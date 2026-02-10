@@ -2137,6 +2137,7 @@ export type Database = {
           mood: string | null
           part_of_yowm: number | null
           prayer_requests: Json | null
+          recipes: Json | null
           tags: string[] | null
           updated_at: string
           user_id: string
@@ -2163,6 +2164,7 @@ export type Database = {
           mood?: string | null
           part_of_yowm?: number | null
           prayer_requests?: Json | null
+          recipes?: Json | null
           tags?: string[] | null
           updated_at?: string
           user_id: string
@@ -2189,6 +2191,7 @@ export type Database = {
           mood?: string | null
           part_of_yowm?: number | null
           prayer_requests?: Json | null
+          recipes?: Json | null
           tags?: string[] | null
           updated_at?: string
           user_id?: string
