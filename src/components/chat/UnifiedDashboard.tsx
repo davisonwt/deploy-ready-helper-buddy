@@ -1,7 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { MessageSquare, BookOpen, GraduationCap, Dumbbell, Radio, ArrowLeft } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useCommunicationModes, CommunicationMode } from '@/hooks/useCommunicationModes';
 import { AuroraBackground } from './AuroraBackground';
 import { ActivityFeed } from './ActivityFeed';
@@ -30,8 +30,17 @@ const modes: ModeConfig[] = [
 
 export const UnifiedDashboard: React.FC = () => {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const { activeMode, setActiveMode, unreadCounts, clearUnread } = useCommunicationModes();
   const [selectedCircle, setSelectedCircle] = useState<string | null>(null);
+
+  // Auto-switch to ChatApp mode when room param is present (e.g. from Memry message button)
+  useEffect(() => {
+    const roomId = searchParams.get('room');
+    if (roomId && activeMode !== 'chatapp') {
+      setActiveMode('chatapp');
+    }
+  }, [searchParams]);
 
   const handleModeChange = (mode: CommunicationMode) => {
     setActiveMode(mode);
