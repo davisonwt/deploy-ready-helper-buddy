@@ -229,7 +229,7 @@ function Layout({ children }) {
                   style={{ borderColor: currentTheme.accent }}
                 >
                   <img 
-                    src="/lovable-uploads/a41a2c64-7483-43dc-90af-67a83994d6aa.png" 
+                    src="/lovable-uploads/s2g-logo.jpg" 
                     alt="sow2grow logo" 
                     className="w-full h-full object-cover bg-transparent"
                   />
@@ -719,7 +719,7 @@ function Layout({ children }) {
                 style={{ borderColor: currentTheme.accent }}
               >
                 <img 
-                  src="/lovable-uploads/a41a2c64-7483-43dc-90af-67a83994d6aa.png" 
+                  src="/lovable-uploads/s2g-logo.jpg" 
                   alt="sow2grow logo" 
                   className="w-full h-full object-cover bg-transparent"
                 />
