@@ -67,105 +67,154 @@ export function LeaderboardTable({ filters = ['xp', 'bestowals', 'followers', 's
           startDate = new Date(0);
       }
 
-      // Fetch leaderboard data based on filter
       let entries: LeaderboardEntry[] = [];
       
       if (selectedFilter === 'xp') {
-        // Mock XP leaderboard - in production would query XP table
-        const { data: profiles } = await supabase
-          .from('profiles')
-          .select('user_id, display_name, avatar_url')
+        // Real XP data from user_points joined with profiles
+        const { data: points } = await supabase
+          .from('user_points')
+          .select('user_id, total_points, level')
+          .order('total_points', { ascending: false })
           .limit(100);
 
-        entries = (profiles || []).map((p, i) => ({
-          id: p.user_id,
-          rank: i + 1,
-          username: p.display_name || 'Anonymous',
-          avatar_url: p.avatar_url,
-          score: (100 - i) * 100 + Math.floor(Math.random() * 500),
-          delta: Math.floor(Math.random() * 20) - 10,
-          badge: i === 0 ? 'crown' : i < 3 ? 'medal' : i < 10 ? 'star' : undefined
-        }));
+        if (points && points.length > 0) {
+          const userIds = points.map(p => p.user_id);
+          const { data: profiles } = await supabase
+            .from('profiles')
+            .select('user_id, display_name, avatar_url')
+            .in('user_id', userIds);
+
+          const profileMap = new Map((profiles || []).map(p => [p.user_id, p]));
+
+          entries = points.map((p, i) => {
+            const profile = profileMap.get(p.user_id);
+            return {
+              id: p.user_id,
+              rank: i + 1,
+              username: profile?.display_name || 'Anonymous',
+              avatar_url: profile?.avatar_url || undefined,
+              score: p.total_points || 0,
+              delta: 0,
+              badge: i === 0 ? 'crown' : i < 3 ? 'medal' : i < 10 ? 'star' : undefined
+            };
+          });
+        }
       } else if (selectedFilter === 'bestowals') {
-        // Fetch by bestowals amount
-        const { data: bestowals } = await supabase
+        // Real bestowals data grouped by bestower
+        const query = supabase
           .from('bestowals')
-          .select('bestower_id, amount, profiles!bestower_id(display_name, avatar_url)')
-          .gte('created_at', startDate.toISOString())
-          .order('amount', { ascending: false })
-          .limit(100);
+          .select('bestower_id, amount')
+          .eq('payment_status', 'completed');
+        
+        if (timeRange !== 'all-time') {
+          query.gte('created_at', startDate.toISOString());
+        }
 
-        const grouped = (bestowals || []).reduce((acc: any, b: any) => {
-          const id = b.bestower_id;
-          if (!acc[id]) {
-            acc[id] = {
+        const { data: bestowals } = await query;
+
+        const grouped: Record<string, number> = {};
+        (bestowals || []).forEach(b => {
+          grouped[b.bestower_id] = (grouped[b.bestower_id] || 0) + (b.amount || 0);
+        });
+
+        const sortedIds = Object.entries(grouped)
+          .sort(([, a], [, b]) => b - a)
+          .slice(0, 100);
+
+        if (sortedIds.length > 0) {
+          const { data: profiles } = await supabase
+            .from('profiles')
+            .select('user_id, display_name, avatar_url')
+            .in('user_id', sortedIds.map(([id]) => id));
+
+          const profileMap = new Map((profiles || []).map(p => [p.user_id, p]));
+
+          entries = sortedIds.map(([id, score], i) => {
+            const profile = profileMap.get(id);
+            return {
               id,
-              username: b.profiles?.display_name || 'Anonymous',
-              avatar_url: b.profiles?.avatar_url,
-              score: 0,
-              delta: 0
+              rank: i + 1,
+              username: profile?.display_name || 'Anonymous',
+              avatar_url: profile?.avatar_url || undefined,
+              score,
+              delta: 0,
+              badge: i === 0 ? 'crown' : i < 3 ? 'medal' : i < 10 ? 'star' : undefined
             };
-          }
-          acc[id].score += b.amount || 0;
-          return acc;
-        }, {});
-
-        entries = Object.values(grouped)
-          .sort((a: any, b: any) => b.score - a.score)
-          .slice(0, 100)
-          .map((entry: any, i) => ({
-            ...entry,
-            rank: i + 1,
-            delta: Math.floor(Math.random() * 50) - 25,
-            badge: i === 0 ? 'crown' : i < 3 ? 'medal' : i < 10 ? 'star' : undefined
-          }));
+          });
+        }
       } else if (selectedFilter === 'followers') {
-        // Fetch by followers count
-        const { data: followers } = await supabase
+        // Real followers data grouped by following_id
+        const query = supabase
           .from('followers')
-          .select('following_id, profiles!following_id(display_name, avatar_url)')
-          .gte('created_at', startDate.toISOString());
+          .select('following_id');
 
-        const grouped = (followers || []).reduce((acc: any, f: any) => {
-          const id = f.following_id;
-          if (!acc[id]) {
-            acc[id] = {
+        if (timeRange !== 'all-time') {
+          query.gte('created_at', startDate.toISOString());
+        }
+
+        const { data: followers } = await query;
+
+        const grouped: Record<string, number> = {};
+        (followers || []).forEach(f => {
+          grouped[f.following_id] = (grouped[f.following_id] || 0) + 1;
+        });
+
+        const sortedIds = Object.entries(grouped)
+          .sort(([, a], [, b]) => b - a)
+          .slice(0, 100);
+
+        if (sortedIds.length > 0) {
+          const { data: profiles } = await supabase
+            .from('profiles')
+            .select('user_id, display_name, avatar_url')
+            .in('user_id', sortedIds.map(([id]) => id));
+
+          const profileMap = new Map((profiles || []).map(p => [p.user_id, p]));
+
+          entries = sortedIds.map(([id, score], i) => {
+            const profile = profileMap.get(id);
+            return {
               id,
-              username: f.profiles?.display_name || 'Anonymous',
-              avatar_url: f.profiles?.avatar_url,
-              score: 0,
-              delta: 0
+              rank: i + 1,
+              username: profile?.display_name || 'Anonymous',
+              avatar_url: profile?.avatar_url || undefined,
+              score,
+              delta: 0,
+              badge: i === 0 ? 'crown' : i < 3 ? 'medal' : i < 10 ? 'star' : undefined
             };
-          }
-          acc[id].score += 1;
-          return acc;
-        }, {});
-
-        entries = Object.values(grouped)
-          .sort((a: any, b: any) => b.score - a.score)
-          .slice(0, 100)
-          .map((entry: any, i) => ({
-            ...entry,
-            rank: i + 1,
-            delta: Math.floor(Math.random() * 10) - 5,
-            badge: i === 0 ? 'crown' : i < 3 ? 'medal' : i < 10 ? 'star' : undefined
-          }));
-      } else {
-        // Streak - mock data
-        const { data: profiles } = await supabase
-          .from('profiles')
-          .select('user_id, display_name, avatar_url')
+          });
+        }
+      } else if (selectedFilter === 'streak') {
+        // Use level from user_points as streak indicator
+        const { data: points } = await supabase
+          .from('user_points')
+          .select('user_id, level, total_points')
+          .order('level', { ascending: false })
+          .order('total_points', { ascending: false })
           .limit(100);
 
-        entries = (profiles || []).map((p, i) => ({
-          id: p.user_id,
-          rank: i + 1,
-          username: p.display_name || 'Anonymous',
-          avatar_url: p.avatar_url,
-          score: Math.floor(Math.random() * 30) + 1,
-          delta: Math.floor(Math.random() * 5) - 2,
-          badge: i === 0 ? 'crown' : i < 3 ? 'medal' : i < 10 ? 'star' : undefined
-        }));
+        if (points && points.length > 0) {
+          const userIds = points.map(p => p.user_id);
+          const { data: profiles } = await supabase
+            .from('profiles')
+            .select('user_id, display_name, avatar_url')
+            .in('user_id', userIds);
+
+          const profileMap = new Map((profiles || []).map(p => [p.user_id, p]));
+
+          entries = points.map((p, i) => {
+            const profile = profileMap.get(p.user_id);
+            return {
+              id: p.user_id,
+              rank: i + 1,
+              username: profile?.display_name || 'Anonymous',
+              avatar_url: profile?.avatar_url || undefined,
+              score: p.level || 1,
+              delta: 0,
+              badge: i === 0 ? 'crown' : i < 3 ? 'medal' : i < 10 ? 'star' : undefined
+            };
+          });
+        }
       }
 
       setLeaderboard(entries);
