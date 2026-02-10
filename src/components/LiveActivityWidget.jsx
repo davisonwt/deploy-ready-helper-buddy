@@ -15,19 +15,28 @@ import {
   Clock,
   DollarSign,
   Mail,
-  UserPlus
+  UserPlus,
+  Award,
+  Megaphone,
+  Car,
+  Wrench
 } from 'lucide-react'
 import { supabase } from '@/integrations/supabase/client'
 import { useAuth } from '@/hooks/useAuth'
+import { useRoles } from '@/hooks/useRoles'
 import { toast } from 'sonner'
 import { formatDistanceToNow } from 'date-fns'
 import { getCurrentTheme } from '@/utils/dashboardThemes'
+import { useNavigate } from 'react-router-dom'
 
 export default function LiveActivityWidget() {
   const { user } = useAuth()
-  const [isExpanded, setIsExpanded] = useState(true) // Start expanded
+  const { isAdminOrGosat } = useRoles()
+  const navigate = useNavigate()
+  const [isExpanded, setIsExpanded] = useState(true)
   const [isVisible, setIsVisible] = useState(true)
   const [currentTheme, setCurrentTheme] = useState(getCurrentTheme())
+  const [pendingApplications, setPendingApplications] = useState({ ambassadors: 0, whisperers: 0, drivers: 0, serviceProviders: 0 })
   
   console.log('LiveActivityWidget: user exists?', !!user, 'isVisible?', isVisible, 'isExpanded?', isExpanded)
   const [liveData, setLiveData] = useState({
@@ -48,6 +57,34 @@ export default function LiveActivityWidget() {
     }, 2 * 60 * 60 * 1000); // 2 hours
     return () => clearInterval(themeInterval);
   }, [])
+
+  // Fetch pending application counts for gosat/admin users
+  useEffect(() => {
+    if (!user || !isAdminOrGosat) return
+    
+    const fetchPendingCounts = async () => {
+      try {
+        const [ambassadorRes, whispererRes, driverRes, serviceRes] = await Promise.all([
+          supabase.from('ambassador_applications').select('id', { count: 'exact', head: true }).eq('status', 'pending'),
+          supabase.from('whisperers').select('id', { count: 'exact', head: true }).eq('status', 'pending'),
+          supabase.from('community_drivers').select('id', { count: 'exact', head: true }).eq('status', 'pending'),
+          supabase.from('service_providers').select('id', { count: 'exact', head: true }).eq('status', 'pending'),
+        ])
+        setPendingApplications({
+          ambassadors: ambassadorRes.count || 0,
+          whisperers: whispererRes.count || 0,
+          drivers: driverRes.count || 0,
+          serviceProviders: serviceRes.count || 0,
+        })
+      } catch (err) {
+        console.error('Error fetching pending application counts:', err)
+      }
+    }
+    
+    fetchPendingCounts()
+    const interval = setInterval(fetchPendingCounts, 60000)
+    return () => clearInterval(interval)
+  }, [user, isAdminOrGosat])
 
   // Set up listener for schedule updates from Personnel Assignments
   useEffect(() => {
@@ -1166,6 +1203,84 @@ export default function LiveActivityWidget() {
                         </div>
                       </div>
                     ))}
+                  </div>
+                )}
+
+                {/* GoSat Pending Applications Notifications */}
+                {isAdminOrGosat && (pendingApplications.ambassadors > 0 || pendingApplications.whisperers > 0 || pendingApplications.drivers > 0 || pendingApplications.serviceProviders > 0) && (
+                  <div className="space-y-2">
+                    <h4 className="text-xs font-semibold flex items-center gap-1" style={{ color: '#f59e0b' }}>
+                      <Award className="h-3 w-3" />
+                      Pending Applications
+                    </h4>
+                    {pendingApplications.ambassadors > 0 && (
+                      <div
+                        className="flex items-center justify-between p-2 rounded-lg border cursor-pointer transition-all duration-200"
+                        style={{ backgroundColor: currentTheme.secondaryButton, borderColor: currentTheme.cardBorder }}
+                        onClick={() => navigate('/admin/dashboard')}
+                        onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = currentTheme.accent + '20' }}
+                        onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = currentTheme.secondaryButton }}
+                      >
+                        <div className="flex items-center gap-2">
+                          <Award className="h-4 w-4" style={{ color: '#eab308' }} />
+                          <span className="text-xs font-medium" style={{ color: currentTheme.textPrimary }}>Ambassadors</span>
+                        </div>
+                        <div className="text-xs font-bold px-2 py-0.5 rounded-full" style={{ backgroundColor: '#ef4444', color: 'white' }}>
+                          {pendingApplications.ambassadors}
+                        </div>
+                      </div>
+                    )}
+                    {pendingApplications.whisperers > 0 && (
+                      <div
+                        className="flex items-center justify-between p-2 rounded-lg border cursor-pointer transition-all duration-200"
+                        style={{ backgroundColor: currentTheme.secondaryButton, borderColor: currentTheme.cardBorder }}
+                        onClick={() => navigate('/admin/dashboard')}
+                        onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = currentTheme.accent + '20' }}
+                        onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = currentTheme.secondaryButton }}
+                      >
+                        <div className="flex items-center gap-2">
+                          <Megaphone className="h-4 w-4" style={{ color: '#ec4899' }} />
+                          <span className="text-xs font-medium" style={{ color: currentTheme.textPrimary }}>Whisperers</span>
+                        </div>
+                        <div className="text-xs font-bold px-2 py-0.5 rounded-full" style={{ backgroundColor: '#ef4444', color: 'white' }}>
+                          {pendingApplications.whisperers}
+                        </div>
+                      </div>
+                    )}
+                    {pendingApplications.drivers > 0 && (
+                      <div
+                        className="flex items-center justify-between p-2 rounded-lg border cursor-pointer transition-all duration-200"
+                        style={{ backgroundColor: currentTheme.secondaryButton, borderColor: currentTheme.cardBorder }}
+                        onClick={() => navigate('/admin/dashboard')}
+                        onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = currentTheme.accent + '20' }}
+                        onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = currentTheme.secondaryButton }}
+                      >
+                        <div className="flex items-center gap-2">
+                          <Car className="h-4 w-4" style={{ color: '#06b6d4' }} />
+                          <span className="text-xs font-medium" style={{ color: currentTheme.textPrimary }}>Drivers</span>
+                        </div>
+                        <div className="text-xs font-bold px-2 py-0.5 rounded-full" style={{ backgroundColor: '#ef4444', color: 'white' }}>
+                          {pendingApplications.drivers}
+                        </div>
+                      </div>
+                    )}
+                    {pendingApplications.serviceProviders > 0 && (
+                      <div
+                        className="flex items-center justify-between p-2 rounded-lg border cursor-pointer transition-all duration-200"
+                        style={{ backgroundColor: currentTheme.secondaryButton, borderColor: currentTheme.cardBorder }}
+                        onClick={() => navigate('/admin/dashboard')}
+                        onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = currentTheme.accent + '20' }}
+                        onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = currentTheme.secondaryButton }}
+                      >
+                        <div className="flex items-center gap-2">
+                          <Wrench className="h-4 w-4" style={{ color: '#14b8a6' }} />
+                          <span className="text-xs font-medium" style={{ color: currentTheme.textPrimary }}>Service Providers</span>
+                        </div>
+                        <div className="text-xs font-bold px-2 py-0.5 rounded-full" style={{ backgroundColor: '#ef4444', color: 'white' }}>
+                          {pendingApplications.serviceProviders}
+                        </div>
+                      </div>
+                    )}
                   </div>
                 )}
 
