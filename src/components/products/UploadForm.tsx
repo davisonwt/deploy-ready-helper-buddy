@@ -421,7 +421,14 @@ export default function UploadForm() {
                   <Label htmlFor="category">Category</Label>
                   <Input
                     id="category"
-                    placeholder="e.g., education, entertainment"
+                    placeholder={
+                      formData.type === 'music' ? 'e.g., gospel, worship, instrumental' :
+                      formData.type === 'ebook' ? 'e.g., devotional, study guide, fiction' :
+                      formData.type === 'book' ? 'e.g., teaching, biography, children' :
+                      formData.type === 'art' ? 'e.g., painting, photography, digital art' :
+                      formData.type === 'produce' ? 'e.g., vegetables, fruit, herbs' :
+                      'e.g., education, entertainment'
+                    }
                     value={formData.category}
                     onChange={(e) => setFormData({ ...formData, category: e.target.value })}
                   />
@@ -698,7 +705,14 @@ export default function UploadForm() {
                   <Label htmlFor="tags">Tags (comma-separated)</Label>
                   <Input
                     id="tags"
-                    placeholder="music, relaxing, ambient"
+                    placeholder={
+                      formData.type === 'music' ? 'music, relaxing, ambient' :
+                      formData.type === 'ebook' ? 'ebook, devotional, study' :
+                      formData.type === 'book' ? 'book, teaching, inspirational' :
+                      formData.type === 'art' ? 'art, painting, digital' :
+                      formData.type === 'produce' ? 'organic, fresh, homegrown' :
+                      'document, resource, guide'
+                    }
                     value={formData.tags}
                     onChange={(e) => setFormData({ ...formData, tags: e.target.value })}
                   />
