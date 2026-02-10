@@ -214,6 +214,51 @@ export type Database = {
         }
         Relationships: []
       }
+      ambassador_applications: {
+        Row: {
+          brand_name: string | null
+          created_at: string
+          current_role: string | null
+          email: string
+          full_name: string
+          id: string
+          platforms: string[] | null
+          status: string
+          updated_at: string
+          user_id: string | null
+          username: string | null
+          why_represent: string
+        }
+        Insert: {
+          brand_name?: string | null
+          created_at?: string
+          current_role?: string | null
+          email: string
+          full_name: string
+          id?: string
+          platforms?: string[] | null
+          status?: string
+          updated_at?: string
+          user_id?: string | null
+          username?: string | null
+          why_represent: string
+        }
+        Update: {
+          brand_name?: string | null
+          created_at?: string
+          current_role?: string | null
+          email?: string
+          full_name?: string
+          id?: string
+          platforms?: string[] | null
+          status?: string
+          updated_at?: string
+          user_id?: string | null
+          username?: string | null
+          why_represent?: string
+        }
+        Relationships: []
+      }
       available_achievements: {
         Row: {
           achievement_type: string
