@@ -101,12 +101,13 @@ export function GamificationHUD({ isVisible, onClose }: GamificationHUDProps) {
                       {userPoints.points_to_next_level} points to go
                     </div>
                   </div>
-                  <Progress 
-                    value={userPoints.points_to_next_level > 0 ? 
-                      ((100 - (userPoints.points_to_next_level / 100) * 100)) : 100
-                    } 
-                    className="h-2"
-                  />
+                  {(() => {
+                    const currentLevelThreshold = 50 * ((userPoints.level - 1) * (userPoints.level - 1));
+                    const nextLevelThreshold = 50 * (userPoints.level * userPoints.level);
+                    const range = nextLevelThreshold - currentLevelThreshold;
+                    const progress = range > 0 ? ((userPoints.total_points - currentLevelThreshold) / range) * 100 : 0;
+                    return <Progress value={Math.min(100, Math.max(0, progress))} className="h-2" />;
+                  })()}
                 </CardContent>
               </Card>
             </div>
