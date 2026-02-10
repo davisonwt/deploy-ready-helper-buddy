@@ -750,11 +750,14 @@ export default function MemryPage() {
     setSelectedPost(post);
     setShowCommentsModal(true);
     
+    // Strip prefixes like "product-", "book-", "music-", "orchard-" to get real UUID
+    const realPostId = post.id.replace(/^(product|book|music|orchard)-/, '');
+    
     // Fetch real comments from database
     const { data: commentsData } = await supabase
       .from('memry_comments')
       .select('*')
-      .eq('post_id', post.id)
+      .eq('post_id', realPostId)
       .order('created_at', { ascending: true });
 
     if (commentsData && commentsData.length > 0) {
@@ -808,8 +811,11 @@ export default function MemryPage() {
   const handleAddComment = async () => {
     if (!newComment.trim() || !user || !selectedPost) return;
     
+    // Strip prefixes like "product-", "book-", "music-", "orchard-" to get real UUID
+    const realPostId = selectedPost.id.replace(/^(product|book|music|orchard)-/, '');
+    
     const insertData: any = {
-      post_id: selectedPost.id,
+      post_id: realPostId,
       user_id: user.id,
       content: newComment.trim()
     };
@@ -824,9 +830,10 @@ export default function MemryPage() {
       .single();
 
     if (error) {
+      console.error('Comment insert error:', error, insertData);
       toast({
         title: "Error",
-        description: "Could not post comment",
+        description: error.message || "Could not post comment",
         variant: "destructive"
       });
       return;
