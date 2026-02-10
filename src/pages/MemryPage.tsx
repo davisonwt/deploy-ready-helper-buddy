@@ -5,7 +5,7 @@ import {
   Camera, Video, ChefHat, X, Send, Bookmark, Play, Pause,
   MoreHorizontal, Music, Volume2, VolumeX, DollarSign, Gift,
   ArrowLeft, ChevronUp, ChevronDown, Sparkles, ShoppingBag, Trees, Book,
-  UserPlus, UserCheck
+  UserPlus, UserCheck, MessageSquare
 } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
@@ -1104,27 +1104,94 @@ export default function MemryPage() {
 
               {/* Right Side Actions */}
               <div className="absolute right-4 bottom-32 flex flex-col items-center gap-6 z-40">
-                {/* Profile + Follow */}
-                <motion.button
-                  whileTap={{ scale: 0.9 }}
-                  onClick={() => handleFollow(currentPost.user_id)}
-                  className="flex flex-col items-center gap-1"
-                >
-                  <Avatar className="w-12 h-12 border-2 border-white shadow-lg mb-1">
+                {/* Profile Avatar - separate, links to member profile */}
+                <Link to={`/member/${currentPost.user_id}`} className="flex flex-col items-center">
+                  <Avatar className="w-12 h-12 border-2 border-white shadow-lg">
                     <AvatarImage src={currentPost.profiles?.avatar_url} />
                     <AvatarFallback className="bg-gradient-to-br from-pink-400 to-orange-400 text-white">
                       {currentPost.profiles?.display_name?.[0] || 'U'}
                     </AvatarFallback>
                   </Avatar>
-                  <div className={`w-7 h-7 rounded-full flex items-center justify-center shadow-md ${
-                    followedUserIds.has(currentPost.user_id) ? 'bg-emerald-500' : 'bg-pink-500'
-                  }`}>
-                    {followedUserIds.has(currentPost.user_id) 
-                      ? <UserCheck className="w-4 h-4 text-white" />
-                      : <UserPlus className="w-4 h-4 text-white" />
-                    }
-                  </div>
-                </motion.button>
+                </Link>
+
+                {/* Follow Button - separate */}
+                {user && currentPost.user_id !== user.id && (
+                  <motion.button
+                    whileTap={{ scale: 0.9 }}
+                    onClick={() => handleFollow(currentPost.user_id)}
+                    className="flex flex-col items-center gap-1"
+                  >
+                    <div className={`w-10 h-10 rounded-full flex items-center justify-center shadow-md ${
+                      followedUserIds.has(currentPost.user_id) ? 'bg-emerald-500' : 'bg-pink-500'
+                    }`}>
+                      {followedUserIds.has(currentPost.user_id) 
+                        ? <UserCheck className="w-5 h-5 text-white" />
+                        : <UserPlus className="w-5 h-5 text-white" />
+                      }
+                    </div>
+                    <span className="text-white text-[10px] font-semibold drop-shadow">
+                      {followedUserIds.has(currentPost.user_id) ? 'Following' : 'Follow'}
+                    </span>
+                  </motion.button>
+                )}
+
+                {/* Direct Message Button */}
+                {user && currentPost.user_id !== user.id && (
+                  <motion.button
+                    whileTap={{ scale: 0.9 }}
+                    onClick={async () => {
+                      if (!user) {
+                        toast({ title: "Sign in required", description: "Please sign in to message", variant: "destructive" });
+                        return;
+                      }
+                      try {
+                        // Find or create direct chat room
+                        const { data: rows } = await supabase
+                          .from('chat_participants')
+                          .select('room_id, user_id, chat_rooms!inner(id, room_type, is_active)')
+                          .eq('chat_rooms.room_type', 'direct')
+                          .eq('chat_rooms.is_active', true)
+                          .in('user_id', [user.id, currentPost.user_id]);
+
+                        let roomId: string | null = null;
+                        if (rows && rows.length) {
+                          const counts: Record<string, number> = {};
+                          for (const r of rows as any[]) {
+                            if (!r?.room_id) continue;
+                            counts[r.room_id] = (counts[r.room_id] || 0) + 1;
+                          }
+                          roomId = Object.entries(counts).find(([, c]) => c >= 2)?.[0] || null;
+                        }
+
+                        if (!roomId) {
+                          const { data: room, error: roomErr } = await supabase
+                            .from('chat_rooms')
+                            .insert({ name: 'Direct Chat', room_type: 'direct', created_by: user.id, is_active: true })
+                            .select('id')
+                            .single();
+                          if (roomErr) throw roomErr;
+                          roomId = room.id;
+
+                          await supabase.from('chat_participants').upsert([
+                            { room_id: roomId, user_id: user.id, is_active: true },
+                            { room_id: roomId, user_id: currentPost.user_id, is_active: true }
+                          ], { onConflict: 'room_id,user_id' });
+                        }
+
+                        navigate(`/chat?room=${roomId}`);
+                      } catch (error) {
+                        console.error('Error starting direct chat:', error);
+                        toast({ title: "Error", description: "Could not start chat", variant: "destructive" });
+                      }
+                    }}
+                    className="flex flex-col items-center gap-1"
+                  >
+                    <div className="w-10 h-10 rounded-full bg-blue-500 flex items-center justify-center shadow-md">
+                      <MessageSquare className="w-5 h-5 text-white" />
+                    </div>
+                    <span className="text-white text-[10px] font-semibold drop-shadow">Message</span>
+                  </motion.button>
+                )}
 
                 {/* Love (Like) */}
                 <motion.button
