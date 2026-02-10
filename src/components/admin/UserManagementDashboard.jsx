@@ -457,7 +457,7 @@ export function UserManagementDashboard() {
                   <TableHead>Community</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead>Joined</TableHead>
-                  <TableHead>Actions</TableHead>
+                  <TableHead className="min-w-[140px]">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -530,7 +530,7 @@ export function UserManagementDashboard() {
                         {user.created_at ? new Date(user.created_at).toLocaleDateString() : 'N/A'}
                       </TableCell>
                       <TableCell>
-                        <div className="flex items-center space-x-2">
+                        <div className="flex items-center space-x-1 flex-nowrap">
                           <Button
                             variant="ghost"
                             size="sm"
