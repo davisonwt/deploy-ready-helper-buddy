@@ -1,10 +1,11 @@
 import { useState } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Settings, BarChart3, Users, CreditCard, Shield } from 'lucide-react';
+import { Settings, BarChart3, Users, CreditCard, Shield, Award } from 'lucide-react';
 import { UserManagementDashboard } from './UserManagementDashboard';
 import { AdminPaymentDashboard } from '../AdminPaymentDashboard';
 import { ContentModerationDashboard } from './ContentModerationDashboard';
+import { AmbassadorApplicationsDashboard } from './AmbassadorApplicationsDashboard';
 import BasicAnalytics from './BasicAnalytics';
 
 export default function AdminDashboard() {
@@ -27,7 +28,7 @@ export default function AdminDashboard() {
 
       {/* Main Dashboard */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="grid w-full grid-cols-4">
+        <TabsList className="grid w-full grid-cols-5">
           <TabsTrigger value="analytics" className="flex items-center gap-2">
             <BarChart3 className="h-4 w-4" />
             Analytics
@@ -43,6 +44,10 @@ export default function AdminDashboard() {
           <TabsTrigger value="moderation" className="flex items-center gap-2">
             <Shield className="h-4 w-4" />
             Moderation
+          </TabsTrigger>
+          <TabsTrigger value="ambassadors" className="flex items-center gap-2">
+            <Award className="h-4 w-4" />
+            Ambassadors
           </TabsTrigger>
         </TabsList>
 
@@ -62,6 +67,10 @@ export default function AdminDashboard() {
 
         <TabsContent value="moderation" className="mt-6">
           <ContentModerationDashboard />
+        </TabsContent>
+
+        <TabsContent value="ambassadors" className="mt-6">
+          <AmbassadorApplicationsDashboard />
         </TabsContent>
       </Tabs>
     </div>
