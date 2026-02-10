@@ -1038,6 +1038,13 @@ export default function MemryPage() {
                       src={currentPost.media_url}
                       alt={currentPost.caption}
                       className="max-w-full max-h-full object-contain"
+                      onError={(e) => {
+                        const target = e.target as HTMLImageElement;
+                        if (!target.dataset.fallback) {
+                          target.dataset.fallback = '1';
+                          target.src = '/lovable-uploads/ff9e6e48-049d-465a-8d2b-f6e8fed93522.png';
+                        }
+                      }}
                     />
                   </div>
                 )}
