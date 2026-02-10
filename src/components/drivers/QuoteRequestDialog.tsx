@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
+import { zodResolver } from '@/lib/zodResolver';
 import { z } from 'zod';
 import { CalendarIcon, Loader2, MapPin, Package, Clock } from 'lucide-react';
 import { format } from 'date-fns';
