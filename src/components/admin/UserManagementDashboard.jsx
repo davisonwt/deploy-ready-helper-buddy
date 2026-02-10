@@ -23,7 +23,11 @@ import {
   Calendar,
   Mail,
   Phone,
-  Wallet
+  Wallet,
+  Award,
+  Megaphone,
+  Car,
+  Wrench
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { useRoles } from '@/hooks/useRoles';
@@ -42,6 +46,7 @@ export function UserManagementDashboard() {
   const [isUserDetailOpen, setIsUserDetailOpen] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [walletData, setWalletData] = useState({});
+  const [communityRoles, setCommunityRoles] = useState({});
   const [balanceData, setBalanceData] = useState({});
   const [userStats, setUserStats] = useState({
     total: 0,
@@ -56,6 +61,7 @@ export function UserManagementDashboard() {
     loadUsers();
     loadUserStats();
     loadWalletData();
+    loadCommunityRoles();
   }, []);
 
   const loadUsers = async () => {
@@ -127,6 +133,35 @@ export function UserManagementDashboard() {
       }
     } catch (error) {
       console.error('Error loading wallet data:', error);
+    }
+  };
+
+  const loadCommunityRoles = async () => {
+    try {
+      const [ambassadorRes, whispererRes, driverRes, serviceRes] = await Promise.all([
+        supabase.from('ambassador_applications').select('user_id, status').eq('status', 'approved'),
+        supabase.from('whisperers').select('user_id, status'),
+        supabase.from('community_drivers').select('user_id, status').eq('status', 'approved'),
+        supabase.from('service_providers').select('user_id, status').eq('status', 'approved'),
+      ]);
+
+      const roleMap = {};
+      const addRole = (data, roleName) => {
+        (data || []).forEach(item => {
+          if (!item.user_id) return;
+          if (!roleMap[item.user_id]) roleMap[item.user_id] = [];
+          roleMap[item.user_id].push(roleName);
+        });
+      };
+
+      addRole(ambassadorRes.data, 'Ambassador');
+      addRole(whispererRes.data, 'Whisperer');
+      addRole(driverRes.data, 'Driver');
+      addRole(serviceRes.data, 'Service Provider');
+
+      setCommunityRoles(roleMap);
+    } catch (error) {
+      console.error('Error loading community roles:', error);
     }
   };
 
@@ -385,9 +420,8 @@ export function UserManagementDashboard() {
                   <TableHead>Email</TableHead>
                   <TableHead>Wallet</TableHead>
                   <TableHead>Roles</TableHead>
+                  <TableHead>Community</TableHead>
                   <TableHead>Status</TableHead>
-                  <TableHead>Joined</TableHead>
-                  <TableHead>Actions</TableHead>
                   <TableHead>Joined</TableHead>
                   <TableHead>Actions</TableHead>
                 </TableRow>
@@ -425,6 +459,29 @@ export function UserManagementDashboard() {
                       </TableCell>
                       <TableCell>
                         {getRoleBadge(user.user_roles)}
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex flex-wrap gap-1">
+                          {(communityRoles[user.user_id] || []).length > 0 ? (
+                            communityRoles[user.user_id].map(role => {
+                              const config = {
+                                'Ambassador': { icon: Award, color: 'bg-yellow-100 text-yellow-800' },
+                                'Whisperer': { icon: Megaphone, color: 'bg-pink-100 text-pink-800' },
+                                'Driver': { icon: Car, color: 'bg-cyan-100 text-cyan-800' },
+                                'Service Provider': { icon: Wrench, color: 'bg-teal-100 text-teal-800' },
+                              }[role] || { icon: User, color: 'bg-gray-100 text-gray-800' };
+                              const Icon = config.icon;
+                              return (
+                                <Badge key={role} variant="outline" className={`text-xs ${config.color}`}>
+                                  <Icon className="h-3 w-3 mr-1" />
+                                  {role}
+                                </Badge>
+                              );
+                            })
+                          ) : (
+                            <span className="text-xs text-muted-foreground">—</span>
+                          )}
+                        </div>
                       </TableCell>
                       <TableCell>
                         {user.suspended ? (
