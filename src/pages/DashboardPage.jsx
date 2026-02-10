@@ -689,7 +689,7 @@ export default function DashboardPage() {
                     )}
                     </span>
                     {unreadMessages > 0 && (
-                      <Link to="/chat" className="text-xs sm:text-sm font-semibold flex items-center gap-1 no-underline" style={{ color: '#3b82f6' }}>
+                      <Link to="/communications-hub" className="text-xs sm:text-sm font-semibold flex items-center gap-1 no-underline" style={{ color: '#3b82f6' }}>
                         <MessageSquare className="h-3 w-3 sm:h-4 sm:w-4" />
                         {unreadMessages} new {unreadMessages === 1 ? 'message' : 'messages'}
                       </Link>
