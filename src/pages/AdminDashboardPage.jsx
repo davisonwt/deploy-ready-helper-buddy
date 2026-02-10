@@ -25,7 +25,11 @@ import {
   ArrowRight,
   Check,
   X,
-  Radio
+  Radio,
+  Award,
+  Megaphone,
+  Car,
+  Wrench
 } from 'lucide-react'
 import { toast } from 'sonner'
 import { useRoles } from '../hooks/useRoles'
@@ -41,6 +45,10 @@ import { OrganizationWalletSetup } from '@/components/admin/OrganizationWalletSe
 import { AdminPaymentDashboard } from '@/components/AdminPaymentDashboard'
 import { GoSatGhostAccessMonitor } from '@/components/admin/GoSatGhostAccessMonitor'
 import PasswordResetApprovalPanel from '@/components/admin/PasswordResetApprovalPanel'
+import { AmbassadorApplicationsDashboard } from '@/components/admin/AmbassadorApplicationsDashboard'
+import { WhispererApplicationsDashboard } from '@/components/admin/WhispererApplicationsDashboard'
+import { DriverApplicationsDashboard } from '@/components/admin/DriverApplicationsDashboard'
+import { ServiceProviderApplicationsDashboard } from '@/components/admin/ServiceProviderApplicationsDashboard'
 
 export default function AdminDashboardPage() {
   const { user } = useAuth()
@@ -354,7 +362,7 @@ export default function AdminDashboardPage() {
         {/* Main Dashboard Tabs */}
         <Tabs defaultValue="analytics" className="space-y-6">
           <div className="flex justify-center mb-8">
-            <TabsList className="bg-transparent p-0 h-auto grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-4">
+            <TabsList className="bg-transparent p-0 h-auto grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-6 gap-4">
               <TabsTrigger 
                 value="analytics" 
                 className="border-2 border-primary/20 rounded-xl px-6 py-4 font-semibold shadow-lg hover:shadow-xl hover:scale-105 hover:border-primary/40 transition-all duration-300 data-[state=active]:bg-gradient-to-br data-[state=active]:from-primary data-[state=active]:to-primary/80 data-[state=active]:text-primary-foreground data-[state=active]:border-primary data-[state=active]:shadow-2xl data-[state=active]:scale-105 bg-background"
@@ -391,6 +399,34 @@ export default function AdminDashboardPage() {
                 className="border-2 border-purple-200 rounded-xl px-6 py-4 font-semibold shadow-lg hover:shadow-xl hover:scale-105 hover:border-purple-300 transition-all duration-300 data-[state=active]:bg-gradient-to-br data-[state=active]:from-purple-500 data-[state=active]:to-purple-600 data-[state=active]:text-white data-[state=active]:border-purple-500 data-[state=active]:shadow-2xl data-[state=active]:scale-105 bg-background"
               >
                 Wallet
+              </TabsTrigger>
+              <TabsTrigger 
+                value="ambassadors" 
+                className="border-2 border-yellow-200 rounded-xl px-6 py-4 font-semibold shadow-lg hover:shadow-xl hover:scale-105 hover:border-yellow-300 transition-all duration-300 data-[state=active]:bg-gradient-to-br data-[state=active]:from-yellow-500 data-[state=active]:to-yellow-600 data-[state=active]:text-white data-[state=active]:border-yellow-500 data-[state=active]:shadow-2xl data-[state=active]:scale-105 bg-background"
+              >
+                <Award className="w-4 h-4 mr-2" />
+                Ambassadors
+              </TabsTrigger>
+              <TabsTrigger 
+                value="whisperers" 
+                className="border-2 border-pink-200 rounded-xl px-6 py-4 font-semibold shadow-lg hover:shadow-xl hover:scale-105 hover:border-pink-300 transition-all duration-300 data-[state=active]:bg-gradient-to-br data-[state=active]:from-pink-500 data-[state=active]:to-pink-600 data-[state=active]:text-white data-[state=active]:border-pink-500 data-[state=active]:shadow-2xl data-[state=active]:scale-105 bg-background"
+              >
+                <Megaphone className="w-4 h-4 mr-2" />
+                Whisperers
+              </TabsTrigger>
+              <TabsTrigger 
+                value="drivers" 
+                className="border-2 border-cyan-200 rounded-xl px-6 py-4 font-semibold shadow-lg hover:shadow-xl hover:scale-105 hover:border-cyan-300 transition-all duration-300 data-[state=active]:bg-gradient-to-br data-[state=active]:from-cyan-500 data-[state=active]:to-cyan-600 data-[state=active]:text-white data-[state=active]:border-cyan-500 data-[state=active]:shadow-2xl data-[state=active]:scale-105 bg-background"
+              >
+                <Car className="w-4 h-4 mr-2" />
+                Drivers
+              </TabsTrigger>
+              <TabsTrigger 
+                value="service-providers" 
+                className="border-2 border-teal-200 rounded-xl px-6 py-4 font-semibold shadow-lg hover:shadow-xl hover:scale-105 hover:border-teal-300 transition-all duration-300 data-[state=active]:bg-gradient-to-br data-[state=active]:from-teal-500 data-[state=active]:to-teal-600 data-[state=active]:text-white data-[state=active]:border-teal-500 data-[state=active]:shadow-2xl data-[state=active]:scale-105 bg-background"
+              >
+                <Wrench className="w-4 h-4 mr-2" />
+                Services
               </TabsTrigger>
               <TabsTrigger 
                 value="legacy" 
@@ -586,6 +622,22 @@ export default function AdminDashboardPage() {
                 )}
               </CardContent>
             </Card>
+          </TabsContent>
+
+          <TabsContent value="ambassadors" className="space-y-6">
+            <AmbassadorApplicationsDashboard />
+          </TabsContent>
+
+          <TabsContent value="whisperers" className="space-y-6">
+            <WhispererApplicationsDashboard />
+          </TabsContent>
+
+          <TabsContent value="drivers" className="space-y-6">
+            <DriverApplicationsDashboard />
+          </TabsContent>
+
+          <TabsContent value="service-providers" className="space-y-6">
+            <ServiceProviderApplicationsDashboard />
           </TabsContent>
 
           <TabsContent value="support" className="space-y-6">
