@@ -433,6 +433,11 @@ export default function UploadForm() {
                       <SelectItem value="technology">Technology</SelectItem>
                       <SelectItem value="lifestyle">Lifestyle</SelectItem>
                       <SelectItem value="spiritual">Spiritual</SelectItem>
+                      <SelectItem value="kitchenware">Kitchenware</SelectItem>
+                      <SelectItem value="properties">Properties</SelectItem>
+                      <SelectItem value="vehicles">Vehicles</SelectItem>
+                      <SelectItem value="fashion">Fashion</SelectItem>
+                      <SelectItem value="food">Food</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
