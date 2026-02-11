@@ -5,6 +5,7 @@ import { useProductBasket } from '@/contexts/ProductBasketContext';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Loader2, Music, Book, Image, Video, TrendingUp, BookOpen } from 'lucide-react';
 import { ImageCarousel } from '@/components/products/ImageCarousel';
+import CategoryFilter from '@/components/products/CategoryFilter';
 import { motion } from 'framer-motion';
 import { toast } from 'sonner';
 import { formatCurrency } from '@/lib/utils';
@@ -84,7 +85,9 @@ export default function ProductsPage() {
     return filterParam === 'trending' ? 'Trending' : 'Most Recent';
   };
 
-  const [selectedCategory, setSelectedCategory] = useState<string>(getInitialCategory());
+  const [selectedCategory, setSelectedCategory] = useState<string>('all');
+  const [selectedType, setSelectedType] = useState<string>(getInitialCategory());
+  const [selectedFormat, setSelectedFormat] = useState<string>('all');
   const [selectedSort, setSelectedSort] = useState<string>(getInitialSort());
   const [activeFilter, setActiveFilter] = useState<string>(filterParam);
   const { addToBasket } = useProductBasket();
@@ -120,7 +123,7 @@ export default function ProductsPage() {
     isFetchingNextPage,
     isLoading,
   } = useInfiniteQuery({
-    queryKey: ['products', selectedCategory, selectedSort],
+    queryKey: ['products', selectedType, selectedCategory, selectedSort],
     initialPageParam: 0,
     queryFn: async ({ pageParam }: { pageParam: number }) => {
       let query = supabase
@@ -136,12 +139,13 @@ export default function ProductsPage() {
         `)
         .range(pageParam, pageParam + ITEMS_PER_PAGE - 1);
 
-      // Apply category/type filter
-      const typeFilters = ['music', 'art', 'file', 'book', 'produce', 'product', 'ebook'];
-      if (typeFilters.includes(selectedCategory)) {
-        // These are type-based filters
-        query = query.eq('type', selectedCategory);
-      } else if (selectedCategory !== 'all' && selectedCategory !== 'trending') {
+      // Apply type filter
+      if (selectedType !== 'all' && selectedType !== 'trending') {
+        query = query.eq('type', selectedType);
+      }
+
+      // Apply category filter
+      if (selectedCategory !== 'all') {
         query = query.eq('category', selectedCategory);
       }
 
@@ -456,75 +460,17 @@ export default function ProductsPage() {
           </h2>
         </div>
 
-        {/* Filter candy bar */}
-        <div className="flex flex-wrap justify-center gap-4 my-10 px-6">
-          <button
-            onClick={() => handleFilter('all')}
-            className={`filter-btn ${activeFilter === 'all' ? 'active' : ''}`}
-          >
-            All Creations
-          </button>
-          <button
-            onClick={() => window.location.href = '/community-music-library'}
-            className="filter-btn"
-          >
-            <Music className="w-4 h-4 mr-1 inline" />
-            Community Music Library
-          </button>
-          <button
-            onClick={() => handleFilter('ebook')}
-            className={`filter-btn ${activeFilter === 'ebook' ? 'active' : ''}`}
-          >
-            E-Books & Courses
-          </button>
-          <button
-            onClick={() => handleFilter('art')}
-            className={`filter-btn ${activeFilter === 'art' ? 'active' : ''}`}
-          >
-            Art & Assets
-          </button>
-          <button
-            onClick={() => handleFilter('video')}
-            className={`filter-btn ${activeFilter === 'video' ? 'active' : ''}`}
-          >
-            Videos
-          </button>
-          <button
-            onClick={() => handleFilter('book')}
-            className={`filter-btn ${activeFilter === 'book' ? 'active' : ''}`}
-          >
-            <BookOpen className="w-4 h-4 mr-1 inline" />
-            Books
-          </button>
-          <button
-            onClick={() => handleFilter('trending')}
-            className={`filter-btn ${activeFilter === 'trending' ? 'active' : ''}`}
-          >
-            Trending Now
-          </button>
-        </div>
-
-        {/* Topic Category Filters */}
-        <div className="flex flex-wrap justify-center gap-2 mb-10 px-6">
-          {['all', 'education', 'entertainment', 'business', 'health', 'technology', 'lifestyle', 'spiritual', 'kitchenware', 'properties', 'vehicles', 'fashion', 'food'].map((cat) => (
-            <button
-              key={cat}
-              onClick={() => {
-                setSelectedCategory(cat === 'all' ? 'all' : cat);
-                if (cat === 'all') {
-                  setActiveFilter('all');
-                }
-              }}
-              className={`px-4 py-2 rounded-full text-sm font-medium capitalize backdrop-blur-md border transition-all ${
-                selectedCategory === cat
-                  ? 'bg-amber-600 border-amber-500 text-white font-bold shadow-lg shadow-amber-600/30'
-                  : 'bg-white/10 border-white/30 text-white/70 hover:bg-white/20 hover:text-white'
-              }`}
-            >
-              {cat}
-            </button>
-          ))}
-        </div>
+        <CategoryFilter
+          selectedCategory={selectedCategory}
+          selectedType={selectedType}
+          selectedFormat={selectedFormat}
+          onCategoryChange={setSelectedCategory}
+          onTypeChange={(type) => {
+            setSelectedType(type);
+            setActiveFilter(type);
+          }}
+          onFormatChange={setSelectedFormat}
+        />
 
         {/* Books Section - Show when 'book' filter is active */}
         {selectedCategory === 'book' && communityBooks && communityBooks.length > 0 && (
