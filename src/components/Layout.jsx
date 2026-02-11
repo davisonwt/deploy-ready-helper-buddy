@@ -26,7 +26,7 @@ import {
   Settings,
   Cloud,
   Sparkles,
-  Mic,
+  
   Radio,
   Crown,
   Book,
@@ -41,7 +41,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 
 import { ProgressButton } from "./gamification/ProgressButton"
 import OnboardingTour from "./onboarding/OnboardingTour"
-import { VoiceCommands } from "./voice/VoiceCommands"
+
 import { MyGardenPanel } from "./MyGardenPanel"
 import { LetItRainPanel } from "./LetItRainPanel"
 
@@ -93,12 +93,10 @@ function Layout({ children }) {
   const {
     showOnboarding, 
     setShowOnboarding, 
-    voiceCommandsEnabled,
-    setVoiceCommandsEnabled
   } = useAppContext()
   
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
-  const [showVoiceCommands, setShowVoiceCommands] = useState(false)
+  
   const [isGardenOpen, setIsGardenOpen] = useState(false)
   const [isLetItRainOpen, setIsLetItRainOpen] = useState(false)
   
@@ -433,29 +431,6 @@ function Layout({ children }) {
             <div className="flex items-center space-x-4">
               <div className="hidden md:flex items-center space-x-3 ml-4">
                 
-                {/* Voice Commands Button */}
-                <button
-                  onClick={() => setShowVoiceCommands(true)}
-                  className="inline-flex items-center justify-center whitespace-nowrap rounded-lg border-2 p-2 transition-all duration-200 hover:scale-105 disabled:pointer-events-none disabled:opacity-50"
-                  title="Voice Commands"
-                  style={{
-                    color: currentTheme.textPrimary,
-                    backgroundColor: currentTheme.secondaryButton,
-                    borderColor: currentTheme.accent,
-                  }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.color = currentTheme.textPrimary;
-                    e.currentTarget.style.backgroundColor = currentTheme.accent;
-                    e.currentTarget.style.borderColor = currentTheme.accent;
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.color = currentTheme.textPrimary;
-                    e.currentTarget.style.backgroundColor = currentTheme.secondaryButton;
-                    e.currentTarget.style.borderColor = currentTheme.accent;
-                  }}
-                >
-                  <Mic className="h-5 w-5" />
-                </button>
                 
                 {/* Basket Icon */}
                 <Link
@@ -770,13 +745,6 @@ function Layout({ children }) {
 
       {/* OnboardingTour rendered at App root only */}
       
-      {/* Voice Commands */}
-      <VoiceCommands 
-        isEnabled={voiceCommandsEnabled}
-        onToggle={() => setVoiceCommandsEnabled(!voiceCommandsEnabled)}
-        isOpen={showVoiceCommands}
-        onOpenChange={setShowVoiceCommands}
-      />
       
       {/* My Garden Panel */}
       <MyGardenPanel isOpen={isGardenOpen} onClose={() => setIsGardenOpen(false)} />
