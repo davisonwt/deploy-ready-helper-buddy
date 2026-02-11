@@ -1286,14 +1286,14 @@ export default function MemryPage() {
                               <button
                                 onClick={(e) => { e.stopPropagation(); setMemryImageIndex(prev => Math.max(0, prev - 1)); }}
                                 disabled={memryImageIndex === 0}
-                                className="absolute left-2 top-1/2 -translate-y-1/2 z-20 w-10 h-10 rounded-full bg-white/80 hover:bg-white text-black disabled:opacity-20 flex items-center justify-center shadow-md"
+                                className="absolute left-[15%] top-1/2 -translate-y-1/2 z-[60] w-12 h-12 rounded-full bg-white/90 hover:bg-white text-black disabled:opacity-20 flex items-center justify-center shadow-lg"
                               >
                                 <ChevronLeft className="w-6 h-6" />
                               </button>
                               <button
                                 onClick={(e) => { e.stopPropagation(); setMemryImageIndex(prev => Math.min(allImages.length - 1, prev + 1)); }}
                                 disabled={memryImageIndex === allImages.length - 1}
-                                className="absolute right-2 top-1/2 -translate-y-1/2 z-20 w-10 h-10 rounded-full bg-white/80 hover:bg-white text-black disabled:opacity-20 flex items-center justify-center shadow-md"
+                                className="absolute right-[15%] top-1/2 -translate-y-1/2 z-[60] w-12 h-12 rounded-full bg-white/90 hover:bg-white text-black disabled:opacity-20 flex items-center justify-center shadow-lg"
                               >
                                 <ChevronRight className="w-6 h-6" />
                               </button>
