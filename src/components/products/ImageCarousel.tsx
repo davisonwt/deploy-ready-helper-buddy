@@ -64,22 +64,24 @@ export function ImageCarousel({ images, title, type, isFeatured, isPlaying, onPl
         ))}
       </div>
 
-      {/* Left/Right arrows */}
+      {/* Left/Right arrows - always visible */}
       {images.length > 1 && (
         <>
           <button
             onClick={(e) => { e.stopPropagation(); scrollTo(Math.max(0, activeIndex - 1)); }}
-            className="absolute left-1 top-1/2 -translate-y-1/2 z-10 w-7 h-7 rounded-full bg-black/50 hover:bg-black/70 flex items-center justify-center text-white transition-opacity"
+            disabled={activeIndex === 0}
+            className="absolute left-1.5 top-1/2 -translate-y-1/2 z-20 w-8 h-8 rounded-full bg-black/60 hover:bg-black/80 disabled:opacity-30 flex items-center justify-center text-white shadow-lg"
             aria-label="Previous image"
           >
-            <ChevronLeft className="w-4 h-4" />
+            <ChevronLeft className="w-5 h-5" />
           </button>
           <button
             onClick={(e) => { e.stopPropagation(); scrollTo(Math.min(images.length - 1, activeIndex + 1)); }}
-            className="absolute right-1 top-1/2 -translate-y-1/2 z-10 w-7 h-7 rounded-full bg-black/50 hover:bg-black/70 flex items-center justify-center text-white transition-opacity"
+            disabled={activeIndex === images.length - 1}
+            className="absolute right-1.5 top-1/2 -translate-y-1/2 z-20 w-8 h-8 rounded-full bg-black/60 hover:bg-black/80 disabled:opacity-30 flex items-center justify-center text-white shadow-lg"
             aria-label="Next image"
           >
-            <ChevronRight className="w-4 h-4" />
+            <ChevronRight className="w-5 h-5" />
           </button>
         </>
       )}
