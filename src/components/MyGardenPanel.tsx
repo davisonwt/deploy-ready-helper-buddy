@@ -98,7 +98,7 @@ export function MyGardenPanel({ isOpen, onClose }: MyGardenPanelProps) {
       emoji: '📦',
       cards: [
         { href: '/my-orchards', title: 'My S2G Orchards', subtitle: '3 growing · +12 fruits today' },
-        { href: '/my-products', title: 'My S2G Products', subtitle: '11 items · earned 83 USDC' },
+        { href: '/my-products', title: 'My S2G Seeds', subtitle: '11 items · earned 83 USDC' },
         { href: '/music-library', title: 'My S2G Music Library', subtitle: '8 tracks · 41 plays today' },
         { href: '/my-s2g-library', title: 'My S2G Library', subtitle: 'Upload your first e-book!' },
       ]
