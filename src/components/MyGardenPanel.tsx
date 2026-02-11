@@ -114,7 +114,7 @@ export function MyGardenPanel({ isOpen, onClose }: MyGardenPanelProps) {
           subtitle: '50+ projects need your rain',
           badge: '2 new'
         },
-        { href: '/products', title: 'Community Creations', subtitle: 'Everything in one place' },
+        { href: '/products', title: 'S2G Community Seeds', subtitle: 'Everything in one place' },
         { href: '/community-music-library', title: 'Community Music Library', subtitle: 'Build your album from sower tracks' },
         { href: '/s2g-community-library', title: 'Community Library', subtitle: 'E-books, courses, docs' },
         { href: '/eternal-forest', title: 'Eternal Forest', subtitle: 'See every soul growing live' },
