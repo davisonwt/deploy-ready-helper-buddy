@@ -27,6 +27,7 @@ export default function UploadForm() {
     tags: ''
   });
   const [coverImage, setCoverImage] = useState<File | null>(null);
+  const [additionalImages, setAdditionalImages] = useState<File[]>([]);
   const [mainFile, setMainFile] = useState<File | null>(null);
   const [releaseType, setReleaseType] = useState<'single' | 'album'>('single');
   const [albumFiles, setAlbumFiles] = useState<File[]>([]);
@@ -277,6 +278,23 @@ export default function UploadForm() {
       }
 
 
+      // Upload additional images
+      const imageUrls: string[] = [coverUrl.publicUrl];
+      for (const img of additionalImages) {
+        if (!img || img.size === 0) continue;
+        const imgExt = img.name.split('.').pop();
+        const imgPath = `covers/${user.id}/${Date.now()}_${Math.random().toString(36).slice(2)}.${imgExt}`;
+        const { error: imgUploadError } = await supabase.storage
+          .from('premium-room')
+          .upload(imgPath, img, { cacheControl: '3600', upsert: false });
+        if (imgUploadError) {
+          console.error('Additional image upload error:', imgUploadError);
+          continue;
+        }
+        const { data: imgUrl } = supabase.storage.from('premium-room').getPublicUrl(imgPath);
+        imageUrls.push(imgUrl.publicUrl);
+      }
+
       // Calculate total price with fees (10% tithing + 5% admin)
       const basePrice = parseFloat(String(formData.price)) || 0;
       const totalPrice = basePrice * 1.15; // Add 15% (10% + 5%)
@@ -294,6 +312,7 @@ export default function UploadForm() {
           price: totalPrice, // Store total price
           cover_image_url: coverUrl.publicUrl,
           file_url: fileUrlPublic,
+          image_urls: imageUrls,
           tags: [...formData.tags.split(',').map(t => t.trim()).filter(Boolean), releaseType],
           has_whisperer: whispererEnabled && pendingInvitations.length > 0,
           whisperer_commission_percent: null, // Will be set per-whisperer after they accept
@@ -517,6 +536,54 @@ export default function UploadForm() {
                         }}
                       />
                     </label>
+                  </div>
+                </div>
+
+                {/* Additional Images */}
+                <div>
+                  <Label>Additional Images (up to 2 more)</Label>
+                  <div className="mt-2">
+                    <label className="flex items-center justify-center w-full h-24 border-2 border-dashed border-border rounded-lg cursor-pointer hover:border-primary transition-colors">
+                      <div className="text-center">
+                        <Upload className="w-6 h-6 mx-auto mb-1 text-muted-foreground" />
+                        <p className="text-sm text-muted-foreground">
+                          {additionalImages.length > 0 ? `${additionalImages.length} additional image(s)` : 'Add more images'}
+                        </p>
+                      </div>
+                      <input
+                        type="file"
+                        accept="image/*"
+                        multiple
+                        className="hidden"
+                        onChange={(e) => {
+                          const files = e.target.files;
+                          if (!files) return;
+                          const remaining = 2 - additionalImages.length;
+                          if (remaining <= 0) {
+                            toast.error('Maximum 2 additional images allowed');
+                            return;
+                          }
+                          const newFiles = Array.from(files).slice(0, remaining).filter(f => f.size > 0);
+                          setAdditionalImages(prev => [...prev, ...newFiles]);
+                        }}
+                      />
+                    </label>
+                    {additionalImages.length > 0 && (
+                      <div className="flex gap-2 mt-2 flex-wrap">
+                        {additionalImages.map((img, i) => (
+                          <div key={i} className="relative">
+                            <img src={URL.createObjectURL(img)} alt="" className="w-16 h-16 object-cover rounded border" />
+                            <button
+                              type="button"
+                              onClick={() => setAdditionalImages(prev => prev.filter((_, idx) => idx !== i))}
+                              className="absolute -top-1 -right-1 bg-destructive text-white rounded-full w-5 h-5 flex items-center justify-center text-xs"
+                            >
+                              <X size={12} />
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    )}
                   </div>
                 </div>
 

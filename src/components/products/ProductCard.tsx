@@ -25,6 +25,7 @@ interface ProductCardProps {
 
 export default function ProductCard({ product, featured, showActions = false }: ProductCardProps) {
   const [imageError, setImageError] = useState(false);
+  const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [isPlaying, setIsPlaying] = useState(false);
   const [downloading, setDownloading] = useState(false);
   const [deleting, setDeleting] = useState(false);
@@ -239,20 +240,38 @@ export default function ProductCard({ product, featured, showActions = false }: 
       <Card className={`group overflow-hidden border-white/20 bg-white/10 backdrop-blur-md hover:bg-white/20 transition-all duration-300 ${featured ? 'border-white/30' : ''}`}>
         <CardContent className="p-0">
           {/* Cover Image */}
-          <div className="relative aspect-square overflow-hidden">
-            {imageError || !product.cover_image_url ? (
-              <GradientPlaceholder 
-                type={product.type || 'product'} 
-                title={product.title}
-                className="w-full h-full"
-              />
-            ) : (
-              <img
-                src={product.cover_image_url}
-                alt={product.title}
-                className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-110"
-                onError={() => setImageError(true)}
-              />
+          <div className="relative aspect-square overflow-hidden"
+            onClick={() => {
+              const imgs = product.image_urls?.length > 0 ? product.image_urls : (product.cover_image_url ? [product.cover_image_url] : []);
+              if (imgs.length > 1) {
+                setCurrentImageIndex((prev) => (prev + 1) % imgs.length);
+              }
+            }}
+          >
+            {(() => {
+              const imgs = product.image_urls?.length > 0 ? product.image_urls : (product.cover_image_url ? [product.cover_image_url] : []);
+              const currentSrc = imgs[currentImageIndex] || product.cover_image_url;
+              return imageError || !currentSrc ? (
+                <GradientPlaceholder 
+                  type={product.type || 'product'} 
+                  title={product.title}
+                  className="w-full h-full"
+                />
+              ) : (
+                <img
+                  src={currentSrc}
+                  alt={product.title}
+                  className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-110"
+                  onError={() => setImageError(true)}
+                />
+              );
+            })()}
+
+            {/* Image count badge */}
+            {product.image_urls?.length > 1 && (
+              <div className="absolute top-3 right-3 bg-black/60 text-white text-xs px-2 py-1 rounded-full z-10">
+                {currentImageIndex + 1}/{product.image_urls.length}
+              </div>
             )}
             
             {/* Overlay */}
