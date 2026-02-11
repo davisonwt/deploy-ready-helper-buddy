@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
@@ -7,9 +7,11 @@ import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Loader2, CheckCircle2, ArrowLeft } from 'lucide-react';
+import { Loader2, CheckCircle2, ArrowLeft, Upload, X } from 'lucide-react';
 import { toast } from 'sonner';
 import { useNavigate, useParams, Link } from 'react-router-dom';
+
+const MAX_IMAGES = 3;
 
 export default function EditForm() {
   const { id } = useParams();
@@ -18,6 +20,10 @@ export default function EditForm() {
   const [loading, setLoading] = useState(true);
   const [updating, setUpdating] = useState(false);
   const [sowerId, setSowerId] = useState<string | null>(null);
+  const [existingImages, setExistingImages] = useState<string[]>([]);
+  const [newImages, setNewImages] = useState<File[]>([]);
+  const [isUploading, setIsUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const [formData, setFormData] = useState({
     title: '',
     description: '',
@@ -66,6 +72,10 @@ export default function EditForm() {
           price: parseFloat(basePrice.toFixed(2)),
           tags: Array.isArray(data.tags) ? data.tags.join(', ') : ''
         });
+
+        // Load existing images
+        const imgs = Array.isArray(data.image_urls) ? data.image_urls : (data.cover_image_url ? [data.cover_image_url] : []);
+        setExistingImages(imgs);
       } catch (error) {
         console.error('Error loading product:', error);
         toast.error('Failed to load product');
@@ -94,6 +104,21 @@ export default function EditForm() {
       const basePrice = parseFloat(String(formData.price)) || 0;
       const totalPrice = basePrice * 1.15;
 
+      // Upload new images
+      const uploadedUrls: string[] = [];
+      for (const img of newImages) {
+        const imgExt = img.name.split('.').pop();
+        const imgPath = `covers/${user.id}/${Date.now()}_${Math.random().toString(36).slice(2)}.${imgExt}`;
+        const { error: imgErr } = await supabase.storage
+          .from('premium-room')
+          .upload(imgPath, img, { cacheControl: '3600', upsert: false });
+        if (imgErr) { console.error('Image upload error:', imgErr); continue; }
+        const { data: imgUrl } = supabase.storage.from('premium-room').getPublicUrl(imgPath);
+        uploadedUrls.push(imgUrl.publicUrl);
+      }
+
+      const allImages = [...existingImages, ...uploadedUrls];
+
       const { error } = await supabase
         .from('products')
         .update({
@@ -104,6 +129,8 @@ export default function EditForm() {
           license_type: formData.license_type,
           price: totalPrice,
           tags: tagsArray,
+          cover_image_url: allImages[0] || null,
+          image_urls: allImages,
           updated_at: new Date().toISOString()
         })
         .eq('id', id)
@@ -244,6 +271,56 @@ export default function EditForm() {
                     </p>
                   </div>
                 )}
+              </div>
+
+              {/* Images Section */}
+              <div className="space-y-2">
+                <Label>Product Images ({existingImages.length + newImages.length}/{MAX_IMAGES})</Label>
+                <div className="flex gap-2 flex-wrap">
+                  {existingImages.map((url, i) => (
+                    <div key={`existing-${i}`} className="relative">
+                      <img src={url} alt="" className="w-20 h-20 object-cover rounded border" />
+                      <button
+                        type="button"
+                        onClick={() => setExistingImages(prev => prev.filter((_, idx) => idx !== i))}
+                        className="absolute -top-1 -right-1 bg-destructive text-white rounded-full w-5 h-5 flex items-center justify-center text-xs"
+                      >
+                        <X size={12} />
+                      </button>
+                      {i === 0 && <span className="absolute bottom-0 left-0 bg-primary text-white text-[10px] px-1 rounded-tr">Cover</span>}
+                    </div>
+                  ))}
+                  {newImages.map((file, i) => (
+                    <div key={`new-${i}`} className="relative">
+                      <img src={URL.createObjectURL(file)} alt="" className="w-20 h-20 object-cover rounded border border-dashed border-primary" />
+                      <button
+                        type="button"
+                        onClick={() => setNewImages(prev => prev.filter((_, idx) => idx !== i))}
+                        className="absolute -top-1 -right-1 bg-destructive text-white rounded-full w-5 h-5 flex items-center justify-center text-xs"
+                      >
+                        <X size={12} />
+                      </button>
+                    </div>
+                  ))}
+                  {existingImages.length + newImages.length < MAX_IMAGES && (
+                    <label className="w-20 h-20 border-2 border-dashed border-border rounded flex items-center justify-center cursor-pointer hover:border-primary transition-colors">
+                      <Upload className="w-6 h-6 text-muted-foreground" />
+                      <input
+                        type="file"
+                        accept="image/*"
+                        className="hidden"
+                        onChange={(e) => {
+                          const file = e.target.files?.[0];
+                          if (file && file.size > 0) {
+                            setNewImages(prev => [...prev, file]);
+                          }
+                          e.target.value = '';
+                        }}
+                      />
+                    </label>
+                  )}
+                </div>
+                <p className="text-xs text-muted-foreground">First image is the cover. Click × to remove.</p>
               </div>
 
               <div className="space-y-2">

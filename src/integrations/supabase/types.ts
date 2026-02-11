@@ -3831,6 +3831,7 @@ export type Database = {
           follower_count: number | null
           has_whisperer: boolean | null
           id: string
+          image_urls: string[] | null
           is_featured: boolean | null
           license_type: string | null
           like_count: number | null
@@ -3859,6 +3860,7 @@ export type Database = {
           follower_count?: number | null
           has_whisperer?: boolean | null
           id?: string
+          image_urls?: string[] | null
           is_featured?: boolean | null
           license_type?: string | null
           like_count?: number | null
@@ -3887,6 +3889,7 @@ export type Database = {
           follower_count?: number | null
           has_whisperer?: boolean | null
           id?: string
+          image_urls?: string[] | null
           is_featured?: boolean | null
           license_type?: string | null
           like_count?: number | null
