@@ -180,6 +180,7 @@ export default function EditForm() {
                       <SelectItem value="book">Book (Physical)</SelectItem>
                       <SelectItem value="art">Art</SelectItem>
                       <SelectItem value="produce">Produce</SelectItem>
+                      <SelectItem value="product">Product</SelectItem>
                       <SelectItem value="file">File / Document</SelectItem>
                     </SelectContent>
                   </Select>

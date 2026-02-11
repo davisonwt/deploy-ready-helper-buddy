@@ -388,6 +388,7 @@ export default function UploadForm() {
                       <SelectItem value="book">Book (Physical)</SelectItem>
                       <SelectItem value="art">Art</SelectItem>
                       <SelectItem value="produce">Produce</SelectItem>
+                      <SelectItem value="product">Product</SelectItem>
                       <SelectItem value="file">File / Document</SelectItem>
                     </SelectContent>
                   </Select>
@@ -521,6 +522,7 @@ export default function UploadForm() {
                       : formData.type === 'ebook' ? 'E-Book File (PDF, EPUB) *'
                       : formData.type === 'book' ? 'Book Preview / Sample (PDF) *'
                       : formData.type === 'produce' ? 'Product Photo *'
+                      : formData.type === 'product' ? 'Product Image *'
                       : formData.type === 'art' ? 'Art File (Image, PDF) *'
                       : 'Main File *'}
                   </Label>
