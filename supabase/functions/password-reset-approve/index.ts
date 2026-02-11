@@ -121,43 +121,21 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Action is "approve" - update the user's password
-    // Find the user by email
-    const { data: users, error: listError } = await adminClient.auth.admin.listUsers();
-    
-    if (listError) {
-      console.error("Error listing users:", listError);
+    // Action is "approve" - generate a password reset link for the user
+    const { data: linkData, error: linkError } = await adminClient.auth.admin.generateLink({
+      type: 'recovery',
+      email: resetRequest.email,
+    });
+
+    if (linkError) {
+      console.error("Error generating reset link:", linkError);
       return new Response(
-        JSON.stringify({ error: "Failed to find user" }),
+        JSON.stringify({ error: "Failed to generate password reset link" }),
         { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
-    const targetUser = users.users.find(u => u.email?.toLowerCase() === resetRequest.email.toLowerCase());
-
-    if (!targetUser) {
-      return new Response(
-        JSON.stringify({ error: "User not found with this email" }),
-        { status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
-    }
-
-    // Decode the password
-    const newPassword = atob(resetRequest.password_hash);
-
-    // Update the user's password using admin API
-    const { error: updateError } = await adminClient.auth.admin.updateUserById(
-      targetUser.id,
-      { password: newPassword }
-    );
-
-    if (updateError) {
-      console.error("Error updating password:", updateError);
-      return new Response(
-        JSON.stringify({ error: "Failed to update password" }),
-        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
-    }
+    console.log(`Password reset link generated for ${resetRequest.email}`);
 
     // Update request status to approved
     await adminClient
