@@ -419,20 +419,21 @@ export default function UploadForm() {
                 )}
 
                 <div>
-                  <Label htmlFor="category">Category</Label>
-                  <Input
-                    id="category"
-                    placeholder={
-                      formData.type === 'music' ? 'e.g., gospel, worship, instrumental' :
-                      formData.type === 'ebook' ? 'e.g., devotional, study guide, fiction' :
-                      formData.type === 'book' ? 'e.g., teaching, biography, children' :
-                      formData.type === 'art' ? 'e.g., painting, photography, digital art' :
-                      formData.type === 'produce' ? 'e.g., vegetables, fruit, herbs' :
-                      'e.g., education, entertainment'
-                    }
-                    value={formData.category}
-                    onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-                  />
+                  <Label htmlFor="category">Category *</Label>
+                  <Select value={formData.category} onValueChange={(value) => setFormData({ ...formData, category: value })}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select a category" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="education">Education</SelectItem>
+                      <SelectItem value="entertainment">Entertainment</SelectItem>
+                      <SelectItem value="business">Business</SelectItem>
+                      <SelectItem value="health">Health</SelectItem>
+                      <SelectItem value="technology">Technology</SelectItem>
+                      <SelectItem value="lifestyle">Lifestyle</SelectItem>
+                      <SelectItem value="spiritual">Spiritual</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </div>
 
                 <div>

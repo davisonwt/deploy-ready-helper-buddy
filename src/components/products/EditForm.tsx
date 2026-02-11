@@ -121,18 +121,6 @@ export default function EditForm() {
     }
   };
 
-  // Category placeholder based on type - matches upload form
-  const getCategoryPlaceholder = () => {
-    switch (formData.type) {
-      case 'music': return 'e.g., gospel, worship, instrumental';
-      case 'ebook': return 'e.g., devotional, study guide, fiction';
-      case 'book': return 'e.g., teaching, biography, children';
-      case 'art': return 'e.g., painting, photography, digital art';
-      case 'produce': return 'e.g., vegetables, fruit, herbs';
-      case 'file': return 'e.g., education, entertainment';
-      default: return 'e.g., general';
-    }
-  };
 
   if (loading) {
     return (
@@ -198,13 +186,21 @@ export default function EditForm() {
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="category">Category</Label>
-                  <Input
-                    id="category"
-                    value={formData.category}
-                    onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-                    placeholder={getCategoryPlaceholder()}
-                  />
+                  <Label htmlFor="category">Category *</Label>
+                  <Select value={formData.category} onValueChange={(value) => setFormData({ ...formData, category: value })}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select a category" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="education">Education</SelectItem>
+                      <SelectItem value="entertainment">Entertainment</SelectItem>
+                      <SelectItem value="business">Business</SelectItem>
+                      <SelectItem value="health">Health</SelectItem>
+                      <SelectItem value="technology">Technology</SelectItem>
+                      <SelectItem value="lifestyle">Lifestyle</SelectItem>
+                      <SelectItem value="spiritual">Spiritual</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </div>
               </div>
 
