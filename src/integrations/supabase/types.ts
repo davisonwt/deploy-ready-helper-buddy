@@ -818,6 +818,7 @@ export type Database = {
           kick_reason: string | null
           kicked_at: string | null
           kicked_by: string | null
+          last_read_at: string | null
           profile_id: string | null
           room_id: string
           user_id: string
@@ -830,6 +831,7 @@ export type Database = {
           kick_reason?: string | null
           kicked_at?: string | null
           kicked_by?: string | null
+          last_read_at?: string | null
           profile_id?: string | null
           room_id: string
           user_id: string
@@ -842,6 +844,7 @@ export type Database = {
           kick_reason?: string | null
           kicked_at?: string | null
           kicked_by?: string | null
+          last_read_at?: string | null
           profile_id?: string | null
           room_id?: string
           user_id?: string

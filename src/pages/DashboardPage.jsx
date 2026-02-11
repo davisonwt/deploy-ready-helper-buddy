@@ -488,28 +488,29 @@ export default function DashboardPage() {
   const fetchUnreadMessages = async () => {
     if (!user?.id) return;
     try {
-      // Get rooms user is a participant of
+      // Get rooms user is a participant of, including last_read_at
       const { data: participantRooms } = await supabase
         .from('chat_participants')
-        .select('room_id, joined_at')
+        .select('room_id, joined_at, last_read_at')
         .eq('user_id', user.id)
         .eq('is_active', true);
 
       if (!participantRooms?.length) return;
 
-      // Count messages in those rooms not sent by user, from last 7 days
-      const sevenDaysAgo = new Date();
-      sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
-      const roomIds = participantRooms.map(r => r.room_id);
+      let totalUnread = 0;
+      for (const room of participantRooms) {
+        // Count messages newer than last_read_at (or joined_at as fallback)
+        const since = room.last_read_at || room.joined_at;
+        const { count } = await supabase
+          .from('chat_messages')
+          .select('id', { count: 'exact', head: true })
+          .eq('room_id', room.room_id)
+          .neq('sender_id', user.id)
+          .gt('created_at', since);
+        totalUnread += (count || 0);
+      }
 
-      const { count } = await supabase
-        .from('chat_messages')
-        .select('id', { count: 'exact', head: true })
-        .in('room_id', roomIds)
-        .neq('sender_id', user.id)
-        .gte('created_at', sevenDaysAgo.toISOString());
-
-      setUnreadMessages(count || 0);
+      setUnreadMessages(totalUnread);
     } catch (error) {
       console.error('Error fetching unread messages:', error);
     }

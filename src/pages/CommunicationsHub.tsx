@@ -1,8 +1,29 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { UnifiedDashboard } from '@/components/chat/UnifiedDashboard';
+import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/hooks/useAuth';
 
 const CommunicationsHub: React.FC = () => {
-  // PHASE 1: UNIFIED DASHBOARD WITH AURORA BACKGROUND
+  const { user } = useAuth();
+
+  // Mark all messages as read when user visits the communications hub
+  useEffect(() => {
+    const markMessagesAsRead = async () => {
+      if (!user?.id) return;
+      try {
+        await supabase
+          .from('chat_participants')
+          .update({ last_read_at: new Date().toISOString() })
+          .eq('user_id', user.id)
+          .eq('is_active', true);
+      } catch (error) {
+        console.error('Error marking messages as read:', error);
+      }
+    };
+
+    markMessagesAsRead();
+  }, [user?.id]);
+
   try {
     return <UnifiedDashboard />;
   } catch (error) {
