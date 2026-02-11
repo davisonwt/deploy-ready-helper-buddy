@@ -33,6 +33,7 @@ import { supabase } from '@/integrations/supabase/client'
 import { VideoPlayer } from '@/components/ui/VideoPlayer';
 import { formatCurrency } from '../utils/formatters';
 import { GradientPlaceholder } from '@/components/ui/GradientPlaceholder';
+import { ImageCarousel } from '@/components/products/ImageCarousel';
 import { processOrchardsUrls } from '../utils/urlUtils';
 import {
   Carousel,
@@ -435,20 +436,11 @@ export default function MyOrchardsPage() {
                     <CarouselItem key={orchard.id} className="pl-2 md:pl-4 md:basis-1/2 lg:basis-1/3">{" "}
                 <Card key={orchard.id} className='backdrop-blur-md bg-white/20 border-white/30 shadow-2xl hover:shadow-3xl transition-all flex flex-col'>
                   <div className="relative">
-                    {orchard.images?.[0] ? (
-                      <img 
-                        src={orchard.images[0]} 
-                        alt={orchard.title}
-                        className="w-full h-48 object-cover rounded-t-lg"
-                      />
-                    ) : (
-                      <GradientPlaceholder 
-                        type="orchard" 
-                        title={orchard.title}
-                        className="w-full h-48 rounded-t-lg"
-                        size="lg"
-                      />
-                    )}
+                    <ImageCarousel
+                      images={orchard.images?.length > 0 ? orchard.images : []}
+                      title={orchard.title}
+                      type="orchard"
+                    />
                     <div className="absolute top-4 right-4">
                       <Badge 
                         variant={orchard.status === 'active' ? 'default' : 'secondary'}

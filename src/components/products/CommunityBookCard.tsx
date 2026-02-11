@@ -6,6 +6,7 @@ import { Book, Heart, Share2, MessageCircle, ShoppingCart } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { GradientPlaceholder } from '@/components/ui/GradientPlaceholder';
 import { SocialActionButtons } from '@/components/social/SocialActionButtons';
+import { ImageCarousel } from './ImageCarousel';
 import BookCheckoutModal from './BookCheckoutModal';
 
 interface CommunityBookCardProps {
@@ -29,10 +30,9 @@ interface CommunityBookCardProps {
 }
 
 export default function CommunityBookCard({ book }: CommunityBookCardProps) {
-  const [imageError, setImageError] = useState(false);
   const [showCheckout, setShowCheckout] = useState(false);
 
-  const coverImage = book.image_urls?.[0] || book.cover_image_url;
+  const images = book.image_urls?.length > 0 ? book.image_urls : (book.cover_image_url ? [book.cover_image_url] : []);
   const totalPrice = (book.bestowal_value || 0) * 1.15;
 
   return (
@@ -40,38 +40,12 @@ export default function CommunityBookCard({ book }: CommunityBookCardProps) {
       <motion.div whileHover={{ y: -8 }} transition={{ duration: 0.2 }}>
         <Card className='group overflow-hidden border-white/20 bg-white/10 backdrop-blur-md hover:bg-white/20 transition-all duration-300'>
           <CardContent className='p-0'>
-            {/* Cover Image */}
-            <div className='relative aspect-[2/3] overflow-hidden'>
-              {imageError || !coverImage ? (
-                <GradientPlaceholder
-                  type='ebook'
-                  title={book.title}
-                  className='w-full h-full'
-                />
-              ) : (
-                <img
-                  src={coverImage}
-                  alt={book.title}
-                  className='w-full h-full object-cover transition-transform duration-300 group-hover:scale-110'
-                  onError={() => setImageError(true)}
-                />
-              )}
-
-              {/* Badges */}
-              <div className='absolute top-3 left-3 flex gap-2'>
-                <Badge className='bg-green-500/90 backdrop-blur-sm'>
-                  <Book className='w-3 h-3 mr-1' />
-                  Book
-                </Badge>
-              </div>
-
-              {/* Image count badge */}
-              {book.image_urls && book.image_urls.length > 1 && (
-                <div className='absolute top-3 right-3 bg-black/60 text-white text-xs px-2 py-1 rounded-full'>
-                  {book.image_urls.length} images
-                </div>
-              )}
-            </div>
+            {/* Cover Image Carousel */}
+            <ImageCarousel
+              images={images}
+              title={book.title}
+              type="ebook"
+            />
 
             {/* Content */}
             <div className='p-4 space-y-3'>

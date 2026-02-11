@@ -4,6 +4,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useProductBasket } from '@/contexts/ProductBasketContext';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Loader2, Music, Book, Image, Video, TrendingUp, BookOpen } from 'lucide-react';
+import { ImageCarousel } from '@/components/products/ImageCarousel';
 import { motion } from 'framer-motion';
 import { toast } from 'sonner';
 import { formatCurrency } from '@/lib/utils';
@@ -416,20 +417,11 @@ export default function ProductsPage() {
                 animate={{ opacity: 1, y: 0 }}
                 className="bg-white/10 backdrop-blur-lg rounded-3xl overflow-hidden hover:scale-105 transition-all shadow-2xl"
               >
-                {product.cover_image_url ? (
-                  <img 
-                    src={product.cover_image_url} 
-                    alt={product.title}
-                    className="w-full h-48 object-cover"
-                    onError={(e) => {
-                      (e.target as HTMLImageElement).src = `https://picsum.photos/400/300?random=${product.id}`;
-                    }}
-                  />
-                ) : (
-                  <div className="w-full h-48 bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center">
-                    {getCategoryIcon(product.category)}
-                  </div>
-                )}
+                <ImageCarousel
+                  images={product.image_urls?.length > 0 ? product.image_urls : (product.cover_image_url ? [product.cover_image_url] : [])}
+                  title={product.title}
+                  type={product.type}
+                />
                 <div className="p-5">
                   <div className={`flex items-center gap-2 text-sm ${getCategoryColor(product.category)}`}>
                     {getCategoryIcon(product.category)}
@@ -561,20 +553,11 @@ export default function ProductsPage() {
               className="bg-white/10 backdrop-blur-lg rounded-3xl overflow-hidden hover:scale-105 transition-all shadow-2xl group"
             >
               <div className="relative">
-                {product.cover_image_url ? (
-                  <img
-                    src={product.cover_image_url}
-                    alt={product.title}
-                    className="w-full h-64 object-cover"
-                    onError={(e) => {
-                      (e.target as HTMLImageElement).src = `https://picsum.photos/400/400?random=${product.id}`;
-                    }}
-                  />
-                ) : (
-                  <div className="w-full h-64 bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center">
-                    {getCategoryIcon(product.category)}
-                  </div>
-                )}
+                <ImageCarousel
+                  images={product.image_urls?.length > 0 ? product.image_urls : (product.cover_image_url ? [product.cover_image_url] : [])}
+                  title={product.title}
+                  type={product.type}
+                />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent opacity-0 group-hover:opacity-100 transition"></div>
                 {product.type === 'music' && (
                   <button
