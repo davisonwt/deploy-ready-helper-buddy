@@ -42,7 +42,12 @@ export default function CategoryFilter({
     'health',
     'technology',
     'lifestyle',
-    'spiritual'
+    'spiritual',
+    'kitchenware',
+    'properties',
+    'vehicles',
+    'fashion',
+    'food'
   ];
 
   const formats = [
