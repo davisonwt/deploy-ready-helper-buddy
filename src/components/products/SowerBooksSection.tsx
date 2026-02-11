@@ -78,7 +78,7 @@ const emptyFormData: BookFormData = {
 
 const MAX_IMAGES = 3;
 
-export default function SowerBooksSection() {
+export default function SowerBooksSection({ selectedCategory = 'all' }: { selectedCategory?: string }) {
   const { user } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -614,12 +614,17 @@ export default function SowerBooksSection() {
         <div className='flex justify-center py-12'>
           <Loader2 className='w-8 h-8 animate-spin text-white' />
         </div>
-      ) : books && books.length > 0 ? (
+      ) : books && books.length > 0 ? (() => {
+        const filteredBooks = selectedCategory === 'all' 
+          ? books 
+          : books.filter(book => (book as any).category === selectedCategory);
+        
+        return filteredBooks.length > 0 ? (
         <div className='relative px-12'>
           <Carousel opts={{ align: 'start', loop: true }} className='w-full'>
             <CarouselContent className='-ml-2 md:-ml-4'>
               <AnimatePresence>
-                {books.map((book) => (
+                {filteredBooks.map((book) => (
                   <CarouselItem key={book.id} className='pl-2 md:pl-4 md:basis-1/2 lg:basis-1/3 xl:basis-1/4'>
                     <motion.div
                       initial={{ opacity: 0, y: 20 }}
@@ -773,7 +778,12 @@ export default function SowerBooksSection() {
             <CarouselNext className='absolute -right-4 top-1/2 -translate-y-1/2 backdrop-blur-md bg-white/20 border-white/30 text-white hover:bg-white/30' />
           </Carousel>
         </div>
-      ) : (
+        ) : (
+          <div className='text-center py-12'>
+            <p className='text-white/80 text-lg'>No books found in this category</p>
+          </div>
+        );
+      })() : (
         <Card className='backdrop-blur-md bg-white/10 border-white/20'>
           <CardContent className='flex flex-col items-center justify-center py-12'>
             <BookOpen className='w-16 h-16 text-white/50 mb-4' />
