@@ -4,7 +4,7 @@ import {
   Heart, MessageCircle, Share2, Plus, Home, Search, User, 
   Camera, Video, ChefHat, X, Send, Bookmark, Play, Pause,
   MoreHorizontal, Music, Volume2, VolumeX, DollarSign, Gift,
-  ArrowLeft, ChevronUp, ChevronDown, Sparkles, ShoppingBag, Trees, Book,
+  ArrowLeft, ChevronUp, ChevronDown, ChevronLeft, ChevronRight, Sparkles, ShoppingBag, Trees, Book,
   UserPlus, UserCheck, MessageSquare
 } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
@@ -38,6 +38,7 @@ interface MemryPost {
   user_id: string;
   content_type: 'photo' | 'video' | 'recipe' | 'music' | 'marketing_video' | 'new_product' | 'new_orchard' | 'new_book';
   media_url: string;
+  image_urls?: string[];
   thumbnail_url?: string;
   audio_url?: string;
   caption: string;
@@ -237,6 +238,7 @@ export default function MemryPage() {
   const [replyingTo, setReplyingTo] = useState<Comment | null>(null);
   const [activeTab, setActiveTab] = useState<'feed' | 'discover' | 'create' | 'recipes' | 'profile'>('feed');
   const [isPlaying, setIsPlaying] = useState(true);
+  const [memryImageIndex, setMemryImageIndex] = useState(0);
   const [isMuted, setIsMuted] = useState(false);
   const [donateAmount, setDonateAmount] = useState([5]);
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -499,6 +501,7 @@ export default function MemryPage() {
           user_id: sowerUserId || product.sower_id || '',
           content_type: 'new_product' as const,
           media_url: product.cover_image_url || '/lovable-uploads/ff9e6e48-049d-465a-8d2b-f6e8fed93522.png',
+          image_urls: product.image_urls?.length > 0 ? product.image_urls : undefined,
           audio_url: isMusicProduct ? (product.file_url || undefined) : undefined,
           caption: `🌱 SEED: ${product.title}`,
           likes_count: product.like_count || 0,
@@ -528,6 +531,7 @@ export default function MemryPage() {
           user_id: orchard.user_id,
           content_type: 'new_orchard' as const,
           media_url: coverImage,
+          image_urls: orchard.images && orchard.images.length > 1 ? orchard.images : undefined,
           caption: `🌳 ORCHARD: ${orchard.title}`,
           likes_count: orchard.like_count || 0,
           comments_count: 0,
@@ -562,6 +566,7 @@ export default function MemryPage() {
           user_id: sowerUserId || book.sower_id || '',
           content_type: 'new_book' as const,
           media_url: book.cover_image_url || '/lovable-uploads/ff9e6e48-049d-465a-8d2b-f6e8fed93522.png',
+          image_urls: book.image_urls?.length > 0 ? book.image_urls : undefined,
           caption: `📚 BOOK: ${book.title}`,
           likes_count: 0,
           comments_count: 0,
@@ -1000,8 +1005,10 @@ export default function MemryPage() {
     
     if (direction === 'down') {
       setCurrentPostIndex(prev => Math.min(prev + 1, posts.length - 1));
+      setMemryImageIndex(0);
     } else if (direction === 'up') {
       setCurrentPostIndex(prev => Math.max(prev - 1, 0));
+      setMemryImageIndex(0);
     }
   }, [posts.length]);
 
@@ -1255,18 +1262,49 @@ export default function MemryPage() {
                   <MusicPreviewPlayer mediaUrl={currentPost.media_url} caption={currentPost.caption} />
                 ) : currentPost.content_type === 'new_product' || currentPost.content_type === 'new_orchard' || currentPost.content_type === 'new_book' ? (
                   <div className="w-full h-full relative flex items-center justify-center">
-                    <img
-                      src={currentPost.media_url}
-                      alt={currentPost.caption}
-                      className="max-w-full max-h-full object-contain"
-                      onError={(e) => {
-                        const target = e.target as HTMLImageElement;
-                        if (!target.dataset.fallback) {
-                          target.dataset.fallback = '1';
-                          target.src = '/lovable-uploads/ff9e6e48-049d-465a-8d2b-f6e8fed93522.png';
-                        }
-                      }}
-                    />
+                    {(() => {
+                      const allImages = currentPost.image_urls && currentPost.image_urls.length > 1
+                        ? currentPost.image_urls
+                        : [currentPost.media_url];
+                      const hasMultiple = allImages.length > 1;
+                      return (
+                        <>
+                          <img
+                            src={allImages[memryImageIndex] || currentPost.media_url}
+                            alt={currentPost.caption}
+                            className="max-w-full max-h-full object-contain"
+                            onError={(e) => {
+                              const target = e.target as HTMLImageElement;
+                              if (!target.dataset.fallback) {
+                                target.dataset.fallback = '1';
+                                target.src = '/lovable-uploads/ff9e6e48-049d-465a-8d2b-f6e8fed93522.png';
+                              }
+                            }}
+                          />
+                          {hasMultiple && (
+                            <>
+                              <button
+                                onClick={(e) => { e.stopPropagation(); setMemryImageIndex(prev => Math.max(0, prev - 1)); }}
+                                disabled={memryImageIndex === 0}
+                                className="absolute left-2 top-1/2 -translate-y-1/2 z-20 w-10 h-10 rounded-full bg-white/80 hover:bg-white text-black disabled:opacity-20 flex items-center justify-center shadow-md"
+                              >
+                                <ChevronLeft className="w-6 h-6" />
+                              </button>
+                              <button
+                                onClick={(e) => { e.stopPropagation(); setMemryImageIndex(prev => Math.min(allImages.length - 1, prev + 1)); }}
+                                disabled={memryImageIndex === allImages.length - 1}
+                                className="absolute right-2 top-1/2 -translate-y-1/2 z-20 w-10 h-10 rounded-full bg-white/80 hover:bg-white text-black disabled:opacity-20 flex items-center justify-center shadow-md"
+                              >
+                                <ChevronRight className="w-6 h-6" />
+                              </button>
+                              <div className="absolute top-4 right-4 bg-black/60 text-white text-xs px-2 py-1 rounded-full z-10">
+                                {memryImageIndex + 1}/{allImages.length}
+                              </div>
+                            </>
+                          )}
+                        </>
+                      );
+                    })()}
                     {/* Audio preview overlay for music products */}
                     {currentPost.audio_url && (
                       <div className="absolute inset-0 flex items-center justify-center z-5">
