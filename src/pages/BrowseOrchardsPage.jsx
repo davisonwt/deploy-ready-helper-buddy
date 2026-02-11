@@ -26,6 +26,7 @@ import { supabase } from "@/integrations/supabase/client"
 import { toast } from "sonner"
 import { processOrchardsUrls } from "../utils/urlUtils"
 import { GradientPlaceholder } from "@/components/ui/GradientPlaceholder"
+import { ImageCarousel } from "@/components/products/ImageCarousel"
 
 
 export default function BrowseOrchardsPage() {
@@ -382,17 +383,11 @@ export default function BrowseOrchardsPage() {
                 <CarouselItem key={orchard.id} className="pl-2 md:pl-4 md:basis-1/2 lg:basis-1/3">
                   <Card className="bg-white/90 backdrop-blur-sm border-nav-community/30 hover:shadow-xl transition-all group flex flex-col h-full">
                     <div className="relative">
-                      {orchard.main_image ? (
-                        <img 
-                          src={orchard.main_image} 
-                          alt={orchard.title}
-                          className="w-full h-48 object-cover rounded-t-lg"
-                        />
-                      ) : (
-                        <div className="w-full h-48 bg-gradient-to-br from-nav-community/30 to-nav-community/50 rounded-t-lg flex items-center justify-center">
-                          <TreePine className="h-12 w-12 text-green-600" />
-                        </div>
-                      )}
+                      <ImageCarousel
+                        images={orchard.images?.length > 0 ? orchard.images : []}
+                        title={orchard.title}
+                        type="orchard"
+                      />
                       <div className="absolute top-4 right-4">
                         <Badge className="bg-nav-community/90 text-green-700 border-0">
                           {orchard.category}
@@ -520,20 +515,11 @@ export default function BrowseOrchardsPage() {
             {filteredOrchards.map((orchard) => (
               <Card key={orchard.id} className="bg-white/90 backdrop-blur-sm border-nav-community/30 hover:shadow-xl transition-all group flex flex-col">
                 <div className="relative">
-                  {orchard.main_image ? (
-                    <img 
-                      src={orchard.main_image} 
-                      alt={orchard.title}
-                      className="w-full h-48 object-cover rounded-t-lg"
-                    />
-                  ) : (
-                    <GradientPlaceholder 
-                      type="orchard" 
-                      title={orchard.title}
-                      className="w-full h-48 rounded-t-lg"
-                      size="lg"
-                    />
-                  )}
+                  <ImageCarousel
+                    images={orchard.images?.length > 0 ? orchard.images : []}
+                    title={orchard.title}
+                    type="orchard"
+                  />
                   <div className="absolute top-4 right-4">
                     <Badge className="bg-nav-community/90 text-green-700 border-0">
                       {orchard.category}
