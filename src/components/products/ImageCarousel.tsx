@@ -44,16 +44,16 @@ export function ImageCarousel({ images, title, type, isFeatured, isPlaying, onPl
   }
 
   return (
-    <div className="relative group/carousel">
+    <div className="relative group/carousel aspect-square overflow-hidden">
       <div
         ref={scrollRef}
         onScroll={handleScroll}
-        className="flex overflow-x-auto snap-x snap-mandatory"
+        className="flex overflow-x-auto snap-x snap-mandatory h-full"
         style={{ scrollbarWidth: 'none', msOverflowStyle: 'none', WebkitOverflowScrolling: 'touch' }}
       >
         <style>{`.group\\/carousel div::-webkit-scrollbar { display: none; }`}</style>
         {images.map((src, idx) => (
-          <div key={idx} className="aspect-square min-w-full snap-center relative overflow-hidden flex-shrink-0">
+          <div key={idx} className="min-w-full h-full snap-center relative overflow-hidden flex-shrink-0">
             <img
               src={src}
               alt={`${title} - ${idx + 1}`}
