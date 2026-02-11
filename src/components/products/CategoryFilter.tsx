@@ -121,7 +121,11 @@ export default function CategoryFilter({
             key={category}
             variant={selectedCategory === category ? 'default' : 'outline'}
             onClick={() => onCategoryChange(category)}
-            className="capitalize backdrop-blur-md bg-white/20 border-white/30 text-white hover:bg-white/30"
+            className={`capitalize backdrop-blur-md border ${
+              selectedCategory === category
+                ? 'bg-amber-600 border-amber-500 text-white font-bold shadow-lg shadow-amber-600/30 hover:bg-amber-700'
+                : 'bg-white/10 border-white/30 text-white/70 hover:bg-white/20 hover:text-white'
+            }`}
           >
             {category}
           </Button>
