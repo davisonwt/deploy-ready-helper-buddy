@@ -17,6 +17,7 @@ export default function EditForm() {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   const [updating, setUpdating] = useState(false);
+  const [sowerId, setSowerId] = useState<string | null>(null);
   const [formData, setFormData] = useState({
     title: '',
     description: '',
@@ -36,7 +37,7 @@ export default function EditForm() {
           .from('products')
           .select(`
             *,
-            sowers!inner(user_id)
+            sowers!inner(id, user_id)
           `)
           .eq('id', id)
           .single();
@@ -50,13 +51,19 @@ export default function EditForm() {
           return;
         }
 
+        setSowerId(data.sowers.id);
+
+        // Reverse-calculate base price from stored total (which includes 15% fees)
+        const storedPrice = data.price || 0;
+        const basePrice = storedPrice > 0 ? storedPrice / 1.15 : 0;
+
         setFormData({
           title: data.title || '',
           description: data.description || '',
           type: data.type || 'music',
           category: data.category || '',
           license_type: data.license_type || 'free',
-          price: data.price || 0,
+          price: parseFloat(basePrice.toFixed(2)),
           tags: Array.isArray(data.tags) ? data.tags.join(', ') : ''
         });
       } catch (error) {
@@ -73,7 +80,7 @@ export default function EditForm() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!user || !id) return;
+    if (!user || !id || !sowerId) return;
 
     setUpdating(true);
 
@@ -85,7 +92,7 @@ export default function EditForm() {
 
       // Calculate total price with fees (10% tithing + 5% admin)
       const basePrice = parseFloat(String(formData.price)) || 0;
-      const totalPrice = basePrice * 1.15; // Add 15% (10% + 5%)
+      const totalPrice = basePrice * 1.15;
 
       const { error } = await supabase
         .from('products')
@@ -95,21 +102,35 @@ export default function EditForm() {
           type: formData.type,
           category: formData.category,
           license_type: formData.license_type,
-          price: totalPrice, // Store total price
+          price: totalPrice,
           tags: tagsArray,
           updated_at: new Date().toISOString()
         })
-        .eq('id', id);
+        .eq('id', id)
+        .eq('sower_id', sowerId);
 
       if (error) throw error;
 
-      toast.success('Product updated successfully!');
+      toast.success('Seed updated successfully!');
       navigate('/my-products');
     } catch (error) {
       console.error('Error updating product:', error);
-      toast.error('Failed to update product');
+      toast.error('Failed to update seed');
     } finally {
       setUpdating(false);
+    }
+  };
+
+  // Category placeholder based on type - matches upload form
+  const getCategoryPlaceholder = () => {
+    switch (formData.type) {
+      case 'music': return 'e.g., gospel, worship, instrumental';
+      case 'ebook': return 'e.g., devotional, study guide, fiction';
+      case 'book': return 'e.g., teaching, biography, children';
+      case 'art': return 'e.g., painting, photography, digital art';
+      case 'produce': return 'e.g., vegetables, fruit, herbs';
+      case 'file': return 'e.g., education, entertainment';
+      default: return 'e.g., general';
     }
   };
 
@@ -127,14 +148,14 @@ export default function EditForm() {
         <Link to="/my-products">
           <Button variant="ghost" className="mb-4">
             <ArrowLeft className="w-4 h-4 mr-2" />
-            Back to My Products
+            Back to My Seeds
           </Button>
         </Link>
 
         <Card>
           <CardHeader>
-            <CardTitle className="text-3xl">Edit Product</CardTitle>
-            <CardDescription>Update your product details</CardDescription>
+            <CardTitle className="text-3xl">Edit Seed</CardTitle>
+            <CardDescription>Update your seed details</CardDescription>
           </CardHeader>
           <CardContent>
             <form onSubmit={handleSubmit} className="space-y-6">
@@ -167,9 +188,11 @@ export default function EditForm() {
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="music">Music</SelectItem>
+                      <SelectItem value="ebook">E-Book</SelectItem>
+                      <SelectItem value="book">Book (Physical)</SelectItem>
                       <SelectItem value="art">Art</SelectItem>
-                      <SelectItem value="digital">Digital Content</SelectItem>
-                      <SelectItem value="other">Other</SelectItem>
+                      <SelectItem value="produce">Produce</SelectItem>
+                      <SelectItem value="file">File / Document</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -180,7 +203,7 @@ export default function EditForm() {
                     id="category"
                     value={formData.category}
                     onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-                    placeholder="e.g., Hip Hop, Digital Art"
+                    placeholder={getCategoryPlaceholder()}
                   />
                 </div>
               </div>
@@ -240,7 +263,7 @@ export default function EditForm() {
                 ) : (
                   <>
                     <CheckCircle2 className="w-4 h-4 mr-2" />
-                    Update Product
+                    Update Seed
                   </>
                 )}
               </Button>
