@@ -235,7 +235,7 @@ export function MasteryModal({ isOpen, onClose }: MasteryModalProps) {
     }
   }
 
-  // Load user progress from Supabase
+  // Load user progress from user_points table
   const loadUserProgress = async () => {
     if (!user) {
       setLoading(false)
@@ -243,47 +243,72 @@ export function MasteryModal({ isOpen, onClose }: MasteryModalProps) {
     }
 
     try {
-      // Use type assertion since user_progress table may not be in generated types
-      let { data, error } = await (supabase
-        .from('profiles') as any)
-        .select('user_id, xp, level, fruits, streak, last_active')
+      // Fetch from user_points (the actual XP/level table)
+      let { data, error } = await supabase
+        .from('user_points')
+        .select('user_id, total_points, level, points_to_next_level')
         .eq('user_id', user.id)
-        .single()
+        .maybeSingle()
 
-      if (error && error.code === 'PGRST116') {
-        // First time – create row with 50 XP - use profiles table
-        const { data: newData, error: insertError } = await (supabase
-          .from('profiles') as any)
-          .update({ xp: 50, level: 1, fruits: 0, streak: 1 })
-          .eq('user_id', user.id)
-          .select()
-          .single()
-
-        if (insertError) {
-          console.error('Error creating user progress:', insertError)
-          setLoading(false)
-          return
-        }
-
-        data = newData
-      } else if (error) {
+      if (error) {
         console.error('Error loading user progress:', error)
         setLoading(false)
         return
       }
 
+      if (!data) {
+        // Initialize user points if they don't exist
+        const { data: newData, error: insertError } = await supabase
+          .from('user_points')
+          .insert({ user_id: user.id })
+          .select()
+          .maybeSingle()
+
+        if (insertError) {
+          console.error('Error creating user points:', insertError)
+          setLoading(false)
+          return
+        }
+        data = newData
+      }
+
+      // Also fetch streak from bestowals activity
+      const { data: activityData } = await supabase
+        .from('bestowals')
+        .select('created_at')
+        .eq('bestower_id', user.id)
+        .order('created_at', { ascending: false })
+        .limit(30)
+
+      let streak = 0
+      if (activityData && activityData.length > 0) {
+        const uniqueDays = new Set<string>()
+        activityData.forEach((item: any) => {
+          uniqueDays.add(new Date(item.created_at).toDateString())
+        })
+        streak = uniqueDays.size
+      }
+
+      // Count fruits as number of orchards created
+      const { count: orchardCount } = await supabase
+        .from('orchards')
+        .select('*', { count: 'exact', head: true })
+        .eq('user_id', user.id)
+
       if (data) {
-        lastLevelRef.current = data.level || 1
+        const xp = data.total_points || 0
+        const level = data.level || 1
+        lastLevelRef.current = level
         const progressData: UserProgress = {
           user_id: data.user_id || user.id,
-          xp: data.xp || 0,
-          level: data.level || 1,
-          fruits: data.fruits || 0,
-          streak: data.streak || 0,
-          last_active: data.last_active || new Date().toISOString()
+          xp,
+          level,
+          fruits: orchardCount || 0,
+          streak,
+          last_active: new Date().toISOString()
         }
         setProgress(progressData)
-        setPreviousLevel(progressData.level)
+        setPreviousLevel(level)
         updateTree(progressData)
       }
     } catch (error) {
@@ -345,7 +370,7 @@ export function MasteryModal({ isOpen, onClose }: MasteryModalProps) {
     // Load initial data
     loadUserProgress()
 
-    // Set up real-time subscription
+    // Set up real-time subscription on user_points table
     const channel = supabase
       .channel('progress-updates')
       .on(
@@ -353,12 +378,12 @@ export function MasteryModal({ isOpen, onClose }: MasteryModalProps) {
         {
           event: 'UPDATE',
           schema: 'public',
-          table: 'user_progress',
+          table: 'user_points',
           filter: `user_id=eq.${user.id}`,
         },
-        (payload) => {
-          const newProgress = payload.new as UserProgress
-          updateTree(newProgress)
+        () => {
+          // Re-fetch all progress data on update
+          loadUserProgress()
         }
       )
       .subscribe()
