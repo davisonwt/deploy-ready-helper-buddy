@@ -356,10 +356,13 @@ export default function SowerBooksSection({ selectedCategory = 'all' }: { select
   return (
     <section className='mb-16'>
       <div className='flex items-center justify-between mb-6'>
-        <h2 className='text-3xl font-bold text-white flex items-center gap-3'>
-          <BookOpen className='w-8 h-8' />
-          My Published Books
-        </h2>
+        {selectedCategory === 'all' && (
+          <h2 className='text-3xl font-bold text-white flex items-center gap-3'>
+            <BookOpen className='w-8 h-8' />
+            My Published Books
+          </h2>
+        )}
+        {selectedCategory !== 'all' && <div />}
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
           <DialogTrigger asChild>
             <Button
@@ -619,7 +622,7 @@ export default function SowerBooksSection({ selectedCategory = 'all' }: { select
           ? books 
           : books.filter(book => (book as any).category === selectedCategory);
         
-        console.log('[SowerBooks] selectedCategory:', selectedCategory, 'books:', books.map(b => ({ id: b.id, title: b.title, category: (b as any).category })), 'filteredBooks count:', filteredBooks.length);
+        
         
         return filteredBooks.length > 0 ? (
         <div className='relative px-12'>

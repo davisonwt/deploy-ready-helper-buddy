@@ -182,44 +182,41 @@ export default function MyProductsPage() {
             onStatusChange={setSelectedStatus}
           />
 
-          {/* Sower Books Section */}
+          {/* Section heading */}
+          <h2 className='text-3xl font-bold mb-6 text-white'>
+            {selectedCategory === 'all' ? 'All Your Seeds' : `Your ${selectedCategory} Seeds`}
+          </h2>
+
+          {/* Sower Books Section (books filtered by category) */}
           <SowerBooksSection selectedCategory={selectedCategory} />
 
-          {products && products.length > 0 ? (
+          {/* Products Grid */}
+          {filteredProducts.length > 0 ? (
             <section className='mb-16'>
-              <h2 className='text-3xl font-bold mb-6 text-white'>
-                {selectedCategory === 'all' ? 'All Your Seeds' : `Your ${selectedCategory} Seeds`}
-              </h2>
-              {filteredProducts.length === 0 ? (
-                <div className='text-center py-12'>
-                  <p className='text-white/80 text-lg'>No products found in this category</p>
-                </div>
-              ) : (
-                <div className='relative px-12'>
-                  <Carousel
-                    opts={{
-                      align: "start",
-                      loop: true,
-                    }}
-                    className='w-full'
-                  >
-                    <CarouselContent className='-ml-2 md:-ml-4'>
-                      {filteredProducts.map((product) => (
-                        <CarouselItem key={product.id} className='pl-2 md:pl-4 md:basis-1/2 lg:basis-1/3 xl:basis-1/4'>
-                          <ProductCard 
-                            product={product} 
-                            showActions={true} 
-                          />
-                        </CarouselItem>
-                      ))}
-                    </CarouselContent>
-                    <CarouselPrevious className='absolute -left-4 top-1/2 -translate-y-1/2 backdrop-blur-md bg-white/20 border-white/30 text-white hover:bg-white/30' />
-                    <CarouselNext className='absolute -right-4 top-1/2 -translate-y-1/2 backdrop-blur-md bg-white/20 border-white/30 text-white hover:bg-white/30' />
-                  </Carousel>
-                </div>
-              )}
+              <div className='relative px-12'>
+                <Carousel
+                  opts={{
+                    align: "start",
+                    loop: true,
+                  }}
+                  className='w-full'
+                >
+                  <CarouselContent className='-ml-2 md:-ml-4'>
+                    {filteredProducts.map((product) => (
+                      <CarouselItem key={product.id} className='pl-2 md:pl-4 md:basis-1/2 lg:basis-1/3 xl:basis-1/4'>
+                        <ProductCard 
+                          product={product} 
+                          showActions={true} 
+                        />
+                      </CarouselItem>
+                    ))}
+                  </CarouselContent>
+                  <CarouselPrevious className='absolute -left-4 top-1/2 -translate-y-1/2 backdrop-blur-md bg-white/20 border-white/30 text-white hover:bg-white/30' />
+                  <CarouselNext className='absolute -right-4 top-1/2 -translate-y-1/2 backdrop-blur-md bg-white/20 border-white/30 text-white hover:bg-white/30' />
+                </Carousel>
+              </div>
             </section>
-          ) : (
+          ) : !products || products.length === 0 ? (
             <Card className='max-w-2xl mx-auto mt-12 backdrop-blur-md bg-white/20 border-white/30 shadow-2xl'>
               <CardContent className='p-12 text-center'>
                 <Package className='w-20 h-20 mx-auto text-white/70 mb-4' />
@@ -235,7 +232,7 @@ export default function MyProductsPage() {
                 </Link>
               </CardContent>
             </Card>
-          )}
+          ) : null}
         </div>
       </div>
 
