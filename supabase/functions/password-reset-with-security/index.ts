@@ -53,8 +53,9 @@ Deno.serve(async (req) => {
       
       if (!targetUser) {
         // Security: Don't reveal if user exists - return generic message
+        console.log("User not found for email:", email);
         return new Response(
-          JSON.stringify({ error: "If an account exists with this email, security questions would be shown. Please check your email address." }),
+          JSON.stringify({ error: "If an account exists with this email and has security questions configured, they will be shown. Please verify your email address." }),
           { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
         );
       }
@@ -67,10 +68,11 @@ Deno.serve(async (req) => {
         .maybeSingle();
 
       if (securityError || !securityData) {
+        // Return same generic message as user-not-found to prevent enumeration
+        console.log("No security questions for user:", targetUser.id);
         return new Response(
           JSON.stringify({
-            error: "Security questions not set up for this account. Please contact support for assistance.",
-            noQuestions: true,
+            error: "If an account exists with this email and has security questions configured, they will be shown. Please verify your email address.",
           }),
           { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
         );
