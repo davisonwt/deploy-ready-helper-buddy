@@ -6,9 +6,8 @@ import {
   Sprout, 
   Heart, 
   Users, 
-  Gift,
-   TreePine,
-   Mic
+   Gift,
+   TreePine
 } from "lucide-react";
 import seedsStrip from '@/assets/seeds-strip.jpg';
 import { ThemeProvider } from "../components/ui/theme-provider";
@@ -17,13 +16,13 @@ import { useAuth } from "../hooks/useAuth";
 import { supabase } from "../integrations/supabase/client";
 
 import OnboardingTour from "../components/onboarding/OnboardingTour";
-import { VoiceCommands } from "../components/voice/VoiceCommands";
+
 import { AppContextProvider, useAppContext } from "../contexts/AppContext";
 import DeferredVideo from "@/components/performance/DeferredVideo";
 import { getCurrentTheme } from "@/utils/dashboardThemes";
 
 function IndexContent() {
-  const [showVoiceCommands, setShowVoiceCommands] = useState(false)
+  
   const { isAuthenticated, loading } = useAuth()
   const navigate = useNavigate()
   const [currentTheme, setCurrentTheme] = useState(getCurrentTheme())
@@ -39,9 +38,7 @@ function IndexContent() {
   // Get context values - MUST be called before any early returns
   const { 
     showOnboarding, 
-    setShowOnboarding, 
-    voiceCommandsEnabled,
-    setVoiceCommandsEnabled
+    setShowOnboarding
   } = useAppContext()
   
   // Redirect authenticated users to dashboard
@@ -96,25 +93,6 @@ function IndexContent() {
               </div>
             </div>
             <div className="flex items-center gap-2 sm:gap-4">
-              <button
-                onClick={() => setShowVoiceCommands(true)}
-                className="hover-scale h-9 w-9 sm:h-10 sm:w-10 inline-flex items-center justify-center rounded-lg transition-all duration-200"
-                title="Voice Commands"
-                style={{
-                  color: currentTheme.textSecondary,
-                  backgroundColor: 'transparent'
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.color = currentTheme.accent;
-                  e.currentTarget.style.backgroundColor = currentTheme.secondaryButton;
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.color = currentTheme.textSecondary;
-                  e.currentTarget.style.backgroundColor = 'transparent';
-                }}
-              >
-                <Mic className="h-4 w-4 sm:h-5 sm:w-5" />
-              </button>
               
               <AdminButton />
               
@@ -816,13 +794,6 @@ function IndexContent() {
 
       {/* OnboardingTour rendered at App root only */}
       
-      {/* Voice Commands */}
-      <VoiceCommands 
-        isEnabled={voiceCommandsEnabled}
-        onToggle={() => setVoiceCommandsEnabled(!voiceCommandsEnabled)}
-        isOpen={showVoiceCommands}
-        onOpenChange={setShowVoiceCommands}
-      />
     </div>
     </ThemeProvider>
   );

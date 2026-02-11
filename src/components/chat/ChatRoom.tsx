@@ -8,7 +8,6 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { 
   ArrowLeft,
   Send,
-  Mic,
   Paperclip,
   Phone,
   PhoneOff,
@@ -42,9 +41,6 @@ export const ChatRoom: React.FC<ChatRoomProps> = ({ roomId, onBack }) => {
   const [roomInfo, setRoomInfo] = useState(null);
   const scrollAreaRef = useRef(null);
   
-  // Voice recording
-  const [recording, setRecording] = useState(false);
-  const mediaRecorderRef = useRef(null);
   
   // Donations
   const [showDonate, setShowDonate] = useState(false);
@@ -576,45 +572,6 @@ export const ChatRoom: React.FC<ChatRoomProps> = ({ roomId, onBack }) => {
       });
     }
   };
-  const startRecording = async () => {
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      mediaRecorderRef.current = new MediaRecorder(stream);
-      const chunks = [];
-      
-      mediaRecorderRef.current.ondataavailable = (e) => chunks.push(e.data);
-      mediaRecorderRef.current.onstop = async () => {
-        const blob = new Blob(chunks, { type: 'audio/wav' });
-        const file = new File([blob], 'voice-note.wav', { type: 'audio/wav' });
-        await handleFileUpload(file);
-        stream.getTracks().forEach((track) => track.stop());
-      };
-      
-      mediaRecorderRef.current.start();
-      setRecording(true);
-      
-      setTimeout(() => {
-        if (mediaRecorderRef.current?.state === 'recording') {
-          mediaRecorderRef.current.stop();
-          setRecording(false);
-        }
-      }, 60000);
-    } catch (error) {
-      console.error('Recording error:', error);
-      toast({
-        variant: 'destructive',
-        title: 'Recording failed',
-        description: 'Could not access microphone',
-      });
-    }
-  };
-
-  const stopRecording = () => {
-    if (mediaRecorderRef.current?.state === 'recording') {
-      mediaRecorderRef.current.stop();
-      setRecording(false);
-    }
-  };
 
   // Handle call click - uses embedded JaaS call
   const [showJitsiCall, setShowJitsiCall] = useState(false);
@@ -713,13 +670,6 @@ export const ChatRoom: React.FC<ChatRoomProps> = ({ roomId, onBack }) => {
           
           {/* Action Buttons */}
           <div className="flex items-center gap-2">
-            <Button
-              variant={recording ? 'destructive' : 'ghost'}
-              size="sm"
-              onClick={recording ? stopRecording : startRecording}
-            >
-              <Mic className="h-4 w-4" />
-            </Button>
             
             <Button
               variant="ghost"
