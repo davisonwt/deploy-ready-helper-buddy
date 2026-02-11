@@ -22,7 +22,7 @@ const LogoHeader = ({
       {showTitle && (
         <div>
           <h1 className={`${titleSize} font-bold text-s2g-green`}>sow2grow</h1>
-          <p className="text-xs text-s2g-blue">364yhvh community farm</p>
+          <a href="https://www.364yhvh.org/" target="_blank" rel="noopener noreferrer" className="text-xs text-s2g-blue hover:underline" onClick={(e) => e.stopPropagation()}>364yhvh community farm</a>
         </div>
       )}
     </Link>

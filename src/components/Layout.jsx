@@ -236,7 +236,7 @@ function Layout({ children }) {
                   <h1 className="text-xl font-bold font-playfair" style={{ color: currentTheme.textPrimary }}>
                     sow2grow
                   </h1>
-                  <p className="text-xs" style={{ color: currentTheme.textSecondary }}>364yhvh community farm</p>
+                  <a href="https://www.364yhvh.org/" target="_blank" rel="noopener noreferrer" className="text-xs hover:underline" style={{ color: currentTheme.textSecondary }} onClick={(e) => e.stopPropagation()}>364yhvh community farm</a>
                 </div>
               </Link>
             </div>
@@ -703,7 +703,7 @@ function Layout({ children }) {
                   <h3 className="text-lg font-bold font-playfair" style={{ color: currentTheme.textPrimary }}>
                     sow2grow
                   </h3>
-                  <p className="text-xs" style={{ color: currentTheme.textSecondary }}>364yhvh community farm</p>
+                  <a href="https://www.364yhvh.org/" target="_blank" rel="noopener noreferrer" className="text-xs hover:underline" style={{ color: currentTheme.textSecondary }}>364yhvh community farm</a>
                 </div>
               </div>
               <p className="text-sm" style={{ color: currentTheme.textSecondary }}>
@@ -738,7 +738,7 @@ function Layout({ children }) {
               color: currentTheme.textSecondary,
             }}
           >
-            <p>&copy; 2024 364yhvh Community Farm. Built with love for the community.</p>
+            <p>&copy; 2024 <a href="https://www.364yhvh.org/" target="_blank" rel="noopener noreferrer" className="hover:underline">364yhvh Community Farm</a>. Built with love for the community.</p>
           </div>
         </div>
       </footer>
