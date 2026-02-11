@@ -170,58 +170,55 @@ export default function MyProductsPage() {
         </div>
 
         <div className='container mx-auto px-4 py-8'>
+          {/* Category Filter - always visible */}
+          <CategoryFilter
+            selectedCategory={selectedCategory}
+            selectedType={selectedType}
+            selectedFormat={selectedFormat}
+            selectedStatus={selectedStatus}
+            onCategoryChange={setSelectedCategory}
+            onTypeChange={setSelectedType}
+            onFormatChange={setSelectedFormat}
+            onStatusChange={setSelectedStatus}
+          />
+
           {/* Sower Books Section */}
-          <SowerBooksSection />
+          <SowerBooksSection selectedCategory={selectedCategory} />
 
           {products && products.length > 0 ? (
-            <>
-              {/* Category Filter */}
-              <CategoryFilter
-                selectedCategory={selectedCategory}
-                selectedType={selectedType}
-                selectedFormat={selectedFormat}
-                selectedStatus={selectedStatus}
-                onCategoryChange={setSelectedCategory}
-                onTypeChange={setSelectedType}
-                onFormatChange={setSelectedFormat}
-                onStatusChange={setSelectedStatus}
-              />
-
-              {/* Products Grid */}
-              <section className='mb-16'>
-                <h2 className='text-3xl font-bold mb-6 text-white'>
-                  {selectedCategory === 'all' ? 'All Your Seeds' : `Your ${selectedCategory} Seeds`}
-                </h2>
-                {filteredProducts.length === 0 ? (
-                  <div className='text-center py-12'>
-                    <p className='text-white/80 text-lg'>No products found in this category</p>
-                  </div>
-                ) : (
-                  <div className='relative px-12'>
-                    <Carousel
-                      opts={{
-                        align: "start",
-                        loop: true,
-                      }}
-                      className='w-full'
-                    >
-                      <CarouselContent className='-ml-2 md:-ml-4'>
-                        {filteredProducts.map((product) => (
-                          <CarouselItem key={product.id} className='pl-2 md:pl-4 md:basis-1/2 lg:basis-1/3 xl:basis-1/4'>
-                            <ProductCard 
-                              product={product} 
-                              showActions={true} 
-                            />
-                          </CarouselItem>
-                        ))}
-                      </CarouselContent>
-                      <CarouselPrevious className='absolute -left-4 top-1/2 -translate-y-1/2 backdrop-blur-md bg-white/20 border-white/30 text-white hover:bg-white/30' />
-                      <CarouselNext className='absolute -right-4 top-1/2 -translate-y-1/2 backdrop-blur-md bg-white/20 border-white/30 text-white hover:bg-white/30' />
-                    </Carousel>
-                  </div>
-                )}
-              </section>
-            </>
+            <section className='mb-16'>
+              <h2 className='text-3xl font-bold mb-6 text-white'>
+                {selectedCategory === 'all' ? 'All Your Seeds' : `Your ${selectedCategory} Seeds`}
+              </h2>
+              {filteredProducts.length === 0 ? (
+                <div className='text-center py-12'>
+                  <p className='text-white/80 text-lg'>No products found in this category</p>
+                </div>
+              ) : (
+                <div className='relative px-12'>
+                  <Carousel
+                    opts={{
+                      align: "start",
+                      loop: true,
+                    }}
+                    className='w-full'
+                  >
+                    <CarouselContent className='-ml-2 md:-ml-4'>
+                      {filteredProducts.map((product) => (
+                        <CarouselItem key={product.id} className='pl-2 md:pl-4 md:basis-1/2 lg:basis-1/3 xl:basis-1/4'>
+                          <ProductCard 
+                            product={product} 
+                            showActions={true} 
+                          />
+                        </CarouselItem>
+                      ))}
+                    </CarouselContent>
+                    <CarouselPrevious className='absolute -left-4 top-1/2 -translate-y-1/2 backdrop-blur-md bg-white/20 border-white/30 text-white hover:bg-white/30' />
+                    <CarouselNext className='absolute -right-4 top-1/2 -translate-y-1/2 backdrop-blur-md bg-white/20 border-white/30 text-white hover:bg-white/30' />
+                  </Carousel>
+                </div>
+              )}
+            </section>
           ) : (
             <Card className='max-w-2xl mx-auto mt-12 backdrop-blur-md bg-white/20 border-white/30 shadow-2xl'>
               <CardContent className='p-12 text-center'>
