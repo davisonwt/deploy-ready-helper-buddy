@@ -353,6 +353,18 @@ export default function SowerBooksSection({ selectedCategory = 'all' }: { select
     return book.cover_image_url;
   };
 
+  // Pre-compute filtered books to decide whether to render at all
+  const filteredBooks = books && books.length > 0
+    ? (selectedCategory === 'all' 
+        ? books 
+        : books.filter(book => (book as any).category === selectedCategory))
+    : [];
+
+  // If a specific category is selected and no books match, hide entire section
+  if (selectedCategory !== 'all' && filteredBooks.length === 0 && !isLoading) {
+    return null;
+  }
+
   return (
     <section className='mb-16'>
       <div className='flex items-center justify-between mb-6'>
@@ -617,14 +629,7 @@ export default function SowerBooksSection({ selectedCategory = 'all' }: { select
         <div className='flex justify-center py-12'>
           <Loader2 className='w-8 h-8 animate-spin text-white' />
         </div>
-      ) : books && books.length > 0 ? (() => {
-        const filteredBooks = selectedCategory === 'all' 
-          ? books 
-          : books.filter(book => (book as any).category === selectedCategory);
-        
-        
-        
-        return filteredBooks.length > 0 ? (
+      ) : filteredBooks.length > 0 ? (
         <div className='relative px-12'>
           <Carousel opts={{ align: 'start', loop: true }} className='w-full'>
             <CarouselContent className='-ml-2 md:-ml-4'>
@@ -783,12 +788,7 @@ export default function SowerBooksSection({ selectedCategory = 'all' }: { select
             <CarouselNext className='absolute -right-4 top-1/2 -translate-y-1/2 backdrop-blur-md bg-white/20 border-white/30 text-white hover:bg-white/30' />
           </Carousel>
         </div>
-        ) : (
-          <div className='text-center py-12'>
-            <p className='text-white/80 text-lg'>No books found in this category</p>
-          </div>
-        );
-      })() : (
+      ) : (
         <Card className='backdrop-blur-md bg-white/10 border-white/20'>
           <CardContent className='flex flex-col items-center justify-center py-12'>
             <BookOpen className='w-16 h-16 text-white/50 mb-4' />
