@@ -136,10 +136,11 @@ export default function ProductsPage() {
         .range(pageParam, pageParam + ITEMS_PER_PAGE - 1);
 
       // Apply category/type filter
-      if (selectedCategory === 'music') {
-        // Music filter uses the 'type' column
-        query = query.eq('type', 'music');
-      } else if (selectedCategory !== 'all' && selectedCategory !== 'trending' && selectedCategory !== 'book') {
+      const typeFilters = ['music', 'art', 'file', 'book', 'produce', 'product', 'ebook'];
+      if (typeFilters.includes(selectedCategory)) {
+        // These are type-based filters
+        query = query.eq('type', selectedCategory);
+      } else if (selectedCategory !== 'all' && selectedCategory !== 'trending') {
         query = query.eq('category', selectedCategory);
       }
 
@@ -267,9 +268,7 @@ export default function ProductsPage() {
       setSelectedCategory('all');
       setSelectedSort('Most Recent');
     } else {
-      // Map 'ebook' to 'book' for database query
-      const dbCategory = filterType === 'ebook' ? 'book' : filterType;
-      setSelectedCategory(dbCategory);
+      setSelectedCategory(filterType);
       setSelectedSort('Most Recent');
     }
   };
