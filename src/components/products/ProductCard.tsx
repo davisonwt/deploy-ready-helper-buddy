@@ -239,73 +239,77 @@ export default function ProductCard({ product, featured, showActions = false }: 
     >
       <Card className={`group overflow-hidden border-white/20 bg-white/10 backdrop-blur-md hover:bg-white/20 transition-all duration-300 ${featured ? 'border-white/30' : ''}`}>
         <CardContent className="p-0">
-          {/* Cover Image */}
-          <div className="relative aspect-square overflow-hidden"
-            onClick={() => {
-              const imgs = product.image_urls?.length > 0 ? product.image_urls : (product.cover_image_url ? [product.cover_image_url] : []);
-              if (imgs.length > 1) {
-                setCurrentImageIndex((prev) => (prev + 1) % imgs.length);
-              }
-            }}
-          >
-            {(() => {
-              const imgs = product.image_urls?.length > 0 ? product.image_urls : (product.cover_image_url ? [product.cover_image_url] : []);
-              const currentSrc = imgs[currentImageIndex] || product.cover_image_url;
-              return imageError || !currentSrc ? (
-                <GradientPlaceholder 
-                  type={product.type || 'product'} 
-                  title={product.title}
-                  className="w-full h-full"
-                />
-              ) : (
-                <img
-                  src={currentSrc}
-                  alt={product.title}
-                  className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-110"
-                  onError={() => setImageError(true)}
-                />
-              );
-            })()}
+          {/* Cover Image - Horizontal Scroll */}
+          {(() => {
+            const imgs = product.image_urls?.length > 0 ? product.image_urls : (product.cover_image_url ? [product.cover_image_url] : []);
+            return imgs.length > 0 ? (
+              <div className="relative">
+                <div className="flex overflow-x-auto snap-x snap-mandatory scrollbar-hide" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none', WebkitOverflowScrolling: 'touch' }}>
+                  {imgs.map((src: string, idx: number) => (
+                    <div key={idx} className="aspect-square min-w-full snap-center relative overflow-hidden">
+                      <img
+                        src={src}
+                        alt={`${product.title} - ${idx + 1}`}
+                        className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-110"
+                        onError={() => setImageError(true)}
+                      />
+                    </div>
+                  ))}
+                </div>
 
-            {/* Image count badge */}
-            {product.image_urls?.length > 1 && (
-              <div className="absolute top-3 right-3 bg-black/60 text-white text-xs px-2 py-1 rounded-full z-10">
-                {currentImageIndex + 1}/{product.image_urls.length}
-              </div>
-            )}
-            
-            {/* Overlay */}
-            <div className="absolute inset-0 bg-gradient-to-t from-background/90 via-background/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-              <div className="absolute inset-0 flex items-center justify-center">
-                {product.type === 'music' && (
-                  <Button
-                    size="lg"
-                    onClick={handlePlayPause}
-                    className="rounded-full bg-primary hover:bg-primary/90 shadow-lg"
-                  >
-                    {isPlaying ? (
-                      <Pause className="w-6 h-6" />
-                    ) : (
-                      <Play className="w-6 h-6 ml-1" />
-                    )}
-                  </Button>
+                {/* Dot indicators */}
+                {imgs.length > 1 && (
+                  <div className="absolute bottom-2 left-1/2 -translate-x-1/2 flex gap-1.5 z-10">
+                    {imgs.map((_: string, idx: number) => (
+                      <div key={idx} className="w-1.5 h-1.5 rounded-full bg-white/60" />
+                    ))}
+                  </div>
                 )}
-              </div>
-            </div>
 
-            {/* Badges */}
-            <div className="absolute top-3 left-3 flex gap-2">
-              {product.is_featured && (
-                <Badge className="bg-primary/90 backdrop-blur-sm">
-                  <Sparkles className="w-3 h-3 mr-1" />
-                  Featured
-                </Badge>
-              )}
-              <Badge variant="secondary" className="backdrop-blur-sm">
-                {product.type}
-              </Badge>
-            </div>
-          </div>
+                {/* Image count badge */}
+                {imgs.length > 1 && (
+                  <div className="absolute top-3 right-3 bg-black/60 text-white text-xs px-2 py-1 rounded-full z-10">
+                    {imgs.length} images
+                  </div>
+                )}
+
+                {/* Overlay for music play */}
+                <div className="absolute inset-0 bg-gradient-to-t from-background/90 via-background/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none">
+                  <div className="absolute inset-0 flex items-center justify-center pointer-events-auto">
+                    {product.type === 'music' && (
+                      <Button
+                        size="lg"
+                        onClick={handlePlayPause}
+                        className="rounded-full bg-primary hover:bg-primary/90 shadow-lg"
+                      >
+                        {isPlaying ? <Pause className="w-6 h-6" /> : <Play className="w-6 h-6 ml-1" />}
+                      </Button>
+                    )}
+                  </div>
+                </div>
+
+                {/* Badges */}
+                <div className="absolute top-3 left-3 flex gap-2 z-10">
+                  {product.is_featured && (
+                    <Badge className="bg-primary/90 backdrop-blur-sm">
+                      <Sparkles className="w-3 h-3 mr-1" />
+                      Featured
+                    </Badge>
+                  )}
+                  <Badge variant="secondary" className="backdrop-blur-sm">
+                    {product.type}
+                  </Badge>
+                </div>
+              </div>
+            ) : (
+              <div className="relative aspect-square overflow-hidden">
+                <GradientPlaceholder type={product.type || 'product'} title={product.title} className="w-full h-full" />
+                <div className="absolute top-3 left-3 flex gap-2">
+                  <Badge variant="secondary" className="backdrop-blur-sm">{product.type}</Badge>
+                </div>
+              </div>
+            );
+          })()}
 
           {/* Content */}
           <div className="p-4 space-y-3">
