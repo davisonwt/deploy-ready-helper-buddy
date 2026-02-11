@@ -345,28 +345,9 @@ export default function MyOrchardsPage() {
           </div>
 
 
-          {/* Filters */}
+           {/* Filters */}
           <div className='mb-8'>
             <div className='space-y-4'>
-              {/* Category Filter Row */}
-              <div className='flex justify-center'>
-                <div className='min-w-[200px]'>
-                  <Select value={selectedCategory} onValueChange={setSelectedCategory}>
-                    <SelectTrigger className='backdrop-blur-md bg-white/20 border-white/30 text-white'>
-                      <SelectValue placeholder='Filter by Category' />
-                    </SelectTrigger>
-                    <SelectContent className='bg-white border border-border z-50'>
-                      <SelectItem value='all'>All Categories</SelectItem>
-                      {categories.map((category) => (
-                        <SelectItem key={category} value={category}>
-                          {category}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-              
               {/* Status Filter Buttons Row */}
               <div className='flex justify-center'>
                 <div className='flex gap-2'>
@@ -384,6 +365,33 @@ export default function MyOrchardsPage() {
                     </Button>
                   ))}
                 </div>
+              </div>
+              
+              {/* Category Pill Buttons */}
+              <div className='flex flex-wrap justify-center gap-2 px-4'>
+                <button
+                  onClick={() => setSelectedCategory('all')}
+                  className={`px-4 py-2 rounded-full text-sm font-medium capitalize backdrop-blur-md border transition-all ${
+                    selectedCategory === 'all'
+                      ? 'bg-amber-600 border-amber-500 text-white font-bold shadow-lg shadow-amber-600/30'
+                      : 'bg-white/10 border-white/30 text-white/70 hover:bg-white/20 hover:text-white'
+                  }`}
+                >
+                  All Categories
+                </button>
+                {categories.map((cat) => (
+                  <button
+                    key={cat}
+                    onClick={() => setSelectedCategory(cat)}
+                    className={`px-4 py-2 rounded-full text-sm font-medium backdrop-blur-md border transition-all ${
+                      selectedCategory === cat
+                        ? 'bg-amber-600 border-amber-500 text-white font-bold shadow-lg shadow-amber-600/30'
+                        : 'bg-white/10 border-white/30 text-white/70 hover:bg-white/20 hover:text-white'
+                    }`}
+                  >
+                    {cat}
+                  </button>
+                ))}
               </div>
             </div>
           </div>

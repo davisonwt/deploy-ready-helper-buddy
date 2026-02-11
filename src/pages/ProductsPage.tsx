@@ -392,9 +392,9 @@ export default function ProductsPage() {
   return (
     <div className="bg-gradient-to-br from-indigo-950 via-purple-900 to-teal-900 min-h-screen text-white">
       {/* Header */}
-      <div className="text-center py-12 px-6">
+       <div className="text-center py-12 px-6">
         <h1 className="text-5xl md:text-6xl font-bold flex items-center justify-center gap-4">
-          <span className="text-7xl">Community Creations</span>
+          <span className="text-7xl">S2G Community Seeds</span>
         </h1>
         <p className="text-yellow-200 text-xl mt-4 max-w-2xl mx-auto">
           Discover amazing music, art, courses & digital gifts from our family of creators.<br />
@@ -510,6 +510,28 @@ export default function ProductsPage() {
           >
             Trending Now
           </button>
+        </div>
+
+        {/* Topic Category Filters */}
+        <div className="flex flex-wrap justify-center gap-2 mb-10 px-6">
+          {['all', 'education', 'entertainment', 'business', 'health', 'technology', 'lifestyle', 'spiritual', 'kitchenware', 'properties', 'vehicles', 'fashion', 'food'].map((cat) => (
+            <button
+              key={cat}
+              onClick={() => {
+                setSelectedCategory(cat === 'all' ? 'all' : cat);
+                if (cat === 'all') {
+                  setActiveFilter('all');
+                }
+              }}
+              className={`px-4 py-2 rounded-full text-sm font-medium capitalize backdrop-blur-md border transition-all ${
+                selectedCategory === cat
+                  ? 'bg-amber-600 border-amber-500 text-white font-bold shadow-lg shadow-amber-600/30'
+                  : 'bg-white/10 border-white/30 text-white/70 hover:bg-white/20 hover:text-white'
+              }`}
+            >
+              {cat}
+            </button>
+          ))}
         </div>
 
         {/* Books Section - Show when 'book' filter is active */}
