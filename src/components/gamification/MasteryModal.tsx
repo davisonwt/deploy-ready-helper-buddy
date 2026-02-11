@@ -132,24 +132,35 @@ export function MasteryModal({ isOpen, onClose }: MasteryModalProps) {
 
     // 4. MONUMENTAL "LEVEL XX" TEXT — RISES FROM HELL TO HEAVEN
     const holyText = document.createElement('div')
-    holyText.innerHTML = `
-      <div style="font-size:14rem; font-weight:900; 
-                  background:linear-gradient(0deg, #facc15, #fff, #f43f5e, #c084fc);
-                  -webkit-background-clip:text; background-clip:text; color:transparent;
-                  text-shadow: 0 0 80px #fff, 0 0 160px #facc15;
-                  letter-spacing:-0.5rem;">
-        LEVEL ${newLevel}
-      </div>
-      <div style="font-size:5rem; margin-top:2rem; 
-                  background:linear-gradient(to right, #34d399, #22d3ee);
-                  -webkit-background-clip:text; background-clip:text; color:transparent;
-                  text-shadow:0 0 60px #34d399;">
-        ${getTitle(newLevel).toUpperCase()}
-      </div>
-      <div style="font-size:3rem; margin-top:1rem; color:#fbbf24; opacity:0.9;">
-        HAS BEEN ACHIEVED!
-      </div>
-    `
+
+    const levelDiv = document.createElement('div')
+    levelDiv.textContent = `LEVEL ${Number(newLevel)}`
+    Object.assign(levelDiv.style, {
+      fontSize: '14rem', fontWeight: '900',
+      background: 'linear-gradient(0deg, #facc15, #fff, #f43f5e, #c084fc)',
+      WebkitBackgroundClip: 'text', backgroundClip: 'text', color: 'transparent',
+      textShadow: '0 0 80px #fff, 0 0 160px #facc15',
+      letterSpacing: '-0.5rem'
+    })
+
+    const titleDiv = document.createElement('div')
+    titleDiv.textContent = getTitle(newLevel).toUpperCase()
+    Object.assign(titleDiv.style, {
+      fontSize: '5rem', marginTop: '2rem',
+      background: 'linear-gradient(to right, #34d399, #22d3ee)',
+      WebkitBackgroundClip: 'text', backgroundClip: 'text', color: 'transparent',
+      textShadow: '0 0 60px #34d399'
+    })
+
+    const achievedDiv = document.createElement('div')
+    achievedDiv.textContent = 'HAS BEEN ACHIEVED!'
+    Object.assign(achievedDiv.style, {
+      fontSize: '3rem', marginTop: '1rem', color: '#fbbf24', opacity: '0.9'
+    })
+
+    holyText.appendChild(levelDiv)
+    holyText.appendChild(titleDiv)
+    holyText.appendChild(achievedDiv)
     Object.assign(holyText.style, {
       position: 'fixed',
       top: '60%',

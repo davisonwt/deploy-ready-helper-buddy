@@ -8,34 +8,17 @@ const corsHeaders = {
   "Access-Control-Max-Age": "86400",
 };
 
-// Simple hash function for password storage (bcrypt-like security would require a library)
-// The actual password update will use Supabase Admin API which handles hashing
-async function hashPassword(password: string): Promise<string> {
-  const encoder = new TextEncoder();
-  const data = encoder.encode(password);
-  const hashBuffer = await crypto.subtle.digest("SHA-256", data);
-  const hashArray = Array.from(new Uint8Array(hashBuffer));
-  return hashArray.map(b => b.toString(16).padStart(2, "0")).join("");
-}
-
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
-    const { email, newPassword } = await req.json();
+    const { email } = await req.json();
 
-    if (!email || !newPassword) {
+    if (!email || typeof email !== 'string' || email.length > 255) {
       return new Response(
-        JSON.stringify({ error: "Email and new password are required" }),
-        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
-    }
-
-    if (newPassword.length < 8) {
-      return new Response(
-        JSON.stringify({ error: "Password must be at least 8 characters" }),
+        JSON.stringify({ error: "Valid email is required" }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
@@ -44,29 +27,25 @@ Deno.serve(async (req) => {
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    // Check if email exists in auth.users (using admin API)
+    // Generic response to prevent email enumeration
+    const genericResponse = new Response(
+      JSON.stringify({ success: true, message: "If an account exists with this email, a reset request has been submitted." }),
+      { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+    );
+
+    // Check if email exists
     const { data: users, error: userError } = await supabase.auth.admin.listUsers();
-    
     if (userError) {
       console.error("Error checking users:", userError);
-      // Don't reveal error details for security
-      return new Response(
-        JSON.stringify({ success: true, message: "If an account exists with this email, a reset request has been submitted." }),
-        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
+      return genericResponse;
     }
 
     const userExists = users.users.some(u => u.email?.toLowerCase() === email.toLowerCase());
-
     if (!userExists) {
-      // Security: Don't reveal if email exists
-      return new Response(
-        JSON.stringify({ success: true, message: "If an account exists with this email, a reset request has been submitted." }),
-        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
+      return genericResponse;
     }
 
-    // Check for existing pending request for this email
+    // Check for existing pending request
     const { data: existingRequest } = await supabase
       .from("password_reset_requests")
       .select("id, expires_at")
@@ -82,21 +61,15 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Hash the password for storage
-    const passwordHash = await hashPassword(newPassword);
-
-    // Store the actual password encrypted (we'll use it with admin API later)
-    // For now, store a simple reversible encoding since we need the actual password for admin.updateUserById
-    const encodedPassword = btoa(newPassword); // Base64 encode for storage
-
-    // Create password reset request
+    // Create password reset request WITHOUT storing the password
+    // Admin approval will trigger Supabase's built-in password reset email
     const { error: insertError } = await supabase
       .from("password_reset_requests")
       .insert({
         email: email.toLowerCase(),
-        password_hash: encodedPassword, // Storing encoded password for admin to use
+        password_hash: "PENDING_ADMIN_RESET", // No password stored - admin will trigger reset link
         status: "pending",
-        expires_at: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString() // 24 hours
+        expires_at: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString()
       });
 
     if (insertError) {
@@ -107,10 +80,10 @@ Deno.serve(async (req) => {
       );
     }
 
-    console.log(`Password reset request created for ${email}`);
+    console.log(`Password reset request created for ${email} (no password stored)`);
 
     return new Response(
-      JSON.stringify({ success: true, message: "Password reset request submitted successfully. A Gosat administrator will review your request." }),
+      JSON.stringify({ success: true, message: "Password reset request submitted successfully. A Gosat administrator will review your request and you will receive a password reset email." }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
 
