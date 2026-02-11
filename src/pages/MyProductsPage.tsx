@@ -82,7 +82,7 @@ export default function MyProductsPage() {
   });
 
   const filteredProducts = products?.filter(product => {
-    const matchesCategory = selectedCategory === 'all' || product.category === selectedCategory;
+    const matchesCategory = selectedCategory === 'all' || product.category === selectedCategory || (selectedCategory === 'entertainment' && product.type === 'music');
     const matchesType = selectedType === 'all' || product.type === selectedType;
     const matchesFormat = selectedFormat === 'all' || (selectedFormat === 'single' && !isAlbum(product)) || (selectedFormat === 'album' && isAlbum(product));
     const matchesStatus = selectedStatus === 'all' || (product.status || 'active') === selectedStatus;
