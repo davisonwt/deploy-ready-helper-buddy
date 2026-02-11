@@ -8,6 +8,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Loader2, BookOpen, Plus, Pencil, Trash2, ExternalLink, Upload, X, Image as ImageIcon, PauseCircle, PlayCircle } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -57,6 +58,7 @@ interface BookFormData {
   language: string;
   purchase_link: string;
   bestowal_value: string;
+  category: string;
 }
 
 const emptyFormData: BookFormData = {
@@ -71,6 +73,7 @@ const emptyFormData: BookFormData = {
   language: 'English',
   purchase_link: '',
   bestowal_value: '',
+  category: '',
 };
 
 const MAX_IMAGES = 3;
@@ -199,7 +202,8 @@ export default function SowerBooksSection() {
         bestowal_value: data.bestowal_value ? parseFloat(data.bestowal_value) : 0,
         delivery_type: 'physical',
         is_public: true,
-      });
+        category: data.category || null,
+      } as any);
       
       if (error) throw error;
     },
@@ -229,7 +233,8 @@ export default function SowerBooksSection() {
         language: data.language || 'English',
         purchase_link: data.purchase_link || null,
         bestowal_value: data.bestowal_value ? parseFloat(data.bestowal_value) : 0,
-      }).eq('id', id);
+        category: data.category || null,
+      } as any).eq('id', id);
       
       if (error) throw error;
     },
@@ -309,6 +314,7 @@ export default function SowerBooksSection() {
       language: book.language || 'English',
       purchase_link: book.purchase_link || '',
       bestowal_value: book.bestowal_value?.toString() || '',
+      category: (book as any).category || '',
     });
     setUploadedImages(book.image_urls || []);
     setIsDialogOpen(true);
@@ -436,7 +442,25 @@ export default function SowerBooksSection() {
                   />
                 </div>
 
-                {/* Image Upload Section */}
+                {/* Category Dropdown */}
+                <div className='col-span-2'>
+                  <Label htmlFor='category'>Category *</Label>
+                  <Select value={formData.category} onValueChange={(value) => setFormData({ ...formData, category: value })}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select a category" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="education">Education</SelectItem>
+                      <SelectItem value="entertainment">Entertainment</SelectItem>
+                      <SelectItem value="business">Business</SelectItem>
+                      <SelectItem value="health">Health</SelectItem>
+                      <SelectItem value="technology">Technology</SelectItem>
+                      <SelectItem value="lifestyle">Lifestyle</SelectItem>
+                      <SelectItem value="spiritual">Spiritual</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
                 <div className='col-span-2'>
                   <Label>Book Images (up to {MAX_IMAGES})</Label>
                   <div className='mt-2 space-y-3'>
