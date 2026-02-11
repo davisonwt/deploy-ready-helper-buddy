@@ -55,6 +55,12 @@ export function OrganizationWalletCredentials() {
     loadCredentials()
   }, [])
 
+  // Mask a credential string to show only last 4 characters
+  const maskCredential = (value: string): string => {
+    if (!value || value.length <= 4) return value
+    return '•'.repeat(Math.min(value.length - 4, 20)) + value.slice(-4)
+  }
+
   const loadCredentials = async () => {
     setLoading(true)
     try {
@@ -66,27 +72,17 @@ export function OrganizationWalletCredentials() {
       if (error) throw error
 
       data?.forEach(wallet => {
+        const masked = {
+          api_key: maskCredential(wallet.api_key || ''),
+          api_secret: maskCredential(wallet.api_secret || ''),
+          merchant_id: wallet.merchant_id || ''
+        }
         if (wallet.wallet_name === 's2gholding') {
-          setS2gholding(prev => ({
-            ...prev,
-            api_key: wallet.api_key || '',
-            api_secret: wallet.api_secret || '',
-            merchant_id: wallet.merchant_id || ''
-          }))
+          setS2gholding(prev => ({ ...prev, ...masked }))
         } else if (wallet.wallet_name === 's2gbestow') {
-          setS2gbestow(prev => ({
-            ...prev,
-            api_key: wallet.api_key || '',
-            api_secret: wallet.api_secret || '',
-            merchant_id: wallet.merchant_id || ''
-          }))
+          setS2gbestow(prev => ({ ...prev, ...masked }))
         } else if (wallet.wallet_name === 's2gdavison') {
-          setS2gdavison(prev => ({
-            ...prev,
-            api_key: wallet.api_key || '',
-            api_secret: wallet.api_secret || '',
-            merchant_id: wallet.merchant_id || ''
-          }))
+          setS2gdavison(prev => ({ ...prev, ...masked }))
         }
       })
     } catch (error) {
