@@ -306,6 +306,33 @@ export default function BrowseOrchardsPage() {
           </Card>
         </div>
 
+        {/* Category Pill Buttons */}
+        <div className="flex flex-wrap justify-center gap-2 mb-8 px-4">
+          <button
+            onClick={() => setSelectedCategory('all')}
+            className={`px-4 py-2 rounded-full text-sm font-medium capitalize backdrop-blur-md border transition-all ${
+              selectedCategory === 'all'
+                ? 'bg-amber-600 border-amber-500 text-white font-bold shadow-lg shadow-amber-600/30'
+                : 'bg-white/10 border-white/30 text-white/70 hover:bg-white/20 hover:text-white'
+            }`}
+          >
+            All Categories
+          </button>
+          {categories.map((cat) => (
+            <button
+              key={cat}
+              onClick={() => setSelectedCategory(cat)}
+              className={`px-4 py-2 rounded-full text-sm font-medium backdrop-blur-md border transition-all ${
+                selectedCategory === cat
+                  ? 'bg-amber-600 border-amber-500 text-white font-bold shadow-lg shadow-amber-600/30'
+                  : 'bg-white/10 border-white/30 text-white/70 hover:bg-white/20 hover:text-white'
+              }`}
+            >
+              {cat}
+            </button>
+          ))}
+        </div>
+
         {/* Results */}
         {loading ? (
           <div className="flex justify-center items-center py-12 bg-white/80 backdrop-blur-sm rounded-2xl mx-auto max-w-md">
