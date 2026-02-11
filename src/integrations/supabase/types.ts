@@ -5955,6 +5955,7 @@ export type Database = {
       sower_books: {
         Row: {
           bestowal_value: number | null
+          category: string | null
           cover_image_url: string | null
           created_at: string
           delivery_type: string | null
@@ -5981,6 +5982,7 @@ export type Database = {
         }
         Insert: {
           bestowal_value?: number | null
+          category?: string | null
           cover_image_url?: string | null
           created_at?: string
           delivery_type?: string | null
@@ -6007,6 +6009,7 @@ export type Database = {
         }
         Update: {
           bestowal_value?: number | null
+          category?: string | null
           cover_image_url?: string | null
           created_at?: string
           delivery_type?: string | null

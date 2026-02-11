@@ -1,0 +1,1 @@
+ALTER TABLE public.sower_books ADD COLUMN category text;
