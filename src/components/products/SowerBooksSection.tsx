@@ -619,6 +619,8 @@ export default function SowerBooksSection({ selectedCategory = 'all' }: { select
           ? books 
           : books.filter(book => (book as any).category === selectedCategory);
         
+        console.log('[SowerBooks] selectedCategory:', selectedCategory, 'books:', books.map(b => ({ id: b.id, title: b.title, category: (b as any).category })), 'filteredBooks count:', filteredBooks.length);
+        
         return filteredBooks.length > 0 ? (
         <div className='relative px-12'>
           <Carousel opts={{ align: 'start', loop: true }} className='w-full'>
