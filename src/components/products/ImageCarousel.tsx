@@ -86,18 +86,6 @@ export function ImageCarousel({ images, title, type, isFeatured, isPlaying, onPl
         </>
       )}
 
-      {/* Dot indicators */}
-      {images.length > 1 && (
-        <div className="absolute bottom-2 left-1/2 -translate-x-1/2 flex gap-1.5 z-10">
-          {images.map((_, idx) => (
-            <button
-              key={idx}
-              onClick={(e) => { e.stopPropagation(); scrollTo(idx); }}
-              className={`w-2 h-2 rounded-full transition-all ${idx === activeIndex ? 'bg-white scale-125' : 'bg-white/50'}`}
-            />
-          ))}
-        </div>
-      )}
 
       {/* Image count badge */}
       {images.length > 1 && (
