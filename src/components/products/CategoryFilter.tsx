@@ -1,12 +1,12 @@
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Music, FileText, Palette, Grid3x3, Disc, Disc3, BookOpen, PlayCircle, PauseCircle } from 'lucide-react';
+import { Music, FileText, Palette, Grid3x3, Disc, Disc3, BookOpen, PlayCircle, PauseCircle, ShoppingBag, Apple, BookOpenCheck } from 'lucide-react';
 
 interface CategoryFilterProps {
   selectedCategory: string;
   selectedType: string;
-  selectedFormat?: string; // 'all', 'single', 'album'
-  selectedStatus?: string; // 'all', 'active', 'paused'
+  selectedFormat?: string;
+  selectedStatus?: string;
   onCategoryChange: (category: string) => void;
   onTypeChange: (type: string) => void;
   onFormatChange?: (format: string) => void;
@@ -28,7 +28,10 @@ export default function CategoryFilter({
     { value: 'music', label: 'Music', icon: Music },
     { value: 'art', label: 'Art', icon: Palette },
     { value: 'file', label: 'Files', icon: FileText },
-    { value: 'book', label: 'Books', icon: BookOpen }
+    { value: 'book', label: 'Books', icon: BookOpen },
+    { value: 'produce', label: 'Produce', icon: Apple },
+    { value: 'product', label: 'Products', icon: ShoppingBag },
+    { value: 'ebook', label: 'E-Books', icon: BookOpenCheck }
   ];
 
   const categories = [
@@ -59,7 +62,7 @@ export default function CategoryFilter({
       {/* Type Filter */}
       <div className="flex justify-center">
         <Tabs value={selectedType} onValueChange={onTypeChange} className="w-full max-w-3xl">
-          <TabsList className="grid w-full grid-cols-5 bg-muted/50 backdrop-blur-md bg-white/20 border-white/30">
+          <TabsList className="grid w-full grid-cols-4 sm:grid-cols-8 bg-muted/50 backdrop-blur-md bg-white/20 border-white/30">
             {types.map(({ value, label, icon: Icon }) => (
               <TabsTrigger
                 key={value}
