@@ -411,7 +411,7 @@ export default function S2GCommunityMusicPage() {
                   <Music className='w-16 h-16 text-white' />
                 </motion.div>
                 <h1 className='text-6xl font-bold text-white drop-shadow-2xl'>
-                  S2G Community Music Library
+                  {user?.first_name || 'Friend'}, Welcome to S2G Community Music Library
                 </h1>
               </div>
               <p className='text-white/90 text-xl mb-4 backdrop-blur-sm bg-white/10 rounded-lg p-4 border border-white/20'>

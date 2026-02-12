@@ -465,7 +465,7 @@ export default function CommunityMusicLibraryPage() {
                   <Music className="w-12 h-12 text-white" />
                 </motion.div>
                 <h1 className="text-5xl font-bold text-white drop-shadow-2xl">
-                  Community Music Library
+                  {user?.first_name || 'Friend'}, Welcome to the Community Music Library
                 </h1>
               </div>
               <p className="text-white/90 text-xl mb-4 backdrop-blur-sm bg-white/10 rounded-lg p-4 border border-white/20">
