@@ -940,6 +940,20 @@ export default function DashboardPage() {
                 Explore
               </h3>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+                {/* Community ChatApp */}
+                <Link to="/communications-hub">
+                  <Button className="w-full h-16 sm:h-20 border shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105 font-medium" style={{
+                  background: 'linear-gradient(135deg, #f97316 0%, #ea580c 100%)',
+                  color: '#fff',
+                  borderColor: '#f97316'
+                }}>
+                    <div className="text-center">
+                      <MessageSquare className="h-5 w-5 sm:h-6 sm:w-6 mx-auto mb-1 sm:mb-2" />
+                      <span className="text-sm sm:text-base">Community ChatApp</span>
+                    </div>
+                  </Button>
+                </Link>
+
                 {/* 364ttt - Torah Top Ten */}
                 <Link to="/364ttt">
                   <Button className="w-full h-16 sm:h-20 border shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105 font-medium" style={{
