@@ -299,7 +299,7 @@ export default function RegisterPage() {
                     sanitizeType="text"
                     maxLength={50}
                     rateLimitKey="registration_form"
-                    className="w-full px-4 py-3 border-2 border-gray-200 bg-olive-green rounded-xl focus:ring-2 focus:ring-green-400 focus:border-green-400 transition-all duration-300 text-light-beige hover:border-gray-300 shadow-sm hover:shadow-md text-center"
+                    className="w-full px-4 py-3 border-2 border-gray-200 bg-white rounded-xl focus:ring-2 focus:ring-green-400 focus:border-green-400 transition-all duration-300 text-gray-900 placeholder:text-gray-400 hover:border-gray-300 shadow-sm hover:shadow-md text-center"
                     placeholder="Enter first name"
                     required
                   />
@@ -318,7 +318,7 @@ export default function RegisterPage() {
                     sanitizeType="text"
                     maxLength={50}
                     rateLimitKey="registration_form"
-                    className="w-full px-4 py-3 border-2 border-gray-200 bg-olive-green rounded-xl focus:ring-2 focus:ring-green-400 focus:border-green-400 transition-all duration-300 text-light-beige hover:border-gray-300 shadow-sm hover:shadow-md text-center"
+                    className="w-full px-4 py-3 border-2 border-gray-200 bg-white rounded-xl focus:ring-2 focus:ring-green-400 focus:border-green-400 transition-all duration-300 text-gray-900 placeholder:text-gray-400 hover:border-gray-300 shadow-sm hover:shadow-md text-center"
                     placeholder="Enter last name"
                     required
                   />
@@ -338,7 +338,7 @@ export default function RegisterPage() {
                     onChange={handleChange}
                     sanitizeType="email"
                     rateLimitKey="registration_form"
-                    className="w-full px-4 py-3 border-2 border-gray-200 bg-olive-green rounded-xl focus:ring-2 focus:ring-blue-400 focus:border-blue-400 transition-all duration-300 text-light-beige hover:border-gray-300 shadow-sm hover:shadow-md text-center"
+                    className="w-full px-4 py-3 border-2 border-gray-200 bg-white rounded-xl focus:ring-2 focus:ring-blue-400 focus:border-blue-400 transition-all duration-300 text-gray-900 placeholder:text-gray-400 hover:border-gray-300 shadow-sm hover:shadow-md text-center"
                     placeholder="your@email.com"
                     required
                   />
@@ -356,7 +356,7 @@ export default function RegisterPage() {
                     onChange={handleChange}
                     sanitizeType="phone"
                     rateLimitKey="registration_form"
-                    className="w-full px-4 py-3 border-2 border-gray-200 bg-olive-green rounded-xl focus:ring-2 focus:ring-purple-400 focus:border-purple-400 transition-all duration-300 text-light-beige hover:border-gray-300 shadow-sm hover:shadow-md text-center"
+                    className="w-full px-4 py-3 border-2 border-gray-200 bg-white rounded-xl focus:ring-2 focus:ring-purple-400 focus:border-purple-400 transition-all duration-300 text-gray-900 placeholder:text-gray-400 hover:border-gray-300 shadow-sm hover:shadow-md text-center"
                     placeholder="+1234567890"
                   />
                 </div>
@@ -368,7 +368,7 @@ export default function RegisterPage() {
                     Country <span className="text-amber-500 font-normal">(Optional)</span>
                   </label>
                   <Select value={formData.location} onValueChange={(value) => setFormData({...formData, location: value, country: value})}>
-                    <SelectTrigger className="w-full px-4 py-3 border-2 border-gray-200 bg-olive-green rounded-xl focus:ring-2 focus:ring-amber-400 focus:border-amber-400 transition-all duration-300 text-light-beige hover:border-gray-300 shadow-sm hover:shadow-md text-center">
+                    <SelectTrigger className="w-full px-4 py-3 border-2 border-gray-200 bg-white rounded-xl focus:ring-2 focus:ring-amber-400 focus:border-amber-400 transition-all duration-300 text-gray-900 hover:border-gray-300 shadow-sm hover:shadow-md text-center">
                       <SelectValue placeholder="Select your country" />
                     </SelectTrigger>
                     <SelectContent className="bg-white border border-gray-200 shadow-lg z-50">
@@ -391,7 +391,7 @@ export default function RegisterPage() {
                   <label className="text-sm font-semibold text-indigo-700">
                     Timezone <span className="text-indigo-500 font-normal">(Auto-detected)</span>
                   </label>
-                  <div className="w-full px-4 py-3 border-2 border-gray-200 bg-olive-green rounded-xl text-light-beige text-center text-sm">
+                  <div className="w-full px-4 py-3 border-2 border-gray-200 bg-white rounded-xl text-gray-900 text-center text-sm">
                     🌍 {formData.timezone} ({new Date().toLocaleTimeString()})
                   </div>
                 </div>
@@ -402,7 +402,7 @@ export default function RegisterPage() {
                   Preferred Currency
                 </label>
                 <Select value={formData.currency} onValueChange={(value) => setFormData({...formData, currency: value})}>
-                  <SelectTrigger className="w-full px-4 py-3 border-2 border-gray-200 bg-olive-green rounded-xl focus:ring-2 focus:ring-purple-400 focus:border-purple-400 transition-all duration-300 text-light-beige hover:border-gray-300 shadow-sm hover:shadow-md text-center">
+                  <SelectTrigger className="w-full px-4 py-3 border-2 border-gray-200 bg-white rounded-xl focus:ring-2 focus:ring-purple-400 focus:border-purple-400 transition-all duration-300 text-gray-900 hover:border-gray-300 shadow-sm hover:shadow-md text-center">
                     <SelectValue placeholder="Select currency" />
                   </SelectTrigger>
                   <SelectContent className="bg-white border border-gray-200 shadow-lg z-50">
@@ -439,7 +439,7 @@ export default function RegisterPage() {
                     type={showPassword ? "text" : "password"}
                     value={formData.password}
                     onChange={handleChange}
-                    className="w-full pl-12 pr-12 py-3 border-2 border-gray-200 bg-olive-green rounded-xl focus:ring-2 focus:ring-green-400 focus:border-green-400 transition-all duration-300 text-light-beige hover:border-gray-300 shadow-sm hover:shadow-md text-center"
+                    className="w-full pl-12 pr-12 py-3 border-2 border-gray-200 bg-white rounded-xl focus:ring-2 focus:ring-green-400 focus:border-green-400 transition-all duration-300 text-gray-900 placeholder:text-gray-400 hover:border-gray-300 shadow-sm hover:shadow-md text-center"
                     placeholder="Create a secure password"
                     required
                   />
@@ -465,7 +465,7 @@ export default function RegisterPage() {
                     type={showConfirmPassword ? "text" : "password"}
                     value={formData.confirmPassword}
                     onChange={handleChange}
-                    className="w-full pl-12 pr-12 py-3 border-2 border-gray-200 bg-olive-green rounded-xl focus:ring-2 focus:ring-green-400 focus:border-green-400 transition-all duration-300 text-light-beige hover:border-gray-300 shadow-sm hover:shadow-md text-center"
+                    className="w-full pl-12 pr-12 py-3 border-2 border-gray-200 bg-white rounded-xl focus:ring-2 focus:ring-green-400 focus:border-green-400 transition-all duration-300 text-gray-900 placeholder:text-gray-400 hover:border-gray-300 shadow-sm hover:shadow-md text-center"
                     placeholder="Confirm your password"
                     required
                   />
