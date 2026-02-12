@@ -125,7 +125,7 @@ export function AnimatedOrchardGrid({
     } else if (status.isSelected) {
       return <Heart className="h-4 w-4 text-white fill-white" />
     } else if (showNumbers) {
-      return <span className="text-xs font-medium text-muted-foreground">{pocketNumber}</span>
+      return <span className="text-xs font-medium text-amber-900">{pocketNumber}</span>
     }
     
     return null
@@ -204,7 +204,7 @@ export function AnimatedOrchardGrid({
     <div className={cn("space-y-4", className)}>
       {/* Grid Header */}
       <div className="text-center mb-6">
-        <div className="flex justify-center items-center gap-6 text-sm text-muted-foreground">
+      <div className="flex justify-center items-center gap-6 text-sm text-card-foreground">
           <div className="flex items-center gap-2">
             <div className="w-4 h-4 bg-amber-200 border-2 border-amber-800 rounded-full"></div>
             <span>Available</span>
