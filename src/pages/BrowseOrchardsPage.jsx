@@ -261,7 +261,7 @@ export default function BrowseOrchardsPage() {
                   <SelectContent className="bg-white border-nav-community/30 z-50">
                     <SelectItem value="all">All Categories</SelectItem>
                     {categories.map((category) => (
-                      <SelectItem key={category} value={category}>
+                      <SelectItem key={category} value={category}>{`Gift of ${category}`}
                         {category}
                       </SelectItem>
                     ))}
@@ -316,7 +316,7 @@ export default function BrowseOrchardsPage() {
             <SelectContent className="bg-card border border-border z-50 max-h-[300px]">
               <SelectItem value="all">All Categories</SelectItem>
               {categories.map((cat) => (
-                <SelectItem key={cat} value={cat}>{cat}</SelectItem>
+                <SelectItem key={cat} value={cat}>{`Gift of ${cat}`}</SelectItem>
               ))}
             </SelectContent>
           </Select>
