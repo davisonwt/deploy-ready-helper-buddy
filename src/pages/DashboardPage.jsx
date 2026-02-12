@@ -939,45 +939,45 @@ export default function DashboardPage() {
               }}></span>
                 Explore
               </h3>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+              <div className="grid grid-cols-3 gap-2 sm:gap-3">
                 {/* Community ChatApp */}
                 <Link to="/community-chat">
-                  <Button className="w-full h-16 sm:h-20 border shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105 font-medium" style={{
+                  <Button className="w-full h-14 sm:h-16 border shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105 font-medium text-xs sm:text-sm" style={{
                   background: 'linear-gradient(135deg, #f97316 0%, #ea580c 100%)',
                   color: '#fff',
                   borderColor: '#f97316'
                 }}>
                     <div className="text-center">
-                      <MessageSquare className="h-5 w-5 sm:h-6 sm:w-6 mx-auto mb-1 sm:mb-2" />
-                      <span className="text-sm sm:text-base">Community ChatApp</span>
+                      <MessageSquare className="h-4 w-4 sm:h-5 sm:w-5 mx-auto mb-1" />
+                      <span>Community ChatApp</span>
                     </div>
                   </Button>
                 </Link>
 
                 {/* 364ttt - Torah Top Ten */}
                 <Link to="/364ttt">
-                  <Button className="w-full h-16 sm:h-20 border shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105 font-medium" style={{
+                  <Button className="w-full h-14 sm:h-16 border shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105 font-medium text-xs sm:text-sm" style={{
                   background: 'linear-gradient(135deg, #7c3aed 0%, #a855f7 100%)',
                   color: '#fff',
                   borderColor: '#8b5cf6'
                 }}>
                     <div className="text-center">
-                      <Music className="h-5 w-5 sm:h-6 sm:w-6 mx-auto mb-1 sm:mb-2" />
-                      <span className="text-sm sm:text-base">Weekly 364 Torah Top Ten</span>
+                      <Music className="h-4 w-4 sm:h-5 sm:w-5 mx-auto mb-1" />
+                      <span>364 Torah Top Ten</span>
                     </div>
                   </Button>
                 </Link>
 
                 {/* Journal & Calendar */}
                 <Link to="/profile?tab=journal">
-                  <Button className="w-full h-16 sm:h-20 border shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105 font-medium" style={{
+                  <Button className="w-full h-14 sm:h-16 border shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105 font-medium text-xs sm:text-sm" style={{
                   background: 'linear-gradient(135deg, #6366f1, #8b5cf6)',
                   borderColor: '#0A1931',
                   color: 'white'
                 }}>
                     <div className="text-center">
-                      <BookOpen className="h-5 w-5 sm:h-6 sm:w-6 mx-auto mb-1 sm:mb-2" />
-                      <span className="text-sm sm:text-base">Journal & Calendar</span>
+                      <BookOpen className="h-4 w-4 sm:h-5 sm:w-5 mx-auto mb-1" />
+                      <span>Journal & Calendar</span>
                     </div>
                   </Button>
                 </Link>
