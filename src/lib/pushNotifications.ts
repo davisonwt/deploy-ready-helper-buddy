@@ -81,7 +81,7 @@ export interface NotificationPayload {
 // Subscribe to push notifications
 export async function subscribeToPush(userId: string) {
   try {
-    const registration = await navigator.serviceWorker.ready
+    const registration = await navigator.serviceWorker.ready as any
     
     // Check if already subscribed
     const existingSubscription = await registration.pushManager.getSubscription()
@@ -116,7 +116,7 @@ export async function subscribeToPush(userId: string) {
 // Unsubscribe from push notifications
 export async function unsubscribeFromPush(userId: string) {
   try {
-    const registration = await navigator.serviceWorker.ready
+    const registration = await navigator.serviceWorker.ready as any
     const subscription = await registration.pushManager.getSubscription()
     
     if (subscription) {
