@@ -69,6 +69,7 @@ const EditOrchardPage = lazy(() => import("./pages/EditOrchardPage"));
 const PremiumRoomsLanding = lazy(() => import("./pages/PremiumRoomsLanding"));
 const PremiumRoomViewPage = lazy(() => import("./pages/PremiumRoomViewPage"));
 const EditPremiumRoomPage = lazy(() => import("./pages/EditPremiumRoomPage"));
+const CommunityChatPage = lazy(() => import("./pages/CommunityChatPage"));
 
 // Lazy load secondary pages for better performance
 const AnimatedOrchardPage = lazy(() => import("./pages/AnimatedOrchardPage"));
@@ -495,6 +496,15 @@ const App = () => (
               {/* ChatApp - Redirect to Communications Hub */}
               <Route path="/chatapp" element={
                 <Navigate to="/communications-hub#chats" replace />
+              } />
+
+              {/* Community Chat - Dedicated community-wide chat */}
+              <Route path="/community-chat" element={
+                <ProtectedRoute>
+                  <Suspense fallback={<div className="flex items-center justify-center min-h-screen"><div className="text-xl">Loading...</div></div>}>
+                    <CommunityChatPage />
+                  </Suspense>
+                </ProtectedRoute>
               } />
               
               {/* Radio Slot Application - Keep functional */}
