@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { Link } from 'react-router-dom';
-import { ArrowLeft, Send, Paperclip, Users, Loader2, Trash2 } from 'lucide-react';
+import { ArrowLeft, Send, Paperclip, Users, Loader2, Trash2, Pencil, Check, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
@@ -31,6 +31,8 @@ const CommunityChatPage: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [sending, setSending] = useState(false);
   const [participantCount, setParticipantCount] = useState(0);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editText, setEditText] = useState('');
   const messagesEndRef = React.useRef<HTMLDivElement>(null);
 
   const scrollToBottom = () => {
@@ -149,6 +151,34 @@ const CommunityChatPage: React.FC = () => {
     }
   };
 
+  // Edit message
+
+  const startEdit = (msg: Message) => {
+    setEditingId(msg.id);
+    setEditText(msg.content || '');
+  };
+
+  const cancelEdit = () => {
+    setEditingId(null);
+    setEditText('');
+  };
+
+  const handleEdit = async () => {
+    if (!editingId || !editText.trim()) return;
+    try {
+      const { error } = await supabase
+        .from('chat_messages')
+        .update({ content: editText.trim(), is_edited: true })
+        .eq('id', editingId)
+        .eq('sender_id', user?.id);
+      if (error) throw error;
+      setMessages(prev => prev.map(m => m.id === editingId ? { ...m, content: editText.trim(), is_edited: true } : m));
+      cancelEdit();
+    } catch (err: any) {
+      toast({ title: 'Error', description: err.message || 'Failed to edit', variant: 'destructive' });
+    }
+  };
+
   // Send message
   const handleSend = async () => {
     if (!newMessage.trim() || !roomId || !user?.id) return;
@@ -242,29 +272,58 @@ const CommunityChatPage: React.FC = () => {
                       </div>
                     )}
                     <div className="flex items-center gap-1">
-                      {isOwn && (
-                        <button
-                          onClick={() => handleDelete(msg.id)}
-                          className="opacity-0 group-hover:opacity-100 transition-opacity p-1 rounded-full hover:bg-white/20"
-                          title="Delete message"
-                        >
-                          <Trash2 className="h-3.5 w-3.5 text-white/60 hover:text-red-400" />
-                        </button>
+                      {isOwn && editingId !== msg.id && (
+                        <>
+                          <button
+                            onClick={() => startEdit(msg)}
+                            className="opacity-0 group-hover:opacity-100 transition-opacity p-1 rounded-full hover:bg-white/20"
+                            title="Edit message"
+                          >
+                            <Pencil className="h-3.5 w-3.5 text-white/60 hover:text-blue-400" />
+                          </button>
+                          <button
+                            onClick={() => handleDelete(msg.id)}
+                            className="opacity-0 group-hover:opacity-100 transition-opacity p-1 rounded-full hover:bg-white/20"
+                            title="Delete message"
+                          >
+                            <Trash2 className="h-3.5 w-3.5 text-white/60 hover:text-red-400" />
+                          </button>
+                        </>
                       )}
-                      <div
-                        className="rounded-2xl px-4 py-2 text-sm"
-                        style={{
-                          backgroundColor: isOwn ? 'rgba(249,115,22,0.85)' : 'rgba(255,255,255,0.1)',
-                          color: 'white',
-                        }}
-                      >
-                        {msg.content}
-                        {msg.file_url && (
-                          <a href={msg.file_url} target="_blank" rel="noopener noreferrer" className="block mt-1 text-xs underline text-blue-300">
-                            📎 {msg.file_name || 'Attachment'}
-                          </a>
-                        )}
-                      </div>
+                      {editingId === msg.id ? (
+                        <div className="flex items-center gap-1 w-full">
+                          <input
+                            type="text"
+                            value={editText}
+                            onChange={e => setEditText(e.target.value)}
+                            onKeyDown={e => { if (e.key === 'Enter') handleEdit(); if (e.key === 'Escape') cancelEdit(); }}
+                            className="flex-1 bg-white/20 text-white rounded-full px-3 py-1.5 text-sm border border-white/20 focus:outline-none focus:border-orange-500/50"
+                            autoFocus
+                          />
+                          <button onClick={handleEdit} className="p-1 rounded-full hover:bg-white/20" title="Save">
+                            <Check className="h-4 w-4 text-green-400" />
+                          </button>
+                          <button onClick={cancelEdit} className="p-1 rounded-full hover:bg-white/20" title="Cancel">
+                            <X className="h-4 w-4 text-red-400" />
+                          </button>
+                        </div>
+                      ) : (
+                        <div
+                          className="rounded-2xl px-4 py-2 text-sm"
+                          style={{
+                            backgroundColor: isOwn ? 'rgba(249,115,22,0.85)' : 'rgba(255,255,255,0.1)',
+                            color: 'white',
+                          }}
+                        >
+                          {msg.content}
+                          {(msg as any).is_edited && <span className="text-[10px] text-white/50 ml-1">(edited)</span>}
+                          {msg.file_url && (
+                            <a href={msg.file_url} target="_blank" rel="noopener noreferrer" className="block mt-1 text-xs underline text-blue-300">
+                              📎 {msg.file_name || 'Attachment'}
+                            </a>
+                          )}
+                        </div>
+                      )}
                     </div>
                     <p className="text-[10px] text-white/40 mt-1 px-1">
                       {new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
