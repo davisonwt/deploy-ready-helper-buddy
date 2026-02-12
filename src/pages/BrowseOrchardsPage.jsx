@@ -220,7 +220,7 @@ export default function BrowseOrchardsPage() {
                   color: 'hsl(137, 80%, 65%)', 
                   textShadow: '2px 2px 4px hsl(137, 80%, 45%)'
                 }}>
-                  Community Orchards
+                  {user?.first_name || 'Friend'}, Welcome to S2G Community Orchards
                 </h1>
                 <p className="text-lg" style={{ color: '#0b6623' }}>
                   Every bestowal helps dreams grow! 🌱

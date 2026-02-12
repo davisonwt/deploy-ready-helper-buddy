@@ -3,6 +3,7 @@ import { useInfiniteQuery, useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useProductBasket } from '@/contexts/ProductBasketContext';
 import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useAuth } from '@/hooks/useAuth';
 import { Loader2, Music, Book, Image, Video, TrendingUp, BookOpen } from 'lucide-react';
 import { ImageCarousel } from '@/components/products/ImageCarousel';
 import CategoryFilter from '@/components/products/CategoryFilter';
@@ -70,6 +71,7 @@ function getCategoryColor(category: string) {
 }
 
 export default function ProductsPage() {
+  const { user } = useAuth();
   const [searchParams, setSearchParams] = useSearchParams();
   const filterParam = searchParams.get('filter') || 'all';
   
@@ -399,7 +401,7 @@ export default function ProductsPage() {
       {/* Header */}
        <div className="text-center py-12 px-6">
         <h1 className="text-5xl md:text-6xl font-bold flex items-center justify-center gap-4">
-          <span className="text-7xl">S2G Community Seeds</span>
+          <span className="text-7xl">{user?.first_name || 'Friend'}, Welcome to S2G Community Seeds</span>
         </h1>
         <p className="text-yellow-200 text-xl mt-4 max-w-2xl mx-auto">
           Discover amazing music, art, courses & digital gifts from our family of creators.<br />
