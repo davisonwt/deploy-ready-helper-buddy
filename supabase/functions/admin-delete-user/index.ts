@@ -103,6 +103,31 @@ Deno.serve(async (req) => {
     // Delete achievements
     await adminClient.from("achievements").delete().eq("user_id", target_user_id);
 
+    // Nullify radio_schedule references
+    await adminClient.from("radio_schedule").update({ approved_by: null }).eq("approved_by", target_user_id);
+
+    // Nullify any other FK references that might block deletion
+    await adminClient.from("bestowals").delete().eq("bestower_id", target_user_id);
+    await adminClient.from("chat_participants").delete().eq("user_id", target_user_id);
+    await adminClient.from("chat_messages").update({ sender_id: null }).eq("sender_id", target_user_id);
+    await adminClient.from("community_posts").delete().eq("author_id", target_user_id);
+    await adminClient.from("community_post_replies").delete().eq("author_id", target_user_id);
+    await adminClient.from("community_post_votes").delete().eq("user_id", target_user_id);
+    await adminClient.from("content_flags").delete().eq("user_id", target_user_id);
+    await adminClient.from("call_sessions").delete().eq("caller_id", target_user_id);
+    await adminClient.from("call_sessions").delete().eq("receiver_id", target_user_id);
+    await adminClient.from("clubhouse_gifts").delete().eq("giver_id", target_user_id);
+    await adminClient.from("clubhouse_gifts").delete().eq("receiver_id", target_user_id);
+    await adminClient.from("ai_creations").delete().eq("user_id", target_user_id);
+    await adminClient.from("ai_usage").delete().eq("user_id", target_user_id);
+    await adminClient.from("birthdays").delete().eq("user_id", target_user_id);
+    await adminClient.from("community_drivers").delete().eq("user_id", target_user_id);
+    await adminClient.from("affiliates").delete().eq("user_id", target_user_id);
+    await adminClient.from("ambassador_applications").delete().eq("user_id", target_user_id);
+    await adminClient.from("circle_members").delete().eq("user_id", target_user_id);
+    await adminClient.from("document_annotations").delete().eq("user_id", target_user_id);
+    await adminClient.from("baskets").delete().eq("user_id", target_user_id);
+
     // Log the deletion as a security event
     try {
       await adminClient.rpc("log_security_event_enhanced", {
