@@ -307,20 +307,6 @@ export default function BrowseOrchardsPage() {
           </Card>
         </div>
 
-        {/* Category Dropdown */}
-        <div className="flex justify-center mb-8 px-4">
-          <Select value={selectedCategory} onValueChange={setSelectedCategory}>
-            <SelectTrigger className="w-[280px] backdrop-blur-md bg-amber-600 border-amber-500 text-white font-bold shadow-lg shadow-amber-600/30">
-              <SelectValue placeholder="All Categories" />
-            </SelectTrigger>
-            <SelectContent className="bg-card border border-border z-50 max-h-[300px]">
-              <SelectItem value="all">All Categories</SelectItem>
-              {categories.map((cat) => (
-                <SelectItem key={cat} value={cat}>{`Gift of ${cat}`}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
 
         {/* Results */}
         {loading ? (
