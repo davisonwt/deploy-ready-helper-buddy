@@ -152,7 +152,7 @@ export default function MyProductsPage() {
                   <Package className='w-16 h-16 text-white' />
                 </div>
                 <h1 className='text-6xl font-bold text-white drop-shadow-2xl'>
-                  My S2G Seeds
+                  {user?.first_name || 'Friend'}, Welcome to Your S2G Seeds
                 </h1>
               </div>
               <p className='text-white/90 text-xl mb-4 backdrop-blur-sm bg-white/10 rounded-lg p-4 border border-white/20'>
