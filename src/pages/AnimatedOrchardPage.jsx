@@ -242,9 +242,9 @@ export default function AnimatedOrchardPage({ orchard: propOrchard }) {
           <OrchardImages orchard={orchard} />
           
           {/* Orchard Grid */}
-          <Card className="bg-white/95 backdrop-blur-sm border-green-200 shadow-xl">
+          <Card className="bg-card border-border shadow-xl">
             <CardHeader>
-              <CardTitle className="text-2xl text-green-800 text-center">
+              <CardTitle className="text-2xl text-card-foreground text-center">
                 🌱 Orchard Growth Visualization
               </CardTitle>
             </CardHeader>

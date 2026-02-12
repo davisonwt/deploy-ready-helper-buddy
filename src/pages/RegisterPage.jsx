@@ -244,16 +244,16 @@ export default function RegisterPage() {
           
           <CardContent className="p-8">
             <form onSubmit={handleSubmit} className="space-y-6">
-              <div className="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+              <div className="mb-6 p-4 bg-blue-900/50 border border-blue-400/30 rounded-lg">
                 <div className="flex items-start">
                   <div className="flex-shrink-0">
-                    <svg className="h-5 w-5 text-blue-400" fill="currentColor" viewBox="0 0 20 20">
+                    <svg className="h-5 w-5 text-blue-300" fill="currentColor" viewBox="0 0 20 20">
                       <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
                     </svg>
                   </div>
                   <div className="ml-3">
-                    <h3 className="text-sm font-medium text-blue-800">Account Policy</h3>
-                    <p className="text-sm text-blue-700 mt-1">
+                    <h3 className="text-sm font-medium text-blue-200">Account Policy</h3>
+                    <p className="text-sm text-blue-300 mt-1">
                       Each email address is limited to one sow2grow account. If you already have an account, please use the login page instead.
                     </p>
                   </div>
@@ -287,7 +287,7 @@ export default function RegisterPage() {
               
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-2">
-                  <label htmlFor="firstName" className="text-sm font-semibold text-green-700">
+                  <label htmlFor="firstName" className="text-sm font-semibold text-foreground">
                     First Name
                   </label>
                   <SecureInput
@@ -306,7 +306,7 @@ export default function RegisterPage() {
                 </div>
                 
                 <div className="space-y-2">
-                  <label htmlFor="lastName" className="text-sm font-semibold text-blue-700">
+                  <label htmlFor="lastName" className="text-sm font-semibold text-foreground">
                     Last Name
                   </label>
                   <SecureInput
@@ -327,7 +327,7 @@ export default function RegisterPage() {
               
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-2">
-                  <label htmlFor="email" className="text-sm font-semibold text-blue-700">
+                  <label htmlFor="email" className="text-sm font-semibold text-foreground">
                     Email Address
                   </label>
                   <SecureInput
@@ -345,8 +345,8 @@ export default function RegisterPage() {
                 </div>
                 
                 <div className="space-y-2">
-                  <label htmlFor="phone" className="text-sm font-semibold text-purple-700">
-                    Phone <span className="text-purple-500 font-normal">(Optional)</span>
+                  <label htmlFor="phone" className="text-sm font-semibold text-foreground">
+                    Phone <span className="text-muted-foreground font-normal">(Optional)</span>
                   </label>
                   <SecureInput
                     id="phone"
@@ -364,8 +364,8 @@ export default function RegisterPage() {
               
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-2">
-                  <label htmlFor="location" className="text-sm font-semibold text-amber-700">
-                    Country <span className="text-amber-500 font-normal">(Optional)</span>
+                  <label htmlFor="location" className="text-sm font-semibold text-foreground">
+                    Country <span className="text-muted-foreground font-normal">(Optional)</span>
                   </label>
                   <Select value={formData.location} onValueChange={(value) => setFormData({...formData, location: value, country: value})}>
                     <SelectTrigger className="w-full px-4 py-3 border-2 border-gray-200 bg-white rounded-xl focus:ring-2 focus:ring-amber-400 focus:border-amber-400 transition-all duration-300 text-gray-900 hover:border-gray-300 shadow-sm hover:shadow-md text-center">
@@ -388,8 +388,8 @@ export default function RegisterPage() {
                 </div>
                 
                 <div className="space-y-2">
-                  <label className="text-sm font-semibold text-indigo-700">
-                    Timezone <span className="text-indigo-500 font-normal">(Auto-detected)</span>
+                  <label className="text-sm font-semibold text-foreground">
+                    Timezone <span className="text-muted-foreground font-normal">(Auto-detected)</span>
                   </label>
                   <div className="w-full px-4 py-3 border-2 border-gray-200 bg-white rounded-xl text-gray-900 text-center text-sm">
                     🌍 {formData.timezone} ({new Date().toLocaleTimeString()})
@@ -398,7 +398,7 @@ export default function RegisterPage() {
               </div>
               
               <div className="space-y-2">
-                <label className="text-sm font-semibold text-purple-700">
+                <label className="text-sm font-semibold text-foreground">
                   Preferred Currency
                 </label>
                 <Select value={formData.currency} onValueChange={(value) => setFormData({...formData, currency: value})}>
@@ -428,7 +428,7 @@ export default function RegisterPage() {
               </div>
               
               <div className="space-y-2">
-                <label htmlFor="password" className="text-sm font-semibold text-green-700">
+                <label htmlFor="password" className="text-sm font-semibold text-foreground">
                   Password
                 </label>
                 <div className="relative">
@@ -454,7 +454,7 @@ export default function RegisterPage() {
               </div>
               
               <div className="space-y-2">
-                <label htmlFor="confirmPassword" className="text-sm font-semibold text-green-700">
+                <label htmlFor="confirmPassword" className="text-sm font-semibold text-foreground">
                   Confirm Password
                 </label>
                 <div className="relative">
