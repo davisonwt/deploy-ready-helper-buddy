@@ -584,6 +584,9 @@ export default function LiveActivityWidget() {
         case 'call':
           toast.info('Group call feature coming soon!')
           break
+        case 'forum':
+          window.location.href = '/community-chat'
+          break
         default:
           break
       }
