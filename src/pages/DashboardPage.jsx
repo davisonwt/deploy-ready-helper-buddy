@@ -27,6 +27,7 @@ import { SowerBalanceCard } from '@/components/wallet/SowerBalanceCard';
 import SecurityQuestionsAlert from '@/components/auth/SecurityQuestionsAlert';
 import { SeedEngagementWidget } from '@/components/dashboard/SeedEngagementWidget';
 export default function DashboardPage() {
+  const [communityUnread, setCommunityUnread] = useState(0);
   const {
     user,
     loading: authLoading
@@ -366,6 +367,44 @@ export default function DashboardPage() {
     }, 1000);
     return () => clearInterval(interval);
   }, []);
+
+  // Fetch community chat unread count
+  useEffect(() => {
+    if (!user?.id) return;
+    const fetchUnread = async () => {
+      try {
+        // Get the community room
+        const { data: roomId } = await supabase.rpc('get_or_create_community_room');
+        if (!roomId) return;
+
+        // Get user's last_read_at for this room
+        const { data: participant } = await supabase
+          .from('chat_participants')
+          .select('last_read_at')
+          .eq('room_id', roomId)
+          .eq('user_id', user.id)
+          .single();
+
+        const lastRead = participant?.last_read_at || '1970-01-01T00:00:00Z';
+
+        // Count messages after last_read_at (excluding own messages)
+        const { count } = await supabase
+          .from('chat_messages')
+          .select('*', { count: 'exact', head: true })
+          .eq('room_id', roomId)
+          .gt('created_at', lastRead)
+          .neq('sender_id', user.id);
+
+        setCommunityUnread(count || 0);
+      } catch (err) {
+        console.error('Error fetching community unread:', err);
+      }
+    };
+    fetchUnread();
+    const interval = setInterval(fetchUnread, 30000);
+    return () => clearInterval(interval);
+  }, [user?.id]);
+
   useEffect(() => {
     if (user && !authLoading) {
       if (process.env.NODE_ENV === 'development') {
@@ -941,7 +980,7 @@ export default function DashboardPage() {
               </h3>
               <div className="grid grid-cols-3 gap-2 sm:gap-3">
                 {/* Community ChatApp */}
-                <Link to="/community-chat">
+                <Link to="/community-chat" className="relative">
                   <Button className="w-full h-14 sm:h-16 border shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105 font-medium text-xs sm:text-sm" style={{
                   background: 'linear-gradient(135deg, #f97316 0%, #ea580c 100%)',
                   color: '#fff',
@@ -952,6 +991,11 @@ export default function DashboardPage() {
                       <span>Community ChatApp</span>
                     </div>
                   </Button>
+                  {communityUnread > 0 && (
+                    <span className="absolute -top-2 -right-2 bg-red-500 text-white text-[10px] font-bold rounded-full min-w-[20px] h-5 flex items-center justify-center px-1 shadow-lg z-10">
+                      {communityUnread > 99 ? '99+' : communityUnread}
+                    </span>
+                  )}
                 </Link>
 
                 {/* 364ttt - Torah Top Ten */}
