@@ -131,8 +131,8 @@ export default function CategoryFilter({
           </SelectTrigger>
           <SelectContent className="bg-card border border-border z-50 max-h-[300px]">
             {categories.map((category) => (
-              <SelectItem key={category} value={category} className="capitalize">
-                {category === 'all' ? 'All Categories' : category}
+            <SelectItem key={category} value={category} className="capitalize">
+                {category === 'all' ? 'All Categories' : `Gift of ${category.charAt(0).toUpperCase() + category.slice(1)}`}
               </SelectItem>
             ))}
           </SelectContent>
