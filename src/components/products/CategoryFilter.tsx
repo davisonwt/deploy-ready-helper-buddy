@@ -1,5 +1,6 @@
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Music, FileText, Palette, Grid3x3, Disc, Disc3, BookOpen, PlayCircle, PauseCircle, ShoppingBag, Apple, BookOpenCheck } from 'lucide-react';
 
 interface CategoryFilterProps {
@@ -122,22 +123,20 @@ export default function CategoryFilter({
         </div>
       )}
 
-      {/* Category Filter */}
-      <div className="flex flex-wrap gap-2 justify-center">
-        {categories.map((category) => (
-          <Button
-            key={category}
-            variant={selectedCategory === category ? 'default' : 'outline'}
-            onClick={() => onCategoryChange(category)}
-            className={`capitalize backdrop-blur-md border ${
-              selectedCategory === category
-                ? 'bg-amber-600 border-amber-500 text-white font-bold shadow-lg shadow-amber-600/30 hover:bg-amber-700'
-                : 'bg-white/10 border-white/30 text-white/70 hover:bg-white/20 hover:text-white'
-            }`}
-          >
-            {category}
-          </Button>
-        ))}
+      {/* Category Dropdown */}
+      <div className="flex justify-center">
+        <Select value={selectedCategory} onValueChange={onCategoryChange}>
+          <SelectTrigger className="w-[280px] backdrop-blur-md bg-amber-600 border-amber-500 text-white font-bold shadow-lg shadow-amber-600/30">
+            <SelectValue placeholder="All Categories" />
+          </SelectTrigger>
+          <SelectContent className="bg-card border border-border z-50 max-h-[300px]">
+            {categories.map((category) => (
+              <SelectItem key={category} value={category} className="capitalize">
+                {category === 'all' ? 'All Categories' : category}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
       </div>
     </div>
   );
