@@ -291,21 +291,23 @@ const CommunityChatPage: React.FC = () => {
                         </>
                       )}
                       {editingId === msg.id ? (
-                        <div className="flex items-center gap-1 w-full">
-                          <input
-                            type="text"
+                        <div className="flex flex-col gap-2 w-full">
+                          <textarea
                             value={editText}
                             onChange={e => setEditText(e.target.value)}
-                            onKeyDown={e => { if (e.key === 'Enter') handleEdit(); if (e.key === 'Escape') cancelEdit(); }}
-                            className="flex-1 bg-white/20 text-white rounded-full px-3 py-1.5 text-sm border border-white/20 focus:outline-none focus:border-orange-500/50"
+                            onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleEdit(); } if (e.key === 'Escape') cancelEdit(); }}
+                            className="w-full bg-white/20 text-white rounded-xl px-4 py-3 text-sm border border-white/20 focus:outline-none focus:border-orange-500/50 resize-none"
+                            rows={Math.max(3, editText.split('\n').length)}
                             autoFocus
                           />
-                          <button onClick={handleEdit} className="p-1 rounded-full hover:bg-white/20" title="Save">
-                            <Check className="h-4 w-4 text-green-400" />
-                          </button>
-                          <button onClick={cancelEdit} className="p-1 rounded-full hover:bg-white/20" title="Cancel">
-                            <X className="h-4 w-4 text-red-400" />
-                          </button>
+                          <div className="flex items-center gap-1 justify-end">
+                            <button onClick={cancelEdit} className="px-3 py-1 rounded-full text-xs text-white/70 hover:bg-white/20" title="Cancel">
+                              Cancel
+                            </button>
+                            <button onClick={handleEdit} className="px-3 py-1 rounded-full text-xs bg-orange-500/80 text-white hover:bg-orange-500" title="Save">
+                              Save
+                            </button>
+                          </div>
                         </div>
                       ) : (
                         <div
