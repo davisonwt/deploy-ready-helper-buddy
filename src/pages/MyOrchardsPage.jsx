@@ -368,31 +368,19 @@ export default function MyOrchardsPage() {
                 </div>
               </div>
               
-              {/* Category Pill Buttons */}
-              <div className='flex flex-wrap justify-center gap-2 px-4'>
-                <button
-                  onClick={() => setSelectedCategory('all')}
-                  className={`px-4 py-2 rounded-full text-sm font-medium capitalize backdrop-blur-md border transition-all ${
-                    selectedCategory === 'all'
-                      ? 'bg-amber-600 border-amber-500 text-white font-bold shadow-lg shadow-amber-600/30'
-                      : 'bg-white/10 border-white/30 text-white/70 hover:bg-white/20 hover:text-white'
-                  }`}
-                >
-                  All Categories
-                </button>
-                {categories.map((cat) => (
-                  <button
-                    key={cat}
-                    onClick={() => setSelectedCategory(cat)}
-                    className={`px-4 py-2 rounded-full text-sm font-medium backdrop-blur-md border transition-all ${
-                      selectedCategory === cat
-                        ? 'bg-amber-600 border-amber-500 text-white font-bold shadow-lg shadow-amber-600/30'
-                        : 'bg-white/10 border-white/30 text-white/70 hover:bg-white/20 hover:text-white'
-                    }`}
-                  >
-                    {cat}
-                  </button>
-                ))}
+              {/* Category Dropdown */}
+              <div className='flex justify-center px-4'>
+                <Select value={selectedCategory} onValueChange={setSelectedCategory}>
+                  <SelectTrigger className="w-[280px] backdrop-blur-md bg-amber-600 border-amber-500 text-white font-bold shadow-lg shadow-amber-600/30">
+                    <SelectValue placeholder="All Categories" />
+                  </SelectTrigger>
+                  <SelectContent className="bg-card border border-border z-50 max-h-[300px]">
+                    <SelectItem value="all">All Categories</SelectItem>
+                    {categories.map((cat) => (
+                      <SelectItem key={cat} value={cat}>{cat}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
             </div>
           </div>
