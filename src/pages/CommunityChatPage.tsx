@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { Link } from 'react-router-dom';
-import { ArrowLeft, Send, Paperclip, Users, Loader2 } from 'lucide-react';
+import { ArrowLeft, Send, Paperclip, Users, Loader2, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
@@ -120,10 +120,34 @@ const CommunityChatPage: React.FC = () => {
       }, () => {
         fetchMessages();
       })
+      .on('postgres_changes', {
+        event: 'DELETE',
+        schema: 'public',
+        table: 'chat_messages',
+        filter: `room_id=eq.${roomId}`,
+      }, () => {
+        fetchMessages();
+      })
       .subscribe();
 
     return () => { supabase.removeChannel(channel); };
   }, [roomId, fetchMessages]);
+
+  // Delete message
+  const handleDelete = async (msgId: string) => {
+    if (!window.confirm('Delete this message?')) return;
+    try {
+      const { error } = await supabase
+        .from('chat_messages')
+        .delete()
+        .eq('id', msgId)
+        .eq('sender_id', user?.id);
+      if (error) throw error;
+      setMessages(prev => prev.filter(m => m.id !== msgId));
+    } catch (err: any) {
+      toast({ title: 'Error', description: err.message || 'Failed to delete', variant: 'destructive' });
+    }
+  };
 
   // Send message
   const handleSend = async () => {
@@ -203,7 +227,7 @@ const CommunityChatPage: React.FC = () => {
               const name = msg.sender_profile?.display_name || 
                 `${msg.sender_profile?.first_name || ''} ${msg.sender_profile?.last_name || ''}`.trim() || 'Unknown';
               return (
-                <div key={msg.id} className={`flex ${isOwn ? 'justify-end' : 'justify-start'}`}>
+                <div key={msg.id} className={`flex ${isOwn ? 'justify-end' : 'justify-start'} group`}>
                   <div className={`max-w-[80%] ${isOwn ? 'order-2' : ''}`}>
                     {!isOwn && (
                       <div className="flex items-center gap-2 mb-1">
@@ -217,19 +241,30 @@ const CommunityChatPage: React.FC = () => {
                         <span className="text-xs text-white/70 font-medium">{name}</span>
                       </div>
                     )}
-                    <div
-                      className="rounded-2xl px-4 py-2 text-sm"
-                      style={{
-                        backgroundColor: isOwn ? 'rgba(249,115,22,0.85)' : 'rgba(255,255,255,0.1)',
-                        color: 'white',
-                      }}
-                    >
-                      {msg.content}
-                      {msg.file_url && (
-                        <a href={msg.file_url} target="_blank" rel="noopener noreferrer" className="block mt-1 text-xs underline text-blue-300">
-                          📎 {msg.file_name || 'Attachment'}
-                        </a>
+                    <div className="flex items-center gap-1">
+                      {isOwn && (
+                        <button
+                          onClick={() => handleDelete(msg.id)}
+                          className="opacity-0 group-hover:opacity-100 transition-opacity p-1 rounded-full hover:bg-white/20"
+                          title="Delete message"
+                        >
+                          <Trash2 className="h-3.5 w-3.5 text-white/60 hover:text-red-400" />
+                        </button>
                       )}
+                      <div
+                        className="rounded-2xl px-4 py-2 text-sm"
+                        style={{
+                          backgroundColor: isOwn ? 'rgba(249,115,22,0.85)' : 'rgba(255,255,255,0.1)',
+                          color: 'white',
+                        }}
+                      >
+                        {msg.content}
+                        {msg.file_url && (
+                          <a href={msg.file_url} target="_blank" rel="noopener noreferrer" className="block mt-1 text-xs underline text-blue-300">
+                            📎 {msg.file_name || 'Attachment'}
+                          </a>
+                        )}
+                      </div>
                     </div>
                     <p className="text-[10px] text-white/40 mt-1 px-1">
                       {new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
