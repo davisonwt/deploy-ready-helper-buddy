@@ -7563,6 +7563,7 @@ export type Database = {
       get_current_radio_show: { Args: never; Returns: Json }
       get_current_week_id: { Args: never; Returns: string }
       get_message_streak: { Args: { user_id_param: string }; Returns: number }
+      get_or_create_community_room: { Args: never; Returns: string }
       get_or_create_direct_room: {
         Args: { user1_id: string; user2_id: string }
         Returns: string
