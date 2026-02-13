@@ -172,7 +172,17 @@ Deno.serve(async (req) => {
     await adminClient.from("document_annotations").delete().eq("user_id", target_user_id);
     await adminClient.from("baskets").delete().eq("user_id", target_user_id);
 
-    // Log the deletion as a security event
+    // Delete memry content
+    const { data: memryPosts } = await adminClient.from("memry_posts").select("id").eq("user_id", target_user_id);
+    if (memryPosts && memryPosts.length > 0) {
+      const postIds = memryPosts.map((p: any) => p.id);
+      await adminClient.from("memry_likes").delete().in("post_id", postIds);
+      await adminClient.from("memry_comments").delete().in("post_id", postIds);
+    }
+    await adminClient.from("memry_likes").delete().eq("user_id", target_user_id);
+    await adminClient.from("memry_comments").delete().eq("user_id", target_user_id);
+    await adminClient.from("memry_posts").delete().eq("user_id", target_user_id);
+
     try {
       await adminClient.rpc("log_security_event_enhanced", {
         event_type: "admin_user_deletion",
