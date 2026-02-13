@@ -168,7 +168,10 @@ export const SocialActionButtons: FC<SocialActionButtonsProps> = ({
     e.stopPropagation();
     const tikTokText = `${shareText} ${getShareUrl()} #Sow2Grow #Community`;
     await navigator.clipboard.writeText(tikTokText);
-    toast.success('TikTok share text copied to clipboard!');
+    toast.success('TikTok share text copied! Opening TikTok — paste it into your new post.');
+    setTimeout(() => {
+      window.open('https://www.tiktok.com/upload', '_blank');
+    }, 500);
   };
 
   const handleEmailShare = (e: React.MouseEvent) => {
