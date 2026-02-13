@@ -44,7 +44,7 @@ export default function CommunityBookCard({ book }: CommunityBookCardProps) {
             <ImageCarousel
               images={images}
               title={book.title}
-              type="ebook"
+              type="book"
             />
 
             {/* Content */}
