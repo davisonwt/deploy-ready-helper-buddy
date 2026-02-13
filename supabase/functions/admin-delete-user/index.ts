@@ -103,6 +103,51 @@ Deno.serve(async (req) => {
     // Delete achievements
     await adminClient.from("achievements").delete().eq("user_id", target_user_id);
 
+    // Delete user's products and related data
+    const { data: userProducts } = await adminClient.from("products").select("id").eq("sower_id", target_user_id);
+    if (userProducts && userProducts.length > 0) {
+      const productIds = userProducts.map((p: any) => p.id);
+      await adminClient.from("basket_items").delete().in("product_id", productIds);
+      await adminClient.from("product_reviews").delete().in("product_id", productIds);
+      await adminClient.from("pocket_products").delete().in("product_id", productIds);
+      await adminClient.from("products").delete().eq("sower_id", target_user_id);
+    }
+
+    // Delete user's sower books and related data
+    const { data: userBooks } = await adminClient.from("sower_books").select("id").eq("sower_id", target_user_id);
+    if (userBooks && userBooks.length > 0) {
+      const bookIds = userBooks.map((b: any) => b.id);
+      await adminClient.from("book_orders").delete().in("book_id", bookIds);
+      await adminClient.from("pocket_products").delete().in("book_id", bookIds);
+      await adminClient.from("sower_books").delete().eq("sower_id", target_user_id);
+    }
+
+    // Delete user's orchards and related data
+    const { data: userOrchards } = await adminClient.from("orchards").select("id").eq("sower_id", target_user_id);
+    if (userOrchards && userOrchards.length > 0) {
+      const orchardIds = userOrchards.map((o: any) => o.id);
+      await adminClient.from("bestowals").delete().in("orchard_id", orchardIds);
+      await adminClient.from("courier_deliveries").delete().in("orchard_id", orchardIds);
+      await adminClient.from("pocket_products").delete().in("orchard_id", orchardIds);
+      await adminClient.from("orchards").delete().eq("sower_id", target_user_id);
+    }
+
+    // Delete community videos
+    await adminClient.from("community_videos").delete().eq("uploader_id", target_user_id);
+
+    // Delete radio DJ data
+    const { data: djData } = await adminClient.from("radio_djs").select("id").eq("user_id", target_user_id);
+    if (djData && djData.length > 0) {
+      const djIds = djData.map((d: any) => d.id);
+      const { data: playlists } = await adminClient.from("dj_playlists").select("id").in("dj_id", djIds);
+      if (playlists && playlists.length > 0) {
+        await adminClient.from("dj_playlist_tracks").delete().in("playlist_id", playlists.map((p: any) => p.id));
+        await adminClient.from("dj_playlists").delete().in("dj_id", djIds);
+      }
+      await adminClient.from("dj_music_tracks").delete().in("dj_id", djIds);
+      await adminClient.from("radio_djs").delete().eq("user_id", target_user_id);
+    }
+
     // Nullify radio_schedule references
     await adminClient.from("radio_schedule").update({ approved_by: null }).eq("approved_by", target_user_id);
 
