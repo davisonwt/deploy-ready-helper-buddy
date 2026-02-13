@@ -196,7 +196,7 @@ export default function LoginPage() {
             <div className="flex justify-center mb-6">
               <div className="w-24 h-24 rounded-2xl overflow-hidden shadow-2xl ring-4 ring-blue-100">
                 <img 
-                  src="https://zuwkgasbkpjlxzsjzumu.supabase.co/storage/v1/object/public/orchard-images/logo.jpeg" 
+                  src="/lovable-uploads/s2g-logo.jpg" 
                   alt="sow2grow logo" 
                   className="w-full h-full object-cover"
                 />
