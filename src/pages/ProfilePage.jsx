@@ -852,8 +852,8 @@ export default function ProfilePage() {
                           </div>
                         </div>
                       ) : (
-                        <div className="px-4 py-2 bg-muted/50 text-foreground rounded-lg text-sm font-medium border border-border/50">
-                          Not connected
+                        <div onClick={() => setEditing(true)} className="px-4 py-2 bg-muted/50 text-foreground rounded-lg text-sm font-medium border border-border/50 cursor-pointer hover:bg-primary/10 hover:border-primary/30 transition-all">
+                          Not connected — Click to connect
                         </div>
                       )}
                     </div>
@@ -915,8 +915,8 @@ export default function ProfilePage() {
                           </div>
                         </div>
                       ) : (
-                        <div className="px-4 py-2 bg-muted/50 text-foreground rounded-lg text-sm font-medium border border-border/50">
-                          Not connected
+                        <div onClick={() => setEditing(true)} className="px-4 py-2 bg-muted/50 text-foreground rounded-lg text-sm font-medium border border-border/50 cursor-pointer hover:bg-primary/10 hover:border-primary/30 transition-all">
+                          Not connected — Click to connect
                         </div>
                       )}
                     </div>
@@ -978,8 +978,8 @@ export default function ProfilePage() {
                           </div>
                         </div>
                       ) : (
-                        <div className="px-4 py-2 bg-muted/50 text-foreground rounded-lg text-sm font-medium border border-border/50">
-                          Not connected
+                        <div onClick={() => setEditing(true)} className="px-4 py-2 bg-muted/50 text-foreground rounded-lg text-sm font-medium border border-border/50 cursor-pointer hover:bg-primary/10 hover:border-primary/30 transition-all">
+                          Not connected — Click to connect
                         </div>
                       )}
                     </div>
@@ -1041,8 +1041,8 @@ export default function ProfilePage() {
                           </div>
                         </div>
                       ) : (
-                        <div className="px-4 py-2 bg-muted/50 text-foreground rounded-lg text-sm font-medium border border-border/50">
-                          Not connected
+                        <div onClick={() => setEditing(true)} className="px-4 py-2 bg-muted/50 text-foreground rounded-lg text-sm font-medium border border-border/50 cursor-pointer hover:bg-primary/10 hover:border-primary/30 transition-all">
+                          Not connected — Click to connect
                         </div>
                       )}
                     </div>
