@@ -76,14 +76,13 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Check the target user exists
-    const { data: targetUser, error: targetError } = await adminClient.auth.admin.getUserById(target_user_id);
-    if (targetError || !targetUser) {
-      return new Response(
-        JSON.stringify({ error: "Target user not found" }),
-        { status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
+    // Check if the target user exists in auth (may already be deleted)
+    let targetUserEmail = "unknown";
+    const { data: targetUser } = await adminClient.auth.admin.getUserById(target_user_id);
+    if (targetUser?.user?.email) {
+      targetUserEmail = targetUser.user.email;
     }
+    // Proceed with cleanup regardless - residual data may still exist
 
     // Clean up related data before deleting auth user
     // (Most tables with user_id FK should CASCADE, but clean up manually for safety)
@@ -180,7 +179,7 @@ Deno.serve(async (req) => {
         target_user_id: target_user_id,
         event_details: {
           deleted_by: callingUser.id,
-          deleted_email: targetUser.user?.email || "unknown",
+          deleted_email: targetUserEmail,
           timestamp: new Date().toISOString(),
         },
         severity_level: "warn",
@@ -189,15 +188,13 @@ Deno.serve(async (req) => {
       // Non-critical, continue even if logging fails
     }
 
-    // Delete the auth user (this is the actual account deletion)
-    const { error: deleteError } = await adminClient.auth.admin.deleteUser(target_user_id);
-
-    if (deleteError) {
-      console.error("Failed to delete auth user:", deleteError);
-      return new Response(
-        JSON.stringify({ error: `Failed to delete user: ${deleteError.message}` }),
-        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
+    // Delete the auth user if they still exist
+    if (targetUser?.user) {
+      const { error: deleteError } = await adminClient.auth.admin.deleteUser(target_user_id);
+      if (deleteError) {
+        console.error("Failed to delete auth user:", deleteError);
+        // Non-fatal: data cleanup already succeeded
+      }
     }
 
     return new Response(
