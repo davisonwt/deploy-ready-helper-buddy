@@ -138,6 +138,7 @@ const S2GCommunityLibraryPage = lazy(() => import("./pages/S2GCommunityLibraryPa
 const S2GCommunityMusicPage = lazy(() => import("./pages/S2GCommunityMusicPage"));
 const CommunityMusicLibraryPage = lazy(() => import("./pages/CommunityMusicLibraryPage"));
 const LibraryUploadForm = lazy(() => import("./components/library/LibraryUploadForm"));
+const LibraryItemEditPage = lazy(() => import("./pages/LibraryItemEditPage"));
 const AmbassadorThumbnailPage = lazy(() => import("./pages/AmbassadorThumbnailPage"));
 const GoSatGhostAccessThumbnailPage = lazy(() => import("./pages/GoSatGhostAccessThumbnailPage"));
 const TrueTequfahClock = lazy(() => import("./components/TrueTequfahClock"));
@@ -1053,6 +1054,15 @@ const App = () => (
                   <Layout>
                     <Suspense fallback={<LoadingFallback />}>
                       <LibraryUploadForm />
+                    </Suspense>
+                  </Layout>
+                </ProtectedRoute>
+              } />
+              <Route path="/my-s2g-library/edit/:id" element={
+                <ProtectedRoute>
+                  <Layout>
+                    <Suspense fallback={<LoadingFallback />}>
+                      <LibraryItemEditPage />
                     </Suspense>
                   </Layout>
                 </ProtectedRoute>
