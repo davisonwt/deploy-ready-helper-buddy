@@ -126,7 +126,7 @@ export const SocialActionButtons: FC<SocialActionButtonsProps> = ({
   const [copied, setCopied] = useState(false);
 
   const getShareUrl = () => {
-    return `https://sow2growapp.com/${type === 'product' ? 'products' : 'orchard'}/${itemId}`;
+    return `https://sow2growapp.lovable.app/${type === 'product' ? 'products' : 'orchard'}/${itemId}`;
   };
 
   const shareText = `Check out "${title}" on Sow2Grow! 🌱🌿`;
