@@ -280,6 +280,11 @@ export const SocialActionButtons: FC<SocialActionButtonsProps> = ({
                 <Mail className="h-4 w-4" />
                 <span className="text-sm">Email</span>
               </Button>
+              <div className="border-t my-1" />
+              <Button onClick={(e: React.MouseEvent) => { e.stopPropagation(); window.open('https://www.364yhvh.org/', '_blank'); }} variant="ghost" className="w-full justify-start h-auto p-2 gap-2">
+                <svg className="h-4 w-4 text-emerald-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10 15.3 15.3 0 01-4-10 15.3 15.3 0 014-10z"/></svg>
+                <span className="text-sm">364yhvh.org</span>
+              </Button>
             </div>
           </PopoverContent>
         </Popover>
