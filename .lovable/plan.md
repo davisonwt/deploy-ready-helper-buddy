@@ -1,23 +1,27 @@
 
-## Fix: "View" Button in Live Activities Should Open Community Chat
 
-### Problem
-The "View" button next to "S2G Community" unread forum messages in the Live Activities widget calls `joinActivity('forum', msg.roomId)`, but the `joinActivity` function has no `case 'forum'` handler. It silently falls through to the `default` case, which does nothing.
+## Problem
 
-### Solution
-Add a `case 'forum'` to the `joinActivity` switch statement in `LiveActivityWidget.jsx` that navigates to `/community-chat`.
+When you share a link to your app on social media (Telegram, Facebook, etc.), the link preview shows **"Lovable Generated Project"** with Lovable's logo instead of your Sow2Grow branding. This happens because the Open Graph and Twitter Card meta tags in `index.html` (lines 31-38) still contain Lovable's default values.
 
-### Changes
+## What Will Change
 
-**File: `src/components/LiveActivityWidget.jsx`** (1 edit)
+Update `index.html` to replace all Lovable branding with your Sow2Grow branding:
 
-Add a new case in the `joinActivity` switch block (around line 586):
+| Meta Tag | Current (Lovable) | Updated (Sow2Grow) |
+|---|---|---|
+| `og:title` | "deploy-ready-helper-buddy" | "Sow2Grow - Community Powered Growth" |
+| `og:description` | "Lovable Generated Project" | Your app description |
+| `og:image` | Lovable's image | Your app's logo/image (from your public folder) |
+| `og:url` | (missing) | `https://sow2growapp.com` |
+| `twitter:site` | `@lovable_dev` | Your Twitter/X handle or removed |
+| `twitter:image` | Lovable's image | Your app's logo/image |
 
-```
-case 'forum':
-  // Navigate to community chat
-  window.location.href = '/community-chat'
-  break
-```
+## Technical Details
 
-This will be inserted between the `case 'call'` and `default` cases, so clicking "View" on any S2G Community message takes the user directly to the Community ChatApp page.
+**File:** `index.html` (lines 31-38)
+
+Replace the existing meta tags with Sow2Grow-branded values. I will also add `og:url` for better SEO and social sharing. For the preview image, I will check your `public` folder for an existing logo to use -- if none is suitable, I will use a placeholder path you can update later.
+
+After publishing, social platforms may cache old previews for a while. You can force a refresh using tools like Facebook's [Sharing Debugger](https://developers.facebook.com/tools/debug/) or Telegram's bot (`@WebpageBot`).
+
