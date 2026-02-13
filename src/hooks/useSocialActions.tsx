@@ -207,7 +207,7 @@ export function useSocialActions() {
 
   const shareTrack = async (trackId: string, title: string, artist?: string) => {
     try {
-      const url = `${window.location.origin}/music-library?track=${trackId}`;
+      const url = `https://sow2growapp.com/music-library?track=${trackId}`;
       const shareText = `Check out "${title}"${artist ? ` by ${artist}` : ''} on S2G Music!`;
       
       if (navigator.share) {
@@ -236,7 +236,7 @@ export function useSocialActions() {
 
   const shareContent = async (type: 'product' | 'orchard', id: string, title: string) => {
     try {
-      const url = `${window.location.origin}/${type === 'product' ? 'products' : 'orchard'}/${id}`;
+      const url = `https://sow2growapp.com/${type === 'product' ? 'products' : 'orchard'}/${id}`;
       
       if (navigator.share) {
         try {

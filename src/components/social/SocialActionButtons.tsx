@@ -126,10 +126,10 @@ export const SocialActionButtons: FC<SocialActionButtonsProps> = ({
   const [copied, setCopied] = useState(false);
 
   const getShareUrl = () => {
-    return `${window.location.origin}/${type === 'product' ? 'products' : 'orchard'}/${itemId}`;
+    return `https://sow2growapp.com/${type === 'product' ? 'products' : 'orchard'}/${itemId}`;
   };
 
-  const shareText = `Check out "${title}" on Sow2Grow! 🌱`;
+  const shareText = `Check out "${title}" on Sow2Grow! 🌱🌿`;
 
   const handleCopyLink = async (e: React.MouseEvent) => {
     e.stopPropagation();
