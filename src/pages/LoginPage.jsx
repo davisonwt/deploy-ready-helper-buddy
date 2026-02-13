@@ -324,7 +324,7 @@ export default function LoginPage() {
               <div className="text-center">
                 <button
                   type="button"
-                  className="text-sm text-primary hover:text-primary/80 transition-colors duration-200"
+                  className="text-sm text-yellow-400 hover:text-yellow-300 font-semibold transition-colors duration-200 underline underline-offset-2"
                   onClick={() => setShowForgotPassword(true)}
                 >
                   Forgot Password?
