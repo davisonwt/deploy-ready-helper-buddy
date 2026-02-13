@@ -8,6 +8,8 @@ import { ArrowLeft, Package, Music, FileText, BookOpen, Image, ShoppingCart, Loa
 import { SocialActionButtons } from '@/components/social/SocialActionButtons';
 import { GradientPlaceholder } from '@/components/ui/GradientPlaceholder';
 import { formatCurrency } from '@/lib/utils';
+import { useProductBasket } from '@/contexts/ProductBasketContext';
+import { useToast } from '@/hooks/use-toast';
 
 
 const typeIcons: Record<string, React.ReactNode> = {
@@ -28,6 +30,8 @@ export default function ProductDetailPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
   const [selectedImage, setSelectedImage] = useState(0);
+  const { addToBasket } = useProductBasket();
+  const { toast } = useToast();
 
   useEffect(() => {
     if (!id) return;
@@ -183,7 +187,30 @@ export default function ProductDetailPage() {
             </p>
           )}
 
-          <div className="pt-2">
+          <div className="flex flex-col gap-3 pt-2">
+            <Button
+              size="lg"
+              className="w-full gap-2"
+              onClick={() => {
+                addToBasket({
+                  id: product.id,
+                  title: product.title,
+                  price: product.price || 0,
+                  cover_image_url: product.cover_image_url,
+                  sower_id: sower?.id || '',
+                  bestowal_count: product.bestowal_count || 0,
+                  sowers: { display_name: sowerName },
+                });
+                toast({
+                  title: 'Added to Basket',
+                  description: `${product.title} has been added to your bestowal basket.`,
+                });
+              }}
+            >
+              <ShoppingCart className="h-5 w-5" />
+              Add to Bestowal Basket — {formatCurrency(product.price || 0)}
+            </Button>
+
             <SocialActionButtons
               type="product"
               itemId={product.id}
