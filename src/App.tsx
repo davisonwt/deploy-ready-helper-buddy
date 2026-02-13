@@ -32,6 +32,7 @@ const SecurityQuestionsSetupPage = lazy(() => import("./pages/SecurityQuestionsS
 
 // DEFERRED LOADING: All other pages lazy loaded
 const ChatApp = lazy(() => import("./pages/ChatApp"));
+const ProductDetailPage = lazy(() => import("./pages/ProductDetailPage"));
 const GroveFeedPage = lazy(() => import("./pages/GroveFeedPage"));
 const CommunicationsHub = lazy(() => 
   import("./pages/CommunicationsHub").catch((error) => {
@@ -979,6 +980,13 @@ const App = () => (
                 <Layout>
                   <Suspense fallback={<LoadingFallback />}>
                     <ProductsPage />
+                  </Suspense>
+                </Layout>
+              } />
+              <Route path="/products/:id" element={
+                <Layout>
+                  <Suspense fallback={<LoadingFallback />}>
+                    <ProductDetailPage />
                   </Suspense>
                 </Layout>
               } />
