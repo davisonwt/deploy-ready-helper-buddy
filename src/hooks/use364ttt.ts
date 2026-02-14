@@ -110,56 +110,111 @@ export function use364ttt() {
     refetchInterval: 30000, // Refetch every 30 seconds
   });
 
-  // Fetch all songs for voting (DJ tracks + music products from all community members)
+  // Fetch all community music for voting (same sources as Community Music Library)
   const { data: allSongs = [], isLoading: songsLoading } = useQuery({
     queryKey: ['364ttt-all-songs'],
     queryFn: async () => {
-      // Fetch DJ tracks
-      const { data: djTracks, error: djError } = await supabase
+      const tracks: { id: string; track_title: string; artist_name: string; file_url: string; dj_id?: string; created_at: string; preview_url: string | null }[] = [];
+      const seenTitles = new Set<string>();
+
+      // 1. DJ tracks
+      const { data: djTracks } = await supabase
         .from('dj_music_tracks')
-        .select('id, track_title, artist_name, file_url, dj_id, created_at, preview_url')
+        .select('*, radio_djs ( user_id, dj_name, avatar_url )')
+        .eq('is_public', true)
         .order('created_at', { ascending: false });
-      if (djError) throw djError;
 
-      // Fetch music products (uploaded by community sowers)
-      const { data: musicProducts, error: prodError } = await supabase
-        .from('products')
-        .select('id, title, description, file_url, sower_id, created_at, cover_image_url')
+      if (djTracks) {
+        const djUserIds = [...new Set(djTracks.map(t => (t as any).radio_djs?.user_id).filter(Boolean))];
+        const { data: djProfiles } = djUserIds.length > 0
+          ? await supabase.from('profiles').select('user_id, display_name').in('user_id', djUserIds)
+          : { data: [] };
+        const profileMap = new Map((djProfiles || []).map(p => [p.user_id, p]));
+
+        djTracks.forEach(t => {
+          const dj = (t as any).radio_djs;
+          const profile = dj?.user_id ? profileMap.get(dj.user_id) : null;
+          const key = t.track_title.toLowerCase();
+          if (!seenTitles.has(key)) {
+            seenTitles.add(key);
+            tracks.push({
+              id: t.id,
+              track_title: t.track_title,
+              artist_name: t.artist_name || dj?.dj_name || profile?.display_name || 'Unknown Artist',
+              file_url: t.file_url,
+              dj_id: t.dj_id,
+              created_at: t.created_at,
+              preview_url: t.preview_url || t.file_url,
+            });
+          }
+        });
+      }
+
+      // 2. S2G library music items
+      const { data: libraryMusic } = await supabase
+        .from('s2g_library_items')
+        .select('*')
+        .eq('is_public', true)
         .eq('type', 'music')
-        .not('file_url', 'is', null);
-      if (prodError) throw prodError;
+        .order('created_at', { ascending: false });
 
-      // Normalize DJ tracks
-      const normalizedDj = (djTracks || []).map(t => ({
-        id: t.id,
-        track_title: t.track_title,
-        artist_name: t.artist_name || 'Unknown Artist',
-        file_url: t.file_url,
-        dj_id: t.dj_id,
-        created_at: t.created_at,
-        preview_url: t.preview_url,
-        source: 'dj' as const,
-      }));
+      if (libraryMusic) {
+        const userIds = [...new Set(libraryMusic.map(item => item.user_id))];
+        const { data: profiles } = userIds.length > 0
+          ? await supabase.from('profiles').select('user_id, display_name').in('user_id', userIds)
+          : { data: [] };
+        const profileMap = new Map((profiles || []).map(p => [p.user_id, p]));
 
-      // Normalize music products (avoid duplicates by file_url)
-      const djFileUrls = new Set(normalizedDj.map(t => t.file_url));
-      const normalizedProducts = (musicProducts || [])
-        .filter(p => p.file_url && !djFileUrls.has(p.file_url))
-        .map(p => ({
-          id: p.id,
-          track_title: p.title,
-          artist_name: p.description || 'Community Artist',
-          file_url: p.file_url,
-          dj_id: p.sower_id,
-          created_at: p.created_at,
-          preview_url: null as string | null,
-          source: 'product' as const,
-        }));
+        libraryMusic.forEach(item => {
+          const profile = profileMap.get(item.user_id);
+          const key = item.title.toLowerCase();
+          if (!seenTitles.has(key)) {
+            seenTitles.add(key);
+            tracks.push({
+              id: item.id,
+              track_title: item.title,
+              artist_name: item.description || profile?.display_name || 'Unknown Artist',
+              file_url: item.file_url,
+              created_at: item.created_at,
+              preview_url: item.preview_url || item.file_url,
+            });
+          }
+        });
+      }
 
-      // Merge and sort by created_at descending
-      return [...normalizedDj, ...normalizedProducts].sort(
-        (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
-      );
+      // 3. Products (music seeds)
+      const { data: productMusic } = await supabase
+        .from('products')
+        .select('*, sowers ( user_id, display_name, logo_url )')
+        .eq('type', 'music')
+        .order('created_at', { ascending: false });
+
+      if (productMusic) {
+        const sowerUserIds = [...new Set(productMusic.map(p => (p as any).sowers?.user_id).filter(Boolean))];
+        const { data: sowerProfiles } = sowerUserIds.length > 0
+          ? await supabase.from('profiles').select('user_id, display_name').in('user_id', sowerUserIds)
+          : { data: [] };
+        const sowerProfileMap = new Map((sowerProfiles || []).map(p => [p.user_id, p]));
+
+        productMusic.forEach(p => {
+          const sower = (p as any).sowers;
+          const profile = sower?.user_id ? sowerProfileMap.get(sower.user_id) : null;
+          const key = (p.title || '').toLowerCase();
+          if (p.file_url && !seenTitles.has(key)) {
+            seenTitles.add(key);
+            tracks.push({
+              id: p.id,
+              track_title: p.title,
+              artist_name: sower?.display_name || profile?.display_name || 'Community Artist',
+              file_url: p.file_url,
+              created_at: p.created_at,
+              preview_url: p.file_url,
+            });
+          }
+        });
+      }
+
+      return tracks.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
     },
   });
 
