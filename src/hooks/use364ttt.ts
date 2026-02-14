@@ -110,16 +110,56 @@ export function use364ttt() {
     refetchInterval: 30000, // Refetch every 30 seconds
   });
 
-  // Fetch all songs for voting (all user-uploaded tracks)
+  // Fetch all songs for voting (DJ tracks + music products from all community members)
   const { data: allSongs = [], isLoading: songsLoading } = useQuery({
     queryKey: ['364ttt-all-songs'],
     queryFn: async () => {
-      const { data, error } = await supabase
+      // Fetch DJ tracks
+      const { data: djTracks, error: djError } = await supabase
         .from('dj_music_tracks')
         .select('id, track_title, artist_name, file_url, dj_id, created_at, preview_url')
         .order('created_at', { ascending: false });
-      if (error) throw error;
-      return data || [];
+      if (djError) throw djError;
+
+      // Fetch music products (uploaded by community sowers)
+      const { data: musicProducts, error: prodError } = await supabase
+        .from('products')
+        .select('id, title, description, file_url, sower_id, created_at, cover_image_url')
+        .eq('type', 'music')
+        .not('file_url', 'is', null);
+      if (prodError) throw prodError;
+
+      // Normalize DJ tracks
+      const normalizedDj = (djTracks || []).map(t => ({
+        id: t.id,
+        track_title: t.track_title,
+        artist_name: t.artist_name || 'Unknown Artist',
+        file_url: t.file_url,
+        dj_id: t.dj_id,
+        created_at: t.created_at,
+        preview_url: t.preview_url,
+        source: 'dj' as const,
+      }));
+
+      // Normalize music products (avoid duplicates by file_url)
+      const djFileUrls = new Set(normalizedDj.map(t => t.file_url));
+      const normalizedProducts = (musicProducts || [])
+        .filter(p => p.file_url && !djFileUrls.has(p.file_url))
+        .map(p => ({
+          id: p.id,
+          track_title: p.title,
+          artist_name: p.description || 'Community Artist',
+          file_url: p.file_url,
+          dj_id: p.sower_id,
+          created_at: p.created_at,
+          preview_url: null as string | null,
+          source: 'product' as const,
+        }));
+
+      // Merge and sort by created_at descending
+      return [...normalizedDj, ...normalizedProducts].sort(
+        (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+      );
     },
   });
 
