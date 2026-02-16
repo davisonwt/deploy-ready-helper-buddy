@@ -6,7 +6,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { useToast } from '@/hooks/use-toast';
 import { Mic, MicOff, Video, VideoOff, Phone, Users, Hand, Settings, UserPlus } from 'lucide-react';
-import { JAAS_CONFIG } from '@/lib/jitsi-config';
+import { JITSI_CONFIG } from '@/lib/jitsi-config';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 
@@ -44,8 +44,8 @@ export default function JitsiRoom({
   const [loadingUsers, setLoadingUsers] = useState(false);
   const { toast } = useToast();
 
-  // Generate JaaS room name
-  const jaasRoomName = JAAS_CONFIG.getRoomName(roomName);
+  // Generate Jitsi room name
+  const jitsiRoomName = JITSI_CONFIG.getRoomName(roomName);
 
   // Load available users for invite
   const loadAvailableUsers = async () => {
@@ -86,7 +86,7 @@ export default function JitsiRoom({
 
 
   useEffect(() => {
-    // Load JaaS API script
+    // Load Jitsi API script
     const loadJitsiScript = () => {
       if (window.JitsiMeetExternalAPI) {
         initializeJitsi();
@@ -94,13 +94,13 @@ export default function JitsiRoom({
       }
 
       const script = document.createElement('script');
-      script.src = JAAS_CONFIG.getScriptUrl();
+      script.src = JITSI_CONFIG.getScriptUrl();
       script.async = true;
       script.onload = initializeJitsi;
       script.onerror = () => {
         toast({
           title: 'Error',
-          description: 'Failed to load JaaS. Please check your internet connection.',
+          description: 'Failed to load Jitsi. Please check your internet connection.',
           variant: 'destructive',
         });
         setIsLoading(false);
@@ -113,7 +113,7 @@ export default function JitsiRoom({
 
       try {
         const options: any = {
-          roomName: jaasRoomName,
+          roomName: jitsiRoomName,
           width: '100%',
           height: '100%',
           parentNode: jitsiContainer.current,
@@ -160,17 +160,8 @@ export default function JitsiRoom({
           },
         };
 
-        // Add JWT if provided for premium features
-        const jwtToken = jwt || JAAS_CONFIG.jwt;
-        if (jwtToken) {
-          console.log('🔐 [JITSI] Using JWT token for authentication');
-          options.jwt = jwtToken;
-        } else {
-          console.warn('⚠️ [JITSI] No JWT token provided - some features may be limited');
-        }
-
-        console.log('🚀 [JITSI] Initializing JaaS with room:', jaasRoomName);
-        jitsiApi.current = new window.JitsiMeetExternalAPI(JAAS_CONFIG.domain, options);
+        console.log('🚀 [JITSI] Initializing Jitsi with room:', jitsiRoomName);
+        jitsiApi.current = new window.JitsiMeetExternalAPI(JITSI_CONFIG.domain, options);
 
         // Event listeners
         jitsiApi.current.addListener('videoConferenceJoined', () => {
@@ -268,7 +259,7 @@ export default function JitsiRoom({
         jitsiApi.current = null;
       }
     };
-  }, [jaasRoomName, displayName, toast]);
+  }, [jitsiRoomName, displayName, toast]);
 
   const handleLeave = () => {
     if (jitsiApi.current) {

@@ -1,6 +1,6 @@
 import { useEffect, useRef } from 'react';
 import { launchConfetti, launchSparkles, playSoundEffect } from '@/utils/confetti';
-import { JAAS_CONFIG, getJaaSInterfaceConfig, getVideoCallConfig } from '@/lib/jitsi-config';
+import { JITSI_CONFIG, getJitsiInterfaceConfig, getVideoCallConfig } from '@/lib/jitsi-config';
 
 declare global {
   interface Window {
@@ -30,17 +30,17 @@ export function JitsiVideoWindow({
   useEffect(() => {
     if (!isOpen || !jitsiMeetRef.current) return;
 
-    // Load JaaS API script if not already loaded
+    // Load Jitsi API script if not already loaded
     if (!window.JitsiMeetExternalAPI) {
       const script = document.createElement('script');
-      script.src = JAAS_CONFIG.getScriptUrl();
+      script.src = JITSI_CONFIG.getScriptUrl();
       script.async = true;
       script.onload = () => {
-        initializeJaaS();
+        initializeJitsi();
       };
       document.body.appendChild(script);
     } else {
-      initializeJaaS();
+      initializeJitsi();
     }
 
     return () => {
@@ -51,20 +51,20 @@ export function JitsiVideoWindow({
     };
   }, [isOpen, roomName, displayName, password]);
 
-  const initializeJaaS = () => {
+  const initializeJitsi = () => {
     if (!jitsiMeetRef.current || !window.JitsiMeetExternalAPI) return;
 
     // Clear any existing content
     jitsiMeetRef.current.innerHTML = '';
 
-    const jaasRoomName = JAAS_CONFIG.getRoomName(`S2G-${roomName}`);
+    const jitsiRoomName = JITSI_CONFIG.getRoomName(`S2G-${roomName}`);
     const options: any = {
-      roomName: jaasRoomName,
+      roomName: jitsiRoomName,
       width: '100%',
       height: '100%',
       parentNode: jitsiMeetRef.current,
       interfaceConfigOverwrite: {
-        ...getJaaSInterfaceConfig(),
+        ...getJitsiInterfaceConfig(),
         filmStripOnly: false,
         DISABLE_JOIN_LEAVE_NOTIFICATIONS: true,
       },
@@ -76,12 +76,7 @@ export function JitsiVideoWindow({
       },
     };
 
-    // Add JWT if available
-    if (JAAS_CONFIG.jwt) {
-      options.jwt = JAAS_CONFIG.jwt;
-    }
-
-    jitsiAPIRef.current = new window.JitsiMeetExternalAPI(JAAS_CONFIG.domain, options);
+    jitsiAPIRef.current = new window.JitsiMeetExternalAPI(JITSI_CONFIG.domain, options);
 
     // Garden-style UI touches
     jitsiAPIRef.current.addEventListener('videoConferenceJoined', () => {
@@ -140,7 +135,7 @@ export function JitsiVideoWindow({
   );
 }
 
-// Global function to start JaaS call (for use from anywhere)
+// Global function to start Jitsi call (for use from anywhere)
 export function startJitsiCall(
   roomName: string,
   displayName: string = 'Sower',

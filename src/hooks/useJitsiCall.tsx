@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
-import { JAAS_CONFIG, getAudioCallConfig, getVideoCallConfig, getJaaSInterfaceConfig } from '@/lib/jitsi-config';
+import { JITSI_CONFIG } from '@/lib/jitsi-config';
 
 declare global {
   interface Window {
@@ -44,7 +44,7 @@ export function useJitsiCall({
   const durationIntervalRef = useRef<number | null>(null);
 
   // Generate unique room name for this call using JaaS format
-  const roomName = JAAS_CONFIG.getRoomName(`call_${callSession.id.replace(/-/g, '')}`);
+  const roomName = JITSI_CONFIG.getRoomName(`call_${callSession.id.replace(/-/g, '')}`);
 
   // Load JaaS script and initialize
   useEffect(() => {
@@ -55,7 +55,7 @@ export function useJitsiCall({
       }
 
       const script = document.createElement('script');
-      script.src = JAAS_CONFIG.getScriptUrl();
+      script.src = JITSI_CONFIG.getScriptUrl();
       script.async = true;
       script.onload = initializeJitsi;
       script.onerror = () => {
@@ -96,12 +96,7 @@ export function useJitsiCall({
           },
         };
 
-        // Add JWT if available for premium features
-        if (JAAS_CONFIG.jwt) {
-          options.jwt = JAAS_CONFIG.jwt;
-        }
-
-        jitsiApiRef.current = new window.JitsiMeetExternalAPI(JAAS_CONFIG.domain, options);
+        jitsiApiRef.current = new window.JitsiMeetExternalAPI(JITSI_CONFIG.domain, options);
 
         // Event listeners
         jitsiApiRef.current.addListener('videoConferenceJoined', () => {
