@@ -1,21 +1,21 @@
 /**
- * JaaS (8x8.vc) Configuration - ONLY JaaS is used for all calls
- * This is the single source of truth for all Jitsi/JaaS integrations
+ * Jitsi Meet Configuration - Free public server
+ * This is the single source of truth for all Jitsi integrations
+ * Using meet.jit.si (free, no JWT required)
+ * When scaling beyond ~1000 users, consider self-hosting or JaaS (8x8.vc)
  */
 
-// JaaS (8x8) Configuration
-export const JAAS_CONFIG = {
-  appId: 'vpaas-magic-cookie-f5f6bee4f16440d4b49cd8668f03d55d',
-  domain: '8x8.vc',
-  getScriptUrl: () => `https://8x8.vc/${JAAS_CONFIG.appId}/external_api.js`,
-  getRoomName: (roomName: string) => `${JAAS_CONFIG.appId}/${roomName}`,
-  // JWT for premium features (recording, outbound calls, etc.)
-  jwt: 'eyJraWQiOiJ2cGFhcy1tYWdpYy1jb29raWUtZjVmNmJlZTRmMTY0NDBkNGI0OWNkODY2OGYwM2Q1NWQvMTAwMWE5LVNBTVBMRV9BUFAiLCJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiJ9.eyJhdWQiOiJqaXRzaSIsImlzcyI6ImNoYXQiLCJpYXQiOjE3NjgyOTE3MDcsImV4cCI6MTc2ODI5ODkwNywibmJmIjoxNzY4MjkxNzAyLCJzdWIiOiJ2cGFhcy1tYWdpYy1jb29raWUtZjVmNmJlZTRmMTY0NDBkNGI0OWNkODY2OGYwM2Q1NWQiLCJjb250ZXh0Ijp7ImZlYXR1cmVzIjp7ImxpdmVzdHJlYW1pbmciOnRydWUsImZpbGUtdXBsb2FkIjp0cnVlLCJvdXRib3VuZC1jYWxsIjp0cnVlLCJzaXAtb3V0Ym91bmQtY2FsbCI6ZmFsc2UsInRyYW5zY3JpcHRpb24iOnRydWUsImxpc3QtdmlzaXRvcnMiOmZhbHNlLCJyZWNvcmRpbmciOnRydWUsImZsaXAiOmZhbHNlfSwidXNlciI6eyJoaWRkZW4tZnJvbS1yZWNvcmRlciI6ZmFsc2UsIm1vZGVyYXRvciI6dHJ1ZSwibmFtZSI6ImRhdmlzb24udGFsamFhcmQiLCJpZCI6ImF1dGgwfDY5MjY5ZDEwYWI2Y2U1ZGE1YjlhM2RkMiIsImF2YXRhciI6Imh0dHBzOi8vc293Mmdyb3dhcHAuY29tIiwiZW1haWwiOiJkYXZpc29uLnRhbGphYXJkQGljbG91ZC5jb20ifX0sInJvb20iOiIqIn0.C2NomRfp2rJVMQ-G0wb72tJk_x3N7Tl1KVRNxf-Gl7uVig7-vjdZVvjeVMrb6fattp3odyFa6FMbBCATx6bK_2P5ejhpgYPJC9I_vduUcYevqC61P5uK2es38V-lxpmM01EW56b7EL7yntv0KyXNZe9uJA35wJA55XdBct7gWYG02bzeexfihRb25vDKYUXkEvSPtWVcu_Q8AQV9KNxtu4wABmWQisWWOJekgWlNAzByI2cZXqAsMq2m8h4pvOOH6eRGW1MxzG9s2TNVgvQ0yZ63FOqd9bKiZFdRPa_B1Hk_lL-N4pGvvoY7wcghLtm9AuU4fJxsiDdux3Q92zPfdA' as string | null,
-  setJwt: (token: string | null) => { JAAS_CONFIG.jwt = token; },
+export const JITSI_CONFIG = {
+  domain: 'meet.jit.si',
+  getScriptUrl: () => 'https://meet.jit.si/external_api.js',
+  getRoomName: (roomName: string) => `S2G_${roomName}`,
 };
 
-// Default configuration for JaaS calls
-export const getDefaultJaaSConfig = () => ({
+// Keep old export name for backward compatibility
+export const JAAS_CONFIG = JITSI_CONFIG;
+
+// Default configuration for calls
+export const getDefaultJitsiConfig = () => ({
   startWithAudioMuted: false,
   startWithVideoMuted: false,
   enableWelcomePage: false,
@@ -37,22 +37,25 @@ export const getDefaultJaaSConfig = () => ({
   channelLastN: 8,
 });
 
+// Keep old export name
+export const getDefaultJaaSConfig = getDefaultJitsiConfig;
+
 // Audio call specific config
 export const getAudioCallConfig = () => ({
-  ...getDefaultJaaSConfig(),
+  ...getDefaultJitsiConfig(),
   startWithVideoMuted: true,
   startVideoMuted: 0,
 });
 
 // Video call specific config
 export const getVideoCallConfig = () => ({
-  ...getDefaultJaaSConfig(),
+  ...getDefaultJitsiConfig(),
   startWithVideoMuted: false,
   startWithAudioMuted: false,
 });
 
-// Interface configuration for JaaS
-export const getJaaSInterfaceConfig = (minimal = false) => ({
+// Interface configuration
+export const getJitsiInterfaceConfig = (minimal = false) => ({
   SHOW_JITSI_WATERMARK: false,
   SHOW_WATERMARK_FOR_GUESTS: false,
   SHOW_BRAND_WATERMARK: false,
@@ -82,7 +85,12 @@ export const getJaaSInterfaceConfig = (minimal = false) => ({
   VERTICAL_FILMSTRIP: false,
 });
 
+// Keep old export name
+export const getJaaSInterfaceConfig = getJitsiInterfaceConfig;
+
 // Generate unique room name
-export const generateJaaSRoomName = (prefix: string, id: string) => {
+export const generateJitsiRoomName = (prefix: string, id: string) => {
   return `${prefix}_${id.replace(/-/g, '')}`;
 };
+
+export const generateJaaSRoomName = generateJitsiRoomName;
