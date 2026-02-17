@@ -747,7 +747,7 @@ const App = () => (
 
               {/* GoSat HQ Chat */}
               <Route path="/gosat/chat" element={
-                <ProtectedRoute allowedRoles={['admin', 'gosat']}>
+                <ProtectedRoute allowedRoles={['gosat']}>
                   <Suspense fallback={<LoadingFallback />}>
                     <GoSatChatPage />
                   </Suspense>
