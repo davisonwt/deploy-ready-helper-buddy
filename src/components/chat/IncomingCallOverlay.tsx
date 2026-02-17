@@ -62,14 +62,6 @@ export default function IncomingCallOverlay() {
   const { incomingCall, currentCall, outgoingCall, answerCall, declineCall, endCall } = useCallManager();
   const [hasAnswered, setHasAnswered] = useState(false);
   const [needsUnlock, setNeedsUnlock] = useState(false);
-  
-  // DEBUG: Log state on every render
-  console.log('📞 [OVERLAY] Component render - State:', {
-    incomingCall: incomingCall ? { id: incomingCall.id, status: incomingCall.status, caller_name: incomingCall.caller_name } : null,
-    outgoingCall: outgoingCall ? { id: outgoingCall.id, status: outgoingCall.status, receiver_name: outgoingCall.receiver_name } : null,
-    currentCall: currentCall ? { id: currentCall.id, status: currentCall.status } : null,
-    hasAnswered
-  });
 
   const audioCtxRef = useRef<AudioContext | null>(null);
   const oscRef = useRef<OscillatorNode | null>(null);
@@ -126,37 +118,18 @@ export default function IncomingCallOverlay() {
 
   // Start ringtone when an incoming call appears; stop any previous one first
   useEffect(() => {
-    console.log('📞 [OVERLAY][RINGTONE] Effect triggered:', {
-      hasIncomingCall: !!incomingCall,
-      incomingCallId: incomingCall?.id,
-      hasAnswered,
-      hasCurrentCall: !!currentCall,
-      currentCallId: currentCall?.id
-    });
-    
     if (!incomingCall) {
-      console.log('📞 [OVERLAY][RINGTONE] No incoming call, stopping ringtone');
       hardStopRingtone();
       return;
     }
     
-    // CRITICAL FIX: Only skip if answered OR active call exists for THIS call
     if (hasAnswered || (currentCall && currentCall.id === incomingCall.id)) {
-      console.log('📞 [OVERLAY][RINGTONE] Skipping ringtone - call answered or active:', { 
-        incomingCall: !!incomingCall,
-        incomingCallId: incomingCall.id,
-        hasAnswered, 
-        currentCall: !!currentCall,
-        currentCallId: currentCall?.id,
-        sameCall: currentCall?.id === incomingCall.id
-      });
       hardStopRingtone();
       return;
     }
     
-    console.log('📞 [OVERLAY] 🚨🚨🚨 STARTING RINGTONE FOR INCOMING CALL:', incomingCall.id, 'caller:', incomingCall.caller_name);
+    console.log('📞 [OVERLAY] Starting ringtone for incoming call:', incomingCall.id);
 
-    // Pre-kill any ghost/duplicate ring before creating a new one
     hardStopRingtone();
 
     const w = window as WindowWithAudioRingtone;
@@ -204,10 +177,60 @@ export default function IncomingCallOverlay() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [incomingCall?.id, hasAnswered]);
 
-  // CRITICAL FIX: Stop ringtone immediately when incoming call disappears OR when currentCall is set
+  // Outgoing ring-back tone: play a distinct "calling..." tone when waiting for answer
+  useEffect(() => {
+    if (!outgoingCall || currentCall) {
+      // No outgoing call or call was answered - stop any tone
+      return;
+    }
+
+    console.log('📞 [OVERLAY] Starting ring-back tone for outgoing call:', outgoingCall.id);
+
+    const w = window as WindowWithAudioRingtone;
+    const AudioContextConstructor = window.AudioContext || w.webkitAudioContext;
+    const globalCtx = w.__unlockedAudioCtx;
+    const ctx: AudioContext = globalCtx ?? (AudioContextConstructor ? new AudioContextConstructor() : new AudioContext());
+
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    gain.gain.value = 0;
+    osc.type = 'sine';
+    osc.frequency.value = 440; // Lower freq ring-back tone (distinct from incoming 800Hz)
+    osc.connect(gain).connect(ctx.destination);
+    osc.start();
+
+    // Ring-back pattern: 2s on, 4s off (standard ring-back)
+    let on = false;
+    const toggle = () => {
+      on = !on;
+      if (gain.gain) gain.gain.value = on ? 0.15 : 0;
+    };
+    toggle(); // Start with tone on
+    const timerId = window.setInterval(toggle, on ? 2000 : 1000);
+
+    // Resume if suspended (iOS)
+    if (ctx.state === 'suspended') {
+      ctx.resume().catch(() => {});
+    }
+
+    return () => {
+      try { clearInterval(timerId); } catch { /* */ }
+      try { gain.gain.value = 0; } catch { /* */ }
+      try { osc.stop(); } catch { /* */ }
+      try { osc.disconnect(); } catch { /* */ }
+      try { gain.disconnect(); } catch { /* */ }
+      try {
+        const unlocked = w.__unlockedAudioCtx;
+        if (ctx && ctx !== unlocked && ctx.state !== 'closed') {
+          ctx.close().catch(() => {});
+        }
+      } catch { /* */ }
+    };
+  }, [outgoingCall?.id, currentCall?.id]);
+
+  // Stop ringtone immediately when incoming call disappears OR when currentCall is set
   useEffect(() => {
     if (!incomingCall || currentCall) {
-      console.log('📞 [OVERLAY] Stopping ringtone - incomingCall:', !!incomingCall, 'currentCall:', !!currentCall);
       hardStopRingtone();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -216,7 +239,6 @@ export default function IncomingCallOverlay() {
   // Safety: if current call transitions to accepted for THIS incoming call, ensure ringtone is stopped
   useEffect(() => {
     if (currentCall && incomingCall && currentCall.id === incomingCall.id) {
-      console.log('📞 [OVERLAY] Current call matches incoming call, stopping ringtone');
       hardStopRingtone();
       setHasAnswered(true);
     }
@@ -277,34 +299,13 @@ export default function IncomingCallOverlay() {
   // For outgoing: show if exists and no active call (keep showing until answered/declined)
   const showOutgoingOverlay = outgoingCall && !currentCall;
   
-  // DEBUG: Log decision
-  console.log('📞 [OVERLAY] Render decision:', {
-    showIncomingOverlay,
-    showOutgoingOverlay,
-    incomingCall: incomingCall ? { id: incomingCall.id, status: incomingCall.status } : null,
-    outgoingCall: outgoingCall ? { id: outgoingCall.id, status: outgoingCall.status } : null,
-    hasAnswered,
-    currentCall: currentCall ? { id: currentCall.id, status: currentCall.status } : null
-  });
-  
   // Don't render if no call to show OR if call is fully active
   if ((!showIncomingOverlay && !showOutgoingOverlay) || (currentCall && currentCall.status === 'accepted')) {
-    console.log('📞 [OVERLAY] ❌ NOT RENDERING - No call to show or call is active');
     return null;
   }
-  
-  console.log('📞 [OVERLAY] ✅ RENDERING - Will show overlay');
 
   const callToShow = showIncomingOverlay ? incomingCall : outgoingCall;
   const isIncoming = !!showIncomingOverlay;
-  
-  console.log('📞 [OVERLAY] Rendering call overlay:', { 
-    type: isIncoming ? 'INCOMING' : 'OUTGOING',
-    call: callToShow 
-  });
-
-  // CRITICAL: Force render - this overlay MUST be visible
-  console.log('📞 [OVERLAY] 🚨 FORCE RENDERING OVERLAY - Call exists:', !!callToShow);
   
   return (
     <div
@@ -369,10 +370,6 @@ export default function IncomingCallOverlay() {
             : 'Waiting for answer...'}
         </div>
         
-        {/* DEBUG: Show call ID for troubleshooting */}
-        <div className="text-xs text-gray-400 mb-2">
-          Call ID: {callToShow.id?.substring(0, 8)}...
-        </div>
 
         {needsUnlock && (
           <div className="text-center space-y-2">

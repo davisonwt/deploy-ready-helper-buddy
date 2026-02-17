@@ -1178,8 +1178,27 @@ const useCallManagerInternal = () => {
   };
 };
 
+// For use ONLY by CallManagerProvider - creates the actual instance
+export const useCallManagerInternal_PROVIDER_ONLY = useCallManagerInternal;
+
+// For use by all other components - reads from context only
 export const useCallManager = () => {
   const ctx = useContext(CallManagerContext);
-  const fallback = useCallManagerInternal();
-  return ctx || fallback;
+  if (!ctx) {
+    console.error('📞 [CALL] useCallManager called outside CallManagerProvider!');
+    // Return safe stubs to prevent crashes
+    return {
+      currentCall: null,
+      incomingCall: null,
+      outgoingCall: null,
+      callHistory: [],
+      callQueue: [],
+      startCall: () => Promise.resolve(null),
+      answerCall: () => Promise.resolve(),
+      declineCall: () => Promise.resolve(),
+      endCall: () => Promise.resolve(),
+      loadCallHistory: () => Promise.resolve()
+    };
+  }
+  return ctx;
 };

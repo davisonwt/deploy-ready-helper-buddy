@@ -1,10 +1,11 @@
 import { PropsWithChildren } from 'react';
 import { CallManagerContext } from '@/contexts/CallManagerContext';
-import { useCallManager } from '@/hooks/useCallManager';
+// Import the internal hook directly - only the provider should create the instance
+import { useCallManagerInternal_PROVIDER_ONLY } from '@/hooks/useCallManager';
 
 export const CallManagerProvider = ({ children }: PropsWithChildren) => {
-  // Create the call manager value via the hook
-  const value = useCallManager();
+  // Create the SINGLE call manager instance for the entire app
+  const value = useCallManagerInternal_PROVIDER_ONLY();
   return (
     <CallManagerContext.Provider value={value}>
       {children}
