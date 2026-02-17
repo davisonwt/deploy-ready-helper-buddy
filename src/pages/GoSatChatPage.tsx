@@ -45,7 +45,7 @@ interface Participant {
 
 export default function GoSatChatPage() {
   const { user } = useAuth();
-  const { isAdminOrGosat, loading: rolesLoading } = useRoles();
+  const { isGosat, loading: rolesLoading } = useRoles();
   const { toast } = useToast();
   const navigate = useNavigate();
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -63,12 +63,12 @@ export default function GoSatChatPage() {
   // Initialize room
   useEffect(() => {
     if (!user || rolesLoading) return;
-    if (!isAdminOrGosat) {
+    if (!isGosat) {
       navigate('/dashboard');
       return;
     }
     initRoom();
-  }, [user, isAdminOrGosat, rolesLoading]);
+  }, [user, isGosat, rolesLoading]);
 
   const initRoom = async () => {
     try {
@@ -236,7 +236,7 @@ export default function GoSatChatPage() {
     );
   }
 
-  if (!isAdminOrGosat) return null;
+  if (!isGosat) return null;
 
   // Active call overlay
   if (activeCall && roomId) {
