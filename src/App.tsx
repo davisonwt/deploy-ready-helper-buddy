@@ -98,6 +98,7 @@ const RadioPage = lazy(() => import("./components/radio/RadioPage"));
 const CreatePremiumRoomPage = lazy(() => import("./pages/CreatePremiumRoomPage").then(m => ({ default: m.CreatePremiumRoomPage })));
 const WalletSettingsPage = lazy(() => import("./pages/WalletSettingsPage"));
 const GosatWalletsPage = lazy(() => import("./pages/GosatWalletsPage"));
+const GoSatChatPage = lazy(() => import("./pages/GoSatChatPage"));
 // BinancePayTestPage removed - using NOWPayments only
 const SowerProfile = lazy(() => import("./pages/SowerProfile"));
 const PublicProfilePage = lazy(() => import("./pages/PublicProfilePage"));
@@ -741,6 +742,15 @@ const App = () => (
                       <GosatWalletsPage />
                     </Suspense>
                   </Layout>
+                </ProtectedRoute>
+              } />
+
+              {/* GoSat HQ Chat */}
+              <Route path="/gosat/chat" element={
+                <ProtectedRoute allowedRoles={['admin', 'gosat']}>
+                  <Suspense fallback={<LoadingFallback />}>
+                    <GoSatChatPage />
+                  </Suspense>
                 </ProtectedRoute>
               } />
               

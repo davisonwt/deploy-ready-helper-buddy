@@ -29,7 +29,8 @@ import {
   Award,
   Megaphone,
   Car,
-  Wrench
+  Wrench,
+  MessageCircle
 } from 'lucide-react'
 import { toast } from 'sonner'
 import { useRoles } from '../hooks/useRoles'
@@ -355,7 +356,14 @@ export default function AdminDashboardPage() {
               </div>
             </div>
             <h1 className="text-3xl font-bold text-primary mb-2">Admin Dashboard</h1>
-            <p className="text-muted-foreground">Comprehensive management hub</p>
+            <p className="text-muted-foreground mb-4">Comprehensive management hub</p>
+            <Button
+              onClick={() => navigate('/gosat/chat')}
+              className="bg-primary hover:bg-primary/90"
+            >
+              <MessageCircle className="h-4 w-4 mr-2" />
+              GoSat HQ Chat
+            </Button>
           </div>
         </div>
 
