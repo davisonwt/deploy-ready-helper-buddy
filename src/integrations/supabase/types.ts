@@ -7568,6 +7568,7 @@ export type Database = {
         Args: { user1_id: string; user2_id: string }
         Returns: string
       }
+      get_or_create_gosat_room: { Args: never; Returns: string }
       get_or_create_live_session: {
         Args: { schedule_id_param: string }
         Returns: string
