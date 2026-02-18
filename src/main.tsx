@@ -53,6 +53,24 @@ window.addEventListener('error', (event) => {
 });
 
 window.addEventListener('unhandledrejection', (event) => {
+  // Auto-reload on chunk/module import failures (stale cache after deploy)
+  const reason = event.reason;
+  if (
+    reason &&
+    (reason.message?.includes('Failed to fetch dynamically imported module') ||
+     reason.message?.includes('Importing a module script failed') ||
+     reason.message?.includes('error loading dynamically imported module'))
+  ) {
+    const reloadKey = 'chunk-reload-ts';
+    const lastReload = Number(sessionStorage.getItem(reloadKey) || '0');
+    // Only auto-reload once per 30 seconds to avoid infinite loops
+    if (Date.now() - lastReload > 30000) {
+      sessionStorage.setItem(reloadKey, String(Date.now()));
+      window.location.reload();
+      return;
+    }
+  }
+
   logError('Unhandled promise rejection', {
     reason: event.reason,
     stack: event.reason?.stack,
