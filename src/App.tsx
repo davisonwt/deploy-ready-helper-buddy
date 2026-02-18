@@ -199,6 +199,10 @@ import { logError } from "@/lib/logging";
 import { NavigationMonitor } from "@/components/monitoring/NavigationMonitor";
 import { DeadLinkDetector } from "@/components/monitoring/DeadLinkDetector";
 import { NotificationBanner } from "@/components/NotificationBanner";
+import { preloadJitsiScript } from "@/lib/jitsiPreloader";
+
+// Preload Jitsi script so calls connect faster
+preloadJitsiScript();
 
 // Loading component for Suspense fallback
 const LoadingFallback = () => (
