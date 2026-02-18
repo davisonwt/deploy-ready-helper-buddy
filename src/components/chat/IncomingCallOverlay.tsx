@@ -1,9 +1,14 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, lazy, Suspense } from 'react';
 import { useCallManager } from '@/hooks/useCallManager';
 import { Button } from '@/components/ui/button';
 import { Phone, PhoneOff } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { stopAllRingtones } from '@/lib/ringtone';
+
+const JitsiAudioCall = lazy(() => import('@/components/jitsi/JitsiAudioCall'));
+const JitsiVideoCall = lazy(() => import('@/components/jitsi/JitsiVideoCall'));
+
+import { useAuth } from '@/hooks/useAuth';
 
 /* ----------  GLOBAL SINGLETON HELPERS  ---------- */
 interface WindowWithAudioRingtone extends Window {
@@ -60,6 +65,7 @@ const stopGlobalRingtone = (): void => {
 
 export default function IncomingCallOverlay() {
   const { incomingCall, currentCall, outgoingCall, answerCall, declineCall, endCall } = useCallManager();
+  const { user } = useAuth();
   const [hasAnswered, setHasAnswered] = useState(false);
   const [needsUnlock, setNeedsUnlock] = useState(false);
 
@@ -292,6 +298,34 @@ export default function IncomingCallOverlay() {
     }
   };
 
+  // ACTIVE CALL: Render Jitsi call UI when call is accepted
+  const isActiveCall = currentCall && (currentCall.status === 'accepted' || currentCall.status === 'active');
+  if (isActiveCall && user) {
+    const callType = currentCall.type || currentCall.call_type || 'audio';
+    const isVideo = callType === 'video';
+    const CallComponent = isVideo ? JitsiVideoCall : JitsiAudioCall;
+    const otherName = currentCall.caller_name || currentCall.receiver_name || 'User';
+    
+    return (
+      <Suspense fallback={<div className="fixed inset-0 bg-background/95 z-50 flex items-center justify-center"><p>Connecting call...</p></div>}>
+        <CallComponent
+          callSession={{
+            id: currentCall.id,
+            caller_id: currentCall.caller_id,
+            receiver_id: currentCall.receiver_id,
+            room_id: currentCall.room_id,
+          }}
+          currentUserId={user.id}
+          callerInfo={{
+            display_name: otherName,
+            avatar_url: currentCall.avatar_url || undefined,
+          }}
+          onEndCall={() => endCall(currentCall.id, 'ended')}
+        />
+      </Suspense>
+    );
+  }
+
   // CRITICAL FIX: Show overlay for incoming calls OR outgoing calls
   // For incoming: show if exists AND (not answered OR currentCall not set yet)
   // This prevents the overlay from disappearing before currentCall is set
@@ -299,8 +333,8 @@ export default function IncomingCallOverlay() {
   // For outgoing: show if exists and no active call (keep showing until answered/declined)
   const showOutgoingOverlay = outgoingCall && !currentCall;
   
-  // Don't render if no call to show OR if call is fully active
-  if ((!showIncomingOverlay && !showOutgoingOverlay) || (currentCall && currentCall.status === 'accepted')) {
+  // Don't render if no call to show
+  if (!showIncomingOverlay && !showOutgoingOverlay) {
     return null;
   }
 
