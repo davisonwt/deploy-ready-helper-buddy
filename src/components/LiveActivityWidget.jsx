@@ -233,30 +233,26 @@ export default function LiveActivityWidget() {
       // Fetch active community chats with recent activity
       const { data: chatData, error: chatError } = await supabase
         .from('chat_rooms')
-        .select(`
-          *,
-          chat_participants!inner (
-            id,
-            user_id,
-            is_active
-          ),
-          chat_messages (
-            created_at
-          )
-        `)
+        .select('id, name, room_type, is_active, updated_at, description')
         .eq('is_active', true)
         .eq('room_type', 'group')
-        .eq('chat_participants.is_active', true)
         .order('updated_at', { ascending: false })
         .limit(5)
 
-      // Process chat data to show only recently active chats
-      const activeCommunityChats = chatData?.filter(chat => {
-        const hasRecentMessages = chat.chat_messages?.some(msg => 
-          new Date(msg.created_at) > new Date(Date.now() - 24 * 60 * 60 * 1000) // Last 24 hours
-        )
-        return hasRecentMessages && chat.chat_participants?.length > 1
-      }) || []
+      // Check for recent messages in these rooms
+      const chatRoomIds = (chatData || []).map(c => c.id)
+      let activeCommunityChats = []
+      if (chatRoomIds.length > 0) {
+        const { data: recentMsgs } = await supabase
+          .from('chat_messages')
+          .select('room_id')
+          .in('room_id', chatRoomIds)
+          .gte('created_at', new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString())
+          .limit(50)
+
+        const roomsWithMessages = new Set((recentMsgs || []).map(m => m.room_id))
+        activeCommunityChats = (chatData || []).filter(chat => roomsWithMessages.has(chat.id))
+      }
 
       // Fetch live courses from live_session_participants
       const { data: sessionData } = await supabase
@@ -606,7 +602,9 @@ export default function LiveActivityWidget() {
                          liveData.groupCalls.length + 
                          liveData.communityChats.length + 
                          liveData.lifeCourses.filter(course => course.isLive).length +
-                         (liveData.aodHereticFrequencies?.isLive ? 1 : 0)
+                         (liveData.aodHereticFrequencies?.isLive ? 1 : 0) +
+                         liveData.unreadMessages.length +
+                         liveData.forumInvitations.length
 
   return (
     <div 
@@ -1287,11 +1285,11 @@ export default function LiveActivityWidget() {
                   </div>
                 )}
 
-                {totalActivities === 0 && (
+                {totalActivities === 0 && liveData.unreadMessages.length === 0 && liveData.forumInvitations.length === 0 && (
                   <div className="text-center py-6">
                     <Users className="h-8 w-8 mx-auto mb-2" style={{ color: currentTheme.textSecondary }} />
-                    <p className="text-xs" style={{ color: currentTheme.textSecondary }}>No live activities right now</p>
-                    <p className="text-xs" style={{ color: currentTheme.textSecondary }}>Check back later!</p>
+                    <p className="text-xs" style={{ color: currentTheme.textSecondary }}>No recent activity</p>
+                    <p className="text-xs" style={{ color: currentTheme.textSecondary }}>Start chatting to see updates here</p>
                   </div>
                 )}
               </>

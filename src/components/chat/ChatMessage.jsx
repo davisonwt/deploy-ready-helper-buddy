@@ -1,7 +1,7 @@
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Download, Image, FileText, Video, Music, Trash2 } from 'lucide-react';
+import { Download, Image, FileText, Video, Music, Trash2, Pencil } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import FilePreview from './FilePreview';
 import { VerificationButton } from './VerificationButton';
@@ -18,7 +18,7 @@ const getFileIcon = (fileType) => {
   return icons[fileType] || FileText;
 };
 
-const ChatMessage = ({ message, isOwn = false, onDelete }) => {
+const ChatMessage = ({ message, isOwn = false, onDelete, onEdit, onReply }) => {
   const sender = message.sender_profile;
   const FileIcon = getFileIcon(message.file_type);
   const isSystemMessage = !message.sender_id && message.system_metadata?.is_system;
@@ -135,6 +135,17 @@ const ChatMessage = ({ message, isOwn = false, onDelete }) => {
             <Badge variant="outline" className="text-xs bg-white/90 backdrop-blur-md border border-white/50 text-gray-700">
               edited
             </Badge>
+          )}
+          {isOwn && onEdit && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => onEdit(message)}
+              className="h-6 w-6 p-0 text-blue-500 hover:text-blue-700 hover:bg-blue-100"
+              title="Edit message"
+            >
+              <Pencil className="h-3 w-3" />
+            </Button>
           )}
           {isOwn && onDelete && (
             <Button
