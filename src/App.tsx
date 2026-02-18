@@ -13,6 +13,8 @@ import { Card, CardContent } from "@/components/ui/card";
 import IncomingCallOverlay from "./components/chat/IncomingCallOverlay";
 import AudioUnlocker from "./components/audio/AudioUnlocker";
 import SoundUnlockBanner from "./components/audio/SoundUnlockBanner";
+import NotificationPrompt from "./components/NotificationPrompt";
+const InstallAppPage = lazy(() => import('./pages/InstallAppPage'));
 
 // Lazy load heavy components for better performance
 const EnhancedAnalyticsDashboard = lazy(() => import('./components/admin/EnhancedAnalyticsDashboard'));
@@ -258,6 +260,7 @@ const App = () => (
                 <SoundUnlockBanner />
                 <NotificationBanner />
                 <IncomingCallOverlay />
+                <NotificationPrompt />
                 <ErrorBoundary>
                     <Suspense fallback={<LoadingFallback />}>
                       <AccessibilityChecker />
@@ -1099,6 +1102,12 @@ const App = () => (
                 </Layout>
               } />
               
+              <Route path="/install" element={
+                <Suspense fallback={<LoadingFallback />}>
+                  <InstallAppPage />
+                </Suspense>
+              } />
+
               {/* Catch-all route - MUST BE LAST */}
               <Route path="*" element={<NotFound />} />
                   </Routes>
