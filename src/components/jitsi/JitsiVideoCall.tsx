@@ -21,6 +21,7 @@ interface JitsiVideoCallProps {
     display_name?: string;
     avatar_url?: string;
   };
+  myDisplayName?: string;
   onEndCall: () => void;
 }
 
@@ -28,9 +29,11 @@ export default function JitsiVideoCall({
   callSession,
   currentUserId,
   callerInfo,
+  myDisplayName,
   onEndCall,
 }: JitsiVideoCallProps) {
   const [isMinimized, setIsMinimized] = useState(false);
+  const ownName = myDisplayName || 'User';
 
   const {
     roomName,
@@ -47,7 +50,7 @@ export default function JitsiVideoCall({
   } = useJitsiCall({
     callSession,
     currentUserId,
-    displayName: callerInfo.display_name || 'User',
+    displayName: ownName,
     callType: 'video',
     onCallEnd: onEndCall,
   });
@@ -65,7 +68,7 @@ export default function JitsiVideoCall({
         <div className="w-full h-full rounded-lg overflow-hidden shadow-xl border-2" style={{ background: '#1a1a2e' }}>
           <ResilientJitsiMeeting
             roomName={roomName}
-            displayName={callerInfo.display_name || 'User'}
+            displayName={ownName}
             startWithVideoMuted={false}
             startWithAudioMuted={false}
             onApiReady={onApiReady}
@@ -115,7 +118,7 @@ export default function JitsiVideoCall({
       <div className="flex-1 min-h-0">
         <ResilientJitsiMeeting
           roomName={roomName}
-          displayName={callerInfo.display_name || 'User'}
+          displayName={ownName}
           startWithVideoMuted={false}
           startWithAudioMuted={false}
           onApiReady={onApiReady}

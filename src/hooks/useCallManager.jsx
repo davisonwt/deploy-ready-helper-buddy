@@ -604,6 +604,23 @@ const useCallManagerInternal = () => {
     try {
       console.log('📞 [CALL] Starting call to:', receiverId, type);
       
+      // Fetch caller's display name from profiles table
+      let callerDisplayName = user?.user_metadata?.first_name || user?.email || 'User';
+      try {
+        const { data: callerProfile } = await supabase
+          .from('profiles')
+          .select('display_name, first_name, last_name')
+          .eq('user_id', userId)
+          .single();
+        if (callerProfile) {
+          callerDisplayName = callerProfile.display_name || 
+            `${callerProfile.first_name || ''} ${callerProfile.last_name || ''}`.trim() || 
+            callerDisplayName;
+        }
+      } catch (e) {
+        console.warn('📞 [CALL] Could not fetch caller profile, using fallback name');
+      }
+
       // Create call record in database
       const { data: callRecord, error: callError } = await supabase
         .from('call_sessions')
@@ -624,7 +641,7 @@ const useCallManagerInternal = () => {
       const callData = {
         id: callRecord.id,
         caller_id: userId,
-        caller_name: user.display_name || user.email,
+        caller_name: callerDisplayName,
         receiver_id: receiverId,
         receiver_name: receiverName,
         type: type,
@@ -745,11 +762,29 @@ const useCallManagerInternal = () => {
       console.error('📞 [CALL] Error stopping ringtones:', error);
     }
 
+    // Fetch receiver's (our) display name to send back to caller
+    let receiverDisplayName = user?.user_metadata?.first_name || 'User';
+    try {
+      const { data: receiverProfile } = await supabase
+        .from('profiles')
+        .select('display_name, first_name, last_name')
+        .eq('user_id', userId)
+        .single();
+      if (receiverProfile) {
+        receiverDisplayName = receiverProfile.display_name || 
+          `${receiverProfile.first_name || ''} ${receiverProfile.last_name || ''}`.trim() || 
+          receiverDisplayName;
+      }
+    } catch (e) {
+      console.warn('📞 [CALL] Could not fetch receiver profile for answer');
+    }
+
     // Prepare call data and optimistically switch UI into active call state immediately
     const callData = {
       ...incomingCall,
       status: 'accepted',
       startTime: Date.now(),
+      receiver_name: receiverDisplayName,
       // Keep isIncoming=true for the callee so WebRTC waits for the caller's offer
       isIncoming: true,
     };
