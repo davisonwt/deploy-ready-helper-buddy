@@ -123,26 +123,23 @@ const ResilientJitsiMeeting = memo(function ResilientJitsiMeeting({
   }
 
   return (
-    <div
-      ref={containerRef}
-      style={{
-        width: '100%',
-        height: '100%',
-        ...style,
-      }}
-      className={className}
-    >
+    <div style={{ position: 'relative', width: '100%', height: '100%', ...style }} className={className}>
       {mode === 'loading' && (
         <div style={{
+          position: 'absolute',
+          inset: 0,
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          width: '100%',
-          height: '100%',
+          zIndex: 1,
         }}>
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
         </div>
       )}
+      <div
+        ref={containerRef}
+        style={{ width: '100%', height: '100%' }}
+      />
     </div>
   );
 });
