@@ -1,9 +1,8 @@
 /**
  * ResilientJitsiMeeting - Always uses direct iframe to meet.jit.si
- * The JitsiMeetExternalAPI approach fails to bypass the prejoin screen,
- * so we skip it entirely and use iframe with URL hash config params.
+ * Uses stable props comparison to prevent iframe re-creation which kills audio.
  */
-import { memo } from 'react';
+import { memo, useRef, useEffect } from 'react';
 import { getJitsiIframeUrl } from '@/lib/jitsiLoader';
 
 interface ResilientJitsiMeetingProps {
@@ -34,7 +33,20 @@ const ResilientJitsiMeeting = memo(function ResilientJitsiMeeting({
     startWithAudioMuted,
   });
 
-  console.log('📞 [JITSI] Using direct iframe mode for room:', roomName);
+  // Store callback in ref so iframe never re-renders due to callback changes
+  const onApiReadyRef = useRef(onApiReady);
+  useEffect(() => {
+    onApiReadyRef.current = onApiReady;
+  }, [onApiReady]);
+
+  // Only log once on mount
+  const mountedRef = useRef(false);
+  useEffect(() => {
+    if (!mountedRef.current) {
+      console.log('📞 [JITSI] Iframe mounted for room:', roomName);
+      mountedRef.current = true;
+    }
+  }, [roomName]);
 
   return (
     <iframe
@@ -50,11 +62,17 @@ const ResilientJitsiMeeting = memo(function ResilientJitsiMeeting({
       className={className}
       onLoad={() => {
         console.log('📞 [JITSI] Iframe loaded for room:', roomName);
-        // Signal that the meeting is "ready" - no API control in iframe mode
-        // but the call is active
-        onApiReady?.(null);
+        onApiReadyRef.current?.(null);
       }}
     />
+  );
+}, (prevProps, nextProps) => {
+  // Only re-render if room or display config changes - NEVER for callback changes
+  return (
+    prevProps.roomName === nextProps.roomName &&
+    prevProps.displayName === nextProps.displayName &&
+    prevProps.startWithVideoMuted === nextProps.startWithVideoMuted &&
+    prevProps.startWithAudioMuted === nextProps.startWithAudioMuted
   );
 });
 
