@@ -1,10 +1,8 @@
 import ResilientJitsiMeeting from '@/components/jitsi/ResilientJitsiMeeting';
-import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { PhoneOff, Mic, MicOff } from 'lucide-react';
+import { PhoneOff } from 'lucide-react';
 import { useJitsiCall } from '@/hooks/useJitsiCall';
-import { JITSI_CONFIG } from '@/lib/jitsi-config';
 
 interface JitsiAudioCallProps {
   callSession: {
@@ -31,10 +29,8 @@ export default function JitsiAudioCall({
     roomName,
     onApiReady,
     isLoading,
-    isAudioMuted,
     callDuration,
     connectionState,
-    toggleAudio,
     hangUp,
   } = useJitsiCall({
     callSession,
@@ -51,18 +47,18 @@ export default function JitsiAudioCall({
   };
 
   return (
-    <div className="fixed inset-0 bg-black z-50 flex flex-col">
+    <div className="fixed inset-0 z-50 flex flex-col" style={{ background: '#1a1a2e' }}>
       {/* Top bar with caller info and hang up */}
-      <div className="flex items-center justify-between px-4 py-2 bg-black/80 text-white z-10">
+      <div className="flex items-center justify-between px-4 py-2 z-10" style={{ background: 'rgba(0,0,0,0.8)' }}>
         <div className="flex items-center gap-3">
           <Avatar className="h-8 w-8">
             <AvatarImage src={callerInfo.avatar_url} />
             <AvatarFallback>{callerInfo.display_name?.charAt(0) || 'U'}</AvatarFallback>
           </Avatar>
           <div>
-            <p className="font-medium text-sm">{callerInfo.display_name || 'Unknown User'}</p>
-            <p className="text-xs text-gray-400">
-              {isLoading ? 'Connecting...' : connectionState === 'connected' ? formatDuration(callDuration) : 'Joining...'}
+            <p className="font-medium text-sm text-white">{callerInfo.display_name || 'Unknown User'}</p>
+            <p className="text-xs" style={{ color: '#9ca3af' }}>
+              {isLoading ? 'Loading...' : connectionState === 'connected' ? formatDuration(callDuration) : 'Connecting...'}
             </p>
           </div>
         </div>
@@ -72,8 +68,8 @@ export default function JitsiAudioCall({
         </Button>
       </div>
 
-      {/* Jitsi takes full screen - user can interact with Jitsi's own Join button and controls */}
-      <div className="flex-1">
+      {/* Jitsi takes full remaining space */}
+      <div className="flex-1 min-h-0">
         <ResilientJitsiMeeting
           roomName={roomName}
           displayName={callerInfo.display_name || 'User'}

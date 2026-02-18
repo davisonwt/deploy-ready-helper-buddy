@@ -32,7 +32,6 @@ export function useJitsiCall({
   const [participantCount, setParticipantCount] = useState(1);
   const [callDuration, setCallDuration] = useState(0);
   const [connectionState, setConnectionState] = useState<'connecting' | 'connected' | 'disconnected'>('connecting');
-  const loadingTimeoutRef = useRef<number | null>(null);
 
   const durationIntervalRef = useRef<number | null>(null);
   const apiRef = useRef<any>(null);
@@ -72,38 +71,67 @@ export function useJitsiCall({
     onCallEnd();
   }, [onCallEnd, updateCallStatus]);
 
-  // Called when Jitsi iframe loads
-  const onApiReady = useCallback((_api: any) => {
-    console.log('📞 [JITSI] ✅ Jitsi iframe loaded - marking call as connected');
+  // Called when Jitsi API is ready (External API instance or null for iframe fallback)
+  const onApiReady = useCallback((externalApi: any) => {
+    console.log('📞 [JITSI] onApiReady called, hasApi:', !!externalApi);
     
-    if (loadingTimeoutRef.current) {
-      clearTimeout(loadingTimeoutRef.current);
-      loadingTimeoutRef.current = null;
-    }
-
     setIsLoading(false);
     setConnectionState('connected');
     
+    // Start duration timer
     if (!durationIntervalRef.current) {
       durationIntervalRef.current = window.setInterval(() => {
         setCallDuration((prev) => prev + 1);
       }, 1000);
     }
 
-    toast({
-      title: 'Connected',
-      description: 'You are now in the call. Speak into your microphone.',
-    });
-  }, [toast]);
+    if (externalApi) {
+      // We have the External API - store it for control
+      apiRef.current = externalApi;
+      
+      // Listen for events
+      externalApi.addListener('videoConferenceJoined', () => {
+        console.log('📞 [JITSI] ✅ Conference joined - audio should be active');
+        updateCallStatus('accepted');
+        toast({
+          title: 'Connected',
+          description: 'You are now in the call.',
+        });
+      });
+
+      externalApi.addListener('audioMuteStatusChanged', (data: any) => {
+        setIsAudioMuted(data.muted);
+      });
+
+      externalApi.addListener('videoMuteStatusChanged', (data: any) => {
+        setIsVideoMuted(data.muted);
+      });
+
+      externalApi.addListener('participantJoined', () => {
+        setParticipantCount(prev => prev + 1);
+      });
+
+      externalApi.addListener('participantLeft', () => {
+        setParticipantCount(prev => Math.max(1, prev - 1));
+      });
+
+      externalApi.addListener('readyToClose', () => {
+        handleCallEnd();
+      });
+    } else {
+      // Iframe fallback - no API control, mark as connected after delay
+      toast({
+        title: 'Connected',
+        description: 'Call started. Use Jitsi controls in the window.',
+      });
+    }
+  }, [handleCallEnd, updateCallStatus, toast]);
 
   // Cleanup on unmount
   useEffect(() => {
     return () => {
       if (durationIntervalRef.current) {
         clearInterval(durationIntervalRef.current);
-      }
-      if (loadingTimeoutRef.current) {
-        clearTimeout(loadingTimeoutRef.current);
       }
       if (apiRef.current) {
         try { apiRef.current.dispose(); } catch {}
