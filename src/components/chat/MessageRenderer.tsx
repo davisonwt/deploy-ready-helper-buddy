@@ -163,11 +163,24 @@ const MessageRenderer = ({
     );
   }
 
-  // Voice message
+  // Voice message - inline audio player
   if (message.message_type === 'voice' && message.file_url) {
     return (
       <Card className={`max-w-xs ${align} ${className}`}>
-...
+        <CardContent className="p-3">
+          <div className="flex items-center gap-2 mb-2">
+            <Volume2 className="h-4 w-4 text-primary shrink-0" />
+            <span className="text-xs font-medium text-muted-foreground">
+              {message.content || 'Voice message'}
+            </span>
+          </div>
+          <audio
+            controls
+            preload="metadata"
+            className="w-full h-8 [&::-webkit-media-controls-panel]:bg-muted/50 rounded"
+            src={message.file_url}
+          />
+        </CardContent>
       </Card>
     );
   }
