@@ -39,7 +39,7 @@ const ResilientJitsiMeeting = memo(function ResilientJitsiMeeting({
   return (
     <iframe
       src={iframeUrl}
-      allow="camera; microphone; display-capture; autoplay; clipboard-write"
+      allow="camera; microphone; display-capture; autoplay; clipboard-write; encrypted-media"
       allowFullScreen
       style={{
         width: '100%',

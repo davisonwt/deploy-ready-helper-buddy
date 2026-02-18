@@ -8,12 +8,11 @@
 export const JITSI_CONFIG = {
   domain: 'meet.jit.si',
   getScriptUrl: () => 'https://meet.jit.si/external_api.js',
-  // Use longer, more unique room names to avoid triggering meet.jit.si lobby/members-only mode
+  // Room names must be ALL LOWERCASE to avoid meet.jit.si lobby enforcement
+  // Long lowercase alphanumeric names are treated as "secure enough" and skip lobby
   getRoomName: (roomName: string) => {
-    // meet.jit.si enforces lobby for short/common room names
-    // Adding a long random-looking suffix prevents this
-    const hash = roomName.replace(/[^a-zA-Z0-9]/g, '');
-    return `Sow2GrowPrivate${hash}Room`;
+    const hash = roomName.replace(/[^a-zA-Z0-9]/g, '').toLowerCase();
+    return `sow2growprivatechannel${hash}`;
   },
 };
 
