@@ -74,7 +74,7 @@ export function useJitsiCall({
 
   // Called when iframe loads or API is ready
   const onApiReady = useCallback((externalApi: any) => {
-    console.log('📞 [JITSI] Meeting ready (iframe mode, no API control)');
+    console.log('📞 [JITSI] Meeting ready, API object:', externalApi ? 'AVAILABLE' : 'null (iframe mode)');
     
     // Clear any existing timeout
     if (loadingTimeoutRef.current) {
@@ -82,38 +82,25 @@ export function useJitsiCall({
       loadingTimeoutRef.current = null;
     }
 
-    // In iframe mode there's no API - mark as connected after a short delay
-    // to allow Jitsi to auto-join (prejoin is disabled via URL params)
-    loadingTimeoutRef.current = window.setTimeout(() => {
-      console.log('📞 [JITSI] Marking call as connected');
-      setIsLoading(false);
-      setConnectionState('connected');
-      durationIntervalRef.current = window.setInterval(() => {
-        setCallDuration((prev) => prev + 1);
-      }, 1000);
-      updateCallStatus('accepted');
-    }, 3000);
-
-    // If we got an actual API object, use its events
+    // If we got an actual API object, use its events for proper control
     if (externalApi) {
       apiRef.current = externalApi;
-
-      externalApi.addListener('videoConferenceJoined', () => {
-        console.log('📞 [JITSI] Conference joined');
-        if (loadingTimeoutRef.current) {
-          clearTimeout(loadingTimeoutRef.current);
-          loadingTimeoutRef.current = null;
-        }
-        setIsLoading(false);
-        setConnectionState('connected');
+      
+      // API mode: conference already joined (videoConferenceJoined fired)
+      console.log('📞 [JITSI] ✅ API mode - conference joined, call is ACTIVE');
+      setIsLoading(false);
+      setConnectionState('connected');
+      
+      if (!durationIntervalRef.current) {
         durationIntervalRef.current = window.setInterval(() => {
           setCallDuration((prev) => prev + 1);
         }, 1000);
-        updateCallStatus('accepted');
-        toast({
-          title: 'Connected',
-          description: 'Call connected successfully',
-        });
+      }
+      
+      updateCallStatus('accepted');
+      toast({
+        title: 'Connected',
+        description: 'Call connected successfully',
       });
 
       externalApi.addListener('videoConferenceLeft', () => {
@@ -125,11 +112,39 @@ export function useJitsiCall({
         setIsAudioMuted(muted);
       });
 
+      externalApi.addListener('videoMuteStatusChanged', ({ muted }: { muted: boolean }) => {
+        setIsVideoMuted(muted);
+      });
+
+      externalApi.addListener('participantJoined', () => {
+        setParticipantCount(prev => prev + 1);
+      });
+
+      externalApi.addListener('participantLeft', () => {
+        setParticipantCount(prev => Math.max(1, prev - 1));
+      });
+
       externalApi.addListener('readyToClose', () => {
         console.log('📞 [JITSI] Ready to close');
         handleCallEnd();
       });
+
+      return;
     }
+
+    // Iframe fallback mode: no API control, mark connected after delay
+    console.log('📞 [JITSI] Iframe fallback mode - marking connected after delay');
+    loadingTimeoutRef.current = window.setTimeout(() => {
+      console.log('📞 [JITSI] Marking call as connected (iframe mode)');
+      setIsLoading(false);
+      setConnectionState('connected');
+      if (!durationIntervalRef.current) {
+        durationIntervalRef.current = window.setInterval(() => {
+          setCallDuration((prev) => prev + 1);
+        }, 1000);
+      }
+      updateCallStatus('accepted');
+    }, 3000);
   }, [handleCallEnd, updateCallStatus, toast]);
 
   // Cleanup on unmount
