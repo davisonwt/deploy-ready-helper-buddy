@@ -1,76 +1,63 @@
 
 
-# Switch to Free Jitsi Meet for All Voice/Video Calls
+# Push Notification Ringing for Incoming Calls
 
-## The Solution
+## Goal
+When someone calls you in Sow2Grow, your phone or PC will show a notification with a ringtone sound -- even if you're on another browser tab or your screen is off. Tapping the notification takes you straight to the call.
 
-**Jitsi Meet** (the open-source project behind JaaS) runs a free public server at `meet.jit.si`. Your app already uses the Jitsi External API -- the only change needed is switching the domain from `8x8.vc` (paid) to `meet.jit.si` (free). No JWT tokens, no API keys, no expiration issues.
+## How It Works
 
-This will immediately restore:
-- 1-on-1 voice and video calls in ChatApp
-- Classroom live sessions
-- Lecture hall sessions
-- Training sessions
-- Radio DJ live broadcasts
-- Group calls
+1. **First time setup**: When you open the app, it asks "Allow notifications?" -- you tap Allow once, and it remembers your choice forever on that device.
 
-## Why This Works for Your Scale
+2. **When someone calls you**: The app sends a push notification to your device that:
+   - Shows "Incoming Call from [Name]" 
+   - Plays a notification sound
+   - Stays on screen until you tap it or the caller hangs up
 
-- Free for unlimited rooms and calls
-- Each call/session is its own isolated room (2-50 participants per room)
-- Handles 1,000+ users easily since not everyone is in one room at the same time
-- No account, no JWT, no tokens needed
-- Same quality video/audio as JaaS (same underlying technology)
-- When you grow and need premium features (recording, analytics, branding), you can switch back to JaaS or self-host
+3. **Works on all devices**: Once you allow notifications on your phone, tablet, or computer, it works on all of them automatically.
 
-## Future Growth Path
+## Limitations (honest)
+- You must have the app open in at least one browser tab (or installed as a PWA) for real-time ringtone
+- iPhone Safari has limited notification support -- works best if the app is "installed" to the home screen
+- If the browser is completely closed, notifications won't work (that requires a true native app)
 
-```text
-Now (0-1,000 users)          Later (1,000+ users)
---------------------         ----------------------
-meet.jit.si (FREE)     -->   Self-hosted Jitsi OR JaaS
-No JWT needed                Your own server = full control
-No cost                      Add recording, branding, SIP
-Unlimited rooms              Handle higher concurrency
-```
+## Technical Implementation
 
-## What Changes
+### Step 1: Make the App a PWA (Progressive Web App)
+- Install `vite-plugin-pwa` and configure it in `vite.config.ts`
+- Add a service worker that handles background notifications
+- Add PWA manifest with app name, icons, and theme colors
+- Add an "Install App" prompt so users can add it to their home screen
 
-### 1. Update `src/lib/jitsi-config.ts`
-- Change domain from `8x8.vc` to `meet.jit.si`
-- Change script URL to `https://meet.jit.si/external_api.js`
-- Remove the JaaS `appId` prefix from room names
-- Remove the expired JWT token entirely
-- Keep all existing config options (resolution, toolbar buttons, etc.)
+### Step 2: Add Browser Notification Permissions
+- Create a `useNotificationPermission` hook that requests permission on first login
+- Store permission state so users aren't asked repeatedly
+- Show a friendly prompt explaining why notifications are needed
 
-### 2. Update `src/hooks/useJitsiCall.tsx`
-- Remove JWT injection from the Jitsi initialization options
-- Room names use simple format (no JaaS prefix needed)
-- Everything else stays the same (event listeners, call status tracking, mute controls)
+### Step 3: Send Browser Notifications on Incoming Calls
+- In the `CallManagerProvider`, when an incoming call is detected:
+  - Play the existing ringtone (already works)
+  - ALSO trigger a `new Notification("Incoming Call", { body: callerName, sound: ... })`
+  - Use the Notification API's `vibrate` pattern for mobile devices
+  - When user taps the notification, focus the app window and show the call overlay
 
-### 3. Update `src/components/video/JitsiVideoWindow.tsx`
-- Remove JWT and JaaS room name prefix
-- Point to `meet.jit.si` domain
+### Step 4: Service Worker for Background Notifications
+- Register a service worker that listens for push events
+- When the app tab is in the background, the service worker shows the notification
+- The service worker can play a notification sound even when the tab is inactive
 
-### 4. Update `src/components/jitsi/JitsiRoom.tsx`
-- Remove JaaS-specific room naming
-- Remove JWT injection
+### Files to Create/Modify
+- `vite.config.ts` -- add PWA plugin configuration
+- `public/manifest.json` -- PWA manifest with app details
+- `public/sw.js` -- service worker for background notifications
+- `src/hooks/useNotificationPermission.ts` -- new hook for permission management
+- `src/hooks/useCallManager.ts` -- add notification trigger when incoming call detected
+- `src/components/NotificationPrompt.tsx` -- friendly UI to request notification permission
+- `index.html` -- add PWA meta tags
+- `public/notification-ring.mp3` -- notification sound file (or generate via Web Audio API)
 
-### 5. Update any other Jitsi components
-- `JitsiAudioCall.tsx` and `JitsiVideoCall.tsx` -- remove JaaS references
-- All components already import from `jitsi-config.ts`, so most changes cascade automatically
-
-## What Stays the Same (no changes needed)
-
-- All call signaling (Supabase Realtime)
-- Call session tracking (call_sessions table)
-- Incoming call overlay with ringtone
-- Chat integration (voice/video buttons in conversations)
-- Radio session lobby and participant management
-- Classroom/Lecture/Training session UIs
-- All UI components and layouts
-
-## Summary
-
-This is a simple configuration change -- swap the paid JaaS domain for the free Jitsi public server. No new infrastructure, no API keys, no tokens to expire. All your existing call and session logic stays intact. When your app grows beyond 1,000 users or you need features like call recording, you can self-host Jitsi on a VPS (around $20-40/month) or return to JaaS.
+### Step 5: "Install App" Page
+- Create a `/install` page that guides users to install the app on their device
+- Show device-specific instructions (Android vs iPhone vs Desktop)
+- Installing the app improves notification reliability significantly
 
