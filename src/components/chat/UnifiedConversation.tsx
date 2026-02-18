@@ -108,12 +108,17 @@ export const UnifiedConversation: React.FC<UnifiedConversationProps> = ({
   }, [roomId, user]);
 
   // Track currentCall from useCallManager
+  // NOTE: For 1-on-1 calls, IncomingCallOverlay handles the Jitsi session.
+  // Only set isCallActive here for UI indicators (minimized bar, etc.),
+  // but do NOT create a duplicate JitsiRoom - that causes participants
+  // to join different rooms and not hear each other.
   useEffect(() => {
     if (currentCall && currentCall.status === 'accepted') {
       setIsCallActive(true);
       setCallType(currentCall.type || 'audio');
       setCallStartTime(currentCall.startTime || Date.now());
-      setJitsiRoomName(currentCall.id.replace(/-/g, '').substring(0, 12));
+      // Don't set jitsiRoomName for 1-on-1 calls - IncomingCallOverlay handles Jitsi
+      // Only set it for group calls (which set jitsiRoomName directly in handleVoiceCall/handleVideoCall)
     } else if (!currentCall) {
       setIsCallActive(false);
       setJitsiRoomName('');
