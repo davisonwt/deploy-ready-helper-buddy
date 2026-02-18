@@ -87,23 +87,36 @@ export default function JitsiRoom({
 
   useEffect(() => {
     // Load Jitsi API script
+    let retryCount = 0;
+    const MAX_RETRIES = 3;
+
     const loadJitsiScript = () => {
       if (window.JitsiMeetExternalAPI) {
         initializeJitsi();
         return;
       }
 
+      const existingScript = document.querySelector(`script[src="${JITSI_CONFIG.getScriptUrl()}"]`);
+      if (existingScript) existingScript.remove();
+
       const script = document.createElement('script');
       script.src = JITSI_CONFIG.getScriptUrl();
       script.async = true;
       script.onload = initializeJitsi;
       script.onerror = () => {
-        toast({
-          title: 'Error',
-          description: 'Failed to load Jitsi. Please check your internet connection.',
-          variant: 'destructive',
-        });
-        setIsLoading(false);
+        retryCount++;
+        console.warn(`⚠️ [JITSI] Script load failed (attempt ${retryCount}/${MAX_RETRIES})`);
+        if (retryCount < MAX_RETRIES) {
+          script.remove();
+          setTimeout(loadJitsiScript, 2000 * retryCount);
+        } else {
+          toast({
+            title: 'Error',
+            description: 'Failed to load call service. Please check your internet connection and try again.',
+            variant: 'destructive',
+          });
+          setIsLoading(false);
+        }
       };
       document.body.appendChild(script);
     };
