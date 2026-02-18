@@ -305,6 +305,7 @@ export default function IncomingCallOverlay() {
     const isVideo = callType === 'video';
     const CallComponent = isVideo ? JitsiVideoCall : JitsiAudioCall;
     const otherName = currentCall.caller_name || currentCall.receiver_name || 'User';
+    const myName = user.user_metadata?.first_name || user.user_metadata?.display_name || user.email || 'User';
     
     return (
       <Suspense fallback={<div className="fixed inset-0 bg-background/95 z-50 flex items-center justify-center"><p>Connecting call...</p></div>}>
@@ -320,6 +321,7 @@ export default function IncomingCallOverlay() {
             display_name: otherName,
             avatar_url: currentCall.avatar_url || undefined,
           }}
+          myDisplayName={myName}
           onEndCall={() => endCall(currentCall.id, 'ended')}
         />
       </Suspense>

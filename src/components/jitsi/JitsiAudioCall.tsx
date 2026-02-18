@@ -16,6 +16,7 @@ interface JitsiAudioCallProps {
     display_name?: string;
     avatar_url?: string;
   };
+  myDisplayName?: string;
   onEndCall: () => void;
 }
 
@@ -23,8 +24,10 @@ export default function JitsiAudioCall({
   callSession,
   currentUserId,
   callerInfo,
+  myDisplayName,
   onEndCall,
 }: JitsiAudioCallProps) {
+  const ownName = myDisplayName || 'User';
   const {
     roomName,
     onApiReady,
@@ -35,7 +38,7 @@ export default function JitsiAudioCall({
   } = useJitsiCall({
     callSession,
     currentUserId,
-    displayName: callerInfo.display_name || 'User',
+    displayName: ownName,
     callType: 'audio',
     onCallEnd: onEndCall,
   });
@@ -72,7 +75,7 @@ export default function JitsiAudioCall({
       <div className="flex-1 min-h-0">
         <ResilientJitsiMeeting
           roomName={roomName}
-          displayName={callerInfo.display_name || 'User'}
+          displayName={ownName}
           startWithVideoMuted={true}
           startWithAudioMuted={false}
           onApiReady={onApiReady}
