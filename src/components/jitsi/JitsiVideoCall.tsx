@@ -1,9 +1,9 @@
+import { JitsiMeeting } from '@jitsi/react-sdk';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import {
-  Phone,
   PhoneOff,
   Mic,
   MicOff,
@@ -14,6 +14,7 @@ import {
   Users,
 } from 'lucide-react';
 import { useJitsiCall } from '@/hooks/useJitsiCall';
+import { JITSI_CONFIG } from '@/lib/jitsi-config';
 import { useState } from 'react';
 
 interface JitsiVideoCallProps {
@@ -40,7 +41,8 @@ export default function JitsiVideoCall({
   const [isMinimized, setIsMinimized] = useState(false);
 
   const {
-    jitsiContainerRef,
+    roomName,
+    onApiReady,
     isLoading,
     isAudioMuted,
     isVideoMuted,
@@ -64,6 +66,31 @@ export default function JitsiVideoCall({
     return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
   };
 
+  const jitsiElement = (
+    <JitsiMeeting
+      domain={JITSI_CONFIG.domain}
+      roomName={roomName}
+      userInfo={{ displayName: callerInfo.display_name || 'User', email: '' }}
+      configOverwrite={{
+        startWithVideoMuted: false,
+        startWithAudioMuted: false,
+        prejoinPageEnabled: false,
+        disableDeepLinking: true,
+        enableClosePage: false,
+      }}
+      interfaceConfigOverwrite={{
+        SHOW_JITSI_WATERMARK: false,
+        TOOLBAR_BUTTONS: ['microphone', 'camera', 'hangup', 'settings', 'desktop', 'fullscreen'],
+        MOBILE_APP_PROMO: false,
+      }}
+      onApiReady={onApiReady}
+      getIFrameRef={(iframeRef) => {
+        iframeRef.style.width = '100%';
+        iframeRef.style.height = '100%';
+      }}
+    />
+  );
+
   // Minimized view
   if (isMinimized) {
     return (
@@ -84,51 +111,25 @@ export default function JitsiVideoCall({
                 </div>
               </div>
               <div className="flex gap-1">
-                <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={() => setIsMinimized(false)}
-                  className="h-8 w-8 p-0"
-                >
+                <Button size="sm" variant="outline" onClick={() => setIsMinimized(false)} className="h-8 w-8 p-0">
                   <Maximize2 className="h-4 w-4" />
                 </Button>
-                <Button
-                  size="sm"
-                  variant="destructive"
-                  onClick={hangUp}
-                  className={`p-0 ${connectionState === 'connected' ? 'h-8 w-8' : 'h-8 px-3'}`}
-                  title={connectionState === 'connected' ? 'End Call' : 'Cancel Call'}
-                >
+                <Button size="sm" variant="destructive" onClick={hangUp} className="h-8 w-8 p-0">
                   <PhoneOff className="h-4 w-4" />
-                  {connectionState !== 'connected' && (
-                    <span className="ml-1 text-xs">Cancel</span>
-                  )}
                 </Button>
               </div>
             </div>
 
-            {/* Mini video preview */}
             <div className="relative w-full h-32 bg-muted rounded-lg overflow-hidden">
-              <div ref={jitsiContainerRef} className="w-full h-full" />
+              {jitsiElement}
             </div>
 
-            {/* Mini controls */}
             {connectionState === 'connected' && (
               <div className="flex justify-center gap-2 mt-3">
-                <Button
-                  size="sm"
-                  variant={isAudioMuted ? 'destructive' : 'outline'}
-                  onClick={toggleAudio}
-                  className="h-8 w-8 p-0"
-                >
+                <Button size="sm" variant={isAudioMuted ? 'destructive' : 'outline'} onClick={toggleAudio} className="h-8 w-8 p-0">
                   {isAudioMuted ? <MicOff className="h-3 w-3" /> : <Mic className="h-3 w-3" />}
                 </Button>
-                <Button
-                  size="sm"
-                  variant={isVideoMuted ? 'secondary' : 'outline'}
-                  onClick={toggleVideo}
-                  className="h-8 w-8 p-0"
-                >
+                <Button size="sm" variant={isVideoMuted ? 'secondary' : 'outline'} onClick={toggleVideo} className="h-8 w-8 p-0">
                   {isVideoMuted ? <VideoOff className="h-3 w-3" /> : <Video className="h-3 w-3" />}
                 </Button>
               </div>
@@ -157,14 +158,11 @@ export default function JitsiVideoCall({
                 {participantCount}
               </Badge>
               {connectionState === 'connected' && (
-                <span className="text-sm text-muted-foreground">
-                  {formatDuration(callDuration)}
-                </span>
+                <span className="text-sm text-muted-foreground">{formatDuration(callDuration)}</span>
               )}
             </div>
           </div>
         </div>
-
         <Button variant="outline" size="sm" onClick={() => setIsMinimized(true)}>
           <Minimize2 className="h-4 w-4" />
         </Button>
@@ -180,7 +178,7 @@ export default function JitsiVideoCall({
             </Card>
           </div>
         )}
-        <div ref={jitsiContainerRef} className="w-full h-full" />
+        {jitsiElement}
       </div>
 
       {/* Controls */}
@@ -188,36 +186,17 @@ export default function JitsiVideoCall({
         <div className="flex items-center justify-center gap-4">
           {connectionState === 'connected' && (
             <>
-              <Button
-                variant={isAudioMuted ? 'destructive' : 'outline'}
-                size="lg"
-                onClick={toggleAudio}
-                className="rounded-full h-14 w-14"
-              >
+              <Button variant={isAudioMuted ? 'destructive' : 'outline'} size="lg" onClick={toggleAudio} className="rounded-full h-14 w-14">
                 {isAudioMuted ? <MicOff className="h-6 w-6" /> : <Mic className="h-6 w-6" />}
               </Button>
-
-              <Button
-                variant={isVideoMuted ? 'secondary' : 'outline'}
-                size="lg"
-                onClick={toggleVideo}
-                className="rounded-full h-14 w-14"
-              >
+              <Button variant={isVideoMuted ? 'secondary' : 'outline'} size="lg" onClick={toggleVideo} className="rounded-full h-14 w-14">
                 {isVideoMuted ? <VideoOff className="h-6 w-6" /> : <Video className="h-6 w-6" />}
               </Button>
             </>
           )}
-
-          <Button
-            variant="destructive"
-            size="lg"
-            onClick={hangUp}
-            className={`rounded-full shadow-lg ${connectionState === 'connected' ? 'h-16 w-16' : 'h-16 px-8'}`}
-          >
+          <Button variant="destructive" size="lg" onClick={hangUp} className={`rounded-full shadow-lg ${connectionState === 'connected' ? 'h-16 w-16' : 'h-16 px-8'}`}>
             <PhoneOff className="h-7 w-7" />
-            {connectionState !== 'connected' && (
-              <span className="ml-2 font-semibold">Cancel</span>
-            )}
+            {connectionState !== 'connected' && <span className="ml-2 font-semibold">Cancel</span>}
           </Button>
         </div>
       </div>

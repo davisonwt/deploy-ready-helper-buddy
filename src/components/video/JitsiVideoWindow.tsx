@@ -2,11 +2,7 @@ import { useEffect, useRef } from 'react';
 import { launchConfetti, launchSparkles, playSoundEffect } from '@/utils/confetti';
 import { JITSI_CONFIG, getJitsiInterfaceConfig, getVideoCallConfig } from '@/lib/jitsi-config';
 
-declare global {
-  interface Window {
-    JitsiMeetExternalAPI: any;
-  }
-}
+// JitsiMeetExternalAPI type is provided by @jitsi/react-sdk
 
 interface JitsiVideoWindowProps {
   isOpen: boolean;

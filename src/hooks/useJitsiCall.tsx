@@ -3,12 +3,6 @@ import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { JITSI_CONFIG } from '@/lib/jitsi-config';
 
-declare global {
-  interface Window {
-    JitsiMeetExternalAPI: any;
-  }
-}
-
 interface JitsiCallOptions {
   callSession: {
     id: string;
@@ -30,8 +24,6 @@ export function useJitsiCall({
   callType,
   onCallEnd,
 }: JitsiCallOptions) {
-  const jitsiContainerRef = useRef<HTMLDivElement>(null);
-  const jitsiApiRef = useRef<any>(null);
   const { toast } = useToast();
 
   const [isLoading, setIsLoading] = useState(true);
@@ -42,154 +34,10 @@ export function useJitsiCall({
   const [connectionState, setConnectionState] = useState<'connecting' | 'connected' | 'disconnected'>('connecting');
 
   const durationIntervalRef = useRef<number | null>(null);
+  const apiRef = useRef<any>(null);
 
-  // Generate unique room name for this call using JaaS format
+  // Generate unique room name for this call
   const roomName = JITSI_CONFIG.getRoomName(`call_${callSession.id.replace(/-/g, '')}`);
-
-  // Load JaaS script and initialize
-  useEffect(() => {
-    let retryCount = 0;
-    const MAX_RETRIES = 3;
-
-    const loadJitsiScript = () => {
-      if (window.JitsiMeetExternalAPI) {
-        initializeJitsi();
-        return;
-      }
-
-      // Remove any previously failed script tags
-      const existingScript = document.querySelector(`script[src="${JITSI_CONFIG.getScriptUrl()}"]`);
-      if (existingScript) existingScript.remove();
-
-      const script = document.createElement('script');
-      script.src = JITSI_CONFIG.getScriptUrl();
-      script.async = true;
-      script.onload = initializeJitsi;
-      script.onerror = () => {
-        retryCount++;
-        console.warn(`⚠️ [JITSI] Script load failed (attempt ${retryCount}/${MAX_RETRIES})`);
-        if (retryCount < MAX_RETRIES) {
-          script.remove();
-          setTimeout(loadJitsiScript, 2000 * retryCount);
-        } else {
-          toast({
-            title: 'Connection Error',
-            description: 'Failed to load call service. Please check your connection and try again.',
-            variant: 'destructive',
-          });
-          setIsLoading(false);
-        }
-      };
-      document.body.appendChild(script);
-    };
-
-    const initializeJitsi = () => {
-      if (!jitsiContainerRef.current) return;
-
-      try {
-        const configOverwrite = callType === 'audio' 
-          ? { startWithVideoMuted: true, startWithAudioMuted: false }
-          : { startWithVideoMuted: false, startWithAudioMuted: false };
-
-        const options: any = {
-          roomName,
-          parentNode: jitsiContainerRef.current,
-          width: '100%',
-          height: '100%',
-          userInfo: { displayName },
-          configOverwrite: {
-            ...configOverwrite,
-            prejoinPageEnabled: false,
-            disableDeepLinking: true,
-            enableClosePage: false,
-          },
-          interfaceConfigOverwrite: {
-            SHOW_JITSI_WATERMARK: false,
-            TOOLBAR_BUTTONS: ['microphone', 'camera', 'hangup', 'settings', 'desktop', 'fullscreen'],
-            MOBILE_APP_PROMO: false,
-          },
-        };
-
-        jitsiApiRef.current = new window.JitsiMeetExternalAPI(JITSI_CONFIG.domain, options);
-
-        // Event listeners
-        jitsiApiRef.current.addListener('videoConferenceJoined', () => {
-          console.log('📞 [JITSI] Conference joined');
-          setIsLoading(false);
-          setConnectionState('connected');
-          
-          // Start call duration timer
-          durationIntervalRef.current = window.setInterval(() => {
-            setCallDuration((prev) => prev + 1);
-          }, 1000);
-
-          // Update call status in database
-          updateCallStatus('accepted');
-
-          toast({
-            title: 'Connected',
-            description: 'Call connected successfully',
-          });
-        });
-
-        jitsiApiRef.current.addListener('videoConferenceLeft', () => {
-          console.log('📞 [JITSI] Conference left');
-          handleCallEnd();
-        });
-
-        jitsiApiRef.current.addListener('participantJoined', (participant: any) => {
-          console.log('📞 [JITSI] Participant joined:', participant);
-          updateParticipantCount();
-        });
-
-        jitsiApiRef.current.addListener('participantLeft', (participant: any) => {
-          console.log('📞 [JITSI] Participant left:', participant);
-          updateParticipantCount();
-        });
-
-        jitsiApiRef.current.addListener('audioMuteStatusChanged', ({ muted }: { muted: boolean }) => {
-          setIsAudioMuted(muted);
-        });
-
-        jitsiApiRef.current.addListener('videoMuteStatusChanged', ({ muted }: { muted: boolean }) => {
-          setIsVideoMuted(muted);
-        });
-
-        jitsiApiRef.current.addListener('readyToClose', () => {
-          console.log('📞 [JITSI] Ready to close');
-          handleCallEnd();
-        });
-
-      } catch (error) {
-        console.error('❌ [JITSI] Initialization error:', error);
-        toast({
-          title: 'Call Failed',
-          description: 'Failed to initialize call',
-          variant: 'destructive',
-        });
-        setIsLoading(false);
-      }
-    };
-
-    const updateParticipantCount = () => {
-      if (jitsiApiRef.current) {
-        const participants = jitsiApiRef.current.getNumberOfParticipants();
-        setParticipantCount(participants + 1); // +1 for local participant
-      }
-    };
-
-    loadJitsiScript();
-
-    return () => {
-      if (durationIntervalRef.current) {
-        clearInterval(durationIntervalRef.current);
-      }
-      if (jitsiApiRef.current) {
-        jitsiApiRef.current.dispose();
-        jitsiApiRef.current = null;
-      }
-    };
-  }, [callSession.id, displayName, roomName, callType, toast]);
 
   // Update call status in database
   const updateCallStatus = useCallback(async (status: string) => {
@@ -215,24 +63,84 @@ export function useJitsiCall({
     setConnectionState('disconnected');
     updateCallStatus('ended');
 
-    if (jitsiApiRef.current) {
-      jitsiApiRef.current.dispose();
-      jitsiApiRef.current = null;
+    if (apiRef.current) {
+      try { apiRef.current.dispose(); } catch {}
+      apiRef.current = null;
     }
 
     onCallEnd();
   }, [onCallEnd, updateCallStatus]);
 
+  // Called when JitsiMeeting's onApiReady fires
+  const onApiReady = useCallback((externalApi: any) => {
+    console.log('📞 [JITSI] API ready');
+    apiRef.current = externalApi;
+
+    externalApi.addListener('videoConferenceJoined', () => {
+      console.log('📞 [JITSI] Conference joined');
+      setIsLoading(false);
+      setConnectionState('connected');
+      
+      durationIntervalRef.current = window.setInterval(() => {
+        setCallDuration((prev) => prev + 1);
+      }, 1000);
+
+      updateCallStatus('accepted');
+
+      toast({
+        title: 'Connected',
+        description: 'Call connected successfully',
+      });
+    });
+
+    externalApi.addListener('videoConferenceLeft', () => {
+      console.log('📞 [JITSI] Conference left');
+      handleCallEnd();
+    });
+
+    externalApi.addListener('participantJoined', () => {
+      const count = externalApi.getNumberOfParticipants();
+      setParticipantCount(count + 1);
+    });
+
+    externalApi.addListener('participantLeft', () => {
+      const count = externalApi.getNumberOfParticipants();
+      setParticipantCount(count + 1);
+    });
+
+    externalApi.addListener('audioMuteStatusChanged', ({ muted }: { muted: boolean }) => {
+      setIsAudioMuted(muted);
+    });
+
+    externalApi.addListener('videoMuteStatusChanged', ({ muted }: { muted: boolean }) => {
+      setIsVideoMuted(muted);
+    });
+
+    externalApi.addListener('readyToClose', () => {
+      console.log('📞 [JITSI] Ready to close');
+      handleCallEnd();
+    });
+  }, [handleCallEnd, updateCallStatus, toast]);
+
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      if (durationIntervalRef.current) {
+        clearInterval(durationIntervalRef.current);
+      }
+      if (apiRef.current) {
+        try { apiRef.current.dispose(); } catch {}
+        apiRef.current = null;
+      }
+    };
+  }, []);
+
   const toggleAudio = useCallback(() => {
-    if (jitsiApiRef.current) {
-      jitsiApiRef.current.executeCommand('toggleAudio');
-    }
+    apiRef.current?.executeCommand('toggleAudio');
   }, []);
 
   const toggleVideo = useCallback(() => {
-    if (jitsiApiRef.current) {
-      jitsiApiRef.current.executeCommand('toggleVideo');
-    }
+    apiRef.current?.executeCommand('toggleVideo');
   }, []);
 
   const hangUp = useCallback(() => {
@@ -240,7 +148,8 @@ export function useJitsiCall({
   }, [handleCallEnd]);
 
   return {
-    jitsiContainerRef,
+    roomName,
+    onApiReady,
     isLoading,
     isAudioMuted,
     isVideoMuted,
