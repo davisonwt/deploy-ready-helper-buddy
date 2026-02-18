@@ -1,4 +1,4 @@
-import { JitsiMeeting } from '@jitsi/react-sdk';
+import ResilientJitsiMeeting from '@/components/jitsi/ResilientJitsiMeeting';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -57,27 +57,18 @@ export default function JitsiAudioCall({
         className="fixed bottom-0 right-0 overflow-hidden" 
         style={{ width: 300, height: 200, opacity: 0.01, pointerEvents: 'none', zIndex: -1 }} 
       >
-        <JitsiMeeting
-          domain={JITSI_CONFIG.domain}
+        <ResilientJitsiMeeting
           roomName={roomName}
-          userInfo={{ displayName: callerInfo.display_name || 'User', email: '' }}
+          displayName={callerInfo.display_name || 'User'}
+          startWithVideoMuted={true}
+          startWithAudioMuted={false}
           configOverwrite={{
-            startWithVideoMuted: true,
-            startWithAudioMuted: false,
-            prejoinPageEnabled: false,
-            disableDeepLinking: true,
             enableClosePage: false,
           }}
           interfaceConfigOverwrite={{
-            SHOW_JITSI_WATERMARK: false,
             TOOLBAR_BUTTONS: ['microphone', 'hangup'],
-            MOBILE_APP_PROMO: false,
           }}
           onApiReady={onApiReady}
-          getIFrameRef={(iframeRef) => {
-            iframeRef.style.width = '100%';
-            iframeRef.style.height = '100%';
-          }}
         />
       </div>
 

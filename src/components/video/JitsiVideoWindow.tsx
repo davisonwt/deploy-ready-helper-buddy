@@ -1,8 +1,7 @@
 import { useEffect, useRef } from 'react';
 import { launchConfetti, launchSparkles, playSoundEffect } from '@/utils/confetti';
 import { JITSI_CONFIG, getJitsiInterfaceConfig, getVideoCallConfig } from '@/lib/jitsi-config';
-
-// JitsiMeetExternalAPI type is provided by @jitsi/react-sdk
+import { loadJitsiApi } from '@/lib/jitsiLoader';
 
 interface JitsiVideoWindowProps {
   isOpen: boolean;
@@ -26,20 +25,18 @@ export function JitsiVideoWindow({
   useEffect(() => {
     if (!isOpen || !jitsiMeetRef.current) return;
 
-    // Load Jitsi API script if not already loaded
-    if (!window.JitsiMeetExternalAPI) {
-      const script = document.createElement('script');
-      script.src = JITSI_CONFIG.getScriptUrl();
-      script.async = true;
-      script.onload = () => {
-        initializeJitsi();
-      };
-      document.body.appendChild(script);
-    } else {
-      initializeJitsi();
-    }
+    let disposed = false;
+
+    const init = async () => {
+      const JitsiAPI = await loadJitsiApi();
+      if (disposed || !jitsiMeetRef.current || !JitsiAPI) return;
+      initializeJitsi(JitsiAPI);
+    };
+
+    init();
 
     return () => {
+      disposed = true;
       if (jitsiAPIRef.current) {
         jitsiAPIRef.current.dispose();
         jitsiAPIRef.current = null;
@@ -47,8 +44,8 @@ export function JitsiVideoWindow({
     };
   }, [isOpen, roomName, displayName, password]);
 
-  const initializeJitsi = () => {
-    if (!jitsiMeetRef.current || !window.JitsiMeetExternalAPI) return;
+  const initializeJitsi = (JitsiAPI: any) => {
+    if (!jitsiMeetRef.current) return;
 
     // Clear any existing content
     jitsiMeetRef.current.innerHTML = '';
@@ -72,7 +69,7 @@ export function JitsiVideoWindow({
       },
     };
 
-    jitsiAPIRef.current = new window.JitsiMeetExternalAPI(JITSI_CONFIG.domain, options);
+    jitsiAPIRef.current = new JitsiAPI(JITSI_CONFIG.domain, options);
 
     // Garden-style UI touches
     jitsiAPIRef.current.addEventListener('videoConferenceJoined', () => {

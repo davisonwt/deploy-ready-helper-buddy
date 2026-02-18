@@ -1,20 +1,13 @@
-import { JitsiMeeting } from '@jitsi/react-sdk';
+import ResilientJitsiMeeting from '@/components/jitsi/ResilientJitsiMeeting';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import {
-  PhoneOff,
-  Mic,
-  MicOff,
-  Video,
-  VideoOff,
-  Minimize2,
-  Maximize2,
-  Users,
+  PhoneOff, Mic, MicOff, Video, VideoOff,
+  Minimize2, Maximize2, Users,
 } from 'lucide-react';
 import { useJitsiCall } from '@/hooks/useJitsiCall';
-import { JITSI_CONFIG } from '@/lib/jitsi-config';
 import { useState } from 'react';
 
 interface JitsiVideoCallProps {
@@ -67,27 +60,15 @@ export default function JitsiVideoCall({
   };
 
   const jitsiElement = (
-    <JitsiMeeting
-      domain={JITSI_CONFIG.domain}
+    <ResilientJitsiMeeting
       roomName={roomName}
-      userInfo={{ displayName: callerInfo.display_name || 'User', email: '' }}
-      configOverwrite={{
-        startWithVideoMuted: false,
-        startWithAudioMuted: false,
-        prejoinPageEnabled: false,
-        disableDeepLinking: true,
-        enableClosePage: false,
-      }}
+      displayName={callerInfo.display_name || 'User'}
+      startWithVideoMuted={false}
+      startWithAudioMuted={false}
       interfaceConfigOverwrite={{
-        SHOW_JITSI_WATERMARK: false,
         TOOLBAR_BUTTONS: ['microphone', 'camera', 'hangup', 'settings', 'desktop', 'fullscreen'],
-        MOBILE_APP_PROMO: false,
       }}
       onApiReady={onApiReady}
-      getIFrameRef={(iframeRef) => {
-        iframeRef.style.width = '100%';
-        iframeRef.style.height = '100%';
-      }}
     />
   );
 
