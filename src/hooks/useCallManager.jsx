@@ -5,6 +5,7 @@ import { useToast } from '@/hooks/use-toast';
 import { stopAllRingtones } from '@/lib/ringtone';
 import { CALL_CONSTANTS, isCallStale, isDuplicateCall } from './callUtils';
 import { CallManagerContext } from '@/contexts/CallManagerContext';
+import { showCallNotification, closeCallNotification } from '@/lib/callNotification';
 
 const useCallManagerInternal = () => {
   const { user } = useAuth();
@@ -29,7 +30,16 @@ const useCallManagerInternal = () => {
   const outgoingCallRef = useRef(outgoingCall);
   const lastIncomingRef = useRef({ id: null, ts: 0 });
   const timeoutIdRef = useRef(null);
+  const callNotifRef = useRef(null);
   
+  // Close browser notification when incoming call is cleared
+  useEffect(() => {
+    if (!incomingCall && callNotifRef.current) {
+      closeCallNotification(callNotifRef.current);
+      callNotifRef.current = null;
+    }
+  }, [incomingCall]);
+
   // Flags for conditional logic AFTER all hooks
   const hasUser = !!user;
   const userId = user?.id || null;
@@ -113,7 +123,12 @@ const useCallManagerInternal = () => {
     setIncomingCall(incomingCallData);
     console.log('📞 [CALL] ✅ setIncomingCall called - IncomingCallOverlay should render NOW');
 
-    // Show notification
+    // Show browser push notification (works even when tab is in background)
+    const callNotif = showCallNotification(callerName, callData.call_type || 'audio');
+    // Store ref so we can close it when call is answered/declined
+    if (callNotif) callNotifRef.current = callNotif;
+
+    // Show in-app toast
     toast({
       title: "Incoming Call",
       description: `${callerName} is calling you`,
