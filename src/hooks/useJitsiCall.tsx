@@ -48,23 +48,37 @@ export function useJitsiCall({
 
   // Load JaaS script and initialize
   useEffect(() => {
+    let retryCount = 0;
+    const MAX_RETRIES = 3;
+
     const loadJitsiScript = () => {
       if (window.JitsiMeetExternalAPI) {
         initializeJitsi();
         return;
       }
 
+      // Remove any previously failed script tags
+      const existingScript = document.querySelector(`script[src="${JITSI_CONFIG.getScriptUrl()}"]`);
+      if (existingScript) existingScript.remove();
+
       const script = document.createElement('script');
       script.src = JITSI_CONFIG.getScriptUrl();
       script.async = true;
       script.onload = initializeJitsi;
       script.onerror = () => {
-        toast({
-          title: 'Connection Error',
-          description: 'Failed to load video call. Please check your connection.',
-          variant: 'destructive',
-        });
-        setIsLoading(false);
+        retryCount++;
+        console.warn(`⚠️ [JITSI] Script load failed (attempt ${retryCount}/${MAX_RETRIES})`);
+        if (retryCount < MAX_RETRIES) {
+          script.remove();
+          setTimeout(loadJitsiScript, 2000 * retryCount);
+        } else {
+          toast({
+            title: 'Connection Error',
+            description: 'Failed to load call service. Please check your connection and try again.',
+            variant: 'destructive',
+          });
+          setIsLoading(false);
+        }
       };
       document.body.appendChild(script);
     };
