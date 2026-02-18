@@ -245,15 +245,20 @@ export const UnifiedConversation: React.FC<UnifiedConversationProps> = ({
     if (!content.trim() || !user) return;
 
     try {
-      const { error } = await supabase.from('chat_messages').insert({
+      console.log('💬 [UnifiedConv] Sending message to room:', roomId, 'content:', content.substring(0, 50));
+      const { data, error } = await supabase.from('chat_messages').insert({
         room_id: roomId,
         sender_id: user.id,
         content: content.trim(),
         message_type: 'text',
         reply_to_id: replyingTo?.id || null,
-      });
+      }).select().single();
 
-      if (error) throw error;
+      if (error) {
+        console.error('💬 [UnifiedConv] Message send error:', error);
+        throw error;
+      }
+      console.log('💬 [UnifiedConv] Message sent successfully:', data?.id);
       setReplyingTo(null);
     } catch (error) {
       console.error('Error sending message:', error);
@@ -262,9 +267,37 @@ export const UnifiedConversation: React.FC<UnifiedConversationProps> = ({
   };
 
   const handleVoiceCall = async () => {
-    if (!otherParticipant || !startCall) return;
+    console.log('📞 [UnifiedConv] handleVoiceCall called', { otherParticipant, startCall: !!startCall, roomType: roomInfo?.room_type, participants: participants.length });
+    
+    // For group chats or when no single other participant, use JitsiRoom directly
+    if (!otherParticipant) {
+      if (participants.length > 1) {
+        // Group call - start Jitsi room
+        const chars = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+        let rn = `S2G_${roomId.replace(/-/g, '').slice(0, 8)}_`;
+        for (let i = 0; i < 8; i++) rn += chars.charAt(Math.floor(Math.random() * chars.length));
+        setJitsiRoomName(rn);
+        setIsCallActive(true);
+        setCallType('audio');
+        setCallStartTime(Date.now());
+        toast({ title: 'Starting voice call', description: 'Connecting...' });
+        return;
+      }
+      toast({ title: 'Error', description: 'No participants found to call', variant: 'destructive' });
+      return;
+    }
+    
+    if (!startCall) {
+      toast({ title: 'Error', description: 'Call system not initialized. Please refresh.', variant: 'destructive' });
+      return;
+    }
+    
     try {
-      await startCall(otherParticipant.user_id, displayName, 'audio', roomId);
+      const result = await startCall(otherParticipant.user_id, displayName, 'audio', roomId);
+      console.log('📞 [UnifiedConv] startCall result:', result);
+      if (!result) {
+        toast({ title: 'Call Failed', description: 'Could not start the call. Try again.', variant: 'destructive' });
+      }
     } catch (error) {
       console.error('Error starting voice call:', error);
       toast({ title: 'Error', description: 'Failed to start call', variant: 'destructive' });
@@ -272,9 +305,36 @@ export const UnifiedConversation: React.FC<UnifiedConversationProps> = ({
   };
 
   const handleVideoCall = async () => {
-    if (!otherParticipant || !startCall) return;
+    console.log('📞 [UnifiedConv] handleVideoCall called', { otherParticipant, startCall: !!startCall, roomType: roomInfo?.room_type, participants: participants.length });
+    
+    // For group chats or when no single other participant, use JitsiRoom directly
+    if (!otherParticipant) {
+      if (participants.length > 1) {
+        const chars = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+        let rn = `S2G_${roomId.replace(/-/g, '').slice(0, 8)}_`;
+        for (let i = 0; i < 8; i++) rn += chars.charAt(Math.floor(Math.random() * chars.length));
+        setJitsiRoomName(rn);
+        setIsCallActive(true);
+        setCallType('video');
+        setCallStartTime(Date.now());
+        toast({ title: 'Starting video call', description: 'Connecting...' });
+        return;
+      }
+      toast({ title: 'Error', description: 'No participants found to call', variant: 'destructive' });
+      return;
+    }
+    
+    if (!startCall) {
+      toast({ title: 'Error', description: 'Call system not initialized. Please refresh.', variant: 'destructive' });
+      return;
+    }
+    
     try {
-      await startCall(otherParticipant.user_id, displayName, 'video', roomId);
+      const result = await startCall(otherParticipant.user_id, displayName, 'video', roomId);
+      console.log('📞 [UnifiedConv] startCall result:', result);
+      if (!result) {
+        toast({ title: 'Call Failed', description: 'Could not start the call. Try again.', variant: 'destructive' });
+      }
     } catch (error) {
       console.error('Error starting video call:', error);
       toast({ title: 'Error', description: 'Failed to start call', variant: 'destructive' });
@@ -499,12 +559,12 @@ export const UnifiedConversation: React.FC<UnifiedConversationProps> = ({
         )}
       </AnimatePresence>
 
-      {/* Embedded Video Call (when active and not minimized) */}
+      {/* Embedded Call (when active and not minimized) */}
       <AnimatePresence>
-        {isCallActive && callType === 'video' && jitsiRoomName && !isCallMinimized && (
+        {isCallActive && jitsiRoomName && !isCallMinimized && (
           <motion.div
             initial={{ height: 0, opacity: 0 }}
-            animate={{ height: 300, opacity: 1 }}
+            animate={{ height: callType === 'video' ? 300 : 80, opacity: 1 }}
             exit={{ height: 0, opacity: 0 }}
             className="relative overflow-hidden border-b"
           >
