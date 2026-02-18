@@ -4702,6 +4702,7 @@ export type Database = {
           approval_status: string | null
           approved_at: string | null
           approved_by: string | null
+          broadcast_mode: string
           created_at: string
           dj_id: string | null
           end_time: string
@@ -4709,6 +4710,7 @@ export type Database = {
           id: string
           is_free: boolean | null
           listener_count: number | null
+          playlist_id: string | null
           playlist_url: string | null
           price: number | null
           requires_review: boolean | null
@@ -4727,6 +4729,7 @@ export type Database = {
           approval_status?: string | null
           approved_at?: string | null
           approved_by?: string | null
+          broadcast_mode?: string
           created_at?: string
           dj_id?: string | null
           end_time: string
@@ -4734,6 +4737,7 @@ export type Database = {
           id?: string
           is_free?: boolean | null
           listener_count?: number | null
+          playlist_id?: string | null
           playlist_url?: string | null
           price?: number | null
           requires_review?: boolean | null
@@ -4752,6 +4756,7 @@ export type Database = {
           approval_status?: string | null
           approved_at?: string | null
           approved_by?: string | null
+          broadcast_mode?: string
           created_at?: string
           dj_id?: string | null
           end_time?: string
@@ -4759,6 +4764,7 @@ export type Database = {
           id?: string
           is_free?: boolean | null
           listener_count?: number | null
+          playlist_id?: string | null
           playlist_url?: string | null
           price?: number | null
           requires_review?: boolean | null
@@ -4777,6 +4783,13 @@ export type Database = {
             columns: ["dj_id"]
             isOneToOne: false
             referencedRelation: "radio_djs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "radio_schedule_playlist_id_fkey"
+            columns: ["playlist_id"]
+            isOneToOne: false
+            referencedRelation: "dj_playlists"
             referencedColumns: ["id"]
           },
           {

@@ -1,56 +1,172 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Slider } from '@/components/ui/slider';
-import { Play, Pause, Volume2, VolumeX } from 'lucide-react';
+import { Play, Pause, Volume2, VolumeX, SkipForward, Music, Radio } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
+import { resolveAudioUrl } from '@/utils/resolveAudioUrl';
+
+interface Track {
+  id: string;
+  track_title: string;
+  artist_name: string | null;
+  duration_seconds: number | null;
+  file_url: string;
+}
 
 const LiveStreamPlayer = () => {
   const [playing, setPlaying] = useState(false);
-  const [volume, setVolume] = useState([0.5]);
+  const [volume, setVolume] = useState([0.7]);
   const [muted, setMuted] = useState(false);
-  const [nowPlaying, setNowPlaying] = useState('AOD Station Radio - Live');
-  const [listenerCount, setListenerCount] = useState(0);
+  const [currentTrack, setCurrentTrack] = useState<Track | null>(null);
+  const [trackIndex, setTrackIndex] = useState(0);
+  const [playlist, setPlaylist] = useState<Track[]>([]);
+  const [showName, setShowName] = useState('AOD Station Radio');
+  const [djName, setDjName] = useState('');
+  const [broadcastMode, setBroadcastMode] = useState<string>('live');
+  const [loading, setLoading] = useState(true);
   const audioRef = useRef<HTMLAudioElement>(null);
   const { toast } = useToast();
 
-  // Grove Station stream URL (replace with your actual stream URL)
-  const streamUrl = 'https://s9.voscast.com:9525/stream'; // Example Shoutcast stream
+  // Fetch current or next scheduled slot and its playlist
+  const fetchCurrentSlot = useCallback(async () => {
+    setLoading(true);
+    try {
+      const now = new Date().toISOString();
+
+      // Find current live or scheduled slot
+      const { data: slot } = await supabase
+        .from('radio_schedule')
+        .select(`
+          id,
+          broadcast_mode,
+          playlist_id,
+          status,
+          radio_shows (show_name, category),
+          radio_djs (id, dj_name, avatar_url)
+        `)
+        .lte('start_time', now)
+        .gte('end_time', now)
+        .in('approval_status', ['approved'])
+        .order('start_time', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+
+      if (slot) {
+        setShowName(slot.radio_shows?.show_name || 'AOD Station Live');
+        setDjName(slot.radio_djs?.dj_name || '');
+        setBroadcastMode(slot.broadcast_mode || 'live');
+
+        // Load playlist tracks
+        await loadPlaylistTracks(slot.playlist_id, slot.radio_djs?.id);
+      } else {
+        // No current show - try next upcoming
+        const { data: next } = await supabase
+          .from('radio_schedule')
+          .select(`
+            id, broadcast_mode, playlist_id,
+            radio_shows (show_name),
+            radio_djs (id, dj_name)
+          `)
+          .gt('start_time', now)
+          .in('approval_status', ['approved'])
+          .order('start_time', { ascending: true })
+          .limit(1)
+          .maybeSingle();
+
+        if (next) {
+          setShowName(`Up Next: ${next.radio_shows?.show_name || 'Show'}`);
+          setDjName(next.radio_djs?.dj_name || '');
+          setBroadcastMode(next.broadcast_mode || 'live');
+          await loadPlaylistTracks(next.playlist_id, next.radio_djs?.id);
+        } else {
+          setShowName('AOD Station Radio');
+          setDjName('No shows scheduled');
+        }
+      }
+    } catch (err) {
+      console.error('Error fetching slot:', err);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  const loadPlaylistTracks = async (playlistId: string | null, djId: string | null) => {
+    let tracks: Track[] = [];
+
+    if (playlistId) {
+      const { data } = await supabase
+        .from('dj_playlist_tracks')
+        .select(`
+          track_order,
+          dj_music_tracks (id, track_title, artist_name, duration_seconds, file_url)
+        `)
+        .eq('playlist_id', playlistId)
+        .eq('is_active', true)
+        .order('track_order');
+
+      tracks = (data || [])
+        .sort((a: any, b: any) => a.track_order - b.track_order)
+        .map((pt: any) => pt.dj_music_tracks)
+        .filter(Boolean);
+    }
+
+    // Fallback: get all DJ tracks if no playlist assigned
+    if (tracks.length === 0 && djId) {
+      const { data } = await supabase
+        .from('dj_music_tracks')
+        .select('id, track_title, artist_name, duration_seconds, file_url')
+        .eq('dj_id', djId)
+        .eq('is_public', true)
+        .order('upload_date', { ascending: false });
+
+      tracks = data || [];
+    }
+
+    setPlaylist(tracks);
+    if (tracks.length > 0) {
+      setTrackIndex(0);
+      setCurrentTrack(tracks[0]);
+    }
+  };
 
   useEffect(() => {
-    // Subscribe to live radio updates
+    fetchCurrentSlot();
+
+    // Refresh every 2 minutes
+    const interval = setInterval(fetchCurrentSlot, 120000);
+
+    // Subscribe to schedule changes
     const channel = supabase
-      .channel('radio-live-updates')
-      .on('broadcast', { event: 'now-playing' }, ({ payload }) => {
-        if (payload.track) {
-          setNowPlaying(payload.track);
-        }
-        if (payload.listener_count !== undefined) {
-          setListenerCount(payload.listener_count);
-        }
+      .channel('radio-player-updates')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'radio_schedule' }, () => {
+        fetchCurrentSlot();
       })
       .subscribe();
 
-    // Get current show info
-    fetchCurrentShow();
-
     return () => {
+      clearInterval(interval);
       supabase.removeChannel(channel);
     };
-  }, []);
+  }, [fetchCurrentSlot]);
 
-  const fetchCurrentShow = async () => {
+  const playTrack = async (track: Track) => {
+    const audio = audioRef.current;
+    if (!audio || !track?.file_url) return;
+
     try {
-      const { data } = await supabase.rpc('get_current_radio_show');
-      if (data && typeof data === 'object') {
-        const showData = data as any;
-        setNowPlaying(`${showData.show_name || 'Live Show'} with ${showData.dj_name || 'DJ'}`);
-        setListenerCount(showData.listener_count || 0);
-      }
-    } catch (error) {
-      console.error('Failed to fetch current show:', error);
+      const url = await resolveAudioUrl(track.file_url, { bucketForKeys: 'dj-music' });
+      audio.src = url;
+      audio.load();
+      await audio.play();
+      setCurrentTrack(track);
+      setPlaying(true);
+    } catch (err) {
+      console.error('Playback error:', err);
+      toast({ variant: 'destructive', title: 'Playback Error', description: 'Could not play this track.' });
+      setPlaying(false);
     }
   };
 
@@ -58,25 +174,43 @@ const LiveStreamPlayer = () => {
     const audio = audioRef.current;
     if (!audio) return;
 
-    try {
-      if (playing) {
-        audio.pause();
-        setPlaying(false);
-      } else {
-        await audio.play();
-        setPlaying(true);
-        // Update listener count
-        setListenerCount(prev => prev + 1);
-      }
-    } catch (err) {
-      toast({ 
-        variant: 'destructive', 
-        title: 'Stream Error',
-        description: 'Unable to connect to live stream. Please try again later.' 
-      });
+    if (playing) {
+      audio.pause();
       setPlaying(false);
+    } else if (currentTrack) {
+      await playTrack(currentTrack);
+    } else if (playlist.length > 0) {
+      await playTrack(playlist[0]);
+    } else {
+      toast({ variant: 'destructive', title: 'No Music', description: 'No tracks available for this slot.' });
     }
   };
+
+  const skipTrack = async () => {
+    if (playlist.length === 0) return;
+    const nextIdx = (trackIndex + 1) % playlist.length;
+    setTrackIndex(nextIdx);
+    await playTrack(playlist[nextIdx]);
+  };
+
+  // Auto-advance to next track
+  useEffect(() => {
+    const audio = audioRef.current;
+    if (!audio) return;
+
+    const onEnded = () => {
+      if (playlist.length > 1) {
+        const nextIdx = (trackIndex + 1) % playlist.length;
+        setTrackIndex(nextIdx);
+        playTrack(playlist[nextIdx]);
+      } else {
+        setPlaying(false);
+      }
+    };
+
+    audio.addEventListener('ended', onEnded);
+    return () => audio.removeEventListener('ended', onEnded);
+  }, [trackIndex, playlist]);
 
   const toggleMute = () => {
     const audio = audioRef.current;
@@ -91,104 +225,97 @@ const LiveStreamPlayer = () => {
     if (audio) {
       audio.volume = value[0];
       setVolume(value);
-      if (value[0] === 0) {
-        setMuted(true);
-        audio.muted = true;
-      } else if (muted) {
-        setMuted(false);
-        audio.muted = false;
-      }
+      if (value[0] === 0) { setMuted(true); audio.muted = true; }
+      else if (muted) { setMuted(false); audio.muted = false; }
     }
   };
 
-  useEffect(() => {
-    const audio = audioRef.current;
-    if (audio) {
-      audio.volume = volume[0];
-      audio.muted = muted;
-      
-      const handleLoadStart = () => setPlaying(false);
-      const handlePlay = () => setPlaying(true);
-      const handlePause = () => setPlaying(false);
-      const handleError = () => {
-        toast({ 
-          variant: 'destructive', 
-          title: 'Stream Error',
-          description: 'Live stream is currently unavailable' 
-        });
-        setPlaying(false);
-      };
-
-      audio.addEventListener('loadstart', handleLoadStart);
-      audio.addEventListener('play', handlePlay);
-      audio.addEventListener('pause', handlePause);
-      audio.addEventListener('error', handleError);
-
-      return () => {
-        audio.removeEventListener('loadstart', handleLoadStart);
-        audio.removeEventListener('play', handlePlay);
-        audio.removeEventListener('pause', handlePause);
-        audio.removeEventListener('error', handleError);
-      };
-    }
-  }, [volume, muted, toast]);
-
   return (
     <Card className="w-full max-w-md mx-auto">
-      <CardHeader>
+      <CardHeader className="pb-3">
         <CardTitle className="flex items-center justify-between">
-          <span>AOD Station Radio</span>
-          <Badge variant="secondary">{listenerCount} listeners</Badge>
-        </CardTitle>
-        <div className="text-sm text-muted-foreground">
-          <Badge variant="outline" className="w-full justify-center">
-            {nowPlaying}
+          <span className="flex items-center gap-2">
+            <Radio className="h-5 w-5 text-primary" />
+            AOD Station Radio
+          </span>
+          <Badge variant={broadcastMode === 'pre_recorded' ? 'secondary' : 'destructive'}>
+            {broadcastMode === 'pre_recorded' ? 'Auto-Play' : 'Live'}
           </Badge>
+        </CardTitle>
+        <div className="text-sm text-muted-foreground space-y-1">
+          <p className="font-medium text-foreground">{showName}</p>
+          {djName && <p>with {djName}</p>}
         </div>
       </CardHeader>
       <CardContent className="space-y-4">
-        <audio ref={audioRef} src={streamUrl} preload="none" />
-        
-        <Button onClick={togglePlay} className="w-full" size="lg">
-          {playing ? (
-            <Pause className="mr-2 h-5 w-5" />
-          ) : (
-            <Play className="mr-2 h-5 w-5" />
-          )}
-          {playing ? 'Pause Stream' : 'Play Live Stream'}
-        </Button>
-        
-        <div className="flex items-center space-x-3">
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={toggleMute}
-            className="p-2"
-          >
-            {muted || volume[0] === 0 ? (
-              <VolumeX className="h-4 w-4" />
-            ) : (
-              <Volume2 className="h-4 w-4" />
-            )}
-          </Button>
-          
-          <div className="flex-1">
-            <Slider
-              value={volume}
-              onValueChange={handleVolumeChange}
-              max={1}
-              min={0}
-              step={0.1}
-              className="cursor-pointer"
-            />
+        <audio ref={audioRef} preload="none" />
+
+        {/* Now playing */}
+        {currentTrack && (
+          <div className="flex items-center gap-3 p-3 bg-muted/50 rounded-lg">
+            <Music className="h-5 w-5 text-primary shrink-0" />
+            <div className="min-w-0">
+              <p className="text-sm font-medium truncate">{currentTrack.track_title}</p>
+              {currentTrack.artist_name && (
+                <p className="text-xs text-muted-foreground truncate">{currentTrack.artist_name}</p>
+              )}
+            </div>
           </div>
+        )}
+
+        {/* Controls */}
+        <div className="flex items-center justify-center gap-3">
+          <Button
+            onClick={togglePlay}
+            size="lg"
+            disabled={loading || playlist.length === 0}
+            className="gap-2"
+          >
+            {playing ? <Pause className="h-5 w-5" /> : <Play className="h-5 w-5" />}
+            {playing ? 'Pause' : 'Play'}
+          </Button>
+
+          <Button
+            variant="outline"
+            size="icon"
+            onClick={skipTrack}
+            disabled={playlist.length <= 1}
+          >
+            <SkipForward className="h-4 w-4" />
+          </Button>
+
+          <Button variant="ghost" size="icon" onClick={toggleMute}>
+            {muted || volume[0] === 0 ? <VolumeX className="h-4 w-4" /> : <Volume2 className="h-4 w-4" />}
+          </Button>
         </div>
-        
-        <div className="text-center text-sm text-muted-foreground">
-          {playing && (
-            <p>🔴 Live • Broadcasting from AOD Station</p>
-          )}
+
+        {/* Volume */}
+        <div className="flex items-center gap-3 px-2">
+          <VolumeX className="h-3 w-3 text-muted-foreground" />
+          <Slider
+            value={volume}
+            onValueChange={handleVolumeChange}
+            max={1}
+            min={0}
+            step={0.05}
+            className="cursor-pointer"
+          />
+          <Volume2 className="h-3 w-3 text-muted-foreground" />
         </div>
+
+        {/* Track count */}
+        {playlist.length > 0 && (
+          <p className="text-center text-xs text-muted-foreground">
+            Track {trackIndex + 1} of {playlist.length}
+            {playing && ' • 🔴 Playing'}
+          </p>
+        )}
+
+        {playlist.length === 0 && !loading && (
+          <p className="text-center text-xs text-muted-foreground">
+            No tracks available. DJs need to upload music for this slot.
+          </p>
+        )}
       </CardContent>
     </Card>
   );

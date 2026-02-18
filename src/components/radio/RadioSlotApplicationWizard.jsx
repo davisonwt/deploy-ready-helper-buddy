@@ -24,7 +24,8 @@ import {
   Clock,
   Plus,
   X,
-  Megaphone
+  Megaphone,
+  Mic
 } from 'lucide-react';
 
 const SHOW_CATEGORIES = [
@@ -66,6 +67,7 @@ export function RadioSlotApplicationWizard({ onClose }) {
     subject: '',
     topic_description: '',
     category: 'music',
+    broadcast_mode: 'live', // 'live' or 'pre_recorded'
     
     // Step 2: Time Slot
     time_slot_date: new Date().toISOString().split('T')[0],
@@ -265,7 +267,9 @@ export function RadioSlotApplicationWizard({ onClose }) {
         start_time: startTime.toISOString(),
         end_time: endTime.toISOString(),
         time_slot_date: formData.time_slot_date,
-        show_notes: formData.show_notes
+        show_notes: formData.show_notes,
+        broadcast_mode: formData.broadcast_mode,
+        playlist_id: formData.broadcast_mode === 'pre_recorded' ? formData.playlist_id : null
       });
 
       if (!scheduleResult.success) throw new Error('Failed to schedule show');
@@ -327,10 +331,12 @@ export function RadioSlotApplicationWizard({ onClose }) {
   const canProceed = () => {
     switch (currentStep) {
       case 0:
-        return formData.show_name.trim() && formData.subject.trim();
+        return formData.show_name.trim() && formData.subject.trim() && formData.broadcast_mode;
       case 1:
         return true;
       case 2:
+        // Pre-recorded mode requires a playlist
+        if (formData.broadcast_mode === 'pre_recorded' && !formData.playlist_id) return false;
         return true;
       case 3:
         return !formData.enable_ads || formData.ad_slots.length > 0;
@@ -409,6 +415,38 @@ export function RadioSlotApplicationWizard({ onClose }) {
                 maxLength={500}
                 rows={3}
               />
+            </div>
+
+            {/* Broadcast Mode */}
+            <div>
+              <Label className="mb-3 block">Broadcast Mode *</Label>
+              <div className="grid grid-cols-2 gap-3">
+                <Button
+                  type="button"
+                  variant={formData.broadcast_mode === 'live' ? 'default' : 'outline'}
+                  className="h-auto py-4 flex-col gap-2"
+                  onClick={() => handleFieldChange('broadcast_mode', 'live')}
+                >
+                  <Mic className="h-6 w-6" />
+                  <span className="font-semibold">Go Live</span>
+                  <span className="text-xs opacity-70">Broadcast in real-time</span>
+                </Button>
+                <Button
+                  type="button"
+                  variant={formData.broadcast_mode === 'pre_recorded' ? 'default' : 'outline'}
+                  className="h-auto py-4 flex-col gap-2"
+                  onClick={() => handleFieldChange('broadcast_mode', 'pre_recorded')}
+                >
+                  <Music className="h-6 w-6" />
+                  <span className="font-semibold">Pre-Recorded</span>
+                  <span className="text-xs opacity-70">Auto-play uploaded audio</span>
+                </Button>
+              </div>
+              <p className="text-xs text-muted-foreground mt-2">
+                {formData.broadcast_mode === 'live' 
+                  ? 'You will broadcast live during your slot. You can still play music from your playlist.'
+                  : 'Your uploaded tracks/playlist will auto-play during the slot. No need to be online.'}
+              </p>
             </div>
           </div>
         );
@@ -523,9 +561,15 @@ export function RadioSlotApplicationWizard({ onClose }) {
                 <Music className="h-4 w-4" />
                 Music for Your Show
               </Label>
-              <p className="text-sm text-muted-foreground mb-3">
-                Select a playlist or upload tracks you want to play during your show
-              </p>
+              {formData.broadcast_mode === 'pre_recorded' ? (
+                <div className="p-3 bg-primary/10 border-l-4 border-primary rounded text-sm mb-3">
+                  <strong>Pre-recorded mode:</strong> A playlist is required. Your tracks will auto-play during your slot.
+                </div>
+              ) : (
+                <p className="text-sm text-muted-foreground mb-3">
+                  Select a playlist or upload tracks you want to play during your show
+                </p>
+              )}
 
               {/* Playlist Selector */}
               <div>
@@ -739,6 +783,12 @@ export function RadioSlotApplicationWizard({ onClose }) {
                 <div>
                   <span className="text-muted-foreground">Time:</span>
                   <p className="font-medium">{selectedSlot?.label}</p>
+                </div>
+                <div>
+                  <span className="text-muted-foreground">Broadcast Mode:</span>
+                  <p className="font-medium">
+                    {formData.broadcast_mode === 'live' ? '🎙️ Live' : '🎵 Pre-Recorded'}
+                  </p>
                 </div>
               </div>
               
