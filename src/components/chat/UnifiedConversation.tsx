@@ -4,6 +4,7 @@
  */
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { Phone, Video } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
@@ -715,19 +716,49 @@ export const UnifiedConversation: React.FC<UnifiedConversationProps> = ({
         </div>
       </ScrollArea>
 
-      {/* Message Input - Always visible, even during calls */}
-      <MessageInput
-        onSendMessage={handleSendMessage}
-        onSendVoice={handleSendVoice}
-        onSendFile={handleFileUpload}
-        onTyping={handleTyping}
-        replyingTo={replyingTo ? {
-          id: replyingTo.id,
-          content: replyingTo.content,
-          senderName: replyingTo.sender_profile?.display_name || 'User',
-        } : null}
-        onCancelReply={() => setReplyingTo(null)}
-      />
+      {/* Message Input with Quick Call Buttons */}
+      <div className="flex items-end gap-1 border-t bg-card/95 backdrop-blur-lg">
+        <div className="flex-1">
+          <MessageInput
+            onSendMessage={handleSendMessage}
+            onSendVoice={handleSendVoice}
+            onSendFile={handleFileUpload}
+            onTyping={handleTyping}
+            replyingTo={replyingTo ? {
+              id: replyingTo.id,
+              content: replyingTo.content,
+              senderName: replyingTo.sender_profile?.display_name || 'User',
+            } : null}
+            onCancelReply={() => setReplyingTo(null)}
+          />
+        </div>
+        {!isCallActive && (
+          <div className="flex items-center gap-0.5 pb-2 pr-2 shrink-0">
+            <motion.div whileTap={{ scale: 0.9 }}>
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={handleVoiceCall}
+                className="h-9 w-9 rounded-full hover:bg-primary/10 hover:text-primary"
+                title="Voice Call"
+              >
+                <Phone className="h-4 w-4" />
+              </Button>
+            </motion.div>
+            <motion.div whileTap={{ scale: 0.9 }}>
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={handleVideoCall}
+                className="h-9 w-9 rounded-full hover:bg-primary/10 hover:text-primary"
+                title="Video Call"
+              >
+                <Video className="h-4 w-4" />
+              </Button>
+            </motion.div>
+          </div>
+        )}
+      </div>
 
       {/* Invite Dialog */}
       <Dialog open={showInviteDialog} onOpenChange={setShowInviteDialog}>
