@@ -1,8 +1,10 @@
+import { JitsiMeeting } from '@jitsi/react-sdk';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Phone, PhoneOff, Mic, MicOff } from 'lucide-react';
+import { PhoneOff, Mic, MicOff } from 'lucide-react';
 import { useJitsiCall } from '@/hooks/useJitsiCall';
+import { JITSI_CONFIG } from '@/lib/jitsi-config';
 
 interface JitsiAudioCallProps {
   callSession: {
@@ -26,7 +28,8 @@ export default function JitsiAudioCall({
   onEndCall,
 }: JitsiAudioCallProps) {
   const {
-    jitsiContainerRef,
+    roomName,
+    onApiReady,
     isLoading,
     isAudioMuted,
     callDuration,
@@ -49,12 +52,34 @@ export default function JitsiAudioCall({
 
   return (
     <div className="fixed inset-0 bg-background/95 backdrop-blur-sm z-50 flex items-center justify-center">
-      {/* Jitsi container - needs real dimensions for browser to allow media streams */}
+      {/* Jitsi iframe - hidden for audio calls but needs real dimensions */}
       <div 
-        ref={jitsiContainerRef} 
         className="fixed bottom-0 right-0 overflow-hidden" 
         style={{ width: 300, height: 200, opacity: 0.01, pointerEvents: 'none', zIndex: -1 }} 
-      />
+      >
+        <JitsiMeeting
+          domain={JITSI_CONFIG.domain}
+          roomName={roomName}
+          userInfo={{ displayName: callerInfo.display_name || 'User', email: '' }}
+          configOverwrite={{
+            startWithVideoMuted: true,
+            startWithAudioMuted: false,
+            prejoinPageEnabled: false,
+            disableDeepLinking: true,
+            enableClosePage: false,
+          }}
+          interfaceConfigOverwrite={{
+            SHOW_JITSI_WATERMARK: false,
+            TOOLBAR_BUTTONS: ['microphone', 'hangup'],
+            MOBILE_APP_PROMO: false,
+          }}
+          onApiReady={onApiReady}
+          getIFrameRef={(iframeRef) => {
+            iframeRef.style.width = '100%';
+            iframeRef.style.height = '100%';
+          }}
+        />
+      </div>
 
       <Card className="p-8 max-w-md w-full mx-4">
         <div className="text-center space-y-6">
