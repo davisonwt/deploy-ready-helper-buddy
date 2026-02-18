@@ -24,21 +24,37 @@ export const OnlineIndicator: React.FC<OnlineIndicatorProps> = ({
   useEffect(() => {
     if (!userId) return;
 
-    // Check initial status from presence or profiles
+    // Check last activity from latest chat message, then profile
     const checkStatus = async () => {
       try {
-        // Try to get last_seen from profiles
-        const { data } = await supabase
+        // First check latest chat message as most reliable "last seen"
+        const { data: msgData } = await supabase
+          .from('chat_messages')
+          .select('created_at')
+          .eq('sender_id', userId)
+          .order('created_at', { ascending: false })
+          .limit(1)
+          .single();
+
+        // Also get profile updated_at as fallback
+        const { data: profileData } = await supabase
           .from('profiles')
           .select('updated_at')
           .eq('user_id', userId)
           .single();
 
-        if (data?.updated_at) {
-          const lastSeenDate = new Date(data.updated_at);
+        // Use whichever is more recent
+        const lastMsgDate = msgData?.created_at ? new Date(msgData.created_at) : null;
+        const profileDate = profileData?.updated_at ? new Date(profileData.updated_at) : null;
+        
+        const latestDate = lastMsgDate && profileDate 
+          ? (lastMsgDate > profileDate ? lastMsgDate : profileDate)
+          : lastMsgDate || profileDate;
+
+        if (latestDate) {
           const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000);
-          setIsOnline(lastSeenDate > fiveMinutesAgo);
-          setLastSeen(lastSeenDate);
+          setIsOnline(latestDate > fiveMinutesAgo);
+          setLastSeen(latestDate);
         }
       } catch (error) {
         // Silently fail - user might not have a profile
