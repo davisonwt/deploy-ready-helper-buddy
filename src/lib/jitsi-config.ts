@@ -8,7 +8,13 @@
 export const JITSI_CONFIG = {
   domain: 'meet.jit.si',
   getScriptUrl: () => 'https://meet.jit.si/external_api.js',
-  getRoomName: (roomName: string) => `S2G_${roomName}`,
+  // Use longer, more unique room names to avoid triggering meet.jit.si lobby/members-only mode
+  getRoomName: (roomName: string) => {
+    // meet.jit.si enforces lobby for short/common room names
+    // Adding a long random-looking suffix prevents this
+    const hash = roomName.replace(/[^a-zA-Z0-9]/g, '');
+    return `Sow2GrowPrivate${hash}Room`;
+  },
 };
 
 // Keep old export name for backward compatibility
