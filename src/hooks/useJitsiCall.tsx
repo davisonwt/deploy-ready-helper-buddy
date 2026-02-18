@@ -32,6 +32,7 @@ export function useJitsiCall({
   const [participantCount, setParticipantCount] = useState(1);
   const [callDuration, setCallDuration] = useState(0);
   const [connectionState, setConnectionState] = useState<'connecting' | 'connected' | 'disconnected'>('connecting');
+  const loadingTimeoutRef = useRef<number | null>(null);
 
   const durationIntervalRef = useRef<number | null>(null);
   const apiRef = useRef<any>(null);
@@ -76,8 +77,30 @@ export function useJitsiCall({
     console.log('📞 [JITSI] API ready');
     apiRef.current = externalApi;
 
+    // Clear any loading timeout since API is ready
+    if (loadingTimeoutRef.current) {
+      clearTimeout(loadingTimeoutRef.current);
+      loadingTimeoutRef.current = null;
+    }
+
+    // Set a fallback: if conference doesn't join in 10s after API ready, force connected
+    loadingTimeoutRef.current = window.setTimeout(() => {
+      console.log('📞 [JITSI] Forcing connected state after timeout');
+      setIsLoading(false);
+      setConnectionState('connected');
+      durationIntervalRef.current = window.setInterval(() => {
+        setCallDuration((prev) => prev + 1);
+      }, 1000);
+      updateCallStatus('accepted');
+    }, 10000);
+
     externalApi.addListener('videoConferenceJoined', () => {
       console.log('📞 [JITSI] Conference joined');
+      // Clear the fallback timeout
+      if (loadingTimeoutRef.current) {
+        clearTimeout(loadingTimeoutRef.current);
+        loadingTimeoutRef.current = null;
+      }
       setIsLoading(false);
       setConnectionState('connected');
       
@@ -127,6 +150,9 @@ export function useJitsiCall({
     return () => {
       if (durationIntervalRef.current) {
         clearInterval(durationIntervalRef.current);
+      }
+      if (loadingTimeoutRef.current) {
+        clearTimeout(loadingTimeoutRef.current);
       }
       if (apiRef.current) {
         try { apiRef.current.dispose(); } catch {}
