@@ -5,7 +5,7 @@
 import React, { useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { MessageCircle, Users, CircleDot, Search, Plus } from 'lucide-react';
+import { MessageCircle, Users, CircleDot, Search, Plus, Phone, Video } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -16,6 +16,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Checkbox } from '@/components/ui/checkbox';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
+import { useCallManager } from '@/hooks/useCallManager';
 import { useToast } from '@/hooks/use-toast';
 import { formatDistanceToNow } from 'date-fns';
 import { UnifiedConversation } from './UnifiedConversation';
@@ -42,6 +43,7 @@ interface ChatConversation {
 export const ChatApp: React.FC = () => {
   const { user } = useAuth();
   const { toast } = useToast();
+  const { startCall } = useCallManager();
   const [searchParams, setSearchParams] = useSearchParams();
   
   const [activeTab, setActiveTab] = useState<'chats' | 'circles' | 'community'>('chats');
@@ -470,28 +472,59 @@ export const ChatApp: React.FC = () => {
             </TabsList>
 
             <TabsContent value="direct" className="space-y-3 max-h-80 overflow-y-auto">
-              {availableUsers.map((profile) => (
+              {availableUsers.map((profile) => {
+                const userName = profile.display_name || `${profile.first_name || ''} ${profile.last_name || ''}`.trim() || 'Unknown';
+                return (
                 <Card
                   key={profile.user_id}
                   className={cn(
-                    "cursor-pointer hover:bg-muted/50 transition-colors",
+                    "hover:bg-muted/50 transition-colors",
                     creatingChat && "pointer-events-none opacity-50"
                   )}
-                  onClick={() => createNewChat(profile.user_id)}
                 >
                   <CardContent className="p-3 flex items-center gap-3">
-                    <Avatar className="w-10 h-10">
+                    <Avatar className="w-10 h-10 cursor-pointer" onClick={() => createNewChat(profile.user_id)}>
                       <AvatarImage src={profile.avatar_url} />
                       <AvatarFallback className="bg-primary/20">
-                        {(profile.display_name || profile.first_name || 'U').charAt(0)}
+                        {userName.charAt(0)}
                       </AvatarFallback>
                     </Avatar>
-                    <span className="font-medium">
-                      {profile.display_name || `${profile.first_name || ''} ${profile.last_name || ''}`.trim() || 'Unknown'}
+                    <span 
+                      className="font-medium flex-1 cursor-pointer" 
+                      onClick={() => createNewChat(profile.user_id)}
+                    >
+                      {userName}
                     </span>
+                    <div className="flex items-center gap-1">
+                      <Button
+                        size="icon"
+                        variant="ghost"
+                        className="h-8 w-8 text-green-500 hover:text-green-600 hover:bg-green-500/10"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          startCall(profile.user_id, userName, 'audio');
+                        }}
+                        title="Voice call"
+                      >
+                        <Phone className="w-4 h-4" />
+                      </Button>
+                      <Button
+                        size="icon"
+                        variant="ghost"
+                        className="h-8 w-8 text-blue-500 hover:text-blue-600 hover:bg-blue-500/10"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          startCall(profile.user_id, userName, 'video');
+                        }}
+                        title="Video call"
+                      >
+                        <Video className="w-4 h-4" />
+                      </Button>
+                    </div>
                   </CardContent>
                 </Card>
-              ))}
+                );
+              })}
             </TabsContent>
 
             <TabsContent value="group" className="space-y-4">

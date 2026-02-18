@@ -4,7 +4,7 @@
  * so we handle script loading ourselves.
  */
 
-const JITSI_DOMAIN = 'meet.jit.si';
+const JITSI_DOMAIN = import.meta.env.VITE_JITSI_DOMAIN || 'meet.jit.si';
 const SCRIPT_URL = `https://${JITSI_DOMAIN}/external_api.js`;
 const MAX_RETRIES = 3;
 const RETRY_DELAY_MS = 2000;

@@ -5,9 +5,11 @@
  * When scaling beyond ~1000 users, consider self-hosting or JaaS (8x8.vc)
  */
 
+const JITSI_DOMAIN_RESOLVED = import.meta.env.VITE_JITSI_DOMAIN || 'meet.jit.si';
+
 export const JITSI_CONFIG = {
-  domain: 'meet.jit.si',
-  getScriptUrl: () => 'https://meet.jit.si/external_api.js',
+  domain: JITSI_DOMAIN_RESOLVED,
+  getScriptUrl: () => `https://${JITSI_DOMAIN_RESOLVED}/external_api.js`,
   // Room names must be ALL LOWERCASE to avoid meet.jit.si lobby enforcement
   // Long lowercase alphanumeric names are treated as "secure enough" and skip lobby
   getRoomName: (roomName: string) => {
