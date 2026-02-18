@@ -1,10 +1,10 @@
 /**
- * ResilientJitsiMeeting - Custom wrapper that handles script loading failures
- * with retries and falls back to a direct iframe when the API can't load.
- * Replaces @jitsi/react-sdk's JitsiMeeting which caches failed loads forever.
+ * ResilientJitsiMeeting - Always uses direct iframe to meet.jit.si
+ * The JitsiMeetExternalAPI approach fails to bypass the prejoin screen,
+ * so we skip it entirely and use iframe with URL hash config params.
  */
-import { useEffect, useRef, useState, useCallback, memo } from 'react';
-import { loadJitsiApi, getJitsiIframeUrl, JITSI_DOMAIN } from '@/lib/jitsiLoader';
+import { memo } from 'react';
+import { getJitsiIframeUrl } from '@/lib/jitsiLoader';
 
 interface ResilientJitsiMeetingProps {
   roomName: string;
@@ -22,126 +22,39 @@ interface ResilientJitsiMeetingProps {
 const ResilientJitsiMeeting = memo(function ResilientJitsiMeeting({
   roomName,
   displayName = 'User',
-  configOverwrite = {},
-  interfaceConfigOverwrite = {},
   startWithVideoMuted = false,
   startWithAudioMuted = false,
   onApiReady,
-  onLoadFailure,
   style,
   className,
 }: ResilientJitsiMeetingProps) {
-  const containerRef = useRef<HTMLDivElement>(null);
-  const apiRef = useRef<any>(null);
-  const [mode, setMode] = useState<'loading' | 'api' | 'iframe' | 'error'>('loading');
-  const mountedRef = useRef(true);
+  const iframeUrl = getJitsiIframeUrl(roomName, {
+    displayName,
+    startWithVideoMuted,
+    startWithAudioMuted,
+  });
 
-  useEffect(() => {
-    mountedRef.current = true;
-    let disposed = false;
-
-    const init = async () => {
-      const JitsiAPI = await loadJitsiApi();
-
-      if (disposed || !mountedRef.current) return;
-
-      if (JitsiAPI && containerRef.current) {
-        try {
-          // Clear the container
-          containerRef.current.innerHTML = '';
-
-          const api = new JitsiAPI(JITSI_DOMAIN, {
-            roomName,
-            parentNode: containerRef.current,
-            configOverwrite: {
-              prejoinPageEnabled: false,
-              prejoinConfig: { enabled: false },
-              disableDeepLinking: true,
-              enableClosePage: false,
-              startWithVideoMuted,
-              startWithAudioMuted,
-              ...configOverwrite,
-            },
-            interfaceConfigOverwrite: {
-              SHOW_JITSI_WATERMARK: false,
-              MOBILE_APP_PROMO: false,
-              SHOW_WATERMARK_FOR_GUESTS: false,
-              ...interfaceConfigOverwrite,
-            },
-            userInfo: { displayName, email: '' },
-          });
-
-          apiRef.current = api;
-          setMode('api');
-          console.log('✅ [JITSI] Meeting created via API');
-          onApiReady?.(api);
-        } catch (err) {
-          console.error('❌ [JITSI] API instantiation failed:', err);
-          setMode('iframe');
-          onLoadFailure?.();
-        }
-      } else {
-        // Script couldn't load — fall back to direct iframe
-        console.warn('⚠️ [JITSI] Falling back to iframe mode');
-        setMode('iframe');
-        onLoadFailure?.();
-      }
-    };
-
-    init();
-
-    return () => {
-      disposed = true;
-      mountedRef.current = false;
-      if (apiRef.current) {
-        try { apiRef.current.dispose(); } catch {}
-        apiRef.current = null;
-      }
-    };
-  }, [roomName]); // Only re-init if room changes
-
-  if (mode === 'iframe') {
-    const iframeUrl = getJitsiIframeUrl(roomName, {
-      displayName,
-      startWithVideoMuted,
-      startWithAudioMuted,
-    });
-
-    return (
-      <iframe
-        src={iframeUrl}
-        allow="camera; microphone; display-capture; autoplay; clipboard-write"
-        allowFullScreen
-        style={{
-          width: '100%',
-          height: '100%',
-          border: 'none',
-          ...style,
-        }}
-        className={className}
-      />
-    );
-  }
+  console.log('📞 [JITSI] Using direct iframe mode for room:', roomName);
 
   return (
-    <div style={{ position: 'relative', width: '100%', height: '100%', ...style }} className={className}>
-      {mode === 'loading' && (
-        <div style={{
-          position: 'absolute',
-          inset: 0,
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          zIndex: 1,
-        }}>
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
-        </div>
-      )}
-      <div
-        ref={containerRef}
-        style={{ width: '100%', height: '100%' }}
-      />
-    </div>
+    <iframe
+      src={iframeUrl}
+      allow="camera; microphone; display-capture; autoplay; clipboard-write"
+      allowFullScreen
+      style={{
+        width: '100%',
+        height: '100%',
+        border: 'none',
+        ...style,
+      }}
+      className={className}
+      onLoad={() => {
+        console.log('📞 [JITSI] Iframe loaded for room:', roomName);
+        // Signal that the meeting is "ready" - no API control in iframe mode
+        // but the call is active
+        onApiReady?.(null);
+      }}
+    />
   );
 });
 

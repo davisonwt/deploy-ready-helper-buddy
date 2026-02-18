@@ -72,77 +72,64 @@ export function useJitsiCall({
     onCallEnd();
   }, [onCallEnd, updateCallStatus]);
 
-  // Called when JitsiMeeting's onApiReady fires
+  // Called when iframe loads or API is ready
   const onApiReady = useCallback((externalApi: any) => {
-    console.log('📞 [JITSI] API ready');
-    apiRef.current = externalApi;
-
-    // Clear any loading timeout since API is ready
+    console.log('📞 [JITSI] Meeting ready (iframe mode, no API control)');
+    
+    // Clear any existing timeout
     if (loadingTimeoutRef.current) {
       clearTimeout(loadingTimeoutRef.current);
       loadingTimeoutRef.current = null;
     }
 
-    // Set a fallback: if conference doesn't join in 10s after API ready, force connected
+    // In iframe mode there's no API - mark as connected after a short delay
+    // to allow Jitsi to auto-join (prejoin is disabled via URL params)
     loadingTimeoutRef.current = window.setTimeout(() => {
-      console.log('📞 [JITSI] Forcing connected state after timeout');
+      console.log('📞 [JITSI] Marking call as connected');
       setIsLoading(false);
       setConnectionState('connected');
       durationIntervalRef.current = window.setInterval(() => {
         setCallDuration((prev) => prev + 1);
       }, 1000);
       updateCallStatus('accepted');
-    }, 10000);
+    }, 3000);
 
-    externalApi.addListener('videoConferenceJoined', () => {
-      console.log('📞 [JITSI] Conference joined');
-      // Clear the fallback timeout
-      if (loadingTimeoutRef.current) {
-        clearTimeout(loadingTimeoutRef.current);
-        loadingTimeoutRef.current = null;
-      }
-      setIsLoading(false);
-      setConnectionState('connected');
-      
-      durationIntervalRef.current = window.setInterval(() => {
-        setCallDuration((prev) => prev + 1);
-      }, 1000);
+    // If we got an actual API object, use its events
+    if (externalApi) {
+      apiRef.current = externalApi;
 
-      updateCallStatus('accepted');
-
-      toast({
-        title: 'Connected',
-        description: 'Call connected successfully',
+      externalApi.addListener('videoConferenceJoined', () => {
+        console.log('📞 [JITSI] Conference joined');
+        if (loadingTimeoutRef.current) {
+          clearTimeout(loadingTimeoutRef.current);
+          loadingTimeoutRef.current = null;
+        }
+        setIsLoading(false);
+        setConnectionState('connected');
+        durationIntervalRef.current = window.setInterval(() => {
+          setCallDuration((prev) => prev + 1);
+        }, 1000);
+        updateCallStatus('accepted');
+        toast({
+          title: 'Connected',
+          description: 'Call connected successfully',
+        });
       });
-    });
 
-    externalApi.addListener('videoConferenceLeft', () => {
-      console.log('📞 [JITSI] Conference left');
-      handleCallEnd();
-    });
+      externalApi.addListener('videoConferenceLeft', () => {
+        console.log('📞 [JITSI] Conference left');
+        handleCallEnd();
+      });
 
-    externalApi.addListener('participantJoined', () => {
-      const count = externalApi.getNumberOfParticipants();
-      setParticipantCount(count + 1);
-    });
+      externalApi.addListener('audioMuteStatusChanged', ({ muted }: { muted: boolean }) => {
+        setIsAudioMuted(muted);
+      });
 
-    externalApi.addListener('participantLeft', () => {
-      const count = externalApi.getNumberOfParticipants();
-      setParticipantCount(count + 1);
-    });
-
-    externalApi.addListener('audioMuteStatusChanged', ({ muted }: { muted: boolean }) => {
-      setIsAudioMuted(muted);
-    });
-
-    externalApi.addListener('videoMuteStatusChanged', ({ muted }: { muted: boolean }) => {
-      setIsVideoMuted(muted);
-    });
-
-    externalApi.addListener('readyToClose', () => {
-      console.log('📞 [JITSI] Ready to close');
-      handleCallEnd();
-    });
+      externalApi.addListener('readyToClose', () => {
+        console.log('📞 [JITSI] Ready to close');
+        handleCallEnd();
+      });
+    }
   }, [handleCallEnd, updateCallStatus, toast]);
 
   // Cleanup on unmount
