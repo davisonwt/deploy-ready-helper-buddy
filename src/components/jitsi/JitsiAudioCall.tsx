@@ -52,23 +52,16 @@ export default function JitsiAudioCall({
 
   return (
     <div className="fixed inset-0 bg-background/95 backdrop-blur-sm z-50 flex items-center justify-center">
-      {/* Jitsi meeting - small but visible so prejoin page can be interacted with if needed */}
+      {/* Jitsi meeting - large enough for user to interact with if needed */}
       <div 
         className="fixed bottom-4 right-4 overflow-hidden rounded-lg shadow-lg border"
-        style={{ width: 320, height: 240, zIndex: 40 }} 
+        style={{ width: 400, height: 300, zIndex: 60 }} 
       >
         <ResilientJitsiMeeting
           roomName={roomName}
           displayName={callerInfo.display_name || 'User'}
           startWithVideoMuted={true}
           startWithAudioMuted={false}
-          configOverwrite={{
-            enableClosePage: false,
-            prejoinConfig: { enabled: false },
-          }}
-          interfaceConfigOverwrite={{
-            TOOLBAR_BUTTONS: ['microphone', 'hangup'],
-          }}
           onApiReady={onApiReady}
         />
       </div>

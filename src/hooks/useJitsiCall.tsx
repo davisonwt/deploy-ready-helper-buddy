@@ -72,80 +72,29 @@ export function useJitsiCall({
     onCallEnd();
   }, [onCallEnd, updateCallStatus]);
 
-  // Called when iframe loads or API is ready
-  const onApiReady = useCallback((externalApi: any) => {
-    console.log('📞 [JITSI] Meeting ready, API object:', externalApi ? 'AVAILABLE' : 'null (iframe mode)');
+  // Called when Jitsi iframe loads
+  const onApiReady = useCallback((_api: any) => {
+    console.log('📞 [JITSI] ✅ Jitsi iframe loaded - marking call as connected');
     
-    // Clear any existing timeout
     if (loadingTimeoutRef.current) {
       clearTimeout(loadingTimeoutRef.current);
       loadingTimeoutRef.current = null;
     }
 
-    // If we got an actual API object, use its events for proper control
-    if (externalApi) {
-      apiRef.current = externalApi;
-      
-      // API mode: conference already joined (videoConferenceJoined fired)
-      console.log('📞 [JITSI] ✅ API mode - conference joined, call is ACTIVE');
-      setIsLoading(false);
-      setConnectionState('connected');
-      
-      if (!durationIntervalRef.current) {
-        durationIntervalRef.current = window.setInterval(() => {
-          setCallDuration((prev) => prev + 1);
-        }, 1000);
-      }
-      
-      updateCallStatus('accepted');
-      toast({
-        title: 'Connected',
-        description: 'Call connected successfully',
-      });
-
-      externalApi.addListener('videoConferenceLeft', () => {
-        console.log('📞 [JITSI] Conference left');
-        handleCallEnd();
-      });
-
-      externalApi.addListener('audioMuteStatusChanged', ({ muted }: { muted: boolean }) => {
-        setIsAudioMuted(muted);
-      });
-
-      externalApi.addListener('videoMuteStatusChanged', ({ muted }: { muted: boolean }) => {
-        setIsVideoMuted(muted);
-      });
-
-      externalApi.addListener('participantJoined', () => {
-        setParticipantCount(prev => prev + 1);
-      });
-
-      externalApi.addListener('participantLeft', () => {
-        setParticipantCount(prev => Math.max(1, prev - 1));
-      });
-
-      externalApi.addListener('readyToClose', () => {
-        console.log('📞 [JITSI] Ready to close');
-        handleCallEnd();
-      });
-
-      return;
+    setIsLoading(false);
+    setConnectionState('connected');
+    
+    if (!durationIntervalRef.current) {
+      durationIntervalRef.current = window.setInterval(() => {
+        setCallDuration((prev) => prev + 1);
+      }, 1000);
     }
 
-    // Iframe fallback mode: no API control, mark connected after delay
-    console.log('📞 [JITSI] Iframe fallback mode - marking connected after delay');
-    loadingTimeoutRef.current = window.setTimeout(() => {
-      console.log('📞 [JITSI] Marking call as connected (iframe mode)');
-      setIsLoading(false);
-      setConnectionState('connected');
-      if (!durationIntervalRef.current) {
-        durationIntervalRef.current = window.setInterval(() => {
-          setCallDuration((prev) => prev + 1);
-        }, 1000);
-      }
-      updateCallStatus('accepted');
-    }, 3000);
-  }, [handleCallEnd, updateCallStatus, toast]);
+    toast({
+      title: 'Connected',
+      description: 'You are now in the call. Speak into your microphone.',
+    });
+  }, [toast]);
 
   // Cleanup on unmount
   useEffect(() => {
