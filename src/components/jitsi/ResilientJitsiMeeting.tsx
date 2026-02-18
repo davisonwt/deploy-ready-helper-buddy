@@ -55,6 +55,7 @@ const ResilientJitsiMeeting = memo(function ResilientJitsiMeeting({
             parentNode: containerRef.current,
             configOverwrite: {
               prejoinPageEnabled: false,
+              prejoinConfig: { enabled: false },
               disableDeepLinking: true,
               enableClosePage: false,
               startWithVideoMuted,

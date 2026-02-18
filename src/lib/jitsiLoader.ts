@@ -100,6 +100,7 @@ export function getJitsiIframeUrl(
   
   const config: Record<string, string> = {
     'config.prejoinPageEnabled': 'false',
+    'config.prejoinConfig.enabled': 'false',
     'config.disableDeepLinking': 'true',
     'config.enableClosePage': 'false',
     'config.startWithAudioMuted': String(options.startWithAudioMuted ?? false),
