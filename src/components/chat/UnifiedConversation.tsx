@@ -240,6 +240,53 @@ export const UnifiedConversation: React.FC<UnifiedConversationProps> = ({
     };
   };
 
+  // Delete message handler
+  const handleDeleteMessage = async (messageId: string) => {
+    try {
+      const { error } = await supabase
+        .from('chat_messages')
+        .delete()
+        .eq('id', messageId)
+        .eq('sender_id', user?.id);
+      
+      if (error) throw error;
+      setMessages(prev => prev.filter(m => m.id !== messageId));
+      toast({ title: 'Message deleted' });
+    } catch (error) {
+      console.error('Error deleting message:', error);
+      toast({ title: 'Error', description: 'Failed to delete message', variant: 'destructive' });
+    }
+  };
+
+  // Edit message handler
+  const [editingMessageId, setEditingMessageId] = useState<string | null>(null);
+  const [editText, setEditText] = useState('');
+
+  const handleStartEdit = (msg: Message) => {
+    setEditingMessageId(msg.id);
+    setEditText(msg.content || '');
+  };
+
+  const handleSaveEdit = async (messageId: string) => {
+    if (!editText.trim()) return;
+    try {
+      const { error } = await supabase
+        .from('chat_messages')
+        .update({ content: editText.trim(), is_edited: true })
+        .eq('id', messageId)
+        .eq('sender_id', user?.id);
+      
+      if (error) throw error;
+      setMessages(prev => prev.map(m => m.id === messageId ? { ...m, content: editText.trim(), is_edited: true } : m));
+      setEditingMessageId(null);
+      setEditText('');
+      toast({ title: 'Message updated' });
+    } catch (error) {
+      console.error('Error editing message:', error);
+      toast({ title: 'Error', description: 'Failed to edit message', variant: 'destructive' });
+    }
+  };
+
   // Handlers
   const handleSendMessage = async (content: string) => {
     if (!content.trim() || !user) return;
@@ -385,6 +432,14 @@ export const UnifiedConversation: React.FC<UnifiedConversationProps> = ({
 
       const { data: urlData } = supabase.storage.from('chat-files').getPublicUrl(filePath);
 
+      // Detect file type from mime type
+      const getFileType = (mime: string) => {
+        if (mime.startsWith('image/')) return 'image';
+        if (mime.startsWith('video/')) return 'video';
+        if (mime.startsWith('audio/')) return 'audio';
+        return 'document';
+      };
+
       await supabase.from('chat_messages').insert([{
         room_id: roomId,
         sender_id: user?.id,
@@ -392,6 +447,8 @@ export const UnifiedConversation: React.FC<UnifiedConversationProps> = ({
         message_type: 'file',
         file_url: urlData.publicUrl,
         file_name: file.name,
+        file_type: getFileType(file.type),
+        file_size: file.size,
       }]);
 
       toast({ title: 'File sent' });
@@ -617,11 +674,36 @@ export const UnifiedConversation: React.FC<UnifiedConversationProps> = ({
                 animate={{ opacity: 1, y: 0 }}
                 className="group"
               >
-                <ChatMessage
-                  message={msg}
-                  isOwn={isOwn}
-                  onReply={() => setReplyingTo(msg)}
-                />
+                {editingMessageId === msg.id ? (
+                  <div className={`flex gap-2 items-center mb-4 ${isOwn ? 'justify-end' : ''}`}>
+                    <input
+                      className="flex-1 px-3 py-2 rounded-lg border bg-background text-sm"
+                      value={editText}
+                      onChange={(e) => setEditText(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter' && !e.shiftKey) {
+                          e.preventDefault();
+                          handleSaveEdit(msg.id);
+                        }
+                        if (e.key === 'Escape') {
+                          setEditingMessageId(null);
+                          setEditText('');
+                        }
+                      }}
+                      autoFocus
+                    />
+                    <Button size="sm" onClick={() => handleSaveEdit(msg.id)}>Save</Button>
+                    <Button size="sm" variant="ghost" onClick={() => { setEditingMessageId(null); setEditText(''); }}>Cancel</Button>
+                  </div>
+                ) : (
+                  <ChatMessage
+                    message={msg}
+                    isOwn={isOwn}
+                    onDelete={isOwn ? handleDeleteMessage : undefined}
+                    onReply={() => setReplyingTo(msg)}
+                    onEdit={isOwn ? () => handleStartEdit(msg) : undefined}
+                  />
+                )}
               </motion.div>
             );
           })}
