@@ -49,8 +49,8 @@ export default function JitsiAudioCall({
 
   return (
     <div className="fixed inset-0 bg-background/95 backdrop-blur-sm z-50 flex items-center justify-center">
-      {/* Hidden Jitsi container */}
-      <div ref={jitsiContainerRef} style={{ display: 'none' }} />
+      {/* Jitsi container - must be rendered (not display:none) for audio to work */}
+      <div ref={jitsiContainerRef} className="absolute w-px h-px overflow-hidden" style={{ opacity: 0, pointerEvents: 'none' }} />
 
       <Card className="p-8 max-w-md w-full mx-4">
         <div className="text-center space-y-6">
