@@ -1012,6 +1012,35 @@ export default function MemryPage() {
     }
   }, [posts.length]);
 
+  // Touch swipe support for mobile
+  const touchStartY = useRef<number | null>(null);
+  const touchStartTime = useRef<number>(0);
+  const isScrolling = useRef(false);
+
+  const handleTouchStart = useCallback((e: React.TouchEvent) => {
+    touchStartY.current = e.touches[0].clientY;
+    touchStartTime.current = Date.now();
+    isScrolling.current = false;
+  }, []);
+
+  const handleTouchEnd = useCallback((e: React.TouchEvent) => {
+    if (touchStartY.current === null || isScrolling.current) return;
+    const deltaY = touchStartY.current - e.changedTouches[0].clientY;
+    const elapsed = Date.now() - touchStartTime.current;
+    const minSwipe = 50;
+    // Quick flick or sufficient distance
+    if (Math.abs(deltaY) > minSwipe || (Math.abs(deltaY) > 30 && elapsed < 300)) {
+      if (deltaY > 0) handleScroll('down');
+      else handleScroll('up');
+    }
+    touchStartY.current = null;
+  }, [handleScroll]);
+
+  const handleTouchMove = useCallback((e: React.TouchEvent) => {
+    // Prevent default page scroll on the feed container
+    e.preventDefault();
+  }, []);
+
   // Reset currentPostIndex when posts change
   useEffect(() => {
     if (currentPostIndex >= posts.length && posts.length > 0) {
@@ -1235,16 +1264,19 @@ export default function MemryPage() {
         ) : (
         <AnimatePresence mode="wait">
           {currentPost && (
-            <motion.div
+             <motion.div
               key={currentPost.id}
               initial={{ opacity: 0, y: 50 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -50 }}
-              className="h-full relative"
+              className="h-full relative touch-none"
               onWheel={(e) => {
                 if (e.deltaY > 0) handleScroll('down');
                 else handleScroll('up');
               }}
+              onTouchStart={handleTouchStart}
+              onTouchMove={handleTouchMove}
+              onTouchEnd={handleTouchEnd}
             >
               {/* Background Image/Video/Music */}
               <div className="absolute inset-0 bg-gradient-to-br from-purple-900 via-pink-800 to-orange-700">
