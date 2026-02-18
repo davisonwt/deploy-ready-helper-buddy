@@ -131,7 +131,7 @@ export const useVoiceMemo = () => {
 
       // Upload to Supabase storage
       const { data: uploadData, error: uploadError } = await supabase.storage
-        .from('chat_files')
+        .from('chat-files')
         .upload(filePath, audioBlob, {
           contentType: 'audio/webm',
           upsert: false,
@@ -142,7 +142,7 @@ export const useVoiceMemo = () => {
 
       // Get public URL
       const { data: { publicUrl } } = supabase.storage
-        .from('chat_files')
+        .from('chat-files')
         .getPublicUrl(filePath);
 
       // Calculate actual duration from recording time
@@ -188,7 +188,7 @@ export const useVoiceMemo = () => {
 
       // Delete from storage
       const { error: deleteError } = await supabase.storage
-        .from('chat_files')
+        .from('chat-files')
         .remove([filePath]);
 
       if (deleteError) throw deleteError;
