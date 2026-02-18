@@ -190,13 +190,26 @@ const ChatMessage = ({ message, isOwn = false, onDelete, onEdit, onReply }) => {
                         userColor.bg.includes('violet') ? '#8b5cf6' : '#6b7280'
           }}
         >
-          {message.content && (
+          {message.content && message.message_type !== 'voice' && (
             <p className="text-sm whitespace-pre-wrap break-words">
               {message.content}
             </p>
           )}
+
+          {/* Voice message - inline audio player */}
+          {message.message_type === 'voice' && message.file_url && (
+            <div className="mt-1">
+              <p className="text-xs text-muted-foreground mb-1.5">{message.content || 'Voice message'}</p>
+              <audio
+                controls
+                preload="metadata"
+                className="w-full h-8 rounded"
+                src={message.file_url}
+              />
+            </div>
+          )}
           
-          {message.file_url && (
+          {message.file_url && message.message_type !== 'voice' && (
             <div className="mt-2">
               <FilePreview
                 fileUrl={message.file_url}
