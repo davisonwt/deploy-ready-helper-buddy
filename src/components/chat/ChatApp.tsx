@@ -195,47 +195,15 @@ export const ChatApp: React.FC = () => {
     
     setCreatingChat(true);
     try {
-      // Check existing direct chat
-      const { data: existingRooms } = await supabase
-        .from('chat_participants')
-        .select('room_id, chat_rooms!inner(room_type)')
-        .eq('user_id', user.id);
+      // Use the secure RPC that handles both room creation and participant insertion
+      const { data: roomId, error } = await supabase.rpc('get_or_create_direct_room', {
+        user1_id: user.id,
+        user2_id: otherUserId,
+      });
 
-      for (const room of existingRooms || []) {
-        const { data: participants } = await supabase
-          .from('chat_participants')
-          .select('user_id')
-          .eq('room_id', room.room_id);
+      if (error) throw error;
 
-        if (participants?.length === 2 && participants.some(p => p.user_id === otherUserId)) {
-          setSelectedRoomId(room.room_id);
-          setShowNewChatDialog(false);
-          setCreatingChat(false);
-          return;
-        }
-      }
-
-      // Create new direct room
-      const { data: newRoom, error: roomError } = await supabase
-        .from('chat_rooms')
-        .insert({
-          room_type: 'direct',
-          created_by: user.id,
-          is_active: true
-        })
-        .select()
-        .single();
-
-      if (roomError) throw roomError;
-
-      await supabase
-        .from('chat_participants')
-        .insert([
-          { room_id: newRoom.id, user_id: user.id, is_active: true },
-          { room_id: newRoom.id, user_id: otherUserId, is_active: true }
-        ]);
-
-      setSelectedRoomId(newRoom.id);
+      setSelectedRoomId(roomId);
       setShowNewChatDialog(false);
       await loadConversations();
     } catch (error) {
