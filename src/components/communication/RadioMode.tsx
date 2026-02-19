@@ -459,50 +459,6 @@ export const RadioMode: React.FC = () => {
         </div>
       )}
 
-      {/* Track Library */}
-      <div>
-        <h3 className="text-xl font-bold text-foreground mb-4">Music Library</h3>
-        <div className="grid gap-3">
-          {tracks.length === 0 ? (
-            <Card className="glass-card bg-transparent border border-primary/20">
-              <CardContent className="p-12 text-center">
-                <Radio className="w-16 h-16 mx-auto mb-4 text-primary/50" />
-                <h3 className="text-xl font-semibold text-foreground mb-2">No Tracks Available</h3>
-                <p className="text-foreground/70">Check back soon for new music</p>
-              </CardContent>
-            </Card>
-          ) : (
-            tracks.map((track, index) => (
-              <motion.div key={track.id} initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: index * 0.05 }}>
-                <Card className="glass-card bg-transparent border border-primary/20 hover:border-primary/40 transition-all">
-                  <CardContent className="p-4">
-                    <div className="flex items-center gap-4">
-                      <Button variant="ghost" size="icon" onClick={() => playTrack(track)} className="rounded-full">
-                        <Play className="w-4 h-4" />
-                      </Button>
-                      <div className="flex-1 min-w-0">
-                        <h4 className="font-semibold text-foreground truncate">{track.track_title}</h4>
-                        <p className="text-sm text-foreground/70 truncate">{track.artist_name || 'Unknown Artist'}</p>
-                      </div>
-                      {track.genre && <Badge variant="outline" className="text-foreground border-primary/30">{track.genre}</Badge>}
-                      <span className="text-sm text-foreground/70">{formatDuration(track.duration_seconds)}</span>
-                      <div className="flex gap-1">
-                        <Button variant="ghost" size="icon" className={`h-8 w-8 ${likedTracks.has(track.id) ? 'text-red-500' : ''}`} onClick={(e) => handleLike(track, e)} disabled={!user}>
-                          <Heart className={`w-4 h-4 ${likedTracks.has(track.id) ? 'fill-current' : ''}`} />
-                        </Button>
-                        <Button variant="ghost" size="icon" className="h-8 w-8" onClick={(e) => handleShare(track, e)}>
-                          <Share2 className="w-4 h-4" />
-                        </Button>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              </motion.div>
-            ))
-          )}
-        </div>
-      </div>
-
       <ScheduleRadioSlotDialog open={scheduleDialogOpen} onOpenChange={setScheduleDialogOpen} onSuccess={loadContent} />
 
       {/* Delete Confirmation */}
