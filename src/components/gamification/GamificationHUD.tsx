@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react"
 import { motion, AnimatePresence } from "framer-motion"
-import { X, Trophy, Award, Target, Bell, CheckCircle } from "lucide-react"
+import { X, Trophy, Award, Target, Bell, CheckCircle, Trash2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
@@ -18,6 +18,7 @@ export function GamificationHUD({ isVisible, onClose }: GamificationHUDProps) {
   let userPoints = null
   let notifications: any[] = []
   let markNotificationAsRead = async (id: string) => {}
+  let deleteNotification = async (id: string) => {}
   
   try {
     const gamification = useGamification()
@@ -25,6 +26,7 @@ export function GamificationHUD({ isVisible, onClose }: GamificationHUDProps) {
     userPoints = gamification.userPoints
     notifications = gamification.notifications
     markNotificationAsRead = gamification.markNotificationAsRead
+    deleteNotification = gamification.deleteNotification
   } catch (error) {
     console.warn('GamificationHUD: hook error', error)
     return null // Don't render if hooks fail
@@ -218,7 +220,7 @@ export function GamificationHUD({ isVisible, onClose }: GamificationHUDProps) {
                         }`}
                         onClick={() => handleNotificationClick(notification)}
                       >
-                        <div className="flex items-start space-x-3">
+                         <div className="flex items-start space-x-3">
                           <div className={`p-1 rounded-full ${!notification.is_read ? 'bg-primary' : 'bg-muted'}`}>
                             {notification.is_read ? (
                               <CheckCircle className="h-3 w-3 text-muted-foreground" />
@@ -233,6 +235,16 @@ export function GamificationHUD({ isVisible, onClose }: GamificationHUDProps) {
                               {new Date(notification.created_at).toLocaleString()}
                             </p>
                           </div>
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              deleteNotification(notification.id)
+                            }}
+                            className="p-1.5 rounded-full hover:bg-destructive/20 text-muted-foreground hover:text-destructive transition-colors shrink-0"
+                            title="Delete notification"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </button>
                         </div>
                       </motion.div>
                     ))}

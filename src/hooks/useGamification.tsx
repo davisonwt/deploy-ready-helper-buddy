@@ -131,6 +131,21 @@ export function useGamification() {
     }
   }
 
+  const deleteNotification = async (notificationId: string) => {
+    try {
+      const { error } = await supabase
+        .from('user_notifications')
+        .delete()
+        .eq('id', notificationId)
+
+      if (error) throw error
+
+      setNotifications(prev => prev.filter(notif => notif.id !== notificationId))
+    } catch (error) {
+      console.error('Error deleting notification:', error)
+    }
+  }
+
   const createNotification = async (
     type: string,
     title: string,
@@ -197,6 +212,7 @@ export function useGamification() {
     fetchUserPoints,
     fetchNotifications,
     markNotificationAsRead,
+    deleteNotification,
     createNotification
   }
 }
