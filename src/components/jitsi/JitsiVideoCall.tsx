@@ -1,13 +1,10 @@
+import { useRef, useState } from 'react';
 import ResilientJitsiMeeting from '@/components/jitsi/ResilientJitsiMeeting';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import {
-  PhoneOff, Mic, MicOff, Video, VideoOff,
-  Minimize2, Maximize2, Users,
-} from 'lucide-react';
+import { PhoneOff, Minimize2, Maximize2 } from 'lucide-react';
 import { useJitsiCall } from '@/hooks/useJitsiCall';
-import { useState } from 'react';
+import CallControlBar from '@/components/jitsi/CallControlBar';
 
 interface JitsiVideoCallProps {
   callSession: {
@@ -34,10 +31,11 @@ export default function JitsiVideoCall({
 }: JitsiVideoCallProps) {
   const [isMinimized, setIsMinimized] = useState(false);
   const ownName = myDisplayName || 'User';
+  const jitsiApiRef = useRef<any>(null);
 
   const {
     roomName,
-    onApiReady,
+    onApiReady: hookOnApiReady,
     isLoading,
     isAudioMuted,
     isVideoMuted,
@@ -55,6 +53,11 @@ export default function JitsiVideoCall({
     onCallEnd: onEndCall,
   });
 
+  const handleApiReady = (api: any) => {
+    jitsiApiRef.current = api;
+    hookOnApiReady(api);
+  };
+
   const formatDuration = (seconds: number) => {
     const mins = Math.floor(seconds / 60);
     const secs = seconds % 60;
@@ -71,7 +74,7 @@ export default function JitsiVideoCall({
             displayName={ownName}
             startWithVideoMuted={false}
             startWithAudioMuted={false}
-            onApiReady={onApiReady}
+            onApiReady={handleApiReady}
           />
           <div className="absolute top-2 right-2 flex gap-1">
             <Button size="sm" variant="outline" onClick={() => setIsMinimized(false)} className="h-7 w-7 p-0">
@@ -86,7 +89,7 @@ export default function JitsiVideoCall({
     );
   }
 
-  // Full screen view - Jitsi takes up the entire screen
+  // Full screen view
   return (
     <div className="fixed inset-0 z-50 flex flex-col" style={{ background: '#1a1a2e' }}>
       {/* Minimal header */}
@@ -103,25 +106,30 @@ export default function JitsiVideoCall({
             </p>
           </div>
         </div>
-        <div className="flex gap-2">
-          <Button variant="outline" size="sm" onClick={() => setIsMinimized(true)}>
-            <Minimize2 className="h-4 w-4" />
-          </Button>
-          <Button variant="destructive" size="sm" onClick={hangUp} className="gap-2">
-            <PhoneOff className="h-4 w-4" />
-            End Call
-          </Button>
-        </div>
+        <Button variant="outline" size="sm" onClick={() => setIsMinimized(true)}>
+          <Minimize2 className="h-4 w-4" />
+        </Button>
       </div>
 
       {/* Jitsi takes full remaining space */}
-      <div className="flex-1 min-h-0">
+      <div className="flex-1 min-h-0 relative">
         <ResilientJitsiMeeting
           roomName={roomName}
           displayName={ownName}
           startWithVideoMuted={false}
           startWithAudioMuted={false}
-          onApiReady={onApiReady}
+          onApiReady={handleApiReady}
+        />
+
+        {/* Custom control bar with invite */}
+        <CallControlBar
+          jitsiApi={jitsiApiRef.current}
+          isAudioMuted={isAudioMuted}
+          isVideoMuted={isVideoMuted}
+          participantCount={participantCount}
+          onToggleAudio={toggleAudio}
+          onToggleVideo={toggleVideo}
+          onHangUp={hangUp}
         />
       </div>
     </div>
