@@ -99,12 +99,11 @@ export default function JitsiRoom({
             enableNoisyMicDetection: true,
             disableInviteFunctions: true,
             hideAddMoreParticipants: true,
-            toolbarButtons: [],
           }}
           interfaceConfigOverwrite={{
-            TOOLBAR_BUTTONS: [],
+            TOOLBAR_BUTTONS: ['microphone', 'camera', 'hangup'],
             TOOLBAR_ALWAYS_VISIBLE: false,
-            TOOLBAR_TIMEOUT: 0,
+            TOOLBAR_TIMEOUT: 1,
             SETTINGS_SECTIONS: ['devices', 'language', 'profile'],
             DEFAULT_REMOTE_DISPLAY_NAME: 'Participant',
             HIDE_INVITE_MORE_HEADER: true,

@@ -80,7 +80,7 @@ const ResilientJitsiMeeting = memo(function ResilientJitsiMeeting({
             hideAddMoreParticipants: true,
             disableAddMoreHeader: true,
             hideParticipantsSettings: true,
-            toolbarButtons: [],
+            // toolbarButtons removed - use interfaceConfigOverwrite TOOLBAR_BUTTONS instead
             // Lobby bypass
             lobby: { autoKnock: true, enabled: false },
             membersOnly: false,
@@ -108,9 +108,9 @@ const ResilientJitsiMeeting = memo(function ResilientJitsiMeeting({
             SHOW_WATERMARK_FOR_GUESTS: false,
             HIDE_INVITE_MORE_HEADER: true,
             DISABLE_JOIN_LEAVE_NOTIFICATIONS: false,
-            TOOLBAR_BUTTONS: [],
+            TOOLBAR_BUTTONS: ['microphone', 'camera', 'hangup'],
             TOOLBAR_ALWAYS_VISIBLE: false,
-            TOOLBAR_TIMEOUT: 0,
+            TOOLBAR_TIMEOUT: 1,
             ...interfaceConfigOverwrite,
           },
         });
