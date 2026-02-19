@@ -80,6 +80,7 @@ export function LiveStreamInterface({ djProfile, currentShow, onEndShow }) {
       fetchActiveHosts()
       fetchGuestRequests()
       fetchApprovedGuests()
+      fetchChatMessages()
       return () => { if (typeof cleanup === 'function') cleanup() }
     }
   }, [liveSession])
@@ -135,6 +136,43 @@ export function LiveStreamInterface({ djProfile, currentShow, onEndShow }) {
         description: 'Failed to initialize live session',
         variant: 'destructive'
       })
+    }
+  }
+
+  const fetchChatMessages = async () => {
+    if (!liveSession) return
+    try {
+      const { data } = await supabase
+        .from('live_session_messages')
+        .select('id, sender_id, content, message_type, created_at')
+        .eq('session_id', liveSession.id)
+        .in('message_type', ['comment', 'request', 'dj_message'])
+        .order('created_at', { ascending: true })
+        .limit(50)
+
+      if (data && data.length > 0) {
+        const senderIds = [...new Set(data.map(d => d.sender_id))]
+        const { data: profiles } = await supabase
+          .from('profiles')
+          .select('user_id, display_name, first_name, last_name')
+          .in('user_id', senderIds)
+
+        const nameMap = {}
+        profiles?.forEach(p => {
+          nameMap[p.user_id] = p.display_name || [p.first_name, p.last_name].filter(Boolean).join(' ') || ''
+        })
+
+        const formatted = data.map(item => ({
+          id: item.id,
+          type: item.sender_id === user?.id ? 'dj' : 'listener',
+          content: item.content,
+          author: nameMap[item.sender_id] || 'Listener',
+          timestamp: new Date(item.created_at)
+        }))
+        setMessages(formatted)
+      }
+    } catch (error) {
+      console.error('Error fetching chat messages:', error)
     }
   }
 
@@ -197,10 +235,46 @@ export function LiveStreamInterface({ djProfile, currentShow, onEndShow }) {
       )
       .subscribe()
 
+    // Subscribe to new chat messages
+    const messagesSubscription = supabase
+      .channel(`live-messages-${liveSession.id}`)
+      .on('postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'live_session_messages',
+          filter: `session_id=eq.${liveSession.id}`
+        },
+        async (payload) => {
+          const msg = payload.new
+          // Resolve sender name
+          let authorName = 'Listener'
+          if (msg.sender_id) {
+            const { data: profile } = await supabase
+              .from('profiles')
+              .select('display_name, first_name, last_name')
+              .eq('user_id', msg.sender_id)
+              .single()
+            if (profile) {
+              authorName = profile.display_name || [profile.first_name, profile.last_name].filter(Boolean).join(' ') || 'Listener'
+            }
+          }
+          setMessages(prev => [...prev, {
+            id: msg.id,
+            type: msg.sender_id === user?.id ? 'dj' : 'listener',
+            content: msg.content,
+            author: authorName,
+            timestamp: new Date(msg.created_at)
+          }])
+        }
+      )
+      .subscribe()
+
     return () => {
       supabase.removeChannel(hostsSubscription)
       supabase.removeChannel(guestsSubscription)
       supabase.removeChannel(sessionSubscription)
+      supabase.removeChannel(messagesSubscription)
     }
   }
 
