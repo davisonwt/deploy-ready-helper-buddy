@@ -4511,6 +4511,39 @@ export type Database = {
           },
         ]
       }
+      radio_listener_streaks: {
+        Row: {
+          created_at: string
+          current_streak: number
+          id: string
+          last_listened_at: string
+          longest_streak: number
+          total_listen_days: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          current_streak?: number
+          id?: string
+          last_listened_at?: string
+          longest_streak?: number
+          total_listen_days?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          current_streak?: number
+          id?: string
+          last_listened_at?: string
+          longest_streak?: number
+          total_listen_days?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       radio_live_hosts: {
         Row: {
           audio_enabled: boolean
@@ -4614,10 +4647,12 @@ export type Database = {
           created_at: string
           ended_at: string | null
           id: string
+          peak_listeners: number | null
           schedule_id: string
           session_token: string
           started_at: string | null
           status: string
+          total_reactions: number | null
           updated_at: string
           viewer_count: number
         }
@@ -4625,10 +4660,12 @@ export type Database = {
           created_at?: string
           ended_at?: string | null
           id?: string
+          peak_listeners?: number | null
           schedule_id: string
           session_token: string
           started_at?: string | null
           status?: string
+          total_reactions?: number | null
           updated_at?: string
           viewer_count?: number
         }
@@ -4636,10 +4673,12 @@ export type Database = {
           created_at?: string
           ended_at?: string | null
           id?: string
+          peak_listeners?: number | null
           schedule_id?: string
           session_token?: string
           started_at?: string | null
           status?: string
+          total_reactions?: number | null
           updated_at?: string
           viewer_count?: number
         }
@@ -4695,6 +4734,33 @@ export type Database = {
           },
         ]
       }
+      radio_reactions: {
+        Row: {
+          created_at: string
+          id: string
+          reaction_type: string
+          segment_index: number | null
+          session_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          reaction_type: string
+          segment_index?: number | null
+          session_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          reaction_type?: string
+          segment_index?: number | null
+          session_id?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       radio_schedule: {
         Row: {
           ai_backup_enabled: boolean | null
@@ -4702,6 +4768,7 @@ export type Database = {
           approval_status: string | null
           approved_at: string | null
           approved_by: string | null
+          bestow_count: number | null
           broadcast_mode: string
           created_at: string
           dj_id: string | null
@@ -4713,6 +4780,7 @@ export type Database = {
           playlist_id: string | null
           playlist_url: string | null
           price: number | null
+          reaction_count: number | null
           requires_review: boolean | null
           show_id: string | null
           show_notes: string | null
@@ -4729,6 +4797,7 @@ export type Database = {
           approval_status?: string | null
           approved_at?: string | null
           approved_by?: string | null
+          bestow_count?: number | null
           broadcast_mode?: string
           created_at?: string
           dj_id?: string | null
@@ -4740,6 +4809,7 @@ export type Database = {
           playlist_id?: string | null
           playlist_url?: string | null
           price?: number | null
+          reaction_count?: number | null
           requires_review?: boolean | null
           show_id?: string | null
           show_notes?: string | null
@@ -4756,6 +4826,7 @@ export type Database = {
           approval_status?: string | null
           approved_at?: string | null
           approved_by?: string | null
+          bestow_count?: number | null
           broadcast_mode?: string
           created_at?: string
           dj_id?: string | null
@@ -4767,6 +4838,7 @@ export type Database = {
           playlist_id?: string | null
           playlist_url?: string | null
           price?: number | null
+          reaction_count?: number | null
           requires_review?: boolean | null
           show_id?: string | null
           show_notes?: string | null
@@ -8126,6 +8198,10 @@ export type Database = {
       update_document_page: {
         Args: { document_id_param: string; new_page: number }
         Returns: boolean
+      }
+      update_listener_streak: {
+        Args: { p_user_id: string }
+        Returns: undefined
       }
       update_payment_config_secure: {
         Args: {

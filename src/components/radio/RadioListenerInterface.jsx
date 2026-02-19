@@ -9,7 +9,7 @@ import { ScrollArea } from '@/components/ui/scroll-area'
 import { 
   MessageSquare, 
   Send, 
-  Phone, 
+  Hand,
   Mic,
   Radio,
   Clock,
@@ -26,6 +26,9 @@ import { supabase } from '@/integrations/supabase/client'
 import { useAuth } from '@/hooks/useAuth'
 import { useMusicPurchase } from '@/hooks/useMusicPurchase'
 import { MusicPurchaseInterface } from './MusicPurchaseInterface'
+import { ListenerReactionBar } from './ListenerReactionBar'
+import { BestowDuringBroadcast } from './BestowDuringBroadcast'
+import { ListenerStreakBadge } from './ListenerStreakBadge'
 
 export function RadioListenerInterface({ liveSession, currentShow }) {
   const { user } = useAuth()
@@ -283,9 +286,10 @@ export function RadioListenerInterface({ liveSession, currentShow }) {
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <Radio className="h-5 w-5 text-red-500" />
+            <Radio className="h-5 w-5 text-destructive" />
             {currentShow?.show_name || 'Live Show'}
             <Badge variant="destructive" className="ml-2">LIVE</Badge>
+            <ListenerStreakBadge />
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -298,13 +302,27 @@ export function RadioListenerInterface({ liveSession, currentShow }) {
                 <p className="text-sm mt-1">{currentShow.description}</p>
               )}
             </div>
-            <div className="flex items-center gap-2 text-sm text-muted-foreground">
-              <Users className="h-4 w-4" />
-              {viewerCount} listening
+            <div className="flex items-center gap-3">
+              {currentShow?.dj_id && (
+                <BestowDuringBroadcast
+                  djId={currentShow.dj_id}
+                  djName={currentShow.dj_name || 'DJ'}
+                  scheduleId={liveSession?.schedule_id}
+                />
+              )}
+              <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                <Users className="h-4 w-4" />
+                {viewerCount} listening
+              </div>
             </div>
           </div>
         </CardContent>
       </Card>
+
+      {/* Emoji Reactions */}
+      {liveSession?.id && (
+        <ListenerReactionBar sessionId={liveSession.id} />
+      )}
 
       {/* Music Purchase Interface */}
       <MusicPurchaseInterface 
@@ -342,19 +360,19 @@ export function RadioListenerInterface({ liveSession, currentShow }) {
           </CardContent>
         </Card>
 
-        {/* Call In */}
+        {/* Raise Hand */}
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <Phone className="h-5 w-5" />
-              Call In to Show
+              <Hand className="h-5 w-5" />
+              Raise Your Hand
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             {!isInCallQueue ? (
               <>
                 <Textarea
-                  placeholder="What would you like to talk about?"
+                  placeholder="What would you like to share or ask?"
                   value={callTopic}
                   onChange={(e) => setCallTopic(e.target.value)}
                   rows={3}
@@ -362,21 +380,21 @@ export function RadioListenerInterface({ liveSession, currentShow }) {
                 <Button 
                   onClick={requestToCall} 
                   disabled={!callTopic.trim()}
-                  className="w-full"
+                  className="w-full gap-2"
                 >
-                  <Phone className="h-4 w-4 mr-2" />
-                  Request to Call In
+                  <Hand className="h-4 w-4" />
+                  Raise Hand to Speak
                 </Button>
                 <p className="text-xs text-muted-foreground">
-                  Briefly describe what you'd like to discuss. The hosts will review your request.
+                  The host will see your request and invite you to speak when ready.
                 </p>
               </>
             ) : (
               <div className="text-center space-y-4">
                 <div className="p-4 bg-muted/30 rounded-lg">
                   <div className="flex items-center justify-center gap-2 mb-2">
-                    <Clock className="h-5 w-5 text-primary" />
-                    <span className="font-medium">In Call Queue</span>
+                    <Hand className="h-5 w-5 text-primary animate-bounce" />
+                    <span className="font-medium">Hand Raised!</span>
                   </div>
                   {queuePosition && (
                     <p className="text-sm text-muted-foreground">
@@ -384,7 +402,7 @@ export function RadioListenerInterface({ liveSession, currentShow }) {
                     </p>
                   )}
                   <p className="text-xs text-muted-foreground mt-2">
-                    Waiting for host approval...
+                    Waiting for host to invite you...
                   </p>
                 </div>
                 <Button 
@@ -392,7 +410,7 @@ export function RadioListenerInterface({ liveSession, currentShow }) {
                   onClick={leaveCallQueue}
                   className="w-full"
                 >
-                  Leave Queue
+                  Lower Hand
                 </Button>
               </div>
             )}

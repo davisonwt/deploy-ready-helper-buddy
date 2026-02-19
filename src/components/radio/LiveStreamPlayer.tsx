@@ -7,6 +7,9 @@ import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { resolveAudioUrl } from '@/utils/resolveAudioUrl';
+import { ListenerReactionBar } from './ListenerReactionBar';
+import { BestowDuringBroadcast } from './BestowDuringBroadcast';
+import { ListenerStreakBadge } from './ListenerStreakBadge';
 
 interface Track {
   id: string;
@@ -25,6 +28,9 @@ const LiveStreamPlayer = () => {
   const [playlist, setPlaylist] = useState<Track[]>([]);
   const [showName, setShowName] = useState('AOD Station Radio');
   const [djName, setDjName] = useState('');
+  const [djId, setDjId] = useState('');
+  const [scheduleId, setScheduleId] = useState('');
+  const [sessionId, setSessionId] = useState('');
   const [broadcastMode, setBroadcastMode] = useState<string>('live');
   const [loading, setLoading] = useState(true);
   const audioRef = useRef<HTMLAudioElement>(null);
@@ -57,7 +63,18 @@ const LiveStreamPlayer = () => {
       if (slot) {
         setShowName(slot.radio_shows?.show_name || 'AOD Station Live');
         setDjName(slot.radio_djs?.dj_name || '');
+        setDjId(slot.radio_djs?.id || '');
+        setScheduleId(slot.id || '');
         setBroadcastMode(slot.broadcast_mode || 'live');
+
+        // Check for live session
+        const { data: session } = await supabase
+          .from('radio_live_sessions')
+          .select('id')
+          .eq('schedule_id', slot.id)
+          .eq('status', 'live')
+          .maybeSingle();
+        if (session) setSessionId(session.id);
 
         // Load playlist tracks
         await loadPlaylistTracks(slot.playlist_id, slot.radio_djs?.id);
@@ -241,6 +258,7 @@ const LiveStreamPlayer = () => {
           <Badge variant={broadcastMode === 'pre_recorded' ? 'secondary' : 'destructive'}>
             {broadcastMode === 'pre_recorded' ? 'Auto-Play' : 'Live'}
           </Badge>
+          <ListenerStreakBadge />
         </CardTitle>
         <div className="text-sm text-muted-foreground space-y-1">
           <p className="font-medium text-foreground">{showName}</p>
@@ -254,12 +272,20 @@ const LiveStreamPlayer = () => {
         {currentTrack && (
           <div className="flex items-center gap-3 p-3 bg-muted/50 rounded-lg">
             <Music className="h-5 w-5 text-primary shrink-0" />
-            <div className="min-w-0">
+            <div className="min-w-0 flex-1">
               <p className="text-sm font-medium truncate">{currentTrack.track_title}</p>
               {currentTrack.artist_name && (
                 <p className="text-xs text-muted-foreground truncate">{currentTrack.artist_name}</p>
               )}
             </div>
+            {djId && (
+              <BestowDuringBroadcast
+                djId={djId}
+                djName={djName}
+                currentTrackTitle={currentTrack.track_title}
+                scheduleId={scheduleId}
+              />
+            )}
           </div>
         )}
 
@@ -315,6 +341,11 @@ const LiveStreamPlayer = () => {
           <p className="text-center text-xs text-muted-foreground">
             No tracks available. DJs need to upload music for this slot.
           </p>
+        )}
+
+        {/* Reaction bar */}
+        {sessionId && (
+          <ListenerReactionBar sessionId={sessionId} />
         )}
       </CardContent>
     </Card>
