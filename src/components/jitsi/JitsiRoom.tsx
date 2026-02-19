@@ -187,6 +187,11 @@ export default function JitsiRoom({
             disableAudioLevels: false,
             enableNoAudioDetection: true,
             enableNoisyMicDetection: true,
+            disableInviteFunctions: true,
+            toolbarButtons: [
+              'microphone', 'camera', 'desktop', 'fullscreen', 'hangup',
+              'chat', 'settings', 'raisehand', 'videoquality', 'filmstrip', 'tileview',
+            ],
           }}
           interfaceConfigOverwrite={{
             TOOLBAR_BUTTONS: [
@@ -195,6 +200,8 @@ export default function JitsiRoom({
             ],
             SETTINGS_SECTIONS: ['devices', 'language', 'profile'],
             DEFAULT_REMOTE_DISPLAY_NAME: 'Participant',
+            HIDE_INVITE_MORE_HEADER: true,
+            SHOW_INVITE_MORE_HEADER: false,
           }}
           onApiReady={onApiReady}
           onLoadFailure={() => {
