@@ -62,6 +62,9 @@ export const TimelineBuilder: React.FC<TimelineBuilderProps> = ({ segments, onCh
 
   const MAX_RECORDING_SECONDS = 120;
 
+  // Ref to always hold the latest stopRecording without stale closures
+  const stopRecordingRef = useRef<(segmentId: string) => void>(() => {});
+
   const startRecording = useCallback(async (segmentId: string) => {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({
@@ -77,13 +80,18 @@ export const TimelineBuilder: React.FC<TimelineBuilderProps> = ({ segments, onCh
         if (e.data.size > 0) chunksRef.current.push(e.data);
       };
 
+      // Auto-stop is handled via the ref so it always calls the latest stopRecording
       timerRef.current = setInterval(() => {
         setRecordingTime(prev => {
-          if (prev + 1 >= MAX_RECORDING_SECONDS) {
-            stopRecording(segmentId);
-            toast({ title: 'Recording Stopped', description: 'Max 2 minutes reached.' });
+          const next = prev + 1;
+          if (next >= MAX_RECORDING_SECONDS) {
+            // Use setTimeout to avoid calling stop inside a state setter
+            setTimeout(() => {
+              stopRecordingRef.current(segmentId);
+              toast({ title: 'Recording Stopped', description: 'Max 2 minutes reached.' });
+            }, 0);
           }
-          return prev + 1;
+          return next;
         });
       }, 1000);
 
@@ -110,6 +118,9 @@ export const TimelineBuilder: React.FC<TimelineBuilderProps> = ({ segments, onCh
     setRecordingSegmentId(null);
     setRecordingTime(0);
   }, [segments, onChange]);
+
+  // Keep the ref in sync so the timer always calls the latest version
+  stopRecordingRef.current = stopRecording;
 
   const clearRecording = useCallback((segmentId: string) => {
     const seg = segments.find(s => s.id === segmentId);
