@@ -230,28 +230,43 @@ export default function LiveActivityWidget() {
       
       const groupCalls = Array.from(groupCallsMap.values())
 
-      // Fetch active community chats with recent activity
-      const { data: chatData, error: chatError } = await supabase
-        .from('chat_rooms')
-        .select('id, name, room_type, is_active, updated_at, description')
-        .eq('is_active', true)
-        .eq('room_type', 'group')
-        .order('updated_at', { ascending: false })
-        .limit(5)
-
-      // Check for recent messages in these rooms
-      const chatRoomIds = (chatData || []).map(c => c.id)
+      // Fetch active chats the user participates in with recent activity
       let activeCommunityChats = []
-      if (chatRoomIds.length > 0) {
-        const { data: recentMsgs } = await supabase
-          .from('chat_messages')
+      if (user) {
+        const { data: userParticipations } = await supabase
+          .from('chat_participants')
           .select('room_id')
-          .in('room_id', chatRoomIds)
-          .gte('created_at', new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString())
-          .limit(50)
+          .eq('user_id', user.id)
+          .eq('is_active', true)
 
-        const roomsWithMessages = new Set((recentMsgs || []).map(m => m.room_id))
-        activeCommunityChats = (chatData || []).filter(chat => roomsWithMessages.has(chat.id))
+        const userRoomIds = (userParticipations || []).map(p => p.room_id)
+        
+        if (userRoomIds.length > 0) {
+          // Get rooms info
+          const { data: chatData } = await supabase
+            .from('chat_rooms')
+            .select('id, name, room_type, is_active, updated_at, description')
+            .in('id', userRoomIds)
+            .eq('is_active', true)
+            .order('updated_at', { ascending: false })
+            .limit(10)
+
+          const chatRoomIds = (chatData || []).map(c => c.id)
+          
+          if (chatRoomIds.length > 0) {
+            // Check for recent messages in these rooms (last 48 hours for broader coverage)
+            const { data: recentMsgs } = await supabase
+              .from('chat_messages')
+              .select('room_id')
+              .in('room_id', chatRoomIds)
+              .neq('sender_id', user.id)
+              .gte('created_at', new Date(Date.now() - 48 * 60 * 60 * 1000).toISOString())
+              .limit(100)
+
+            const roomsWithMessages = new Set((recentMsgs || []).map(m => m.room_id))
+            activeCommunityChats = (chatData || []).filter(chat => roomsWithMessages.has(chat.id))
+          }
+        }
       }
 
       // Fetch live courses from live_session_participants
@@ -339,10 +354,9 @@ export default function LiveActivityWidget() {
         topic: "Live Now"
       } : null
 
-      // Fetch unread forum messages
+      // Fetch unread messages from ALL chats the user participates in
       let unreadMessages = []
       if (user) {
-        // Get all forums the user participates in
         const { data: userRooms } = await supabase
           .from('chat_participants')
           .select('room_id')
@@ -352,29 +366,27 @@ export default function LiveActivityWidget() {
         if (userRooms && userRooms.length > 0) {
           const roomIds = userRooms.map(r => r.room_id)
           
-          // Get unread messages (messages created after user joined, or use a read tracking system)
-          // For now, we'll get recent messages from the last 24 hours
-          // Fetch without FK joins to avoid 400 errors
+          // Get recent messages from others in the last 48 hours
           const { data: recentMessages } = await supabase
             .from('chat_messages')
             .select('*')
             .in('room_id', roomIds)
-            .gte('created_at', new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString())
+            .neq('sender_id', user.id)
+            .gte('created_at', new Date(Date.now() - 48 * 60 * 60 * 1000).toISOString())
             .order('created_at', { ascending: false })
-            .limit(10)
+            .limit(20)
 
-          // Fetch rooms separately to filter group rooms
+          // Fetch ALL rooms (not just group)
           const { data: rooms } = await supabase
             .from('chat_rooms')
             .select('id, name, room_type')
             .in('id', roomIds)
-            .eq('room_type', 'group')
           
-          const groupRoomIds = new Set((rooms || []).map(r => r.id))
-          const groupMessages = (recentMessages || []).filter(m => groupRoomIds.has(m.room_id))
+          const validRoomIds = new Set((rooms || []).map(r => r.id))
+          const validMessages = (recentMessages || []).filter(m => validRoomIds.has(m.room_id))
           
-          // Fetch sender profiles separately
-          const senderIds = [...new Set(groupMessages.map(m => m.sender_id).filter(Boolean))]
+          // Fetch sender profiles
+          const senderIds = [...new Set(validMessages.map(m => m.sender_id).filter(Boolean))]
           let profileMap = new Map()
           if (senderIds.length > 0) {
             const { data: profiles } = await supabase
@@ -388,22 +400,24 @@ export default function LiveActivityWidget() {
           
           // Group by room and get latest message per room
           const messagesByRoom = new Map()
-          groupMessages.forEach(msg => {
+          validMessages.forEach(msg => {
             const room = roomMap.get(msg.room_id)
             const profile = profileMap.get(msg.sender_id)
+            const senderName = profile?.display_name || 'Unknown'
+            const roomName = room?.room_type === 'direct' ? senderName : (room?.name || 'Chat')
             
             if (!messagesByRoom.has(msg.room_id)) {
               messagesByRoom.set(msg.room_id, {
                 roomId: msg.room_id,
-                roomName: room?.name || 'Forum',
+                roomName: roomName,
                 roomType: room?.room_type,
                 latestMessage: {
                   id: msg.id,
                   content: msg.content,
-                  senderName: profile?.display_name || 'Unknown',
+                  senderName: senderName,
                   senderAvatar: profile?.avatar_url,
                   createdAt: msg.created_at,
-                  unreadCount: 1 // TODO: Implement proper unread tracking
+                  unreadCount: 1
                 }
               })
             } else {
@@ -935,9 +949,9 @@ export default function LiveActivityWidget() {
                   <div className="space-y-2">
                     <h4 className="text-xs font-semibold flex items-center gap-1" style={{ color: currentTheme.accent }}>
                       <MessageCircle className="h-3 w-3" />
-                      Community Chats
+                      Active Chats
                     </h4>
-                    {liveData.communityChats.slice(0, 2).map((chat) => (
+                    {liveData.communityChats.slice(0, 3).map((chat) => (
                       <div 
                         key={chat.id}
                         className="flex items-center justify-between p-2 rounded-lg border"
@@ -952,10 +966,10 @@ export default function LiveActivityWidget() {
                           </div>
                           <div>
                             <div className="text-xs font-medium line-clamp-1" style={{ color: currentTheme.textPrimary }}>
-                              {chat.name || 'Community Chat'}
+                              {chat.name || (chat.room_type === 'direct' ? 'Direct Message' : 'Chat')}
                             </div>
                             <div className="text-xs" style={{ color: currentTheme.textSecondary }}>
-                              {chat.chat_participants?.filter(p => p.is_active).length || 0} active
+                              {chat.room_type === 'direct' ? 'DM' : 'Group'} • Active recently
                             </div>
                           </div>
                         </div>
@@ -966,7 +980,7 @@ export default function LiveActivityWidget() {
                             backgroundColor: currentTheme.secondaryButton,
                             color: currentTheme.textPrimary
                           }}
-                          onClick={() => joinActivity('chat', chat.id)}
+                          onClick={() => navigate('/communications-hub')}
                           onMouseEnter={(e) => {
                             e.currentTarget.style.backgroundColor = currentTheme.accent;
                             e.currentTarget.style.borderColor = currentTheme.accent;
@@ -1289,7 +1303,7 @@ export default function LiveActivityWidget() {
                   <div className="text-center py-6">
                     <Users className="h-8 w-8 mx-auto mb-2" style={{ color: currentTheme.textSecondary }} />
                     <p className="text-xs" style={{ color: currentTheme.textSecondary }}>No recent activity</p>
-                    <p className="text-xs" style={{ color: currentTheme.textSecondary }}>Start chatting to see updates here</p>
+                    <p className="text-xs" style={{ color: currentTheme.textSecondary }}>Schedule a radio slot or start chatting</p>
                   </div>
                 )}
               </>
