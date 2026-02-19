@@ -12,6 +12,7 @@ import { BestowDuringBroadcast } from './BestowDuringBroadcast';
 import { ListenerStreakBadge } from './ListenerStreakBadge';
 import { NowPlayingSeedCard } from './NowPlayingSeedCard';
 import { SeedRequestForm } from './SeedRequestQueue';
+import { NowPlayingWidget } from './NowPlayingWidget';
 
 interface Track {
   id: string;
@@ -241,11 +242,20 @@ const LiveStreamPlayer = () => {
 
   return (
     <div className="space-y-3 w-full max-w-md mx-auto">
-      <Card>
+      {/* Now Playing Widget */}
+      {currentTrack && playing && (
+        <NowPlayingWidget
+          trackTitle={currentTrack.track_title}
+          artistName={currentTrack.artist_name || undefined}
+          isPlaying={playing}
+        />
+      )}
+
+      <Card className="border-amber-500/20 bg-gradient-to-br from-amber-50/50 to-orange-50/30 dark:from-amber-950/20 dark:to-orange-950/10">
         <CardHeader className="pb-3">
           <CardTitle className="flex items-center justify-between">
             <span className="flex items-center gap-2">
-              <Radio className="h-5 w-5 text-primary" />
+              <Radio className="h-5 w-5 text-amber-600 dark:text-amber-400" />
               AOD Station Radio
             </span>
             <Badge variant={broadcastMode === 'pre_recorded' ? 'secondary' : 'destructive'}>

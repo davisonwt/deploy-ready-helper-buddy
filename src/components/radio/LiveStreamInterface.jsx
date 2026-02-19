@@ -33,6 +33,9 @@ import { UniversalLiveSessionInterface } from '@/components/live/UniversalLiveSe
 import { useToast } from '@/hooks/use-toast'
 import { supabase } from '@/integrations/supabase/client'
 import { useAuth } from '@/hooks/useAuth'
+import { GoLiveCountdown } from '@/components/radio/GoLiveCountdown'
+import { CoHostSearchInvite } from '@/components/radio/CoHostSearchInvite'
+import { GuestSpeakerQueue } from '@/components/radio/GuestSpeakerQueue'
 
 export function LiveStreamInterface({ djProfile, currentShow, onEndShow }) {
   const { user } = useAuth()
@@ -50,6 +53,9 @@ export function LiveStreamInterface({ djProfile, currentShow, onEndShow }) {
   const [messages, setMessages] = useState([])
   const [chatMessage, setChatMessage] = useState('')
   const [approvedGuests, setApprovedGuests] = useState([])
+  const [showCountdown, setShowCountdown] = useState(false)
+  const [showCoHostSearch, setShowCoHostSearch] = useState(false)
+  const [hostMuteStates, setHostMuteStates] = useState({})
   const isHost = activeHosts.some(host => host.user_id === user?.id)
   
   const audioRef = useRef(null)
@@ -584,12 +590,36 @@ export function LiveStreamInterface({ djProfile, currentShow, onEndShow }) {
 
   return (
     <div className="space-y-6">
+      {/* Go Live Countdown Overlay */}
+      {showCountdown && (
+        <GoLiveCountdown
+          djName={djProfile?.dj_name}
+          onComplete={() => {
+            setShowCountdown(false)
+            startLiveStream()
+          }}
+          onCancel={() => setShowCountdown(false)}
+        />
+      )}
+
+      {/* Co-Host Search Modal */}
+      {liveSession && djProfile && (
+        <CoHostSearchInvite
+          open={showCoHostSearch}
+          onClose={() => setShowCoHostSearch(false)}
+          scheduleId={currentShow?.schedule_id}
+          hostDjId={djProfile.id}
+          currentCoHostCount={activeHosts.filter(h => h.role !== 'main_host').length}
+          maxCoHosts={5}
+        />
+      )}
+
       {/* Live Status Header */}
-      <Card className={isLive ? "border-red-500 bg-red-50" : "border-yellow-500 bg-yellow-50"}>
+      <Card className={isLive ? "border-red-500 bg-red-50 dark:bg-red-950/20" : "border-amber-500 bg-amber-50 dark:bg-amber-950/20"}>
         <CardContent className="p-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <div className={`w-3 h-3 rounded-full ${isLive ? 'bg-red-500 animate-pulse' : 'bg-yellow-500'}`} />
+              <div className={`w-3 h-3 rounded-full ${isLive ? 'bg-red-500 animate-pulse' : 'bg-amber-500'}`} />
               <Avatar className="h-12 w-12">
                 <AvatarImage src={djProfile?.avatar_url} />
                 <AvatarFallback>
@@ -610,8 +640,19 @@ export function LiveStreamInterface({ djProfile, currentShow, onEndShow }) {
               </div>
             </div>
             <div className="flex items-center gap-2">
+              {!isLive && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setShowCoHostSearch(true)}
+                  className="gap-1"
+                >
+                  <UserPlus className="h-4 w-4" />
+                  Invite Co-Host
+                </Button>
+              )}
               {!isLive ? (
-                <Button onClick={startLiveStream} className="bg-red-500 hover:bg-red-600">
+                <Button onClick={() => setShowCountdown(true)} className="bg-red-500 hover:bg-red-600 text-white">
                   <Radio className="h-4 w-4 mr-2" />
                   Go Live
                 </Button>
@@ -677,34 +718,62 @@ export function LiveStreamInterface({ djProfile, currentShow, onEndShow }) {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Users className="h-5 w-5" />
-              Active Hosts ({activeHosts.length}/3)
+              Active Hosts ({activeHosts.length}/5)
+              {isLive && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="ml-auto gap-1"
+                  onClick={() => setShowCoHostSearch(true)}
+                >
+                  <UserPlus className="h-3 w-3" />
+                  Add
+                </Button>
+              )}
             </CardTitle>
           </CardHeader>
           <CardContent>
             <div className="space-y-2">
               {activeHosts.map((host) => (
-                <div key={host.id} className="flex items-center justify-between p-2 border rounded">
+                <div key={host.id} className="flex items-center justify-between p-2 border rounded-lg">
                   <div className="flex items-center gap-2">
-                    <Badge variant={host.role === 'main_host' ? 'default' : 'secondary'}>
+                    <Badge variant={host.role === 'main_host' ? 'default' : 'secondary'} className="text-xs">
                       {host.role.replace('_', ' ')}
                     </Badge>
                     <span className="text-sm">
                       {host.radio_djs?.dj_name || host.profiles?.display_name || 'Unknown'}
                     </span>
-                    {host.audio_enabled ? 
-                      <Mic className="h-3 w-3 text-green-500" /> : 
-                      <MicOff className="h-3 w-3 text-red-500" />
-                    }
                   </div>
-                  {host.role !== 'main_host' && (
+                  <div className="flex items-center gap-1">
+                    {/* Individual mute toggle for host */}
                     <Button
                       variant="ghost"
                       size="sm"
-                      onClick={() => removeHost(host.id)}
+                      className="h-7 w-7 p-0"
+                      onClick={() => {
+                        setHostMuteStates(prev => ({
+                          ...prev,
+                          [host.id]: !prev[host.id]
+                        }))
+                      }}
+                      title={hostMuteStates[host.id] ? 'Unmute' : 'Mute'}
                     >
-                      <UserMinus className="h-3 w-3" />
+                      {hostMuteStates[host.id] ? 
+                        <MicOff className="h-3.5 w-3.5 text-red-500" /> : 
+                        <Mic className="h-3.5 w-3.5 text-green-500" />
+                      }
                     </Button>
-                  )}
+                    {host.role !== 'main_host' && (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-7 w-7 p-0"
+                        onClick={() => removeHost(host.id)}
+                      >
+                        <UserMinus className="h-3.5 w-3.5" />
+                      </Button>
+                    )}
+                  </div>
                 </div>
               ))}
             </div>
@@ -712,53 +781,14 @@ export function LiveStreamInterface({ djProfile, currentShow, onEndShow }) {
         </Card>
       </div>
 
-      {/* Guest Requests */}
-      {guestRequests.length > 0 && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Hand className="h-5 w-5" />
-              Guest Requests ({guestRequests.length})
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-3">
-              {guestRequests.map((request) => (
-                <div key={request.id} className="flex items-center justify-between p-3 border rounded">
-                  <div>
-                    <p className="font-medium">
-                      {request.profiles?.display_name || 'Anonymous Listener'}
-                    </p>
-                    {request.request_message && (
-                      <p className="text-sm text-muted-foreground">
-                        "{request.request_message}"
-                      </p>
-                    )}
-                    <p className="text-xs text-muted-foreground">
-                      {new Date(request.created_at).toLocaleTimeString()}
-                    </p>
-                  </div>
-                  <div className="flex gap-2">
-                    <Button
-                      size="sm"
-                      onClick={() => approveGuestRequest(request.id)}
-                    >
-                      <PhoneCall className="h-3 w-3 mr-1" />
-                      Accept
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() => rejectGuestRequest(request.id)}
-                    >
-                      Decline
-                    </Button>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
+      {/* Guest Speaker Queue */}
+      <GuestSpeakerQueue
+        requests={guestRequests}
+        approvedGuests={approvedGuests}
+        onApprove={approveGuestRequest}
+        onReject={rejectGuestRequest}
+        isHost={isHost}
+      />
       )}
 
       {/* HOST INTERFACE - Messages & Call Management */}

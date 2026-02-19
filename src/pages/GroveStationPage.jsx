@@ -41,6 +41,7 @@ import { DJAchievements } from '@/components/radio/DJAchievements'
 import { DJLeaderboard } from '@/components/radio/DJLeaderboard'
 import { BroadcastHistory } from '@/components/radio/BroadcastHistory'
 import { DJSeedRequestQueue } from '@/components/radio/SeedRequestQueue'
+import { NowPlayingWidget } from '@/components/radio/NowPlayingWidget'
 
 export default function GroveStationPage() {
   const {
@@ -84,23 +85,25 @@ export default function GroveStationPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background via-muted/20 to-background">
+    <div className="min-h-screen bg-gradient-to-br from-amber-950/10 via-background to-green-950/10 dark:from-amber-950/20 dark:via-background dark:to-green-950/20">
       <div className="container mx-auto py-6 space-y-6">
-        {/* Compact Station Header */}
-        <Card className="border-2 shadow-lg">
+        {/* Compact Station Header - Earthy Theme */}
+        <Card className="border-2 border-amber-500/30 shadow-lg bg-gradient-to-r from-amber-50/80 via-orange-50/50 to-green-50/30 dark:from-amber-950/30 dark:via-orange-950/20 dark:to-green-950/20">
           <CardContent className="p-6">
             <div className="flex items-center justify-between flex-wrap gap-4">
               <div className="flex items-center gap-4">
                 <div className="relative">
-                  <div className="w-14 h-14 bg-gradient-to-br from-primary to-primary/60 rounded-full flex items-center justify-center">
-                    <Radio className="h-7 w-7 text-primary-foreground" />
+                  <div className="w-14 h-14 bg-gradient-to-br from-amber-600 to-green-700 rounded-full flex items-center justify-center shadow-lg shadow-amber-500/20">
+                    <Radio className="h-7 w-7 text-white" />
                   </div>
                   {isPlaying && (
                     <div className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full animate-pulse"></div>
                   )}
                 </div>
                 <div>
-                  <h1 className="text-2xl font-bold">{stationConfig?.station_name || 'The Set-Apart Heretics AOD Frequencies'}</h1>
+                  <h1 className="text-2xl font-bold bg-gradient-to-r from-amber-700 to-green-800 dark:from-amber-400 dark:to-green-400 bg-clip-text text-transparent">
+                    {stationConfig?.station_name || 'The Set-Apart Heretics AOD Frequencies'}
+                  </h1>
                   <p className="text-sm text-muted-foreground">{stationConfig?.station_tagline || 'Where eternal wisdom meets bold voices'}</p>
                 </div>
               </div>
@@ -110,7 +113,7 @@ export default function GroveStationPage() {
                 variant={isPlaying ? "default" : "outline"}
                 size="lg"
                 onClick={handlePlayPause}
-                className="gap-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl"
+                className="gap-2 bg-gradient-to-r from-amber-600 to-orange-600 hover:from-amber-700 hover:to-orange-700 text-white rounded-xl border-0 shadow-lg shadow-amber-500/20"
               >
                 {isPlaying ? (
                   <>
@@ -125,32 +128,43 @@ export default function GroveStationPage() {
                 )}
               </Button>
             </div>
+
+            {/* Now Playing Widget - shown when playing */}
+            {isPlaying && currentShow && (
+              <div className="mt-4">
+                <NowPlayingWidget
+                  trackTitle={currentShow?.show_name}
+                  artistName={currentShow?.dj_name}
+                  isPlaying={isPlaying}
+                />
+              </div>
+            )}
           </CardContent>
         </Card>
 
         {/* Prominent Tab Navigation */}
-        <Card className="border-2 shadow-xl">
+        <Card className="border-2 border-amber-500/20 shadow-xl">
           <Tabs defaultValue="listen" className="w-full">
             <div className="p-6">
               <TabsList className="w-full h-auto bg-transparent grid gap-3" style={{ gridTemplateColumns: 'repeat(3, 1fr)' }}>
                 {/* First Row - 3 buttons */}
                 <TabsTrigger 
                   value="listen" 
-                  className="flex items-center justify-center gap-2 py-3 px-4 rounded-2xl font-semibold transition-all duration-200 hover:scale-105 data-[state=active]:bg-blue-600 data-[state=active]:text-white data-[state=active]:shadow-lg bg-blue-100 hover:bg-blue-200"
+                  className="flex items-center justify-center gap-2 py-3 px-4 rounded-2xl font-semibold transition-all duration-200 hover:scale-105 data-[state=active]:bg-gradient-to-r data-[state=active]:from-amber-600 data-[state=active]:to-orange-600 data-[state=active]:text-white data-[state=active]:shadow-lg bg-amber-100 hover:bg-amber-200 dark:bg-amber-950/30 dark:hover:bg-amber-950/50"
                 >
                   <Headphones className="h-5 w-5" />
                   <span>Listen Now</span>
                 </TabsTrigger>
                 <TabsTrigger 
                   value="schedule"
-                  className="flex items-center justify-center gap-2 py-3 px-4 rounded-2xl font-semibold transition-all duration-200 hover:scale-105 data-[state=active]:bg-blue-700 data-[state=active]:text-white data-[state=active]:shadow-lg bg-blue-100 hover:bg-blue-200"
+                  className="flex items-center justify-center gap-2 py-3 px-4 rounded-2xl font-semibold transition-all duration-200 hover:scale-105 data-[state=active]:bg-gradient-to-r data-[state=active]:from-orange-600 data-[state=active]:to-amber-700 data-[state=active]:text-white data-[state=active]:shadow-lg bg-orange-100 hover:bg-orange-200 dark:bg-orange-950/30 dark:hover:bg-orange-950/50"
                 >
                   <Calendar className="h-5 w-5" />
                   <span>Schedule</span>
                 </TabsTrigger>
                 <TabsTrigger 
                   value="djs"
-                  className="flex items-center justify-center gap-2 py-3 px-4 rounded-2xl font-semibold transition-all duration-200 hover:scale-105 data-[state=active]:bg-blue-500 data-[state=active]:text-white data-[state=active]:shadow-lg bg-blue-100 hover:bg-blue-200"
+                  className="flex items-center justify-center gap-2 py-3 px-4 rounded-2xl font-semibold transition-all duration-200 hover:scale-105 data-[state=active]:bg-gradient-to-r data-[state=active]:from-green-700 data-[state=active]:to-emerald-600 data-[state=active]:text-white data-[state=active]:shadow-lg bg-green-100 hover:bg-green-200 dark:bg-green-950/30 dark:hover:bg-green-950/50"
                 >
                   <Users className="h-5 w-5" />
                   <span>Our DJs</span>
@@ -160,14 +174,14 @@ export default function GroveStationPage() {
                 <TabsTrigger 
                   value="broadcast" 
                   disabled={!isDJ}
-                  className="flex items-center justify-center gap-2 py-3 px-4 rounded-2xl font-semibold transition-all duration-200 hover:scale-105 data-[state=active]:bg-blue-800 data-[state=active]:text-white data-[state=active]:shadow-lg bg-blue-100 hover:bg-blue-200 disabled:opacity-40 disabled:hover:scale-100 col-start-1 col-end-2"
+                  className="flex items-center justify-center gap-2 py-3 px-4 rounded-2xl font-semibold transition-all duration-200 hover:scale-105 data-[state=active]:bg-gradient-to-r data-[state=active]:from-red-600 data-[state=active]:to-orange-600 data-[state=active]:text-white data-[state=active]:shadow-lg bg-red-100 hover:bg-red-200 dark:bg-red-950/30 dark:hover:bg-red-950/50 disabled:opacity-40 disabled:hover:scale-100 col-start-1 col-end-2"
                 >
                   <Mic className="h-5 w-5" />
                   <span>Go Live</span>
                 </TabsTrigger>
                 <TabsTrigger 
                   value="stats"
-                  className="flex items-center justify-center gap-2 py-3 px-4 rounded-2xl font-semibold transition-all duration-200 hover:scale-105 data-[state=active]:bg-blue-900 data-[state=active]:text-white data-[state=active]:shadow-lg bg-blue-100 hover:bg-blue-200 col-start-2 col-end-3"
+                  className="flex items-center justify-center gap-2 py-3 px-4 rounded-2xl font-semibold transition-all duration-200 hover:scale-105 data-[state=active]:bg-gradient-to-r data-[state=active]:from-amber-800 data-[state=active]:to-green-800 data-[state=active]:text-white data-[state=active]:shadow-lg bg-amber-100 hover:bg-amber-200 dark:bg-amber-950/30 dark:hover:bg-amber-950/50 col-start-2 col-end-3"
                 >
                   <TrendingUp className="h-5 w-5" />
                   <span>Stats</span>
@@ -237,7 +251,7 @@ export default function GroveStationPage() {
                   </p>
                 </div>
                 <div className="flex items-center gap-4 justify-center">
-                  <Button size="lg" onClick={handlePlayPause} className="gap-2 bg-blue-500 hover:bg-blue-600 text-white rounded-xl">
+                  <Button size="lg" onClick={handlePlayPause} className="gap-2 bg-gradient-to-r from-amber-600 to-orange-600 hover:from-amber-700 hover:to-orange-700 text-white rounded-xl border-0 shadow-lg">
                     {isPlaying ? (
                       <>
                         <Pause className="h-5 w-5" />
@@ -294,7 +308,7 @@ export default function GroveStationPage() {
                 <p className="text-muted-foreground">See what's playing when</p>
               </div>
               {isDJ && (
-                <Button onClick={() => setShowScheduleForm(true)} className="bg-blue-700 hover:bg-blue-800 text-white rounded-xl">
+                <Button onClick={() => setShowScheduleForm(true)} className="bg-gradient-to-r from-amber-600 to-orange-600 hover:from-amber-700 hover:to-orange-700 text-white rounded-xl border-0">
                   <Calendar className="h-4 w-4 mr-2" />
                   Book Time Slot
                 </Button>
@@ -336,7 +350,7 @@ export default function GroveStationPage() {
                 <p className="text-muted-foreground">Meet our amazing broadcasters</p>
               </div>
               {!isDJ && (
-                <Button onClick={() => setShowCreateDJ(true)} className="bg-blue-600 hover:bg-blue-700 text-white rounded-xl">
+                <Button onClick={() => setShowCreateDJ(true)} className="bg-gradient-to-r from-green-700 to-emerald-600 hover:from-green-800 hover:to-emerald-700 text-white rounded-xl border-0">
                   <Mic className="h-4 w-4 mr-2" />
                   Become a DJ
                 </Button>
@@ -392,7 +406,7 @@ export default function GroveStationPage() {
                     </p>
                   </div>
                   {canGoLive && (
-                    <Button onClick={handleGoLive} size="lg" className="bg-blue-800 hover:bg-blue-900 text-white rounded-xl">
+                    <Button onClick={handleGoLive} size="lg" className="bg-gradient-to-r from-red-600 to-orange-600 hover:from-red-700 hover:to-orange-700 text-white rounded-xl border-0 shadow-lg">
                       <Mic className="h-4 w-4 mr-2" />
                       Go Live
                     </Button>
@@ -482,7 +496,7 @@ export default function GroveStationPage() {
                           <CardContent className="space-y-3">
                             <Button 
                               onClick={() => setShowScheduleForm(true)}
-                              className="w-full justify-start bg-blue-50 hover:bg-blue-100 border-blue-300 text-blue-900 rounded-xl"
+                              className="w-full justify-start bg-amber-50 hover:bg-amber-100 border-amber-300 text-amber-900 dark:bg-amber-950/20 dark:hover:bg-amber-950/40 dark:text-amber-300 dark:border-amber-800 rounded-xl"
                               variant="outline"
                             >
                               <Calendar className="h-4 w-4 mr-2" />
@@ -491,14 +505,14 @@ export default function GroveStationPage() {
                             <Button 
                               disabled={!canGoLive}
                               onClick={handleGoLive}
-                              className="w-full justify-start bg-blue-600 hover:bg-blue-700 text-white rounded-xl"
+                              className="w-full justify-start bg-gradient-to-r from-red-600 to-orange-600 hover:from-red-700 hover:to-orange-700 text-white rounded-xl border-0"
                             >
                               <Mic className="h-4 w-4 mr-2" />
                               {canGoLive ? "Go Live Now" : "No Scheduled Shows"}
                             </Button>
                             <Button 
                               variant="ghost"
-                              className="w-full justify-start hover:bg-blue-100 text-blue-900 rounded-xl"
+                              className="w-full justify-start hover:bg-amber-100 dark:hover:bg-amber-950/30 text-amber-900 dark:text-amber-300 rounded-xl"
                             >
                               <MessageSquare className="h-4 w-4 mr-2" />
                               View Feedback
@@ -550,7 +564,7 @@ export default function GroveStationPage() {
                   <p className="text-muted-foreground mb-4">
                     Share your voice with the community and host your own shows!
                   </p>
-                  <Button onClick={() => setShowCreateDJ(true)} className="bg-blue-700 hover:bg-blue-800 text-white rounded-xl">
+                  <Button onClick={() => setShowCreateDJ(true)} className="bg-gradient-to-r from-green-700 to-emerald-600 hover:from-green-800 hover:to-emerald-700 text-white rounded-xl border-0">
                     Create DJ Profile
                   </Button>
                 </CardContent>
