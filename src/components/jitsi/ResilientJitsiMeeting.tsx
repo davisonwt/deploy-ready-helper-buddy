@@ -76,6 +76,7 @@ const ResilientJitsiMeeting = memo(function ResilientJitsiMeeting({
             enableWelcomePage: false,
             enableInsecureRoomNameWarning: false,
             hideConferenceSubject: true,
+            disableInviteFunctions: true,
             // Lobby bypass
             lobby: { autoKnock: true, enabled: false },
             membersOnly: false,
