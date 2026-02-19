@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { MUSIC_MOODS, MUSIC_GENRES } from '@/constants/musicCategories';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
@@ -24,7 +25,9 @@ export default function UploadForm() {
     category: '',
     license_type: 'free',
     price: 0,
-    tags: ''
+    tags: '',
+    music_mood: '',
+    music_genre: '',
   });
   const [coverImage, setCoverImage] = useState<File | null>(null);
   const [additionalImages, setAdditionalImages] = useState<File[]>([]);
@@ -315,7 +318,9 @@ export default function UploadForm() {
           image_urls: imageUrls,
           tags: [...formData.tags.split(',').map(t => t.trim()).filter(Boolean), releaseType],
           has_whisperer: whispererEnabled && pendingInvitations.length > 0,
-          whisperer_commission_percent: null, // Will be set per-whisperer after they accept
+          whisperer_commission_percent: null,
+          music_mood: formData.type === 'music' ? formData.music_mood || null : null,
+          music_genre: formData.type === 'music' ? formData.music_genre || null : null,
         })
         .select()
         .single();
@@ -435,6 +440,37 @@ export default function UploadForm() {
                         Albums must have 8+ songs. Upload as ZIP or select multiple files.
                       </p>
                     )}
+                  </div>
+                )}
+
+                {formData.type === 'music' && (
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <Label>Mood</Label>
+                      <Select value={formData.music_mood} onValueChange={(v) => setFormData({ ...formData, music_mood: v })}>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select mood" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {MUSIC_MOODS.map((m) => (
+                            <SelectItem key={m.value} value={m.value}>{m.label}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div>
+                      <Label>Genre</Label>
+                      <Select value={formData.music_genre} onValueChange={(v) => setFormData({ ...formData, music_genre: v })}>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select genre" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {MUSIC_GENRES.map((g) => (
+                            <SelectItem key={g.value} value={g.value}>{g.label}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
                   </div>
                 )}
 

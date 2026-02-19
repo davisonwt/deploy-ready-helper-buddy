@@ -1676,6 +1676,8 @@ export type Database = {
           is_explicit: boolean | null
           is_original: boolean | null
           is_public: boolean | null
+          music_genre: string | null
+          music_mood: string | null
           preview_url: string | null
           price: number | null
           tags: string[] | null
@@ -1698,6 +1700,8 @@ export type Database = {
           is_explicit?: boolean | null
           is_original?: boolean | null
           is_public?: boolean | null
+          music_genre?: string | null
+          music_mood?: string | null
           preview_url?: string | null
           price?: number | null
           tags?: string[] | null
@@ -1720,6 +1724,8 @@ export type Database = {
           is_explicit?: boolean | null
           is_original?: boolean | null
           is_public?: boolean | null
+          music_genre?: string | null
+          music_mood?: string | null
           preview_url?: string | null
           price?: number | null
           tags?: string[] | null
@@ -3837,6 +3843,8 @@ export type Database = {
           like_count: number | null
           max_whisperers: number | null
           metadata: Json | null
+          music_genre: string | null
+          music_mood: string | null
           play_count: number | null
           price: number | null
           sower_id: string | null
@@ -3866,6 +3874,8 @@ export type Database = {
           like_count?: number | null
           max_whisperers?: number | null
           metadata?: Json | null
+          music_genre?: string | null
+          music_mood?: string | null
           play_count?: number | null
           price?: number | null
           sower_id?: string | null
@@ -3895,6 +3905,8 @@ export type Database = {
           like_count?: number | null
           max_whisperers?: number | null
           metadata?: Json | null
+          music_genre?: string | null
+          music_mood?: string | null
           play_count?: number | null
           price?: number | null
           sower_id?: string | null
@@ -5898,6 +5910,8 @@ export type Database = {
           gifter_id: string
           id: string
           images: string[] | null
+          music_genre: string | null
+          music_mood: string | null
           title: string
           updated_at: string
           video_url: string | null
@@ -5910,6 +5924,8 @@ export type Database = {
           gifter_id: string
           id?: string
           images?: string[] | null
+          music_genre?: string | null
+          music_mood?: string | null
           title: string
           updated_at?: string
           video_url?: string | null
@@ -5922,6 +5938,8 @@ export type Database = {
           gifter_id?: string
           id?: string
           images?: string[] | null
+          music_genre?: string | null
+          music_mood?: string | null
           title?: string
           updated_at?: string
           video_url?: string | null
