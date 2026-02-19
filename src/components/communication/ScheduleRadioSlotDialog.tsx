@@ -6,14 +6,13 @@ import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Calendar } from '@/components/ui/calendar';
-import { Checkbox } from '@/components/ui/checkbox';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
 import { format } from 'date-fns';
-import { formatInTimeZone } from 'date-fns-tz';
 import { supabase } from '@/integrations/supabase/client';
-import { Music, FileText, Upload, Globe } from 'lucide-react';
-import { useDropzone } from 'react-dropzone';
+import { Globe } from 'lucide-react';
+import { TimelineBuilder } from '@/components/radio/TimelineBuilder';
+import type { TimelineSegment } from '@/components/radio/TimelineBuilder';
 
 interface ScheduleRadioSlotDialogProps {
   open: boolean;
@@ -66,44 +65,8 @@ export const ScheduleRadioSlotDialog: React.FC<ScheduleRadioSlotDialogProps> = (
   const [formData, setFormData] = useState({
     show_title: '',
     description: '',
-    genre: '',
   });
-  const [availableTracks, setAvailableTracks] = useState<any[]>([]);
-  const [selectedTracks, setSelectedTracks] = useState<string[]>([]);
-  const [uploadedDocs, setUploadedDocs] = useState<File[]>([]);
-
-  const { getRootProps, getInputProps } = useDropzone({
-    accept: { 'application/pdf': ['.pdf'], 'application/msword': ['.doc', '.docx'] },
-    onDrop: (acceptedFiles) => {
-      setUploadedDocs(prev => [...prev, ...acceptedFiles]);
-    },
-  });
-
-  useEffect(() => {
-    if (open && step === 3) {
-      loadAvailableTracks();
-    }
-  }, [open, step]);
-
-  const loadAvailableTracks = async () => {
-    const { data, error } = await supabase
-      .from('dj_music_tracks')
-      .select('*, radio_djs(dj_name, user_id)')
-      .eq('is_public', true)
-      .order('created_at', { ascending: false });
-
-    if (!error && data) {
-      setAvailableTracks(data);
-    }
-  };
-
-  const toggleTrackSelection = (trackId: string) => {
-    setSelectedTracks(prev =>
-      prev.includes(trackId)
-        ? prev.filter(id => id !== trackId)
-        : [...prev, trackId]
-    );
-  };
+  const [timelineSegments, setTimelineSegments] = useState<TimelineSegment[]>([]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -124,32 +87,38 @@ export const ScheduleRadioSlotDialog: React.FC<ScheduleRadioSlotDialogProps> = (
 
     setLoading(true);
     try {
-      // Upload documents to storage if any
-      const docUrls: string[] = [];
-      for (const doc of uploadedDocs) {
-        const filePath = `radio-docs/${Date.now()}-${doc.name}`;
-        const { error: uploadError } = await supabase.storage
-          .from('chat-documents')
-          .upload(filePath, doc);
-        
-        if (!uploadError) {
-          docUrls.push(filePath);
+      // Upload segment files to storage
+      const segmentsData = [];
+      for (const seg of timelineSegments) {
+        let fileUrl: string | undefined;
+        if (seg.file) {
+          const filePath = `radio-content/${Date.now()}-${seg.file.name}`;
+          const { error: uploadError } = await supabase.storage
+            .from('chat-documents')
+            .upload(filePath, seg.file);
+          if (!uploadError) fileUrl = filePath;
         }
+        segmentsData.push({
+          type: seg.type,
+          title: seg.title,
+          durationMinutes: seg.durationMinutes,
+          contentId: seg.contentId,
+          contentName: seg.contentName,
+          fileUrl,
+        });
       }
 
-      // Create radio slot request with tracks and documents
       const slotData = {
         ...formData,
         date: selectedDate,
         slot: selectedSlot,
-        selected_tracks: selectedTracks,
-        documents: docUrls,
+        timeline_segments: segmentsData,
         approval_status: 'pending',
       };
 
       toast({
         title: 'Radio Slot Requested',
-        description: `Your 2-hour radio slot with ${selectedTracks.length} tracks and ${uploadedDocs.length} documents has been submitted for approval by gosat.`,
+        description: `Your 2-hour show with ${timelineSegments.length} segments has been submitted for approval.`,
       });
 
       onOpenChange(false);
@@ -157,12 +126,10 @@ export const ScheduleRadioSlotDialog: React.FC<ScheduleRadioSlotDialogProps> = (
       setStep(1);
       setSelectedDate(undefined);
       setSelectedSlot('');
-      setSelectedTracks([]);
-      setUploadedDocs([]);
+      setTimelineSegments([]);
       setFormData({
         show_title: '',
         description: '',
-        genre: '',
       });
     } catch (error: any) {
       toast({
@@ -309,82 +276,14 @@ export const ScheduleRadioSlotDialog: React.FC<ScheduleRadioSlotDialogProps> = (
                 </div>
               </div>
 
-              <div>
-                <Label className="flex items-center gap-2 mb-3">
-                  <Music className="h-4 w-4" />
-                  Pre-load Music Tracks ({selectedTracks.length} selected)
-                </Label>
-                <div className="max-h-60 overflow-y-auto space-y-2 p-2 border rounded-lg glass-panel">
-                  {availableTracks.map((track) => (
-                    <div
-                      key={track.id}
-                      className="flex items-center gap-3 p-2 hover:bg-accent/50 rounded cursor-pointer"
-                      onClick={() => toggleTrackSelection(track.id)}
-                    >
-                      <Checkbox
-                        checked={selectedTracks.includes(track.id)}
-                        onCheckedChange={() => toggleTrackSelection(track.id)}
-                      />
-                      <div className="flex-1">
-                        <p className="font-medium">{track.track_title}</p>
-                        <p className="text-xs text-muted-foreground">
-                          by {track.radio_djs?.dj_name || 'Unknown'} • {track.genre || 'No genre'}
-                        </p>
-                      </div>
-                      {track.price && (
-                        <Badge variant="outline" className="text-xs">
-                          ${track.price}
-                        </Badge>
-                      )}
-                    </div>
-                  ))}
-                  {availableTracks.length === 0 && (
-                    <p className="text-sm text-muted-foreground text-center py-4">
-                      No public tracks available
-                    </p>
-                  )}
-                </div>
-              </div>
+              <TimelineBuilder
+                segments={timelineSegments}
+                onChange={setTimelineSegments}
+              />
 
-              <div>
-                <Label className="flex items-center gap-2 mb-3">
-                  <FileText className="h-4 w-4" />
-                  Upload Documents (PDFs, Word files for studies/readings)
-                </Label>
-                <div
-                  {...getRootProps()}
-                  className="border-2 border-dashed rounded-lg p-6 text-center cursor-pointer hover:border-primary/50 glass-panel"
-                >
-                  <input {...getInputProps()} />
-                  <Upload className="h-8 w-8 mx-auto mb-2 text-muted-foreground" />
-                  <p className="text-sm text-muted-foreground">
-                    Drag & drop documents here, or click to select
-                  </p>
-                </div>
-                {uploadedDocs.length > 0 && (
-                  <div className="mt-2 space-y-1">
-                    {uploadedDocs.map((doc, idx) => (
-                      <div key={idx} className="flex items-center gap-2 text-sm p-2 bg-accent/50 rounded">
-                        <FileText className="h-4 w-4" />
-                        <span className="flex-1">{doc.name}</span>
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => setUploadedDocs(prev => prev.filter((_, i) => i !== idx))}
-                        >
-                          Remove
-                        </Button>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-
-              <div className="p-4 rounded-lg bg-info/10 border border-info/20">
+              <div className="p-4 rounded-lg bg-accent/10 border border-accent/20">
                 <p className="text-sm">
                   <strong>Bestowal Feature:</strong> Listeners can bestow on tracks and documents during your show.
-                  You'll receive 1-on-1 notifications when listeners bestow on your content, and they'll receive invoices.
                   Gosat's will receive tithing (10%) and admin (5%) fees automatically.
                 </p>
               </div>
