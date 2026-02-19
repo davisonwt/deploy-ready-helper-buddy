@@ -1,52 +1,54 @@
 
 
-# Add Live Voice Recording to Voice/Talk Segments
+# Fix: Replace Jitsi Native Toolbar with Custom S2G Control Bar
 
-## What Changes
+## The Root Cause
 
-When a DJ adds a "Voice / Talk" segment, they will see **two options**:
-1. **Record with Mic** -- a record button that captures audio directly from the browser microphone, with a live timer showing time remaining (max 2 minutes per recording)
-2. **Upload File** -- the existing drag-and-drop upload (kept as a fallback)
+The self-hosted Jitsi server at `meet.sow2growapp.com` has its own server-side configuration that **overrides** the client-side `toolbarButtons` and `disableInviteFunctions` settings. CSS injection into the iframe fails because it's cross-origin. No amount of client config flags will reliably hide that native invite button.
 
-After recording, the audio appears inline with a playback preview and options to re-record or delete.
+## The Solution
 
-## How It Works
+**Hide the entire Jitsi native toolbar** and use only our custom control bar overlay, which already has the working member-search invite button.
 
-1. DJ clicks "Voice / Talk" to add a segment
-2. Inside the segment card, a prominent **Record** button appears alongside the existing upload option
-3. Pressing Record starts capturing audio via the browser microphone
-4. A pulsing red indicator and countdown timer show recording is active
-5. DJ presses **Stop** to finish -- the audio blob is stored on the segment
-6. The recorded audio shows as a playable preview with a re-record option
-7. On final submission, the audio blob is uploaded to Supabase storage (`chat-documents` bucket)
+### Changes Required
 
----
+**1. `src/components/jitsi/ResilientJitsiMeeting.tsx`**
+- Set `toolbarButtons: []` (empty array) in `configOverwrite` to suppress the native toolbar
+- Add `filmstripOnly: false`, `TOOLBAR_ALWAYS_VISIBLE: false`, and `TOOLBAR_TIMEOUT: 0` to ensure the native bar never shows
+- Set `interfaceConfigOverwrite.TOOLBAR_BUTTONS: []` as well
+- Remove the CSS injection code (it doesn't work cross-origin and is no longer needed)
 
-## Technical Details
+**2. `src/components/jitsi/JitsiRoom.tsx`**
+- Update `configOverwrite.toolbarButtons` to `[]` (empty)
+- Update `interfaceConfigOverwrite.TOOLBAR_BUTTONS` to `[]` (empty)
+- Add missing control buttons to the custom overlay bar to replace what the native toolbar provided:
+  - **Screen share** button (calls `api.executeCommand('toggleShareScreen')`)
+  - **Chat** button (calls `api.executeCommand('toggleChat')`)
+  - **Fullscreen** button (calls `api.executeCommand('toggleFilmStrip')` or browser fullscreen)
+  - **Tile view** button (calls `api.executeCommand('toggleTileView')`)
+- Keep the existing custom buttons: mute/unmute audio, mute/unmute video, raise hand, settings, invite (UserPlus), and leave
 
-### File Modified: `src/components/radio/TimelineBuilder.tsx`
+**3. `src/lib/jitsi-config.ts`**
+- Update `getJitsiInterfaceConfig` to default `TOOLBAR_BUTTONS: []` so all Jitsi entry points consistently hide the native bar
 
-**1. Import the existing `useVoiceMemo` hook**
-- Reuse `startRecording`, `stopRecording`, `isRecording`, `recordingTime`, `formatRecordingTime` from `src/hooks/useVoiceMemo.jsx`
+### Technical Details
 
-**2. Add recording state to Voice/Talk segments**
-- Track which segment is actively recording (`recordingSegmentId`)
-- Store the recorded audio blob on the segment object (new `audioBlob` field on `TimelineSegment`)
+All Jitsi External API commands used in the custom bar:
+- `toggleAudio` -- already implemented
+- `toggleVideo` -- already implemented
+- `toggleRaiseHand` -- already implemented
+- `toggleSettings` -- already implemented (as `executeCommand('toggleSettings')`)
+- `toggleShareScreen` -- new
+- `toggleChat` -- new
+- `toggleTileView` -- new
 
-**3. Replace the Voice/Talk segment UI (lines 281-291)**
-- Show a two-option layout:
-  - **Record button**: Mic icon that toggles start/stop recording
-  - **Upload zone**: Existing file drop zone (smaller, secondary)
-- When recording: show pulsing red dot, elapsed time, and countdown
-- After recording: show inline audio player (`<audio>` element with `URL.createObjectURL(blob)`), re-record button, and delete button
+The custom invite (UserPlus) button triggers the existing `Dialog` that searches the `profiles` table and sends a `call_sessions` record with `status: 'ringing'` -- this already works and is unaffected.
 
-**4. Update `TimelineSegment` interface (line 22)**
-- Add optional `audioBlob?: Blob` field to hold the recorded audio before upload
+### Why This Is the Permanent Fix
 
-**5. Recording flow**
-- On "Record" click: call `navigator.mediaDevices.getUserMedia({ audio: true })`, create a `MediaRecorder`, collect chunks
-- On "Stop" click: assemble blob, create object URL for preview, store blob on segment
-- The existing `useVoiceMemo` hook logic will be adapted inline (since it's tightly coupled to participant IDs for upload, we will use its recording pattern but handle the blob locally)
-
-### No new files needed -- all changes are within `TimelineBuilder.tsx`.
+- No dependency on Jitsi server-side config
+- No cross-origin CSS hacks
+- No config flag guessing
+- The native toolbar simply never renders
+- Our custom bar is the single source of truth for all meeting controls
 
