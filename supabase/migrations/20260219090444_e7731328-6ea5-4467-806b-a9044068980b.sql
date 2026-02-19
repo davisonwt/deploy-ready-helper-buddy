@@ -1,0 +1,1 @@
+UPDATE public.radio_station_config SET station_name = 'Covenant Radio 364YHVH fm' WHERE id = '8916c4c7-9f96-447e-9fe0-6fd493371837';
