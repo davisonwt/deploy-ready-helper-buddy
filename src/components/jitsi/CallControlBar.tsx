@@ -19,6 +19,7 @@ import { useAuth } from '@/hooks/useAuth';
 
 interface CallControlBarProps {
   jitsiApi: any;
+  roomName?: string;
   isAudioMuted?: boolean;
   isVideoMuted?: boolean;
   isHandRaised?: boolean;
@@ -31,6 +32,7 @@ interface CallControlBarProps {
 
 export default function CallControlBar({
   jitsiApi,
+  roomName,
   isAudioMuted = false,
   isVideoMuted = false,
   isHandRaised = false,
@@ -93,6 +95,7 @@ export default function CallControlBar({
         receiver_id: invitedUser.user_id,
         call_type: 'video',
         status: 'ringing',
+        ...(roomName ? { room_id: roomName } : {}),
       });
       if (error) throw error;
 

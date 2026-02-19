@@ -618,6 +618,7 @@ export type Database = {
           ended_at: string | null
           id: string
           receiver_id: string
+          room_id: string | null
           status: string
         }
         Insert: {
@@ -628,6 +629,7 @@ export type Database = {
           ended_at?: string | null
           id?: string
           receiver_id: string
+          room_id?: string | null
           status?: string
         }
         Update: {
@@ -638,6 +640,7 @@ export type Database = {
           ended_at?: string | null
           id?: string
           receiver_id?: string
+          room_id?: string | null
           status?: string
         }
         Relationships: []

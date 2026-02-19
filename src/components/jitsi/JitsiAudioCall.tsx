@@ -92,6 +92,7 @@ export default function JitsiAudioCall({
         {/* Custom control bar with invite */}
         <CallControlBar
           jitsiApi={jitsiApiRef.current}
+          roomName={roomName}
           isAudioMuted={isAudioMuted}
           isVideoMuted={isVideoMuted}
           participantCount={participantCount}
