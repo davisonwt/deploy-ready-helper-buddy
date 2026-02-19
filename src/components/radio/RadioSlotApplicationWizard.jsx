@@ -387,24 +387,6 @@ export function RadioSlotApplicationWizard({ onClose }) {
               />
             </div>
 
-            <div>
-              <Label htmlFor="category">Category *</Label>
-              <Select 
-                value={formData.category} 
-                onValueChange={(value) => handleFieldChange('category', value)}
-              >
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {SHOW_CATEGORIES.map((category) => (
-                    <SelectItem key={category.value} value={category.value}>
-                      {category.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
 
             <div>
               <Label htmlFor="description">Description</Label>
@@ -789,12 +771,6 @@ export function RadioSlotApplicationWizard({ onClose }) {
             <div className="p-4 bg-muted rounded-lg space-y-3">
               <h3 className="font-semibold text-lg">{formData.show_name}</h3>
               <div className="grid grid-cols-2 gap-4 text-sm">
-                <div>
-                  <span className="text-muted-foreground">Category:</span>
-                  <p className="font-medium">
-                    {SHOW_CATEGORIES.find(c => c.value === formData.category)?.label}
-                  </p>
-                </div>
                 <div>
                   <span className="text-muted-foreground">Subject:</span>
                   <p className="font-medium">{formData.subject}</p>
