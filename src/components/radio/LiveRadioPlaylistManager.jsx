@@ -209,7 +209,7 @@ export function LiveRadioPlaylistManager({ sessionId, isHost = false }) {
                       className="flex items-center gap-1"
                     >
                       <ShoppingCart className="h-3 w-3" />
-                      $1.38 USDC
+                      ${currentTrack?.price ? Number(currentTrack.price).toFixed(2) : '0.00'} USDC
                     </Button>
                   )}
                   <span className="text-xs text-muted-foreground">Get MP3</span>
@@ -284,7 +284,7 @@ export function LiveRadioPlaylistManager({ sessionId, isHost = false }) {
                     className="flex items-center gap-1 text-xs"
                   >
                     <ShoppingCart className="h-3 w-3" />
-                    $1.38
+                    ${track.price ? Number(track.price).toFixed(2) : '0.00'}
                   </Button>
                 )}
               </div>

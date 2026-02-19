@@ -411,7 +411,7 @@ export default function PublicMusicLibrary() {
             <span>{filteredTracks.length} tracks available</span>
             <span className="flex items-center gap-1">
               <DollarSign className="h-3 w-3" />
-              $1.38 USDC each (includes fees)
+              Prices set by each DJ (USDC)
             </span>
           </div>
         </CardContent>
@@ -519,7 +519,7 @@ export default function PublicMusicLibrary() {
                         className="flex items-center gap-2"
                       >
                         <ShoppingCart className="h-4 w-4" />
-                        $1.38 USDC
+                        ${track.price ? Number(track.price).toFixed(2) : '0.00'} USDC
                       </Button>
                     ) : (
                       <Button variant="outline" size="sm" disabled>

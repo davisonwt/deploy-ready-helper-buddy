@@ -78,7 +78,7 @@ export function MusicPurchaseInterface({
                 <div className="text-right">
                   <div className="flex items-center gap-1 text-lg font-bold text-primary">
                     <DollarSign className="h-4 w-4" />
-                    1.38 USDC
+                    {currentTrack.price ? `$${Number(currentTrack.price).toFixed(2)}` : 'Free'} USDC
                   </div>
                   <p className="text-xs text-muted-foreground">Total price</p>
                 </div>
@@ -147,7 +147,7 @@ export function MusicPurchaseInterface({
                     </div>
                   </div>
                   <div className="flex flex-col items-end gap-1">
-                    <span className="text-sm font-semibold">$1.38</span>
+                    <span className="text-sm font-semibold">${track.price ? Number(track.price).toFixed(2) : '0.00'}</span>
                     <Button
                       variant="outline"
                       size="sm"
