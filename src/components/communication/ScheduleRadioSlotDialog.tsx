@@ -272,16 +272,7 @@ export const ScheduleRadioSlotDialog: React.FC<ScheduleRadioSlotDialogProps> = (
                 />
               </div>
 
-              <div>
-                <Label htmlFor="genre">Genre/Category</Label>
-                <Input
-                  id="genre"
-                  value={formData.genre}
-                  onChange={(e) => setFormData({ ...formData, genre: e.target.value })}
-                  placeholder="Jazz, Hip-Hop, Talk Show, etc."
-                  required
-                />
-              </div>
+
 
               <div>
                 <Label htmlFor="description">Show Description</Label>
@@ -314,7 +305,7 @@ export const ScheduleRadioSlotDialog: React.FC<ScheduleRadioSlotDialogProps> = (
                   </span>
                 </div>
                 <div className="text-sm text-muted-foreground">
-                  {formData.show_title} • {formData.genre}
+                  {formData.show_title}
                 </div>
               </div>
 
