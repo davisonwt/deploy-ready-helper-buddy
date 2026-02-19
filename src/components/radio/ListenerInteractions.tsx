@@ -56,8 +56,29 @@ const ListenerInteractions = () => {
           table: 'live_session_messages',
           filter: 'message_type=in.(comment,request)'
         },
-        (payload) => {
-          setComments((prev) => [payload.new as Comment, ...prev.slice(0, 49)]);
+        async (payload) => {
+          const newMsg = payload.new as any;
+          // Resolve the sender's display name
+          let displayName: string | undefined;
+          if (newMsg.sender_id) {
+            const { data: profile } = await supabase
+              .from('profiles')
+              .select('display_name, first_name, last_name')
+              .eq('user_id', newMsg.sender_id)
+              .single();
+            if (profile) {
+              displayName = profile.display_name || [profile.first_name, profile.last_name].filter(Boolean).join(' ') || undefined;
+            }
+          }
+          const comment: Comment = {
+            id: newMsg.id,
+            user_id: newMsg.sender_id,
+            message: newMsg.content,
+            type: newMsg.message_type as 'comment' | 'request',
+            created_at: newMsg.created_at,
+            display_name: displayName,
+          };
+          setComments((prev) => [comment, ...prev.slice(0, 49)]);
         }
       )
       .on(

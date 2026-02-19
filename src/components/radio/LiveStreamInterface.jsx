@@ -858,15 +858,20 @@ export function LiveStreamInterface({ djProfile, currentShow, onEndShow }) {
                 <div className="flex items-start gap-2">
                   <Badge 
                     variant={message.type === 'dj' ? 'default' : 'outline'} 
-                    className="text-xs"
+                    className="text-xs shrink-0"
                   >
-                    {message.type === 'dj' ? 'DJ' : 'LISTENER'}
+                    {message.type === 'dj' ? 'DJ' : 'L'}
                   </Badge>
                   <div className="flex-1">
+                    <div className="flex items-center gap-1.5">
+                      <span className="font-medium text-foreground">
+                        {message.type === 'dj' ? (djProfile?.dj_name || 'DJ') : (message.author || 'Listener')}
+                      </span>
+                      <span className="text-xs text-muted-foreground">
+                        {message.timestamp.toLocaleTimeString()}
+                      </span>
+                    </div>
                     <p>{message.content}</p>
-                    <span className="text-xs text-muted-foreground">
-                      {message.timestamp.toLocaleTimeString()}
-                    </span>
                   </div>
                 </div>
               </div>
