@@ -106,6 +106,7 @@ export default function GroveStationPage() {
                   {currentShow.broadcast_mode === 'pre_recorded' ? '📻 Auto-Play' : currentShow.is_live ? '🔴 Live Now' : '📅 Scheduled'}
                 </Badge>
               )}
+            </div>
           </CardContent>
         </Card>
 
