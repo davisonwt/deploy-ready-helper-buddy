@@ -4948,6 +4948,8 @@ export type Database = {
           duration_minutes: number
           emoji_icon: string | null
           id: string
+          mapped_document_name: string | null
+          mapped_document_url: string | null
           mapped_track_id: string | null
           schedule_id: string | null
           segment_order: number
@@ -4960,6 +4962,8 @@ export type Database = {
           duration_minutes?: number
           emoji_icon?: string | null
           id?: string
+          mapped_document_name?: string | null
+          mapped_document_url?: string | null
           mapped_track_id?: string | null
           schedule_id?: string | null
           segment_order?: number
@@ -4972,6 +4976,8 @@ export type Database = {
           duration_minutes?: number
           emoji_icon?: string | null
           id?: string
+          mapped_document_name?: string | null
+          mapped_document_url?: string | null
           mapped_track_id?: string | null
           schedule_id?: string | null
           segment_order?: number

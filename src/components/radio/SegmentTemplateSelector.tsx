@@ -15,6 +15,8 @@ export interface SegmentItem {
   mapped_track_title?: string;
   mapped_track_url?: string;
   mapped_track_duration?: number;
+  mapped_document_url?: string;
+  mapped_document_name?: string;
 }
 
 interface Template {

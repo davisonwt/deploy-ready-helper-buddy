@@ -5,6 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Progress } from '@/components/ui/progress';
 import { SegmentTemplateSelector, SegmentItem } from './SegmentTemplateSelector';
 import { SegmentAudioPicker } from './SegmentAudioPicker';
+import { SegmentDocumentPicker } from './SegmentDocumentPicker';
 import { Plus, Trash2, Shuffle, GripVertical, AlertTriangle, CheckCircle } from 'lucide-react';
 import { motion, AnimatePresence, Reorder } from 'framer-motion';
 import confetti from 'canvas-confetti';
@@ -90,6 +91,26 @@ export const SegmentTimelineBuilder: React.FC<SegmentTimelineBuilderProps> = ({
     onSegmentsChange(updated);
   };
 
+  const attachDocument = (index: number, doc: { name: string; url: string }) => {
+    const updated = [...segments];
+    updated[index] = {
+      ...updated[index],
+      mapped_document_name: doc.name,
+      mapped_document_url: doc.url,
+    };
+    onSegmentsChange(updated);
+  };
+
+  const clearDocument = (index: number) => {
+    const updated = [...segments];
+    updated[index] = {
+      ...updated[index],
+      mapped_document_name: undefined,
+      mapped_document_url: undefined,
+    };
+    onSegmentsChange(updated);
+  };
+
   const shuffleSegments = () => {
     const shuffled = [...segments].sort(() => Math.random() - 0.5);
     onSegmentsChange(shuffled);
@@ -117,7 +138,7 @@ export const SegmentTimelineBuilder: React.FC<SegmentTimelineBuilderProps> = ({
             {totalMinutes} / {MAX_MINUTES} minutes
           </span>
           <span className={`text-xs font-medium ${isOver ? 'text-destructive' : isExact ? 'text-green-500' : 'text-muted-foreground'}`}>
-            {isOver ? `${Math.abs(remaining)} min over!` : isExact ? 'Perfect! ✨' : `${remaining} min remaining`}
+            {isOver ? `${Math.abs(remaining)} min over` : isExact ? 'Perfect! ✨' : `${remaining} min remaining`}
           </span>
         </div>
         <Progress value={Math.min(100, (totalMinutes / MAX_MINUTES) * 100)} className="h-3" />
@@ -222,14 +243,20 @@ export const SegmentTimelineBuilder: React.FC<SegmentTimelineBuilderProps> = ({
                       <Trash2 className="h-3.5 w-3.5" />
                     </Button>
                   </div>
-                  {/* Audio attachment row */}
-                  <div className="ml-10 mt-1">
+                  {/* Attachments row */}
+                  <div className="ml-10 mt-1 flex flex-wrap items-center gap-3">
                     <SegmentAudioPicker
                       segmentDuration={seg.duration}
                       currentTrackTitle={seg.mapped_track_title}
                       currentTrackDuration={seg.mapped_track_duration}
                       onSelect={(track) => attachAudio(index, track)}
                       onClear={() => clearAudio(index)}
+                    />
+                    <SegmentDocumentPicker
+                      currentDocumentName={seg.mapped_document_name}
+                      currentDocumentUrl={seg.mapped_document_url}
+                      onAttach={(doc) => attachDocument(index, doc)}
+                      onClear={() => clearDocument(index)}
                     />
                   </div>
                 </Reorder.Item>
