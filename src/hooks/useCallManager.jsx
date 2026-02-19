@@ -653,17 +653,20 @@ const useCallManagerInternal = () => {
         console.warn('📞 [CALL] Could not fetch caller profile, using fallback name');
       }
 
-      // CRITICAL FIX: Generate room_id BEFORE creating DB record so both sides share the same room
-      const generatedRoomId = roomId || null; // Will be set after DB insert
+      // CRITICAL FIX: Generate room_id BEFORE insert so both sides get it immediately
+      // Use crypto.randomUUID for a unique room, then pass through getRoomName for lobby bypass
+      const jitsiRoomName = roomId || JITSI_CONFIG.getRoomName(`call_${crypto.randomUUID().replace(/-/g, '')}`);
+      console.log('📞 [CALL] Generated jitsiRoomName:', jitsiRoomName);
       
-      // Create call record in database
+      // Create call record WITH room_id in a single atomic insert — no race condition
       const { data: callRecord, error: callError } = await supabase
         .from('call_sessions')
         .insert({
           caller_id: userId,
           receiver_id: receiverId,
           call_type: type,
-          status: 'ringing'
+          status: 'ringing',
+          room_id: jitsiRoomName,
         })
         .select()
         .single();
@@ -672,15 +675,6 @@ const useCallManagerInternal = () => {
         console.error('❌ [CALL] Failed to create call record:', callError);
         throw callError;
       }
-
-      // CRITICAL: Generate the Jitsi room name from the call ID and store it in DB
-      const jitsiRoomName = roomId || JITSI_CONFIG.getRoomName(`call_${callRecord.id.replace(/-/g, '')}`);
-      
-      // Store room_id in DB so receiver can find it via polling
-      await supabase
-        .from('call_sessions')
-        .update({ room_id: jitsiRoomName })
-        .eq('id', callRecord.id);
 
       const callData = {
         id: callRecord.id,
