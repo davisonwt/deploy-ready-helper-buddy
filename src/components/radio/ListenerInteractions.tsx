@@ -148,16 +148,16 @@ const ListenerInteractions = () => {
         .eq('type', 'music')
         .order('title');
 
-      // Get sower profile names for music products
+      // Get sower names — sower_id references sowers.id, not auth users
       const sowerIds = [...new Set(((musicProducts as any[]) || []).map((p: any) => p.sower_id))] as string[];
       let sowerNameMap: Record<string, string> = {};
       if (sowerIds.length > 0) {
-        const { data: profiles } = await supabase
-          .from('profiles')
-          .select('user_id, display_name, first_name, last_name')
-          .in('user_id', sowerIds);
-        profiles?.forEach(p => {
-          sowerNameMap[p.user_id] = p.display_name || [p.first_name, p.last_name].filter(Boolean).join(' ') || 'Sower';
+        const { data: sowers } = await (supabase
+          .from('sowers') as any)
+          .select('id, display_name')
+          .in('id', sowerIds);
+        (sowers as any[] || []).forEach((s: any) => {
+          sowerNameMap[s.id] = s.display_name || 'Sower';
         });
       }
 
