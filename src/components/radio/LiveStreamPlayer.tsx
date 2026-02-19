@@ -147,6 +147,14 @@ const LiveStreamPlayer = () => {
     }
   };
 
+  // Auto-play for pre-recorded broadcasts once playlist loads
+  useEffect(() => {
+    if (broadcastMode === 'pre_recorded' && playlist.length > 0 && !playing && currentTrack) {
+      console.log('[RadioPlayer] Auto-playing pre-recorded broadcast, track:', currentTrack.track_title);
+      playTrack(currentTrack);
+    }
+  }, [broadcastMode, playlist, currentTrack]);
+
   useEffect(() => {
     fetchCurrentSlot();
     const interval = setInterval(fetchCurrentSlot, 120000);
@@ -165,19 +173,32 @@ const LiveStreamPlayer = () => {
 
   const playTrack = async (track: Track) => {
     const audio = audioRef.current;
-    if (!audio || !track?.file_url) return;
+    if (!audio || !track?.file_url) {
+      console.warn('[RadioPlayer] No audio element or file_url', { audio: !!audio, file_url: track?.file_url });
+      return;
+    }
 
     try {
+      console.log('[RadioPlayer] Resolving URL for:', track.track_title, track.file_url);
       const url = await resolveAudioUrl(track.file_url, { bucketForKeys: 'dj-music' });
+      console.log('[RadioPlayer] Resolved URL:', url?.substring(0, 80));
       audio.src = url;
       audio.load();
       await audio.play();
       setCurrentTrack(track);
       setPlaying(true);
-    } catch (err) {
-      console.error('Playback error:', err);
-      toast({ variant: 'destructive', title: 'Playback Error', description: 'Could not play this track.' });
-      setPlaying(false);
+      console.log('[RadioPlayer] ✅ Playing:', track.track_title);
+    } catch (err: any) {
+      console.error('[RadioPlayer] Playback error:', err?.message || err);
+      // If autoplay was blocked, just set the track so user can click play
+      if (err?.name === 'NotAllowedError') {
+        setCurrentTrack(track);
+        setPlaying(false);
+        toast({ title: 'Tap Play', description: 'Click play to start listening.' });
+      } else {
+        toast({ variant: 'destructive', title: 'Playback Error', description: 'Could not play this track.' });
+        setPlaying(false);
+      }
     }
   };
 
