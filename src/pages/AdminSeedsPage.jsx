@@ -6,11 +6,12 @@ import { Badge } from '../components/ui/badge';
 import { Textarea } from '../components/ui/textarea';
 import { useToast } from '../hooks/use-toast';
 import { useRoles } from '../hooks/useRoles';
-import { CheckCircle, XCircle, MessageCircle, ImageIcon } from 'lucide-react';
+import { CheckCircle, XCircle, MessageCircle, ImageIcon, Bell, Loader2 } from 'lucide-react';
 
 export default function AdminSeedsPage() {
   const [submissions, setSubmissions] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [notifying, setNotifying] = useState(false);
   const { toast } = useToast();
   const { isAdminOrGosat, loading: rolesLoading } = useRoles();
 
@@ -92,7 +93,38 @@ export default function AdminSeedsPage() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-background to-secondary/20 p-6">
       <div className="max-w-7xl mx-auto">
-        <h1 className="text-4xl font-bold text-primary mb-8">Seeds Management</h1>
+        <div className="flex items-center justify-between mb-8">
+          <h1 className="text-4xl font-bold text-primary">Seeds Management</h1>
+          <Button
+            onClick={async () => {
+              setNotifying(true);
+              try {
+                const { data: { session } } = await supabase.auth.getSession();
+                const res = await supabase.functions.invoke('notify-uncategorized-music', {
+                  headers: { Authorization: `Bearer ${session?.access_token}` },
+                });
+                if (res.error) throw res.error;
+                const result = res.data;
+                toast({
+                  title: "Notifications Sent",
+                  description: `Notified ${result.usersNotified} sower(s) about ${result.totalUncategorized} uncategorized music upload(s).`,
+                });
+              } catch (err) {
+                console.error('Notification error:', err);
+                toast({ title: "Error", description: "Failed to send notifications", variant: "destructive" });
+              } finally {
+                setNotifying(false);
+              }
+            }}
+            disabled={notifying}
+            variant="outline"
+            className="gap-2"
+            style={{ backgroundColor: '#17A2B8', borderColor: '#0A1931', color: '#ffffff' }}
+          >
+            {notifying ? <Loader2 className="h-4 w-4 animate-spin" /> : <Bell className="h-4 w-4" />}
+            Notify Sowers (Uncategorized Music)
+          </Button>
+        </div>
         
         <div className="grid gap-6">
           {submissions.length === 0 ? (
