@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, Link } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
@@ -13,7 +13,9 @@ import {
   Calendar, 
   Sprout,
   Users,
-  MapPin
+  MapPin,
+  ShoppingBag,
+  Package
 } from 'lucide-react';
 
 interface PublicProfile {
@@ -31,11 +33,24 @@ interface UserPoints {
   level: number;
 }
 
+interface SeedProduct {
+  id: string;
+  title: string;
+  description: string | null;
+  price: number | null;
+  cover_image_url: string | null;
+  image_urls: string[] | null;
+  type: string | null;
+  category: string | null;
+  status: string | null;
+}
+
 export default function PublicProfilePage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const [profile, setProfile] = useState<PublicProfile | null>(null);
   const [points, setPoints] = useState<UserPoints | null>(null);
+  const [seeds, setSeeds] = useState<SeedProduct[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -50,29 +65,35 @@ export default function PublicProfilePage() {
       setLoading(true);
       setError(null);
 
-      // Get public profile data
-      const { data: profileData, error: profileError } = await supabase
-        .from('profiles')
-        .select('user_id, display_name, username, avatar_url, bio, location, created_at')
-        .eq('user_id', userId)
-        .single();
+      // Fetch profile, points, and seeds in parallel
+      const [profileRes, pointsRes, seedsRes] = await Promise.all([
+        supabase
+          .from('profiles')
+          .select('user_id, display_name, username, avatar_url, bio, location, created_at')
+          .eq('user_id', userId)
+          .single(),
+        supabase
+          .from('user_points')
+          .select('total_points, level')
+          .eq('user_id', userId)
+          .single(),
+        supabase
+          .from('products')
+          .select('id, title, description, price, cover_image_url, image_urls, type, category, status')
+          .eq('sower_id', userId)
+          .eq('status', 'active')
+          .order('created_at', { ascending: false }),
+      ]);
 
-      if (profileError) {
-        console.error('Profile error:', profileError);
+      if (profileRes.error) {
+        console.error('Profile error:', profileRes.error);
         setError('Profile not found');
         return;
       }
 
-      setProfile(profileData);
-
-      // Get user points/level
-      const { data: pointsData } = await supabase
-        .from('user_points')
-        .select('total_points, level')
-        .eq('user_id', userId)
-        .single();
-
-      setPoints(pointsData || { total_points: 0, level: 1 });
+      setProfile(profileRes.data);
+      setPoints(pointsRes.data || { total_points: 0, level: 1 });
+      setSeeds(seedsRes.data || []);
 
     } catch (err) {
       console.error('Error loading profile:', err);
@@ -228,6 +249,57 @@ export default function PublicProfilePage() {
               <span>Member since {memberSince}</span>
             </div>
           </div>
+
+          {/* Sower's Seeds */}
+          {seeds.length > 0 && (
+            <div className="pt-4 border-t">
+              <h2 className="text-lg font-bold flex items-center gap-2 mb-4">
+                <ShoppingBag className="h-5 w-5 text-primary" />
+                Seeds Sowed ({seeds.length})
+              </h2>
+              <div className="grid grid-cols-2 gap-3">
+                {seeds.map((seed) => (
+                  <Link key={seed.id} to={`/products/${seed.id}`} className="no-underline">
+                    <Card className="overflow-hidden hover:shadow-md transition-shadow cursor-pointer">
+                      <div className="aspect-square bg-muted relative">
+                        {(seed.cover_image_url || seed.image_urls?.[0]) ? (
+                          <img
+                            src={seed.cover_image_url || seed.image_urls?.[0]}
+                            alt={seed.title}
+                            className="w-full h-full object-cover"
+                          />
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center">
+                            <Package className="h-8 w-8 text-muted-foreground" />
+                          </div>
+                        )}
+                        {seed.type && (
+                          <Badge className="absolute top-1 left-1 text-[10px] px-1.5 py-0.5">
+                            {seed.type}
+                          </Badge>
+                        )}
+                      </div>
+                      <CardContent className="p-2">
+                        <p className="text-sm font-semibold truncate">{seed.title}</p>
+                        {seed.price != null && (
+                          <p className="text-xs text-muted-foreground">
+                            ${seed.price.toFixed(2)}
+                          </p>
+                        )}
+                      </CardContent>
+                    </Card>
+                  </Link>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {seeds.length === 0 && !loading && (
+            <div className="pt-4 border-t text-center py-6">
+              <Package className="h-10 w-10 mx-auto text-muted-foreground mb-2" />
+              <p className="text-sm text-muted-foreground">No seeds sowed yet</p>
+            </div>
+          )}
 
           {/* Return to Forest Button */}
           <Button 
