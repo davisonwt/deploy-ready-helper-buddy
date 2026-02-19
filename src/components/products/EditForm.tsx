@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
+import { MUSIC_MOODS, MUSIC_GENRES } from '@/constants/musicCategories';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
@@ -31,7 +32,9 @@ export default function EditForm() {
     category: '',
     license_type: 'free',
     price: 0,
-    tags: ''
+    tags: '',
+    music_mood: '',
+    music_genre: '',
   });
 
   useEffect(() => {
@@ -70,7 +73,9 @@ export default function EditForm() {
           category: data.category || '',
           license_type: data.license_type || 'free',
           price: parseFloat(basePrice.toFixed(2)),
-          tags: Array.isArray(data.tags) ? data.tags.join(', ') : ''
+          tags: Array.isArray(data.tags) ? data.tags.join(', ') : '',
+          music_mood: data.music_mood || '',
+          music_genre: data.music_genre || '',
         });
 
         // Load existing images
@@ -131,6 +136,8 @@ export default function EditForm() {
           tags: tagsArray,
           cover_image_url: allImages[0] || null,
           image_urls: allImages,
+          music_mood: formData.type === 'music' ? formData.music_mood || null : null,
+          music_genre: formData.type === 'music' ? formData.music_genre || null : null,
           updated_at: new Date().toISOString()
         })
         .eq('id', id)
@@ -236,6 +243,37 @@ export default function EditForm() {
                   </Select>
                 </div>
               </div>
+
+              {formData.type === 'music' && (
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label>Mood</Label>
+                    <Select value={formData.music_mood} onValueChange={(v) => setFormData({ ...formData, music_mood: v })}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select mood" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {MUSIC_MOODS.map((m) => (
+                          <SelectItem key={m.value} value={m.value}>{m.label}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Genre</Label>
+                    <Select value={formData.music_genre} onValueChange={(v) => setFormData({ ...formData, music_genre: v })}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select genre" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {MUSIC_GENRES.map((g) => (
+                          <SelectItem key={g.value} value={g.value}>{g.label}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+              )}
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">

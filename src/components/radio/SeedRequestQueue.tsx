@@ -7,7 +7,9 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Music, Search, Sprout, Send, Check, X, ListMusic } from 'lucide-react';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Music, Sprout, Send, X, ListMusic, Filter } from 'lucide-react';
+import { MUSIC_MOODS, MUSIC_GENRES } from '@/constants/musicCategories';
 
 interface SeedOption {
   id: string;
@@ -16,7 +18,9 @@ interface SeedOption {
   cover_url?: string;
   file_url?: string;
   duration_seconds?: number;
-  source: 'seed' | 'track';
+  source: 'product' | 'dj_track';
+  music_mood?: string;
+  music_genre?: string;
 }
 
 interface SeedRequest {
@@ -30,56 +34,79 @@ interface SeedRequest {
   created_at: string;
 }
 
-// ── Listener: request a seed ──
+const fmt = (s?: number) => {
+  if (!s) return '';
+  return `${Math.floor(s / 60)}:${(s % 60).toString().padStart(2, '0')}`;
+};
+
+// ── Listener: categorized song request ──
 export const SeedRequestForm: React.FC<{ sessionId: string }> = ({ sessionId }) => {
   const { user } = useAuth();
   const { toast } = useToast();
-  const [search, setSearch] = useState('');
-  const [results, setResults] = useState<SeedOption[]>([]);
-  const [loading, setLoading] = useState(false);
+  const [moodFilter, setMoodFilter] = useState<string>('all');
+  const [genreFilter, setGenreFilter] = useState<string>('all');
+  const [allSongs, setAllSongs] = useState<SeedOption[]>([]);
+  const [loading, setLoading] = useState(true);
   const [message, setMessage] = useState('');
   const [selected, setSelected] = useState<SeedOption | null>(null);
   const [submitting, setSubmitting] = useState(false);
 
+  // Fetch all music seeds on mount
   useEffect(() => {
-    if (search.length < 2) { setResults([]); return; }
-    const timeout = setTimeout(async () => {
+    const fetchAll = async () => {
       setLoading(true);
-      const q = `%${search}%`;
 
-      // Search community seeds (music)
-      const { data: seeds } = await (supabase.from('seeds') as any)
-        .select('id, title, sower_name, image_url, file_url, duration_seconds')
+      // Fetch music products
+      const { data: products } = await supabase
+        .from('products')
+        .select('id, title, cover_image_url, file_url, music_mood, music_genre, sowers(sower_name)')
         .eq('type', 'music')
-        .eq('status', 'active')
-        .ilike('title', q)
-        .limit(10);
+        .order('created_at', { ascending: false })
+        .limit(500);
 
-      // Search DJ tracks
-      const { data: tracks } = await supabase
+      // Fetch public DJ tracks
+      const { data: djTracks } = await supabase
         .from('dj_music_tracks')
-        .select('id, track_title, artist_name, file_url, duration_seconds')
+        .select('id, track_title, artist_name, file_url, duration_seconds, music_mood, music_genre')
         .eq('is_public', true)
-        .ilike('track_title', q)
-        .limit(10);
+        .order('created_at', { ascending: false })
+        .limit(200);
 
       const combined: SeedOption[] = [
-        ...(seeds || []).map((s: any) => ({
-          id: s.id, title: s.title, artist: s.sower_name,
-          cover_url: s.image_url, file_url: s.file_url,
-          duration_seconds: s.duration_seconds, source: 'seed' as const,
+        ...(products || []).map((p: any) => ({
+          id: p.id,
+          title: p.title,
+          artist: p.sowers?.sower_name,
+          cover_url: p.cover_image_url,
+          file_url: p.file_url,
+          source: 'product' as const,
+          music_mood: p.music_mood,
+          music_genre: p.music_genre,
         })),
-        ...(tracks || []).map((t: any) => ({
-          id: t.id, title: t.track_title, artist: t.artist_name,
-          file_url: t.file_url, duration_seconds: t.duration_seconds,
-          source: 'track' as const,
+        ...(djTracks || []).map((t: any) => ({
+          id: t.id,
+          title: t.track_title,
+          artist: t.artist_name,
+          file_url: t.file_url,
+          duration_seconds: t.duration_seconds,
+          source: 'dj_track' as const,
+          music_mood: t.music_mood,
+          music_genre: t.music_genre,
         })),
       ];
-      setResults(combined);
+      setAllSongs(combined);
       setLoading(false);
-    }, 400);
-    return () => clearTimeout(timeout);
-  }, [search]);
+    };
+    fetchAll();
+  }, []);
+
+  const filtered = useMemo(() => {
+    return allSongs.filter((s) => {
+      if (moodFilter !== 'all' && s.music_mood !== moodFilter) return false;
+      if (genreFilter !== 'all' && s.music_genre !== genreFilter) return false;
+      return true;
+    });
+  }, [allSongs, moodFilter, genreFilter]);
 
   const submitRequest = async () => {
     if (!selected || !user) return;
@@ -87,8 +114,8 @@ export const SeedRequestForm: React.FC<{ sessionId: string }> = ({ sessionId }) 
     const { error } = await supabase.from('radio_seed_requests').insert({
       session_id: sessionId,
       requester_id: user.id,
-      seed_id: selected.source === 'seed' ? selected.id : null,
-      track_id: selected.source === 'track' ? selected.id : null,
+      seed_id: selected.source === 'product' ? selected.id : null,
+      track_id: selected.source === 'dj_track' ? selected.id : null,
       seed_title: selected.title,
       seed_artist: selected.artist || null,
       seed_cover_url: selected.cover_url || null,
@@ -102,16 +129,12 @@ export const SeedRequestForm: React.FC<{ sessionId: string }> = ({ sessionId }) 
     } else {
       toast({ title: '🎵 Song Requested!', description: `"${selected.title}" has been sent to the DJ.` });
       setSelected(null);
-      setSearch('');
       setMessage('');
-      setResults([]);
     }
   };
 
-  const fmt = (s?: number) => {
-    if (!s) return '';
-    return `${Math.floor(s / 60)}:${(s % 60).toString().padStart(2, '0')}`;
-  };
+  const moodMeta = (val: string) => MUSIC_MOODS.find((m) => m.value === val);
+  const genreMeta = (val: string) => MUSIC_GENRES.find((g) => g.value === val);
 
   return (
     <Card>
@@ -124,48 +147,75 @@ export const SeedRequestForm: React.FC<{ sessionId: string }> = ({ sessionId }) 
       <CardContent className="space-y-3">
         {!selected ? (
           <>
-            <div className="relative">
-              <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
-              <Input
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                placeholder="Search S2G seeds or DJ tracks..."
-                className="pl-8 h-9 text-sm"
-              />
+            {/* Filters */}
+            <div className="flex gap-2">
+              <Select value={moodFilter} onValueChange={setMoodFilter}>
+                <SelectTrigger className="h-8 text-xs flex-1">
+                  <SelectValue placeholder="Mood" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Moods</SelectItem>
+                  {MUSIC_MOODS.map((m) => (
+                    <SelectItem key={m.value} value={m.value}>{m.label}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <Select value={genreFilter} onValueChange={setGenreFilter}>
+                <SelectTrigger className="h-8 text-xs flex-1">
+                  <SelectValue placeholder="Genre" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Genres</SelectItem>
+                  {MUSIC_GENRES.map((g) => (
+                    <SelectItem key={g.value} value={g.value}>{g.label}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
-            {results.length > 0 && (
-              <ScrollArea className="max-h-48">
+
+            {/* Song list */}
+            {loading ? (
+              <p className="text-xs text-muted-foreground text-center py-4">Loading music library...</p>
+            ) : (
+              <ScrollArea className="max-h-56">
                 <div className="space-y-1">
-                  {results.map((r) => (
+                  {filtered.length === 0 && (
+                    <p className="text-xs text-muted-foreground text-center py-4">No songs match these filters</p>
+                  )}
+                  {filtered.map((song) => (
                     <button
-                      key={`${r.source}-${r.id}`}
-                      onClick={() => setSelected(r)}
+                      key={`${song.source}-${song.id}`}
+                      onClick={() => setSelected(song)}
                       className="w-full flex items-center gap-2 px-2 py-2 rounded-md hover:bg-accent/50 transition-colors text-left"
                     >
                       <div className="h-8 w-8 rounded bg-primary/10 flex items-center justify-center shrink-0 overflow-hidden">
-                        {r.cover_url ? (
-                          <img src={r.cover_url} alt="" className="h-full w-full object-cover" />
+                        {song.cover_url ? (
+                          <img src={song.cover_url} alt="" className="h-full w-full object-cover" />
                         ) : (
                           <Music className="h-3.5 w-3.5 text-primary" />
                         )}
                       </div>
                       <div className="flex-1 min-w-0">
-                        <p className="text-xs font-medium truncate">{r.title}</p>
-                        {r.artist && <p className="text-[10px] text-muted-foreground truncate">{r.artist}</p>}
+                        <p className="text-xs font-medium truncate">{song.title}</p>
+                        {song.artist && <p className="text-[10px] text-muted-foreground truncate">{song.artist}</p>}
                       </div>
-                      <Badge variant="outline" className="text-[9px] shrink-0">
-                        {r.source === 'seed' ? '🌱 Seed' : '🎧 DJ'}
-                      </Badge>
-                      {r.duration_seconds && (
-                        <span className="text-[10px] text-muted-foreground shrink-0">{fmt(r.duration_seconds)}</span>
+                      <div className="flex flex-col items-end gap-0.5 shrink-0">
+                        {song.music_mood && moodMeta(song.music_mood) && (
+                          <Badge variant="outline" className="text-[8px] px-1 py-0 h-3.5" style={{ borderColor: moodMeta(song.music_mood)?.color }}>
+                            {moodMeta(song.music_mood)?.label}
+                          </Badge>
+                        )}
+                        {song.music_genre && (
+                          <span className="text-[9px] text-muted-foreground">{genreMeta(song.music_genre)?.label || song.music_genre}</span>
+                        )}
+                      </div>
+                      {song.duration_seconds && (
+                        <span className="text-[10px] text-muted-foreground shrink-0">{fmt(song.duration_seconds)}</span>
                       )}
                     </button>
                   ))}
                 </div>
               </ScrollArea>
-            )}
-            {search.length >= 2 && results.length === 0 && !loading && (
-              <p className="text-xs text-muted-foreground text-center py-3">No songs found</p>
             )}
           </>
         ) : (
@@ -197,10 +247,15 @@ export const SeedRequestForm: React.FC<{ sessionId: string }> = ({ sessionId }) 
   );
 };
 
-// ── DJ: manage the request queue ──
-export const DJSeedRequestQueue: React.FC<{ sessionId: string }> = ({ sessionId }) => {
+// ── DJ: manage the request queue with drag-and-drop swap ──
+export const DJSeedRequestQueue: React.FC<{
+  sessionId: string;
+  segments?: any[];
+  onSwapSegmentAudio?: (segmentIndex: number, track: { id: string; title: string; url?: string; duration_seconds?: number }) => void;
+}> = ({ sessionId, segments, onSwapSegmentAudio }) => {
   const { toast } = useToast();
   const [requests, setRequests] = useState<SeedRequest[]>([]);
+  const [draggedRequest, setDraggedRequest] = useState<SeedRequest | null>(null);
 
   useEffect(() => {
     const fetch = async () => {
@@ -233,43 +288,106 @@ export const DJSeedRequestQueue: React.FC<{ sessionId: string }> = ({ sessionId 
     if (error) toast({ variant: 'destructive', title: 'Error', description: 'Could not update request.' });
   };
 
-  if (requests.length === 0) {
-    return (
-      <div className="text-center py-4 text-xs text-muted-foreground">
-        <ListMusic className="h-5 w-5 mx-auto mb-1 opacity-50" />
-        No song requests yet
-      </div>
-    );
-  }
+  const handleDragStart = (e: React.DragEvent, request: SeedRequest) => {
+    setDraggedRequest(request);
+    e.dataTransfer.setData('text/plain', request.id);
+    e.dataTransfer.effectAllowed = 'move';
+  };
+
+  const handleSegmentDrop = (e: React.DragEvent, segIndex: number) => {
+    e.preventDefault();
+    if (!draggedRequest || !onSwapSegmentAudio) return;
+
+    onSwapSegmentAudio(segIndex, {
+      id: (draggedRequest as any).seed_id || (draggedRequest as any).track_id || draggedRequest.id,
+      title: draggedRequest.seed_title,
+      url: (draggedRequest as any).seed_file_url,
+      duration_seconds: (draggedRequest as any).seed_duration_seconds,
+    });
+
+    // Mark as played
+    updateStatus(draggedRequest.id, 'approved');
+    setDraggedRequest(null);
+
+    toast({ title: '🎵 Swapped!', description: `"${draggedRequest.seed_title}" mapped to segment.` });
+  };
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+  };
 
   return (
-    <div className="space-y-2">
-      <p className="text-xs font-semibold text-muted-foreground flex items-center gap-1.5">
-        <ListMusic className="h-3.5 w-3.5" />
-        Song Requests ({requests.length})
-      </p>
-      {requests.map((r) => (
-        <div key={r.id} className="flex items-center gap-2 p-2 bg-muted/30 rounded-lg">
-          <div className="flex-1 min-w-0">
-            <p className="text-xs font-medium truncate">{r.seed_title}</p>
-            {r.seed_artist && <p className="text-[10px] text-muted-foreground truncate">{r.seed_artist}</p>}
-            {r.message && <p className="text-[10px] text-muted-foreground italic mt-0.5">"{r.message}"</p>}
+    <div className="space-y-4">
+      {/* Request queue */}
+      <div className="space-y-2">
+        <p className="text-xs font-semibold text-muted-foreground flex items-center gap-1.5">
+          <ListMusic className="h-3.5 w-3.5" />
+          Song Requests ({requests.length})
+        </p>
+        {requests.length === 0 && (
+          <div className="text-center py-4 text-xs text-muted-foreground">
+            <ListMusic className="h-5 w-5 mx-auto mb-1 opacity-50" />
+            No song requests yet
           </div>
-          <Badge variant={r.status === 'approved' ? 'default' : 'outline'} className="text-[9px] shrink-0">
-            {r.status}
-          </Badge>
-          {r.status === 'pending' && (
-            <div className="flex gap-1 shrink-0">
-              <Button variant="ghost" size="sm" className="h-7 w-7 p-0 text-primary" onClick={() => updateStatus(r.id, 'approved')}>
-                <Check className="h-3.5 w-3.5" />
-              </Button>
-              <Button variant="ghost" size="sm" className="h-7 w-7 p-0 text-destructive" onClick={() => updateStatus(r.id, 'skipped')}>
-                <X className="h-3.5 w-3.5" />
-              </Button>
+        )}
+        {requests.map((r) => (
+          <div
+            key={r.id}
+            draggable
+            onDragStart={(e) => handleDragStart(e, r)}
+            className="flex items-center gap-2 p-2 bg-muted/30 rounded-lg cursor-grab active:cursor-grabbing hover:bg-muted/50 transition-colors border border-transparent hover:border-primary/20"
+          >
+            <div className="flex-1 min-w-0">
+              <p className="text-xs font-medium truncate">{r.seed_title}</p>
+              {r.seed_artist && <p className="text-[10px] text-muted-foreground truncate">{r.seed_artist}</p>}
+              {r.message && <p className="text-[10px] text-muted-foreground italic mt-0.5">"{r.message}"</p>}
             </div>
-          )}
+            <Badge variant={r.status === 'approved' ? 'default' : 'outline'} className="text-[9px] shrink-0">
+              {r.status}
+            </Badge>
+            {r.status === 'pending' && (
+              <div className="flex gap-1 shrink-0">
+                <Button variant="ghost" size="sm" className="h-7 w-7 p-0 text-primary" onClick={() => updateStatus(r.id, 'approved')}>
+                  ✅
+                </Button>
+                <Button variant="ghost" size="sm" className="h-7 w-7 p-0 text-destructive" onClick={() => updateStatus(r.id, 'skipped')}>
+                  ❌
+                </Button>
+              </div>
+            )}
+          </div>
+        ))}
+      </div>
+
+      {/* Drop targets: timeline segments */}
+      {segments && segments.length > 0 && requests.length > 0 && (
+        <div className="space-y-2">
+          <p className="text-xs font-semibold text-muted-foreground">
+            🎯 Drag a request onto a segment to swap its audio:
+          </p>
+          <div className="space-y-1">
+            {segments.map((seg, i) => (
+              <div
+                key={i}
+                onDrop={(e) => handleSegmentDrop(e, i)}
+                onDragOver={handleDragOver}
+                className="flex items-center gap-2 p-2 rounded-lg border-2 border-dashed border-muted-foreground/20 hover:border-primary/50 transition-colors bg-card"
+                style={{ borderLeftWidth: 4, borderLeftColor: seg.color, borderLeftStyle: 'solid' }}
+              >
+                <span className="text-sm">{seg.emoji}</span>
+                <div className="flex-1 min-w-0">
+                  <p className="text-xs font-medium truncate">{seg.title}</p>
+                  {seg.mapped_track_title && (
+                    <p className="text-[10px] text-primary truncate">🎵 {seg.mapped_track_title}</p>
+                  )}
+                </div>
+                <span className="text-[10px] text-muted-foreground shrink-0">{seg.duration}m</span>
+              </div>
+            ))}
+          </div>
         </div>
-      ))}
+      )}
     </div>
   );
 };
