@@ -19,6 +19,7 @@ import { supabase } from '@/integrations/supabase/client'
 import { useAuth } from '@/hooks/useAuth'
 import { GuestRequestModal } from './GuestRequestModal'
 import { MusicPurchaseInterface } from './MusicPurchaseInterface'
+import { resolveAudioUrl } from '@/utils/resolveAudioUrl'
 
 export function LiveStreamListener({ liveSession, currentShow }) {
   const { user } = useAuth()
@@ -174,6 +175,9 @@ export function LiveStreamListener({ liveSession, currentShow }) {
       }
     } else {
       setIsPlaying(false)
+      if (audioRef.current) {
+        audioRef.current.pause()
+      }
       if (peerConnectionRef.current) {
         peerConnectionRef.current.close()
         peerConnectionRef.current = null
@@ -250,24 +254,26 @@ export function LiveStreamListener({ liveSession, currentShow }) {
           setCurrentTrack(currentTrack) // Store current track for purchase interface
           
           if (currentTrack?.file_url && audioRef.current) {
-            audioRef.current.src = currentTrack.file_url
+            // Resolve the storage key to a signed URL
+            const resolvedUrl = await resolveAudioUrl(currentTrack.file_url, { bucketForKeys: 'dj-music' })
+            console.log('[Listener] Resolved audio URL:', resolvedUrl?.substring(0, 80))
+            audioRef.current.src = resolvedUrl
             audioRef.current.load()
             
             // Auto-play the track
             try {
               await audioRef.current.play()
-              console.log(`Now playing: ${currentTrack.track_title} by ${currentTrack.artist_name}`)
+              console.log(`[Listener] ✅ Now playing: ${currentTrack.track_title} by ${currentTrack.artist_name}`)
               
               toast({
                 title: "Now Playing",
                 description: `${currentTrack.track_title} by ${currentTrack.artist_name}`,
               })
             } catch (playError) {
-              console.error('Error playing track:', playError)
+              console.error('[Listener] Autoplay blocked:', playError)
               toast({
-                title: "Autoplay Blocked",
-                description: "Click play to start the music - browser autoplay policy",
-                variant: "destructive"
+                title: "Tap Play",
+                description: "Click play to start the music",
               })
             }
           }
@@ -281,59 +287,50 @@ export function LiveStreamListener({ liveSession, currentShow }) {
   const fetchPlaylistForCurrentShow = async () => {
     try {
       if (!currentShow?.schedule_id) return
+
+      // First get the schedule's playlist_id directly (avoids deep nested query timeout)
       const { data: sched, error } = await supabase
         .from('radio_schedule')
-        .select(`
-          id,
-          radio_djs (
-            id,
-            dj_playlists (
-              id,
-              playlist_name,
-              dj_playlist_tracks (
-                track_order,
-                dj_music_tracks (
-                  id,
-                  track_title,
-                  artist_name,
-                  duration_seconds,
-                  genre,
-                  file_url
-                )
-              )
-            )
-          )
-        `)
+        .select('id, playlist_id, dj_id')
         .eq('id', currentShow.schedule_id)
         .maybeSingle()
 
       if (error) {
-        console.error('Error fetching playlist for show:', error)
+        console.error('Error fetching schedule:', error)
         return
       }
 
-      const playlists = sched?.radio_djs?.dj_playlists || []
-      if (playlists.length === 0) {
-        // Fallback: show all DJ tracks if no public playlist accessible
-        const { data: djTracks, error: djErr } = await supabase
+      let tracks = []
+
+      // Use playlist_id if available
+      if (sched?.playlist_id) {
+        const { data: ptData } = await supabase
+          .from('dj_playlist_tracks')
+          .select(`
+            track_order,
+            dj_music_tracks (id, track_title, artist_name, duration_seconds, genre, file_url, price)
+          `)
+          .eq('playlist_id', sched.playlist_id)
+          .eq('is_active', true)
+          .order('track_order')
+
+        tracks = (ptData || [])
+          .sort((a, b) => a.track_order - b.track_order)
+          .map(pt => pt.dj_music_tracks)
+          .filter(Boolean)
+      }
+
+      // Fallback: get all DJ tracks
+      if (tracks.length === 0 && sched?.dj_id) {
+        const { data: djTracks } = await supabase
           .from('dj_music_tracks')
-          .select('id, track_title, artist_name, duration_seconds, genre, file_url')
-          .eq('dj_id', sched?.radio_djs?.id)
+          .select('id, track_title, artist_name, duration_seconds, genre, file_url, price')
+          .eq('dj_id', sched.dj_id)
+          .eq('is_public', true)
           .order('upload_date', { ascending: false })
-        if (djErr) {
-          console.error('Fallback DJ tracks error:', djErr)
-          return
-        }
-        setPlaylistTracks(djTracks || [])
-        if (!currentTrack && djTracks?.length > 0) setCurrentTrack(djTracks[0])
-        return
-      }
 
-      const pl = playlists[0]
-      const tracks = (pl.dj_playlist_tracks || [])
-        .sort((a, b) => a.track_order - b.track_order)
-        .map(pt => pt.dj_music_tracks)
-        .filter(Boolean)
+        tracks = djTracks || []
+      }
 
       setPlaylistTracks(tracks)
       if (!currentTrack && tracks.length > 0) setCurrentTrack(tracks[0])
@@ -346,23 +343,27 @@ export function LiveStreamListener({ liveSession, currentShow }) {
     try {
       if (!currentShow?.schedule_id) return
 
-      // Get the DJ's default playlist
-      const { data: djData } = await supabase
+      // Get the schedule's playlist_id directly
+      const { data: schedData } = await supabase
         .from('radio_schedule')
-        .select(`
-          radio_djs (
-            id,
-            dj_playlists (
-              id,
-              playlist_name
-            )
-          )
-        `)
+        .select('playlist_id, dj_id')
         .eq('id', currentShow.schedule_id)
         .single()
 
-      const djPlaylists = djData?.radio_djs?.dj_playlists || []
-      if (djPlaylists.length === 0) {
+      let playlistId = schedData?.playlist_id
+
+      // If no playlist_id on schedule, get DJ's first playlist
+      if (!playlistId && schedData?.dj_id) {
+        const { data: plData } = await supabase
+          .from('dj_playlists')
+          .select('id')
+          .eq('dj_id', schedData.dj_id)
+          .limit(1)
+          .maybeSingle()
+        playlistId = plData?.id
+      }
+
+      if (!playlistId) {
         toast({
           title: "No Playlist Found",
           description: "DJ hasn't uploaded any music yet",
@@ -371,16 +372,13 @@ export function LiveStreamListener({ liveSession, currentShow }) {
         return
       }
 
-      // Use the first available playlist
-      const playlist = djPlaylists[0]
-
       // Create automated session
       const { data: newSession, error } = await supabase
         .from('radio_automated_sessions')
         .insert({
           session_id: liveSession.id,
           schedule_id: currentShow.schedule_id,
-          playlist_id: playlist.id,
+          playlist_id: playlistId,
           session_type: 'automated',
           playback_status: 'playing',
           current_track_index: 0,
@@ -391,13 +389,13 @@ export function LiveStreamListener({ liveSession, currentShow }) {
 
       if (error) throw error
 
-      console.log('Created automated session:', newSession)
+      console.log('[Listener] Created automated session:', newSession)
       
       // Now fetch and play the track
       await fetchAndPlayCurrentTrack()
       
     } catch (error) {
-      console.error('Error creating automated session:', error)
+      console.error('[Listener] Error creating automated session:', error)
       toast({
         title: "Setup Error",
         description: "Failed to set up music playback",
