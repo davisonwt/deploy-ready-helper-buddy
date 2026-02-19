@@ -299,6 +299,36 @@ export function LiveStreamListener({ liveSession, currentShow }) {
     }
   }
 
+  const awardRadioPlayXP = async (track) => {
+    if (!user || !track?.id) return
+    try {
+      // Look up the track owner (dj_id -> user_id)
+      const { data: djTrack } = await supabase
+        .from('dj_music_tracks')
+        .select('dj_id, radio_djs(user_id)')
+        .eq('id', track.id)
+        .maybeSingle()
+
+      const trackOwnerId = djTrack?.radio_djs?.user_id
+      if (!trackOwnerId) return
+
+      const { data: awarded, error } = await supabase.rpc('award_radio_play_xp', {
+        p_track_owner_id: trackOwnerId,
+        p_listener_id: user.id,
+        p_track_id: track.id,
+        p_points: 10
+      })
+
+      if (error) {
+        console.error('[XP] Error awarding radio play XP:', error)
+      } else if (awarded) {
+        console.log(`[XP] ✅ +10 XP awarded to sower for "${track.track_title}"`)
+      }
+    } catch (e) {
+      console.error('[XP] Failed to award XP:', e)
+    }
+  }
+
   const playCurrentTrackAudio = async (track) => {
     if (!track?.file_url || !audioRef.current) return
     try {
@@ -309,6 +339,9 @@ export function LiveStreamListener({ liveSession, currentShow }) {
       await audioRef.current.play()
       console.log(`[Listener] ✅ Now playing: ${track.track_title}`)
       toast({ title: "Now Playing", description: `${track.track_title} by ${track.artist_name}` })
+
+      // Award XP to the song owner (non-blocking)
+      awardRadioPlayXP(track)
     } catch (playError) {
       if (playError?.name === 'NotAllowedError') {
         toast({ title: "Tap Play", description: "Click play to start the music" })
