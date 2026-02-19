@@ -1,19 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
-  'Access-Control-Allow-Headers': [
-    'authorization',
-    'x-client-info',
-    'apikey',
-    'content-type',
-    'x-idempotency-key',
-    // Sent by our Supabase client global headers
-    'x-my-custom-header',
-  ].join(', '),
-};
+import { getSecureCorsHeaders, validatePaymentAmount } from "../_shared/security.ts";
 
 // S2G Platform Wallet Addresses
 const S2G_WALLETS = {
@@ -61,6 +48,8 @@ interface CreateOrderRequest {
 }
 
 serve(async (req) => {
+  const corsHeaders = getSecureCorsHeaders(req);
+
   // Handle CORS preflight
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
@@ -146,10 +135,11 @@ serve(async (req) => {
 
     console.log('📦 Creating order:', { paymentType, amount, orchardId, productCount: productItems?.length || 0 });
 
-    // Validate input
-    if (!amount || amount <= 0) {
+    // Validate input with shared security utility
+    const amountValidation = validatePaymentAmount(amount);
+    if (!amountValidation.valid) {
       return new Response(
-        JSON.stringify({ error: 'Invalid amount' }),
+        JSON.stringify({ error: amountValidation.error }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
@@ -455,7 +445,7 @@ serve(async (req) => {
   } catch (error) {
     console.error('❌ Error creating order:', error);
     return new Response(
-      JSON.stringify({ error: 'Failed to create payment', details: String(error) }),
+      JSON.stringify({ error: 'Failed to create payment' }),
       { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
   }

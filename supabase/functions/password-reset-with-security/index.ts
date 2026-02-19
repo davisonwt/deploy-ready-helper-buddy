@@ -51,25 +51,27 @@ Deno.serve(async (req) => {
 
       const targetUser = users.users.find(u => u.email?.toLowerCase() === email.toLowerCase());
       
-      if (!targetUser) {
-        // Security: Don't reveal if user exists - return generic message
-        console.log("User not found for email:", email);
-        return new Response(
-          JSON.stringify({ error: "If an account exists with this email and has security questions configured, they will be shown. Please verify your email address." }),
-          { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-        );
+      // Always fetch questions if user exists, but return same structure regardless
+      let questions: { question_1: string; question_2: string; question_3: string } | null = null;
+
+      if (targetUser) {
+        const { data: securityData } = await supabase
+          .from("user_security_questions")
+          .select("question_1, question_2, question_3")
+          .eq("user_id", targetUser.id)
+          .maybeSingle();
+
+        if (securityData) {
+          questions = {
+            question_1: securityData.question_1,
+            question_2: securityData.question_2,
+            question_3: securityData.question_3,
+          };
+        }
       }
 
-      // Get security questions
-      const { data: securityData, error: securityError } = await supabase
-        .from("user_security_questions")
-        .select("question_1, question_2, question_3")
-        .eq("user_id", targetUser.id)
-        .maybeSingle();
-
-      if (securityError || !securityData) {
-        // Return same generic message as user-not-found to prevent enumeration
-        console.log("No security questions for user:", targetUser.id);
+      // Return identical structure whether user exists or not
+      if (!questions) {
         return new Response(
           JSON.stringify({
             error: "If an account exists with this email and has security questions configured, they will be shown. Please verify your email address.",
@@ -81,11 +83,7 @@ Deno.serve(async (req) => {
       return new Response(
         JSON.stringify({ 
           success: true,
-          questions: {
-            question_1: securityData.question_1,
-            question_2: securityData.question_2,
-            question_3: securityData.question_3
-          }
+          questions,
         }),
         { headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
@@ -120,8 +118,9 @@ Deno.serve(async (req) => {
       const targetUser = users.users.find(u => u.email?.toLowerCase() === email.toLowerCase());
       
       if (!targetUser) {
+        // Return same error as incorrect answers to prevent enumeration
         return new Response(
-          JSON.stringify({ error: "Account not found" }),
+          JSON.stringify({ error: "One or more security answers are incorrect. Please try again." }),
           { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
         );
       }
@@ -134,8 +133,9 @@ Deno.serve(async (req) => {
         .maybeSingle();
 
       if (securityError || !securityData) {
+        // Return same error as incorrect answers to prevent enumeration
         return new Response(
-          JSON.stringify({ error: "Security questions not found for this account" }),
+          JSON.stringify({ error: "One or more security answers are incorrect. Please try again." }),
           { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
         );
       }

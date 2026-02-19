@@ -2,9 +2,9 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { crypto } from "https://deno.land/std@0.177.0/crypto/mod.ts";
 
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-nowpayments-sig',
+// Webhook endpoint - no CORS needed for server-to-server calls
+const webhookHeaders = {
+  'Content-Type': 'application/json',
 };
 
 // NOWPayments whitelisted IP addresses
@@ -150,9 +150,9 @@ async function updateSowerBalance(
 }
 
 serve(async (req) => {
-  // Handle CORS preflight
+  // Handle CORS preflight (not expected for webhooks, but safe fallback)
   if (req.method === 'OPTIONS') {
-    return new Response(null, { headers: corsHeaders });
+    return new Response(null, { status: 204 });
   }
 
   const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
@@ -169,8 +169,8 @@ serve(async (req) => {
     if (!isWhitelistedIP(clientIP)) {
       console.error('❌ IP not whitelisted:', clientIP);
       return new Response(
-        JSON.stringify({ error: 'IP not whitelisted' }),
-        { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        JSON.stringify({ error: 'Forbidden' }),
+        { status: 403, headers: webhookHeaders }
       );
     }
 
@@ -184,8 +184,8 @@ serve(async (req) => {
     if (!signature) {
       console.error('❌ Missing signature header');
       return new Response(
-        JSON.stringify({ error: 'Missing signature' }),
-        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        JSON.stringify({ error: 'Unauthorized' }),
+        { status: 401, headers: webhookHeaders }
       );
     }
 
@@ -203,8 +203,8 @@ serve(async (req) => {
     if (!isValid) {
       console.error('❌ Invalid signature');
       return new Response(
-        JSON.stringify({ error: 'Invalid signature' }),
-        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        JSON.stringify({ error: 'Unauthorized' }),
+        { status: 401, headers: webhookHeaders }
       );
     }
 
@@ -227,7 +227,7 @@ serve(async (req) => {
       console.log('⚠️ Webhook already processed, skipping');
       return new Response(
         JSON.stringify({ success: true, message: 'Already processed' }),
-        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        { headers: webhookHeaders }
       );
     }
 
@@ -288,8 +288,8 @@ serve(async (req) => {
       if (bestowalError || !data) {
         console.error('❌ Bestowal not found:', orderId, bestowalError);
         return new Response(
-          JSON.stringify({ error: 'Bestowal not found' }),
-          { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          JSON.stringify({ error: 'Not found' }),
+          { status: 404, headers: webhookHeaders }
         );
       }
 
@@ -576,16 +576,15 @@ serve(async (req) => {
         success: true, 
         status: paymentStatus,
         order_id: orderId,
-        funds_held_in: paymentStatus === 'completed' ? S2G_WALLETS.HOLDINGS : null,
       }),
-      { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      { headers: webhookHeaders }
     );
 
   } catch (error) {
     console.error('❌ Webhook processing error:', error);
     return new Response(
-      JSON.stringify({ error: 'Internal server error', details: String(error) }),
-      { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      JSON.stringify({ error: 'Internal server error' }),
+      { status: 500, headers: webhookHeaders }
     );
   }
 });

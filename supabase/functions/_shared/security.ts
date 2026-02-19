@@ -12,8 +12,8 @@ export function getSecureCorsHeaders(req: Request): Record<string, string> {
     "https://sow2growapp.com",
     "https://www.sow2growapp.com",
     "https://app.sow2grow.com",
-    // Add staging if needed
-    // "https://staging.sow2growapp.com",
+    "https://sow2growapp.lovable.app",
+    "https://id-preview--f76da68e-977d-42e6-85f3-ea2df1aea0df.lovable.app",
   ];
 
   // For webhooks (no origin), return minimal headers
