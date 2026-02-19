@@ -4917,6 +4917,140 @@ export type Database = {
           },
         ]
       }
+      radio_seed_plays: {
+        Row: {
+          dj_id: string | null
+          duration_seconds: number | null
+          id: string
+          played_at: string
+          schedule_id: string | null
+          seed_id: string | null
+          session_id: string | null
+          source: string
+          sower_id: string | null
+          track_id: string | null
+        }
+        Insert: {
+          dj_id?: string | null
+          duration_seconds?: number | null
+          id?: string
+          played_at?: string
+          schedule_id?: string | null
+          seed_id?: string | null
+          session_id?: string | null
+          source?: string
+          sower_id?: string | null
+          track_id?: string | null
+        }
+        Update: {
+          dj_id?: string | null
+          duration_seconds?: number | null
+          id?: string
+          played_at?: string
+          schedule_id?: string | null
+          seed_id?: string | null
+          session_id?: string | null
+          source?: string
+          sower_id?: string | null
+          track_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "radio_seed_plays_dj_id_fkey"
+            columns: ["dj_id"]
+            isOneToOne: false
+            referencedRelation: "radio_djs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "radio_seed_plays_schedule_id_fkey"
+            columns: ["schedule_id"]
+            isOneToOne: false
+            referencedRelation: "radio_schedule"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "radio_seed_plays_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "radio_live_sessions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "radio_seed_plays_track_id_fkey"
+            columns: ["track_id"]
+            isOneToOne: false
+            referencedRelation: "dj_music_tracks"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      radio_seed_requests: {
+        Row: {
+          created_at: string
+          id: string
+          message: string | null
+          requester_id: string
+          resolved_at: string | null
+          seed_artist: string | null
+          seed_cover_url: string | null
+          seed_duration_seconds: number | null
+          seed_file_url: string | null
+          seed_id: string | null
+          seed_title: string
+          session_id: string | null
+          status: string
+          track_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          message?: string | null
+          requester_id: string
+          resolved_at?: string | null
+          seed_artist?: string | null
+          seed_cover_url?: string | null
+          seed_duration_seconds?: number | null
+          seed_file_url?: string | null
+          seed_id?: string | null
+          seed_title: string
+          session_id?: string | null
+          status?: string
+          track_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          message?: string | null
+          requester_id?: string
+          resolved_at?: string | null
+          seed_artist?: string | null
+          seed_cover_url?: string | null
+          seed_duration_seconds?: number | null
+          seed_file_url?: string | null
+          seed_id?: string | null
+          seed_title?: string
+          session_id?: string | null
+          status?: string
+          track_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "radio_seed_requests_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "radio_live_sessions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "radio_seed_requests_track_id_fkey"
+            columns: ["track_id"]
+            isOneToOne: false
+            referencedRelation: "dj_music_tracks"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       radio_segment_templates: {
         Row: {
           created_at: string

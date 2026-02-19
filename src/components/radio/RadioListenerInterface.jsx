@@ -4,22 +4,14 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { Badge } from '@/components/ui/badge'
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { 
   MessageSquare, 
   Send, 
   Hand,
-  Mic,
   Radio,
-  Clock,
   Users,
   Music,
-  ShoppingCart,
-  Play,
-  Pause,
-  Volume2,
-  Download
 } from 'lucide-react'
 import { useToast } from '@/hooks/use-toast'
 import { supabase } from '@/integrations/supabase/client'
@@ -29,6 +21,8 @@ import { MusicPurchaseInterface } from './MusicPurchaseInterface'
 import { ListenerReactionBar } from './ListenerReactionBar'
 import { BestowDuringBroadcast } from './BestowDuringBroadcast'
 import { ListenerStreakBadge } from './ListenerStreakBadge'
+import { NowPlayingSeedCard } from './NowPlayingSeedCard'
+import { SeedRequestForm } from './SeedRequestQueue'
 
 export function RadioListenerInterface({ liveSession, currentShow }) {
   const { user } = useAuth()
@@ -36,13 +30,11 @@ export function RadioListenerInterface({ liveSession, currentShow }) {
   const { purchaseTrack, loading: purchasing } = useMusicPurchase()
   const [message, setMessage] = useState('')
   const [callTopic, setCallTopic] = useState('')
-  const [showCallModal, setShowCallModal] = useState(false)
   const [isInCallQueue, setIsInCallQueue] = useState(false)
   const [queuePosition, setQueuePosition] = useState(null)
   const [viewerCount, setViewerCount] = useState(0)
   const [currentTrack, setCurrentTrack] = useState(null)
   const [playlistTracks, setPlaylistTracks] = useState([])
-  const [showTrackPurchase, setShowTrackPurchase] = useState(false)
 
   useEffect(() => {
     if (liveSession && user) {
@@ -65,7 +57,6 @@ export function RadioListenerInterface({ liveSession, currentShow }) {
 
       if (data && !error) {
         setIsInCallQueue(true)
-        // Get queue position
         const { data: queueData } = await supabase
           .from('radio_call_queue')
           .select('id')
@@ -98,7 +89,6 @@ export function RadioListenerInterface({ liveSession, currentShow }) {
 
   const fetchCurrentPlaylist = async () => {
     try {
-      // Get the automated session for this live session
       const { data: automatedSession, error: sessionError } = await supabase
         .from('radio_automated_sessions')
         .select(`
@@ -133,7 +123,6 @@ export function RadioListenerInterface({ liveSession, currentShow }) {
 
       setPlaylistTracks(tracks)
       
-      // Set current track (simulate progression - in real app this would track actual playback)
       if (tracks.length > 0) {
         setCurrentTrack(tracks[0])
       }
@@ -143,7 +132,6 @@ export function RadioListenerInterface({ liveSession, currentShow }) {
   }
 
   const setupRealtimeSubscriptions = () => {
-    // Subscribe to session updates for viewer count
     const sessionChannel = supabase
       .channel(`session-${liveSession.id}`)
       .on('postgres_changes', 
@@ -159,7 +147,6 @@ export function RadioListenerInterface({ liveSession, currentShow }) {
       )
       .subscribe()
 
-    // Subscribe to call queue updates
     const queueChannel = supabase
       .channel(`queue-${liveSession.id}-${user.id}`)
       .on('postgres_changes', 
@@ -231,7 +218,6 @@ export function RadioListenerInterface({ liveSession, currentShow }) {
       })
 
       setCallTopic('')
-      setShowCallModal(false)
       setIsInCallQueue(true)
       checkCallQueueStatus()
     } catch (error) {
@@ -270,12 +256,6 @@ export function RadioListenerInterface({ liveSession, currentShow }) {
         variant: "destructive"
       })
     }
-  }
-
-  const formatDuration = (seconds) => {
-    const mins = Math.floor(seconds / 60)
-    const secs = seconds % 60
-    return `${mins}:${secs.toString().padStart(2, '0')}`
   }
 
   if (!liveSession) return null
@@ -319,6 +299,19 @@ export function RadioListenerInterface({ liveSession, currentShow }) {
         </CardContent>
       </Card>
 
+      {/* Now Playing Seed Card */}
+      {currentTrack && (
+        <NowPlayingSeedCard
+          trackId={currentTrack.id}
+          trackTitle={currentTrack.track_title}
+          artistName={currentTrack.artist_name || undefined}
+          durationSeconds={currentTrack.duration_seconds || undefined}
+          djId={currentShow?.dj_id}
+          sessionId={liveSession?.id}
+          scheduleId={liveSession?.schedule_id}
+        />
+      )}
+
       {/* Emoji Reactions */}
       {liveSession?.id && (
         <ListenerReactionBar sessionId={liveSession.id} />
@@ -329,6 +322,11 @@ export function RadioListenerInterface({ liveSession, currentShow }) {
         tracks={playlistTracks}
         currentTrack={currentTrack}
       />
+
+      {/* Song Request */}
+      {liveSession?.id && (
+        <SeedRequestForm sessionId={liveSession.id} />
+      )}
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {/* Send Message */}
