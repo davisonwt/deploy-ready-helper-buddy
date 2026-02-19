@@ -153,6 +153,14 @@ const useCallManagerInternal = () => {
       console.warn('📞 [CALL] No user, ignoring call answered event');
       return;
     }
+
+    // CRITICAL FIX: If we already have an active call with a DIFFERENT id,
+    // this is an invite acceptance — don't replace our current call state.
+    const activeCall = currentCallRef.current;
+    if (activeCall && activeCall.id !== callData.id && activeCall.status !== 'ended') {
+      console.log('📞 [CALL] 🚫 Ignoring call_answered for invite — already in active call:', activeCall.id, 'invite call:', callData.id);
+      return;
+    }
     
     console.log('📞 [CALL] 🚨🚨🚨 CALL ANSWERED - Updating caller state:', callData);
     console.log('📞 [CALL] Previous outgoingCall:', outgoingCallRef.current?.id);
@@ -435,6 +443,13 @@ const useCallManagerInternal = () => {
           console.log('🛟 [CALL][DB] Caller saw DB update:', { id: row.id, status: row.status, accepted_at: row.accepted_at });
 
           if (row?.status === 'accepted') {
+            // CRITICAL FIX: If we already have an active call (e.g. we're in a room and invited someone),
+            // do NOT replace our current call state — that would kick us out.
+            const activeCall = currentCallRef.current;
+            if (activeCall && activeCall.id !== row.id && activeCall.status !== 'ended') {
+              console.log('📞 [CALL][DB] 🚫 Ignoring accepted update for invite — already in active call:', activeCall.id);
+              return;
+            }
             console.log('🛟 [CALL][DB] Fallback accepted update, triggering handleCallAnswered');
             handleCallAnswered({
               id: row.id,
