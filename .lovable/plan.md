@@ -1,54 +1,37 @@
 
+# Add "View Sower Profile" on Hover in Memry Feed
 
-# Fix: Replace Jitsi Native Toolbar with Custom S2G Control Bar
+## What This Does
+When you hover over a sower's profile picture or name in the Memry feed, a small popup card will appear showing the sower's name, avatar, and a "View Profile" button that navigates to their public member profile page (`/member/:id`).
 
-## The Root Cause
+## Changes
 
-The self-hosted Jitsi server at `meet.sow2growapp.com` has its own server-side configuration that **overrides** the client-side `toolbarButtons` and `disableInviteFunctions` settings. CSS injection into the iframe fails because it's cross-origin. No amount of client config flags will reliably hide that native invite button.
+### 1. Add HoverCard to the Bottom Info Avatar (MemryPage.tsx)
+The bottom-left sower info section (avatar + name) currently has no interaction. We will wrap it with a **HoverCard** component that shows:
+- Sower's avatar (larger)
+- Display name and username
+- A "View Profile" button linking to `/member/:userId`
 
-## The Solution
+### 2. Enhance the Right-Side Avatar
+The right-side avatar already links to the profile on click. We will also add a **HoverCard** to it so hovering shows a quick preview before clicking.
 
-**Hide the entire Jitsi native toolbar** and use only our custom control bar overlay, which already has the working member-search invite button.
+### 3. Keep Existing Click Behavior
+The right-side avatar will retain its direct link navigation. The hover card is an enhancement, not a replacement.
 
-### Changes Required
+## Technical Details
 
-**1. `src/components/jitsi/ResilientJitsiMeeting.tsx`**
-- Set `toolbarButtons: []` (empty array) in `configOverwrite` to suppress the native toolbar
-- Add `filmstripOnly: false`, `TOOLBAR_ALWAYS_VISIBLE: false`, and `TOOLBAR_TIMEOUT: 0` to ensure the native bar never shows
-- Set `interfaceConfigOverwrite.TOOLBAR_BUTTONS: []` as well
-- Remove the CSS injection code (it doesn't work cross-origin and is no longer needed)
+**File to modify:** `src/pages/MemryPage.tsx`
 
-**2. `src/components/jitsi/JitsiRoom.tsx`**
-- Update `configOverwrite.toolbarButtons` to `[]` (empty)
-- Update `interfaceConfigOverwrite.TOOLBAR_BUTTONS` to `[]` (empty)
-- Add missing control buttons to the custom overlay bar to replace what the native toolbar provided:
-  - **Screen share** button (calls `api.executeCommand('toggleShareScreen')`)
-  - **Chat** button (calls `api.executeCommand('toggleChat')`)
-  - **Fullscreen** button (calls `api.executeCommand('toggleFilmStrip')` or browser fullscreen)
-  - **Tile view** button (calls `api.executeCommand('toggleTileView')`)
-- Keep the existing custom buttons: mute/unmute audio, mute/unmute video, raise hand, settings, invite (UserPlus), and leave
+**Components used:**
+- `HoverCard`, `HoverCardTrigger`, `HoverCardContent` from `@/components/ui/hover-card` (already installed)
+- Existing `Avatar`, `AvatarImage`, `AvatarFallback` components
+- Existing `Button` component with `Link` for navigation
 
-**3. `src/lib/jitsi-config.ts`**
-- Update `getJitsiInterfaceConfig` to default `TOOLBAR_BUTTONS: []` so all Jitsi entry points consistently hide the native bar
+**Implementation approach:**
+- Import `HoverCard`, `HoverCardTrigger`, `HoverCardContent` 
+- Wrap the right-side avatar (around line 1390) with a HoverCard that shows sower info + "View Profile" button
+- Wrap the bottom-info avatar section (around line 1590) with a HoverCard with the same preview card
+- The HoverCard content will include: avatar, display name, @username, and a "View Profile" button linking to `/member/:userId`
+- On mobile (touch devices), tapping the avatar will still navigate directly to the profile since hover isn't available
 
-### Technical Details
-
-All Jitsi External API commands used in the custom bar:
-- `toggleAudio` -- already implemented
-- `toggleVideo` -- already implemented
-- `toggleRaiseHand` -- already implemented
-- `toggleSettings` -- already implemented (as `executeCommand('toggleSettings')`)
-- `toggleShareScreen` -- new
-- `toggleChat` -- new
-- `toggleTileView` -- new
-
-The custom invite (UserPlus) button triggers the existing `Dialog` that searches the `profiles` table and sends a `call_sessions` record with `status: 'ringing'` -- this already works and is unaffected.
-
-### Why This Is the Permanent Fix
-
-- No dependency on Jitsi server-side config
-- No cross-origin CSS hacks
-- No config flag guessing
-- The native toolbar simply never renders
-- Our custom bar is the single source of truth for all meeting controls
-
+**No database changes required** -- all profile data is already available in `currentPost.profiles` and `currentPost.user_id`.
