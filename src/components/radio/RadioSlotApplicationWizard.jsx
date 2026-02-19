@@ -533,6 +533,7 @@ export function RadioSlotApplicationWizard({ onClose }) {
 
       case 3:
         return (
+          <div className="space-y-6">
             {/* Documents Section */}
             <div>
               <Label className="flex items-center gap-2 mb-3">

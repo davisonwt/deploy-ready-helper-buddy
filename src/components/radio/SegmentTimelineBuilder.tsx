@@ -4,6 +4,7 @@ import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Progress } from '@/components/ui/progress';
 import { SegmentTemplateSelector, SegmentItem } from './SegmentTemplateSelector';
+import { SegmentAudioPicker } from './SegmentAudioPicker';
 import { Plus, Trash2, Shuffle, GripVertical, AlertTriangle, CheckCircle } from 'lucide-react';
 import { motion, AnimatePresence, Reorder } from 'framer-motion';
 import confetti from 'canvas-confetti';
@@ -62,6 +63,30 @@ export const SegmentTimelineBuilder: React.FC<SegmentTimelineBuilderProps> = ({
   const updateTitle = (index: number, title: string) => {
     const updated = [...segments];
     updated[index] = { ...updated[index], title };
+    onSegmentsChange(updated);
+  };
+
+  const attachAudio = (index: number, track: { id: string; title: string; url?: string; duration_seconds?: number }) => {
+    const updated = [...segments];
+    updated[index] = {
+      ...updated[index],
+      mapped_track_id: track.id,
+      mapped_track_title: track.title,
+      mapped_track_url: track.url,
+      mapped_track_duration: track.duration_seconds,
+    };
+    onSegmentsChange(updated);
+  };
+
+  const clearAudio = (index: number) => {
+    const updated = [...segments];
+    updated[index] = {
+      ...updated[index],
+      mapped_track_id: undefined,
+      mapped_track_title: undefined,
+      mapped_track_url: undefined,
+      mapped_track_duration: undefined,
+    };
     onSegmentsChange(updated);
   };
 
@@ -165,36 +190,48 @@ export const SegmentTimelineBuilder: React.FC<SegmentTimelineBuilderProps> = ({
                 <Reorder.Item
                   key={`${seg.type}-${index}-${seg.title}`}
                   value={seg}
-                  className="flex items-center gap-2 p-3 rounded-lg border bg-card cursor-grab active:cursor-grabbing hover:shadow-sm transition-shadow"
+                  className="p-3 rounded-lg border bg-card cursor-grab active:cursor-grabbing hover:shadow-sm transition-shadow"
                   style={{ borderLeftWidth: 4, borderLeftColor: seg.color }}
                 >
-                  <GripVertical className="h-4 w-4 text-muted-foreground shrink-0" />
-                  <span className="text-lg shrink-0">{seg.emoji}</span>
-                  <Input
-                    value={seg.title}
-                    onChange={(e) => updateTitle(index, e.target.value)}
-                    className="h-7 text-xs flex-1 min-w-0"
-                  />
-                  <div className="flex items-center gap-1 shrink-0">
+                  <div className="flex items-center gap-2">
+                    <GripVertical className="h-4 w-4 text-muted-foreground shrink-0" />
+                    <span className="text-lg shrink-0">{seg.emoji}</span>
                     <Input
-                      type="number"
-                      min={1}
-                      max={120}
-                      value={seg.duration}
-                      onChange={(e) => updateDuration(index, parseInt(e.target.value) || 1)}
-                      className="h-7 w-14 text-xs text-center"
+                      value={seg.title}
+                      onChange={(e) => updateTitle(index, e.target.value)}
+                      className="h-7 text-xs flex-1 min-w-0"
                     />
-                    <span className="text-[10px] text-muted-foreground">min</span>
+                    <div className="flex items-center gap-1 shrink-0">
+                      <Input
+                        type="number"
+                        min={1}
+                        max={120}
+                        value={seg.duration}
+                        onChange={(e) => updateDuration(index, parseInt(e.target.value) || 1)}
+                        className="h-7 w-14 text-xs text-center"
+                      />
+                      <span className="text-[10px] text-muted-foreground">min</span>
+                    </div>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      className="h-7 w-7 p-0 shrink-0 text-muted-foreground hover:text-destructive"
+                      onClick={() => removeSegment(index)}
+                    >
+                      <Trash2 className="h-3.5 w-3.5" />
+                    </Button>
                   </div>
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="sm"
-                    className="h-7 w-7 p-0 shrink-0 text-muted-foreground hover:text-destructive"
-                    onClick={() => removeSegment(index)}
-                  >
-                    <Trash2 className="h-3.5 w-3.5" />
-                  </Button>
+                  {/* Audio attachment row */}
+                  <div className="ml-10 mt-1">
+                    <SegmentAudioPicker
+                      segmentDuration={seg.duration}
+                      currentTrackTitle={seg.mapped_track_title}
+                      currentTrackDuration={seg.mapped_track_duration}
+                      onSelect={(track) => attachAudio(index, track)}
+                      onClear={() => clearAudio(index)}
+                    />
+                  </div>
                 </Reorder.Item>
               ))}
             </AnimatePresence>
