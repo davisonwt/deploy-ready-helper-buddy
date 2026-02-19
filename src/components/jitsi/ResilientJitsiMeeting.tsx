@@ -90,11 +90,10 @@ const ResilientJitsiMeeting = memo(function ResilientJitsiMeeting({
             enableNoAudioDetection: true,
             enableNoisyMicDetection: true,
             audioQuality: { stereo: false, opusMaxAverageBitrate: 32000 },
-            // P2P for direct audio
+            // P2P - disable for self-hosted to force JVB media relay
+            // P2P often fails behind NAT without proper TURN configuration
             p2p: {
-              enabled: true,
-              useStunTurn: true,
-              stunServers: [{ urls: 'stun:stun.l.google.com:19302' }],
+              enabled: false,
             },
             channelLastN: -1,
             enableLayerSuspension: true,

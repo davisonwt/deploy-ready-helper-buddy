@@ -6,6 +6,7 @@ import { stopAllRingtones } from '@/lib/ringtone';
 import { CALL_CONSTANTS, isCallStale, isDuplicateCall } from './callUtils';
 import { CallManagerContext } from '@/contexts/CallManagerContext';
 import { showCallNotification, closeCallNotification } from '@/lib/callNotification';
+import { JITSI_CONFIG } from '@/lib/jitsi-config';
 
 const useCallManagerInternal = () => {
   const { user } = useAuth();
@@ -466,6 +467,7 @@ const useCallManagerInternal = () => {
               status: 'accepted',
               isIncoming: false,
               startTime: Date.now(),
+              room_id: row.room_id || undefined,
             });
             return;
           }
@@ -651,6 +653,9 @@ const useCallManagerInternal = () => {
         console.warn('📞 [CALL] Could not fetch caller profile, using fallback name');
       }
 
+      // CRITICAL FIX: Generate room_id BEFORE creating DB record so both sides share the same room
+      const generatedRoomId = roomId || null; // Will be set after DB insert
+      
       // Create call record in database
       const { data: callRecord, error: callError } = await supabase
         .from('call_sessions')
@@ -668,6 +673,15 @@ const useCallManagerInternal = () => {
         throw callError;
       }
 
+      // CRITICAL: Generate the Jitsi room name from the call ID and store it in DB
+      const jitsiRoomName = roomId || JITSI_CONFIG.getRoomName(`call_${callRecord.id.replace(/-/g, '')}`);
+      
+      // Store room_id in DB so receiver can find it via polling
+      await supabase
+        .from('call_sessions')
+        .update({ room_id: jitsiRoomName })
+        .eq('id', callRecord.id);
+
       const callData = {
         id: callRecord.id,
         caller_id: userId,
@@ -675,7 +689,7 @@ const useCallManagerInternal = () => {
         receiver_id: receiverId,
         receiver_name: receiverName,
         type: type,
-        room_id: roomId,
+        room_id: jitsiRoomName,
         status: 'ringing',
         isIncoming: false,
         timestamp: Date.now()

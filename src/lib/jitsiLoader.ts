@@ -114,9 +114,7 @@ export function getJitsiIframeUrl(
     'config.membersOnly': 'false',
     'config.enableWelcomePage': 'false',
     // P2P and connectivity settings for reliable audio
-    'config.p2p.enabled': 'true',
-    'config.p2p.useStunTurn': 'true',
-    'config.p2p.stunServers': JSON.stringify([{ urls: 'stun:stun.l.google.com:19302' }]),
+    'config.p2p.enabled': 'false',
     'config.enableForcedReload': 'false',
     'config.channelLastN': '-1',
     'config.enableLayerSuspension': 'true',

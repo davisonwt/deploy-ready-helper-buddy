@@ -38,7 +38,13 @@ export function useJitsiCall({
 
   // Use existing room_id if provided (e.g., when joining an invite), otherwise generate one
   const roomName = callSession.room_id || JITSI_CONFIG.getRoomName(`call_${callSession.id.replace(/-/g, '')}`);
-
+  
+  console.log('📞 [JITSI-CALL] Room resolved:', { 
+    sessionId: callSession.id, 
+    providedRoomId: callSession.room_id, 
+    resolvedRoomName: roomName,
+    currentUserId 
+  });
   // Update call status in database
   const updateCallStatus = useCallback(async (status: string) => {
     try {
