@@ -1,6 +1,7 @@
 import React, { useState } from 'react'
 import { useGroveStation } from '@/hooks/useGroveStation'
 import RadioListenerInterface from '@/components/radio/RadioListenerInterface'
+import ListenerInteractions from '@/components/radio/ListenerInteractions'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -193,18 +194,9 @@ export default function GroveStationPage() {
               </Card>
             )}
 
-            {/* Show message when not live */}
+            {/* Listener comments/requests always available */}
             {currentShow && !liveSession && (
-              <Card>
-                <CardContent className="p-6 text-center">
-                  <div className="space-y-2">
-                    <Radio className="h-8 w-8 mx-auto text-muted-foreground" />
-                    <p className="text-muted-foreground">
-                      Show will be live soon. Messages and call-ins will be available once the host goes live.
-                    </p>
-                  </div>
-                </CardContent>
-              </Card>
+              <ListenerInteractions />
             )}
             
             {!currentShow && (
