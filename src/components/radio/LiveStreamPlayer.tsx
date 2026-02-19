@@ -6,6 +6,7 @@ import { Play, Pause, Volume2, VolumeX, SkipForward, Music, Radio } from 'lucide
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/hooks/useAuth';
 import { resolveAudioUrl } from '@/utils/resolveAudioUrl';
 import { ListenerReactionBar } from './ListenerReactionBar';
 import { BestowDuringBroadcast } from './BestowDuringBroadcast';
@@ -23,6 +24,7 @@ interface Track {
 }
 
 const LiveStreamPlayer = () => {
+  const { user } = useAuth();
   const [playing, setPlaying] = useState(false);
   const [volume, setVolume] = useState([0.7]);
   const [muted, setMuted] = useState(false);
@@ -188,6 +190,20 @@ const LiveStreamPlayer = () => {
       setCurrentTrack(track);
       setPlaying(true);
       console.log('[RadioPlayer] ✅ Playing:', track.track_title);
+
+      // Award +10 XP per unique track play per day
+      if (user) {
+        (async () => {
+          try {
+            const { data } = await supabase.rpc('award_radio_play_xp', { p_track_id: track.id });
+            if (data === true) {
+              console.log('[RadioPlayer] +10 XP awarded for:', track.track_title);
+            }
+          } catch (err) {
+            console.warn('[RadioPlayer] XP award error:', err);
+          }
+        })();
+      }
     } catch (err: any) {
       console.error('[RadioPlayer] Playback error:', err?.message || err);
       // If autoplay was blocked, just set the track so user can click play
