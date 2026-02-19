@@ -85,6 +85,7 @@ export const UnifiedConversation: React.FC<UnifiedConversationProps> = ({
   const [replyingTo, setReplyingTo] = useState<any>(null);
   const [usersTyping, setUsersTyping] = useState<string[]>([]);
   const [showInviteDialog, setShowInviteDialog] = useState(false);
+  const [showGroupInfo, setShowGroupInfo] = useState(false);
   const [availableUsers, setAvailableUsers] = useState<any[]>([]);
   const [selectedInvitees, setSelectedInvitees] = useState<string[]>([]);
   
@@ -580,7 +581,8 @@ export const UnifiedConversation: React.FC<UnifiedConversationProps> = ({
               onVideoCall={handleVideoCall}
               onInvite={handleAddPeople}
               onViewProfile={() => {
-                toast({ title: 'View Profile', description: `Viewing ${displayName}'s profile` });
+                fetchParticipants();
+                setShowGroupInfo(true);
               }}
               onMute={() => {
                 toast({ title: 'Muted', description: 'Notifications muted for this conversation' });
@@ -800,9 +802,63 @@ export const UnifiedConversation: React.FC<UnifiedConversationProps> = ({
           </ScrollArea>
           <div className="flex justify-end gap-2 mt-4">
             <Button variant="outline" onClick={() => setShowInviteDialog(false)}>Cancel</Button>
-            <Button disabled={selectedInvitees.length === 0}>
+            <Button 
+              disabled={selectedInvitees.length === 0}
+              onClick={async () => {
+                try {
+                  const { error } = await supabase.rpc('add_room_participants', {
+                    _room_id: roomId,
+                    _user_ids: selectedInvitees,
+                  });
+                  if (error) throw error;
+                  toast({ title: 'Added!', description: `${selectedInvitees.length} participant(s) added` });
+                  setSelectedInvitees([]);
+                  setShowInviteDialog(false);
+                  fetchParticipants();
+                } catch (err: any) {
+                  console.error('Error adding participants:', err);
+                  toast({ title: 'Error', description: err.message || 'Failed to add participants', variant: 'destructive' });
+                }
+              }}
+            >
               {isCallActive ? 'Add to Call' : 'Add'}
             </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Group Info Dialog */}
+      <Dialog open={showGroupInfo} onOpenChange={setShowGroupInfo}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>{roomInfo?.name || 'Group Info'}</DialogTitle>
+          </DialogHeader>
+          {roomInfo?.description && (
+            <p className="text-sm text-muted-foreground">{roomInfo.description}</p>
+          )}
+          <div className="mt-2">
+            <h4 className="text-sm font-semibold mb-2">Participants ({participants.length})</h4>
+            <ScrollArea className="max-h-72">
+              <div className="space-y-2">
+                {participants.map((p) => {
+                  const name = p.profiles?.display_name || 
+                    `${p.profiles?.first_name || ''} ${p.profiles?.last_name || ''}`.trim() || 'Unknown';
+                  const isYou = p.user_id === user?.id;
+                  return (
+                    <div key={p.user_id} className="flex items-center gap-3 p-2 rounded-lg">
+                      <Avatar className="h-9 w-9">
+                        <AvatarImage src={p.profiles?.avatar_url} />
+                        <AvatarFallback>{name.charAt(0).toUpperCase()}</AvatarFallback>
+                      </Avatar>
+                      <div className="flex-1 min-w-0">
+                        <span className="font-medium text-sm truncate block">{name}</span>
+                        {isYou && <span className="text-xs text-muted-foreground">You</span>}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </ScrollArea>
           </div>
         </DialogContent>
       </Dialog>
