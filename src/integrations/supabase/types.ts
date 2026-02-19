@@ -4790,6 +4790,36 @@ export type Database = {
           },
         ]
       }
+      radio_play_xp_log: {
+        Row: {
+          awarded_date: string
+          created_at: string
+          id: string
+          listener_id: string
+          points_awarded: number
+          track_id: string
+          track_owner_id: string
+        }
+        Insert: {
+          awarded_date?: string
+          created_at?: string
+          id?: string
+          listener_id: string
+          points_awarded?: number
+          track_id: string
+          track_owner_id: string
+        }
+        Update: {
+          awarded_date?: string
+          created_at?: string
+          id?: string
+          listener_id?: string
+          points_awarded?: number
+          track_id?: string
+          track_owner_id?: string
+        }
+        Relationships: []
+      }
       radio_reactions: {
         Row: {
           created_at: string
@@ -7845,6 +7875,15 @@ export type Database = {
           user_id_param: string
         }
         Returns: undefined
+      }
+      award_radio_play_xp: {
+        Args: {
+          p_listener_id: string
+          p_points?: number
+          p_track_id: string
+          p_track_owner_id: string
+        }
+        Returns: boolean
       }
       browse_public_rooms: {
         Args: never
