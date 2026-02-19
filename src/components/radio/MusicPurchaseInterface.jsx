@@ -134,13 +134,13 @@ export function MusicPurchaseInterface({
                       {index + 2}
                     </div>
                     <div>
-                      <p className="font-medium text-sm">{track.track_title}</p>
-                      <p className="text-xs text-muted-foreground">{track.artist_name}</p>
+                      <p className="font-medium text-sm text-foreground">{track.track_title}</p>
+                      <p className="text-xs text-foreground/70">{track.artist_name}</p>
                       <div className="flex items-center gap-2 mt-1">
                         <Badge variant="outline" className="text-xs">
                           {track.genre}
                         </Badge>
-                        <span className="text-xs text-muted-foreground">
+                        <span className="text-xs text-foreground/60">
                           {formatDuration(track.duration_seconds)}
                         </span>
                       </div>

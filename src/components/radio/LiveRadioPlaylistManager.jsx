@@ -271,8 +271,8 @@ export function LiveRadioPlaylistManager({ sessionId, isHost = false }) {
                     {currentTrackIndex + index + 2}
                   </div>
                   <div>
-                    <p className="font-medium text-sm">{track.track_title}</p>
-                    <p className="text-xs text-muted-foreground">{track.artist_name}</p>
+                    <p className="font-medium text-sm text-foreground">{track.track_title}</p>
+                    <p className="text-xs text-foreground/70">{track.artist_name}</p>
                   </div>
                 </div>
                 {user && (
