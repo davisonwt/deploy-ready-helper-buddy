@@ -3,6 +3,7 @@ import { useGroveStation } from '@/hooks/useGroveStation'
 import { useFileUpload } from '@/hooks/useFileUpload'
 import { useAuth } from '@/hooks/useAuth'
 import { supabase } from '@/integrations/supabase/client'
+import confetti from 'canvas-confetti'
 import { SecureInput, SecureTextarea } from '@/components/ui/secure-input'
 import {
   Dialog,
@@ -235,8 +236,15 @@ export function EnhancedScheduleShowForm({ open, onClose, djProfile }) {
 
     if (result.success) {
       setCurrentScheduleId(result.data.id)
+      // 🎤 Slot booking confetti explosion!
+      confetti({
+        particleCount: 150,
+        spread: 100,
+        origin: { y: 0.6 },
+        colors: ['#d97706', '#ea580c', '#16a34a', '#ca8a04', '#f59e0b'],
+      })
       toast({
-        title: "Show Scheduled! 🎉",
+        title: "🎙️ Show Scheduled! 🎉",
         description: "Your radio slot has been submitted for approval by the Gosats team. You'll be notified once it's reviewed.",
       })
       onClose()
