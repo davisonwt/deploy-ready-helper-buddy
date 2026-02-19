@@ -77,6 +77,9 @@ const ResilientJitsiMeeting = memo(function ResilientJitsiMeeting({
             enableInsecureRoomNameWarning: false,
             hideConferenceSubject: true,
             disableInviteFunctions: true,
+            hideAddMoreParticipants: true,
+            disableAddMoreHeader: true,
+            hideParticipantsSettings: true,
             // Lobby bypass
             lobby: { autoKnock: true, enabled: false },
             membersOnly: false,
@@ -119,6 +122,44 @@ const ResilientJitsiMeeting = memo(function ResilientJitsiMeeting({
         // Notify parent that API is ready
         console.log('📞 [JITSI] ✅ External API instance created successfully');
         onApiReadyRef.current?.(api);
+
+        // Inject CSS to hide native invite elements inside the Jitsi iframe
+        try {
+          const iframe = containerRef.current?.querySelector('iframe');
+          if (iframe) {
+            const checkAndInject = () => {
+              try {
+                const iframeDoc = iframe.contentDocument || iframe.contentWindow?.document;
+                if (iframeDoc) {
+                  const style = iframeDoc.createElement('style');
+                  style.textContent = `
+                    .invite-more-container,
+                    .add-people-dialog,
+                    [class*="invite"],
+                    [class*="AddPeople"],
+                    .participants-pane-footer,
+                    button[aria-label="Invite someone"],
+                    #invite-more-header,
+                    .invite-more-dialog,
+                    [data-testid="invite.button"] {
+                      display: none !important;
+                    }
+                  `;
+                  iframeDoc.head.appendChild(style);
+                  console.log('📞 [JITSI] ✅ Injected CSS to hide native invite UI');
+                }
+              } catch (e) {
+                // Cross-origin - can't inject CSS, that's OK
+                console.log('📞 [JITSI] Could not inject CSS (cross-origin)');
+              }
+            };
+            // Try immediately and after a delay
+            setTimeout(checkAndInject, 2000);
+            setTimeout(checkAndInject, 5000);
+          }
+        } catch (e) {
+          // Safe to ignore
+        }
 
         // Listen for key events
         api.addListener('videoConferenceJoined', () => {

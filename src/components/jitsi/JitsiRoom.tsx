@@ -188,6 +188,7 @@ export default function JitsiRoom({
             enableNoAudioDetection: true,
             enableNoisyMicDetection: true,
             disableInviteFunctions: true,
+            hideAddMoreParticipants: true,
             toolbarButtons: [
               'microphone', 'camera', 'desktop', 'fullscreen', 'hangup',
               'chat', 'settings', 'raisehand', 'videoquality', 'filmstrip', 'tileview',
