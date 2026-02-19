@@ -4,8 +4,6 @@
  */
 import { useState, useRef, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import data from '@emoji-mart/data';
-import Picker from '@emoji-mart/react';
 import { 
   Send, 
   Mic, 
@@ -288,17 +286,22 @@ export const MessageInput: React.FC<MessageInputProps> = ({
                 />
                 {/* Emoji Picker */}
                 {showEmojiPicker && (
-                  <div ref={emojiPickerRef} className="absolute bottom-12 right-0 z-50">
-                    <Picker
-                      data={data}
-                      onEmojiSelect={(emoji: any) => {
-                        setMessage(prev => prev + emoji.native);
-                        setShowEmojiPicker(false);
-                      }}
-                      theme="dark"
-                      previewPosition="none"
-                      skinTonePosition="none"
-                    />
+                  <div ref={emojiPickerRef} className="absolute bottom-12 right-0 z-50 bg-card border rounded-lg shadow-lg p-2 w-64 max-h-48 overflow-y-auto">
+                    <div className="grid grid-cols-8 gap-1">
+                      {['😀','😂','🥹','😍','🤩','😎','🥳','😇','🙏','❤️','🔥','👏','💯','✨','🎉','👍','👋','💪','😢','😤','🤔','😏','🫶','💀','👀','🙌','💕','😊','🤗','😌','🥰','😘','💖','⭐','🌟','💫','🎶','🫡','✅','❌'].map((emoji) => (
+                        <button
+                          key={emoji}
+                          type="button"
+                          className="text-xl hover:bg-muted rounded p-1 cursor-pointer"
+                          onClick={() => {
+                            setMessage(prev => prev + emoji);
+                            setShowEmojiPicker(false);
+                          }}
+                        >
+                          {emoji}
+                        </button>
+                      ))}
+                    </div>
                   </div>
                 )}
                 <Button
