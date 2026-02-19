@@ -232,6 +232,15 @@ const useCallManagerInternal = () => {
     }
     
     console.log('📞 [CALL] Call ended:', callData);
+
+    // CRITICAL FIX: Only process if the ended call matches one of our active calls.
+    // If we're in a DIFFERENT active call (e.g. we invited someone and their invite
+    // session ended), do NOT clear our current call state — that would kick US out.
+    const activeCall = currentCallRef.current;
+    if (activeCall && callData?.id && activeCall.id !== callData.id && activeCall.status !== 'ended') {
+      console.log('📞 [CALL] 🚫 Ignoring call_ended for invite/other call — already in active call:', activeCall.id, 'ended call:', callData.id);
+      return;
+    }
     
     // CRITICAL FIX: Stop ringtone FIRST
     try {
@@ -249,7 +258,6 @@ const useCallManagerInternal = () => {
       console.error('📞 [CALL] Error clearing end flag:', error);
     }
     
-    // CRITICAL FIX: Clear ALL call state immediately (don't wait for matching)
     const wasActiveCall = currentCall || outgoingCall || incomingCall;
     
     // Add to call history before clearing
@@ -269,7 +277,6 @@ const useCallManagerInternal = () => {
       setCallHistory(prev => [historyEntry, ...prev.slice(0, CALL_CONSTANTS.HISTORY_LIMIT - 1)]);
     }
     
-    // CRITICAL FIX: Always clear all state, regardless of callId match
     setCurrentCall(null);
     setOutgoingCall(null);
     setIncomingCall(null);
@@ -464,6 +471,13 @@ const useCallManagerInternal = () => {
           }
 
           if (row?.status === 'ended') {
+            // CRITICAL FIX: If we're in a different active call, ignore this ended update
+            const activeCall = currentCallRef.current;
+            if (activeCall && activeCall.id !== row.id && activeCall.status !== 'ended') {
+              console.log('📞 [CALL][DB] 🚫 Ignoring ended update for invite — already in active call:', activeCall.id);
+              return;
+            }
+
             const now = Date.now();
             const acceptedAtMs = row?.accepted_at ? new Date(row.accepted_at).getTime() : 0;
             const ageSinceAccept = acceptedAtMs ? (now - acceptedAtMs) : Infinity;
