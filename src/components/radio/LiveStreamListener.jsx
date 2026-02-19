@@ -22,6 +22,7 @@ import { MusicPurchaseInterface } from './MusicPurchaseInterface'
 import { resolveAudioUrl } from '@/utils/resolveAudioUrl'
 
 export function LiveStreamListener({ liveSession, currentShow }) {
+  const isPreRecorded = currentShow?.broadcast_mode === 'pre_recorded'
   const { user } = useAuth()
   const { toast } = useToast()
   const [isPlaying, setIsPlaying] = useState(false)
@@ -166,8 +167,8 @@ export function LiveStreamListener({ liveSession, currentShow }) {
   }, [playlistTracks, currentTrack])
 
   const togglePlayPause = async () => {
-    // Hard guard to prevent undefined liveSession usage
-    if (!liveSession || !liveSession.id) {
+    // For pre-recorded mode, we only need currentShow (no live session required)
+    if (!isPreRecorded && (!liveSession || !liveSession.id)) {
       toast({
         title: "Not Live Yet",
         description: "The host hasn't started the live session yet.",
@@ -181,14 +182,13 @@ export function LiveStreamListener({ liveSession, currentShow }) {
         await initializeAudioStream()
         setIsPlaying(true)
         
-        // Increment viewer count using secure function
-        const { error } = await supabase.rpc('update_viewer_count_secure', {
-          session_id_param: liveSession.id,
-          new_count: (liveSession.viewer_count || 0) + 1
-        })
-        
-        if (error) {
-          console.error('Error updating viewer count:', error)
+        // Only update viewer count if we have a live session
+        if (liveSession?.id) {
+          const { error } = await supabase.rpc('update_viewer_count_secure', {
+            session_id_param: liveSession.id,
+            new_count: (liveSession.viewer_count || 0) + 1
+          })
+          if (error) console.error('Error updating viewer count:', error)
         }
 
       } catch (error) {
@@ -209,14 +209,12 @@ export function LiveStreamListener({ liveSession, currentShow }) {
         peerConnectionRef.current = null
       }
       
-      // Decrement viewer count using secure function
-      const { error } = await supabase.rpc('update_viewer_count_secure', {
-        session_id_param: liveSession.id,
-        new_count: Math.max(0, (liveSession.viewer_count || 1) - 1)
-      })
-      
-      if (error) {
-        console.error('Error updating viewer count:', error)
+      if (liveSession?.id) {
+        const { error } = await supabase.rpc('update_viewer_count_secure', {
+          session_id_param: liveSession.id,
+          new_count: Math.max(0, (liveSession.viewer_count || 1) - 1)
+        })
+        if (error) console.error('Error updating viewer count:', error)
       }
     }
   }
@@ -432,8 +430,8 @@ export function LiveStreamListener({ liveSession, currentShow }) {
           <div className="text-center space-y-4">
             <div className="flex items-center justify-center gap-2 mb-4">
               <div className={`w-3 h-3 rounded-full ${liveSession ? 'bg-red-500 animate-pulse' : 'bg-muted-foreground/40'}`} />
-              <Badge variant={liveSession ? 'destructive' : 'secondary'} className="text-sm font-medium">
-                {liveSession ? 'LIVE' : 'Scheduled'}
+              <Badge variant={liveSession || isPreRecorded ? 'destructive' : 'secondary'} className="text-sm font-medium">
+                {liveSession ? 'LIVE' : isPreRecorded ? 'AUTO-PLAY' : 'Scheduled'}
               </Badge>
               {liveSession && (
                 <span className="text-sm text-muted-foreground">
@@ -455,7 +453,7 @@ export function LiveStreamListener({ liveSession, currentShow }) {
                 size="lg"
                 onClick={togglePlayPause}
                 className={isPlaying ? "bg-red-500 hover:bg-red-600" : ""}
-                disabled={!liveSession || !liveSession.id}
+                disabled={!isPreRecorded && (!liveSession || !liveSession.id)}
               >
                 {isPlaying ? (
                   <Pause className="h-5 w-5 mr-2" />

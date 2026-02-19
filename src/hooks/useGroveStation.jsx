@@ -68,6 +68,7 @@ export function useGroveStation() {
             description: liveSlot.radio_shows?.description,
             start_time: liveSlot.start_time,
             end_time: liveSlot.end_time,
+            broadcast_mode: liveSlot.broadcast_mode || 'live',
             status: 'live',
             listener_count: liveSlot.listener_count || 0,
             is_live: true,
@@ -90,6 +91,7 @@ export function useGroveStation() {
           .maybeSingle()
 
         if (nextSlot) {
+          const isCurrentlyAiring = new Date(nextSlot.start_time) <= new Date() && new Date(nextSlot.end_time) >= new Date()
           show = {
             schedule_id: nextSlot.id,
             show_name: nextSlot.radio_shows?.show_name || 'Scheduled Show',
@@ -99,9 +101,10 @@ export function useGroveStation() {
             description: nextSlot.radio_shows?.description,
             start_time: nextSlot.start_time,
             end_time: nextSlot.end_time,
+            broadcast_mode: nextSlot.broadcast_mode || 'live',
             status: nextSlot.status || 'scheduled',
             listener_count: nextSlot.listener_count || 0,
-            is_live: nextSlot.status === 'live',
+            is_live: nextSlot.status === 'live' || (isCurrentlyAiring && nextSlot.broadcast_mode === 'pre_recorded'),
           }
         }
       }
