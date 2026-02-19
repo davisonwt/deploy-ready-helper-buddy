@@ -134,20 +134,66 @@ const ListenerInteractions = () => {
 
   const fetchTracks = async () => {
     try {
-      const { data } = await supabase
+      // Fetch from DJ tracks
+      const { data: djTracks } = await supabase
         .from('dj_music_tracks')
         .select('id, track_title, artist_name, music_genre')
         .eq('is_public', true)
         .order('track_title');
 
-      if (data) {
-        setTracks(data.map(t => ({
-          id: t.id,
-          title: t.track_title,
-          artist: t.artist_name || 'Unknown Artist',
-          genre: t.music_genre || undefined,
-        })));
+      // Fetch music products from sowers
+      const { data: musicProducts } = await (supabase
+        .from('products') as any)
+        .select('id, title, sower_id, category')
+        .eq('product_type', 'music')
+        .order('title');
+
+      // Get sower profile names for music products
+      const sowerIds = [...new Set(((musicProducts as any[]) || []).map((p: any) => p.sower_id))] as string[];
+      let sowerNameMap: Record<string, string> = {};
+      if (sowerIds.length > 0) {
+        const { data: profiles } = await supabase
+          .from('profiles')
+          .select('user_id, display_name, first_name, last_name')
+          .in('user_id', sowerIds);
+        profiles?.forEach(p => {
+          sowerNameMap[p.user_id] = p.display_name || [p.first_name, p.last_name].filter(Boolean).join(' ') || 'Sower';
+        });
       }
+
+      const allTracks: SowerTrack[] = [];
+      const seenTitles = new Set<string>();
+
+      // Add DJ tracks
+      (djTracks || []).forEach(t => {
+        const key = t.track_title.toLowerCase().trim();
+        if (!seenTitles.has(key)) {
+          seenTitles.add(key);
+          allTracks.push({
+            id: t.id,
+            title: t.track_title,
+            artist: t.artist_name || 'Unknown Artist',
+            genre: t.music_genre || undefined,
+          });
+        }
+      });
+
+      // Add music products (deduplicated by title)
+      (musicProducts || []).forEach(p => {
+        const key = p.title.toLowerCase().trim();
+        if (!seenTitles.has(key)) {
+          seenTitles.add(key);
+          allTracks.push({
+            id: p.id,
+            title: p.title,
+            artist: sowerNameMap[p.sower_id] || 'Sower',
+            genre: p.category || undefined,
+          });
+        }
+      });
+
+      allTracks.sort((a, b) => a.title.localeCompare(b.title));
+      setTracks(allTracks);
     } catch (error) {
       console.error('Failed to fetch tracks:', error);
     }
