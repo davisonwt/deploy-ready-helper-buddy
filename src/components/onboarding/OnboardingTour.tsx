@@ -5,6 +5,7 @@ import { useUser, useSupabaseClient } from '@supabase/auth-helpers-react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from '@/hooks/use-toast';
 import { useCallManager } from '@/hooks/useCallManager';
+import { useLocation } from 'react-router-dom';
 
 const steps: Step[] = [
   {
@@ -51,6 +52,8 @@ const OnboardingTour = () => {
   const supabase = useSupabaseClient();
   const queryClient = useQueryClient();
   const { currentCall } = useCallManager();
+  const location = useLocation();
+  const isDashboard = location.pathname === '/dashboard' || location.pathname === '/';
 
   // Check if user has completed onboarding
   const { data: preferences } = useQuery({
@@ -171,7 +174,7 @@ const OnboardingTour = () => {
         }}
       />
       
-      {!run && !preferences?.onboarding_complete && (
+      {isDashboard && !run && !preferences?.onboarding_complete && (
         <Button onClick={startTour} className="fixed top-36 right-6 z-50 shadow-lg transition-all duration-300 bg-green-600/20 hover:bg-green-600 text-white/50 hover:text-white border border-green-400/30 hover:border-green-400 hover:shadow-xl">
           Start Tour
         </Button>

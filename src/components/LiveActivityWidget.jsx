@@ -27,14 +27,18 @@ import { useRoles } from '@/hooks/useRoles'
 import { toast } from 'sonner'
 import { formatDistanceToNow } from 'date-fns'
 import { getCurrentTheme } from '@/utils/dashboardThemes'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useLocation } from 'react-router-dom'
 
 export default function LiveActivityWidget() {
   const { user } = useAuth()
   const { isAdminOrGosat } = useRoles()
   const navigate = useNavigate()
+  const location = useLocation()
   const [isExpanded, setIsExpanded] = useState(true)
   const [isVisible, setIsVisible] = useState(true)
+
+  // Only show on dashboard
+  const isDashboard = location.pathname === '/dashboard' || location.pathname === '/'
   const [currentTheme, setCurrentTheme] = useState(getCurrentTheme())
   const [pendingApplications, setPendingApplications] = useState({ ambassadors: 0, whisperers: 0, drivers: 0, serviceProviders: 0 })
   
@@ -607,8 +611,7 @@ export default function LiveActivityWidget() {
   }
 
   // Show widget for all users, with different content based on auth status
-  if (!isVisible) {
-    console.log('LiveActivityWidget: Not showing - isVisible:', isVisible)
+  if (!isVisible || !isDashboard) {
     return null
   }
 
