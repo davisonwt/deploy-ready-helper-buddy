@@ -443,7 +443,10 @@ export function LiveStreamListener({ liveSession, currentShow }) {
       }
 
       setPlaylistTracks(tracks)
-      if (!currentTrack && tracks.length > 0) setCurrentTrack(tracks[0])
+      if (!currentTrack && tracks.length > 0) {
+        const { trackIndex } = calculateCurrentTrack(tracks)
+        setCurrentTrack(tracks[trackIndex])
+      }
     } catch (e) {
       console.error('Playlist preload failed:', e)
     }
