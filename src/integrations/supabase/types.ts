@@ -4366,6 +4366,44 @@ export type Database = {
           },
         ]
       }
+      radio_dj_badges: {
+        Row: {
+          badge_description: string | null
+          badge_icon: string
+          badge_name: string
+          badge_type: string
+          dj_id: string
+          earned_at: string
+          id: string
+        }
+        Insert: {
+          badge_description?: string | null
+          badge_icon?: string
+          badge_name: string
+          badge_type: string
+          dj_id: string
+          earned_at?: string
+          id?: string
+        }
+        Update: {
+          badge_description?: string | null
+          badge_icon?: string
+          badge_name?: string
+          badge_type?: string
+          dj_id?: string
+          earned_at?: string
+          id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "radio_dj_badges_dj_id_fkey"
+            columns: ["dj_id"]
+            isOneToOne: false
+            referencedRelation: "radio_djs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       radio_djs: {
         Row: {
           avatar_url: string | null
@@ -4647,11 +4685,13 @@ export type Database = {
           created_at: string
           ended_at: string | null
           id: string
+          most_clapped_segment: number | null
           peak_listeners: number | null
           schedule_id: string
           session_token: string
           started_at: string | null
           status: string
+          total_bestow_amount: number | null
           total_reactions: number | null
           updated_at: string
           viewer_count: number
@@ -4660,11 +4700,13 @@ export type Database = {
           created_at?: string
           ended_at?: string | null
           id?: string
+          most_clapped_segment?: number | null
           peak_listeners?: number | null
           schedule_id: string
           session_token: string
           started_at?: string | null
           status?: string
+          total_bestow_amount?: number | null
           total_reactions?: number | null
           updated_at?: string
           viewer_count?: number
@@ -4673,11 +4715,13 @@ export type Database = {
           created_at?: string
           ended_at?: string | null
           id?: string
+          most_clapped_segment?: number | null
           peak_listeners?: number | null
           schedule_id?: string
           session_token?: string
           started_at?: string | null
           status?: string
+          total_bestow_amount?: number | null
           total_reactions?: number | null
           updated_at?: string
           viewer_count?: number
@@ -7681,6 +7725,7 @@ export type Database = {
         Args: { p_room_id: string; p_user_id: string }
         Returns: boolean
       }
+      check_dj_badges: { Args: { p_dj_id: string }; Returns: undefined }
       check_payment_idempotency: {
         Args: { idempotency_key_param: string; user_id_param: string }
         Returns: Json

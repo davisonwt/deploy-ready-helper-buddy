@@ -37,6 +37,9 @@ import DJMusicLibrary from '@/components/radio/DJMusicLibrary'
 import DJPlaylistManager from '@/components/radio/DJPlaylistManager'
 import AutomatedSessionScheduler from '@/components/radio/AutomatedSessionScheduler'
 import { UniversalLiveSessionInterface } from '@/components/live/UniversalLiveSessionInterface'
+import { DJAchievements } from '@/components/radio/DJAchievements'
+import { DJLeaderboard } from '@/components/radio/DJLeaderboard'
+import { BroadcastHistory } from '@/components/radio/BroadcastHistory'
 
 export default function GroveStationPage() {
   const {
@@ -403,14 +406,22 @@ export default function GroveStationPage() {
                   />
                 ) : (
                   <Tabs defaultValue="profile" className="w-full">
-                    <TabsList className="grid w-full grid-cols-4">
+                    <TabsList className="grid w-full grid-cols-6">
                       <TabsTrigger value="profile">
                         <Mic className="h-4 w-4 mr-2" />
                         Profile
                       </TabsTrigger>
+                      <TabsTrigger value="achievements">
+                        <Star className="h-4 w-4 mr-2" />
+                        Badges
+                      </TabsTrigger>
+                      <TabsTrigger value="history">
+                        <Clock className="h-4 w-4 mr-2" />
+                        History
+                      </TabsTrigger>
                       <TabsTrigger value="music">
                         <Music className="h-4 w-4 mr-2" />
-                        Music Library
+                        Music
                       </TabsTrigger>
                       <TabsTrigger value="playlists">
                         <ListMusic className="h-4 w-4 mr-2" />
@@ -418,7 +429,7 @@ export default function GroveStationPage() {
                       </TabsTrigger>
                       <TabsTrigger value="automation">
                         <Zap className="h-4 w-4 mr-2" />
-                        Automation
+                        Auto
                       </TabsTrigger>
                     </TabsList>
 
@@ -492,6 +503,15 @@ export default function GroveStationPage() {
                       </div>
                     </TabsContent>
 
+                    <TabsContent value="achievements" className="space-y-6">
+                      <DJAchievements djId={userDJProfile?.id} />
+                      <DJLeaderboard />
+                    </TabsContent>
+
+                    <TabsContent value="history">
+                      <BroadcastHistory djId={userDJProfile?.id} />
+                    </TabsContent>
+
                     <TabsContent value="music">
                       <DJMusicLibrary />
                     </TabsContent>
@@ -525,6 +545,7 @@ export default function GroveStationPage() {
           {/* Stats Tab */}
           <TabsContent value="stats" className="space-y-6 p-6 bg-card">
             <StationStats stats={stats} />
+            <DJLeaderboard />
           </TabsContent>
         </Tabs>
       </Card>
