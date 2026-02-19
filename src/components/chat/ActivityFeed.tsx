@@ -1,119 +1,155 @@
 import React, { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
-import { MessageCircle, Users, BookOpen, GraduationCap, Dumbbell, Radio, Clock, Calendar } from 'lucide-react';
+import { MessageCircle, Users, Radio, Clock, Calendar } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Badge } from '@/components/ui/badge';
 import { formatDistanceToNow, format } from 'date-fns';
 
-interface Activity {
+interface RecentChat {
   id: string;
-  mode_type: string;
-  action_type: string;
-  content: string;
-  created_at: string;
-  actor_profile_id: string;
-  profiles?: any;
+  room_id: string;
+  room_name: string;
+  room_type: string;
+  last_message: string;
+  last_message_at: string;
+  sender_name: string;
+  sender_avatar: string | null;
+  participant_count: number;
 }
 
 interface ScheduledSlot {
   id: string;
-  time_slot_date: string;
   start_time: string;
   end_time: string;
   status: string | null;
   show_subject: string | null;
   show_notes: string | null;
-  broadcast_mode: string;
   radio_djs: { dj_name: string } | null;
 }
 
-const getModeIcon = (mode: string) => {
-  switch (mode) {
-    case 'chat': return <MessageCircle className="w-4 h-4" />;
-    case 'community': return <Users className="w-4 h-4" />;
-    case 'classroom': return <BookOpen className="w-4 h-4" />;
-    case 'lecture': return <GraduationCap className="w-4 h-4" />;
-    case 'training': return <Dumbbell className="w-4 h-4" />;
-    case 'radio': return <Radio className="w-4 h-4" />;
-    default: return <MessageCircle className="w-4 h-4" />;
-  }
-};
-
 export const ActivityFeed: React.FC = () => {
-  const [activities, setActivities] = useState<Activity[]>([]);
+  const [recentChats, setRecentChats] = useState<RecentChat[]>([]);
   const [radioSlots, setRadioSlots] = useState<ScheduledSlot[]>([]);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const { data: { user } } = await supabase.auth.getUser();
-        
-        // Fetch activities and upcoming radio slots in parallel
-        const [activitiesResult, slotsResult] = await Promise.all([
-          user ? supabase
-            .from('activity_feed')
-            .select('*')
-            .eq('user_id', user.id)
-            .order('created_at', { ascending: false })
-            .limit(20) : Promise.resolve({ data: [], error: null }),
-          supabase
-            .from('radio_schedule')
-            .select('id, time_slot_date, start_time, end_time, status, show_subject, show_notes, broadcast_mode, radio_djs(dj_name)')
-            .gte('end_time', new Date().toISOString())
-            .order('start_time', { ascending: true })
-            .limit(5),
-        ]);
+  const fetchData = async () => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) { setLoading(false); return; }
 
-        // Fetch profiles for activities
-        const actData = activitiesResult.data || [];
-        const actorIds = [...new Set(actData.map((a: any) => a.actor_profile_id).filter(Boolean))];
-        let activitiesWithProfiles = actData;
-        if (actorIds.length > 0) {
-          const { data: profilesData } = await supabase
+      // Get user's rooms
+      const { data: participations } = await supabase
+        .from('chat_participants')
+        .select('room_id')
+        .eq('user_id', user.id)
+        .eq('is_active', true);
+
+      const roomIds = (participations || []).map(p => p.room_id);
+
+      // Fetch rooms, recent messages, and radio slots in parallel
+      const [roomsResult, slotsResult] = await Promise.all([
+        roomIds.length > 0
+          ? supabase
+              .from('chat_rooms')
+              .select('id, name, room_type, updated_at')
+              .in('id', roomIds)
+              .eq('is_active', true)
+              .order('updated_at', { ascending: false })
+              .limit(10)
+          : Promise.resolve({ data: [], error: null }),
+        supabase
+          .from('radio_schedule')
+          .select('id, start_time, end_time, status, show_subject, show_notes, radio_djs(dj_name)')
+          .gte('end_time', new Date().toISOString())
+          .order('start_time', { ascending: true })
+          .limit(5),
+      ]);
+
+      const rooms = roomsResult.data || [];
+      setRadioSlots((slotsResult.data as ScheduledSlot[]) || []);
+
+      if (rooms.length === 0) { setRecentChats([]); setLoading(false); return; }
+
+      // Get latest message per room
+      const chatItems: RecentChat[] = [];
+      for (const room of rooms) {
+        const { data: msgs } = await supabase
+          .from('chat_messages')
+          .select('id, content, created_at, sender_id, message_type')
+          .eq('room_id', room.id)
+          .order('created_at', { ascending: false })
+          .limit(1);
+
+        const msg = msgs?.[0];
+        if (!msg) continue;
+
+        // Get sender profile
+        let senderName = 'Unknown';
+        let senderAvatar: string | null = null;
+        if (msg.sender_id) {
+          const { data: prof } = await supabase
             .from('profiles')
-            .select('*')
-            .in('id', actorIds);
-          activitiesWithProfiles = actData.map((activity: any) => ({
-            ...activity,
-            profiles: profilesData?.find((p: any) => p.id === activity.actor_profile_id),
-          }));
+            .select('display_name, first_name, last_name, avatar_url')
+            .eq('user_id', msg.sender_id)
+            .single();
+          if (prof) {
+            senderName = prof.display_name || `${prof.first_name || ''} ${prof.last_name || ''}`.trim() || 'Unknown';
+            senderAvatar = prof.avatar_url;
+          }
         }
 
-        setActivities(activitiesWithProfiles);
-        setRadioSlots((slotsResult.data as ScheduledSlot[]) || []);
-      } catch (error) {
-        console.error('Error fetching activities:', error);
-      } finally {
-        setLoading(false);
+        // Get participant count
+        const { count } = await supabase
+          .from('chat_participants')
+          .select('*', { count: 'exact', head: true })
+          .eq('room_id', room.id)
+          .eq('is_active', true);
+
+        chatItems.push({
+          id: room.id,
+          room_id: room.id,
+          room_name: room.name || (room.room_type === 'direct' ? senderName : 'Unnamed Chat'),
+          room_type: room.room_type,
+          last_message: msg.message_type === 'text' ? (msg.content || '') : `📎 ${msg.message_type}`,
+          last_message_at: msg.created_at,
+          sender_name: senderName,
+          sender_avatar: senderAvatar,
+          participant_count: count || 0,
+        });
       }
-    };
 
+      setRecentChats(chatItems);
+    } catch (error) {
+      console.error('Error fetching activity feed:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
     fetchData();
+    const interval = setInterval(fetchData, 30000);
 
-    const setupSubscription = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
+    // Realtime subscription for new messages
+    const channel = supabase
+      .channel('activity-feed-messages')
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'chat_messages' }, () => fetchData())
+      .subscribe();
 
-      const subscription = supabase
-        .channel('activity-feed-changes')
-        .on('postgres_changes', { event: '*', schema: 'public', table: 'activity_feed', filter: `user_id=eq.${user.id}` }, () => fetchData())
-        .subscribe();
-      return subscription;
+    return () => {
+      clearInterval(interval);
+      supabase.removeChannel(channel);
     };
-
-    const subscriptionPromise = setupSubscription();
-    return () => { subscriptionPromise.then(sub => sub?.unsubscribe()); };
   }, []);
 
   if (loading) {
     return (
       <div className="glass-panel rounded-2xl p-6 h-[600px]">
-        <h3 className="text-lg font-bold text-heading-primary mb-4">Activity Feed</h3>
+        <h3 className="text-lg font-bold text-heading-primary mb-4">Live Activity</h3>
         <div className="space-y-4">
-          {[1, 2, 3, 4].map((i) => (
+          {[1, 2, 3].map((i) => (
             <div key={i} className="glass-card p-4 rounded-xl animate-pulse">
               <div className="h-4 bg-muted rounded w-3/4 mb-2"></div>
               <div className="h-3 bg-muted/50 rounded w-1/2"></div>
@@ -124,7 +160,7 @@ export const ActivityFeed: React.FC = () => {
     );
   }
 
-  const hasContent = activities.length > 0 || radioSlots.length > 0;
+  const hasContent = recentChats.length > 0 || radioSlots.length > 0;
 
   return (
     <div className="glass-panel rounded-2xl p-6 h-[600px] flex flex-col">
@@ -173,44 +209,58 @@ export const ActivityFeed: React.FC = () => {
             </div>
           )}
 
-          {/* Activity Feed Items */}
-          {activities.map((activity, index) => (
-            <motion.div
-              key={activity.id}
-              className="glass-card p-4 rounded-xl hover:bg-card/80 transition-colors cursor-pointer"
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: index * 0.05 }}
-              whileHover={{ scale: 1.02 }}
-            >
-              <div className="flex items-start gap-3">
-                <Avatar className="w-10 h-10 border-2 border-primary/20">
-                  <AvatarImage src={activity.profiles?.avatar_url || activity.profiles?.profile_image_url} />
-                  <AvatarFallback className="bg-primary/20 text-primary">
-                    {activity.profiles?.display_name?.charAt(0) || activity.profiles?.username?.charAt(0) || 'U'}
-                  </AvatarFallback>
-                </Avatar>
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2 mb-1">
-                    <div className="text-primary">{getModeIcon(activity.mode_type)}</div>
-                    <p className="text-sm font-semibold text-foreground truncate">
-                      {activity.profiles?.display_name || activity.profiles?.username || 'Someone'}
-                    </p>
+          {/* Recent Chat Activity */}
+          {recentChats.length > 0 && (
+            <div>
+              <p className="text-xs font-semibold text-primary mb-2 flex items-center gap-1">
+                <MessageCircle className="w-3 h-3" /> Recent Chats
+              </p>
+              {recentChats.map((chat, index) => (
+                <motion.div
+                  key={chat.id}
+                  className="glass-card p-3 rounded-xl mb-2 hover:bg-card/80 transition-colors cursor-pointer"
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: index * 0.05 }}
+                >
+                  <div className="flex items-start gap-2">
+                    <Avatar className="w-8 h-8 border border-primary/20 shrink-0">
+                      <AvatarImage src={chat.sender_avatar || undefined} />
+                      <AvatarFallback className="bg-primary/20 text-primary text-xs">
+                        {chat.room_type === 'direct' ? chat.sender_name.charAt(0) : chat.room_name.charAt(0)}
+                      </AvatarFallback>
+                    </Avatar>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center justify-between gap-1">
+                        <span className="text-xs font-semibold text-foreground truncate">
+                          {chat.room_name}
+                        </span>
+                        <div className="flex items-center gap-1 shrink-0">
+                          {chat.room_type !== 'direct' && (
+                            <span className="text-[10px] text-muted-foreground flex items-center gap-0.5">
+                              <Users className="w-2.5 h-2.5" /> {chat.participant_count}
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                      <p className="text-[11px] text-muted-foreground truncate">
+                        <span className="font-medium">{chat.sender_name}:</span> {chat.last_message}
+                      </p>
+                      <p className="text-[10px] text-muted-foreground/70 mt-0.5">
+                        {formatDistanceToNow(new Date(chat.last_message_at), { addSuffix: true })}
+                      </p>
+                    </div>
                   </div>
-                  <p className="text-sm text-foreground/90 line-clamp-2">{activity.content}</p>
-                  <p className="text-xs text-muted-foreground mt-1">
-                    {formatDistanceToNow(new Date(activity.created_at), { addSuffix: true })}
-                  </p>
-                </div>
-              </div>
-            </motion.div>
-          ))}
+                </motion.div>
+              ))}
+            </div>
+          )}
 
           {!hasContent && (
             <div className="text-center py-8 text-foreground/80">
-              <Radio className="w-8 h-8 mx-auto mb-2 text-primary/50" />
+              <MessageCircle className="w-8 h-8 mx-auto mb-2 text-primary/50" />
               <p>No recent activity</p>
-              <p className="text-sm mt-1">Schedule a radio slot or start chatting</p>
+              <p className="text-sm mt-1">Start a conversation to see activity here</p>
             </div>
           )}
         </div>
