@@ -11,6 +11,10 @@ export interface SegmentItem {
   duration: number;
   emoji: string;
   color: string;
+  mapped_track_id?: string;
+  mapped_track_title?: string;
+  mapped_track_url?: string;
+  mapped_track_duration?: number;
 }
 
 interface Template {
