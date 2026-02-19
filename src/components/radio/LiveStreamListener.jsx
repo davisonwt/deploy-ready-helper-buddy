@@ -219,17 +219,53 @@ export function LiveStreamListener({ liveSession, currentShow }) {
     }
   }
 
+  // Calculate which track should be playing right now based on show start time
+  const calculateCurrentTrack = (tracks) => {
+    if (!currentShow?.start_time || tracks.length === 0) {
+      return { trackIndex: 0, seekOffset: 0 }
+    }
+
+    // Parse show start time (today's date + the start_time)
+    const now = new Date()
+    const [hours, minutes] = currentShow.start_time.split(':').map(Number)
+    const showStart = new Date(now)
+    showStart.setHours(hours, minutes, 0, 0)
+    
+    // If show start is in the future, start from track 0
+    if (now < showStart) {
+      return { trackIndex: 0, seekOffset: 0 }
+    }
+
+    const elapsedSeconds = Math.floor((now - showStart) / 1000)
+
+    // Calculate total playlist duration
+    const totalDuration = tracks.reduce((sum, t) => sum + (t.duration_seconds || 180), 0)
+    
+    if (totalDuration === 0) return { trackIndex: 0, seekOffset: 0 }
+
+    // Loop: find position within the repeating playlist
+    const positionInLoop = elapsedSeconds % totalDuration
+
+    let cumulative = 0
+    for (let i = 0; i < tracks.length; i++) {
+      const trackDuration = tracks[i].duration_seconds || 180
+      if (cumulative + trackDuration > positionInLoop) {
+        return { trackIndex: i, seekOffset: positionInLoop - cumulative }
+      }
+      cumulative += trackDuration
+    }
+
+    return { trackIndex: 0, seekOffset: 0 }
+  }
+
   const initializeAudioStream = async () => {
     try {
-      // Fetch playlist and play the first track directly
-      if (playlistTracks.length > 0 && currentTrack) {
-        await playCurrentTrackAudio(currentTrack)
-      } else if (playlistTracks.length > 0) {
-        const firstTrack = playlistTracks[0]
-        setCurrentTrack(firstTrack)
-        await playCurrentTrackAudio(firstTrack)
+      if (playlistTracks.length > 0) {
+        const { trackIndex, seekOffset } = calculateCurrentTrack(playlistTracks)
+        const targetTrack = playlistTracks[trackIndex]
+        setCurrentTrack(targetTrack)
+        await playCurrentTrackAudio(targetTrack, seekOffset)
       } else {
-        // Need to fetch playlist first, then play
         await fetchPlaylistAndPlay()
       }
       
@@ -288,9 +324,12 @@ export function LiveStreamListener({ liveSession, currentShow }) {
       setPlaylistTracks(tracks)
 
       if (tracks.length > 0) {
-        const firstTrack = tracks[0]
-        setCurrentTrack(firstTrack)
-        await playCurrentTrackAudio(firstTrack)
+        // Calculate which track should be playing based on elapsed time
+        const { trackIndex, seekOffset } = calculateCurrentTrack(tracks)
+        const targetTrack = tracks[trackIndex]
+        console.log(`[Listener] Resuming at track ${trackIndex + 1}/${tracks.length}: "${targetTrack.track_title}" (seek ${seekOffset}s)`)
+        setCurrentTrack(targetTrack)
+        await playCurrentTrackAudio(targetTrack, seekOffset)
       } else {
         toast({ title: "No Music", description: "No tracks available for this slot.", variant: "destructive" })
       }
@@ -329,13 +368,16 @@ export function LiveStreamListener({ liveSession, currentShow }) {
     }
   }
 
-  const playCurrentTrackAudio = async (track) => {
+  const playCurrentTrackAudio = async (track, seekOffset = 0) => {
     if (!track?.file_url || !audioRef.current) return
     try {
       const resolvedUrl = await resolveAudioUrl(track.file_url, { bucketForKeys: 'dj-music' })
-      console.log('[Listener] Playing:', track.track_title, resolvedUrl?.substring(0, 80))
+      console.log('[Listener] Playing:', track.track_title, resolvedUrl?.substring(0, 80), seekOffset ? `(seek +${seekOffset}s)` : '')
       audioRef.current.src = resolvedUrl
       audioRef.current.load()
+      if (seekOffset > 0) {
+        audioRef.current.currentTime = seekOffset
+      }
       await audioRef.current.play()
       console.log(`[Listener] ✅ Now playing: ${track.track_title}`)
       toast({ title: "Now Playing", description: `${track.track_title} by ${track.artist_name}` })
