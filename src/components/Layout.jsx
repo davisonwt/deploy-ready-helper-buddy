@@ -542,13 +542,13 @@ function Layout({ children }) {
         {isMobileMenuOpen && (
           <div className="md:hidden">
             <div 
-              className="px-2 pt-2 pb-3 space-y-1 sm:px-3 border-t"
+              className="px-3 pt-3 pb-4 space-y-2 sm:px-4 border-t"
               style={{
                 backgroundColor: currentTheme.cardBg,
                 borderColor: currentTheme.cardBorder,
               }}
             >
-              {/* Primary Navigation */}
+              {/* Primary Navigation - Pill buttons matching desktop */}
               {primaryNavigation.map((item) => {
                 const Icon = item.icon
                 const isItemActive = isActive(item.href)
@@ -556,76 +556,106 @@ function Layout({ children }) {
                   <Link
                     key={item.name}
                     to={item.href}
-                    className="flex items-center space-x-3 px-3 py-2 rounded-md text-base font-medium transition-all duration-200"
+                    className={`flex items-center space-x-3 px-4 py-2.5 text-sm font-medium transition-all duration-200 border-2 ${isItemActive ? 'shadow-lg' : ''}`}
                     style={{
-                      backgroundColor: isItemActive ? currentTheme.accent : 'transparent',
+                      backgroundColor: isItemActive ? currentTheme.accent : currentTheme.secondaryButton,
+                      borderColor: isItemActive ? currentTheme.accent : currentTheme.cardBorder,
                       color: currentTheme.textPrimary,
-                    }}
-                    onMouseEnter={(e) => {
-                      if (!isItemActive) {
-                        e.currentTarget.style.backgroundColor = currentTheme.secondaryButton;
-                      }
-                    }}
-                    onMouseLeave={(e) => {
-                      if (!isItemActive) {
-                        e.currentTarget.style.backgroundColor = 'transparent';
-                      }
+                      borderRadius: '21px',
+                      boxShadow: isItemActive
+                        ? `0 4px 12px ${currentTheme.shadow}`
+                        : 'inset 0 2px 4px rgba(0,0,0,0.1)',
                     }}
                     onClick={() => { 
                       setIsMobileMenuOpen(false);
                     }}
                   >
-                    <Icon className="h-5 w-5" />
+                    <Icon className="h-4 w-4 flex-shrink-0" />
                     <span>{item.name}</span>
                   </Link>
                 )
               })}
+
+              {/* Panel Buttons - 364yhvh days, My Garden, Let It Rain */}
+              <button
+                onClick={() => { setIsYHVHDaysOpen(true); setIsMobileMenuOpen(false); }}
+                className={`flex items-center space-x-3 px-4 py-2.5 text-sm font-medium transition-all duration-200 border-2 w-full ${isYHVHDaysActive() ? 'shadow-lg' : ''}`}
+                style={{
+                  backgroundColor: isYHVHDaysActive() ? currentTheme.accent : currentTheme.secondaryButton,
+                  borderColor: isYHVHDaysActive() ? currentTheme.accent : currentTheme.cardBorder,
+                  color: currentTheme.textPrimary,
+                  borderRadius: '21px',
+                  boxShadow: isYHVHDaysActive()
+                    ? `0 4px 12px ${currentTheme.shadow}`
+                    : 'inset 0 2px 4px rgba(0,0,0,0.1)',
+                }}
+              >
+                <Calendar className="h-4 w-4 flex-shrink-0" />
+                <span>364yhvh days</span>
+              </button>
+
+              <button
+                onClick={() => { setIsGardenOpen(true); setIsMobileMenuOpen(false); }}
+                className={`flex items-center space-x-3 px-4 py-2.5 text-sm font-medium transition-all duration-200 border-2 w-full ${isGardenActive() ? 'shadow-lg' : ''}`}
+                style={{
+                  backgroundColor: isGardenActive() ? currentTheme.accent : currentTheme.secondaryButton,
+                  borderColor: isGardenActive() ? currentTheme.accent : currentTheme.cardBorder,
+                  color: currentTheme.textPrimary,
+                  borderRadius: '21px',
+                  boxShadow: isGardenActive()
+                    ? `0 4px 12px ${currentTheme.shadow}`
+                    : 'inset 0 2px 4px rgba(0,0,0,0.1)',
+                }}
+              >
+                <User className="h-4 w-4 flex-shrink-0" />
+                <span>My Garden</span>
+              </button>
+
+              <button
+                onClick={() => { setIsLetItRainOpen(true); setIsMobileMenuOpen(false); }}
+                className={`flex items-center space-x-3 px-4 py-2.5 text-sm font-medium transition-all duration-200 border-2 w-full ${(isActive('/tithing') || isActive('/free-will-gifting')) ? 'shadow-lg' : ''}`}
+                style={{
+                  backgroundColor: (isActive('/tithing') || isActive('/free-will-gifting')) ? currentTheme.accent : currentTheme.secondaryButton,
+                  borderColor: (isActive('/tithing') || isActive('/free-will-gifting')) ? currentTheme.accent : currentTheme.cardBorder,
+                  color: currentTheme.textPrimary,
+                  borderRadius: '21px',
+                  boxShadow: (isActive('/tithing') || isActive('/free-will-gifting'))
+                    ? `0 4px 12px ${currentTheme.shadow}`
+                    : 'inset 0 2px 4px rgba(0,0,0,0.1)',
+                }}
+              >
+                <Cloud className="h-4 w-4 flex-shrink-0" />
+                <span>Let It Rain</span>
+              </button>
+
+              {/* Gosat's Button - Only show if admin/gosat */}
+              {shouldShowAdminButton && (
+                <button
+                  onClick={() => { setIsGosatOpen(true); setIsMobileMenuOpen(false); }}
+                  className="flex items-center space-x-3 px-4 py-2.5 text-sm font-medium transition-all duration-200 border-2 w-full"
+                  style={{
+                    backgroundColor: currentTheme.secondaryButton,
+                    borderColor: currentTheme.cardBorder,
+                    color: currentTheme.textPrimary,
+                    borderRadius: '21px',
+                    boxShadow: 'inset 0 2px 4px rgba(0,0,0,0.1)',
+                  }}
+                >
+                  <Settings className="h-4 w-4 flex-shrink-0" />
+                  <span>gosat's</span>
+                </button>
+              )}
               
-              {/* Grouped Navigation - Flattened for mobile */}
-              {groupedNavigation.map((group) => (
-                group.items.map((item) => {
-                  const Icon = item.icon
-                  const isItemActive = isActive(item.href)
-                  return (
-                    <Link
-                      key={item.name}
-                      to={item.href}
-                      className="flex items-center space-x-3 px-3 py-2 rounded-md text-base font-medium transition-all duration-200"
-                      style={{
-                        backgroundColor: isItemActive ? currentTheme.accent : 'transparent',
-                        color: currentTheme.textPrimary,
-                      }}
-                      onMouseEnter={(e) => {
-                        if (!isItemActive) {
-                          e.currentTarget.style.backgroundColor = currentTheme.secondaryButton;
-                        }
-                      }}
-                      onMouseLeave={(e) => {
-                        if (!isItemActive) {
-                          e.currentTarget.style.backgroundColor = 'transparent';
-                        }
-                      }}
-                      onClick={() => setIsMobileMenuOpen(false)}
-                    >
-                      <Icon className="h-5 w-5" />
-                      <span>{item.name}</span>
-                    </Link>
-                  )
-                })
-              ))}
-              
-              <div className="pt-4 mt-4 border-t" style={{ borderColor: currentTheme.cardBorder }}>
+              <div className="pt-3 mt-3 border-t" style={{ borderColor: currentTheme.cardBorder }}>
                 <Link
                   to="/profile"
-                  className="flex items-center space-x-3 px-3 py-2 rounded-md text-base font-medium"
-                  style={{ color: currentTheme.textSecondary }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.color = currentTheme.accent;
-                    e.currentTarget.style.backgroundColor = currentTheme.secondaryButton;
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.color = currentTheme.textSecondary;
-                    e.currentTarget.style.backgroundColor = 'transparent';
+                  className="flex items-center space-x-3 px-4 py-2.5 text-sm font-medium transition-all duration-200 border-2"
+                  style={{
+                    backgroundColor: currentTheme.secondaryButton,
+                    borderColor: currentTheme.cardBorder,
+                    color: currentTheme.textPrimary,
+                    borderRadius: '21px',
+                    boxShadow: 'inset 0 2px 4px rgba(0,0,0,0.1)',
                   }}
                   onClick={() => setIsMobileMenuOpen(false)}
                 >
@@ -652,18 +682,16 @@ function Layout({ children }) {
                 </Link>
                 <button
                   onClick={handleLogout}
-                  className="flex items-center space-x-3 px-3 py-2 rounded-md text-base font-medium w-full text-left"
-                  style={{ color: currentTheme.textSecondary }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.color = '#ef5350';
-                    e.currentTarget.style.backgroundColor = 'rgba(239, 83, 80, 0.1)';
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.color = currentTheme.textSecondary;
-                    e.currentTarget.style.backgroundColor = 'transparent';
+                  className="flex items-center space-x-3 px-4 py-2.5 text-sm font-medium w-full text-left mt-2 border-2 transition-all duration-200"
+                  style={{
+                    backgroundColor: currentTheme.secondaryButton,
+                    borderColor: currentTheme.cardBorder,
+                    color: currentTheme.textPrimary,
+                    borderRadius: '21px',
+                    boxShadow: 'inset 0 2px 4px rgba(0,0,0,0.1)',
                   }}
                 >
-                  <LogOut className="h-5 w-5" />
+                  <LogOut className="h-4 w-4 flex-shrink-0" />
                   <span>Logout</span>
                 </button>
               </div>
