@@ -2,11 +2,16 @@ import { useState } from 'react'
 import { motion } from 'framer-motion'
 import { MasteryModal } from './MasteryModal'
 import { useCallManager } from '@/hooks/useCallManager'
+import { useLocation } from 'react-router-dom'
 
 export function ProgressButton() {
   const [isModalOpen, setIsModalOpen] = useState(false)
   const { currentCall } = useCallManager()
+  const location = useLocation()
 
+  // Only show on dashboard
+  const isDashboard = location.pathname === '/dashboard' || location.pathname === '/'
+  if (!isDashboard) return null
   if (currentCall && currentCall.status !== 'ended') return null
 
   return (

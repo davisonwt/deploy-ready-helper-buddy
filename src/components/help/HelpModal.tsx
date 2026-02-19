@@ -25,6 +25,7 @@ import { toast } from '@/hooks/use-toast';
 import { toast as sonnerToast } from 'sonner';
 import { useMutation } from '@tanstack/react-query';
 import { useCallManager } from '@/hooks/useCallManager';
+import { useLocation } from 'react-router-dom';
 
 const docs = [
   {
@@ -86,6 +87,8 @@ const faqs = [
 const HelpModal = () => {
   const [search, setSearch] = useState('');
   const [open, setOpen] = useState(false);
+  const location = useLocation();
+  const isDashboard = location.pathname === '/dashboard' || location.pathname === '/';
   const [feedback, setFeedback] = useState('');
   const [activeTab, setActiveTab] = useState('docs');
   const user = useUser();
@@ -172,6 +175,8 @@ const HelpModal = () => {
     };
     return colors[category as keyof typeof colors] || 'bg-gray-100 text-gray-800';
   };
+
+  if (!isDashboard) return null;
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
