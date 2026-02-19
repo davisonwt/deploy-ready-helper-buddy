@@ -10,6 +10,8 @@ import { resolveAudioUrl } from '@/utils/resolveAudioUrl';
 import { ListenerReactionBar } from './ListenerReactionBar';
 import { BestowDuringBroadcast } from './BestowDuringBroadcast';
 import { ListenerStreakBadge } from './ListenerStreakBadge';
+import { NowPlayingSeedCard } from './NowPlayingSeedCard';
+import { SeedRequestForm } from './SeedRequestQueue';
 
 interface Track {
   id: string;
@@ -42,7 +44,6 @@ const LiveStreamPlayer = () => {
     try {
       const now = new Date().toISOString();
 
-      // Find current live or scheduled slot
       const { data: slot } = await supabase
         .from('radio_schedule')
         .select(`
@@ -67,7 +68,6 @@ const LiveStreamPlayer = () => {
         setScheduleId(slot.id || '');
         setBroadcastMode(slot.broadcast_mode || 'live');
 
-        // Check for live session
         const { data: session } = await supabase
           .from('radio_live_sessions')
           .select('id')
@@ -76,10 +76,8 @@ const LiveStreamPlayer = () => {
           .maybeSingle();
         if (session) setSessionId(session.id);
 
-        // Load playlist tracks
         await loadPlaylistTracks(slot.playlist_id, slot.radio_djs?.id);
       } else {
-        // No current show - try next upcoming
         const { data: next } = await supabase
           .from('radio_schedule')
           .select(`
@@ -130,7 +128,6 @@ const LiveStreamPlayer = () => {
         .filter(Boolean);
     }
 
-    // Fallback: get all DJ tracks if no playlist assigned
     if (tracks.length === 0 && djId) {
       const { data } = await supabase
         .from('dj_music_tracks')
@@ -151,11 +148,7 @@ const LiveStreamPlayer = () => {
 
   useEffect(() => {
     fetchCurrentSlot();
-
-    // Refresh every 2 minutes
     const interval = setInterval(fetchCurrentSlot, 120000);
-
-    // Subscribe to schedule changes
     const channel = supabase
       .channel('radio-player-updates')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'radio_schedule' }, () => {
@@ -210,7 +203,6 @@ const LiveStreamPlayer = () => {
     await playTrack(playlist[nextIdx]);
   };
 
-  // Auto-advance to next track
   useEffect(() => {
     const audio = audioRef.current;
     if (!audio) return;
@@ -248,107 +240,106 @@ const LiveStreamPlayer = () => {
   };
 
   return (
-    <Card className="w-full max-w-md mx-auto">
-      <CardHeader className="pb-3">
-        <CardTitle className="flex items-center justify-between">
-          <span className="flex items-center gap-2">
-            <Radio className="h-5 w-5 text-primary" />
-            AOD Station Radio
-          </span>
-          <Badge variant={broadcastMode === 'pre_recorded' ? 'secondary' : 'destructive'}>
-            {broadcastMode === 'pre_recorded' ? 'Auto-Play' : 'Live'}
-          </Badge>
-          <ListenerStreakBadge />
-        </CardTitle>
-        <div className="text-sm text-muted-foreground space-y-1">
-          <p className="font-medium text-foreground">{showName}</p>
-          {djName && <p>with {djName}</p>}
-        </div>
-      </CardHeader>
-      <CardContent className="space-y-4">
-        <audio ref={audioRef} preload="none" />
-
-        {/* Now playing */}
-        {currentTrack && (
-          <div className="flex items-center gap-3 p-3 bg-muted/50 rounded-lg">
-            <Music className="h-5 w-5 text-primary shrink-0" />
-            <div className="min-w-0 flex-1">
-              <p className="text-sm font-medium truncate">{currentTrack.track_title}</p>
-              {currentTrack.artist_name && (
-                <p className="text-xs text-muted-foreground truncate">{currentTrack.artist_name}</p>
-              )}
-            </div>
-            {djId && (
-              <BestowDuringBroadcast
-                djId={djId}
-                djName={djName}
-                currentTrackTitle={currentTrack.track_title}
-                scheduleId={scheduleId}
-              />
-            )}
+    <div className="space-y-3 w-full max-w-md mx-auto">
+      <Card>
+        <CardHeader className="pb-3">
+          <CardTitle className="flex items-center justify-between">
+            <span className="flex items-center gap-2">
+              <Radio className="h-5 w-5 text-primary" />
+              AOD Station Radio
+            </span>
+            <Badge variant={broadcastMode === 'pre_recorded' ? 'secondary' : 'destructive'}>
+              {broadcastMode === 'pre_recorded' ? 'Auto-Play' : 'Live'}
+            </Badge>
+            <ListenerStreakBadge />
+          </CardTitle>
+          <div className="text-sm text-muted-foreground space-y-1">
+            <p className="font-medium text-foreground">{showName}</p>
+            {djName && <p>with {djName}</p>}
           </div>
-        )}
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <audio ref={audioRef} preload="none" />
 
-        {/* Controls */}
-        <div className="flex items-center justify-center gap-3">
-          <Button
-            onClick={togglePlay}
-            size="lg"
-            disabled={loading || playlist.length === 0}
-            className="gap-2"
-          >
-            {playing ? <Pause className="h-5 w-5" /> : <Play className="h-5 w-5" />}
-            {playing ? 'Pause' : 'Play'}
-          </Button>
+          {/* Controls */}
+          <div className="flex items-center justify-center gap-3">
+            <Button
+              onClick={togglePlay}
+              size="lg"
+              disabled={loading || playlist.length === 0}
+              className="gap-2"
+            >
+              {playing ? <Pause className="h-5 w-5" /> : <Play className="h-5 w-5" />}
+              {playing ? 'Pause' : 'Play'}
+            </Button>
 
-          <Button
-            variant="outline"
-            size="icon"
-            onClick={skipTrack}
-            disabled={playlist.length <= 1}
-          >
-            <SkipForward className="h-4 w-4" />
-          </Button>
+            <Button
+              variant="outline"
+              size="icon"
+              onClick={skipTrack}
+              disabled={playlist.length <= 1}
+            >
+              <SkipForward className="h-4 w-4" />
+            </Button>
 
-          <Button variant="ghost" size="icon" onClick={toggleMute}>
-            {muted || volume[0] === 0 ? <VolumeX className="h-4 w-4" /> : <Volume2 className="h-4 w-4" />}
-          </Button>
-        </div>
+            <Button variant="ghost" size="icon" onClick={toggleMute}>
+              {muted || volume[0] === 0 ? <VolumeX className="h-4 w-4" /> : <Volume2 className="h-4 w-4" />}
+            </Button>
+          </div>
 
-        {/* Volume */}
-        <div className="flex items-center gap-3 px-2">
-          <VolumeX className="h-3 w-3 text-muted-foreground" />
-          <Slider
-            value={volume}
-            onValueChange={handleVolumeChange}
-            max={1}
-            min={0}
-            step={0.05}
-            className="cursor-pointer"
-          />
-          <Volume2 className="h-3 w-3 text-muted-foreground" />
-        </div>
+          {/* Volume */}
+          <div className="flex items-center gap-3 px-2">
+            <VolumeX className="h-3 w-3 text-muted-foreground" />
+            <Slider
+              value={volume}
+              onValueChange={handleVolumeChange}
+              max={1}
+              min={0}
+              step={0.05}
+              className="cursor-pointer"
+            />
+            <Volume2 className="h-3 w-3 text-muted-foreground" />
+          </div>
 
-        {/* Track count */}
-        {playlist.length > 0 && (
-          <p className="text-center text-xs text-muted-foreground">
-            Track {trackIndex + 1} of {playlist.length}
-            {playing && ' • 🔴 Playing'}
-          </p>
-        )}
+          {/* Track count */}
+          {playlist.length > 0 && (
+            <p className="text-center text-xs text-muted-foreground">
+              Track {trackIndex + 1} of {playlist.length}
+              {playing && ' • 🔴 Playing'}
+            </p>
+          )}
 
-        {playlist.length === 0 && !loading && (
-          <p className="text-center text-xs text-muted-foreground">
-            No tracks available. DJs need to upload music for this slot.
-          </p>
-        )}
+          {playlist.length === 0 && !loading && (
+            <p className="text-center text-xs text-muted-foreground">
+              No tracks available. DJs need to upload music for this slot.
+            </p>
+          )}
 
-        {/* Reaction bar */}
-        {sessionId && (
-          <ListenerReactionBar sessionId={sessionId} />
-        )}
-      </CardContent>
-    </Card>
+          {/* Reaction bar */}
+          {sessionId && (
+            <ListenerReactionBar sessionId={sessionId} />
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Now Playing Seed Card */}
+      {currentTrack && playing && (
+        <NowPlayingSeedCard
+          trackId={currentTrack.id}
+          trackTitle={currentTrack.track_title}
+          artistName={currentTrack.artist_name || undefined}
+          durationSeconds={currentTrack.duration_seconds || undefined}
+          djId={djId}
+          sessionId={sessionId || undefined}
+          scheduleId={scheduleId || undefined}
+        />
+      )}
+
+      {/* Song Request */}
+      {sessionId && (
+        <SeedRequestForm sessionId={sessionId} />
+      )}
+    </div>
   );
 };
 

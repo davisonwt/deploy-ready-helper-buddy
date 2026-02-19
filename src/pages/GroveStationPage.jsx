@@ -40,6 +40,7 @@ import { UniversalLiveSessionInterface } from '@/components/live/UniversalLiveSe
 import { DJAchievements } from '@/components/radio/DJAchievements'
 import { DJLeaderboard } from '@/components/radio/DJLeaderboard'
 import { BroadcastHistory } from '@/components/radio/BroadcastHistory'
+import { DJSeedRequestQueue } from '@/components/radio/SeedRequestQueue'
 
 export default function GroveStationPage() {
   const {
@@ -406,7 +407,7 @@ export default function GroveStationPage() {
                   />
                 ) : (
                   <Tabs defaultValue="profile" className="w-full">
-                    <TabsList className="grid w-full grid-cols-6">
+                    <TabsList className="grid w-full grid-cols-7">
                       <TabsTrigger value="profile">
                         <Mic className="h-4 w-4 mr-2" />
                         Profile
@@ -426,6 +427,10 @@ export default function GroveStationPage() {
                       <TabsTrigger value="playlists">
                         <ListMusic className="h-4 w-4 mr-2" />
                         Playlists
+                      </TabsTrigger>
+                      <TabsTrigger value="requests">
+                        <ListMusic className="h-4 w-4 mr-2" />
+                        Requests
                       </TabsTrigger>
                       <TabsTrigger value="automation">
                         <Zap className="h-4 w-4 mr-2" />
@@ -510,6 +515,17 @@ export default function GroveStationPage() {
 
                     <TabsContent value="history">
                       <BroadcastHistory djId={userDJProfile?.id} />
+                    </TabsContent>
+
+                    <TabsContent value="requests">
+                      {liveSession ? (
+                        <DJSeedRequestQueue sessionId={liveSession.id} />
+                      ) : (
+                        <div className="text-center py-8 text-muted-foreground">
+                          <ListMusic className="h-8 w-8 mx-auto mb-2 opacity-50" />
+                          <p>Song requests will appear here when you're live.</p>
+                        </div>
+                      )}
                     </TabsContent>
 
                     <TabsContent value="music">
