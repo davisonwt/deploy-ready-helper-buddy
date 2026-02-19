@@ -145,7 +145,7 @@ const ListenerInteractions = () => {
       const { data: musicProducts } = await (supabase
         .from('products') as any)
         .select('id, title, sower_id, category')
-        .eq('product_type', 'music')
+        .eq('type', 'music')
         .order('title');
 
       // Get sower profile names for music products
