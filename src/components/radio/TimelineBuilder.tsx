@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useRef, useMemo } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -10,8 +10,8 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { 
-  Music, Mic, Megaphone, FileText, Plus, Trash2, 
-  Clock, GripVertical, Search, Play, Upload 
+  Music, Mic, MicOff, Megaphone, FileText, Plus, Trash2, 
+  Clock, GripVertical, Search, Play, Upload, Square, RotateCcw
 } from 'lucide-react';
 import { useDropzone } from 'react-dropzone';
 
@@ -29,6 +29,8 @@ interface TimelineSegment {
   file?: File; // for uploaded voice notes / ads / docs
   fileUrl?: string;
   notes?: string;
+  audioBlob?: Blob; // for mic-recorded voice notes
+  audioUrl?: string; // object URL for playback preview
 }
 
 const SEGMENT_TYPES: { value: SegmentType; label: string; icon: React.ReactNode; color: string }[] = [
@@ -50,6 +52,77 @@ export const TimelineBuilder: React.FC<TimelineBuilderProps> = ({ segments, onCh
   const [musicSearch, setMusicSearch] = useState('');
   const [communityTracks, setCommunityTracks] = useState<any[]>([]);
   const [loadingTracks, setLoadingTracks] = useState(false);
+
+  // Voice recording state
+  const [recordingSegmentId, setRecordingSegmentId] = useState<string | null>(null);
+  const [recordingTime, setRecordingTime] = useState(0);
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const chunksRef = useRef<Blob[]>([]);
+  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  const MAX_RECORDING_SECONDS = 120;
+
+  const startRecording = useCallback(async (segmentId: string) => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({
+        audio: { sampleRate: 44100, channelCount: 1, echoCancellation: true, noiseSuppression: true }
+      });
+      const mediaRecorder = new MediaRecorder(stream, { mimeType: 'audio/webm;codecs=opus' });
+      chunksRef.current = [];
+      mediaRecorderRef.current = mediaRecorder;
+      setRecordingSegmentId(segmentId);
+      setRecordingTime(0);
+
+      mediaRecorder.ondataavailable = (e) => {
+        if (e.data.size > 0) chunksRef.current.push(e.data);
+      };
+
+      timerRef.current = setInterval(() => {
+        setRecordingTime(prev => {
+          if (prev + 1 >= MAX_RECORDING_SECONDS) {
+            stopRecording(segmentId);
+            toast({ title: 'Recording Stopped', description: 'Max 2 minutes reached.' });
+          }
+          return prev + 1;
+        });
+      }, 1000);
+
+      mediaRecorder.start(100);
+    } catch (err) {
+      console.error('Mic error:', err);
+      toast({ title: 'Mic Error', description: 'Could not access microphone. Check permissions.', variant: 'destructive' });
+    }
+  }, [toast]);
+
+  const stopRecording = useCallback((segmentId: string) => {
+    if (timerRef.current) { clearInterval(timerRef.current); timerRef.current = null; }
+
+    const recorder = mediaRecorderRef.current;
+    if (recorder && recorder.state !== 'inactive') {
+      recorder.onstop = () => {
+        const blob = new Blob(chunksRef.current, { type: 'audio/webm' });
+        const url = URL.createObjectURL(blob);
+        onChange(segments.map(s => s.id === segmentId ? { ...s, audioBlob: blob, audioUrl: url, file: undefined } : s));
+        recorder.stream.getTracks().forEach(t => t.stop());
+      };
+      recorder.stop();
+    }
+    setRecordingSegmentId(null);
+    setRecordingTime(0);
+  }, [segments, onChange]);
+
+  const clearRecording = useCallback((segmentId: string) => {
+    const seg = segments.find(s => s.id === segmentId);
+    if (seg?.audioUrl) URL.revokeObjectURL(seg.audioUrl);
+    onChange(segments.map(s => s.id === segmentId ? { ...s, audioBlob: undefined, audioUrl: undefined } : s));
+  }, [segments, onChange]);
+
+  const formatCountdown = (elapsed: number) => {
+    const remaining = MAX_RECORDING_SECONDS - elapsed;
+    const m = Math.floor(remaining / 60);
+    const s = remaining % 60;
+    return `${m}:${s.toString().padStart(2, '0')} left`;
+  };
 
   const usedMinutes = segments.reduce((sum, s) => sum + s.durationMinutes, 0);
   const remainingMinutes = TOTAL_MINUTES - usedMinutes;
@@ -278,15 +351,25 @@ export const TimelineBuilder: React.FC<TimelineBuilderProps> = ({ segments, onCh
                 </div>
               )}
 
-              {(segment.type === 'voice_note' || segment.type === 'ad') && (
+              {segment.type === 'voice_note' && (
+                <VoiceSegmentControls
+                  segment={segment}
+                  isRecording={recordingSegmentId === segment.id}
+                  recordingTime={recordingTime}
+                  formatCountdown={formatCountdown}
+                  onStartRecording={() => startRecording(segment.id)}
+                  onStopRecording={() => stopRecording(segment.id)}
+                  onClearRecording={() => clearRecording(segment.id)}
+                  onFileSelect={(file) => updateSegment(segment.id, { file, title: segment.title || file.name, audioBlob: undefined, audioUrl: undefined })}
+                />
+              )}
+
+              {segment.type === 'ad' && (
                 <FileUploadZone
                   segment={segment}
                   onFileSelect={(file) => updateSegment(segment.id, { file, title: segment.title || file.name })}
-                  accept={segment.type === 'voice_note' 
-                    ? { 'audio/*': ['.mp3', '.wav', '.m4a', '.ogg'] }
-                    : { 'audio/*': ['.mp3', '.wav', '.m4a'], 'video/*': ['.mp4'] }
-                  }
-                  label={segment.type === 'voice_note' ? 'Upload voice note / teaching audio' : 'Upload ad audio/video'}
+                  accept={{ 'audio/*': ['.mp3', '.wav', '.m4a'], 'video/*': ['.mp4'] }}
+                  label="Upload ad audio/video"
                 />
               )}
 
@@ -420,6 +503,110 @@ const FileUploadZone: React.FC<{
       <input {...getInputProps()} />
       <Upload className="h-4 w-4 mx-auto mb-1 text-muted-foreground" />
       <p className="text-xs text-muted-foreground">{label}</p>
+    </div>
+  );
+};
+
+// Voice segment with Record + Upload options
+const VoiceSegmentControls: React.FC<{
+  segment: TimelineSegment;
+  isRecording: boolean;
+  recordingTime: number;
+  formatCountdown: (elapsed: number) => string;
+  onStartRecording: () => void;
+  onStopRecording: () => void;
+  onClearRecording: () => void;
+  onFileSelect: (file: File) => void;
+}> = ({ segment, isRecording, recordingTime, formatCountdown, onStartRecording, onStopRecording, onClearRecording, onFileSelect }) => {
+  const { getRootProps, getInputProps } = useDropzone({
+    accept: { 'audio/*': ['.mp3', '.wav', '.m4a', '.ogg'] },
+    maxFiles: 1,
+    onDrop: (files) => files[0] && onFileSelect(files[0]),
+  });
+
+  // Show playback preview if recorded
+  if (segment.audioBlob && segment.audioUrl) {
+    return (
+      <div className="space-y-2 p-2 bg-background/40 rounded">
+        <div className="flex items-center gap-2">
+          <Mic className="h-4 w-4 text-primary" />
+          <span className="text-xs font-medium">Recorded Voice Note</span>
+          <Badge variant="outline" className="text-xs ml-auto">
+            {(segment.audioBlob.size / 1024).toFixed(0)} KB
+          </Badge>
+        </div>
+        <audio src={segment.audioUrl} controls className="w-full h-8" />
+        <div className="flex gap-2">
+          <Button type="button" variant="outline" size="sm" className="text-xs gap-1 flex-1" onClick={onClearRecording}>
+            <RotateCcw className="h-3 w-3" /> Re-record
+          </Button>
+          <Button type="button" variant="ghost" size="sm" className="text-xs gap-1 text-destructive" onClick={onClearRecording}>
+            <Trash2 className="h-3 w-3" /> Delete
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
+  // Show uploaded file
+  if (segment.file) {
+    return (
+      <div className="flex items-center gap-2 p-2 bg-background/40 rounded text-sm">
+        <FileText className="h-4 w-4" />
+        <span className="flex-1 truncate">{segment.file.name}</span>
+        <Badge variant="outline" className="text-xs">
+          {(segment.file.size / 1024 / 1024).toFixed(1)} MB
+        </Badge>
+      </div>
+    );
+  }
+
+  // Recording in progress
+  if (isRecording) {
+    return (
+      <div className="p-3 rounded border border-destructive/50 bg-destructive/10 space-y-2">
+        <div className="flex items-center gap-2">
+          <span className="relative flex h-3 w-3">
+            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-destructive opacity-75" />
+            <span className="relative inline-flex rounded-full h-3 w-3 bg-destructive" />
+          </span>
+          <span className="text-sm font-medium text-destructive">Recording...</span>
+          <span className="text-xs text-muted-foreground ml-auto font-mono">{formatCountdown(recordingTime)}</span>
+        </div>
+        <div className="h-1.5 bg-muted rounded-full overflow-hidden">
+          <div
+            className="h-full bg-destructive transition-all rounded-full"
+            style={{ width: `${(recordingTime / 120) * 100}%` }}
+          />
+        </div>
+        <Button type="button" variant="destructive" size="sm" className="w-full text-xs gap-1" onClick={onStopRecording}>
+          <Square className="h-3 w-3" /> Stop Recording
+        </Button>
+      </div>
+    );
+  }
+
+  // Default: show Record + Upload options
+  return (
+    <div className="grid grid-cols-2 gap-2">
+      <Button
+        type="button"
+        variant="outline"
+        size="sm"
+        className="text-xs gap-1.5 h-auto py-3 flex-col border-primary/30 hover:border-primary hover:bg-primary/5"
+        onClick={onStartRecording}
+      >
+        <Mic className="h-5 w-5 text-primary" />
+        Record with Mic
+      </Button>
+      <div
+        {...getRootProps()}
+        className="border border-dashed rounded-md p-3 text-center cursor-pointer hover:border-primary/50 transition-colors flex flex-col items-center justify-center"
+      >
+        <input {...getInputProps()} />
+        <Upload className="h-5 w-5 text-muted-foreground mb-1" />
+        <p className="text-xs text-muted-foreground">Upload File</p>
+      </div>
     </div>
   );
 };
