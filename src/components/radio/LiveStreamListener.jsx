@@ -139,6 +139,32 @@ export function LiveStreamListener({ liveSession, currentShow }) {
     }
   }, [user, liveSession])
 
+  // Auto-play when tracks load and user has pressed play
+  useEffect(() => {
+    if (isPlaying && currentTrack && audioRef.current && !audioRef.current.src) {
+      playCurrentTrackAudio(currentTrack)
+    }
+  }, [currentTrack, isPlaying])
+
+  // Handle track ended - play next
+  useEffect(() => {
+    const audio = audioRef.current
+    if (!audio) return
+    const onEnded = async () => {
+      if (playlistTracks.length <= 1) {
+        setIsPlaying(false)
+        return
+      }
+      const currentIdx = playlistTracks.findIndex(t => t.id === currentTrack?.id)
+      const nextIdx = (currentIdx + 1) % playlistTracks.length
+      const nextTrack = playlistTracks[nextIdx]
+      setCurrentTrack(nextTrack)
+      await playCurrentTrackAudio(nextTrack)
+    }
+    audio.addEventListener('ended', onEnded)
+    return () => audio.removeEventListener('ended', onEnded)
+  }, [playlistTracks, currentTrack])
+
   const togglePlayPause = async () => {
     // Hard guard to prevent undefined liveSession usage
     if (!liveSession || !liveSession.id) {
@@ -210,77 +236,36 @@ export function LiveStreamListener({ liveSession, currentShow }) {
 
   const fetchAndPlayCurrentTrack = async () => {
     try {
-      // Get the automated session for this live session
-      const { data: automatedSession, error: sessionError } = await supabase
-        .from('radio_automated_sessions')
-        .select(`
-          *,
-          dj_playlists (
-            *,
-            dj_playlist_tracks (
-              track_order,
-              dj_music_tracks (
-                id,
-                track_title,
-                artist_name,
-                duration_seconds,
-                file_url
-              )
-            )
-          )
-        `)
-        .eq('session_id', liveSession.id)
-        .eq('playback_status', 'playing')
-        .maybeSingle()
-
-      if (sessionError) {
-        console.log('No automated session found, creating one...')
-        // If no automated session exists, try to create one
-        await createAutomatedSessionForCurrentShow()
+      // If we already have playlist tracks loaded, play from those
+      if (playlistTracks.length > 0 && currentTrack) {
+        await playCurrentTrackAudio(currentTrack)
         return
       }
 
-      if (automatedSession && automatedSession.dj_playlists) {
-        const tracks = automatedSession.dj_playlists.dj_playlist_tracks
-          ?.sort((a, b) => a.track_order - b.track_order)
-          ?.map(pt => pt.dj_music_tracks) || []
-
-        setPlaylistTracks(tracks) // Store tracks for purchase interface
-
-        if (tracks.length > 0) {
-          const currentTrackIndex = automatedSession.current_track_index || 0
-          const currentTrack = tracks[currentTrackIndex]
-          
-          setCurrentTrack(currentTrack) // Store current track for purchase interface
-          
-          if (currentTrack?.file_url && audioRef.current) {
-            // Resolve the storage key to a signed URL
-            const resolvedUrl = await resolveAudioUrl(currentTrack.file_url, { bucketForKeys: 'dj-music' })
-            console.log('[Listener] Resolved audio URL:', resolvedUrl?.substring(0, 80))
-            audioRef.current.src = resolvedUrl
-            audioRef.current.load()
-            
-            // Auto-play the track
-            try {
-              await audioRef.current.play()
-              console.log(`[Listener] ✅ Now playing: ${currentTrack.track_title} by ${currentTrack.artist_name}`)
-              
-              toast({
-                title: "Now Playing",
-                description: `${currentTrack.track_title} by ${currentTrack.artist_name}`,
-              })
-            } catch (playError) {
-              console.error('[Listener] Autoplay blocked:', playError)
-              toast({
-                title: "Tap Play",
-                description: "Click play to start the music",
-              })
-            }
-          }
-        }
-      }
+      // Otherwise fetch the playlist first, then play
+      await fetchPlaylistForCurrentShow()
     } catch (error) {
-      console.error('Error fetching current track:', error)
+      console.error('[Listener] Error fetching current track:', error)
+    }
+  }
+
+  const playCurrentTrackAudio = async (track) => {
+    if (!track?.file_url || !audioRef.current) return
+    try {
+      const resolvedUrl = await resolveAudioUrl(track.file_url, { bucketForKeys: 'dj-music' })
+      console.log('[Listener] Playing:', track.track_title, resolvedUrl?.substring(0, 80))
+      audioRef.current.src = resolvedUrl
+      audioRef.current.load()
+      await audioRef.current.play()
+      console.log(`[Listener] ✅ Now playing: ${track.track_title}`)
+      toast({ title: "Now Playing", description: `${track.track_title} by ${track.artist_name}` })
+    } catch (playError) {
+      if (playError?.name === 'NotAllowedError') {
+        toast({ title: "Tap Play", description: "Click play to start the music" })
+      } else {
+        console.error('[Listener] Playback error:', playError)
+        toast({ title: "Playback Error", description: "Could not play track", variant: "destructive" })
+      }
     }
   }
 
