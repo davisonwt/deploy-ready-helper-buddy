@@ -140,6 +140,36 @@ export function LiveStreamListener({ liveSession, currentShow }) {
     }
   }, [user, liveSession])
 
+  // Auto-start playback when component mounts (listener joined = wants to listen)
+  const autoPlayAttempted = useRef(false)
+  useEffect(() => {
+    if (autoPlayAttempted.current) return
+    // Need either a live session or pre-recorded show with tracks
+    const canPlay = isPreRecorded ? !!currentShow : !!liveSession?.id
+    if (!canPlay) return
+    // Wait for playlist tracks to load for pre-recorded mode
+    if (isPreRecorded && playlistTracks.length === 0) return
+    
+    autoPlayAttempted.current = true
+    // Small delay to ensure audio context is ready
+    const timer = setTimeout(async () => {
+      try {
+        await initializeAudioStream()
+        setIsPlaying(true)
+        if (liveSession?.id) {
+          await supabase.rpc('update_viewer_count_secure', {
+            session_id_param: liveSession.id,
+            new_count: (liveSession.viewer_count || 0) + 1
+          })
+        }
+      } catch (err) {
+        // Browser blocked autoplay - user will need to click play
+        console.log('Autoplay blocked, user interaction required:', err.message)
+      }
+    }, 500)
+    return () => clearTimeout(timer)
+  }, [liveSession, currentShow, playlistTracks, isPreRecorded])
+
   // Auto-play when tracks load and user has pressed play
   useEffect(() => {
     if (isPlaying && currentTrack && audioRef.current && !audioRef.current.src) {
@@ -604,7 +634,7 @@ export function LiveStreamListener({ liveSession, currentShow }) {
                 ) : (
                   <Play className="h-5 w-5 mr-2" />
                 )}
-                {isPlaying ? 'Pause' : 'Listen Live'}
+                {isPlaying ? 'Pause' : 'Resume'}
               </Button>
 
               <Button
