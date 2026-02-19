@@ -12,6 +12,8 @@
   },
   "dependencies": {
     "@axe-core/react": "^4.10.2",
+    "@emoji-mart/data": "^1.2.1",
+    "@emoji-mart/react": "^1.1.1",
     "@headlessui/react": "^2.2.9",
     "@heroicons/react": "^2.2.0",
     "@hookform/resolvers": "^3.9.0",
