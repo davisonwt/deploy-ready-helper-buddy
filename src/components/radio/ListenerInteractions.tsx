@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Send, MessageCircle, Music } from 'lucide-react';
+import { Send, MessageCircle, Music, Pencil, Trash2, X, Check } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { Badge } from '@/components/ui/badge';
 import { supabase } from '@/integrations/supabase/client';
@@ -22,13 +22,14 @@ const ListenerInteractions = () => {
   const [type, setType] = useState<'comment' | 'request'>('comment');
   const [comments, setComments] = useState<Comment[]>([]);
   const [loading, setLoading] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editText, setEditText] = useState('');
   const { user } = useAuth();
   const { toast } = useToast();
 
   useEffect(() => {
     fetchComments();
 
-    // Subscribe to new comments
     const channel = supabase
       .channel('live-radio-comments')
       .on(
@@ -41,6 +42,34 @@ const ListenerInteractions = () => {
         },
         (payload) => {
           setComments((prev) => [payload.new as Comment, ...prev.slice(0, 49)]);
+        }
+      )
+      .on(
+        'postgres_changes',
+        { 
+          event: 'UPDATE', 
+          schema: 'public', 
+          table: 'live_session_messages'
+        },
+        (payload) => {
+          const updated = payload.new as any;
+          setComments((prev) => prev.map(c => 
+            c.id === updated.id 
+              ? { ...c, message: updated.content } 
+              : c
+          ));
+        }
+      )
+      .on(
+        'postgres_changes',
+        { 
+          event: 'DELETE', 
+          schema: 'public', 
+          table: 'live_session_messages'
+        },
+        (payload) => {
+          const deleted = payload.old as any;
+          setComments((prev) => prev.filter(c => c.id !== deleted.id));
         }
       )
       .subscribe();
@@ -79,13 +108,12 @@ const ListenerInteractions = () => {
 
     setLoading(true);
     try {
-      // Get current radio session
       const { data: sessionData } = await supabase
         .from('radio_live_sessions')
         .select('id')
         .eq('status', 'live')
         .limit(1)
-        .single();
+        .maybeSingle();
 
       if (!sessionData) {
         toast({ 
@@ -114,6 +142,51 @@ const ListenerInteractions = () => {
       toast({ variant: 'destructive', description: err.message });
     } finally {
       setLoading(false);
+    }
+  };
+
+  const startEdit = (comment: Comment) => {
+    setEditingId(comment.id);
+    setEditText(comment.message);
+  };
+
+  const cancelEdit = () => {
+    setEditingId(null);
+    setEditText('');
+  };
+
+  const saveEdit = async (id: string) => {
+    if (!editText.trim()) return;
+    try {
+      const { error } = await supabase
+        .from('live_session_messages')
+        .update({ content: editText.trim() })
+        .eq('id', id);
+
+      if (error) throw error;
+
+      setComments(prev => prev.map(c => c.id === id ? { ...c, message: editText.trim() } : c));
+      setEditingId(null);
+      setEditText('');
+      toast({ description: 'Message updated' });
+    } catch (err: any) {
+      toast({ variant: 'destructive', description: err.message });
+    }
+  };
+
+  const deleteComment = async (id: string) => {
+    try {
+      const { error } = await supabase
+        .from('live_session_messages')
+        .delete()
+        .eq('id', id);
+
+      if (error) throw error;
+
+      setComments(prev => prev.filter(c => c.id !== id));
+      toast({ description: 'Message deleted' });
+    } catch (err: any) {
+      toast({ variant: 'destructive', description: err.message });
     }
   };
 
@@ -197,7 +270,7 @@ const ListenerInteractions = () => {
             comments.map((comment) => (
               <div 
                 key={comment.id} 
-                className="flex items-start space-x-2 p-3 bg-muted/50 rounded-lg"
+                className="flex items-start space-x-2 p-3 bg-muted/50 rounded-lg group"
               >
                 <Badge 
                   variant={comment.type === 'request' ? 'secondary' : 'default'}
@@ -215,11 +288,51 @@ const ListenerInteractions = () => {
                     <p className="font-medium text-sm truncate">
                       {formatDisplayName(comment)}
                     </p>
-                    <span className="text-xs text-muted-foreground">
-                      {formatTime(comment.created_at)}
-                    </span>
+                    <div className="flex items-center gap-1">
+                      <span className="text-xs text-muted-foreground">
+                        {formatTime(comment.created_at)}
+                      </span>
+                      {user && user.id === comment.user_id && editingId !== comment.id && (
+                        <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-6 w-6"
+                            onClick={() => startEdit(comment)}
+                          >
+                            <Pencil className="h-3 w-3" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-6 w-6 text-destructive hover:text-destructive"
+                            onClick={() => deleteComment(comment.id)}
+                          >
+                            <Trash2 className="h-3 w-3" />
+                          </Button>
+                        </div>
+                      )}
+                    </div>
                   </div>
-                  <p className="text-sm break-words">{comment.message}</p>
+                  {editingId === comment.id ? (
+                    <div className="flex items-center gap-1 mt-1">
+                      <Input
+                        value={editText}
+                        onChange={(e) => setEditText(e.target.value)}
+                        className="h-7 text-sm"
+                        onKeyPress={(e) => e.key === 'Enter' && saveEdit(comment.id)}
+                        autoFocus
+                      />
+                      <Button size="icon" className="h-7 w-7 shrink-0" onClick={() => saveEdit(comment.id)}>
+                        <Check className="h-3 w-3" />
+                      </Button>
+                      <Button size="icon" variant="ghost" className="h-7 w-7 shrink-0" onClick={cancelEdit}>
+                        <X className="h-3 w-3" />
+                      </Button>
+                    </div>
+                  ) : (
+                    <p className="text-sm break-words">{comment.message}</p>
+                  )}
                 </div>
               </div>
             ))
