@@ -7,10 +7,12 @@ import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Calendar } from '@/components/ui/calendar';
 import { Checkbox } from '@/components/ui/checkbox';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
 import { format } from 'date-fns';
+import { formatInTimeZone } from 'date-fns-tz';
 import { supabase } from '@/integrations/supabase/client';
-import { Music, FileText, Upload } from 'lucide-react';
+import { Music, FileText, Upload, Globe } from 'lucide-react';
 import { useDropzone } from 'react-dropzone';
 
 interface ScheduleRadioSlotDialogProps {
@@ -18,6 +20,22 @@ interface ScheduleRadioSlotDialogProps {
   onOpenChange: (open: boolean) => void;
   onSuccess: () => void;
 }
+
+const TIMEZONE_OPTIONS = [
+  { label: '🇺🇸 USA (Eastern)', value: 'America/New_York', abbr: 'ET' },
+  { label: '🇺🇸 USA (Central)', value: 'America/Chicago', abbr: 'CT' },
+  { label: '🇺🇸 USA (Mountain)', value: 'America/Denver', abbr: 'MT' },
+  { label: '🇺🇸 USA (Pacific)', value: 'America/Los_Angeles', abbr: 'PT' },
+  { label: '🇿🇦 South Africa', value: 'Africa/Johannesburg', abbr: 'SAST' },
+  { label: '🇨🇦 Canada (Eastern)', value: 'America/Toronto', abbr: 'ET' },
+  { label: '🇨🇦 Canada (Pacific)', value: 'America/Vancouver', abbr: 'PT' },
+  { label: '🇬🇧 United Kingdom', value: 'Europe/London', abbr: 'GMT/BST' },
+  { label: '🇦🇺 Australia (Sydney)', value: 'Australia/Sydney', abbr: 'AEST' },
+  { label: '🇳🇬 Nigeria', value: 'Africa/Lagos', abbr: 'WAT' },
+  { label: '🇰🇪 Kenya / East Africa', value: 'Africa/Nairobi', abbr: 'EAT' },
+  { label: '🇮🇳 India', value: 'Asia/Kolkata', abbr: 'IST' },
+  { label: '🇮🇱 Israel', value: 'Asia/Jerusalem', abbr: 'IST' },
+];
 
 const TIME_SLOTS = Array.from({ length: 12 }, (_, i) => {
   const hour = i * 2;
@@ -27,6 +45,12 @@ const TIME_SLOTS = Array.from({ length: 12 }, (_, i) => {
     hour: hour,
   };
 });
+
+const detectTimezone = () => {
+  const userTz = Intl.DateTimeFormat().resolvedOptions().timeZone;
+  const match = TIMEZONE_OPTIONS.find(tz => tz.value === userTz);
+  return match ? match.value : TIMEZONE_OPTIONS[0].value;
+};
 
 export const ScheduleRadioSlotDialog: React.FC<ScheduleRadioSlotDialogProps> = ({
   open,
@@ -38,6 +62,7 @@ export const ScheduleRadioSlotDialog: React.FC<ScheduleRadioSlotDialogProps> = (
   const [step, setStep] = useState(1);
   const [selectedDate, setSelectedDate] = useState<Date>();
   const [selectedSlot, setSelectedSlot] = useState<string>('');
+  const [selectedTimezone, setSelectedTimezone] = useState(detectTimezone());
   const [formData, setFormData] = useState({
     show_title: '',
     description: '',
@@ -165,6 +190,28 @@ export const ScheduleRadioSlotDialog: React.FC<ScheduleRadioSlotDialogProps> = (
           {step === 1 && (
             <>
               <div>
+                <Label className="mb-2 flex items-center gap-2">
+                  <Globe className="h-4 w-4" />
+                  Your Timezone
+                </Label>
+                <Select value={selectedTimezone} onValueChange={setSelectedTimezone}>
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder="Select your timezone" />
+                  </SelectTrigger>
+                  <SelectContent className="max-h-60">
+                    {TIMEZONE_OPTIONS.map((tz) => (
+                      <SelectItem key={tz.value} value={tz.value}>
+                        {tz.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <p className="text-xs text-muted-foreground mt-1">
+                  Time slots below are shown in {TIMEZONE_OPTIONS.find(tz => tz.value === selectedTimezone)?.label || selectedTimezone}
+                </p>
+              </div>
+
+              <div>
                 <Label className="mb-2 block">Select Date</Label>
                 <Calendar
                   mode="single"
@@ -178,7 +225,10 @@ export const ScheduleRadioSlotDialog: React.FC<ScheduleRadioSlotDialogProps> = (
               {selectedDate && (
                 <div>
                   <Label className="mb-3 block">
-                    Select 2-Hour Slot for {format(selectedDate, 'MMMM d, yyyy')}
+                    Select 2-Hour Slot for {format(selectedDate, 'MMMM d, yyyy')}{' '}
+                    <span className="text-xs text-muted-foreground">
+                      ({TIMEZONE_OPTIONS.find(tz => tz.value === selectedTimezone)?.abbr})
+                    </span>
                   </Label>
                   <div className="grid grid-cols-2 gap-2 max-h-60 overflow-y-auto p-2">
                     {TIME_SLOTS.map((slot) => (
@@ -205,7 +255,8 @@ export const ScheduleRadioSlotDialog: React.FC<ScheduleRadioSlotDialogProps> = (
                   <Badge>Selected Slot</Badge>
                   <span className="font-semibold">
                     {selectedDate && format(selectedDate, 'MMMM d, yyyy')} •{' '}
-                    {TIME_SLOTS.find((s) => s.id === selectedSlot)?.time}
+                    {TIME_SLOTS.find((s) => s.id === selectedSlot)?.time}{' '}
+                    ({TIMEZONE_OPTIONS.find(tz => tz.value === selectedTimezone)?.abbr})
                   </span>
                 </div>
               </div>
