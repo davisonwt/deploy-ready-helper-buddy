@@ -301,14 +301,6 @@ export const RadioMode: React.FC = () => {
             <CardContent className="p-8 text-center">
               <Clock className="w-12 h-12 mx-auto mb-3 text-primary/50" />
               <p className="text-foreground/70">No upcoming radio slots scheduled</p>
-              <Button
-                variant="outline"
-                className="mt-3 gap-2"
-                onClick={() => setScheduleDialogOpen(true)}
-              >
-                <Plus className="w-4 h-4" />
-                Schedule One Now
-              </Button>
             </CardContent>
           </Card>
         ) : (
