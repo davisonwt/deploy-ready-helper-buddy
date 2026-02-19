@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
@@ -15,7 +15,9 @@ import {
   Users,
   MapPin,
   ShoppingBag,
-  Package
+  Package,
+  ChevronLeft,
+  ChevronRight
 } from 'lucide-react';
 
 interface PublicProfile {
@@ -105,7 +107,7 @@ export default function PublicProfilePage() {
             .order('created_at', { ascending: false }),
           supabase
             .from('sower_books')
-            .select('id, title, description, price, cover_image_url, category, status')
+            .select('id, title, description, bestowal_value, cover_image_url, image_urls, category, status')
             .eq('sower_id', sowerId)
             .eq('status', 'active')
             .order('created_at', { ascending: false }),
@@ -126,9 +128,9 @@ export default function PublicProfilePage() {
           id: b.id,
           title: b.title,
           description: b.description,
-          price: b.price,
+          price: b.bestowal_value,
           cover_image_url: b.cover_image_url,
-          image_urls: null,
+          image_urls: b.image_urls,
           type: 'Book',
           category: b.category,
           status: b.status,
@@ -291,46 +293,73 @@ export default function PublicProfilePage() {
             </div>
           </div>
 
-          {/* Sower's Seeds */}
+          {/* Sower's Seeds - Horizontal Slider */}
           {seeds.length > 0 && (
             <div className="pt-4 border-t">
               <h2 className="text-lg font-bold flex items-center gap-2 mb-4">
                 <ShoppingBag className="h-5 w-5 text-primary" />
                 Seeds Sowed ({seeds.length})
               </h2>
-              <div className="grid grid-cols-2 gap-3">
-                {seeds.map((seed) => (
-                  <Link key={seed.id} to={`/products/${seed.id}`} className="no-underline">
-                    <Card className="overflow-hidden hover:shadow-md transition-shadow cursor-pointer">
-                      <div className="aspect-square bg-muted relative">
-                        {(seed.cover_image_url || seed.image_urls?.[0]) ? (
-                          <img
-                            src={seed.cover_image_url || seed.image_urls?.[0]}
-                            alt={seed.title}
-                            className="w-full h-full object-cover"
-                          />
-                        ) : (
-                          <div className="w-full h-full flex items-center justify-center">
-                            <Package className="h-8 w-8 text-muted-foreground" />
-                          </div>
-                        )}
-                        {seed.type && (
-                          <Badge className="absolute top-1 left-1 text-[10px] px-1.5 py-0.5">
-                            {seed.type}
-                          </Badge>
-                        )}
-                      </div>
-                      <CardContent className="p-2">
-                        <p className="text-sm font-semibold truncate">{seed.title}</p>
-                        {seed.price != null && (
-                          <p className="text-xs text-muted-foreground">
-                            ${seed.price.toFixed(2)}
-                          </p>
-                        )}
-                      </CardContent>
-                    </Card>
-                  </Link>
-                ))}
+              <div className="relative group">
+                {/* Left Arrow */}
+                <button
+                  onClick={() => {
+                    const el = document.getElementById('seeds-slider');
+                    if (el) el.scrollBy({ left: -200, behavior: 'smooth' });
+                  }}
+                  className="absolute left-0 top-1/2 -translate-y-1/2 z-10 w-8 h-8 rounded-full bg-background border shadow-md flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                >
+                  <ChevronLeft className="h-4 w-4" />
+                </button>
+                {/* Right Arrow */}
+                <button
+                  onClick={() => {
+                    const el = document.getElementById('seeds-slider');
+                    if (el) el.scrollBy({ left: 200, behavior: 'smooth' });
+                  }}
+                  className="absolute right-0 top-1/2 -translate-y-1/2 z-10 w-8 h-8 rounded-full bg-background border shadow-md flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                >
+                  <ChevronRight className="h-4 w-4" />
+                </button>
+                {/* Scrollable container */}
+                <div
+                  id="seeds-slider"
+                  className="flex gap-3 overflow-x-auto scrollbar-hide snap-x snap-mandatory pb-2"
+                  style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+                >
+                  {seeds.map((seed) => (
+                    <Link key={seed.id} to={`/products/${seed.id}`} className="no-underline flex-shrink-0 w-40 snap-start">
+                      <Card className="overflow-hidden hover:shadow-md transition-shadow cursor-pointer">
+                        <div className="aspect-square bg-muted relative">
+                          {(seed.cover_image_url || seed.image_urls?.[0]) ? (
+                            <img
+                              src={seed.cover_image_url || seed.image_urls?.[0]}
+                              alt={seed.title}
+                              className="w-full h-full object-cover"
+                            />
+                          ) : (
+                            <div className="w-full h-full flex items-center justify-center">
+                              <Package className="h-8 w-8 text-muted-foreground" />
+                            </div>
+                          )}
+                          {seed.type && (
+                            <Badge className="absolute top-1 left-1 text-[10px] px-1.5 py-0.5">
+                              {seed.type}
+                            </Badge>
+                          )}
+                        </div>
+                        <CardContent className="p-2">
+                          <p className="text-sm font-semibold truncate">{seed.title}</p>
+                          {seed.price != null && (
+                            <p className="text-xs text-muted-foreground">
+                              ${seed.price.toFixed(2)}
+                            </p>
+                          )}
+                        </CardContent>
+                      </Card>
+                    </Link>
+                  ))}
+                </div>
               </div>
             </div>
           )}
