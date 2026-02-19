@@ -653,9 +653,11 @@ const useCallManagerInternal = () => {
         console.warn('📞 [CALL] Could not fetch caller profile, using fallback name');
       }
 
-      // CRITICAL FIX: Generate room_id BEFORE insert so both sides get it immediately
-      // Use crypto.randomUUID for a unique room, then pass through getRoomName for lobby bypass
-      const jitsiRoomName = roomId || JITSI_CONFIG.getRoomName(`call_${crypto.randomUUID().replace(/-/g, '')}`);
+      // CRITICAL FIX: ALWAYS pass through getRoomName() to ensure:
+      // 1. No hyphens (meet.jit.si rejects/lobbies them)
+      // 2. Long alphanumeric prefix for lobby bypass
+      // 3. Consistent format for both caller and receiver
+      const jitsiRoomName = JITSI_CONFIG.getRoomName(roomId || `call_${crypto.randomUUID().replace(/-/g, '')}`);
       console.log('📞 [CALL] Generated jitsiRoomName:', jitsiRoomName);
       
       // Create call record WITH room_id in a single atomic insert — no race condition
