@@ -7876,15 +7876,17 @@ export type Database = {
         }
         Returns: undefined
       }
-      award_radio_play_xp: {
-        Args: {
-          p_listener_id: string
-          p_points?: number
-          p_track_id: string
-          p_track_owner_id: string
-        }
-        Returns: boolean
-      }
+      award_radio_play_xp:
+        | { Args: { p_track_id: string }; Returns: boolean }
+        | {
+            Args: {
+              p_listener_id: string
+              p_points?: number
+              p_track_id: string
+              p_track_owner_id: string
+            }
+            Returns: boolean
+          }
       browse_public_rooms: {
         Args: never
         Returns: {
