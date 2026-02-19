@@ -1,10 +1,5 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
-
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers":
-    "authorization, x-client-info, apikey, content-type",
-};
+import { getSecureCorsHeaders } from "../_shared/security.ts";
 
 interface AdminNotificationRequest {
   email: string;
@@ -16,6 +11,8 @@ interface AdminNotificationRequest {
 }
 
 const handler = async (req: Request): Promise<Response> => {
+  const corsHeaders = getSecureCorsHeaders(req);
+
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
