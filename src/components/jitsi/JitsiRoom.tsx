@@ -7,7 +7,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
-import { Mic, MicOff, Video, VideoOff, Phone, Users, Hand, Settings, UserPlus, Search, Check } from 'lucide-react';
+import { Mic, MicOff, Video, VideoOff, Phone, Users, Hand, Settings, UserPlus, Search, Check, Monitor, MessageSquare, LayoutGrid } from 'lucide-react';
 import { JITSI_CONFIG } from '@/lib/jitsi-config';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
@@ -162,6 +162,9 @@ export default function JitsiRoom({
   const toggleVideo = () => jitsiApi.current?.executeCommand('toggleVideo');
   const toggleRaiseHand = () => jitsiApi.current?.executeCommand('toggleRaiseHand');
   const openSettings = () => jitsiApi.current?.executeCommand('toggleSettings');
+  const toggleScreenShare = () => jitsiApi.current?.executeCommand('toggleShareScreen');
+  const toggleChat = () => jitsiApi.current?.executeCommand('toggleChat');
+  const toggleTileView = () => jitsiApi.current?.executeCommand('toggleTileView');
 
   return (
     <div className="relative w-full h-screen bg-background">
@@ -189,16 +192,12 @@ export default function JitsiRoom({
             enableNoisyMicDetection: true,
             disableInviteFunctions: true,
             hideAddMoreParticipants: true,
-            toolbarButtons: [
-              'microphone', 'camera', 'desktop', 'fullscreen', 'hangup',
-              'chat', 'settings', 'raisehand', 'videoquality', 'filmstrip', 'tileview',
-            ],
+            toolbarButtons: [],
           }}
           interfaceConfigOverwrite={{
-            TOOLBAR_BUTTONS: [
-              'microphone', 'camera', 'desktop', 'fullscreen', 'hangup',
-              'chat', 'settings', 'raisehand', 'videoquality', 'filmstrip', 'tileview',
-            ],
+            TOOLBAR_BUTTONS: [],
+            TOOLBAR_ALWAYS_VISIBLE: false,
+            TOOLBAR_TIMEOUT: 0,
             SETTINGS_SECTIONS: ['devices', 'language', 'profile'],
             DEFAULT_REMOTE_DISPLAY_NAME: 'Participant',
             HIDE_INVITE_MORE_HEADER: true,
@@ -232,6 +231,15 @@ export default function JitsiRoom({
               </Button>
               <Button variant={isHandRaised ? 'default' : 'outline'} size="icon" onClick={toggleRaiseHand} className="rounded-full h-12 w-12">
                 <Hand className="h-5 w-5" />
+              </Button>
+              <Button variant="outline" size="icon" onClick={toggleScreenShare} className="rounded-full h-12 w-12" title="Share screen">
+                <Monitor className="h-5 w-5" />
+              </Button>
+              <Button variant="outline" size="icon" onClick={toggleChat} className="rounded-full h-12 w-12" title="Chat">
+                <MessageSquare className="h-5 w-5" />
+              </Button>
+              <Button variant="outline" size="icon" onClick={toggleTileView} className="rounded-full h-12 w-12" title="Tile view">
+                <LayoutGrid className="h-5 w-5" />
               </Button>
               <Button variant="outline" size="icon" onClick={openSettings} className="rounded-full h-12 w-12">
                 <Settings className="h-5 w-5" />

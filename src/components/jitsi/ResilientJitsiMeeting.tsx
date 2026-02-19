@@ -80,6 +80,7 @@ const ResilientJitsiMeeting = memo(function ResilientJitsiMeeting({
             hideAddMoreParticipants: true,
             disableAddMoreHeader: true,
             hideParticipantsSettings: true,
+            toolbarButtons: [],
             // Lobby bypass
             lobby: { autoKnock: true, enabled: false },
             membersOnly: false,
@@ -107,6 +108,9 @@ const ResilientJitsiMeeting = memo(function ResilientJitsiMeeting({
             SHOW_WATERMARK_FOR_GUESTS: false,
             HIDE_INVITE_MORE_HEADER: true,
             DISABLE_JOIN_LEAVE_NOTIFICATIONS: false,
+            TOOLBAR_BUTTONS: [],
+            TOOLBAR_ALWAYS_VISIBLE: false,
+            TOOLBAR_TIMEOUT: 0,
             ...interfaceConfigOverwrite,
           },
         });
@@ -123,43 +127,7 @@ const ResilientJitsiMeeting = memo(function ResilientJitsiMeeting({
         console.log('📞 [JITSI] ✅ External API instance created successfully');
         onApiReadyRef.current?.(api);
 
-        // Inject CSS to hide native invite elements inside the Jitsi iframe
-        try {
-          const iframe = containerRef.current?.querySelector('iframe');
-          if (iframe) {
-            const checkAndInject = () => {
-              try {
-                const iframeDoc = iframe.contentDocument || iframe.contentWindow?.document;
-                if (iframeDoc) {
-                  const style = iframeDoc.createElement('style');
-                  style.textContent = `
-                    .invite-more-container,
-                    .add-people-dialog,
-                    [class*="invite"],
-                    [class*="AddPeople"],
-                    .participants-pane-footer,
-                    button[aria-label="Invite someone"],
-                    #invite-more-header,
-                    .invite-more-dialog,
-                    [data-testid="invite.button"] {
-                      display: none !important;
-                    }
-                  `;
-                  iframeDoc.head.appendChild(style);
-                  console.log('📞 [JITSI] ✅ Injected CSS to hide native invite UI');
-                }
-              } catch (e) {
-                // Cross-origin - can't inject CSS, that's OK
-                console.log('📞 [JITSI] Could not inject CSS (cross-origin)');
-              }
-            };
-            // Try immediately and after a delay
-            setTimeout(checkAndInject, 2000);
-            setTimeout(checkAndInject, 5000);
-          }
-        } catch (e) {
-          // Safe to ignore
-        }
+        // CSS injection removed - native toolbar is fully hidden via empty TOOLBAR_BUTTONS
 
         // Listen for key events
         api.addListener('videoConferenceJoined', () => {
