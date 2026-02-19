@@ -4,6 +4,8 @@
  */
 import { useState, useRef, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import data from '@emoji-mart/data';
+import Picker from '@emoji-mart/react';
 import { 
   Send, 
   Mic, 
@@ -51,10 +53,12 @@ export const MessageInput: React.FC<MessageInputProps> = ({
   const [message, setMessage] = useState('');
   const [isRecording, setIsRecording] = useState(false);
   const [recordingDuration, setRecordingDuration] = useState(0);
+  const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
   const recordingTimerRef = useRef<NodeJS.Timeout | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const emojiPickerRef = useRef<HTMLDivElement>(null);
 
   const handleSend = useCallback(() => {
     if (!message.trim() || disabled) return;
@@ -282,11 +286,27 @@ export const MessageInput: React.FC<MessageInputProps> = ({
                   disabled={disabled}
                   className="pr-10 rounded-full bg-muted/50 border-0 focus-visible:ring-1"
                 />
+                {/* Emoji Picker */}
+                {showEmojiPicker && (
+                  <div ref={emojiPickerRef} className="absolute bottom-12 right-0 z-50">
+                    <Picker
+                      data={data}
+                      onEmojiSelect={(emoji: any) => {
+                        setMessage(prev => prev + emoji.native);
+                        setShowEmojiPicker(false);
+                      }}
+                      theme="dark"
+                      previewPosition="none"
+                      skinTonePosition="none"
+                    />
+                  </div>
+                )}
                 <Button
                   variant="ghost"
                   size="icon"
                   className="absolute right-1 top-1/2 -translate-y-1/2 h-8 w-8 rounded-full"
                   disabled={disabled}
+                  onClick={() => setShowEmojiPicker(prev => !prev)}
                 >
                   <Smile className="h-5 w-5 text-muted-foreground" />
                 </Button>
