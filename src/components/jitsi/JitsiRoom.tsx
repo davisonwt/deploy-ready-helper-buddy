@@ -121,6 +121,7 @@ export default function JitsiRoom({
       {!isFallbackMode && (
         <CallControlBar
           jitsiApi={jitsiApi.current}
+          roomName={jitsiRoomName}
           isAudioMuted={isAudioMuted}
           isVideoMuted={isVideoMuted}
           isHandRaised={isHandRaised}

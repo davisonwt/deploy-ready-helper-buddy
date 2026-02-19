@@ -419,6 +419,7 @@ const useCallManagerInternal = () => {
               type: row.call_type || 'audio',
               status: row.status,
               isIncoming: true,
+              room_id: row.room_id || undefined,
             });
           } else {
             console.log('📞 [CALL][DB] INSERT status is not "ringing":', row.status);
@@ -1120,7 +1121,7 @@ const useCallManagerInternal = () => {
         const sinceIso = new Date(Date.now() - 60000).toISOString();
         const { data, error } = await supabase
           .from('call_sessions')
-          .select('id, caller_id, receiver_id, call_type, status, created_at')
+          .select('id, caller_id, receiver_id, call_type, status, created_at, room_id')
           .eq('receiver_id', userId)
           .eq('status', 'ringing')
           .gt('created_at', sinceIso)
@@ -1161,7 +1162,8 @@ const useCallManagerInternal = () => {
               type: call.call_type || 'audio',
               status: call.status,
               isIncoming: true,
-              timestamp: new Date(call.created_at).getTime()
+              timestamp: new Date(call.created_at).getTime(),
+              room_id: call.room_id || undefined,
             });
           } else {
             // Only log occasionally when call is already in state (every 5th poll = 10 seconds)

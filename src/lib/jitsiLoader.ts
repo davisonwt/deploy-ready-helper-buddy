@@ -112,6 +112,7 @@ export function getJitsiIframeUrl(
     'config.lobby.enabled': 'false',
     'config.enableInsecureRoomNameWarning': 'false',
     'config.membersOnly': 'false',
+    'config.enableWelcomePage': 'false',
     // P2P and connectivity settings for reliable audio
     'config.p2p.enabled': 'true',
     'config.p2p.useStunTurn': 'true',

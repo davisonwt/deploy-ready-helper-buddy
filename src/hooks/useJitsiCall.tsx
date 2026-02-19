@@ -36,8 +36,8 @@ export function useJitsiCall({
   const durationIntervalRef = useRef<number | null>(null);
   const apiRef = useRef<any>(null);
 
-  // Generate unique room name for this call
-  const roomName = JITSI_CONFIG.getRoomName(`call_${callSession.id.replace(/-/g, '')}`);
+  // Use existing room_id if provided (e.g., when joining an invite), otherwise generate one
+  const roomName = callSession.room_id || JITSI_CONFIG.getRoomName(`call_${callSession.id.replace(/-/g, '')}`);
 
   // Update call status in database
   const updateCallStatus = useCallback(async (status: string) => {
