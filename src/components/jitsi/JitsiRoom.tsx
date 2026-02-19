@@ -1,12 +1,13 @@
-import { useState, useRef, useCallback } from 'react';
+import { useState, useRef, useCallback, useEffect } from 'react';
 import ResilientJitsiMeeting from '@/components/jitsi/ResilientJitsiMeeting';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
-import { Mic, MicOff, Video, VideoOff, Phone, Users, Hand, Settings, UserPlus } from 'lucide-react';
+import { Mic, MicOff, Video, VideoOff, Phone, Users, Hand, Settings, UserPlus, Search, Check } from 'lucide-react';
 import { JITSI_CONFIG } from '@/lib/jitsi-config';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
@@ -35,21 +36,48 @@ export default function JitsiRoom({
   const [availableUsers, setAvailableUsers] = useState<any[]>([]);
   const [loadingUsers, setLoadingUsers] = useState(false);
   const [isFallbackMode, setIsFallbackMode] = useState(false);
+  const [inviteSearch, setInviteSearch] = useState('');
+  const [invitedUserIds, setInvitedUserIds] = useState<Set<string>>(new Set());
   const { toast } = useToast();
 
   const jitsiRoomName = JITSI_CONFIG.getRoomName(roomName);
+
+  // Load users when dialog opens or search changes
+  useEffect(() => {
+    if (!showInviteDialog || !user) return;
+    const timeout = setTimeout(() => {
+      loadAvailableUsers();
+    }, 300); // debounce
+    return () => clearTimeout(timeout);
+  }, [showInviteDialog, inviteSearch, user]);
 
   const loadAvailableUsers = async () => {
     if (!user) return;
     setLoadingUsers(true);
     try {
-      const { data: profiles, error } = await supabase
+      let query = supabase
         .from('profiles')
         .select('id, user_id, display_name, avatar_url, first_name, last_name')
         .neq('user_id', user.id)
-        .limit(50);
+        .limit(30);
+
+      if (inviteSearch.trim()) {
+        const s = inviteSearch.trim();
+        query = query.or(
+          `display_name.ilike.%${s}%,first_name.ilike.%${s}%,last_name.ilike.%${s}%`
+        );
+      }
+
+      const { data: profiles, error } = await query;
       if (error) throw error;
-      setAvailableUsers(profiles || []);
+
+      // Filter out blank names
+      const filtered = (profiles || []).filter((u: any) => {
+        const name = (u.display_name || `${u.first_name || ''} ${u.last_name || ''}`.trim());
+        return name.length > 1 && name !== ' ';
+      });
+
+      setAvailableUsers(filtered);
     } catch (error) {
       console.error('Error loading users:', error);
     } finally {
@@ -58,20 +86,30 @@ export default function JitsiRoom({
   };
 
   const handleInviteUser = async (invitedUser: any) => {
-    const roomLink = `${window.location.origin}/communications-hub?joinCall=${roomName}`;
+    if (!user) return;
     try {
-      await navigator.clipboard.writeText(roomLink);
-      toast({
-        title: 'Invite sent!',
-        description: `Room link copied. Share it with ${invitedUser.display_name || invitedUser.first_name || 'the user'} to join the call.`,
+      // Create a call_session record so the invited user gets a real in-app notification
+      const { error } = await supabase.from('call_sessions').insert({
+        caller_id: user.id,
+        receiver_id: invitedUser.user_id,
+        call_type: 'video',
+        status: 'ringing',
       });
-    } catch {
+      if (error) throw error;
+
+      setInvitedUserIds(prev => new Set(prev).add(invitedUser.user_id));
       toast({
-        title: 'Invite ready',
-        description: `Ask ${invitedUser.display_name || invitedUser.first_name || 'the user'} to join room: ${roomName}`,
+        title: 'Invitation sent!',
+        description: `${invitedUser.display_name || invitedUser.first_name || 'User'} will receive a call notification.`,
+      });
+    } catch (err: any) {
+      console.error('Invite error:', err);
+      toast({
+        variant: 'destructive',
+        title: 'Invite failed',
+        description: err.message || 'Could not send invitation',
       });
     }
-    setShowInviteDialog(false);
   };
 
   const onApiReady = useCallback((externalApi: any) => {
@@ -166,7 +204,7 @@ export default function JitsiRoom({
         />
       </div>
 
-      {/* Custom Control Bar - only show when API mode (not iframe fallback) */}
+      {/* Custom Control Bar */}
       {!isFallbackMode && (
         <div className="absolute bottom-6 left-1/2 -translate-x-1/2 z-20">
           <Card className="p-4 shadow-lg">
@@ -175,7 +213,7 @@ export default function JitsiRoom({
                 <Users className="h-4 w-4" />
                 <span className="text-sm font-medium">{participantCount}</span>
               </div>
-              <Button variant="outline" size="icon" onClick={() => { loadAvailableUsers(); setShowInviteDialog(true); }} className="rounded-full h-12 w-12" title="Invite users">
+              <Button variant="outline" size="icon" onClick={() => { setInviteSearch(''); setShowInviteDialog(true); }} className="rounded-full h-12 w-12" title="Invite users">
                 <UserPlus className="h-5 w-5" />
               </Button>
               <Button variant={isAudioMuted ? 'destructive' : 'secondary'} size="icon" onClick={toggleAudio} className="rounded-full h-12 w-12">
@@ -198,31 +236,62 @@ export default function JitsiRoom({
         </div>
       )}
 
-      {/* Invite Dialog */}
+      {/* Invite Dialog with Search */}
       <Dialog open={showInviteDialog} onOpenChange={setShowInviteDialog}>
         <DialogContent className="max-w-md">
-          <DialogHeader><DialogTitle>Invite Users to Call</DialogTitle></DialogHeader>
+          <DialogHeader><DialogTitle>Invite Members to Call</DialogTitle></DialogHeader>
+          
+          {/* Search Input */}
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input
+              placeholder="Search registered members..."
+              value={inviteSearch}
+              onChange={(e) => setInviteSearch(e.target.value)}
+              className="pl-9"
+              autoFocus
+            />
+          </div>
+
           <ScrollArea className="max-h-80">
             {loadingUsers ? (
               <div className="flex items-center justify-center py-8">
                 <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
               </div>
             ) : availableUsers.length === 0 ? (
-              <p className="text-center text-muted-foreground py-4">No users available</p>
+              <p className="text-center text-muted-foreground py-4">
+                {inviteSearch.trim() ? `No members found for "${inviteSearch}"` : 'No members available'}
+              </p>
             ) : (
               <div className="space-y-2">
-                {availableUsers.map((u) => (
-                  <div key={u.id} className="flex items-center justify-between p-3 rounded-lg hover:bg-accent cursor-pointer transition-colors" onClick={() => handleInviteUser(u)}>
-                    <div className="flex items-center gap-3">
-                      <Avatar className="h-10 w-10">
-                        <AvatarImage src={u.avatar_url} />
-                        <AvatarFallback>{(u.display_name || u.first_name || 'U').charAt(0).toUpperCase()}</AvatarFallback>
-                      </Avatar>
-                      <p className="font-medium">{u.display_name || `${u.first_name || ''} ${u.last_name || ''}`.trim() || 'User'}</p>
+                {availableUsers.map((u) => {
+                  const alreadyInvited = invitedUserIds.has(u.user_id);
+                  const name = u.display_name || `${u.first_name || ''} ${u.last_name || ''}`.trim() || 'User';
+                  return (
+                    <div
+                      key={u.id}
+                      className={`flex items-center justify-between p-3 rounded-lg transition-colors ${
+                        alreadyInvited ? 'bg-primary/10' : 'hover:bg-accent cursor-pointer'
+                      }`}
+                      onClick={() => !alreadyInvited && handleInviteUser(u)}
+                    >
+                      <div className="flex items-center gap-3">
+                        <Avatar className="h-10 w-10">
+                          <AvatarImage src={u.avatar_url} />
+                          <AvatarFallback>{name.charAt(0).toUpperCase()}</AvatarFallback>
+                        </Avatar>
+                        <p className="font-medium">{name}</p>
+                      </div>
+                      {alreadyInvited ? (
+                        <span className="flex items-center gap-1 text-sm text-primary">
+                          <Check className="h-4 w-4" /> Invited
+                        </span>
+                      ) : (
+                        <Button size="sm" variant="outline"><UserPlus className="h-4 w-4 mr-1" />Invite</Button>
+                      )}
                     </div>
-                    <Button size="sm" variant="outline"><UserPlus className="h-4 w-4 mr-1" />Invite</Button>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             )}
           </ScrollArea>
