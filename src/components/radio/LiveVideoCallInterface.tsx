@@ -178,9 +178,9 @@ export function LiveVideoCallInterface({
         </div>
 
         {/* Instructions */}
-        <div className="bg-muted/50 rounded-lg p-4 space-y-2">
-          <p className="text-sm font-medium">Before you join:</p>
-          <ul className="text-sm text-muted-foreground space-y-1">
+        <div className="bg-muted/30 rounded-lg p-4 space-y-2 border border-border/50">
+          <p className="text-sm font-medium text-foreground">Before you join:</p>
+          <ul className="text-sm text-foreground/80 space-y-1">
             <li>• Make sure your camera and microphone are working</li>
             <li>• Find a quiet place with good lighting</li>
             <li>• Test your internet connection for smooth streaming</li>
