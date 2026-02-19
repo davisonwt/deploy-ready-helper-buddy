@@ -66,9 +66,6 @@ export function RadioSlotApplicationWizard({ onClose }) {
     // Step 1: Basic Info
     show_name: '',
     description: '',
-    subject: '',
-    topic_description: '',
-    category: 'music',
     broadcast_mode: 'live', // 'live' or 'pre_recorded'
     
     // Step 2: Time Slot
@@ -255,9 +252,6 @@ export function RadioSlotApplicationWizard({ onClose }) {
       const showResult = await createShow({
         show_name: formData.show_name,
         description: formData.description,
-        subject: formData.subject,
-        topic_description: formData.topic_description,
-        category: formData.category
       });
 
       if (!showResult.success) throw new Error('Failed to create show');
@@ -341,7 +335,7 @@ export function RadioSlotApplicationWizard({ onClose }) {
   const canProceed = () => {
     switch (currentStep) {
       case 0:
-        return formData.show_name.trim() && formData.subject.trim() && formData.broadcast_mode;
+        return formData.show_name.trim() && formData.broadcast_mode;
       case 1:
         return true;
       case 2:
@@ -376,16 +370,6 @@ export function RadioSlotApplicationWizard({ onClose }) {
               />
             </div>
 
-            <div>
-              <Label htmlFor="subject">Subject/Topic *</Label>
-              <PermissiveInput
-                id="subject"
-                placeholder="e.g., Love & Relationships, Business Growth!"
-                value={formData.subject}
-                onChange={(e) => handleFieldChange('subject', e.target.value)}
-                maxLength={100}
-              />
-            </div>
 
 
             <div>
@@ -771,10 +755,6 @@ export function RadioSlotApplicationWizard({ onClose }) {
             <div className="p-4 bg-muted rounded-lg space-y-3">
               <h3 className="font-semibold text-lg">{formData.show_name}</h3>
               <div className="grid grid-cols-2 gap-4 text-sm">
-                <div>
-                  <span className="text-muted-foreground">Subject:</span>
-                  <p className="font-medium">{formData.subject}</p>
-                </div>
                 <div>
                   <span className="text-muted-foreground">Date:</span>
                   <p className="font-medium">{formData.time_slot_date}</p>
