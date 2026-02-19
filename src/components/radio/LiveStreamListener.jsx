@@ -221,10 +221,19 @@ export function LiveStreamListener({ liveSession, currentShow }) {
 
   const initializeAudioStream = async () => {
     try {
-      // Instead of WebRTC, let's fetch and play the actual music tracks
-      await fetchAndPlayCurrentTrack()
+      // Fetch playlist and play the first track directly
+      if (playlistTracks.length > 0 && currentTrack) {
+        await playCurrentTrackAudio(currentTrack)
+      } else if (playlistTracks.length > 0) {
+        const firstTrack = playlistTracks[0]
+        setCurrentTrack(firstTrack)
+        await playCurrentTrackAudio(firstTrack)
+      } else {
+        // Need to fetch playlist first, then play
+        await fetchPlaylistAndPlay()
+      }
       
-      console.log('Audio stream initialized - playing music tracks')
+      console.log('[Listener] Audio stream initialized')
       
     } catch (error) {
       console.error('Error initializing audio stream:', error)
@@ -232,18 +241,61 @@ export function LiveStreamListener({ liveSession, currentShow }) {
     }
   }
 
-  const fetchAndPlayCurrentTrack = async () => {
+  const fetchPlaylistAndPlay = async () => {
     try {
-      // If we already have playlist tracks loaded, play from those
-      if (playlistTracks.length > 0 && currentTrack) {
-        await playCurrentTrackAudio(currentTrack)
+      if (!currentShow?.schedule_id) {
+        console.warn('[Listener] No schedule_id on currentShow')
         return
       }
 
-      // Otherwise fetch the playlist first, then play
-      await fetchPlaylistForCurrentShow()
-    } catch (error) {
-      console.error('[Listener] Error fetching current track:', error)
+      const { data: sched } = await supabase
+        .from('radio_schedule')
+        .select('id, playlist_id, dj_id')
+        .eq('id', currentShow.schedule_id)
+        .maybeSingle()
+
+      let tracks = []
+
+      if (sched?.playlist_id) {
+        const { data: ptData } = await supabase
+          .from('dj_playlist_tracks')
+          .select(`
+            track_order,
+            dj_music_tracks (id, track_title, artist_name, duration_seconds, genre, file_url, price)
+          `)
+          .eq('playlist_id', sched.playlist_id)
+          .eq('is_active', true)
+          .order('track_order')
+
+        tracks = (ptData || [])
+          .sort((a, b) => a.track_order - b.track_order)
+          .map(pt => pt.dj_music_tracks)
+          .filter(Boolean)
+      }
+
+      if (tracks.length === 0 && sched?.dj_id) {
+        const { data: djTracks } = await supabase
+          .from('dj_music_tracks')
+          .select('id, track_title, artist_name, duration_seconds, genre, file_url, price')
+          .eq('dj_id', sched.dj_id)
+          .eq('is_public', true)
+          .order('upload_date', { ascending: false })
+
+        tracks = djTracks || []
+      }
+
+      console.log('[Listener] Fetched tracks:', tracks.length)
+      setPlaylistTracks(tracks)
+
+      if (tracks.length > 0) {
+        const firstTrack = tracks[0]
+        setCurrentTrack(firstTrack)
+        await playCurrentTrackAudio(firstTrack)
+      } else {
+        toast({ title: "No Music", description: "No tracks available for this slot.", variant: "destructive" })
+      }
+    } catch (e) {
+      console.error('[Listener] fetchPlaylistAndPlay failed:', e)
     }
   }
 
@@ -493,11 +545,7 @@ export function LiveStreamListener({ liveSession, currentShow }) {
               ref={audioRef} 
               controls={false}
               loop={false}
-              onEnded={() => {
-                // Auto-advance to next track when current ends
-                console.log('Track ended, should advance to next')
-                setIsPlaying(false)
-              }}
+              preload="auto"
             />
           </div>
         </CardContent>
