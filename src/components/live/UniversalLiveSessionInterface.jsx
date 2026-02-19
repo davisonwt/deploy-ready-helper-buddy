@@ -509,18 +509,18 @@ export function UniversalLiveSessionInterface({
         {/* Right Sidebar - Interactive Feed with Darker Theme */}
         <div className="space-y-4">
           <Tabs defaultValue="messages" className="w-full">
-            <TabsList className="grid w-full grid-cols-4 bg-slate-800 border-slate-700">
-              <TabsTrigger value="messages" className="data-[state=active]:bg-slate-700 data-[state=active]:text-white text-slate-300 text-xs px-1">
-                Messages
+            <TabsList className="grid w-full grid-cols-4 bg-slate-800 border-slate-700 gap-0.5 p-1">
+              <TabsTrigger value="messages" className="data-[state=active]:bg-slate-700 data-[state=active]:text-white text-slate-300 text-[10px] px-0.5 py-1.5 leading-tight">
+                Msgs
               </TabsTrigger>
-              <TabsTrigger value="media" className="data-[state=active]:bg-slate-700 data-[state=active]:text-white text-slate-300 text-xs px-1">
+              <TabsTrigger value="media" className="data-[state=active]:bg-slate-700 data-[state=active]:text-white text-slate-300 text-[10px] px-0.5 py-1.5 leading-tight">
                 Media
               </TabsTrigger>
-              <TabsTrigger value="queue" className="data-[state=active]:bg-slate-700 data-[state=active]:text-white text-slate-300 text-xs px-1">
+              <TabsTrigger value="queue" className="data-[state=active]:bg-slate-700 data-[state=active]:text-white text-slate-300 text-[10px] px-0.5 py-1.5 leading-tight">
                 Queue ({callQueue.length})
               </TabsTrigger>
-              <TabsTrigger value="requests" className="data-[state=active]:bg-slate-700 data-[state=active]:text-white text-slate-300 text-xs px-1">
-                Requests ({guestRequests.filter(r => r.status === 'pending').length})
+              <TabsTrigger value="requests" className="data-[state=active]:bg-slate-700 data-[state=active]:text-white text-slate-300 text-[10px] px-0.5 py-1.5 leading-tight">
+                Req ({guestRequests.filter(r => r.status === 'pending').length})
               </TabsTrigger>
             </TabsList>
 
