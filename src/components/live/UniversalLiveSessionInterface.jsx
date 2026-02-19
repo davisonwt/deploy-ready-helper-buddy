@@ -510,16 +510,16 @@ export function UniversalLiveSessionInterface({
         <div className="space-y-4">
           <Tabs defaultValue="messages" className="w-full">
             <TabsList className="grid w-full grid-cols-4 bg-slate-800 border-slate-700 gap-2 p-1.5">
-              <TabsTrigger value="messages" className="data-[state=active]:bg-slate-700 data-[state=active]:text-white text-slate-300 text-[10px] px-0.5 py-1.5 leading-tight">
+              <TabsTrigger value="messages" className="text-slate-300 text-[10px] px-0.5 py-1.5 leading-tight">
                 Msgs
               </TabsTrigger>
-              <TabsTrigger value="media" className="data-[state=active]:bg-slate-700 data-[state=active]:text-white text-slate-300 text-[10px] px-0.5 py-1.5 leading-tight">
+              <TabsTrigger value="media" className="text-slate-300 text-[10px] px-0.5 py-1.5 leading-tight">
                 Media
               </TabsTrigger>
-              <TabsTrigger value="queue" className="data-[state=active]:bg-slate-700 data-[state=active]:text-white text-slate-300 text-[10px] px-0.5 py-1.5 leading-tight">
+              <TabsTrigger value="queue" className="text-slate-300 text-[10px] px-0.5 py-1.5 leading-tight">
                 Queue ({callQueue.length})
               </TabsTrigger>
-              <TabsTrigger value="requests" className="data-[state=active]:bg-slate-700 data-[state=active]:text-white text-slate-300 text-[10px] px-0.5 py-1.5 leading-tight">
+              <TabsTrigger value="requests" className="text-slate-300 text-[10px] px-0.5 py-1.5 leading-tight">
                 Req ({guestRequests.filter(r => r.status === 'pending').length})
               </TabsTrigger>
             </TabsList>
