@@ -7853,6 +7853,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      add_room_participants: {
+        Args: { _room_id: string; _user_ids: string[] }
+        Returns: undefined
+      }
       add_xp: {
         Args: { amount?: number; user_id_param: string }
         Returns: Json

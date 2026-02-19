@@ -241,17 +241,19 @@ export const ChatApp: React.FC = () => {
 
       if (roomError) throw roomError;
 
-      const participants = [
-        { room_id: newRoom.id, user_id: user.id, is_active: true, is_moderator: true },
-        ...selectedUsers.map(userId => ({
-          room_id: newRoom.id,
-          user_id: userId,
-          is_active: true,
-          is_moderator: false
-        }))
-      ];
+      // Add creator as moderator first
+      await supabase.from('chat_participants').insert({
+        room_id: newRoom.id, user_id: user.id, is_active: true, is_moderator: true
+      });
 
-      await supabase.from('chat_participants').insert(participants);
+      // Add other participants via SECURITY DEFINER RPC (bypasses RLS)
+      if (selectedUsers.length > 0) {
+        const { error: rpcError } = await supabase.rpc('add_room_participants', {
+          _room_id: newRoom.id,
+          _user_ids: selectedUsers
+        });
+        if (rpcError) throw rpcError;
+      }
 
       toast({
         title: 'Group created!',
