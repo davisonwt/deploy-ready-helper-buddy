@@ -21,6 +21,7 @@ import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Slider } from '@/components/ui/slider';
 import { Badge } from '@/components/ui/badge';
 import { useProductBasket } from '@/contexts/ProductBasketContext';
+import { HoverCard, HoverCardTrigger, HoverCardContent } from '@/components/ui/hover-card';
 
 const toHandle = (value?: string) => {
   const v = (value || '').trim().toLowerCase();
@@ -1386,15 +1387,36 @@ export default function MemryPage() {
 
               {/* Right Side Actions */}
               <div className="absolute right-4 bottom-32 flex flex-col items-center gap-6 z-40">
-                {/* Profile Avatar - separate, links to member profile */}
-                <Link to={`/member/${currentPost.user_id}`} className="flex flex-col items-center">
-                  <Avatar className="w-12 h-12 border-2 border-white shadow-lg">
-                    <AvatarImage src={currentPost.profiles?.avatar_url} />
-                    <AvatarFallback className="bg-gradient-to-br from-pink-400 to-orange-400 text-white">
-                      {currentPost.profiles?.display_name?.[0] || 'U'}
-                    </AvatarFallback>
-                  </Avatar>
-                </Link>
+                {/* Profile Avatar - with hover card preview */}
+                <HoverCard>
+                  <HoverCardTrigger asChild>
+                    <Link to={`/member/${currentPost.user_id}`} className="flex flex-col items-center">
+                      <Avatar className="w-12 h-12 border-2 border-white shadow-lg">
+                        <AvatarImage src={currentPost.profiles?.avatar_url} />
+                        <AvatarFallback className="bg-gradient-to-br from-pink-400 to-orange-400 text-white">
+                          {currentPost.profiles?.display_name?.[0] || 'U'}
+                        </AvatarFallback>
+                      </Avatar>
+                    </Link>
+                  </HoverCardTrigger>
+                  <HoverCardContent side="left" className="w-64 bg-black/80 backdrop-blur-md border-white/20 text-white">
+                    <div className="flex items-center gap-3">
+                      <Avatar className="w-14 h-14 border-2 border-white/50">
+                        <AvatarImage src={currentPost.profiles?.avatar_url} />
+                        <AvatarFallback className="bg-gradient-to-br from-pink-400 to-orange-400 text-white">
+                          {currentPost.profiles?.display_name?.[0] || 'U'}
+                        </AvatarFallback>
+                      </Avatar>
+                      <div className="flex-1 min-w-0">
+                        <p className="font-bold text-sm truncate">{currentPost.profiles?.display_name || 'Sower'}</p>
+                        <p className="text-xs text-white/60">@{toHandle(currentPost.profiles?.username || currentPost.profiles?.display_name)}</p>
+                      </div>
+                    </div>
+                    <Button asChild size="sm" className="w-full mt-3 bg-white text-black hover:bg-white/90 border-0">
+                      <Link to={`/member/${currentPost.user_id}`}>View Profile</Link>
+                    </Button>
+                  </HoverCardContent>
+                </HoverCard>
 
                 {/* Follow Button - separate */}
                 {user && currentPost.user_id !== user.id && (
@@ -1586,14 +1608,37 @@ export default function MemryPage() {
                   transition={{ delay: 0.2 }}
                   className="bg-black/40 backdrop-blur-md rounded-2xl p-4"
                 >
-                  {/* Sower Profile Section */}
+                  {/* Sower Profile Section - with hover card preview */}
                   <div className="flex items-center gap-3 mb-3">
-                    <Avatar className="w-10 h-10 border-2 border-white/50">
-                      <AvatarImage src={currentPost.profiles?.avatar_url} />
-                      <AvatarFallback className="bg-gradient-to-br from-pink-400 to-orange-400 text-white text-sm">
-                        {currentPost.profiles?.display_name?.[0] || 'S'}
-                      </AvatarFallback>
-                    </Avatar>
+                    <HoverCard>
+                      <HoverCardTrigger asChild>
+                        <Link to={`/member/${currentPost.user_id}`} className="flex-shrink-0">
+                          <Avatar className="w-10 h-10 border-2 border-white/50 cursor-pointer">
+                            <AvatarImage src={currentPost.profiles?.avatar_url} />
+                            <AvatarFallback className="bg-gradient-to-br from-pink-400 to-orange-400 text-white text-sm">
+                              {currentPost.profiles?.display_name?.[0] || 'S'}
+                            </AvatarFallback>
+                          </Avatar>
+                        </Link>
+                      </HoverCardTrigger>
+                      <HoverCardContent side="top" className="w-64 bg-black/80 backdrop-blur-md border-white/20 text-white">
+                        <div className="flex items-center gap-3">
+                          <Avatar className="w-14 h-14 border-2 border-white/50">
+                            <AvatarImage src={currentPost.profiles?.avatar_url} />
+                            <AvatarFallback className="bg-gradient-to-br from-pink-400 to-orange-400 text-white">
+                              {currentPost.profiles?.display_name?.[0] || 'S'}
+                            </AvatarFallback>
+                          </Avatar>
+                          <div className="flex-1 min-w-0">
+                            <p className="font-bold text-sm truncate">{currentPost.profiles?.display_name || 'Sower'}</p>
+                            <p className="text-xs text-white/60">@{toHandle(currentPost.profiles?.username || currentPost.profiles?.display_name)}</p>
+                          </div>
+                        </div>
+                        <Button asChild size="sm" className="w-full mt-3 bg-white text-black hover:bg-white/90 border-0">
+                          <Link to={`/member/${currentPost.user_id}`}>View Profile</Link>
+                        </Button>
+                      </HoverCardContent>
+                    </HoverCard>
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2">
                         <span className="text-white font-bold text-base drop-shadow truncate">
