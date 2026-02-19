@@ -222,21 +222,21 @@ export function LiveStreamListener({ liveSession, currentShow }) {
   // Calculate which track should be playing right now based on show start time
   const calculateCurrentTrack = (tracks) => {
     if (!currentShow?.start_time || tracks.length === 0) {
+      console.warn('[Sync] No start_time or empty tracks, defaulting to track 0')
       return { trackIndex: 0, seekOffset: 0 }
     }
 
-    // Parse show start time (today's date + the start_time)
+    // start_time is a full ISO timestamp (e.g. "2026-02-19T10:00:00+00:00")
+    const showStart = new Date(currentShow.start_time)
     const now = new Date()
-    const [hours, minutes] = currentShow.start_time.split(':').map(Number)
-    const showStart = new Date(now)
-    showStart.setHours(hours, minutes, 0, 0)
-    
+
     // If show start is in the future, start from track 0
     if (now < showStart) {
+      console.log('[Sync] Show hasn\'t started yet, defaulting to track 0')
       return { trackIndex: 0, seekOffset: 0 }
     }
 
-    const elapsedSeconds = Math.floor((now - showStart) / 1000)
+    const elapsedSeconds = Math.floor((now.getTime() - showStart.getTime()) / 1000)
 
     // Calculate total playlist duration
     const totalDuration = tracks.reduce((sum, t) => sum + (t.duration_seconds || 180), 0)
@@ -250,7 +250,9 @@ export function LiveStreamListener({ liveSession, currentShow }) {
     for (let i = 0; i < tracks.length; i++) {
       const trackDuration = tracks[i].duration_seconds || 180
       if (cumulative + trackDuration > positionInLoop) {
-        return { trackIndex: i, seekOffset: positionInLoop - cumulative }
+        const seekOffset = positionInLoop - cumulative
+        console.log(`[Sync] Elapsed ${elapsedSeconds}s, loop pos ${positionInLoop}s → track ${i + 1}/${tracks.length} "${tracks[i].track_title}" @ ${seekOffset}s`)
+        return { trackIndex: i, seekOffset }
       }
       cumulative += trackDuration
     }
@@ -373,13 +375,25 @@ export function LiveStreamListener({ liveSession, currentShow }) {
     try {
       const resolvedUrl = await resolveAudioUrl(track.file_url, { bucketForKeys: 'dj-music' })
       console.log('[Listener] Playing:', track.track_title, resolvedUrl?.substring(0, 80), seekOffset ? `(seek +${seekOffset}s)` : '')
-      audioRef.current.src = resolvedUrl
-      audioRef.current.load()
+      const audio = audioRef.current
+      audio.src = resolvedUrl
+      audio.load()
+
+      // Seek AFTER metadata is loaded so currentTime actually works
       if (seekOffset > 0) {
-        audioRef.current.currentTime = seekOffset
+        await new Promise((resolve) => {
+          const onLoaded = () => {
+            audio.removeEventListener('loadedmetadata', onLoaded)
+            audio.currentTime = seekOffset
+            console.log(`[Listener] Seeked to ${seekOffset}s`)
+            resolve()
+          }
+          audio.addEventListener('loadedmetadata', onLoaded)
+        })
       }
-      await audioRef.current.play()
-      console.log(`[Listener] ✅ Now playing: ${track.track_title}`)
+
+      await audio.play()
+      console.log(`[Listener] ✅ Now playing: ${track.track_title}${seekOffset ? ` @ ${seekOffset}s` : ''}`)
       toast({ title: "Now Playing", description: `${track.track_title} by ${track.artist_name}` })
 
       // Award XP to the song owner (non-blocking)
