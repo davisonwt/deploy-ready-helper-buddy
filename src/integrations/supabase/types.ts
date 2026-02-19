@@ -4801,6 +4801,36 @@ export type Database = {
           },
         ]
       }
+      radio_segment_templates: {
+        Row: {
+          created_at: string
+          description: string | null
+          icon: string | null
+          id: string
+          is_active: boolean | null
+          name: string
+          segments_json: Json
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          icon?: string | null
+          id?: string
+          is_active?: boolean | null
+          name: string
+          segments_json: Json
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          icon?: string | null
+          id?: string
+          is_active?: boolean | null
+          name?: string
+          segments_json?: Json
+        }
+        Relationships: []
+      }
       radio_show_files: {
         Row: {
           created_at: string
@@ -4907,6 +4937,60 @@ export type Database = {
             columns: ["dj_id"]
             isOneToOne: false
             referencedRelation: "radio_djs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      radio_slot_segments: {
+        Row: {
+          color: string | null
+          created_at: string
+          duration_minutes: number
+          emoji_icon: string | null
+          id: string
+          mapped_track_id: string | null
+          schedule_id: string | null
+          segment_order: number
+          segment_type: string
+          title: string | null
+        }
+        Insert: {
+          color?: string | null
+          created_at?: string
+          duration_minutes?: number
+          emoji_icon?: string | null
+          id?: string
+          mapped_track_id?: string | null
+          schedule_id?: string | null
+          segment_order?: number
+          segment_type: string
+          title?: string | null
+        }
+        Update: {
+          color?: string | null
+          created_at?: string
+          duration_minutes?: number
+          emoji_icon?: string | null
+          id?: string
+          mapped_track_id?: string | null
+          schedule_id?: string | null
+          segment_order?: number
+          segment_type?: string
+          title?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "radio_slot_segments_mapped_track_id_fkey"
+            columns: ["mapped_track_id"]
+            isOneToOne: false
+            referencedRelation: "dj_music_tracks"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "radio_slot_segments_schedule_id_fkey"
+            columns: ["schedule_id"]
+            isOneToOne: false
+            referencedRelation: "radio_schedule"
             referencedColumns: ["id"]
           },
         ]

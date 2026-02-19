@@ -13,6 +13,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import DJMusicUpload from '@/components/radio/DJMusicUpload';
+import { SegmentTimelineBuilder } from '@/components/radio/SegmentTimelineBuilder';
 import { 
   Radio, 
   Calendar, 
@@ -25,7 +26,8 @@ import {
   Plus,
   X,
   Megaphone,
-  Mic
+  Mic,
+  LayoutGrid
 } from 'lucide-react';
 
 const SHOW_CATEGORIES = [
@@ -74,11 +76,14 @@ export function RadioSlotApplicationWizard({ onClose }) {
     slot_index: Math.floor(new Date().getHours() / 2),
     show_notes: '',
     
-    // Step 3: Content (Documents & Playlists)
+    // Step 3: Segment Timeline
+    segments: [],
+    
+    // Step 4: Content (Documents & Playlists)
     documents: [],
     playlist_id: null,
     
-    // Step 4: Monetization (Advertisements)
+    // Step 5: Monetization (Advertisements)
     enable_ads: false,
     ad_slots: [],
     ad_rate_per_slot: 50
@@ -134,6 +139,11 @@ export function RadioSlotApplicationWizard({ onClose }) {
       title: 'Select Time Slot',
       description: 'Choose when you want to broadcast your show',
       icon: <Calendar className="h-5 w-5" />
+    },
+    {
+      title: 'Plan Your Segments',
+      description: 'Design your 2-hour show with drag-and-drop segments',
+      icon: <LayoutGrid className="h-5 w-5" />
     },
     {
       title: 'Prepare Content',
@@ -335,12 +345,15 @@ export function RadioSlotApplicationWizard({ onClose }) {
       case 1:
         return true;
       case 2:
+        // Segment step - at least 1 segment recommended but not required
+        return true;
+      case 3:
         // Pre-recorded mode requires a playlist
         if (formData.broadcast_mode === 'pre_recorded' && !formData.playlist_id) return false;
         return true;
-      case 3:
-        return !formData.enable_ads || formData.ad_slots.length > 0;
       case 4:
+        return !formData.enable_ads || formData.ad_slots.length > 0;
+      case 5:
         return true;
       default:
         return true;
@@ -510,7 +523,16 @@ export function RadioSlotApplicationWizard({ onClose }) {
 
       case 2:
         return (
-          <div className="space-y-6">
+          <div className="space-y-4">
+            <SegmentTimelineBuilder
+              segments={formData.segments}
+              onSegmentsChange={(segments) => handleFieldChange('segments', segments)}
+            />
+          </div>
+        );
+
+      case 3:
+        return (
             {/* Documents Section */}
             <div>
               <Label className="flex items-center gap-2 mb-3">
@@ -631,7 +653,7 @@ export function RadioSlotApplicationWizard({ onClose }) {
           </div>
         );
 
-      case 3:
+      case 4:
         return (
           <div className="space-y-6">
             <div className="flex items-center gap-3">
@@ -759,7 +781,7 @@ export function RadioSlotApplicationWizard({ onClose }) {
           </div>
         );
 
-      case 4:
+      case 5:
         const selectedSlot = TIME_SLOTS.find(s => s.value === formData.slot_index);
         return (
           <div className="space-y-6">
@@ -800,7 +822,12 @@ export function RadioSlotApplicationWizard({ onClose }) {
               )}
             </div>
 
-            <div className="grid grid-cols-3 gap-4">
+            <div className="grid grid-cols-4 gap-3">
+              <div className="p-3 bg-card border rounded-lg text-center">
+                <LayoutGrid className="h-6 w-6 mx-auto mb-2 text-primary" />
+                <p className="text-2xl font-bold">{formData.segments.length}</p>
+                <p className="text-xs text-muted-foreground">Segments</p>
+              </div>
               <div className="p-3 bg-card border rounded-lg text-center">
                 <FileText className="h-6 w-6 mx-auto mb-2 text-primary" />
                 <p className="text-2xl font-bold">{formData.documents.length}</p>
