@@ -1,13 +1,21 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Send, MessageCircle, Music, Pencil, Trash2, X, Check } from 'lucide-react';
+import { Send, MessageCircle, Music, Pencil, Trash2, X, Check, Search } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { Badge } from '@/components/ui/badge';
+import { ScrollArea } from '@/components/ui/scroll-area';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
+
+interface SowerTrack {
+  id: string;
+  title: string;
+  artist: string;
+  genre?: string;
+}
 
 interface Comment {
   id: string;
@@ -25,8 +33,15 @@ const ListenerInteractions = () => {
   const [loading, setLoading] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editText, setEditText] = useState('');
+  const [tracks, setTracks] = useState<SowerTrack[]>([]);
+  const [trackSearch, setTrackSearch] = useState('');
+  const [selectedTrack, setSelectedTrack] = useState<SowerTrack | null>(null);
   const { user } = useAuth();
   const { toast } = useToast();
+
+  useEffect(() => {
+    fetchTracks();
+  }, []);
 
   useEffect(() => {
     fetchComments();
@@ -117,8 +132,39 @@ const ListenerInteractions = () => {
     }
   };
 
+  const fetchTracks = async () => {
+    try {
+      const { data } = await supabase
+        .from('dj_music_tracks')
+        .select('id, track_title, artist_name, music_genre')
+        .eq('is_public', true)
+        .order('track_title');
+
+      if (data) {
+        setTracks(data.map(t => ({
+          id: t.id,
+          title: t.track_title,
+          artist: t.artist_name || 'Unknown Artist',
+          genre: t.music_genre || undefined,
+        })));
+      }
+    } catch (error) {
+      console.error('Failed to fetch tracks:', error);
+    }
+  };
+
+  const filteredTracks = useMemo(() => {
+    if (!trackSearch.trim()) return tracks;
+    const q = trackSearch.toLowerCase();
+    return tracks.filter(t => 
+      t.title.toLowerCase().includes(q) || t.artist.toLowerCase().includes(q)
+    );
+  }, [tracks, trackSearch]);
+
   const sendMessage = async () => {
-    if (!message.trim() || !user || loading) return;
+    if (type === 'request' && !selectedTrack && !message.trim()) return;
+    if (type === 'comment' && !message.trim()) return;
+    if (!user || loading) return;
 
     setLoading(true);
     try {
@@ -137,10 +183,14 @@ const ListenerInteractions = () => {
         return;
       }
 
+      const content = type === 'request' && selectedTrack
+        ? `🎵 ${selectedTrack.title} — ${selectedTrack.artist}${message.trim() ? ` (${message.trim()})` : ''}`
+        : message;
+
       const { error } = await supabase.from('live_session_messages').insert({
         session_id: sessionData.id,
         sender_id: user.id,
-        content: message,
+        content,
         message_type: type,
         sender_type: 'participant'
       });
@@ -148,6 +198,7 @@ const ListenerInteractions = () => {
       if (error) throw error;
 
       setMessage('');
+      setSelectedTrack(null);
       toast({ 
         title: type === 'comment' ? 'Comment sent!' : 'Song request sent!',
         description: type === 'request' ? 'The DJ will see your request' : undefined
@@ -246,6 +297,58 @@ const ListenerInteractions = () => {
               </SelectContent>
             </Select>
             
+            {type === 'request' && (
+              <div className="space-y-2">
+                {selectedTrack ? (
+                  <div className="flex items-center justify-between p-2 bg-primary/10 rounded-lg border border-primary/20">
+                    <div className="flex items-center gap-2 min-w-0">
+                      <Music className="h-4 w-4 text-primary shrink-0" />
+                      <div className="min-w-0">
+                        <p className="text-sm font-medium truncate">{selectedTrack.title}</p>
+                        <p className="text-xs text-muted-foreground truncate">{selectedTrack.artist}</p>
+                      </div>
+                    </div>
+                    <Button variant="ghost" size="icon" className="h-6 w-6 shrink-0" onClick={() => setSelectedTrack(null)}>
+                      <X className="h-3 w-3" />
+                    </Button>
+                  </div>
+                ) : (
+                  <>
+                    <div className="relative">
+                      <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                      <Input
+                        value={trackSearch}
+                        onChange={(e) => setTrackSearch(e.target.value)}
+                        placeholder="Search sower songs..."
+                        className="pl-9"
+                      />
+                    </div>
+                    <ScrollArea className="h-40 border rounded-lg">
+                      {filteredTracks.length === 0 ? (
+                        <p className="text-sm text-muted-foreground text-center py-4">No songs found</p>
+                      ) : (
+                        <div className="p-1">
+                          {filteredTracks.map(track => (
+                            <button
+                              key={track.id}
+                              onClick={() => { setSelectedTrack(track); setTrackSearch(''); }}
+                              className="w-full flex items-center gap-2 p-2 rounded-md hover:bg-muted text-left transition-colors"
+                            >
+                              <Music className="h-4 w-4 text-muted-foreground shrink-0" />
+                              <div className="min-w-0">
+                                <p className="text-sm font-medium truncate">{track.title}</p>
+                                <p className="text-xs text-muted-foreground truncate">{track.artist}{track.genre ? ` · ${track.genre}` : ''}</p>
+                              </div>
+                            </button>
+                          ))}
+                        </div>
+                      )}
+                    </ScrollArea>
+                  </>
+                )}
+              </div>
+            )}
+
             <div className="flex space-x-2">
               <Input
                 value={message}
@@ -253,14 +356,14 @@ const ListenerInteractions = () => {
                 placeholder={
                   type === 'comment' 
                     ? 'Say something...' 
-                    : 'Request a song...'
+                    : selectedTrack ? 'Add a note (optional)...' : 'Or type a song name...'
                 }
                 onKeyPress={(e) => e.key === 'Enter' && sendMessage()}
                 disabled={loading}
               />
               <Button 
                 onClick={sendMessage} 
-                disabled={!message.trim() || loading}
+                disabled={(type === 'request' ? (!selectedTrack && !message.trim()) : !message.trim()) || loading}
                 size="sm"
               >
                 <Send className="h-4 w-4" />
