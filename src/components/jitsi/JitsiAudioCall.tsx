@@ -1,8 +1,8 @@
+import { useRef } from 'react';
 import ResilientJitsiMeeting from '@/components/jitsi/ResilientJitsiMeeting';
-import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { PhoneOff } from 'lucide-react';
 import { useJitsiCall } from '@/hooks/useJitsiCall';
+import CallControlBar from '@/components/jitsi/CallControlBar';
 
 interface JitsiAudioCallProps {
   callSession: {
@@ -28,12 +28,19 @@ export default function JitsiAudioCall({
   onEndCall,
 }: JitsiAudioCallProps) {
   const ownName = myDisplayName || 'User';
+  const jitsiApiRef = useRef<any>(null);
+
   const {
     roomName,
-    onApiReady,
+    onApiReady: hookOnApiReady,
     isLoading,
+    isAudioMuted,
+    isVideoMuted,
+    participantCount,
     callDuration,
     connectionState,
+    toggleAudio,
+    toggleVideo,
     hangUp,
   } = useJitsiCall({
     callSession,
@@ -43,6 +50,11 @@ export default function JitsiAudioCall({
     onCallEnd: onEndCall,
   });
 
+  const handleApiReady = (api: any) => {
+    jitsiApiRef.current = api;
+    hookOnApiReady(api);
+  };
+
   const formatDuration = (seconds: number) => {
     const mins = Math.floor(seconds / 60);
     const secs = seconds % 60;
@@ -51,7 +63,7 @@ export default function JitsiAudioCall({
 
   return (
     <div className="fixed inset-0 z-50 flex flex-col" style={{ background: '#1a1a2e' }}>
-      {/* Top bar with caller info and hang up */}
+      {/* Top bar with caller info */}
       <div className="flex items-center justify-between px-4 py-2 z-10" style={{ background: 'rgba(0,0,0,0.8)' }}>
         <div className="flex items-center gap-3">
           <Avatar className="h-8 w-8">
@@ -65,20 +77,28 @@ export default function JitsiAudioCall({
             </p>
           </div>
         </div>
-        <Button variant="destructive" size="sm" onClick={hangUp} className="gap-2">
-          <PhoneOff className="h-4 w-4" />
-          End Call
-        </Button>
       </div>
 
       {/* Jitsi takes full remaining space */}
-      <div className="flex-1 min-h-0">
+      <div className="flex-1 min-h-0 relative">
         <ResilientJitsiMeeting
           roomName={roomName}
           displayName={ownName}
           startWithVideoMuted={true}
           startWithAudioMuted={false}
-          onApiReady={onApiReady}
+          onApiReady={handleApiReady}
+        />
+
+        {/* Custom control bar with invite */}
+        <CallControlBar
+          jitsiApi={jitsiApiRef.current}
+          isAudioMuted={isAudioMuted}
+          isVideoMuted={isVideoMuted}
+          participantCount={participantCount}
+          onToggleAudio={toggleAudio}
+          onToggleVideo={toggleVideo}
+          onHangUp={hangUp}
+          showVideoToggle={true}
         />
       </div>
     </div>
