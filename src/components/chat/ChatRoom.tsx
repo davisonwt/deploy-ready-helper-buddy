@@ -338,13 +338,11 @@ export const ChatRoom: React.FC<ChatRoomProps> = ({ roomId, onBack }) => {
   const handleInvite = async () => {
     if (selectedInvitees.length === 0) return;
     try {
-      const rows = selectedInvitees.map(uid => ({
-        room_id: roomId,
-        user_id: uid,
-        is_moderator: false,
-        is_active: true
-      }));
-      const { error } = await supabase.from('chat_participants').upsert(rows, { onConflict: 'room_id,user_id' });
+      // Use SECURITY DEFINER RPC to bypass RLS for adding participants
+      const { error } = await supabase.rpc('add_room_participants', {
+        _room_id: roomId,
+        _user_ids: selectedInvitees
+      });
       if (error) throw error;
       toast({ title: 'Invitations sent', description: `${selectedInvitees.length} user(s) invited` });
       setInviteOpen(false);

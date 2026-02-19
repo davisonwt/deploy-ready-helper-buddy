@@ -228,21 +228,19 @@ export const CommunityForums: React.FC = () => {
 
         const existingUserIds = new Set(existingParticipants?.map(p => p.user_id) || []);
 
-        // Only add participants that don't already exist
-        const participantInserts = allUserIds
-          .filter(userId => !existingUserIds.has(userId))
-          .map(userId => ({
-            room_id: groupRoom.id,
-            user_id: userId,
-            profile_id: userToProfileMap.get(userId) || null,
-            is_active: true,
-          }));
+        // Add creator first
+        await supabase.from('chat_participants').insert({
+          room_id: groupRoom.id, user_id: user.id, is_active: true, is_moderator: true,
+          profile_id: userToProfileMap.get(user.id) || null,
+        });
 
-        if (participantInserts.length > 0) {
-          const { error: participantError } = await supabase
-            .from('chat_participants')
-            .insert(participantInserts);
-
+        // Add other participants via SECURITY DEFINER RPC
+        const otherIds = selectedMembers.filter(uid => uid !== user.id);
+        if (otherIds.length > 0) {
+          const { error: participantError } = await supabase.rpc('add_room_participants', {
+            _room_id: groupRoom.id,
+            _user_ids: otherIds
+          });
           if (participantError) throw participantError;
         }
 
