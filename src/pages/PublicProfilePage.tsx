@@ -65,8 +65,8 @@ export default function PublicProfilePage() {
       setLoading(true);
       setError(null);
 
-      // Fetch profile, points, seeds, and books in parallel
-      const [profileRes, pointsRes, seedsRes, booksRes] = await Promise.all([
+      // Fetch profile, points, and sower record in parallel
+      const [profileRes, pointsRes, sowerRes] = await Promise.all([
         supabase
           .from('profiles')
           .select('user_id, display_name, username, avatar_url, bio, location, created_at')
@@ -76,19 +76,12 @@ export default function PublicProfilePage() {
           .from('user_points')
           .select('total_points, level')
           .eq('user_id', userId)
-          .single(),
+          .maybeSingle(),
         supabase
-          .from('products')
-          .select('id, title, description, price, cover_image_url, image_urls, type, category, status')
-          .eq('sower_id', userId)
-          .eq('status', 'active')
-          .order('created_at', { ascending: false }),
-        supabase
-          .from('sower_books')
-          .select('id, title, description, price, cover_image_url, category, status')
-          .eq('sower_id', userId)
-          .eq('status', 'active')
-          .order('created_at', { ascending: false }),
+          .from('sowers')
+          .select('id')
+          .eq('user_id', userId)
+          .maybeSingle(),
       ]);
 
       if (profileRes.error) {
@@ -97,33 +90,51 @@ export default function PublicProfilePage() {
         return;
       }
 
-      // Combine products and books into one seeds list
-      const productSeeds: SeedProduct[] = (seedsRes.data || []).map((p: any) => ({
-        id: p.id,
-        title: p.title,
-        description: p.description,
-        price: p.price,
-        cover_image_url: p.cover_image_url,
-        image_urls: p.image_urls,
-        type: p.type,
-        category: p.category,
-        status: p.status,
-      }));
-      const bookSeeds: SeedProduct[] = (booksRes.data || []).map((b: any) => ({
-        id: b.id,
-        title: b.title,
-        description: b.description,
-        price: b.price,
-        cover_image_url: b.cover_image_url,
-        image_urls: null,
-        type: 'Book',
-        category: b.category,
-        status: b.status,
-      }));
-
       setProfile(profileRes.data);
       setPoints(pointsRes.data || { total_points: 0, level: 1 });
-      setSeeds([...productSeeds, ...bookSeeds]);
+
+      // If user is a sower, fetch their products and books using sowers.id
+      const sowerId = sowerRes.data?.id;
+      if (sowerId) {
+        const [seedsRes, booksRes] = await Promise.all([
+          supabase
+            .from('products')
+            .select('id, title, description, price, cover_image_url, image_urls, type, category, status')
+            .eq('sower_id', sowerId)
+            .eq('status', 'active')
+            .order('created_at', { ascending: false }),
+          supabase
+            .from('sower_books')
+            .select('id, title, description, price, cover_image_url, category, status')
+            .eq('sower_id', sowerId)
+            .eq('status', 'active')
+            .order('created_at', { ascending: false }),
+        ]);
+
+        const productSeeds: SeedProduct[] = (seedsRes.data || []).map((p: any) => ({
+          id: p.id,
+          title: p.title,
+          description: p.description,
+          price: p.price,
+          cover_image_url: p.cover_image_url,
+          image_urls: p.image_urls,
+          type: p.type,
+          category: p.category,
+          status: p.status,
+        }));
+        const bookSeeds: SeedProduct[] = (booksRes.data || []).map((b: any) => ({
+          id: b.id,
+          title: b.title,
+          description: b.description,
+          price: b.price,
+          cover_image_url: b.cover_image_url,
+          image_urls: null,
+          type: 'Book',
+          category: b.category,
+          status: b.status,
+        }));
+        setSeeds([...productSeeds, ...bookSeeds]);
+      }
 
     } catch (err) {
       console.error('Error loading profile:', err);
