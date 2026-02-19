@@ -189,7 +189,27 @@ export function UniversalLiveSessionInterface({
         .order('created_at', { ascending: true })
 
       if (error) throw error
-      setCallQueue(data || [])
+      
+      const queue = data || []
+      if (queue.length > 0) {
+        const userIds = [...new Set(queue.map(c => c.user_id).filter(Boolean))]
+        const { data: profiles } = await supabase
+          .from('profiles')
+          .select('user_id, display_name, first_name, last_name, avatar_url')
+          .in('user_id', userIds)
+
+        const profileMap = {}
+        profiles?.forEach(p => {
+          profileMap[p.user_id] = {
+            display_name: p.display_name || [p.first_name, p.last_name].filter(Boolean).join(' ') || null,
+            avatar_url: p.avatar_url
+          }
+        })
+
+        setCallQueue(queue.map(c => ({ ...c, profiles: profileMap[c.user_id] || null })))
+      } else {
+        setCallQueue([])
+      }
     } catch (error) {
       console.error('Error fetching call queue:', error)
     }
@@ -207,7 +227,32 @@ export function UniversalLiveSessionInterface({
         .limit(50)
 
       if (error) throw error
-      setMessages(data || [])
+      
+      // Resolve sender names from profiles
+      const msgs = data || []
+      if (msgs.length > 0) {
+        const senderIds = [...new Set(msgs.map(m => m.sender_id).filter(Boolean))]
+        const { data: profiles } = await supabase
+          .from('profiles')
+          .select('user_id, display_name, first_name, last_name, avatar_url')
+          .in('user_id', senderIds)
+
+        const profileMap = {}
+        profiles?.forEach(p => {
+          profileMap[p.user_id] = {
+            display_name: p.display_name || [p.first_name, p.last_name].filter(Boolean).join(' ') || null,
+            avatar_url: p.avatar_url
+          }
+        })
+
+        const enriched = msgs.map(m => ({
+          ...m,
+          profiles: profileMap[m.sender_id] || null
+        }))
+        setMessages(enriched)
+      } else {
+        setMessages([])
+      }
     } catch (error) {
       console.error('Error fetching messages:', error)
     }
@@ -225,8 +270,34 @@ export function UniversalLiveSessionInterface({
         .order('created_at', { ascending: true })
 
       if (error) throw error
-      setGuestRequests(data || [])
-      setApprovedGuests(data?.filter(g => g.status === 'approved') || [])
+      
+      // Resolve profile names
+      const requests = data || []
+      if (requests.length > 0) {
+        const userIds = [...new Set(requests.map(r => r.user_id).filter(Boolean))]
+        const { data: profiles } = await supabase
+          .from('profiles')
+          .select('user_id, display_name, first_name, last_name, avatar_url')
+          .in('user_id', userIds)
+
+        const profileMap = {}
+        profiles?.forEach(p => {
+          profileMap[p.user_id] = {
+            display_name: p.display_name || [p.first_name, p.last_name].filter(Boolean).join(' ') || null,
+            avatar_url: p.avatar_url
+          }
+        })
+
+        const enriched = requests.map(r => ({
+          ...r,
+          profiles: profileMap[r.user_id] || null
+        }))
+        setGuestRequests(enriched)
+        setApprovedGuests(enriched.filter(g => g.status === 'approved'))
+      } else {
+        setGuestRequests([])
+        setApprovedGuests([])
+      }
     } catch (error) {
       console.error('Error fetching guest requests:', error)
     }
@@ -439,20 +510,16 @@ export function UniversalLiveSessionInterface({
         <div className="space-y-4">
           <Tabs defaultValue="messages" className="w-full">
             <TabsList className="grid w-full grid-cols-4 bg-slate-800 border-slate-700">
-              <TabsTrigger value="messages" className="data-[state=active]:bg-slate-700 data-[state=active]:text-white text-slate-300">
-                <MessageSquare className="h-4 w-4 mr-1" />
+              <TabsTrigger value="messages" className="data-[state=active]:bg-slate-700 data-[state=active]:text-white text-slate-300 text-xs px-1">
                 Messages
               </TabsTrigger>
-              <TabsTrigger value="media" className="data-[state=active]:bg-slate-700 data-[state=active]:text-white text-slate-300">
-                <Folder className="h-4 w-4 mr-1" />
+              <TabsTrigger value="media" className="data-[state=active]:bg-slate-700 data-[state=active]:text-white text-slate-300 text-xs px-1">
                 Media
               </TabsTrigger>
-              <TabsTrigger value="queue" className="data-[state=active]:bg-slate-700 data-[state=active]:text-white text-slate-300">
-                <Clock className="h-4 w-4 mr-1" />
+              <TabsTrigger value="queue" className="data-[state=active]:bg-slate-700 data-[state=active]:text-white text-slate-300 text-xs px-1">
                 Queue ({callQueue.length})
               </TabsTrigger>
-              <TabsTrigger value="requests" className="data-[state=active]:bg-slate-700 data-[state=active]:text-white text-slate-300">
-                <Hand className="h-4 w-4 mr-1" />
+              <TabsTrigger value="requests" className="data-[state=active]:bg-slate-700 data-[state=active]:text-white text-slate-300 text-xs px-1">
                 Requests ({guestRequests.filter(r => r.status === 'pending').length})
               </TabsTrigger>
             </TabsList>
