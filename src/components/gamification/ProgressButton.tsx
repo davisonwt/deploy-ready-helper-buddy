@@ -1,9 +1,13 @@
 import { useState } from 'react'
 import { motion } from 'framer-motion'
 import { MasteryModal } from './MasteryModal'
+import { useCallManager } from '@/hooks/useCallManager'
 
 export function ProgressButton() {
   const [isModalOpen, setIsModalOpen] = useState(false)
+  const { currentCall } = useCallManager()
+
+  if (currentCall && currentCall.status !== 'ended') return null
 
   return (
     <>

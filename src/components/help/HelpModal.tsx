@@ -24,6 +24,7 @@ import { useSupabaseClient, useUser } from '@supabase/auth-helpers-react';
 import { toast } from '@/hooks/use-toast';
 import { toast as sonnerToast } from 'sonner';
 import { useMutation } from '@tanstack/react-query';
+import { useCallManager } from '@/hooks/useCallManager';
 
 const docs = [
   {
@@ -89,6 +90,7 @@ const HelpModal = () => {
   const [activeTab, setActiveTab] = useState('docs');
   const user = useUser();
   const supabase = useSupabaseClient();
+  const { currentCall } = useCallManager();
 
   const filteredDocs = docs.filter(doc => 
     doc.title.toLowerCase().includes(search.toLowerCase()) ||
@@ -149,6 +151,10 @@ const HelpModal = () => {
       });
     },
   });
+
+  // Hide during active calls
+  const isInCall = currentCall && currentCall.status !== 'ended';
+  if (isInCall) return null;
 
   const handleFeedbackSubmit = () => {
     if (feedback.trim()) {

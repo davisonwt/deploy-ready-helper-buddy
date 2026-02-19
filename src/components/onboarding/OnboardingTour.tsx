@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { useUser, useSupabaseClient } from '@supabase/auth-helpers-react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from '@/hooks/use-toast';
+import { useCallManager } from '@/hooks/useCallManager';
 
 const steps: Step[] = [
   {
@@ -49,6 +50,7 @@ const OnboardingTour = () => {
   const user = useUser();
   const supabase = useSupabaseClient();
   const queryClient = useQueryClient();
+  const { currentCall } = useCallManager();
 
   // Check if user has completed onboarding
   const { data: preferences } = useQuery({
@@ -112,6 +114,10 @@ const OnboardingTour = () => {
     setRun(false);
     completeTourMutation.mutate();
   };
+
+  // Hide during active calls
+  const isInCall = currentCall && currentCall.status !== 'ended';
+  if (isInCall) return null;
 
   // Don't show anything if user has completed onboarding
   if (preferences?.onboarding_complete && !run) {
