@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { X, Trophy, Award, Bell, CheckCircle } from 'lucide-react'
+import { X, Trophy, Award, Bell, CheckCircle, Trash2 } from 'lucide-react'
 import { useGamification } from '@/hooks/useGamification'
 import { useAuth } from '@/hooks/useAuth'
 import { supabase } from '@/integrations/supabase/client'
@@ -63,6 +63,7 @@ export function MasteryModal({ isOpen, onClose }: MasteryModalProps) {
   let notifications: any[] = []
   let userPoints: any = null
   let markNotificationAsRead = async (id: string) => {}
+  let deleteNotification = async (id: string) => {}
   
   try {
     const gamification = useGamification()
@@ -70,6 +71,7 @@ export function MasteryModal({ isOpen, onClose }: MasteryModalProps) {
     notifications = gamification.notifications
     userPoints = gamification.userPoints
     markNotificationAsRead = gamification.markNotificationAsRead
+    deleteNotification = gamification.deleteNotification
   } catch (error) {
     console.warn('MasteryModal: gamification hook error', error)
   }
@@ -717,7 +719,7 @@ export function MasteryModal({ isOpen, onClose }: MasteryModalProps) {
                         }`}
                         onClick={() => handleNotificationClick(notification)}
                       >
-                        <div className="flex items-start space-x-3">
+                         <div className="flex items-start space-x-3">
                           <div className={`p-1 rounded-full ${!notification.is_read ? 'bg-yellow-400' : 'bg-white/20'}`}>
                             {notification.is_read ? (
                               <CheckCircle className="h-3 w-3 text-white/60" />
@@ -732,6 +734,16 @@ export function MasteryModal({ isOpen, onClose }: MasteryModalProps) {
                               {new Date(notification.created_at).toLocaleString()}
                             </p>
                           </div>
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              deleteNotification(notification.id)
+                            }}
+                            className="p-1.5 rounded-full hover:bg-red-500/20 text-white/40 hover:text-red-400 transition-colors shrink-0"
+                            title="Delete notification"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </button>
                         </div>
                       </motion.div>
                     ))}
@@ -777,11 +789,6 @@ export function MasteryModal({ isOpen, onClose }: MasteryModalProps) {
               >
                 <Award className="h-5 w-5" />
                 <span>Achievements</span>
-                {achievements.length > 0 && (
-                  <Badge className="ml-1 bg-yellow-400/20 text-yellow-300 border-yellow-400/30">
-                    {achievements.length}
-                  </Badge>
-                )}
                 {activeTab === "achievements" && (
                   <motion.div
                     layoutId="activeTab"
