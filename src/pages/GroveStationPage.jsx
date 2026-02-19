@@ -12,8 +12,6 @@ import {
   Mic, 
   Calendar, 
   Users, 
-  Play, 
-  Pause, 
   Volume2,
   Clock,
   Star,
@@ -41,7 +39,7 @@ import { DJAchievements } from '@/components/radio/DJAchievements'
 import { DJLeaderboard } from '@/components/radio/DJLeaderboard'
 import { BroadcastHistory } from '@/components/radio/BroadcastHistory'
 import { DJSeedRequestQueue } from '@/components/radio/SeedRequestQueue'
-import { NowPlayingWidget } from '@/components/radio/NowPlayingWidget'
+
 
 export default function GroveStationPage() {
   const {
@@ -59,15 +57,9 @@ export default function GroveStationPage() {
     submitFeedback
   } = useGroveStation()
 
-  const [isPlaying, setIsPlaying] = useState(false)
   const [showCreateDJ, setShowCreateDJ] = useState(false)
   const [showScheduleForm, setShowScheduleForm] = useState(false)
   const [showLiveInterface, setShowLiveInterface] = useState(false)
-
-  const handlePlayPause = () => {
-    setIsPlaying(!isPlaying)
-    // TODO: Implement actual audio streaming
-  }
 
   const handleGoLive = async () => {
     if (canGoLive && currentShow) {
@@ -96,7 +88,7 @@ export default function GroveStationPage() {
                   <div className="w-14 h-14 bg-gradient-to-br from-amber-600 to-green-700 rounded-full flex items-center justify-center shadow-lg shadow-amber-500/20">
                     <Radio className="h-7 w-7 text-white" />
                   </div>
-                  {isPlaying && (
+                  {currentShow?.is_live && (
                     <div className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full animate-pulse"></div>
                   )}
                 </div>
@@ -108,37 +100,12 @@ export default function GroveStationPage() {
                 </div>
               </div>
               
-              {/* Quick Play Button */}
-              <Button
-                variant={isPlaying ? "default" : "outline"}
-                size="lg"
-                onClick={handlePlayPause}
-                className="gap-2 bg-gradient-to-r from-amber-600 to-orange-600 hover:from-amber-700 hover:to-orange-700 text-white rounded-xl border-0 shadow-lg shadow-amber-500/20"
-              >
-                {isPlaying ? (
-                  <>
-                    <Pause className="h-5 w-5" />
-                    Pause Stream
-                  </>
-                ) : (
-                  <>
-                    <Play className="h-5 w-5" />
-                    Start Listening
-                  </>
-                )}
-              </Button>
-            </div>
-
-            {/* Now Playing Widget - shown when playing */}
-            {isPlaying && currentShow && (
-              <div className="mt-4">
-                <NowPlayingWidget
-                  trackTitle={currentShow?.show_name}
-                  artistName={currentShow?.dj_name}
-                  isPlaying={isPlaying}
-                />
-              </div>
-            )}
+              {/* Show status badge */}
+              {currentShow && (
+                <Badge variant="outline" className="bg-amber-100 dark:bg-amber-950/30 text-amber-700 dark:text-amber-400 border-amber-300 text-sm px-3 py-1">
+                  {currentShow.broadcast_mode === 'pre_recorded' ? '📻 Auto-Play' : currentShow.is_live ? '🔴 Live Now' : '📅 Scheduled'}
+                </Badge>
+              )}
           </CardContent>
         </Card>
 
@@ -250,25 +217,7 @@ export default function GroveStationPage() {
                     {stationConfig?.station_description || 'Broadcasting from the Ancient of Days - Your 24/7 community radio station for those who dare to be different'}
                   </p>
                 </div>
-                <div className="flex items-center gap-4 justify-center">
-                  <Button size="lg" onClick={handlePlayPause} className="gap-2 bg-gradient-to-r from-amber-600 to-orange-600 hover:from-amber-700 hover:to-orange-700 text-white rounded-xl border-0 shadow-lg">
-                    {isPlaying ? (
-                      <>
-                        <Pause className="h-5 w-5" />
-                        Pause Stream
-                      </>
-                    ) : (
-                      <>
-                        <Play className="h-5 w-5" />
-                        Start Listening
-                      </>
-                    )}
-                  </Button>
-                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                    <Volume2 className="h-4 w-4" />
-                    <span>High Quality</span>
-                  </div>
-                </div>
+                <p className="text-sm text-muted-foreground">Check the schedule for upcoming shows or browse our DJs.</p>
               </div>
             )}
 
