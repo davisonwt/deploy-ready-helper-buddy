@@ -94,7 +94,7 @@ export default function GroveStationPage() {
                 </div>
                 <div>
                   <h1 className="text-2xl font-bold bg-gradient-to-r from-amber-700 to-green-800 dark:from-amber-400 dark:to-green-400 bg-clip-text text-transparent">
-                    {stationConfig?.station_name || 'The Set-Apart Heretics AOD Frequencies'}
+                    {stationConfig?.station_name || 'Covenant Radio 364YHVH fm'}
                   </h1>
                   <p className="text-sm text-muted-foreground">{stationConfig?.station_tagline || 'Where eternal wisdom meets bold voices'}</p>
                 </div>
