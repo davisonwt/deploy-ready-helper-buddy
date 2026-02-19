@@ -15,6 +15,7 @@ interface Comment {
   message: string;
   type: 'comment' | 'request';
   created_at: string;
+  display_name?: string;
 }
 
 const ListenerInteractions = () => {
@@ -89,12 +90,25 @@ const ListenerInteractions = () => {
         .limit(50);
 
       if (data) {
+        // Fetch profile names for all unique sender_ids
+        const senderIds = [...new Set(data.map(d => d.sender_id))];
+        const { data: profiles } = await supabase
+          .from('profiles')
+          .select('user_id, display_name, first_name, last_name')
+          .in('user_id', senderIds);
+
+        const nameMap: Record<string, string> = {};
+        profiles?.forEach(p => {
+          nameMap[p.user_id] = p.display_name || [p.first_name, p.last_name].filter(Boolean).join(' ') || '';
+        });
+
         const formattedComments = data.map(item => ({
           id: item.id,
           user_id: item.sender_id,
           message: item.content,
           type: item.message_type as 'comment' | 'request',
           created_at: item.created_at,
+          display_name: nameMap[item.sender_id] || undefined,
         }));
         setComments(formattedComments);
       }
@@ -191,7 +205,7 @@ const ListenerInteractions = () => {
   };
 
   const formatDisplayName = (comment: Comment) => {
-    return `User ${comment.user_id.slice(0, 8)}`;
+    return comment.display_name || `User ${comment.user_id.slice(0, 8)}`;
   };
 
   const formatTime = (timestamp: string) => {
