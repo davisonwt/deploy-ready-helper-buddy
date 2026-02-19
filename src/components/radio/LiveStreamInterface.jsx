@@ -789,7 +789,6 @@ export function LiveStreamInterface({ djProfile, currentShow, onEndShow }) {
         onReject={rejectGuestRequest}
         isHost={isHost}
       />
-      )}
 
       {/* HOST INTERFACE - Messages & Call Management */}
       {liveSession && isLive && (
@@ -902,5 +901,5 @@ export function LiveStreamInterface({ djProfile, currentShow, onEndShow }) {
     </div>
   )
 }
-  
-  // ... keep existing code (remaining content truncated for brevity)
+
+export default LiveStreamInterface
