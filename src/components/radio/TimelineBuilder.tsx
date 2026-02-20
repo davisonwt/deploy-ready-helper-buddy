@@ -215,7 +215,7 @@ export const TimelineBuilder: React.FC<TimelineBuilderProps> = ({ segments, onCh
       // Load only music-related sower products with sower name via sowers table
       const { data: productTracks } = await supabase
         .from('products')
-        .select('id, title, description, price, category, music_genre, music_mood, sower_id, type, duration, sowers(display_name)')
+        .select('id, title, description, price, category, music_genre, music_mood, sower_id, type, duration, artist_name, sowers(display_name)')
       .eq('status', 'active')
       .in('type', ['music', 'Music'])
       .lte('price', 5)
@@ -235,7 +235,7 @@ export const TimelineBuilder: React.FC<TimelineBuilderProps> = ({ segments, onCh
         ...(productTracks || []).map((p: any) => ({
           id: p.id,
           title: p.title,
-          artist: (p.sowers as any)?.display_name || 'Sower',
+          artist: p.artist_name || (p.sowers as any)?.display_name || 'Sower',
           durationSeconds: p.duration ? Number(p.duration) : null,
           price: p.price || 2,
           genre: p.music_genre || p.category || 'unknown',

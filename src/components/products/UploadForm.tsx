@@ -28,6 +28,9 @@ export default function UploadForm() {
     tags: '',
     music_mood: '',
     music_genre: '',
+    artist_name: '',
+    duration_minutes: '',
+    duration_seconds: '',
   });
   const [coverImage, setCoverImage] = useState<File | null>(null);
   const [additionalImages, setAdditionalImages] = useState<File[]>([]);
@@ -321,7 +324,11 @@ export default function UploadForm() {
           whisperer_commission_percent: null,
           music_mood: formData.type === 'music' ? formData.music_mood || null : null,
           music_genre: formData.type === 'music' ? formData.music_genre || null : null,
-        })
+          artist_name: formData.type === 'music' ? formData.artist_name || null : null,
+          duration: formData.type === 'music' && releaseType === 'single'
+            ? (parseInt(formData.duration_minutes || '0') * 60 + parseInt(formData.duration_seconds || '0')) || null
+            : null,
+        } as any)
         .select()
         .single();
 
@@ -470,6 +477,48 @@ export default function UploadForm() {
                           ))}
                         </SelectContent>
                       </Select>
+                    </div>
+                  </div>
+                )}
+
+                {formData.type === 'music' && (
+                  <div>
+                    <Label htmlFor="artist_name">Artist / Creator Name</Label>
+                    <Input
+                      id="artist_name"
+                      placeholder="e.g. John Doe"
+                      value={formData.artist_name}
+                      onChange={(e) => setFormData({ ...formData, artist_name: e.target.value })}
+                    />
+                  </div>
+                )}
+
+                {formData.type === 'music' && releaseType === 'single' && (
+                  <div>
+                    <Label>Song Duration</Label>
+                    <div className="grid grid-cols-2 gap-2">
+                      <div>
+                        <Input
+                          type="number"
+                          min="0"
+                          max="59"
+                          placeholder="Minutes"
+                          value={formData.duration_minutes}
+                          onChange={(e) => setFormData({ ...formData, duration_minutes: e.target.value })}
+                        />
+                        <span className="text-xs text-muted-foreground">Minutes</span>
+                      </div>
+                      <div>
+                        <Input
+                          type="number"
+                          min="0"
+                          max="59"
+                          placeholder="Seconds"
+                          value={formData.duration_seconds}
+                          onChange={(e) => setFormData({ ...formData, duration_seconds: e.target.value })}
+                        />
+                        <span className="text-xs text-muted-foreground">Seconds</span>
+                      </div>
                     </div>
                   </div>
                 )}
