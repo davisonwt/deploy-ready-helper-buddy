@@ -212,11 +212,12 @@ export const TimelineBuilder: React.FC<TimelineBuilderProps> = ({ segments, onCh
         .eq('is_public', true)
         .order('created_at', { ascending: false });
 
-      // Load ALL sower products with sower name via sowers table
+      // Load only music-related sower products with sower name via sowers table
       const { data: productTracks } = await supabase
         .from('products')
-        .select('id, title, description, price, category, music_genre, music_mood, sower_id, sowers(display_name)')
+        .select('id, title, description, price, category, music_genre, music_mood, sower_id, type, sowers(display_name)')
         .eq('status', 'active')
+        .in('type', ['music', 'Music'])
         .order('created_at', { ascending: false });
 
       const allTracks: any[] = [
