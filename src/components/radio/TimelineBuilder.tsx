@@ -215,7 +215,7 @@ export const TimelineBuilder: React.FC<TimelineBuilderProps> = ({ segments, onCh
       // Load only music-related sower products with sower name via sowers table
       const { data: productTracks } = await supabase
         .from('products')
-        .select('id, title, description, price, category, music_genre, music_mood, sower_id, type, sowers(display_name)')
+        .select('id, title, description, price, category, music_genre, music_mood, sower_id, type, duration, sowers(display_name)')
         .eq('status', 'active')
         .in('type', ['music', 'Music'])
         .order('created_at', { ascending: false });
@@ -225,7 +225,7 @@ export const TimelineBuilder: React.FC<TimelineBuilderProps> = ({ segments, onCh
           id: t.id,
           title: t.track_title,
           artist: t.artist_name || (t.radio_djs as any)?.dj_name || 'Unknown',
-          duration: t.duration_seconds ? Math.round(t.duration_seconds / 60) : null,
+          durationSeconds: t.duration_seconds || null,
           price: t.price || 2,
           genre: t.music_genre || 'unknown',
           mood: t.music_mood || 'unknown',
@@ -235,7 +235,7 @@ export const TimelineBuilder: React.FC<TimelineBuilderProps> = ({ segments, onCh
           id: p.id,
           title: p.title,
           artist: (p.sowers as any)?.display_name || 'Sower',
-          duration: null,
+          durationSeconds: p.duration ? Number(p.duration) : null,
           price: p.price || 2,
           genre: p.music_genre || p.category || 'unknown',
           mood: p.music_mood || 'unknown',
@@ -250,13 +250,22 @@ export const TimelineBuilder: React.FC<TimelineBuilderProps> = ({ segments, onCh
     }
   };
 
+  const formatDurationSeconds = (totalSeconds: number) => {
+    const m = Math.floor(totalSeconds / 60);
+    const s = totalSeconds % 60;
+    return `${m}:${s.toString().padStart(2, '0')}`;
+  };
+
   const selectTrack = (track: any) => {
     if (editingSegmentId) {
+      const durationMin = track.durationSeconds
+        ? Math.ceil(track.durationSeconds / 10) * 10 / 60  // round up to nearest 10 seconds
+        : segments.find(s => s.id === editingSegmentId)?.durationMinutes || 5;
       updateSegment(editingSegmentId, {
         contentId: track.id,
         contentName: `${track.title} — ${track.artist}`,
         title: track.title,
-        durationMinutes: track.duration || segments.find(s => s.id === editingSegmentId)?.durationMinutes || 5,
+        durationMinutes: durationMin,
       });
     }
     setShowMusicPicker(false);
@@ -274,9 +283,11 @@ export const TimelineBuilder: React.FC<TimelineBuilderProps> = ({ segments, onCh
   let runningMinutes = 0;
 
   const formatTime = (minutes: number) => {
-    const h = Math.floor(minutes / 60);
-    const m = minutes % 60;
-    return `${h}:${m.toString().padStart(2, '0')}`;
+    const totalSec = Math.round(minutes * 60);
+    const h = Math.floor(totalSec / 3600);
+    const m = Math.floor((totalSec % 3600) / 60);
+    const s = totalSec % 60;
+    return s > 0 ? `${h}:${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}` : `${h}:${m.toString().padStart(2, '0')}`;
   };
 
   return (
@@ -363,15 +374,38 @@ export const TimelineBuilder: React.FC<TimelineBuilderProps> = ({ segments, onCh
                   />
                 </div>
                 <div>
-                  <Label className="text-xs">Duration (min)</Label>
-                  <Input
-                    type="number"
-                    min={1}
-                    max={120}
-                    value={segment.durationMinutes}
-                    onChange={(e) => updateSegment(segment.id, { durationMinutes: Math.max(1, parseInt(e.target.value) || 1) })}
-                    className="h-8 text-sm"
-                  />
+                  <Label className="text-xs">Duration</Label>
+                  <div className="flex items-center gap-1">
+                    <Input
+                      type="number"
+                      min={0}
+                      max={120}
+                      value={Math.floor(segment.durationMinutes)}
+                      onChange={(e) => {
+                        const mins = Math.max(0, parseInt(e.target.value) || 0);
+                        const currentSecs = Math.round((segment.durationMinutes % 1) * 60);
+                        updateSegment(segment.id, { durationMinutes: mins + currentSecs / 60 });
+                      }}
+                      className="h-8 text-sm w-16"
+                    />
+                    <span className="text-xs text-muted-foreground">m</span>
+                    <Select
+                      value={String(Math.round((segment.durationMinutes % 1) * 60 / 10) * 10)}
+                      onValueChange={(val) => {
+                        const mins = Math.floor(segment.durationMinutes);
+                        updateSegment(segment.id, { durationMinutes: mins + Number(val) / 60 });
+                      }}
+                    >
+                      <SelectTrigger className="h-8 text-sm w-16">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {[0, 10, 20, 30, 40, 50].map(s => (
+                          <SelectItem key={s} value={String(s)}>{s}s</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
                 </div>
               </div>
 
@@ -498,10 +532,10 @@ export const TimelineBuilder: React.FC<TimelineBuilderProps> = ({ segments, onCh
                     </div>
                     <div className="flex-1 min-w-0">
                       <p className="font-medium text-sm truncate">{track.title}</p>
-                      <p className="text-xs text-muted-foreground">
+                    <p className="text-xs text-muted-foreground">
                         {track.artist}
                         {track.genre !== 'unknown' && ` • ${track.genre}`}
-                        {track.duration && ` • ${track.duration} min`}
+                        {track.durationSeconds ? ` • ${formatDurationSeconds(track.durationSeconds)}` : ''}
                       </p>
                     </div>
                     <Badge variant="outline" className="text-xs shrink-0">
