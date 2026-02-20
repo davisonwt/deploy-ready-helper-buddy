@@ -1,37 +1,44 @@
 
-# Add "View Sower Profile" on Hover in Memry Feed
 
-## What This Does
-When you hover over a sower's profile picture or name in the Memry feed, a small popup card will appear showing the sower's name, avatar, and a "View Profile" button that navigates to their public member profile page (`/member/:id`).
+# Extend Voice Recording for Radio Pre-Recording
 
-## Changes
+## Problem
+1. **Lost work**: Browser-based recordings are stored only in memory as Blobs. When the page reloads (e.g., from a code deploy), all in-progress recordings are lost. Recordings need to be saved to the server incrementally so progress is preserved.
+2. **2-minute recording cap**: Both the `TimelineBuilder` voice recorder and `useVoiceMemo` hook enforce a hard 120-second (2 min) limit. For pre-recording radio show segments, DJs need to record for the full duration of their segment (which can be up to 120 *minutes*).
 
-### 1. Add HoverCard to the Bottom Info Avatar (MemryPage.tsx)
-The bottom-left sower info section (avatar + name) currently has no interaction. We will wrap it with a **HoverCard** component that shows:
-- Sower's avatar (larger)
-- Display name and username
-- A "View Profile" button linking to `/member/:userId`
+## Plan
 
-### 2. Enhance the Right-Side Avatar
-The right-side avatar already links to the profile on click. We will also add a **HoverCard** to it so hovering shows a quick preview before clicking.
+### 1. Remove the 2-minute hard cap on Timeline Builder voice recordings
+- In `src/components/radio/TimelineBuilder.tsx`, change `MAX_RECORDING_SECONDS = 120` to be dynamic, based on the segment's `durationMinutes` value (converted to seconds).
+- Update the countdown timer and progress bar to reflect the segment's actual duration instead of a fixed 2 minutes.
+- The auto-stop will trigger when the recording reaches the segment's configured duration (e.g., a 15-minute voice segment stops at 15 minutes).
 
-### 3. Keep Existing Click Behavior
-The right-side avatar will retain its direct link navigation. The hover card is an enhancement, not a replacement.
+### 2. Auto-save recordings to Supabase Storage as they're captured
+- Instead of holding all audio chunks in browser memory until submission, upload the completed recording Blob to Supabase Storage immediately when the user stops recording (or when auto-stop triggers).
+- Store the recording in the `chat-files` bucket under a path like `radio-voice-segments/{userId}/{segmentId}-{timestamp}.webm`.
+- Save the resulting storage URL on the segment object (`fileUrl`) so it persists even if the page reloads.
+- This prevents data loss from page refreshes or code deploys.
+
+### 3. Update the useVoiceMemo hook for consistency
+- In `src/hooks/useVoiceMemo.jsx`, increase `MAX_RECORDING_TIME` from 120 seconds to a configurable parameter (default remains 120s for chat voice memos, but radio contexts can pass a higher limit).
+
+### 4. Update UI feedback
+- The recording progress bar and countdown text in the `VoiceSegmentControls` component will show the actual segment duration limit instead of always "2:00 left".
+- Add a subtle warning when approaching the segment time limit (e.g., last 30 seconds).
 
 ## Technical Details
 
-**File to modify:** `src/pages/MemryPage.tsx`
+**Files to modify:**
+- `src/components/radio/TimelineBuilder.tsx` -- Make `MAX_RECORDING_SECONDS` dynamic per segment, auto-upload on stop
+- `src/hooks/useVoiceMemo.jsx` -- Accept configurable max duration parameter
 
-**Components used:**
-- `HoverCard`, `HoverCardTrigger`, `HoverCardContent` from `@/components/ui/hover-card` (already installed)
-- Existing `Avatar`, `AvatarImage`, `AvatarFallback` components
-- Existing `Button` component with `Link` for navigation
+**Key changes in TimelineBuilder.tsx:**
+- `MAX_RECORDING_SECONDS` becomes a function: `getMaxSeconds(segment) => segment.durationMinutes * 60`
+- `stopRecording` callback: after creating the Blob, upload it to Supabase Storage and store the URL on the segment
+- `formatCountdown` uses the segment-specific max instead of a constant
+- Progress bar width calculation uses segment-specific max
 
-**Implementation approach:**
-- Import `HoverCard`, `HoverCardTrigger`, `HoverCardContent` 
-- Wrap the right-side avatar (around line 1390) with a HoverCard that shows sower info + "View Profile" button
-- Wrap the bottom-info avatar section (around line 1590) with a HoverCard with the same preview card
-- The HoverCard content will include: avatar, display name, @username, and a "View Profile" button linking to `/member/:userId`
-- On mobile (touch devices), tapping the avatar will still navigate directly to the profile since hover isn't available
+**Key changes in useVoiceMemo.jsx:**
+- `startRecording` accepts an optional `maxDuration` parameter (defaults to 120 seconds)
+- Timer and auto-stop use the passed duration instead of the constant
 
-**No database changes required** -- all profile data is already available in `currentPost.profiles` and `currentPost.user_id`.
