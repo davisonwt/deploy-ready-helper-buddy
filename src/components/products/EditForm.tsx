@@ -35,6 +35,9 @@ export default function EditForm() {
     tags: '',
     music_mood: '',
     music_genre: '',
+    artist_name: '',
+    duration_minutes: '',
+    duration_seconds: '',
   });
 
   useEffect(() => {
@@ -66,6 +69,7 @@ export default function EditForm() {
         const storedPrice = data.price || 0;
         const basePrice = storedPrice > 0 ? storedPrice / 1.15 : 0;
 
+        const durationTotal = data.duration ? Number(data.duration) : 0;
         setFormData({
           title: data.title || '',
           description: data.description || '',
@@ -76,6 +80,9 @@ export default function EditForm() {
           tags: Array.isArray(data.tags) ? data.tags.join(', ') : '',
           music_mood: data.music_mood || '',
           music_genre: data.music_genre || '',
+          artist_name: (data as any).artist_name || '',
+          duration_minutes: durationTotal > 0 ? String(Math.floor(durationTotal / 60)) : '',
+          duration_seconds: durationTotal > 0 ? String(durationTotal % 60) : '',
         });
 
         // Load existing images
@@ -138,8 +145,12 @@ export default function EditForm() {
           image_urls: allImages,
           music_mood: formData.type === 'music' ? formData.music_mood || null : null,
           music_genre: formData.type === 'music' ? formData.music_genre || null : null,
+          artist_name: formData.type === 'music' ? formData.artist_name || null : null,
+          duration: formData.type === 'music'
+            ? (parseInt(formData.duration_minutes || '0') * 60 + parseInt(formData.duration_seconds || '0')) || null
+            : null,
           updated_at: new Date().toISOString()
-        })
+        } as any)
         .eq('id', id)
         .eq('sower_id', sowerId);
 
@@ -271,6 +282,48 @@ export default function EditForm() {
                         ))}
                       </SelectContent>
                     </Select>
+                  </div>
+                </div>
+              )}
+
+              {formData.type === 'music' && (
+                <div className="space-y-2">
+                  <Label htmlFor="artist_name">Artist / Creator Name</Label>
+                  <Input
+                    id="artist_name"
+                    placeholder="e.g. John Doe"
+                    value={formData.artist_name}
+                    onChange={(e) => setFormData({ ...formData, artist_name: e.target.value })}
+                  />
+                </div>
+              )}
+
+              {formData.type === 'music' && (
+                <div className="space-y-2">
+                  <Label>Song Duration</Label>
+                  <div className="grid grid-cols-2 gap-2">
+                    <div>
+                      <Input
+                        type="number"
+                        min="0"
+                        max="59"
+                        placeholder="Minutes"
+                        value={formData.duration_minutes}
+                        onChange={(e) => setFormData({ ...formData, duration_minutes: e.target.value })}
+                      />
+                      <span className="text-xs text-muted-foreground">Minutes</span>
+                    </div>
+                    <div>
+                      <Input
+                        type="number"
+                        min="0"
+                        max="59"
+                        placeholder="Seconds"
+                        value={formData.duration_seconds}
+                        onChange={(e) => setFormData({ ...formData, duration_seconds: e.target.value })}
+                      />
+                      <span className="text-xs text-muted-foreground">Seconds</span>
+                    </div>
                   </div>
                 </div>
               )}
