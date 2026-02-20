@@ -3828,6 +3828,7 @@ export type Database = {
       }
       products: {
         Row: {
+          artist_name: string | null
           bestowal_count: number | null
           category: string | null
           cover_image_url: string | null
@@ -3859,6 +3860,7 @@ export type Database = {
           whisperer_commission_percent: number | null
         }
         Insert: {
+          artist_name?: string | null
           bestowal_count?: number | null
           category?: string | null
           cover_image_url?: string | null
@@ -3890,6 +3892,7 @@ export type Database = {
           whisperer_commission_percent?: number | null
         }
         Update: {
+          artist_name?: string | null
           bestowal_count?: number | null
           category?: string | null
           cover_image_url?: string | null
