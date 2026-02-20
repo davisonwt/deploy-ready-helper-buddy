@@ -212,27 +212,12 @@ export const TimelineBuilder: React.FC<TimelineBuilderProps> = ({ segments, onCh
         .eq('is_public', true)
         .order('created_at', { ascending: false });
 
-      // Load ALL sower products (music, spiritual, entertainment, etc.)
+      // Load ALL sower products with sower name via sowers table
       const { data: productTracks } = await supabase
         .from('products')
-        .select('id, title, description, price, category, music_genre, music_mood, sower_id')
+        .select('id, title, description, price, category, music_genre, music_mood, sower_id, sowers(display_name)')
         .eq('status', 'active')
         .order('created_at', { ascending: false });
-
-      // Fetch sower names for products
-      const sowerIds = [...new Set((productTracks || []).map((p: any) => p.sower_id).filter(Boolean))];
-      let sowerNameMap: Record<string, string> = {};
-      if (sowerIds.length > 0) {
-        const { data: sowerProfiles } = await supabase
-          .from('profiles')
-          .select('user_id, display_name, first_name, last_name')
-          .in('user_id', sowerIds);
-        if (sowerProfiles) {
-          for (const sp of sowerProfiles) {
-            sowerNameMap[sp.user_id] = sp.display_name || `${sp.first_name || ''} ${sp.last_name || ''}`.trim() || 'Sower';
-          }
-        }
-      }
 
       const allTracks: any[] = [
         ...(djTracks || []).map((t: any) => ({
@@ -248,7 +233,7 @@ export const TimelineBuilder: React.FC<TimelineBuilderProps> = ({ segments, onCh
         ...(productTracks || []).map((p: any) => ({
           id: p.id,
           title: p.title,
-          artist: sowerNameMap[p.sower_id] || 'Sower',
+          artist: (p.sowers as any)?.display_name || 'Sower',
           duration: null,
           price: p.price || 2,
           genre: p.music_genre || p.category || 'unknown',
