@@ -205,26 +205,40 @@ export const TimelineBuilder: React.FC<TimelineBuilderProps> = ({ segments, onCh
   const loadCommunityMusic = async () => {
     setLoadingTracks(true);
     try {
-      // Load from dj_music_tracks (public tracks)
+      // Load from dj_music_tracks (public tracks) with DJ name
       const { data: djTracks } = await supabase
         .from('dj_music_tracks')
-        .select('id, track_title, artist_name, duration_seconds, price, music_genre, music_mood')
+        .select('id, track_title, artist_name, duration_seconds, price, music_genre, music_mood, dj_id, radio_djs(dj_name)')
         .eq('is_public', true)
         .order('created_at', { ascending: false });
 
-      // Load from products table (music products)
+      // Load ALL sower products (music, spiritual, entertainment, etc.)
       const { data: productTracks } = await supabase
         .from('products')
-        .select('id, title, description, price, category, music_genre, music_mood')
-        .eq('category', 'music')
+        .select('id, title, description, price, category, music_genre, music_mood, sower_id')
         .eq('status', 'active')
         .order('created_at', { ascending: false });
+
+      // Fetch sower names for products
+      const sowerIds = [...new Set((productTracks || []).map((p: any) => p.sower_id).filter(Boolean))];
+      let sowerNameMap: Record<string, string> = {};
+      if (sowerIds.length > 0) {
+        const { data: sowerProfiles } = await supabase
+          .from('profiles')
+          .select('user_id, display_name, first_name, last_name')
+          .in('user_id', sowerIds);
+        if (sowerProfiles) {
+          for (const sp of sowerProfiles) {
+            sowerNameMap[sp.user_id] = sp.display_name || `${sp.first_name || ''} ${sp.last_name || ''}`.trim() || 'Sower';
+          }
+        }
+      }
 
       const allTracks: any[] = [
         ...(djTracks || []).map((t: any) => ({
           id: t.id,
           title: t.track_title,
-          artist: t.artist_name || 'Unknown',
+          artist: t.artist_name || (t.radio_djs as any)?.dj_name || 'Unknown',
           duration: t.duration_seconds ? Math.round(t.duration_seconds / 60) : null,
           price: t.price || 2,
           genre: t.music_genre || 'unknown',
@@ -234,10 +248,10 @@ export const TimelineBuilder: React.FC<TimelineBuilderProps> = ({ segments, onCh
         ...(productTracks || []).map((p: any) => ({
           id: p.id,
           title: p.title,
-          artist: 'Sower',
+          artist: sowerNameMap[p.sower_id] || 'Sower',
           duration: null,
           price: p.price || 2,
-          genre: p.music_genre || 'unknown',
+          genre: p.music_genre || p.category || 'unknown',
           mood: p.music_mood || 'unknown',
           source: 'product',
         })),
