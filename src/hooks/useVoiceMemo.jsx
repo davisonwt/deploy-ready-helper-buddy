@@ -2,7 +2,7 @@ import { useState, useRef, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 
-const MAX_RECORDING_TIME = 120; // 2 minutes in seconds
+const DEFAULT_MAX_RECORDING_TIME = 120; // 2 minutes in seconds for chat voice memos
 
 export const useVoiceMemo = () => {
   const [isRecording, setIsRecording] = useState(false);
@@ -14,7 +14,7 @@ export const useVoiceMemo = () => {
   const recordingTimerRef = useRef(null);
   const { toast } = useToast();
 
-  const startRecording = useCallback(async (currentTopic = "General discussion") => {
+  const startRecording = useCallback(async (currentTopic = "General discussion", maxDuration = DEFAULT_MAX_RECORDING_TIME) => {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ 
         audio: {
@@ -33,9 +33,8 @@ export const useVoiceMemo = () => {
       mediaRecorderRef.current = mediaRecorder;
       setRecordingTime(0);
 
-      // Add topic context as metadata
       mediaRecorder.addEventListener('start', () => {
-        console.log(`Recording started for topic: ${currentTopic}`);
+        console.log(`Recording started for topic: ${currentTopic} (max ${maxDuration}s)`);
       });
 
       mediaRecorder.ondataavailable = (event) => {
@@ -48,26 +47,25 @@ export const useVoiceMemo = () => {
       recordingTimerRef.current = setInterval(() => {
         setRecordingTime(prev => {
           const newTime = prev + 1;
-          if (newTime >= MAX_RECORDING_TIME) {
-            // Auto-stop at 2 minutes
+          if (newTime >= maxDuration) {
             stopRecording();
             toast({
               title: "Recording Stopped",
-              description: "Maximum recording time of 2 minutes reached.",
+              description: `Maximum recording time of ${Math.floor(maxDuration / 60)} minutes reached.`,
             });
           }
           return newTime;
         });
       }, 1000);
 
-      // Auto-stop timer at 2 minutes
+      // Auto-stop timer
       timerRef.current = setTimeout(() => {
         if (isRecording) {
           stopRecording();
         }
-      }, MAX_RECORDING_TIME * 1000);
+      }, maxDuration * 1000);
 
-      mediaRecorder.start(100); // Record in 100ms chunks
+      mediaRecorder.start(100);
       setIsRecording(true);
     } catch (error) {
       console.error('Error starting recording:', error);
@@ -220,8 +218,8 @@ export const useVoiceMemo = () => {
   }, [toast]);
 
   // Format recording time for display
-  const formatRecordingTime = (seconds) => {
-    const remainingTime = MAX_RECORDING_TIME - seconds;
+  const formatRecordingTime = (seconds, maxTime = DEFAULT_MAX_RECORDING_TIME) => {
+    const remainingTime = maxTime - seconds;
     const mins = Math.floor(remainingTime / 60);
     const secs = remainingTime % 60;
     return `${mins}:${secs.toString().padStart(2, '0')} left`;
@@ -231,7 +229,7 @@ export const useVoiceMemo = () => {
     isRecording,
     isUploading,
     recordingTime,
-    maxRecordingTime: MAX_RECORDING_TIME,
+    maxRecordingTime: DEFAULT_MAX_RECORDING_TIME,
     formatRecordingTime,
     startRecording,
     stopRecording,

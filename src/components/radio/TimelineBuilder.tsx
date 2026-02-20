@@ -60,7 +60,13 @@ export const TimelineBuilder: React.FC<TimelineBuilderProps> = ({ segments, onCh
   const chunksRef = useRef<Blob[]>([]);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
-  const MAX_RECORDING_SECONDS = 120;
+  // Dynamic max recording based on segment duration (in seconds)
+  const getMaxRecordingSeconds = useCallback((segmentId: string) => {
+    const seg = segments.find(s => s.id === segmentId);
+    return seg ? seg.durationMinutes * 60 : 120;
+  }, [segments]);
+
+  const [isUploading, setIsUploading] = useState(false);
 
   // Ref to always hold the latest stopRecording without stale closures
   const stopRecordingRef = useRef<(segmentId: string) => void>(() => {});
@@ -80,15 +86,16 @@ export const TimelineBuilder: React.FC<TimelineBuilderProps> = ({ segments, onCh
         if (e.data.size > 0) chunksRef.current.push(e.data);
       };
 
+      const maxSeconds = getMaxRecordingSeconds(segmentId);
+
       // Auto-stop is handled via the ref so it always calls the latest stopRecording
       timerRef.current = setInterval(() => {
         setRecordingTime(prev => {
           const next = prev + 1;
-          if (next >= MAX_RECORDING_SECONDS) {
-            // Use setTimeout to avoid calling stop inside a state setter
+          if (next >= maxSeconds) {
             setTimeout(() => {
               stopRecordingRef.current(segmentId);
-              toast({ title: 'Recording Stopped', description: 'Max 2 minutes reached.' });
+              toast({ title: 'Recording Stopped', description: `Segment time limit of ${Math.floor(maxSeconds / 60)} min reached.` });
             }, 0);
           }
           return next;
@@ -100,24 +107,48 @@ export const TimelineBuilder: React.FC<TimelineBuilderProps> = ({ segments, onCh
       console.error('Mic error:', err);
       toast({ title: 'Mic Error', description: 'Could not access microphone. Check permissions.', variant: 'destructive' });
     }
-  }, [toast]);
+  }, [toast, getMaxRecordingSeconds]);
 
   const stopRecording = useCallback((segmentId: string) => {
     if (timerRef.current) { clearInterval(timerRef.current); timerRef.current = null; }
 
     const recorder = mediaRecorderRef.current;
     if (recorder && recorder.state !== 'inactive') {
-      recorder.onstop = () => {
+      recorder.onstop = async () => {
         const blob = new Blob(chunksRef.current, { type: 'audio/webm' });
         const url = URL.createObjectURL(blob);
-        onChange(segments.map(s => s.id === segmentId ? { ...s, audioBlob: blob, audioUrl: url, file: undefined } : s));
+
+        // Auto-save to Supabase Storage to prevent data loss
+        try {
+          setIsUploading(true);
+          const fileName = `radio-voice-segments/${segmentId}-${Date.now()}.webm`;
+          const { error: uploadError } = await supabase.storage
+            .from('chat-files')
+            .upload(fileName, blob, { contentType: 'audio/webm', upsert: false });
+
+          if (uploadError) {
+            console.error('Upload error:', uploadError);
+            toast({ title: 'Auto-save failed', description: 'Recording kept locally. Try re-recording if page refreshes.', variant: 'destructive' });
+            onChange(segments.map(s => s.id === segmentId ? { ...s, audioBlob: blob, audioUrl: url, file: undefined } : s));
+          } else {
+            const { data: { publicUrl } } = supabase.storage.from('chat-files').getPublicUrl(fileName);
+            onChange(segments.map(s => s.id === segmentId ? { ...s, audioBlob: blob, audioUrl: url, fileUrl: publicUrl, file: undefined } : s));
+            toast({ title: 'Recording Saved', description: 'Your voice recording has been saved to the server.' });
+          }
+        } catch (err) {
+          console.error('Save error:', err);
+          onChange(segments.map(s => s.id === segmentId ? { ...s, audioBlob: blob, audioUrl: url, file: undefined } : s));
+        } finally {
+          setIsUploading(false);
+        }
+
         recorder.stream.getTracks().forEach(t => t.stop());
       };
       recorder.stop();
     }
     setRecordingSegmentId(null);
     setRecordingTime(0);
-  }, [segments, onChange]);
+  }, [segments, onChange, toast]);
 
   // Keep the ref in sync so the timer always calls the latest version
   stopRecordingRef.current = stopRecording;
@@ -128,8 +159,9 @@ export const TimelineBuilder: React.FC<TimelineBuilderProps> = ({ segments, onCh
     onChange(segments.map(s => s.id === segmentId ? { ...s, audioBlob: undefined, audioUrl: undefined } : s));
   }, [segments, onChange]);
 
-  const formatCountdown = (elapsed: number) => {
-    const remaining = MAX_RECORDING_SECONDS - elapsed;
+  const formatCountdown = (elapsed: number, segmentId?: string) => {
+    const maxSec = segmentId ? getMaxRecordingSeconds(segmentId) : 120;
+    const remaining = maxSec - elapsed;
     const m = Math.floor(remaining / 60);
     const s = remaining % 60;
     return `${m}:${s.toString().padStart(2, '0')} left`;
@@ -366,8 +398,10 @@ export const TimelineBuilder: React.FC<TimelineBuilderProps> = ({ segments, onCh
                 <VoiceSegmentControls
                   segment={segment}
                   isRecording={recordingSegmentId === segment.id}
+                  isUploading={isUploading && recordingSegmentId === null}
                   recordingTime={recordingTime}
-                  formatCountdown={formatCountdown}
+                  maxRecordingSeconds={getMaxRecordingSeconds(segment.id)}
+                  formatCountdown={(elapsed) => formatCountdown(elapsed, segment.id)}
                   onStartRecording={() => startRecording(segment.id)}
                   onStopRecording={() => stopRecording(segment.id)}
                   onClearRecording={() => clearRecording(segment.id)}
@@ -522,18 +556,29 @@ const FileUploadZone: React.FC<{
 const VoiceSegmentControls: React.FC<{
   segment: TimelineSegment;
   isRecording: boolean;
+  isUploading: boolean;
   recordingTime: number;
+  maxRecordingSeconds: number;
   formatCountdown: (elapsed: number) => string;
   onStartRecording: () => void;
   onStopRecording: () => void;
   onClearRecording: () => void;
   onFileSelect: (file: File) => void;
-}> = ({ segment, isRecording, recordingTime, formatCountdown, onStartRecording, onStopRecording, onClearRecording, onFileSelect }) => {
+}> = ({ segment, isRecording, isUploading, recordingTime, maxRecordingSeconds, formatCountdown, onStartRecording, onStopRecording, onClearRecording, onFileSelect }) => {
   const { getRootProps, getInputProps } = useDropzone({
     accept: { 'audio/*': ['.mp3', '.wav', '.m4a', '.ogg'] },
     maxFiles: 1,
     onDrop: (files) => files[0] && onFileSelect(files[0]),
   });
+
+  // Show uploading state
+  if (isUploading) {
+    return (
+      <div className="p-3 rounded border border-primary/50 bg-primary/10 text-center">
+        <span className="text-sm text-muted-foreground">Saving recording to server...</span>
+      </div>
+    );
+  }
 
   // Show playback preview if recorded
   if (segment.audioBlob && segment.audioUrl) {
@@ -542,6 +587,9 @@ const VoiceSegmentControls: React.FC<{
         <div className="flex items-center gap-2">
           <Mic className="h-4 w-4 text-primary" />
           <span className="text-xs font-medium">Recorded Voice Note</span>
+          {segment.fileUrl && (
+            <Badge variant="outline" className="text-xs text-emerald-400 border-emerald-400/40">Saved ✓</Badge>
+          )}
           <Badge variant="outline" className="text-xs ml-auto">
             {(segment.audioBlob.size / 1024).toFixed(0)} KB
           </Badge>
@@ -574,6 +622,7 @@ const VoiceSegmentControls: React.FC<{
 
   // Recording in progress
   if (isRecording) {
+    const isWarning = (maxRecordingSeconds - recordingTime) <= 30;
     return (
       <div className="p-3 rounded border border-destructive/50 bg-destructive/10 space-y-2">
         <div className="flex items-center gap-2">
@@ -582,12 +631,14 @@ const VoiceSegmentControls: React.FC<{
             <span className="relative inline-flex rounded-full h-3 w-3 bg-destructive" />
           </span>
           <span className="text-sm font-medium text-destructive">Recording...</span>
-          <span className="text-xs text-muted-foreground ml-auto font-mono">{formatCountdown(recordingTime)}</span>
+          <span className={`text-xs ml-auto font-mono ${isWarning ? 'text-destructive font-bold' : 'text-muted-foreground'}`}>
+            {isWarning && '⚠️ '}{formatCountdown(recordingTime)}
+          </span>
         </div>
         <div className="h-1.5 bg-muted rounded-full overflow-hidden">
           <div
             className="h-full bg-destructive transition-all rounded-full"
-            style={{ width: `${(recordingTime / 120) * 100}%` }}
+            style={{ width: `${(recordingTime / maxRecordingSeconds) * 100}%` }}
           />
         </div>
         <Button type="button" variant="destructive" size="sm" className="w-full text-xs gap-1" onClick={onStopRecording}>
