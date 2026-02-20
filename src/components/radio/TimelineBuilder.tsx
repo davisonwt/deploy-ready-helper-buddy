@@ -216,9 +216,10 @@ export const TimelineBuilder: React.FC<TimelineBuilderProps> = ({ segments, onCh
       const { data: productTracks } = await supabase
         .from('products')
         .select('id, title, description, price, category, music_genre, music_mood, sower_id, type, duration, sowers(display_name)')
-        .eq('status', 'active')
-        .in('type', ['music', 'Music'])
-        .order('created_at', { ascending: false });
+      .eq('status', 'active')
+      .in('type', ['music', 'Music'])
+      .lte('price', 5)
+      .order('created_at', { ascending: false });
 
       const allTracks: any[] = [
         ...(djTracks || []).map((t: any) => ({
@@ -535,7 +536,8 @@ export const TimelineBuilder: React.FC<TimelineBuilderProps> = ({ segments, onCh
                     <p className="text-xs text-muted-foreground">
                         {track.artist}
                         {track.genre !== 'unknown' && ` • ${track.genre}`}
-                        {track.durationSeconds ? ` • ${formatDurationSeconds(track.durationSeconds)}` : ''}
+                        {' • '}
+                        {track.durationSeconds ? formatDurationSeconds(track.durationSeconds) : 'Duration N/A'}
                       </p>
                     </div>
                     <Badge variant="outline" className="text-xs shrink-0">
