@@ -1,88 +1,79 @@
 
 
-# AI Voice Assistant + Download/Re-upload for Radio Slots
+# Free AI Voice Assistant for Radio Slots (No External Accounts Needed)
 
-## Overview
-Adding two capabilities to the Voice/Talk segments in the Timeline Builder:
-1. **Download button** so DJs can edit recordings externally and re-upload polished versions
-2. **AI Voice Generator** — DJ types a script, AI polishes it, then ElevenLabs generates a clean voice note
+## The Idea
+Instead of ElevenLabs (paid), we use two free tools you already have:
 
-## What Changes
+1. **Lovable AI** (already configured) -- polishes your rough notes into a clean radio script
+2. **Browser's Built-in Text-to-Speech** (Web Speech API) -- reads the script aloud so you can hear how it sounds, then you record yourself reading the polished version with one click
 
-### 1. Download Button (Simple Addition)
-When a voice recording exists, add a "Download" button next to "Re-record" and "Delete" in the `VoiceSegmentControls` component. This lets DJs save the `.webm` file to their PC for editing in Audacity, Adobe Audition, etc., then use the existing "Upload File" option to bring back the polished version.
+Plus the **Download button** so you can edit recordings on your PC.
 
-### 2. ElevenLabs Connector Setup
-ElevenLabs is available as a connector. We'll connect it to get the `ELEVENLABS_API_KEY` secret, which powers text-to-speech generation.
+## How It Works for the DJ
 
-### 3. AI Script Polish Edge Function
-A new edge function `generate-radio-script` that:
-- Takes rough bullet points or notes from the DJ
-- Uses Lovable AI (already has `LOVABLE_API_KEY`) to polish them into a natural radio script
-- Returns the clean script text for review before voice generation
+### Option A: AI Script Helper (new)
+1. Click "AI Voice" on a voice segment
+2. Type rough notes like "welcome listeners, mention tonight's theme is gospel praise, shout out to Sister Mary"
+3. Click "Polish Script" -- AI turns it into a smooth radio script
+4. Click "Listen" -- your browser reads it aloud so you hear the flow
+5. Edit the script if needed
+6. Click "Record This" -- starts mic recording with the script visible as a teleprompter
+7. Done! Clean recording in one take because you're reading a polished script
 
-### 4. ElevenLabs TTS Edge Function
-A new edge function `generate-voice-note` that:
-- Takes the polished script text
-- Calls ElevenLabs TTS API with a professional voice (e.g., "Brian" — warm male, or "Sarah" — clear female)
-- Returns the audio as binary data
-- DJ can preview, accept, or regenerate
+### Option B: Download for External Editing (new)
+1. Record your voice as usual
+2. Click "Download" to save the file to your PC
+3. Edit in Audacity, remove background noise, etc.
+4. Use "Upload File" to bring back the polished version
 
-### 5. AI Voice Panel in Timeline Builder
-When a DJ adds a Voice/Talk segment, they'll see three options instead of two:
-- **Record with Mic** (existing)
-- **Upload File** (existing)
-- **AI Voice** (new) — opens a small panel where the DJ:
-  1. Types or pastes their script/bullet points
-  2. Picks a voice (from a short curated list)
-  3. Clicks "Generate" — AI polishes the text, then generates audio
-  4. Previews the result
-  5. Accepts it (saves to Supabase Storage like recordings do) or regenerates
+### Option C: Record with Mic / Upload File (existing, unchanged)
 
----
+## What's Free and Why
+- **Script polishing**: Uses Lovable AI (LOVABLE_API_KEY already configured, included in your plan)
+- **Voice preview**: Uses your browser's built-in speech engine -- completely free, no API, no account
+- **Recording**: Uses your existing mic recording code
+- **Download**: Just a download link on the existing audio blob
 
 ## Technical Details
 
 ### Files Created
-1. **`supabase/functions/generate-radio-script/index.ts`** — Edge function using Lovable AI to polish DJ notes into radio scripts
-2. **`supabase/functions/generate-voice-note/index.ts`** — Edge function calling ElevenLabs TTS, returns binary audio
+1. **`supabase/functions/generate-radio-script/index.ts`** -- Edge function that takes rough DJ notes and returns a polished radio script using Lovable AI
 
 ### Files Modified
-1. **`src/components/radio/TimelineBuilder.tsx`** — Add Download button to `VoiceSegmentControls`, add "AI Voice" as a third option in the default controls grid (3 columns instead of 2), add AI Voice generation panel with script input, voice selector, and generate/preview flow
-2. **`supabase/config.toml`** — Register the two new edge functions with `verify_jwt = false`
+1. **`src/components/radio/TimelineBuilder.tsx`**:
+   - Add "Download" button to the recorded voice preview (next to Re-record and Delete)
+   - Add "AI Voice" as a third option in the default controls (3-column grid)
+   - Add AI Voice panel with: script textarea, "Polish Script" button, "Listen" preview button, "Record This" teleprompter mode
+2. **`supabase/config.toml`** -- Register the new `generate-radio-script` edge function
 
-### Secrets Required
-- `ELEVENLABS_API_KEY` — via the ElevenLabs connector
+### Edge Function: generate-radio-script
+- Takes: `{ notes: string, showTheme?: string }`
+- Uses Lovable AI (google/gemini-3-flash-preview) to convert rough notes into natural radio speech
+- Returns: `{ script: string }`
+- No streaming needed -- just a quick polish request
 
-### Edge Function Flow
+### UI Changes to VoiceSegmentControls
 
-```text
-DJ types notes
-     |
-     v
-generate-radio-script (Lovable AI)
-     |
-     v
-Polished script shown for review/edit
-     |
-     v
-generate-voice-note (ElevenLabs TTS)
-     |
-     v
-Audio preview in browser
-     |
-     v
-Accept --> Save to Supabase Storage --> Attached to segment
-```
+**Default state** (currently 2-column grid) becomes 3-column:
+- Record with Mic (existing)
+- Upload File (existing)  
+- AI Voice (new) -- sparkle icon
 
-### Voice Options (Curated Short List)
-- Brian (warm male narrator)
-- Sarah (clear female)
-- George (deep male)
-- Lily (soft female)
+**AI Voice panel** (shown when "AI Voice" is clicked):
+- Textarea for rough notes/bullet points
+- "Polish Script" button -- calls the edge function
+- Polished script display (editable)
+- "Listen" button -- browser reads it aloud using Web Speech API
+- "Record This" button -- starts mic recording with script visible as teleprompter overlay
+- Back button to return to default options
 
-DJs pick from this list. No complex configuration needed.
+**Recorded state** adds Download button:
+- Re-record (existing)
+- Download (new) -- downloads the .webm file
+- Delete (existing)
 
-### No Database Changes
-All audio files use the existing `chat-files` storage bucket under `radio-voice-segments/`. No new tables needed.
-
+### No New Dependencies
+- Web Speech API is built into all modern browsers
+- Lovable AI is already configured
+- No new npm packages needed
