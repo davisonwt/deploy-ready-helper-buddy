@@ -612,16 +612,54 @@ const VoiceSegmentControls: React.FC<{
     onDrop: (files) => files[0] && onFileSelect(files[0]),
   });
 
-  const handleDownload = () => {
+  const handleDownload = async () => {
     if (!segment.audioBlob) return;
-    const url = URL.createObjectURL(segment.audioBlob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `${segment.title || 'voice-recording'}-${Date.now()}.webm`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
+    try {
+      // Decode webm audio to PCM, then encode as MP3
+      const arrayBuffer = await segment.audioBlob.arrayBuffer();
+      const audioCtx = new AudioContext();
+      const audioBuffer = await audioCtx.decodeAudioData(arrayBuffer);
+      const samples = audioBuffer.getChannelData(0);
+      const sampleRate = audioBuffer.sampleRate;
+
+      const { default: lamejs } = await import('lamejs');
+      const mp3enc = new lamejs.Mp3Encoder(1, sampleRate, 128);
+      const sampleBlockSize = 1152;
+      const int16 = new Int16Array(samples.length);
+      for (let i = 0; i < samples.length; i++) {
+        const s = Math.max(-1, Math.min(1, samples[i]));
+        int16[i] = s < 0 ? s * 0x8000 : s * 0x7FFF;
+      }
+      const mp3Data: Uint8Array[] = [];
+      for (let i = 0; i < int16.length; i += sampleBlockSize) {
+        const chunk = int16.subarray(i, i + sampleBlockSize);
+        const buf = mp3enc.encodeBuffer(chunk);
+        if (buf.length > 0) mp3Data.push(new Uint8Array(buf));
+      }
+      const end = mp3enc.flush();
+      if (end.length > 0) mp3Data.push(new Uint8Array(end));
+
+      const mp3Blob = new Blob(mp3Data as BlobPart[], { type: 'audio/mp3' });
+      const url = URL.createObjectURL(mp3Blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `${segment.title || 'voice-recording'}-${Date.now()}.mp3`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      audioCtx.close();
+    } catch (err) {
+      console.error('MP3 conversion failed, falling back to webm:', err);
+      const url = URL.createObjectURL(segment.audioBlob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `${segment.title || 'voice-recording'}-${Date.now()}.webm`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    }
   };
 
   const handleStartTeleprompterRecord = (script: string) => {
