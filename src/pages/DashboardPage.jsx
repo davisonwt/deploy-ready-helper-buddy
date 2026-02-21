@@ -18,7 +18,6 @@ import { getCreatorDateSync } from '@/utils/customCalendar';
 import { getDayInfo } from '@/utils/sacredCalendar';
 import { getCurrentTheme } from '@/utils/dashboardThemes';
 import { AmbassadorThumbnail } from '@/components/marketing/AmbassadorThumbnail';
-// GoSatGhostAccessThumbnail removed from public dashboard - access via Admin Dashboard only
 import { StatsCards } from '@/components/dashboard/StatsCards';
 import { StatsFloatingButton } from '@/components/dashboard/StatsFloatingButton';
 import { TopSowersTeaser } from '@/components/dashboard/TopSowersTeaser';
@@ -26,6 +25,8 @@ import { WalletSetupPrompt } from '@/components/wallet/WalletSetupPrompt';
 import { SowerBalanceCard } from '@/components/wallet/SowerBalanceCard';
 import SecurityQuestionsAlert from '@/components/auth/SecurityQuestionsAlert';
 import { SeedEngagementWidget } from '@/components/dashboard/SeedEngagementWidget';
+import { DashboardSkeleton } from '@/components/dashboard/DashboardSkeleton';
+import { motion } from 'framer-motion';
 export default function DashboardPage() {
   const [communityUnread, setCommunityUnread] = useState(0);
   const {
@@ -624,22 +625,7 @@ export default function DashboardPage() {
     if (process.env.NODE_ENV === 'development') {
       console.log('🔄 Dashboard: Loading state - auth:', authLoading, 'orchards:', orchardsLoading, 'bestowals:', bestowalsLoading);
     }
-    const theme = getCurrentTheme();
-    return <div className="min-h-screen flex items-center justify-center" style={{
-      background: theme.background
-    }}>
-        <div className="text-center backdrop-blur-xl rounded-2xl p-8 border" style={{
-        backgroundColor: theme.cardBg,
-        borderColor: theme.cardBorder
-      }}>
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 mx-auto mb-4" style={{
-          borderColor: theme.accent
-        }}></div>
-          <p style={{
-          color: theme.textPrimary
-        }}>Loading your dashboard...</p>
-        </div>
-      </div>;
+    return <DashboardSkeleton />;
   }
 
   // Show error state if there's an error
@@ -664,6 +650,16 @@ export default function DashboardPage() {
         </div>
       </div>;
   }
+  // Staggered animation helper
+  const sectionVariants = {
+    hidden: { opacity: 0, y: 20 },
+    visible: (i) => ({
+      opacity: 1,
+      y: 0,
+      transition: { delay: i * 0.1, duration: 0.4, ease: 'easeOut' }
+    })
+  };
+
   return <div className="min-h-screen relative" style={{
     background: currentTheme.background
   }}>
@@ -675,6 +671,7 @@ export default function DashboardPage() {
         </div>
         
         {/* Welcome Section with Profile Picture - Mobile Responsive */}
+        <motion.div custom={0} variants={sectionVariants} initial="hidden" animate="visible">
         <div className="max-w-4xl mx-auto p-4 sm:p-6 md:p-8 rounded-xl sm:rounded-2xl border shadow-xl sm:shadow-2xl mb-4 sm:mb-6 md:mb-8 mt-2 sm:mt-4 backdrop-blur-xl" style={{
         backgroundColor: currentTheme.cardBg,
         borderColor: currentTheme.cardBorder,
@@ -686,17 +683,21 @@ export default function DashboardPage() {
           <div className="flex flex-col gap-4 w-full">
             {/* Top Section: User Icon and Welcome Info */}
             <div className="flex items-center gap-4 sm:gap-6">
-              {/* User Icon */}
-              <div className="w-14 h-14 sm:w-16 sm:h-16 md:w-20 md:h-20 rounded-full overflow-hidden border-2 sm:border-3 md:border-4 shadow-md sm:shadow-lg flex-shrink-0" style={{
-              borderColor: currentTheme.accent
-            }}>
-                {user?.avatar_url ? <img src={user.avatar_url} alt="Profile" className="w-full h-full object-cover" /> : <div className="w-full h-full flex items-center justify-center" style={{
-                background: currentTheme.primaryButton
-              }}>
-                    <User className="h-6 w-6 sm:h-8 sm:w-8 md:h-10 md:w-10" style={{
-                  color: currentTheme.textPrimary
-                }} />
-                  </div>}
+              {/* User Icon with gradient ring */}
+              <div className="relative flex-shrink-0">
+                <div className="w-16 h-16 sm:w-18 sm:h-18 md:w-20 md:h-20 rounded-full p-[3px]" style={{
+                  background: `linear-gradient(135deg, ${currentTheme.accent}, ${currentTheme.accent}88, ${currentTheme.accent})`,
+                }}>
+                  <div className="w-full h-full rounded-full overflow-hidden border-2 border-black/20">
+                    {user?.avatar_url ? <img src={user.avatar_url} alt="Profile" className="w-full h-full object-cover" /> : <div className="w-full h-full flex items-center justify-center" style={{
+                    background: currentTheme.primaryButton
+                  }}>
+                        <User className="h-6 w-6 sm:h-8 sm:w-8 md:h-10 md:w-10" style={{
+                      color: currentTheme.textPrimary
+                    }} />
+                      </div>}
+                  </div>
+                </div>
               </div>
               
               {/* Welcome Message - Next to Icon */}
@@ -711,12 +712,15 @@ export default function DashboardPage() {
               }}>
                   Ready to grow your orchard today?
                 </p>
-                <div className="flex items-center gap-3 mt-1">
+                <div className="flex items-center gap-2 mt-1 flex-wrap">
                   <p className="text-xs sm:text-sm" style={{
                   color: currentTheme.textSecondary
                 }}>
-                    Payment Method: USDC (USD Coin)
+                    Payment Method:
                   </p>
+                  <Badge className="text-[10px] sm:text-xs px-2 py-0.5 rounded-full font-semibold" style={{ backgroundColor: currentTheme.accent + '25', color: currentTheme.accent, border: `1px solid ${currentTheme.accent}50` }}>
+                    USDC
+                  </Badge>
                   <span className="text-xs sm:text-sm font-semibold flex items-center gap-1" style={{
                     color: currentTheme.accent
                   }}>
@@ -744,22 +748,20 @@ export default function DashboardPage() {
           }}></div>
 
             {/* Calendar Info Text - Centered */}
-            {calendarData && <div className="w-full space-y-2 text-center" style={{
-            color: '#b48f50'
+            {calendarData && <div className="w-full space-y-2 text-center tracking-wide" style={{
+            color: currentTheme.accent
           }}>
-                <div className="text-base sm:text-lg font-bold">
+                <div className="text-lg sm:text-xl font-bold tracking-wide">
                   Year {calendarData.year} • Month {calendarData.month} • Day {calendarData.dayOfMonth}
                 </div>
-                <div className="text-sm sm:text-base">
+                <div className="text-sm sm:text-base" style={{ color: currentTheme.textSecondary }}>
                   Weekday {calendarData.weekday} • Part {calendarData.part}/18
                 </div>
-                <div className="text-xs sm:text-sm opacity-80">
+                <div className="text-xs sm:text-sm opacity-80" style={{ color: currentTheme.textSecondary }}>
                   Day {calendarData.dayOfYear} of 364 • {calendarData.season}
                 </div>
-                <div className="text-xs font-mono opacity-60">
-                  {/* Display current LOCAL time - each user sees their own timezone */}
+                <div className="text-xs font-mono opacity-60" style={{ color: currentTheme.textSecondary }}>
                   {currentTime.toLocaleString(undefined, {
-                // Use user's LOCAL timezone - no hardcoded timezone!
                 weekday: 'long',
                 year: 'numeric',
                 month: 'long',
@@ -769,40 +771,42 @@ export default function DashboardPage() {
                 second: '2-digit'
               })}
                 </div>
-                <div className="text-xs opacity-50 italic mt-2">
+                <div className="text-xs opacity-50 italic mt-2" style={{ color: currentTheme.textSecondary }}>
                   Creator's wheels never lie • forever in sync
                 </div>
               </div>}
           </div>
         </div>
+        </motion.div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-3 sm:px-4 md:px-6 lg:px-8 py-4 sm:py-6 md:py-8">
+      <div className="max-w-7xl mx-auto px-3 sm:px-4 md:px-6 lg:px-8 py-4 sm:py-6 md:py-8 pb-24 sm:pb-16">
         {/* Wallet Setup Prompt Banner */}
-        <div className="mb-6">
+        <motion.div custom={1} variants={sectionVariants} initial="hidden" animate="visible" className="mb-6">
           <WalletSetupPrompt variant="card" />
-        </div>
+        </motion.div>
 
         {/* My Earnings Balance Card */}
-        <div className="mb-6">
+        <motion.div custom={2} variants={sectionVariants} initial="hidden" animate="visible" className="mb-6">
           <SowerBalanceCard compact />
-        </div>
+        </motion.div>
 
         {/* Addictive Stats Cards */}
-        <div className="mb-6">
-          <StatsCards />
-        </div>
+        <motion.div custom={3} variants={sectionVariants} initial="hidden" animate="visible" className="mb-6">
+          <StatsCards theme={currentTheme} />
+        </motion.div>
 
         {/* Top Sowers Teaser */}
-        <div className="mb-6">
-          <TopSowersTeaser />
-        </div>
+        <motion.div custom={4} variants={sectionVariants} initial="hidden" animate="visible" className="mb-6">
+          <TopSowersTeaser theme={currentTheme} />
+        </motion.div>
 
         {/* Seed Engagement - Loves & Comments */}
-        <div className="mb-6">
+        <motion.div custom={5} variants={sectionVariants} initial="hidden" animate="visible" className="mb-6">
           <SeedEngagementWidget theme={currentTheme} />
-        </div>
+        </motion.div>
 
+        <motion.div custom={6} variants={sectionVariants} initial="hidden" animate="visible">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 md:gap-8">
 
           {/* Global Timezone Support */}
@@ -847,11 +851,13 @@ export default function DashboardPage() {
             </CardContent>
           </Card>
         </div>
+        </motion.div>
 
 
         {/* GoSat Ghost Access removed from public dashboard - access via Admin Dashboard only */}
 
         {/* Quick Actions */}
+        <motion.div custom={7} variants={sectionVariants} initial="hidden" animate="visible">
         <Card className="mt-4 sm:mt-6 md:mt-8 border shadow-xl quick-actions-tour backdrop-blur-xl" style={{
         backgroundColor: currentTheme.cardBg,
         borderColor: currentTheme.cardBorder
@@ -863,108 +869,73 @@ export default function DashboardPage() {
           </CardHeader>
           <CardContent className="p-4 sm:p-5 md:p-6 pt-0 space-y-6">
             
-            {/* CREATE & MANAGE Section */}
+            {/* CREATE & MANAGE Section - 2x2 on mobile, 4-col on desktop */}
             <div>
               <h3 className="font-semibold tracking-wider mb-3 flex items-center gap-2 text-sm" style={{
               color: currentTheme.textSecondary
             }}>
                 Create & Manage
               </h3>
-              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 sm:gap-4">
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
               <Link to="/create-orchard">
-                <Button className="w-full h-16 sm:h-20 border shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105 font-medium" style={{
+                <Button className="w-full h-20 sm:h-24 rounded-2xl border shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-1 font-medium" style={{
                   background: currentTheme.primaryButton,
                   color: currentTheme.textPrimary,
                   borderColor: currentTheme.accent
                 }}>
                   <div className="text-center">
-                    <Plus className="h-5 w-5 sm:h-6 sm:w-6 mx-auto mb-1 sm:mb-2" />
-                    <span className="text-sm sm:text-base">Plant New Seed</span>
+                    <Plus className="h-6 w-6 mx-auto mb-2" />
+                    <span className="text-sm">Plant New Seed</span>
                   </div>
                 </Button>
               </Link>
               
-              <div className="w-full border shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105 hover:-translate-y-1 rounded-lg p-3 sm:p-4 pb-4 sm:pb-6 cursor-pointer font-medium overflow-visible backdrop-blur-md" style={{
-                backgroundColor: currentTheme.cardBg,
-                borderColor: currentTheme.cardBorder
-              }}>
-                <div className="text-center mb-2 sm:mb-3">
-                  <TreePine className="h-5 w-5 sm:h-6 sm:w-6 mx-auto mb-1 sm:mb-2" style={{
-                    color: currentTheme.textPrimary
-                  }} />
-                  <span className="font-medium text-sm sm:text-base" style={{
-                    color: currentTheme.textPrimary
-                  }}>Browse Orchards</span>
-                </div>
-                <div className="flex justify-center space-x-2 sm:space-x-3 mt-3 sm:mt-4">
-                  <Link to="/browse-orchards">
-                    <div className="group w-8 h-8 sm:w-10 sm:h-10 rounded-full border-2 flex items-center justify-center hover:scale-110 hover:-translate-y-1 transition-all duration-300" style={{
-                      borderColor: currentTheme.accent,
-                      backgroundColor: currentTheme.cardBg
-                    }} onMouseEnter={e => {
-                      e.currentTarget.style.backgroundColor = currentTheme.accent;
-                      e.currentTarget.style.borderColor = currentTheme.accent;
-                    }} onMouseLeave={e => {
-                      e.currentTarget.style.backgroundColor = currentTheme.cardBg;
-                      e.currentTarget.style.borderColor = currentTheme.accent;
-                    }}>
-                      <Users className="h-4 w-4 sm:h-5 sm:w-5 transition-colors" style={{
-                        color: currentTheme.textPrimary
-                      }} />
-                    </div>
-                  </Link>
-                  <Link to="/my-orchards">
-                    <div className="group w-8 h-8 sm:w-10 sm:h-10 rounded-full border-2 flex items-center justify-center hover:scale-110 hover:-translate-y-1 transition-all duration-300" style={{
-                      borderColor: currentTheme.accent,
-                      backgroundColor: currentTheme.cardBg
-                    }} onMouseEnter={e => {
-                      e.currentTarget.style.backgroundColor = currentTheme.accent;
-                      e.currentTarget.style.borderColor = currentTheme.accent;
-                    }} onMouseLeave={e => {
-                      e.currentTarget.style.backgroundColor = currentTheme.cardBg;
-                      e.currentTarget.style.borderColor = currentTheme.accent;
-                    }}>
-                      <User className="h-4 w-4 sm:h-5 sm:w-5 transition-colors" style={{
-                        color: currentTheme.textPrimary
-                      }} />
-                    </div>
-                  </Link>
-                  <Link to="/364yhvh-orchards" onClick={e => {
-                    console.log('🔗 Navigating to 364yhvh-orchards page');
-                  }}>
-                    <div className="group w-8 h-8 sm:w-10 sm:h-10 rounded-full border-2 flex items-center justify-center hover:scale-110 hover:-translate-y-1 transition-all duration-300 cursor-pointer" style={{
-                      borderColor: currentTheme.accent,
-                      backgroundColor: currentTheme.cardBg
-                    }} onMouseEnter={e => {
-                      e.currentTarget.style.backgroundColor = currentTheme.accent;
-                      e.currentTarget.style.borderColor = currentTheme.accent;
-                    }} onMouseLeave={e => {
-                      e.currentTarget.style.backgroundColor = currentTheme.cardBg;
-                      e.currentTarget.style.borderColor = currentTheme.accent;
-                    }}>
-                      <Heart className="h-4 w-4 sm:h-5 sm:w-5 transition-colors" style={{
-                        color: currentTheme.textPrimary
-                      }} />
-                    </div>
-                  </Link>
-                </div>
-              </div>
-              
-              <Link to="/profile">
-                <Button className="w-full h-16 sm:h-20 border shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105 font-medium" style={{
+              <Link to="/browse-orchards">
+                <Button className="w-full h-20 sm:h-24 rounded-2xl border shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-1 font-medium" style={{
                   background: currentTheme.primaryButton,
                   color: currentTheme.textPrimary,
                   borderColor: currentTheme.accent
                 }}>
                   <div className="text-center">
-                    {user?.avatar_url ? <img src={user.avatar_url} alt="Profile" className="w-6 h-6 sm:w-8 sm:h-8 rounded-full mx-auto mb-1 sm:mb-2 border-2" style={{
-                      borderColor: currentTheme.accent
-                    }} /> : <User className="h-5 w-5 sm:h-6 sm:w-6 mx-auto mb-1 sm:mb-2" />}
-                    <span className="text-sm sm:text-base">My Profile</span>
+                    <TreePine className="h-6 w-6 mx-auto mb-2" />
+                    <span className="text-sm">Browse Orchards</span>
                   </div>
                 </Button>
               </Link>
 
+              <Link to="/my-orchards">
+                <Button className="w-full h-20 sm:h-24 rounded-2xl border shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-1 font-medium" style={{
+                  background: currentTheme.primaryButton,
+                  color: currentTheme.textPrimary,
+                  borderColor: currentTheme.accent
+                }}>
+                  <div className="text-center">
+                    <Sprout className="h-6 w-6 mx-auto mb-2" />
+                    <span className="text-sm">My Orchards</span>
+                  </div>
+                </Button>
+              </Link>
+              
+              <Link to="/profile">
+                <Button className="w-full h-20 sm:h-24 rounded-2xl border shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-1 font-medium" style={{
+                  background: currentTheme.primaryButton,
+                  color: currentTheme.textPrimary,
+                  borderColor: currentTheme.accent
+                }}>
+                  <div className="text-center">
+                    {user?.avatar_url ? <img src={user.avatar_url} alt="Profile" className="w-6 h-6 rounded-full mx-auto mb-2 border-2" style={{
+                      borderColor: currentTheme.accent
+                    }} /> : <User className="h-6 w-6 mx-auto mb-2" />}
+                    <span className="text-sm">My Profile</span>
+                  </div>
+                </Button>
+              </Link>
+              </div>
+              {/* Sub-links row */}
+              <div className="flex gap-2 mt-2 flex-wrap">
+                <Link to="/364yhvh-orchards" className="text-xs font-medium px-3 py-1.5 rounded-full border transition-all hover:opacity-80" style={{ color: currentTheme.accent, borderColor: currentTheme.accent + '50' }}>
+                  364YHVH Orchards
+                </Link>
               </div>
             </div>
 
@@ -981,7 +952,7 @@ export default function DashboardPage() {
               <div className="grid grid-cols-3 gap-2 sm:gap-3">
                 {/* Community ChatApp */}
                 <Link to="/community-chat" className="relative">
-                  <Button className="w-full h-14 sm:h-16 border shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105 font-medium text-xs sm:text-sm" style={{
+                  <Button className="w-full h-14 sm:h-16 rounded-2xl border shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105 font-medium text-xs sm:text-sm" style={{
                   background: 'linear-gradient(135deg, #f97316 0%, #ea580c 100%)',
                   color: '#fff',
                   borderColor: '#f97316'
@@ -1000,7 +971,7 @@ export default function DashboardPage() {
 
                 {/* 364ttt - Torah Top Ten */}
                 <Link to="/364ttt">
-                  <Button className="w-full h-14 sm:h-16 border shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105 font-medium text-xs sm:text-sm" style={{
+                  <Button className="w-full h-14 sm:h-16 rounded-2xl border shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105 font-medium text-xs sm:text-sm" style={{
                   background: 'linear-gradient(135deg, #7c3aed 0%, #a855f7 100%)',
                   color: '#fff',
                   borderColor: '#8b5cf6'
@@ -1014,7 +985,7 @@ export default function DashboardPage() {
 
                 {/* Journal & Calendar */}
                 <Link to="/profile?tab=journal">
-                  <Button className="w-full h-14 sm:h-16 border shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105 font-medium text-xs sm:text-sm" style={{
+                  <Button className="w-full h-14 sm:h-16 rounded-2xl border shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105 font-medium text-xs sm:text-sm" style={{
                   background: 'linear-gradient(135deg, #6366f1, #8b5cf6)',
                   borderColor: '#0A1931',
                   color: 'white'
@@ -1041,7 +1012,7 @@ export default function DashboardPage() {
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
                 {/* Become a Whisperer */}
                 <Link to="/become-whisperer">
-                  <Button className="w-full h-16 sm:h-20 border shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105 font-medium" style={{
+                  <Button className="w-full h-16 sm:h-20 rounded-2xl border shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-1 font-medium" style={{
                   background: currentTheme.primaryButton,
                   color: currentTheme.textPrimary,
                   borderColor: currentTheme.accent
@@ -1055,7 +1026,7 @@ export default function DashboardPage() {
 
                 {/* Become a S2G Driver */}
                 <Link to="/register-vehicle">
-                  <Button className="w-full h-16 sm:h-20 border shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105 font-medium" style={{
+                  <Button className="w-full h-16 sm:h-20 rounded-2xl border shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-1 font-medium" style={{
                   background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
                   color: '#fff',
                   borderColor: '#10b981'
@@ -1069,7 +1040,7 @@ export default function DashboardPage() {
 
                 {/* Become a S2G Service Provider */}
                 <Link to="/register-services">
-                  <Button className="w-full h-16 sm:h-20 border shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105 font-medium" style={{
+                  <Button className="w-full h-16 sm:h-20 rounded-2xl border shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-1 font-medium" style={{
                   background: 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)',
                   color: '#fff',
                   borderColor: '#f59e0b'
@@ -1084,9 +1055,10 @@ export default function DashboardPage() {
             </div>
           </CardContent>
         </Card>
+        </motion.div>
       </div>
       
-      {/* Floating Stats Button */}
-      <StatsFloatingButton />
+      {/* Live Activities Bottom Bar */}
+      <StatsFloatingButton theme={currentTheme} />
     </div>;
 }
