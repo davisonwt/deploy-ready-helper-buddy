@@ -122,6 +122,26 @@ const ResilientJitsiMeeting = memo(function ResilientJitsiMeeting({
         apiInstanceRef.current = api;
         setMode('api');
 
+        // Ensure the API-created iframe has autoplay permission for remote audio
+        if (containerRef.current) {
+          const iframe = containerRef.current.querySelector('iframe');
+          if (iframe) {
+            iframe.setAttribute('allow', 'camera; microphone; display-capture; autoplay; clipboard-write');
+          } else {
+            // iframe may appear slightly later
+            const observer = new MutationObserver(() => {
+              const iframeEl = containerRef.current?.querySelector('iframe');
+              if (iframeEl) {
+                iframeEl.setAttribute('allow', 'camera; microphone; display-capture; autoplay; clipboard-write');
+                observer.disconnect();
+              }
+            });
+            observer.observe(containerRef.current, { childList: true, subtree: true });
+            // Cleanup observer after 10s
+            setTimeout(() => observer.disconnect(), 10000);
+          }
+        }
+
         // Notify parent that API is ready
         console.log('📞 [JITSI] ✅ External API instance created successfully');
         onApiReadyRef.current?.(api);
