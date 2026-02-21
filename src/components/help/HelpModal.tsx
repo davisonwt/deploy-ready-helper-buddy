@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { 
   Dialog, 
   DialogContent, 
@@ -87,6 +87,13 @@ const faqs = [
 const HelpModal = () => {
   const [search, setSearch] = useState('');
   const [open, setOpen] = useState(false);
+
+  // Listen for open event from bottom bar
+  useEffect(() => {
+    const handleOpen = () => setOpen(true);
+    window.addEventListener('open-help-modal', handleOpen);
+    return () => window.removeEventListener('open-help-modal', handleOpen);
+  }, []);
   const location = useLocation();
   const isDashboard = location.pathname === '/dashboard' || location.pathname === '/';
   const [feedback, setFeedback] = useState('');
@@ -180,16 +187,7 @@ const HelpModal = () => {
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        <Button 
-          variant="default" 
-          size="icon"
-          className="fixed top-52 right-6 z-50 shadow-lg hover:shadow-xl transition-all duration-300 bg-teal-600/20 hover:bg-teal-600 text-white/50 hover:text-white border border-teal-400/30 hover:border-teal-400"
-          aria-label="Help & Documentation"
-        >
-          <HelpCircle className="h-5 w-5" />
-        </Button>
-      </DialogTrigger>
+      {/* Old floating button removed - now triggered from bottom bar */}
       
       <DialogContent className="max-w-4xl max-h-[80vh] overflow-hidden flex flex-col">
         <DialogHeader>

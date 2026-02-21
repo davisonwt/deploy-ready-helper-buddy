@@ -48,6 +48,13 @@ const steps: Step[] = [
 
 const OnboardingTour = () => {
   const [run, setRun] = useState(false);
+
+  // Listen for start-tour event from bottom bar
+  useEffect(() => {
+    const handleStart = () => setRun(true);
+    window.addEventListener('start-onboarding-tour', handleStart);
+    return () => window.removeEventListener('start-onboarding-tour', handleStart);
+  }, []);
   const user = useUser();
   const supabase = useSupabaseClient();
   const queryClient = useQueryClient();
@@ -124,16 +131,7 @@ const OnboardingTour = () => {
 
   // Don't show anything if user has completed onboarding
   if (preferences?.onboarding_complete && !run) {
-    return (
-      <Button 
-        onClick={startTour}
-        variant="outline"
-        size="sm"
-        className="fixed top-52 right-6 z-50 shadow-lg"
-      >
-        Take Tour Again
-      </Button>
-    );
+    return null; // Old floating button removed - now triggered from bottom bar
   }
 
   return (
@@ -174,11 +172,7 @@ const OnboardingTour = () => {
         }}
       />
       
-      {isDashboard && !run && !preferences?.onboarding_complete && (
-        <Button onClick={startTour} className="fixed top-36 right-6 z-50 shadow-lg transition-all duration-300 bg-green-600/20 hover:bg-green-600 text-white/50 hover:text-white border border-green-400/30 hover:border-green-400 hover:shadow-xl">
-          Start Tour
-        </Button>
-      )}
+      {/* Old floating Start Tour button removed - now in bottom bar */}
     </>
   );
 };

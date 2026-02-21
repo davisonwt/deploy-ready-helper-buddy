@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
-import { Activity, TreePine, ChevronUp } from 'lucide-react';
+import { Activity, TreePine, ChevronUp, HelpCircle, Navigation } from 'lucide-react';
 import { MasteryModal } from '@/components/gamification/MasteryModal';
 
 interface LiveActivitiesBarProps {
@@ -25,8 +25,15 @@ export function StatsFloatingButton({ theme }: LiveActivitiesBarProps) {
   const textSecondary = theme?.textSecondary || 'rgba(255,255,255,0.6)';
 
   const handleLiveActivities = () => {
-    // Toggle the existing LiveActivityWidget via custom event
     window.dispatchEvent(new CustomEvent('toggle-live-activity'));
+  };
+
+  const handleStartTour = () => {
+    window.dispatchEvent(new CustomEvent('start-onboarding-tour'));
+  };
+
+  const handleHelp = () => {
+    window.dispatchEvent(new CustomEvent('open-help-modal'));
   };
 
   return (
@@ -40,16 +47,16 @@ export function StatsFloatingButton({ theme }: LiveActivitiesBarProps) {
         style={{ height: '56px' }}
       >
         <div
-          className="h-full flex items-center justify-between px-4 sm:px-6 backdrop-blur-xl border-t"
+          className="h-full flex items-center justify-between px-2 sm:px-4 backdrop-blur-xl border-t"
           style={{
             backgroundColor: cardBg,
             borderColor: borderColor,
           }}
         >
-          {/* Left: Live Activities */}
+          {/* Live Activities */}
           <button
             onClick={handleLiveActivities}
-            className="flex items-center gap-2 min-h-[44px] px-2 rounded-lg transition-colors hover:opacity-80 focus:outline-none focus:ring-2 focus:ring-offset-2"
+            className="flex items-center gap-1.5 min-h-[44px] px-2 rounded-lg transition-colors hover:opacity-80 focus:outline-none focus:ring-2 focus:ring-offset-2"
             style={{ color: textPrimary }}
             aria-label="View Live Activities"
           >
@@ -59,18 +66,40 @@ export function StatsFloatingButton({ theme }: LiveActivitiesBarProps) {
             >
               <Activity className="h-4 w-4" style={{ color: accentColor }} />
             </motion.div>
-            <span className="text-sm font-medium">Live Activities</span>
+            <span className="text-xs sm:text-sm font-medium">Live</span>
           </button>
 
-          {/* Right: Your Progress */}
+          {/* Start Tour */}
+          <button
+            onClick={handleStartTour}
+            className="flex items-center gap-1.5 min-h-[44px] px-2 rounded-lg transition-colors hover:opacity-80 focus:outline-none focus:ring-2 focus:ring-offset-2"
+            style={{ color: textPrimary }}
+            aria-label="Start Tour"
+          >
+            <Navigation className="h-4 w-4" style={{ color: accentColor }} />
+            <span className="text-xs sm:text-sm font-medium">Tour</span>
+          </button>
+
+          {/* Help */}
+          <button
+            onClick={handleHelp}
+            className="flex items-center gap-1.5 min-h-[44px] px-2 rounded-lg transition-colors hover:opacity-80 focus:outline-none focus:ring-2 focus:ring-offset-2"
+            style={{ color: textPrimary }}
+            aria-label="Help & Documentation"
+          >
+            <HelpCircle className="h-4 w-4" style={{ color: accentColor }} />
+            <span className="text-xs sm:text-sm font-medium">Help</span>
+          </button>
+
+          {/* Your Progress */}
           <button
             onClick={() => setMasteryOpen(true)}
-            className="flex items-center gap-2 min-h-[44px] px-2 rounded-lg transition-colors hover:opacity-80 focus:outline-none focus:ring-2 focus:ring-offset-2"
+            className="flex items-center gap-1.5 min-h-[44px] px-2 rounded-lg transition-colors hover:opacity-80 focus:outline-none focus:ring-2 focus:ring-offset-2"
             style={{ color: textPrimary }}
             aria-label="View Your Progress"
           >
             <TreePine className="h-4 w-4" style={{ color: accentColor }} />
-            <span className="text-sm font-medium">Your Progress</span>
+            <span className="text-xs sm:text-sm font-medium">Progress</span>
             <ChevronUp className="h-3 w-3" style={{ color: textSecondary }} />
           </button>
         </div>
