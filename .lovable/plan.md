@@ -1,86 +1,88 @@
 
 
-# Dashboard Modernization Plan
+# AI Voice Assistant + Download/Re-upload for Radio Slots
 
-## What We're Doing
-Upgrading the main dashboard to a cleaner, more modern layout while keeping all existing features and the 2-hour color-changing theme system. The goal is better spacing, glassmorphism consistency, staggered animations, and a more thumb-friendly mobile experience.
-
-## What Stays the Same
-- The 12-theme color rotation system (every 2 hours) -- untouched
-- All existing data fetching (stats, calendar, followers, bestowals, etc.)
-- All existing sub-components (StatsCards, TopSowersTeaser, SeedEngagementWidget, WalletSetupPrompt, SowerBalanceCard, LiveTimezoneDisplay, StatsFloatingButton, SecurityQuestionsAlert)
-- Bottom mobile navigation (MobileTabBar) -- untouched
-- All routing and links
+## Overview
+Adding two capabilities to the Voice/Talk segments in the Timeline Builder:
+1. **Download button** so DJs can edit recordings externally and re-upload polished versions
+2. **AI Voice Generator** — DJ types a script, AI polishes it, then ElevenLabs generates a clean voice note
 
 ## What Changes
 
-### 1. Welcome Card Upgrade
-- Add a gradient ring around the avatar (using the current theme accent color)
-- Add a "USDC" badge pill next to payment method text
-- Slightly larger avatar on desktop (80px) with better border glow
-- Add backdrop-blur(12px) consistently
+### 1. Download Button (Simple Addition)
+When a voice recording exists, add a "Download" button next to "Re-record" and "Delete" in the `VoiceSegmentControls` component. This lets DJs save the `.webm` file to their PC for editing in Audacity, Adobe Audition, etc., then use the existing "Upload File" option to bring back the polished version.
 
-### 2. Hebrew Date Display Polish
-- Use the theme accent color for the primary date line instead of hardcoded gold (#b48f50)
-- Add `tracking-wide` letter spacing for elegance
-- Slightly larger font for the Year/Month/Day line
+### 2. ElevenLabs Connector Setup
+ElevenLabs is available as a connector. We'll connect it to get the `ELEVENLABS_API_KEY` secret, which powers text-to-speech generation.
 
-### 3. Quick Actions Grid Rework
-- Convert the "Create & Manage" section from mixed layouts to a clean 2x2 grid on mobile, 4-column on desktop
-- Each button: icon on top, label below, consistent 16px border-radius, 44px minimum touch target
-- Add hover glow effect using the theme's shadow color
-- Add hover `translateY(-4px)` lift animation
-- Simplify the "Browse Orchards" card to match the other buttons' style (remove the nested circle buttons -- move those sub-links into a simple row below)
+### 3. AI Script Polish Edge Function
+A new edge function `generate-radio-script` that:
+- Takes rough bullet points or notes from the DJ
+- Uses Lovable AI (already has `LOVABLE_API_KEY`) to polish them into a natural radio script
+- Returns the clean script text for review before voice generation
 
-### 4. Explore Section
-- Keep the 3-column grid but ensure consistent card heights
-- Add subtle scale(1.05) hover with glow
+### 4. ElevenLabs TTS Edge Function
+A new edge function `generate-voice-note` that:
+- Takes the polished script text
+- Calls ElevenLabs TTS API with a professional voice (e.g., "Brian" — warm male, or "Sarah" — clear female)
+- Returns the audio as binary data
+- DJ can preview, accept, or regenerate
 
-### 5. Stats Grid Theme Integration
-- Update StatsCards to use the current dashboard theme colors (accent, cardBg, cardBorder) via CSS custom properties instead of hardcoded amber/orange gradients
-- Pass `currentTheme` as a prop so numbers use the dynamic accent color
-
-### 6. Leaderboard Card Theme Integration
-- Same as stats: update TopSowersTeaser to accept theme prop and use dynamic colors instead of hardcoded amber
-
-### 7. Staggered Page Load Animations
-- Wrap each dashboard section in a `motion.div` with staggered `delay` (0.1s increments)
-- Fade-in + slight upward slide for each section
-
-### 8. Live Activities Bar (Bottom)
-- Convert the existing `StatsFloatingButton` (currently top-right corner) into a slim bottom bar (72px) positioned above the mobile nav
-- Show "Live Activities" count on the left, "Your Progress" on the right
-- Collapsible upward on tap (sheet-style)
-- Ensure it never overlaps scrollable content (add bottom padding to main content)
-
-### 9. Skeleton Loading States
-- Replace the simple spinner loading screen with skeleton placeholder cards that match the dashboard layout
-
-### 10. Accessibility
-- Ensure all interactive elements have focus rings
-- Add `prefers-reduced-motion` media query support to disable animations
-- Semantic HTML improvements (section, nav, main landmarks)
+### 5. AI Voice Panel in Timeline Builder
+When a DJ adds a Voice/Talk segment, they'll see three options instead of two:
+- **Record with Mic** (existing)
+- **Upload File** (existing)
+- **AI Voice** (new) — opens a small panel where the DJ:
+  1. Types or pastes their script/bullet points
+  2. Picks a voice (from a short curated list)
+  3. Clicks "Generate" — AI polishes the text, then generates audio
+  4. Previews the result
+  5. Accepts it (saves to Supabase Storage like recordings do) or regenerates
 
 ---
 
 ## Technical Details
 
-### Files Modified
-1. **`src/pages/DashboardPage.jsx`** -- Main restructure: staggered animations, theme-aware Quick Actions grid, skeleton loading, bottom bar integration, date display polish
-2. **`src/components/dashboard/StatsCards.tsx`** -- Accept optional `theme` prop, use dynamic colors when provided
-3. **`src/components/dashboard/TopSowersTeaser.tsx`** -- Accept optional `theme` prop, use dynamic colors when provided
-4. **`src/components/dashboard/StatsFloatingButton.tsx`** -- Redesign into a bottom "Live Activities" bar with collapsible sheet
-
 ### Files Created
-- **`src/components/dashboard/DashboardSkeleton.tsx`** -- Skeleton loading component matching the dashboard layout
+1. **`supabase/functions/generate-radio-script/index.ts`** — Edge function using Lovable AI to polish DJ notes into radio scripts
+2. **`supabase/functions/generate-voice-note/index.ts`** — Edge function calling ElevenLabs TTS, returns binary audio
+
+### Files Modified
+1. **`src/components/radio/TimelineBuilder.tsx`** — Add Download button to `VoiceSegmentControls`, add "AI Voice" as a third option in the default controls grid (3 columns instead of 2), add AI Voice generation panel with script input, voice selector, and generate/preview flow
+2. **`supabase/config.toml`** — Register the two new edge functions with `verify_jwt = false`
+
+### Secrets Required
+- `ELEVENLABS_API_KEY` — via the ElevenLabs connector
+
+### Edge Function Flow
+
+```text
+DJ types notes
+     |
+     v
+generate-radio-script (Lovable AI)
+     |
+     v
+Polished script shown for review/edit
+     |
+     v
+generate-voice-note (ElevenLabs TTS)
+     |
+     v
+Audio preview in browser
+     |
+     v
+Accept --> Save to Supabase Storage --> Attached to segment
+```
+
+### Voice Options (Curated Short List)
+- Brian (warm male narrator)
+- Sarah (clear female)
+- George (deep male)
+- Lily (soft female)
+
+DJs pick from this list. No complex configuration needed.
 
 ### No Database Changes
-This is purely a frontend/UI update. No migrations or backend changes needed.
-
-### Key Patterns Followed
-- Theme colors applied via inline `style` props (matching existing pattern throughout DashboardPage)
-- framer-motion for all animations (already a dependency)
-- Glassmorphism: `backdrop-blur-xl`, semi-transparent backgrounds, subtle borders (matching existing `glass-panel` pattern)
-- Mobile-first: 1-column on mobile, expanding on larger screens
-- 44px minimum touch targets on all interactive elements
+All audio files use the existing `chat-files` storage bucket under `radio-voice-segments/`. No new tables needed.
 
