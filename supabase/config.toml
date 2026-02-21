@@ -118,3 +118,7 @@ verify_jwt = false
 # Content Moderation
 [functions.moderate-content]
 verify_jwt = false
+
+# AI Radio Script Generator
+[functions.generate-radio-script]
+verify_jwt = false
