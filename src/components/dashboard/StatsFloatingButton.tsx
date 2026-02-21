@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
-import { Activity, TreePine, ChevronUp, HelpCircle, Navigation } from 'lucide-react';
+import { Activity, TreePine, ChevronUp, HelpCircle, Navigation, BarChart3 } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import { MasteryModal } from '@/components/gamification/MasteryModal';
 
 interface LiveActivitiesBarProps {
@@ -17,6 +18,7 @@ interface LiveActivitiesBarProps {
 
 export function StatsFloatingButton({ theme }: LiveActivitiesBarProps) {
   const [masteryOpen, setMasteryOpen] = useState(false);
+  const navigate = useNavigate();
 
   const accentColor = theme?.accent || '#f59e0b';
   const cardBg = theme?.cardBg || 'rgba(30, 41, 59, 0.9)';
@@ -89,6 +91,17 @@ export function StatsFloatingButton({ theme }: LiveActivitiesBarProps) {
           >
             <HelpCircle className="h-4 w-4" style={{ color: accentColor }} />
             <span className="text-xs sm:text-sm font-medium">Help</span>
+          </button>
+
+          {/* Stats */}
+          <button
+            onClick={() => navigate('/stats')}
+            className="flex items-center gap-1.5 min-h-[44px] px-2 rounded-lg transition-colors hover:opacity-80 focus:outline-none focus:ring-2 focus:ring-offset-2"
+            style={{ color: textPrimary }}
+            aria-label="View Stats"
+          >
+            <BarChart3 className="h-4 w-4" style={{ color: accentColor }} />
+            <span className="text-xs sm:text-sm font-medium">Stats</span>
           </button>
 
           {/* Your Progress */}
