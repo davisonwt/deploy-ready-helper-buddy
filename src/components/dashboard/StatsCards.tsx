@@ -15,11 +15,30 @@ import { dropDeltaRewards, checkStreakReward, triggerConfettiForFollowers } from
 import { formatCurrency } from '@/utils/formatters';
 import { useAuth } from '@/hooks/useAuth';
 
-export function StatsCards() {
+interface StatsCardsProps {
+  theme?: {
+    accent: string;
+    cardBg: string;
+    cardBorder: string;
+    textPrimary: string;
+    textSecondary: string;
+    shadow: string;
+  };
+}
+
+export function StatsCards({ theme }: StatsCardsProps) {
   const { user } = useAuth();
   const { stats, loading, mutate } = useMyStats();
   const [hasTriggeredConfetti, setHasTriggeredConfetti] = useState(false);
   const [hasTriggeredRewards, setHasTriggeredRewards] = useState<Record<string, boolean>>({});
+
+  // Theme-aware colors
+  const accent = theme?.accent || '#f59e0b';
+  const cardBg = theme?.cardBg || 'rgba(120, 53, 15, 0.3)';
+  const cardBorder = theme?.cardBorder || 'rgba(245, 158, 11, 0.2)';
+  const textPrimary = theme?.textPrimary || '#ffffff';
+  const textSecondary = theme?.textSecondary || 'rgba(252, 211, 77, 0.8)';
+  const shadow = theme?.shadow || 'rgba(245, 158, 11, 0.1)';
 
   // Trigger confetti for daily new followers
   useEffect(() => {
@@ -34,19 +53,14 @@ export function StatsCards() {
     if (!stats || !user?.id) return;
 
     const checkRewards = async () => {
-      // Check registered sowers delta
       if (stats.registeredSowersDelta >= 5 && !hasTriggeredRewards.sowers) {
         await dropDeltaRewards(user.id, 'sowers', stats.registeredSowersDelta);
         setHasTriggeredRewards(prev => ({ ...prev, sowers: true }));
       }
-
-      // Check followers delta
       if (stats.followersDelta >= 5 && !hasTriggeredRewards.followers) {
         await dropDeltaRewards(user.id, 'followers', stats.followersDelta);
         setHasTriggeredRewards(prev => ({ ...prev, followers: true }));
       }
-
-      // Check streak reward
       if (stats.streak >= 7 && !hasTriggeredRewards.streak) {
         await checkStreakReward(user.id, stats.streak);
         setHasTriggeredRewards(prev => ({ ...prev, streak: true }));
@@ -56,11 +70,17 @@ export function StatsCards() {
     checkRewards();
   }, [stats, user?.id, hasTriggeredRewards]);
 
+  const cardStyle = {
+    backgroundColor: cardBg,
+    borderColor: cardBorder,
+    boxShadow: `0 25px 50px -12px ${shadow}`,
+  };
+
   if (loading) {
     return (
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
         {[...Array(5)].map((_, i) => (
-          <Card key={i} className="animate-pulse rounded-3xl bg-gradient-to-br from-amber-900/30 to-orange-900/30 border border-amber-500/20 h-32" />
+          <Card key={i} className="animate-pulse rounded-3xl backdrop-blur-xl border h-32" style={cardStyle} />
         ))}
       </div>
     );
@@ -69,9 +89,9 @@ export function StatsCards() {
   if (!stats) {
     return (
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
-        <Card className="rounded-3xl bg-gradient-to-br from-amber-900/30 to-orange-900/30 backdrop-blur-xl border border-amber-500/20 shadow-2xl shadow-amber-500/10">
-          <CardContent className="p-6 text-center text-amber-300/60">
-            <p className="text-sm">Loading stats...</p>
+        <Card className="rounded-3xl backdrop-blur-xl border" style={cardStyle}>
+          <CardContent className="p-6 text-center">
+            <p className="text-sm" style={{ color: textSecondary }}>Loading stats...</p>
           </CardContent>
         </Card>
       </div>
@@ -87,37 +107,40 @@ export function StatsCards() {
     }
   };
 
+  const positiveBadgeStyle = { backgroundColor: 'transparent', border: `1px solid #34d399`, color: '#34d399' };
+  const negativeBadgeStyle = { backgroundColor: 'transparent', border: `1px solid #f87171`, color: '#f87171' };
+  const neutralBadgeStyle = { backgroundColor: 'transparent', border: `1px solid ${accent}`, color: accent };
+  const hotBadgeStyle = { backgroundColor: 'transparent', border: `1px solid #34d399`, color: '#34d399' };
+
+  const getDeltaBadgeStyle = (delta: number, hotThreshold = 10) => {
+    if (delta >= hotThreshold) return hotBadgeStyle;
+    if (delta > 0) return positiveBadgeStyle;
+    return negativeBadgeStyle;
+  };
+
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
       {/* Card 1: S2G Registered Sowers */}
-      <motion.div
-        variants={cardVariants}
-        initial="hidden"
-        whileInView="visible"
-        viewport={{ once: true }}
-      >
-        <Card className="rounded-3xl bg-gradient-to-br from-amber-900/30 to-orange-900/30 backdrop-blur-xl border border-amber-500/20 shadow-2xl shadow-amber-500/10 h-full">
+      <motion.div variants={cardVariants} initial="hidden" whileInView="visible" viewport={{ once: true }}>
+        <Card className="rounded-3xl backdrop-blur-xl border h-full" style={cardStyle}>
           <CardContent className="p-6 h-full flex flex-col">
             <div className="flex items-start justify-between mb-2">
               <div className="flex items-center gap-2">
-                <Users className="h-5 w-5 text-amber-400" />
-                <span className="text-sm text-amber-300/80">S2G Registered Sowers</span>
+                <Users className="h-5 w-5" style={{ color: accent }} />
+                <span className="text-sm" style={{ color: textSecondary }}>S2G Registered Sowers</span>
               </div>
               {stats.registeredSowersDelta >= 10 && (
-                <motion.div
-                  animate={{ scale: [1, 1.2, 1] }}
-                  transition={{ repeat: Infinity, duration: 2 }}
-                >
+                <motion.div animate={{ scale: [1, 1.2, 1] }} transition={{ repeat: Infinity, duration: 2 }}>
                   <Flame className="h-5 w-5 text-emerald-400" />
                 </motion.div>
               )}
             </div>
             <div className="flex items-baseline gap-2 flex-wrap">
-              <span className="font-mono text-3xl sm:text-4xl tracking-tighter text-white">
+              <span className="font-mono text-3xl sm:text-4xl tracking-tighter" style={{ color: textPrimary }}>
                 {stats.registeredSowers.toLocaleString()}
               </span>
               {stats.registeredSowersDelta !== 0 && (
-                <Badge className={`bg-transparent border text-xs ${stats.registeredSowersDelta >= 10 ? 'text-emerald-400 border-emerald-400' : stats.registeredSowersDelta > 0 ? 'text-amber-400 border-amber-400' : 'text-red-400 border-red-400'}`}>
+                <Badge className="text-xs" style={getDeltaBadgeStyle(stats.registeredSowersDelta)}>
                   {stats.registeredSowersDelta > 0 ? '+' : ''}{stats.registeredSowersDelta} today
                 </Badge>
               )}
@@ -127,29 +150,24 @@ export function StatsCards() {
       </motion.div>
 
       {/* Card 2: My Followers */}
-      <motion.div
-        variants={cardVariants}
-        initial="hidden"
-        whileInView="visible"
-        viewport={{ once: true }}
-      >
-        <Card className="rounded-3xl bg-gradient-to-br from-amber-900/30 to-orange-900/30 backdrop-blur-xl border border-amber-500/20 shadow-2xl shadow-amber-500/10 h-full">
+      <motion.div variants={cardVariants} initial="hidden" whileInView="visible" viewport={{ once: true }}>
+        <Card className="rounded-3xl backdrop-blur-xl border h-full" style={cardStyle}>
           <CardContent className="p-6 h-full flex flex-col">
             <div className="flex items-center gap-2 mb-2">
               <motion.div
                 animate={stats.followersDelta > 0 ? { scale: [1, 1.1, 1] } : {}}
                 transition={{ repeat: Infinity, duration: 1.5 }}
               >
-                <Heart className="h-5 w-5 text-amber-400 fill-amber-400" />
+                <Heart className="h-5 w-5" style={{ color: accent, fill: accent }} />
               </motion.div>
-              <span className="text-sm text-amber-300/80">My Followers</span>
+              <span className="text-sm" style={{ color: textSecondary }}>My Followers</span>
             </div>
             <div className="flex items-baseline gap-2 flex-wrap">
-              <span className="font-mono text-3xl sm:text-4xl tracking-tighter text-white">
+              <span className="font-mono text-3xl sm:text-4xl tracking-tighter" style={{ color: textPrimary }}>
                 {stats.followers.toLocaleString()}
               </span>
               {stats.followersDelta !== 0 && (
-                <Badge className={`bg-transparent border text-xs ${stats.followersDelta > 0 ? 'text-emerald-400 border-emerald-400' : 'text-red-400 border-red-400'}`}>
+                <Badge className="text-xs" style={getDeltaBadgeStyle(stats.followersDelta, 5)}>
                   {stats.followersDelta > 0 ? '+' : ''}{stats.followersDelta} today
                 </Badge>
               )}
@@ -159,108 +177,80 @@ export function StatsCards() {
       </motion.div>
 
       {/* Card 3: My Daily New Followers */}
-      <motion.div
-        variants={cardVariants}
-        initial="hidden"
-        whileInView="visible"
-        viewport={{ once: true }}
-      >
-        <Card className="rounded-3xl bg-gradient-to-br from-amber-900/30 to-orange-900/30 backdrop-blur-xl border border-amber-500/20 shadow-2xl shadow-amber-500/10 h-full">
+      <motion.div variants={cardVariants} initial="hidden" whileInView="visible" viewport={{ once: true }}>
+        <Card className="rounded-3xl backdrop-blur-xl border h-full" style={cardStyle}>
           <CardContent className="p-6 h-full flex flex-col">
             <div className="flex items-center gap-2 mb-2">
-              <Sparkles className="h-5 w-5 text-amber-400" />
-              <span className="text-sm text-amber-300/80">Daily New Followers</span>
+              <Sparkles className="h-5 w-5" style={{ color: accent }} />
+              <span className="text-sm" style={{ color: textSecondary }}>Daily New Followers</span>
             </div>
             <div className="flex items-baseline gap-2">
-              <span className="font-mono text-3xl sm:text-4xl tracking-tighter text-white">
+              <span className="font-mono text-3xl sm:text-4xl tracking-tighter" style={{ color: textPrimary }}>
                 {stats.dailyNewFollowers}
               </span>
             </div>
             {stats.dailyNewFollowers >= 5 && (
-              <motion.div
-                initial={{ opacity: 0, y: -10 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="mt-2"
-              >
-                <Badge className="bg-emerald-500/20 text-emerald-400 border-emerald-400 text-xs">
+              <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} className="mt-2">
+                <Badge className="text-xs" style={{ backgroundColor: 'rgba(16, 185, 129, 0.2)', color: '#34d399', border: '1px solid #34d399' }}>
                   🎉 Milestone!
                 </Badge>
               </motion.div>
             )}
             {stats.dailyNewFollowers === 0 && (
-              <p className="text-xs text-amber-300/60 mt-2">Start growing your community!</p>
+              <p className="text-xs mt-2" style={{ color: textSecondary }}>Start growing your community!</p>
             )}
           </CardContent>
         </Card>
       </motion.div>
 
       {/* Card 4: My Daily Bestowals */}
-      <motion.div
-        variants={cardVariants}
-        initial="hidden"
-        whileInView="visible"
-        viewport={{ once: true }}
-      >
-        <Card className="rounded-3xl bg-gradient-to-br from-amber-900/30 to-orange-900/30 backdrop-blur-xl border border-amber-500/20 shadow-2xl shadow-amber-500/10 h-full">
+      <motion.div variants={cardVariants} initial="hidden" whileInView="visible" viewport={{ once: true }}>
+        <Card className="rounded-3xl backdrop-blur-xl border h-full" style={cardStyle}>
           <CardContent className="p-6 h-full flex flex-col">
             <div className="flex items-center gap-2 mb-2">
-              <DollarSign className="h-5 w-5 text-amber-400" />
-              <span className="text-sm text-amber-300/80">Daily Bestowals</span>
+              <DollarSign className="h-5 w-5" style={{ color: accent }} />
+              <span className="text-sm" style={{ color: textSecondary }}>Daily Bestowals</span>
             </div>
             <div className="flex items-baseline gap-2 mb-2">
-              <span className="font-mono text-3xl sm:text-4xl tracking-tighter text-white">
+              <span className="font-mono text-3xl sm:text-4xl tracking-tighter" style={{ color: textPrimary }}>
                 {formatCurrency(stats.dailyBestowals)}
               </span>
             </div>
             {stats.dailyBestowalsProducts && stats.dailyBestowalsProducts.length > 0 ? (
               <div className="flex gap-1 mt-2 flex-wrap">
                 {stats.dailyBestowalsProducts.slice(0, 3).map((product, i) => (
-                  <Badge key={i} className="bg-amber-500/20 text-amber-300 border-amber-400 text-xs truncate max-w-full">
+                  <Badge key={i} className="text-xs truncate max-w-full" style={{ backgroundColor: accent + '20', color: textSecondary, border: `1px solid ${accent}` }}>
                     {product.name}
                   </Badge>
                 ))}
               </div>
             ) : stats.dailyBestowals === 0 && (
-              <p className="text-xs text-amber-300/60 mt-2">Make your first bestowal today!</p>
+              <p className="text-xs mt-2" style={{ color: textSecondary }}>Make your first bestowal today!</p>
             )}
           </CardContent>
         </Card>
       </motion.div>
 
       {/* Card 5: My Monthly Bestowals */}
-      <motion.div
-        variants={cardVariants}
-        initial="hidden"
-        whileInView="visible"
-        viewport={{ once: true }}
-      >
-        <Card className="rounded-3xl bg-gradient-to-br from-amber-900/30 to-orange-900/30 backdrop-blur-xl border border-amber-500/20 shadow-2xl shadow-amber-500/10 h-full">
+      <motion.div variants={cardVariants} initial="hidden" whileInView="visible" viewport={{ once: true }}>
+        <Card className="rounded-3xl backdrop-blur-xl border h-full" style={cardStyle}>
           <CardContent className="p-6 h-full flex flex-col">
             <div className="flex items-center gap-2 mb-2">
-              <TrendingUp className="h-5 w-5 text-amber-400" />
-              <span className="text-sm text-amber-300/80">Monthly Bestowals</span>
+              <TrendingUp className="h-5 w-5" style={{ color: accent }} />
+              <span className="text-sm" style={{ color: textSecondary }}>Monthly Bestowals</span>
             </div>
             <div className="flex items-baseline gap-2 mb-3">
-              <span className="font-mono text-3xl sm:text-4xl tracking-tighter text-white">
+              <span className="font-mono text-3xl sm:text-4xl tracking-tighter" style={{ color: textPrimary }}>
                 {formatCurrency(stats.monthlyBestowals)}
               </span>
             </div>
-            {/* Progress ring to next milestone */}
+            {/* Progress ring */}
             <div className="relative w-16 h-16 mx-auto flex-shrink-0">
               <svg className="transform -rotate-90 w-16 h-16" viewBox="0 0 64 64">
-                <circle
-                  cx="32"
-                  cy="32"
-                  r="26"
-                  stroke="rgba(251, 191, 36, 0.2)"
-                  strokeWidth="4"
-                  fill="none"
-                />
+                <circle cx="32" cy="32" r="26" stroke={accent + '33'} strokeWidth="4" fill="none" />
                 <motion.circle
-                  cx="32"
-                  cy="32"
-                  r="26"
-                  stroke="#f59e0b"
+                  cx="32" cy="32" r="26"
+                  stroke={accent}
                   strokeWidth="4"
                   fill="none"
                   strokeDasharray={`${2 * Math.PI * 26}`}
@@ -272,16 +262,16 @@ export function StatsCards() {
               </svg>
               <div className="absolute inset-0 flex items-center justify-center">
                 <div className="text-center px-1">
-                  <span className="text-[10px] text-amber-300 block leading-tight">
+                  <span className="text-[10px] block leading-tight" style={{ color: accent }}>
                     {Math.min(Math.ceil(stats.monthlyBestowals / 5) * 5, 10)}
                   </span>
-                  <span className="text-[8px] text-amber-300/60 block mt-0.5 leading-tight">
+                  <span className="text-[8px] block mt-0.5 leading-tight" style={{ color: textSecondary }}>
                     USDC
                   </span>
                 </div>
               </div>
             </div>
-            <p className="text-xs text-amber-300/60 mt-2 text-center">
+            <p className="text-xs mt-2 text-center" style={{ color: textSecondary }}>
               {stats.monthlyBestowals < 5 
                 ? `${(5 - stats.monthlyBestowals).toFixed(2)} USDC to next tier`
                 : 'Keep it up!'
@@ -293,4 +283,3 @@ export function StatsCards() {
     </div>
   );
 }
-
