@@ -3,6 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from '@/components/ui/sheet'
 import { 
   Radio,
   Users,
@@ -35,14 +36,14 @@ export default function LiveActivityWidget() {
   const navigate = useNavigate()
   const location = useLocation()
   const [isExpanded, setIsExpanded] = useState(true)
-  const [isVisible, setIsVisible] = useState(true)
+  const [sheetOpen, setSheetOpen] = useState(false)
 
   // Only show on dashboard
   const isDashboard = location.pathname === '/dashboard' || location.pathname === '/'
   const [currentTheme, setCurrentTheme] = useState(getCurrentTheme())
   const [pendingApplications, setPendingApplications] = useState({ ambassadors: 0, whisperers: 0, drivers: 0, serviceProviders: 0 })
   
-  console.log('LiveActivityWidget: user exists?', !!user, 'isVisible?', isVisible, 'isExpanded?', isExpanded)
+  
   const [liveData, setLiveData] = useState({
     radioHosts: [],
     groupCalls: [],
@@ -57,8 +58,7 @@ export default function LiveActivityWidget() {
   // Listen for toggle event from bottom bar
   useEffect(() => {
     const handleToggle = () => {
-      setIsVisible(true);
-      setIsExpanded(prev => !prev);
+      setSheetOpen(prev => !prev);
     };
     window.addEventListener('toggle-live-activity', handleToggle);
     return () => window.removeEventListener('toggle-live-activity', handleToggle);
@@ -620,8 +620,8 @@ export default function LiveActivityWidget() {
     }
   }
 
-  // Show widget for all users, with different content based on auth status
-  if (!isVisible || !isDashboard) {
+  // Only render on dashboard
+  if (!isDashboard) {
     return null
   }
 
@@ -634,207 +634,54 @@ export default function LiveActivityWidget() {
                          liveData.forumInvitations.length
 
   return (
-    <div 
-      className="fixed bottom-6 left-6 w-80 max-w-[calc(100vw-3rem)] pointer-events-auto" 
-      style={{ 
-        zIndex: 50, // Reasonable z-index - above content but below modals/dropdowns
-        position: 'fixed'
-      }}
-    >
-      {/* Debug indicator */}
-      <div 
-        className="absolute -top-10 right-0 text-white text-xs px-2 py-1 rounded pointer-events-auto"
-        style={{ 
-          zIndex: 51,
-          backgroundColor: currentTheme.accent,
-          color: currentTheme.textPrimary
-        }}
-      >
-        WIDGET ACTIVE
-      </div>
-      
-      <Card 
-        className="shadow-xl relative pointer-events-auto"
-        style={{ 
-          zIndex: 50,
-          position: 'relative',
+    <Sheet open={sheetOpen} onOpenChange={setSheetOpen}>
+      <SheetContent
+        side="bottom"
+        className="rounded-t-3xl border-t max-h-[70vh] overflow-y-auto backdrop-blur-xl"
+        style={{
           backgroundColor: currentTheme.cardBg,
           borderColor: currentTheme.cardBorder,
-          borderWidth: '1px',
-          boxShadow: `0 20px 25px -5px ${currentTheme.shadow}, 0 10px 10px -5px ${currentTheme.shadow}`
         }}
       >
-        {!user && (
-          <div 
-            className="absolute -top-2 -right-2 pointer-events-none"
-            style={{ zIndex: 51 }}
-          >
-            <div 
-              className="text-white text-xs px-2 py-1 rounded-full animate-pulse shadow-lg"
-              style={{
-                backgroundColor: currentTheme.accent,
-                color: currentTheme.textPrimary
-              }}
-            >
-              🔴 LIVE NOW
-            </div>
-          </div>
-        )}
-        <CardHeader 
-          className="pb-3 cursor-pointer relative pointer-events-auto transition-colors"
-          style={{
-            backgroundColor: currentTheme.secondaryButton,
-            borderBottomColor: currentTheme.cardBorder,
-            borderBottomWidth: '1px'
-          }}
-          onClick={() => {
-            console.log('Header clicked, toggling expand from', isExpanded, 'to', !isExpanded)
-            setIsExpanded(!isExpanded)
-          }}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.backgroundColor = currentTheme.accent + '20';
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.backgroundColor = currentTheme.secondaryButton;
-          }}
-        >
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="relative">
-                <Radio className="h-6 w-6 animate-pulse" style={{ color: currentTheme.accent }} />
-                {totalActivities > 0 && (
-                  <div 
-                    className="absolute -top-1 -right-1 w-4 h-4 text-white text-xs rounded-full flex items-center justify-center animate-bounce shadow-lg"
-                    style={{
-                      backgroundColor: currentTheme.accent,
-                      color: currentTheme.textPrimary
-                    }}
-                  >
-                    {totalActivities}
-                  </div>
-                )}
-              </div>
-              <div>
-                <CardTitle className="text-base font-bold" style={{ color: currentTheme.textPrimary }}>🎬 Live Activities</CardTitle>
-                <div className="text-xs" style={{ color: currentTheme.textSecondary }}>
-                  {user ? 'Click to join activities' : 'Login to participate'}
-                </div>
-              </div>
-            </div>
-            <div className="flex items-center gap-2">
-              {isExpanded ? (
-                <ChevronUp className="h-5 w-5" style={{ color: currentTheme.accent }} />
-              ) : (
-                <ChevronDown className="h-5 w-5" style={{ color: currentTheme.accent }} />
-              )}
-              <button
-                onClick={(e) => {
-                  e.stopPropagation()
-                  setIsVisible(false)
-                }}
-                className="inline-flex items-center justify-center rounded-full p-1 transition-all duration-200"
-                style={{
-                  color: currentTheme.textSecondary,
-                  backgroundColor: 'transparent'
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.backgroundColor = currentTheme.accent + '20';
-                  e.currentTarget.style.color = currentTheme.accent;
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.backgroundColor = 'transparent';
-                  e.currentTarget.style.color = currentTheme.textSecondary;
-                }}
+        <SheetHeader>
+          <SheetTitle style={{ color: currentTheme.textPrimary }} className="flex items-center gap-2">
+            <Radio className="h-5 w-5" style={{ color: currentTheme.accent }} />
+            🎬 Live Activities
+            {totalActivities > 0 && (
+              <span
+                className="text-xs font-bold px-2 py-0.5 rounded-full"
+                style={{ backgroundColor: currentTheme.accent + '25', color: currentTheme.accent }}
               >
-                <X className="h-4 w-4" />
-              </button>
+                {totalActivities}
+              </span>
+            )}
+          </SheetTitle>
+          <SheetDescription style={{ color: currentTheme.textSecondary }}>
+            {user ? 'Click to join activities' : 'Login to participate'}
+          </SheetDescription>
+        </SheetHeader>
+
+        <div className="mt-4 space-y-4">
+          {loading ? (
+            <div className="text-center py-4">
+              <div 
+                className="animate-spin rounded-full h-6 w-6 border-b-2 mx-auto"
+                style={{ borderColor: currentTheme.accent }}
+              ></div>
+              <p className="text-xs mt-2" style={{ color: currentTheme.textSecondary }}>Loading activities...</p>
             </div>
-          </div>
-        </CardHeader>
-
-        {isExpanded && (
-          <CardContent 
-            className="pt-0 max-h-96 overflow-y-auto space-y-4 relative pointer-events-auto"
-            style={{ 
-              zIndex: 50,
-              backgroundColor: currentTheme.cardBg
-            }}
-          >
-            {loading ? (
-              <div className="text-center py-4">
-                <div 
-                  className="animate-spin rounded-full h-6 w-6 border-b-2 mx-auto"
-                  style={{ borderColor: currentTheme.accent }}
-                ></div>
-                <p className="text-xs mt-2" style={{ color: currentTheme.textSecondary }}>Loading activities...</p>
-              </div>
-            ) : (
-              <>
-                {/* Live Radio Hosts */}
-                {liveData.radioHosts.length > 0 && (
-                  <div className="space-y-2">
-                    <h4 className="text-xs font-semibold flex items-center gap-1" style={{ color: currentTheme.accent }}>
-                      <Radio className="h-3 w-3" />
-                      Live on Radio
-                    </h4>
-                    {liveData.radioHosts.slice(0, 2).map((session) => (
-                      <div 
-                        key={session.id}
-                        className="flex items-center justify-between p-2 rounded-lg border"
-                        style={{
-                          backgroundColor: currentTheme.secondaryButton,
-                          borderColor: currentTheme.cardBorder
-                        }}
-                      >
-                        <div className="flex items-center gap-2">
-                          <div className="relative">
-                            <Avatar className="h-6 w-6">
-                              <AvatarImage src={session.radio_schedule?.radio_djs?.avatar_url} />
-                              <AvatarFallback className="text-xs">DJ</AvatarFallback>
-                            </Avatar>
-                            <div className="absolute -top-1 -right-1 w-2 h-2 bg-red-500 rounded-full animate-pulse" />
-                          </div>
-                          <div>
-                            <div className="text-xs font-medium" style={{ color: currentTheme.textPrimary }}>
-                              {session.radio_schedule?.radio_djs?.dj_name || 'DJ Live'}
-                            </div>
-                            <div className="text-xs" style={{ color: currentTheme.textSecondary }}>
-                              {session.viewer_count || 0} listeners
-                            </div>
-                          </div>
-                        </div>
-                        <button 
-                          className="text-xs h-6 px-2 py-1 rounded border transition-all duration-200"
-                          style={{
-                            borderColor: currentTheme.accent,
-                            backgroundColor: currentTheme.secondaryButton,
-                            color: currentTheme.textPrimary
-                          }}
-                          onClick={() => joinActivity('radio', session.id)}
-                          onMouseEnter={(e) => {
-                            e.currentTarget.style.backgroundColor = currentTheme.accent;
-                            e.currentTarget.style.borderColor = currentTheme.accent;
-                          }}
-                          onMouseLeave={(e) => {
-                            e.currentTarget.style.backgroundColor = currentTheme.secondaryButton;
-                            e.currentTarget.style.borderColor = currentTheme.accent;
-                          }}
-                        >
-                          Listen
-                        </button>
-                      </div>
-                    ))}
-                  </div>
-                )}
-
-                {/* AoD Heretic's Frequencies */}
-                {liveData.aodHereticFrequencies && (
-                  <div className="space-y-2">
-                    <h4 className="text-xs font-semibold flex items-center gap-1" style={{ color: currentTheme.accent }}>
-                      <Radio className="h-3 w-3" />
-                      AoD Heretic's Frequencies
-                    </h4>
+          ) : (
+            <>
+              {/* Live Radio Hosts */}
+              {liveData.radioHosts.length > 0 && (
+                <div className="space-y-2">
+                  <h4 className="text-xs font-semibold flex items-center gap-1" style={{ color: currentTheme.accent }}>
+                    <Radio className="h-3 w-3" />
+                    Live on Radio
+                  </h4>
+                  {liveData.radioHosts.slice(0, 2).map((session) => (
                     <div 
+                      key={session.id}
                       className="flex items-center justify-between p-2 rounded-lg border"
                       style={{
                         backgroundColor: currentTheme.secondaryButton,
@@ -844,148 +691,350 @@ export default function LiveActivityWidget() {
                       <div className="flex items-center gap-2">
                         <div className="relative">
                           <Avatar className="h-6 w-6">
-                            <AvatarImage src={liveData.aodHereticFrequencies.hostAvatar} />
-                            <AvatarFallback className="text-xs text-white" style={{ backgroundColor: currentTheme.accent }}>AH</AvatarFallback>
+                            <AvatarImage src={session.radio_schedule?.radio_djs?.avatar_url} />
+                            <AvatarFallback className="text-xs">DJ</AvatarFallback>
                           </Avatar>
-                          {liveData.aodHereticFrequencies.isLive && (
-                            <div className="absolute -top-1 -right-1 w-2 h-2 rounded-full animate-pulse" style={{ backgroundColor: currentTheme.accent }} />
-                          )}
+                          <div className="absolute -top-1 -right-1 w-2 h-2 bg-red-500 rounded-full animate-pulse" />
                         </div>
                         <div>
                           <div className="text-xs font-medium" style={{ color: currentTheme.textPrimary }}>
-                            {liveData.aodHereticFrequencies.currentHost}
+                            {session.radio_schedule?.radio_djs?.dj_name || 'DJ Live'}
                           </div>
                           <div className="text-xs" style={{ color: currentTheme.textSecondary }}>
-                            {liveData.aodHereticFrequencies.frequency} • {liveData.aodHereticFrequencies.listeners} listeners
+                            {session.viewer_count || 0} listeners
                           </div>
                         </div>
                       </div>
-                      <div className="flex items-center gap-1">
-                        <Badge 
-                          variant="outline" 
-                          className="text-xs px-1 py-0 h-4"
-                          style={{
-                            borderColor: currentTheme.accent,
-                            backgroundColor: currentTheme.secondaryButton,
-                            color: currentTheme.textPrimary
-                          }}
-                        >
-                          {liveData.aodHereticFrequencies.isLive ? 'LIVE' : 'OFF-AIR'}
-                        </Badge>
-                        <button 
-                          className="text-xs h-6 px-2 py-1 rounded border transition-all duration-200"
-                          style={{
-                            borderColor: currentTheme.accent,
-                            backgroundColor: currentTheme.secondaryButton,
-                            color: currentTheme.textPrimary
-                          }}
-                          onClick={() => joinActivity('radio', liveData.aodHereticFrequencies.id)}
-                          disabled={!liveData.aodHereticFrequencies.isLive}
-                          onMouseEnter={(e) => {
-                            if (!e.currentTarget.disabled) {
-                              e.currentTarget.style.backgroundColor = currentTheme.accent;
-                              e.currentTarget.style.borderColor = currentTheme.accent;
-                            }
-                          }}
-                          onMouseLeave={(e) => {
-                            if (!e.currentTarget.disabled) {
-                              e.currentTarget.style.backgroundColor = currentTheme.secondaryButton;
-                              e.currentTarget.style.borderColor = currentTheme.accent;
-                            }
-                          }}
-                        >
-                          {liveData.aodHereticFrequencies.isLive ? 'Tune In' : 'Offline'}
-                        </button>
+                      <button 
+                        className="text-xs h-6 px-2 py-1 rounded border transition-all duration-200"
+                        style={{
+                          borderColor: currentTheme.accent,
+                          backgroundColor: currentTheme.secondaryButton,
+                          color: currentTheme.textPrimary
+                        }}
+                        onClick={() => joinActivity('radio', session.id)}
+                      >
+                        Listen
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {/* AoD Heretic's Frequencies */}
+              {liveData.aodHereticFrequencies && (
+                <div className="space-y-2">
+                  <h4 className="text-xs font-semibold flex items-center gap-1" style={{ color: currentTheme.accent }}>
+                    <Radio className="h-3 w-3" />
+                    AoD Heretic's Frequencies
+                  </h4>
+                  <div 
+                    className="flex items-center justify-between p-2 rounded-lg border"
+                    style={{
+                      backgroundColor: currentTheme.secondaryButton,
+                      borderColor: currentTheme.cardBorder
+                    }}
+                  >
+                    <div className="flex items-center gap-2">
+                      <div className="relative">
+                        <Avatar className="h-6 w-6">
+                          <AvatarImage src={liveData.aodHereticFrequencies.hostAvatar} />
+                          <AvatarFallback className="text-xs text-white" style={{ backgroundColor: currentTheme.accent }}>AH</AvatarFallback>
+                        </Avatar>
+                        {liveData.aodHereticFrequencies.isLive && (
+                          <div className="absolute -top-1 -right-1 w-2 h-2 rounded-full animate-pulse" style={{ backgroundColor: currentTheme.accent }} />
+                        )}
+                      </div>
+                      <div>
+                        <div className="text-xs font-medium" style={{ color: currentTheme.textPrimary }}>
+                          {liveData.aodHereticFrequencies.currentHost}
+                        </div>
+                        <div className="text-xs" style={{ color: currentTheme.textSecondary }}>
+                          {liveData.aodHereticFrequencies.frequency} • {liveData.aodHereticFrequencies.listeners} listeners
+                        </div>
                       </div>
                     </div>
-                  </div>
-                )}
-
-                {/* Live Group Calls */}
-                {liveData.groupCalls.length > 0 && (
-                  <div className="space-y-2">
-                    <h4 className="text-xs font-semibold flex items-center gap-1" style={{ color: currentTheme.accent }}>
-                      <Phone className="h-3 w-3" />
-                      Group Calls
-                    </h4>
-                    {liveData.groupCalls.slice(0, 2).map((call) => (
-                      <div 
-                        key={call.id}
-                        className="flex items-center justify-between p-2 rounded-lg border"
+                    <div className="flex items-center gap-1">
+                      <Badge 
+                        variant="outline" 
+                        className="text-xs px-1 py-0 h-4"
                         style={{
+                          borderColor: currentTheme.accent,
                           backgroundColor: currentTheme.secondaryButton,
-                          borderColor: currentTheme.cardBorder
+                          color: currentTheme.textPrimary
                         }}
                       >
-                        <div className="flex items-center gap-2">
-                          <div className="relative">
-                            <div className="w-6 h-6 rounded-full flex items-center justify-center" style={{ backgroundColor: currentTheme.accent }}>
-                              <Phone className="h-3 w-3 text-white" />
-                            </div>
-                            <div className="absolute -top-1 -right-1 w-2 h-2 rounded-full animate-pulse" style={{ backgroundColor: currentTheme.accentLight }} />
+                        {liveData.aodHereticFrequencies.isLive ? 'LIVE' : 'OFF-AIR'}
+                      </Badge>
+                      <button 
+                        className="text-xs h-6 px-2 py-1 rounded border transition-all duration-200"
+                        style={{
+                          borderColor: currentTheme.accent,
+                          backgroundColor: currentTheme.secondaryButton,
+                          color: currentTheme.textPrimary
+                        }}
+                        onClick={() => joinActivity('radio', liveData.aodHereticFrequencies.id)}
+                        disabled={!liveData.aodHereticFrequencies.isLive}
+                      >
+                        {liveData.aodHereticFrequencies.isLive ? 'Tune In' : 'Offline'}
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Live Group Calls */}
+              {liveData.groupCalls.length > 0 && (
+                <div className="space-y-2">
+                  <h4 className="text-xs font-semibold flex items-center gap-1" style={{ color: currentTheme.accent }}>
+                    <Phone className="h-3 w-3" />
+                    Group Calls
+                  </h4>
+                  {liveData.groupCalls.slice(0, 2).map((call) => (
+                    <div 
+                      key={call.id}
+                      className="flex items-center justify-between p-2 rounded-lg border"
+                      style={{
+                        backgroundColor: currentTheme.secondaryButton,
+                        borderColor: currentTheme.cardBorder
+                      }}
+                    >
+                      <div className="flex items-center gap-2">
+                        <div className="relative">
+                          <div className="w-6 h-6 rounded-full flex items-center justify-center" style={{ backgroundColor: currentTheme.accent }}>
+                            <Phone className="h-3 w-3 text-white" />
                           </div>
-                          <div>
-                            <div className="text-xs font-medium line-clamp-1" style={{ color: currentTheme.textPrimary }}>
-                              {call.title}
-                            </div>
-                            <div className="text-xs" style={{ color: currentTheme.textSecondary }}>
-                              {call.participants}/{call.maxParticipants} • {call.host}
-                            </div>
+                          <div className="absolute -top-1 -right-1 w-2 h-2 rounded-full animate-pulse" style={{ backgroundColor: currentTheme.accentLight }} />
+                        </div>
+                        <div>
+                          <div className="text-xs font-medium line-clamp-1" style={{ color: currentTheme.textPrimary }}>
+                            {call.title}
+                          </div>
+                          <div className="text-xs" style={{ color: currentTheme.textSecondary }}>
+                            {call.participants}/{call.maxParticipants} • {call.host}
                           </div>
                         </div>
-                        <button 
-                          className="text-xs h-6 px-2 py-1 rounded border transition-all duration-200"
-                          style={{
-                            borderColor: currentTheme.accent,
-                            backgroundColor: currentTheme.secondaryButton,
-                            color: currentTheme.textPrimary
-                          }}
-                          onClick={() => joinActivity('call', call.id)}
-                          onMouseEnter={(e) => {
-                            e.currentTarget.style.backgroundColor = currentTheme.accent;
-                            e.currentTarget.style.borderColor = currentTheme.accent;
-                          }}
-                          onMouseLeave={(e) => {
-                            e.currentTarget.style.backgroundColor = currentTheme.secondaryButton;
-                            e.currentTarget.style.borderColor = currentTheme.accent;
-                          }}
-                        >
-                          Join
-                        </button>
                       </div>
-                    ))}
-                  </div>
-                )}
-
-                {/* Community Chats */}
-                {liveData.communityChats.length > 0 && (
-                  <div className="space-y-2">
-                    <h4 className="text-xs font-semibold flex items-center gap-1" style={{ color: currentTheme.accent }}>
-                      <MessageCircle className="h-3 w-3" />
-                      Active Chats
-                    </h4>
-                    {liveData.communityChats.slice(0, 3).map((chat) => (
-                      <div 
-                        key={chat.id}
-                        className="flex items-center justify-between p-2 rounded-lg border"
+                      <button 
+                        className="text-xs h-6 px-2 py-1 rounded border transition-all duration-200"
                         style={{
+                          borderColor: currentTheme.accent,
                           backgroundColor: currentTheme.secondaryButton,
-                          borderColor: currentTheme.cardBorder
+                          color: currentTheme.textPrimary
                         }}
+                        onClick={() => joinActivity('call', call.id)}
                       >
-                        <div className="flex items-center gap-2">
+                        Join
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {/* Community Chats */}
+              {liveData.communityChats.length > 0 && (
+                <div className="space-y-2">
+                  <h4 className="text-xs font-semibold flex items-center gap-1" style={{ color: currentTheme.accent }}>
+                    <MessageCircle className="h-3 w-3" />
+                    Active Chats
+                  </h4>
+                  {liveData.communityChats.slice(0, 3).map((chat) => (
+                    <div 
+                      key={chat.id}
+                      className="flex items-center justify-between p-2 rounded-lg border"
+                      style={{
+                        backgroundColor: currentTheme.secondaryButton,
+                        borderColor: currentTheme.cardBorder
+                      }}
+                    >
+                      <div className="flex items-center gap-2">
+                        <div className="w-6 h-6 rounded-full flex items-center justify-center" style={{ backgroundColor: currentTheme.accent }}>
+                          <MessageCircle className="h-3 w-3 text-white" />
+                        </div>
+                        <div>
+                          <div className="text-xs font-medium line-clamp-1" style={{ color: currentTheme.textPrimary }}>
+                            {chat.name || (chat.room_type === 'direct' ? 'Direct Message' : 'Chat')}
+                          </div>
+                          <div className="text-xs" style={{ color: currentTheme.textSecondary }}>
+                            {chat.room_type === 'direct' ? 'DM' : 'Group'} • Active recently
+                          </div>
+                        </div>
+                      </div>
+                      <button 
+                        className="text-xs h-6 px-2 py-1 rounded border transition-all duration-200"
+                        style={{
+                          borderColor: currentTheme.accent,
+                          backgroundColor: currentTheme.secondaryButton,
+                          color: currentTheme.textPrimary
+                        }}
+                        onClick={() => navigate('/communications-hub')}
+                      >
+                        Chat
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {/* Life Courses */}
+              {liveData.lifeCourses.length > 0 && (
+                <div className="space-y-2">
+                  <h4 className="text-xs font-semibold flex items-center gap-1" style={{ color: currentTheme.accent }}>
+                    <GraduationCap className="h-3 w-3" />
+                    Life Courses
+                  </h4>
+                  {liveData.lifeCourses.slice(0, 3).map((course) => (
+                    <div 
+                      key={course.id}
+                      className="flex items-center justify-between p-2 rounded-lg border"
+                      style={{
+                        backgroundColor: currentTheme.secondaryButton,
+                        borderColor: currentTheme.cardBorder
+                      }}
+                    >
+                      <div className="flex items-center gap-2">
+                        <div className="relative">
+                          <div className="w-6 h-6 rounded-full flex items-center justify-center" style={{ backgroundColor: currentTheme.accent }}>
+                            <GraduationCap className="h-3 w-3 text-white" />
+                          </div>
+                          {course.isLive && (
+                            <div className="absolute -top-1 -right-1 w-2 h-2 rounded-full animate-pulse" style={{ backgroundColor: currentTheme.accentLight }} />
+                          )}
+                        </div>
+                        <div>
+                          <div className="text-xs font-medium line-clamp-1" style={{ color: currentTheme.textPrimary }}>
+                            {course.title}
+                          </div>
+                          <div className="text-xs flex items-center gap-1" style={{ color: currentTheme.textSecondary }}>
+                            {course.isPaid ? (
+                              <><DollarSign className="h-2 w-2" />${course.price}</>
+                            ) : (
+                              'Free'
+                            )}
+                            {course.isLive ? (
+                              <span className="font-medium" style={{ color: currentTheme.accent }}>• Live Now</span>
+                            ) : (
+                              <span>• {formatDistanceToNow(course.nextSession)} left</span>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                      <button 
+                        className="text-xs h-6 px-2 py-1 rounded border transition-all duration-200"
+                        style={{
+                          borderColor: currentTheme.accent,
+                          backgroundColor: currentTheme.secondaryButton,
+                          color: currentTheme.textPrimary
+                        }}
+                        onClick={() => joinActivity('course', course.id)}
+                      >
+                        {course.isLive ? 'Join' : 'Register'}
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {/* Unread Forum Messages */}
+              {liveData.unreadMessages.length > 0 && (
+                <div className="space-y-2">
+                  <h4 className="text-xs font-semibold flex items-center gap-1" style={{ color: currentTheme.accent }}>
+                    <MessageCircle className="h-3 w-3" />
+                    Unread Forum Messages
+                  </h4>
+                  {liveData.unreadMessages.slice(0, 3).map((msg) => (
+                    <div 
+                      key={msg.roomId}
+                      className="flex items-center justify-between p-2 rounded-lg border cursor-pointer"
+                      style={{
+                        backgroundColor: currentTheme.secondaryButton,
+                        borderColor: currentTheme.accent,
+                        borderWidth: '2px'
+                      }}
+                      onClick={() => joinActivity('forum', msg.roomId)}
+                    >
+                      <div className="flex items-center gap-2 flex-1 min-w-0">
+                        <div className="relative">
                           <div className="w-6 h-6 rounded-full flex items-center justify-center" style={{ backgroundColor: currentTheme.accent }}>
                             <MessageCircle className="h-3 w-3 text-white" />
                           </div>
-                          <div>
-                            <div className="text-xs font-medium line-clamp-1" style={{ color: currentTheme.textPrimary }}>
-                              {chat.name || (chat.room_type === 'direct' ? 'Direct Message' : 'Chat')}
+                          {msg.latestMessage.unreadCount > 0 && (
+                            <div 
+                              className="absolute -top-1 -right-1 w-4 h-4 rounded-full flex items-center justify-center text-xs font-bold animate-pulse"
+                              style={{
+                                backgroundColor: currentTheme.accent,
+                                color: currentTheme.textPrimary
+                              }}
+                            >
+                              {msg.latestMessage.unreadCount > 9 ? '9+' : msg.latestMessage.unreadCount}
                             </div>
-                            <div className="text-xs" style={{ color: currentTheme.textSecondary }}>
-                              {chat.room_type === 'direct' ? 'DM' : 'Group'} • Active recently
-                            </div>
+                          )}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <div className="text-xs font-medium line-clamp-1" style={{ color: currentTheme.textPrimary }}>
+                            {msg.roomName}
+                          </div>
+                          <div className="text-xs line-clamp-1" style={{ color: currentTheme.textSecondary }}>
+                            {msg.latestMessage.senderName}: {msg.latestMessage.content?.substring(0, 30) || 'New message'}...
                           </div>
                         </div>
+                      </div>
+                      <button 
+                        className="text-xs h-6 px-2 py-1 rounded border transition-all duration-200 ml-2"
+                        style={{
+                          borderColor: currentTheme.accent,
+                          backgroundColor: currentTheme.accent,
+                          color: currentTheme.textPrimary
+                        }}
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          joinActivity('forum', msg.roomId)
+                        }}
+                      >
+                        View
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {/* Forum Invitations */}
+              {liveData.forumInvitations.length > 0 && (
+                <div className="space-y-2">
+                  <h4 className="text-xs font-semibold flex items-center gap-1" style={{ color: currentTheme.accent }}>
+                    <Users className="h-3 w-3" />
+                    Forum Invitations ({liveData.forumInvitations.length})
+                  </h4>
+                  {liveData.forumInvitations.slice(0, 3).map((invitation) => (
+                    <div 
+                      key={invitation.id}
+                      className="flex items-center justify-between p-2 rounded-lg border"
+                      style={{
+                        backgroundColor: currentTheme.secondaryButton,
+                        borderColor: currentTheme.accent,
+                        borderWidth: '2px'
+                      }}
+                    >
+                      <div className="flex items-center gap-2 flex-1 min-w-0">
+                        <div className="relative">
+                          <Avatar className="h-6 w-6">
+                            <AvatarImage src={invitation.inviterAvatar} />
+                            <AvatarFallback className="text-xs" style={{ backgroundColor: currentTheme.accent, color: currentTheme.textPrimary }}>
+                              {invitation.inviterName.charAt(0).toUpperCase()}
+                            </AvatarFallback>
+                          </Avatar>
+                          <div className="absolute -top-1 -right-1 w-2 h-2 rounded-full animate-pulse" style={{ backgroundColor: currentTheme.accent }} />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <div className="text-xs font-medium line-clamp-1" style={{ color: currentTheme.textPrimary }}>
+                            {invitation.roomName}
+                          </div>
+                          <div className="text-xs line-clamp-1" style={{ color: currentTheme.textSecondary }}>
+                            Invited by {invitation.inviterName}
+                          </div>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-1 ml-2">
                         <button 
                           className="text-xs h-6 px-2 py-1 rounded border transition-all duration-200"
                           style={{
@@ -993,337 +1042,117 @@ export default function LiveActivityWidget() {
                             backgroundColor: currentTheme.secondaryButton,
                             color: currentTheme.textPrimary
                           }}
-                          onClick={() => navigate('/communications-hub')}
-                          onMouseEnter={(e) => {
-                            e.currentTarget.style.backgroundColor = currentTheme.accent;
-                            e.currentTarget.style.borderColor = currentTheme.accent;
-                          }}
-                          onMouseLeave={(e) => {
-                            e.currentTarget.style.backgroundColor = currentTheme.secondaryButton;
-                            e.currentTarget.style.borderColor = currentTheme.accent;
-                          }}
+                          onClick={() => joinActivity('accept_invitation', invitation.id)}
                         >
-                          Chat
+                          Accept
                         </button>
-                      </div>
-                    ))}
-                  </div>
-                )}
-
-                {/* Life Courses */}
-                {liveData.lifeCourses.length > 0 && (
-                  <div className="space-y-2">
-                    <h4 className="text-xs font-semibold flex items-center gap-1" style={{ color: currentTheme.accent }}>
-                      <GraduationCap className="h-3 w-3" />
-                      Life Courses
-                    </h4>
-                    {liveData.lifeCourses.slice(0, 3).map((course) => (
-                      <div 
-                        key={course.id}
-                        className="flex items-center justify-between p-2 rounded-lg border"
-                        style={{
-                          backgroundColor: currentTheme.secondaryButton,
-                          borderColor: currentTheme.cardBorder
-                        }}
-                      >
-                        <div className="flex items-center gap-2">
-                          <div className="relative">
-                            <div className="w-6 h-6 rounded-full flex items-center justify-center" style={{ backgroundColor: currentTheme.accent }}>
-                              <GraduationCap className="h-3 w-3 text-white" />
-                            </div>
-                            {course.isLive && (
-                              <div className="absolute -top-1 -right-1 w-2 h-2 rounded-full animate-pulse" style={{ backgroundColor: currentTheme.accentLight }} />
-                            )}
-                          </div>
-                          <div>
-                            <div className="text-xs font-medium line-clamp-1" style={{ color: currentTheme.textPrimary }}>
-                              {course.title}
-                            </div>
-                            <div className="text-xs flex items-center gap-1" style={{ color: currentTheme.textSecondary }}>
-                              {course.isPaid ? (
-                                <><DollarSign className="h-2 w-2" />${course.price}</>
-                              ) : (
-                                'Free'
-                              )}
-                              {course.isLive ? (
-                                <span className="font-medium" style={{ color: currentTheme.accent }}>• Live Now</span>
-                              ) : (
-                                <span>• {formatDistanceToNow(course.nextSession)} left</span>
-                              )}
-                            </div>
-                          </div>
-                        </div>
                         <button 
                           className="text-xs h-6 px-2 py-1 rounded border transition-all duration-200"
                           style={{
-                            borderColor: currentTheme.accent,
-                            backgroundColor: currentTheme.secondaryButton,
-                            color: currentTheme.textPrimary
+                            borderColor: currentTheme.cardBorder,
+                            backgroundColor: 'transparent',
+                            color: currentTheme.textSecondary
                           }}
-                          onClick={() => joinActivity('course', course.id)}
-                          onMouseEnter={(e) => {
-                            e.currentTarget.style.backgroundColor = currentTheme.accent;
-                            e.currentTarget.style.borderColor = currentTheme.accent;
-                          }}
-                          onMouseLeave={(e) => {
-                            e.currentTarget.style.backgroundColor = currentTheme.secondaryButton;
-                            e.currentTarget.style.borderColor = currentTheme.accent;
-                          }}
-                        >
-                          {course.isLive ? 'Join' : 'Register'}
-                        </button>
-                      </div>
-                    ))}
-                  </div>
-                )}
-
-                {/* Unread Forum Messages */}
-                {liveData.unreadMessages.length > 0 && (
-                  <div className="space-y-2">
-                    <h4 className="text-xs font-semibold flex items-center gap-1" style={{ color: currentTheme.accent }}>
-                      <MessageCircle className="h-3 w-3" />
-                      Unread Forum Messages
-                    </h4>
-                    {liveData.unreadMessages.slice(0, 3).map((msg) => (
-                      <div 
-                        key={msg.roomId}
-                        className="flex items-center justify-between p-2 rounded-lg border cursor-pointer"
-                        style={{
-                          backgroundColor: currentTheme.secondaryButton,
-                          borderColor: currentTheme.accent,
-                          borderWidth: '2px'
-                        }}
-                        onClick={() => joinActivity('forum', msg.roomId)}
-                        onMouseEnter={(e) => {
-                          e.currentTarget.style.backgroundColor = currentTheme.accent + '20';
-                        }}
-                        onMouseLeave={(e) => {
-                          e.currentTarget.style.backgroundColor = currentTheme.secondaryButton;
-                        }}
-                      >
-                        <div className="flex items-center gap-2 flex-1 min-w-0">
-                          <div className="relative">
-                            <div className="w-6 h-6 rounded-full flex items-center justify-center" style={{ backgroundColor: currentTheme.accent }}>
-                              <MessageCircle className="h-3 w-3 text-white" />
-                            </div>
-                            {msg.latestMessage.unreadCount > 0 && (
-                              <div 
-                                className="absolute -top-1 -right-1 w-4 h-4 rounded-full flex items-center justify-center text-xs font-bold animate-pulse"
-                                style={{
-                                  backgroundColor: currentTheme.accent,
-                                  color: currentTheme.textPrimary
-                                }}
-                              >
-                                {msg.latestMessage.unreadCount > 9 ? '9+' : msg.latestMessage.unreadCount}
-                              </div>
-                            )}
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <div className="text-xs font-medium line-clamp-1" style={{ color: currentTheme.textPrimary }}>
-                              {msg.roomName}
-                            </div>
-                            <div className="text-xs line-clamp-1" style={{ color: currentTheme.textSecondary }}>
-                              {msg.latestMessage.senderName}: {msg.latestMessage.content?.substring(0, 30) || 'New message'}...
-                            </div>
-                          </div>
-                        </div>
-                        <button 
-                          className="text-xs h-6 px-2 py-1 rounded border transition-all duration-200 ml-2"
-                          style={{
-                            borderColor: currentTheme.accent,
-                            backgroundColor: currentTheme.accent,
-                            color: currentTheme.textPrimary
-                          }}
-                          onClick={(e) => {
-                            e.stopPropagation()
-                            joinActivity('forum', msg.roomId)
+                          onClick={async () => {
+                            const { error } = await supabase
+                              .from('chat_join_requests')
+                              .update({ status: 'declined', reviewed_at: new Date().toISOString() })
+                              .eq('id', invitation.id)
+                            if (!error) {
+                              toast.success('Invitation declined')
+                              fetchLiveData()
+                            }
                           }}
                         >
-                          View
+                          Decline
                         </button>
                       </div>
-                    ))}
-                  </div>
-                )}
+                    </div>
+                  ))}
+                </div>
+              )}
 
-                {/* Forum Invitations */}
-                {liveData.forumInvitations.length > 0 && (
-                  <div className="space-y-2">
-                    <h4 className="text-xs font-semibold flex items-center gap-1" style={{ color: currentTheme.accent }}>
-                      <Users className="h-3 w-3" />
-                      Forum Invitations ({liveData.forumInvitations.length})
-                    </h4>
-                    {liveData.forumInvitations.slice(0, 3).map((invitation) => (
-                      <div 
-                        key={invitation.id}
-                        className="flex items-center justify-between p-2 rounded-lg border"
-                        style={{
-                          backgroundColor: currentTheme.secondaryButton,
-                          borderColor: currentTheme.accent,
-                          borderWidth: '2px'
-                        }}
-                      >
-                        <div className="flex items-center gap-2 flex-1 min-w-0">
-                          <div className="relative">
-                            <Avatar className="h-6 w-6">
-                              <AvatarImage src={invitation.inviterAvatar} />
-                              <AvatarFallback className="text-xs" style={{ backgroundColor: currentTheme.accent, color: currentTheme.textPrimary }}>
-                                {invitation.inviterName.charAt(0).toUpperCase()}
-                              </AvatarFallback>
-                            </Avatar>
-                            <div className="absolute -top-1 -right-1 w-2 h-2 rounded-full animate-pulse" style={{ backgroundColor: currentTheme.accent }} />
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <div className="text-xs font-medium line-clamp-1" style={{ color: currentTheme.textPrimary }}>
-                              {invitation.roomName}
-                            </div>
-                            <div className="text-xs line-clamp-1" style={{ color: currentTheme.textSecondary }}>
-                              Invited by {invitation.inviterName}
-                            </div>
-                          </div>
-                        </div>
-                        <div className="flex items-center gap-1 ml-2">
-                          <button 
-                            className="text-xs h-6 px-2 py-1 rounded border transition-all duration-200"
-                            style={{
-                              borderColor: currentTheme.accent,
-                              backgroundColor: currentTheme.secondaryButton,
-                              color: currentTheme.textPrimary
-                            }}
-                            onClick={() => joinActivity('accept_invitation', invitation.id)}
-                            onMouseEnter={(e) => {
-                              e.currentTarget.style.backgroundColor = currentTheme.accent;
-                              e.currentTarget.style.borderColor = currentTheme.accent;
-                            }}
-                            onMouseLeave={(e) => {
-                              e.currentTarget.style.backgroundColor = currentTheme.secondaryButton;
-                              e.currentTarget.style.borderColor = currentTheme.accent;
-                            }}
-                          >
-                            Accept
-                          </button>
-                          <button 
-                            className="text-xs h-6 px-2 py-1 rounded border transition-all duration-200"
-                            style={{
-                              borderColor: currentTheme.cardBorder,
-                              backgroundColor: 'transparent',
-                              color: currentTheme.textSecondary
-                            }}
-                            onClick={async () => {
-                              const { error } = await supabase
-                                .from('chat_join_requests')
-                                .update({ status: 'declined', reviewed_at: new Date().toISOString() })
-                                .eq('id', invitation.id)
-                              if (!error) {
-                                toast.success('Invitation declined')
-                                fetchLiveData()
-                              }
-                            }}
-                            onMouseEnter={(e) => {
-                              e.currentTarget.style.backgroundColor = currentTheme.cardBorder + '40';
-                            }}
-                            onMouseLeave={(e) => {
-                              e.currentTarget.style.backgroundColor = 'transparent';
-                            }}
-                          >
-                            Decline
-                          </button>
-                        </div>
+              {/* GoSat Pending Applications Notifications */}
+              {isAdminOrGosat && (pendingApplications.ambassadors > 0 || pendingApplications.whisperers > 0 || pendingApplications.drivers > 0 || pendingApplications.serviceProviders > 0) && (
+                <div className="space-y-2">
+                  <h4 className="text-xs font-semibold flex items-center gap-1" style={{ color: '#f59e0b' }}>
+                    <Award className="h-3 w-3" />
+                    Pending Applications
+                  </h4>
+                  {pendingApplications.ambassadors > 0 && (
+                    <div
+                      className="flex items-center justify-between p-2 rounded-lg border cursor-pointer transition-all duration-200"
+                      style={{ backgroundColor: currentTheme.secondaryButton, borderColor: currentTheme.cardBorder }}
+                      onClick={() => navigate('/admin/dashboard')}
+                    >
+                      <div className="flex items-center gap-2">
+                        <Award className="h-4 w-4" style={{ color: '#eab308' }} />
+                        <span className="text-xs font-medium" style={{ color: currentTheme.textPrimary }}>Ambassadors</span>
                       </div>
-                    ))}
-                  </div>
-                )}
+                      <div className="text-xs font-bold px-2 py-0.5 rounded-full" style={{ backgroundColor: '#ef4444', color: 'white' }}>
+                        {pendingApplications.ambassadors}
+                      </div>
+                    </div>
+                  )}
+                  {pendingApplications.whisperers > 0 && (
+                    <div
+                      className="flex items-center justify-between p-2 rounded-lg border cursor-pointer transition-all duration-200"
+                      style={{ backgroundColor: currentTheme.secondaryButton, borderColor: currentTheme.cardBorder }}
+                      onClick={() => navigate('/admin/dashboard')}
+                    >
+                      <div className="flex items-center gap-2">
+                        <Megaphone className="h-4 w-4" style={{ color: '#ec4899' }} />
+                        <span className="text-xs font-medium" style={{ color: currentTheme.textPrimary }}>Whisperers</span>
+                      </div>
+                      <div className="text-xs font-bold px-2 py-0.5 rounded-full" style={{ backgroundColor: '#ef4444', color: 'white' }}>
+                        {pendingApplications.whisperers}
+                      </div>
+                    </div>
+                  )}
+                  {pendingApplications.drivers > 0 && (
+                    <div
+                      className="flex items-center justify-between p-2 rounded-lg border cursor-pointer transition-all duration-200"
+                      style={{ backgroundColor: currentTheme.secondaryButton, borderColor: currentTheme.cardBorder }}
+                      onClick={() => navigate('/admin/dashboard')}
+                    >
+                      <div className="flex items-center gap-2">
+                        <Car className="h-4 w-4" style={{ color: '#06b6d4' }} />
+                        <span className="text-xs font-medium" style={{ color: currentTheme.textPrimary }}>Drivers</span>
+                      </div>
+                      <div className="text-xs font-bold px-2 py-0.5 rounded-full" style={{ backgroundColor: '#ef4444', color: 'white' }}>
+                        {pendingApplications.drivers}
+                      </div>
+                    </div>
+                  )}
+                  {pendingApplications.serviceProviders > 0 && (
+                    <div
+                      className="flex items-center justify-between p-2 rounded-lg border cursor-pointer transition-all duration-200"
+                      style={{ backgroundColor: currentTheme.secondaryButton, borderColor: currentTheme.cardBorder }}
+                      onClick={() => navigate('/admin/dashboard')}
+                    >
+                      <div className="flex items-center gap-2">
+                        <Wrench className="h-4 w-4" style={{ color: '#14b8a6' }} />
+                        <span className="text-xs font-medium" style={{ color: currentTheme.textPrimary }}>Service Providers</span>
+                      </div>
+                      <div className="text-xs font-bold px-2 py-0.5 rounded-full" style={{ backgroundColor: '#ef4444', color: 'white' }}>
+                        {pendingApplications.serviceProviders}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
 
-                {/* GoSat Pending Applications Notifications */}
-                {isAdminOrGosat && (pendingApplications.ambassadors > 0 || pendingApplications.whisperers > 0 || pendingApplications.drivers > 0 || pendingApplications.serviceProviders > 0) && (
-                  <div className="space-y-2">
-                    <h4 className="text-xs font-semibold flex items-center gap-1" style={{ color: '#f59e0b' }}>
-                      <Award className="h-3 w-3" />
-                      Pending Applications
-                    </h4>
-                    {pendingApplications.ambassadors > 0 && (
-                      <div
-                        className="flex items-center justify-between p-2 rounded-lg border cursor-pointer transition-all duration-200"
-                        style={{ backgroundColor: currentTheme.secondaryButton, borderColor: currentTheme.cardBorder }}
-                        onClick={() => navigate('/admin/dashboard')}
-                        onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = currentTheme.accent + '20' }}
-                        onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = currentTheme.secondaryButton }}
-                      >
-                        <div className="flex items-center gap-2">
-                          <Award className="h-4 w-4" style={{ color: '#eab308' }} />
-                          <span className="text-xs font-medium" style={{ color: currentTheme.textPrimary }}>Ambassadors</span>
-                        </div>
-                        <div className="text-xs font-bold px-2 py-0.5 rounded-full" style={{ backgroundColor: '#ef4444', color: 'white' }}>
-                          {pendingApplications.ambassadors}
-                        </div>
-                      </div>
-                    )}
-                    {pendingApplications.whisperers > 0 && (
-                      <div
-                        className="flex items-center justify-between p-2 rounded-lg border cursor-pointer transition-all duration-200"
-                        style={{ backgroundColor: currentTheme.secondaryButton, borderColor: currentTheme.cardBorder }}
-                        onClick={() => navigate('/admin/dashboard')}
-                        onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = currentTheme.accent + '20' }}
-                        onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = currentTheme.secondaryButton }}
-                      >
-                        <div className="flex items-center gap-2">
-                          <Megaphone className="h-4 w-4" style={{ color: '#ec4899' }} />
-                          <span className="text-xs font-medium" style={{ color: currentTheme.textPrimary }}>Whisperers</span>
-                        </div>
-                        <div className="text-xs font-bold px-2 py-0.5 rounded-full" style={{ backgroundColor: '#ef4444', color: 'white' }}>
-                          {pendingApplications.whisperers}
-                        </div>
-                      </div>
-                    )}
-                    {pendingApplications.drivers > 0 && (
-                      <div
-                        className="flex items-center justify-between p-2 rounded-lg border cursor-pointer transition-all duration-200"
-                        style={{ backgroundColor: currentTheme.secondaryButton, borderColor: currentTheme.cardBorder }}
-                        onClick={() => navigate('/admin/dashboard')}
-                        onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = currentTheme.accent + '20' }}
-                        onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = currentTheme.secondaryButton }}
-                      >
-                        <div className="flex items-center gap-2">
-                          <Car className="h-4 w-4" style={{ color: '#06b6d4' }} />
-                          <span className="text-xs font-medium" style={{ color: currentTheme.textPrimary }}>Drivers</span>
-                        </div>
-                        <div className="text-xs font-bold px-2 py-0.5 rounded-full" style={{ backgroundColor: '#ef4444', color: 'white' }}>
-                          {pendingApplications.drivers}
-                        </div>
-                      </div>
-                    )}
-                    {pendingApplications.serviceProviders > 0 && (
-                      <div
-                        className="flex items-center justify-between p-2 rounded-lg border cursor-pointer transition-all duration-200"
-                        style={{ backgroundColor: currentTheme.secondaryButton, borderColor: currentTheme.cardBorder }}
-                        onClick={() => navigate('/admin/dashboard')}
-                        onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = currentTheme.accent + '20' }}
-                        onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = currentTheme.secondaryButton }}
-                      >
-                        <div className="flex items-center gap-2">
-                          <Wrench className="h-4 w-4" style={{ color: '#14b8a6' }} />
-                          <span className="text-xs font-medium" style={{ color: currentTheme.textPrimary }}>Service Providers</span>
-                        </div>
-                        <div className="text-xs font-bold px-2 py-0.5 rounded-full" style={{ backgroundColor: '#ef4444', color: 'white' }}>
-                          {pendingApplications.serviceProviders}
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                )}
-
-                {totalActivities === 0 && liveData.unreadMessages.length === 0 && liveData.forumInvitations.length === 0 && (
-                  <div className="text-center py-6">
-                    <Users className="h-8 w-8 mx-auto mb-2" style={{ color: currentTheme.textSecondary }} />
-                    <p className="text-xs" style={{ color: currentTheme.textSecondary }}>No recent activity</p>
-                    <p className="text-xs" style={{ color: currentTheme.textSecondary }}>Schedule a radio slot or start chatting</p>
-                  </div>
-                )}
-              </>
-            )}
-          </CardContent>
-        )}
-      </Card>
-    </div>
+              {totalActivities === 0 && liveData.unreadMessages.length === 0 && liveData.forumInvitations.length === 0 && (
+                <div className="text-center py-6">
+                  <Users className="h-8 w-8 mx-auto mb-2" style={{ color: currentTheme.textSecondary }} />
+                  <p className="text-xs" style={{ color: currentTheme.textSecondary }}>No recent activity</p>
+                  <p className="text-xs" style={{ color: currentTheme.textSecondary }}>Schedule a radio slot or start chatting</p>
+                </div>
+              )}
+            </>
+          )}
+        </div>
+      </SheetContent>
+    </Sheet>
   )
 }
