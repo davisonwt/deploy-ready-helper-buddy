@@ -11,9 +11,11 @@ import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { 
   Music, Mic, MicOff, Megaphone, FileText, Plus, Trash2, 
-  Clock, GripVertical, Search, Play, Upload, Square, RotateCcw
+  Clock, GripVertical, Search, Play, Upload, Square, RotateCcw,
+  Download, Sparkles
 } from 'lucide-react';
 import { useDropzone } from 'react-dropzone';
+import { AIVoicePanel } from './AIVoicePanel';
 
 const TOTAL_MINUTES = 120;
 
@@ -588,7 +590,7 @@ const FileUploadZone: React.FC<{
   );
 };
 
-// Voice segment with Record + Upload options
+// Voice segment with Record + Upload + AI Voice options
 const VoiceSegmentControls: React.FC<{
   segment: TimelineSegment;
   isRecording: boolean;
@@ -601,11 +603,32 @@ const VoiceSegmentControls: React.FC<{
   onClearRecording: () => void;
   onFileSelect: (file: File) => void;
 }> = ({ segment, isRecording, isUploading, recordingTime, maxRecordingSeconds, formatCountdown, onStartRecording, onStopRecording, onClearRecording, onFileSelect }) => {
+  const [mode, setMode] = useState<'default' | 'ai_voice' | 'teleprompter'>('default');
+  const [teleprompterScript, setTeleprompterScript] = useState('');
+
   const { getRootProps, getInputProps } = useDropzone({
     accept: { 'audio/*': ['.mp3', '.wav', '.m4a', '.ogg'] },
     maxFiles: 1,
     onDrop: (files) => files[0] && onFileSelect(files[0]),
   });
+
+  const handleDownload = () => {
+    if (!segment.audioBlob) return;
+    const url = URL.createObjectURL(segment.audioBlob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `${segment.title || 'voice-recording'}-${Date.now()}.webm`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  };
+
+  const handleStartTeleprompterRecord = (script: string) => {
+    setTeleprompterScript(script);
+    setMode('teleprompter');
+    onStartRecording();
+  };
 
   // Show uploading state
   if (isUploading) {
@@ -616,7 +639,7 @@ const VoiceSegmentControls: React.FC<{
     );
   }
 
-  // Show playback preview if recorded
+  // Show playback preview if recorded (with Download button)
   if (segment.audioBlob && segment.audioUrl) {
     return (
       <div className="space-y-2 p-2 bg-background/40 rounded">
@@ -634,6 +657,9 @@ const VoiceSegmentControls: React.FC<{
         <div className="flex gap-2">
           <Button type="button" variant="outline" size="sm" className="text-xs gap-1 flex-1" onClick={onClearRecording}>
             <RotateCcw className="h-3 w-3" /> Re-record
+          </Button>
+          <Button type="button" variant="outline" size="sm" className="text-xs gap-1 flex-1" onClick={handleDownload}>
+            <Download className="h-3 w-3" /> Download
           </Button>
           <Button type="button" variant="ghost" size="sm" className="text-xs gap-1 text-destructive" onClick={onClearRecording}>
             <Trash2 className="h-3 w-3" /> Delete
@@ -656,11 +682,18 @@ const VoiceSegmentControls: React.FC<{
     );
   }
 
-  // Recording in progress
+  // Recording in progress (with optional teleprompter)
   if (isRecording) {
     const isWarning = (maxRecordingSeconds - recordingTime) <= 30;
     return (
       <div className="p-3 rounded border border-destructive/50 bg-destructive/10 space-y-2">
+        {/* Teleprompter script display */}
+        {mode === 'teleprompter' && teleprompterScript && (
+          <div className="p-3 bg-background/80 rounded border border-primary/30 max-h-32 overflow-y-auto">
+            <p className="text-xs text-muted-foreground mb-1">📜 Read this:</p>
+            <p className="text-sm leading-relaxed whitespace-pre-wrap">{teleprompterScript}</p>
+          </div>
+        )}
         <div className="flex items-center gap-2">
           <span className="relative flex h-3 w-3">
             <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-destructive opacity-75" />
@@ -677,16 +710,27 @@ const VoiceSegmentControls: React.FC<{
             style={{ width: `${(recordingTime / maxRecordingSeconds) * 100}%` }}
           />
         </div>
-        <Button type="button" variant="destructive" size="sm" className="w-full text-xs gap-1" onClick={onStopRecording}>
+        <Button type="button" variant="destructive" size="sm" className="w-full text-xs gap-1" onClick={() => { onStopRecording(); setMode('default'); }}>
           <Square className="h-3 w-3" /> Stop Recording
         </Button>
       </div>
     );
   }
 
-  // Default: show Record + Upload options
+  // AI Voice panel
+  if (mode === 'ai_voice') {
+    return (
+      <AIVoicePanel
+        segmentDurationMinutes={segment.durationMinutes}
+        onStartTeleprompterRecord={handleStartTeleprompterRecord}
+        onBack={() => setMode('default')}
+      />
+    );
+  }
+
+  // Default: show Record + Upload + AI Voice options (3-column)
   return (
-    <div className="grid grid-cols-2 gap-2">
+    <div className="grid grid-cols-3 gap-2">
       <Button
         type="button"
         variant="outline"
@@ -705,6 +749,16 @@ const VoiceSegmentControls: React.FC<{
         <Upload className="h-5 w-5 text-muted-foreground mb-1" />
         <p className="text-xs text-muted-foreground">Upload File</p>
       </div>
+      <Button
+        type="button"
+        variant="outline"
+        size="sm"
+        className="text-xs gap-1.5 h-auto py-3 flex-col border-primary/30 hover:border-primary hover:bg-primary/5"
+        onClick={() => setMode('ai_voice')}
+      >
+        <Sparkles className="h-5 w-5 text-primary" />
+        AI Voice
+      </Button>
     </div>
   );
 };
