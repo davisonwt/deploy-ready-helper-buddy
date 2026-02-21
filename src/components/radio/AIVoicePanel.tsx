@@ -1,7 +1,8 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { Sparkles, Volume2, VolumeX, Mic, ArrowLeft, Loader2 } from 'lucide-react';
@@ -22,6 +23,28 @@ export const AIVoicePanel: React.FC<AIVoicePanelProps> = ({
   const [polishedScript, setPolishedScript] = useState('');
   const [isPolishing, setIsPolishing] = useState(false);
   const [isSpeaking, setIsSpeaking] = useState(false);
+  const [voices, setVoices] = useState<SpeechSynthesisVoice[]>([]);
+  const [selectedVoiceURI, setSelectedVoiceURI] = useState<string>('');
+
+  // Load available voices
+  useEffect(() => {
+    const loadVoices = () => {
+      const available = window.speechSynthesis.getVoices();
+      if (available.length > 0) {
+        setVoices(available);
+        // Pick a good default - prefer English, non-default voices (Google/Microsoft sound better)
+        const preferred = available.find(v => 
+          v.lang.startsWith('en') && (v.name.includes('Google') || v.name.includes('Microsoft') || v.name.includes('Natural'))
+        ) || available.find(v => v.lang.startsWith('en')) || available[0];
+        if (preferred && !selectedVoiceURI) {
+          setSelectedVoiceURI(preferred.voiceURI);
+        }
+      }
+    };
+    loadVoices();
+    window.speechSynthesis.onvoiceschanged = loadVoices;
+    return () => { window.speechSynthesis.onvoiceschanged = null; };
+  }, []);
 
   const polishScript = useCallback(async () => {
     if (!notes.trim()) {
@@ -60,7 +83,9 @@ export const AIVoicePanel: React.FC<AIVoicePanelProps> = ({
       return;
     }
     const utterance = new SpeechSynthesisUtterance(text);
-    utterance.rate = 0.9;
+    const voice = voices.find(v => v.voiceURI === selectedVoiceURI);
+    if (voice) utterance.voice = voice;
+    utterance.rate = 0.95;
     utterance.pitch = 1;
     utterance.onend = () => setIsSpeaking(false);
     utterance.onerror = () => setIsSpeaking(false);
@@ -130,31 +155,57 @@ export const AIVoicePanel: React.FC<AIVoicePanelProps> = ({
         </div>
       )}
 
-      {/* Listen + Record buttons */}
+      {/* Voice selector + Listen + Record buttons */}
       {(polishedScript || notes.trim()) && (
-        <div className="flex gap-2">
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            className="text-xs gap-1.5 flex-1"
-            onClick={listenToScript}
-          >
-            {isSpeaking ? (
-              <><VolumeX className="h-3 w-3" /> Stop</>
-            ) : (
-              <><Volume2 className="h-3 w-3" /> Listen</>
-            )}
-          </Button>
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            className="text-xs gap-1.5 flex-1 border-primary/50 text-primary hover:bg-primary/10"
-            onClick={() => onStartTeleprompterRecord(scriptToRecord)}
-          >
-            <Mic className="h-3 w-3" /> Record This
-          </Button>
+        <div className="space-y-2">
+          {voices.length > 1 && (
+            <div>
+              <p className="text-xs text-muted-foreground mb-1">Voice:</p>
+              <Select value={selectedVoiceURI} onValueChange={setSelectedVoiceURI}>
+                <SelectTrigger className="h-8 text-xs">
+                  <SelectValue placeholder="Select a voice" />
+                </SelectTrigger>
+                <SelectContent className="max-h-48">
+                  {voices
+                    .filter(v => v.lang.startsWith('en'))
+                    .sort((a, b) => {
+                      const score = (v: SpeechSynthesisVoice) => 
+                        v.name.includes('Google') || v.name.includes('Microsoft') || v.name.includes('Natural') ? 0 : 1;
+                      return score(a) - score(b) || a.name.localeCompare(b.name);
+                    })
+                    .map(v => (
+                      <SelectItem key={v.voiceURI} value={v.voiceURI} className="text-xs">
+                        {v.name.replace(/Microsoft |Google /, '')} {v.name.includes('Google') || v.name.includes('Microsoft') ? '⭐' : ''}
+                      </SelectItem>
+                    ))}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
+          <div className="flex gap-2">
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              className="text-xs gap-1.5 flex-1"
+              onClick={listenToScript}
+            >
+              {isSpeaking ? (
+                <><VolumeX className="h-3 w-3" /> Stop</>
+              ) : (
+                <><Volume2 className="h-3 w-3" /> Listen</>
+              )}
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              className="text-xs gap-1.5 flex-1 border-primary/50 text-primary hover:bg-primary/10"
+              onClick={() => onStartTeleprompterRecord(scriptToRecord)}
+            >
+              <Mic className="h-3 w-3" /> Record This
+            </Button>
+          </div>
         </div>
       )}
 
