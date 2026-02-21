@@ -54,6 +54,16 @@ export default function LiveActivityWidget() {
   })
   const [loading, setLoading] = useState(true)
 
+  // Listen for toggle event from bottom bar
+  useEffect(() => {
+    const handleToggle = () => {
+      setIsVisible(true);
+      setIsExpanded(prev => !prev);
+    };
+    window.addEventListener('toggle-live-activity', handleToggle);
+    return () => window.removeEventListener('toggle-live-activity', handleToggle);
+  }, []);
+
   // Update theme every 2 hours
   useEffect(() => {
     const themeInterval = setInterval(() => {

@@ -791,8 +791,7 @@ function Layout({ children }) {
       {/* Mobile Tab Bar */}
       <MobileTabBar onOpenGarden={() => setIsGardenOpen(true)} />
 
-      {/* Your Progress Button & Modal */}
-      <ProgressButton />
+      {/* ProgressButton removed - now integrated into StatsFloatingButton bottom bar */}
 
       {/* Jitsi Video Window */}
       {jitsiCall && (
