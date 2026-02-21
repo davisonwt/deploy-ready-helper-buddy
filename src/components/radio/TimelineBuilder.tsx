@@ -615,42 +615,65 @@ const VoiceSegmentControls: React.FC<{
   const handleDownload = async () => {
     if (!segment.audioBlob) return;
     try {
-      // Decode webm audio to PCM, then encode as MP3
+      // Decode webm to PCM, then export as WAV (universal, no external libs needed)
       const arrayBuffer = await segment.audioBlob.arrayBuffer();
       const audioCtx = new AudioContext();
       const audioBuffer = await audioCtx.decodeAudioData(arrayBuffer);
-      const samples = audioBuffer.getChannelData(0);
+      const numChannels = audioBuffer.numberOfChannels;
       const sampleRate = audioBuffer.sampleRate;
+      const length = audioBuffer.length;
 
-      const { default: lamejs } = await import('lamejs');
-      const mp3enc = new lamejs.Mp3Encoder(1, sampleRate, 128);
-      const sampleBlockSize = 1152;
-      const int16 = new Int16Array(samples.length);
-      for (let i = 0; i < samples.length; i++) {
-        const s = Math.max(-1, Math.min(1, samples[i]));
-        int16[i] = s < 0 ? s * 0x8000 : s * 0x7FFF;
+      // Interleave channels
+      const interleaved = new Float32Array(length * numChannels);
+      for (let ch = 0; ch < numChannels; ch++) {
+        const channelData = audioBuffer.getChannelData(ch);
+        for (let i = 0; i < length; i++) {
+          interleaved[i * numChannels + ch] = channelData[i];
+        }
       }
-      const mp3Data: Uint8Array[] = [];
-      for (let i = 0; i < int16.length; i += sampleBlockSize) {
-        const chunk = int16.subarray(i, i + sampleBlockSize);
-        const buf = mp3enc.encodeBuffer(chunk);
-        if (buf.length > 0) mp3Data.push(new Uint8Array(buf));
-      }
-      const end = mp3enc.flush();
-      if (end.length > 0) mp3Data.push(new Uint8Array(end));
 
-      const mp3Blob = new Blob(mp3Data as BlobPart[], { type: 'audio/mp3' });
-      const url = URL.createObjectURL(mp3Blob);
+      // Convert to 16-bit PCM
+      const pcm = new Int16Array(interleaved.length);
+      for (let i = 0; i < interleaved.length; i++) {
+        const s = Math.max(-1, Math.min(1, interleaved[i]));
+        pcm[i] = s < 0 ? s * 0x8000 : s * 0x7FFF;
+      }
+
+      // Build WAV file
+      const wavBuffer = new ArrayBuffer(44 + pcm.length * 2);
+      const view = new DataView(wavBuffer);
+      const writeString = (offset: number, str: string) => {
+        for (let i = 0; i < str.length; i++) view.setUint8(offset + i, str.charCodeAt(i));
+      };
+      writeString(0, 'RIFF');
+      view.setUint32(4, 36 + pcm.length * 2, true);
+      writeString(8, 'WAVE');
+      writeString(12, 'fmt ');
+      view.setUint32(16, 16, true);
+      view.setUint16(20, 1, true);
+      view.setUint16(22, numChannels, true);
+      view.setUint32(24, sampleRate, true);
+      view.setUint32(28, sampleRate * numChannels * 2, true);
+      view.setUint16(32, numChannels * 2, true);
+      view.setUint16(34, 16, true);
+      writeString(36, 'data');
+      view.setUint32(40, pcm.length * 2, true);
+      for (let i = 0; i < pcm.length; i++) {
+        view.setInt16(44 + i * 2, pcm[i], true);
+      }
+
+      const wavBlob = new Blob([wavBuffer], { type: 'audio/wav' });
+      const url = URL.createObjectURL(wavBlob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = `${segment.title || 'voice-recording'}-${Date.now()}.mp3`;
+      a.download = `${segment.title || 'voice-recording'}-${Date.now()}.wav`;
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
       URL.revokeObjectURL(url);
       audioCtx.close();
     } catch (err) {
-      console.error('MP3 conversion failed, falling back to webm:', err);
+      console.error('WAV conversion failed, falling back to webm:', err);
       const url = URL.createObjectURL(segment.audioBlob);
       const a = document.createElement('a');
       a.href = url;
