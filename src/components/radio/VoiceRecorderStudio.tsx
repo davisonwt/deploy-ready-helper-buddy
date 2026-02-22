@@ -218,8 +218,8 @@ export const VoiceRecorderStudio: React.FC<VoiceRecorderStudioProps> = ({ open, 
           </DialogDescription>
         </DialogHeader>
 
-        <ScrollArea className="flex-1 min-h-0">
-          <div className="space-y-4 pr-2">
+        <ScrollArea className="flex-1 min-h-0 max-h-[calc(85vh-120px)]">
+          <div className="space-y-4 pr-4">
             {/* Notes & AI Section */}
             <div className="glass-panel rounded-xl p-4 space-y-3">
               <p className="text-sm font-medium flex items-center gap-2">
