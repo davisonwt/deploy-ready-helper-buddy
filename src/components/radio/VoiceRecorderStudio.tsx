@@ -225,28 +225,30 @@ export const VoiceRecorderStudio: React.FC<VoiceRecorderStudioProps> = ({ open, 
               </div>
             )}
             {recordings.map(rec => (
-              <div key={rec.id} className="glass-card rounded-lg p-3 flex items-center gap-3">
-                <Button size="icon" variant="ghost" className="shrink-0" onClick={() => playRecording(rec)}>
-                  {playingId === rec.id ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4" />}
-                </Button>
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium truncate">{rec.title}</p>
-                  <p className="text-xs text-muted-foreground">
-                    {formatTime(rec.duration)}
-                    {rec.savedPath && <Badge variant="outline" className="ml-2 text-[10px] px-1">Cloud ✓</Badge>}
-                  </p>
+              <div key={rec.id} className="glass-card rounded-lg p-3 space-y-2">
+                <div className="flex items-center gap-3">
+                  <Button size="icon" variant="ghost" className="shrink-0" onClick={() => playRecording(rec)}>
+                    {playingId === rec.id ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4" />}
+                  </Button>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium truncate">{rec.title}</p>
+                    <p className="text-xs text-muted-foreground">
+                      {formatTime(rec.duration)}
+                      {rec.savedPath && <Badge variant="outline" className="ml-2 text-[10px] px-1">Cloud ✓</Badge>}
+                    </p>
+                  </div>
                 </div>
-                <div className="flex gap-1 shrink-0">
-                  <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => downloadRecording(rec)} title="Download WAV">
-                    <Download className="w-3.5 h-3.5" />
+                <div className="flex gap-2 pl-12">
+                  <Button size="sm" variant="ghost" className="h-7 text-xs gap-1" onClick={() => downloadRecording(rec)} title="Download WAV">
+                    <Download className="w-3.5 h-3.5" /> Download
                   </Button>
                   {!rec.savedPath && (
-                    <Button size="icon" variant="ghost" className="h-7 w-7 text-primary" onClick={() => saveToCloud(rec)} title="Save to Cloud">
-                      <Plus className="w-3.5 h-3.5" />
+                    <Button size="sm" variant="ghost" className="h-7 text-xs gap-1 text-primary" onClick={() => saveToCloud(rec)} title="Save to Cloud">
+                      <Plus className="w-3.5 h-3.5" /> Save
                     </Button>
                   )}
-                  <Button size="icon" variant="ghost" className="h-7 w-7 text-destructive" onClick={() => deleteRecording(rec.id)} title="Delete">
-                    <Trash2 className="w-3.5 h-3.5" />
+                  <Button size="sm" variant="ghost" className="h-7 text-xs gap-1 text-destructive" onClick={() => deleteRecording(rec.id)} title="Delete">
+                    <Trash2 className="w-3.5 h-3.5" /> Delete
                   </Button>
                 </div>
               </div>
