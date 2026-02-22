@@ -87,6 +87,41 @@ export const ScheduleRadioSlotDialog: React.FC<ScheduleRadioSlotDialogProps> = (
 
     setLoading(true);
     try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('Not authenticated');
+
+      // Get or create DJ profile
+      let { data: dj } = await supabase
+        .from('radio_djs')
+        .select('id')
+        .eq('user_id', user.id)
+        .single();
+
+      if (!dj) {
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('display_name, first_name')
+          .eq('user_id', user.id)
+          .single();
+
+        const { data: newDj, error: djErr } = await supabase
+          .from('radio_djs')
+          .insert({ user_id: user.id, dj_name: profile?.display_name || profile?.first_name || 'DJ' })
+          .select('id')
+          .single();
+        if (djErr) throw djErr;
+        dj = newDj;
+      }
+
+      // Calculate start/end times from selected slot and date
+      const slotInfo = TIME_SLOTS.find(s => s.id === selectedSlot);
+      if (!slotInfo || !selectedDate) throw new Error('Missing slot or date');
+
+      const startDate = new Date(selectedDate);
+      startDate.setHours(slotInfo.hour, 0, 0, 0);
+      const endDate = new Date(startDate);
+      endDate.setHours(slotInfo.hour + 2);
+
       // Upload segment files to storage
       const segmentsData = [];
       for (const seg of timelineSegments) {
@@ -108,17 +143,28 @@ export const ScheduleRadioSlotDialog: React.FC<ScheduleRadioSlotDialogProps> = (
         });
       }
 
-      const slotData = {
-        ...formData,
-        date: selectedDate,
-        slot: selectedSlot,
-        timeline_segments: segmentsData,
-        approval_status: 'pending',
-      };
+      // Insert into radio_schedule
+      const { error: insertError } = await supabase
+        .from('radio_schedule')
+        .insert({
+          dj_id: dj!.id,
+          start_time: startDate.toISOString(),
+          end_time: endDate.toISOString(),
+          time_slot_date: format(selectedDate, 'yyyy-MM-dd'),
+          hour_slot: slotInfo.hour,
+          status: 'scheduled',
+          approval_status: 'pending',
+          show_subject: formData.show_title,
+          show_notes: formData.description,
+          show_topic_description: JSON.stringify(segmentsData),
+          broadcast_mode: 'pre_recorded',
+        });
+
+      if (insertError) throw insertError;
 
       toast({
         title: 'Radio Slot Requested',
-        description: `Your 2-hour show with ${timelineSegments.length} segments has been submitted for approval.`,
+        description: `Your 2-hour show "${formData.show_title}" has been saved and submitted for approval.`,
       });
 
       onOpenChange(false);
