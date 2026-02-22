@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Radio, Play, Pause, Volume2, Music, Users, Heart, Share2, Plus, Headphones, Calendar, Clock, Trash2, Edit, MoreVertical } from 'lucide-react';
+import { Radio, Play, Pause, Volume2, Music, Users, Heart, Share2, Plus, Headphones, Calendar, Clock, Trash2, Edit, MoreVertical, Mic } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -25,6 +25,7 @@ import {
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { ScheduleRadioSlotDialog } from './ScheduleRadioSlotDialog';
+import { VoiceRecorderStudio } from '@/components/radio/VoiceRecorderStudio';
 import { useAuth } from '@/hooks/useAuth';
 import { toast } from 'sonner';
 import JitsiRoom from '@/components/jitsi/JitsiRoom';
@@ -82,6 +83,7 @@ export const RadioMode: React.FC = () => {
   const [currentTrack, setCurrentTrack] = useState<Track | null>(null);
   const [volume, setVolume] = useState([75]);
   const [scheduleDialogOpen, setScheduleDialogOpen] = useState(false);
+  const [voiceStudioOpen, setVoiceStudioOpen] = useState(false);
   const [likedTracks, setLikedTracks] = useState<Set<string>>(new Set());
   const [activeStream, setActiveStream] = useState<Stream | null>(null);
   const [deleteSlotId, setDeleteSlotId] = useState<string | null>(null);
@@ -280,14 +282,24 @@ export const RadioMode: React.FC = () => {
           <h2 className="text-3xl font-bold text-foreground mb-2">Radio Broadcasts</h2>
           <p className="text-foreground/80">24/7 live streams • 2-hour slots available</p>
         </div>
-        <Button
-          className="gap-2"
-          onClick={() => setScheduleDialogOpen(true)}
-          style={{ backgroundColor: '#17A2B8', color: 'white', border: '2px solid #0A1931' }}
-        >
-          <Plus className="w-4 h-4" />
-          Request Radio Slot
-        </Button>
+        <div className="flex gap-2 flex-wrap">
+          <Button
+            className="gap-2"
+            variant="outline"
+            onClick={() => setVoiceStudioOpen(true)}
+          >
+            <Mic className="w-4 h-4" />
+            Voice Recorder
+          </Button>
+          <Button
+            className="gap-2"
+            onClick={() => setScheduleDialogOpen(true)}
+            style={{ backgroundColor: '#17A2B8', color: 'white', border: '2px solid #0A1931' }}
+          >
+            <Plus className="w-4 h-4" />
+            Request Radio Slot
+          </Button>
+        </div>
       </div>
 
       {/* Scheduled Slots Section */}
@@ -452,6 +464,7 @@ export const RadioMode: React.FC = () => {
       )}
 
       <ScheduleRadioSlotDialog open={scheduleDialogOpen} onOpenChange={setScheduleDialogOpen} onSuccess={loadContent} />
+      <VoiceRecorderStudio open={voiceStudioOpen} onOpenChange={setVoiceStudioOpen} />
 
       {/* Delete Confirmation */}
       <AlertDialog open={!!deleteSlotId} onOpenChange={(open) => !open && setDeleteSlotId(null)}>
