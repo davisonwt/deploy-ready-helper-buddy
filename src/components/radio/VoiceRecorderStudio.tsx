@@ -2,10 +2,10 @@ import React, { useState, useRef, useCallback } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Badge } from '@/components/ui/badge';
-import { Mic, Square, Play, Pause, Download, Trash2, Plus } from 'lucide-react';
+import { Mic, Square, Play, Pause, Download, Trash2, Plus, Sparkles, Loader2, Copy, Check } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 
@@ -30,6 +30,12 @@ export const VoiceRecorderStudio: React.FC<VoiceRecorderStudioProps> = ({ open, 
   const [recordingTitle, setRecordingTitle] = useState('');
   const [recordingTime, setRecordingTime] = useState(0);
   const [playingId, setPlayingId] = useState<string | null>(null);
+
+  // Notes & AI state
+  const [notes, setNotes] = useState('');
+  const [generatedScript, setGeneratedScript] = useState('');
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [copied, setCopied] = useState(false);
 
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const chunksRef = useRef<Blob[]>([]);
@@ -146,7 +152,6 @@ export const VoiceRecorderStudio: React.FC<VoiceRecorderStudioProps> = ({ open, 
       URL.revokeObjectURL(url);
       audioCtx.close();
     } catch {
-      // Fallback to webm
       const url = URL.createObjectURL(rec.blob);
       const a = document.createElement('a');
       a.href = url;
@@ -172,6 +177,33 @@ export const VoiceRecorderStudio: React.FC<VoiceRecorderStudioProps> = ({ open, 
     }
   };
 
+  const generateScript = async () => {
+    if (!notes.trim()) {
+      toast({ title: 'Notes Required', description: 'Write some rough notes first, then let AI polish them.', variant: 'destructive' });
+      return;
+    }
+    setIsGenerating(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('generate-radio-script', {
+        body: { notes: notes.trim() },
+      });
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+      setGeneratedScript(data.script || '');
+      toast({ title: 'Script Generated', description: 'Your notes have been polished into a radio script.' });
+    } catch (err: any) {
+      toast({ title: 'Generation Failed', description: err.message, variant: 'destructive' });
+    } finally {
+      setIsGenerating(false);
+    }
+  };
+
+  const copyScript = () => {
+    navigator.clipboard.writeText(generatedScript);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+
   const formatTime = (s: number) => `${Math.floor(s / 60).toString().padStart(2, '0')}:${(s % 60).toString().padStart(2, '0')}`;
 
   return (
@@ -182,42 +214,79 @@ export const VoiceRecorderStudio: React.FC<VoiceRecorderStudioProps> = ({ open, 
             <Mic className="w-5 h-5 text-primary" /> Voice Recording Studio
           </DialogTitle>
           <DialogDescription>
-            Record voice segments, download as WAV, and upload them into your radio timeline slots later.
+            Record voice segments, refine notes with AI, download as WAV, and upload them into your radio timeline slots later.
           </DialogDescription>
         </DialogHeader>
 
-        {/* Recorder */}
-        <div className="glass-panel rounded-xl p-4 space-y-3">
-          <div className="flex gap-2">
-            <Input
-              placeholder="Recording title (optional)"
-              value={recordingTitle}
-              onChange={e => setRecordingTitle(e.target.value)}
-              disabled={isRecording}
-              className="flex-1"
-            />
-            {!isRecording ? (
-              <Button onClick={startRecording} size="icon" variant="default" className="bg-destructive hover:bg-destructive/90 shrink-0">
-                <Mic className="w-4 h-4" />
-              </Button>
-            ) : (
-              <Button onClick={stopRecording} size="icon" variant="destructive" className="shrink-0 animate-pulse">
-                <Square className="w-4 h-4" />
-              </Button>
-            )}
-          </div>
-          {isRecording && (
-            <div className="flex items-center gap-2 text-sm">
-              <span className="w-2 h-2 rounded-full bg-destructive animate-pulse" />
-              <span className="text-destructive font-mono font-semibold">{formatTime(recordingTime)}</span>
-              <span className="text-muted-foreground">Recording...</span>
-            </div>
-          )}
-        </div>
-
-        {/* Recordings List */}
         <ScrollArea className="flex-1 min-h-0">
-          <div className="space-y-2 pr-2">
+          <div className="space-y-4 pr-2">
+            {/* Notes & AI Section */}
+            <div className="glass-panel rounded-xl p-4 space-y-3">
+              <p className="text-sm font-medium flex items-center gap-2">
+                <Sparkles className="w-4 h-4 text-primary" /> Script Notes & AI
+              </p>
+              <Textarea
+                placeholder="Write your rough notes here... bullet points, talking points, anything. AI will polish them into a smooth radio script."
+                value={notes}
+                onChange={e => setNotes(e.target.value)}
+                className="min-h-[80px] text-sm"
+              />
+              <Button
+                size="sm"
+                onClick={generateScript}
+                disabled={isGenerating || !notes.trim()}
+                className="gap-1.5"
+              >
+                {isGenerating ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Sparkles className="w-3.5 h-3.5" />}
+                {isGenerating ? 'Generating...' : 'AI Refine Script'}
+              </Button>
+
+              {generatedScript && (
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <p className="text-xs font-medium text-muted-foreground">Generated Script</p>
+                    <Button size="sm" variant="ghost" className="h-6 text-xs gap-1" onClick={copyScript}>
+                      {copied ? <Check className="w-3 h-3" /> : <Copy className="w-3 h-3" />}
+                      {copied ? 'Copied' : 'Copy'}
+                    </Button>
+                  </div>
+                  <div className="bg-muted/50 rounded-lg p-3 text-sm whitespace-pre-wrap max-h-[200px] overflow-y-auto">
+                    {generatedScript}
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Recorder */}
+            <div className="glass-panel rounded-xl p-4 space-y-3">
+              <div className="flex gap-2">
+                <Input
+                  placeholder="Recording title (optional)"
+                  value={recordingTitle}
+                  onChange={e => setRecordingTitle(e.target.value)}
+                  disabled={isRecording}
+                  className="flex-1"
+                />
+                {!isRecording ? (
+                  <Button onClick={startRecording} size="icon" variant="default" className="bg-destructive hover:bg-destructive/90 shrink-0">
+                    <Mic className="w-4 h-4" />
+                  </Button>
+                ) : (
+                  <Button onClick={stopRecording} size="icon" variant="destructive" className="shrink-0 animate-pulse">
+                    <Square className="w-4 h-4" />
+                  </Button>
+                )}
+              </div>
+              {isRecording && (
+                <div className="flex items-center gap-2 text-sm">
+                  <span className="w-2 h-2 rounded-full bg-destructive animate-pulse" />
+                  <span className="text-destructive font-mono font-semibold">{formatTime(recordingTime)}</span>
+                  <span className="text-muted-foreground">Recording...</span>
+                </div>
+              )}
+            </div>
+
+            {/* Recordings List */}
             {recordings.length === 0 && (
               <div className="text-center py-8 text-muted-foreground">
                 <Mic className="w-8 h-8 mx-auto mb-2 opacity-40" />
