@@ -1050,9 +1050,9 @@ export default function MemryPage() {
   }, [posts.length, currentPostIndex]);
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-[#FFF5E6] via-[#FFECD2] to-[#FFE4C4] overflow-hidden">
+    <div className="h-screen bg-gradient-to-b from-[#FFF5E6] via-[#FFECD2] to-[#FFE4C4] overflow-hidden">
       {/* Main Feed - TikTok Style */}
-      <div className="h-screen relative">
+      <div className="h-full relative">
         {/* Header */}
         <motion.div 
           initial={{ y: -50, opacity: 0 }}
