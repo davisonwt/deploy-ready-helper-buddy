@@ -701,12 +701,12 @@ function Layout({ children }) {
       </header>
       
       {/* Main Content */}
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <main className={location.pathname === '/memry' ? 'h-[calc(100vh-56px)] overflow-hidden p-0' : 'max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8'}>
         {children}
       </main>
       
       {/* Footer */}
-      <footer 
+      {location.pathname !== '/memry' && <footer 
         className="backdrop-blur-sm border-t mt-auto"
         style={{
           backgroundColor: currentTheme.cardBg,
@@ -769,7 +769,7 @@ function Layout({ children }) {
             <p>&copy; 2024 <a href="https://www.364yhvh.org/" target="_blank" rel="noopener noreferrer" className="hover:underline">364yhvh Community Farm</a>. Built with love for the community.</p>
           </div>
         </div>
-      </footer>
+      </footer>}
 
       {/* OnboardingTour rendered at App root only */}
       
