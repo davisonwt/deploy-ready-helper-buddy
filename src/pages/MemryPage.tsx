@@ -1386,7 +1386,7 @@ export default function MemryPage() {
               </div>
 
               {/* Right Side Actions */}
-              <div className="absolute right-4 bottom-32 flex flex-col items-center gap-6 z-40">
+              <div className="absolute right-4 top-28 bottom-32 flex flex-col items-center justify-end gap-4 z-40 overflow-y-auto">
                 {/* Profile Avatar - with hover card preview */}
                 <HoverCard>
                   <HoverCardTrigger asChild>
