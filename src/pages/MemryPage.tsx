@@ -1280,12 +1280,12 @@ export default function MemryPage() {
               onTouchEnd={handleTouchEnd}
             >
               {/* Background Image/Video/Music */}
-              <div className="absolute inset-0 bg-gradient-to-br from-purple-900 via-pink-800 to-orange-700">
+              <div className="absolute inset-0 bg-gradient-to-br from-purple-900 via-pink-800 to-orange-700 flex items-center justify-center">
                 {currentPost.content_type === 'video' || currentPost.content_type === 'marketing_video' ? (
                   <video
                     ref={videoRef}
                     src={currentPost.media_url}
-                    className="w-full h-full object-contain"
+                    className="max-w-[80%] max-h-full object-contain mx-auto"
                     autoPlay
                     loop
                     muted={isMuted}
@@ -1294,7 +1294,7 @@ export default function MemryPage() {
                 ) : currentPost.content_type === 'music' ? (
                   <MusicPreviewPlayer mediaUrl={currentPost.media_url} caption={currentPost.caption} />
                 ) : currentPost.content_type === 'new_product' || currentPost.content_type === 'new_orchard' || currentPost.content_type === 'new_book' ? (
-                  <div className="w-full h-full relative flex items-center justify-center">
+                  <div className="w-full h-full relative flex items-center justify-center max-w-[80%] mx-auto">
                     {(() => {
                       const allImages = currentPost.image_urls && currentPost.image_urls.length > 1
                         ? currentPost.image_urls
@@ -1366,11 +1366,11 @@ export default function MemryPage() {
                     </div>
                   </div>
                 ) : (
-                  <div className="w-full h-full flex items-center justify-center">
+                <div className="w-full h-full flex items-center justify-center max-w-[80%] mx-auto">
                     <img
                       src={currentPost.media_url}
                       alt={currentPost.caption}
-                      className="max-w-full max-h-full object-contain"
+                      className="max-w-full max-h-full object-contain mx-auto"
                       onError={(e) => {
                         const target = e.target as HTMLImageElement;
                         if (!target.dataset.fallback) {
