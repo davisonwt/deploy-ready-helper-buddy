@@ -115,7 +115,15 @@ export const ScheduleRadioSlotDialog: React.FC<ScheduleRadioSlotDialogProps> = (
               durationSeconds: seg.durationSeconds || 0,
               contentId: seg.contentId,
               contentName: seg.contentName,
-              fileUrl: seg.fileUrl || seg.file_url,
+              fileUrl:
+                seg.fileUrl ||
+                seg.file_url ||
+                seg.audioUrl ||
+                seg.audio_url ||
+                seg.voiceUrl ||
+                seg.voice_url ||
+                seg.url ||
+                (typeof seg.contentId === 'string' && seg.contentId.startsWith('http') ? seg.contentId : undefined),
               file: undefined,
             })));
           }
