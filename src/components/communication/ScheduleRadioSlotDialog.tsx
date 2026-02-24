@@ -110,7 +110,7 @@ export const ScheduleRadioSlotDialog: React.FC<ScheduleRadioSlotDialogProps> = (
           }
         } catch { /* ignore parse errors */ }
       }
-      setStep(2); // Skip date selection, go to details
+      setStep(1); // Allow editing date/time too
     } else if (!editSlot && open) {
       // Reset for new slot
       setStep(1);
@@ -306,7 +306,11 @@ export const ScheduleRadioSlotDialog: React.FC<ScheduleRadioSlotDialogProps> = (
                   selected={selectedDate}
                   onSelect={setSelectedDate}
                   className="rounded-md border glass-panel"
-                  disabled={(date) => date < new Date()}
+                  disabled={(date) => {
+                    const today = new Date();
+                    today.setHours(0, 0, 0, 0);
+                    return date < today;
+                  }}
                 />
               </div>
 
