@@ -406,11 +406,11 @@ export const TimelineBuilder: React.FC<TimelineBuilderProps> = ({ segments, onCh
                   <div className="flex items-center gap-1">
                     <Input
                       type="number"
-                      min={1}
+                      min={0}
                       max={120}
                       value={Math.floor(segment.durationMinutes)}
                       onChange={(e) => {
-                        const mins = Math.max(1, parseInt(e.target.value) || 1);
+                        const mins = Math.max(0, parseInt(e.target.value) || 0);
                         const currentSecs = Math.round((segment.durationMinutes % 1) * 60);
                         updateSegment(segment.id, { durationMinutes: mins + currentSecs / 60 });
                       }}
