@@ -115,6 +115,7 @@ export const ScheduleRadioSlotDialog: React.FC<ScheduleRadioSlotDialogProps> = (
               durationSeconds: seg.durationSeconds || 0,
               contentId: seg.contentId,
               contentName: seg.contentName,
+              fileUrl: seg.fileUrl || seg.file_url,
               file: undefined,
             })));
           }
@@ -200,7 +201,7 @@ export const ScheduleRadioSlotDialog: React.FC<ScheduleRadioSlotDialogProps> = (
 
       const segmentsData = [];
       for (const seg of timelineSegments) {
-        let fileUrl: string | undefined;
+        let fileUrl: string | undefined = seg.fileUrl;
         if (seg.file) {
           const filePath = `radio-content/${Date.now()}-${seg.file.name}`;
           const { error: uploadError } = await supabase.storage

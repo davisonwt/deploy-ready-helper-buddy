@@ -16,6 +16,7 @@ import {
 } from 'lucide-react';
 import { useDropzone } from 'react-dropzone';
 import { AIVoicePanel } from './AIVoicePanel';
+import { resolveAudioUrl } from '@/utils/resolveAudioUrl';
 
 const TOTAL_MINUTES = 120;
 
@@ -158,7 +159,13 @@ export const TimelineBuilder: React.FC<TimelineBuilderProps> = ({ segments, onCh
   const clearRecording = useCallback((segmentId: string) => {
     const seg = segments.find(s => s.id === segmentId);
     if (seg?.audioUrl) URL.revokeObjectURL(seg.audioUrl);
-    onChange(segments.map(s => s.id === segmentId ? { ...s, audioBlob: undefined, audioUrl: undefined } : s));
+    onChange(
+      segments.map(s =>
+        s.id === segmentId
+          ? { ...s, file: undefined, fileUrl: undefined, audioBlob: undefined, audioUrl: undefined }
+          : s,
+      ),
+    );
   }, [segments, onChange]);
 
   const formatCountdown = (elapsed: number, segmentId?: string) => {
@@ -642,7 +649,36 @@ const VoiceSegmentControls: React.FC<{
   const [mode, setMode] = useState<'default' | 'ai_voice' | 'teleprompter'>('default');
   const [teleprompterScript, setTeleprompterScript] = useState('');
   const [fileIsPlaying, setFileIsPlaying] = useState(false);
+  const [resolvedFileUrl, setResolvedFileUrl] = useState<string | null>(null);
+  const [isResolvingFileUrl, setIsResolvingFileUrl] = useState(false);
   const fileAudioRef = useRef<HTMLAudioElement | null>(null);
+
+  React.useEffect(() => {
+    let cancelled = false;
+
+    const resolveRemoteFileUrl = async () => {
+      if (!segment.fileUrl || segment.file || (segment.audioBlob && segment.audioUrl)) {
+        setResolvedFileUrl(null);
+        return;
+      }
+
+      setIsResolvingFileUrl(true);
+      try {
+        const resolved = await resolveAudioUrl(segment.fileUrl, { bucketForKeys: 'chat-documents' });
+        if (!cancelled) setResolvedFileUrl(resolved);
+      } catch (error) {
+        console.error('Error resolving saved voice segment URL:', error);
+        if (!cancelled) setResolvedFileUrl(segment.fileUrl);
+      } finally {
+        if (!cancelled) setIsResolvingFileUrl(false);
+      }
+    };
+
+    resolveRemoteFileUrl();
+    return () => {
+      cancelled = true;
+    };
+  }, [segment.fileUrl, segment.file, segment.audioBlob, segment.audioUrl]);
 
   React.useEffect(() => {
     return () => {
@@ -772,6 +808,32 @@ const VoiceSegmentControls: React.FC<{
           </Button>
           <Button type="button" variant="ghost" size="sm" className="text-xs gap-1 text-destructive" onClick={onClearRecording}>
             <Trash2 className="h-3 w-3" /> Delete
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
+  // Show saved remote recording when editing existing slots
+  if (segment.fileUrl && !segment.file && !segment.audioBlob) {
+    return (
+      <div className="space-y-2 p-2 bg-background/40 rounded">
+        <div className="flex items-center gap-2">
+          <Mic className="h-4 w-4 text-primary" />
+          <span className="text-xs font-medium">Saved Voice Recording</span>
+          <Badge variant="outline" className="text-xs ml-auto">Ready</Badge>
+        </div>
+        {isResolvingFileUrl ? (
+          <p className="text-xs text-muted-foreground">Loading audio preview...</p>
+        ) : (
+          <audio src={resolvedFileUrl || undefined} controls className="w-full h-8" />
+        )}
+        <div className="flex gap-2">
+          <Button type="button" variant="outline" size="sm" className="text-xs gap-1 flex-1" onClick={onClearRecording}>
+            <RotateCcw className="h-3 w-3" /> Record Over
+          </Button>
+          <Button type="button" variant="ghost" size="sm" className="text-xs gap-1 text-destructive" onClick={onClearRecording}>
+            <Trash2 className="h-3 w-3" /> Remove
           </Button>
         </div>
       </div>
