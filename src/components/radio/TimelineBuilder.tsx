@@ -449,6 +449,7 @@ export const TimelineBuilder: React.FC<TimelineBuilderProps> = ({ segments, onCh
                   onStartRecording={() => startRecording(segment.id)}
                   onStopRecording={() => stopRecording(segment.id)}
                   onClearRecording={() => clearRecording(segment.id)}
+                  onRecoverFileUrl={(url) => updateSegment(segment.id, { fileUrl: url })}
                   onFileSelect={(file) => updateSegment(segment.id, { file, title: segment.title || file.name, audioBlob: undefined, audioUrl: undefined })}
                 />
               )}
@@ -644,38 +645,91 @@ const VoiceSegmentControls: React.FC<{
   onStartRecording: () => void;
   onStopRecording: () => void;
   onClearRecording: () => void;
+  onRecoverFileUrl: (url: string) => void;
   onFileSelect: (file: File) => void;
-}> = ({ segment, isRecording, isUploading, recordingTime, maxRecordingSeconds, formatCountdown, onStartRecording, onStopRecording, onClearRecording, onFileSelect }) => {
+}> = ({ segment, isRecording, isUploading, recordingTime, maxRecordingSeconds, formatCountdown, onStartRecording, onStopRecording, onClearRecording, onRecoverFileUrl, onFileSelect }) => {
   const [mode, setMode] = useState<'default' | 'ai_voice' | 'teleprompter'>('default');
   const [teleprompterScript, setTeleprompterScript] = useState('');
   const [fileIsPlaying, setFileIsPlaying] = useState(false);
   const [resolvedFileUrl, setResolvedFileUrl] = useState<string | null>(null);
   const [isResolvingFileUrl, setIsResolvingFileUrl] = useState(false);
+  const [recoveryAttempt, setRecoveryAttempt] = useState(0);
   const fileAudioRef = useRef<HTMLAudioElement | null>(null);
 
   React.useEffect(() => {
     let cancelled = false;
 
     const resolveRemoteFileUrl = async () => {
-      if (!segment.fileUrl || segment.file || (segment.audioBlob && segment.audioUrl)) {
+      if (segment.file || (segment.audioBlob && segment.audioUrl)) {
         setResolvedFileUrl(null);
+        setIsResolvingFileUrl(false);
         return;
       }
 
       setIsResolvingFileUrl(true);
       try {
-        const primary = await resolveAudioUrl(segment.fileUrl, { bucketForKeys: 'chat-files' });
-        const isPrimaryUsable = primary?.startsWith('http') || primary?.startsWith('blob:') || primary?.startsWith('data:');
+        if (segment.fileUrl) {
+          const primary = await resolveAudioUrl(segment.fileUrl, { bucketForKeys: 'chat-files' });
+          const isPrimaryUsable = primary?.startsWith('http') || primary?.startsWith('blob:') || primary?.startsWith('data:');
 
-        if (isPrimaryUsable) {
-          if (!cancelled) setResolvedFileUrl(primary);
+          if (isPrimaryUsable) {
+            if (!cancelled) setResolvedFileUrl(primary);
+            return;
+          }
+
+          const fallback = await resolveAudioUrl(segment.fileUrl, { bucketForKeys: 'chat-documents' });
+          const isFallbackUsable = fallback?.startsWith('http') || fallback?.startsWith('blob:') || fallback?.startsWith('data:');
+
+          if (!cancelled) setResolvedFileUrl(isFallbackUsable ? fallback : null);
           return;
         }
 
-        const fallback = await resolveAudioUrl(segment.fileUrl, { bucketForKeys: 'chat-documents' });
-        const isFallbackUsable = fallback?.startsWith('http') || fallback?.startsWith('blob:') || fallback?.startsWith('data:');
+        const title = segment.title?.trim();
+        if (!title) {
+          if (!cancelled) setResolvedFileUrl(null);
+          return;
+        }
 
-        if (!cancelled) setResolvedFileUrl(isFallbackUsable ? fallback : null);
+        const normalizedTitle = title.replace(/\.[^.]+$/, '').trim();
+        const searchTerms = Array.from(new Set([title, normalizedTitle].filter(Boolean)));
+        const locations = [
+          { bucket: 'chat-files', folder: 'radio-content' },
+          { bucket: 'chat-documents', folder: 'radio-content' },
+          { bucket: 'chat-files', folder: 'radio-voice-segments' },
+        ] as const;
+
+        for (const location of locations) {
+          for (const term of searchTerms) {
+            const { data: listed } = await supabase.storage
+              .from(location.bucket)
+              .list(location.folder, { limit: 50, search: term });
+
+            const match = listed?.find((item) => {
+              const fileName = item.name.toLowerCase();
+              return (
+                fileName.includes(title.toLowerCase()) ||
+                (normalizedTitle.length > 0 && fileName.includes(normalizedTitle.toLowerCase()))
+              );
+            });
+
+            if (match) {
+              const objectPath = `${location.folder}/${match.name}`;
+              const { data: publicData } = supabase.storage
+                .from(location.bucket)
+                .getPublicUrl(objectPath);
+
+              if (publicData?.publicUrl) {
+                if (!cancelled) {
+                  setResolvedFileUrl(publicData.publicUrl);
+                  onRecoverFileUrl(publicData.publicUrl);
+                }
+                return;
+              }
+            }
+          }
+        }
+
+        if (!cancelled) setResolvedFileUrl(null);
       } catch (error) {
         console.error('Error resolving saved voice segment URL:', error);
         if (!cancelled) setResolvedFileUrl(null);
@@ -688,7 +742,7 @@ const VoiceSegmentControls: React.FC<{
     return () => {
       cancelled = true;
     };
-  }, [segment.fileUrl, segment.file, segment.audioBlob, segment.audioUrl]);
+  }, [segment.fileUrl, segment.file, segment.audioBlob, segment.audioUrl, segment.title, recoveryAttempt, onRecoverFileUrl]);
 
   React.useEffect(() => {
     return () => {
@@ -824,22 +878,42 @@ const VoiceSegmentControls: React.FC<{
     );
   }
 
-  // Show saved remote recording when editing existing slots
-  if (segment.fileUrl && !segment.file && !segment.audioBlob) {
+  // Show saved/loaded recording area when editing existing slots
+  const isLikelyLoadedRecording = Boolean(segment.fileUrl) || /\.(mp3|wav|m4a|ogg|webm)$/i.test(segment.title?.trim() || '');
+  if (!segment.file && !segment.audioBlob && isLikelyLoadedRecording) {
+    const hasOriginalLink = Boolean(segment.fileUrl);
+
     return (
       <div className="space-y-2 p-2 bg-background/40 rounded">
         <div className="flex items-center gap-2">
           <Mic className="h-4 w-4 text-primary" />
           <span className="text-xs font-medium">Saved Voice Recording</span>
-          <Badge variant="outline" className="text-xs ml-auto">Ready</Badge>
+          <Badge variant="outline" className="text-xs ml-auto">
+            {hasOriginalLink ? 'Loaded' : 'Legacy'}
+          </Badge>
         </div>
+
         {isResolvingFileUrl ? (
           <p className="text-xs text-muted-foreground">Loading audio preview...</p>
         ) : resolvedFileUrl ? (
           <audio src={resolvedFileUrl} controls className="w-full h-8" />
         ) : (
-          <p className="text-xs text-destructive">Audio file link is missing for this segment. Please re-upload it.</p>
+          <div className="space-y-2">
+            <p className="text-xs text-destructive">
+              No playable audio link was saved for this segment, so there is nothing to preview yet.
+            </p>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              className="text-xs"
+              onClick={() => setRecoveryAttempt((prev) => prev + 1)}
+            >
+              Try finding loaded file
+            </Button>
+          </div>
         )}
+
         <div className="flex gap-2">
           <Button type="button" variant="outline" size="sm" className="text-xs gap-1 flex-1" onClick={onClearRecording}>
             <RotateCcw className="h-3 w-3" /> Record Over
