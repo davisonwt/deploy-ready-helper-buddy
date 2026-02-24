@@ -70,7 +70,7 @@ export const ScheduleRadioSlotDialog: React.FC<ScheduleRadioSlotDialogProps> = (
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
   const [step, setStep] = useState(1);
-  const [selectedDate, setSelectedDate] = useState<Date>();
+  const [selectedDates, setSelectedDates] = useState<Date[]>([]);
   const [selectedSlot, setSelectedSlot] = useState<string>('');
   const [selectedTimezone, setSelectedTimezone] = useState(detectTimezone());
   const [formData, setFormData] = useState({
@@ -85,7 +85,7 @@ export const ScheduleRadioSlotDialog: React.FC<ScheduleRadioSlotDialogProps> = (
   useEffect(() => {
     if (editSlot && open) {
       const date = new Date(editSlot.time_slot_date + 'T00:00:00');
-      setSelectedDate(date);
+      setSelectedDates([date]);
       const slotMatch = TIME_SLOTS.find(s => s.hour === editSlot.hour_slot);
       setSelectedSlot(slotMatch?.id || '');
       setFormData({
@@ -114,7 +114,7 @@ export const ScheduleRadioSlotDialog: React.FC<ScheduleRadioSlotDialogProps> = (
     } else if (!editSlot && open) {
       // Reset for new slot
       setStep(1);
-      setSelectedDate(undefined);
+      setSelectedDates([]);
       setSelectedSlot('');
       setFormData({ show_title: '', description: '' });
       setTimelineSegments([]);
@@ -131,10 +131,10 @@ export const ScheduleRadioSlotDialog: React.FC<ScheduleRadioSlotDialogProps> = (
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (step === 1 && (!selectedDate || !selectedSlot)) {
+    if (step === 1 && (selectedDates.length === 0 || !selectedSlot)) {
       toast({
         title: 'Missing Information',
-        description: 'Please select a date and time slot',
+        description: 'Please select at least one date and a time slot',
         variant: 'destructive',
       });
       return;
@@ -175,14 +175,9 @@ export const ScheduleRadioSlotDialog: React.FC<ScheduleRadioSlotDialogProps> = (
 
       // Calculate start/end times from selected slot and date
       const slotInfo = TIME_SLOTS.find(s => s.id === selectedSlot);
-      if (!slotInfo || !selectedDate) throw new Error('Missing slot or date');
+      if (!slotInfo || selectedDates.length === 0) throw new Error('Missing slot or date');
 
-      const startDate = new Date(selectedDate);
-      startDate.setHours(slotInfo.hour, 0, 0, 0);
-      const endDate = new Date(startDate);
-      endDate.setHours(slotInfo.hour + 2);
-
-      // Upload segment files to storage
+      // Upload segment files to storage (once, shared across all dates)
       const segmentsData = [];
       for (const seg of timelineSegments) {
         let fileUrl: string | undefined;
@@ -203,54 +198,68 @@ export const ScheduleRadioSlotDialog: React.FC<ScheduleRadioSlotDialogProps> = (
         });
       }
 
-      const scheduleData = {
-        dj_id: dj!.id,
-        start_time: startDate.toISOString(),
-        end_time: endDate.toISOString(),
-        time_slot_date: format(selectedDate, 'yyyy-MM-dd'),
-        hour_slot: slotInfo.hour,
-        status: 'scheduled',
-        approval_status: 'pending',
-        show_subject: formData.show_title,
-        show_notes: formData.description,
-        show_topic_description: JSON.stringify(segmentsData),
-        broadcast_mode: 'pre_recorded',
-      };
-
-      let dbError;
       if (isEditMode && editSlot) {
+        // Edit mode: update the single existing slot (use first selected date)
+        const editDate = selectedDates[0];
+        const startDate = new Date(editDate);
+        startDate.setHours(slotInfo.hour, 0, 0, 0);
+        const endDate = new Date(startDate);
+        endDate.setHours(slotInfo.hour + 2);
+
         const { error } = await supabase
           .from('radio_schedule')
-          .update(scheduleData)
+          .update({
+            dj_id: dj!.id,
+            start_time: startDate.toISOString(),
+            end_time: endDate.toISOString(),
+            time_slot_date: format(editDate, 'yyyy-MM-dd'),
+            hour_slot: slotInfo.hour,
+            show_subject: formData.show_title,
+            show_notes: formData.description,
+            show_topic_description: JSON.stringify(segmentsData),
+            broadcast_mode: 'pre_recorded',
+          })
           .eq('id', editSlot.id);
-        dbError = error;
+        if (error) throw error;
       } else {
-        const { error } = await supabase
-          .from('radio_schedule')
-          .insert(scheduleData);
-        dbError = error;
+        // New mode: create one slot per selected date
+        const insertRows = selectedDates.map(date => {
+          const startDate = new Date(date);
+          startDate.setHours(slotInfo.hour, 0, 0, 0);
+          const endDate = new Date(startDate);
+          endDate.setHours(slotInfo.hour + 2);
+          return {
+            dj_id: dj!.id,
+            start_time: startDate.toISOString(),
+            end_time: endDate.toISOString(),
+            time_slot_date: format(date, 'yyyy-MM-dd'),
+            hour_slot: slotInfo.hour,
+            status: 'scheduled',
+            approval_status: 'pending',
+            show_subject: formData.show_title,
+            show_notes: formData.description,
+            show_topic_description: JSON.stringify(segmentsData),
+            broadcast_mode: 'pre_recorded',
+          };
+        });
+        const { error } = await supabase.from('radio_schedule').insert(insertRows);
+        if (error) throw error;
       }
 
-      if (dbError) throw dbError;
-
       toast({
-        title: isEditMode ? 'Radio Slot Updated' : 'Radio Slot Requested',
+        title: isEditMode ? 'Radio Slot Updated' : 'Radio Slot(s) Requested',
         description: isEditMode 
           ? `Your show "${formData.show_title}" has been updated.`
-          : `Your 2-hour show "${formData.show_title}" has been saved and submitted for approval.`,
+          : `Your show "${formData.show_title}" has been scheduled for ${selectedDates.length} date(s) and submitted for approval.`,
       });
 
       onSuccess();
       onOpenChange(false);
       setStep(1);
-      setSelectedDate(undefined);
+      setSelectedDates([]);
       setSelectedSlot('');
       setTimelineSegments([]);
-      setFormData({
-        show_title: '',
-        description: '',
-      });
-      // Safety net for Radix pointer lock edge-cases
+      setFormData({ show_title: '', description: '' });
       document.body.style.pointerEvents = 'auto';
     } catch (error: any) {
       toast({
@@ -300,24 +309,29 @@ export const ScheduleRadioSlotDialog: React.FC<ScheduleRadioSlotDialogProps> = (
               </div>
 
               <div>
-                <Label className="mb-2 block">Select Date</Label>
+                <Label className="mb-2 block">{isEditMode ? 'Select Date' : 'Select Date(s)'}</Label>
                 <Calendar
-                  mode="single"
-                  selected={selectedDate}
-                  onSelect={setSelectedDate}
-                  className="rounded-md border glass-panel"
+                  mode="multiple"
+                  selected={selectedDates}
+                  onSelect={(dates) => setSelectedDates(dates || [])}
+                  className="rounded-md border glass-panel pointer-events-auto"
                   disabled={(date) => {
                     const today = new Date();
                     today.setHours(0, 0, 0, 0);
                     return date < today;
                   }}
                 />
+                {selectedDates.length > 0 && (
+                  <p className="text-xs text-muted-foreground mt-2">
+                    {selectedDates.length} date(s) selected
+                  </p>
+                )}
               </div>
 
-              {selectedDate && (
+              {selectedDates.length > 0 && (
                 <div>
                   <Label className="mb-3 block">
-                    Select 2-Hour Slot for {format(selectedDate, 'MMMM d, yyyy')}{' '}
+                    Select 2-Hour Slot{' '}
                     <span className="text-xs text-muted-foreground">
                       ({TIMEZONE_OPTIONS.find(tz => tz.value === selectedTimezone)?.abbr})
                     </span>
@@ -343,10 +357,10 @@ export const ScheduleRadioSlotDialog: React.FC<ScheduleRadioSlotDialogProps> = (
           {step === 2 && (
             <>
               <div className="p-4 rounded-lg glass-panel space-y-2">
-                <div className="flex items-center gap-2">
-                  <Badge>Selected Slot</Badge>
+                <div className="flex items-center gap-2 flex-wrap">
+                  <Badge>Selected</Badge>
                   <span className="font-semibold">
-                    {selectedDate && format(selectedDate, 'MMMM d, yyyy')} •{' '}
+                    {selectedDates.map(d => format(d, 'MMM d')).join(', ')} •{' '}
                     {TIME_SLOTS.find((s) => s.id === selectedSlot)?.time}{' '}
                     ({TIMEZONE_OPTIONS.find(tz => tz.value === selectedTimezone)?.abbr})
                   </span>
@@ -389,10 +403,10 @@ export const ScheduleRadioSlotDialog: React.FC<ScheduleRadioSlotDialogProps> = (
           {step === 3 && (
             <>
               <div className="p-4 rounded-lg glass-panel space-y-2">
-                <div className="flex items-center gap-2">
-                  <Badge>Selected Slot</Badge>
+                <div className="flex items-center gap-2 flex-wrap">
+                  <Badge>Selected</Badge>
                   <span className="font-semibold">
-                    {selectedDate && format(selectedDate, 'MMMM d, yyyy')} •{' '}
+                    {selectedDates.map(d => format(d, 'MMM d')).join(', ')} •{' '}
                     {TIME_SLOTS.find((s) => s.id === selectedSlot)?.time}
                   </span>
                 </div>
@@ -426,7 +440,7 @@ export const ScheduleRadioSlotDialog: React.FC<ScheduleRadioSlotDialogProps> = (
             >
               {step > 1 ? 'Back' : 'Cancel'}
             </Button>
-            <Button type="submit" disabled={loading || (step === 1 && (!selectedDate || !selectedSlot))}>
+            <Button type="submit" disabled={loading || (step === 1 && (selectedDates.length === 0 || !selectedSlot))}>
               {step < 3 ? 'Next' : loading ? 'Submitting...' : 'Submit Request'}
             </Button>
           </div>
