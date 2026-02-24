@@ -107,25 +107,34 @@ export const ScheduleRadioSlotDialog: React.FC<ScheduleRadioSlotDialogProps> = (
         try {
           const parsed = JSON.parse(editSlot.show_topic_description);
           if (Array.isArray(parsed)) {
-            setTimelineSegments(parsed.map((seg: any, i: number) => ({
-              id: `seg-${i}-${Date.now()}`,
-              type: seg.type || 'music',
-              title: seg.title || '',
-              durationMinutes: seg.durationMinutes || 3,
-              durationSeconds: seg.durationSeconds || 0,
-              contentId: seg.contentId,
-              contentName: seg.contentName,
-              fileUrl:
-                seg.fileUrl ||
-                seg.file_url ||
-                seg.audioUrl ||
-                seg.audio_url ||
-                seg.voiceUrl ||
-                seg.voice_url ||
-                seg.url ||
-                (typeof seg.contentId === 'string' && seg.contentId.startsWith('http') ? seg.contentId : undefined),
-              file: undefined,
-            })));
+            setTimelineSegments(parsed.map((seg: any, i: number) => {
+              const legacyDuration = Number(
+                seg.durationMinutes ??
+                seg.duration ??
+                (typeof seg.duration_seconds === 'number' ? seg.duration_seconds / 60 : undefined),
+              );
+              const durationMinutes = Number.isFinite(legacyDuration) ? Math.max(1 / 6, legacyDuration) : 3;
+
+              return {
+                id: `seg-${i}-${Date.now()}`,
+                type: seg.type || 'music',
+                title: seg.title || '',
+                durationMinutes,
+                durationSeconds: seg.durationSeconds || 0,
+                contentId: seg.contentId,
+                contentName: seg.contentName,
+                fileUrl:
+                  seg.fileUrl ||
+                  seg.file_url ||
+                  seg.audioUrl ||
+                  seg.audio_url ||
+                  seg.voiceUrl ||
+                  seg.voice_url ||
+                  seg.url ||
+                  (typeof seg.contentId === 'string' && seg.contentId.startsWith('http') ? seg.contentId : undefined),
+                file: undefined,
+              };
+            }));
           }
         } catch {
           // ignore parse errors

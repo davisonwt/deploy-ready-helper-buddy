@@ -879,17 +879,15 @@ const VoiceSegmentControls: React.FC<{
   }
 
   // Show saved/loaded recording area when editing existing slots
-  const isLikelyLoadedRecording = Boolean(segment.fileUrl) || /\.(mp3|wav|m4a|ogg|webm)$/i.test(segment.title?.trim() || '');
-  if (!segment.file && !segment.audioBlob && isLikelyLoadedRecording) {
-    const hasOriginalLink = Boolean(segment.fileUrl);
-
+  const hasSavedRecordingLink = Boolean(segment.fileUrl);
+  if (!segment.file && !segment.audioBlob && hasSavedRecordingLink) {
     return (
       <div className="space-y-2 p-2 bg-background/40 rounded">
         <div className="flex items-center gap-2">
           <Mic className="h-4 w-4 text-primary" />
           <span className="text-xs font-medium">Saved Voice Recording</span>
           <Badge variant="outline" className="text-xs ml-auto">
-            {hasOriginalLink ? 'Loaded' : 'Legacy'}
+            Loaded
           </Badge>
         </div>
 
@@ -900,7 +898,7 @@ const VoiceSegmentControls: React.FC<{
         ) : (
           <div className="space-y-2">
             <p className="text-xs text-destructive">
-              No playable audio link was saved for this segment, so there is nothing to preview yet.
+              Could not preview this saved file, but you can replace it right now.
             </p>
             <Button
               type="button"
@@ -918,6 +916,14 @@ const VoiceSegmentControls: React.FC<{
           <Button type="button" variant="outline" size="sm" className="text-xs gap-1 flex-1" onClick={onClearRecording}>
             <RotateCcw className="h-3 w-3" /> Record Over
           </Button>
+
+          <div {...getRootProps()} className="flex-1">
+            <input {...getInputProps()} />
+            <Button type="button" variant="outline" size="sm" className="text-xs gap-1 w-full">
+              <Upload className="h-3 w-3" /> Upload Replacement
+            </Button>
+          </div>
+
           <Button type="button" variant="ghost" size="sm" className="text-xs gap-1 text-destructive" onClick={onClearRecording}>
             <Trash2 className="h-3 w-3" /> Remove
           </Button>
