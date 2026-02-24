@@ -14,10 +14,20 @@ import { Globe } from 'lucide-react';
 import { TimelineBuilder } from '@/components/radio/TimelineBuilder';
 import type { TimelineSegment } from '@/components/radio/TimelineBuilder';
 
+export interface EditableSlotData {
+  id: string;
+  time_slot_date: string;
+  hour_slot: number;
+  show_subject: string | null;
+  show_notes: string | null;
+  show_topic_description: string | null;
+}
+
 interface ScheduleRadioSlotDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onSuccess: () => void;
+  editSlot?: EditableSlotData | null;
 }
 
 const TIMEZONE_OPTIONS = [
@@ -55,6 +65,7 @@ export const ScheduleRadioSlotDialog: React.FC<ScheduleRadioSlotDialogProps> = (
   open,
   onOpenChange,
   onSuccess,
+  editSlot,
 }) => {
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
@@ -67,6 +78,48 @@ export const ScheduleRadioSlotDialog: React.FC<ScheduleRadioSlotDialogProps> = (
     description: '',
   });
   const [timelineSegments, setTimelineSegments] = useState<TimelineSegment[]>([]);
+
+  const isEditMode = !!editSlot;
+
+  // Pre-fill form when editing
+  useEffect(() => {
+    if (editSlot && open) {
+      const date = new Date(editSlot.time_slot_date + 'T00:00:00');
+      setSelectedDate(date);
+      const slotMatch = TIME_SLOTS.find(s => s.hour === editSlot.hour_slot);
+      setSelectedSlot(slotMatch?.id || '');
+      setFormData({
+        show_title: editSlot.show_subject || '',
+        description: editSlot.show_notes || '',
+      });
+      // Parse saved timeline segments (without files - those were uploaded)
+      if (editSlot.show_topic_description) {
+        try {
+          const parsed = JSON.parse(editSlot.show_topic_description);
+          if (Array.isArray(parsed)) {
+            setTimelineSegments(parsed.map((seg: any, i: number) => ({
+              id: `seg-${i}-${Date.now()}`,
+              type: seg.type || 'music',
+              title: seg.title || '',
+              durationMinutes: seg.durationMinutes || 3,
+              durationSeconds: seg.durationSeconds || 0,
+              contentId: seg.contentId,
+              contentName: seg.contentName,
+              file: undefined,
+            })));
+          }
+        } catch { /* ignore parse errors */ }
+      }
+      setStep(2); // Skip date selection, go to details
+    } else if (!editSlot && open) {
+      // Reset for new slot
+      setStep(1);
+      setSelectedDate(undefined);
+      setSelectedSlot('');
+      setFormData({ show_title: '', description: '' });
+      setTimelineSegments([]);
+    }
+  }, [editSlot, open]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -143,28 +196,41 @@ export const ScheduleRadioSlotDialog: React.FC<ScheduleRadioSlotDialogProps> = (
         });
       }
 
-      // Insert into radio_schedule
-      const { error: insertError } = await supabase
-        .from('radio_schedule')
-        .insert({
-          dj_id: dj!.id,
-          start_time: startDate.toISOString(),
-          end_time: endDate.toISOString(),
-          time_slot_date: format(selectedDate, 'yyyy-MM-dd'),
-          hour_slot: slotInfo.hour,
-          status: 'scheduled',
-          approval_status: 'pending',
-          show_subject: formData.show_title,
-          show_notes: formData.description,
-          show_topic_description: JSON.stringify(segmentsData),
-          broadcast_mode: 'pre_recorded',
-        });
+      const scheduleData = {
+        dj_id: dj!.id,
+        start_time: startDate.toISOString(),
+        end_time: endDate.toISOString(),
+        time_slot_date: format(selectedDate, 'yyyy-MM-dd'),
+        hour_slot: slotInfo.hour,
+        status: 'scheduled',
+        approval_status: 'pending',
+        show_subject: formData.show_title,
+        show_notes: formData.description,
+        show_topic_description: JSON.stringify(segmentsData),
+        broadcast_mode: 'pre_recorded',
+      };
 
-      if (insertError) throw insertError;
+      let dbError;
+      if (isEditMode && editSlot) {
+        const { error } = await supabase
+          .from('radio_schedule')
+          .update(scheduleData)
+          .eq('id', editSlot.id);
+        dbError = error;
+      } else {
+        const { error } = await supabase
+          .from('radio_schedule')
+          .insert(scheduleData);
+        dbError = error;
+      }
+
+      if (dbError) throw dbError;
 
       toast({
-        title: 'Radio Slot Requested',
-        description: `Your 2-hour show "${formData.show_title}" has been saved and submitted for approval.`,
+        title: isEditMode ? 'Radio Slot Updated' : 'Radio Slot Requested',
+        description: isEditMode 
+          ? `Your show "${formData.show_title}" has been updated.`
+          : `Your 2-hour show "${formData.show_title}" has been saved and submitted for approval.`,
       });
 
       onOpenChange(false);
@@ -193,7 +259,7 @@ export const ScheduleRadioSlotDialog: React.FC<ScheduleRadioSlotDialogProps> = (
       <DialogContent className="glass-card bg-background/95 border-primary/20 max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="text-2xl">
-            Schedule Radio Slot (2 Hours) - Step {step}/3
+            {isEditMode ? 'Edit Radio Slot' : 'Schedule Radio Slot (2 Hours)'} - Step {step}/3
           </DialogTitle>
           <p className="text-sm text-muted-foreground">
             24/7 broadcast slots available • Pending approval by gosat
