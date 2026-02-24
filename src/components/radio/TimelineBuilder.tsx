@@ -68,7 +68,7 @@ export const TimelineBuilder: React.FC<TimelineBuilderProps> = ({ segments, onCh
   // Dynamic max recording based on segment duration (in seconds)
   const getMaxRecordingSeconds = useCallback((segmentId: string) => {
     const seg = segments.find(s => s.id === segmentId);
-    return seg ? seg.durationMinutes * 60 : 120;
+    return seg ? Math.max(120, Math.round(seg.durationMinutes * 60)) : 120;
   }, [segments]);
 
   const [isUploading, setIsUploading] = useState(false);
@@ -406,11 +406,11 @@ export const TimelineBuilder: React.FC<TimelineBuilderProps> = ({ segments, onCh
                   <div className="flex items-center gap-1">
                     <Input
                       type="number"
-                      min={0}
+                      min={1}
                       max={120}
                       value={Math.floor(segment.durationMinutes)}
                       onChange={(e) => {
-                        const mins = Math.max(0, parseInt(e.target.value) || 0);
+                        const mins = Math.max(1, parseInt(e.target.value) || 1);
                         const currentSecs = Math.round((segment.durationMinutes % 1) * 60);
                         updateSegment(segment.id, { durationMinutes: mins + currentSecs / 60 });
                       }}
