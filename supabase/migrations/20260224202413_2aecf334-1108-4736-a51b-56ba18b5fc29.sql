@@ -1,0 +1,2 @@
+ALTER TABLE public.radio_feedback DROP CONSTRAINT radio_feedback_schedule_id_fkey;
+ALTER TABLE public.radio_feedback ADD CONSTRAINT radio_feedback_schedule_id_fkey FOREIGN KEY (schedule_id) REFERENCES public.radio_schedule(id) ON DELETE CASCADE;
