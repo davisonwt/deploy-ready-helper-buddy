@@ -199,28 +199,46 @@ export const ScheduleRadioSlotDialog: React.FC<ScheduleRadioSlotDialogProps> = (
       }
 
       if (isEditMode && editSlot) {
-        // Edit mode: update the single existing slot (use first selected date)
-        const editDate = selectedDates[0];
-        const startDate = new Date(editDate);
-        startDate.setHours(slotInfo.hour, 0, 0, 0);
-        const endDate = new Date(startDate);
-        endDate.setHours(slotInfo.hour + 2);
+        const sortedDates = [...selectedDates].sort((a, b) => a.getTime() - b.getTime());
+        const buildSlotRow = (date: Date) => {
+          const startDate = new Date(date);
+          startDate.setHours(slotInfo.hour, 0, 0, 0);
+          const endDate = new Date(startDate);
+          endDate.setHours(slotInfo.hour + 2);
 
-        const { error } = await supabase
-          .from('radio_schedule')
-          .update({
+          return {
             dj_id: dj!.id,
             start_time: startDate.toISOString(),
             end_time: endDate.toISOString(),
-            time_slot_date: format(editDate, 'yyyy-MM-dd'),
+            time_slot_date: format(date, 'yyyy-MM-dd'),
             hour_slot: slotInfo.hour,
             show_subject: formData.show_title,
             show_notes: formData.description,
             show_topic_description: JSON.stringify(segmentsData),
-            broadcast_mode: 'pre_recorded',
-          })
+            broadcast_mode: 'pre_recorded' as const,
+          };
+        };
+
+        // Edit mode: update the existing slot and create additional slots for extra selected dates
+        const [firstDate, ...additionalDates] = sortedDates;
+        const { error: updateError } = await supabase
+          .from('radio_schedule')
+          .update(buildSlotRow(firstDate))
           .eq('id', editSlot.id);
-        if (error) throw error;
+        if (updateError) throw updateError;
+
+        if (additionalDates.length > 0) {
+          const insertRows = additionalDates.map((date) => ({
+            ...buildSlotRow(date),
+            status: 'scheduled',
+            approval_status: 'pending',
+          }));
+
+          const { error: insertError } = await supabase
+            .from('radio_schedule')
+            .insert(insertRows);
+          if (insertError) throw insertError;
+        }
       } else {
         // New mode: create one slot per selected date
         const insertRows = selectedDates.map(date => {
@@ -309,7 +327,7 @@ export const ScheduleRadioSlotDialog: React.FC<ScheduleRadioSlotDialogProps> = (
               </div>
 
               <div>
-                <Label className="mb-2 block">{isEditMode ? 'Select Date' : 'Select Date(s)'}</Label>
+                <Label className="mb-2 block">Select Date(s)</Label>
                 <Calendar
                   mode="multiple"
                   selected={selectedDates}
