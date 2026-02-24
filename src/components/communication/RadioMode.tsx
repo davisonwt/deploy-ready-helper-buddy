@@ -94,6 +94,13 @@ export const RadioMode: React.FC = () => {
     loadContent();
   }, []);
 
+  // Safety: prevent stale Radix pointer lock when dialog/menu close in sequence
+  useEffect(() => {
+    if (!scheduleDialogOpen) {
+      document.body.style.pointerEvents = 'auto';
+    }
+  }, [scheduleDialogOpen]);
+
   const loadContent = async () => {
     try {
       // Load scheduled slots, tracks, and streams in parallel
@@ -366,7 +373,7 @@ export const RadioMode: React.FC = () => {
 
                         {/* Actions for slot owner */}
                         {isMine && (
-                          <DropdownMenu>
+                          <DropdownMenu modal={false}>
                             <DropdownMenuTrigger asChild>
                               <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0">
                                 <MoreVertical className="h-4 w-4" />
@@ -480,7 +487,10 @@ export const RadioMode: React.FC = () => {
         open={scheduleDialogOpen}
         onOpenChange={(open) => {
           setScheduleDialogOpen(open);
-          if (!open) setEditSlotData(null);
+          if (!open) {
+            setEditSlotData(null);
+            document.body.style.pointerEvents = 'auto';
+          }
         }}
         onSuccess={loadContent}
         editSlot={editSlotData}
