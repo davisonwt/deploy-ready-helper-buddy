@@ -11,7 +11,7 @@ import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { 
   Music, Mic, MicOff, Megaphone, FileText, Plus, Trash2, 
-  Clock, GripVertical, Search, Play, Upload, Square, RotateCcw,
+  Clock, GripVertical, Search, Play, Pause, Upload, Square, RotateCcw,
   Download, Sparkles
 } from 'lucide-react';
 import { useDropzone } from 'react-dropzone';
@@ -568,11 +568,41 @@ const FileUploadZone: React.FC<{
     maxFiles: 1,
     onDrop: (files) => files[0] && onFileSelect(files[0]),
   });
+  const [isPlaying, setIsPlaying] = useState(false);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
+
+  const togglePlay = () => {
+    if (!segment.file) return;
+    if (!audioRef.current) {
+      audioRef.current = new Audio(URL.createObjectURL(segment.file));
+      audioRef.current.onended = () => setIsPlaying(false);
+    }
+    if (isPlaying) {
+      audioRef.current.pause();
+      setIsPlaying(false);
+    } else {
+      audioRef.current.play();
+      setIsPlaying(true);
+    }
+  };
+
+  // Cleanup on unmount or file change
+  React.useEffect(() => {
+    return () => {
+      if (audioRef.current) {
+        audioRef.current.pause();
+        URL.revokeObjectURL(audioRef.current.src);
+        audioRef.current = null;
+      }
+    };
+  }, [segment.file]);
 
   if (segment.file) {
     return (
       <div className="flex items-center gap-2 p-2 bg-background/40 rounded text-sm">
-        <FileText className="h-4 w-4" />
+        <Button type="button" variant="ghost" size="sm" className="h-7 w-7 p-0 shrink-0" onClick={togglePlay}>
+          {isPlaying ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}
+        </Button>
         <span className="flex-1 truncate">{segment.file.name}</span>
         <Badge variant="outline" className="text-xs">
           {(segment.file.size / 1024 / 1024).toFixed(1)} MB
@@ -611,6 +641,18 @@ const VoiceSegmentControls: React.FC<{
 }> = ({ segment, isRecording, isUploading, recordingTime, maxRecordingSeconds, formatCountdown, onStartRecording, onStopRecording, onClearRecording, onFileSelect }) => {
   const [mode, setMode] = useState<'default' | 'ai_voice' | 'teleprompter'>('default');
   const [teleprompterScript, setTeleprompterScript] = useState('');
+  const [fileIsPlaying, setFileIsPlaying] = useState(false);
+  const fileAudioRef = useRef<HTMLAudioElement | null>(null);
+
+  React.useEffect(() => {
+    return () => {
+      if (fileAudioRef.current) {
+        fileAudioRef.current.pause();
+        URL.revokeObjectURL(fileAudioRef.current.src);
+        fileAudioRef.current = null;
+      }
+    };
+  }, [segment.file]);
 
   const { getRootProps, getInputProps } = useDropzone({
     accept: { 'audio/*': ['.mp3', '.wav', '.m4a', '.ogg'] },
@@ -736,11 +778,27 @@ const VoiceSegmentControls: React.FC<{
     );
   }
 
-  // Show uploaded file with replace option
+  // Show uploaded file with replace option and play preview
   if (segment.file) {
+    const toggleFilePlay = () => {
+      if (!fileAudioRef.current) {
+        fileAudioRef.current = new Audio(URL.createObjectURL(segment.file!));
+        fileAudioRef.current.onended = () => setFileIsPlaying(false);
+      }
+      if (fileIsPlaying) {
+        fileAudioRef.current.pause();
+        setFileIsPlaying(false);
+      } else {
+        fileAudioRef.current.play();
+        setFileIsPlaying(true);
+      }
+    };
+
     return (
       <div className="flex items-center gap-2 p-2 bg-background/40 rounded text-sm">
-        <FileText className="h-4 w-4" />
+        <Button type="button" variant="ghost" size="sm" className="h-7 w-7 p-0 shrink-0" onClick={toggleFilePlay}>
+          {fileIsPlaying ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}
+        </Button>
         <span className="flex-1 truncate">{segment.file.name}</span>
         <Badge variant="outline" className="text-xs">
           {(segment.file.size / 1024 / 1024).toFixed(1)} MB
