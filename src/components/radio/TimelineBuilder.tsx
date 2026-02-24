@@ -577,6 +577,12 @@ const FileUploadZone: React.FC<{
         <Badge variant="outline" className="text-xs">
           {(segment.file.size / 1024 / 1024).toFixed(1)} MB
         </Badge>
+        <div {...getRootProps()} className="cursor-pointer">
+          <input {...getInputProps()} />
+          <Button type="button" variant="ghost" size="sm" className="h-6 text-xs">
+            Replace
+          </Button>
+        </div>
       </div>
     );
   }
@@ -730,7 +736,7 @@ const VoiceSegmentControls: React.FC<{
     );
   }
 
-  // Show uploaded file
+  // Show uploaded file with replace option
   if (segment.file) {
     return (
       <div className="flex items-center gap-2 p-2 bg-background/40 rounded text-sm">
@@ -739,6 +745,12 @@ const VoiceSegmentControls: React.FC<{
         <Badge variant="outline" className="text-xs">
           {(segment.file.size / 1024 / 1024).toFixed(1)} MB
         </Badge>
+        <div {...getRootProps()} className="cursor-pointer">
+          <input {...getInputProps()} />
+          <Button type="button" variant="ghost" size="sm" className="h-6 text-xs">
+            Replace
+          </Button>
+        </div>
       </div>
     );
   }
