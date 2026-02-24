@@ -53,6 +53,8 @@ export const TimelineBuilder: React.FC<TimelineBuilderProps> = ({ segments, onCh
   const [showMusicPicker, setShowMusicPicker] = useState(false);
   const [editingSegmentId, setEditingSegmentId] = useState<string | null>(null);
   const [musicSearch, setMusicSearch] = useState('');
+  const [dragIndex, setDragIndex] = useState<number | null>(null);
+  const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
   const [communityTracks, setCommunityTracks] = useState<any[]>([]);
   const [loadingTracks, setLoadingTracks] = useState(false);
 
@@ -350,9 +352,25 @@ export const TimelineBuilder: React.FC<TimelineBuilderProps> = ({ segments, onCh
           const endTime = formatTime(runningMinutes);
 
           return (
-            <div key={segment.id} className={`border rounded-lg p-3 space-y-2 ${segType?.color || ''}`}>
+            <div
+              key={segment.id}
+              draggable
+              onDragStart={() => setDragIndex(index)}
+              onDragOver={(e) => { e.preventDefault(); setDragOverIndex(index); }}
+              onDragEnd={() => {
+                if (dragIndex !== null && dragOverIndex !== null && dragIndex !== dragOverIndex) {
+                  const reordered = [...segments];
+                  const [moved] = reordered.splice(dragIndex, 1);
+                  reordered.splice(dragOverIndex, 0, moved);
+                  onChange(reordered);
+                }
+                setDragIndex(null);
+                setDragOverIndex(null);
+              }}
+              className={`border rounded-lg p-3 space-y-2 transition-opacity ${segType?.color || ''} ${dragIndex === index ? 'opacity-40' : ''} ${dragOverIndex === index && dragIndex !== index ? 'ring-2 ring-primary' : ''}`}
+            >
               <div className="flex items-center gap-2">
-                <GripVertical className="h-4 w-4 text-muted-foreground cursor-grab" />
+                <GripVertical className="h-4 w-4 text-muted-foreground cursor-grab active:cursor-grabbing" />
                 <Badge variant="outline" className="text-xs font-mono">
                   {startTime} → {endTime}
                 </Badge>
