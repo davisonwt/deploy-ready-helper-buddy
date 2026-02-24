@@ -448,6 +448,10 @@ export const TimelineBuilder: React.FC<TimelineBuilderProps> = ({ segments, onCh
                   formatCountdown={(elapsed) => formatCountdown(elapsed, segment.id)}
                   onStartRecording={() => startRecording(segment.id)}
                   onStopRecording={() => stopRecording(segment.id)}
+                  onRecordOver={() => {
+                    clearRecording(segment.id);
+                    setTimeout(() => startRecording(segment.id), 0);
+                  }}
                   onClearRecording={() => clearRecording(segment.id)}
                   onRecoverFileUrl={(url) => updateSegment(segment.id, { fileUrl: url })}
                   onFileSelect={(file) => updateSegment(segment.id, { file, title: segment.title || file.name, audioBlob: undefined, audioUrl: undefined })}
@@ -644,10 +648,11 @@ const VoiceSegmentControls: React.FC<{
   formatCountdown: (elapsed: number) => string;
   onStartRecording: () => void;
   onStopRecording: () => void;
+  onRecordOver: () => void;
   onClearRecording: () => void;
   onRecoverFileUrl: (url: string) => void;
   onFileSelect: (file: File) => void;
-}> = ({ segment, isRecording, isUploading, recordingTime, maxRecordingSeconds, formatCountdown, onStartRecording, onStopRecording, onClearRecording, onRecoverFileUrl, onFileSelect }) => {
+}> = ({ segment, isRecording, isUploading, recordingTime, maxRecordingSeconds, formatCountdown, onStartRecording, onStopRecording, onRecordOver, onClearRecording, onRecoverFileUrl, onFileSelect }) => {
   const [mode, setMode] = useState<'default' | 'ai_voice' | 'teleprompter'>('default');
   const [teleprompterScript, setTeleprompterScript] = useState('');
   const [fileIsPlaying, setFileIsPlaying] = useState(false);
@@ -864,7 +869,7 @@ const VoiceSegmentControls: React.FC<{
         </div>
         <audio src={segment.audioUrl} controls className="w-full h-8" />
         <div className="flex gap-2">
-          <Button type="button" variant="outline" size="sm" className="text-xs gap-1 flex-1" onClick={onClearRecording}>
+          <Button type="button" variant="outline" size="sm" className="text-xs gap-1 flex-1" onClick={onRecordOver}>
             <RotateCcw className="h-3 w-3" /> Re-record
           </Button>
           <Button type="button" variant="outline" size="sm" className="text-xs gap-1 flex-1" onClick={handleDownload}>
@@ -913,7 +918,7 @@ const VoiceSegmentControls: React.FC<{
         )}
 
         <div className="flex gap-2">
-          <Button type="button" variant="outline" size="sm" className="text-xs gap-1 flex-1" onClick={onClearRecording}>
+          <Button type="button" variant="outline" size="sm" className="text-xs gap-1 flex-1" onClick={onRecordOver}>
             <RotateCcw className="h-3 w-3" /> Record Over
           </Button>
 
