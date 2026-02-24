@@ -24,7 +24,7 @@ import {
 } from '@/components/ui/alert-dialog';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
-import { ScheduleRadioSlotDialog } from './ScheduleRadioSlotDialog';
+import { ScheduleRadioSlotDialog, type EditableSlotData } from './ScheduleRadioSlotDialog';
 import { VoiceRecorderStudio } from '@/components/radio/VoiceRecorderStudio';
 import { useAuth } from '@/hooks/useAuth';
 import { toast } from 'sonner';
@@ -63,6 +63,7 @@ interface ScheduledSlot {
   approval_status: string | null;
   show_subject: string | null;
   show_notes: string | null;
+  show_topic_description: string | null;
   broadcast_mode: string;
   dj_id: string | null;
   radio_djs: {
@@ -87,6 +88,7 @@ export const RadioMode: React.FC = () => {
   const [likedTracks, setLikedTracks] = useState<Set<string>>(new Set());
   const [activeStream, setActiveStream] = useState<Stream | null>(null);
   const [deleteSlotId, setDeleteSlotId] = useState<string | null>(null);
+  const [editSlotData, setEditSlotData] = useState<EditableSlotData | null>(null);
 
   useEffect(() => {
     loadContent();
@@ -372,8 +374,19 @@ export const RadioMode: React.FC = () => {
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="end" className="bg-popover border border-border">
                               <DropdownMenuItem onClick={() => {
-                                // Open edit dialog - for now navigate to the slot's timeline builder
-                                toast.info('Edit slot: use the timeline builder on the DJ dashboard to add music, ads, and voice notes.');
+                                if (slot.approval_status === 'pending') {
+                                  setEditSlotData({
+                                    id: slot.id,
+                                    time_slot_date: slot.time_slot_date,
+                                    hour_slot: slot.hour_slot,
+                                    show_subject: slot.show_subject,
+                                    show_notes: slot.show_notes,
+                                    show_topic_description: slot.show_topic_description,
+                                  });
+                                  setScheduleDialogOpen(true);
+                                } else {
+                                  toast.info('Only pending slots can be edited.');
+                                }
                               }}>
                                 <Edit className="h-4 w-4 mr-2" />
                                 Edit Slot Content
@@ -463,7 +476,15 @@ export const RadioMode: React.FC = () => {
         </div>
       )}
 
-      <ScheduleRadioSlotDialog open={scheduleDialogOpen} onOpenChange={setScheduleDialogOpen} onSuccess={loadContent} />
+      <ScheduleRadioSlotDialog
+        open={scheduleDialogOpen}
+        onOpenChange={(open) => {
+          setScheduleDialogOpen(open);
+          if (!open) setEditSlotData(null);
+        }}
+        onSuccess={loadContent}
+        editSlot={editSlotData}
+      />
       <VoiceRecorderStudio open={voiceStudioOpen} onOpenChange={setVoiceStudioOpen} />
 
       {/* Delete Confirmation */}
