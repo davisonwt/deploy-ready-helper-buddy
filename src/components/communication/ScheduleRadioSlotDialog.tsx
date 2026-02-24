@@ -121,6 +121,13 @@ export const ScheduleRadioSlotDialog: React.FC<ScheduleRadioSlotDialogProps> = (
     }
   }, [editSlot, open]);
 
+  // Safety: ensure body interaction is restored when dialog closes
+  useEffect(() => {
+    if (!open) {
+      document.body.style.pointerEvents = 'auto';
+    }
+  }, [open]);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -233,7 +240,8 @@ export const ScheduleRadioSlotDialog: React.FC<ScheduleRadioSlotDialogProps> = (
           : `Your 2-hour show "${formData.show_title}" has been saved and submitted for approval.`,
       });
 
-      // Reset state first, then close dialog
+      onSuccess();
+      onOpenChange(false);
       setStep(1);
       setSelectedDate(undefined);
       setSelectedSlot('');
@@ -242,11 +250,8 @@ export const ScheduleRadioSlotDialog: React.FC<ScheduleRadioSlotDialogProps> = (
         show_title: '',
         description: '',
       });
-      // Close dialog after state reset to avoid stale overlay
-      setTimeout(() => {
-        onOpenChange(false);
-        onSuccess();
-      }, 100);
+      // Safety net for Radix pointer lock edge-cases
+      document.body.style.pointerEvents = 'auto';
     } catch (error: any) {
       toast({
         title: 'Error',
