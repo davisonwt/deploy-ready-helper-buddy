@@ -30,6 +30,12 @@ interface ScheduleRadioSlotDialogProps {
   editSlot?: EditableSlotData | null;
 }
 
+interface SlotSelectionEntry {
+  id: string;
+  date: Date;
+  slotId: string;
+}
+
 const TIMEZONE_OPTIONS = [
   { label: '🇺🇸 USA (Eastern)', value: 'America/New_York', abbr: 'ET' },
   { label: '🇺🇸 USA (Central)', value: 'America/Chicago', abbr: 'CT' },
@@ -70,8 +76,9 @@ export const ScheduleRadioSlotDialog: React.FC<ScheduleRadioSlotDialogProps> = (
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
   const [step, setStep] = useState(1);
-  const [selectedDates, setSelectedDates] = useState<Date[]>([]);
+  const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined);
   const [selectedSlot, setSelectedSlot] = useState<string>('');
+  const [slotEntries, setSlotEntries] = useState<SlotSelectionEntry[]>([]);
   const [selectedTimezone, setSelectedTimezone] = useState(detectTimezone());
   const [formData, setFormData] = useState({
     show_title: '',
@@ -85,14 +92,17 @@ export const ScheduleRadioSlotDialog: React.FC<ScheduleRadioSlotDialogProps> = (
   useEffect(() => {
     if (editSlot && open) {
       const date = new Date(editSlot.time_slot_date + 'T00:00:00');
-      setSelectedDates([date]);
       const slotMatch = TIME_SLOTS.find(s => s.hour === editSlot.hour_slot);
-      setSelectedSlot(slotMatch?.id || '');
+      const initialSlotId = slotMatch?.id || '';
+
+      setSelectedDate(date);
+      setSelectedSlot(initialSlotId);
+      setSlotEntries(initialSlotId ? [{ id: `slot-entry-${Date.now()}`, date, slotId: initialSlotId }] : []);
       setFormData({
         show_title: editSlot.show_subject || '',
         description: editSlot.show_notes || '',
       });
-      // Parse saved timeline segments (without files - those were uploaded)
+
       if (editSlot.show_topic_description) {
         try {
           const parsed = JSON.parse(editSlot.show_topic_description);
@@ -108,14 +118,16 @@ export const ScheduleRadioSlotDialog: React.FC<ScheduleRadioSlotDialogProps> = (
               file: undefined,
             })));
           }
-        } catch { /* ignore parse errors */ }
+        } catch {
+          // ignore parse errors
+        }
       }
-      setStep(1); // Allow editing date/time too
-    } else if (!editSlot && open) {
-      // Reset for new slot
       setStep(1);
-      setSelectedDates([]);
+    } else if (!editSlot && open) {
+      setStep(1);
+      setSelectedDate(undefined);
       setSelectedSlot('');
+      setSlotEntries([]);
       setFormData({ show_title: '', description: '' });
       setTimelineSegments([]);
     }
@@ -130,11 +142,11 @@ export const ScheduleRadioSlotDialog: React.FC<ScheduleRadioSlotDialogProps> = (
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
-    if (step === 1 && (selectedDates.length === 0 || !selectedSlot)) {
+
+    if (step === 1 && slotEntries.length === 0) {
       toast({
         title: 'Missing Information',
-        description: 'Please select at least one date and a time slot',
+        description: 'Please add at least one date and time slot',
         variant: 'destructive',
       });
       return;
@@ -150,7 +162,6 @@ export const ScheduleRadioSlotDialog: React.FC<ScheduleRadioSlotDialogProps> = (
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('Not authenticated');
 
-      // Get or create DJ profile
       let { data: dj } = await supabase
         .from('radio_djs')
         .select('id')
@@ -173,11 +184,20 @@ export const ScheduleRadioSlotDialog: React.FC<ScheduleRadioSlotDialogProps> = (
         dj = newDj;
       }
 
-      // Calculate start/end times from selected slot and date
-      const slotInfo = TIME_SLOTS.find(s => s.id === selectedSlot);
-      if (!slotInfo || selectedDates.length === 0) throw new Error('Missing slot or date');
+      const slotMap = new Map(TIME_SLOTS.map((slot) => [slot.id, slot]));
+      const normalizedEntries = slotEntries
+        .map((entry) => ({ ...entry, slot: slotMap.get(entry.slotId) }))
+        .filter((entry): entry is SlotSelectionEntry & { slot: (typeof TIME_SLOTS)[number] } => !!entry.slot)
+        .sort((a, b) => {
+          const aDate = new Date(a.date);
+          const bDate = new Date(b.date);
+          aDate.setHours(a.slot.hour, 0, 0, 0);
+          bDate.setHours(b.slot.hour, 0, 0, 0);
+          return aDate.getTime() - bDate.getTime();
+        });
 
-      // Upload segment files to storage (once, shared across all dates)
+      if (normalizedEntries.length === 0) throw new Error('Missing valid slot selections');
+
       const segmentsData = [];
       for (const seg of timelineSegments) {
         let fileUrl: string | undefined;
@@ -188,6 +208,7 @@ export const ScheduleRadioSlotDialog: React.FC<ScheduleRadioSlotDialogProps> = (
             .upload(filePath, seg.file);
           if (!uploadError) fileUrl = filePath;
         }
+
         segmentsData.push({
           type: seg.type,
           title: seg.title,
@@ -198,84 +219,69 @@ export const ScheduleRadioSlotDialog: React.FC<ScheduleRadioSlotDialogProps> = (
         });
       }
 
-      if (isEditMode && editSlot) {
-        const sortedDates = [...selectedDates].sort((a, b) => a.getTime() - b.getTime());
-        const buildSlotRow = (date: Date) => {
-          const startDate = new Date(date);
-          startDate.setHours(slotInfo.hour, 0, 0, 0);
-          const endDate = new Date(startDate);
-          endDate.setHours(slotInfo.hour + 2);
+      const buildSlotRow = (entry: SlotSelectionEntry & { slot: (typeof TIME_SLOTS)[number] }) => {
+        const startDate = new Date(entry.date);
+        startDate.setHours(entry.slot.hour, 0, 0, 0);
+        const endDate = new Date(startDate);
+        endDate.setHours(entry.slot.hour + 2);
 
-          return {
-            dj_id: dj!.id,
-            start_time: startDate.toISOString(),
-            end_time: endDate.toISOString(),
-            time_slot_date: format(date, 'yyyy-MM-dd'),
-            hour_slot: slotInfo.hour,
-            show_subject: formData.show_title,
-            show_notes: formData.description,
-            show_topic_description: JSON.stringify(segmentsData),
-            broadcast_mode: 'pre_recorded' as const,
-          };
+        return {
+          dj_id: dj!.id,
+          start_time: startDate.toISOString(),
+          end_time: endDate.toISOString(),
+          time_slot_date: format(entry.date, 'yyyy-MM-dd'),
+          hour_slot: entry.slot.hour,
+          show_subject: formData.show_title,
+          show_notes: formData.description,
+          show_topic_description: JSON.stringify(segmentsData),
+          broadcast_mode: 'pre_recorded' as const,
         };
+      };
 
-        // Edit mode: update the existing slot and create additional slots for extra selected dates
-        const [firstDate, ...additionalDates] = sortedDates;
+      if (isEditMode && editSlot) {
+        const [firstEntry, ...additionalEntries] = normalizedEntries;
         const { error: updateError } = await supabase
           .from('radio_schedule')
-          .update(buildSlotRow(firstDate))
+          .update(buildSlotRow(firstEntry))
           .eq('id', editSlot.id);
         if (updateError) throw updateError;
 
-        if (additionalDates.length > 0) {
-          const insertRows = additionalDates.map((date) => ({
-            ...buildSlotRow(date),
-            status: 'scheduled',
-            approval_status: 'pending',
-          }));
-
+        if (additionalEntries.length > 0) {
           const { error: insertError } = await supabase
             .from('radio_schedule')
-            .insert(insertRows);
+            .insert(
+              additionalEntries.map((entry) => ({
+                ...buildSlotRow(entry),
+                status: 'scheduled',
+                approval_status: 'pending',
+              })),
+            );
           if (insertError) throw insertError;
         }
       } else {
-        // New mode: create one slot per selected date
-        const insertRows = selectedDates.map(date => {
-          const startDate = new Date(date);
-          startDate.setHours(slotInfo.hour, 0, 0, 0);
-          const endDate = new Date(startDate);
-          endDate.setHours(slotInfo.hour + 2);
-          return {
-            dj_id: dj!.id,
-            start_time: startDate.toISOString(),
-            end_time: endDate.toISOString(),
-            time_slot_date: format(date, 'yyyy-MM-dd'),
-            hour_slot: slotInfo.hour,
+        const { error } = await supabase.from('radio_schedule').insert(
+          normalizedEntries.map((entry) => ({
+            ...buildSlotRow(entry),
             status: 'scheduled',
             approval_status: 'pending',
-            show_subject: formData.show_title,
-            show_notes: formData.description,
-            show_topic_description: JSON.stringify(segmentsData),
-            broadcast_mode: 'pre_recorded',
-          };
-        });
-        const { error } = await supabase.from('radio_schedule').insert(insertRows);
+          })),
+        );
         if (error) throw error;
       }
 
       toast({
         title: isEditMode ? 'Radio Slot Updated' : 'Radio Slot(s) Requested',
-        description: isEditMode 
-          ? `Your show "${formData.show_title}" has been updated.`
-          : `Your show "${formData.show_title}" has been scheduled for ${selectedDates.length} date(s) and submitted for approval.`,
+        description: isEditMode
+          ? `Your show "${formData.show_title}" has been updated for ${normalizedEntries.length} slot(s).`
+          : `Your show "${formData.show_title}" has been scheduled for ${normalizedEntries.length} slot(s) and submitted for approval.`,
       });
 
       onSuccess();
       onOpenChange(false);
       setStep(1);
-      setSelectedDates([]);
+      setSelectedDate(undefined);
       setSelectedSlot('');
+      setSlotEntries([]);
       setTimelineSegments([]);
       setFormData({ show_title: '', description: '' });
       document.body.style.pointerEvents = 'auto';
@@ -288,6 +294,44 @@ export const ScheduleRadioSlotDialog: React.FC<ScheduleRadioSlotDialogProps> = (
     } finally {
       setLoading(false);
     }
+  };
+
+  const addSlotEntry = () => {
+    if (!selectedDate || !selectedSlot) {
+      toast({
+        title: 'Select date and time',
+        description: 'Pick a date and choose a 2-hour slot before adding.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    const dateKey = format(selectedDate, 'yyyy-MM-dd');
+    const duplicate = slotEntries.some(
+      (entry) => format(entry.date, 'yyyy-MM-dd') === dateKey && entry.slotId === selectedSlot,
+    );
+
+    if (duplicate) {
+      toast({
+        title: 'Slot already added',
+        description: 'That date and time is already in your schedule list.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    setSlotEntries((prev) => [
+      ...prev,
+      {
+        id: `slot-entry-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+        date: new Date(selectedDate),
+        slotId: selectedSlot,
+      },
+    ]);
+  };
+
+  const removeSlotEntry = (entryId: string) => {
+    setSlotEntries((prev) => prev.filter((entry) => entry.id !== entryId));
   };
 
   return (
@@ -327,11 +371,11 @@ export const ScheduleRadioSlotDialog: React.FC<ScheduleRadioSlotDialogProps> = (
               </div>
 
               <div>
-                <Label className="mb-2 block">Select Date(s)</Label>
+                <Label className="mb-2 block">Pick a date</Label>
                 <Calendar
-                  mode="multiple"
-                  selected={selectedDates}
-                  onSelect={(dates) => setSelectedDates(dates || [])}
+                  mode="single"
+                  selected={selectedDate}
+                  onSelect={(date) => setSelectedDate(date)}
                   className="rounded-md border glass-panel pointer-events-auto"
                   disabled={(date) => {
                     const today = new Date();
@@ -339,36 +383,60 @@ export const ScheduleRadioSlotDialog: React.FC<ScheduleRadioSlotDialogProps> = (
                     return date < today;
                   }}
                 />
-                {selectedDates.length > 0 && (
+                {selectedDate && (
                   <p className="text-xs text-muted-foreground mt-2">
-                    {selectedDates.length} date(s) selected
+                    Selected date: {format(selectedDate, 'MMM d, yyyy')}
                   </p>
                 )}
               </div>
 
-              {selectedDates.length > 0 && (
-                <div>
-                  <Label className="mb-3 block">
-                    Select 2-Hour Slot{' '}
-                    <span className="text-xs text-muted-foreground">
-                      ({TIMEZONE_OPTIONS.find(tz => tz.value === selectedTimezone)?.abbr})
-                    </span>
-                  </Label>
-                  <div className="grid grid-cols-2 gap-2 max-h-60 overflow-y-auto p-2">
-                    {TIME_SLOTS.map((slot) => (
-                      <Button
-                        key={slot.id}
-                        type="button"
-                        variant={selectedSlot === slot.id ? 'default' : 'outline'}
-                        className="justify-start"
-                        onClick={() => setSelectedSlot(slot.id)}
-                      >
-                        {slot.time}
-                      </Button>
-                    ))}
-                  </div>
+              <div>
+                <Label className="mb-3 block">
+                  Pick a 2-Hour Slot
+                  <span className="text-xs text-muted-foreground ml-1">
+                    ({TIMEZONE_OPTIONS.find(tz => tz.value === selectedTimezone)?.abbr})
+                  </span>
+                </Label>
+                <div className="grid grid-cols-2 gap-2 max-h-60 overflow-y-auto p-2">
+                  {TIME_SLOTS.map((slot) => (
+                    <Button
+                      key={slot.id}
+                      type="button"
+                      variant={selectedSlot === slot.id ? 'default' : 'outline'}
+                      className="justify-start"
+                      onClick={() => setSelectedSlot(slot.id)}
+                    >
+                      {slot.time}
+                    </Button>
+                  ))}
                 </div>
-              )}
+                <Button type="button" className="mt-3" onClick={addSlotEntry}>
+                  Add This Date + Time
+                </Button>
+              </div>
+
+              <div className="space-y-2">
+                <Label className="mb-1 block">Scheduled to run ({slotEntries.length})</Label>
+                {slotEntries.length === 0 ? (
+                  <p className="text-xs text-muted-foreground">No slots added yet.</p>
+                ) : (
+                  <div className="space-y-2">
+                    {slotEntries
+                      .slice()
+                      .sort((a, b) => a.date.getTime() - b.date.getTime())
+                      .map((entry) => (
+                        <div key={entry.id} className="flex items-center justify-between rounded-md border border-border/60 px-3 py-2">
+                          <span className="text-sm">
+                            {format(entry.date, 'MMM d, yyyy')} • {TIME_SLOTS.find((slot) => slot.id === entry.slotId)?.time}
+                          </span>
+                          <Button type="button" variant="ghost" size="sm" onClick={() => removeSlotEntry(entry.id)}>
+                            Remove
+                          </Button>
+                        </div>
+                      ))}
+                  </div>
+                )}
+              </div>
             </>
           )}
 
@@ -378,9 +446,8 @@ export const ScheduleRadioSlotDialog: React.FC<ScheduleRadioSlotDialogProps> = (
                 <div className="flex items-center gap-2 flex-wrap">
                   <Badge>Selected</Badge>
                   <span className="font-semibold">
-                    {selectedDates.map(d => format(d, 'MMM d')).join(', ')} •{' '}
-                    {TIME_SLOTS.find((s) => s.id === selectedSlot)?.time}{' '}
-                    ({TIMEZONE_OPTIONS.find(tz => tz.value === selectedTimezone)?.abbr})
+                    {slotEntries.length} slot(s) scheduled
+                    {' '}({TIMEZONE_OPTIONS.find(tz => tz.value === selectedTimezone)?.abbr})
                   </span>
                 </div>
               </div>
@@ -424,8 +491,7 @@ export const ScheduleRadioSlotDialog: React.FC<ScheduleRadioSlotDialogProps> = (
                 <div className="flex items-center gap-2 flex-wrap">
                   <Badge>Selected</Badge>
                   <span className="font-semibold">
-                    {selectedDates.map(d => format(d, 'MMM d')).join(', ')} •{' '}
-                    {TIME_SLOTS.find((s) => s.id === selectedSlot)?.time}
+                    {slotEntries.length} slot(s) ready to run
                   </span>
                 </div>
                 <div className="text-sm text-muted-foreground">
@@ -458,7 +524,7 @@ export const ScheduleRadioSlotDialog: React.FC<ScheduleRadioSlotDialogProps> = (
             >
               {step > 1 ? 'Back' : 'Cancel'}
             </Button>
-            <Button type="submit" disabled={loading || (step === 1 && (selectedDates.length === 0 || !selectedSlot))}>
+            <Button type="submit" disabled={loading || (step === 1 && slotEntries.length === 0)}>
               {step < 3 ? 'Next' : loading ? 'Submitting...' : 'Submit Request'}
             </Button>
           </div>
