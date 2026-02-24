@@ -278,9 +278,13 @@ export const RadioMode: React.FC = () => {
     );
   }
 
-  // Split slots into upcoming and past
+  // Split slots into upcoming and past — always show pending/own slots even if time passed
   const now = new Date();
-  const upcomingSlots = scheduledSlots.filter(s => new Date(s.end_time) >= now);
+  const upcomingSlots = scheduledSlots.filter(s => 
+    new Date(s.end_time) >= now || 
+    s.approval_status === 'pending' || 
+    isMySlot(s)
+  );
   const mySlots = scheduledSlots.filter(s => isMySlot(s));
 
   return (
