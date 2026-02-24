@@ -664,11 +664,21 @@ const VoiceSegmentControls: React.FC<{
 
       setIsResolvingFileUrl(true);
       try {
-        const resolved = await resolveAudioUrl(segment.fileUrl, { bucketForKeys: 'chat-documents' });
-        if (!cancelled) setResolvedFileUrl(resolved);
+        const primary = await resolveAudioUrl(segment.fileUrl, { bucketForKeys: 'chat-files' });
+        const isPrimaryUsable = primary?.startsWith('http') || primary?.startsWith('blob:') || primary?.startsWith('data:');
+
+        if (isPrimaryUsable) {
+          if (!cancelled) setResolvedFileUrl(primary);
+          return;
+        }
+
+        const fallback = await resolveAudioUrl(segment.fileUrl, { bucketForKeys: 'chat-documents' });
+        const isFallbackUsable = fallback?.startsWith('http') || fallback?.startsWith('blob:') || fallback?.startsWith('data:');
+
+        if (!cancelled) setResolvedFileUrl(isFallbackUsable ? fallback : null);
       } catch (error) {
         console.error('Error resolving saved voice segment URL:', error);
-        if (!cancelled) setResolvedFileUrl(segment.fileUrl);
+        if (!cancelled) setResolvedFileUrl(null);
       } finally {
         if (!cancelled) setIsResolvingFileUrl(false);
       }
@@ -825,8 +835,10 @@ const VoiceSegmentControls: React.FC<{
         </div>
         {isResolvingFileUrl ? (
           <p className="text-xs text-muted-foreground">Loading audio preview...</p>
+        ) : resolvedFileUrl ? (
+          <audio src={resolvedFileUrl} controls className="w-full h-8" />
         ) : (
-          <audio src={resolvedFileUrl || undefined} controls className="w-full h-8" />
+          <p className="text-xs text-destructive">Audio file link is missing for this segment. Please re-upload it.</p>
         )}
         <div className="flex gap-2">
           <Button type="button" variant="outline" size="sm" className="text-xs gap-1 flex-1" onClick={onClearRecording}>

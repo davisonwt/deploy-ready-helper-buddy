@@ -205,9 +205,18 @@ export const ScheduleRadioSlotDialog: React.FC<ScheduleRadioSlotDialogProps> = (
         if (seg.file) {
           const filePath = `radio-content/${Date.now()}-${seg.file.name}`;
           const { error: uploadError } = await supabase.storage
-            .from('chat-documents')
-            .upload(filePath, seg.file);
-          if (!uploadError) fileUrl = filePath;
+            .from('chat-files')
+            .upload(filePath, seg.file, { upsert: false });
+
+          if (uploadError) {
+            throw new Error(`Failed to upload "${seg.file.name}": ${uploadError.message}`);
+          }
+
+          const { data: publicData } = supabase.storage
+            .from('chat-files')
+            .getPublicUrl(filePath);
+
+          fileUrl = publicData?.publicUrl || filePath;
         }
 
         segmentsData.push({
