@@ -233,8 +233,7 @@ export const ScheduleRadioSlotDialog: React.FC<ScheduleRadioSlotDialogProps> = (
           : `Your 2-hour show "${formData.show_title}" has been saved and submitted for approval.`,
       });
 
-      onOpenChange(false);
-      onSuccess();
+      // Reset state first, then close dialog
       setStep(1);
       setSelectedDate(undefined);
       setSelectedSlot('');
@@ -243,6 +242,11 @@ export const ScheduleRadioSlotDialog: React.FC<ScheduleRadioSlotDialogProps> = (
         show_title: '',
         description: '',
       });
+      // Close dialog after state reset to avoid stale overlay
+      setTimeout(() => {
+        onOpenChange(false);
+        onSuccess();
+      }, 100);
     } catch (error: any) {
       toast({
         title: 'Error',
