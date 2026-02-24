@@ -113,7 +113,7 @@ export const ScheduleRadioSlotDialog: React.FC<ScheduleRadioSlotDialogProps> = (
                 seg.duration ??
                 (typeof seg.duration_seconds === 'number' ? seg.duration_seconds / 60 : undefined),
               );
-              const durationMinutes = Number.isFinite(legacyDuration) ? Math.max(1 / 6, legacyDuration) : 3;
+              const durationMinutes = Number.isFinite(legacyDuration) ? Math.max(1, legacyDuration) : 3;
 
               return {
                 id: `seg-${i}-${Date.now()}`,
