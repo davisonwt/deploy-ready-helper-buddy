@@ -208,7 +208,7 @@ export const VoiceRecorderStudio: React.FC<VoiceRecorderStudioProps> = ({ open, 
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="glass-card bg-background/95 border-primary/20 max-w-lg max-h-[85vh] overflow-hidden flex flex-col">
+      <DialogContent className="glass-card bg-background/95 border-primary/20 max-w-lg max-h-[85vh] flex flex-col overflow-hidden">
         <DialogHeader>
           <DialogTitle className="text-xl flex items-center gap-2">
             <Mic className="w-5 h-5 text-primary" /> Voice Recording Studio
@@ -218,7 +218,7 @@ export const VoiceRecorderStudio: React.FC<VoiceRecorderStudioProps> = ({ open, 
           </DialogDescription>
         </DialogHeader>
 
-        <ScrollArea className="flex-1 min-h-0 max-h-[calc(85vh-120px)]">
+        <ScrollArea className="flex-1 min-h-0 overflow-y-auto" style={{ maxHeight: 'calc(85vh - 140px)' }}>
           <div className="space-y-4 pr-4">
             {/* Notes & AI Section */}
             <div className="glass-panel rounded-xl p-4 space-y-3">
