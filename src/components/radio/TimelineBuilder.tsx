@@ -355,7 +355,14 @@ export const TimelineBuilder: React.FC<TimelineBuilderProps> = ({ segments, onCh
             <div
               key={segment.id}
               draggable
-              onDragStart={() => setDragIndex(index)}
+              onDragStart={(e) => {
+                const target = e.target as HTMLElement;
+                if (target.closest('input, textarea, select, [contenteditable]')) {
+                  e.preventDefault();
+                  return;
+                }
+                setDragIndex(index);
+              }}
               onDragOver={(e) => { e.preventDefault(); setDragOverIndex(index); }}
               onDragEnd={() => {
                 if (dragIndex !== null && dragOverIndex !== null && dragIndex !== dragOverIndex) {
