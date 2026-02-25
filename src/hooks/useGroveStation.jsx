@@ -35,9 +35,52 @@ export function useGroveStation() {
     }
   }
 
-  // Fetch current show
-  const fetchCurrentShow = async () => {
+  // Fetch current show (optionally by specific schedule ID)
+  const fetchCurrentShow = async (targetScheduleId = null) => {
     try {
+      // If a specific schedule ID is requested (e.g. from Live Activities), load that directly
+      if (targetScheduleId) {
+        const { data: targetSlot } = await supabase
+          .from('radio_schedule')
+          .select(`
+            *,
+            radio_shows (show_name, description, category),
+            radio_djs (dj_name, avatar_url)
+          `)
+          .eq('id', targetScheduleId)
+          .eq('approval_status', 'approved')
+          .maybeSingle()
+
+        if (targetSlot) {
+          const isCurrentlyAiring = new Date(targetSlot.start_time) <= new Date() && new Date(targetSlot.end_time) >= new Date()
+          const show = {
+            schedule_id: targetSlot.id,
+            show_name: targetSlot.radio_shows?.show_name || targetSlot.show_subject || 'Show',
+            dj_name: targetSlot.radio_djs?.dj_name || 'DJ',
+            dj_avatar: targetSlot.radio_djs?.avatar_url,
+            category: targetSlot.radio_shows?.category,
+            description: targetSlot.radio_shows?.description,
+            start_time: targetSlot.start_time,
+            end_time: targetSlot.end_time,
+            broadcast_mode: targetSlot.broadcast_mode || 'live',
+            status: targetSlot.status || 'scheduled',
+            listener_count: targetSlot.listener_count || 0,
+            is_live: targetSlot.status === 'live' || (isCurrentlyAiring && targetSlot.broadcast_mode === 'pre_recorded'),
+          }
+          setCurrentShow(show)
+          if (show.is_live && show.schedule_id) {
+            const { data: existingSession } = await supabase
+              .from('radio_live_sessions')
+              .select('*')
+              .eq('schedule_id', show.schedule_id)
+              .eq('status', 'live')
+              .maybeSingle()
+            if (existingSession) setLiveSession(existingSession)
+          }
+          return
+        }
+      }
+
       // Primary: use DB function
       const { data, error } = await supabase.rpc('get_current_radio_show')
       if (error) throw error
@@ -557,8 +600,12 @@ export function useGroveStation() {
 
   // Initial data fetch
   useEffect(() => {
+    // Check if a specific schedule was requested via URL param
+    const urlParams = new URLSearchParams(window.location.search)
+    const targetSchedule = urlParams.get('schedule')
+    
     fetchStationConfig()
-    fetchCurrentShow()
+    fetchCurrentShow(targetSchedule || null)
     fetchSchedule()
     fetchDJs()
     if (user) {
