@@ -38,18 +38,45 @@ export function useGroveStation() {
   // Fetch current show (optionally by specific schedule ID)
   const fetchCurrentShow = async (targetScheduleId = null) => {
     try {
-      // If a specific schedule ID is requested (e.g. from Live Activities), load that directly
+      // If a specific schedule ID (or live session ID) is requested, resolve and load that slot directly
       if (targetScheduleId) {
-        const { data: targetSlot } = await supabase
+        let resolvedScheduleId = targetScheduleId
+
+        let { data: targetSlot } = await supabase
           .from('radio_schedule')
           .select(`
             *,
             radio_shows (show_name, description, category),
             radio_djs (dj_name, avatar_url)
           `)
-          .eq('id', targetScheduleId)
+          .eq('id', resolvedScheduleId)
           .eq('approval_status', 'approved')
           .maybeSingle()
+
+        // Fallback: target may be a radio_live_sessions.id, so resolve to schedule_id first
+        if (!targetSlot) {
+          const { data: targetSession } = await supabase
+            .from('radio_live_sessions')
+            .select('schedule_id')
+            .eq('id', targetScheduleId)
+            .maybeSingle()
+
+          if (targetSession?.schedule_id) {
+            resolvedScheduleId = targetSession.schedule_id
+            const { data: resolvedSlot } = await supabase
+              .from('radio_schedule')
+              .select(`
+                *,
+                radio_shows (show_name, description, category),
+                radio_djs (dj_name, avatar_url)
+              `)
+              .eq('id', resolvedScheduleId)
+              .eq('approval_status', 'approved')
+              .maybeSingle()
+
+            targetSlot = resolvedSlot
+          }
+        }
 
         if (targetSlot) {
           const isCurrentlyAiring = new Date(targetSlot.start_time) <= new Date() && new Date(targetSlot.end_time) >= new Date()
