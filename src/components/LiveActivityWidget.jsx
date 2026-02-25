@@ -698,10 +698,10 @@ export default function LiveActivityWidget() {
                         </div>
                         <div>
                           <div className="text-xs font-medium" style={{ color: currentTheme.textPrimary }}>
-                            {session.radio_schedule?.radio_djs?.dj_name || 'DJ Live'}
+                            {session.radio_schedule?.radio_shows?.show_name || session.radio_schedule?.show_subject || 'Live Show'}
                           </div>
                           <div className="text-xs" style={{ color: currentTheme.textSecondary }}>
-                            {session.viewer_count || 0} listeners
+                            {session.radio_schedule?.radio_djs?.dj_name || 'DJ Live'} · {session.viewer_count || 0} listeners
                           </div>
                         </div>
                       </div>
