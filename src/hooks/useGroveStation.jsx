@@ -38,9 +38,11 @@ export function useGroveStation() {
   // Fetch current show (optionally by specific schedule ID)
   const fetchCurrentShow = async (targetScheduleId = null) => {
     try {
+      const requestedScheduleId = targetScheduleId || new URLSearchParams(window.location.search).get('schedule')
+
       // If a specific schedule ID (or live session ID) is requested, resolve and load that slot directly
-      if (targetScheduleId) {
-        let resolvedScheduleId = targetScheduleId
+      if (requestedScheduleId) {
+        let resolvedScheduleId = requestedScheduleId
 
         let { data: targetSlot } = await supabase
           .from('radio_schedule')
@@ -58,7 +60,7 @@ export function useGroveStation() {
           const { data: targetSession } = await supabase
             .from('radio_live_sessions')
             .select('schedule_id')
-            .eq('id', targetScheduleId)
+            .eq('id', requestedScheduleId)
             .maybeSingle()
 
           if (targetSession?.schedule_id) {
