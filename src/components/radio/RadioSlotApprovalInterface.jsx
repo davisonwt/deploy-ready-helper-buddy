@@ -101,8 +101,8 @@ export function RadioSlotApprovalInterface() {
         })
       }
       
-      // Filter out entries with null radio_shows to prevent render crashes
-      setRequests(requestsWithApproverInfo.filter(r => r.radio_shows != null))
+      // Show all entries - radio_shows may be null for pending slots
+      setRequests(requestsWithApproverInfo)
       
     } catch (error) {
       console.error('❌ Error fetching requests:', error)
