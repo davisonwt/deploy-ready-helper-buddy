@@ -220,7 +220,8 @@ export const ScheduleRadioSlotDialog: React.FC<ScheduleRadioSlotDialogProps> = (
       for (const seg of timelineSegments) {
         let fileUrl: string | undefined = seg.fileUrl;
         if (seg.file) {
-          const filePath = `radio-content/${Date.now()}-${seg.file.name}`;
+          const sanitizedName = seg.file.name.replace(/[^a-zA-Z0-9._-]/g, '_');
+          const filePath = `radio-content/${Date.now()}-${sanitizedName}`;
           const { error: uploadError } = await supabase.storage
             .from('chat-files')
             .upload(filePath, seg.file, { upsert: false });
