@@ -54,6 +54,7 @@ export function useGroveStation() {
             radio_djs (dj_name, avatar_url)
           `)
           .eq('status', 'live')
+          .eq('approval_status', 'approved')
           .order('start_time', { ascending: false })
           .limit(1)
           .maybeSingle()
@@ -85,6 +86,7 @@ export function useGroveStation() {
             radio_shows (show_name, description, category),
             radio_djs (dj_name, avatar_url)
           `)
+          .eq('approval_status', 'approved')
           .gte('end_time', new Date().toISOString())
           .order('start_time', { ascending: true })
           .limit(1)
@@ -148,6 +150,7 @@ export function useGroveStation() {
           )
         `)
         .eq('time_slot_date', date)
+        .eq('approval_status', 'approved')
         .order('hour_slot')
 
       if (error) throw error
@@ -590,6 +593,7 @@ export function useGroveStation() {
     isDJ: !!userDJProfile,
     canGoLive: userDJProfile && schedule.some(slot => 
       slot.dj_name === userDJProfile.dj_name && 
+      slot.approval_status === 'approved' &&
       slot.status === 'scheduled' &&
       new Date().getHours() === slot.hour_slot
     )
