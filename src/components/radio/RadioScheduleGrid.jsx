@@ -95,6 +95,7 @@ export function RadioScheduleGrid({ schedule, compact = false, showLegend = true
           )
         `)
         .eq('time_slot_date', today)
+        .eq('approval_status', 'approved')
         .order('hour_slot', { ascending: true })
 
       if (error) throw error
