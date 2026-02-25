@@ -342,6 +342,7 @@ export default function LiveActivityWidget() {
         .select(`
           *,
           radio_schedule!inner (
+            id,
             radio_shows!inner (
               show_name
             ),
@@ -357,6 +358,7 @@ export default function LiveActivityWidget() {
 
       const aodHereticFrequencies = aodData ? {
         id: aodData.id,
+        scheduleId: aodData.radio_schedule?.id,
         showName: aodData.radio_schedule?.radio_shows?.show_name || "AoD Heretic's Frequencies",
         currentHost: aodData.radio_schedule?.radio_djs?.dj_name || "Ed",
         hostAvatar: aodData.radio_schedule?.radio_djs?.avatar_url,
@@ -712,7 +714,7 @@ export default function LiveActivityWidget() {
                           backgroundColor: currentTheme.secondaryButton,
                           color: currentTheme.textPrimary
                         }}
-                        onClick={() => joinActivity('radio', session.id)}
+                        onClick={() => joinActivity('radio', session.radio_schedule?.id || session.id)}
                       >
                         Listen
                       </button>
@@ -773,7 +775,7 @@ export default function LiveActivityWidget() {
                           backgroundColor: currentTheme.secondaryButton,
                           color: currentTheme.textPrimary
                         }}
-                        onClick={() => joinActivity('radio', liveData.aodHereticFrequencies.id)}
+                        onClick={() => joinActivity('radio', liveData.aodHereticFrequencies.scheduleId || liveData.aodHereticFrequencies.id)}
                         disabled={!liveData.aodHereticFrequencies.isLive}
                       >
                         {liveData.aodHereticFrequencies.isLive ? 'Tune In' : 'Offline'}
