@@ -101,7 +101,8 @@ export function RadioSlotApprovalInterface() {
         })
       }
       
-      setRequests(requestsWithApproverInfo)
+      // Filter out entries with null radio_shows to prevent render crashes
+      setRequests(requestsWithApproverInfo.filter(r => r.radio_shows != null))
       
     } catch (error) {
       console.error('❌ Error fetching requests:', error)
@@ -341,9 +342,9 @@ export function RadioSlotApprovalInterface() {
                             </AvatarFallback>
                           </Avatar>
                           <div>
-                            <h4 className="font-medium">{request.radio_shows.show_name}</h4>
+                            <h4 className="font-medium">{request.radio_shows?.show_name || 'Untitled Show'}</h4>
                             <p className="text-sm text-muted-foreground">
-                              DJ {request.radio_djs.dj_name}
+                              DJ {request.radio_djs?.dj_name || 'Unknown'}
                             </p>
                             <div className="flex items-center gap-2 mt-1">
                               <Calendar className="h-3 w-3" />
@@ -384,9 +385,9 @@ export function RadioSlotApprovalInterface() {
                           </AvatarFallback>
                         </Avatar>
                         <div>
-                          <h4 className="font-medium">{request.radio_shows.show_name}</h4>
+                          <h4 className="font-medium">{request.radio_shows?.show_name || 'Untitled Show'}</h4>
                           <p className="text-sm text-muted-foreground">
-                            DJ {request.radio_djs.dj_name}
+                            DJ {request.radio_djs?.dj_name || 'Unknown'}
                           </p>
                           <div className="flex items-center gap-2 mt-1">
                             <Calendar className="h-3 w-3" />
@@ -431,9 +432,9 @@ export function RadioSlotApprovalInterface() {
                           </AvatarFallback>
                         </Avatar>
                         <div>
-                          <h4 className="font-medium">{request.radio_shows.show_name}</h4>
+                          <h4 className="font-medium">{request.radio_shows?.show_name || 'Untitled Show'}</h4>
                           <p className="text-sm text-muted-foreground">
-                            DJ {request.radio_djs.dj_name}
+                            DJ {request.radio_djs?.dj_name || 'Unknown'}
                           </p>
                           <div className="flex items-center gap-2 mt-1">
                             <Calendar className="h-3 w-3" />
@@ -488,9 +489,9 @@ export function RadioSlotApprovalInterface() {
                       </AvatarFallback>
                     </Avatar>
                     <div>
-                      <h3>{selectedRequest.radio_shows.show_name}</h3>
+                      <h3>{selectedRequest.radio_shows?.show_name || 'Untitled Show'}</h3>
                       <p className="text-sm text-muted-foreground">
-                        DJ {selectedRequest.radio_djs.dj_name}
+                        DJ {selectedRequest.radio_djs?.dj_name || 'Unknown'}
                       </p>
                     </div>
                     {getStatusBadge(selectedRequest.approval_status)}
@@ -506,26 +507,26 @@ export function RadioSlotApprovalInterface() {
                     </div>
                     <div>
                       <Label className="text-sm font-medium">Category</Label>
-                      <p className="text-sm capitalize">{selectedRequest.radio_shows.category?.replace('_', ' ')}</p>
+                      <p className="text-sm capitalize">{selectedRequest.radio_shows?.category?.replace('_', ' ') || 'N/A'}</p>
                     </div>
                   </div>
                   
                   <div>
                     <Label className="text-sm font-medium">Subject/Topic</Label>
-                    <p className="text-sm">{selectedRequest.radio_shows.subject}</p>
+                    <p className="text-sm">{selectedRequest.radio_shows?.subject || 'N/A'}</p>
                   </div>
 
-                  {selectedRequest.radio_shows.description && (
+                  {selectedRequest.radio_shows?.description && (
                     <div>
                       <Label className="text-sm font-medium">Description</Label>
-                      <p className="text-sm">{selectedRequest.radio_shows.description}</p>
+                      <p className="text-sm">{selectedRequest.radio_shows?.description}</p>
                     </div>
                   )}
 
-                  {selectedRequest.radio_shows.topic_description && (
+                  {selectedRequest.radio_shows?.topic_description && (
                     <div>
                       <Label className="text-sm font-medium">Episode Topic Description</Label>
-                      <p className="text-sm">{selectedRequest.radio_shows.topic_description}</p>
+                      <p className="text-sm">{selectedRequest.radio_shows?.topic_description}</p>
                     </div>
                   )}
 
