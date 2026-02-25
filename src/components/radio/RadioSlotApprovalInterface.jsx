@@ -255,6 +255,10 @@ export function RadioSlotApprovalInterface() {
     }
   }
 
+  const getRequestTitle = (request) => {
+    return request?.radio_shows?.show_name?.trim() || request?.show_subject?.trim() || request?.radio_shows?.subject?.trim() || 'Untitled Show'
+  }
+
   if (!hasPermission) {
     return (
       <Card>
@@ -342,7 +346,7 @@ export function RadioSlotApprovalInterface() {
                             </AvatarFallback>
                           </Avatar>
                           <div>
-                            <h4 className="font-medium">{request.radio_shows?.show_name || 'Untitled Show'}</h4>
+                            <h4 className="font-medium">{getRequestTitle(request)}</h4>
                             <p className="text-sm text-muted-foreground">
                               DJ {request.radio_djs?.dj_name || 'Unknown'}
                             </p>
@@ -385,7 +389,7 @@ export function RadioSlotApprovalInterface() {
                           </AvatarFallback>
                         </Avatar>
                         <div>
-                          <h4 className="font-medium">{request.radio_shows?.show_name || 'Untitled Show'}</h4>
+                          <h4 className="font-medium">{getRequestTitle(request)}</h4>
                           <p className="text-sm text-muted-foreground">
                             DJ {request.radio_djs?.dj_name || 'Unknown'}
                           </p>
@@ -432,7 +436,7 @@ export function RadioSlotApprovalInterface() {
                           </AvatarFallback>
                         </Avatar>
                         <div>
-                          <h4 className="font-medium">{request.radio_shows?.show_name || 'Untitled Show'}</h4>
+                          <h4 className="font-medium">{getRequestTitle(request)}</h4>
                           <p className="text-sm text-muted-foreground">
                             DJ {request.radio_djs?.dj_name || 'Unknown'}
                           </p>
@@ -489,7 +493,7 @@ export function RadioSlotApprovalInterface() {
                       </AvatarFallback>
                     </Avatar>
                     <div>
-                      <h3>{selectedRequest.radio_shows?.show_name || 'Untitled Show'}</h3>
+                      <h3>{getRequestTitle(selectedRequest)}</h3>
                       <p className="text-sm text-muted-foreground">
                         DJ {selectedRequest.radio_djs?.dj_name || 'Unknown'}
                       </p>
