@@ -585,8 +585,8 @@ export default function LiveActivityWidget() {
     try {
       switch (type) {
         case 'radio':
-          // Navigate to radio station
-          window.location.href = '/grove-station'
+          // Navigate to radio station with specific schedule ID
+          window.location.href = `/grove-station?schedule=${activityId}`
           break
         case 'chat': {
           // Join chat room
