@@ -71,7 +71,7 @@ export function RadioSlotApprovalInterface() {
             user_id
           )
         `)
-        .eq('requires_review', true)
+        .in('approval_status', ['pending', 'approved', 'rejected'])
         .order('created_at', { ascending: false })
 
       if (error) {
@@ -154,7 +154,7 @@ export function RadioSlotApprovalInterface() {
 
       toast({
         title: "Request Approved! ✅",
-        description: `${selectedRequest.radio_djs.dj_name}'s radio slot has been approved.`,
+        description: `${selectedRequest.radio_djs?.dj_name || 'DJ'}'s radio slot has been approved.`,
       })
 
       setShowDetailsModal(false)
@@ -186,7 +186,7 @@ export function RadioSlotApprovalInterface() {
 
       toast({
         title: "Request Rejected",
-        description: `${selectedRequest.radio_djs.dj_name}'s radio slot has been rejected.`,
+        description: `${selectedRequest.radio_djs?.dj_name || 'DJ'}'s radio slot has been rejected.`,
       })
 
       setShowDetailsModal(false)
@@ -336,7 +336,7 @@ export function RadioSlotApprovalInterface() {
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-4">
                           <Avatar className="h-12 w-12">
-                            <AvatarImage src={request.radio_djs.avatar_url} />
+                            <AvatarImage src={request.radio_djs?.avatar_url} />
                             <AvatarFallback>
                               <User className="h-6 w-6" />
                             </AvatarFallback>
@@ -379,7 +379,7 @@ export function RadioSlotApprovalInterface() {
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-4">
                         <Avatar className="h-12 w-12">
-                          <AvatarImage src={request.radio_djs.avatar_url} />
+                          <AvatarImage src={request.radio_djs?.avatar_url} />
                           <AvatarFallback>
                             <User className="h-6 w-6" />
                           </AvatarFallback>
@@ -426,7 +426,7 @@ export function RadioSlotApprovalInterface() {
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-4">
                         <Avatar className="h-12 w-12">
-                          <AvatarImage src={request.radio_djs.avatar_url} />
+                          <AvatarImage src={request.radio_djs?.avatar_url} />
                           <AvatarFallback>
                             <User className="h-6 w-6" />
                           </AvatarFallback>
@@ -483,7 +483,7 @@ export function RadioSlotApprovalInterface() {
                 <CardHeader>
                   <CardTitle className="flex items-center gap-3">
                     <Avatar className="h-12 w-12">
-                      <AvatarImage src={selectedRequest.radio_djs.avatar_url} />
+                      <AvatarImage src={selectedRequest.radio_djs?.avatar_url} />
                       <AvatarFallback>
                         <User className="h-6 w-6" />
                       </AvatarFallback>
