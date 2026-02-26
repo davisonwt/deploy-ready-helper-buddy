@@ -144,7 +144,7 @@ export function MusicPurchaseInterface({
                 >
                   <div className="flex items-center gap-3">
                     <div className="w-8 h-8 rounded-full bg-primary/20 text-primary text-sm flex items-center justify-center font-medium">
-                      {index + 1}
+                      {currentTrackIndex >= 0 ? ((currentTrackIndex + 1 + index) % tracks.length) + 1 : index + 2}
                     </div>
                     <div>
                       <p className="font-medium text-sm text-foreground">{track.track_title}</p>
