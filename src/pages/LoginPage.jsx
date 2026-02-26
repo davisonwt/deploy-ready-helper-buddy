@@ -191,7 +191,7 @@ export default function LoginPage() {
           </p>
         </div>
         
-        <Card className="bg-white/95 backdrop-blur-lg border-0 shadow-2xl transition-all duration-500 hover:shadow-3xl">
+        <Card className="bg-[hsl(210,40%,14%)] backdrop-blur-lg border border-emerald-500/30 shadow-2xl transition-all duration-500 hover:shadow-3xl text-white">
           <CardHeader className="text-center pb-4">
             <div className="flex justify-center mb-6">
               <div className="w-24 h-24 rounded-2xl overflow-hidden shadow-2xl ring-4 ring-blue-100">
@@ -202,7 +202,7 @@ export default function LoginPage() {
                 />
               </div>
             </div>
-            <CardTitle className="text-xl text-blue-700 mb-2" style={{ fontFamily: "Playfair Display, serif" }}>
+            <CardTitle className="text-xl text-white mb-2" style={{ fontFamily: "Playfair Display, serif" }}>
               Enter Your Orchard
             </CardTitle>
             <Badge variant="secondary" className="bg-gradient-to-r from-blue-500 to-green-500 text-white border-0">
@@ -232,8 +232,8 @@ export default function LoginPage() {
               )}
               
               <div className="space-y-2">
-                <label htmlFor="email" className="text-sm font-medium text-blue-700 flex items-center">
-                  <Mail className="h-4 w-4 mr-2 text-blue-500" />
+                <label htmlFor="email" className="text-sm font-medium text-white flex items-center">
+                  <Mail className="h-4 w-4 mr-2 text-blue-400" />
                   Username
                 </label>
                 <div className="relative group">
@@ -246,7 +246,7 @@ export default function LoginPage() {
                     sanitizeType="email"
                     rateLimitKey="login_form"
                     securityLevel="high"
-                    className="w-full px-4 py-3 border-2 border-gray-200 bg-white rounded-xl focus:ring-2 focus:ring-blue-400 focus:border-blue-400 transition-all duration-300 text-foreground placeholder:text-muted-foreground hover:border-gray-300 shadow-sm hover:shadow-md"
+                    className="w-full px-4 py-3 border-2 border-slate-600 bg-slate-700/80 rounded-xl focus:ring-2 focus:ring-blue-400 focus:border-blue-400 transition-all duration-300 text-white placeholder:text-slate-400 hover:border-slate-500 shadow-sm hover:shadow-md"
                     placeholder="your@email.com"
                     required
                     disabled={loading || securityViolations >= 3}
@@ -256,8 +256,8 @@ export default function LoginPage() {
               </div>
               
               <div className="space-y-2">
-                <label htmlFor="password" className="text-sm font-medium text-green-700 flex items-center">
-                  <Lock className="h-4 w-4 mr-2 text-green-500" />
+                <label htmlFor="password" className="text-sm font-medium text-white flex items-center">
+                  <Lock className="h-4 w-4 mr-2 text-green-400" />
                   Password
                 </label>
                 <div className="relative group">
@@ -270,7 +270,7 @@ export default function LoginPage() {
                     sanitizeType="text"
                     rateLimitKey="login_form"
                     securityLevel="high"
-                    className="w-full px-4 py-3 border-2 border-gray-200 bg-white rounded-xl focus:ring-2 focus:ring-green-400 focus:border-green-400 transition-all duration-300 text-foreground placeholder:text-muted-foreground hover:border-gray-300 shadow-sm hover:shadow-md pr-12"
+                    className="w-full px-4 py-3 border-2 border-slate-600 bg-slate-700/80 rounded-xl focus:ring-2 focus:ring-green-400 focus:border-green-400 transition-all duration-300 text-white placeholder:text-slate-400 hover:border-slate-500 shadow-sm hover:shadow-md pr-12"
                     placeholder="Enter your password"
                     required
                     disabled={loading || securityViolations >= 3}
@@ -324,7 +324,7 @@ export default function LoginPage() {
               <div className="text-center">
                 <button
                   type="button"
-                  className="text-sm text-yellow-400 hover:text-yellow-300 font-semibold transition-colors duration-200 underline underline-offset-2"
+                  className="text-sm text-amber-300 hover:text-amber-200 font-semibold transition-colors duration-200 underline underline-offset-4 decoration-amber-400/60 hover:decoration-amber-300 bg-slate-800/50 px-4 py-2 rounded-lg"
                   onClick={() => setShowForgotPassword(true)}
                 >
                   Forgot Password?
@@ -334,22 +334,22 @@ export default function LoginPage() {
             
             <div className="relative">
               <div className="absolute inset-0 flex items-center">
-                <div className="w-full border-t border-border"></div>
+                <div className="w-full border-t border-slate-700"></div>
               </div>
               <div className="relative flex justify-center text-xs uppercase">
-                <span className="bg-card px-2 text-muted-foreground">New to our community?</span>
+                <span className="bg-[hsl(210,40%,14%)] px-2 text-slate-400">New to our community?</span>
               </div>
             </div>
             
             <div className="text-center space-y-3">
-              <p className="text-sm text-muted-foreground mb-3">
+              <p className="text-sm text-slate-400 mb-3">
                 Ready to start sowing and bestowing?
               </p>
               <div className="flex flex-col gap-2">
                 <Link to="/register">
-                  <Button 
+                    <Button 
                     variant="outline" 
-                    className="w-full border-blue-300 text-blue-600 hover:bg-blue-50 hover:border-blue-500 transition-all duration-300 hover:scale-105 font-medium"
+                    className="w-full border-blue-400/50 text-blue-300 hover:bg-blue-900/30 hover:border-blue-400 transition-all duration-300 hover:scale-105 font-medium"
                   >
                     <Users className="h-4 w-4 mr-2" />
                     Join Our Community
@@ -360,7 +360,7 @@ export default function LoginPage() {
                   variant="ghost" 
                   onClick={handleGuestAccess}
                   disabled={loading}
-                  className="w-full text-gray-600 hover:text-gray-800 hover:bg-gray-50 transition-all duration-300 text-sm"
+                  className="w-full text-slate-400 hover:text-slate-200 hover:bg-slate-800/50 transition-all duration-300 text-sm"
                 >
                   {loading ? (
                     <div className="flex items-center">
@@ -374,14 +374,14 @@ export default function LoginPage() {
               </div>
             </div>
             
-            <div className="pt-4 border-t border-border">
+            <div className="pt-4 border-t border-slate-700">
               <div className="text-center space-y-2">
-                <div className="flex justify-center items-center space-x-2 text-xs text-muted-foreground">
+                <div className="flex justify-center items-center space-x-2 text-xs text-slate-400">
                   <Heart className="h-3 w-3 text-red-400" />
                   <span>"Give, and it will be given to you..."</span>
                   <Heart className="h-3 w-3 text-red-400" />
                 </div>
-                <p className="text-xs text-muted-foreground italic">Luke 6:38</p>
+                <p className="text-xs text-slate-500 italic">Luke 6:38</p>
               </div>
             </div>
           </CardContent>
