@@ -55,12 +55,25 @@ export default function GroveStationPage() {
     canGoLive,
     liveSession,
     updateShowStatus,
-    submitFeedback
+    submitFeedback,
+    fetchCurrentShow
   } = useGroveStation()
 
   const [showCreateDJ, setShowCreateDJ] = useState(false)
   const [showScheduleForm, setShowScheduleForm] = useState(false)
   const [showLiveInterface, setShowLiveInterface] = useState(false)
+  const [activeTab, setActiveTab] = useState('listen')
+
+  const handleScheduleSelect = async (scheduleId) => {
+    if (!scheduleId) return
+
+    const url = new URL(window.location.href)
+    url.searchParams.set('schedule', scheduleId)
+    window.history.replaceState({}, '', `${url.pathname}?${url.searchParams.toString()}`)
+
+    await fetchCurrentShow(scheduleId)
+    setActiveTab('listen')
+  }
 
   const handleGoLive = async () => {
     if (canGoLive && currentShow) {
@@ -113,7 +126,7 @@ export default function GroveStationPage() {
 
         {/* Prominent Tab Navigation */}
         <Card className="border-2 border-amber-500/20 shadow-xl">
-          <Tabs defaultValue="listen" className="w-full">
+          <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
             <div className="p-6">
               <TabsList className="w-full h-auto bg-transparent grid gap-3" style={{ gridTemplateColumns: 'repeat(3, 1fr)' }}>
                 {/* First Row - 3 buttons */}
@@ -256,7 +269,7 @@ export default function GroveStationPage() {
                 </Button>
               )}
             </div>
-            <RadioScheduleGrid schedule={schedule} />
+            <RadioScheduleGrid schedule={schedule} onSelectSchedule={handleScheduleSelect} />
             
             <div className="mt-8 space-y-8">
               <div>

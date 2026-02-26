@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
@@ -29,10 +29,11 @@ const CATEGORY_COLORS = {
   live_call_in: 'bg-pink-500/10 border-pink-500/20 text-pink-700'
 }
 
-export function RadioScheduleGrid({ schedule, compact = false, showLegend = true }) {
+export function RadioScheduleGrid({ schedule, compact = false, showLegend = true, onSelectSchedule }) {
   const [selectedSlot, setSelectedSlot] = useState('current')
   const [liveSchedule, setLiveSchedule] = useState([])
   const [loading, setLoading] = useState(true)
+  const lastSelectedScheduleRef = useRef(null)
   const currentHour = new Date().getHours()
   const currentSlotIndex = Math.floor(currentHour / 2)
 
@@ -145,6 +146,21 @@ export function RadioScheduleGrid({ schedule, compact = false, showLegend = true
   const mainSlot = currentSlotGroup.slots.find(s => s.id) || currentSlotGroup.slots[0]
   const isLive = mainSlot?.status === 'live'
   const isCurrentSlot = currentSlotGroup.slotIndex === currentSlotIndex
+
+  useEffect(() => {
+    if (selectedSlot === 'current') {
+      lastSelectedScheduleRef.current = null
+      return
+    }
+
+    const selectedGroup = slotGroups.find(slot => slot.slotIndex.toString() === selectedSlot)
+    const selectedMainSlot = selectedGroup?.slots?.find(s => s.id) || selectedGroup?.slots?.[0]
+
+    if (selectedMainSlot?.id && selectedMainSlot.id !== lastSelectedScheduleRef.current) {
+      lastSelectedScheduleRef.current = selectedMainSlot.id
+      onSelectSchedule?.(selectedMainSlot.id)
+    }
+  }, [selectedSlot, slotGroups, onSelectSchedule])
 
   if (loading) {
     return (
