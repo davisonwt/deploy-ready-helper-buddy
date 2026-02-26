@@ -288,12 +288,35 @@ export function useGroveStation() {
     }
   }
 
-  // Create DJ profile
+  // Create DJ profile (upsert - returns existing if one exists)
   const createDJProfile = async (profileData) => {
     if (!user) return { success: false, error: 'Not authenticated' }
 
     try {
       setLoading(true)
+
+      // Check if user already has a DJ profile
+      const { data: existing, error: checkError } = await supabase
+        .from('radio_djs')
+        .select('*')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .maybeSingle()
+
+      if (checkError) throw checkError
+
+      if (existing) {
+        // User already has a profile — return it
+        setUserDJProfile(existing)
+        toast({
+          title: "DJ Profile Found",
+          description: `Welcome back, ${existing.dj_name}! You already have a DJ profile.`,
+        })
+        return { success: true, data: existing }
+      }
+
+      // No existing profile — create one
       const { data, error } = await supabase
         .from('radio_djs')
         .insert([{
