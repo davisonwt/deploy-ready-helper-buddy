@@ -335,6 +335,8 @@ export const RadioMode: React.FC = () => {
               const isLive = slot.status === 'live';
               const isPending = slot.approval_status === 'pending';
               const isMine = isMySlot(slot);
+              const isFutureApproved = slot.approval_status === 'approved' && new Date(slot.start_time) > now;
+              const isEditable = isPending || isFutureApproved;
 
               return (
                 <motion.div
@@ -385,7 +387,7 @@ export const RadioMode: React.FC = () => {
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="end" className="bg-popover border border-border">
                               <DropdownMenuItem onClick={() => {
-                                if (slot.approval_status === 'pending') {
+                                if (isEditable) {
                                   setEditSlotData({
                                     id: slot.id,
                                     time_slot_date: slot.time_slot_date,
@@ -396,7 +398,7 @@ export const RadioMode: React.FC = () => {
                                   });
                                   setScheduleDialogOpen(true);
                                 } else {
-                                  toast.info('Only pending slots can be edited.');
+                                  toast.info('You can edit pending slots and approved slots that have not started yet.');
                                 }
                               }}>
                                 <Edit className="h-4 w-4 mr-2" />
