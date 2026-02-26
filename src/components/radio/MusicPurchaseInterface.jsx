@@ -14,7 +14,7 @@ import {
 import { useMusicPurchase } from '@/hooks/useMusicPurchase'
 import { useAuth } from '@/hooks/useAuth'
 import { toast } from 'sonner'
-
+import { getStandardSinglePriceBreakdown } from '@/utils/musicPricing'
 export function MusicPurchaseInterface({ 
   tracks = [], 
   currentTrack = null, 
@@ -71,13 +71,8 @@ export function MusicPurchaseInterface({
     return `${mins}:${secs.toString().padStart(2, '0')}`
   }
 
-  const getPricingBreakdown = (track) => {
-    const rawPrice = Number(track?.price)
-    const base = Number.isFinite(rawPrice) && rawPrice >= 2 ? rawPrice : 2
-    const tithing = base * 0.1
-    const admin = base * 0.05
-    const total = base + tithing + admin
-    return { base, tithing, admin, total }
+  const getPricingBreakdown = () => {
+    return getStandardSinglePriceBreakdown()
   }
 
   const getTrackSlotNumber = (track, fallbackIndex = 0) => {

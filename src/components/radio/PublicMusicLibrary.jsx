@@ -19,7 +19,7 @@ import {
 import { supabase } from '@/integrations/supabase/client'
 import { useMusicPurchase } from '@/hooks/useMusicPurchase'
 import { useAuth } from '@/hooks/useAuth'
-
+import { getStandardSingleTotalPrice } from '@/utils/musicPricing'
 export default function PublicMusicLibrary() {
   const { user } = useAuth()
   const { purchaseTrack, loading: purchasing } = useMusicPurchase()
@@ -53,6 +53,11 @@ export default function PublicMusicLibrary() {
       return `${(bytes / 1024).toFixed(1)} KB`
     }
     return `${(bytes / (1024 * 1024)).toFixed(1)} MB`
+  }
+
+  const getDisplayPrice = (track) => {
+    if (!track?.price || Number(track.price) <= 0) return 0
+    return getStandardSingleTotalPrice()
   }
 
   const fetchTracks = async () => {
@@ -519,7 +524,7 @@ export default function PublicMusicLibrary() {
                         className="flex items-center gap-2"
                       >
                         <ShoppingCart className="h-4 w-4" />
-                        ${track.price ? Number(track.price).toFixed(2) : '0.00'} USDC
+                        ${getDisplayPrice(track).toFixed(2)} USDC
                       </Button>
                     ) : (
                       <Button variant="outline" size="sm" disabled>
