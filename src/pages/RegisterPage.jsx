@@ -199,10 +199,10 @@ export default function RegisterPage() {
           <span className="font-medium">Back to sow2grow</span>
         </Link>
         
-        <Card className="bg-white/95 backdrop-blur-lg border-0 shadow-2xl hover:shadow-3xl transition-all duration-500 overflow-hidden">
+        <Card className="bg-[hsl(210,40%,14%)] backdrop-blur-lg border border-emerald-500/30 shadow-2xl hover:shadow-3xl transition-all duration-500 overflow-hidden text-white">
           {/* Beautiful gradient header */}
           <div className="bg-gradient-to-r from-green-600 via-blue-600 to-green-600 p-1">
-            <div className="bg-white/95 rounded-t-lg">
+            <div className="bg-[hsl(210,40%,14%)] rounded-t-lg">
               <CardHeader className="text-center pb-8 pt-8">
                 {/* Logo */}
                 <div className="flex justify-center mb-6">
@@ -214,10 +214,10 @@ export default function RegisterPage() {
                     />
                   </div>
                 </div>
-                <CardTitle className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-green-600 bg-clip-text text-transparent mb-2" style={{ fontFamily: "Playfair Display, serif" }}>
+                <CardTitle className="text-3xl font-bold text-white mb-2" style={{ fontFamily: "Playfair Display, serif" }}>
                   Join the sow2grow Community
                 </CardTitle>
-                <p className="text-gray-600 text-lg mb-4">Begin your journey in the 364yhvh community farm</p>
+                <p className="text-slate-300 text-lg mb-4">Begin your journey in the 364yhvh community farm</p>
                 <div className="flex justify-center gap-2 mb-4">
                   <Button 
                     onClick={() => setShowQuickRegistration(true)}
@@ -287,7 +287,7 @@ export default function RegisterPage() {
               
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-2">
-                  <label htmlFor="firstName" className="text-sm font-semibold text-foreground">
+                  <label htmlFor="firstName" className="text-sm font-semibold text-white">
                     First Name
                   </label>
                   <SecureInput
@@ -299,14 +299,14 @@ export default function RegisterPage() {
                     sanitizeType="text"
                     maxLength={50}
                     rateLimitKey="registration_form"
-                    className="w-full px-4 py-3 border-2 border-gray-200 bg-white rounded-xl focus:ring-2 focus:ring-green-400 focus:border-green-400 transition-all duration-300 text-gray-900 placeholder:text-gray-400 hover:border-gray-300 shadow-sm hover:shadow-md text-center"
+                    className="w-full px-4 py-3 border-2 border-slate-600 bg-slate-700/80 rounded-xl focus:ring-2 focus:ring-green-400 focus:border-green-400 transition-all duration-300 text-white placeholder:text-slate-400 hover:border-slate-500 shadow-sm hover:shadow-md text-center"
                     placeholder="Enter first name"
                     required
                   />
                 </div>
                 
                 <div className="space-y-2">
-                  <label htmlFor="lastName" className="text-sm font-semibold text-foreground">
+                  <label htmlFor="lastName" className="text-sm font-semibold text-white">
                     Last Name
                   </label>
                   <SecureInput
@@ -318,7 +318,7 @@ export default function RegisterPage() {
                     sanitizeType="text"
                     maxLength={50}
                     rateLimitKey="registration_form"
-                    className="w-full px-4 py-3 border-2 border-gray-200 bg-white rounded-xl focus:ring-2 focus:ring-green-400 focus:border-green-400 transition-all duration-300 text-gray-900 placeholder:text-gray-400 hover:border-gray-300 shadow-sm hover:shadow-md text-center"
+                    className="w-full px-4 py-3 border-2 border-slate-600 bg-slate-700/80 rounded-xl focus:ring-2 focus:ring-green-400 focus:border-green-400 transition-all duration-300 text-white placeholder:text-slate-400 hover:border-slate-500 shadow-sm hover:shadow-md text-center"
                     placeholder="Enter last name"
                     required
                   />
@@ -327,7 +327,7 @@ export default function RegisterPage() {
               
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-2">
-                  <label htmlFor="email" className="text-sm font-semibold text-foreground">
+                  <label htmlFor="email" className="text-sm font-semibold text-white">
                     Email Address
                   </label>
                   <SecureInput
@@ -338,15 +338,15 @@ export default function RegisterPage() {
                     onChange={handleChange}
                     sanitizeType="email"
                     rateLimitKey="registration_form"
-                    className="w-full px-4 py-3 border-2 border-gray-200 bg-white rounded-xl focus:ring-2 focus:ring-blue-400 focus:border-blue-400 transition-all duration-300 text-gray-900 placeholder:text-gray-400 hover:border-gray-300 shadow-sm hover:shadow-md text-center"
+                    className="w-full px-4 py-3 border-2 border-slate-600 bg-slate-700/80 rounded-xl focus:ring-2 focus:ring-blue-400 focus:border-blue-400 transition-all duration-300 text-white placeholder:text-slate-400 hover:border-slate-500 shadow-sm hover:shadow-md text-center"
                     placeholder="your@email.com"
                     required
                   />
                 </div>
                 
                 <div className="space-y-2">
-                  <label htmlFor="phone" className="text-sm font-semibold text-foreground">
-                    Phone <span className="text-muted-foreground font-normal">(Optional)</span>
+                  <label htmlFor="phone" className="text-sm font-semibold text-white">
+                    Phone <span className="text-slate-400 font-normal">(Optional)</span>
                   </label>
                   <SecureInput
                     id="phone"
@@ -356,7 +356,7 @@ export default function RegisterPage() {
                     onChange={handleChange}
                     sanitizeType="phone"
                     rateLimitKey="registration_form"
-                    className="w-full px-4 py-3 border-2 border-gray-200 bg-white rounded-xl focus:ring-2 focus:ring-purple-400 focus:border-purple-400 transition-all duration-300 text-gray-900 placeholder:text-gray-400 hover:border-gray-300 shadow-sm hover:shadow-md text-center"
+                    className="w-full px-4 py-3 border-2 border-slate-600 bg-slate-700/80 rounded-xl focus:ring-2 focus:ring-purple-400 focus:border-purple-400 transition-all duration-300 text-white placeholder:text-slate-400 hover:border-slate-500 shadow-sm hover:shadow-md text-center"
                     placeholder="+1234567890"
                   />
                 </div>
@@ -364,11 +364,11 @@ export default function RegisterPage() {
               
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-2">
-                  <label htmlFor="location" className="text-sm font-semibold text-foreground">
-                    Country <span className="text-muted-foreground font-normal">(Optional)</span>
+                  <label htmlFor="location" className="text-sm font-semibold text-white">
+                    Country <span className="text-slate-400 font-normal">(Optional)</span>
                   </label>
                   <Select value={formData.location} onValueChange={(value) => setFormData({...formData, location: value, country: value})}>
-                    <SelectTrigger className="w-full px-4 py-3 border-2 border-gray-200 bg-white rounded-xl focus:ring-2 focus:ring-amber-400 focus:border-amber-400 transition-all duration-300 text-gray-900 hover:border-gray-300 shadow-sm hover:shadow-md text-center">
+                    <SelectTrigger className="w-full px-4 py-3 border-2 border-slate-600 bg-slate-700/80 rounded-xl focus:ring-2 focus:ring-amber-400 focus:border-amber-400 transition-all duration-300 text-white hover:border-slate-500 shadow-sm hover:shadow-md text-center">
                       <SelectValue placeholder="Select your country" />
                     </SelectTrigger>
                     <SelectContent className="bg-white border border-gray-200 shadow-lg z-50">
@@ -388,21 +388,21 @@ export default function RegisterPage() {
                 </div>
                 
                 <div className="space-y-2">
-                  <label className="text-sm font-semibold text-foreground">
-                    Timezone <span className="text-muted-foreground font-normal">(Auto-detected)</span>
+                  <label className="text-sm font-semibold text-white">
+                    Timezone <span className="text-slate-400 font-normal">(Auto-detected)</span>
                   </label>
-                  <div className="w-full px-4 py-3 border-2 border-gray-200 bg-white rounded-xl text-gray-900 text-center text-sm">
+                  <div className="w-full px-4 py-3 border-2 border-slate-600 bg-slate-700/80 rounded-xl text-white text-center text-sm">
                     🌍 {formData.timezone} ({new Date().toLocaleTimeString()})
                   </div>
                 </div>
               </div>
               
               <div className="space-y-2">
-                <label className="text-sm font-semibold text-foreground">
+                <label className="text-sm font-semibold text-white">
                   Preferred Currency
                 </label>
                 <Select value={formData.currency} onValueChange={(value) => setFormData({...formData, currency: value})}>
-                  <SelectTrigger className="w-full px-4 py-3 border-2 border-gray-200 bg-white rounded-xl focus:ring-2 focus:ring-purple-400 focus:border-purple-400 transition-all duration-300 text-gray-900 hover:border-gray-300 shadow-sm hover:shadow-md text-center">
+                  <SelectTrigger className="w-full px-4 py-3 border-2 border-slate-600 bg-slate-700/80 rounded-xl focus:ring-2 focus:ring-purple-400 focus:border-purple-400 transition-all duration-300 text-white hover:border-slate-500 shadow-sm hover:shadow-md text-center">
                     <SelectValue placeholder="Select currency" />
                   </SelectTrigger>
                   <SelectContent className="bg-white border border-gray-200 shadow-lg z-50">
@@ -428,25 +428,25 @@ export default function RegisterPage() {
               </div>
               
               <div className="space-y-2">
-                <label htmlFor="password" className="text-sm font-semibold text-foreground">
+                <label htmlFor="password" className="text-sm font-semibold text-white">
                   Password
                 </label>
                 <div className="relative">
-                  <Lock className="absolute left-4 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400 z-10" />
+                  <Lock className="absolute left-4 top-1/2 transform -translate-y-1/2 h-5 w-5 text-slate-400 z-10" />
                   <input
                     id="password"
                     name="password"
                     type={showPassword ? "text" : "password"}
                     value={formData.password}
                     onChange={handleChange}
-                    className="w-full pl-12 pr-12 py-3 border-2 border-gray-200 bg-white rounded-xl focus:ring-2 focus:ring-green-400 focus:border-green-400 transition-all duration-300 text-gray-900 placeholder:text-gray-400 hover:border-gray-300 shadow-sm hover:shadow-md text-center"
+                    className="w-full pl-12 pr-12 py-3 border-2 border-slate-600 bg-slate-700/80 rounded-xl focus:ring-2 focus:ring-green-400 focus:border-green-400 transition-all duration-300 text-white placeholder:text-slate-400 hover:border-slate-500 shadow-sm hover:shadow-md text-center"
                     placeholder="Create a secure password"
                     required
                   />
                   <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-green-600 transition-colors p-1 rounded-full hover:bg-green-50/20 z-10"
+                    className="absolute right-4 top-1/2 transform -translate-y-1/2 text-slate-400 hover:text-green-400 transition-colors p-1 rounded-full hover:bg-green-50/20 z-10"
                   >
                     {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
                   </button>
@@ -454,25 +454,25 @@ export default function RegisterPage() {
               </div>
               
               <div className="space-y-2">
-                <label htmlFor="confirmPassword" className="text-sm font-semibold text-foreground">
+                <label htmlFor="confirmPassword" className="text-sm font-semibold text-white">
                   Confirm Password
                 </label>
                 <div className="relative">
-                  <Lock className="absolute left-4 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400 z-10" />
+                  <Lock className="absolute left-4 top-1/2 transform -translate-y-1/2 h-5 w-5 text-slate-400 z-10" />
                   <input
                     id="confirmPassword"
                     name="confirmPassword"
                     type={showConfirmPassword ? "text" : "password"}
                     value={formData.confirmPassword}
                     onChange={handleChange}
-                    className="w-full pl-12 pr-12 py-3 border-2 border-gray-200 bg-white rounded-xl focus:ring-2 focus:ring-green-400 focus:border-green-400 transition-all duration-300 text-gray-900 placeholder:text-gray-400 hover:border-gray-300 shadow-sm hover:shadow-md text-center"
+                    className="w-full pl-12 pr-12 py-3 border-2 border-slate-600 bg-slate-700/80 rounded-xl focus:ring-2 focus:ring-green-400 focus:border-green-400 transition-all duration-300 text-white placeholder:text-slate-400 hover:border-slate-500 shadow-sm hover:shadow-md text-center"
                     placeholder="Confirm your password"
                     required
                   />
                   <button
                     type="button"
                     onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                    className="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-green-600 transition-colors p-1 rounded-full hover:bg-green-50/20 z-10"
+                    className="absolute right-4 top-1/2 transform -translate-y-1/2 text-slate-400 hover:text-green-400 transition-colors p-1 rounded-full hover:bg-green-50/20 z-10"
                   >
                     {showConfirmPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
                   </button>
@@ -493,21 +493,21 @@ export default function RegisterPage() {
             </form>
             
             <div className="mt-8 text-center">
-              <p className="text-royal-purple">
+              <p className="text-slate-300">
                 Already part of our community?{" "}
-                <Link to="/login" className="text-cyan-accent hover:text-cyan-accent/80 font-semibold transition-colors hover:underline">
+                <Link to="/login" className="text-amber-300 hover:text-amber-200 font-semibold transition-colors hover:underline">
                   Sign In Here
                 </Link>
               </p>
             </div>
             
             {/* Beautiful divider with scripture */}
-            <div className="mt-8 pt-6 border-t border-gray-200">
-              <div className="text-center bg-gradient-to-r from-green-50 to-blue-50 rounded-xl p-4 shadow-sm">
-                <p className="text-sm text-green-700 italic font-medium">
+            <div className="mt-8 pt-6 border-t border-slate-700">
+              <div className="text-center bg-slate-800/50 rounded-xl p-4 shadow-sm">
+                <p className="text-sm text-slate-300 italic font-medium">
                   "Give, and it will be given to you. A good measure, pressed down, shaken together and running over, will be poured into your lap."
                 </p>
-                <p className="text-xs text-green-600 font-semibold mt-2">— Luke 6:38</p>
+                <p className="text-xs text-slate-400 font-semibold mt-2">— Luke 6:38</p>
               </div>
             </div>
           </CardContent>
