@@ -290,6 +290,102 @@ export function LiveStreamListener({ liveSession, currentShow }) {
     return { trackIndex: 0, seekOffset: 0 }
   }
 
+  const loadTracksForSchedule = async (scheduleId) => {
+    const { data: sched, error } = await supabase
+      .from('radio_schedule')
+      .select('id, playlist_id, dj_id, show_topic_description')
+      .eq('id', scheduleId)
+      .maybeSingle()
+
+    if (error) {
+      console.error('[Listener] Error fetching schedule:', error)
+      return []
+    }
+
+    if (!sched) return []
+
+    const timelineItems = Array.isArray(sched.show_topic_description)
+      ? sched.show_topic_description
+      : []
+
+    if (timelineItems.length > 0) {
+      const musicIds = [...new Set(
+        timelineItems
+          .filter(item => item?.type === 'music' && item?.contentId)
+          .map(item => item.contentId)
+      )]
+
+      let musicTrackMap = new Map()
+      if (musicIds.length > 0) {
+        const { data: musicRows } = await supabase
+          .from('dj_music_tracks')
+          .select('id, track_title, artist_name, duration_seconds, genre, file_url, price')
+          .in('id', musicIds)
+
+        musicTrackMap = new Map((musicRows || []).map(track => [track.id, track]))
+      }
+
+      const timelineTracks = timelineItems.flatMap((item, index) => {
+        if (item?.type === 'voice_note' && item?.fileUrl) {
+          return [{
+            id: `voice-${scheduleId}-${index}`,
+            track_title: item.title || `Voice Segment ${index + 1}`,
+            artist_name: currentShow?.dj_name || 'Host',
+            duration_seconds: item.durationMinutes ? Math.round(Number(item.durationMinutes) * 60) : null,
+            genre: 'voice_note',
+            file_url: item.fileUrl,
+            price: null,
+            isVoiceNote: true
+          }]
+        }
+
+        if (item?.type === 'music' && item?.contentId) {
+          const track = musicTrackMap.get(item.contentId)
+          return track ? [{ ...track, isVoiceNote: false }] : []
+        }
+
+        return []
+      })
+
+      if (timelineTracks.length > 0) {
+        console.log('[Listener] Loaded timeline sequence:', timelineTracks.length)
+        return timelineTracks
+      }
+    }
+
+    let tracks = []
+
+    if (sched.playlist_id) {
+      const { data: ptData } = await supabase
+        .from('dj_playlist_tracks')
+        .select(`
+          track_order,
+          dj_music_tracks (id, track_title, artist_name, duration_seconds, genre, file_url, price)
+        `)
+        .eq('playlist_id', sched.playlist_id)
+        .eq('is_active', true)
+        .order('track_order')
+
+      tracks = (ptData || [])
+        .sort((a, b) => a.track_order - b.track_order)
+        .map(pt => pt.dj_music_tracks)
+        .filter(Boolean)
+    }
+
+    if (tracks.length === 0 && sched.dj_id) {
+      const { data: djTracks } = await supabase
+        .from('dj_music_tracks')
+        .select('id, track_title, artist_name, duration_seconds, genre, file_url, price')
+        .eq('dj_id', sched.dj_id)
+        .eq('is_public', true)
+        .order('upload_date', { ascending: false })
+
+      tracks = djTracks || []
+    }
+
+    return tracks
+  }
+
   const initializeAudioStream = async () => {
     try {
       if (playlistTracks.length > 0) {
@@ -316,54 +412,19 @@ export function LiveStreamListener({ liveSession, currentShow }) {
         return
       }
 
-      const { data: sched } = await supabase
-        .from('radio_schedule')
-        .select('id, playlist_id, dj_id')
-        .eq('id', currentShow.schedule_id)
-        .maybeSingle()
-
-      let tracks = []
-
-      if (sched?.playlist_id) {
-        const { data: ptData } = await supabase
-          .from('dj_playlist_tracks')
-          .select(`
-            track_order,
-            dj_music_tracks (id, track_title, artist_name, duration_seconds, genre, file_url, price)
-          `)
-          .eq('playlist_id', sched.playlist_id)
-          .eq('is_active', true)
-          .order('track_order')
-
-        tracks = (ptData || [])
-          .sort((a, b) => a.track_order - b.track_order)
-          .map(pt => pt.dj_music_tracks)
-          .filter(Boolean)
-      }
-
-      if (tracks.length === 0 && sched?.dj_id) {
-        const { data: djTracks } = await supabase
-          .from('dj_music_tracks')
-          .select('id, track_title, artist_name, duration_seconds, genre, file_url, price')
-          .eq('dj_id', sched.dj_id)
-          .eq('is_public', true)
-          .order('upload_date', { ascending: false })
-
-        tracks = djTracks || []
-      }
+      const tracks = await loadTracksForSchedule(currentShow.schedule_id)
 
       console.log('[Listener] Fetched tracks:', tracks.length)
       setPlaylistTracks(tracks)
 
       if (tracks.length > 0) {
-        // Calculate which track should be playing based on elapsed time
         const { trackIndex, seekOffset } = calculateCurrentTrack(tracks)
         const targetTrack = tracks[trackIndex]
         console.log(`[Listener] Resuming at track ${trackIndex + 1}/${tracks.length}: "${targetTrack.track_title}" (seek ${seekOffset}s)`)
         setCurrentTrack(targetTrack)
         await playCurrentTrackAudio(targetTrack, seekOffset)
       } else {
-        toast({ title: "No Music", description: "No tracks available for this slot.", variant: "destructive" })
+        toast({ title: "No Content", description: "No voice or music segments found for this slot.", variant: "destructive" })
       }
     } catch (e) {
       console.error('[Listener] fetchPlaylistAndPlay failed:', e)
@@ -403,7 +464,10 @@ export function LiveStreamListener({ liveSession, currentShow }) {
   const playCurrentTrackAudio = async (track, seekOffset = 0) => {
     if (!track?.file_url || !audioRef.current) return
     try {
-      const resolvedUrl = await resolveAudioUrl(track.file_url, { bucketForKeys: 'dj-music' })
+      const resolvedUrl = track.isVoiceNote
+        ? track.file_url
+        : await resolveAudioUrl(track.file_url, { bucketForKeys: 'dj-music' })
+
       console.log('[Listener] Playing:', track.track_title, resolvedUrl?.substring(0, 80), seekOffset ? `(seek +${seekOffset}s)` : '')
       const audio = audioRef.current
       audio.src = resolvedUrl
@@ -424,10 +488,12 @@ export function LiveStreamListener({ liveSession, currentShow }) {
 
       await audio.play()
       console.log(`[Listener] ✅ Now playing: ${track.track_title}${seekOffset ? ` @ ${seekOffset}s` : ''}`)
-      toast({ title: "Now Playing", description: `${track.track_title} by ${track.artist_name}` })
+      toast({ title: "Now Playing", description: `${track.track_title} by ${track.artist_name || 'Host'}` })
 
-      // Award XP to the song owner (non-blocking)
-      awardRadioPlayXP(track)
+      // Award XP only for music tracks (not voice notes)
+      if (!track.isVoiceNote) {
+        awardRadioPlayXP(track)
+      }
     } catch (playError) {
       if (playError?.name === 'NotAllowedError') {
         toast({ title: "Tap Play", description: "Click play to start the music" })
@@ -437,54 +503,13 @@ export function LiveStreamListener({ liveSession, currentShow }) {
       }
     }
   }
+  }
 
   const fetchPlaylistForCurrentShow = async () => {
     try {
       if (!currentShow?.schedule_id) return
 
-      // First get the schedule's playlist_id directly (avoids deep nested query timeout)
-      const { data: sched, error } = await supabase
-        .from('radio_schedule')
-        .select('id, playlist_id, dj_id')
-        .eq('id', currentShow.schedule_id)
-        .maybeSingle()
-
-      if (error) {
-        console.error('Error fetching schedule:', error)
-        return
-      }
-
-      let tracks = []
-
-      // Use playlist_id if available
-      if (sched?.playlist_id) {
-        const { data: ptData } = await supabase
-          .from('dj_playlist_tracks')
-          .select(`
-            track_order,
-            dj_music_tracks (id, track_title, artist_name, duration_seconds, genre, file_url, price)
-          `)
-          .eq('playlist_id', sched.playlist_id)
-          .eq('is_active', true)
-          .order('track_order')
-
-        tracks = (ptData || [])
-          .sort((a, b) => a.track_order - b.track_order)
-          .map(pt => pt.dj_music_tracks)
-          .filter(Boolean)
-      }
-
-      // Fallback: get all DJ tracks
-      if (tracks.length === 0 && sched?.dj_id) {
-        const { data: djTracks } = await supabase
-          .from('dj_music_tracks')
-          .select('id, track_title, artist_name, duration_seconds, genre, file_url, price')
-          .eq('dj_id', sched.dj_id)
-          .eq('is_public', true)
-          .order('upload_date', { ascending: false })
-
-        tracks = djTracks || []
-      }
+      const tracks = await loadTracksForSchedule(currentShow.schedule_id)
 
       setPlaylistTracks(tracks)
       if (!currentTrack && tracks.length > 0) {
