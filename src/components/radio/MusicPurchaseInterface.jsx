@@ -6,11 +6,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { 
   Music, 
   ShoppingCart, 
-  Download, 
   Lock, 
-  Check,
   Clock,
-  DollarSign,
   Info
 } from 'lucide-react'
 import { useMusicPurchase } from '@/hooks/useMusicPurchase'
@@ -47,11 +44,34 @@ export function MusicPurchaseInterface({
     return `${mins}:${secs.toString().padStart(2, '0')}`
   }
 
+  const getPricingBreakdown = (track) => {
+    const rawPrice = Number(track?.price)
+    const base = Number.isFinite(rawPrice) && rawPrice >= 2 ? rawPrice : 2
+    const tithing = base * 0.1
+    const admin = base * 0.05
+    const total = base + tithing + admin
+    return { base, tithing, admin, total }
+  }
+
+  const getTrackSlotNumber = (track, fallbackIndex = 0) => {
+    const explicitSlot = Number(track?.slot_number ?? track?.slotNumber)
+    if (Number.isInteger(explicitSlot) && explicitSlot > 0) return explicitSlot
+
+    const identityIndex = tracks.findIndex((candidate) => candidate === track)
+    if (identityIndex >= 0) return identityIndex + 1
+
+    const fallbackMatchIndex = tracks.findIndex((candidate) =>
+      candidate?.id === track?.id &&
+      candidate?.file_url === track?.file_url &&
+      candidate?.track_title === track?.track_title &&
+      candidate?.artist_name === track?.artist_name
+    )
+
+    return fallbackMatchIndex >= 0 ? fallbackMatchIndex + 1 : fallbackIndex + 1
+  }
+
   const currentTrackIndex = currentTrack
-    ? tracks.findIndex((track) =>
-        track === currentTrack ||
-        (track.id === currentTrack.id && track.file_url === currentTrack.file_url && track.track_title === currentTrack.track_title)
-      )
+    ? tracks.findIndex((track, index) => getTrackSlotNumber(track, index) === getTrackSlotNumber(currentTrack, 0))
     : -1
 
   const orderedUpcomingTracks = tracks.length <= 1
@@ -78,6 +98,9 @@ export function MusicPurchaseInterface({
                 <h4 className="font-semibold text-lg">{currentTrack.track_title}</h4>
                 <p className="text-muted-foreground">{currentTrack.artist_name}</p>
                 <div className="flex items-center gap-2 mt-2">
+                  <Badge variant="secondary" className="text-xs">
+                    Slot #{getTrackSlotNumber(currentTrack, currentTrackIndex >= 0 ? currentTrackIndex : 0)}
+                  </Badge>
                   <Badge variant="outline" className="text-xs">
                     {currentTrack.genre}
                   </Badge>
@@ -89,11 +112,15 @@ export function MusicPurchaseInterface({
               </div>
               <div className="flex flex-col gap-3 items-end">
                 <div className="text-right">
-                  <div className="flex items-center gap-1 text-lg font-bold text-primary">
-                    <DollarSign className="h-4 w-4" />
-                    {currentTrack.price ? `$${Number(currentTrack.price).toFixed(2)}` : 'Free'} USDC
+                  <div className="text-lg font-bold text-primary">
+                    ${getPricingBreakdown(currentTrack).total.toFixed(2)} USDC
                   </div>
-                  <p className="text-xs text-muted-foreground">Total price</p>
+                  <p className="text-xs text-muted-foreground">Total bestow amount</p>
+                  <div className="text-[11px] text-muted-foreground mt-1 space-y-0.5">
+                    <p>Base: ${getPricingBreakdown(currentTrack).base.toFixed(2)}</p>
+                    <p>Tithing (10%): ${getPricingBreakdown(currentTrack).tithing.toFixed(2)}</p>
+                    <p>Admin (5%): ${getPricingBreakdown(currentTrack).admin.toFixed(2)}</p>
+                  </div>
                 </div>
                 <Button
                   onClick={() => handlePurchaseTrack(currentTrack)}
@@ -137,43 +164,49 @@ export function MusicPurchaseInterface({
           </CardHeader>
           <CardContent>
             <div className="space-y-3 max-h-64 overflow-y-auto">
-              {orderedUpcomingTracks.slice(0, 5).map((track, index) => (
-                <div 
-                  key={`${track.id}-${index}`} 
-                  className="flex items-center justify-between p-3 rounded-lg bg-muted/30 hover:bg-muted/50 transition-colors"
-                >
-                  <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 rounded-full bg-primary/20 text-primary text-sm flex items-center justify-center font-medium">
-                      {currentTrackIndex >= 0 ? ((currentTrackIndex + 1 + index) % tracks.length) + 1 : index + 2}
-                    </div>
-                    <div>
-                      <p className="font-medium text-sm text-foreground">{track.track_title}</p>
-                      <p className="text-xs text-foreground/70">{track.artist_name}</p>
-                      <div className="flex items-center gap-2 mt-1">
-                        <Badge variant="outline" className="text-xs">
-                          {track.genre}
-                        </Badge>
-                        <span className="text-xs text-foreground/60">
-                          {formatDuration(track.duration_seconds)}
-                        </span>
+              {orderedUpcomingTracks.slice(0, 5).map((track, index) => {
+                const pricing = getPricingBreakdown(track)
+                const slotNumber = getTrackSlotNumber(track, index)
+
+                return (
+                  <div 
+                    key={`${track.id}-${slotNumber}-${index}`} 
+                    className="flex items-center justify-between p-3 rounded-lg bg-muted/30 hover:bg-muted/50 transition-colors"
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className="w-8 h-8 rounded-full bg-primary/20 text-primary text-sm flex items-center justify-center font-medium">
+                        {slotNumber}
+                      </div>
+                      <div>
+                        <p className="font-medium text-sm text-foreground">{track.track_title}</p>
+                        <p className="text-xs text-foreground/70">{track.artist_name}</p>
+                        <div className="flex items-center gap-2 mt-1">
+                          <Badge variant="outline" className="text-xs">
+                            {track.genre}
+                          </Badge>
+                          <span className="text-xs text-foreground/60">
+                            {formatDuration(track.duration_seconds)}
+                          </span>
+                        </div>
                       </div>
                     </div>
+                    <div className="flex flex-col items-end gap-1">
+                      <span className="text-sm font-semibold">${pricing.total.toFixed(2)}</span>
+                      <span className="text-[10px] text-muted-foreground">incl. 10% + 5%</span>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handlePurchaseTrack(track)}
+                        disabled={purchasing || !user}
+                        className="text-xs h-7"
+                      >
+                        <ShoppingCart className="h-3 w-3 mr-1" />
+                        Buy
+                      </Button>
+                    </div>
                   </div>
-                  <div className="flex flex-col items-end gap-1">
-                    <span className="text-sm font-semibold">${track.price ? Number(track.price).toFixed(2) : '0.00'}</span>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => handlePurchaseTrack(track)}
-                      disabled={purchasing || !user}
-                      className="text-xs h-7"
-                    >
-                      <ShoppingCart className="h-3 w-3 mr-1" />
-                      Buy
-                    </Button>
-                  </div>
-                </div>
-              ))}
+                )
+              })}
             </div>
             
             {orderedUpcomingTracks.length > 5 && (
