@@ -252,20 +252,42 @@ export function LiveStreamListener({ liveSession, currentShow }) {
     }
   }
 
-  // Calculate which track should be playing right now based on show start time
+  // Calculate which track should be playing right now based on the strongest available clock anchor
   const calculateCurrentTrack = (tracks) => {
-    if (!currentShow?.start_time || tracks.length === 0) {
-      console.warn('[Sync] No start_time or empty tracks, defaulting to track 0')
+    if (tracks.length === 0) {
       return { trackIndex: 0, seekOffset: 0 }
     }
 
-    // start_time is a full ISO timestamp (e.g. "2026-02-19T10:00:00+00:00")
-    const showStart = new Date(currentShow.start_time)
     const now = new Date()
 
-    // If show start is in the future, start from track 0
-    if (now < showStart) {
-      console.log('[Sync] Show hasn\'t started yet, defaulting to track 0')
+    const liveAnchorRaw = liveSession?.started_at || liveSession?.created_at
+    const scheduleAnchorRaw = currentShow?.start_time || null
+    const fallbackAnchorRaw = currentShow?.created_at || null
+
+    const parseDateSafe = (value) => {
+      if (!value) return null
+      const parsed = new Date(value)
+      return Number.isNaN(parsed.getTime()) ? null : parsed
+    }
+
+    const liveAnchor = parseDateSafe(liveAnchorRaw)
+    const scheduleAnchor = parseDateSafe(scheduleAnchorRaw)
+    const fallbackAnchor = parseDateSafe(fallbackAnchorRaw)
+
+    const showStart = (liveAnchor && liveAnchor <= now)
+      ? liveAnchor
+      : (scheduleAnchor && scheduleAnchor <= now)
+        ? scheduleAnchor
+        : (fallbackAnchor && fallbackAnchor <= now)
+          ? fallbackAnchor
+          : scheduleAnchor || liveAnchor || fallbackAnchor
+
+    if (!showStart || Number.isNaN(showStart.getTime()) || now < showStart) {
+      console.warn('[Sync] No valid past anchor found yet, defaulting to track 0', {
+        liveAnchor: liveAnchorRaw,
+        scheduleAnchor: scheduleAnchorRaw,
+        fallbackAnchor: fallbackAnchorRaw
+      })
       return { trackIndex: 0, seekOffset: 0 }
     }
 
@@ -273,7 +295,7 @@ export function LiveStreamListener({ liveSession, currentShow }) {
 
     // Calculate total playlist duration
     const totalDuration = tracks.reduce((sum, t) => sum + (t.duration_seconds || 180), 0)
-    
+
     if (totalDuration === 0) return { trackIndex: 0, seekOffset: 0 }
 
     // Loop: find position within the repeating playlist
@@ -284,7 +306,7 @@ export function LiveStreamListener({ liveSession, currentShow }) {
       const trackDuration = tracks[i].duration_seconds || 180
       if (cumulative + trackDuration > positionInLoop) {
         const seekOffset = positionInLoop - cumulative
-        console.log(`[Sync] Elapsed ${elapsedSeconds}s, loop pos ${positionInLoop}s → track ${i + 1}/${tracks.length} "${tracks[i].track_title}" @ ${seekOffset}s`)
+        console.log(`[Sync] Anchor ${showStart.toISOString()} elapsed ${elapsedSeconds}s, loop pos ${positionInLoop}s → track ${i + 1}/${tracks.length} "${tracks[i].track_title}" @ ${seekOffset}s`)
         return { trackIndex: i, seekOffset }
       }
       cumulative += trackDuration
