@@ -79,12 +79,11 @@ function IndexContent() {
         <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16 sm:h-20 md:h-[90px]">
             <div className="flex items-center gap-2 sm:gap-4">
-              <div className="flex items-center justify-center bg-transparent">
+              <div className="flex items-center justify-center w-12 h-12 sm:w-16 sm:h-16 md:w-[90px] md:h-[90px] rounded-full overflow-hidden border-2 border-amber-500/80 shadow-lg bg-white">
                 <img
                   src="/lovable-uploads/s2g-logo.jpg"
                   alt="sow2grow logo"
-                  className="w-12 h-12 sm:w-16 sm:h-16 md:w-[90px] md:h-[90px] object-contain bg-transparent"
-                  style={{ backgroundColor: 'transparent' }}
+                  className="w-full h-full object-cover"
                 />
               </div>
               <div>
