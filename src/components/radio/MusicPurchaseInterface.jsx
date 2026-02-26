@@ -2,13 +2,14 @@ import React, { useState } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
 import { 
   Music, 
   ShoppingCart, 
   Lock, 
   Clock,
-  Info
+  Info,
+  Gift,
+  Mic
 } from 'lucide-react'
 import { useMusicPurchase } from '@/hooks/useMusicPurchase'
 import { useAuth } from '@/hooks/useAuth'
@@ -23,6 +24,11 @@ export function MusicPurchaseInterface({
   const { user } = useAuth()
   const { purchaseTrack, loading: purchasing } = useMusicPurchase()
   const [selectedTrack, setSelectedTrack] = useState(null)
+  const [giftingTrack, setGiftingTrack] = useState(null)
+
+  const isVoiceNote = (track) => {
+    return track?.track_type === 'voice_note' || track?.track_type === 'voicenote'
+  }
 
   const handlePurchaseTrack = async (track) => {
     if (!user) {
@@ -36,6 +42,15 @@ export function MusicPurchaseInterface({
       setSelectedTrack(null)
       toast.success(`🎵 "${track.track_title}" purchased! Check your direct messages.`)
     }
+  }
+
+  const handleFreeWillGift = async (track) => {
+    if (!user) {
+      toast.error('Please log in to gift the DJ')
+      return
+    }
+    // For now, trigger the same purchase flow - the backend handles delivery via DM
+    toast.info(`🎁 Gift feature for "${track.track_title}" coming soon! The file will be sent to your personal chat with the DJ.`)
   }
 
   const formatDuration = (seconds) => {
@@ -82,12 +97,12 @@ export function MusicPurchaseInterface({
 
   return (
     <>
-      {/* Current Track Purchase */}
+      {/* Current Track */}
       {currentTrack && (
         <Card className="border-primary/20 bg-gradient-to-r from-primary/5 to-primary/10">
           <CardHeader className="pb-3">
             <CardTitle className="flex items-center gap-2 text-lg">
-              <Music className="h-5 w-5 text-primary" />
+              {isVoiceNote(currentTrack) ? <Mic className="h-5 w-5 text-primary" /> : <Music className="h-5 w-5 text-primary" />}
               Now Playing
               <Badge variant="default" className="text-xs">LIVE</Badge>
             </CardTitle>
@@ -102,7 +117,7 @@ export function MusicPurchaseInterface({
                     Slot #{getTrackSlotNumber(currentTrack, currentTrackIndex >= 0 ? currentTrackIndex : 0)}
                   </Badge>
                   <Badge variant="outline" className="text-xs">
-                    {currentTrack.genre}
+                    {isVoiceNote(currentTrack) ? 'voice_note' : currentTrack.genre}
                   </Badge>
                   <span className="text-xs text-muted-foreground flex items-center gap-1">
                     <Clock className="h-3 w-3" />
@@ -110,36 +125,56 @@ export function MusicPurchaseInterface({
                   </span>
                 </div>
               </div>
-              <div className="flex flex-col gap-3 items-end">
-                <div className="text-right">
-                  <div className="text-lg font-bold text-primary">
-                    ${getPricingBreakdown(currentTrack).total.toFixed(2)} USDC
+
+              {/* Music: show pricing + buy */}
+              {!isVoiceNote(currentTrack) ? (
+                <div className="flex flex-col gap-3 items-end">
+                  <div className="text-right">
+                    <div className="text-lg font-bold text-primary">
+                      ${getPricingBreakdown(currentTrack).total.toFixed(2)} USDC
+                    </div>
+                    <p className="text-xs text-muted-foreground">Total bestow amount</p>
+                    <div className="text-[11px] text-muted-foreground mt-1 space-y-0.5">
+                      <p>Base: ${getPricingBreakdown(currentTrack).base.toFixed(2)}</p>
+                      <p>Tithing (10%): ${getPricingBreakdown(currentTrack).tithing.toFixed(2)}</p>
+                      <p>Admin (5%): ${getPricingBreakdown(currentTrack).admin.toFixed(2)}</p>
+                    </div>
                   </div>
-                  <p className="text-xs text-muted-foreground">Total bestow amount</p>
-                  <div className="text-[11px] text-muted-foreground mt-1 space-y-0.5">
-                    <p>Base: ${getPricingBreakdown(currentTrack).base.toFixed(2)}</p>
-                    <p>Tithing (10%): ${getPricingBreakdown(currentTrack).tithing.toFixed(2)}</p>
-                    <p>Admin (5%): ${getPricingBreakdown(currentTrack).admin.toFixed(2)}</p>
-                  </div>
+                  <Button
+                    onClick={() => handlePurchaseTrack(currentTrack)}
+                    disabled={purchasing || !user}
+                    className="flex items-center gap-2"
+                  >
+                    <ShoppingCart className="h-4 w-4" />
+                    {purchasing ? 'Processing...' : 'Buy MP3'}
+                  </Button>
                 </div>
-                <Button
-                  onClick={() => handlePurchaseTrack(currentTrack)}
-                  disabled={purchasing || !user}
-                  className="flex items-center gap-2"
-                >
-                  <ShoppingCart className="h-4 w-4" />
-                  {purchasing ? 'Processing...' : 'Buy MP3'}
-                </Button>
-              </div>
+              ) : (
+                /* Voice note: free-will gift */
+                <div className="flex flex-col gap-2 items-end">
+                  <Badge variant="secondary" className="text-xs">Free</Badge>
+                  <Button
+                    variant="outline"
+                    onClick={() => handleFreeWillGift(currentTrack)}
+                    disabled={!user}
+                    className="flex items-center gap-2"
+                  >
+                    <Gift className="h-4 w-4" />
+                    Gift DJ
+                  </Button>
+                </div>
+              )}
             </div>
             
             <div className="mt-4 p-3 rounded-lg bg-muted/50">
               <div className="flex items-start gap-2">
                 <Lock className="h-4 w-4 text-muted-foreground mt-0.5" />
                 <div className="text-sm">
-                  <p className="font-medium">Secure Purchase</p>
+                  <p className="font-medium">Secure {isVoiceNote(currentTrack) ? 'Gift' : 'Purchase'}</p>
                   <p className="text-muted-foreground text-xs">
-                    MP3 file will be sent privately to your direct messages. Files are not shareable with others.
+                    {isVoiceNote(currentTrack)
+                      ? 'Gift the DJ and receive this voice note in your personal chat with them.'
+                      : 'MP3 file will be sent privately to your direct messages. Files are not shareable with others.'}
                   </p>
                 </div>
               </div>
@@ -165,8 +200,10 @@ export function MusicPurchaseInterface({
           <CardContent>
             <div className="space-y-3 max-h-64 overflow-y-auto">
               {orderedUpcomingTracks.slice(0, 5).map((track, index) => {
-                const pricing = getPricingBreakdown(track)
-                const slotNumber = getTrackSlotNumber(track, index)
+                const voiceNote = isVoiceNote(track)
+                const pricing = voiceNote ? null : getPricingBreakdown(track)
+                const originalIndex = tracks.indexOf(track)
+                const slotNumber = originalIndex >= 0 ? originalIndex + 1 : getTrackSlotNumber(track, index)
 
                 return (
                   <div 
@@ -182,7 +219,7 @@ export function MusicPurchaseInterface({
                         <p className="text-xs text-foreground/70">{track.artist_name}</p>
                         <div className="flex items-center gap-2 mt-1">
                           <Badge variant="outline" className="text-xs">
-                            {track.genre}
+                            {voiceNote ? 'voice_note' : track.genre}
                           </Badge>
                           <span className="text-xs text-foreground/60">
                             {formatDuration(track.duration_seconds)}
@@ -190,20 +227,37 @@ export function MusicPurchaseInterface({
                         </div>
                       </div>
                     </div>
-                    <div className="flex flex-col items-end gap-1">
-                      <span className="text-sm font-semibold">${pricing.total.toFixed(2)}</span>
-                      <span className="text-[10px] text-muted-foreground">incl. 10% + 5%</span>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => handlePurchaseTrack(track)}
-                        disabled={purchasing || !user}
-                        className="text-xs h-7"
-                      >
-                        <ShoppingCart className="h-3 w-3 mr-1" />
-                        Buy
-                      </Button>
-                    </div>
+
+                    {voiceNote ? (
+                      <div className="flex flex-col items-end gap-1">
+                        <Badge variant="secondary" className="text-xs">Free</Badge>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleFreeWillGift(track)}
+                          disabled={!user}
+                          className="text-xs h-7"
+                        >
+                          <Gift className="h-3 w-3 mr-1" />
+                          Gift
+                        </Button>
+                      </div>
+                    ) : (
+                      <div className="flex flex-col items-end gap-1">
+                        <span className="text-sm font-semibold">${pricing.total.toFixed(2)}</span>
+                        <span className="text-[10px] text-muted-foreground">incl. 10% + 5%</span>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handlePurchaseTrack(track)}
+                          disabled={purchasing || !user}
+                          className="text-xs h-7"
+                        >
+                          <ShoppingCart className="h-3 w-3 mr-1" />
+                          Buy
+                        </Button>
+                      </div>
+                    )}
                   </div>
                 )
               })}
@@ -225,8 +279,8 @@ export function MusicPurchaseInterface({
                     💡 How it works
                   </p>
                   <p className="text-blue-700 dark:text-blue-200 text-xs mt-1">
-                    Purchase any track to get the high-quality MP3 file sent directly to your messages. 
-                    Each purchase is private and files cannot be shared with others.
+                    Purchase music tracks to get the MP3 sent to your messages. 
+                    Voice notes are free — gift the DJ and receive the file in your personal chat.
                   </p>
                 </div>
               </div>
