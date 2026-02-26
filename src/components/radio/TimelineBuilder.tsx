@@ -18,7 +18,7 @@ import {
 import { useDropzone } from 'react-dropzone';
 import { AIVoicePanel } from './AIVoicePanel';
 import { resolveAudioUrl } from '@/utils/resolveAudioUrl';
-
+import { getStandardSingleTotalPrice } from '@/utils/musicPricing';
 const TOTAL_MINUTES = 120;
 
 type SegmentType = 'music' | 'voice_note' | 'ad' | 'document';
@@ -243,7 +243,7 @@ export const TimelineBuilder: React.FC<TimelineBuilderProps> = ({ segments, onCh
           title: t.track_title,
           artist: t.artist_name || (t.radio_djs as any)?.dj_name || 'Unknown',
           durationSeconds: t.duration_seconds || null,
-          price: t.price || 2,
+          price: t.price && Number(t.price) > 0 ? getStandardSingleTotalPrice() : 0,
           genre: t.music_genre || 'unknown',
           mood: t.music_mood || 'unknown',
           source: 'dj_track',
@@ -253,7 +253,7 @@ export const TimelineBuilder: React.FC<TimelineBuilderProps> = ({ segments, onCh
           title: p.title,
           artist: p.artist_name || (p.sowers as any)?.display_name || 'Sower',
           durationSeconds: p.duration ? Number(p.duration) : null,
-          price: p.price || 2,
+          price: p.price && Number(p.price) > 0 ? getStandardSingleTotalPrice() : 0,
           genre: p.music_genre || p.category || 'unknown',
           mood: p.music_mood || 'unknown',
           source: 'product',
@@ -283,7 +283,7 @@ export const TimelineBuilder: React.FC<TimelineBuilderProps> = ({ segments, onCh
         contentName: `${track.title} — ${track.artist}`,
         title: track.title,
         durationMinutes: durationMin,
-        bestowalAmount: Math.max(track.price || 2, 2), // Enforce $2 minimum for music
+        bestowalAmount: Number(track.price) > 0 ? 2 : 0, // Singles use fixed 2.00 base (2.30 total)
       });
     }
     setShowMusicPicker(false);
@@ -682,7 +682,7 @@ export const TimelineBuilder: React.FC<TimelineBuilderProps> = ({ segments, onCh
                       </p>
                     </div>
                     <Badge variant="outline" className="text-xs shrink-0">
-                      ${track.price}
+                      ${Number(track.price || 0).toFixed(2)}
                     </Badge>
                   </div>
                 ))}

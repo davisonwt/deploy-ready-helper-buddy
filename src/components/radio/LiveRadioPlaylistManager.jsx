@@ -16,7 +16,7 @@ import { supabase } from '@/integrations/supabase/client'
 import { useAuth } from '@/hooks/useAuth'
 import { useMusicPurchase } from '@/hooks/useMusicPurchase'
 import { toast } from 'sonner'
-
+import { getStandardSingleTotalPrice } from '@/utils/musicPricing'
 export function LiveRadioPlaylistManager({ sessionId, isHost = false }) {
   const { user } = useAuth()
   const { purchaseTrack, loading: purchasing } = useMusicPurchase()
@@ -52,7 +52,8 @@ export function LiveRadioPlaylistManager({ sessionId, isHost = false }) {
                 duration_seconds,
                 genre,
                 file_url,
-                file_size
+                file_size,
+                price
               )
             )
           )
@@ -163,6 +164,11 @@ export function LiveRadioPlaylistManager({ sessionId, isHost = false }) {
     return `${mins}:${secs.toString().padStart(2, '0')}`
   }
 
+  const getDisplayPrice = (track) => {
+    if (!track?.price || Number(track.price) <= 0) return 0
+    return getStandardSingleTotalPrice()
+  }
+
   if (!automatedSession || playlistTracks.length === 0) {
     return null
   }
@@ -209,7 +215,7 @@ export function LiveRadioPlaylistManager({ sessionId, isHost = false }) {
                       className="flex items-center gap-1"
                     >
                       <ShoppingCart className="h-3 w-3" />
-                      ${currentTrack?.price ? Number(currentTrack.price).toFixed(2) : '0.00'} USDC
+                      ${getDisplayPrice(currentTrack).toFixed(2)} USDC
                     </Button>
                   )}
                   <span className="text-xs text-muted-foreground">Get MP3</span>
@@ -284,7 +290,7 @@ export function LiveRadioPlaylistManager({ sessionId, isHost = false }) {
                     className="flex items-center gap-1 text-xs"
                   >
                     <ShoppingCart className="h-3 w-3" />
-                    ${track.price ? Number(track.price).toFixed(2) : '0.00'}
+                    ${getDisplayPrice(track).toFixed(2)}
                   </Button>
                 )}
               </div>

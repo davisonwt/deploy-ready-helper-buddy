@@ -13,10 +13,11 @@ import { GradientPlaceholder } from '@/components/ui/GradientPlaceholder';
 import { launchConfetti } from '@/utils/confetti';
 import { resolveAudioUrl } from '@/utils/resolveAudioUrl';
 import { useCurrency } from '@/hooks/useCurrency';
-
+import { getStandardSingleTotalPrice } from '@/utils/musicPricing';
 const SINGLE_PRICE = 2.00; // Base price per single
 const TITHING_RATE = 0.10; // 10%
 const ADMIN_FEE_RATE = 0.05; // 5%
+const SINGLE_TOTAL_PRICE = getStandardSingleTotalPrice();
 const PREVIEW_DURATION = 30; // 30 seconds preview
 
 export default function CommunityMusicLibraryPage() {
@@ -87,10 +88,10 @@ export default function CommunityMusicLibraryPage() {
             tag.toLowerCase().includes('ep')
           ) || false;
           
-          // Singles are always 2 USDC minimum
-          const trackPrice = isAlbum 
-            ? (track.price || 0) 
-            : Math.max(track.price || 0, SINGLE_PRICE);
+          // Singles use a fixed total bestowal value (2.00 + 15% = 2.30)
+          const trackPrice = isAlbum
+            ? (track.price || 0)
+            : SINGLE_TOTAL_PRICE;
           
           tracks.push({
             id: track.id,
@@ -142,10 +143,10 @@ export default function CommunityMusicLibraryPage() {
             tag.toLowerCase().includes('ep')
           ) || false;
           
-          // Singles are always 2 USDC minimum
-          const itemPrice = isAlbum 
-            ? (item.price || 0) 
-            : Math.max(item.price || 0, SINGLE_PRICE);
+          // Singles use a fixed total bestowal value (2.00 + 15% = 2.30)
+          const itemPrice = isAlbum
+            ? (item.price || 0)
+            : SINGLE_TOTAL_PRICE;
           
           tracks.push({
             id: item.id,
@@ -202,10 +203,10 @@ export default function CommunityMusicLibraryPage() {
                           titleLower.includes('project') ||
                           categoryLower.includes('album');
           
-          // Singles are always 2 USDC minimum
-          const productPrice = isAlbum 
-            ? (product.price || 0) 
-            : Math.max(product.price || 0, SINGLE_PRICE);
+          // Singles use a fixed total bestowal value (2.00 + 15% = 2.30)
+          const productPrice = isAlbum
+            ? (product.price || 0)
+            : SINGLE_TOTAL_PRICE;
           
           // Skip if already added from other sources (check by title to avoid duplicates)
           const alreadyExists = tracks.some(t => 
@@ -469,7 +470,7 @@ export default function CommunityMusicLibraryPage() {
                 </h1>
               </div>
               <p className="text-white/90 text-xl mb-4 backdrop-blur-sm bg-white/10 rounded-lg p-4 border border-white/20">
-                Build your custom album from sower tracks. Each single is {formatAmount(SINGLE_PRICE)} (includes 10% tithing + 5% admin fee).
+                Build your custom album from sower tracks. Each single is {formatAmount(SINGLE_TOTAL_PRICE)} (2.00 base + 10% tithing + 5% admin).
               </p>
               <div className="flex items-center justify-center gap-6 text-white/80">
                 <div className="flex items-center gap-2">

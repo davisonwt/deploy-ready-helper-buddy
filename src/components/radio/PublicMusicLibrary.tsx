@@ -22,7 +22,7 @@ import {
 import { useAuth } from '@/hooks/useAuth';
 import { toast } from 'sonner';
 import { useMusicPurchase } from '@/hooks/useMusicPurchase';
-
+import { getStandardSingleTotalPrice } from '@/utils/musicPricing';
 export default function PublicMusicLibrary() {
   const { user } = useAuth();
   const { purchaseTrack, hasPurchased } = useMusicPurchase();
@@ -82,6 +82,11 @@ export default function PublicMusicLibrary() {
     const mins = Math.floor(seconds / 60);
     const secs = seconds % 60;
     return `${mins}:${secs.toString().padStart(2, '0')}`;
+  };
+
+  const getDisplayPrice = (track: any) => {
+    if (!track?.price || Number(track.price) <= 0) return 0;
+    return getStandardSingleTotalPrice();
   };
 
   const filteredTracks = tracks
@@ -210,7 +215,7 @@ export default function PublicMusicLibrary() {
     }
 
     try {
-      await purchaseTrack(track.id, track.price);
+      await purchaseTrack(track.id, getDisplayPrice(track));
       toast.success('Track purchased successfully!');
     } catch (error) {
       console.error('Purchase error:', error);
@@ -396,7 +401,7 @@ export default function PublicMusicLibrary() {
                             onClick={() => handlePurchase(track)}
                           >
                             <ShoppingCart className="h-3 w-3 mr-1" />
-                            ${track.price}
+                            ${getDisplayPrice(track).toFixed(2)}
                           </Button>
                         )
                       ) : (
