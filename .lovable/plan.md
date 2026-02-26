@@ -1,62 +1,76 @@
 
 
-## Plan: Ensure Approved Radio Slots Go Live at Correct Time Slots
+## Plan: Fix Radio Playback — Merge DJ Profiles & Enforce Single Profile
 
-### Problem Analysis
+### Root Cause (Verified via Database)
 
-After reviewing the codebase, I found several issues that prevent approved radio slots from correctly going live at their scheduled times:
+The issue is NOT about routing or schedule selection. The real problem is **duplicate DJ profiles**:
 
-1. **`canGoLive` logic is broken** (`useGroveStation.jsx`, line 591-595): It only checks `status === 'scheduled'` but does NOT check `approval_status === 'approved'`. It also only compares `hour_slot` to the current hour, ignoring `start_time`/`end_time` fields.
+- Your user has **40+ duplicate `radio_djs` entries** (created each time you clicked "Become a DJ")
+- Your approved radio slots reference DJ profile `ba1dbb88-...` ("davison - sow2grow guide") — which has **0 music tracks**
+- All 26 uploaded music tracks belong to an older DJ profile `bcef36bb-...` ("davison taljaard")
+- When the player loads a slot, it queries `dj_music_tracks WHERE dj_id = ba1dbb88-...` → finds nothing → "No Music"
 
-2. **Schedule grid shows unapproved slots** (`RadioScheduleGrid.jsx`): Fetches ALL slots for today regardless of approval status, so pending/rejected slots appear as valid scheduled shows.
-
-3. **Current show fallback ignores approval status** (`useGroveStation.jsx`, lines 48-110): The fallback queries that find the current or next show do not filter by `approval_status = 'approved'`, so a pending or rejected slot could become the "current show."
-
-4. **`fetchSchedule` shows unapproved slots** (`useGroveStation.jsx`, line 130-180): All slots for a date are fetched and formatted into the 24-hour grid without filtering by approval status.
-
----
+The music was never deleted — it's just linked to a different DJ profile than the one your scheduled slots reference.
 
 ### Changes
 
-#### 1. Fix `canGoLive` in `useGroveStation.jsx` (line 591-595)
-- Add `approval_status === 'approved'` check
-- Use `start_time`/`end_time` for time window matching instead of just `hour_slot`
+#### 1. Database Migration: Consolidate DJ profiles
 
-#### 2. Filter `fetchCurrentShow` fallbacks in `useGroveStation.jsx`
-- **Fallback A** (line 49-76): Add `.eq('approval_status', 'approved')` to the live slot query
-- **Fallback B** (line 81-110): Add `.eq('approval_status', 'approved')` to the upcoming slot query
+- Move all `dj_music_tracks` from old profiles to the newest active profile (`ba1dbb88-...`)
+- Move all `dj_playlists` similarly
+- Update any `radio_schedule` entries pointing to old profiles
+- Delete all duplicate DJ profiles for this user, keeping only the newest
+- Add a **unique constraint** on `radio_djs(user_id)` to prevent future duplicates
 
-#### 3. Filter `fetchSchedule` in `useGroveStation.jsx` (line 134-153)
-- Add `.eq('approval_status', 'approved')` so only approved slots appear in the schedule grid
+```sql
+-- Move tracks from ALL old profiles to newest
+UPDATE dj_music_tracks SET dj_id = 'ba1dbb88-6527-4004-b931-2b41279b5e55'
+WHERE dj_id IN (SELECT id FROM radio_djs WHERE user_id = '04754d57-d41d-4ea7-93df-542047a6785b' AND id != 'ba1dbb88-6527-4004-b931-2b41279b5e55');
 
-#### 4. Filter `RadioScheduleGrid.jsx` direct fetch (line 80-99)
-- Add `.eq('approval_status', 'approved')` to the today's schedule query so the grid only shows approved shows
+-- Move playlists
+UPDATE dj_playlists SET dj_id = 'ba1dbb88-6527-4004-b931-2b41279b5e55'
+WHERE dj_id IN (SELECT id FROM radio_djs WHERE user_id = '04754d57-d41d-4ea7-93df-542047a6785b' AND id != 'ba1dbb88-6527-4004-b931-2b41279b5e55');
 
-#### 5. Filter `fetchTodaySchedule` in `RadioScheduleGrid.jsx`
-- Same filter to ensure the grid only displays approved slots
+-- Move schedule entries  
+UPDATE radio_schedule SET dj_id = 'ba1dbb88-6527-4004-b931-2b41279b5e55'
+WHERE dj_id IN (SELECT id FROM radio_djs WHERE user_id = '04754d57-d41d-4ea7-93df-542047a6785b' AND id != 'ba1dbb88-6527-4004-b931-2b41279b5e55');
+
+-- Move shows, stats, badges, etc.
+-- Delete duplicates
+-- Add unique constraint on user_id
+```
+
+#### 2. Fix `useGroveStation.jsx` — `createDJProfile`
+
+Change `createDJProfile` to use **upsert** behavior: check if a profile already exists for the user first, and return it instead of creating a duplicate.
+
+#### 3. Fix `useDJPlaylist.jsx` — `fetchDJProfile`
+
+Currently uses `.limit(1).single()` which may pick an arbitrary profile when duplicates exist. Change to sort by `created_at DESC` and pick the newest, matching what the scheduling system uses.
+
+#### 4. Fix `CreateDJProfileForm.jsx`
+
+Add a pre-check: if the user already has a DJ profile, show their existing profile instead of creating a new one.
 
 ---
 
 ### Technical Details
 
-**`canGoLive` fix:**
-```javascript
-canGoLive: userDJProfile && schedule.some(slot =>
-  slot.dj_name === userDJProfile.dj_name &&
-  slot.approval_status === 'approved' &&
-  slot.status === 'scheduled' &&
-  new Date().getHours() === slot.hour_slot
-)
+**Data migration targets** (all tables with `dj_id` foreign key):
+- `dj_music_tracks` — 26 tracks to move
+- `dj_playlists` — playlists to move
+- `radio_schedule` — already on newest profile (8 slots)
+- `radio_shows` — shows to move
+- `radio_stats` — stats to move
+- `radio_dj_badges` — badges to move
+- `radio_live_hosts` — hosts to move
+- `radio_seed_plays` — plays to move
+
+**Unique constraint SQL:**
+```sql
+CREATE UNIQUE INDEX radio_djs_user_id_unique ON radio_djs(user_id);
 ```
 
-**Fallback queries** — add to each:
-```javascript
-.eq('approval_status', 'approved')
-```
-
-This ensures:
-- Only admin-approved slots appear in schedules
-- Only approved slots can trigger go-live
-- The "current show" is always an approved show
-- Listeners only see approved content on the station
+This prevents any future duplicate profile creation at the database level.
 
