@@ -503,7 +503,6 @@ export function LiveStreamListener({ liveSession, currentShow }) {
       }
     }
   }
-  }
 
   const fetchPlaylistForCurrentShow = async () => {
     try {
