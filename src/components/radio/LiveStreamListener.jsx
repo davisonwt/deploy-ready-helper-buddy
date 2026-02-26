@@ -304,15 +304,23 @@ export function LiveStreamListener({ liveSession, currentShow }) {
 
     if (!sched) return []
 
-    const timelineItems = Array.isArray(sched.show_topic_description)
-      ? sched.show_topic_description
-      : []
+    let timelineItems = []
+    if (Array.isArray(sched.show_topic_description)) {
+      timelineItems = sched.show_topic_description
+    } else if (typeof sched.show_topic_description === 'string' && sched.show_topic_description.trim()) {
+      try {
+        const parsed = JSON.parse(sched.show_topic_description)
+        timelineItems = Array.isArray(parsed) ? parsed : []
+      } catch (parseErr) {
+        console.error('[Listener] Failed to parse show_topic_description JSON:', parseErr)
+      }
+    }
 
     if (timelineItems.length > 0) {
       const musicIds = [...new Set(
         timelineItems
-          .filter(item => item?.type === 'music' && item?.contentId)
-          .map(item => item.contentId)
+          .filter(item => item?.type === 'music' && (item?.contentId || item?.content_id))
+          .map(item => item.contentId || item.content_id)
       )]
 
       let musicTrackMap = new Map()
@@ -326,21 +334,23 @@ export function LiveStreamListener({ liveSession, currentShow }) {
       }
 
       const timelineTracks = timelineItems.flatMap((item, index) => {
-        if (item?.type === 'voice_note' && item?.fileUrl) {
+        const voiceUrl = item?.fileUrl || item?.file_url || item?.audioUrl || item?.audio_url
+
+        if (item?.type === 'voice_note' && voiceUrl) {
           return [{
             id: `voice-${scheduleId}-${index}`,
             track_title: item.title || `Voice Segment ${index + 1}`,
             artist_name: currentShow?.dj_name || 'Host',
             duration_seconds: item.durationMinutes ? Math.round(Number(item.durationMinutes) * 60) : null,
             genre: 'voice_note',
-            file_url: item.fileUrl,
+            file_url: voiceUrl,
             price: null,
             isVoiceNote: true
           }]
         }
 
-        if (item?.type === 'music' && item?.contentId) {
-          const track = musicTrackMap.get(item.contentId)
+        if (item?.type === 'music' && (item?.contentId || item?.content_id)) {
+          const track = musicTrackMap.get(item.contentId || item.content_id)
           return track ? [{ ...track, isVoiceNote: false }] : []
         }
 
@@ -351,6 +361,9 @@ export function LiveStreamListener({ liveSession, currentShow }) {
         console.log('[Listener] Loaded timeline sequence:', timelineTracks.length)
         return timelineTracks
       }
+
+      console.warn('[Listener] Timeline exists but no playable timeline items were resolved; skipping library fallback to avoid wrong-slot playback')
+      return []
     }
 
     let tracks = []
