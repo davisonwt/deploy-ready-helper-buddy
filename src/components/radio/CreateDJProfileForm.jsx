@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { useGroveStation } from '@/hooks/useGroveStation'
 import { SecureInput, SecureTextarea } from '@/components/ui/secure-input'
 import {
@@ -34,7 +34,7 @@ const TIME_SLOTS = [
 ]
 
 export function CreateDJProfileForm({ open, onClose }) {
-  const { createDJProfile, loading } = useGroveStation()
+  const { createDJProfile, loading, userDJProfile } = useGroveStation()
   const [formData, setFormData] = useState({
     dj_name: '',
     bio: '',
@@ -42,6 +42,13 @@ export function CreateDJProfileForm({ open, onClose }) {
     preferred_time_slots: [],
     emergency_availability: false
   })
+
+  // If user already has a profile, close the form and notify
+  useEffect(() => {
+    if (open && userDJProfile) {
+      onClose()
+    }
+  }, [open, userDJProfile, onClose])
 
   const handleSubmit = async (e) => {
     e.preventDefault()
