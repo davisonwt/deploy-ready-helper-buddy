@@ -194,7 +194,7 @@ export default function LoginPage() {
         <Card className="bg-[hsl(210,40%,14%)] backdrop-blur-lg border border-emerald-500/30 shadow-2xl transition-all duration-500 hover:shadow-3xl text-white">
           <CardHeader className="text-center pb-4">
             <div className="flex justify-center mb-6">
-              <div className="w-24 h-24 rounded-2xl overflow-hidden shadow-2xl ring-4 ring-blue-100">
+              <div className="w-24 h-24 rounded-full overflow-hidden shadow-2xl ring-4 ring-amber-600/60 ring-offset-2 ring-offset-[hsl(210,40%,14%)]">
                 <img 
                   src="/lovable-uploads/s2g-logo.jpg" 
                   alt="sow2grow logo" 
