@@ -37,6 +37,7 @@ export function LiveStreamListener({ liveSession, currentShow }) {
   
   const audioRef = useRef(null)
   const peerConnectionRef = useRef(null)
+  const pendingSeekOffset = useRef(0)
 
   const fetchActiveHosts = async () => {
     if (!liveSession) return
@@ -173,7 +174,9 @@ export function LiveStreamListener({ liveSession, currentShow }) {
   // Auto-play when tracks load and user has pressed play
   useEffect(() => {
     if (isPlaying && currentTrack && audioRef.current && !audioRef.current.src) {
-      playCurrentTrackAudio(currentTrack)
+      const offset = pendingSeekOffset.current || 0
+      pendingSeekOffset.current = 0
+      playCurrentTrackAudio(currentTrack, offset)
     }
   }, [currentTrack, isPlaying])
 
@@ -578,9 +581,12 @@ export function LiveStreamListener({ liveSession, currentShow }) {
       const tracks = await loadTracksForSchedule(currentShow.schedule_id)
 
       setPlaylistTracks(tracks)
-      if (!currentTrack && tracks.length > 0) {
-        const { trackIndex } = calculateCurrentTrack(tracks)
+      if (tracks.length > 0) {
+        // Always sync to clock position, not just first load
+        const { trackIndex, seekOffset } = calculateCurrentTrack(tracks)
         setCurrentTrack(tracks[trackIndex])
+        // Store seekOffset so autoplay can use it
+        pendingSeekOffset.current = seekOffset
       }
     } catch (e) {
       console.error('Playlist preload failed:', e)
