@@ -47,6 +47,19 @@ export function MusicPurchaseInterface({
     return `${mins}:${secs.toString().padStart(2, '0')}`
   }
 
+  const currentTrackIndex = currentTrack
+    ? tracks.findIndex((track) =>
+        track === currentTrack ||
+        (track.id === currentTrack.id && track.file_url === currentTrack.file_url && track.track_title === currentTrack.track_title)
+      )
+    : -1
+
+  const orderedUpcomingTracks = tracks.length <= 1
+    ? []
+    : currentTrackIndex >= 0
+      ? [...tracks.slice(currentTrackIndex + 1), ...tracks.slice(0, currentTrackIndex)]
+      : tracks.slice(1)
+
   return (
     <>
       {/* Current Track Purchase */}
@@ -109,7 +122,7 @@ export function MusicPurchaseInterface({
       )}
 
       {/* Upcoming Tracks */}
-      {tracks.length > 1 && (
+      {orderedUpcomingTracks.length > 0 && (
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center justify-between">
@@ -118,20 +131,20 @@ export function MusicPurchaseInterface({
                 Upcoming Tracks
               </span>
               <Badge variant="secondary" className="text-xs">
-                {tracks.length - 1} tracks
+                {orderedUpcomingTracks.length} tracks
               </Badge>
             </CardTitle>
           </CardHeader>
           <CardContent>
             <div className="space-y-3 max-h-64 overflow-y-auto">
-              {tracks.slice(1, 6).map((track, index) => (
+              {orderedUpcomingTracks.slice(0, 5).map((track, index) => (
                 <div 
-                  key={track.id} 
+                  key={`${track.id}-${index}`} 
                   className="flex items-center justify-between p-3 rounded-lg bg-muted/30 hover:bg-muted/50 transition-colors"
                 >
                   <div className="flex items-center gap-3">
                     <div className="w-8 h-8 rounded-full bg-primary/20 text-primary text-sm flex items-center justify-center font-medium">
-                      {index + 2}
+                      {index + 1}
                     </div>
                     <div>
                       <p className="font-medium text-sm text-foreground">{track.track_title}</p>
@@ -163,10 +176,10 @@ export function MusicPurchaseInterface({
               ))}
             </div>
             
-            {tracks.length > 6 && (
+            {orderedUpcomingTracks.length > 5 && (
               <div className="text-center mt-3">
                 <p className="text-xs text-muted-foreground">
-                  +{tracks.length - 6} more tracks in playlist
+                  +{orderedUpcomingTracks.length - 5} more tracks in playlist
                 </p>
               </div>
             )}
