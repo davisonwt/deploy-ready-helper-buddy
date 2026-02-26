@@ -9,10 +9,11 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
+import { Switch } from '@/components/ui/switch';
 import { 
   Music, Mic, MicOff, Megaphone, FileText, Plus, Trash2, 
   Clock, GripVertical, Search, Play, Pause, Upload, Square, RotateCcw,
-  Download, Sparkles
+  Download, Sparkles, DollarSign, ShieldCheck
 } from 'lucide-react';
 import { useDropzone } from 'react-dropzone';
 import { AIVoicePanel } from './AIVoicePanel';
@@ -34,6 +35,8 @@ interface TimelineSegment {
   notes?: string;
   audioBlob?: Blob; // for mic-recorded voice notes
   audioUrl?: string; // object URL for playback preview
+  bestowalAmount?: number; // price/bestowal amount set by DJ
+  isDownloadable?: boolean; // whether listeners can download
 }
 
 const SEGMENT_TYPES: { value: SegmentType; label: string; icon: React.ReactNode; color: string }[] = [
@@ -195,6 +198,8 @@ export const TimelineBuilder: React.FC<TimelineBuilderProps> = ({ segments, onCh
       type,
       title: '',
       durationMinutes: defaultDuration,
+      bestowalAmount: type === 'music' ? 2 : 0, // Music = $2 min, others free by default
+      isDownloadable: false, // Not downloadable by default
     };
     onChange([...segments, newSegment]);
   };
@@ -278,6 +283,7 @@ export const TimelineBuilder: React.FC<TimelineBuilderProps> = ({ segments, onCh
         contentName: `${track.title} — ${track.artist}`,
         title: track.title,
         durationMinutes: durationMin,
+        bestowalAmount: Math.max(track.price || 2, 2), // Enforce $2 minimum for music
       });
     }
     setShowMusicPicker(false);
@@ -440,6 +446,102 @@ export const TimelineBuilder: React.FC<TimelineBuilderProps> = ({ segments, onCh
                         ))}
                       </SelectContent>
                     </Select>
+                  </div>
+                </div>
+              </div>
+
+              {/* Bestowal Amount & Downloadable Controls */}
+              <div className="grid grid-cols-2 gap-2">
+                <div>
+                  <Label className="text-xs flex items-center gap-1">
+                    <DollarSign className="h-3 w-3" />
+                    Bestowal Amount (USDC)
+                  </Label>
+                  {segment.type === 'music' ? (
+                    <div className="space-y-1">
+                      <Input
+                        type="number"
+                        min={2}
+                        step={0.5}
+                        value={segment.bestowalAmount ?? 2}
+                        onChange={(e) => {
+                          const val = parseFloat(e.target.value) || 2;
+                          updateSegment(segment.id, { bestowalAmount: Math.max(val, 2) });
+                        }}
+                        className="h-8 text-sm"
+                      />
+                      <div className="text-[10px] text-muted-foreground space-y-0.5">
+                        <div className="flex justify-between">
+                          <span>Base price:</span>
+                          <span>${(segment.bestowalAmount ?? 2).toFixed(2)}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span>+ 10% Tithe:</span>
+                          <span>${((segment.bestowalAmount ?? 2) * 0.10).toFixed(2)}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span>+ 5% Admin:</span>
+                          <span>${((segment.bestowalAmount ?? 2) * 0.05).toFixed(2)}</span>
+                        </div>
+                        <div className="flex justify-between font-semibold text-foreground border-t border-border/50 pt-0.5">
+                          <span>Total:</span>
+                          <span>${((segment.bestowalAmount ?? 2) * 1.15).toFixed(2)}</span>
+                        </div>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="space-y-1">
+                      <Input
+                        type="number"
+                        min={0}
+                        step={0.5}
+                        value={segment.bestowalAmount ?? 0}
+                        onChange={(e) => {
+                          const val = parseFloat(e.target.value) || 0;
+                          updateSegment(segment.id, { bestowalAmount: Math.max(val, 0) });
+                        }}
+                        className="h-8 text-sm"
+                        placeholder="Free"
+                      />
+                      {(segment.bestowalAmount ?? 0) > 0 && (
+                        <div className="text-[10px] text-muted-foreground space-y-0.5">
+                          <div className="flex justify-between">
+                            <span>Base:</span>
+                            <span>${(segment.bestowalAmount ?? 0).toFixed(2)}</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span>+ 10% Tithe:</span>
+                            <span>${((segment.bestowalAmount ?? 0) * 0.10).toFixed(2)}</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span>+ 5% Admin:</span>
+                            <span>${((segment.bestowalAmount ?? 0) * 0.05).toFixed(2)}</span>
+                          </div>
+                          <div className="flex justify-between font-semibold text-foreground border-t border-border/50 pt-0.5">
+                            <span>Total:</span>
+                            <span>${((segment.bestowalAmount ?? 0) * 1.15).toFixed(2)}</span>
+                          </div>
+                        </div>
+                      )}
+                      {(segment.bestowalAmount ?? 0) === 0 && (
+                        <p className="text-[10px] text-muted-foreground">Free — no bestowal required</p>
+                      )}
+                    </div>
+                  )}
+                </div>
+                <div>
+                  <Label className="text-xs flex items-center gap-1">
+                    <ShieldCheck className="h-3 w-3" />
+                    Allow Download
+                  </Label>
+                  <div className="flex items-center gap-2 mt-2">
+                    <Switch
+                      checked={segment.isDownloadable ?? false}
+                      onCheckedChange={(checked) => updateSegment(segment.id, { isDownloadable: checked })}
+                    />
+                    <span className="text-xs text-muted-foreground">
+                      {segment.isDownloadable ? 'Downloadable' : 'Stream only'}
+                    </span>
                   </div>
                 </div>
               </div>
