@@ -151,7 +151,7 @@ export default function LoginPage() {
   }
   
   return (
-    <div className="min-h-screen bg-gradient-to-br from-green-50 via-blue-50 to-amber-50 flex items-center justify-center p-4 relative overflow-hidden">
+    <div className="min-h-screen bg-[hsl(210,30%,20%)] flex items-center justify-center p-4 relative overflow-hidden">
       {/* Enhanced animated background elements */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         <div className="absolute top-20 left-10 w-32 h-32 bg-blue-200/30 rounded-full animate-pulse shadow-xl" style={{ animationDuration: "4s" }}></div>
