@@ -323,14 +323,24 @@ export function LiveStreamListener({ liveSession, currentShow }) {
           .map(item => item.contentId || item.content_id)
       )]
 
-      let musicTrackMap = new Map()
-      if (musicIds.length > 0) {
-        const { data: musicRows } = await supabase
-          .from('dj_music_tracks')
-          .select('id, track_title, artist_name, duration_seconds, genre, file_url, price')
-          .in('id', musicIds)
+      let djMusicTrackMap = new Map()
+      let productTrackMap = new Map()
 
-        musicTrackMap = new Map((musicRows || []).map(track => [track.id, track]))
+      if (musicIds.length > 0) {
+        const [{ data: djMusicRows }, { data: productRows }] = await Promise.all([
+          supabase
+            .from('dj_music_tracks')
+            .select('id, track_title, artist_name, duration_seconds, genre, file_url, price')
+            .in('id', musicIds),
+          supabase
+            .from('products')
+            .select('id, title, artist_name, duration, category, music_genre, file_url, price, sowers(display_name)')
+            .in('id', musicIds)
+            .eq('status', 'active')
+        ])
+
+        djMusicTrackMap = new Map((djMusicRows || []).map(track => [track.id, track]))
+        productTrackMap = new Map((productRows || []).map(track => [track.id, track]))
       }
 
       const timelineTracks = timelineItems.flatMap((item, index) => {
@@ -345,13 +355,50 @@ export function LiveStreamListener({ liveSession, currentShow }) {
             genre: 'voice_note',
             file_url: voiceUrl,
             price: null,
-            isVoiceNote: true
+            isVoiceNote: true,
+            sourceType: 'voice_note'
           }]
         }
 
-        if (item?.type === 'music' && (item?.contentId || item?.content_id)) {
-          const track = musicTrackMap.get(item.contentId || item.content_id)
-          return track ? [{ ...track, isVoiceNote: false }] : []
+        if (item?.type === 'music') {
+          const contentId = item?.contentId || item?.content_id
+          const inlineMusicUrl = item?.fileUrl || item?.file_url || item?.audioUrl || item?.audio_url
+
+          if (contentId) {
+            const djTrack = djMusicTrackMap.get(contentId)
+            if (djTrack) {
+              return [{ ...djTrack, isVoiceNote: false, sourceType: 'dj_track' }]
+            }
+
+            const productTrack = productTrackMap.get(contentId)
+            if (productTrack?.file_url) {
+              return [{
+                id: productTrack.id,
+                track_title: productTrack.title || item.title || `Music Segment ${index + 1}`,
+                artist_name: productTrack.artist_name || productTrack?.sowers?.display_name || 'Sower',
+                duration_seconds: productTrack.duration ? Number(productTrack.duration) : null,
+                genre: productTrack.music_genre || productTrack.category || 'music',
+                file_url: productTrack.file_url,
+                price: productTrack.price ?? null,
+                isVoiceNote: false,
+                sourceType: 'product'
+              }]
+            }
+          }
+
+          if (inlineMusicUrl) {
+            return [{
+              id: `music-inline-${scheduleId}-${index}`,
+              track_title: item.title || `Music Segment ${index + 1}`,
+              artist_name: currentShow?.dj_name || 'Host',
+              duration_seconds: item.durationMinutes ? Math.round(Number(item.durationMinutes) * 60) : null,
+              genre: 'music',
+              file_url: inlineMusicUrl,
+              price: item.bestowalAmount ?? null,
+              isVoiceNote: false,
+              sourceType: 'inline_music'
+            }]
+          }
         }
 
         return []
@@ -477,9 +524,16 @@ export function LiveStreamListener({ liveSession, currentShow }) {
   const playCurrentTrackAudio = async (track, seekOffset = 0) => {
     if (!track?.file_url || !audioRef.current) return
     try {
-      const resolvedUrl = track.isVoiceNote
-        ? track.file_url
-        : await resolveAudioUrl(track.file_url, { bucketForKeys: 'dj-music' })
+      let resolvedUrl = track.file_url
+
+      if (!track.isVoiceNote) {
+        const preferredBucket = track.sourceType === 'product' ? 'music-tracks' : 'dj-music'
+        resolvedUrl = await resolveAudioUrl(track.file_url, { bucketForKeys: preferredBucket })
+
+        if (resolvedUrl === track.file_url && !String(resolvedUrl).startsWith('http')) {
+          resolvedUrl = await resolveAudioUrl(track.file_url, { bucketForKeys: 'chat-files' })
+        }
+      }
 
       console.log('[Listener] Playing:', track.track_title, resolvedUrl?.substring(0, 80), seekOffset ? `(seek +${seekOffset}s)` : '')
       const audio = audioRef.current
