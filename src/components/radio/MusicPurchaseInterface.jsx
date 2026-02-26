@@ -27,7 +27,19 @@ export function MusicPurchaseInterface({
   const [giftingTrack, setGiftingTrack] = useState(null)
 
   const isVoiceNote = (track) => {
-    return track?.track_type === 'voice_note' || track?.track_type === 'voicenote'
+    const normalizedTrackType = String(track?.track_type || track?.type || '').toLowerCase().trim()
+    const normalizedSourceType = String(track?.sourceType || track?.source_type || '').toLowerCase().trim()
+    const normalizedGenre = String(track?.genre || '').toLowerCase().trim()
+
+    return (
+      track?.isVoiceNote === true ||
+      normalizedTrackType === 'voice_note' ||
+      normalizedTrackType === 'voicenote' ||
+      normalizedSourceType === 'voice_note' ||
+      normalizedSourceType === 'voicenote' ||
+      normalizedGenre === 'voice_note' ||
+      normalizedGenre === 'voicenote'
+    )
   }
 
   const handlePurchaseTrack = async (track) => {
