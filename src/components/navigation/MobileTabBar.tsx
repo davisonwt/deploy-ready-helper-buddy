@@ -67,7 +67,7 @@ export function MobileTabBar({ onOpenGarden }: MobileTabBarProps) {
               className={`flex flex-col items-center justify-center flex-1 h-full py-2 transition-all duration-200 ${
                 tab.isActive 
                   ? 'text-primary' 
-                  : 'text-muted-foreground hover:text-foreground'
+                  : 'text-foreground/80 hover:text-foreground'
               }`}
             >
               {tab.highlight ? (
@@ -77,7 +77,7 @@ export function MobileTabBar({ onOpenGarden }: MobileTabBarProps) {
               ) : (
                 <>
                   <Icon className={`h-5 w-5 ${tab.isActive ? 'scale-110' : ''}`} />
-                  <span className="text-[10px] mt-1 font-medium">{tab.label}</span>
+                  <span className="text-[11px] mt-1 font-semibold">{tab.label}</span>
                 </>
               )}
             </button>
