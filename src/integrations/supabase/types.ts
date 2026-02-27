@@ -517,6 +517,57 @@ export type Database = {
         }
         Relationships: []
       }
+      biz_ads: {
+        Row: {
+          created_at: string
+          description: string | null
+          duration_seconds: number | null
+          file_size: number | null
+          id: string
+          is_active: boolean | null
+          media_type: string
+          media_url: string
+          mime_type: string | null
+          status: string
+          thumbnail_url: string | null
+          title: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          duration_seconds?: number | null
+          file_size?: number | null
+          id?: string
+          is_active?: boolean | null
+          media_type?: string
+          media_url: string
+          mime_type?: string | null
+          status?: string
+          thumbnail_url?: string | null
+          title: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          duration_seconds?: number | null
+          file_size?: number | null
+          id?: string
+          is_active?: boolean | null
+          media_type?: string
+          media_url?: string
+          mime_type?: string | null
+          status?: string
+          thumbnail_url?: string | null
+          title?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       book_orders: {
         Row: {
           admin_fee: number

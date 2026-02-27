@@ -163,6 +163,10 @@ const CommunityServicesPage = lazy(() => import("./pages/CommunityServicesPage")
 const ServiceProviderDashboardPage = lazy(() => import("./pages/ServiceProviderDashboardPage"));
 const MyServiceRequestsPage = lazy(() => import("./pages/MyServiceRequestsPage"));
 
+// Biz Ads
+const MyBizAdsPage = lazy(() => import("./pages/MyBizAdsPage"));
+const CommunityBizAdsPage = lazy(() => import("./pages/CommunityBizAdsPage"));
+
 // 364ttt - Weekly Torah Top Ten
 const TorahTopTenPage = lazy(() => import("./pages/TorahTopTenPage"));
 const VotingPage = lazy(() => import("./pages/VotingPage"));
@@ -568,6 +572,22 @@ const App = () => (
                     </Layout>
                   </ProtectedRoute>
                  } />
+
+               {/* Biz Ads */}
+               <Route path="/my-biz-ads" element={
+                 <ProtectedRoute>
+                   <Layout>
+                     <MyBizAdsPage />
+                   </Layout>
+                 </ProtectedRoute>
+               } />
+               <Route path="/community-biz-ads" element={
+                 <ProtectedRoute>
+                   <Layout>
+                     <CommunityBizAdsPage />
+                   </Layout>
+                 </ProtectedRoute>
+               } />
 
                {/* Grove Station - 24hr Radio */}
               <Route path="/grove-station" element={
