@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react'
+import React, { useState, useEffect, useCallback, useRef } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -25,6 +25,7 @@ export function RadioHostPanel({ compact = false }) {
   const [loading, setLoading] = useState(true)
   const [quickMessage, setQuickMessage] = useState({})
   const [sendingTo, setSendingTo] = useState(null)
+  const onlinePresenceIdsRef = useRef(new Set())
 
   // Fetch GoSat users and track their online presence via global channel
   useEffect(() => {
@@ -52,7 +53,13 @@ export function RadioHostPanel({ compact = false }) {
           .in('user_id', gosatIds)
 
         if (profileError) throw profileError
-        if (mounted) setOnlineHosts(profiles || [])
+        if (mounted) {
+          const withPresence = (profiles || []).map(profile => ({
+            ...profile,
+            _isOnline: onlinePresenceIdsRef.current.has(profile.user_id)
+          }))
+          setOnlineHosts(withPresence)
+        }
       } catch (err) {
         console.error('[RadioHostPanel] Error fetching gosat users:', err)
       } finally {
@@ -71,6 +78,7 @@ export function RadioHostPanel({ compact = false }) {
       .on('presence', { event: 'sync' }, () => {
         const state = channel.presenceState()
         const onlineIds = new Set(Object.keys(state))
+        onlinePresenceIdsRef.current = onlineIds
         setOnlineHosts(prev => prev.map(h => ({
           ...h,
           _isOnline: onlineIds.has(h.user_id)
@@ -136,20 +144,20 @@ export function RadioHostPanel({ compact = false }) {
   }
 
   const onlineHostsList = onlineHosts.filter(h => h._isOnline)
-  const offlineHostsList = onlineHosts.filter(h => !h._isOnline)
+  const meIsOnline = onlineHostsList.some(h => h.user_id === user?.id)
 
   // Compact mode: just show avatars row (for inside the player)
   if (compact) {
-    if (loading || onlineHosts.length === 0) return null
+    if (loading || onlineHostsList.length === 0) return null
 
     return (
       <div className="flex items-center gap-2">
         <span className="text-xs text-muted-foreground font-medium">Hosts:</span>
         <div className="flex -space-x-2">
-          {onlineHosts.slice(0, 5).map(host => (
+          {onlineHostsList.slice(0, 5).map(host => (
             <Avatar key={host.user_id} className="h-7 w-7 border-2 border-background cursor-pointer hover:scale-110 transition-transform"
               onClick={() => handleMessage(host)}
-              title={getDisplayName(host)}
+              title={`${getDisplayName(host)} (live now)`}
             >
               <AvatarImage src={host.avatar_url} />
               <AvatarFallback className="text-[10px] bg-primary text-primary-foreground">
@@ -158,10 +166,11 @@ export function RadioHostPanel({ compact = false }) {
             </Avatar>
           ))}
         </div>
-        {onlineHostsList.length > 0 && (
-          <Badge variant="outline" className="text-[10px] px-1.5 py-0 border-green-500 text-green-600">
-            {onlineHostsList.length} online
-          </Badge>
+        <Badge variant="outline" className="text-[10px] px-1.5 py-0 border-green-500 text-green-600">
+          {onlineHostsList.length} live
+        </Badge>
+        {meIsOnline && (
+          <Badge variant="secondary" className="text-[10px] px-1.5 py-0">You’re live</Badge>
         )}
       </div>
     )
@@ -185,12 +194,11 @@ export function RadioHostPanel({ compact = false }) {
       <CardContent className="space-y-3">
         {loading ? (
           <p className="text-sm text-muted-foreground text-center py-4">Loading hosts...</p>
-        ) : onlineHosts.length === 0 ? (
-          <p className="text-sm text-muted-foreground text-center py-4">No hosts available right now</p>
+        ) : onlineHostsList.length === 0 ? (
+          <p className="text-sm text-muted-foreground text-center py-4">No hosts are live right now</p>
         ) : (
           <>
-            {/* Online hosts first */}
-            {[...onlineHostsList, ...offlineHostsList].map(host => {
+            {onlineHostsList.map(host => {
               const isOnline = host._isOnline
               const isSelf = host.user_id === user?.id
 
