@@ -19,6 +19,7 @@ import { supabase } from '@/integrations/supabase/client'
 import { useAuth } from '@/hooks/useAuth'
 import { GuestRequestModal } from './GuestRequestModal'
 import { MusicPurchaseInterface } from './MusicPurchaseInterface'
+import { RadioHostPanel } from './RadioHostPanel'
 import { resolveAudioUrl } from '@/utils/resolveAudioUrl'
 
 export function LiveStreamListener({ liveSession, currentShow }) {
@@ -738,6 +739,10 @@ export function LiveStreamListener({ liveSession, currentShow }) {
               <p className="text-muted-foreground">
                 with {activeHosts.filter(h => h.role === 'main_host')[0]?.radio_djs?.dj_name || currentShow?.dj_name || 'AOD Station'}
               </p>
+              {/* Compact GoSat host avatars */}
+              <div className="flex justify-center pt-1">
+                <RadioHostPanel compact />
+              </div>
             </div>
 
             {/* Audio Player Controls */}
@@ -865,6 +870,9 @@ export function LiveStreamListener({ liveSession, currentShow }) {
           </CardContent>
         </Card>
       )}
+
+      {/* GoSat Hosts — Message & Call */}
+      <RadioHostPanel />
 
       {/* Music Purchase Interface */}
       <MusicPurchaseInterface 
