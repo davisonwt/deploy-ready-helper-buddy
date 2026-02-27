@@ -177,7 +177,7 @@ export default function LiveActivityWidget() {
         .limit(3)
 
       // Combine live and scheduled data
-      const allRadioSessions = [
+      let allRadioSessions = [
         ...(radioData || []),
         ...(scheduledData || []).map(schedule => ({
           id: schedule.id,
@@ -187,6 +187,33 @@ export default function LiveActivityWidget() {
           radio_schedule: schedule
         }))
       ]
+
+      // Fallback: if nothing is live or scheduled, show the most recent completed slot as replay
+      if (allRadioSessions.length === 0) {
+        const { data: replayData } = await supabase
+          .from('radio_schedule')
+          .select(`
+            *,
+            radio_shows (show_name, category, subject),
+            radio_djs (dj_name, avatar_url)
+          `)
+          .eq('approval_status', 'approved')
+          .in('status', ['completed', 'live', 'scheduled'])
+          .order('time_slot_date', { ascending: false })
+          .order('hour_slot', { ascending: false })
+          .limit(1)
+
+        if (replayData && replayData.length > 0) {
+          allRadioSessions = replayData.map(schedule => ({
+            id: schedule.id,
+            status: 'replay',
+            viewer_count: schedule.listener_count || 0,
+            created_at: schedule.start_time || schedule.created_at,
+            radio_schedule: schedule,
+            _isReplay: true
+          }))
+        }
+      }
 
       // Fetch active group calls from live_call_participants (no FK joins)
       const { data: callData } = await supabase
@@ -679,7 +706,7 @@ export default function LiveActivityWidget() {
                 <div className="space-y-2">
                   <h4 className="text-xs font-semibold flex items-center gap-1" style={{ color: currentTheme.accent }}>
                     <Radio className="h-3 w-3" />
-                    Live on Radio
+                    {liveData.radioHosts.some(s => s._isReplay) ? '🎧 Replay Available' : 'Live on Radio'}
                   </h4>
                   {liveData.radioHosts.slice(0, 2).map((session) => (
                     <div 
@@ -696,14 +723,16 @@ export default function LiveActivityWidget() {
                             <AvatarImage src={session.radio_schedule?.radio_djs?.avatar_url} />
                             <AvatarFallback className="text-xs">DJ</AvatarFallback>
                           </Avatar>
-                          <div className="absolute -top-1 -right-1 w-2 h-2 bg-red-500 rounded-full animate-pulse" />
+                          {!session._isReplay && (
+                            <div className="absolute -top-1 -right-1 w-2 h-2 bg-red-500 rounded-full animate-pulse" />
+                          )}
                         </div>
                         <div>
                           <div className="text-xs font-medium" style={{ color: currentTheme.textPrimary }}>
                             {session.radio_schedule?.radio_shows?.show_name || session.radio_schedule?.show_subject || 'Live Show'}
                           </div>
                           <div className="text-xs" style={{ color: currentTheme.textSecondary }}>
-                            {session.radio_schedule?.radio_djs?.dj_name || 'DJ Live'} · {session.viewer_count || 0} listeners
+                            {session.radio_schedule?.radio_djs?.dj_name || 'DJ'} · {session._isReplay ? 'Replay' : `${session.viewer_count || 0} listeners`}
                           </div>
                         </div>
                       </div>
@@ -716,7 +745,7 @@ export default function LiveActivityWidget() {
                         }}
                         onClick={() => joinActivity('radio', session.radio_schedule?.id || session.id)}
                       >
-                        Listen
+                        {session._isReplay ? 'Replay' : 'Listen'}
                       </button>
                     </div>
                   ))}
