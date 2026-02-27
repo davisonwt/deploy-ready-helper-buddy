@@ -9,6 +9,7 @@ import { Link } from 'react-router-dom';
 import { Sprout, TreePine, Heart, TrendingUp, Users, DollarSign, Plus, Calendar, User, Globe, Clock, MessageSquare, BarChart3, Trophy, Shield, Loader2, Music, Megaphone, Car, Wrench, BookOpen } from 'lucide-react';
 import { formatCurrency } from '../utils/formatters';
 import LiveTimezoneDisplay from '@/components/dashboard/LiveTimezoneDisplay';
+import WeatherWidget from '@/components/weather/WeatherWidget';
 import { supabase } from "@/integrations/supabase/client";
 import LiveActivityWidget from '@/components/LiveActivityWidget';
 import { GamificationHUD } from '@/components/gamification/GamificationHUD';
@@ -845,6 +846,45 @@ export default function DashboardPage() {
                 }}>
                     <Clock className="h-3 w-3 sm:h-4 sm:w-4 mr-2" />
                     View Radio Schedule
+                  </button>
+                </Link>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Weather Widget */}
+          <Card className="lg:col-span-1 border shadow-xl backdrop-blur-xl" style={{
+            backgroundColor: currentTheme.cardBg,
+            borderColor: currentTheme.cardBorder
+          }}>
+            <CardHeader className="p-4 sm:p-5 md:p-6">
+              <CardTitle className="flex items-center text-base sm:text-lg" style={{
+                color: currentTheme.textPrimary
+              }}>
+                <span className="text-xl mr-2">🌤️</span>
+                Weather
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="p-4 sm:p-5 md:p-6 pt-0">
+              <WeatherWidget compact />
+              <div className="mt-3 sm:mt-4 pt-2 sm:pt-3 border-t" style={{
+                borderColor: currentTheme.cardBorder
+              }}>
+                <Link to="/weather">
+                  <button className="w-full inline-flex items-center justify-center whitespace-nowrap rounded-full border-2 px-4 py-2 text-sm sm:text-base font-medium transition-all duration-200 shadow-sm" style={{
+                    color: currentTheme.textPrimary,
+                    borderColor: currentTheme.accent,
+                    backgroundColor: currentTheme.secondaryButton
+                  }} onMouseEnter={e => {
+                    e.currentTarget.style.backgroundColor = currentTheme.accent;
+                    e.currentTarget.style.borderColor = currentTheme.accent;
+                    e.currentTarget.style.color = currentTheme.textPrimary;
+                  }} onMouseLeave={e => {
+                    e.currentTarget.style.backgroundColor = currentTheme.secondaryButton;
+                    e.currentTarget.style.borderColor = currentTheme.accent;
+                    e.currentTarget.style.color = currentTheme.textPrimary;
+                  }}>
+                    🌦️ View Full Weather
                   </button>
                 </Link>
               </div>
