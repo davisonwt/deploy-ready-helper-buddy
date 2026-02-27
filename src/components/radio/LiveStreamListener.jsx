@@ -156,7 +156,9 @@ export function LiveStreamListener({ liveSession, currentShow }) {
     // Small delay to ensure audio context is ready
     const timer = setTimeout(async () => {
       try {
-        await initializeAudioStream()
+        const started = await initializeAudioStream()
+        if (!started) return
+
         setIsPlaying(true)
         if (liveSession?.id) {
           await supabase.rpc('update_viewer_count_secure', {
@@ -213,7 +215,12 @@ export function LiveStreamListener({ liveSession, currentShow }) {
 
     if (!isPlaying) {
       try {
-        await initializeAudioStream()
+        const started = await initializeAudioStream()
+        if (!started) {
+          setIsPlaying(false)
+          return
+        }
+
         setIsPlaying(true)
         
         // Only update viewer count if we have a live session
@@ -480,14 +487,17 @@ export function LiveStreamListener({ liveSession, currentShow }) {
         setCurrentTrack(targetTrack)
         await playCurrentTrackAudio(targetTrack, seekOffset)
       } else {
-        await fetchPlaylistAndPlay()
+        const startedFromFetchedPlaylist = await fetchPlaylistAndPlay()
+        if (!startedFromFetchedPlaylist) {
+          return false
+        }
       }
       
       console.log('[Listener] Audio stream initialized')
-      
+      return true
     } catch (error) {
       console.error('Error initializing audio stream:', error)
-      throw error
+      return false
     }
   }
 
@@ -495,7 +505,7 @@ export function LiveStreamListener({ liveSession, currentShow }) {
     try {
       if (!currentShow?.schedule_id) {
         console.warn('[Listener] No schedule_id on currentShow')
-        return
+        return false
       }
 
       const tracks = await loadTracksForSchedule(currentShow.schedule_id)
@@ -509,11 +519,14 @@ export function LiveStreamListener({ liveSession, currentShow }) {
         console.log(`[Listener] Resuming at track ${trackIndex + 1}/${tracks.length}: "${targetTrack.track_title}" (seek ${seekOffset}s)`)
         setCurrentTrack(targetTrack)
         await playCurrentTrackAudio(targetTrack, seekOffset)
-      } else {
-        toast({ title: "No Content", description: "No voice or music segments found for this slot.", variant: "destructive" })
+        return true
       }
+
+      toast({ title: "No Content", description: "No voice or music segments found for this slot.", variant: "destructive" })
+      return false
     } catch (e) {
       console.error('[Listener] fetchPlaylistAndPlay failed:', e)
+      return false
     }
   }
 
@@ -548,7 +561,10 @@ export function LiveStreamListener({ liveSession, currentShow }) {
   }
 
   const playCurrentTrackAudio = async (track, seekOffset = 0) => {
-    if (!track?.file_url || !audioRef.current) return
+    if (!track?.file_url || !audioRef.current) {
+      throw new Error('Missing playable track URL')
+    }
+
     try {
       let resolvedUrl = track.file_url
 
@@ -563,6 +579,12 @@ export function LiveStreamListener({ liveSession, currentShow }) {
 
       console.log('[Listener] Playing:', track.track_title, resolvedUrl?.substring(0, 80), seekOffset ? `(seek +${seekOffset}s)` : '')
       const audio = audioRef.current
+
+      // Ensure audio is actually audible when starting a track
+      audio.muted = false
+      if (muted) setMuted(false)
+      audio.volume = volume
+
       audio.src = resolvedUrl
       audio.load()
 
@@ -587,6 +609,8 @@ export function LiveStreamListener({ liveSession, currentShow }) {
       if (!track.isVoiceNote) {
         awardRadioPlayXP(track)
       }
+
+      return true
     } catch (playError) {
       if (playError?.name === 'NotAllowedError') {
         toast({ title: "Tap Play", description: "Click play to start the music" })
@@ -594,6 +618,8 @@ export function LiveStreamListener({ liveSession, currentShow }) {
         console.error('[Listener] Playback error:', playError)
         toast({ title: "Playback Error", description: "Could not play track", variant: "destructive" })
       }
+
+      throw playError
     }
   }
 
