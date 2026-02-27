@@ -193,6 +193,65 @@ export type Database = {
         }
         Relationships: []
       }
+      ai_generated_content: {
+        Row: {
+          audio_url: string | null
+          content: string | null
+          content_type: string
+          created_at: string
+          id: string
+          is_approved: boolean | null
+          metadata: Json | null
+          model_version: string | null
+          prompt_used: string | null
+          sower_id: string
+          title: string
+          tts_provider: string | null
+          tts_voice_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          audio_url?: string | null
+          content?: string | null
+          content_type?: string
+          created_at?: string
+          id?: string
+          is_approved?: boolean | null
+          metadata?: Json | null
+          model_version?: string | null
+          prompt_used?: string | null
+          sower_id: string
+          title: string
+          tts_provider?: string | null
+          tts_voice_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          audio_url?: string | null
+          content?: string | null
+          content_type?: string
+          created_at?: string
+          id?: string
+          is_approved?: boolean | null
+          metadata?: Json | null
+          model_version?: string | null
+          prompt_used?: string | null
+          sower_id?: string
+          title?: string
+          tts_provider?: string | null
+          tts_voice_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ai_generated_content_sower_id_fkey"
+            columns: ["sower_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["user_id"]
+          },
+        ]
+      }
       ai_usage: {
         Row: {
           date: string
@@ -258,6 +317,69 @@ export type Database = {
           why_represent?: string
         }
         Relationships: []
+      }
+      arweave_exports: {
+        Row: {
+          arweave_tx_id: string | null
+          batch_end: string | null
+          batch_start: string | null
+          completed_at: string | null
+          created_at: string
+          error_message: string | null
+          export_status: string
+          exported_by: string | null
+          file_hash: string | null
+          file_size_bytes: number | null
+          id: string
+          message_count: number | null
+          room_id: string
+        }
+        Insert: {
+          arweave_tx_id?: string | null
+          batch_end?: string | null
+          batch_start?: string | null
+          completed_at?: string | null
+          created_at?: string
+          error_message?: string | null
+          export_status?: string
+          exported_by?: string | null
+          file_hash?: string | null
+          file_size_bytes?: number | null
+          id?: string
+          message_count?: number | null
+          room_id: string
+        }
+        Update: {
+          arweave_tx_id?: string | null
+          batch_end?: string | null
+          batch_start?: string | null
+          completed_at?: string | null
+          created_at?: string
+          error_message?: string | null
+          export_status?: string
+          exported_by?: string | null
+          file_hash?: string | null
+          file_size_bytes?: number | null
+          id?: string
+          message_count?: number | null
+          room_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "arweave_exports_exported_by_fkey"
+            columns: ["exported_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "arweave_exports_room_id_fkey"
+            columns: ["room_id"]
+            isOneToOne: false
+            referencedRelation: "chat_rooms"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       available_achievements: {
         Row: {
@@ -801,13 +923,18 @@ export type Database = {
       }
       chat_messages: {
         Row: {
+          ai_generated: boolean | null
           content: string | null
           created_at: string
+          embedding: string | null
+          emotional_tone: string | null
           file_name: string | null
           file_size: number | null
           file_type: Database["public"]["Enums"]["file_type"] | null
           file_url: string | null
           id: string
+          immutable_hash: string | null
+          intent_tags: string[] | null
           is_edited: boolean
           message_type: string
           reply_to_id: string | null
@@ -818,13 +945,18 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          ai_generated?: boolean | null
           content?: string | null
           created_at?: string
+          embedding?: string | null
+          emotional_tone?: string | null
           file_name?: string | null
           file_size?: number | null
           file_type?: Database["public"]["Enums"]["file_type"] | null
           file_url?: string | null
           id?: string
+          immutable_hash?: string | null
+          intent_tags?: string[] | null
           is_edited?: boolean
           message_type?: string
           reply_to_id?: string | null
@@ -835,13 +967,18 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          ai_generated?: boolean | null
           content?: string | null
           created_at?: string
+          embedding?: string | null
+          emotional_tone?: string | null
           file_name?: string | null
           file_size?: number | null
           file_type?: Database["public"]["Enums"]["file_type"] | null
           file_url?: string | null
           id?: string
+          immutable_hash?: string | null
+          intent_tags?: string[] | null
           is_edited?: boolean
           message_type?: string
           reply_to_id?: string | null
@@ -2194,6 +2331,65 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "content_flags"
             referencedColumns: ["id"]
+          },
+        ]
+      }
+      gosat_insights: {
+        Row: {
+          access_tier: string
+          actioned_at: string | null
+          actioned_by: string | null
+          created_at: string
+          details: Json | null
+          expires_at: string | null
+          id: string
+          insight_type: string
+          is_actionable: boolean | null
+          related_room_ids: string[] | null
+          related_user_ids: string[] | null
+          severity: string | null
+          summary: string | null
+          title: string
+        }
+        Insert: {
+          access_tier?: string
+          actioned_at?: string | null
+          actioned_by?: string | null
+          created_at?: string
+          details?: Json | null
+          expires_at?: string | null
+          id?: string
+          insight_type?: string
+          is_actionable?: boolean | null
+          related_room_ids?: string[] | null
+          related_user_ids?: string[] | null
+          severity?: string | null
+          summary?: string | null
+          title: string
+        }
+        Update: {
+          access_tier?: string
+          actioned_at?: string | null
+          actioned_by?: string | null
+          created_at?: string
+          details?: Json | null
+          expires_at?: string | null
+          id?: string
+          insight_type?: string
+          is_actionable?: boolean | null
+          related_room_ids?: string[] | null
+          related_user_ids?: string[] | null
+          severity?: string | null
+          summary?: string | null
+          title?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "gosat_insights_actioned_by_fkey"
+            columns: ["actioned_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["user_id"]
           },
         ]
       }
@@ -5565,6 +5761,59 @@ export type Database = {
           },
         ]
       }
+      registered_agents: {
+        Row: {
+          agent_name: string
+          agent_type: string
+          api_key_hash: string | null
+          capabilities: Json | null
+          created_at: string
+          created_by: string | null
+          description: string | null
+          endpoint_url: string | null
+          id: string
+          is_active: boolean | null
+          rate_limit_per_minute: number | null
+          updated_at: string
+        }
+        Insert: {
+          agent_name: string
+          agent_type?: string
+          api_key_hash?: string | null
+          capabilities?: Json | null
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          endpoint_url?: string | null
+          id?: string
+          is_active?: boolean | null
+          rate_limit_per_minute?: number | null
+          updated_at?: string
+        }
+        Update: {
+          agent_name?: string
+          agent_type?: string
+          api_key_hash?: string | null
+          capabilities?: Json | null
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          endpoint_url?: string | null
+          id?: string
+          is_active?: boolean | null
+          rate_limit_per_minute?: number | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "registered_agents_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["user_id"]
+          },
+        ]
+      }
       room_gifts: {
         Row: {
           amount: number
@@ -6576,6 +6825,59 @@ export type Database = {
           wallet_type?: string | null
         }
         Relationships: []
+      }
+      sower_stories: {
+        Row: {
+          content: string | null
+          created_at: string
+          id: string
+          is_published: boolean | null
+          media_urls: string[] | null
+          published_at: string | null
+          sower_id: string
+          story_type: string | null
+          tags: string[] | null
+          title: string
+          updated_at: string
+          view_count: number | null
+        }
+        Insert: {
+          content?: string | null
+          created_at?: string
+          id?: string
+          is_published?: boolean | null
+          media_urls?: string[] | null
+          published_at?: string | null
+          sower_id: string
+          story_type?: string | null
+          tags?: string[] | null
+          title: string
+          updated_at?: string
+          view_count?: number | null
+        }
+        Update: {
+          content?: string | null
+          created_at?: string
+          id?: string
+          is_published?: boolean | null
+          media_urls?: string[] | null
+          published_at?: string | null
+          sower_id?: string
+          story_type?: string | null
+          tags?: string[] | null
+          title?: string
+          updated_at?: string
+          view_count?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sower_stories_sower_id_fkey"
+            columns: ["sower_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["user_id"]
+          },
+        ]
       }
       sowers: {
         Row: {
@@ -8269,6 +8571,7 @@ export type Database = {
         Returns: boolean
       }
       cleanup_expired_idempotency_keys: { Args: never; Returns: undefined }
+      cleanup_inactive_voice_clones: { Args: never; Returns: number }
       cleanup_old_rate_limits: { Args: never; Returns: undefined }
       create_verification_room_for_user: {
         Args: { target_user_id: string }
@@ -8308,6 +8611,10 @@ export type Database = {
       }
       get_current_radio_show: { Args: never; Returns: Json }
       get_current_week_id: { Args: never; Returns: string }
+      get_gosat_insight_details: {
+        Args: { _insight_id: string }
+        Returns: Json
+      }
       get_message_streak: { Args: { user_id_param: string }; Returns: number }
       get_or_create_community_room: { Args: never; Returns: string }
       get_or_create_direct_room: {
@@ -8735,13 +9042,18 @@ export type Database = {
           p_room_id: string
         }
         Returns: {
+          ai_generated: boolean | null
           content: string | null
           created_at: string
+          embedding: string | null
+          emotional_tone: string | null
           file_name: string | null
           file_size: number | null
           file_type: Database["public"]["Enums"]["file_type"] | null
           file_url: string | null
           id: string
+          immutable_hash: string | null
+          intent_tags: string[] | null
           is_edited: boolean
           message_type: string
           reply_to_id: string | null
