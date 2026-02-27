@@ -40,6 +40,7 @@ import { DJAchievements } from '@/components/radio/DJAchievements'
 import { DJLeaderboard } from '@/components/radio/DJLeaderboard'
 import { BroadcastHistory } from '@/components/radio/BroadcastHistory'
 import { DJSeedRequestQueue } from '@/components/radio/SeedRequestQueue'
+import WeatherWidget from '@/components/weather/WeatherWidget'
 
 
 export default function GroveStationPage() {
@@ -209,7 +210,12 @@ export default function GroveStationPage() {
 
             {/* Listener comments/requests always available */}
             {currentShow && !liveSession && (
-              <ListenerInteractions />
+              <div className="grid grid-cols-1 xl:grid-cols-2 gap-6 items-start">
+                <ListenerInteractions />
+                <div className="w-full max-w-md mx-auto xl:mx-0">
+                  <WeatherWidget compact />
+                </div>
+              </div>
             )}
             
             {!currentShow && (
