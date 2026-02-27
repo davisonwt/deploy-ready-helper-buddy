@@ -101,6 +101,7 @@ export function MyGardenPanel({ isOpen, onClose }: MyGardenPanelProps) {
         { href: '/my-products', title: 'My S2G Seeds', subtitle: '11 items · earned 83 USDC' },
         { href: '/music-library', title: 'My S2G Music Library', subtitle: '8 tracks · 41 plays today' },
         { href: '/my-s2g-library', title: 'My S2G Library', subtitle: 'Upload your first e-book!' },
+        { href: '/my-biz-ads', title: 'My S2G Biz Ads', subtitle: 'Upload ads for radio & community' },
       ]
     },
     {
@@ -117,6 +118,7 @@ export function MyGardenPanel({ isOpen, onClose }: MyGardenPanelProps) {
         { href: '/products', title: 'S2G Community Seeds', subtitle: 'Everything in one place' },
         { href: '/community-music-library', title: 'Community Music Library', subtitle: 'Build your album from sower tracks' },
         { href: '/s2g-community-library', title: 'Community Library', subtitle: 'E-books, courses, docs' },
+        { href: '/community-biz-ads', title: 'Community Biz Ads', subtitle: 'Business ads from sowers' },
         { href: '/eternal-forest', title: 'Eternal Forest', subtitle: 'See every soul growing live' },
       ]
     },
