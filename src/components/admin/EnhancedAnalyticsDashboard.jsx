@@ -322,7 +322,7 @@ export function EnhancedAnalyticsDashboard() {
       <Tabs defaultValue="overview" className="space-y-6">
         <div className="flex justify-center">
           <TabsList className="gap-2">
-            <TabsTrigger value="overview" className="data-[state=active]:bg-primary/10 data-[state=active]:text-primary">Overview</TabsTrigger>
+            <TabsTrigger value="overview" className="text-foreground data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">Overview</TabsTrigger>
             <TabsTrigger value="growth" className="data-[state=active]:bg-secondary/10 data-[state=active]:text-secondary">Growth Trends</TabsTrigger>
             <TabsTrigger value="categories" className="data-[state=active]:bg-accent/20 data-[state=active]:text-[hsl(var(--accent))]">Categories</TabsTrigger>
             <TabsTrigger value="revenue" className="data-[state=active]:bg-[hsl(var(--s2g-purple))]/10 data-[state=active]:text-[hsl(var(--s2g-purple))]">Revenue</TabsTrigger>
