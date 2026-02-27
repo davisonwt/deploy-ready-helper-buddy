@@ -4,10 +4,12 @@ import { useAuth } from '@/hooks/useAuth'
 
 /**
  * Broadcasts the current user's presence on the 'gosat-presence' channel.
- * Should be mounted once at app level (e.g. Layout) for GoSat users.
- * Non-GoSat users also join so they can read presence state, but only GoSat users track.
+ * Should be mounted once at app level (e.g. Layout).
+ *
+ * Note: tracking is done for any authenticated user; host visibility is still
+ * restricted in RadioHostPanel to users with the 'gosat' role.
  */
-export function useGosatPresence(isGosat) {
+export function useGosatPresence() {
   const { user } = useAuth()
   const channelRef = useRef(null)
 
@@ -23,7 +25,7 @@ export function useGosatPresence(isGosat) {
         // Presence state is read by RadioHostPanel via its own subscription
       })
       .subscribe(async (status) => {
-        if (status === 'SUBSCRIBED' && isGosat) {
+        if (status === 'SUBSCRIBED') {
           await channel.track({
             user_id: user.id,
             online_at: new Date().toISOString()
@@ -37,5 +39,6 @@ export function useGosatPresence(isGosat) {
       supabase.removeChannel(channel)
       channelRef.current = null
     }
-  }, [user?.id, isGosat])
+  }, [user?.id])
 }
+

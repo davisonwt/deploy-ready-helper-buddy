@@ -56,7 +56,7 @@ export function RadioHostPanel({ compact = false }) {
         if (mounted) {
           const withPresence = (profiles || []).map(profile => ({
             ...profile,
-            _isOnline: onlinePresenceIdsRef.current.has(profile.user_id)
+            _isOnline: profile.user_id === user.id || onlinePresenceIdsRef.current.has(profile.user_id)
           }))
           setOnlineHosts(withPresence)
         }
@@ -81,7 +81,7 @@ export function RadioHostPanel({ compact = false }) {
         onlinePresenceIdsRef.current = onlineIds
         setOnlineHosts(prev => prev.map(h => ({
           ...h,
-          _isOnline: onlineIds.has(h.user_id)
+          _isOnline: h.user_id === user.id || onlineIds.has(h.user_id)
         })))
       })
       .subscribe()
