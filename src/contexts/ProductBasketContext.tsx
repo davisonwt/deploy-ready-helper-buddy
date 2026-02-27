@@ -10,6 +10,10 @@ interface Product {
   sowers?: {
     display_name: string;
   };
+  // Whisperer attribution data (set when user arrives via ?ref= link)
+  whisperer_ref_code?: string;
+  whisperer_ref_link_id?: string;
+  whisperer_id?: string;
 }
 
 interface ProductBasketContextType {

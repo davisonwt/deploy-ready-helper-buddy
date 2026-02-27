@@ -41,12 +41,15 @@ export default function BestowalCheckout() {
   const creatorsAmount = totalAmount * 0.85 - totalWhisperCommission;
   const whispersAmount = totalWhisperCommission;
 
-  // Prepare product items for payment
+  // Prepare product items for payment (include attribution data)
   const productItems = basketItems.map(item => ({
     id: item.id,
     title: item.title,
     price: Number(item.price),
     sower_id: item.sower_id,
+    whisperer_ref_code: (item as any).whisperer_ref_code || null,
+    whisperer_ref_link_id: (item as any).whisperer_ref_link_id || null,
+    whisperer_id: (item as any).whisperer_id || null,
   }));
 
   const handlePaymentSuccess = (bestowalId: string, invoiceUrl: string) => {

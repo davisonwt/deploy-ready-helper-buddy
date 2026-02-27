@@ -7721,6 +7721,181 @@ export type Database = {
         }
         Relationships: []
       }
+      whisperer_clicks: {
+        Row: {
+          book_id: string | null
+          created_at: string
+          id: string
+          ip_hash: string | null
+          orchard_id: string | null
+          product_id: string | null
+          ref_link_id: string
+          referrer_url: string | null
+          user_agent: string | null
+          user_id: string | null
+          visitor_id: string | null
+          whisperer_id: string
+        }
+        Insert: {
+          book_id?: string | null
+          created_at?: string
+          id?: string
+          ip_hash?: string | null
+          orchard_id?: string | null
+          product_id?: string | null
+          ref_link_id: string
+          referrer_url?: string | null
+          user_agent?: string | null
+          user_id?: string | null
+          visitor_id?: string | null
+          whisperer_id: string
+        }
+        Update: {
+          book_id?: string | null
+          created_at?: string
+          id?: string
+          ip_hash?: string | null
+          orchard_id?: string | null
+          product_id?: string | null
+          ref_link_id?: string
+          referrer_url?: string | null
+          user_agent?: string | null
+          user_id?: string | null
+          visitor_id?: string | null
+          whisperer_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "whisperer_clicks_book_id_fkey"
+            columns: ["book_id"]
+            isOneToOne: false
+            referencedRelation: "sower_books"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "whisperer_clicks_orchard_id_fkey"
+            columns: ["orchard_id"]
+            isOneToOne: false
+            referencedRelation: "orchards"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "whisperer_clicks_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "whisperer_clicks_ref_link_id_fkey"
+            columns: ["ref_link_id"]
+            isOneToOne: false
+            referencedRelation: "whisperer_referral_links"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "whisperer_clicks_whisperer_id_fkey"
+            columns: ["whisperer_id"]
+            isOneToOne: false
+            referencedRelation: "whisperers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      whisperer_conversions: {
+        Row: {
+          attribution_type: string
+          bestowal_amount: number
+          bestowal_id: string | null
+          bestower_id: string
+          book_id: string | null
+          click_id: string | null
+          commission_amount: number
+          commission_percent: number
+          created_at: string
+          id: string
+          orchard_id: string | null
+          product_id: string | null
+          ref_link_id: string
+          whisperer_id: string
+        }
+        Insert: {
+          attribution_type?: string
+          bestowal_amount?: number
+          bestowal_id?: string | null
+          bestower_id: string
+          book_id?: string | null
+          click_id?: string | null
+          commission_amount?: number
+          commission_percent?: number
+          created_at?: string
+          id?: string
+          orchard_id?: string | null
+          product_id?: string | null
+          ref_link_id: string
+          whisperer_id: string
+        }
+        Update: {
+          attribution_type?: string
+          bestowal_amount?: number
+          bestowal_id?: string | null
+          bestower_id?: string
+          book_id?: string | null
+          click_id?: string | null
+          commission_amount?: number
+          commission_percent?: number
+          created_at?: string
+          id?: string
+          orchard_id?: string | null
+          product_id?: string | null
+          ref_link_id?: string
+          whisperer_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "whisperer_conversions_book_id_fkey"
+            columns: ["book_id"]
+            isOneToOne: false
+            referencedRelation: "sower_books"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "whisperer_conversions_click_id_fkey"
+            columns: ["click_id"]
+            isOneToOne: false
+            referencedRelation: "whisperer_clicks"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "whisperer_conversions_orchard_id_fkey"
+            columns: ["orchard_id"]
+            isOneToOne: false
+            referencedRelation: "orchards"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "whisperer_conversions_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "whisperer_conversions_ref_link_id_fkey"
+            columns: ["ref_link_id"]
+            isOneToOne: false
+            referencedRelation: "whisperer_referral_links"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "whisperer_conversions_whisperer_id_fkey"
+            columns: ["whisperer_id"]
+            isOneToOne: false
+            referencedRelation: "whisperers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       whisperer_earnings: {
         Row: {
           amount: number
@@ -7842,6 +8017,90 @@ export type Database = {
           },
           {
             foreignKeyName: "whisperer_invitations_whisperer_id_fkey"
+            columns: ["whisperer_id"]
+            isOneToOne: false
+            referencedRelation: "whisperers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      whisperer_referral_links: {
+        Row: {
+          assignment_id: string
+          book_id: string | null
+          created_at: string
+          id: string
+          is_active: boolean
+          orchard_id: string | null
+          product_id: string | null
+          ref_code: string
+          total_clicks: number
+          total_conversions: number
+          total_earned: number
+          updated_at: string
+          whisperer_id: string
+        }
+        Insert: {
+          assignment_id: string
+          book_id?: string | null
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          orchard_id?: string | null
+          product_id?: string | null
+          ref_code: string
+          total_clicks?: number
+          total_conversions?: number
+          total_earned?: number
+          updated_at?: string
+          whisperer_id: string
+        }
+        Update: {
+          assignment_id?: string
+          book_id?: string | null
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          orchard_id?: string | null
+          product_id?: string | null
+          ref_code?: string
+          total_clicks?: number
+          total_conversions?: number
+          total_earned?: number
+          updated_at?: string
+          whisperer_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "whisperer_referral_links_assignment_id_fkey"
+            columns: ["assignment_id"]
+            isOneToOne: false
+            referencedRelation: "product_whisperer_assignments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "whisperer_referral_links_book_id_fkey"
+            columns: ["book_id"]
+            isOneToOne: false
+            referencedRelation: "sower_books"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "whisperer_referral_links_orchard_id_fkey"
+            columns: ["orchard_id"]
+            isOneToOne: false
+            referencedRelation: "orchards"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "whisperer_referral_links_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "whisperer_referral_links_whisperer_id_fkey"
             columns: ["whisperer_id"]
             isOneToOne: false
             referencedRelation: "whisperers"
@@ -8020,6 +8279,7 @@ export type Database = {
       encrypt_pii_data_secure: { Args: { data_text: string }; Returns: string }
       end_stream: { Args: { stream_id_param: string }; Returns: boolean }
       generate_invoice_number: { Args: never; Returns: string }
+      generate_ref_code: { Args: never; Returns: string }
       get_admin_profile_access_report: {
         Args: { days_back?: number }
         Returns: {

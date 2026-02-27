@@ -4,6 +4,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { WhispererProfileForm } from '@/components/whisperers/WhispererProfileForm';
 import { WhispererInvitationsPanel } from '@/components/whisperers/WhispererInvitationsPanel';
+import { WhispererReferralLinks } from '@/components/whisperers/WhispererReferralLinks';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -207,6 +208,13 @@ export default function BecomeWhispererPage() {
         {existingProfile && (
           <div className="mb-8">
             <WhispererInvitationsPanel />
+          </div>
+        )}
+
+        {/* Referral Links - only show for existing whisperers */}
+        {existingProfile && (
+          <div className="mb-8">
+            <WhispererReferralLinks />
           </div>
         )}
 
