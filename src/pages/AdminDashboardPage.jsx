@@ -50,6 +50,7 @@ import { AmbassadorApplicationsDashboard } from '@/components/admin/AmbassadorAp
 import { WhispererApplicationsDashboard } from '@/components/admin/WhispererApplicationsDashboard'
 import { DriverApplicationsDashboard } from '@/components/admin/DriverApplicationsDashboard'
 import { ServiceProviderApplicationsDashboard } from '@/components/admin/ServiceProviderApplicationsDashboard'
+import { BestowalAuditDashboard } from '@/components/admin/BestowalAuditDashboard'
 
 export default function AdminDashboardPage() {
   const { user } = useAuth()
@@ -449,6 +450,13 @@ export default function AdminDashboardPage() {
                 <Shield className="w-4 h-4 mr-2" />
                 Support
               </TabsTrigger>
+              <TabsTrigger 
+                value="bestowal-audit" 
+                className="border-2 border-emerald-200 rounded-xl px-6 py-4 font-semibold shadow-lg hover:shadow-xl hover:scale-105 hover:border-emerald-300 transition-all duration-300 data-[state=active]:bg-gradient-to-br data-[state=active]:from-emerald-500 data-[state=active]:to-emerald-600 data-[state=active]:text-white data-[state=active]:border-emerald-500 data-[state=active]:shadow-2xl data-[state=active]:scale-105 bg-background"
+              >
+                <Eye className="w-4 h-4 mr-2" />
+                Bestowal Audit
+              </TabsTrigger>
             </TabsList>
           </div>
 
@@ -650,6 +658,10 @@ export default function AdminDashboardPage() {
 
           <TabsContent value="support" className="space-y-6">
             <PasswordResetApprovalPanel />
+          </TabsContent>
+
+          <TabsContent value="bestowal-audit" className="space-y-6">
+            <BestowalAuditDashboard />
           </TabsContent>
         </Tabs>
       </div>
