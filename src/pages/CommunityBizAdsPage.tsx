@@ -2,10 +2,10 @@ import React from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { ArrowLeft, Megaphone, Music, Image, Video, Loader2, ExternalLink } from 'lucide-react';
+import { ArrowLeft, Megaphone, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
+import BizAdCard from '@/components/biz-ads/BizAdCard';
 
 export default function CommunityBizAdsPage() {
   const navigate = useNavigate();
@@ -67,31 +67,7 @@ export default function CommunityBizAdsPage() {
               const profile = ad.profiles;
               const displayName = profile?.display_name || profile?.username || 'Sower';
               return (
-                <Card key={ad.id} className="overflow-hidden hover:shadow-lg transition-shadow">
-                  <div className="aspect-video bg-muted relative">
-                    {ad.media_type === 'image' ? (
-                      <img src={ad.media_url} alt={ad.title} className="w-full h-full object-cover" />
-                    ) : ad.media_type === 'video' ? (
-                      <video src={ad.media_url} controls className="w-full h-full object-cover" />
-                    ) : (
-                      <div className="w-full h-full flex flex-col items-center justify-center gap-2 p-4">
-                        <Music className="w-12 h-12 text-muted-foreground" />
-                        <audio src={ad.media_url} controls className="w-full" />
-                      </div>
-                    )}
-                    <Badge className="absolute top-2 left-2" variant="outline">
-                      {ad.media_type === 'video' ? <Video className="w-3 h-3 mr-1" /> : ad.media_type === 'audio' ? <Music className="w-3 h-3 mr-1" /> : <Image className="w-3 h-3 mr-1" />}
-                      {ad.media_type}
-                    </Badge>
-                  </div>
-                  <CardContent className="p-4 space-y-2">
-                    <h3 className="font-semibold text-lg">{ad.title}</h3>
-                    {ad.description && <p className="text-sm text-muted-foreground line-clamp-3">{ad.description}</p>}
-                    <p className="text-xs text-muted-foreground">
-                      By {displayName} · {new Date(ad.created_at).toLocaleDateString()}
-                    </p>
-                  </CardContent>
-                </Card>
+                <BizAdCard key={ad.id} ad={ad} displayName={displayName} />
               );
             })}
           </div>

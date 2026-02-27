@@ -528,11 +528,15 @@ export type Database = {
           media_type: string
           media_url: string
           mime_type: string | null
+          overlay_headline: string | null
+          overlay_position: string | null
+          overlay_tagline: string | null
           status: string
           thumbnail_url: string | null
           title: string
           updated_at: string
           user_id: string
+          voiceover_url: string | null
         }
         Insert: {
           created_at?: string
@@ -544,11 +548,15 @@ export type Database = {
           media_type?: string
           media_url: string
           mime_type?: string | null
+          overlay_headline?: string | null
+          overlay_position?: string | null
+          overlay_tagline?: string | null
           status?: string
           thumbnail_url?: string | null
           title: string
           updated_at?: string
           user_id: string
+          voiceover_url?: string | null
         }
         Update: {
           created_at?: string
@@ -560,11 +568,15 @@ export type Database = {
           media_type?: string
           media_url?: string
           mime_type?: string | null
+          overlay_headline?: string | null
+          overlay_position?: string | null
+          overlay_tagline?: string | null
           status?: string
           thumbnail_url?: string | null
           title?: string
           updated_at?: string
           user_id?: string
+          voiceover_url?: string | null
         }
         Relationships: []
       }
