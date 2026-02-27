@@ -160,6 +160,7 @@ export function MyGardenPanel({ isOpen, onClose }: MyGardenPanelProps) {
       emoji: '⚙️',
       cards: [
         { href: '/profile?tab=journal', title: 'Journal & Calendar', subtitle: 'Track your spiritual journey' },
+        { href: '/weather', title: 'Weather', subtitle: 'Check your local weather' },
         {
           onClick: () => {
             if (typeof window !== 'undefined' && window.startJitsi) {
