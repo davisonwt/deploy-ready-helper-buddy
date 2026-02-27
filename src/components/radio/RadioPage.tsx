@@ -8,6 +8,7 @@ import MusicLibrary from './MusicLibrary';
 import PlaylistManager from './PlaylistManager';
 import LiveStreamPlayer from './LiveStreamPlayer';
 import ListenerInteractions from './ListenerInteractions';
+import WeatherWidget from '@/components/weather/WeatherWidget';
 import { useAuth } from '@/hooks/useAuth';
 
 const RadioPage = () => {
@@ -88,6 +89,11 @@ const RadioPage = () => {
             <span className="font-semibold">Create Slot</span>
             <span className="text-xs text-muted-foreground">Generate your radio show</span>
           </Button>
+        </div>
+        
+        {/* Weather Widget */}
+        <div className="max-w-md mx-auto mt-6">
+          <WeatherWidget compact />
         </div>
       </div>
 

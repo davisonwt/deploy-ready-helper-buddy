@@ -110,6 +110,7 @@ const RadioGenerator = lazy(() => import("./pages/RadioGenerator"));
 const LiveRoomsPage = lazy(() => import("./pages/LiveRoomsPage"));
 const CreateLiveRoomPage = lazy(() => import("./pages/CreateLiveRoomPage"));
 const SupportUsPage = lazy(() => import("./pages/SupportUsPage"));
+const WeatherPage = lazy(() => import("./pages/WeatherPage"));
 const ProductsPage = lazy(() => import("./pages/ProductsPage"));
 const MyProductsPage = lazy(() => import("./pages/MyProductsPage"));
 const BecomeWhispererPage = lazy(() => import("./pages/BecomeWhispererPage"));
@@ -637,8 +638,16 @@ const App = () => (
                      <RadioPage />
                    </Layout>
                  </ProtectedRoute>
-               } />
-               
+                } />
+                
+                <Route path="/weather" element={
+                  <ProtectedRoute>
+                    <Suspense fallback={<LoadingFallback />}>
+                      <WeatherPage />
+                    </Suspense>
+                  </ProtectedRoute>
+                } />
+                
                <Route path="/sower/:id" element={
                   <ProtectedRoute>
                     <Layout>
