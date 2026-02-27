@@ -213,8 +213,14 @@ export default function BecomeWhispererPage() {
 
         {/* Referral Links - only show for existing whisperers */}
         {existingProfile && (
-          <div className="mb-8">
+          <div className="mb-8 space-y-4">
             <WhispererReferralLinks />
+            <Link to="/whisperer-earnings">
+              <Button variant="outline" className="w-full gap-2">
+                <TrendingUp className="h-4 w-4" />
+                View Full Earnings Dashboard
+              </Button>
+            </Link>
           </div>
         )}
 

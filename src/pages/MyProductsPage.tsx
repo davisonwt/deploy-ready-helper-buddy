@@ -5,7 +5,7 @@ import { useAuth } from '@/hooks/useAuth';
 import ProductCard from '@/components/products/ProductCard';
 import CategoryFilter from '@/components/products/CategoryFilter';
 import SowerBooksSection from '@/components/products/SowerBooksSection';
-import { Loader2, Package, Upload, Plus } from 'lucide-react';
+import { Loader2, Package, Upload, Plus, Users } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -158,13 +158,20 @@ export default function MyProductsPage() {
               <p className='text-white/90 text-xl mb-4 backdrop-blur-sm bg-white/10 rounded-lg p-4 border border-white/20'>
                 Manage your uploaded seeds — music, books, art, produce & digital content.
               </p>
-              <Link to="/products/upload">
-                <Button size="lg" className='backdrop-blur-md bg-white/20 border-white/30 text-white hover:bg-white/30'>
-                   <Upload className="w-5 h-5 mr-2" />
-
-                  Upload New Seed
-                </Button>
-              </Link>
+              <div className="flex flex-wrap gap-3 justify-center">
+                <Link to="/products/upload">
+                  <Button size="lg" className='backdrop-blur-md bg-white/20 border-white/30 text-white hover:bg-white/30'>
+                    <Upload className="w-5 h-5 mr-2" />
+                    Upload New Seed
+                  </Button>
+                </Link>
+                <Link to="/my-whisperers">
+                  <Button size="lg" variant="outline" className='backdrop-blur-md bg-white/10 border-white/30 text-white hover:bg-white/20'>
+                    <Users className="w-5 h-5 mr-2" />
+                    Manage Whisperers
+                  </Button>
+                </Link>
+              </div>
             </motion.div>
           </div>
         </div>
