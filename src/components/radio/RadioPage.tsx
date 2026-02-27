@@ -158,40 +158,22 @@ const RadioPage = () => {
         <TabsContent value="chat" className="mt-8">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
             <ListenerInteractions />
-            <Card>
-              <CardHeader>
-                <CardTitle>Chat Guidelines</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="space-y-2">
-                  <h4 className="font-medium flex items-center">
-                    <MessageCircle className="h-4 w-4 mr-2" />
-                    Comments
-                  </h4>
-                  <p className="text-sm text-muted-foreground">
-                    Share your thoughts, reactions, and connect with other listeners during live shows.
-                  </p>
-                </div>
-                <div className="space-y-2">
-                  <h4 className="font-medium flex items-center">
-                    <Music className="h-4 w-4 mr-2" />
-                    Song Requests
-                  </h4>
-                  <p className="text-sm text-muted-foreground">
-                    Request your favorite songs! DJs will see your requests and play them when possible.
-                  </p>
-                </div>
-                <div className="space-y-2">
-                  <h4 className="font-medium">Community Guidelines</h4>
+            <div className="space-y-6">
+              <WeatherWidget />
+              <Card>
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-base">Chat Guidelines</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-2">
                   <ul className="text-sm text-muted-foreground space-y-1">
                     <li>• Be respectful to all listeners and DJs</li>
                     <li>• Keep requests appropriate and family-friendly</li>
                     <li>• Avoid spam and repeated messages</li>
                     <li>• Enjoy the music and community!</li>
                   </ul>
-                </div>
-              </CardContent>
-            </Card>
+                </CardContent>
+              </Card>
+            </div>
           </div>
         </TabsContent>
       </Tabs>
