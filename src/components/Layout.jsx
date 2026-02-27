@@ -93,7 +93,7 @@ function Layout({ children }) {
   }, [user?.id])
 
   // Broadcast GoSat presence globally so radio listeners can see who's online
-  useGosatPresence(isAdminOrGosat)
+  useGosatPresence()
   const {
     showOnboarding, 
     setShowOnboarding, 
