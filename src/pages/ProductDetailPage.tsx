@@ -10,6 +10,7 @@ import { GradientPlaceholder } from '@/components/ui/GradientPlaceholder';
 import { formatCurrency } from '@/lib/utils';
 import { useProductBasket } from '@/contexts/ProductBasketContext';
 import { useToast } from '@/hooks/use-toast';
+import { useWhispererAttribution, getAttributionCookie } from '@/hooks/useWhispererAttribution';
 
 
 const typeIcons: Record<string, React.ReactNode> = {
@@ -33,6 +34,8 @@ export default function ProductDetailPage() {
   const { addToBasket } = useProductBasket();
   const { toast } = useToast();
 
+  // Track whisperer referral attribution (?ref=XXXX in URL)
+  useWhispererAttribution(id);
   useEffect(() => {
     if (!id) return;
 
@@ -192,6 +195,10 @@ export default function ProductDetailPage() {
               size="lg"
               className="w-full gap-2"
               onClick={() => {
+                // Check for whisperer attribution
+                const attribution = getAttributionCookie();
+                const hasAttribution = attribution && attribution.productId === product.id;
+
                 addToBasket({
                   id: product.id,
                   title: product.title,
@@ -200,6 +207,12 @@ export default function ProductDetailPage() {
                   sower_id: sower?.id || '',
                   bestowal_count: product.bestowal_count || 0,
                   sowers: { display_name: sowerName },
+                  // Attach whisperer attribution if present
+                  ...(hasAttribution ? {
+                    whisperer_ref_code: attribution.refCode,
+                    whisperer_ref_link_id: attribution.refLinkId,
+                    whisperer_id: attribution.whispererId,
+                  } : {}),
                 });
                 toast({
                   title: 'Added to Basket',

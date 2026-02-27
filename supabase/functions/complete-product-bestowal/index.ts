@@ -35,7 +35,7 @@ serve(async (req) => {
     }
 
     const body = await req.json();
-    const { productId, amount, sowerId } = body;
+    const { productId, amount, sowerId, whispererRefCode, whispererRefLinkId, whispererId } = body;
 
     if (!productId || !amount || !sowerId) {
       return createErrorResponse('Missing required fields', 400, req);
@@ -60,10 +60,31 @@ serve(async (req) => {
                              product.type === 'music';
 
     // Calculate distribution
+    // If a whisperer referred this bestowal, they get a commission from the sower's share
+    let whispererCommissionPercent = 0;
+    let whispererAssignment = null;
+
+    if (whispererId && whispererRefLinkId) {
+      // Look up the assignment to get the commission percent
+      const { data: assignment } = await supabase
+        .from('product_whisperer_assignments')
+        .select('id, commission_percent')
+        .eq('whisperer_id', whispererId)
+        .eq('product_id', productId)
+        .eq('is_active', true)
+        .maybeSingle();
+
+      if (assignment) {
+        whispererCommissionPercent = assignment.commission_percent || 0;
+        whispererAssignment = assignment;
+      }
+    }
+
     const tithingAmount = amount * 0.10; // 10% tithing
     const adminFee = amount * 0.05; // 5% admin fee
-    const sowerAmount = amount * 0.70; // 70% to sower
-    const productWhispersAmount = amount * 0.15; // 15% to product whispers
+    const whispererAmount = amount * 0.85 * (whispererCommissionPercent / 100); // from sower's 85%
+    const sowerAmount = amount * 0.85 - whispererAmount; // remainder to sower
+    const productWhispersAmount = whispererAmount; // for invoice display
 
     // Determine release status based on delivery type
     const releaseStatus = isDigitalProduct ? 'released' : 'held';
@@ -97,6 +118,95 @@ serve(async (req) => {
     if (bestowalError) {
       console.error('Failed to create product bestowal:', bestowalError);
       return createErrorResponse('Failed to create bestowal record', 500, req);
+    }
+
+    // ---- WHISPERER CONVERSION TRACKING ----
+    if (whispererId && whispererRefLinkId && whispererAmount > 0) {
+      console.log(`📣 Whisperer attribution: ${whispererId} earns $${whispererAmount.toFixed(2)} (${whispererCommissionPercent}%)`);
+
+      // Record conversion
+      await supabase.from('whisperer_conversions').insert({
+        ref_link_id: whispererRefLinkId,
+        whisperer_id: whispererId,
+        product_id: productId,
+        bestowal_id: bestowal.id,
+        bestower_id: user.id,
+        bestowal_amount: amount,
+        commission_percent: whispererCommissionPercent,
+        commission_amount: whispererAmount,
+        attribution_type: whispererRefCode ? 'direct' : 'cookie',
+      });
+
+      // Update referral link stats
+      const { data: refLink } = await supabase
+        .from('whisperer_referral_links')
+        .select('total_conversions, total_earned')
+        .eq('id', whispererRefLinkId)
+        .single();
+
+      if (refLink) {
+        await supabase
+          .from('whisperer_referral_links')
+          .update({
+            total_conversions: (refLink.total_conversions || 0) + 1,
+            total_earned: (refLink.total_earned || 0) + whispererAmount,
+          })
+          .eq('id', whispererRefLinkId);
+      }
+
+      // Record whisperer earnings
+      await supabase.from('whisperer_earnings').insert({
+        whisperer_id: whispererId,
+        assignment_id: whispererAssignment?.id || null,
+        amount: whispererAmount,
+        source_type: 'product_bestowal',
+        source_id: bestowal.id,
+        status: isDigitalProduct ? 'processed' : 'pending',
+      });
+
+      // Credit whisperer balance (use sower_balances pattern)
+      // Look up the whisperer's user_id
+      const { data: whispererUser } = await supabase
+        .from('whisperers')
+        .select('user_id')
+        .eq('id', whispererId)
+        .single();
+
+      if (whispererUser) {
+        const { data: existingWhispererBalance } = await supabase
+          .from('sower_balances')
+          .select('*')
+          .eq('user_id', whispererUser.user_id)
+          .single();
+
+        if (!existingWhispererBalance) {
+          await supabase.from('sower_balances').insert({
+            user_id: whispererUser.user_id,
+            available_balance: isDigitalProduct ? whispererAmount : 0,
+            pending_balance: isDigitalProduct ? 0 : whispererAmount,
+            total_earned: isDigitalProduct ? whispererAmount : 0,
+          });
+        } else {
+          if (isDigitalProduct) {
+            await supabase
+              .from('sower_balances')
+              .update({
+                available_balance: existingWhispererBalance.available_balance + whispererAmount,
+                total_earned: existingWhispererBalance.total_earned + whispererAmount,
+                updated_at: new Date().toISOString(),
+              })
+              .eq('user_id', whispererUser.user_id);
+          } else {
+            await supabase
+              .from('sower_balances')
+              .update({
+                pending_balance: existingWhispererBalance.pending_balance + whispererAmount,
+                updated_at: new Date().toISOString(),
+              })
+              .eq('user_id', whispererUser.user_id);
+          }
+        }
+      }
     }
 
     // Update product bestowal count
