@@ -3,6 +3,7 @@ import { useAuth } from "@/hooks/useAuth"
 import { useBasket } from "@/hooks/useBasket"
 import { useState, useMemo, useEffect, Suspense, lazy } from 'react'
 import { supabase } from "@/integrations/supabase/client"
+import { useGosatPresence } from "@/hooks/useGosatPresence"
 import {
   Sprout, 
   Home, 
@@ -90,6 +91,9 @@ function Layout({ children }) {
     load()
     return () => { active = false }
   }, [user?.id])
+
+  // Broadcast GoSat presence globally so radio listeners can see who's online
+  useGosatPresence(isAdminOrGosat)
   const {
     showOnboarding, 
     setShowOnboarding, 

@@ -26,7 +26,7 @@ export function RadioHostPanel({ compact = false }) {
   const [quickMessage, setQuickMessage] = useState({})
   const [sendingTo, setSendingTo] = useState(null)
 
-  // Track online GoSat users via Supabase Realtime Presence
+  // Fetch GoSat users and track their online presence via global channel
   useEffect(() => {
     if (!user) return
 
@@ -34,7 +34,6 @@ export function RadioHostPanel({ compact = false }) {
 
     const fetchGosatUsers = async () => {
       try {
-        // Get all gosat user IDs
         const { data: roleData, error: roleError } = await supabase
           .from('user_roles')
           .select('user_id')
@@ -47,7 +46,6 @@ export function RadioHostPanel({ compact = false }) {
           return
         }
 
-        // Get their profiles
         const { data: profiles, error: profileError } = await supabase
           .from('profiles')
           .select('id, user_id, display_name, first_name, last_name, avatar_url')
@@ -64,8 +62,8 @@ export function RadioHostPanel({ compact = false }) {
 
     fetchGosatUsers()
 
-    // Set up presence channel so GoSats broadcast their online status
-    const channel = supabase.channel('radio-host-presence', {
+    // Subscribe to the GLOBAL gosat-presence channel (broadcast by Layout)
+    const channel = supabase.channel('gosat-presence', {
       config: { presence: { key: user.id } }
     })
 
@@ -78,11 +76,7 @@ export function RadioHostPanel({ compact = false }) {
           _isOnline: onlineIds.has(h.user_id)
         })))
       })
-      .subscribe(async (status) => {
-        if (status === 'SUBSCRIBED') {
-          await channel.track({ user_id: user.id, joined_at: new Date().toISOString() })
-        }
-      })
+      .subscribe()
 
     return () => {
       mounted = false
