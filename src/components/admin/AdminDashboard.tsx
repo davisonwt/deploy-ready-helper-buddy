@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Settings, BarChart3, Users, CreditCard, Shield, Award, Megaphone, Car, Wrench } from 'lucide-react';
+import { Settings, BarChart3, Users, CreditCard, Shield, Award, Megaphone, Car, Wrench, Eye } from 'lucide-react';
 import { UserManagementDashboard } from './UserManagementDashboard';
 import { AdminPaymentDashboard } from '../AdminPaymentDashboard';
 import { ContentModerationDashboard } from './ContentModerationDashboard';
@@ -9,6 +9,7 @@ import { WhispererApplicationsDashboard } from './WhispererApplicationsDashboard
 import { DriverApplicationsDashboard } from './DriverApplicationsDashboard';
 import { ServiceProviderApplicationsDashboard } from './ServiceProviderApplicationsDashboard';
 import BasicAnalytics from './BasicAnalytics';
+import { BestowalAuditDashboard } from './BestowalAuditDashboard';
 
 export default function AdminDashboard() {
   const [activeTab, setActiveTab] = useState('analytics');
@@ -63,6 +64,10 @@ export default function AdminDashboard() {
             <Wrench className="h-4 w-4" />
             Service Providers
           </TabsTrigger>
+          <TabsTrigger value="bestowal-audit" className="flex items-center gap-2">
+            <Eye className="h-4 w-4" />
+            Bestowal Audit
+          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="analytics" className="mt-6">
@@ -97,6 +102,10 @@ export default function AdminDashboard() {
 
         <TabsContent value="service-providers" className="mt-6">
           <ServiceProviderApplicationsDashboard />
+        </TabsContent>
+
+        <TabsContent value="bestowal-audit" className="mt-6">
+          <BestowalAuditDashboard />
         </TabsContent>
       </Tabs>
     </div>

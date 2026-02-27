@@ -114,6 +114,8 @@ const WeatherPage = lazy(() => import("./pages/WeatherPage"));
 const ProductsPage = lazy(() => import("./pages/ProductsPage"));
 const MyProductsPage = lazy(() => import("./pages/MyProductsPage"));
 const BecomeWhispererPage = lazy(() => import("./pages/BecomeWhispererPage"));
+const SowerWhispererManagementPage = lazy(() => import("./pages/SowerWhispererManagementPage"));
+const WhispererEarningsDashboardPage = lazy(() => import("./pages/WhispererEarningsDashboardPage"));
 const UploadForm = lazy(() => import("./components/products/UploadForm"));
 const EditForm = lazy(() => import("./components/products/EditForm"));
 const ProductBasketPage = lazy(() => import("./pages/ProductBasketPage"));
@@ -1080,6 +1082,24 @@ const App = () => (
                   <Layout>
                     <Suspense fallback={<LoadingFallback />}>
                       <BecomeWhispererPage />
+                    </Suspense>
+                  </Layout>
+                </ProtectedRoute>
+              } />
+              <Route path="/my-whisperers" element={
+                <ProtectedRoute>
+                  <Layout>
+                    <Suspense fallback={<LoadingFallback />}>
+                      <SowerWhispererManagementPage />
+                    </Suspense>
+                  </Layout>
+                </ProtectedRoute>
+              } />
+              <Route path="/whisperer-earnings" element={
+                <ProtectedRoute>
+                  <Layout>
+                    <Suspense fallback={<LoadingFallback />}>
+                      <WhispererEarningsDashboardPage />
                     </Suspense>
                   </Layout>
                 </ProtectedRoute>
