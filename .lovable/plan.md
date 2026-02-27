@@ -1,76 +1,58 @@
 
 
-## Plan: Fix Radio Playback — Merge DJ Profiles & Enforce Single Profile
+## Enhanced Biz Ads: Multi-Layer Ad Builder
 
-### Root Cause (Verified via Database)
+Great idea. Right now ads are single-file uploads. You're describing something closer to a **composite ad** -- a visual (image or video) combined with a voiceover track and overlay text. Here's what I'd build:
 
-The issue is NOT about routing or schedule selection. The real problem is **duplicate DJ profiles**:
+### Concept: Multi-Layer Ad Upload
 
-- Your user has **40+ duplicate `radio_djs` entries** (created each time you clicked "Become a DJ")
-- Your approved radio slots reference DJ profile `ba1dbb88-...` ("davison - sow2grow guide") — which has **0 music tracks**
-- All 26 uploaded music tracks belong to an older DJ profile `bcef36bb-...` ("davison taljaard")
-- When the player loads a slot, it queries `dj_music_tracks WHERE dj_id = ba1dbb88-...` → finds nothing → "No Music"
+Instead of one file, each ad gets up to 3 layers:
 
-The music was never deleted — it's just linked to a different DJ profile than the one your scheduled slots reference.
-
-### Changes
-
-#### 1. Database Migration: Consolidate DJ profiles
-
-- Move all `dj_music_tracks` from old profiles to the newest active profile (`ba1dbb88-...`)
-- Move all `dj_playlists` similarly
-- Update any `radio_schedule` entries pointing to old profiles
-- Delete all duplicate DJ profiles for this user, keeping only the newest
-- Add a **unique constraint** on `radio_djs(user_id)` to prevent future duplicates
-
-```sql
--- Move tracks from ALL old profiles to newest
-UPDATE dj_music_tracks SET dj_id = 'ba1dbb88-6527-4004-b931-2b41279b5e55'
-WHERE dj_id IN (SELECT id FROM radio_djs WHERE user_id = '04754d57-d41d-4ea7-93df-542047a6785b' AND id != 'ba1dbb88-6527-4004-b931-2b41279b5e55');
-
--- Move playlists
-UPDATE dj_playlists SET dj_id = 'ba1dbb88-6527-4004-b931-2b41279b5e55'
-WHERE dj_id IN (SELECT id FROM radio_djs WHERE user_id = '04754d57-d41d-4ea7-93df-542047a6785b' AND id != 'ba1dbb88-6527-4004-b931-2b41279b5e55');
-
--- Move schedule entries  
-UPDATE radio_schedule SET dj_id = 'ba1dbb88-6527-4004-b931-2b41279b5e55'
-WHERE dj_id IN (SELECT id FROM radio_djs WHERE user_id = '04754d57-d41d-4ea7-93df-542047a6785b' AND id != 'ba1dbb88-6527-4004-b931-2b41279b5e55');
-
--- Move shows, stats, badges, etc.
--- Delete duplicates
--- Add unique constraint on user_id
+```text
+┌─────────────────────────────┐
+│  VISUAL LAYER               │  ← Image or short video (required)
+│  (background / main media)  │
+├─────────────────────────────┤
+│  VOICEOVER LAYER            │  ← Audio file (optional)
+│  (plays over the visual)    │
+├─────────────────────────────┤
+│  TEXT OVERLAY                │  ← Headline + tagline text (optional)
+│  (displayed on the visual)  │
+└─────────────────────────────┘
 ```
 
-#### 2. Fix `useGroveStation.jsx` — `createDJProfile`
+### Database Changes
 
-Change `createDJProfile` to use **upsert** behavior: check if a profile already exists for the user first, and return it instead of creating a duplicate.
+Add new columns to `biz_ads`:
+- `voiceover_url` (text, nullable) -- separate audio track URL
+- `overlay_headline` (text, nullable) -- bold headline text shown on the ad
+- `overlay_tagline` (text, nullable) -- smaller subtitle/CTA text
+- `overlay_position` (text, default 'bottom') -- where text appears: top, center, bottom
 
-#### 3. Fix `useDJPlaylist.jsx` — `fetchDJProfile`
+### Upload Form Changes (MyBizAdsPage)
 
-Currently uses `.limit(1).single()` which may pick an arbitrary profile when duplicates exist. Change to sort by `created_at DESC` and pick the newest, matching what the scheduling system uses.
+Replace the single dropzone with a **step-based form**:
+1. **Visual** (required) -- drag/drop image or short video (max 60s)
+2. **Voiceover** (optional) -- upload an audio file or record one in-browser
+3. **Text Overlay** (optional) -- headline + tagline input fields with position selector
+4. **Preview** -- shows the composite result before submitting
 
-#### 4. Fix `CreateDJProfileForm.jsx`
+### Community Gallery Changes (CommunityBizAdsPage)
 
-Add a pre-check: if the user already has a DJ profile, show their existing profile instead of creating a new one.
+- Render text overlay on top of image/video using absolute-positioned elements
+- Auto-play voiceover when ad card is clicked or expanded
+- For radio playback: if ad has a voiceover, play it; otherwise skip audio portion
 
----
+### Ad Card Preview (both pages)
 
-### Technical Details
+- Image/video displays with text overlay rendered on top (gradient background behind text for readability)
+- Small speaker icon indicates voiceover is attached
+- Click to preview the full composite ad in a modal with audio playback
 
-**Data migration targets** (all tables with `dj_id` foreign key):
-- `dj_music_tracks` — 26 tracks to move
-- `dj_playlists` — playlists to move
-- `radio_schedule` — already on newest profile (8 slots)
-- `radio_shows` — shows to move
-- `radio_stats` — stats to move
-- `radio_dj_badges` — badges to move
-- `radio_live_hosts` — hosts to move
-- `radio_seed_plays` — plays to move
+### Implementation Steps
 
-**Unique constraint SQL:**
-```sql
-CREATE UNIQUE INDEX radio_djs_user_id_unique ON radio_djs(user_id);
-```
-
-This prevents any future duplicate profile creation at the database level.
+1. Run migration to add `voiceover_url`, `overlay_headline`, `overlay_tagline`, `overlay_position` columns to `biz_ads`
+2. Rebuild the upload dialog in `MyBizAdsPage.tsx` with separate visual + voiceover dropzones and text overlay fields
+3. Update ad cards in both pages to render text overlays on the visual and play voiceover on interaction
+4. Update `CommunityBizAdsPage.tsx` with the enhanced ad card display and preview modal
 
