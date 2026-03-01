@@ -96,20 +96,17 @@ export async function resolveAudioUrl(input: string, options: ResolveAudioUrlOpt
   // Bare key (not a URL) → try multiple buckets and name variations
   if (!input.startsWith('http')) {
     const key = input.replace(/^\/+/, '').replace(/^public\//, '');
-    
-    // 1. Try exact key in music-tracks bucket (where full paths are stored)
-    const fromMusicTracks = await trySignedUrl('music-tracks', key, expiresIn);
-    if (fromMusicTracks) {
-      console.log(`[resolveAudioUrl] ✅ Found in music-tracks: "${key}"`);
-      return fromMusicTracks;
-    }
 
-    // 2. Try exact key in dj-music bucket
-    if (bucketForKeys) {
-      const fromDjMusic = await trySignedUrl(bucketForKeys, key, expiresIn);
-      if (fromDjMusic) {
-        console.log(`[resolveAudioUrl] ✅ Found in ${bucketForKeys}: "${key}"`);
-        return fromDjMusic;
+    // 1) Try exact key in common buckets first
+    const bucketsToTry = Array.from(
+      new Set(['music-tracks', bucketForKeys, 'premium-room', 'dj-music'].filter(Boolean) as string[])
+    );
+
+    for (const bucket of bucketsToTry) {
+      const direct = await trySignedUrl(bucket, key, expiresIn);
+      if (direct) {
+        console.log(`[resolveAudioUrl] ✅ Found in ${bucket}: "${key}"`);
+        return direct;
       }
     }
 
