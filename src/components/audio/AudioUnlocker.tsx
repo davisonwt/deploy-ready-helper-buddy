@@ -1,4 +1,5 @@
 import { useEffect, useRef } from 'react';
+import { unlockHtmlMediaElement } from '@/utils/unlockHtmlMediaElement';
 
 // Globally unlocks audio autoplay on mobile by performing a short, user-gesture-bound
 // AudioContext resume and a tiny beep. Invisible and safe to run once per session.
@@ -49,6 +50,9 @@ const AudioUnlocker: React.FC = () => {
             try { gain.disconnect(); } catch { /* ignore */ }
           };
         } catch { /* ignore unlock ping errors */ }
+
+        // Also unlock HTMLMediaElement autoplay in a safe way (without touching active players)
+        await unlockHtmlMediaElement();
 
         const onVisible = async () => {
           if (document.visibilityState === 'visible') {

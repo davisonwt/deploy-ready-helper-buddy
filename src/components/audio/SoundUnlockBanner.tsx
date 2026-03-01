@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
+import { unlockHtmlMediaElement } from '@/utils/unlockHtmlMediaElement';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 
@@ -52,6 +53,9 @@ const SoundUnlockBanner: React.FC = () => {
           try { gain.disconnect(); } catch { /* ignore */ }
         };
       } catch (e) { /* ignore unlock ping errors */ }
+
+      // Also unlock HTMLMediaElement autoplay in a safe way (without touching active players)
+      await unlockHtmlMediaElement();
 
       const onVisible = async () => {
         if (document.visibilityState === 'visible') {
