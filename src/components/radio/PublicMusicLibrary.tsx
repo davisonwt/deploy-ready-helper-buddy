@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
+import { resolveAudioUrl } from '@/utils/resolveAudioUrl';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -33,6 +34,8 @@ export default function PublicMusicLibrary() {
   const [currentTrackId, setCurrentTrackId] = useState<string | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const audioRef = useRef<HTMLAudioElement | null>(null);
+  const previewTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const PREVIEW_DURATION = 30;
 
   const { data: tracks = [], isLoading } = useQuery({
     queryKey: ['public-music-tracks'],
@@ -75,6 +78,7 @@ export default function PublicMusicLibrary() {
         audioRef.current.pause();
         audioRef.current.src = '';
       }
+      if (previewTimerRef.current) clearTimeout(previewTimerRef.current);
     };
   }, []);
 
@@ -119,9 +123,10 @@ export default function PublicMusicLibrary() {
   const uniqueTypes = [...new Set(tracks.map(t => t.track_type))];
 
   const handlePlay = async (track: any) => {
-    if (track.price && track.price > 0 && !userPurchases.includes(track.id)) {
-      toast.error('This track requires purchase before playing');
-      return;
+    // Clear any existing preview timer
+    if (previewTimerRef.current) {
+      clearTimeout(previewTimerRef.current);
+      previewTimerRef.current = null;
     }
 
     let el = audioRef.current;
@@ -132,42 +137,53 @@ export default function PublicMusicLibrary() {
     el.crossOrigin = 'anonymous';
     el.volume = 0.7;
 
-    if (currentTrackId !== track.id) {
-      try {
-        el.pause();
-        el.src = '';
-        el.load();
+    if (currentTrackId === track.id && isPlaying) {
+      // Toggle off
+      el.pause();
+      setIsPlaying(false);
+      return;
+    }
+
+    // Stop current playback
+    try {
+      el.pause();
+      el.src = '';
+      el.load();
+      setIsPlaying(false);
+    } catch (e) {
+      console.warn('Error stopping audio:', e);
+    }
+
+    try {
+      const resolvedUrl = await resolveAudioUrl(track.file_url, { bucketForKeys: 'music-tracks' });
+
+      el.src = resolvedUrl;
+      el.load();
+      el.currentTime = 0;
+      await el.play();
+      setCurrentTrackId(track.id);
+      setIsPlaying(true);
+
+      // Enforce 30-second preview limit for ALL playback
+      previewTimerRef.current = setTimeout(() => {
+        if (audioRef.current) {
+          audioRef.current.pause();
+        }
         setIsPlaying(false);
-      } catch (e) {
-        console.warn('Error stopping audio:', e);
-      }
-
-      try {
-        const { data } = await supabase.storage
-          .from('music-tracks')
-          .createSignedUrl(track.file_url, 3600);
-
-        const playableUrl = data?.signedUrl || track.file_url;
-
-        el.src = playableUrl;
-        el.load();
-        await el.play();
-        setCurrentTrackId(track.id);
-        setIsPlaying(true);
-      } catch (error) {
-        console.error('Audio play error:', error);
-        toast.error('Failed to play track');
         setCurrentTrackId(null);
+        toast.info('Preview ended. Purchase to download the full track!');
+      }, PREVIEW_DURATION * 1000);
+
+      el.onended = () => {
+        if (previewTimerRef.current) clearTimeout(previewTimerRef.current);
         setIsPlaying(false);
-      }
-    } else {
-      if (isPlaying) {
-        el.pause();
-        setIsPlaying(false);
-      } else {
-        await el.play();
-        setIsPlaying(true);
-      }
+        setCurrentTrackId(null);
+      };
+    } catch (error) {
+      console.error('Audio play error:', error);
+      toast.error('Failed to play track');
+      setCurrentTrackId(null);
+      setIsPlaying(false);
     }
   };
 

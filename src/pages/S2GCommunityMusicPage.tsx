@@ -12,6 +12,7 @@ import { formatCurrency } from '@/utils/formatters';
 import { toast } from 'sonner';
 import { GradientPlaceholder } from '@/components/ui/GradientPlaceholder';
 import { launchConfetti } from '@/utils/confetti';
+import { resolveAudioUrl } from '@/utils/resolveAudioUrl';
 
 export default function S2GCommunityMusicPage() {
   const { user } = useAuth();
@@ -191,25 +192,41 @@ export default function S2GCommunityMusicPage() {
     return `${mins}:${secs.toString().padStart(2, '0')}`;
   };
 
-  const handlePlay = (item: any) => {
-    const hasFullAccess = hasAccess(item);
-    
-    if (!hasFullAccess) {
-      // Play 30-second preview
-      const audio = new Audio(item.preview_url || item.file_url);
-      audio.currentTime = playbackPositions.get(item.id) || 0;
-      
-      audio.play();
+  const handlePlay = async (item: any) => {
+    // Toggle off if already playing this track
+    if (playingId === item.id && audioRefs.has(item.id)) {
+      const audio = audioRefs.get(item.id)!;
+      audio.pause();
+      setPlayingId(null);
+      audioRefs.delete(item.id);
+      return;
+    }
+
+    // Stop any currently playing track
+    audioRefs.forEach(audio => audio.pause());
+    audioRefs.clear();
+    setPlayingId(null);
+
+    try {
+      // Resolve signed URL
+      const rawUrl = item.preview_url || item.file_url;
+      const resolvedUrl = await resolveAudioUrl(rawUrl, { bucketForKeys: 'music-tracks' });
+
+      const audio = new Audio(resolvedUrl);
+      audio.crossOrigin = 'anonymous';
+      audio.volume = 0.7;
+      audio.currentTime = 0;
+
+      await audio.play();
       setPlayingId(item.id);
       audioRefs.set(item.id, audio);
 
-      // Stop after 30 seconds if no access
+      // Always enforce 30-second preview limit
       const stopTimer = setTimeout(() => {
-        if (!hasFullAccess) {
-          audio.pause();
-          setPlayingId(null);
-          toast.info('Preview ended. Bestow to access full track!');
-        }
+        audio.pause();
+        setPlayingId(null);
+        audioRefs.delete(item.id);
+        toast.info('Preview ended. Bestow to download the full track!');
       }, PREVIEW_DURATION * 1000);
 
       audio.onended = () => {
@@ -217,37 +234,10 @@ export default function S2GCommunityMusicPage() {
         setPlayingId(null);
         audioRefs.delete(item.id);
       };
-
-      audio.ontimeupdate = () => {
-        setPlaybackPositions(new Map(playbackPositions.set(item.id, audio.currentTime)));
-      };
-    } else {
-      // Play full track
-      if (playingId === item.id && audioRefs.has(item.id)) {
-        const audio = audioRefs.get(item.id)!;
-        audio.pause();
-        setPlayingId(null);
-        audioRefs.delete(item.id);
-      } else {
-        // Stop any currently playing track
-        audioRefs.forEach(audio => audio.pause());
-        audioRefs.clear();
-
-        const audio = new Audio(item.file_url);
-        audio.currentTime = playbackPositions.get(item.id) || 0;
-        audio.play();
-        setPlayingId(item.id);
-        audioRefs.set(item.id, audio);
-
-        audio.onended = () => {
-          setPlayingId(null);
-          audioRefs.delete(item.id);
-        };
-
-        audio.ontimeupdate = () => {
-          setPlaybackPositions(new Map(playbackPositions.set(item.id, audio.currentTime)));
-        };
-      }
+    } catch (error) {
+      console.error('Audio play error:', error);
+      toast.error('Failed to play preview');
+      setPlayingId(null);
     }
   };
 
