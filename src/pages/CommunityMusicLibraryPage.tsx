@@ -283,14 +283,31 @@ export default function CommunityMusicLibraryPage() {
     setLoadingId(track.id);
 
     try {
-      const resolvedUrl = await resolveAudioUrl(track.preview_url || track.file_url);
+      const candidateUrls = [track.preview_url, track.file_url].filter(Boolean);
+      let playableUrl: string | null = null;
+
+      for (const candidate of candidateUrls) {
+        try {
+          const resolved = await resolveAudioUrl(candidate, { bucketForKeys: 'premium-room' });
+          if (resolved) {
+            playableUrl = resolved;
+            break;
+          }
+        } catch {
+          // try next candidate
+        }
+      }
+
+      if (!playableUrl) throw new Error('No playable audio URL resolved');
 
       if (!audioRef.current) {
         audioRef.current = new Audio();
       }
 
       const audio = audioRef.current;
-      audio.src = resolvedUrl;
+      audio.pause();
+      audio.src = playableUrl;
+      audio.load();
       audio.currentTime = 0;
       audio.volume = 0.85;
 
@@ -303,10 +320,6 @@ export default function CommunityMusicLibraryPage() {
       }, PREVIEW_DURATION * 1000);
 
       audio.onended = () => stopPreview();
-    } catch (err) {
-      console.error('Preview playback error:', err);
-      toast.error('Failed to play preview');
-      stopPreview();
     } finally {
       setLoadingId(null);
     }
