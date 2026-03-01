@@ -1,33 +1,49 @@
 
 
-# Sprint 1: Execute Database Migration
+# Fix: 30-Second Preview Enforcement Across All Music Pages
 
-I'm in read-only planning mode. I'll switch to implementation mode to execute this migration. Here's the exact execution plan:
+## Problem Identified
 
-## Single Migration File
+After inspecting all audio playback code, there are multiple places where songs can play in full instead of being limited to 30 seconds:
 
-Create `supabase/migrations/20260227_sprint1_story_whisperer_foundation.sql` with all 8 steps:
+### Bug 1: `S2GCommunityMusicPage.tsx` (lines 194-252)
+The `handlePlay` function has two branches:
+- If `hasAccess(item)` returns **false**: plays 30-second preview (correct)
+- If `hasAccess(item)` returns **true**: plays the **full song** with no time limit
 
-1. **Add AI columns to `chat_messages`** — `intent_tags TEXT[]`, `emotional_tone TEXT`, `ai_generated BOOLEAN`, `immutable_hash TEXT`
-2. **Enable pgvector + embedding** — `CREATE EXTENSION IF NOT EXISTS vector`, add `embedding vector(768)`, IVFFlat index
-3. **Create `sower_stories`** — FK `sower_id → profiles(user_id)`, RLS with `has_role()`
-4. **Create `ai_generated_content`** — FK `sower_id → profiles(user_id)`, includes `tts_provider TEXT`
-5. **Create `arweave_exports`** — FK `room_id → chat_rooms(id)`, weekly batch fields
-6. **Create `registered_agents`** — agent registry scaffold
-7. **Create `gosat_insights`** — tiered access + `get_gosat_insight_details()` security definer
-8. **Storage buckets** — `voice-clones` and `conversation-exports` (private) + `cleanup_inactive_voice_clones()` function
+`hasAccess` returns true when `item.price === 0` or `item.is_giveaway === true`. If Ed Esterline's track "Truth Will Mend" has a price of 0 or is tagged as a giveaway, the full song plays unrestricted.
 
-## Post-Migration Validation
+### Bug 2: `S2GCommunityMusicPage.tsx` - No toggle on preview
+In the non-access branch, clicking play again does NOT stop the current audio. It creates a second `Audio` instance, so two copies play simultaneously.
 
-Run 6 verification queries:
-- pgvector extension active
-- Backward-compatible INSERT to `chat_messages`
-- Forward-compatible INSERT with new columns
-- All 5 tables exist with correct columns
-- Storage buckets created
-- Supabase linter for RLS coverage
+### Bug 3: `S2GCommunityMusicPage.tsx` - No `resolveAudioUrl`
+Unlike `CommunityMusicLibraryPage` and `AudioSnippetPlayer`, this page creates `new Audio(item.preview_url || item.file_url)` directly without resolving signed URLs, which can cause playback failures on Supabase storage files.
 
-## On Success
+### Bug 4: `PublicMusicLibrary.tsx` (lines 121-172)
+Plays full tracks for purchased users with no 30-second snippet limit at all.
 
-Proceed to Sprint 2: Intent Tagging Edge Function with self-hosted HuggingFace on RunPod and keyword-matching fallback.
+## Fix Plan
+
+### Step 1: Fix `S2GCommunityMusicPage.tsx` `handlePlay`
+- Remove the full-access branch that plays unlimited audio
+- ALL playback uses the 30-second preview timer, regardless of access status
+- Add toggle logic: clicking play while playing stops current audio
+- Use `resolveAudioUrl` for signed URL resolution
+- Clean up audio instances properly on stop
+
+### Step 2: Fix `PublicMusicLibrary.tsx` `handlePlay`
+- Add 30-second preview timer to all playback
+- Use `resolveAudioUrl` for signed URL resolution
+
+### Step 3: Verify `CommunityMusicLibraryPage.tsx` and `AudioSnippetPlayer.tsx`
+- These already have correct 30-second limits - no changes needed
+
+## Technical Detail
+All preview playback will follow the same pattern:
+```
+audio.play()
+timer = setTimeout(() => { audio.pause(); }, 30000)
+audio.onended = () => clearTimeout(timer)
+```
+Full track access (download) remains gated behind bestowal/purchase - but in-browser playback is always 30-second preview.
 
