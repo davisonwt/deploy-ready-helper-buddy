@@ -283,33 +283,26 @@ export default function CommunityMusicLibraryPage() {
     setLoadingId(track.id);
 
     try {
-      const candidateUrls = [track.preview_url, track.file_url].filter(Boolean);
-      let playableUrl: string | null = null;
-
-      for (const candidate of candidateUrls) {
-        try {
-          const resolved = await resolveAudioUrl(candidate, { bucketForKeys: 'premium-room' });
-          if (resolved) {
-            playableUrl = resolved;
-            break;
-          }
-        } catch {
-          // try next candidate
-        }
-      }
-
-      if (!playableUrl) throw new Error('No playable audio URL resolved');
+      const resolvedUrl = await resolveAudioUrl(track.preview_url || track.file_url);
 
       if (!audioRef.current) {
         audioRef.current = new Audio();
       }
 
       const audio = audioRef.current;
-      audio.pause();
-      audio.src = playableUrl;
-      audio.load();
+      audio.src = resolvedUrl;
       audio.currentTime = 0;
       audio.volume = 0.85;
+
+      await audio.play();
+      setPlayingId(track.id);
+
+      stopTimerRef.current = window.setTimeout(() => {
+        stopPreview();
+        toast.info('Preview ended. Add to your album!');
+      }, PREVIEW_DURATION * 1000);
+
+      audio.onended = () => stopPreview();
 
       await audio.play();
       setPlayingId(track.id);
