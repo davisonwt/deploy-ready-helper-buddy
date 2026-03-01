@@ -135,7 +135,6 @@ export default function PublicMusicLibrary() {
       audioRef.current = el;
     }
     el.volume = 0.7;
-    el.volume = 0.7;
 
     if (currentTrackId === track.id && isPlaying) {
       // Toggle off

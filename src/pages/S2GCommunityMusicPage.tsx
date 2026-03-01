@@ -214,7 +214,6 @@ export default function S2GCommunityMusicPage() {
 
       const audio = new Audio(resolvedUrl);
       audio.volume = 0.7;
-      audio.volume = 0.7;
       audio.currentTime = 0;
 
       await audio.play();
