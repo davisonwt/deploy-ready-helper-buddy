@@ -213,7 +213,7 @@ export default function S2GCommunityMusicPage() {
       const resolvedUrl = await resolveAudioUrl(rawUrl, { bucketForKeys: 'music-tracks' });
 
       const audio = new Audio(resolvedUrl);
-      audio.crossOrigin = 'anonymous';
+      audio.volume = 0.7;
       audio.volume = 0.7;
       audio.currentTime = 0;
 

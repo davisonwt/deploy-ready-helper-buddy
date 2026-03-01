@@ -134,7 +134,7 @@ export default function PublicMusicLibrary() {
       el = new Audio();
       audioRef.current = el;
     }
-    el.crossOrigin = 'anonymous';
+    el.volume = 0.7;
     el.volume = 0.7;
 
     if (currentTrackId === track.id && isPlaying) {
