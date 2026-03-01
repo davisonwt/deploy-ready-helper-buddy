@@ -34,24 +34,31 @@ const SoundUnlockBanner: React.FC = () => {
       let ctx: AudioContext | null = w.__unlockedAudioCtx || null;
       if (!ctx) {
         ctx = new AudioContextConstructor();
+        w.__unlockedAudioCtx = ctx;
+      }
+
+      try { await ctx.resume(); } catch (e) { /* ignore resume errors */ }
+
+      // Lightweight one-shot unlock ping (do not keep oscillators running)
+      try {
         const osc = ctx.createOscillator();
         const gain = ctx.createGain();
         gain.gain.value = 0.0001; // effectively silent
         osc.connect(gain).connect(ctx.destination);
-        try { await ctx.resume(); } catch (e) { /* resume may fail silently on some browsers */ }
-        try { osc.start(); } catch (e) { /* oscillator may already be started or blocked */ }
-        w.__unlockedAudioCtx = ctx;
-        w.__unlockedOsc = osc;
-        w.__unlockedGain = gain;
-        const onVisible = async () => {
-          if (document.visibilityState === 'visible') {
-            try { await ctx!.resume(); } catch (e) { /* ignore resume errors */ }
-          }
+        osc.start();
+        osc.stop(ctx.currentTime + 0.02);
+        osc.onended = () => {
+          try { osc.disconnect(); } catch { /* ignore */ }
+          try { gain.disconnect(); } catch { /* ignore */ }
         };
-        document.addEventListener('visibilitychange', onVisible);
-      } else {
-        try { await ctx.resume(); } catch (e) { /* ignore resume errors */ }
-      }
+      } catch (e) { /* ignore unlock ping errors */ }
+
+      const onVisible = async () => {
+        if (document.visibilityState === 'visible') {
+          try { await ctx!.resume(); } catch (e) { /* ignore resume errors */ }
+        }
+      };
+      document.addEventListener('visibilitychange', onVisible);
 
       try { sessionStorage.setItem('audioUnlocked', '1'); } catch { /* storage might be disabled */ }
       setVisible(false);

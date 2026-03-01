@@ -30,16 +30,26 @@ const AudioUnlocker: React.FC = () => {
         const w = window as WindowWithAudioUnlock;
         const AudioContextConstructor: typeof AudioContext | undefined = window.AudioContext || w.webkitAudioContext;
         if (!AudioContextConstructor) return;
-        const ctx: AudioContext = new AudioContextConstructor();
-        const osc = ctx.createOscillator();
-        const gain = ctx.createGain();
-        gain.gain.value = 0.0001; // effectively silent
-        osc.connect(gain).connect(ctx.destination);
-        try { await ctx.resume(); } catch { /* resume may fail silently on some browsers */ }
-        try { osc.start(); } catch { /* oscillator may already be started or blocked */ }
+
+        const ctx: AudioContext = w.__unlockedAudioCtx || new AudioContextConstructor();
         w.__unlockedAudioCtx = ctx;
-        w.__unlockedOsc = osc;
-        w.__unlockedGain = gain;
+
+        try { await ctx.resume(); } catch { /* resume may fail silently on some browsers */ }
+
+        // Lightweight, one-shot unlock ping (do not keep oscillators running)
+        try {
+          const osc = ctx.createOscillator();
+          const gain = ctx.createGain();
+          gain.gain.value = 0.0001; // effectively silent
+          osc.connect(gain).connect(ctx.destination);
+          osc.start();
+          osc.stop(ctx.currentTime + 0.02);
+          osc.onended = () => {
+            try { osc.disconnect(); } catch { /* ignore */ }
+            try { gain.disconnect(); } catch { /* ignore */ }
+          };
+        } catch { /* ignore unlock ping errors */ }
+
         const onVisible = async () => {
           if (document.visibilityState === 'visible') {
             try { await ctx.resume(); } catch { /* ignore resume errors */ }
@@ -49,15 +59,6 @@ const AudioUnlocker: React.FC = () => {
       } catch (e) {
         console.warn('[AudioUnlocker] Failed to unlock audio context', e);
       }
-
-      // Nudge any existing muted audio elements to start then stop (unlocks autoplay on some browsers)
-      try {
-        const els = Array.from(document.querySelectorAll('audio')) as HTMLAudioElement[];
-        for (const el of els) {
-          try { await el.play(); } catch { /* play may be blocked */ }
-          try { el.pause(); } catch { /* pause may fail */ }
-        }
-      } catch { /* querying audio elements may fail in rare cases */ }
 
       try { sessionStorage.setItem('audioUnlocked', '1'); } catch { /* storage might be disabled */ }
       // Remove listeners after first gesture
