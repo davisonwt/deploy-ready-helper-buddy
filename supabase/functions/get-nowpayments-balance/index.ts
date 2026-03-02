@@ -11,6 +11,7 @@ serve(async (req) => {
 
   try {
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
+    const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabaseAnonKey = Deno.env.get('SUPABASE_ANON_KEY')!;
     const nowpaymentsApiKey = Deno.env.get('NOWPAYMENTS_API_KEY')!;
 
@@ -37,13 +38,17 @@ serve(async (req) => {
     const userId = claimsData.claims.sub;
 
     // Check if user has gosat role
-    const { data: profile } = await supabase
-      .from('profiles')
+    // Use service role client to check user_roles table (bypasses RLS)
+    const serviceClient = createClient(supabaseUrl, supabaseServiceKey);
+
+    const { data: roleData } = await serviceClient
+      .from('user_roles')
       .select('role')
       .eq('user_id', userId)
-      .single();
+      .eq('role', 'gosat')
+      .maybeSingle();
 
-    if (!profile || profile.role !== 'gosat') {
+    if (!roleData) {
       return new Response(JSON.stringify({ error: 'Forbidden: GoSat role required' }), {
         status: 403, headers: corsHeaders
       });
