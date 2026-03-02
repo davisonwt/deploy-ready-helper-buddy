@@ -86,7 +86,7 @@ export function PayPalButton({
 
       toast({ title: 'Redirecting to PayPal', description: 'Complete your payment on PayPal...' });
       onSuccess?.(data.bestowalId, data.approvalUrl);
-      window.location.href = data.approvalUrl;
+      window.open(data.approvalUrl, '_blank');
 
     } catch (err) {
       const error = err instanceof Error ? err : new Error('Unknown error occurred');

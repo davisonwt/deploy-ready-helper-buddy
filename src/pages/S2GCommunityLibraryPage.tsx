@@ -140,7 +140,7 @@ export default function S2GCommunityLibraryPage() {
       }
 
       if (data?.invoiceUrl) {
-        window.location.href = data.invoiceUrl;
+        window.open(data.invoiceUrl, '_blank');
         toast.info('Redirecting to payment page...');
       } else {
         toast.error('Failed to get payment URL. Please try again.');
