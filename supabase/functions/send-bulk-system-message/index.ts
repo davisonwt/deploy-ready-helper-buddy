@@ -47,9 +47,10 @@ serve(async (req) => {
     }
 
     const body = await req.json();
-    const { targetRole, message, dryRun } = body;
+    const { targetRole, message, dryRun, targetUserIds: specificUserIds } = body;
 
-    // targetRole: 'all' | 'sower' | 'grower' | 'whisperer' | 'driver'
+    // targetRole: 'all' | 'sower' | 'grower' | 'whisperer' | 'driver' | 'specific'
+    // targetUserIds: string[] (only when targetRole === 'specific')
     // message: custom message text (optional, uses default if not provided)
     // dryRun: if true, just returns count without sending
 
@@ -73,7 +74,10 @@ serve(async (req) => {
     // Build the list of target users
     let targetUserIds: string[] = [];
 
-    if (targetRole === 'all') {
+    if (targetRole === 'specific' && Array.isArray(specificUserIds)) {
+      // Specific users provided by the caller
+      targetUserIds = specificUserIds.filter((id: string) => id !== gosatUserId);
+    } else if (targetRole === 'all') {
       // Get all users with profiles
       const { data: allProfiles } = await supabase
         .from('profiles')
