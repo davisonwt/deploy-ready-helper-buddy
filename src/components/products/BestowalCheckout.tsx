@@ -8,7 +8,7 @@ import { ShoppingCart, Trash2, LogIn, AlertCircle } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { GradientPlaceholder } from '@/components/ui/GradientPlaceholder';
 import { launchConfetti, floatingScore, playSoundEffect } from '@/utils/confetti';
-import { NowPaymentsButton } from '@/components/payment/NowPaymentsButton';
+import { PaymentMethodSelector } from '@/components/payment/PaymentMethodSelector';
 import { useNavigate } from 'react-router-dom';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 
@@ -184,17 +184,15 @@ export default function BestowalCheckout() {
             Login to Complete Bestowal
           </Button>
         ) : (
-          <NowPaymentsButton
+          <PaymentMethodSelector
             amount={totalAmount}
             paymentType="product"
             productItems={productItems}
             disabled={basketItems.length === 0}
             onSuccess={handlePaymentSuccess}
             onError={handlePaymentError}
-            className="w-full"
-            buttonText="Complete Bestowal"
-            variant="default"
-            size="lg"
+            cryptoButtonText="Complete Bestowal with Crypto"
+            paypalButtonText="Complete Bestowal with PayPal"
           />
         )}
 
