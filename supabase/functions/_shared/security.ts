@@ -28,7 +28,7 @@ export function getSecureCorsHeaders(req: Request): Record<string, string> {
     return {
       "Access-Control-Allow-Origin": origin,
       "Access-Control-Allow-Methods": "POST, OPTIONS",
-      "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-idempotency-key, x-csrf-token",
+      "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-my-custom-header, x-idempotency-key, x-csrf-token, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
       "Access-Control-Max-Age": "86400",
       "Content-Type": "application/json",
     };
