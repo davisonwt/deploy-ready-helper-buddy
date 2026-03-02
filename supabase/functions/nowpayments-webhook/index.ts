@@ -281,7 +281,7 @@ serve(async (req) => {
       // Get the bestowal by order_id
       const { data, error: bestowalError } = await supabase
         .from('bestowals')
-        .select('*, orchards(title, grower_id)')
+        .select('*, orchards(title, user_id)')
         .eq('id', orderId)
         .single();
 
@@ -294,7 +294,7 @@ serve(async (req) => {
       }
 
       bestowal = data;
-      growerUserId = bestowal.orchards?.grower_id;
+      growerUserId = bestowal.orchards?.user_id;
       console.log('📦 Found orchard bestowal:', bestowal.id);
 
       // Update bestowal status
@@ -495,13 +495,13 @@ serve(async (req) => {
 
     // Log the payment in payment_transactions
     await supabase.from('payment_transactions').insert({
-      user_id: bestowal?.bestower_id || null,
+      bestowal_id: bestowal?.id || null,
       amount: ipnData.price_amount,
       currency: ipnData.price_currency.toUpperCase(),
       payment_method: 'nowpayments',
       payment_provider_id: String(ipnData.payment_id),
       status: paymentStatus,
-      metadata: {
+      provider_response: {
         order_id: orderId,
         pay_currency: ipnData.pay_currency,
         pay_amount: ipnData.pay_amount,
@@ -511,20 +511,23 @@ serve(async (req) => {
         holding_wallet: S2G_WALLETS.HOLDINGS,
         admin_wallet: S2G_WALLETS.ADMIN,
       },
+      completed_at: paymentStatus === 'completed' ? new Date().toISOString() : null,
     });
 
     // Create audit log
     await supabase.from('payment_audit_log').insert({
       user_id: bestowal?.bestower_id || null,
+      bestowal_id: bestowal?.id || null,
       action: 'nowpayments_webhook',
       amount: ipnData.price_amount,
       currency: ipnData.price_currency.toUpperCase(),
-      status: paymentStatus,
+      payment_method: 'nowpayments',
       ip_address: req.headers.get('x-forwarded-for') || req.headers.get('cf-connecting-ip') || 'unknown',
       metadata: {
         payment_id: ipnData.payment_id,
         order_id: orderId,
         ipn_status: ipnData.payment_status,
+        payment_status: paymentStatus,
         holding_wallet: S2G_WALLETS.HOLDINGS,
         funds_location: paymentStatus === 'completed' ? 'S2G Holdings Wallet' : 'pending',
       },

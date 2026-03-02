@@ -71,9 +71,22 @@ export function SowerBalanceCard({ compact = false }: SowerBalanceCardProps) {
 
   const handleRefresh = async () => {
     setRefreshing(true);
+    
+    // First sync with NOWPayments to catch completed payments
+    try {
+      const { data: syncResult, error: syncError } = await supabase.functions.invoke('sync-nowpayments-balance');
+      
+      if (!syncError && syncResult?.synced > 0) {
+        toast.success(syncResult.message);
+      } else if (!syncError) {
+        toast.success('Balance is up to date');
+      }
+    } catch (err) {
+      console.error('Sync error:', err);
+    }
+    
     await fetchBalance();
     setRefreshing(false);
-    toast.success('Balance refreshed');
   };
 
   const handleRequestPayout = async () => {
