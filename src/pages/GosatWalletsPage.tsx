@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { OrganizationWalletSetup } from '@/components/admin/OrganizationWalletSetup'
 import { OrganizationWalletCredentials } from '@/components/admin/OrganizationWalletCredentials'
 import { ManualDistributionQueue } from '@/components/wallet/ManualDistributionQueue'
+import { NowPaymentsAccountBalance } from '@/components/wallet/NowPaymentsAccountBalance'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { getCurrentTheme } from '@/utils/dashboardThemes'
 
@@ -78,7 +79,8 @@ export default function GosatWalletsPage() {
             }
           `}</style>
 
-          <TabsContent value="overview">
+          <TabsContent value="overview" className="space-y-6">
+            <NowPaymentsAccountBalance />
             <OrganizationWalletSetup />
           </TabsContent>
 
