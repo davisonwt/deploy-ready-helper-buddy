@@ -1,0 +1,1 @@
+ALTER TABLE organization_wallets DROP CONSTRAINT IF EXISTS organization_wallets_wallet_address_key;
