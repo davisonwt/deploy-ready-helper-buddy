@@ -108,6 +108,13 @@ verify_jwt = false
 [functions.distribute-bestowal]
 verify_jwt = true
 
+# PayPal Payment Integration
+[functions.create-paypal-order]
+verify_jwt = false
+
+[functions.paypal-webhook]
+verify_jwt = false
+
 # NOWPayments Payout Functions
 [functions.create-nowpayments-payout]
 verify_jwt = false
