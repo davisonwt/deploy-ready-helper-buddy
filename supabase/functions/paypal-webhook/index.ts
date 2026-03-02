@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { sendPostPaymentMessages } from "../_shared/postPaymentMessages.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -197,7 +198,6 @@ serve(async (req) => {
         action: 'paypal_payment_confirmed',
         amount: captureAmount,
         currency: 'USD',
-        status: 'confirmed',
         ip_address: req.headers.get('x-forwarded-for') || 'webhook',
         metadata: {
           paypal_order_id: orderId,
@@ -205,6 +205,98 @@ serve(async (req) => {
           bestowal_id: bestowal?.id,
         },
       });
+
+      // ═══════════════════════════════════════════════
+      // Send ChatApp notifications after payment confirmation
+      // ═══════════════════════════════════════════════
+      if (bestowal) {
+        try {
+          // Get orchard/content details for the notification
+          let contentTitle = 'Bestowal';
+          let sowerId: string | null = null;
+          let contentType: 'orchard' | 'product' | 'music' | 'tithe' | 'freewill' = 'orchard';
+          let trackFileUrl: string | undefined;
+          let trackTitle: string | undefined;
+          let artistName: string | undefined;
+
+          // Check if this is an orchard bestowal
+          const { data: orchardBestowal } = await supabase
+            .from('bestowals')
+            .select('*, orchards(title, user_id)')
+            .eq('id', bestowal.id)
+            .single();
+
+          if (orchardBestowal?.orchards) {
+            contentTitle = orchardBestowal.orchards.title || 'Orchard';
+            sowerId = orchardBestowal.orchards.user_id;
+          }
+
+          // Check if this is a music track purchase
+          const { data: musicPurchase } = await supabase
+            .from('music_purchases')
+            .select('*, dj_music_tracks(track_title, artist_name, file_url, dj_id)')
+            .eq('payment_reference', orderId)
+            .maybeSingle();
+
+          if (musicPurchase?.dj_music_tracks) {
+            contentType = 'music';
+            contentTitle = musicPurchase.dj_music_tracks.track_title || 'Music Track';
+            trackTitle = musicPurchase.dj_music_tracks.track_title;
+            artistName = musicPurchase.dj_music_tracks.artist_name;
+            trackFileUrl = musicPurchase.dj_music_tracks.file_url;
+            sowerId = musicPurchase.dj_music_tracks.dj_id;
+          }
+
+          // Check product bestowals
+          if (!sowerId) {
+            const { data: productBestowal } = await supabase
+              .from('product_bestowals')
+              .select('*, products(title, sower_id)')
+              .like('payment_reference', `%${orderId}%`)
+              .maybeSingle();
+
+            if (productBestowal?.products) {
+              contentType = 'product';
+              contentTitle = productBestowal.products.title || 'Product';
+              sowerId = productBestowal.products.sower_id;
+            }
+          }
+
+          if (sowerId && bestowal.bestower_id) {
+            const sowerEarnings = captureAmount * 0.85;
+            const tithingAmount = captureAmount * 0.10;
+            const adminFee = captureAmount * 0.05;
+
+            const result = await sendPostPaymentMessages(supabase, {
+              bestowalId: bestowal.id,
+              bestowerId: bestowal.bestower_id,
+              sowerId,
+              amount: captureAmount,
+              currency: 'USD',
+              paymentMethod: 'paypal',
+              paymentReference: orderId,
+              contentType,
+              contentTitle,
+              trackFileUrl,
+              trackTitle,
+              artistName,
+              sowerEarnings,
+              tithingAmount,
+              adminFee,
+            });
+
+            if (result.success) {
+              console.log('✅ ChatApp notifications sent successfully');
+            } else {
+              console.warn('⚠️ Some ChatApp notifications failed:', result.errors);
+            }
+          } else {
+            console.warn('⚠️ Could not determine sower for ChatApp notifications');
+          }
+        } catch (notifError) {
+          console.error('⚠️ ChatApp notification error (non-critical):', notifError);
+        }
+      }
     }
 
     return new Response(

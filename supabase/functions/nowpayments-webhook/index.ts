@@ -1,6 +1,7 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { crypto } from "https://deno.land/std@0.177.0/crypto/mod.ts";
+import { sendPostPaymentMessages } from "../_shared/postPaymentMessages.ts";
 
 // Webhook endpoint - no CORS needed for server-to-server calls
 const webhookHeaders = {
@@ -558,7 +559,7 @@ serve(async (req) => {
         });
       }
 
-      // Send notification messages via edge function
+      // Send email notifications via edge function
       try {
         await supabase.functions.invoke('send-bestowal-notifications', {
           body: { 
@@ -568,9 +569,101 @@ serve(async (req) => {
             currency: ipnData.price_currency.toUpperCase(),
           },
         });
-        console.log('✅ Notifications sent successfully');
+        console.log('✅ Email notifications sent successfully');
       } catch (notifError) {
-        console.error('⚠️ Notification sending failed (non-critical):', notifError);
+        console.error('⚠️ Email notification sending failed (non-critical):', notifError);
+      }
+
+      // Send ChatApp notifications (3 messages: bestower, sower, HQ)
+      if (growerUserId) {
+        try {
+          const sowerEarnings = ipnData.price_amount * DISTRIBUTION.BASE_SOWER;
+          const tithingAmount = ipnData.price_amount * DISTRIBUTION.TITHING;
+          const adminFee = ipnData.price_amount * DISTRIBUTION.ADMIN;
+
+          const chatResult = await sendPostPaymentMessages(supabase, {
+            bestowalId: bestowal.id,
+            bestowerId: bestowal.bestower_id,
+            sowerId: growerUserId,
+            amount: ipnData.price_amount,
+            currency: ipnData.price_currency.toUpperCase(),
+            paymentMethod: 'nowpayments',
+            paymentReference: String(ipnData.payment_id),
+            contentType: 'orchard',
+            contentTitle: bestowal.orchards?.title || 'Orchard',
+            sowerEarnings,
+            tithingAmount,
+            adminFee,
+          });
+
+          if (chatResult.success) {
+            console.log('✅ ChatApp notifications sent successfully');
+          } else {
+            console.warn('⚠️ Some ChatApp notifications failed:', chatResult.errors);
+          }
+        } catch (chatError) {
+          console.error('⚠️ ChatApp notification error (non-critical):', chatError);
+        }
+      }
+    }
+
+    // If payment completed for product bestowals, send ChatApp notifications too
+    if (paymentStatus === 'completed' && !isOrchardBestowal) {
+      try {
+        // Try to find product bestowal details
+        const { data: productBestowal } = await supabase
+          .from('product_bestowals')
+          .select('*, products(title, sower_id, type)')
+          .like('payment_reference', `%${orderId}%`)
+          .maybeSingle();
+
+        if (productBestowal?.products && productBestowal.bestower_id) {
+          const sowerEarnings = ipnData.price_amount * DISTRIBUTION.BASE_SOWER;
+          const tithingAmount = ipnData.price_amount * DISTRIBUTION.TITHING;
+          const adminFee = ipnData.price_amount * DISTRIBUTION.ADMIN;
+
+          const isMusic = productBestowal.products.type === 'music';
+          let trackFileUrl: string | undefined;
+          let trackTitle: string | undefined;
+          let artistName: string | undefined;
+
+          if (isMusic) {
+            // Get music track details for download link
+            const { data: musicTrack } = await supabase
+              .from('dj_music_tracks')
+              .select('track_title, artist_name, file_url')
+              .eq('id', productBestowal.product_id)
+              .maybeSingle();
+
+            if (musicTrack) {
+              trackFileUrl = musicTrack.file_url;
+              trackTitle = musicTrack.track_title;
+              artistName = musicTrack.artist_name;
+            }
+          }
+
+          await sendPostPaymentMessages(supabase, {
+            bestowalId: productBestowal.id,
+            bestowerId: productBestowal.bestower_id,
+            sowerId: productBestowal.products.sower_id,
+            amount: ipnData.price_amount,
+            currency: ipnData.price_currency.toUpperCase(),
+            paymentMethod: 'nowpayments',
+            paymentReference: String(ipnData.payment_id),
+            contentType: isMusic ? 'music' : 'product',
+            contentTitle: productBestowal.products.title || 'Product',
+            trackFileUrl,
+            trackTitle,
+            artistName,
+            sowerEarnings,
+            tithingAmount,
+            adminFee,
+          });
+
+          console.log('✅ Product ChatApp notifications sent');
+        }
+      } catch (productNotifError) {
+        console.error('⚠️ Product ChatApp notification error (non-critical):', productNotifError);
       }
     }
 

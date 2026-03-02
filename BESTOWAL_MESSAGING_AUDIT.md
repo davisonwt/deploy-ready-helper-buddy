@@ -2,38 +2,46 @@
 
 ## Current Status
 
-### ✅ FOUND: Gosat → Bestower (Invoice/Proof)
-**Location**: `supabase/functions/binance-pay-webhook/index.ts` - `sendBestowalProofMessage()`
-- Sends invoice/proof message from gosat to bestower
-- **Security Issue**: Uses direct `chat_messages.insert()` instead of secure `insert_system_chat_message()`
+### ✅ Gosat → Bestower (Congratulations + Receipt/Download)
+**Location**: `supabase/functions/_shared/postPaymentMessages.ts`
+- Sends congratulations message from GoSat to bestower
+- Includes payment receipt details
+- For music purchases: includes 7-day signed download URL
+- Uses `insert_system_chat_message()` for security
 
-### ❌ MISSING: Sower → Bestower (Thank You)
-**Required**: Automatic thank you message from sower to bestower
-- Should be sent when bestowal is completed
-- Should thank bestower for their contribution
+### ✅ Gosat → Sower (Payment Received Notification)
+**Location**: `supabase/functions/_shared/postPaymentMessages.ts`
+- Notifies sower that a bestowal was made
+- Includes earnings breakdown (85% sower, 10% tithe, 5% admin)
+- Uses `insert_system_chat_message()` for security
 
-### ❌ MISSING: Gosat → Sower (Bestowal Notification)
-**Required**: Notification message from gosat to sower
-- Should notify sower that a bestowal was made to their orchard
-- Should include bestowal details and invoice
+### ✅ Gosat → GoSat HQ Chat (Internal Audit)
+**Location**: `supabase/functions/_shared/postPaymentMessages.ts`
+- Logs transaction to GoSat HQ group chat
+- Includes buyer, sower, amount, method, reference
+- Uses `insert_system_chat_message()` for security
+
+### ✅ Email Notifications (Bestower + Sower)
+**Location**: `supabase/functions/send-bestowal-notifications/index.ts`
+- Sends email via Resend to bestower and sower
+- Called from NOWPayments webhook for orchard bestowals
 
 ---
 
-## Required Implementation
+## Integration Points
 
-1. Create `sendSowerThankYouMessage()` function
-2. Create `sendSowerBestowalNotification()` function
-3. Update `sendBestowalProofMessage()` to use secure system message function
-4. Call all three functions in webhook when payment completes
-5. Ensure all messages use `insert_system_chat_message()` for security
+| Webhook | ChatApp Messages | Email Notifications |
+|---------|-----------------|---------------------|
+| `paypal-webhook` | ✅ All 3 messages | ❌ Not yet |
+| `nowpayments-webhook` | ✅ All 3 messages (orchard + product) | ✅ Orchard only |
+| `complete-product-bestowal` | ✅ All 3 messages (pre-existing) | ❌ N/A |
 
 ---
 
-## Security Requirements
+## Security
 
-- ✅ All messages must use `insert_system_chat_message()` (service role only)
-- ✅ All messages must be logged to `chat_system_message_audit`
-- ✅ Room access must be validated
-- ✅ Message content must be sanitized
-- ✅ Rate limiting must be enforced
-
+- ✅ All messages use `insert_system_chat_message()` (service role only)
+- ✅ All messages logged to `chat_system_message_audit`
+- ✅ Room access validated via `get_or_create_direct_room` RPC
+- ✅ Music download links use 7-day signed URLs
+- ✅ All notification failures are non-critical (logged but don't block payment)
