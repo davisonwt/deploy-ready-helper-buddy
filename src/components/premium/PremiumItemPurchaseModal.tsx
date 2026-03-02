@@ -34,8 +34,8 @@ export function PremiumItemPurchaseModal({
       return;
     }
 
-    toast.info('Binance Pay integration coming soon!');
-    // TODO: Implement Binance Pay purchase flow
+    toast.info('NOWPayments integration coming soon!');
+    // TODO: Implement NOWPayments purchase flow
   };
 
   return (
@@ -44,7 +44,7 @@ export function PremiumItemPurchaseModal({
         <DialogHeader>
           <DialogTitle>Purchase {itemType}</DialogTitle>
           <DialogDescription>
-            Pay with USDC via Binance Pay
+            Pay with crypto via NOWPayments
           </DialogDescription>
         </DialogHeader>
 
@@ -52,7 +52,7 @@ export function PremiumItemPurchaseModal({
           <Alert>
             <Info className="h-4 w-4" />
             <AlertDescription>
-              All payments are processed through Binance Pay using USDC
+              All payments are processed through NOWPayments
             </AlertDescription>
           </Alert>
 
@@ -77,7 +77,7 @@ export function PremiumItemPurchaseModal({
           </Button>
           <Button onClick={handlePurchase} disabled={processing}>
             {processing && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-            {processing ? 'Processing...' : 'Pay with Binance Pay'}
+            {processing ? 'Processing...' : 'Pay with NOWPayments'}
           </Button>
         </DialogFooter>
       </DialogContent>

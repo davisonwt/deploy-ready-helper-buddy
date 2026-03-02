@@ -144,7 +144,7 @@ export function OrganizationWalletCredentials() {
             id={`${credentials.wallet_name}-merchant-id`}
             value={credentials.merchant_id}
             onChange={(e) => setCredentials(prev => ({ ...prev, merchant_id: e.target.value }))}
-            placeholder="Enter Binance Pay Merchant ID"
+            placeholder="Enter NOWPayments Merchant ID"
             style={{
               backgroundColor: currentTheme.secondaryButton,
               borderColor: currentTheme.cardBorder,
@@ -310,7 +310,7 @@ export function OrganizationWalletCredentials() {
         }}
       >
         <AlertDescription style={{ color: currentTheme.textPrimary }}>
-          Each wallet requires its own Binance Pay API credentials. Get these from your Binance Merchant Dashboard for each sub-account.
+          Each wallet requires its own NOWPayments API credentials. Get these from your NOWPayments Dashboard for each sub-account.
         </AlertDescription>
       </Alert>
 
@@ -331,7 +331,7 @@ export function OrganizationWalletCredentials() {
       {s2gdavison.merchant_id && (
         renderWalletForm(
           's2gdavison Personal Wallet',
-          'Your personal Binance Pay wallet - only you can view and edit this wallet.',
+          'Your personal NOWPayments wallet - only you can view and edit this wallet.',
           s2gdavison,
           setS2gdavison
         )
