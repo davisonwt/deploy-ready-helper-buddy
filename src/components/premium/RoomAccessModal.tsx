@@ -35,8 +35,8 @@ export function RoomAccessModal({
     }
 
     if (room.price > 0) {
-      toast.info('Binance Pay integration coming soon!');
-      // TODO: Implement Binance Pay purchase flow
+      toast.info('NOWPayments integration coming soon!');
+      // TODO: Implement NOWPayments purchase flow
       return;
     }
 
@@ -74,7 +74,7 @@ export function RoomAccessModal({
           <DialogTitle>{room.price > 0 ? 'Purchase Room Access' : 'Join Room'}</DialogTitle>
           <DialogDescription>
             {room.price > 0 
-              ? 'Pay with USDC via Binance Pay'
+              ? 'Pay with crypto via NOWPayments'
               : 'Join this room to access all content'
             }
           </DialogDescription>
@@ -85,7 +85,7 @@ export function RoomAccessModal({
             <Alert>
               <Info className="h-4 w-4" />
               <AlertDescription>
-                All payments are processed through Binance Pay using USDC
+                All payments are processed through NOWPayments
               </AlertDescription>
             </Alert>
           )}
@@ -111,7 +111,7 @@ export function RoomAccessModal({
           </Button>
           <Button onClick={handleJoinRoom} disabled={processing}>
             {processing && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-            {processing ? 'Processing...' : (room.price > 0 ? 'Pay with Binance Pay' : 'Join Room')}
+            {processing ? 'Processing...' : (room.price > 0 ? 'Pay with NOWPayments' : 'Join Room')}
           </Button>
         </DialogFooter>
       </DialogContent>

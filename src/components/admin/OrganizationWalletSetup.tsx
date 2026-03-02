@@ -119,7 +119,7 @@ export function OrganizationWalletSetup() {
           Organization Wallet Setup
         </CardTitle>
         <CardDescription style={{ color: currentTheme.textSecondary }}>
-          Binance Pay wallet addresses for receiving payments via the Bestowal Map
+          NOWPayments wallet addresses for receiving payments via the Bestowal Map
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-6">
@@ -131,7 +131,7 @@ export function OrganizationWalletSetup() {
         >
           <Wallet className="h-4 w-4" style={{ color: currentTheme.accent }} />
           <AlertDescription style={{ color: currentTheme.textPrimary }}>
-            All payments are processed through Binance Pay and distributed automatically according to the Bestowal Map:
+            All payments are processed through NOWPayments and distributed automatically according to the Bestowal Map:
             <ul className="list-disc list-inside mt-2 space-y-1">
               <li>All payments first go to <strong>s2gholding</strong> (holding wallet)</li>
               <li>15% automatically distributed to <strong>s2gbestow</strong> (10% tithing + 5% admin)</li>
@@ -155,7 +155,7 @@ export function OrganizationWalletSetup() {
           >
             <AlertCircle className="h-4 w-4" style={{ color: currentTheme.accent }} />
             <AlertDescription style={{ color: currentTheme.textPrimary }}>
-              No Binance Pay wallets configured. Please add s2gholding and s2gbestow wallet addresses in the database.
+              No NOWPayments wallets configured. Please add s2gholding and s2gbestow wallet addresses in the database.
             </AlertDescription>
           </Alert>
         ) : (
@@ -308,9 +308,9 @@ export function OrganizationWalletSetup() {
         >
           <AlertCircle className="h-4 w-4" style={{ color: currentTheme.accent }} />
           <AlertDescription className="text-xs" style={{ color: currentTheme.textPrimary }}>
-            Important: These wallet addresses are used for Binance Pay distributions. 
+             Important: These wallet addresses are used for NOWPayments distributions. 
             Make sure you have access to all wallets and keep your recovery phrases safe.
-            All payments are processed in USDC via Binance Pay.
+            All payments are processed via NOWPayments.
           </AlertDescription>
         </Alert>
       </CardContent>
