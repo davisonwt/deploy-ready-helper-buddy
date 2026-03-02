@@ -1,4 +1,5 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import { OrganizationWalletSetup } from '@/components/admin/OrganizationWalletSetup'
 import { OrganizationWalletCredentials } from '@/components/admin/OrganizationWalletCredentials'
 import { ManualDistributionQueue } from '@/components/wallet/ManualDistributionQueue'
@@ -8,6 +9,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { getCurrentTheme } from '@/utils/dashboardThemes'
 
 export default function GosatWalletsPage() {
+  const [searchParams] = useSearchParams()
+  const defaultTab = searchParams.get('tab') || 'overview'
   const [currentTheme, setCurrentTheme] = useState(getCurrentTheme())
 
   useEffect(() => {
@@ -25,7 +28,7 @@ export default function GosatWalletsPage() {
           Manage organization payment wallets and distribution queue
         </p>
 
-        <Tabs defaultValue="overview" className="space-y-6">
+        <Tabs defaultValue={defaultTab} className="space-y-6">
           <TabsList 
             className="grid grid-cols-4 gap-4 bg-transparent p-0 border-none shadow-none h-auto"
           >

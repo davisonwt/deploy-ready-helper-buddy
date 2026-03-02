@@ -1,6 +1,6 @@
 import { useEffect } from 'react'
 import { Link } from 'react-router-dom'
-import { X, Settings, Radio, Wallet, Sprout } from 'lucide-react'
+import { X, Settings, Radio, Wallet, Sprout, Megaphone } from 'lucide-react'
 
 interface GosatPanelProps {
   isOpen: boolean
@@ -30,6 +30,7 @@ export function GosatPanel({ isOpen, onClose }: GosatPanelProps) {
     { href: '/admin/radio', title: 'AOD Station Radio', subtitle: 'Radio management', icon: Radio },
     { href: '/gosat/wallets', title: 'Organization Wallets', subtitle: 'Manage organization funds', icon: Wallet },
     { href: '/admin/seeds', title: 'Seeds Management', subtitle: 'Manage seeds & products', icon: Sprout },
+    { href: '/gosat/wallets?tab=announcements', title: '📢 Announcements', subtitle: 'Send bulk messages to users', icon: Megaphone },
   ]
 
   const quickActions = [
@@ -37,6 +38,7 @@ export function GosatPanel({ isOpen, onClose }: GosatPanelProps) {
     { href: '/admin/radio', label: 'Radio', color: 'bg-purple-600 hover:bg-purple-500', icon: Radio },
     { href: '/gosat/wallets', label: 'Wallets', color: 'bg-green-600 hover:bg-green-500', icon: Wallet },
     { href: '/admin/seeds', label: 'Seeds', color: 'bg-teal-600 hover:bg-teal-500', icon: Sprout },
+    { href: '/gosat/wallets?tab=announcements', label: '📢 Announce', color: 'bg-amber-600 hover:bg-amber-500', icon: Megaphone },
   ]
 
   if (!isOpen) {
