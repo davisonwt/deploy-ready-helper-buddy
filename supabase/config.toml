@@ -42,6 +42,9 @@ verify_jwt = false
 [functions.create-nowpayments-order]
 verify_jwt = false
 
+[functions.sync-nowpayments-balance]
+verify_jwt = false
+
 # Email Functions
 [functions.send-welcome-email]
 verify_jwt = false
