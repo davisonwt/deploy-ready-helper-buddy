@@ -1,49 +1,65 @@
 
 
-# Fix: 30-Second Preview Enforcement Across All Music Pages
+# Plan: Add PayPal as Additional Payment Option
 
-## Problem Identified
+## Understanding
+- PayPal is added **alongside** the existing NOWPayments (crypto) option — not replacing it
+- All PayPal fees are borne by the **sower/bestower**, not the Sow2Grow platform account
+- PayPal Client ID and Secret are already set up in Supabase under app name "sow2growapp"
+- Same distribution logic applies (85/10/5 for orchards, 70/15/10/5 for products)
 
-After inspecting all audio playback code, there are multiple places where songs can play in full instead of being limited to 30 seconds:
+## What Gets Built
 
-### Bug 1: `S2GCommunityMusicPage.tsx` (lines 194-252)
-The `handlePlay` function has two branches:
-- If `hasAccess(item)` returns **false**: plays 30-second preview (correct)
-- If `hasAccess(item)` returns **true**: plays the **full song** with no time limit
+### 1. Add PayPal Secrets to Edge Functions
+The `PAYPAL_CLIENT_ID` and `PAYPAL_CLIENT_SECRET` need to be added as Supabase Edge Function secrets so the new edge function can access them.
 
-`hasAccess` returns true when `item.price === 0` or `item.is_giveaway === true`. If Ed Esterline's track "Truth Will Mend" has a price of 0 or is tagged as a giveaway, the full song plays unrestricted.
+### 2. Create `create-paypal-order` Edge Function
+- Same authentication, rate-limiting, and validation as `create-nowpayments-order`
+- Calls PayPal REST API v2 (`/v2/checkout/orders`) to create an order
+- Uses sandbox URL for testing, live for production
+- Creates pending bestowal/payment records
+- Returns PayPal approval URL for redirect
+- Sets `payment_method: 'paypal'` on bestowal records
 
-### Bug 2: `S2GCommunityMusicPage.tsx` - No toggle on preview
-In the non-access branch, clicking play again does NOT stop the current audio. It creates a second `Audio` instance, so two copies play simultaneously.
+### 3. Create `paypal-webhook` Edge Function
+- Receives PayPal webhook notifications (CHECKOUT.ORDER.APPROVED, PAYMENT.CAPTURE.COMPLETED)
+- Verifies webhook authenticity via PayPal API
+- Updates payment status to confirmed
+- Triggers distribution (same `distribute-bestowal` logic)
+- Registered in `config.toml` with `verify_jwt = false`
 
-### Bug 3: `S2GCommunityMusicPage.tsx` - No `resolveAudioUrl`
-Unlike `CommunityMusicLibraryPage` and `AudioSnippetPlayer`, this page creates `new Audio(item.preview_url || item.file_url)` directly without resolving signed URLs, which can cause playback failures on Supabase storage files.
+### 4. Create `PayPalButton` Component (`src/components/payment/PayPalButton.tsx`)
+- Same interface/props as `NowPaymentsButton` (orchardId, amount, paymentType, productItems, etc.)
+- Calls `create-paypal-order` edge function
+- Redirects to PayPal checkout
+- PayPal-branded styling with PayPal icon
 
-### Bug 4: `PublicMusicLibrary.tsx` (lines 121-172)
-Plays full tracks for purchased users with no 30-second snippet limit at all.
+### 5. Create `PaymentMethodSelector` Component
+A reusable wrapper that shows two payment buttons side-by-side or stacked:
+- **Pay with Crypto** (existing NowPaymentsButton)
+- **Pay with PayPal** (new PayPalButton)
 
-## Fix Plan
+### 6. Update All 4 Payment Surfaces
+Replace the standalone `NowPaymentsButton` with the new `PaymentMethodSelector` in:
+- `PaymentModal.jsx` — orchard payments
+- `EnhancedBestowalPayment.jsx` — orchard bestowals
+- `OrchardPaymentWidget.jsx` — orchard widget
+- `BestowalCheckout.tsx` — product bestowals
 
-### Step 1: Fix `S2GCommunityMusicPage.tsx` `handlePlay`
-- Remove the full-access branch that plays unlimited audio
-- ALL playback uses the 30-second preview timer, regardless of access status
-- Add toggle logic: clicking play while playing stops current audio
-- Use `resolveAudioUrl` for signed URL resolution
-- Clean up audio instances properly on stop
+Each surface will show both payment options with the same props they currently pass.
 
-### Step 2: Fix `PublicMusicLibrary.tsx` `handlePlay`
-- Add 30-second preview timer to all playback
-- Use `resolveAudioUrl` for signed URL resolution
+## Technical Details
 
-### Step 3: Verify `CommunityMusicLibraryPage.tsx` and `AudioSnippetPlayer.tsx`
-- These already have correct 30-second limits - no changes needed
+- **PayPal API**: REST v2 at `api-m.paypal.com` (live) / `api-m.sandbox.paypal.com` (sandbox)
+- **Auth**: Server-side client credentials grant → create order → redirect user → webhook confirms
+- **Fee handling**: PayPal fees are naturally charged to the receiving account; since funds go to the S2G PayPal account first then distribute, the fee is effectively passed to the bestower via the total amount (no markup needed — PayPal deducts from received amount)
+- **Webhook URL**: `https://zuwkgasbkpjlxzsjzumu.supabase.co/functions/v1/paypal-webhook`
 
-## Technical Detail
-All preview playback will follow the same pattern:
-```
-audio.play()
-timer = setTimeout(() => { audio.pause(); }, 30000)
-audio.onended = () => clearTimeout(timer)
-```
-Full track access (download) remains gated behind bestowal/purchase - but in-browser playback is always 30-second preview.
+## Steps
+1. Request `PAYPAL_CLIENT_ID` and `PAYPAL_CLIENT_SECRET` as Edge Function secrets
+2. Create `create-paypal-order` edge function + config.toml entry
+3. Create `paypal-webhook` edge function + config.toml entry
+4. Create `PayPalButton` component
+5. Create `PaymentMethodSelector` component
+6. Update 4 payment surfaces to show both options
 
