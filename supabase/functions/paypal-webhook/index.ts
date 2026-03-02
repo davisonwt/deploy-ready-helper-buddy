@@ -90,6 +90,15 @@ serve(async (req) => {
   try {
     const body = await req.text();
     
+    // Guard against empty body (PayPal health-check pings)
+    if (!body || body.trim().length === 0) {
+      console.log('ℹ️ Empty body received (likely PayPal health-check ping)');
+      return new Response(
+        JSON.stringify({ received: true, note: 'empty body acknowledged' }),
+        { status: 200, headers: corsHeaders }
+      );
+    }
+
     // Verify webhook signature
     const isValid = await verifyWebhookSignature(req, body);
     if (!isValid) {
@@ -100,7 +109,16 @@ serve(async (req) => {
       );
     }
 
-    const event = JSON.parse(body);
+    let event: any;
+    try {
+      event = JSON.parse(body);
+    } catch (parseError) {
+      console.error('❌ Failed to parse webhook body:', parseError);
+      return new Response(
+        JSON.stringify({ error: 'Invalid JSON body' }),
+        { status: 400, headers: corsHeaders }
+      );
+    }
     const eventType = event.event_type;
     console.log('📩 PayPal webhook event:', eventType);
 
