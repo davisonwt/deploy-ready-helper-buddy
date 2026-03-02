@@ -3,7 +3,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { supabase } from '@/integrations/supabase/client';
-import { RefreshCw, Wallet, AlertCircle } from 'lucide-react';
+import { RefreshCw, Wallet, AlertCircle, Building2, Heart } from 'lucide-react';
 import { toast } from 'sonner';
 
 interface BalanceCurrency {
@@ -11,8 +11,26 @@ interface BalanceCurrency {
   currency: string;
 }
 
+interface WalletBalance {
+  currencies: BalanceCurrency[];
+  error?: string;
+}
+
+const WALLET_CONFIG: Record<string, { label: string; description: string; icon: typeof Wallet }> = {
+  s2gholding: {
+    label: 'S2G Holding',
+    description: 'Main holding wallet — receives all incoming payments',
+    icon: Building2,
+  },
+  s2gbestow: {
+    label: 'S2G Bestow (Tithing)',
+    description: 'Tithing & admin wallet — receives 15% platform share',
+    icon: Heart,
+  },
+};
+
 export function NowPaymentsAccountBalance() {
-  const [balanceData, setBalanceData] = useState<BalanceCurrency[]>([]);
+  const [walletBalances, setWalletBalances] = useState<Record<string, WalletBalance>>({});
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -30,36 +48,12 @@ export function NowPaymentsAccountBalance() {
         throw new Error(data?.error || 'Unknown error');
       }
 
-      // NOWPayments returns balance as an object with currency keys
-      const raw = data.balance;
-      const currencies: BalanceCurrency[] = [];
-
-      if (raw && typeof raw === 'object') {
-        // Handle various response shapes
-        if (Array.isArray(raw)) {
-          raw.forEach((item: any) => {
-            if (item.currency && item.amount !== undefined) {
-              currencies.push({ currency: item.currency.toUpperCase(), amount: Number(item.amount) });
-            }
-          });
-        } else {
-          // Object shape: { btc: 0.001, eth: 0.5, ... } or nested
-          for (const [key, value] of Object.entries(raw)) {
-            if (typeof value === 'number') {
-              currencies.push({ currency: key.toUpperCase(), amount: value });
-            } else if (typeof value === 'object' && value !== null && 'amount' in (value as any)) {
-              currencies.push({ currency: key.toUpperCase(), amount: Number((value as any).amount) });
-            }
-          }
-        }
-      }
-
-      setBalanceData(currencies);
-      if (showToast) toast.success('Balance refreshed');
+      setWalletBalances(data.wallets || {});
+      if (showToast) toast.success('Balances refreshed');
     } catch (err: any) {
       console.error('Balance fetch error:', err);
       setError(err.message);
-      if (showToast) toast.error('Failed to refresh balance');
+      if (showToast) toast.error('Failed to refresh balances');
     } finally {
       setLoading(false);
     }
@@ -75,8 +69,7 @@ export function NowPaymentsAccountBalance() {
     setRefreshing(false);
   };
 
-  const nonZeroBalances = balanceData.filter(b => b.amount > 0);
-  const hasBalances = nonZeroBalances.length > 0;
+  const walletNames = ['s2gholding', 's2gbestow'];
 
   return (
     <Card>
@@ -85,10 +78,10 @@ export function NowPaymentsAccountBalance() {
           <div>
             <CardTitle className="flex items-center gap-2 text-lg">
               <Wallet className="h-5 w-5 text-primary" />
-              NOWPayments Account Balance
+              NOWPayments Account Balances
             </CardTitle>
             <CardDescription>
-              Live balance from your NOWPayments merchant account
+              Live balances from your NOWPayments merchant accounts
             </CardDescription>
           </div>
           <Button
@@ -101,7 +94,7 @@ export function NowPaymentsAccountBalance() {
           </Button>
         </div>
       </CardHeader>
-      <CardContent>
+      <CardContent className="space-y-6">
         {loading ? (
           <div className="flex items-center justify-center py-6">
             <RefreshCw className="h-6 w-6 animate-spin text-muted-foreground" />
@@ -111,26 +104,50 @@ export function NowPaymentsAccountBalance() {
             <AlertCircle className="h-4 w-4 shrink-0" />
             <span>{error}</span>
           </div>
-        ) : hasBalances ? (
-          <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-            {nonZeroBalances.map((b) => (
-              <div
-                key={b.currency}
-                className="p-3 rounded-lg border bg-muted/30"
-              >
-                <Badge variant="outline" className="mb-1 text-xs">
-                  {b.currency}
-                </Badge>
-                <p className="text-lg font-bold font-mono">
-                  {b.amount < 0.0001 ? b.amount.toExponential(2) : b.amount.toFixed(8).replace(/0+$/, '').replace(/\.$/, '')}
-                </p>
-              </div>
-            ))}
-          </div>
         ) : (
-          <p className="text-sm text-muted-foreground py-4">
-            No balances found. Funds may have already been forwarded or the account is empty.
-          </p>
+          walletNames.map((walletName) => {
+            const config = WALLET_CONFIG[walletName];
+            const balance = walletBalances[walletName];
+            const Icon = config?.icon || Wallet;
+            const nonZero = balance?.currencies?.filter(b => b.amount > 0) || [];
+            const hasError = balance?.error;
+
+            return (
+              <div key={walletName} className="rounded-lg border p-4 space-y-3">
+                <div className="flex items-center gap-2">
+                  <Icon className="h-4 w-4 text-primary" />
+                  <h3 className="font-semibold text-sm">{config?.label || walletName}</h3>
+                </div>
+                <p className="text-xs text-muted-foreground">{config?.description}</p>
+
+                {hasError ? (
+                  <div className="flex items-center gap-2 text-destructive text-xs">
+                    <AlertCircle className="h-3 w-3 shrink-0" />
+                    <span>{balance.error}</span>
+                  </div>
+                ) : nonZero.length > 0 ? (
+                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                    {nonZero.map((b) => (
+                      <div key={b.currency} className="p-3 rounded-lg border bg-muted/30">
+                        <Badge variant="outline" className="mb-1 text-xs">
+                          {b.currency}
+                        </Badge>
+                        <p className="text-lg font-bold font-mono">
+                          {b.amount < 0.0001
+                            ? b.amount.toExponential(2)
+                            : b.amount.toFixed(8).replace(/0+$/, '').replace(/\.$/, '')}
+                        </p>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-xs text-muted-foreground">
+                    No balances found — account may be empty or funds forwarded.
+                  </p>
+                )}
+              </div>
+            );
+          })
         )}
       </CardContent>
     </Card>
