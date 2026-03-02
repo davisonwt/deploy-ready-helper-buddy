@@ -3,17 +3,17 @@ import { OrganizationWalletSetup } from '@/components/admin/OrganizationWalletSe
 import { OrganizationWalletCredentials } from '@/components/admin/OrganizationWalletCredentials'
 import { ManualDistributionQueue } from '@/components/wallet/ManualDistributionQueue'
 import { NowPaymentsAccountBalance } from '@/components/wallet/NowPaymentsAccountBalance'
+import { BulkAnnouncementSender } from '@/components/gosat/BulkAnnouncementSender'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { getCurrentTheme } from '@/utils/dashboardThemes'
 
 export default function GosatWalletsPage() {
   const [currentTheme, setCurrentTheme] = useState(getCurrentTheme())
 
-  // Update theme every 2 hours
   useEffect(() => {
     const themeInterval = setInterval(() => {
       setCurrentTheme(getCurrentTheme());
-    }, 2 * 60 * 60 * 1000); // 2 hours
+    }, 2 * 60 * 60 * 1000);
     return () => clearInterval(themeInterval);
   }, [])
 
@@ -27,7 +27,7 @@ export default function GosatWalletsPage() {
 
         <Tabs defaultValue="overview" className="space-y-6">
           <TabsList 
-            className="grid grid-cols-3 gap-4 bg-transparent p-0 border-none shadow-none h-auto"
+            className="grid grid-cols-4 gap-4 bg-transparent p-0 border-none shadow-none h-auto"
           >
             <TabsTrigger 
               value="overview"
@@ -62,6 +62,17 @@ export default function GosatWalletsPage() {
             >
               Distribution Queue
             </TabsTrigger>
+            <TabsTrigger 
+              value="announcements"
+              className="rounded-xl border px-6 py-3 text-sm font-semibold transition-all duration-300"
+              style={{
+                backgroundColor: 'transparent',
+                borderColor: currentTheme.cardBorder,
+                color: currentTheme.textSecondary
+              }}
+            >
+              📢 Announcements
+            </TabsTrigger>
           </TabsList>
           
           <style>{`
@@ -90,6 +101,10 @@ export default function GosatWalletsPage() {
 
           <TabsContent value="distribution">
             <ManualDistributionQueue />
+          </TabsContent>
+
+          <TabsContent value="announcements">
+            <BulkAnnouncementSender />
           </TabsContent>
         </Tabs>
       </div>
