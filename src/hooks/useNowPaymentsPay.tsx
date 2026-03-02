@@ -80,8 +80,8 @@ export function useNowPaymentsPay() {
       // Call success callback
       onSuccess?.(data.bestowalId, data.invoiceUrl);
 
-      // Redirect to NOWPayments checkout
-      window.location.href = data.invoiceUrl;
+      // Open NOWPayments checkout in new tab (avoids blank page in iframe)
+      window.open(data.invoiceUrl, '_blank');
 
       return data;
     } catch (err) {

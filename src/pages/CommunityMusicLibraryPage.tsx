@@ -380,7 +380,7 @@ export default function CommunityMusicLibraryPage() {
 
       if (data?.invoiceUrl) {
         toast.info('Redirecting to payment...');
-        window.location.href = data.invoiceUrl;
+        window.open(data.invoiceUrl, '_blank');
       } else {
         toast.error('Failed to get payment URL');
       }
@@ -431,7 +431,7 @@ export default function CommunityMusicLibraryPage() {
 
       if (data?.invoiceUrl) {
         toast.info('Redirecting to payment...');
-        window.location.href = data.invoiceUrl;
+        window.open(data.invoiceUrl, '_blank');
       } else {
         toast.error('Failed to get payment URL');
       }

@@ -164,7 +164,7 @@ export default function BookCheckoutModal({ isOpen, onClose, book }: BookCheckou
       });
 
       // Redirect to payment page
-      window.location.href = paymentData.invoiceUrl;
+      window.open(paymentData.invoiceUrl, '_blank');
     } catch (error) {
       console.error('Checkout error:', error);
       toast({
