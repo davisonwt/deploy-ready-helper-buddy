@@ -23,8 +23,25 @@ export function getSecureCorsHeaders(req: Request): Record<string, string> {
     };
   }
 
-  // Check if origin is allowed
-  if (origin && allowedOrigins.includes(origin)) {
+  // Check if origin is allowed (supports production + Lovable preview domains)
+  let isAllowedOrigin = false;
+  if (origin) {
+    if (allowedOrigins.includes(origin)) {
+      isAllowedOrigin = true;
+    } else {
+      try {
+        const { protocol, hostname } = new URL(origin);
+        isAllowedOrigin = protocol === "https:" && (
+          hostname.endsWith(".lovable.app") ||
+          hostname.endsWith(".lovableproject.com")
+        );
+      } catch {
+        isAllowedOrigin = false;
+      }
+    }
+  }
+
+  if (isAllowedOrigin) {
     return {
       "Access-Control-Allow-Origin": origin,
       "Access-Control-Allow-Methods": "POST, OPTIONS",
