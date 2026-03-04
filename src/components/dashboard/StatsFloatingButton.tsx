@@ -49,7 +49,7 @@ export function StatsFloatingButton({ theme }: LiveActivitiesBarProps) {
         style={{ height: '56px' }}
       >
         <div
-          className="h-full flex items-center justify-between px-2 sm:px-4 backdrop-blur-xl border-t"
+          className="h-full flex items-center justify-center gap-1 sm:gap-2 backdrop-blur-xl border-t"
           style={{
             backgroundColor: cardBg,
             borderColor: borderColor,
