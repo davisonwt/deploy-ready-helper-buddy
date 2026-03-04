@@ -388,6 +388,7 @@ export const RadioMode: React.FC = () => {
                               <DropdownMenuItem onClick={() => {
                                   setEditSlotData({
                                     id: slot.id,
+                                    dj_id: slot.dj_id,
                                     time_slot_date: slot.time_slot_date,
                                     hour_slot: slot.hour_slot,
                                     show_subject: slot.show_subject,

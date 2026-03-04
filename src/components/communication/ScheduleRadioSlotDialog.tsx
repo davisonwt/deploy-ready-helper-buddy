@@ -16,6 +16,7 @@ import type { TimelineSegment } from '@/components/radio/TimelineBuilder';
 
 export interface EditableSlotData {
   id: string;
+  dj_id: string;
   time_slot_date: string;
   hour_slot: number;
   show_subject: string | null;
@@ -253,8 +254,11 @@ export const ScheduleRadioSlotDialog: React.FC<ScheduleRadioSlotDialogProps> = (
         const endDate = new Date(startDate);
         endDate.setHours(entry.slot.hour + 2);
 
+        // In edit mode, preserve the original DJ's dj_id
+        const slotDjId = (isEditMode && editSlot?.dj_id) ? editSlot.dj_id : dj!.id;
+
         return {
-          dj_id: dj!.id,
+          dj_id: slotDjId,
           start_time: startDate.toISOString(),
           end_time: endDate.toISOString(),
           time_slot_date: format(entry.date, 'yyyy-MM-dd'),
