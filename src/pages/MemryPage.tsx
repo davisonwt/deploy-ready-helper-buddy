@@ -1287,9 +1287,13 @@ export default function MemryPage() {
                     src={currentPost.media_url}
                     className="max-w-[80%] max-h-full object-contain mx-auto"
                     autoPlay
-                    loop
                     muted={isMuted}
                     playsInline
+                    onEnded={() => {
+                      if (currentPostIndex < posts.length - 1) {
+                        handleScroll('down');
+                      }
+                    }}
                   />
                 ) : currentPost.content_type === 'music' ? (
                   <MusicPreviewPlayer mediaUrl={currentPost.media_url} caption={currentPost.caption} />
