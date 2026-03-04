@@ -10,6 +10,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Checkbox } from '@/components/ui/checkbox';
+import { Card, CardContent } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import DJMusicUpload from '@/components/radio/DJMusicUpload';
@@ -27,7 +28,9 @@ import {
   X,
   Megaphone,
   Mic,
-  LayoutGrid
+  LayoutGrid,
+  RotateCcw,
+  Sparkles
 } from 'lucide-react';
 
 const SHOW_CATEGORIES = [
