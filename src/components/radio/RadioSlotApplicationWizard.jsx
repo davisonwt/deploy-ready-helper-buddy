@@ -122,6 +122,55 @@ export function RadioSlotApplicationWizard({ onClose }) {
     fetchPlaylistsAndTracks();
   }, [userDJProfile]);
 
+  // Fetch past shows for re-run option
+  useEffect(() => {
+    const fetchPastShows = async () => {
+      if (!userDJProfile?.id) return;
+      setLoadingPastShows(true);
+      try {
+        const { data } = await supabase
+          .from('radio_schedule')
+          .select(`
+            id, show_name, show_subject, subject, show_notes, broadcast_mode,
+            radio_shows (id, show_name, description, subject, topic_description)
+          `)
+          .eq('dj_id', userDJProfile.id)
+          .in('approval_status', ['approved', 'completed'])
+          .order('created_at', { ascending: false });
+
+        if (data) {
+          // Deduplicate by show name
+          const seen = new Set();
+          const unique = data.filter(slot => {
+            const name = slot.radio_shows?.show_name || slot.show_name || 'Untitled';
+            if (seen.has(name)) return false;
+            seen.add(name);
+            return true;
+          });
+          setPastShows(unique);
+        }
+      } catch (err) {
+        console.error('Error fetching past shows:', err);
+      } finally {
+        setLoadingPastShows(false);
+      }
+    };
+    fetchPastShows();
+  }, [userDJProfile]);
+
+  const handleSelectPastShow = (show) => {
+    setSelectedPastShow(show);
+    const showData = show.radio_shows || {};
+    setFormData(prev => ({
+      ...prev,
+      show_name: showData.show_name || show.show_name || '',
+      description: showData.description || '',
+      topic_description: showData.topic_description || '',
+      broadcast_mode: show.broadcast_mode || 'live',
+      show_notes: show.show_notes || '',
+    }));
+  };
+
   // Refetch tracks after upload
   const refreshTracks = async () => {
     if (!userDJProfile?.id) return;
@@ -133,7 +182,13 @@ export function RadioSlotApplicationWizard({ onClose }) {
     if (trackData) setTracks(trackData);
   };
 
-  const steps = [
+  const steps = wizardMode === null ? [
+    {
+      title: 'Choose Mode',
+      description: 'Start fresh or re-run a previous show on new dates',
+      icon: <Radio className="h-5 w-5" />
+    }
+  ] : [
     {
       title: 'Basic Information',
       description: 'Tell us about your show and what listeners can expect',
