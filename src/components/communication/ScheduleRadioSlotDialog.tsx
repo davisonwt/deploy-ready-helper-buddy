@@ -133,6 +133,9 @@ export const ScheduleRadioSlotDialog: React.FC<ScheduleRadioSlotDialogProps> = (
     description: '',
   });
   const [timelineSegments, setTimelineSegments] = useState<TimelineSegment[]>([]);
+  const [rerunTemplates, setRerunTemplates] = useState<RerunTemplate[]>([]);
+  const [selectedRerunTemplateId, setSelectedRerunTemplateId] = useState('none');
+  const [loadingReruns, setLoadingReruns] = useState(false);
 
   const isEditMode = !!editSlot;
 
