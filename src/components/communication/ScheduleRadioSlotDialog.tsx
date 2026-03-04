@@ -16,6 +16,7 @@ import type { TimelineSegment } from '@/components/radio/TimelineBuilder';
 
 export interface EditableSlotData {
   id: string;
+  dj_id: string;
   time_slot_date: string;
   hour_slot: number;
   show_subject: string | null;
