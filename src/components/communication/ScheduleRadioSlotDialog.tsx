@@ -442,6 +442,20 @@ export const ScheduleRadioSlotDialog: React.FC<ScheduleRadioSlotDialogProps> = (
     setSlotEntries((prev) => prev.filter((entry) => entry.id !== entryId));
   };
 
+  const applyRerunTemplate = (templateId: string) => {
+    setSelectedRerunTemplateId(templateId);
+    if (templateId === 'none') return;
+
+    const template = rerunTemplates.find((item) => item.id === templateId);
+    if (!template) return;
+
+    setFormData({
+      show_title: template.title,
+      description: template.description,
+    });
+    setTimelineSegments(parseTimelineSegments(template.timelineJson));
+  };
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="glass-card bg-background/95 border-primary/20 max-w-2xl max-h-[90vh] overflow-y-auto">
