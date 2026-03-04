@@ -470,6 +470,28 @@ export const ScheduleRadioSlotDialog: React.FC<ScheduleRadioSlotDialogProps> = (
         <form onSubmit={handleSubmit} className="space-y-6">
           {step === 1 && (
             <>
+              {!isEditMode && (
+                <div>
+                  <Label htmlFor="rerun_template">Re-run a Previous Show (Optional)</Label>
+                  <Select value={selectedRerunTemplateId} onValueChange={applyRerunTemplate}>
+                    <SelectTrigger id="rerun_template">
+                      <SelectValue placeholder={loadingReruns ? 'Loading previous shows...' : 'Choose a previous show'} />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="none">Start from scratch</SelectItem>
+                      {rerunTemplates.map((template) => (
+                        <SelectItem key={template.id} value={template.id}>
+                          {template.title}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Select a past show to auto-fill title, description, and timeline segments.
+                  </p>
+                </div>
+              )}
+
               <div>
                 <Label className="mb-2 flex items-center gap-2">
                   <Globe className="h-4 w-4" />
