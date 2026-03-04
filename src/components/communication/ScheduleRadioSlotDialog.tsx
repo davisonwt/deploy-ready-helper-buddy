@@ -403,7 +403,13 @@ export const ScheduleRadioSlotDialog: React.FC<ScheduleRadioSlotDialogProps> = (
                 <Calendar
                   mode="single"
                   selected={selectedDate}
-                  onSelect={(date) => setSelectedDate(date)}
+                  onSelect={(date) => {
+                    setSelectedDate(date);
+                    // In edit mode, auto-update the single slot entry's date
+                    if (isEditMode && date && slotEntries.length === 1) {
+                      setSlotEntries([{ ...slotEntries[0], date: new Date(date) }]);
+                    }
+                  }}
                   className="rounded-md border glass-panel pointer-events-auto"
                   disabled={(date) => {
                     const today = new Date();
@@ -432,15 +438,31 @@ export const ScheduleRadioSlotDialog: React.FC<ScheduleRadioSlotDialogProps> = (
                       type="button"
                       variant={selectedSlot === slot.id ? 'default' : 'outline'}
                       className="justify-start"
-                      onClick={() => setSelectedSlot(slot.id)}
+                      onClick={() => {
+                        setSelectedSlot(slot.id);
+                        // In edit mode, auto-update the single slot entry's time
+                        if (isEditMode && selectedDate && slotEntries.length === 1) {
+                          setSlotEntries([{
+                            ...slotEntries[0],
+                            slotId: slot.id,
+                          }]);
+                        }
+                      }}
                     >
                       {slot.time}
                     </Button>
                   ))}
                 </div>
-                <Button type="button" className="mt-3" onClick={addSlotEntry}>
-                  Add This Date + Time
-                </Button>
+                {!isEditMode && (
+                  <Button type="button" className="mt-3" onClick={addSlotEntry}>
+                    Add This Date + Time
+                  </Button>
+                )}
+                {isEditMode && (
+                  <p className="text-xs text-muted-foreground mt-2">
+                    Tap a slot above to change the broadcast time for this show.
+                  </p>
+                )}
               </div>
 
               <div className="space-y-2">
