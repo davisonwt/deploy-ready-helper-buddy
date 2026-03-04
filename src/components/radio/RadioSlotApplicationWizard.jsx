@@ -395,16 +395,15 @@ export function RadioSlotApplicationWizard({ onClose }) {
   };
 
   const canProceed = () => {
+    if (wizardMode === null) return false; // handled by mode buttons
     switch (currentStep) {
       case 0:
         return formData.show_name.trim() && formData.broadcast_mode;
       case 1:
         return true;
       case 2:
-        // Segment step - at least 1 segment recommended but not required
         return true;
       case 3:
-        // Pre-recorded mode requires a playlist
         if (formData.broadcast_mode === 'pre_recorded' && !formData.playlist_id) return false;
         return true;
       case 4:
@@ -416,11 +415,78 @@ export function RadioSlotApplicationWizard({ onClose }) {
     }
   };
 
+  const renderModeSelection = () => (
+    <div className="space-y-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <Button
+          type="button"
+          variant="outline"
+          className="h-auto py-8 flex-col gap-3 border-2 hover:border-primary hover:bg-primary/5 transition-all"
+          onClick={() => { setWizardMode('new'); setCurrentStep(0); }}
+        >
+          <Sparkles className="h-8 w-8 text-primary" />
+          <span className="font-bold text-lg">New Show</span>
+          <span className="text-xs text-muted-foreground text-center">Create a brand new radio show from scratch</span>
+        </Button>
+        <Button
+          type="button"
+          variant="outline"
+          className="h-auto py-8 flex-col gap-3 border-2 hover:border-primary hover:bg-primary/5 transition-all"
+          onClick={() => { setWizardMode('rerun'); setCurrentStep(0); }}
+          disabled={pastShows.length === 0}
+        >
+          <RotateCcw className="h-8 w-8 text-primary" />
+          <span className="font-bold text-lg">Re-run Existing Show</span>
+          <span className="text-xs text-muted-foreground text-center">
+            {pastShows.length === 0
+              ? 'No past shows found'
+              : `Pick from ${pastShows.length} previous show(s) to schedule again`}
+          </span>
+        </Button>
+      </div>
+    </div>
+  );
+
+  const renderRerunPicker = () => (
+    <div className="space-y-4">
+      <p className="text-sm text-muted-foreground">Select a previous show to re-run. Its details will be pre-filled — you can edit anything before submitting.</p>
+      {loadingPastShows ? (
+        <p className="text-sm text-muted-foreground animate-pulse">Loading past shows...</p>
+      ) : (
+        <div className="space-y-2 max-h-[400px] overflow-y-auto">
+          {pastShows.map((show) => {
+            const name = show.radio_shows?.show_name || show.show_name || 'Untitled';
+            const desc = show.radio_shows?.description || '';
+            const isSelected = selectedPastShow?.id === show.id;
+            return (
+              <Card
+                key={show.id}
+                className={`cursor-pointer transition-all border-2 ${isSelected ? 'border-primary bg-primary/5' : 'border-transparent hover:border-primary/30'}`}
+                onClick={() => handleSelectPastShow(show)}
+              >
+                <CardContent className="p-4 flex items-center gap-3">
+                  <Radio className="h-5 w-5 text-primary shrink-0" />
+                  <div className="min-w-0">
+                    <p className="font-semibold truncate">{name}</p>
+                    {desc && <p className="text-xs text-muted-foreground truncate">{desc}</p>}
+                  </div>
+                  {isSelected && <Badge className="ml-auto shrink-0">Selected</Badge>}
+                </CardContent>
+              </Card>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+
   const renderStepContent = () => {
+    if (wizardMode === null) return renderModeSelection();
     switch (currentStep) {
       case 0:
         return (
           <div className="space-y-4">
+            {wizardMode === 'rerun' && renderRerunPicker()}
             <div>
               <Label htmlFor="show_name">Show Name *</Label>
               <PermissiveInput
