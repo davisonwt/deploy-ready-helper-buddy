@@ -1,8 +1,9 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Activity, TreePine, ChevronUp, HelpCircle, Navigation, BarChart3 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { MasteryModal } from '@/components/gamification/MasteryModal';
+import { getCurrentTheme } from '@/utils/dashboardThemes';
 
 interface LiveActivitiesBarProps {
   theme?: {
@@ -16,15 +17,24 @@ interface LiveActivitiesBarProps {
   };
 }
 
-export function StatsFloatingButton({ theme }: LiveActivitiesBarProps) {
+export function StatsFloatingButton({ theme: propTheme }: LiveActivitiesBarProps) {
   const [masteryOpen, setMasteryOpen] = useState(false);
+  const [autoTheme, setAutoTheme] = useState(getCurrentTheme());
   const navigate = useNavigate();
 
-  const accentColor = theme?.accent || '#f59e0b';
-  const cardBg = theme?.cardBg || 'rgba(30, 41, 59, 0.9)';
-  const borderColor = theme?.cardBorder || 'rgba(255,255,255,0.1)';
-  const textPrimary = theme?.textPrimary || '#ffffff';
-  const textSecondary = theme?.textSecondary || 'rgba(255,255,255,0.6)';
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setAutoTheme(getCurrentTheme());
+    }, 2 * 60 * 60 * 1000);
+    return () => clearInterval(interval);
+  }, []);
+
+  const theme = propTheme || autoTheme;
+  const accentColor = theme.accent;
+  const cardBg = theme.cardBg;
+  const borderColor = theme.cardBorder;
+  const textPrimary = theme.textPrimary;
+  const textSecondary = theme.textSecondary;
 
   const handleLiveActivities = () => {
     window.dispatchEvent(new CustomEvent('toggle-live-activity'));
