@@ -63,6 +63,10 @@ export function RadioSlotApplicationWizard({ onClose }) {
   const navigate = useNavigate();
   const [currentStep, setCurrentStep] = useState(0);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [wizardMode, setWizardMode] = useState(null); // 'new' or 'rerun'
+  const [pastShows, setPastShows] = useState([]);
+  const [loadingPastShows, setLoadingPastShows] = useState(false);
+  const [selectedPastShow, setSelectedPastShow] = useState(null);
 
   // Form data for all steps
   const [formData, setFormData] = useState({
