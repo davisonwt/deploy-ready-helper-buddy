@@ -10,6 +10,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Checkbox } from '@/components/ui/checkbox';
+import { Card, CardContent } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import DJMusicUpload from '@/components/radio/DJMusicUpload';
@@ -27,7 +28,9 @@ import {
   X,
   Megaphone,
   Mic,
-  LayoutGrid
+  LayoutGrid,
+  RotateCcw,
+  Sparkles
 } from 'lucide-react';
 
 const SHOW_CATEGORIES = [
@@ -60,6 +63,10 @@ export function RadioSlotApplicationWizard({ onClose }) {
   const navigate = useNavigate();
   const [currentStep, setCurrentStep] = useState(0);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [wizardMode, setWizardMode] = useState(null); // 'new' or 'rerun'
+  const [pastShows, setPastShows] = useState([]);
+  const [loadingPastShows, setLoadingPastShows] = useState(false);
+  const [selectedPastShow, setSelectedPastShow] = useState(null);
 
   // Form data for all steps
   const [formData, setFormData] = useState({
@@ -115,6 +122,55 @@ export function RadioSlotApplicationWizard({ onClose }) {
     fetchPlaylistsAndTracks();
   }, [userDJProfile]);
 
+  // Fetch past shows for re-run option
+  useEffect(() => {
+    const fetchPastShows = async () => {
+      if (!userDJProfile?.id) return;
+      setLoadingPastShows(true);
+      try {
+        const { data } = await supabase
+          .from('radio_schedule')
+          .select(`
+            id, show_name, show_subject, subject, show_notes, broadcast_mode,
+            radio_shows (id, show_name, description, subject, topic_description)
+          `)
+          .eq('dj_id', userDJProfile.id)
+          .in('approval_status', ['approved', 'completed'])
+          .order('created_at', { ascending: false });
+
+        if (data) {
+          // Deduplicate by show name
+          const seen = new Set();
+          const unique = data.filter(slot => {
+            const name = slot.radio_shows?.show_name || slot.show_name || 'Untitled';
+            if (seen.has(name)) return false;
+            seen.add(name);
+            return true;
+          });
+          setPastShows(unique);
+        }
+      } catch (err) {
+        console.error('Error fetching past shows:', err);
+      } finally {
+        setLoadingPastShows(false);
+      }
+    };
+    fetchPastShows();
+  }, [userDJProfile]);
+
+  const handleSelectPastShow = (show) => {
+    setSelectedPastShow(show);
+    const showData = show.radio_shows || {};
+    setFormData(prev => ({
+      ...prev,
+      show_name: showData.show_name || show.show_name || '',
+      description: showData.description || '',
+      topic_description: showData.topic_description || '',
+      broadcast_mode: show.broadcast_mode || 'live',
+      show_notes: show.show_notes || '',
+    }));
+  };
+
   // Refetch tracks after upload
   const refreshTracks = async () => {
     if (!userDJProfile?.id) return;
@@ -126,7 +182,13 @@ export function RadioSlotApplicationWizard({ onClose }) {
     if (trackData) setTracks(trackData);
   };
 
-  const steps = [
+  const steps = wizardMode === null ? [
+    {
+      title: 'Choose Mode',
+      description: 'Start fresh or re-run a previous show on new dates',
+      icon: <Radio className="h-5 w-5" />
+    }
+  ] : [
     {
       title: 'Basic Information',
       description: 'Tell us about your show and what listeners can expect',
@@ -333,16 +395,15 @@ export function RadioSlotApplicationWizard({ onClose }) {
   };
 
   const canProceed = () => {
+    if (wizardMode === null) return false; // handled by mode buttons
     switch (currentStep) {
       case 0:
         return formData.show_name.trim() && formData.broadcast_mode;
       case 1:
         return true;
       case 2:
-        // Segment step - at least 1 segment recommended but not required
         return true;
       case 3:
-        // Pre-recorded mode requires a playlist
         if (formData.broadcast_mode === 'pre_recorded' && !formData.playlist_id) return false;
         return true;
       case 4:
@@ -354,11 +415,78 @@ export function RadioSlotApplicationWizard({ onClose }) {
     }
   };
 
+  const renderModeSelection = () => (
+    <div className="space-y-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <Button
+          type="button"
+          variant="outline"
+          className="h-auto py-8 flex-col gap-3 border-2 hover:border-primary hover:bg-primary/5 transition-all"
+          onClick={() => { setWizardMode('new'); setCurrentStep(0); }}
+        >
+          <Sparkles className="h-8 w-8 text-primary" />
+          <span className="font-bold text-lg">New Show</span>
+          <span className="text-xs text-muted-foreground text-center">Create a brand new radio show from scratch</span>
+        </Button>
+        <Button
+          type="button"
+          variant="outline"
+          className="h-auto py-8 flex-col gap-3 border-2 hover:border-primary hover:bg-primary/5 transition-all"
+          onClick={() => { setWizardMode('rerun'); setCurrentStep(0); }}
+          disabled={pastShows.length === 0}
+        >
+          <RotateCcw className="h-8 w-8 text-primary" />
+          <span className="font-bold text-lg">Re-run Existing Show</span>
+          <span className="text-xs text-muted-foreground text-center">
+            {pastShows.length === 0
+              ? 'No past shows found'
+              : `Pick from ${pastShows.length} previous show(s) to schedule again`}
+          </span>
+        </Button>
+      </div>
+    </div>
+  );
+
+  const renderRerunPicker = () => (
+    <div className="space-y-4">
+      <p className="text-sm text-muted-foreground">Select a previous show to re-run. Its details will be pre-filled — you can edit anything before submitting.</p>
+      {loadingPastShows ? (
+        <p className="text-sm text-muted-foreground animate-pulse">Loading past shows...</p>
+      ) : (
+        <div className="space-y-2 max-h-[400px] overflow-y-auto">
+          {pastShows.map((show) => {
+            const name = show.radio_shows?.show_name || show.show_name || 'Untitled';
+            const desc = show.radio_shows?.description || '';
+            const isSelected = selectedPastShow?.id === show.id;
+            return (
+              <Card
+                key={show.id}
+                className={`cursor-pointer transition-all border-2 ${isSelected ? 'border-primary bg-primary/5' : 'border-transparent hover:border-primary/30'}`}
+                onClick={() => handleSelectPastShow(show)}
+              >
+                <CardContent className="p-4 flex items-center gap-3">
+                  <Radio className="h-5 w-5 text-primary shrink-0" />
+                  <div className="min-w-0">
+                    <p className="font-semibold truncate">{name}</p>
+                    {desc && <p className="text-xs text-muted-foreground truncate">{desc}</p>}
+                  </div>
+                  {isSelected && <Badge className="ml-auto shrink-0">Selected</Badge>}
+                </CardContent>
+              </Card>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+
   const renderStepContent = () => {
+    if (wizardMode === null) return renderModeSelection();
     switch (currentStep) {
       case 0:
         return (
           <div className="space-y-4">
+            {wizardMode === 'rerun' && renderRerunPicker()}
             <div>
               <Label htmlFor="show_name">Show Name *</Label>
               <PermissiveInput
@@ -816,14 +944,24 @@ export function RadioSlotApplicationWizard({ onClose }) {
     }
   };
 
+  const handleCancel = () => {
+    if (wizardMode !== null && currentStep === 0) {
+      // Go back to mode selection
+      setWizardMode(null);
+      setSelectedPastShow(null);
+      return;
+    }
+    onClose();
+  };
+
   return (
     <WizardContainer
       steps={steps}
       currentStep={currentStep}
       onStepChange={setCurrentStep}
       title="Apply for Radio Time Slot"
-      description="Follow these steps to set up your radio show application"
-      onCancel={onClose}
+      description={wizardMode === null ? "Choose to create a new show or re-run an existing one" : "Follow these steps to set up your radio show application"}
+      onCancel={handleCancel}
       onSubmit={handleSubmit}
       isSubmitting={isSubmitting}
       canGoNext={canProceed()}
