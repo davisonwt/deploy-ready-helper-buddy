@@ -944,14 +944,24 @@ export function RadioSlotApplicationWizard({ onClose }) {
     }
   };
 
+  const handleCancel = () => {
+    if (wizardMode !== null && currentStep === 0) {
+      // Go back to mode selection
+      setWizardMode(null);
+      setSelectedPastShow(null);
+      return;
+    }
+    onClose();
+  };
+
   return (
     <WizardContainer
       steps={steps}
       currentStep={currentStep}
       onStepChange={setCurrentStep}
       title="Apply for Radio Time Slot"
-      description="Follow these steps to set up your radio show application"
-      onCancel={onClose}
+      description={wizardMode === null ? "Choose to create a new show or re-run an existing one" : "Follow these steps to set up your radio show application"}
+      onCancel={handleCancel}
       onSubmit={handleSubmit}
       isSubmitting={isSubmitting}
       canGoNext={canProceed()}
