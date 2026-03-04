@@ -1302,7 +1302,9 @@ export default function MemryPage() {
                     }}
                   />
                 ) : currentPost.content_type === 'music' ? (
-                  <MusicPreviewPlayer mediaUrl={currentPost.media_url} caption={currentPost.caption} />
+                  <MusicPreviewPlayer mediaUrl={currentPost.media_url} caption={currentPost.caption} onPreviewEnd={() => {
+                    if (currentPostIndex < posts.length - 1) handleScroll('down');
+                  }} />
                 ) : currentPost.content_type === 'new_product' || currentPost.content_type === 'new_orchard' || currentPost.content_type === 'new_book' ? (
                   <div className="w-full h-full relative flex items-center justify-center max-w-[80%] mx-auto">
                     {(() => {
