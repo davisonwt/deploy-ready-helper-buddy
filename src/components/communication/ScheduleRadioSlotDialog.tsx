@@ -453,16 +453,9 @@ export const ScheduleRadioSlotDialog: React.FC<ScheduleRadioSlotDialogProps> = (
                     </Button>
                   ))}
                 </div>
-                {!isEditMode && (
-                  <Button type="button" className="mt-3" onClick={addSlotEntry}>
-                    Add This Date + Time
-                  </Button>
-                )}
-                {isEditMode && (
-                  <p className="text-xs text-muted-foreground mt-2">
-                    Tap a slot above to change the broadcast time for this show.
-                  </p>
-                )}
+                <Button type="button" className="mt-3" onClick={addSlotEntry}>
+                  Add This Date + Time
+                </Button>
               </div>
 
               <div className="space-y-2">
