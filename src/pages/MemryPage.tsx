@@ -146,20 +146,27 @@ function MusicPreviewPlayer({ mediaUrl, caption, transparent = false, onPreviewE
         });
     }
 
+    let previewFinished = false;
+    const completePreview = () => {
+      if (previewFinished) return;
+      previewFinished = true;
+      audio.pause();
+      audio.currentTime = 0;
+      setPlaying(false);
+      onPreviewEnd?.();
+    };
+
     const onTimeUpdate = () => {
       setCurrentTime(audio.currentTime);
       if (audio.currentTime >= PREVIEW_DURATION) {
-        audio.pause();
-        audio.currentTime = 0;
-        setPlaying(false);
-        if (onPreviewEnd) onPreviewEnd();
+        completePreview();
       }
     };
+
     const onEnded = () => {
-      audio.currentTime = 0;
-      setPlaying(false);
-      if (onPreviewEnd) onPreviewEnd();
+      completePreview();
     };
+
     const onError = () => {
       console.error('[MusicPreview] Audio load error for:', resolvedUrl);
       setLoadError(true);
@@ -177,7 +184,7 @@ function MusicPreviewPlayer({ mediaUrl, caption, transparent = false, onPreviewE
       audio.pause();
       audio.src = '';
     };
-  }, [resolvedUrl]);
+  }, [resolvedUrl, onPreviewEnd]);
 
   const togglePlay = () => {
     const audio = audioRef.current;
@@ -1007,17 +1014,22 @@ export default function MemryPage() {
 
   const currentPost = posts[currentPostIndex];
 
+  const advanceToNextPost = useCallback(() => {
+    if (posts.length === 0) return;
+    setCurrentPostIndex(prev => Math.min(prev + 1, posts.length - 1));
+    setMemryImageIndex(0);
+  }, [posts.length]);
+
   const handleScroll = useCallback((direction: 'up' | 'down') => {
     if (posts.length === 0) return;
-    
+
     if (direction === 'down') {
-      setCurrentPostIndex(prev => Math.min(prev + 1, posts.length - 1));
-      setMemryImageIndex(0);
+      advanceToNextPost();
     } else if (direction === 'up') {
       setCurrentPostIndex(prev => Math.max(prev - 1, 0));
       setMemryImageIndex(0);
     }
-  }, [posts.length]);
+  }, [posts.length, advanceToNextPost]);
 
   // Touch swipe support for mobile
   const touchStartY = useRef<number | null>(null);
@@ -1298,16 +1310,15 @@ export default function MemryPage() {
                     autoPlay
                     muted={isMuted}
                     playsInline
-                    onEnded={() => {
-                      if (currentPostIndex < posts.length - 1) {
-                        handleScroll('down');
-                      }
-                    }}
+                    onEnded={advanceToNextPost}
                   />
                 ) : currentPost.content_type === 'music' ? (
-                  <MusicPreviewPlayer mediaUrl={currentPost.media_url} caption={currentPost.caption} onPreviewEnd={() => {
-                    if (currentPostIndex < posts.length - 1) handleScroll('down');
-                  }} />
+                  <MusicPreviewPlayer
+                    key={currentPost.id}
+                    mediaUrl={currentPost.media_url}
+                    caption={currentPost.caption}
+                    onPreviewEnd={advanceToNextPost}
+                  />
                 ) : currentPost.content_type === 'new_product' || currentPost.content_type === 'new_orchard' || currentPost.content_type === 'new_book' ? (
                   <div className="w-full h-full relative flex items-center justify-center max-w-[80%] mx-auto">
                     {(() => {
