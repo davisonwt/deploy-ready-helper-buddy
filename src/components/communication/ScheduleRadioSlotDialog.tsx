@@ -75,6 +75,46 @@ const detectTimezone = () => {
   return match ? match.value : TIMEZONE_OPTIONS[0].value;
 };
 
+const parseTimelineSegments = (raw: string | null | undefined): TimelineSegment[] => {
+  if (!raw) return [];
+
+  try {
+    const parsed = JSON.parse(raw);
+    if (!Array.isArray(parsed)) return [];
+
+    return parsed.map((seg: any, i: number) => {
+      const legacyDuration = Number(
+        seg.durationMinutes ??
+        seg.duration ??
+        (typeof seg.duration_seconds === 'number' ? seg.duration_seconds / 60 : undefined),
+      );
+      const durationMinutes = Number.isFinite(legacyDuration) ? Math.max(1 / 6, legacyDuration) : 3;
+
+      return {
+        id: `seg-${i}-${Date.now()}`,
+        type: seg.type || 'music',
+        title: seg.title || '',
+        durationMinutes,
+        durationSeconds: seg.durationSeconds || 0,
+        contentId: seg.contentId,
+        contentName: seg.contentName,
+        fileUrl:
+          seg.fileUrl ||
+          seg.file_url ||
+          seg.audioUrl ||
+          seg.audio_url ||
+          seg.voiceUrl ||
+          seg.voice_url ||
+          seg.url ||
+          (typeof seg.contentId === 'string' && seg.contentId.startsWith('http') ? seg.contentId : undefined),
+        file: undefined,
+      };
+    });
+  } catch {
+    return [];
+  }
+};
+
 export const ScheduleRadioSlotDialog: React.FC<ScheduleRadioSlotDialogProps> = ({
   open,
   onOpenChange,
