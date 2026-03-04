@@ -611,40 +611,6 @@ export const ScheduleRadioSlotDialog: React.FC<ScheduleRadioSlotDialogProps> = (
                 </div>
               </div>
 
-              <div>
-                <Label htmlFor="rerun_template">Re-run a Previous Show (Optional)</Label>
-                <Select
-                  value={selectedRerunTemplateId}
-                  onValueChange={(value) => {
-                    setSelectedRerunTemplateId(value);
-                    if (value === 'none') return;
-
-                    const template = rerunTemplates.find((item) => item.id === value);
-                    if (!template) return;
-
-                    setFormData({
-                      show_title: template.title,
-                      description: template.description,
-                    });
-                    setTimelineSegments(parseTimelineSegments(template.timelineJson));
-                  }}
-                >
-                  <SelectTrigger id="rerun_template">
-                    <SelectValue placeholder={loadingReruns ? 'Loading previous shows...' : 'Choose a previous show'} />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="none">Start from scratch</SelectItem>
-                    {rerunTemplates.map((template) => (
-                      <SelectItem key={template.id} value={template.id}>
-                        {template.title}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <p className="text-xs text-muted-foreground mt-1">
-                  Select a past show to auto-fill title, description, and timeline segments.
-                </p>
-              </div>
 
               <div>
                 <Label htmlFor="show_title">Show Title</Label>
