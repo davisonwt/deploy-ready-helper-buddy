@@ -37,6 +37,13 @@ interface SlotSelectionEntry {
   slotId: string;
 }
 
+interface RerunTemplate {
+  id: string;
+  title: string;
+  description: string;
+  timelineJson: string | null;
+}
+
 const TIMEZONE_OPTIONS = [
   { label: '🇺🇸 USA (Eastern)', value: 'America/New_York', abbr: 'ET' },
   { label: '🇺🇸 USA (Central)', value: 'America/Chicago', abbr: 'CT' },
