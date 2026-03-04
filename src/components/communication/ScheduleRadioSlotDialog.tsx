@@ -153,44 +153,8 @@ export const ScheduleRadioSlotDialog: React.FC<ScheduleRadioSlotDialogProps> = (
         show_title: editSlot.show_subject || '',
         description: editSlot.show_notes || '',
       });
-
-      if (editSlot.show_topic_description) {
-        try {
-          const parsed = JSON.parse(editSlot.show_topic_description);
-          if (Array.isArray(parsed)) {
-            setTimelineSegments(parsed.map((seg: any, i: number) => {
-              const legacyDuration = Number(
-                seg.durationMinutes ??
-                seg.duration ??
-                (typeof seg.duration_seconds === 'number' ? seg.duration_seconds / 60 : undefined),
-              );
-              const durationMinutes = Number.isFinite(legacyDuration) ? Math.max(1 / 6, legacyDuration) : 3;
-
-              return {
-                id: `seg-${i}-${Date.now()}`,
-                type: seg.type || 'music',
-                title: seg.title || '',
-                durationMinutes,
-                durationSeconds: seg.durationSeconds || 0,
-                contentId: seg.contentId,
-                contentName: seg.contentName,
-                fileUrl:
-                  seg.fileUrl ||
-                  seg.file_url ||
-                  seg.audioUrl ||
-                  seg.audio_url ||
-                  seg.voiceUrl ||
-                  seg.voice_url ||
-                  seg.url ||
-                  (typeof seg.contentId === 'string' && seg.contentId.startsWith('http') ? seg.contentId : undefined),
-                file: undefined,
-              };
-            }));
-          }
-        } catch {
-          // ignore parse errors
-        }
-      }
+      setTimelineSegments(parseTimelineSegments(editSlot.show_topic_description));
+      setSelectedRerunTemplateId('none');
       setStep(1);
     } else if (!editSlot && open) {
       setStep(1);
@@ -199,8 +163,70 @@ export const ScheduleRadioSlotDialog: React.FC<ScheduleRadioSlotDialogProps> = (
       setSlotEntries([]);
       setFormData({ show_title: '', description: '' });
       setTimelineSegments([]);
+      setSelectedRerunTemplateId('none');
     }
   }, [editSlot, open]);
+
+  // Load prior radio slots that can be re-run
+  useEffect(() => {
+    const loadRerunTemplates = async () => {
+      if (!open) return;
+      setLoadingReruns(true);
+
+      try {
+        const {
+          data: { user },
+        } = await supabase.auth.getUser();
+
+        if (!user) {
+          setRerunTemplates([]);
+          return;
+        }
+
+        const { data: dj } = await supabase
+          .from('radio_djs')
+          .select('id')
+          .eq('user_id', user.id)
+          .single();
+
+        if (!dj?.id) {
+          setRerunTemplates([]);
+          return;
+        }
+
+        const { data: pastSlots } = await supabase
+          .from('radio_schedule')
+          .select('id, show_subject, show_notes, show_topic_description, created_at')
+          .eq('dj_id', dj.id)
+          .order('created_at', { ascending: false })
+          .limit(100);
+
+        const templates = (pastSlots || [])
+          .filter((slot) => (slot.show_subject || '').trim().length > 0)
+          .reduce<RerunTemplate[]>((acc, slot) => {
+            const duplicate = acc.some((item) => item.title === slot.show_subject && item.description === (slot.show_notes || ''));
+            if (duplicate) return acc;
+
+            acc.push({
+              id: slot.id,
+              title: slot.show_subject || 'Untitled show',
+              description: slot.show_notes || '',
+              timelineJson: slot.show_topic_description,
+            });
+            return acc;
+          }, []);
+
+        setRerunTemplates(templates);
+      } catch (error) {
+        console.error('Failed to load rerun templates:', error);
+        setRerunTemplates([]);
+      } finally {
+        setLoadingReruns(false);
+      }
+    };
+
+    loadRerunTemplates();
+  }, [open]);
 
   // Safety: ensure body interaction is restored when dialog closes
   useEffect(() => {
