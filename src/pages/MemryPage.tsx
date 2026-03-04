@@ -1055,6 +1055,21 @@ export default function MemryPage() {
     }
   }, [posts.length, currentPostIndex]);
 
+  // Auto-advance for static posts (photos, recipes, product/orchard/book cards) after 8 seconds
+  useEffect(() => {
+    const post = posts[currentPostIndex];
+    if (!post) return;
+    const isStatic = !['video', 'marketing_video', 'music'].includes(post.content_type);
+    if (!isStatic) return;
+    if (currentPostIndex >= posts.length - 1) return;
+
+    const timer = setTimeout(() => {
+      handleScroll('down');
+    }, 8000);
+
+    return () => clearTimeout(timer);
+  }, [currentPostIndex, posts, handleScroll]);
+
   return (
     <div className="h-screen bg-gradient-to-b from-[#FFF5E6] via-[#FFECD2] to-[#FFE4C4] overflow-hidden">
       {/* Main Feed - TikTok Style */}
