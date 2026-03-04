@@ -403,7 +403,13 @@ export const ScheduleRadioSlotDialog: React.FC<ScheduleRadioSlotDialogProps> = (
                 <Calendar
                   mode="single"
                   selected={selectedDate}
-                  onSelect={(date) => setSelectedDate(date)}
+                  onSelect={(date) => {
+                    setSelectedDate(date);
+                    // In edit mode, auto-update the single slot entry's date
+                    if (isEditMode && date && slotEntries.length === 1) {
+                      setSlotEntries([{ ...slotEntries[0], date: new Date(date) }]);
+                    }
+                  }}
                   className="rounded-md border glass-panel pointer-events-auto"
                   disabled={(date) => {
                     const today = new Date();
