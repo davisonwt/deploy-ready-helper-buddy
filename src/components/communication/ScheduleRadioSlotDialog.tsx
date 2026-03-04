@@ -442,6 +442,20 @@ export const ScheduleRadioSlotDialog: React.FC<ScheduleRadioSlotDialogProps> = (
     setSlotEntries((prev) => prev.filter((entry) => entry.id !== entryId));
   };
 
+  const applyRerunTemplate = (templateId: string) => {
+    setSelectedRerunTemplateId(templateId);
+    if (templateId === 'none') return;
+
+    const template = rerunTemplates.find((item) => item.id === templateId);
+    if (!template) return;
+
+    setFormData({
+      show_title: template.title,
+      description: template.description,
+    });
+    setTimelineSegments(parseTimelineSegments(template.timelineJson));
+  };
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="glass-card bg-background/95 border-primary/20 max-w-2xl max-h-[90vh] overflow-y-auto">
@@ -456,6 +470,28 @@ export const ScheduleRadioSlotDialog: React.FC<ScheduleRadioSlotDialogProps> = (
         <form onSubmit={handleSubmit} className="space-y-6">
           {step === 1 && (
             <>
+              {!isEditMode && (
+                <div>
+                  <Label htmlFor="rerun_template">Re-run a Previous Show (Optional)</Label>
+                  <Select value={selectedRerunTemplateId} onValueChange={applyRerunTemplate}>
+                    <SelectTrigger id="rerun_template">
+                      <SelectValue placeholder={loadingReruns ? 'Loading previous shows...' : 'Choose a previous show'} />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="none">Start from scratch</SelectItem>
+                      {rerunTemplates.map((template) => (
+                        <SelectItem key={template.id} value={template.id}>
+                          {template.title}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Select a past show to auto-fill title, description, and timeline segments.
+                  </p>
+                </div>
+              )}
+
               <div>
                 <Label className="mb-2 flex items-center gap-2">
                   <Globe className="h-4 w-4" />
@@ -575,40 +611,6 @@ export const ScheduleRadioSlotDialog: React.FC<ScheduleRadioSlotDialogProps> = (
                 </div>
               </div>
 
-              <div>
-                <Label htmlFor="rerun_template">Re-run a Previous Show (Optional)</Label>
-                <Select
-                  value={selectedRerunTemplateId}
-                  onValueChange={(value) => {
-                    setSelectedRerunTemplateId(value);
-                    if (value === 'none') return;
-
-                    const template = rerunTemplates.find((item) => item.id === value);
-                    if (!template) return;
-
-                    setFormData({
-                      show_title: template.title,
-                      description: template.description,
-                    });
-                    setTimelineSegments(parseTimelineSegments(template.timelineJson));
-                  }}
-                >
-                  <SelectTrigger id="rerun_template">
-                    <SelectValue placeholder={loadingReruns ? 'Loading previous shows...' : 'Choose a previous show'} />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="none">Start from scratch</SelectItem>
-                    {rerunTemplates.map((template) => (
-                      <SelectItem key={template.id} value={template.id}>
-                        {template.title}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <p className="text-xs text-muted-foreground mt-1">
-                  Select a past show to auto-fill title, description, and timeline segments.
-                </p>
-              </div>
 
               <div>
                 <Label htmlFor="show_title">Show Title</Label>
