@@ -221,7 +221,7 @@ function MusicPreviewPlayer({ mediaUrl, caption, transparent = false, onPreviewE
             </p>
           )}
           {playing && (
-            <p className="text-white/80 text-sm mt-4">🎵 30s Preview • Looping</p>
+            <p className="text-white/80 text-sm mt-4">🎵 30s Preview</p>
           )}
         </>
       )}
