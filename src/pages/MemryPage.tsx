@@ -80,7 +80,7 @@ interface Comment {
 }
 
 // 30-second looping audio preview for music posts on Memry feed
-function MusicPreviewPlayer({ mediaUrl, caption, transparent = false }: { mediaUrl: string; caption: string; transparent?: boolean }) {
+function MusicPreviewPlayer({ mediaUrl, caption, transparent = false, onPreviewEnd }: { mediaUrl: string; caption: string; transparent?: boolean; onPreviewEnd?: () => void }) {
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const [resolvedUrl, setResolvedUrl] = useState<string>('');
   const [playing, setPlaying] = useState(false);
@@ -149,11 +149,17 @@ function MusicPreviewPlayer({ mediaUrl, caption, transparent = false }: { mediaU
     const onTimeUpdate = () => {
       setCurrentTime(audio.currentTime);
       if (audio.currentTime >= PREVIEW_DURATION) {
+        audio.pause();
         audio.currentTime = 0;
-        audio.play().catch(() => {});
+        setPlaying(false);
+        if (onPreviewEnd) onPreviewEnd();
       }
     };
-    const onEnded = () => { audio.currentTime = 0; audio.play().catch(() => {}); };
+    const onEnded = () => {
+      audio.currentTime = 0;
+      setPlaying(false);
+      if (onPreviewEnd) onPreviewEnd();
+    };
     const onError = () => {
       console.error('[MusicPreview] Audio load error for:', resolvedUrl);
       setLoadError(true);
