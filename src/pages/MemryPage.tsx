@@ -80,7 +80,7 @@ interface Comment {
 }
 
 // 30-second looping audio preview for music posts on Memry feed
-function MusicPreviewPlayer({ mediaUrl, caption, transparent = false }: { mediaUrl: string; caption: string; transparent?: boolean }) {
+function MusicPreviewPlayer({ mediaUrl, caption, transparent = false, onPreviewEnd }: { mediaUrl: string; caption: string; transparent?: boolean; onPreviewEnd?: () => void }) {
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const [resolvedUrl, setResolvedUrl] = useState<string>('');
   const [playing, setPlaying] = useState(false);
@@ -149,11 +149,17 @@ function MusicPreviewPlayer({ mediaUrl, caption, transparent = false }: { mediaU
     const onTimeUpdate = () => {
       setCurrentTime(audio.currentTime);
       if (audio.currentTime >= PREVIEW_DURATION) {
+        audio.pause();
         audio.currentTime = 0;
-        audio.play().catch(() => {});
+        setPlaying(false);
+        if (onPreviewEnd) onPreviewEnd();
       }
     };
-    const onEnded = () => { audio.currentTime = 0; audio.play().catch(() => {}); };
+    const onEnded = () => {
+      audio.currentTime = 0;
+      setPlaying(false);
+      if (onPreviewEnd) onPreviewEnd();
+    };
     const onError = () => {
       console.error('[MusicPreview] Audio load error for:', resolvedUrl);
       setLoadError(true);
@@ -215,7 +221,7 @@ function MusicPreviewPlayer({ mediaUrl, caption, transparent = false }: { mediaU
             </p>
           )}
           {playing && (
-            <p className="text-white/80 text-sm mt-4">🎵 30s Preview • Looping</p>
+            <p className="text-white/80 text-sm mt-4">🎵 30s Preview</p>
           )}
         </>
       )}
@@ -1049,6 +1055,21 @@ export default function MemryPage() {
     }
   }, [posts.length, currentPostIndex]);
 
+  // Auto-advance for static posts (photos, recipes, product/orchard/book cards) after 8 seconds
+  useEffect(() => {
+    const post = posts[currentPostIndex];
+    if (!post) return;
+    const isStatic = !['video', 'marketing_video', 'music'].includes(post.content_type);
+    if (!isStatic) return;
+    if (currentPostIndex >= posts.length - 1) return;
+
+    const timer = setTimeout(() => {
+      handleScroll('down');
+    }, 8000);
+
+    return () => clearTimeout(timer);
+  }, [currentPostIndex, posts, handleScroll]);
+
   return (
     <div className="h-screen bg-gradient-to-b from-[#FFF5E6] via-[#FFECD2] to-[#FFE4C4] overflow-hidden">
       {/* Main Feed - TikTok Style */}
@@ -1287,12 +1308,18 @@ export default function MemryPage() {
                     src={currentPost.media_url}
                     className="max-w-[80%] max-h-full object-contain mx-auto"
                     autoPlay
-                    loop
                     muted={isMuted}
                     playsInline
+                    onEnded={() => {
+                      if (currentPostIndex < posts.length - 1) {
+                        handleScroll('down');
+                      }
+                    }}
                   />
                 ) : currentPost.content_type === 'music' ? (
-                  <MusicPreviewPlayer mediaUrl={currentPost.media_url} caption={currentPost.caption} />
+                  <MusicPreviewPlayer mediaUrl={currentPost.media_url} caption={currentPost.caption} onPreviewEnd={() => {
+                    if (currentPostIndex < posts.length - 1) handleScroll('down');
+                  }} />
                 ) : currentPost.content_type === 'new_product' || currentPost.content_type === 'new_orchard' || currentPost.content_type === 'new_book' ? (
                   <div className="w-full h-full relative flex items-center justify-center max-w-[80%] mx-auto">
                     {(() => {
