@@ -18,8 +18,16 @@ const SabbathContext = createContext<SabbathContextType>({
 export const SabbathProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const sabbath = useSabbath();
 
+  // Temporary test override via URL param: ?sabbath_test=true
+  const urlParams = new URLSearchParams(window.location.search);
+  const testOverride = urlParams.get('sabbath_test') === 'true';
+
+  const value = testOverride
+    ? { ...sabbath, isSabbath: true, loading: false }
+    : sabbath;
+
   return (
-    <SabbathContext.Provider value={sabbath}>
+    <SabbathContext.Provider value={value}>
       {children}
     </SabbathContext.Provider>
   );
