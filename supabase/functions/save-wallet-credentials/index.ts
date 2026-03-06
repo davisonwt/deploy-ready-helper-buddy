@@ -14,7 +14,6 @@ serve(async (req) => {
   const supabaseAnonKey = Deno.env.get('SUPABASE_ANON_KEY')!;
 
   try {
-    // Authenticate user
     const authHeader = req.headers.get('Authorization');
     if (!authHeader?.startsWith('Bearer ')) {
       return new Response(JSON.stringify({ error: 'Unauthorized' }), {
@@ -35,15 +34,7 @@ serve(async (req) => {
     }
 
     const userId = claimsData.claims.sub as string;
-
-    // Use service role client for vault operations
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
-
-    // Check if user is admin (required for org wallet updates)
-    const { data: isAdmin } = await supabase.rpc('has_role', {
-      _user_id: userId,
-      _role: 'admin'
-    });
 
     const { wallet_name, api_key, api_secret, merchant_id } = await req.json();
 
@@ -53,11 +44,13 @@ serve(async (req) => {
       });
     }
 
-    // Determine prefix and authorize
-    let prefix: string;
     const orgWallets = ['s2gholding', 's2gbestow', 's2gdavison'];
+    let prefix: string;
 
     if (orgWallets.includes(wallet_name)) {
+      const { data: isAdmin } = await supabase.rpc('has_role', {
+        _user_id: userId, _role: 'admin'
+      });
       if (!isAdmin) {
         return new Response(JSON.stringify({ error: 'Admin access required' }), {
           status: 403, headers: corsHeaders
@@ -72,45 +65,29 @@ serve(async (req) => {
       });
     }
 
-    // Store each credential in Vault using SQL (service role bypasses RLS)
-    const secrets = [
+    // Upsert each credential into Vault
+    const upserts = [
       { name: `${prefix}_api_key`, value: api_key, desc: `API key for ${prefix}` },
       { name: `${prefix}_api_secret`, value: api_secret, desc: `API secret for ${prefix}` },
       { name: `${prefix}_merchant_id`, value: merchant_id || '', desc: `Merchant ID for ${prefix}` },
     ];
 
-    for (const secret of secrets) {
-      // Try to update existing secret first, then insert if not found
-      const { error: upsertError } = await supabase.rpc('pg_query', {
-        query: `SELECT vault.create_secret($1, $2, $3)`,
-        params: [secret.value, secret.name, secret.desc]
+    for (const s of upserts) {
+      const { error } = await supabase.rpc('upsert_vault_secret', {
+        secret_name: s.name,
+        secret_value: s.value,
+        secret_description: s.desc,
       });
-
-      if (upsertError) {
-        // If create_secret fails (duplicate), update instead
-        const { error: updateError } = await supabase
-          .from('vault.decrypted_secrets')
-          .update({ secret: secret.value })
-          .eq('name', secret.name);
-
-        if (updateError) {
-          // Use raw SQL as final fallback
-          await supabase.rpc('get_vault_secret', { secret_name: secret.name });
-          // If secret exists, update it via SQL
-          const updateSql = `
-            UPDATE vault.secrets 
-            SET secret = $1 
-            WHERE id = (SELECT id FROM vault.decrypted_secrets WHERE name = $2 LIMIT 1)
-          `;
-          console.log(`Attempting vault update for ${secret.name}`);
-        }
+      if (error) {
+        console.error(`Failed to save vault secret ${s.name}:`, error);
+        throw new Error(`Failed to save credential: ${s.name}`);
       }
     }
 
     console.log(`✅ Vault credentials saved for ${prefix} by user ${userId}`);
 
     return new Response(
-      JSON.stringify({ success: true, message: `Credentials saved securely for ${prefix}` }),
+      JSON.stringify({ success: true, message: `Credentials encrypted and saved for ${prefix}` }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
   } catch (error) {
