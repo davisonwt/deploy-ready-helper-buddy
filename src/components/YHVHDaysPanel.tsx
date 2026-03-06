@@ -1,6 +1,6 @@
 import { useEffect } from 'react'
 import { Link } from 'react-router-dom'
-import { X, Calendar, Circle } from 'lucide-react'
+import { X, Calendar, Circle, BookOpen } from 'lucide-react'
 
 interface YHVHDaysPanelProps {
   isOpen: boolean
@@ -39,6 +39,13 @@ export function YHVHDaysPanel({ isOpen, onClose }: YHVHDaysPanelProps) {
       subtitle: 'YHVH 8-wheel rotating calendar',
       icon: Calendar,
       gradient: 'from-amber-600 to-orange-600'
+    },
+    { 
+      href: '/scriptural-study', 
+      title: 'Scriptural Study Q&A', 
+      subtitle: 'End Times study companion',
+      icon: BookOpen,
+      gradient: 'from-amber-800 to-yellow-700'
     }
   ]
 
