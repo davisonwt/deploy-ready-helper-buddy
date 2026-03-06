@@ -849,6 +849,14 @@ const App = () => (
                 </ProtectedRoute>
               } />
 
+              <Route path="/explore-sessions" element={
+                <ProtectedRoute>
+                  <Layout>
+                    <ExploreSessionsPage />
+                  </Layout>
+                </ProtectedRoute>
+              } />
+
               <Route path="/wallet-settings" element={
                 <ProtectedRoute>
                   <Layout>
