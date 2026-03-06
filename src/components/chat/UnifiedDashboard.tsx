@@ -7,7 +7,7 @@ import { AuroraBackground } from './AuroraBackground';
 import { ActivityFeed } from './ActivityFeed';
 import { ChatApp } from './ChatApp';
 import { ClassroomMode } from '../communication/ClassroomMode';
-import { LectureMode } from '../communication/LectureMode';
+import { SkillDropMode } from '../communication/SkillDropMode';
 import { TrainingMode } from '../communication/TrainingMode';
 import { RadioMode } from '../communication/RadioMode';
 import { Button } from '@/components/ui/button';
@@ -23,7 +23,7 @@ interface ModeConfig {
 const modes: ModeConfig[] = [
   { id: 'chatapp', icon: <MessageSquare className="w-5 h-5" />, label: 'ChatApp', color: 'from-primary/20 to-primary/5' },
   { id: 'classroom', icon: <BookOpen className="w-5 h-5" />, label: 'Classrooms', color: 'from-success/20 to-success/5' },
-  { id: 'lecture', icon: <GraduationCap className="w-5 h-5" />, label: 'Lectures', color: 'from-info/20 to-info/5' },
+  { id: 'skilldrop', icon: <GraduationCap className="w-5 h-5" />, label: 'SkillDrop', color: 'from-info/20 to-info/5' },
   { id: 'training', icon: <Dumbbell className="w-5 h-5" />, label: 'Training', color: 'from-warning/20 to-warning/5' },
   { id: 'radio', icon: <Radio className="w-5 h-5" />, label: 'Radio', color: 'from-harvest/20 to-harvest/5' },
 ];
@@ -56,8 +56,8 @@ export const UnifiedDashboard: React.FC = () => {
         return <ChatApp />;
       case 'classroom':
         return <ClassroomMode />;
-      case 'lecture':
-        return <LectureMode />;
+      case 'skilldrop':
+        return <SkillDropMode />;
       case 'training':
         return <TrainingMode />;
       case 'radio':
