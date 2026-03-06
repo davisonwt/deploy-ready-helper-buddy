@@ -1351,12 +1351,16 @@ export type Database = {
           created_at: string | null
           description: string | null
           duration_minutes: number | null
+          host_approved: boolean | null
           id: string
           instructor_id: string
           instructor_profile_id: string | null
+          is_free: boolean | null
           max_participants: number | null
+          pricing_type: string
           recording_url: string | null
           scheduled_at: string
+          session_fee: number | null
           status: string | null
           title: string
           updated_at: string | null
@@ -1367,12 +1371,16 @@ export type Database = {
           created_at?: string | null
           description?: string | null
           duration_minutes?: number | null
+          host_approved?: boolean | null
           id?: string
           instructor_id: string
           instructor_profile_id?: string | null
+          is_free?: boolean | null
           max_participants?: number | null
+          pricing_type?: string
           recording_url?: string | null
           scheduled_at: string
+          session_fee?: number | null
           status?: string | null
           title: string
           updated_at?: string | null
@@ -1383,12 +1391,16 @@ export type Database = {
           created_at?: string | null
           description?: string | null
           duration_minutes?: number | null
+          host_approved?: boolean | null
           id?: string
           instructor_id?: string
           instructor_profile_id?: string | null
+          is_free?: boolean | null
           max_participants?: number | null
+          pricing_type?: string
           recording_url?: string | null
           scheduled_at?: string
+          session_fee?: number | null
           status?: string | null
           title?: string
           updated_at?: string | null
@@ -3858,6 +3870,7 @@ export type Database = {
           max_participants: number
           music: Json | null
           price: number
+          pricing_type: string
           room_type: string
           title: string
           updated_at: string
@@ -3873,6 +3886,7 @@ export type Database = {
           max_participants?: number
           music?: Json | null
           price?: number
+          pricing_type?: string
           room_type?: string
           title: string
           updated_at?: string
@@ -3888,6 +3902,7 @@ export type Database = {
           max_participants?: number
           music?: Json | null
           price?: number
+          pricing_type?: string
           room_type?: string
           title?: string
           updated_at?: string
@@ -5156,6 +5171,7 @@ export type Database = {
           playlist_id: string | null
           playlist_url: string | null
           price: number | null
+          pricing_type: string
           reaction_count: number | null
           requires_review: boolean | null
           show_id: string | null
@@ -5185,6 +5201,7 @@ export type Database = {
           playlist_id?: string | null
           playlist_url?: string | null
           price?: number | null
+          pricing_type?: string
           reaction_count?: number | null
           requires_review?: boolean | null
           show_id?: string | null
@@ -5214,6 +5231,7 @@ export type Database = {
           playlist_id?: string | null
           playlist_url?: string | null
           price?: number | null
+          pricing_type?: string
           reaction_count?: number | null
           requires_review?: boolean | null
           show_id?: string | null
@@ -6695,6 +6713,8 @@ export type Database = {
           id: string
           payment_method: string | null
           payment_reference: string | null
+          session_id: string | null
+          session_type: string
           started_at: string
           status: string
           subscriber_id: string
@@ -6710,6 +6730,8 @@ export type Database = {
           id?: string
           payment_method?: string | null
           payment_reference?: string | null
+          session_id?: string | null
+          session_type?: string
           started_at?: string
           status?: string
           subscriber_id: string
@@ -6725,6 +6747,8 @@ export type Database = {
           id?: string
           payment_method?: string | null
           payment_reference?: string | null
+          session_id?: string | null
+          session_type?: string
           started_at?: string
           status?: string
           subscriber_id?: string
@@ -6744,6 +6768,7 @@ export type Database = {
           is_gosat_session: boolean | null
           presenter_id: string
           presenter_profile_id: string | null
+          pricing_type: string
           recording_url: string | null
           scheduled_at: string
           session_fee: number | null
@@ -6765,6 +6790,7 @@ export type Database = {
           is_gosat_session?: boolean | null
           presenter_id: string
           presenter_profile_id?: string | null
+          pricing_type?: string
           recording_url?: string | null
           scheduled_at: string
           session_fee?: number | null
@@ -6786,6 +6812,7 @@ export type Database = {
           is_gosat_session?: boolean | null
           presenter_id?: string
           presenter_profile_id?: string | null
+          pricing_type?: string
           recording_url?: string | null
           scheduled_at?: string
           session_fee?: number | null
