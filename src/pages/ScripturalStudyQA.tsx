@@ -9,6 +9,7 @@ import { useToast } from '@/hooks/use-toast'
 
 export default function ScripturalStudyQA() {
   const navigate = useNavigate()
+  const { toast } = useToast()
   const [expandedTopic, setExpandedTopic] = useState<string | null>(null)
   const [goLiveDialog, setGoLiveDialog] = useState<{ open: boolean; topicId?: string; topicTitle?: string }>({
     open: false,
