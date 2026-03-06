@@ -51,7 +51,7 @@ export function AdminButton() {
 
   return (
     <>
-      {auth?.isAuthenticated && (userRoles?.length > 0) && (
+      {auth?.isAuthenticated && userRoles.includes('gosat') && (
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button 
