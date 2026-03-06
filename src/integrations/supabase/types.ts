@@ -9139,6 +9139,14 @@ export type Database = {
         }
         Returns: boolean
       }
+      upsert_vault_secret: {
+        Args: {
+          secret_description?: string
+          secret_name: string
+          secret_value: string
+        }
+        Returns: undefined
+      }
       user_has_premium_room_access: {
         Args: { room_id_param: string; user_id_param: string }
         Returns: boolean
