@@ -96,18 +96,20 @@ export function OrganizationWalletCredentials() {
   const saveCredentials = async (walletName: string, credentials: WalletCredentials) => {
     setSaving(true)
     try {
-      const { error } = await supabase
-        .from('organization_wallets')
-        .update({
+      // Save credentials to Supabase Vault via edge function
+      const { data, error } = await supabase.functions.invoke('save-wallet-credentials', {
+        body: {
+          wallet_name: walletName,
           api_key: credentials.api_key,
           api_secret: credentials.api_secret,
           merchant_id: credentials.merchant_id
-        })
-        .eq('wallet_name', walletName)
+        }
+      })
 
       if (error) throw error
+      if (data?.error) throw new Error(data.error)
 
-      toast.success(`${walletName} credentials saved successfully`)
+      toast.success(`${walletName} credentials encrypted and saved securely`)
     } catch (error) {
       console.error('Error saving credentials:', error)
       toast.error('Failed to save credentials')
