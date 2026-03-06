@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
+import { SessionPricingSelector, PricingType } from '@/components/SessionPricingSelector';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
@@ -32,6 +33,8 @@ export const ScheduleSkillDropDialog: React.FC<ScheduleSkillDropDialogProps> = (
     scheduled_at: '',
     duration_minutes: 45,
   });
+  const [pricingType, setPricingType] = useState<PricingType>('monthly');
+  const [sessionFee, setSessionFee] = useState(5);
 
   // Update title when topicTitle changes
   React.useEffect(() => {
@@ -55,29 +58,26 @@ export const ScheduleSkillDropDialog: React.FC<ScheduleSkillDropDialogProps> = (
         status: 'scheduled',
         attendees_count: 0,
         topic_id: topicId || null,
+        pricing_type: pricingType,
+        session_fee: pricingType === 'free' ? 0 : sessionFee,
+        is_gosat_session: false,
+        host_approved: true,
       } as any);
 
       if (error) throw error;
 
       toast({
         title: 'SkillDrop Scheduled',
-        description: 'Your SkillDrop session has been scheduled successfully!',
+        description: `Your ${pricingType === 'free' ? 'free' : `${sessionFee} USDT ${pricingType}`} SkillDrop session has been scheduled!`,
       });
 
       onOpenChange(false);
       onSuccess();
-      setFormData({
-        title: '',
-        description: '',
-        scheduled_at: '',
-        duration_minutes: 45,
-      });
+      setFormData({ title: '', description: '', scheduled_at: '', duration_minutes: 45 });
+      setPricingType('monthly');
+      setSessionFee(5);
     } catch (error: any) {
-      toast({
-        title: 'Error',
-        description: error.message,
-        variant: 'destructive',
-      });
+      toast({ title: 'Error', description: error.message, variant: 'destructive' });
     } finally {
       setLoading(false);
     }
@@ -85,7 +85,7 @@ export const ScheduleSkillDropDialog: React.FC<ScheduleSkillDropDialogProps> = (
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="glass-card bg-background/95 border-primary/20 max-w-lg">
+      <DialogContent className="glass-card bg-background/95 border-primary/20 max-w-lg max-h-[85vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="text-2xl">Schedule SkillDrop</DialogTitle>
         </DialogHeader>
@@ -108,7 +108,7 @@ export const ScheduleSkillDropDialog: React.FC<ScheduleSkillDropDialogProps> = (
               value={formData.description}
               onChange={(e) => setFormData({ ...formData, description: e.target.value })}
               placeholder="What topics will be covered in this session?"
-              rows={4}
+              rows={3}
             />
           </div>
 
@@ -123,7 +123,6 @@ export const ScheduleSkillDropDialog: React.FC<ScheduleSkillDropDialogProps> = (
                 required
               />
             </div>
-
             <div>
               <Label htmlFor="duration">Duration (minutes)</Label>
               <Input
@@ -137,6 +136,15 @@ export const ScheduleSkillDropDialog: React.FC<ScheduleSkillDropDialogProps> = (
               />
             </div>
           </div>
+
+          {/* Pricing */}
+          <SessionPricingSelector
+            pricingType={pricingType}
+            onPricingTypeChange={setPricingType}
+            sessionFee={sessionFee}
+            onSessionFeeChange={setSessionFee}
+            sessionLabel="SkillDrop"
+          />
 
           <div className="flex justify-end gap-2 pt-4">
             <Button type="button" variant="ghost" onClick={() => onOpenChange(false)}>
