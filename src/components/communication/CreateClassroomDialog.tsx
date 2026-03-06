@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
+import { SessionPricingSelector, PricingType } from '@/components/SessionPricingSelector';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
@@ -29,6 +30,8 @@ export const CreateClassroomDialog: React.FC<CreateClassroomDialogProps> = ({
     duration_minutes: 60,
     max_participants: 20,
   });
+  const [pricingType, setPricingType] = useState<PricingType>('free');
+  const [sessionFee, setSessionFee] = useState(5);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -36,7 +39,6 @@ export const CreateClassroomDialog: React.FC<CreateClassroomDialogProps> = ({
 
     setLoading(true);
     try {
-      // Get the user's profile ID
       const { data: profileData } = await supabase
         .from('profiles')
         .select('id')
@@ -52,30 +54,25 @@ export const CreateClassroomDialog: React.FC<CreateClassroomDialogProps> = ({
         instructor_id: user.id,
         instructor_profile_id: profileData?.id || null,
         status: 'scheduled',
-      });
+        pricing_type: pricingType,
+        session_fee: pricingType === 'free' ? 0 : sessionFee,
+        is_free: pricingType === 'free',
+      } as any);
 
       if (error) throw error;
 
       toast({
         title: 'Classroom Created',
-        description: 'Your interactive classroom session has been scheduled!',
+        description: `Your ${pricingType === 'free' ? 'free' : `${sessionFee} USDT ${pricingType}`} classroom session has been scheduled!`,
       });
 
       onOpenChange(false);
       onSuccess();
-      setFormData({
-        title: '',
-        description: '',
-        scheduled_at: '',
-        duration_minutes: 60,
-        max_participants: 20,
-      });
+      setFormData({ title: '', description: '', scheduled_at: '', duration_minutes: 60, max_participants: 20 });
+      setPricingType('free');
+      setSessionFee(5);
     } catch (error: any) {
-      toast({
-        title: 'Error',
-        description: error.message,
-        variant: 'destructive',
-      });
+      toast({ title: 'Error', description: error.message, variant: 'destructive' });
     } finally {
       setLoading(false);
     }
@@ -83,7 +80,7 @@ export const CreateClassroomDialog: React.FC<CreateClassroomDialogProps> = ({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="glass-card bg-background/95 border-primary/20 max-w-lg">
+      <DialogContent className="glass-card bg-background/95 border-primary/20 max-w-lg max-h-[85vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="text-2xl">Create Classroom Session</DialogTitle>
         </DialogHeader>
@@ -121,7 +118,6 @@ export const CreateClassroomDialog: React.FC<CreateClassroomDialogProps> = ({
                 required
               />
             </div>
-
             <div>
               <Label htmlFor="duration">Duration (minutes)</Label>
               <Input
@@ -148,6 +144,15 @@ export const CreateClassroomDialog: React.FC<CreateClassroomDialogProps> = ({
               required
             />
           </div>
+
+          {/* Pricing */}
+          <SessionPricingSelector
+            pricingType={pricingType}
+            onPricingTypeChange={setPricingType}
+            sessionFee={sessionFee}
+            onSessionFeeChange={setSessionFee}
+            sessionLabel="Classroom"
+          />
 
           <div className="flex justify-end gap-2 pt-4">
             <Button type="button" variant="ghost" onClick={() => onOpenChange(false)}>
