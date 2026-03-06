@@ -257,6 +257,7 @@ const App = () => (
   }}>
     <AuthProvider>
       <AppContextProvider>
+        <SabbathProvider>
         <VisualEditorProvider>
         <CallManagerProvider>
         <BasketProvider>
