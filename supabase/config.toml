@@ -135,3 +135,7 @@ verify_jwt = false
 # AI Radio Script Generator
 [functions.generate-radio-script]
 verify_jwt = false
+
+# Wallet Credentials Vault Storage
+[functions.save-wallet-credentials]
+verify_jwt = false
