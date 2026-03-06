@@ -27,6 +27,7 @@ import { SowerBalanceCard } from '@/components/wallet/SowerBalanceCard';
 import SecurityQuestionsAlert from '@/components/auth/SecurityQuestionsAlert';
 import { SeedEngagementWidget } from '@/components/dashboard/SeedEngagementWidget';
 import { DashboardSkeleton } from '@/components/dashboard/DashboardSkeleton';
+import { SabbathDashboardBanner } from '@/components/SabbathDashboardBanner';
 import { motion } from 'framer-motion';
 export default function DashboardPage() {
   const [communityUnread, setCommunityUnread] = useState(0);
@@ -669,6 +670,7 @@ export default function DashboardPage() {
         {/* Security Questions Alert */}
         <div className="max-w-4xl mx-auto px-4 sm:px-6 md:px-8 pt-4">
           <SecurityQuestionsAlert />
+          <SabbathDashboardBanner />
         </div>
         
         {/* Welcome Section with Profile Picture - Mobile Responsive */}

@@ -94,7 +94,7 @@ export const SkillDropHostApplicationForm: React.FC<Props> = ({ open, onOpenChan
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="glass-card bg-background/95 border-primary/20 max-w-lg">
+      <DialogContent className="glass-card bg-background/95 border-primary/20 max-w-lg max-h-[85vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2 text-xl">
             <GraduationCap className="w-6 h-6 text-primary" />
