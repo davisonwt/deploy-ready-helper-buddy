@@ -1,4 +1,5 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { checkRateLimit, createRateLimitResponse } from "../_shared/rateLimiter.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -18,6 +19,12 @@ async function hashAnswer(answer: string): Promise<string> {
   return hashArray.map(b => b.toString(16).padStart(2, "0")).join("");
 }
 
+/** Extract client IP for rate limiting */
+function getClientIp(req: Request): string {
+  const forwarded = req.headers.get("x-forwarded-for");
+  return forwarded ? forwarded.split(",")[0].trim() : "unknown";
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -30,6 +37,9 @@ Deno.serve(async (req) => {
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
+    const clientIp = getClientIp(req);
+    const rateLimitIdentifier = `pw_reset:${email?.toLowerCase() || clientIp}`;
+
     // Action: get-questions - Returns security questions for an email
     if (action === "get-questions") {
       if (!email) {
@@ -39,26 +49,26 @@ Deno.serve(async (req) => {
         );
       }
 
-      // Find user by email
-      const { data: users, error: listError } = await supabase.auth.admin.listUsers();
-      if (listError) {
-        console.error("Error listing users:", listError);
-        return new Response(
-          JSON.stringify({ error: "Unable to process request" }),
-          { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-        );
+      // Rate limit question lookups: 10 per 15 min per email/IP
+      const allowed = await checkRateLimit(supabase, rateLimitIdentifier, "pw_reset_questions", 10, 15, true);
+      if (!allowed) {
+        return createRateLimitResponse(900);
       }
 
-      const targetUser = users.users.find(u => u.email?.toLowerCase() === email.toLowerCase());
-      
-      // Always fetch questions if user exists, but return same structure regardless
+      // Look up user via profiles table instead of listing all users
+      const { data: profileData } = await supabase
+        .from("profiles")
+        .select("user_id")
+        .ilike("email", email.trim())
+        .maybeSingle();
+
       let questions: { question_1: string; question_2: string; question_3: string } | null = null;
 
-      if (targetUser) {
+      if (profileData?.user_id) {
         const { data: securityData } = await supabase
           .from("user_security_questions")
           .select("question_1, question_2, question_3")
-          .eq("user_id", targetUser.id)
+          .eq("user_id", profileData.user_id)
           .maybeSingle();
 
         if (securityData) {
@@ -105,19 +115,21 @@ Deno.serve(async (req) => {
         );
       }
 
-      // Find user
-      const { data: users, error: listError } = await supabase.auth.admin.listUsers();
-      if (listError) {
-        console.error("Error listing users:", listError);
-        return new Response(
-          JSON.stringify({ error: "Unable to process request" }),
-          { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-        );
+      // Rate limit: 5 verification attempts per 15 min per email (brute-force protection)
+      const allowed = await checkRateLimit(supabase, rateLimitIdentifier, "pw_reset_verify", 5, 15, true);
+      if (!allowed) {
+        console.log(`Rate limit exceeded for password reset verification: ${email}`);
+        return createRateLimitResponse(900);
       }
 
-      const targetUser = users.users.find(u => u.email?.toLowerCase() === email.toLowerCase());
+      // Look up user via profiles table instead of listing all users
+      const { data: profileData } = await supabase
+        .from("profiles")
+        .select("user_id")
+        .ilike("email", email.trim())
+        .maybeSingle();
       
-      if (!targetUser) {
+      if (!profileData?.user_id) {
         // Return same error as incorrect answers to prevent enumeration
         return new Response(
           JSON.stringify({ error: "One or more security answers are incorrect. Please try again." }),
@@ -129,11 +141,10 @@ Deno.serve(async (req) => {
       const { data: securityData, error: securityError } = await supabase
         .from("user_security_questions")
         .select("*")
-        .eq("user_id", targetUser.id)
+        .eq("user_id", profileData.user_id)
         .maybeSingle();
 
       if (securityError || !securityData) {
-        // Return same error as incorrect answers to prevent enumeration
         return new Response(
           JSON.stringify({ error: "One or more security answers are incorrect. Please try again." }),
           { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
@@ -162,7 +173,7 @@ Deno.serve(async (req) => {
 
       // All answers correct - reset the password
       const { error: updateError } = await supabase.auth.admin.updateUserById(
-        targetUser.id,
+        profileData.user_id,
         { password: newPassword }
       );
 
