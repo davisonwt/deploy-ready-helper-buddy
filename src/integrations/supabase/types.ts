@@ -7198,6 +7198,54 @@ export type Database = {
           },
         ]
       }
+      study_subscriptions: {
+        Row: {
+          amount: number
+          auto_renew: boolean
+          cancelled_at: string | null
+          created_at: string
+          currency: string
+          expires_at: string
+          id: string
+          payment_method: string | null
+          payment_reference: string | null
+          started_at: string
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          amount?: number
+          auto_renew?: boolean
+          cancelled_at?: string | null
+          created_at?: string
+          currency?: string
+          expires_at: string
+          id?: string
+          payment_method?: string | null
+          payment_reference?: string | null
+          started_at?: string
+          status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          auto_renew?: boolean
+          cancelled_at?: string | null
+          created_at?: string
+          currency?: string
+          expires_at?: string
+          id?: string
+          payment_method?: string | null
+          payment_reference?: string | null
+          started_at?: string
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       training_courses: {
         Row: {
           circle_id: string | null
