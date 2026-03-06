@@ -29,11 +29,13 @@ const handler = async (req: Request): Promise<Response> => {
       });
     }
 
-    const supabase = createClient(
-      Deno.env.get('SUPABASE_URL')!,
-      Deno.env.get('SUPABASE_ANON_KEY')!,
-      { global: { headers: { Authorization: authHeader } } }
-    );
+    const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
+    const supabaseAnonKey = Deno.env.get('SUPABASE_ANON_KEY')!;
+    const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+
+    const supabase = createClient(supabaseUrl, supabaseAnonKey, {
+      global: { headers: { Authorization: authHeader } },
+    });
 
     const token = authHeader.replace('Bearer ', '');
     const { data: claimsData, error: claimsError } = await supabase.auth.getClaims(token);
@@ -44,14 +46,45 @@ const handler = async (req: Request): Promise<Response> => {
       });
     }
 
+    const userId = claimsData.claims.sub as string;
+
+    // Admin/gosat role check — only admins can send emails
+    const serviceClient = createClient(supabaseUrl, supabaseServiceKey);
+    const { data: isAdmin } = await serviceClient.rpc('has_role', {
+      _user_id: userId, _role: 'admin'
+    });
+
+    if (!isAdmin) {
+      console.error(`Non-admin user ${userId} attempted to send email via Brevo`);
+      return new Response(JSON.stringify({ error: 'Forbidden: admin access required' }), {
+        status: 403,
+        headers: { 'Content-Type': 'application/json', ...corsHeaders },
+      });
+    }
+
     const { to, subject, html }: BrevoEmailRequest = await req.json();
+
+    // Validate inputs
+    if (!Array.isArray(to) || to.length === 0 || to.length > 50) {
+      return new Response(JSON.stringify({ error: 'Invalid recipients (1-50 allowed)' }), {
+        status: 400,
+        headers: { 'Content-Type': 'application/json', ...corsHeaders },
+      });
+    }
+
+    if (!subject || typeof subject !== 'string' || subject.length > 500) {
+      return new Response(JSON.stringify({ error: 'Invalid subject' }), {
+        status: 400,
+        headers: { 'Content-Type': 'application/json', ...corsHeaders },
+      });
+    }
 
     const brevoApiKey = Deno.env.get('BREVO_API_KEY');
     if (!brevoApiKey) {
       throw new Error('BREVO_API_KEY secret not configured');
     }
 
-    console.log('Sending email via Brevo API...');
+    console.log('Admin sending email via Brevo API...');
     console.log('To:', to);
     console.log('Subject:', subject);
 

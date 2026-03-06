@@ -55,36 +55,33 @@ export function OrganizationWalletCredentials() {
     loadCredentials()
   }, [])
 
-  // Mask a credential string to show only last 4 characters
-  const maskCredential = (value: string): string => {
-    if (!value || value.length <= 4) return value
-    return '•'.repeat(Math.min(value.length - 4, 20)) + value.slice(-4)
-  }
+  // Credentials are now read from Vault; actual secrets never sent to client
 
   const loadCredentials = async () => {
     setLoading(true)
     try {
-      const { data, error } = await supabase
-        .from('organization_wallets')
-        .select('wallet_name, api_key, api_secret, merchant_id')
-        .in('wallet_name', ['s2gholding', 's2gbestow', 's2gdavison'])
+      // Read credential status from Vault via edge function (never reads plaintext DB columns)
+      const { data, error } = await supabase.functions.invoke('get-wallet-credentials', {
+        body: { wallet_names: ['s2gholding', 's2gbestow', 's2gdavison'] }
+      })
 
       if (error) throw error
 
-      data?.forEach(wallet => {
-        const masked = {
-          api_key: maskCredential(wallet.api_key || ''),
-          api_secret: maskCredential(wallet.api_secret || ''),
-          merchant_id: wallet.merchant_id || ''
+      const wallets = data?.wallets || {}
+      for (const [walletName, info] of Object.entries(wallets) as [string, { has_credentials: boolean; merchant_id: string }][]) {
+        const display = {
+          api_key: info.has_credentials ? '••••••••••••configured' : '',
+          api_secret: info.has_credentials ? '••••••••••••configured' : '',
+          merchant_id: info.merchant_id || ''
         }
-        if (wallet.wallet_name === 's2gholding') {
-          setS2gholding(prev => ({ ...prev, ...masked }))
-        } else if (wallet.wallet_name === 's2gbestow') {
-          setS2gbestow(prev => ({ ...prev, ...masked }))
-        } else if (wallet.wallet_name === 's2gdavison') {
-          setS2gdavison(prev => ({ ...prev, ...masked }))
+        if (walletName === 's2gholding') {
+          setS2gholding(prev => ({ ...prev, ...display }))
+        } else if (walletName === 's2gbestow') {
+          setS2gbestow(prev => ({ ...prev, ...display }))
+        } else if (walletName === 's2gdavison') {
+          setS2gdavison(prev => ({ ...prev, ...display }))
         }
-      })
+      }
     } catch (error) {
       console.error('Error loading credentials:', error)
       toast.error('Failed to load wallet credentials')

@@ -139,3 +139,6 @@ verify_jwt = false
 # Wallet Credentials Vault Storage
 [functions.save-wallet-credentials]
 verify_jwt = false
+
+[functions.get-wallet-credentials]
+verify_jwt = false
