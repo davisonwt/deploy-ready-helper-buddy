@@ -10,6 +10,7 @@ import {
 import { Link, useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { resolveAudioUrl } from '@/utils/resolveAudioUrl';
+import { LiveSessionAdBanner } from '@/components/memry/LiveSessionAdBanner';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
