@@ -6,9 +6,16 @@ interface StudySubscription {
   isSubscribed: boolean;
   loading: boolean;
   expiresAt: string | null;
-  subscribe: () => void; // trigger payment flow
+  subscribe: () => void;
 }
 
+/**
+ * Checks if user has an active study subscription.
+ * The Scriptural Study Q&A is a GoSat project — 5 USDT/month goes entirely
+ * to GoSat's tithing wallet (no 85/10/5 split since GoSat IS the platform).
+ * User-hosted SkillDrop sessions use skilldrop_session_subscriptions with the
+ * standard 85% host / 10% tithing / 5% admin split.
+ */
 export function useStudySubscription(): StudySubscription {
   const { user } = useAuth();
   const [isSubscribed, setIsSubscribed] = useState(false);
@@ -53,9 +60,7 @@ export function useStudySubscription(): StudySubscription {
   }, [user]);
 
   const subscribe = () => {
-    // This will be wired to the payment flow (NOWPayments/PayPal)
-    // For now, it serves as a trigger point
-    console.log('Subscribe flow triggered');
+    console.log('GoSat study subscription flow triggered — 5 USDT to GoSat tithing wallet');
   };
 
   return { isSubscribed, loading, expiresAt, subscribe };

@@ -1,13 +1,15 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { ChevronDown, ChevronRight, BookOpen, Flame, ArrowLeft, Radio, Calendar, Clock, Lock, CreditCard } from 'lucide-react'
+import { ChevronDown, ChevronRight, BookOpen, Flame, ArrowLeft, Radio, Calendar, Clock, Lock, CreditCard, GraduationCap } from 'lucide-react'
 import { scripturalTopics } from '@/data/scripturalTopics'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Button } from '@/components/ui/button'
 import { ScheduleSkillDropDialog } from '@/components/communication/ScheduleSkillDropDialog'
+import { SkillDropHostApplicationForm } from '@/components/skilldrop/SkillDropHostApplicationForm'
 import { useToast } from '@/hooks/use-toast'
 import { useSabbathContext } from '@/contexts/SabbathContext'
 import { useStudySubscription } from '@/hooks/useStudySubscription'
+import { useSkillDropHostApplication } from '@/hooks/useSkillDropHostApplication'
 import { SabbathGuard, SabbathRestMessage } from '@/components/SabbathGuard'
 
 export default function ScripturalStudyQA() {
@@ -15,10 +17,12 @@ export default function ScripturalStudyQA() {
   const { toast } = useToast()
   const { isSabbath } = useSabbathContext()
   const { isSubscribed, loading: subLoading } = useStudySubscription()
+  const { application, isApprovedHost } = useSkillDropHostApplication()
   const [expandedTopic, setExpandedTopic] = useState<string | null>(null)
   const [goLiveDialog, setGoLiveDialog] = useState<{ open: boolean; topicId?: string; topicTitle?: string }>({
     open: false,
   })
+  const [hostAppDialog, setHostAppDialog] = useState(false)
 
   return (
     <div className="min-h-screen relative" style={{ background: 'linear-gradient(180deg, #2C1810 0%, #1A0F0A 50%, #0D0705 100%)' }}>
@@ -48,6 +52,9 @@ export default function ScripturalStudyQA() {
           <p className="text-amber-400/70 text-sm italic max-w-md mx-auto">
             A digital companion to "The Complete Study: Victory Already Won — Understanding the End Times Through Scripture"
           </p>
+          <p className="text-amber-600/50 text-[10px] mt-2 uppercase tracking-widest">
+            A GoSat Project — All proceeds support the ministry
+          </p>
           <div className="w-24 h-[2px] bg-gradient-to-r from-transparent via-amber-600 to-transparent mx-auto mt-4" />
         </div>
 
@@ -61,7 +68,7 @@ export default function ScripturalStudyQA() {
           </motion.div>
         )}
 
-        {/* Subscription Banner */}
+        {/* Subscription Banner — GoSat session: 5 USDT goes to GoSat tithing wallet */}
         {!subLoading && !isSubscribed && !isSabbath && (
           <motion.div
             initial={{ opacity: 0, y: 10 }}
@@ -93,6 +100,65 @@ export default function ScripturalStudyQA() {
                 Subscribe — 5 USDT/month
               </Button>
             </SabbathGuard>
+          </motion.div>
+        )}
+
+        {/* Become a SkillDrop Host CTA */}
+        {!isSabbath && (
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.1 }}
+            className="mb-8 rounded-xl border border-indigo-600/30 bg-gradient-to-br from-indigo-900/20 to-stone-900/30 p-5"
+          >
+            <div className="flex items-start gap-4">
+              <GraduationCap className="w-10 h-10 text-indigo-400 shrink-0 mt-1" />
+              <div className="flex-1">
+                <h3 className="text-indigo-100 font-serif font-bold text-lg mb-1">
+                  Host Your Own SkillDrop Sessions
+                </h3>
+                <p className="text-indigo-300/70 text-sm mb-1">
+                  Sowers, Growers, Drivers, Whisperers, and Service Providers can apply to host their own SkillDrop sessions.
+                </p>
+                <p className="text-indigo-400/50 text-xs mb-3">
+                  Earn <span className="font-bold text-indigo-300">85%</span> of each subscriber's 5 USDT/month • 10% tithing • 5% admin
+                </p>
+                <SabbathGuard>
+                  {isApprovedHost ? (
+                    <div className="flex items-center gap-2">
+                      <span className="text-emerald-400 text-sm font-semibold">✓ Approved Host</span>
+                      <Button
+                        size="sm"
+                        onClick={() => setGoLiveDialog({ open: true })}
+                        className="gap-1 text-xs"
+                        style={{
+                          background: 'linear-gradient(135deg, #4338CA, #3730A3)',
+                          color: '#C7D2FE',
+                          border: '1px solid rgba(99, 102, 241, 0.3)',
+                        }}
+                      >
+                        <Radio className="w-3 h-3" />
+                        Schedule Session
+                      </Button>
+                    </div>
+                  ) : (
+                    <Button
+                      onClick={() => setHostAppDialog(true)}
+                      size="sm"
+                      className="gap-2 text-sm"
+                      style={{
+                        background: 'linear-gradient(135deg, #4338CA, #3730A3)',
+                        color: '#C7D2FE',
+                        border: '1px solid rgba(99, 102, 241, 0.3)',
+                      }}
+                    >
+                      <GraduationCap className="w-4 h-4" />
+                      {application?.status === 'pending' ? 'Application Pending...' : 'Apply to Become a Host'}
+                    </Button>
+                  )}
+                </SabbathGuard>
+              </div>
+            </div>
           </motion.div>
         )}
 
@@ -171,11 +237,21 @@ export default function ScripturalStudyQA() {
                           </button>
                         ))}
 
-                        {/* Go Live Button — hidden on Sabbath */}
+                        {/* Go Live Button — hidden on Sabbath, only for approved hosts or GoSat */}
                         <SabbathGuard>
                           <div className="mt-2 pt-3 border-t border-amber-800/20">
                             <Button
-                              onClick={() => setGoLiveDialog({ open: true, topicId: topic.id, topicTitle: topic.title })}
+                              onClick={() => {
+                                if (!isApprovedHost) {
+                                  toast({
+                                    title: '🎓 Host Application Required',
+                                    description: 'You need to apply and be approved as a SkillDrop host before scheduling sessions.',
+                                  })
+                                  setHostAppDialog(true)
+                                  return
+                                }
+                                setGoLiveDialog({ open: true, topicId: topic.id, topicTitle: topic.title })
+                              }}
                               className="w-full gap-2 rounded-xl font-semibold text-sm"
                               style={{
                                 background: 'linear-gradient(135deg, #B45309, #92400E)',
@@ -189,7 +265,7 @@ export default function ScripturalStudyQA() {
                             </Button>
                             <p className="text-amber-700/50 text-[10px] text-center mt-1.5 flex items-center justify-center gap-1">
                               <Clock className="w-3 h-3" />
-                              Set a date & time for a live study session on this topic
+                              {isApprovedHost ? 'Set a date & time for a live study session' : 'Requires approved host application'}
                             </p>
                           </div>
                         </SabbathGuard>
@@ -218,6 +294,12 @@ export default function ScripturalStudyQA() {
         onSuccess={() => setGoLiveDialog({ open: false })}
         topicId={goLiveDialog.topicId}
         topicTitle={goLiveDialog.topicTitle}
+      />
+
+      {/* Host Application Dialog */}
+      <SkillDropHostApplicationForm
+        open={hostAppDialog}
+        onOpenChange={setHostAppDialog}
       />
     </div>
   )
