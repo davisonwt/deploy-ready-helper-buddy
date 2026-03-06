@@ -152,6 +152,8 @@ const Sow2GrowCalendarPage = lazy(() => import("./pages/Sow2GrowCalendarPage"));
 const EnochianCalendarDesignPage = lazy(() => import("./pages/EnochianCalendarDesignPage"));
 const WheelsInItselfPage = lazy(() => import("./pages/WheelsInItselfPage"));
 const EternalForestPage = lazy(() => import("./pages/EternalForestPage"));
+const ScripturalStudyQA = lazy(() => import("./pages/ScripturalStudyQA"));
+const StudyAnswerPage = lazy(() => import("./pages/StudyAnswerPage"));
 const MemryPage = lazy(() => import("./pages/MemryPage"));
 
 // Community Drivers
@@ -311,6 +313,16 @@ const App = () => (
                     <WheelsInItselfPage />
                   </Suspense>
                 </Layout>
+              } />
+              <Route path="/scriptural-study" element={
+                <Suspense fallback={<LoadingFallback />}>
+                  <ScripturalStudyQA />
+                </Suspense>
+              } />
+              <Route path="/scriptural-study/:topicId/:questionId" element={
+                <Suspense fallback={<LoadingFallback />}>
+                  <StudyAnswerPage />
+                </Suspense>
               } />
               
               {/* Debug route for auth issues */}
