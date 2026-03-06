@@ -420,7 +420,7 @@ export default function DashboardPage() {
           const {
             data,
             error
-          } = await supabase.from('profiles').select('*') // User can see their own complete profile
+          } = await supabase.from('profiles').select('id, user_id, display_name, first_name, last_name, avatar_url, bio, location, timezone, preferred_currency, verification_status, has_complete_billing_info, website, tiktok_url, instagram_url, facebook_url, twitter_url, youtube_url, show_social_media, country, is_chatapp_verified, username, created_at, updated_at, suspended') // No email/phone - PII protected
           .eq('user_id', user.id).maybeSingle();
           if (error && error.code !== 'PGRST116') {
             // Ignore "no rows returned" error

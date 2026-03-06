@@ -77,14 +77,20 @@ export function useRoles(): UseRolesResult {
       setLoading(true)
       setError(null)
 
+      // Fetch profiles without PII columns (email/phone are revoked at DB level)
       const { data: profiles, error: profilesError } = await supabase
         .from('profiles')
-        .select('id, user_id, display_name, avatar_url, first_name, last_name, email, phone, location, verification_status, created_at, suspended')
+        .select('id, user_id, display_name, avatar_url, first_name, last_name, location, verification_status, created_at, suspended')
         .order('created_at', { ascending: false })
 
       if (profilesError) {
         return { success: false, error: profilesError.message, data: [] as any }
       }
+
+      // Fetch PII via secure function (only works for gosat/admin roles)
+      const userIds = (profiles || []).map((p: any) => p.user_id)
+      const { data: piiData } = await supabase.rpc('get_users_pii', { user_ids: userIds })
+      const piiMap = new Map((piiData || []).map((p: any) => [p.user_id, p]))
 
       const { data: userRolesData, error: rolesError } = await supabase
         .from('user_roles')
@@ -95,10 +101,15 @@ export function useRoles(): UseRolesResult {
         return { success: false, error: rolesError.message, data: [] as any }
       }
 
-      const combined = (profiles || []).map((profile: any) => ({
-        ...profile,
-        user_roles: (userRolesData || []).filter((r: any) => r.user_id === profile.user_id),
-      }))
+      const combined = (profiles || []).map((profile: any) => {
+        const pii = piiMap.get(profile.user_id) || {}
+        return {
+          ...profile,
+          email: (pii as any).email || null,
+          phone: (pii as any).phone || null,
+          user_roles: (userRolesData || []).filter((r: any) => r.user_id === profile.user_id),
+        }
+      })
 
       return { success: true, data: combined as any }
     } catch (e: any) {

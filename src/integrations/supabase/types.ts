@@ -101,6 +101,13 @@ export type Database = {
             referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "activity_feed_actor_profile_id_fkey"
+            columns: ["actor_profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles_public"
+            referencedColumns: ["id"]
+          },
         ]
       }
       affiliates: {
@@ -250,6 +257,13 @@ export type Database = {
             referencedRelation: "profiles"
             referencedColumns: ["user_id"]
           },
+          {
+            foreignKeyName: "ai_generated_content_sower_id_fkey"
+            columns: ["sower_id"]
+            isOneToOne: false
+            referencedRelation: "profiles_public"
+            referencedColumns: ["user_id"]
+          },
         ]
       }
       ai_usage: {
@@ -370,6 +384,13 @@ export type Database = {
             columns: ["exported_by"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "arweave_exports_exported_by_fkey"
+            columns: ["exported_by"]
+            isOneToOne: false
+            referencedRelation: "profiles_public"
             referencedColumns: ["user_id"]
           },
           {
@@ -556,6 +577,13 @@ export type Database = {
             columns: ["bestower_profile_id"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bestowals_bestower_profile_id_fkey"
+            columns: ["bestower_profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles_public"
             referencedColumns: ["id"]
           },
           {
@@ -1010,6 +1038,13 @@ export type Database = {
             referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "chat_messages_sender_profile_id_fkey"
+            columns: ["sender_profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles_public"
+            referencedColumns: ["id"]
+          },
         ]
       }
       chat_participants: {
@@ -1058,6 +1093,13 @@ export type Database = {
             columns: ["profile_id"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "chat_participants_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles_public"
             referencedColumns: ["id"]
           },
           {
@@ -1367,6 +1409,13 @@ export type Database = {
             referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "classroom_sessions_instructor_profile_id_fkey"
+            columns: ["instructor_profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles_public"
+            referencedColumns: ["id"]
+          },
         ]
       }
       clubhouse_gifts: {
@@ -1550,6 +1599,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "community_post_replies_author_profile_id_fkey"
+            columns: ["author_profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles_public"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "community_post_replies_parent_reply_id_fkey"
             columns: ["parent_reply_id"]
             isOneToOne: false
@@ -1662,6 +1718,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "community_posts_author_profile_id_fkey"
+            columns: ["author_profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles_public"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "community_posts_circle_id_fkey"
             columns: ["circle_id"]
             isOneToOne: false
@@ -1741,6 +1804,13 @@ export type Database = {
             columns: ["uploader_profile_id"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "community_videos_uploader_profile_id_fkey"
+            columns: ["uploader_profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles_public"
             referencedColumns: ["id"]
           },
         ]
@@ -2391,6 +2461,13 @@ export type Database = {
             referencedRelation: "profiles"
             referencedColumns: ["user_id"]
           },
+          {
+            foreignKeyName: "gosat_insights_actioned_by_fkey"
+            columns: ["actioned_by"]
+            isOneToOne: false
+            referencedRelation: "profiles_public"
+            referencedColumns: ["user_id"]
+          },
         ]
       }
       journal_entries: {
@@ -2539,6 +2616,13 @@ export type Database = {
             columns: ["presenter_profile_id"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "lecture_halls_presenter_profile_id_fkey"
+            columns: ["presenter_profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles_public"
             referencedColumns: ["id"]
           },
         ]
@@ -3355,6 +3439,13 @@ export type Database = {
             columns: ["profile_id"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "orchards_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles_public"
             referencedColumns: ["id"]
           },
         ]
@@ -4527,6 +4618,13 @@ export type Database = {
             columns: ["broadcaster_profile_id"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "radio_broadcasts_broadcaster_profile_id_fkey"
+            columns: ["broadcaster_profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles_public"
             referencedColumns: ["id"]
           },
           {
@@ -5812,6 +5910,13 @@ export type Database = {
             referencedRelation: "profiles"
             referencedColumns: ["user_id"]
           },
+          {
+            foreignKeyName: "registered_agents_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles_public"
+            referencedColumns: ["user_id"]
+          },
         ]
       }
       room_gifts: {
@@ -6298,6 +6403,13 @@ export type Database = {
             columns: ["gifter_id"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "seeds_gifter_id_fkey"
+            columns: ["gifter_id"]
+            isOneToOne: false
+            referencedRelation: "profiles_public"
             referencedColumns: ["user_id"]
           },
         ]
@@ -6877,6 +6989,13 @@ export type Database = {
             referencedRelation: "profiles"
             referencedColumns: ["user_id"]
           },
+          {
+            foreignKeyName: "sower_stories_sower_id_fkey"
+            columns: ["sower_id"]
+            isOneToOne: false
+            referencedRelation: "profiles_public"
+            referencedColumns: ["user_id"]
+          },
         ]
       }
       sowers: {
@@ -7135,6 +7254,13 @@ export type Database = {
             columns: ["instructor_profile_id"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "training_courses_instructor_profile_id_fkey"
+            columns: ["instructor_profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles_public"
             referencedColumns: ["id"]
           },
         ]
@@ -7750,6 +7876,13 @@ export type Database = {
             columns: ["commenter_profile_id"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "video_comments_commenter_profile_id_fkey"
+            columns: ["commenter_profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles_public"
             referencedColumns: ["id"]
           },
           {
@@ -8473,11 +8606,89 @@ export type Database = {
             referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "whisperers_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles_public"
+            referencedColumns: ["id"]
+          },
         ]
       }
     }
     Views: {
-      [_ in never]: never
+      profiles_public: {
+        Row: {
+          avatar_url: string | null
+          bio: string | null
+          country: string | null
+          created_at: string | null
+          display_name: string | null
+          facebook_url: string | null
+          id: string | null
+          instagram_url: string | null
+          is_chatapp_verified: boolean | null
+          location: string | null
+          show_social_media: boolean | null
+          tiktok_url: string | null
+          twitter_url: string | null
+          updated_at: string | null
+          user_id: string | null
+          username: string | null
+          verification_status:
+            | Database["public"]["Enums"]["verification_status"]
+            | null
+          website: string | null
+          youtube_url: string | null
+        }
+        Insert: {
+          avatar_url?: string | null
+          bio?: string | null
+          country?: string | null
+          created_at?: string | null
+          display_name?: string | null
+          facebook_url?: string | null
+          id?: string | null
+          instagram_url?: string | null
+          is_chatapp_verified?: boolean | null
+          location?: string | null
+          show_social_media?: boolean | null
+          tiktok_url?: string | null
+          twitter_url?: string | null
+          updated_at?: string | null
+          user_id?: string | null
+          username?: string | null
+          verification_status?:
+            | Database["public"]["Enums"]["verification_status"]
+            | null
+          website?: string | null
+          youtube_url?: string | null
+        }
+        Update: {
+          avatar_url?: string | null
+          bio?: string | null
+          country?: string | null
+          created_at?: string | null
+          display_name?: string | null
+          facebook_url?: string | null
+          id?: string | null
+          instagram_url?: string | null
+          is_chatapp_verified?: boolean | null
+          location?: string | null
+          show_social_media?: boolean | null
+          tiktok_url?: string | null
+          twitter_url?: string | null
+          updated_at?: string | null
+          user_id?: string | null
+          username?: string | null
+          verification_status?:
+            | Database["public"]["Enums"]["verification_status"]
+            | null
+          website?: string | null
+          youtube_url?: string | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       add_room_participants: {
@@ -8849,9 +9060,24 @@ export type Database = {
           display_name: string
         }[]
       }
+      get_user_pii: {
+        Args: { target_user_id: string }
+        Returns: {
+          email: string
+          phone: string
+        }[]
+      }
       get_user_remaining_votes: {
         Args: { user_id_param?: string }
         Returns: number
+      }
+      get_users_pii: {
+        Args: { user_ids: string[] }
+        Returns: {
+          email: string
+          phone: string
+          user_id: string
+        }[]
       }
       get_vault_secret: { Args: { secret_name: string }; Returns: string }
       get_weekly_leaderboard: {
