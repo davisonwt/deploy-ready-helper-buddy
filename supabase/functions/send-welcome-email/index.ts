@@ -1,12 +1,13 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { Resend } from "npm:resend@2.0.0";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.3";
 
 const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers":
-    "authorization, x-client-info, apikey, content-type",
+    "authorization, x-client-info, apikey, content-type, x-my-custom-header, x-idempotency-key, x-csrf-token, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
 interface WelcomeEmailRequest {
@@ -15,13 +16,52 @@ interface WelcomeEmailRequest {
   lastName: string;
 }
 
+/** Escape HTML special characters to prevent injection in email templates */
+function escapeHtml(str: string): string {
+  return str
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
+}
+
 const handler = async (req: Request): Promise<Response> => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
+    // Authenticate the caller
+    const authHeader = req.headers.get("Authorization");
+    if (!authHeader?.startsWith("Bearer ")) {
+      return new Response(JSON.stringify({ error: "Unauthorized" }), {
+        status: 401,
+        headers: { "Content-Type": "application/json", ...corsHeaders },
+      });
+    }
+
+    const supabase = createClient(
+      Deno.env.get("SUPABASE_URL")!,
+      Deno.env.get("SUPABASE_ANON_KEY")!,
+      { global: { headers: { Authorization: authHeader } } }
+    );
+
+    const token = authHeader.replace("Bearer ", "");
+    const { data: claimsData, error: claimsError } = await supabase.auth.getClaims(token);
+    if (claimsError || !claimsData?.claims) {
+      return new Response(JSON.stringify({ error: "Unauthorized" }), {
+        status: 401,
+        headers: { "Content-Type": "application/json", ...corsHeaders },
+      });
+    }
+
     const { email, firstName, lastName }: WelcomeEmailRequest = await req.json();
+
+    // Sanitize user-provided values before embedding in HTML
+    const safeFirstName = escapeHtml(firstName.slice(0, 100));
+    const safeLastName = escapeHtml(lastName.slice(0, 100));
+    const safeEmail = escapeHtml(email.slice(0, 255));
 
     // Send welcome email to user
     const userEmailResponse = await resend.emails.send({
@@ -43,7 +83,7 @@ const handler = async (req: Request): Promise<Response> => {
 
             <!-- Welcome Message -->
             <div style="text-align: center; margin-bottom: 40px;">
-              <h2 style="color: #1f2937; font-size: 24px; margin-bottom: 20px;">Welcome ${firstName} ${lastName}! 🎉</h2>
+              <h2 style="color: #1f2937; font-size: 24px; margin-bottom: 20px;">Welcome ${safeFirstName} ${safeLastName}! 🎉</h2>
               <p style="color: #4b5563; font-size: 18px; line-height: 1.6; margin-bottom: 30px;">
                 Welcome to Sow2Grow, a branch of 364yhvh digital farm.
               </p>
@@ -141,12 +181,12 @@ const handler = async (req: Request): Promise<Response> => {
               <div style="display: grid; gap: 15px;">
                 <div style="display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid #e5e7eb;">
                   <span style="color: #6b7280; font-weight: 500;">Name:</span>
-                  <span style="color: #1f2937; font-weight: 600;">${firstName} ${lastName}</span>
+                  <span style="color: #1f2937; font-weight: 600;">${safeFirstName} ${safeLastName}</span>
                 </div>
                 
                 <div style="display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid #e5e7eb;">
                   <span style="color: #6b7280; font-weight: 500;">Email:</span>
-                  <span style="color: #1f2937; font-weight: 600;">${email}</span>
+                  <span style="color: #1f2937; font-weight: 600;">${safeEmail}</span>
                 </div>
                 
                 <div style="display: flex; justify-content: space-between; padding: 10px 0;">
@@ -178,10 +218,10 @@ const handler = async (req: Request): Promise<Response> => {
         ...corsHeaders,
       },
     });
-  } catch (error: any) {
+    } catch (error: any) {
     console.error("Error in send-welcome-email function:", error);
     return new Response(
-      JSON.stringify({ error: error.message }),
+      JSON.stringify({ error: "Failed to send welcome email" }),
       {
         status: 500,
         headers: { "Content-Type": "application/json", ...corsHeaders },
