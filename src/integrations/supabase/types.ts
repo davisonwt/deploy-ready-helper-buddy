@@ -9060,9 +9060,24 @@ export type Database = {
           display_name: string
         }[]
       }
+      get_user_pii: {
+        Args: { target_user_id: string }
+        Returns: {
+          email: string
+          phone: string
+        }[]
+      }
       get_user_remaining_votes: {
         Args: { user_id_param?: string }
         Returns: number
+      }
+      get_users_pii: {
+        Args: { user_ids: string[] }
+        Returns: {
+          email: string
+          phone: string
+          user_id: string
+        }[]
       }
       get_vault_secret: { Args: { secret_name: string }; Returns: string }
       get_weekly_leaderboard: {
