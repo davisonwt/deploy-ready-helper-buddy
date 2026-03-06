@@ -9,6 +9,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { Upload, FileText, Image, Music, X } from 'lucide-react';
+import { SessionPricingSelector, PricingType } from '@/components/SessionPricingSelector';
 
 interface FileItem {
   id: string;
