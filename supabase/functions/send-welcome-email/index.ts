@@ -83,7 +83,7 @@ const handler = async (req: Request): Promise<Response> => {
 
             <!-- Welcome Message -->
             <div style="text-align: center; margin-bottom: 40px;">
-              <h2 style="color: #1f2937; font-size: 24px; margin-bottom: 20px;">Welcome ${firstName} ${lastName}! 🎉</h2>
+              <h2 style="color: #1f2937; font-size: 24px; margin-bottom: 20px;">Welcome ${safeFirstName} ${safeLastName}! 🎉</h2>
               <p style="color: #4b5563; font-size: 18px; line-height: 1.6; margin-bottom: 30px;">
                 Welcome to Sow2Grow, a branch of 364yhvh digital farm.
               </p>
