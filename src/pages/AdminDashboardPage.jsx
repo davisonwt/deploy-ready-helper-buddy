@@ -30,7 +30,8 @@ import {
   Megaphone,
   Car,
   Wrench,
-  MessageCircle
+  MessageCircle,
+  GraduationCap
 } from 'lucide-react'
 import { toast } from 'sonner'
 import { useRoles } from '../hooks/useRoles'
