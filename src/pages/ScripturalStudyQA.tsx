@@ -1,10 +1,11 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { ChevronDown, ChevronRight, BookOpen, Flame, ArrowLeft, Radio, Calendar, Clock } from 'lucide-react'
+import { ChevronDown, ChevronRight, BookOpen, Flame, ArrowLeft, Radio, Calendar, Clock, Lock } from 'lucide-react'
 import { scripturalTopics } from '@/data/scripturalTopics'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Button } from '@/components/ui/button'
 import { ScheduleSkillDropDialog } from '@/components/communication/ScheduleSkillDropDialog'
+import { useToast } from '@/hooks/use-toast'
 
 export default function ScripturalStudyQA() {
   const navigate = useNavigate()
