@@ -105,11 +105,18 @@ export class AuthProviderClass extends React.Component {
   fetchUserProfile = async (authUser) => {
     if (!authUser) return null
     try {
-      const { data: profile } = await supabase
-        .from('profiles')
-        .select('id, user_id, display_name, first_name, last_name, avatar_url, bio, location, timezone, preferred_currency, verification_status, has_complete_billing_info, website, tiktok_url, instagram_url, facebook_url, twitter_url, youtube_url, show_social_media, phone, country, is_chatapp_verified, created_at, updated_at')
-        .eq('user_id', authUser.id)
-        .maybeSingle()
+      // Query profile (email/phone columns are revoked at DB level for security)
+      const [{ data: profile }, { data: piiData }] = await Promise.all([
+        supabase
+          .from('profiles')
+          .select('id, user_id, display_name, first_name, last_name, avatar_url, bio, location, timezone, preferred_currency, verification_status, has_complete_billing_info, website, tiktok_url, instagram_url, facebook_url, twitter_url, youtube_url, show_social_media, country, is_chatapp_verified, created_at, updated_at')
+          .eq('user_id', authUser.id)
+          .maybeSingle(),
+        // Get own PII via secure function
+        supabase.rpc('get_user_pii', { target_user_id: authUser.id })
+      ])
+
+      const pii = piiData?.[0] || {}
 
       return {
         ...authUser,
@@ -117,6 +124,7 @@ export class AuthProviderClass extends React.Component {
         id: authUser.id,
         user_id: authUser.id,
         email: authUser.email,
+        phone: pii.phone || profile?.phone || null,
       }
     } catch (e) {
       console.error('Profile fetch error:', e)
