@@ -108,10 +108,13 @@ export default function ScripturalStudyQA() {
                         {topic.questions.map((q) => (
                           <button
                             key={q.id}
-                            onClick={() => navigate(`/scriptural-study/${topic.id}/${q.id}`)}
+                            onClick={() => toast({
+                              title: '📖 Live SkillDrop Coming Soon',
+                              description: `A live SkillDrop session will be announced for this study. Stay tuned for the date & time where we'll explore this together with live chat, Q&A, and more!`,
+                            })}
                             className="w-full flex items-start gap-3 py-3 text-left hover:bg-amber-700/10 rounded-lg px-2 transition-colors group"
                           >
-                            <Flame className="w-4 h-4 text-amber-600/40 mt-0.5 shrink-0 group-hover:text-amber-400 transition-colors" />
+                            <Lock className="w-4 h-4 text-amber-600/40 mt-0.5 shrink-0 group-hover:text-amber-400 transition-colors" />
                             <span className="text-amber-200/80 text-sm leading-snug group-hover:text-amber-100 transition-colors">
                               {q.question}
                             </span>
