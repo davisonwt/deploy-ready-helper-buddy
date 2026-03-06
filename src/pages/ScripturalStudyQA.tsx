@@ -1,15 +1,20 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { ChevronDown, ChevronRight, BookOpen, Flame, ArrowLeft, Radio, Calendar, Clock, Lock } from 'lucide-react'
+import { ChevronDown, ChevronRight, BookOpen, Flame, ArrowLeft, Radio, Calendar, Clock, Lock, CreditCard } from 'lucide-react'
 import { scripturalTopics } from '@/data/scripturalTopics'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Button } from '@/components/ui/button'
 import { ScheduleSkillDropDialog } from '@/components/communication/ScheduleSkillDropDialog'
 import { useToast } from '@/hooks/use-toast'
+import { useSabbathContext } from '@/contexts/SabbathContext'
+import { useStudySubscription } from '@/hooks/useStudySubscription'
+import { SabbathGuard, SabbathRestMessage } from '@/components/SabbathGuard'
 
 export default function ScripturalStudyQA() {
   const navigate = useNavigate()
   const { toast } = useToast()
+  const { isSabbath } = useSabbathContext()
+  const { isSubscribed, loading: subLoading } = useStudySubscription()
   const [expandedTopic, setExpandedTopic] = useState<string | null>(null)
   const [goLiveDialog, setGoLiveDialog] = useState<{ open: boolean; topicId?: string; topicTitle?: string }>({
     open: false,
@@ -45,6 +50,51 @@ export default function ScripturalStudyQA() {
           </p>
           <div className="w-24 h-[2px] bg-gradient-to-r from-transparent via-amber-600 to-transparent mx-auto mt-4" />
         </div>
+
+        {/* Sabbath Banner */}
+        {isSabbath && (
+          <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} className="mb-6">
+            <SabbathRestMessage className="border-emerald-700/30 from-emerald-900/20 to-stone-900/30" />
+            <p className="text-emerald-400/70 text-xs text-center mt-2 italic">
+              🕊️ All Sabbath studies are free — enjoy your rest
+            </p>
+          </motion.div>
+        )}
+
+        {/* Subscription Banner */}
+        {!subLoading && !isSubscribed && !isSabbath && (
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="mb-8 rounded-xl border border-amber-600/30 bg-gradient-to-br from-amber-900/30 to-stone-900/40 p-5 text-center"
+          >
+            <CreditCard className="w-8 h-8 text-amber-400 mx-auto mb-2" />
+            <h3 className="text-amber-100 font-serif font-bold text-lg mb-1">
+              Monthly Study Access
+            </h3>
+            <p className="text-amber-400/70 text-sm mb-3">
+              Subscribe for <span className="font-bold text-amber-300">5 USDT/month</span> to attend live SkillDrop study sessions with chat, Q&A, and document sharing.
+            </p>
+            <p className="text-amber-500/50 text-xs mb-3">Cancel anytime • Sabbath studies always free</p>
+            <SabbathGuard>
+              <Button
+                onClick={() => toast({
+                  title: '💳 Subscription Coming Soon',
+                  description: 'The 5 USDT/month subscription will be available shortly via NOWPayments & PayPal.',
+                })}
+                className="gap-2 rounded-xl font-semibold text-sm"
+                style={{
+                  background: 'linear-gradient(135deg, #B45309, #92400E)',
+                  color: '#FDE68A',
+                  border: '1px solid rgba(251, 191, 36, 0.3)',
+                }}
+              >
+                <CreditCard className="w-4 h-4" />
+                Subscribe — 5 USDT/month
+              </Button>
+            </SabbathGuard>
+          </motion.div>
+        )}
 
         {/* Scriptural Topics Button */}
         <motion.div
@@ -121,26 +171,28 @@ export default function ScripturalStudyQA() {
                           </button>
                         ))}
 
-                        {/* Go Live Button */}
-                        <div className="mt-2 pt-3 border-t border-amber-800/20">
-                          <Button
-                            onClick={() => setGoLiveDialog({ open: true, topicId: topic.id, topicTitle: topic.title })}
-                            className="w-full gap-2 rounded-xl font-semibold text-sm"
-                            style={{
-                              background: 'linear-gradient(135deg, #B45309, #92400E)',
-                              color: '#FDE68A',
-                              border: '1px solid rgba(251, 191, 36, 0.3)',
-                            }}
-                          >
-                            <Radio className="w-4 h-4" />
-                            Go Live — Schedule SkillDrop Session
-                            <Calendar className="w-4 h-4 ml-auto opacity-60" />
-                          </Button>
-                          <p className="text-amber-700/50 text-[10px] text-center mt-1.5 flex items-center justify-center gap-1">
-                            <Clock className="w-3 h-3" />
-                            Set a date & time for a live study session on this topic
-                          </p>
-                        </div>
+                        {/* Go Live Button — hidden on Sabbath */}
+                        <SabbathGuard>
+                          <div className="mt-2 pt-3 border-t border-amber-800/20">
+                            <Button
+                              onClick={() => setGoLiveDialog({ open: true, topicId: topic.id, topicTitle: topic.title })}
+                              className="w-full gap-2 rounded-xl font-semibold text-sm"
+                              style={{
+                                background: 'linear-gradient(135deg, #B45309, #92400E)',
+                                color: '#FDE68A',
+                                border: '1px solid rgba(251, 191, 36, 0.3)',
+                              }}
+                            >
+                              <Radio className="w-4 h-4" />
+                              Go Live — Schedule SkillDrop Session
+                              <Calendar className="w-4 h-4 ml-auto opacity-60" />
+                            </Button>
+                            <p className="text-amber-700/50 text-[10px] text-center mt-1.5 flex items-center justify-center gap-1">
+                              <Clock className="w-3 h-3" />
+                              Set a date & time for a live study session on this topic
+                            </p>
+                          </div>
+                        </SabbathGuard>
                       </div>
                     </motion.div>
                   )}

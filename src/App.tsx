@@ -204,6 +204,7 @@ import "./utils/errorDetection"; // Initialize error detection
 import "./utils/cookieConfig"; // Configure cookie policy
 import { CallManagerProvider } from '@/providers/CallManagerProvider';
 import EnhancedErrorBoundary from "@/components/error/EnhancedErrorBoundary";
+import { SabbathProvider } from "@/contexts/SabbathContext";
 import { logError } from "@/lib/logging";
 import { NavigationMonitor } from "@/components/monitoring/NavigationMonitor";
 import { DeadLinkDetector } from "@/components/monitoring/DeadLinkDetector";
@@ -256,6 +257,7 @@ const App = () => (
   }}>
     <AuthProvider>
       <AppContextProvider>
+        <SabbathProvider>
         <VisualEditorProvider>
         <CallManagerProvider>
         <BasketProvider>
@@ -1191,6 +1193,7 @@ const App = () => (
         </BasketProvider>
         </CallManagerProvider>
         </VisualEditorProvider>
+        </SabbathProvider>
     </AppContextProvider>
   </AuthProvider>
 </EnhancedErrorBoundary>
