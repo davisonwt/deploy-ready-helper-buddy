@@ -6,6 +6,7 @@ import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { 
   ArrowLeft, 
   TreePine, 
@@ -17,8 +18,14 @@ import {
   ShoppingBag,
   Package,
   ChevronLeft,
-  ChevronRight
+  ChevronRight,
+  Music,
+  GraduationCap,
+  Radio,
+  BookOpen,
+  Clock
 } from 'lucide-react';
+import { format } from 'date-fns';
 
 interface PublicProfile {
   user_id: string;
@@ -47,12 +54,32 @@ interface SeedProduct {
   status: string | null;
 }
 
+interface UserSession {
+  id: string;
+  title: string;
+  mode: string;
+  scheduled_at: string;
+  pricing_type: string;
+  session_fee: number | null;
+  status: string;
+}
+
+interface MusicTrack {
+  id: string;
+  track_title: string;
+  artist_name: string;
+  cover_art_url: string | null;
+  genre: string | null;
+}
+
 export default function PublicProfilePage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const [profile, setProfile] = useState<PublicProfile | null>(null);
   const [points, setPoints] = useState<UserPoints | null>(null);
   const [seeds, setSeeds] = useState<SeedProduct[]>([]);
+  const [userSessions, setUserSessions] = useState<UserSession[]>([]);
+  const [musicTracks, setMusicTracks] = useState<MusicTrack[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -136,6 +163,43 @@ export default function PublicProfilePage() {
           status: b.status,
         }));
         setSeeds([...productSeeds, ...bookSeeds]);
+      }
+
+      // Fetch sessions (classrooms) hosted by this user
+      const { data: sessionsData } = await supabase
+        .from('classroom_sessions')
+        .select('id, title, scheduled_at, pricing_type, session_fee, is_free, status')
+        .eq('instructor_id', userId)
+        .order('scheduled_at', { ascending: false })
+        .limit(20);
+
+      if (sessionsData) {
+        setUserSessions(sessionsData.map((s: any) => ({
+          id: s.id,
+          title: s.title,
+          mode: 'classroom',
+          scheduled_at: s.scheduled_at,
+          pricing_type: s.is_free ? 'free' : (s.pricing_type || 'per_session'),
+          session_fee: s.session_fee,
+          status: s.status,
+        })));
+      }
+
+      // Fetch music by this user (via radio_djs)
+      const { data: djData } = await supabase
+        .from('radio_djs')
+        .select('id')
+        .eq('user_id', userId)
+        .maybeSingle();
+
+      if (djData) {
+        const { data: tracks } = await supabase
+          .from('dj_music_tracks')
+          .select('id, track_title, artist_name, cover_art_url, genre')
+          .eq('dj_id', (djData as any).id)
+          .order('created_at', { ascending: false })
+          .limit(20);
+        if (tracks) setMusicTracks(tracks as any);
       }
 
     } catch (err) {
@@ -293,83 +357,157 @@ export default function PublicProfilePage() {
             </div>
           </div>
 
-          {/* Sower's Seeds - Horizontal Slider */}
-          {seeds.length > 0 && (
-            <div className="pt-4 border-t">
-              <h2 className="text-lg font-bold flex items-center gap-2 mb-4">
-                <ShoppingBag className="h-5 w-5 text-primary" />
-                Seeds Sowed ({seeds.length})
-              </h2>
-              <div className="relative group">
-                {/* Left Arrow */}
-                <button
-                  onClick={() => {
-                    const el = document.getElementById('seeds-slider');
-                    if (el) el.scrollBy({ left: -200, behavior: 'smooth' });
-                  }}
-                  className="absolute left-0 top-1/2 -translate-y-1/2 z-10 w-8 h-8 rounded-full bg-background border shadow-md flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
-                >
-                  <ChevronLeft className="h-4 w-4" />
-                </button>
-                {/* Right Arrow */}
-                <button
-                  onClick={() => {
-                    const el = document.getElementById('seeds-slider');
-                    if (el) el.scrollBy({ left: 200, behavior: 'smooth' });
-                  }}
-                  className="absolute right-0 top-1/2 -translate-y-1/2 z-10 w-8 h-8 rounded-full bg-background border shadow-md flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
-                >
-                  <ChevronRight className="h-4 w-4" />
-                </button>
-                {/* Scrollable container */}
-                <div
-                  id="seeds-slider"
-                  className="flex gap-3 overflow-x-auto scrollbar-hide snap-x snap-mandatory pb-2"
-                  style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
-                >
-                  {seeds.map((seed) => (
-                    <Link key={seed.id} to={`/products/${seed.id}`} className="no-underline flex-shrink-0 w-40 snap-start">
-                      <Card className="overflow-hidden hover:shadow-md transition-shadow cursor-pointer">
-                        <div className="aspect-square bg-muted relative">
-                          {(seed.cover_image_url || seed.image_urls?.[0]) ? (
-                            <img
-                              src={seed.cover_image_url || seed.image_urls?.[0]}
-                              alt={seed.title}
-                              className="w-full h-full object-cover"
-                            />
-                          ) : (
-                            <div className="w-full h-full flex items-center justify-center">
-                              <Package className="h-8 w-8 text-muted-foreground" />
-                            </div>
-                          )}
-                          {seed.type && (
-                            <Badge className="absolute top-1 left-1 text-[10px] px-1.5 py-0.5">
-                              {seed.type}
-                            </Badge>
-                          )}
+          {/* Content Tabs */}
+          <Tabs defaultValue="seeds" className="pt-4 border-t">
+            <TabsList className="w-full grid grid-cols-3">
+              <TabsTrigger value="seeds">
+                <ShoppingBag className="h-3 w-3 mr-1" />
+                Seeds ({seeds.length})
+              </TabsTrigger>
+              <TabsTrigger value="sessions">
+                <GraduationCap className="h-3 w-3 mr-1" />
+                Sessions ({userSessions.length})
+              </TabsTrigger>
+              <TabsTrigger value="music">
+                <Music className="h-3 w-3 mr-1" />
+                Music ({musicTracks.length})
+              </TabsTrigger>
+            </TabsList>
+
+            <TabsContent value="seeds">
+              {seeds.length > 0 ? (
+                <div className="relative group mt-3">
+                  <button
+                    onClick={() => {
+                      const el = document.getElementById('seeds-slider');
+                      if (el) el.scrollBy({ left: -200, behavior: 'smooth' });
+                    }}
+                    className="absolute left-0 top-1/2 -translate-y-1/2 z-10 w-8 h-8 rounded-full bg-background border shadow-md flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                  >
+                    <ChevronLeft className="h-4 w-4" />
+                  </button>
+                  <button
+                    onClick={() => {
+                      const el = document.getElementById('seeds-slider');
+                      if (el) el.scrollBy({ left: 200, behavior: 'smooth' });
+                    }}
+                    className="absolute right-0 top-1/2 -translate-y-1/2 z-10 w-8 h-8 rounded-full bg-background border shadow-md flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                  >
+                    <ChevronRight className="h-4 w-4" />
+                  </button>
+                  <div
+                    id="seeds-slider"
+                    className="flex gap-3 overflow-x-auto scrollbar-hide snap-x snap-mandatory pb-2"
+                    style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+                  >
+                    {seeds.map((seed) => (
+                      <Link key={seed.id} to={`/products/${seed.id}`} className="no-underline flex-shrink-0 w-40 snap-start">
+                        <Card className="overflow-hidden hover:shadow-md transition-shadow cursor-pointer">
+                          <div className="aspect-square bg-muted relative">
+                            {(seed.cover_image_url || seed.image_urls?.[0]) ? (
+                              <img
+                                src={seed.cover_image_url || seed.image_urls?.[0]}
+                                alt={seed.title}
+                                className="w-full h-full object-cover"
+                              />
+                            ) : (
+                              <div className="w-full h-full flex items-center justify-center">
+                                <Package className="h-8 w-8 text-muted-foreground" />
+                              </div>
+                            )}
+                            {seed.type && (
+                              <Badge className="absolute top-1 left-1 text-[10px] px-1.5 py-0.5">
+                                {seed.type}
+                              </Badge>
+                            )}
+                          </div>
+                          <CardContent className="p-2">
+                            <p className="text-sm font-semibold truncate">{seed.title}</p>
+                            {seed.price != null && (
+                              <p className="text-xs text-muted-foreground">
+                                ${seed.price.toFixed(2)}
+                              </p>
+                            )}
+                          </CardContent>
+                        </Card>
+                      </Link>
+                    ))}
+                  </div>
+                </div>
+              ) : (
+                <div className="text-center py-6">
+                  <Package className="h-10 w-10 mx-auto text-muted-foreground mb-2" />
+                  <p className="text-sm text-muted-foreground">No seeds sowed yet</p>
+                </div>
+              )}
+            </TabsContent>
+
+            <TabsContent value="sessions">
+              {userSessions.length > 0 ? (
+                <div className="space-y-2 mt-3">
+                  {userSessions.map(session => (
+                    <Card key={session.id} className="overflow-hidden">
+                      <CardContent className="p-3 flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
+                          <GraduationCap className="h-5 w-5 text-primary" />
                         </div>
-                        <CardContent className="p-2">
-                          <p className="text-sm font-semibold truncate">{seed.title}</p>
-                          {seed.price != null && (
-                            <p className="text-xs text-muted-foreground">
-                              ${seed.price.toFixed(2)}
-                            </p>
-                          )}
-                        </CardContent>
-                      </Card>
-                    </Link>
+                        <div className="flex-1 min-w-0">
+                          <p className="font-semibold text-sm truncate">{session.title}</p>
+                          <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                            <Clock className="h-3 w-3" />
+                            <span>{format(new Date(session.scheduled_at), 'MMM d, h:mm a')}</span>
+                            <Badge variant={session.status === 'live' ? 'destructive' : 'secondary'} className="text-[9px] px-1 py-0">
+                              {session.status === 'live' ? '🔴 LIVE' : session.status}
+                            </Badge>
+                          </div>
+                        </div>
+                        <Badge variant="outline" className="text-[10px] flex-shrink-0">
+                          {session.pricing_type === 'free' ? 'FREE' : session.pricing_type === 'monthly' ? `$${session.session_fee}/mo` : `$${session.session_fee}`}
+                        </Badge>
+                      </CardContent>
+                    </Card>
                   ))}
                 </div>
-              </div>
-            </div>
-          )}
+              ) : (
+                <div className="text-center py-6">
+                  <GraduationCap className="h-10 w-10 mx-auto text-muted-foreground mb-2" />
+                  <p className="text-sm text-muted-foreground">No sessions yet</p>
+                </div>
+              )}
+            </TabsContent>
 
-          {seeds.length === 0 && !loading && (
-            <div className="pt-4 border-t text-center py-6">
-              <Package className="h-10 w-10 mx-auto text-muted-foreground mb-2" />
-              <p className="text-sm text-muted-foreground">No seeds sowed yet</p>
-            </div>
-          )}
+            <TabsContent value="music">
+              {musicTracks.length > 0 ? (
+                <div className="space-y-2 mt-3">
+                  {musicTracks.map(track => (
+                    <Card key={track.id} className="overflow-hidden">
+                      <CardContent className="p-3 flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
+                          {track.cover_art_url ? (
+                            <img src={track.cover_art_url} alt={track.track_title} className="w-full h-full object-cover rounded-lg" />
+                          ) : (
+                            <Music className="h-5 w-5 text-primary" />
+                          )}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="font-semibold text-sm truncate">{track.track_title}</p>
+                          <p className="text-xs text-muted-foreground">{track.artist_name}</p>
+                        </div>
+                        {track.genre && (
+                          <Badge variant="outline" className="text-[10px] flex-shrink-0">{track.genre}</Badge>
+                        )}
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-6">
+                  <Music className="h-10 w-10 mx-auto text-muted-foreground mb-2" />
+                  <p className="text-sm text-muted-foreground">No music tracks yet</p>
+                </div>
+              )}
+            </TabsContent>
+          </Tabs>
 
           {/* Return to Forest Button */}
           <Button 

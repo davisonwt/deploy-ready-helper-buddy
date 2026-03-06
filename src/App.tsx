@@ -155,6 +155,7 @@ const EternalForestPage = lazy(() => import("./pages/EternalForestPage"));
 const ScripturalStudyQA = lazy(() => import("./pages/ScripturalStudyQA"));
 const StudyAnswerPage = lazy(() => import("./pages/StudyAnswerPage"));
 const MemryPage = lazy(() => import("./pages/MemryPage"));
+const ExploreSessionsPage = lazy(() => import("./pages/ExploreSessionsPage"));
 
 // Community Drivers
 const RegisterVehiclePage = lazy(() => import("./pages/RegisterVehiclePage"));
@@ -844,6 +845,14 @@ const App = () => (
                 <ProtectedRoute>
                   <Layout>
                     <MemryPage />
+                  </Layout>
+                </ProtectedRoute>
+              } />
+
+              <Route path="/explore-sessions" element={
+                <ProtectedRoute>
+                  <Layout>
+                    <ExploreSessionsPage />
                   </Layout>
                 </ProtectedRoute>
               } />
