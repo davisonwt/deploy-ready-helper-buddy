@@ -8853,6 +8853,7 @@ export type Database = {
         Args: { user_id_param?: string }
         Returns: number
       }
+      get_vault_secret: { Args: { secret_name: string }; Returns: string }
       get_weekly_leaderboard: {
         Args: { limit_count?: number }
         Returns: {
