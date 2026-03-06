@@ -1193,6 +1193,7 @@ const App = () => (
         </BasketProvider>
         </CallManagerProvider>
         </VisualEditorProvider>
+        </SabbathProvider>
     </AppContextProvider>
   </AuthProvider>
 </EnhancedErrorBoundary>
