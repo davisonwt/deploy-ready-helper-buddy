@@ -7,7 +7,7 @@ interface JitsiButtonProps {
   orchardPassword?: string;
 }
 
-// 1. Start a Classroom / Lecture
+// 1. Start a Classroom / SkillDrop
 export function StartClassroomButton({ className = '' }: JitsiButtonProps) {
   const handleStart = () => {
     startJitsiCall('Classroom-2025', 'Teacher Davison', 's2gclass123');

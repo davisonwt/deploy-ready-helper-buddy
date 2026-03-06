@@ -1,12 +1,17 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { ChevronDown, ChevronRight, BookOpen, Flame, ArrowLeft } from 'lucide-react'
+import { ChevronDown, ChevronRight, BookOpen, Flame, ArrowLeft, Radio, Calendar, Clock } from 'lucide-react'
 import { scripturalTopics } from '@/data/scripturalTopics'
 import { motion, AnimatePresence } from 'framer-motion'
+import { Button } from '@/components/ui/button'
+import { ScheduleSkillDropDialog } from '@/components/communication/ScheduleSkillDropDialog'
 
 export default function ScripturalStudyQA() {
   const navigate = useNavigate()
   const [expandedTopic, setExpandedTopic] = useState<string | null>(null)
+  const [goLiveDialog, setGoLiveDialog] = useState<{ open: boolean; topicId?: string; topicTitle?: string }>({
+    open: false,
+  })
 
   return (
     <div className="min-h-screen relative" style={{ background: 'linear-gradient(180deg, #2C1810 0%, #1A0F0A 50%, #0D0705 100%)' }}>
@@ -87,7 +92,7 @@ export default function ScripturalStudyQA() {
                   }
                 </button>
 
-                {/* Questions List */}
+                {/* Questions List + Go Live */}
                 <AnimatePresence>
                   {isExpanded && (
                     <motion.div
@@ -98,7 +103,7 @@ export default function ScripturalStudyQA() {
                       className="overflow-hidden"
                     >
                       <div className="border-t border-amber-800/20 px-4 pb-3">
-                        {topic.questions.map((q, qIdx) => (
+                        {topic.questions.map((q) => (
                           <button
                             key={q.id}
                             onClick={() => navigate(`/scriptural-study/${topic.id}/${q.id}`)}
@@ -110,6 +115,27 @@ export default function ScripturalStudyQA() {
                             </span>
                           </button>
                         ))}
+
+                        {/* Go Live Button */}
+                        <div className="mt-2 pt-3 border-t border-amber-800/20">
+                          <Button
+                            onClick={() => setGoLiveDialog({ open: true, topicId: topic.id, topicTitle: topic.title })}
+                            className="w-full gap-2 rounded-xl font-semibold text-sm"
+                            style={{
+                              background: 'linear-gradient(135deg, #B45309, #92400E)',
+                              color: '#FDE68A',
+                              border: '1px solid rgba(251, 191, 36, 0.3)',
+                            }}
+                          >
+                            <Radio className="w-4 h-4" />
+                            Go Live — Schedule SkillDrop Session
+                            <Calendar className="w-4 h-4 ml-auto opacity-60" />
+                          </Button>
+                          <p className="text-amber-700/50 text-[10px] text-center mt-1.5 flex items-center justify-center gap-1">
+                            <Clock className="w-3 h-3" />
+                            Set a date & time for a live study session on this topic
+                          </p>
+                        </div>
                       </div>
                     </motion.div>
                   )}
@@ -127,6 +153,15 @@ export default function ScripturalStudyQA() {
           <p className="text-amber-700/60 text-[10px] mt-1 italic tracking-widest uppercase">Cloud of Witnesses</p>
         </div>
       </div>
+
+      {/* Schedule SkillDrop Dialog */}
+      <ScheduleSkillDropDialog
+        open={goLiveDialog.open}
+        onOpenChange={(open) => setGoLiveDialog(prev => ({ ...prev, open }))}
+        onSuccess={() => setGoLiveDialog({ open: false })}
+        topicId={goLiveDialog.topicId}
+        topicTitle={goLiveDialog.topicTitle}
+      />
     </div>
   )
 }

@@ -8,26 +8,37 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
 
-interface ScheduleLectureDialogProps {
+interface ScheduleSkillDropDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onSuccess: () => void;
+  topicId?: string;
+  topicTitle?: string;
 }
 
-export const ScheduleLectureDialog: React.FC<ScheduleLectureDialogProps> = ({
+export const ScheduleSkillDropDialog: React.FC<ScheduleSkillDropDialogProps> = ({
   open,
   onOpenChange,
   onSuccess,
+  topicId,
+  topicTitle,
 }) => {
   const { user } = useAuth();
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
-    title: '',
+    title: topicTitle ? `SkillDrop: ${topicTitle}` : '',
     description: '',
     scheduled_at: '',
     duration_minutes: 45,
   });
+
+  // Update title when topicTitle changes
+  React.useEffect(() => {
+    if (topicTitle) {
+      setFormData(prev => ({ ...prev, title: `SkillDrop: ${topicTitle}` }));
+    }
+  }, [topicTitle]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -35,7 +46,7 @@ export const ScheduleLectureDialog: React.FC<ScheduleLectureDialogProps> = ({
 
     setLoading(true);
     try {
-      const { error } = await supabase.from('lecture_halls').insert({
+      const { error } = await supabase.from('skilldrop_sessions' as any).insert({
         title: formData.title,
         description: formData.description,
         scheduled_at: new Date(formData.scheduled_at).toISOString(),
@@ -43,13 +54,14 @@ export const ScheduleLectureDialog: React.FC<ScheduleLectureDialogProps> = ({
         presenter_id: user.id,
         status: 'scheduled',
         attendees_count: 0,
-      });
+        topic_id: topicId || null,
+      } as any);
 
       if (error) throw error;
 
       toast({
-        title: 'Lecture Scheduled',
-        description: 'Your lecture has been scheduled successfully!',
+        title: 'SkillDrop Scheduled',
+        description: 'Your SkillDrop session has been scheduled successfully!',
       });
 
       onOpenChange(false);
@@ -75,16 +87,16 @@ export const ScheduleLectureDialog: React.FC<ScheduleLectureDialogProps> = ({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="glass-card bg-background/95 border-primary/20 max-w-lg">
         <DialogHeader>
-          <DialogTitle className="text-2xl">Schedule Lecture</DialogTitle>
+          <DialogTitle className="text-2xl">Schedule SkillDrop</DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <Label htmlFor="title">Lecture Title</Label>
+            <Label htmlFor="title">Session Title</Label>
             <Input
               id="title"
               value={formData.title}
               onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-              placeholder="Advanced JavaScript Patterns"
+              placeholder="Scriptural Study: The Time Is Near"
               required
             />
           </div>
@@ -95,7 +107,7 @@ export const ScheduleLectureDialog: React.FC<ScheduleLectureDialogProps> = ({
               id="description"
               value={formData.description}
               onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-              placeholder="What topics will be covered?"
+              placeholder="What topics will be covered in this session?"
               rows={4}
             />
           </div>
@@ -131,7 +143,7 @@ export const ScheduleLectureDialog: React.FC<ScheduleLectureDialogProps> = ({
               Cancel
             </Button>
             <Button type="submit" disabled={loading}>
-              {loading ? 'Scheduling...' : 'Schedule Lecture'}
+              {loading ? 'Scheduling...' : 'Schedule SkillDrop'}
             </Button>
           </div>
         </form>

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { GraduationCap, Users, Calendar, Presentation, Plus, MessageCircle } from 'lucide-react';
+import { Zap, Users, Calendar, Presentation, Plus, MessageCircle } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -9,10 +9,10 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { formatDistanceToNow } from 'date-fns';
 import { useToast } from '@/hooks/use-toast';
-import { ScheduleLectureDialog } from './ScheduleLectureDialog';
+import { ScheduleSkillDropDialog } from './ScheduleSkillDropDialog';
 import JitsiRoom from '@/components/jitsi/JitsiRoom';
 
-interface LectureHall {
+interface SkillDropSession {
   id: string;
   title: string;
   description: string | null;
@@ -22,28 +22,29 @@ interface LectureHall {
   status: string | null;
   presenter_id: string;
   presenter_profile_id: string | null;
+  topic_id: string | null;
   profiles?: {
     display_name: string | null;
     avatar_url: string | null;
   };
 }
 
-export const LectureMode: React.FC = () => {
+export const SkillDropMode: React.FC = () => {
   const { user, profile } = useAuth();
   const { toast } = useToast();
-  const [lectures, setLectures] = useState<LectureHall[]>([]);
+  const [sessions, setSessions] = useState<SkillDropSession[]>([]);
   const [loading, setLoading] = useState(true);
   const [scheduleDialogOpen, setScheduleDialogOpen] = useState(false);
-  const [activeLecture, setActiveLecture] = useState<LectureHall | null>(null);
+  const [activeSession, setActiveSession] = useState<SkillDropSession | null>(null);
 
   useEffect(() => {
-    loadLectures();
+    loadSessions();
   }, []);
 
-  const loadLectures = async () => {
+  const loadSessions = async () => {
     try {
       const { data, error } = await supabase
-        .from('lecture_halls')
+        .from('skilldrop_sessions' as any)
         .select(`
           *,
           profiles:presenter_profile_id (
@@ -55,43 +56,42 @@ export const LectureMode: React.FC = () => {
         .limit(20);
 
       if (error) throw error;
-      setLectures(data || []);
+      setSessions((data as any) || []);
     } catch (error) {
-      console.error('Error loading lectures:', error);
+      console.error('Error loading SkillDrop sessions:', error);
     } finally {
       setLoading(false);
     }
   };
 
-  const attendLecture = (lecture: LectureHall) => {
-    setActiveLecture(lecture);
+  const joinSession = (session: SkillDropSession) => {
+    setActiveSession(session);
     toast({
-      title: 'Joining Lecture',
-      description: `Connecting to ${lecture.title}...`,
+      title: 'Joining SkillDrop',
+      description: `Connecting to ${session.title}...`,
     });
   };
 
-  const leaveLecture = () => {
-    setActiveLecture(null);
+  const leaveSession = () => {
+    setActiveSession(null);
     toast({
-      title: 'Left Lecture',
-      description: 'You have left the lecture hall.',
+      title: 'Left SkillDrop',
+      description: 'You have left the session.',
     });
   };
 
-  // Show JitsiRoom when in active lecture
-  if (activeLecture) {
-    const isPresenter = user?.id === activeLecture.presenter_id;
+  if (activeSession) {
+    const isPresenter = user?.id === activeSession.presenter_id;
     const displayName = profile?.display_name || user?.email?.split('@')[0] || 'Attendee';
-    const roomName = `lecture_${activeLecture.id.replace(/-/g, '')}`;
+    const roomName = `skilldrop_${activeSession.id.replace(/-/g, '')}`;
 
     return (
       <div className="h-full flex flex-col">
         <div className="flex items-center justify-between p-4 glass-card mb-4">
           <div>
-            <h2 className="text-xl font-bold text-white">{activeLecture.title}</h2>
+            <h2 className="text-xl font-bold text-white">{activeSession.title}</h2>
             <p className="text-white/70 text-sm">
-              {isPresenter ? 'You are the presenter' : `Presenter: ${activeLecture.profiles?.display_name || 'Unknown'}`}
+              {isPresenter ? 'You are the presenter' : `Presenter: ${activeSession.profiles?.display_name || 'Unknown'}`}
             </p>
           </div>
           <Badge variant={isPresenter ? 'default' : 'outline'} className="text-white">
@@ -103,7 +103,7 @@ export const LectureMode: React.FC = () => {
           <JitsiRoom
             roomName={roomName}
             displayName={displayName}
-            onLeave={leaveLecture}
+            onLeave={leaveSession}
             isModerator={isPresenter}
           />
         </div>
@@ -131,8 +131,8 @@ export const LectureMode: React.FC = () => {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-3xl font-bold text-white mb-2">Lecture Halls</h2>
-          <p className="text-white/80">Attend presentations and participate in Q&A sessions</p>
+          <h2 className="text-3xl font-bold text-white mb-2">SkillDrop Sessions</h2>
+          <p className="text-white/80">Join live sessions, Q&A, and interactive study drops</p>
         </div>
         <Button 
           className="gap-2" 
@@ -140,28 +140,28 @@ export const LectureMode: React.FC = () => {
           style={{ backgroundColor: '#17A2B8', color: 'white', border: '2px solid #0A1931' }}
         >
           <Plus className="w-4 h-4" />
-          Schedule Lecture
+          Schedule SkillDrop
         </Button>
       </div>
 
-      {/* Lecture List */}
+      {/* Session List */}
       <div className="grid gap-4">
-        {lectures.length === 0 ? (
+        {sessions.length === 0 ? (
           <Card className="glass-card bg-transparent border border-primary/20">
             <CardContent className="p-12 text-center">
-              <GraduationCap className="w-16 h-16 mx-auto mb-4 text-primary/50" />
-              <h3 className="text-xl font-semibold text-white mb-2">No Scheduled Lectures</h3>
-              <p className="text-white/70 mb-4">Be the first to schedule a presentation</p>
+              <Zap className="w-16 h-16 mx-auto mb-4 text-primary/50" />
+              <h3 className="text-xl font-semibold text-white mb-2">No Scheduled SkillDrops</h3>
+              <p className="text-white/70 mb-4">Be the first to schedule a live session</p>
               <Button onClick={() => setScheduleDialogOpen(true)}>
                 <Plus className="w-4 h-4 mr-2" />
-                Schedule Lecture
+                Schedule SkillDrop
               </Button>
             </CardContent>
           </Card>
         ) : (
-          lectures.map((lecture, index) => (
+          sessions.map((session, index) => (
             <motion.div
-              key={lecture.id}
+              key={session.id}
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: index * 0.1 }}
@@ -170,49 +170,54 @@ export const LectureMode: React.FC = () => {
                 <CardContent className="p-6">
                   <div className="flex items-start gap-4">
                     <Avatar className="w-12 h-12 border-2 border-primary/30">
-                      <AvatarImage src={lecture.profiles?.avatar_url || undefined} />
+                      <AvatarImage src={session.profiles?.avatar_url || undefined} />
                       <AvatarFallback className="bg-primary/20 text-white">
-                        {lecture.profiles?.display_name?.charAt(0) || 'P'}
+                        {session.profiles?.display_name?.charAt(0) || 'P'}
                       </AvatarFallback>
                     </Avatar>
 
                     <div className="flex-1">
                       <div className="flex items-start justify-between mb-2">
                         <div>
-                          <h3 className="text-xl font-bold text-white mb-1">{lecture.title}</h3>
+                          <h3 className="text-xl font-bold text-white mb-1">{session.title}</h3>
                           <p className="text-sm text-white/70">
-                            Presenter: {lecture.profiles?.display_name || 'Unknown'}
+                            Presenter: {session.profiles?.display_name || 'Unknown'}
                           </p>
                         </div>
                         <Badge variant="outline" className="text-white border-primary/30">
-                          {lecture.status || 'scheduled'}
+                          {session.status || 'scheduled'}
                         </Badge>
                       </div>
 
-                      {lecture.description && (
-                        <p className="text-white/80 mb-3">{lecture.description}</p>
+                      {session.description && (
+                        <p className="text-white/80 mb-3">{session.description}</p>
                       )}
 
                       <div className="flex flex-wrap gap-4 text-sm text-white/70 mb-4">
                         <div className="flex items-center gap-1">
                           <Calendar className="w-4 h-4" />
-                          {formatDistanceToNow(new Date(lecture.scheduled_at), { addSuffix: true })}
+                          {formatDistanceToNow(new Date(session.scheduled_at), { addSuffix: true })}
                         </div>
-                        {lecture.attendees_count !== null && (
+                        {session.attendees_count !== null && (
                           <div className="flex items-center gap-1">
                             <Users className="w-4 h-4" />
-                            {lecture.attendees_count} attending
+                            {session.attendees_count} attending
                           </div>
+                        )}
+                        {session.topic_id && (
+                          <Badge variant="secondary" className="text-xs">
+                            📖 Study Topic
+                          </Badge>
                         )}
                       </div>
 
                       <div className="flex gap-2">
                         <Button 
-                          onClick={() => attendLecture(lecture)}
+                          onClick={() => joinSession(session)}
                           className="gap-2"
                         >
                           <Presentation className="w-4 h-4" />
-                          Attend Lecture
+                          Join SkillDrop
                         </Button>
                         <Button variant="outline" className="gap-2">
                           <MessageCircle className="w-4 h-4" />
@@ -228,10 +233,10 @@ export const LectureMode: React.FC = () => {
         )}
       </div>
 
-      <ScheduleLectureDialog
+      <ScheduleSkillDropDialog
         open={scheduleDialogOpen}
         onOpenChange={setScheduleDialogOpen}
-        onSuccess={loadLectures}
+        onSuccess={loadSessions}
       />
     </div>
   );

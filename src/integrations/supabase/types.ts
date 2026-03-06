@@ -2554,79 +2554,6 @@ export type Database = {
         }
         Relationships: []
       }
-      lecture_halls: {
-        Row: {
-          attendees_count: number | null
-          circle_id: string | null
-          created_at: string | null
-          description: string | null
-          duration_minutes: number | null
-          id: string
-          presenter_id: string
-          presenter_profile_id: string | null
-          recording_url: string | null
-          scheduled_at: string
-          slides_url: string | null
-          status: string | null
-          title: string
-          updated_at: string | null
-        }
-        Insert: {
-          attendees_count?: number | null
-          circle_id?: string | null
-          created_at?: string | null
-          description?: string | null
-          duration_minutes?: number | null
-          id?: string
-          presenter_id: string
-          presenter_profile_id?: string | null
-          recording_url?: string | null
-          scheduled_at: string
-          slides_url?: string | null
-          status?: string | null
-          title: string
-          updated_at?: string | null
-        }
-        Update: {
-          attendees_count?: number | null
-          circle_id?: string | null
-          created_at?: string | null
-          description?: string | null
-          duration_minutes?: number | null
-          id?: string
-          presenter_id?: string
-          presenter_profile_id?: string | null
-          recording_url?: string | null
-          scheduled_at?: string
-          slides_url?: string | null
-          status?: string | null
-          title?: string
-          updated_at?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "lecture_halls_circle_id_fkey"
-            columns: ["circle_id"]
-            isOneToOne: false
-            referencedRelation: "circles"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "lecture_halls_presenter_profile_id_fkey"
-            columns: ["presenter_profile_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "lecture_halls_presenter_profile_id_fkey"
-            columns: ["presenter_profile_id"]
-            isOneToOne: false
-            referencedRelation: "profiles_public"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       live_call_participants: {
         Row: {
           call_session_id: string
@@ -6708,6 +6635,85 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      skilldrop_sessions: {
+        Row: {
+          attendees_count: number | null
+          circle_id: string | null
+          created_at: string | null
+          description: string | null
+          duration_minutes: number | null
+          id: string
+          presenter_id: string
+          presenter_profile_id: string | null
+          recording_url: string | null
+          scheduled_at: string
+          slides_url: string | null
+          status: string | null
+          title: string
+          topic_id: string | null
+          topic_question_id: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          attendees_count?: number | null
+          circle_id?: string | null
+          created_at?: string | null
+          description?: string | null
+          duration_minutes?: number | null
+          id?: string
+          presenter_id: string
+          presenter_profile_id?: string | null
+          recording_url?: string | null
+          scheduled_at: string
+          slides_url?: string | null
+          status?: string | null
+          title: string
+          topic_id?: string | null
+          topic_question_id?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          attendees_count?: number | null
+          circle_id?: string | null
+          created_at?: string | null
+          description?: string | null
+          duration_minutes?: number | null
+          id?: string
+          presenter_id?: string
+          presenter_profile_id?: string | null
+          recording_url?: string | null
+          scheduled_at?: string
+          slides_url?: string | null
+          status?: string | null
+          title?: string
+          topic_id?: string | null
+          topic_question_id?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "lecture_halls_circle_id_fkey"
+            columns: ["circle_id"]
+            isOneToOne: false
+            referencedRelation: "circles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "lecture_halls_presenter_profile_id_fkey"
+            columns: ["presenter_profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "lecture_halls_presenter_profile_id_fkey"
+            columns: ["presenter_profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles_public"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       song_votes: {
         Row: {
