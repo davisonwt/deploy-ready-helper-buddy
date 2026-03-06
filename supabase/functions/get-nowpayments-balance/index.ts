@@ -53,27 +53,23 @@ serve(async (req) => {
       });
     }
 
-    // Load API keys from organization_wallets table for both wallets
-    const { data: wallets, error: walletsError } = await serviceClient
-      .from('organization_wallets')
-      .select('wallet_name, api_key')
-      .in('wallet_name', ['s2gholding', 's2gbestow'])
-      .eq('is_active', true);
-
-    if (walletsError) {
-      console.error('Error loading wallet configs:', walletsError);
-    }
-
+    // Load API keys from Vault (encrypted at rest) instead of plaintext DB columns
     const walletApiKeys: Record<string, string> = {};
-    if (wallets) {
-      for (const w of wallets) {
-        if (w.api_key) {
-          walletApiKeys[w.wallet_name] = w.api_key;
-        }
-      }
-    }
+    const walletNames = ['s2gholding', 's2gbestow'];
 
-    // Fall back to global env key if no per-wallet keys found
+    await Promise.all(walletNames.map(async (name) => {
+      const { data: apiKey, error: vaultErr } = await serviceClient.rpc('get_vault_secret', {
+        secret_name: `${name}_api_key`
+      });
+      if (vaultErr) {
+        console.error(`Vault lookup error for ${name}:`, vaultErr.message);
+      }
+      if (apiKey) {
+        walletApiKeys[name] = apiKey;
+      }
+    }));
+
+    // Fall back to global env key if no Vault key found for s2gholding
     if (!walletApiKeys['s2gholding'] && globalApiKey) {
       walletApiKeys['s2gholding'] = globalApiKey;
     }
@@ -103,8 +99,6 @@ serve(async (req) => {
 
     // Fetch balance for each wallet that has an API key
     const results: Record<string, { currencies: Array<{ currency: string; amount: number }>; error?: string }> = {};
-
-    const walletNames = ['s2gholding', 's2gbestow'];
 
     await Promise.all(walletNames.map(async (name) => {
       const apiKey = walletApiKeys[name];
