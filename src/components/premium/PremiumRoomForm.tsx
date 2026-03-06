@@ -9,6 +9,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { Upload, FileText, Image, Music, X } from 'lucide-react';
+import { SessionPricingSelector, PricingType } from '@/components/SessionPricingSelector';
 
 interface FileItem {
   id: string;
@@ -267,20 +268,17 @@ export const PremiumRoomForm = ({ roomId }: PremiumRoomFormProps) => {
               />
             </div>
 
+            {/* Pricing Model */}
+            <SessionPricingSelector
+              pricingType={(formData.price === 0 ? 'free' : 'per_session') as PricingType}
+              onPricingTypeChange={(type) => setFormData({...formData, price: type === 'free' ? 0 : formData.price || 5})}
+              sessionFee={formData.price}
+              onSessionFeeChange={(fee) => setFormData({...formData, price: fee})}
+              sessionLabel="Premium Room"
+              currency="USDC"
+            />
+
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="price">Room Access Price (USDC)</Label>
-                <Input
-                  id="price"
-                  type="number"
-                  min="0"
-                  step="0.01"
-                  value={formData.price}
-                  onChange={(e) => setFormData({...formData, price: parseFloat(e.target.value) || 0})}
-                  placeholder="0.00"
-                />
-                <p className="text-xs text-muted-foreground">Set to 0 for free access</p>
-              </div>
               
               <div className="space-y-2">
                 <Label htmlFor="maxParticipants">Max Participants</Label>

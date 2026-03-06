@@ -100,7 +100,9 @@ export function EnhancedScheduleShowForm({ open, onClose, djProfile }) {
   const [scheduleData, setScheduleData] = useState({
     time_slot_date: new Date().toISOString().split('T')[0],
     slot_index: Math.floor(new Date().getHours() / 2),
-    show_notes: ''
+    show_notes: '',
+    pricing_type: 'free',
+    price: 5
   })
   const [uploadedFiles, setUploadedFiles] = useState({})
   const [uploading, setUploading] = useState(false)
@@ -576,6 +578,39 @@ export function EnhancedScheduleShowForm({ open, onClose, djProfile }) {
                 sanitizeType="text"
                 rows={2}
               />
+            </div>
+
+            {/* Pricing - imported dynamically to avoid JSX issues */}
+            <div className="space-y-3">
+              <Label className="text-sm font-semibold">Show Pricing</Label>
+              <div className="grid grid-cols-3 gap-2">
+                {['free', 'per_session', 'monthly'].map(type => (
+                  <Button
+                    key={type}
+                    type="button"
+                    variant={scheduleData.pricing_type === type ? 'default' : 'outline'}
+                    size="sm"
+                    onClick={() => setScheduleData(prev => ({ ...prev, pricing_type: type }))}
+                  >
+                    {type === 'free' ? '🎁 Free' : type === 'per_session' ? '💰 Per Show' : '🔄 Monthly'}
+                  </Button>
+                ))}
+              </div>
+              {scheduleData.pricing_type && scheduleData.pricing_type !== 'free' && (
+                <div>
+                  <Label htmlFor="show_price">Fee (USDT)</Label>
+                  <SecureInput
+                    id="show_price"
+                    type="number"
+                    min="1"
+                    step="0.5"
+                    value={scheduleData.price || 5}
+                    onChange={(e) => setScheduleData(prev => ({ ...prev, price: parseFloat(e.target.value) || 5 }))}
+                    placeholder="5.00"
+                  />
+                  <p className="text-xs text-muted-foreground mt-1">You earn 85% · 10% tithing · 5% admin</p>
+                </div>
+              )}
             </div>
 
             <div className="p-4 bg-blue-50 dark:bg-blue-950/20 rounded-lg border border-blue-200 dark:border-blue-800">
