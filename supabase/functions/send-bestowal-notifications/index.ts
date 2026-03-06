@@ -24,6 +24,28 @@ const handler = async (req: Request): Promise<Response> => {
   }
 
   try {
+    // --- Authentication: require a valid service-role or authenticated user JWT ---
+    const authHeader = req.headers.get('Authorization');
+    if (!authHeader?.startsWith('Bearer ')) {
+      return new Response(
+        JSON.stringify({ error: 'Unauthorized' }),
+        { status: 401, headers: { "Content-Type": "application/json", ...corsHeaders } }
+      );
+    }
+
+    const token = authHeader.replace('Bearer ', '');
+    const authClient = createClient(supabaseUrl, Deno.env.get('SUPABASE_ANON_KEY')!, {
+      global: { headers: { Authorization: `Bearer ${token}` } }
+    });
+    const { data: claimsData, error: claimsError } = await authClient.auth.getClaims(token);
+    if (claimsError || !claimsData?.claims) {
+      return new Response(
+        JSON.stringify({ error: 'Unauthorized' }),
+        { status: 401, headers: { "Content-Type": "application/json", ...corsHeaders } }
+      );
+    }
+    // --- End authentication ---
+
     const { bestowAlId, type }: BestowAlNotificationRequest = await req.json();
     
     console.log(`Processing bestowal notification: ${type} for ${bestowAlId}`);
@@ -81,7 +103,7 @@ const handler = async (req: Request): Promise<Response> => {
 
     let subject = "";
     let bestowerHtml = "";
-    let sowerEmails: string[] = [];
+    let notifySower = false;
 
     switch (type) {
       case 'created':
@@ -156,15 +178,7 @@ const handler = async (req: Request): Promise<Response> => {
             </div>
           </div>
         `;
-        
-        // Notify orchard owner
-        if (bestowal.orchards?.user_id) {
-          const { data: sowerAuth, error: sowerAuthError } = await supabase.auth.admin.getUserById(bestowal.orchards.user_id);
-          
-          if (!sowerAuthError && sowerAuth.user?.email) {
-            sowerEmails.push(sowerAuth.user.email);
-          }
-        }
+        notifySower = true;
         break;
 
       case 'failed':
@@ -192,13 +206,6 @@ const handler = async (req: Request): Promise<Response> => {
               </ul>
             </div>
             
-            <div style="text-align: center; margin: 30px 0;">
-              <a href="${supabaseUrl.replace('.supabase.co', '')}/orchard/${bestowal.orchard_id}" 
-                 style="background-color: #22c55e; color: white; padding: 15px 30px; text-decoration: none; border-radius: 8px; font-weight: bold; display: inline-block; font-size: 16px;">
-                Try Again
-              </a>
-            </div>
-            
             <div style="border-top: 1px solid #eee; margin-top: 30px; padding-top: 20px; text-align: center;">
               <p style="font-size: 12px; color: #999; margin: 0;">
                 If you continue to experience issues, please contact support@sow2grow.online
@@ -220,62 +227,61 @@ const handler = async (req: Request): Promise<Response> => {
     console.log("Bestower notification sent:", bestowerEmailResponse);
 
     // Send notification to sower if bestowal completed
-    if (type === 'completed' && sowerEmails.length > 0) {
-      const sowerSubject = `🎉 New Bestowal Received - ${bestowal.orchards?.title}`;
-      const sowerHtml = `
-        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
-          <div style="text-align: center; margin-bottom: 30px;">
-            <h1 style="color: #22c55e; margin: 0;">🎉 New Bestowal Received!</h1>
-          </div>
-          
-          <p style="font-size: 16px; line-height: 1.6; color: #333;">
-            Dear ${sowerName},
-          </p>
-          
-          <p style="font-size: 16px; line-height: 1.6; color: #333;">
-            Wonderful news! You've received a new bestowal for your orchard <strong>"${bestowal.orchards?.title}"</strong>.
-          </p>
-          
-          <div style="background: #f0fdf4; border-left: 4px solid #22c55e; padding: 20px; margin: 20px 0; border-radius: 4px;">
-            <h3 style="margin: 0 0 10px 0; color: #22c55e;">Bestowal Details:</h3>
-            <p style="margin: 5px 0; color: #333;"><strong>From:</strong> ${bestowerName}</p>
-            <p style="margin: 5px 0; color: #333;"><strong>Amount:</strong> ${bestowal.amount} ${bestowal.currency}</p>
-            <p style="margin: 5px 0; color: #333;"><strong>Pockets Filled:</strong> ${bestowal.pockets_count}</p>
-            ${bestowal.message ? `<p style="margin: 5px 0; color: #333;"><strong>Message:</strong> "${bestowal.message}"</p>` : ''}
-          </div>
-          
-          <p style="font-size: 14px; line-height: 1.6; color: #666;">
-            This brings you closer to your orchard goal! Keep nurturing your vision and engaging with your community.
-          </p>
-          
-          <div style="border-top: 1px solid #eee; margin-top: 30px; padding-top: 20px; text-align: center;">
-            <p style="font-size: 14px; color: #666; margin: 0;">
-              Your orchard is growing! 🌱 → 🌳
+    if (notifySower && bestowal.orchards?.user_id) {
+      const { data: sowerAuth, error: sowerAuthError } = await supabase.auth.admin.getUserById(bestowal.orchards.user_id);
+      
+      if (!sowerAuthError && sowerAuth.user?.email) {
+        const sowerSubject = `🎉 New Bestowal Received - ${bestowal.orchards?.title}`;
+        const sowerHtml = `
+          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+            <div style="text-align: center; margin-bottom: 30px;">
+              <h1 style="color: #22c55e; margin: 0;">🎉 New Bestowal Received!</h1>
+            </div>
+            
+            <p style="font-size: 16px; line-height: 1.6; color: #333;">
+              Dear ${sowerName},
             </p>
+            
+            <p style="font-size: 16px; line-height: 1.6; color: #333;">
+              Wonderful news! You've received a new bestowal for your orchard <strong>"${bestowal.orchards?.title}"</strong>.
+            </p>
+            
+            <div style="background: #f0fdf4; border-left: 4px solid #22c55e; padding: 20px; margin: 20px 0; border-radius: 4px;">
+              <h3 style="margin: 0 0 10px 0; color: #22c55e;">Bestowal Details:</h3>
+              <p style="margin: 5px 0; color: #333;"><strong>From:</strong> ${bestowerName}</p>
+              <p style="margin: 5px 0; color: #333;"><strong>Amount:</strong> ${bestowal.amount} ${bestowal.currency}</p>
+              <p style="margin: 5px 0; color: #333;"><strong>Pockets Filled:</strong> ${bestowal.pockets_count}</p>
+              ${bestowal.message ? `<p style="margin: 5px 0; color: #333;"><strong>Message:</strong> "${bestowal.message}"</p>` : ''}
+            </div>
+            
+            <p style="font-size: 14px; line-height: 1.6; color: #666;">
+              This brings you closer to your orchard goal! Keep nurturing your vision and engaging with your community.
+            </p>
+            
+            <div style="border-top: 1px solid #eee; margin-top: 30px; padding-top: 20px; text-align: center;">
+              <p style="font-size: 14px; color: #666; margin: 0;">
+                Your orchard is growing! 🌱 → 🌳
+              </p>
+            </div>
           </div>
-        </div>
-      `;
+        `;
 
-      for (const sowerEmail of sowerEmails) {
         await resend.emails.send({
           from: "Sow2Grow <no-reply@sow2grow.online>",
-          to: [sowerEmail],
+          to: [sowerAuth.user.email],
           subject: sowerSubject,
           html: sowerHtml,
         });
-      }
 
-      console.log("Sower notifications sent to:", sowerEmails);
+        console.log("Sower notification sent");
+      }
     }
 
+    // Return success WITHOUT exposing email addresses
     return new Response(
       JSON.stringify({ 
         success: true, 
-        message: "Notifications sent successfully",
-        recipients: {
-          bestower: bestowerEmail,
-          sowers: sowerEmails
-        }
+        message: "Notifications sent successfully"
       }),
       {
         status: 200,
@@ -290,7 +296,7 @@ const handler = async (req: Request): Promise<Response> => {
     console.error("Error in send-bestowal-notifications function:", error);
     return new Response(
       JSON.stringify({ 
-        error: error.message || 'Failed to send notifications',
+        error: 'Failed to send notifications',
         success: false 
       }),
       {
