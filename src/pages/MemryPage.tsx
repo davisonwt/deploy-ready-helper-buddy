@@ -1072,6 +1072,8 @@ export default function MemryPage() {
 
   return (
     <div className="h-screen bg-gradient-to-b from-[#FFF5E6] via-[#FFECD2] to-[#FFE4C4] overflow-hidden">
+      {/* Live Session Ad Banner */}
+      <LiveSessionAdBanner />
       {/* Main Feed - TikTok Style */}
       <div className="h-full relative">
         {/* Header */}
