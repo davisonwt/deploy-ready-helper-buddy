@@ -928,7 +928,7 @@ const App = () => (
               
               {/* Admin Routes */}
               <Route path="/admin/analytics" element={
-                <ProtectedRoute>
+                <ProtectedRoute allowedRoles={['admin', 'gosat']}>
                   <Layout>
                     <AdminAnalyticsPage />
                   </Layout>
