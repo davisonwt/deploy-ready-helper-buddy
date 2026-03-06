@@ -6636,6 +6636,102 @@ export type Database = {
         }
         Relationships: []
       }
+      skilldrop_host_applications: {
+        Row: {
+          created_at: string
+          description: string | null
+          experience_summary: string | null
+          expertise_area: string
+          full_name: string
+          id: string
+          rejection_reason: string | null
+          reviewed_at: string | null
+          reviewed_by: string | null
+          role_type: string
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          experience_summary?: string | null
+          expertise_area: string
+          full_name: string
+          id?: string
+          rejection_reason?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          role_type: string
+          status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          experience_summary?: string | null
+          expertise_area?: string
+          full_name?: string
+          id?: string
+          rejection_reason?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          role_type?: string
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      skilldrop_session_subscriptions: {
+        Row: {
+          amount: number
+          cancelled_at: string | null
+          created_at: string
+          currency: string
+          expires_at: string
+          host_id: string
+          id: string
+          payment_method: string | null
+          payment_reference: string | null
+          started_at: string
+          status: string
+          subscriber_id: string
+          updated_at: string
+        }
+        Insert: {
+          amount?: number
+          cancelled_at?: string | null
+          created_at?: string
+          currency?: string
+          expires_at?: string
+          host_id: string
+          id?: string
+          payment_method?: string | null
+          payment_reference?: string | null
+          started_at?: string
+          status?: string
+          subscriber_id: string
+          updated_at?: string
+        }
+        Update: {
+          amount?: number
+          cancelled_at?: string | null
+          created_at?: string
+          currency?: string
+          expires_at?: string
+          host_id?: string
+          id?: string
+          payment_method?: string | null
+          payment_reference?: string | null
+          started_at?: string
+          status?: string
+          subscriber_id?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       skilldrop_sessions: {
         Row: {
           attendees_count: number | null
@@ -6643,11 +6739,14 @@ export type Database = {
           created_at: string | null
           description: string | null
           duration_minutes: number | null
+          host_approved: boolean | null
           id: string
+          is_gosat_session: boolean | null
           presenter_id: string
           presenter_profile_id: string | null
           recording_url: string | null
           scheduled_at: string
+          session_fee: number | null
           slides_url: string | null
           status: string | null
           title: string
@@ -6661,11 +6760,14 @@ export type Database = {
           created_at?: string | null
           description?: string | null
           duration_minutes?: number | null
+          host_approved?: boolean | null
           id?: string
+          is_gosat_session?: boolean | null
           presenter_id: string
           presenter_profile_id?: string | null
           recording_url?: string | null
           scheduled_at: string
+          session_fee?: number | null
           slides_url?: string | null
           status?: string | null
           title: string
@@ -6679,11 +6781,14 @@ export type Database = {
           created_at?: string | null
           description?: string | null
           duration_minutes?: number | null
+          host_approved?: boolean | null
           id?: string
+          is_gosat_session?: boolean | null
           presenter_id?: string
           presenter_profile_id?: string | null
           recording_url?: string | null
           scheduled_at?: string
+          session_fee?: number | null
           slides_url?: string | null
           status?: string | null
           title?: string
