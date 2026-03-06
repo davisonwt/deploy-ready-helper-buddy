@@ -268,7 +268,6 @@ serve(async (req) => {
       return new Response(
         JSON.stringify({ 
           error: 'Failed to process payout. Please try again later.',
-          details: String(apiError),
         }),
         { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
@@ -277,7 +276,7 @@ serve(async (req) => {
   } catch (error) {
     console.error('❌ Error creating payout:', error);
     return new Response(
-      JSON.stringify({ error: 'Failed to create payout', details: String(error) }),
+      JSON.stringify({ error: 'Failed to create payout. Please contact support.' }),
       { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
   }
