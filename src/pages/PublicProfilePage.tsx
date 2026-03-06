@@ -194,7 +194,7 @@ export default function PublicProfilePage() {
 
       if (djData) {
         const { data: tracks } = await supabase
-          .from('radio_tracks')
+          .from('dj_music_tracks')
           .select('id, track_title, artist_name, cover_art_url, genre')
           .eq('dj_id', (djData as any).id)
           .order('created_at', { ascending: false })
