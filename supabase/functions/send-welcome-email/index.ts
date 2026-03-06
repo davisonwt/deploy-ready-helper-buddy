@@ -181,12 +181,12 @@ const handler = async (req: Request): Promise<Response> => {
               <div style="display: grid; gap: 15px;">
                 <div style="display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid #e5e7eb;">
                   <span style="color: #6b7280; font-weight: 500;">Name:</span>
-                  <span style="color: #1f2937; font-weight: 600;">${firstName} ${lastName}</span>
+                  <span style="color: #1f2937; font-weight: 600;">${safeFirstName} ${safeLastName}</span>
                 </div>
                 
                 <div style="display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid #e5e7eb;">
                   <span style="color: #6b7280; font-weight: 500;">Email:</span>
-                  <span style="color: #1f2937; font-weight: 600;">${email}</span>
+                  <span style="color: #1f2937; font-weight: 600;">${safeEmail}</span>
                 </div>
                 
                 <div style="display: flex; justify-content: space-between; padding: 10px 0;">
@@ -218,10 +218,10 @@ const handler = async (req: Request): Promise<Response> => {
         ...corsHeaders,
       },
     });
-  } catch (error: any) {
+    } catch (error: any) {
     console.error("Error in send-welcome-email function:", error);
     return new Response(
-      JSON.stringify({ error: error.message }),
+      JSON.stringify({ error: "Failed to send welcome email" }),
       {
         status: 500,
         headers: { "Content-Type": "application/json", ...corsHeaders },
