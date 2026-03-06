@@ -7,7 +7,7 @@ export type CommunicationMode =
   | 'chat' 
   | 'community' 
   | 'classroom' 
-  | 'lecture' 
+  | 'skilldrop' 
   | 'training' 
   | 'radio';
 
@@ -32,7 +32,7 @@ export const useCommunicationModes = create<CommunicationModeStore>()(
         chat: 0,
         community: 0,
         classroom: 0,
-        lecture: 0,
+        skilldrop: 0,
         training: 0,
         radio: 0,
       },
