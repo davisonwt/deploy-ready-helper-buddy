@@ -6,6 +6,7 @@ import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { 
   ArrowLeft, 
   TreePine, 
@@ -17,8 +18,14 @@ import {
   ShoppingBag,
   Package,
   ChevronLeft,
-  ChevronRight
+  ChevronRight,
+  Music,
+  GraduationCap,
+  Radio,
+  BookOpen,
+  Clock
 } from 'lucide-react';
+import { format } from 'date-fns';
 
 interface PublicProfile {
   user_id: string;
@@ -47,12 +54,32 @@ interface SeedProduct {
   status: string | null;
 }
 
+interface UserSession {
+  id: string;
+  title: string;
+  mode: string;
+  scheduled_at: string;
+  pricing_type: string;
+  session_fee: number | null;
+  status: string;
+}
+
+interface MusicTrack {
+  id: string;
+  track_title: string;
+  artist_name: string;
+  cover_art_url: string | null;
+  genre: string | null;
+}
+
 export default function PublicProfilePage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const [profile, setProfile] = useState<PublicProfile | null>(null);
   const [points, setPoints] = useState<UserPoints | null>(null);
   const [seeds, setSeeds] = useState<SeedProduct[]>([]);
+  const [userSessions, setUserSessions] = useState<UserSession[]>([]);
+  const [musicTracks, setMusicTracks] = useState<MusicTrack[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -136,6 +163,43 @@ export default function PublicProfilePage() {
           status: b.status,
         }));
         setSeeds([...productSeeds, ...bookSeeds]);
+      }
+
+      // Fetch sessions (classrooms) hosted by this user
+      const { data: sessionsData } = await supabase
+        .from('classroom_sessions')
+        .select('id, title, scheduled_at, pricing_type, session_fee, is_free, status')
+        .eq('instructor_id', userId)
+        .order('scheduled_at', { ascending: false })
+        .limit(20);
+
+      if (sessionsData) {
+        setUserSessions(sessionsData.map((s: any) => ({
+          id: s.id,
+          title: s.title,
+          mode: 'classroom',
+          scheduled_at: s.scheduled_at,
+          pricing_type: s.is_free ? 'free' : (s.pricing_type || 'per_session'),
+          session_fee: s.session_fee,
+          status: s.status,
+        })));
+      }
+
+      // Fetch music by this user (via radio_djs)
+      const { data: djData } = await supabase
+        .from('radio_djs')
+        .select('id')
+        .eq('user_id', userId)
+        .maybeSingle();
+
+      if (djData) {
+        const { data: tracks } = await supabase
+          .from('radio_tracks')
+          .select('id, track_title, artist_name, cover_art_url, genre')
+          .eq('dj_id', (djData as any).id)
+          .order('created_at', { ascending: false })
+          .limit(20);
+        if (tracks) setMusicTracks(tracks as any);
       }
 
     } catch (err) {
