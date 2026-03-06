@@ -51,6 +51,7 @@ import { WhispererApplicationsDashboard } from '@/components/admin/WhispererAppl
 import { DriverApplicationsDashboard } from '@/components/admin/DriverApplicationsDashboard'
 import { ServiceProviderApplicationsDashboard } from '@/components/admin/ServiceProviderApplicationsDashboard'
 import { BestowalAuditDashboard } from '@/components/admin/BestowalAuditDashboard'
+import { SkillDropHostApprovalDashboard } from '@/components/admin/SkillDropHostApprovalDashboard'
 
 export default function AdminDashboardPage() {
   const { user } = useAuth()
@@ -457,6 +458,13 @@ export default function AdminDashboardPage() {
                 <Eye className="w-4 h-4 mr-2" />
                 Bestowal Audit
               </TabsTrigger>
+              <TabsTrigger 
+                value="skilldrop-hosts" 
+                className="border-2 border-indigo-200 rounded-xl px-6 py-4 font-semibold shadow-lg hover:shadow-xl hover:scale-105 hover:border-indigo-300 transition-all duration-300 data-[state=active]:bg-gradient-to-br data-[state=active]:from-indigo-500 data-[state=active]:to-indigo-600 data-[state=active]:text-white data-[state=active]:border-indigo-500 data-[state=active]:shadow-2xl data-[state=active]:scale-105 bg-background"
+              >
+                <GraduationCap className="w-4 h-4 mr-2" />
+                SkillDrop Hosts
+              </TabsTrigger>
             </TabsList>
           </div>
 
@@ -662,6 +670,10 @@ export default function AdminDashboardPage() {
 
           <TabsContent value="bestowal-audit" className="space-y-6">
             <BestowalAuditDashboard />
+          </TabsContent>
+
+          <TabsContent value="skilldrop-hosts" className="space-y-6">
+            <SkillDropHostApprovalDashboard />
           </TabsContent>
         </Tabs>
       </div>
