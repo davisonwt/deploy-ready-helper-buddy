@@ -55,11 +55,7 @@ export function OrganizationWalletCredentials() {
     loadCredentials()
   }, [])
 
-  // Mask a credential string to show only last 4 characters
-  const maskCredential = (value: string): string => {
-    if (!value || value.length <= 4) return value
-    return '•'.repeat(Math.min(value.length - 4, 20)) + value.slice(-4)
-  }
+  // Credentials are now read from Vault; actual secrets never sent to client
 
   const loadCredentials = async () => {
     setLoading(true)
