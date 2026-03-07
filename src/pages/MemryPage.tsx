@@ -81,7 +81,7 @@ interface Comment {
 }
 
 // 30-second looping audio preview for music posts on Memry feed
-function MusicPreviewPlayer({ mediaUrl, caption, transparent = false, onPreviewEnd }: { mediaUrl: string; caption: string; transparent?: boolean; onPreviewEnd?: () => void }) {
+function MusicPreviewPlayer({ mediaUrl, caption, transparent = false, onPreviewEnd, isActive = true }: { mediaUrl: string; caption: string; transparent?: boolean; onPreviewEnd?: () => void; isActive?: boolean }) {
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const [resolvedUrl, setResolvedUrl] = useState<string>('');
   const [playing, setPlaying] = useState(false);
@@ -127,10 +127,18 @@ function MusicPreviewPlayer({ mediaUrl, caption, transparent = false, onPreviewE
     return () => { cancelled = true; };
   }, [mediaUrl]);
 
-  // Play audio once URL is resolved
+  // Play audio once URL is resolved — only when isActive
   useEffect(() => {
     const audio = audioRef.current;
     if (!audio || !resolvedUrl) return;
+
+    // If not active, pause and bail
+    if (!isActive) {
+      audio.pause();
+      audio.currentTime = 0;
+      setPlaying(false);
+      return;
+    }
 
     setLoadError(false);
     audio.src = resolvedUrl;
@@ -185,7 +193,7 @@ function MusicPreviewPlayer({ mediaUrl, caption, transparent = false, onPreviewE
       audio.pause();
       audio.src = '';
     };
-  }, [resolvedUrl, onPreviewEnd]);
+  }, [resolvedUrl, onPreviewEnd, isActive]);
 
   const togglePlay = () => {
     const audio = audioRef.current;
@@ -276,8 +284,10 @@ export default function MemryPage() {
   const [inlineChat, setInlineChat] = useState('');
   const [creatorPostIndices, setCreatorPostIndices] = useState<Record<string, number>>({});
   const [creatorImageIndices, setCreatorImageIndices] = useState<Record<string, number>>({});
+  const [activeCreatorId, setActiveCreatorId] = useState<string | null>(null);
   const hTouchStartX = useRef<number | null>(null);
   const hTouchCreatorId = useRef<string | null>(null);
+  const feedContainerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     fetchUser();
@@ -1053,18 +1063,59 @@ export default function MemryPage() {
     setCreatorImageIndices(prev => ({ ...prev, [`${userId}-${postIdx}`]: imgIdx }));
   }, []);
 
-  // Render media background for a post card
-  const renderMedia = (post: MemryPost, creatorUserId: string, postIdx: number, imgIdx: number) => (
+  // Track which creator row is visible via IntersectionObserver
+  useEffect(() => {
+    const container = feedContainerRef.current;
+    if (!container || groupedCreators.length === 0) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        for (const entry of entries) {
+          if (entry.isIntersecting) {
+            const creatorId = entry.target.getAttribute('data-creator-id');
+            if (creatorId) setActiveCreatorId(creatorId);
+          }
+        }
+      },
+      { root: container, threshold: 0.6 }
+    );
+
+    const rows = container.querySelectorAll('[data-creator-id]');
+    rows.forEach(row => observer.observe(row));
+
+    // Set initial active creator
+    if (groupedCreators.length > 0 && !activeCreatorId) {
+      setActiveCreatorId(groupedCreators[0].userId);
+    }
+
+    return () => observer.disconnect();
+  }, [groupedCreators, activeTab]);
+
+  // Render media background for a post card — only plays media when isActive
+  const renderMedia = (post: MemryPost, creatorUserId: string, postIdx: number, imgIdx: number, isActive: boolean) => (
     <div className="absolute inset-0 bg-gradient-to-br from-purple-900 via-pink-800 to-orange-700 flex items-center justify-center">
       {post.content_type === 'video' || post.content_type === 'marketing_video' ? (
-        <video
-          src={post.media_url}
-          className="max-w-[80%] max-h-full object-contain mx-auto"
-          autoPlay muted={isMuted} playsInline
-          onEnded={() => navigateCreatorPost(creatorUserId, 1)}
-        />
+        isActive ? (
+          <video
+            src={post.media_url}
+            className="max-w-[80%] max-h-full object-contain mx-auto"
+            autoPlay muted={isMuted} playsInline
+            onEnded={() => navigateCreatorPost(creatorUserId, 1)}
+          />
+        ) : (
+          <div className="w-full h-full flex items-center justify-center max-w-[80%] mx-auto">
+            {post.thumbnail_url ? (
+              <img src={post.thumbnail_url} alt={post.caption} className="max-w-full max-h-full object-contain" />
+            ) : (
+              <div className="text-white/50 text-center">
+                <Play className="w-16 h-16 mx-auto mb-2" />
+                <p className="text-sm">Scroll to play</p>
+              </div>
+            )}
+          </div>
+        )
       ) : post.content_type === 'music' ? (
-        <MusicPreviewPlayer key={post.id} mediaUrl={post.media_url} caption={post.caption} onPreviewEnd={() => navigateCreatorPost(creatorUserId, 1)} />
+        <MusicPreviewPlayer key={post.id} mediaUrl={post.media_url} caption={post.caption} onPreviewEnd={() => navigateCreatorPost(creatorUserId, 1)} isActive={isActive} />
       ) : post.content_type === 'new_product' || post.content_type === 'new_orchard' || post.content_type === 'new_book' ? (
         <div className="w-full h-full relative flex items-center justify-center max-w-[80%] mx-auto">
           {(() => {
@@ -1569,7 +1620,7 @@ export default function MemryPage() {
             </div>
           </div>
         ) : (
-        <div className="h-full overflow-y-auto" style={{ scrollSnapType: 'y mandatory' }}>
+        <div ref={feedContainerRef} className="h-full overflow-y-auto" style={{ scrollSnapType: 'y mandatory' }}>
           {groupedCreators.map((creator) => {
             const postIdx = creatorPostIndices[creator.userId] || 0;
             const post = creator.posts[postIdx];
@@ -1582,6 +1633,7 @@ export default function MemryPage() {
               <div
                 key={creator.userId}
                 id={`creator-row-${creator.userId}`}
+                data-creator-id={creator.userId}
                 className="h-full relative"
                 style={{ scrollSnapAlign: 'start' }}
                 onTouchStart={(e) => {
@@ -1597,7 +1649,7 @@ export default function MemryPage() {
                   hTouchStartX.current = null;
                 }}
               >
-                {renderMedia(post, creator.userId, postIdx, imgIdx)}
+                {renderMedia(post, creator.userId, postIdx, imgIdx, activeCreatorId === creator.userId)}
 
                 {/* Horizontal Post Navigation */}
                 {totalPosts > 1 && (

@@ -1,4 +1,5 @@
 import { useState, useRef, useCallback, useEffect } from 'react';
+import { globalAudioManager } from '@/utils/globalAudioManager';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
@@ -304,9 +305,11 @@ export default function CommunityMusicLibraryPage() {
 
       if (!audioRef.current) {
         audioRef.current = new Audio();
+        globalAudioManager.register(audioRef.current);
       }
 
       const audio = audioRef.current;
+      globalAudioManager.play(audio);
       audio.pause();
       audio.src = resolvedUrl;
       audio.currentTime = 0;
