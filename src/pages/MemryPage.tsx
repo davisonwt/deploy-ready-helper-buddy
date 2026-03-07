@@ -1752,6 +1752,61 @@ export default function MemryPage() {
                     </div>
                   )}
 
+                  {/* Inline Chat Strip */}
+                  {user && currentPost.user_id !== user.id && (
+                    <div className="flex items-center gap-2 mb-3">
+                      <Input
+                        placeholder={`Message ${currentPost.profiles?.display_name || 'sower'}...`}
+                        value={inlineChat}
+                        onChange={(e) => setInlineChat(e.target.value)}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter' && inlineChat.trim()) {
+                            e.preventDefault();
+                            const realPostId = currentPost.id.replace(/^(product|book|music|orchard)-/, '');
+                            supabase
+                              .from('memry_comments')
+                              .insert({ post_id: realPostId, user_id: user.id, content: inlineChat.trim() })
+                              .then(({ error }) => {
+                                if (!error) {
+                                  toast({ title: "Message sent! 💬" });
+                                  setPosts(prev => prev.map(p =>
+                                    p.id === currentPost.id ? { ...p, comments_count: p.comments_count + 1 } : p
+                                  ));
+                                  setInlineChat('');
+                                } else {
+                                  toast({ title: "Error", description: error.message, variant: "destructive" });
+                                }
+                              });
+                          }
+                        }}
+                        className="flex-1 h-8 text-xs bg-white/20 border-white/20 text-white placeholder:text-white/50 rounded-full px-3"
+                      />
+                      <button
+                        onClick={() => {
+                          if (!inlineChat.trim()) return;
+                          const realPostId = currentPost.id.replace(/^(product|book|music|orchard)-/, '');
+                          supabase
+                            .from('memry_comments')
+                            .insert({ post_id: realPostId, user_id: user.id, content: inlineChat.trim() })
+                            .then(({ error }) => {
+                              if (!error) {
+                                toast({ title: "Message sent! 💬" });
+                                setPosts(prev => prev.map(p =>
+                                  p.id === currentPost.id ? { ...p, comments_count: p.comments_count + 1 } : p
+                                ));
+                                setInlineChat('');
+                              } else {
+                                toast({ title: "Error", description: error.message, variant: "destructive" });
+                              }
+                            });
+                        }}
+                        className="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center flex-shrink-0"
+                      >
+                        <Send className="w-4 h-4 text-white" />
+                      </button>
+                    </div>
+                  )}
+
                   {/* Bestow buttons for special content types */}
                   {(currentPost.content_type === 'marketing_video' || currentPost.content_type === 'new_orchard') && currentPost.orchard_id && (
                     <Button
