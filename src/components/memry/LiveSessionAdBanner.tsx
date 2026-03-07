@@ -101,10 +101,10 @@ export function LiveSessionAdBanner() {
         initial={{ y: -80, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
         exit={{ y: -80, opacity: 0 }}
-        className="fixed top-[56px] left-0 right-0 z-[45] px-3 pt-14"
+        className="fixed top-[56px] left-0 right-0 z-[45] px-3 pt-1"
       >
         <div 
-          className="max-w-lg mx-auto bg-gradient-to-r from-red-600 via-orange-500 to-amber-500 rounded-2xl p-3 shadow-2xl cursor-pointer relative"
+          className="max-w-lg mx-auto bg-gradient-to-r from-red-600 via-orange-500 to-amber-500 rounded-xl p-2 shadow-xl cursor-pointer relative"
           onClick={() => {
             if (session.mode === 'radio') navigate(`/grove-station?schedule=${session.id}`);
             else navigate(`/communications-hub?classroom=${session.id}`);
@@ -117,26 +117,26 @@ export function LiveSessionAdBanner() {
             <X className="h-3 w-3" />
           </button>
 
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center animate-pulse flex-shrink-0">
-              <Radio className="h-5 w-5 text-white" />
+          <div className="flex items-center gap-2">
+            <div className="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center animate-pulse flex-shrink-0">
+              <Radio className="h-4 w-4 text-white" />
             </div>
             <div className="flex-1 min-w-0">
-              <div className="flex items-center gap-1.5 mb-0.5">
-                <Badge className="bg-white/20 text-white border-0 text-[9px] px-1.5 py-0 animate-pulse">
-                  🔴 LIVE NOW
+              <div className="flex items-center gap-1 mb-0.5">
+                <Badge className="bg-white/20 text-white border-0 text-[8px] px-1 py-0 animate-pulse">
+                  🔴 LIVE
                 </Badge>
-                <Badge className="bg-white/20 text-white border-0 text-[9px] px-1.5 py-0">
+                <Badge className="bg-white/20 text-white border-0 text-[8px] px-1 py-0">
                   {pricingText}
                 </Badge>
               </div>
-              <p className="text-white font-bold text-sm truncate">{session.title}</p>
-              <p className="text-white/80 text-xs">
+              <p className="text-white font-bold text-xs truncate">{session.title}</p>
+              <p className="text-white/80 text-[10px]">
                 with {session.host_name} • {format(new Date(session.scheduled_at), 'h:mm a')}
                 {session.listener_count > 0 && ` • ${session.listener_count} listening`}
               </p>
             </div>
-            <Button size="sm" className="bg-white text-orange-600 hover:bg-white/90 border-0 font-bold flex-shrink-0">
+            <Button size="sm" className="bg-white text-orange-600 hover:bg-white/90 border-0 font-bold flex-shrink-0 text-xs h-7 px-2">
               <Sparkles className="h-3 w-3 mr-1" />
               Join
             </Button>

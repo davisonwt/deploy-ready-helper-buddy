@@ -1162,9 +1162,9 @@ export default function MemryPage() {
     </div>
   );
 
-  // Render right-side action buttons for a post
+  // Render left-side action buttons for a post
   const renderActions = (post: MemryPost) => (
-    <div className="absolute right-4 top-28 bottom-32 flex flex-col items-center justify-end gap-4 z-40 overflow-y-auto">
+    <div className="absolute left-4 top-28 bottom-[45%] flex flex-col items-center justify-end gap-4 z-40 overflow-y-auto">
       <HoverCard>
         <HoverCardTrigger asChild>
           <Link to={`/member/${post.user_id}`} className="flex flex-col items-center">
@@ -1272,7 +1272,7 @@ export default function MemryPage() {
 
   // Render bottom info panel for a post
   const renderInfoPanel = (post: MemryPost) => (
-    <div className="absolute bottom-36 left-4 right-20 z-40 max-h-[45vh] overflow-y-auto">
+    <div className="absolute bottom-36 left-20 right-4 z-40 max-h-[45vh] overflow-y-auto">
       <motion.div initial={{ y: 20, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ delay: 0.2 }} className="bg-black/40 backdrop-blur-md rounded-2xl p-4">
         <div className="flex items-center gap-3 mb-3">
           <HoverCard>
@@ -1651,27 +1651,45 @@ export default function MemryPage() {
               >
                 {renderMedia(post, creator.userId, postIdx, imgIdx, activeCreatorId === creator.userId)}
 
-                {/* Horizontal Post Navigation */}
+                {/* Horizontal Post Navigation - top counter (mobile + desktop) */}
                 {totalPosts > 1 && (
-                  <div className="absolute top-20 left-1/2 -translate-x-1/2 z-50 flex items-center gap-2">
+                  <>
+                    <div className="absolute top-20 left-1/2 -translate-x-1/2 z-50 flex items-center gap-2">
+                      <button
+                        onClick={() => navigateCreatorPost(creator.userId, -1)}
+                        disabled={postIdx === 0}
+                        className="w-9 h-9 rounded-full bg-black/50 backdrop-blur-sm flex items-center justify-center text-white disabled:opacity-30 transition-opacity md:hidden"
+                      >
+                        <ChevronLeft className="w-5 h-5" />
+                      </button>
+                      <span className="text-white text-xs font-bold bg-black/50 backdrop-blur-sm px-4 py-1.5 rounded-full">
+                        {postIdx + 1} / {totalPosts}
+                      </span>
+                      <button
+                        onClick={() => navigateCreatorPost(creator.userId, 1)}
+                        disabled={postIdx === totalPosts - 1}
+                        className="w-9 h-9 rounded-full bg-black/50 backdrop-blur-sm flex items-center justify-center text-white disabled:opacity-30 transition-opacity md:hidden"
+                      >
+                        <ChevronRight className="w-5 h-5" />
+                      </button>
+                    </div>
+
+                    {/* Large desktop/TV side arrows */}
                     <button
                       onClick={() => navigateCreatorPost(creator.userId, -1)}
                       disabled={postIdx === 0}
-                      className="w-9 h-9 rounded-full bg-black/50 backdrop-blur-sm flex items-center justify-center text-white disabled:opacity-30 transition-opacity"
+                      className="hidden md:flex absolute left-6 top-1/2 -translate-y-1/2 z-50 w-14 h-14 rounded-full bg-black/60 backdrop-blur-md items-center justify-center text-white disabled:opacity-20 hover:bg-black/80 transition-all shadow-lg"
                     >
-                      <ChevronLeft className="w-5 h-5" />
+                      <ChevronLeft className="w-8 h-8" />
                     </button>
-                    <span className="text-white text-xs font-bold bg-black/50 backdrop-blur-sm px-4 py-1.5 rounded-full">
-                      {postIdx + 1} / {totalPosts}
-                    </span>
                     <button
                       onClick={() => navigateCreatorPost(creator.userId, 1)}
                       disabled={postIdx === totalPosts - 1}
-                      className="w-9 h-9 rounded-full bg-black/50 backdrop-blur-sm flex items-center justify-center text-white disabled:opacity-30 transition-opacity"
+                      className="hidden md:flex absolute right-6 top-1/2 -translate-y-1/2 z-50 w-14 h-14 rounded-full bg-black/60 backdrop-blur-md items-center justify-center text-white disabled:opacity-20 hover:bg-black/80 transition-all shadow-lg"
                     >
-                      <ChevronRight className="w-5 h-5" />
+                      <ChevronRight className="w-8 h-8" />
                     </button>
-                  </div>
+                  </>
                 )}
 
                 {renderActions(post)}

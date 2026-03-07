@@ -1,38 +1,52 @@
 
 
-## Fix Memry Page Layout for Desktop/TV + Live Banner Declutter
+## Why Your Balance Shows $0.00
 
-Three issues to address from the screenshot:
+After a thorough investigation, I found **critical bugs in the NOWPayments webhook** that prevent your balance from ever being updated. Here is what's happening:
 
-### 1. Move Action Buttons to the Left Side
+### Root Cause: Webhook Processing Fails Silently
 
-Currently `renderActions` places buttons on the right (`right-4`). On wide screens/TVs the info panel (profile, chat, bestow) is at bottom-left while actions are far right — feels disconnected.
+The `nowpayments-webhook` edge function has **zero logs** and the `processed_webhooks` table is **empty** — meaning no webhook from NOWPayments has ever been successfully processed. Even though invoices are being created successfully (I can see 3 recent invoice creations), when NOWPayments sends the payment confirmation callback, the webhook crashes due to column-name mismatches in the database queries.
 
-**Change**: Move the action buttons column from `right-4` to `left-4` so they sit on the left side of the media, forming a cohesive left-side control area alongside the info panel.
+### Bugs Found
 
-### 2. Fix Live Session Banner Clutter
+1. **`orchards.grower_id` does not exist** — the actual column is `user_id`. The webhook queries `orchards(title, grower_id)` which silently fails, so the sower's balance is never credited.
 
-The `LiveSessionAdBanner` uses `fixed top-[56px]` with `pt-14` causing it to overlap content and look cramped. 
+2. **`payment_transactions.user_id` does not exist** — the actual column is `bestowal_id`. The webhook tries to insert with `user_id` causing an error.
 
-**Change in `LiveSessionAdBanner.tsx`**:
-- Remove `pt-14`, use `pt-2` instead
-- Make the banner more compact — reduce padding from `p-3` to `p-2`
-- Reduce icon size and tighten spacing
-- Add a subtle top offset so it sits neatly below the header without overlapping the post nav controls
+3. **`payment_audit_log.status` does not exist** — the webhook inserts a `status` field that doesn't exist in the table schema.
 
-### 3. Add Left/Right Arrow Navigation for Desktop (PC/TV)
+These three bugs cause the webhook to crash every time NOWPayments sends a payment confirmation, which is why your `sower_balances` stays at $0.00.
 
-Touch swipe works on mobile but there are no visible clickable arrow buttons for horizontal post navigation on desktop. The current arrows are at `top-20` which is too high and small.
+### Implementation Plan
 
-**Change**: Make the horizontal post navigation arrows larger, position them on the left and right edges of the viewport (vertically centered), and make them clearly visible on non-touch devices. Use `hidden md:flex` so they only show on larger screens where touch isn't the primary input.
+**Step 1 — Fix `nowpayments-webhook` edge function**
+- Change `orchards(title, grower_id)` to `orchards(title, user_id)` and update all references from `grower_id` to `user_id`
+- Fix `payment_transactions` insert to use correct column names (`bestowal_id` instead of `user_id`)
+- Fix `payment_audit_log` insert to remove the nonexistent `status` column
+- Redeploy the function
 
-### Files to Edit
+**Step 2 — Create a balance sync edge function**
+- New edge function `sync-nowpayments-balance` that calls the NOWPayments API (`/v1/payment/{id}`) to check the status of past invoices
+- Queries `product_bestowals` and `bestowals` for records with `payment_status = 'pending'` and payment references
+- For any that show `finished` on NOWPayments, retroactively credit the sower's balance
+- This catches any payments that completed while the webhook was broken
 
-- **`src/pages/MemryPage.tsx`**
-  - `renderActions`: Change `right-4` to `left-4`, adjust positioning to not overlap the info panel (stack above it, use `top-28 bottom-[45%]` range)
-  - Feed section (lines 1654-1675): Replace/augment the small top-center nav with large side-mounted arrows for desktop
-  - `renderInfoPanel`: Keep `bottom-36 left-4 right-20` but change `right-20` to `right-4` since actions moved left; update to `left-20` to avoid overlapping the now-left-side action buttons
+**Step 3 — Add "Sync Balance" button to the UI**
+- In `SowerBalanceCard`, the refresh button will also call the sync function
+- Shows a toast with the result (e.g., "Found 2 completed payments, balance updated")
 
-- **`src/components/memry/LiveSessionAdBanner.tsx`**
-  - Reduce `pt-14` to `pt-1`, tighten padding, make it less visually dominant
+**Step 4 — Verify IPN callback URL is configured in NOWPayments dashboard**
+- The code sets `ipn_callback_url` per-invoice which is correct
+- But you should also verify in your NOWPayments dashboard settings that the IPN URL is set to: `https://zuwkgasbkpjlxzsjzumu.supabase.co/functions/v1/nowpayments-webhook`
+
+### Technical Detail: Column Mismatches
+
+```text
+Webhook code                  Actual DB column
+─────────────────────────────────────────────────
+orchards.grower_id        →   orchards.user_id
+payment_transactions.user_id → payment_transactions.bestowal_id
+payment_audit_log.status  →   (does not exist, remove)
+```
 
