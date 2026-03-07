@@ -1123,7 +1123,7 @@ export default function MemryPage() {
             onEnded={() => navigateCreatorPost(creatorUserId, 1)}
           />
         ) : (
-          <div className="w-full h-full flex items-center justify-center max-w-[80%] mx-auto">
+          <div className="w-full h-full flex items-center justify-center max-w-full mx-auto">
             {post.thumbnail_url ? (
               <img src={post.thumbnail_url} alt={post.caption} className="max-w-full max-h-full object-contain" />
             ) : (
@@ -1137,7 +1137,7 @@ export default function MemryPage() {
       ) : post.content_type === 'music' ? (
         <MusicPreviewPlayer key={post.id} mediaUrl={post.media_url} caption={post.caption} onPreviewEnd={() => navigateCreatorPost(creatorUserId, 1)} isActive={isActive} />
       ) : post.content_type === 'new_product' || post.content_type === 'new_orchard' || post.content_type === 'new_book' ? (
-        <div className="w-full h-full relative flex items-center justify-center max-w-[80%] mx-auto">
+        <div className="w-full h-full relative flex items-center justify-center max-w-full mx-auto">
           {(() => {
             const allImages = post.image_urls && post.image_urls.length > 1 ? post.image_urls : [post.media_url];
             const hasMultiple = allImages.length > 1;
@@ -1173,7 +1173,7 @@ export default function MemryPage() {
           </div>
         </div>
       ) : (
-        <div className="w-full h-full flex items-center justify-center max-w-[80%] mx-auto">
+        <div className="w-full h-full flex items-center justify-center max-w-full mx-auto">
           <img src={post.media_url} alt={post.caption} className="max-w-full max-h-full object-contain mx-auto"
             onError={(e) => { const t = e.target as HTMLImageElement; if (!t.dataset.fallback) { t.dataset.fallback = '1'; t.src = '/lovable-uploads/ff9e6e48-049d-465a-8d2b-f6e8fed93522.png'; } }} />
         </div>
@@ -1184,7 +1184,7 @@ export default function MemryPage() {
 
   // Render right-side action buttons for a post
   const renderActions = (post: MemryPost) => (
-    <div className="absolute right-4 top-28 bottom-2 flex flex-col items-center justify-end gap-4 z-40 overflow-y-auto pb-[env(safe-area-inset-bottom,4px)]">
+    <div className="absolute right-2 md:right-4 top-32 md:top-28 bottom-3 md:bottom-2 flex flex-col items-center justify-end gap-3 z-40 overflow-y-auto pb-[env(safe-area-inset-bottom,4px)]">
       <HoverCard>
         <HoverCardTrigger asChild>
           <Link to={`/member/${post.user_id}`} className="flex flex-col items-center">
@@ -1292,7 +1292,7 @@ export default function MemryPage() {
 
   // Render bottom info panel for a post
   const renderInfoPanel = (post: MemryPost) => (
-    <div className="absolute bottom-2 left-14 right-20 z-40 max-h-[45vh] overflow-y-auto pb-[env(safe-area-inset-bottom,4px)]">
+    <div className="absolute bottom-2 left-[4.75rem] right-[5.5rem] md:left-24 md:right-24 z-40 max-h-[45vh] overflow-y-auto pb-[env(safe-area-inset-bottom,4px)]">
       <motion.div initial={{ y: 20, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ delay: 0.2 }} className="bg-black/40 backdrop-blur-md rounded-2xl p-4">
         <div className="flex items-center gap-3 mb-3">
           <HoverCard>
