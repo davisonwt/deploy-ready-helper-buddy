@@ -273,6 +273,7 @@ export default function MemryPage() {
   const [recipeIngredients, setRecipeIngredients] = useState('');
   const [recipeInstructions, setRecipeInstructions] = useState('');
   const [uploading, setUploading] = useState(false);
+  const [inlineChat, setInlineChat] = useState('');
 
   useEffect(() => {
     fetchUser();
@@ -1630,7 +1631,7 @@ export default function MemryPage() {
               </div>
 
               {/* Bottom Info - Enhanced Sower Details */}
-              <div className="absolute bottom-28 left-4 right-20 z-40">
+              <div className="absolute bottom-36 left-4 right-20 z-40 max-h-[45vh] overflow-y-auto">
                 <motion.div
                   initial={{ y: 20, opacity: 0 }}
                   animate={{ y: 0, opacity: 1 }}
