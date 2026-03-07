@@ -81,7 +81,7 @@ interface Comment {
 }
 
 // 30-second looping audio preview for music posts on Memry feed
-function MusicPreviewPlayer({ mediaUrl, caption, transparent = false, onPreviewEnd }: { mediaUrl: string; caption: string; transparent?: boolean; onPreviewEnd?: () => void }) {
+function MusicPreviewPlayer({ mediaUrl, caption, transparent = false, onPreviewEnd, isActive = true }: { mediaUrl: string; caption: string; transparent?: boolean; onPreviewEnd?: () => void; isActive?: boolean }) {
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const [resolvedUrl, setResolvedUrl] = useState<string>('');
   const [playing, setPlaying] = useState(false);
