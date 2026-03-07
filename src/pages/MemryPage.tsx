@@ -1105,6 +1105,11 @@ export default function MemryPage() {
     return () => observer.disconnect();
   }, [groupedCreators, activeTab]);
 
+  // Hard-stop any previously playing media when visible creator row changes
+  useEffect(() => {
+    globalAudioManager.stopAll();
+  }, [activeCreatorId]);
+
   // Render media background for a post card — only plays media when isActive
   const renderMedia = (post: MemryPost, creatorUserId: string, postIdx: number, imgIdx: number, isActive: boolean) => (
     <div className="absolute inset-0 bg-gradient-to-br from-purple-900 via-pink-800 to-orange-700 flex items-center justify-center">
