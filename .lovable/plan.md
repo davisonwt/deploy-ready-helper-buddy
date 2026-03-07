@@ -1,59 +1,52 @@
 
 
-## Restructure Memry Feed: Horizontal Per-Creator Browsing
+## Why Your Balance Shows $0.00
 
-### Current Layout
-- TikTok-style vertical scroll: one post at a time, full-screen, scroll up/down between individual posts from mixed creators
+After a thorough investigation, I found **critical bugs in the NOWPayments webhook** that prevent your balance from ever being updated. Here is what's happening:
 
-### Proposed Layout
-- **Vertical scroll** = switch between different sowers/growers/creators
-- **Horizontal scroll** = browse all seeds/lives/adverts from that specific creator
-- Each "row" is one creator, showing their content as a horizontal carousel
+### Root Cause: Webhook Processing Fails Silently
 
-### Architecture
+The `nowpayments-webhook` edge function has **zero logs** and the `processed_webhooks` table is **empty** — meaning no webhook from NOWPayments has ever been successfully processed. Even though invoices are being created successfully (I can see 3 recent invoice creations), when NOWPayments sends the payment confirmation callback, the webhook crashes due to column-name mismatches in the database queries.
 
-```text
-┌──────────────────────────────┐
-│  Creator A (avatar + name)   │
-│  ┌─────┐ ┌─────┐ ┌─────┐    │  ← swipe left/right
-│  │Seed1│ │Seed2│ │Seed3│    │
-│  └─────┘ └─────┘ └─────┘    │
-├──────────────────────────────┤  ← scroll down
-│  Creator B (avatar + name)   │
-│  ┌─────┐ ┌─────┐            │  ← swipe left/right
-│  │Seed1│ │Seed2│            │
-│  └─────┘ └─────┘            │
-├──────────────────────────────┤  ← scroll down
-│  Creator C ...               │
-└──────────────────────────────┘
-```
+### Bugs Found
+
+1. **`orchards.grower_id` does not exist** — the actual column is `user_id`. The webhook queries `orchards(title, grower_id)` which silently fails, so the sower's balance is never credited.
+
+2. **`payment_transactions.user_id` does not exist** — the actual column is `bestowal_id`. The webhook tries to insert with `user_id` causing an error.
+
+3. **`payment_audit_log.status` does not exist** — the webhook inserts a `status` field that doesn't exist in the table schema.
+
+These three bugs cause the webhook to crash every time NOWPayments sends a payment confirmation, which is why your `sower_balances` stays at $0.00.
 
 ### Implementation Plan
 
-**File: `src/pages/MemryPage.tsx`**
+**Step 1 — Fix `nowpayments-webhook` edge function**
+- Change `orchards(title, grower_id)` to `orchards(title, user_id)` and update all references from `grower_id` to `user_id`
+- Fix `payment_transactions` insert to use correct column names (`bestowal_id` instead of `user_id`)
+- Fix `payment_audit_log` insert to remove the nonexistent `status` column
+- Redeploy the function
 
-1. **Group posts by creator** — after fetching all posts, group them into a `Map<userId, { profile, posts[] }>` sorted by most recent post per creator
+**Step 2 — Create a balance sync edge function**
+- New edge function `sync-nowpayments-balance` that calls the NOWPayments API (`/v1/payment/{id}`) to check the status of past invoices
+- Queries `product_bestowals` and `bestowals` for records with `payment_status = 'pending'` and payment references
+- For any that show `finished` on NOWPayments, retroactively credit the sower's balance
+- This catches any payments that completed while the webhook was broken
 
-2. **Replace the single-post vertical scroller** with a vertical list of creator rows. Each row contains:
-   - Creator header (avatar, name, follow button)
-   - Horizontal swipeable carousel of their posts (full-width cards, snap-scroll)
-   - Each card retains the current media display, action buttons (like, comment, share, bookmark), inline chat strip, and bestow button
+**Step 3 — Add "Sync Balance" button to the UI**
+- In `SowerBalanceCard`, the refresh button will also call the sync function
+- Shows a toast with the result (e.g., "Found 2 completed payments, balance updated")
 
-3. **Each horizontal card** remains full-viewport-width and uses CSS scroll-snap (`scroll-snap-type: x mandatory`, `scroll-snap-align: start`) for smooth swiping between that creator's content
+**Step 4 — Verify IPN callback URL is configured in NOWPayments dashboard**
+- The code sets `ipn_callback_url` per-invoice which is correct
+- But you should also verify in your NOWPayments dashboard settings that the IPN URL is set to: `https://zuwkgasbkpjlxzsjzumu.supabase.co/functions/v1/nowpayments-webhook`
 
-4. **Vertical scrolling** uses the same snap approach (`scroll-snap-type: y mandatory`) so each creator row fills the screen height
+### Technical Detail: Column Mismatches
 
-5. **Keep all existing interactions** — likes, comments, bookmarks, follow, DM, bestow, inline chat — they just render within each horizontal card instead of the single-post view
-
-6. **Post counter** — show "2/5" indicator per creator so users know how many seeds that creator has
-
-### Technical Details
-
-- Group logic: `Object.values(posts.reduce((acc, post) => { acc[post.user_id] = acc[post.user_id] || { profile: post.profiles, posts: [] }; acc[post.user_id].posts.push(post); return acc; }, {}))` sorted by latest `created_at`
-- Horizontal scroll container: `overflow-x-auto scroll-snap-type-x-mandatory flex` with each item `scroll-snap-align-start w-screen flex-shrink-0`
-- Vertical scroll container: `overflow-y-auto scroll-snap-type-y-mandatory h-screen` with each row `scroll-snap-align-start h-screen`
-- The right-side action buttons and bottom info panel remain absolutely positioned within each card
-
-### Files to Edit
-- **src/pages/MemryPage.tsx** — main restructure (grouping logic + dual-axis scroll layout)
+```text
+Webhook code                  Actual DB column
+─────────────────────────────────────────────────
+orchards.grower_id        →   orchards.user_id
+payment_transactions.user_id → payment_transactions.bestowal_id
+payment_audit_log.status  →   (does not exist, remove)
+```
 
