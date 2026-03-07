@@ -1155,7 +1155,7 @@ export default function MemryPage() {
                       className="absolute right-[15%] top-1/2 -translate-y-1/2 z-[60] w-12 h-12 rounded-full bg-white/90 hover:bg-white text-black disabled:opacity-20 flex items-center justify-center shadow-lg">
                       <ChevronRight className="w-6 h-6" />
                     </button>
-                    <div className="absolute top-4 right-4 bg-black/60 text-white text-xs px-2 py-1 rounded-full z-10">{imgIdx + 1}/{allImages.length}</div>
+                    <div className="absolute top-4 right-2 bg-black/60 text-white text-xs px-2 py-1 rounded-full z-10">{imgIdx + 1}/{allImages.length}</div>
                   </>
                 )}
               </>
