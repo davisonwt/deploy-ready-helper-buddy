@@ -1922,44 +1922,44 @@ export default function MemryPage() {
         )}
 
         {/* Bottom Navigation */}
-        <div className="fixed bottom-0 left-0 right-0 z-50 px-4 py-2 bg-gradient-to-t from-black/50 to-transparent">
+        <div className="fixed bottom-0 left-0 right-0 z-50 px-4 pb-[env(safe-area-inset-bottom,8px)] pt-2 bg-gradient-to-t from-black/70 via-black/40 to-transparent">
           <div className="max-w-lg mx-auto">
-            <div className="flex items-center justify-around bg-white/10 backdrop-blur-xl rounded-full py-2">
+            <div className="flex items-center justify-around bg-white/15 backdrop-blur-xl rounded-full py-1.5 px-1">
               <button 
-                className={`flex flex-col items-center p-2 ${activeTab === 'feed' ? 'text-pink-400' : 'text-white/70'}`}
+                className={`flex flex-col items-center px-3 py-1 rounded-xl transition-colors ${activeTab === 'feed' ? 'text-pink-400 bg-white/10' : 'text-white/70'}`}
                 onClick={() => setActiveTab('feed')}
               >
-                <Home className="w-6 h-6" />
-                <span className="text-xs mt-1">Home</span>
+                <Home className="w-5 h-5" />
+                <span className="text-[10px] mt-0.5">Home</span>
               </button>
               <button 
-                className={`flex flex-col items-center p-2 ${activeTab === 'discover' ? 'text-pink-400' : 'text-white/70'}`}
+                className={`flex flex-col items-center px-3 py-1 rounded-xl transition-colors ${activeTab === 'discover' ? 'text-pink-400 bg-white/10' : 'text-white/70'}`}
                 onClick={() => setActiveTab('discover')}
               >
-                <Search className="w-6 h-6" />
-                <span className="text-xs mt-1">Discover</span>
+                <Search className="w-5 h-5" />
+                <span className="text-[10px] mt-0.5">Discover</span>
               </button>
               <button 
-                className="flex flex-col items-center p-2"
+                className="flex flex-col items-center px-2 py-1"
                 onClick={() => setShowCreateModal(true)}
               >
-                <div className="w-12 h-8 bg-gradient-to-r from-pink-500 to-orange-500 rounded-lg flex items-center justify-center">
-                  <Plus className="w-6 h-6 text-white" />
+                <div className="w-10 h-7 bg-gradient-to-r from-pink-500 to-orange-500 rounded-lg flex items-center justify-center">
+                  <Plus className="w-5 h-5 text-white" />
                 </div>
               </button>
               <button 
-                className={`flex flex-col items-center p-2 ${activeTab === 'recipes' ? 'text-pink-400' : 'text-white/70'}`}
+                className={`flex flex-col items-center px-3 py-1 rounded-xl transition-colors ${activeTab === 'recipes' ? 'text-pink-400 bg-white/10' : 'text-white/70'}`}
                 onClick={() => setActiveTab('recipes')}
               >
-                <ChefHat className="w-6 h-6" />
-                <span className="text-xs mt-1">Recipes</span>
+                <ChefHat className="w-5 h-5" />
+                <span className="text-[10px] mt-0.5">Recipes</span>
               </button>
               <button 
-                className={`flex flex-col items-center p-2 ${activeTab === 'profile' ? 'text-pink-400' : 'text-white/70'}`}
+                className={`flex flex-col items-center px-3 py-1 rounded-xl transition-colors ${activeTab === 'profile' ? 'text-pink-400 bg-white/10' : 'text-white/70'}`}
                 onClick={() => setActiveTab('profile')}
               >
-                <User className="w-6 h-6" />
-                <span className="text-xs mt-1">Profile</span>
+                <User className="w-5 h-5" />
+                <span className="text-[10px] mt-0.5">Profile</span>
               </button>
             </div>
           </div>
