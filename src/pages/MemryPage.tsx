@@ -1143,8 +1143,13 @@ export default function MemryPage() {
             const hasMultiple = allImages.length > 1;
             return (
               <>
-                <img src={allImages[imgIdx] || post.media_url} alt={post.caption} className="max-w-full max-h-full object-contain"
-                  onError={(e) => { const t = e.target as HTMLImageElement; if (!t.dataset.fallback) { t.dataset.fallback = '1'; t.src = '/lovable-uploads/ff9e6e48-049d-465a-8d2b-f6e8fed93522.png'; } }} />
+                <div className="relative inline-flex max-w-full max-h-full">
+                  <img src={allImages[imgIdx] || post.media_url} alt={post.caption} className="max-w-full max-h-full object-contain"
+                    onError={(e) => { const t = e.target as HTMLImageElement; if (!t.dataset.fallback) { t.dataset.fallback = '1'; t.src = '/lovable-uploads/ff9e6e48-049d-465a-8d2b-f6e8fed93522.png'; } }} />
+                  {hasMultiple && (
+                    <div className="absolute top-4 right-0 bg-black/60 text-white text-xs px-2 py-1 rounded-full z-20">{imgIdx + 1}/{allImages.length}</div>
+                  )}
+                </div>
                 {hasMultiple && (
                   <>
                     <button onClick={(e) => { e.stopPropagation(); setCreatorImgIdx(creatorUserId, postIdx, Math.max(0, imgIdx - 1)); }} disabled={imgIdx === 0}
@@ -1155,7 +1160,6 @@ export default function MemryPage() {
                       className="absolute right-[15%] top-1/2 -translate-y-1/2 z-[60] w-12 h-12 rounded-full bg-white/90 hover:bg-white text-black disabled:opacity-20 flex items-center justify-center shadow-lg">
                       <ChevronRight className="w-6 h-6" />
                     </button>
-                    <div className="absolute top-4 right-2 bg-black/60 text-white text-xs px-2 py-1 rounded-full z-10">{imgIdx + 1}/{allImages.length}</div>
                   </>
                 )}
               </>
