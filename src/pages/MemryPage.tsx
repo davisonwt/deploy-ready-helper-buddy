@@ -1779,7 +1779,7 @@ export default function MemryPage() {
                               });
                           }
                         }}
-                        className="flex-1 h-8 text-xs bg-white/20 border-white/20 text-white placeholder:text-white/50 rounded-full px-3"
+                        className="flex-1 h-8 text-xs bg-card/60 border-primary/30 text-card-foreground placeholder:text-muted-foreground rounded-full px-3 focus:border-primary focus:ring-primary/20"
                       />
                       <button
                         onClick={() => {
@@ -1800,7 +1800,7 @@ export default function MemryPage() {
                               }
                             });
                         }}
-                        className="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center flex-shrink-0"
+                        className="w-8 h-8 rounded-full bg-primary/80 hover:bg-primary flex items-center justify-center flex-shrink-0 transition-colors"
                       >
                         <Send className="w-4 h-4 text-white" />
                       </button>
