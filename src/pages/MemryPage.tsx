@@ -273,6 +273,7 @@ export default function MemryPage() {
   const [recipeIngredients, setRecipeIngredients] = useState('');
   const [recipeInstructions, setRecipeInstructions] = useState('');
   const [uploading, setUploading] = useState(false);
+  const [inlineChat, setInlineChat] = useState('');
 
   useEffect(() => {
     fetchUser();
@@ -1630,7 +1631,7 @@ export default function MemryPage() {
               </div>
 
               {/* Bottom Info - Enhanced Sower Details */}
-              <div className="absolute bottom-28 left-4 right-20 z-40">
+              <div className="absolute bottom-36 left-4 right-20 z-40 max-h-[45vh] overflow-y-auto">
                 <motion.div
                   initial={{ y: 20, opacity: 0 }}
                   animate={{ y: 0, opacity: 1 }}
@@ -1727,7 +1728,63 @@ export default function MemryPage() {
                           </button>
                         )}
                       </div>
+                  </div>
+
+                  {/* Inline Chat Strip */}
+                  {user && currentPost.user_id !== user.id && (
+                    <div className="flex items-center gap-2 mb-2">
+                      <Input
+                        placeholder={`Message ${currentPost.profiles?.display_name || 'sower'}...`}
+                        value={inlineChat}
+                        onChange={(e) => setInlineChat(e.target.value)}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter' && inlineChat.trim()) {
+                            e.preventDefault();
+                            // Send as a comment on this post
+                            const realPostId = currentPost.id.replace(/^(product|book|music|orchard)-/, '');
+                            supabase
+                              .from('memry_comments')
+                              .insert({ post_id: realPostId, user_id: user.id, content: inlineChat.trim() })
+                              .then(({ error }) => {
+                                if (!error) {
+                                  toast({ title: "Message sent! 💬" });
+                                  setPosts(prev => prev.map(p =>
+                                    p.id === currentPost.id ? { ...p, comments_count: p.comments_count + 1 } : p
+                                  ));
+                                  setInlineChat('');
+                                } else {
+                                  toast({ title: "Error", description: error.message, variant: "destructive" });
+                                }
+                              });
+                          }
+                        }}
+                        className="flex-1 h-8 text-xs bg-white/20 border-white/20 text-white placeholder:text-white/50 rounded-full px-3"
+                      />
+                      <button
+                        onClick={() => {
+                          if (!inlineChat.trim()) return;
+                          const realPostId = currentPost.id.replace(/^(product|book|music|orchard)-/, '');
+                          supabase
+                            .from('memry_comments')
+                            .insert({ post_id: realPostId, user_id: user.id, content: inlineChat.trim() })
+                            .then(({ error }) => {
+                              if (!error) {
+                                toast({ title: "Message sent! 💬" });
+                                setPosts(prev => prev.map(p =>
+                                  p.id === currentPost.id ? { ...p, comments_count: p.comments_count + 1 } : p
+                                ));
+                                setInlineChat('');
+                              } else {
+                                toast({ title: "Error", description: error.message, variant: "destructive" });
+                              }
+                            });
+                        }}
+                        className="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center flex-shrink-0"
+                      >
+                        <Send className="w-4 h-4 text-white" />
+                      </button>
                     </div>
+                  )}
                   </div>
                   
                   {currentPost.content_type === 'recipe' && currentPost.recipe_title && (
@@ -1865,44 +1922,44 @@ export default function MemryPage() {
         )}
 
         {/* Bottom Navigation */}
-        <div className="fixed bottom-0 left-0 right-0 z-50 px-4 py-2 bg-gradient-to-t from-black/50 to-transparent">
+        <div className="fixed bottom-0 left-0 right-0 z-50 px-4 pb-[env(safe-area-inset-bottom,8px)] pt-2 bg-gradient-to-t from-black/70 via-black/40 to-transparent">
           <div className="max-w-lg mx-auto">
-            <div className="flex items-center justify-around bg-white/10 backdrop-blur-xl rounded-full py-2">
+            <div className="flex items-center justify-around bg-white/15 backdrop-blur-xl rounded-full py-1.5 px-1">
               <button 
-                className={`flex flex-col items-center p-2 ${activeTab === 'feed' ? 'text-pink-400' : 'text-white/70'}`}
+                className={`flex flex-col items-center px-3 py-1 rounded-xl transition-colors ${activeTab === 'feed' ? 'text-pink-400 bg-white/10' : 'text-white/70'}`}
                 onClick={() => setActiveTab('feed')}
               >
-                <Home className="w-6 h-6" />
-                <span className="text-xs mt-1">Home</span>
+                <Home className="w-5 h-5" />
+                <span className="text-[10px] mt-0.5">Home</span>
               </button>
               <button 
-                className={`flex flex-col items-center p-2 ${activeTab === 'discover' ? 'text-pink-400' : 'text-white/70'}`}
+                className={`flex flex-col items-center px-3 py-1 rounded-xl transition-colors ${activeTab === 'discover' ? 'text-pink-400 bg-white/10' : 'text-white/70'}`}
                 onClick={() => setActiveTab('discover')}
               >
-                <Search className="w-6 h-6" />
-                <span className="text-xs mt-1">Discover</span>
+                <Search className="w-5 h-5" />
+                <span className="text-[10px] mt-0.5">Discover</span>
               </button>
               <button 
-                className="flex flex-col items-center p-2"
+                className="flex flex-col items-center px-2 py-1"
                 onClick={() => setShowCreateModal(true)}
               >
-                <div className="w-12 h-8 bg-gradient-to-r from-pink-500 to-orange-500 rounded-lg flex items-center justify-center">
-                  <Plus className="w-6 h-6 text-white" />
+                <div className="w-10 h-7 bg-gradient-to-r from-pink-500 to-orange-500 rounded-lg flex items-center justify-center">
+                  <Plus className="w-5 h-5 text-white" />
                 </div>
               </button>
               <button 
-                className={`flex flex-col items-center p-2 ${activeTab === 'recipes' ? 'text-pink-400' : 'text-white/70'}`}
+                className={`flex flex-col items-center px-3 py-1 rounded-xl transition-colors ${activeTab === 'recipes' ? 'text-pink-400 bg-white/10' : 'text-white/70'}`}
                 onClick={() => setActiveTab('recipes')}
               >
-                <ChefHat className="w-6 h-6" />
-                <span className="text-xs mt-1">Recipes</span>
+                <ChefHat className="w-5 h-5" />
+                <span className="text-[10px] mt-0.5">Recipes</span>
               </button>
               <button 
-                className={`flex flex-col items-center p-2 ${activeTab === 'profile' ? 'text-pink-400' : 'text-white/70'}`}
+                className={`flex flex-col items-center px-3 py-1 rounded-xl transition-colors ${activeTab === 'profile' ? 'text-pink-400 bg-white/10' : 'text-white/70'}`}
                 onClick={() => setActiveTab('profile')}
               >
-                <User className="w-6 h-6" />
-                <span className="text-xs mt-1">Profile</span>
+                <User className="w-5 h-5" />
+                <span className="text-[10px] mt-0.5">Profile</span>
               </button>
             </div>
           </div>

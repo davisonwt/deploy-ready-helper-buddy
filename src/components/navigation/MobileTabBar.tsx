@@ -11,8 +11,8 @@ export function MobileTabBar({ onOpenGarden }: MobileTabBarProps) {
   const navigate = useNavigate()
   const isMobile = useIsMobile()
   
-  // Only show on mobile
-  if (!isMobile) {
+  // Hide on mobile OR on pages with their own bottom nav
+  if (!isMobile || location.pathname === '/memry') {
     return null
   }
   
