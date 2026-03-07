@@ -274,6 +274,10 @@ export default function MemryPage() {
   const [recipeInstructions, setRecipeInstructions] = useState('');
   const [uploading, setUploading] = useState(false);
   const [inlineChat, setInlineChat] = useState('');
+  const [creatorPostIndices, setCreatorPostIndices] = useState<Record<string, number>>({});
+  const [creatorImageIndices, setCreatorImageIndices] = useState<Record<string, number>>({});
+  const hTouchStartX = useRef<number | null>(null);
+  const hTouchCreatorId = useRef<string | null>(null);
 
   useEffect(() => {
     fetchUser();
@@ -1014,63 +1018,331 @@ export default function MemryPage() {
     }
   };
 
-  const currentPost = posts[currentPostIndex];
+  // Group posts by creator for dual-axis browsing
+  const groupedCreators = useMemo(() => {
+    const groups: Record<string, { profile: MemryPost['profiles'], userId: string, posts: MemryPost[] }> = {};
+    posts.forEach(post => {
+      const uid = post.user_id;
+      if (!groups[uid]) groups[uid] = { profile: post.profiles, userId: uid, posts: [] };
+      groups[uid].posts.push(post);
+    });
+    return Object.values(groups).sort((a, b) =>
+      new Date(b.posts[0].created_at).getTime() - new Date(a.posts[0].created_at).getTime()
+    );
+  }, [posts]);
 
-  const advanceToNextPost = useCallback(() => {
-    if (posts.length === 0) return;
-    setCurrentPostIndex(prev => Math.min(prev + 1, posts.length - 1));
-    setMemryImageIndex(0);
-  }, [posts.length]);
+  const navigateCreatorPost = useCallback((userId: string, direction: number) => {
+    setCreatorPostIndices(prev => {
+      const current = prev[userId] || 0;
+      const creator = groupedCreators.find(c => c.userId === userId);
+      if (!creator) return prev;
+      const newIdx = Math.max(0, Math.min(creator.posts.length - 1, current + direction));
+      return { ...prev, [userId]: newIdx };
+    });
+    setCreatorImageIndices(prev => {
+      const next = { ...prev };
+      Object.keys(next).forEach(k => { if (k.startsWith(userId + '-')) delete next[k]; });
+      return next;
+    });
+  }, [groupedCreators]);
 
-  const handleScroll = useCallback((direction: 'up' | 'down') => {
-    if (posts.length === 0) return;
+  const getCreatorImgIdx = useCallback((userId: string, postIdx: number) =>
+    creatorImageIndices[`${userId}-${postIdx}`] || 0, [creatorImageIndices]);
 
-    if (direction === 'down') {
-      advanceToNextPost();
-    } else if (direction === 'up') {
-      setCurrentPostIndex(prev => Math.max(prev - 1, 0));
-      setMemryImageIndex(0);
-    }
-  }, [posts.length, advanceToNextPost]);
-
-  // Touch swipe support for mobile
-  const touchStartY = useRef<number | null>(null);
-  const touchStartTime = useRef<number>(0);
-  const isScrolling = useRef(false);
-
-  const handleTouchStart = useCallback((e: React.TouchEvent) => {
-    touchStartY.current = e.touches[0].clientY;
-    touchStartTime.current = Date.now();
-    isScrolling.current = false;
+  const setCreatorImgIdx = useCallback((userId: string, postIdx: number, imgIdx: number) => {
+    setCreatorImageIndices(prev => ({ ...prev, [`${userId}-${postIdx}`]: imgIdx }));
   }, []);
 
-  const handleTouchEnd = useCallback((e: React.TouchEvent) => {
-    if (touchStartY.current === null || isScrolling.current) return;
-    const deltaY = touchStartY.current - e.changedTouches[0].clientY;
-    const elapsed = Date.now() - touchStartTime.current;
-    const minSwipe = 50;
-    // Quick flick or sufficient distance
-    if (Math.abs(deltaY) > minSwipe || (Math.abs(deltaY) > 30 && elapsed < 300)) {
-      if (deltaY > 0) handleScroll('down');
-      else handleScroll('up');
-    }
-    touchStartY.current = null;
-  }, [handleScroll]);
+  // Render media background for a post card
+  const renderMedia = (post: MemryPost, creatorUserId: string, postIdx: number, imgIdx: number) => (
+    <div className="absolute inset-0 bg-gradient-to-br from-purple-900 via-pink-800 to-orange-700 flex items-center justify-center">
+      {post.content_type === 'video' || post.content_type === 'marketing_video' ? (
+        <video
+          src={post.media_url}
+          className="max-w-[80%] max-h-full object-contain mx-auto"
+          autoPlay muted={isMuted} playsInline
+          onEnded={() => navigateCreatorPost(creatorUserId, 1)}
+        />
+      ) : post.content_type === 'music' ? (
+        <MusicPreviewPlayer key={post.id} mediaUrl={post.media_url} caption={post.caption} onPreviewEnd={() => navigateCreatorPost(creatorUserId, 1)} />
+      ) : post.content_type === 'new_product' || post.content_type === 'new_orchard' || post.content_type === 'new_book' ? (
+        <div className="w-full h-full relative flex items-center justify-center max-w-[80%] mx-auto">
+          {(() => {
+            const allImages = post.image_urls && post.image_urls.length > 1 ? post.image_urls : [post.media_url];
+            const hasMultiple = allImages.length > 1;
+            return (
+              <>
+                <img src={allImages[imgIdx] || post.media_url} alt={post.caption} className="max-w-full max-h-full object-contain"
+                  onError={(e) => { const t = e.target as HTMLImageElement; if (!t.dataset.fallback) { t.dataset.fallback = '1'; t.src = '/lovable-uploads/ff9e6e48-049d-465a-8d2b-f6e8fed93522.png'; } }} />
+                {hasMultiple && (
+                  <>
+                    <button onClick={(e) => { e.stopPropagation(); setCreatorImgIdx(creatorUserId, postIdx, Math.max(0, imgIdx - 1)); }} disabled={imgIdx === 0}
+                      className="absolute left-[15%] top-1/2 -translate-y-1/2 z-[60] w-12 h-12 rounded-full bg-white/90 hover:bg-white text-black disabled:opacity-20 flex items-center justify-center shadow-lg">
+                      <ChevronLeft className="w-6 h-6" />
+                    </button>
+                    <button onClick={(e) => { e.stopPropagation(); setCreatorImgIdx(creatorUserId, postIdx, Math.min(allImages.length - 1, imgIdx + 1)); }} disabled={imgIdx === allImages.length - 1}
+                      className="absolute right-[15%] top-1/2 -translate-y-1/2 z-[60] w-12 h-12 rounded-full bg-white/90 hover:bg-white text-black disabled:opacity-20 flex items-center justify-center shadow-lg">
+                      <ChevronRight className="w-6 h-6" />
+                    </button>
+                    <div className="absolute top-4 right-4 bg-black/60 text-white text-xs px-2 py-1 rounded-full z-10">{imgIdx + 1}/{allImages.length}</div>
+                  </>
+                )}
+              </>
+            );
+          })()}
+          {post.audio_url && (
+            <div className="absolute inset-0 flex items-center justify-center z-5">
+              <MusicPreviewPlayer mediaUrl={post.audio_url} caption={post.caption} transparent />
+            </div>
+          )}
+          <div className="absolute top-20 left-4 right-4 z-10">
+            <Badge className={`px-4 py-2 text-sm font-bold ${post.content_type === 'new_product' ? 'bg-gradient-to-r from-emerald-500 to-teal-500' : post.content_type === 'new_book' ? 'bg-gradient-to-r from-blue-500 to-indigo-500' : 'bg-gradient-to-r from-amber-500 to-orange-500'} text-white animate-pulse`}>
+              {post.content_type === 'new_product' ? (<><ShoppingBag className="w-4 h-4 mr-2 inline" /> NEW SEED AVAILABLE</>) : post.content_type === 'new_book' ? (<><Book className="w-4 h-4 mr-2 inline" /> NEW BOOK AVAILABLE</>) : (<><Trees className="w-4 h-4 mr-2 inline" /> NEW ORCHARD PLANTED</>)}
+            </Badge>
+          </div>
+        </div>
+      ) : (
+        <div className="w-full h-full flex items-center justify-center max-w-[80%] mx-auto">
+          <img src={post.media_url} alt={post.caption} className="max-w-full max-h-full object-contain mx-auto"
+            onError={(e) => { const t = e.target as HTMLImageElement; if (!t.dataset.fallback) { t.dataset.fallback = '1'; t.src = '/lovable-uploads/ff9e6e48-049d-465a-8d2b-f6e8fed93522.png'; } }} />
+        </div>
+      )}
+      <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-black/30 pointer-events-none" />
+    </div>
+  );
 
-  const handleTouchMove = useCallback((e: React.TouchEvent) => {
-    // Prevent default page scroll on the feed container
-    e.preventDefault();
-  }, []);
+  // Render right-side action buttons for a post
+  const renderActions = (post: MemryPost) => (
+    <div className="absolute right-4 top-28 bottom-32 flex flex-col items-center justify-end gap-4 z-40 overflow-y-auto">
+      <HoverCard>
+        <HoverCardTrigger asChild>
+          <Link to={`/member/${post.user_id}`} className="flex flex-col items-center">
+            <Avatar className="w-12 h-12 border-2 border-white shadow-lg">
+              <AvatarImage src={post.profiles?.avatar_url} />
+              <AvatarFallback className="bg-gradient-to-br from-pink-400 to-orange-400 text-white">{post.profiles?.display_name?.[0] || 'U'}</AvatarFallback>
+            </Avatar>
+          </Link>
+        </HoverCardTrigger>
+        <HoverCardContent side="left" className="w-64 bg-black/80 backdrop-blur-md border-white/20 text-white">
+          <div className="flex items-center gap-3">
+            <Avatar className="w-14 h-14 border-2 border-white/50"><AvatarImage src={post.profiles?.avatar_url} /><AvatarFallback className="bg-gradient-to-br from-pink-400 to-orange-400 text-white">{post.profiles?.display_name?.[0] || 'U'}</AvatarFallback></Avatar>
+            <div className="flex-1 min-w-0"><p className="font-bold text-sm truncate">{post.profiles?.display_name || 'Sower'}</p><p className="text-xs text-white/60">@{toHandle(post.profiles?.username || post.profiles?.display_name)}</p></div>
+          </div>
+          <Button asChild size="sm" className="w-full mt-3 bg-white text-black hover:bg-white/90 border-0"><Link to={`/member/${post.user_id}`}>View Profile</Link></Button>
+        </HoverCardContent>
+      </HoverCard>
 
-  // Reset currentPostIndex when posts change
-  useEffect(() => {
-    if (currentPostIndex >= posts.length && posts.length > 0) {
-      setCurrentPostIndex(posts.length - 1);
-    }
-  }, [posts.length, currentPostIndex]);
+      {user && post.user_id !== user.id && (
+        <motion.button whileTap={{ scale: 0.9 }} onClick={() => handleFollow(post.user_id)} className="flex flex-col items-center gap-1">
+          <div className={`w-10 h-10 rounded-full flex items-center justify-center shadow-md ${followedUserIds.has(post.user_id) ? 'bg-emerald-500' : 'bg-pink-500'}`}>
+            {followedUserIds.has(post.user_id) ? <UserCheck className="w-5 h-5 text-white" /> : <UserPlus className="w-5 h-5 text-white" />}
+          </div>
+          <span className="text-white text-[10px] font-semibold drop-shadow">{followedUserIds.has(post.user_id) ? 'Following' : 'Follow'}</span>
+        </motion.button>
+      )}
 
-  // Static posts (photos, recipes, cards) stay until user manually scrolls
-  // Only videos and music previews auto-advance when their content finishes
+      {user && post.user_id !== user.id && (
+        <motion.button whileTap={{ scale: 0.9 }} onClick={async () => {
+          if (!user) { toast({ title: "Sign in required", description: "Please sign in to message", variant: "destructive" }); return; }
+          try {
+            const { data: roomId, error } = await supabase.rpc('get_or_create_direct_room', { user1_id: user.id, user2_id: post.user_id });
+            if (error) throw error;
+            if (!roomId) throw new Error('No room ID returned');
+            supabase.from('activity_feed').insert({ user_id: post.user_id, actor_id: user.id, action_type: 'new_message', content: 'Someone sent you a message about your seed', entity_type: 'chat_room', entity_id: roomId, mode_type: 'chatapp', metadata: { seed_id: post.id, seed_caption: post.caption?.slice(0, 100) } });
+            navigate(`/communications-hub?room=${roomId}`);
+          } catch (error: any) {
+            console.error('Error starting direct chat:', error);
+            toast({ title: "Error", description: error?.message || "Could not start chat", variant: "destructive" });
+          }
+        }} className="flex flex-col items-center gap-1">
+          <div className="relative w-10 h-10 rounded-full bg-blue-500 flex items-center justify-center shadow-md">
+            <MessageSquare className="w-5 h-5 text-white" />
+            {(messageCountsByUser[post.user_id] || 0) > 0 && (
+              <span className="absolute -top-1 -right-1 bg-destructive text-destructive-foreground text-[9px] font-bold rounded-full min-w-[18px] h-[18px] flex items-center justify-center px-1">
+                {messageCountsByUser[post.user_id] > 99 ? '99+' : messageCountsByUser[post.user_id]}
+              </span>
+            )}
+          </div>
+          <span className="text-white text-[10px] font-semibold drop-shadow">Message</span>
+        </motion.button>
+      )}
+
+      <motion.button whileTap={{ scale: 0.9 }} onClick={() => handleLike(post.id)} className="flex flex-col items-center gap-1">
+        <div className={`w-12 h-12 rounded-full flex items-center justify-center ${post.user_liked || likedPostIds.has(post.id) ? 'bg-pink-500' : 'bg-white/20 backdrop-blur-sm'}`}>
+          <Heart className={`w-6 h-6 ${post.user_liked || likedPostIds.has(post.id) ? 'text-white fill-white' : 'text-white'}`} />
+        </div>
+        <span className="text-white text-xs font-semibold drop-shadow">{post.likes_count}</span>
+      </motion.button>
+
+      <motion.button whileTap={{ scale: 0.9 }} onClick={() => handleDonate(post)} className="flex flex-col items-center gap-1">
+        <div className="w-12 h-12 rounded-full bg-gradient-to-br from-emerald-400 to-teal-500 flex items-center justify-center shadow-lg">
+          <Gift className="w-6 h-6 text-white" />
+        </div>
+        <span className="text-white text-xs font-semibold drop-shadow">Donate</span>
+      </motion.button>
+
+      <motion.button whileTap={{ scale: 0.9 }} onClick={() => openComments(post)} className="flex flex-col items-center gap-1">
+        <div className="w-12 h-12 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center">
+          <MessageCircle className="w-6 h-6 text-white" />
+        </div>
+        <span className="text-white text-xs font-semibold drop-shadow">{post.comments_count}</span>
+      </motion.button>
+
+      <motion.button whileTap={{ scale: 0.9 }} onClick={() => handleBookmark(post.id)} className="flex flex-col items-center gap-1">
+        <div className={`w-12 h-12 rounded-full flex items-center justify-center ${post.user_bookmarked ? 'bg-amber-500' : 'bg-white/20 backdrop-blur-sm'}`}>
+          <Bookmark className={`w-6 h-6 ${post.user_bookmarked ? 'text-white fill-white' : 'text-white'}`} />
+        </div>
+      </motion.button>
+
+      <motion.button whileTap={{ scale: 0.9 }} onClick={async () => {
+        const shareUrl = `${window.location.origin}/memry?post=${post.id}`;
+        try {
+          if (navigator.share) { await navigator.share({ title: 'S2G Memry', text: post.caption || `Check out this post by ${post.profiles?.display_name}`, url: shareUrl }); toast({ title: "Shared!" }); }
+          else { await navigator.clipboard.writeText(shareUrl); toast({ title: "Link copied!" }); }
+        } catch (error: any) {
+          if (error.name !== 'AbortError') { await navigator.clipboard.writeText(shareUrl); toast({ title: "Link copied!" }); }
+        }
+      }} className="flex flex-col items-center gap-1">
+        <div className="w-12 h-12 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center">
+          <Share2 className="w-6 h-6 text-white" />
+        </div>
+        <span className="text-white text-xs font-semibold drop-shadow">Share</span>
+      </motion.button>
+
+      {(post.content_type === 'video' || post.content_type === 'marketing_video') && (
+        <motion.button whileTap={{ scale: 0.9 }} onClick={() => setIsMuted(!isMuted)} className="flex flex-col items-center">
+          <div className="w-10 h-10 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center">
+            {isMuted ? <VolumeX className="w-5 h-5 text-white" /> : <Volume2 className="w-5 h-5 text-white" />}
+          </div>
+        </motion.button>
+      )}
+    </div>
+  );
+
+  // Render bottom info panel for a post
+  const renderInfoPanel = (post: MemryPost) => (
+    <div className="absolute bottom-36 left-4 right-20 z-40 max-h-[45vh] overflow-y-auto">
+      <motion.div initial={{ y: 20, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ delay: 0.2 }} className="bg-black/40 backdrop-blur-md rounded-2xl p-4">
+        <div className="flex items-center gap-3 mb-3">
+          <HoverCard>
+            <HoverCardTrigger asChild>
+              <Link to={`/member/${post.user_id}`} className="flex-shrink-0">
+                <Avatar className="w-10 h-10 border-2 border-white/50 cursor-pointer">
+                  <AvatarImage src={post.profiles?.avatar_url} />
+                  <AvatarFallback className="bg-gradient-to-br from-pink-400 to-orange-400 text-white text-sm">{post.profiles?.display_name?.[0] || 'S'}</AvatarFallback>
+                </Avatar>
+              </Link>
+            </HoverCardTrigger>
+            <HoverCardContent side="top" className="w-64 bg-black/80 backdrop-blur-md border-white/20 text-white">
+              <div className="flex items-center gap-3">
+                <Avatar className="w-14 h-14 border-2 border-white/50"><AvatarImage src={post.profiles?.avatar_url} /><AvatarFallback className="bg-gradient-to-br from-pink-400 to-orange-400 text-white">{post.profiles?.display_name?.[0] || 'S'}</AvatarFallback></Avatar>
+                <div className="flex-1 min-w-0"><p className="font-bold text-sm truncate">{post.profiles?.display_name || 'Sower'}</p><p className="text-xs text-white/60">@{toHandle(post.profiles?.username || post.profiles?.display_name)}</p></div>
+              </div>
+              <Button asChild size="sm" className="w-full mt-3 bg-white text-black hover:bg-white/90 border-0"><Link to={`/member/${post.user_id}`}>View Profile</Link></Button>
+            </HoverCardContent>
+          </HoverCard>
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-2">
+              <span className="text-white font-bold text-base drop-shadow truncate">{post.profiles?.display_name || 'Sower'}</span>
+              {post.content_type === 'recipe' && <span className="px-2 py-0.5 bg-orange-500 rounded-full text-xs text-white font-semibold flex-shrink-0"><ChefHat className="w-3 h-3 inline mr-1" />Recipe</span>}
+              {post.content_type === 'marketing_video' && <span className="px-2 py-0.5 bg-gradient-to-r from-pink-500 to-purple-500 rounded-full text-xs text-white font-semibold flex-shrink-0"><Video className="w-3 h-3 inline mr-1" />Marketing</span>}
+              {post.content_type === 'new_product' && <span className="px-2 py-0.5 bg-gradient-to-r from-emerald-500 to-teal-500 rounded-full text-xs text-white font-semibold flex-shrink-0"><ShoppingBag className="w-3 h-3 inline mr-1" />Seed</span>}
+              {post.content_type === 'new_orchard' && <span className="px-2 py-0.5 bg-gradient-to-r from-amber-500 to-orange-500 rounded-full text-xs text-white font-semibold flex-shrink-0"><Trees className="w-3 h-3 inline mr-1" />Orchard</span>}
+              {post.content_type === 'music' && <span className="px-2 py-0.5 bg-gradient-to-r from-violet-500 to-purple-500 rounded-full text-xs text-white font-semibold flex-shrink-0"><Music className="w-3 h-3 inline mr-1" />Music</span>}
+              {post.content_type === 'new_book' && <span className="px-2 py-0.5 bg-gradient-to-r from-blue-500 to-indigo-500 rounded-full text-xs text-white font-semibold flex-shrink-0"><Book className="w-3 h-3 inline mr-1" />Book</span>}
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="text-white/70 text-xs">@{post.profiles?.username || 'sower'}</span>
+              {user && post.user_id !== user.id && (
+                <button onClick={() => handleFollow(post.user_id)} className={`px-2 py-0.5 rounded-full text-xs font-semibold transition-colors ${followedUserIds.has(post.user_id) ? 'bg-white/20 text-white/80' : 'bg-pink-500 text-white'}`}>
+                  {followedUserIds.has(post.user_id) ? 'Following' : 'Follow'}
+                </button>
+              )}
+            </div>
+          </div>
+        </div>
+
+        {post.content_type === 'recipe' && post.recipe_title && <h3 className="text-white font-bold text-lg mb-1 drop-shadow">{post.recipe_title}</h3>}
+        <p className="text-white/90 text-sm line-clamp-2 drop-shadow mb-3">{post.caption}</p>
+
+        {post.content_type === 'recipe' && post.recipe_ingredients && (
+          <div className="mb-3 p-2 bg-white/10 rounded-lg">
+            <p className="text-white/80 text-xs">📝 {post.recipe_ingredients.slice(0, 3).join(' • ')}{post.recipe_ingredients.length > 3 && ' • ...'}</p>
+          </div>
+        )}
+
+        {user && post.user_id !== user.id && (
+          <div className="flex items-center gap-2 mb-3">
+            <Input
+              placeholder={`Message ${post.profiles?.display_name || 'sower'}...`}
+              value={inlineChat}
+              onChange={(e) => setInlineChat(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' && inlineChat.trim()) {
+                  e.preventDefault();
+                  const realPostId = post.id.replace(/^(product|book|music|orchard)-/, '');
+                  supabase.from('memry_comments').insert({ post_id: realPostId, user_id: user.id, content: inlineChat.trim() }).then(({ error }) => {
+                    if (!error) { toast({ title: "Message sent! 💬" }); setPosts(prev => prev.map(p => p.id === post.id ? { ...p, comments_count: p.comments_count + 1 } : p)); setInlineChat(''); }
+                    else { toast({ title: "Error", description: error.message, variant: "destructive" }); }
+                  });
+                }
+              }}
+              className="flex-1 h-8 text-xs rounded-full px-3 !bg-input-bg !border-input-border !text-input-text placeholder:!text-input-placeholder focus:!border-input-border-focus focus:!ring-input-border-focus/20"
+            />
+            <button
+              onClick={() => {
+                if (!inlineChat.trim()) return;
+                const realPostId = post.id.replace(/^(product|book|music|orchard)-/, '');
+                supabase.from('memry_comments').insert({ post_id: realPostId, user_id: user.id, content: inlineChat.trim() }).then(({ error }) => {
+                  if (!error) { toast({ title: "Message sent! 💬" }); setPosts(prev => prev.map(p => p.id === post.id ? { ...p, comments_count: p.comments_count + 1 } : p)); setInlineChat(''); }
+                  else { toast({ title: "Error", description: error.message, variant: "destructive" }); }
+                });
+              }}
+              className="w-8 h-8 rounded-full bg-primary hover:bg-primary-hover flex items-center justify-center flex-shrink-0 transition-colors"
+            >
+              <Send className="w-4 h-4 text-primary-foreground" />
+            </button>
+          </div>
+        )}
+
+        {(post.content_type === 'marketing_video' || post.content_type === 'new_orchard') && post.orchard_id && (
+          <Button onClick={() => navigate(`/orchard/${post.orchard_id}`)} className="w-full bg-gradient-to-r from-yellow-500 to-orange-500 hover:from-yellow-600 hover:to-orange-600 text-white font-bold shadow-lg" size="lg">
+            <Gift className="w-5 h-5 mr-2" /> Bestow & Get This Seed
+          </Button>
+        )}
+        {post.content_type === 'new_product' && post.product_id && (
+          <Button onClick={() => {
+            const productId = post.product_id?.replace('product-', '') || post.product_id || '';
+            addToBasket({ id: productId, title: post.product_title || post.caption.replace('🌱 SEED: ', ''), price: post.product_price || 0, cover_image_url: post.media_url, sower_id: post.user_id, bestowal_count: 1, sowers: { display_name: post.profiles?.display_name || 'Sower' } });
+            toast({ title: "Added to basket! 🛒", description: "Redirecting to checkout..." });
+            navigate('/products/basket');
+          }} className="w-full bg-gradient-to-r from-yellow-500 to-orange-500 hover:from-yellow-600 hover:to-orange-600 text-white font-bold shadow-lg" size="lg">
+            <Gift className="w-5 h-5 mr-2" /> Bestow & Get This Seed
+          </Button>
+        )}
+        {post.content_type === 'new_book' && post.book_id && (
+          <Button onClick={() => {
+            const bookId = post.book_id?.replace('book-', '') || post.book_id || '';
+            addToBasket({ id: bookId, title: post.product_title || post.caption.replace('📚 BOOK: ', ''), price: post.product_price || 0, cover_image_url: post.media_url, sower_id: post.user_id, bestowal_count: 1, sowers: { display_name: post.profiles?.display_name || 'Sower' } });
+            toast({ title: "Book added to basket! 📚", description: "Redirecting to checkout..." });
+            navigate('/products/basket');
+          }} className="w-full bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-white font-bold shadow-lg" size="lg">
+            <Book className="w-5 h-5 mr-2" /> Bestow & Get This Book
+          </Button>
+        )}
+        {post.content_type === 'music' && (
+          <Button onClick={() => navigate('/community-music-library')} className="w-full bg-gradient-to-r from-violet-500 to-purple-500 hover:from-violet-600 hover:to-purple-600 text-white font-bold shadow-lg" size="lg">
+            <Gift className="w-5 h-5 mr-2" /> Bestow & Get This Track
+          </Button>
+        )}
+        {(post.content_type === 'photo' || post.content_type === 'video' || post.content_type === 'recipe') && (
+          <Button onClick={() => handleDonate(post)} className="w-full bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-white font-bold shadow-lg" size="lg">
+            <Gift className="w-5 h-5 mr-2" /> Support This Creator
+          </Button>
+        )}
+      </motion.div>
+    </div>
+  );
 
   return (
     <div className="h-screen bg-gradient-to-b from-[#FFF5E6] via-[#FFECD2] to-[#FFE4C4] overflow-hidden">
@@ -1178,8 +1450,15 @@ export default function MemryPage() {
                       key={recipe.id}
                       whileTap={{ scale: 0.97 }}
                       onClick={() => {
-                        const idx = posts.findIndex(p => p.id === recipe.id);
-                        if (idx >= 0) { setCurrentPostIndex(idx); setActiveTab('feed'); }
+                        for (const creator of groupedCreators) {
+                          const pIdx = creator.posts.findIndex(p => p.id === recipe.id);
+                          if (pIdx >= 0) {
+                            setCreatorPostIndices(prev => ({ ...prev, [creator.userId]: pIdx }));
+                            setActiveTab('feed');
+                            setTimeout(() => document.getElementById(`creator-row-${creator.userId}`)?.scrollIntoView({ behavior: 'smooth' }), 100);
+                            break;
+                          }
+                        }
                       }}
                       className="bg-white/60 backdrop-blur rounded-xl overflow-hidden cursor-pointer"
                     >
@@ -1231,8 +1510,15 @@ export default function MemryPage() {
                           key={post.id}
                           whileTap={{ scale: 0.95 }}
                           onClick={() => {
-                            const idx = posts.findIndex(p => p.id === post.id);
-                            if (idx >= 0) { setCurrentPostIndex(idx); setActiveTab('feed'); }
+                            for (const creator of groupedCreators) {
+                              const pIdx = creator.posts.findIndex(p => p.id === post.id);
+                              if (pIdx >= 0) {
+                                setCreatorPostIndices(prev => ({ ...prev, [creator.userId]: pIdx }));
+                                setActiveTab('feed');
+                                setTimeout(() => document.getElementById(`creator-row-${creator.userId}`)?.scrollIntoView({ behavior: 'smooth' }), 100);
+                                break;
+                              }
+                            }
                           }}
                           className="aspect-square rounded-lg overflow-hidden cursor-pointer relative"
                         >
@@ -1264,7 +1550,6 @@ export default function MemryPage() {
         {/* === FEED TAB (main content) === */}
         {activeTab === 'feed' && (
         <>
-        {/* Content Feed */}
         {loading ? (
           <div className="h-full flex items-center justify-center">
             <div className="text-center">
@@ -1272,651 +1557,84 @@ export default function MemryPage() {
               <p className="text-orange-800 font-medium">Loading memries...</p>
             </div>
           </div>
-        ) : posts.length === 0 ? (
+        ) : groupedCreators.length === 0 ? (
           <div className="h-full flex items-center justify-center p-8">
             <div className="text-center max-w-md">
               <Camera className="w-16 h-16 text-orange-400 mx-auto mb-4" />
               <h3 className="text-2xl font-bold text-orange-800 mb-2">No memries yet</h3>
               <p className="text-orange-600 mb-4">Be the first to share a photo, video, or recipe with the community!</p>
-              <Button 
-                onClick={() => setShowCreateModal(true)}
-                className="bg-gradient-to-r from-pink-500 to-orange-500 text-white"
-              >
-                <Plus className="w-4 h-4 mr-2" />
-                Create First Memry
+              <Button onClick={() => setShowCreateModal(true)} className="bg-gradient-to-r from-pink-500 to-orange-500 text-white">
+                <Plus className="w-4 h-4 mr-2" /> Create First Memry
               </Button>
             </div>
           </div>
         ) : (
-        <AnimatePresence mode="wait">
-          {currentPost && (
-             <motion.div
-              key={currentPost.id}
-              initial={{ opacity: 0, y: 50 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -50 }}
-              className="h-full relative touch-none"
-              onWheel={(e) => {
-                if (e.deltaY > 0) handleScroll('down');
-                else handleScroll('up');
-              }}
-              onTouchStart={handleTouchStart}
-              onTouchMove={handleTouchMove}
-              onTouchEnd={handleTouchEnd}
-            >
-              {/* Background Image/Video/Music */}
-              <div className="absolute inset-0 bg-gradient-to-br from-purple-900 via-pink-800 to-orange-700 flex items-center justify-center">
-                {currentPost.content_type === 'video' || currentPost.content_type === 'marketing_video' ? (
-                  <video
-                    ref={videoRef}
-                    src={currentPost.media_url}
-                    className="max-w-[80%] max-h-full object-contain mx-auto"
-                    autoPlay
-                    muted={isMuted}
-                    playsInline
-                    onEnded={advanceToNextPost}
-                  />
-                ) : currentPost.content_type === 'music' ? (
-                  <MusicPreviewPlayer
-                    key={currentPost.id}
-                    mediaUrl={currentPost.media_url}
-                    caption={currentPost.caption}
-                    onPreviewEnd={advanceToNextPost}
-                  />
-                ) : currentPost.content_type === 'new_product' || currentPost.content_type === 'new_orchard' || currentPost.content_type === 'new_book' ? (
-                  <div className="w-full h-full relative flex items-center justify-center max-w-[80%] mx-auto">
-                    {(() => {
-                      const allImages = currentPost.image_urls && currentPost.image_urls.length > 1
-                        ? currentPost.image_urls
-                        : [currentPost.media_url];
-                      const hasMultiple = allImages.length > 1;
-                      return (
-                        <>
-                          <img
-                            src={allImages[memryImageIndex] || currentPost.media_url}
-                            alt={currentPost.caption}
-                            className="max-w-full max-h-full object-contain"
-                            onError={(e) => {
-                              const target = e.target as HTMLImageElement;
-                              if (!target.dataset.fallback) {
-                                target.dataset.fallback = '1';
-                                target.src = '/lovable-uploads/ff9e6e48-049d-465a-8d2b-f6e8fed93522.png';
-                              }
-                            }}
-                          />
-                          {hasMultiple && (
-                            <>
-                              <button
-                                onClick={(e) => { e.stopPropagation(); setMemryImageIndex(prev => Math.max(0, prev - 1)); }}
-                                disabled={memryImageIndex === 0}
-                                className="absolute left-[15%] top-1/2 -translate-y-1/2 z-[60] w-12 h-12 rounded-full bg-white/90 hover:bg-white text-black disabled:opacity-20 flex items-center justify-center shadow-lg"
-                              >
-                                <ChevronLeft className="w-6 h-6" />
-                              </button>
-                              <button
-                                onClick={(e) => { e.stopPropagation(); setMemryImageIndex(prev => Math.min(allImages.length - 1, prev + 1)); }}
-                                disabled={memryImageIndex === allImages.length - 1}
-                                className="absolute right-[15%] top-1/2 -translate-y-1/2 z-[60] w-12 h-12 rounded-full bg-white/90 hover:bg-white text-black disabled:opacity-20 flex items-center justify-center shadow-lg"
-                              >
-                                <ChevronRight className="w-6 h-6" />
-                              </button>
-                              <div className="absolute top-4 right-4 bg-black/60 text-white text-xs px-2 py-1 rounded-full z-10">
-                                {memryImageIndex + 1}/{allImages.length}
-                              </div>
-                            </>
-                          )}
-                        </>
-                      );
-                    })()}
-                    {/* Audio preview overlay for music products */}
-                    {currentPost.audio_url && (
-                      <div className="absolute inset-0 flex items-center justify-center z-5">
-                        <MusicPreviewPlayer mediaUrl={currentPost.audio_url} caption={currentPost.caption} transparent />
-                      </div>
-                    )}
-                    {/* Notification badge overlay */}
-                    <div className="absolute top-20 left-4 right-4 z-10">
-                      <Badge 
-                        className={`px-4 py-2 text-sm font-bold ${
-                          currentPost.content_type === 'new_product' 
-                            ? 'bg-gradient-to-r from-emerald-500 to-teal-500' 
-                            : currentPost.content_type === 'new_book'
-                            ? 'bg-gradient-to-r from-blue-500 to-indigo-500'
-                            : 'bg-gradient-to-r from-amber-500 to-orange-500'
-                        } text-white animate-pulse`}
-                      >
-                        {currentPost.content_type === 'new_product' ? (
-                          <><ShoppingBag className="w-4 h-4 mr-2 inline" /> NEW SEED AVAILABLE</>
-                        ) : currentPost.content_type === 'new_book' ? (
-                          <><Book className="w-4 h-4 mr-2 inline" /> NEW BOOK AVAILABLE</>
-                        ) : (
-                          <><Trees className="w-4 h-4 mr-2 inline" /> NEW ORCHARD PLANTED</>
-                        )}
-                      </Badge>
-                    </div>
-                  </div>
-                ) : (
-                <div className="w-full h-full flex items-center justify-center max-w-[80%] mx-auto">
-                    <img
-                      src={currentPost.media_url}
-                      alt={currentPost.caption}
-                      className="max-w-full max-h-full object-contain mx-auto"
-                      onError={(e) => {
-                        const target = e.target as HTMLImageElement;
-                        if (!target.dataset.fallback) {
-                          target.dataset.fallback = '1';
-                          target.src = '/lovable-uploads/ff9e6e48-049d-465a-8d2b-f6e8fed93522.png';
-                        }
-                      }}
-                    />
-                  </div>
-                )}
-                {/* Gradient overlay */}
-                <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-black/30 pointer-events-none" />
-              </div>
+        <div className="h-full overflow-y-auto" style={{ scrollSnapType: 'y mandatory' }}>
+          {groupedCreators.map((creator) => {
+            const postIdx = creatorPostIndices[creator.userId] || 0;
+            const post = creator.posts[postIdx];
+            const totalPosts = creator.posts.length;
+            const imgIdx = getCreatorImgIdx(creator.userId, postIdx);
 
-              {/* Right Side Actions */}
-              <div className="absolute right-4 top-28 bottom-32 flex flex-col items-center justify-end gap-4 z-40 overflow-y-auto">
-                {/* Profile Avatar - with hover card preview */}
-                <HoverCard>
-                  <HoverCardTrigger asChild>
-                    <Link to={`/member/${currentPost.user_id}`} className="flex flex-col items-center">
-                      <Avatar className="w-12 h-12 border-2 border-white shadow-lg">
-                        <AvatarImage src={currentPost.profiles?.avatar_url} />
-                        <AvatarFallback className="bg-gradient-to-br from-pink-400 to-orange-400 text-white">
-                          {currentPost.profiles?.display_name?.[0] || 'U'}
-                        </AvatarFallback>
-                      </Avatar>
-                    </Link>
-                  </HoverCardTrigger>
-                  <HoverCardContent side="left" className="w-64 bg-black/80 backdrop-blur-md border-white/20 text-white">
-                    <div className="flex items-center gap-3">
-                      <Avatar className="w-14 h-14 border-2 border-white/50">
-                        <AvatarImage src={currentPost.profiles?.avatar_url} />
-                        <AvatarFallback className="bg-gradient-to-br from-pink-400 to-orange-400 text-white">
-                          {currentPost.profiles?.display_name?.[0] || 'U'}
-                        </AvatarFallback>
-                      </Avatar>
-                      <div className="flex-1 min-w-0">
-                        <p className="font-bold text-sm truncate">{currentPost.profiles?.display_name || 'Sower'}</p>
-                        <p className="text-xs text-white/60">@{toHandle(currentPost.profiles?.username || currentPost.profiles?.display_name)}</p>
-                      </div>
-                    </div>
-                    <Button asChild size="sm" className="w-full mt-3 bg-white text-black hover:bg-white/90 border-0">
-                      <Link to={`/member/${currentPost.user_id}`}>View Profile</Link>
-                    </Button>
-                  </HoverCardContent>
-                </HoverCard>
+            if (!post) return null;
 
-                {/* Follow Button - separate */}
-                {user && currentPost.user_id !== user.id && (
-                  <motion.button
-                    whileTap={{ scale: 0.9 }}
-                    onClick={() => handleFollow(currentPost.user_id)}
-                    className="flex flex-col items-center gap-1"
-                  >
-                    <div className={`w-10 h-10 rounded-full flex items-center justify-center shadow-md ${
-                      followedUserIds.has(currentPost.user_id) ? 'bg-emerald-500' : 'bg-pink-500'
-                    }`}>
-                      {followedUserIds.has(currentPost.user_id) 
-                        ? <UserCheck className="w-5 h-5 text-white" />
-                        : <UserPlus className="w-5 h-5 text-white" />
-                      }
-                    </div>
-                    <span className="text-white text-[10px] font-semibold drop-shadow">
-                      {followedUserIds.has(currentPost.user_id) ? 'Following' : 'Follow'}
+            return (
+              <div
+                key={creator.userId}
+                id={`creator-row-${creator.userId}`}
+                className="h-full relative"
+                style={{ scrollSnapAlign: 'start' }}
+                onTouchStart={(e) => {
+                  hTouchStartX.current = e.touches[0].clientX;
+                  hTouchCreatorId.current = creator.userId;
+                }}
+                onTouchEnd={(e) => {
+                  if (hTouchStartX.current === null || hTouchCreatorId.current !== creator.userId) return;
+                  const deltaX = hTouchStartX.current - e.changedTouches[0].clientX;
+                  if (Math.abs(deltaX) > 60) {
+                    navigateCreatorPost(creator.userId, deltaX > 0 ? 1 : -1);
+                  }
+                  hTouchStartX.current = null;
+                }}
+              >
+                {renderMedia(post, creator.userId, postIdx, imgIdx)}
+
+                {/* Horizontal Post Navigation */}
+                {totalPosts > 1 && (
+                  <div className="absolute top-20 left-1/2 -translate-x-1/2 z-50 flex items-center gap-2">
+                    <button
+                      onClick={() => navigateCreatorPost(creator.userId, -1)}
+                      disabled={postIdx === 0}
+                      className="w-9 h-9 rounded-full bg-black/50 backdrop-blur-sm flex items-center justify-center text-white disabled:opacity-30 transition-opacity"
+                    >
+                      <ChevronLeft className="w-5 h-5" />
+                    </button>
+                    <span className="text-white text-xs font-bold bg-black/50 backdrop-blur-sm px-4 py-1.5 rounded-full">
+                      {postIdx + 1} / {totalPosts}
                     </span>
-                  </motion.button>
+                    <button
+                      onClick={() => navigateCreatorPost(creator.userId, 1)}
+                      disabled={postIdx === totalPosts - 1}
+                      className="w-9 h-9 rounded-full bg-black/50 backdrop-blur-sm flex items-center justify-center text-white disabled:opacity-30 transition-opacity"
+                    >
+                      <ChevronRight className="w-5 h-5" />
+                    </button>
+                  </div>
                 )}
 
-                {/* Direct Message Button */}
-                {user && currentPost.user_id !== user.id && (
-                  <motion.button
-                    whileTap={{ scale: 0.9 }}
-                    onClick={async () => {
-                      if (!user) {
-                        toast({ title: "Sign in required", description: "Please sign in to message", variant: "destructive" });
-                        return;
-                      }
-                      try {
-                        // Use RPC to find or create direct chat room
-                        const { data: roomId, error } = await supabase.rpc('get_or_create_direct_room', {
-                          user1_id: user.id,
-                          user2_id: currentPost.user_id,
-                        });
-                        console.log('RPC result:', { roomId, error, userId: user.id, targetId: currentPost.user_id });
-                        if (error) throw error;
-                        if (!roomId) throw new Error('No room ID returned');
+                {renderActions(post)}
+                {renderInfoPanel(post)}
 
-                        // Push notification to the content creator's dashboard (non-blocking)
-                        supabase.from('activity_feed').insert({
-                          user_id: currentPost.user_id,
-                          actor_id: user.id,
-                          action_type: 'new_message',
-                          content: `Someone sent you a message about your seed`,
-                          entity_type: 'chat_room',
-                          entity_id: roomId,
-                          mode_type: 'chatapp',
-                          metadata: { seed_id: currentPost.id, seed_caption: currentPost.caption?.slice(0, 100) }
-                        }).then(({ error: feedErr }) => {
-                          if (feedErr) console.warn('Activity feed insert failed:', feedErr);
-                        });
-
-                        navigate(`/communications-hub?room=${roomId}`);
-                      } catch (error: any) {
-                        console.error('Error starting direct chat:', error);
-                        toast({ title: "Error", description: error?.message || "Could not start chat", variant: "destructive" });
-                      }
-                    }}
-                    className="flex flex-col items-center gap-1"
-                  >
-                    <div className="relative w-10 h-10 rounded-full bg-blue-500 flex items-center justify-center shadow-md">
-                      <MessageSquare className="w-5 h-5 text-white" />
-                      {(messageCountsByUser[currentPost.user_id] || 0) > 0 && (
-                        <span className="absolute -top-1 -right-1 bg-destructive text-destructive-foreground text-[9px] font-bold rounded-full min-w-[18px] h-[18px] flex items-center justify-center px-1">
-                          {messageCountsByUser[currentPost.user_id] > 99 ? '99+' : messageCountsByUser[currentPost.user_id]}
-                        </span>
-                      )}
-                    </div>
-                    <span className="text-white text-[10px] font-semibold drop-shadow">Message</span>
-                  </motion.button>
-                )}
-
-                {/* Love (Like) */}
-                <motion.button
-                  whileTap={{ scale: 0.9 }}
-                  onClick={() => handleLike(currentPost.id)}
-                  className="flex flex-col items-center gap-1"
-                >
-                  <div className={`w-12 h-12 rounded-full flex items-center justify-center ${
-                    currentPost.user_liked || likedPostIds.has(currentPost.id) ? 'bg-pink-500' : 'bg-white/20 backdrop-blur-sm'
-                  }`}>
-                    <Heart className={`w-6 h-6 ${currentPost.user_liked || likedPostIds.has(currentPost.id) ? 'text-white fill-white' : 'text-white'}`} />
-                  </div>
-                  <span className="text-white text-xs font-semibold drop-shadow">{currentPost.likes_count}</span>
-                </motion.button>
-
-                {/* Donate */}
-                <motion.button
-                  whileTap={{ scale: 0.9 }}
-                  onClick={() => handleDonate(currentPost)}
-                  className="flex flex-col items-center gap-1"
-                >
-                  <div className="w-12 h-12 rounded-full bg-gradient-to-br from-emerald-400 to-teal-500 flex items-center justify-center shadow-lg">
-                    <Gift className="w-6 h-6 text-white" />
-                  </div>
-                  <span className="text-white text-xs font-semibold drop-shadow">Donate</span>
-                </motion.button>
-
-                {/* Comment */}
-                <motion.button
-                  whileTap={{ scale: 0.9 }}
-                  onClick={() => openComments(currentPost)}
-                  className="flex flex-col items-center gap-1"
-                >
-                  <div className="w-12 h-12 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center">
-                    <MessageCircle className="w-6 h-6 text-white" />
-                  </div>
-                  <span className="text-white text-xs font-semibold drop-shadow">{currentPost.comments_count}</span>
-                </motion.button>
-
-                {/* Bookmark */}
-                <motion.button
-                  whileTap={{ scale: 0.9 }}
-                  onClick={() => handleBookmark(currentPost.id)}
-                  className="flex flex-col items-center gap-1"
-                >
-                  <div className={`w-12 h-12 rounded-full flex items-center justify-center ${
-                    currentPost.user_bookmarked ? 'bg-amber-500' : 'bg-white/20 backdrop-blur-sm'
-                  }`}>
-                    <Bookmark className={`w-6 h-6 ${currentPost.user_bookmarked ? 'text-white fill-white' : 'text-white'}`} />
-                  </div>
-                </motion.button>
-
-                {/* Share */}
-                <motion.button
-                  whileTap={{ scale: 0.9 }}
-                  onClick={async () => {
-                    const shareUrl = `${window.location.origin}/memry?post=${currentPost.id}`;
-                    const shareData = {
-                      title: 'S2G Memry',
-                      text: currentPost.caption || `Check out this post by ${currentPost.profiles?.display_name}`,
-                      url: shareUrl
-                    };
-                    
-                    try {
-                      if (navigator.share) {
-                        await navigator.share(shareData);
-                        toast({
-                          title: "Shared!",
-                          description: "Post shared successfully"
-                        });
-                      } else {
-                        await navigator.clipboard.writeText(shareUrl);
-                        toast({
-                          title: "Link copied!",
-                          description: "Share link copied to clipboard"
-                        });
-                      }
-                    } catch (error: any) {
-                      if (error.name !== 'AbortError') {
-                        await navigator.clipboard.writeText(shareUrl);
-                        toast({
-                          title: "Link copied!",
-                          description: "Share link copied to clipboard"
-                        });
-                      }
-                    }
-                  }}
-                  className="flex flex-col items-center gap-1"
-                >
-                  <div className="w-12 h-12 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center">
-                    <Share2 className="w-6 h-6 text-white" />
-                  </div>
-                  <span className="text-white text-xs font-semibold drop-shadow">Share</span>
-                </motion.button>
-
-                {/* Sound toggle for videos */}
-                {(currentPost.content_type === 'video' || currentPost.content_type === 'marketing_video') && (
-                  <motion.button
-                    whileTap={{ scale: 0.9 }}
-                    onClick={() => setIsMuted(!isMuted)}
-                    className="flex flex-col items-center"
-                  >
-                    <div className="w-10 h-10 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center">
-                      {isMuted ? <VolumeX className="w-5 h-5 text-white" /> : <Volume2 className="w-5 h-5 text-white" />}
-                    </div>
-                  </motion.button>
-                )}
+                {/* Scroll indicator */}
+                <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-20">
+                  <motion.div animate={{ y: [0, 5, 0] }} transition={{ repeat: Infinity, duration: 1.5 }} className="text-white/50 text-xs">
+                    ↕ Scroll for more creators
+                  </motion.div>
+                </div>
               </div>
-
-              {/* Bottom Info - Enhanced Sower Details */}
-              <div className="absolute bottom-36 left-4 right-20 z-40 max-h-[45vh] overflow-y-auto">
-                <motion.div
-                  initial={{ y: 20, opacity: 0 }}
-                  animate={{ y: 0, opacity: 1 }}
-                  transition={{ delay: 0.2 }}
-                  className="bg-black/40 backdrop-blur-md rounded-2xl p-4"
-                >
-                  {/* Sower Profile Section - with hover card preview */}
-                  <div className="flex items-center gap-3 mb-3">
-                    <HoverCard>
-                      <HoverCardTrigger asChild>
-                        <Link to={`/member/${currentPost.user_id}`} className="flex-shrink-0">
-                          <Avatar className="w-10 h-10 border-2 border-white/50 cursor-pointer">
-                            <AvatarImage src={currentPost.profiles?.avatar_url} />
-                            <AvatarFallback className="bg-gradient-to-br from-pink-400 to-orange-400 text-white text-sm">
-                              {currentPost.profiles?.display_name?.[0] || 'S'}
-                            </AvatarFallback>
-                          </Avatar>
-                        </Link>
-                      </HoverCardTrigger>
-                      <HoverCardContent side="top" className="w-64 bg-black/80 backdrop-blur-md border-white/20 text-white">
-                        <div className="flex items-center gap-3">
-                          <Avatar className="w-14 h-14 border-2 border-white/50">
-                            <AvatarImage src={currentPost.profiles?.avatar_url} />
-                            <AvatarFallback className="bg-gradient-to-br from-pink-400 to-orange-400 text-white">
-                              {currentPost.profiles?.display_name?.[0] || 'S'}
-                            </AvatarFallback>
-                          </Avatar>
-                          <div className="flex-1 min-w-0">
-                            <p className="font-bold text-sm truncate">{currentPost.profiles?.display_name || 'Sower'}</p>
-                            <p className="text-xs text-white/60">@{toHandle(currentPost.profiles?.username || currentPost.profiles?.display_name)}</p>
-                          </div>
-                        </div>
-                        <Button asChild size="sm" className="w-full mt-3 bg-white text-black hover:bg-white/90 border-0">
-                          <Link to={`/member/${currentPost.user_id}`}>View Profile</Link>
-                        </Button>
-                      </HoverCardContent>
-                    </HoverCard>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2">
-                        <span className="text-white font-bold text-base drop-shadow truncate">
-                          {currentPost.profiles?.display_name || 'Sower'}
-                        </span>
-                        {currentPost.content_type === 'recipe' && (
-                          <span className="px-2 py-0.5 bg-orange-500 rounded-full text-xs text-white font-semibold flex-shrink-0">
-                            <ChefHat className="w-3 h-3 inline mr-1" />
-                            Recipe
-                          </span>
-                        )}
-                        {currentPost.content_type === 'marketing_video' && (
-                          <span className="px-2 py-0.5 bg-gradient-to-r from-pink-500 to-purple-500 rounded-full text-xs text-white font-semibold flex-shrink-0">
-                            <Video className="w-3 h-3 inline mr-1" />
-                            Marketing
-                          </span>
-                        )}
-                        {currentPost.content_type === 'new_product' && (
-                          <span className="px-2 py-0.5 bg-gradient-to-r from-emerald-500 to-teal-500 rounded-full text-xs text-white font-semibold flex-shrink-0">
-                            <ShoppingBag className="w-3 h-3 inline mr-1" />
-                            Seed
-                          </span>
-                        )}
-                        {currentPost.content_type === 'new_orchard' && (
-                          <span className="px-2 py-0.5 bg-gradient-to-r from-amber-500 to-orange-500 rounded-full text-xs text-white font-semibold flex-shrink-0">
-                            <Trees className="w-3 h-3 inline mr-1" />
-                            Orchard
-                          </span>
-                        )}
-                        {currentPost.content_type === 'music' && (
-                          <span className="px-2 py-0.5 bg-gradient-to-r from-violet-500 to-purple-500 rounded-full text-xs text-white font-semibold flex-shrink-0">
-                            <Music className="w-3 h-3 inline mr-1" />
-                            Music
-                          </span>
-                        )}
-                        {currentPost.content_type === 'new_book' && (
-                          <span className="px-2 py-0.5 bg-gradient-to-r from-blue-500 to-indigo-500 rounded-full text-xs text-white font-semibold flex-shrink-0">
-                            <Book className="w-3 h-3 inline mr-1" />
-                            Book
-                          </span>
-                        )}
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <span className="text-white/70 text-xs">
-                          @{currentPost.profiles?.username || 'sower'}
-                        </span>
-                        {user && currentPost.user_id !== user.id && (
-                          <button
-                            onClick={() => handleFollow(currentPost.user_id)}
-                            className={`px-2 py-0.5 rounded-full text-xs font-semibold transition-colors ${
-                              followedUserIds.has(currentPost.user_id)
-                                ? 'bg-white/20 text-white/80'
-                                : 'bg-pink-500 text-white'
-                            }`}
-                          >
-                            {followedUserIds.has(currentPost.user_id) ? 'Following' : 'Follow'}
-                          </button>
-                        )}
-                      </div>
-                  </div>
-
-                  </div>
-                  
-                  {currentPost.content_type === 'recipe' && currentPost.recipe_title && (
-                    <h3 className="text-white font-bold text-lg mb-1 drop-shadow">
-                      {currentPost.recipe_title}
-                    </h3>
-                  )}
-                  
-                  <p className="text-white/90 text-sm line-clamp-2 drop-shadow mb-3">
-                    {currentPost.caption}
-                  </p>
-
-                  {/* Recipe preview */}
-                  {currentPost.content_type === 'recipe' && currentPost.recipe_ingredients && (
-                    <div className="mb-3 p-2 bg-white/10 rounded-lg">
-                      <p className="text-white/80 text-xs">
-                        📝 {currentPost.recipe_ingredients.slice(0, 3).join(' • ')}
-                        {currentPost.recipe_ingredients.length > 3 && ' • ...'}
-                      </p>
-                    </div>
-                  )}
-
-                  {/* Inline Chat Strip */}
-                  {user && currentPost.user_id !== user.id && (
-                    <div className="flex items-center gap-2 mb-3">
-                      <Input
-                        placeholder={`Message ${currentPost.profiles?.display_name || 'sower'}...`}
-                        value={inlineChat}
-                        onChange={(e) => setInlineChat(e.target.value)}
-                        onKeyDown={(e) => {
-                          if (e.key === 'Enter' && inlineChat.trim()) {
-                            e.preventDefault();
-                            const realPostId = currentPost.id.replace(/^(product|book|music|orchard)-/, '');
-                            supabase
-                              .from('memry_comments')
-                              .insert({ post_id: realPostId, user_id: user.id, content: inlineChat.trim() })
-                              .then(({ error }) => {
-                                if (!error) {
-                                  toast({ title: "Message sent! 💬" });
-                                  setPosts(prev => prev.map(p =>
-                                    p.id === currentPost.id ? { ...p, comments_count: p.comments_count + 1 } : p
-                                  ));
-                                  setInlineChat('');
-                                } else {
-                                  toast({ title: "Error", description: error.message, variant: "destructive" });
-                                }
-                              });
-                          }
-                        }}
-                        className="flex-1 h-8 text-xs rounded-full px-3 !bg-input-bg !border-input-border !text-input-text placeholder:!text-input-placeholder focus:!border-input-border-focus focus:!ring-input-border-focus/20"
-                      />
-                      <button
-                        onClick={() => {
-                          if (!inlineChat.trim()) return;
-                          const realPostId = currentPost.id.replace(/^(product|book|music|orchard)-/, '');
-                          supabase
-                            .from('memry_comments')
-                            .insert({ post_id: realPostId, user_id: user.id, content: inlineChat.trim() })
-                            .then(({ error }) => {
-                              if (!error) {
-                                toast({ title: "Message sent! 💬" });
-                                setPosts(prev => prev.map(p =>
-                                  p.id === currentPost.id ? { ...p, comments_count: p.comments_count + 1 } : p
-                                ));
-                                setInlineChat('');
-                              } else {
-                                toast({ title: "Error", description: error.message, variant: "destructive" });
-                              }
-                            });
-                        }}
-                        className="w-8 h-8 rounded-full bg-primary hover:bg-primary-hover flex items-center justify-center flex-shrink-0 transition-colors"
-                      >
-                        <Send className="w-4 h-4 text-primary-foreground" />
-                      </button>
-                    </div>
-                  )}
-
-                  {/* Bestow buttons for special content types */}
-                  {(currentPost.content_type === 'marketing_video' || currentPost.content_type === 'new_orchard') && currentPost.orchard_id && (
-                    <Button
-                      onClick={() => navigate(`/orchard/${currentPost.orchard_id}`)}
-                      className="w-full bg-gradient-to-r from-yellow-500 to-orange-500 hover:from-yellow-600 hover:to-orange-600 text-white font-bold shadow-lg"
-                      size="lg"
-                    >
-                      <Gift className="w-5 h-5 mr-2" />
-                      Bestow & Get This Seed
-                    </Button>
-                  )}
-
-                  {currentPost.content_type === 'new_product' && currentPost.product_id && (
-                    <Button
-                      onClick={() => {
-                        // Add to basket and navigate to checkout
-                        const productId = currentPost.product_id?.replace('product-', '') || currentPost.product_id || '';
-                        addToBasket({
-                          id: productId,
-                          title: currentPost.product_title || currentPost.caption.replace('🌱 SEED: ', ''),
-                          price: currentPost.product_price || 0,
-                          cover_image_url: currentPost.media_url,
-                          sower_id: currentPost.user_id,
-                          bestowal_count: 1,
-                          sowers: {
-                            display_name: currentPost.profiles?.display_name || 'Sower'
-                          }
-                        });
-                        toast({
-                          title: "Added to basket! 🛒",
-                          description: "Redirecting to checkout..."
-                        });
-                        navigate('/products/basket');
-                      }}
-                      className="w-full bg-gradient-to-r from-yellow-500 to-orange-500 hover:from-yellow-600 hover:to-orange-600 text-white font-bold shadow-lg"
-                      size="lg"
-                    >
-                      <Gift className="w-5 h-5 mr-2" />
-                      Bestow & Get This Seed
-                    </Button>
-                  )}
-
-                  {currentPost.content_type === 'new_book' && currentPost.book_id && (
-                    <Button
-                      onClick={() => {
-                        // Add book to basket and navigate to checkout
-                        const bookId = currentPost.book_id?.replace('book-', '') || currentPost.book_id || '';
-                        addToBasket({
-                          id: bookId,
-                          title: currentPost.product_title || currentPost.caption.replace('📚 BOOK: ', ''),
-                          price: currentPost.product_price || 0,
-                          cover_image_url: currentPost.media_url,
-                          sower_id: currentPost.user_id,
-                          bestowal_count: 1,
-                          sowers: {
-                            display_name: currentPost.profiles?.display_name || 'Sower'
-                          }
-                        });
-                        toast({
-                          title: "Book added to basket! 📚",
-                          description: "Redirecting to checkout..."
-                        });
-                        navigate('/products/basket');
-                      }}
-                      className="w-full bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-white font-bold shadow-lg"
-                      size="lg"
-                    >
-                      <Book className="w-5 h-5 mr-2" />
-                      Bestow & Get This Book
-                    </Button>
-                  )}
-
-                  {currentPost.content_type === 'music' && (
-                    <Button
-                      onClick={() => navigate(`/community-music-library`)}
-                      className="w-full bg-gradient-to-r from-violet-500 to-purple-500 hover:from-violet-600 hover:to-purple-600 text-white font-bold shadow-lg"
-                      size="lg"
-                    >
-                      <Gift className="w-5 h-5 mr-2" />
-                      Bestow & Get This Track
-                    </Button>
-                  )}
-
-                  {/* Generic donate for photos/videos/recipes */}
-                  {(currentPost.content_type === 'photo' || currentPost.content_type === 'video' || currentPost.content_type === 'recipe') && (
-                    <Button
-                      onClick={() => handleDonate(currentPost)}
-                      className="w-full bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-white font-bold shadow-lg"
-                      size="lg"
-                    >
-                      <Gift className="w-5 h-5 mr-2" />
-                      Support This Creator
-                    </Button>
-                  )}
-                </motion.div>
-              </div>
-
-              {/* Scroll indicator */}
-              <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-20">
-                <motion.div
-                  animate={{ y: [0, 5, 0] }}
-                  transition={{ repeat: Infinity, duration: 1.5 }}
-                  className="text-white/50 text-xs"
-                >
-                  Scroll for more
-                </motion.div>
-              </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
+            );
+          })}
+        </div>
         )}
         </>
         )}
