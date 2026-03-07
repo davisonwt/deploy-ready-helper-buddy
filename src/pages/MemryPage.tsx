@@ -1698,14 +1698,14 @@ export default function MemryPage() {
                     <button
                       onClick={() => navigateCreatorPost(creator.userId, -1)}
                       disabled={postIdx === 0}
-                      className="hidden md:flex absolute left-6 top-1/2 -translate-y-1/2 z-50 w-14 h-14 rounded-full bg-black/60 backdrop-blur-md items-center justify-center text-white disabled:opacity-20 hover:bg-black/80 transition-all shadow-lg"
+                      className="hidden md:flex absolute left-24 top-1/2 -translate-y-1/2 z-50 w-14 h-14 rounded-full bg-black/60 backdrop-blur-md items-center justify-center text-white disabled:opacity-20 hover:bg-black/80 transition-all shadow-lg"
                     >
                       <ChevronLeft className="w-8 h-8" />
                     </button>
                     <button
                       onClick={() => navigateCreatorPost(creator.userId, 1)}
                       disabled={postIdx === totalPosts - 1}
-                      className="hidden md:flex absolute right-6 top-1/2 -translate-y-1/2 z-50 w-14 h-14 rounded-full bg-black/60 backdrop-blur-md items-center justify-center text-white disabled:opacity-20 hover:bg-black/80 transition-all shadow-lg"
+                      className="hidden md:flex absolute right-24 top-1/2 -translate-y-1/2 z-50 w-14 h-14 rounded-full bg-black/60 backdrop-blur-md items-center justify-center text-white disabled:opacity-20 hover:bg-black/80 transition-all shadow-lg"
                     >
                       <ChevronRight className="w-8 h-8" />
                     </button>
