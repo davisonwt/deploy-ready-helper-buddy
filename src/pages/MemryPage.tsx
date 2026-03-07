@@ -10,6 +10,7 @@ import {
 import { Link, useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { resolveAudioUrl } from '@/utils/resolveAudioUrl';
+import { globalAudioManager } from '@/utils/globalAudioManager';
 import { LiveSessionAdBanner } from '@/components/memry/LiveSessionAdBanner';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -127,6 +128,16 @@ function MusicPreviewPlayer({ mediaUrl, caption, transparent = false, onPreviewE
     return () => { cancelled = true; };
   }, [mediaUrl]);
 
+  // Register this audio instance globally so only one media plays at a time
+  useEffect(() => {
+    const audio = audioRef.current;
+    if (!audio) return;
+    globalAudioManager.register(audio);
+    return () => {
+      globalAudioManager.unregister(audio);
+    };
+  }, []);
+
   // Play audio once URL is resolved — only when isActive
   useEffect(() => {
     const audio = audioRef.current;
@@ -145,6 +156,7 @@ function MusicPreviewPlayer({ mediaUrl, caption, transparent = false, onPreviewE
     audio.load();
 
     // Try autoplay (may be blocked by browser policy)
+    globalAudioManager.play(audio);
     const playPromise = audio.play();
     if (playPromise) {
       playPromise
@@ -202,6 +214,7 @@ function MusicPreviewPlayer({ mediaUrl, caption, transparent = false, onPreviewE
       audio.pause();
       setPlaying(false);
     } else {
+      globalAudioManager.play(audio);
       audio.play().then(() => setPlaying(true)).catch((err) => {
         console.error('[MusicPreview] Play failed:', err);
       });
@@ -211,7 +224,7 @@ function MusicPreviewPlayer({ mediaUrl, caption, transparent = false, onPreviewE
   return (
     <div className={`w-full h-full flex flex-col items-center justify-center ${transparent ? '' : 'bg-gradient-to-br from-purple-600 via-pink-500 to-orange-400'}`}>
       <Music className={`w-24 h-24 text-white/80 mb-6 ${playing ? 'animate-pulse' : ''}`} />
-      <audio ref={audioRef} preload="auto" crossOrigin="anonymous" className="hidden" />
+      <audio ref={audioRef} preload="auto" className="hidden" />
       
       {loadError ? (
         <p className="text-white/70 text-sm">⚠️ Could not load audio</p>
@@ -1042,6 +1055,7 @@ export default function MemryPage() {
   }, [posts]);
 
   const navigateCreatorPost = useCallback((userId: string, direction: number) => {
+    globalAudioManager.stopAll();
     setCreatorPostIndices(prev => {
       const current = prev[userId] || 0;
       const creator = groupedCreators.find(c => c.userId === userId);
@@ -1091,6 +1105,11 @@ export default function MemryPage() {
     return () => observer.disconnect();
   }, [groupedCreators, activeTab]);
 
+  // Hard-stop any previously playing media when visible creator row changes
+  useEffect(() => {
+    globalAudioManager.stopAll();
+  }, [activeCreatorId]);
+
   // Render media background for a post card — only plays media when isActive
   const renderMedia = (post: MemryPost, creatorUserId: string, postIdx: number, imgIdx: number, isActive: boolean) => (
     <div className="absolute inset-0 bg-gradient-to-br from-purple-900 via-pink-800 to-orange-700 flex items-center justify-center">
@@ -1100,6 +1119,7 @@ export default function MemryPage() {
             src={post.media_url}
             className="max-w-[80%] max-h-full object-contain mx-auto"
             autoPlay muted={isMuted} playsInline
+            onPlay={(e) => globalAudioManager.play(e.currentTarget)}
             onEnded={() => navigateCreatorPost(creatorUserId, 1)}
           />
         ) : (
@@ -1143,7 +1163,7 @@ export default function MemryPage() {
           })()}
           {post.audio_url && (
             <div className="absolute inset-0 flex items-center justify-center z-5">
-              <MusicPreviewPlayer mediaUrl={post.audio_url} caption={post.caption} transparent />
+              <MusicPreviewPlayer mediaUrl={post.audio_url} caption={post.caption} transparent isActive={isActive} />
             </div>
           )}
           <div className="absolute top-20 left-4 right-4 z-10">
@@ -1162,9 +1182,9 @@ export default function MemryPage() {
     </div>
   );
 
-  // Render left-side action buttons for a post
+  // Render right-side action buttons for a post
   const renderActions = (post: MemryPost) => (
-    <div className="absolute left-4 top-28 bottom-[45%] flex flex-col items-center justify-end gap-4 z-40 overflow-y-auto">
+    <div className="absolute right-4 top-28 bottom-32 flex flex-col items-center justify-end gap-4 z-40 overflow-y-auto">
       <HoverCard>
         <HoverCardTrigger asChild>
           <Link to={`/member/${post.user_id}`} className="flex flex-col items-center">
@@ -1272,7 +1292,7 @@ export default function MemryPage() {
 
   // Render bottom info panel for a post
   const renderInfoPanel = (post: MemryPost) => (
-    <div className="absolute bottom-36 left-20 right-4 z-40 max-h-[45vh] overflow-y-auto">
+    <div className="absolute bottom-36 left-4 right-20 z-40 max-h-[45vh] overflow-y-auto">
       <motion.div initial={{ y: 20, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ delay: 0.2 }} className="bg-black/40 backdrop-blur-md rounded-2xl p-4">
         <div className="flex items-center gap-3 mb-3">
           <HoverCard>
@@ -1710,9 +1730,9 @@ export default function MemryPage() {
         )}
 
         {/* Bottom Navigation */}
-        <div className="fixed bottom-0 left-0 right-0 z-50 px-4 pb-[env(safe-area-inset-bottom,8px)] pt-2 bg-gradient-to-t from-black/70 via-black/40 to-transparent">
-          <div className="max-w-lg mx-auto">
-            <div className="flex items-center justify-around bg-white/15 backdrop-blur-xl rounded-full py-1.5 px-1">
+        <div className="fixed bottom-0 left-0 right-0 z-50 px-4 pb-[env(safe-area-inset-bottom,8px)] pt-2 bg-gradient-to-t from-black/70 via-black/40 to-transparent md:left-4 md:right-auto md:bottom-6 md:bg-transparent">
+          <div className="max-w-lg mx-auto md:max-w-none">
+            <div className="flex items-center justify-around bg-white/15 backdrop-blur-xl rounded-full py-1.5 px-1 md:px-2">
               <button 
                 className={`flex flex-col items-center px-3 py-1 rounded-xl transition-colors ${activeTab === 'feed' ? 'text-pink-400 bg-white/10' : 'text-white/70'}`}
                 onClick={() => setActiveTab('feed')}
