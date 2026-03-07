@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
+import { globalAudioManager } from '@/utils/globalAudioManager';
 import { useProductBasket } from '@/contexts/ProductBasketContext';
 import { useAuth } from '@/hooks/useAuth';
 import { useNavigate } from 'react-router-dom';
@@ -69,6 +70,13 @@ export default function ProductCard({ product, featured, showActions = false }: 
     return count.toString();
   };
 
+  // Register audio element with global manager
+  useEffect(() => {
+    const audio = audioRef.current;
+    if (audio) globalAudioManager.register(audio);
+    return () => { if (audio) globalAudioManager.unregister(audio); };
+  }, []);
+
   const handlePlayPause = async () => {
     if (!audioRef.current) return;
 
@@ -77,6 +85,7 @@ export default function ProductCard({ product, featured, showActions = false }: 
       setIsPlaying(false);
     } else {
       try {
+        globalAudioManager.play(audioRef.current);
         await supabase.rpc('increment_product_play_count', { product_uuid: product.id });
         await audioRef.current.play();
         setIsPlaying(true);

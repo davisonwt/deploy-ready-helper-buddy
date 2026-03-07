@@ -1620,7 +1620,7 @@ export default function MemryPage() {
             </div>
           </div>
         ) : (
-        <div className="h-full overflow-y-auto" style={{ scrollSnapType: 'y mandatory' }}>
+        <div ref={feedContainerRef} className="h-full overflow-y-auto" style={{ scrollSnapType: 'y mandatory' }}>
           {groupedCreators.map((creator) => {
             const postIdx = creatorPostIndices[creator.userId] || 0;
             const post = creator.posts[postIdx];
@@ -1633,6 +1633,7 @@ export default function MemryPage() {
               <div
                 key={creator.userId}
                 id={`creator-row-${creator.userId}`}
+                data-creator-id={creator.userId}
                 className="h-full relative"
                 style={{ scrollSnapAlign: 'start' }}
                 onTouchStart={(e) => {
@@ -1648,7 +1649,7 @@ export default function MemryPage() {
                   hTouchStartX.current = null;
                 }}
               >
-                {renderMedia(post, creator.userId, postIdx, imgIdx)}
+                {renderMedia(post, creator.userId, postIdx, imgIdx, activeCreatorId === creator.userId)}
 
                 {/* Horizontal Post Navigation */}
                 {totalPosts > 1 && (
