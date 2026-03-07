@@ -1457,7 +1457,7 @@ export default function MemryPage() {
 
         {/* === DISCOVER TAB === */}
         {activeTab === 'discover' && (
-          <div className="h-full flex flex-col p-4 pt-20 pb-24 overflow-y-auto">
+          <div className="h-full flex flex-col pt-20 pb-24 pl-20 pr-3 md:pl-24 md:pr-6 overflow-y-auto">
             <div className="max-w-lg mx-auto w-full space-y-4">
               <Input
                 placeholder="Search users, sowers, content..."
@@ -1503,7 +1503,7 @@ export default function MemryPage() {
 
         {/* === RECIPES TAB === */}
         {activeTab === 'recipes' && (
-          <div className="h-full flex flex-col p-4 pt-20 pb-24 overflow-y-auto">
+          <div className="h-full flex flex-col pt-20 pb-24 pl-20 pr-3 md:pl-24 md:pr-6 overflow-y-auto">
             <div className="max-w-lg mx-auto w-full space-y-4">
               <h2 className="text-xl font-bold text-orange-800">Community Recipes</h2>
               {allPosts.filter(p => p.content_type === 'recipe').length === 0 ? (
@@ -1550,7 +1550,7 @@ export default function MemryPage() {
 
         {/* === PROFILE TAB === */}
         {activeTab === 'profile' && (
-          <div className="h-full flex flex-col p-4 pt-20 pb-24 overflow-y-auto">
+          <div className="h-full flex flex-col pt-20 pb-24 pl-20 pr-3 md:pl-24 md:pr-6 overflow-y-auto">
             <div className="max-w-lg mx-auto w-full space-y-4">
               {user ? (
                 <>
@@ -1698,14 +1698,14 @@ export default function MemryPage() {
                     <button
                       onClick={() => navigateCreatorPost(creator.userId, -1)}
                       disabled={postIdx === 0}
-                      className="hidden md:flex absolute left-24 top-1/2 -translate-y-1/2 z-50 w-14 h-14 rounded-full bg-black/60 backdrop-blur-md items-center justify-center text-white disabled:opacity-20 hover:bg-black/80 transition-all shadow-lg"
+                      className="hidden md:flex absolute left-1/2 top-1/2 z-[60] w-14 h-14 rounded-full bg-black/60 backdrop-blur-md items-center justify-center text-white disabled:opacity-20 hover:bg-black/80 transition-all shadow-lg -translate-y-1/2 -translate-x-[min(38vw,540px)]"
                     >
                       <ChevronLeft className="w-8 h-8" />
                     </button>
                     <button
                       onClick={() => navigateCreatorPost(creator.userId, 1)}
                       disabled={postIdx === totalPosts - 1}
-                      className="hidden md:flex absolute right-24 top-1/2 -translate-y-1/2 z-50 w-14 h-14 rounded-full bg-black/60 backdrop-blur-md items-center justify-center text-white disabled:opacity-20 hover:bg-black/80 transition-all shadow-lg"
+                      className="hidden md:flex absolute left-1/2 top-1/2 z-[60] w-14 h-14 rounded-full bg-black/60 backdrop-blur-md items-center justify-center text-white disabled:opacity-20 hover:bg-black/80 transition-all shadow-lg -translate-y-1/2 translate-x-[min(38vw,540px)]"
                     >
                       <ChevronRight className="w-8 h-8" />
                     </button>
@@ -1730,7 +1730,7 @@ export default function MemryPage() {
         )}
 
         {/* Vertical Left-Side Navigation */}
-        <div className="fixed left-2 top-1/2 -translate-y-1/2 z-50 flex flex-col items-center gap-2 bg-white/15 backdrop-blur-xl rounded-full py-3 px-1.5">
+        <div className="fixed left-2 md:left-3 top-1/2 -translate-y-1/2 z-50 flex flex-col items-center gap-2 bg-white/15 backdrop-blur-xl rounded-full py-3 px-1.5">
           <button 
             className={`flex flex-col items-center px-2 py-1.5 rounded-xl transition-colors ${activeTab === 'feed' ? 'text-pink-400 bg-white/10' : 'text-white/70'}`}
             onClick={() => setActiveTab('feed')}
