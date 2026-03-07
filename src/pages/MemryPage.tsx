@@ -1779,7 +1779,7 @@ export default function MemryPage() {
                               });
                           }
                         }}
-                        className="flex-1 h-8 text-xs bg-card/60 border-primary/30 text-card-foreground placeholder:text-muted-foreground rounded-full px-3 focus:border-primary focus:ring-primary/20"
+                        className="flex-1 h-8 text-xs rounded-full px-3 !bg-input-bg !border-input-border !text-input-text placeholder:!text-input-placeholder focus:!border-input-border-focus focus:!ring-input-border-focus/20"
                       />
                       <button
                         onClick={() => {
@@ -1800,9 +1800,9 @@ export default function MemryPage() {
                               }
                             });
                         }}
-                        className="w-8 h-8 rounded-full bg-primary/80 hover:bg-primary flex items-center justify-center flex-shrink-0 transition-colors"
+                        className="w-8 h-8 rounded-full bg-primary hover:bg-primary-hover flex items-center justify-center flex-shrink-0 transition-colors"
                       >
-                        <Send className="w-4 h-4 text-white" />
+                        <Send className="w-4 h-4 text-primary-foreground" />
                       </button>
                     </div>
                   )}
