@@ -1112,18 +1112,18 @@ export default function MemryPage() {
 
   // Render media background for a post card — only plays media when isActive
   const renderMedia = (post: MemryPost, creatorUserId: string, postIdx: number, imgIdx: number, isActive: boolean) => (
-    <div className="absolute inset-0 bg-gradient-to-br from-purple-900 via-pink-800 to-orange-700 flex items-center justify-center">
+    <div className="absolute inset-0 bg-gradient-to-br from-purple-900 via-pink-800 to-orange-700 flex items-center justify-center px-[76px] md:px-28">
       {post.content_type === 'video' || post.content_type === 'marketing_video' ? (
         isActive ? (
           <video
             src={post.media_url}
-            className="max-w-[80%] max-h-full object-contain mx-auto"
+            className="max-w-full max-h-full object-contain mx-auto"
             autoPlay muted={isMuted} playsInline
             onPlay={(e) => globalAudioManager.play(e.currentTarget)}
             onEnded={() => navigateCreatorPost(creatorUserId, 1)}
           />
         ) : (
-          <div className="w-full h-full flex items-center justify-center max-w-[80%] mx-auto">
+          <div className="w-full h-full flex items-center justify-center max-w-full mx-auto">
             {post.thumbnail_url ? (
               <img src={post.thumbnail_url} alt={post.caption} className="max-w-full max-h-full object-contain" />
             ) : (
@@ -1137,7 +1137,7 @@ export default function MemryPage() {
       ) : post.content_type === 'music' ? (
         <MusicPreviewPlayer key={post.id} mediaUrl={post.media_url} caption={post.caption} onPreviewEnd={() => navigateCreatorPost(creatorUserId, 1)} isActive={isActive} />
       ) : post.content_type === 'new_product' || post.content_type === 'new_orchard' || post.content_type === 'new_book' ? (
-        <div className="w-full h-full relative flex items-center justify-center max-w-[80%] mx-auto">
+        <div className="w-full h-full relative flex items-center justify-center max-w-full mx-auto">
           {(() => {
             const allImages = post.image_urls && post.image_urls.length > 1 ? post.image_urls : [post.media_url];
             const hasMultiple = allImages.length > 1;
@@ -1173,7 +1173,7 @@ export default function MemryPage() {
           </div>
         </div>
       ) : (
-        <div className="w-full h-full flex items-center justify-center max-w-[80%] mx-auto">
+        <div className="w-full h-full flex items-center justify-center max-w-full mx-auto">
           <img src={post.media_url} alt={post.caption} className="max-w-full max-h-full object-contain mx-auto"
             onError={(e) => { const t = e.target as HTMLImageElement; if (!t.dataset.fallback) { t.dataset.fallback = '1'; t.src = '/lovable-uploads/ff9e6e48-049d-465a-8d2b-f6e8fed93522.png'; } }} />
         </div>
@@ -1184,7 +1184,7 @@ export default function MemryPage() {
 
   // Render right-side action buttons for a post
   const renderActions = (post: MemryPost) => (
-    <div className="absolute right-4 top-28 bottom-2 flex flex-col items-center justify-end gap-4 z-40 overflow-y-auto pb-[env(safe-area-inset-bottom,4px)]">
+    <div className="absolute right-2 md:right-4 top-32 md:top-28 bottom-3 md:bottom-2 flex flex-col items-center justify-end gap-3 z-40 overflow-y-auto pb-[env(safe-area-inset-bottom,4px)]">
       <HoverCard>
         <HoverCardTrigger asChild>
           <Link to={`/member/${post.user_id}`} className="flex flex-col items-center">
@@ -1292,7 +1292,7 @@ export default function MemryPage() {
 
   // Render bottom info panel for a post
   const renderInfoPanel = (post: MemryPost) => (
-    <div className="absolute bottom-2 left-14 right-20 z-40 max-h-[45vh] overflow-y-auto pb-[env(safe-area-inset-bottom,4px)]">
+    <div className="absolute bottom-2 left-[4.75rem] right-[5.5rem] md:left-24 md:right-24 z-40 max-h-[45vh] overflow-y-auto pb-[env(safe-area-inset-bottom,4px)]">
       <motion.div initial={{ y: 20, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ delay: 0.2 }} className="bg-black/40 backdrop-blur-md rounded-2xl p-4">
         <div className="flex items-center gap-3 mb-3">
           <HoverCard>
@@ -1457,7 +1457,7 @@ export default function MemryPage() {
 
         {/* === DISCOVER TAB === */}
         {activeTab === 'discover' && (
-          <div className="h-full flex flex-col p-4 pt-20 pb-24 overflow-y-auto">
+          <div className="h-full flex flex-col pt-20 pb-24 pl-20 pr-3 md:pl-24 md:pr-6 overflow-y-auto">
             <div className="max-w-lg mx-auto w-full space-y-4">
               <Input
                 placeholder="Search users, sowers, content..."
@@ -1503,7 +1503,7 @@ export default function MemryPage() {
 
         {/* === RECIPES TAB === */}
         {activeTab === 'recipes' && (
-          <div className="h-full flex flex-col p-4 pt-20 pb-24 overflow-y-auto">
+          <div className="h-full flex flex-col pt-20 pb-24 pl-20 pr-3 md:pl-24 md:pr-6 overflow-y-auto">
             <div className="max-w-lg mx-auto w-full space-y-4">
               <h2 className="text-xl font-bold text-orange-800">Community Recipes</h2>
               {allPosts.filter(p => p.content_type === 'recipe').length === 0 ? (
@@ -1550,7 +1550,7 @@ export default function MemryPage() {
 
         {/* === PROFILE TAB === */}
         {activeTab === 'profile' && (
-          <div className="h-full flex flex-col p-4 pt-20 pb-24 overflow-y-auto">
+          <div className="h-full flex flex-col pt-20 pb-24 pl-20 pr-3 md:pl-24 md:pr-6 overflow-y-auto">
             <div className="max-w-lg mx-auto w-full space-y-4">
               {user ? (
                 <>
@@ -1698,14 +1698,14 @@ export default function MemryPage() {
                     <button
                       onClick={() => navigateCreatorPost(creator.userId, -1)}
                       disabled={postIdx === 0}
-                      className="hidden md:flex absolute left-24 top-1/2 -translate-y-1/2 z-50 w-14 h-14 rounded-full bg-black/60 backdrop-blur-md items-center justify-center text-white disabled:opacity-20 hover:bg-black/80 transition-all shadow-lg"
+                      className="hidden md:flex absolute left-1/2 top-1/2 z-[60] w-14 h-14 rounded-full bg-black/60 backdrop-blur-md items-center justify-center text-white disabled:opacity-20 hover:bg-black/80 transition-all shadow-lg -translate-y-1/2 -translate-x-[min(38vw,540px)]"
                     >
                       <ChevronLeft className="w-8 h-8" />
                     </button>
                     <button
                       onClick={() => navigateCreatorPost(creator.userId, 1)}
                       disabled={postIdx === totalPosts - 1}
-                      className="hidden md:flex absolute right-24 top-1/2 -translate-y-1/2 z-50 w-14 h-14 rounded-full bg-black/60 backdrop-blur-md items-center justify-center text-white disabled:opacity-20 hover:bg-black/80 transition-all shadow-lg"
+                      className="hidden md:flex absolute left-1/2 top-1/2 z-[60] w-14 h-14 rounded-full bg-black/60 backdrop-blur-md items-center justify-center text-white disabled:opacity-20 hover:bg-black/80 transition-all shadow-lg -translate-y-1/2 translate-x-[min(38vw,540px)]"
                     >
                       <ChevronRight className="w-8 h-8" />
                     </button>
@@ -1730,7 +1730,7 @@ export default function MemryPage() {
         )}
 
         {/* Vertical Left-Side Navigation */}
-        <div className="fixed left-2 top-1/2 -translate-y-1/2 z-50 flex flex-col items-center gap-2 bg-white/15 backdrop-blur-xl rounded-full py-3 px-1.5">
+        <div className="fixed left-2 md:left-3 top-1/2 -translate-y-1/2 z-50 flex flex-col items-center gap-2 bg-white/15 backdrop-blur-xl rounded-full py-3 px-1.5">
           <button 
             className={`flex flex-col items-center px-2 py-1.5 rounded-xl transition-colors ${activeTab === 'feed' ? 'text-pink-400 bg-white/10' : 'text-white/70'}`}
             onClick={() => setActiveTab('feed')}
