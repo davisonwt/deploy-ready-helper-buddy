@@ -1730,9 +1730,31 @@ export default function MemryPage() {
                       </div>
                   </div>
 
+                  </div>
+                  
+                  {currentPost.content_type === 'recipe' && currentPost.recipe_title && (
+                    <h3 className="text-white font-bold text-lg mb-1 drop-shadow">
+                      {currentPost.recipe_title}
+                    </h3>
+                  )}
+                  
+                  <p className="text-white/90 text-sm line-clamp-2 drop-shadow mb-3">
+                    {currentPost.caption}
+                  </p>
+
+                  {/* Recipe preview */}
+                  {currentPost.content_type === 'recipe' && currentPost.recipe_ingredients && (
+                    <div className="mb-3 p-2 bg-white/10 rounded-lg">
+                      <p className="text-white/80 text-xs">
+                        📝 {currentPost.recipe_ingredients.slice(0, 3).join(' • ')}
+                        {currentPost.recipe_ingredients.length > 3 && ' • ...'}
+                      </p>
+                    </div>
+                  )}
+
                   {/* Inline Chat Strip */}
                   {user && currentPost.user_id !== user.id && (
-                    <div className="flex items-center gap-2 mb-2">
+                    <div className="flex items-center gap-2 mb-3">
                       <Input
                         placeholder={`Message ${currentPost.profiles?.display_name || 'sower'}...`}
                         value={inlineChat}
@@ -1740,7 +1762,6 @@ export default function MemryPage() {
                         onKeyDown={(e) => {
                           if (e.key === 'Enter' && inlineChat.trim()) {
                             e.preventDefault();
-                            // Send as a comment on this post
                             const realPostId = currentPost.id.replace(/^(product|book|music|orchard)-/, '');
                             supabase
                               .from('memry_comments')
@@ -1783,27 +1804,6 @@ export default function MemryPage() {
                       >
                         <Send className="w-4 h-4 text-white" />
                       </button>
-                    </div>
-                  )}
-                  </div>
-                  
-                  {currentPost.content_type === 'recipe' && currentPost.recipe_title && (
-                    <h3 className="text-white font-bold text-lg mb-1 drop-shadow">
-                      {currentPost.recipe_title}
-                    </h3>
-                  )}
-                  
-                  <p className="text-white/90 text-sm line-clamp-2 drop-shadow mb-3">
-                    {currentPost.caption}
-                  </p>
-
-                  {/* Recipe preview */}
-                  {currentPost.content_type === 'recipe' && currentPost.recipe_ingredients && (
-                    <div className="mb-3 p-2 bg-white/10 rounded-lg">
-                      <p className="text-white/80 text-xs">
-                        📝 {currentPost.recipe_ingredients.slice(0, 3).join(' • ')}
-                        {currentPost.recipe_ingredients.length > 3 && ' • ...'}
-                      </p>
                     </div>
                   )}
 
