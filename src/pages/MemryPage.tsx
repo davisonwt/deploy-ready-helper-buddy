@@ -1105,10 +1105,10 @@ export default function MemryPage() {
     return () => observer.disconnect();
   }, [groupedCreators, activeTab]);
 
-  // Hard-stop any previously playing media when visible creator row changes
+  // Hard-stop any previously playing media when visible creator row or post index changes
   useEffect(() => {
     globalAudioManager.stopAll();
-  }, [activeCreatorId]);
+  }, [activeCreatorId, creatorPostIndices]);
 
   // Render media background for a post card — only plays media when isActive
   const renderMedia = (post: MemryPost, creatorUserId: string, postIdx: number, imgIdx: number, isActive: boolean) => (
