@@ -1,52 +1,43 @@
 
 
-## Why Your Balance Shows $0.00
+## Fix Memry Page: Vertical Nav, Bottom Info Panel, Single-Post Audio
 
-After a thorough investigation, I found **critical bugs in the NOWPayments webhook** that prevent your balance from ever being updated. Here is what's happening:
+Three changes:
 
-### Root Cause: Webhook Processing Fails Silently
+### 1. Convert Bottom Nav to Vertical Stack (Left Side)
 
-The `nowpayments-webhook` edge function has **zero logs** and the `processed_webhooks` table is **empty** — meaning no webhook from NOWPayments has ever been successfully processed. Even though invoices are being created successfully (I can see 3 recent invoice creations), when NOWPayments sends the payment confirmation callback, the webhook crashes due to column-name mismatches in the database queries.
+The Home/Discover/+/Recipes/Profile bar is currently horizontal at the bottom. Convert it to a vertical column on the left edge of the screen — similar to how the action buttons are stacked vertically on the right.
 
-### Bugs Found
+- Position: `fixed left-2 top-1/2 -translate-y-1/2 z-50`
+- Layout: `flex flex-col items-center gap-2`
+- Each button: rounded icon + tiny label below, same styling as current
+- The "+" button keeps its gradient pill shape
+- Remove the horizontal bottom bar entirely
 
-1. **`orchards.grower_id` does not exist** — the actual column is `user_id`. The webhook queries `orchards(title, grower_id)` which silently fails, so the sower's balance is never credited.
+### 2. Move Info Panel to Very Bottom
 
-2. **`payment_transactions.user_id` does not exist** — the actual column is `bestowal_id`. The webhook tries to insert with `user_id` causing an error.
+Currently at `bottom-36`. Move it to `bottom-2` (or `bottom-[env(safe-area-inset-bottom,8px)]`) so the profile/name/chat/bestow block sits flush at the bottom of the screen. Adjust `right` to `right-4` since the nav is no longer at the bottom.
 
-3. **`payment_audit_log.status` does not exist** — the webhook inserts a `status` field that doesn't exist in the table schema.
+### 3. Fix Audio: Only Currently Visible Post Plays
 
-These three bugs cause the webhook to crash every time NOWPayments sends a payment confirmation, which is why your `sower_balances` stays at $0.00.
+The bug: `isActive` is set to `activeCreatorId === creator.userId`, meaning ALL posts from one creator are "active" — but only one post is displayed at a time via `postIdx`. When that creator has multiple music/audio posts, they all try to play simultaneously.
 
-### Implementation Plan
-
-**Step 1 — Fix `nowpayments-webhook` edge function**
-- Change `orchards(title, grower_id)` to `orchards(title, user_id)` and update all references from `grower_id` to `user_id`
-- Fix `payment_transactions` insert to use correct column names (`bestowal_id` instead of `user_id`)
-- Fix `payment_audit_log` insert to remove the nonexistent `status` column
-- Redeploy the function
-
-**Step 2 — Create a balance sync edge function**
-- New edge function `sync-nowpayments-balance` that calls the NOWPayments API (`/v1/payment/{id}`) to check the status of past invoices
-- Queries `product_bestowals` and `bestowals` for records with `payment_status = 'pending'` and payment references
-- For any that show `finished` on NOWPayments, retroactively credit the sower's balance
-- This catches any payments that completed while the webhook was broken
-
-**Step 3 — Add "Sync Balance" button to the UI**
-- In `SowerBalanceCard`, the refresh button will also call the sync function
-- Shows a toast with the result (e.g., "Found 2 completed payments, balance updated")
-
-**Step 4 — Verify IPN callback URL is configured in NOWPayments dashboard**
-- The code sets `ipn_callback_url` per-invoice which is correct
-- But you should also verify in your NOWPayments dashboard settings that the IPN URL is set to: `https://zuwkgasbkpjlxzsjzumu.supabase.co/functions/v1/nowpayments-webhook`
-
-### Technical Detail: Column Mismatches
-
-```text
-Webhook code                  Actual DB column
-─────────────────────────────────────────────────
-orchards.grower_id        →   orchards.user_id
-payment_transactions.user_id → payment_transactions.bestowal_id
-payment_audit_log.status  →   (does not exist, remove)
+**Fix**: Pass a unique active key combining `creatorId + postIdx`. In `renderMedia`, compare not just the creator but also the specific post index. Change the `isActive` prop to:
 ```
+isActive={activeCreatorId === creator.userId && postIdx === (creatorPostIndices[creator.userId] || 0)}
+```
+
+Wait — `postIdx` in the map IS always the current index. The issue is that `renderMedia` is only called for the single visible post. Let me re-examine...
+
+Actually, only one post per creator is rendered (line 1646: `const post = creator.posts[postIdx]`), so the render itself is correct. The real issue is that `MusicPreviewPlayer` creates a new audio element each time it mounts but when `postIdx` changes, the old component unmounts and the new one mounts — the old audio may not be cleaned up fast enough, or the `useEffect` cleanup race with the new autoplay causes overlap.
+
+**Real fix**: Call `globalAudioManager.stopAll()` inside `navigateCreatorPost` (already done at line 1058) AND also add it to the `useEffect` that runs when `creatorPostIndices` changes. Additionally, ensure the `MusicPreviewPlayer` cleanup in its `useEffect` return properly stops audio before the new instance starts.
+
+### Files to Edit
+
+**`src/pages/MemryPage.tsx`**:
+- Lines 1732-1774: Replace horizontal bottom nav with vertical left-side nav
+- Line 1295: Change `bottom-36` to `bottom-2` and adjust `right-20` to `right-4`
+- Line 1187: Adjust action buttons `bottom-32` to `bottom-2` to match new layout (or keep right-side as-is since nav moved to left)
+- Add `useEffect` watching `creatorPostIndices` to call `globalAudioManager.stopAll()`
 
