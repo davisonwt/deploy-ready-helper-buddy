@@ -1184,7 +1184,7 @@ export default function MemryPage() {
 
   // Render right-side action buttons for a post
   const renderActions = (post: MemryPost) => (
-    <div className="absolute right-4 top-28 bottom-32 flex flex-col items-center justify-end gap-4 z-40 overflow-y-auto">
+    <div className="absolute right-4 top-28 bottom-2 flex flex-col items-center justify-end gap-4 z-40 overflow-y-auto pb-[env(safe-area-inset-bottom,4px)]">
       <HoverCard>
         <HoverCardTrigger asChild>
           <Link to={`/member/${post.user_id}`} className="flex flex-col items-center">
@@ -1292,7 +1292,7 @@ export default function MemryPage() {
 
   // Render bottom info panel for a post
   const renderInfoPanel = (post: MemryPost) => (
-    <div className="absolute bottom-36 left-4 right-20 z-40 max-h-[45vh] overflow-y-auto">
+    <div className="absolute bottom-2 left-14 right-20 z-40 max-h-[45vh] overflow-y-auto pb-[env(safe-area-inset-bottom,4px)]">
       <motion.div initial={{ y: 20, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ delay: 0.2 }} className="bg-black/40 backdrop-blur-md rounded-2xl p-4">
         <div className="flex items-center gap-3 mb-3">
           <HoverCard>
@@ -1729,48 +1729,44 @@ export default function MemryPage() {
         </>
         )}
 
-        {/* Bottom Navigation */}
-        <div className="fixed bottom-0 left-0 right-0 z-50 px-4 pb-[env(safe-area-inset-bottom,8px)] pt-2 bg-gradient-to-t from-black/70 via-black/40 to-transparent md:left-4 md:right-auto md:bottom-6 md:bg-transparent">
-          <div className="max-w-lg mx-auto md:max-w-none">
-            <div className="flex items-center justify-around bg-white/15 backdrop-blur-xl rounded-full py-1.5 px-1 md:px-2">
-              <button 
-                className={`flex flex-col items-center px-3 py-1 rounded-xl transition-colors ${activeTab === 'feed' ? 'text-pink-400 bg-white/10' : 'text-white/70'}`}
-                onClick={() => setActiveTab('feed')}
-              >
-                <Home className="w-5 h-5" />
-                <span className="text-[10px] mt-0.5">Home</span>
-              </button>
-              <button 
-                className={`flex flex-col items-center px-3 py-1 rounded-xl transition-colors ${activeTab === 'discover' ? 'text-pink-400 bg-white/10' : 'text-white/70'}`}
-                onClick={() => setActiveTab('discover')}
-              >
-                <Search className="w-5 h-5" />
-                <span className="text-[10px] mt-0.5">Discover</span>
-              </button>
-              <button 
-                className="flex flex-col items-center px-2 py-1"
-                onClick={() => setShowCreateModal(true)}
-              >
-                <div className="w-10 h-7 bg-gradient-to-r from-pink-500 to-orange-500 rounded-lg flex items-center justify-center">
-                  <Plus className="w-5 h-5 text-white" />
-                </div>
-              </button>
-              <button 
-                className={`flex flex-col items-center px-3 py-1 rounded-xl transition-colors ${activeTab === 'recipes' ? 'text-pink-400 bg-white/10' : 'text-white/70'}`}
-                onClick={() => setActiveTab('recipes')}
-              >
-                <ChefHat className="w-5 h-5" />
-                <span className="text-[10px] mt-0.5">Recipes</span>
-              </button>
-              <button 
-                className={`flex flex-col items-center px-3 py-1 rounded-xl transition-colors ${activeTab === 'profile' ? 'text-pink-400 bg-white/10' : 'text-white/70'}`}
-                onClick={() => setActiveTab('profile')}
-              >
-                <User className="w-5 h-5" />
-                <span className="text-[10px] mt-0.5">Profile</span>
-              </button>
+        {/* Vertical Left-Side Navigation */}
+        <div className="fixed left-2 top-1/2 -translate-y-1/2 z-50 flex flex-col items-center gap-2 bg-white/15 backdrop-blur-xl rounded-full py-3 px-1.5">
+          <button 
+            className={`flex flex-col items-center px-2 py-1.5 rounded-xl transition-colors ${activeTab === 'feed' ? 'text-pink-400 bg-white/10' : 'text-white/70'}`}
+            onClick={() => setActiveTab('feed')}
+          >
+            <Home className="w-5 h-5" />
+            <span className="text-[9px] mt-0.5">Home</span>
+          </button>
+          <button 
+            className={`flex flex-col items-center px-2 py-1.5 rounded-xl transition-colors ${activeTab === 'discover' ? 'text-pink-400 bg-white/10' : 'text-white/70'}`}
+            onClick={() => setActiveTab('discover')}
+          >
+            <Search className="w-5 h-5" />
+            <span className="text-[9px] mt-0.5">Discover</span>
+          </button>
+          <button 
+            className="flex flex-col items-center px-1.5 py-1"
+            onClick={() => setShowCreateModal(true)}
+          >
+            <div className="w-9 h-9 bg-gradient-to-r from-pink-500 to-orange-500 rounded-full flex items-center justify-center">
+              <Plus className="w-5 h-5 text-white" />
             </div>
-          </div>
+          </button>
+          <button 
+            className={`flex flex-col items-center px-2 py-1.5 rounded-xl transition-colors ${activeTab === 'recipes' ? 'text-pink-400 bg-white/10' : 'text-white/70'}`}
+            onClick={() => setActiveTab('recipes')}
+          >
+            <ChefHat className="w-5 h-5" />
+            <span className="text-[9px] mt-0.5">Recipes</span>
+          </button>
+          <button 
+            className={`flex flex-col items-center px-2 py-1.5 rounded-xl transition-colors ${activeTab === 'profile' ? 'text-pink-400 bg-white/10' : 'text-white/70'}`}
+            onClick={() => setActiveTab('profile')}
+          >
+            <User className="w-5 h-5" />
+            <span className="text-[9px] mt-0.5">Profile</span>
+          </button>
         </div>
       </div>
 
