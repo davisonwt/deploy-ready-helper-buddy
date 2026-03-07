@@ -101,10 +101,10 @@ export function LiveSessionAdBanner() {
         initial={{ y: -80, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
         exit={{ y: -80, opacity: 0 }}
-        className="fixed top-[56px] left-0 right-0 z-[45] px-3 pt-14"
+        className="fixed top-[56px] left-0 right-0 z-[45] px-3 pt-1"
       >
         <div 
-          className="max-w-lg mx-auto bg-gradient-to-r from-red-600 via-orange-500 to-amber-500 rounded-2xl p-3 shadow-2xl cursor-pointer relative"
+          className="max-w-lg mx-auto bg-gradient-to-r from-red-600 via-orange-500 to-amber-500 rounded-xl p-2 shadow-xl cursor-pointer relative"
           onClick={() => {
             if (session.mode === 'radio') navigate(`/grove-station?schedule=${session.id}`);
             else navigate(`/communications-hub?classroom=${session.id}`);
