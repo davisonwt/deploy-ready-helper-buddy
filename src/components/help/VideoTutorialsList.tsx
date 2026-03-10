@@ -31,7 +31,7 @@ const VideoTutorialsList = () => {
   };
 
   return (
-    <div className="h-full flex flex-col">
+    <div className="flex flex-col">
       <div className="mb-4">
         <div className="relative">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -44,7 +44,7 @@ const VideoTutorialsList = () => {
         </div>
       </div>
 
-      <div className="flex-1 overflow-y-auto space-y-6 pr-1">
+      <div className="space-y-6 pr-1">
         {filteredCategories.map((category) => (
           <div key={category.id}>
             <div className="flex items-center gap-2 mb-3 sticky top-0 bg-background/95 backdrop-blur-sm py-1 z-10">
