@@ -201,10 +201,14 @@ const HelpModal = () => {
         
         <div className="flex-1 overflow-hidden">
           <Tabs value={activeTab} onValueChange={setActiveTab} className="h-full flex flex-col">
-            <TabsList className="grid w-full grid-cols-3">
+            <TabsList className="grid w-full grid-cols-4">
+              <TabsTrigger value="videos" className="flex items-center gap-2">
+                <Play className="h-4 w-4" />
+                Videos
+              </TabsTrigger>
               <TabsTrigger value="docs" className="flex items-center gap-2">
                 <Book className="h-4 w-4" />
-                Documentation
+                Docs
               </TabsTrigger>
               <TabsTrigger value="faqs" className="flex items-center gap-2">
                 <HelpCircle className="h-4 w-4" />
