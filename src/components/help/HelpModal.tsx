@@ -18,8 +18,10 @@ import {
   Book, 
   Video,
   ExternalLink,
-  Send
+  Send,
+  Play
 } from 'lucide-react';
+import VideoTutorialsList from './VideoTutorialsList';
 import { useSupabaseClient, useUser } from '@supabase/auth-helpers-react';
 import { toast } from '@/hooks/use-toast';
 import { toast as sonnerToast } from 'sonner';
@@ -97,7 +99,7 @@ const HelpModal = () => {
   const location = useLocation();
   const isDashboard = location.pathname === '/dashboard' || location.pathname === '/';
   const [feedback, setFeedback] = useState('');
-  const [activeTab, setActiveTab] = useState('docs');
+  const [activeTab, setActiveTab] = useState('videos');
   const user = useUser();
   const supabase = useSupabaseClient();
   const { currentCall } = useCallManager();
@@ -199,10 +201,14 @@ const HelpModal = () => {
         
         <div className="flex-1 overflow-hidden">
           <Tabs value={activeTab} onValueChange={setActiveTab} className="h-full flex flex-col">
-            <TabsList className="grid w-full grid-cols-3">
+            <TabsList className="grid w-full grid-cols-4">
+              <TabsTrigger value="videos" className="flex items-center gap-2">
+                <Play className="h-4 w-4" />
+                Videos
+              </TabsTrigger>
               <TabsTrigger value="docs" className="flex items-center gap-2">
                 <Book className="h-4 w-4" />
-                Documentation
+                Docs
               </TabsTrigger>
               <TabsTrigger value="faqs" className="flex items-center gap-2">
                 <HelpCircle className="h-4 w-4" />
@@ -215,6 +221,10 @@ const HelpModal = () => {
             </TabsList>
             
             <div className="flex-1 overflow-hidden mt-4">
+              <TabsContent value="videos" className="h-full flex flex-col mt-0">
+                <VideoTutorialsList />
+              </TabsContent>
+
               <TabsContent value="docs" className="h-full flex flex-col mt-0">
                 <div className="mb-4">
                   <div className="relative">
