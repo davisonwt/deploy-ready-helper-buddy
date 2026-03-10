@@ -33,8 +33,32 @@ export function StatsFloatingButton({ theme: propTheme }: LiveActivitiesBarProps
   const accentColor = theme.accent;
   const cardBg = theme.cardBg;
   const borderColor = theme.cardBorder;
-  const textPrimary = theme.textPrimary;
-  const textSecondary = theme.textSecondary;
+
+  const extractHex = (value: string): string => {
+    const match = value.match(/#[0-9a-fA-F]{6}/);
+    return match ? match[0] : '#26c6da';
+  };
+
+  const getContrastTextColor = (hex: string): string => {
+    const clean = hex.replace('#', '');
+    const r = parseInt(clean.slice(0, 2), 16);
+    const g = parseInt(clean.slice(2, 4), 16);
+    const b = parseInt(clean.slice(4, 6), 16);
+    const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+    return luminance > 0.62 ? '#0b1220' : '#ffffff';
+  };
+
+  const buttonTextColor = getContrastTextColor(extractHex(accentColor));
+  const buttonBaseStyle = {
+    background: theme.primaryButton,
+    color: buttonTextColor,
+    border: `1px solid ${theme.cardBorder}`,
+    boxShadow: `0 6px 14px ${theme.shadow}`,
+  };
+
+  const handleButtonHover = (e: React.MouseEvent<HTMLButtonElement>, hover: boolean) => {
+    e.currentTarget.style.background = hover ? theme.primaryButtonHover : theme.primaryButton;
+  };
 
   const handleLiveActivities = () => {
     window.dispatchEvent(new CustomEvent('toggle-live-activity'));
