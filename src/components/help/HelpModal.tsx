@@ -278,7 +278,7 @@ const HelpModal = () => {
                 </div>
               </TabsContent>
               
-              <TabsContent value="faqs" className="h-full flex flex-col mt-0">
+              <TabsContent value="faqs" className="h-full mt-0 overflow-y-auto flex flex-col">
                 <div className="mb-4">
                   <div className="relative">
                     <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
