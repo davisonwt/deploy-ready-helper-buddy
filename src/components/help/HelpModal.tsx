@@ -308,7 +308,7 @@ const HelpModal = () => {
                 </div>
               </TabsContent>
               
-              <TabsContent value="feedback" className="h-full flex flex-col mt-0">
+              <TabsContent value="feedback" className="h-full mt-0 overflow-y-auto flex flex-col">
                 <div className="space-y-4">
                   <div>
                     <h3 className="font-semibold mb-2">Send Feedback</h3>
