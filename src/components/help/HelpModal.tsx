@@ -99,7 +99,7 @@ const HelpModal = () => {
   const location = useLocation();
   const isDashboard = location.pathname === '/dashboard' || location.pathname === '/';
   const [feedback, setFeedback] = useState('');
-  const [activeTab, setActiveTab] = useState('docs');
+  const [activeTab, setActiveTab] = useState('videos');
   const user = useUser();
   const supabase = useSupabaseClient();
   const { currentCall } = useCallManager();
