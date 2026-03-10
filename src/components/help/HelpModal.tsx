@@ -221,6 +221,10 @@ const HelpModal = () => {
             </TabsList>
             
             <div className="flex-1 overflow-hidden mt-4">
+              <TabsContent value="videos" className="h-full flex flex-col mt-0">
+                <VideoTutorialsList />
+              </TabsContent>
+
               <TabsContent value="docs" className="h-full flex flex-col mt-0">
                 <div className="mb-4">
                   <div className="relative">
