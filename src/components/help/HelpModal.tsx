@@ -199,7 +199,7 @@ const HelpModal = () => {
           </DialogTitle>
         </DialogHeader>
         
-        <div className="flex-1 overflow-hidden">
+        <div className="flex-1 min-h-0 overflow-hidden">
           <Tabs value={activeTab} onValueChange={setActiveTab} className="h-full flex flex-col">
             <TabsList className="grid w-full grid-cols-4">
               <TabsTrigger value="videos" className="flex items-center gap-2">
