@@ -13,6 +13,7 @@ interface LiveActivitiesBarProps {
     textPrimary: string;
     textSecondary: string;
     primaryButton: string;
+    primaryButtonHover: string;
     shadow: string;
   };
 }
@@ -33,8 +34,32 @@ export function StatsFloatingButton({ theme: propTheme }: LiveActivitiesBarProps
   const accentColor = theme.accent;
   const cardBg = theme.cardBg;
   const borderColor = theme.cardBorder;
-  const textPrimary = theme.textPrimary;
-  const textSecondary = theme.textSecondary;
+
+  const extractHex = (value: string): string => {
+    const match = value.match(/#[0-9a-fA-F]{6}/);
+    return match ? match[0] : '#26c6da';
+  };
+
+  const getContrastTextColor = (hex: string): string => {
+    const clean = hex.replace('#', '');
+    const r = parseInt(clean.slice(0, 2), 16);
+    const g = parseInt(clean.slice(2, 4), 16);
+    const b = parseInt(clean.slice(4, 6), 16);
+    const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+    return luminance > 0.62 ? '#0b1220' : '#ffffff';
+  };
+
+  const buttonTextColor = getContrastTextColor(extractHex(accentColor));
+  const buttonBaseStyle = {
+    background: theme.primaryButton,
+    color: buttonTextColor,
+    border: `1px solid ${theme.cardBorder}`,
+    boxShadow: `0 6px 14px ${theme.shadow}`,
+  };
+
+  const handleButtonHover = (e: React.MouseEvent<HTMLButtonElement>, hover: boolean) => {
+    e.currentTarget.style.background = hover ? theme.primaryButtonHover : theme.primaryButton;
+  };
 
   const handleLiveActivities = () => {
     window.dispatchEvent(new CustomEvent('toggle-live-activity'));
@@ -68,57 +93,72 @@ export function StatsFloatingButton({ theme: propTheme }: LiveActivitiesBarProps
           {/* Live Activities */}
           <button
             onClick={handleLiveActivities}
-            className="flex items-center gap-1.5 min-h-[44px] px-2 rounded-lg transition-colors hover:opacity-80 focus:outline-none focus:ring-2 focus:ring-offset-2"
+            onMouseEnter={(e) => handleButtonHover(e, true)}
+            onMouseLeave={(e) => handleButtonHover(e, false)}
+            className="flex items-center gap-1.5 min-h-[44px] px-2 rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2"
+            style={buttonBaseStyle}
             aria-label="View Live Activities"
           >
             <motion.div
               animate={{ scale: [1, 1.2, 1] }}
               transition={{ repeat: Infinity, duration: 2 }}
             >
-              <Activity className="h-4 w-4" style={{ color: accentColor }} />
+              <Activity className="h-4 w-4" style={{ color: buttonTextColor }} />
             </motion.div>
-            <span className="text-xs sm:text-sm font-semibold text-foreground">Live</span>
+            <span className="text-xs sm:text-sm font-semibold">Live</span>
           </button>
 
           {/* Start Tour */}
           <button
             onClick={handleStartTour}
-            className="flex items-center gap-1.5 min-h-[44px] px-2 rounded-lg transition-colors hover:opacity-80 focus:outline-none focus:ring-2 focus:ring-offset-2"
+            onMouseEnter={(e) => handleButtonHover(e, true)}
+            onMouseLeave={(e) => handleButtonHover(e, false)}
+            className="flex items-center gap-1.5 min-h-[44px] px-2 rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2"
+            style={buttonBaseStyle}
             aria-label="Start Tour"
           >
-            <Navigation className="h-4 w-4" style={{ color: accentColor }} />
-            <span className="text-xs sm:text-sm font-semibold text-foreground">Tour</span>
+            <Navigation className="h-4 w-4" style={{ color: buttonTextColor }} />
+            <span className="text-xs sm:text-sm font-semibold">Tour</span>
           </button>
 
           {/* Help */}
           <button
             onClick={handleHelp}
-            className="flex items-center gap-1.5 min-h-[44px] px-2 rounded-lg transition-colors hover:opacity-80 focus:outline-none focus:ring-2 focus:ring-offset-2"
+            onMouseEnter={(e) => handleButtonHover(e, true)}
+            onMouseLeave={(e) => handleButtonHover(e, false)}
+            className="flex items-center gap-1.5 min-h-[44px] px-2 rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2"
+            style={buttonBaseStyle}
             aria-label="Help & Documentation"
           >
-            <HelpCircle className="h-4 w-4" style={{ color: accentColor }} />
-            <span className="text-xs sm:text-sm font-semibold text-foreground">Help</span>
+            <HelpCircle className="h-4 w-4" style={{ color: buttonTextColor }} />
+            <span className="text-xs sm:text-sm font-semibold">Help</span>
           </button>
 
           {/* Stats */}
           <button
             onClick={() => navigate('/stats')}
-            className="flex items-center gap-1.5 min-h-[44px] px-2 rounded-lg transition-colors hover:opacity-80 focus:outline-none focus:ring-2 focus:ring-offset-2"
+            onMouseEnter={(e) => handleButtonHover(e, true)}
+            onMouseLeave={(e) => handleButtonHover(e, false)}
+            className="flex items-center gap-1.5 min-h-[44px] px-2 rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2"
+            style={buttonBaseStyle}
             aria-label="View Stats"
           >
-            <BarChart3 className="h-4 w-4" style={{ color: accentColor }} />
-            <span className="text-xs sm:text-sm font-semibold text-foreground">Stats</span>
+            <BarChart3 className="h-4 w-4" style={{ color: buttonTextColor }} />
+            <span className="text-xs sm:text-sm font-semibold">Stats</span>
           </button>
 
           {/* Your Progress */}
           <button
             onClick={() => setMasteryOpen(true)}
-            className="flex items-center gap-1.5 min-h-[44px] px-2 rounded-lg transition-colors hover:opacity-80 focus:outline-none focus:ring-2 focus:ring-offset-2"
+            onMouseEnter={(e) => handleButtonHover(e, true)}
+            onMouseLeave={(e) => handleButtonHover(e, false)}
+            className="flex items-center gap-1.5 min-h-[44px] px-2 rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2"
+            style={buttonBaseStyle}
             aria-label="View Your Progress"
           >
-            <TreePine className="h-4 w-4" style={{ color: accentColor }} />
-            <span className="text-xs sm:text-sm font-semibold text-foreground">Progress</span>
-            <ChevronUp className="h-3 w-3 text-foreground/60" />
+            <TreePine className="h-4 w-4" style={{ color: buttonTextColor }} />
+            <span className="text-xs sm:text-sm font-semibold">Progress</span>
+            <ChevronUp className="h-3 w-3" style={{ color: buttonTextColor }} />
           </button>
         </div>
       </motion.div>
