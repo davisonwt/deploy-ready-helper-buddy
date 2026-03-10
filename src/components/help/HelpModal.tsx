@@ -191,7 +191,7 @@ const HelpModal = () => {
     <Dialog open={open} onOpenChange={setOpen}>
       {/* Old floating button removed - now triggered from bottom bar */}
       
-      <DialogContent className="max-w-4xl max-h-[80vh] flex flex-col overflow-hidden">
+      <DialogContent className="max-w-4xl h-[85vh] sm:h-[80vh] flex flex-col overflow-hidden">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Book className="h-5 w-5" />
@@ -200,7 +200,7 @@ const HelpModal = () => {
         </DialogHeader>
         
         <div className="flex-1 min-h-0 overflow-hidden">
-          <Tabs value={activeTab} onValueChange={setActiveTab} className="h-full flex flex-col">
+          <Tabs value={activeTab} onValueChange={setActiveTab} className="h-full min-h-0 flex flex-col">
             <TabsList className="grid w-full grid-cols-4">
               <TabsTrigger value="videos" className="flex items-center gap-2">
                 <Play className="h-4 w-4" />
@@ -220,8 +220,8 @@ const HelpModal = () => {
               </TabsTrigger>
             </TabsList>
             
-            <div className="flex-1 min-h-0 overflow-hidden mt-4">
-              <TabsContent value="videos" className="h-full mt-0 overflow-y-auto">
+            <div className="flex-1 min-h-0 mt-4 overflow-hidden">
+              <TabsContent value="videos" className="h-full mt-0 overflow-y-auto pr-1">
                 <VideoTutorialsList />
               </TabsContent>
 
