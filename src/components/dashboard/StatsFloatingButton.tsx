@@ -13,6 +13,7 @@ interface LiveActivitiesBarProps {
     textPrimary: string;
     textSecondary: string;
     primaryButton: string;
+    primaryButtonHover: string;
     shadow: string;
   };
 }
