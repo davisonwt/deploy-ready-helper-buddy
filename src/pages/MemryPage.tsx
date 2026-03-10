@@ -1143,8 +1143,8 @@ export default function MemryPage() {
             const hasMultiple = allImages.length > 1;
             return (
               <>
-                <div className="relative w-fit h-fit max-w-full max-h-full mx-auto">
-                  <img src={allImages[imgIdx] || post.media_url} alt={post.caption} className="max-w-full max-h-full object-contain block"
+                <div className="relative inline-block max-w-full max-h-full align-middle">
+                  <img src={allImages[imgIdx] || post.media_url} alt={post.caption} className="block w-auto h-auto max-w-full max-h-full object-contain"
                     onError={(e) => { const t = e.target as HTMLImageElement; if (!t.dataset.fallback) { t.dataset.fallback = '1'; t.src = '/lovable-uploads/ff9e6e48-049d-465a-8d2b-f6e8fed93522.png'; } }} />
                   {hasMultiple && (
                     <div className="absolute top-4 right-2 bg-black/60 text-white text-xs px-2 py-1 rounded-full z-20">{imgIdx + 1}/{allImages.length}</div>
