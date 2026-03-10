@@ -69,7 +69,6 @@ export function StatsFloatingButton({ theme: propTheme }: LiveActivitiesBarProps
           <button
             onClick={handleLiveActivities}
             className="flex items-center gap-1.5 min-h-[44px] px-2 rounded-lg transition-colors hover:opacity-80 focus:outline-none focus:ring-2 focus:ring-offset-2"
-            style={{ color: textPrimary }}
             aria-label="View Live Activities"
           >
             <motion.div
@@ -78,52 +77,48 @@ export function StatsFloatingButton({ theme: propTheme }: LiveActivitiesBarProps
             >
               <Activity className="h-4 w-4" style={{ color: accentColor }} />
             </motion.div>
-            <span className="text-xs sm:text-sm font-medium">Live</span>
+            <span className="text-xs sm:text-sm font-semibold text-foreground">Live</span>
           </button>
 
           {/* Start Tour */}
           <button
             onClick={handleStartTour}
             className="flex items-center gap-1.5 min-h-[44px] px-2 rounded-lg transition-colors hover:opacity-80 focus:outline-none focus:ring-2 focus:ring-offset-2"
-            style={{ color: textPrimary }}
             aria-label="Start Tour"
           >
             <Navigation className="h-4 w-4" style={{ color: accentColor }} />
-            <span className="text-xs sm:text-sm font-medium">Tour</span>
+            <span className="text-xs sm:text-sm font-semibold text-foreground">Tour</span>
           </button>
 
           {/* Help */}
           <button
             onClick={handleHelp}
             className="flex items-center gap-1.5 min-h-[44px] px-2 rounded-lg transition-colors hover:opacity-80 focus:outline-none focus:ring-2 focus:ring-offset-2"
-            style={{ color: textPrimary }}
             aria-label="Help & Documentation"
           >
             <HelpCircle className="h-4 w-4" style={{ color: accentColor }} />
-            <span className="text-xs sm:text-sm font-medium">Help</span>
+            <span className="text-xs sm:text-sm font-semibold text-foreground">Help</span>
           </button>
 
           {/* Stats */}
           <button
             onClick={() => navigate('/stats')}
             className="flex items-center gap-1.5 min-h-[44px] px-2 rounded-lg transition-colors hover:opacity-80 focus:outline-none focus:ring-2 focus:ring-offset-2"
-            style={{ color: textPrimary }}
             aria-label="View Stats"
           >
             <BarChart3 className="h-4 w-4" style={{ color: accentColor }} />
-            <span className="text-xs sm:text-sm font-medium">Stats</span>
+            <span className="text-xs sm:text-sm font-semibold text-foreground">Stats</span>
           </button>
 
           {/* Your Progress */}
           <button
             onClick={() => setMasteryOpen(true)}
             className="flex items-center gap-1.5 min-h-[44px] px-2 rounded-lg transition-colors hover:opacity-80 focus:outline-none focus:ring-2 focus:ring-offset-2"
-            style={{ color: textPrimary }}
             aria-label="View Your Progress"
           >
             <TreePine className="h-4 w-4" style={{ color: accentColor }} />
-            <span className="text-xs sm:text-sm font-medium">Progress</span>
-            <ChevronUp className="h-3 w-3" style={{ color: textSecondary }} />
+            <span className="text-xs sm:text-sm font-semibold text-foreground">Progress</span>
+            <ChevronUp className="h-3 w-3 text-foreground/60" />
           </button>
         </div>
       </motion.div>
