@@ -18,8 +18,10 @@ import {
   Book, 
   Video,
   ExternalLink,
-  Send
+  Send,
+  Play
 } from 'lucide-react';
+import VideoTutorialsList from './VideoTutorialsList';
 import { useSupabaseClient, useUser } from '@supabase/auth-helpers-react';
 import { toast } from '@/hooks/use-toast';
 import { toast as sonnerToast } from 'sonner';
