@@ -31,7 +31,7 @@ const VideoTutorialsList = () => {
   };
 
   return (
-    <div className="flex flex-col">
+    <div className="flex flex-col min-h-full">
       <div className="mb-4">
         <div className="relative">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -44,7 +44,7 @@ const VideoTutorialsList = () => {
         </div>
       </div>
 
-      <div className="space-y-6 pr-1">
+      <div className="space-y-6 pr-1 pb-2">
         {filteredCategories.map((category) => (
           <div key={category.id}>
             <div className="flex items-center gap-2 mb-3 sticky top-0 bg-background/95 backdrop-blur-sm py-1 z-10">
@@ -60,7 +60,7 @@ const VideoTutorialsList = () => {
                 <button
                   key={video.id}
                   onClick={() => handlePlayVideo(video)}
-                  className="w-full text-left p-3 rounded-lg border border-border hover:bg-accent/50 transition-colors group flex items-start gap-3"
+                  className="w-full text-left p-3 rounded-lg border border-border bg-card/80 hover:bg-accent/70 transition-colors group flex items-start gap-3"
                 >
                   <div className="flex-shrink-0 w-10 h-10 rounded-md bg-primary/10 flex items-center justify-center group-hover:bg-primary/20 transition-colors">
                     <Play className="h-4 w-4 text-primary" />
@@ -71,11 +71,11 @@ const VideoTutorialsList = () => {
                         {video.title}
                       </span>
                     </div>
-                    <p className="text-xs text-muted-foreground line-clamp-2">
+                    <p className="text-xs text-foreground/80 line-clamp-2">
                       {video.description}
                     </p>
                   </div>
-                  <div className="flex-shrink-0 flex items-center gap-1 text-muted-foreground">
+                  <div className="flex-shrink-0 flex items-center gap-1 text-foreground/70">
                     <Clock className="h-3 w-3" />
                     <span className="text-xs">{video.duration}</span>
                   </div>

@@ -225,7 +225,7 @@ const HelpModal = () => {
                 <VideoTutorialsList />
               </TabsContent>
 
-              <TabsContent value="docs" className="h-full mt-0 overflow-y-auto flex flex-col">
+              <TabsContent value="docs" className="h-full mt-0 overflow-y-auto flex flex-col pr-1">
                 <div className="mb-4">
                   <div className="relative">
                     <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -278,7 +278,7 @@ const HelpModal = () => {
                 </div>
               </TabsContent>
               
-              <TabsContent value="faqs" className="h-full mt-0 overflow-y-auto flex flex-col">
+              <TabsContent value="faqs" className="h-full mt-0 overflow-y-auto flex flex-col pr-1">
                 <div className="mb-4">
                   <div className="relative">
                     <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -308,7 +308,7 @@ const HelpModal = () => {
                 </div>
               </TabsContent>
               
-              <TabsContent value="feedback" className="h-full mt-0 overflow-y-auto flex flex-col">
+              <TabsContent value="feedback" className="h-full mt-0 overflow-y-auto flex flex-col pr-1">
                 <div className="space-y-4">
                   <div>
                     <h3 className="font-semibold mb-2">Send Feedback</h3>
