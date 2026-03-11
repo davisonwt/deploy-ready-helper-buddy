@@ -211,6 +211,7 @@ import { logError } from "@/lib/logging";
 import { NavigationMonitor } from "@/components/monitoring/NavigationMonitor";
 import { DeadLinkDetector } from "@/components/monitoring/DeadLinkDetector";
 import { NotificationBanner } from "@/components/NotificationBanner";
+import { ReferralCaptureProvider } from "@/components/referral/ReferralCaptureProvider";
 import { preloadJitsiScript } from "@/lib/jitsiPreloader";
 
 // Preload Jitsi script so calls connect faster
