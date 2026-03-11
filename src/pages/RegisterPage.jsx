@@ -449,6 +449,25 @@ export default function RegisterPage() {
                   </SelectContent>
                 </Select>
               </div>
+
+              {/* Referral Code */}
+              <div className="space-y-2">
+                <label htmlFor="referralCode" className="text-sm font-semibold text-white">
+                  Referral Code <span className="text-slate-400 font-normal">(Optional)</span>
+                </label>
+                <SecureInput
+                  id="referralCode"
+                  name="referralCode"
+                  type="text"
+                  value={formData.referralCode}
+                  onChange={handleChange}
+                  sanitizeType="text"
+                  maxLength={15}
+                  rateLimitKey="registration_form"
+                  className="w-full px-4 py-3 border-2 border-slate-600 bg-slate-700/80 rounded-xl focus:ring-2 focus:ring-green-400 focus:border-green-400 transition-all duration-300 text-white placeholder:text-slate-400 hover:border-slate-500 shadow-sm hover:shadow-md text-center font-mono tracking-wider"
+                  placeholder="S2G-XXXXXXXX"
+                />
+              </div>
               
               <div className="space-y-2">
                 <label htmlFor="password" className="text-sm font-semibold text-white">
