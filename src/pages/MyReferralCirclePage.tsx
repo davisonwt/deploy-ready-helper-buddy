@@ -107,10 +107,10 @@ export default function MyReferralCirclePage() {
           </Link>
           <div>
             <h1 className="text-2xl sm:text-3xl font-bold" style={{ color: theme.textPrimary }}>
-              🌱 My Referral Circle
+              🌊 My S2G Tribe
             </h1>
             <p className="text-sm" style={{ color: theme.textSecondary }}>
-              Invite friends and grow your sow2grow community
+              Send a ripple — start a wave. Grow your tribe.
             </p>
           </div>
         </div>
