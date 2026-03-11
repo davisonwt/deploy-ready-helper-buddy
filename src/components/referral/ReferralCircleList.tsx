@@ -15,7 +15,7 @@ export function ReferralCircleList({ members, myReferrer, theme }: ReferralCircl
         <Card className="border shadow-lg" style={{ backgroundColor: theme.cardBg, borderColor: theme.cardBorder }}>
           <CardHeader className="pb-2">
             <CardTitle className="text-base flex items-center gap-2" style={{ color: theme.textPrimary }}>
-              🌳 Invited By
+              🌊 Your Ripple Origin
             </CardTitle>
           </CardHeader>
           <CardContent>
