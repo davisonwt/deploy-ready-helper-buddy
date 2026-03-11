@@ -84,7 +84,7 @@ export default function MyReferralCirclePage() {
 
   const copyLink = () => {
     navigator.clipboard.writeText(referralLink);
-    toast({ title: 'Link copied!', description: 'Share it with friends to grow your circle 🌱' });
+    toast({ title: 'Ripple sent! 🌊', description: 'Share it to grow your tribe' });
   };
 
   if (loading) {
