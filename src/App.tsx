@@ -99,7 +99,7 @@ const VideoUploadPage = lazy(() => import("./pages/VideoUploadPage"));
 const RadioPage = lazy(() => import("./components/radio/RadioPage"));
 const CreatePremiumRoomPage = lazy(() => import("./pages/CreatePremiumRoomPage").then(m => ({ default: m.CreatePremiumRoomPage })));
 const WalletSettingsPage = lazy(() => import("./pages/WalletSettingsPage"));
-const MyReferralCirclePage = lazy(() => import("./pages/MyReferralCirclePage"));
+const MyS2GTribePage = lazy(() => import("./pages/MyReferralCirclePage"));
 const GosatWalletsPage = lazy(() => import("./pages/GosatWalletsPage"));
 const GoSatChatPage = lazy(() => import("./pages/GoSatChatPage"));
 // BinancePayTestPage removed - using NOWPayments only
