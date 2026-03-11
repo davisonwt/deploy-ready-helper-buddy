@@ -45,7 +45,7 @@ export function ReferralCircleList({ members, myReferrer, theme }: ReferralCircl
         <CardHeader className="pb-2">
           <CardTitle className="text-base flex items-center gap-2" style={{ color: theme.textPrimary }}>
             <Users className="h-5 w-5" style={{ color: theme.accent }} />
-            My Circle ({members.length})
+            My Tribe ({members.length})
           </CardTitle>
         </CardHeader>
         <CardContent>
