@@ -59,7 +59,7 @@ export function ReferralShareTools({ referralLink, referralCode, theme }: Referr
       <CardHeader className="pb-2">
         <CardTitle className="text-base flex items-center gap-2" style={{ color: theme.textPrimary }}>
           <Share2 className="h-5 w-5" style={{ color: theme.accent }} />
-          Share & Invite
+          Send a Ripple
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
