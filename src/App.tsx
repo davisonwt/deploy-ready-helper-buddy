@@ -336,6 +336,17 @@ const App = () => (
                 </Suspense>
               } />
               
+              {/* Referral Circle */}
+              <Route path="/my-referral-circle" element={
+                <ProtectedRoute>
+                  <RequireVerification>
+                    <Layout>
+                      <MyReferralCirclePage />
+                    </Layout>
+                  </RequireVerification>
+                </ProtectedRoute>
+              } />
+
               {/* Dashboard Routes */}
               <Route path="/dashboard" element={
                 <ProtectedRoute>

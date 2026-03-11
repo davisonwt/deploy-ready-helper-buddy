@@ -142,3 +142,7 @@ verify_jwt = false
 
 [functions.get-wallet-credentials]
 verify_jwt = false
+
+# Referral System
+[functions.track-referral-click]
+verify_jwt = false
