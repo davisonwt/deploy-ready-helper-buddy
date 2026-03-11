@@ -88,6 +88,20 @@ export function QuickRegistration() {
       });
 
       if (result.success) {
+        // Process referral if code exists
+        if (formData.referralCode && result.user?.id) {
+          try {
+            const { supabase } = await import('@/integrations/supabase/client');
+            await supabase.rpc('process_referral', {
+              p_referred_user_id: result.user.id,
+              p_referral_code: formData.referralCode
+            });
+            clearReferralCookie();
+          } catch (refErr) {
+            console.warn('Referral processing failed:', refErr);
+          }
+        }
+
         setStep(3);
         toast({
           title: "Welcome to sow2grow! 🌱",
