@@ -168,7 +168,8 @@ export class AuthProviderClass extends React.Component {
             preferred_currency: userData.currency,
             timezone: userData.timezone,
             country: userData.country,
-            username: userData.username || userData.email?.split('@')[0]
+            username: userData.username || userData.email?.split('@')[0],
+            referral_code: userData.referral_code || null
           }
         }
       }))
