@@ -279,6 +279,7 @@ const App = () => (
                 <NotificationBanner />
                 <IncomingCallOverlay />
                 <NotificationPrompt />
+                <ReferralCaptureProvider />
                 <ErrorBoundary>
                     <Suspense fallback={<LoadingFallback />}>
                       <AccessibilityChecker />
