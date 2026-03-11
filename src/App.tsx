@@ -338,12 +338,12 @@ const App = () => (
                 </Suspense>
               } />
               
-              {/* Referral Circle */}
-              <Route path="/my-referral-circle" element={
+              {/* My S2G Tribe */}
+              <Route path="/my-s2g-tribe" element={
                 <ProtectedRoute>
                   <RequireVerification>
                     <Layout>
-                      <MyReferralCirclePage />
+                      <MyS2GTribePage />
                     </Layout>
                   </RequireVerification>
                 </ProtectedRoute>

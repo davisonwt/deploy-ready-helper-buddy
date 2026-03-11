@@ -51,10 +51,10 @@ export function ReferralCircleList({ members, myReferrer, theme }: ReferralCircl
         <CardContent>
           {members.length === 0 ? (
             <div className="text-center py-8">
-              <div className="text-4xl mb-3">🌾</div>
-              <p className="font-medium" style={{ color: theme.textPrimary }}>No one in your circle yet</p>
+              <div className="text-4xl mb-3">🌊</div>
+              <p className="font-medium" style={{ color: theme.textPrimary }}>No ripples yet</p>
               <p className="text-sm mt-1" style={{ color: theme.textSecondary }}>
-                Share your referral link to start growing your circle!
+                Send your first ripple to start building your tribe!
               </p>
             </div>
           ) : (

@@ -11,9 +11,9 @@ interface ReferralStatsProps {
 
 export function ReferralStats({ totalClicks, totalSignups, circleSize, theme }: ReferralStatsProps) {
   const stats = [
-    { label: 'Link Clicks', value: totalClicks, icon: MousePointerClick, emoji: '👆' },
-    { label: 'Signups', value: totalSignups, icon: UserPlus, emoji: '🌱' },
-    { label: 'Circle Size', value: circleSize, icon: Users, emoji: '🤝' },
+    { label: 'Ripples Sent', value: totalClicks, icon: MousePointerClick, emoji: '🌊' },
+    { label: 'New Ripples', value: totalSignups, icon: UserPlus, emoji: '🌱' },
+    { label: 'Tribe Size', value: circleSize, icon: Users, emoji: '🤝' },
   ];
 
   return (

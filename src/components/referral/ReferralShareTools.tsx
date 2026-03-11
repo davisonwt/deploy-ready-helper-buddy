@@ -47,8 +47,8 @@ export function ReferralShareTools({ referralLink, referralCode, theme }: Referr
   const shareNative = async () => {
     if (navigator.share) {
       await navigator.share({
-        title: 'Join sow2grow',
-        text: 'Join the sow2grow community farm!',
+        title: 'Join my S2G Tribe',
+        text: 'Every ripple starts a wave — join my tribe on sow2grow! 🌊',
         url: referralLink,
       });
     }

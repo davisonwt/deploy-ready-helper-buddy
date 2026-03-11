@@ -119,7 +119,7 @@ export default function MyReferralCirclePage() {
         <Card className="border shadow-xl backdrop-blur-xl" style={{ backgroundColor: theme.cardBg, borderColor: theme.cardBorder }}>
           <CardHeader>
             <CardTitle className="text-lg" style={{ color: theme.textPrimary }}>
-              Your Referral Code
+              Your Tribe Invitation Code
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
