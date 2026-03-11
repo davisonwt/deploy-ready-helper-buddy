@@ -1,52 +1,13 @@
 
+## S2G Referral Circle System — IMPLEMENTED ✅
 
-## Why Your Balance Shows $0.00
+### What was built
 
-After a thorough investigation, I found **critical bugs in the NOWPayments webhook** that prevent your balance from ever being updated. Here is what's happening:
-
-### Root Cause: Webhook Processing Fails Silently
-
-The `nowpayments-webhook` edge function has **zero logs** and the `processed_webhooks` table is **empty** — meaning no webhook from NOWPayments has ever been successfully processed. Even though invoices are being created successfully (I can see 3 recent invoice creations), when NOWPayments sends the payment confirmation callback, the webhook crashes due to column-name mismatches in the database queries.
-
-### Bugs Found
-
-1. **`orchards.grower_id` does not exist** — the actual column is `user_id`. The webhook queries `orchards(title, grower_id)` which silently fails, so the sower's balance is never credited.
-
-2. **`payment_transactions.user_id` does not exist** — the actual column is `bestowal_id`. The webhook tries to insert with `user_id` causing an error.
-
-3. **`payment_audit_log.status` does not exist** — the webhook inserts a `status` field that doesn't exist in the table schema.
-
-These three bugs cause the webhook to crash every time NOWPayments sends a payment confirmation, which is why your `sower_balances` stays at $0.00.
-
-### Implementation Plan
-
-**Step 1 — Fix `nowpayments-webhook` edge function**
-- Change `orchards(title, grower_id)` to `orchards(title, user_id)` and update all references from `grower_id` to `user_id`
-- Fix `payment_transactions` insert to use correct column names (`bestowal_id` instead of `user_id`)
-- Fix `payment_audit_log` insert to remove the nonexistent `status` column
-- Redeploy the function
-
-**Step 2 — Create a balance sync edge function**
-- New edge function `sync-nowpayments-balance` that calls the NOWPayments API (`/v1/payment/{id}`) to check the status of past invoices
-- Queries `product_bestowals` and `bestowals` for records with `payment_status = 'pending'` and payment references
-- For any that show `finished` on NOWPayments, retroactively credit the sower's balance
-- This catches any payments that completed while the webhook was broken
-
-**Step 3 — Add "Sync Balance" button to the UI**
-- In `SowerBalanceCard`, the refresh button will also call the sync function
-- Shows a toast with the result (e.g., "Found 2 completed payments, balance updated")
-
-**Step 4 — Verify IPN callback URL is configured in NOWPayments dashboard**
-- The code sets `ipn_callback_url` per-invoice which is correct
-- But you should also verify in your NOWPayments dashboard settings that the IPN URL is set to: `https://zuwkgasbkpjlxzsjzumu.supabase.co/functions/v1/nowpayments-webhook`
-
-### Technical Detail: Column Mismatches
-
-```text
-Webhook code                  Actual DB column
-─────────────────────────────────────────────────
-orchards.grower_id        →   orchards.user_id
-payment_transactions.user_id → payment_transactions.bestowal_id
-payment_audit_log.status  →   (does not exist, remove)
-```
-
+1. **Database tables**: `user_referrals` (unique S2G-XXXXXXXX codes per user) and `referral_circle` (tracks referrer→referred relationships) with RLS policies
+2. **Auto-generation trigger**: `trg_auto_create_user_referral` generates a code when any new profile is created; existing users were backfilled
+3. **`process_referral` RPC**: Validates code, prevents self-referral, creates relationship, increments counter
+4. **`track-referral-click` edge function**: Increments click counter when someone visits a referral link
+5. **`useReferralCapture` hook + `ReferralCaptureProvider`**: Captures `?ref=CODE` from any URL, stores 30-day cookie, tracks click
+6. **Signup integration**: Both `RegisterPage.jsx` and `QuickRegistration.jsx` have optional referral code field, auto-filled from cookie, processed after signup
+7. **My Referral Circle page** (`/my-referral-circle`): Shows referral code, copy link, QR code, stats (clicks/signups/circle size), circle members list, referrer info, WhatsApp/Email/native share
+8. **Navigation**: Added to Dashboard quick actions sub-links and MyGardenPanel community section
