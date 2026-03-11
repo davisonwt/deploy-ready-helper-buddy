@@ -9363,6 +9363,10 @@ export type Database = {
         Args: { product_uuid: string }
         Returns: undefined
       }
+      increment_referral_clicks: {
+        Args: { p_code: string }
+        Returns: undefined
+      }
       increment_video_views: {
         Args: { video_uuid: string }
         Returns: undefined
