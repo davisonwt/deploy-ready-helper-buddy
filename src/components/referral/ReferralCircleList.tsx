@@ -15,7 +15,7 @@ export function ReferralCircleList({ members, myReferrer, theme }: ReferralCircl
         <Card className="border shadow-lg" style={{ backgroundColor: theme.cardBg, borderColor: theme.cardBorder }}>
           <CardHeader className="pb-2">
             <CardTitle className="text-base flex items-center gap-2" style={{ color: theme.textPrimary }}>
-              🌳 Invited By
+              🌊 Your Ripple Origin
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -45,16 +45,16 @@ export function ReferralCircleList({ members, myReferrer, theme }: ReferralCircl
         <CardHeader className="pb-2">
           <CardTitle className="text-base flex items-center gap-2" style={{ color: theme.textPrimary }}>
             <Users className="h-5 w-5" style={{ color: theme.accent }} />
-            My Circle ({members.length})
+            My Tribe ({members.length})
           </CardTitle>
         </CardHeader>
         <CardContent>
           {members.length === 0 ? (
             <div className="text-center py-8">
-              <div className="text-4xl mb-3">🌾</div>
-              <p className="font-medium" style={{ color: theme.textPrimary }}>No one in your circle yet</p>
+              <div className="text-4xl mb-3">🌊</div>
+              <p className="font-medium" style={{ color: theme.textPrimary }}>No ripples yet</p>
               <p className="text-sm mt-1" style={{ color: theme.textSecondary }}>
-                Share your referral link to start growing your circle!
+                Send your first ripple to start building your tribe!
               </p>
             </div>
           ) : (

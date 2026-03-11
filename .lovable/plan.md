@@ -1,5 +1,11 @@
 
-## S2G Referral Circle System — IMPLEMENTED ✅
+## S2G Tribe (Referral) System — IMPLEMENTED ✅
+
+### Brand Language
+- **My S2G Tribe** = your referral group (people you invited)
+- **Ripples** = activity/stories from tribe members
+- **Send a Ripple** = inviting someone
+- **New Ripple** = new member joining your tribe
 
 ### What was built
 
@@ -9,5 +15,5 @@
 4. **`track-referral-click` edge function**: Increments click counter when someone visits a referral link
 5. **`useReferralCapture` hook + `ReferralCaptureProvider`**: Captures `?ref=CODE` from any URL, stores 30-day cookie, tracks click
 6. **Signup integration**: Both `RegisterPage.jsx` and `QuickRegistration.jsx` have optional referral code field, auto-filled from cookie, processed after signup
-7. **My Referral Circle page** (`/my-referral-circle`): Shows referral code, copy link, QR code, stats (clicks/signups/circle size), circle members list, referrer info, WhatsApp/Email/native share
+7. **My S2G Tribe page** (`/my-s2g-tribe`): Shows tribe invitation code, copy link, QR code, stats (ripples sent/new ripples/tribe size), tribe members list, referrer info, WhatsApp/Email/native share
 8. **Navigation**: Added to Dashboard quick actions sub-links and MyGardenPanel community section

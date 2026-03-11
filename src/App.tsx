@@ -99,7 +99,7 @@ const VideoUploadPage = lazy(() => import("./pages/VideoUploadPage"));
 const RadioPage = lazy(() => import("./components/radio/RadioPage"));
 const CreatePremiumRoomPage = lazy(() => import("./pages/CreatePremiumRoomPage").then(m => ({ default: m.CreatePremiumRoomPage })));
 const WalletSettingsPage = lazy(() => import("./pages/WalletSettingsPage"));
-const MyReferralCirclePage = lazy(() => import("./pages/MyReferralCirclePage"));
+const MyS2GTribePage = lazy(() => import("./pages/MyReferralCirclePage"));
 const GosatWalletsPage = lazy(() => import("./pages/GosatWalletsPage"));
 const GoSatChatPage = lazy(() => import("./pages/GoSatChatPage"));
 // BinancePayTestPage removed - using NOWPayments only
@@ -338,12 +338,12 @@ const App = () => (
                 </Suspense>
               } />
               
-              {/* Referral Circle */}
-              <Route path="/my-referral-circle" element={
+              {/* My S2G Tribe */}
+              <Route path="/my-s2g-tribe" element={
                 <ProtectedRoute>
                   <RequireVerification>
                     <Layout>
-                      <MyReferralCirclePage />
+                      <MyS2GTribePage />
                     </Layout>
                   </RequireVerification>
                 </ProtectedRoute>

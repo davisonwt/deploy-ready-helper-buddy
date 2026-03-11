@@ -34,21 +34,21 @@ export function ReferralShareTools({ referralLink, referralCode, theme }: Referr
   };
 
   const shareWhatsApp = () => {
-    const text = `Join me on sow2grow! 🌱 Use my referral link: ${referralLink}`;
+    const text = `Join my S2G Tribe! 🌊 Start your ripple: ${referralLink}`;
     window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank');
   };
 
   const shareEmail = () => {
-    const subject = 'Join sow2grow - Community Farm';
-    const body = `Hey!\n\nI'd love for you to join the sow2grow community farm. Use my referral link to sign up:\n\n${referralLink}\n\nSee you there! 🌱`;
+    const subject = 'Join my S2G Tribe 🌊';
+    const body = `Hey!\n\nI'd love for you to join my tribe on sow2grow. Every invitation is a ripple — and ripples become waves.\n\nJoin here: ${referralLink}\n\nLet's grow together! 🌊`;
     window.open(`mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`);
   };
 
   const shareNative = async () => {
     if (navigator.share) {
       await navigator.share({
-        title: 'Join sow2grow',
-        text: 'Join the sow2grow community farm!',
+        title: 'Join my S2G Tribe',
+        text: 'Every ripple starts a wave — join my tribe on sow2grow! 🌊',
         url: referralLink,
       });
     }
@@ -59,7 +59,7 @@ export function ReferralShareTools({ referralLink, referralCode, theme }: Referr
       <CardHeader className="pb-2">
         <CardTitle className="text-base flex items-center gap-2" style={{ color: theme.textPrimary }}>
           <Share2 className="h-5 w-5" style={{ color: theme.accent }} />
-          Share & Invite
+          Send a Ripple
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">

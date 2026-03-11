@@ -84,7 +84,7 @@ export default function MyReferralCirclePage() {
 
   const copyLink = () => {
     navigator.clipboard.writeText(referralLink);
-    toast({ title: 'Link copied!', description: 'Share it with friends to grow your circle 🌱' });
+    toast({ title: 'Ripple sent! 🌊', description: 'Share it to grow your tribe' });
   };
 
   if (loading) {
@@ -107,10 +107,10 @@ export default function MyReferralCirclePage() {
           </Link>
           <div>
             <h1 className="text-2xl sm:text-3xl font-bold" style={{ color: theme.textPrimary }}>
-              🌱 My Referral Circle
+              🌊 My S2G Tribe
             </h1>
             <p className="text-sm" style={{ color: theme.textSecondary }}>
-              Invite friends and grow your sow2grow community
+              Send a ripple — start a wave. Grow your tribe.
             </p>
           </div>
         </div>
@@ -119,7 +119,7 @@ export default function MyReferralCirclePage() {
         <Card className="border shadow-xl backdrop-blur-xl" style={{ backgroundColor: theme.cardBg, borderColor: theme.cardBorder }}>
           <CardHeader>
             <CardTitle className="text-lg" style={{ color: theme.textPrimary }}>
-              Your Referral Code
+              Your Tribe Invitation Code
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
