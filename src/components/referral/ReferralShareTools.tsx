@@ -34,7 +34,7 @@ export function ReferralShareTools({ referralLink, referralCode, theme }: Referr
   };
 
   const shareWhatsApp = () => {
-    const text = `Join me on sow2grow! 🌱 Use my referral link: ${referralLink}`;
+    const text = `Join my S2G Tribe! 🌊 Start your ripple: ${referralLink}`;
     window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank');
   };
 
