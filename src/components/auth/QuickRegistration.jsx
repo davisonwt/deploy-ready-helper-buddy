@@ -46,8 +46,17 @@ export function QuickRegistration() {
     password: '',
     location: '',
     currency: 'USD',
-    timezone: Intl.DateTimeFormat().resolvedOptions().timeZone
+    timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+    referralCode: ''
   });
+
+  // Auto-fill referral code from cookie
+  useEffect(() => {
+    const cookieRef = getReferralCode();
+    if (cookieRef) {
+      setFormData(prev => ({ ...prev, referralCode: cookieRef }));
+    }
+  }, []);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
