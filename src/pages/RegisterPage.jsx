@@ -24,8 +24,17 @@ export default function RegisterPage() {
     phone: "",
     currency: "USD",
     timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
-    country: ""
+    country: "",
+    referralCode: ""
   })
+
+  // Auto-fill referral code from cookie
+  useEffect(() => {
+    const cookieRef = getReferralCode();
+    if (cookieRef) {
+      setFormData(prev => ({ ...prev, referralCode: cookieRef }));
+    }
+  }, []);
   const [showPassword, setShowPassword] = useState(false)
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
   const [loading, setLoading] = useState(false)
