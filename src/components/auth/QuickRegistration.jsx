@@ -84,22 +84,15 @@ export function QuickRegistration() {
         location: formData.location,
         currency: formData.currency,
         timezone: formData.timezone,
-        country: formData.location
+        country: formData.location,
+        referral_code: formData.referralCode || null
       });
 
       if (result.success) {
-        // Process referral if code exists
-        if (formData.referralCode && result.user?.id) {
-          try {
-            const { supabase } = await import('@/integrations/supabase/client');
-            await supabase.rpc('process_referral', {
-              p_referred_user_id: result.user.id,
-              p_referral_code: formData.referralCode
-            });
-            clearReferralCookie();
-          } catch (refErr) {
-            console.warn('Referral processing failed:', refErr);
-          }
+        // Clear referral cookie since it's now stored in user metadata
+        // and will be processed by the DB trigger on profile creation
+        if (formData.referralCode) {
+          clearReferralCookie();
         }
 
         setStep(3);
