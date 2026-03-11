@@ -21,6 +21,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
 import { countries } from '@/data/countries';
 import { validatePassword, getPasswordValidationFeedback } from '@/lib/utils';
+import { getReferralCode, clearReferralCookie } from '@/hooks/useReferralCapture';
 
 const POPULAR_COUNTRIES = [
   'United States',
