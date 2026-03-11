@@ -274,6 +274,20 @@ export function QuickRegistration() {
                 </div>
               </div>
 
+              {/* Referral Code */}
+              <div>
+                <label className="text-sm font-medium text-gray-700 mb-2 block">
+                  Referral Code (Optional)
+                </label>
+                <Input
+                  placeholder="S2G-XXXXXXXX"
+                  value={formData.referralCode}
+                  onChange={(e) => setFormData(prev => ({ ...prev, referralCode: e.target.value }))}
+                  className="font-mono tracking-wider text-center"
+                  maxLength={15}
+                />
+              </div>
+
               <div className="flex gap-3">
                 <Button 
                   onClick={() => setStep(1)}
