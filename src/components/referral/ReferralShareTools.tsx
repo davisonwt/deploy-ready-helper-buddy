@@ -39,8 +39,8 @@ export function ReferralShareTools({ referralLink, referralCode, theme }: Referr
   };
 
   const shareEmail = () => {
-    const subject = 'Join sow2grow - Community Farm';
-    const body = `Hey!\n\nI'd love for you to join the sow2grow community farm. Use my referral link to sign up:\n\n${referralLink}\n\nSee you there! 🌱`;
+    const subject = 'Join my S2G Tribe 🌊';
+    const body = `Hey!\n\nI'd love for you to join my tribe on sow2grow. Every invitation is a ripple — and ripples become waves.\n\nJoin here: ${referralLink}\n\nLet's grow together! 🌊`;
     window.open(`mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`);
   };
 
