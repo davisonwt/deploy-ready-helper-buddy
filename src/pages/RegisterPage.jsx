@@ -102,6 +102,19 @@ export default function RegisterPage() {
       })
       
       if (result.success) {
+        // Process referral if code exists
+        if (formData.referralCode && result.user?.id) {
+          try {
+            await supabase.rpc('process_referral', {
+              p_referred_user_id: result.user.id,
+              p_referral_code: formData.referralCode
+            });
+            clearReferralCookie();
+          } catch (refErr) {
+            console.warn('Referral processing failed:', refErr);
+          }
+        }
+
         // HTML escape function for email safety
         const escapeHtml = (text) => {
           if (!text) return '';
