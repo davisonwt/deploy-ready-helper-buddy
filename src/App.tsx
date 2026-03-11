@@ -99,6 +99,7 @@ const VideoUploadPage = lazy(() => import("./pages/VideoUploadPage"));
 const RadioPage = lazy(() => import("./components/radio/RadioPage"));
 const CreatePremiumRoomPage = lazy(() => import("./pages/CreatePremiumRoomPage").then(m => ({ default: m.CreatePremiumRoomPage })));
 const WalletSettingsPage = lazy(() => import("./pages/WalletSettingsPage"));
+const MyReferralCirclePage = lazy(() => import("./pages/MyReferralCirclePage"));
 const GosatWalletsPage = lazy(() => import("./pages/GosatWalletsPage"));
 const GoSatChatPage = lazy(() => import("./pages/GoSatChatPage"));
 // BinancePayTestPage removed - using NOWPayments only
@@ -210,6 +211,7 @@ import { logError } from "@/lib/logging";
 import { NavigationMonitor } from "@/components/monitoring/NavigationMonitor";
 import { DeadLinkDetector } from "@/components/monitoring/DeadLinkDetector";
 import { NotificationBanner } from "@/components/NotificationBanner";
+import { ReferralCaptureProvider } from "@/components/referral/ReferralCaptureProvider";
 import { preloadJitsiScript } from "@/lib/jitsiPreloader";
 
 // Preload Jitsi script so calls connect faster
@@ -277,6 +279,7 @@ const App = () => (
                 <NotificationBanner />
                 <IncomingCallOverlay />
                 <NotificationPrompt />
+                <ReferralCaptureProvider />
                 <ErrorBoundary>
                     <Suspense fallback={<LoadingFallback />}>
                       <AccessibilityChecker />
@@ -335,6 +338,17 @@ const App = () => (
                 </Suspense>
               } />
               
+              {/* Referral Circle */}
+              <Route path="/my-referral-circle" element={
+                <ProtectedRoute>
+                  <RequireVerification>
+                    <Layout>
+                      <MyReferralCirclePage />
+                    </Layout>
+                  </RequireVerification>
+                </ProtectedRoute>
+              } />
+
               {/* Dashboard Routes */}
               <Route path="/dashboard" element={
                 <ProtectedRoute>

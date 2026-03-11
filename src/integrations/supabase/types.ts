@@ -5760,6 +5760,30 @@ export type Database = {
         }
         Relationships: []
       }
+      referral_circle: {
+        Row: {
+          id: string
+          referred_at: string
+          referred_user_id: string
+          referrer_id: string
+          status: string
+        }
+        Insert: {
+          id?: string
+          referred_at?: string
+          referred_user_id: string
+          referrer_id: string
+          status?: string
+        }
+        Update: {
+          id?: string
+          referred_at?: string
+          referred_user_id?: string
+          referrer_id?: string
+          status?: string
+        }
+        Relationships: []
+      }
       referrals: {
         Row: {
           commission_amount: number
@@ -7822,6 +7846,33 @@ export type Database = {
         }
         Relationships: []
       }
+      user_referrals: {
+        Row: {
+          created_at: string
+          id: string
+          referral_code: string
+          total_clicks: number
+          total_signups: number
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          referral_code: string
+          total_clicks?: number
+          total_signups?: number
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          referral_code?: string
+          total_clicks?: number
+          total_signups?: number
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_roles: {
         Row: {
           created_at: string
@@ -8980,6 +9031,7 @@ export type Database = {
       end_stream: { Args: { stream_id_param: string }; Returns: boolean }
       generate_invoice_number: { Args: never; Returns: string }
       generate_ref_code: { Args: never; Returns: string }
+      generate_referral_code: { Args: never; Returns: string }
       get_admin_profile_access_report: {
         Args: { days_back?: number }
         Returns: {
@@ -9311,6 +9363,10 @@ export type Database = {
         Args: { product_uuid: string }
         Returns: undefined
       }
+      increment_referral_clicks: {
+        Args: { p_code: string }
+        Returns: undefined
+      }
       increment_video_views: {
         Args: { video_uuid: string }
         Returns: undefined
@@ -9414,6 +9470,10 @@ export type Database = {
       migrate_billing_data_for_user: {
         Args: { target_user_id: string }
         Returns: boolean
+      }
+      process_referral: {
+        Args: { p_referral_code: string; p_referred_user_id: string }
+        Returns: Json
       }
       reject_join_request: { Args: { request_id: string }; Returns: boolean }
       reject_radio_schedule_slot: {

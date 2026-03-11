@@ -978,6 +978,9 @@ export default function DashboardPage() {
                 <Link to="/364yhvh-orchards" className="text-xs font-medium px-3 py-1.5 rounded-full border transition-all hover:opacity-80" style={{ color: currentTheme.accent, borderColor: currentTheme.accent + '50' }}>
                   364YHVH Orchards
                 </Link>
+                <Link to="/my-referral-circle" className="text-xs font-medium px-3 py-1.5 rounded-full border transition-all hover:opacity-80" style={{ color: currentTheme.accent, borderColor: currentTheme.accent + '50' }}>
+                  🌱 My Referral Circle
+                </Link>
               </div>
             </div>
 

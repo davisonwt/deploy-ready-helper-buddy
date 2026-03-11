@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -21,6 +21,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
 import { countries } from '@/data/countries';
 import { validatePassword, getPasswordValidationFeedback } from '@/lib/utils';
+import { getReferralCode, clearReferralCookie } from '@/hooks/useReferralCapture';
 
 const POPULAR_COUNTRIES = [
   'United States',
@@ -45,8 +46,17 @@ export function QuickRegistration() {
     password: '',
     location: '',
     currency: 'USD',
-    timezone: Intl.DateTimeFormat().resolvedOptions().timeZone
+    timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+    referralCode: ''
   });
+
+  // Auto-fill referral code from cookie
+  useEffect(() => {
+    const cookieRef = getReferralCode();
+    if (cookieRef) {
+      setFormData(prev => ({ ...prev, referralCode: cookieRef }));
+    }
+  }, []);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
@@ -78,6 +88,20 @@ export function QuickRegistration() {
       });
 
       if (result.success) {
+        // Process referral if code exists
+        if (formData.referralCode && result.user?.id) {
+          try {
+            const { supabase } = await import('@/integrations/supabase/client');
+            await supabase.rpc('process_referral', {
+              p_referred_user_id: result.user.id,
+              p_referral_code: formData.referralCode
+            });
+            clearReferralCookie();
+          } catch (refErr) {
+            console.warn('Referral processing failed:', refErr);
+          }
+        }
+
         setStep(3);
         toast({
           title: "Welcome to sow2grow! 🌱",
@@ -248,6 +272,20 @@ export function QuickRegistration() {
                 <div className="text-xs text-gray-500 mt-1">
                   Auto-detected • {new Date().toLocaleTimeString()}
                 </div>
+              </div>
+
+              {/* Referral Code */}
+              <div>
+                <label className="text-sm font-medium text-gray-700 mb-2 block">
+                  Referral Code (Optional)
+                </label>
+                <Input
+                  placeholder="S2G-XXXXXXXX"
+                  value={formData.referralCode}
+                  onChange={(e) => setFormData(prev => ({ ...prev, referralCode: e.target.value }))}
+                  className="font-mono tracking-wider text-center"
+                  maxLength={15}
+                />
               </div>
 
               <div className="flex gap-3">

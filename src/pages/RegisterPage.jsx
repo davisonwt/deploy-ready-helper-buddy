@@ -1,5 +1,5 @@
-import { useState } from "react"
-import { Link, useNavigate } from "react-router-dom"
+import { useState, useEffect } from "react"
+import { Link, useNavigate, useSearchParams } from "react-router-dom"
 import { useAuth } from "../hooks/useAuth"
 import { Button } from "../components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "../components/ui/card"
@@ -11,6 +11,7 @@ import { countries } from "../data/countries"
 import { supabase } from "@/integrations/supabase/client"
 import { useToast } from "@/hooks/use-toast"
 import { QuickRegistration } from "../components/auth/QuickRegistration"
+import { getReferralCode, clearReferralCookie } from "@/hooks/useReferralCapture"
 
 export default function RegisterPage() {
   const [formData, setFormData] = useState({
@@ -23,8 +24,17 @@ export default function RegisterPage() {
     phone: "",
     currency: "USD",
     timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
-    country: ""
+    country: "",
+    referralCode: ""
   })
+
+  // Auto-fill referral code from cookie
+  useEffect(() => {
+    const cookieRef = getReferralCode();
+    if (cookieRef) {
+      setFormData(prev => ({ ...prev, referralCode: cookieRef }));
+    }
+  }, []);
   const [showPassword, setShowPassword] = useState(false)
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
   const [loading, setLoading] = useState(false)
@@ -92,6 +102,19 @@ export default function RegisterPage() {
       })
       
       if (result.success) {
+        // Process referral if code exists
+        if (formData.referralCode && result.user?.id) {
+          try {
+            await supabase.rpc('process_referral', {
+              p_referred_user_id: result.user.id,
+              p_referral_code: formData.referralCode
+            });
+            clearReferralCookie();
+          } catch (refErr) {
+            console.warn('Referral processing failed:', refErr);
+          }
+        }
+
         // HTML escape function for email safety
         const escapeHtml = (text) => {
           if (!text) return '';
@@ -425,6 +448,25 @@ export default function RegisterPage() {
                     <SelectScrollDownButton />
                   </SelectContent>
                 </Select>
+              </div>
+
+              {/* Referral Code */}
+              <div className="space-y-2">
+                <label htmlFor="referralCode" className="text-sm font-semibold text-white">
+                  Referral Code <span className="text-slate-400 font-normal">(Optional)</span>
+                </label>
+                <SecureInput
+                  id="referralCode"
+                  name="referralCode"
+                  type="text"
+                  value={formData.referralCode}
+                  onChange={handleChange}
+                  sanitizeType="text"
+                  maxLength={15}
+                  rateLimitKey="registration_form"
+                  className="w-full px-4 py-3 border-2 border-slate-600 bg-slate-700/80 rounded-xl focus:ring-2 focus:ring-green-400 focus:border-green-400 transition-all duration-300 text-white placeholder:text-slate-400 hover:border-slate-500 shadow-sm hover:shadow-md text-center font-mono tracking-wider"
+                  placeholder="S2G-XXXXXXXX"
+                />
               </div>
               
               <div className="space-y-2">
