@@ -79,7 +79,7 @@ export default function MyReferralCirclePage() {
   };
 
   const referralLink = referralData?.referral_code
-    ? `https://sow2growapp.lovable.app/?ref=${referralData.referral_code}`
+    ? `https://sow2growapp.com/?ref=${referralData.referral_code}`
     : '';
 
   const copyLink = () => {
