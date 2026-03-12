@@ -13,6 +13,7 @@ interface StatsData {
   registeredSowers: number;
   registeredSowersDelta: number;
   followersDelta: number;
+  tribeSize: number;
   dailyBestowalsProducts?: Array<{ id: string; name: string; icon?: string }>;
 }
 
@@ -138,6 +139,16 @@ const fetcher = async (userId: string): Promise<StatsData> => {
     streak = uniqueDays.size;
   }
 
+  // Get tribe size (referral circle)
+  const { count: tribeSize, error: tribeError } = await supabase
+    .from('referral_circle')
+    .select('*', { count: 'exact', head: true })
+    .eq('referrer_id', userId);
+
+  if (tribeError) {
+    console.error('Error fetching tribe size:', tribeError);
+  }
+
   // Get rank (simplified - would need proper leaderboard query)
   const rank = 1; // Placeholder
 
@@ -151,6 +162,7 @@ const fetcher = async (userId: string): Promise<StatsData> => {
     registeredSowers: registeredSowers || 0,
     registeredSowersDelta: (registeredSowers || 0) - (yesterdaySowers || 0),
     followersDelta: (totalFollowers || 0) - (yesterdayFollowers || 0),
+    tribeSize: tribeSize || 0,
     dailyBestowalsProducts: dailyBestowalsData?.slice(0, 3).map((b: any) => ({
       id: b.orchards?.id || '',
       name: b.orchards?.title || 'Unknown'
@@ -169,6 +181,7 @@ const fetcher = async (userId: string): Promise<StatsData> => {
       registeredSowers: 0,
       registeredSowersDelta: 0,
       followersDelta: 0,
+      tribeSize: 0,
       dailyBestowalsProducts: []
     };
   }

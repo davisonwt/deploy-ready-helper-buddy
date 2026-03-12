@@ -1,36 +1,19 @@
 
+## S2G Tribe (Referral) System — IMPLEMENTED ✅
 
-## Merge "My Tribe" into the "My Followers" Card
+### Brand Language
+- **My S2G Tribe** = your referral group (people you invited)
+- **Ripples** = activity/stories from tribe members
+- **Send a Ripple** = inviting someone
+- **New Ripple** = new member joining your tribe
 
-Instead of adding a 6th card, we'll enhance the existing "My Followers" card to show both followers and tribe size in a single, clean layout.
+### What was built
 
-### Design
-
-The card title becomes **"My Followers & Tribe"**. Below the main followers count, a subtle secondary line shows tribe size — keeping the card compact.
-
-```text
-┌─────────────────────────┐
-│ ❤️  My Community        │
-│                         │
-│  142  followers         │
-│   22  tribe members     │
-│        +3 today         │
-└─────────────────────────┘
-```
-
-### Changes
-
-**1. `src/hooks/useMyStats.ts`**
-- Add `tribeSize: number` to `StatsData`
-- Query `referral_circle` count where `referrer_id = userId`
-- Default to 0 on error
-
-**2. `src/components/dashboard/StatsCards.tsx`**
-- Rename Card 2 from "My Followers" to "My Community" (or "Followers & Tribe")
-- Show followers count on one line, tribe size on a second line beneath it
-- Keep the existing delta badge for followers
-- Add a small Users icon + tribe count as a secondary stat
-- Grid stays at 5 columns — no layout change
-
-This keeps the dashboard clean while surfacing tribe data where it's contextually relevant.
-
+1. **Database tables**: `user_referrals` (unique S2G-XXXXXXXX codes per user) and `referral_circle` (tracks referrer→referred relationships) with RLS policies
+2. **Auto-generation trigger**: `trg_auto_create_user_referral` generates a code when any new profile is created; existing users were backfilled
+3. **`process_referral` RPC**: Validates code, prevents self-referral, creates relationship, increments counter
+4. **`track-referral-click` edge function**: Increments click counter when someone visits a referral link
+5. **`useReferralCapture` hook + `ReferralCaptureProvider`**: Captures `?ref=CODE` from any URL, stores 30-day cookie, tracks click
+6. **Signup integration**: Both `RegisterPage.jsx` and `QuickRegistration.jsx` have optional referral code field, auto-filled from cookie, processed after signup
+7. **My S2G Tribe page** (`/my-s2g-tribe`): Shows tribe invitation code, copy link, QR code, stats (ripples sent/new ripples/tribe size), tribe members list, referrer info, WhatsApp/Email/native share
+8. **Navigation**: Added to Dashboard quick actions sub-links and MyGardenPanel community section
