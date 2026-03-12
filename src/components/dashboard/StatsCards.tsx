@@ -149,7 +149,7 @@ export function StatsCards({ theme }: StatsCardsProps) {
         </Card>
       </motion.div>
 
-      {/* Card 2: My Followers */}
+      {/* Card 2: My Community (Followers & Tribe) */}
       <motion.div variants={cardVariants} initial="hidden" whileInView="visible" viewport={{ once: true }}>
         <Card className="rounded-3xl backdrop-blur-xl border h-full" style={cardStyle}>
           <CardContent className="p-6 h-full flex flex-col">
@@ -160,17 +160,25 @@ export function StatsCards({ theme }: StatsCardsProps) {
               >
                 <Heart className="h-5 w-5" style={{ color: accent, fill: accent }} />
               </motion.div>
-              <span className="text-sm" style={{ color: textSecondary }}>My Followers</span>
+              <span className="text-sm" style={{ color: textSecondary }}>My Community</span>
             </div>
             <div className="flex items-baseline gap-2 flex-wrap">
               <span className="font-mono text-3xl sm:text-4xl tracking-tighter" style={{ color: textPrimary }}>
                 {stats.followers.toLocaleString()}
               </span>
+              <span className="text-xs" style={{ color: textSecondary }}>followers</span>
               {stats.followersDelta !== 0 && (
                 <Badge className="text-xs" style={getDeltaBadgeStyle(stats.followersDelta, 5)}>
                   {stats.followersDelta > 0 ? '+' : ''}{stats.followersDelta} today
                 </Badge>
               )}
+            </div>
+            <div className="flex items-center gap-2 mt-2">
+              <Users className="h-4 w-4" style={{ color: accent, opacity: 0.8 }} />
+              <span className="font-mono text-lg tracking-tight" style={{ color: textPrimary }}>
+                {stats.tribeSize.toLocaleString()}
+              </span>
+              <span className="text-xs" style={{ color: textSecondary }}>tribe members</span>
             </div>
           </CardContent>
         </Card>

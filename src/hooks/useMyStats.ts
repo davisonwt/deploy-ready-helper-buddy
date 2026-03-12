@@ -181,6 +181,7 @@ const fetcher = async (userId: string): Promise<StatsData> => {
       registeredSowers: 0,
       registeredSowersDelta: 0,
       followersDelta: 0,
+      tribeSize: 0,
       dailyBestowalsProducts: []
     };
   }
