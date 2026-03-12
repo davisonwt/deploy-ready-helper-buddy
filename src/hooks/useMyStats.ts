@@ -13,6 +13,7 @@ interface StatsData {
   registeredSowers: number;
   registeredSowersDelta: number;
   followersDelta: number;
+  tribeSize: number;
   dailyBestowalsProducts?: Array<{ id: string; name: string; icon?: string }>;
 }
 
