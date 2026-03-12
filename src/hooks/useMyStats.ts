@@ -162,6 +162,7 @@ const fetcher = async (userId: string): Promise<StatsData> => {
     registeredSowers: registeredSowers || 0,
     registeredSowersDelta: (registeredSowers || 0) - (yesterdaySowers || 0),
     followersDelta: (totalFollowers || 0) - (yesterdayFollowers || 0),
+    tribeSize: tribeSize || 0,
     dailyBestowalsProducts: dailyBestowalsData?.slice(0, 3).map((b: any) => ({
       id: b.orchards?.id || '',
       name: b.orchards?.title || 'Unknown'
