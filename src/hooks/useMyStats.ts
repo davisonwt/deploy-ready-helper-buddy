@@ -139,6 +139,16 @@ const fetcher = async (userId: string): Promise<StatsData> => {
     streak = uniqueDays.size;
   }
 
+  // Get tribe size (referral circle)
+  const { count: tribeSize, error: tribeError } = await supabase
+    .from('referral_circle')
+    .select('*', { count: 'exact', head: true })
+    .eq('referrer_id', userId);
+
+  if (tribeError) {
+    console.error('Error fetching tribe size:', tribeError);
+  }
+
   // Get rank (simplified - would need proper leaderboard query)
   const rank = 1; // Placeholder
 
