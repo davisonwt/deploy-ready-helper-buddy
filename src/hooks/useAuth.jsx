@@ -133,7 +133,7 @@ export class AuthProviderClass extends React.Component {
   }
 
   syncReferralAttribution = async (authUser) => {
-    const normalizedReferralCode = authUser?.user_metadata?.referral_code?.trim?.().toUpperCase?.()
+    const normalizedReferralCode = authUser?.user_metadata?.referral_code?.trim?.()?.toUpperCase?.()
     if (!authUser?.id || !normalizedReferralCode) return
 
     try {
