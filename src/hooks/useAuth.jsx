@@ -132,9 +132,47 @@ export class AuthProviderClass extends React.Component {
     }
   }
 
+  syncReferralAttribution = async (authUser) => {
+    const normalizedReferralCode = authUser?.user_metadata?.referral_code?.trim?.()?.toUpperCase?.()
+    if (!authUser?.id || !normalizedReferralCode) return
+
+    try {
+      const { data: referralResult, error: referralError } = await supabase.rpc('process_referral', {
+        p_referred_user_id: authUser.id,
+        p_referral_code: normalizedReferralCode,
+      })
+
+      if (referralError) {
+        logWarn('Referral attribution sync failed', {
+          message: referralError.message,
+          referredUserId: authUser.id,
+          referralCode: normalizedReferralCode,
+        })
+      } else if (
+        referralResult?.success === false &&
+        !['User already referred', 'Cannot refer yourself', 'Invalid referral code'].includes(referralResult?.error)
+      ) {
+        logWarn('Referral attribution sync returned non-success', {
+          referredUserId: authUser.id,
+          referralCode: normalizedReferralCode,
+          response: referralResult,
+        })
+      }
+    } catch (referralSyncError) {
+      logWarn('Referral attribution sync exception', {
+        message: referralSyncError?.message,
+        referredUserId: authUser.id,
+        referralCode: normalizedReferralCode,
+      })
+    }
+  }
+
   safeFetchProfile = async (authUser) => {
     try {
-      const full = await this.fetchUserProfile(authUser)
+      const [full] = await Promise.all([
+        this.fetchUserProfile(authUser),
+        this.syncReferralAttribution(authUser),
+      ])
       if (this._isMounted) this.setState({ user: full || authUser })
     } catch (e) {
       console.error('Profile fetch error:', e)
@@ -155,6 +193,8 @@ export class AuthProviderClass extends React.Component {
   register = async (userData) => {
     try {
       const currentDomain = window.location.origin
+      const normalizedReferralCode = userData.referral_code?.trim().toUpperCase() || null
+
       const { data, error } = await this.withRetry(() => supabase.auth.signUp({
         email: userData.email,
         password: userData.password,
@@ -169,11 +209,43 @@ export class AuthProviderClass extends React.Component {
             timezone: userData.timezone,
             country: userData.country,
             username: userData.username || userData.email?.split('@')[0],
-            referral_code: userData.referral_code || null
+            referral_code: normalizedReferralCode,
           }
         }
       }))
+
       if (error) return { success: false, error: error.message }
+
+      // Fallback processing: ensures referral link is created even if DB trigger misses it.
+      if (data?.user?.id && normalizedReferralCode) {
+        try {
+          const { data: referralResult, error: referralError } = await supabase.rpc('process_referral', {
+            p_referred_user_id: data.user.id,
+            p_referral_code: normalizedReferralCode,
+          })
+
+          if (referralError) {
+            logWarn('Referral fallback processing failed', {
+              message: referralError.message,
+              referredUserId: data.user.id,
+              referralCode: normalizedReferralCode,
+            })
+          } else if (referralResult?.success === false && referralResult?.error !== 'User already referred') {
+            logWarn('Referral fallback returned non-success', {
+              referredUserId: data.user.id,
+              referralCode: normalizedReferralCode,
+              response: referralResult,
+            })
+          }
+        } catch (referralProcessingError) {
+          logWarn('Referral fallback processing exception', {
+            message: referralProcessingError?.message,
+            referredUserId: data.user.id,
+            referralCode: normalizedReferralCode,
+          })
+        }
+      }
+
       return { success: true, user: data.user }
     } catch (e) {
       return { success: false, error: e.message }
