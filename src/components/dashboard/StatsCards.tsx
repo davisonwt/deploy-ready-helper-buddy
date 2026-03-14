@@ -78,8 +78,8 @@ export function StatsCards({ theme }: StatsCardsProps) {
 
   if (loading) {
     return (
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
-        {[...Array(5)].map((_, i) => (
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        {[...Array(3)].map((_, i) => (
           <Card key={i} className="animate-pulse rounded-3xl backdrop-blur-xl border h-32" style={cardStyle} />
         ))}
       </div>
@@ -88,7 +88,7 @@ export function StatsCards({ theme }: StatsCardsProps) {
 
   if (!stats) {
     return (
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <Card className="rounded-3xl backdrop-blur-xl border" style={cardStyle}>
           <CardContent className="p-6 text-center">
             <p className="text-sm" style={{ color: textSecondary }}>Loading stats...</p>
@@ -119,15 +119,15 @@ export function StatsCards({ theme }: StatsCardsProps) {
   };
 
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
-      {/* Card 1: S2G Registered Sowers */}
+    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+      {/* Card 1: S2G Community */}
       <motion.div variants={cardVariants} initial="hidden" whileInView="visible" viewport={{ once: true }}>
         <Card className="rounded-3xl backdrop-blur-xl border h-full" style={cardStyle}>
           <CardContent className="p-6 h-full flex flex-col">
             <div className="flex items-start justify-between mb-2">
               <div className="flex items-center gap-2">
                 <Users className="h-5 w-5" style={{ color: accent }} />
-                <span className="text-sm" style={{ color: textSecondary }}>S2G Registered Sowers</span>
+                <span className="text-sm" style={{ color: textSecondary }}>S2G Community</span>
               </div>
               {stats.registeredSowersDelta >= 10 && (
                 <motion.div animate={{ scale: [1, 1.2, 1] }} transition={{ repeat: Infinity, duration: 2 }}>
@@ -139,17 +139,20 @@ export function StatsCards({ theme }: StatsCardsProps) {
               <span className="font-mono text-3xl sm:text-4xl tracking-tighter" style={{ color: textPrimary }}>
                 {stats.registeredSowers.toLocaleString()}
               </span>
-              {stats.registeredSowersDelta !== 0 && (
-                <Badge className="text-xs" style={getDeltaBadgeStyle(stats.registeredSowersDelta)}>
-                  {stats.registeredSowersDelta > 0 ? '+' : ''}{stats.registeredSowersDelta} today
-                </Badge>
-              )}
+              <span className="text-xs" style={{ color: textSecondary }}>total members</span>
+            </div>
+            <div className="flex items-center gap-2 mt-3">
+              <Sparkles className="h-4 w-4" style={{ color: accent, opacity: 0.8 }} />
+              <span className="font-mono text-lg tracking-tight" style={{ color: textPrimary }}>
+                +{stats.registeredSowersDelta}
+              </span>
+              <span className="text-xs" style={{ color: textSecondary }}>new today</span>
             </div>
           </CardContent>
         </Card>
       </motion.div>
 
-      {/* Card 2: My Community (Followers & Tribe) */}
+      {/* Card 2: My Garden */}
       <motion.div variants={cardVariants} initial="hidden" whileInView="visible" viewport={{ once: true }}>
         <Card className="rounded-3xl backdrop-blur-xl border h-full" style={cardStyle}>
           <CardContent className="p-6 h-full flex flex-col">
@@ -160,7 +163,7 @@ export function StatsCards({ theme }: StatsCardsProps) {
               >
                 <Heart className="h-5 w-5" style={{ color: accent, fill: accent }} />
               </motion.div>
-              <span className="text-sm" style={{ color: textSecondary }}>My Community</span>
+              <span className="text-sm" style={{ color: textSecondary }}>My Garden</span>
             </div>
             <div className="flex items-baseline gap-2 flex-wrap">
               <span className="font-mono text-3xl sm:text-4xl tracking-tighter" style={{ color: textPrimary }}>
@@ -180,111 +183,71 @@ export function StatsCards({ theme }: StatsCardsProps) {
               </span>
               <span className="text-xs" style={{ color: textSecondary }}>tribe members</span>
             </div>
-          </CardContent>
-        </Card>
-      </motion.div>
-
-      {/* Card 3: My Daily New Followers */}
-      <motion.div variants={cardVariants} initial="hidden" whileInView="visible" viewport={{ once: true }}>
-        <Card className="rounded-3xl backdrop-blur-xl border h-full" style={cardStyle}>
-          <CardContent className="p-6 h-full flex flex-col">
-            <div className="flex items-center gap-2 mb-2">
-              <Sparkles className="h-5 w-5" style={{ color: accent }} />
-              <span className="text-sm" style={{ color: textSecondary }}>Daily New Followers</span>
-            </div>
-            <div className="flex items-baseline gap-2">
-              <span className="font-mono text-3xl sm:text-4xl tracking-tighter" style={{ color: textPrimary }}>
-                {stats.dailyNewFollowers}
+            <div className="flex items-center gap-2 mt-2">
+              <Sparkles className="h-4 w-4" style={{ color: accent, opacity: 0.8 }} />
+              <span className="font-mono text-lg tracking-tight" style={{ color: textPrimary }}>
+                +{stats.dailyNewFollowers}
               </span>
-            </div>
-            {stats.dailyNewFollowers >= 5 && (
-              <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} className="mt-2">
+              <span className="text-xs" style={{ color: textSecondary }}>new followers today</span>
+              {stats.dailyNewFollowers >= 5 && (
                 <Badge className="text-xs" style={{ backgroundColor: 'rgba(16, 185, 129, 0.2)', color: '#34d399', border: '1px solid #34d399' }}>
-                  🎉 Milestone!
+                  🎉
                 </Badge>
-              </motion.div>
-            )}
-            {stats.dailyNewFollowers === 0 && (
-              <p className="text-xs mt-2" style={{ color: textSecondary }}>Start growing your community!</p>
-            )}
+              )}
+            </div>
           </CardContent>
         </Card>
       </motion.div>
 
-      {/* Card 4: My Daily Bestowals */}
-      <motion.div variants={cardVariants} initial="hidden" whileInView="visible" viewport={{ once: true }}>
-        <Card className="rounded-3xl backdrop-blur-xl border h-full" style={cardStyle}>
-          <CardContent className="p-6 h-full flex flex-col">
-            <div className="flex items-center gap-2 mb-2">
-              <DollarSign className="h-5 w-5" style={{ color: accent }} />
-              <span className="text-sm" style={{ color: textSecondary }}>Daily Bestowals</span>
-            </div>
-            <div className="flex items-baseline gap-2 mb-2">
-              <span className="font-mono text-3xl sm:text-4xl tracking-tighter" style={{ color: textPrimary }}>
-                {formatCurrency(stats.dailyBestowals)}
-              </span>
-            </div>
-            {stats.dailyBestowalsProducts && stats.dailyBestowalsProducts.length > 0 ? (
-              <div className="flex gap-1 mt-2 flex-wrap">
-                {stats.dailyBestowalsProducts.slice(0, 3).map((product, i) => (
-                  <Badge key={i} className="text-xs truncate max-w-full" style={{ backgroundColor: accent + '20', color: textSecondary, border: `1px solid ${accent}` }}>
-                    {product.name}
-                  </Badge>
-                ))}
-              </div>
-            ) : stats.dailyBestowals === 0 && (
-              <p className="text-xs mt-2" style={{ color: textSecondary }}>Make your first bestowal today!</p>
-            )}
-          </CardContent>
-        </Card>
-      </motion.div>
-
-      {/* Card 5: My Monthly Bestowals */}
+      {/* Card 3: My Harvest */}
       <motion.div variants={cardVariants} initial="hidden" whileInView="visible" viewport={{ once: true }}>
         <Card className="rounded-3xl backdrop-blur-xl border h-full" style={cardStyle}>
           <CardContent className="p-6 h-full flex flex-col">
             <div className="flex items-center gap-2 mb-2">
               <TrendingUp className="h-5 w-5" style={{ color: accent }} />
-              <span className="text-sm" style={{ color: textSecondary }}>Monthly Bestowals</span>
+              <span className="text-sm" style={{ color: textSecondary }}>My Harvest</span>
             </div>
-            <div className="flex items-baseline gap-2 mb-3">
+            <div className="flex items-baseline gap-2 mb-1">
               <span className="font-mono text-3xl sm:text-4xl tracking-tighter" style={{ color: textPrimary }}>
                 {formatCurrency(stats.monthlyBestowals)}
               </span>
+              <span className="text-xs" style={{ color: textSecondary }}>this month</span>
+            </div>
+            <div className="flex items-center gap-2 mt-2">
+              <DollarSign className="h-4 w-4" style={{ color: accent, opacity: 0.8 }} />
+              <span className="font-mono text-lg tracking-tight" style={{ color: textPrimary }}>
+                {formatCurrency(stats.dailyBestowals)}
+              </span>
+              <span className="text-xs" style={{ color: textSecondary }}>today</span>
             </div>
             {/* Progress ring */}
-            <div className="relative w-16 h-16 mx-auto flex-shrink-0">
-              <svg className="transform -rotate-90 w-16 h-16" viewBox="0 0 64 64">
-                <circle cx="32" cy="32" r="26" stroke={accent + '33'} strokeWidth="4" fill="none" />
-                <motion.circle
-                  cx="32" cy="32" r="26"
-                  stroke={accent}
-                  strokeWidth="4"
-                  fill="none"
-                  strokeDasharray={`${2 * Math.PI * 26}`}
-                  strokeDashoffset={`${2 * Math.PI * 26 * (1 - Math.min(stats.monthlyBestowals / 10, 1))}`}
-                  initial={{ strokeDashoffset: 2 * Math.PI * 26 }}
-                  animate={{ strokeDashoffset: 2 * Math.PI * 26 * (1 - Math.min(stats.monthlyBestowals / 10, 1)) }}
-                  transition={{ duration: 1 }}
-                />
-              </svg>
-              <div className="absolute inset-0 flex items-center justify-center">
-                <div className="text-center px-1">
-                  <span className="text-[10px] block leading-tight" style={{ color: accent }}>
+            <div className="flex items-center gap-3 mt-3">
+              <div className="relative w-12 h-12 flex-shrink-0">
+                <svg className="transform -rotate-90 w-12 h-12" viewBox="0 0 48 48">
+                  <circle cx="24" cy="24" r="19" stroke={accent + '33'} strokeWidth="3" fill="none" />
+                  <motion.circle
+                    cx="24" cy="24" r="19"
+                    stroke={accent}
+                    strokeWidth="3"
+                    fill="none"
+                    strokeDasharray={`${2 * Math.PI * 19}`}
+                    initial={{ strokeDashoffset: 2 * Math.PI * 19 }}
+                    animate={{ strokeDashoffset: 2 * Math.PI * 19 * (1 - Math.min(stats.monthlyBestowals / 10, 1)) }}
+                    transition={{ duration: 1 }}
+                  />
+                </svg>
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <span className="text-[8px]" style={{ color: accent }}>
                     {Math.min(Math.ceil(stats.monthlyBestowals / 5) * 5, 10)}
-                  </span>
-                  <span className="text-[8px] block mt-0.5 leading-tight" style={{ color: textSecondary }}>
-                    USDC
                   </span>
                 </div>
               </div>
+              <p className="text-xs" style={{ color: textSecondary }}>
+                {stats.monthlyBestowals < 5
+                  ? `${(5 - stats.monthlyBestowals).toFixed(2)} USDC to next tier`
+                  : 'Keep it up!'}
+              </p>
             </div>
-            <p className="text-xs mt-2 text-center" style={{ color: textSecondary }}>
-              {stats.monthlyBestowals < 5 
-                ? `${(5 - stats.monthlyBestowals).toFixed(2)} USDC to next tier`
-                : 'Keep it up!'
-              }
-            </p>
           </CardContent>
         </Card>
       </motion.div>
