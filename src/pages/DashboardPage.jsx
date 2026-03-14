@@ -911,67 +911,39 @@ export default function DashboardPage() {
           </CardHeader>
           <CardContent className="p-4 sm:p-5 md:p-6 pt-0 space-y-6">
             
-            {/* CREATE & MANAGE Section - 2x2 on mobile, 4-col on desktop */}
+            {/* CREATE & MANAGE Section - Compact icon-chip grid */}
             <div>
               <h3 className="font-semibold tracking-wider mb-3 flex items-center gap-2 text-sm" style={{
               color: currentTheme.textSecondary
             }}>
                 Create & Manage
               </h3>
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-              <Link to="/create-orchard">
-                <Button className="w-full h-20 sm:h-24 rounded-2xl border shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-1 font-medium" style={{
-                  background: currentTheme.primaryButton,
-                  color: currentTheme.textPrimary,
-                  borderColor: currentTheme.accent
-                }}>
-                  <div className="text-center">
-                    <Plus className="h-6 w-6 mx-auto mb-2" />
-                    <span className="text-sm">Plant New Seed</span>
-                  </div>
-                </Button>
-              </Link>
-              
-              <Link to="/browse-orchards">
-                <Button className="w-full h-20 sm:h-24 rounded-2xl border shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-1 font-medium" style={{
-                  background: currentTheme.primaryButton,
-                  color: currentTheme.textPrimary,
-                  borderColor: currentTheme.accent
-                }}>
-                  <div className="text-center">
-                    <TreePine className="h-6 w-6 mx-auto mb-2" />
-                    <span className="text-sm">Browse Orchards</span>
-                  </div>
-                </Button>
-              </Link>
-
-              <Link to="/my-orchards">
-                <Button className="w-full h-20 sm:h-24 rounded-2xl border shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-1 font-medium" style={{
-                  background: currentTheme.primaryButton,
-                  color: currentTheme.textPrimary,
-                  borderColor: currentTheme.accent
-                }}>
-                  <div className="text-center">
-                    <Sprout className="h-6 w-6 mx-auto mb-2" />
-                    <span className="text-sm">My Orchards</span>
-                  </div>
-                </Button>
-              </Link>
-              
-              <Link to="/profile">
-                <Button className="w-full h-20 sm:h-24 rounded-2xl border shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-1 font-medium" style={{
-                  background: currentTheme.primaryButton,
-                  color: currentTheme.textPrimary,
-                  borderColor: currentTheme.accent
-                }}>
-                  <div className="text-center">
-                    {user?.avatar_url ? <img src={user.avatar_url} alt="Profile" className="w-6 h-6 rounded-full mx-auto mb-2 border-2" style={{
-                      borderColor: currentTheme.accent
-                    }} /> : <User className="h-6 w-6 mx-auto mb-2" />}
-                    <span className="text-sm">My Profile</span>
-                  </div>
-                </Button>
-              </Link>
+              <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
+                {[
+                  { to: '/create-orchard', icon: Plus, label: 'Plant Seed' },
+                  { to: '/browse-orchards', icon: TreePine, label: 'Orchards' },
+                  { to: '/community-chat', icon: MessageSquare, label: 'New Chat' },
+                  { to: '/create-session?type=classroom', icon: GraduationCap, label: 'Classroom' },
+                  { to: '/create-session?type=training', icon: Dumbbell, label: 'Training' },
+                  { to: '/create-session?type=skilldrop', icon: Zap, label: 'SkillDrop' },
+                  { to: '/create-session?type=radio', icon: Radio, label: 'Radio' },
+                  { to: '/profile', icon: User, label: 'My Profile', isProfile: true },
+                ].map(({ to, icon: Icon, label, isProfile }) => (
+                  <Link key={to} to={to}>
+                    <Button className="w-full h-11 rounded-xl border shadow-md hover:shadow-lg transition-all duration-300 hover:-translate-y-0.5 px-3 gap-2" style={{
+                      background: currentTheme.secondaryButton,
+                      color: currentTheme.textPrimary,
+                      borderColor: currentTheme.cardBorder
+                    }}>
+                      {isProfile && user?.avatar_url ? (
+                        <img src={user.avatar_url} alt="Profile" className="w-4 h-4 rounded-full border" style={{ borderColor: currentTheme.accent }} />
+                      ) : (
+                        <Icon className="h-4 w-4 shrink-0" style={{ color: currentTheme.accent }} />
+                      )}
+                      <span className="text-xs font-medium truncate">{label}</span>
+                    </Button>
+                  </Link>
+                ))}
               </div>
               {/* Sub-links row */}
               <div className="flex gap-2 mt-2 flex-wrap">
