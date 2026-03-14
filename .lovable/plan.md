@@ -1,43 +1,19 @@
 
+## S2G Tribe (Referral) System — IMPLEMENTED ✅
 
-## Redesign "Create & Manage" into a Compact Quick-Create Grid
+### Brand Language
+- **My S2G Tribe** = your referral group (people you invited)
+- **Ripples** = activity/stories from tribe members
+- **Send a Ripple** = inviting someone
+- **New Ripple** = new member joining your tribe
 
-Right now the "Create & Manage" section has only 4 large buttons (Plant New Seed, Browse Orchards, My Orchards, My Profile). You want to expand this to cover all the things users can create across the platform — but with smaller, cleaner buttons so it doesn't feel cluttered.
+### What was built
 
-### Proposed Design: Icon-Chip Grid
-
-Replace the 4 large cards with a compact grid of smaller icon+label chips — think pill-shaped buttons arranged in a flowing wrap layout. Each one is ~40px tall with a small icon and short label. This fits 8-12 actions without taking more vertical space than the current 4 cards.
-
-```text
-Create & Manage
-┌──────────┐ ┌──────────┐ ┌──────────┐ ┌──────────┐
-│ + Seed   │ │ 🌳 Orchard│ │ 💬 Chat  │ │ 🎓 Class │
-└──────────┘ └──────────┘ └──────────┘ └──────────┘
-┌──────────┐ ┌──────────┐ ┌──────────┐ ┌──────────┐
-│ 🏋 Training│ │ ⚡ SkillDrop│ │ 📻 Radio │ │ 👤 Profile│
-└──────────┘ └──────────┘ └──────────┘ └──────────┘
-```
-
-- **4 columns on desktop, 3 on mobile** — compact pill buttons (~h-12)
-- Each button: small icon + short label, theme-colored gradient background
-- Actions included:
-  1. **Plant Seed** → `/create-orchard` (new product/seed)
-  2. **New Orchard** → `/browse-orchards`
-  3. **New Chat** → `/community-chat` (start a conversation)
-  4. **New Classroom** → `/create-session?type=classroom`
-  5. **New Training** → `/create-session?type=training`
-  6. **New SkillDrop** → `/create-session?type=skilldrop`
-  7. **New Radio** → `/create-session?type=radio`
-  8. **My Profile** → `/profile`
-- Sub-links row (364YHVH Orchards, My S2G Tribe) stays as-is below
-
-### Changes
-
-**`src/pages/DashboardPage.jsx`** (lines 914-985)
-- Replace the 4 large `h-20/h-24` buttons with 8 compact `h-12` pill buttons
-- Grid changes from `grid-cols-2 sm:grid-cols-4` to `grid-cols-3 sm:grid-cols-4`
-- Each button uses a subtle gradient with theme colors, smaller icons (`h-4 w-4`), and `text-xs` labels
-- Keep sub-links row unchanged
-
-This keeps the "less is more" philosophy — more options, less visual weight.
-
+1. **Database tables**: `user_referrals` (unique S2G-XXXXXXXX codes per user) and `referral_circle` (tracks referrer→referred relationships) with RLS policies
+2. **Auto-generation trigger**: `trg_auto_create_user_referral` generates a code when any new profile is created; existing users were backfilled
+3. **`process_referral` RPC**: Validates code, prevents self-referral, creates relationship, increments counter
+4. **`track-referral-click` edge function**: Increments click counter when someone visits a referral link
+5. **`useReferralCapture` hook + `ReferralCaptureProvider`**: Captures `?ref=CODE` from any URL, stores 30-day cookie, tracks click
+6. **Signup integration**: Both `RegisterPage.jsx` and `QuickRegistration.jsx` have optional referral code field, auto-filled from cookie, processed after signup
+7. **My S2G Tribe page** (`/my-s2g-tribe`): Shows tribe invitation code, copy link, QR code, stats (ripples sent/new ripples/tribe size), tribe members list, referrer info, WhatsApp/Email/native share
+8. **Navigation**: Added to Dashboard quick actions sub-links and MyGardenPanel community section
