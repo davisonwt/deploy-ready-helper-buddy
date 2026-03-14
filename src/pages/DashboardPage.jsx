@@ -6,7 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Link } from 'react-router-dom';
-import { Sprout, TreePine, Heart, TrendingUp, Users, DollarSign, Plus, Calendar, User, Globe, Clock, MessageSquare, BarChart3, Trophy, Shield, Loader2, Music, Megaphone, Car, Wrench, BookOpen } from 'lucide-react';
+import { Sprout, TreePine, Heart, TrendingUp, Users, DollarSign, Plus, Calendar, User, Globe, Clock, MessageSquare, BarChart3, Trophy, Shield, Loader2, Music, Megaphone, Car, Wrench, BookOpen, GraduationCap, Dumbbell, Zap, Radio } from 'lucide-react';
 import { formatCurrency } from '../utils/formatters';
 import LiveTimezoneDisplay from '@/components/dashboard/LiveTimezoneDisplay';
 import WeatherWidget from '@/components/weather/WeatherWidget';
