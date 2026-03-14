@@ -1,19 +1,21 @@
 
-## S2G Tribe (Referral) System — IMPLEMENTED ✅
 
-### Brand Language
-- **My S2G Tribe** = your referral group (people you invited)
-- **Ripples** = activity/stories from tribe members
-- **Send a Ripple** = inviting someone
-- **New Ripple** = new member joining your tribe
+## Fix Create & Manage Section: Theme Colors + Sub-link Button Sizing
 
-### What was built
+Two issues to fix in `src/pages/DashboardPage.jsx`:
 
-1. **Database tables**: `user_referrals` (unique S2G-XXXXXXXX codes per user) and `referral_circle` (tracks referrer→referred relationships) with RLS policies
-2. **Auto-generation trigger**: `trg_auto_create_user_referral` generates a code when any new profile is created; existing users were backfilled
-3. **`process_referral` RPC**: Validates code, prevents self-referral, creates relationship, increments counter
-4. **`track-referral-click` edge function**: Increments click counter when someone visits a referral link
-5. **`useReferralCapture` hook + `ReferralCaptureProvider`**: Captures `?ref=CODE` from any URL, stores 30-day cookie, tracks click
-6. **Signup integration**: Both `RegisterPage.jsx` and `QuickRegistration.jsx` have optional referral code field, auto-filled from cookie, processed after signup
-7. **My S2G Tribe page** (`/my-s2g-tribe`): Shows tribe invitation code, copy link, QR code, stats (ripples sent/new ripples/tribe size), tribe members list, referrer info, WhatsApp/Email/native share
-8. **Navigation**: Added to Dashboard quick actions sub-links and MyGardenPanel community section
+### 1. Button Colors — Use Theme Primary Gradient (not `secondaryButton`)
+The 8 icon-chip buttons currently use `currentTheme.secondaryButton` (a subtle transparent background). They should use `currentTheme.primaryButton` with proper contrast text color, matching the rest of the dashboard's themed buttons.
+
+**Line 934**: Change `background: currentTheme.secondaryButton` → `background: currentTheme.primaryButton` and compute contrast text color like `StatsFloatingButton` does.
+
+### 2. Sub-links — Make Same Size as Icon-Chip Buttons
+The "364YHVH Orchards" and "My S2G Tribe" links are currently small pill text links. They should be the same `h-11 rounded-xl` buttons as the 8 chips above, using the same styling.
+
+**Lines 949-956**: Convert from `<Link>` text pills to full `<Link><Button>` chips matching the grid buttons above, placed inside the same grid (or a 2-col grid below).
+
+### Changes — `src/pages/DashboardPage.jsx`
+
+- **Lines 933-936**: Change button style to use `currentTheme.primaryButton` for background, compute contrast text color based on accent hex luminance
+- **Lines 949-956**: Replace the small pill links with two full-sized `h-11 rounded-xl` buttons matching the icon-chip style, using the primary button gradient
+
