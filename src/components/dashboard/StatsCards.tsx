@@ -88,7 +88,7 @@ export function StatsCards({ theme }: StatsCardsProps) {
 
   if (!stats) {
     return (
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <Card className="rounded-3xl backdrop-blur-xl border" style={cardStyle}>
           <CardContent className="p-6 text-center">
             <p className="text-sm" style={{ color: textSecondary }}>Loading stats...</p>
