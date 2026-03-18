@@ -154,19 +154,27 @@ export function BeadPopup({ isOpen, onClose, year, month, day }: BeadPopupProps)
     const monthDays = [30, 30, 31, 30, 30, 31, 30, 30, 31, 30, 30, 31]
     const EPOCH_DATE = new Date(2025, 2, 20)
 
-    let daysFromEpoch = (yhwhYear - 6028) * 364
+    let daysFromEpoch = 0
 
+    // Add full prior years with DOT days included
+    for (let y = 6028; y < yhwhYear; y++) {
+      daysFromEpoch += 364 + getDaysOutOfTimeCount(y)
+    }
+
+    // Add regular month/day offset inside target year
     for (let i = 0; i < yhwhMonth - 1; i++) {
       daysFromEpoch += monthDays[i]
     }
-
     daysFromEpoch += yhwhDay - 1
+
+    // DOT days are inserted after Month 12 Day 28 and are not counted in month numbering.
+    // So Month 12 Day 29+ must be shifted forward by DOT count.
+    if (yhwhMonth === 12 && yhwhDay >= 29) {
+      daysFromEpoch += getDaysOutOfTimeCount(yhwhYear)
+    }
 
     const gregorianDate = new Date(EPOCH_DATE)
     gregorianDate.setDate(gregorianDate.getDate() + daysFromEpoch)
-
-    // Use midday so calculateCreatorDate() doesn't roll back to previous day
-    // because of sunrise-based day start (05:13).
     gregorianDate.setHours(12, 0, 0, 0)
 
     return gregorianDate
