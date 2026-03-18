@@ -1093,7 +1093,8 @@ export default function DashboardPage() {
                   <Button className="w-full h-16 sm:h-20 rounded-2xl border shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-1 font-medium" style={{
                   background: 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)',
                   color: '#fff',
-                  borderColor: '#f59e0b'
+                  borderColor: '#f59e0b',
+                  textShadow: '-0.5px -0.5px 0 #000, 0.5px -0.5px 0 #000, -0.5px 0.5px 0 #000, 0.5px 0.5px 0 #000'
                 }}>
                     <div className="text-center">
                       <Wrench className="h-5 w-5 sm:h-6 sm:w-6 mx-auto mb-1 sm:mb-2" />
