@@ -28,6 +28,7 @@ import SecurityQuestionsAlert from '@/components/auth/SecurityQuestionsAlert';
 import { SeedEngagementWidget } from '@/components/dashboard/SeedEngagementWidget';
 import { DashboardSkeleton } from '@/components/dashboard/DashboardSkeleton';
 import { SabbathDashboardBanner } from '@/components/SabbathDashboardBanner';
+import { DailyPlantingTip } from '@/components/garden/DailyPlantingTip';
 import { motion } from 'framer-motion';
 export default function DashboardPage() {
   const [communityUnread, setCommunityUnread] = useState(0);
@@ -890,6 +891,8 @@ export default function DashboardPage() {
                   </button>
                 </Link>
               </div>
+              {/* Daily Planting Tip */}
+              <DailyPlantingTip currentTheme={currentTheme} />
             </CardContent>
           </Card>
         </div>
