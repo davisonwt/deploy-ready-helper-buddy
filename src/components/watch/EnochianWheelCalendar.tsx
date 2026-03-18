@@ -4091,6 +4091,7 @@ const Month12Strand = ({ dayOfMonth, year }: { dayOfMonth: number; year: number 
         MONTH 12
       </motion.h2>
 
+      <BeadScrollWindow futureBeadCount={futureBeads.length}>
       {/* Future days (uncounted) - at top */}
       <div className="flex flex-col" style={{ gap: '1mm' }}>
         {futureBeads.map((b) => {
