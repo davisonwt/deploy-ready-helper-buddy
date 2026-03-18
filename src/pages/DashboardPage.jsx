@@ -1001,7 +1001,7 @@ export default function DashboardPage() {
                   background: 'linear-gradient(135deg, #f97316 0%, #ea580c 100%)',
                   color: '#fff',
                   borderColor: '#f97316',
-                  textShadow: '-0.5px -0.5px 0 #000, 0.5px -0.5px 0 #000, -0.5px 0.5px 0 #000, 0.5px 0.5px 0 #000'
+                  textShadow: '-0.3px -0.3px 0 #000, 0.3px -0.3px 0 #000, -0.3px 0.3px 0 #000, 0.3px 0.3px 0 #000'
                 }}>
                     <div className="text-center">
                       <MessageSquare className="h-4 w-4 sm:h-5 sm:w-5 mx-auto mb-1" />
