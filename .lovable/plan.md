@@ -1,21 +1,33 @@
 
 
-## Fix Create & Manage Section: Theme Colors + Sub-link Button Sizing
+## Fix Month 12 Dot Days: Show Only 1 Dot Day This Year
 
-Two issues to fix in `src/pages/DashboardPage.jsx`:
+### Problem
+Month 12 in the Ed's Beads calendar always shows both DOT 1 (Helo-Yaseph) and DOT 2 (Asfa'el) after day 28. This year (6028) there is only 1 day out of time, so the correct bead order should be: **28 → DOT 1 → 29 → 30 → 31**.
 
-### 1. Button Colors — Use Theme Primary Gradient (not `secondaryButton`)
-The 8 icon-chip buttons currently use `currentTheme.secondaryButton` (a subtle transparent background). They should use `currentTheme.primaryButton` with proper contrast text color, matching the rest of the dashboard's themed buttons.
+### Current Structure (hardcoded)
+The bead array in `EnochianWheelCalendar.tsx` (~line 3884-3923) always pushes both DOT1 and DOT2 beads after day 28, regardless of the year.
 
-**Line 934**: Change `background: currentTheme.secondaryButton` → `background: currentTheme.primaryButton` and compute contrast text color like `StatsFloatingButton` does.
+### Plan
 
-### 2. Sub-links — Make Same Size as Icon-Chip Buttons
-The "364YHVH Orchards" and "My S2G Tribe" links are currently small pill text links. They should be the same `h-11 rounded-xl` buttons as the 8 chips above, using the same styling.
+**File: `src/utils/customCalendar.ts`**
+- Add an exported function `getDaysOutOfTimeCount(year: number): number` that returns 1 or 2 based on the year. For year 6028, return **1**. This centralizes the logic so all calendar views can use it.
 
-**Lines 949-956**: Convert from `<Link>` text pills to full `<Link><Button>` chips matching the grid buttons above, placed inside the same grid (or a 2-col grid below).
+**File: `src/components/watch/EnochianWheelCalendar.tsx`**
+- Import `getDaysOutOfTimeCount` from customCalendar
+- Around line 3884, get the dot count: `const dotsThisYear = getDaysOutOfTimeCount(year)`
+- Wrap the DOT1 push (line 3886) in `if (dotsThisYear >= 1)`
+- Wrap the DOT2 push (line 3906) in `if (dotsThisYear >= 2)`
+- This ensures only 1 dot bead appears this year, placed correctly between day 28 and day 29
 
-### Changes — `src/pages/DashboardPage.jsx`
+**File: `src/components/watch/RemnantsWheelCalendar.tsx`**
+- Apply the same conditional logic to the Wheel 1 (Man's Count) and YHVH Count dot day rendering, so DOT2 is hidden when only 1 dot day exists this year.
 
-- **Lines 933-936**: Change button style to use `currentTheme.primaryButton` for background, compute contrast text color based on accent hex luminance
-- **Lines 949-956**: Replace the small pill links with two full-sized `h-11 rounded-xl` buttons matching the icon-chip style, using the primary button gradient
+**File: `src/components/Sow2GrowCalendar.tsx`**
+- Update the "Days Out of Time" section at the bottom to also respect the dot count.
+
+### Bead Order After Fix (Month 12)
+```text
+Day 1 ... Day 28 → DOT 1 → Day 29 → Day 30 → Day 31
+```
 
