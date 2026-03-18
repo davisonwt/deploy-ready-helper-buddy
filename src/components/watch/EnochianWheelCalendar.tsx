@@ -3958,15 +3958,15 @@ const Month12Strand = ({ dayOfMonth, year }: { dayOfMonth: number; year: number 
   // Reverse so day 1 is at bottom
   const reversedBeads = [...beads].reverse();
 
-  // For future/past split, consider beadType - days out of time are always shown
+  // For future/past split based on current month day progression
   const futureBeads = reversedBeads.filter(bead => 
     (bead.beadType === 'regular' && bead.day > dayOfMonth) || 
-    bead.beadType === 'daysOutOfTime1' || 
-    bead.beadType === 'daysOutOfTime2' ||
+    ((bead.beadType === 'daysOutOfTime1' || bead.beadType === 'daysOutOfTime2') && dayOfMonth <= 28) ||
     (bead.beadType === 'newWeekCycle' && bead.day > dayOfMonth)
   );
   const pastBeads = reversedBeads.filter(bead => 
     (bead.beadType === 'regular' && bead.day <= dayOfMonth) ||
+    ((bead.beadType === 'daysOutOfTime1' || bead.beadType === 'daysOutOfTime2') && dayOfMonth > 28) ||
     (bead.beadType === 'newWeekCycle' && bead.day <= dayOfMonth)
   );
 
@@ -3983,7 +3983,7 @@ const Month12Strand = ({ dayOfMonth, year }: { dayOfMonth: number; year: number 
 
       {/* Future days (uncounted) - at top */}
       <div className="flex flex-col" style={{ gap: '1mm' }}>
-        {futureBeads.map((b, idx) => {
+        {futureBeads.map((b) => {
           const curveAngle = getSolarCurveAngle(b.globalDay);
           const beadKey = b.beadType === 'daysOutOfTime1' ? 'dot1' : 
                          b.beadType === 'daysOutOfTime2' ? 'dot2' : 
@@ -4091,7 +4091,9 @@ const Month12Strand = ({ dayOfMonth, year }: { dayOfMonth: number; year: number 
       <div className="flex flex-col" style={{ gap: '1mm' }}>
         {pastBeads.map((b) => {
           const curveAngle = getSolarCurveAngle(b.globalDay);
-          const beadKey = `past-day-${b.day}`;
+          const beadKey = b.beadType === 'daysOutOfTime1' ? 'past-dot1' :
+                         b.beadType === 'daysOutOfTime2' ? 'past-dot2' :
+                         `past-day-${b.day}`;
           return (
             <motion.div
               key={beadKey}
@@ -4116,16 +4118,23 @@ const Month12Strand = ({ dayOfMonth, year }: { dayOfMonth: number; year: number 
                 b.isAdarJoy ? { opacity: [0.8, 1, 0.8] } :
                 {}
               }
-              transition={{ duration: b.isPurim ? 3 : 2, repeat: Infinity }}
+              transition={{ duration: b.isPurim ? 3 : b.isDaysOutOfTime ? 3 : 2, repeat: Infinity }}
               className="relative flex items-center gap-2"
             >
               <div
-                className="relative w-11 h-11 md:w-12 md:h-12 rounded-full border-3 md:border-4 border-black flex items-center justify-center cursor-pointer hover:scale-110 transition-transform"
-                onClick={() => setSelectedBead({ year, month: 12, day: b.day })}
+                className={`relative w-11 h-11 md:w-12 md:h-12 rounded-full border-3 md:border-4 flex items-center justify-center cursor-pointer hover:scale-110 transition-transform ${
+                  b.isDaysOutOfTime ? 'border-purple-900' : 'border-black'
+                }`}
+                onClick={() => b.beadType === 'regular' || b.beadType === 'newWeekCycle'
+                  ? setSelectedBead({ year, month: 12, day: b.day })
+                  : null}
                 title={b.label}
                 style={{
-                  background: `radial-gradient(circle at 30% 30%, #fff, ${b.color})`,
-                  boxShadow: 
+                  background: b.isDaysOutOfTime
+                    ? `radial-gradient(circle at 30% 30%, #a78bfa, ${b.color})`
+                    : `radial-gradient(circle at 30% 30%, #fff, ${b.color})`,
+                  boxShadow:
+                    b.isDaysOutOfTime ? '0 0 60px #4c1d95, inset 0 0 25px rgba(167,139,250,0.5)' :
                     b.isLastSabbath ? '0 0 60px #9333ea, inset 0 0 20px #fff' :
                     b.isNewWeekCycle ? '0 0 50px #8b5cf6, inset 0 0 15px #fff' :
                     b.isPurim ? '0 0 300px #ec4899, 0 0 500px #fff, inset 0 0 120px #fff' :
@@ -4156,8 +4165,19 @@ const Month12Strand = ({ dayOfMonth, year }: { dayOfMonth: number; year: number 
                     </div>
                   </>
                 )}
-                <span className="text-xs font-bold text-pink-300 drop-shadow-2xl relative z-10">
-                  {b.displayNumber}
+                {b.isDaysOutOfTime && (
+                  <motion.div
+                    animate={{ opacity: [0.5, 1, 0.5] }}
+                    transition={{ duration: 2, repeat: Infinity }}
+                    className="absolute inset-0 flex items-center justify-center text-[8px] font-bold text-purple-200 pointer-events-none text-center px-1"
+                  >
+                    {b.isDaysOutOfTime1 ? 'DOT 1' : 'DOT 2'}
+                  </motion.div>
+                )}
+                <span className={`text-xs font-bold drop-shadow-2xl relative z-10 ${
+                  b.isDaysOutOfTime ? 'text-purple-100' : 'text-pink-300'
+                }`}>
+                  {b.isDaysOutOfTime ? '' : b.displayNumber}
                 </span>
               </div>
 
