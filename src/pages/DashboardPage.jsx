@@ -974,7 +974,7 @@ export default function DashboardPage() {
                         const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
                         return luminance > 0.45 ? '#0b1220' : '#ffffff';
                       })(),
-                      textShadow: '-0.5px -0.5px 0 #000, 0.5px -0.5px 0 #000, -0.5px 0.5px 0 #000, 0.5px 0.5px 0 #000',
+                      textShadow: '-0.3px -0.3px 0 #000, 0.3px -0.3px 0 #000, -0.3px 0.3px 0 #000, 0.3px 0.3px 0 #000',
                       borderColor: currentTheme.cardBorder
                     }}>
                       <span className="text-xs font-semibold truncate">{label}</span>
