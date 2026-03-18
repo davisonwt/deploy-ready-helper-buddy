@@ -319,15 +319,12 @@ export default function DashboardPage() {
     const localYear = now.getFullYear();
     const localMonth = now.getMonth();
     const localDate = now.getDate();
-    const localHour = now.getHours();
-    const localMinute = now.getMinutes();
-    const currentTimeMinutes = localHour * 60 + localMinute;
-    const sunriseTimeMinutes = 5 * 60 + 13; // 05:13
+    const sunrise = SunCalc.getTimes(now, userLat, userLon).sunrise;
 
     let effectiveYear = localYear;
     let effectiveMonth = localMonth;
     let effectiveDate = localDate;
-    if (currentTimeMinutes < sunriseTimeMinutes) {
+    if (now < sunrise) {
       const prevDay = new Date(localYear, localMonth, localDate - 1);
       effectiveYear = prevDay.getFullYear();
       effectiveMonth = prevDay.getMonth();
