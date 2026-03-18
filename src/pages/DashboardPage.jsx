@@ -940,7 +940,17 @@ export default function DashboardPage() {
                         const g = parseInt(clean.slice(2, 4), 16);
                         const b = parseInt(clean.slice(4, 6), 16);
                         const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
-                        return luminance > 0.62 ? '#0b1220' : '#ffffff';
+                        return luminance > 0.45 ? '#0b1220' : '#ffffff';
+                      })(),
+                      textShadow: (() => {
+                        const match = currentTheme.accent.match(/#[0-9a-fA-F]{6}/);
+                        const hex = match ? match[0] : '#26c6da';
+                        const clean = hex.replace('#', '');
+                        const r = parseInt(clean.slice(0, 2), 16);
+                        const g = parseInt(clean.slice(2, 4), 16);
+                        const b = parseInt(clean.slice(4, 6), 16);
+                        const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+                        return luminance > 0.45 ? 'none' : '0 1px 2px rgba(0,0,0,0.3)';
                       })(),
                       borderColor: currentTheme.cardBorder
                     }}>
@@ -949,7 +959,7 @@ export default function DashboardPage() {
                       ) : (
                         <Icon className="h-4 w-4 shrink-0" />
                       )}
-                      <span className="text-xs font-medium truncate">{label}</span>
+                      <span className="text-xs font-semibold truncate">{label}</span>
                     </Button>
                   </Link>
                 ))}
@@ -971,11 +981,21 @@ export default function DashboardPage() {
                         const g = parseInt(clean.slice(2, 4), 16);
                         const b = parseInt(clean.slice(4, 6), 16);
                         const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
-                        return luminance > 0.62 ? '#0b1220' : '#ffffff';
+                        return luminance > 0.45 ? '#0b1220' : '#ffffff';
+                      })(),
+                      textShadow: (() => {
+                        const match = currentTheme.accent.match(/#[0-9a-fA-F]{6}/);
+                        const hex = match ? match[0] : '#26c6da';
+                        const clean = hex.replace('#', '');
+                        const r = parseInt(clean.slice(0, 2), 16);
+                        const g = parseInt(clean.slice(2, 4), 16);
+                        const b = parseInt(clean.slice(4, 6), 16);
+                        const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+                        return luminance > 0.45 ? 'none' : '0 1px 2px rgba(0,0,0,0.3)';
                       })(),
                       borderColor: currentTheme.cardBorder
                     }}>
-                      <span className="text-xs font-medium truncate">{label}</span>
+                      <span className="text-xs font-semibold truncate">{label}</span>
                     </Button>
                   </Link>
                 ))}
