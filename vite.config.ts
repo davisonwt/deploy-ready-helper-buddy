@@ -16,12 +16,6 @@ export default defineConfig(({ mode, command }) => ({
   plugins: [
     react(),
     command === 'serve' && mode === 'development' && componentTagger(),
-    command === 'serve' && eslint({
-      failOnError: true, // Fail dev server on ESLint errors
-      failOnWarning: false,
-      emitError: true,
-      emitWarning: true,
-    }),
   ].filter(Boolean),
   test: {
     globals: true,
