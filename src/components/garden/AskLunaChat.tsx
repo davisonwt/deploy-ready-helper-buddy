@@ -246,7 +246,7 @@ export function AskLunaChat({ userCropKeys = [], userSoilPh, city }: AskLunaChat
                   </button>
                 </div>
                 <p className="text-[9px] text-emerald-700 text-center mt-1.5">
-                  Inspired by Seedtime · Gardenize · Margaret Roberts' Companion Planting
+                  Inspired by Seedtime · Gardenize · Companion planting wisdom
                 </p>
               </div>
             </motion.div>
