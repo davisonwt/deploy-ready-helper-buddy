@@ -3,7 +3,9 @@ import { createPortal } from 'react-dom';
 
 import { motion } from 'framer-motion';
 
-import { Sun, Moon } from 'lucide-react';
+import { Sun, Moon, Sprout } from 'lucide-react';
+import { getMoonInfo } from '@/utils/lunarEngine';
+import { MOON_ELEMENT_LABELS } from '@/data/gardenCrops';
 
 import { calculateCreatorDate } from '@/utils/dashboardCalendar';
 import { getCreatorTime } from '@/utils/customTime';
