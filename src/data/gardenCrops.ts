@@ -504,7 +504,7 @@ export const GARDEN_CROPS: CropData[] = [
     companions: {
       good: ['tomato', 'pepper', 'bean', 'cucumber', 'potato'],
       bad: [],
-      notes: 'General garden protector — deters nematodes & whitefly (Margaret Roberts)',
+      notes: 'General garden protector — deters nematodes & whitefly',
     },
     moonPreference: 'flower',
     frostSensitivity: 'tender',
