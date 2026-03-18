@@ -1,21 +1,55 @@
 
 
-## Fix Create & Manage Section: Theme Colors + Sub-link Button Sizing
+## Scrollable 7-Bead Window — "Beads in Your Hands"
 
-Two issues to fix in `src/pages/DashboardPage.jsx`:
+### Concept
+Instead of showing the entire strand of 30-33 beads vertically, we show a **fixed window of 7 beads** centered on the current day. The user can **drag/scroll up and down** to pull beads through the viewport — like sliding prayer beads through your fingers. The current day bead stays centered by default, with 3 future beads above and 3 past beads below.
 
-### 1. Button Colors — Use Theme Primary Gradient (not `secondaryButton`)
-The 8 icon-chip buttons currently use `currentTheme.secondaryButton` (a subtle transparent background). They should use `currentTheme.primaryButton` with proper contrast text color, matching the rest of the dashboard's themed buttons.
+### Visual Design
+```text
+    ╔══════════════╗
+    ║   ○ Day 27   ║  ← future (faded)
+    ║   ○ Day 28   ║  ← future
+    ║   ○ Day 29   ║  ← future (approaching)
+    ║  ◉ Day 30 ◉  ║  ← TODAY (glowing, centered)
+    ║   ● DOT 1    ║  ← past (if applicable)
+    ║   ● Day 1    ║  ← past
+    ║   ● Day 2    ║  ← past (faded)
+    ╚══════════════╝
+         ↕ drag to scroll
+```
 
-**Line 934**: Change `background: currentTheme.secondaryButton` → `background: currentTheme.primaryButton` and compute contrast text color like `StatsFloatingButton` does.
+### Behavior
+- **Auto-centers** on today's bead on load
+- **Touch drag / mouse scroll / trackpad** moves beads up and down smoothly
+- Beads at the edges of the 7-bead window **fade out** slightly, creating depth
+- The center bead (position 4 of 7) is always slightly larger and brighter
+- A subtle **string/cord line** runs through the center connecting all beads
+- Optional: momentum/snap scrolling so beads settle into position
 
-### 2. Sub-links — Make Same Size as Icon-Chip Buttons
-The "364YHVH Orchards" and "My S2G Tribe" links are currently small pill text links. They should be the same `h-11 rounded-xl` buttons as the 8 chips above, using the same styling.
+### Technical Approach
 
-**Lines 949-956**: Convert from `<Link>` text pills to full `<Link><Button>` chips matching the grid buttons above, placed inside the same grid (or a 2-col grid below).
+**All 12 MonthStrand components** will be wrapped in a reusable scroll container:
 
-### Changes — `src/pages/DashboardPage.jsx`
+1. **Create `BeadScrollWindow` wrapper component** — a fixed-height container (~7 bead heights) with `overflow-y: auto` and `scroll-snap-type: y mandatory`. Each bead gets `scroll-snap-align: center`.
 
-- **Lines 933-936**: Change button style to use `currentTheme.primaryButton` for background, compute contrast text color based on accent hex luminance
-- **Lines 949-956**: Replace the small pill links with two full-sized `h-11 rounded-xl` buttons matching the icon-chip style, using the primary button gradient
+2. **Apply to each MonthStrand** — Instead of rendering all beads in a plain `flex-col`, wrap the bead list inside `BeadScrollWindow`. The component will:
+   - Calculate initial scroll position to center on the current day bead
+   - Use `useRef` + `scrollTo` on mount to auto-center
+   - Apply opacity gradient: beads at edges fade (opacity 0.4), center bead full opacity
+   - Keep the 1cm gap between future/past beads
+
+3. **Tactile feel enhancements**:
+   - CSS `scroll-snap-type: y mandatory` with `scroll-snap-align: center` on each bead for snappy feel
+   - Slight scale transform: center bead `scale(1.15)`, edge beads `scale(0.85)`
+   - Top/bottom fade overlays (gradient masks) to create the "tunnel" effect
+
+4. **Files to edit**:
+   - `src/components/watch/EnochianWheelCalendar.tsx` — Create `BeadScrollWindow` component, then wrap the bead rendering in each of the 12 `MonthXStrand` components with it. The window height will be approximately `7 * (bead size + gap)` ≈ 350px.
+
+### What stays the same
+- All bead styling, colors, animations, click handlers, popups
+- The future/past split with the 1cm gap
+- Blood drop animation on bottom bead
+- All DOT day logic
 
