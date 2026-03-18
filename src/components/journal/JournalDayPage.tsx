@@ -310,6 +310,21 @@ export default function JournalDayPage({ userId, date, onDateChange, entry, onSa
       {/* 🌱 Garden Log Section */}
       <GardenLogSection date={date} />
 
+      {/* 🌙 Garden Task Cards */}
+      <div className="border border-emerald-200/30 rounded-xl bg-emerald-950/20 p-3">
+        <GardenTaskCards
+          date={date}
+          weekDay={yhwhDate.weekDay}
+          yhwhMonth={yhwhDate.month}
+          yhwhDay={yhwhDate.day}
+        />
+      </div>
+
+      {/* 🏆 Garden Streak & Badges */}
+      <div className="border border-emerald-200/30 rounded-xl bg-emerald-950/20 p-3">
+        <GardenStreakBadges />
+      </div>
+
       {/* Journal Page Card */}
       <Card className="border-border/50 bg-card/80 backdrop-blur-sm">
         <CardContent className="pt-6 space-y-5">
