@@ -959,7 +959,7 @@ export default function DashboardPage() {
                       ) : (
                         <Icon className="h-4 w-4 shrink-0" />
                       )}
-                      <span className="text-xs font-medium truncate">{label}</span>
+                      <span className="text-xs font-semibold truncate">{label}</span>
                     </Button>
                   </Link>
                 ))}
