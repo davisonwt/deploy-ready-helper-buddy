@@ -190,26 +190,34 @@ export default function DashboardPage() {
       let year = 6028;
       let remainingDays = totalDays;
 
-      // Calculate year
+      // Calculate year (regular 364 days + Days Out of Time)
       while (remainingDays >= 365) {
         remainingDays -= 365;
         year++;
       }
 
-      // Calculate month and day
+      // Calculate day index and apply Days Out of Time offset (after day 361)
+      const dotDaysThisYear = getDaysOutOfTimeCount(year);
+      let regularDayOfYear = remainingDays + 1;
+
+      if (regularDayOfYear > 361 && regularDayOfYear <= 361 + dotDaysThisYear) {
+        // During DOT window, keep regular count on day 361 (Month 12 Day 28)
+        regularDayOfYear = 361;
+      } else if (regularDayOfYear > 361 + dotDaysThisYear) {
+        // After DOT window, shift regular days forward by DOT count
+        regularDayOfYear -= dotDaysThisYear;
+      }
+
+      // Calculate month and day from adjusted regular day count
       let month = 1;
-      let day = remainingDays + 1;
+      let day = regularDayOfYear;
       while (day > daysPerMonth[month - 1]) {
         day -= daysPerMonth[month - 1];
         month++;
-        if (month > 12) {
-          month = 1;
-          year++;
-        }
       }
 
-      // Weekday: Year starts on "Day 4" (weekday 4)
-      const weekDay = (totalDays % 7 + 4) % 7 || 7;
+      // Weekday uses the 364-day count (DOT days do not advance weekday)
+      const weekDay = ((regularDayOfYear - 1 + 3) % 7) + 1;
       const creatorDate = {
         year,
         month,
@@ -221,7 +229,7 @@ export default function DashboardPage() {
       }
       const creatorTime = getCreatorTime(now, userLat, userLon); // Use current time for time parts
 
-      // Calculate day of year
+      // Calculate day of year from adjusted Creator date
       const monthDays = [30, 30, 31, 30, 30, 31, 30, 30, 31, 30, 30, 31];
       let dayOfYear = 0;
       for (let i = 0; i < creatorDate.month - 1; i++) {
