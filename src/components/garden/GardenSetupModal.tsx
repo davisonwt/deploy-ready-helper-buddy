@@ -288,8 +288,8 @@ export function GardenSetupModal({ isOpen, onClose }: GardenSetupModalProps) {
                       onClick={() => toggleCrop(crop.key)}
                       className={`flex items-center gap-2 px-2.5 py-2 rounded-lg text-xs text-left transition-all border ${
                         isSelected
-                          ? 'bg-emerald-600/20 border-emerald-500/50 text-emerald-300'
-                          : 'border-emerald-800/20 text-emerald-500/70 hover:border-emerald-600/40'
+                          ? 'bg-emerald-600/20 border-emerald-500/50 text-emerald-100'
+                          : 'border-emerald-800/40 text-emerald-200/90 hover:border-emerald-600/40'
                       }`}
                     >
                       <span className="text-base">{crop.emoji}</span>
