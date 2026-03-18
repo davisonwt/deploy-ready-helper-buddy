@@ -144,6 +144,7 @@ const Month1Strand = ({ dayOfMonth, year }: { dayOfMonth: number; year: number }
   const [showBloodDrop, setShowBloodDrop] = useState(false);
   const [currentPart, setCurrentPart] = useState(0);
   const [selectedBead, setSelectedBead] = useState<{ year: number; month: number; day: number } | null>(null);
+  const [selectedMonth12Bead, setSelectedMonth12Bead] = useState<{ day: number; weekCycleDay: number } | null>(null);
   const { location } = useUserLocation();
 
   useEffect(() => {
