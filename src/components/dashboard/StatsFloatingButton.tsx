@@ -55,7 +55,7 @@ export function StatsFloatingButton({ theme: propTheme }: LiveActivitiesBarProps
     color: buttonTextColor,
     border: `1px solid ${theme.cardBorder}`,
     boxShadow: `0 6px 14px ${theme.shadow}`,
-    textShadow: '-0.5px -0.5px 0 #000, 0.5px -0.5px 0 #000, -0.5px 0.5px 0 #000, 0.5px 0.5px 0 #000',
+    textShadow: '-0.3px -0.3px 0 #000, 0.3px -0.3px 0 #000, -0.3px 0.3px 0 #000, 0.3px 0.3px 0 #000',
   };
 
   const handleButtonHover = (e: React.MouseEvent<HTMLButtonElement>, hover: boolean) => {
