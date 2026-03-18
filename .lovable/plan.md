@@ -1,21 +1,31 @@
 
 
-## Fix Create & Manage Section: Theme Colors + Sub-link Button Sizing
+## Add Diary & Journal Links to Bead Popup
 
-Two issues to fix in `src/pages/DashboardPage.jsx`:
+### What
+When a bead is clicked and the popup opens, add two action buttons — "Diary" and "Journal" — that link the user to the diary/journal page for that specific date. Currently the popup says "No entries for this day / Click on this date in the calendar to add entries" but provides no actual links.
 
-### 1. Button Colors — Use Theme Primary Gradient (not `secondaryButton`)
-The 8 icon-chip buttons currently use `currentTheme.secondaryButton` (a subtle transparent background). They should use `currentTheme.primaryButton` with proper contrast text color, matching the rest of the dashboard's themed buttons.
+### Where
+**File:** `src/components/watch/BeadPopup.tsx`
 
-**Line 934**: Change `background: currentTheme.secondaryButton` → `background: currentTheme.primaryButton` and compute contrast text color like `StatsFloatingButton` does.
+### Changes
 
-### 2. Sub-links — Make Same Size as Icon-Chip Buttons
-The "364YHVH Orchards" and "My S2G Tribe" links are currently small pill text links. They should be the same `h-11 rounded-xl` buttons as the 8 chips above, using the same styling.
+1. **Import `useNavigate`** from `react-router-dom` and `BookOpen`, `PenLine` from `lucide-react`.
 
-**Lines 949-956**: Convert from `<Link>` text pills to full `<Link><Button>` chips matching the grid buttons above, placed inside the same grid (or a 2-col grid below).
+2. **Add two styled action buttons** below the existing content (both in the "has content" and "no content" states):
+   - **"Open Journal"** — navigates to `/profile?tab=journal` with date query params (e.g., `&year=6028&month=12&day=30`) so the journal can pre-select that date
+   - **"Write Diary Entry"** — navigates to the same journal tab (since diary lives within the Journal component on the profile page)
 
-### Changes — `src/pages/DashboardPage.jsx`
+3. **Button placement**: Add a sticky footer section at the bottom of the popup content area with two side-by-side buttons styled consistently with the cloud theme (rounded, gradient backgrounds).
 
-- **Lines 933-936**: Change button style to use `currentTheme.primaryButton` for background, compute contrast text color based on accent hex luminance
-- **Lines 949-956**: Replace the small pill links with two full-sized `h-11 rounded-xl` buttons matching the icon-chip style, using the primary button gradient
+4. **Replace the empty state text** "Click on this date in the calendar to add entries" with the actual clickable buttons.
+
+5. **Close popup on navigation** — call `onClose()` before `navigate()` so the portal is cleaned up.
+
+### Implementation Detail
+The journal/diary both live at `/profile?tab=journal`. The two buttons will be:
+- "📖 Open Journal" — links to `/profile?tab=journal&year={year}&month={month}&day={day}`
+- "📝 Write Diary" — same destination, different visual emphasis
+
+Both will use `useNavigate` and pass the sacred calendar date as URL params.
 
