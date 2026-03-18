@@ -305,6 +305,9 @@ export default function JournalDayPage({ userId, date, onDateChange, entry, onSa
         </Button>
       </div>
 
+      {/* 🌱 Garden Log Section */}
+      <GardenLogSection date={date} />
+
       {/* Journal Page Card */}
       <Card className="border-border/50 bg-card/80 backdrop-blur-sm">
         <CardContent className="pt-6 space-y-5">
