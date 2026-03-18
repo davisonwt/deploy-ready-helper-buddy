@@ -890,6 +890,8 @@ export default function DashboardPage() {
                   </button>
                 </Link>
               </div>
+              {/* Daily Planting Tip */}
+              <DailyPlantingTip currentTheme={currentTheme} />
             </CardContent>
           </Card>
         </div>
