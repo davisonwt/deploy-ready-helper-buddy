@@ -187,12 +187,12 @@ export function getMoonInfo(date: Date): MoonInfo {
 export function getDailyCompanionTip(element: BiodynamicElement): string {
   const tips: Record<BiodynamicElement, string[]> = {
     root: [
-      '🥕🧅 Plant carrots near leeks — they confuse each other\'s flies (Margaret Roberts)',
+      '🥕🧅 Plant carrots near leeks — they can confuse each other\'s flies',
       '🧄🍅 Garlic near tomatoes acts as natural pest repellent',
       '🥔🫘 Potatoes and beans are great companions — beans fix nitrogen',
     ],
     leaf: [
-      '🌿🍅 Plant basil near tomatoes — repels flies & boosts flavor (Margaret Roberts)',
+      '🌿🍅 Plant basil near tomatoes — repels flies & boosts flavor',
       '🌱 Mint deters cabbage moth — plant in pots to prevent spreading',
       '🥬🍓 Spinach and strawberries make excellent companions',
     ],

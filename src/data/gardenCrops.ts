@@ -3,7 +3,7 @@
  * 
  * Comprehensive crop database with:
  * - Soil pH ranges (from Old Farmer's Almanac / organic standards)
- * - Companion planting pairs (Margaret Roberts' principles)
+ * - Companion planting pairs (time-tested garden practices)
  * - Biodynamic moon preferences (Root/Leaf/Fruit/Flower)
  * - Frost sensitivity & categories
  */
@@ -35,7 +35,7 @@ export const GARDEN_CROPS: CropData[] = [
     companions: {
       good: ['basil', 'carrot', 'parsley', 'marigold', 'nasturtium'],
       bad: ['cabbage', 'fennel', 'potato'],
-      notes: 'Basil repels flies & improves flavor (Margaret Roberts)',
+      notes: 'Basil repels flies and can improve tomato flavor',
     },
     moonPreference: 'fruit',
     frostSensitivity: 'tender',
@@ -195,7 +195,7 @@ export const GARDEN_CROPS: CropData[] = [
     companions: {
       good: ['leek', 'onion', 'tomato', 'rosemary', 'sage'],
       bad: ['dill'],
-      notes: 'Leeks + carrots confuse each other\'s flies (Margaret Roberts)',
+      notes: 'Leeks + carrots can confuse each other\'s flies',
     },
     moonPreference: 'root',
     frostSensitivity: 'semi-hardy',
@@ -281,7 +281,7 @@ export const GARDEN_CROPS: CropData[] = [
     companions: {
       good: ['carrot', 'celery', 'onion'],
       bad: ['bean', 'pea'],
-      notes: 'Leeks & carrots confuse each other\'s pest flies (Margaret Roberts)',
+      notes: 'Leeks & carrots can confuse each other\'s pest flies',
     },
     moonPreference: 'root',
     frostSensitivity: 'hardy',
@@ -298,7 +298,7 @@ export const GARDEN_CROPS: CropData[] = [
     companions: {
       good: ['tomato', 'pepper', 'oregano', 'marigold'],
       bad: ['sage', 'rue'],
-      notes: 'Plant near tomatoes — repels flies & improves flavor (Margaret Roberts)',
+      notes: 'Plant near tomatoes — helps repel flies and improve flavor',
     },
     moonPreference: 'leaf',
     frostSensitivity: 'tender',
@@ -504,7 +504,7 @@ export const GARDEN_CROPS: CropData[] = [
     companions: {
       good: ['tomato', 'pepper', 'bean', 'cucumber', 'potato'],
       bad: [],
-      notes: 'General garden protector — deters nematodes & whitefly (Margaret Roberts)',
+      notes: 'General garden protector — deters nematodes & whitefly',
     },
     moonPreference: 'flower',
     frostSensitivity: 'tender',
@@ -519,7 +519,7 @@ export const GARDEN_CROPS: CropData[] = [
     companions: {
       good: ['tomato', 'cucumber', 'bean', 'cabbage', 'radish'],
       bad: [],
-      notes: 'Trap crop for aphids — sacrificial protector (Margaret Roberts)',
+      notes: 'Trap crop for aphids — sacrificial protector',
     },
     moonPreference: 'flower',
     frostSensitivity: 'tender',

@@ -66,7 +66,7 @@ function getLunaResponse(question: string, context: {
   // Companion planting questions
   if (q.includes('companion') || q.includes('pair') || q.includes('together') || q.includes('next to')) {
     const tip = getDailyCompanionTip(moonInfo.element);
-    let response = `🤝 **Companion Planting Tip** (Margaret Roberts' principles):\n\n${tip}\n\n`;
+    let response = `🤝 **Companion Planting Tip**:\n\n${tip}\n\n`;
     
     // Find specific crop mentions
     const mentionedCrop = GARDEN_CROPS.find(c => q.includes(c.name.toLowerCase()) || q.includes(c.key));
@@ -246,7 +246,7 @@ export function AskLunaChat({ userCropKeys = [], userSoilPh, city }: AskLunaChat
                   </button>
                 </div>
                 <p className="text-[9px] text-emerald-700 text-center mt-1.5">
-                  Inspired by Seedtime · Gardenize · Margaret Roberts' Companion Planting
+                  Inspired by Seedtime · Gardenize · Companion planting wisdom
                 </p>
               </div>
             </motion.div>

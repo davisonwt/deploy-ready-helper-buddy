@@ -12,7 +12,7 @@ interface GardenStreakBadgesProps {
 const INSPIRED_BY = [
   { name: 'Seedtime', emoji: '🌱', desc: 'Biblical planting calendar' },
   { name: 'Gardenize', emoji: '📱', desc: 'Digital garden journal' },
-  { name: 'Margaret Roberts', emoji: '🌿', desc: 'Companion planting pioneer' },
+  { name: 'Companion Planting', emoji: '🌿', desc: 'Time-tested companion patterns' },
   { name: 'Diary of an Organic Grower', emoji: '📓', desc: 'Organic growing wisdom' },
 ];
 
