@@ -11,6 +11,7 @@ interface GardenGuideSectionProps {
 
 export function GardenGuideSection({ gregorianDate }: GardenGuideSectionProps) {
   const [expanded, setExpanded] = useState(false);
+  const [showSetup, setShowSetup] = useState(false);
 
   const moonInfo = useMemo(() => getMoonInfo(gregorianDate), [gregorianDate]);
   const companionTip = useMemo(() => getDailyCompanionTip(moonInfo.element), [moonInfo.element]);
