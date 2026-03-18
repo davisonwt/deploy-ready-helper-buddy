@@ -6,6 +6,7 @@ import { motion } from 'framer-motion';
 import { Sun, Moon, Sprout } from 'lucide-react';
 import { getMoonInfo } from '@/utils/lunarEngine';
 import { MOON_ELEMENT_LABELS } from '@/data/gardenCrops';
+import { AskLunaChat } from '@/components/garden/AskLunaChat';
 
 import { calculateCreatorDate } from '@/utils/dashboardCalendar';
 import { getCreatorTime } from '@/utils/customTime';
