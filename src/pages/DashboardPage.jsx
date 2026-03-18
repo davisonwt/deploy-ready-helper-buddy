@@ -16,7 +16,7 @@ import LiveActivityWidget from '@/components/LiveActivityWidget';
 import { GamificationHUD } from '@/components/gamification/GamificationHUD';
 import { SecurityAlertsPanel } from '@/components/security/SecurityAlertsPanel';
 import { getCreatorTime } from '@/utils/customTime';
-import { getCreatorDateSync, getDaysOutOfTimeCount } from '@/utils/customCalendar';
+import { calculateCreatorDate } from '@/utils/dashboardCalendar';
 import { getDayInfo } from '@/utils/sacredCalendar';
 import { getCurrentTheme } from '@/utils/dashboardThemes';
 import { AmbassadorThumbnail } from '@/components/marketing/AmbassadorThumbnail';
