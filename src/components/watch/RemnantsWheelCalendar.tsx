@@ -903,8 +903,8 @@ export function RemnantsWheelCalendar({ size = 900 }: RemnantsWheelCalendarProps
           );
         })()}
         
-        {/* Dot 2: Asfa'el (after Helo-Yaseph) */}
-        {(() => {
+        {/* Dot 2: Asfa'el (after Helo-Yaseph) — only if 2 dot days this year */}
+        {getDaysOutOfTimeCount(calendarData.year) >= 2 && (() => {
           const dotIndex = 365; // Position after dot 1
           const startAngle = (dotIndex / totalSlots) * 360;
           const endAngle = ((dotIndex + 1) / totalSlots) * 360;
