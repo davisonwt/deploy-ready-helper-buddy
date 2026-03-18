@@ -1064,7 +1064,7 @@ export default function DashboardPage() {
                   background: currentTheme.primaryButton,
                   color: currentTheme.textPrimary,
                   borderColor: currentTheme.accent,
-                  textShadow: '-0.5px -0.5px 0 #000, 0.5px -0.5px 0 #000, -0.5px 0.5px 0 #000, 0.5px 0.5px 0 #000'
+                  textShadow: '-0.3px -0.3px 0 #000, 0.3px -0.3px 0 #000, -0.3px 0.3px 0 #000, 0.3px 0.3px 0 #000'
                 }}>
                     <div className="text-center">
                       <Megaphone className="h-5 w-5 sm:h-6 sm:w-6 mx-auto mb-1 sm:mb-2" />
