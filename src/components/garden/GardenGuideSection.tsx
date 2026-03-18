@@ -1,8 +1,9 @@
 import React, { useState, useMemo } from 'react';
-import { ChevronDown, ChevronUp, Leaf, Sprout, Droplets } from 'lucide-react';
+import { ChevronDown, ChevronUp, Leaf, Sprout, Droplets, Settings } from 'lucide-react';
 import { getMoonInfo, getDailyCompanionTip, getZodiacEmoji } from '@/utils/lunarEngine';
 import { MOON_ELEMENT_LABELS } from '@/data/gardenCrops';
 import { Badge } from '@/components/ui/badge';
+import { GardenSetupModal } from '@/components/garden/GardenSetupModal';
 
 interface GardenGuideSectionProps {
   gregorianDate: Date;
@@ -10,6 +11,7 @@ interface GardenGuideSectionProps {
 
 export function GardenGuideSection({ gregorianDate }: GardenGuideSectionProps) {
   const [expanded, setExpanded] = useState(false);
+  const [showSetup, setShowSetup] = useState(false);
 
   const moonInfo = useMemo(() => getMoonInfo(gregorianDate), [gregorianDate]);
   const companionTip = useMemo(() => getDailyCompanionTip(moonInfo.element), [moonInfo.element]);
@@ -100,8 +102,19 @@ export function GardenGuideSection({ gregorianDate }: GardenGuideSectionProps) {
               {Math.round(moonInfo.illumination * 100)}%
             </span>
           </div>
+
+          {/* Garden Setup button */}
+          <button
+            onClick={() => setShowSetup(true)}
+            className="flex items-center gap-1.5 w-full text-xs text-emerald-500 hover:text-emerald-300 transition-colors mt-1 py-1.5"
+          >
+            <Settings className="w-3.5 h-3.5" />
+            Setup Garden Profile (crops, pH, location)
+          </button>
         </div>
       )}
+
+      <GardenSetupModal isOpen={showSetup} onClose={() => setShowSetup(false)} />
     </div>
   );
 }

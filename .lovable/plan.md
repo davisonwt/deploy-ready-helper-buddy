@@ -1,21 +1,24 @@
+## Lunar Garden Hub — Implementation Progress
 
+### ✅ Step 1: Crops Data Layer (DONE)
+- `src/data/gardenCrops.ts` — 35+ crops with pH ranges, companions, moon prefs, categories
 
-## Fix Create & Manage Section: Theme Colors + Sub-link Button Sizing
+### ✅ Step 2: Moon Phase Engine (DONE)
+- `src/utils/lunarEngine.ts` — synodic month calculator, zodiac, biodynamic elements
 
-Two issues to fix in `src/pages/DashboardPage.jsx`:
+### ✅ Step 3: Bead Popup Integration (DONE)
+- `src/components/garden/GardenGuideSection.tsx` — collapsible garden guide in bead popups
 
-### 1. Button Colors — Use Theme Primary Gradient (not `secondaryButton`)
-The 8 icon-chip buttons currently use `currentTheme.secondaryButton` (a subtle transparent background). They should use `currentTheme.primaryButton` with proper contrast text color, matching the rest of the dashboard's themed buttons.
+### ✅ Step 4: Journal Garden Log Tab (DONE)
+- `src/components/garden/GardenLogSection.tsx` — quick-log buttons, moon info, companion tips
 
-**Line 934**: Change `background: currentTheme.secondaryButton` → `background: currentTheme.primaryButton` and compute contrast text color like `StatsFloatingButton` does.
+### ✅ Step 5: Wheel Moon Indicator (DONE)
+- Moon phase + zodiac + biodynamic element in wheel footer
 
-### 2. Sub-links — Make Same Size as Icon-Chip Buttons
-The "364YHVH Orchards" and "My S2G Tribe" links are currently small pill text links. They should be the same `h-11 rounded-xl` buttons as the 8 chips above, using the same styling.
+### ✅ Step 6: Garden Setup + Supabase (DONE)
+- `garden_profiles`, `user_crops`, `garden_activities` tables with RLS
+- `src/components/garden/GardenSetupModal.tsx` — crop selection, pH input, location
 
-**Lines 949-956**: Convert from `<Link>` text pills to full `<Link><Button>` chips matching the grid buttons above, placed inside the same grid (or a 2-col grid below).
-
-### Changes — `src/pages/DashboardPage.jsx`
-
-- **Lines 933-936**: Change button style to use `currentTheme.primaryButton` for background, compute contrast text color based on accent hex luminance
-- **Lines 949-956**: Replace the small pill links with two full-sized `h-11 rounded-xl` buttons matching the icon-chip style, using the primary button gradient
-
+### 🔲 Step 7: Task System with Moon Overlays
+### 🔲 Step 8: "Ask Luna" Floating AI Chat
+### 🔲 Step 9: Streak Counter + Badges + Polish

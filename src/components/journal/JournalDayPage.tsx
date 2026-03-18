@@ -5,6 +5,7 @@ import {
   Image as ImageIcon, Mic, Video, FileText, UtensilsCrossed,
   Heart, Smile, Frown, Meh, TrendingUp, Play, Pause, Loader2
 } from 'lucide-react';
+import GardenLogSection from '@/components/garden/GardenLogSection';
 import { Button } from '../ui/button';
 import { Card, CardContent } from '../ui/card';
 import { Badge } from '../ui/badge';
@@ -303,6 +304,9 @@ export default function JournalDayPage({ userId, date, onDateChange, entry, onSa
           <ChevronRight className="h-5 w-5" />
         </Button>
       </div>
+
+      {/* 🌱 Garden Log Section */}
+      <GardenLogSection date={date} />
 
       {/* Journal Page Card */}
       <Card className="border-border/50 bg-card/80 backdrop-blur-sm">

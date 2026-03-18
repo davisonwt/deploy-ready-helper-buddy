@@ -3,7 +3,9 @@ import { createPortal } from 'react-dom';
 
 import { motion } from 'framer-motion';
 
-import { Sun, Moon } from 'lucide-react';
+import { Sun, Moon, Sprout } from 'lucide-react';
+import { getMoonInfo } from '@/utils/lunarEngine';
+import { MOON_ELEMENT_LABELS } from '@/data/gardenCrops';
 
 import { calculateCreatorDate } from '@/utils/dashboardCalendar';
 import { getCreatorTime } from '@/utils/customTime';
@@ -4837,6 +4839,25 @@ const EnochianTimepiece = () => {
         </p>
         <p className="text-base md:text-lg text-amber-200 mt-2">The Creator's wheels never lie • Forever in sync</p>
         <p className="text-sm md:text-base text-yellow-400 mt-2">Day {enochianDate.dayOfYear}</p>
+        
+        {/* Moon Phase Garden Indicator */}
+        {(() => {
+          const moonInfo = getMoonInfo(currentTime);
+          const elementInfo = MOON_ELEMENT_LABELS[moonInfo.element];
+          return (
+            <div className="mt-3 flex items-center justify-center gap-2 flex-wrap">
+              <span className="text-2xl">{moonInfo.phaseEmoji}</span>
+              <span className="text-sm text-emerald-300">{moonInfo.phase}</span>
+              <span className="text-emerald-600">•</span>
+              <span className="text-sm text-emerald-400">{moonInfo.zodiac}</span>
+              <span className="text-emerald-600">•</span>
+              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-900/40 border border-emerald-700/40 text-xs text-emerald-300">
+                <Sprout className="w-3 h-3" />
+                {elementInfo.emoji} {elementInfo.label}
+              </span>
+            </div>
+          );
+        })()}
       </motion.div>
 
 
