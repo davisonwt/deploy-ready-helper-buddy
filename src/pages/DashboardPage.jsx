@@ -1020,7 +1020,8 @@ export default function DashboardPage() {
                   <Button className="w-full h-14 sm:h-16 rounded-2xl border shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105 font-medium text-xs sm:text-sm" style={{
                   background: 'linear-gradient(135deg, #7c3aed 0%, #a855f7 100%)',
                   color: '#fff',
-                  borderColor: '#8b5cf6'
+                  borderColor: '#8b5cf6',
+                  textShadow: '-0.5px -0.5px 0 #000, 0.5px -0.5px 0 #000, -0.5px 0.5px 0 #000, 0.5px 0.5px 0 #000'
                 }}>
                     <div className="text-center">
                       <Music className="h-4 w-4 sm:h-5 sm:w-5 mx-auto mb-1" />
