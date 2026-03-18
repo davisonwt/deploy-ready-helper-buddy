@@ -1079,7 +1079,7 @@ export default function DashboardPage() {
                   background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
                   color: '#fff',
                   borderColor: '#10b981',
-                  textShadow: '-0.5px -0.5px 0 #000, 0.5px -0.5px 0 #000, -0.5px 0.5px 0 #000, 0.5px 0.5px 0 #000'
+                  textShadow: '-0.3px -0.3px 0 #000, 0.3px -0.3px 0 #000, -0.3px 0.3px 0 #000, 0.3px 0.3px 0 #000'
                 }}>
                     <div className="text-center">
                       <Car className="h-5 w-5 sm:h-6 sm:w-6 mx-auto mb-1 sm:mb-2" />
