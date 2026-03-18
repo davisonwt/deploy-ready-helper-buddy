@@ -1,8 +1,9 @@
 import React, { useState, useMemo } from 'react';
-import { ChevronDown, ChevronUp, Leaf, Sprout, Droplets } from 'lucide-react';
+import { ChevronDown, ChevronUp, Leaf, Sprout, Droplets, Settings } from 'lucide-react';
 import { getMoonInfo, getDailyCompanionTip, getZodiacEmoji } from '@/utils/lunarEngine';
 import { MOON_ELEMENT_LABELS } from '@/data/gardenCrops';
 import { Badge } from '@/components/ui/badge';
+import { GardenSetupModal } from '@/components/garden/GardenSetupModal';
 
 interface GardenGuideSectionProps {
   gregorianDate: Date;
