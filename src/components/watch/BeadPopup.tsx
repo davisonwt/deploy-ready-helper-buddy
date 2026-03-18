@@ -384,9 +384,27 @@ export function BeadPopup({ isOpen, onClose, year, month, day }: BeadPopupProps)
                   <div className="text-center text-slate-500 py-8">
                     <div className="text-4xl mb-3">☁️</div>
                     <p className="text-lg font-medium mb-1">No entries for this day</p>
-                    <p className="text-sm">Click on this date in the calendar to add entries</p>
+                    <p className="text-sm text-slate-400 mb-2">Add a journal or diary entry for this date</p>
                   </div>
                 )}
+
+                {/* Diary & Journal action buttons */}
+                <div className="flex gap-3 pt-2 pb-2">
+                  <button
+                    onClick={() => handleNavigate('journal')}
+                    className="flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-2xl bg-gradient-to-r from-sky-400 to-blue-500 text-white font-semibold shadow-lg hover:shadow-xl hover:scale-105 transition-all duration-200"
+                  >
+                    <BookOpen className="w-4 h-4" />
+                    Open Journal
+                  </button>
+                  <button
+                    onClick={() => handleNavigate('diary')}
+                    className="flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-2xl bg-gradient-to-r from-violet-400 to-purple-500 text-white font-semibold shadow-lg hover:shadow-xl hover:scale-105 transition-all duration-200"
+                  >
+                    <PenLine className="w-4 h-4" />
+                    Write Diary
+                  </button>
+                </div>
               </div>
             </div>
           </div>
