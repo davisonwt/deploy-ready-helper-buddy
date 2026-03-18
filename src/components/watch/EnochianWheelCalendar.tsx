@@ -3292,6 +3292,7 @@ const Month9Strand = ({ dayOfMonth, year }: { dayOfMonth: number; year: number }
         })}
 
       </div>
+      </BeadScrollWindow>
 
       {/* Bead Popup */}
       {selectedBead && (
