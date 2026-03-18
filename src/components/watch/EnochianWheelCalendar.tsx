@@ -4205,8 +4205,54 @@ const Month12Strand = ({ dayOfMonth, year }: { dayOfMonth: number; year: number 
           day={selectedBead.day}
         />
       )}
-    </div>
-  );
+
+      {/* Dot Day Popup */}
+      {selectedDotDay && (
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/60 backdrop-blur-sm" onClick={() => setSelectedDotDay(null)}>
+          <div 
+            className="relative w-[90vw] max-w-md bg-gradient-to-br from-purple-950 via-indigo-950 to-black rounded-3xl border-2 border-purple-500/50 shadow-2xl shadow-purple-900/50 p-8 text-center"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <button 
+              onClick={() => setSelectedDotDay(null)}
+              className="absolute top-4 right-4 text-purple-300 hover:text-white text-2xl font-bold"
+            >
+              ✕
+            </button>
+
+            <div className="text-6xl mb-4">✦</div>
+            
+            <h2 className="text-3xl font-black bg-gradient-to-r from-purple-300 via-amber-300 to-purple-300 bg-clip-text text-transparent mb-2">
+              {selectedDotDay.dotNumber === 1 ? 'Helo-Yaseph' : "Asfa'el"}
+            </h2>
+            
+            <div className="text-lg text-purple-300 font-semibold mb-4">
+              Day Out of Time {selectedDotDay.dotNumber}
+            </div>
+
+            <div className="bg-purple-900/40 rounded-2xl p-5 mb-5 border border-purple-700/30">
+              <p className="text-purple-200 text-sm leading-relaxed mb-4">
+                {selectedDotDay.label}
+              </p>
+              <div className="border-t border-purple-700/30 pt-4 mt-4">
+                <p className="text-amber-300 font-bold text-base mb-2">בראשית / Genesis 1:1-2</p>
+                <p className="text-purple-100 text-sm leading-relaxed italic">
+                  "In the beginning Elohim created the heavens and the earth. And the earth was without form, and void; and darkness was upon the face of the deep."
+                </p>
+                <p className="text-amber-200/80 text-xs mt-3 font-semibold tracking-wide uppercase">
+                  Eternity — a place where no time existed
+                </p>
+              </div>
+            </div>
+
+            <div className="flex items-center justify-center gap-2 text-purple-400 text-xs">
+              <span className="w-8 h-[1px] bg-purple-700" />
+              <span>Not counted in the sacred calendar</span>
+              <span className="w-8 h-[1px] bg-purple-700" />
+            </div>
+          </div>
+        </div>
+      )}
 };
 
 
