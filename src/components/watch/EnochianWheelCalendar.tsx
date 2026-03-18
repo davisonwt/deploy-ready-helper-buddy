@@ -4253,6 +4253,8 @@ const Month12Strand = ({ dayOfMonth, year }: { dayOfMonth: number; year: number 
           </div>
         </div>
       )}
+    </div>
+  );
 };
 
 
