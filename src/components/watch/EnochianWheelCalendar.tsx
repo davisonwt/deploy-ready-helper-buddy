@@ -6,6 +6,7 @@ import { Sun, Moon } from 'lucide-react';
 
 import { calculateCreatorDate } from '@/utils/dashboardCalendar';
 import { getCreatorTime } from '@/utils/customTime';
+import { getDaysOutOfTimeCount } from '@/utils/customCalendar';
 import { useUserLocation } from '@/hooks/useUserLocation';
 import { BeadPopup } from './BeadPopup';
 
@@ -3881,46 +3882,52 @@ const Month12Strand = ({ dayOfMonth, year }: { dayOfMonth: number; year: number 
     });
   }
 
-  // Second: Days Out of Time (2 beads after day 28)
+  // Second: Days Out of Time (conditional beads after day 28)
+  const dotsThisYear = getDaysOutOfTimeCount(year);
+
   // Bead 1: If tequvah on 2nd day of 7th month, 1 day added (not counted)
-  beads.push({
-    day: 0,
-    displayNumber: 'DOT1',
-    globalDay: 362,
-    color: '#4c1d95', // Deep purple for days out of time
-    isToday: false,
-    isSabbath: false,
-    isPurim: false,
-    isShushanPurim: false,
-    isAdarJoy: false,
-    isLastSabbath: false,
-    isDaysOutOfTime: true,
-    isDaysOutOfTime1: true,
-    isDaysOutOfTime2: false,
-    isNewWeekCycle: false,
-    label: "Helo-Yaseph (the 6th month's name) - Day out of time 1: if the tequvah appears on the 2nd day of the 7th month only 1 day is added and this day is not counted",
-    beadType: 'daysOutOfTime1'
-  });
+  if (dotsThisYear >= 1) {
+    beads.push({
+      day: 0,
+      displayNumber: 'DOT1',
+      globalDay: 362,
+      color: '#4c1d95', // Deep purple for days out of time
+      isToday: false,
+      isSabbath: false,
+      isPurim: false,
+      isShushanPurim: false,
+      isAdarJoy: false,
+      isLastSabbath: false,
+      isDaysOutOfTime: true,
+      isDaysOutOfTime1: true,
+      isDaysOutOfTime2: false,
+      isNewWeekCycle: false,
+      label: "Helo-Yaseph (the 6th month's name) - Day out of time 1: if the tequvah appears on the 2nd day of the 7th month only 1 day is added and this day is not counted",
+      beadType: 'daysOutOfTime1'
+    });
+  }
 
   // Bead 2: If tequvah on 3rd day of 7th month, 2nd day also added (not counted)
-  beads.push({
-    day: 0,
-    displayNumber: 'DOT2',
-    globalDay: 363,
-    color: '#581c87', // Even deeper purple
-    isToday: false,
-    isSabbath: false,
-    isPurim: false,
-    isShushanPurim: false,
-    isAdarJoy: false,
-    isLastSabbath: false,
-    isDaysOutOfTime: true,
-    isDaysOutOfTime1: false,
-    isDaysOutOfTime2: true,
-    isNewWeekCycle: false,
-    label: "Asfa'el - Day out of time 2: if the tequvah appears on the 3rd day of the 7th month this 2nd day is also added and this day is also not counted",
-    beadType: 'daysOutOfTime2'
-  });
+  if (dotsThisYear >= 2) {
+    beads.push({
+      day: 0,
+      displayNumber: 'DOT2',
+      globalDay: 363,
+      color: '#581c87', // Even deeper purple
+      isToday: false,
+      isSabbath: false,
+      isPurim: false,
+      isShushanPurim: false,
+      isAdarJoy: false,
+      isLastSabbath: false,
+      isDaysOutOfTime: true,
+      isDaysOutOfTime1: false,
+      isDaysOutOfTime2: true,
+      isNewWeekCycle: false,
+      label: "Asfa'el - Day out of time 2: if the tequvah appears on the 3rd day of the 7th month this 2nd day is also added and this day is also not counted",
+      beadType: 'daysOutOfTime2'
+    });
+  }
 
   // Third: Days 29, 30, 31 (new week cycle)
   for (let i = 29; i <= 31; i++) {
