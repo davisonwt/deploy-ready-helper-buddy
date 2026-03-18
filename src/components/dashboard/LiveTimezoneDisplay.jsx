@@ -128,10 +128,11 @@ export default function LiveTimezoneDisplay() {
           </div>
         </div>
         <Badge 
-          className="font-mono"
+          className="font-mono text-sm font-bold px-3 py-1"
           style={{
-            backgroundColor: currentTheme.accent,
-            color: currentTheme.textPrimary,
+            backgroundColor: '#0b1220',
+            color: currentTheme.accent,
+            border: `1px solid ${currentTheme.accent}`,
           }}
         >
           <Clock className="h-3 w-3 mr-1" />

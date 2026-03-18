@@ -183,7 +183,10 @@ export function TopSowersTeaser({ theme }: TopSowersTeaserProps) {
           <Button
             onClick={handleViewFullBoard}
             className="w-full mt-4 text-white"
-            style={{ background: primaryButton }}
+            style={{
+              background: primaryButton,
+              textShadow: '-0.5px -0.5px 0 #000, 0.5px -0.5px 0 #000, -0.5px 0.5px 0 #000, 0.5px 0.5px 0 #000',
+            }}
           >
             <TrendingUp className="h-4 w-4 mr-2" />
             View Full Board
