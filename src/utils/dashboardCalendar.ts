@@ -114,6 +114,14 @@ export function calculateCreatorDate(date: Date = new Date()): CreatorCalendarDa
     }
   }
   
+  // Account for Days Out of Time in Month 12
+  // Dot days are inserted after day 28 and are NOT counted as regular month days
+  // So if we're in month 12 and day > 28, subtract the dot days
+  if (month === 12 && day > 28) {
+    const dotDays = getDaysOutOfTimeCount(year);
+    day -= dotDays;
+  }
+  
   // Calculate day of year
   const monthDays = [30, 30, 31, 30, 30, 31, 30, 30, 31, 30, 30, 31];
   let dayOfYear = 0;
