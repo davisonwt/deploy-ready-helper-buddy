@@ -931,14 +931,23 @@ export default function DashboardPage() {
                 ].map(({ to, icon: Icon, label, isProfile }) => (
                   <Link key={to} to={to}>
                     <Button className="w-full h-11 rounded-xl border shadow-md hover:shadow-lg transition-all duration-300 hover:-translate-y-0.5 px-3 gap-2" style={{
-                      background: currentTheme.secondaryButton,
-                      color: currentTheme.textPrimary,
+                      background: currentTheme.primaryButton,
+                      color: (() => {
+                        const match = currentTheme.accent.match(/#[0-9a-fA-F]{6}/);
+                        const hex = match ? match[0] : '#26c6da';
+                        const clean = hex.replace('#', '');
+                        const r = parseInt(clean.slice(0, 2), 16);
+                        const g = parseInt(clean.slice(2, 4), 16);
+                        const b = parseInt(clean.slice(4, 6), 16);
+                        const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+                        return luminance > 0.62 ? '#0b1220' : '#ffffff';
+                      })(),
                       borderColor: currentTheme.cardBorder
                     }}>
                       {isProfile && user?.avatar_url ? (
-                        <img src={user.avatar_url} alt="Profile" className="w-4 h-4 rounded-full border" style={{ borderColor: currentTheme.accent }} />
+                        <img src={user.avatar_url} alt="Profile" className="w-4 h-4 rounded-full border" style={{ borderColor: 'currentColor' }} />
                       ) : (
-                        <Icon className="h-4 w-4 shrink-0" style={{ color: currentTheme.accent }} />
+                        <Icon className="h-4 w-4 shrink-0" />
                       )}
                       <span className="text-xs font-medium truncate">{label}</span>
                     </Button>
