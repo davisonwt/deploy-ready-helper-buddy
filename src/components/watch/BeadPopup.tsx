@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import { createPortal } from 'react-dom'
 import { useNavigate } from 'react-router-dom'
-import { X, FileText, Image, Heart, Users, Sparkles, Calendar, Star, Trash2, BookOpen, PenLine } from 'lucide-react'
+import { X, FileText, Image, Heart, Users, Sparkles, Calendar, Star, Trash2, BookOpen, PenLine, ScrollText, ChevronDown, ChevronUp } from 'lucide-react'
 import { motion } from 'framer-motion'
 import { calculateCreatorDate } from '@/utils/dashboardCalendar'
 import { useAuth } from '@/hooks/useAuth'
@@ -10,6 +10,7 @@ import { Badge } from '../ui/badge'
 import { Button } from '../ui/button'
 import { ScrollArea } from '../ui/scroll-area'
 import { useToast } from '@/hooks/use-toast'
+import { sacredCalendarNotes } from '@/data/sacredCalendarNotes'
 
 interface BeadPopupProps {
   isOpen: boolean
