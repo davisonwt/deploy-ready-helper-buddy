@@ -333,6 +333,8 @@ export default function EnochianCalendarDesignPage() {
                 <MonthComponent
                   dayOfMonth={isCurrentMonth ? enochianDate.dayOfMonth : 0}
                   year={enochianDate.year}
+                  currentMonth={enochianDate.month}
+                  currentDayOfMonth={enochianDate.dayOfMonth}
                 />
               </motion.div>
             </AnimatePresence>

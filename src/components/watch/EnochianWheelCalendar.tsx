@@ -216,12 +216,13 @@ const Month1Strand = ({ dayOfMonth, year, currentMonth, currentDayOfMonth }: { d
     const weekCycleDay = i + 1; // 1, 2, 3
     const yhvhCount = i + 1; // 1, 2, 3
     
+    const isMonth12Today = currentMonth === 12 && currentDayOfMonth === day12;
     beads.push({
       day: day12,
       displayNumber: day12,
       globalDay: 334 + day12, // Month 12 global offset
-      color: '#1f2937',
-      isToday: false, // These are from previous year
+      color: isMonth12Today ? '#ec4899' : '#1f2937',
+      isToday: isMonth12Today,
       isTekufah: false,
       isSabbath: false,
       isFirstSabbath: false,
