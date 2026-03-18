@@ -4549,7 +4549,7 @@ const EnochianTimepiece = () => {
               transition={{ duration: 1.5 }}
               className="w-full"
             >
-              <Month1Strand dayOfMonth={enochianDate.dayOfMonth} year={enochianDate.year} />
+              <Month1Strand dayOfMonth={enochianDate.dayOfMonth} year={enochianDate.year} currentMonth={enochianDate.month} currentDayOfMonth={enochianDate.dayOfMonth} />
             </motion.div>
           )}
 
