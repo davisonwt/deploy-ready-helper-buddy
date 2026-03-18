@@ -46,7 +46,7 @@ export function getDaysInMonth(month: number): number {
  */
 async function getSunriseTime(date: Date, lat: number, lon: number): Promise<Date> {
   try {
-    const dateStr = date.toISOString().split('T')[0];
+    const dateStr = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
     const url = `https://api.sunrise-sunset.org/json?lat=${lat}&lng=${lon}&date=${dateStr}&formatted=0`;
     const response = await fetch(url);
     const data = await response.json();

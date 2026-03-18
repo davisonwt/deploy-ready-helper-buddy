@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import SunCalc from 'suncalc';
 import { useAuth } from '../hooks/useAuth';
 import { useOrchards } from '../hooks/useOrchards';
 import { useBestowals } from '../hooks/useBestowals.jsx';
@@ -113,20 +114,14 @@ export default function DashboardPage() {
       const localDate = now.getDate();
       const localHour = now.getHours();
       const localMinute = now.getMinutes();
-
-      // IMPORTANT: Day starts at sunrise (05:13), not midnight!
-      // Compare current LOCAL time with sunrise time (05:13)
-      const currentTimeMinutes = localHour * 60 + localMinute;
-      const sunriseTimeMinutes = 5 * 60 + 13; // 05:13 = 313 minutes
-
-      const isBeforeSunrise = currentTimeMinutes < sunriseTimeMinutes;
+      const sunrise = SunCalc.getTimes(now, userLat, userLon).sunrise;
+      const isBeforeSunrise = now < sunrise;
 
       // Debug logs only in development
       if (process.env.NODE_ENV === 'development') {
         console.log(`[Dashboard] ===== SUNRISE CHECK =====`);
         console.log(`[Dashboard] Current LOCAL time: ${localHour}:${localMinute.toString().padStart(2, '0')}:${now.getSeconds().toString().padStart(2, '0')}`);
-        console.log(`[Dashboard] Sunrise time: 05:13 (313 minutes)`);
-        console.log(`[Dashboard] Current time in minutes: ${currentTimeMinutes}`);
+        console.log(`[Dashboard] Sunrise time: ${sunrise.toLocaleTimeString()}`);
         console.log(`[Dashboard] Is before sunrise? ${isBeforeSunrise}`);
         console.log(`[Dashboard] Current Gregorian date: ${localYear}-${localMonth + 1}-${localDate}`);
       }
@@ -324,15 +319,12 @@ export default function DashboardPage() {
     const localYear = now.getFullYear();
     const localMonth = now.getMonth();
     const localDate = now.getDate();
-    const localHour = now.getHours();
-    const localMinute = now.getMinutes();
-    const currentTimeMinutes = localHour * 60 + localMinute;
-    const sunriseTimeMinutes = 5 * 60 + 13; // 05:13
+    const sunrise = SunCalc.getTimes(now, userLat, userLon).sunrise;
 
     let effectiveYear = localYear;
     let effectiveMonth = localMonth;
     let effectiveDate = localDate;
-    if (currentTimeMinutes < sunriseTimeMinutes) {
+    if (now < sunrise) {
       const prevDay = new Date(localYear, localMonth, localDate - 1);
       effectiveYear = prevDay.getFullYear();
       effectiveMonth = prevDay.getMonth();
@@ -348,19 +340,16 @@ export default function DashboardPage() {
       const now = new Date();
       setCurrentTime(now);
 
-      // Use sunrise-based day calculation - LOCAL time only
+      // Use sunrise-based day calculation with real sunrise for user's location
       const localYear = now.getFullYear();
       const localMonth = now.getMonth();
       const localDate = now.getDate();
-      const localHour = now.getHours();
-      const localMinute = now.getMinutes();
-      const currentTimeMinutes = localHour * 60 + localMinute;
-      const sunriseTimeMinutes = 5 * 60 + 13; // 05:13
+      const sunrise = SunCalc.getTimes(now, userLat, userLon).sunrise;
 
       let effectiveYear = localYear;
       let effectiveMonth = localMonth;
       let effectiveDate = localDate;
-      if (currentTimeMinutes < sunriseTimeMinutes) {
+      if (now < sunrise) {
         const prevDay = new Date(localYear, localMonth, localDate - 1);
         effectiveYear = prevDay.getFullYear();
         effectiveMonth = prevDay.getMonth();
