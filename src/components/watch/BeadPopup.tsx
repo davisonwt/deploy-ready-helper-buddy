@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react'
+import { createPortal } from 'react-dom'
 import { X, FileText, Image, Heart, Users, Sparkles, Calendar, Star, Trash2 } from 'lucide-react'
 import { motion } from 'framer-motion'
 import { calculateCreatorDate } from '@/utils/dashboardCalendar'
@@ -153,8 +154,8 @@ export function BeadPopup({ isOpen, onClose, year, month, day }: BeadPopupProps)
 
   const hasAnyContent = hasNotes || hasMedia || hasPrayer || hasLife || hasSpiritual
 
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center pointer-events-auto">
+  return createPortal(
+    <div className="fixed inset-0 z-[9999] flex items-center justify-center pointer-events-auto" style={{ isolation: 'isolate' }}>
       {/* Backdrop */}
       <motion.div
         initial={{ opacity: 0 }}
@@ -170,11 +171,11 @@ export function BeadPopup({ isOpen, onClose, year, month, day }: BeadPopupProps)
         animate={{ opacity: 1, scale: 1, y: 0 }}
         exit={{ opacity: 0, scale: 0.8, y: 20 }}
         transition={{ type: "spring", damping: 20, stiffness: 300 }}
-        className="relative max-w-lg w-full mx-4"
+        className="relative max-w-lg w-full mx-4 max-h-[90vh] flex flex-col"
       >
         {/* Main cloud body */}
         <div 
-          className="relative bg-gradient-to-br from-white/95 via-sky-50/95 to-blue-100/95 backdrop-blur-xl rounded-[40px] shadow-2xl overflow-hidden"
+          className="relative bg-gradient-to-br from-white/95 via-sky-50/95 to-blue-100/95 backdrop-blur-xl rounded-[40px] shadow-2xl overflow-hidden flex flex-col max-h-[85vh]"
           style={{
             boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25), 0 0 40px rgba(135, 206, 250, 0.3), inset 0 1px 0 rgba(255,255,255,0.8)',
           }}
@@ -184,46 +185,46 @@ export function BeadPopup({ isOpen, onClose, year, month, day }: BeadPopupProps)
           <div className="absolute -top-6 left-1/2 transform -translate-x-1/2 w-20 h-20 bg-gradient-to-br from-white to-sky-100 rounded-full opacity-90" />
           <div className="absolute -top-4 right-1/4 w-14 h-14 bg-gradient-to-br from-white to-sky-100 rounded-full opacity-80" />
           
+          {/* Close button - always visible at top right */}
+          <button
+            onClick={onClose}
+            className="absolute top-3 right-3 z-50 text-slate-400 hover:text-slate-600 transition-colors p-2 hover:bg-slate-100 rounded-full bg-white/80 shadow-md"
+          >
+            <X className="w-6 h-6" />
+          </button>
+
           {/* Content */}
-          <div className="relative z-10 pt-8">
+          <div className="relative z-10 pt-8 flex flex-col min-h-0">
             {/* Header */}
-            <div className="px-6 pb-4 border-b border-sky-200/50">
-              <div className="flex items-start justify-between">
-                <div className="flex-1">
-                  <h2 className="text-2xl font-bold text-slate-800 mb-2">
-                    {year} / {String(month).padStart(2, '0')} / {String(day).padStart(2, '0')}
-                  </h2>
-                  <div className="flex flex-wrap gap-2 mt-3">
-                    {isShabbat && (
-                      <Badge className="bg-amber-400 text-amber-900 font-bold shadow-sm">
-                        <Star className="w-3 h-3 mr-1" />
-                        Shabbat
-                      </Badge>
-                    )}
-                    {feastDayName && (
-                      <Badge className="bg-blue-500 text-white font-bold shadow-sm">
-                        <Calendar className="w-3 h-3 mr-1" />
-                        {feastDayName}
-                      </Badge>
-                    )}
-                    {yhwhDate && (
-                      <Badge variant="outline" className="text-slate-600 border-slate-300">
-                        Day {yhwhDate.weekDay === 7 ? 'Shabbat' : yhwhDate.weekDay} of Week
-                      </Badge>
-                    )}
-                  </div>
+            <div className="px-6 pb-4 border-b border-sky-200/50 shrink-0">
+              <div className="pr-10">
+                <h2 className="text-2xl font-bold text-slate-800 mb-2">
+                  {year} / {String(month).padStart(2, '0')} / {String(day).padStart(2, '0')}
+                </h2>
+                <div className="flex flex-wrap gap-2 mt-3">
+                  {isShabbat && (
+                    <Badge className="bg-amber-400 text-amber-900 font-bold shadow-sm">
+                      <Star className="w-3 h-3 mr-1" />
+                      Shabbat
+                    </Badge>
+                  )}
+                  {feastDayName && (
+                    <Badge className="bg-blue-500 text-white font-bold shadow-sm">
+                      <Calendar className="w-3 h-3 mr-1" />
+                      {feastDayName}
+                    </Badge>
+                  )}
+                  {yhwhDate && (
+                    <Badge variant="outline" className="text-slate-600 border-slate-300">
+                      Day {yhwhDate.weekDay === 7 ? 'Shabbat' : yhwhDate.weekDay} of Week
+                    </Badge>
+                  )}
                 </div>
-                <button
-                  onClick={onClose}
-                  className="text-slate-400 hover:text-slate-600 transition-colors p-2 hover:bg-slate-100 rounded-full"
-                >
-                  <X className="w-5 h-5" />
-                </button>
               </div>
             </div>
 
-            {/* Content Area */}
-            <ScrollArea className="max-h-[60vh]">
+            {/* Content Area - scrollable */}
+            <div className="flex-1 overflow-y-auto min-h-0" style={{ maxHeight: '60vh' }}>
               <div className="p-6 space-y-4">
                 {loading ? (
                   <div className="text-center text-slate-500 py-8">
@@ -248,7 +249,7 @@ export function BeadPopup({ isOpen, onClose, year, month, day }: BeadPopupProps)
                             <Trash2 className="w-4 h-4" />
                           </Button>
                         </div>
-                        <p className="text-slate-600 text-sm line-clamp-3">
+                        <p className="text-slate-600 text-sm">
                           {(journalEntry.content || journalEntry.richText || '').replace(/<[^>]*>/g, '').substring(0, 200)}
                           {(journalEntry.content || journalEntry.richText || '').length > 200 ? '...' : ''}
                         </p>
@@ -368,10 +369,11 @@ export function BeadPopup({ isOpen, onClose, year, month, day }: BeadPopupProps)
                   </div>
                 )}
               </div>
-            </ScrollArea>
+            </div>
           </div>
         </div>
       </motion.div>
-    </div>
+    </div>,
+    document.body
   )
 }

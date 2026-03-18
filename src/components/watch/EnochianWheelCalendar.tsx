@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { createPortal } from 'react-dom';
 
 import { motion } from 'framer-motion';
 
@@ -468,15 +469,15 @@ const Month1Strand = ({ dayOfMonth, year }: { dayOfMonth: number; year: number }
       )}
 
       {/* Month 12 Bead Popup for days 29, 30, 31 shown on Month 1 strand */}
-      {selectedMonth12Bead && (
+      {selectedMonth12Bead && createPortal(
         <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/60 backdrop-blur-sm" onClick={() => setSelectedMonth12Bead(null)}>
           <div 
-            className="relative w-[90vw] max-w-md bg-gradient-to-br from-stone-900 via-stone-950 to-black rounded-3xl border-2 border-amber-500/50 shadow-2xl shadow-amber-900/50 p-8 text-center"
+            className="relative w-[90vw] max-w-md bg-gradient-to-br from-stone-900 via-stone-950 to-black rounded-3xl border-2 border-amber-500/50 shadow-2xl shadow-amber-900/50 p-8 text-center max-h-[85vh] overflow-y-auto"
             onClick={(e) => e.stopPropagation()}
           >
             <button 
               onClick={() => setSelectedMonth12Bead(null)}
-              className="absolute top-4 right-4 text-amber-300 hover:text-white text-2xl font-bold"
+              className="absolute top-4 right-4 text-amber-300 hover:text-white text-2xl font-bold z-10 bg-stone-900/80 rounded-full w-10 h-10 flex items-center justify-center"
             >
               ×
             </button>
@@ -502,7 +503,8 @@ const Month1Strand = ({ dayOfMonth, year }: { dayOfMonth: number; year: number }
               </p>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </div>
   );
@@ -4318,15 +4320,15 @@ const Month12Strand = ({ dayOfMonth, year }: { dayOfMonth: number; year: number 
       )}
 
       {/* Dot Day Popup */}
-      {selectedDotDay && (
+      {selectedDotDay && createPortal(
         <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/60 backdrop-blur-sm" onClick={() => setSelectedDotDay(null)}>
           <div 
-            className="relative w-[90vw] max-w-md bg-gradient-to-br from-purple-950 via-indigo-950 to-black rounded-3xl border-2 border-purple-500/50 shadow-2xl shadow-purple-900/50 p-8 text-center"
+            className="relative w-[90vw] max-w-md bg-gradient-to-br from-purple-950 via-indigo-950 to-black rounded-3xl border-2 border-purple-500/50 shadow-2xl shadow-purple-900/50 p-8 text-center max-h-[85vh] overflow-y-auto"
             onClick={(e) => e.stopPropagation()}
           >
             <button 
               onClick={() => setSelectedDotDay(null)}
-              className="absolute top-4 right-4 text-purple-300 hover:text-white text-2xl font-bold"
+              className="absolute top-4 right-4 text-purple-300 hover:text-white text-2xl font-bold z-10 bg-purple-950/80 rounded-full w-10 h-10 flex items-center justify-center"
             >
               ✕
             </button>
@@ -4362,7 +4364,8 @@ const Month12Strand = ({ dayOfMonth, year }: { dayOfMonth: number; year: number 
               <span className="w-8 h-[1px] bg-purple-700" />
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </div>
   );
