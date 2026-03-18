@@ -2008,6 +2008,7 @@ const Month5Strand = ({ dayOfMonth, year }: { dayOfMonth: number; year: number }
           );
         })}
       </div>
+      </BeadScrollWindow>
 
 
       {/* Bead Popup */}
