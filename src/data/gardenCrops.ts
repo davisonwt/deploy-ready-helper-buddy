@@ -35,7 +35,7 @@ export const GARDEN_CROPS: CropData[] = [
     companions: {
       good: ['basil', 'carrot', 'parsley', 'marigold', 'nasturtium'],
       bad: ['cabbage', 'fennel', 'potato'],
-      notes: 'Basil repels flies & improves flavor (Margaret Roberts)',
+      notes: 'Basil repels flies and can improve tomato flavor',
     },
     moonPreference: 'fruit',
     frostSensitivity: 'tender',
