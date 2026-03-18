@@ -177,7 +177,7 @@ interface ExtendedBead {
   isNewYearStart: boolean;
 }
 
-const Month1Strand = ({ dayOfMonth, year }: { dayOfMonth: number; year: number }) => {
+const Month1Strand = ({ dayOfMonth, year, currentMonth, currentDayOfMonth }: { dayOfMonth: number; year: number; currentMonth?: number; currentDayOfMonth?: number }) => {
   const [showBloodDrop, setShowBloodDrop] = useState(false);
   const [currentPart, setCurrentPart] = useState(0);
   const [selectedBead, setSelectedBead] = useState<{ year: number; month: number; day: number } | null>(null);
@@ -216,12 +216,13 @@ const Month1Strand = ({ dayOfMonth, year }: { dayOfMonth: number; year: number }
     const weekCycleDay = i + 1; // 1, 2, 3
     const yhvhCount = i + 1; // 1, 2, 3
     
+    const isMonth12Today = currentMonth === 12 && currentDayOfMonth === day12;
     beads.push({
       day: day12,
       displayNumber: day12,
       globalDay: 334 + day12, // Month 12 global offset
-      color: '#1f2937',
-      isToday: false, // These are from previous year
+      color: isMonth12Today ? '#ec4899' : '#1f2937',
+      isToday: isMonth12Today,
       isTekufah: false,
       isSabbath: false,
       isFirstSabbath: false,
@@ -4548,7 +4549,7 @@ const EnochianTimepiece = () => {
               transition={{ duration: 1.5 }}
               className="w-full"
             >
-              <Month1Strand dayOfMonth={enochianDate.dayOfMonth} year={enochianDate.year} />
+              <Month1Strand dayOfMonth={enochianDate.dayOfMonth} year={enochianDate.year} currentMonth={enochianDate.month} currentDayOfMonth={enochianDate.dayOfMonth} />
             </motion.div>
           )}
 
