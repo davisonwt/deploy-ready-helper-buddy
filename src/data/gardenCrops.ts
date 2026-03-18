@@ -519,7 +519,7 @@ export const GARDEN_CROPS: CropData[] = [
     companions: {
       good: ['tomato', 'cucumber', 'bean', 'cabbage', 'radish'],
       bad: [],
-      notes: 'Trap crop for aphids — sacrificial protector (Margaret Roberts)',
+      notes: 'Trap crop for aphids — sacrificial protector',
     },
     moonPreference: 'flower',
     frostSensitivity: 'tender',
