@@ -428,6 +428,44 @@ const Month1Strand = ({ dayOfMonth, year }: { dayOfMonth: number; year: number }
           day={selectedBead.day}
         />
       )}
+
+      {/* Month 12 Bead Popup for days 29, 30, 31 shown on Month 1 strand */}
+      {selectedMonth12Bead && (
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/60 backdrop-blur-sm" onClick={() => setSelectedMonth12Bead(null)}>
+          <div 
+            className="relative w-[90vw] max-w-md bg-gradient-to-br from-stone-900 via-stone-950 to-black rounded-3xl border-2 border-amber-500/50 shadow-2xl shadow-amber-900/50 p-8 text-center"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <button 
+              onClick={() => setSelectedMonth12Bead(null)}
+              className="absolute top-4 right-4 text-amber-300 hover:text-white text-2xl font-bold"
+            >
+              ×
+            </button>
+
+            <div className="text-5xl mb-3">📿</div>
+            
+            <h2 className="text-2xl font-black bg-gradient-to-r from-amber-300 via-yellow-200 to-amber-300 bg-clip-text text-transparent mb-2">
+              Day {selectedMonth12Bead.day} — 12th Month
+            </h2>
+            
+            <div className="text-lg text-amber-400 font-semibold mb-5">
+              New Year Week Cycle Day {selectedMonth12Bead.weekCycleDay}
+            </div>
+
+            <div className="bg-amber-900/30 rounded-2xl p-5 border border-amber-700/30">
+              <p className="text-amber-100 text-sm leading-relaxed">
+                {selectedMonth12Bead.day === 29 && 
+                  "Day 29 of the 12th month will always represent day 1 of the new seven day week cycle of the new year."}
+                {selectedMonth12Bead.day === 30 && 
+                  "Day 30 of the 12th month will always represent day 2 of the new seven day week cycle of the new year."}
+                {selectedMonth12Bead.day === 31 && 
+                  "Day 31 of the 12th month will always represent day 3 of the new seven day week cycle of the new year."}
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
