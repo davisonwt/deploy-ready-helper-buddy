@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react'
+import { createPortal } from 'react-dom'
 import { X, FileText, Image, Heart, Users, Sparkles, Calendar, Star, Trash2 } from 'lucide-react'
 import { motion } from 'framer-motion'
 import { calculateCreatorDate } from '@/utils/dashboardCalendar'
