@@ -90,19 +90,7 @@ export default function DashboardPage() {
   const [currentTime, setCurrentTime] = useState(new Date());
   const [userLat, setUserLat] = useState(-26.2); // Default: South Africa
   const [userLon, setUserLon] = useState(28.0); // Default: South Africa
-  const [customDate, setCustomDate] = useState(null);
   const [calendarData, setCalendarData] = useState(null);
-
-  // Helper function to get sunrise/sunset times (using user-provided times)
-  const getSunriseSunsetTimes = date => {
-    // Create new date objects to avoid mutating the original
-    const sunrise = new Date(date.getFullYear(), date.getMonth(), date.getDate(), 5, 13, 0, 0);
-    const sunset = new Date(date.getFullYear(), date.getMonth(), date.getDate(), 19, 26, 0, 0);
-    return {
-      sunrise,
-      sunset
-    };
-  };
 
   // Calculate calendar data directly (without CalendarWheel component)
   useEffect(() => {
