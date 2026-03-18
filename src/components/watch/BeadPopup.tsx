@@ -148,6 +148,18 @@ export function BeadPopup({ isOpen, onClose, year, month, day }: BeadPopupProps)
     }
   }
 
+  const handleNavigate = (type: 'journal' | 'diary') => {
+    const params = new URLSearchParams({
+      tab: 'journal',
+      year: String(year),
+      month: String(month),
+      day: String(day),
+      view: type,
+    })
+    onClose()
+    navigate(`/profile?${params.toString()}`)
+  }
+
   if (!isOpen) return null
 
   const isShabbat = yhwhDate?.weekDay === 7
