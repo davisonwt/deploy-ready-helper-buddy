@@ -1133,7 +1133,7 @@ export const sacredCalendarNotes: Record<string, CalendarDayNotes> = {
       "Evilmerodach became King of Babylon and brought Jehoiachin king of Judah out of prison (Jeremiah 52:31 & 2 Kings 25:27-30 — 2 or 3 day difference in texts)",
     ],
   },
-  "M12_D30": {
+  "M12_D31": {
     notes: [
       "[Parents Day of Honor]",
       "Aldebaran, Watcher of the East & Spring (Enoch 74:1-4)",
