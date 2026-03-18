@@ -191,8 +191,8 @@ export default function DashboardPage() {
       let remainingDays = totalDays;
 
       // Calculate year (regular 364 days + Days Out of Time)
-      while (remainingDays >= 365) {
-        remainingDays -= 365;
+      while (remainingDays >= 364 + getDaysOutOfTimeCount(year)) {
+        remainingDays -= 364 + getDaysOutOfTimeCount(year);
         year++;
       }
 
