@@ -401,7 +401,8 @@ export default function EnochianCalendarDesignPage() {
                 <span className="text-xl font-bold text-gray-400">אֱלוֹיָסֵף</span>
               </div>
               <p className="text-lg text-gray-300">Helo-Yaseph</p>
-              <p className="text-sm text-gray-500">Yah is adding</p>
+              <p className="text-sm text-gray-500">Look and behold, YHVH is adding</p>
+              <p className="text-xs text-gray-600 mt-1">Also the name of Month 7</p>
             </motion.div>
 
             <motion.div whileHover={{ scale: 1.1 }} className="text-center">

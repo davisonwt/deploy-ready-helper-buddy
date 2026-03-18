@@ -4804,8 +4804,9 @@ const EnochianTimepiece = () => {
             <div className="w-32 h-32 md:w-40 md:h-40 mx-auto rounded-full bg-gradient-to-br from-gray-900 to-black border-4 md:border-8 border-gray-800 shadow-2xl flex items-center justify-center">
               <span className="text-xl md:text-2xl font-bold text-gray-400">אֱלוֹיָסֵף</span>
             </div>
-            <p className="text-center mt-4 text-base md:text-xl text-gray-400">Helo-Yaseph • Yah is adding</p>
-            <p className="text-center text-sm text-gray-500">the 6th month's name</p>
+            <p className="text-center mt-4 text-base md:text-xl text-gray-400">Helo-Yaseph</p>
+            <p className="text-center text-sm text-gray-500">Look and behold, YHVH is adding</p>
+            <p className="text-center text-xs text-gray-600">Also the name of Month 7</p>
                 </div>
 
           {/* Asfa'el — appears only on +2 years */}
