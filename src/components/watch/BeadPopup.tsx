@@ -55,6 +55,52 @@ function getFeastDayName(month: number, day: number): string | null {
   return null
 }
 
+// Sacred History section component
+function SacredHistorySection({ month, day }: { month: number; day: number }) {
+  const [expanded, setExpanded] = useState(true);
+  const key = `M${month}_D${day}`;
+  const dayNotes = sacredCalendarNotes[key];
+
+  if (!dayNotes || (dayNotes.notes.length === 0 && !dayNotes.secondaryNotes?.length)) return null;
+
+  return (
+    <div className="bg-amber-50/80 rounded-2xl p-4 border border-amber-200/60">
+      <button
+        onClick={() => setExpanded(!expanded)}
+        className="flex items-center justify-between w-full mb-2"
+      >
+        <div className="flex items-center gap-2">
+          <ScrollText className="w-5 h-5 text-amber-700" />
+          <span className="font-semibold text-amber-900">Sacred History</span>
+        </div>
+        {expanded ? (
+          <ChevronUp className="w-4 h-4 text-amber-600" />
+        ) : (
+          <ChevronDown className="w-4 h-4 text-amber-600" />
+        )}
+      </button>
+      {expanded && (
+        <div className="space-y-1.5">
+          {dayNotes.notes.map((note, i) => (
+            <p key={i} className="text-amber-900/80 text-xs leading-relaxed pl-3 border-l-2 border-amber-300/60">
+              {note}
+            </p>
+          ))}
+          {dayNotes.secondaryNotes && dayNotes.secondaryNotes.length > 0 && (
+            <div className="mt-2 pt-2 border-t border-amber-200/40">
+              {dayNotes.secondaryNotes.map((note, i) => (
+                <p key={i} className="text-amber-700/70 text-xs italic pl-3">
+                  {note}
+                </p>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
 export function BeadPopup({ isOpen, onClose, year, month, day }: BeadPopupProps) {
   const { user } = useAuth()
   const { toast } = useToast()
