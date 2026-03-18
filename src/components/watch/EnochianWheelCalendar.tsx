@@ -3810,6 +3810,7 @@ interface Month12Bead {
 
 const Month12Strand = ({ dayOfMonth, year }: { dayOfMonth: number; year: number }) => {
   const [selectedBead, setSelectedBead] = useState<{ year: number; month: number; day: number } | null>(null);
+  const [selectedDotDay, setSelectedDotDay] = useState<{ dotNumber: number; label: string } | null>(null);
   const [showBloodDrop, setShowBloodDrop] = useState(false);
   const [currentPart, setCurrentPart] = useState(0);
   const { location } = useUserLocation();
