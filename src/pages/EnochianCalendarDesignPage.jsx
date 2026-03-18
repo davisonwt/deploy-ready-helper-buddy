@@ -1,8 +1,8 @@
-import React, { useState, useEffect, useMemo } from 'react';
-import { motion } from 'framer-motion';
+import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { LocationVerification } from '@/components/calendar/LocationVerification';
 import { Button } from '@/components/ui/button';
-import { RotateCcw, Sun, Leaf, Snowflake, Flower, MapPin } from 'lucide-react';
+import { RotateCcw, Sun, Leaf, Snowflake, Flower, MapPin, ChevronLeft, ChevronRight } from 'lucide-react';
 import { calculateCreatorDate } from '@/utils/dashboardCalendar';
 import { getCreatorTime } from '@/utils/customTime';
 import { useUserLocation } from '@/hooks/useUserLocation';
@@ -98,11 +98,18 @@ const PART_NAMES = [
   'Laylah 4', 'Laylah 5', 'Laylah 6'
 ];
 
+function getSeasonForMonth(monthNum) {
+  return BASE_SEASONS.find(s => s.months.includes(monthNum)) || BASE_SEASONS[0];
+}
+
 export default function EnochianCalendarDesignPage() {
   const { location, loading: locationLoading } = useUserLocation();
   const [enochianDate, setEnochianDate] = useState({
     year: 6028, month: 1, dayOfMonth: 1, part: 1, dayOfYear: 1
   });
+  const [activeMonth, setActiveMonth] = useState(1);
+  const [direction, setDirection] = useState(0); // -1 left, 1 right
+  const touchStartX = useRef(0);
 
   // Update calendar based on location
   useEffect(() => {
@@ -111,43 +118,76 @@ export default function EnochianCalendarDesignPage() {
       const creatorDate = calculateCreatorDate(now);
       const creatorTime = getCreatorTime(now, location.lat, location.lon);
       
-      setEnochianDate({
+      const newDate = {
         year: creatorDate.year,
         month: creatorDate.month,
         dayOfMonth: creatorDate.day,
         part: creatorTime.part,
         dayOfYear: creatorDate.dayOfYear
-      });
+      };
+      setEnochianDate(newDate);
     };
     
     updateDate();
-    const interval = setInterval(updateDate, 60000); // Update every minute
+    const interval = setInterval(updateDate, 60000);
     return () => clearInterval(interval);
   }, [location.lat, location.lon]);
 
-  // Reorder seasons to put current month's season first
-  const orderedSeasons = useMemo(() => {
-    const currentSeasonIndex = BASE_SEASONS.findIndex(
-      season => season.months.includes(enochianDate.month)
-    );
-    
-    if (currentSeasonIndex === -1) return BASE_SEASONS;
-    
-    // Rotate array so current season is first
-    const reordered = [
-      ...BASE_SEASONS.slice(currentSeasonIndex),
-      ...BASE_SEASONS.slice(0, currentSeasonIndex)
-    ];
-    
-    return reordered;
+  // Set activeMonth to current month on first load
+  useEffect(() => {
+    if (enochianDate.month >= 1 && enochianDate.month <= 12) {
+      setActiveMonth(enochianDate.month);
+    }
   }, [enochianDate.month]);
+
+  const goToMonth = useCallback((month) => {
+    if (month < 1 || month > 12) return;
+    setDirection(month > activeMonth ? 1 : -1);
+    setActiveMonth(month);
+  }, [activeMonth]);
+
+  const goPrev = useCallback(() => {
+    if (activeMonth > 1) {
+      setDirection(-1);
+      setActiveMonth(prev => prev - 1);
+    }
+  }, [activeMonth]);
+
+  const goNext = useCallback(() => {
+    if (activeMonth < 12) {
+      setDirection(1);
+      setActiveMonth(prev => prev + 1);
+    }
+  }, [activeMonth]);
+
+  const handleTouchStart = (e) => {
+    touchStartX.current = e.touches[0].clientX;
+  };
+
+  const handleTouchEnd = (e) => {
+    const diff = touchStartX.current - e.changedTouches[0].clientX;
+    if (Math.abs(diff) > 50) {
+      if (diff > 0) goNext();
+      else goPrev();
+    }
+  };
 
   const handleRefresh = () => {
     window.location.reload();
   };
 
-  // Determine hemisphere based on latitude
   const isNorthernHemisphere = location.lat >= 0;
+  const currentSeason = getSeasonForMonth(activeMonth);
+  const NorthIcon = currentSeason.northIcon;
+  const SouthIcon = currentSeason.southIcon;
+  const MonthComponent = MonthComponents[activeMonth];
+  const isCurrentMonth = activeMonth === enochianDate.month;
+
+  const slideVariants = {
+    enter: (dir) => ({ x: dir > 0 ? 300 : -300, opacity: 0 }),
+    center: { x: 0, opacity: 1 },
+    exit: (dir) => ({ x: dir > 0 ? -300 : 300, opacity: 0 }),
+  };
 
   return (
     <div className="min-h-screen w-full bg-gradient-to-b from-[#0a0a15] via-[#1a1a2e] to-[#0a0a15] overflow-x-hidden">
@@ -179,185 +219,171 @@ export default function EnochianCalendarDesignPage() {
         <motion.div 
           initial={{ y: -50, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
-          className="flex flex-col items-center gap-4 mb-6"
+          className="flex flex-col items-center gap-3 mb-4"
         >
-          <h1 className="text-4xl md:text-5xl lg:text-6xl font-black text-center bg-gradient-to-r from-amber-400 via-yellow-500 to-amber-400 bg-clip-text text-transparent drop-shadow-2xl">
+          <h1 className="text-4xl md:text-5xl font-black text-center bg-gradient-to-r from-amber-400 via-yellow-500 to-amber-400 bg-clip-text text-transparent drop-shadow-2xl">
             Ed's Beads
           </h1>
-          <p className="text-lg md:text-xl text-amber-200/80 tracking-widest">
+          <p className="text-sm md:text-base text-amber-200/80 tracking-widest">
             364 Days • Eternal Alignment • Sunrise to Sunrise
           </p>
           
           {/* Current Time Info */}
-          <div className="flex flex-wrap items-center justify-center gap-4 mt-2">
-            <div className="bg-black/40 px-4 py-2 rounded-full border border-amber-500/30">
-              <span className="text-amber-300 font-bold">
+          <div className="flex flex-wrap items-center justify-center gap-3 mt-1">
+            <div className="bg-black/40 px-3 py-1.5 rounded-full border border-amber-500/30">
+              <span className="text-amber-300 font-bold text-sm">
                 Year {enochianDate.year} • Month {enochianDate.month} • Day {enochianDate.dayOfMonth}
               </span>
             </div>
-            <div className="bg-black/40 px-4 py-2 rounded-full border border-cyan-500/30">
-              <span className="text-cyan-300 font-bold">
+            <div className="bg-black/40 px-3 py-1.5 rounded-full border border-cyan-500/30">
+              <span className="text-cyan-300 font-bold text-sm">
                 Part {enochianDate.part}/18 • {PART_NAMES[enochianDate.part - 1] || 'Unknown'}
               </span>
             </div>
           </div>
 
           {/* Location Status */}
-          <div className="flex items-center gap-2 text-sm">
-            <MapPin className={`w-4 h-4 ${location.verified ? 'text-green-400' : 'text-yellow-400'}`} />
+          <div className="flex items-center gap-2 text-xs">
+            <MapPin className={`w-3 h-3 ${location.verified ? 'text-green-400' : 'text-yellow-400'}`} />
             <span className={location.verified ? 'text-green-300' : 'text-yellow-300'}>
-              {location.verified ? 'Location verified' : 'Location not verified'} 
-              ({location.lat.toFixed(2)}°, {location.lon.toFixed(2)}°)
-              {isNorthernHemisphere ? ' • Northern Hemisphere' : ' • Southern Hemisphere'}
+              {location.verified ? 'Verified' : 'Not verified'} 
+              ({location.lat.toFixed(1)}°, {location.lon.toFixed(1)}°)
+              {isNorthernHemisphere ? ' • N' : ' • S'}
             </span>
-          </div>
-
-          <div className="flex items-center gap-4">
             <Button
               onClick={handleRefresh}
-              variant="outline"
+              variant="ghost"
               size="sm"
-              className="gap-2 border-amber-500/30 hover:border-amber-500/60 text-amber-300"
+              className="h-6 px-2 gap-1 text-amber-300/60 hover:text-amber-300"
             >
-              <RotateCcw className="h-4 w-4" />
-              Refresh
+              <RotateCcw className="h-3 w-3" />
             </Button>
           </div>
         </motion.div>
         <LocationVerification />
       </div>
 
-      {/* Current Month Indicator */}
-      <div className="container mx-auto px-4 mb-4 relative z-10">
-        <motion.div
-          initial={{ opacity: 0, scale: 0.9 }}
-          animate={{ opacity: 1, scale: 1 }}
-          className="text-center p-4 bg-pink-500/20 rounded-2xl border border-pink-500/40"
-        >
-          <p className="text-pink-300 font-bold text-lg">
-            📍 Current: Month {enochianDate.month} • Day {enochianDate.dayOfMonth} • Part {enochianDate.part}
-          </p>
-          <p className="text-pink-200/60 text-sm mt-1">
-            Current season shown first below
-          </p>
-        </motion.div>
+      {/* Season Header */}
+      <div className="container mx-auto px-4 mb-3 relative z-10">
+        <div className={`bg-gradient-to-r ${currentSeason.gradient} p-3 rounded-2xl border ${currentSeason.borderColor}`}>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <NorthIcon className={`w-5 h-5 ${currentSeason.textColor}`} />
+              <div>
+                <p className="text-[10px] text-white/50 uppercase tracking-wider">Northern</p>
+                <p className={`text-sm font-bold ${currentSeason.textColor} ${
+                  isNorthernHemisphere ? 'underline decoration-2' : ''
+                }`}>{currentSeason.northern}</p>
+              </div>
+            </div>
+
+            <div className="text-center">
+              <p className={`text-lg font-black ${currentSeason.textColor}`}>
+                Month {activeMonth}
+              </p>
+              {isCurrentMonth && (
+                <span className="text-[10px] text-pink-300 font-medium">● NOW</span>
+              )}
+            </div>
+
+            <div className="flex items-center gap-2">
+              <div className="text-right">
+                <p className="text-[10px] text-white/50 uppercase tracking-wider">Southern</p>
+                <p className={`text-sm font-bold ${currentSeason.textColor} ${
+                  !isNorthernHemisphere ? 'underline decoration-2' : ''
+                }`}>{currentSeason.southern}</p>
+              </div>
+              <SouthIcon className={`w-5 h-5 ${currentSeason.textColor}`} />
+            </div>
+          </div>
+        </div>
       </div>
 
-      {/* Seasonal Grid - Current season first */}
+      {/* Single Month Carousel */}
+      <div className="container mx-auto px-4 pb-4 relative z-10">
+        <div
+          className="relative flex items-center justify-center"
+          onTouchStart={handleTouchStart}
+          onTouchEnd={handleTouchEnd}
+        >
+          {/* Left Arrow */}
+          <button
+            onClick={goPrev}
+            disabled={activeMonth <= 1}
+            className={`absolute left-0 z-20 p-2 rounded-full bg-black/50 border border-white/10 backdrop-blur-sm transition-all ${
+              activeMonth <= 1 ? 'opacity-20 cursor-not-allowed' : 'opacity-80 hover:opacity-100 hover:scale-110'
+            }`}
+          >
+            <ChevronLeft className="w-6 h-6 text-white" />
+          </button>
+
+          {/* Bead Strand */}
+          <div className="w-full max-w-md mx-auto overflow-hidden">
+            <AnimatePresence mode="wait" custom={direction}>
+              <motion.div
+                key={activeMonth}
+                custom={direction}
+                variants={slideVariants}
+                initial="enter"
+                animate="center"
+                exit="exit"
+                transition={{ duration: 0.3, ease: 'easeInOut' }}
+                className="flex justify-center"
+              >
+                <MonthComponent
+                  dayOfMonth={isCurrentMonth ? enochianDate.dayOfMonth : 0}
+                  year={enochianDate.year}
+                />
+              </motion.div>
+            </AnimatePresence>
+          </div>
+
+          {/* Right Arrow */}
+          <button
+            onClick={goNext}
+            disabled={activeMonth >= 12}
+            className={`absolute right-0 z-20 p-2 rounded-full bg-black/50 border border-white/10 backdrop-blur-sm transition-all ${
+              activeMonth >= 12 ? 'opacity-20 cursor-not-allowed' : 'opacity-80 hover:opacity-100 hover:scale-110'
+            }`}
+          >
+            <ChevronRight className="w-6 h-6 text-white" />
+          </button>
+        </div>
+
+        {/* Month Dot Indicators */}
+        <div className="flex items-center justify-center gap-2 mt-4">
+          {Array.from({ length: 12 }, (_, i) => {
+            const monthNum = i + 1;
+            const isActive = monthNum === activeMonth;
+            const isCurrent = monthNum === enochianDate.month;
+            return (
+              <button
+                key={monthNum}
+                onClick={() => goToMonth(monthNum)}
+                className={`relative rounded-full transition-all duration-200 ${
+                  isActive
+                    ? 'w-6 h-3 bg-amber-400'
+                    : 'w-3 h-3 bg-white/20 hover:bg-white/40'
+                } ${isCurrent && !isActive ? 'ring-2 ring-pink-400 ring-offset-1 ring-offset-transparent' : ''}`}
+                title={`Month ${monthNum}`}
+              >
+                {isCurrent && (
+                  <span className="absolute -top-3 left-1/2 -translate-x-1/2 text-[8px] text-pink-300">●</span>
+                )}
+              </button>
+            );
+          })}
+        </div>
+        <p className="text-center text-white/30 text-[10px] mt-1">Swipe or tap to navigate months</p>
+      </div>
+
+      {/* Days Out of Time Section */}
       <div className="container mx-auto px-4 pb-12 relative z-10">
-        {orderedSeasons.map((season, seasonIndex) => {
-          const NorthIcon = season.northIcon;
-          const SouthIcon = season.southIcon;
-          const isCurrentSeason = season.months.includes(enochianDate.month);
-          
-          return (
-            <motion.div
-              key={season.id}
-              initial={{ opacity: 0, y: 50 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: seasonIndex * 0.1 }}
-              className={`mb-8 rounded-3xl overflow-hidden border-2 ${season.borderColor} shadow-2xl ${
-                isCurrentSeason ? 'ring-4 ring-pink-500/50 shadow-pink-500/30' : ''
-              }`}
-            >
-              {/* Current Season Badge */}
-              {isCurrentSeason && (
-                <div className="bg-pink-500 text-white text-center py-2 font-bold tracking-wider">
-                  ✨ CURRENT SEASON ✨
-                </div>
-              )}
-
-              {/* Season Header - Split Hemisphere Display */}
-              <div className={`bg-gradient-to-r ${season.gradient} p-4 md:p-6`}>
-                <div className="flex items-center justify-between">
-                  {/* Northern Hemisphere */}
-                  <div className="flex items-center gap-3">
-                    <NorthIcon className={`w-8 h-8 ${season.textColor}`} />
-                    <div>
-                      <p className="text-sm text-white/60 uppercase tracking-wider">Northern</p>
-                      <p className={`text-xl md:text-2xl font-bold ${season.textColor} ${
-                        isNorthernHemisphere ? 'underline decoration-2' : ''
-                      }`}>{season.northern}</p>
-                    </div>
-                  </div>
-
-                  {/* Month Range - reversed to match bead placement */}
-                  <div className="text-center">
-                    <p className="text-white/40 text-sm">Months</p>
-                    <p className="text-2xl md:text-3xl font-black text-white">
-                      {season.months[2]} - {season.months[0]}
-                    </p>
-                  </div>
-
-                  {/* Southern Hemisphere */}
-                  <div className="flex items-center gap-3">
-                    <div className="text-right">
-                      <p className="text-sm text-white/60 uppercase tracking-wider">Southern</p>
-                      <p className={`text-xl md:text-2xl font-bold ${season.textColor} ${
-                        !isNorthernHemisphere ? 'underline decoration-2' : ''
-                      }`}>{season.southern}</p>
-                    </div>
-                    <SouthIcon className={`w-8 h-8 ${season.textColor}`} />
-                  </div>
-                </div>
-              </div>
-
-              {/* Three Months Grid - Right to Left (1 on right) */}
-              <div className={`${season.bgAccent} p-4 md:p-6`}>
-                <div className="grid grid-cols-3 gap-4 md:gap-6">
-                  {/* Reversed order: month 3, 2, 1 so month 1 is on the right */}
-                  {[...season.months].reverse().map((monthNum) => {
-                    const MonthComponent = MonthComponents[monthNum];
-                    const isCurrentMonth = monthNum === enochianDate.month;
-                    
-                    return (
-                      <motion.div
-                        key={monthNum}
-                        className={`relative rounded-2xl overflow-hidden ${
-                          isCurrentMonth 
-                            ? 'ring-4 ring-pink-500/50 shadow-lg shadow-pink-500/30' 
-                            : ''
-                        }`}
-                        whileHover={{ scale: 1.02 }}
-                        transition={{ duration: 0.2 }}
-                      >
-                        {/* Current Month Indicator */}
-                        {isCurrentMonth && (
-                          <motion.div
-                            className="absolute inset-0 bg-gradient-to-b from-pink-500/20 to-transparent pointer-events-none z-10"
-                            animate={{ opacity: [0.3, 0.6, 0.3] }}
-                            transition={{ duration: 2, repeat: Infinity }}
-                          />
-                        )}
-                        
-                        {/* Month Bead Strand - Compact uniform height */}
-                        <div className="h-[200px] overflow-hidden rounded-xl bg-gradient-to-b from-black/40 to-black/60 relative">
-                          <div className="w-full h-full flex justify-center overflow-hidden">
-                            <div className="transform scale-[0.32] origin-top -mt-4">
-                              <MonthComponent 
-                                dayOfMonth={isCurrentMonth ? enochianDate.dayOfMonth : 0} 
-                                year={enochianDate.year}
-                              />
-                            </div>
-                          </div>
-                          {/* Fade out at bottom */}
-                          <div className="absolute bottom-0 left-0 right-0 h-10 bg-gradient-to-t from-black to-transparent pointer-events-none" />
-                        </div>
-                      </motion.div>
-                    );
-                  })}
-                </div>
-              </div>
-            </motion.div>
-          );
-        })}
-
-        {/* Days Out of Time Section */}
         <motion.div
           initial={{ opacity: 0, scale: 0.9 }}
           animate={{ opacity: 1, scale: 1 }}
-          transition={{ delay: 0.8 }}
-          className="mt-12 p-8 rounded-3xl bg-gradient-to-b from-purple-900/40 via-black to-purple-900/40 border-2 border-purple-500/30 text-center"
+          transition={{ delay: 0.4 }}
+          className="mt-8 p-8 rounded-3xl bg-gradient-to-b from-purple-900/40 via-black to-purple-900/40 border-2 border-purple-500/30 text-center"
         >
           <h2 className="text-3xl md:text-4xl font-black text-purple-300 mb-4">
             Days Outside Time
@@ -367,11 +393,7 @@ export default function EnochianCalendarDesignPage() {
           </p>
           
           <div className="flex flex-col md:flex-row items-center justify-center gap-8 md:gap-16">
-            {/* Helo-Yaseph */}
-            <motion.div 
-              whileHover={{ scale: 1.1 }}
-              className="text-center"
-            >
+            <motion.div whileHover={{ scale: 1.1 }} className="text-center">
               <div className="w-24 h-24 md:w-32 md:h-32 mx-auto rounded-full bg-gradient-to-br from-gray-900 to-black border-4 border-gray-700 shadow-2xl flex items-center justify-center mb-4">
                 <span className="text-xl font-bold text-gray-400">אֱלוֹיָסֵף</span>
               </div>
@@ -379,11 +401,7 @@ export default function EnochianCalendarDesignPage() {
               <p className="text-sm text-gray-500">Yah is adding</p>
             </motion.div>
 
-            {/* Asfa'el */}
-            <motion.div 
-              whileHover={{ scale: 1.1 }}
-              className="text-center"
-            >
+            <motion.div whileHover={{ scale: 1.1 }} className="text-center">
               <div className="w-24 h-24 md:w-32 md:h-32 mx-auto rounded-full bg-gradient-to-br from-zinc-900 via-black to-zinc-900 border-4 border-zinc-600 shadow-2xl flex items-center justify-center mb-4">
                 <span className="text-xl font-bold text-zinc-400">אַסְפָּעֵאל</span>
               </div>
@@ -397,7 +415,7 @@ export default function EnochianCalendarDesignPage() {
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          transition={{ delay: 1 }}
+          transition={{ delay: 0.6 }}
           className="mt-8 p-6 rounded-2xl bg-black/40 border border-white/10"
         >
           <h3 className="text-xl font-bold text-amber-300 mb-4 text-center">Bead Colors</h3>
@@ -425,7 +443,7 @@ export default function EnochianCalendarDesignPage() {
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 1.2 }}
+          transition={{ delay: 0.8 }}
           className="mt-8 text-center"
         >
           <p className="text-amber-200/60">

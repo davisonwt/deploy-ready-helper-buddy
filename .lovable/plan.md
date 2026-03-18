@@ -1,61 +1,21 @@
 
 
-## Redesign Ed's Beads — Single Month Focus with Swipe Navigation
+## Fix Create & Manage Section: Theme Colors + Sub-link Button Sizing
 
-### The Problem
-Currently, 3 months are crammed side-by-side at `scale(0.32)` in tiny 200px boxes. The beads are barely readable, the scrollable "beads in your hands" feel is completely lost at that scale, and it looks cluttered. The beautiful 7-bead scroll window you built is invisible.
+Two issues to fix in `src/pages/DashboardPage.jsx`:
 
-### The Proposal: Single Month Carousel
+### 1. Button Colors — Use Theme Primary Gradient (not `secondaryButton`)
+The 8 icon-chip buttons currently use `currentTheme.secondaryButton` (a subtle transparent background). They should use `currentTheme.primaryButton` with proper contrast text color, matching the rest of the dashboard's themed buttons.
 
-Show **one month at a time**, full-size, centered on screen — preserving the tactile bead-scrolling experience. Users swipe left/right (or tap arrows) to move between months.
+**Line 934**: Change `background: currentTheme.secondaryButton` → `background: currentTheme.primaryButton` and compute contrast text color like `StatsFloatingButton` does.
 
-```text
-  ┌─────────────────────────────────────┐
-  │  ❄ Winter          ☀ Summer         │  ← season header
-  │                                     │
-  │     ◀  MONTH 12  ▶                  │  ← month nav arrows
-  │                                     │
-  │         ○ Day 30     (large)        │
-  │         ○ Day 29                    │
-  │        DOT 1                        │
-  │        ◉ Day 28 ◉   ← today        │  ← full-size 7-bead window
-  │         ● Day 27                    │
-  │         ● Day 26                    │
-  │         ● Day 25                    │
-  │                                     │
-  │      ↕ SCROLL                       │
-  │                                     │
-  │   ○ ○ ○ ○ ○ ○ ● ● ● ● ● ◉         │  ← month dots (1-12)
-  └─────────────────────────────────────┘
-```
+### 2. Sub-links — Make Same Size as Icon-Chip Buttons
+The "364YHVH Orchards" and "My S2G Tribe" links are currently small pill text links. They should be the same `h-11 rounded-xl` buttons as the 8 chips above, using the same styling.
 
-### Key Design Elements
+**Lines 949-956**: Convert from `<Link>` text pills to full `<Link><Button>` chips matching the grid buttons above, placed inside the same grid (or a 2-col grid below).
 
-1. **Full-size single month** — the bead strand renders at 100% scale in a centered column (`max-w-md`), fully interactive and scrollable
-2. **Left/Right navigation** — arrow buttons + swipe gesture to move between months 1-12; animates with a slide transition
-3. **Month dot indicator** — 12 small dots at the bottom showing which month you're viewing, current month highlighted pink
-4. **Season header** — compact bar at top showing Northern/Southern season labels + icons for the currently viewed month's season
-5. **Auto-starts on current month** — opens directly to the user's current month
-6. **Current month badge** — pink glow/ring on the active month's dot indicator so you can always find "now"
+### Changes — `src/pages/DashboardPage.jsx`
 
-### Technical Changes
-
-**File:** `src/pages/EnochianCalendarDesignPage.jsx`
-
-- Replace the `grid grid-cols-3` seasonal layout with a single `useState` tracking `activeMonth` (1-12, defaults to `enochianDate.month`)
-- Render only `MonthComponents[activeMonth]` at full size inside a centered container
-- Add prev/next buttons (chevron icons) on either side
-- Add touch swipe support using `onTouchStart`/`onTouchEnd` handlers (no library needed)
-- Add a row of 12 clickable dots below the strand for direct month jumping
-- Derive the season header dynamically from `activeMonth` using the existing `BASE_SEASONS` array
-- Keep the "Days Outside Time" section and legend below, unchanged
-- Wrap month transitions in `AnimatePresence` + `motion.div` for smooth slide animations
-
-### What stays the same
-- All bead logic, colors, scroll behavior, popups, journal/diary links
-- The `BeadScrollWindow` 7-bead tactile feel — now fully visible and usable
-- Days Outside Time section at the bottom
-- Legend section
-- Header with year/month/day/part info
-- Location verification
+- **Lines 933-936**: Change button style to use `currentTheme.primaryButton` for background, compute contrast text color based on accent hex luminance
+- **Lines 949-956**: Replace the small pill links with two full-sized `h-11 rounded-xl` buttons matching the icon-chip style, using the primary button gradient
 
