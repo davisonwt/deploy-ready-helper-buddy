@@ -57,6 +57,7 @@ function getFeastDayName(month: number, day: number): string | null {
 export function BeadPopup({ isOpen, onClose, year, month, day }: BeadPopupProps) {
   const { user } = useAuth()
   const { toast } = useToast()
+  const navigate = useNavigate()
 
   const [journalEntry, setJournalEntry] = useState<any>(null)
   const [loading, setLoading] = useState(false)
