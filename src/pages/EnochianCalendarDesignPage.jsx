@@ -351,7 +351,7 @@ export default function EnochianCalendarDesignPage() {
         </div>
 
         {/* Month Dot Indicators */}
-        <div className="flex items-center justify-center gap-2 mt-4">
+        <div className="flex items-center justify-center gap-1.5 mt-4">
           {Array.from({ length: 12 }, (_, i) => {
             const monthNum = i + 1;
             const isActive = monthNum === activeMonth;
@@ -360,15 +360,16 @@ export default function EnochianCalendarDesignPage() {
               <button
                 key={monthNum}
                 onClick={() => goToMonth(monthNum)}
-                className={`relative rounded-full transition-all duration-200 ${
+                className={`relative flex items-center justify-center rounded-full transition-all duration-200 ${
                   isActive
-                    ? 'w-6 h-3 bg-amber-400'
-                    : 'w-3 h-3 bg-white/20 hover:bg-white/40'
-                } ${isCurrent && !isActive ? 'ring-2 ring-pink-400 ring-offset-1 ring-offset-transparent' : ''}`}
+                    ? 'w-8 h-8 bg-amber-400 text-black font-black text-xs'
+                    : 'w-7 h-7 bg-white/10 hover:bg-white/25 text-white/50 hover:text-white/80 text-[10px] font-semibold'
+                } ${isCurrent && !isActive ? 'ring-2 ring-pink-400' : ''}`}
                 title={`Month ${monthNum}`}
               >
-                {isCurrent && (
-                  <span className="absolute -top-3 left-1/2 -translate-x-1/2 text-[8px] text-pink-300">●</span>
+                {monthNum}
+                {isCurrent && !isActive && (
+                  <span className="absolute -top-1.5 left-1/2 -translate-x-1/2 text-[6px] text-pink-300">●</span>
                 )}
               </button>
             );
