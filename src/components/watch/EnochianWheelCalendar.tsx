@@ -22,6 +22,42 @@ const DAYS_PER_YEAR = 364;
 
 
 
+// Scrollable 7-Bead Window — "Beads in Your Hands"
+// Shows ~7 beads at a time with tactile scroll feel, auto-centers on today
+const BeadScrollWindow = ({ children, futureBeadCount }: { children: React.ReactNode; futureBeadCount: number }) => {
+  const scrollRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!scrollRef.current) return;
+    const BEAD_HEIGHT = 50;
+    const GAP_HEIGHT = 38;
+    const containerHeight = scrollRef.current.clientHeight;
+    const scrollTarget = futureBeadCount * BEAD_HEIGHT + GAP_HEIGHT / 2 - containerHeight / 2;
+    scrollRef.current.scrollTo({ top: Math.max(0, scrollTarget), behavior: 'auto' });
+  }, [futureBeadCount]);
+
+  return (
+    <div className="relative w-full">
+      <div className="absolute left-1/2 top-0 bottom-0 w-[2px] -translate-x-1/2 bg-gradient-to-b from-amber-900/20 via-amber-600/40 to-amber-900/20 z-0 pointer-events-none" />
+      <div
+        ref={scrollRef}
+        className="relative z-10 overflow-y-auto flex flex-col items-center"
+        style={{
+          height: '350px',
+          maskImage: 'linear-gradient(to bottom, transparent 0%, black 12%, black 88%, transparent 100%)',
+          WebkitMaskImage: 'linear-gradient(to bottom, transparent 0%, black 12%, black 88%, transparent 100%)',
+          scrollbarWidth: 'none',
+          scrollSnapType: 'y proximity' as any,
+        }}
+      >
+        {children}
+      </div>
+      <div className="text-center mt-1 text-amber-500/30 text-[10px] tracking-[0.3em] select-none">↕ SCROLL</div>
+    </div>
+  );
+};
+
+
 // Blood Drop Animation Component - drips from bottom bead to ground
 const BloodDrop = ({ isActive }: { isActive: boolean }) => {
   if (!isActive) return null;
@@ -252,6 +288,7 @@ const Month1Strand = ({ dayOfMonth, year }: { dayOfMonth: number; year: number }
       <h2 className="text-lg md:text-xl lg:text-2xl font-black text-amber-400 mb-2 md:mb-4 tracking-widest">MONTH 1</h2>
       <p className="text-xs text-amber-200/60 mb-2">33 Beads (includes days 29-31 from Month 12)</p>
       
+      <BeadScrollWindow futureBeadCount={futureBeads.length}>
       {/* Future days (uncounted) - at top */}
       <div className="flex flex-col" style={{ gap: '1mm' }}>
         {futureBeads.map((bead) => {
@@ -418,6 +455,7 @@ const Month1Strand = ({ dayOfMonth, year }: { dayOfMonth: number; year: number }
           );
         })}
       </div>
+      </BeadScrollWindow>
 
       {selectedBead && (
         <BeadPopup
@@ -578,6 +616,7 @@ const Month2Strand = ({ dayOfMonth, year }: { dayOfMonth: number; year: number }
 
 
 
+      <BeadScrollWindow futureBeadCount={futureBeads.length}>
       {/* Future days (uncounted) - at top */}
       <div className="flex flex-col" style={{ gap: '1mm' }}>
 
@@ -808,6 +847,7 @@ const Month2Strand = ({ dayOfMonth, year }: { dayOfMonth: number; year: number }
           );
         })}
       </div>
+      </BeadScrollWindow>
 
 
 
@@ -943,6 +983,7 @@ const Month3Strand = ({ dayOfMonth, year }: { dayOfMonth: number; year: number }
 
 
 
+      <BeadScrollWindow futureBeadCount={futureBeads.length}>
       {/* Future days (uncounted) - at top */}
       <div className="flex flex-col" style={{ gap: '1mm' }}>
 
@@ -1183,6 +1224,7 @@ const Month3Strand = ({ dayOfMonth, year }: { dayOfMonth: number; year: number }
           );
         })}
       </div>
+      </BeadScrollWindow>
 
 
 
@@ -1318,6 +1360,7 @@ const Month4Strand = ({ dayOfMonth, year }: { dayOfMonth: number; year: number }
 
 
 
+      <BeadScrollWindow futureBeadCount={futureBeads.length}>
       {/* Future days (uncounted) - at top */}
       <div className="flex flex-col" style={{ gap: '1mm' }}>
 
@@ -1586,6 +1629,7 @@ const Month4Strand = ({ dayOfMonth, year }: { dayOfMonth: number; year: number }
           );
         })}
       </div>
+      </BeadScrollWindow>
 
 
 
@@ -1740,6 +1784,7 @@ const Month5Strand = ({ dayOfMonth, year }: { dayOfMonth: number; year: number }
 
 
 
+      <BeadScrollWindow futureBeadCount={futureBeads.length}>
       {/* Future days (uncounted) - at top */}
       <div className="flex flex-col" style={{ gap: '1mm' }}>
 
@@ -1963,6 +2008,7 @@ const Month5Strand = ({ dayOfMonth, year }: { dayOfMonth: number; year: number }
           );
         })}
       </div>
+      </BeadScrollWindow>
 
 
       {/* Bead Popup */}
@@ -2088,6 +2134,7 @@ const Month6Strand = ({ dayOfMonth, year }: { dayOfMonth: number; year: number }
 
 
 
+      <BeadScrollWindow futureBeadCount={futureBeads.length}>
       {/* Future days (uncounted) - at top */}
       <div className="flex flex-col" style={{ gap: '1mm' }}>
 
@@ -2319,6 +2366,7 @@ const Month6Strand = ({ dayOfMonth, year }: { dayOfMonth: number; year: number }
           );
         })}
       </div>
+      </BeadScrollWindow>
 
       {/* Bead Popup */}
       {selectedBead && (
@@ -2454,6 +2502,7 @@ const Month7Strand = ({ dayOfMonth, year }: { dayOfMonth: number; year: number }
 
 
 
+      <BeadScrollWindow futureBeadCount={futureBeads.length}>
       {/* Future days (uncounted) - at top */}
       <div className="flex flex-col" style={{ gap: '1mm' }}>
 
@@ -2665,6 +2714,7 @@ const Month7Strand = ({ dayOfMonth, year }: { dayOfMonth: number; year: number }
           );
         })}
       </div>
+      </BeadScrollWindow>
 
       {/* Bead Popup */}
       {selectedBead && (
@@ -2786,6 +2836,7 @@ const Month8Strand = ({ dayOfMonth, year }: { dayOfMonth: number; year: number }
 
 
 
+      <BeadScrollWindow futureBeadCount={futureBeads.length}>
       {/* Future days (uncounted) - at top */}
       <div className="flex flex-col" style={{ gap: '1mm' }}>
 
@@ -2999,6 +3050,7 @@ const Month8Strand = ({ dayOfMonth, year }: { dayOfMonth: number; year: number }
           );
         })}
       </div>
+      </BeadScrollWindow>
 
       {/* Bead Popup */}
       {selectedBead && (
@@ -3106,6 +3158,7 @@ const Month9Strand = ({ dayOfMonth, year }: { dayOfMonth: number; year: number }
 
 
 
+      <BeadScrollWindow futureBeadCount={futureBeads.length}>
       {/* Future days (uncounted) - at top */}
       <div className="flex flex-col" style={{ gap: '1mm' }}>
 
@@ -3239,6 +3292,7 @@ const Month9Strand = ({ dayOfMonth, year }: { dayOfMonth: number; year: number }
         })}
 
       </div>
+      </BeadScrollWindow>
 
       {/* Bead Popup */}
       {selectedBead && (
@@ -3353,6 +3407,7 @@ const Month10Strand = ({ dayOfMonth, year }: { dayOfMonth: number; year: number 
 
 
 
+      <BeadScrollWindow futureBeadCount={futureBeads.length}>
       {/* Future days (uncounted) - at top */}
       <div className="flex flex-col" style={{ gap: '1mm' }}>
 
@@ -3528,6 +3583,7 @@ const Month10Strand = ({ dayOfMonth, year }: { dayOfMonth: number; year: number 
         })}
 
       </div>
+      </BeadScrollWindow>
 
       {/* Bead Popup */}
       {selectedBead && (
@@ -3642,6 +3698,7 @@ const Month11Strand = ({ dayOfMonth, year }: { dayOfMonth: number; year: number 
 
 
 
+      <BeadScrollWindow futureBeadCount={futureBeads.length}>
       {/* Future days (uncounted) - at top */}
       <div className="flex flex-col" style={{ gap: '1mm' }}>
 
@@ -3824,6 +3881,7 @@ const Month11Strand = ({ dayOfMonth, year }: { dayOfMonth: number; year: number 
                 );
               })}
       </div>
+      </BeadScrollWindow>
 
       {/* Bead Popup */}
       {selectedBead && (
@@ -4033,6 +4091,7 @@ const Month12Strand = ({ dayOfMonth, year }: { dayOfMonth: number; year: number 
         MONTH 12
       </motion.h2>
 
+      <BeadScrollWindow futureBeadCount={futureBeads.length}>
       {/* Future days (uncounted) - at top */}
       <div className="flex flex-col" style={{ gap: '1mm' }}>
         {futureBeads.map((b) => {
@@ -4246,6 +4305,7 @@ const Month12Strand = ({ dayOfMonth, year }: { dayOfMonth: number; year: number 
           );
         })}
       </div>
+      </BeadScrollWindow>
 
       {selectedBead && (
         <BeadPopup
