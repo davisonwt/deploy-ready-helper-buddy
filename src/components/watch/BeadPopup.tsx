@@ -113,6 +113,11 @@ export function BeadPopup({ isOpen, onClose, year, month, day }: BeadPopupProps)
 
     const gregorianDate = new Date(EPOCH_DATE)
     gregorianDate.setDate(gregorianDate.getDate() + daysFromEpoch)
+
+    // Use midday so calculateCreatorDate() doesn't roll back to previous day
+    // because of sunrise-based day start (05:13).
+    gregorianDate.setHours(12, 0, 0, 0)
+
     return gregorianDate
   }
 
