@@ -3,7 +3,7 @@
  * 
  * Comprehensive crop database with:
  * - Soil pH ranges (from Old Farmer's Almanac / organic standards)
- * - Companion planting pairs (Margaret Roberts' principles)
+ * - Companion planting pairs (time-tested garden practices)
  * - Biodynamic moon preferences (Root/Leaf/Fruit/Flower)
  * - Frost sensitivity & categories
  */
