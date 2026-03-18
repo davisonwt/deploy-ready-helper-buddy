@@ -2381,6 +2381,93 @@ export type Database = {
         }
         Relationships: []
       }
+      garden_activities: {
+        Row: {
+          activity_type: string
+          created_at: string | null
+          crop_key: string | null
+          gregorian_date: string | null
+          id: string
+          moon_element: string | null
+          moon_phase: string | null
+          notes: string | null
+          photo_url: string | null
+          user_id: string
+          yhwh_day: number | null
+          yhwh_month: number | null
+          yhwh_year: number | null
+        }
+        Insert: {
+          activity_type: string
+          created_at?: string | null
+          crop_key?: string | null
+          gregorian_date?: string | null
+          id?: string
+          moon_element?: string | null
+          moon_phase?: string | null
+          notes?: string | null
+          photo_url?: string | null
+          user_id: string
+          yhwh_day?: number | null
+          yhwh_month?: number | null
+          yhwh_year?: number | null
+        }
+        Update: {
+          activity_type?: string
+          created_at?: string | null
+          crop_key?: string | null
+          gregorian_date?: string | null
+          id?: string
+          moon_element?: string | null
+          moon_phase?: string | null
+          notes?: string | null
+          photo_url?: string | null
+          user_id?: string
+          yhwh_day?: number | null
+          yhwh_month?: number | null
+          yhwh_year?: number | null
+        }
+        Relationships: []
+      }
+      garden_profiles: {
+        Row: {
+          city: string | null
+          created_at: string | null
+          hardiness_zone: string | null
+          hemisphere: string | null
+          id: string
+          latitude: number | null
+          longitude: number | null
+          soil_ph: number | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          city?: string | null
+          created_at?: string | null
+          hardiness_zone?: string | null
+          hemisphere?: string | null
+          id?: string
+          latitude?: number | null
+          longitude?: number | null
+          soil_ph?: number | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          city?: string | null
+          created_at?: string | null
+          hardiness_zone?: string | null
+          hemisphere?: string | null
+          id?: string
+          latitude?: number | null
+          longitude?: number | null
+          soil_ph?: number | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       gosat_alerts: {
         Row: {
           alert_type: string
@@ -7776,6 +7863,39 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      user_crops: {
+        Row: {
+          created_at: string | null
+          crop_key: string
+          id: string
+          notes: string | null
+          planted_date: string | null
+          status: string | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          crop_key: string
+          id?: string
+          notes?: string | null
+          planted_date?: string | null
+          status?: string | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          crop_key?: string
+          id?: string
+          notes?: string | null
+          planted_date?: string | null
+          status?: string | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
       }
       user_notifications: {
         Row: {
