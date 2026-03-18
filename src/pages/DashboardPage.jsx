@@ -188,63 +188,24 @@ export default function DashboardPage() {
     };
   }, [user?.id]);
 
-  // Get user location and update custom time
+  // Get user location
   useEffect(() => {
-    // Try to get user's location from browser
     if (navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(position => {
         setUserLat(position.coords.latitude);
         setUserLon(position.coords.longitude);
       }, () => {
-        // Fallback to default if geolocation fails
         console.log('Using default location (South Africa: -26.2°N, 28.0°E)');
       });
     }
-
-    // Initialize custom date (with sunrise-based calculation)
-    const now = new Date();
-    const localYear = now.getFullYear();
-    const localMonth = now.getMonth();
-    const localDate = now.getDate();
-    const sunrise = SunCalc.getTimes(now, userLat, userLon).sunrise;
-
-    let effectiveYear = localYear;
-    let effectiveMonth = localMonth;
-    let effectiveDate = localDate;
-    if (now < sunrise) {
-      const prevDay = new Date(localYear, localMonth, localDate - 1);
-      effectiveYear = prevDay.getFullYear();
-      effectiveMonth = prevDay.getMonth();
-      effectiveDate = prevDay.getDate();
-    }
-    const normalizedDate = new Date(effectiveYear, effectiveMonth, effectiveDate, 12, 0, 0, 0);
-    setCustomDate(getCreatorDateSync(normalizedDate));
   }, []);
 
-  // Update time every second
+  // Update clock every second
   useEffect(() => {
     const interval = setInterval(() => {
-      const now = new Date();
-      setCurrentTime(now);
-
-      // Use sunrise-based day calculation with real sunrise for user's location
-      const localYear = now.getFullYear();
-      const localMonth = now.getMonth();
-      const localDate = now.getDate();
-      const sunrise = SunCalc.getTimes(now, userLat, userLon).sunrise;
-
-      let effectiveYear = localYear;
-      let effectiveMonth = localMonth;
-      let effectiveDate = localDate;
-      if (now < sunrise) {
-        const prevDay = new Date(localYear, localMonth, localDate - 1);
-        effectiveYear = prevDay.getFullYear();
-        effectiveMonth = prevDay.getMonth();
-        effectiveDate = prevDay.getDate();
-      }
-      const normalizedDate = new Date(effectiveYear, effectiveMonth, effectiveDate, 12, 0, 0, 0);
-      setCustomDate(getCreatorDateSync(normalizedDate));
+      setCurrentTime(new Date());
     }, 1000);
+
     return () => clearInterval(interval);
   }, []);
 
