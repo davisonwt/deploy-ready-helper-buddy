@@ -6,6 +6,7 @@ import { Sun, Moon } from 'lucide-react';
 
 import { calculateCreatorDate } from '@/utils/dashboardCalendar';
 import { getCreatorTime } from '@/utils/customTime';
+import { getDaysOutOfTimeCount } from '@/utils/customCalendar';
 import { useUserLocation } from '@/hooks/useUserLocation';
 import { BeadPopup } from './BeadPopup';
 
