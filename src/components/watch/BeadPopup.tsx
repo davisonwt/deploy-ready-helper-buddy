@@ -11,6 +11,7 @@ import { Button } from '../ui/button'
 import { ScrollArea } from '../ui/scroll-area'
 import { useToast } from '@/hooks/use-toast'
 import { sacredCalendarNotes } from '@/data/sacredCalendarNotes'
+import { GardenGuideSection } from '@/components/garden/GardenGuideSection'
 
 interface BeadPopupProps {
   isOpen: boolean
