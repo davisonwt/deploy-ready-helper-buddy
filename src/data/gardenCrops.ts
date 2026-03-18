@@ -298,7 +298,7 @@ export const GARDEN_CROPS: CropData[] = [
     companions: {
       good: ['tomato', 'pepper', 'oregano', 'marigold'],
       bad: ['sage', 'rue'],
-      notes: 'Plant near tomatoes — repels flies & improves flavor (Margaret Roberts)',
+      notes: 'Plant near tomatoes — helps repel flies and improve flavor',
     },
     moonPreference: 'leaf',
     frostSensitivity: 'tender',
