@@ -281,7 +281,7 @@ export const GARDEN_CROPS: CropData[] = [
     companions: {
       good: ['carrot', 'celery', 'onion'],
       bad: ['bean', 'pea'],
-      notes: 'Leeks & carrots confuse each other\'s pest flies (Margaret Roberts)',
+      notes: 'Leeks & carrots can confuse each other\'s pest flies',
     },
     moonPreference: 'root',
     frostSensitivity: 'hardy',
