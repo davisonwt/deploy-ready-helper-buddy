@@ -95,141 +95,32 @@ export default function DashboardPage() {
   // Calculate calendar data directly (without CalendarWheel component)
   useEffect(() => {
     const updateCalendarData = () => {
-      // Get current LOCAL time - no internet, no UTC conversion, just local time
       const now = new Date();
       const localYear = now.getFullYear();
       const localMonth = now.getMonth();
       const localDate = now.getDate();
       const localHour = now.getHours();
       const localMinute = now.getMinutes();
-      const sunrise = SunCalc.getTimes(now, userLat, userLon).sunrise;
+
+      // Normalize to local noon for sunrise lookup to avoid SunCalc previous-day edge cases.
+      const sunriseReferenceDate = new Date(localYear, localMonth, localDate, 12, 0, 0, 0);
+      const sunrise = SunCalc.getTimes(sunriseReferenceDate, userLat, userLon).sunrise;
       const isBeforeSunrise = now < sunrise;
 
-      // Debug logs only in development
+      const creatorDate = calculateCreatorDate(now, userLat, userLon);
+      const creatorTime = getCreatorTime(now, userLat, userLon);
+      const dayInfo = getDayInfo(creatorDate.dayOfYear);
+
       if (process.env.NODE_ENV === 'development') {
         console.log(`[Dashboard] ===== SUNRISE CHECK =====`);
         console.log(`[Dashboard] Current LOCAL time: ${localHour}:${localMinute.toString().padStart(2, '0')}:${now.getSeconds().toString().padStart(2, '0')}`);
         console.log(`[Dashboard] Sunrise time: ${sunrise.toLocaleTimeString()}`);
         console.log(`[Dashboard] Is before sunrise? ${isBeforeSunrise}`);
         console.log(`[Dashboard] Current Gregorian date: ${localYear}-${localMonth + 1}-${localDate}`);
-      }
-
-      // If current time is before sunrise, we're still on the previous calendar day
-      let effectiveYear = localYear;
-      let effectiveMonth = localMonth;
-      let effectiveDate = localDate;
-      if (isBeforeSunrise) {
-        // Still on previous day - go back one day using date arithmetic
-        const prevDayDate = new Date(localYear, localMonth, localDate);
-        prevDayDate.setDate(prevDayDate.getDate() - 1);
-        effectiveYear = prevDayDate.getFullYear();
-        effectiveMonth = prevDayDate.getMonth();
-        effectiveDate = prevDayDate.getDate();
-        if (process.env.NODE_ENV === 'development') {
-          console.log(`[Dashboard] ⚠️ BEFORE SUNRISE - Using PREVIOUS day: ${effectiveYear}-${effectiveMonth + 1}-${effectiveDate}`);
-        }
-      } else {
-        if (process.env.NODE_ENV === 'development') {
-          console.log(`[Dashboard] ✅ AFTER SUNRISE - Using CURRENT day: ${effectiveYear}-${effectiveMonth + 1}-${effectiveDate}`);
-        }
-      }
-
-      // Calculate Creator date using PURE LOCAL date arithmetic (NO UTC, NO getTime())
-      // Epoch: March 20, 2025 = Year 6028, Month 1, Day 1 (LOCAL time)
-      const epochYear = 2025;
-      const epochMonth = 2; // March (0-indexed)
-      const epochDate = 20;
-
-      // Calculate days difference using PURE date arithmetic (no milliseconds, no UTC)
-      let totalDays = 0;
-
-      // Count days from epoch to effective date using local date components only
-      let currentYear = epochYear;
-      let currentMonth = epochMonth;
-      let currentDate = epochDate;
-      const gregorianDaysPerMonth = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
-
-      // Check for leap years
-      const isLeapYear = year => year % 4 === 0 && year % 100 !== 0 || year % 400 === 0;
-      while (currentYear < effectiveYear || currentYear === effectiveYear && currentMonth < effectiveMonth || currentYear === effectiveYear && currentMonth === effectiveMonth && currentDate < effectiveDate) {
-        totalDays++;
-        currentDate++;
-        let daysInCurrentMonth = gregorianDaysPerMonth[currentMonth];
-        if (currentMonth === 1 && isLeapYear(currentYear)) {
-          daysInCurrentMonth = 29; // February in leap year
-        }
-        if (currentDate > daysInCurrentMonth) {
-          currentDate = 1;
-          currentMonth++;
-          if (currentMonth > 11) {
-            currentMonth = 0;
-            currentYear++;
-          }
-        }
-      }
-      if (process.env.NODE_ENV === 'development') {
-        console.log(`[Dashboard] Effective LOCAL: ${effectiveYear}-${effectiveMonth + 1}-${effectiveDate}`);
-        console.log(`[Dashboard] Epoch LOCAL: ${epochYear}-${epochMonth + 1}-${epochDate}`);
-        console.log(`[Dashboard] Days since epoch (PURE LOCAL): ${totalDays}`);
-      }
-
-      // Calculate Creator calendar date
-      const daysPerMonth = [30, 30, 31, 30, 30, 31, 30, 30, 31, 30, 30, 31];
-      let year = 6028;
-      let remainingDays = totalDays;
-
-      // Calculate year (regular 364 days + Days Out of Time)
-      while (remainingDays >= 364 + getDaysOutOfTimeCount(year)) {
-        remainingDays -= 364 + getDaysOutOfTimeCount(year);
-        year++;
-      }
-
-      // Calculate day index and apply Days Out of Time offset (after day 361)
-      const dotDaysThisYear = getDaysOutOfTimeCount(year);
-      let regularDayOfYear = remainingDays + 1;
-
-      if (regularDayOfYear > 361 && regularDayOfYear <= 361 + dotDaysThisYear) {
-        // During DOT window, keep regular count on day 361 (Month 12 Day 28)
-        regularDayOfYear = 361;
-      } else if (regularDayOfYear > 361 + dotDaysThisYear) {
-        // After DOT window, shift regular days forward by DOT count
-        regularDayOfYear -= dotDaysThisYear;
-      }
-
-      // Calculate month and day from adjusted regular day count
-      let month = 1;
-      let day = regularDayOfYear;
-      while (day > daysPerMonth[month - 1]) {
-        day -= daysPerMonth[month - 1];
-        month++;
-      }
-
-      // Weekday uses the 364-day count (DOT days do not advance weekday)
-      const weekDay = ((regularDayOfYear - 1 + 3) % 7) + 1;
-      const creatorDate = {
-        year,
-        month,
-        day,
-        weekDay
-      };
-      if (process.env.NODE_ENV === 'development') {
         console.log(`[Dashboard] Creator date result: Year ${creatorDate.year}, Month ${creatorDate.month}, Day ${creatorDate.day}, Weekday ${creatorDate.weekDay}`);
+        console.log(`[Dashboard] Day of year calculated: ${creatorDate.dayOfYear}`);
       }
-      const creatorTime = getCreatorTime(now, userLat, userLon); // Use current time for time parts
 
-      // Calculate day of year from adjusted Creator date
-      const monthDays = [30, 30, 31, 30, 30, 31, 30, 30, 31, 30, 30, 31];
-      let dayOfYear = 0;
-      for (let i = 0; i < creatorDate.month - 1; i++) {
-        dayOfYear += monthDays[i];
-      }
-      dayOfYear += creatorDate.day;
-      if (process.env.NODE_ENV === 'development') {
-        console.log(`[Dashboard] Day of year calculated: ${dayOfYear}`);
-      }
-      const dayInfo = getDayInfo(dayOfYear);
-
-      // Create timestamp string in LOCAL time (not UTC)
       // Format: YYYY-MM-DDTHH:mm:ss (local time, no timezone)
       const localTimestamp = `${localYear}-${String(localMonth + 1).padStart(2, '0')}-${String(localDate).padStart(2, '0')}T${String(localHour).padStart(2, '0')}:${String(localMinute).padStart(2, '0')}:${String(now.getSeconds()).padStart(2, '0')}`;
       const newCalendarData = {
@@ -238,20 +129,20 @@ export default function DashboardPage() {
         dayOfMonth: creatorDate.day,
         weekday: creatorDate.weekDay,
         part: creatorTime.part,
-        dayOfYear: dayOfYear,
+        dayOfYear: creatorDate.dayOfYear,
         season: dayInfo.isFeast ? dayInfo.feastName || 'Feast Day' : creatorDate.weekDay === 7 ? 'Sabbath Day' : 'Regular Day',
-        timestamp: localTimestamp // Use LOCAL time string, not UTC ISO string
+        timestamp: localTimestamp,
       };
+
       if (process.env.NODE_ENV === 'development') {
         console.log(`[Dashboard] Setting calendar data:`, newCalendarData);
       }
+
       setCalendarData(newCalendarData);
     };
 
-    // Run immediately and update every minute
     updateCalendarData();
-    const interval = setInterval(updateCalendarData, 60000); // Update every minute
-
+    const interval = setInterval(updateCalendarData, 60000);
     return () => clearInterval(interval);
   }, [userLat, userLon]);
 
