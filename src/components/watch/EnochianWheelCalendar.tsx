@@ -275,7 +275,13 @@ const Month1Strand = ({ dayOfMonth, year }: { dayOfMonth: number; year: number }
             >
               <div
                 className={`w-11 h-11 md:w-13 md:h-13 rounded-full border-3 md:border-4 border-black relative flex items-center justify-center cursor-pointer hover:scale-110 transition-transform ${bead.isFromMonth12 ? 'opacity-70' : ''}`}
-                onClick={() => !bead.isFromMonth12 && setSelectedBead({ year, month: 1, day: bead.displayNumber })}
+                onClick={() => {
+                  if (bead.isFromMonth12) {
+                    setSelectedMonth12Bead({ day: bead.day, weekCycleDay: bead.day - 28 });
+                  } else {
+                    setSelectedBead({ year, month: 1, day: bead.displayNumber });
+                  }
+                }}
                 title={bead.label}
                 style={{
                   background: `radial-gradient(circle at 30% 30%, #fff, ${bead.color})`,
