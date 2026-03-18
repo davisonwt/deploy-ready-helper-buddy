@@ -3407,6 +3407,7 @@ const Month10Strand = ({ dayOfMonth, year }: { dayOfMonth: number; year: number 
 
 
 
+      <BeadScrollWindow futureBeadCount={futureBeads.length}>
       {/* Future days (uncounted) - at top */}
       <div className="flex flex-col" style={{ gap: '1mm' }}>
 
