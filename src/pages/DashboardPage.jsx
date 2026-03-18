@@ -942,16 +942,7 @@ export default function DashboardPage() {
                         const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
                         return luminance > 0.45 ? '#0b1220' : '#ffffff';
                       })(),
-                      textShadow: (() => {
-                        const match = currentTheme.accent.match(/#[0-9a-fA-F]{6}/);
-                        const hex = match ? match[0] : '#26c6da';
-                        const clean = hex.replace('#', '');
-                        const r = parseInt(clean.slice(0, 2), 16);
-                        const g = parseInt(clean.slice(2, 4), 16);
-                        const b = parseInt(clean.slice(4, 6), 16);
-                        const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
-                        return luminance > 0.45 ? 'none' : '0 1px 2px rgba(0,0,0,0.3)';
-                      })(),
+                      textShadow: '-0.5px -0.5px 0 #000, 0.5px -0.5px 0 #000, -0.5px 0.5px 0 #000, 0.5px 0.5px 0 #000',
                       borderColor: currentTheme.cardBorder
                     }}>
                       {isProfile && user?.avatar_url ? (
@@ -983,16 +974,7 @@ export default function DashboardPage() {
                         const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
                         return luminance > 0.45 ? '#0b1220' : '#ffffff';
                       })(),
-                      textShadow: (() => {
-                        const match = currentTheme.accent.match(/#[0-9a-fA-F]{6}/);
-                        const hex = match ? match[0] : '#26c6da';
-                        const clean = hex.replace('#', '');
-                        const r = parseInt(clean.slice(0, 2), 16);
-                        const g = parseInt(clean.slice(2, 4), 16);
-                        const b = parseInt(clean.slice(4, 6), 16);
-                        const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
-                        return luminance > 0.45 ? 'none' : '0 1px 2px rgba(0,0,0,0.3)';
-                      })(),
+                      textShadow: '-0.5px -0.5px 0 #000, 0.5px -0.5px 0 #000, -0.5px 0.5px 0 #000, 0.5px 0.5px 0 #000',
                       borderColor: currentTheme.cardBorder
                     }}>
                       <span className="text-xs font-semibold truncate">{label}</span>
@@ -1018,7 +1000,8 @@ export default function DashboardPage() {
                   <Button className="w-full h-14 sm:h-16 rounded-2xl border shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105 font-medium text-xs sm:text-sm" style={{
                   background: 'linear-gradient(135deg, #f97316 0%, #ea580c 100%)',
                   color: '#fff',
-                  borderColor: '#f97316'
+                  borderColor: '#f97316',
+                  textShadow: '-0.5px -0.5px 0 #000, 0.5px -0.5px 0 #000, -0.5px 0.5px 0 #000, 0.5px 0.5px 0 #000'
                 }}>
                     <div className="text-center">
                       <MessageSquare className="h-4 w-4 sm:h-5 sm:w-5 mx-auto mb-1" />
@@ -1037,7 +1020,8 @@ export default function DashboardPage() {
                   <Button className="w-full h-14 sm:h-16 rounded-2xl border shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105 font-medium text-xs sm:text-sm" style={{
                   background: 'linear-gradient(135deg, #7c3aed 0%, #a855f7 100%)',
                   color: '#fff',
-                  borderColor: '#8b5cf6'
+                  borderColor: '#8b5cf6',
+                  textShadow: '-0.5px -0.5px 0 #000, 0.5px -0.5px 0 #000, -0.5px 0.5px 0 #000, 0.5px 0.5px 0 #000'
                 }}>
                     <div className="text-center">
                       <Music className="h-4 w-4 sm:h-5 sm:w-5 mx-auto mb-1" />
@@ -1051,7 +1035,8 @@ export default function DashboardPage() {
                   <Button className="w-full h-14 sm:h-16 rounded-2xl border shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105 font-medium text-xs sm:text-sm" style={{
                   background: 'linear-gradient(135deg, #6366f1, #8b5cf6)',
                   borderColor: '#0A1931',
-                  color: 'white'
+                  color: 'white',
+                  textShadow: '-0.5px -0.5px 0 #000, 0.5px -0.5px 0 #000, -0.5px 0.5px 0 #000, 0.5px 0.5px 0 #000'
                 }}>
                     <div className="text-center">
                       <BookOpen className="h-4 w-4 sm:h-5 sm:w-5 mx-auto mb-1" />
@@ -1078,7 +1063,8 @@ export default function DashboardPage() {
                   <Button className="w-full h-16 sm:h-20 rounded-2xl border shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-1 font-medium" style={{
                   background: currentTheme.primaryButton,
                   color: currentTheme.textPrimary,
-                  borderColor: currentTheme.accent
+                  borderColor: currentTheme.accent,
+                  textShadow: '-0.5px -0.5px 0 #000, 0.5px -0.5px 0 #000, -0.5px 0.5px 0 #000, 0.5px 0.5px 0 #000'
                 }}>
                     <div className="text-center">
                       <Megaphone className="h-5 w-5 sm:h-6 sm:w-6 mx-auto mb-1 sm:mb-2" />
@@ -1092,7 +1078,8 @@ export default function DashboardPage() {
                   <Button className="w-full h-16 sm:h-20 rounded-2xl border shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-1 font-medium" style={{
                   background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
                   color: '#fff',
-                  borderColor: '#10b981'
+                  borderColor: '#10b981',
+                  textShadow: '-0.5px -0.5px 0 #000, 0.5px -0.5px 0 #000, -0.5px 0.5px 0 #000, 0.5px 0.5px 0 #000'
                 }}>
                     <div className="text-center">
                       <Car className="h-5 w-5 sm:h-6 sm:w-6 mx-auto mb-1 sm:mb-2" />
@@ -1106,7 +1093,8 @@ export default function DashboardPage() {
                   <Button className="w-full h-16 sm:h-20 rounded-2xl border shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-1 font-medium" style={{
                   background: 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)',
                   color: '#fff',
-                  borderColor: '#f59e0b'
+                  borderColor: '#f59e0b',
+                  textShadow: '-0.5px -0.5px 0 #000, 0.5px -0.5px 0 #000, -0.5px 0.5px 0 #000, 0.5px 0.5px 0 #000'
                 }}>
                     <div className="text-center">
                       <Wrench className="h-5 w-5 sm:h-6 sm:w-6 mx-auto mb-1 sm:mb-2" />
