@@ -6,6 +6,7 @@ import { motion } from 'framer-motion';
 import { Sun, Moon, Sprout } from 'lucide-react';
 import { getMoonInfo } from '@/utils/lunarEngine';
 import { MOON_ELEMENT_LABELS } from '@/data/gardenCrops';
+import { AskLunaChat } from '@/components/garden/AskLunaChat';
 
 import { calculateCreatorDate } from '@/utils/dashboardCalendar';
 import { getCreatorTime } from '@/utils/customTime';
@@ -4866,6 +4867,8 @@ const EnochianTimepiece = () => {
       <Sun className="absolute top-4 right-4 w-12 h-12 md:w-16 md:h-16 lg:w-24 lg:h-24 text-amber-400 animate-pulse z-10" />
       <Moon className="absolute top-4 left-4 w-10 h-10 md:w-14 md:h-14 lg:w-20 lg:h-20 text-blue-300 animate-pulse z-10" />
 
+      {/* Ask Luna Floating Chat */}
+      <AskLunaChat />
 
     </div>
 

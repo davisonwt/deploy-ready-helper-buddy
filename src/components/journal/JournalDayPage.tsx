@@ -6,6 +6,8 @@ import {
   Heart, Smile, Frown, Meh, TrendingUp, Play, Pause, Loader2
 } from 'lucide-react';
 import GardenLogSection from '@/components/garden/GardenLogSection';
+import { GardenTaskCards } from '@/components/garden/GardenTaskCards';
+import { GardenStreakBadges } from '@/components/garden/GardenStreakBadges';
 import { Button } from '../ui/button';
 import { Card, CardContent } from '../ui/card';
 import { Badge } from '../ui/badge';
@@ -307,6 +309,21 @@ export default function JournalDayPage({ userId, date, onDateChange, entry, onSa
 
       {/* 🌱 Garden Log Section */}
       <GardenLogSection date={date} />
+
+      {/* 🌙 Garden Task Cards */}
+      <div className="border border-emerald-200/30 rounded-xl bg-emerald-950/20 p-3">
+        <GardenTaskCards
+          date={date}
+          weekDay={yhwhDate.weekDay}
+          yhwhMonth={yhwhDate.month}
+          yhwhDay={yhwhDate.day}
+        />
+      </div>
+
+      {/* 🏆 Garden Streak & Badges */}
+      <div className="border border-emerald-200/30 rounded-xl bg-emerald-950/20 p-3">
+        <GardenStreakBadges />
+      </div>
 
       {/* Journal Page Card */}
       <Card className="border-border/50 bg-card/80 backdrop-blur-sm">

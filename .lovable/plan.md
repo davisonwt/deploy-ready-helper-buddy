@@ -1,24 +1,20 @@
 ## Lunar Garden Hub — Implementation Progress
 
-### ✅ Step 1: Crops Data Layer (DONE)
-- `src/data/gardenCrops.ts` — 35+ crops with pH ranges, companions, moon prefs, categories
+### ✅ All 9 Steps Complete!
 
-### ✅ Step 2: Moon Phase Engine (DONE)
-- `src/utils/lunarEngine.ts` — synodic month calculator, zodiac, biodynamic elements
+| Step | What | Files |
+|------|-------|-------|
+| 1 | Crops data (pH, companions, moon prefs) | `src/data/gardenCrops.ts` |
+| 2 | Moon phase engine | `src/utils/lunarEngine.ts` |
+| 3 | Bead popup garden section | `src/components/garden/GardenGuideSection.tsx` |
+| 4 | Journal garden log tab | `src/components/garden/GardenLogSection.tsx` |
+| 5 | Wheel moon indicator | `EnochianWheelCalendar.tsx` footer |
+| 6 | Garden setup + Supabase tables | `garden_profiles`, `user_crops`, `garden_activities` + `GardenSetupModal.tsx` |
+| 7 | Task cards with moon overlays | `src/components/garden/GardenTaskCards.tsx` |
+| 8 | Ask Luna AI chat | `src/components/garden/AskLunaChat.tsx` |
+| 9 | Streaks, badges, user notes | `src/components/garden/GardenStreakBadges.tsx` |
 
-### ✅ Step 3: Bead Popup Integration (DONE)
-- `src/components/garden/GardenGuideSection.tsx` — collapsible garden guide in bead popups
-
-### ✅ Step 4: Journal Garden Log Tab (DONE)
-- `src/components/garden/GardenLogSection.tsx` — quick-log buttons, moon info, companion tips
-
-### ✅ Step 5: Wheel Moon Indicator (DONE)
-- Moon phase + zodiac + biodynamic element in wheel footer
-
-### ✅ Step 6: Garden Setup + Supabase (DONE)
-- `garden_profiles`, `user_crops`, `garden_activities` tables with RLS
-- `src/components/garden/GardenSetupModal.tsx` — crop selection, pH input, location
-
-### 🔲 Step 7: Task System with Moon Overlays
-### 🔲 Step 8: "Ask Luna" Floating AI Chat
-### 🔲 Step 9: Streak Counter + Badges + Polish
+### Additional Features
+- **Sabbath/Feast rest days**: `src/utils/gardenRestDays.ts` — all garden components show rest warnings on Shabbat and festival days
+- **User notes system**: Garden log allows notes on what worked/didn't, saved to `garden_activities` table
+- **pH compatibility**: Real-time pH checks against selected crops in setup modal
