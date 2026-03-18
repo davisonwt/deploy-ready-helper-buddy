@@ -4319,15 +4319,15 @@ const Month12Strand = ({ dayOfMonth, year }: { dayOfMonth: number; year: number 
       )}
 
       {/* Dot Day Popup */}
-      {selectedDotDay && (
+      {selectedDotDay && createPortal(
         <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/60 backdrop-blur-sm" onClick={() => setSelectedDotDay(null)}>
           <div 
-            className="relative w-[90vw] max-w-md bg-gradient-to-br from-purple-950 via-indigo-950 to-black rounded-3xl border-2 border-purple-500/50 shadow-2xl shadow-purple-900/50 p-8 text-center"
+            className="relative w-[90vw] max-w-md bg-gradient-to-br from-purple-950 via-indigo-950 to-black rounded-3xl border-2 border-purple-500/50 shadow-2xl shadow-purple-900/50 p-8 text-center max-h-[85vh] overflow-y-auto"
             onClick={(e) => e.stopPropagation()}
           >
             <button 
               onClick={() => setSelectedDotDay(null)}
-              className="absolute top-4 right-4 text-purple-300 hover:text-white text-2xl font-bold"
+              className="absolute top-4 right-4 text-purple-300 hover:text-white text-2xl font-bold z-10 bg-purple-950/80 rounded-full w-10 h-10 flex items-center justify-center"
             >
               ✕
             </button>
@@ -4363,7 +4363,8 @@ const Month12Strand = ({ dayOfMonth, year }: { dayOfMonth: number; year: number 
               <span className="w-8 h-[1px] bg-purple-700" />
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </div>
   );
