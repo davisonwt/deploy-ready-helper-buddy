@@ -1629,6 +1629,7 @@ const Month4Strand = ({ dayOfMonth, year }: { dayOfMonth: number; year: number }
           );
         })}
       </div>
+      </BeadScrollWindow>
 
 
 
