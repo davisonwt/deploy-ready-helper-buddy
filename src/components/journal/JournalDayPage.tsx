@@ -6,6 +6,8 @@ import {
   Heart, Smile, Frown, Meh, TrendingUp, Play, Pause, Loader2
 } from 'lucide-react';
 import GardenLogSection from '@/components/garden/GardenLogSection';
+import { GardenTaskCards } from '@/components/garden/GardenTaskCards';
+import { GardenStreakBadges } from '@/components/garden/GardenStreakBadges';
 import { Button } from '../ui/button';
 import { Card, CardContent } from '../ui/card';
 import { Badge } from '../ui/badge';
