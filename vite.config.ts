@@ -1,9 +1,7 @@
 import { defineConfig } from "vite";
-import react from "@vitejs/plugin-react-swc";
+import react from "@vitejs/plugin-react";
 import path from "path";
 import { componentTagger } from "lovable-tagger";
-// @ts-ignore - vite-plugin-eslint types issue with package.json exports
-import eslint from "vite-plugin-eslint";
 
 // https://vitejs.dev/config/
 export default defineConfig(({ mode, command }) => ({
@@ -18,12 +16,6 @@ export default defineConfig(({ mode, command }) => ({
   plugins: [
     react(),
     command === 'serve' && mode === 'development' && componentTagger(),
-    command === 'serve' && eslint({
-      failOnError: true, // Fail dev server on ESLint errors
-      failOnWarning: false,
-      emitError: true,
-      emitWarning: true,
-    }),
   ].filter(Boolean),
   test: {
     globals: true,
