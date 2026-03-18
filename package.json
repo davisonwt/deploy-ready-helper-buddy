@@ -69,6 +69,7 @@
     "@visx/legend": "^3.12.0",
     "@visx/responsive": "^3.12.0",
     "@visx/scale": "^3.12.0",
+    "@vitejs/plugin-react": "4.3.4",
     "assert": "^2.1.0",
     "buffer": "^6.0.3",
     "canvas-confetti": "^1.9.4",
