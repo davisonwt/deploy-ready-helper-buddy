@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import { createPortal } from 'react-dom'
 import { useNavigate } from 'react-router-dom'
-import { X, FileText, Image, Heart, Users, Sparkles, Calendar, Star, Trash2, BookOpen, PenLine } from 'lucide-react'
+import { X, FileText, Image, Heart, Users, Sparkles, Calendar, Star, Trash2, BookOpen, PenLine, ScrollText, ChevronDown, ChevronUp } from 'lucide-react'
 import { motion } from 'framer-motion'
 import { calculateCreatorDate } from '@/utils/dashboardCalendar'
 import { useAuth } from '@/hooks/useAuth'
@@ -10,6 +10,7 @@ import { Badge } from '../ui/badge'
 import { Button } from '../ui/button'
 import { ScrollArea } from '../ui/scroll-area'
 import { useToast } from '@/hooks/use-toast'
+import { sacredCalendarNotes } from '@/data/sacredCalendarNotes'
 
 interface BeadPopupProps {
   isOpen: boolean
@@ -52,6 +53,52 @@ function getFeastDayName(month: number, day: number): string | null {
     if (day === 1 || day === 15) return 'Feast Day'
   }
   return null
+}
+
+// Sacred History section component
+function SacredHistorySection({ month, day }: { month: number; day: number }) {
+  const [expanded, setExpanded] = useState(true);
+  const key = `M${month}_D${day}`;
+  const dayNotes = sacredCalendarNotes[key];
+
+  if (!dayNotes || (dayNotes.notes.length === 0 && !dayNotes.secondaryNotes?.length)) return null;
+
+  return (
+    <div className="bg-amber-50/80 rounded-2xl p-4 border border-amber-200/60">
+      <button
+        onClick={() => setExpanded(!expanded)}
+        className="flex items-center justify-between w-full mb-2"
+      >
+        <div className="flex items-center gap-2">
+          <ScrollText className="w-5 h-5 text-amber-700" />
+          <span className="font-semibold text-amber-900">Sacred History</span>
+        </div>
+        {expanded ? (
+          <ChevronUp className="w-4 h-4 text-amber-600" />
+        ) : (
+          <ChevronDown className="w-4 h-4 text-amber-600" />
+        )}
+      </button>
+      {expanded && (
+        <div className="space-y-1.5">
+          {dayNotes.notes.map((note, i) => (
+            <p key={i} className="text-amber-900/80 text-xs leading-relaxed pl-3 border-l-2 border-amber-300/60">
+              {note}
+            </p>
+          ))}
+          {dayNotes.secondaryNotes && dayNotes.secondaryNotes.length > 0 && (
+            <div className="mt-2 pt-2 border-t border-amber-200/40">
+              {dayNotes.secondaryNotes.map((note, i) => (
+                <p key={i} className="text-amber-700/70 text-xs italic pl-3">
+                  {note}
+                </p>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
 }
 
 export function BeadPopup({ isOpen, onClose, year, month, day }: BeadPopupProps) {
@@ -245,6 +292,8 @@ export function BeadPopup({ isOpen, onClose, year, month, day }: BeadPopupProps)
             {/* Content Area - scrollable */}
             <div className="flex-1 overflow-y-auto min-h-0" style={{ maxHeight: '60vh' }}>
               <div className="p-6 space-y-4">
+                {/* Sacred History Notes */}
+                <SacredHistorySection month={month} day={day} />
                 {loading ? (
                   <div className="text-center text-slate-500 py-8">
                     <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500 mx-auto mb-3" />

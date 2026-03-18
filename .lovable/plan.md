@@ -1,55 +1,21 @@
 
 
-## Add Sacred Calendar Biblical Notes to Bead Popups
+## Fix Create & Manage Section: Theme Colors + Sub-link Button Sizing
 
-### What
-Extract all biblical/historical event notes from the uploaded spreadsheet and embed them as a static data file. When a bead is tapped, the popup will display the relevant historical notes for that month/day alongside existing journal entries.
+Two issues to fix in `src/pages/DashboardPage.jsx`:
 
-### The Data
-The spreadsheet contains 364+ rows mapping each sacred calendar day (Month 1 Day 1 through Month 12 Day 31) to:
-- **Main notes** (column H): Biblical events, feast details, historical references from Jubilees, Enoch, Exodus, etc.
-- **Secondary notes** (column I): Song of the Sabbath Sacrifice numbers, additional context
+### 1. Button Colors — Use Theme Primary Gradient (not `secondaryButton`)
+The 8 icon-chip buttons currently use `currentTheme.secondaryButton` (a subtle transparent background). They should use `currentTheme.primaryButton` with proper contrast text color, matching the rest of the dashboard's themed buttons.
 
-Columns E (Gregorian date) and F (Gregorian day name) will be skipped as requested.
+**Line 934**: Change `background: currentTheme.secondaryButton` → `background: currentTheme.primaryButton` and compute contrast text color like `StatsFloatingButton` does.
 
-### Technical Approach
+### 2. Sub-links — Make Same Size as Icon-Chip Buttons
+The "364YHVH Orchards" and "My S2G Tribe" links are currently small pill text links. They should be the same `h-11 rounded-xl` buttons as the 8 chips above, using the same styling.
 
-**1. Create data file: `src/data/sacredCalendarNotes.ts`**
-- Export a `Record<string, { notes: string[]; secondaryNotes?: string[] }>` keyed by `"M{month}_D{day}"` (e.g., `"M1_D14"`)
-- Parse each `<br/>` and bullet (`•`) into separate array items for clean rendering
-- Cover all 12 months, all days (1-30/31), plus DOT days and intercalary days
-- This will be a large file (~2000+ lines) but it's static data — no runtime cost
+**Lines 949-956**: Convert from `<Link>` text pills to full `<Link><Button>` chips matching the grid buttons above, placed inside the same grid (or a 2-col grid below).
 
-**2. Update `src/components/watch/BeadPopup.tsx`**
-- Import the notes data
-- Look up `sacredCalendarNotes[`M${month}_D${day}`]`
-- Add a new "Sacred History" section (with a scroll icon) between the header and journal entries
-- Each note bullet rendered as a styled list item
-- Secondary notes shown in a smaller, muted style below
-- Section is collapsible (starts expanded) so it doesn't overwhelm the popup when journal entries also exist
+### Changes — `src/pages/DashboardPage.jsx`
 
-### UI Design for the Notes Section
-```text
-┌─────────────────────────────────────┐
-│  📜 Sacred History                  │
-│  ─────────────────────────────────  │
-│  • Passover Begins at Sunset...     │
-│  • Abraham offered Isaac...         │
-│  • Death Angel killed the 1st...    │
-│  • Moses & Israel kept Passover...  │
-│                                     │
-│  Song of the Sabbath Sacrifice #2   │
-│─────────────────────────────────────│
-│  📝 Your Journal Entry (existing)   │
-└─────────────────────────────────────┘
-```
-
-Styled with an amber/parchment background (`bg-amber-50/80`) to distinguish from the user's personal journal entries (blue).
-
-### Build Error Note
-The `@swc/core` native binding error is an infrastructure/build environment issue, not caused by code changes. It should resolve on retry.
-
-### Files to Create/Edit
-- **Create:** `src/data/sacredCalendarNotes.ts` — all 364 days of notes extracted from the spreadsheet
-- **Edit:** `src/components/watch/BeadPopup.tsx` — add Sacred History section
+- **Lines 933-936**: Change button style to use `currentTheme.primaryButton` for background, compute contrast text color based on accent hex luminance
+- **Lines 949-956**: Replace the small pill links with two full-sized `h-11 rounded-xl` buttons matching the icon-chip style, using the primary button gradient
 
