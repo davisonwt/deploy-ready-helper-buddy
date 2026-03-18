@@ -1036,7 +1036,7 @@ export default function DashboardPage() {
                   background: 'linear-gradient(135deg, #6366f1, #8b5cf6)',
                   borderColor: '#0A1931',
                   color: 'white',
-                  textShadow: '-0.5px -0.5px 0 #000, 0.5px -0.5px 0 #000, -0.5px 0.5px 0 #000, 0.5px 0.5px 0 #000'
+                  textShadow: '-0.3px -0.3px 0 #000, 0.3px -0.3px 0 #000, -0.3px 0.3px 0 #000, 0.3px 0.3px 0 #000'
                 }}>
                     <div className="text-center">
                       <BookOpen className="h-4 w-4 sm:h-5 sm:w-5 mx-auto mb-1" />
