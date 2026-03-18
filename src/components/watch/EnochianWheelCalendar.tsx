@@ -177,7 +177,7 @@ interface ExtendedBead {
   isNewYearStart: boolean;
 }
 
-const Month1Strand = ({ dayOfMonth, year }: { dayOfMonth: number; year: number }) => {
+const Month1Strand = ({ dayOfMonth, year, currentMonth, currentDayOfMonth }: { dayOfMonth: number; year: number; currentMonth?: number; currentDayOfMonth?: number }) => {
   const [showBloodDrop, setShowBloodDrop] = useState(false);
   const [currentPart, setCurrentPart] = useState(0);
   const [selectedBead, setSelectedBead] = useState<{ year: number; month: number; day: number } | null>(null);
