@@ -295,6 +295,9 @@ export function BeadPopup({ isOpen, onClose, year, month, day }: BeadPopupProps)
               <div className="p-6 space-y-4">
                 {/* Sacred History Notes */}
                 <SacredHistorySection month={month} day={day} />
+
+                {/* Garden Guide — Moon Phase + Companions + pH */}
+                <GardenGuideSection gregorianDate={getGregorianDateForYhwh(year, month, day)} />
                 {loading ? (
                   <div className="text-center text-slate-500 py-8">
                     <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500 mx-auto mb-3" />
