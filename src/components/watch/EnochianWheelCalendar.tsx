@@ -4130,9 +4130,13 @@ const Month12Strand = ({ dayOfMonth, year }: { dayOfMonth: number; year: number 
                 className={`relative w-11 h-11 md:w-12 md:h-12 rounded-full border-3 md:border-4 flex items-center justify-center cursor-pointer hover:scale-110 transition-transform ${
                   b.isDaysOutOfTime ? 'border-purple-900' : 'border-black'
                 }`}
-                onClick={() => b.beadType === 'regular' || b.beadType === 'newWeekCycle'
-                  ? setSelectedBead({ year, month: 12, day: b.day })
-                  : null}
+                onClick={() => {
+                  if (b.beadType === 'regular' || b.beadType === 'newWeekCycle') {
+                    setSelectedBead({ year, month: 12, day: b.day });
+                  } else if (b.isDaysOutOfTime) {
+                    setSelectedDotDay({ dotNumber: b.isDaysOutOfTime1 ? 1 : 2, label: b.label });
+                  }
+                }}
                 title={b.label}
                 style={{
                   background: b.isDaysOutOfTime
