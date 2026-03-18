@@ -66,7 +66,7 @@ function getLunaResponse(question: string, context: {
   // Companion planting questions
   if (q.includes('companion') || q.includes('pair') || q.includes('together') || q.includes('next to')) {
     const tip = getDailyCompanionTip(moonInfo.element);
-    let response = `🤝 **Companion Planting Tip** (Margaret Roberts' principles):\n\n${tip}\n\n`;
+    let response = `🤝 **Companion Planting Tip**:\n\n${tip}\n\n`;
     
     // Find specific crop mentions
     const mentionedCrop = GARDEN_CROPS.find(c => q.includes(c.name.toLowerCase()) || q.includes(c.key));
