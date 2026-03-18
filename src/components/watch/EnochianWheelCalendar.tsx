@@ -3883,7 +3883,7 @@ const Month12Strand = ({ dayOfMonth, year }: { dayOfMonth: number; year: number 
   }
 
   // Second: Days Out of Time (conditional beads after day 28)
-  const dotsThisYear = getDaysOutOfTimeCount(enochianDate.year);
+  const dotsThisYear = getDaysOutOfTimeCount(year);
 
   // Bead 1: If tequvah on 2nd day of 7th month, 1 day added (not counted)
   if (dotsThisYear >= 1) {
