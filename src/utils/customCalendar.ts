@@ -241,3 +241,17 @@ export function getDayOfWeek(date: CustomDate): string {
 export function isTequvahMonth(month: number): boolean {
   return month === 7;
 }
+
+/**
+ * Get the number of Days Out of Time for a given year.
+ * If tequvah appears on the 2nd day of the 7th month → 1 dot day (Helo-Yaseph).
+ * If tequvah appears on the 3rd day of the 7th month → 2 dot days (Helo-Yaseph + Asfa'el).
+ * Update this mapping each year based on observed tequvah.
+ */
+export function getDaysOutOfTimeCount(year: number): number {
+  // Known years — update annually based on tequvah observation
+  const knownYears: Record<number, number> = {
+    6028: 1, // 2025-2026: tequvah on 2nd day → 1 dot day
+  };
+  return knownYears[year] ?? 1; // Default to 1 if unknown
+}
