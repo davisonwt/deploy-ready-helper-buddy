@@ -288,6 +288,7 @@ const Month1Strand = ({ dayOfMonth, year }: { dayOfMonth: number; year: number }
       <h2 className="text-lg md:text-xl lg:text-2xl font-black text-amber-400 mb-2 md:mb-4 tracking-widest">MONTH 1</h2>
       <p className="text-xs text-amber-200/60 mb-2">33 Beads (includes days 29-31 from Month 12)</p>
       
+      <BeadScrollWindow futureBeadCount={futureBeads.length}>
       {/* Future days (uncounted) - at top */}
       <div className="flex flex-col" style={{ gap: '1mm' }}>
         {futureBeads.map((bead) => {
