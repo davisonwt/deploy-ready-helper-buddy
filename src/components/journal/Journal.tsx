@@ -447,9 +447,12 @@ export default function Journal() {
                     <Card
                       className="hover:shadow-lg transition-shadow cursor-pointer"
                       onClick={() => {
-                        const parts = (entry.createdAt || '').split('-');
-                        const d = parts.length === 3 ? new Date(+parts[0], +parts[1] - 1, +parts[2]) : new Date(entry.createdAt);
-                        setSelectedDate(d);
+                        const entryDate = getGregorianDateForYhwh(
+                          entry.yhwhDate.year,
+                          entry.yhwhDate.month,
+                          entry.yhwhDate.day
+                        );
+                        setSelectedDate(entryDate);
                         setActiveTab('today');
                       }}
                     >
