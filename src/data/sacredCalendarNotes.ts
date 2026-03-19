@@ -14,6 +14,7 @@ export const sacredCalendarNotes: Record<string, CalendarDayNotes> = {
   "M1_D1": {
     notes: [
       "Day of the Season: Spring",
+      "Creation Day 4 — Berĕshith (Genesis) 1:14-19",
       "The Sun comes out of his chamber to run his race (Psalm 19:5-6). Sun will rise in the 4th Portal.",
       "Tam'ayen, who is the Leader of the Order of the 1st Month (Enoch 82:15)",
       "Noah's Memorial Festival Day of Remembrance #1 of 4 (Jubilees 6:23-29)",
@@ -33,6 +34,12 @@ export const sacredCalendarNotes: Record<string, CalendarDayNotes> = {
       "Jacob arrived at Bethel and had the dream of the ladder (Jubilees 27:19-28)",
     ],
     secondaryNotes: [
+      "14 And Elohim said, \"Let lights come to be in the expanse of the heavens to separate the day from the night, and let them be for signs and appointed times, and for days and years,",
+      "15 and let them be for lights in the expanse of the heavens to give light on the earth.\" And it came to be so.",
+      "16 And Elohim made two great lights: the greater light to rule the day, and the lesser light to rule the night, and the stars.",
+      "17 And Elohim set them in the expanse of the heavens to give light on the earth,",
+      "18 and to rule over the day and over the night, and to separate the light from the darkness. And Elohim saw that it was good.",
+      "19 And there came to be evening and there came to be morning, the fourth day.",
       "The rain, former rain and latter day rain will come down in the first month (Joel 2:23)",
     ],
   },
@@ -1133,6 +1140,28 @@ export const sacredCalendarNotes: Record<string, CalendarDayNotes> = {
       "Evilmerodach became King of Babylon and brought Jehoiachin king of Judah out of prison (Jeremiah 52:31 & 2 Kings 25:27-30 — 2 or 3 day difference in texts)",
     ],
   },
+  "M12_D29": {
+    notes: [
+      "New Year Week Cycle — Day 1 of the new seven day week cycle",
+      "Creation Day 1 — Berĕshith (Genesis) 1:3-5",
+    ],
+    secondaryNotes: [
+      "3 And Elohim said, \"Let light come to be,\" and light came to be.",
+      "4 And Elohim saw the light, that it was good. And Elohim separated the light from the darkness.",
+      "5 And Elohim called the light 'day' and the darkness He called 'night.' And there came to be evening and there came to be morning, one day.",
+    ],
+  },
+  "M12_D30": {
+    notes: [
+      "New Year Week Cycle — Day 2 of the new seven day week cycle",
+      "Creation Day 2 — Berĕshith (Genesis) 1:6-8",
+    ],
+    secondaryNotes: [
+      "6 And Elohim said, \"Let an expanse come to be in the midst of the waters, and let it separate the waters from the waters.\"",
+      "7 And Elohim made the expanse, and separated the waters which were under the expanse from the waters which were above the expanse. And it came to be so.",
+      "8 And Elohim called the expanse 'heavens.' And there came to be evening and there came to be morning, the second day.",
+    ],
+  },
   "M12_D31": {
     notes: [
       "[Parents Day of Honor]",
@@ -1142,6 +1171,15 @@ export const sacredCalendarNotes: Record<string, CalendarDayNotes> = {
       "364th Day of the year, the Sun finishes his race and goes into his tabernacle / chamber (Psalm 19:6)",
       "The name of the 4th additional Captain of a Thousand has been lost (missing from Enoch 82)",
       "The daughters of Israel went to lament the daughter of Jephthah the Gileadite four days a year (Judges 11:39-40)",
+      "New Year Week Cycle — Day 3 of the new seven day week cycle",
+      "Creation Day 3 — Berĕshith (Genesis) 1:9-13",
+    ],
+    secondaryNotes: [
+      "9 And Elohim said, \"Let the waters under the heavens be gathered together into one place, and let the dry land appear.\" And it came to be so.",
+      "10 And Elohim called the dry land 'earth,' and the collection of the waters He called 'seas.' And Elohim saw that it was good.",
+      "11 And Elohim said, \"Let the earth bring forth grass, the plant that yields seed, and the fruit tree that yields fruit according to its kind, whose seed is in itself, on the earth.\" And it came to be so.",
+      "12 And the earth brought forth grass, the plant that yields seed according to its kind, and the tree that yields fruit, whose seed is in itself according to its kind. And Elohim saw that it was good.",
+      "13 And there came to be evening and there came to be morning, the third day.",
     ],
   },
 
