@@ -139,14 +139,28 @@ export default function CalendarGrid({ entries: propEntries, onDateSelect }: Cal
             : getGregorianDateForYhwh(entry.yhwh_year, entry.yhwh_month, entry.yhwh_day);
           const normalizedYhwh = calculateCreatorDate(gregorianDate);
 
+          const hasStoredYhwhDate =
+            Number.isFinite(Number(entry.yhwh_year)) &&
+            Number.isFinite(Number(entry.yhwh_month)) &&
+            Number.isFinite(Number(entry.yhwh_day));
+
+          const resolvedYhwhDate = hasStoredYhwhDate
+            ? {
+                year: Number(entry.yhwh_year),
+                month: Number(entry.yhwh_month),
+                day: Number(entry.yhwh_day),
+                weekDay: Number(entry.yhwh_weekday) || normalizedYhwh.weekDay,
+              }
+            : {
+                year: normalizedYhwh.year,
+                month: normalizedYhwh.month,
+                day: normalizedYhwh.day,
+                weekDay: normalizedYhwh.weekDay,
+              };
+
           return {
             id: entry.id,
-            yhwhDate: {
-              year: normalizedYhwh.year,
-              month: normalizedYhwh.month,
-              day: normalizedYhwh.day,
-              weekDay: normalizedYhwh.weekDay,
-            },
+            yhwhDate: resolvedYhwhDate,
             gregorianDate: gregorianDate.toLocaleDateString('en-US', {
               year: 'numeric',
               month: 'long',

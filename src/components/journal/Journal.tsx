@@ -236,14 +236,28 @@ export default function Journal() {
         const normalizedYhwhDate = calculateCreatorDate(gregorianDate);
         const gregorianDateKey = toLocalDateKey(gregorianDate);
 
+        const hasStoredYhwhDate =
+          Number.isFinite(Number(entry.yhwh_year)) &&
+          Number.isFinite(Number(entry.yhwh_month)) &&
+          Number.isFinite(Number(entry.yhwh_day));
+
+        const resolvedYhwhDate = hasStoredYhwhDate
+          ? {
+              year: Number(entry.yhwh_year),
+              month: Number(entry.yhwh_month),
+              day: Number(entry.yhwh_day),
+              weekDay: Number(entry.yhwh_weekday) || normalizedYhwhDate.weekDay,
+            }
+          : {
+              year: normalizedYhwhDate.year,
+              month: normalizedYhwhDate.month,
+              day: normalizedYhwhDate.day,
+              weekDay: normalizedYhwhDate.weekDay,
+            };
+
         return {
           id: entry.id,
-          yhwhDate: {
-            year: normalizedYhwhDate.year,
-            month: normalizedYhwhDate.month,
-            day: normalizedYhwhDate.day,
-            weekDay: normalizedYhwhDate.weekDay,
-          },
+          yhwhDate: resolvedYhwhDate,
           gregorianDate: formatGregorianForDisplay(gregorianDate),
           content: entry.content,
           mood: entry.mood,
