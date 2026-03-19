@@ -90,15 +90,6 @@ const MOOD_COLORS = {
 const DAYS_PER_MONTH = [30, 30, 31, 30, 30, 31, 30, 30, 31, 30, 30, 31];
 const EPOCH_DATE = new Date(2025, 2, 20);
 
-const toLocalDateKey = (date: Date) =>
-  `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
-
-const parseLocalDateKey = (dateKey?: string | null): Date | null => {
-  if (!dateKey || typeof dateKey !== 'string') return null;
-  const [year, month, day] = dateKey.split('-').map(Number);
-  if (!year || !month || !day) return null;
-  return new Date(year, month - 1, day, 12, 0, 0, 0);
-};
 
 const getGregorianDateForYhwh = (yhwhYear: number, yhwhMonth: number, yhwhDay: number): Date => {
   let daysFromEpoch = 0;
