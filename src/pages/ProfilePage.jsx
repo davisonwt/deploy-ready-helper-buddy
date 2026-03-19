@@ -1270,7 +1270,12 @@ export default function ProfilePage() {
               </TabsContent>
 
               <TabsContent value="journal" className="mt-6">
-                <Journal />
+                <Journal 
+                  initialYhwhYear={journalYear}
+                  initialYhwhMonth={journalMonth}
+                  initialYhwhDay={journalDay}
+                  initialView={journalView}
+                />
               </TabsContent>
 
               <TabsContent value="recipes" className="mt-6">
