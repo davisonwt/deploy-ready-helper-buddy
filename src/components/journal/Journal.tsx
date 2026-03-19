@@ -275,7 +275,7 @@ export default function Journal() {
 
   useEffect(() => {
     loadEntries();
-  }, [user]);
+  }, [user, migrated, didLegacyOffsetRepair]);
 
   // Real-time subscription
   useEffect(() => {
