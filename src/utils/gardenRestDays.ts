@@ -32,9 +32,11 @@ export function getFeastInfo(month: number, day: number): { name: string; isRest
   }
   // Month 2 feasts
   if (month === 2) {
+    if (day === 1) return { name: 'New Month', isRestDay: false };
     if (day === 14) return { name: 'Second Pesach', isRestDay: false };
     if (day === 15) return { name: 'Unleavened Bread (Day 1)', isRestDay: true };
     if (day === 21) return { name: 'Unleavened Bread (Day 7)', isRestDay: true };
+    if (day >= 16 && day <= 20) return { name: 'Unleavened Bread', isRestDay: false };
   }
   // Month 3 feasts
   if (month === 3) {
