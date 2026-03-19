@@ -215,6 +215,66 @@ export default function Journal() {
         setDidLegacyOffsetRepair(true);
       }
 
+      const calendarRepairPayload = entriesData
+        .map((entry: any) => {
+          const parsedGregorian = parseLocalDateKey(entry.gregorian_date);
+          if (!parsedGregorian) return null;
+
+          const canonicalYhwh = calculateYhwhDateFromCivilDate(parsedGregorian);
+          const storedYear = Number(entry.yhwh_year);
+          const storedMonth = Number(entry.yhwh_month);
+          const storedDay = Number(entry.yhwh_day);
+          const storedWeekday = Number(entry.yhwh_weekday);
+          const storedDayOfYear = Number(entry.yhwh_day_of_year);
+
+          const isMismatch =
+            !Number.isFinite(storedYear) ||
+            !Number.isFinite(storedMonth) ||
+            !Number.isFinite(storedDay) ||
+            storedYear !== canonicalYhwh.year ||
+            storedMonth !== canonicalYhwh.month ||
+            storedDay !== canonicalYhwh.day ||
+            (Number.isFinite(storedWeekday) && storedWeekday !== canonicalYhwh.weekDay) ||
+            (Number.isFinite(storedDayOfYear) && storedDayOfYear !== canonicalYhwh.dayOfYear);
+
+          if (!isMismatch) return null;
+
+          return {
+            id: entry.id,
+            ...canonicalYhwh,
+          };
+        })
+        .filter(Boolean) as Array<{ id: string; year: number; month: number; day: number; weekDay: number; dayOfYear: number }>;
+
+      if (calendarRepairPayload.length > 0) {
+        await Promise.all(
+          calendarRepairPayload.map((payload) =>
+            supabase
+              .from('journal_entries')
+              .update({
+                yhwh_year: payload.year,
+                yhwh_month: payload.month,
+                yhwh_day: payload.day,
+                yhwh_weekday: payload.weekDay,
+                yhwh_day_of_year: payload.dayOfYear,
+                is_shabbat: payload.weekDay === 7,
+                updated_at: new Date().toISOString(),
+              })
+              .eq('id', payload.id)
+              .eq('user_id', user.id)
+          )
+        );
+
+        const { data: repairedData, error: repairedError } = await supabase
+          .from('journal_entries')
+          .select('*')
+          .eq('user_id', user.id)
+          .order('created_at', { ascending: false });
+
+        if (repairedError) throw repairedError;
+        entriesData = repairedData || [];
+      }
+
       setRawEntries(entriesData);
 
       const safeArray = (val: any): any[] => {
