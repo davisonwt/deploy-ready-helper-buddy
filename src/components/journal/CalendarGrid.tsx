@@ -61,7 +61,8 @@ function getGregorianDateForYhwh(yhwhYear: number, yhwhMonth: number, yhwhDay: n
   
   const gregorianDate = new Date(EPOCH_DATE);
   gregorianDate.setDate(gregorianDate.getDate() + daysFromEpoch);
-  
+  gregorianDate.setHours(12, 0, 0, 0);
+
   return gregorianDate;
 }
 
