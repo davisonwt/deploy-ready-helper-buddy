@@ -174,50 +174,72 @@ export default function CalendarGrid({ entries: propEntries, onDateSelect }: Cal
   const calendarDays = useMemo(() => {
     const days: Array<{
       gregorianDate: Date;
-      yhwhDate: ReturnType<typeof calculateCreatorDate>;
+      yhwhDate: ReturnType<typeof calculateCreatorDate> & { isDayOutOfTime?: boolean; dotDay?: number };
       hasEntry: boolean;
       entry?: JournalEntry;
       birthdays: Array<{ yhwh_month: number; yhwh_day: number; person_name: string }>;
+      isDot?: boolean;
+      dotDay?: number;
+      displayLabel?: string;
     }> = [];
 
     const daysInMonth = DAYS_PER_MONTH[currentYhwhMonth - 1];
+    const dotCount = currentYhwhMonth === 12 ? getDaysOutOfTimeCount(currentYhwhYear) : 0;
     
-    // Generate all days in the YHWH month
     const monthDays = [30, 30, 31, 30, 30, 31, 30, 30, 31, 30, 30, 31];
+
     for (let day = 1; day <= daysInMonth; day++) {
+      // After day 28 in Month 12, insert DOT days
+      if (currentYhwhMonth === 12 && day === 29 && dotCount > 0) {
+        for (let dot = 1; dot <= dotCount; dot++) {
+          const gregorianDate = getGregorianDateForYhwh(currentYhwhYear, 12, 28, true, dot);
+          const gregorianAtNoon = new Date(gregorianDate);
+          gregorianAtNoon.setHours(12, 0, 0, 0);
+          const yhwhDate = calculateCreatorDate(gregorianAtNoon);
+          
+          // DOT days don't advance weekday — use day 28's weekday (Sabbath = 7)
+          const yhwhDateDot = { ...yhwhDate, weekDay: 7, isDayOutOfTime: true, dotDay: dot };
+
+          days.push({
+            gregorianDate,
+            yhwhDate: yhwhDateDot,
+            hasEntry: false,
+            birthdays: [],
+            isDot: true,
+            dotDay: dot,
+            displayLabel: `DOT ${dot}`,
+          });
+        }
+      }
+
       const gregorianDate = getGregorianDateForYhwh(currentYhwhYear, currentYhwhMonth, day);
-      // Use noon to avoid sunrise time issues when calculating YHWH date
       const gregorianAtNoon = new Date(gregorianDate);
       gregorianAtNoon.setHours(12, 0, 0, 0);
       const yhwhDate = calculateCreatorDate(gregorianAtNoon);
       
-      // Calculate day of year for fixed weekday pattern
       let dayOfYear = 0;
       for (let i = 0; i < currentYhwhMonth - 1; i++) {
         dayOfYear += monthDays[i];
       }
       dayOfYear += day;
       
-      // Override weekday with fixed pattern calculation (same for all years)
-      const STARTING_WEEKDAY_YEAR_6028 = 4; // Year 6028 Month 1 Day 1 = Day 4
+      const STARTING_WEEKDAY_YEAR_6028 = 4;
       const fixedWeekday = ((dayOfYear - 1 + STARTING_WEEKDAY_YEAR_6028 - 1) % 7) + 1;
       const yhwhDateWithFixedWeekday = { ...yhwhDate, weekDay: fixedWeekday };
       
-      // Find entry for this date (match by YHWH date for accurate syncing)
       const entry = entries.find(e => 
         e.yhwhDate.year === currentYhwhYear &&
         e.yhwhDate.month === currentYhwhMonth &&
         e.yhwhDate.day === day
       );
 
-      // Find birthdays for this date (matches month and day, repeats every year)
       const dayBirthdays = birthdays.filter(
         b => b.yhwh_month === currentYhwhMonth && b.yhwh_day === day
-      )
+      );
 
       days.push({
-        gregorianDate, // Keep original for display
-        yhwhDate: yhwhDateWithFixedWeekday, // Use fixed weekday pattern
+        gregorianDate,
+        yhwhDate: yhwhDateWithFixedWeekday,
         hasEntry: !!entry,
         entry,
         birthdays: dayBirthdays,
