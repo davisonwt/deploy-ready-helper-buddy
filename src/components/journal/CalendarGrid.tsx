@@ -376,36 +376,40 @@ export default function CalendarGrid({ entries: propEntries, onDateSelect }: Cal
           {calendarDays.map((day, idx) => {
             const isToday = day.gregorianDate.toDateString() === new Date().toDateString();
             const isShabbatDay = isShabbat(day.yhwhDate);
-            const isTequvahDay = isTequvah(day.yhwhDate);
+            const isTequvahDay = !day.isDot && isTequvah(day.yhwhDate);
+            const isDotDay = !!day.isDot;
 
             return (
               <motion.button
                 key={idx}
                 onClick={() => {
-                  setSelectedDay({ date: day.gregorianDate, yhwhDate: day.yhwhDate });
-                  setIsOptionsMenuOpen(true);
-                  if (onDateSelect) {
-                    onDateSelect(day.gregorianDate);
+                  if (!isDotDay) {
+                    setSelectedDay({ date: day.gregorianDate, yhwhDate: day.yhwhDate });
+                    setIsOptionsMenuOpen(true);
+                    if (onDateSelect) {
+                      onDateSelect(day.gregorianDate);
+                    }
                   }
                 }}
                 className={`
                   aspect-square p-2 rounded-lg border-2 transition-all
-                  ${isToday ? 'border-primary bg-primary/10' : 'border-border'}
-                  ${day.hasEntry ? 'bg-success/10 hover:bg-success/20' : 'hover:bg-muted/50'}
-                  ${day.birthdays && day.birthdays.length > 0 ? 'bg-pink-500/10 ring-1 ring-pink-500/30' : ''}
-                  ${isShabbatDay ? 'bg-yellow-500/20' : ''}
-                  ${isTequvahDay ? 'ring-2 ring-amber-500/50' : ''}
+                  ${isDotDay ? 'border-purple-500/60 bg-purple-900/30 hover:bg-purple-900/50' : ''}
+                  ${!isDotDay && isToday ? 'border-primary bg-primary/10' : !isDotDay ? 'border-border' : ''}
+                  ${!isDotDay && day.hasEntry ? 'bg-success/10 hover:bg-success/20' : !isDotDay ? 'hover:bg-muted/50' : ''}
+                  ${!isDotDay && day.birthdays && day.birthdays.length > 0 ? 'bg-pink-500/10 ring-1 ring-pink-500/30' : ''}
+                  ${!isDotDay && isShabbatDay ? 'bg-yellow-500/20' : ''}
+                  ${!isDotDay && isTequvahDay ? 'ring-2 ring-amber-500/50' : ''}
                 `}
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
               >
                 <div className="flex flex-col items-center justify-center h-full">
-                  {/* YHWH day number - PRIMARY */}
+                  {/* Day label */}
                   <div className={`
                     text-lg font-bold mb-1
-                    ${isToday ? 'text-primary' : 'text-foreground'}
+                    ${isDotDay ? 'text-purple-300' : isToday ? 'text-primary' : 'text-foreground'}
                   `}>
-                    {day.yhwhDate.day}
+                    {day.displayLabel || day.yhwhDate.day}
                   </div>
 
                   {/* Gregorian date - SECONDARY */}
