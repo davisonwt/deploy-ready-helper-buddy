@@ -14,6 +14,7 @@ export const sacredCalendarNotes: Record<string, CalendarDayNotes> = {
   "M1_D1": {
     notes: [
       "Day of the Season: Spring",
+      "Creation Day 4 — Berĕshith (Genesis) 1:14-19",
       "The Sun comes out of his chamber to run his race (Psalm 19:5-6). Sun will rise in the 4th Portal.",
       "Tam'ayen, who is the Leader of the Order of the 1st Month (Enoch 82:15)",
       "Noah's Memorial Festival Day of Remembrance #1 of 4 (Jubilees 6:23-29)",
@@ -33,6 +34,12 @@ export const sacredCalendarNotes: Record<string, CalendarDayNotes> = {
       "Jacob arrived at Bethel and had the dream of the ladder (Jubilees 27:19-28)",
     ],
     secondaryNotes: [
+      "14 And Elohim said, \"Let lights come to be in the expanse of the heavens to separate the day from the night, and let them be for signs and appointed times, and for days and years,",
+      "15 and let them be for lights in the expanse of the heavens to give light on the earth.\" And it came to be so.",
+      "16 And Elohim made two great lights: the greater light to rule the day, and the lesser light to rule the night, and the stars.",
+      "17 And Elohim set them in the expanse of the heavens to give light on the earth,",
+      "18 and to rule over the day and over the night, and to separate the light from the darkness. And Elohim saw that it was good.",
+      "19 And there came to be evening and there came to be morning, the fourth day.",
       "The rain, former rain and latter day rain will come down in the first month (Joel 2:23)",
     ],
   },
