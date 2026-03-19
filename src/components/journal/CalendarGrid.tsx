@@ -495,6 +495,14 @@ export default function CalendarGrid({ entries: propEntries, onDateSelect }: Cal
                         T
                       </Badge>
                     )}
+                    {omerCount && (
+                      <Badge 
+                        className={`bg-black/30 font-bold text-[8px] px-1 py-0 border border-current ${omerCount.color}`}
+                        title={`${omerCount.label} Day ${omerCount.count}${omerCount.count % 7 === 0 ? ' (Sabbath ' + (omerCount.count / 7) + ')' : ''}`}
+                      >
+                        {omerCount.count}{omerCount.count % 7 === 0 ? '🕎' : ''}
+                      </Badge>
+                    )}
                   </div>
                 </div>
               </motion.button>
