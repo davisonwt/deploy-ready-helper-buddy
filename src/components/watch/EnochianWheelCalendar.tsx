@@ -499,7 +499,7 @@ const Month1Strand = ({ dayOfMonth, year, currentMonth, currentDayOfMonth }: { d
               New Year Week Cycle Day {selectedMonth12Bead.weekCycleDay}
             </div>
 
-            <div className="bg-amber-900/30 rounded-2xl p-5 border border-amber-700/30">
+            <div className="bg-amber-900/30 rounded-2xl p-5 border border-amber-700/30 mb-4">
               <p className="text-amber-100 text-sm leading-relaxed">
                 {selectedMonth12Bead.day === 29 && 
                   "Day 29 of the 12th month will always represent day 1 of the new seven day week cycle of the new year."}
@@ -508,6 +508,34 @@ const Month1Strand = ({ dayOfMonth, year, currentMonth, currentDayOfMonth }: { d
                 {selectedMonth12Bead.day === 31 && 
                   "Day 31 of the 12th month will always represent day 3 of the new seven day week cycle of the new year."}
               </p>
+            </div>
+
+            {/* Genesis Creation Day Scripture */}
+            <div className="bg-stone-800/60 rounded-2xl p-5 border border-amber-600/20">
+              <h3 className="text-amber-400 font-bold text-sm mb-3 tracking-wide">
+                {selectedMonth12Bead.day === 29 && "🕯️ Creation Day 1 — Berĕshith (Genesis) 1:3-5"}
+                {selectedMonth12Bead.day === 30 && "🕯️ Creation Day 2 — Berĕshith (Genesis) 1:6-8"}
+                {selectedMonth12Bead.day === 31 && "🕯️ Creation Day 3 — Berĕshith (Genesis) 1:9-13"}
+              </h3>
+              <div className="text-amber-100/80 text-xs leading-relaxed space-y-2 text-left">
+                {selectedMonth12Bead.day === 29 && <>
+                  <p>3 And Elohim said, "Let light come to be," and light came to be.</p>
+                  <p>4 And Elohim saw the light, that it was good. And Elohim separated the light from the darkness.</p>
+                  <p>5 And Elohim called the light 'day' and the darkness He called 'night.' And there came to be evening and there came to be morning, one day.</p>
+                </>}
+                {selectedMonth12Bead.day === 30 && <>
+                  <p>6 And Elohim said, "Let an expanse come to be in the midst of the waters, and let it separate the waters from the waters."</p>
+                  <p>7 And Elohim made the expanse, and separated the waters which were under the expanse from the waters which were above the expanse. And it came to be so.</p>
+                  <p>8 And Elohim called the expanse 'heavens.' And there came to be evening and there came to be morning, the second day.</p>
+                </>}
+                {selectedMonth12Bead.day === 31 && <>
+                  <p>9 And Elohim said, "Let the waters under the heavens be gathered together into one place, and let the dry land appear." And it came to be so.</p>
+                  <p>10 And Elohim called the dry land 'earth,' and the collection of the waters He called 'seas.' And Elohim saw that it was good.</p>
+                  <p>11 And Elohim said, "Let the earth bring forth grass, the plant that yields seed, and the fruit tree that yields fruit according to its kind, whose seed is in itself, on the earth." And it came to be so.</p>
+                  <p>12 And the earth brought forth grass, the plant that yields seed according to its kind, and the tree that yields fruit, whose seed is in itself according to its kind. And Elohim saw that it was good.</p>
+                  <p>13 And there came to be evening and there came to be morning, the third day.</p>
+                </>}
+              </div>
             </div>
           </div>
         </div>,
