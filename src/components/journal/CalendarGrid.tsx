@@ -438,6 +438,14 @@ export default function CalendarGrid({ entries: propEntries, onDateSelect }: Cal
                         S
                       </Badge>
                     )}
+                    {feastInfo && (
+                      <Badge
+                        className="bg-cyan-500/20 text-cyan-700 text-[8px] px-1 py-0"
+                        title={feastInfo.name}
+                      >
+                        F
+                      </Badge>
+                    )}
                     {isTequvahDay && (
                       <Badge className="bg-amber-500/20 text-amber-700 text-[8px] px-1 py-0">
                         T
