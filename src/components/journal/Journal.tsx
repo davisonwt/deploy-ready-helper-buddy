@@ -435,7 +435,7 @@ export default function Journal() {
     const matchByGregorian = rawEntries.find((entry) => entry.gregorian_date === selectedDateKey);
     if (matchByGregorian) return matchByGregorian;
 
-    const selectedYhwhDate = calculateCreatorDate(selectedDate);
+    const selectedYhwhDate = calculateYhwhDateFromCivilDate(selectedDate);
     return rawEntries.find((entry) =>
       entry.yhwh_year === selectedYhwhDate.year &&
       entry.yhwh_month === selectedYhwhDate.month &&
