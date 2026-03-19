@@ -139,7 +139,7 @@ export default function Journal() {
         mood: entry.mood,
         tags: safeArray(entry.tags),
         images: safeArray(entry.images),
-        createdAt: entry.created_at,
+        createdAt: entry.gregorian_date || entry.created_at,
         updatedAt: entry.updated_at,
         partOfYowm: entry.part_of_yowm,
         watch: entry.watch,
