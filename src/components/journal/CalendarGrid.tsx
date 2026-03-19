@@ -5,6 +5,7 @@ import { Button } from '../ui/button';
 import { Card, CardContent } from '../ui/card';
 import { Badge } from '../ui/badge';
 import { calculateCreatorDate } from '@/utils/dashboardCalendar';
+import { getDaysOutOfTimeCount } from '@/utils/customCalendar';
 import { JournalEntry } from './Journal';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
