@@ -121,21 +121,33 @@ const formatGregorianForDisplay = (date: Date) =>
     day: 'numeric',
   });
 
-export default function Journal() {
+interface JournalProps {
+  initialYhwhYear?: number;
+  initialYhwhMonth?: number;
+  initialYhwhDay?: number;
+  initialView?: string;
+}
+
+export default function Journal({ initialYhwhYear, initialYhwhMonth, initialYhwhDay, initialView }: JournalProps = {}) {
   const { location } = useUserLocation();
   const { user } = useAuth();
   const [entries, setEntries] = useState<JournalEntry[]>([]);
   const [rawEntries, setRawEntries] = useState<any[]>([]);
-  const [selectedDate, setSelectedDate] = useState<Date>(new Date());
+  const [selectedDate, setSelectedDate] = useState<Date>(() => {
+    // If deep-linked with sacred date params, convert to Gregorian
+    if (initialYhwhYear && initialYhwhMonth && initialYhwhDay) {
+      return getGregorianDateForYhwh(initialYhwhYear, initialYhwhMonth, initialYhwhDay);
+    }
+    return new Date();
+  });
   const [searchQuery, setSearchQuery] = useState('');
   const [moodFilter, setMoodFilter] = useState<string>('all');
   const [loading, setLoading] = useState(true);
   const [migrated, setMigrated] = useState(false);
-  const [didLegacyOffsetRepair, setDidLegacyOffsetRepair] = useState(false);
-  const [activeTab, setActiveTab] = useState('today');
+  const [activeTab, setActiveTab] = useState(initialView === 'diary' ? 'today' : 'today');
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
 
-  // Load entries from Supabase
+  // Load entries from Supabase — READ ONLY, no mutations
   const loadEntries = async () => {
     if (!user) {
       setLoading(false);
@@ -152,128 +164,7 @@ export default function Journal() {
 
       if (error) throw error;
 
-      let entriesData = data || [];
-
-      // One-time legacy repair: old midnight save bug shifted some Month 12 entries back by 1 day
-      if (!didLegacyOffsetRepair) {
-        const month12Rows = entriesData.filter(
-          (row: any) => row.yhwh_year === 6028 && row.yhwh_month === 12
-        );
-        const days = new Set(month12Rows.map((row: any) => Number(row.yhwh_day)));
-        const hasLegacyPattern =
-          month12Rows.length >= 3 &&
-          [3, 10, 17].every((d) => days.has(d)) &&
-          ![4, 11, 18].some((d) => days.has(d));
-
-        if (hasLegacyPattern) {
-          let repairedCount = 0;
-
-          for (const row of month12Rows) {
-            const originalDate = parseLocalDateKey(row.gregorian_date);
-            if (!originalDate) continue;
-
-            const shiftedDate = new Date(originalDate);
-            shiftedDate.setDate(shiftedDate.getDate() + 1);
-            shiftedDate.setHours(12, 0, 0, 0);
-
-            const fixedYhwhDate = calculateYhwhDateFromCivilDate(shiftedDate);
-
-            const { error: updateError } = await supabase
-              .from('journal_entries')
-              .update({
-                gregorian_date: toLocalDateKey(shiftedDate),
-                yhwh_year: fixedYhwhDate.year,
-                yhwh_month: fixedYhwhDate.month,
-                yhwh_day: fixedYhwhDate.day,
-                yhwh_weekday: fixedYhwhDate.weekDay,
-                yhwh_day_of_year: fixedYhwhDate.dayOfYear,
-                is_shabbat: fixedYhwhDate.weekDay === 7,
-                updated_at: new Date().toISOString(),
-              })
-              .eq('id', row.id)
-              .eq('user_id', user.id);
-
-            if (!updateError) repairedCount += 1;
-          }
-
-          if (repairedCount > 0) {
-            const { data: repairedData, error: repairedError } = await supabase
-              .from('journal_entries')
-              .select('*')
-              .eq('user_id', user.id)
-              .order('created_at', { ascending: false });
-
-            if (repairedError) throw repairedError;
-            entriesData = repairedData || [];
-
-            toast.success(
-              `Repaired ${repairedCount} shifted journal entr${repairedCount === 1 ? 'y' : 'ies'} to the correct day.`
-            );
-          }
-        }
-
-        setDidLegacyOffsetRepair(true);
-      }
-
-      const calendarRepairPayload = entriesData
-        .map((entry: any) => {
-          const parsedGregorian = parseLocalDateKey(entry.gregorian_date);
-          if (!parsedGregorian) return null;
-
-          const canonicalYhwh = calculateYhwhDateFromCivilDate(parsedGregorian);
-          const storedYear = Number(entry.yhwh_year);
-          const storedMonth = Number(entry.yhwh_month);
-          const storedDay = Number(entry.yhwh_day);
-          const storedWeekday = Number(entry.yhwh_weekday);
-          const storedDayOfYear = Number(entry.yhwh_day_of_year);
-
-          const isMismatch =
-            !Number.isFinite(storedYear) ||
-            !Number.isFinite(storedMonth) ||
-            !Number.isFinite(storedDay) ||
-            storedYear !== canonicalYhwh.year ||
-            storedMonth !== canonicalYhwh.month ||
-            storedDay !== canonicalYhwh.day ||
-            (Number.isFinite(storedWeekday) && storedWeekday !== canonicalYhwh.weekDay) ||
-            (Number.isFinite(storedDayOfYear) && storedDayOfYear !== canonicalYhwh.dayOfYear);
-
-          if (!isMismatch) return null;
-
-          return {
-            id: entry.id,
-            ...canonicalYhwh,
-          };
-        })
-        .filter(Boolean) as Array<{ id: string; year: number; month: number; day: number; weekDay: number; dayOfYear: number }>;
-
-      if (calendarRepairPayload.length > 0) {
-        await Promise.all(
-          calendarRepairPayload.map((payload) =>
-            supabase
-              .from('journal_entries')
-              .update({
-                yhwh_year: payload.year,
-                yhwh_month: payload.month,
-                yhwh_day: payload.day,
-                yhwh_weekday: payload.weekDay,
-                yhwh_day_of_year: payload.dayOfYear,
-                is_shabbat: payload.weekDay === 7,
-                updated_at: new Date().toISOString(),
-              })
-              .eq('id', payload.id)
-              .eq('user_id', user.id)
-          )
-        );
-
-        const { data: repairedData, error: repairedError } = await supabase
-          .from('journal_entries')
-          .select('*')
-          .eq('user_id', user.id)
-          .order('created_at', { ascending: false });
-
-        if (repairedError) throw repairedError;
-        entriesData = repairedData || [];
-      }
+      const entriesData = data || [];
 
       setRawEntries(entriesData);
 
@@ -286,37 +177,36 @@ export default function Journal() {
       };
 
       const formattedEntries: JournalEntry[] = entriesData.map((entry: any) => {
-        const parsedGregorianDate = parseLocalDateKey(entry.gregorian_date);
-        const fallbackGregorianDate = getGregorianDateForYhwh(entry.yhwh_year, entry.yhwh_month, entry.yhwh_day);
-        const gregorianDate = parsedGregorianDate || fallbackGregorianDate;
-        const canonicalYhwhDate = calculateYhwhDateFromCivilDate(gregorianDate);
-        const gregorianDateKey = toLocalDateKey(gregorianDate);
-
+        // Use stored YHWH fields as source of truth (they were set at save time)
         const hasStoredYhwhDate =
           Number.isFinite(Number(entry.yhwh_year)) &&
           Number.isFinite(Number(entry.yhwh_month)) &&
           Number.isFinite(Number(entry.yhwh_day));
 
-        const resolvedYhwhDate = parsedGregorianDate
+        const resolvedYhwhDate = hasStoredYhwhDate
           ? {
-              year: canonicalYhwhDate.year,
-              month: canonicalYhwhDate.month,
-              day: canonicalYhwhDate.day,
-              weekDay: canonicalYhwhDate.weekDay,
+              year: Number(entry.yhwh_year),
+              month: Number(entry.yhwh_month),
+              day: Number(entry.yhwh_day),
+              weekDay: Number(entry.yhwh_weekday) || 1,
             }
-          : hasStoredYhwhDate
-            ? {
-                year: Number(entry.yhwh_year),
-                month: Number(entry.yhwh_month),
-                day: Number(entry.yhwh_day),
-                weekDay: Number(entry.yhwh_weekday) || canonicalYhwhDate.weekDay,
-              }
-            : {
+          : (() => {
+              const parsedGregorianDate = parseLocalDateKey(entry.gregorian_date);
+              const fallbackGregorianDate = getGregorianDateForYhwh(entry.yhwh_year || 6028, entry.yhwh_month || 1, entry.yhwh_day || 1);
+              const gregorianDate = parsedGregorianDate || fallbackGregorianDate;
+              const canonicalYhwhDate = calculateYhwhDateFromCivilDate(gregorianDate);
+              return {
                 year: canonicalYhwhDate.year,
                 month: canonicalYhwhDate.month,
                 day: canonicalYhwhDate.day,
                 weekDay: canonicalYhwhDate.weekDay,
               };
+            })();
+
+        const parsedGregorianDate = parseLocalDateKey(entry.gregorian_date);
+        const fallbackGregorianDate = getGregorianDateForYhwh(resolvedYhwhDate.year, resolvedYhwhDate.month, resolvedYhwhDate.day);
+        const gregorianDate = parsedGregorianDate || fallbackGregorianDate;
+        const gregorianDateKey = toLocalDateKey(gregorianDate);
 
         return {
           id: entry.id,
@@ -352,7 +242,7 @@ export default function Journal() {
 
   useEffect(() => {
     loadEntries();
-  }, [user, migrated, didLegacyOffsetRepair]);
+  }, [user, migrated]);
 
   // Real-time subscription
   useEffect(() => {
@@ -375,7 +265,7 @@ export default function Journal() {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [user, migrated, didLegacyOffsetRepair]);
+  }, [user, migrated]);
 
   // Migrate localStorage entries to Supabase
   const migrateLocalStorageEntries = async (userId: string) => {
