@@ -434,7 +434,9 @@ export default function Journal() {
                             <Button
                               onClick={(e) => { 
                                 e.stopPropagation(); 
-                                setSelectedDate(new Date(entry.createdAt));
+                                const parts = (entry.createdAt || '').split('-');
+                                const d = parts.length === 3 ? new Date(+parts[0], +parts[1] - 1, +parts[2]) : new Date(entry.createdAt);
+                                setSelectedDate(d);
                                 setActiveTab('today');
                               }}
                               variant="ghost"
