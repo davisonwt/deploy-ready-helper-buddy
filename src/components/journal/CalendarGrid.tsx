@@ -8,6 +8,41 @@ import { calculateCreatorDate } from '@/utils/dashboardCalendar';
 import { getDaysOutOfTimeCount } from '@/utils/customCalendar';
 import { getFeastInfo } from '@/utils/gardenRestDays';
 import { JournalEntry } from './Journal';
+
+/**
+ * Calculate the 50-day count number for Omer→Shavuot, →New Wine, →New Oil
+ * Returns { count, label } or null if day is not in any count period.
+ * 
+ * Omer to Shavuot:   M1 D26 (day 1) → M3 D15 (day 50)
+ * Count to New Wine:  M3 D16 (day 1) → M5 D3  (day 50)
+ * Count to New Oil:   M5 D4  (day 1) → M6 D22 (day 50)
+ */
+function getOmerCount(month: number, day: number): { count: number; label: string; color: string } | null {
+  const MONTH_DAYS = [30, 30, 31, 30, 30, 31, 30, 30, 31, 30, 30, 31];
+  
+  // Convert month/day to absolute day of year
+  let dayOfYear = 0;
+  for (let m = 0; m < month - 1; m++) dayOfYear += MONTH_DAYS[m];
+  dayOfYear += day;
+  
+  // Omer start: M1 D26 = day 26
+  const omerStart = 26;
+  // New Wine start: M3 D16 = 30+30+16 = 76
+  const newWineStart = 76;
+  // New Oil start: M5 D4 = 30+30+31+30+4 = 125
+  const newOilStart = 125;
+  
+  if (dayOfYear >= omerStart && dayOfYear < omerStart + 50) {
+    return { count: dayOfYear - omerStart + 1, label: 'Omer', color: 'text-amber-400' };
+  }
+  if (dayOfYear >= newWineStart && dayOfYear < newWineStart + 50) {
+    return { count: dayOfYear - newWineStart + 1, label: 'Wine', color: 'text-rose-400' };
+  }
+  if (dayOfYear >= newOilStart && dayOfYear < newOilStart + 50) {
+    return { count: dayOfYear - newOilStart + 1, label: 'Oil', color: 'text-emerald-400' };
+  }
+  return null;
+}
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { BirthdayManager } from './BirthdayManager';
@@ -389,6 +424,7 @@ export default function CalendarGrid({ entries: propEntries, onDateSelect }: Cal
             const isTequvahDay = !day.isDot && isTequvah(day.yhwhDate);
             const isDotDay = !!day.isDot;
             const feastInfo = !isDotDay ? getFeastInfo(day.yhwhDate.month, day.yhwhDate.day) : null;
+            const omerCount = !isDotDay ? getOmerCount(day.yhwhDate.month, day.yhwhDate.day) : null;
 
             return (
               <motion.button
@@ -448,15 +484,23 @@ export default function CalendarGrid({ entries: propEntries, onDateSelect }: Cal
                     )}
                     {feastInfo && (
                       <Badge
-                        className="bg-cyan-500/20 text-cyan-700 text-[8px] px-1 py-0"
+                        className="bg-cyan-400/40 text-cyan-200 font-bold text-[9px] px-1.5 py-0 border border-cyan-400/80"
                         title={feastInfo.name}
                       >
-                        F
+                        🕎 {feastInfo.name.length <= 8 ? feastInfo.name : 'F'}
                       </Badge>
                     )}
                     {isTequvahDay && (
                       <Badge className="bg-amber-500/20 text-amber-700 text-[8px] px-1 py-0">
                         T
+                      </Badge>
+                    )}
+                    {omerCount && (
+                      <Badge 
+                        className={`bg-black/30 font-bold text-[8px] px-1 py-0 border border-current ${omerCount.color}`}
+                        title={`${omerCount.label} Day ${omerCount.count}${omerCount.count % 7 === 0 ? ' (Sabbath ' + (omerCount.count / 7) + ')' : ''}`}
+                      >
+                        {omerCount.count}{omerCount.count % 7 === 0 ? '🕎' : ''}
                       </Badge>
                     )}
                   </div>
@@ -495,6 +539,18 @@ export default function CalendarGrid({ entries: propEntries, onDateSelect }: Cal
           <div className="flex items-center gap-2">
             <div className="w-4 h-4 rounded border-2 border-purple-500 bg-purple-900/30" />
             <span className="text-muted-foreground">Day Out of Time</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <div className="w-4 h-4 rounded border-2 border-amber-400 bg-black/30" />
+            <span className="text-muted-foreground">Omer → Shavu'ot (1-50)</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <div className="w-4 h-4 rounded border-2 border-rose-400 bg-black/30" />
+            <span className="text-muted-foreground">Count → New Wine (1-50)</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <div className="w-4 h-4 rounded border-2 border-emerald-400 bg-black/30" />
+            <span className="text-muted-foreground">Count → New Oil (1-50)</span>
           </div>
         </div>
       </CardContent>
