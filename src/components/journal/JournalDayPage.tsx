@@ -13,7 +13,7 @@ import { Card, CardContent } from '../ui/card';
 import { Badge } from '../ui/badge';
 import { Textarea } from '../ui/textarea';
 import { Input } from '../ui/input';
-import { calculateCreatorDate } from '@/utils/dashboardCalendar';
+import { calculateYhwhDateFromCivilDate, toLocalDateKey } from '@/utils/journalDateMapping';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
