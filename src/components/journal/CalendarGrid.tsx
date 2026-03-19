@@ -496,7 +496,7 @@ export default function CalendarGrid({ entries: propEntries, onDateSelect }: Cal
                         T
                       </Badge>
                     )}
-                    {omerCount.map((oc, oi) => (
+                    {(omerCount || []).map((oc, oi) => (
                       <Badge 
                         key={oi}
                         className={`bg-black/30 font-bold text-[8px] px-1 py-0 border border-current ${oc.color}`}
