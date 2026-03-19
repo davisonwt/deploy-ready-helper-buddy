@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
-import { calculateSunrise } from '@/utils/customTime';
-import { getCreatorDateSync } from '@/utils/customCalendar';
+import { calculateCreatorDate } from '@/utils/dashboardCalendar';
 import { getDayInfo } from '@/utils/sacredCalendar';
 
 type SacredBannerState = {
@@ -11,13 +10,8 @@ type SacredBannerState = {
   feastName: string | null;
 };
 
-const MONTH_DAYS = [30, 30, 31, 30, 30, 31, 30, 30, 31, 30, 30, 31];
 const DEFAULT_LAT = -26.2;
 const DEFAULT_LON = 28.0;
-
-function getCreatorDayOfYear(month: number, day: number): number {
-  return MONTH_DAYS.slice(0, Math.max(0, month - 1)).reduce((sum, days) => sum + days, 0) + day;
-}
 
 /**
  * Shows a sacred-day banner only on active sacred days:
@@ -34,20 +28,13 @@ export const SabbathDashboardBanner: React.FC = () => {
 
   useEffect(() => {
     let mounted = true;
+    let activeLat = DEFAULT_LAT;
+    let activeLon = DEFAULT_LON;
 
     const computeSacredStatus = (lat: number, lon: number) => {
       const now = new Date();
-      const sunriseMinutes = calculateSunrise(now, lat, lon);
-      const nowMinutes = now.getHours() * 60 + now.getMinutes();
-
-      const effectiveDate = new Date(now);
-      if (nowMinutes < sunriseMinutes) {
-        effectiveDate.setDate(effectiveDate.getDate() - 1);
-      }
-
-      const creatorDate = getCreatorDateSync(effectiveDate);
-      const creatorDay = getCreatorDayOfYear(creatorDate.month, creatorDate.day);
-      const dayInfo = getDayInfo(creatorDay);
+      const creatorDate = calculateCreatorDate(now, lat, lon);
+      const dayInfo = getDayInfo(creatorDate.dayOfYear);
 
       if (!mounted) return;
       setState({
@@ -60,15 +47,19 @@ export const SabbathDashboardBanner: React.FC = () => {
 
     if (navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(
-        (position) => computeSacredStatus(position.coords.latitude, position.coords.longitude),
-        () => computeSacredStatus(DEFAULT_LAT, DEFAULT_LON),
+        (position) => {
+          activeLat = position.coords.latitude;
+          activeLon = position.coords.longitude;
+          computeSacredStatus(activeLat, activeLon);
+        },
+        () => computeSacredStatus(activeLat, activeLon),
         { timeout: 5000 }
       );
     } else {
-      computeSacredStatus(DEFAULT_LAT, DEFAULT_LON);
+      computeSacredStatus(activeLat, activeLon);
     }
 
-    const interval = setInterval(() => computeSacredStatus(DEFAULT_LAT, DEFAULT_LON), 5 * 60 * 1000);
+    const interval = setInterval(() => computeSacredStatus(activeLat, activeLon), 5 * 60 * 1000);
 
     return () => {
       mounted = false;
