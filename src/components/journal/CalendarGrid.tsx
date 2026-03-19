@@ -297,9 +297,9 @@ export default function CalendarGrid({ entries: propEntries, onDateSelect }: Cal
     return yhwhDate.weekDay === 7;
   };
 
-  // Check if day is Tequvah (alignment day - simplified check)
+  // Check if day is Tequvah (spring equinox alignment - Month 12 Day 31 and Month 1 Day 1)
   const isTequvah = (yhwhDate: ReturnType<typeof calculateCreatorDate>) => {
-    return yhwhDate.day === 1 || yhwhDate.day === 15 || yhwhDate.day === 30;
+    return (yhwhDate.month === 12 && yhwhDate.day === 31) || (yhwhDate.month === 1 && yhwhDate.day === 1);
   };
 
   return (
