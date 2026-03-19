@@ -5,6 +5,7 @@ import { Button } from '../ui/button';
 import { Card, CardContent } from '../ui/card';
 import { Badge } from '../ui/badge';
 import { calculateCreatorDate } from '@/utils/dashboardCalendar';
+import { getDaysOutOfTimeCount } from '@/utils/customCalendar';
 import { JournalEntry } from './Journal';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
@@ -29,23 +30,34 @@ const DAYS_PER_MONTH = [30, 30, 31, 30, 30, 31, 30, 30, 31, 30, 30, 31];
 const EPOCH_DATE = new Date(2025, 2, 20); // March 20, 2025 (month is 0-indexed)
 
 // Calculate Gregorian date for a given YHWH date
-function getGregorianDateForYhwh(yhwhYear: number, yhwhMonth: number, yhwhDay: number): Date {
+function getGregorianDateForYhwh(yhwhYear: number, yhwhMonth: number, yhwhDay: number, isDot?: boolean, dotDay?: number): Date {
   // Calculate days from epoch
   const monthDays = [30, 30, 31, 30, 30, 31, 30, 30, 31, 30, 30, 31];
   
-  // Days from epoch year start (each year has 364 days)
-  let daysFromEpoch = (yhwhYear - 6028) * 364;
+  // Days from epoch year start — account for DOT days in prior years
+  let daysFromEpoch = 0;
+  for (let y = 6028; y < yhwhYear; y++) {
+    daysFromEpoch += 364 + getDaysOutOfTimeCount(y);
+  }
   
   // Add days from months before current month
   for (let i = 0; i < yhwhMonth - 1; i++) {
     daysFromEpoch += monthDays[i];
   }
+
+  if (isDot && dotDay) {
+    // DOT days are inserted after Month 12 Day 28
+    // So DOT day N = day 28 + N absolute days into the year
+    daysFromEpoch += 28 + dotDay - 1;
+  } else {
+    // For Month 12 days 29+, DOT days are inserted between day 28 and day 29
+    if (yhwhMonth === 12 && yhwhDay >= 29) {
+      daysFromEpoch += yhwhDay - 1 + getDaysOutOfTimeCount(yhwhYear);
+    } else {
+      daysFromEpoch += yhwhDay - 1;
+    }
+  }
   
-  // Add days in current month (subtract 1 because Day 1 is the first day, so 0 days added)
-  daysFromEpoch += yhwhDay - 1;
-  
-  // Calculate Gregorian date
-  // Use UTC to avoid timezone issues, then convert to local
   const gregorianDate = new Date(EPOCH_DATE);
   gregorianDate.setDate(gregorianDate.getDate() + daysFromEpoch);
   
@@ -162,50 +174,72 @@ export default function CalendarGrid({ entries: propEntries, onDateSelect }: Cal
   const calendarDays = useMemo(() => {
     const days: Array<{
       gregorianDate: Date;
-      yhwhDate: ReturnType<typeof calculateCreatorDate>;
+      yhwhDate: ReturnType<typeof calculateCreatorDate> & { isDayOutOfTime?: boolean; dotDay?: number };
       hasEntry: boolean;
       entry?: JournalEntry;
       birthdays: Array<{ yhwh_month: number; yhwh_day: number; person_name: string }>;
+      isDot?: boolean;
+      dotDay?: number;
+      displayLabel?: string;
     }> = [];
 
     const daysInMonth = DAYS_PER_MONTH[currentYhwhMonth - 1];
+    const dotCount = currentYhwhMonth === 12 ? getDaysOutOfTimeCount(currentYhwhYear) : 0;
     
-    // Generate all days in the YHWH month
     const monthDays = [30, 30, 31, 30, 30, 31, 30, 30, 31, 30, 30, 31];
+
     for (let day = 1; day <= daysInMonth; day++) {
+      // After day 28 in Month 12, insert DOT days
+      if (currentYhwhMonth === 12 && day === 29 && dotCount > 0) {
+        for (let dot = 1; dot <= dotCount; dot++) {
+          const gregorianDate = getGregorianDateForYhwh(currentYhwhYear, 12, 28, true, dot);
+          const gregorianAtNoon = new Date(gregorianDate);
+          gregorianAtNoon.setHours(12, 0, 0, 0);
+          const yhwhDate = calculateCreatorDate(gregorianAtNoon);
+          
+          // DOT days don't advance weekday — use day 28's weekday (Sabbath = 7)
+          const yhwhDateDot = { ...yhwhDate, weekDay: 7, isDayOutOfTime: true, dotDay: dot };
+
+          days.push({
+            gregorianDate,
+            yhwhDate: yhwhDateDot,
+            hasEntry: false,
+            birthdays: [],
+            isDot: true,
+            dotDay: dot,
+            displayLabel: `DOT ${dot}`,
+          });
+        }
+      }
+
       const gregorianDate = getGregorianDateForYhwh(currentYhwhYear, currentYhwhMonth, day);
-      // Use noon to avoid sunrise time issues when calculating YHWH date
       const gregorianAtNoon = new Date(gregorianDate);
       gregorianAtNoon.setHours(12, 0, 0, 0);
       const yhwhDate = calculateCreatorDate(gregorianAtNoon);
       
-      // Calculate day of year for fixed weekday pattern
       let dayOfYear = 0;
       for (let i = 0; i < currentYhwhMonth - 1; i++) {
         dayOfYear += monthDays[i];
       }
       dayOfYear += day;
       
-      // Override weekday with fixed pattern calculation (same for all years)
-      const STARTING_WEEKDAY_YEAR_6028 = 4; // Year 6028 Month 1 Day 1 = Day 4
+      const STARTING_WEEKDAY_YEAR_6028 = 4;
       const fixedWeekday = ((dayOfYear - 1 + STARTING_WEEKDAY_YEAR_6028 - 1) % 7) + 1;
       const yhwhDateWithFixedWeekday = { ...yhwhDate, weekDay: fixedWeekday };
       
-      // Find entry for this date (match by YHWH date for accurate syncing)
       const entry = entries.find(e => 
         e.yhwhDate.year === currentYhwhYear &&
         e.yhwhDate.month === currentYhwhMonth &&
         e.yhwhDate.day === day
       );
 
-      // Find birthdays for this date (matches month and day, repeats every year)
       const dayBirthdays = birthdays.filter(
         b => b.yhwh_month === currentYhwhMonth && b.yhwh_day === day
-      )
+      );
 
       days.push({
-        gregorianDate, // Keep original for display
-        yhwhDate: yhwhDateWithFixedWeekday, // Use fixed weekday pattern
+        gregorianDate,
+        yhwhDate: yhwhDateWithFixedWeekday,
         hasEntry: !!entry,
         entry,
         birthdays: dayBirthdays,
@@ -342,36 +376,40 @@ export default function CalendarGrid({ entries: propEntries, onDateSelect }: Cal
           {calendarDays.map((day, idx) => {
             const isToday = day.gregorianDate.toDateString() === new Date().toDateString();
             const isShabbatDay = isShabbat(day.yhwhDate);
-            const isTequvahDay = isTequvah(day.yhwhDate);
+            const isTequvahDay = !day.isDot && isTequvah(day.yhwhDate);
+            const isDotDay = !!day.isDot;
 
             return (
               <motion.button
                 key={idx}
                 onClick={() => {
-                  setSelectedDay({ date: day.gregorianDate, yhwhDate: day.yhwhDate });
-                  setIsOptionsMenuOpen(true);
-                  if (onDateSelect) {
-                    onDateSelect(day.gregorianDate);
+                  if (!isDotDay) {
+                    setSelectedDay({ date: day.gregorianDate, yhwhDate: day.yhwhDate });
+                    setIsOptionsMenuOpen(true);
+                    if (onDateSelect) {
+                      onDateSelect(day.gregorianDate);
+                    }
                   }
                 }}
                 className={`
                   aspect-square p-2 rounded-lg border-2 transition-all
-                  ${isToday ? 'border-primary bg-primary/10' : 'border-border'}
-                  ${day.hasEntry ? 'bg-success/10 hover:bg-success/20' : 'hover:bg-muted/50'}
-                  ${day.birthdays && day.birthdays.length > 0 ? 'bg-pink-500/10 ring-1 ring-pink-500/30' : ''}
-                  ${isShabbatDay ? 'bg-yellow-500/20' : ''}
-                  ${isTequvahDay ? 'ring-2 ring-amber-500/50' : ''}
+                  ${isDotDay ? 'border-purple-500/60 bg-purple-900/30 hover:bg-purple-900/50' : ''}
+                  ${!isDotDay && isToday ? 'border-primary bg-primary/10' : !isDotDay ? 'border-border' : ''}
+                  ${!isDotDay && day.hasEntry ? 'bg-success/10 hover:bg-success/20' : !isDotDay ? 'hover:bg-muted/50' : ''}
+                  ${!isDotDay && day.birthdays && day.birthdays.length > 0 ? 'bg-pink-500/10 ring-1 ring-pink-500/30' : ''}
+                  ${!isDotDay && isShabbatDay ? 'bg-yellow-500/20' : ''}
+                  ${!isDotDay && isTequvahDay ? 'ring-2 ring-amber-500/50' : ''}
                 `}
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
               >
                 <div className="flex flex-col items-center justify-center h-full">
-                  {/* YHWH day number - PRIMARY */}
+                  {/* Day label */}
                   <div className={`
                     text-lg font-bold mb-1
-                    ${isToday ? 'text-primary' : 'text-foreground'}
+                    ${isDotDay ? 'text-purple-300' : isToday ? 'text-primary' : 'text-foreground'}
                   `}>
-                    {day.yhwhDate.day}
+                    {day.displayLabel || day.yhwhDate.day}
                   </div>
 
                   {/* Gregorian date - SECONDARY */}
@@ -429,6 +467,10 @@ export default function CalendarGrid({ entries: propEntries, onDateSelect }: Cal
           <div className="flex items-center gap-2">
             <div className="w-4 h-4 rounded border-2 border-pink-500 bg-pink-500/10 ring-1 ring-pink-500/30" />
             <span className="text-muted-foreground">Birthday</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <div className="w-4 h-4 rounded border-2 border-purple-500 bg-purple-900/30" />
+            <span className="text-muted-foreground">Day Out of Time</span>
           </div>
         </div>
       </CardContent>
