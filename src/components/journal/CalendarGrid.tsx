@@ -30,23 +30,34 @@ const DAYS_PER_MONTH = [30, 30, 31, 30, 30, 31, 30, 30, 31, 30, 30, 31];
 const EPOCH_DATE = new Date(2025, 2, 20); // March 20, 2025 (month is 0-indexed)
 
 // Calculate Gregorian date for a given YHWH date
-function getGregorianDateForYhwh(yhwhYear: number, yhwhMonth: number, yhwhDay: number): Date {
+function getGregorianDateForYhwh(yhwhYear: number, yhwhMonth: number, yhwhDay: number, isDot?: boolean, dotDay?: number): Date {
   // Calculate days from epoch
   const monthDays = [30, 30, 31, 30, 30, 31, 30, 30, 31, 30, 30, 31];
   
-  // Days from epoch year start (each year has 364 days)
-  let daysFromEpoch = (yhwhYear - 6028) * 364;
+  // Days from epoch year start — account for DOT days in prior years
+  let daysFromEpoch = 0;
+  for (let y = 6028; y < yhwhYear; y++) {
+    daysFromEpoch += 364 + getDaysOutOfTimeCount(y);
+  }
   
   // Add days from months before current month
   for (let i = 0; i < yhwhMonth - 1; i++) {
     daysFromEpoch += monthDays[i];
   }
+
+  if (isDot && dotDay) {
+    // DOT days are inserted after Month 12 Day 28
+    // So DOT day N = day 28 + N absolute days into the year
+    daysFromEpoch += 28 + dotDay - 1;
+  } else {
+    // For Month 12 days 29+, DOT days are inserted between day 28 and day 29
+    if (yhwhMonth === 12 && yhwhDay >= 29) {
+      daysFromEpoch += yhwhDay - 1 + getDaysOutOfTimeCount(yhwhYear);
+    } else {
+      daysFromEpoch += yhwhDay - 1;
+    }
+  }
   
-  // Add days in current month (subtract 1 because Day 1 is the first day, so 0 days added)
-  daysFromEpoch += yhwhDay - 1;
-  
-  // Calculate Gregorian date
-  // Use UTC to avoid timezone issues, then convert to local
   const gregorianDate = new Date(EPOCH_DATE);
   gregorianDate.setDate(gregorianDate.getDate() + daysFromEpoch);
   
