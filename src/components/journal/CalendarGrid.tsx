@@ -138,30 +138,35 @@ export default function CalendarGrid({ entries: propEntries, onDateSelect }: Cal
 
       if (data) {
         const formattedEntries: JournalEntry[] = data.map((entry: any) => {
-          const [year, month, day] = String(entry.gregorian_date || '').split('-').map(Number);
-          const gregorianDate = year && month && day
-            ? new Date(year, month - 1, day, 12, 0, 0, 0)
-            : getGregorianDateForYhwh(entry.yhwh_year, entry.yhwh_month, entry.yhwh_day);
-          const normalizedYhwh = calculateCreatorDate(gregorianDate);
+          const parsedGregorianDate = parseLocalDateKey(entry.gregorian_date);
+          const gregorianDate = parsedGregorianDate || getGregorianDateForYhwh(entry.yhwh_year, entry.yhwh_month, entry.yhwh_day);
+          const canonicalYhwhDate = calculateYhwhDateFromCivilDate(gregorianDate);
 
           const hasStoredYhwhDate =
             Number.isFinite(Number(entry.yhwh_year)) &&
             Number.isFinite(Number(entry.yhwh_month)) &&
             Number.isFinite(Number(entry.yhwh_day));
 
-          const resolvedYhwhDate = hasStoredYhwhDate
+          const resolvedYhwhDate = parsedGregorianDate
             ? {
-                year: Number(entry.yhwh_year),
-                month: Number(entry.yhwh_month),
-                day: Number(entry.yhwh_day),
-                weekDay: Number(entry.yhwh_weekday) || normalizedYhwh.weekDay,
+                year: canonicalYhwhDate.year,
+                month: canonicalYhwhDate.month,
+                day: canonicalYhwhDate.day,
+                weekDay: canonicalYhwhDate.weekDay,
               }
-            : {
-                year: normalizedYhwh.year,
-                month: normalizedYhwh.month,
-                day: normalizedYhwh.day,
-                weekDay: normalizedYhwh.weekDay,
-              };
+            : hasStoredYhwhDate
+              ? {
+                  year: Number(entry.yhwh_year),
+                  month: Number(entry.yhwh_month),
+                  day: Number(entry.yhwh_day),
+                  weekDay: Number(entry.yhwh_weekday) || canonicalYhwhDate.weekDay,
+                }
+              : {
+                  year: canonicalYhwhDate.year,
+                  month: canonicalYhwhDate.month,
+                  day: canonicalYhwhDate.day,
+                  weekDay: canonicalYhwhDate.weekDay,
+                };
 
           return {
             id: entry.id,
