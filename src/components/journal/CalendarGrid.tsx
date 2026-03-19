@@ -14,34 +14,35 @@ import { JournalEntry } from './Journal';
  * Returns { count, label } or null if day is not in any count period.
  * 
  * Omer to Shavuot:   M1 D26 (day 1) → M3 D15 (day 50)
- * Count to New Wine:  M3 D16 (day 1) → M5 D3  (day 50)
- * Count to New Oil:   M5 D4  (day 1) → M6 D22 (day 50)
+ * Count to New Wine:  M3 D15 (day 1) → M5 D3  (day 50)  ← day 50 of Omer = day 1 of Wine
+ * Count to New Oil:   M5 D3  (day 1) → M6 D22 (day 50)  ← day 50 of Wine = day 1 of Oil
  */
-function getOmerCount(month: number, day: number): { count: number; label: string; color: string } | null {
+function getOmerCount(month: number, day: number): { count: number; label: string; color: string }[] {
   const MONTH_DAYS = [30, 30, 31, 30, 30, 31, 30, 30, 31, 30, 30, 31];
   
-  // Convert month/day to absolute day of year
   let dayOfYear = 0;
   for (let m = 0; m < month - 1; m++) dayOfYear += MONTH_DAYS[m];
   dayOfYear += day;
   
   // Omer start: M1 D26 = day 26
   const omerStart = 26;
-  // New Wine start: M3 D16 = 30+30+16 = 76
-  const newWineStart = 76;
-  // New Oil start: M5 D4 = 30+30+31+30+4 = 125
-  const newOilStart = 125;
+  // New Wine start: M3 D15 = 30+30+15 = 75 (= omer day 50)
+  const newWineStart = 75;
+  // New Oil start: M5 D3 = 30+30+31+30+3 = 124 (= wine day 50)
+  const newOilStart = 124;
+  
+  const results: { count: number; label: string; color: string }[] = [];
   
   if (dayOfYear >= omerStart && dayOfYear < omerStart + 50) {
-    return { count: dayOfYear - omerStart + 1, label: 'Omer', color: 'text-amber-400' };
+    results.push({ count: dayOfYear - omerStart + 1, label: 'Omer', color: 'text-amber-400' });
   }
   if (dayOfYear >= newWineStart && dayOfYear < newWineStart + 50) {
-    return { count: dayOfYear - newWineStart + 1, label: 'Wine', color: 'text-rose-400' };
+    results.push({ count: dayOfYear - newWineStart + 1, label: 'Wine', color: 'text-rose-400' });
   }
   if (dayOfYear >= newOilStart && dayOfYear < newOilStart + 50) {
-    return { count: dayOfYear - newOilStart + 1, label: 'Oil', color: 'text-emerald-400' };
+    results.push({ count: dayOfYear - newOilStart + 1, label: 'Oil', color: 'text-emerald-400' });
   }
-  return null;
+  return results;
 }
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
