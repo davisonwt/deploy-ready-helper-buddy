@@ -402,7 +402,7 @@ export default function Journal() {
             yhwh_month: entry.yhwhDate.month,
             yhwh_day: entry.yhwhDate.day,
             yhwh_weekday: entry.yhwhDate.weekDay || 1,
-            yhwh_day_of_year: calculateCreatorDate(
+            yhwh_day_of_year: calculateYhwhDateFromCivilDate(
               parseLocalDateKey(entry.createdAt) ||
                 getGregorianDateForYhwh(entry.yhwhDate.year, entry.yhwhDate.month, entry.yhwhDate.day)
             ).dayOfYear || 1,
