@@ -469,6 +469,10 @@ export default function CalendarGrid({ entries: propEntries, onDateSelect }: Cal
             <span className="text-muted-foreground">Shabbat</span>
           </div>
           <div className="flex items-center gap-2">
+            <div className="w-4 h-4 rounded border-2 border-cyan-400 bg-cyan-500/20" />
+            <span className="text-muted-foreground">Feast Day</span>
+          </div>
+          <div className="flex items-center gap-2">
             <div className="w-4 h-4 rounded border-2 border-amber-500 ring-2 ring-amber-500/50" />
             <span className="text-muted-foreground">Tequvah</span>
           </div>
