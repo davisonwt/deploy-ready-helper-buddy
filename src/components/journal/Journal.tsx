@@ -167,16 +167,18 @@ export default function Journal() {
       };
 
       const formattedEntries: JournalEntry[] = (data || []).map((entry: any) => {
-        const gregorianDate = getGregorianDateForYhwh(entry.yhwh_year, entry.yhwh_month, entry.yhwh_day);
+        const fallbackGregorianDate = getGregorianDateForYhwh(entry.yhwh_year, entry.yhwh_month, entry.yhwh_day);
+        const gregorianDate = parseLocalDateKey(entry.gregorian_date) || fallbackGregorianDate;
+        const normalizedYhwhDate = calculateCreatorDate(gregorianDate);
         const gregorianDateKey = toLocalDateKey(gregorianDate);
 
         return {
           id: entry.id,
           yhwhDate: {
-            year: entry.yhwh_year,
-            month: entry.yhwh_month,
-            day: entry.yhwh_day,
-            weekDay: entry.yhwh_weekday,
+            year: normalizedYhwhDate.year,
+            month: normalizedYhwhDate.month,
+            day: normalizedYhwhDate.day,
+            weekDay: normalizedYhwhDate.weekDay,
           },
           gregorianDate: formatGregorianForDisplay(gregorianDate),
           content: entry.content,
