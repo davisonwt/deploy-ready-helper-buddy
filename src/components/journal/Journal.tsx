@@ -252,7 +252,7 @@ export default function Journal() {
             yhwh_day: entry.yhwhDate.day,
             yhwh_weekday: entry.yhwhDate.weekDay || 1,
             yhwh_day_of_year: calculateCreatorDate(new Date(entry.createdAt)).dayOfYear || 1,
-            gregorian_date: new Date(entry.createdAt).toISOString().split('T')[0],
+            gregorian_date: toLocalDateKey(new Date(entry.createdAt)),
             content: entry.content,
             mood: entry.mood,
             tags: entry.tags || [],
