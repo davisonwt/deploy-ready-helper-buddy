@@ -540,6 +540,18 @@ export default function CalendarGrid({ entries: propEntries, onDateSelect }: Cal
             <div className="w-4 h-4 rounded border-2 border-purple-500 bg-purple-900/30" />
             <span className="text-muted-foreground">Day Out of Time</span>
           </div>
+          <div className="flex items-center gap-2">
+            <div className="w-4 h-4 rounded border-2 border-amber-400 bg-black/30" />
+            <span className="text-muted-foreground">Omer → Shavu'ot (1-50)</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <div className="w-4 h-4 rounded border-2 border-rose-400 bg-black/30" />
+            <span className="text-muted-foreground">Count → New Wine (1-50)</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <div className="w-4 h-4 rounded border-2 border-emerald-400 bg-black/30" />
+            <span className="text-muted-foreground">Count → New Oil (1-50)</span>
+          </div>
         </div>
       </CardContent>
       
