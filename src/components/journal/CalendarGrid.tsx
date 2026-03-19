@@ -6,6 +6,7 @@ import { Card, CardContent } from '../ui/card';
 import { Badge } from '../ui/badge';
 import { calculateCreatorDate } from '@/utils/dashboardCalendar';
 import { getDaysOutOfTimeCount } from '@/utils/customCalendar';
+import { getFeastInfo } from '@/utils/gardenRestDays';
 import { JournalEntry } from './Journal';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
@@ -60,7 +61,8 @@ function getGregorianDateForYhwh(yhwhYear: number, yhwhMonth: number, yhwhDay: n
   
   const gregorianDate = new Date(EPOCH_DATE);
   gregorianDate.setDate(gregorianDate.getDate() + daysFromEpoch);
-  
+  gregorianDate.setHours(12, 0, 0, 0);
+
   return gregorianDate;
 }
 
@@ -94,31 +96,39 @@ export default function CalendarGrid({ entries: propEntries, onDateSelect }: Cal
         .order('created_at', { ascending: false });
 
       if (data) {
-        const formattedEntries: JournalEntry[] = data.map((entry: any) => ({
-          id: entry.id,
-          yhwhDate: {
-            year: entry.yhwh_year,
-            month: entry.yhwh_month,
-            day: entry.yhwh_day,
-            weekDay: entry.yhwh_weekday,
-          },
-          gregorianDate: new Date(entry.gregorian_date).toLocaleDateString('en-US', {
-            year: 'numeric',
-            month: 'long',
-            day: 'numeric',
-          }),
-          content: entry.content,
-          mood: entry.mood,
-          tags: entry.tags || [],
-          images: entry.images || [],
-          createdAt: entry.created_at,
-          updatedAt: entry.updated_at,
-          partOfYowm: entry.part_of_yowm,
-          watch: entry.watch,
-          isShabbat: entry.is_shabbat,
-          isTequvah: entry.is_tequvah,
-          feast: entry.feast,
-        }));
+        const formattedEntries: JournalEntry[] = data.map((entry: any) => {
+          const [year, month, day] = String(entry.gregorian_date || '').split('-').map(Number);
+          const gregorianDate = year && month && day
+            ? new Date(year, month - 1, day, 12, 0, 0, 0)
+            : getGregorianDateForYhwh(entry.yhwh_year, entry.yhwh_month, entry.yhwh_day);
+          const normalizedYhwh = calculateCreatorDate(gregorianDate);
+
+          return {
+            id: entry.id,
+            yhwhDate: {
+              year: normalizedYhwh.year,
+              month: normalizedYhwh.month,
+              day: normalizedYhwh.day,
+              weekDay: normalizedYhwh.weekDay,
+            },
+            gregorianDate: gregorianDate.toLocaleDateString('en-US', {
+              year: 'numeric',
+              month: 'long',
+              day: 'numeric',
+            }),
+            content: entry.content,
+            mood: entry.mood,
+            tags: entry.tags || [],
+            images: entry.images || [],
+            createdAt: entry.gregorian_date || entry.created_at,
+            updatedAt: entry.updated_at,
+            partOfYowm: entry.part_of_yowm,
+            watch: entry.watch,
+            isShabbat: entry.is_shabbat,
+            isTequvah: entry.is_tequvah,
+            feast: entry.feast,
+          };
+        });
         setEntries(formattedEntries);
       }
     };
@@ -378,6 +388,7 @@ export default function CalendarGrid({ entries: propEntries, onDateSelect }: Cal
             const isShabbatDay = isShabbat(day.yhwhDate);
             const isTequvahDay = !day.isDot && isTequvah(day.yhwhDate);
             const isDotDay = !!day.isDot;
+            const feastInfo = !isDotDay ? getFeastInfo(day.yhwhDate.month, day.yhwhDate.day) : null;
 
             return (
               <motion.button
@@ -398,6 +409,7 @@ export default function CalendarGrid({ entries: propEntries, onDateSelect }: Cal
                   ${!isDotDay && day.hasEntry ? 'bg-success/10 hover:bg-success/20' : !isDotDay ? 'hover:bg-muted/50' : ''}
                   ${!isDotDay && day.birthdays && day.birthdays.length > 0 ? 'bg-pink-500/10 ring-1 ring-pink-500/30' : ''}
                   ${!isDotDay && isShabbatDay ? 'bg-yellow-500/20' : ''}
+                  ${!isDotDay && feastInfo ? 'ring-1 ring-cyan-400/60' : ''}
                   ${!isDotDay && isTequvahDay ? 'ring-2 ring-amber-500/50' : ''}
                 `}
                 whileHover={{ scale: 1.05 }}
@@ -434,6 +446,14 @@ export default function CalendarGrid({ entries: propEntries, onDateSelect }: Cal
                         S
                       </Badge>
                     )}
+                    {feastInfo && (
+                      <Badge
+                        className="bg-cyan-500/20 text-cyan-700 text-[8px] px-1 py-0"
+                        title={feastInfo.name}
+                      >
+                        F
+                      </Badge>
+                    )}
                     {isTequvahDay && (
                       <Badge className="bg-amber-500/20 text-amber-700 text-[8px] px-1 py-0">
                         T
@@ -455,6 +475,10 @@ export default function CalendarGrid({ entries: propEntries, onDateSelect }: Cal
           <div className="flex items-center gap-2">
             <div className="w-4 h-4 rounded border-2 border-yellow-500 bg-yellow-500/20" />
             <span className="text-muted-foreground">Shabbat</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <div className="w-4 h-4 rounded border-2 border-cyan-400 bg-cyan-500/20" />
+            <span className="text-muted-foreground">Feast Day</span>
           </div>
           <div className="flex items-center gap-2">
             <div className="w-4 h-4 rounded border-2 border-amber-500 ring-2 ring-amber-500/50" />

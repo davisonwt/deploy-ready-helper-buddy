@@ -89,6 +89,13 @@ const EPOCH_DATE = new Date(2025, 2, 20);
 const toLocalDateKey = (date: Date) =>
   `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
 
+const parseLocalDateKey = (dateKey?: string | null): Date | null => {
+  if (!dateKey || typeof dateKey !== 'string') return null;
+  const [year, month, day] = dateKey.split('-').map(Number);
+  if (!year || !month || !day) return null;
+  return new Date(year, month - 1, day, 12, 0, 0, 0);
+};
+
 const getGregorianDateForYhwh = (yhwhYear: number, yhwhMonth: number, yhwhDay: number): Date => {
   let daysFromEpoch = 0;
 
@@ -108,6 +115,7 @@ const getGregorianDateForYhwh = (yhwhYear: number, yhwhMonth: number, yhwhDay: n
 
   const gregorianDate = new Date(EPOCH_DATE);
   gregorianDate.setDate(gregorianDate.getDate() + daysFromEpoch);
+  gregorianDate.setHours(12, 0, 0, 0);
   return gregorianDate;
 };
 
@@ -159,16 +167,18 @@ export default function Journal() {
       };
 
       const formattedEntries: JournalEntry[] = (data || []).map((entry: any) => {
-        const gregorianDate = getGregorianDateForYhwh(entry.yhwh_year, entry.yhwh_month, entry.yhwh_day);
+        const fallbackGregorianDate = getGregorianDateForYhwh(entry.yhwh_year, entry.yhwh_month, entry.yhwh_day);
+        const gregorianDate = parseLocalDateKey(entry.gregorian_date) || fallbackGregorianDate;
+        const normalizedYhwhDate = calculateCreatorDate(gregorianDate);
         const gregorianDateKey = toLocalDateKey(gregorianDate);
 
         return {
           id: entry.id,
           yhwhDate: {
-            year: entry.yhwh_year,
-            month: entry.yhwh_month,
-            day: entry.yhwh_day,
-            weekDay: entry.yhwh_weekday,
+            year: normalizedYhwhDate.year,
+            month: normalizedYhwhDate.month,
+            day: normalizedYhwhDate.day,
+            weekDay: normalizedYhwhDate.weekDay,
           },
           gregorianDate: formatGregorianForDisplay(gregorianDate),
           content: entry.content,
@@ -252,10 +262,12 @@ export default function Journal() {
             yhwh_day: entry.yhwhDate.day,
             yhwh_weekday: entry.yhwhDate.weekDay || 1,
             yhwh_day_of_year: calculateCreatorDate(
-              getGregorianDateForYhwh(entry.yhwhDate.year, entry.yhwhDate.month, entry.yhwhDate.day)
+              parseLocalDateKey(entry.createdAt) ||
+                getGregorianDateForYhwh(entry.yhwhDate.year, entry.yhwhDate.month, entry.yhwhDate.day)
             ).dayOfYear || 1,
             gregorian_date: toLocalDateKey(
-              getGregorianDateForYhwh(entry.yhwhDate.year, entry.yhwhDate.month, entry.yhwhDate.day)
+              parseLocalDateKey(entry.createdAt) ||
+                getGregorianDateForYhwh(entry.yhwhDate.year, entry.yhwhDate.month, entry.yhwhDate.day)
             ),
             content: entry.content,
             mood: entry.mood,
@@ -276,8 +288,12 @@ export default function Journal() {
     }
   };
 
-  // Find raw entry for the selected date using canonical YHWH date fields
+  // Find raw entry for the selected date (prefer exact Gregorian key, fallback to YHWH tuple)
   const currentDayEntry = useMemo(() => {
+    const selectedDateKey = toLocalDateKey(selectedDate);
+    const matchByGregorian = rawEntries.find((entry) => entry.gregorian_date === selectedDateKey);
+    if (matchByGregorian) return matchByGregorian;
+
     const selectedYhwhDate = calculateCreatorDate(selectedDate);
     return rawEntries.find((entry) =>
       entry.yhwh_year === selectedYhwhDate.year &&
