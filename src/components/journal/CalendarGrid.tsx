@@ -401,6 +401,7 @@ export default function CalendarGrid({ entries: propEntries, onDateSelect }: Cal
                   ${!isDotDay && day.hasEntry ? 'bg-success/10 hover:bg-success/20' : !isDotDay ? 'hover:bg-muted/50' : ''}
                   ${!isDotDay && day.birthdays && day.birthdays.length > 0 ? 'bg-pink-500/10 ring-1 ring-pink-500/30' : ''}
                   ${!isDotDay && isShabbatDay ? 'bg-yellow-500/20' : ''}
+                  ${!isDotDay && feastInfo ? 'ring-1 ring-cyan-400/60' : ''}
                   ${!isDotDay && isTequvahDay ? 'ring-2 ring-amber-500/50' : ''}
                 `}
                 whileHover={{ scale: 1.05 }}
