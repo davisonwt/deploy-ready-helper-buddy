@@ -13,7 +13,7 @@ import { Card, CardContent } from '../ui/card';
 import { Badge } from '../ui/badge';
 import { Textarea } from '../ui/textarea';
 import { Input } from '../ui/input';
-import { calculateCreatorDate } from '@/utils/dashboardCalendar';
+import { calculateYhwhDateFromCivilDate, toLocalDateKey } from '@/utils/journalDateMapping';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
@@ -78,7 +78,7 @@ export default function JournalDayPage({ userId, date, onDateChange, entry, onSa
     return normalized;
   }, [date]);
 
-  const yhwhDate = calculateCreatorDate(dateAtNoon);
+  const yhwhDate = calculateYhwhDateFromCivilDate(dateAtNoon);
 
   // Sync state when entry prop changes
   React.useEffect(() => {
@@ -230,7 +230,7 @@ export default function JournalDayPage({ userId, date, onDateChange, entry, onSa
   const handleSave = async () => {
     setSaving(true);
     try {
-      const gregorianDateStr = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+      const gregorianDateStr = toLocalDateKey(dateAtNoon);
       const entryData = {
         user_id: userId,
         yhwh_year: yhwhDate.year,
