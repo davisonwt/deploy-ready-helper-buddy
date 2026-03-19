@@ -176,7 +176,7 @@ export default function Journal() {
             shiftedDate.setDate(shiftedDate.getDate() + 1);
             shiftedDate.setHours(12, 0, 0, 0);
 
-            const fixedYhwhDate = calculateCreatorDate(shiftedDate);
+            const fixedYhwhDate = calculateYhwhDateFromCivilDate(shiftedDate);
 
             const { error: updateError } = await supabase
               .from('journal_entries')
