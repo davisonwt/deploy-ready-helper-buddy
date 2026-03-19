@@ -25,11 +25,22 @@ import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
 import { Badge } from '../ui/badge';
 import { Input } from '../ui/input';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../ui/tabs';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '../ui/alert-dialog';
 import { calculateCreatorDate } from '@/utils/dashboardCalendar';
 import { getCreatorTime } from '@/utils/customTime';
 import { useUserLocation } from '@/hooks/useUserLocation';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
 import CalendarGrid from './CalendarGrid';
 import JournalDayPage from './JournalDayPage';
 
@@ -82,6 +93,7 @@ export default function Journal() {
   const [loading, setLoading] = useState(true);
   const [migrated, setMigrated] = useState(false);
   const [activeTab, setActiveTab] = useState('today');
+  const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
 
   // Load entries from Supabase
   const loadEntries = async () => {
@@ -253,18 +265,19 @@ export default function Journal() {
 
   const handleDelete = async (id: string) => {
     if (!user) return;
-    if (confirm('Are you sure you want to delete this entry?')) {
-      try {
-        const { error } = await supabase
-          .from('journal_entries')
-          .delete()
-          .eq('id', id)
-          .eq('user_id', user.id);
-        if (error) throw error;
-      } catch (error) {
-        console.error('Failed to delete entry:', error);
-        alert('Failed to delete entry. Please try again.');
-      }
+    try {
+      const { error } = await supabase
+        .from('journal_entries')
+        .delete()
+        .eq('id', id)
+        .eq('user_id', user.id);
+      if (error) throw error;
+      toast.success('Entry deleted successfully');
+      setDeleteConfirmId(null);
+    } catch (error) {
+      console.error('Failed to delete entry:', error);
+      toast.error('Failed to delete entry. Please try again.');
+      setDeleteConfirmId(null);
     }
   };
 
@@ -415,14 +428,28 @@ export default function Journal() {
                             </div>
                             <div className="text-sm text-muted-foreground">{entry.gregorianDate}</div>
                           </div>
-                          <Button
-                            onClick={(e) => { e.stopPropagation(); handleDelete(entry.id); }}
-                            variant="ghost"
-                            size="sm"
-                            className="text-destructive hover:text-destructive"
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
+                          <div className="flex gap-1">
+                            <Button
+                              onClick={(e) => { 
+                                e.stopPropagation(); 
+                                setSelectedDate(new Date(entry.createdAt));
+                                setActiveTab('today');
+                              }}
+                              variant="ghost"
+                              size="sm"
+                              className="text-muted-foreground hover:text-foreground"
+                            >
+                              <Edit className="h-4 w-4" />
+                            </Button>
+                            <Button
+                              onClick={(e) => { e.stopPropagation(); setDeleteConfirmId(entry.id); }}
+                              variant="ghost"
+                              size="sm"
+                              className="text-destructive hover:text-destructive"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </div>
                         </div>
 
                         {entry.content && (
@@ -468,6 +495,27 @@ export default function Journal() {
           />
         </TabsContent>
       </Tabs>
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={!!deleteConfirmId} onOpenChange={(open) => !open && setDeleteConfirmId(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Journal Entry</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete this entry? This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => deleteConfirmId && handleDelete(deleteConfirmId)}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
