@@ -468,6 +468,10 @@ export default function CalendarGrid({ entries: propEntries, onDateSelect }: Cal
             <div className="w-4 h-4 rounded border-2 border-pink-500 bg-pink-500/10 ring-1 ring-pink-500/30" />
             <span className="text-muted-foreground">Birthday</span>
           </div>
+          <div className="flex items-center gap-2">
+            <div className="w-4 h-4 rounded border-2 border-purple-500 bg-purple-900/30" />
+            <span className="text-muted-foreground">Day Out of Time</span>
+          </div>
         </div>
       </CardContent>
       
