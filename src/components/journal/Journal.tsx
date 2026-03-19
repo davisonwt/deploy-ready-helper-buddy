@@ -158,31 +158,32 @@ export default function Journal() {
         return [];
       };
 
-      const formattedEntries: JournalEntry[] = (data || []).map((entry: any) => ({
-        id: entry.id,
-        yhwhDate: {
-          year: entry.yhwh_year,
-          month: entry.yhwh_month,
-          day: entry.yhwh_day,
-          weekDay: entry.yhwh_weekday,
-        },
-        gregorianDate: new Date(entry.gregorian_date).toLocaleDateString('en-US', {
-          year: 'numeric',
-          month: 'long',
-          day: 'numeric',
-        }),
-        content: entry.content,
-        mood: entry.mood,
-        tags: safeArray(entry.tags),
-        images: safeArray(entry.images),
-        createdAt: entry.gregorian_date || entry.created_at,
-        updatedAt: entry.updated_at,
-        partOfYowm: entry.part_of_yowm,
-        watch: entry.watch,
-        isShabbat: entry.is_shabbat,
-        isTequvah: entry.is_tequvah,
-        feast: entry.feast,
-      }));
+      const formattedEntries: JournalEntry[] = (data || []).map((entry: any) => {
+        const gregorianDate = getGregorianDateForYhwh(entry.yhwh_year, entry.yhwh_month, entry.yhwh_day);
+        const gregorianDateKey = toLocalDateKey(gregorianDate);
+
+        return {
+          id: entry.id,
+          yhwhDate: {
+            year: entry.yhwh_year,
+            month: entry.yhwh_month,
+            day: entry.yhwh_day,
+            weekDay: entry.yhwh_weekday,
+          },
+          gregorianDate: formatGregorianForDisplay(gregorianDate),
+          content: entry.content,
+          mood: entry.mood,
+          tags: safeArray(entry.tags),
+          images: safeArray(entry.images),
+          createdAt: gregorianDateKey,
+          updatedAt: entry.updated_at,
+          partOfYowm: entry.part_of_yowm,
+          watch: entry.watch,
+          isShabbat: entry.is_shabbat,
+          isTequvah: entry.is_tequvah,
+          feast: entry.feast,
+        };
+      });
 
       setEntries(formattedEntries);
 
