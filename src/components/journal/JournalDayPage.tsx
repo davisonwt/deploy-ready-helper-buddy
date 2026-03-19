@@ -78,7 +78,7 @@ export default function JournalDayPage({ userId, date, onDateChange, entry, onSa
     return normalized;
   }, [date]);
 
-  const yhwhDate = calculateCreatorDate(dateAtNoon);
+  const yhwhDate = calculateYhwhDateFromCivilDate(dateAtNoon);
 
   // Sync state when entry prop changes
   React.useEffect(() => {
