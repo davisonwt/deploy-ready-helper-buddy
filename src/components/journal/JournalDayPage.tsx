@@ -72,7 +72,13 @@ export default function JournalDayPage({ userId, date, onDateChange, entry, onSa
   const videoInputRef = useRef<HTMLInputElement>(null);
   const voiceInputRef = useRef<HTMLInputElement>(null);
 
-  const yhwhDate = calculateCreatorDate(date);
+  const dateAtNoon = React.useMemo(() => {
+    const normalized = new Date(date);
+    normalized.setHours(12, 0, 0, 0);
+    return normalized;
+  }, [date]);
+
+  const yhwhDate = calculateCreatorDate(dateAtNoon);
 
   // Sync state when entry prop changes
   React.useEffect(() => {
