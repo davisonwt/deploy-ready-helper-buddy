@@ -8,6 +8,41 @@ import { calculateCreatorDate } from '@/utils/dashboardCalendar';
 import { getDaysOutOfTimeCount } from '@/utils/customCalendar';
 import { getFeastInfo } from '@/utils/gardenRestDays';
 import { JournalEntry } from './Journal';
+
+/**
+ * Calculate the 50-day count number for Omer→Shavuot, →New Wine, →New Oil
+ * Returns { count, label } or null if day is not in any count period.
+ * 
+ * Omer to Shavuot:   M1 D26 (day 1) → M3 D15 (day 50)
+ * Count to New Wine:  M3 D16 (day 1) → M5 D3  (day 50)
+ * Count to New Oil:   M5 D4  (day 1) → M6 D22 (day 50)
+ */
+function getOmerCount(month: number, day: number): { count: number; label: string; color: string } | null {
+  const MONTH_DAYS = [30, 30, 31, 30, 30, 31, 30, 30, 31, 30, 30, 31];
+  
+  // Convert month/day to absolute day of year
+  let dayOfYear = 0;
+  for (let m = 0; m < month - 1; m++) dayOfYear += MONTH_DAYS[m];
+  dayOfYear += day;
+  
+  // Omer start: M1 D26 = day 26
+  const omerStart = 26;
+  // New Wine start: M3 D16 = 30+30+16 = 76
+  const newWineStart = 76;
+  // New Oil start: M5 D4 = 30+30+31+30+4 = 125
+  const newOilStart = 125;
+  
+  if (dayOfYear >= omerStart && dayOfYear < omerStart + 50) {
+    return { count: dayOfYear - omerStart + 1, label: 'Omer', color: 'text-amber-400' };
+  }
+  if (dayOfYear >= newWineStart && dayOfYear < newWineStart + 50) {
+    return { count: dayOfYear - newWineStart + 1, label: 'Wine', color: 'text-rose-400' };
+  }
+  if (dayOfYear >= newOilStart && dayOfYear < newOilStart + 50) {
+    return { count: dayOfYear - newOilStart + 1, label: 'Oil', color: 'text-emerald-400' };
+  }
+  return null;
+}
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { BirthdayManager } from './BirthdayManager';
