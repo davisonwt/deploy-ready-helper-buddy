@@ -298,7 +298,7 @@ export default function Journal() {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [user]);
+  }, [user, migrated, didLegacyOffsetRepair]);
 
   // Migrate localStorage entries to Supabase
   const migrateLocalStorageEntries = async (userId: string) => {
