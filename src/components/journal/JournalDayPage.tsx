@@ -224,7 +224,7 @@ export default function JournalDayPage({ userId, date, onDateChange, entry, onSa
   const handleSave = async () => {
     setSaving(true);
     try {
-      const gregorianDateStr = date.toISOString().split('T')[0];
+      const gregorianDateStr = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
       const entryData = {
         user_id: userId,
         yhwh_year: yhwhDate.year,
