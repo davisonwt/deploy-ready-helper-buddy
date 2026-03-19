@@ -428,14 +428,28 @@ export default function Journal() {
                             </div>
                             <div className="text-sm text-muted-foreground">{entry.gregorianDate}</div>
                           </div>
-                          <Button
-                            onClick={(e) => { e.stopPropagation(); handleDelete(entry.id); }}
-                            variant="ghost"
-                            size="sm"
-                            className="text-destructive hover:text-destructive"
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
+                          <div className="flex gap-1">
+                            <Button
+                              onClick={(e) => { 
+                                e.stopPropagation(); 
+                                setSelectedDate(new Date(entry.createdAt));
+                                setActiveTab('today');
+                              }}
+                              variant="ghost"
+                              size="sm"
+                              className="text-muted-foreground hover:text-foreground"
+                            >
+                              <Edit className="h-4 w-4" />
+                            </Button>
+                            <Button
+                              onClick={(e) => { e.stopPropagation(); setDeleteConfirmId(entry.id); }}
+                              variant="ghost"
+                              size="sm"
+                              className="text-destructive hover:text-destructive"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </div>
                         </div>
 
                         {entry.content && (
