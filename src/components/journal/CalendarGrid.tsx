@@ -424,6 +424,7 @@ export default function CalendarGrid({ entries: propEntries, onDateSelect }: Cal
             const isTequvahDay = !day.isDot && isTequvah(day.yhwhDate);
             const isDotDay = !!day.isDot;
             const feastInfo = !isDotDay ? getFeastInfo(day.yhwhDate.month, day.yhwhDate.day) : null;
+            const omerCount = !isDotDay ? getOmerCount(day.yhwhDate.month, day.yhwhDate.day) : null;
 
             return (
               <motion.button
