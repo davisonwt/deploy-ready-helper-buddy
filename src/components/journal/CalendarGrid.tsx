@@ -297,10 +297,15 @@ export default function CalendarGrid({ entries: propEntries, onDateSelect }: Cal
       const fixedWeekday = ((dayOfYear - 1 + STARTING_WEEKDAY_YEAR_6028 - 1) % 7) + 1;
       const yhwhDateWithFixedWeekday = { ...yhwhDate, weekDay: fixedWeekday };
       
-      const entry = entries.find(e => 
+      const entry = entries.find((e) =>
         e.yhwhDate.year === currentYhwhYear &&
         e.yhwhDate.month === currentYhwhMonth &&
-        e.yhwhDate.day === day
+        e.yhwhDate.day === day &&
+        hasMeaningfulJournalEntry({
+          content: e.content,
+          tags: e.tags,
+          images: e.images,
+        })
       );
 
       const dayBirthdays = birthdays.filter(
