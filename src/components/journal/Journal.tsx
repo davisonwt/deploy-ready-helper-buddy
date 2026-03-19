@@ -136,6 +136,7 @@ export default function Journal() {
   const [moodFilter, setMoodFilter] = useState<string>('all');
   const [loading, setLoading] = useState(true);
   const [migrated, setMigrated] = useState(false);
+  const [didLegacyOffsetRepair, setDidLegacyOffsetRepair] = useState(false);
   const [activeTab, setActiveTab] = useState('today');
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
 
@@ -156,7 +157,70 @@ export default function Journal() {
 
       if (error) throw error;
 
-      setRawEntries(data || []);
+      let entriesData = data || [];
+
+      // One-time legacy repair: old midnight save bug shifted some Month 12 entries back by 1 day
+      if (!didLegacyOffsetRepair) {
+        const month12Rows = entriesData.filter(
+          (row: any) => row.yhwh_year === 6028 && row.yhwh_month === 12
+        );
+        const days = new Set(month12Rows.map((row: any) => Number(row.yhwh_day)));
+        const hasLegacyPattern =
+          month12Rows.length >= 3 &&
+          [3, 10, 17].every((d) => days.has(d)) &&
+          ![4, 11, 18].some((d) => days.has(d));
+
+        if (hasLegacyPattern) {
+          let repairedCount = 0;
+
+          for (const row of month12Rows) {
+            const originalDate = parseLocalDateKey(row.gregorian_date);
+            if (!originalDate) continue;
+
+            const shiftedDate = new Date(originalDate);
+            shiftedDate.setDate(shiftedDate.getDate() + 1);
+            shiftedDate.setHours(12, 0, 0, 0);
+
+            const fixedYhwhDate = calculateCreatorDate(shiftedDate);
+
+            const { error: updateError } = await supabase
+              .from('journal_entries')
+              .update({
+                gregorian_date: toLocalDateKey(shiftedDate),
+                yhwh_year: fixedYhwhDate.year,
+                yhwh_month: fixedYhwhDate.month,
+                yhwh_day: fixedYhwhDate.day,
+                yhwh_weekday: fixedYhwhDate.weekDay,
+                yhwh_day_of_year: fixedYhwhDate.dayOfYear,
+                is_shabbat: fixedYhwhDate.weekDay === 7,
+                updated_at: new Date().toISOString(),
+              })
+              .eq('id', row.id)
+              .eq('user_id', user.id);
+
+            if (!updateError) repairedCount += 1;
+          }
+
+          if (repairedCount > 0) {
+            const { data: repairedData, error: repairedError } = await supabase
+              .from('journal_entries')
+              .select('*')
+              .eq('user_id', user.id)
+              .order('created_at', { ascending: false });
+
+            if (repairedError) throw repairedError;
+            entriesData = repairedData || [];
+
+            toast.success(
+              `Repaired ${repairedCount} shifted journal entr${repairedCount === 1 ? 'y' : 'ies'} to the correct day.`
+            );
+          }
+        }
+
+        setDidLegacyOffsetRepair(true);
+      }
+
+      setRawEntries(entriesData);
 
       const safeArray = (val: any): any[] => {
         if (Array.isArray(val)) return val;
@@ -166,7 +230,7 @@ export default function Journal() {
         return [];
       };
 
-      const formattedEntries: JournalEntry[] = (data || []).map((entry: any) => {
+      const formattedEntries: JournalEntry[] = entriesData.map((entry: any) => {
         const fallbackGregorianDate = getGregorianDateForYhwh(entry.yhwh_year, entry.yhwh_month, entry.yhwh_day);
         const gregorianDate = parseLocalDateKey(entry.gregorian_date) || fallbackGregorianDate;
         const normalizedYhwhDate = calculateCreatorDate(gregorianDate);
