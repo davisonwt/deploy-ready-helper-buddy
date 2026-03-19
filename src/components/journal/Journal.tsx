@@ -36,6 +36,7 @@ import {
   AlertDialogTitle,
 } from '../ui/alert-dialog';
 import { calculateCreatorDate } from '@/utils/dashboardCalendar';
+import { getDaysOutOfTimeCount } from '@/utils/customCalendar';
 import { getCreatorTime } from '@/utils/customTime';
 import { useUserLocation } from '@/hooks/useUserLocation';
 import { useAuth } from '@/hooks/useAuth';
@@ -82,6 +83,41 @@ const MOOD_COLORS = {
   grateful: 'text-pink-500',
 };
 
+const DAYS_PER_MONTH = [30, 30, 31, 30, 30, 31, 30, 30, 31, 30, 30, 31];
+const EPOCH_DATE = new Date(2025, 2, 20);
+
+const toLocalDateKey = (date: Date) =>
+  `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+
+const getGregorianDateForYhwh = (yhwhYear: number, yhwhMonth: number, yhwhDay: number): Date => {
+  let daysFromEpoch = 0;
+
+  for (let y = 6028; y < yhwhYear; y++) {
+    daysFromEpoch += 364 + getDaysOutOfTimeCount(y);
+  }
+
+  for (let i = 0; i < yhwhMonth - 1; i++) {
+    daysFromEpoch += DAYS_PER_MONTH[i];
+  }
+
+  if (yhwhMonth === 12 && yhwhDay >= 29) {
+    daysFromEpoch += yhwhDay - 1 + getDaysOutOfTimeCount(yhwhYear);
+  } else {
+    daysFromEpoch += yhwhDay - 1;
+  }
+
+  const gregorianDate = new Date(EPOCH_DATE);
+  gregorianDate.setDate(gregorianDate.getDate() + daysFromEpoch);
+  return gregorianDate;
+};
+
+const formatGregorianForDisplay = (date: Date) =>
+  date.toLocaleDateString('en-US', {
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
+  });
+
 export default function Journal() {
   const { location } = useUserLocation();
   const { user } = useAuth();
@@ -122,31 +158,32 @@ export default function Journal() {
         return [];
       };
 
-      const formattedEntries: JournalEntry[] = (data || []).map((entry: any) => ({
-        id: entry.id,
-        yhwhDate: {
-          year: entry.yhwh_year,
-          month: entry.yhwh_month,
-          day: entry.yhwh_day,
-          weekDay: entry.yhwh_weekday,
-        },
-        gregorianDate: new Date(entry.gregorian_date).toLocaleDateString('en-US', {
-          year: 'numeric',
-          month: 'long',
-          day: 'numeric',
-        }),
-        content: entry.content,
-        mood: entry.mood,
-        tags: safeArray(entry.tags),
-        images: safeArray(entry.images),
-        createdAt: entry.gregorian_date || entry.created_at,
-        updatedAt: entry.updated_at,
-        partOfYowm: entry.part_of_yowm,
-        watch: entry.watch,
-        isShabbat: entry.is_shabbat,
-        isTequvah: entry.is_tequvah,
-        feast: entry.feast,
-      }));
+      const formattedEntries: JournalEntry[] = (data || []).map((entry: any) => {
+        const gregorianDate = getGregorianDateForYhwh(entry.yhwh_year, entry.yhwh_month, entry.yhwh_day);
+        const gregorianDateKey = toLocalDateKey(gregorianDate);
+
+        return {
+          id: entry.id,
+          yhwhDate: {
+            year: entry.yhwh_year,
+            month: entry.yhwh_month,
+            day: entry.yhwh_day,
+            weekDay: entry.yhwh_weekday,
+          },
+          gregorianDate: formatGregorianForDisplay(gregorianDate),
+          content: entry.content,
+          mood: entry.mood,
+          tags: safeArray(entry.tags),
+          images: safeArray(entry.images),
+          createdAt: gregorianDateKey,
+          updatedAt: entry.updated_at,
+          partOfYowm: entry.part_of_yowm,
+          watch: entry.watch,
+          isShabbat: entry.is_shabbat,
+          isTequvah: entry.is_tequvah,
+          feast: entry.feast,
+        };
+      });
 
       setEntries(formattedEntries);
 
@@ -214,8 +251,12 @@ export default function Journal() {
             yhwh_month: entry.yhwhDate.month,
             yhwh_day: entry.yhwhDate.day,
             yhwh_weekday: entry.yhwhDate.weekDay || 1,
-            yhwh_day_of_year: calculateCreatorDate(new Date(entry.createdAt)).dayOfYear || 1,
-            gregorian_date: new Date(entry.createdAt).toISOString().split('T')[0],
+            yhwh_day_of_year: calculateCreatorDate(
+              getGregorianDateForYhwh(entry.yhwhDate.year, entry.yhwhDate.month, entry.yhwhDate.day)
+            ).dayOfYear || 1,
+            gregorian_date: toLocalDateKey(
+              getGregorianDateForYhwh(entry.yhwhDate.year, entry.yhwhDate.month, entry.yhwhDate.day)
+            ),
             content: entry.content,
             mood: entry.mood,
             tags: entry.tags || [],
@@ -235,10 +276,14 @@ export default function Journal() {
     }
   };
 
-  // Find raw entry for the selected date
+  // Find raw entry for the selected date using canonical YHWH date fields
   const currentDayEntry = useMemo(() => {
-    const dateStr = selectedDate.toISOString().split('T')[0];
-    return rawEntries.find(e => e.gregorian_date === dateStr) || null;
+    const selectedYhwhDate = calculateCreatorDate(selectedDate);
+    return rawEntries.find((entry) =>
+      entry.yhwh_year === selectedYhwhDate.year &&
+      entry.yhwh_month === selectedYhwhDate.month &&
+      entry.yhwh_day === selectedYhwhDate.day
+    ) || null;
   }, [rawEntries, selectedDate]);
 
   // Filtered entries for list view
@@ -406,9 +451,12 @@ export default function Journal() {
                     <Card
                       className="hover:shadow-lg transition-shadow cursor-pointer"
                       onClick={() => {
-                        const parts = (entry.createdAt || '').split('-');
-                        const d = parts.length === 3 ? new Date(+parts[0], +parts[1] - 1, +parts[2]) : new Date(entry.createdAt);
-                        setSelectedDate(d);
+                        const entryDate = getGregorianDateForYhwh(
+                          entry.yhwhDate.year,
+                          entry.yhwhDate.month,
+                          entry.yhwhDate.day
+                        );
+                        setSelectedDate(entryDate);
                         setActiveTab('today');
                       }}
                     >
@@ -434,9 +482,12 @@ export default function Journal() {
                             <Button
                               onClick={(e) => { 
                                 e.stopPropagation(); 
-                                const parts = (entry.createdAt || '').split('-');
-                                const d = parts.length === 3 ? new Date(+parts[0], +parts[1] - 1, +parts[2]) : new Date(entry.createdAt);
-                                setSelectedDate(d);
+                                const entryDate = getGregorianDateForYhwh(
+                                  entry.yhwhDate.year,
+                                  entry.yhwhDate.month,
+                                  entry.yhwhDate.day
+                                );
+                                setSelectedDate(entryDate);
                                 setActiveTab('today');
                               }}
                               variant="ghost"

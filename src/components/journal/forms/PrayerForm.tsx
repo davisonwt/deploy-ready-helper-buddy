@@ -80,7 +80,7 @@ export function PrayerForm({ selectedDate, yhwhDate, onClose, onSave }: PrayerFo
     const time = getCreatorTime(selectedDate, 0, 0)
     
     try {
-      const gregorianDateStr = selectedDate.toISOString().split('T')[0]
+      const gregorianDateStr = `${selectedDate.getFullYear()}-${String(selectedDate.getMonth() + 1).padStart(2, '0')}-${String(selectedDate.getDate()).padStart(2, '0')}`
       
       const { data: existingEntry } = await supabase
         .from('journal_entries')
