@@ -83,6 +83,41 @@ const MOOD_COLORS = {
   grateful: 'text-pink-500',
 };
 
+const DAYS_PER_MONTH = [30, 30, 31, 30, 30, 31, 30, 30, 31, 30, 30, 31];
+const EPOCH_DATE = new Date(2025, 2, 20);
+
+const toLocalDateKey = (date: Date) =>
+  `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+
+const getGregorianDateForYhwh = (yhwhYear: number, yhwhMonth: number, yhwhDay: number): Date => {
+  let daysFromEpoch = 0;
+
+  for (let y = 6028; y < yhwhYear; y++) {
+    daysFromEpoch += 364 + getDaysOutOfTimeCount(y);
+  }
+
+  for (let i = 0; i < yhwhMonth - 1; i++) {
+    daysFromEpoch += DAYS_PER_MONTH[i];
+  }
+
+  if (yhwhMonth === 12 && yhwhDay >= 29) {
+    daysFromEpoch += yhwhDay - 1 + getDaysOutOfTimeCount(yhwhYear);
+  } else {
+    daysFromEpoch += yhwhDay - 1;
+  }
+
+  const gregorianDate = new Date(EPOCH_DATE);
+  gregorianDate.setDate(gregorianDate.getDate() + daysFromEpoch);
+  return gregorianDate;
+};
+
+const formatGregorianForDisplay = (date: Date) =>
+  date.toLocaleDateString('en-US', {
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
+  });
+
 export default function Journal() {
   const { location } = useUserLocation();
   const { user } = useAuth();
