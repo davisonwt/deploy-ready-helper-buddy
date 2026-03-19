@@ -93,6 +93,7 @@ export default function Journal() {
   const [loading, setLoading] = useState(true);
   const [migrated, setMigrated] = useState(false);
   const [activeTab, setActiveTab] = useState('today');
+  const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
 
   // Load entries from Supabase
   const loadEntries = async () => {
