@@ -272,10 +272,14 @@ export default function Journal() {
     }
   };
 
-  // Find raw entry for the selected date
+  // Find raw entry for the selected date using canonical YHWH date fields
   const currentDayEntry = useMemo(() => {
-    const dateStr = selectedDate.toISOString().split('T')[0];
-    return rawEntries.find(e => e.gregorian_date === dateStr) || null;
+    const selectedYhwhDate = calculateCreatorDate(selectedDate);
+    return rawEntries.find((entry) =>
+      entry.yhwh_year === selectedYhwhDate.year &&
+      entry.yhwh_month === selectedYhwhDate.month &&
+      entry.yhwh_day === selectedYhwhDate.day
+    ) || null;
   }, [rawEntries, selectedDate]);
 
   // Filtered entries for list view
