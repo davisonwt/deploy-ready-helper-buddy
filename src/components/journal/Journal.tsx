@@ -35,9 +35,13 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '../ui/alert-dialog';
-import { calculateCreatorDate } from '@/utils/dashboardCalendar';
 import { getDaysOutOfTimeCount } from '@/utils/customCalendar';
 import { getCreatorTime } from '@/utils/customTime';
+import {
+  calculateYhwhDateFromCivilDate,
+  parseLocalDateKey,
+  toLocalDateKey,
+} from '@/utils/journalDateMapping';
 import { useUserLocation } from '@/hooks/useUserLocation';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
