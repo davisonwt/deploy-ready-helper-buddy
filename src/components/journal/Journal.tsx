@@ -286,9 +286,10 @@ export default function Journal() {
       };
 
       const formattedEntries: JournalEntry[] = entriesData.map((entry: any) => {
+        const parsedGregorianDate = parseLocalDateKey(entry.gregorian_date);
         const fallbackGregorianDate = getGregorianDateForYhwh(entry.yhwh_year, entry.yhwh_month, entry.yhwh_day);
-        const gregorianDate = parseLocalDateKey(entry.gregorian_date) || fallbackGregorianDate;
-        const normalizedYhwhDate = calculateCreatorDate(gregorianDate);
+        const gregorianDate = parsedGregorianDate || fallbackGregorianDate;
+        const canonicalYhwhDate = calculateYhwhDateFromCivilDate(gregorianDate);
         const gregorianDateKey = toLocalDateKey(gregorianDate);
 
         const hasStoredYhwhDate =
@@ -296,19 +297,26 @@ export default function Journal() {
           Number.isFinite(Number(entry.yhwh_month)) &&
           Number.isFinite(Number(entry.yhwh_day));
 
-        const resolvedYhwhDate = hasStoredYhwhDate
+        const resolvedYhwhDate = parsedGregorianDate
           ? {
-              year: Number(entry.yhwh_year),
-              month: Number(entry.yhwh_month),
-              day: Number(entry.yhwh_day),
-              weekDay: Number(entry.yhwh_weekday) || normalizedYhwhDate.weekDay,
+              year: canonicalYhwhDate.year,
+              month: canonicalYhwhDate.month,
+              day: canonicalYhwhDate.day,
+              weekDay: canonicalYhwhDate.weekDay,
             }
-          : {
-              year: normalizedYhwhDate.year,
-              month: normalizedYhwhDate.month,
-              day: normalizedYhwhDate.day,
-              weekDay: normalizedYhwhDate.weekDay,
-            };
+          : hasStoredYhwhDate
+            ? {
+                year: Number(entry.yhwh_year),
+                month: Number(entry.yhwh_month),
+                day: Number(entry.yhwh_day),
+                weekDay: Number(entry.yhwh_weekday) || canonicalYhwhDate.weekDay,
+              }
+            : {
+                year: canonicalYhwhDate.year,
+                month: canonicalYhwhDate.month,
+                day: canonicalYhwhDate.day,
+                weekDay: canonicalYhwhDate.weekDay,
+              };
 
         return {
           id: entry.id,
