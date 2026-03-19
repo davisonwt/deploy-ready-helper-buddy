@@ -265,18 +265,19 @@ export default function Journal() {
 
   const handleDelete = async (id: string) => {
     if (!user) return;
-    if (confirm('Are you sure you want to delete this entry?')) {
-      try {
-        const { error } = await supabase
-          .from('journal_entries')
-          .delete()
-          .eq('id', id)
-          .eq('user_id', user.id);
-        if (error) throw error;
-      } catch (error) {
-        console.error('Failed to delete entry:', error);
-        alert('Failed to delete entry. Please try again.');
-      }
+    try {
+      const { error } = await supabase
+        .from('journal_entries')
+        .delete()
+        .eq('id', id)
+        .eq('user_id', user.id);
+      if (error) throw error;
+      toast.success('Entry deleted successfully');
+      setDeleteConfirmId(null);
+    } catch (error) {
+      console.error('Failed to delete entry:', error);
+      toast.error('Failed to delete entry. Please try again.');
+      setDeleteConfirmId(null);
     }
   };
 
