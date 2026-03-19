@@ -139,7 +139,7 @@ export default function Journal() {
         mood: entry.mood,
         tags: safeArray(entry.tags),
         images: safeArray(entry.images),
-        createdAt: entry.created_at,
+        createdAt: entry.gregorian_date || entry.created_at,
         updatedAt: entry.updated_at,
         partOfYowm: entry.part_of_yowm,
         watch: entry.watch,
@@ -406,7 +406,9 @@ export default function Journal() {
                     <Card
                       className="hover:shadow-lg transition-shadow cursor-pointer"
                       onClick={() => {
-                        setSelectedDate(new Date(entry.createdAt));
+                        const parts = (entry.createdAt || '').split('-');
+                        const d = parts.length === 3 ? new Date(+parts[0], +parts[1] - 1, +parts[2]) : new Date(entry.createdAt);
+                        setSelectedDate(d);
                         setActiveTab('today');
                       }}
                     >
@@ -432,7 +434,9 @@ export default function Journal() {
                             <Button
                               onClick={(e) => { 
                                 e.stopPropagation(); 
-                                setSelectedDate(new Date(entry.createdAt));
+                                const parts = (entry.createdAt || '').split('-');
+                                const d = parts.length === 3 ? new Date(+parts[0], +parts[1] - 1, +parts[2]) : new Date(entry.createdAt);
+                                setSelectedDate(d);
                                 setActiveTab('today');
                               }}
                               variant="ghost"
