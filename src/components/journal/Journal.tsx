@@ -262,10 +262,12 @@ export default function Journal() {
             yhwh_day: entry.yhwhDate.day,
             yhwh_weekday: entry.yhwhDate.weekDay || 1,
             yhwh_day_of_year: calculateCreatorDate(
-              getGregorianDateForYhwh(entry.yhwhDate.year, entry.yhwhDate.month, entry.yhwhDate.day)
+              parseLocalDateKey(entry.createdAt) ||
+                getGregorianDateForYhwh(entry.yhwhDate.year, entry.yhwhDate.month, entry.yhwhDate.day)
             ).dayOfYear || 1,
             gregorian_date: toLocalDateKey(
-              getGregorianDateForYhwh(entry.yhwhDate.year, entry.yhwhDate.month, entry.yhwhDate.day)
+              parseLocalDateKey(entry.createdAt) ||
+                getGregorianDateForYhwh(entry.yhwhDate.year, entry.yhwhDate.month, entry.yhwhDate.day)
             ),
             content: entry.content,
             mood: entry.mood,
