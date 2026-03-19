@@ -286,8 +286,12 @@ export default function Journal() {
     }
   };
 
-  // Find raw entry for the selected date using canonical YHWH date fields
+  // Find raw entry for the selected date (prefer exact Gregorian key, fallback to YHWH tuple)
   const currentDayEntry = useMemo(() => {
+    const selectedDateKey = toLocalDateKey(selectedDate);
+    const matchByGregorian = rawEntries.find((entry) => entry.gregorian_date === selectedDateKey);
+    if (matchByGregorian) return matchByGregorian;
+
     const selectedYhwhDate = calculateCreatorDate(selectedDate);
     return rawEntries.find((entry) =>
       entry.yhwh_year === selectedYhwhDate.year &&
