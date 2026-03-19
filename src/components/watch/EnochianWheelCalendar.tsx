@@ -35,8 +35,9 @@ const BeadScrollWindow = ({ children, futureBeadCount }: { children: React.React
     if (!scrollRef.current) return;
     const BEAD_HEIGHT = 50;
     const GAP_HEIGHT = 38;
+    const EDGE_BUFFER = 40;
     const containerHeight = scrollRef.current.clientHeight;
-    const scrollTarget = futureBeadCount * BEAD_HEIGHT + GAP_HEIGHT / 2 - containerHeight / 2;
+    const scrollTarget = EDGE_BUFFER + futureBeadCount * BEAD_HEIGHT + GAP_HEIGHT / 2 - containerHeight / 2;
     scrollRef.current.scrollTo({ top: Math.max(0, scrollTarget), behavior: 'auto' });
   }, [futureBeadCount]);
 
@@ -48,8 +49,10 @@ const BeadScrollWindow = ({ children, futureBeadCount }: { children: React.React
         className="relative z-10 overflow-y-auto flex flex-col items-center"
         style={{
           height: '350px',
-          maskImage: 'linear-gradient(to bottom, transparent 0%, black 12%, black 88%, transparent 100%)',
-          WebkitMaskImage: 'linear-gradient(to bottom, transparent 0%, black 12%, black 88%, transparent 100%)',
+          paddingTop: '40px',
+          paddingBottom: '40px',
+          maskImage: 'linear-gradient(to bottom, transparent 0%, black 6%, black 94%, transparent 100%)',
+          WebkitMaskImage: 'linear-gradient(to bottom, transparent 0%, black 6%, black 94%, transparent 100%)',
           scrollbarWidth: 'none',
           scrollSnapType: 'y proximity' as any,
         }}
