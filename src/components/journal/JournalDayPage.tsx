@@ -228,6 +228,22 @@ export default function JournalDayPage({ userId, date, onDateChange, entry, onSa
   };
 
   const handleSave = async () => {
+    // Guard: don't save empty entries
+    const parsedTags = tags.split(',').map(t => t.trim()).filter(Boolean);
+    const hasAnyContent = 
+      content.trim() || 
+      gratitude.trim() || 
+      images.length > 0 || 
+      voiceNotes.length > 0 || 
+      videos.length > 0 || 
+      recipes.length > 0 ||
+      parsedTags.length > 0;
+
+    if (!hasAnyContent) {
+      toast.error('Cannot save an empty entry. Add some content first.');
+      return;
+    }
+
     setSaving(true);
     try {
       const gregorianDateStr = toLocalDateKey(dateAtNoon);
@@ -241,7 +257,7 @@ export default function JournalDayPage({ userId, date, onDateChange, entry, onSa
         gregorian_date: gregorianDateStr,
         content,
         mood,
-        tags: tags.split(',').map(t => t.trim()).filter(Boolean),
+        tags: parsedTags,
         gratitude: gratitude || null,
         images,
         voice_notes: voiceNotes,

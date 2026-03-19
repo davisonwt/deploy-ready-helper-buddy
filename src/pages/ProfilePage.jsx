@@ -59,11 +59,17 @@ export default function ProfilePage() {
   const [activeTab, setActiveTab] = useState("profile")
   const fileInputRef = useRef(null)
   
+  // Parse sacred date params from URL for deep-linking into journal
+  const searchParams = new URLSearchParams(location.search)
+  const journalYear = searchParams.get('year') ? Number(searchParams.get('year')) : undefined
+  const journalMonth = searchParams.get('month') ? Number(searchParams.get('month')) : undefined
+  const journalDay = searchParams.get('day') ? Number(searchParams.get('day')) : undefined
+  const journalView = searchParams.get('view') || undefined
+
   useEffect(() => {
     setMounted(true)
     
     // Check for tab query parameter
-    const searchParams = new URLSearchParams(location.search)
     const tabParam = searchParams.get('tab')
     if (tabParam && ['profile', 'journal', 'recipes'].includes(tabParam)) {
       setActiveTab(tabParam)
