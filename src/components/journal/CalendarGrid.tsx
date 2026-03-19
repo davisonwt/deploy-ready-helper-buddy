@@ -496,14 +496,15 @@ export default function CalendarGrid({ entries: propEntries, onDateSelect }: Cal
                         T
                       </Badge>
                     )}
-                    {omerCount && (
+                    {omerCount.map((oc, oi) => (
                       <Badge 
-                        className={`bg-black/30 font-bold text-[8px] px-1 py-0 border border-current ${omerCount.color}`}
-                        title={`${omerCount.label} Day ${omerCount.count}${omerCount.count % 7 === 0 ? ' (Sabbath ' + (omerCount.count / 7) + ')' : ''}`}
+                        key={oi}
+                        className={`bg-black/30 font-bold text-[8px] px-1 py-0 border border-current ${oc.color}`}
+                        title={`${oc.label} Day ${oc.count}${oc.count % 7 === 0 ? ' (Sabbath ' + (oc.count / 7) + ')' : ''}`}
                       >
-                        {omerCount.count}{omerCount.count % 7 === 0 ? '🕎' : ''}
+                        {oc.count}{oc.count % 7 === 0 ? '🕎' : ''}
                       </Badge>
-                    )}
+                    ))}
                   </div>
                 </div>
               </motion.button>
