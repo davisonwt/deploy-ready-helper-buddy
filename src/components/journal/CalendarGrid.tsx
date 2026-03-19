@@ -7,6 +7,11 @@ import { Badge } from '../ui/badge';
 import { calculateCreatorDate } from '@/utils/dashboardCalendar';
 import { getDaysOutOfTimeCount } from '@/utils/customCalendar';
 import { getFeastInfo } from '@/utils/gardenRestDays';
+import {
+  calculateYhwhDateFromCivilDate,
+  parseLocalDateKey,
+  hasMeaningfulJournalEntry,
+} from '@/utils/journalDateMapping';
 import { JournalEntry } from './Journal';
 
 /**
