@@ -150,7 +150,7 @@ const AmbassadorThumbnailPage = lazy(() => import("./pages/AmbassadorThumbnailPa
 const GoSatGhostAccessThumbnailPage = lazy(() => import("./pages/GoSatGhostAccessThumbnailPage"));
 const TrueTequfahClock = lazy(() => import("./components/TrueTequfahClock"));
 const Sow2GrowCalendarPage = lazy(() => import("./pages/Sow2GrowCalendarPage"));
-const EnochianCalendarDesignPage = lazy(() => import("./pages/EnochianCalendarDesignPage"));
+const EnochianCalendarDesignPage = lazy(() => import("./pages/EnochianCalendarDesignPage").catch(() => import("./pages/EnochianCalendarDesignPage")));
 const WheelsInItselfPage = lazy(() => import("./pages/WheelsInItselfPage"));
 const EternalForestPage = lazy(() => import("./pages/EternalForestPage"));
 const ScripturalStudyQA = lazy(() => import("./pages/ScripturalStudyQA"));
