@@ -27,6 +27,12 @@ interface ProductCardProps {
 }
 
 export default function ProductCard({ product, featured, showActions = false }: ProductCardProps) {
+  // Track product view on mount
+  useEffect(() => {
+    if (product?.id) {
+      analytics.trackProductView(product.id, { title: product.title, type: product.type });
+    }
+  }, [product?.id]);
   const [imageError, setImageError] = useState(false);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [isPlaying, setIsPlaying] = useState(false);
