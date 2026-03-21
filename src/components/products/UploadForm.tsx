@@ -367,6 +367,7 @@ export default function UploadForm() {
       }
 
       toast.success('Product uploaded successfully!');
+      analytics.track('product_listed', { title: formData.title, type: formData.type, licenseType: formData.license_type });
       navigate('/my-products');
     } catch (error: any) {
       console.error('Upload error:', error);
