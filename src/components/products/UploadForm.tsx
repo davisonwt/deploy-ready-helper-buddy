@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { analytics } from '@/lib/analytics/sow2grow';
 import { MUSIC_MOODS, MUSIC_GENRES } from '@/constants/musicCategories';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
@@ -366,6 +367,7 @@ export default function UploadForm() {
       }
 
       toast.success('Product uploaded successfully!');
+      analytics.track('product_listed', { title: formData.title, type: formData.type, licenseType: formData.license_type });
       navigate('/my-products');
     } catch (error: any) {
       console.error('Upload error:', error);

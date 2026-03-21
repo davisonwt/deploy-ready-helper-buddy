@@ -1,13 +1,20 @@
-import { useMemo } from 'react';
+import { useMemo, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { CheckCircle, ArrowRight } from 'lucide-react';
+import { analytics } from '@/lib/analytics/sow2grow';
 
 export default function PaymentSuccessPage() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const bestowalId = useMemo(() => searchParams.get('orderId'), [searchParams]);
+
+  useEffect(() => {
+    if (bestowalId) {
+      analytics.track('bestowal_complete', { bestowalId });
+    }
+  }, [bestowalId]);
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-background to-muted/20 p-4">

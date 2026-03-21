@@ -1,7 +1,10 @@
 /**
  * S2G Marketing Analytics SDK
  * Auto-instruments every user touchpoint with GDPR/CCPA compliance
+ * Events are persisted to Supabase analytics_events table via edge function
  */
+
+import { supabase } from '@/integrations/supabase/client';
 
 interface AnalyticsEvent {
   event: string;
@@ -58,9 +61,29 @@ class Sow2GrowAnalytics {
 
   private async loadConsent() {
     try {
+      // Try localStorage first (works for both logged-in and anonymous)
       const stored = localStorage.getItem('s2g_analytics_consent');
       if (stored) {
         this.consent = JSON.parse(stored);
+      }
+
+      // If logged in, try loading from DB
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        const { data } = await supabase
+          .from('user_consent')
+          .select('analytics, marketing_attribution, precise_location')
+          .eq('user_id', user.id)
+          .maybeSingle();
+
+        if (data) {
+          this.consent = {
+            analytics: data.analytics,
+            marketingAttribution: data.marketing_attribution,
+            preciseLocation: data.precise_location,
+          };
+          localStorage.setItem('s2g_analytics_consent', JSON.stringify(this.consent));
+        }
       }
     } catch (e) {
       console.warn('Failed to load analytics consent', e);
@@ -71,15 +94,33 @@ class Sow2GrowAnalytics {
     this.userId = userId;
   }
 
-  setConsent(consent: { analytics: boolean; marketingAttribution: boolean; preciseLocation: boolean }) {
+  async setConsent(consent: { analytics: boolean; marketingAttribution: boolean; preciseLocation: boolean }) {
     this.consent = consent;
     localStorage.setItem('s2g_analytics_consent', JSON.stringify(consent));
+
+    // Persist to DB if logged in
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        await supabase
+          .from('user_consent')
+          .upsert({
+            user_id: user.id,
+            analytics: consent.analytics,
+            marketing_attribution: consent.marketingAttribution,
+            precise_location: consent.preciseLocation,
+            updated_at: new Date().toISOString(),
+          }, { onConflict: 'user_id' });
+      }
+    } catch (e) {
+      console.warn('Failed to persist consent to DB', e);
+    }
   }
 
   private getSuperProperties(): Partial<AnalyticsEvent> {
     const now = new Date();
     const utmParams = this.getUTMParams();
-    
+
     return {
       userId: this.userId,
       sessionId: this.sessionId,
@@ -88,7 +129,7 @@ class Sow2GrowAnalytics {
       timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
       deviceModel: this.getDeviceModel(),
       osVersion: this.getOSVersion(),
-      appVersion: process.env.REACT_APP_VERSION || '1.0.0',
+      appVersion: '1.0.0',
       screenWidth: window.screen.width,
       screenHeight: window.screen.height,
       ...utmParams,
@@ -133,17 +174,7 @@ class Sow2GrowAnalytics {
 
   private async getLocation(): Promise<{ lat?: number; lon?: number; ipCountry?: string; ipCity?: string }> {
     if (!this.consent.preciseLocation) {
-      // Try IP-based location (less precise, no consent needed)
-      try {
-        const response = await fetch('https://ipapi.co/json/');
-        const data = await response.json();
-        return {
-          ipCountry: data.country_code,
-          ipCity: data.city,
-        };
-      } catch (e) {
-        return {};
-      }
+      return {};
     }
 
     return new Promise((resolve) => {
@@ -166,10 +197,8 @@ class Sow2GrowAnalytics {
   }
 
   private setupAutoEvents() {
-    // Session start
     this.track('session_start');
 
-    // Screen view on route change (if using React Router)
     if (typeof window !== 'undefined') {
       window.addEventListener('beforeunload', () => {
         this.track('session_end');
@@ -188,7 +217,7 @@ class Sow2GrowAnalytics {
 
   track(eventName: string, properties?: Record<string, any>) {
     if (!this.consent.analytics && eventName !== 'session_start') {
-      return; // Don't track if no consent (except session_start for consent tracking)
+      return;
     }
 
     const event: AnalyticsEvent = {
@@ -197,7 +226,6 @@ class Sow2GrowAnalytics {
       ...properties,
     };
 
-    // Add location if consented
     if (this.consent.preciseLocation || eventName === 'session_start') {
       this.getLocation().then((location) => {
         Object.assign(event, location);
@@ -207,7 +235,6 @@ class Sow2GrowAnalytics {
       this.eventQueue.push(event);
     }
 
-    // Flush immediately for critical events
     if (['bestowal_complete', 'purchase'].includes(eventName)) {
       this.flush();
     }
@@ -273,7 +300,7 @@ class Sow2GrowAnalytics {
   private startFlushInterval() {
     this.flushInterval = setInterval(() => {
       this.flush();
-    }, 5000); // Flush every 5 seconds
+    }, 5000);
   }
 
   async flush(sync = false) {
@@ -284,13 +311,12 @@ class Sow2GrowAnalytics {
 
     const flushEvents = async () => {
       try {
-        // Import the API function
-        const { ingestAnalyticsEvents } = await import('@/api/analytics/events');
-        const result = await ingestAnalyticsEvents(events);
+        const { error } = await supabase.functions.invoke('ingest-analytics', {
+          body: { events },
+        });
 
-        if (!result.success) {
-          console.warn('Analytics flush failed:', result.error);
-          // Re-queue events on failure (up to 100)
+        if (error) {
+          console.warn('Analytics flush failed:', error);
           if (this.eventQueue.length < 100) {
             this.eventQueue.unshift(...events);
           }
@@ -318,4 +344,3 @@ export const analytics = new Sow2GrowAnalytics();
 export function useAnalytics() {
   return analytics;
 }
-

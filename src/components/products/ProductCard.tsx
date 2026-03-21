@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
+import { analytics } from '@/lib/analytics/sow2grow';
 import { globalAudioManager } from '@/utils/globalAudioManager';
 import { useProductBasket } from '@/contexts/ProductBasketContext';
 import { useAuth } from '@/hooks/useAuth';
@@ -26,6 +27,12 @@ interface ProductCardProps {
 }
 
 export default function ProductCard({ product, featured, showActions = false }: ProductCardProps) {
+  // Track product view on mount
+  useEffect(() => {
+    if (product?.id) {
+      analytics.trackProductView(product.id, { title: product.title, type: product.type });
+    }
+  }, [product?.id]);
   const [imageError, setImageError] = useState(false);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [isPlaying, setIsPlaying] = useState(false);
@@ -147,7 +154,7 @@ export default function ProductCard({ product, featured, showActions = false }: 
       e.stopPropagation();
     }
     try {
-      console.log('ProductCard: handleBestow called', product);
+      analytics.trackProductTap(product.id, { title: product.title, action: 'bestow' });
       if (!product.id) {
         toast.error('Invalid product');
         return;
