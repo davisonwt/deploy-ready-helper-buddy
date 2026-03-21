@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { analytics } from '@/lib/analytics/sow2grow';
 import { useProductBasket } from '@/contexts/ProductBasketContext';
 import { useAuth } from '@/hooks/useAuth';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
