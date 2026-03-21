@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { analytics } from '@/lib/analytics/sow2grow';
 import { MUSIC_MOODS, MUSIC_GENRES } from '@/constants/musicCategories';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
