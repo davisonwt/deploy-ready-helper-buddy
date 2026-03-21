@@ -18,10 +18,13 @@ export default function BestowalCheckout() {
   const { user } = useAuth();
   const navigate = useNavigate();
   
-  // Debug: Log basket items
+  // Track bestowal start when checkout is viewed with items
   useEffect(() => {
-    console.log('🛒 BestowalCheckout: Basket items', basketItems);
-    console.log('🛒 BestowalCheckout: localStorage productBasket', localStorage.getItem('productBasket'));
+    if (basketItems.length > 0) {
+      basketItems.forEach(item => {
+        analytics.trackBestowalStart(item.id, Number(item.price));
+      });
+    }
   }, [basketItems]);
 
   // Calculate distribution breakdown

@@ -10,6 +10,12 @@ export default function PaymentSuccessPage() {
   const [searchParams] = useSearchParams();
   const bestowalId = useMemo(() => searchParams.get('orderId'), [searchParams]);
 
+  useEffect(() => {
+    if (bestowalId) {
+      analytics.track('bestowal_complete', { bestowalId });
+    }
+  }, [bestowalId]);
+
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-background to-muted/20 p-4">
       <Card className="max-w-md w-full">

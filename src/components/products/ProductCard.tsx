@@ -154,7 +154,7 @@ export default function ProductCard({ product, featured, showActions = false }: 
       e.stopPropagation();
     }
     try {
-      console.log('ProductCard: handleBestow called', product);
+      analytics.trackProductTap(product.id, { title: product.title, action: 'bestow' });
       if (!product.id) {
         toast.error('Invalid product');
         return;
