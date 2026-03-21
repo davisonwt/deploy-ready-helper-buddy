@@ -332,6 +332,72 @@ export type Database = {
         }
         Relationships: []
       }
+      analytics_events: {
+        Row: {
+          attribution_channel: string | null
+          created_at: string
+          device_model: string | null
+          event: string
+          id: string
+          ip_city: string | null
+          ip_country: string | null
+          os_version: string | null
+          properties: Json | null
+          screen_height: number | null
+          screen_width: number | null
+          session_id: string
+          timestamp: string
+          user_id: string | null
+          utm_campaign: string | null
+          utm_content: string | null
+          utm_medium: string | null
+          utm_source: string | null
+          utm_term: string | null
+        }
+        Insert: {
+          attribution_channel?: string | null
+          created_at?: string
+          device_model?: string | null
+          event: string
+          id?: string
+          ip_city?: string | null
+          ip_country?: string | null
+          os_version?: string | null
+          properties?: Json | null
+          screen_height?: number | null
+          screen_width?: number | null
+          session_id: string
+          timestamp?: string
+          user_id?: string | null
+          utm_campaign?: string | null
+          utm_content?: string | null
+          utm_medium?: string | null
+          utm_source?: string | null
+          utm_term?: string | null
+        }
+        Update: {
+          attribution_channel?: string | null
+          created_at?: string
+          device_model?: string | null
+          event?: string
+          id?: string
+          ip_city?: string | null
+          ip_country?: string | null
+          os_version?: string | null
+          properties?: Json | null
+          screen_height?: number | null
+          screen_width?: number | null
+          session_id?: string
+          timestamp?: string
+          user_id?: string | null
+          utm_campaign?: string | null
+          utm_content?: string | null
+          utm_medium?: string | null
+          utm_source?: string | null
+          utm_term?: string | null
+        }
+        Relationships: []
+      }
       arweave_exports: {
         Row: {
           arweave_tx_id: string | null
@@ -7863,6 +7929,33 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      user_consent: {
+        Row: {
+          analytics: boolean
+          id: string
+          marketing_attribution: boolean
+          precise_location: boolean
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          analytics?: boolean
+          id?: string
+          marketing_attribution?: boolean
+          precise_location?: boolean
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          analytics?: boolean
+          id?: string
+          marketing_attribution?: boolean
+          precise_location?: boolean
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
       }
       user_crops: {
         Row: {
