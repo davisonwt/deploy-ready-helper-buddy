@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
+import { analytics } from '@/lib/analytics/sow2grow';
 import { globalAudioManager } from '@/utils/globalAudioManager';
 import { useProductBasket } from '@/contexts/ProductBasketContext';
 import { useAuth } from '@/hooks/useAuth';
