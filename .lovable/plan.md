@@ -1,107 +1,97 @@
 
-Issue report (what was changed, why it still broke, and what I found)
 
-I hear you. You asked for a detailed report, so this is a straight technical postmortem.
+# Event Tracking Data Pipeline
 
-1) What was changed during the previous fixes
-- `src/components/journal/CalendarGrid.tsx`
-  - Omer/New Wine/New Oil overlap logic was changed (50th day overlaps with next cycle day 1).
-  - Rendering changed from single count to array badges.
-  - A null guard was later added after the crash (`omerCount.map` on null).
-- `src/utils/gardenRestDays.ts`
-  - Month 2 feast labels were expanded (full Unleavened Bread week, rest day markers, etc.).
-- `src/components/journal/Journal.tsx`, `CalendarGrid.tsx`, `JournalDayPage.tsx`, and new `src/utils/journalDateMapping.ts`
-  - Date mapping was centralized to noon-based parsing.
-  - “Ghost entry” filtering was added.
-  - Auto-repair logic was added to rewrite stored YHWH fields based on `gregorian_date`.
+## What We're Building
+A real `analytics_events` table and `user_consent` table in Supabase, then wiring up the existing SDK (`src/lib/analytics/sow2grow.ts`) to actually persist events to the database instead of logging to console. This becomes the data foundation for all future AI agents.
 
-2) Why this still failed (root causes)
-Do I know what the issue is? Yes.
+## Current State
+- The SDK class `Sow2GrowAnalytics` already exists with full event tracking methods (product views, bestowals, follows, messages, video, etc.)
+- It queues events and flushes every 5 seconds
+- But the flush target (`src/api/analytics/events.ts`) is **stubbed** — it just logs to console
+- `useMarketingStats` returns mock data because there's no events table
+- No `analytics_events` or `user_consent` tables exist in the database
 
-Root Cause A: Two different calendar engines are still active
-- `dashboardCalendar.calculateCreatorDate()` = sunrise/location-based
-- `journalDateMapping.calculateYhwhDateFromCivilDate()` = civil noon-based
-- These are both used in journal flow, so the same date can resolve differently in different components.
+## Implementation Steps
 
-Root Cause B: Silent auto-rewrites in load path
-- `Journal.tsx` has two mutation blocks inside `loadEntries()`:
-  - “legacy offset repair”
-  - “calendarRepairPayload” mismatch repair
-- That means simply opening journal can rewrite rows.
-- This is high-risk and can move entries unexpectedly when mapping logic changes.
+### Step 1 — Create database tables (migration)
 
-Root Cause C: URL date params are ignored in Profile/Journal entry flow
-- `BeadPopup.tsx` navigates with `?tab=journal&year=...&month=...&day=...&view=...`
-- `ProfilePage.jsx` only reads `tab` and ignores year/month/day/view.
-- Result: user thinks they opened a chosen sacred day, but Journal defaults to current date state. Saving can land on a different day than intended.
+**`analytics_events` table:**
+- `id` (uuid, PK)
+- `user_id` (uuid, nullable — anonymous events allowed)
+- `session_id` (text)
+- `event` (text, indexed) — e.g. `product_view`, `bestowal_complete`, `session_start`
+- `properties` (jsonb) — flexible payload for event-specific data (productId, revenue, roomId, etc.)
+- `timestamp` (timestamptz)
+- `device_model`, `os_version`, `screen_width`, `screen_height` (text/int)
+- `utm_source`, `utm_medium`, `utm_campaign`, `utm_term`, `utm_content` (text, nullable)
+- `attribution_channel` (text)
+- `ip_country`, `ip_city` (text, nullable)
+- `created_at` (timestamptz, default now())
 
-Root Cause D: Empty rows still exist in DB
-- There is a saved row at Month 1 Day 7 with empty content/media/tags.
-- Even if marker filtering tries to hide empty entries, empty rows still create confusion in “exists / no exists” behavior across views.
+**`user_consent` table:**
+- `id` (uuid, PK)
+- `user_id` (uuid, references auth.users, unique)
+- `analytics` (boolean, default false)
+- `marketing_attribution` (boolean, default false)
+- `precise_location` (boolean, default false)
+- `updated_at` (timestamptz)
 
-3) Verified data findings from your account rows
-From `journal_entries` for your user:
-- New Year note exists at:
-  - `yhwh_year=6029, yhwh_month=1, yhwh_day=1, gregorian_date=2026-03-20`
-- Pesach note exists at:
-  - `yhwh_year=6029, yhwh_month=1, yhwh_day=14, gregorian_date=2026-04-02`
-- There is an empty row at:
-  - `yhwh_year=6029, yhwh_month=1, yhwh_day=7, content=''` (no tags/media)
+**RLS policies:**
+- `analytics_events`: Users can INSERT their own events. Only admins can SELECT all. Users can SELECT their own.
+- `user_consent`: Users can read/write their own consent record.
 
-So the DB has a real empty day-7 record and valid day-1/day-14 records. The UI mismatch is from resolution/render/save flow inconsistencies, not from one single bad row.
+**Indexes:**
+- `analytics_events(event)` — for filtering by event type
+- `analytics_events(user_id, timestamp)` — for per-user time queries
+- `analytics_events(created_at)` — for time-range dashboards
 
-4) Why “fixed” reports didn’t hold
-- The prior fixes treated symptoms in isolation (ghost marker, null crash, specific day shifts).
-- But the root system stayed inconsistent:
-  - dual date calculators
-  - write-on-read repair logic
-  - ignored URL-selected day
-- So each patch could fix one view while another path still remapped differently.
+### Step 2 — Create an edge function for event ingestion
 
-5) Corrective plan (implementation plan to actually stabilize)
-Step 1 — Freeze destructive behavior
-- Remove all automatic row-rewrite logic from journal load (`Journal.tsx` repair blocks).
-- No data mutations during read/render.
+**`supabase/functions/ingest-analytics/index.ts`**
+- Accepts POST with JSON array of events
+- Validates JWT (authenticated users) or allows anonymous with session_id
+- Batch-inserts events into `analytics_events` using service role
+- Extracts IP country/city from request headers (Supabase provides `x-forwarded-for`)
+- Returns `{ success, inserted }` count
 
-Step 2 — Single source of truth for persisted journal dates
-- Use one canonical mapping for all journal persistence and lookup (recommend noon-based civil mapping in `journalDateMapping.ts` for stability).
-- `dashboardCalendar` can remain for display features, but not for journal row identity.
+### Step 3 — Wire up the SDK to the edge function
 
-Step 3 — Respect deep-linked selected day
-- Parse `year/month/day/view` query params in Profile/Journal init.
-- Convert selected sacred day to Gregorian once and initialize `selectedDate` from that.
-- This directly fixes “I clicked day X but save went to Y”.
+**`src/lib/analytics/sow2grow.ts`** — Update `flush()` method:
+- Replace the import of `@/api/analytics/events` with a direct call to `supabase.functions.invoke('ingest-analytics', { body: { events } })`
+- Remove the stubbed `src/api/analytics/events.ts` file (no longer needed)
 
-Step 4 — Unify save keys and lookup keys
-- Save and find entries by one canonical key path (prefer `gregorian_date` + canonical derived YHWH tuple at save time).
-- Ensure all forms and day page follow identical save/update criteria.
+**`src/lib/analytics/sow2grow.ts`** — Update consent:
+- On `setConsent()`, also save to `user_consent` table via Supabase client
+- On `loadConsent()`, try loading from DB first (if logged in), fall back to localStorage
 
-Step 5 — Stop creating empty placeholder entries
-- Guard saves: if no meaningful content (text/gratitude/tags/media/recipes/prayer), do not insert a new row.
-- Optionally delete existing empty rows for same date when user clears everything.
+### Step 4 — Update useMarketingStats to use real data
 
-Step 6 — One-time explicit repair script (manual trigger only)
-- Build a deliberate migration/repair action (dry-run + confirm) to clean mismatched historic rows.
-- Never run repairs automatically on page load again.
+**`src/hooks/useMarketingStats.ts`**:
+- Replace mock data with actual queries against `analytics_events`
+- Funnel: count events by type (`product_view` → `bestowal_start` → `bestowal_complete`)
+- Attribution: group by `utm_source`
+- Recent events: select latest 10 events
+- Hourly revenue: aggregate `bestowal_complete` events by hour
 
-6) Validation checklist after implementation
-- Click Month 1 Day 1 from calendar → save note → appears only on M1D1.
-- Click Month 1 Day 14 → save/edit → never appears on day 13.
-- Month 1 Day 7 with empty row shows no entry marker.
-- Deep link `/profile?tab=journal&year=...&month=...&day=...&view=diary` opens exactly that date.
-- Reopen app/reload page and confirm no dates shift without user action.
+### Step 5 — Add tracking calls at key touchpoints
 
-Technical detail summary (files to change in fix pass)
-- `src/components/journal/Journal.tsx`
-  - Remove load-time auto-repair mutations
-  - Initialize selected date from URL params
-  - Keep canonical read mapping only
-- `src/components/journal/CalendarGrid.tsx`
-  - Ensure marker logic checks meaningful content consistently
-  - Keep canonical mapping only for matching
-- `src/components/journal/JournalDayPage.tsx` + all date option forms
-  - Shared save helper; reject empty inserts
-- `src/pages/ProfilePage.jsx`
-  - Parse year/month/day/view and pass/initialize Journal date context
-- `src/utils/journalDateMapping.ts`
-  - Remain canonical utility used everywhere for journal persistence
+Instrument these existing components (most already have the SDK imported but some don't call it):
+- `ProductCard.tsx` — `trackProductView` on render, `trackProductTap` on click
+- `BestowalCheckout.tsx` — `trackBestowalStart` on checkout initiation
+- `PaymentSuccessPage.tsx` — `trackBestowalComplete` on success
+- `UploadForm.tsx` — `track('product_listed')` on successful upload
+
+## Files Changed
+| File | Action |
+|------|--------|
+| New migration SQL | Create `analytics_events` + `user_consent` tables + RLS + indexes |
+| `supabase/functions/ingest-analytics/index.ts` | New edge function for batch event ingestion |
+| `src/lib/analytics/sow2grow.ts` | Wire flush to edge function, persist consent to DB |
+| `src/api/analytics/events.ts` | Delete (replaced by edge function) |
+| `src/hooks/useMarketingStats.ts` | Query real `analytics_events` table |
+| `src/components/products/ProductCard.tsx` | Add tracking calls |
+| `src/components/products/BestowalCheckout.tsx` | Add tracking calls |
+| `src/pages/PaymentSuccessPage.tsx` | Add tracking calls |
+| `src/components/products/UploadForm.tsx` | Add tracking calls |
+
