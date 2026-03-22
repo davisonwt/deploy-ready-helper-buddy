@@ -835,7 +835,7 @@ export default function DashboardPage() {
                       })(),
                       borderColor: currentTheme.cardBorder
                     }}>
-                      <span className="text-xs font-semibold truncate">{label}</span>
+                      <span className="text-xs font-bold truncate">{label}</span>
                     </Button>
                   </Link>
                 ))}
