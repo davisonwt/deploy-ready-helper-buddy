@@ -149,26 +149,10 @@ export default function DashboardPage() {
   // Theme system - rotates every 2 hours
   const [currentTheme, setCurrentTheme] = useState(getCurrentTheme());
 
-  const getReadableTextStylesForBackground = (background) => {
-    const hexMatches = background?.match(/#[0-9a-fA-F]{6}/g) || [];
-    const sampleColors = hexMatches.length > 0 ? hexMatches : ['#26c6da'];
-    const averageLuminance = sampleColors.reduce((acc, hex) => {
-      const clean = hex.replace('#', '');
-      const r = parseInt(clean.slice(0, 2), 16);
-      const g = parseInt(clean.slice(2, 4), 16);
-      const b = parseInt(clean.slice(4, 6), 16);
-      return acc + (0.299 * r + 0.587 * g + 0.114 * b) / 255;
-    }, 0) / sampleColors.length;
-
-    const useDarkText = averageLuminance > 0.5;
-
-    return {
-      color: useDarkText ? '#112033' : '#ffffff',
-      textShadow: useDarkText ? 'none' : '0 1px 2px rgba(0,0,0,0.55)'
-    };
+  const primaryButtonTextStyles = {
+    color: '#112033',
+    textShadow: 'none'
   };
-
-  const primaryButtonTextStyles = getReadableTextStylesForBackground(currentTheme.primaryButton);
 
   // Update theme every hour to check for 2-hour rotation
   useEffect(() => {
@@ -791,7 +775,7 @@ export default function DashboardPage() {
                   { to: '/profile', icon: User, label: 'My Profile', isProfile: true },
                 ].map(({ to, icon: Icon, label, isProfile }) => (
                   <Link key={to} to={to}>
-                    <Button className="w-full h-11 rounded-xl border shadow-md hover:shadow-lg transition-all duration-300 hover:-translate-y-0.5 px-3 gap-2" style={{
+                    <Button className="w-full h-11 rounded-xl border shadow-md hover:shadow-lg transition-all duration-300 hover:-translate-y-0.5 px-3 gap-2 !text-slate-900 [&_svg]:!text-slate-900" style={{
                       background: currentTheme.primaryButton,
                       ...primaryButtonTextStyles,
                       borderColor: currentTheme.cardBorder
@@ -813,7 +797,7 @@ export default function DashboardPage() {
                   { to: '/my-s2g-tribe', label: '🌊 My S2G Tribe' },
                 ].map(({ to, label }) => (
                   <Link key={to} to={to}>
-                    <Button className="w-full h-11 rounded-xl border shadow-md hover:shadow-lg transition-all duration-300 hover:-translate-y-0.5 px-3 gap-2" style={{
+                    <Button className="w-full h-11 rounded-xl border shadow-md hover:shadow-lg transition-all duration-300 hover:-translate-y-0.5 px-3 gap-2 !text-slate-900 [&_svg]:!text-slate-900" style={{
                       background: currentTheme.primaryButton,
                       ...primaryButtonTextStyles,
                       borderColor: currentTheme.cardBorder
@@ -901,7 +885,7 @@ export default function DashboardPage() {
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
                 {/* Become a Whisperer */}
                 <Link to="/become-whisperer">
-                  <Button className="w-full h-16 sm:h-20 rounded-2xl border shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-1 font-medium" style={{
+                  <Button className="w-full h-16 sm:h-20 rounded-2xl border shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-1 font-medium !text-slate-900 [&_svg]:!text-slate-900" style={{
                   background: currentTheme.primaryButton,
                   ...primaryButtonTextStyles,
                   borderColor: currentTheme.accent
