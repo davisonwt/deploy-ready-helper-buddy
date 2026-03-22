@@ -885,7 +885,7 @@ export default function DashboardPage() {
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
                 {/* Become a Whisperer */}
                 <Link to="/become-whisperer">
-                  <Button className="w-full h-16 sm:h-20 rounded-2xl border shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-1 font-medium" style={{
+                  <Button className="w-full h-16 sm:h-20 rounded-2xl border shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-1 font-medium !text-slate-900 [&_svg]:!text-slate-900" style={{
                   background: currentTheme.primaryButton,
                   ...primaryButtonTextStyles,
                   borderColor: currentTheme.accent
