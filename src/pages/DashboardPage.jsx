@@ -793,26 +793,7 @@ export default function DashboardPage() {
                   <Link key={to} to={to}>
                     <Button className="w-full h-11 rounded-xl border shadow-md hover:shadow-lg transition-all duration-300 hover:-translate-y-0.5 px-3 gap-2" style={{
                       background: currentTheme.primaryButton,
-                      color: (() => {
-                        const match = currentTheme.accent.match(/#[0-9a-fA-F]{6}/);
-                        const hex = match ? match[0] : '#26c6da';
-                        const clean = hex.replace('#', '');
-                        const r = parseInt(clean.slice(0, 2), 16);
-                        const g = parseInt(clean.slice(2, 4), 16);
-                        const b = parseInt(clean.slice(4, 6), 16);
-                        const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
-                        return luminance > 0.45 ? '#1a2332' : '#ffffff';
-                      })(),
-                      textShadow: (() => {
-                        const match = currentTheme.accent.match(/#[0-9a-fA-F]{6}/);
-                        const hex = match ? match[0] : '#26c6da';
-                        const clean = hex.replace('#', '');
-                        const r = parseInt(clean.slice(0, 2), 16);
-                        const g = parseInt(clean.slice(2, 4), 16);
-                        const b = parseInt(clean.slice(4, 6), 16);
-                        const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
-                        return luminance > 0.45 ? 'none' : '0 1px 2px rgba(0,0,0,0.5)';
-                      })(),
+                      ...primaryButtonTextStyles,
                       borderColor: currentTheme.cardBorder
                     }}>
                       {isProfile && user?.avatar_url ? (
