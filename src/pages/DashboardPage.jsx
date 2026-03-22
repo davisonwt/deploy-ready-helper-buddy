@@ -775,7 +775,7 @@ export default function DashboardPage() {
                   { to: '/profile', icon: User, label: 'My Profile', isProfile: true },
                 ].map(({ to, icon: Icon, label, isProfile }) => (
                   <Link key={to} to={to}>
-                    <Button className="w-full h-11 rounded-xl border shadow-md hover:shadow-lg transition-all duration-300 hover:-translate-y-0.5 px-3 gap-2" style={{
+                    <Button className="w-full h-11 rounded-xl border shadow-md hover:shadow-lg transition-all duration-300 hover:-translate-y-0.5 px-3 gap-2 !text-slate-900 [&_svg]:!text-slate-900" style={{
                       background: currentTheme.primaryButton,
                       ...primaryButtonTextStyles,
                       borderColor: currentTheme.cardBorder
