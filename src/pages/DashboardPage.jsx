@@ -903,9 +903,8 @@ export default function DashboardPage() {
                 <Link to="/become-whisperer">
                   <Button className="w-full h-16 sm:h-20 rounded-2xl border shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-1 font-medium" style={{
                   background: currentTheme.primaryButton,
-                  color: currentTheme.textPrimary,
-                  borderColor: currentTheme.accent,
-                  textShadow: '-0.3px -0.3px 0 #000, 0.3px -0.3px 0 #000, -0.3px 0.3px 0 #000, 0.3px 0.3px 0 #000'
+                  ...primaryButtonTextStyles,
+                  borderColor: currentTheme.accent
                 }}>
                     <div className="text-center">
                       <Megaphone className="h-5 w-5 sm:h-6 sm:w-6 mx-auto mb-1 sm:mb-2" />
