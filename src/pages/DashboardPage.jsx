@@ -149,26 +149,10 @@ export default function DashboardPage() {
   // Theme system - rotates every 2 hours
   const [currentTheme, setCurrentTheme] = useState(getCurrentTheme());
 
-  const getReadableTextStylesForBackground = (background) => {
-    const hexMatches = background?.match(/#[0-9a-fA-F]{6}/g) || [];
-    const sampleColors = hexMatches.length > 0 ? hexMatches : ['#26c6da'];
-    const averageLuminance = sampleColors.reduce((acc, hex) => {
-      const clean = hex.replace('#', '');
-      const r = parseInt(clean.slice(0, 2), 16);
-      const g = parseInt(clean.slice(2, 4), 16);
-      const b = parseInt(clean.slice(4, 6), 16);
-      return acc + (0.299 * r + 0.587 * g + 0.114 * b) / 255;
-    }, 0) / sampleColors.length;
-
-    const useDarkText = averageLuminance > 0.5;
-
-    return {
-      color: useDarkText ? '#112033' : '#ffffff',
-      textShadow: useDarkText ? 'none' : '0 1px 2px rgba(0,0,0,0.55)'
-    };
+  const primaryButtonTextStyles = {
+    color: '#112033',
+    textShadow: 'none'
   };
-
-  const primaryButtonTextStyles = getReadableTextStylesForBackground(currentTheme.primaryButton);
 
   // Update theme every hour to check for 2-hour rotation
   useEffect(() => {
