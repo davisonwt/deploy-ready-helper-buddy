@@ -20,6 +20,7 @@ import { useAuth } from '@/hooks/useAuth'
 import { GuestRequestModal } from './GuestRequestModal'
 import { MusicPurchaseInterface } from './MusicPurchaseInterface'
 import { RadioHostPanel } from './RadioHostPanel'
+import { NowPlayingSeedCard } from './NowPlayingSeedCard'
 import { resolveAudioUrl } from '@/utils/resolveAudioUrl'
 
 export function LiveStreamListener({ liveSession, currentShow }) {
