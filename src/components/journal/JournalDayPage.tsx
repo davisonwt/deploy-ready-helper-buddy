@@ -318,7 +318,7 @@ export default function JournalDayPage({ userId, date, onDateChange, entry, onSa
             {date.toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
           </div>
           <div className="text-sm text-muted-foreground">
-            YHWH Year {yhwhDate.year} • Month {yhwhDate.month} • Day {yhwhDate.day}
+            YHVH Year {yhwhDate.year} • Month {yhwhDate.month} • Day {yhwhDate.day}
             {yhwhDate.weekDay === 7 && <Badge className="ml-2 bg-yellow-500/20 text-yellow-700 text-xs">Shabbat</Badge>}
           </div>
           {isToday && <Badge className="mt-1 bg-primary/20 text-primary text-xs">Today</Badge>}

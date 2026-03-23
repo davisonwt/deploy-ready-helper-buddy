@@ -395,7 +395,7 @@ export default function CalendarGrid({ entries: propEntries, onDateSelect }: Cal
                 {YHWH_MONTHS[currentYhwhMonth - 1]} {currentYhwhYear}
               </h3>
               <p className="text-sm text-muted-foreground">
-                YHWH Calendar View
+                YHVH Calendar View
               </p>
             </div>
             <Button

@@ -188,9 +188,9 @@ export const scripturalTopics: StudyTopic[] = [
         question: 'Why celebrating murder is NOT the gospel',
         answer: 'Placeholder: Challenging study on reframing the crucifixion narrative.',
         conventionalView: [
-          { conventional: 'The crucifixion was "God\'s plan" to kill his son', scripture: 'Scripture calls the crucifixion murder by lawless men, which YHWH used for good (Acts 2:23, Genesis 50:20)' },
+          { conventional: 'The crucifixion was "God\'s plan" to kill his son', scripture: 'Scripture calls the crucifixion murder by lawless men, which YHVH used for good (Acts 2:23, Genesis 50:20)' },
         ],
-        mindBlown: { text: 'Peter told the crowd: "You, with the help of lawless men, put him to death by nailing him to the cross" (Acts 2:23). It was murder. YHWH turned it for good — but it was still murder.', reference: 'Acts 2:23' },
+        mindBlown: { text: 'Peter told the crowd: "You, with the help of lawless men, put him to death by nailing him to the cross" (Acts 2:23). It was murder. YHVH turned it for good — but it was still murder.', reference: 'Acts 2:23' },
       },
     ],
   },
@@ -278,7 +278,7 @@ export const scripturalTopics: StudyTopic[] = [
         conventionalView: [
           { conventional: 'The first resurrection is a future bodily event', scripture: 'The first resurrection is spiritual — passing from death to life when you believe (John 5:24-25)' },
         ],
-        mindBlown: { text: '"The hour is coming AND NOW IS when the dead will hear the voice of the Son of Elohim, and those who hear will LIVE." Present tense. NOW IS.', reference: 'John 5:25' },
+        mindBlown: { text: '"The hour is coming AND NOW IS when the dead will hear the voice of the Son of Elohiym, and those who hear will LIVE." Present tense. NOW IS.', reference: 'John 5:25' },
       },
     ],
   },
@@ -348,7 +348,7 @@ export const scripturalTopics: StudyTopic[] = [
         conventionalView: [
           { conventional: 'We need future glorified bodies to enter the kingdom', scripture: 'The kingdom is spiritual — entered by spiritual rebirth, not physical transformation (John 3:5-6)' },
         ],
-        mindBlown: { text: 'Yahusha said "the kingdom of Elohim is WITHIN you" (Luke 17:21). Not above you. Not ahead of you. WITHIN you. Right now.', reference: 'Luke 17:21' },
+        mindBlown: { text: 'Yahusha said "the kingdom of Elohiym is WITHIN you" (Luke 17:21). Not above you. Not ahead of you. WITHIN you. Right now.', reference: 'Luke 17:21' },
       },
       {
         id: 'garden-exile-return',
@@ -381,7 +381,7 @@ export const scripturalTopics: StudyTopic[] = [
         question: 'Why we use AA and AM (After Adam, After Messiah)',
         answer: 'Placeholder: Study explaining the biblical dating system.',
         conventionalView: [
-          { conventional: 'BC/AD or BCE/CE are the standard dating systems', scripture: 'The biblical calendar counts from creation (After Adam) and from Messiah (After Messiah) — centering time on YHWH\'s timeline' },
+          { conventional: 'BC/AD or BCE/CE are the standard dating systems', scripture: 'The biblical calendar counts from creation (After Adam) and from Messiah (After Messiah) — centering time on YHVH\'s timeline' },
         ],
         mindBlown: { text: 'Why do we use a pagan emperor\'s dating system (AD = Anno Domini) when scripture provides its own timeline from creation? AA and AM restore the biblical framework.', reference: 'Genesis 5, Luke 3:23-38' },
       },

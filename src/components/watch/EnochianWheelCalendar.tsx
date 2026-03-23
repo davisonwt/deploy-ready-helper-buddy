@@ -519,20 +519,20 @@ const Month1Strand = ({ dayOfMonth, year, currentMonth, currentDayOfMonth }: { d
               </h3>
               <div className="text-amber-100/80 text-xs leading-relaxed space-y-2 text-left">
                 {selectedMonth12Bead.day === 29 && <>
-                  <p>3 And Elohim said, "Let light come to be," and light came to be.</p>
-                  <p>4 And Elohim saw the light, that it was good. And Elohim separated the light from the darkness.</p>
-                  <p>5 And Elohim called the light 'day' and the darkness He called 'night.' And there came to be evening and there came to be morning, one day.</p>
+                  <p>3 And Elohiym said, "Let light come to be," and light came to be.</p>
+                  <p>4 And Elohiym saw the light, that it was good. And Elohiym separated the light from the darkness.</p>
+                  <p>5 And Elohiym called the light 'day' and the darkness He called 'night.' And there came to be evening and there came to be morning, one day.</p>
                 </>}
                 {selectedMonth12Bead.day === 30 && <>
-                  <p>6 And Elohim said, "Let an expanse come to be in the midst of the waters, and let it separate the waters from the waters."</p>
-                  <p>7 And Elohim made the expanse, and separated the waters which were under the expanse from the waters which were above the expanse. And it came to be so.</p>
-                  <p>8 And Elohim called the expanse 'heavens.' And there came to be evening and there came to be morning, the second day.</p>
+                  <p>6 And Elohiym said, "Let an expanse come to be in the midst of the waters, and let it separate the waters from the waters."</p>
+                  <p>7 And Elohiym made the expanse, and separated the waters which were under the expanse from the waters which were above the expanse. And it came to be so.</p>
+                  <p>8 And Elohiym called the expanse 'heavens.' And there came to be evening and there came to be morning, the second day.</p>
                 </>}
                 {selectedMonth12Bead.day === 31 && <>
-                  <p>9 And Elohim said, "Let the waters under the heavens be gathered together into one place, and let the dry land appear." And it came to be so.</p>
-                  <p>10 And Elohim called the dry land 'earth,' and the collection of the waters He called 'seas.' And Elohim saw that it was good.</p>
-                  <p>11 And Elohim said, "Let the earth bring forth grass, the plant that yields seed, and the fruit tree that yields fruit according to its kind, whose seed is in itself, on the earth." And it came to be so.</p>
-                  <p>12 And the earth brought forth grass, the plant that yields seed according to its kind, and the tree that yields fruit, whose seed is in itself according to its kind. And Elohim saw that it was good.</p>
+                  <p>9 And Elohiym said, "Let the waters under the heavens be gathered together into one place, and let the dry land appear." And it came to be so.</p>
+                  <p>10 And Elohiym called the dry land 'earth,' and the collection of the waters He called 'seas.' And Elohiym saw that it was good.</p>
+                  <p>11 And Elohiym said, "Let the earth bring forth grass, the plant that yields seed, and the fruit tree that yields fruit according to its kind, whose seed is in itself, on the earth." And it came to be so.</p>
+                  <p>12 And the earth brought forth grass, the plant that yields seed according to its kind, and the tree that yields fruit, whose seed is in itself according to its kind. And Elohiym saw that it was good.</p>
                   <p>13 And there came to be evening and there came to be morning, the third day.</p>
                 </>}
               </div>
@@ -2809,7 +2809,7 @@ const Month8Strand = ({ dayOfMonth, year }: { dayOfMonth: number; year: number }
     const sabbathDays = calculateSabbathDays(8);
     const isSabbath = sabbathDays.includes(day);
 
-    const is7Cheshvan   = day === 7;                     // Vayehi – prayers for rain begin (Israel)
+    const is7Cheshvan   = day === 7;                     // Vayehi – prayers for rain begin (Yashar'el)
 
     const is23Cheshvan  = day === 23;                    // Traditional date of future Temple cornerstone laying
 
@@ -4385,7 +4385,7 @@ const Month12Strand = ({ dayOfMonth, year }: { dayOfMonth: number; year: number 
               <div className="border-t border-purple-700/30 pt-4 mt-4">
                 <p className="text-amber-300 font-bold text-base mb-2">בראשית / Genesis 1:1-2</p>
                 <p className="text-purple-100 text-sm leading-relaxed italic">
-                  "In the beginning Elohim created the heavens and the earth. And the earth was without form, and void; and darkness was upon the face of the deep."
+                  "In the beginning Elohiym created the heavens and the earth. And the earth was without form, and void; and darkness was upon the face of the deep."
                 </p>
                 <p className="text-amber-200/80 text-xs mt-3 font-semibold tracking-wide uppercase">
                   Eternity — a place where no time existed

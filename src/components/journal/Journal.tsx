@@ -396,7 +396,7 @@ export default function Journal({ initialYhwhYear, initialYhwhMonth, initialYhwh
             My Journal
           </h2>
           <p className="text-muted-foreground mt-2">
-            Reflect on your journey through the YHWH calendar
+            Reflect on your journey through the YHVH calendar
           </p>
         </div>
         <Button onClick={handleExport} variant="outline" size="sm">
