@@ -948,7 +948,7 @@ export const sacredCalendarNotes: Record<string, CalendarDayNotes> = {
   "M9_D20": {
     notes: [
       "Ezra gathered all the people of Judah and Benjamin to Jerusalem and commanded the men who had taken strange wives to put them away (Ezra 10:1-15)",
-      "David's (and Israel's) sin of counting. Joab brought David the census (2 Samuel 24:8)",
+      "David's (and Yashar'el's) sin of counting. Joab brought David the census (2 Samuel 24:8)",
     ],
   },
   "M9_D21": {

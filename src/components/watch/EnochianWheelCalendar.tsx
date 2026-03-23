@@ -2809,7 +2809,7 @@ const Month8Strand = ({ dayOfMonth, year }: { dayOfMonth: number; year: number }
     const sabbathDays = calculateSabbathDays(8);
     const isSabbath = sabbathDays.includes(day);
 
-    const is7Cheshvan   = day === 7;                     // Vayehi – prayers for rain begin (Israel)
+    const is7Cheshvan   = day === 7;                     // Vayehi – prayers for rain begin (Yashar'el)
 
     const is23Cheshvan  = day === 23;                    // Traditional date of future Temple cornerstone laying
 
