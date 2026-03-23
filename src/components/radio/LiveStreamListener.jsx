@@ -903,6 +903,19 @@ export function LiveStreamListener({ liveSession, currentShow }) {
       {/* GoSat Hosts — Message & Call */}
       <RadioHostPanel />
 
+      {/* Now Playing Seed Card with Bestow */}
+      {currentTrack && isPlaying && !currentTrack.isVoiceNote && (
+        <NowPlayingSeedCard
+          seedId={currentTrack.sourceType === 'product' ? currentTrack.id : undefined}
+          trackId={currentTrack.id}
+          trackTitle={currentTrack.track_title}
+          artistName={currentTrack.artist_name || undefined}
+          durationSeconds={currentTrack.duration_seconds || undefined}
+          sessionId={liveSession?.id || undefined}
+          scheduleId={currentShow?.schedule_id || undefined}
+        />
+      )}
+
       {/* Music Purchase Interface */}
       <MusicPurchaseInterface 
         tracks={playlistTracks}
