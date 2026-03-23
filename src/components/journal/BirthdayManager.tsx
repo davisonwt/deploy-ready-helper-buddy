@@ -230,7 +230,7 @@ export function BirthdayManager({ selectedYhwhMonth, selectedYhwhDay, onBirthday
 
             <div className="grid grid-cols-2 gap-2">
               <div>
-                <label className="text-sm font-medium mb-1 block">YHWH Month</label>
+                <label className="text-sm font-medium mb-1 block">YHVH Month</label>
                 <select
                   value={formData.yhwh_month}
                   onChange={(e) => setFormData({ ...formData, yhwh_month: parseInt(e.target.value) })}
@@ -242,7 +242,7 @@ export function BirthdayManager({ selectedYhwhMonth, selectedYhwhDay, onBirthday
                 </select>
               </div>
               <div>
-                <label className="text-sm font-medium mb-1 block">YHWH Day</label>
+                <label className="text-sm font-medium mb-1 block">YHVH Day</label>
                 <Input
                   type="number"
                   min="1"
