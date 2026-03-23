@@ -20,6 +20,7 @@ import { useAuth } from '@/hooks/useAuth'
 import { GuestRequestModal } from './GuestRequestModal'
 import { MusicPurchaseInterface } from './MusicPurchaseInterface'
 import { RadioHostPanel } from './RadioHostPanel'
+import { NowPlayingSeedCard } from './NowPlayingSeedCard'
 import { resolveAudioUrl } from '@/utils/resolveAudioUrl'
 
 export function LiveStreamListener({ liveSession, currentShow }) {
@@ -261,6 +262,8 @@ export function LiveStreamListener({ liveSession, currentShow }) {
   }
 
   // Calculate which track should be playing right now based on the strongest available clock anchor
+  // NOTE: We intentionally return seekOffset = 0 so listeners always hear full songs from the start.
+  // The track index is still sync'd to the clock so everyone starts on the same song.
   const calculateCurrentTrack = (tracks) => {
     if (tracks.length === 0) {
       return { trackIndex: 0, seekOffset: 0 }
@@ -313,9 +316,9 @@ export function LiveStreamListener({ liveSession, currentShow }) {
     for (let i = 0; i < tracks.length; i++) {
       const trackDuration = tracks[i].duration_seconds || 180
       if (cumulative + trackDuration > positionInLoop) {
-        const seekOffset = positionInLoop - cumulative
-        console.log(`[Sync] Anchor ${showStart.toISOString()} elapsed ${elapsedSeconds}s, loop pos ${positionInLoop}s → track ${i + 1}/${tracks.length} "${tracks[i].track_title}" @ ${seekOffset}s`)
-        return { trackIndex: i, seekOffset }
+        // Always play full songs — no mid-track seeking on the radio
+        console.log(`[Sync] Anchor ${showStart.toISOString()} elapsed ${elapsedSeconds}s, loop pos ${positionInLoop}s → track ${i + 1}/${tracks.length} "${tracks[i].track_title}" (playing from start)`)
+        return { trackIndex: i, seekOffset: 0 }
       }
       cumulative += trackDuration
     }
@@ -899,6 +902,19 @@ export function LiveStreamListener({ liveSession, currentShow }) {
 
       {/* GoSat Hosts — Message & Call */}
       <RadioHostPanel />
+
+      {/* Now Playing Seed Card with Bestow */}
+      {currentTrack && isPlaying && !currentTrack.isVoiceNote && (
+        <NowPlayingSeedCard
+          seedId={currentTrack.sourceType === 'product' ? currentTrack.id : undefined}
+          trackId={currentTrack.id}
+          trackTitle={currentTrack.track_title}
+          artistName={currentTrack.artist_name || undefined}
+          durationSeconds={currentTrack.duration_seconds || undefined}
+          sessionId={liveSession?.id || undefined}
+          scheduleId={currentShow?.schedule_id || undefined}
+        />
+      )}
 
       {/* Music Purchase Interface */}
       <MusicPurchaseInterface 
