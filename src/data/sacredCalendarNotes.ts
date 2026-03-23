@@ -21,16 +21,16 @@ export const sacredCalendarNotes: Record<string, CalendarDayNotes> = {
       "Tekufah: Strongs 8622 (Dead Sea Scroll 4Q324d indicates the tekufah occurs on the 1st Day of months 4, 7, & 10 and possibly month 1)",
       "Elohiym instructed Noah to build the ark (Jubilees 6:21-22)",
       "Earth became visible after the flood (Dead Sea Scroll 4Q252 & Jubilees 5:30). Noah removed covering of Ark and saw the ground was dry (Genesis 8:13 & Jubilees 6:30)",
-      "Noah made a feast and burnt offering to YHWH and he became drunk, his nakedness exposed, and Ham sinned while Shem and Japheth covered (Jubilees 7:2-13)",
-      "YHWH spake unto Moses and Aaron in Egypt: 'This month shall be unto you the beginning of months' (Exodus 12:1-2)",
+      "Noah made a feast and burnt offering to YHVH and he became drunk, his nakedness exposed, and Ham sinned while Shem and Japheth covered (Jubilees 7:2-13)",
+      "YHVH spake unto Moses and Aaron in Egypt: 'This month shall be unto you the beginning of months' (Exodus 12:1-2)",
       "Moses erected the Tabernacle & furnished the Sanctuary (Exodus 40:2 & 17)",
-      "2 of 4 of Aaron's sons, Nahab and Abihu offered strange fire to YHWH and fire from YHWH killed them (Leviticus 10:1-3)",
-      "Levitical Law given to Moses and the Children of Israel (Leviticus 11-27)",
-      "Hannah prayed and made a vow to YHWH for a male son (1 Samuel 1:1-28)",
+      "2 of 4 of Aaron's sons, Nahab and Abihu offered strange fire to YHVH and fire from YHVH killed them (Leviticus 10:1-3)",
+      "Levitical Law given to Moses and the Children of Yashar'el (Leviticus 11-27)",
+      "Hannah prayed and made a vow to YHVH for a male son (1 Samuel 1:1-28)",
       "King Hezekiah reopened the doors of the Temple and instructed priests to cleanse themselves (2 Chron 29:17)",
       "Ezra left Babylon with the articles of the temple by decree of Artaxerxes (Ezra 7:9)",
       "Levi named (and circumcised?) by Jacob (Jubilees 28:18)",
-      "YHWH Elohiym appeared to Isaac at night at the Well of the Oath (Jubilees 24:22-23)",
+      "YHVH Elohiym appeared to Isaac at night at the Well of the Oath (Jubilees 24:22-23)",
       "Jacob arrived at Bethel and had the dream of the ladder (Jubilees 27:19-28)",
     ],
     secondaryNotes: [
@@ -45,7 +45,7 @@ export const sacredCalendarNotes: Record<string, CalendarDayNotes> = {
   },
   "M1_D2": {
     notes: [
-      "Noah cursed Canaan for what Ham did to him. Noah blessed YHWH Elohiym of Shem, made Canaan Shem's servant, blessed Japheth that he would dwell in tents of Shem (Genesis 9:20-28)",
+      "Noah cursed Canaan for what Ham did to him. Noah blessed YHVH Elohiym of Shem, made Canaan Shem's servant, blessed Japheth that he would dwell in tents of Shem (Genesis 9:20-28)",
     ],
   },
   "M1_D3": {
@@ -62,27 +62,27 @@ export const sacredCalendarNotes: Record<string, CalendarDayNotes> = {
   },
   "M1_D5": {
     notes: [
-      "Joshua rose early in the morning; and they removed from Shittim, and came to Jordan, he and all the children of Israel, and lodged there before they passed over (Joshua 3:1)",
+      "Joshua rose early in the morning; and they removed from Shittim, and came to Jordan, he and all the children of Yashar'el, and lodged there before they passed over (Joshua 3:1)",
     ],
   },
   "M1_D7": {
     notes: [
       "Joshua instructed the people to prepare their victuals (sanctify themselves) to enter into the Promise land within 3 Days (Joshua 1:11)",
-      "A future prophecy of yet to be fulfilled of Restored Israel and future cleansing of the people (Ezekiel 45:20)",
+      "A future prophecy of yet to be fulfilled of Restored Yashar'el and future cleansing of the people (Ezekiel 45:20)",
       "Ezekiel given a prophecy against Pharaoh king of Egypt that the king of Babylon will become strong and defeat him (Ezekiel 30:20-26)",
     ],
   },
   "M1_D9": {
     notes: [
-      "The officers went through the host of Israel and commanded them when they see the Ark of the covenant to follow it (Joshua 3:2)",
-      "Joshua said unto the people, 'Sanctify yourselves: for tomorrow YHWH will do wonders among you.' (Joshua 3:5)",
+      "The officers went through the host of Yashar'el and commanded them when they see the Ark of the covenant to follow it (Joshua 3:2)",
+      "Joshua said unto the people, 'Sanctify yourselves: for tomorrow YHVH will do wonders among you.' (Joshua 3:5)",
       "Six days before Passover Yahusha came to Bethany, where they had a special meal for Him, Martha served, Lazarus reclined, Mariam anointed His feet with spikenard and wiped His feet with her hair (John 12:1-11)",
     ],
   },
   "M1_D10": {
     notes: [
-      "Israel instructed to take a Passover Lamb by the 10th Day of the 1st Month (Exodus 12:3)",
-      "Israel came out of Jordan, crossed the Jordan river, came into Promised Land, encamped at Gilgal east of Jericho. 12 Stones taken from Jordan River and set up at Gilgal. Israelites circumcised and the reproach of Egypt rolled away (Joshua 4:19)",
+      "Yashar'el instructed to take a Passover Lamb by the 10th Day of the 1st Month (Exodus 12:3)",
+      "Yashar'el came out of Jordan, crossed the Jordan river, came into Promised Land, encamped at Gilgal east of Jericho. 12 Stones taken from Jordan River and set up at Gilgal. Yashar'elites circumcised and the reproach of Egypt rolled away (Joshua 4:19)",
       "Ezra's fast? (Ezra 8:23)",
       "Yahusha left Bethany and was coming to Jerusalem, the people took Palm Branches and blessed Yahusha, Yahusha took a colt donkey to fulfill prophecy (John 12:12-50)",
       "Yahusha cleansed the Temple, this is the 2nd time at the end of His Ministry",
@@ -99,7 +99,7 @@ export const sacredCalendarNotes: Record<string, CalendarDayNotes> = {
   },
   "M1_D12": {
     notes: [
-      "Voices in heaven were heard regarding Abraham's faithfulness and love for YHWH among his trials and Mastema petitions Elohiym to test Abraham a 7th time with the offering of Isaac (Jubilees 16:15-18)",
+      "Voices in heaven were heard regarding Abraham's faithfulness and love for YHVH among his trials and Mastema petitions Elohiym to test Abraham a 7th time with the offering of Isaac (Jubilees 16:15-18)",
       "Ezra and those of the captivity departed from the river Ahava for Jerusalem after they fasted for safe travels (Ezra 8:31)",
       "Yahusha back in Bethany at Simon's house having a meal, and this time His head was anointed with the spikenard (Mark 14:1-9)",
       "Judas agreed to betray Yahusha (Mark 14:10)",
@@ -108,22 +108,22 @@ export const sacredCalendarNotes: Record<string, CalendarDayNotes> = {
   "M1_D14": {
     notes: [
       "Passover Begins at Sunset (Lev 23:5)",
-      "Abraham offered Isaac and YHWH provided the ram (Jubilees 17:15 & Jubilees 18:3)",
+      "Abraham offered Isaac and YHVH provided the ram (Jubilees 17:15 & Jubilees 18:3)",
       "Death Angel killed the 1st borns at midnight",
-      "Moses & Israel kept the Passover in the Wilderness of Sinai (Numbers 9:5)",
+      "Moses & Yashar'el kept the Passover in the Wilderness of Sinai (Numbers 9:5)",
       "King Josiah re-instituted the Passover (2 Chron 35:1)",
       "The children of the captivity from Persia kept the Passover in Jerusalem after they rebuilt the temple (Ezra 6:19)",
       "Yahusha ate the Passover with Disciples. Yahusha prayed in Gethsemane and was apprehended",
-      "A future prophecy of Restored Israel and the Prince keeping the Passover and the 7 day Feast of Unleavened Bread (Ezekiel 45:21-24)",
+      "A future prophecy of Restored Yashar'el and the Prince keeping the Passover and the 7 day Feast of Unleavened Bread (Ezekiel 45:21-24)",
     ],
   },
   "M1_D15": {
     notes: [
       "1st Day of Abraham's Festival of Joy (Jubilees 18:18)",
       "1st Day of Unleavened Bread",
-      "Israel departed Rameses, Egypt (Num 33:3)",
+      "Yashar'el departed Rameses, Egypt (Num 33:3)",
       "The manna stopped (Joshua 5:11-12)",
-      "An outward appearing Moabite male servant requested of King David to be circumcised; David sought counsel from YHWH — only Moabite and Ammonite women may dwell among Israel (Gad the Seer 3:1-12)",
+      "An outward appearing Moabite male servant requested of King David to be circumcised; David sought counsel from YHVH — only Moabite and Ammonite women may dwell among Yashar'el (Gad the Seer 3:1-12)",
       "Yahusha tried, sacrificed, died around the 9th hour and buried during the mixing of the day",
       "Night 1 in the Tomb",
     ],
@@ -132,7 +132,7 @@ export const sacredCalendarNotes: Record<string, CalendarDayNotes> = {
     notes: [
       "2nd Day of Abraham's Festival of Joy (Jubilees 18:18)",
       "2nd Day of Unleavened Bread",
-      "The priests finished their cleansing of the House of YHWH as instructed by King Hezekiah (2 Chron 29:17)",
+      "The priests finished their cleansing of the House of YHVH as instructed by King Hezekiah (2 Chron 29:17)",
       "Day 1, Night 2 in the Tomb",
     ],
   },
@@ -149,7 +149,7 @@ export const sacredCalendarNotes: Record<string, CalendarDayNotes> = {
       "4th Day of Abraham's Festival of Joy (Jubilees 18:18)",
       "4th Day of Unleavened Bread",
       "Day 3 in the Tomb, Yahusha Resurrected at Sunset",
-      "At the end of the Sabbath as it was beginning to dawn toward the 1st day of week Mary and Mary go to the tomb and encounter The Angel of YHWH (Matthew 28:1)",
+      "At the end of the Sabbath as it was beginning to dawn toward the 1st day of week Mary and Mary go to the tomb and encounter The Angel of YHVH (Matthew 28:1)",
     ],
     secondaryNotes: ["Song of the Sabbath Sacrifice #3"],
   },
@@ -172,25 +172,25 @@ export const sacredCalendarNotes: Record<string, CalendarDayNotes> = {
     notes: [
       "7th Day of Abraham's Festival of Joy (Jubilees 18:18)",
       "7th Day of Unleavened Bread",
-      "Israel at night crossed Red Sea and Egyptian army destroyed at dawn (Exodus 14)",
+      "Yashar'el at night crossed Red Sea and Egyptian army destroyed at dawn (Exodus 14)",
       "Moses Song of Deliverance at dawn (Exodus 15:1-21)",
     ],
   },
   "M1_D22": {
     notes: [
-      "Israel 1st of 3 Day Journey into the wilderness of Shur looking for water (Exodus 15:22-27)",
+      "Yashar'el 1st of 3 Day Journey into the wilderness of Shur looking for water (Exodus 15:22-27)",
       "Paul sailed from Philippi to Troas Day 1 (Acts 20:6)",
     ],
   },
   "M1_D23": {
     notes: [
-      "Israel 2nd of 3 Day Journey into the wilderness of Shur looking for water and came to Marah where the waters were bitter (Exodus 15:22-27)",
+      "Yashar'el 2nd of 3 Day Journey into the wilderness of Shur looking for water and came to Marah where the waters were bitter (Exodus 15:22-27)",
       "Paul sailed from Philippi to Troas Day 2 (Acts 20:6)",
     ],
   },
   "M1_D24": {
     notes: [
-      "Israel 3rd of 3 Day Journey into the wilderness of Shur looking for water and came to Elim with 70 Palm Trees & 12 Springs (Exodus 15:22-27)",
+      "Yashar'el 3rd of 3 Day Journey into the wilderness of Shur looking for water and came to Elim with 70 Palm Trees & 12 Springs (Exodus 15:22-27)",
       "Daniel received a vision by the great river after a 3 week fast (Daniel 10:4)",
       "Paul sailed from Philippi to Troas Day 3 (Acts 20:6)",
     ],
@@ -217,7 +217,7 @@ export const sacredCalendarNotes: Record<string, CalendarDayNotes> = {
   "M2_D1": {
     notes: [
       "Berka'el, who is the Leader of the Order of the 2nd Month (Enoch 82:17)",
-      "YHWH commanded Moses to number Israel by their families, from twenty years old and upward (Numbers 1:1 & 18)",
+      "YHVH commanded Moses to number Yashar'el by their families, from twenty years old and upward (Numbers 1:1 & 18)",
       "Joshua instructed to march around Jericho, Day 1 (Jasher 88:14)",
     ],
     secondaryNotes: [
@@ -246,7 +246,7 @@ export const sacredCalendarNotes: Record<string, CalendarDayNotes> = {
   },
   "M2_D9": {
     notes: [
-      "Noah & family went in the Ark & the animals went in unto Noah & YHWH shut him in (Gen 7:7, 10 & 16)",
+      "Noah & family went in the Ark & the animals went in unto Noah & YHVH shut him in (Gen 7:7, 10 & 16)",
     ],
     secondaryNotes: ["Song of the Sabbath Sacrifice #6"],
   },
@@ -269,8 +269,8 @@ export const sacredCalendarNotes: Record<string, CalendarDayNotes> = {
   "M2_D15": {
     notes: [
       "Day 1 of 2nd Unleavened Bread & King Hezekiah prayed for Atonement (2 Chron 30:18-22)",
-      "Israel came unto Wilderness of Sin and murmured against YHWH for their hunger (Exodus 16:1)",
-      "YHWH gave Israel quail at evening (Exodus 16:13)",
+      "Yashar'el came unto Wilderness of Sin and murmured against YHVH for their hunger (Exodus 16:1)",
+      "YHVH gave Yashar'el quail at evening (Exodus 16:13)",
       "At dawn dew came onto the ground (Exodus 16:13)",
       "Yahusha met the disciples at Lake Galilee and had a meal of broiled fish and bread? (John 21:1-19)",
       "Noah on Ark Day 6",
@@ -279,7 +279,7 @@ export const sacredCalendarNotes: Record<string, CalendarDayNotes> = {
   "M2_D16": {
     notes: [
       "Day 2 of 2nd Unleavened Bread (2 Chron 30:21-22)",
-      "The dew is lifted at Sunrise and Manna was first given on the Sabbath prior to Sabbath institution for Israel (Exodus 16:13)",
+      "The dew is lifted at Sunrise and Manna was first given on the Sabbath prior to Sabbath institution for Yashar'el (Exodus 16:13)",
       "Noah on Ark Day 7",
     ],
     secondaryNotes: ["Song of the Sabbath Sacrifice #7"],
@@ -288,7 +288,7 @@ export const sacredCalendarNotes: Record<string, CalendarDayNotes> = {
     notes: [
       "Day 3 of 2nd Unleavened Bread (2 Chron 30:21-22)",
       "Eve deceived by Serpent, Eve and Adam ate of tree of knowledge of good and evil (Jubilees 3:17-22)",
-      "YHWH made coats of animal skin, atonement for Adam and Eve. Curses given. Adam and Eve exiled from Garden of Eden",
+      "YHVH made coats of animal skin, atonement for Adam and Eve. Curses given. Adam and Eve exiled from Garden of Eden",
       "Day 1 Flood Judgement of Earth Started after 7 days on the Ark (Gen 7:10-11)",
       "Noah went from the Ark after 364-Day year (Dead Sea Scrolls 4Q252)",
     ],
@@ -317,8 +317,8 @@ export const sacredCalendarNotes: Record<string, CalendarDayNotes> = {
   "M2_D23": {
     notes: [
       "Day 2 of 7 Day extension of 2nd Unleavened Bread (2 Chron 30:23)",
-      "The First Sabbath observed by Israel (Exodus 16:22-26)",
-      "Some in Israel broke the commandment going out looking for manna, Moses rebuked (Exodus 16:27-28)",
+      "The First Sabbath observed by Yashar'el (Exodus 16:22-26)",
+      "Some in Yashar'el broke the commandment going out looking for manna, Moses rebuked (Exodus 16:27-28)",
     ],
     secondaryNotes: ["Song of the Sabbath Sacrifice #8"],
   },
@@ -349,28 +349,28 @@ export const sacredCalendarNotes: Record<string, CalendarDayNotes> = {
   "M3_D1": {
     notes: [
       "Zalebsa'el, who is the Leader of the Order of the 3rd Month (Enoch 82:17)",
-      "Noah built altar and made atonement offering and YHWH made a covenant with Noah to not flood-judge the earth (Jubilees 6:1-9)",
-      "YHWH came to Abram in a dream, revealed himself as YHWH and promised Abram his own offspring, the blessing of his offspring, and the land of the Canaanites (Jubilees 9:1-9)",
-      "Abram believed YHWH and it counted as righteousness. YHWH instructed Abram to gather animals for a covenant",
-      "Israel/Jacob left Haran to the Well of the Oath (Jubilees 44:1)",
+      "Noah built altar and made atonement offering and YHVH made a covenant with Noah to not flood-judge the earth (Jubilees 6:1-9)",
+      "YHVH came to Abram in a dream, revealed himself as YHVH and promised Abram his own offspring, the blessing of his offspring, and the land of the Canaanites (Jubilees 9:1-9)",
+      "Abram believed YHVH and it counted as righteousness. YHVH instructed Abram to gather animals for a covenant",
+      "Yashar'el/Jacob left Haran to the Well of the Oath (Jubilees 44:1)",
       "A future prophecy given to Ezekiel about the King of Assyria being destroyed by Pharaoh of Egypt (Ezekiel 31:1)",
     ],
   },
   "M3_D7": {
     notes: [
-      "Israel made sacrifice to El of his father Isaac at the Well of the Oath (Jubilees 44:1)",
+      "Yashar'el made sacrifice to El of his father Isaac at the Well of the Oath (Jubilees 44:1)",
     ],
     secondaryNotes: ["Song of the Sabbath Sacrifice #10"],
   },
   "M3_D13": {
     notes: [
-      "Laban pursued and caught up to Jacob in Gilead and YHWH appeared to Laban in a dream and instructed him not to harm Jacob (Jubilees 29:5-6)",
-      "Day 1 Moses instructed Israel to sanctify themselves / wash their garments, set mountain boundaries, not to come near a woman, and be ready against the 3rd Day (Exodus 19:10-11)",
+      "Laban pursued and caught up to Jacob in Gilead and YHVH appeared to Laban in a dream and instructed him not to harm Jacob (Jubilees 29:5-6)",
+      "Day 1 Moses instructed Yashar'el to sanctify themselves / wash their garments, set mountain boundaries, not to come near a woman, and be ready against the 3rd Day (Exodus 19:10-11)",
     ],
   },
   "M3_D14": {
     notes: [
-      "Day 2 Moses instructed Israel to not go near a woman (Exodus 19:10-11)",
+      "Day 2 Moses instructed Yashar'el to not go near a woman (Exodus 19:10-11)",
       "Yahusha's start of His ministry and baptism by John?",
       "Yahusha's 2nd ascension into heaven from the Mount of Olives? 'a Sabbath Day's Journey!!!' (Acts 1:3-12 & v22)",
       "The disciples return to Jerusalem from the Mount of Olives, Peter speaks quoting Psalm 69:25 and 109:8 to replace Judas. Matthias chosen via Urim and Thummim (Acts 1:12-26)",
@@ -381,9 +381,9 @@ export const sacredCalendarNotes: Record<string, CalendarDayNotes> = {
     notes: [
       "Shavuot / Feast of Weeks / First Fruits of Wheat (Dead Sea Scroll 4Q394)",
       "Noah's Covenant to NOT eat blood (Jubilees 6:17)",
-      "Abram at Mamre built an altar and sacrificed. YHWH confirmed the covenant passing through the animals as a flame (Jubilees 9:10-17)",
+      "Abram at Mamre built an altar and sacrificed. YHVH confirmed the covenant passing through the animals as a flame (Jubilees 9:10-17)",
       "Abram offered first-fruit offerings (Jubilees 9:19)",
-      "YHWH re-appears to Abram as El Shaddai and makes covenant. Abram's name changed to Abraham (Jubilees 15:1-7)",
+      "YHVH re-appears to Abram as El Shaddai and makes covenant. Abram's name changed to Abraham (Jubilees 15:1-7)",
       "Covenant of circumcision given to Abraham (Jubilees 15:11)",
       "The promise of Isaac made to Abraham (Jubilees 15:19 & Genesis 18:14)",
       "Sarai named changed to Sarah (Jubilees 15:15)",
@@ -392,7 +392,7 @@ export const sacredCalendarNotes: Record<string, CalendarDayNotes> = {
       "Jacob made a feast for Laban and made a covenant with him at Gilead (Jubilees 29:7-9)",
       "Judah named (and circumcised?) by Jacob (Jubilees 28:15)",
       "Elohiym instructed Moses to ascend/descend Mount Sinai (Jubilees 1:1 & Exodus 19:25)",
-      "At boqer / morning before sunrise YHWH descended upon Mount Sinai, YHWH audibly spoke 10 Commandments to Israel (Exodus 19:16 - 24:8)",
+      "At boqer / morning before sunrise YHVH descended upon Mount Sinai, YHVH audibly spoke 10 Commandments to Yashar'el (Exodus 19:16 - 24:8)",
       "Tobit celebrated this day but instead did a good work of burying the dead (Tobit 2:1-4)",
       "Yahusha declares the fields are white for harvest 4 months early (John 4:35)",
       "Paul's priority to make it back to Jerusalem to celebrate Shavuot (Acts 20 & 21)",
@@ -403,33 +403,33 @@ export const sacredCalendarNotes: Record<string, CalendarDayNotes> = {
   },
   "M3_D16": {
     notes: [
-      "YHWH appeared to Jacob (Israel) and instructed him to go down to Egypt. Jacob and sons departed that day (Jubilees 44:5-8)",
-      "YHWH promises to gather the Israelites from their diaspora after they repent (Jubilees 1:14)",
-      "Day 1, Glory of YHWH in a Cloud covered Mount Sinai (Jubilees 1:2 & Exodus 24:16)",
-      "YHWH instructs Moses to come part way up Mount Sinai with Aaron, Nahab, Abihu, and 70 elders (Exodus 24:9)",
+      "YHVH appeared to Jacob (Yashar'el) and instructed him to go down to Egypt. Jacob and sons departed that day (Jubilees 44:5-8)",
+      "YHVH promises to gather the Yashar'elites from their diaspora after they repent (Jubilees 1:14)",
+      "Day 1, Glory of YHVH in a Cloud covered Mount Sinai (Jubilees 1:2 & Exodus 24:16)",
+      "YHVH instructs Moses to come part way up Mount Sinai with Aaron, Nahab, Abihu, and 70 elders (Exodus 24:9)",
       "Was Elijah given supernatural bread and water and started his 40 Day journey to Mount Horeb? (1 Kings 19:1-7)",
     ],
   },
   "M3_D17": {
-    notes: ["Day 2, Glory of YHWH in a Cloud covered Mount Sinai (Jubilees 1:2 & Exodus 24:16)"],
+    notes: ["Day 2, Glory of YHVH in a Cloud covered Mount Sinai (Jubilees 1:2 & Exodus 24:16)"],
   },
   "M3_D18": {
-    notes: ["Day 3, Glory of YHWH in a Cloud covered Mount Sinai (Jubilees 1:2 & Exodus 24:16)"],
+    notes: ["Day 3, Glory of YHVH in a Cloud covered Mount Sinai (Jubilees 1:2 & Exodus 24:16)"],
   },
   "M3_D19": {
-    notes: ["Day 4, Glory of YHWH in a Cloud covered Mount Sinai (Jubilees 1:2 & Exodus 24:16)"],
+    notes: ["Day 4, Glory of YHVH in a Cloud covered Mount Sinai (Jubilees 1:2 & Exodus 24:16)"],
   },
   "M3_D20": {
-    notes: ["Day 5, Glory of YHWH in a Cloud covered Mount Sinai (Jubilees 1:2 & Exodus 24:16)"],
+    notes: ["Day 5, Glory of YHVH in a Cloud covered Mount Sinai (Jubilees 1:2 & Exodus 24:16)"],
   },
   "M3_D21": {
-    notes: ["Day 6, Glory of YHWH in a Cloud covered Mount Sinai (Jubilees 1:2 & Exodus 24:16)"],
+    notes: ["Day 6, Glory of YHVH in a Cloud covered Mount Sinai (Jubilees 1:2 & Exodus 24:16)"],
     secondaryNotes: ["Song of the Sabbath Sacrifice #12"],
   },
   "M3_D22": {
     notes: [
       "Isaac, the son of the promise circumcised (Jubilees 16:14)",
-      "Day 7, Elohiym called Moses out of the midst of the cloud. Moses and Joshua ascend Mount Sinai and started Day 1 of 40 of Moses's supernatural fast. YHWH teaches Moses the Book of Jubilees (Jubilees 1:3-4 & Exodus 24:16-18)",
+      "Day 7, Elohiym called Moses out of the midst of the cloud. Moses and Joshua ascend Mount Sinai and started Day 1 of 40 of Moses's supernatural fast. YHVH teaches Moses the Book of Jubilees (Jubilees 1:3-4 & Exodus 24:16-18)",
     ],
   },
   "M3_D26": {
@@ -449,7 +449,7 @@ export const sacredCalendarNotes: Record<string, CalendarDayNotes> = {
       "Jacob sent his father and mother clothing, food, bread, drink, milk, butter, cheese, and dates four times a year, between the times of the seasons (Jubilees 29:15-16)",
       "The 12 Spies sent out to spy on the promised land for 40 days? (Numbers 13:20)",
       "Heluyasaf, the 1st additional Captain of a Thousand (Enoch 82:12 & 17)",
-      "The daughters of Israel went to lament the daughter of Jephthah the Gileadite four days a year (Judges 11:39-40)",
+      "The daughters of Yashar'el went to lament the daughter of Jephthah the Gileadite four days a year (Judges 11:39-40)",
     ],
   },
 
@@ -462,7 +462,7 @@ export const sacredCalendarNotes: Record<string, CalendarDayNotes> = {
       "Tekufah: Strongs 8622 (Dead Sea Scroll 4Q324d)",
       "Adam and Eve departed Eden? (Jubilees 3:32)",
       "The fountains of the great deep were closed and the flood-gates of heaven were restrained (Jubilees 5:27)",
-      "YHWH and two angels appeared to Abraham under the oak tree at Mamre. Sarah laughed. Name of Isaac revealed. Two angels left to judge Sodom & Gomorrah (Genesis 18 & Jubilees 16:1-4)",
+      "YHVH and two angels appeared to Abraham under the oak tree at Mamre. Sarah laughed. Name of Isaac revealed. Two angels left to judge Sodom & Gomorrah (Genesis 18 & Jubilees 16:1-4)",
       "Joseph named by Rachel (and circumcised) (Jubilees 28:24-25)",
       "The 12 Spies sent out? (Numbers 13:20)",
       "Joshua's Long Day?",
@@ -485,7 +485,7 @@ export const sacredCalendarNotes: Record<string, CalendarDayNotes> = {
   },
   "M4_D5": {
     notes: [
-      "Ezekiel received a vision from YHWH on the river Chebar, saw the four living creatures and the glorious appearance of Elohiym, was titled 'son of man,' told to eat the book of lamentations, addressed the rebellious house of Israel, was taken to Tel Aviv, Chebar and remained astonished 7 Days (Ezekiel 1:1-3:15)",
+      "Ezekiel received a vision from YHVH on the river Chebar, saw the four living creatures and the glorious appearance of Elohiym, was titled 'son of man,' told to eat the book of lamentations, addressed the rebellious house of Yashar'el, was taken to Tel Aviv, Chebar and remained astonished 7 Days (Ezekiel 1:1-3:15)",
     ],
   },
   "M4_D6": {
@@ -510,7 +510,7 @@ export const sacredCalendarNotes: Record<string, CalendarDayNotes> = {
   "M4_D11": {
     notes: [
       "Day 7 Ezekiel was astonished with Tel Aviv, Chebar",
-      "At the end of day 7 Ezekiel received the word of YHWH and is made a watchman to the house of Israel. Siege of Jerusalem predicted, instructed to lay on his side 390+40 Days (Ezekiel 3:16-7:27)",
+      "At the end of day 7 Ezekiel received the word of YHVH and is made a watchman to the house of Yashar'el. Siege of Jerusalem predicted, instructed to lay on his side 390+40 Days (Ezekiel 3:16-7:27)",
     ],
     secondaryNotes: ["Song of the Sabbath Sacrifice #2"],
   },
@@ -532,7 +532,7 @@ export const sacredCalendarNotes: Record<string, CalendarDayNotes> = {
   "M4_D30": {
     notes: [
       "Moses 40th Day on Mount Sinai completed his fast. He returned down the mountain the following day!",
-      "Aaron made the golden calf and an altar on this day and proclaimed the Feast of YHWH the next day (Exodus 32:1-6)",
+      "Aaron made the golden calf and an altar on this day and proclaimed the Feast of YHVH the next day (Exodus 32:1-6)",
     ],
   },
 
@@ -540,20 +540,20 @@ export const sacredCalendarNotes: Record<string, CalendarDayNotes> = {
   "M5_D1": {
     notes: [
       "Helya'el, who is the Leader of the Order of the 5th Month (Enoch 82:17)",
-      "Moses notified by YHWH of the idolatry in the camp. Gold calf idol worship. Moses descended the mountain and broke the tablets of the 10 Commandments. Moses burnt, ground the gold calves, made Israel drink. The Levites killed 3,000 idolatrous Israelites (Exodus 32:7-29)",
-      "Aaron paganized YHWH's New Month Feast Day with Egyptian idolatrous pagan rituals to the Golden Calves (Exodus 32:18 LXX)",
-      "Aaron as instructed by YHWH climbed Mount Hor, gave the High Priestly garments to his son Eleazar and died atop of Mount Hor (Numbers 20:23-29 & 33:38)",
+      "Moses notified by YHVH of the idolatry in the camp. Gold calf idol worship. Moses descended the mountain and broke the tablets of the 10 Commandments. Moses burnt, ground the gold calves, made Yashar'el drink. The Levites killed 3,000 idolatrous Yashar'elites (Exodus 32:7-29)",
+      "Aaron paganized YHVH's New Month Feast Day with Egyptian idolatrous pagan rituals to the Golden Calves (Exodus 32:18 LXX)",
+      "Aaron as instructed by YHVH climbed Mount Hor, gave the High Priestly garments to his son Eleazar and died atop of Mount Hor (Numbers 20:23-29 & 33:38)",
       "Day 1 Ezra arrived at Jerusalem with the gold and the silver and stayed three days (Ezra 7:9 & 8:32)",
     ],
     secondaryNotes: [
-      "The children of Israel mourned the death of Aaron 30 Days — the entire 5th Month (Numbers 20:29)",
+      "The children of Yashar'el mourned the death of Aaron 30 Days — the entire 5th Month (Numbers 20:29)",
       "In the 5th month Hannaniah falsely prophesied and Jeremiah prophesied the death of Hannaniah (Jeremiah 28)",
     ],
   },
   "M5_D2": {
     notes: [
-      "Moses went back up the mountain to make atonement for Israel. Sinners to be blotted from YHWH's book. YHWH killed those who sinned (Exodus 32:30-35)",
-      "YHWH instructs Moses to make new tablets. YHWH descended in a cloud. YHWH passed by Moses and gave Moses instruction / torah (Exodus 34:1-26)",
+      "Moses went back up the mountain to make atonement for Yashar'el. Sinners to be blotted from YHVH's book. YHVH killed those who sinned (Exodus 32:30-35)",
+      "YHVH instructs Moses to make new tablets. YHVH descended in a cloud. YHVH passed by Moses and gave Moses instruction / torah (Exodus 34:1-26)",
       "Day 2 Ezra stayed at Jerusalem",
     ],
     secondaryNotes: ["Song of the Sabbath Sacrifice #5"],
@@ -561,7 +561,7 @@ export const sacredCalendarNotes: Record<string, CalendarDayNotes> = {
   "M5_D3": {
     notes: [
       "Festival of New Wine (Dead Sea Scroll 4Q394)",
-      "On this morning Moses had climbed Mount Sinai with the new tablets. YHWH manifested Himself to Moses and Moses' face shone. YHWH made a New Covenant. Day 1 of 40 of Moses's second time on the mountain! (Exodus 34:27-28)",
+      "On this morning Moses had climbed Mount Sinai with the new tablets. YHVH manifested Himself to Moses and Moses' face shone. YHVH made a New Covenant. Day 1 of 40 of Moses's second time on the mountain! (Exodus 34:27-28)",
       "Remaining 400 men of the tribe of Benjamin took wives from the Daughters of Shiloh during the Festival of New Wine (Judges 21:19-24)",
       "Day 3 Ezra stayed at Jerusalem",
       "Remember the Covenant of Salt (Temple Scroll)",
@@ -588,13 +588,13 @@ export const sacredCalendarNotes: Record<string, CalendarDayNotes> = {
     notes: [
       "The Fast of the 5th Month (Zechariah 8:19)",
       "The 12 Spies returned from the promised land with the fruit of the land, 10 spies gave an evil report, Caleb and Joshua gave a good report (Numbers 13:25)",
-      "Caleb requests from Joshua the land of Hebron that YHWH promised him (Joshua 14:6-15)",
+      "Caleb requests from Joshua the land of Hebron that YHVH promised him (Joshua 14:6-15)",
       "Nebuzaradan arrived at Jerusalem and burnt the temple (Jeremiah 52:12-14)",
-      "The elders of Israel came to Ezekiel to enquire of YHWH; YHWH rebuked them. Prophecy of regathering, Gog and Magog parable (Ezekiel 20-23)",
+      "The elders of Yashar'el came to Ezekiel to enquire of YHVH; YHVH rebuked them. Prophecy of regathering, Gog and Magog parable (Ezekiel 20-23)",
     ],
   },
   "M5_D11": {
-    notes: ["Day #390 Ezekiel laid on his side for Israel"],
+    notes: ["Day #390 Ezekiel laid on his side for Yashar'el"],
   },
   "M5_D12": {
     notes: ["Day 1 of 40, Ezekiel started laying on his side for Judah"],
@@ -621,12 +621,12 @@ export const sacredCalendarNotes: Record<string, CalendarDayNotes> = {
   "M6_D1": {
     notes: [
       "Ki'el, who is the Leader of the Order of the 6th Month (Enoch 82:17)",
-      "Haggai receives the word of YHWH instructing Zerubbabel & Joshua to rebuild the temple (Haggai 1:1-11)",
+      "Haggai receives the word of YHVH instructing Zerubbabel & Joshua to rebuild the temple (Haggai 1:1-11)",
     ],
   },
   "M6_D5": {
     notes: [
-      "Ezekiel receives a vision from YHWH regarding the wickedness of the temple priests, the sealing of the righteous, the judgement and destruction of the wicked, re-appearance of the four living creatures, YHWH departs above the Mount of Olives (Ezekiel 8-19)",
+      "Ezekiel receives a vision from YHVH regarding the wickedness of the temple priests, the sealing of the righteous, the judgement and destruction of the wicked, re-appearance of the four living creatures, YHVH departs above the Mount of Olives (Ezekiel 8-19)",
     ],
   },
   "M6_D7": {
@@ -641,7 +641,7 @@ export const sacredCalendarNotes: Record<string, CalendarDayNotes> = {
   },
   "M6_D13": {
     notes: [
-      "Moses descends Mount Sinai a second time after 40 days and his face is shining. Moses re-emphasized the Sabbath law, called for YHWH's freewill offering of the Firstfruits and called for Besalel and Oholiab as the Foreman (Exodus 34:29-36:7)",
+      "Moses descends Mount Sinai a second time after 40 days and his face is shining. Moses re-emphasized the Sabbath law, called for YHVH's freewill offering of the Firstfruits and called for Besalel and Oholiab as the Foreman (Exodus 34:29-36:7)",
     ],
   },
   "M6_D14": {
@@ -650,7 +650,7 @@ export const sacredCalendarNotes: Record<string, CalendarDayNotes> = {
   },
   "M6_D15": {
     notes: [
-      "YHWH visited Sarah as promised and she conceived Isaac (Jubilees 16:12)",
+      "YHVH visited Sarah as promised and she conceived Isaac (Jubilees 16:12)",
     ],
   },
   "M6_D21": {
@@ -706,7 +706,7 @@ export const sacredCalendarNotes: Record<string, CalendarDayNotes> = {
       "The Leader of the Station / Fall Season is Milay'ul (Enoch 82:12-13)",
       "Jacob sent his father and mother clothing, food, bread, drink, milk, butter, cheese, and dates four times a year (Jubilees 29:15-16)",
       "Asfa'el, the 2nd additional Captain of a Thousand (Enoch 82:12 & 17)",
-      "The daughters of Israel went to lament the daughter of Jephthah the Gileadite four days a year (Judges 11:39-40)",
+      "The daughters of Yashar'el went to lament the daughter of Jephthah the Gileadite four days a year (Judges 11:39-40)",
     ],
   },
 
@@ -718,18 +718,18 @@ export const sacredCalendarNotes: Record<string, CalendarDayNotes> = {
       "Tekufah: Strongs 8622 (Dead Sea Scroll 4Q324d)",
       "Yom Teruah (Leviticus 23:23-35 & Numbers 29:1)",
       "Rosh Hashanah: Head of Sectarian / Civil / Royal Calendar Year (Dead Sea Scroll 4Q394 3-7 i)",
-      "'Now there was a day when the sons of Alahym came to present themselves before YHWH, and Satan came also among them' (Job 1:6)",
+      "'Now there was a day when the sons of Alahym came to present themselves before YHVH, and Satan came also among them' (Job 1:6)",
       "Day 1 of Awe / Repentance of unintentional sins (Gad the Seer 14:1-22)",
       "The mouths of the abysses of the earth were opened, and the water began to descend (Jubilees 5:29)",
       "Abram sought the stars but repented and declared, 'My El, El Elyon, Thou alone art my El' (Jubilees 12:16-31)",
       "Jacob returned to Bethel and set up a pillar (Jubilees 31:3)",
       "Naphtali was in good health and made a feast; the next morning he told his sons he was ill (Testament of Naphtali, Dead Sea Scrolls)",
       "David anointed King over Judah in Hebron? (2 Samuel 2:4)",
-      "Gad the Seer received a vision from YHWH at the Gihon Spring (Gad the Seer 14:1-22)",
+      "Gad the Seer received a vision from YHVH at the Gihon Spring (Gad the Seer 14:1-22)",
       "Burnt Sacrifices re-started towards end of Babylonian Captivity (Ezra 3:6)",
       "Ezra brought the law back after Babylonian Captivity (Nehemiah 8:2)",
       "Joel says, 'Blow the trumpet in Zion, sanctify a fast, call a solemn assembly' (Joel 2:15)",
-      "John the Revelator heard the Trumpet on the Day of YHWH (Revelation 1:10 & 4:1)",
+      "John the Revelator heard the Trumpet on the Day of YHVH (Revelation 1:10 & 4:1)",
     ],
     secondaryNotes: [
       "Noah gathered grapes in the 7th Month and made wine (Jubilees 7:1-2)",
@@ -804,7 +804,7 @@ export const sacredCalendarNotes: Record<string, CalendarDayNotes> = {
   "M7_D14": {
     notes: [
       "Festival of 1st Temple Dedication Day 7 (2 Chronicles 7:8-10)",
-      "Enoch received a vision of the heavens of heavens shaken violently, YHWH's mercy ended, Leviathan and Behemoth unleashed (Enoch 60:1-25)",
+      "Enoch received a vision of the heavens of heavens shaken violently, YHVH's mercy ended, Leviathan and Behemoth unleashed (Enoch 60:1-25)",
       "Levi received a dream at Bethel that he would be priest of Most High Elohiym. Rachel became pregnant with Benjamin (Jubilees 32:1-3)",
     ],
   },
@@ -812,7 +812,7 @@ export const sacredCalendarNotes: Record<string, CalendarDayNotes> = {
     notes: [
       "Sukkot / Tabernacles",
       "Jacob gave priestly garments to Levi as well as the tithe and sacrifice. Day 1 of Jacob's Tithe Sacrifice (Jubilees 32:3-8)",
-      "A future prophecy of Restored Israel keeping Sukkot (Ezekiel 45:25)",
+      "A future prophecy of Restored Yashar'el keeping Sukkot (Ezekiel 45:25)",
       "Yahusha's birth? He tabernacled / dwelt among us (John 1:14)",
     ],
     secondaryNotes: ["14 days after Tekufah (as per Exodus 34:22)"],
@@ -839,13 +839,13 @@ export const sacredCalendarNotes: Record<string, CalendarDayNotes> = {
   "M7_D21": {
     notes: [
       "Day 7 of Jacob's Tithe Sacrifice (Jubilees 32:7-8)",
-      "Haggai receives the word of YHWH to Zerubbabel, Joshua, & the remnant that the glory of the second temple will be greater than the first (Haggai 2:1-9)",
+      "Haggai receives the word of YHVH to Zerubbabel, Joshua, & the remnant that the glory of the second temple will be greater than the first (Haggai 2:1-9)",
     ],
   },
   "M7_D22": {
     notes: [
       "Day 8 'The Addition' of Jacob's Tithe Sacrifice",
-      "YHWH appeared to Jacob and reconfirmed his name Israel and His promises. YHWH ascended and a messenger descended with 7 tablets of the future (Jubilees 32:16-29)",
+      "YHVH appeared to Jacob and reconfirmed his name Yashar'el and His promises. YHVH ascended and a messenger descended with 7 tablets of the future (Jubilees 32:16-29)",
       "Yahusha proclaimed torrents of living water (the Spirit) for those who believe upon Him (John 7:2 & 37-38)",
       "Yahusha circumcised and named? (Luke 2:21)",
     ],
@@ -894,7 +894,7 @@ export const sacredCalendarNotes: Record<string, CalendarDayNotes> = {
   },
   "M8_D15": {
     notes: [
-      "King Jeroboam ordained a wicked feast at Bethel to the golden calf idols for the Northern Kingdom of Israel (1 Kings 12:32-33). Interesting that Halloween, All Saints Day, All Souls Day, Day of the Dead Festival aligns with the Idolatry Festival set up by Jeroboam.",
+      "King Jeroboam ordained a wicked feast at Bethel to the golden calf idols for the Northern Kingdom of Yashar'el (1 Kings 12:32-33). Interesting that Halloween, All Saints Day, All Souls Day, Day of the Dead Festival aligns with the Idolatry Festival set up by Jeroboam.",
     ],
   },
   "M8_D16": {
@@ -907,7 +907,7 @@ export const sacredCalendarNotes: Record<string, CalendarDayNotes> = {
   },
   "M8_D25": {
     notes: [
-      "Baby Yahusha dedicated to YHWH at the Temple on 41st day? (Luke 2:22-24)",
+      "Baby Yahusha dedicated to YHVH at the Temple on 41st day? (Luke 2:22-24)",
       "Baby Yahusha seen by two witnesses at the Temple, Simeon & Anna (Luke 2:25-36)",
     ],
   },
@@ -927,7 +927,7 @@ export const sacredCalendarNotes: Record<string, CalendarDayNotes> = {
   },
   "M9_D4": {
     notes: [
-      "Zechariah received the word of YHWH about how YHWH tried to reason with Israel but they wouldn't listen. YHWH shares His jealousy for Jerusalem and promises the nations will come to seek YHWH of Hosts (Zechariah 7 & 8)",
+      "Zechariah received the word of YHVH about how YHVH tried to reason with Yashar'el but they wouldn't listen. YHVH shares His jealousy for Jerusalem and promises the nations will come to seek YHVH of Hosts (Zechariah 7 & 8)",
     ],
   },
   "M9_D7": {
@@ -953,25 +953,25 @@ export const sacredCalendarNotes: Record<string, CalendarDayNotes> = {
   },
   "M9_D21": {
     notes: [
-      "David rose up in the morning and pleaded with YHWH for His mercies? (Gad the Seer 7:15-18)",
+      "David rose up in the morning and pleaded with YHVH for His mercies? (Gad the Seer 7:15-18)",
     ],
     secondaryNotes: ["Song of the Sabbath Sacrifice #12"],
   },
   "M9_D22": {
     notes: [
-      "Day 1 of Angel of YHWH bringing pestilence on the land of Israel & Judah? (Gad the Seer 7:19)",
+      "Day 1 of Angel of YHVH bringing pestilence on the land of Yashar'el & Judah? (Gad the Seer 7:19)",
     ],
   },
   "M9_D23": {
     notes: [
-      "Day 2 of Angel of YHWH bringing pestilence on the land of Israel & Judah? (Gad the Seer 7:19)",
+      "Day 2 of Angel of YHVH bringing pestilence on the land of Yashar'el & Judah? (Gad the Seer 7:19)",
     ],
   },
   "M9_D24": {
     notes: [
-      "Day 3 of Angel of YHWH bringing pestilence: 70,000 men destroyed, Angel about to destroy Jerusalem (Gad the Seer 7:19-20)",
-      "David pleaded against destruction. YHWH instructed David to purchase the threshing floor of Ornan the Jebusite for 600 shekels of gold. David built an altar and the Angel of YHWH stopped the destruction (Gad the Seer 7:21-35)",
-      "Haggai received the word of YHWH to bless the people from this day they laid the foundation of the Second Temple. Zerubbabel as a signet (Haggai 2:10-23)",
+      "Day 3 of Angel of YHVH bringing pestilence: 70,000 men destroyed, Angel about to destroy Jerusalem (Gad the Seer 7:19-20)",
+      "David pleaded against destruction. YHVH instructed David to purchase the threshing floor of Ornan the Jebusite for 600 shekels of gold. David built an altar and the Angel of YHVH stopped the destruction (Gad the Seer 7:21-35)",
+      "Haggai received the word of YHVH to bless the people from this day they laid the foundation of the Second Temple. Zerubbabel as a signet (Haggai 2:10-23)",
     ],
   },
   "M9_D28": {
@@ -985,7 +985,7 @@ export const sacredCalendarNotes: Record<string, CalendarDayNotes> = {
       "The Leader of the Station / Winter Season is Narel (Enoch 82:12-13)",
       "Jacob sent his father and mother clothing, food, bread, drink, milk, butter, cheese, and dates four times a year (Jubilees 29:15-16)",
       "The name of the 3rd additional Captain of a Thousand has been lost (missing from Enoch 82)",
-      "The daughters of Israel went to lament the daughter of Jephthah the Gileadite four days a year (Judges 11:39-40)",
+      "The daughters of Yashar'el went to lament the daughter of Jephthah the Gileadite four days a year (Judges 11:39-40)",
     ],
   },
 
@@ -1012,14 +1012,14 @@ export const sacredCalendarNotes: Record<string, CalendarDayNotes> = {
   },
   "M10_D5": {
     notes: [
-      "Ezekiel received news by an escapee that Jerusalem was destroyed. Received the word against those who destroyed Jerusalem. Promise of a Davidic Shepherd. Desolation of Mount Seir and Idumea. Blessing upon the mountains of Israel. The Gog and Magog war (Ezekiel 33:21-39:29)",
+      "Ezekiel received news by an escapee that Jerusalem was destroyed. Received the word against those who destroyed Jerusalem. Promise of a Davidic Shepherd. Desolation of Mount Seir and Idumea. Blessing upon the mountains of Yashar'el. The Gog and Magog war (Ezekiel 33:21-39:29)",
     ],
   },
   "M10_D10": {
     notes: [
       "The Fast of the 10th Month (Zechariah 8:19)",
       "King Nebuchadnezzar built forts around Jerusalem and started the siege (2 Kings 25:1 & Jeremiah 52:4)",
-      "Ezekiel received the word of YHWH to prophesy against Jerusalem, the Ammonites, Moab, Edom, and Philistines (Ezekiel 24 & 25)",
+      "Ezekiel received the word of YHVH to prophesy against Jerusalem, the Ammonites, Moab, Edom, and Philistines (Ezekiel 24 & 25)",
     ],
   },
   "M10_D11": {
@@ -1028,7 +1028,7 @@ export const sacredCalendarNotes: Record<string, CalendarDayNotes> = {
   },
   "M10_D12": {
     notes: [
-      "Ezekiel received the word of YHWH to prophesy against Pharaoh king of Egypt and the destruction of Egypt (Ezekiel 29:1-16)",
+      "Ezekiel received the word of YHVH to prophesy against Pharaoh king of Egypt and the destruction of Egypt (Ezekiel 29:1-16)",
     ],
   },
   "M10_D18": {
@@ -1086,7 +1086,7 @@ export const sacredCalendarNotes: Record<string, CalendarDayNotes> = {
   "M11_D24": {
     notes: [
       "Noah sent out the dove a third time and it didn't return (Genesis 8:12)",
-      "The word of YHWH came to Zechariah — the vision of the rider of the red horse, the 70 years of indignation, YHWH's Jealousy for Jerusalem, the four carpenters, the measuring line of Jerusalem, Joshua the high priest selected, Zerubbabel selected, the two golden lampstands, nuclear bomb? planted in the land of Shinar, the temple will be rebuilt by Joshua (Zechariah 1:7 - 6:15)",
+      "The word of YHVH came to Zechariah — the vision of the rider of the red horse, the 70 years of indignation, YHVH's Jealousy for Jerusalem, the four carpenters, the measuring line of Jerusalem, Joshua the high priest selected, Zerubbabel selected, the two golden lampstands, nuclear bomb? planted in the land of Shinar, the temple will be rebuilt by Joshua (Zechariah 1:7 - 6:15)",
     ],
   },
   "M11_D30": {
@@ -1098,7 +1098,7 @@ export const sacredCalendarNotes: Record<string, CalendarDayNotes> = {
   "M12_D1": {
     notes: [
       "The name of the Leader of the Order for the 12th Month has been lost (missing from Enoch 82)",
-      "Ezekiel received the word of YHWH, a lamentation against Pharaoh king of Egypt that the king of Babylon is going to destroy them (Ezekiel 32:1-16)",
+      "Ezekiel received the word of YHVH, a lamentation against Pharaoh king of Egypt that the king of Babylon is going to destroy them (Ezekiel 32:1-16)",
     ],
   },
   "M12_D3": {
@@ -1118,7 +1118,7 @@ export const sacredCalendarNotes: Record<string, CalendarDayNotes> = {
   },
   "M12_D15": {
     notes: [
-      "Ezekiel received the word of YHWH to wail for the multitude of Egypt. Elam, Meshech, Tubal, Edom, and Zidonians destroyed. Pharaoh will see the destruction (Ezekiel 32:17-33:20)",
+      "Ezekiel received the word of YHVH to wail for the multitude of Egypt. Elam, Meshech, Tubal, Edom, and Zidonians destroyed. Pharaoh will see the destruction (Ezekiel 32:17-33:20)",
     ],
   },
   "M12_D21": {
@@ -1170,7 +1170,7 @@ export const sacredCalendarNotes: Record<string, CalendarDayNotes> = {
       "Jacob sent his father and mother clothing, food, bread, drink, milk, butter, cheese, and dates four times a year (Jubilees 29:15-16)",
       "364th Day of the year, the Sun finishes his race and goes into his tabernacle / chamber (Psalm 19:6)",
       "The name of the 4th additional Captain of a Thousand has been lost (missing from Enoch 82)",
-      "The daughters of Israel went to lament the daughter of Jephthah the Gileadite four days a year (Judges 11:39-40)",
+      "The daughters of Yashar'el went to lament the daughter of Jephthah the Gileadite four days a year (Judges 11:39-40)",
       "New Year Week Cycle — Day 3 of the new seven day week cycle",
       "Creation Day 3 — Berĕshith (Genesis) 1:9-13",
     ],
@@ -1186,7 +1186,7 @@ export const sacredCalendarNotes: Record<string, CalendarDayNotes> = {
   // ============ DAYS OUT OF TIME ============
   "DOT_D1": {
     notes: [
-      "2017: Judah's Miracle — Cornea Laceration Healed & same day Modern Israel warned of judgment for eating with the blood per Ezekiel 33:25",
+      "2017: Judah's Miracle — Cornea Laceration Healed & same day Modern Yashar'el warned of judgment for eating with the blood per Ezekiel 33:25",
     ],
   },
 
