@@ -278,7 +278,7 @@ export const scripturalTopics: StudyTopic[] = [
         conventionalView: [
           { conventional: 'The first resurrection is a future bodily event', scripture: 'The first resurrection is spiritual — passing from death to life when you believe (John 5:24-25)' },
         ],
-        mindBlown: { text: '"The hour is coming AND NOW IS when the dead will hear the voice of the Son of Elohim, and those who hear will LIVE." Present tense. NOW IS.', reference: 'John 5:25' },
+        mindBlown: { text: '"The hour is coming AND NOW IS when the dead will hear the voice of the Son of Elohiym, and those who hear will LIVE." Present tense. NOW IS.', reference: 'John 5:25' },
       },
     ],
   },
@@ -348,7 +348,7 @@ export const scripturalTopics: StudyTopic[] = [
         conventionalView: [
           { conventional: 'We need future glorified bodies to enter the kingdom', scripture: 'The kingdom is spiritual — entered by spiritual rebirth, not physical transformation (John 3:5-6)' },
         ],
-        mindBlown: { text: 'Yahusha said "the kingdom of Elohim is WITHIN you" (Luke 17:21). Not above you. Not ahead of you. WITHIN you. Right now.', reference: 'Luke 17:21' },
+        mindBlown: { text: 'Yahusha said "the kingdom of Elohiym is WITHIN you" (Luke 17:21). Not above you. Not ahead of you. WITHIN you. Right now.', reference: 'Luke 17:21' },
       },
       {
         id: 'garden-exile-return',

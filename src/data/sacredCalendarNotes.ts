@@ -19,7 +19,7 @@ export const sacredCalendarNotes: Record<string, CalendarDayNotes> = {
       "Tam'ayen, who is the Leader of the Order of the 1st Month (Enoch 82:15)",
       "Noah's Memorial Festival Day of Remembrance #1 of 4 (Jubilees 6:23-29)",
       "Tekufah: Strongs 8622 (Dead Sea Scroll 4Q324d indicates the tekufah occurs on the 1st Day of months 4, 7, & 10 and possibly month 1)",
-      "Elohim instructed Noah to build the ark (Jubilees 6:21-22)",
+      "Elohiym instructed Noah to build the ark (Jubilees 6:21-22)",
       "Earth became visible after the flood (Dead Sea Scroll 4Q252 & Jubilees 5:30). Noah removed covering of Ark and saw the ground was dry (Genesis 8:13 & Jubilees 6:30)",
       "Noah made a feast and burnt offering to YHWH and he became drunk, his nakedness exposed, and Ham sinned while Shem and Japheth covered (Jubilees 7:2-13)",
       "YHWH spake unto Moses and Aaron in Egypt: 'This month shall be unto you the beginning of months' (Exodus 12:1-2)",
@@ -30,22 +30,22 @@ export const sacredCalendarNotes: Record<string, CalendarDayNotes> = {
       "King Hezekiah reopened the doors of the Temple and instructed priests to cleanse themselves (2 Chron 29:17)",
       "Ezra left Babylon with the articles of the temple by decree of Artaxerxes (Ezra 7:9)",
       "Levi named (and circumcised?) by Jacob (Jubilees 28:18)",
-      "YHWH Elohim appeared to Isaac at night at the Well of the Oath (Jubilees 24:22-23)",
+      "YHWH Elohiym appeared to Isaac at night at the Well of the Oath (Jubilees 24:22-23)",
       "Jacob arrived at Bethel and had the dream of the ladder (Jubilees 27:19-28)",
     ],
     secondaryNotes: [
-      "14 And Elohim said, \"Let lights come to be in the expanse of the heavens to separate the day from the night, and let them be for signs and appointed times, and for days and years,",
+      "14 And Elohiym said, \"Let lights come to be in the expanse of the heavens to separate the day from the night, and let them be for signs and appointed times, and for days and years,",
       "15 and let them be for lights in the expanse of the heavens to give light on the earth.\" And it came to be so.",
-      "16 And Elohim made two great lights: the greater light to rule the day, and the lesser light to rule the night, and the stars.",
-      "17 And Elohim set them in the expanse of the heavens to give light on the earth,",
-      "18 and to rule over the day and over the night, and to separate the light from the darkness. And Elohim saw that it was good.",
+      "16 And Elohiym made two great lights: the greater light to rule the day, and the lesser light to rule the night, and the stars.",
+      "17 And Elohiym set them in the expanse of the heavens to give light on the earth,",
+      "18 and to rule over the day and over the night, and to separate the light from the darkness. And Elohiym saw that it was good.",
       "19 And there came to be evening and there came to be morning, the fourth day.",
       "The rain, former rain and latter day rain will come down in the first month (Joel 2:23)",
     ],
   },
   "M1_D2": {
     notes: [
-      "Noah cursed Canaan for what Ham did to him. Noah blessed YHWH Elohim of Shem, made Canaan Shem's servant, blessed Japheth that he would dwell in tents of Shem (Genesis 9:20-28)",
+      "Noah cursed Canaan for what Ham did to him. Noah blessed YHWH Elohiym of Shem, made Canaan Shem's servant, blessed Japheth that he would dwell in tents of Shem (Genesis 9:20-28)",
     ],
   },
   "M1_D3": {
@@ -56,7 +56,7 @@ export const sacredCalendarNotes: Record<string, CalendarDayNotes> = {
   "M1_D4": {
     notes: [
       "Daniel started his 3 week fast (of bread and water?) (Daniel 10:3). Fasting on a Sabbath is Prohibited (Jubilees 50:12-13)",
-      "Lazarus resurrected on this day. Yeshua's reference to the Spring Equinox / 12 hours in a day & later the 15 furlong distance which is around a Sabbath Day's journey (John 11:9 & 18)",
+      "Lazarus resurrected on this day. Yahusha's reference to the Spring Equinox / 12 hours in a day & later the 15 furlong distance which is around a Sabbath Day's journey (John 11:9 & 18)",
     ],
     secondaryNotes: ["Song of the Sabbath Sacrifice #1"],
   },
@@ -76,7 +76,7 @@ export const sacredCalendarNotes: Record<string, CalendarDayNotes> = {
     notes: [
       "The officers went through the host of Israel and commanded them when they see the Ark of the covenant to follow it (Joshua 3:2)",
       "Joshua said unto the people, 'Sanctify yourselves: for tomorrow YHWH will do wonders among you.' (Joshua 3:5)",
-      "Six days before Passover Yeshua came to Bethany, where they had a special meal for Him, Martha served, Lazarus reclined, Mariam anointed His feet with spikenard and wiped His feet with her hair (John 12:1-11)",
+      "Six days before Passover Yahusha came to Bethany, where they had a special meal for Him, Martha served, Lazarus reclined, Mariam anointed His feet with spikenard and wiped His feet with her hair (John 12:1-11)",
     ],
   },
   "M1_D10": {
@@ -84,25 +84,25 @@ export const sacredCalendarNotes: Record<string, CalendarDayNotes> = {
       "Israel instructed to take a Passover Lamb by the 10th Day of the 1st Month (Exodus 12:3)",
       "Israel came out of Jordan, crossed the Jordan river, came into Promised Land, encamped at Gilgal east of Jericho. 12 Stones taken from Jordan River and set up at Gilgal. Israelites circumcised and the reproach of Egypt rolled away (Joshua 4:19)",
       "Ezra's fast? (Ezra 8:23)",
-      "Yeshua left Bethany and was coming to Jerusalem, the people took Palm Branches and blessed Yeshua, Yeshua took a colt donkey to fulfill prophecy (John 12:12-50)",
-      "Yeshua cleansed the Temple, this is the 2nd time at the end of His Ministry",
-      "In the morning / boqr / before sunrise Yeshua cursed the fig tree and it withered",
+      "Yahusha left Bethany and was coming to Jerusalem, the people took Palm Branches and blessed Yahusha, Yahusha took a colt donkey to fulfill prophecy (John 12:12-50)",
+      "Yahusha cleansed the Temple, this is the 2nd time at the end of His Ministry",
+      "In the morning / boqr / before sunrise Yahusha cursed the fig tree and it withered",
     ],
   },
   "M1_D11": {
     notes: [
-      "Yeshua went to the Temple and His authority was challenged by the chief priests, scribes, and elders",
-      "Yeshua prophesied of the Beginning of Sorrows on this day",
-      "Yeshua instructs His disciples to Watch (Passover is a night of watching)",
+      "Yahusha went to the Temple and His authority was challenged by the chief priests, scribes, and elders",
+      "Yahusha prophesied of the Beginning of Sorrows on this day",
+      "Yahusha instructs His disciples to Watch (Passover is a night of watching)",
     ],
     secondaryNotes: ["Song of the Sabbath Sacrifice #2"],
   },
   "M1_D12": {
     notes: [
-      "Voices in heaven were heard regarding Abraham's faithfulness and love for YHWH among his trials and Mastema petitions Elohim to test Abraham a 7th time with the offering of Isaac (Jubilees 16:15-18)",
+      "Voices in heaven were heard regarding Abraham's faithfulness and love for YHWH among his trials and Mastema petitions Elohiym to test Abraham a 7th time with the offering of Isaac (Jubilees 16:15-18)",
       "Ezra and those of the captivity departed from the river Ahava for Jerusalem after they fasted for safe travels (Ezra 8:31)",
-      "Yeshua back in Bethany at Simon's house having a meal, and this time His head was anointed with the spikenard (Mark 14:1-9)",
-      "Judas agreed to betray Yeshua (Mark 14:10)",
+      "Yahusha back in Bethany at Simon's house having a meal, and this time His head was anointed with the spikenard (Mark 14:1-9)",
+      "Judas agreed to betray Yahusha (Mark 14:10)",
     ],
   },
   "M1_D14": {
@@ -113,7 +113,7 @@ export const sacredCalendarNotes: Record<string, CalendarDayNotes> = {
       "Moses & Israel kept the Passover in the Wilderness of Sinai (Numbers 9:5)",
       "King Josiah re-instituted the Passover (2 Chron 35:1)",
       "The children of the captivity from Persia kept the Passover in Jerusalem after they rebuilt the temple (Ezra 6:19)",
-      "Yeshua ate the Passover with Disciples. Yeshua prayed in Gethsemane and was apprehended",
+      "Yahusha ate the Passover with Disciples. Yahusha prayed in Gethsemane and was apprehended",
       "A future prophecy of Restored Israel and the Prince keeping the Passover and the 7 day Feast of Unleavened Bread (Ezekiel 45:21-24)",
     ],
   },
@@ -124,7 +124,7 @@ export const sacredCalendarNotes: Record<string, CalendarDayNotes> = {
       "Israel departed Rameses, Egypt (Num 33:3)",
       "The manna stopped (Joshua 5:11-12)",
       "An outward appearing Moabite male servant requested of King David to be circumcised; David sought counsel from YHWH — only Moabite and Ammonite women may dwell among Israel (Gad the Seer 3:1-12)",
-      "Yeshua tried, sacrificed, died around the 9th hour and buried during the mixing of the day",
+      "Yahusha tried, sacrificed, died around the 9th hour and buried during the mixing of the day",
       "Night 1 in the Tomb",
     ],
   },
@@ -148,7 +148,7 @@ export const sacredCalendarNotes: Record<string, CalendarDayNotes> = {
     notes: [
       "4th Day of Abraham's Festival of Joy (Jubilees 18:18)",
       "4th Day of Unleavened Bread",
-      "Day 3 in the Tomb, Yeshua Resurrected at Sunset",
+      "Day 3 in the Tomb, Yahusha Resurrected at Sunset",
       "At the end of the Sabbath as it was beginning to dawn toward the 1st day of week Mary and Mary go to the tomb and encounter The Angel of YHWH (Matthew 28:1)",
     ],
     secondaryNotes: ["Song of the Sabbath Sacrifice #3"],
@@ -157,9 +157,9 @@ export const sacredCalendarNotes: Record<string, CalendarDayNotes> = {
     notes: [
       "5th Day of Abraham's Festival of Joy (Jubilees 18:18)",
       "5th Day of Unleavened Bread",
-      "Yeshua encounters Mary after sunrise (John 20:19)",
-      "Yeshua encounters the two on the Road to Emmaus",
-      "Yeshua appeared to His disciples, walked with them to Bethany and did His 1st Ascension (Luke 24:36-53)",
+      "Yahusha encounters Mary after sunrise (John 20:19)",
+      "Yahusha encounters the two on the Road to Emmaus",
+      "Yahusha appeared to His disciples, walked with them to Bethany and did His 1st Ascension (Luke 24:36-53)",
     ],
   },
   "M1_D20": {
@@ -204,7 +204,7 @@ export const sacredCalendarNotes: Record<string, CalendarDayNotes> = {
   "M1_D26": {
     notes: [
       "Bikkurim / First Fruits Barley Wave Sheaf Offering (Dead Sea Scroll 4Q325 pegs the date to the 26th Day of the 1st Month)",
-      "8 days after His resurrection Yeshua suddenly appeared to the gathered disciples and instructed Thomas to inspect Him like the Barley Wave Sheaf (John 20:26)",
+      "8 days after His resurrection Yahusha suddenly appeared to the gathered disciples and instructed Thomas to inspect Him like the Barley Wave Sheaf (John 20:26)",
       "Paul arrived in Troas on Day 5 (Acts 20:6)",
     ],
     secondaryNotes: [
@@ -272,7 +272,7 @@ export const sacredCalendarNotes: Record<string, CalendarDayNotes> = {
       "Israel came unto Wilderness of Sin and murmured against YHWH for their hunger (Exodus 16:1)",
       "YHWH gave Israel quail at evening (Exodus 16:13)",
       "At dawn dew came onto the ground (Exodus 16:13)",
-      "Yeshua met the disciples at Lake Galilee and had a meal of broiled fish and bread? (John 21:1-19)",
+      "Yahusha met the disciples at Lake Galilee and had a meal of broiled fish and bread? (John 21:1-19)",
       "Noah on Ark Day 6",
     ],
   },
@@ -371,8 +371,8 @@ export const sacredCalendarNotes: Record<string, CalendarDayNotes> = {
   "M3_D14": {
     notes: [
       "Day 2 Moses instructed Israel to not go near a woman (Exodus 19:10-11)",
-      "Yeshua's start of His ministry and baptism by John?",
-      "Yeshua's 2nd ascension into heaven from the Mount of Olives? 'a Sabbath Day's Journey!!!' (Acts 1:3-12 & v22)",
+      "Yahusha's start of His ministry and baptism by John?",
+      "Yahusha's 2nd ascension into heaven from the Mount of Olives? 'a Sabbath Day's Journey!!!' (Acts 1:3-12 & v22)",
       "The disciples return to Jerusalem from the Mount of Olives, Peter speaks quoting Psalm 69:25 and 109:8 to replace Judas. Matthias chosen via Urim and Thummim (Acts 1:12-26)",
     ],
     secondaryNotes: ["Song of the Sabbath Sacrifice #11"],
@@ -391,10 +391,10 @@ export const sacredCalendarNotes: Record<string, CalendarDayNotes> = {
       "Abraham blesses Jacob and died (Jubilees 22)",
       "Jacob made a feast for Laban and made a covenant with him at Gilead (Jubilees 29:7-9)",
       "Judah named (and circumcised?) by Jacob (Jubilees 28:15)",
-      "Elohim instructed Moses to ascend/descend Mount Sinai (Jubilees 1:1 & Exodus 19:25)",
+      "Elohiym instructed Moses to ascend/descend Mount Sinai (Jubilees 1:1 & Exodus 19:25)",
       "At boqer / morning before sunrise YHWH descended upon Mount Sinai, YHWH audibly spoke 10 Commandments to Israel (Exodus 19:16 - 24:8)",
       "Tobit celebrated this day but instead did a good work of burying the dead (Tobit 2:1-4)",
-      "Yeshua declares the fields are white for harvest 4 months early (John 4:35)",
+      "Yahusha declares the fields are white for harvest 4 months early (John 4:35)",
       "Paul's priority to make it back to Jerusalem to celebrate Shavuot (Acts 20 & 21)",
     ],
     secondaryNotes: [
@@ -429,7 +429,7 @@ export const sacredCalendarNotes: Record<string, CalendarDayNotes> = {
   "M3_D22": {
     notes: [
       "Isaac, the son of the promise circumcised (Jubilees 16:14)",
-      "Day 7, Elohim called Moses out of the midst of the cloud. Moses and Joshua ascend Mount Sinai and started Day 1 of 40 of Moses's supernatural fast. YHWH teaches Moses the Book of Jubilees (Jubilees 1:3-4 & Exodus 24:16-18)",
+      "Day 7, Elohiym called Moses out of the midst of the cloud. Moses and Joshua ascend Mount Sinai and started Day 1 of 40 of Moses's supernatural fast. YHWH teaches Moses the Book of Jubilees (Jubilees 1:3-4 & Exodus 24:16-18)",
     ],
   },
   "M3_D26": {
@@ -485,7 +485,7 @@ export const sacredCalendarNotes: Record<string, CalendarDayNotes> = {
   },
   "M4_D5": {
     notes: [
-      "Ezekiel received a vision from YHWH on the river Chebar, saw the four living creatures and the glorious appearance of Elohim, was titled 'son of man,' told to eat the book of lamentations, addressed the rebellious house of Israel, was taken to Tel Aviv, Chebar and remained astonished 7 Days (Ezekiel 1:1-3:15)",
+      "Ezekiel received a vision from YHWH on the river Chebar, saw the four living creatures and the glorious appearance of Elohiym, was titled 'son of man,' told to eat the book of lamentations, addressed the rebellious house of Israel, was taken to Tel Aviv, Chebar and remained astonished 7 Days (Ezekiel 1:1-3:15)",
     ],
   },
   "M4_D6": {
@@ -571,7 +571,7 @@ export const sacredCalendarNotes: Record<string, CalendarDayNotes> = {
   "M5_D4": {
     notes: [
       "Issachar named by Leah (and circumcised?) (Jubilees 28:22)",
-      "The silver, gold and vessels were weighed in the house of Elohim (Ezra 8:33-36)",
+      "The silver, gold and vessels were weighed in the house of Elohiym (Ezra 8:33-36)",
       "Peter and John before the council, Gamaliel's Counsel (Acts 4:5-5:41)",
     ],
   },
@@ -783,7 +783,7 @@ export const sacredCalendarNotes: Record<string, CalendarDayNotes> = {
       "Festival of 1st Temple Dedication Day 3 (2 Chronicles 7:8-10)",
       "Joseph sold into slavery, brothers killed a goat and dipped Joseph's garment in the blood (Jubilees 38:10-19)",
       "The Fast of the 7th Month (Zechariah 8:19)",
-      "Yeshua in a synagogue in Nazareth read Isaiah 61:1-3 and stopped halfway (Luke 4:17-21)",
+      "Yahusha in a synagogue in Nazareth read Isaiah 61:1-3 and stopped halfway (Luke 4:17-21)",
       "On the Yom Kippur JUBILEE Ezekiel received the vision of Millennial Temple (Ezekiel 40-48)",
     ],
     secondaryNotes: [
@@ -805,7 +805,7 @@ export const sacredCalendarNotes: Record<string, CalendarDayNotes> = {
     notes: [
       "Festival of 1st Temple Dedication Day 7 (2 Chronicles 7:8-10)",
       "Enoch received a vision of the heavens of heavens shaken violently, YHWH's mercy ended, Leviathan and Behemoth unleashed (Enoch 60:1-25)",
-      "Levi received a dream at Bethel that he would be priest of Most High Elohim. Rachel became pregnant with Benjamin (Jubilees 32:1-3)",
+      "Levi received a dream at Bethel that he would be priest of Most High Elohiym. Rachel became pregnant with Benjamin (Jubilees 32:1-3)",
     ],
   },
   "M7_D15": {
@@ -813,7 +813,7 @@ export const sacredCalendarNotes: Record<string, CalendarDayNotes> = {
       "Sukkot / Tabernacles",
       "Jacob gave priestly garments to Levi as well as the tithe and sacrifice. Day 1 of Jacob's Tithe Sacrifice (Jubilees 32:3-8)",
       "A future prophecy of Restored Israel keeping Sukkot (Ezekiel 45:25)",
-      "Yeshua's birth? He tabernacled / dwelt among us (John 1:14)",
+      "Yahusha's birth? He tabernacled / dwelt among us (John 1:14)",
     ],
     secondaryNotes: ["14 days after Tekufah (as per Exodus 34:22)"],
   },
@@ -846,8 +846,8 @@ export const sacredCalendarNotes: Record<string, CalendarDayNotes> = {
     notes: [
       "Day 8 'The Addition' of Jacob's Tithe Sacrifice",
       "YHWH appeared to Jacob and reconfirmed his name Israel and His promises. YHWH ascended and a messenger descended with 7 tablets of the future (Jubilees 32:16-29)",
-      "Yeshua proclaimed torrents of living water (the Spirit) for those who believe upon Him (John 7:2 & 37-38)",
-      "Yeshua circumcised and named? (Luke 2:21)",
+      "Yahusha proclaimed torrents of living water (the Spirit) for those who believe upon Him (John 7:2 & 37-38)",
+      "Yahusha circumcised and named? (Luke 2:21)",
     ],
   },
   "M7_D23": {
@@ -907,8 +907,8 @@ export const sacredCalendarNotes: Record<string, CalendarDayNotes> = {
   },
   "M8_D25": {
     notes: [
-      "Baby Yeshua dedicated to YHWH at the Temple on 41st day? (Luke 2:22-24)",
-      "Baby Yeshua seen by two witnesses at the Temple, Simeon & Anna (Luke 2:25-36)",
+      "Baby Yahusha dedicated to YHWH at the Temple on 41st day? (Luke 2:22-24)",
+      "Baby Yahusha seen by two witnesses at the Temple, Simeon & Anna (Luke 2:25-36)",
     ],
   },
   "M8_D30": {
@@ -1104,8 +1104,8 @@ export const sacredCalendarNotes: Record<string, CalendarDayNotes> = {
   "M12_D3": {
     notes: [
       "Second Temple completed and dedicated (Ezra 6:15-18)",
-      "Wedding at Cana, Yeshua turned water into wine? (John 2:1-11) — It happened before Passover",
-      "Yeshua in Jerusalem for Second Temple dedication in the winter, not Hannukah? (John 10:22-39)",
+      "Wedding at Cana, Yahusha turned water into wine? (John 2:1-11) — It happened before Passover",
+      "Yahusha in Jerusalem for Second Temple dedication in the winter, not Hannukah? (John 10:22-39)",
     ],
   },
   "M12_D7": {
@@ -1146,9 +1146,9 @@ export const sacredCalendarNotes: Record<string, CalendarDayNotes> = {
       "Creation Day 1 — Berĕshith (Genesis) 1:3-5",
     ],
     secondaryNotes: [
-      "3 And Elohim said, \"Let light come to be,\" and light came to be.",
-      "4 And Elohim saw the light, that it was good. And Elohim separated the light from the darkness.",
-      "5 And Elohim called the light 'day' and the darkness He called 'night.' And there came to be evening and there came to be morning, one day.",
+      "3 And Elohiym said, \"Let light come to be,\" and light came to be.",
+      "4 And Elohiym saw the light, that it was good. And Elohiym separated the light from the darkness.",
+      "5 And Elohiym called the light 'day' and the darkness He called 'night.' And there came to be evening and there came to be morning, one day.",
     ],
   },
   "M12_D30": {
@@ -1157,9 +1157,9 @@ export const sacredCalendarNotes: Record<string, CalendarDayNotes> = {
       "Creation Day 2 — Berĕshith (Genesis) 1:6-8",
     ],
     secondaryNotes: [
-      "6 And Elohim said, \"Let an expanse come to be in the midst of the waters, and let it separate the waters from the waters.\"",
-      "7 And Elohim made the expanse, and separated the waters which were under the expanse from the waters which were above the expanse. And it came to be so.",
-      "8 And Elohim called the expanse 'heavens.' And there came to be evening and there came to be morning, the second day.",
+      "6 And Elohiym said, \"Let an expanse come to be in the midst of the waters, and let it separate the waters from the waters.\"",
+      "7 And Elohiym made the expanse, and separated the waters which were under the expanse from the waters which were above the expanse. And it came to be so.",
+      "8 And Elohiym called the expanse 'heavens.' And there came to be evening and there came to be morning, the second day.",
     ],
   },
   "M12_D31": {
@@ -1175,10 +1175,10 @@ export const sacredCalendarNotes: Record<string, CalendarDayNotes> = {
       "Creation Day 3 — Berĕshith (Genesis) 1:9-13",
     ],
     secondaryNotes: [
-      "9 And Elohim said, \"Let the waters under the heavens be gathered together into one place, and let the dry land appear.\" And it came to be so.",
-      "10 And Elohim called the dry land 'earth,' and the collection of the waters He called 'seas.' And Elohim saw that it was good.",
-      "11 And Elohim said, \"Let the earth bring forth grass, the plant that yields seed, and the fruit tree that yields fruit according to its kind, whose seed is in itself, on the earth.\" And it came to be so.",
-      "12 And the earth brought forth grass, the plant that yields seed according to its kind, and the tree that yields fruit, whose seed is in itself according to its kind. And Elohim saw that it was good.",
+      "9 And Elohiym said, \"Let the waters under the heavens be gathered together into one place, and let the dry land appear.\" And it came to be so.",
+      "10 And Elohiym called the dry land 'earth,' and the collection of the waters He called 'seas.' And Elohiym saw that it was good.",
+      "11 And Elohiym said, \"Let the earth bring forth grass, the plant that yields seed, and the fruit tree that yields fruit according to its kind, whose seed is in itself, on the earth.\" And it came to be so.",
+      "12 And the earth brought forth grass, the plant that yields seed according to its kind, and the tree that yields fruit, whose seed is in itself according to its kind. And Elohiym saw that it was good.",
       "13 And there came to be evening and there came to be morning, the third day.",
     ],
   },
@@ -1197,11 +1197,11 @@ export const sacredCalendarNotes: Record<string, CalendarDayNotes> = {
       "'Through the course of the sun these distinctions are made' (Enoch 72:33)",
       "Spring Equinox is the Great Sign upon the earth (Jubilees 2:9)",
       "The Removed 365th Day of Solar Cycle & The Cursed Day of Job's Birth (Job 3:1-26)",
-      "Enoch lived 365 years, walked with Elohim: and he was not; for Elohim took him (Genesis 5:21-24)",
+      "Enoch lived 365 years, walked with Elohiym: and he was not; for Elohiym took him (Genesis 5:21-24)",
       "Absalom polled his head at every year's end (2 Samuel 14:26) — Polling your hair on Spring Equinox appears to be a pagan practice",
       "Kings go out for War (2 Samuel 11:1 & 1 Chronicles 20:1 & Revelation 16:4)",
-      "'Are there not twelve hours in the day?' — Yeshua (John 11:9)",
-      "Yeshua received word Lazarus was sick and tarried 2 days. Lazarus died on this day.",
+      "'Are there not twelve hours in the day?' — Yahusha (John 11:9)",
+      "Yahusha received word Lazarus was sick and tarried 2 days. Lazarus died on this day.",
     ],
   },
 };
