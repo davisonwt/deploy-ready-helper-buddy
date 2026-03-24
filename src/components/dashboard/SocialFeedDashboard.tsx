@@ -264,7 +264,7 @@ export const SocialFeedDashboard: React.FC<SocialFeedDashboardProps> = ({
       {/* Feed */}
       <div className="max-w-2xl mx-auto px-3 py-4 pb-24 space-y-3">
         {feedItems.map((item, i) => (
-          <FeedItemCard key={item.id} item={item} index={i} />
+          <FeedItemCard key={item.id} item={item} index={i} theme={currentTheme} />
         ))}
       </div>
 
