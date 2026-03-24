@@ -399,7 +399,7 @@ export default function SacredCalendarFeed() {
               >
                 <div className="flex" style={{ minHeight: '520px' }}>
                   {/* Left: Beads — full height */}
-                  <div className="relative flex-shrink-0 flex flex-col" style={{ width: '50%' }}>
+                  <div className="relative flex-shrink-0 flex flex-col" style={{ width: '38%' }}>
                     {/* Nav arrows */}
                     <button
                       onClick={goPrev}
