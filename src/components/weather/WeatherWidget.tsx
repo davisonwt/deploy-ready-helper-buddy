@@ -20,47 +20,14 @@ interface WeatherWidgetProps {
   };
 }
 
-const WeatherWidget = ({ compact = false }: WeatherWidgetProps) => {
-  const { user } = useAuth();
-  const [userTimezone, setUserTimezone] = useState<string>('Africa/Johannesburg');
-  const [saving, setSaving] = useState(false);
-  const timezones = getAvailableTimezones();
-
-  // Load user's timezone from profile
-  useEffect(() => {
-    if (!user) return;
-    supabase
-      .from('profiles')
-      .select('timezone')
-      .eq('id', user.id)
-      .single()
-      .then(({ data }) => {
-        if (data?.timezone) setUserTimezone(data.timezone);
-      });
-  }, [user]);
-
-  const { weather, loading, error, refetch } = useWeather(userTimezone);
-  const coords = getTimezoneCoords(userTimezone);
-
-  const handleTimezoneChange = async (tz: string) => {
-    setUserTimezone(tz);
-    if (!user) return;
-    setSaving(true);
-    const { error } = await supabase
-      .from('profiles')
-      .update({ timezone: tz })
-      .eq('id', user.id);
-    setSaving(false);
-    if (error) {
-      toast.error('Failed to save timezone');
-    } else {
-      toast.success('Timezone updated');
-    }
-  };
-
+const WeatherWidget = ({ compact = false, theme }: WeatherWidgetProps) => {
+...
   if (compact) {
     return (
-      <Card className="bg-gradient-to-br from-primary/10 to-primary/5 border-primary/20">
+      <Card
+        className="border"
+        style={theme ? { backgroundColor: theme.cardBg, borderColor: theme.cardBorder } : undefined}
+      >
         <CardContent className="p-4">
           {loading ? (
             <div className="flex items-center gap-3">
@@ -71,19 +38,19 @@ const WeatherWidget = ({ compact = false }: WeatherWidgetProps) => {
               </div>
             </div>
           ) : error ? (
-            <p className="text-sm text-muted-foreground">Weather unavailable</p>
+            <p className="text-sm" style={{ color: theme?.textSecondary }}>Weather unavailable</p>
           ) : weather ? (
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <span className="text-3xl">{weather.icon}</span>
                 <div>
-                  <div className="text-2xl font-bold">{weather.temperature}°C</div>
-                  <div className="text-xs text-muted-foreground">{weather.description}</div>
+                  <div className="text-2xl font-bold" style={{ color: theme?.textPrimary }}>{weather.temperature}°C</div>
+                  <div className="text-xs" style={{ color: theme?.textSecondary }}>{weather.description}</div>
                 </div>
               </div>
-              <div className="text-right text-xs text-muted-foreground">
+              <div className="text-right text-xs" style={{ color: theme?.textSecondary }}>
                 <div className="flex items-center gap-1 justify-end">
-                  <MapPin className="h-3 w-3" />
+                  <MapPin className="h-3 w-3" style={{ color: theme?.accent }} />
                   {coords.city}
                 </div>
                 <div>H: {weather.temperatureMax}° L: {weather.temperatureMin}°</div>
