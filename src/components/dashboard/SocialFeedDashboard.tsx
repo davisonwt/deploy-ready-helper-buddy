@@ -230,17 +230,17 @@ export const SocialFeedDashboard: React.FC<SocialFeedDashboardProps> = ({
     children: (
       <div className="grid grid-cols-3 gap-2">
         <Link to="/become-whisperer">
-          <Button size="sm" className="w-full rounded-xl text-[10px] font-bold gap-1 h-10" variant="secondary">
+          <Button size="sm" className="w-full rounded-xl text-[10px] font-bold gap-1 h-10 border-0" style={{ background: currentTheme.accent, color: currentTheme.textPrimary }}>
             <Megaphone className="w-3.5 h-3.5" /> Whisperer
           </Button>
         </Link>
         <Link to="/register-vehicle">
-          <Button size="sm" className="w-full rounded-xl text-[10px] font-bold gap-1 h-10" variant="secondary">
+          <Button size="sm" className="w-full rounded-xl text-[10px] font-bold gap-1 h-10 border-0" style={{ background: currentTheme.accent, color: currentTheme.textPrimary }}>
             <Car className="w-3.5 h-3.5" /> Driver
           </Button>
         </Link>
         <Link to="/register-services">
-          <Button size="sm" className="w-full rounded-xl text-[10px] font-bold gap-1 h-10" variant="secondary">
+          <Button size="sm" className="w-full rounded-xl text-[10px] font-bold gap-1 h-10 border-0" style={{ background: currentTheme.accent, color: currentTheme.textPrimary }}>
             <Wrench className="w-3.5 h-3.5" /> Services
           </Button>
         </Link>
