@@ -61,8 +61,8 @@ export default function DJMusicLibrary() {
         track.artist_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
         track.tags?.some(tag => tag.toLowerCase().includes(searchTerm.toLowerCase()))
       
-      const matchesGenre = !selectedGenre || track.genre === selectedGenre
-      const matchesType = !selectedType || track.track_type === selectedType
+      const matchesGenre = !selectedGenre || selectedGenre === '__all__' || track.genre === selectedGenre
+      const matchesType = !selectedType || selectedType === '__all__' || track.track_type === selectedType
       
       return matchesSearch && matchesGenre && matchesType
     })
@@ -319,7 +319,7 @@ export default function DJMusicLibrary() {
                 <SelectValue placeholder="All Genres" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">All Genres</SelectItem>
+                <SelectItem value="__all__">All Genres</SelectItem>
                 {uniqueGenres.map(genre => (
                   <SelectItem key={genre} value={genre}>{genre}</SelectItem>
                 ))}
@@ -332,7 +332,7 @@ export default function DJMusicLibrary() {
                 <SelectValue placeholder="All Types" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">All Types</SelectItem>
+                <SelectItem value="__all__">All Types</SelectItem>
                 {uniqueTypes.map(type => (
                   <SelectItem key={type} value={type}>{getTrackTypeLabel(type)}</SelectItem>
                 ))}
