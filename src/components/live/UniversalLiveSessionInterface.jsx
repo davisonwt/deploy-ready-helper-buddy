@@ -509,18 +509,18 @@ export function UniversalLiveSessionInterface({
         {/* Right Sidebar - Interactive Feed with Darker Theme */}
         <div className="space-y-4">
           <Tabs defaultValue="messages" className="w-full">
-            <TabsList className="grid w-full grid-cols-4 bg-slate-800 border-slate-700 gap-2 p-1.5">
-              <TabsTrigger value="messages" className="text-slate-300 text-[10px] px-0.5 py-1.5 leading-tight">
-                Msgs
+            <TabsList className="grid w-full grid-cols-4 bg-slate-800 border-slate-700 gap-1 p-1 h-auto">
+              <TabsTrigger value="messages" className="text-slate-300 data-[state=active]:text-white text-[11px] px-2 py-2 rounded-lg">
+                💬 Msgs
               </TabsTrigger>
-              <TabsTrigger value="media" className="text-slate-300 text-[10px] px-0.5 py-1.5 leading-tight">
-                Media
+              <TabsTrigger value="media" className="text-slate-300 data-[state=active]:text-white text-[11px] px-2 py-2 rounded-lg">
+                📷 Media
               </TabsTrigger>
-              <TabsTrigger value="queue" className="text-slate-300 text-[10px] px-0.5 py-1.5 leading-tight">
-                Queue ({callQueue.length})
+              <TabsTrigger value="queue" className="text-slate-300 data-[state=active]:text-white text-[11px] px-2 py-2 rounded-lg">
+                📋 Queue {callQueue.length > 0 && `(${callQueue.length})`}
               </TabsTrigger>
-              <TabsTrigger value="requests" className="text-slate-300 text-[10px] px-0.5 py-1.5 leading-tight">
-                Req ({guestRequests.filter(r => r.status === 'pending').length})
+              <TabsTrigger value="requests" className="text-slate-300 data-[state=active]:text-white text-[11px] px-2 py-2 rounded-lg">
+                🙋 Req {guestRequests.filter(r => r.status === 'pending').length > 0 && `(${guestRequests.filter(r => r.status === 'pending').length})`}
               </TabsTrigger>
             </TabsList>
 
