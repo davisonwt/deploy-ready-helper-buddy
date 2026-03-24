@@ -258,6 +258,7 @@ export const SocialFeedDashboard: React.FC<SocialFeedDashboardProps> = ({
         profile={profile}
         unreadMessages={unreadMessages}
         calendarData={calendarData}
+        theme={currentTheme}
       />
 
       {/* Feed */}
