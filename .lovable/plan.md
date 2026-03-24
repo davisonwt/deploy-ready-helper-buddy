@@ -1,124 +1,101 @@
 
 
-# Communications Hub Redesign — "Live & Active Hub"
+# Social Feed Transformation — All Major Pages
 
-## Overview
-Transform the Communications Hub from a static, card-heavy layout into a TikTok/Discord-inspired infinite-scroll feed that surfaces all live and recent activity (radio, classrooms, SkillDrop, training, community chat) in one addictive vertical stream — while keeping private messaging separate and secure.
+## The Core Idea
 
-## Architecture
+You're right — the "website feel" comes from full-width cards, big headers, and static layouts across every page. The fix is the same pattern we applied to the Dashboard: replace static blocks with **vertical feed cards**, **sticky compact headers**, and **contextual content that flows**.
 
-```text
-┌──────────────────────────────────────────────────┐
-│  Top Nav Pills (unchanged)                        │
-│  [ChatApp] [Classrooms] [SkillDrop] [Training]   │
-│  [Radio]                                          │
-├──────────────────────┬───────────────────────────┤
-│                      │  Slim Sidebar (desktop)    │
-│  UNIFIED FEED        │  - Your DMs (compact)     │
-│  "What's Happening   │  - Notifications          │
-│   Now 🌱"            │  - Quick Bestow           │
-│                      │                           │
-│  [Live Radio Card]   │                           │
-│  [Classroom Card]    │                           │
-│  [Community Chat]    │                           │
-│  [Pre-recorded]      │                           │
-│  [SkillDrop replay]  │                           │
-│  ... infinite scroll │                           │
-│                      │                           │
-├──────────────────────┴───────────────────────────┤
-│  FAB: + New Chat / New Room                       │
-└──────────────────────────────────────────────────┘
-```
+This is a huge scope (7+ major pages), so we should phase it to keep things stable.
 
-## Key Design Decisions
+---
 
-**Feed card types** — Each card is ~60-70% screen height on mobile:
-- **Live Radio** — Animated waveform, now-playing track, LIVE badge, listener count, Join + Bestow buttons
-- **Classroom/SkillDrop/Training** — Session thumbnail, host avatar, participant count, Join button, price badge if paid
-- **Pre-recorded/Replay** — Same card style but with "Replay" badge instead of "LIVE", fully scrollable and joinable
-- **Community Chat** — Compact preview of latest messages, tap to enter
-- **Private DMs/Groups** — Do NOT appear in the feed; only accessible via sidebar "Your Chats" or the existing Chats/Circles/Community sub-tabs within ChatApp
+## Phase 1 — Radio Mode (the biggest win)
 
-**Privacy model:**
-- 1-on-1 chats = private, never in feed
-- Group chats = invite-only, never in feed  
-- Community rooms = public, shown in feed
-- Paid sessions = shown in feed with clear price badge; payment gate on join
+RadioMode.tsx (521 lines) is the heaviest offender. Your detailed breakdown is spot-on. Here's the plan:
 
-**Sparkle/cherry aesthetic:**
-- Cherry 🍒 reaction emojis that float up when tapped
-- Leaf ✨ sparkle animation when new rooms appear at top
-- Soft glow pulse on LIVE badges
-- Blue-teal gradient cards with glassmorphism
+**Sticky Player Bar** (top, always visible)
+- Now-playing track title + animated waveform + pause/play + volume slider
+- "LIVE" pulse badge + listener count + "Join Conversation" button — all in one slim bar
+- Blurred album art / host avatar as subtle background
 
-## Implementation Steps
+**Interaction Tray** (tabbed, below player)
+- Tab 1: **Chat** — merged "Send Message to Hosts" + "Live Chat" into one thread
+- Tab 2: **Queue** — upcoming tracks + "Request Song" via FAB (+) button
+- Tab 3: **People** — listeners with avatars, host presence badge, "Raise Hand"
 
-### Step 1 — Create `LiveFeedCard` component
-New component `src/components/chat/LiveFeedCard.tsx` — a unified card that renders differently based on `type` (radio, classroom, skilldrop, training, community). Includes:
-- Host avatar (top-left), LIVE/Replay/Upcoming badge (top-right)
-- Participant count with real-time updates
-- Large visual area (waveform for radio, thumbnail for sessions)
-- Title + host name + description
-- Bottom action bar: Join, Bestow/Buy, React (cherry emoji)
-- Price badge overlay if session requires payment
+**Scheduled Slots as Feed Cards** (below the tray)
+- Vertical scroll of upcoming/replay slots as compact cards (like LiveFeedCard)
+- Swipeable — audio cross-fades as you scroll between sessions
+- "Host is Present" glowing badge for simulive (pre-recorded + live host)
+- Price badge if paid, "Free" badge if not
 
-### Step 2 — Create `UnifiedFeed` component
-New component `src/components/chat/UnifiedFeed.tsx` — replaces the current ChatApp as the default view in the ChatApp tab. Aggregates:
-- Active radio slots (from `radio_schedule` where status = 'live' or recent replays)
-- Active classrooms (from `classroom_sessions` where status = 'active')
-- Active SkillDrop sessions (from `skilldrop_sessions`)
-- Active training sessions (from `training_sessions`)
-- Community chat rooms (from `chat_rooms` where room_type = 'community')
-- Pre-recorded/completed sessions available for replay
+**FAB Menu** — floating "+" for Request Song, Dedication, Voice Note
 
-Uses Supabase Realtime to push new live items to the top with sparkle animation. Pull-to-refresh support.
+**What gets removed**: redundant "Now Playing" duplicate sections, scattered message boxes, giant text blocks for song requests
 
-### Step 3 — Create `PrivateChatsDrawer` component
-New component for the sidebar/drawer that holds private messaging:
-- Compact DM list (avatar + name + last message preview)
-- Group chats (invite-only)
-- Notification badges
-- Quick "Send Love" bestowal shortcut
-- On mobile: accessible via a chat bubble FAB or swipe gesture
+---
 
-### Step 4 — Refactor `ChatApp.tsx`
-Replace the current Chats/Circles/Community tab layout with:
-- Default view = `UnifiedFeed` (the live scroll feed)
-- "My Chats" button/icon opens `PrivateChatsDrawer` (slide-in panel or bottom sheet on mobile)
-- Circles and Community sub-navigation remain accessible but integrated into the feed context
+## Phase 2 — Communications Hub / ChatApp
 
-### Step 5 — Refactor `UnifiedDashboard.tsx`
-- Slim down the Activity Feed sidebar (currently 350px) to ~280px
-- Replace `ActivityFeed` content with the new notifications + DM list
-- On mobile, hide sidebar entirely; use FAB for chat access
+Already partially done with UnifiedFeed. Refinements:
+- Make LiveFeedCard truly full-height (60-70% viewport) with audio cross-fade on scroll
+- Add "Host is Present" badge for simulive sessions
+- Merge the sidebar Activity Feed into a notification bell dropdown instead of a permanent panel
+- Slim the overall layout — remove the 280px sidebar on mobile entirely
 
-### Step 6 — Add micro-animations
-- Cherry 🍒 emoji burst on reaction tap (CSS keyframe animation)
-- Sparkle ✨ entrance animation for new feed items
-- Soft pulse glow on LIVE badges
-- Smooth card entrance with staggered fade-in
+---
 
-### Step 7 — Payment gate on feed cards
-- Cards for paid sessions show price clearly (e.g. "S2G 2.30" badge)
-- Tapping "Join" on a paid session triggers the existing bestowal/payment flow
-- Free sessions show "Free" badge in green
+## Phase 3 — My Garden (profile/content pages)
 
-## Files Changed
+Currently ProfilePage.jsx is 1,290 lines of stacked cards. Transform into:
+- Sticky profile header (avatar + name + stats strip)
+- Tabbed feed below: Seeds | Sessions | Music | Journal — each tab renders as a vertical scroll of compact cards
+- Actions (edit profile, upload) move to a FAB or header icons
+
+---
+
+## Phase 4 — 364yhvh Days (Calendar)
+
+Sow2GrowCalendarPage.tsx (314 lines) — currently a dense astronomical display. Transform into:
+- Sticky "Today" bar (day number, month, season, sabbath indicator)
+- Feed of daily notes, feast days, and spiritual content as scrollable cards
+- The bead calendar visualization becomes a collapsible "hero" at the top
+- Birth date revealer becomes a card in the feed
+
+---
+
+## Phase 5 — S2G Memry
+
+Already TikTok-style (2,086 lines). Minimal changes needed — it's the most "social feed" page already. Just ensure consistent card styling with the rest of the app.
+
+---
+
+## Phase 6 — Let It Rain & GoSat's
+
+These are dropdown menus leading to sub-pages (Tithing, Gifting, Admin). Lower priority — they're functional utilities, not browsing experiences. Light touch: compact headers, card-based layouts instead of full-page forms.
+
+---
+
+## Implementation Order
+
+We build **Phase 1 (Radio)** first since it's the page you've described in most detail and has the most impact. Each phase is independent — we ship one, verify, then move to the next.
+
+### Files for Phase 1 (Radio)
 
 | File | Action |
 |------|--------|
-| `src/components/chat/LiveFeedCard.tsx` | New — unified feed card component |
-| `src/components/chat/UnifiedFeed.tsx` | New — infinite scroll feed aggregating all live/replay content |
-| `src/components/chat/PrivateChatsDrawer.tsx` | New — slide-in panel for private DMs and group chats |
-| `src/components/chat/ChatApp.tsx` | Major refactor — default to UnifiedFeed, move chats to drawer |
-| `src/components/chat/UnifiedDashboard.tsx` | Update sidebar width, integrate notifications |
-| `src/components/chat/ActivityFeed.tsx` | Refactor into slimmer notification-focused widget |
-| `src/components/chat/SparkleEffects.tsx` | New — cherry/leaf/sparkle micro-animation components |
+| `src/components/radio/StickyRadioPlayer.tsx` | New — persistent player bar with waveform, controls, join button |
+| `src/components/radio/RadioInteractionTray.tsx` | New — tabbed Chat/Queue/People drawer |
+| `src/components/radio/RadioSessionFeed.tsx` | New — vertical scroll of session cards with cross-fade |
+| `src/components/communication/RadioMode.tsx` | Major refactor — replace 521-line static layout with the 3 new components |
+| `src/components/chat/LiveFeedCard.tsx` | Minor — add "Host is Present" badge and audio cross-fade support |
 
-## What Stays the Same
-- Top navigation pills (ChatApp, Classrooms, SkillDrop, Training, Radio) — unchanged
-- All existing functionality (voice recorder, song requests, rate show, now playing purchase, Jitsi calls)
-- Private messaging security (RLS, invite-only groups, SECURITY DEFINER RPCs)
-- Dark blue-teal theme and glassmorphism aesthetic
-- Back to Dashboard button
+### Estimated scope per phase
+- Phase 1 (Radio): ~5 files, major refactor
+- Phase 2 (ChatApp): ~3 files, refinements
+- Phase 3 (My Garden): ~4 files, major refactor
+- Phase 4 (Calendar): ~3 files, moderate refactor
+- Phase 5 (Memry): ~1 file, minor tweaks
+- Phase 6 (Let It Rain/GoSat): ~2-3 files, light touch
 
