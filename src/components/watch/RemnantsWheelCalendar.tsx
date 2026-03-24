@@ -1528,12 +1528,29 @@ export function RemnantsWheelCalendar({ size = 900 }: RemnantsWheelCalendarProps
   return (
     <TooltipProvider>
       <div className="flex flex-col items-center">
+        {/* Magnifier Toggle */}
+        <button
+          onClick={() => {
+            setShowMagnifier(!showMagnifier);
+            if (showMagnifier) setMagnifyPos(null);
+          }}
+          className={`mb-3 flex items-center gap-2 px-4 py-2 rounded-full text-sm font-semibold transition-all ${
+            showMagnifier
+              ? 'bg-primary text-primary-foreground shadow-lg'
+              : 'bg-muted/30 text-muted-foreground hover:bg-muted/50 border border-border/30'
+          }`}
+        >
+          🔍 {showMagnifier ? 'Magnifier ON' : 'Magnifier'}
+        </button>
+
         {/* Main Wheel */}
         <div 
           ref={containerRef}
           className="relative" 
-          style={{ width: size, height: size }}
+          style={{ width: size, height: size, cursor: showMagnifier ? 'none' : 'default' }}
           onMouseMove={handleMouseMove}
+          onMouseEnter={() => { if (showMagnifier) setMagnifyPos({ x: size / 2, y: size / 2 }); }}
+          onMouseLeave={() => setMagnifyPos(null)}
         >
           <svg
             width={size}
