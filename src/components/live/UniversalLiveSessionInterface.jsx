@@ -489,8 +489,8 @@ export function UniversalLiveSessionInterface({
 
       {/* Main Interface - Darker Theme */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Video Call Interface - Takes up 2 columns */}
-        <div className="lg:col-span-2">
+        {/* Video Call Interface - Takes up 2 columns, always first on mobile */}
+        <div className="lg:col-span-2 order-1">
           <Card className="bg-slate-900 border-slate-700">
             <CardContent className="p-6">
             <LiveVideoCallInterface
@@ -507,19 +507,19 @@ export function UniversalLiveSessionInterface({
         </div>
 
         {/* Right Sidebar - Interactive Feed with Darker Theme */}
-        <div className="space-y-4">
+        <div className="space-y-4 order-2">
           <Tabs defaultValue="messages" className="w-full">
-            <TabsList className="grid w-full grid-cols-4 bg-slate-800 border-slate-700 gap-1 p-1 h-auto">
-              <TabsTrigger value="messages" className="text-slate-300 data-[state=active]:text-white text-[11px] px-2 py-2 rounded-lg">
+            <TabsList className="grid w-full grid-cols-4 bg-slate-800/80 border-slate-700 gap-1.5 p-1.5 h-auto">
+              <TabsTrigger value="messages" className="text-slate-300 data-[state=active]:bg-slate-600 data-[state=active]:text-white text-xs px-3 py-2.5 rounded-lg whitespace-nowrap">
                 💬 Msgs
               </TabsTrigger>
-              <TabsTrigger value="media" className="text-slate-300 data-[state=active]:text-white text-[11px] px-2 py-2 rounded-lg">
+              <TabsTrigger value="media" className="text-slate-300 data-[state=active]:bg-slate-600 data-[state=active]:text-white text-xs px-3 py-2.5 rounded-lg whitespace-nowrap">
                 📷 Media
               </TabsTrigger>
-              <TabsTrigger value="queue" className="text-slate-300 data-[state=active]:text-white text-[11px] px-2 py-2 rounded-lg">
+              <TabsTrigger value="queue" className="text-slate-300 data-[state=active]:bg-slate-600 data-[state=active]:text-white text-xs px-3 py-2.5 rounded-lg whitespace-nowrap">
                 📋 Queue {callQueue.length > 0 && `(${callQueue.length})`}
               </TabsTrigger>
-              <TabsTrigger value="requests" className="text-slate-300 data-[state=active]:text-white text-[11px] px-2 py-2 rounded-lg">
+              <TabsTrigger value="requests" className="text-slate-300 data-[state=active]:bg-slate-600 data-[state=active]:text-white text-xs px-3 py-2.5 rounded-lg whitespace-nowrap">
                 🙋 Req {guestRequests.filter(r => r.status === 'pending').length > 0 && `(${guestRequests.filter(r => r.status === 'pending').length})`}
               </TabsTrigger>
             </TabsList>
