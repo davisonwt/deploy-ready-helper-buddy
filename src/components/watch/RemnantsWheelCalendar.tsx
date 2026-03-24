@@ -1553,6 +1553,7 @@ export function RemnantsWheelCalendar({ size = 900 }: RemnantsWheelCalendarProps
           onMouseLeave={() => setMagnifyPos(null)}
         >
           <svg
+            ref={svgRef}
             width={size}
             height={size}
             viewBox={`0 0 ${size} ${size}`}
