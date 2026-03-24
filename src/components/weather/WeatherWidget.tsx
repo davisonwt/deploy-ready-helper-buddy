@@ -17,6 +17,8 @@ interface WeatherWidgetProps {
     textPrimary?: string;
     textSecondary?: string;
     accent?: string;
+    primaryButton?: string;
+    shadow?: string;
   };
 }
 
@@ -42,6 +44,14 @@ const WeatherWidget = ({ compact = false, theme }: WeatherWidgetProps) => {
   const { weather, loading, error, refetch } = useWeather(userTimezone);
   const coords = getTimezoneCoords(userTimezone);
 
+  const compactCardStyle = theme
+    ? {
+        background: theme.primaryButton || theme.cardBg,
+        borderColor: theme.cardBorder,
+        boxShadow: theme.shadow ? `0 8px 18px ${theme.shadow}` : undefined,
+      }
+    : undefined;
+
   const handleTimezoneChange = async (tz: string) => {
     setUserTimezone(tz);
     if (!user) return;
@@ -62,7 +72,7 @@ const WeatherWidget = ({ compact = false, theme }: WeatherWidgetProps) => {
     return (
       <Card
         className="border"
-        style={theme ? { backgroundColor: theme.cardBg, borderColor: theme.cardBorder } : undefined}
+        style={compactCardStyle}
       >
         <CardContent className="p-4">
           {loading ? (
@@ -74,19 +84,19 @@ const WeatherWidget = ({ compact = false, theme }: WeatherWidgetProps) => {
               </div>
             </div>
           ) : error ? (
-            <p className="text-sm" style={{ color: theme?.textSecondary }}>Weather unavailable</p>
+            <p className="text-sm" style={{ color: theme?.textPrimary }}>Weather unavailable</p>
           ) : weather ? (
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <span className="text-3xl">{weather.icon}</span>
                 <div>
                   <div className="text-2xl font-bold" style={{ color: theme?.textPrimary }}>{weather.temperature}°C</div>
-                  <div className="text-xs" style={{ color: theme?.textSecondary }}>{weather.description}</div>
+                  <div className="text-xs" style={{ color: theme?.textPrimary }}>{weather.description}</div>
                 </div>
               </div>
-              <div className="text-right text-xs" style={{ color: theme?.textSecondary }}>
+              <div className="text-right text-xs" style={{ color: theme?.textPrimary }}>
                 <div className="flex items-center gap-1 justify-end">
-                  <MapPin className="h-3 w-3" style={{ color: theme?.accent }} />
+                  <MapPin className="h-3 w-3" style={{ color: theme?.textPrimary }} />
                   {coords.city}
                 </div>
                 <div>H: {weather.temperatureMax}° L: {weather.temperatureMin}°</div>

@@ -41,6 +41,7 @@ interface SowerBalanceCardProps {
     textPrimary?: string;
     textSecondary?: string;
     accent?: string;
+    shadow?: string;
   };
 }
 
@@ -195,7 +196,13 @@ export function SowerBalanceCard({ compact = false, theme }: SowerBalanceCardPro
                 size="icon"
                 onClick={handleRefresh}
                 disabled={refreshing}
-                style={{ color: theme?.textSecondary }}
+                className="border"
+                style={theme ? {
+                  background: theme.primaryButton,
+                  color: theme.textPrimary,
+                  borderColor: theme.cardBorder,
+                  boxShadow: theme.shadow ? `0 8px 18px ${theme.shadow}` : undefined,
+                } : undefined}
               >
                 <RefreshCw className={`h-4 w-4 ${refreshing ? 'animate-spin' : ''}`} />
               </Button>
@@ -203,7 +210,7 @@ export function SowerBalanceCard({ compact = false, theme }: SowerBalanceCardPro
                 <Button
                   size="sm"
                   onClick={handleRequestPayout}
-                  style={theme ? { background: theme.primaryButton, color: '#112033' } : undefined}
+                  style={theme ? { background: theme.primaryButton, color: theme.textPrimary, borderColor: theme.cardBorder } : undefined}
                 >
                   Withdraw
                 </Button>
@@ -223,7 +230,7 @@ export function SowerBalanceCard({ compact = false, theme }: SowerBalanceCardPro
                 className="w-full gap-2"
                 type="button"
                 onClick={() => navigate('/wallet-settings')}
-                style={theme ? { borderColor: theme.cardBorder, color: theme.textPrimary, backgroundColor: theme.secondaryButton } : undefined}
+                style={theme ? { borderColor: theme.cardBorder, color: theme.textPrimary, background: theme.primaryButton } : undefined}
               >
                 <Settings className="h-4 w-4" />
                 Set Up Payout Wallet

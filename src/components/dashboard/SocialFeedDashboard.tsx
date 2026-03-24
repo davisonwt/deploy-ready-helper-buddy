@@ -43,6 +43,19 @@ export const SocialFeedDashboard: React.FC<SocialFeedDashboardProps> = ({
   const feedItems: DashboardFeedItem[] = [];
   let idx = 0;
 
+  const themedActionButtonStyle: React.CSSProperties = {
+    background: currentTheme.primaryButton,
+    color: currentTheme.textPrimary,
+    borderColor: currentTheme.cardBorder,
+    boxShadow: `0 8px 18px ${currentTheme.shadow}`,
+  };
+
+  const sectionTagStyle: React.CSSProperties = {
+    backgroundColor: currentTheme.secondaryButton,
+    borderColor: currentTheme.cardBorder,
+    color: currentTheme.textSecondary,
+  };
+
   // 1. Security + Sabbath (priority 0 — always top)
   feedItems.push({
     id: 'alerts',
@@ -197,24 +210,28 @@ export const SocialFeedDashboard: React.FC<SocialFeedDashboardProps> = ({
     priority: 9,
     title: 'Explore',
     emoji: '🔮',
-    subtitle: 'Discover more on S2G',
     children: (
-      <div className="grid grid-cols-3 gap-2">
-        <Link to="/364ttt">
-          <Button size="sm" className="w-full rounded-xl text-[10px] font-bold gap-1 h-10 border-0" style={{ background: currentTheme.accent, color: currentTheme.textPrimary }}>
-            <Music className="w-3.5 h-3.5" /> 364 TTT
-          </Button>
-        </Link>
-        <Link to="/profile?tab=journal">
-          <Button size="sm" className="w-full rounded-xl text-[10px] font-bold gap-1 h-10 border-0" style={{ background: currentTheme.accent, color: currentTheme.textPrimary }}>
-            <BookOpen className="w-3.5 h-3.5" /> Journal
-          </Button>
-        </Link>
-        <Link to="/communications-hub">
-          <Button size="sm" className="w-full rounded-xl text-[10px] font-bold gap-1 h-10 border-0" style={{ background: currentTheme.accent, color: currentTheme.textPrimary }}>
-            <MessageSquare className="w-3.5 h-3.5" /> Hub
-          </Button>
-        </Link>
+      <div className="space-y-2">
+        <div className="inline-flex rounded-full border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide" style={sectionTagStyle}>
+          Quick Paths
+        </div>
+        <div className="grid grid-cols-3 gap-2">
+          <Link to="/364ttt">
+            <Button size="sm" className="w-full rounded-xl text-[10px] font-bold gap-1 h-10" style={themedActionButtonStyle}>
+              <Music className="w-3.5 h-3.5" /> 364 TTT
+            </Button>
+          </Link>
+          <Link to="/profile?tab=journal">
+            <Button size="sm" className="w-full rounded-xl text-[10px] font-bold gap-1 h-10" style={themedActionButtonStyle}>
+              <BookOpen className="w-3.5 h-3.5" /> Journal
+            </Button>
+          </Link>
+          <Link to="/communications-hub">
+            <Button size="sm" className="w-full rounded-xl text-[10px] font-bold gap-1 h-10" style={themedActionButtonStyle}>
+              <MessageSquare className="w-3.5 h-3.5" /> Hub
+            </Button>
+          </Link>
+        </div>
       </div>
     ),
   });
@@ -226,24 +243,28 @@ export const SocialFeedDashboard: React.FC<SocialFeedDashboardProps> = ({
     priority: 10,
     title: 'Join Our Team',
     emoji: '🌱',
-    subtitle: 'Help grow the S2G community',
     children: (
-      <div className="grid grid-cols-3 gap-2">
-        <Link to="/become-whisperer">
-          <Button size="sm" className="w-full rounded-xl text-[10px] font-bold gap-1 h-10 border-0" style={{ background: currentTheme.accent, color: currentTheme.textPrimary }}>
-            <Megaphone className="w-3.5 h-3.5" /> Whisperer
-          </Button>
-        </Link>
-        <Link to="/register-vehicle">
-          <Button size="sm" className="w-full rounded-xl text-[10px] font-bold gap-1 h-10 border-0" style={{ background: currentTheme.accent, color: currentTheme.textPrimary }}>
-            <Car className="w-3.5 h-3.5" /> Driver
-          </Button>
-        </Link>
-        <Link to="/register-services">
-          <Button size="sm" className="w-full rounded-xl text-[10px] font-bold gap-1 h-10 border-0" style={{ background: currentTheme.accent, color: currentTheme.textPrimary }}>
-            <Wrench className="w-3.5 h-3.5" /> Services
-          </Button>
-        </Link>
+      <div className="space-y-2">
+        <div className="inline-flex rounded-full border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide" style={sectionTagStyle}>
+          Community Roles
+        </div>
+        <div className="grid grid-cols-3 gap-2">
+          <Link to="/become-whisperer">
+            <Button size="sm" className="w-full rounded-xl text-[10px] font-bold gap-1 h-10" style={themedActionButtonStyle}>
+              <Megaphone className="w-3.5 h-3.5" /> Whisperer
+            </Button>
+          </Link>
+          <Link to="/register-vehicle">
+            <Button size="sm" className="w-full rounded-xl text-[10px] font-bold gap-1 h-10" style={themedActionButtonStyle}>
+              <Car className="w-3.5 h-3.5" /> Driver
+            </Button>
+          </Link>
+          <Link to="/register-services">
+            <Button size="sm" className="w-full rounded-xl text-[10px] font-bold gap-1 h-10" style={themedActionButtonStyle}>
+              <Wrench className="w-3.5 h-3.5" /> Services
+            </Button>
+          </Link>
+        </div>
       </div>
     ),
   });
