@@ -489,7 +489,6 @@ export default function DashboardPage() {
     />
   );
 }
-      {/* Content wrapper */}
       <div className="relative z-10">
         {/* Security Questions Alert */}
         <div className="max-w-4xl mx-auto px-4 sm:px-6 md:px-8 pt-4">
