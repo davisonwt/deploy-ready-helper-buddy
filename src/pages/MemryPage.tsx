@@ -1739,6 +1739,48 @@ export default function MemryPage() {
           </div>
         ) : (
         <div ref={feedContainerRef} className="h-full overflow-y-auto" style={{ scrollSnapType: 'y mandatory' }}>
+          {/* Stories Row */}
+          {storyCreators.length > 0 && (
+            <div className="fixed top-[104px] left-[72px] right-0 z-20 px-4 py-2">
+              <div className="flex items-center gap-3 overflow-x-auto max-w-lg mx-auto" style={{ scrollbarWidth: 'none' }}>
+                {/* Your Story */}
+                {user && (
+                  <button onClick={() => setShowCreateModal(true)} className="flex flex-col items-center gap-1 flex-shrink-0">
+                    <div className="relative">
+                      <div className="w-14 h-14 rounded-full bg-gradient-to-br from-orange-200 to-pink-200 flex items-center justify-center">
+                        <Plus className="w-6 h-6 text-orange-500" />
+                      </div>
+                    </div>
+                    <span className="text-[9px] text-white font-semibold drop-shadow">Your Story</span>
+                  </button>
+                )}
+                {storyCreators.map((post) => (
+                  <button
+                    key={post.user_id}
+                    onClick={() => {
+                      const creator = groupedCreators.find(c => c.userId === post.user_id);
+                      if (creator) {
+                        document.getElementById(`creator-row-${creator.userId}`)?.scrollIntoView({ behavior: 'smooth' });
+                      }
+                    }}
+                    className="flex flex-col items-center gap-1 flex-shrink-0"
+                  >
+                    <div className="p-[2px] rounded-full bg-gradient-to-tr from-pink-500 via-orange-400 to-yellow-400">
+                      <Avatar className="w-13 h-13 border-2 border-black">
+                        <AvatarImage src={post.profiles?.avatar_url} />
+                        <AvatarFallback className="bg-gradient-to-br from-pink-400 to-orange-400 text-white text-xs">
+                          {post.profiles?.display_name?.[0] || 'S'}
+                        </AvatarFallback>
+                      </Avatar>
+                    </div>
+                    <span className="text-[9px] text-white font-semibold drop-shadow truncate w-14 text-center">
+                      {post.profiles?.display_name?.split(' ')[0] || 'Sower'}
+                    </span>
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
           {groupedCreators.map((creator) => {
             const postIdx = creatorPostIndices[creator.userId] || 0;
             const post = creator.posts[postIdx];
