@@ -1,36 +1,16 @@
 import React, { useState, useEffect } from 'react';
 import SunCalc from 'suncalc';
 import { useAuth } from '../hooks/useAuth';
-import { useOrchards } from '../hooks/useOrchards';
 import { useBestowals } from '../hooks/useBestowals.jsx';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Link } from 'react-router-dom';
-import { Sprout, TreePine, Heart, TrendingUp, Users, DollarSign, Plus, Calendar, User, Globe, Clock, MessageSquare, BarChart3, Trophy, Shield, Loader2, Music, Megaphone, Car, Wrench, BookOpen, GraduationCap, Dumbbell, Zap, Radio } from 'lucide-react';
-import { formatCurrency } from '../utils/formatters';
-import LiveTimezoneDisplay from '@/components/dashboard/LiveTimezoneDisplay';
-import WeatherWidget from '@/components/weather/WeatherWidget';
 import { supabase } from "@/integrations/supabase/client";
-import LiveActivityWidget from '@/components/LiveActivityWidget';
-import { GamificationHUD } from '@/components/gamification/GamificationHUD';
-import { SecurityAlertsPanel } from '@/components/security/SecurityAlertsPanel';
 import { getCreatorTime } from '@/utils/customTime';
 import { calculateCreatorDate } from '@/utils/dashboardCalendar';
 import { getDayInfo } from '@/utils/sacredCalendar';
 import { getCurrentTheme } from '@/utils/dashboardThemes';
-import { AmbassadorThumbnail } from '@/components/marketing/AmbassadorThumbnail';
-import { StatsCards } from '@/components/dashboard/StatsCards';
-import { StatsFloatingButton } from '@/components/dashboard/StatsFloatingButton';
-import { TopSowersTeaser } from '@/components/dashboard/TopSowersTeaser';
-import { WalletSetupPrompt } from '@/components/wallet/WalletSetupPrompt';
-import { SowerBalanceCard } from '@/components/wallet/SowerBalanceCard';
-import SecurityQuestionsAlert from '@/components/auth/SecurityQuestionsAlert';
-import { SeedEngagementWidget } from '@/components/dashboard/SeedEngagementWidget';
 import { DashboardSkeleton } from '@/components/dashboard/DashboardSkeleton';
-import { SabbathDashboardBanner } from '@/components/SabbathDashboardBanner';
-import { DailyPlantingTip } from '@/components/garden/DailyPlantingTip';
-import { motion } from 'framer-motion';
+import { SocialFeedDashboard } from '@/components/dashboard/SocialFeedDashboard';
+
 export default function DashboardPage() {
   const [communityUnread, setCommunityUnread] = useState(0);
   const {
