@@ -80,6 +80,99 @@ export const RadioMode: React.FC = () => {
   const [activeStream, setActiveStream] = useState<Stream | null>(null);
   const [deleteSlotId, setDeleteSlotId] = useState<string | null>(null);
   const [editSlotData, setEditSlotData] = useState<EditableSlotData | null>(null);
+  const [trackIndex, setTrackIndex] = useState(0);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
+
+  // Initialize audio element
+  useEffect(() => {
+    const audio = new Audio();
+    audio.volume = volume[0] / 100;
+    audioRef.current = audio;
+
+    audio.addEventListener('ended', () => {
+      // Auto-advance to next track
+      setTrackIndex((prev) => {
+        const next = prev + 1;
+        if (next < tracks.length) {
+          playTrack(tracks[next], next);
+          return next;
+        }
+        // Loop back to start
+        if (tracks.length > 0) {
+          playTrack(tracks[0], 0);
+          return 0;
+        }
+        setIsPlaying(false);
+        return 0;
+      });
+    });
+
+    return () => {
+      audio.pause();
+      audio.src = '';
+    };
+  }, []);
+
+  // Sync volume
+  useEffect(() => {
+    if (audioRef.current) {
+      audioRef.current.volume = volume[0] / 100;
+    }
+  }, [volume]);
+
+  // Auto-select first track when tracks load
+  useEffect(() => {
+    if (tracks.length > 0 && !currentTrack) {
+      setCurrentTrack(tracks[0]);
+      setTrackIndex(0);
+    }
+  }, [tracks]);
+
+  const playTrack = useCallback(async (track: Track, index?: number) => {
+    const audio = audioRef.current;
+    if (!audio || !track?.file_url) return;
+
+    try {
+      const url = await resolveAudioUrl(track.file_url, { bucketForKeys: 'dj-music' });
+      audio.src = url;
+      audio.load();
+      await audio.play();
+      setCurrentTrack(track);
+      setIsPlaying(true);
+      if (index !== undefined) setTrackIndex(index);
+      console.log('[RadioMode] ✅ Playing:', track.track_title);
+    } catch (err: any) {
+      if (err?.name === 'NotAllowedError') {
+        setCurrentTrack(track);
+        setIsPlaying(false);
+        toast.info('Tap Play to start listening');
+      } else {
+        console.error('[RadioMode] Playback error:', err);
+        toast.error('Could not play this track');
+        setIsPlaying(false);
+      }
+    }
+  }, []);
+
+  const handleTogglePlay = useCallback(() => {
+    const audio = audioRef.current;
+    if (!audio) return;
+
+    if (isPlaying) {
+      audio.pause();
+      setIsPlaying(false);
+    } else if (currentTrack) {
+      if (audio.src) {
+        audio.play().then(() => setIsPlaying(true)).catch(() => {
+          playTrack(currentTrack, trackIndex);
+        });
+      } else {
+        playTrack(currentTrack, trackIndex);
+      }
+    } else if (tracks.length > 0) {
+      playTrack(tracks[0], 0);
+    }
+  }, [isPlaying, currentTrack, tracks, trackIndex, playTrack]);
 
   useEffect(() => {
     loadContent();
