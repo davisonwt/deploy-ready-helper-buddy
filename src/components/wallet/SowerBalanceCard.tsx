@@ -174,7 +174,7 @@ export function SowerBalanceCard({ compact = false, theme }: SowerBalanceCardPro
     return (
       <Card
         className="border"
-        style={theme ? { borderColor: theme.cardBorder, backgroundColor: theme.cardBg } : undefined}
+        style={theme ? { borderColor: theme.cardBorder, background: theme.primaryButton, boxShadow: theme.shadow ? `0 8px 18px ${theme.shadow}` : undefined } : undefined}
       >
         <CardContent className="py-4">
           <div className="flex items-center justify-between">
@@ -186,8 +186,8 @@ export function SowerBalanceCard({ compact = false, theme }: SowerBalanceCardPro
                 <Wallet className="h-5 w-5" style={{ color: theme?.accent }} />
               </div>
               <div>
-                <p className="text-sm" style={{ color: theme?.textSecondary }}>Available Balance</p>
-                <p className="text-2xl font-bold" style={{ color: theme?.textPrimary }}>${availableBalance.toFixed(2)}</p>
+                <p className="text-sm" style={{ color: '#2d4a35' }}>Available Balance</p>
+                <p className="text-2xl font-bold" style={{ color: '#2d4a35' }}>${availableBalance.toFixed(2)}</p>
               </div>
             </div>
             <div className="flex gap-2">

@@ -52,6 +52,8 @@ const WeatherWidget = ({ compact = false, theme }: WeatherWidgetProps) => {
       }
     : undefined;
 
+  const compactTextColor = theme ? '#2d4a35' : undefined;
+
   const handleTimezoneChange = async (tz: string) => {
     setUserTimezone(tz);
     if (!user) return;
@@ -90,13 +92,13 @@ const WeatherWidget = ({ compact = false, theme }: WeatherWidgetProps) => {
               <div className="flex items-center gap-3">
                 <span className="text-3xl">{weather.icon}</span>
                 <div>
-                  <div className="text-2xl font-bold" style={{ color: theme?.textPrimary }}>{weather.temperature}°C</div>
-                  <div className="text-xs" style={{ color: theme?.textPrimary }}>{weather.description}</div>
+                  <div className="text-2xl font-bold" style={{ color: compactTextColor }}>{weather.temperature}°C</div>
+                  <div className="text-xs" style={{ color: compactTextColor }}>{weather.description}</div>
                 </div>
               </div>
-              <div className="text-right text-xs" style={{ color: theme?.textPrimary }}>
+              <div className="text-right text-xs" style={{ color: compactTextColor }}>
                 <div className="flex items-center gap-1 justify-end">
-                  <MapPin className="h-3 w-3" style={{ color: theme?.textPrimary }} />
+                  <MapPin className="h-3 w-3" style={{ color: compactTextColor }} />
                   {coords.city}
                 </div>
                 <div>H: {weather.temperatureMax}° L: {weather.temperatureMin}°</div>

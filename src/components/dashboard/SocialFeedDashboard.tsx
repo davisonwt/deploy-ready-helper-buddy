@@ -45,7 +45,7 @@ export const SocialFeedDashboard: React.FC<SocialFeedDashboardProps> = ({
 
   const themedActionButtonStyle: React.CSSProperties = {
     background: currentTheme.primaryButton,
-    color: currentTheme.textPrimary,
+    color: '#2d4a35',
     borderColor: currentTheme.cardBorder,
     boxShadow: `0 8px 18px ${currentTheme.shadow}`,
   };
