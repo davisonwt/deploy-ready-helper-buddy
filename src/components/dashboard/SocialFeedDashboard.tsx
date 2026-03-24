@@ -258,17 +258,18 @@ export const SocialFeedDashboard: React.FC<SocialFeedDashboardProps> = ({
         profile={profile}
         unreadMessages={unreadMessages}
         calendarData={calendarData}
+        theme={currentTheme}
       />
 
       {/* Feed */}
       <div className="max-w-2xl mx-auto px-3 py-4 pb-24 space-y-3">
         {feedItems.map((item, i) => (
-          <FeedItemCard key={item.id} item={item} index={i} />
+          <FeedItemCard key={item.id} item={item} index={i} theme={currentTheme} />
         ))}
       </div>
 
       {/* Bottom Action Bar */}
-      <BottomActionBar />
+      <BottomActionBar theme={currentTheme} />
 
       {/* Live Activities floating button */}
       <div className="hidden sm:block">
