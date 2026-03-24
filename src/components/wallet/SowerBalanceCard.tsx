@@ -33,9 +33,18 @@ interface SowerBalance {
 
 interface SowerBalanceCardProps {
   compact?: boolean;
+  theme?: {
+    cardBg?: string;
+    cardBorder?: string;
+    primaryButton?: string;
+    secondaryButton?: string;
+    textPrimary?: string;
+    textSecondary?: string;
+    accent?: string;
+  };
 }
 
-export function SowerBalanceCard({ compact = false }: SowerBalanceCardProps) {
+export function SowerBalanceCard({ compact = false, theme }: SowerBalanceCardProps) {
   const { user } = useAuth();
   const navigate = useNavigate();
   const [balance, setBalance] = useState<SowerBalance | null>(null);
@@ -108,7 +117,10 @@ export function SowerBalanceCard({ compact = false }: SowerBalanceCardProps) {
 
   if (loading) {
     return (
-      <Card className={compact ? 'border-primary/20' : ''}>
+      <Card
+        className={compact ? 'border' : ''}
+        style={compact && theme ? { borderColor: theme.cardBorder, backgroundColor: theme.cardBg } : undefined}
+      >
         <CardContent className="flex items-center justify-center py-8">
           <RefreshCw className="h-6 w-6 animate-spin text-muted-foreground" />
         </CardContent>
@@ -119,10 +131,13 @@ export function SowerBalanceCard({ compact = false }: SowerBalanceCardProps) {
   // No balance record yet - show setup prompt
   if (!balance) {
     return (
-      <Card className={compact ? 'border-primary/20' : ''}>
+      <Card
+        className={compact ? 'border' : ''}
+        style={compact && theme ? { borderColor: theme.cardBorder, backgroundColor: theme.cardBg } : undefined}
+      >
         <CardHeader className={compact ? 'pb-2' : ''}>
-          <CardTitle className="flex items-center gap-2 text-lg">
-            <Wallet className="h-5 w-5 text-primary" />
+          <CardTitle className="flex items-center gap-2 text-lg" style={{ color: theme?.textPrimary }}>
+            <Wallet className="h-5 w-5" style={{ color: theme?.accent }} />
             My Earnings
           </CardTitle>
         </CardHeader>
@@ -156,16 +171,22 @@ export function SowerBalanceCard({ compact = false }: SowerBalanceCardProps) {
 
   if (compact) {
     return (
-      <Card className="border-primary/20 bg-gradient-to-br from-primary/5 to-primary/10">
+      <Card
+        className="border"
+        style={theme ? { borderColor: theme.cardBorder, backgroundColor: theme.cardBg } : undefined}
+      >
         <CardContent className="py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <div className="p-2 rounded-full bg-primary/20">
-                <Wallet className="h-5 w-5 text-primary" />
+              <div
+                className="p-2 rounded-full"
+                style={{ backgroundColor: theme?.accent ? `${theme.accent}22` : undefined }}
+              >
+                <Wallet className="h-5 w-5" style={{ color: theme?.accent }} />
               </div>
               <div>
-                <p className="text-sm text-muted-foreground">Available Balance</p>
-                <p className="text-2xl font-bold">${availableBalance.toFixed(2)}</p>
+                <p className="text-sm" style={{ color: theme?.textSecondary }}>Available Balance</p>
+                <p className="text-2xl font-bold" style={{ color: theme?.textPrimary }}>${availableBalance.toFixed(2)}</p>
               </div>
             </div>
             <div className="flex gap-2">
@@ -174,33 +195,39 @@ export function SowerBalanceCard({ compact = false }: SowerBalanceCardProps) {
                 size="icon"
                 onClick={handleRefresh}
                 disabled={refreshing}
+                style={{ color: theme?.textSecondary }}
               >
                 <RefreshCw className={`h-4 w-4 ${refreshing ? 'animate-spin' : ''}`} />
               </Button>
               {hasWallet && availableBalance >= 10 && (
-                <Button size="sm" onClick={handleRequestPayout}>
+                <Button
+                  size="sm"
+                  onClick={handleRequestPayout}
+                  style={theme ? { background: theme.primaryButton, color: '#112033' } : undefined}
+                >
                   Withdraw
                 </Button>
               )}
             </div>
           </div>
           {pendingBalance > 0 && (
-            <p className="text-xs text-muted-foreground mt-2">
+            <p className="text-xs mt-2" style={{ color: theme?.textSecondary }}>
               + ${pendingBalance.toFixed(2)} pending
             </p>
           )}
           {!hasWallet && (
             <div className="mt-3">
-               <Button
-                 variant="outline"
-                 size="sm"
-                 className="w-full gap-2"
-                 type="button"
-                 onClick={() => navigate('/wallet-settings')}
-               >
-                 <Settings className="h-4 w-4" />
-                 Set Up Payout Wallet
-               </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                className="w-full gap-2"
+                type="button"
+                onClick={() => navigate('/wallet-settings')}
+                style={theme ? { borderColor: theme.cardBorder, color: theme.textPrimary, backgroundColor: theme.secondaryButton } : undefined}
+              >
+                <Settings className="h-4 w-4" />
+                Set Up Payout Wallet
+              </Button>
             </div>
           )}
         </CardContent>
