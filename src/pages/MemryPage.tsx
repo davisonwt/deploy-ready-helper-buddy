@@ -1643,6 +1643,79 @@ export default function MemryPage() {
           </div>
         )}
 
+        {/* === TRENDING TAB === */}
+        {activeTab === 'trending' && (
+          <div className="h-full flex flex-col pt-20 pb-24 pl-20 pr-3 md:pl-24 md:pr-6 overflow-y-auto">
+            <div className="max-w-lg mx-auto w-full space-y-4">
+              <div className="flex items-center gap-2 mb-2">
+                <Flame className="w-5 h-5 text-orange-500" />
+                <h2 className="text-xl font-bold text-orange-800">Trending This Week</h2>
+              </div>
+              {trendingPosts.length === 0 ? (
+                <div className="text-center py-12">
+                  <TrendingUp className="w-16 h-16 text-orange-300 mx-auto mb-4" />
+                  <p className="text-orange-600">No trending posts yet this week</p>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {trendingPosts.map((post, idx) => (
+                    <motion.div
+                      key={post.id}
+                      initial={{ opacity: 0, x: -20 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ delay: idx * 0.05 }}
+                      onClick={() => {
+                        for (const creator of groupedCreators) {
+                          const pIdx = creator.posts.findIndex(p => p.id === post.id);
+                          if (pIdx >= 0) {
+                            setCreatorPostIndices(prev => ({ ...prev, [creator.userId]: pIdx }));
+                            setActiveTab('feed');
+                            setTimeout(() => document.getElementById(`creator-row-${creator.userId}`)?.scrollIntoView({ behavior: 'smooth' }), 100);
+                            break;
+                          }
+                        }
+                      }}
+                      className="flex items-center gap-3 p-3 bg-white/60 backdrop-blur rounded-2xl cursor-pointer hover:bg-white/80 transition-colors"
+                    >
+                      <span className="text-2xl font-black text-orange-300 w-8 text-center">
+                        {idx + 1}
+                      </span>
+                      <div className="w-14 h-14 rounded-xl overflow-hidden flex-shrink-0">
+                        {post.content_type === 'video' || post.content_type === 'marketing_video' ? (
+                          <div className="w-full h-full bg-gradient-to-br from-purple-400 to-pink-400 flex items-center justify-center">
+                            <Play className="w-6 h-6 text-white" />
+                          </div>
+                        ) : post.content_type === 'music' ? (
+                          <div className="w-full h-full bg-gradient-to-br from-violet-400 to-purple-400 flex items-center justify-center">
+                            <Music className="w-6 h-6 text-white" />
+                          </div>
+                        ) : (
+                          <img src={post.media_url} alt="" className="w-full h-full object-cover" />
+                        )}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-bold text-orange-800 truncate">{post.caption || 'Untitled'}</p>
+                        <p className="text-xs text-orange-500">@{toHandle(post.profiles?.username || post.profiles?.display_name)}</p>
+                        <div className="flex items-center gap-3 mt-1">
+                          <span className="text-[10px] text-orange-400 flex items-center gap-0.5">
+                            <Heart className="w-3 h-3" /> {post.likes_count}
+                          </span>
+                          <span className="text-[10px] text-orange-400 flex items-center gap-0.5">
+                            <MessageCircle className="w-3 h-3" /> {post.comments_count}
+                          </span>
+                        </div>
+                      </div>
+                      {idx < 3 && (
+                        <Flame className="w-5 h-5 text-orange-500 flex-shrink-0" />
+                      )}
+                    </motion.div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
         {/* === FEED TAB (main content) === */}
         {activeTab === 'feed' && (
         <>
