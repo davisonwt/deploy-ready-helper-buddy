@@ -133,7 +133,7 @@ export function MusicPurchaseInterface({
                 </div>
               </div>
 
-              {/* Music: show pricing + buy */}
+              {/* Music: show pricing + bestow */}
               {!isVoiceNote(currentTrack) ? (
                 <div className="flex flex-col gap-3 items-end">
                   <div className="text-right">
