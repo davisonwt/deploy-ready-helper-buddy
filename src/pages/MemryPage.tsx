@@ -1041,6 +1041,27 @@ export default function MemryPage() {
     }
   };
 
+  // Trending posts - sorted by engagement (likes + comments) from last 7 days
+  const trendingPosts = useMemo(() => {
+    const sevenDaysAgo = new Date();
+    sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+    return [...allPosts]
+      .filter(p => new Date(p.created_at) >= sevenDaysAgo)
+      .sort((a, b) => (b.likes_count + b.comments_count) - (a.likes_count + a.comments_count))
+      .slice(0, 20);
+  }, [allPosts]);
+
+  // Stories - unique creators with recent posts (last 24h) 
+  const storyCreators = useMemo(() => {
+    const oneDayAgo = new Date();
+    oneDayAgo.setDate(oneDayAgo.getDate() - 1);
+    const seen = new Set<string>();
+    return allPosts
+      .filter(p => new Date(p.created_at) >= oneDayAgo)
+      .filter(p => { if (seen.has(p.user_id)) return false; seen.add(p.user_id); return true; })
+      .slice(0, 15);
+  }, [allPosts]);
+
   // Group posts by creator for dual-axis browsing
   const groupedCreators = useMemo(() => {
     const groups: Record<string, { profile: MemryPost['profiles'], userId: string, posts: MemryPost[] }> = {};
