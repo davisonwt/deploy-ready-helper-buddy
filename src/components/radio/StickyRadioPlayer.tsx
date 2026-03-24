@@ -53,8 +53,8 @@ export const StickyRadioPlayer: React.FC<StickyRadioPlayerProps> = ({
       />
 
       <div className="relative p-4">
-        {/* Top row: Status + Listeners */}
-        <div className="flex items-center justify-between mb-3">
+        {/* Station Name + Listeners */}
+        <div className="flex items-center justify-between mb-1">
           <div className="flex items-center gap-2">
             <Headphones className="w-4 h-4 text-primary" />
             <span className="text-xs font-bold text-primary uppercase tracking-wider">Radio 364YHVH fm</span>
@@ -68,6 +68,9 @@ export const StickyRadioPlayer: React.FC<StickyRadioPlayerProps> = ({
             )}
           </div>
         </div>
+        <h2 className="text-sm font-bold text-center mb-3" style={{ color: 'hsl(var(--muted-foreground))' }}>
+          364yhvh / s2g community member's music
+        </h2>
 
         {/* Main player area */}
         <div className="flex items-center gap-4">
