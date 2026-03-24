@@ -412,7 +412,7 @@ export default function AdminDashboardPage() {
           </TabsContent>
 
           <TabsContent value="payments">
-            <div className="bg-white rounded-lg border">
+            <div className="rounded-lg border border-amber-700/30" style={{ background: 'rgba(45, 24, 16, 0.6)' }}>
               <AdminPaymentDashboard />
             </div>
           </TabsContent>
