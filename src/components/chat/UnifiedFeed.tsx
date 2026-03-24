@@ -65,7 +65,7 @@ export const UnifiedFeed: React.FC = () => {
           title: slot.show_subject || slot.show_notes || 'Radio Show',
           hostName: djData?.dj_name || 'DJ',
           hostAvatar: djData?.avatar_url || null,
-          participantCount: slot.current_listeners || 0,
+          participantCount: slot.listener_count || 0,
           nowPlayingTrack: isLive ? 'Tuning in...' : undefined,
           roomId: slot.id,
           scheduledAt: slot.start_time,
