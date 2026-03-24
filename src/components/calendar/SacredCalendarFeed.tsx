@@ -83,7 +83,7 @@ function DayInfoPanel({ year, month, day, theme, enochianDate }: {
   const season = getSeasonForMonth(month);
 
   return (
-    <div className="flex flex-col gap-3 h-full overflow-y-auto pr-1" style={{ maxHeight: '350px' }}>
+    <div className="flex flex-col gap-3 h-full overflow-y-auto pr-1" style={{ maxHeight: '500px' }}>
       {/* Day Header */}
       <div className="text-center pb-2" style={{ borderBottom: `1px solid ${theme.cardBorder}` }}>
         <div className="text-2xl font-black" style={{ color: theme.accent }}>
