@@ -15,6 +15,12 @@ const RadioPage = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
 
+  // Redirect to the immersive Grove Station experience
+  React.useEffect(() => {
+    navigate('/grove-station', { replace: true });
+  }, [navigate]);
+
+
   if (!user) {
     return (
       <div className="container mx-auto px-4 py-8">
