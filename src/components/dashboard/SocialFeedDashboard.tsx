@@ -127,7 +127,7 @@ export const SocialFeedDashboard: React.FC<SocialFeedDashboardProps> = ({
     linkTo: '/weather',
     children: (
       <div>
-        <WeatherWidget compact />
+        <WeatherWidget compact theme={currentTheme} />
         <DailyPlantingTip currentTheme={currentTheme} />
       </div>
     ),
