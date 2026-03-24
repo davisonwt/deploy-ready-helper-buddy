@@ -319,7 +319,7 @@ export default function DJMusicLibrary() {
                 <SelectValue placeholder="All Genres" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">All Genres</SelectItem>
+                <SelectItem value="__all__">All Genres</SelectItem>
                 {uniqueGenres.map(genre => (
                   <SelectItem key={genre} value={genre}>{genre}</SelectItem>
                 ))}
