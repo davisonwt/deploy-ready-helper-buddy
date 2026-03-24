@@ -272,7 +272,7 @@ export default function MemryPage() {
   const [comments, setComments] = useState<Comment[]>([]);
   const [newComment, setNewComment] = useState('');
   const [replyingTo, setReplyingTo] = useState<Comment | null>(null);
-  const [activeTab, setActiveTab] = useState<'feed' | 'discover' | 'create' | 'recipes' | 'profile'>('feed');
+  const [activeTab, setActiveTab] = useState<'feed' | 'discover' | 'create' | 'recipes' | 'profile' | 'trending'>('feed');
   const [isPlaying, setIsPlaying] = useState(true);
   const [memryImageIndex, setMemryImageIndex] = useState(0);
   const [isMuted, setIsMuted] = useState(false);
