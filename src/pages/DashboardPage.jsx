@@ -475,19 +475,20 @@ export default function DashboardPage() {
         </div>
       </div>;
   }
-  // Staggered animation helper
-  const sectionVariants = {
-    hidden: { opacity: 0, y: 20 },
-    visible: (i) => ({
-      opacity: 1,
-      y: 0,
-      transition: { delay: i * 0.1, duration: 0.4, ease: 'easeOut' }
-    })
-  };
 
-  return <div className="min-h-screen relative" style={{
-    background: currentTheme.background
-  }}>
+  return (
+    <SocialFeedDashboard
+      profile={profile}
+      calendarData={calendarData}
+      stats={stats}
+      unreadMessages={unreadMessages}
+      communityUnread={communityUnread}
+      currentTheme={currentTheme}
+      currentTime={currentTime}
+      user={user}
+    />
+  );
+}
       {/* Content wrapper */}
       <div className="relative z-10">
         {/* Security Questions Alert */}
