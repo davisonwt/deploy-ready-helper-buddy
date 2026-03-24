@@ -269,7 +269,7 @@ export const SocialFeedDashboard: React.FC<SocialFeedDashboardProps> = ({
       </div>
 
       {/* Bottom Action Bar */}
-      <BottomActionBar />
+      <BottomActionBar theme={currentTheme} />
 
       {/* Live Activities floating button */}
       <div className="hidden sm:block">
