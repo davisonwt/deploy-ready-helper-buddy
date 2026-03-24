@@ -1,5 +1,5 @@
-import React, { useEffect, useState } from 'react';
-import { Radio, Play, Clock, ChevronRight, Music, Headphones } from 'lucide-react';
+import React, { useEffect, useMemo, useState } from 'react';
+import { Radio, Clock, ChevronRight, Music, Headphones } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { DashboardTheme } from '@/utils/dashboardThemes';
@@ -34,6 +34,25 @@ interface RadioSlot {
   } | null;
 }
 
+type DisplayRadioSlot = RadioSlot & {
+  isAlwaysOn?: boolean;
+};
+
+const ALWAYS_ON_SESSION_MATCHERS = [
+  '364yhvh / s2g community member',
+  'path of refinement: from wisdom to understanding to knowledge',
+];
+
+const normalizeText = (value: string | null | undefined) => (value || '').toLowerCase().replace(/\s+/g, ' ').trim();
+
+const isAlwaysOnSession = (slot: RadioSlot) => {
+  const subject = normalizeText(slot.show_subject);
+  const notes = normalizeText(slot.show_notes);
+  return ALWAYS_ON_SESSION_MATCHERS.some(
+    (matcher) => subject.includes(matcher) || notes.includes(matcher)
+  );
+};
+
 function parsePlaylistDescription(raw: string): string[] | null {
   try {
     const trimmed = raw.trim();
@@ -61,40 +80,59 @@ export const RadioSection: React.FC<RadioSectionProps> = ({ theme }) => {
 
   useEffect(() => {
     const fetchSlots = async () => {
-      const today = new Date().toISOString().split('T')[0];
       const { data } = await supabase
         .from('radio_schedule')
         .select('*, radio_djs(dj_name, user_id, avatar_url)')
-        .gte('time_slot_date', today)
-        .order('time_slot_date', { ascending: true })
-        .order('hour_slot', { ascending: true })
-        .limit(6);
+        .eq('approval_status', 'approved')
+        .order('created_at', { ascending: false })
+        .limit(60);
+
       setSlots((data as RadioSlot[]) || []);
       setLoading(false);
     };
+
     fetchSlots();
   }, []);
 
-  const now = new Date();
-  const activeSlots = slots.filter(
-    (s) => new Date(s.end_time) >= now
-  );
+  const displaySlots = useMemo<DisplayRadioSlot[]>(() => {
+    const now = new Date();
 
-  const handleJoin = (slot: RadioSlot) => {
-    navigate('/grove-station');
+    const alwaysOnSessions: DisplayRadioSlot[] = ALWAYS_ON_SESSION_MATCHERS.flatMap((matcher) => {
+      const found = slots.find((slot) => {
+        const subject = normalizeText(slot.show_subject);
+        const notes = normalizeText(slot.show_notes);
+        return subject.includes(matcher) || notes.includes(matcher);
+      });
+
+      return found ? [{ ...found, isAlwaysOn: true }] : [];
+    });
+
+    const dynamicActiveSessions: DisplayRadioSlot[] = slots
+      .filter((slot) => !isAlwaysOnSession(slot))
+      .filter((slot) => {
+        if (slot.status === 'live') return true;
+        const end = new Date(slot.end_time);
+        return !Number.isNaN(end.getTime()) && end >= now;
+      })
+      .map((slot) => ({ ...slot }));
+
+    return [...alwaysOnSessions, ...dynamicActiveSessions].slice(0, 6);
+  }, [slots]);
+
+  const handleJoin = (slot: DisplayRadioSlot) => {
+    navigate(`/grove-station?session=${slot.id}`);
   };
 
   const formatTime = (start: string, end: string) => {
     try {
       return `${format(new Date(start), 'HH:mm')} – ${format(new Date(end), 'HH:mm')}`;
     } catch {
-      return 'TBD';
+      return 'Any time';
     }
   };
 
   return (
     <div className="space-y-3">
-      {/* Section header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           <div className="p-1.5 rounded-lg" style={{ background: theme.secondaryButton }}>
@@ -113,12 +151,12 @@ export const RadioSection: React.FC<RadioSectionProps> = ({ theme }) => {
         <div className="flex items-center justify-center py-8">
           <div className="w-5 h-5 border-2 rounded-full animate-spin" style={{ borderColor: theme.accent, borderTopColor: 'transparent' }} />
         </div>
-      ) : activeSlots.length === 0 ? (
+      ) : displaySlots.length === 0 ? (
         <div
           className="rounded-xl p-6 text-center border"
           style={{ background: theme.cardBg, borderColor: theme.cardBorder }}
         >
-          <Radio className="w-8 h-8 mx-auto mb-2" style={{ color: theme.textSecondary + '60' }} />
+          <Radio className="w-8 h-8 mx-auto mb-2 text-muted-foreground/50" />
           <p className="text-xs font-medium" style={{ color: theme.textSecondary }}>No active sessions right now</p>
           <Button
             size="sm"
@@ -131,11 +169,10 @@ export const RadioSection: React.FC<RadioSectionProps> = ({ theme }) => {
         </div>
       ) : (
         <div className="space-y-2.5">
-          {activeSlots.map((slot, i) => {
-            const isLive = slot.status === 'live';
+          {displaySlots.map((slot, i) => {
+            const isLive = slot.isAlwaysOn || slot.status === 'live';
             const slotDate = new Date(slot.time_slot_date);
 
-            // Parse playlist tracks
             let tracks: string[] | null = null;
             if (slot.show_topic_description) {
               tracks = parsePlaylistDescription(slot.show_topic_description);
@@ -152,13 +189,12 @@ export const RadioSection: React.FC<RadioSectionProps> = ({ theme }) => {
                 className="rounded-xl border overflow-hidden cursor-pointer hover:scale-[1.01] transition-transform"
                 style={{
                   background: theme.cardBg,
-                  borderColor: isLive ? 'hsl(0 70% 50% / 0.5)' : theme.cardBorder,
+                  borderColor: isLive ? 'hsl(var(--destructive) / 0.45)' : theme.cardBorder,
                   boxShadow: `0 6px 16px ${theme.shadow}`,
                 }}
                 onClick={() => handleJoin(slot)}
               >
                 <div className="p-3">
-                  {/* Host row */}
                   <div className="flex items-center justify-between mb-2">
                     <div className="flex items-center gap-2">
                       <Avatar className="w-7 h-7 border" style={{ borderColor: theme.cardBorder }}>
@@ -173,9 +209,13 @@ export const RadioSection: React.FC<RadioSectionProps> = ({ theme }) => {
                         </p>
                         <div className="flex items-center gap-1 text-[9px]" style={{ color: theme.textSecondary }}>
                           <Clock className="w-2.5 h-2.5" />
-                          {formatTime(slot.start_time, slot.end_time)}
-                          <span>·</span>
-                          <span>{format(slotDate, 'MMM d')}</span>
+                          {slot.isAlwaysOn ? 'Always available' : formatTime(slot.start_time, slot.end_time)}
+                          {!slot.isAlwaysOn && !Number.isNaN(slotDate.getTime()) && (
+                            <>
+                              <span>·</span>
+                              <span>{format(slotDate, 'MMM d')}</span>
+                            </>
+                          )}
                         </div>
                       </div>
                     </div>
@@ -184,12 +224,10 @@ export const RadioSection: React.FC<RadioSectionProps> = ({ theme }) => {
                     </div>
                   </div>
 
-                  {/* Session title */}
                   <h4 className="text-sm font-bold mb-1 truncate" style={{ color: theme.textPrimary }}>
                     {slot.show_subject || slot.show_notes || 'Radio Session'}
                   </h4>
 
-                  {/* Track pills or description */}
                   {displayTracks.length > 0 ? (
                     <div className="flex flex-wrap items-center gap-1 mb-2">
                       {displayTracks.map((name, idx) => (
@@ -212,20 +250,23 @@ export const RadioSection: React.FC<RadioSectionProps> = ({ theme }) => {
                     </p>
                   ) : null}
 
-                  {/* Footer: mode + action */}
                   <div className="flex items-center justify-between">
                     <Badge variant="secondary" className="text-[9px] px-1.5 py-0" style={{ backgroundColor: theme.secondaryButton, borderColor: theme.cardBorder, color: theme.textPrimary }}>
-                      {slot.broadcast_mode === 'pre_recorded' ? '📻 Auto-play' : '🎙️ Live'}
+                      {slot.isAlwaysOn ? '🎧 Always On' : slot.broadcast_mode === 'pre_recorded' ? '📻 Auto-play' : '🎙️ Live'}
                     </Badge>
                     <div className="flex items-center gap-1">
                       <Button
                         size="sm"
                         className="text-[10px] h-6 px-2.5 rounded-full font-semibold"
                         style={{
-                          background: isLive ? 'hsl(0 70% 50%)' : theme.primaryButton,
-                          color: isLive ? '#fff' : theme.textPrimary,
+                          background: isLive ? theme.primaryButton : theme.secondaryButton,
+                          color: theme.textPrimary,
+                          borderColor: theme.cardBorder,
                         }}
-                        onClick={(e) => { e.stopPropagation(); handleJoin(slot); }}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleJoin(slot);
+                        }}
                       >
                         {isLive ? '🔴 Join Live' : '▶ Listen'}
                       </Button>
