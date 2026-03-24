@@ -426,9 +426,9 @@ export default function SacredCalendarFeed() {
                           animate="center"
                           exit="exit"
                           transition={{ duration: 0.3, ease: 'easeInOut' }}
-                          className="flex justify-center h-full"
+                          className="flex justify-center h-full w-full"
                         >
-                          <div className="transform scale-[0.95] origin-top">
+                          <div className="transform scale-[0.95] origin-top w-full">
                             <MonthComponent
                               dayOfMonth={isCurrentMonth ? enochianDate.dayOfMonth : 0}
                               year={enochianDate.year}

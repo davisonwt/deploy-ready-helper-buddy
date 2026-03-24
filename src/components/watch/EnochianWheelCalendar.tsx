@@ -1811,11 +1811,11 @@ const Month5Strand = ({ dayOfMonth, year }: { dayOfMonth: number; year: number }
 
         transition={{ duration: 2.5, type: "spring", stiffness: 70 }}
 
-        className="text-lg md:text-xl font-black bg-gradient-to-r from-gray-600 via-red-700 to-black bg-clip-text text-transparent mb-4 md:mb-6 tracking-widest drop-shadow-2xl"
+        className="text-lg md:text-xl font-black text-amber-300 mb-4 md:mb-6 tracking-widest drop-shadow-2xl"
 
       >
 
-        <h2 className="text-lg md:text-xl lg:text-2xl font-black bg-gradient-to-r from-gray-600 via-red-700 to-black bg-clip-text text-transparent mb-2 md:mb-4 tracking-widest drop-shadow-2xl">MONTH 5</h2>
+        <h2 className="text-lg md:text-xl lg:text-2xl font-black text-amber-300 mb-2 md:mb-4 tracking-widest drop-shadow-2xl">MONTH 5</h2>
 
       </motion.h2>
 
