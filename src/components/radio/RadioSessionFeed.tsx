@@ -14,6 +14,29 @@ import { LiveBadge, ReplayBadge, UpcomingBadge, CherryReactionButton } from '@/c
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
 import { getCurrentTheme } from '@/utils/dashboardThemes';
+import { Music } from 'lucide-react';
+
+/** Try to parse JSON playlist from show_topic_description and return track names */
+function parsePlaylistDescription(raw: string): string[] | null {
+  try {
+    const trimmed = raw.trim();
+    if (!trimmed.startsWith('[')) return null;
+    const parsed = JSON.parse(trimmed);
+    if (!Array.isArray(parsed)) return null;
+    return parsed
+      .filter((t: any) => t.contentName || t.title)
+      .map((t: any) => t.contentName || t.title);
+  } catch {
+    // Might be a partial JSON string — try to extract titles with regex
+    const titles: string[] = [];
+    const regex = /"(?:contentName|title)"\s*:\s*"([^"]+)"/g;
+    let match: RegExpExecArray | null;
+    while ((match = regex.exec(raw)) !== null) {
+      if (!titles.includes(match[1])) titles.push(match[1]);
+    }
+    return titles.length > 0 ? titles : null;
+  }
+}
 
 interface ScheduledSlot {
   id: string;
@@ -199,9 +222,37 @@ export const RadioSessionFeed: React.FC<RadioSessionFeedProps> = ({
               <h4 className="text-sm font-bold text-foreground mb-0.5 truncate">
                 {slot.show_subject || slot.show_notes || 'Radio Slot'}
               </h4>
-              {slot.show_topic_description && (
-                <p className="text-xs text-muted-foreground line-clamp-2 mb-2">{slot.show_topic_description}</p>
-              )}
+              {slot.show_topic_description && (() => {
+                const tracks = parsePlaylistDescription(slot.show_topic_description);
+                if (tracks && tracks.length > 0) {
+                  const displayTracks = tracks.slice(0, 4);
+                  const remaining = tracks.length - displayTracks.length;
+                  return (
+                    <div className="flex flex-wrap items-center gap-1.5 mb-2 mt-1">
+                      {displayTracks.map((name, i) => (
+                        <span
+                          key={i}
+                          className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-medium border"
+                          style={{ backgroundColor: theme.secondaryButton, borderColor: theme.cardBorder, color: theme.textPrimary }}
+                        >
+                          <Music className="w-2.5 h-2.5" />
+                          {name}
+                        </span>
+                      ))}
+                      {remaining > 0 && (
+                        <span className="text-[10px] font-medium" style={{ color: theme.textSecondary }}>
+                          +{remaining} more
+                        </span>
+                      )}
+                    </div>
+                  );
+                }
+                return (
+                  <p className="text-xs line-clamp-2 mb-2" style={{ color: theme.textSecondary }}>
+                    {slot.show_topic_description}
+                  </p>
+                );
+              })()}
 
               {/* Broadcast mode badge */}
               <div className="flex items-center justify-between">
