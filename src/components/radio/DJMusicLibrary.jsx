@@ -332,7 +332,7 @@ export default function DJMusicLibrary() {
                 <SelectValue placeholder="All Types" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">All Types</SelectItem>
+                <SelectItem value="__all__">All Types</SelectItem>
                 {uniqueTypes.map(type => (
                   <SelectItem key={type} value={type}>{getTrackTypeLabel(type)}</SelectItem>
                 ))}
