@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Users } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
@@ -11,6 +11,7 @@ import { RadioSessionFeed } from '@/components/radio/RadioSessionFeed';
 import { useAuth } from '@/hooks/useAuth';
 import { toast } from 'sonner';
 import JitsiRoom from '@/components/jitsi/JitsiRoom';
+import { resolveAudioUrl } from '@/utils/resolveAudioUrl';
 import {
   AlertDialog,
   AlertDialogAction,
