@@ -261,7 +261,7 @@ export function MusicPurchaseInterface({
                           className="text-xs h-7"
                         >
                           <ShoppingCart className="h-3 w-3 mr-1" />
-                          Buy
+                          Bestow
                         </Button>
                       </div>
                     )}

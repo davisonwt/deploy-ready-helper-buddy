@@ -305,7 +305,7 @@ export function MediaDock({ sessionId, isHost = false }: MediaDockProps) {
                           }}
                         >
                           <ShoppingCart className="h-3 w-3" />
-                          Buy
+                          Bestow
                         </Button>
                       ) : (
                         <Button size="sm" variant="outline">
