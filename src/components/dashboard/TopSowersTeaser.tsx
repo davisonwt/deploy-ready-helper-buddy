@@ -182,10 +182,10 @@ export function TopSowersTeaser({ theme }: TopSowersTeaserProps) {
 
           <Button
             onClick={handleViewFullBoard}
-            className="w-full mt-4"
+            className="w-full mt-4 !text-[hsl(102_25%_25%)] [&_svg]:!text-[hsl(102_25%_25%)]"
             style={{
               background: primaryButton,
-              color: '#2d4a35',
+              color: 'hsl(102 25% 25%)',
             }}
           >
             <TrendingUp className="h-4 w-4 mr-2" />

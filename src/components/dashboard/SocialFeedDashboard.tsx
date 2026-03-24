@@ -45,10 +45,12 @@ export const SocialFeedDashboard: React.FC<SocialFeedDashboardProps> = ({
 
   const themedActionButtonStyle: React.CSSProperties = {
     background: currentTheme.primaryButton,
-    color: '#2d4a35',
+    color: 'hsl(102 25% 25%)',
     borderColor: currentTheme.cardBorder,
     boxShadow: `0 8px 18px ${currentTheme.shadow}`,
   };
+
+  const themedActionButtonClass = 'w-full rounded-xl text-[10px] font-bold gap-1 h-10 !text-[hsl(102_25%_25%)] [&_svg]:!text-[hsl(102_25%_25%)]';
 
   const sectionTagStyle: React.CSSProperties = {
     backgroundColor: currentTheme.secondaryButton,
@@ -217,17 +219,17 @@ export const SocialFeedDashboard: React.FC<SocialFeedDashboardProps> = ({
         </div>
         <div className="grid grid-cols-3 gap-2">
           <Link to="/364ttt">
-            <Button size="sm" className="w-full rounded-xl text-[10px] font-bold gap-1 h-10" style={themedActionButtonStyle}>
+            <Button size="sm" className={themedActionButtonClass} style={themedActionButtonStyle}>
               <Music className="w-3.5 h-3.5" /> 364 TTT
             </Button>
           </Link>
           <Link to="/profile?tab=journal">
-            <Button size="sm" className="w-full rounded-xl text-[10px] font-bold gap-1 h-10" style={themedActionButtonStyle}>
+            <Button size="sm" className={themedActionButtonClass} style={themedActionButtonStyle}>
               <BookOpen className="w-3.5 h-3.5" /> Journal
             </Button>
           </Link>
           <Link to="/communications-hub">
-            <Button size="sm" className="w-full rounded-xl text-[10px] font-bold gap-1 h-10" style={themedActionButtonStyle}>
+            <Button size="sm" className={themedActionButtonClass} style={themedActionButtonStyle}>
               <MessageSquare className="w-3.5 h-3.5" /> Hub
             </Button>
           </Link>
@@ -250,17 +252,17 @@ export const SocialFeedDashboard: React.FC<SocialFeedDashboardProps> = ({
         </div>
         <div className="grid grid-cols-3 gap-2">
           <Link to="/become-whisperer">
-            <Button size="sm" className="w-full rounded-xl text-[10px] font-bold gap-1 h-10" style={themedActionButtonStyle}>
+            <Button size="sm" className={themedActionButtonClass} style={themedActionButtonStyle}>
               <Megaphone className="w-3.5 h-3.5" /> Whisperer
             </Button>
           </Link>
           <Link to="/register-vehicle">
-            <Button size="sm" className="w-full rounded-xl text-[10px] font-bold gap-1 h-10" style={themedActionButtonStyle}>
+            <Button size="sm" className={themedActionButtonClass} style={themedActionButtonStyle}>
               <Car className="w-3.5 h-3.5" /> Driver
             </Button>
           </Link>
           <Link to="/register-services">
-            <Button size="sm" className="w-full rounded-xl text-[10px] font-bold gap-1 h-10" style={themedActionButtonStyle}>
+            <Button size="sm" className={themedActionButtonClass} style={themedActionButtonStyle}>
               <Wrench className="w-3.5 h-3.5" /> Services
             </Button>
           </Link>
