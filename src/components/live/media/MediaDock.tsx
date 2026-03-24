@@ -180,7 +180,7 @@ export function MediaDock({ sessionId, isHost = false }: MediaDockProps) {
                         }}
                       >
                         <ShoppingCart className="h-3 w-3" />
-                        Buy Now
+                        Bestow Now
                       </Button>
                     ) : (
                       <Button size="sm" variant="outline" className="w-full gap-1">
