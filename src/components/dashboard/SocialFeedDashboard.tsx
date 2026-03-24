@@ -68,7 +68,7 @@ export const SocialFeedDashboard: React.FC<SocialFeedDashboardProps> = ({
     children: (
       <div className="space-y-3">
         <WalletSetupPrompt variant="card" />
-        <SowerBalanceCard compact />
+        <SowerBalanceCard compact theme={currentTheme} />
       </div>
     ),
   });
