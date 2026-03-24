@@ -33,9 +33,18 @@ interface SowerBalance {
 
 interface SowerBalanceCardProps {
   compact?: boolean;
+  theme?: {
+    cardBg?: string;
+    cardBorder?: string;
+    primaryButton?: string;
+    secondaryButton?: string;
+    textPrimary?: string;
+    textSecondary?: string;
+    accent?: string;
+  };
 }
 
-export function SowerBalanceCard({ compact = false }: SowerBalanceCardProps) {
+export function SowerBalanceCard({ compact = false, theme }: SowerBalanceCardProps) {
   const { user } = useAuth();
   const navigate = useNavigate();
   const [balance, setBalance] = useState<SowerBalance | null>(null);

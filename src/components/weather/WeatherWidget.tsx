@@ -11,6 +11,13 @@ import { toast } from 'sonner';
 
 interface WeatherWidgetProps {
   compact?: boolean;
+  theme?: {
+    cardBg?: string;
+    cardBorder?: string;
+    textPrimary?: string;
+    textSecondary?: string;
+    accent?: string;
+  };
 }
 
 const WeatherWidget = ({ compact = false }: WeatherWidgetProps) => {
