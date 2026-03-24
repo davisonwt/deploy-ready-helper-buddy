@@ -51,7 +51,7 @@ export const AIVideoGenerator = ({ onVideoGenerated }) => {
           4. TikTok trending hashtags
           5. YouTube tags
           6. Twitter hashtags
-          Focus on hashtags that will attract bestowers (buyers) to sowers (sellers) on agricultural/marketplace platforms.`
+          Focus on hashtags that will attract bestowers to sowers on agricultural/marketplace platforms.`
         }
       });
 
