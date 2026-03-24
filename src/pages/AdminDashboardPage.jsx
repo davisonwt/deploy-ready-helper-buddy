@@ -348,21 +348,21 @@ export default function AdminDashboardPage() {
   }
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen" style={{ background: 'linear-gradient(165deg, #2d1810 0%, #3d1f14 30%, #4a2518 60%, #2a1a12 100%)' }}>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Header */}
-        <div className="max-w-4xl mx-auto p-8 rounded-2xl border shadow-2xl mb-8 bg-card text-card-foreground">
+        <div className="max-w-4xl mx-auto p-6 rounded-2xl border border-amber-700/30 shadow-2xl mb-8" style={{ background: 'rgba(45, 24, 16, 0.8)', backdropFilter: 'blur(12px)' }}>
           <div className="text-center">
-            <div className="flex justify-center mb-4">
-              <div className="p-4 bg-primary/20 rounded-full">
-                <Settings className="h-12 w-12 text-primary" />
+            <div className="flex justify-center mb-3">
+              <div className="p-3 bg-amber-600/20 rounded-full">
+                <Settings className="h-10 w-10 text-amber-400" />
               </div>
             </div>
-            <h1 className="text-3xl font-bold text-primary mb-2">Admin Dashboard</h1>
-            <p className="text-muted-foreground mb-4">Comprehensive management hub</p>
+            <h1 className="text-2xl font-bold text-amber-50 mb-1">Admin Dashboard</h1>
+            <p className="text-amber-300/60 text-sm mb-4">Comprehensive management hub</p>
             <Button
               onClick={() => navigate('/gosat/chat')}
-              className="bg-primary hover:bg-primary/90"
+              className="bg-gradient-to-r from-amber-600 to-orange-600 hover:from-amber-500 hover:to-orange-500 text-amber-50"
             >
               <MessageCircle className="h-4 w-4 mr-2" />
               GoSat HQ Chat
@@ -374,98 +374,32 @@ export default function AdminDashboardPage() {
         <Tabs defaultValue="analytics" className="space-y-6">
           <div className="flex justify-center mb-8">
             <TabsList className="bg-transparent p-0 h-auto grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-6 gap-4">
-              <TabsTrigger 
-                value="analytics" 
-                className="border-2 border-primary/20 rounded-xl px-6 py-4 font-semibold shadow-lg hover:shadow-xl hover:scale-105 hover:border-primary/40 transition-all duration-300 data-[state=active]:bg-gradient-to-br data-[state=active]:from-primary data-[state=active]:to-primary/80 data-[state=active]:text-primary-foreground data-[state=active]:border-primary data-[state=active]:shadow-2xl data-[state=active]:scale-105 bg-background"
-              >
-                Analytics
-              </TabsTrigger>
-              <TabsTrigger 
-                value="users" 
-                className="border-2 border-blue-200 rounded-xl px-6 py-4 font-semibold shadow-lg hover:shadow-xl hover:scale-105 hover:border-blue-300 transition-all duration-300 data-[state=active]:bg-gradient-to-br data-[state=active]:from-blue-500 data-[state=active]:to-blue-600 data-[state=active]:text-white data-[state=active]:border-blue-500 data-[state=active]:shadow-2xl data-[state=active]:scale-105 bg-background"
-              >
-                Users
-              </TabsTrigger>
-              <TabsTrigger 
-                value="payments" 
-                className="border-2 border-green-200 rounded-xl px-6 py-4 font-semibold shadow-lg hover:shadow-xl hover:scale-105 hover:border-green-300 transition-all duration-300 data-[state=active]:bg-gradient-to-br data-[state=active]:from-green-500 data-[state=active]:to-green-600 data-[state=active]:text-white data-[state=active]:border-green-500 data-[state=active]:shadow-2xl data-[state=active]:scale-105 bg-background"
-              >
-                Payments
-              </TabsTrigger>
-              <TabsTrigger 
-                value="moderation" 
-                className="border-2 border-orange-200 rounded-xl px-6 py-4 font-semibold shadow-lg hover:shadow-xl hover:scale-105 hover:border-orange-300 transition-all duration-300 data-[state=active]:bg-gradient-to-br data-[state=active]:from-orange-500 data-[state=active]:to-orange-600 data-[state=active]:text-white data-[state=active]:border-orange-500 data-[state=active]:shadow-2xl data-[state=active]:scale-105 bg-background"
-              >
-                Moderation
-              </TabsTrigger>
-              <TabsTrigger 
-                value="ghost-access" 
-                className="border-2 border-amber-200 rounded-xl px-6 py-4 font-semibold shadow-lg hover:shadow-xl hover:scale-105 hover:border-amber-300 transition-all duration-300 data-[state=active]:bg-gradient-to-br data-[state=active]:from-amber-500 data-[state=active]:to-amber-600 data-[state=active]:text-white data-[state=active]:border-amber-500 data-[state=active]:shadow-2xl data-[state=active]:scale-105 bg-background"
-              >
-                <Shield className="w-4 h-4 mr-2" />
-                Ghost Access
-              </TabsTrigger>
-              <TabsTrigger 
-                value="wallet" 
-                className="border-2 border-purple-200 rounded-xl px-6 py-4 font-semibold shadow-lg hover:shadow-xl hover:scale-105 hover:border-purple-300 transition-all duration-300 data-[state=active]:bg-gradient-to-br data-[state=active]:from-purple-500 data-[state=active]:to-purple-600 data-[state=active]:text-white data-[state=active]:border-purple-500 data-[state=active]:shadow-2xl data-[state=active]:scale-105 bg-background"
-              >
-                Wallet
-              </TabsTrigger>
-              <TabsTrigger 
-                value="ambassadors" 
-                className="border-2 border-yellow-200 rounded-xl px-6 py-4 font-semibold shadow-lg hover:shadow-xl hover:scale-105 hover:border-yellow-300 transition-all duration-300 data-[state=active]:bg-gradient-to-br data-[state=active]:from-yellow-500 data-[state=active]:to-yellow-600 data-[state=active]:text-white data-[state=active]:border-yellow-500 data-[state=active]:shadow-2xl data-[state=active]:scale-105 bg-background"
-              >
-                <Award className="w-4 h-4 mr-2" />
-                Ambassadors
-              </TabsTrigger>
-              <TabsTrigger 
-                value="whisperers" 
-                className="border-2 border-pink-200 rounded-xl px-6 py-4 font-semibold shadow-lg hover:shadow-xl hover:scale-105 hover:border-pink-300 transition-all duration-300 data-[state=active]:bg-gradient-to-br data-[state=active]:from-pink-500 data-[state=active]:to-pink-600 data-[state=active]:text-white data-[state=active]:border-pink-500 data-[state=active]:shadow-2xl data-[state=active]:scale-105 bg-background"
-              >
-                <Megaphone className="w-4 h-4 mr-2" />
-                Whisperers
-              </TabsTrigger>
-              <TabsTrigger 
-                value="drivers" 
-                className="border-2 border-cyan-200 rounded-xl px-6 py-4 font-semibold shadow-lg hover:shadow-xl hover:scale-105 hover:border-cyan-300 transition-all duration-300 data-[state=active]:bg-gradient-to-br data-[state=active]:from-cyan-500 data-[state=active]:to-cyan-600 data-[state=active]:text-white data-[state=active]:border-cyan-500 data-[state=active]:shadow-2xl data-[state=active]:scale-105 bg-background"
-              >
-                <Car className="w-4 h-4 mr-2" />
-                Drivers
-              </TabsTrigger>
-              <TabsTrigger 
-                value="service-providers" 
-                className="border-2 border-teal-200 rounded-xl px-6 py-4 font-semibold shadow-lg hover:shadow-xl hover:scale-105 hover:border-teal-300 transition-all duration-300 data-[state=active]:bg-gradient-to-br data-[state=active]:from-teal-500 data-[state=active]:to-teal-600 data-[state=active]:text-white data-[state=active]:border-teal-500 data-[state=active]:shadow-2xl data-[state=active]:scale-105 bg-background"
-              >
-                <Wrench className="w-4 h-4 mr-2" />
-                Services
-              </TabsTrigger>
-              <TabsTrigger 
-                value="legacy" 
-                className="border-2 border-slate-200 rounded-xl px-6 py-4 font-semibold shadow-lg hover:shadow-xl hover:scale-105 hover:border-slate-300 transition-all duration-300 data-[state=active]:bg-gradient-to-br data-[state=active]:from-slate-500 data-[state=active]:to-slate-600 data-[state=active]:text-white data-[state=active]:border-slate-500 data-[state=active]:shadow-2xl data-[state=active]:scale-105 bg-background"
-              >
-                Legacy
-              </TabsTrigger>
-              <TabsTrigger 
-                value="support" 
-                className="border-2 border-red-200 rounded-xl px-6 py-4 font-semibold shadow-lg hover:shadow-xl hover:scale-105 hover:border-red-300 transition-all duration-300 data-[state=active]:bg-gradient-to-br data-[state=active]:from-red-500 data-[state=active]:to-red-600 data-[state=active]:text-white data-[state=active]:border-red-500 data-[state=active]:shadow-2xl data-[state=active]:scale-105 bg-background"
-              >
-                <Shield className="w-4 h-4 mr-2" />
-                Support
-              </TabsTrigger>
-              <TabsTrigger 
-                value="bestowal-audit" 
-                className="border-2 border-emerald-200 rounded-xl px-6 py-4 font-semibold shadow-lg hover:shadow-xl hover:scale-105 hover:border-emerald-300 transition-all duration-300 data-[state=active]:bg-gradient-to-br data-[state=active]:from-emerald-500 data-[state=active]:to-emerald-600 data-[state=active]:text-white data-[state=active]:border-emerald-500 data-[state=active]:shadow-2xl data-[state=active]:scale-105 bg-background"
-              >
-                <Eye className="w-4 h-4 mr-2" />
-                Bestowal Audit
-              </TabsTrigger>
-              <TabsTrigger 
-                value="skilldrop-hosts" 
-                className="border-2 border-indigo-200 rounded-xl px-6 py-4 font-semibold shadow-lg hover:shadow-xl hover:scale-105 hover:border-indigo-300 transition-all duration-300 data-[state=active]:bg-gradient-to-br data-[state=active]:from-indigo-500 data-[state=active]:to-indigo-600 data-[state=active]:text-white data-[state=active]:border-indigo-500 data-[state=active]:shadow-2xl data-[state=active]:scale-105 bg-background"
-              >
-                <GraduationCap className="w-4 h-4 mr-2" />
-                SkillDrop Hosts
-              </TabsTrigger>
+              {[
+                { value: 'analytics', label: 'Analytics' },
+                { value: 'users', label: 'Users' },
+                { value: 'payments', label: 'Payments' },
+                { value: 'moderation', label: 'Moderation' },
+                { value: 'ghost-access', label: 'Ghost Access', icon: Shield },
+                { value: 'wallet', label: 'Wallet' },
+                { value: 'ambassadors', label: 'Ambassadors', icon: Award },
+                { value: 'whisperers', label: 'Whisperers', icon: Megaphone },
+                { value: 'drivers', label: 'Drivers', icon: Car },
+                { value: 'service-providers', label: 'Services', icon: Wrench },
+                { value: 'legacy', label: 'Legacy' },
+                { value: 'support', label: 'Support', icon: Shield },
+                { value: 'bestowal-audit', label: 'Bestowal Audit', icon: Eye },
+                { value: 'skilldrop-hosts', label: 'SkillDrop Hosts', icon: GraduationCap },
+              ].map((tab) => (
+                <TabsTrigger
+                  key={tab.value}
+                  value={tab.value}
+                  className="border-2 border-amber-700/30 rounded-xl px-5 py-3 font-semibold shadow-lg hover:shadow-xl hover:scale-105 hover:border-amber-500/50 transition-all duration-300 data-[state=active]:bg-gradient-to-br data-[state=active]:from-amber-600 data-[state=active]:to-orange-600 data-[state=active]:text-amber-50 data-[state=active]:border-amber-500 data-[state=active]:shadow-2xl data-[state=active]:scale-105 text-amber-200/80"
+                  style={{ background: 'rgba(45, 24, 16, 0.7)' }}
+                >
+                  {tab.icon && <tab.icon className="w-4 h-4 mr-2" />}
+                  {tab.label}
+                </TabsTrigger>
+              ))}
             </TabsList>
           </div>
 
@@ -478,7 +412,7 @@ export default function AdminDashboardPage() {
           </TabsContent>
 
           <TabsContent value="payments">
-            <div className="bg-white rounded-lg border">
+            <div className="rounded-lg border border-amber-700/30" style={{ background: 'rgba(45, 24, 16, 0.6)' }}>
               <AdminPaymentDashboard />
             </div>
           </TabsContent>
