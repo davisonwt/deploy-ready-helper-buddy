@@ -55,8 +55,8 @@ export const sacredCalendarNotes: Record<string, CalendarDayNotes> = {
   },
   "M1_D4": {
     notes: [
-      "Daniel started his 3 week fast (of bread and water?) (Daniel 10:3). Fasting on a Sabbath is Prohibited (Jubilees 50:12-13)",
-      "Lazarus resurrected on this day. Yahusha's reference to the Spring Equinox / 12 hours in a day & later the 15 furlong distance which is around a Sabbath Day's journey (John 11:9 & 18)",
+      "Daniel started his 3 week fast (no bread and wine) (Daniel 10:3). Fasting on a Sabbath is Prohibited (Jubilees 50:12-13)",
+      "Qumran Calendar (4Q320-321) — The Dead Sea Scrolls document a 364-day calendar where the year always begins on Day 4 of the week. Therefore, the first Sabbath of the year is always on the 4th day of Month 1.",
     ],
     secondaryNotes: ["Song of the Sabbath Sacrifice #1"],
   },
