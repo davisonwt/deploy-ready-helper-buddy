@@ -92,7 +92,7 @@ export const GardenSection: React.FC<GardenSectionProps> = ({ theme }) => {
                       {img ? (
                         <img src={img} alt={orchard.name} className="w-full h-full object-cover" loading="lazy" />
                       ) : (
-                        <GradientPlaceholder name={orchard.name} className="w-full h-full" />
+                        <GradientPlaceholder title={orchard.name} className="w-full h-full" />
                       )}
                       <div
                         className="absolute top-1 right-1 px-1.5 py-0.5 rounded-full text-[8px] font-bold uppercase"
