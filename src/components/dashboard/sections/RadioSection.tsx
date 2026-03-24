@@ -120,7 +120,7 @@ export const RadioSection: React.FC<RadioSectionProps> = ({ theme }) => {
   }, [slots]);
 
   const handleJoin = (slot: DisplayRadioSlot) => {
-    navigate(`/grove-station?session=${slot.id}`);
+    navigate(`/grove-station?schedule=${slot.id}`);
   };
 
   const formatTime = (start: string, end: string) => {
