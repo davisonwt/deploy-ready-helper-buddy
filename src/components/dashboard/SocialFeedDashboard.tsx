@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useRef, useState, useEffect, useCallback } from 'react';
 import { FeedItemCard, DashboardFeedItem } from './FeedItemCard';
 import { StickyProfileBar } from './StickyProfileBar';
 import { BottomActionBar } from './BottomActionBar';
@@ -14,9 +14,17 @@ import LiveTimezoneDisplay from '@/components/dashboard/LiveTimezoneDisplay';
 import { DailyPlantingTip } from '@/components/garden/DailyPlantingTip';
 import { StatsFloatingButton } from './StatsFloatingButton';
 import { getDayInfo } from '@/utils/sacredCalendar';
-import { Link } from 'react-router-dom';
-import { Button } from '@/components/ui/button';
-import { MessageSquare, Music, BookOpen, Megaphone, Car, Wrench } from 'lucide-react';
+import { MessageSquare } from 'lucide-react';
+
+// Section system
+import { SectionNavBar } from './SectionNavBar';
+import { DashboardSection } from './DashboardSection';
+import { DASHBOARD_SECTIONS, getAllSectionThemes } from './sectionConfig';
+import { RadioSection } from './sections/RadioSection';
+import { BrowseSection } from './sections/BrowseSection';
+import { ChatSection } from './sections/ChatSection';
+import { GardenSection } from './sections/GardenSection';
+import { ExploreSection } from './sections/ExploreSection';
 
 interface SocialFeedDashboardProps {
   profile: any;
@@ -39,26 +47,49 @@ export const SocialFeedDashboard: React.FC<SocialFeedDashboardProps> = ({
   currentTime,
   user,
 }) => {
-  // Build feed items sorted by priority
+  const [activeSection, setActiveSection] = useState('home');
+  const sectionThemes = getAllSectionThemes();
+  const sectionRefs = useRef<Record<string, HTMLElement | null>>({});
+
+  // IntersectionObserver for active section tracking
+  useEffect(() => {
+    const observers: IntersectionObserver[] = [];
+    
+    DASHBOARD_SECTIONS.forEach((section) => {
+      const el = sectionRefs.current[section.id];
+      if (!el) return;
+      
+      const observer = new IntersectionObserver(
+        ([entry]) => {
+          if (entry.isIntersecting) {
+            setActiveSection(section.id);
+          }
+        },
+        { threshold: 0.3, rootMargin: '-80px 0px -40% 0px' }
+      );
+      observer.observe(el);
+      observers.push(observer);
+    });
+
+    return () => observers.forEach(o => o.disconnect());
+  }, []);
+
+  const handleSectionClick = useCallback((sectionId: string) => {
+    const el = sectionRefs.current[sectionId];
+    if (el) {
+      el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  }, []);
+
+  const setSectionRef = useCallback((id: string) => (el: HTMLElement | null) => {
+    sectionRefs.current[id] = el;
+  }, []);
+
+  // Build home feed items
   const feedItems: DashboardFeedItem[] = [];
-  let idx = 0;
+  const homeTheme = sectionThemes['home'] || currentTheme;
 
-  const themedActionButtonStyle: React.CSSProperties = {
-    background: currentTheme.primaryButton,
-    color: 'hsl(102 25% 25%)',
-    borderColor: currentTheme.cardBorder,
-    boxShadow: `0 8px 18px ${currentTheme.shadow}`,
-  };
-
-  const themedActionButtonClass = 'w-full rounded-xl text-[10px] font-bold gap-1 h-10 !text-[hsl(102_25%_25%)] [&_svg]:!text-[hsl(102_25%_25%)]';
-
-  const sectionTagStyle: React.CSSProperties = {
-    backgroundColor: currentTheme.secondaryButton,
-    borderColor: currentTheme.cardBorder,
-    color: currentTheme.textSecondary,
-  };
-
-  // 1. Security + Sabbath (priority 0 — always top)
+  // 1. Alerts
   feedItems.push({
     id: 'alerts',
     type: 'stat-summary',
@@ -72,7 +103,7 @@ export const SocialFeedDashboard: React.FC<SocialFeedDashboardProps> = ({
     ),
   });
 
-  // 2. Wallet setup (priority 1)
+  // 2. Wallet
   feedItems.push({
     id: 'wallet-setup',
     type: 'earnings',
@@ -83,12 +114,12 @@ export const SocialFeedDashboard: React.FC<SocialFeedDashboardProps> = ({
     children: (
       <div className="space-y-3">
         <WalletSetupPrompt variant="card" />
-        <SowerBalanceCard compact theme={currentTheme} />
+        <SowerBalanceCard compact theme={homeTheme} />
       </div>
     ),
   });
 
-  // 3. Stats strip (priority 2)
+  // 3. Stats
   feedItems.push({
     id: 'stats',
     type: 'stat-summary',
@@ -96,10 +127,10 @@ export const SocialFeedDashboard: React.FC<SocialFeedDashboardProps> = ({
     title: 'Your Garden',
     emoji: '📊',
     subtitle: `${stats.totalFollowers} followers · ${stats.totalOrchards} seeds · ${stats.totalBestowals} bestowals`,
-    children: <StatsCards theme={currentTheme} />,
+    children: <StatsCards theme={homeTheme} />,
   });
 
-  // 4. Calendar note (priority 3)
+  // 4. Calendar
   if (calendarData) {
     const dayInfo = getDayInfo(calendarData.dayOfYear);
     feedItems.push({
@@ -131,7 +162,7 @@ export const SocialFeedDashboard: React.FC<SocialFeedDashboardProps> = ({
     });
   }
 
-  // 5. Weather (priority 4)
+  // 5. Weather
   feedItems.push({
     id: 'weather',
     type: 'weather',
@@ -142,13 +173,13 @@ export const SocialFeedDashboard: React.FC<SocialFeedDashboardProps> = ({
     linkTo: '/weather',
     children: (
       <div>
-        <WeatherWidget compact theme={currentTheme} />
-        <DailyPlantingTip currentTheme={currentTheme} />
+        <WeatherWidget compact theme={homeTheme} />
+        <DailyPlantingTip currentTheme={homeTheme} />
       </div>
     ),
   });
 
-  // 6. Top Sowers (priority 5)
+  // 6. Top Sowers
   feedItems.push({
     id: 'top-sowers',
     type: 'social-proof',
@@ -156,10 +187,10 @@ export const SocialFeedDashboard: React.FC<SocialFeedDashboardProps> = ({
     title: 'Top Sowers',
     emoji: '🏆',
     subtitle: 'Community leaders this week',
-    children: <TopSowersTeaser theme={currentTheme} />,
+    children: <TopSowersTeaser theme={homeTheme} />,
   });
 
-  // 7. Engagement (priority 6)
+  // 7. Engagement
   feedItems.push({
     id: 'engagement',
     type: 'engagement',
@@ -167,10 +198,10 @@ export const SocialFeedDashboard: React.FC<SocialFeedDashboardProps> = ({
     title: 'Seed Engagement',
     emoji: '❤️',
     subtitle: 'Loves & comments on your seeds',
-    children: <SeedEngagementWidget theme={currentTheme} />,
+    children: <SeedEngagementWidget theme={homeTheme} />,
   });
 
-  // 8. Community Chat (priority 7)
+  // 8. Community Chat preview
   feedItems.push({
     id: 'community-chat',
     type: 'community-chat',
@@ -194,7 +225,7 @@ export const SocialFeedDashboard: React.FC<SocialFeedDashboardProps> = ({
     ),
   });
 
-  // 9. Timezone (priority 8)
+  // 9. Timezone
   feedItems.push({
     id: 'timezone',
     type: 'stat-summary',
@@ -205,98 +236,88 @@ export const SocialFeedDashboard: React.FC<SocialFeedDashboardProps> = ({
     children: <LiveTimezoneDisplay />,
   });
 
-  // 10. Explore links (priority 9)
-  feedItems.push({
-    id: 'explore',
-    type: 'promo',
-    priority: 9,
-    title: 'Explore',
-    emoji: '🔮',
-    children: (
-      <div className="space-y-2">
-        <div className="inline-flex rounded-full border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide" style={sectionTagStyle}>
-          Quick Paths
-        </div>
-        <div className="grid grid-cols-3 gap-2">
-          <Link to="/364ttt">
-            <Button size="sm" className={themedActionButtonClass} style={themedActionButtonStyle}>
-              <Music className="w-3.5 h-3.5" /> 364 TTT
-            </Button>
-          </Link>
-          <Link to="/profile?tab=journal">
-            <Button size="sm" className={themedActionButtonClass} style={themedActionButtonStyle}>
-              <BookOpen className="w-3.5 h-3.5" /> Journal
-            </Button>
-          </Link>
-          <Link to="/communications-hub">
-            <Button size="sm" className={themedActionButtonClass} style={themedActionButtonStyle}>
-              <MessageSquare className="w-3.5 h-3.5" /> Hub
-            </Button>
-          </Link>
-        </div>
-      </div>
-    ),
-  });
-
-  // 11. Join our team — promo (priority 10, shown at bottom)
-  feedItems.push({
-    id: 'join-team',
-    type: 'promo',
-    priority: 10,
-    title: 'Join Our Team',
-    emoji: '🌱',
-    children: (
-      <div className="space-y-2">
-        <div className="inline-flex rounded-full border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide" style={sectionTagStyle}>
-          Community Roles
-        </div>
-        <div className="grid grid-cols-3 gap-2">
-          <Link to="/become-whisperer">
-            <Button size="sm" className={themedActionButtonClass} style={themedActionButtonStyle}>
-              <Megaphone className="w-3.5 h-3.5" /> Whisperer
-            </Button>
-          </Link>
-          <Link to="/register-vehicle">
-            <Button size="sm" className={themedActionButtonClass} style={themedActionButtonStyle}>
-              <Car className="w-3.5 h-3.5" /> Driver
-            </Button>
-          </Link>
-          <Link to="/register-services">
-            <Button size="sm" className={themedActionButtonClass} style={themedActionButtonStyle}>
-              <Wrench className="w-3.5 h-3.5" /> Services
-            </Button>
-          </Link>
-        </div>
-      </div>
-    ),
-  });
-
-  // Sort by priority
   feedItems.sort((a, b) => a.priority - b.priority);
 
   return (
-    <div className="min-h-screen relative" style={{ background: currentTheme.background }}>
+    <div className="min-h-screen relative">
       {/* Sticky Profile Bar */}
       <StickyProfileBar
         profile={profile}
         unreadMessages={unreadMessages}
         calendarData={calendarData}
-        theme={currentTheme}
+        theme={sectionThemes[activeSection] || currentTheme}
       />
 
-      {/* Feed */}
-      <div className="max-w-2xl mx-auto px-3 py-4 pb-24 space-y-3">
+      {/* Sticky Section Nav */}
+      <SectionNavBar
+        activeSectionId={activeSection}
+        sectionThemes={sectionThemes}
+        onSectionClick={handleSectionClick}
+      />
+
+      {/* === HOME SECTION === */}
+      <DashboardSection
+        ref={setSectionRef('home')}
+        id="home"
+        theme={sectionThemes['home']}
+      >
         {feedItems.map((item, i) => (
-          <FeedItemCard key={item.id} item={item} index={i} theme={currentTheme} />
+          <FeedItemCard key={item.id} item={item} index={i} theme={sectionThemes['home']} />
         ))}
-      </div>
+      </DashboardSection>
+
+      {/* === RADIO SECTION === */}
+      <DashboardSection
+        ref={setSectionRef('radio')}
+        id="radio"
+        theme={sectionThemes['radio']}
+      >
+        <RadioSection theme={sectionThemes['radio']} />
+      </DashboardSection>
+
+      {/* === BROWSE SECTION === */}
+      <DashboardSection
+        ref={setSectionRef('browse')}
+        id="browse"
+        theme={sectionThemes['browse']}
+      >
+        <BrowseSection theme={sectionThemes['browse']} />
+      </DashboardSection>
+
+      {/* === CHAT SECTION === */}
+      <DashboardSection
+        ref={setSectionRef('chat')}
+        id="chat"
+        theme={sectionThemes['chat']}
+      >
+        <ChatSection theme={sectionThemes['chat']} />
+      </DashboardSection>
+
+      {/* === GARDEN SECTION === */}
+      <DashboardSection
+        ref={setSectionRef('garden')}
+        id="garden"
+        theme={sectionThemes['garden']}
+      >
+        <GardenSection theme={sectionThemes['garden']} />
+      </DashboardSection>
+
+      {/* === EXPLORE SECTION === */}
+      <DashboardSection
+        ref={setSectionRef('explore')}
+        id="explore"
+        theme={sectionThemes['explore']}
+        className="pb-24"
+      >
+        <ExploreSection theme={sectionThemes['explore']} />
+      </DashboardSection>
 
       {/* Bottom Action Bar */}
-      <BottomActionBar theme={currentTheme} />
+      <BottomActionBar theme={sectionThemes[activeSection] || currentTheme} />
 
-      {/* Live Activities floating button */}
+      {/* Stats floating button */}
       <div className="hidden sm:block">
-        <StatsFloatingButton theme={currentTheme} />
+        <StatsFloatingButton theme={sectionThemes[activeSection] || currentTheme} />
       </div>
     </div>
   );
