@@ -1,79 +1,111 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { useGroveStation } from '@/hooks/useGroveStation'
-import RadioListenerInterface from '@/components/radio/RadioListenerInterface'
+import { LiveStreamListener } from '@/components/radio/LiveStreamListener'
 import ListenerInteractions from '@/components/radio/ListenerInteractions'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
-import { Separator } from '@/components/ui/separator'
-import { 
-  Radio, 
-  Mic, 
-  Calendar, 
-  Users, 
-  Volume2,
-  Clock,
-  Star,
-  MessageSquare,
-  TrendingUp,
-  Headphones,
-  Globe,
-  Music,
-  ListMusic,
-  Zap
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { ScrollArea } from '@/components/ui/scroll-area'
+import { motion, AnimatePresence } from 'framer-motion'
+import {
+  Radio, Mic, Calendar, Users, Volume2, Clock, Star,
+  MessageSquare, Headphones, Music, ListMusic, Zap,
+  ChevronDown, ChevronUp, Play, TrendingUp, Plus, X
 } from 'lucide-react'
 import { CreateDJProfileForm } from '@/components/radio/CreateDJProfileForm'
 import { EnhancedScheduleShowForm } from '@/components/radio/EnhancedScheduleShowForm'
 import { LiveStreamInterface } from '@/components/radio/LiveStreamInterface'
-import { LiveStreamListener } from '@/components/radio/LiveStreamListener'
 import { RadioScheduleGrid } from '@/components/radio/RadioScheduleGrid'
 import { StationStats } from '@/components/radio/StationStats'
-import TimezoneSlotAssignment from '@/components/radio/TimezoneSlotAssignment'
-import GlobalDJScheduler from '@/components/radio/GlobalDJScheduler'
-import DJMusicLibrary from '@/components/radio/DJMusicLibrary'
-import DJPlaylistManager from '@/components/radio/DJPlaylistManager'
-import AutomatedSessionScheduler from '@/components/radio/AutomatedSessionScheduler'
 import { UniversalLiveSessionInterface } from '@/components/live/UniversalLiveSessionInterface'
 import { DJAchievements } from '@/components/radio/DJAchievements'
 import { DJLeaderboard } from '@/components/radio/DJLeaderboard'
 import { BroadcastHistory } from '@/components/radio/BroadcastHistory'
 import { DJSeedRequestQueue } from '@/components/radio/SeedRequestQueue'
-import WeatherWidget from '@/components/weather/WeatherWidget'
+import DJMusicLibrary from '@/components/radio/DJMusicLibrary'
+import DJPlaylistManager from '@/components/radio/DJPlaylistManager'
+import AutomatedSessionScheduler from '@/components/radio/AutomatedSessionScheduler'
+import { getCurrentTheme } from '@/utils/dashboardThemes'
 
+// Compact feed card wrapper
+function FeedCard({ children, theme, className = '', delay = 0 }) {
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 16 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.4, delay }}
+      className={`rounded-2xl border backdrop-blur-sm overflow-hidden ${className}`}
+      style={{
+        backgroundColor: theme.cardBg,
+        borderColor: theme.cardBorder,
+        boxShadow: `0 4px 24px ${theme.shadow}`,
+      }}
+    >
+      {children}
+    </motion.div>
+  )
+}
+
+// Collapsible section
+function CollapsibleFeedCard({ title, icon: Icon, theme, children, defaultOpen = false, delay = 0 }) {
+  const [open, setOpen] = useState(defaultOpen)
+  return (
+    <FeedCard theme={theme} delay={delay}>
+      <button
+        onClick={() => setOpen(o => !o)}
+        className="w-full flex items-center justify-between p-4 text-left"
+        style={{ color: theme.textPrimary }}
+      >
+        <span className="flex items-center gap-2 font-semibold text-sm">
+          <Icon className="h-4 w-4" style={{ color: theme.accent }} />
+          {title}
+        </span>
+        {open ? <ChevronUp className="h-4 w-4" style={{ color: theme.textSecondary }} /> : <ChevronDown className="h-4 w-4" style={{ color: theme.textSecondary }} />}
+      </button>
+      <AnimatePresence>
+        {open && (
+          <motion.div
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: 'auto', opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ duration: 0.25 }}
+            className="overflow-hidden"
+          >
+            <div className="px-4 pb-4">{children}</div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </FeedCard>
+  )
+}
 
 export default function GroveStationPage() {
   const {
-    stationConfig,
-    currentShow,
-    schedule,
-    djs,
-    userDJProfile,
-    stats,
-    loading,
-    isDJ,
-    canGoLive,
-    liveSession,
-    updateShowStatus,
-    submitFeedback,
-    fetchCurrentShow
+    stationConfig, currentShow, schedule, djs, userDJProfile,
+    stats, loading, isDJ, canGoLive, liveSession,
+    updateShowStatus, submitFeedback, fetchCurrentShow
   } = useGroveStation()
 
+  const [theme, setTheme] = useState(getCurrentTheme())
   const [showCreateDJ, setShowCreateDJ] = useState(false)
   const [showScheduleForm, setShowScheduleForm] = useState(false)
   const [showLiveInterface, setShowLiveInterface] = useState(false)
-  const [activeTab, setActiveTab] = useState('listen')
+  const [showDJPanel, setShowDJPanel] = useState(false)
+  const [djPanelTab, setDjPanelTab] = useState('music')
+
+  // Rotate theme every 2 hours
+  useEffect(() => {
+    const interval = setInterval(() => setTheme(getCurrentTheme()), 60000)
+    return () => clearInterval(interval)
+  }, [])
 
   const handleScheduleSelect = async (scheduleId) => {
     if (!scheduleId) return
-
     const url = new URL(window.location.href)
     url.searchParams.set('schedule', scheduleId)
     window.history.replaceState({}, '', `${url.pathname}?${url.searchParams.toString()}`)
-
     await fetchCurrentShow(scheduleId)
-    setActiveTab('listen')
   }
 
   const handleGoLive = async () => {
@@ -85,483 +117,383 @@ export default function GroveStationPage() {
 
   if (loading && !stationConfig) {
     return (
-      <div className="container mx-auto py-8 flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+      <div className="min-h-screen flex items-center justify-center" style={{ background: theme.background }}>
+        <div className="flex flex-col items-center gap-3">
+          <Radio className="h-10 w-10 animate-pulse" style={{ color: theme.accent }} />
+          <p className="text-sm" style={{ color: theme.textSecondary }}>Tuning in...</p>
+        </div>
       </div>
     )
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-amber-950/10 via-background to-green-950/10 dark:from-amber-950/20 dark:via-background dark:to-green-950/20">
-      <div className="container mx-auto py-6 space-y-6">
-        {/* Compact Station Header - Earthy Theme */}
-        <Card className="border-2 border-amber-500/30 shadow-lg bg-gradient-to-r from-amber-50/80 via-orange-50/50 to-green-50/30 dark:from-amber-950/30 dark:via-orange-950/20 dark:to-green-950/20">
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between flex-wrap gap-4">
-              <div className="flex items-center gap-4">
-                <div className="relative">
-                  <div className="w-14 h-14 bg-gradient-to-br from-amber-600 to-green-700 rounded-full flex items-center justify-center shadow-lg shadow-amber-500/20">
-                    <Radio className="h-7 w-7 text-white" />
-                  </div>
-                  {currentShow?.is_live && (
-                    <div className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full animate-pulse"></div>
-                  )}
-                </div>
-                <div>
-                  <h1 className="text-2xl font-bold bg-gradient-to-r from-amber-700 to-green-800 dark:from-amber-400 dark:to-green-400 bg-clip-text text-transparent">
-                    {stationConfig?.station_name || 'Covenant Radio 364YHVH fm'}
-                  </h1>
-                  <p className="text-sm text-muted-foreground">{stationConfig?.station_tagline || 'Where eternal wisdom meets bold voices'}</p>
-                </div>
-              </div>
-              
-              {/* Show status badge */}
-              {currentShow && (
-                <Badge variant="outline" className="bg-amber-100 dark:bg-amber-950/30 text-amber-700 dark:text-amber-400 border-amber-300 text-sm px-3 py-1">
-                  {currentShow.broadcast_mode === 'pre_recorded' ? '📻 Auto-Play' : currentShow.is_live ? '🔴 Live Now' : '📅 Scheduled'}
-                </Badge>
-              )}
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Prominent Tab Navigation */}
-        <Card className="border-2 border-amber-500/20 shadow-xl">
-          <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-            <div className="p-6">
-              <TabsList className="w-full h-auto bg-transparent grid gap-3" style={{ gridTemplateColumns: 'repeat(3, 1fr)' }}>
-                {/* First Row - 3 buttons */}
-                <TabsTrigger 
-                  value="listen" 
-                  className="flex items-center justify-center gap-2 py-3 px-4 rounded-2xl font-semibold transition-all duration-200 hover:scale-105 data-[state=active]:bg-gradient-to-r data-[state=active]:from-amber-600 data-[state=active]:to-orange-600 data-[state=active]:text-white data-[state=active]:shadow-lg bg-amber-100 hover:bg-amber-200 dark:bg-amber-950/30 dark:hover:bg-amber-950/50"
+    <div className="min-h-screen transition-all duration-1000" style={{ background: theme.background }}>
+      {/* ─── Sticky Player Header ─── */}
+      <div
+        className="sticky top-0 z-40 border-b backdrop-blur-xl"
+        style={{
+          backgroundColor: `${theme.cardBg}`,
+          borderColor: theme.cardBorder,
+        }}
+      >
+        <div className="max-w-2xl mx-auto px-4 py-3">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3 min-w-0">
+              <div className="relative shrink-0">
+                <div
+                  className="w-10 h-10 rounded-full flex items-center justify-center"
+                  style={{ background: theme.primaryButton }}
                 >
-                  <Headphones className="h-5 w-5" />
-                  <span>Listen Now</span>
-                </TabsTrigger>
-                <TabsTrigger 
-                  value="schedule"
-                  className="flex items-center justify-center gap-2 py-3 px-4 rounded-2xl font-semibold transition-all duration-200 hover:scale-105 data-[state=active]:bg-gradient-to-r data-[state=active]:from-orange-600 data-[state=active]:to-amber-700 data-[state=active]:text-white data-[state=active]:shadow-lg bg-orange-100 hover:bg-orange-200 dark:bg-orange-950/30 dark:hover:bg-orange-950/50"
-                >
-                  <Calendar className="h-5 w-5" />
-                  <span>Schedule</span>
-                </TabsTrigger>
-                <TabsTrigger 
-                  value="djs"
-                  className="flex items-center justify-center gap-2 py-3 px-4 rounded-2xl font-semibold transition-all duration-200 hover:scale-105 data-[state=active]:bg-gradient-to-r data-[state=active]:from-green-700 data-[state=active]:to-emerald-600 data-[state=active]:text-white data-[state=active]:shadow-lg bg-green-100 hover:bg-green-200 dark:bg-green-950/30 dark:hover:bg-green-950/50"
-                >
-                  <Users className="h-5 w-5" />
-                  <span>Our DJs</span>
-                </TabsTrigger>
-                
-                {/* Second Row - 2 buttons centered */}
-                <TabsTrigger 
-                  value="broadcast" 
-                  disabled={!isDJ}
-                  className="flex items-center justify-center gap-2 py-3 px-4 rounded-2xl font-semibold transition-all duration-200 hover:scale-105 data-[state=active]:bg-gradient-to-r data-[state=active]:from-red-600 data-[state=active]:to-orange-600 data-[state=active]:text-white data-[state=active]:shadow-lg bg-red-100 hover:bg-red-200 dark:bg-red-950/30 dark:hover:bg-red-950/50 disabled:opacity-40 disabled:hover:scale-100 col-start-1 col-end-2"
-                >
-                  <Mic className="h-5 w-5" />
-                  <span>Go Live</span>
-                </TabsTrigger>
-                <TabsTrigger 
-                  value="stats"
-                  className="flex items-center justify-center gap-2 py-3 px-4 rounded-2xl font-semibold transition-all duration-200 hover:scale-105 data-[state=active]:bg-gradient-to-r data-[state=active]:from-amber-800 data-[state=active]:to-green-800 data-[state=active]:text-white data-[state=active]:shadow-lg bg-amber-100 hover:bg-amber-200 dark:bg-amber-950/30 dark:hover:bg-amber-950/50 col-start-2 col-end-3"
-                >
-                  <TrendingUp className="h-5 w-5" />
-                  <span>Stats</span>
-                </TabsTrigger>
-              </TabsList>
-            </div>
-
-          {/* Listen Tab */}
-          <TabsContent value="listen" className="space-y-6 p-6 bg-card">
-            {currentShow && (
-              <LiveStreamListener 
-                liveSession={liveSession}
-                currentShow={currentShow}
-              />
-            )}
-            
-            {/* Listener Interface for Messages and Call-ins */}
-            {currentShow && liveSession && currentShow.is_live && (
-              <RadioListenerInterface 
-                liveSession={liveSession}
-                currentShow={currentShow}
-              />
-            )}
-
-            {currentShow && liveSession && (
-              <Card className="border-2">
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <MessageSquare className="h-5 w-5" />
-                    Live Interaction Feed
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <UniversalLiveSessionInterface
-                    sessionData={{ id: liveSession.id, title: currentShow?.show_name || 'Live Radio Session', ...liveSession }}
-                    sessionType="radio"
-                    currentUser={null}
-                    isHost={false}
-                  />
-                </CardContent>
-              </Card>
-            )}
-
-            {/* Listener comments/requests always available */}
-            {currentShow && !liveSession && (
-              <div className="grid grid-cols-1 xl:grid-cols-2 gap-6 items-start">
-                <ListenerInteractions />
-                <div className="w-full max-w-md mx-auto xl:mx-0">
-                  <WeatherWidget compact />
+                  <Radio className="h-5 w-5 text-white" />
                 </div>
-              </div>
-            )}
-            
-            {!currentShow && (
-              <div className="text-center space-y-6 py-8">
-                <div className="w-32 h-32 mx-auto bg-gradient-to-br from-primary/20 to-primary/5 rounded-full flex items-center justify-center">
-                  <Radio className="h-16 w-16 text-primary animate-pulse" />
-                </div>
-                <div className="space-y-2">
-                  <h3 className="text-2xl font-bold">24/7 Community Radio</h3>
-                  <p className="text-muted-foreground max-w-lg mx-auto">
-                    {stationConfig?.station_description || 'Broadcasting from the Ancient of Days - Your 24/7 community radio station for those who dare to be different'}
-                  </p>
-                </div>
-                <p className="text-sm text-muted-foreground">Check the schedule for upcoming shows or browse our DJs.</p>
-              </div>
-            )}
-
-            {/* Feedback Section */}
-            {currentShow && (
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <MessageSquare className="h-5 w-5" />
-                    Rate This Show
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="flex items-center gap-2">
-                    {[1, 2, 3, 4, 5].map((rating) => (
-                      <Button
-                        key={rating}
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => submitFeedback(currentShow.schedule_id, { rating })}
-                        className="hover:bg-blue-100 rounded-xl"
-                      >
-                        <Star className="h-4 w-4" />
-                      </Button>
-                    ))}
-                  </div>
-                </CardContent>
-              </Card>
-            )}
-          </TabsContent>
-
-          {/* Schedule Tab */}
-          <TabsContent value="schedule" className="space-y-6 p-6 bg-card">
-            <div className="flex items-center justify-between">
-              <div>
-                <h2 className="text-2xl font-bold">24/7 Schedule</h2>
-                <p className="text-muted-foreground">See what's playing when</p>
-              </div>
-              {isDJ && (
-                <Button onClick={() => setShowScheduleForm(true)} className="bg-gradient-to-r from-amber-600 to-orange-600 hover:from-amber-700 hover:to-orange-700 text-white rounded-xl border-0">
-                  <Calendar className="h-4 w-4 mr-2" />
-                  Book Time Slot
-                </Button>
-              )}
-            </div>
-            <RadioScheduleGrid schedule={schedule} onSelectSchedule={handleScheduleSelect} />
-            
-            <div className="mt-8 space-y-8">
-              <div>
-                <h3 className="text-xl font-semibold mb-4 flex items-center gap-2">
-                  <Globe className="h-5 w-5 text-primary" />
-                  🌍 Global Heretics Coverage Scheduler
-                </h3>
-                <p className="text-muted-foreground mb-4">
-                  Manage worldwide 24/7 coverage by assigning heretics to their optimal daylight hours (6 AM - 8 PM local time).
-                  Ensure listeners always have someone broadcasting during reasonable hours somewhere in the world.
-                </p>
-                <GlobalDJScheduler />
-              </div>
-              
-              <div>
-                <h3 className="text-xl font-semibold mb-4 flex items-center gap-2">
-                  <Globe className="h-5 w-5 text-primary" />
-                  📅 Multi-Timezone Slot Assignment
-                </h3>
-                <p className="text-muted-foreground mb-4">
-                  Detailed scheduling interface with timezone conversion for specific date management.
-                </p>
-                <TimezoneSlotAssignment />
-              </div>
-            </div>
-          </TabsContent>
-
-          {/* DJs Tab */}
-          <TabsContent value="djs" className="space-y-6 p-6 bg-card">
-            <div className="flex items-center justify-between">
-              <div>
-                <h2 className="text-2xl font-bold">AOD Station DJs</h2>
-                <p className="text-muted-foreground">Meet our amazing broadcasters</p>
-              </div>
-              {!isDJ && (
-                <Button onClick={() => setShowCreateDJ(true)} className="bg-gradient-to-r from-green-700 to-emerald-600 hover:from-green-800 hover:to-emerald-700 text-white rounded-xl border-0">
-                  <Mic className="h-4 w-4 mr-2" />
-                  Become a DJ
-                </Button>
-              )}
-            </div>
-
-            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-              {djs.map((dj) => (
-                <Card key={dj.id}>
-                  <CardContent className="p-6">
-                    <div className="flex items-start gap-4">
-                      <Avatar className="h-12 w-12">
-                        <AvatarImage src={dj.avatar_url} />
-                        <AvatarFallback>
-                          {dj.dj_name.split(' ').map(n => n[0]).join('')}
-                        </AvatarFallback>
-                      </Avatar>
-                      <div className="flex-1">
-                        <div className="flex items-center gap-2 mb-2">
-                          <h3 className="font-semibold">{dj.dj_name}</h3>
-                          <Badge variant="outline" size="sm">{dj.dj_role}</Badge>
-                        </div>
-                        <p className="text-sm text-muted-foreground mb-3">
-                          {dj.bio || 'AOD Station DJ'}
-                        </p>
-                        <div className="flex items-center gap-4 text-xs text-muted-foreground">
-                          <div className="flex items-center gap-1">
-                            <Clock className="h-3 w-3" />
-                            {dj.total_hours_hosted || 0}h
-                          </div>
-                          <div className="flex items-center gap-1">
-                            <Star className="h-3 w-3" />
-                            {dj.rating || 5.0}
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          </TabsContent>
-
-          {/* Broadcast Tab (DJ Only) */}
-          <TabsContent value="broadcast" className="space-y-6 p-6 bg-card">
-            {isDJ ? (
-              <div className="space-y-6">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <h2 className="text-2xl font-bold">DJ Control Panel</h2>
-                    <p className="text-muted-foreground">
-                      Welcome back, {userDJProfile?.dj_name}!
-                    </p>
-                  </div>
-                  {canGoLive && (
-                    <Button onClick={handleGoLive} size="lg" className="bg-gradient-to-r from-red-600 to-orange-600 hover:from-red-700 hover:to-orange-700 text-white rounded-xl border-0 shadow-lg">
-                      <Mic className="h-4 w-4 mr-2" />
-                      Go Live
-                    </Button>
-                  )}
-                </div>
-
-                {showLiveInterface ? (
-                  <LiveStreamInterface 
-                    djProfile={userDJProfile}
-                    currentShow={currentShow}
-                    onEndShow={() => setShowLiveInterface(false)}
-                  />
-                ) : (
-                  <Tabs defaultValue="profile" className="w-full">
-                    <TabsList className="grid w-full grid-cols-7">
-                      <TabsTrigger value="profile">
-                        <Mic className="h-4 w-4 mr-2" />
-                        Profile
-                      </TabsTrigger>
-                      <TabsTrigger value="achievements">
-                        <Star className="h-4 w-4 mr-2" />
-                        Badges
-                      </TabsTrigger>
-                      <TabsTrigger value="history">
-                        <Clock className="h-4 w-4 mr-2" />
-                        History
-                      </TabsTrigger>
-                      <TabsTrigger value="music">
-                        <Music className="h-4 w-4 mr-2" />
-                        Music
-                      </TabsTrigger>
-                      <TabsTrigger value="playlists">
-                        <ListMusic className="h-4 w-4 mr-2" />
-                        Playlists
-                      </TabsTrigger>
-                      <TabsTrigger value="requests">
-                        <ListMusic className="h-4 w-4 mr-2" />
-                        Requests
-                      </TabsTrigger>
-                      <TabsTrigger value="automation">
-                        <Zap className="h-4 w-4 mr-2" />
-                        Auto
-                      </TabsTrigger>
-                    </TabsList>
-
-                    <TabsContent value="profile" className="space-y-6">
-                      <div className="grid gap-6 md:grid-cols-2">
-                        <Card>
-                          <CardHeader>
-                            <CardTitle>Your Profile</CardTitle>
-                          </CardHeader>
-                          <CardContent className="space-y-4">
-                            <div className="flex items-center gap-4">
-                              <Avatar className="h-16 w-16">
-                                <AvatarImage src={userDJProfile?.avatar_url} />
-                                <AvatarFallback>
-                                  <Mic className="h-6 w-6" />
-                                </AvatarFallback>
-                              </Avatar>
-                              <div>
-                                <h3 className="font-semibold">{userDJProfile?.dj_name}</h3>
-                                <Badge variant="outline">{userDJProfile?.dj_role}</Badge>
-                              </div>
-                            </div>
-                            <Separator />
-                            <div className="grid grid-cols-2 gap-4 text-center">
-                              <div>
-                                <div className="text-2xl font-bold text-primary">
-                                  {userDJProfile?.total_hours_hosted || 0}
-                                </div>
-                                <div className="text-xs text-muted-foreground">Hours Hosted</div>
-                              </div>
-                              <div>
-                                <div className="text-2xl font-bold text-primary">
-                                  {userDJProfile?.rating || 5.0}
-                                </div>
-                                <div className="text-xs text-muted-foreground">Rating</div>
-                              </div>
-                            </div>
-                          </CardContent>
-                        </Card>
-
-                        <Card>
-                          <CardHeader>
-                            <CardTitle>Quick Actions</CardTitle>
-                          </CardHeader>
-                          <CardContent className="space-y-3">
-                            <Button 
-                              onClick={() => setShowScheduleForm(true)}
-                              className="w-full justify-start bg-amber-50 hover:bg-amber-100 border-amber-300 text-amber-900 dark:bg-amber-950/20 dark:hover:bg-amber-950/40 dark:text-amber-300 dark:border-amber-800 rounded-xl"
-                              variant="outline"
-                            >
-                              <Calendar className="h-4 w-4 mr-2" />
-                              Schedule New Show
-                            </Button>
-                            <Button 
-                              disabled={!canGoLive}
-                              onClick={handleGoLive}
-                              className="w-full justify-start bg-gradient-to-r from-red-600 to-orange-600 hover:from-red-700 hover:to-orange-700 text-white rounded-xl border-0"
-                            >
-                              <Mic className="h-4 w-4 mr-2" />
-                              {canGoLive ? "Go Live Now" : "No Scheduled Shows"}
-                            </Button>
-                            <Button 
-                              variant="ghost"
-                              className="w-full justify-start hover:bg-amber-100 dark:hover:bg-amber-950/30 text-amber-900 dark:text-amber-300 rounded-xl"
-                            >
-                              <MessageSquare className="h-4 w-4 mr-2" />
-                              View Feedback
-                            </Button>
-                          </CardContent>
-                        </Card>
-                      </div>
-                    </TabsContent>
-
-                    <TabsContent value="achievements" className="space-y-6">
-                      <DJAchievements djId={userDJProfile?.id} />
-                      <DJLeaderboard />
-                    </TabsContent>
-
-                    <TabsContent value="history">
-                      <BroadcastHistory djId={userDJProfile?.id} />
-                    </TabsContent>
-
-                    <TabsContent value="requests">
-                      {liveSession ? (
-                        <DJSeedRequestQueue sessionId={liveSession.id} />
-                      ) : (
-                        <div className="text-center py-8 text-muted-foreground">
-                          <ListMusic className="h-8 w-8 mx-auto mb-2 opacity-50" />
-                          <p>Song requests will appear here when you're live.</p>
-                        </div>
-                      )}
-                    </TabsContent>
-
-                    <TabsContent value="music">
-                      <DJMusicLibrary />
-                    </TabsContent>
-
-                    <TabsContent value="playlists">
-                      <DJPlaylistManager />
-                    </TabsContent>
-
-                    <TabsContent value="automation">
-                      <AutomatedSessionScheduler />
-                    </TabsContent>
-                  </Tabs>
+                {currentShow?.is_live && (
+                  <div className="absolute -top-0.5 -right-0.5 w-3 h-3 bg-red-500 rounded-full animate-pulse border-2" style={{ borderColor: theme.cardBg }} />
                 )}
               </div>
-            ) : (
-              <Card>
-                <CardContent className="p-8 text-center">
-                  <Mic className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
-                  <h3 className="text-lg font-semibold mb-2">Become an AOD Station DJ</h3>
-                  <p className="text-muted-foreground mb-4">
-                    Share your voice with the community and host your own shows!
-                  </p>
-                  <Button onClick={() => setShowCreateDJ(true)} className="bg-gradient-to-r from-green-700 to-emerald-600 hover:from-green-800 hover:to-emerald-700 text-white rounded-xl border-0">
-                    Create DJ Profile
-                  </Button>
-                </CardContent>
-              </Card>
-            )}
-          </TabsContent>
+              <div className="min-w-0">
+                <h1 className="text-sm font-bold truncate" style={{ color: theme.textPrimary }}>
+                  {stationConfig?.station_name || 'Covenant Radio 364YHVH fm'}
+                </h1>
+                <p className="text-xs truncate" style={{ color: theme.textSecondary }}>
+                  {currentShow
+                    ? `${currentShow.show_name} • ${currentShow.dj_name}`
+                    : stationConfig?.station_tagline || 'Where eternal wisdom meets bold voices'
+                  }
+                </p>
+              </div>
+            </div>
 
-          {/* Stats Tab */}
-          <TabsContent value="stats" className="space-y-6 p-6 bg-card">
-            <StationStats stats={stats} />
+            <div className="flex items-center gap-2 shrink-0">
+              {currentShow && (
+                <Badge
+                  className="text-[10px] px-2 py-0.5 border-0 font-bold"
+                  style={{
+                    background: currentShow.is_live ? 'rgba(239,68,68,0.9)' : theme.secondaryButton,
+                    color: currentShow.is_live ? '#fff' : theme.textPrimary,
+                  }}
+                >
+                  {currentShow.is_live ? '🔴 LIVE' : currentShow.broadcast_mode === 'pre_recorded' ? '📻 AUTO' : '📅 NEXT'}
+                </Badge>
+              )}
+              {currentShow?.listener_count > 0 && (
+                <span className="text-xs flex items-center gap-1" style={{ color: theme.textSecondary }}>
+                  <Headphones className="h-3 w-3" /> {currentShow.listener_count}
+                </span>
+              )}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* ─── Feed Content ─── */}
+      <div className="max-w-2xl mx-auto px-4 py-4 space-y-4 pb-28">
+
+        {/* Now Playing / Player */}
+        {currentShow && (
+          <FeedCard theme={theme} delay={0}>
+            <div className="p-4">
+              <LiveStreamListener
+                liveSession={liveSession}
+                currentShow={currentShow}
+              />
+            </div>
+          </FeedCard>
+        )}
+
+        {/* Live Interaction Feed (if live) */}
+        {currentShow && liveSession && currentShow.is_live && (
+          <FeedCard theme={theme} delay={0.1}>
+            <div className="p-4">
+              <div className="flex items-center gap-2 mb-3">
+                <MessageSquare className="h-4 w-4" style={{ color: theme.accent }} />
+                <span className="text-sm font-semibold" style={{ color: theme.textPrimary }}>Live Chat</span>
+              </div>
+              <UniversalLiveSessionInterface
+                sessionData={{ id: liveSession.id, title: currentShow?.show_name || 'Live Radio Session', ...liveSession }}
+                sessionType="radio"
+                currentUser={null}
+                isHost={false}
+              />
+            </div>
+          </FeedCard>
+        )}
+
+        {/* Listener Interactions (comments/requests when not fully live) */}
+        {currentShow && !liveSession && (
+          <FeedCard theme={theme} delay={0.1}>
+            <div className="p-4">
+              <ListenerInteractions />
+            </div>
+          </FeedCard>
+        )}
+
+        {/* No Show — Welcome Card */}
+        {!currentShow && (
+          <FeedCard theme={theme} delay={0}>
+            <div className="p-8 text-center">
+              <div
+                className="w-20 h-20 mx-auto rounded-full flex items-center justify-center mb-4"
+                style={{ background: theme.secondaryButton }}
+              >
+                <Radio className="h-10 w-10 animate-pulse" style={{ color: theme.accent }} />
+              </div>
+              <h3 className="text-lg font-bold mb-1" style={{ color: theme.textPrimary }}>24/7 Community Radio</h3>
+              <p className="text-sm mb-2" style={{ color: theme.textSecondary }}>
+                {stationConfig?.station_description || 'Broadcasting from the Ancient of Days'}
+              </p>
+              <p className="text-xs" style={{ color: theme.textSecondary }}>Check the schedule below or browse our DJs.</p>
+            </div>
+          </FeedCard>
+        )}
+
+        {/* Rate This Show */}
+        {currentShow && (
+          <FeedCard theme={theme} delay={0.15}>
+            <div className="p-4 flex items-center justify-between">
+              <span className="text-xs font-medium" style={{ color: theme.textSecondary }}>Rate this show</span>
+              <div className="flex items-center gap-1">
+                {[1, 2, 3, 4, 5].map((rating) => (
+                  <button
+                    key={rating}
+                    onClick={() => submitFeedback(currentShow.schedule_id, { rating })}
+                    className="p-1.5 rounded-lg transition-colors hover:scale-110"
+                    style={{ color: theme.accent }}
+                  >
+                    <Star className="h-4 w-4" />
+                  </button>
+                ))}
+              </div>
+            </div>
+          </FeedCard>
+        )}
+
+        {/* DJs — Compact Horizontal Scroll */}
+        <FeedCard theme={theme} delay={0.2}>
+          <div className="p-4">
+            <div className="flex items-center justify-between mb-3">
+              <span className="text-sm font-semibold flex items-center gap-2" style={{ color: theme.textPrimary }}>
+                <Users className="h-4 w-4" style={{ color: theme.accent }} />
+                AOD Station DJs
+              </span>
+              {!isDJ && (
+                <Button
+                  size="sm"
+                  className="text-xs h-7 px-3 rounded-full border-0"
+                  style={{ background: theme.primaryButton, color: '#fff' }}
+                  onClick={() => setShowCreateDJ(true)}
+                >
+                  <Mic className="h-3 w-3 mr-1" /> Become DJ
+                </Button>
+              )}
+            </div>
+            <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-hide">
+              {djs.map((dj) => (
+                <div
+                  key={dj.id}
+                  className="flex flex-col items-center gap-1.5 min-w-[72px] p-2 rounded-xl transition-colors"
+                  style={{ backgroundColor: theme.secondaryButton }}
+                >
+                  <Avatar className="h-10 w-10 ring-2" style={{ '--tw-ring-color': theme.accent }}>
+                    <AvatarImage src={dj.avatar_url} />
+                    <AvatarFallback className="text-xs" style={{ backgroundColor: theme.secondaryButton, color: theme.textPrimary }}>
+                      {dj.dj_name?.split(' ').map(n => n[0]).join('')}
+                    </AvatarFallback>
+                  </Avatar>
+                  <span className="text-[10px] font-medium text-center truncate w-full" style={{ color: theme.textPrimary }}>
+                    {dj.dj_name}
+                  </span>
+                  <div className="flex items-center gap-1 text-[9px]" style={{ color: theme.textSecondary }}>
+                    <Star className="h-2.5 w-2.5" /> {dj.rating || '5.0'}
+                  </div>
+                </div>
+              ))}
+              {djs.length === 0 && (
+                <p className="text-xs py-4 w-full text-center" style={{ color: theme.textSecondary }}>No DJs yet — be the first!</p>
+              )}
+            </div>
+          </div>
+        </FeedCard>
+
+        {/* Schedule — Collapsible */}
+        <CollapsibleFeedCard title="Today's Schedule" icon={Calendar} theme={theme} delay={0.25}>
+          <RadioScheduleGrid schedule={schedule} onSelectSchedule={handleScheduleSelect} />
+          {isDJ && (
+            <Button
+              className="mt-3 w-full text-xs rounded-xl border-0"
+              style={{ background: theme.primaryButton, color: '#fff' }}
+              onClick={() => setShowScheduleForm(true)}
+            >
+              <Calendar className="h-3 w-3 mr-1.5" /> Book Time Slot
+            </Button>
+          )}
+        </CollapsibleFeedCard>
+
+        {/* Station Stats — Collapsible */}
+        <CollapsibleFeedCard title="Station Stats" icon={TrendingUp} theme={theme} delay={0.3}>
+          <StationStats stats={stats} />
+          <div className="mt-3">
             <DJLeaderboard />
-          </TabsContent>
-        </Tabs>
-      </Card>
+          </div>
+        </CollapsibleFeedCard>
 
-      {/* Help Text */}
-      <div className="text-center text-sm text-muted-foreground py-4">
-        <p>Use the tabs above to navigate between listening live, checking the schedule, meeting our DJs, broadcasting your own show, and viewing stats.</p>
-      </div>
+        {/* DJ Control Panel — Only for DJs */}
+        {isDJ && (
+          <CollapsibleFeedCard title="DJ Control Panel" icon={Mic} theme={theme} defaultOpen={false} delay={0.35}>
+            {showLiveInterface ? (
+              <LiveStreamInterface
+                djProfile={userDJProfile}
+                currentShow={currentShow}
+                onEndShow={() => setShowLiveInterface(false)}
+              />
+            ) : (
+              <div className="space-y-4">
+                {/* DJ Quick Stats */}
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="rounded-xl p-3 text-center" style={{ backgroundColor: theme.secondaryButton }}>
+                    <div className="text-lg font-bold" style={{ color: theme.accent }}>{userDJProfile?.total_hours_hosted || 0}</div>
+                    <div className="text-[10px]" style={{ color: theme.textSecondary }}>Hours Hosted</div>
+                  </div>
+                  <div className="rounded-xl p-3 text-center" style={{ backgroundColor: theme.secondaryButton }}>
+                    <div className="text-lg font-bold" style={{ color: theme.accent }}>{userDJProfile?.rating || 5.0}</div>
+                    <div className="text-[10px]" style={{ color: theme.textSecondary }}>Rating</div>
+                  </div>
+                </div>
 
-      {/* Modals */}
-        {showCreateDJ && (
-          <CreateDJProfileForm 
-            open={showCreateDJ}
-            onClose={() => setShowCreateDJ(false)}
-          />
+                {/* Go Live */}
+                {canGoLive && (
+                  <Button
+                    onClick={handleGoLive}
+                    className="w-full rounded-xl border-0 font-semibold"
+                    style={{ background: 'linear-gradient(135deg, #ef4444, #f97316)', color: '#fff' }}
+                  >
+                    <Mic className="h-4 w-4 mr-2" /> Go Live Now
+                  </Button>
+                )}
+
+                {/* DJ Sub-tabs */}
+                <Tabs value={djPanelTab} onValueChange={setDjPanelTab}>
+                  <TabsList className="grid w-full grid-cols-4 bg-transparent gap-1">
+                    {[
+                      { v: 'music', icon: Music, label: 'Music' },
+                      { v: 'playlists', icon: ListMusic, label: 'Lists' },
+                      { v: 'history', icon: Clock, label: 'History' },
+                      { v: 'auto', icon: Zap, label: 'Auto' },
+                    ].map(({ v, icon: I, label }) => (
+                      <TabsTrigger
+                        key={v}
+                        value={v}
+                        className="text-[10px] py-1.5 rounded-lg data-[state=active]:shadow-none"
+                        style={{
+                          backgroundColor: djPanelTab === v ? theme.secondaryButton : 'transparent',
+                          color: djPanelTab === v ? theme.accent : theme.textSecondary,
+                        }}
+                      >
+                        <I className="h-3 w-3 mr-1" />{label}
+                      </TabsTrigger>
+                    ))}
+                  </TabsList>
+                  <TabsContent value="music"><DJMusicLibrary /></TabsContent>
+                  <TabsContent value="playlists"><DJPlaylistManager /></TabsContent>
+                  <TabsContent value="history"><BroadcastHistory djId={userDJProfile?.id} /></TabsContent>
+                  <TabsContent value="auto"><AutomatedSessionScheduler /></TabsContent>
+                </Tabs>
+
+                {/* Seed Requests if live */}
+                {liveSession && (
+                  <div className="mt-3">
+                    <p className="text-xs font-medium mb-2" style={{ color: theme.textPrimary }}>Song Requests</p>
+                    <DJSeedRequestQueue sessionId={liveSession.id} />
+                  </div>
+                )}
+
+                {/* Achievements */}
+                <DJAchievements djId={userDJProfile?.id} />
+              </div>
+            )}
+          </CollapsibleFeedCard>
         )}
 
-        {showScheduleForm && (
-          <EnhancedScheduleShowForm
-            open={showScheduleForm}
-            onClose={() => setShowScheduleForm(false)}
-            djProfile={userDJProfile}
-          />
+        {/* Become a DJ CTA (non-DJs) */}
+        {!isDJ && (
+          <FeedCard theme={theme} delay={0.35}>
+            <div className="p-6 text-center">
+              <div
+                className="w-14 h-14 mx-auto rounded-full flex items-center justify-center mb-3"
+                style={{ background: theme.secondaryButton }}
+              >
+                <Mic className="h-7 w-7" style={{ color: theme.accent }} />
+              </div>
+              <h3 className="text-sm font-bold mb-1" style={{ color: theme.textPrimary }}>Share Your Voice</h3>
+              <p className="text-xs mb-3" style={{ color: theme.textSecondary }}>
+                Become an AOD Station DJ and host your own shows!
+              </p>
+              <Button
+                className="rounded-xl border-0 text-xs"
+                style={{ background: theme.primaryButton, color: '#fff' }}
+                onClick={() => setShowCreateDJ(true)}
+              >
+                Create DJ Profile
+              </Button>
+            </div>
+          </FeedCard>
         )}
       </div>
+
+      {/* ─── FAB for DJ Actions ─── */}
+      {isDJ && (
+        <div className="fixed bottom-20 right-4 z-50 flex flex-col gap-2 items-end">
+          {showDJPanel && (
+            <motion.div
+              initial={{ opacity: 0, scale: 0.8 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.8 }}
+              className="flex flex-col gap-2"
+            >
+              <Button
+                size="sm"
+                className="rounded-full shadow-lg border-0 text-xs"
+                style={{ background: theme.primaryButton, color: '#fff' }}
+                onClick={() => setShowScheduleForm(true)}
+              >
+                <Calendar className="h-3 w-3 mr-1.5" /> Book Slot
+              </Button>
+              {canGoLive && (
+                <Button
+                  size="sm"
+                  className="rounded-full shadow-lg border-0 text-xs"
+                  style={{ background: 'linear-gradient(135deg, #ef4444, #f97316)', color: '#fff' }}
+                  onClick={handleGoLive}
+                >
+                  <Mic className="h-3 w-3 mr-1.5" /> Go Live
+                </Button>
+              )}
+            </motion.div>
+          )}
+          <Button
+            size="icon"
+            className="h-12 w-12 rounded-full shadow-xl border-0"
+            style={{ background: theme.primaryButton, color: '#fff' }}
+            onClick={() => setShowDJPanel(p => !p)}
+          >
+            {showDJPanel ? <X className="h-5 w-5" /> : <Plus className="h-5 w-5" />}
+          </Button>
+        </div>
+      )}
+
+      {/* ─── Modals ─── */}
+      {showCreateDJ && (
+        <CreateDJProfileForm
+          open={showCreateDJ}
+          onClose={() => setShowCreateDJ(false)}
+        />
+      )}
+      {showScheduleForm && (
+        <EnhancedScheduleShowForm
+          open={showScheduleForm}
+          onClose={() => setShowScheduleForm(false)}
+          djProfile={userDJProfile}
+        />
+      )}
     </div>
   )
 }

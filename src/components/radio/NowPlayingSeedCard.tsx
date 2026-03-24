@@ -80,8 +80,14 @@ export const NowPlayingSeedCard: React.FC<NowPlayingSeedCardProps> = ({
   };
 
   const bestowSeed = () => {
-    if (seedId) navigate(`/products/${seedId}?action=bestow`);
-    else toast({ title: '🌱 Bestow', description: 'This track is not yet listed as a community seed.' });
+    if (seedId) {
+      navigate(`/products/${seedId}?action=bestow`);
+    } else if (trackId && djId) {
+      // All radio tracks are bestowable — navigate to DJ bestowal flow
+      navigate(`/sower/${djId}?bestow=true&trackId=${trackId}&trackTitle=${encodeURIComponent(trackTitle)}`);
+    } else {
+      toast({ title: '🌱 Bestow', description: 'Bestow support to this artist through the radio station.' });
+    }
   };
 
   return (

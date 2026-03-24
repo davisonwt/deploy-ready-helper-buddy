@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -14,6 +15,12 @@ import { useAuth } from '@/hooks/useAuth';
 const RadioPage = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
+
+  // Redirect to the immersive Grove Station experience
+  useEffect(() => {
+    navigate('/grove-station', { replace: true });
+  }, [navigate]);
+
 
   if (!user) {
     return (
