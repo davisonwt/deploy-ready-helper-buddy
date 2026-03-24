@@ -17,14 +17,14 @@ export const RadioSection: React.FC<RadioSectionProps> = ({ theme }) => {
   useEffect(() => {
     const fetchSlots = async () => {
       const today = new Date().toISOString().split('T')[0];
-      const { data } = await supabase
-        .from('radio_scheduled_slots')
+      const { data } = await (supabase
+        .from('radio_scheduled_slots' as any)
         .select('id, time_slot_date, start_time, end_time, show_subject, broadcast_mode, status, radio_djs(dj_name, avatar_url)')
         .gte('time_slot_date', today)
         .eq('approval_status', 'approved')
         .order('time_slot_date', { ascending: true })
         .order('start_time', { ascending: true })
-        .limit(5);
+        .limit(5) as any);
       setSlots(data || []);
       setLoading(false);
     };

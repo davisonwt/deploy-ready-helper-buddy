@@ -72,7 +72,7 @@ export const BrowseSection: React.FC<BrowseSectionProps> = ({ theme }) => {
                       {img ? (
                         <img src={img} alt={orchard.name} className="w-full h-full object-cover" loading="lazy" />
                       ) : (
-                        <GradientPlaceholder name={orchard.name} className="w-full h-full" />
+                        <GradientPlaceholder title={orchard.name} className="w-full h-full" />
                       )}
                       <div className="absolute bottom-1 right-1 flex gap-1">
                         {orchard.view_count > 0 && (
