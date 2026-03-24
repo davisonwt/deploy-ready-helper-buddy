@@ -156,7 +156,7 @@ export default function GroveStationPage() {
                 </h1>
                 <p className="text-xs truncate" style={{ color: theme.textSecondary }}>
                   {currentShow
-                    ? `${currentShow.show_name} • ${currentShow.dj_name}`
+                    ? "364yhvh / s2g community member's music"
                     : stationConfig?.station_tagline || 'Where eternal wisdom meets bold voices'
                   }
                 </p>
