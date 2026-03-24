@@ -74,7 +74,10 @@ export function RemnantsWheelCalendar({ size = 900 }: RemnantsWheelCalendarProps
   const [currentTime, setCurrentTime] = useState(new Date());
   const [hoveredElement, setHoveredElement] = useState<{ type: string; data: any } | null>(null);
   const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
+  const [magnifyPos, setMagnifyPos] = useState<{ x: number; y: number } | null>(null);
+  const [showMagnifier, setShowMagnifier] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
+  const svgRef = useRef<SVGSVGElement>(null);
 
   // Update time every second
   useEffect(() => {
