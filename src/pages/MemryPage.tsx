@@ -267,7 +267,7 @@ export default function MemryPage() {
   const [currentPostIndex, setCurrentPostIndex] = useState(0);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showCommentsModal, setShowCommentsModal] = useState(false);
-  const [showDonateModal, setShowDonateModal] = useState(false);
+  const [showBestowalModal, setShowBestowalModal] = useState(false);
   const [selectedPost, setSelectedPost] = useState<MemryPost | null>(null);
   const [comments, setComments] = useState<Comment[]>([]);
   const [newComment, setNewComment] = useState('');
@@ -276,7 +276,7 @@ export default function MemryPage() {
   const [isPlaying, setIsPlaying] = useState(true);
   const [memryImageIndex, setMemryImageIndex] = useState(0);
   const [isMuted, setIsMuted] = useState(false);
-  const [donateAmount, setDonateAmount] = useState([5]);
+  const [bestowalAmount, setBestowalAmount] = useState([5]);
   const videoRef = useRef<HTMLVideoElement>(null);
   const { toast } = useToast();
   const [user, setUser] = useState<any>(null);
@@ -738,20 +738,20 @@ export default function MemryPage() {
     }
   };
 
-  const handleDonate = (post: MemryPost) => {
+  const handleBestowal = (post: MemryPost) => {
     setSelectedPost(post);
-    setShowDonateModal(true);
+    setShowBestowalModal(true);
   };
 
-  const confirmDonate = async () => {
+  const confirmBestowal = async () => {
     if (!selectedPost) return;
     
     toast({
-      title: "Donation sent! 💝",
-      description: `$${donateAmount[0]} USDT sent to ${selectedPost.profiles?.display_name}`
+      title: "Bestowal sent! 💝",
+      description: `$${bestowalAmount[0]} USDT sent to ${selectedPost.profiles?.display_name}`
     });
-    setShowDonateModal(false);
-    setDonateAmount([5]);
+    setShowBestowalModal(false);
+    setBestowalAmount([5]);
   };
 
   const handleBookmark = async (postId: string) => {
@@ -1249,11 +1249,11 @@ export default function MemryPage() {
         <span className="text-white text-xs font-semibold drop-shadow">{post.likes_count}</span>
       </motion.button>
 
-      <motion.button whileTap={{ scale: 0.9 }} onClick={() => handleDonate(post)} className="flex flex-col items-center gap-1">
+      <motion.button whileTap={{ scale: 0.9 }} onClick={() => handleBestowal(post)} className="flex flex-col items-center gap-1">
         <div className="w-12 h-12 rounded-full bg-gradient-to-br from-emerald-400 to-teal-500 flex items-center justify-center shadow-lg">
           <Gift className="w-6 h-6 text-white" />
         </div>
-        <span className="text-white text-xs font-semibold drop-shadow">Donate</span>
+        <span className="text-white text-xs font-semibold drop-shadow">Bestow</span>
       </motion.button>
 
       <motion.button whileTap={{ scale: 0.9 }} onClick={() => openComments(post)} className="flex flex-col items-center gap-1">
@@ -1411,7 +1411,7 @@ export default function MemryPage() {
           </Button>
         )}
         {(post.content_type === 'photo' || post.content_type === 'video' || post.content_type === 'recipe') && (
-          <Button onClick={() => handleDonate(post)} className="w-full bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-white font-bold shadow-lg" size="lg">
+          <Button onClick={() => handleBestowal(post)} className="w-full bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-white font-bold shadow-lg" size="lg">
             <Gift className="w-5 h-5 mr-2" /> Support This Creator
           </Button>
         )}
@@ -2008,12 +2008,12 @@ export default function MemryPage() {
       </Dialog>
 
       {/* Donate Modal */}
-      <Dialog open={showDonateModal} onOpenChange={setShowDonateModal}>
+      <Dialog open={showBestowalModal} onOpenChange={setShowBestowalModal}>
         <DialogContent className="max-w-md bg-gradient-to-b from-[#FFF5E6] to-[#FFECD2] border-none rounded-3xl">
           <DialogHeader>
             <DialogTitle className="text-2xl font-black text-orange-800 flex items-center gap-2">
               <Gift className="w-6 h-6 text-emerald-500" />
-              Donate to Creator
+              Bestow to Creator
             </DialogTitle>
           </DialogHeader>
           
@@ -2035,12 +2035,12 @@ export default function MemryPage() {
             {/* Amount Slider */}
             <div className="space-y-4">
               <div className="flex items-center justify-between">
-                <span className="text-orange-700 font-medium">Donation Amount</span>
-                <span className="text-2xl font-black text-emerald-600">${donateAmount[0]} USDT</span>
+                <span className="text-orange-700 font-medium">Bestowal Amount</span>
+                <span className="text-2xl font-black text-emerald-600">${bestowalAmount[0]} USDT</span>
               </div>
               <Slider
-                value={donateAmount}
-                onValueChange={setDonateAmount}
+                value={bestowalAmount}
+                onValueChange={setBestowalAmount}
                 min={0.5}
                 max={100}
                 step={0.5}
@@ -2058,8 +2058,8 @@ export default function MemryPage() {
                 <Button
                   key={amount}
                   variant="outline"
-                  onClick={() => setDonateAmount([amount])}
-                  className={`border-orange-300 ${donateAmount[0] === amount ? 'bg-emerald-100 border-emerald-400' : ''}`}
+                  onClick={() => setBestowalAmount([amount])}
+                  className={`border-orange-300 ${bestowalAmount[0] === amount ? 'bg-emerald-100 border-emerald-400' : ''}`}
                 >
                   ${amount}
                 </Button>
@@ -2068,11 +2068,11 @@ export default function MemryPage() {
 
             {/* Confirm Button */}
             <Button
-              onClick={confirmDonate}
+              onClick={confirmBestowal}
               className="w-full bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-white font-bold py-6 rounded-2xl"
             >
               <Gift className="w-5 h-5 mr-2" />
-              Send ${donateAmount[0]} USDT
+              Send ${bestowalAmount[0]} USDT
             </Button>
 
             <p className="text-xs text-center text-orange-400">
