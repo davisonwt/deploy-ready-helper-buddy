@@ -1,97 +1,124 @@
 
 
-# Event Tracking Data Pipeline
+# Communications Hub Redesign — "Live & Active Hub"
 
-## What We're Building
-A real `analytics_events` table and `user_consent` table in Supabase, then wiring up the existing SDK (`src/lib/analytics/sow2grow.ts`) to actually persist events to the database instead of logging to console. This becomes the data foundation for all future AI agents.
+## Overview
+Transform the Communications Hub from a static, card-heavy layout into a TikTok/Discord-inspired infinite-scroll feed that surfaces all live and recent activity (radio, classrooms, SkillDrop, training, community chat) in one addictive vertical stream — while keeping private messaging separate and secure.
 
-## Current State
-- The SDK class `Sow2GrowAnalytics` already exists with full event tracking methods (product views, bestowals, follows, messages, video, etc.)
-- It queues events and flushes every 5 seconds
-- But the flush target (`src/api/analytics/events.ts`) is **stubbed** — it just logs to console
-- `useMarketingStats` returns mock data because there's no events table
-- No `analytics_events` or `user_consent` tables exist in the database
+## Architecture
+
+```text
+┌──────────────────────────────────────────────────┐
+│  Top Nav Pills (unchanged)                        │
+│  [ChatApp] [Classrooms] [SkillDrop] [Training]   │
+│  [Radio]                                          │
+├──────────────────────┬───────────────────────────┤
+│                      │  Slim Sidebar (desktop)    │
+│  UNIFIED FEED        │  - Your DMs (compact)     │
+│  "What's Happening   │  - Notifications          │
+│   Now 🌱"            │  - Quick Bestow           │
+│                      │                           │
+│  [Live Radio Card]   │                           │
+│  [Classroom Card]    │                           │
+│  [Community Chat]    │                           │
+│  [Pre-recorded]      │                           │
+│  [SkillDrop replay]  │                           │
+│  ... infinite scroll │                           │
+│                      │                           │
+├──────────────────────┴───────────────────────────┤
+│  FAB: + New Chat / New Room                       │
+└──────────────────────────────────────────────────┘
+```
+
+## Key Design Decisions
+
+**Feed card types** — Each card is ~60-70% screen height on mobile:
+- **Live Radio** — Animated waveform, now-playing track, LIVE badge, listener count, Join + Bestow buttons
+- **Classroom/SkillDrop/Training** — Session thumbnail, host avatar, participant count, Join button, price badge if paid
+- **Pre-recorded/Replay** — Same card style but with "Replay" badge instead of "LIVE", fully scrollable and joinable
+- **Community Chat** — Compact preview of latest messages, tap to enter
+- **Private DMs/Groups** — Do NOT appear in the feed; only accessible via sidebar "Your Chats" or the existing Chats/Circles/Community sub-tabs within ChatApp
+
+**Privacy model:**
+- 1-on-1 chats = private, never in feed
+- Group chats = invite-only, never in feed  
+- Community rooms = public, shown in feed
+- Paid sessions = shown in feed with clear price badge; payment gate on join
+
+**Sparkle/cherry aesthetic:**
+- Cherry 🍒 reaction emojis that float up when tapped
+- Leaf ✨ sparkle animation when new rooms appear at top
+- Soft glow pulse on LIVE badges
+- Blue-teal gradient cards with glassmorphism
 
 ## Implementation Steps
 
-### Step 1 — Create database tables (migration)
+### Step 1 — Create `LiveFeedCard` component
+New component `src/components/chat/LiveFeedCard.tsx` — a unified card that renders differently based on `type` (radio, classroom, skilldrop, training, community). Includes:
+- Host avatar (top-left), LIVE/Replay/Upcoming badge (top-right)
+- Participant count with real-time updates
+- Large visual area (waveform for radio, thumbnail for sessions)
+- Title + host name + description
+- Bottom action bar: Join, Bestow/Buy, React (cherry emoji)
+- Price badge overlay if session requires payment
 
-**`analytics_events` table:**
-- `id` (uuid, PK)
-- `user_id` (uuid, nullable — anonymous events allowed)
-- `session_id` (text)
-- `event` (text, indexed) — e.g. `product_view`, `bestowal_complete`, `session_start`
-- `properties` (jsonb) — flexible payload for event-specific data (productId, revenue, roomId, etc.)
-- `timestamp` (timestamptz)
-- `device_model`, `os_version`, `screen_width`, `screen_height` (text/int)
-- `utm_source`, `utm_medium`, `utm_campaign`, `utm_term`, `utm_content` (text, nullable)
-- `attribution_channel` (text)
-- `ip_country`, `ip_city` (text, nullable)
-- `created_at` (timestamptz, default now())
+### Step 2 — Create `UnifiedFeed` component
+New component `src/components/chat/UnifiedFeed.tsx` — replaces the current ChatApp as the default view in the ChatApp tab. Aggregates:
+- Active radio slots (from `radio_schedule` where status = 'live' or recent replays)
+- Active classrooms (from `classroom_sessions` where status = 'active')
+- Active SkillDrop sessions (from `skilldrop_sessions`)
+- Active training sessions (from `training_sessions`)
+- Community chat rooms (from `chat_rooms` where room_type = 'community')
+- Pre-recorded/completed sessions available for replay
 
-**`user_consent` table:**
-- `id` (uuid, PK)
-- `user_id` (uuid, references auth.users, unique)
-- `analytics` (boolean, default false)
-- `marketing_attribution` (boolean, default false)
-- `precise_location` (boolean, default false)
-- `updated_at` (timestamptz)
+Uses Supabase Realtime to push new live items to the top with sparkle animation. Pull-to-refresh support.
 
-**RLS policies:**
-- `analytics_events`: Users can INSERT their own events. Only admins can SELECT all. Users can SELECT their own.
-- `user_consent`: Users can read/write their own consent record.
+### Step 3 — Create `PrivateChatsDrawer` component
+New component for the sidebar/drawer that holds private messaging:
+- Compact DM list (avatar + name + last message preview)
+- Group chats (invite-only)
+- Notification badges
+- Quick "Send Love" bestowal shortcut
+- On mobile: accessible via a chat bubble FAB or swipe gesture
 
-**Indexes:**
-- `analytics_events(event)` — for filtering by event type
-- `analytics_events(user_id, timestamp)` — for per-user time queries
-- `analytics_events(created_at)` — for time-range dashboards
+### Step 4 — Refactor `ChatApp.tsx`
+Replace the current Chats/Circles/Community tab layout with:
+- Default view = `UnifiedFeed` (the live scroll feed)
+- "My Chats" button/icon opens `PrivateChatsDrawer` (slide-in panel or bottom sheet on mobile)
+- Circles and Community sub-navigation remain accessible but integrated into the feed context
 
-### Step 2 — Create an edge function for event ingestion
+### Step 5 — Refactor `UnifiedDashboard.tsx`
+- Slim down the Activity Feed sidebar (currently 350px) to ~280px
+- Replace `ActivityFeed` content with the new notifications + DM list
+- On mobile, hide sidebar entirely; use FAB for chat access
 
-**`supabase/functions/ingest-analytics/index.ts`**
-- Accepts POST with JSON array of events
-- Validates JWT (authenticated users) or allows anonymous with session_id
-- Batch-inserts events into `analytics_events` using service role
-- Extracts IP country/city from request headers (Supabase provides `x-forwarded-for`)
-- Returns `{ success, inserted }` count
+### Step 6 — Add micro-animations
+- Cherry 🍒 emoji burst on reaction tap (CSS keyframe animation)
+- Sparkle ✨ entrance animation for new feed items
+- Soft pulse glow on LIVE badges
+- Smooth card entrance with staggered fade-in
 
-### Step 3 — Wire up the SDK to the edge function
-
-**`src/lib/analytics/sow2grow.ts`** — Update `flush()` method:
-- Replace the import of `@/api/analytics/events` with a direct call to `supabase.functions.invoke('ingest-analytics', { body: { events } })`
-- Remove the stubbed `src/api/analytics/events.ts` file (no longer needed)
-
-**`src/lib/analytics/sow2grow.ts`** — Update consent:
-- On `setConsent()`, also save to `user_consent` table via Supabase client
-- On `loadConsent()`, try loading from DB first (if logged in), fall back to localStorage
-
-### Step 4 — Update useMarketingStats to use real data
-
-**`src/hooks/useMarketingStats.ts`**:
-- Replace mock data with actual queries against `analytics_events`
-- Funnel: count events by type (`product_view` → `bestowal_start` → `bestowal_complete`)
-- Attribution: group by `utm_source`
-- Recent events: select latest 10 events
-- Hourly revenue: aggregate `bestowal_complete` events by hour
-
-### Step 5 — Add tracking calls at key touchpoints
-
-Instrument these existing components (most already have the SDK imported but some don't call it):
-- `ProductCard.tsx` — `trackProductView` on render, `trackProductTap` on click
-- `BestowalCheckout.tsx` — `trackBestowalStart` on checkout initiation
-- `PaymentSuccessPage.tsx` — `trackBestowalComplete` on success
-- `UploadForm.tsx` — `track('product_listed')` on successful upload
+### Step 7 — Payment gate on feed cards
+- Cards for paid sessions show price clearly (e.g. "S2G 2.30" badge)
+- Tapping "Join" on a paid session triggers the existing bestowal/payment flow
+- Free sessions show "Free" badge in green
 
 ## Files Changed
+
 | File | Action |
 |------|--------|
-| New migration SQL | Create `analytics_events` + `user_consent` tables + RLS + indexes |
-| `supabase/functions/ingest-analytics/index.ts` | New edge function for batch event ingestion |
-| `src/lib/analytics/sow2grow.ts` | Wire flush to edge function, persist consent to DB |
-| `src/api/analytics/events.ts` | Delete (replaced by edge function) |
-| `src/hooks/useMarketingStats.ts` | Query real `analytics_events` table |
-| `src/components/products/ProductCard.tsx` | Add tracking calls |
-| `src/components/products/BestowalCheckout.tsx` | Add tracking calls |
-| `src/pages/PaymentSuccessPage.tsx` | Add tracking calls |
-| `src/components/products/UploadForm.tsx` | Add tracking calls |
+| `src/components/chat/LiveFeedCard.tsx` | New — unified feed card component |
+| `src/components/chat/UnifiedFeed.tsx` | New — infinite scroll feed aggregating all live/replay content |
+| `src/components/chat/PrivateChatsDrawer.tsx` | New — slide-in panel for private DMs and group chats |
+| `src/components/chat/ChatApp.tsx` | Major refactor — default to UnifiedFeed, move chats to drawer |
+| `src/components/chat/UnifiedDashboard.tsx` | Update sidebar width, integrate notifications |
+| `src/components/chat/ActivityFeed.tsx` | Refactor into slimmer notification-focused widget |
+| `src/components/chat/SparkleEffects.tsx` | New — cherry/leaf/sparkle micro-animation components |
+
+## What Stays the Same
+- Top navigation pills (ChatApp, Classrooms, SkillDrop, Training, Radio) — unchanged
+- All existing functionality (voice recorder, song requests, rate show, now playing purchase, Jitsi calls)
+- Private messaging security (RLS, invite-only groups, SECURITY DEFINER RPCs)
+- Dark blue-teal theme and glassmorphism aesthetic
+- Back to Dashboard button
 
