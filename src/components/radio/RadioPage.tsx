@@ -16,7 +16,7 @@ const RadioPage = () => {
   const navigate = useNavigate();
 
   // Redirect to the immersive Grove Station experience
-  React.useEffect(() => {
+  useEffect(() => {
     navigate('/grove-station', { replace: true });
   }, [navigate]);
 
