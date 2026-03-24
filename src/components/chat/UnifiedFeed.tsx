@@ -7,40 +7,37 @@ import { useToast } from '@/hooks/use-toast';
 import { LiveFeedCard, FeedItem } from './LiveFeedCard';
 import { SparkleEntrance } from './SparkleEffects';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 export const UnifiedFeed: React.FC = () => {
   const { user } = useAuth();
   const { toast } = useToast();
+  const isMobile = useIsMobile();
   const [feedItems, setFeedItems] = useState<FeedItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
 
   const fetchFeed = useCallback(async () => {
     try {
-      // Fetch all sources in parallel
       const [radioResult, classroomResult, skilldropResult, communityResult] = await Promise.all([
-        // Radio slots (live + recent replays + upcoming)
         supabase
           .from('radio_schedule')
-          .select('id, start_time, end_time, status, show_subject, show_notes, listener_count, radio_djs(dj_name, avatar_url)')
+          .select('id, start_time, end_time, status, show_subject, show_notes, listener_count, broadcast_mode, radio_djs(dj_name, avatar_url, user_id)')
           .or('status.eq.live,status.eq.approved,status.eq.completed')
           .order('start_time', { ascending: false })
           .limit(10),
-        // Active + recent classrooms
         supabase
           .from('classroom_sessions')
-          .select('id, title, description, status, scheduled_at, session_fee, is_free, pricing_type, max_participants, instructor_profile_id, profiles:instructor_profile_id(display_name, avatar_url)')
+          .select('id, title, description, status, scheduled_at, session_fee, is_free, pricing_type, max_participants, instructor_profile_id, instructor_id, profiles:instructor_profile_id(display_name, avatar_url)')
           .in('status', ['active', 'scheduled', 'completed'])
           .order('scheduled_at', { ascending: false })
           .limit(10),
-        // SkillDrop sessions
         supabase
           .from('skilldrop_sessions')
           .select('id, title, description, status, scheduled_at, session_fee, pricing_type, presenter_profile_id, profiles:presenter_profile_id(display_name, avatar_url)')
           .in('status', ['active', 'scheduled', 'completed'])
           .order('scheduled_at', { ascending: false })
           .limit(10),
-        // Community chat rooms
         supabase
           .from('chat_rooms')
           .select('id, name, description, room_type, current_listeners, updated_at')
@@ -52,12 +49,13 @@ export const UnifiedFeed: React.FC = () => {
 
       const items: FeedItem[] = [];
 
-      // Process radio
+      // Process radio — detect "host is present" for pre-recorded + live host
       (radioResult.data || []).forEach(slot => {
         const isLive = slot.status === 'live';
         const isCompleted = slot.status === 'completed';
         const isUpcoming = new Date(slot.start_time) > new Date();
         const djData = slot.radio_djs as any;
+        const isPreRecordedWithHost = slot.broadcast_mode === 'pre_recorded' && isLive;
         items.push({
           id: `radio-${slot.id}`,
           type: 'radio',
@@ -69,6 +67,7 @@ export const UnifiedFeed: React.FC = () => {
           nowPlayingTrack: isLive ? 'Tuning in...' : undefined,
           roomId: slot.id,
           scheduledAt: slot.start_time,
+          hostIsPresent: isPreRecordedWithHost,
         });
       });
 
@@ -128,7 +127,7 @@ export const UnifiedFeed: React.FC = () => {
         });
       });
 
-      // Sort: live first, then upcoming, then replays, then by date
+      // Sort: live first, then upcoming, then replays
       const statusOrder: Record<string, number> = { live: 0, active: 1, upcoming: 2, replay: 3 };
       items.sort((a, b) => {
         const orderDiff = (statusOrder[a.status] ?? 9) - (statusOrder[b.status] ?? 9);
@@ -149,14 +148,11 @@ export const UnifiedFeed: React.FC = () => {
   useEffect(() => {
     fetchFeed();
 
-    // Realtime: listen for new radio going live
     const channel = supabase
       .channel('unified-feed-realtime')
       .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'radio_schedule', filter: 'status=eq.live' }, () => fetchFeed())
       .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'classroom_sessions' }, () => fetchFeed())
-      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'chat_messages' }, () => {
-        // Debounce community updates
-      })
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'chat_messages' }, () => {})
       .subscribe();
 
     const interval = setInterval(fetchFeed, 30000);
@@ -173,7 +169,6 @@ export const UnifiedFeed: React.FC = () => {
   };
 
   const handleJoin = (item: FeedItem) => {
-    // For now, show toast — actual navigation logic depends on the item type
     toast({
       title: `Joining ${item.title}`,
       description: `Opening ${item.type} session...`,
@@ -230,6 +225,7 @@ export const UnifiedFeed: React.FC = () => {
                   index={index}
                   onJoin={handleJoin}
                   onBestow={handleBestow}
+                  immersive={isMobile}
                 />
               </SparkleEntrance>
             ))
