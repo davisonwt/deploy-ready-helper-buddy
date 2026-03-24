@@ -330,7 +330,7 @@ export const RadioMode: React.FC = () => {
         currentTrack={currentTrack}
         isPlaying={isPlaying}
         volume={volume}
-        onTogglePlay={() => setIsPlaying(!isPlaying)}
+        onTogglePlay={handleTogglePlay}
         onVolumeChange={setVolume}
         listenerCount={liveStream?.viewer_count || 0}
         isLive={!!liveStream}
