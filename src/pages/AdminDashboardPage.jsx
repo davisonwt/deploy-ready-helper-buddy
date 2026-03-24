@@ -348,21 +348,21 @@ export default function AdminDashboardPage() {
   }
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen" style={{ background: 'linear-gradient(165deg, #2d1810 0%, #3d1f14 30%, #4a2518 60%, #2a1a12 100%)' }}>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Header */}
-        <div className="max-w-4xl mx-auto p-8 rounded-2xl border shadow-2xl mb-8 bg-card text-card-foreground">
+        <div className="max-w-4xl mx-auto p-6 rounded-2xl border border-amber-700/30 shadow-2xl mb-8" style={{ background: 'rgba(45, 24, 16, 0.8)', backdropFilter: 'blur(12px)' }}>
           <div className="text-center">
-            <div className="flex justify-center mb-4">
-              <div className="p-4 bg-primary/20 rounded-full">
-                <Settings className="h-12 w-12 text-primary" />
+            <div className="flex justify-center mb-3">
+              <div className="p-3 bg-amber-600/20 rounded-full">
+                <Settings className="h-10 w-10 text-amber-400" />
               </div>
             </div>
-            <h1 className="text-3xl font-bold text-primary mb-2">Admin Dashboard</h1>
-            <p className="text-muted-foreground mb-4">Comprehensive management hub</p>
+            <h1 className="text-2xl font-bold text-amber-50 mb-1">Admin Dashboard</h1>
+            <p className="text-amber-300/60 text-sm mb-4">Comprehensive management hub</p>
             <Button
               onClick={() => navigate('/gosat/chat')}
-              className="bg-primary hover:bg-primary/90"
+              className="bg-gradient-to-r from-amber-600 to-orange-600 hover:from-amber-500 hover:to-orange-500 text-amber-50"
             >
               <MessageCircle className="h-4 w-4 mr-2" />
               GoSat HQ Chat
