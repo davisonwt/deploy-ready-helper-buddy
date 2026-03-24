@@ -5,7 +5,7 @@ import {
   Camera, Video, ChefHat, X, Send, Bookmark, Play, Pause,
   MoreHorizontal, Music, Volume2, VolumeX, DollarSign, Gift,
   ArrowLeft, ChevronUp, ChevronDown, ChevronLeft, ChevronRight, Sparkles, ShoppingBag, Trees, Book,
-  UserPlus, UserCheck, MessageSquare
+  UserPlus, UserCheck, MessageSquare, TrendingUp, Flame
 } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
@@ -267,16 +267,16 @@ export default function MemryPage() {
   const [currentPostIndex, setCurrentPostIndex] = useState(0);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showCommentsModal, setShowCommentsModal] = useState(false);
-  const [showDonateModal, setShowDonateModal] = useState(false);
+  const [showBestowalModal, setShowBestowalModal] = useState(false);
   const [selectedPost, setSelectedPost] = useState<MemryPost | null>(null);
   const [comments, setComments] = useState<Comment[]>([]);
   const [newComment, setNewComment] = useState('');
   const [replyingTo, setReplyingTo] = useState<Comment | null>(null);
-  const [activeTab, setActiveTab] = useState<'feed' | 'discover' | 'create' | 'recipes' | 'profile'>('feed');
+  const [activeTab, setActiveTab] = useState<'feed' | 'discover' | 'create' | 'recipes' | 'profile' | 'trending'>('feed');
   const [isPlaying, setIsPlaying] = useState(true);
   const [memryImageIndex, setMemryImageIndex] = useState(0);
   const [isMuted, setIsMuted] = useState(false);
-  const [donateAmount, setDonateAmount] = useState([5]);
+  const [bestowalAmount, setBestowalAmount] = useState([5]);
   const videoRef = useRef<HTMLVideoElement>(null);
   const { toast } = useToast();
   const [user, setUser] = useState<any>(null);
@@ -738,20 +738,20 @@ export default function MemryPage() {
     }
   };
 
-  const handleDonate = (post: MemryPost) => {
+  const handleBestowal = (post: MemryPost) => {
     setSelectedPost(post);
-    setShowDonateModal(true);
+    setShowBestowalModal(true);
   };
 
-  const confirmDonate = async () => {
+  const confirmBestowal = async () => {
     if (!selectedPost) return;
     
     toast({
-      title: "Donation sent! 💝",
-      description: `$${donateAmount[0]} USDT sent to ${selectedPost.profiles?.display_name}`
+      title: "Bestowal sent! 💝",
+      description: `$${bestowalAmount[0]} USDT sent to ${selectedPost.profiles?.display_name}`
     });
-    setShowDonateModal(false);
-    setDonateAmount([5]);
+    setShowBestowalModal(false);
+    setBestowalAmount([5]);
   };
 
   const handleBookmark = async (postId: string) => {
@@ -1041,6 +1041,27 @@ export default function MemryPage() {
     }
   };
 
+  // Trending posts - sorted by engagement (likes + comments) from last 7 days
+  const trendingPosts = useMemo(() => {
+    const sevenDaysAgo = new Date();
+    sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+    return [...allPosts]
+      .filter(p => new Date(p.created_at) >= sevenDaysAgo)
+      .sort((a, b) => (b.likes_count + b.comments_count) - (a.likes_count + a.comments_count))
+      .slice(0, 20);
+  }, [allPosts]);
+
+  // Stories - unique creators with recent posts (last 24h) 
+  const storyCreators = useMemo(() => {
+    const oneDayAgo = new Date();
+    oneDayAgo.setDate(oneDayAgo.getDate() - 1);
+    const seen = new Set<string>();
+    return allPosts
+      .filter(p => new Date(p.created_at) >= oneDayAgo)
+      .filter(p => { if (seen.has(p.user_id)) return false; seen.add(p.user_id); return true; })
+      .slice(0, 15);
+  }, [allPosts]);
+
   // Group posts by creator for dual-axis browsing
   const groupedCreators = useMemo(() => {
     const groups: Record<string, { profile: MemryPost['profiles'], userId: string, posts: MemryPost[] }> = {};
@@ -1249,11 +1270,11 @@ export default function MemryPage() {
         <span className="text-white text-xs font-semibold drop-shadow">{post.likes_count}</span>
       </motion.button>
 
-      <motion.button whileTap={{ scale: 0.9 }} onClick={() => handleDonate(post)} className="flex flex-col items-center gap-1">
+      <motion.button whileTap={{ scale: 0.9 }} onClick={() => handleBestowal(post)} className="flex flex-col items-center gap-1">
         <div className="w-12 h-12 rounded-full bg-gradient-to-br from-emerald-400 to-teal-500 flex items-center justify-center shadow-lg">
           <Gift className="w-6 h-6 text-white" />
         </div>
-        <span className="text-white text-xs font-semibold drop-shadow">Donate</span>
+        <span className="text-white text-xs font-semibold drop-shadow">Bestow</span>
       </motion.button>
 
       <motion.button whileTap={{ scale: 0.9 }} onClick={() => openComments(post)} className="flex flex-col items-center gap-1">
@@ -1411,7 +1432,7 @@ export default function MemryPage() {
           </Button>
         )}
         {(post.content_type === 'photo' || post.content_type === 'video' || post.content_type === 'recipe') && (
-          <Button onClick={() => handleDonate(post)} className="w-full bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-white font-bold shadow-lg" size="lg">
+          <Button onClick={() => handleBestowal(post)} className="w-full bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-white font-bold shadow-lg" size="lg">
             <Gift className="w-5 h-5 mr-2" /> Support This Creator
           </Button>
         )}
@@ -1622,6 +1643,79 @@ export default function MemryPage() {
           </div>
         )}
 
+        {/* === TRENDING TAB === */}
+        {activeTab === 'trending' && (
+          <div className="h-full flex flex-col pt-20 pb-24 pl-20 pr-3 md:pl-24 md:pr-6 overflow-y-auto">
+            <div className="max-w-lg mx-auto w-full space-y-4">
+              <div className="flex items-center gap-2 mb-2">
+                <Flame className="w-5 h-5 text-orange-500" />
+                <h2 className="text-xl font-bold text-orange-800">Trending This Week</h2>
+              </div>
+              {trendingPosts.length === 0 ? (
+                <div className="text-center py-12">
+                  <TrendingUp className="w-16 h-16 text-orange-300 mx-auto mb-4" />
+                  <p className="text-orange-600">No trending posts yet this week</p>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {trendingPosts.map((post, idx) => (
+                    <motion.div
+                      key={post.id}
+                      initial={{ opacity: 0, x: -20 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ delay: idx * 0.05 }}
+                      onClick={() => {
+                        for (const creator of groupedCreators) {
+                          const pIdx = creator.posts.findIndex(p => p.id === post.id);
+                          if (pIdx >= 0) {
+                            setCreatorPostIndices(prev => ({ ...prev, [creator.userId]: pIdx }));
+                            setActiveTab('feed');
+                            setTimeout(() => document.getElementById(`creator-row-${creator.userId}`)?.scrollIntoView({ behavior: 'smooth' }), 100);
+                            break;
+                          }
+                        }
+                      }}
+                      className="flex items-center gap-3 p-3 bg-white/60 backdrop-blur rounded-2xl cursor-pointer hover:bg-white/80 transition-colors"
+                    >
+                      <span className="text-2xl font-black text-orange-300 w-8 text-center">
+                        {idx + 1}
+                      </span>
+                      <div className="w-14 h-14 rounded-xl overflow-hidden flex-shrink-0">
+                        {post.content_type === 'video' || post.content_type === 'marketing_video' ? (
+                          <div className="w-full h-full bg-gradient-to-br from-purple-400 to-pink-400 flex items-center justify-center">
+                            <Play className="w-6 h-6 text-white" />
+                          </div>
+                        ) : post.content_type === 'music' ? (
+                          <div className="w-full h-full bg-gradient-to-br from-violet-400 to-purple-400 flex items-center justify-center">
+                            <Music className="w-6 h-6 text-white" />
+                          </div>
+                        ) : (
+                          <img src={post.media_url} alt="" className="w-full h-full object-cover" />
+                        )}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-bold text-orange-800 truncate">{post.caption || 'Untitled'}</p>
+                        <p className="text-xs text-orange-500">@{toHandle(post.profiles?.username || post.profiles?.display_name)}</p>
+                        <div className="flex items-center gap-3 mt-1">
+                          <span className="text-[10px] text-orange-400 flex items-center gap-0.5">
+                            <Heart className="w-3 h-3" /> {post.likes_count}
+                          </span>
+                          <span className="text-[10px] text-orange-400 flex items-center gap-0.5">
+                            <MessageCircle className="w-3 h-3" /> {post.comments_count}
+                          </span>
+                        </div>
+                      </div>
+                      {idx < 3 && (
+                        <Flame className="w-5 h-5 text-orange-500 flex-shrink-0" />
+                      )}
+                    </motion.div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
         {/* === FEED TAB (main content) === */}
         {activeTab === 'feed' && (
         <>
@@ -1645,6 +1739,48 @@ export default function MemryPage() {
           </div>
         ) : (
         <div ref={feedContainerRef} className="h-full overflow-y-auto" style={{ scrollSnapType: 'y mandatory' }}>
+          {/* Stories Row */}
+          {storyCreators.length > 0 && (
+            <div className="fixed top-[104px] left-[72px] right-0 z-20 px-4 py-2">
+              <div className="flex items-center gap-3 overflow-x-auto max-w-lg mx-auto" style={{ scrollbarWidth: 'none' }}>
+                {/* Your Story */}
+                {user && (
+                  <button onClick={() => setShowCreateModal(true)} className="flex flex-col items-center gap-1 flex-shrink-0">
+                    <div className="relative">
+                      <div className="w-14 h-14 rounded-full bg-gradient-to-br from-orange-200 to-pink-200 flex items-center justify-center">
+                        <Plus className="w-6 h-6 text-orange-500" />
+                      </div>
+                    </div>
+                    <span className="text-[9px] text-white font-semibold drop-shadow">Your Story</span>
+                  </button>
+                )}
+                {storyCreators.map((post) => (
+                  <button
+                    key={post.user_id}
+                    onClick={() => {
+                      const creator = groupedCreators.find(c => c.userId === post.user_id);
+                      if (creator) {
+                        document.getElementById(`creator-row-${creator.userId}`)?.scrollIntoView({ behavior: 'smooth' });
+                      }
+                    }}
+                    className="flex flex-col items-center gap-1 flex-shrink-0"
+                  >
+                    <div className="p-[2px] rounded-full bg-gradient-to-tr from-pink-500 via-orange-400 to-yellow-400">
+                      <Avatar className="w-13 h-13 border-2 border-black">
+                        <AvatarImage src={post.profiles?.avatar_url} />
+                        <AvatarFallback className="bg-gradient-to-br from-pink-400 to-orange-400 text-white text-xs">
+                          {post.profiles?.display_name?.[0] || 'S'}
+                        </AvatarFallback>
+                      </Avatar>
+                    </div>
+                    <span className="text-[9px] text-white font-semibold drop-shadow truncate w-14 text-center">
+                      {post.profiles?.display_name?.split(' ')[0] || 'Sower'}
+                    </span>
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
           {groupedCreators.map((creator) => {
             const postIdx = creatorPostIndices[creator.userId] || 0;
             const post = creator.posts[postIdx];
@@ -1756,6 +1892,13 @@ export default function MemryPage() {
             <div className="w-9 h-9 bg-gradient-to-r from-pink-500 to-orange-500 rounded-full flex items-center justify-center">
               <Plus className="w-5 h-5 text-white" />
             </div>
+          </button>
+          <button 
+            className={`flex flex-col items-center px-2 py-1.5 rounded-xl transition-colors ${activeTab === 'trending' ? 'text-pink-400 bg-white/10' : 'text-white/70'}`}
+            onClick={() => setActiveTab('trending')}
+          >
+            <Flame className="w-5 h-5" />
+            <span className="text-[9px] mt-0.5">Trending</span>
           </button>
           <button 
             className={`flex flex-col items-center px-2 py-1.5 rounded-xl transition-colors ${activeTab === 'recipes' ? 'text-pink-400 bg-white/10' : 'text-white/70'}`}
@@ -2008,12 +2151,12 @@ export default function MemryPage() {
       </Dialog>
 
       {/* Donate Modal */}
-      <Dialog open={showDonateModal} onOpenChange={setShowDonateModal}>
+      <Dialog open={showBestowalModal} onOpenChange={setShowBestowalModal}>
         <DialogContent className="max-w-md bg-gradient-to-b from-[#FFF5E6] to-[#FFECD2] border-none rounded-3xl">
           <DialogHeader>
             <DialogTitle className="text-2xl font-black text-orange-800 flex items-center gap-2">
               <Gift className="w-6 h-6 text-emerald-500" />
-              Donate to Creator
+              Bestow to Creator
             </DialogTitle>
           </DialogHeader>
           
@@ -2035,12 +2178,12 @@ export default function MemryPage() {
             {/* Amount Slider */}
             <div className="space-y-4">
               <div className="flex items-center justify-between">
-                <span className="text-orange-700 font-medium">Donation Amount</span>
-                <span className="text-2xl font-black text-emerald-600">${donateAmount[0]} USDT</span>
+                <span className="text-orange-700 font-medium">Bestowal Amount</span>
+                <span className="text-2xl font-black text-emerald-600">${bestowalAmount[0]} USDT</span>
               </div>
               <Slider
-                value={donateAmount}
-                onValueChange={setDonateAmount}
+                value={bestowalAmount}
+                onValueChange={setBestowalAmount}
                 min={0.5}
                 max={100}
                 step={0.5}
@@ -2058,8 +2201,8 @@ export default function MemryPage() {
                 <Button
                   key={amount}
                   variant="outline"
-                  onClick={() => setDonateAmount([amount])}
-                  className={`border-orange-300 ${donateAmount[0] === amount ? 'bg-emerald-100 border-emerald-400' : ''}`}
+                  onClick={() => setBestowalAmount([amount])}
+                  className={`border-orange-300 ${bestowalAmount[0] === amount ? 'bg-emerald-100 border-emerald-400' : ''}`}
                 >
                   ${amount}
                 </Button>
@@ -2068,11 +2211,11 @@ export default function MemryPage() {
 
             {/* Confirm Button */}
             <Button
-              onClick={confirmDonate}
+              onClick={confirmBestowal}
               className="w-full bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-white font-bold py-6 rounded-2xl"
             >
               <Gift className="w-5 h-5 mr-2" />
-              Send ${donateAmount[0]} USDT
+              Send ${bestowalAmount[0]} USDT
             </Button>
 
             <p className="text-xs text-center text-orange-400">
