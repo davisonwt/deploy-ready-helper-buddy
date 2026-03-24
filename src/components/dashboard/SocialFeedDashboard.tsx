@@ -7,10 +7,13 @@ import { StatsFloatingButton } from './StatsFloatingButton';
 import { SectionNavBar } from './SectionNavBar';
 import { DashboardSection } from './DashboardSection';
 import { DASHBOARD_SECTIONS, getAllSectionThemes } from './sectionConfig';
+import { DashboardOverviewSection } from './sections/DashboardOverviewSection';
 import { ChatAppSection } from './sections/ChatAppSection';
+import { MemrySection } from './sections/MemrySection';
 import { YhvhDaysSection } from './sections/YhvhDaysSection';
 import { MyGardenSection } from './sections/MyGardenSection';
-import { MemrySection } from './sections/MemrySection';
+import { LetItRainSection } from './sections/LetItRainSection';
+import { GosatsSection } from './sections/GosatsSection';
 
 interface SocialFeedDashboardProps {
   profile: any;
@@ -33,7 +36,7 @@ export const SocialFeedDashboard: React.FC<SocialFeedDashboardProps> = ({
   currentTime,
   user,
 }) => {
-  const [activeSection, setActiveSection] = useState('chatapp');
+  const [activeSection, setActiveSection] = useState('dashboard');
   const sectionThemes = getAllSectionThemes();
   const sectionRefs = useRef<Record<string, HTMLElement | null>>({});
 
@@ -78,9 +81,26 @@ export const SocialFeedDashboard: React.FC<SocialFeedDashboardProps> = ({
         onSectionClick={handleSectionClick}
       />
 
+      {/* === DASHBOARD OVERVIEW === */}
+      <DashboardSection ref={setSectionRef('dashboard')} id="dashboard" theme={sectionThemes['dashboard']}>
+        <DashboardOverviewSection
+          theme={sectionThemes['dashboard']}
+          profile={profile}
+          calendarData={calendarData}
+          stats={stats}
+          unreadMessages={unreadMessages}
+          communityUnread={communityUnread}
+        />
+      </DashboardSection>
+
       {/* === CHATAPP SECTION === */}
       <DashboardSection ref={setSectionRef('chatapp')} id="chatapp" theme={sectionThemes['chatapp']}>
         <ChatAppSection theme={sectionThemes['chatapp']} />
+      </DashboardSection>
+
+      {/* === S2G MEMRY SECTION === */}
+      <DashboardSection ref={setSectionRef('memry')} id="memry" theme={sectionThemes['memry']}>
+        <MemrySection theme={sectionThemes['memry']} />
       </DashboardSection>
 
       {/* === 364YHVH DAYS SECTION === */}
@@ -98,9 +118,14 @@ export const SocialFeedDashboard: React.FC<SocialFeedDashboardProps> = ({
         <MyGardenSection theme={sectionThemes['garden']} stats={stats} />
       </DashboardSection>
 
-      {/* === S2G MEMRY SECTION === */}
-      <DashboardSection ref={setSectionRef('memry')} id="memry" theme={sectionThemes['memry']} className="pb-24">
-        <MemrySection theme={sectionThemes['memry']} />
+      {/* === LET IT RAIN SECTION === */}
+      <DashboardSection ref={setSectionRef('letitrain')} id="letitrain" theme={sectionThemes['letitrain']}>
+        <LetItRainSection theme={sectionThemes['letitrain']} />
+      </DashboardSection>
+
+      {/* === GOSAT'S SECTION === */}
+      <DashboardSection ref={setSectionRef('gosats')} id="gosats" theme={sectionThemes['gosats']} className="pb-24">
+        <GosatsSection theme={sectionThemes['gosats']} />
       </DashboardSection>
 
       <BottomActionBar theme={sectionThemes[activeSection] || currentTheme} />
