@@ -292,7 +292,7 @@ const Month1Strand = ({ dayOfMonth, year, currentMonth, currentDayOfMonth }: { d
   const pastBeads = reversedBeads.slice(reversedBeads.length - currentActualDay);
 
   return (
-    <div className="flex flex-col items-center p-4 md:p-6 bg-gradient-to-b from-stone-900 to-black rounded-3xl shadow-2xl w-full">
+    <div className="flex flex-col items-center p-4 md:p-6 bg-gradient-to-b from-stone-900 to-black rounded-3xl shadow-2xl w-full max-w-[520px]">
       <h2 className="text-lg md:text-xl lg:text-2xl font-black text-amber-400 mb-2 md:mb-4 tracking-widest">MONTH 1</h2>
       <p className="text-xs text-amber-200/60 mb-2">33 Beads (includes days 29-31 from Month 12)</p>
       
@@ -635,7 +635,7 @@ const Month2Strand = ({ dayOfMonth, year }: { dayOfMonth: number; year: number }
 
   return (
 
-    <div className="flex flex-col items-center p-4 md:p-6 bg-gradient-to-b from-stone-900 via-purple-950 to-black rounded-3xl shadow-2xl border border-amber-800/30 w-full">
+    <div className="flex flex-col items-center p-4 md:p-6 bg-gradient-to-b from-stone-900 via-purple-950 to-black rounded-3xl shadow-2xl border border-amber-800/30 w-full max-w-[520px]">
 
       <motion.h2 
 
@@ -1000,7 +1000,7 @@ const Month3Strand = ({ dayOfMonth, year }: { dayOfMonth: number; year: number }
 
   return (
 
-    <div className="flex flex-col items-center p-4 md:p-6 bg-gradient-to-b from-purple-950 via-black to-indigo-950 rounded-3xl shadow-2xl border-2 border-amber-600/40 w-full">
+    <div className="flex flex-col items-center p-4 md:p-6 bg-gradient-to-b from-purple-950 via-black to-indigo-950 rounded-3xl shadow-2xl border-2 border-amber-600/40 w-full max-w-[520px]">
 
       <motion.h2 
 
@@ -1377,7 +1377,7 @@ const Month4Strand = ({ dayOfMonth, year }: { dayOfMonth: number; year: number }
 
   return (
 
-    <div className="flex flex-col items-center p-4 md:p-6 bg-gradient-to-b from-slate-900 via-red-950 to-black rounded-3xl shadow-2xl border-2 border-red-900/60 w-full">
+    <div className="flex flex-col items-center p-4 md:p-6 bg-gradient-to-b from-slate-900 via-red-950 to-black rounded-3xl shadow-2xl border-2 border-red-900/60 w-full max-w-[520px]">
 
       <motion.h2 
 
@@ -1801,7 +1801,7 @@ const Month5Strand = ({ dayOfMonth, year }: { dayOfMonth: number; year: number }
 
   return (
 
-    <div className="flex flex-col items-center p-4 md:p-6 bg-gradient-to-b from-gray-900 via-red-950 to-black rounded-3xl shadow-2xl border-4 border-red-900/80 w-full">
+    <div className="flex flex-col items-center p-4 md:p-6 bg-gradient-to-b from-gray-900 via-red-950 to-black rounded-3xl shadow-2xl border-4 border-red-900/80 w-full max-w-[520px]">
 
       <motion.h2 
 
@@ -2151,7 +2151,7 @@ const Month6Strand = ({ dayOfMonth, year }: { dayOfMonth: number; year: number }
 
   return (
 
-    <div className="flex flex-col items-center p-4 md:p-6 bg-gradient-to-b from-indigo-950 via-black to-purple-950 rounded-3xl shadow-2xl border-2 border-cyan-700/60 w-full">
+    <div className="flex flex-col items-center p-4 md:p-6 bg-gradient-to-b from-indigo-950 via-black to-purple-950 rounded-3xl shadow-2xl border-2 border-cyan-700/60 w-full max-w-[520px]">
 
       <motion.h2 
 
@@ -2519,7 +2519,7 @@ const Month7Strand = ({ dayOfMonth, year }: { dayOfMonth: number; year: number }
 
   return (
 
-    <div className="flex flex-col items-center p-4 md:p-6 bg-gradient-to-b from-black via-purple-950 to-amber-950 rounded-3xl shadow-2xl border-4 border-amber-600 w-full">
+    <div className="flex flex-col items-center p-4 md:p-6 bg-gradient-to-b from-black via-purple-950 to-amber-950 rounded-3xl shadow-2xl border-4 border-amber-600 w-full max-w-[520px]">
 
       <motion.h2 
 
@@ -2851,7 +2851,7 @@ const Month8Strand = ({ dayOfMonth, year }: { dayOfMonth: number; year: number }
 
   return (
 
-    <div className="flex flex-col items-center p-4 md:p-6 bg-gradient-to-b from-gray-900 via-slate-950 to-black rounded-3xl shadow-2xl border-2 border-gray-700 w-full">
+    <div className="flex flex-col items-center p-4 md:p-6 bg-gradient-to-b from-gray-900 via-slate-950 to-black rounded-3xl shadow-2xl border-2 border-gray-700 w-full max-w-[520px]">
 
       <motion.h2 
 
@@ -3175,7 +3175,7 @@ const Month9Strand = ({ dayOfMonth, year }: { dayOfMonth: number; year: number }
 
   return (
 
-    <div className="flex flex-col items-center p-4 md:p-6 bg-gradient-to-b from-indigo-950 via-black to-amber-950 rounded-3xl shadow-2xl border-4 border-amber-700/50 w-full">
+    <div className="flex flex-col items-center p-4 md:p-6 bg-gradient-to-b from-indigo-950 via-black to-amber-950 rounded-3xl shadow-2xl border-4 border-amber-700/50 w-full max-w-[520px]">
 
       <motion.h2 
 
@@ -3422,7 +3422,7 @@ const Month10Strand = ({ dayOfMonth, year }: { dayOfMonth: number; year: number 
 
   return (
 
-    <div className="flex flex-col items-center p-4 md:p-6 bg-gradient-to-b from-slate-900 via-gray-950 to-black rounded-3xl shadow-2xl border-3 border-gray-800 w-full">
+    <div className="flex flex-col items-center p-4 md:p-6 bg-gradient-to-b from-slate-900 via-gray-950 to-black rounded-3xl shadow-2xl border-3 border-gray-800 w-full max-w-[520px]">
 
       <motion.h2 
 
@@ -3715,7 +3715,7 @@ const Month11Strand = ({ dayOfMonth, year }: { dayOfMonth: number; year: number 
 
   return (
 
-    <div className="flex flex-col items-center p-4 md:p-6 bg-gradient-to-b from-pink-950 via-black to-teal-950 rounded-3xl shadow-2xl border-4 border-pink-800/40 w-full">
+    <div className="flex flex-col items-center p-4 md:p-6 bg-gradient-to-b from-pink-950 via-black to-teal-950 rounded-3xl shadow-2xl border-4 border-pink-800/40 w-full max-w-[520px]">
 
       <motion.h2 
 
@@ -4118,7 +4118,7 @@ const Month12Strand = ({ dayOfMonth, year }: { dayOfMonth: number; year: number 
   );
 
   return (
-    <div className="flex flex-col items-center p-4 md:p-6 bg-gradient-to-b from-purple-950 via-pink-900 to-black rounded-3xl shadow-2xl border-4 border-pink-700 w-full">
+    <div className="flex flex-col items-center p-4 md:p-6 bg-gradient-to-b from-purple-950 via-pink-900 to-black rounded-3xl shadow-2xl border-4 border-pink-700 w-full max-w-[520px]">
       <motion.h2 
         initial={{ scale: 0, rotate: -720 }}
         animate={{ scale: 1, rotate: 0 }}
