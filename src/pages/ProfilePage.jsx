@@ -417,7 +417,7 @@ export default function ProfilePage() {
                     <Shield className="h-3 w-3" /> {userStats.verificationLevel}
                   </span>
                   <span className="inline-flex items-center gap-1 text-[10px] font-medium px-2.5 py-1 rounded-full"
-                    style={{ background: '#eab30820`, color: '#eab308' }}>
+                    style={{ background: '#eab30820', color: '#eab308' }}>
                     <Crown className="h-3 w-3" /> {userStats.communityRank}
                   </span>
                 </div>
