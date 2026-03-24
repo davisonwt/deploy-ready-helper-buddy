@@ -227,7 +227,7 @@ export function MediaDock({ sessionId, isHost = false }: MediaDockProps) {
                           }}
                         >
                           <ShoppingCart className="h-3 w-3" />
-                          Buy Art
+                          Bestow Art
                         </Button>
                       </div>
                     )}
