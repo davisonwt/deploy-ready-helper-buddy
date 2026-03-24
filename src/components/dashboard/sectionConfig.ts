@@ -1,5 +1,5 @@
-import { Home, Radio, TreePine, MessageSquare, Sprout, Compass } from 'lucide-react';
-import { getThemeByIndex, getCurrentTheme, DashboardTheme } from '@/utils/dashboardThemes';
+import { MessageSquare, Calendar, Sprout, Camera } from 'lucide-react';
+import { getThemeByIndex, DashboardTheme } from '@/utils/dashboardThemes';
 
 export interface DashboardSectionConfig {
   id: string;
@@ -9,12 +9,10 @@ export interface DashboardSectionConfig {
 }
 
 export const DASHBOARD_SECTIONS: DashboardSectionConfig[] = [
-  { id: 'home', label: 'Home', icon: Home, themeOffset: 0 },
-  { id: 'radio', label: 'Radio', icon: Radio, themeOffset: 2 },
-  { id: 'browse', label: 'Browse', icon: TreePine, themeOffset: 4 },
-  { id: 'chat', label: 'Chat', icon: MessageSquare, themeOffset: 6 },
-  { id: 'garden', label: 'Garden', icon: Sprout, themeOffset: 8 },
-  { id: 'explore', label: 'Explore', icon: Compass, themeOffset: 10 },
+  { id: 'chatapp', label: 'ChatApp', icon: MessageSquare, themeOffset: 0 },
+  { id: '364yhvh', label: '364yhvh Days', icon: Calendar, themeOffset: 3 },
+  { id: 'garden', label: 'My Garden', icon: Sprout, themeOffset: 6 },
+  { id: 'memry', label: 'S2G Memry', icon: Camera, themeOffset: 9 },
 ];
 
 export function getSectionTheme(sectionId: string): DashboardTheme {
