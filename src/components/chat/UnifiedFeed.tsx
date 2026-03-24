@@ -108,7 +108,7 @@ export const UnifiedFeed: React.FC = () => {
           hostAvatar: profile?.avatar_url || null,
           participantCount: 0,
           price: session.session_fee,
-          isFree: session.is_free || session.pricing_type === 'free',
+          isFree: session.pricing_type === 'free',
           scheduledAt: session.scheduled_at,
           roomId: session.id,
         });
