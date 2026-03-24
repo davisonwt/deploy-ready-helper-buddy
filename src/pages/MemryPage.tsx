@@ -1894,6 +1894,13 @@ export default function MemryPage() {
             </div>
           </button>
           <button 
+            className={`flex flex-col items-center px-2 py-1.5 rounded-xl transition-colors ${activeTab === 'trending' ? 'text-pink-400 bg-white/10' : 'text-white/70'}`}
+            onClick={() => setActiveTab('trending')}
+          >
+            <Flame className="w-5 h-5" />
+            <span className="text-[9px] mt-0.5">Trending</span>
+          </button>
+          <button 
             className={`flex flex-col items-center px-2 py-1.5 rounded-xl transition-colors ${activeTab === 'recipes' ? 'text-pink-400 bg-white/10' : 'text-white/70'}`}
             onClick={() => setActiveTab('recipes')}
           >
