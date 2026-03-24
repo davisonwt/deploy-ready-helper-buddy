@@ -397,7 +397,7 @@ export default function SacredCalendarFeed() {
                 onTouchStart={handleTouchStart}
                 onTouchEnd={handleTouchEnd}
               >
-                <div className="flex" style={{ minHeight: '520px' }}>
+                <div className="flex" style={{ minHeight: '600px' }}>
                   {/* Left: Beads — full height */}
                   <div className="relative flex-shrink-0 flex flex-col" style={{ width: '50%' }}>
                     {/* Nav arrows */}
@@ -428,7 +428,7 @@ export default function SacredCalendarFeed() {
                           transition={{ duration: 0.3, ease: 'easeInOut' }}
                           className="flex justify-center h-full"
                         >
-                          <div className="transform scale-[0.85] origin-top">
+                          <div className="transform scale-[0.95] origin-top">
                             <MonthComponent
                               dayOfMonth={isCurrentMonth ? enochianDate.dayOfMonth : 0}
                               year={enochianDate.year}
