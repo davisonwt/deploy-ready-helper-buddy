@@ -21,7 +21,43 @@ interface WeatherWidgetProps {
 }
 
 const WeatherWidget = ({ compact = false, theme }: WeatherWidgetProps) => {
-...
+  const { user } = useAuth();
+  const [userTimezone, setUserTimezone] = useState<string>('Africa/Johannesburg');
+  const [saving, setSaving] = useState(false);
+  const timezones = getAvailableTimezones();
+
+  // Load user's timezone from profile
+  useEffect(() => {
+    if (!user) return;
+    supabase
+      .from('profiles')
+      .select('timezone')
+      .eq('id', user.id)
+      .single()
+      .then(({ data }) => {
+        if (data?.timezone) setUserTimezone(data.timezone);
+      });
+  }, [user]);
+
+  const { weather, loading, error, refetch } = useWeather(userTimezone);
+  const coords = getTimezoneCoords(userTimezone);
+
+  const handleTimezoneChange = async (tz: string) => {
+    setUserTimezone(tz);
+    if (!user) return;
+    setSaving(true);
+    const { error } = await supabase
+      .from('profiles')
+      .update({ timezone: tz })
+      .eq('id', user.id);
+    setSaving(false);
+    if (error) {
+      toast.error('Failed to save timezone');
+    } else {
+      toast.success('Timezone updated');
+    }
+  };
+
   if (compact) {
     return (
       <Card
