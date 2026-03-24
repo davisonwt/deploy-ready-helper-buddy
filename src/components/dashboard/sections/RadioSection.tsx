@@ -94,10 +94,10 @@ export const RadioSection: React.FC<RadioSectionProps> = ({ theme }) => {
     fetchSlots();
   }, []);
 
-  const displaySlots = useMemo(() => {
+  const displaySlots = useMemo<DisplayRadioSlot[]>(() => {
     const now = new Date();
 
-    const alwaysOnSessions = ALWAYS_ON_SESSION_MATCHERS
+    const alwaysOnSessions: DisplayRadioSlot[] = ALWAYS_ON_SESSION_MATCHERS
       .map((matcher) => {
         const found = slots.find((slot) => {
           const subject = normalizeText(slot.show_subject);
@@ -106,15 +106,16 @@ export const RadioSection: React.FC<RadioSectionProps> = ({ theme }) => {
         });
         return found ? { ...found, isAlwaysOn: true } : null;
       })
-      .filter(Boolean) as DisplayRadioSlot[];
+      .filter((slot): slot is DisplayRadioSlot => !!slot);
 
-    const dynamicActiveSessions = slots
+    const dynamicActiveSessions: DisplayRadioSlot[] = slots
       .filter((slot) => !isAlwaysOnSession(slot))
       .filter((slot) => {
         if (slot.status === 'live') return true;
         const end = new Date(slot.end_time);
         return !Number.isNaN(end.getTime()) && end >= now;
-      });
+      })
+      .map((slot) => ({ ...slot }));
 
     return [...alwaysOnSessions, ...dynamicActiveSessions].slice(0, 6);
   }, [slots]);
