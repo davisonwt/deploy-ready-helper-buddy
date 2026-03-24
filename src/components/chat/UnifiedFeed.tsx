@@ -22,7 +22,7 @@ export const UnifiedFeed: React.FC = () => {
         // Radio slots (live + recent replays + upcoming)
         supabase
           .from('radio_schedule')
-          .select('id, start_time, end_time, status, show_subject, show_notes, show_name, current_listeners, radio_djs(dj_name, avatar_url)')
+          .select('id, start_time, end_time, status, show_subject, show_notes, listener_count, radio_djs(dj_name, avatar_url)')
           .or('status.eq.live,status.eq.approved,status.eq.completed')
           .order('start_time', { ascending: false })
           .limit(10),
