@@ -140,7 +140,7 @@ export default function SowerProfile() {
                     ) : (
                       <ShoppingCart className="h-4 w-4" />
                     )}
-                    Buy Song
+                    Bestow Song
                   </Button>
                 </CardContent>
               </Card>

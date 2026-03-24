@@ -167,7 +167,7 @@ export const VideoCreationWizard = () => {
       5. Sow2Grow-specific hashtags to attract bestowers
       6. Production tips for filming
       
-      Focus on attracting bestowers (buyers) to this sower's orchard on the Sow2Grow marketplace.`;
+      Focus on attracting bestowers to this sower's orchard on the Sow2Grow marketplace.`;
 
       const { data, error } = await supabase.functions.invoke('generate-content-ideas', {
         body: {

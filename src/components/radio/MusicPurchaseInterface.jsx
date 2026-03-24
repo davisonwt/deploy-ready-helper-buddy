@@ -133,7 +133,7 @@ export function MusicPurchaseInterface({
                 </div>
               </div>
 
-              {/* Music: show pricing + buy */}
+              {/* Music: show pricing + bestow */}
               {!isVoiceNote(currentTrack) ? (
                 <div className="flex flex-col gap-3 items-end">
                   <div className="text-right">
@@ -153,7 +153,7 @@ export function MusicPurchaseInterface({
                     className="flex items-center gap-2"
                   >
                     <ShoppingCart className="h-4 w-4" />
-                    {purchasing ? 'Processing...' : 'Buy MP3'}
+                    {purchasing ? 'Processing...' : 'Bestow MP3'}
                   </Button>
                 </div>
               ) : (
@@ -261,7 +261,7 @@ export function MusicPurchaseInterface({
                           className="text-xs h-7"
                         >
                           <ShoppingCart className="h-3 w-3 mr-1" />
-                          Buy
+                          Bestow
                         </Button>
                       </div>
                     )}

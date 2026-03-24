@@ -180,7 +180,7 @@ export function MediaDock({ sessionId, isHost = false }: MediaDockProps) {
                         }}
                       >
                         <ShoppingCart className="h-3 w-3" />
-                        Buy Now
+                        Bestow Now
                       </Button>
                     ) : (
                       <Button size="sm" variant="outline" className="w-full gap-1">
@@ -227,7 +227,7 @@ export function MediaDock({ sessionId, isHost = false }: MediaDockProps) {
                           }}
                         >
                           <ShoppingCart className="h-3 w-3" />
-                          Buy Art
+                          Bestow Art
                         </Button>
                       </div>
                     )}
@@ -305,7 +305,7 @@ export function MediaDock({ sessionId, isHost = false }: MediaDockProps) {
                           }}
                         >
                           <ShoppingCart className="h-3 w-3" />
-                          Buy
+                          Bestow
                         </Button>
                       ) : (
                         <Button size="sm" variant="outline">

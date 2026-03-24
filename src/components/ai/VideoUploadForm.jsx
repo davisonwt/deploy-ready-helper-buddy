@@ -86,7 +86,7 @@ export const VideoUploadForm = ({ onVideoUploaded }) => {
           productDescription: `Video titled "${videoTitle}": ${videoDescription}`,
           targetAudience: 'Social media users',
           contentType: 'video-marketing',
-          customPrompt: 'Generate engaging descriptions, hashtags, and platform-specific optimization suggestions for this video to attract bestowers (buyers) on social media platforms.'
+          customPrompt: 'Generate engaging descriptions, hashtags, and platform-specific optimization suggestions for this video to attract bestowers on social media platforms.'
         }
       });
 
