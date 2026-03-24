@@ -221,14 +221,18 @@ export function RemnantsWheelCalendar({ size = 900 }: RemnantsWheelCalendarProps
   }, []);
 
   const handleMouseMove = useCallback((e: React.MouseEvent) => {
-    if (hoveredElement && containerRef.current) {
+    if (containerRef.current) {
       const rect = containerRef.current.getBoundingClientRect();
-      setMousePosition({
-        x: e.clientX - rect.left,
-        y: e.clientY - rect.top,
-      });
+      const x = e.clientX - rect.left;
+      const y = e.clientY - rect.top;
+      if (hoveredElement) {
+        setMousePosition({ x, y });
+      }
+      if (showMagnifier) {
+        setMagnifyPos({ x, y });
+      }
     }
-  }, [hoveredElement]);
+  }, [hoveredElement, showMagnifier]);
 
   const handleHoverEnd = useCallback(() => {
     setHoveredElement(null);
