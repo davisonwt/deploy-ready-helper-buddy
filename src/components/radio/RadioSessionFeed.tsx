@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import { Clock, Calendar, Edit, Trash2, MoreVertical, Mic, Plus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -13,6 +13,7 @@ import {
 import { LiveBadge, ReplayBadge, UpcomingBadge, CherryReactionButton } from '@/components/chat/SparkleEffects';
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
+import { getCurrentTheme } from '@/utils/dashboardThemes';
 
 interface ScheduledSlot {
   id: string;
@@ -69,24 +70,40 @@ export const RadioSessionFeed: React.FC<RadioSessionFeedProps> = ({
     (s) => new Date(s.end_time) >= now || s.approval_status === 'pending' || isMySlot(s)
   );
 
+  const [theme, setTheme] = useState(getCurrentTheme());
+
+  useEffect(() => {
+    const refreshTheme = () => setTheme(getCurrentTheme());
+    refreshTheme();
+    const interval = setInterval(refreshTheme, 60 * 1000);
+    return () => clearInterval(interval);
+  }, []);
+
+  const actionButtonStyle: React.CSSProperties = {
+    background: theme.primaryButton,
+    color: theme.textPrimary,
+    borderColor: theme.cardBorder,
+    boxShadow: `0 8px 18px ${theme.shadow}`,
+  };
+
   return (
     <div className="space-y-3">
       {/* Section header with actions */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <Calendar className="w-4 h-4 text-primary" />
-          <h3 className="text-sm font-bold text-foreground">
+          <Calendar className="w-4 h-4" style={{ color: theme.accent }} />
+          <h3 className="text-sm font-bold" style={{ color: theme.textPrimary }}>
             Sessions ({upcomingSlots.length})
           </h3>
         </div>
         <div className="flex gap-1.5">
           {onOpenVoiceStudio && (
-            <Button variant="ghost" size="sm" className="gap-1 text-xs h-7 px-2" onClick={onOpenVoiceStudio}>
+            <Button variant="ghost" size="sm" className="gap-1 text-xs h-7 px-2" style={actionButtonStyle} onClick={onOpenVoiceStudio}>
               <Mic className="w-3.5 h-3.5" /> Record
             </Button>
           )}
           {onScheduleNew && (
-            <Button size="sm" className="gap-1 text-xs h-7 px-2.5 bg-primary hover:bg-primary/90" onClick={onScheduleNew}>
+            <Button size="sm" className="gap-1 text-xs h-7 px-2.5" style={actionButtonStyle} onClick={onScheduleNew}>
               <Plus className="w-3.5 h-3.5" /> New Slot
             </Button>
           )}
@@ -96,8 +113,8 @@ export const RadioSessionFeed: React.FC<RadioSessionFeedProps> = ({
       {/* Empty state */}
       {upcomingSlots.length === 0 && (
         <div
-          className="rounded-2xl border border-border/20 p-8 text-center"
-          style={{ backgroundColor: 'hsl(210 67% 12% / 0.6)' }}
+          className="rounded-2xl border p-8 text-center"
+          style={{ backgroundColor: theme.cardBg, borderColor: theme.cardBorder }}
         >
           <Clock className="w-10 h-10 mx-auto mb-2 text-muted-foreground/40" />
           <p className="text-xs text-muted-foreground">No upcoming radio slots</p>
@@ -120,18 +137,21 @@ export const RadioSessionFeed: React.FC<RadioSessionFeedProps> = ({
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: index * 0.05, type: 'spring', stiffness: 200, damping: 25 }}
             className={cn(
-              'rounded-2xl border overflow-hidden transition-all',
-              isLive ? 'border-destructive/40' : 'border-border/20 hover:border-primary/30'
+              'rounded-2xl border overflow-hidden transition-all'
             )}
-            style={{ backgroundColor: 'hsl(212 49% 24% / 0.85)' }}
+            style={{
+              backgroundColor: theme.cardBg,
+              borderColor: isLive ? 'hsl(var(--destructive) / 0.5)' : theme.cardBorder,
+              boxShadow: `0 10px 24px ${theme.shadow}`,
+            }}
           >
             <div className="p-3">
               {/* Top row: Host + Status */}
               <div className="flex items-center justify-between mb-2">
                 <div className="flex items-center gap-2">
-                  <Avatar className="w-8 h-8 border-2 border-primary/30">
+                  <Avatar className="w-8 h-8 border-2" style={{ borderColor: theme.cardBorder }}>
                     <AvatarImage src={slot.radio_djs?.avatar_url || undefined} />
-                    <AvatarFallback className="bg-primary/20 text-foreground text-[10px]">
+                    <AvatarFallback className="text-[10px]" style={{ backgroundColor: theme.secondaryButton, color: theme.textPrimary }}>
                       {slot.radio_djs?.dj_name?.charAt(0) || '?'}
                     </AvatarFallback>
                   </Avatar>
@@ -185,7 +205,7 @@ export const RadioSessionFeed: React.FC<RadioSessionFeedProps> = ({
 
               {/* Broadcast mode badge */}
               <div className="flex items-center justify-between">
-                <Badge variant="secondary" className="text-[10px] px-2 py-0.5">
+                <Badge variant="secondary" className="text-[10px] px-2 py-0.5" style={{ backgroundColor: theme.secondaryButton, borderColor: theme.cardBorder, color: theme.textPrimary }}>
                   {slot.broadcast_mode === 'pre_recorded' ? '📻 Auto-play' : '🎙️ Live'}
                 </Badge>
 
