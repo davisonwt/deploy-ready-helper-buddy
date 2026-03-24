@@ -153,7 +153,7 @@ export function MusicPurchaseInterface({
                     className="flex items-center gap-2"
                   >
                     <ShoppingCart className="h-4 w-4" />
-                    {purchasing ? 'Processing...' : 'Buy MP3'}
+                    {purchasing ? 'Processing...' : 'Bestow MP3'}
                   </Button>
                 </div>
               ) : (
