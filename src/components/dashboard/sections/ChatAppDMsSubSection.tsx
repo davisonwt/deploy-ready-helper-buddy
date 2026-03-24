@@ -23,7 +23,7 @@ export const ChatAppDMsSubSection: React.FC<Props> = ({ theme }) => {
         .from('chat_rooms')
         .select('id, name, room_type, description, current_listeners, is_active')
         .eq('is_active', true)
-        .in('room_type', ['direct', 'group', 'community'])
+        .in('room_type', ['direct', 'group'])
         .order('updated_at', { ascending: false })
         .limit(5);
       setRooms(data || []);
