@@ -62,7 +62,7 @@ export const UnifiedFeed: React.FC = () => {
           id: `radio-${slot.id}`,
           type: 'radio',
           status: isLive ? 'live' : isCompleted ? 'replay' : isUpcoming ? 'upcoming' : 'active',
-          title: slot.show_name || slot.show_subject || slot.show_notes || 'Radio Show',
+          title: slot.show_subject || slot.show_notes || 'Radio Show',
           hostName: djData?.dj_name || 'DJ',
           hostAvatar: djData?.avatar_url || null,
           participantCount: slot.current_listeners || 0,
