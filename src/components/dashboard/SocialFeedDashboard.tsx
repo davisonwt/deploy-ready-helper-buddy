@@ -100,9 +100,9 @@ export const SocialFeedDashboard: React.FC<SocialFeedDashboardProps> = ({
           <p className="text-xs text-muted-foreground">
             Weekday {calendarData.weekday} • Part {calendarData.part}/18 • Day {calendarData.dayOfYear} of 364
           </p>
-          {dayInfo?.notes && dayInfo.notes.length > 0 && (
+          {dayInfo?.feastName && (
             <p className="text-xs text-foreground/80 italic line-clamp-2">
-              {dayInfo.notes[0]}
+              {dayInfo.feastName}
             </p>
           )}
           <p className="text-[10px] text-muted-foreground/60 font-mono">
