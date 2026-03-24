@@ -397,9 +397,9 @@ export default function SacredCalendarFeed() {
                 onTouchStart={handleTouchStart}
                 onTouchEnd={handleTouchEnd}
               >
-                <div className="flex">
-                  {/* Left: Beads */}
-                  <div className="relative flex-shrink-0" style={{ width: '45%' }}>
+                <div className="flex" style={{ minHeight: '520px' }}>
+                  {/* Left: Beads — full height */}
+                  <div className="relative flex-shrink-0 flex flex-col" style={{ width: '50%' }}>
                     {/* Nav arrows */}
                     <button
                       onClick={goPrev}
@@ -416,7 +416,7 @@ export default function SacredCalendarFeed() {
                       <ChevronRight className="w-4 h-4 text-white" />
                     </button>
 
-                    <div className="overflow-hidden">
+                    <div className="flex-1 overflow-hidden">
                       <AnimatePresence mode="wait" custom={direction}>
                         <motion.div
                           key={activeMonth}
@@ -426,9 +426,9 @@ export default function SacredCalendarFeed() {
                           animate="center"
                           exit="exit"
                           transition={{ duration: 0.3, ease: 'easeInOut' }}
-                          className="flex justify-center"
+                          className="flex justify-center h-full"
                         >
-                          <div className="transform scale-[0.75] origin-top">
+                          <div className="transform scale-[0.85] origin-top">
                             <MonthComponent
                               dayOfMonth={isCurrentMonth ? enochianDate.dayOfMonth : 0}
                               year={enochianDate.year}
