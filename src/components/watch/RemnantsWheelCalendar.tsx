@@ -74,7 +74,10 @@ export function RemnantsWheelCalendar({ size = 900 }: RemnantsWheelCalendarProps
   const [currentTime, setCurrentTime] = useState(new Date());
   const [hoveredElement, setHoveredElement] = useState<{ type: string; data: any } | null>(null);
   const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
+  const [magnifyPos, setMagnifyPos] = useState<{ x: number; y: number } | null>(null);
+  const [showMagnifier, setShowMagnifier] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
+  const svgRef = useRef<SVGSVGElement>(null);
 
   // Update time every second
   useEffect(() => {
@@ -218,14 +221,18 @@ export function RemnantsWheelCalendar({ size = 900 }: RemnantsWheelCalendarProps
   }, []);
 
   const handleMouseMove = useCallback((e: React.MouseEvent) => {
-    if (hoveredElement && containerRef.current) {
+    if (containerRef.current) {
       const rect = containerRef.current.getBoundingClientRect();
-      setMousePosition({
-        x: e.clientX - rect.left,
-        y: e.clientY - rect.top,
-      });
+      const x = e.clientX - rect.left;
+      const y = e.clientY - rect.top;
+      if (hoveredElement) {
+        setMousePosition({ x, y });
+      }
+      if (showMagnifier) {
+        setMagnifyPos({ x, y });
+      }
     }
-  }, [hoveredElement]);
+  }, [hoveredElement, showMagnifier]);
 
   const handleHoverEnd = useCallback(() => {
     setHoveredElement(null);
@@ -248,7 +255,7 @@ export function RemnantsWheelCalendar({ size = 900 }: RemnantsWheelCalendarProps
         </defs>
         <text
           fill={COLORS.OUTER_TEXT}
-          fontSize="11"
+          fontSize="4.5"
           fontFamily="serif"
           letterSpacing="3"
         >
@@ -340,7 +347,7 @@ export function RemnantsWheelCalendar({ size = 900 }: RemnantsWheelCalendarProps
                   textAnchor="middle"
                   dominantBaseline="middle"
                   fill="white"
-                  fontSize="6"
+                  fontSize="4.5"
                   fontWeight={isCurrent ? 'bold' : 'normal'}
                 >
                   {mansCount}
@@ -378,7 +385,7 @@ export function RemnantsWheelCalendar({ size = 900 }: RemnantsWheelCalendarProps
                 textAnchor="middle"
                 dominantBaseline="middle"
                 fill="hsl(45, 20%, 15%)"
-                fontSize="5"
+                fontSize="3.5"
                 fontWeight="bold"
               >
                 •1
@@ -415,7 +422,7 @@ export function RemnantsWheelCalendar({ size = 900 }: RemnantsWheelCalendarProps
                 textAnchor="middle"
                 dominantBaseline="middle"
                 fill="white"
-                fontSize="5"
+                fontSize="3.5"
                 fontWeight="bold"
               >
                 •2
@@ -457,7 +464,7 @@ export function RemnantsWheelCalendar({ size = 900 }: RemnantsWheelCalendarProps
                 textAnchor="middle"
                 dominantBaseline="middle"
                 fill="white"
-                fontSize="5"
+                fontSize="3.5"
                 fontWeight="bold"
               >
                 362
@@ -499,7 +506,7 @@ export function RemnantsWheelCalendar({ size = 900 }: RemnantsWheelCalendarProps
                 textAnchor="middle"
                 dominantBaseline="middle"
                 fill="white"
-                fontSize="5"
+                fontSize="3.5"
                 fontWeight="bold"
               >
                 363
@@ -541,7 +548,7 @@ export function RemnantsWheelCalendar({ size = 900 }: RemnantsWheelCalendarProps
                 textAnchor="middle"
                 dominantBaseline="middle"
                 fill="white"
-                fontSize="5"
+                fontSize="3.5"
                 fontWeight="bold"
               >
                 364
@@ -586,7 +593,7 @@ export function RemnantsWheelCalendar({ size = 900 }: RemnantsWheelCalendarProps
                 textAnchor="middle"
                 dominantBaseline="middle"
                 fill="hsl(45, 20%, 15%)"
-                fontSize="5"
+                fontSize="3.5"
                 fontWeight="bold"
               >
                 1
@@ -630,7 +637,7 @@ export function RemnantsWheelCalendar({ size = 900 }: RemnantsWheelCalendarProps
                 textAnchor="middle"
                 dominantBaseline="middle"
                 fill="white"
-                fontSize="5"
+                fontSize="3.5"
                 fontWeight="bold"
               >
                 2
@@ -674,7 +681,7 @@ export function RemnantsWheelCalendar({ size = 900 }: RemnantsWheelCalendarProps
                 textAnchor="middle"
                 dominantBaseline="middle"
                 fill="white"
-                fontSize="5"
+                fontSize="3.5"
                 fontWeight="bold"
               >
                 3
@@ -719,7 +726,7 @@ export function RemnantsWheelCalendar({ size = 900 }: RemnantsWheelCalendarProps
                 textAnchor="middle"
                 dominantBaseline="middle"
                 fill="hsl(45, 20%, 15%)"
-                fontSize="5"
+                fontSize="3.5"
                 fontWeight="bold"
               >
                 4
@@ -791,7 +798,7 @@ export function RemnantsWheelCalendar({ size = 900 }: RemnantsWheelCalendarProps
                   textAnchor="middle"
                   dominantBaseline="middle"
                   fill="white"
-                  fontSize="5"
+                  fontSize="3.5"
                   fontWeight={dayType !== 'normal' ? 'bold' : 'normal'}
                 >
                   {dayOfMonth}
@@ -856,7 +863,7 @@ export function RemnantsWheelCalendar({ size = 900 }: RemnantsWheelCalendarProps
                   textAnchor="middle"
                   dominantBaseline="middle"
                   fill="white"
-                  fontSize="5"
+                  fontSize="3.5"
                   fontWeight={isCurrent || isDay364 ? 'bold' : 'normal'}
                 >
                   {day}
@@ -894,7 +901,7 @@ export function RemnantsWheelCalendar({ size = 900 }: RemnantsWheelCalendarProps
                 textAnchor="middle"
                 dominantBaseline="middle"
                 fill="hsl(45, 20%, 15%)"
-                fontSize="4"
+                fontSize="3"
                 fontWeight="bold"
               >
                 •1
@@ -931,7 +938,7 @@ export function RemnantsWheelCalendar({ size = 900 }: RemnantsWheelCalendarProps
                 textAnchor="middle"
                 dominantBaseline="middle"
                 fill="white"
-                fontSize="4"
+                fontSize="3"
                 fontWeight="bold"
               >
                 •2
@@ -985,7 +992,7 @@ export function RemnantsWheelCalendar({ size = 900 }: RemnantsWheelCalendarProps
                 textAnchor="middle"
                 dominantBaseline="middle"
                 fill="white"
-                fontSize="7"
+                fontSize="3.5"
                 fontWeight={isCurrent ? 'bold' : 'normal'}
               >
                 {week}
@@ -1065,7 +1072,7 @@ export function RemnantsWheelCalendar({ size = 900 }: RemnantsWheelCalendarProps
                 y={textPos.y - 5}
                 textAnchor="middle"
                 fill="white"
-                fontSize="7"
+                fontSize="3.5"
                 fontWeight="bold"
                 transform={`rotate(${midAngle}, ${textPos.x}, ${textPos.y})`}
               >
@@ -1076,7 +1083,7 @@ export function RemnantsWheelCalendar({ size = 900 }: RemnantsWheelCalendarProps
                 y={textPos.y + 7}
                 textAnchor="middle"
                 fill="hsl(220, 20%, 85%)"
-                fontSize="6"
+                fontSize="4.5"
                 transform={`rotate(${midAngle}, ${textPos.x}, ${textPos.y})`}
               >
                 {leader.tribe}
@@ -1151,7 +1158,7 @@ export function RemnantsWheelCalendar({ size = 900 }: RemnantsWheelCalendarProps
               {/* Creature name (curved) */}
               <text
                 fill="white"
-                fontSize="10"
+                fontSize="3.5"
                 fontWeight="bold"
                 style={{ textShadow: '1px 1px 2px rgba(0,0,0,0.8)' }}
               >
@@ -1162,7 +1169,7 @@ export function RemnantsWheelCalendar({ size = 900 }: RemnantsWheelCalendarProps
               {/* Leader name (curved) */}
               <text
                 fill="white"
-                fontSize="8"
+                fontSize="4.5"
                 style={{ textShadow: '1px 1px 2px rgba(0,0,0,0.8)' }}
               >
                 <textPath href={`#${namePathId}`} startOffset="50%" textAnchor="middle">
@@ -1172,7 +1179,7 @@ export function RemnantsWheelCalendar({ size = 900 }: RemnantsWheelCalendarProps
               {/* Representative (curved) */}
               <text
                 fill="hsl(220, 20%, 80%)"
-                fontSize="6"
+                fontSize="4.5"
                 style={{ textShadow: '1px 1px 2px rgba(0,0,0,0.8)' }}
               >
                 <textPath href={`#${repPathId}`} startOffset="50%" textAnchor="middle">
@@ -1225,7 +1232,7 @@ export function RemnantsWheelCalendar({ size = 900 }: RemnantsWheelCalendarProps
                 textAnchor="middle"
                 dominantBaseline="middle"
                 fill="white"
-                fontSize="7"
+                fontSize="3.5"
                 fontWeight={isCurrent ? 'bold' : 'normal'}
               >
                 {part}
@@ -1301,7 +1308,7 @@ export function RemnantsWheelCalendar({ size = 900 }: RemnantsWheelCalendarProps
                   </defs>
                   <text
                     fill="white"
-                    fontSize="8"
+                    fontSize="4.5"
                     fontWeight="bold"
                     style={{ textShadow: '1px 1px 2px rgba(0,0,0,0.8)' }}
                   >
@@ -1337,7 +1344,7 @@ export function RemnantsWheelCalendar({ size = 900 }: RemnantsWheelCalendarProps
             textAnchor="middle"
             dominantBaseline="middle"
             fill={getDayColor(calendarData.dayType)}
-            fontSize="10"
+            fontSize="3.5"
             fontWeight="bold"
           >
             {calendarData.feastName}
@@ -1350,7 +1357,7 @@ export function RemnantsWheelCalendar({ size = 900 }: RemnantsWheelCalendarProps
             textAnchor="middle"
             dominantBaseline="middle"
             fill="hsl(220, 20%, 60%)"
-            fontSize="9"
+            fontSize="6.5"
           >
             {getWeekdayName(calendarData.weekDay)}
           </text>
@@ -1389,7 +1396,7 @@ export function RemnantsWheelCalendar({ size = 900 }: RemnantsWheelCalendarProps
           x={startPoint.x + 10}
           y={startPoint.y}
           fill={COLORS.DAY_OUT_OF_TIME}
-          fontSize="10"
+          fontSize="3.5"
           fontWeight="bold"
         >
           {INFINITY_LEADER.name}
@@ -1398,7 +1405,7 @@ export function RemnantsWheelCalendar({ size = 900 }: RemnantsWheelCalendarProps
           x={startPoint.x + 10}
           y={startPoint.y + 12}
           fill="hsl(263, 50%, 70%)"
-          fontSize="8"
+          fontSize="4.5"
         >
           Day Out of Time
         </text>
@@ -1521,14 +1528,32 @@ export function RemnantsWheelCalendar({ size = 900 }: RemnantsWheelCalendarProps
   return (
     <TooltipProvider>
       <div className="flex flex-col items-center">
+        {/* Magnifier Toggle */}
+        <button
+          onClick={() => {
+            setShowMagnifier(!showMagnifier);
+            if (showMagnifier) setMagnifyPos(null);
+          }}
+          className={`mb-3 flex items-center gap-2 px-4 py-2 rounded-full text-sm font-semibold transition-all ${
+            showMagnifier
+              ? 'bg-primary text-primary-foreground shadow-lg'
+              : 'bg-muted/30 text-muted-foreground hover:bg-muted/50 border border-border/30'
+          }`}
+        >
+          🔍 {showMagnifier ? 'Magnifier ON' : 'Magnifier'}
+        </button>
+
         {/* Main Wheel */}
         <div 
           ref={containerRef}
           className="relative" 
-          style={{ width: size, height: size }}
+          style={{ width: size, height: size, cursor: showMagnifier ? 'none' : 'default' }}
           onMouseMove={handleMouseMove}
+          onMouseEnter={() => { if (showMagnifier) setMagnifyPos({ x: size / 2, y: size / 2 }); }}
+          onMouseLeave={() => setMagnifyPos(null)}
         >
           <svg
+            ref={svgRef}
             width={size}
             height={size}
             viewBox={`0 0 ${size} ${size}`}
@@ -1682,6 +1707,60 @@ export function RemnantsWheelCalendar({ size = 900 }: RemnantsWheelCalendarProps
               </motion.div>
             )}
           </AnimatePresence>
+
+          {/* Magnifying Glass Lens */}
+          {showMagnifier && magnifyPos && svgRef.current && (() => {
+            const lensSize = 180;
+            const zoomLevel = 3;
+            const viewSize = lensSize / zoomLevel;
+            const svgX = magnifyPos.x - viewSize / 2;
+            const svgY = magnifyPos.y - viewSize / 2;
+
+            return (
+              <div
+                className="absolute pointer-events-none z-40"
+                style={{
+                  left: magnifyPos.x - lensSize / 2,
+                  top: magnifyPos.y - lensSize / 2,
+                  width: lensSize,
+                  height: lensSize,
+                }}
+              >
+                <svg
+                  width={lensSize}
+                  height={lensSize}
+                  viewBox={`${svgX} ${svgY} ${viewSize} ${viewSize}`}
+                  className="overflow-hidden"
+                  style={{
+                    borderRadius: '50%',
+                    border: '3px solid hsl(var(--primary))',
+                    boxShadow: '0 0 20px hsl(var(--primary) / 0.4), inset 0 0 10px rgba(0,0,0,0.3)',
+                    backgroundColor: 'hsl(220, 30%, 5%)',
+                  }}
+                >
+                  {/* Re-render the full wheel content inside the magnified view */}
+                  <circle cx={cx} cy={cy} r={size / 2} fill="hsl(220, 30%, 5%)" />
+                  {renderOuterText()}
+                  {renderWheel1MansCount()}
+                  {renderWheel2MonthDays()}
+                  {renderWheel3YHVHCount()}
+                  {renderWheel4Weeks()}
+                  {renderWheel5MonthlyLeaders()}
+                  {renderWheel6SeasonalLeaders()}
+                  {renderWheel7Parts18()}
+                  {renderWheel8Parts4Variable()}
+                  {renderCenter()}
+                </svg>
+                {/* Crosshair */}
+                <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                  <div className="w-px h-6 bg-primary/40" />
+                </div>
+                <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                  <div className="w-6 h-px bg-primary/40" />
+                </div>
+              </div>
+            );
+          })()}
         </div>
 
         {/* Date Info Panel (BELOW the wheels) */}
