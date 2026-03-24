@@ -1,61 +1,35 @@
 import React, { useState, useEffect } from 'react';
 import SunCalc from 'suncalc';
 import { useAuth } from '../hooks/useAuth';
-import { useOrchards } from '../hooks/useOrchards';
 import { useBestowals } from '../hooks/useBestowals.jsx';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Link } from 'react-router-dom';
-import { Sprout, TreePine, Heart, TrendingUp, Users, DollarSign, Plus, Calendar, User, Globe, Clock, MessageSquare, BarChart3, Trophy, Shield, Loader2, Music, Megaphone, Car, Wrench, BookOpen, GraduationCap, Dumbbell, Zap, Radio } from 'lucide-react';
-import { formatCurrency } from '../utils/formatters';
-import LiveTimezoneDisplay from '@/components/dashboard/LiveTimezoneDisplay';
-import WeatherWidget from '@/components/weather/WeatherWidget';
 import { supabase } from "@/integrations/supabase/client";
-import LiveActivityWidget from '@/components/LiveActivityWidget';
-import { GamificationHUD } from '@/components/gamification/GamificationHUD';
-import { SecurityAlertsPanel } from '@/components/security/SecurityAlertsPanel';
 import { getCreatorTime } from '@/utils/customTime';
 import { calculateCreatorDate } from '@/utils/dashboardCalendar';
 import { getDayInfo } from '@/utils/sacredCalendar';
 import { getCurrentTheme } from '@/utils/dashboardThemes';
-import { AmbassadorThumbnail } from '@/components/marketing/AmbassadorThumbnail';
-import { StatsCards } from '@/components/dashboard/StatsCards';
-import { StatsFloatingButton } from '@/components/dashboard/StatsFloatingButton';
-import { TopSowersTeaser } from '@/components/dashboard/TopSowersTeaser';
-import { WalletSetupPrompt } from '@/components/wallet/WalletSetupPrompt';
-import { SowerBalanceCard } from '@/components/wallet/SowerBalanceCard';
-import SecurityQuestionsAlert from '@/components/auth/SecurityQuestionsAlert';
-import { SeedEngagementWidget } from '@/components/dashboard/SeedEngagementWidget';
 import { DashboardSkeleton } from '@/components/dashboard/DashboardSkeleton';
-import { SabbathDashboardBanner } from '@/components/SabbathDashboardBanner';
-import { DailyPlantingTip } from '@/components/garden/DailyPlantingTip';
-import { motion } from 'framer-motion';
+import { SocialFeedDashboard } from '@/components/dashboard/SocialFeedDashboard';
+
 export default function DashboardPage() {
   const [communityUnread, setCommunityUnread] = useState(0);
   const {
     user,
     loading: authLoading
   } = useAuth();
-  // Replaced useOrchards hook to avoid hook dispatcher bug
   const [orchards, setOrchards] = useState([]);
   const [orchardsLoading, setOrchardsLoading] = useState(false);
   const fetchOrchards = async (filters = {}) => {
     try {
       setOrchardsLoading(true);
-      let query = supabase.from('orchards').select(`*`).eq('status', 'active').order('created_at', {
-        ascending: false
-      });
+      let query = supabase.from('orchards').select(`*`).eq('status', 'active').order('created_at', { ascending: false });
       if (filters.category && filters.category !== 'all') {
         query = query.eq('category', filters.category);
       }
       if (filters.search) {
         query = query.or(`title.ilike.%${filters.search}%,description.ilike.%${filters.search}%`);
       }
-      const {
-        data,
-        error: fetchError
-      } = await query;
+      const { data, error: fetchError } = await query;
       if (fetchError) throw fetchError;
       setOrchards(data || []);
     } catch (err) {
@@ -84,15 +58,12 @@ export default function DashboardPage() {
   const [error, setError] = useState(null);
   const [userRoles, setUserRoles] = useState([]);
   const [rolesLoading, setRolesLoading] = useState(false);
-  const isAdminOrGosat = userRoles.includes('admin') || userRoles.includes('gosat');
 
-  // Custom time state for display
   const [currentTime, setCurrentTime] = useState(new Date());
-  const [userLat, setUserLat] = useState(-26.2); // Default: South Africa
-  const [userLon, setUserLon] = useState(28.0); // Default: South Africa
+  const [userLat, setUserLat] = useState(-26.2);
+  const [userLon, setUserLon] = useState(28.0);
   const [calendarData, setCalendarData] = useState(null);
 
-  // Calculate calendar data directly (without CalendarWheel component)
   useEffect(() => {
     const updateCalendarData = () => {
       const now = new Date();
@@ -102,26 +73,13 @@ export default function DashboardPage() {
       const localHour = now.getHours();
       const localMinute = now.getMinutes();
 
-      // Normalize to local noon for sunrise lookup to avoid SunCalc previous-day edge cases.
       const sunriseReferenceDate = new Date(localYear, localMonth, localDate, 12, 0, 0, 0);
       const sunrise = SunCalc.getTimes(sunriseReferenceDate, userLat, userLon).sunrise;
-      const isBeforeSunrise = now < sunrise;
 
       const creatorDate = calculateCreatorDate(now, userLat, userLon);
       const creatorTime = getCreatorTime(now, userLat, userLon);
       const dayInfo = getDayInfo(creatorDate.dayOfYear);
 
-      if (process.env.NODE_ENV === 'development') {
-        console.log(`[Dashboard] ===== SUNRISE CHECK =====`);
-        console.log(`[Dashboard] Current LOCAL time: ${localHour}:${localMinute.toString().padStart(2, '0')}:${now.getSeconds().toString().padStart(2, '0')}`);
-        console.log(`[Dashboard] Sunrise time: ${sunrise.toLocaleTimeString()}`);
-        console.log(`[Dashboard] Is before sunrise? ${isBeforeSunrise}`);
-        console.log(`[Dashboard] Current Gregorian date: ${localYear}-${localMonth + 1}-${localDate}`);
-        console.log(`[Dashboard] Creator date result: Year ${creatorDate.year}, Month ${creatorDate.month}, Day ${creatorDate.day}, Weekday ${creatorDate.weekDay}`);
-        console.log(`[Dashboard] Day of year calculated: ${creatorDate.dayOfYear}`);
-      }
-
-      // Format: YYYY-MM-DDTHH:mm:ss (local time, no timezone)
       const localTimestamp = `${localYear}-${String(localMonth + 1).padStart(2, '0')}-${String(localDate).padStart(2, '0')}T${String(localHour).padStart(2, '0')}:${String(localMinute).padStart(2, '0')}:${String(now.getSeconds()).padStart(2, '0')}`;
       const newCalendarData = {
         year: creatorDate.year,
@@ -134,10 +92,6 @@ export default function DashboardPage() {
         timestamp: localTimestamp,
       };
 
-      if (process.env.NODE_ENV === 'development') {
-        console.log(`[Dashboard] Setting calendar data:`, newCalendarData);
-      }
-
       setCalendarData(newCalendarData);
     };
 
@@ -146,38 +100,22 @@ export default function DashboardPage() {
     return () => clearInterval(interval);
   }, [userLat, userLon]);
 
-  // Theme system - rotates every 2 hours
   const [currentTheme, setCurrentTheme] = useState(getCurrentTheme());
 
-  const primaryButtonTextStyles = {
-    color: '#112033',
-    textShadow: 'none'
-  };
-
-  // Update theme every hour to check for 2-hour rotation
   useEffect(() => {
-    const updateTheme = () => {
-      setCurrentTheme(getCurrentTheme());
-    };
-    updateTheme(); // Initial set
-    const interval = setInterval(updateTheme, 60 * 60 * 1000); // Check every hour
+    const updateTheme = () => setCurrentTheme(getCurrentTheme());
+    updateTheme();
+    const interval = setInterval(updateTheme, 60 * 60 * 1000);
     return () => clearInterval(interval);
   }, []);
 
-  // NOWPayments - no wallet state needed
   useEffect(() => {
     let mounted = true;
     const loadRoles = async () => {
-      if (!user?.id) {
-        setUserRoles([]);
-        return;
-      }
+      if (!user?.id) { setUserRoles([]); return; }
       try {
         setRolesLoading(true);
-        const {
-          data,
-          error
-        } = await supabase.from('user_roles').select('role').eq('user_id', user.id);
+        const { data, error } = await supabase.from('user_roles').select('role').eq('user_id', user.id);
         if (error) throw error;
         if (!mounted) return;
         setUserRoles((data || []).map(r => r.role));
@@ -188,59 +126,42 @@ export default function DashboardPage() {
       }
     };
     loadRoles();
-    return () => {
-      mounted = false;
-    };
+    return () => { mounted = false; };
   }, [user?.id]);
 
-  // Get user location
   useEffect(() => {
     if (navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(position => {
         setUserLat(position.coords.latitude);
         setUserLon(position.coords.longitude);
-      }, () => {
-        console.log('Using default location (South Africa: -26.2°N, 28.0°E)');
-      });
+      }, () => {});
     }
   }, []);
 
-  // Update clock every second
   useEffect(() => {
-    const interval = setInterval(() => {
-      setCurrentTime(new Date());
-    }, 1000);
-
+    const interval = setInterval(() => setCurrentTime(new Date()), 1000);
     return () => clearInterval(interval);
   }, []);
 
-  // Fetch community chat unread count
   useEffect(() => {
     if (!user?.id) return;
     const fetchUnread = async () => {
       try {
-        // Get the community room
         const { data: roomId } = await supabase.rpc('get_or_create_community_room');
         if (!roomId) return;
-
-        // Get user's last_read_at for this room
         const { data: participant } = await supabase
           .from('chat_participants')
           .select('last_read_at')
           .eq('room_id', roomId)
           .eq('user_id', user.id)
           .single();
-
         const lastRead = participant?.last_read_at || '1970-01-01T00:00:00Z';
-
-        // Count messages after last_read_at (excluding own messages)
         const { count } = await supabase
           .from('chat_messages')
           .select('*', { count: 'exact', head: true })
           .eq('room_id', roomId)
           .gt('created_at', lastRead)
           .neq('sender_id', user.id);
-
         setCommunityUnread(count || 0);
       } catch (err) {
         console.error('Error fetching community unread:', err);
@@ -253,109 +174,48 @@ export default function DashboardPage() {
 
   useEffect(() => {
     if (user && !authLoading) {
-      if (process.env.NODE_ENV === 'development') {
-        console.log('🔍 Dashboard: Starting data fetch for user:', user.id);
-      }
       setError(null);
 
-      // Fetch user profile
       const fetchProfile = async () => {
         try {
-          const {
-            data,
-            error
-          } = await supabase.from('profiles').select('id, user_id, display_name, first_name, last_name, avatar_url, bio, location, timezone, preferred_currency, verification_status, has_complete_billing_info, website, tiktok_url, instagram_url, facebook_url, twitter_url, youtube_url, show_social_media, country, is_chatapp_verified, username, created_at, updated_at, suspended') // No email/phone - PII protected
-          .eq('user_id', user.id).maybeSingle();
+          const { data, error } = await supabase.from('profiles')
+            .select('id, user_id, display_name, first_name, last_name, avatar_url, bio, location, timezone, preferred_currency, verification_status, has_complete_billing_info, website, tiktok_url, instagram_url, facebook_url, twitter_url, youtube_url, show_social_media, country, is_chatapp_verified, username, created_at, updated_at, suspended')
+            .eq('user_id', user.id).maybeSingle();
           if (error && error.code !== 'PGRST116') {
-            // Ignore "no rows returned" error
-            const errorMessage = error.message || error.details || error.hint || JSON.stringify(error) || 'Unknown error';
-            console.error('❌ Dashboard: Error fetching profile:', {
-              message: errorMessage,
-              code: error.code,
-              details: error.details,
-              hint: error.hint,
-              fullError: error
-            });
-            setError(`Failed to load profile: ${errorMessage}`);
+            setError(`Failed to load profile: ${error.message || 'Unknown error'}`);
           } else {
             setProfile(data);
-            if (process.env.NODE_ENV === 'development') {
-              console.log('✅ Dashboard: Profile loaded', data ? 'with data' : 'no profile found');
-            }
           }
         } catch (error) {
-          const errorMessage = error?.message || error?.toString() || JSON.stringify(error) || 'Unknown error';
-          console.error('❌ Dashboard: Error fetching profile:', {
-            message: errorMessage,
-            error: error,
-            stack: error?.stack
-          });
-          setError(`Failed to load profile: ${errorMessage}`);
+          setError(`Failed to load profile: ${error?.message || 'Unknown error'}`);
         }
       };
 
-      // Fetch all orchards first (the hook doesn't support user filtering)
       const fetchData = async () => {
-        try {
-          await fetchOrchards();
-          if (process.env.NODE_ENV === 'development') {
-            console.log('✅ Dashboard: Orchards fetched successfully');
-          }
-        } catch (error) {
-          console.error('❌ Dashboard: Error fetching orchards:', error);
-          setError('Failed to load orchards');
-        }
+        try { await fetchOrchards(); } catch (error) { setError('Failed to load orchards'); }
       };
 
-      // Fetch user's bestowals
       const fetchUserBestowals = async () => {
         try {
-          if (process.env.NODE_ENV === 'development') {
-            console.log('🔍 Dashboard: Fetching user bestowals...');
-          }
           const result = await getUserBestowals();
-          if (result.success) {
-            setUserBestowals(result.data);
-            if (process.env.NODE_ENV === 'development') {
-              console.log('✅ Dashboard: Bestowals fetched successfully:', result.data.length);
-            }
-          } else {
-            console.error('❌ Dashboard: Failed to fetch bestowals:', result.error);
-            setUserBestowals([]);
-          }
-        } catch (error) {
-          console.error('❌ Dashboard: Error fetching bestowals:', error);
-          setUserBestowals([]);
-        }
+          if (result.success) setUserBestowals(result.data);
+          else setUserBestowals([]);
+        } catch (error) { setUserBestowals([]); }
       };
 
-      // Execute all data fetching
       Promise.all([fetchProfile(), fetchData(), fetchActiveUsers(), fetchUserBestowals(), fetchFollowerStats(), fetchUnreadMessages()]).catch(err => {
-        console.error('❌ Dashboard: Error in data fetching:', err);
         setError('Failed to load dashboard data');
       });
     }
   }, [user, authLoading]);
+
   const fetchFollowerStats = async () => {
     if (!user?.id) return;
     try {
-      if (process.env.NODE_ENV === 'development') {
-        console.log('🔍 Dashboard: Fetching follower stats...');
-      }
       const sevenDaysAgo = new Date();
       sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
-
-      // Get total followers
-      const {
-        data: followers,
-        error: followersError
-      } = await supabase.from('followers').select('id').eq('following_id', user.id);
-
-      // Get new followers (last 7 days)
-      const {
-        data: newFollowers,
-        error: newFollowersError
-      } = await supabase.from('followers').select('id').eq('following_id', user.id).gte('created_at', sevenDaysAgo.toISOString());
+      const { data: followers, error: followersError } = await supabase.from('followers').select('id').eq('following_id', user.id);
+      const { data: newFollowers, error: newFollowersError } = await supabase.from('followers').select('id').eq('following_id', user.id).gte('created_at', sevenDaysAgo.toISOString());
       if (followersError) throw followersError;
       if (newFollowersError) throw newFollowersError;
       setStats(prev => ({
@@ -363,28 +223,22 @@ export default function DashboardPage() {
         totalFollowers: followers?.length || 0,
         newFollowers: newFollowers?.length || 0
       }));
-      if (process.env.NODE_ENV === 'development') {
-        console.log('✅ Dashboard: Followers:', followers?.length || 0, 'New:', newFollowers?.length || 0);
-      }
     } catch (error) {
-      console.error('❌ Dashboard: Error fetching follower stats:', error);
+      console.error('Error fetching follower stats:', error);
     }
   };
+
   const fetchUnreadMessages = async () => {
     if (!user?.id) return;
     try {
-      // Get rooms user is a participant of, including last_read_at
       const { data: participantRooms } = await supabase
         .from('chat_participants')
         .select('room_id, joined_at, last_read_at')
         .eq('user_id', user.id)
         .eq('is_active', true);
-
       if (!participantRooms?.length) return;
-
       let totalUnread = 0;
       for (const room of participantRooms) {
-        // Count messages newer than last_read_at (or joined_at as fallback)
         const since = room.last_read_at || room.joined_at;
         const { count } = await supabase
           .from('chat_messages')
@@ -394,67 +248,29 @@ export default function DashboardPage() {
           .gt('created_at', since);
         totalUnread += (count || 0);
       }
-
       setUnreadMessages(totalUnread);
     } catch (error) {
       console.error('Error fetching unread messages:', error);
     }
   };
+
   const fetchActiveUsers = async () => {
     try {
-      if (process.env.NODE_ENV === 'development') {
-        console.log('🔍 Dashboard: Fetching active users...');
-      }
-      // Get active users (users who have been active in the last 30 days)
       const thirtyDaysAgo = new Date();
       thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-      if (process.env.NODE_ENV === 'development') {
-        console.log('📅 Dashboard: Looking for activity since:', thirtyDaysAgo.toISOString());
-      }
-
-      // Get users who created orchards in last 30 days
-      const {
-        data: orchardUsers,
-        error: orchardError
-      } = await supabase.from('orchards').select('user_id').gte('created_at', thirtyDaysAgo.toISOString());
-      if (process.env.NODE_ENV === 'development') {
-        console.log('🌳 Dashboard: Orchard users:', orchardUsers?.length || 0, orchardError);
-      }
-
-      // Get users who made bestowals in last 30 days
-      const {
-        data: bestowalUsers,
-        error: bestowalError
-      } = await supabase.from('bestowals').select('bestower_id').gte('created_at', thirtyDaysAgo.toISOString());
-      if (process.env.NODE_ENV === 'development') {
-        console.log('💝 Dashboard: Bestowal users:', bestowalUsers?.length || 0, bestowalError);
-      }
-
-      // Get users who sent messages in last 30 days
-      const {
-        data: messageUsers,
-        error: messageError
-      } = await supabase.from('chat_messages').select('sender_id').gte('created_at', thirtyDaysAgo.toISOString());
-      if (process.env.NODE_ENV === 'development') {
-        console.log('💬 Dashboard: Message users:', messageUsers?.length || 0, messageError);
-      }
-
-      // Combine all unique user IDs
+      const { data: orchardUsers } = await supabase.from('orchards').select('user_id').gte('created_at', thirtyDaysAgo.toISOString());
+      const { data: bestowalUsers } = await supabase.from('bestowals').select('bestower_id').gte('created_at', thirtyDaysAgo.toISOString());
+      const { data: messageUsers } = await supabase.from('chat_messages').select('sender_id').gte('created_at', thirtyDaysAgo.toISOString());
       const activeUserIds = new Set([...(orchardUsers?.map(u => u.user_id) || []), ...(bestowalUsers?.map(u => u.bestower_id) || []), ...(messageUsers?.map(u => u.sender_id) || [])]);
-      if (process.env.NODE_ENV === 'development') {
-        console.log('👥 Dashboard: Total active users:', activeUserIds.size);
-      }
       setActiveUsers(activeUserIds.size);
     } catch (error) {
-      console.error('❌ Dashboard: Error fetching active users:', error);
+      console.error('Error fetching active users:', error);
     }
   };
+
   useEffect(() => {
-    // Filter user's orchards
     const userCreatedOrchards = orchards.filter(orchard => orchard.user_id === user?.id);
     setUserOrchards(userCreatedOrchards);
-
-    // Calculate stats
     const totalRaised = userCreatedOrchards.reduce((sum, orchard) => sum + (orchard.filled_pockets * orchard.pocket_price || 0), 0);
     setStats(prev => ({
       ...prev,
@@ -465,475 +281,34 @@ export default function DashboardPage() {
     }));
   }, [orchards, userBestowals, user]);
 
-  // Show loading screen while auth is loading or data is loading
   if (authLoading || orchardsLoading || bestowalsLoading) {
-    if (process.env.NODE_ENV === 'development') {
-      console.log('🔄 Dashboard: Loading state - auth:', authLoading, 'orchards:', orchardsLoading, 'bestowals:', bestowalsLoading);
-    }
     return <DashboardSkeleton />;
   }
 
-  // Show error state if there's an error
   if (error) {
     const theme = getCurrentTheme();
-    return <div className="min-h-screen flex items-center justify-center" style={{
-      background: theme.background
-    }}>
-        <div className="text-center backdrop-blur-xl rounded-2xl p-8 border" style={{
-        backgroundColor: theme.cardBg,
-        borderColor: theme.cardBorder
-      }}>
-          <p className="mb-4" style={{
-          color: theme.textPrimary
-        }}>{error}</p>
-          <Button onClick={() => window.location.reload()} style={{
-          background: theme.primaryButton,
-          color: theme.textPrimary
-        }}>
+    return (
+      <div className="min-h-screen flex items-center justify-center" style={{ background: theme.background }}>
+        <div className="text-center backdrop-blur-xl rounded-2xl p-8 border" style={{ backgroundColor: theme.cardBg, borderColor: theme.cardBorder }}>
+          <p className="mb-4" style={{ color: theme.textPrimary }}>{error}</p>
+          <Button onClick={() => window.location.reload()} style={{ background: theme.primaryButton, color: theme.textPrimary }}>
             Retry
           </Button>
         </div>
-      </div>;
+      </div>
+    );
   }
-  // Staggered animation helper
-  const sectionVariants = {
-    hidden: { opacity: 0, y: 20 },
-    visible: (i) => ({
-      opacity: 1,
-      y: 0,
-      transition: { delay: i * 0.1, duration: 0.4, ease: 'easeOut' }
-    })
-  };
 
-  return <div className="min-h-screen relative" style={{
-    background: currentTheme.background
-  }}>
-      {/* Content wrapper */}
-      <div className="relative z-10">
-        {/* Security Questions Alert */}
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 md:px-8 pt-4">
-          <SecurityQuestionsAlert />
-          <SabbathDashboardBanner />
-        </div>
-        
-        {/* Welcome Section with Profile Picture - Mobile Responsive */}
-        <motion.div custom={0} variants={sectionVariants} initial="hidden" animate="visible">
-        <div className="max-w-4xl mx-auto p-4 sm:p-6 md:p-8 rounded-xl sm:rounded-2xl border shadow-xl sm:shadow-2xl mb-4 sm:mb-6 md:mb-8 mt-2 sm:mt-4 backdrop-blur-xl" style={{
-        backgroundColor: currentTheme.cardBg,
-        borderColor: currentTheme.cardBorder,
-        boxShadow: `0 20px 25px -5px ${currentTheme.shadow}, 0 10px 10px -5px ${currentTheme.shadow}`,
-        position: 'relative',
-        zIndex: 1
-      }}>
-          {/* User Icon and Info - Side by Side */}
-          <div className="flex flex-col gap-4 w-full">
-            {/* Top Section: User Icon and Welcome Info */}
-            <div className="flex items-center gap-4 sm:gap-6">
-              {/* User Icon with gradient ring */}
-              <div className="relative flex-shrink-0">
-                <div className="w-16 h-16 sm:w-18 sm:h-18 md:w-20 md:h-20 rounded-full p-[3px]" style={{
-                  background: `linear-gradient(135deg, ${currentTheme.accent}, ${currentTheme.accent}88, ${currentTheme.accent})`,
-                }}>
-                  <div className="w-full h-full rounded-full overflow-hidden border-2 border-black/20">
-                    {user?.avatar_url ? <img src={user.avatar_url} alt="Profile" className="w-full h-full object-cover" /> : <div className="w-full h-full flex items-center justify-center" style={{
-                    background: currentTheme.primaryButton
-                  }}>
-                        <User className="h-6 w-6 sm:h-8 sm:w-8 md:h-10 md:w-10" style={{
-                      color: currentTheme.textPrimary
-                    }} />
-                      </div>}
-                  </div>
-                </div>
-              </div>
-              
-              {/* Welcome Message - Next to Icon */}
-              <div className="min-w-0 flex-1">
-                <h1 className="text-lg sm:text-xl md:text-2xl lg:text-3xl font-bold truncate" style={{
-                color: currentTheme.textPrimary
-              }}>
-                  Welcome back, {profile?.first_name || profile?.display_name || 'Friend'}!
-                </h1>
-                <p className="text-sm sm:text-base md:text-lg" style={{
-                color: currentTheme.textSecondary
-              }}>
-                  Ready to grow your orchard today?
-                </p>
-                <div className="flex items-center gap-2 mt-1 flex-wrap">
-                  <p className="text-xs sm:text-sm" style={{
-                  color: currentTheme.textSecondary
-                }}>
-                    Payment Method:
-                  </p>
-                  <Badge className="text-[10px] sm:text-xs px-2 py-0.5 rounded-full font-semibold" style={{ backgroundColor: currentTheme.accent + '25', color: currentTheme.accent, border: `1px solid ${currentTheme.accent}50` }}>
-                    USDC
-                  </Badge>
-                  <span className="text-xs sm:text-sm font-semibold flex items-center gap-1" style={{
-                    color: currentTheme.accent
-                  }}>
-                    <Users className="h-3 w-3 sm:h-4 sm:w-4" />
-                    {stats.totalFollowers} {stats.totalFollowers === 1 ? 'Follower' : 'Followers'}
-                    {stats.newFollowers > 0 && (
-                      <Badge className="ml-1 text-[10px] px-1.5 py-0" style={{ backgroundColor: currentTheme.accent + '30', color: currentTheme.accent }}>
-                        +{stats.newFollowers} new
-                      </Badge>
-                    )}
-                    </span>
-                    {unreadMessages > 0 && (
-                      <Link to="/communications-hub" className="text-xs sm:text-sm font-semibold flex items-center gap-1 no-underline" style={{ color: '#3b82f6' }}>
-                        <MessageSquare className="h-3 w-3 sm:h-4 sm:w-4" />
-                        {unreadMessages} new {unreadMessages === 1 ? 'message' : 'messages'}
-                      </Link>
-                    )}
-                  </div>
-              </div>
-            </div>
-
-            {/* Divider Line */}
-            <div className="w-full border-t my-4" style={{
-            borderColor: currentTheme.textSecondary + '40'
-          }}></div>
-
-            {/* Calendar Info Text - Centered */}
-            {calendarData && <div className="w-full space-y-2 text-center tracking-wide" style={{
-            color: currentTheme.accent
-          }}>
-                <div className="text-lg sm:text-xl font-bold tracking-wide">
-                  Year {calendarData.year} • Month {calendarData.month} • Day {calendarData.dayOfMonth}
-                </div>
-                <div className="text-sm sm:text-base" style={{ color: currentTheme.textSecondary }}>
-                  Weekday {calendarData.weekday} • Part {calendarData.part}/18
-                </div>
-                <div className="text-xs sm:text-sm opacity-80" style={{ color: currentTheme.textSecondary }}>
-                  Day {calendarData.dayOfYear} of 364 • {calendarData.season}
-                </div>
-                <div className="text-xs font-mono opacity-60" style={{ color: currentTheme.textSecondary }}>
-                  {currentTime.toLocaleString(undefined, {
-                weekday: 'long',
-                year: 'numeric',
-                month: 'long',
-                day: 'numeric',
-                hour: '2-digit',
-                minute: '2-digit',
-                second: '2-digit'
-              })}
-                </div>
-                <div className="text-xs opacity-50 italic mt-2" style={{ color: currentTheme.textSecondary }}>
-                  Creator's wheels never lie • forever in sync
-                </div>
-              </div>}
-          </div>
-        </div>
-        </motion.div>
-      </div>
-
-      <div className="max-w-7xl mx-auto px-3 sm:px-4 md:px-6 lg:px-8 py-4 sm:py-6 md:py-8 pb-24 sm:pb-16">
-        {/* Wallet Setup Prompt Banner */}
-        <motion.div custom={1} variants={sectionVariants} initial="hidden" animate="visible" className="mb-6">
-          <WalletSetupPrompt variant="card" />
-        </motion.div>
-
-        {/* My Earnings Balance Card */}
-        <motion.div custom={2} variants={sectionVariants} initial="hidden" animate="visible" className="mb-6">
-          <SowerBalanceCard compact />
-        </motion.div>
-
-        {/* Addictive Stats Cards */}
-        <motion.div custom={3} variants={sectionVariants} initial="hidden" animate="visible" className="mb-6">
-          <StatsCards theme={currentTheme} />
-        </motion.div>
-
-        {/* Top Sowers Teaser */}
-        <motion.div custom={4} variants={sectionVariants} initial="hidden" animate="visible" className="mb-6">
-          <TopSowersTeaser theme={currentTheme} />
-        </motion.div>
-
-        {/* Seed Engagement - Loves & Comments */}
-        <motion.div custom={5} variants={sectionVariants} initial="hidden" animate="visible" className="mb-6">
-          <SeedEngagementWidget theme={currentTheme} />
-        </motion.div>
-
-        <motion.div custom={6} variants={sectionVariants} initial="hidden" animate="visible">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 md:gap-8">
-
-          {/* Global Timezone Support */}
-          <Card className="lg:col-span-1 border shadow-xl timezone-tour backdrop-blur-xl" style={{
-          backgroundColor: currentTheme.cardBg,
-          borderColor: currentTheme.cardBorder
-        }}>
-            <CardHeader className="p-4 sm:p-5 md:p-6">
-              <CardTitle className="flex items-center text-base sm:text-lg" style={{
-              color: currentTheme.textPrimary
-            }}>
-                <Globe className="h-4 w-4 sm:h-5 sm:w-5 mr-2" style={{
-                color: currentTheme.accent
-              }} />
-                Global Time Zones
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="p-4 sm:p-5 md:p-6 pt-0">
-              <LiveTimezoneDisplay />
-              <div className="mt-3 sm:mt-4 pt-2 sm:pt-3 border-t" style={{
-              borderColor: currentTheme.cardBorder
-            }}>
-                <Link to="/grove-station">
-                  <button className="w-full inline-flex items-center justify-center whitespace-nowrap rounded-full border-2 px-4 py-2 text-sm sm:text-base font-medium transition-all duration-200 shadow-sm disabled:pointer-events-none disabled:opacity-50" style={{
-                  color: currentTheme.textPrimary,
-                  borderColor: currentTheme.accent,
-                  backgroundColor: currentTheme.secondaryButton
-                }} onMouseEnter={e => {
-                  e.currentTarget.style.backgroundColor = currentTheme.accent;
-                  e.currentTarget.style.borderColor = currentTheme.accent;
-                  e.currentTarget.style.color = currentTheme.textPrimary;
-                }} onMouseLeave={e => {
-                  e.currentTarget.style.backgroundColor = currentTheme.secondaryButton;
-                  e.currentTarget.style.borderColor = currentTheme.accent;
-                  e.currentTarget.style.color = currentTheme.textPrimary;
-                }}>
-                    <Clock className="h-3 w-3 sm:h-4 sm:w-4 mr-2" />
-                    View Radio Schedule
-                  </button>
-                </Link>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Weather Widget */}
-          <Card className="lg:col-span-1 border shadow-xl backdrop-blur-xl" style={{
-            backgroundColor: currentTheme.cardBg,
-            borderColor: currentTheme.cardBorder
-          }}>
-            <CardHeader className="p-4 sm:p-5 md:p-6">
-              <CardTitle className="flex items-center text-base sm:text-lg" style={{
-                color: currentTheme.textPrimary
-              }}>
-                <span className="text-xl mr-2">🌤️</span>
-                Weather
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="p-4 sm:p-5 md:p-6 pt-0">
-              <WeatherWidget compact />
-              <div className="mt-3 sm:mt-4 pt-2 sm:pt-3 border-t" style={{
-                borderColor: currentTheme.cardBorder
-              }}>
-                <Link to="/weather">
-                  <button className="w-full inline-flex items-center justify-center whitespace-nowrap rounded-full border-2 px-4 py-2 text-sm sm:text-base font-medium transition-all duration-200 shadow-sm" style={{
-                    color: currentTheme.textPrimary,
-                    borderColor: currentTheme.accent,
-                    backgroundColor: currentTheme.secondaryButton
-                  }} onMouseEnter={e => {
-                    e.currentTarget.style.backgroundColor = currentTheme.accent;
-                    e.currentTarget.style.borderColor = currentTheme.accent;
-                    e.currentTarget.style.color = currentTheme.textPrimary;
-                  }} onMouseLeave={e => {
-                    e.currentTarget.style.backgroundColor = currentTheme.secondaryButton;
-                    e.currentTarget.style.borderColor = currentTheme.accent;
-                    e.currentTarget.style.color = currentTheme.textPrimary;
-                  }}>
-                    🌦️ View Full Weather
-                  </button>
-                </Link>
-              </div>
-              {/* Daily Planting Tip */}
-              <DailyPlantingTip currentTheme={currentTheme} />
-            </CardContent>
-          </Card>
-        </div>
-        </motion.div>
-
-
-        {/* GoSat Ghost Access removed from public dashboard - access via Admin Dashboard only */}
-
-        {/* Quick Actions */}
-        <motion.div custom={7} variants={sectionVariants} initial="hidden" animate="visible">
-        <Card className="mt-4 sm:mt-6 md:mt-8 border shadow-xl quick-actions-tour backdrop-blur-xl" style={{
-        backgroundColor: currentTheme.cardBg,
-        borderColor: currentTheme.cardBorder
-      }}>
-          <CardHeader className="p-4 sm:p-5 md:p-6">
-            <CardTitle className="text-base sm:text-lg" style={{
-            color: currentTheme.textPrimary
-          }}>Quick Actions</CardTitle>
-          </CardHeader>
-          <CardContent className="p-4 sm:p-5 md:p-6 pt-0 space-y-6">
-            
-            {/* CREATE & MANAGE Section - Compact icon-chip grid */}
-            <div>
-              <h3 className="font-semibold tracking-wider mb-3 flex items-center gap-2 text-sm" style={{
-              color: currentTheme.textSecondary
-            }}>
-                Create & Manage
-              </h3>
-              <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
-                {[
-                  { to: '/create-orchard', icon: Plus, label: 'Plant Seed' },
-                  { to: '/browse-orchards', icon: TreePine, label: 'Orchards' },
-                  { to: '/community-chat', icon: MessageSquare, label: 'New Chat' },
-                  { to: '/create-session?type=classroom', icon: GraduationCap, label: 'Classroom' },
-                  { to: '/create-session?type=training', icon: Dumbbell, label: 'Training' },
-                  { to: '/create-session?type=skilldrop', icon: Zap, label: 'SkillDrop' },
-                  { to: '/create-session?type=radio', icon: Radio, label: 'Radio' },
-                  { to: '/profile', icon: User, label: 'My Profile', isProfile: true },
-                ].map(({ to, icon: Icon, label, isProfile }) => (
-                  <Link key={to} to={to}>
-                    <Button className="w-full h-11 rounded-xl border shadow-md hover:shadow-lg transition-all duration-300 hover:-translate-y-0.5 px-3 gap-2 !text-slate-900 [&_svg]:!text-slate-900" style={{
-                      background: currentTheme.primaryButton,
-                      ...primaryButtonTextStyles,
-                      borderColor: currentTheme.cardBorder
-                    }}>
-                      {isProfile && user?.avatar_url ? (
-                        <img src={user.avatar_url} alt="Profile" className="w-4 h-4 rounded-full border" style={{ borderColor: 'currentColor' }} />
-                      ) : (
-                        <Icon className="h-4 w-4 shrink-0" />
-                      )}
-                      <span className="text-xs font-bold truncate">{label}</span>
-                    </Button>
-                  </Link>
-                ))}
-              </div>
-              {/* Sub-links row */}
-              <div className="grid grid-cols-2 gap-2 mt-2">
-                {[
-                  { to: '/364yhvh-orchards', label: '364YHVH Orchards' },
-                  { to: '/my-s2g-tribe', label: '🌊 My S2G Tribe' },
-                ].map(({ to, label }) => (
-                  <Link key={to} to={to}>
-                    <Button className="w-full h-11 rounded-xl border shadow-md hover:shadow-lg transition-all duration-300 hover:-translate-y-0.5 px-3 gap-2 !text-slate-900 [&_svg]:!text-slate-900" style={{
-                      background: currentTheme.primaryButton,
-                      ...primaryButtonTextStyles,
-                      borderColor: currentTheme.cardBorder
-                    }}>
-                      <span className="text-xs font-bold truncate">{label}</span>
-                    </Button>
-                  </Link>
-                ))}
-              </div>
-            </div>
-
-            {/* EXPLORE Section */}
-            <div>
-              <h3 className="text-sm font-semibold tracking-wider mb-3 flex items-center gap-2" style={{
-              color: currentTheme.textSecondary
-            }}>
-                <span className="w-6 h-0.5 rounded" style={{
-                backgroundColor: currentTheme.accent
-              }}></span>
-                Explore
-              </h3>
-              <div className="grid grid-cols-3 gap-2 sm:gap-3">
-                {/* Community ChatApp */}
-                <Link to="/community-chat" className="relative">
-                  <Button className="w-full h-14 sm:h-16 rounded-2xl border shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105 font-medium text-xs sm:text-sm" style={{
-                  background: 'linear-gradient(135deg, #f97316 0%, #ea580c 100%)',
-                  color: '#fff',
-                  borderColor: '#f97316',
-                  textShadow: '-0.3px -0.3px 0 #000, 0.3px -0.3px 0 #000, -0.3px 0.3px 0 #000, 0.3px 0.3px 0 #000'
-                }}>
-                    <div className="text-center">
-                      <MessageSquare className="h-4 w-4 sm:h-5 sm:w-5 mx-auto mb-1" />
-                      <span>Community ChatApp</span>
-                    </div>
-                  </Button>
-                  {communityUnread > 0 && (
-                    <span className="absolute -top-2 -right-2 bg-red-500 text-white text-[10px] font-bold rounded-full min-w-[20px] h-5 flex items-center justify-center px-1 shadow-lg z-10">
-                      {communityUnread > 99 ? '99+' : communityUnread}
-                    </span>
-                  )}
-                </Link>
-
-                {/* 364ttt - Torah Top Ten */}
-                <Link to="/364ttt">
-                  <Button className="w-full h-14 sm:h-16 rounded-2xl border shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105 font-medium text-xs sm:text-sm" style={{
-                  background: 'linear-gradient(135deg, #7c3aed 0%, #a855f7 100%)',
-                  color: '#fff',
-                  borderColor: '#8b5cf6',
-                  textShadow: '-0.3px -0.3px 0 #000, 0.3px -0.3px 0 #000, -0.3px 0.3px 0 #000, 0.3px 0.3px 0 #000'
-                }}>
-                    <div className="text-center">
-                      <Music className="h-4 w-4 sm:h-5 sm:w-5 mx-auto mb-1" />
-                      <span>364 Torah Top Ten</span>
-                    </div>
-                  </Button>
-                </Link>
-
-                {/* Journal & Calendar */}
-                <Link to="/profile?tab=journal">
-                  <Button className="w-full h-14 sm:h-16 rounded-2xl border shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105 font-medium text-xs sm:text-sm" style={{
-                  background: 'linear-gradient(135deg, #6366f1, #8b5cf6)',
-                  borderColor: '#0A1931',
-                  color: 'white',
-                  textShadow: '-0.3px -0.3px 0 #000, 0.3px -0.3px 0 #000, -0.3px 0.3px 0 #000, 0.3px 0.3px 0 #000'
-                }}>
-                    <div className="text-center">
-                      <BookOpen className="h-4 w-4 sm:h-5 sm:w-5 mx-auto mb-1" />
-                      <span>Journal & Calendar</span>
-                    </div>
-                  </Button>
-                </Link>
-              </div>
-            </div>
-
-            {/* JOIN OUR TEAM Section */}
-            <div>
-              <h3 className="text-sm font-semibold tracking-wider mb-3 flex items-center gap-2" style={{
-              color: currentTheme.textSecondary
-            }}>
-                <span className="w-6 h-0.5 rounded" style={{
-                backgroundColor: currentTheme.accent
-              }}></span>
-                Join Our Team
-              </h3>
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
-                {/* Become a Whisperer */}
-                <Link to="/become-whisperer">
-                  <Button className="w-full h-16 sm:h-20 rounded-2xl border shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-1 font-medium !text-slate-900 [&_svg]:!text-slate-900" style={{
-                  background: currentTheme.primaryButton,
-                  ...primaryButtonTextStyles,
-                  borderColor: currentTheme.accent
-                }}>
-                    <div className="text-center">
-                      <Megaphone className="h-5 w-5 sm:h-6 sm:w-6 mx-auto mb-1 sm:mb-2" />
-                      <span className="text-sm sm:text-base">Become a Whisperer</span>
-                    </div>
-                  </Button>
-                </Link>
-
-                {/* Become a S2G Driver */}
-                <Link to="/register-vehicle">
-                  <Button className="w-full h-16 sm:h-20 rounded-2xl border shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-1 font-medium" style={{
-                  background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
-                  color: '#fff',
-                  borderColor: '#10b981',
-                  textShadow: '-0.3px -0.3px 0 #000, 0.3px -0.3px 0 #000, -0.3px 0.3px 0 #000, 0.3px 0.3px 0 #000'
-                }}>
-                    <div className="text-center">
-                      <Car className="h-5 w-5 sm:h-6 sm:w-6 mx-auto mb-1 sm:mb-2" />
-                      <span className="text-sm sm:text-base">Become a S2G Driver</span>
-                    </div>
-                  </Button>
-                </Link>
-
-                {/* Become a S2G Service Provider */}
-                <Link to="/register-services">
-                  <Button className="w-full h-16 sm:h-20 rounded-2xl border shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-1 font-medium" style={{
-                  background: 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)',
-                  color: '#fff',
-                  borderColor: '#f59e0b',
-                  textShadow: '-0.3px -0.3px 0 #000, 0.3px -0.3px 0 #000, -0.3px 0.3px 0 #000, 0.3px 0.3px 0 #000'
-                }}>
-                    <div className="text-center">
-                      <Wrench className="h-5 w-5 sm:h-6 sm:w-6 mx-auto mb-1 sm:mb-2" />
-                      <span className="text-sm sm:text-base">Become a S2G Service Provider</span>
-                    </div>
-                  </Button>
-                </Link>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-        </motion.div>
-      </div>
-      
-      {/* Live Activities Bottom Bar */}
-      <StatsFloatingButton theme={currentTheme} />
-    </div>;
+  return (
+    <SocialFeedDashboard
+      profile={profile}
+      calendarData={calendarData}
+      stats={stats}
+      unreadMessages={unreadMessages}
+      communityUnread={communityUnread}
+      currentTheme={currentTheme}
+      currentTime={currentTime}
+      user={user}
+    />
+  );
 }
