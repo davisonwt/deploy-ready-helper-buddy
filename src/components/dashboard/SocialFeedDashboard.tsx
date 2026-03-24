@@ -201,17 +201,17 @@ export const SocialFeedDashboard: React.FC<SocialFeedDashboardProps> = ({
     children: (
       <div className="grid grid-cols-3 gap-2">
         <Link to="/364ttt">
-          <Button size="sm" className="w-full rounded-xl text-[10px] font-bold gap-1 h-10" variant="secondary">
+          <Button size="sm" className="w-full rounded-xl text-[10px] font-bold gap-1 h-10 border-0" style={{ background: currentTheme.accent, color: currentTheme.textPrimary }}>
             <Music className="w-3.5 h-3.5" /> 364 TTT
           </Button>
         </Link>
         <Link to="/profile?tab=journal">
-          <Button size="sm" className="w-full rounded-xl text-[10px] font-bold gap-1 h-10" variant="secondary">
+          <Button size="sm" className="w-full rounded-xl text-[10px] font-bold gap-1 h-10 border-0" style={{ background: currentTheme.accent, color: currentTheme.textPrimary }}>
             <BookOpen className="w-3.5 h-3.5" /> Journal
           </Button>
         </Link>
         <Link to="/communications-hub">
-          <Button size="sm" className="w-full rounded-xl text-[10px] font-bold gap-1 h-10" variant="secondary">
+          <Button size="sm" className="w-full rounded-xl text-[10px] font-bold gap-1 h-10 border-0" style={{ background: currentTheme.accent, color: currentTheme.textPrimary }}>
             <MessageSquare className="w-3.5 h-3.5" /> Hub
           </Button>
         </Link>
