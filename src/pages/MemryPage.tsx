@@ -5,7 +5,7 @@ import {
   Camera, Video, ChefHat, X, Send, Bookmark, Play, Pause,
   MoreHorizontal, Music, Volume2, VolumeX, DollarSign, Gift,
   ArrowLeft, ChevronUp, ChevronDown, ChevronLeft, ChevronRight, Sparkles, ShoppingBag, Trees, Book,
-  UserPlus, UserCheck, MessageSquare
+  UserPlus, UserCheck, MessageSquare, TrendingUp, Flame
 } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
