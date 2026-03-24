@@ -27,7 +27,7 @@ function GardenFeedCard({
       className="rounded-2xl overflow-hidden border"
       style={{ 
         background: theme.cardBg, 
-        borderColor: theme.border 
+        borderColor: theme.cardBorder 
       }}
     >
       <button
@@ -216,7 +216,7 @@ export function MyGardenPanel({ isOpen, onClose }: MyGardenPanelProps) {
               const inner = (
                 <div
                   className="flex flex-col items-center justify-center rounded-2xl py-3 px-2 text-center transition-transform active:scale-95"
-                  style={{ background: theme.cardBg, border: `1px solid ${theme.border}` }}
+                  style={{ background: theme.cardBg, border: `1px solid ${theme.cardBorder}` }}
                 >
                   <span className="text-2xl mb-1">{action.icon}</span>
                   <span className="text-[10px] font-semibold leading-tight whitespace-pre-line" style={{ color: theme.textPrimary }}>
@@ -309,7 +309,7 @@ export function MyGardenPanel({ isOpen, onClose }: MyGardenPanelProps) {
             <button
               onClick={() => { launchSparkles(); navigate('/products'); closeGarden() }}
               className="flex-1 py-3 rounded-xl text-sm font-semibold transition-transform active:scale-95"
-              style={{ background: theme.cardBg, border: `1px solid ${theme.border}`, color: theme.textPrimary }}
+              style={{ background: theme.cardBg, border: `1px solid ${theme.cardBorder}`, color: theme.textPrimary }}
             >
               ✨ Surprise Me
             </button>
