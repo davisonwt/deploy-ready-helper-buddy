@@ -1706,6 +1706,60 @@ export function RemnantsWheelCalendar({ size = 900 }: RemnantsWheelCalendarProps
               </motion.div>
             )}
           </AnimatePresence>
+
+          {/* Magnifying Glass Lens */}
+          {showMagnifier && magnifyPos && svgRef.current && (() => {
+            const lensSize = 180;
+            const zoomLevel = 3;
+            const viewSize = lensSize / zoomLevel;
+            const svgX = magnifyPos.x - viewSize / 2;
+            const svgY = magnifyPos.y - viewSize / 2;
+
+            return (
+              <div
+                className="absolute pointer-events-none z-40"
+                style={{
+                  left: magnifyPos.x - lensSize / 2,
+                  top: magnifyPos.y - lensSize / 2,
+                  width: lensSize,
+                  height: lensSize,
+                }}
+              >
+                <svg
+                  width={lensSize}
+                  height={lensSize}
+                  viewBox={`${svgX} ${svgY} ${viewSize} ${viewSize}`}
+                  className="overflow-hidden"
+                  style={{
+                    borderRadius: '50%',
+                    border: '3px solid hsl(var(--primary))',
+                    boxShadow: '0 0 20px hsl(var(--primary) / 0.4), inset 0 0 10px rgba(0,0,0,0.3)',
+                    backgroundColor: 'hsl(220, 30%, 5%)',
+                  }}
+                >
+                  {/* Re-render the full wheel content inside the magnified view */}
+                  <circle cx={cx} cy={cy} r={size / 2} fill="hsl(220, 30%, 5%)" />
+                  {renderOuterText()}
+                  {renderWheel1MansCount()}
+                  {renderWheel2MonthDays()}
+                  {renderWheel3YHVHCount()}
+                  {renderWheel4Weeks()}
+                  {renderWheel5MonthlyLeaders()}
+                  {renderWheel6SeasonalLeaders()}
+                  {renderWheel7Parts18()}
+                  {renderWheel8Parts4Variable()}
+                  {renderCenter()}
+                </svg>
+                {/* Crosshair */}
+                <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                  <div className="w-px h-6 bg-primary/40" />
+                </div>
+                <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                  <div className="w-6 h-px bg-primary/40" />
+                </div>
+              </div>
+            );
+          })()}
         </div>
 
         {/* Date Info Panel (BELOW the wheels) */}
