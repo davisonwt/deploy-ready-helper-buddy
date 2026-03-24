@@ -340,7 +340,7 @@ const Month1Strand = ({ dayOfMonth, year, currentMonth, currentDayOfMonth }: { d
                   transform: 'translateZ(30px)'
                 }}
               >
-                <span className="text-xs font-extrabold relative z-10" style={{ color: "#fbbf24", textShadow: "0 1px 3px rgba(0,0,0,0.9), 0 0 6px rgba(0,0,0,0.7)" }}>
+                <span className="text-xs font-extrabold relative z-10" style={{ color: "#fef3c7", textShadow: "0 1px 3px rgba(0,0,0,0.95), 0 0 8px rgba(0,0,0,0.85)", WebkitTextStroke: "0.7px rgba(0,0,0,0.95)" }}>
                   {bead.displayNumber}
                 </span>
                 
@@ -423,7 +423,7 @@ const Month1Strand = ({ dayOfMonth, year, currentMonth, currentDayOfMonth }: { d
                   transform: 'translateZ(30px)'
                 }}
               >
-                <span className="text-xs font-extrabold relative z-10" style={{ color: "#fbbf24", textShadow: "0 1px 3px rgba(0,0,0,0.9), 0 0 6px rgba(0,0,0,0.7)" }}>
+                <span className="text-xs font-extrabold relative z-10" style={{ color: "#fef3c7", textShadow: "0 1px 3px rgba(0,0,0,0.95), 0 0 8px rgba(0,0,0,0.85)", WebkitTextStroke: "0.7px rgba(0,0,0,0.95)" }}>
                   {bead.displayNumber}
                 </span>
                 
@@ -711,7 +711,7 @@ const Month2Strand = ({ dayOfMonth, year }: { dayOfMonth: number; year: number }
               }}
 
             >
-              <span className="text-xs font-extrabold relative z-10" style={{ color: "#fbbf24", textShadow: "0 1px 3px rgba(0,0,0,0.9), 0 0 6px rgba(0,0,0,0.7)" }}>
+              <span className="text-xs font-extrabold relative z-10" style={{ color: "#fef3c7", textShadow: "0 1px 3px rgba(0,0,0,0.95), 0 0 8px rgba(0,0,0,0.85)", WebkitTextStroke: "0.7px rgba(0,0,0,0.95)" }}>
                 {bead.day}
               </span>
             </div>
@@ -826,7 +826,7 @@ const Month2Strand = ({ dayOfMonth, year }: { dayOfMonth: number; year: number }
               }}
 
             >
-              <span className="text-xs font-extrabold relative z-10" style={{ color: "#fbbf24", textShadow: "0 1px 3px rgba(0,0,0,0.9), 0 0 6px rgba(0,0,0,0.7)" }}>
+              <span className="text-xs font-extrabold relative z-10" style={{ color: "#fef3c7", textShadow: "0 1px 3px rgba(0,0,0,0.95), 0 0 8px rgba(0,0,0,0.85)", WebkitTextStroke: "0.7px rgba(0,0,0,0.95)" }}>
                 {bead.day}
               </span>
             </div>
@@ -1077,7 +1077,7 @@ const Month3Strand = ({ dayOfMonth, year }: { dayOfMonth: number; year: number }
               }}
 
             >
-              <span className="text-xs font-extrabold relative z-10" style={{ color: "#fbbf24", textShadow: "0 1px 3px rgba(0,0,0,0.9), 0 0 6px rgba(0,0,0,0.7)" }}>
+              <span className="text-xs font-extrabold relative z-10" style={{ color: "#fef3c7", textShadow: "0 1px 3px rgba(0,0,0,0.95), 0 0 8px rgba(0,0,0,0.85)", WebkitTextStroke: "0.7px rgba(0,0,0,0.95)" }}>
                 {bead.day}
               </span>
             </div>
@@ -1197,7 +1197,7 @@ const Month3Strand = ({ dayOfMonth, year }: { dayOfMonth: number; year: number }
               }}
 
             >
-              <span className="text-xs font-extrabold relative z-10" style={{ color: "#fbbf24", textShadow: "0 1px 3px rgba(0,0,0,0.9), 0 0 6px rgba(0,0,0,0.7)" }}>
+              <span className="text-xs font-extrabold relative z-10" style={{ color: "#fef3c7", textShadow: "0 1px 3px rgba(0,0,0,0.95), 0 0 8px rgba(0,0,0,0.85)", WebkitTextStroke: "0.7px rgba(0,0,0,0.95)" }}>
                 {bead.day}
               </span>
             </div>
@@ -1457,7 +1457,7 @@ const Month4Strand = ({ dayOfMonth, year }: { dayOfMonth: number; year: number }
               }}
 
             >
-              <span className="text-xs font-extrabold relative z-10" style={{ color: "#fbbf24", textShadow: "0 1px 3px rgba(0,0,0,0.9), 0 0 6px rgba(0,0,0,0.7)" }}>
+              <span className="text-xs font-extrabold relative z-10" style={{ color: "#fef3c7", textShadow: "0 1px 3px rgba(0,0,0,0.95), 0 0 8px rgba(0,0,0,0.85)", WebkitTextStroke: "0.7px rgba(0,0,0,0.95)" }}>
                 {bead.day}
               </span>
             </div>
@@ -1593,7 +1593,7 @@ const Month4Strand = ({ dayOfMonth, year }: { dayOfMonth: number; year: number }
               }}
 
             >
-              <span className="text-xs font-extrabold relative z-10" style={{ color: "#fbbf24", textShadow: "0 1px 3px rgba(0,0,0,0.9), 0 0 6px rgba(0,0,0,0.7)" }}>
+              <span className="text-xs font-extrabold relative z-10" style={{ color: "#fef3c7", textShadow: "0 1px 3px rgba(0,0,0,0.95), 0 0 8px rgba(0,0,0,0.85)", WebkitTextStroke: "0.7px rgba(0,0,0,0.95)" }}>
                 {bead.day}
               </span>
             </div>
@@ -1867,7 +1867,7 @@ const Month5Strand = ({ dayOfMonth, year }: { dayOfMonth: number; year: number }
                 ...(bead.is9Av && { border: '12px solid #000' })
               }}
             >
-              <span className="text-xs font-extrabold relative z-10" style={{ color: "#fbbf24", textShadow: "0 1px 3px rgba(0,0,0,0.9), 0 0 6px rgba(0,0,0,0.7)" }}>
+              <span className="text-xs font-extrabold relative z-10" style={{ color: "#fef3c7", textShadow: "0 1px 3px rgba(0,0,0,0.95), 0 0 8px rgba(0,0,0,0.85)", WebkitTextStroke: "0.7px rgba(0,0,0,0.95)" }}>
                 {bead.day}
               </span>
             </div>
@@ -1980,7 +1980,7 @@ const Month5Strand = ({ dayOfMonth, year }: { dayOfMonth: number; year: number }
                 ...(bead.is9Av && { border: '12px solid #000' })
               }}
             >
-              <span className="text-xs font-extrabold relative z-10" style={{ color: "#fbbf24", textShadow: "0 1px 3px rgba(0,0,0,0.9), 0 0 6px rgba(0,0,0,0.7)" }}>
+              <span className="text-xs font-extrabold relative z-10" style={{ color: "#fef3c7", textShadow: "0 1px 3px rgba(0,0,0,0.95), 0 0 8px rgba(0,0,0,0.85)", WebkitTextStroke: "0.7px rgba(0,0,0,0.95)" }}>
                 {bead.day}
               </span>
             </div>
@@ -2217,7 +2217,7 @@ const Month6Strand = ({ dayOfMonth, year }: { dayOfMonth: number; year: number }
                 ...(bead.is29Elul && { border: '12px solid #fff' })
               }}
             >
-              <span className="text-xs font-extrabold relative z-10" style={{ color: "#fbbf24", textShadow: "0 1px 3px rgba(0,0,0,0.9), 0 0 6px rgba(0,0,0,0.7)" }}>
+              <span className="text-xs font-extrabold relative z-10" style={{ color: "#fef3c7", textShadow: "0 1px 3px rgba(0,0,0,0.95), 0 0 8px rgba(0,0,0,0.85)", WebkitTextStroke: "0.7px rgba(0,0,0,0.95)" }}>
                 {bead.day}
               </span>
             </div>
@@ -2334,7 +2334,7 @@ const Month6Strand = ({ dayOfMonth, year }: { dayOfMonth: number; year: number }
                 ...(bead.is29Elul && { border: '12px solid #fff' })
               }}
             >
-              <span className="text-xs font-extrabold relative z-10" style={{ color: "#fbbf24", textShadow: "0 1px 3px rgba(0,0,0,0.9), 0 0 6px rgba(0,0,0,0.7)" }}>
+              <span className="text-xs font-extrabold relative z-10" style={{ color: "#fef3c7", textShadow: "0 1px 3px rgba(0,0,0,0.95), 0 0 8px rgba(0,0,0,0.85)", WebkitTextStroke: "0.7px rgba(0,0,0,0.95)" }}>
                 {bead.day}
               </span>
             </div>
@@ -2596,7 +2596,7 @@ const Month7Strand = ({ dayOfMonth, year }: { dayOfMonth: number; year: number }
               }}
 
             >
-              <span className="text-xs md:text-sm font-extrabold relative z-10" style={{ color: "#fbbf24", textShadow: "0 1px 3px rgba(0,0,0,0.9), 0 0 6px rgba(0,0,0,0.7)" }}>
+              <span className="text-xs md:text-sm font-extrabold relative z-10" style={{ color: "#fef3c7", textShadow: "0 1px 3px rgba(0,0,0,0.95), 0 0 8px rgba(0,0,0,0.85)", WebkitTextStroke: "0.7px rgba(0,0,0,0.95)" }}>
                 {b.day}
               </span>
             </div>
@@ -2701,7 +2701,7 @@ const Month7Strand = ({ dayOfMonth, year }: { dayOfMonth: number; year: number }
               }}
 
             >
-              <span className="text-xs md:text-sm font-extrabold relative z-10" style={{ color: "#fbbf24", textShadow: "0 1px 3px rgba(0,0,0,0.9), 0 0 6px rgba(0,0,0,0.7)" }}>
+              <span className="text-xs md:text-sm font-extrabold relative z-10" style={{ color: "#fef3c7", textShadow: "0 1px 3px rgba(0,0,0,0.95), 0 0 8px rgba(0,0,0,0.85)", WebkitTextStroke: "0.7px rgba(0,0,0,0.95)" }}>
                 {b.day}
               </span>
             </div>
@@ -3243,7 +3243,7 @@ const Month9Strand = ({ dayOfMonth, year }: { dayOfMonth: number; year: number }
               }}
 
             >
-              <span className="text-xs md:text-sm font-extrabold relative z-10" style={{ color: "#fbbf24", textShadow: "0 1px 3px rgba(0,0,0,0.9), 0 0 6px rgba(0,0,0,0.7)" }}>
+              <span className="text-xs md:text-sm font-extrabold relative z-10" style={{ color: "#fef3c7", textShadow: "0 1px 3px rgba(0,0,0,0.95), 0 0 8px rgba(0,0,0,0.85)", WebkitTextStroke: "0.7px rgba(0,0,0,0.95)" }}>
                 {b.day}
               </span>
 
@@ -3311,7 +3311,7 @@ const Month9Strand = ({ dayOfMonth, year }: { dayOfMonth: number; year: number }
               }}
 
             >
-              <span className="text-xs md:text-sm font-extrabold relative z-10" style={{ color: "#fbbf24", textShadow: "0 1px 3px rgba(0,0,0,0.9), 0 0 6px rgba(0,0,0,0.7)" }}>
+              <span className="text-xs md:text-sm font-extrabold relative z-10" style={{ color: "#fef3c7", textShadow: "0 1px 3px rgba(0,0,0,0.95), 0 0 8px rgba(0,0,0,0.85)", WebkitTextStroke: "0.7px rgba(0,0,0,0.95)" }}>
                 {b.day}
               </span>
 
