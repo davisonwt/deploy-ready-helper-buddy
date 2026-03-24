@@ -1,10 +1,16 @@
 /**
  * Chat Components - Unified exports
- * WhatsApp-style unified communication experience
+ * TikTok/Discord-inspired unified communication experience
  */
 
-// Main ChatApp (WhatsApp-style unified hub)
+// Main ChatApp (Live & Active Hub)
 export { ChatApp } from './ChatApp';
+
+// Live Feed components
+export { UnifiedFeed } from './UnifiedFeed';
+export { LiveFeedCard } from './LiveFeedCard';
+export { PrivateChatsDrawer } from './PrivateChatsDrawer';
+export { SparkleEntrance, LiveBadge, ReplayBadge, UpcomingBadge, PriceBadge, AnimatedWaveform, CherryReactionButton, CherryBurst } from './SparkleEffects';
 
 // Core conversation components
 export { UnifiedConversation } from './UnifiedConversation';

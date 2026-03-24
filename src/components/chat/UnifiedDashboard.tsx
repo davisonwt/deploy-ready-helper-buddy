@@ -154,7 +154,7 @@ export const UnifiedDashboard: React.FC = () => {
           </motion.div>
 
           {/* Main Layout - Content + Activity Feed */}
-          <div className="grid grid-cols-1 lg:grid-cols-[1fr,350px] gap-6">
+          <div className="grid grid-cols-1 lg:grid-cols-[1fr,280px] gap-6">
             {/* Main Content Area */}
             <motion.div
               className="min-h-[500px]"
