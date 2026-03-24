@@ -36,7 +36,7 @@ export const UnifiedFeed: React.FC = () => {
         // SkillDrop sessions
         supabase
           .from('skilldrop_sessions')
-          .select('id, title, description, status, scheduled_at, session_fee, is_free, pricing_type, max_participants, presenter_profile_id, profiles:presenter_profile_id(display_name, avatar_url)')
+          .select('id, title, description, status, scheduled_at, session_fee, pricing_type, presenter_profile_id, profiles:presenter_profile_id(display_name, avatar_url)')
           .in('status', ['active', 'scheduled', 'completed'])
           .order('scheduled_at', { ascending: false })
           .limit(10),
