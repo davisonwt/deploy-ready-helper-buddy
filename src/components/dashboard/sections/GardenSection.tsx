@@ -20,13 +20,13 @@ export const GardenSection: React.FC<GardenSectionProps> = ({ theme }) => {
   useEffect(() => {
     if (!user) return;
     const fetchMyOrchards = async () => {
-      const { data } = await (supabase
+      const result: any = await supabase
         .from('orchards')
         .select('id, name, category, images, view_count, follower_count, status')
         .eq('sower_id', user.id)
         .order('created_at', { ascending: false })
-        .limit(4) as any);
-      setMyOrchards(data || []);
+        .limit(4);
+      setMyOrchards(result.data || []);
       setLoading(false);
     };
     fetchMyOrchards();
