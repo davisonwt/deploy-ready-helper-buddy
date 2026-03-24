@@ -397,7 +397,7 @@ export default function SacredCalendarFeed() {
                 onTouchStart={handleTouchStart}
                 onTouchEnd={handleTouchEnd}
               >
-                <div className="flex" style={{ minHeight: '600px' }}>
+                <div className="flex" style={{ minHeight: '520px' }}>
                   {/* Left: Beads — full height */}
                   <div className="relative flex-shrink-0 flex flex-col" style={{ width: '50%' }}>
                     {/* Nav arrows */}

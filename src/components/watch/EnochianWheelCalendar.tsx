@@ -48,7 +48,7 @@ const BeadScrollWindow = ({ children, futureBeadCount }: { children: React.React
         ref={scrollRef}
         className="relative z-10 overflow-y-auto flex flex-col items-center"
         style={{
-          height: '350px',
+          height: '460px',
           paddingTop: '40px',
           paddingBottom: '40px',
           maskImage: 'linear-gradient(to bottom, transparent 0%, black 6%, black 94%, transparent 100%)',
