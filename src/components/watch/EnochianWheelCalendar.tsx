@@ -2596,7 +2596,7 @@ const Month7Strand = ({ dayOfMonth, year }: { dayOfMonth: number; year: number }
               }}
 
             >
-              <span className="text-xs md:text-sm font-bold text-amber-300 drop-shadow-2xl relative z-10">
+              <span className="text-xs md:text-sm font-extrabold relative z-10" style={{ color: "#fbbf24", textShadow: "0 1px 3px rgba(0,0,0,0.9), 0 0 6px rgba(0,0,0,0.7)" }}>
                 {b.day}
               </span>
             </div>
@@ -2701,7 +2701,7 @@ const Month7Strand = ({ dayOfMonth, year }: { dayOfMonth: number; year: number }
               }}
 
             >
-              <span className="text-xs md:text-sm font-bold text-amber-300 drop-shadow-2xl relative z-10">
+              <span className="text-xs md:text-sm font-extrabold relative z-10" style={{ color: "#fbbf24", textShadow: "0 1px 3px rgba(0,0,0,0.9), 0 0 6px rgba(0,0,0,0.7)" }}>
                 {b.day}
               </span>
             </div>
@@ -3243,7 +3243,7 @@ const Month9Strand = ({ dayOfMonth, year }: { dayOfMonth: number; year: number }
               }}
 
             >
-              <span className="text-xs md:text-sm font-bold text-amber-300 drop-shadow-2xl relative z-10">
+              <span className="text-xs md:text-sm font-extrabold relative z-10" style={{ color: "#fbbf24", textShadow: "0 1px 3px rgba(0,0,0,0.9), 0 0 6px rgba(0,0,0,0.7)" }}>
                 {b.day}
               </span>
 
@@ -3311,7 +3311,7 @@ const Month9Strand = ({ dayOfMonth, year }: { dayOfMonth: number; year: number }
               }}
 
             >
-              <span className="text-xs md:text-sm font-bold text-amber-300 drop-shadow-2xl relative z-10">
+              <span className="text-xs md:text-sm font-extrabold relative z-10" style={{ color: "#fbbf24", textShadow: "0 1px 3px rgba(0,0,0,0.9), 0 0 6px rgba(0,0,0,0.7)" }}>
                 {b.day}
               </span>
 
