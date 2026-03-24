@@ -38,7 +38,8 @@ export function useGroveStation() {
   // Fetch current show (optionally by specific schedule ID)
   const fetchCurrentShow = async (targetScheduleId = null) => {
     try {
-      const requestedScheduleId = targetScheduleId || new URLSearchParams(window.location.search).get('schedule')
+      const urlParams = new URLSearchParams(window.location.search)
+      const requestedScheduleId = targetScheduleId || urlParams.get('schedule') || urlParams.get('session')
 
       // If a specific schedule ID (or live session ID) is requested, resolve and load that slot directly
       if (requestedScheduleId) {
