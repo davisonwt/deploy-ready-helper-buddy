@@ -199,12 +199,12 @@ export function SowerBalanceCard({ compact = false, theme }: SowerBalanceCardPro
                 className="border"
                 style={theme ? {
                   background: theme.primaryButton,
-                  color: theme.textPrimary,
+                  color: 'hsl(102 25% 25%)',
                   borderColor: theme.cardBorder,
                   boxShadow: theme.shadow ? `0 8px 18px ${theme.shadow}` : undefined,
                 } : undefined}
               >
-                <RefreshCw className={`h-4 w-4 ${refreshing ? 'animate-spin' : ''}`} />
+                <RefreshCw className={`h-4 w-4 ${refreshing ? 'animate-spin' : ''} text-[hsl(102_25%_25%)]`} />
               </Button>
               {hasWallet && availableBalance >= 10 && (
                 <Button
