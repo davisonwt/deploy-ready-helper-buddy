@@ -1,17 +1,16 @@
 import React, { useState, useEffect } from 'react';
-import { motion } from 'framer-motion';
-import { Radio, Play, Pause, Volume2, Music, Users, Heart, Share2, Plus, Headphones, Calendar, Clock, Trash2, Edit, MoreVertical, Mic } from 'lucide-react';
-import { Card, CardContent } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Slider } from '@/components/ui/slider';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
+import { Users } from 'lucide-react';
+import { supabase } from '@/integrations/supabase/client';
+import { useToast } from '@/hooks/use-toast';
+import { ScheduleRadioSlotDialog, type EditableSlotData } from './ScheduleRadioSlotDialog';
+import { VoiceRecorderStudio } from '@/components/radio/VoiceRecorderStudio';
+import { StickyRadioPlayer } from '@/components/radio/StickyRadioPlayer';
+import { RadioInteractionTray } from '@/components/radio/RadioInteractionTray';
+import { RadioSessionFeed } from '@/components/radio/RadioSessionFeed';
+import { useAuth } from '@/hooks/useAuth';
+import { toast } from 'sonner';
+import JitsiRoom from '@/components/jitsi/JitsiRoom';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -22,14 +21,6 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
-import { supabase } from '@/integrations/supabase/client';
-import { useToast } from '@/hooks/use-toast';
-import { ScheduleRadioSlotDialog, type EditableSlotData } from './ScheduleRadioSlotDialog';
-import { VoiceRecorderStudio } from '@/components/radio/VoiceRecorderStudio';
-import { useAuth } from '@/hooks/useAuth';
-import { toast } from 'sonner';
-import JitsiRoom from '@/components/jitsi/JitsiRoom';
-import { format } from 'date-fns';
 
 interface Track {
   id: string;
@@ -85,7 +76,6 @@ export const RadioMode: React.FC = () => {
   const [volume, setVolume] = useState([75]);
   const [scheduleDialogOpen, setScheduleDialogOpen] = useState(false);
   const [voiceStudioOpen, setVoiceStudioOpen] = useState(false);
-  const [likedTracks, setLikedTracks] = useState<Set<string>>(new Set());
   const [activeStream, setActiveStream] = useState<Stream | null>(null);
   const [deleteSlotId, setDeleteSlotId] = useState<string | null>(null);
   const [editSlotData, setEditSlotData] = useState<EditableSlotData | null>(null);
@@ -94,7 +84,6 @@ export const RadioMode: React.FC = () => {
     loadContent();
   }, []);
 
-  // Safety: prevent stale Radix pointer lock when dialog/menu close in sequence
   useEffect(() => {
     if (!scheduleDialogOpen) {
       document.body.style.pointerEvents = 'auto';
@@ -103,7 +92,6 @@ export const RadioMode: React.FC = () => {
 
   const loadContent = async () => {
     try {
-      // Load scheduled slots, tracks, and streams in parallel
       const [slotsResult, tracksResult, streamsResult] = await Promise.all([
         supabase
           .from('radio_schedule')
@@ -141,28 +129,14 @@ export const RadioMode: React.FC = () => {
         .from('radio_schedule')
         .delete()
         .eq('id', deleteSlotId);
-
       if (error) throw error;
       toast.success('Radio slot deleted');
-      setScheduledSlots(prev => prev.filter(s => s.id !== deleteSlotId));
+      setScheduledSlots((prev) => prev.filter((s) => s.id !== deleteSlotId));
     } catch (error: any) {
       toast.error('Failed to delete slot: ' + error.message);
     } finally {
       setDeleteSlotId(null);
     }
-  };
-
-  const isMySlot = (slot: ScheduledSlot) => {
-    return user?.id && slot.radio_djs?.user_id === user.id;
-  };
-
-  const playTrack = (track: Track) => {
-    setCurrentTrack(track);
-    setIsPlaying(true);
-    toastNotification({
-      title: 'Now Playing',
-      description: `${track.track_title} by ${track.artist_name || 'Unknown Artist'}`,
-    });
   };
 
   const joinStream = (stream: Stream) => {
@@ -181,58 +155,35 @@ export const RadioMode: React.FC = () => {
     });
   };
 
-  const handleLike = async (track: Track, e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    if (!user) { toast.error('Please login to like tracks'); return; }
-    const isLiked = likedTracks.has(track.id);
-    if (isLiked) {
-      setLikedTracks(prev => { const s = new Set(prev); s.delete(track.id); return s; });
-      toast.success('Unliked');
-    } else {
-      setLikedTracks(prev => new Set(prev).add(track.id));
-      toast.success('Liked!');
-    }
+  const handleJoinLiveSlot = (slot: ScheduledSlot) => {
+    // Create a virtual stream from the slot to join via Jitsi
+    const virtualStream: Stream = {
+      id: slot.id,
+      title: slot.show_subject || slot.show_notes || 'Radio Slot',
+      description: slot.show_topic_description || null,
+      status: 'live',
+      viewer_count: null,
+      user_id: slot.radio_djs?.user_id || '',
+      thumbnail_url: null,
+      tags: null,
+    };
+    joinStream(virtualStream);
   };
 
-  const handleShare = async (track: Track, e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    try {
-      if (navigator.share) {
-        await navigator.share({ title: track.track_title, text: `Check out ${track.track_title}`, url: window.location.href });
-      } else {
-        await navigator.clipboard.writeText(window.location.href);
-        toast.success('Link copied!');
-      }
-    } catch (error: any) {
-      if (error.name !== 'AbortError') {
-        await navigator.clipboard.writeText(window.location.href);
-        toast.success('Link copied!');
-      }
-    }
+  const handleEditSlot = (slot: ScheduledSlot) => {
+    setEditSlotData({
+      id: slot.id,
+      dj_id: slot.dj_id,
+      time_slot_date: slot.time_slot_date,
+      hour_slot: slot.hour_slot,
+      show_subject: slot.show_subject,
+      show_notes: slot.show_notes,
+      show_topic_description: slot.show_topic_description,
+    });
+    setScheduleDialogOpen(true);
   };
 
-  const togglePlayPause = () => setIsPlaying(!isPlaying);
-
-  const formatDuration = (seconds: number | null) => {
-    if (!seconds) return '--:--';
-    const mins = Math.floor(seconds / 60);
-    const secs = seconds % 60;
-    return `${mins}:${secs.toString().padStart(2, '0')}`;
-  };
-
-  const formatSlotTime = (startTime: string, endTime: string) => {
-    try {
-      const start = new Date(startTime);
-      const end = new Date(endTime);
-      return `${format(start, 'HH:mm')} - ${format(end, 'HH:mm')}`;
-    } catch {
-      return 'TBD';
-    }
-  };
-
-  // Show JitsiRoom when in active stream
+  // Active stream Jitsi view
   if (activeStream) {
     const isDJ = user?.id === activeStream.user_id;
     const displayName = profile?.display_name || user?.email?.split('@')[0] || 'Listener';
@@ -240,17 +191,15 @@ export const RadioMode: React.FC = () => {
 
     return (
       <div className="h-full flex flex-col">
-        <div className="flex items-center justify-between p-4 glass-card mb-4">
+        <div className="flex items-center justify-between p-4 rounded-2xl border border-border/20 mb-4" style={{ backgroundColor: 'hsl(210 67% 12% / 0.8)' }}>
           <div>
-            <h2 className="text-xl font-bold text-foreground">{activeStream.title}</h2>
-            <p className="text-muted-foreground text-sm">
-              {isDJ ? 'You are the DJ' : 'Live Radio Broadcast'}
-            </p>
+            <h2 className="text-lg font-bold text-foreground">{activeStream.title}</h2>
+            <p className="text-muted-foreground text-xs">{isDJ ? 'You are the DJ' : 'Live Radio Broadcast'}</p>
           </div>
           <div className="flex items-center gap-2">
-            <Badge variant="destructive" className="animate-pulse">LIVE</Badge>
+            <Badge variant="destructive" className="animate-pulse text-xs">LIVE</Badge>
             {activeStream.viewer_count !== null && (
-              <Badge variant="outline">
+              <Badge variant="outline" className="text-xs">
                 <Users className="w-3 h-3 mr-1" />
                 {activeStream.viewer_count}
               </Badge>
@@ -264,227 +213,64 @@ export const RadioMode: React.FC = () => {
     );
   }
 
+  // Loading state
   if (loading) {
     return (
       <div className="space-y-4">
-        <Card className="glass-card bg-transparent border border-primary/20">
-          <CardContent className="p-6 animate-pulse">
-            <div className="h-32 bg-muted/30 rounded mb-4"></div>
-            <div className="h-6 bg-muted/30 rounded w-3/4 mb-3"></div>
-            <div className="h-4 bg-muted/20 rounded w-1/2"></div>
-          </CardContent>
-        </Card>
+        <div className="rounded-2xl border border-border/20 p-6 animate-pulse" style={{ backgroundColor: 'hsl(210 67% 12% / 0.6)' }}>
+          <div className="h-16 bg-muted/20 rounded-xl mb-3" />
+          <div className="h-4 bg-muted/20 rounded w-3/4 mb-2" />
+          <div className="h-4 bg-muted/20 rounded w-1/2" />
+        </div>
       </div>
     );
   }
 
-  // Split slots into upcoming and past — always show pending/own slots even if time passed
-  const now = new Date();
-  const upcomingSlots = scheduledSlots.filter(s => 
-    new Date(s.end_time) >= now || 
-    s.approval_status === 'pending' || 
-    isMySlot(s)
-  );
-  const mySlots = scheduledSlots.filter(s => isMySlot(s));
+  // Find if there's a live stream to show as primary
+  const liveStream = streams.length > 0 ? streams[0] : null;
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex items-start justify-between flex-wrap gap-4 mb-6">
-        <div>
-          <h2 className="text-3xl font-bold text-foreground mb-2">Radio Broadcasts</h2>
-          <p className="text-foreground/80">24/7 live streams • 2-hour slots available</p>
-        </div>
-        <div className="flex gap-2 flex-wrap">
-          <Button
-            className="gap-2"
-            variant="outline"
-            onClick={() => setVoiceStudioOpen(true)}
-          >
-            <Mic className="w-4 h-4" />
-            Voice Recorder
-          </Button>
-          <Button
-            className="gap-2"
-            onClick={() => setScheduleDialogOpen(true)}
-            style={{ backgroundColor: '#17A2B8', color: 'white', border: '2px solid #0A1931' }}
-          >
-            <Plus className="w-4 h-4" />
-            Request Radio Slot
-          </Button>
-        </div>
-      </div>
+    <div className="space-y-4">
+      {/* Sticky Player */}
+      <StickyRadioPlayer
+        currentTrack={currentTrack}
+        isPlaying={isPlaying}
+        volume={volume}
+        onTogglePlay={() => setIsPlaying(!isPlaying)}
+        onVolumeChange={setVolume}
+        listenerCount={liveStream?.viewer_count || 0}
+        isLive={!!liveStream}
+        onJoinConversation={liveStream ? () => joinStream(liveStream) : undefined}
+        hostName={scheduledSlots[0]?.radio_djs?.dj_name}
+      />
 
-      {/* Scheduled Slots Section */}
-      <div>
-        <h3 className="text-xl font-bold text-foreground mb-4 flex items-center gap-2">
-          <Calendar className="w-5 h-5 text-primary" />
-          Scheduled Slots ({upcomingSlots.length})
-        </h3>
-        {upcomingSlots.length === 0 ? (
-          <Card className="glass-card bg-transparent border border-primary/20">
-            <CardContent className="p-8 text-center">
-              <Clock className="w-12 h-12 mx-auto mb-3 text-primary/50" />
-              <p className="text-foreground/70">No upcoming radio slots scheduled</p>
-            </CardContent>
-          </Card>
-        ) : (
-          <div className="grid gap-3">
-            {upcomingSlots.map((slot) => {
-              const slotDate = new Date(slot.time_slot_date);
-              const isLive = slot.status === 'live';
-              const isPending = slot.approval_status === 'pending';
-              const isMine = isMySlot(slot);
-              // All own slots are editable regardless of approval status
+      {/* Interaction Tray */}
+      <RadioInteractionTray
+        messages={[]}
+        queue={tracks.map((t) => ({
+          id: t.id,
+          title: t.track_title,
+          artist: t.artist_name || 'Unknown',
+          isNowPlaying: currentTrack?.id === t.id,
+        }))}
+        listeners={[]}
+        onSendMessage={(msg) => toast.info(`Message sent: ${msg}`)}
+        onRequestSong={() => toast.info('Song request feature coming soon!')}
+        onRaiseHand={() => toast.info('Hand raised!')}
+      />
 
-              return (
-                <motion.div
-                  key={slot.id}
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                >
-                  <Card className={`glass-card bg-transparent border transition-all ${isLive ? 'border-destructive/50' : 'border-primary/20 hover:border-primary/40'}`}>
-                    <CardContent className="p-4">
-                      <div className="flex items-center gap-4">
-                        <div className="flex flex-col items-center justify-center w-16 h-16 rounded-lg bg-card/50 border border-border/30 shrink-0">
-                          <span className="text-xs text-muted-foreground">{format(slotDate, 'MMM')}</span>
-                          <span className="text-xl font-bold text-foreground">{format(slotDate, 'd')}</span>
-                        </div>
+      {/* Session Feed */}
+      <RadioSessionFeed
+        slots={scheduledSlots}
+        currentUserId={user?.id}
+        onEditSlot={handleEditSlot}
+        onDeleteSlot={(id) => setDeleteSlotId(id)}
+        onJoinSlot={handleJoinLiveSlot}
+        onScheduleNew={() => setScheduleDialogOpen(true)}
+        onOpenVoiceStudio={() => setVoiceStudioOpen(true)}
+      />
 
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-2 mb-1">
-                            <h4 className="font-semibold text-foreground truncate">
-                              {slot.show_subject || slot.show_notes || 'Radio Slot'}
-                            </h4>
-                            {isLive && <Badge variant="destructive" className="text-xs animate-pulse">LIVE</Badge>}
-                            {isPending && <Badge variant="outline" className="text-xs text-yellow-400 border-yellow-400/50">Pending</Badge>}
-                            {slot.approval_status === 'approved' && !isLive && (
-                              <Badge variant="outline" className="text-xs text-green-400 border-green-400/50">Approved</Badge>
-                            )}
-                          </div>
-                          <div className="flex items-center gap-3 text-sm text-muted-foreground">
-                            <span className="flex items-center gap-1">
-                              <Clock className="w-3 h-3" />
-                              {formatSlotTime(slot.start_time, slot.end_time)}
-                            </span>
-                            <span>•</span>
-                            <span>{slot.radio_djs?.dj_name || 'Unknown DJ'}</span>
-                            <span>•</span>
-                            <Badge variant="secondary" className="text-[10px] px-1.5 py-0">
-                              {slot.broadcast_mode === 'pre_recorded' ? 'Auto-play' : 'Live'}
-                            </Badge>
-                          </div>
-                        </div>
-
-                        {/* Actions for slot owner */}
-                        {isMine && (
-                          <DropdownMenu modal={false}>
-                            <DropdownMenuTrigger asChild>
-                              <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0">
-                                <MoreVertical className="h-4 w-4" />
-                              </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end" className="bg-popover border border-border">
-                              <DropdownMenuItem onClick={() => {
-                                  setEditSlotData({
-                                    id: slot.id,
-                                    dj_id: slot.dj_id,
-                                    time_slot_date: slot.time_slot_date,
-                                    hour_slot: slot.hour_slot,
-                                    show_subject: slot.show_subject,
-                                    show_notes: slot.show_notes,
-                                    show_topic_description: slot.show_topic_description,
-                                  });
-                                  setScheduleDialogOpen(true);
-                              }}>
-                                <Edit className="h-4 w-4 mr-2" />
-                                Edit Slot Content
-                              </DropdownMenuItem>
-                              <DropdownMenuItem
-                                onClick={() => setDeleteSlotId(slot.id)}
-                                className="text-destructive focus:text-destructive"
-                              >
-                                <Trash2 className="h-4 w-4 mr-2" />
-                                Delete Slot
-                              </DropdownMenuItem>
-                            </DropdownMenuContent>
-                          </DropdownMenu>
-                        )}
-                      </div>
-                    </CardContent>
-                  </Card>
-                </motion.div>
-              );
-            })}
-          </div>
-        )}
-      </div>
-
-      {/* Now Playing Card */}
-      {currentTrack && (
-        <Card className="glass-card bg-transparent border-2 border-primary/30">
-          <CardContent className="p-6">
-            <div className="flex items-center gap-4 mb-4">
-              <div className="relative w-20 h-20 rounded-xl bg-gradient-to-br from-primary/30 to-primary/10 flex items-center justify-center">
-                <Music className="w-10 h-10 text-primary" />
-                {isPlaying && (
-                  <motion.div
-                    className="absolute inset-0 rounded-xl border-2 border-primary"
-                    animate={{ scale: [1, 1.1, 1], opacity: [1, 0.5, 1] }}
-                    transition={{ repeat: Infinity, duration: 2 }}
-                  />
-                )}
-              </div>
-              <div className="flex-1">
-                <h3 className="text-xl font-bold text-foreground mb-1">{currentTrack.track_title}</h3>
-                <p className="text-foreground/70">{currentTrack.artist_name || 'Unknown Artist'}</p>
-              </div>
-              <Button onClick={togglePlayPause} size="lg" className="rounded-full w-14 h-14">
-                {isPlaying ? <Pause className="w-6 h-6" /> : <Play className="w-6 h-6 ml-1" />}
-              </Button>
-            </div>
-            <div className="flex items-center gap-4">
-              <Volume2 className="w-4 h-4 text-foreground/70" />
-              <Slider value={volume} onValueChange={setVolume} max={100} step={1} className="flex-1" />
-              <span className="text-sm text-foreground/70 w-12">{volume[0]}%</span>
-            </div>
-          </CardContent>
-        </Card>
-      )}
-
-      {/* Live Streams */}
-      {streams.length > 0 && (
-        <div>
-          <h3 className="text-xl font-bold text-foreground mb-4">🔴 Live Now</h3>
-          <div className="grid gap-4">
-            {streams.map((stream) => (
-              <Card key={stream.id} className="glass-card bg-transparent border border-primary/20 hover:border-primary/40 transition-all">
-                <CardContent className="p-4">
-                  <div className="flex items-center gap-4">
-                    <div className="w-16 h-16 rounded-lg bg-gradient-to-br from-destructive/30 to-destructive/10 flex items-center justify-center">
-                      <Radio className="w-8 h-8 text-destructive" />
-                    </div>
-                    <div className="flex-1">
-                      <h4 className="font-bold text-foreground mb-1">{stream.title}</h4>
-                      <div className="flex items-center gap-2 text-sm text-foreground/70">
-                        <Badge variant="destructive" className="text-xs">LIVE</Badge>
-                        {stream.viewer_count !== null && (
-                          <span className="flex items-center gap-1"><Users className="w-3 h-3" />{stream.viewer_count}</span>
-                        )}
-                      </div>
-                    </div>
-                    <Button onClick={() => joinStream(stream)} className="gap-2">
-                      <Headphones className="w-4 h-4" />
-                      Listen Live
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        </div>
-      )}
-
+      {/* Dialogs */}
       <ScheduleRadioSlotDialog
         open={scheduleDialogOpen}
         onOpenChange={(open) => {
@@ -499,14 +285,11 @@ export const RadioMode: React.FC = () => {
       />
       <VoiceRecorderStudio open={voiceStudioOpen} onOpenChange={setVoiceStudioOpen} />
 
-      {/* Delete Confirmation */}
       <AlertDialog open={!!deleteSlotId} onOpenChange={(open) => !open && setDeleteSlotId(null)}>
         <AlertDialogContent className="bg-card border-border">
           <AlertDialogHeader>
             <AlertDialogTitle>Delete Radio Slot?</AlertDialogTitle>
-            <AlertDialogDescription>
-              This will permanently remove this scheduled radio slot. This action cannot be undone.
-            </AlertDialogDescription>
+            <AlertDialogDescription>This will permanently remove this scheduled radio slot.</AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
