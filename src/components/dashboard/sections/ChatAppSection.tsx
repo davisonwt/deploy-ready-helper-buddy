@@ -1,19 +1,23 @@
 import React from 'react';
-import { MessageSquare } from 'lucide-react';
+import { MessageSquare, GraduationCap, Zap, Dumbbell, Radio } from 'lucide-react';
 import { DashboardTheme } from '@/utils/dashboardThemes';
-import { ChatAppDMsSubSection } from './ChatAppDMsSubSection';
-import { ClassroomSubSection } from './ClassroomSubSection';
-import { SkillDropSubSection } from './SkillDropSubSection';
-import { TrainingSubSection } from './TrainingSubSection';
-import { RadioSection } from './RadioSection';
+import { GradientGatewayCard } from './GradientGatewayCard';
 
 interface ChatAppSectionProps {
   theme: DashboardTheme;
 }
 
+const chatAppCards = [
+  { href: '/communications', title: 'Chats', subtitle: '1-on-1 & Group circles', icon: MessageSquare, gradient: 'linear-gradient(135deg, #0d9488, #06b6d4)' },
+  { href: '/explore-sessions?type=classroom', title: 'Classrooms', subtitle: 'Live & upcoming sessions', icon: GraduationCap, gradient: 'linear-gradient(135deg, #0891b2, #3b82f6)' },
+  { href: '/explore-sessions?type=skilldrop', title: 'SkillDrop', subtitle: 'Learn new skills', icon: Zap, gradient: 'linear-gradient(135deg, #2563eb, #7c3aed)' },
+  { href: '/explore-sessions?type=training', title: 'Training', subtitle: 'Grow & develop', icon: Dumbbell, gradient: 'linear-gradient(135deg, #7c3aed, #db2777)' },
+  { href: '/grove-station', title: 'Radio', subtitle: 'Live audio & broadcasts', icon: Radio, gradient: 'linear-gradient(135deg, #db2777, #ef4444)' },
+];
+
 export const ChatAppSection: React.FC<ChatAppSectionProps> = ({ theme }) => {
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       {/* Section Header */}
       <div className="flex items-center gap-2">
         <div className="p-2 rounded-xl" style={{ background: theme.secondaryButton }}>
@@ -29,24 +33,14 @@ export const ChatAppSection: React.FC<ChatAppSectionProps> = ({ theme }) => {
         </div>
       </div>
 
-      {/* Sub-sections with dividers */}
-      <ChatAppDMsSubSection theme={theme} />
-
-      <div className="border-t" style={{ borderColor: theme.cardBorder }} />
-
-      <ClassroomSubSection theme={theme} />
-
-      <div className="border-t" style={{ borderColor: theme.cardBorder }} />
-
-      <SkillDropSubSection theme={theme} />
-
-      <div className="border-t" style={{ borderColor: theme.cardBorder }} />
-
-      <TrainingSubSection theme={theme} />
-
-      <div className="border-t" style={{ borderColor: theme.cardBorder }} />
-
-      <RadioSection theme={theme} />
+      {/* Gateway Cards Grid */}
+      <div className="grid grid-cols-2 gap-3">
+        {chatAppCards.slice(0, 4).map((card) => (
+          <GradientGatewayCard key={card.title} {...card} />
+        ))}
+      </div>
+      {/* Radio full-width */}
+      <GradientGatewayCard {...chatAppCards[4]} className="w-full" />
     </div>
   );
 };
