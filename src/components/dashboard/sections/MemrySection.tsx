@@ -5,6 +5,7 @@ import { DashboardTheme } from '@/utils/dashboardThemes';
 import { GradientGatewayCard } from './GradientGatewayCard';
 import { BrowseSection } from './BrowseSection';
 import { ExploreSection } from './ExploreSection';
+import { KeeperHelpButton } from './KeeperHelpButton';
 
 interface MemrySectionProps {
   theme: DashboardTheme;
@@ -38,9 +39,12 @@ export const MemrySection: React.FC<MemrySectionProps> = ({ theme }) => {
             </p>
           </div>
         </div>
-        <Link to="/memry" className="text-[11px] font-semibold flex items-center gap-0.5" style={{ color: theme.accent }}>
-          Open Feed <ChevronRight className="w-3 h-3" />
-        </Link>
+        <div className="flex items-center gap-2">
+          <KeeperHelpButton sectionName="S2G Memry" />
+          <Link to="/memry" className="text-[11px] font-semibold flex items-center gap-0.5" style={{ color: theme.accent }}>
+            Open Feed <ChevronRight className="w-3 h-3" />
+          </Link>
+        </div>
       </div>
 
       {/* Sub-Category Cards */}

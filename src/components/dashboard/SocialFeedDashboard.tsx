@@ -2,6 +2,7 @@ import React, { useRef, useState, useEffect, useCallback } from 'react';
 import { StickyProfileBar } from './StickyProfileBar';
 import { BottomActionBar } from './BottomActionBar';
 import { StatsFloatingButton } from './StatsFloatingButton';
+import { GoLiveFAB } from './GoLiveFAB';
 
 // Section system
 import { SectionNavBar } from './SectionNavBar';
@@ -14,6 +15,9 @@ import { YhvhDaysSection } from './sections/YhvhDaysSection';
 import { MyGardenSection } from './sections/MyGardenSection';
 import { LetItRainSection } from './sections/LetItRainSection';
 import { GosatsSection } from './sections/GosatsSection';
+
+// Interstitial Memry carousels
+import { MemryFeedCarousel } from './sections/MemryFeedCarousel';
 
 interface SocialFeedDashboardProps {
   profile: any;
@@ -93,6 +97,12 @@ export const SocialFeedDashboard: React.FC<SocialFeedDashboardProps> = ({
         />
       </DashboardSection>
 
+      {/* === INTERSTITIAL: Tribal Orchards + Live Feed === */}
+      <div className="px-4 max-w-md mx-auto">
+        <MemryFeedCarousel variant="orchards" />
+        <MemryFeedCarousel variant="live" />
+      </div>
+
       {/* === CHATAPP SECTION === */}
       <DashboardSection ref={setSectionRef('chatapp')} id="chatapp" theme={sectionThemes['chatapp']}>
         <ChatAppSection theme={sectionThemes['chatapp']} />
@@ -102,6 +112,11 @@ export const SocialFeedDashboard: React.FC<SocialFeedDashboardProps> = ({
       <DashboardSection ref={setSectionRef('memry')} id="memry" theme={sectionThemes['memry']}>
         <MemrySection theme={sectionThemes['memry']} />
       </DashboardSection>
+
+      {/* === INTERSTITIAL: Tribal Music === */}
+      <div className="px-4 max-w-md mx-auto">
+        <MemryFeedCarousel variant="music" />
+      </div>
 
       {/* === 364YHVH DAYS SECTION === */}
       <DashboardSection ref={setSectionRef('364yhvh')} id="364yhvh" theme={sectionThemes['364yhvh']}>
@@ -113,10 +128,20 @@ export const SocialFeedDashboard: React.FC<SocialFeedDashboardProps> = ({
         />
       </DashboardSection>
 
+      {/* === INTERSTITIAL: Tribal Library === */}
+      <div className="px-4 max-w-md mx-auto">
+        <MemryFeedCarousel variant="library" />
+      </div>
+
       {/* === MY GARDEN SECTION === */}
       <DashboardSection ref={setSectionRef('garden')} id="garden" theme={sectionThemes['garden']}>
         <MyGardenSection theme={sectionThemes['garden']} stats={stats} />
       </DashboardSection>
+
+      {/* === INTERSTITIAL: Tribal Biz Ads === */}
+      <div className="px-4 max-w-md mx-auto">
+        <MemryFeedCarousel variant="bizads" />
+      </div>
 
       {/* === LET IT RAIN SECTION === */}
       <DashboardSection ref={setSectionRef('letitrain')} id="letitrain" theme={sectionThemes['letitrain']}>
@@ -127,6 +152,9 @@ export const SocialFeedDashboard: React.FC<SocialFeedDashboardProps> = ({
       <DashboardSection ref={setSectionRef('gosats')} id="gosats" theme={sectionThemes['gosats']} className="pb-24">
         <GosatsSection theme={sectionThemes['gosats']} />
       </DashboardSection>
+
+      {/* Go Live FAB */}
+      <GoLiveFAB theme={sectionThemes[activeSection] || currentTheme} />
 
       <BottomActionBar theme={sectionThemes[activeSection] || currentTheme} />
       <div className="hidden sm:block">

@@ -2,6 +2,7 @@ import React from 'react';
 import { MessageSquare, GraduationCap, Zap, Dumbbell, Radio } from 'lucide-react';
 import { DashboardTheme } from '@/utils/dashboardThemes';
 import { GradientGatewayCard } from './GradientGatewayCard';
+import { KeeperHelpButton } from './KeeperHelpButton';
 
 interface ChatAppSectionProps {
   theme: DashboardTheme;
@@ -19,18 +20,21 @@ export const ChatAppSection: React.FC<ChatAppSectionProps> = ({ theme }) => {
   return (
     <div className="space-y-4">
       {/* Section Header */}
-      <div className="flex items-center gap-2">
-        <div className="p-2 rounded-xl" style={{ background: theme.secondaryButton }}>
-          <MessageSquare className="w-5 h-5" style={{ color: theme.accent }} />
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <div className="p-2 rounded-xl" style={{ background: theme.secondaryButton }}>
+            <MessageSquare className="w-5 h-5" style={{ color: theme.accent }} />
+          </div>
+          <div>
+            <h2 className="text-lg font-extrabold tracking-tight" style={{ color: theme.textPrimary }}>
+              ChatApp
+            </h2>
+            <p className="text-[10px]" style={{ color: theme.textSecondary }}>
+              Connect, learn & listen — all in one place
+            </p>
+          </div>
         </div>
-        <div>
-          <h2 className="text-lg font-extrabold tracking-tight" style={{ color: theme.textPrimary }}>
-            ChatApp
-          </h2>
-          <p className="text-[10px]" style={{ color: theme.textSecondary }}>
-            Connect, learn & listen — all in one place
-          </p>
-        </div>
+        <KeeperHelpButton sectionName="ChatApp" />
       </div>
 
       {/* Gateway Cards Grid */}
