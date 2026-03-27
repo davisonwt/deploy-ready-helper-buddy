@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 
 const storyCache = new Map<string, string>();
@@ -22,6 +22,12 @@ export const useSeedStory = (params: SeedStoryParams) => {
   const [story, setStory] = useState<string | null>(hasCachedStory ? cached! : null);
   const [loading, setLoading] = useState(!hasCachedStory && !failedSeedIds.has(params.seedId));
 
+  /** Allow the SowerStoryStrip to override the story after an edit */
+  const setStoryOverride = useCallback((text: string) => {
+    storyCache.set(params.seedId, text);
+    setStory(text);
+  }, [params.seedId]);
+
   useEffect(() => {
     const existing = storyCache.get(params.seedId);
     if (existing?.trim()) {
@@ -30,7 +36,6 @@ export const useSeedStory = (params: SeedStoryParams) => {
       return;
     }
 
-    // Clean up stale/empty cache values from earlier failed runs
     if (storyCache.has(params.seedId) && !existing?.trim()) {
       storyCache.delete(params.seedId);
     }
@@ -56,6 +61,20 @@ export const useSeedStory = (params: SeedStoryParams) => {
 
     const request = (async () => {
       try {
+        // Check for sower-edited override first
+        const { data: override } = await supabase
+          .from('seed_story_overrides' as any)
+          .select('story_text')
+          .eq('seed_id', params.seedId)
+          .maybeSingle();
+
+        const overrideObj = override as any;
+        if (overrideObj?.story_text?.trim()) {
+          const text = overrideObj.story_text.trim();
+          storyCache.set(params.seedId, text);
+          return text;
+        }
+
         const {
           data: { session },
         } = await supabase.auth.getSession();
@@ -122,5 +141,5 @@ export const useSeedStory = (params: SeedStoryParams) => {
     params.seedCategory,
   ]);
 
-  return { story, loading };
+  return { story, loading, setStoryOverride };
 };

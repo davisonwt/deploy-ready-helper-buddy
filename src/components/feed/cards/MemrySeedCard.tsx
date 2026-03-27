@@ -40,6 +40,7 @@ interface MemrySeedCardProps {
     };
     user_liked?: boolean;
     sower_seed_number?: number;
+    content_category?: string;
   };
   user: any;
   isFollowing: boolean;
@@ -536,7 +537,18 @@ export const MemrySeedCard: React.FC<MemrySeedCardProps> = ({
         bestowalsCount={post.likes_count || 0}
         engagements={post.comments_count || 0}
         seedCategory={getSeedTypeLabel()}
+        sowerUserId={post.user_id}
+        currentUserId={user?.id}
       />
+
+      {/* ── Price display for books/music ── */}
+      {(isBook || isMusic) && post.product_price != null && post.product_price > 0 && (
+        <div className="px-3 py-1.5 bg-card">
+          <span className="text-emerald-400 font-bold text-sm">
+            Bestowal Value: ${post.product_price.toFixed(2)}
+          </span>
+        </div>
+      )}
 
       {/* ── Section 2: Actions Row ── */}
       <div className="px-3 py-2.5 bg-card">
@@ -579,14 +591,22 @@ export const MemrySeedCard: React.FC<MemrySeedCardProps> = ({
       {/* ── Section 3: Hairline divider ── */}
       <div className="h-px bg-border/50" />
 
-      {/* ── Section 4: Bestow bar ── */}
-      <button
-        onClick={handleBestow}
-        className="w-full flex items-center justify-center gap-2 py-3 bg-gradient-to-r from-amber-400 to-orange-500 hover:from-amber-500 hover:to-orange-600 transition-colors text-amber-950 font-bold text-sm rounded-b-2xl"
-      >
-        <Gift className="w-4 h-4" />
-        {isBook ? 'Bestow & Get This Book' : isMusic ? 'Bestow & Get This Track' : 'Bestow & Get This Seed'}
-      </button>
+      {/* ── Section 4: Bestow / Gift bar ── */}
+      {(() => {
+        const isHomemade = post.content_category === 'homemade' || post.content_category === 'testimony' || post.content_category === 'tutorial';
+        const ctaLabel = isHomemade
+          ? '🎁 Gift to Content Creator'
+          : isBook ? '🎁 Bestow & Get This Book' : isMusic ? '🎁 Bestow & Get This Track' : '🎁 Bestow & Get This Seed';
+        return (
+          <button
+            onClick={handleBestow}
+            className="w-full flex items-center justify-center gap-2 py-3 bg-gradient-to-r from-amber-400 to-orange-500 hover:from-amber-500 hover:to-orange-600 transition-colors text-amber-950 font-bold text-sm rounded-b-2xl"
+          >
+            <Gift className="w-4 h-4" />
+            {ctaLabel}
+          </button>
+        );
+      })()}
     </div>
   );
 };
