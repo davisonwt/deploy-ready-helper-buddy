@@ -196,10 +196,23 @@ export const MemrySeedCard: React.FC<MemrySeedCardProps> = ({
   const [imgIdx, setImgIdx] = useState(0);
   const [inlineMsg, setInlineMsg] = useState('');
   const cardRef = useRef<HTMLDivElement>(null);
+  const videoRef = useRef<HTMLVideoElement>(null);
   const [isInView, setIsInView] = useState(false);
+  const [videoPlaying, setVideoPlaying] = useState(false);
 
-  const allImages = [post.media_url];
-  const hasMultipleImages = false;
+  // Build image gallery from image_urls + media_url, deduplicated
+  const allImages = (() => {
+    const imgs: string[] = [];
+    if (post.image_urls?.length) {
+      post.image_urls.forEach((url) => { if (url && !imgs.includes(url)) imgs.push(url); });
+    }
+    if (post.media_url && !imgs.includes(post.media_url) && !/\.(mp4|webm|mov)(\?|$)/i.test(post.media_url)) {
+      imgs.push(post.media_url);
+    }
+    return imgs.length > 0 ? imgs : [post.media_url];
+  })();
+  const hasMultipleImages = allImages.length > 1;
+  const isVideo = post.media_url && /\.(mp4|webm|mov)(\?|$)/i.test(post.media_url);
   const isProduct = post.content_type === 'new_product';
   const isOrchard = post.content_type === 'new_orchard';
   const isBook = post.content_type === 'new_book';
@@ -326,22 +339,45 @@ export const MemrySeedCard: React.FC<MemrySeedCardProps> = ({
           <div className="w-full h-full bg-gradient-to-br from-violet-700 via-purple-600 to-pink-500 flex items-center justify-center">
             <Music className="w-20 h-20 text-white/30" />
           </div>
-        ) : post.media_url && /\.(mp4|webm|mov)(\?|$)/i.test(post.media_url) ? (
-          <video
-            src={post.media_url}
-            className="w-full h-full object-cover"
-            muted
-            playsInline
-            preload="metadata"
-            poster={post.image_urls?.[0]}
-            onError={(e) => {
-              const t = e.target as HTMLVideoElement;
-              if (!t.dataset.fallback) {
-                t.dataset.fallback = '1';
-                t.poster = '/lovable-uploads/ff9e6e48-049d-465a-8d2b-f6e8fed93522.png';
-              }
-            }}
-          />
+        ) : isVideo ? (
+          <>
+            <video
+              ref={videoRef}
+              src={post.media_url}
+              className="w-full h-full object-cover"
+              muted={!videoPlaying}
+              playsInline
+              preload="metadata"
+              poster={post.image_urls?.[0]}
+              loop
+              onError={(e) => {
+                const t = e.target as HTMLVideoElement;
+                if (!t.dataset.fallback) {
+                  t.dataset.fallback = '1';
+                  t.poster = '/lovable-uploads/ff9e6e48-049d-465a-8d2b-f6e8fed93522.png';
+                }
+              }}
+              onPause={() => setVideoPlaying(false)}
+              onPlay={() => setVideoPlaying(true)}
+            />
+            <button
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                const vid = videoRef.current;
+                if (!vid) return;
+                if (vid.paused) { vid.muted = false; vid.play().catch(() => {}); }
+                else { vid.pause(); }
+              }}
+              className="absolute inset-0 z-[5] flex items-center justify-center"
+            >
+              {!videoPlaying && (
+                <div className="w-14 h-14 rounded-full bg-black/50 backdrop-blur-sm flex items-center justify-center">
+                  <Play className="w-7 h-7 text-white ml-1" fill="white" />
+                </div>
+              )}
+            </button>
+          </>
         ) : (
           <img
             src={allImages[imgIdx] || post.media_url}
