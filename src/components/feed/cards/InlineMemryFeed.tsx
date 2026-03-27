@@ -8,6 +8,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
+import { convertToPublicUrl } from '@/utils/urlUtils';
 
 interface MemryPost {
   id: string;
@@ -125,20 +126,27 @@ export const InlineMemryFeed: React.FC = () => {
       (products || []).forEach((p: any) => {
         const userId = p.sower?.user_id || p.sower_id;
         const profile = profileMap.get(userId);
-        const images = [p.cover_image_url, ...(p.image_urls || p.gallery_images || [])].filter(Boolean);
+        const images = [p.cover_image_url, ...(p.image_urls || p.gallery_images || [])]
+          .filter(Boolean)
+          .map((url: string) => convertToPublicUrl(url));
         const descriptor = [p.category, p.type, p.product_type].filter(Boolean).join(' ').toLowerCase();
         const normalizedType = String(p.type || '').toLowerCase();
-        const fileUrl = typeof p.file_url === 'string' ? p.file_url : undefined;
+        const fileUrl = typeof p.file_url === 'string' ? convertToPublicUrl(p.file_url) : undefined;
         const isLikelyAudioFile = !!fileUrl && /\.(mp3|wav|m4a|aac|ogg|flac)(\?|$)/i.test(fileUrl);
+        const isLikelyVideoFile = !!fileUrl && /\.(mp4|webm|mov|m4v)(\?|$)/i.test(fileUrl);
         const isAudioCategory = ['music', 'audio', 'song', 'track'].some((token) => descriptor.includes(token));
-        const audioUrl = fileUrl && (normalizedType === 'music' || isLikelyAudioFile || isAudioCategory) ? fileUrl : undefined;
+        const audioUrl = fileUrl && !isLikelyVideoFile && (normalizedType === 'music' || isLikelyAudioFile || isAudioCategory) ? fileUrl : undefined;
         const looksLikeMusic = normalizedType === 'music' || isAudioCategory || !!audioUrl;
+        const primaryImage = images[0];
+        const mediaUrl = isLikelyVideoFile ? fileUrl! : (primaryImage || '/placeholder.svg');
+        const galleryImages = images.filter((url) => url !== mediaUrl);
+
         allPosts.push({
           id: `product-${p.id}`,
           user_id: userId,
           content_type: looksLikeMusic ? 'music' : 'new_product',
-          media_url: p.cover_image_url || '/placeholder.svg',
-          image_urls: images.length > 1 ? images : undefined,
+          media_url: mediaUrl,
+          image_urls: galleryImages.length > 0 ? [primaryImage, ...galleryImages].filter(Boolean) as string[] : (primaryImage ? [primaryImage] : undefined),
           audio_url: audioUrl,
           caption: `🌱 SEED: ${p.title}`,
           likes_count: p.bestowal_count || 0,
@@ -154,7 +162,9 @@ export const InlineMemryFeed: React.FC = () => {
 
       (orchards || []).forEach((o: any) => {
         const profile = profileMap.get(o.user_id);
-        const orchardImages = [o.banner_url, o.logo_url, ...(o.images || [])].filter(Boolean);
+        const orchardImages = [o.banner_url, o.logo_url, ...(o.images || [])]
+          .filter(Boolean)
+          .map((url: string) => convertToPublicUrl(url));
         allPosts.push({
           id: `orchard-${o.id}`,
           user_id: o.user_id,
@@ -173,7 +183,9 @@ export const InlineMemryFeed: React.FC = () => {
       (books || []).forEach((b: any) => {
         const userId = b.sower?.user_id || b.sower_id;
         const profile = profileMap.get(userId);
-        const bookImages = [b.cover_image_url, ...(b.gallery_images || b.image_urls || [])].filter(Boolean);
+        const bookImages = [b.cover_image_url, ...(b.gallery_images || b.image_urls || [])]
+          .filter(Boolean)
+          .map((url: string) => convertToPublicUrl(url));
         allPosts.push({
           id: `book-${b.id}`,
           user_id: userId,
@@ -192,14 +204,15 @@ export const InlineMemryFeed: React.FC = () => {
 
       (memryPosts || []).forEach((mp: any) => {
         const profile = profileMap.get(mp.user_id);
-        const mpImages = [mp.media_url, ...(mp.image_urls || [])].filter(Boolean);
+        const mpMediaUrl = convertToPublicUrl(mp.media_url);
+        const mpImages = [mpMediaUrl, ...(mp.image_urls || [])].filter(Boolean).map((url: string) => convertToPublicUrl(url));
         allPosts.push({
           id: mp.id,
           user_id: mp.user_id,
           content_type: mp.content_type,
-          media_url: mp.media_url,
+          media_url: mpMediaUrl,
           image_urls: mpImages.length > 1 ? mpImages : mp.image_urls,
-          audio_url: mp.content_type === 'music' ? mp.media_url : mp.audio_url,
+          audio_url: mp.content_type === 'music' ? mpMediaUrl : convertToPublicUrl(mp.audio_url),
           caption: mp.caption || '',
           likes_count: mp.likes_count || 0,
           comments_count: mp.comments_count || 0,
