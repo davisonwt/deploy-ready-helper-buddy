@@ -608,7 +608,8 @@ export const MemrySeedCard: React.FC<MemrySeedCardProps> = ({
           : isBook ? '🎁 Bestow & Get This Book' : isMusic ? '🎁 Bestow & Get This Track' : '🎁 Bestow & Get This Seed';
         return (
           <button
-            onClick={handleBestow}
+            type="button"
+            onClick={(e) => handleBestow(e)}
             className="w-full flex items-center justify-center gap-2 py-3 bg-gradient-to-r from-amber-400 to-orange-500 hover:from-amber-500 hover:to-orange-600 transition-colors text-amber-950 font-bold text-sm rounded-b-2xl"
           >
             <Gift className="w-4 h-4" />
