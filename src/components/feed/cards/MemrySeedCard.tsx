@@ -245,7 +245,7 @@ export const MemrySeedCard: React.FC<MemrySeedCardProps> = ({
     const imgs = imageCandidates;
     return imgs.length > 0 ? imgs : [fallbackMedia];
   })();
-  const videoPosterUrl = imageCandidates[0] || undefined;
+  const videoPosterUrl = imageCandidates[0] || fallbackMedia;
 
   useEffect(() => {
     setImgIdx((current) => Math.min(current, Math.max(0, allImages.length - 1)));
@@ -259,7 +259,11 @@ export const MemrySeedCard: React.FC<MemrySeedCardProps> = ({
   const isSeed = isProduct || isOrchard || isBook;
   const categoryText = String(post.category || post.product_type || post.content_type || '').toLowerCase();
   const audioPreviewUrl = audioCandidates[0] || mediaUrl;
-  const hasAudio = !!(audioPreviewUrl || isMusic || categoryText.includes('music') || categoryText.includes('audio'));
+  const hasAudio = !!(
+    (isMusic || categoryText.includes('music') || categoryText.includes('audio')) &&
+    audioPreviewUrl &&
+    !isVideo
+  );
 
   useEffect(() => {
     const el = cardRef.current;
