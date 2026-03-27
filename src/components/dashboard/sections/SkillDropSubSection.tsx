@@ -22,7 +22,7 @@ export const SkillDropSubSection: React.FC<Props> = ({ theme }) => {
     const fetch = async () => {
       const { data } = await supabase
         .from('skilldrop_sessions')
-        .select('*, profiles:presenter_profile_id(display_name, avatar_url)')
+        .select('*, presenter_profile:profiles!lecture_halls_presenter_profile_id_fkey(display_name, avatar_url)')
         .in('status', ['live', 'scheduled'])
         .gte('scheduled_at', new Date(Date.now() - 3600000).toISOString())
         .order('scheduled_at', { ascending: true })
@@ -57,7 +57,7 @@ export const SkillDropSubSection: React.FC<Props> = ({ theme }) => {
         <div className="space-y-1.5">
           {sessions.map((s, i) => {
             const isLive = s.status === 'live';
-            const profile = s.profiles;
+            const profile = s.presenter_profile;
             return (
               <motion.div key={s.id} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.05 }}>
                 <div
