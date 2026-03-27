@@ -245,7 +245,7 @@ export const MemrySeedCard: React.FC<MemrySeedCardProps> = ({
     const imgs = imageCandidates;
     return imgs.length > 0 ? imgs : [fallbackMedia];
   })();
-  const videoPosterUrl = imageCandidates[0] || '';
+  const videoPosterUrl = imageCandidates[0] || fallbackMedia;
 
   useEffect(() => {
     setImgIdx((current) => Math.min(current, Math.max(0, allImages.length - 1)));
@@ -284,21 +284,6 @@ export const MemrySeedCard: React.FC<MemrySeedCardProps> = ({
       audioEl.currentTime = 0;
     });
   }, [isInView, hasAudio]);
-
-  useEffect(() => {
-    if (!isVideo) return;
-    const vid = videoRef.current;
-    if (!vid) return;
-
-    if (isInView) {
-      vid.muted = true;
-      vid.play().catch(() => {});
-      return;
-    }
-
-    vid.pause();
-    setVideoPlaying(false);
-  }, [isInView, isVideo, primaryVideoUrl]);
 
   // Determine seed type label
   const getSeedTypeLabel = () => {
@@ -406,8 +391,8 @@ export const MemrySeedCard: React.FC<MemrySeedCardProps> = ({
               className="w-full h-full object-cover"
               muted={!videoPlaying}
               playsInline
-              preload="auto"
-              poster={videoPosterUrl || undefined}
+              preload="metadata"
+              poster={videoPosterUrl}
               loop
               onError={(e) => {
                 const t = e.target as HTMLVideoElement;
@@ -430,8 +415,6 @@ export const MemrySeedCard: React.FC<MemrySeedCardProps> = ({
                 if (vid.paused) {
                   vid.muted = false;
                   vid.play().catch(() => {});
-                } else if (vid.muted) {
-                  vid.muted = false;
                 } else {
                   vid.pause();
                 }
