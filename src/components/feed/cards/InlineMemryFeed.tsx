@@ -32,6 +32,7 @@ interface MemryPost {
     username: string;
   };
   user_liked?: boolean;
+  sower_seed_number?: number;
 }
 
 interface FeedComment {
@@ -131,10 +132,11 @@ export const InlineMemryFeed: React.FC = () => {
         const isLikelyAudioFile = !!fileUrl && /\.(mp3|wav|m4a|aac|ogg|flac)(\?|$)/i.test(fileUrl);
         const isAudioCategory = ['music', 'audio', 'song', 'track'].some((token) => descriptor.includes(token));
         const audioUrl = fileUrl && (normalizedType === 'music' || isLikelyAudioFile || isAudioCategory) ? fileUrl : undefined;
+        const looksLikeMusic = normalizedType === 'music' || isAudioCategory || !!audioUrl;
         allPosts.push({
           id: `product-${p.id}`,
           user_id: userId,
-          content_type: 'new_product',
+          content_type: looksLikeMusic ? 'music' : 'new_product',
           media_url: p.cover_image_url || '/placeholder.svg',
           image_urls: images.length > 1 ? images : undefined,
           audio_url: audioUrl,
@@ -200,11 +202,43 @@ export const InlineMemryFeed: React.FC = () => {
         });
       });
 
-      // Sort by newest, mark liked
-      allPosts.sort((a, b) => 0); // keep interleaved order
-      allPosts.forEach(p => { p.user_liked = likedPostIds.has(p.id); });
+      // Interleave by sower to avoid long same-sower streaks
+      const bySower = new Map<string, MemryPost[]>();
+      allPosts.forEach((post) => {
+        const key = post.user_id || 'unknown';
+        const list = bySower.get(key) || [];
+        list.push(post);
+        bySower.set(key, list);
+      });
 
-      setPosts(allPosts);
+      const interleaved: MemryPost[] = [];
+      let safety = 0;
+      while (safety < 5000) {
+        safety += 1;
+        let pushed = false;
+        for (const [, queue] of bySower) {
+          if (queue.length > 0) {
+            interleaved.push(queue.shift()!);
+            pushed = true;
+          }
+        }
+        if (!pushed) break;
+      }
+
+      // Assign per-sower seed number badge (1 = most recent within current feed batch)
+      const sowerCounter = new Map<string, number>();
+      interleaved.forEach((post) => {
+        const key = post.user_id || 'unknown';
+        const current = (sowerCounter.get(key) || 0) + 1;
+        sowerCounter.set(key, current);
+        post.sower_seed_number = current;
+      });
+
+      // Mark liked for UI state
+      const finalPosts = interleaved.length ? interleaved : allPosts;
+      finalPosts.forEach(p => { p.user_liked = likedPostIds.has(p.id); });
+
+      setPosts(finalPosts);
     } catch (err) {
       console.error('InlineMemryFeed load error:', err);
     } finally {

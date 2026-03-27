@@ -35,6 +35,7 @@ interface MemrySeedCardProps {
       username: string;
     };
     user_liked?: boolean;
+    sower_seed_number?: number;
   };
   user: any;
   isFollowing: boolean;
@@ -162,7 +163,7 @@ const SeedAudioPreview: React.FC<{ audioUrl: string }> = ({ audioUrl }) => {
   }, []);
 
   return (
-    <div className="absolute bottom-14 left-3 right-3 z-20">
+    <div className="relative z-20 w-full max-w-[210px]">
       <audio ref={audioRef} preload="metadata" playsInline className="hidden" />
       <div className="flex items-center gap-2 bg-black/50 backdrop-blur-md rounded-full px-3 py-1.5">
         <button onClick={togglePlay} className="text-white hover:scale-110 transition-transform flex-shrink-0" disabled={loading || !resolvedUrl}>
@@ -174,7 +175,6 @@ const SeedAudioPreview: React.FC<{ audioUrl: string }> = ({ audioUrl }) => {
         <span className="text-white text-[10px] font-mono flex-shrink-0">
           {Math.floor(currentTime)}s/{PREVIEW_DURATION}s
         </span>
-        <Music className="w-3.5 h-3.5 text-white/60 flex-shrink-0" />
       </div>
     </div>
   );
@@ -194,6 +194,8 @@ export const MemrySeedCard: React.FC<MemrySeedCardProps> = ({
   const { addToBasket } = useProductBasket();
   const [imgIdx, setImgIdx] = useState(0);
   const [inlineMsg, setInlineMsg] = useState('');
+  const cardRef = useRef<HTMLDivElement>(null);
+  const [isInView, setIsInView] = useState(false);
 
   const allImages = post.image_urls && post.image_urls.length > 1 ? post.image_urls : [post.media_url];
   const hasMultipleImages = allImages.length > 1;
@@ -204,6 +206,26 @@ export const MemrySeedCard: React.FC<MemrySeedCardProps> = ({
   const isSeed = isProduct || isOrchard || isBook;
   const categoryText = String(post.category || post.product_type || post.content_type || '').toLowerCase();
   const hasAudio = !!(post.audio_url || isMusic || categoryText.includes('music') || categoryText.includes('audio'));
+
+  useEffect(() => {
+    const el = cardRef.current;
+    if (!el) return;
+    const observer = new IntersectionObserver(
+      ([entry]) => setIsInView(entry.isIntersecting && entry.intersectionRatio > 0.55),
+      { threshold: [0.55] }
+    );
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, []);
+
+  useEffect(() => {
+    if (isInView || !hasAudio) return;
+    const localAudios = cardRef.current?.querySelectorAll('audio') ?? [];
+    localAudios.forEach((audioEl) => {
+      audioEl.pause();
+      audioEl.currentTime = 0;
+    });
+  }, [isInView, hasAudio]);
 
   // Determine seed type label
   const getSeedTypeLabel = () => {
@@ -295,7 +317,7 @@ export const MemrySeedCard: React.FC<MemrySeedCardProps> = ({
   };
 
   return (
-    <div className="rounded-2xl overflow-hidden bg-card border border-border/30 shadow-md">
+    <div ref={cardRef} className="rounded-2xl overflow-hidden bg-card border border-border/30 shadow-md">
       {/* ── Section 1: Image Zone ── */}
       <div className="relative w-full" style={{ height: 340 }}>
         {/* Seed image */}
@@ -332,6 +354,12 @@ export const MemrySeedCard: React.FC<MemrySeedCardProps> = ({
           </div>
         )}
 
+        {!!post.sower_seed_number && (
+          <div className="absolute top-3 right-3 z-10 translate-y-8 bg-background/75 text-foreground text-[10px] font-bold px-2 py-0.5 rounded-full backdrop-blur-sm border border-border/50">
+            Seed #{post.sower_seed_number}
+          </div>
+        )}
+
         {/* Image navigation arrows */}
         {hasMultipleImages && (
           <>
@@ -350,11 +378,6 @@ export const MemrySeedCard: React.FC<MemrySeedCardProps> = ({
               <ChevronRight className="w-4 h-4" />
             </button>
           </>
-        )}
-
-        {/* 30s audio preview player */}
-        {hasAudio && (
-          <SeedAudioPreview audioUrl={post.audio_url || post.media_url} />
         )}
 
         {/* Bottom gradient fade */}
@@ -387,9 +410,14 @@ export const MemrySeedCard: React.FC<MemrySeedCardProps> = ({
             </div>
           </div>
 
-          <p className="text-white font-semibold text-[16px] leading-tight line-clamp-2 drop-shadow">
-            {post.product_title || post.caption}
-          </p>
+          <div className="flex items-end justify-between gap-2">
+            <p className="text-white font-semibold text-[16px] leading-tight line-clamp-2 drop-shadow flex-1">
+              {post.product_title || post.caption}
+            </p>
+            {hasAudio && (
+              <SeedAudioPreview audioUrl={post.audio_url || post.media_url} />
+            )}
+          </div>
         </div>
       </div>
 
