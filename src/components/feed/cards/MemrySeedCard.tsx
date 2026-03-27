@@ -409,23 +409,32 @@ export const MemrySeedCard: React.FC<MemrySeedCardProps> = ({
           <>
             <video
               ref={videoRef}
-              src={primaryVideoUrl || mediaUrl}
-              className="w-full h-full object-cover"
+              src={resolvedVideoSrc}
+              className="w-full h-full object-cover relative z-[2]"
               muted={!videoPlaying}
               playsInline
-              preload="none"
+              preload="metadata"
               poster={videoPosterUrl}
               loop
+              onLoadedData={() => setVideoReady(true)}
+              onCanPlay={() => setVideoReady(true)}
+              onPlaying={() => {
+                setVideoReady(true);
+                setVideoPlaying(true);
+              }}
               onError={(e) => {
                 const t = e.target as HTMLVideoElement;
                 if (!t.dataset.fallback) {
                   t.dataset.fallback = '1';
                   t.poster = fallbackMedia;
                 }
+                setVideoReady(true);
               }}
               onPause={() => setVideoPlaying(false)}
-              onPlay={() => setVideoPlaying(true)}
             />
+            {!videoReady && (
+              <div className="absolute inset-0 z-[4] bg-background/20 animate-pulse pointer-events-none" />
+            )}
             <button
               type="button"
               data-deadlink-watch-ignore="true"
