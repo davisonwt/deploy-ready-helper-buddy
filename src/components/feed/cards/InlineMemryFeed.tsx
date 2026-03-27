@@ -114,7 +114,8 @@ function InlineMusicSnippet({ mediaUrl, isVisible }: { mediaUrl: string; isVisib
 
 function SowerMemryCard({ sower, index }: { sower: SowerMemry; index: number }) {
   const [imgIdx, setImgIdx] = useState(0);
-  const [isVisible, setIsVisible] = useState(false);
+  const [isHovered, setIsHovered] = useState(false);
+  const [isInView, setIsInView] = useState(false);
   const cardRef = useRef<HTMLDivElement>(null);
 
   // Collect all preview items with type info
@@ -124,14 +125,17 @@ function SowerMemryCard({ sower, index }: { sower: SowerMemry; index: number }) 
     ...sower.orchards.filter(o => o.imageUrl).map(o => ({ url: o.imageUrl!, type: 'image' })),
   ];
 
-  // IntersectionObserver for auto-play
+  // IntersectionObserver for viewport tracking
   useEffect(() => {
     const el = cardRef.current;
     if (!el) return;
-    const obs = new IntersectionObserver(([entry]) => setIsVisible(entry.isIntersecting), { threshold: 0.5 });
+    const obs = new IntersectionObserver(([entry]) => setIsInView(entry.isIntersecting), { threshold: 0.5 });
     obs.observe(el);
     return () => obs.disconnect();
   }, []);
+
+  // Audio plays when card is both in view AND hovered
+  const isActive = isInView && isHovered;
 
   const currentItem = previewItems[imgIdx];
   const isMusic = currentItem?.type === 'music';
