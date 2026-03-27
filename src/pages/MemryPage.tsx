@@ -287,6 +287,7 @@ export default function MemryPage({ embedded = false }: { embedded?: boolean }) 
   const [messageCountsByUser, setMessageCountsByUser] = useState<Record<string, number>>({});
   // New post state
   const [newPostType, setNewPostType] = useState<'photo' | 'video' | 'recipe' | 'music'>('photo');
+  const [newPostCategory, setNewPostCategory] = useState<'seed' | 'homemade' | 'testimony' | 'tutorial'>('homemade');
   const [newPostCaption, setNewPostCaption] = useState('');
   const [newPostFile, setNewPostFile] = useState<File | null>(null);
   const [newPostPreview, setNewPostPreview] = useState<string>('');
@@ -1003,12 +1004,13 @@ export default function MemryPage({ embedded = false }: { embedded?: boolean }) 
         .insert({
           user_id: user.id,
           content_type: newPostType,
+          content_category: newPostCategory,
           media_url: mediaUrl || 'https://via.placeholder.com/400',
           caption: newPostCaption,
           recipe_title: newPostType === 'recipe' ? recipeTitle : null,
           recipe_ingredients: newPostType === 'recipe' ? recipeIngredients.split('\n').filter(i => i.trim()) : null,
           recipe_instructions: newPostType === 'recipe' ? recipeInstructions : null
-        });
+        } as any);
 
       if (postError) {
         throw postError;
@@ -1951,6 +1953,33 @@ export default function MemryPage({ embedded = false }: { embedded?: boolean }) 
                 </TabsTrigger>
               </TabsList>
             </Tabs>
+
+            {/* Content Category */}
+            <div className="space-y-1.5">
+              <label className="text-sm font-semibold text-orange-800">Content Category</label>
+              <div className="grid grid-cols-2 gap-2">
+                {([
+                  { value: 'seed', label: '🌱 Seed (Product)', desc: 'Commercial offering' },
+                  { value: 'homemade', label: '🏠 Homemade', desc: 'Personal creation' },
+                  { value: 'testimony', label: '🙏 Testimony', desc: 'Share your story' },
+                  { value: 'tutorial', label: '📖 Tutorial', desc: 'Teach something' },
+                ] as const).map((cat) => (
+                  <button
+                    key={cat.value}
+                    type="button"
+                    onClick={() => setNewPostCategory(cat.value)}
+                    className={`text-left p-2 rounded-xl border-2 transition-all ${
+                      newPostCategory === cat.value
+                        ? 'border-orange-500 bg-orange-50'
+                        : 'border-orange-200 bg-white/50 hover:border-orange-300'
+                    }`}
+                  >
+                    <span className="text-xs font-bold text-orange-900">{cat.label}</span>
+                    <p className="text-[10px] text-orange-600/70">{cat.desc}</p>
+                  </button>
+                ))}
+              </div>
+            </div>
 
             {/* Media Upload */}
             <div className="relative">
