@@ -48,7 +48,11 @@ export const InlineMemryFeed: React.FC = () => {
   const [user, setUser] = useState<any>(null);
   const [likedPostIds, setLikedPostIds] = useState<Set<string>>(new Set());
   const [followedUserIds, setFollowedUserIds] = useState<Set<string>>(new Set());
-  const { toast } = useToast();
+  const [commentsOpen, setCommentsOpen] = useState(false);
+  const [commentsPostId, setCommentsPostId] = useState<string | null>(null);
+  const [comments, setComments] = useState<FeedComment[]>([]);
+  const [newComment, setNewComment] = useState('');
+  const navigate = useNavigate();
 
   useEffect(() => {
     loadData();
