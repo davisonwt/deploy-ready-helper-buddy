@@ -12,7 +12,7 @@ import { resolveAudioUrl } from '@/utils/resolveAudioUrl';
 import { globalAudioManager } from '@/utils/globalAudioManager';
 import { unlockHtmlMediaElement } from '@/utils/unlockHtmlMediaElement';
 import { dedupeUrls, isAudioUrl, isVideoUrl, normalizeMediaUrl } from '@/utils/memryFeedMedia';
-import { imagePresets } from '@/utils/imageOptimizer';
+
 
 interface MemrySeedCardProps {
   post: {
@@ -431,7 +431,7 @@ export const MemrySeedCard: React.FC<MemrySeedCardProps> = ({
           </>
         ) : (
           <img
-            src={imagePresets.feedCard(allImages[Math.min(imgIdx, allImages.length - 1)])}
+            src={allImages[Math.min(imgIdx, allImages.length - 1)]}
             alt={post.caption}
             className="w-full h-full object-cover"
             loading="lazy"
