@@ -182,6 +182,7 @@ export const InlineMemryFeed: React.FC = () => {
           content_type: mp.content_type,
           media_url: mp.media_url,
           image_urls: mp.image_urls,
+          audio_url: mp.content_type === 'music' ? mp.media_url : mp.audio_url,
           caption: mp.caption || '',
           likes_count: mp.likes_count || 0,
           comments_count: mp.comments_count || 0,
