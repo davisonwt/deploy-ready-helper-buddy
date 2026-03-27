@@ -1529,7 +1529,7 @@ export default function MemryPage({ embedded = false }: { embedded?: boolean }) 
         )}
 
         {/* === RECIPES TAB === */}
-        {activeTab === 'recipes' && (
+        {!embedded && activeTab === 'recipes' && (
           <div className="h-full flex flex-col pt-20 pb-24 pl-20 pr-3 md:pl-24 md:pr-6 overflow-y-auto">
             <div className="max-w-lg mx-auto w-full space-y-4">
               <h2 className="text-xl font-bold text-orange-800">Community Recipes</h2>
