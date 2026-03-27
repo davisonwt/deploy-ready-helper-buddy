@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback, useRef, useContext } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
+import { useLocation } from 'react-router-dom';
 import { stopAllRingtones } from '@/lib/ringtone';
 import { CALL_CONSTANTS, isCallStale, isDuplicateCall } from './callUtils';
 import { CallManagerContext } from '@/contexts/CallManagerContext';
@@ -11,6 +12,7 @@ import { JITSI_CONFIG } from '@/lib/jitsi-config';
 const useCallManagerInternal = () => {
   const { user } = useAuth();
   const { toast } = useToast();
+  const location = useLocation();
   
   // ============================================
   // ALL HOOKS AT TOP LEVEL - UNCONDITIONAL
@@ -44,6 +46,17 @@ const useCallManagerInternal = () => {
   // Flags for conditional logic AFTER all hooks
   const hasUser = !!user;
   const userId = user?.id || null;
+  const pathname = location?.pathname || '';
+  const shouldPollIncomingCalls = [
+    '/communications-hub',
+    '/chat',
+    '/community-chat',
+    '/live-rooms',
+    '/clubhouse',
+    '/radio',
+    '/calls',
+    '/call',
+  ].some((prefix) => pathname.startsWith(prefix));
   
   // ============================================
   // CALLBACKS - ALL UNCONDITIONAL
@@ -1142,7 +1155,7 @@ const useCallManagerInternal = () => {
 
   // CRITICAL FIX: Poll aggressively for incoming calls - ALWAYS poll when no incoming call
   useEffect(() => {
-    if (!hasUser || !userId) {
+    if (!hasUser || !userId || !shouldPollIncomingCalls) {
       return;
     }
     // CRITICAL: Only skip if we already have an incoming call or active call
@@ -1150,7 +1163,7 @@ const useCallManagerInternal = () => {
       return;
     }
 
-    console.log('📞 [CALL][POLL] Starting poll for incoming calls, userId:', userId);
+    console.log('📞 [CALL][POLL] Starting poll for incoming calls, userId:', userId, 'route:', pathname);
     
     let pollCount = 0;
     const poll = setInterval(async () => {
@@ -1228,7 +1241,7 @@ const useCallManagerInternal = () => {
       }
       clearInterval(poll);
     };
-  }, [hasUser, userId, incomingCall, currentCall, handleIncomingCall]);
+  }, [hasUser, userId, incomingCall, currentCall, handleIncomingCall, shouldPollIncomingCalls, pathname]);
 
   // ============================================
   // RETURN - Conditional on hasUser for stubs
