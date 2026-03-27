@@ -261,17 +261,15 @@ export const InlineMemryFeed: React.FC = () => {
         const sourceMediaUrl = normalizeMediaUrl(mp.media_url);
         const sourceThumbUrl = normalizeMediaUrl(mp.thumbnail_url);
         const mediaPayload = toMediaPayload(mp, {
-          forceVideoUrl:
-            normalizedType === 'video' || isVideoUrl(sourceMediaUrl)
-              ? sourceMediaUrl
-              : undefined,
+          forceVideoUrl: isVideoUrl(sourceMediaUrl) ? sourceMediaUrl : undefined,
           forceImageUrl: sourceThumbUrl || (!isVideoUrl(sourceMediaUrl) ? sourceMediaUrl : undefined),
           forceAudioUrl: isAudioUrl(sourceMediaUrl) ? sourceMediaUrl : undefined,
         });
         const primaryVideo = mediaPayload.videos[0] || '';
         const primaryImage = mediaPayload.images[0] || '';
         const primaryAudio = mediaPayload.audios[0];
-        const isVideoType = normalizedType === 'video' || !!primaryVideo;
+        const hasVideoSource = !!(primaryVideo || isVideoUrl(sourceMediaUrl));
+        const isVideoType = hasVideoSource;
         const mpMediaUrl = isVideoType
           ? (primaryVideo || sourceMediaUrl || primaryImage || FALLBACK_MEDIA)
           : (primaryImage || primaryVideo || sourceMediaUrl || primaryAudio || FALLBACK_MEDIA);
@@ -279,13 +277,16 @@ export const InlineMemryFeed: React.FC = () => {
         const mpAudio = normalizedType === 'music'
           ? (primaryAudio || (isAudioUrl(mpMediaUrl) ? mpMediaUrl : undefined))
           : primaryAudio;
+        const resolvedContentType = isVideoType || (normalizedType !== 'music' && isVideoUrl(mpMediaUrl))
+          ? 'video'
+          : normalizedType === 'video'
+            ? (mpAudio ? 'audio' : 'photo')
+            : (normalizedType || (mpAudio ? 'audio' : 'photo'));
 
         allPosts.push({
           id: mp.id,
           user_id: mp.user_id,
-          content_type: isVideoType || (normalizedType !== 'music' && isVideoUrl(mpMediaUrl))
-            ? 'video'
-            : (normalizedType || 'photo'),
+          content_type: resolvedContentType,
           media_url: mpMediaUrl,
           media: mediaPayload.media,
           image_urls: mpImages.length > 0 ? mpImages : undefined,
