@@ -1,8 +1,15 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { Camera } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { MemrySeedCard } from './MemrySeedCard';
 import { useToast } from '@/hooks/use-toast';
+import { useNavigate } from 'react-router-dom';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
+import { Send } from 'lucide-react';
 
 interface MemryPost {
   id: string;
@@ -10,6 +17,7 @@ interface MemryPost {
   content_type: string;
   media_url: string;
   image_urls?: string[];
+  audio_url?: string;
   caption: string;
   likes_count: number;
   comments_count: number;
@@ -24,6 +32,14 @@ interface MemryPost {
     username: string;
   };
   user_liked?: boolean;
+}
+
+interface FeedComment {
+  id: string;
+  user_id: string;
+  content: string;
+  created_at: string;
+  profiles?: { display_name: string; avatar_url: string };
 }
 
 export const InlineMemryFeed: React.FC = () => {
