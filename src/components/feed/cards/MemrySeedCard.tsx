@@ -259,7 +259,6 @@ export const MemrySeedCard: React.FC<MemrySeedCardProps> = ({
     const imgs = imageCandidates;
     return imgs.length > 0 ? imgs : [fallbackMedia];
   })();
-  const videoPosterUrl = imageCandidates[0] || fallbackMedia;
   const resolvedVideoSrc = primaryVideoUrl || mediaUrl;
 
   useEffect(() => {
@@ -271,6 +270,7 @@ export const MemrySeedCard: React.FC<MemrySeedCardProps> = ({
     setVideoPlaying(false);
     const video = videoRef.current;
     if (!video) return;
+    delete video.dataset.previewSeeked;
     const rafId = requestAnimationFrame(() => markVideoReady(video));
     return () => cancelAnimationFrame(rafId);
   }, [resolvedVideoSrc, post.id, markVideoReady]);
@@ -431,9 +431,23 @@ export const MemrySeedCard: React.FC<MemrySeedCardProps> = ({
               muted={!videoPlaying}
               playsInline
               preload="metadata"
-              poster={videoPosterUrl}
               loop
-              onLoadedMetadata={(e) => markVideoReady(e.currentTarget)}
+              onLoadedMetadata={(e) => {
+                const target = e.currentTarget;
+                markVideoReady(target);
+                if (!target.dataset.previewSeeked) {
+                  target.dataset.previewSeeked = '1';
+                  const duration = Number.isFinite(target.duration) ? target.duration : 0;
+                  const seekTo = Math.min(Math.max(duration * 0.12, 0.6), 2.5);
+                  if (seekTo > 0) {
+                    try {
+                      target.currentTime = seekTo;
+                    } catch {
+                      // ignore seek failures on partially buffered media
+                    }
+                  }
+                }
+              }}
               onLoadedData={(e) => markVideoReady(e.currentTarget)}
               onCanPlay={(e) => markVideoReady(e.currentTarget)}
               onCanPlayThrough={(e) => markVideoReady(e.currentTarget)}
@@ -443,24 +457,16 @@ export const MemrySeedCard: React.FC<MemrySeedCardProps> = ({
               onPlaying={() => {
                 setVideoReady(true);
                 setVideoPlaying(true);
-                const current = videoRef.current;
-                if (current) {
-                  current.poster = '';
-                }
               }}
               onError={(e) => {
                 const t = e.target as HTMLVideoElement;
                 if (!t.dataset.fallback) {
                   t.dataset.fallback = '1';
-                  t.poster = fallbackMedia;
                 }
                 setVideoReady(true);
               }}
               onPause={() => setVideoPlaying(false)}
             />
-            {!videoReady && !videoPlaying && (
-              <div className="absolute inset-0 z-[4] bg-muted/60 animate-pulse pointer-events-none" />
-            )}
             <button
               type="button"
               data-deadlink-watch-ignore="true"
@@ -471,7 +477,6 @@ export const MemrySeedCard: React.FC<MemrySeedCardProps> = ({
                 if (!vid) return;
                 if (vid.paused) {
                   setVideoReady(true);
-                  vid.poster = '';
                   vid.muted = false;
                   vid.play().catch(() => {});
                 } else {
