@@ -197,6 +197,7 @@ export const InlineMemryFeed: React.FC = () => {
           product_type: p.product_type || undefined,
           category: p.category || undefined,
           profiles: profile ? { display_name: profile.display_name, avatar_url: profile.avatar_url, username: profile.username } : undefined,
+          content_category: 'seed',
         });
       });
 
@@ -246,9 +247,10 @@ export const InlineMemryFeed: React.FC = () => {
           likes_count: 0,
           comments_count: 0,
           book_id: b.id,
-          product_price: b.price,
+          product_price: b.bestowal_value || b.price || 0,
           product_title: b.title,
           profiles: profile ? { display_name: profile.display_name, avatar_url: profile.avatar_url, username: profile.username } : undefined,
+          content_category: 'seed',
         });
       });
 
