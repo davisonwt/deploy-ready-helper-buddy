@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Heart, MessageCircle, Share2, Send, Gift, ChevronLeft, ChevronRight, Play, Pause, Music, MessageSquare, Lock } from 'lucide-react';
 import { SowerStoryStrip } from './SowerStoryStrip';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -205,6 +205,13 @@ export const MemrySeedCard: React.FC<MemrySeedCardProps> = ({
   const [videoPlaying, setVideoPlaying] = useState(false);
   const [videoReady, setVideoReady] = useState(false);
 
+  const markVideoReady = useCallback((element?: HTMLVideoElement | null) => {
+    if (!element) return;
+    if (element.readyState >= HTMLMediaElement.HAVE_CURRENT_DATA) {
+      setVideoReady(true);
+    }
+  }, []);
+
   const fallbackMedia = '/lovable-uploads/ff9e6e48-049d-465a-8d2b-f6e8fed93522.png';
   const mediaUrl = normalizeMediaUrl(post.media_url || '');
   const normalizedPayloadMedia = (post.media || [])
@@ -262,7 +269,11 @@ export const MemrySeedCard: React.FC<MemrySeedCardProps> = ({
   useEffect(() => {
     setVideoReady(false);
     setVideoPlaying(false);
-  }, [resolvedVideoSrc, post.id]);
+    const video = videoRef.current;
+    if (!video) return;
+    const rafId = requestAnimationFrame(() => markVideoReady(video));
+    return () => cancelAnimationFrame(rafId);
+  }, [resolvedVideoSrc, post.id, markVideoReady]);
 
   const hasMultipleImages = allImages.length > 1;
   const isProduct = post.content_type === 'new_product';
@@ -410,14 +421,18 @@ export const MemrySeedCard: React.FC<MemrySeedCardProps> = ({
             <video
               ref={videoRef}
               src={resolvedVideoSrc}
-              className="w-full h-full object-cover relative z-[2]"
+              className={`absolute inset-0 h-full w-full object-cover z-[2] transition-opacity duration-200 ${videoReady ? 'opacity-100' : 'opacity-0'}`}
               muted={!videoPlaying}
               playsInline
               preload="metadata"
               poster={videoPosterUrl}
               loop
-              onLoadedData={() => setVideoReady(true)}
-              onCanPlay={() => setVideoReady(true)}
+              onLoadedMetadata={(e) => markVideoReady(e.currentTarget)}
+              onLoadedData={(e) => markVideoReady(e.currentTarget)}
+              onCanPlay={(e) => markVideoReady(e.currentTarget)}
+              onCanPlayThrough={(e) => markVideoReady(e.currentTarget)}
+              onTimeUpdate={(e) => markVideoReady(e.currentTarget)}
+              onPlay={(e) => markVideoReady(e.currentTarget)}
               onPlaying={() => {
                 setVideoReady(true);
                 setVideoPlaying(true);
@@ -433,7 +448,7 @@ export const MemrySeedCard: React.FC<MemrySeedCardProps> = ({
               onPause={() => setVideoPlaying(false)}
             />
             {!videoReady && (
-              <div className="absolute inset-0 z-[4] bg-background/20 animate-pulse pointer-events-none" />
+              <div className="absolute inset-0 z-[4] bg-muted/60 animate-pulse pointer-events-none" />
             )}
             <button
               type="button"
