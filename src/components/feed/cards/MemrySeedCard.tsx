@@ -11,7 +11,7 @@ import { useProductBasket } from '@/contexts/ProductBasketContext';
 import { resolveAudioUrl } from '@/utils/resolveAudioUrl';
 import { globalAudioManager } from '@/utils/globalAudioManager';
 import { unlockHtmlMediaElement } from '@/utils/unlockHtmlMediaElement';
-import { dedupeUrls, isVideoUrl, normalizeMediaUrl } from '@/utils/memryFeedMedia';
+import { dedupeUrls, isAudioUrl, isVideoUrl, normalizeMediaUrl } from '@/utils/memryFeedMedia';
 
 interface MemrySeedCardProps {
   post: {
@@ -19,6 +19,7 @@ interface MemrySeedCardProps {
     user_id: string;
     content_type: string;
     media_url: string;
+    media?: { type: 'image' | 'video' | 'audio'; url: string }[];
     image_urls?: string[];
     audio_url?: string;
     caption: string;
@@ -203,20 +204,48 @@ export const MemrySeedCard: React.FC<MemrySeedCardProps> = ({
 
   const fallbackMedia = '/lovable-uploads/ff9e6e48-049d-465a-8d2b-f6e8fed93522.png';
   const mediaUrl = normalizeMediaUrl(post.media_url || '');
+  const normalizedPayloadMedia = (post.media || [])
+    .map((item) => ({
+      type: item.type,
+      url: normalizeMediaUrl(item.url),
+    }))
+    .filter((item) => Boolean(item.url));
+  const payloadMediaUrls = dedupeUrls(normalizedPayloadMedia.map((item) => item.url));
+  const normalizedPostAudioUrl = normalizeMediaUrl(post.audio_url || '');
   const isVideoByType = String(post.content_type || '').toLowerCase() === 'video';
   const normalizedImageUrls = (post.image_urls || [])
     .map((url) => normalizeMediaUrl(url))
     .filter(Boolean);
-  const mediaCandidates = dedupeUrls([mediaUrl, ...normalizedImageUrls].filter(Boolean));
-  const primaryVideoUrl = mediaCandidates.find((url) => isVideoUrl(url)) || '';
-  const isVideoByUrl = !!primaryVideoUrl;
-  const isVideo = isVideoByType || isVideoByUrl;
+  const mediaCandidates = dedupeUrls([
+    ...payloadMediaUrls,
+    mediaUrl,
+    ...normalizedImageUrls,
+    normalizedPostAudioUrl,
+  ].filter(Boolean));
+  const videoCandidates = dedupeUrls([
+    ...normalizedPayloadMedia.filter((item) => item.type === 'video').map((item) => item.url),
+    ...mediaCandidates.filter((url) => isVideoUrl(url)),
+  ]);
+  const imageCandidates = dedupeUrls([
+    ...normalizedPayloadMedia.filter((item) => item.type === 'image').map((item) => item.url),
+    ...normalizedImageUrls,
+    ...mediaCandidates.filter((url) => !isVideoUrl(url) && !isAudioUrl(url)),
+  ]);
+  const audioCandidates = dedupeUrls([
+    ...normalizedPayloadMedia.filter((item) => item.type === 'audio').map((item) => item.url),
+    normalizedPostAudioUrl,
+    ...mediaCandidates.filter((url) => isAudioUrl(url)),
+  ]);
+  const primaryVideoUrl = videoCandidates[0] || '';
+  const isVideoByUrl = videoCandidates.length > 0;
+  const isVideo = isVideoByUrl || (isVideoByType && isVideoUrl(mediaUrl));
 
   // Build image gallery from image_urls + media_url, deduplicated
   const allImages = (() => {
-    const imgs = mediaCandidates.filter((url) => !isVideoUrl(url));
+    const imgs = imageCandidates;
     return imgs.length > 0 ? imgs : [fallbackMedia];
   })();
+  const videoPosterUrl = imageCandidates[0] || undefined;
 
   useEffect(() => {
     setImgIdx((current) => Math.min(current, Math.max(0, allImages.length - 1)));
@@ -229,7 +258,8 @@ export const MemrySeedCard: React.FC<MemrySeedCardProps> = ({
   const isMusic = post.content_type === 'music';
   const isSeed = isProduct || isOrchard || isBook;
   const categoryText = String(post.category || post.product_type || post.content_type || '').toLowerCase();
-  const hasAudio = !!(post.audio_url || isMusic || categoryText.includes('music') || categoryText.includes('audio'));
+  const audioPreviewUrl = audioCandidates[0] || mediaUrl;
+  const hasAudio = !!(audioPreviewUrl || isMusic || categoryText.includes('music') || categoryText.includes('audio'));
 
   useEffect(() => {
     const el = cardRef.current;
@@ -358,7 +388,7 @@ export const MemrySeedCard: React.FC<MemrySeedCardProps> = ({
               muted={!videoPlaying}
               playsInline
               preload="metadata"
-              poster={post.image_urls?.[0] || fallbackMedia}
+              poster={videoPosterUrl}
               loop
               onError={(e) => {
                 const t = e.target as HTMLVideoElement;
@@ -477,8 +507,8 @@ export const MemrySeedCard: React.FC<MemrySeedCardProps> = ({
             <p className="text-white font-semibold text-[16px] leading-tight line-clamp-2 drop-shadow flex-1">
               {post.product_title || post.caption}
             </p>
-            {hasAudio && (
-              <SeedAudioPreview audioUrl={post.audio_url || post.media_url} />
+            {hasAudio && !!audioPreviewUrl && (
+              <SeedAudioPreview audioUrl={audioPreviewUrl} />
             )}
           </div>
         </div>

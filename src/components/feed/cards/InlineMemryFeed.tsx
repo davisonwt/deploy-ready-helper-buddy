@@ -15,6 +15,7 @@ interface MemryPost {
   user_id: string;
   content_type: string;
   media_url: string;
+  media?: { type: 'image' | 'video' | 'audio'; url: string }[];
   image_urls?: string[];
   audio_url?: string;
   caption: string;
@@ -45,6 +46,35 @@ interface FeedComment {
 }
 
 const FALLBACK_MEDIA = '/lovable-uploads/ff9e6e48-049d-465a-8d2b-f6e8fed93522.png';
+
+const toMediaPayload = (
+  source: any,
+  options: {
+    forceVideoUrl?: string;
+    forceImageUrl?: string;
+    forceAudioUrl?: string;
+  } = {}
+) => {
+  const normalized = normalizeMemryMedia(source);
+  const forcedVideo = normalizeMediaUrl(options.forceVideoUrl || '');
+  const forcedImage = normalizeMediaUrl(options.forceImageUrl || '');
+  const forcedAudio = normalizeMediaUrl(options.forceAudioUrl || '');
+
+  const videos = dedupeUrls([...(forcedVideo ? [forcedVideo] : []), ...normalized.videos]);
+  const images = dedupeUrls([...(forcedImage ? [forcedImage] : []), ...normalized.images]);
+  const audios = dedupeUrls([...(forcedAudio ? [forcedAudio] : []), ...normalized.audios]);
+
+  return {
+    videos,
+    images,
+    audios,
+    media: [
+      ...videos.map((url) => ({ type: 'video' as const, url })),
+      ...images.map((url) => ({ type: 'image' as const, url })),
+      ...audios.map((url) => ({ type: 'audio' as const, url })),
+    ],
+  };
+};
 
 export const InlineMemryFeed: React.FC = () => {
   const [posts, setPosts] = useState<MemryPost[]>([]);
@@ -128,26 +158,31 @@ export const InlineMemryFeed: React.FC = () => {
       (products || []).forEach((p: any) => {
         const userId = p.sower?.user_id || p.sower_id;
         const profile = profileMap.get(userId);
-        const media = normalizeMemryMedia(p);
         const descriptor = [p.category, p.type, p.product_type].filter(Boolean).join(' ').toLowerCase();
         const normalizedType = String(p.type || '').toLowerCase();
         const isAudioCategory = ['music', 'audio', 'song', 'track'].some((token) => descriptor.includes(token));
         const normalizedFileUrl = normalizeMediaUrl(p.file_url);
         const normalizedCoverUrl = normalizeMediaUrl(p.cover_image_url);
-        const audioUrl = media.audios[0] || (isAudioUrl(normalizedFileUrl) ? normalizedFileUrl : undefined);
-        const videoUrl = media.videos[0] || (isVideoUrl(normalizedFileUrl) ? normalizedFileUrl : '');
-        const primaryImage = media.images[0] || normalizedCoverUrl;
+        const mediaPayload = toMediaPayload(p, {
+          forceVideoUrl: isVideoUrl(normalizedFileUrl) ? normalizedFileUrl : undefined,
+          forceImageUrl: normalizedCoverUrl || undefined,
+          forceAudioUrl: isAudioUrl(normalizedFileUrl) ? normalizedFileUrl : undefined,
+        });
+        const audioUrl = mediaPayload.audios[0];
+        const videoUrl = mediaPayload.videos[0] || '';
+        const primaryImage = mediaPayload.images[0] || '';
         const looksLikeMusic = normalizedType === 'music' || isAudioCategory || !!audioUrl;
         const mediaUrl = looksLikeMusic
           ? (primaryImage || videoUrl || FALLBACK_MEDIA)
           : (videoUrl || primaryImage || audioUrl || FALLBACK_MEDIA);
-        const imageUrls = dedupeUrls([...(primaryImage ? [primaryImage] : []), ...media.images]);
+        const imageUrls = mediaPayload.images;
 
         allPosts.push({
           id: `product-${p.id}`,
           user_id: userId,
           content_type: looksLikeMusic ? 'music' : 'new_product',
           media_url: mediaUrl,
+          media: mediaPayload.media,
           image_urls: imageUrls.length > 0 ? imageUrls : undefined,
           audio_url: audioUrl,
           caption: `🌱 SEED: ${p.title}`,
@@ -164,16 +199,19 @@ export const InlineMemryFeed: React.FC = () => {
 
       (orchards || []).forEach((o: any) => {
         const profile = profileMap.get(o.user_id);
-        const media = normalizeMemryMedia(o);
         const normalizedVideo = normalizeMediaUrl(o.video_url);
-        const orchardMediaUrl = media.videos[0] || (isVideoUrl(normalizedVideo) ? normalizedVideo : '') || media.images[0] || FALLBACK_MEDIA;
-        const orchardImages = dedupeUrls(media.images);
+        const mediaPayload = toMediaPayload(o, {
+          forceVideoUrl: isVideoUrl(normalizedVideo) ? normalizedVideo : undefined,
+        });
+        const orchardMediaUrl = mediaPayload.videos[0] || mediaPayload.images[0] || FALLBACK_MEDIA;
+        const orchardImages = mediaPayload.images;
 
         allPosts.push({
           id: `orchard-${o.id}`,
           user_id: o.user_id,
           content_type: 'new_orchard',
           media_url: orchardMediaUrl,
+          media: mediaPayload.media,
           image_urls: orchardImages.length > 0 ? orchardImages : undefined,
           caption: `🌳 ORCHARD: ${o.name}`,
           likes_count: 0,
@@ -187,16 +225,19 @@ export const InlineMemryFeed: React.FC = () => {
       (books || []).forEach((b: any) => {
         const userId = b.sower?.user_id || b.sower_id;
         const profile = profileMap.get(userId);
-        const media = normalizeMemryMedia(b);
         const bookCover = normalizeMediaUrl(b.cover_image_url);
-        const bookMediaUrl = media.videos[0] || media.images[0] || bookCover || FALLBACK_MEDIA;
-        const bookImages = dedupeUrls([...(bookCover ? [bookCover] : []), ...media.images]);
+        const mediaPayload = toMediaPayload(b, {
+          forceImageUrl: bookCover || undefined,
+        });
+        const bookMediaUrl = mediaPayload.videos[0] || mediaPayload.images[0] || FALLBACK_MEDIA;
+        const bookImages = mediaPayload.images;
 
         allPosts.push({
           id: `book-${b.id}`,
           user_id: userId,
           content_type: 'new_book',
           media_url: bookMediaUrl,
+          media: mediaPayload.media,
           image_urls: bookImages.length > 0 ? bookImages : undefined,
           caption: `📚 BOOK: ${b.title}`,
           likes_count: 0,
@@ -210,22 +251,25 @@ export const InlineMemryFeed: React.FC = () => {
 
       (memryPosts || []).forEach((mp: any) => {
         const profile = profileMap.get(mp.user_id);
-        const media = normalizeMemryMedia(mp);
         const normalizedType = String(mp.content_type || '').toLowerCase();
         const sourceMediaUrl = normalizeMediaUrl(mp.media_url);
         const sourceThumbUrl = normalizeMediaUrl(mp.thumbnail_url);
-        const primaryVideo = media.videos[0] || (isVideoUrl(sourceMediaUrl) ? sourceMediaUrl : '');
-        const primaryImage = media.images[0] || sourceThumbUrl || (!isVideoUrl(sourceMediaUrl) ? sourceMediaUrl : '');
-        const primaryAudio = media.audios[0] || (isAudioUrl(sourceMediaUrl) ? sourceMediaUrl : undefined);
-        const isVideoType = normalizedType === 'video' || isVideoUrl(sourceMediaUrl) || !!primaryVideo;
+        const mediaPayload = toMediaPayload(mp, {
+          forceVideoUrl:
+            normalizedType === 'video' || isVideoUrl(sourceMediaUrl)
+              ? sourceMediaUrl
+              : undefined,
+          forceImageUrl: sourceThumbUrl || (!isVideoUrl(sourceMediaUrl) ? sourceMediaUrl : undefined),
+          forceAudioUrl: isAudioUrl(sourceMediaUrl) ? sourceMediaUrl : undefined,
+        });
+        const primaryVideo = mediaPayload.videos[0] || '';
+        const primaryImage = mediaPayload.images[0] || '';
+        const primaryAudio = mediaPayload.audios[0];
+        const isVideoType = normalizedType === 'video' || !!primaryVideo;
         const mpMediaUrl = isVideoType
-          ? (primaryVideo || primaryImage || FALLBACK_MEDIA)
+          ? (primaryVideo || sourceMediaUrl || primaryImage || FALLBACK_MEDIA)
           : (primaryImage || primaryVideo || sourceMediaUrl || primaryAudio || FALLBACK_MEDIA);
-        const mpImages = dedupeUrls([
-          ...(sourceThumbUrl ? [sourceThumbUrl] : []),
-          ...media.images,
-          ...(!isVideoUrl(sourceMediaUrl) && sourceMediaUrl ? [sourceMediaUrl] : []),
-        ]);
+        const mpImages = mediaPayload.images;
         const mpAudio = normalizedType === 'music'
           ? (primaryAudio || (isAudioUrl(mpMediaUrl) ? mpMediaUrl : undefined))
           : primaryAudio;
@@ -237,6 +281,7 @@ export const InlineMemryFeed: React.FC = () => {
             ? 'video'
             : (normalizedType || 'photo'),
           media_url: mpMediaUrl,
+          media: mediaPayload.media,
           image_urls: mpImages.length > 0 ? mpImages : undefined,
           audio_url: mpAudio,
           caption: mp.caption || '',
