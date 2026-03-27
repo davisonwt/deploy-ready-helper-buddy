@@ -270,6 +270,7 @@ export const MemrySeedCard: React.FC<MemrySeedCardProps> = ({
     setVideoPlaying(false);
     const video = videoRef.current;
     if (!video) return;
+    delete video.dataset.previewSeeked;
     const rafId = requestAnimationFrame(() => markVideoReady(video));
     return () => cancelAnimationFrame(rafId);
   }, [resolvedVideoSrc, post.id, markVideoReady]);
@@ -431,7 +432,22 @@ export const MemrySeedCard: React.FC<MemrySeedCardProps> = ({
               playsInline
               preload="metadata"
               loop
-              onLoadedMetadata={(e) => markVideoReady(e.currentTarget)}
+              onLoadedMetadata={(e) => {
+                const target = e.currentTarget;
+                markVideoReady(target);
+                if (!target.dataset.previewSeeked) {
+                  target.dataset.previewSeeked = '1';
+                  const duration = Number.isFinite(target.duration) ? target.duration : 0;
+                  const seekTo = Math.min(Math.max(duration * 0.12, 0.6), 2.5);
+                  if (seekTo > 0) {
+                    try {
+                      target.currentTime = seekTo;
+                    } catch {
+                      // ignore seek failures on partially buffered media
+                    }
+                  }
+                }
+              }}
               onLoadedData={(e) => markVideoReady(e.currentTarget)}
               onCanPlay={(e) => markVideoReady(e.currentTarget)}
               onCanPlayThrough={(e) => markVideoReady(e.currentTarget)}
