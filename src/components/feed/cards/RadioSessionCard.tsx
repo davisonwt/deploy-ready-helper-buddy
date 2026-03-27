@@ -1,6 +1,6 @@
 import React from 'react';
-import { Link } from 'react-router-dom';
-import { Radio, Users } from 'lucide-react';
+import { Link, useNavigate } from 'react-router-dom';
+import { Radio, Users, RotateCcw } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { motion } from 'framer-motion';
 
@@ -55,6 +55,14 @@ const SyncBar: React.FC = () => {
 
 export const RadioSessionCard: React.FC<{ data: RadioSessionData }> = ({ data }) => {
   const isLive = data.status === 'live';
+  const isPreRecorded = data.broadcastMode === 'pre_recorded';
+  const navigate = useNavigate();
+
+  const handleListenFromStart = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    navigate(`/grove-station?schedule=${data.id}&fromStart=true`);
+  };
 
   return (
     <Link to={`/grove-station?schedule=${data.id}`}>
