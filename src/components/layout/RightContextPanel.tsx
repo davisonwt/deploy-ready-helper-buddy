@@ -132,8 +132,12 @@ export const RightContextPanel: React.FC<RightContextPanelProps> = ({
         </div>
         <div className="space-y-1.5">
           <div className="flex justify-between text-xs">
-            <span className="text-muted-foreground">Total Sowers</span>
-            <span className="font-semibold text-foreground">{communityCount}</span>
+            <span className="text-muted-foreground">Total Tribe Members</span>
+            <span className="font-semibold text-foreground">{totalMembers || 0}</span>
+          </div>
+          <div className="flex justify-between text-xs">
+            <span className="text-muted-foreground">Active Sowers</span>
+            <span className="font-semibold text-foreground">{activeSowers || 0}</span>
           </div>
           <div className="flex justify-between text-xs">
             <span className="text-muted-foreground">Active Orchards</span>
