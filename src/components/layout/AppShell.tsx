@@ -3,6 +3,7 @@ import { useIsMobile } from '@/hooks/use-mobile';
 import { AppSidebar } from './AppSidebar';
 import { RightContextPanel } from './RightContextPanel';
 import { MobileBottomTabs } from './MobileBottomTabs';
+import { GoLiveFAB } from '../dashboard/GoLiveFAB';
 
 interface AppShellProps {
   children: ReactNode;

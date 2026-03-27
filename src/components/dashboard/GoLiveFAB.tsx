@@ -2,20 +2,15 @@ import React, { useState } from 'react';
 import { Radio, GraduationCap, Zap, Dumbbell, X, Video } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { DashboardTheme } from '@/utils/dashboardThemes';
-
-interface GoLiveFABProps {
-  theme: DashboardTheme;
-}
 
 const liveOptions = [
-  { href: '/create-session?type=classroom', label: 'Classroom', sublabel: 'Teach & mentor', icon: GraduationCap, gradient: 'linear-gradient(135deg, #0891b2, #06b6d4)' },
-  { href: '/create-session?type=skilldrop', label: 'SkillDrop', sublabel: 'Share a skill', icon: Zap, gradient: 'linear-gradient(135deg, #2563eb, #7c3aed)' },
-  { href: '/create-session?type=training', label: 'Training', sublabel: 'Lead a workout', icon: Dumbbell, gradient: 'linear-gradient(135deg, #7c3aed, #db2777)' },
-  { href: '/create-session?type=radio', label: 'Radio', sublabel: 'Go on air', icon: Radio, gradient: 'linear-gradient(135deg, #db2777, #ef4444)' },
+  { href: '/communications-hub?tab=classroom', label: 'Classroom', sublabel: 'Teach & mentor', icon: GraduationCap, gradient: 'linear-gradient(135deg, #0891b2, #06b6d4)' },
+  { href: '/explore-sessions?type=skilldrop', label: 'SkillDrop', sublabel: 'Share a skill', icon: Zap, gradient: 'linear-gradient(135deg, #2563eb, #7c3aed)' },
+  { href: '/communications-hub?tab=training', label: 'Training', sublabel: 'Lead a workout', icon: Dumbbell, gradient: 'linear-gradient(135deg, #7c3aed, #db2777)' },
+  { href: '/radio-slot-application', label: 'Radio', sublabel: 'Go on air', icon: Radio, gradient: 'linear-gradient(135deg, #db2777, #ef4444)' },
 ];
 
-export const GoLiveFAB: React.FC<GoLiveFABProps> = ({ theme }) => {
+export const GoLiveFAB: React.FC = () => {
   const [open, setOpen] = useState(false);
 
   return (
