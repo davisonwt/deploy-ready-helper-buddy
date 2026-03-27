@@ -163,16 +163,16 @@ const SeedAudioPreview: React.FC<{ audioUrl: string }> = ({ audioUrl }) => {
   }, []);
 
   return (
-    <div className="relative z-20 flex-shrink-0" style={{ width: 140 }}>
+    <div className="relative z-20 flex-shrink-0 w-[108px] sm:w-[116px]">
       <audio ref={audioRef} preload="metadata" playsInline className="hidden" />
-      <div className="flex items-center gap-1.5 bg-black/50 backdrop-blur-md rounded-full px-2 py-1">
+      <div className="h-8 flex items-center gap-1.5 bg-black/50 backdrop-blur-md rounded-full px-2">
         <button onClick={togglePlay} className="text-white hover:scale-110 transition-transform flex-shrink-0" disabled={loading || !resolvedUrl}>
-          {playing ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4" />}
+          {playing ? <Pause className="w-3.5 h-3.5" /> : <Play className="w-3.5 h-3.5" />}
         </button>
-        <div className="flex-1 h-1 bg-white/20 rounded-full overflow-hidden">
+        <div className="flex-1 h-[2px] bg-white/20 rounded-full overflow-hidden">
           <div className="h-full bg-white rounded-full transition-all" style={{ width: `${(currentTime / PREVIEW_DURATION) * 100}%` }} />
         </div>
-        <span className="text-white text-[9px] font-mono flex-shrink-0">
+        <span className="text-white text-[8px] font-mono flex-shrink-0">
           {Math.floor(currentTime)}s/{PREVIEW_DURATION}s
         </span>
       </div>
@@ -426,7 +426,7 @@ export const MemrySeedCard: React.FC<MemrySeedCardProps> = ({
             </div>
           </div>
 
-          <div className="flex items-end justify-between gap-2">
+          <div className="flex items-center justify-between gap-2">
             <p className="text-white font-semibold text-[16px] leading-tight line-clamp-2 drop-shadow flex-1">
               {post.product_title || post.caption}
             </p>
