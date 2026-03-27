@@ -163,24 +163,26 @@ export const InlineMemryFeed: React.FC = () => {
         const isAudioCategory = ['music', 'audio', 'song', 'track'].some((token) => descriptor.includes(token));
         const normalizedFileUrl = normalizeMediaUrl(p.file_url);
         const normalizedCoverUrl = normalizeMediaUrl(p.cover_image_url);
-        const mediaPayload = toMediaPayload(p, {
-          forceVideoUrl: isVideoUrl(normalizedFileUrl) ? normalizedFileUrl : undefined,
+        const looksLikeMusic = normalizedType === 'music' || isAudioCategory;
+        const sourceForMedia = looksLikeMusic ? { ...p, file_url: undefined, media_url: normalizedCoverUrl || p.media_url } : p;
+        const mediaPayload = toMediaPayload(sourceForMedia, {
+          forceVideoUrl: !looksLikeMusic && isVideoUrl(normalizedFileUrl) ? normalizedFileUrl : undefined,
           forceImageUrl: normalizedCoverUrl || undefined,
-          forceAudioUrl: isAudioUrl(normalizedFileUrl) ? normalizedFileUrl : undefined,
+          forceAudioUrl: looksLikeMusic || isAudioUrl(normalizedFileUrl) ? normalizedFileUrl : undefined,
         });
         const audioUrl = mediaPayload.audios[0];
         const videoUrl = mediaPayload.videos[0] || '';
         const primaryImage = mediaPayload.images[0] || '';
-        const looksLikeMusic = normalizedType === 'music' || isAudioCategory || !!audioUrl;
-        const mediaUrl = looksLikeMusic
-          ? (primaryImage || videoUrl || FALLBACK_MEDIA)
+        const resolvedMusicPost = looksLikeMusic || !!audioUrl;
+        const mediaUrl = resolvedMusicPost
+          ? (primaryImage || FALLBACK_MEDIA)
           : (videoUrl || primaryImage || audioUrl || FALLBACK_MEDIA);
         const imageUrls = mediaPayload.images;
 
         allPosts.push({
           id: `product-${p.id}`,
           user_id: userId,
-          content_type: looksLikeMusic ? 'music' : 'new_product',
+          content_type: resolvedMusicPost ? 'music' : 'new_product',
           media_url: mediaUrl,
           media: mediaPayload.media,
           image_urls: imageUrls.length > 0 ? imageUrls : undefined,
