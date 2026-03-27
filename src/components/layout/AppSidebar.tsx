@@ -28,7 +28,7 @@ const navItems = [
 ];
 
 const adminItems = [
-  { to: '/admin/analytics', label: "GoSat's", icon: Settings, color: '#BA7517' },
+  { to: '/admin/analytics', label: "GoSat's", desc: 'Admin analytics', icon: Settings, gradient: 'linear-gradient(135deg, #BA7517, #D4952A)' },
 ];
 
 export const AppSidebar: React.FC<AppSidebarProps> = ({ radioLive, userProfile }) => {
