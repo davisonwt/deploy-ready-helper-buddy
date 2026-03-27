@@ -13,7 +13,7 @@ export const RadioLiveCard: React.FC = () => {
       const { data } = await supabase
         .from('chat_rooms')
         .select('id, name, description, current_listeners, created_by')
-        .eq('room_type', 'radio')
+        .eq('category', 'radio')
         .eq('is_active', true)
         .order('created_at', { ascending: false })
         .limit(1)
