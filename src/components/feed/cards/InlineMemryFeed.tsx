@@ -93,7 +93,7 @@ export const InlineMemryFeed: React.FC = () => {
       // Get active sower IDs from products
       const { data: activeProducts } = await supabase
         .from('products')
-        .select('id, name, image_url, price, sower_id')
+        .select('id, title, cover_image_url, price, sower_id')
         .eq('status', 'active');
 
       const sowerIds = [...new Set((activeProducts || []).map(p => p.sower_id).filter(Boolean))];
@@ -116,7 +116,7 @@ export const InlineMemryFeed: React.FC = () => {
       // Get active orchards
       const { data: orchards } = await supabase
         .from('orchards')
-        .select('id, name, images, user_id')
+        .select('id, title, images, user_id')
         .eq('status', 'active');
       (orchards || []).forEach(o => allUserIds.add(o.user_id));
 
