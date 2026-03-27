@@ -44,6 +44,169 @@ interface FeedComment {
   profiles?: { display_name: string; avatar_url: string };
 }
 
+const FALLBACK_MEDIA = '/lovable-uploads/ff9e6e48-049d-465a-8d2b-f6e8fed93522.png';
+
+type MediaKind = 'image' | 'video' | 'audio';
+
+const VIDEO_EXT_RE = /\.(mp4|webm|mov|m4v|mkv|avi)(\?|$)/i;
+const AUDIO_EXT_RE = /\.(mp3|wav|m4a|aac|ogg|flac)(\?|$)/i;
+
+const dedupeUrls = (urls: string[]) => {
+  const seen = new Set<string>();
+  return urls.filter((url) => {
+    if (!url || seen.has(url)) return false;
+    seen.add(url);
+    return true;
+  });
+};
+
+const parseArrayish = (value: unknown): unknown[] => {
+  if (!value) return [];
+  if (Array.isArray(value)) return value;
+
+  if (typeof value === 'string') {
+    const trimmed = value.trim();
+    if (!trimmed) return [];
+
+    const looksLikeJson =
+      (trimmed.startsWith('[') && trimmed.endsWith(']')) ||
+      (trimmed.startsWith('{') && trimmed.endsWith('}'));
+
+    if (looksLikeJson) {
+      try {
+        const parsed = JSON.parse(trimmed);
+        return Array.isArray(parsed) ? parsed : [parsed];
+      } catch {
+        return [trimmed];
+      }
+    }
+
+    return [trimmed];
+  }
+
+  if (typeof value === 'object') return [value];
+  return [];
+};
+
+const extractUrl = (item: any): string | undefined => {
+  if (typeof item === 'string') return item;
+  if (!item || typeof item !== 'object') return undefined;
+
+  const candidate =
+    item.url ??
+    item.src ??
+    item.path ??
+    item.publicUrl ??
+    item.public_url ??
+    item.file_url ??
+    item.media_url ??
+    item.image_url ??
+    item.video_url ??
+    item.audio_url ??
+    item.thumbnail_url ??
+    item.cover ??
+    item.cover_image_url;
+
+  return typeof candidate === 'string' ? candidate : undefined;
+};
+
+const inferMediaKind = (url: string, hint?: unknown): MediaKind => {
+  const hinted = String(hint || '').toLowerCase();
+
+  if (hinted.startsWith('video')) return 'video';
+  if (hinted.startsWith('audio')) return 'audio';
+  if (hinted.startsWith('image') || hinted === 'photo' || hinted === 'picture') return 'image';
+
+  if (VIDEO_EXT_RE.test(url)) return 'video';
+  if (AUDIO_EXT_RE.test(url)) return 'audio';
+
+  return 'image';
+};
+
+const normalizeMemryMedia = (source: any) => {
+  const mediaMap = new Map<string, MediaKind>();
+  const metadata = source?.metadata && typeof source.metadata === 'object' ? source.metadata : {};
+
+  const pushValue = (value: unknown, hint?: unknown) => {
+    for (const item of parseArrayish(value)) {
+      if (item && typeof item === 'object') {
+        const obj = item as any;
+
+        if (obj.tracks) pushValue(obj.tracks, 'audio');
+        if (obj.media) pushValue(obj.media, hint);
+        if (obj.media_items) pushValue(obj.media_items, hint);
+        if (obj.attachments) pushValue(obj.attachments, hint);
+        if (obj.media_urls) pushValue(obj.media_urls, hint);
+        if (obj.image_urls) pushValue(obj.image_urls, 'image');
+        if (obj.video_urls) pushValue(obj.video_urls, 'video');
+        if (obj.audio_urls) pushValue(obj.audio_urls, 'audio');
+      }
+
+      const rawUrl = extractUrl(item);
+      if (!rawUrl) continue;
+      const url = convertToPublicUrl(rawUrl.trim());
+      if (!url) continue;
+
+      const explicitHint =
+        typeof item === 'object'
+          ? (item as any).type ?? (item as any).mime_type ?? (item as any).media_type ?? hint
+          : hint;
+
+      const nextKind = inferMediaKind(url, explicitHint);
+      const currentKind = mediaMap.get(url);
+
+      if (!currentKind || (currentKind === 'image' && nextKind !== 'image')) {
+        mediaMap.set(url, nextKind);
+      }
+    }
+  };
+
+  [
+    source?.media,
+    source?.media_items,
+    source?.attachments,
+    source?.media_urls,
+    source?.image_urls,
+    source?.video_urls,
+    source?.audio_urls,
+    source?.images,
+    source?.gallery_images,
+    source?.media_url,
+    source?.image_url,
+    source?.video_url,
+    source?.audio_url,
+    source?.cover_image_url,
+    source?.banner_url,
+    source?.logo_url,
+    source?.thumbnail_url,
+    source?.file_url,
+    metadata?.media,
+    metadata?.media_items,
+    metadata?.attachments,
+    metadata?.media_urls,
+    metadata?.image_urls,
+    metadata?.video_urls,
+    metadata?.audio_urls,
+    metadata?.images,
+    metadata?.gallery_images,
+    metadata?.cover,
+    metadata?.cover_image_url,
+    metadata?.thumbnail,
+    metadata?.thumbnail_url,
+    metadata?.video_url,
+    metadata?.audio_url,
+    metadata?.file_url,
+  ].forEach((entry) => pushValue(entry));
+
+  const entries = [...mediaMap.entries()];
+
+  return {
+    images: entries.filter(([, kind]) => kind === 'image').map(([url]) => url),
+    videos: entries.filter(([, kind]) => kind === 'video').map(([url]) => url),
+    audios: entries.filter(([, kind]) => kind === 'audio').map(([url]) => url),
+  };
+};
+
 export const InlineMemryFeed: React.FC = () => {
   const [posts, setPosts] = useState<MemryPost[]>([]);
   const [loading, setLoading] = useState(true);
@@ -126,27 +289,25 @@ export const InlineMemryFeed: React.FC = () => {
       (products || []).forEach((p: any) => {
         const userId = p.sower?.user_id || p.sower_id;
         const profile = profileMap.get(userId);
-        const images = [p.cover_image_url, ...(p.image_urls || p.gallery_images || [])]
-          .filter(Boolean)
-          .map((url: string) => convertToPublicUrl(url));
+        const media = normalizeMemryMedia(p);
         const descriptor = [p.category, p.type, p.product_type].filter(Boolean).join(' ').toLowerCase();
         const normalizedType = String(p.type || '').toLowerCase();
-        const fileUrl = typeof p.file_url === 'string' ? convertToPublicUrl(p.file_url) : undefined;
-        const isLikelyAudioFile = !!fileUrl && /\.(mp3|wav|m4a|aac|ogg|flac)(\?|$)/i.test(fileUrl);
-        const isLikelyVideoFile = !!fileUrl && /\.(mp4|webm|mov|m4v)(\?|$)/i.test(fileUrl);
         const isAudioCategory = ['music', 'audio', 'song', 'track'].some((token) => descriptor.includes(token));
-        const audioUrl = fileUrl && !isLikelyVideoFile && (normalizedType === 'music' || isLikelyAudioFile || isAudioCategory) ? fileUrl : undefined;
+        const audioUrl = media.audios[0];
+        const videoUrl = media.videos[0];
         const looksLikeMusic = normalizedType === 'music' || isAudioCategory || !!audioUrl;
-        const primaryImage = images[0];
-        const mediaUrl = isLikelyVideoFile ? fileUrl! : (primaryImage || '/placeholder.svg');
-        const galleryImages = images.filter((url) => url !== mediaUrl);
+        const mediaUrl = videoUrl && !looksLikeMusic ? videoUrl : (media.images[0] || videoUrl || FALLBACK_MEDIA);
+        const imageUrls = dedupeUrls([
+          ...media.images,
+          ...(!VIDEO_EXT_RE.test(mediaUrl) ? [mediaUrl] : []),
+        ]);
 
         allPosts.push({
           id: `product-${p.id}`,
           user_id: userId,
           content_type: looksLikeMusic ? 'music' : 'new_product',
           media_url: mediaUrl,
-          image_urls: galleryImages.length > 0 ? [primaryImage, ...galleryImages].filter(Boolean) as string[] : (primaryImage ? [primaryImage] : undefined),
+          image_urls: imageUrls.length > 0 ? imageUrls : undefined,
           audio_url: audioUrl,
           caption: `🌱 SEED: ${p.title}`,
           likes_count: p.bestowal_count || 0,
@@ -162,15 +323,16 @@ export const InlineMemryFeed: React.FC = () => {
 
       (orchards || []).forEach((o: any) => {
         const profile = profileMap.get(o.user_id);
-        const orchardImages = [o.banner_url, o.logo_url, ...(o.images || [])]
-          .filter(Boolean)
-          .map((url: string) => convertToPublicUrl(url));
+        const media = normalizeMemryMedia(o);
+        const orchardMediaUrl = media.videos[0] || media.images[0] || FALLBACK_MEDIA;
+        const orchardImages = dedupeUrls(media.images);
+
         allPosts.push({
           id: `orchard-${o.id}`,
           user_id: o.user_id,
           content_type: 'new_orchard',
-          media_url: orchardImages[0] || '/placeholder.svg',
-          image_urls: orchardImages.length > 1 ? orchardImages : undefined,
+          media_url: orchardMediaUrl,
+          image_urls: orchardImages.length > 0 ? orchardImages : undefined,
           caption: `🌳 ORCHARD: ${o.name}`,
           likes_count: 0,
           comments_count: 0,
@@ -183,15 +345,16 @@ export const InlineMemryFeed: React.FC = () => {
       (books || []).forEach((b: any) => {
         const userId = b.sower?.user_id || b.sower_id;
         const profile = profileMap.get(userId);
-        const bookImages = [b.cover_image_url, ...(b.gallery_images || b.image_urls || [])]
-          .filter(Boolean)
-          .map((url: string) => convertToPublicUrl(url));
+        const media = normalizeMemryMedia(b);
+        const bookMediaUrl = media.videos[0] || media.images[0] || FALLBACK_MEDIA;
+        const bookImages = dedupeUrls(media.images);
+
         allPosts.push({
           id: `book-${b.id}`,
           user_id: userId,
           content_type: 'new_book',
-          media_url: bookImages[0] || '/placeholder.svg',
-          image_urls: bookImages.length > 1 ? bookImages : undefined,
+          media_url: bookMediaUrl,
+          image_urls: bookImages.length > 0 ? bookImages : undefined,
           caption: `📚 BOOK: ${b.title}`,
           likes_count: 0,
           comments_count: 0,
@@ -204,15 +367,29 @@ export const InlineMemryFeed: React.FC = () => {
 
       (memryPosts || []).forEach((mp: any) => {
         const profile = profileMap.get(mp.user_id);
-        const mpMediaUrl = convertToPublicUrl(mp.media_url);
-        const mpImages = [mpMediaUrl, ...(mp.image_urls || [])].filter(Boolean).map((url: string) => convertToPublicUrl(url));
+        const media = normalizeMemryMedia(mp);
+        const normalizedType = String(mp.content_type || '').toLowerCase();
+        const primaryVideo = media.videos[0];
+        const primaryImage = media.images[0];
+        const primaryAudio = media.audios[0];
+        const isVideoType = normalizedType === 'video';
+        const mpMediaUrl = isVideoType
+          ? (primaryVideo || primaryImage || FALLBACK_MEDIA)
+          : (primaryImage || primaryVideo || primaryAudio || FALLBACK_MEDIA);
+        const mpImages = dedupeUrls(media.images);
+        const mpAudio = normalizedType === 'music'
+          ? (primaryAudio || (AUDIO_EXT_RE.test(mpMediaUrl) ? mpMediaUrl : undefined))
+          : primaryAudio;
+
         allPosts.push({
           id: mp.id,
           user_id: mp.user_id,
-          content_type: mp.content_type,
+          content_type: isVideoType || (normalizedType !== 'music' && VIDEO_EXT_RE.test(mpMediaUrl))
+            ? 'video'
+            : (normalizedType || 'photo'),
           media_url: mpMediaUrl,
-          image_urls: mpImages.length > 1 ? mpImages : mp.image_urls,
-          audio_url: mp.content_type === 'music' ? mpMediaUrl : convertToPublicUrl(mp.audio_url),
+          image_urls: mpImages.length > 0 ? mpImages : undefined,
+          audio_url: mpAudio,
           caption: mp.caption || '',
           likes_count: mp.likes_count || 0,
           comments_count: mp.comments_count || 0,
