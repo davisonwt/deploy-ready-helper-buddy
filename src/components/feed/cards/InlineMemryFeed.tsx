@@ -1,7 +1,7 @@
 import React, { useRef, useState, useEffect, useCallback } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { Camera, ChevronRight, ChevronLeft, ShoppingBag, TreePine, Music, Play, Pause } from 'lucide-react';
+import { Camera, ChevronRight, ChevronLeft, ShoppingBag, TreePine, Music, Play, Pause, Sparkles } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { motion } from 'framer-motion';
@@ -110,6 +110,32 @@ function InlineMusicSnippet({ mediaUrl, isVisible }: { mediaUrl: string; isVisib
       </div>
     </div>
   );
+}
+
+/** Generate a short CaaS story blurb per sower */
+function generateCaaSStory(sower: SowerMemry): string {
+  const name = sower.displayName;
+  const seedCount = sower.products.length;
+  const orchardCount = sower.orchards.length;
+  const postCount = sower.memryPosts.length;
+  const musicCount = sower.memryPosts.filter(p => p.mediaType === 'music').length;
+
+  if (musicCount > 0 && seedCount > 0) {
+    return `${name} is sowing through sound and seed — ${musicCount} track${musicCount !== 1 ? 's' : ''} shared, ${seedCount} seed${seedCount !== 1 ? 's' : ''} planted. A journey of creative giving.`;
+  }
+  if (seedCount > 0 && orchardCount > 0) {
+    return `${name} has planted ${seedCount} seed${seedCount !== 1 ? 's' : ''} and tended ${orchardCount} orchard${orchardCount !== 1 ? 's' : ''} — growing something meaningful for the community.`;
+  }
+  if (seedCount > 0) {
+    return `${name} stepped forward with ${seedCount} seed${seedCount !== 1 ? 's' : ''} sown into the community. Every seed tells a story of purpose.`;
+  }
+  if (orchardCount > 0) {
+    return `${name} is cultivating ${orchardCount} orchard${orchardCount !== 1 ? 's' : ''} — inviting the community to rally around a shared vision.`;
+  }
+  if (postCount > 0) {
+    return `${name} is sharing their journey through ${postCount} memr${postCount !== 1 ? 'ies' : 'y'} — each one a window into their story.`;
+  }
+  return `${name} has joined the community as a sower — watch this space as their story unfolds.`;
 }
 
 function SowerMemryCard({ sower, index }: { sower: SowerMemry; index: number }) {
@@ -230,6 +256,14 @@ function SowerMemryCard({ sower, index }: { sower: SowerMemry; index: number }) 
               </div>
             </div>
             <ChevronRight className="w-3.5 h-3.5 text-muted-foreground/50" />
+          </div>
+
+          {/* CaaS Story Blurb */}
+          <div className="mt-2 flex items-start gap-1.5 border-l-2 border-primary/30 pl-2">
+            <Sparkles className="w-3 h-3 text-primary/60 mt-0.5 flex-shrink-0" />
+            <p className="text-[10px] leading-relaxed text-muted-foreground italic">
+              {generateCaaSStory(sower)}
+            </p>
           </div>
         </div>
       </Link>

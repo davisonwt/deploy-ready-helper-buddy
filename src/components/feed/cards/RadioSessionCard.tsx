@@ -1,6 +1,6 @@
 import React from 'react';
-import { Link } from 'react-router-dom';
-import { Radio, Users } from 'lucide-react';
+import { Link, useNavigate } from 'react-router-dom';
+import { Radio, Users, RotateCcw } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { motion } from 'framer-motion';
 
@@ -55,6 +55,14 @@ const SyncBar: React.FC = () => {
 
 export const RadioSessionCard: React.FC<{ data: RadioSessionData }> = ({ data }) => {
   const isLive = data.status === 'live';
+  const isPreRecorded = data.broadcastMode === 'pre_recorded';
+  const navigate = useNavigate();
+
+  const handleListenFromStart = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    navigate(`/grove-station?schedule=${data.id}&fromStart=true`);
+  };
 
   return (
     <Link to={`/grove-station?schedule=${data.id}`}>
@@ -109,10 +117,19 @@ export const RadioSessionCard: React.FC<{ data: RadioSessionData }> = ({ data })
         </div>
 
         {/* Animated Sync Bar */}
-        <div className="px-3 pb-3">
+        <div className="px-3 pb-3 space-y-2">
           <div className="rounded-lg p-2" style={{ backgroundColor: 'hsl(210 67% 8% / 0.6)' }}>
             <SyncBar />
           </div>
+          {isPreRecorded && (
+            <button
+              onClick={handleListenFromStart}
+              className="w-full flex items-center justify-center gap-1.5 py-1.5 rounded-lg text-[10px] font-bold uppercase tracking-wider text-destructive-foreground bg-destructive/80 hover:bg-destructive transition-colors"
+            >
+              <RotateCcw className="w-3 h-3" />
+              Listen from Start
+            </button>
+          )}
         </div>
       </motion.div>
     </Link>
