@@ -3217,6 +3217,7 @@ export type Database = {
         Row: {
           caption: string | null
           comments_count: number
+          content_category: string | null
           content_type: string
           created_at: string
           id: string
@@ -3232,6 +3233,7 @@ export type Database = {
         Insert: {
           caption?: string | null
           comments_count?: number
+          content_category?: string | null
           content_type: string
           created_at?: string
           id?: string
@@ -3247,6 +3249,7 @@ export type Database = {
         Update: {
           caption?: string | null
           comments_count?: number
+          content_category?: string | null
           content_type?: string
           created_at?: string
           id?: string
@@ -6433,6 +6436,33 @@ export type Database = {
           title?: string
           type?: string
           updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      seed_story_overrides: {
+        Row: {
+          created_at: string
+          id: string
+          seed_id: string
+          story_text: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          seed_id: string
+          story_text: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          seed_id?: string
+          story_text?: string
+          updated_at?: string
           user_id?: string
         }
         Relationships: []
