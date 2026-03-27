@@ -1209,7 +1209,7 @@ export default function MemryPage({ embedded = false }: { embedded?: boolean }) 
 
   // Render right-side action buttons for a post
   const renderActions = (post: MemryPost) => (
-    <div className="absolute right-2 md:right-4 top-32 md:top-28 bottom-3 md:bottom-2 flex flex-col items-center justify-end gap-3 z-40 overflow-y-auto pb-[env(safe-area-inset-bottom,4px)]">
+    <div className={`absolute right-1 top-16 bottom-2 flex flex-col items-center justify-end gap-2 z-40 overflow-y-auto pb-[env(safe-area-inset-bottom,4px)] ${embedded ? 'scale-75 origin-right' : 'right-2 md:right-4 top-32 md:top-28 bottom-3 md:bottom-2 gap-3'}`}>
       <HoverCard>
         <HoverCardTrigger asChild>
           <Link to={`/member/${post.user_id}`} className="flex flex-col items-center">
@@ -1317,8 +1317,8 @@ export default function MemryPage({ embedded = false }: { embedded?: boolean }) 
 
   // Render bottom info panel for a post
   const renderInfoPanel = (post: MemryPost) => (
-    <div className="absolute bottom-2 left-[4.75rem] right-[5.5rem] md:left-24 md:right-24 z-40 max-h-[45vh] overflow-y-auto pb-[env(safe-area-inset-bottom,4px)]">
-      <motion.div initial={{ y: 20, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ delay: 0.2 }} className="bg-black/40 backdrop-blur-md rounded-2xl p-4">
+    <div className={`absolute bottom-2 z-40 overflow-y-auto pb-[env(safe-area-inset-bottom,4px)] ${embedded ? 'left-2 right-14 max-h-[40%]' : 'left-[4.75rem] right-[5.5rem] md:left-24 md:right-24 max-h-[45vh]'}`}>
+      <motion.div initial={{ y: 20, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ delay: 0.2 }} className="bg-black/40 backdrop-blur-md rounded-2xl p-3">
         <div className="flex items-center gap-3 mb-3">
           <HoverCard>
             <HoverCardTrigger asChild>
