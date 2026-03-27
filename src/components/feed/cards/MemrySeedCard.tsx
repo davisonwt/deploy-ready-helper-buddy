@@ -197,8 +197,8 @@ export const MemrySeedCard: React.FC<MemrySeedCardProps> = ({
   const cardRef = useRef<HTMLDivElement>(null);
   const [isInView, setIsInView] = useState(false);
 
-  const allImages = post.image_urls && post.image_urls.length > 1 ? post.image_urls : [post.media_url];
-  const hasMultipleImages = allImages.length > 1;
+  const allImages = [post.media_url];
+  const hasMultipleImages = false;
   const isProduct = post.content_type === 'new_product';
   const isOrchard = post.content_type === 'new_orchard';
   const isBook = post.content_type === 'new_book';
