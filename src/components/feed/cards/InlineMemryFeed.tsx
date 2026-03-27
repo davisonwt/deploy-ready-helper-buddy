@@ -129,6 +129,7 @@ export const InlineMemryFeed: React.FC = () => {
           content_type: 'new_product',
           media_url: p.cover_image_url || '/placeholder.svg',
           image_urls: images.length > 1 ? images : undefined,
+          audio_url: p.audio_preview_url || p.media_url?.includes('audio') ? p.media_url : undefined,
           caption: `🌱 SEED: ${p.title}`,
           likes_count: p.bestowal_count || 0,
           comments_count: 0,
