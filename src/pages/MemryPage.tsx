@@ -258,7 +258,7 @@ function MusicPreviewPlayer({ mediaUrl, caption, transparent = false, onPreviewE
   );
 }
 
-export default function MemryPage() {
+export default function MemryPage({ embedded = false }: { embedded?: boolean }) {
   const navigate = useNavigate();
   const { addToBasket } = useProductBasket();
   const [posts, setPosts] = useState<MemryPost[]>([]);
@@ -1133,7 +1133,7 @@ export default function MemryPage() {
 
   // Render media background for a post card — only plays media when isActive
   const renderMedia = (post: MemryPost, creatorUserId: string, postIdx: number, imgIdx: number, isActive: boolean) => (
-    <div className="absolute inset-0 bg-gradient-to-br from-purple-900 via-pink-800 to-orange-700 flex items-center justify-center px-[76px] md:px-28">
+    <div className={`absolute inset-0 bg-gradient-to-br from-purple-900 via-pink-800 to-orange-700 flex items-center justify-center ${embedded ? 'px-2' : 'px-[76px] md:px-28'}`}>
       {post.content_type === 'video' || post.content_type === 'marketing_video' ? (
         isActive ? (
           <video
@@ -1209,7 +1209,7 @@ export default function MemryPage() {
 
   // Render right-side action buttons for a post
   const renderActions = (post: MemryPost) => (
-    <div className="absolute right-2 md:right-4 top-32 md:top-28 bottom-3 md:bottom-2 flex flex-col items-center justify-end gap-3 z-40 overflow-y-auto pb-[env(safe-area-inset-bottom,4px)]">
+    <div className={`absolute right-1 top-16 bottom-2 flex flex-col items-center justify-end gap-2 z-40 overflow-y-auto pb-[env(safe-area-inset-bottom,4px)] ${embedded ? 'scale-75 origin-right' : 'right-2 md:right-4 top-32 md:top-28 bottom-3 md:bottom-2 gap-3'}`}>
       <HoverCard>
         <HoverCardTrigger asChild>
           <Link to={`/member/${post.user_id}`} className="flex flex-col items-center">
@@ -1317,8 +1317,8 @@ export default function MemryPage() {
 
   // Render bottom info panel for a post
   const renderInfoPanel = (post: MemryPost) => (
-    <div className="absolute bottom-2 left-[4.75rem] right-[5.5rem] md:left-24 md:right-24 z-40 max-h-[45vh] overflow-y-auto pb-[env(safe-area-inset-bottom,4px)]">
-      <motion.div initial={{ y: 20, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ delay: 0.2 }} className="bg-black/40 backdrop-blur-md rounded-2xl p-4">
+    <div className={`absolute bottom-2 z-40 overflow-y-auto pb-[env(safe-area-inset-bottom,4px)] ${embedded ? 'left-2 right-14 max-h-[40%]' : 'left-[4.75rem] right-[5.5rem] md:left-24 md:right-24 max-h-[45vh]'}`}>
+      <motion.div initial={{ y: 20, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ delay: 0.2 }} className="bg-black/40 backdrop-blur-md rounded-2xl p-3">
         <div className="flex items-center gap-3 mb-3">
           <HoverCard>
             <HoverCardTrigger asChild>
@@ -1441,12 +1441,13 @@ export default function MemryPage() {
   );
 
   return (
-    <div className="h-screen bg-gradient-to-b from-[#FFF5E6] via-[#FFECD2] to-[#FFE4C4] overflow-hidden">
+    <div className={`${embedded ? 'h-full' : 'h-screen'} bg-gradient-to-b from-[#FFF5E6] via-[#FFECD2] to-[#FFE4C4] overflow-hidden`}>
       {/* Live Session Ad Banner */}
-      <LiveSessionAdBanner />
+      {!embedded && <LiveSessionAdBanner />}
       {/* Main Feed - TikTok Style */}
       <div className="h-full relative">
         {/* Header */}
+        {!embedded && (
         <motion.div 
           initial={{ y: -50, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
@@ -1479,9 +1480,10 @@ export default function MemryPage() {
             </div>
           </div>
         </motion.div>
+        )}
 
         {/* === DISCOVER TAB === */}
-        {activeTab === 'discover' && (
+        {!embedded && activeTab === 'discover' && (
           <div className="h-full flex flex-col pt-20 pb-24 pl-20 pr-3 md:pl-24 md:pr-6 overflow-y-auto">
             <div className="max-w-lg mx-auto w-full space-y-4">
               <Input
@@ -1527,7 +1529,7 @@ export default function MemryPage() {
         )}
 
         {/* === RECIPES TAB === */}
-        {activeTab === 'recipes' && (
+        {!embedded && activeTab === 'recipes' && (
           <div className="h-full flex flex-col pt-20 pb-24 pl-20 pr-3 md:pl-24 md:pr-6 overflow-y-auto">
             <div className="max-w-lg mx-auto w-full space-y-4">
               <h2 className="text-xl font-bold text-orange-800">Community Recipes</h2>
@@ -1574,7 +1576,7 @@ export default function MemryPage() {
         )}
 
         {/* === PROFILE TAB === */}
-        {activeTab === 'profile' && (
+        {!embedded && activeTab === 'profile' && (
           <div className="h-full flex flex-col pt-20 pb-24 pl-20 pr-3 md:pl-24 md:pr-6 overflow-y-auto">
             <div className="max-w-lg mx-auto w-full space-y-4">
               {user ? (
@@ -1644,7 +1646,7 @@ export default function MemryPage() {
         )}
 
         {/* === TRENDING TAB === */}
-        {activeTab === 'trending' && (
+        {!embedded && activeTab === 'trending' && (
           <div className="h-full flex flex-col pt-20 pb-24 pl-20 pr-3 md:pl-24 md:pr-6 overflow-y-auto">
             <div className="max-w-lg mx-auto w-full space-y-4">
               <div className="flex items-center gap-2 mb-2">
@@ -1740,7 +1742,7 @@ export default function MemryPage() {
         ) : (
         <div ref={feedContainerRef} className="h-full overflow-y-auto" style={{ scrollSnapType: 'y mandatory' }}>
           {/* Stories Row */}
-          {storyCreators.length > 0 && (
+          {storyCreators.length > 0 && !embedded && (
             <div className="fixed top-[104px] left-[72px] right-0 z-20 px-4 py-2">
               <div className="flex items-center gap-3 overflow-x-auto max-w-lg mx-auto" style={{ scrollbarWidth: 'none' }}>
                 {/* Your Story */}
@@ -1870,6 +1872,7 @@ export default function MemryPage() {
         )}
 
         {/* Vertical Left-Side Navigation */}
+        {!embedded && (
         <div className="fixed left-2 md:left-3 top-1/2 -translate-y-1/2 z-50 flex flex-col items-center gap-2 bg-white/15 backdrop-blur-xl rounded-full py-3 px-1.5">
           <button 
             className={`flex flex-col items-center px-2 py-1.5 rounded-xl transition-colors ${activeTab === 'feed' ? 'text-pink-400 bg-white/10' : 'text-white/70'}`}
@@ -1915,6 +1918,7 @@ export default function MemryPage() {
             <span className="text-[9px] mt-0.5">Profile</span>
           </button>
         </div>
+        )}
       </div>
 
       {/* Create Post Modal */}
