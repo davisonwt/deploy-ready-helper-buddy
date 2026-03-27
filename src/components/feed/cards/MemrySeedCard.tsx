@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Heart, MessageCircle, Share2, Send, Gift, ChevronLeft, ChevronRight, Play, Pause, Music, MessageSquare, Lock } from 'lucide-react';
 import { SowerStoryStrip } from './SowerStoryStrip';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -203,14 +203,6 @@ export const MemrySeedCard: React.FC<MemrySeedCardProps> = ({
   const videoRef = useRef<HTMLVideoElement>(null);
   const [isInView, setIsInView] = useState(false);
   const [videoPlaying, setVideoPlaying] = useState(false);
-  const [videoReady, setVideoReady] = useState(false);
-
-  const markVideoReady = useCallback((element?: HTMLVideoElement | null) => {
-    if (!element) return;
-    if (element.readyState >= HTMLMediaElement.HAVE_CURRENT_DATA) {
-      setVideoReady(true);
-    }
-  }, []);
 
   const fallbackMedia = '/lovable-uploads/ff9e6e48-049d-465a-8d2b-f6e8fed93522.png';
   const mediaUrl = normalizeMediaUrl(post.media_url || '');
@@ -266,20 +258,11 @@ export const MemrySeedCard: React.FC<MemrySeedCardProps> = ({
   }, [allImages.length]);
 
   useEffect(() => {
-    setVideoReady(false);
     setVideoPlaying(false);
     const video = videoRef.current;
     if (!video) return;
-    delete video.dataset.previewSeeked;
-    const rafId = requestAnimationFrame(() => markVideoReady(video));
-    return () => cancelAnimationFrame(rafId);
-  }, [resolvedVideoSrc, post.id, markVideoReady]);
-
-  useEffect(() => {
-    if (!isVideo || videoReady) return;
-    const timeoutId = window.setTimeout(() => setVideoReady(true), 2500);
-    return () => window.clearTimeout(timeoutId);
-  }, [isVideo, videoReady, resolvedVideoSrc, post.id]);
+    video.pause();
+  }, [resolvedVideoSrc, post.id]);
 
   const hasMultipleImages = allImages.length > 1;
   const isProduct = post.content_type === 'new_product';
@@ -427,45 +410,27 @@ export const MemrySeedCard: React.FC<MemrySeedCardProps> = ({
             <video
               ref={videoRef}
               src={resolvedVideoSrc}
-              className="absolute inset-0 h-full w-full object-cover z-[2]"
-              muted={!videoPlaying}
+              className="absolute inset-0 z-[2] h-full w-full object-cover"
+              muted={false}
               playsInline
               preload="metadata"
+              controls
               loop
-              onLoadedMetadata={(e) => {
-                const target = e.currentTarget;
-                markVideoReady(target);
-                if (!target.dataset.previewSeeked) {
-                  target.dataset.previewSeeked = '1';
-                  const duration = Number.isFinite(target.duration) ? target.duration : 0;
-                  const seekTo = Math.min(Math.max(duration * 0.12, 0.6), 2.5);
-                  if (seekTo > 0) {
-                    try {
-                      target.currentTime = seekTo;
-                    } catch {
-                      // ignore seek failures on partially buffered media
-                    }
-                  }
-                }
-              }}
-              onLoadedData={(e) => markVideoReady(e.currentTarget)}
-              onCanPlay={(e) => markVideoReady(e.currentTarget)}
-              onCanPlayThrough={(e) => markVideoReady(e.currentTarget)}
-              onTimeUpdate={(e) => markVideoReady(e.currentTarget)}
-              onPlay={(e) => markVideoReady(e.currentTarget)}
-              onProgress={(e) => markVideoReady(e.currentTarget)}
-              onPlaying={() => {
-                setVideoReady(true);
-                setVideoPlaying(true);
-              }}
-              onError={(e) => {
-                const t = e.target as HTMLVideoElement;
-                if (!t.dataset.fallback) {
-                  t.dataset.fallback = '1';
-                }
-                setVideoReady(true);
-              }}
+              onPlaying={() => setVideoPlaying(true)}
+              onPlay={() => setVideoPlaying(true)}
+              onError={() => setVideoPlaying(false)}
               onPause={() => setVideoPlaying(false)}
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                const vid = videoRef.current;
+                if (!vid) return;
+                if (vid.paused) {
+                  vid.play().catch(() => {});
+                } else {
+                  vid.pause();
+                }
+              }}
             />
             <button
               type="button"
@@ -476,22 +441,16 @@ export const MemrySeedCard: React.FC<MemrySeedCardProps> = ({
                 const vid = videoRef.current;
                 if (!vid) return;
                 if (vid.paused) {
-                  setVideoReady(true);
-                  vid.muted = false;
                   vid.play().catch(() => {});
                 } else {
                   vid.pause();
                 }
               }}
-              className="absolute inset-0 z-[5] flex items-center justify-center bg-transparent border-0 p-0 appearance-none"
+              className="absolute bottom-3 right-3 z-[6] flex h-12 w-12 items-center justify-center rounded-full bg-black/50 backdrop-blur-sm border-0 p-0 appearance-none"
               style={{ WebkitTapHighlightColor: 'transparent' }}
               aria-label={videoPlaying ? 'Pause video' : 'Play video'}
             >
-              {!videoPlaying && (
-                <div className="w-14 h-14 rounded-full bg-black/50 backdrop-blur-sm flex items-center justify-center">
-                  <Play className="w-7 h-7 text-white ml-1" fill="white" />
-                </div>
-              )}
+              {!videoPlaying ? <Play className="w-6 h-6 text-white ml-0.5" fill="white" /> : <Pause className="w-6 h-6 text-white" />}
             </button>
           </>
         ) : (
