@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Heart, MessageCircle, Share2, Send, Gift, ChevronLeft, ChevronRight, Play, Pause, Music, MessageSquare, Lock } from 'lucide-react';
+import { SowerStoryStrip } from './SowerStoryStrip';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
