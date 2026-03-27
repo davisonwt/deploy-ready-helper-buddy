@@ -1208,12 +1208,17 @@ export default function MemryPage({ embedded = false }: { embedded?: boolean }) 
   );
 
   // Render right-side action buttons for a post
+  const btnSize = embedded ? 'w-9 h-9' : 'w-12 h-12';
+  const btnSizeSm = embedded ? 'w-8 h-8' : 'w-10 h-10';
+  const iconSize = embedded ? 'w-4 h-4' : 'w-6 h-6';
+  const iconSizeSm = embedded ? 'w-3.5 h-3.5' : 'w-5 h-5';
+
   const renderActions = (post: MemryPost) => (
-    <div className={`absolute right-1 top-16 bottom-2 flex flex-col items-center justify-end gap-2 z-40 overflow-y-auto pb-[env(safe-area-inset-bottom,4px)] ${embedded ? 'scale-75 origin-right' : 'right-2 md:right-4 top-32 md:top-28 bottom-3 md:bottom-2 gap-3'}`}>
+    <div className={`absolute right-1 flex flex-col items-center justify-end z-40 overflow-y-auto pb-[env(safe-area-inset-bottom,4px)] ${embedded ? 'top-14 bottom-1 gap-1.5' : 'right-2 md:right-4 top-32 md:top-28 bottom-3 md:bottom-2 gap-2 md:gap-3'}`}>
       <HoverCard>
         <HoverCardTrigger asChild>
           <Link to={`/member/${post.user_id}`} className="flex flex-col items-center">
-            <Avatar className="w-12 h-12 border-2 border-white shadow-lg">
+            <Avatar className={`${btnSize} border-2 border-white shadow-lg`}>
               <AvatarImage src={post.profiles?.avatar_url} />
               <AvatarFallback className="bg-gradient-to-br from-pink-400 to-orange-400 text-white">{post.profiles?.display_name?.[0] || 'U'}</AvatarFallback>
             </Avatar>
@@ -1230,10 +1235,10 @@ export default function MemryPage({ embedded = false }: { embedded?: boolean }) 
 
       {user && post.user_id !== user.id && (
         <motion.button whileTap={{ scale: 0.9 }} onClick={() => handleFollow(post.user_id)} className="flex flex-col items-center gap-1">
-          <div className={`w-10 h-10 rounded-full flex items-center justify-center shadow-md ${followedUserIds.has(post.user_id) ? 'bg-emerald-500' : 'bg-pink-500'}`}>
-            {followedUserIds.has(post.user_id) ? <UserCheck className="w-5 h-5 text-white" /> : <UserPlus className="w-5 h-5 text-white" />}
+          <div className={`${btnSizeSm} rounded-full flex items-center justify-center shadow-md ${followedUserIds.has(post.user_id) ? 'bg-emerald-500' : 'bg-pink-500'}`}>
+            {followedUserIds.has(post.user_id) ? <UserCheck className={`${iconSizeSm} text-white`} /> : <UserPlus className={`${iconSizeSm} text-white`} />}
           </div>
-          <span className="text-white text-[10px] font-semibold drop-shadow">{followedUserIds.has(post.user_id) ? 'Following' : 'Follow'}</span>
+          {!embedded && <span className="text-white text-[10px] font-semibold drop-shadow">{followedUserIds.has(post.user_id) ? 'Following' : 'Follow'}</span>}
         </motion.button>
       )}
 
@@ -1251,42 +1256,42 @@ export default function MemryPage({ embedded = false }: { embedded?: boolean }) 
             toast({ title: "Error", description: error?.message || "Could not start chat", variant: "destructive" });
           }
         }} className="flex flex-col items-center gap-1">
-          <div className="relative w-10 h-10 rounded-full bg-blue-500 flex items-center justify-center shadow-md">
-            <MessageSquare className="w-5 h-5 text-white" />
+          <div className={`relative ${btnSizeSm} rounded-full bg-blue-500 flex items-center justify-center shadow-md`}>
+            <MessageSquare className={`${iconSizeSm} text-white`} />
             {(messageCountsByUser[post.user_id] || 0) > 0 && (
               <span className="absolute -top-1 -right-1 bg-destructive text-destructive-foreground text-[9px] font-bold rounded-full min-w-[18px] h-[18px] flex items-center justify-center px-1">
                 {messageCountsByUser[post.user_id] > 99 ? '99+' : messageCountsByUser[post.user_id]}
               </span>
             )}
           </div>
-          <span className="text-white text-[10px] font-semibold drop-shadow">Message</span>
+          {!embedded && <span className="text-white text-[10px] font-semibold drop-shadow">Message</span>}
         </motion.button>
       )}
 
       <motion.button whileTap={{ scale: 0.9 }} onClick={() => handleLike(post.id)} className="flex flex-col items-center gap-1">
-        <div className={`w-12 h-12 rounded-full flex items-center justify-center ${post.user_liked || likedPostIds.has(post.id) ? 'bg-pink-500' : 'bg-white/20 backdrop-blur-sm'}`}>
-          <Heart className={`w-6 h-6 ${post.user_liked || likedPostIds.has(post.id) ? 'text-white fill-white' : 'text-white'}`} />
+        <div className={`${btnSize} rounded-full flex items-center justify-center ${post.user_liked || likedPostIds.has(post.id) ? 'bg-pink-500' : 'bg-white/20 backdrop-blur-sm'}`}>
+          <Heart className={`${iconSize} ${post.user_liked || likedPostIds.has(post.id) ? 'text-white fill-white' : 'text-white'}`} />
         </div>
-        <span className="text-white text-xs font-semibold drop-shadow">{post.likes_count}</span>
+        {!embedded && <span className="text-white text-xs font-semibold drop-shadow">{post.likes_count}</span>}
       </motion.button>
 
       <motion.button whileTap={{ scale: 0.9 }} onClick={() => handleBestowal(post)} className="flex flex-col items-center gap-1">
-        <div className="w-12 h-12 rounded-full bg-gradient-to-br from-emerald-400 to-teal-500 flex items-center justify-center shadow-lg">
-          <Gift className="w-6 h-6 text-white" />
+        <div className={`${btnSize} rounded-full bg-gradient-to-br from-emerald-400 to-teal-500 flex items-center justify-center shadow-lg`}>
+          <Gift className={`${iconSize} text-white`} />
         </div>
-        <span className="text-white text-xs font-semibold drop-shadow">Bestow</span>
+        {!embedded && <span className="text-white text-xs font-semibold drop-shadow">Bestow</span>}
       </motion.button>
 
       <motion.button whileTap={{ scale: 0.9 }} onClick={() => openComments(post)} className="flex flex-col items-center gap-1">
-        <div className="w-12 h-12 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center">
-          <MessageCircle className="w-6 h-6 text-white" />
+        <div className={`${btnSize} rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center`}>
+          <MessageCircle className={`${iconSize} text-white`} />
         </div>
-        <span className="text-white text-xs font-semibold drop-shadow">{post.comments_count}</span>
+        {!embedded && <span className="text-white text-xs font-semibold drop-shadow">{post.comments_count}</span>}
       </motion.button>
 
       <motion.button whileTap={{ scale: 0.9 }} onClick={() => handleBookmark(post.id)} className="flex flex-col items-center gap-1">
-        <div className={`w-12 h-12 rounded-full flex items-center justify-center ${post.user_bookmarked ? 'bg-amber-500' : 'bg-white/20 backdrop-blur-sm'}`}>
-          <Bookmark className={`w-6 h-6 ${post.user_bookmarked ? 'text-white fill-white' : 'text-white'}`} />
+        <div className={`${btnSize} rounded-full flex items-center justify-center ${post.user_bookmarked ? 'bg-amber-500' : 'bg-white/20 backdrop-blur-sm'}`}>
+          <Bookmark className={`${iconSize} ${post.user_bookmarked ? 'text-white fill-white' : 'text-white'}`} />
         </div>
       </motion.button>
 
@@ -1299,16 +1304,16 @@ export default function MemryPage({ embedded = false }: { embedded?: boolean }) 
           if (error.name !== 'AbortError') { await navigator.clipboard.writeText(shareUrl); toast({ title: "Link copied!" }); }
         }
       }} className="flex flex-col items-center gap-1">
-        <div className="w-12 h-12 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center">
-          <Share2 className="w-6 h-6 text-white" />
+        <div className={`${btnSize} rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center`}>
+          <Share2 className={`${iconSize} text-white`} />
         </div>
-        <span className="text-white text-xs font-semibold drop-shadow">Share</span>
+        {!embedded && <span className="text-white text-xs font-semibold drop-shadow">Share</span>}
       </motion.button>
 
       {(post.content_type === 'video' || post.content_type === 'marketing_video') && (
         <motion.button whileTap={{ scale: 0.9 }} onClick={() => setIsMuted(!isMuted)} className="flex flex-col items-center">
-          <div className="w-10 h-10 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center">
-            {isMuted ? <VolumeX className="w-5 h-5 text-white" /> : <Volume2 className="w-5 h-5 text-white" />}
+          <div className={`${btnSizeSm} rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center`}>
+            {isMuted ? <VolumeX className={`${iconSizeSm} text-white`} /> : <Volume2 className={`${iconSizeSm} text-white`} />}
           </div>
         </motion.button>
       )}
@@ -1317,7 +1322,7 @@ export default function MemryPage({ embedded = false }: { embedded?: boolean }) 
 
   // Render bottom info panel for a post
   const renderInfoPanel = (post: MemryPost) => (
-    <div className={`absolute bottom-2 z-40 overflow-y-auto pb-[env(safe-area-inset-bottom,4px)] ${embedded ? 'left-2 right-14 max-h-[40%]' : 'left-[4.75rem] right-[5.5rem] md:left-24 md:right-24 max-h-[45vh]'}`}>
+    <div className={`absolute bottom-2 z-40 overflow-y-auto pb-[env(safe-area-inset-bottom,4px)] ${embedded ? 'left-2 right-12 max-h-[40%]' : 'left-[4.75rem] right-[5.5rem] md:left-24 md:right-24 max-h-[45vh]'}`}>
       <motion.div initial={{ y: 20, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ delay: 0.2 }} className="bg-black/40 backdrop-blur-md rounded-2xl p-3">
         <div className="flex items-center gap-3 mb-3">
           <HoverCard>
