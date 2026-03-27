@@ -35,6 +35,7 @@ interface MemryPost {
   };
   user_liked?: boolean;
   sower_seed_number?: number;
+  content_category?: string;
 }
 
 interface FeedComment {
