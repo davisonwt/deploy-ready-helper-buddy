@@ -258,7 +258,7 @@ function MusicPreviewPlayer({ mediaUrl, caption, transparent = false, onPreviewE
   );
 }
 
-export default function MemryPage() {
+export default function MemryPage({ embedded = false }: { embedded?: boolean }) {
   const navigate = useNavigate();
   const { addToBasket } = useProductBasket();
   const [posts, setPosts] = useState<MemryPost[]>([]);
