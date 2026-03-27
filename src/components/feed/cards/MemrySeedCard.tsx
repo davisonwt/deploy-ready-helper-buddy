@@ -203,6 +203,7 @@ export const MemrySeedCard: React.FC<MemrySeedCardProps> = ({
   const videoRef = useRef<HTMLVideoElement>(null);
   const [isInView, setIsInView] = useState(false);
   const [videoPlaying, setVideoPlaying] = useState(false);
+  const [videoReady, setVideoReady] = useState(false);
 
   const fallbackMedia = '/lovable-uploads/ff9e6e48-049d-465a-8d2b-f6e8fed93522.png';
   const mediaUrl = normalizeMediaUrl(post.media_url || '');
@@ -252,10 +253,16 @@ export const MemrySeedCard: React.FC<MemrySeedCardProps> = ({
     return imgs.length > 0 ? imgs : [fallbackMedia];
   })();
   const videoPosterUrl = imageCandidates[0] || fallbackMedia;
+  const resolvedVideoSrc = primaryVideoUrl || mediaUrl;
 
   useEffect(() => {
     setImgIdx((current) => Math.min(current, Math.max(0, allImages.length - 1)));
   }, [allImages.length]);
+
+  useEffect(() => {
+    setVideoReady(false);
+    setVideoPlaying(false);
+  }, [resolvedVideoSrc, post.id]);
 
   const hasMultipleImages = allImages.length > 1;
   const isProduct = post.content_type === 'new_product';
@@ -402,23 +409,32 @@ export const MemrySeedCard: React.FC<MemrySeedCardProps> = ({
           <>
             <video
               ref={videoRef}
-              src={primaryVideoUrl || mediaUrl}
-              className="w-full h-full object-cover"
+              src={resolvedVideoSrc}
+              className="w-full h-full object-cover relative z-[2]"
               muted={!videoPlaying}
               playsInline
-              preload="none"
+              preload="metadata"
               poster={videoPosterUrl}
               loop
+              onLoadedData={() => setVideoReady(true)}
+              onCanPlay={() => setVideoReady(true)}
+              onPlaying={() => {
+                setVideoReady(true);
+                setVideoPlaying(true);
+              }}
               onError={(e) => {
                 const t = e.target as HTMLVideoElement;
                 if (!t.dataset.fallback) {
                   t.dataset.fallback = '1';
                   t.poster = fallbackMedia;
                 }
+                setVideoReady(true);
               }}
               onPause={() => setVideoPlaying(false)}
-              onPlay={() => setVideoPlaying(true)}
             />
+            {!videoReady && (
+              <div className="absolute inset-0 z-[4] bg-background/20 animate-pulse pointer-events-none" />
+            )}
             <button
               type="button"
               data-deadlink-watch-ignore="true"
