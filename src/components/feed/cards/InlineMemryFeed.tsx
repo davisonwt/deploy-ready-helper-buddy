@@ -125,7 +125,7 @@ export const InlineMemryFeed: React.FC = () => {
       (products || []).forEach((p: any) => {
         const userId = p.sower?.user_id || p.sower_id;
         const profile = profileMap.get(userId);
-        const images = [p.cover_image_url, ...(p.gallery_images || [])].filter(Boolean);
+        const images = [p.cover_image_url, ...(p.image_urls || p.gallery_images || [])].filter(Boolean);
         const descriptor = [p.category, p.type, p.product_type].filter(Boolean).join(' ').toLowerCase();
         const normalizedType = String(p.type || '').toLowerCase();
         const fileUrl = typeof p.file_url === 'string' ? p.file_url : undefined;
@@ -154,11 +154,13 @@ export const InlineMemryFeed: React.FC = () => {
 
       (orchards || []).forEach((o: any) => {
         const profile = profileMap.get(o.user_id);
+        const orchardImages = [o.banner_url, o.logo_url, ...(o.images || [])].filter(Boolean);
         allPosts.push({
           id: `orchard-${o.id}`,
           user_id: o.user_id,
           content_type: 'new_orchard',
-          media_url: o.banner_url || o.logo_url || '/placeholder.svg',
+          media_url: orchardImages[0] || '/placeholder.svg',
+          image_urls: orchardImages.length > 1 ? orchardImages : undefined,
           caption: `🌳 ORCHARD: ${o.name}`,
           likes_count: 0,
           comments_count: 0,
@@ -171,11 +173,13 @@ export const InlineMemryFeed: React.FC = () => {
       (books || []).forEach((b: any) => {
         const userId = b.sower?.user_id || b.sower_id;
         const profile = profileMap.get(userId);
+        const bookImages = [b.cover_image_url, ...(b.gallery_images || b.image_urls || [])].filter(Boolean);
         allPosts.push({
           id: `book-${b.id}`,
           user_id: userId,
           content_type: 'new_book',
-          media_url: b.cover_image_url || '/placeholder.svg',
+          media_url: bookImages[0] || '/placeholder.svg',
+          image_urls: bookImages.length > 1 ? bookImages : undefined,
           caption: `📚 BOOK: ${b.title}`,
           likes_count: 0,
           comments_count: 0,
@@ -188,12 +192,13 @@ export const InlineMemryFeed: React.FC = () => {
 
       (memryPosts || []).forEach((mp: any) => {
         const profile = profileMap.get(mp.user_id);
+        const mpImages = [mp.media_url, ...(mp.image_urls || [])].filter(Boolean);
         allPosts.push({
           id: mp.id,
           user_id: mp.user_id,
           content_type: mp.content_type,
           media_url: mp.media_url,
-          image_urls: mp.image_urls,
+          image_urls: mpImages.length > 1 ? mpImages : mp.image_urls,
           audio_url: mp.content_type === 'music' ? mp.media_url : mp.audio_url,
           caption: mp.caption || '',
           likes_count: mp.likes_count || 0,

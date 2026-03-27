@@ -163,16 +163,16 @@ const SeedAudioPreview: React.FC<{ audioUrl: string }> = ({ audioUrl }) => {
   }, []);
 
   return (
-    <div className="relative z-20 w-full max-w-[210px]">
+    <div className="relative z-20 flex-shrink-0" style={{ width: 140 }}>
       <audio ref={audioRef} preload="metadata" playsInline className="hidden" />
-      <div className="flex items-center gap-2 bg-black/50 backdrop-blur-md rounded-full px-3 py-1.5">
+      <div className="flex items-center gap-1.5 bg-black/50 backdrop-blur-md rounded-full px-2 py-1">
         <button onClick={togglePlay} className="text-white hover:scale-110 transition-transform flex-shrink-0" disabled={loading || !resolvedUrl}>
-          {playing ? <Pause className="w-5 h-5" /> : <Play className="w-5 h-5" />}
+          {playing ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4" />}
         </button>
         <div className="flex-1 h-1 bg-white/20 rounded-full overflow-hidden">
           <div className="h-full bg-white rounded-full transition-all" style={{ width: `${(currentTime / PREVIEW_DURATION) * 100}%` }} />
         </div>
-        <span className="text-white text-[10px] font-mono flex-shrink-0">
+        <span className="text-white text-[9px] font-mono flex-shrink-0">
           {Math.floor(currentTime)}s/{PREVIEW_DURATION}s
         </span>
       </div>
@@ -321,10 +321,26 @@ export const MemrySeedCard: React.FC<MemrySeedCardProps> = ({
       {/* ── Section 1: Image Zone ── */}
       <div className="relative w-full" style={{ height: 340 }}>
         {/* Seed image */}
-        {isMusic && !post.image_urls?.length ? (
+        {isMusic && !post.media_url && !post.image_urls?.length ? (
           <div className="w-full h-full bg-gradient-to-br from-violet-700 via-purple-600 to-pink-500 flex items-center justify-center">
             <Music className="w-20 h-20 text-white/30" />
           </div>
+        ) : post.media_url && /\.(mp4|webm|mov)(\?|$)/i.test(post.media_url) ? (
+          <video
+            src={post.media_url}
+            className="w-full h-full object-cover"
+            muted
+            playsInline
+            preload="metadata"
+            poster={post.image_urls?.[0]}
+            onError={(e) => {
+              const t = e.target as HTMLVideoElement;
+              if (!t.dataset.fallback) {
+                t.dataset.fallback = '1';
+                t.poster = '/lovable-uploads/ff9e6e48-049d-465a-8d2b-f6e8fed93522.png';
+              }
+            }}
+          />
         ) : (
           <img
             src={allImages[imgIdx] || post.media_url}
