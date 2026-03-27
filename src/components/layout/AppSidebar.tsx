@@ -63,8 +63,8 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({ radioLive, userProfile }
         </div>
       </div>
 
-      {/* Nav Items */}
-      <nav className="flex-1 px-2 space-y-1">
+      {/* Nav Items — gradient cards */}
+      <nav className="flex-1 px-2 space-y-2 overflow-y-auto">
         {navItems.map((item) => {
           const Icon = item.icon;
           return (
@@ -72,31 +72,29 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({ radioLive, userProfile }
               key={item.to}
               to={item.to}
               className={({ isActive }) => cn(
-                'flex items-center gap-2.5 h-9 px-2.5 rounded-lg text-[13px] transition-colors',
-                'hover:bg-accent/10',
-                isActive
-                  ? 'font-medium'
-                  : 'text-muted-foreground'
+                'flex items-center gap-3 p-2.5 rounded-xl transition-all',
+                'hover:scale-[1.02] hover:shadow-lg',
+                isActive ? 'ring-2 ring-white/30 shadow-lg' : 'opacity-85 hover:opacity-100'
               )}
-              style={({ isActive }) => isActive ? { backgroundColor: `${item.color}18` } : undefined}
+              style={{ background: item.gradient }}
             >
-              <div
-                className="relative w-7 h-7 rounded-md flex items-center justify-center flex-shrink-0"
-                style={{ backgroundColor: item.color }}
-              >
-                <Icon className="w-3.5 h-3.5 text-white" />
+              <div className="relative w-9 h-9 rounded-lg bg-white/20 backdrop-blur-sm flex items-center justify-center flex-shrink-0">
+                <Icon className="w-4.5 h-4.5 text-white" />
                 {item.liveIndicator && radioLive && (
-                  <span className="absolute -top-0.5 -right-0.5 w-2 h-2 bg-red-500 rounded-full animate-pulse ring-2 ring-card" />
+                  <span className="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 bg-red-500 rounded-full animate-pulse ring-2 ring-white/50" />
                 )}
               </div>
-              <span>{item.label}</span>
+              <div className="flex flex-col leading-tight min-w-0">
+                <span className="text-[13px] font-bold text-white truncate">{item.label}</span>
+                <span className="text-[10px] text-white/70 truncate">{item.desc}</span>
+              </div>
             </NavLink>
           );
         })}
       </nav>
 
       {/* Admin */}
-      <div className="px-2 pt-2 border-t border-border/20 mt-1 space-y-1">
+      <div className="px-2 pt-2 border-t border-border/20 mt-1 space-y-2">
         {adminItems.map((item) => {
           const Icon = item.icon;
           return (
@@ -104,19 +102,19 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({ radioLive, userProfile }
               key={item.to}
               to={item.to}
               className={({ isActive }) => cn(
-                'flex items-center gap-2.5 h-9 px-2.5 rounded-lg text-[13px] transition-colors',
-                'hover:bg-accent/10',
-                isActive ? 'font-medium' : 'text-muted-foreground'
+                'flex items-center gap-3 p-2.5 rounded-xl transition-all',
+                'hover:scale-[1.02] hover:shadow-lg',
+                isActive ? 'ring-2 ring-white/30 shadow-lg' : 'opacity-85 hover:opacity-100'
               )}
-              style={({ isActive }) => isActive ? { backgroundColor: `${item.color}18` } : undefined}
+              style={{ background: item.gradient }}
             >
-              <div
-                className="w-7 h-7 rounded-md flex items-center justify-center flex-shrink-0"
-                style={{ backgroundColor: item.color }}
-              >
-                <Icon className="w-3.5 h-3.5 text-white" />
+              <div className="w-9 h-9 rounded-lg bg-white/20 backdrop-blur-sm flex items-center justify-center flex-shrink-0">
+                <Icon className="w-4.5 h-4.5 text-white" />
               </div>
-              <span>{item.label}</span>
+              <div className="flex flex-col leading-tight min-w-0">
+                <span className="text-[13px] font-bold text-white truncate">{item.label}</span>
+                <span className="text-[10px] text-white/70 truncate">{item.desc}</span>
+              </div>
             </NavLink>
           );
         })}
