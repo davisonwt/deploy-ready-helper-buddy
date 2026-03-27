@@ -353,9 +353,7 @@ const App = () => (
               <Route path="/dashboard" element={
                 <ProtectedRoute>
                   <RequireVerification>
-                    <Layout>
-                      <DashboardPage />
-                    </Layout>
+                    <DashboardPage />
                   </RequireVerification>
                 </ProtectedRoute>
               } />
