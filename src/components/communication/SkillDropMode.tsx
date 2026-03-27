@@ -23,7 +23,7 @@ interface SkillDropSession {
   presenter_id: string;
   presenter_profile_id: string | null;
   topic_id: string | null;
-  profiles?: {
+  presenter_profile?: {
     display_name: string | null;
     avatar_url: string | null;
   };
@@ -47,7 +47,7 @@ export const SkillDropMode: React.FC = () => {
         .from('skilldrop_sessions' as any)
         .select(`
           *,
-          profiles:presenter_profile_id (
+          presenter_profile:profiles!lecture_halls_presenter_profile_id_fkey (
             display_name,
             avatar_url
           )
@@ -91,7 +91,7 @@ export const SkillDropMode: React.FC = () => {
           <div>
             <h2 className="text-xl font-bold text-white">{activeSession.title}</h2>
             <p className="text-white/70 text-sm">
-              {isPresenter ? 'You are the presenter' : `Presenter: ${activeSession.profiles?.display_name || 'Unknown'}`}
+                {isPresenter ? 'You are the presenter' : `Presenter: ${activeSession.presenter_profile?.display_name || 'Unknown'}`}
             </p>
           </div>
           <Badge variant={isPresenter ? 'default' : 'outline'} className="text-white">
@@ -170,9 +170,9 @@ export const SkillDropMode: React.FC = () => {
                 <CardContent className="p-6">
                   <div className="flex items-start gap-4">
                     <Avatar className="w-12 h-12 border-2 border-primary/30">
-                      <AvatarImage src={session.profiles?.avatar_url || undefined} />
+                      <AvatarImage src={session.presenter_profile?.avatar_url || undefined} />
                       <AvatarFallback className="bg-primary/20 text-white">
-                        {session.profiles?.display_name?.charAt(0) || 'P'}
+                        {session.presenter_profile?.display_name?.charAt(0) || 'P'}
                       </AvatarFallback>
                     </Avatar>
 
@@ -181,7 +181,7 @@ export const SkillDropMode: React.FC = () => {
                         <div>
                           <h3 className="text-xl font-bold text-white mb-1">{session.title}</h3>
                           <p className="text-sm text-white/70">
-                            Presenter: {session.profiles?.display_name || 'Unknown'}
+                            Presenter: {session.presenter_profile?.display_name || 'Unknown'}
                           </p>
                         </div>
                         <Badge variant="outline" className="text-white border-primary/30">

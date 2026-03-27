@@ -18,6 +18,7 @@ export const DeadLinkDetector = () => {
       if (!target) return;
       const clickable = target.closest('a,button,[role="button"],[data-deadlink-watch]') as HTMLElement | null;
       if (!clickable) return;
+      if (clickable.getAttribute('data-deadlink-watch-ignore') === 'true') return;
 
       const from = location.pathname;
       const to = (clickable as HTMLAnchorElement).getAttribute?.('href') || clickable.getAttribute('data-href') || undefined;

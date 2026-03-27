@@ -405,6 +405,8 @@ export const MemrySeedCard: React.FC<MemrySeedCardProps> = ({
               onPlay={() => setVideoPlaying(true)}
             />
             <button
+              type="button"
+              data-deadlink-watch-ignore="true"
               onClick={(e) => {
                 e.preventDefault();
                 e.stopPropagation();
