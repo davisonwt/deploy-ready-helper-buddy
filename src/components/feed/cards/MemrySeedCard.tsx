@@ -438,6 +438,17 @@ export const MemrySeedCard: React.FC<MemrySeedCardProps> = ({
         </div>
       </div>
 
+      {/* ── CaaS AI Story Strip ── */}
+      <SowerStoryStrip
+        seedId={post.id}
+        sowerName={post.profiles?.display_name || 'Sower'}
+        seedTitle={post.product_title || post.caption}
+        daysSincePlanted={0}
+        bestowalsCount={post.likes_count || 0}
+        engagements={post.comments_count || 0}
+        seedCategory={getSeedTypeLabel()}
+      />
+
       {/* ── Section 2: Actions Row ── */}
       <div className="px-3 py-2.5">
         <div className="flex items-center gap-2 flex-nowrap">
