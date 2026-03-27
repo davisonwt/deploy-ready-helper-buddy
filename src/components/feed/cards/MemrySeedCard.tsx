@@ -9,6 +9,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useProductBasket } from '@/contexts/ProductBasketContext';
 import { resolveAudioUrl } from '@/utils/resolveAudioUrl';
 import { globalAudioManager } from '@/utils/globalAudioManager';
+import { unlockHtmlMediaElement } from '@/utils/unlockHtmlMediaElement';
 
 interface MemrySeedCardProps {
   post: {
@@ -108,6 +109,7 @@ const SeedAudioPreview: React.FC<{ audioUrl: string }> = ({ audioUrl }) => {
     } else {
       try {
         setLoading(true);
+        await unlockHtmlMediaElement();
         if (audio.src !== resolvedUrl) {
           audio.src = resolvedUrl;
           audio.load();
@@ -161,7 +163,7 @@ const SeedAudioPreview: React.FC<{ audioUrl: string }> = ({ audioUrl }) => {
 
   return (
     <div className="absolute bottom-14 left-3 right-3 z-20">
-      <audio ref={audioRef} preload="none" className="hidden" />
+      <audio ref={audioRef} preload="metadata" playsInline className="hidden" />
       <div className="flex items-center gap-2 bg-black/50 backdrop-blur-md rounded-full px-3 py-1.5">
         <button onClick={togglePlay} className="text-white hover:scale-110 transition-transform flex-shrink-0" disabled={loading || !resolvedUrl}>
           {playing ? <Pause className="w-5 h-5" /> : <Play className="w-5 h-5" />}
@@ -419,7 +421,7 @@ export const MemrySeedCard: React.FC<MemrySeedCardProps> = ({
             onKeyDown={(e) => {
               if (e.key === 'Enter') { e.preventDefault(); handleSendMessage(); }
             }}
-            className="h-8 text-xs rounded-full px-4 min-w-[170px] max-w-[240px] flex-1 bg-muted border-border"
+            className="h-8 text-xs rounded-full px-4 w-[52%] min-w-[220px] bg-muted border-border"
           />
           {user && (
             <button onClick={handleSendMessage} className="w-8 h-8 rounded-full bg-primary hover:bg-primary/90 flex items-center justify-center flex-shrink-0 transition-colors">
