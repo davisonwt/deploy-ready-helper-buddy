@@ -9,6 +9,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useProductBasket } from '@/contexts/ProductBasketContext';
 import { resolveAudioUrl } from '@/utils/resolveAudioUrl';
 import { globalAudioManager } from '@/utils/globalAudioManager';
+import { unlockHtmlMediaElement } from '@/utils/unlockHtmlMediaElement';
 
 interface MemrySeedCardProps {
   post: {
@@ -52,8 +53,10 @@ const toHandle = (value?: string) => {
 // ── 30-second audio preview player ──
 const SeedAudioPreview: React.FC<{ audioUrl: string }> = ({ audioUrl }) => {
   const audioRef = useRef<HTMLAudioElement>(null);
+  const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [resolvedUrl, setResolvedUrl] = useState('');
   const [playing, setPlaying] = useState(false);
+  const [loading, setLoading] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
   const PREVIEW_DURATION = 30;
 
@@ -70,32 +73,65 @@ const SeedAudioPreview: React.FC<{ audioUrl: string }> = ({ audioUrl }) => {
             if (manifest.tracks?.length > 0) urlToResolve = manifest.tracks[0].url;
           } catch {}
         }
-        const url = await resolveAudioUrl(urlToResolve, { bucketForKeys: 'music-tracks' });
+        const url = await resolveAudioUrl(urlToResolve, { bucketForKeys: 'dj-music' });
         if (!cancelled) setResolvedUrl(url);
       } catch {
         if (!cancelled) setResolvedUrl(audioUrl);
       }
     })();
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
   }, [audioUrl]);
 
   useEffect(() => {
     const audio = audioRef.current;
     if (!audio) return;
     globalAudioManager.register(audio);
-    return () => { globalAudioManager.unregister(audio); };
+    return () => {
+      if (timeoutRef.current) clearTimeout(timeoutRef.current);
+      audio.pause();
+      audio.currentTime = 0;
+      globalAudioManager.unregister(audio);
+    };
   }, []);
 
-  const togglePlay = () => {
+  const togglePlay = async () => {
     const audio = audioRef.current;
     if (!audio || !resolvedUrl) return;
+
     if (playing) {
       audio.pause();
+      audio.currentTime = 0;
       setPlaying(false);
+      setCurrentTime(0);
+      if (timeoutRef.current) clearTimeout(timeoutRef.current);
     } else {
-      audio.src = resolvedUrl;
-      globalAudioManager.play(audio);
-      audio.play().then(() => setPlaying(true)).catch(() => setPlaying(false));
+      try {
+        setLoading(true);
+        await unlockHtmlMediaElement();
+        if (audio.src !== resolvedUrl) {
+          audio.src = resolvedUrl;
+          audio.load();
+        }
+        if (audio.currentTime >= PREVIEW_DURATION || audio.currentTime === 0) {
+          audio.currentTime = 0;
+        }
+        globalAudioManager.play(audio);
+        await audio.play();
+        setPlaying(true);
+        if (timeoutRef.current) clearTimeout(timeoutRef.current);
+        timeoutRef.current = setTimeout(() => {
+          audio.pause();
+          audio.currentTime = 0;
+          setPlaying(false);
+          setCurrentTime(0);
+        }, PREVIEW_DURATION * 1000);
+      } catch {
+        setPlaying(false);
+      } finally {
+        setLoading(false);
+      }
     }
   };
 
@@ -111,19 +147,25 @@ const SeedAudioPreview: React.FC<{ audioUrl: string }> = ({ audioUrl }) => {
       }
     };
     const onEnd = () => { setPlaying(false); };
+    const onPause = () => {
+      setPlaying(false);
+      if (audio.currentTime === 0) setCurrentTime(0);
+    };
     audio.addEventListener('timeupdate', onTime);
     audio.addEventListener('ended', onEnd);
+    audio.addEventListener('pause', onPause);
     return () => {
       audio.removeEventListener('timeupdate', onTime);
       audio.removeEventListener('ended', onEnd);
+      audio.removeEventListener('pause', onPause);
     };
   }, []);
 
   return (
     <div className="absolute bottom-14 left-3 right-3 z-20">
-      <audio ref={audioRef} preload="none" className="hidden" />
+      <audio ref={audioRef} preload="metadata" playsInline className="hidden" />
       <div className="flex items-center gap-2 bg-black/50 backdrop-blur-md rounded-full px-3 py-1.5">
-        <button onClick={togglePlay} className="text-white hover:scale-110 transition-transform flex-shrink-0">
+        <button onClick={togglePlay} className="text-white hover:scale-110 transition-transform flex-shrink-0" disabled={loading || !resolvedUrl}>
           {playing ? <Pause className="w-5 h-5" /> : <Play className="w-5 h-5" />}
         </button>
         <div className="flex-1 h-1 bg-white/20 rounded-full overflow-hidden">
@@ -160,7 +202,8 @@ export const MemrySeedCard: React.FC<MemrySeedCardProps> = ({
   const isBook = post.content_type === 'new_book';
   const isMusic = post.content_type === 'music';
   const isSeed = isProduct || isOrchard || isBook;
-  const hasAudio = !!(post.audio_url || isMusic || (post.category && ['music', 'e-book', 'audio'].includes(post.category.toLowerCase())));
+  const categoryText = String(post.category || post.product_type || post.content_type || '').toLowerCase();
+  const hasAudio = !!(post.audio_url || isMusic || categoryText.includes('music') || categoryText.includes('audio'));
 
   // Determine seed type label
   const getSeedTypeLabel = () => {
@@ -351,9 +394,8 @@ export const MemrySeedCard: React.FC<MemrySeedCardProps> = ({
       </div>
 
       {/* ── Section 2: Actions Row ── */}
-      <div className="px-3 py-2.5 space-y-2">
-        {/* Top row: action icons */}
-        <div className="flex items-center gap-3">
+      <div className="px-3 py-2.5">
+        <div className="flex items-center gap-2 flex-nowrap">
           <button onClick={() => onLike(post.id)} className="flex items-center gap-1 text-muted-foreground hover:text-pink-500 transition-colors">
             <Heart className={`w-[18px] h-[18px] ${post.user_liked ? 'text-pink-500 fill-pink-500' : ''}`} />
             <span className="text-xs font-medium">{post.likes_count}</span>
@@ -370,10 +412,7 @@ export const MemrySeedCard: React.FC<MemrySeedCardProps> = ({
               <Lock className="w-[16px] h-[16px]" />
             </button>
           )}
-        </div>
-
-        {/* Bottom row: full-width message input */}
-        <div className="flex items-center gap-2">
+          <div className="flex-1" />
           <Input
             placeholder={user ? `Say something...` : 'Sign in to comment'}
             value={inlineMsg}
@@ -382,7 +421,7 @@ export const MemrySeedCard: React.FC<MemrySeedCardProps> = ({
             onKeyDown={(e) => {
               if (e.key === 'Enter') { e.preventDefault(); handleSendMessage(); }
             }}
-            className="h-8 text-xs rounded-full px-4 flex-1 bg-muted border-border"
+            className="h-8 text-xs rounded-full px-4 w-[52%] min-w-[220px] bg-muted border-border"
           />
           {user && (
             <button onClick={handleSendMessage} className="w-8 h-8 rounded-full bg-primary hover:bg-primary/90 flex items-center justify-center flex-shrink-0 transition-colors">

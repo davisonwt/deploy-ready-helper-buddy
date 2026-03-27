@@ -125,7 +125,12 @@ export const InlineMemryFeed: React.FC = () => {
         const userId = p.sower?.user_id || p.sower_id;
         const profile = profileMap.get(userId);
         const images = [p.cover_image_url, ...(p.gallery_images || [])].filter(Boolean);
-        const audioUrl = p.audio_preview_url || (p.category?.toLowerCase() === 'music' ? p.media_url : undefined);
+        const descriptor = [p.category, p.type, p.product_type].filter(Boolean).join(' ').toLowerCase();
+        const normalizedType = String(p.type || '').toLowerCase();
+        const fileUrl = typeof p.file_url === 'string' ? p.file_url : undefined;
+        const isLikelyAudioFile = !!fileUrl && /\.(mp3|wav|m4a|aac|ogg|flac)(\?|$)/i.test(fileUrl);
+        const isAudioCategory = ['music', 'audio', 'song', 'track'].some((token) => descriptor.includes(token));
+        const audioUrl = fileUrl && (normalizedType === 'music' || isLikelyAudioFile || isAudioCategory) ? fileUrl : undefined;
         allPosts.push({
           id: `product-${p.id}`,
           user_id: userId,
