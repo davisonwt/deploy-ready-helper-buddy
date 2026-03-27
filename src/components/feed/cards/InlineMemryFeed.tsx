@@ -300,14 +300,9 @@ export const InlineMemryFeed: React.FC = () => {
 
   return (
     <section>
-      <div className="flex items-center justify-between mb-2.5">
-        <div className="flex items-center gap-2">
-          <Camera className="w-4 h-4 text-orange-500" />
-          <h2 className="text-sm font-bold text-foreground">S2G Memry</h2>
-        </div>
-        <Link to="/memry" className="text-xs font-semibold text-orange-500 flex items-center gap-0.5">
-          Open Full Feed <ChevronRight className="w-3 h-3" />
-        </Link>
+      <div className="flex items-center gap-2 mb-2.5">
+        <Camera className="w-4 h-4 text-orange-500" />
+        <h2 className="text-sm font-bold text-foreground">S2G Memry</h2>
       </div>
 
       {isLoading ? (
