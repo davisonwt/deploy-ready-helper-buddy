@@ -228,6 +228,61 @@ export const HomeFeed: React.FC<HomeFeedProps> = ({
           </section>
         )}
 
+        {/* === S2G MEMRY FEED === */}
+        <section>
+          <div className="flex items-center justify-between mb-2.5">
+            <div className="flex items-center gap-2">
+              <Camera className="w-4 h-4 text-orange-500" />
+              <h2 className="text-sm font-bold text-foreground">S2G Memry</h2>
+            </div>
+            <Link to="/memry" className="text-xs font-semibold text-orange-500 flex items-center gap-0.5">
+              Open Feed <ChevronRight className="w-3 h-3" />
+            </Link>
+          </div>
+          <div className="grid grid-cols-2 gap-2.5">
+            {[
+              { href: '/memry?filter=individuals', title: 'Individuals', subtitle: 'Discover sowers', icon: User, gradient: 'linear-gradient(135deg, #ea580c, #f97316)' },
+              { href: '/memry?filter=companies', title: 'Companies', subtitle: 'Browse businesses', icon: Building2, gradient: 'linear-gradient(135deg, #dc2626, #f97316)' },
+              { href: '/memry?filter=ads', title: 'Ads', subtitle: 'Community adverts', icon: Megaphone, gradient: 'linear-gradient(135deg, #db2777, #f43f5e)' },
+              { href: '/memry?filter=videos', title: 'Home Videos', subtitle: 'Community content', icon: Video, gradient: 'linear-gradient(135deg, #e11d48, #be185d)' },
+              { href: '/community-whisperers', title: 'Whisperers', subtitle: 'Prayer & support', icon: Ear, gradient: 'linear-gradient(135deg, #a21caf, #db2777)' },
+              { href: '/community-drivers', title: 'Drivers', subtitle: 'Community transport', icon: Car, gradient: 'linear-gradient(135deg, #d97706, #ea580c)' },
+            ].map((card) => (
+              <Link
+                key={card.title}
+                to={card.href}
+                className="block rounded-2xl p-4 transition-all hover:scale-[1.02] hover:shadow-lg"
+                style={{ background: card.gradient }}
+              >
+                <div className="flex items-center gap-3">
+                  <div className="w-9 h-9 rounded-xl bg-white/20 backdrop-blur flex items-center justify-center shrink-0">
+                    <card.icon className="w-4.5 h-4.5 text-white" />
+                  </div>
+                  <div className="min-w-0">
+                    <h3 className="font-bold text-white text-sm leading-tight">{card.title}</h3>
+                    <p className="text-[10px] text-white/70 truncate">{card.subtitle}</p>
+                  </div>
+                </div>
+              </Link>
+            ))}
+          </div>
+          <Link
+            to="/community-services"
+            className="block rounded-2xl p-4 mt-2.5 transition-all hover:scale-[1.02] hover:shadow-lg"
+            style={{ background: 'linear-gradient(135deg, #b45309, #d97706)' }}
+          >
+            <div className="flex items-center gap-3">
+              <div className="w-9 h-9 rounded-xl bg-white/20 backdrop-blur flex items-center justify-center shrink-0">
+                <Wrench className="w-4.5 h-4.5 text-white" />
+              </div>
+              <div>
+                <h3 className="font-bold text-white text-sm">Services</h3>
+                <p className="text-[10px] text-white/70">Local offerings</p>
+              </div>
+            </div>
+          </Link>
+        </section>
+
         {/* === CHAT ROOMS === */}
         {(chatRooms || []).length > 0 && (
           <section>
