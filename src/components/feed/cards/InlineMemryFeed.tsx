@@ -164,13 +164,13 @@ export const InlineMemryFeed: React.FC = () => {
         const uid = sowerToUser[p.sower_id];
         if (!uid) return;
         const s = getOrCreate(uid);
-        s.products.push({ id: p.id, name: p.name, imageUrl: p.image_url || undefined, price: p.price || undefined });
+        s.products.push({ id: p.id, name: p.title, imageUrl: p.cover_image_url || undefined, price: p.price || undefined });
       });
 
       // Map orchards
       (orchards || []).forEach(o => {
         const s = getOrCreate(o.user_id);
-        s.orchards.push({ id: o.id, name: o.name, imageUrl: o.images?.[0] || undefined });
+        s.orchards.push({ id: o.id, name: o.title, imageUrl: o.images?.[0] || undefined });
       });
 
       // Map memry posts
