@@ -95,12 +95,12 @@ export const RightContextPanel: React.FC<RightContextPanelProps> = ({
         </p>
       </div>
 
-      {/* Community Stats */}
+      {/* Tribes Stats */}
       <div className="rounded-xl bg-card/80 border border-border/20 p-3">
         <div className="flex items-center gap-2 mb-2">
           <Users className="w-4 h-4 text-s2g-blue" />
           <span className="text-xs font-semibold text-foreground/80 uppercase tracking-wider">
-            Community
+            Tribes
           </span>
         </div>
         <div className="space-y-1.5">
@@ -111,6 +111,13 @@ export const RightContextPanel: React.FC<RightContextPanelProps> = ({
           <div className="flex justify-between text-xs">
             <span className="text-muted-foreground">Active Orchards</span>
             <span className="font-semibold text-foreground">{activeOrchards || 0}</span>
+          </div>
+          <div className="flex justify-between text-xs">
+            <span className="text-muted-foreground flex items-center gap-1">
+              <Leaf className="w-3 h-3 text-primary" />
+              Active Seeds
+            </span>
+            <span className="font-semibold text-foreground">{activeSeeds || 0}</span>
           </div>
           {radioLive && (
             <div className="flex justify-between text-xs">
