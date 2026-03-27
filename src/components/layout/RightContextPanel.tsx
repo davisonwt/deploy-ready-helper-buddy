@@ -1,5 +1,5 @@
 import React from 'react';
-import { Calendar, Sprout, Users, Radio } from 'lucide-react';
+import { Calendar, Sprout, Users, Radio, Leaf } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -31,6 +31,18 @@ export const RightContextPanel: React.FC<RightContextPanelProps> = ({
         .from('orchards')
         .select('*', { count: 'exact', head: true })
         .eq('status', 'active');
+      return count || 0;
+    },
+    staleTime: 5 * 60 * 1000,
+  });
+
+  // Fetch active seeds (products) count
+  const { data: activeSeeds } = useQuery({
+    queryKey: ['active-seeds-count'],
+    queryFn: async () => {
+      const { count } = await supabase
+        .from('products')
+        .select('*', { count: 'exact', head: true });
       return count || 0;
     },
     staleTime: 5 * 60 * 1000,
