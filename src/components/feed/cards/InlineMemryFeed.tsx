@@ -1,10 +1,12 @@
-import React from 'react';
+import React, { useRef, useState, useEffect, useCallback } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { Camera, ChevronRight, Heart, ShoppingBag, TreePine, Package } from 'lucide-react';
+import { Camera, ChevronRight, ChevronLeft, ShoppingBag, TreePine, Music, Play, Pause } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { motion } from 'framer-motion';
+import { resolveAudioUrl } from '@/utils/resolveAudioUrl';
+import { globalAudioManager } from '@/utils/globalAudioManager';
 
 interface SowerMemry {
   userId: string;
@@ -15,17 +17,137 @@ interface SowerMemry {
   memryPosts: { id: string; mediaUrl?: string; caption?: string; mediaType?: string }[];
 }
 
+/** Inline 30s music snippet that auto-plays when visible */
+function InlineMusicSnippet({ mediaUrl, isVisible }: { mediaUrl: string; isVisible: boolean }) {
+  const audioRef = useRef<HTMLAudioElement | null>(null);
+  const [resolvedUrl, setResolvedUrl] = useState('');
+  const [playing, setPlaying] = useState(false);
+  const [currentTime, setCurrentTime] = useState(0);
+  const PREVIEW_DURATION = 30;
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        let urlToResolve = mediaUrl;
+        if (mediaUrl.includes('manifest.json')) {
+          try {
+            const resp = await fetch(mediaUrl);
+            const manifest = await resp.json();
+            if (manifest.tracks?.[0]?.url) urlToResolve = manifest.tracks[0].url;
+          } catch { /* ignore */ }
+        }
+        const url = await resolveAudioUrl(urlToResolve, { bucketForKeys: 'music-tracks' });
+        if (!cancelled) setResolvedUrl(url);
+      } catch {
+        if (!cancelled) setResolvedUrl(mediaUrl);
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [mediaUrl]);
+
+  useEffect(() => {
+    const audio = audioRef.current;
+    if (!audio) return;
+    globalAudioManager.register(audio);
+    return () => { globalAudioManager.unregister(audio); };
+  }, []);
+
+  useEffect(() => {
+    const audio = audioRef.current;
+    if (!audio || !resolvedUrl) return;
+
+    if (!isVisible) {
+      audio.pause();
+      setPlaying(false);
+      return;
+    }
+
+    audio.src = resolvedUrl;
+    audio.load();
+    globalAudioManager.play(audio);
+    const p = audio.play();
+    if (p) p.then(() => setPlaying(true)).catch(() => setPlaying(false));
+
+    const onTime = () => {
+      setCurrentTime(audio.currentTime);
+      if (audio.currentTime >= PREVIEW_DURATION) {
+        audio.pause();
+        audio.currentTime = 0;
+        setPlaying(false);
+      }
+    };
+    const onEnd = () => { setPlaying(false); };
+    audio.addEventListener('timeupdate', onTime);
+    audio.addEventListener('ended', onEnd);
+    return () => {
+      audio.removeEventListener('timeupdate', onTime);
+      audio.removeEventListener('ended', onEnd);
+      audio.pause();
+      audio.src = '';
+    };
+  }, [resolvedUrl, isVisible]);
+
+  const toggle = () => {
+    const audio = audioRef.current;
+    if (!audio || !resolvedUrl) return;
+    if (playing) { audio.pause(); setPlaying(false); }
+    else { globalAudioManager.play(audio); audio.play().then(() => setPlaying(true)).catch(() => {}); }
+  };
+
+  return (
+    <div className="absolute inset-0 flex flex-col items-center justify-center bg-gradient-to-br from-purple-600 via-pink-500 to-orange-400 z-10">
+      <Music className={`w-10 h-10 text-white/80 mb-2 ${playing ? 'animate-pulse' : ''}`} />
+      <audio ref={audioRef} preload="auto" className="hidden" />
+      <div className="flex items-center gap-2 bg-black/30 rounded-full px-3 py-1.5 backdrop-blur-sm">
+        <button onClick={(e) => { e.preventDefault(); e.stopPropagation(); toggle(); }} className="text-white">
+          {playing ? <Pause className="w-5 h-5" /> : <Play className="w-5 h-5" />}
+        </button>
+        <div className="w-20 h-1 bg-white/30 rounded-full overflow-hidden">
+          <div className="h-full bg-white rounded-full transition-all" style={{ width: `${(currentTime / PREVIEW_DURATION) * 100}%` }} />
+        </div>
+        <span className="text-white text-[9px] font-mono">{Math.floor(currentTime)}s/{PREVIEW_DURATION}s</span>
+      </div>
+    </div>
+  );
+}
+
 function SowerMemryCard({ sower, index }: { sower: SowerMemry; index: number }) {
-  const totalItems = sower.products.length + sower.orchards.length + sower.memryPosts.length;
-  // Pick a preview image from any available content
-  const previewImages = [
-    ...sower.memryPosts.filter(p => p.mediaUrl).map(p => p.mediaUrl!),
-    ...sower.products.filter(p => p.imageUrl).map(p => p.imageUrl!),
-    ...sower.orchards.filter(o => o.imageUrl).map(o => o.imageUrl!),
-  ].slice(0, 3);
+  const [imgIdx, setImgIdx] = useState(0);
+  const [isVisible, setIsVisible] = useState(false);
+  const cardRef = useRef<HTMLDivElement>(null);
+
+  // Collect all preview items with type info
+  const previewItems = [
+    ...sower.memryPosts.filter(p => p.mediaUrl).map(p => ({ url: p.mediaUrl!, type: p.mediaType || 'image' })),
+    ...sower.products.filter(p => p.imageUrl).map(p => ({ url: p.imageUrl!, type: 'image' })),
+    ...sower.orchards.filter(o => o.imageUrl).map(o => ({ url: o.imageUrl!, type: 'image' })),
+  ];
+
+  // IntersectionObserver for auto-play
+  useEffect(() => {
+    const el = cardRef.current;
+    if (!el) return;
+    const obs = new IntersectionObserver(([entry]) => setIsVisible(entry.isIntersecting), { threshold: 0.5 });
+    obs.observe(el);
+    return () => obs.disconnect();
+  }, []);
+
+  const currentItem = previewItems[imgIdx];
+  const isMusic = currentItem?.type === 'music';
+
+  const goLeft = (e: React.MouseEvent) => {
+    e.preventDefault(); e.stopPropagation();
+    setImgIdx(i => (i - 1 + previewItems.length) % previewItems.length);
+  };
+  const goRight = (e: React.MouseEvent) => {
+    e.preventDefault(); e.stopPropagation();
+    setImgIdx(i => (i + 1) % previewItems.length);
+  };
 
   return (
     <motion.div
+      ref={cardRef}
       initial={{ opacity: 0, y: 12 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: index * 0.08 }}
@@ -34,14 +156,36 @@ function SowerMemryCard({ sower, index }: { sower: SowerMemry; index: number }) 
         to={`/member/${sower.userId}`}
         className="block rounded-2xl border border-border/20 overflow-hidden bg-card hover:border-primary/30 transition-colors"
       >
-        {/* Image grid preview */}
-        {previewImages.length > 0 ? (
-          <div className={`grid ${previewImages.length >= 3 ? 'grid-cols-3' : previewImages.length === 2 ? 'grid-cols-2' : 'grid-cols-1'} gap-px h-28`}>
-            {previewImages.map((img, i) => (
-              <div key={i} className="overflow-hidden bg-muted">
-                <img src={img} alt="" className="w-full h-full object-cover" loading="lazy" />
-              </div>
-            ))}
+        {/* Media carousel */}
+        {previewItems.length > 0 ? (
+          <div className="relative h-36 bg-muted overflow-hidden">
+            {isMusic && currentItem ? (
+              <InlineMusicSnippet mediaUrl={currentItem.url} isVisible={isVisible} />
+            ) : currentItem ? (
+              <img src={currentItem.url} alt="" className="w-full h-full object-cover" loading="lazy" />
+            ) : null}
+
+            {/* Left / Right arrows */}
+            {previewItems.length > 1 && (
+              <>
+                <button
+                  onClick={goLeft}
+                  className="absolute left-1.5 top-1/2 -translate-y-1/2 z-20 w-7 h-7 rounded-full bg-white/90 text-black flex items-center justify-center shadow-md hover:scale-105 transition-transform"
+                >
+                  <ChevronLeft className="w-4 h-4" />
+                </button>
+                <button
+                  onClick={goRight}
+                  className="absolute right-1.5 top-1/2 -translate-y-1/2 z-20 w-7 h-7 rounded-full bg-white/90 text-black flex items-center justify-center shadow-md hover:scale-105 transition-transform"
+                >
+                  <ChevronRight className="w-4 h-4" />
+                </button>
+                {/* Counter */}
+                <span className="absolute top-1.5 right-1.5 z-20 bg-black/50 text-white text-[9px] font-mono px-1.5 py-0.5 rounded-full">
+                  {imgIdx + 1}/{previewItems.length}
+                </span>
+              </>
+            )}
           </div>
         ) : (
           <div className="h-20 bg-gradient-to-br from-primary/10 to-accent/10 flex items-center justify-center">
@@ -98,85 +242,48 @@ export const InlineMemryFeed: React.FC = () => {
 
       const sowerIds = [...new Set((activeProducts || []).map(p => p.sower_id).filter(Boolean))];
 
-      // Get sower -> user_id mapping
       let sowerToUser: Record<string, string> = {};
       let allUserIds = new Set<string>();
 
       if (sowerIds.length > 0) {
-        const { data: sowers } = await supabase
-          .from('sowers')
-          .select('id, user_id')
-          .in('id', sowerIds);
-        (sowers || []).forEach(s => {
-          sowerToUser[s.id] = s.user_id;
-          allUserIds.add(s.user_id);
-        });
+        const { data: sowers } = await supabase.from('sowers').select('id, user_id').in('id', sowerIds);
+        (sowers || []).forEach(s => { sowerToUser[s.id] = s.user_id; allUserIds.add(s.user_id); });
       }
 
-      // Get active orchards
-      const { data: orchards } = await supabase
-        .from('orchards')
-        .select('id, title, images, user_id')
-        .eq('status', 'active');
+      const { data: orchards } = await supabase.from('orchards').select('id, title, images, user_id').eq('status', 'active');
       (orchards || []).forEach(o => allUserIds.add(o.user_id));
 
-      // Get recent memry posts from these users
       const userIdArr = Array.from(allUserIds);
       let memryPosts: any[] = [];
       if (userIdArr.length > 0) {
-        const { data } = await supabase
-          .from('memry_posts')
-          .select('id, user_id, media_url, media_type, caption')
-          .in('user_id', userIdArr)
-          .order('created_at', { ascending: false })
-          .limit(30);
+        const { data } = await supabase.from('memry_posts').select('id, user_id, media_url, media_type, caption').in('user_id', userIdArr).order('created_at', { ascending: false }).limit(30);
         memryPosts = data || [];
       }
 
-      // Get profiles
-      const { data: profiles } = await supabase
-        .from('profiles')
-        .select('user_id, display_name, avatar_url')
-        .in('user_id', userIdArr);
-
+      const { data: profiles } = await supabase.from('profiles').select('user_id, display_name, avatar_url').in('user_id', userIdArr);
       const profileMap = new Map((profiles || []).map(p => [p.user_id, p]));
 
-      // Group by user
       const sowerMap = new Map<string, SowerMemry>();
-
       const getOrCreate = (userId: string): SowerMemry => {
         if (!sowerMap.has(userId)) {
           const prof = profileMap.get(userId);
-          sowerMap.set(userId, {
-            userId,
-            displayName: prof?.display_name || 'Sower',
-            avatarUrl: prof?.avatar_url || undefined,
-            products: [],
-            orchards: [],
-            memryPosts: [],
-          });
+          sowerMap.set(userId, { userId, displayName: prof?.display_name || 'Sower', avatarUrl: prof?.avatar_url || undefined, products: [], orchards: [], memryPosts: [] });
         }
         return sowerMap.get(userId)!;
       };
 
-      // Map products
       (activeProducts || []).forEach(p => {
         const uid = sowerToUser[p.sower_id];
         if (!uid) return;
-        const s = getOrCreate(uid);
-        s.products.push({ id: p.id, name: p.title, imageUrl: p.cover_image_url || undefined, price: p.price || undefined });
+        getOrCreate(uid).products.push({ id: p.id, name: p.title, imageUrl: p.cover_image_url || undefined, price: p.price || undefined });
       });
 
-      // Map orchards
       (orchards || []).forEach(o => {
-        const s = getOrCreate(o.user_id);
-        s.orchards.push({ id: o.id, name: o.title, imageUrl: o.images?.[0] || undefined });
+        getOrCreate(o.user_id).orchards.push({ id: o.id, name: o.title, imageUrl: o.images?.[0] || undefined });
       });
 
-      // Map memry posts
       memryPosts.forEach(m => {
-        const s = getOrCreate(m.user_id);
-        s.memryPosts.push({ id: m.id, mediaUrl: m.media_url, caption: m.caption, mediaType: m.media_type });
+        getOrCreate(m.user_id).memryPosts.push({ id: m.id, mediaUrl: m.media_url, caption: m.caption, mediaType: m.media_type });
       });
 
       return Array.from(sowerMap.values()).slice(0, 8);
