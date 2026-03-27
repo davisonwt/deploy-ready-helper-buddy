@@ -29,6 +29,7 @@ export const AppShell: React.FC<AppShellProps> = ({
           {children}
         </main>
         <MobileBottomTabs radioLive={radioLive} />
+        <GoLiveFAB />
       </div>
     );
   }
@@ -54,6 +55,7 @@ export const AppShell: React.FC<AppShellProps> = ({
           radioListeners={radioListeners}
         />
       </aside>
+      <GoLiveFAB />
     </div>
   );
 };
