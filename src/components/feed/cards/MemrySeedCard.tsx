@@ -245,7 +245,7 @@ export const MemrySeedCard: React.FC<MemrySeedCardProps> = ({
     const imgs = imageCandidates;
     return imgs.length > 0 ? imgs : [fallbackMedia];
   })();
-  const videoPosterUrl = imageCandidates[0] || fallbackMedia;
+  const videoPosterUrl = imageCandidates[0] || '';
 
   useEffect(() => {
     setImgIdx((current) => Math.min(current, Math.max(0, allImages.length - 1)));
@@ -284,6 +284,21 @@ export const MemrySeedCard: React.FC<MemrySeedCardProps> = ({
       audioEl.currentTime = 0;
     });
   }, [isInView, hasAudio]);
+
+  useEffect(() => {
+    if (!isVideo) return;
+    const vid = videoRef.current;
+    if (!vid) return;
+
+    if (isInView) {
+      vid.muted = true;
+      vid.play().catch(() => {});
+      return;
+    }
+
+    vid.pause();
+    setVideoPlaying(false);
+  }, [isInView, isVideo, primaryVideoUrl]);
 
   // Determine seed type label
   const getSeedTypeLabel = () => {
@@ -391,8 +406,8 @@ export const MemrySeedCard: React.FC<MemrySeedCardProps> = ({
               className="w-full h-full object-cover"
               muted={!videoPlaying}
               playsInline
-              preload="metadata"
-              poster={videoPosterUrl}
+              preload="auto"
+              poster={videoPosterUrl || undefined}
               loop
               onError={(e) => {
                 const t = e.target as HTMLVideoElement;
@@ -412,8 +427,14 @@ export const MemrySeedCard: React.FC<MemrySeedCardProps> = ({
                 e.stopPropagation();
                 const vid = videoRef.current;
                 if (!vid) return;
-                if (vid.paused) { vid.muted = false; vid.play().catch(() => {}); }
-                else { vid.pause(); }
+                if (vid.paused) {
+                  vid.muted = false;
+                  vid.play().catch(() => {});
+                } else if (vid.muted) {
+                  vid.muted = false;
+                } else {
+                  vid.pause();
+                }
               }}
               className="absolute inset-0 z-[5] flex items-center justify-center"
             >
