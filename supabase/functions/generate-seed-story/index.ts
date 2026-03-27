@@ -45,9 +45,9 @@ serve(async (req) => {
     const engagements = toSafeNumber((payload as Record<string, unknown>).engagements);
     const seedCategory = toSafeString((payload as Record<string, unknown>).seedCategory);
 
-    if (!sowerName || !seedTitle) {
-      return new Response(JSON.stringify({ error: "sowerName and seedTitle are required" }), {
-        status: 400,
+    if (!sowerName && !seedTitle) {
+      return new Response(JSON.stringify({ story: buildFallbackStory("This sower", "their seed", engagements), fallback: true }), {
+        status: 200,
         headers: jsonHeaders,
       });
     }
