@@ -24,6 +24,8 @@ interface MemrySeedCardProps {
     product_id?: string;
     product_price?: number;
     product_title?: string;
+    product_type?: string;
+    category?: string;
     orchard_id?: string;
     book_id?: string;
     profiles?: {
