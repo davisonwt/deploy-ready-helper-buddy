@@ -2,7 +2,7 @@ import React from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
 import {
   Home, Sprout, TreePine, MessageSquare, GraduationCap,
-  Zap, Radio, Calendar, CloudRain, Settings, Plus
+  Zap, Radio, Calendar, CloudRain, Settings, Plus, Users
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
@@ -25,6 +25,7 @@ const navItems = [
   { to: '/grove-station', label: 'Radio', desc: 'Live community radio', icon: Radio, gradient: 'linear-gradient(135deg, #E24B4A, #F87171)', liveIndicator: true },
   { to: '/enochian-calendar-design', label: '364yhvh Days', desc: "Creator's calendar", icon: Calendar, gradient: 'linear-gradient(135deg, #3C3489, #6355C7)' },
   { to: '/tithing', label: 'Let It Rain', desc: 'Bestow blessings', icon: CloudRain, gradient: 'linear-gradient(135deg, #533AB7, #8B5CF6)' },
+  { to: '/my-s2g-tribe', label: 'My Tribe', desc: 'Invite & grow your tribe', icon: Users, gradient: 'linear-gradient(135deg, #0E7490, #22D3EE)' },
 ];
 
 const adminItems = [
