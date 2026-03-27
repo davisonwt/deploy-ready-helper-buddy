@@ -275,6 +275,12 @@ export const MemrySeedCard: React.FC<MemrySeedCardProps> = ({
     return () => cancelAnimationFrame(rafId);
   }, [resolvedVideoSrc, post.id, markVideoReady]);
 
+  useEffect(() => {
+    if (!isVideo || videoReady) return;
+    const timeoutId = window.setTimeout(() => setVideoReady(true), 2500);
+    return () => window.clearTimeout(timeoutId);
+  }, [isVideo, videoReady, resolvedVideoSrc, post.id]);
+
   const hasMultipleImages = allImages.length > 1;
   const isProduct = post.content_type === 'new_product';
   const isOrchard = post.content_type === 'new_orchard';
@@ -421,7 +427,7 @@ export const MemrySeedCard: React.FC<MemrySeedCardProps> = ({
             <video
               ref={videoRef}
               src={resolvedVideoSrc}
-              className={`absolute inset-0 h-full w-full object-cover z-[2] transition-opacity duration-200 ${videoReady ? 'opacity-100' : 'opacity-0'}`}
+              className="absolute inset-0 h-full w-full object-cover z-[2]"
               muted={!videoPlaying}
               playsInline
               preload="metadata"
@@ -433,6 +439,7 @@ export const MemrySeedCard: React.FC<MemrySeedCardProps> = ({
               onCanPlayThrough={(e) => markVideoReady(e.currentTarget)}
               onTimeUpdate={(e) => markVideoReady(e.currentTarget)}
               onPlay={(e) => markVideoReady(e.currentTarget)}
+              onProgress={(e) => markVideoReady(e.currentTarget)}
               onPlaying={() => {
                 setVideoReady(true);
                 setVideoPlaying(true);
@@ -447,7 +454,7 @@ export const MemrySeedCard: React.FC<MemrySeedCardProps> = ({
               }}
               onPause={() => setVideoPlaying(false)}
             />
-            {!videoReady && (
+            {!videoReady && !videoPlaying && (
               <div className="absolute inset-0 z-[4] bg-muted/60 animate-pulse pointer-events-none" />
             )}
             <button
@@ -459,6 +466,7 @@ export const MemrySeedCard: React.FC<MemrySeedCardProps> = ({
                 const vid = videoRef.current;
                 if (!vid) return;
                 if (vid.paused) {
+                  setVideoReady(true);
                   vid.muted = false;
                   vid.play().catch(() => {});
                 } else {
