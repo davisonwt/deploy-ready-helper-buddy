@@ -203,6 +203,7 @@ export const MemrySeedCard: React.FC<MemrySeedCardProps> = ({
   const videoRef = useRef<HTMLVideoElement>(null);
   const [isInView, setIsInView] = useState(false);
   const [videoPlaying, setVideoPlaying] = useState(false);
+  const [videoReady, setVideoReady] = useState(false);
 
   const fallbackMedia = '/lovable-uploads/ff9e6e48-049d-465a-8d2b-f6e8fed93522.png';
   const mediaUrl = normalizeMediaUrl(post.media_url || '');
@@ -252,10 +253,16 @@ export const MemrySeedCard: React.FC<MemrySeedCardProps> = ({
     return imgs.length > 0 ? imgs : [fallbackMedia];
   })();
   const videoPosterUrl = imageCandidates[0] || fallbackMedia;
+  const resolvedVideoSrc = primaryVideoUrl || mediaUrl;
 
   useEffect(() => {
     setImgIdx((current) => Math.min(current, Math.max(0, allImages.length - 1)));
   }, [allImages.length]);
+
+  useEffect(() => {
+    setVideoReady(false);
+    setVideoPlaying(false);
+  }, [resolvedVideoSrc, post.id]);
 
   const hasMultipleImages = allImages.length > 1;
   const isProduct = post.content_type === 'new_product';
