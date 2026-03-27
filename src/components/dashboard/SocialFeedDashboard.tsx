@@ -154,7 +154,7 @@ export const SocialFeedDashboard: React.FC<SocialFeedDashboardProps> = ({
       </DashboardSection>
 
       {/* Go Live FAB */}
-      <GoLiveFAB theme={sectionThemes[activeSection] || currentTheme} />
+      <GoLiveFAB />
 
       <BottomActionBar theme={sectionThemes[activeSection] || currentTheme} />
       <div className="hidden sm:block">

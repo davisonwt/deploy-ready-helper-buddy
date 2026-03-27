@@ -3,6 +3,7 @@ import { useIsMobile } from '@/hooks/use-mobile';
 import { AppSidebar } from './AppSidebar';
 import { RightContextPanel } from './RightContextPanel';
 import { MobileBottomTabs } from './MobileBottomTabs';
+import { GoLiveFAB } from '../dashboard/GoLiveFAB';
 
 interface AppShellProps {
   children: ReactNode;
@@ -28,6 +29,7 @@ export const AppShell: React.FC<AppShellProps> = ({
           {children}
         </main>
         <MobileBottomTabs radioLive={radioLive} />
+        <GoLiveFAB />
       </div>
     );
   }
@@ -53,6 +55,7 @@ export const AppShell: React.FC<AppShellProps> = ({
           radioListeners={radioListeners}
         />
       </aside>
+      <GoLiveFAB />
     </div>
   );
 };

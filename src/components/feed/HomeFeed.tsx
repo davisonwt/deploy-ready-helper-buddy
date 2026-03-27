@@ -7,8 +7,9 @@ import { ActiveSowerCard } from './cards/ActiveSowerCard';
 import { ChatRoomCard } from './cards/ChatRoomCard';
 import { AIStoryCard } from './cards/AIStoryCard';
 import { SeedPostCard } from './cards/SeedPostCard';
+import { LiveSessionCard } from './cards/LiveSessionCard';
 import { FeedHeader } from './FeedHeader';
-import { Radio, Sprout, MessageSquare } from 'lucide-react';
+import { Radio, Sprout, MessageSquare, Zap } from 'lucide-react';
 import { InlineMemryFeed } from './cards/InlineMemryFeed';
 
 interface HomeFeedProps {
@@ -41,6 +42,54 @@ export const HomeFeed: React.FC<HomeFeedProps> = ({
     },
     refetchInterval: 15000,
     staleTime: 10000,
+  });
+
+  // Fetch active classroom sessions
+  const { data: classroomSessions } = useQuery({
+    queryKey: ['feed-classroom-sessions'],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from('classroom_sessions')
+        .select('id, title, description, status, scheduled_at, max_participants, pricing_type, instructor_id, profiles:instructor_profile_id(display_name, avatar_url)')
+        .in('status', ['scheduled', 'live', 'active'])
+        .order('scheduled_at', { ascending: true })
+        .limit(5);
+      return (data || []).map((s: any) => ({
+        id: s.id, title: s.title, description: s.description,
+        type: 'classroom' as const, status: s.status,
+        hostName: s.profiles?.display_name || 'Instructor',
+        hostAvatar: s.profiles?.avatar_url,
+        scheduledAt: s.scheduled_at,
+        maxParticipants: s.max_participants,
+        pricingType: s.pricing_type,
+      }));
+    },
+    refetchInterval: 30000,
+    staleTime: 15000,
+  });
+
+  // Fetch active skilldrop sessions
+  const { data: skilldropSessions } = useQuery({
+    queryKey: ['feed-skilldrop-sessions'],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from('skilldrop_sessions')
+        .select('id, title, description, status, scheduled_at, max_participants, pricing_type, presenter_id, profiles:presenter_profile_id(display_name, avatar_url)')
+        .in('status', ['scheduled', 'live', 'active'])
+        .order('scheduled_at', { ascending: true })
+        .limit(5);
+      return (data || []).map((s: any) => ({
+        id: s.id, title: s.title, description: s.description,
+        type: 'skilldrop' as const, status: s.status,
+        hostName: s.profiles?.display_name || 'Presenter',
+        hostAvatar: s.profiles?.avatar_url,
+        scheduledAt: s.scheduled_at,
+        maxParticipants: s.max_participants,
+        pricingType: s.pricing_type,
+      }));
+    },
+    refetchInterval: 30000,
+    staleTime: 15000,
   });
 
   // Fetch active sowers (users who have products via sowers table)
@@ -213,7 +262,24 @@ export const HomeFeed: React.FC<HomeFeedProps> = ({
           </section>
         )}
 
-        {/* === ACTIVE SOWERS === */}
+        {/* === LIVE SESSIONS (Classroom, SkillDrop, Training) === */}
+        {((classroomSessions || []).length > 0 || (skilldropSessions || []).length > 0) && (
+          <section>
+            <div className="flex items-center gap-2 mb-2.5">
+              <Zap className="w-4 h-4 text-primary" />
+              <h2 className="text-sm font-bold text-foreground">Live Sessions</h2>
+            </div>
+            <div className="space-y-3">
+              {(classroomSessions || []).map((session) => (
+                <LiveSessionCard key={`cls-${session.id}`} data={session} />
+              ))}
+              {(skilldropSessions || []).map((session) => (
+                <LiveSessionCard key={`sd-${session.id}`} data={session} />
+              ))}
+            </div>
+          </section>
+        )}
+
         {(activeSowers || []).length > 0 && (
           <section>
             <div className="flex items-center gap-2 mb-2.5">
