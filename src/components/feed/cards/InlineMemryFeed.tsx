@@ -223,6 +223,7 @@ export const InlineMemryFeed: React.FC = () => {
           orchard_id: o.id,
           product_title: o.name,
           profiles: profile ? { display_name: profile.display_name, avatar_url: profile.avatar_url, username: profile.username } : undefined,
+          content_category: 'seed',
         });
       });
 
