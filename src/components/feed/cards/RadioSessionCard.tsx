@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Radio, Users, RotateCcw } from 'lucide-react';
+import { Radio, Users, RotateCcw, Headphones } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { motion } from 'framer-motion';
 
@@ -17,19 +17,19 @@ interface RadioSessionData {
 
 /** Animated audio sync bar — continuously animating equalizer */
 const SyncBar: React.FC = () => {
-  const bars = Array.from({ length: 32 });
+  const bars = Array.from({ length: 28 });
   return (
-    <div className="flex items-end gap-[2px] h-10 w-full justify-center">
+    <div className="flex items-end gap-[2px] h-8 w-full justify-center">
       {bars.map((_, i) => {
-        const baseHeight = 4 + Math.random() * 6;
-        const peakHeight = 14 + Math.random() * 26;
-        const midHeight = 6 + Math.random() * 12;
+        const baseHeight = 3 + Math.random() * 4;
+        const peakHeight = 10 + Math.random() * 20;
+        const midHeight = 5 + Math.random() * 8;
         return (
           <motion.div
             key={i}
-            className="w-[3px] rounded-full"
+            className="w-[2.5px] rounded-full"
             style={{
-              background: `linear-gradient(180deg, hsl(0 84% 60%) 0%, hsl(25 95% 53%) 50%, hsl(45 93% 47%) 100%)`,
+              background: `linear-gradient(180deg, hsl(0 84% 60%) 0%, hsl(20 95% 53%) 40%, hsl(45 93% 47%) 100%)`,
             }}
             animate={{
               height: [
@@ -69,68 +69,96 @@ export const RadioSessionCard: React.FC<{ data: RadioSessionData }> = ({ data })
       <motion.div
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
-        className="rounded-xl border border-border/30 overflow-hidden hover:border-destructive/40 transition-all group"
-        style={{ backgroundColor: 'hsl(210 67% 12% / 0.85)' }}
+        className="rounded-2xl overflow-hidden shadow-md group border border-border/30"
       >
-        {/* Header */}
-        <div className="flex items-center justify-between px-3 pt-3">
-          <div className="flex items-center gap-2 min-w-0">
-            <div className="relative">
-              <Avatar className="w-8 h-8 border-2 border-destructive/30">
-                <AvatarImage src={data.djAvatar || undefined} />
-                <AvatarFallback className="bg-destructive/20 text-foreground text-[10px]">
-                  {data.djName.charAt(0)}
-                </AvatarFallback>
-              </Avatar>
-              {isLive && (
-                <span className="absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full bg-destructive border-2 border-background animate-pulse" />
-              )}
-            </div>
-            <div className="min-w-0">
-              <p className="text-xs font-semibold text-foreground truncate">{data.djName}</p>
-              <div className="flex items-center gap-1 text-[10px] text-muted-foreground">
-                <Radio className="w-3 h-3" />
-                <span>Radio 364YHVH fm</span>
-              </div>
-            </div>
+        {/* ── Image zone with dark radio gradient ── */}
+        <div className="relative w-full" style={{ height: 200 }}>
+          <div className="w-full h-full bg-gradient-to-br from-[hsl(210_67%_8%)] via-[hsl(210_50%_14%)] to-[hsl(220_60%_10%)] flex flex-col items-center justify-center gap-3">
+            <Radio className="w-10 h-10 text-destructive/60" />
+            <SyncBar />
           </div>
 
-          <div className="flex items-center gap-1.5">
-            <span className="relative flex items-center gap-1 px-2 py-0.5 rounded-full bg-destructive text-destructive-foreground text-[10px] font-bold uppercase tracking-wider">
-              <span className="absolute inset-0 rounded-full bg-destructive animate-ping opacity-30" />
+          {/* Top-left: LIVE / ON AIR badge */}
+          <div className="absolute top-3 left-3 z-10">
+            <span className="relative flex items-center gap-1 px-2.5 py-1 rounded-full bg-destructive text-destructive-foreground text-[10px] font-bold uppercase tracking-wider shadow-lg">
+              <span className="absolute inset-0 rounded-full bg-destructive animate-ping opacity-20" />
               <span className="relative w-1.5 h-1.5 rounded-full bg-destructive-foreground animate-pulse" />
               <span className="relative">{isLive ? 'LIVE' : 'ON AIR'}</span>
             </span>
-            {data.listenerCount > 0 && (
-              <span className="flex items-center gap-0.5 text-[10px] text-muted-foreground">
-                <Users className="w-3 h-3" /> {data.listenerCount}
-              </span>
-            )}
+          </div>
+
+          {/* Top-right: listener count */}
+          {data.listenerCount > 0 && (
+            <div className="absolute top-3 right-3 z-10 bg-black/60 text-white text-[11px] font-semibold px-2.5 py-1 rounded-full backdrop-blur-sm flex items-center gap-1">
+              <Users className="w-3 h-3" /> {data.listenerCount}
+            </div>
+          )}
+
+          {/* Bottom gradient fade */}
+          <div className="absolute bottom-0 left-0 right-0 h-24 bg-gradient-to-t from-black/80 via-black/30 to-transparent pointer-events-none" />
+
+          {/* Sower row at bottom of image */}
+          <div className="absolute bottom-0 left-0 right-0 z-10 px-3 pb-3">
+            <div className="flex items-center gap-2.5 mb-1.5">
+              <div className="relative">
+                <Avatar className="w-9 h-9 border-2 border-destructive/50 shadow">
+                  <AvatarImage src={data.djAvatar || undefined} />
+                  <AvatarFallback className="bg-gradient-to-br from-red-500 to-orange-500 text-white text-xs">
+                    {data.djName.charAt(0)}
+                  </AvatarFallback>
+                </Avatar>
+                {isLive && (
+                  <span className="absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full bg-destructive border-2 border-background animate-pulse" />
+                )}
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-white font-bold text-sm truncate">{data.djName}</p>
+                <div className="flex items-center gap-1 text-[10px] text-white/50">
+                  <Radio className="w-3 h-3" />
+                  <span>Radio 364YHVH fm</span>
+                </div>
+              </div>
+            </div>
+            <p className="text-white font-semibold text-[16px] leading-tight line-clamp-2 drop-shadow">
+              {data.showSubject || data.showNotes || 'Radio Session'}
+            </p>
           </div>
         </div>
 
-        {/* Title */}
-        <div className="px-3 pt-2 pb-1">
-          <h3 className="text-sm font-bold text-foreground truncate group-hover:text-destructive transition-colors">
-            {data.showSubject || data.showNotes || 'Radio Session'}
-          </h3>
-        </div>
-
-        {/* Animated Sync Bar */}
-        <div className="px-3 pb-3 space-y-2">
-          <div className="rounded-lg p-2" style={{ backgroundColor: 'hsl(210 67% 8% / 0.6)' }}>
-            <SyncBar />
+        {/* ── Actions row ── */}
+        <div className="px-3 py-2.5 bg-card flex items-center gap-3">
+          <div className="flex items-center gap-1 text-muted-foreground">
+            <Headphones className="w-[18px] h-[18px]" />
+            <span className="text-xs font-medium">Tune In</span>
           </div>
-          {isPreRecorded && (
-            <button
-              onClick={handleListenFromStart}
-              className="w-full flex items-center justify-center gap-1.5 py-1.5 rounded-lg text-[10px] font-bold uppercase tracking-wider text-destructive-foreground bg-destructive/80 hover:bg-destructive transition-colors"
-            >
-              <RotateCcw className="w-3 h-3" />
-              Listen from Start
-            </button>
+          {data.listenerCount > 0 && (
+            <div className="flex items-center gap-1 text-muted-foreground">
+              <Users className="w-[18px] h-[18px]" />
+              <span className="text-xs font-medium">{data.listenerCount}</span>
+            </div>
           )}
         </div>
+
+        {/* ── Hairline divider ── */}
+        <div className="h-px bg-border/50" />
+
+        {/* ── Bottom bar ── */}
+        <button
+          onClick={isPreRecorded ? handleListenFromStart : undefined}
+          className="w-full flex items-center justify-center gap-2 py-3 bg-gradient-to-r from-red-500 to-orange-500 hover:from-red-600 hover:to-orange-600 transition-colors text-white font-bold text-sm rounded-b-2xl"
+        >
+          {isPreRecorded ? (
+            <>
+              <RotateCcw className="w-4 h-4" />
+              Listen from Start
+            </>
+          ) : (
+            <>
+              <Radio className="w-4 h-4" />
+              Listen Live
+            </>
+          )}
+        </button>
       </motion.div>
     </Link>
   );
