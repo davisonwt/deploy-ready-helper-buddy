@@ -68,8 +68,9 @@ export const useSeedStory = (params: SeedStoryParams) => {
           .eq('seed_id', params.seedId)
           .maybeSingle();
 
-        if (override?.story_text?.trim()) {
-          const text = override.story_text.trim();
+        const overrideObj = override as any;
+        if (overrideObj?.story_text?.trim()) {
+          const text = overrideObj.story_text.trim();
           storyCache.set(params.seedId, text);
           return text;
         }
