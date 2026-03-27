@@ -393,7 +393,7 @@ export const MemrySeedCard: React.FC<MemrySeedCardProps> = ({
               muted={!videoPlaying}
               playsInline
               preload="none"
-              poster={imagePresets.feedCard(videoPosterUrl)}
+              poster={videoPosterUrl}
               loop
               onError={(e) => {
                 const t = e.target as HTMLVideoElement;
