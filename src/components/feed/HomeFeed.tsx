@@ -33,11 +33,35 @@ export const HomeFeed: React.FC<HomeFeedProps> = ({
     queryFn: async () => {
       const { data } = await supabase
         .from('radio_schedule')
-        .select('id, show_subject, show_notes, status, broadcast_mode, listener_count, radio_djs(dj_name, avatar_url)')
+        .select('id, show_subject, show_notes, status, broadcast_mode, listener_count, radio_djs(dj_name, avatar_url, user_id)')
         .eq('approval_status', 'approved')
         .or('status.eq.live,broadcast_mode.eq.pre_recorded')
         .order('created_at', { ascending: false })
         .limit(5);
+      
+      // For DJs missing avatar_url, fall back to their profile avatar
+      if (data?.length) {
+        const missingAvatarUserIds = data
+          .map((s: any) => s.radio_djs)
+          .filter((dj: any) => dj && !dj.avatar_url && dj.user_id)
+          .map((dj: any) => dj.user_id);
+        
+        if (missingAvatarUserIds.length > 0) {
+          const { data: profiles } = await supabase
+            .from('profiles')
+            .select('user_id, avatar_url')
+            .in('user_id', missingAvatarUserIds);
+          
+          const profileAvatarMap = new Map((profiles || []).map((p: any) => [p.user_id, p.avatar_url]));
+          data.forEach((s: any) => {
+            const dj = s.radio_djs as any;
+            if (dj && !dj.avatar_url && dj.user_id) {
+              dj.avatar_url = profileAvatarMap.get(dj.user_id) || null;
+            }
+          });
+        }
+      }
+      
       return data || [];
     },
     refetchInterval: 15000,
