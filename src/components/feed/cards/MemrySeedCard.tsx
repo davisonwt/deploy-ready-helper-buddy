@@ -196,10 +196,23 @@ export const MemrySeedCard: React.FC<MemrySeedCardProps> = ({
   const [imgIdx, setImgIdx] = useState(0);
   const [inlineMsg, setInlineMsg] = useState('');
   const cardRef = useRef<HTMLDivElement>(null);
+  const videoRef = useRef<HTMLVideoElement>(null);
   const [isInView, setIsInView] = useState(false);
+  const [videoPlaying, setVideoPlaying] = useState(false);
 
-  const allImages = [post.media_url];
-  const hasMultipleImages = false;
+  // Build image gallery from image_urls + media_url, deduplicated
+  const allImages = (() => {
+    const imgs: string[] = [];
+    if (post.image_urls?.length) {
+      post.image_urls.forEach((url) => { if (url && !imgs.includes(url)) imgs.push(url); });
+    }
+    if (post.media_url && !imgs.includes(post.media_url) && !/\.(mp4|webm|mov)(\?|$)/i.test(post.media_url)) {
+      imgs.push(post.media_url);
+    }
+    return imgs.length > 0 ? imgs : [post.media_url];
+  })();
+  const hasMultipleImages = allImages.length > 1;
+  const isVideo = post.media_url && /\.(mp4|webm|mov)(\?|$)/i.test(post.media_url);
   const isProduct = post.content_type === 'new_product';
   const isOrchard = post.content_type === 'new_orchard';
   const isBook = post.content_type === 'new_book';
