@@ -1441,9 +1441,9 @@ export default function MemryPage({ embedded = false }: { embedded?: boolean }) 
   );
 
   return (
-    <div className="h-screen bg-gradient-to-b from-[#FFF5E6] via-[#FFECD2] to-[#FFE4C4] overflow-hidden">
+    <div className={`${embedded ? 'h-full' : 'h-screen'} bg-gradient-to-b from-[#FFF5E6] via-[#FFECD2] to-[#FFE4C4] overflow-hidden`}>
       {/* Live Session Ad Banner */}
-      <LiveSessionAdBanner />
+      {!embedded && <LiveSessionAdBanner />}
       {/* Main Feed - TikTok Style */}
       <div className="h-full relative">
         {/* Header */}
