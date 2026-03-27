@@ -1133,7 +1133,7 @@ export default function MemryPage({ embedded = false }: { embedded?: boolean }) 
 
   // Render media background for a post card — only plays media when isActive
   const renderMedia = (post: MemryPost, creatorUserId: string, postIdx: number, imgIdx: number, isActive: boolean) => (
-    <div className="absolute inset-0 bg-gradient-to-br from-purple-900 via-pink-800 to-orange-700 flex items-center justify-center px-[76px] md:px-28">
+    <div className={`absolute inset-0 bg-gradient-to-br from-purple-900 via-pink-800 to-orange-700 flex items-center justify-center ${embedded ? 'px-2' : 'px-[76px] md:px-28'}`}>
       {post.content_type === 'video' || post.content_type === 'marketing_video' ? (
         isActive ? (
           <video
