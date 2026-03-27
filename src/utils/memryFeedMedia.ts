@@ -3,17 +3,26 @@ import { convertToPublicUrl } from '@/utils/urlUtils';
 export type MediaKind = 'image' | 'video' | 'audio';
 
 const SUPABASE_URL = String((import.meta as any)?.env?.VITE_SUPABASE_URL || '').replace(/\/$/, '');
-const VIDEO_EXT_RE = /\.(mp4|webm|mov|m4v|mkv|avi)(\?|$)/i;
-const AUDIO_EXT_RE = /\.(mp3|wav|m4a|aac|ogg|flac)(\?|$)/i;
+const VIDEO_EXT_RE = /\.(mp4|webm|mov|m4v|mkv|avi|m3u8)(\?|$)/i;
+const AUDIO_EXT_RE = /\.(mp3|wav|m4a|aac|ogg|flac|opus)(\?|$)/i;
+const VIDEO_HINT_RE = /(video\/|[?&](?:mime|content_type|type)=video)/i;
+const AUDIO_HINT_RE = /(audio\/|[?&](?:mime|content_type|type)=audio)/i;
 
 const MEDIA_KEYS = [
   'media', 'media_items', 'media_urls', 'attachments', 'files', 'file',
+  'gallery', 'gallery_items', 'assets', 'content', 'videos', 'audios',
   'image', 'image1', 'image2', 'image3', 'image4', 'image_url', 'image_urls',
+  'imageUrl', 'images', 'photos',
   'images', 'gallery_images', 'cover', 'cover_image_url', 'coverImageUrl',
+  'cover_image', 'coverImage', 'cover_url', 'poster', 'poster_url',
   'thumbnail', 'thumbnail_url', 'banner_url', 'logo_url',
+  'thumbnailUrl', 'thumb', 'thumb_url',
   'video', 'video_url', 'video_urls',
+  'videoUrl',
   'audio', 'audio_url', 'audio_urls', 'tracks',
+  'audioUrl',
   'path', 'public_url', 'publicUrl', 'download_url', 'secure_url', 'src', 'url',
+  'href', 'uri', 'link', 'file_url', 'file_urls', 'file_path', 'filePath', 'key',
 ];
 
 const cleanUrl = (value: string) =>
@@ -23,6 +32,11 @@ const cleanUrl = (value: string) =>
     .replace(/\\u0026/g, '&');
 
 const looksLikeBucketPath = (value: string) => /^[a-z0-9][a-z0-9._-]*\/.+/i.test(value);
+
+const looksLikeMediaKey = (key: string) =>
+  /(media|image\d*|video\d*|audio\d*|file\d*|attachment|gallery|asset|thumb|thumbnail|cover|banner|poster|url|src|path|uri|link)/i.test(
+    key
+  );
 
 const parsePostgresArray = (value: string) => {
   const inner = value.slice(1, -1).trim();
@@ -63,6 +77,13 @@ const parseArrayish = (value: unknown): unknown[] => {
         .filter(Boolean);
     }
 
+    if ((trimmed.includes('|') || trimmed.includes(';') || trimmed.includes('\n')) && /(https?:\/\/|\/storage\/|\w+\/\w+)/i.test(trimmed)) {
+      return trimmed
+        .split(/[|;\n]/)
+        .map((part) => part.trim())
+        .filter(Boolean);
+    }
+
     return [trimmed];
   }
 
@@ -74,13 +95,25 @@ const extractUrl = (item: any): string | undefined => {
   if (typeof item === 'string') return item;
   if (!item || typeof item !== 'object') return undefined;
 
+  if (typeof item.bucket === 'string' && typeof item.path === 'string') {
+    return `${item.bucket}/${item.path}`;
+  }
+
   const candidate =
     item.url ??
+    item.uri ??
+    item.href ??
+    item.link ??
     item.src ??
     item.path ??
+    item.file_path ??
     item.publicUrl ??
     item.public_url ??
+    item.imageUrl ??
+    item.videoUrl ??
+    item.audioUrl ??
     item.file ??
+    item.file_url ??
     item.file_url ??
     item.download_url ??
     item.media_url ??
@@ -95,6 +128,10 @@ const extractUrl = (item: any): string | undefined => {
     item.video_url ??
     item.audio ??
     item.audio_url ??
+    item.poster ??
+    item.poster_url ??
+    item.thumb ??
+    item.thumb_url ??
     item.thumbnail ??
     item.thumbnail_url ??
     item.cover ??
@@ -141,8 +178,15 @@ export const normalizeMediaUrl = (url?: string | null): string => {
   return converted;
 };
 
-export const isVideoUrl = (url?: string | null) => VIDEO_EXT_RE.test(String(url || ''));
-export const isAudioUrl = (url?: string | null) => AUDIO_EXT_RE.test(String(url || ''));
+export const isVideoUrl = (url?: string | null) => {
+  const value = String(url || '');
+  return VIDEO_EXT_RE.test(value) || VIDEO_HINT_RE.test(value);
+};
+
+export const isAudioUrl = (url?: string | null) => {
+  const value = String(url || '');
+  return AUDIO_EXT_RE.test(value) || AUDIO_HINT_RE.test(value);
+};
 
 export const dedupeUrls = (urls: string[]) => {
   const seen = new Set<string>();
@@ -181,7 +225,12 @@ export const normalizeMemryMedia = (
         if (!visited.has(obj)) {
           visited.add(obj);
           const nestedHint = obj.type ?? obj.mime_type ?? obj.media_type ?? obj.content_type ?? hint;
-          for (const key of MEDIA_KEYS) {
+          const keysToScan = new Set<string>([
+            ...MEDIA_KEYS,
+            ...Object.keys(obj).filter((key) => looksLikeMediaKey(key)),
+          ]);
+
+          for (const key of keysToScan) {
             if (obj[key] !== undefined && obj[key] !== null) {
               pushValue(obj[key], nestedHint);
             }
