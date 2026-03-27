@@ -102,15 +102,15 @@ export const HomeFeed: React.FC<HomeFeedProps> = ({
     queryFn: async () => {
       const { data } = await supabase
         .from('skilldrop_sessions')
-        .select('id, title, description, status, scheduled_at, max_participants, pricing_type, presenter_id, profiles:presenter_profile_id(display_name, avatar_url)')
+        .select('id, title, description, status, scheduled_at, max_participants, pricing_type, presenter_id, presenter_profile:profiles!lecture_halls_presenter_profile_id_fkey(display_name, avatar_url)')
         .in('status', ['scheduled', 'live', 'active'])
         .order('scheduled_at', { ascending: true })
         .limit(5);
       return (data || []).map((s: any) => ({
         id: s.id, title: s.title, description: s.description,
         type: 'skilldrop' as const, status: s.status,
-        hostName: s.profiles?.display_name || 'Presenter',
-        hostAvatar: s.profiles?.avatar_url,
+        hostName: s.presenter_profile?.display_name || 'Presenter',
+        hostAvatar: s.presenter_profile?.avatar_url,
         scheduledAt: s.scheduled_at,
         maxParticipants: s.max_participants,
         pricingType: s.pricing_type,
