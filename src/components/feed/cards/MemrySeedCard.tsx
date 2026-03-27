@@ -432,26 +432,26 @@ export const MemrySeedCard: React.FC<MemrySeedCardProps> = ({
                 }
               }}
             />
-            <button
-              type="button"
-              data-deadlink-watch-ignore="true"
-              onClick={(e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                const vid = videoRef.current;
-                if (!vid) return;
-                if (vid.paused) {
+            {!videoPlaying && (
+              <button
+                type="button"
+                data-deadlink-watch-ignore="true"
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  const vid = videoRef.current;
+                  if (!vid) return;
                   vid.play().catch(() => {});
-                } else {
-                  vid.pause();
-                }
-              }}
-              className="absolute bottom-3 right-3 z-[6] flex h-12 w-12 items-center justify-center rounded-full bg-black/50 backdrop-blur-sm border-0 p-0 appearance-none"
-              style={{ WebkitTapHighlightColor: 'transparent' }}
-              aria-label={videoPlaying ? 'Pause video' : 'Play video'}
-            >
-              {!videoPlaying ? <Play className="w-6 h-6 text-white ml-0.5" fill="white" /> : <Pause className="w-6 h-6 text-white" />}
-            </button>
+                }}
+                className="absolute inset-0 z-[6] flex items-center justify-center border-0 p-0 appearance-none bg-transparent"
+                style={{ WebkitTapHighlightColor: 'transparent' }}
+                aria-label="Play video"
+              >
+                <div className="flex h-14 w-14 items-center justify-center rounded-full bg-black/50 backdrop-blur-sm transition hover:bg-black/60">
+                  <Play className="ml-0.5 h-6 w-6 text-white fill-white" />
+                </div>
+              </button>
+            )}
           </>
         ) : (
           <img
