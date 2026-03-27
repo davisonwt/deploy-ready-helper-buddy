@@ -34,7 +34,7 @@ export const UnifiedFeed: React.FC = () => {
           .limit(10),
         supabase
           .from('skilldrop_sessions')
-          .select('id, title, description, status, scheduled_at, session_fee, pricing_type, presenter_profile_id, profiles:presenter_profile_id(display_name, avatar_url)')
+          .select('id, title, description, status, scheduled_at, session_fee, pricing_type, presenter_profile_id, presenter_profile:profiles!lecture_halls_presenter_profile_id_fkey(display_name, avatar_url)')
           .in('status', ['active', 'scheduled', 'completed'])
           .order('scheduled_at', { ascending: false })
           .limit(10),
@@ -94,7 +94,7 @@ export const UnifiedFeed: React.FC = () => {
 
       // Process skilldrop
       (skilldropResult.data || []).forEach(session => {
-        const profile = session.profiles as any;
+        const profile = session.presenter_profile as any;
         const isActive = session.status === 'active';
         const isCompleted = session.status === 'completed';
         items.push({
