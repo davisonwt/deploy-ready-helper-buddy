@@ -124,7 +124,7 @@ export default function VideoCard({ video, onVideoClick, showDeleteOption = fals
               muted={isMuted}
               loop
               playsInline
-              preload="metadata"
+              preload="none"
               crossOrigin="anonymous"
               onPlay={() => setIsPlaying(true)}
               onPause={() => setIsPlaying(false)}
@@ -133,11 +133,6 @@ export default function VideoCard({ video, onVideoClick, showDeleteOption = fals
               onCanPlay={handleVideoLoad}
             >
               <source src={video.video_url} type="video/mp4" />
-              <source src={video.video_url} type="video/webm" />
-              <source src={video.video_url} type="video/quicktime" />
-              <source src={video.video_url} type="video/mov" />
-              <source src={video.video_url} type="video/3gpp" />
-              <source src={video.video_url} type="video/avi" />
               Your browser does not support the video tag.
             </video>
           )}

@@ -24,7 +24,9 @@ export default defineConfig(({ mode, command }) => ({
   },
   build: {
     outDir: 'dist',
-    sourcemap: true, // For error tracking and debugging
+    sourcemap: true,
+    assetsInlineLimit: 4096, // Inline tiny assets < 4KB
+    cssCodeSplit: true,
     rollupOptions: {
       output: {
         manualChunks: {

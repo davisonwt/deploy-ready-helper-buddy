@@ -1,0 +1,23 @@
+# Cache hashed assets immutably (Vite adds content hash to filenames)
+/assets/*
+  Cache-Control: public, max-age=31536000, immutable
+
+# Cache images
+*.webp
+  Cache-Control: public, max-age=31536000, immutable
+*.avif
+  Cache-Control: public, max-age=31536000, immutable
+*.jpg
+  Cache-Control: public, max-age=86400
+*.png
+  Cache-Control: public, max-age=86400
+
+# HTML pages should revalidate
+/*.html
+  Cache-Control: public, max-age=0, must-revalidate
+/index.html
+  Cache-Control: public, max-age=0, must-revalidate
+
+# Service worker
+/sw.js
+  Cache-Control: public, max-age=0, must-revalidate
