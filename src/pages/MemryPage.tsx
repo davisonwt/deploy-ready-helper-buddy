@@ -1918,6 +1918,7 @@ export default function MemryPage({ embedded = false }: { embedded?: boolean }) 
             <span className="text-[9px] mt-0.5">Profile</span>
           </button>
         </div>
+        )}
       </div>
 
       {/* Create Post Modal */}
