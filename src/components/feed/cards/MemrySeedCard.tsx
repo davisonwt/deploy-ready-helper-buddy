@@ -342,24 +342,32 @@ export const MemrySeedCard: React.FC<MemrySeedCardProps> = ({
     }
   };
 
-  const handleBestow = () => {
-    if (isProduct && post.product_id) {
-      const productId = post.product_id.replace('product-', '');
+  const handleBestow = (e?: React.MouseEvent) => {
+    if (e) { e.preventDefault(); e.stopPropagation(); }
+
+    // Resolve the real entity ID (strip prefix)
+    const resolveId = (raw: string | undefined, prefix: string) =>
+      raw ? raw.replace(`${prefix}-`, '') : undefined;
+
+    const productId = resolveId(post.product_id, 'product');
+    const bookId = resolveId(post.book_id, 'book');
+
+    // Products & music seeds both have product_id
+    if ((isProduct || isMusic) && productId) {
       addToBasket({
         id: productId,
-        title: post.product_title || post.caption.replace('🌱 SEED: ', ''),
+        title: post.product_title || post.caption.replace(/^(🌱 SEED:|🎵 MUSIC:)\s*/i, ''),
         price: post.product_price || 0,
         cover_image_url: post.media_url,
         sower_id: post.user_id,
         bestowal_count: 1,
         sowers: { display_name: post.profiles?.display_name || 'Sower' },
       });
-      toast({ title: 'Added to basket! 🛒' });
+      toast({ title: isMusic ? 'Track added to basket! 🎵' : 'Added to basket! 🛒' });
       navigate('/products/basket');
     } else if (isOrchard && post.orchard_id) {
       navigate(`/orchard/${post.orchard_id}`);
-    } else if (isBook && post.book_id) {
-      const bookId = post.book_id.replace('book-', '');
+    } else if (isBook && bookId) {
       addToBasket({
         id: bookId,
         title: post.product_title || post.caption.replace('📚 BOOK: ', ''),
@@ -371,8 +379,9 @@ export const MemrySeedCard: React.FC<MemrySeedCardProps> = ({
       });
       toast({ title: 'Book added to basket! 📚' });
       navigate('/products/basket');
-    } else {
-      navigate(`/member/${post.user_id}`);
+    } else if (post.user_id) {
+      // Homemade / testimony / tutorial → gift to creator via their profile
+      navigate(`/sower/${post.user_id}?bestow=true`);
     }
   };
 
@@ -599,7 +608,8 @@ export const MemrySeedCard: React.FC<MemrySeedCardProps> = ({
           : isBook ? '🎁 Bestow & Get This Book' : isMusic ? '🎁 Bestow & Get This Track' : '🎁 Bestow & Get This Seed';
         return (
           <button
-            onClick={handleBestow}
+            type="button"
+            onClick={(e) => handleBestow(e)}
             className="w-full flex items-center justify-center gap-2 py-3 bg-gradient-to-r from-amber-400 to-orange-500 hover:from-amber-500 hover:to-orange-600 transition-colors text-amber-950 font-bold text-sm rounded-b-2xl"
           >
             <Gift className="w-4 h-4" />
