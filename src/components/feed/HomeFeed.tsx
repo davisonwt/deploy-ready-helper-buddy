@@ -262,7 +262,24 @@ export const HomeFeed: React.FC<HomeFeedProps> = ({
           </section>
         )}
 
-        {/* === ACTIVE SOWERS === */}
+        {/* === LIVE SESSIONS (Classroom, SkillDrop, Training) === */}
+        {((classroomSessions || []).length > 0 || (skilldropSessions || []).length > 0) && (
+          <section>
+            <div className="flex items-center gap-2 mb-2.5">
+              <Zap className="w-4 h-4 text-primary" />
+              <h2 className="text-sm font-bold text-foreground">Live Sessions</h2>
+            </div>
+            <div className="space-y-3">
+              {(classroomSessions || []).map((session) => (
+                <LiveSessionCard key={`cls-${session.id}`} data={session} />
+              ))}
+              {(skilldropSessions || []).map((session) => (
+                <LiveSessionCard key={`sd-${session.id}`} data={session} />
+              ))}
+            </div>
+          </section>
+        )}
+
         {(activeSowers || []).length > 0 && (
           <section>
             <div className="flex items-center gap-2 mb-2.5">
