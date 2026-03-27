@@ -1576,7 +1576,7 @@ export default function MemryPage({ embedded = false }: { embedded?: boolean }) 
         )}
 
         {/* === PROFILE TAB === */}
-        {activeTab === 'profile' && (
+        {!embedded && activeTab === 'profile' && (
           <div className="h-full flex flex-col pt-20 pb-24 pl-20 pr-3 md:pl-24 md:pr-6 overflow-y-auto">
             <div className="max-w-lg mx-auto w-full space-y-4">
               {user ? (
@@ -1646,7 +1646,7 @@ export default function MemryPage({ embedded = false }: { embedded?: boolean }) 
         )}
 
         {/* === TRENDING TAB === */}
-        {activeTab === 'trending' && (
+        {!embedded && activeTab === 'trending' && (
           <div className="h-full flex flex-col pt-20 pb-24 pl-20 pr-3 md:pl-24 md:pr-6 overflow-y-auto">
             <div className="max-w-lg mx-auto w-full space-y-4">
               <div className="flex items-center gap-2 mb-2">
@@ -1872,6 +1872,7 @@ export default function MemryPage({ embedded = false }: { embedded?: boolean }) 
         )}
 
         {/* Vertical Left-Side Navigation */}
+        {!embedded && (
         <div className="fixed left-2 md:left-3 top-1/2 -translate-y-1/2 z-50 flex flex-col items-center gap-2 bg-white/15 backdrop-blur-xl rounded-full py-3 px-1.5">
           <button 
             className={`flex flex-col items-center px-2 py-1.5 rounded-xl transition-colors ${activeTab === 'feed' ? 'text-pink-400 bg-white/10' : 'text-white/70'}`}
