@@ -7,8 +7,9 @@ import { ActiveSowerCard } from './cards/ActiveSowerCard';
 import { ChatRoomCard } from './cards/ChatRoomCard';
 import { AIStoryCard } from './cards/AIStoryCard';
 import { SeedPostCard } from './cards/SeedPostCard';
+import { LiveSessionCard } from './cards/LiveSessionCard';
 import { FeedHeader } from './FeedHeader';
-import { Radio, Sprout, MessageSquare } from 'lucide-react';
+import { Radio, Sprout, MessageSquare, Zap } from 'lucide-react';
 import { InlineMemryFeed } from './cards/InlineMemryFeed';
 
 interface HomeFeedProps {
