@@ -17,18 +17,27 @@ interface SeedStoryParams {
 
 export const useSeedStory = (params: SeedStoryParams) => {
   const [story, setStory] = useState<string | null>(storyCache.get(params.seedId) || null);
+  const [loading, setLoading] = useState(!storyCache.has(params.seedId));
 
   useEffect(() => {
     if (storyCache.has(params.seedId)) {
       setStory(storyCache.get(params.seedId)!);
+      setLoading(false);
       return;
     }
 
     // Deduplicate concurrent requests for the same seed
     if (pendingRequests.has(params.seedId)) {
-      pendingRequests.get(params.seedId)!.then((s) => setStory(s)).catch(() => {});
+      setLoading(true);
+      pendingRequests.get(params.seedId)!.then((s) => {
+        setStory(s);
+        setLoading(false);
+      }).catch(() => setLoading(false));
       return;
     }
+
+    setLoading(true);
+    console.log('🌱 Fetching story for seed:', params.seedId, params.seedTitle);
 
     const request = (async () => {
       try {
@@ -43,11 +52,21 @@ export const useSeedStory = (params: SeedStoryParams) => {
           },
         });
 
-        if (error || !data?.story) return '';
+        console.log('🌱 Story response for', params.seedId, ':', { data, error });
+
+        if (error) {
+          console.error('🌱 Story error:', error);
+          return '';
+        }
+        if (!data?.story) {
+          console.warn('🌱 No story in response:', data);
+          return '';
+        }
         const storyText = data.story as string;
         storyCache.set(params.seedId, storyText);
         return storyText;
-      } catch {
+      } catch (e) {
+        console.error('🌱 Story fetch failed:', e);
         return '';
       }
     })();
@@ -55,9 +74,10 @@ export const useSeedStory = (params: SeedStoryParams) => {
     pendingRequests.set(params.seedId, request);
     request.then((s) => {
       setStory(s);
+      setLoading(false);
       pendingRequests.delete(params.seedId);
     });
   }, [params.seedId]);
 
-  return story;
+  return { story, loading };
 };
