@@ -291,6 +291,7 @@ export const InlineMemryFeed: React.FC = () => {
           likes_count: mp.likes_count || 0,
           comments_count: mp.comments_count || 0,
           profiles: profile ? { display_name: profile.display_name, avatar_url: profile.avatar_url, username: profile.username } : undefined,
+          content_category: mp.content_category || 'homemade',
         });
       });
 
