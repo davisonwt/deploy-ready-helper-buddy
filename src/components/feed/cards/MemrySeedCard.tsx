@@ -443,6 +443,10 @@ export const MemrySeedCard: React.FC<MemrySeedCardProps> = ({
               onPlaying={() => {
                 setVideoReady(true);
                 setVideoPlaying(true);
+                const current = videoRef.current;
+                if (current) {
+                  current.poster = '';
+                }
               }}
               onError={(e) => {
                 const t = e.target as HTMLVideoElement;
@@ -467,6 +471,7 @@ export const MemrySeedCard: React.FC<MemrySeedCardProps> = ({
                 if (!vid) return;
                 if (vid.paused) {
                   setVideoReady(true);
+                  vid.poster = '';
                   vid.muted = false;
                   vid.play().catch(() => {});
                 } else {
