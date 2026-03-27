@@ -14,7 +14,7 @@ const moreItems = [
   { to: '/explore-sessions?type=skilldrop', label: 'SkillDrop', icon: Zap, color: '#534AB7' },
   { to: '/enochian-calendar-design', label: '364yhvh Days', icon: Calendar, color: '#3C3489' },
   { to: '/tithing', label: 'Let It Rain', icon: CloudRain, color: '#533AB7' },
-  { to: '/admin/analytics', label: "GoSat's", icon: Settings, color: '#BA7517' },
+  { to: '/admin/dashboard', label: "GoSat's", icon: Settings, color: '#BA7517' },
 ];
 
 const tabs = [
