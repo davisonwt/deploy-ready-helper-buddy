@@ -483,7 +483,9 @@ export const MemrySeedCard: React.FC<MemrySeedCardProps> = ({
                   vid.pause();
                 }
               }}
-              className="absolute inset-0 z-[5] flex items-center justify-center"
+              className="absolute inset-0 z-[5] flex items-center justify-center bg-transparent border-0 p-0 appearance-none"
+              style={{ WebkitTapHighlightColor: 'transparent' }}
+              aria-label={videoPlaying ? 'Pause video' : 'Play video'}
             >
               {!videoPlaying && (
                 <div className="w-14 h-14 rounded-full bg-black/50 backdrop-blur-sm flex items-center justify-center">
