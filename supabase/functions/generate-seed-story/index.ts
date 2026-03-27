@@ -20,53 +20,66 @@ serve(async (req) => {
 
     const { sowerName, seedTitle, daysSincePlanted, bestowalsCount, engagements, seedCategory } = await req.json();
 
-    const userMessage = `Sower name: ${sowerName}
-Seed title: ${seedTitle}
-Days since planted: ${daysSincePlanted}
-Bestowals received: ${bestowalsCount}
-Comments/engagements: ${engagements}
-Seed category: ${seedCategory}`;
+    const userMessage = `Sower: ${sowerName}, Seed: ${seedTitle}, Days: ${daysSincePlanted}, Bestowals: ${bestowalsCount}, Engagements: ${engagements}, Category: ${seedCategory}`;
 
-    const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${LOVABLE_API_KEY}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        model: "google/gemini-3-flash-preview",
-        messages: [
-          { role: "system", content: SYSTEM_PROMPT },
-          { role: "user", content: userMessage },
-        ],
-        stream: false,
-      }),
-    });
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 10000);
 
-    if (!response.ok) {
-      if (response.status === 429) {
-        return new Response(JSON.stringify({ error: "Rate limited" }), {
-          status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
-      }
-      if (response.status === 402) {
-        return new Response(JSON.stringify({ error: "Payment required" }), {
-          status: 402, headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
-      }
-      const t = await response.text();
-      console.error("AI gateway error:", response.status, t);
-      return new Response(JSON.stringify({ error: "AI generation failed" }), {
-        status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
+    try {
+      const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${LOVABLE_API_KEY}`,
+          "Content-Type": "application/json",
+        },
+        signal: controller.signal,
+        body: JSON.stringify({
+          model: "google/gemini-2.0-flash-001",
+          max_tokens: 200,
+          temperature: 0.7,
+          messages: [
+            { role: "system", content: SYSTEM_PROMPT },
+            { role: "user", content: userMessage },
+          ],
+          stream: false,
+        }),
       });
+
+      clearTimeout(timeout);
+
+      if (!response.ok) {
+        const t = await response.text();
+        if (response.status === 429) {
+          return new Response(JSON.stringify({ error: "Rate limited" }), {
+            status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" },
+          });
+        }
+        if (response.status === 402) {
+          return new Response(JSON.stringify({ error: "Payment required" }), {
+            status: 402, headers: { ...corsHeaders, "Content-Type": "application/json" },
+          });
+        }
+        console.error("AI gateway error:", response.status, t);
+        return new Response(JSON.stringify({ error: "AI generation failed" }), {
+          status: 502, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      const data = await response.json();
+      const story = data.choices?.[0]?.message?.content || "";
+
+      return new Response(JSON.stringify({ story }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    } catch (fetchErr) {
+      clearTimeout(timeout);
+      if (fetchErr instanceof DOMException && fetchErr.name === "AbortError") {
+        return new Response(JSON.stringify({ error: "Story generation timed out" }), {
+          status: 504, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      throw fetchErr;
     }
-
-    const data = await response.json();
-    const story = data.choices?.[0]?.message?.content || "";
-
-    return new Response(JSON.stringify({ story }), {
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
   } catch (e) {
     console.error("generate-seed-story error:", e);
     return new Response(JSON.stringify({ error: e instanceof Error ? e.message : "Unknown error" }), {
