@@ -1447,6 +1447,7 @@ export default function MemryPage({ embedded = false }: { embedded?: boolean }) 
       {/* Main Feed - TikTok Style */}
       <div className="h-full relative">
         {/* Header */}
+        {!embedded && (
         <motion.div 
           initial={{ y: -50, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
