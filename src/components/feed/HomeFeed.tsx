@@ -8,7 +8,8 @@ import { ChatRoomCard } from './cards/ChatRoomCard';
 import { AIStoryCard } from './cards/AIStoryCard';
 import { SeedPostCard } from './cards/SeedPostCard';
 import { FeedHeader } from './FeedHeader';
-import { Radio, Sprout, MessageSquare } from 'lucide-react';
+import { Radio, Sprout, MessageSquare, Camera, User, Building2, Megaphone, Video, Ear, Car, Wrench, ChevronRight } from 'lucide-react';
+import { Link } from 'react-router-dom';
 
 interface HomeFeedProps {
   profile: any;
