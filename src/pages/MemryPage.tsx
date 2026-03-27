@@ -1483,7 +1483,7 @@ export default function MemryPage({ embedded = false }: { embedded?: boolean }) 
         )}
 
         {/* === DISCOVER TAB === */}
-        {activeTab === 'discover' && (
+        {!embedded && activeTab === 'discover' && (
           <div className="h-full flex flex-col pt-20 pb-24 pl-20 pr-3 md:pl-24 md:pr-6 overflow-y-auto">
             <div className="max-w-lg mx-auto w-full space-y-4">
               <Input
