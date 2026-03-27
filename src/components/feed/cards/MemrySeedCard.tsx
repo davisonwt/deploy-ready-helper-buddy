@@ -24,6 +24,8 @@ interface MemrySeedCardProps {
     product_id?: string;
     product_price?: number;
     product_title?: string;
+    product_type?: string;
+    category?: string;
     orchard_id?: string;
     book_id?: string;
     profiles?: {
@@ -158,7 +160,23 @@ export const MemrySeedCard: React.FC<MemrySeedCardProps> = ({
   const isBook = post.content_type === 'new_book';
   const isMusic = post.content_type === 'music';
   const isSeed = isProduct || isOrchard || isBook;
-  const hasAudio = !!(post.audio_url || isMusic);
+  const hasAudio = !!(post.audio_url || isMusic || (post.category && ['music', 'e-book', 'audio'].includes(post.category.toLowerCase())));
+
+  // Determine seed type label
+  const getSeedTypeLabel = () => {
+    if (isMusic) return '🎵 Music';
+    if (isBook) return '📚 Book';
+    if (isOrchard) return '🌳 Orchard';
+    const cat = (post.category || post.product_type || '').toLowerCase();
+    if (cat.includes('music')) return '🎵 Music';
+    if (cat.includes('e-book') || cat.includes('ebook')) return '📱 E-Book';
+    if (cat.includes('book')) return '📚 Book';
+    if (cat.includes('art')) return '🎨 Art';
+    if (cat.includes('produce')) return '🥬 Produce';
+    if (cat.includes('file')) return '📄 File';
+    if (isProduct) return '🌱 Product';
+    return '🌱 Seed';
+  };
 
   const handleShare = async () => {
     const shareUrl = `${window.location.origin}/memry?post=${post.id}`;
@@ -257,10 +275,10 @@ export const MemrySeedCard: React.FC<MemrySeedCardProps> = ({
           />
         )}
 
-        {/* Top-left: Badge */}
-        {(isSeed || isMusic) && (
+        {/* Top-left: Badge with seed type */}
+        {(isSeed || isMusic || isProduct) && (
           <Badge className="absolute top-3 left-3 z-10 bg-emerald-500 hover:bg-emerald-500 text-white text-[10px] font-bold px-2.5 py-1 shadow-lg">
-            {isProduct ? '🌱 New Seed Available' : isBook ? '📚 New Book Available' : isMusic ? '🎵 Music Seed' : '🌳 New Orchard Planted'}
+            {getSeedTypeLabel()} — New Available
           </Badge>
         )}
 
@@ -315,8 +333,8 @@ export const MemrySeedCard: React.FC<MemrySeedCardProps> = ({
                 <Link to={`/member/${post.user_id}`} className="text-white font-bold text-sm truncate hover:underline">
                   {post.profiles?.display_name || 'Sower'}
                 </Link>
-                {isSeed && (
-                  <span className="bg-emerald-500/80 text-white text-[9px] font-bold px-1.5 py-0.5 rounded-full">Seed</span>
+                {(isSeed || isMusic) && (
+                  <span className="bg-emerald-500/80 text-white text-[9px] font-bold px-1.5 py-0.5 rounded-full">{getSeedTypeLabel()}</span>
                 )}
                 {isFollowing && (
                   <span className="bg-white/20 text-white/80 text-[9px] font-semibold px-1.5 py-0.5 rounded-full backdrop-blur-sm">Following</span>
@@ -333,66 +351,45 @@ export const MemrySeedCard: React.FC<MemrySeedCardProps> = ({
       </div>
 
       {/* ── Section 2: Actions Row ── */}
-      <div className="flex items-center gap-2 px-3 py-2.5">
-        {/* Heart + count */}
-        <button
-          onClick={() => onLike(post.id)}
-          className="flex items-center gap-1 text-muted-foreground hover:text-pink-500 transition-colors"
-        >
-          <Heart className={`w-[18px] h-[18px] ${post.user_liked ? 'text-pink-500 fill-pink-500' : ''}`} />
-          <span className="text-xs font-medium">{post.likes_count}</span>
-        </button>
-
-        {/* Comment + count */}
-        <button
-          onClick={() => onOpenComments(post.id)}
-          className="flex items-center gap-1 text-muted-foreground hover:text-foreground transition-colors"
-        >
-          <MessageCircle className="w-[18px] h-[18px]" />
-          <span className="text-xs font-medium">{post.comments_count}</span>
-        </button>
-
-        {/* Share */}
-        <button onClick={handleShare} className="text-muted-foreground hover:text-foreground transition-colors">
-          <Share2 className="w-[18px] h-[18px]" />
-        </button>
-
-        {/* Private message button */}
-        {user && post.user_id !== user?.id && (
-          <button
-            onClick={handlePrivateMessage}
-            className="text-muted-foreground hover:text-blue-500 transition-colors"
-            title={`Private message ${post.profiles?.display_name || 'sower'}`}
-          >
-            <Lock className="w-[16px] h-[16px]" />
+      <div className="px-3 py-2.5 space-y-2">
+        {/* Top row: action icons */}
+        <div className="flex items-center gap-3">
+          <button onClick={() => onLike(post.id)} className="flex items-center gap-1 text-muted-foreground hover:text-pink-500 transition-colors">
+            <Heart className={`w-[18px] h-[18px] ${post.user_liked ? 'text-pink-500 fill-pink-500' : ''}`} />
+            <span className="text-xs font-medium">{post.likes_count}</span>
           </button>
-        )}
-
-        {/* Spacer */}
-        <div className="flex-1" />
-
-        {/* Message input pill + send — wider */}
-        <Input
-          placeholder={user ? `Say something...` : 'Sign in to comment'}
-          value={inlineMsg}
-          onChange={(e) => setInlineMsg(e.target.value)}
-          disabled={!user}
-          onKeyDown={(e) => {
-            if (e.key === 'Enter') {
-              e.preventDefault();
-              handleSendMessage();
-            }
-          }}
-          className="h-7 text-[11px] rounded-full px-3 flex-1 min-w-0 bg-muted border-border"
-        />
-        {user && (
-          <button
-            onClick={handleSendMessage}
-            className="w-7 h-7 rounded-full bg-primary hover:bg-primary/90 flex items-center justify-center flex-shrink-0 transition-colors"
-          >
-            <Send className="w-3.5 h-3.5 text-primary-foreground" />
+          <button onClick={() => onOpenComments(post.id)} className="flex items-center gap-1 text-muted-foreground hover:text-foreground transition-colors">
+            <MessageCircle className="w-[18px] h-[18px]" />
+            <span className="text-xs font-medium">{post.comments_count}</span>
           </button>
-        )}
+          <button onClick={handleShare} className="text-muted-foreground hover:text-foreground transition-colors">
+            <Share2 className="w-[18px] h-[18px]" />
+          </button>
+          {user && post.user_id !== user?.id && (
+            <button onClick={handlePrivateMessage} className="text-muted-foreground hover:text-blue-500 transition-colors" title={`Private message ${post.profiles?.display_name || 'sower'}`}>
+              <Lock className="w-[16px] h-[16px]" />
+            </button>
+          )}
+        </div>
+
+        {/* Bottom row: full-width message input */}
+        <div className="flex items-center gap-2">
+          <Input
+            placeholder={user ? `Say something...` : 'Sign in to comment'}
+            value={inlineMsg}
+            onChange={(e) => setInlineMsg(e.target.value)}
+            disabled={!user}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') { e.preventDefault(); handleSendMessage(); }
+            }}
+            className="h-8 text-xs rounded-full px-4 flex-1 bg-muted border-border"
+          />
+          {user && (
+            <button onClick={handleSendMessage} className="w-8 h-8 rounded-full bg-primary hover:bg-primary/90 flex items-center justify-center flex-shrink-0 transition-colors">
+              <Send className="w-3.5 h-3.5 text-primary-foreground" />
+            </button>
+          )}
+        </div>
       </div>
 
       {/* ── Section 3: Hairline divider ── */}

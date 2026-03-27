@@ -22,6 +22,8 @@ interface MemryPost {
   product_id?: string;
   product_price?: number;
   product_title?: string;
+  product_type?: string;
+  category?: string;
   orchard_id?: string;
   book_id?: string;
   profiles?: {
@@ -123,19 +125,22 @@ export const InlineMemryFeed: React.FC = () => {
         const userId = p.sower?.user_id || p.sower_id;
         const profile = profileMap.get(userId);
         const images = [p.cover_image_url, ...(p.gallery_images || [])].filter(Boolean);
+        const audioUrl = p.audio_preview_url || (p.category?.toLowerCase() === 'music' ? p.media_url : undefined);
         allPosts.push({
           id: `product-${p.id}`,
           user_id: userId,
           content_type: 'new_product',
           media_url: p.cover_image_url || '/placeholder.svg',
           image_urls: images.length > 1 ? images : undefined,
-          audio_url: p.audio_preview_url || p.media_url?.includes('audio') ? p.media_url : undefined,
+          audio_url: audioUrl,
           caption: `🌱 SEED: ${p.title}`,
           likes_count: p.bestowal_count || 0,
           comments_count: 0,
           product_id: p.id,
           product_price: p.price,
           product_title: p.title,
+          product_type: p.product_type || undefined,
+          category: p.category || undefined,
           profiles: profile ? { display_name: profile.display_name, avatar_url: profile.avatar_url, username: profile.username } : undefined,
         });
       });
