@@ -98,11 +98,21 @@ const extractUrl = (item: any): string | undefined => {
     item.path ??
     item.publicUrl ??
     item.public_url ??
+    item.file ??
     item.file_url ??
     item.media_url ??
+    item.mediaUrl ??
+    item.image ??
+    item.image1 ??
+    item.image2 ??
+    item.image3 ??
+    item.image4 ??
     item.image_url ??
+    item.video ??
     item.video_url ??
+    item.audio ??
     item.audio_url ??
+    item.thumbnail ??
     item.thumbnail_url ??
     item.cover ??
     item.cover_image_url;
@@ -133,13 +143,26 @@ const normalizeMemryMedia = (source: any) => {
         const obj = item as any;
 
         if (obj.tracks) pushValue(obj.tracks, 'audio');
+        if (obj.file) pushValue(obj.file, hint);
+        if (obj.files) pushValue(obj.files, hint);
         if (obj.media) pushValue(obj.media, hint);
         if (obj.media_items) pushValue(obj.media_items, hint);
         if (obj.attachments) pushValue(obj.attachments, hint);
         if (obj.media_urls) pushValue(obj.media_urls, hint);
+        if (obj.image) pushValue(obj.image, 'image');
+        if (obj.image1) pushValue(obj.image1, 'image');
+        if (obj.image2) pushValue(obj.image2, 'image');
+        if (obj.image3) pushValue(obj.image3, 'image');
+        if (obj.image4) pushValue(obj.image4, 'image');
         if (obj.image_urls) pushValue(obj.image_urls, 'image');
+        if (obj.video) pushValue(obj.video, 'video');
+        if (obj.video_url) pushValue(obj.video_url, 'video');
         if (obj.video_urls) pushValue(obj.video_urls, 'video');
+        if (obj.audio) pushValue(obj.audio, 'audio');
+        if (obj.audio_url) pushValue(obj.audio_url, 'audio');
         if (obj.audio_urls) pushValue(obj.audio_urls, 'audio');
+        if (obj.thumbnail) pushValue(obj.thumbnail, 'image');
+        if (obj.thumbnail_url) pushValue(obj.thumbnail_url, 'image');
       }
 
       const rawUrl = extractUrl(item);
@@ -163,10 +186,18 @@ const normalizeMemryMedia = (source: any) => {
 
   [
     source?.media,
+    source?.files,
+    source?.file,
     source?.media_items,
     source?.attachments,
     source?.media_urls,
+    source?.image,
+    source?.image1,
+    source?.image2,
+    source?.image3,
+    source?.image4,
     source?.image_urls,
+    source?.video,
     source?.video_urls,
     source?.audio_urls,
     source?.images,
@@ -181,11 +212,20 @@ const normalizeMemryMedia = (source: any) => {
     source?.thumbnail_url,
     source?.file_url,
     metadata?.media,
+    metadata?.files,
+    metadata?.file,
     metadata?.media_items,
     metadata?.attachments,
     metadata?.media_urls,
+    metadata?.image,
+    metadata?.image1,
+    metadata?.image2,
+    metadata?.image3,
+    metadata?.image4,
     metadata?.image_urls,
+    metadata?.video,
     metadata?.video_urls,
+    metadata?.audio,
     metadata?.audio_urls,
     metadata?.images,
     metadata?.gallery_images,
@@ -369,13 +409,18 @@ export const InlineMemryFeed: React.FC = () => {
         const profile = profileMap.get(mp.user_id);
         const media = normalizeMemryMedia(mp);
         const normalizedType = String(mp.content_type || '').toLowerCase();
+        const sourceMediaUrl = convertToPublicUrl(String(mp.media_url || '').trim());
+        const sourceVideoUrl = convertToPublicUrl(String(mp.video_url || '').trim());
+        const sourceImageUrl = convertToPublicUrl(String(mp.image_url || '').trim());
         const primaryVideo = media.videos[0];
         const primaryImage = media.images[0];
         const primaryAudio = media.audios[0];
-        const isVideoType = normalizedType === 'video';
+        const sourceVideoCandidate = sourceVideoUrl || sourceMediaUrl;
+        const hasSourceVideo = !!sourceVideoCandidate && VIDEO_EXT_RE.test(sourceVideoCandidate);
+        const isVideoType = normalizedType === 'video' || hasSourceVideo;
         const mpMediaUrl = isVideoType
-          ? (primaryVideo || primaryImage || FALLBACK_MEDIA)
-          : (primaryImage || primaryVideo || primaryAudio || FALLBACK_MEDIA);
+          ? (primaryVideo || sourceVideoCandidate || primaryImage || sourceImageUrl || FALLBACK_MEDIA)
+          : (primaryImage || sourceImageUrl || primaryVideo || sourceVideoUrl || sourceMediaUrl || primaryAudio || FALLBACK_MEDIA);
         const mpImages = dedupeUrls(media.images);
         const mpAudio = normalizedType === 'music'
           ? (primaryAudio || (AUDIO_EXT_RE.test(mpMediaUrl) ? mpMediaUrl : undefined))
