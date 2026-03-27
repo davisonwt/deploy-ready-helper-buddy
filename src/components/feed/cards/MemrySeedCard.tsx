@@ -339,22 +339,45 @@ export const MemrySeedCard: React.FC<MemrySeedCardProps> = ({
           <div className="w-full h-full bg-gradient-to-br from-violet-700 via-purple-600 to-pink-500 flex items-center justify-center">
             <Music className="w-20 h-20 text-white/30" />
           </div>
-        ) : post.media_url && /\.(mp4|webm|mov)(\?|$)/i.test(post.media_url) ? (
-          <video
-            src={post.media_url}
-            className="w-full h-full object-cover"
-            muted
-            playsInline
-            preload="metadata"
-            poster={post.image_urls?.[0]}
-            onError={(e) => {
-              const t = e.target as HTMLVideoElement;
-              if (!t.dataset.fallback) {
-                t.dataset.fallback = '1';
-                t.poster = '/lovable-uploads/ff9e6e48-049d-465a-8d2b-f6e8fed93522.png';
-              }
-            }}
-          />
+        ) : isVideo ? (
+          <>
+            <video
+              ref={videoRef}
+              src={post.media_url}
+              className="w-full h-full object-cover"
+              muted={!videoPlaying}
+              playsInline
+              preload="metadata"
+              poster={post.image_urls?.[0]}
+              loop
+              onError={(e) => {
+                const t = e.target as HTMLVideoElement;
+                if (!t.dataset.fallback) {
+                  t.dataset.fallback = '1';
+                  t.poster = '/lovable-uploads/ff9e6e48-049d-465a-8d2b-f6e8fed93522.png';
+                }
+              }}
+              onPause={() => setVideoPlaying(false)}
+              onPlay={() => setVideoPlaying(true)}
+            />
+            <button
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                const vid = videoRef.current;
+                if (!vid) return;
+                if (vid.paused) { vid.muted = false; vid.play().catch(() => {}); }
+                else { vid.pause(); }
+              }}
+              className="absolute inset-0 z-[5] flex items-center justify-center"
+            >
+              {!videoPlaying && (
+                <div className="w-14 h-14 rounded-full bg-black/50 backdrop-blur-sm flex items-center justify-center">
+                  <Play className="w-7 h-7 text-white ml-1" fill="white" />
+                </div>
+              )}
+            </button>
+          </>
         ) : (
           <img
             src={allImages[imgIdx] || post.media_url}
