@@ -23,6 +23,33 @@ export const RightContextPanel: React.FC<RightContextPanelProps> = ({
   radioLive = false,
   radioListeners = 0,
 }) => {
+  // Fetch total tribe members (all profiles)
+  const { data: totalMembers } = useQuery({
+    queryKey: ['total-tribe-members'],
+    queryFn: async () => {
+      const { count } = await supabase
+        .from('profiles')
+        .select('user_id', { count: 'exact', head: true });
+      return count || 0;
+    },
+    staleTime: 5 * 60 * 1000,
+  });
+
+  // Fetch active sowers (users who have sowed — created active orchards)
+  const { data: activeSowers } = useQuery({
+    queryKey: ['active-sowers-count'],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from('orchards')
+        .select('user_id')
+        .eq('status', 'active');
+      // Count distinct user_ids
+      const uniqueUsers = new Set((data || []).map((r: any) => r.user_id));
+      return uniqueUsers.size;
+    },
+    staleTime: 5 * 60 * 1000,
+  });
+
   // Fetch active orchards count
   const { data: activeOrchards } = useQuery({
     queryKey: ['active-orchards-count'],
