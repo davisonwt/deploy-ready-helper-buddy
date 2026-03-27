@@ -200,19 +200,29 @@ export const MemrySeedCard: React.FC<MemrySeedCardProps> = ({
   const [isInView, setIsInView] = useState(false);
   const [videoPlaying, setVideoPlaying] = useState(false);
 
+  const fallbackMedia = '/lovable-uploads/ff9e6e48-049d-465a-8d2b-f6e8fed93522.png';
+  const mediaUrl = (post.media_url || '').trim();
+  const isVideoByType = String(post.content_type || '').toLowerCase() === 'video';
+  const isVideoByUrl = /\.(mp4|webm|mov|m4v)(\?|$)/i.test(mediaUrl);
+  const isVideo = !!mediaUrl && (isVideoByType || isVideoByUrl);
+
   // Build image gallery from image_urls + media_url, deduplicated
   const allImages = (() => {
     const imgs: string[] = [];
     if (post.image_urls?.length) {
       post.image_urls.forEach((url) => { if (url && !imgs.includes(url)) imgs.push(url); });
     }
-    if (post.media_url && !imgs.includes(post.media_url) && !/\.(mp4|webm|mov)(\?|$)/i.test(post.media_url)) {
-      imgs.push(post.media_url);
+    if (mediaUrl && !imgs.includes(mediaUrl) && !isVideoByUrl) {
+      imgs.push(mediaUrl);
     }
-    return imgs.length > 0 ? imgs : [post.media_url];
+    return imgs.length > 0 ? imgs : [fallbackMedia];
   })();
+
+  useEffect(() => {
+    setImgIdx((current) => Math.min(current, Math.max(0, allImages.length - 1)));
+  }, [allImages.length]);
+
   const hasMultipleImages = allImages.length > 1;
-  const isVideo = post.media_url && /\.(mp4|webm|mov)(\?|$)/i.test(post.media_url);
   const isProduct = post.content_type === 'new_product';
   const isOrchard = post.content_type === 'new_orchard';
   const isBook = post.content_type === 'new_book';
@@ -343,18 +353,18 @@ export const MemrySeedCard: React.FC<MemrySeedCardProps> = ({
           <>
             <video
               ref={videoRef}
-              src={post.media_url}
+              src={mediaUrl}
               className="w-full h-full object-cover"
               muted={!videoPlaying}
               playsInline
               preload="metadata"
-              poster={post.image_urls?.[0]}
+              poster={post.image_urls?.[0] || fallbackMedia}
               loop
               onError={(e) => {
                 const t = e.target as HTMLVideoElement;
                 if (!t.dataset.fallback) {
                   t.dataset.fallback = '1';
-                  t.poster = '/lovable-uploads/ff9e6e48-049d-465a-8d2b-f6e8fed93522.png';
+                  t.poster = fallbackMedia;
                 }
               }}
               onPause={() => setVideoPlaying(false)}
@@ -380,14 +390,14 @@ export const MemrySeedCard: React.FC<MemrySeedCardProps> = ({
           </>
         ) : (
           <img
-            src={allImages[imgIdx] || post.media_url}
+            src={allImages[Math.min(imgIdx, allImages.length - 1)]}
             alt={post.caption}
             className="w-full h-full object-cover"
             onError={(e) => {
               const t = e.target as HTMLImageElement;
               if (!t.dataset.fallback) {
                 t.dataset.fallback = '1';
-                t.src = '/lovable-uploads/ff9e6e48-049d-465a-8d2b-f6e8fed93522.png';
+                t.src = fallbackMedia;
               }
             }}
           />
