@@ -1480,6 +1480,7 @@ export default function MemryPage({ embedded = false }: { embedded?: boolean }) 
             </div>
           </div>
         </motion.div>
+        )}
 
         {/* === DISCOVER TAB === */}
         {activeTab === 'discover' && (
