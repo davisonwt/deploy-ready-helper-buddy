@@ -9,9 +9,12 @@ import { AIStoryCard } from './cards/AIStoryCard';
 import { SeedPostCard } from './cards/SeedPostCard';
 import { LiveSessionCard } from './cards/LiveSessionCard';
 import { FeedHeader } from './FeedHeader';
-import { Radio, Sprout, MessageSquare, Zap } from 'lucide-react';
+import { Radio, Sprout, MessageSquare, Zap, ChevronDown } from 'lucide-react';
 import { InlineMemryFeed } from './cards/InlineMemryFeed';
 import { DayBeadsFeedCard } from './cards/DayBeadsFeedCard';
+
+import { useState } from 'react';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 
 interface HomeFeedProps {
   profile: any;
@@ -307,15 +310,23 @@ export const HomeFeed: React.FC<HomeFeedProps> = ({
 
         {(activeSowers || []).length > 0 && (
           <section>
-            <div className="flex items-center gap-2 mb-2.5">
-              <Sprout className="w-4 h-4 text-success" />
-              <h2 className="text-sm font-bold text-foreground">Active Sowers</h2>
-            </div>
-            <div className="space-y-2">
-              {(activeSowers || []).map((sower: any, i: number) => (
-                <ActiveSowerCard key={sower.userId} data={sower} index={i} />
-              ))}
-            </div>
+            <Collapsible>
+              <CollapsibleTrigger className="w-full flex items-center justify-between group cursor-pointer mb-2.5">
+                <div className="flex items-center gap-2">
+                  <Sprout className="w-4 h-4 text-success" />
+                  <h2 className="text-sm font-bold text-foreground">Active Sowers</h2>
+                  <span className="text-[10px] text-muted-foreground bg-muted rounded-full px-1.5 py-0.5">{(activeSowers || []).length}</span>
+                </div>
+                <ChevronDown className="w-4 h-4 text-muted-foreground transition-transform group-data-[state=open]:rotate-180" />
+              </CollapsibleTrigger>
+              <CollapsibleContent>
+                <div className="space-y-2">
+                  {(activeSowers || []).map((sower: any, i: number) => (
+                    <ActiveSowerCard key={sower.userId} data={sower} index={i} />
+                  ))}
+                </div>
+              </CollapsibleContent>
+            </Collapsible>
           </section>
         )}
 

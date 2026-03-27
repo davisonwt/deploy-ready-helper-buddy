@@ -14,7 +14,7 @@ interface ActiveSowerData {
 
 export const ActiveSowerCard: React.FC<{ data: ActiveSowerData; index: number }> = ({ data, index }) => {
   return (
-    <Link to={`/public-profile/${data.userId}`}>
+    <Link to={`/member/${data.userId}`}>
       <motion.div
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
