@@ -1,16 +1,26 @@
 import { memo, useState, useCallback } from 'react';
 import { cn } from '@/lib/utils';
+import { optimizeImageUrl } from '@/utils/imageOptimizer';
 
 interface LazyImageProps extends React.ImgHTMLAttributes<HTMLImageElement> {
   src: string;
   alt: string;
   fallback?: string;
   className?: string;
+  /** Desired display width – used for Supabase image optimization */
+  displayWidth?: number;
+  /** Quality 1-100 for compressed format */
+  quality?: number;
 }
 
-const LazyImage = memo(({ src, alt, fallback, className, ...props }: LazyImageProps) => {
+const LazyImage = memo(({ src, alt, fallback, className, displayWidth, quality, ...props }: LazyImageProps) => {
   const [isLoaded, setIsLoaded] = useState(false);
   const [hasError, setHasError] = useState(false);
+
+  const optimizedSrc = optimizeImageUrl(src, {
+    width: displayWidth,
+    quality: quality ?? 75,
+  });
 
   const handleLoad = useCallback(() => {
     setIsLoaded(true);
@@ -37,9 +47,10 @@ const LazyImage = memo(({ src, alt, fallback, className, ...props }: LazyImagePr
         <div className="absolute inset-0 bg-muted animate-pulse" />
       )}
       <img
-        src={src}
+        src={optimizedSrc}
         alt={alt}
         loading="lazy"
+        decoding="async"
         onLoad={handleLoad}
         onError={handleError}
         className={cn(
