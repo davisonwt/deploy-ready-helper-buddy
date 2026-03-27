@@ -259,7 +259,6 @@ export const MemrySeedCard: React.FC<MemrySeedCardProps> = ({
     const imgs = imageCandidates;
     return imgs.length > 0 ? imgs : [fallbackMedia];
   })();
-  const videoPosterUrl = imageCandidates[0] || fallbackMedia;
   const resolvedVideoSrc = primaryVideoUrl || mediaUrl;
 
   useEffect(() => {
@@ -431,7 +430,6 @@ export const MemrySeedCard: React.FC<MemrySeedCardProps> = ({
               muted={!videoPlaying}
               playsInline
               preload="metadata"
-              poster={videoPosterUrl}
               loop
               onLoadedMetadata={(e) => markVideoReady(e.currentTarget)}
               onLoadedData={(e) => markVideoReady(e.currentTarget)}
@@ -443,24 +441,16 @@ export const MemrySeedCard: React.FC<MemrySeedCardProps> = ({
               onPlaying={() => {
                 setVideoReady(true);
                 setVideoPlaying(true);
-                const current = videoRef.current;
-                if (current) {
-                  current.poster = '';
-                }
               }}
               onError={(e) => {
                 const t = e.target as HTMLVideoElement;
                 if (!t.dataset.fallback) {
                   t.dataset.fallback = '1';
-                  t.poster = fallbackMedia;
                 }
                 setVideoReady(true);
               }}
               onPause={() => setVideoPlaying(false)}
             />
-            {!videoReady && !videoPlaying && (
-              <div className="absolute inset-0 z-[4] bg-muted/60 animate-pulse pointer-events-none" />
-            )}
             <button
               type="button"
               data-deadlink-watch-ignore="true"
@@ -471,7 +461,6 @@ export const MemrySeedCard: React.FC<MemrySeedCardProps> = ({
                 if (!vid) return;
                 if (vid.paused) {
                   setVideoReady(true);
-                  vid.poster = '';
                   vid.muted = false;
                   vid.play().catch(() => {});
                 } else {
