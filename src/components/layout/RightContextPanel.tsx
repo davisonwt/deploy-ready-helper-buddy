@@ -36,15 +36,17 @@ export const RightContextPanel: React.FC<RightContextPanelProps> = ({
   });
 
   // Fetch active sowers (users who have sowed — created active orchards)
+  // Fetch active sowers (users who sowed — created orchards OR products)
   const { data: activeSowers } = useQuery({
     queryKey: ['active-sowers-count'],
     queryFn: async () => {
-      const { data } = await supabase
-        .from('orchards')
-        .select('user_id')
-        .eq('status', 'active');
-      // Count distinct user_ids
-      const uniqueUsers = new Set((data || []).map((r: any) => r.user_id));
+      const [orchardRes, productRes] = await Promise.all([
+        supabase.from('orchards').select('user_id'),
+        supabase.from('products').select('sower_id'),
+      ]);
+      const uniqueUsers = new Set<string>();
+      (orchardRes.data || []).forEach((r: any) => uniqueUsers.add(r.user_id));
+      (productRes.data || []).forEach((r: any) => uniqueUsers.add(r.sower_id));
       return uniqueUsers.size;
     },
     staleTime: 5 * 60 * 1000,
