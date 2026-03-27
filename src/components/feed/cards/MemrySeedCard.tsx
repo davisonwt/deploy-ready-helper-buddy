@@ -450,21 +450,21 @@ export const MemrySeedCard: React.FC<MemrySeedCardProps> = ({
       />
 
       {/* ── Section 2: Actions Row ── */}
-      <div className="px-3 py-2.5">
-        <div className="flex items-center gap-2 flex-nowrap">
-          <button onClick={() => onLike(post.id)} className="flex items-center gap-1 text-muted-foreground hover:text-pink-500 transition-colors">
+      <div className="px-3 py-2.5 bg-card">
+        <div className="flex items-center gap-3 flex-nowrap">
+          <button onClick={() => onLike(post.id)} className="flex items-center gap-1 bg-transparent border-none p-0 text-white/60 hover:text-pink-500 transition-colors">
             <Heart className={`w-[18px] h-[18px] ${post.user_liked ? 'text-pink-500 fill-pink-500' : ''}`} />
             <span className="text-xs font-medium">{post.likes_count}</span>
           </button>
-          <button onClick={() => onOpenComments(post.id)} className="flex items-center gap-1 text-muted-foreground hover:text-foreground transition-colors">
+          <button onClick={() => onOpenComments(post.id)} className="flex items-center gap-1 bg-transparent border-none p-0 text-white/60 hover:text-white transition-colors">
             <MessageCircle className="w-[18px] h-[18px]" />
             <span className="text-xs font-medium">{post.comments_count}</span>
           </button>
-          <button onClick={handleShare} className="text-muted-foreground hover:text-foreground transition-colors">
+          <button onClick={handleShare} className="bg-transparent border-none p-0 text-white/60 hover:text-white transition-colors">
             <Share2 className="w-[18px] h-[18px]" />
           </button>
           {user && post.user_id !== user?.id && (
-            <button onClick={handlePrivateMessage} className="text-muted-foreground hover:text-blue-500 transition-colors" title={`Private message ${post.profiles?.display_name || 'sower'}`}>
+            <button onClick={handlePrivateMessage} className="bg-transparent border-none p-0 text-white/60 hover:text-blue-400 transition-colors" title={`Private message ${post.profiles?.display_name || 'sower'}`}>
               <Lock className="w-[16px] h-[16px]" />
             </button>
           )}
@@ -477,11 +477,11 @@ export const MemrySeedCard: React.FC<MemrySeedCardProps> = ({
             onKeyDown={(e) => {
               if (e.key === 'Enter') { e.preventDefault(); handleSendMessage(); }
             }}
-            className="h-8 text-xs rounded-full px-4 w-[52%] min-w-[220px] bg-muted border-border"
+            className="h-7 text-xs rounded-full px-3 w-[48%] min-w-[160px] bg-transparent border border-white/20 text-white/80 placeholder:text-white/30"
           />
           {user && (
-            <button onClick={handleSendMessage} className="w-8 h-8 rounded-full bg-primary hover:bg-primary/90 flex items-center justify-center flex-shrink-0 transition-colors">
-              <Send className="w-3.5 h-3.5 text-primary-foreground" />
+            <button onClick={handleSendMessage} className="w-7 h-7 rounded-full bg-emerald-500 hover:bg-emerald-600 flex items-center justify-center flex-shrink-0 transition-colors">
+              <Send className="w-3.5 h-3.5 text-white" />
             </button>
           )}
         </div>
