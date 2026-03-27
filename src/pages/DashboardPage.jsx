@@ -53,7 +53,7 @@ export default function DashboardPage() {
   const { data: communityCount } = useQuery({
     queryKey: ['community-count'],
     queryFn: async () => {
-      const { count } = await supabase.from('profiles').select('*', { count: 'exact', head: true });
+      const { count } = await supabase.from('profiles').select('user_id', { count: 'exact', head: true });
       return count || 0;
     },
     staleTime: 5 * 60 * 1000,

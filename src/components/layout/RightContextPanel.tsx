@@ -105,7 +105,7 @@ export const RightContextPanel: React.FC<RightContextPanelProps> = ({
         </div>
         <div className="space-y-1.5">
           <div className="flex justify-between text-xs">
-            <span className="text-muted-foreground">Total Keepers</span>
+            <span className="text-muted-foreground">Total Sowers</span>
             <span className="font-semibold text-foreground">{communityCount}</span>
           </div>
           <div className="flex justify-between text-xs">
