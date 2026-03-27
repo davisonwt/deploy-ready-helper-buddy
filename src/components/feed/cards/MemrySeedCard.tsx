@@ -262,6 +262,8 @@ export const MemrySeedCard: React.FC<MemrySeedCardProps> = ({
     const video = videoRef.current;
     if (!video) return;
     video.pause();
+    video.currentTime = 0;
+    delete video.dataset.previewSeeked;
   }, [resolvedVideoSrc, post.id]);
 
   const hasMultipleImages = allImages.length > 1;
@@ -414,8 +416,20 @@ export const MemrySeedCard: React.FC<MemrySeedCardProps> = ({
               muted={false}
               playsInline
               preload="metadata"
-              controls
               loop
+              onLoadedMetadata={(e) => {
+                const vid = e.currentTarget;
+                if (vid.dataset.previewSeeked === '1') return;
+                const duration = Number.isFinite(vid.duration) ? vid.duration : 0;
+                if (duration <= 0.8) return;
+                try {
+                  const seekTo = Math.min(Math.max(duration * 0.08, 0.35), 2);
+                  vid.currentTime = seekTo;
+                  vid.dataset.previewSeeked = '1';
+                } catch {
+                  // Ignore seek failures on streams that disallow programmatic seeking early.
+                }
+              }}
               onPlaying={() => setVideoPlaying(true)}
               onPlay={() => setVideoPlaying(true)}
               onError={() => setVideoPlaying(false)}
@@ -432,26 +446,30 @@ export const MemrySeedCard: React.FC<MemrySeedCardProps> = ({
                 }
               }}
             />
-            {!videoPlaying && (
-              <button
-                type="button"
-                data-deadlink-watch-ignore="true"
-                onClick={(e) => {
-                  e.preventDefault();
-                  e.stopPropagation();
-                  const vid = videoRef.current;
-                  if (!vid) return;
+            <button
+              type="button"
+              data-deadlink-watch-ignore="true"
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                const vid = videoRef.current;
+                if (!vid) return;
+                if (vid.paused) {
                   vid.play().catch(() => {});
-                }}
-                className="absolute inset-0 z-[6] flex items-center justify-center border-0 p-0 appearance-none bg-transparent"
-                style={{ WebkitTapHighlightColor: 'transparent' }}
-                aria-label="Play video"
-              >
-                <div className="flex h-14 w-14 items-center justify-center rounded-full bg-black/50 backdrop-blur-sm transition hover:bg-black/60">
-                  <Play className="ml-0.5 h-6 w-6 text-white fill-white" />
-                </div>
-              </button>
-            )}
+                } else {
+                  vid.pause();
+                }
+              }}
+              className="absolute bottom-3 right-3 z-[8] flex h-12 w-12 items-center justify-center rounded-full bg-black/50 backdrop-blur-sm border-0 p-0 appearance-none"
+              style={{ WebkitTapHighlightColor: 'transparent' }}
+              aria-label={videoPlaying ? 'Pause video' : 'Play video'}
+            >
+              {videoPlaying ? (
+                <Pause className="h-6 w-6 text-white" />
+              ) : (
+                <Play className="ml-0.5 h-6 w-6 text-white" fill="white" />
+              )}
+            </button>
           </>
         ) : (
           <img
