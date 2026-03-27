@@ -1,15 +1,13 @@
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
-import { Camera } from 'lucide-react';
+import React, { useState, useEffect, useCallback } from 'react';
+import { Camera, Send } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { MemrySeedCard } from './MemrySeedCard';
-import { useToast } from '@/hooks/use-toast';
 import { useNavigate } from 'react-router-dom';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { Send } from 'lucide-react';
 
 interface MemryPost {
   id: string;
