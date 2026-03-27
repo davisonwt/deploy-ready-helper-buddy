@@ -114,7 +114,8 @@ function InlineMusicSnippet({ mediaUrl, isVisible }: { mediaUrl: string; isVisib
 
 function SowerMemryCard({ sower, index }: { sower: SowerMemry; index: number }) {
   const [imgIdx, setImgIdx] = useState(0);
-  const [isVisible, setIsVisible] = useState(false);
+  const [isHovered, setIsHovered] = useState(false);
+  const [isInView, setIsInView] = useState(false);
   const cardRef = useRef<HTMLDivElement>(null);
 
   // Collect all preview items with type info
@@ -124,14 +125,17 @@ function SowerMemryCard({ sower, index }: { sower: SowerMemry; index: number }) 
     ...sower.orchards.filter(o => o.imageUrl).map(o => ({ url: o.imageUrl!, type: 'image' })),
   ];
 
-  // IntersectionObserver for auto-play
+  // IntersectionObserver for viewport tracking
   useEffect(() => {
     const el = cardRef.current;
     if (!el) return;
-    const obs = new IntersectionObserver(([entry]) => setIsVisible(entry.isIntersecting), { threshold: 0.5 });
+    const obs = new IntersectionObserver(([entry]) => setIsInView(entry.isIntersecting), { threshold: 0.5 });
     obs.observe(el);
     return () => obs.disconnect();
   }, []);
+
+  // Audio plays when card is both in view AND hovered
+  const isActive = isInView && isHovered;
 
   const currentItem = previewItems[imgIdx];
   const isMusic = currentItem?.type === 'music';
@@ -151,6 +155,9 @@ function SowerMemryCard({ sower, index }: { sower: SowerMemry; index: number }) 
       initial={{ opacity: 0, y: 12 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: index * 0.08 }}
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
+      onTouchStart={() => setIsHovered(true)}
     >
       <Link
         to={`/member/${sower.userId}`}
@@ -160,7 +167,7 @@ function SowerMemryCard({ sower, index }: { sower: SowerMemry; index: number }) 
         {previewItems.length > 0 ? (
           <div className="relative h-36 bg-muted overflow-hidden">
             {isMusic && currentItem ? (
-              <InlineMusicSnippet mediaUrl={currentItem.url} isVisible={isVisible} />
+              <InlineMusicSnippet mediaUrl={currentItem.url} isVisible={isActive} />
             ) : currentItem ? (
               <img src={currentItem.url} alt="" className="w-full h-full object-cover" loading="lazy" />
             ) : null}
