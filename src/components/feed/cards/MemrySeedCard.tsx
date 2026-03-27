@@ -214,7 +214,9 @@ export const MemrySeedCard: React.FC<MemrySeedCardProps> = ({
     .filter((item) => Boolean(item.url));
   const payloadMediaUrls = dedupeUrls(normalizedPayloadMedia.map((item) => item.url));
   const normalizedPostAudioUrl = normalizeMediaUrl(post.audio_url || '');
-  const isVideoByType = String(post.content_type || '').toLowerCase() === 'video';
+  const normalizedContentType = String(post.content_type || '').toLowerCase();
+  const isMusicPost = normalizedContentType === 'music';
+  const isVideoByType = normalizedContentType === 'video';
   const normalizedImageUrls = (post.image_urls || [])
     .map((url) => normalizeMediaUrl(url))
     .filter(Boolean);
@@ -224,9 +226,11 @@ export const MemrySeedCard: React.FC<MemrySeedCardProps> = ({
     ...normalizedImageUrls,
     normalizedPostAudioUrl,
   ].filter(Boolean));
+
+  // IMPORTANT: music posts can carry .MOV audio sources; don't treat those audio URLs as video cards
   const videoCandidates = dedupeUrls([
     ...normalizedPayloadMedia.filter((item) => item.type === 'video').map((item) => item.url),
-    ...mediaCandidates.filter((url) => isVideoUrl(url)),
+    ...(isMusicPost ? [] : mediaCandidates.filter((url) => isVideoUrl(url))),
   ]);
   const imageCandidates = dedupeUrls([
     ...normalizedPayloadMedia.filter((item) => item.type === 'image').map((item) => item.url),
@@ -240,7 +244,7 @@ export const MemrySeedCard: React.FC<MemrySeedCardProps> = ({
   ]);
   const primaryVideoUrl = videoCandidates[0] || '';
   const isVideoByUrl = videoCandidates.length > 0;
-  const isVideo = isVideoByUrl || (isVideoByType && isVideoUrl(mediaUrl));
+  const isVideo = !isMusicPost && (isVideoByUrl || (isVideoByType && isVideoUrl(mediaUrl)));
 
   // Build image gallery from image_urls + media_url, deduplicated
   const allImages = (() => {
