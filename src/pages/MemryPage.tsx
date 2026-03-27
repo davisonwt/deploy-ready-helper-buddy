@@ -1742,7 +1742,7 @@ export default function MemryPage({ embedded = false }: { embedded?: boolean }) 
         ) : (
         <div ref={feedContainerRef} className="h-full overflow-y-auto" style={{ scrollSnapType: 'y mandatory' }}>
           {/* Stories Row */}
-          {storyCreators.length > 0 && (
+          {storyCreators.length > 0 && !embedded && (
             <div className="fixed top-[104px] left-[72px] right-0 z-20 px-4 py-2">
               <div className="flex items-center gap-3 overflow-x-auto max-w-lg mx-auto" style={{ scrollbarWidth: 'none' }}>
                 {/* Your Story */}
