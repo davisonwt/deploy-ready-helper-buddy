@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Heart, MessageCircle, Share2, Send, Gift, ChevronLeft, ChevronRight, Play, Pause, Music, MessageSquare, Lock } from 'lucide-react';
+import { SowerStoryStrip } from './SowerStoryStrip';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
@@ -436,6 +437,17 @@ export const MemrySeedCard: React.FC<MemrySeedCardProps> = ({
           </div>
         </div>
       </div>
+
+      {/* ── CaaS AI Story Strip ── */}
+      <SowerStoryStrip
+        seedId={post.id}
+        sowerName={post.profiles?.display_name || 'Sower'}
+        seedTitle={post.product_title || post.caption}
+        daysSincePlanted={0}
+        bestowalsCount={post.likes_count || 0}
+        engagements={post.comments_count || 0}
+        seedCategory={getSeedTypeLabel()}
+      />
 
       {/* ── Section 2: Actions Row ── */}
       <div className="px-3 py-2.5">
