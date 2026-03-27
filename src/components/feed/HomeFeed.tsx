@@ -11,6 +11,7 @@ import { LiveSessionCard } from './cards/LiveSessionCard';
 import { FeedHeader } from './FeedHeader';
 import { Radio, Sprout, MessageSquare, Zap } from 'lucide-react';
 import { InlineMemryFeed } from './cards/InlineMemryFeed';
+import { DayBeadsFeedCard } from './cards/DayBeadsFeedCard';
 
 interface HomeFeedProps {
   profile: any;
@@ -317,6 +318,8 @@ export const HomeFeed: React.FC<HomeFeedProps> = ({
             </div>
           </section>
         )}
+
+        <DayBeadsFeedCard calendarData={calendarData} />
 
         {/* === S2G MEMRY FEED (inline) === */}
         <InlineMemryFeed />
