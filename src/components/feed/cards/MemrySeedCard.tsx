@@ -160,7 +160,23 @@ export const MemrySeedCard: React.FC<MemrySeedCardProps> = ({
   const isBook = post.content_type === 'new_book';
   const isMusic = post.content_type === 'music';
   const isSeed = isProduct || isOrchard || isBook;
-  const hasAudio = !!(post.audio_url || isMusic);
+  const hasAudio = !!(post.audio_url || isMusic || (post.category && ['music', 'e-book', 'audio'].includes(post.category.toLowerCase())));
+
+  // Determine seed type label
+  const getSeedTypeLabel = () => {
+    if (isMusic) return '🎵 Music';
+    if (isBook) return '📚 Book';
+    if (isOrchard) return '🌳 Orchard';
+    const cat = (post.category || post.product_type || '').toLowerCase();
+    if (cat.includes('music')) return '🎵 Music';
+    if (cat.includes('e-book') || cat.includes('ebook')) return '📱 E-Book';
+    if (cat.includes('book')) return '📚 Book';
+    if (cat.includes('art')) return '🎨 Art';
+    if (cat.includes('produce')) return '🥬 Produce';
+    if (cat.includes('file')) return '📄 File';
+    if (isProduct) return '🌱 Product';
+    return '🌱 Seed';
+  };
 
   const handleShare = async () => {
     const shareUrl = `${window.location.origin}/memry?post=${post.id}`;
@@ -259,10 +275,10 @@ export const MemrySeedCard: React.FC<MemrySeedCardProps> = ({
           />
         )}
 
-        {/* Top-left: Badge */}
-        {(isSeed || isMusic) && (
+        {/* Top-left: Badge with seed type */}
+        {(isSeed || isMusic || isProduct) && (
           <Badge className="absolute top-3 left-3 z-10 bg-emerald-500 hover:bg-emerald-500 text-white text-[10px] font-bold px-2.5 py-1 shadow-lg">
-            {isProduct ? '🌱 New Seed Available' : isBook ? '📚 New Book Available' : isMusic ? '🎵 Music Seed' : '🌳 New Orchard Planted'}
+            {getSeedTypeLabel()} — New Available
           </Badge>
         )}
 
@@ -317,8 +333,8 @@ export const MemrySeedCard: React.FC<MemrySeedCardProps> = ({
                 <Link to={`/member/${post.user_id}`} className="text-white font-bold text-sm truncate hover:underline">
                   {post.profiles?.display_name || 'Sower'}
                 </Link>
-                {isSeed && (
-                  <span className="bg-emerald-500/80 text-white text-[9px] font-bold px-1.5 py-0.5 rounded-full">Seed</span>
+                {(isSeed || isMusic) && (
+                  <span className="bg-emerald-500/80 text-white text-[9px] font-bold px-1.5 py-0.5 rounded-full">{getSeedTypeLabel()}</span>
                 )}
                 {isFollowing && (
                   <span className="bg-white/20 text-white/80 text-[9px] font-semibold px-1.5 py-0.5 rounded-full backdrop-blur-sm">Following</span>
