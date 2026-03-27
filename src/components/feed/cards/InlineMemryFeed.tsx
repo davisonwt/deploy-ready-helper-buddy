@@ -239,9 +239,60 @@ export const InlineMemryFeed: React.FC = () => {
     }
   };
 
-  const handleComment = (postId: string) => {
-    toast({ title: 'Comments', description: 'Opening comments...' });
+  const handleOpenComments = useCallback(async (postId: string) => {
+    setCommentsPostId(postId);
+    setCommentsOpen(true);
+    setComments([]);
+    setNewComment('');
+
+    const realPostId = postId.replace(/^(product|book|music|orchard)-/, '');
+    const { data } = await supabase
+      .from('memry_comments')
+      .select('*')
+      .eq('post_id', realPostId)
+      .order('created_at', { ascending: true });
+
+    if (data && data.length > 0) {
+      const userIds = [...new Set(data.map((c: any) => c.user_id))];
+      const { data: profiles } = await supabase
+        .from('public_profiles')
+        .select('user_id, display_name, avatar_url')
+        .in('user_id', userIds);
+      const pMap = new Map((profiles || []).map((p: any) => [p.user_id, p]));
+      setComments(data.map((c: any) => {
+        const p = pMap.get(c.user_id);
+        return { id: c.id, user_id: c.user_id, content: c.content, created_at: c.created_at, profiles: p ? { display_name: p.display_name, avatar_url: p.avatar_url } : undefined };
+      }));
+    }
+  }, []);
+
+  const handleAddComment = async () => {
+    if (!newComment.trim() || !user || !commentsPostId) return;
+    const realPostId = commentsPostId.replace(/^(product|book|music|orchard)-/, '');
+    const { data: newC, error } = await supabase
+      .from('memry_comments')
+      .insert({ post_id: realPostId, user_id: user.id, content: newComment.trim() })
+      .select()
+      .single();
+    if (!error && newC) {
+      const { data: myProfile } = await supabase.from('public_profiles').select('display_name, avatar_url').eq('user_id', user.id).maybeSingle();
+      setComments(prev => [...prev, { id: newC.id, user_id: user.id, content: newComment.trim(), created_at: new Date().toISOString(), profiles: myProfile ? { display_name: myProfile.display_name, avatar_url: myProfile.avatar_url } : undefined }]);
+      setPosts(prev => prev.map(p => p.id === commentsPostId ? { ...p, comments_count: p.comments_count + 1 } : p));
+      setNewComment('');
+    }
   };
+
+  const handlePrivateMessage = useCallback(async (targetUserId: string, seedCaption: string) => {
+    if (!user) return;
+    try {
+      const { data: roomId, error } = await supabase.rpc('get_or_create_direct_room', { user1_id: user.id, user2_id: targetUserId });
+      if (error) throw error;
+      if (!roomId) throw new Error('No room ID returned');
+      navigate(`/communications-hub?room=${roomId}`);
+    } catch (err: any) {
+      console.error('Private message error:', err);
+    }
+  }, [user, navigate]);
 
   if (loading) {
     return (
@@ -285,10 +336,58 @@ export const InlineMemryFeed: React.FC = () => {
             isFollowing={followedUserIds.has(post.user_id)}
             onLike={handleLike}
             onFollow={handleFollow}
-            onComment={handleComment}
+            onOpenComments={handleOpenComments}
+            onPrivateMessage={handlePrivateMessage}
           />
         ))}
       </div>
+
+      {/* Comments Modal */}
+      <Dialog open={commentsOpen} onOpenChange={setCommentsOpen}>
+        <DialogContent className="max-w-md bg-card border-border rounded-2xl max-h-[70vh]">
+          <DialogHeader>
+            <DialogTitle className="text-lg font-bold">Messages</DialogTitle>
+          </DialogHeader>
+          <ScrollArea className="max-h-[45vh] pr-2">
+            <div className="space-y-3">
+              {comments.length === 0 && (
+                <p className="text-sm text-muted-foreground text-center py-6">No messages yet. Be the first!</p>
+              )}
+              {comments.map(c => (
+                <div key={c.id} className="flex gap-2.5">
+                  <Avatar className="w-8 h-8 flex-shrink-0">
+                    <AvatarImage src={c.profiles?.avatar_url} />
+                    <AvatarFallback className="bg-primary/20 text-primary text-xs">{c.profiles?.display_name?.[0] || 'U'}</AvatarFallback>
+                  </Avatar>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm">
+                      <span className="font-semibold text-foreground">{c.profiles?.display_name || 'Sower'}</span>{' '}
+                      <span className="text-muted-foreground">{c.content}</span>
+                    </p>
+                    <p className="text-[10px] text-muted-foreground mt-0.5">
+                      {new Date(c.created_at).toLocaleDateString()}
+                    </p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </ScrollArea>
+          {user && (
+            <div className="flex gap-2 pt-3 border-t border-border">
+              <Input
+                placeholder="Write a message..."
+                value={newComment}
+                onChange={e => setNewComment(e.target.value)}
+                onKeyDown={e => e.key === 'Enter' && handleAddComment()}
+                className="flex-1 bg-muted border-border"
+              />
+              <Button onClick={handleAddComment} size="sm" className="bg-primary text-primary-foreground">
+                <Send className="w-4 h-4" />
+              </Button>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </section>
   );
 };
