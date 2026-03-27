@@ -155,6 +155,9 @@ function SowerMemryCard({ sower, index }: { sower: SowerMemry; index: number }) 
       initial={{ opacity: 0, y: 12 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: index * 0.08 }}
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
+      onTouchStart={() => setIsHovered(true)}
     >
       <Link
         to={`/member/${sower.userId}`}
@@ -164,7 +167,7 @@ function SowerMemryCard({ sower, index }: { sower: SowerMemry; index: number }) 
         {previewItems.length > 0 ? (
           <div className="relative h-36 bg-muted overflow-hidden">
             {isMusic && currentItem ? (
-              <InlineMusicSnippet mediaUrl={currentItem.url} isVisible={isVisible} />
+              <InlineMusicSnippet mediaUrl={currentItem.url} isVisible={isActive} />
             ) : currentItem ? (
               <img src={currentItem.url} alt="" className="w-full h-full object-cover" loading="lazy" />
             ) : null}
