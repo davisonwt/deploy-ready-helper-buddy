@@ -1,12 +1,7 @@
-import React from 'react';
-import { NavLink } from 'react-router-dom';
-import { Home, Sprout, MessageSquare, Radio, MoreHorizontal } from 'lucide-react';
+import React, { useState } from 'react';
+import { NavLink, Link } from 'react-router-dom';
+import { Home, Sprout, MessageSquare, Radio, MoreHorizontal, TreePine, GraduationCap, Zap, Calendar, CloudRain, Settings, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { useState } from 'react';
-import { Link } from 'react-router-dom';
-import {
-  TreePine, GraduationCap, Zap, Calendar, CloudRain, Settings, X
-} from 'lucide-react';
 import { AnimatePresence, motion } from 'framer-motion';
 
 interface MobileBottomTabsProps {
@@ -14,23 +9,23 @@ interface MobileBottomTabsProps {
 }
 
 const moreItems = [
-  { to: '/browse-orchards', label: 'Orchards', icon: TreePine },
-  { to: '/explore-sessions?type=classroom', label: 'Classrooms', icon: GraduationCap },
-  { to: '/explore-sessions?type=skilldrop', label: 'SkillDrop', icon: Zap },
-  { to: '/enochian-calendar-design', label: '364yhvh Days', icon: Calendar },
-  { to: '/tithing', label: 'Let It Rain', icon: CloudRain },
-  { to: '/admin/analytics', label: "GoSat's", icon: Settings },
+  { to: '/browse-orchards', label: 'Orchards', icon: TreePine, color: '#0F6E56' },
+  { to: '/explore-sessions?type=classroom', label: 'Classrooms', icon: GraduationCap, color: '#378ADD' },
+  { to: '/explore-sessions?type=skilldrop', label: 'SkillDrop', icon: Zap, color: '#534AB7' },
+  { to: '/enochian-calendar-design', label: '364yhvh Days', icon: Calendar, color: '#3C3489' },
+  { to: '/tithing', label: 'Let It Rain', icon: CloudRain, color: '#533AB7' },
+  { to: '/admin/analytics', label: "GoSat's", icon: Settings, color: '#BA7517' },
+];
+
+const tabs = [
+  { to: '/dashboard', label: 'Feed', icon: Home, color: '#185FA5' },
+  { to: '/my-orchards', label: 'Plant', icon: Sprout, color: '#3B6D11' },
+  { to: '/communications-hub', label: 'Chat', icon: MessageSquare, color: '#1D9E75' },
+  { to: '/grove-station', label: 'Radio', icon: Radio, color: '#E24B4A', live: true },
 ];
 
 export const MobileBottomTabs: React.FC<MobileBottomTabsProps> = ({ radioLive }) => {
   const [showMore, setShowMore] = useState(false);
-
-  const tabs = [
-    { to: '/dashboard', label: 'Feed', icon: Home },
-    { to: '/my-orchards', label: 'Plant', icon: Sprout },
-    { to: '/communications-hub', label: 'Chat', icon: MessageSquare },
-    { to: '/grove-station', label: 'Radio', icon: Radio, live: true },
-  ];
 
   return (
     <>
@@ -68,7 +63,12 @@ export const MobileBottomTabs: React.FC<MobileBottomTabsProps> = ({ radioLive })
                       onClick={() => setShowMore(false)}
                       className="flex flex-col items-center gap-1.5 p-3 rounded-xl hover:bg-accent/10 transition-colors"
                     >
-                      <Icon className="w-5 h-5 text-primary" />
+                      <div
+                        className="w-9 h-9 rounded-lg flex items-center justify-center"
+                        style={{ backgroundColor: item.color }}
+                      >
+                        <Icon className="w-4 h-4 text-white" />
+                      </div>
                       <span className="text-[10px] text-muted-foreground font-medium">{item.label}</span>
                     </Link>
                   );
@@ -90,11 +90,16 @@ export const MobileBottomTabs: React.FC<MobileBottomTabsProps> = ({ radioLive })
                 to={tab.to}
                 className={({ isActive }) => cn(
                   'flex flex-col items-center gap-0.5 px-3 py-1 rounded-lg transition-colors min-w-[52px]',
-                  isActive ? 'text-primary' : 'text-muted-foreground'
+                  isActive ? 'text-foreground' : 'text-muted-foreground'
                 )}
               >
                 <div className="relative">
-                  <Icon className="w-5 h-5" />
+                  <div
+                    className="w-7 h-7 rounded-md flex items-center justify-center"
+                    style={{ backgroundColor: tab.color }}
+                  >
+                    <Icon className="w-3.5 h-3.5 text-white" />
+                  </div>
                   {tab.live && radioLive && (
                     <span className="absolute -top-0.5 -right-1 w-2 h-2 bg-red-500 rounded-full animate-pulse" />
                   )}
@@ -107,7 +112,9 @@ export const MobileBottomTabs: React.FC<MobileBottomTabsProps> = ({ radioLive })
             onClick={() => setShowMore(true)}
             className="flex flex-col items-center gap-0.5 px-3 py-1 rounded-lg text-muted-foreground min-w-[52px]"
           >
-            <MoreHorizontal className="w-5 h-5" />
+            <div className="w-7 h-7 rounded-md flex items-center justify-center bg-muted/40">
+              <MoreHorizontal className="w-3.5 h-3.5" />
+            </div>
             <span className="text-[10px] font-medium">More</span>
           </button>
         </div>
