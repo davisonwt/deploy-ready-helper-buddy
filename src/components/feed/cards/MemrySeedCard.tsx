@@ -11,6 +11,7 @@ import { useProductBasket } from '@/contexts/ProductBasketContext';
 import { resolveAudioUrl } from '@/utils/resolveAudioUrl';
 import { globalAudioManager } from '@/utils/globalAudioManager';
 import { unlockHtmlMediaElement } from '@/utils/unlockHtmlMediaElement';
+import { dedupeUrls, isVideoUrl, normalizeMediaUrl } from '@/utils/memryFeedMedia';
 
 interface MemrySeedCardProps {
   post: {
@@ -201,20 +202,19 @@ export const MemrySeedCard: React.FC<MemrySeedCardProps> = ({
   const [videoPlaying, setVideoPlaying] = useState(false);
 
   const fallbackMedia = '/lovable-uploads/ff9e6e48-049d-465a-8d2b-f6e8fed93522.png';
-  const mediaUrl = (post.media_url || '').trim();
+  const mediaUrl = normalizeMediaUrl(post.media_url || '');
   const isVideoByType = String(post.content_type || '').toLowerCase() === 'video';
-  const isVideoByUrl = /\.(mp4|webm|mov|m4v)(\?|$)/i.test(mediaUrl);
-  const isVideo = !!mediaUrl && (isVideoByType || isVideoByUrl);
+  const normalizedImageUrls = (post.image_urls || [])
+    .map((url) => normalizeMediaUrl(url))
+    .filter(Boolean);
+  const mediaCandidates = dedupeUrls([mediaUrl, ...normalizedImageUrls].filter(Boolean));
+  const primaryVideoUrl = mediaCandidates.find((url) => isVideoUrl(url)) || '';
+  const isVideoByUrl = !!primaryVideoUrl;
+  const isVideo = isVideoByType || isVideoByUrl;
 
   // Build image gallery from image_urls + media_url, deduplicated
   const allImages = (() => {
-    const imgs: string[] = [];
-    if (post.image_urls?.length) {
-      post.image_urls.forEach((url) => { if (url && !imgs.includes(url)) imgs.push(url); });
-    }
-    if (mediaUrl && !imgs.includes(mediaUrl) && !isVideoByUrl) {
-      imgs.push(mediaUrl);
-    }
+    const imgs = mediaCandidates.filter((url) => !isVideoUrl(url));
     return imgs.length > 0 ? imgs : [fallbackMedia];
   })();
 
@@ -353,7 +353,7 @@ export const MemrySeedCard: React.FC<MemrySeedCardProps> = ({
           <>
             <video
               ref={videoRef}
-              src={mediaUrl}
+              src={primaryVideoUrl || mediaUrl}
               className="w-full h-full object-cover"
               muted={!videoPlaying}
               playsInline
