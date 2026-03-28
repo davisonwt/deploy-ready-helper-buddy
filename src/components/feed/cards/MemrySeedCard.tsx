@@ -446,30 +446,36 @@ export const MemrySeedCard: React.FC<MemrySeedCardProps> = ({
                 }
               }}
             />
-            <button
-              type="button"
-              data-deadlink-watch-ignore="true"
-              onClick={(e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                const vid = videoRef.current;
-                if (!vid) return;
-                if (vid.paused) {
-                  vid.play().catch(() => {});
-                } else {
-                  vid.pause();
-                }
-              }}
-              className="absolute bottom-3 right-3 z-[8] flex h-12 w-12 items-center justify-center rounded-full bg-black/50 backdrop-blur-sm border-0 p-0 appearance-none"
-              style={{ WebkitTapHighlightColor: 'transparent' }}
-              aria-label={videoPlaying ? 'Pause video' : 'Play video'}
-            >
-              {videoPlaying ? (
-                <Pause className="h-6 w-6 text-white" />
-              ) : (
-                <Play className="ml-0.5 h-6 w-6 text-white" fill="white" />
-              )}
-            </button>
+            <div className="absolute bottom-3 right-3 z-[8] w-[108px] sm:w-[116px]">
+              <div className="h-8 flex items-center gap-1.5 bg-black/50 backdrop-blur-md rounded-full px-2">
+                <button
+                  type="button"
+                  data-deadlink-watch-ignore="true"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    const vid = videoRef.current;
+                    if (!vid) return;
+                    if (vid.paused) {
+                      vid.play().catch(() => {});
+                    } else {
+                      vid.pause();
+                    }
+                  }}
+                  className="text-white hover:scale-110 transition-transform flex-shrink-0 border-0 p-0 bg-transparent appearance-none cursor-pointer"
+                  style={{ WebkitTapHighlightColor: 'transparent' }}
+                  aria-label={videoPlaying ? 'Pause video' : 'Play video'}
+                >
+                  {videoPlaying ? <Pause className="w-3.5 h-3.5" /> : <Play className="w-3.5 h-3.5" />}
+                </button>
+                <div className="flex-1 h-[2px] bg-white/20 rounded-full overflow-hidden">
+                  <div className="h-full bg-white rounded-full" />
+                </div>
+                <span className="text-white text-[8px] font-mono flex-shrink-0">
+                  {videoPlaying ? '▶' : '⏸'}
+                </span>
+              </div>
+            </div>
           </>
         ) : (
           <img
