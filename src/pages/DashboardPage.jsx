@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import SunCalc from 'suncalc';
-import { MessageCircle, Video } from 'lucide-react';
+import { MessageCircle, Video, Sprout } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { useAuth } from '../hooks/useAuth';
 import { useBestowals } from '../hooks/useBestowals.jsx';
@@ -202,12 +202,22 @@ export default function DashboardPage() {
         </div>
       </AppShell>
 
-      {/* Static bottom bar with Go Live + Chat */}
+      {/* Static bottom bar with Plant + Go Live + Chat */}
       <div className="fixed inset-x-0 bottom-0 z-[100] border-t border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80">
         <div className="mx-auto flex max-w-screen-md items-center justify-center gap-3 px-4 py-3">
+          <a
+            href="/create-orchard"
+            className="flex flex-1 max-w-[180px] items-center justify-center gap-2 rounded-full px-4 py-3 font-bold text-sm text-white shadow-lg"
+            style={{
+              background: 'linear-gradient(135deg, #166534, #22c55e)',
+            }}
+          >
+            <Sprout className="h-5 w-5" />
+            Plant
+          </a>
           <button
             onClick={() => setGoLiveOpen(!goLiveOpen)}
-            className="flex flex-1 max-w-[220px] items-center justify-center gap-2 rounded-full px-4 py-3 font-bold text-sm text-white shadow-lg"
+            className="flex flex-1 max-w-[180px] items-center justify-center gap-2 rounded-full px-4 py-3 font-bold text-sm text-white shadow-lg"
             style={{
               background: 'linear-gradient(135deg, #dc2626, #f43f5e)',
             }}
@@ -217,7 +227,7 @@ export default function DashboardPage() {
           </button>
           <button
             onClick={() => setChatDrawerOpen(true)}
-            className="flex flex-1 max-w-[220px] items-center justify-center gap-2 rounded-full bg-primary px-4 py-3 font-bold text-sm text-primary-foreground shadow-lg"
+            className="flex flex-1 max-w-[180px] items-center justify-center gap-2 rounded-full bg-primary px-4 py-3 font-bold text-sm text-primary-foreground shadow-lg"
           >
             <MessageCircle className="h-5 w-5" />
             Chat
