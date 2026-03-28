@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import SunCalc from 'suncalc';
-import { MessageCircle } from 'lucide-react';
+import { MessageCircle, Video } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { useAuth } from '../hooks/useAuth';
 import { useBestowals } from '../hooks/useBestowals.jsx';
@@ -189,29 +189,73 @@ export default function DashboardPage() {
       <AppShell
         calendarData={calendarData}
         communityCount={communityCount || 0}
+        hideGoLiveFAB
       >
-        <HomeFeed
-          profile={profile}
-          calendarData={calendarData}
-          stats={stats}
-          unreadMessages={unreadMessages}
-        />
+        <div className="pb-20">
+          <HomeFeed
+            profile={profile}
+            calendarData={calendarData}
+            stats={stats}
+            unreadMessages={unreadMessages}
+          />
+        </div>
       </AppShell>
 
-      <motion.button
-        type="button"
-        aria-label="Open chats"
-        onClick={() => setChatDrawerOpen(true)}
-        className="fixed bottom-36 right-4 lg:right-56 z-[62] flex items-center gap-2 rounded-full border border-border/50 bg-primary px-4 py-3 text-primary-foreground shadow-2xl"
-        whileHover={{ scale: 1.04 }}
-        whileTap={{ scale: 0.96 }}
-      >
-        <MessageCircle className="h-5 w-5" />
-        <span className="text-sm font-bold">Chat</span>
-      </motion.button>
+      {/* Static bottom bar with Go Live + Chat */}
+      <div className="fixed inset-x-0 bottom-0 z-[100] border-t border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80">
+        <div className="mx-auto flex max-w-screen-md items-center justify-center gap-3 px-4 py-3">
+          <button
+            onClick={() => setGoLiveOpen(!goLiveOpen)}
+            className="flex flex-1 max-w-[220px] items-center justify-center gap-2 rounded-full px-4 py-3 font-bold text-sm text-white shadow-lg"
+            style={{
+              background: 'linear-gradient(135deg, #dc2626, #f43f5e)',
+            }}
+          >
+            <Video className="h-5 w-5" />
+            Go Live
+          </button>
+          <button
+            onClick={() => setChatDrawerOpen(true)}
+            className="flex flex-1 max-w-[220px] items-center justify-center gap-2 rounded-full bg-primary px-4 py-3 font-bold text-sm text-primary-foreground shadow-lg"
+          >
+            <MessageCircle className="h-5 w-5" />
+            Chat
+          </button>
+        </div>
+      </div>
+
+      {/* Go Live options panel */}
+      {goLiveOpen && (
+        <>
+          <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[101]" onClick={() => setGoLiveOpen(false)} />
+          <div className="fixed bottom-20 left-1/2 -translate-x-1/2 z-[102] w-56 space-y-2">
+            <p className="text-[10px] font-bold uppercase tracking-wider text-white/70 px-1 mb-1">Go Live As…</p>
+            {[
+              { href: '/communications-hub?tab=classroom', label: 'Classroom', sublabel: 'Teach & mentor', icon: '🎓', gradient: 'linear-gradient(135deg, #0891b2, #06b6d4)' },
+              { href: '/explore-sessions?type=skilldrop', label: 'SkillDrop', sublabel: 'Share a skill', icon: '⚡', gradient: 'linear-gradient(135deg, #2563eb, #7c3aed)' },
+              { href: '/communications-hub?tab=training', label: 'Training', sublabel: 'Lead a workout', icon: '💪', gradient: 'linear-gradient(135deg, #7c3aed, #db2777)' },
+              { href: '/radio-slot-application', label: 'Radio', sublabel: 'Go on air', icon: '📻', gradient: 'linear-gradient(135deg, #db2777, #ef4444)' },
+            ].map((opt) => (
+              <a
+                key={opt.label}
+                href={opt.href}
+                onClick={() => setGoLiveOpen(false)}
+                className="flex items-center gap-3 rounded-2xl p-3 shadow-lg"
+                style={{ background: opt.gradient }}
+              >
+                <span className="text-xl">{opt.icon}</span>
+                <div>
+                  <span className="font-bold text-white text-xs block">{opt.label}</span>
+                  <span className="text-[9px] text-white/60">{opt.sublabel}</span>
+                </div>
+              </a>
+            ))}
+          </div>
+        </>
+      )}
 
       {chatDrawerOpen && (
-        <div className="fixed inset-0 z-[80] pointer-events-auto">
+        <div className="fixed inset-0 z-[110] pointer-events-auto">
           <PrivateChatsDrawer
             isOpen={true}
             onClose={() => setChatDrawerOpen(false)}
