@@ -52,9 +52,15 @@ export const PrivateChatsDrawer: React.FC<PrivateChatsDrawerProps> = ({ isOpen, 
   }, [user, isOpen]);
 
   const loadConversations = async () => {
-    if (!user) return;
+    if (!user) {
+      setConversations([]);
+      setLoading(false);
+      return;
+    }
+
+    setLoading(true);
     try {
-      const { data: rooms } = await supabase
+      const { data: rooms, error: roomsError } = await supabase
         .from('chat_rooms')
         .select(`id, name, room_type, created_at, chat_participants!inner(user_id, is_active)`)
         .eq('chat_participants.user_id', user.id)
@@ -64,52 +70,96 @@ export const PrivateChatsDrawer: React.FC<PrivateChatsDrawerProps> = ({ isOpen, 
         .order('created_at', { ascending: false })
         .limit(30);
 
-      const items: ChatConversation[] = [];
-      for (const room of rooms || []) {
-        const { data: msgs } = await supabase
+      if (roomsError) throw roomsError;
+
+      const roomList = rooms || [];
+      if (roomList.length === 0) {
+        setConversations([]);
+        return;
+      }
+
+      const roomIds = roomList.map((room: any) => room.id);
+
+      const [messagesResult, participantsResult] = await Promise.all([
+        supabase
           .from('chat_messages')
-          .select('content, created_at')
-          .eq('room_id', room.id)
+          .select('room_id, content, created_at')
+          .in('room_id', roomIds)
           .order('created_at', { ascending: false })
-          .limit(1);
-
-        const { data: others } = await supabase
+          .limit(Math.max(roomIds.length * 4, 80)),
+        supabase
           .from('chat_participants')
-          .select('profiles(display_name, avatar_url, first_name, last_name)')
-          .eq('room_id', room.id)
+          .select('room_id, user_id, profiles(display_name, avatar_url, first_name, last_name)')
+          .in('room_id', roomIds)
           .eq('is_active', true)
-          .neq('user_id', user.id)
-          .limit(1);
+          .neq('user_id', user.id),
+      ]);
 
-        const otherProfile = (others?.[0] as any)?.profiles;
+      if (messagesResult.error) throw messagesResult.error;
+      if (participantsResult.error) throw participantsResult.error;
+
+      const latestMessageByRoom = new Map<string, { content: string | null; created_at: string }>();
+      (messagesResult.data || []).forEach((msg: any) => {
+        if (!latestMessageByRoom.has(msg.room_id)) {
+          latestMessageByRoom.set(msg.room_id, msg);
+        }
+      });
+
+      const otherProfileByRoom = new Map<string, any>();
+      (participantsResult.data || []).forEach((participant: any) => {
+        if (!otherProfileByRoom.has(participant.room_id)) {
+          otherProfileByRoom.set(participant.room_id, participant.profiles);
+        }
+      });
+
+      const items: ChatConversation[] = roomList.map((room: any) => {
+        const latestMessage = latestMessageByRoom.get(room.id);
+        const otherProfile = otherProfileByRoom.get(room.id);
         const isGroup = room.room_type === 'group';
-        items.push({
+
+        return {
           id: room.id,
-          name: isGroup ? (room.name || 'Group') : (otherProfile?.display_name || `${otherProfile?.first_name || ''} ${otherProfile?.last_name || ''}`.trim() || 'Unknown'),
+          name: isGroup
+            ? (room.name || 'Group')
+            : (otherProfile?.display_name || `${otherProfile?.first_name || ''} ${otherProfile?.last_name || ''}`.trim() || 'Unknown'),
           avatar_url: isGroup ? null : (otherProfile?.avatar_url || null),
-          last_message: msgs?.[0]?.content || 'No messages yet',
-          last_message_time: msgs?.[0]?.created_at || room.created_at,
+          last_message: latestMessage?.content || 'No messages yet',
+          last_message_time: latestMessage?.created_at || room.created_at,
           unread_count: 0,
           is_group: isGroup,
-        });
-      }
+        };
+      });
+
       setConversations(items);
     } catch (e) {
       console.error('Error loading chats:', e);
+      toast({ title: 'Error', description: 'Failed to load chats', variant: 'destructive' });
+      setConversations([]);
     } finally {
       setLoading(false);
     }
   };
 
   const loadAvailableUsers = async () => {
-    if (!user) return;
+    if (!user) {
+      setAvailableUsers([]);
+      return;
+    }
+
     const { data, error } = await supabase
       .from('profiles')
       .select('id, user_id, display_name, avatar_url, first_name, last_name')
       .neq('user_id', user.id)
       .limit(50);
-    console.log('📋 loadAvailableUsers result:', { count: data?.length, error });
-    setAvailableUsers(data || []);
+
+    if (error) {
+      console.error('Error loading available users:', error);
+      toast({ title: 'Error', description: 'Failed to load users', variant: 'destructive' });
+      setAvailableUsers([]);
+      return;
+    }
+
+    setAvailableUsers((data || []).filter((profile: any) => profile.user_id && profile.user_id !== user.id));
   };
 
   const createNewChat = async (otherUserId: string) => {
