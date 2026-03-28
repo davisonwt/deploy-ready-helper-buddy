@@ -1,6 +1,7 @@
 import React, { useRef, useState, useEffect, useCallback } from 'react';
 import { MessageCircle } from 'lucide-react';
 import { motion } from 'framer-motion';
+import { createPortal } from 'react-dom';
 import { StickyProfileBar } from './StickyProfileBar';
 import { BottomActionBar } from './BottomActionBar';
 import { StatsFloatingButton } from './StatsFloatingButton';
@@ -175,8 +176,11 @@ export const SocialFeedDashboard: React.FC<SocialFeedDashboardProps> = ({
         <span className="text-sm font-bold">Chat</span>
       </motion.button>
 
-      {/* Private Chats Drawer (overlay on feed) */}
-      {chatDrawerOpen && <PrivateChatsDrawer isOpen={chatDrawerOpen} onClose={() => setChatDrawerOpen(false)} />}
+      {/* Private Chats Drawer (portal overlay so it never affects feed rendering/click layers) */}
+      {chatDrawerOpen && typeof document !== 'undefined' && createPortal(
+        <PrivateChatsDrawer isOpen={true} onClose={() => setChatDrawerOpen(false)} />,
+        document.body
+      )}
 
       <BottomActionBar theme={sectionThemes[activeSection] || currentTheme} />
       <div className="hidden sm:block">
