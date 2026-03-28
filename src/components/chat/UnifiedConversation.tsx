@@ -495,11 +495,20 @@ export const UnifiedConversation: React.FC<UnifiedConversationProps> = ({
   };
 
   const loadAvailableUsers = async () => {
-    const { data } = await supabase
+    let query = supabase
       .from('profiles')
       .select('user_id, display_name, first_name, last_name, avatar_url')
-      .not('user_id', 'in', `(${participants.map(p => p.user_id).join(',')})`)
       .limit(50);
+
+    const existingIds = participants.map(p => p.user_id).filter(Boolean);
+    if (existingIds.length > 0) {
+      query = query.not('user_id', 'in', `(${existingIds.join(',')})`);
+    }
+
+    const { data, error } = await query;
+    if (error) {
+      console.error('Error loading available users:', error);
+    }
     setAvailableUsers(data || []);
   };
 
