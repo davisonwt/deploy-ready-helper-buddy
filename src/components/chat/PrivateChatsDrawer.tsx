@@ -273,10 +273,10 @@ export const PrivateChatsDrawer: React.FC<PrivateChatsDrawerProps> = ({ isOpen, 
             <Dialog open={showNewChatDialog} onOpenChange={setShowNewChatDialog}>
               <DialogContent className="max-w-md">
                 <DialogHeader><DialogTitle>New Conversation</DialogTitle></DialogHeader>
-                <Tabs value={chatType} onValueChange={v => setChatType(v as any)} className="w-full">
-                  <TabsList className="grid w-full grid-cols-2 mb-4">
-                    <TabsTrigger value="direct">Direct Message</TabsTrigger>
-                    <TabsTrigger value="group">Group Chat</TabsTrigger>
+                <Tabs value={chatType} onValueChange={v => setChatType(v as any)} className="w-full" data-deadlink-watch-ignore="true">
+                  <TabsList className="grid w-full grid-cols-2 mb-4" data-deadlink-watch-ignore="true">
+                    <TabsTrigger value="direct" data-deadlink-watch-ignore="true">Direct Message</TabsTrigger>
+                    <TabsTrigger value="group" data-deadlink-watch-ignore="true">Group Chat</TabsTrigger>
                   </TabsList>
                   <TabsContent value="direct" className="space-y-2 max-h-60 overflow-y-auto">
                     {availableUsers.length === 0 ? (
