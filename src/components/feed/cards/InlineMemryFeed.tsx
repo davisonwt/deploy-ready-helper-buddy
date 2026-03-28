@@ -61,8 +61,8 @@ const toMediaPayload = (
   const forcedImage = normalizeMediaUrl(options.forceImageUrl || '');
   const forcedAudio = normalizeMediaUrl(options.forceAudioUrl || '');
 
-  const videos = dedupeUrls([...(forcedVideo ? [forcedVideo] : []), ...normalized.videos]).filter((url) => !isManifestUrl(url));
-  const images = filterRenderableImages([...(forcedImage ? [forcedImage] : []), ...normalized.images]);
+  const videos = dedupeUrls([...(forcedVideo ? [forcedVideo] : []), ...normalized.videos]);
+  const images = dedupeUrls([...(forcedImage ? [forcedImage] : []), ...normalized.images]);
   const audios = dedupeUrls([...(forcedAudio ? [forcedAudio] : []), ...normalized.audios]);
 
   return {
