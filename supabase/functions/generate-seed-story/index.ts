@@ -85,9 +85,11 @@ serve(async (req) => {
           });
         }
         if (response.status === 402) {
-          return new Response(JSON.stringify({ error: "Payment required" }), {
-            status: 402, headers: jsonHeaders,
-          });
+          console.warn("AI gateway returned 402 – using fallback story");
+          return new Response(JSON.stringify({
+            story: buildFallbackStory(sowerName, seedTitle, engagements),
+            fallback: true,
+          }), { status: 200, headers: jsonHeaders });
         }
         console.error("AI gateway error:", response.status, t);
         return new Response(JSON.stringify({
