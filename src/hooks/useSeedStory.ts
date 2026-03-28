@@ -101,6 +101,7 @@ export const useSeedStory = (params: SeedStoryParams) => {
         });
 
         if (!response.ok) {
+          console.warn(`generate-seed-story returned ${response.status}`);
           return '';
         }
 
