@@ -205,7 +205,7 @@ export default function DashboardPage() {
             type="button"
             aria-label="Open chats"
             onClick={() => setChatDrawerOpen(true)}
-            className="fixed bottom-36 right-4 md:right-[216px] z-[80] flex items-center gap-2 rounded-full border border-border/40 bg-primary px-4 py-3 text-primary-foreground shadow-xl"
+            className="fixed bottom-20 right-24 z-[95] flex items-center gap-2 rounded-full border border-border/50 bg-primary px-4 py-3 text-primary-foreground shadow-2xl"
             whileHover={{ scale: 1.04 }}
             whileTap={{ scale: 0.96 }}
           >
