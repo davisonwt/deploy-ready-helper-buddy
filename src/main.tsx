@@ -154,6 +154,14 @@ if (typeof window !== 'undefined') {
   });
 }
 
+function isPreviewHost(hostname: string) {
+  return (
+    hostname.includes('lovableproject.com') ||
+    hostname.includes('sandbox.lovable.dev') ||
+    hostname.includes('lovable.app')
+  );
+}
+
 async function registerServiceWorker() {
   try {
     // Check if SW is disabled
@@ -161,7 +169,23 @@ async function registerServiceWorker() {
       return;
     }
 
-    const registration = await navigator.serviceWorker.register('/sw.js?v=2025-11-08-v3');
+    // Skip SW on preview hosts to avoid stale cache/controller issues
+    if (isPreviewHost(window.location.hostname)) {
+      const registrations = await navigator.serviceWorker.getRegistrations();
+      await Promise.all(registrations.map((registration) => registration.unregister()));
+      return;
+    }
+
+    // Clean up old SW versions before registering the current one
+    const expectedScript = '/sw.js?v=2025-11-08-v3';
+    const registrations = await navigator.serviceWorker.getRegistrations();
+    await Promise.all(
+      registrations
+        .filter((registration) => !registration.active?.scriptURL?.includes(expectedScript))
+        .map((registration) => registration.unregister())
+    );
+
+    const registration = await navigator.serviceWorker.register(expectedScript);
     
     // Only update if page is visible (don't interrupt user)
     if (document.visibilityState === 'visible') {
@@ -169,7 +193,7 @@ async function registerServiceWorker() {
     }
   } catch (error) {
     // Silently fail - don't block app functionality
-    console.warn('Service worker registration skipped:', error.message);
+    console.warn('Service worker registration skipped:', (error as Error)?.message || error);
   }
 }
 
