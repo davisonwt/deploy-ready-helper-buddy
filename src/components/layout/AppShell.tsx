@@ -13,6 +13,7 @@ interface AppShellProps {
   communityCount?: number;
   radioLive?: boolean;
   radioListeners?: number;
+  hideGoLiveFAB?: boolean;
 }
 
 export const AppShell: React.FC<AppShellProps> = ({
@@ -21,6 +22,7 @@ export const AppShell: React.FC<AppShellProps> = ({
   communityCount = 0,
   radioLive = false,
   radioListeners = 0,
+  hideGoLiveFAB = false,
 }) => {
   const isMobile = useIsMobile();
 
@@ -53,7 +55,7 @@ export const AppShell: React.FC<AppShellProps> = ({
           {children}
         </main>
         <MobileBottomTabs radioLive={radioLive} />
-        <GoLiveFAB />
+        {!hideGoLiveFAB && <GoLiveFAB />}
 
         {/* Left drawer — full sidebar navigation */}
         <Sheet open={leftOpen} onOpenChange={setLeftOpen}>
@@ -100,7 +102,7 @@ export const AppShell: React.FC<AppShellProps> = ({
           radioListeners={radioListeners}
         />
       </aside>
-      <GoLiveFAB />
+      {!hideGoLiveFAB && <GoLiveFAB />}
     </div>
   );
 };
