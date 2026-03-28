@@ -287,6 +287,16 @@ export const MemrySeedCard: React.FC<MemrySeedCardProps> = ({
     !isVideo
   );
 
+  const toggleVideoPlayback = () => {
+    const vid = videoRef.current;
+    if (!vid) return;
+    if (vid.paused) {
+      vid.play().catch(() => {});
+    } else {
+      vid.pause();
+    }
+  };
+
   useEffect(() => {
     const el = cardRef.current;
     if (!el) return;
@@ -321,99 +331,13 @@ export const MemrySeedCard: React.FC<MemrySeedCardProps> = ({
     if (isProduct) return '🌱 Product';
     return '🌱 Seed';
   };
-
-  const handleShare = async () => {
-    const shareUrl = `${window.location.origin}/memry?post=${post.id}`;
-    try {
-      if (navigator.share) {
-        await navigator.share({ title: 'S2G Memry', text: post.caption, url: shareUrl });
-      } else {
-        await navigator.clipboard.writeText(shareUrl);
-        toast({ title: 'Link copied!' });
-      }
-    } catch {
-      await navigator.clipboard.writeText(shareUrl);
-      toast({ title: 'Link copied!' });
-    }
-  };
-
-  const handleSendMessage = async () => {
-    if (!inlineMsg.trim() || !user) return;
-    const realPostId = post.id.replace(/^(product|book|music|orchard)-/, '');
-    const { error } = await supabase.from('memry_comments').insert({
-      post_id: realPostId,
-      user_id: user.id,
-      content: inlineMsg.trim(),
-    });
-    if (!error) {
-      toast({ title: 'Message sent! 💬' });
-      setInlineMsg('');
-    }
-  };
-
-  const handlePrivateMessage = async () => {
-    if (!user) {
-      toast({ title: 'Sign in required', description: 'Please sign in to message', variant: 'destructive' });
-      return;
-    }
-    if (onPrivateMessage) {
-      onPrivateMessage(post.user_id, post.caption);
-    }
-  };
-
-  const handleBestow = (e?: React.MouseEvent) => {
-    if (e) { e.preventDefault(); e.stopPropagation(); }
-
-    const resolveId = (raw: string | undefined, prefix: string) =>
-      raw ? raw.replace(`${prefix}-`, '') : undefined;
-
-    const productId = resolveId(post.product_id, 'product');
-    const bookId = resolveId(post.book_id, 'book');
-
-    if ((isProduct || isMusic) && productId) {
-      addToBasket({
-        id: productId,
-        title: post.product_title || post.caption.replace(/^(🌱 SEED:|🎵 MUSIC:)\s*/i, ''),
-        price: post.product_price || 0,
-        cover_image_url: post.media_url,
-        sower_id: post.user_id,
-        bestowal_count: 1,
-        sowers: { display_name: post.profiles?.display_name || 'Sower' },
-      });
-      toast({ title: isMusic ? 'Track added to basket! 🎵' : 'Added to basket! 🛒' });
-      navigate('/products/basket');
-    } else if (isOrchard && post.orchard_id) {
-      navigate(`/orchard/${post.orchard_id}`);
-    } else if (isBook && bookId) {
-      addToBasket({
-        id: bookId,
-        title: post.product_title || post.caption.replace('📚 BOOK: ', ''),
-        price: post.product_price || 0,
-        cover_image_url: post.media_url,
-        sower_id: post.user_id,
-        bestowal_count: 1,
-        sowers: { display_name: post.profiles?.display_name || 'Sower' },
-      });
-      toast({ title: 'Book added to basket! 📚' });
-      navigate('/products/basket');
-    } else if (post.user_id) {
-      navigate(`/sower/${post.user_id}?bestow=true`);
-    }
-  };
-
-  return (
-    <div ref={cardRef} className="rounded-2xl overflow-hidden bg-card border border-border/30 shadow-md">
-      <div className="relative w-full" style={{ height: 340 }}>
-        {isMusic && !post.media_url && !post.image_urls?.length ? (
-          <div className="w-full h-full bg-gradient-to-br from-violet-700 via-purple-600 to-pink-500 flex items-center justify-center">
-            <Music className="w-20 h-20 text-white/30" />
-          </div>
+...
         ) : isVideo ? (
           <>
             <video
               ref={videoRef}
               src={resolvedVideoSrc}
-              className="absolute inset-0 z-[2] h-full w-full object-cover"
+              className="absolute inset-0 z-[2] h-full w-full object-cover pointer-events-none"
               muted={false}
               playsInline
               preload="metadata"
@@ -435,20 +359,19 @@ export const MemrySeedCard: React.FC<MemrySeedCardProps> = ({
               onPlay={() => setVideoPlaying(true)}
               onError={() => setVideoPlaying(false)}
               onPause={() => setVideoPlaying(false)}
+            />
+            <button
+              type="button"
               onClick={(e) => {
                 e.preventDefault();
                 e.stopPropagation();
-                const vid = videoRef.current;
-                if (!vid) return;
-                if (vid.paused) {
-                  vid.play().catch(() => {});
-                } else {
-                  vid.pause();
-                }
+                toggleVideoPlayback();
               }}
+              className="absolute inset-0 z-[10]"
+              aria-label={videoPlaying ? 'Pause video preview' : 'Play video preview'}
             />
             <div
-              className="absolute bottom-3 right-3 z-[12] w-[108px] sm:w-[116px]"
+              className="absolute bottom-3 right-3 z-[30] w-[108px] sm:w-[116px]"
               style={{ pointerEvents: 'auto' }}
               onPointerDown={(e) => { e.stopPropagation(); }}
               onTouchStart={(e) => { e.stopPropagation(); }}
@@ -457,18 +380,13 @@ export const MemrySeedCard: React.FC<MemrySeedCardProps> = ({
                 <button
                   type="button"
                   data-deadlink-watch-ignore="true"
+                  onMouseDown={(e) => { e.stopPropagation(); }}
                   onPointerDown={(e) => { e.stopPropagation(); }}
                   onTouchStart={(e) => { e.stopPropagation(); }}
                   onClick={(e) => {
                     e.preventDefault();
                     e.stopPropagation();
-                    const vid = videoRef.current;
-                    if (!vid) return;
-                    if (vid.paused) {
-                      vid.play().catch(() => {});
-                    } else {
-                      vid.pause();
-                    }
+                    toggleVideoPlayback();
                   }}
                   className="text-white hover:scale-110 transition-transform flex-shrink-0 border-0 p-0 bg-transparent appearance-none cursor-pointer"
                   style={{ WebkitTapHighlightColor: 'transparent', touchAction: 'manipulation', pointerEvents: 'auto' }}
