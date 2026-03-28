@@ -679,3 +679,5 @@ export const MemrySeedCard: React.FC<MemrySeedCardProps> = ({
     </div>
   );
 };
+
+export default MemrySeedCard;
