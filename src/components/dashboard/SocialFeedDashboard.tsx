@@ -1,8 +1,11 @@
 import React, { useRef, useState, useEffect, useCallback } from 'react';
+import { MessageCircle } from 'lucide-react';
+import { motion } from 'framer-motion';
 import { StickyProfileBar } from './StickyProfileBar';
 import { BottomActionBar } from './BottomActionBar';
 import { StatsFloatingButton } from './StatsFloatingButton';
 import { GoLiveFAB } from './GoLiveFAB';
+import { PrivateChatsDrawer } from '@/components/chat/PrivateChatsDrawer';
 
 // Section system
 import { SectionNavBar } from './SectionNavBar';
