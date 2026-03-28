@@ -331,7 +331,93 @@ export const MemrySeedCard: React.FC<MemrySeedCardProps> = ({
     if (isProduct) return '🌱 Product';
     return '🌱 Seed';
   };
-...
+
+  const handleShare = async () => {
+    const shareUrl = `${window.location.origin}/memry?post=${post.id}`;
+    try {
+      if (navigator.share) {
+        await navigator.share({ title: 'S2G Memry', text: post.caption, url: shareUrl });
+      } else {
+        await navigator.clipboard.writeText(shareUrl);
+        toast({ title: 'Link copied!' });
+      }
+    } catch {
+      await navigator.clipboard.writeText(shareUrl);
+      toast({ title: 'Link copied!' });
+    }
+  };
+
+  const handleSendMessage = async () => {
+    if (!inlineMsg.trim() || !user) return;
+    const realPostId = post.id.replace(/^(product|book|music|orchard)-/, '');
+    const { error } = await supabase.from('memry_comments').insert({
+      post_id: realPostId,
+      user_id: user.id,
+      content: inlineMsg.trim(),
+    });
+    if (!error) {
+      toast({ title: 'Message sent! 💬' });
+      setInlineMsg('');
+    }
+  };
+
+  const handlePrivateMessage = async () => {
+    if (!user) {
+      toast({ title: 'Sign in required', description: 'Please sign in to message', variant: 'destructive' });
+      return;
+    }
+    if (onPrivateMessage) {
+      onPrivateMessage(post.user_id, post.caption);
+    }
+  };
+
+  const handleBestow = (e?: React.MouseEvent) => {
+    if (e) { e.preventDefault(); e.stopPropagation(); }
+
+    const resolveId = (raw: string | undefined, prefix: string) =>
+      raw ? raw.replace(`${prefix}-`, '') : undefined;
+
+    const productId = resolveId(post.product_id, 'product');
+    const bookId = resolveId(post.book_id, 'book');
+
+    if ((isProduct || isMusic) && productId) {
+      addToBasket({
+        id: productId,
+        title: post.product_title || post.caption.replace(/^(🌱 SEED:|🎵 MUSIC:)\s*/i, ''),
+        price: post.product_price || 0,
+        cover_image_url: post.media_url,
+        sower_id: post.user_id,
+        bestowal_count: 1,
+        sowers: { display_name: post.profiles?.display_name || 'Sower' },
+      });
+      toast({ title: isMusic ? 'Track added to basket! 🎵' : 'Added to basket! 🛒' });
+      navigate('/products/basket');
+    } else if (isOrchard && post.orchard_id) {
+      navigate(`/orchard/${post.orchard_id}`);
+    } else if (isBook && bookId) {
+      addToBasket({
+        id: bookId,
+        title: post.product_title || post.caption.replace('📚 BOOK: ', ''),
+        price: post.product_price || 0,
+        cover_image_url: post.media_url,
+        sower_id: post.user_id,
+        bestowal_count: 1,
+        sowers: { display_name: post.profiles?.display_name || 'Sower' },
+      });
+      toast({ title: 'Book added to basket! 📚' });
+      navigate('/products/basket');
+    } else if (post.user_id) {
+      navigate(`/sower/${post.user_id}?bestow=true`);
+    }
+  };
+
+  return (
+    <div ref={cardRef} className="rounded-2xl overflow-hidden bg-card border border-border/30 shadow-md">
+      <div className="relative w-full" style={{ height: 340 }}>
+        {isMusic && !post.media_url && !post.image_urls?.length ? (
+          <div className="w-full h-full bg-gradient-to-br from-violet-700 via-purple-600 to-pink-500 flex items-center justify-center">
+            <Music className="w-20 h-20 text-white/30" />
+          </div>
         ) : isVideo ? (
           <>
             <video
@@ -367,7 +453,7 @@ export const MemrySeedCard: React.FC<MemrySeedCardProps> = ({
                 e.stopPropagation();
                 toggleVideoPlayback();
               }}
-              className="absolute inset-0 z-[10]"
+              className="absolute inset-0 z-[10] bg-transparent border-0 p-0"
               aria-label={videoPlaying ? 'Pause video preview' : 'Play video preview'}
             />
             <div
