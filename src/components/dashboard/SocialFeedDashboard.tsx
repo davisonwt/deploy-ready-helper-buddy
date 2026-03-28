@@ -176,7 +176,7 @@ export const SocialFeedDashboard: React.FC<SocialFeedDashboardProps> = ({
       </motion.button>
 
       {/* Private Chats Drawer (overlay on feed) */}
-      <PrivateChatsDrawer isOpen={chatDrawerOpen} onClose={() => setChatDrawerOpen(false)} />
+      {chatDrawerOpen && <PrivateChatsDrawer isOpen={chatDrawerOpen} onClose={() => setChatDrawerOpen(false)} />}
 
       <BottomActionBar theme={sectionThemes[activeSection] || currentTheme} />
       <div className="hidden sm:block">
