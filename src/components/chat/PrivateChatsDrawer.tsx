@@ -47,6 +47,19 @@ export const PrivateChatsDrawer: React.FC<PrivateChatsDrawerProps> = ({ isOpen, 
   const [groupName, setGroupName] = useState('');
   const [chatType, setChatType] = useState<'direct' | 'group'>('direct');
   const [creatingChat, setCreatingChat] = useState(false);
+  const [backendDegraded, setBackendDegraded] = useState(false);
+
+  const getErrorStatus = (error: any) => {
+    const rawStatus = error?.status ?? error?.code ?? error?.statusCode;
+    const parsed = Number(rawStatus);
+    return Number.isFinite(parsed) ? parsed : null;
+  };
+
+  const isBillingOrQuotaError = (error: any) => {
+    const status = getErrorStatus(error);
+    const message = `${error?.message || ''} ${error?.details || ''}`.toLowerCase();
+    return status === 402 || message.includes('billing') || message.includes('quota') || message.includes('payment');
+  };
 
   useEffect(() => {
     if (!isOpen) {
@@ -83,7 +96,14 @@ export const PrivateChatsDrawer: React.FC<PrivateChatsDrawerProps> = ({ isOpen, 
         .order('created_at', { ascending: false })
         .limit(30);
 
-      if (roomsError) throw roomsError;
+      if (roomsError) {
+        if (isBillingOrQuotaError(roomsError)) {
+          setBackendDegraded(true);
+          setConversations([]);
+          return;
+        }
+        throw roomsError;
+      }
 
       const roomList = rooms || [];
       if (roomList.length === 0) {
@@ -108,8 +128,23 @@ export const PrivateChatsDrawer: React.FC<PrivateChatsDrawerProps> = ({ isOpen, 
           .neq('user_id', user.id),
       ]);
 
-      if (messagesResult.error) throw messagesResult.error;
-      if (participantsResult.error) throw participantsResult.error;
+      if (messagesResult.error) {
+        if (isBillingOrQuotaError(messagesResult.error)) {
+          setBackendDegraded(true);
+          setConversations([]);
+          return;
+        }
+        throw messagesResult.error;
+      }
+
+      if (participantsResult.error) {
+        if (isBillingOrQuotaError(participantsResult.error)) {
+          setBackendDegraded(true);
+          setConversations([]);
+          return;
+        }
+        throw participantsResult.error;
+      }
 
       const latestMessageByRoom = new Map<string, { content: string | null; created_at: string }>();
       (messagesResult.data || []).forEach((msg: any) => {
@@ -143,10 +178,16 @@ export const PrivateChatsDrawer: React.FC<PrivateChatsDrawerProps> = ({ isOpen, 
         };
       });
 
+      setBackendDegraded(false);
       setConversations(items);
     } catch (e) {
       console.error('Error loading chats:', e);
-      toast({ title: 'Error', description: 'Failed to load chats', variant: 'destructive' });
+      if (isBillingOrQuotaError(e)) {
+        setBackendDegraded(true);
+        toast({ title: 'Backend paused', description: 'Chat is temporarily unavailable due to Supabase billing/quota.', variant: 'destructive' });
+      } else {
+        toast({ title: 'Error', description: 'Failed to load chats', variant: 'destructive' });
+      }
       setConversations([]);
     } finally {
       setLoading(false);
@@ -164,8 +205,15 @@ export const PrivateChatsDrawer: React.FC<PrivateChatsDrawerProps> = ({ isOpen, 
     try {
       const { data: allProfiles, error: allProfilesError } = await supabase.rpc('get_all_user_profiles');
 
+      if (allProfilesError && isBillingOrQuotaError(allProfilesError)) {
+        setBackendDegraded(true);
+        setAvailableUsers([]);
+        return;
+      }
+
       if (!allProfilesError && Array.isArray(allProfiles)) {
         const normalized = allProfiles.filter((profile: any) => profile?.user_id && profile.user_id !== user.id);
+        setBackendDegraded(false);
         setAvailableUsers(normalized);
         return;
       }
@@ -176,12 +224,25 @@ export const PrivateChatsDrawer: React.FC<PrivateChatsDrawerProps> = ({ isOpen, 
         .neq('user_id', user.id)
         .limit(50);
 
-      if (error) throw error;
+      if (error) {
+        if (isBillingOrQuotaError(error)) {
+          setBackendDegraded(true);
+          setAvailableUsers([]);
+          return;
+        }
+        throw error;
+      }
 
+      setBackendDegraded(false);
       setAvailableUsers((data || []).filter((profile: any) => profile.user_id && profile.user_id !== user.id));
     } catch (error) {
       console.error('Error loading available users:', error);
-      toast({ title: 'Error', description: 'Failed to load users', variant: 'destructive' });
+      if (isBillingOrQuotaError(error)) {
+        setBackendDegraded(true);
+        toast({ title: 'Backend paused', description: 'Cannot load users while Supabase billing/quota is paused.', variant: 'destructive' });
+      } else {
+        toast({ title: 'Error', description: 'Failed to load users', variant: 'destructive' });
+      }
       setAvailableUsers([]);
     } finally {
       setLoadingUsers(false);
@@ -189,6 +250,10 @@ export const PrivateChatsDrawer: React.FC<PrivateChatsDrawerProps> = ({ isOpen, 
   };
 
   const openNewChatDialog = async () => {
+    if (backendDegraded) {
+      toast({ title: 'Backend paused', description: 'New chats are unavailable until Supabase billing/quota is restored.', variant: 'destructive' });
+      return;
+    }
     setChatType('direct');
     setShowNewChatDialog(true);
     await loadAvailableUsers();
@@ -286,7 +351,7 @@ export const PrivateChatsDrawer: React.FC<PrivateChatsDrawerProps> = ({ isOpen, 
                 <Button
                   size="sm"
                   onClick={openNewChatDialog}
-                  disabled={loadingUsers}
+                  disabled={loadingUsers || backendDegraded}
                   style={{ backgroundColor: 'hsl(188 78% 41%)', color: 'white', border: 'none' }}
                 >
                   <Plus className="w-4 h-4" />
@@ -324,7 +389,9 @@ export const PrivateChatsDrawer: React.FC<PrivateChatsDrawerProps> = ({ isOpen, 
                 ) : filtered.length === 0 ? (
                   <div className="text-center py-8">
                     <MessageCircle className="w-10 h-10 mx-auto mb-2 text-muted-foreground/30" />
-                    <p className="text-sm text-muted-foreground">No conversations</p>
+                    <p className="text-sm text-muted-foreground">
+                      {backendDegraded ? 'Chat temporarily unavailable (Supabase billing/quota paused).' : 'No conversations'}
+                    </p>
                   </div>
                 ) : (
                   filtered.map(chat => (
@@ -368,6 +435,8 @@ export const PrivateChatsDrawer: React.FC<PrivateChatsDrawerProps> = ({ isOpen, 
                   <TabsContent value="direct" className="space-y-2 max-h-60 overflow-y-auto">
                     {loadingUsers ? (
                       <p className="text-center text-muted-foreground py-6 text-sm">Loading users...</p>
+                    ) : backendDegraded ? (
+                      <p className="text-center text-muted-foreground py-6 text-sm">Cannot load users while backend is paused.</p>
                     ) : availableUsers.length === 0 ? (
                       <p className="text-center text-muted-foreground py-6 text-sm">No users available. Try refreshing.</p>
                     ) : (
@@ -398,6 +467,8 @@ export const PrivateChatsDrawer: React.FC<PrivateChatsDrawerProps> = ({ isOpen, 
                     <div className="space-y-1 max-h-48 overflow-y-auto">
                       {loadingUsers ? (
                         <p className="text-center text-muted-foreground py-4 text-xs">Loading users...</p>
+                      ) : backendDegraded ? (
+                        <p className="text-center text-muted-foreground py-4 text-xs">Cannot load users while backend is paused.</p>
                       ) : availableUsers.length === 0 ? (
                         <p className="text-center text-muted-foreground py-4 text-xs">No users available.</p>
                       ) : (
