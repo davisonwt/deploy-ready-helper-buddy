@@ -545,7 +545,7 @@ export const MemrySeedCard: React.FC<MemrySeedCardProps> = ({
         <div className="absolute bottom-0 left-0 right-0 h-28 bg-gradient-to-t from-black/80 via-black/40 to-transparent pointer-events-none" />
 
         {/* Sower row + title overlay at bottom of image */}
-        <div
+        <div className="absolute left-0 right-0 z-[11] px-3" style={{ pointerEvents: 'none' }}>
           className={`absolute left-0 right-0 z-[9] px-3 ${
             isVideo ? 'bottom-12 pb-2' : 'bottom-0 pb-3'
           }`}
