@@ -1,8 +1,11 @@
 import React, { useRef, useState, useEffect, useCallback } from 'react';
+import { MessageCircle } from 'lucide-react';
+import { motion } from 'framer-motion';
 import { StickyProfileBar } from './StickyProfileBar';
 import { BottomActionBar } from './BottomActionBar';
 import { StatsFloatingButton } from './StatsFloatingButton';
 import { GoLiveFAB } from './GoLiveFAB';
+import { PrivateChatsDrawer } from '@/components/chat/PrivateChatsDrawer';
 
 // Section system
 import { SectionNavBar } from './SectionNavBar';
@@ -41,6 +44,7 @@ export const SocialFeedDashboard: React.FC<SocialFeedDashboardProps> = ({
   user,
 }) => {
   const [activeSection, setActiveSection] = useState('dashboard');
+  const [chatDrawerOpen, setChatDrawerOpen] = useState(false);
   const sectionThemes = getAllSectionThemes();
   const sectionRefs = useRef<Record<string, HTMLElement | null>>({});
 
@@ -155,6 +159,24 @@ export const SocialFeedDashboard: React.FC<SocialFeedDashboardProps> = ({
 
       {/* Go Live FAB */}
       <GoLiveFAB />
+
+      {/* Quick Connect Chat FAB */}
+      <motion.button
+        onClick={() => setChatDrawerOpen(true)}
+        className="fixed bottom-[88px] right-4 z-40 flex items-center gap-2 px-4 py-3 rounded-full shadow-lg backdrop-blur-md border border-primary/20"
+        style={{
+          backgroundColor: (sectionThemes[activeSection] || currentTheme).accent,
+          color: 'white',
+        }}
+        whileHover={{ scale: 1.05 }}
+        whileTap={{ scale: 0.95 }}
+      >
+        <MessageCircle className="w-5 h-5" />
+        <span className="text-sm font-bold">Chat</span>
+      </motion.button>
+
+      {/* Private Chats Drawer (overlay on feed) */}
+      <PrivateChatsDrawer isOpen={chatDrawerOpen} onClose={() => setChatDrawerOpen(false)} />
 
       <BottomActionBar theme={sectionThemes[activeSection] || currentTheme} />
       <div className="hidden sm:block">
