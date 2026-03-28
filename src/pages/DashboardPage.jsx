@@ -200,26 +200,30 @@ export default function DashboardPage() {
       </AppShell>
 
       {typeof document !== 'undefined' && createPortal(
-        <>
-          <motion.button
-            type="button"
-            aria-label="Open chats"
-            onClick={() => setChatDrawerOpen(true)}
-            className="fixed bottom-20 right-24 z-[95] flex items-center gap-2 rounded-full border border-border/50 bg-primary px-4 py-3 text-primary-foreground shadow-2xl"
-            whileHover={{ scale: 1.04 }}
-            whileTap={{ scale: 0.96 }}
-          >
-            <MessageCircle className="h-5 w-5" />
-            <span className="text-sm font-bold">Chat</span>
-          </motion.button>
+        <div className="fixed inset-0 z-[95] pointer-events-none">
+          <div className="absolute bottom-20 right-20 pointer-events-auto">
+            <motion.button
+              type="button"
+              aria-label="Open chats"
+              onClick={() => setChatDrawerOpen(true)}
+              className="flex items-center gap-2 rounded-full border border-border/50 bg-primary px-4 py-3 text-primary-foreground shadow-2xl"
+              whileHover={{ scale: 1.04 }}
+              whileTap={{ scale: 0.96 }}
+            >
+              <MessageCircle className="h-5 w-5" />
+              <span className="text-sm font-bold">Chat</span>
+            </motion.button>
+          </div>
 
           {chatDrawerOpen && (
-            <PrivateChatsDrawer
-              isOpen={true}
-              onClose={() => setChatDrawerOpen(false)}
-            />
+            <div className="absolute inset-0 pointer-events-auto">
+              <PrivateChatsDrawer
+                isOpen={true}
+                onClose={() => setChatDrawerOpen(false)}
+              />
+            </div>
           )}
-        </>,
+        </div>,
         document.body
       )}
     </>
