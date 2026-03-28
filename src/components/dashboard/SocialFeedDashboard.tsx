@@ -44,6 +44,7 @@ export const SocialFeedDashboard: React.FC<SocialFeedDashboardProps> = ({
   user,
 }) => {
   const [activeSection, setActiveSection] = useState('dashboard');
+  const [chatDrawerOpen, setChatDrawerOpen] = useState(false);
   const sectionThemes = getAllSectionThemes();
   const sectionRefs = useRef<Record<string, HTMLElement | null>>({});
 
