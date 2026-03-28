@@ -35,6 +35,12 @@ self.addEventListener('activate', (event) => {
 // Network-first for everything - minimal caching overhead
 self.addEventListener('fetch', (event) => {
   const { request } = event
+  const requestUrl = new URL(request.url)
+
+  // Never intercept cross-origin requests (e.g. Jitsi external scripts)
+  if (requestUrl.origin !== self.location.origin) {
+    return
+  }
   
   // Skip caching for API calls
   if (request.url.includes('/api/') || request.url.includes('supabase')) {
@@ -60,7 +66,7 @@ self.addEventListener('fetch', (event) => {
       })
       .catch(() => {
         // Fallback to cache only for static assets
-        return caches.match(request)
+        return caches.match(request).then((cached) => cached || Response.error())
       })
   )
 })
