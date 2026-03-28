@@ -140,6 +140,7 @@ export const UnifiedFeed: React.FC = () => {
     } catch (error) {
       console.error('Error fetching feed:', error);
     } finally {
+      console.log('📡 UnifiedFeed loaded, items:', items?.length ?? 0);
       setLoading(false);
       setRefreshing(false);
     }
