@@ -204,10 +204,10 @@ export default function DashboardPage() {
 
       {/* Static bottom bar with Plant + Go Live + Chat */}
       <div className="fixed inset-x-0 bottom-0 z-[100] pointer-events-none border-t border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80">
-        <div className="mx-auto grid w-full max-w-screen-md grid-cols-3 gap-3 px-4 py-3 pointer-events-auto">
+        <div className="mx-auto grid w-full max-w-screen-md grid-cols-3 gap-3 px-4 py-3 pointer-events-none">
           <a
             href="/create-orchard"
-            className="flex min-w-0 w-full items-center justify-center gap-2 rounded-full px-3 py-3 font-bold text-sm text-white shadow-lg"
+            className="flex min-w-0 w-full items-center justify-center gap-2 rounded-full px-3 py-3 font-bold text-sm text-white shadow-lg pointer-events-auto"
             style={{
               background: 'linear-gradient(135deg, #166534, #22c55e)',
             }}
@@ -217,7 +217,7 @@ export default function DashboardPage() {
           </a>
           <button
             onClick={() => setGoLiveOpen(!goLiveOpen)}
-            className="flex min-w-0 w-full items-center justify-center gap-2 rounded-full px-3 py-3 font-bold text-sm text-white shadow-lg"
+            className="flex min-w-0 w-full items-center justify-center gap-2 rounded-full px-3 py-3 font-bold text-sm text-white shadow-lg pointer-events-auto"
             style={{
               background: 'linear-gradient(135deg, #dc2626, #f43f5e)',
             }}
@@ -227,7 +227,7 @@ export default function DashboardPage() {
           </button>
           <button
             onClick={() => setChatDrawerOpen(true)}
-            className="flex min-w-0 w-full items-center justify-center gap-2 rounded-full bg-primary px-3 py-3 font-bold text-sm text-primary-foreground shadow-lg"
+            className="flex min-w-0 w-full items-center justify-center gap-2 rounded-full bg-primary px-3 py-3 font-bold text-sm text-primary-foreground shadow-lg pointer-events-auto"
           >
             <MessageCircle className="h-5 w-5" />
             Chat
