@@ -1,5 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import SunCalc from 'suncalc';
+import { createPortal } from 'react-dom';
+import { MessageCircle } from 'lucide-react';
+import { motion } from 'framer-motion';
 import { useAuth } from '../hooks/useAuth';
 import { useBestowals } from '../hooks/useBestowals.jsx';
 import { Button } from '@/components/ui/button';
@@ -10,6 +13,7 @@ import { getDayInfo } from '@/utils/sacredCalendar';
 import { DashboardSkeleton } from '@/components/dashboard/DashboardSkeleton';
 import { AppShell } from '@/components/layout/AppShell';
 import { HomeFeed } from '@/components/feed/HomeFeed';
+import { PrivateChatsDrawer } from '@/components/chat/PrivateChatsDrawer';
 import { useQuery } from '@tanstack/react-query';
 
 export default function DashboardPage() {
@@ -17,6 +21,7 @@ export default function DashboardPage() {
   const { user, loading: authLoading } = useAuth();
   const [orchards, setOrchards] = useState([]);
   const [orchardsLoading, setOrchardsLoading] = useState(false);
+  const [chatDrawerOpen, setChatDrawerOpen] = useState(false);
 
   const fetchOrchards = async (filters = {}) => {
     try {
@@ -181,16 +186,42 @@ export default function DashboardPage() {
   }
 
   return (
-    <AppShell
-      calendarData={calendarData}
-      communityCount={communityCount || 0}
-    >
-      <HomeFeed
-        profile={profile}
+    <>
+      <AppShell
         calendarData={calendarData}
-        stats={stats}
-        unreadMessages={unreadMessages}
-      />
-    </AppShell>
+        communityCount={communityCount || 0}
+      >
+        <HomeFeed
+          profile={profile}
+          calendarData={calendarData}
+          stats={stats}
+          unreadMessages={unreadMessages}
+        />
+      </AppShell>
+
+      {typeof document !== 'undefined' && createPortal(
+        <>
+          <motion.button
+            type="button"
+            aria-label="Open chats"
+            onClick={() => setChatDrawerOpen(true)}
+            className="fixed bottom-24 right-4 z-[60] flex items-center gap-2 rounded-full border border-border/40 bg-primary px-4 py-3 text-primary-foreground shadow-xl"
+            whileHover={{ scale: 1.04 }}
+            whileTap={{ scale: 0.96 }}
+          >
+            <MessageCircle className="h-5 w-5" />
+            <span className="text-sm font-bold">Chat</span>
+          </motion.button>
+
+          {chatDrawerOpen && (
+            <PrivateChatsDrawer
+              isOpen={true}
+              onClose={() => setChatDrawerOpen(false)}
+            />
+          )}
+        </>,
+        document.body
+      )}
+    </>
   );
 }
