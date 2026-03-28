@@ -446,7 +446,7 @@ export const MemrySeedCard: React.FC<MemrySeedCardProps> = ({
                 }
               }}
             />
-            <div className="absolute bottom-3 right-3 z-[8] w-[108px] sm:w-[116px]">
+            <div className="absolute bottom-3 right-3 z-[12] w-[108px] sm:w-[116px]">
               <div className="h-8 flex items-center gap-1.5 bg-black/50 backdrop-blur-md rounded-full px-2">
                 <button
                   type="button"
@@ -539,7 +539,7 @@ export const MemrySeedCard: React.FC<MemrySeedCardProps> = ({
 
         {/* Sower row + title overlay at bottom of image */}
         <div
-          className={`absolute left-0 right-0 z-10 px-3 ${
+          className={`absolute left-0 right-0 z-[9] px-3 ${
             isVideo ? 'bottom-12 pb-2' : 'bottom-0 pb-3'
           }`}
         >
