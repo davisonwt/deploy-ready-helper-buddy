@@ -103,11 +103,12 @@ export const PrivateChatsDrawer: React.FC<PrivateChatsDrawerProps> = ({ isOpen, 
 
   const loadAvailableUsers = async () => {
     if (!user) return;
-    const { data } = await supabase
+    const { data, error } = await supabase
       .from('profiles')
       .select('id, user_id, display_name, avatar_url, first_name, last_name')
       .neq('user_id', user.id)
       .limit(50);
+    console.log('📋 loadAvailableUsers result:', { count: data?.length, error });
     setAvailableUsers(data || []);
   };
 
