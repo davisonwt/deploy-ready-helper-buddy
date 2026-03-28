@@ -198,28 +198,26 @@ export default function DashboardPage() {
         />
       </AppShell>
 
-      <div className="fixed inset-0 z-[70] pointer-events-none">
-        <motion.button
-          type="button"
-          aria-label="Open chats"
-          onClick={() => setChatDrawerOpen(true)}
-          className="pointer-events-auto absolute bottom-36 right-4 md:right-56 flex items-center gap-2 rounded-full border border-border/50 bg-primary px-4 py-3 text-primary-foreground shadow-2xl"
-          whileHover={{ scale: 1.04 }}
-          whileTap={{ scale: 0.96 }}
-        >
-          <MessageCircle className="h-5 w-5" />
-          <span className="text-sm font-bold">Chat</span>
-        </motion.button>
+      <motion.button
+        type="button"
+        aria-label="Open chats"
+        onClick={() => setChatDrawerOpen(true)}
+        className="fixed bottom-36 right-4 lg:right-56 z-[62] flex items-center gap-2 rounded-full border border-border/50 bg-primary px-4 py-3 text-primary-foreground shadow-2xl"
+        whileHover={{ scale: 1.04 }}
+        whileTap={{ scale: 0.96 }}
+      >
+        <MessageCircle className="h-5 w-5" />
+        <span className="text-sm font-bold">Chat</span>
+      </motion.button>
 
-        {chatDrawerOpen && (
-          <div className="fixed inset-0 z-[80] pointer-events-auto">
-            <PrivateChatsDrawer
-              isOpen={true}
-              onClose={() => setChatDrawerOpen(false)}
-            />
-          </div>
-        )}
-      </div>
+      {chatDrawerOpen && (
+        <div className="fixed inset-0 z-[80] pointer-events-auto">
+          <PrivateChatsDrawer
+            isOpen={true}
+            onClose={() => setChatDrawerOpen(false)}
+          />
+        </div>
+      )}
     </>
   );
 }
