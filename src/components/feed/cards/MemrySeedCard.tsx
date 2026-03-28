@@ -173,9 +173,11 @@ const SeedAudioPreview: React.FC<{ audioUrl: string }> = ({ audioUrl }) => {
       <div className="h-8 flex items-center gap-1.5 bg-black/50 backdrop-blur-md rounded-full px-2">
         <button
           type="button"
+          onPointerDown={(e) => { e.preventDefault(); e.stopPropagation(); }}
+          onTouchStart={(e) => { e.preventDefault(); e.stopPropagation(); }}
           onClick={(e) => { e.preventDefault(); e.stopPropagation(); togglePlay(); }}
           className="text-white hover:scale-110 transition-transform flex-shrink-0 border-0 p-0 bg-transparent appearance-none cursor-pointer"
-          style={{ WebkitTapHighlightColor: 'transparent' }}
+          style={{ WebkitTapHighlightColor: 'transparent', touchAction: 'manipulation' }}
           disabled={loading || !resolvedUrl}
           aria-label={playing ? 'Pause preview' : 'Play preview'}
         >
@@ -453,11 +455,17 @@ export const MemrySeedCard: React.FC<MemrySeedCardProps> = ({
                 }
               }}
             />
-            <div className="absolute bottom-3 right-3 z-[12] w-[108px] sm:w-[116px]">
+            <div
+              className="absolute bottom-3 right-3 z-[12] w-[108px] sm:w-[116px]"
+              onPointerDown={(e) => { e.preventDefault(); e.stopPropagation(); }}
+              onTouchStart={(e) => { e.preventDefault(); e.stopPropagation(); }}
+            >
               <div className="h-8 flex items-center gap-1.5 bg-black/50 backdrop-blur-md rounded-full px-2">
                 <button
                   type="button"
                   data-deadlink-watch-ignore="true"
+                  onPointerDown={(e) => { e.preventDefault(); e.stopPropagation(); }}
+                  onTouchStart={(e) => { e.preventDefault(); e.stopPropagation(); }}
                   onClick={(e) => {
                     e.preventDefault();
                     e.stopPropagation();
@@ -470,7 +478,7 @@ export const MemrySeedCard: React.FC<MemrySeedCardProps> = ({
                     }
                   }}
                   className="text-white hover:scale-110 transition-transform flex-shrink-0 border-0 p-0 bg-transparent appearance-none cursor-pointer"
-                  style={{ WebkitTapHighlightColor: 'transparent' }}
+                  style={{ WebkitTapHighlightColor: 'transparent', touchAction: 'manipulation' }}
                   aria-label={videoPlaying ? 'Pause video' : 'Play video'}
                 >
                   {videoPlaying ? <Pause className="w-3.5 h-3.5" /> : <Play className="w-3.5 h-3.5" />}
