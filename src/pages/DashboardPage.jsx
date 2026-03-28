@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import SunCalc from 'suncalc';
-import { createPortal } from 'react-dom';
 import { MessageCircle } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { useAuth } from '../hooks/useAuth';
@@ -199,31 +198,28 @@ export default function DashboardPage() {
         />
       </AppShell>
 
-      {typeof document !== 'undefined' && createPortal(
-        <>
-          <motion.button
-            type="button"
-            aria-label="Open chats"
-            onClick={() => setChatDrawerOpen(true)}
-            className="fixed bottom-20 right-20 z-[2147483646] pointer-events-auto flex items-center gap-2 rounded-full border border-border/50 bg-primary px-4 py-3 text-primary-foreground shadow-2xl"
-            whileHover={{ scale: 1.04 }}
-            whileTap={{ scale: 0.96 }}
-          >
-            <MessageCircle className="h-5 w-5" />
-            <span className="text-sm font-bold">Chat</span>
-          </motion.button>
+      <div className="fixed inset-0 z-[70] pointer-events-none">
+        <motion.button
+          type="button"
+          aria-label="Open chats"
+          onClick={() => setChatDrawerOpen(true)}
+          className="pointer-events-auto absolute bottom-20 right-4 md:right-[216px] flex items-center gap-2 rounded-full border border-border/50 bg-primary px-4 py-3 text-primary-foreground shadow-2xl"
+          whileHover={{ scale: 1.04 }}
+          whileTap={{ scale: 0.96 }}
+        >
+          <MessageCircle className="h-5 w-5" />
+          <span className="text-sm font-bold">Chat</span>
+        </motion.button>
 
-          {chatDrawerOpen && (
-            <div className="fixed inset-0 z-[2147483647] pointer-events-auto">
-              <PrivateChatsDrawer
-                isOpen={true}
-                onClose={() => setChatDrawerOpen(false)}
-              />
-            </div>
-          )}
-        </>,
-        document.body
-      )}
+        {chatDrawerOpen && (
+          <div className="fixed inset-0 z-[80] pointer-events-auto">
+            <PrivateChatsDrawer
+              isOpen={true}
+              onClose={() => setChatDrawerOpen(false)}
+            />
+          </div>
+        )}
+      </div>
     </>
   );
 }
