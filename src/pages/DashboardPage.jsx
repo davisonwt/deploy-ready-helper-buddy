@@ -21,6 +21,7 @@ export default function DashboardPage() {
   const [orchards, setOrchards] = useState([]);
   const [orchardsLoading, setOrchardsLoading] = useState(false);
   const [chatDrawerOpen, setChatDrawerOpen] = useState(false);
+  const [goLiveOpen, setGoLiveOpen] = useState(false);
 
   const fetchOrchards = async (filters = {}) => {
     try {
