@@ -47,6 +47,12 @@ interface FeedComment {
 }
 
 const FALLBACK_MEDIA = '/lovable-uploads/ff9e6e48-049d-465a-8d2b-f6e8fed93522.png';
+const MANIFEST_RE = /(?:^|\/)manifest\.json(?:[?#]|$)/i;
+
+const isManifestUrl = (url?: string | null) => MANIFEST_RE.test(String(url || ''));
+
+const filterRenderableImages = (urls: string[]) =>
+  dedupeUrls(urls.filter((url) => !!url && !isManifestUrl(url)));
 
 const toMediaPayload = (
   source: any,
@@ -61,8 +67,8 @@ const toMediaPayload = (
   const forcedImage = normalizeMediaUrl(options.forceImageUrl || '');
   const forcedAudio = normalizeMediaUrl(options.forceAudioUrl || '');
 
-  const videos = dedupeUrls([...(forcedVideo ? [forcedVideo] : []), ...normalized.videos]);
-  const images = dedupeUrls([...(forcedImage ? [forcedImage] : []), ...normalized.images]);
+  const videos = dedupeUrls([...(forcedVideo ? [forcedVideo] : []), ...normalized.videos]).filter((url) => !isManifestUrl(url));
+  const images = filterRenderableImages([...(forcedImage ? [forcedImage] : []), ...normalized.images]);
   const audios = dedupeUrls([...(forcedAudio ? [forcedAudio] : []), ...normalized.audios]);
 
   return {
