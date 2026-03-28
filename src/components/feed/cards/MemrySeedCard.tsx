@@ -181,7 +181,272 @@ const SeedAudioPreview: React.FC<{ audioUrl: string }> = ({ audioUrl }) => {
           disabled={loading || !resolvedUrl}
           aria-label={playing ? 'Pause preview' : 'Play preview'}
         >
-...
+          {playing ? <Pause className="w-3.5 h-3.5" /> : <Play className="w-3.5 h-3.5" />}
+        </button>
+        <div className="flex-1 h-[2px] bg-white/20 rounded-full overflow-hidden">
+          <div className="h-full bg-white rounded-full transition-all" style={{ width: `${(currentTime / PREVIEW_DURATION) * 100}%` }} />
+        </div>
+        <span className="text-white text-[8px] font-mono flex-shrink-0">
+          {Math.floor(currentTime)}s/{PREVIEW_DURATION}s
+        </span>
+      </div>
+    </div>
+  );
+};
+
+export const MemrySeedCard: React.FC<MemrySeedCardProps> = ({
+  post,
+  user,
+  isFollowing,
+  onLike,
+  onFollow,
+  onOpenComments,
+  onPrivateMessage,
+}) => {
+  const navigate = useNavigate();
+  const { toast } = useToast();
+  const { addToBasket } = useProductBasket();
+  const [imgIdx, setImgIdx] = useState(0);
+  const [inlineMsg, setInlineMsg] = useState('');
+  const cardRef = useRef<HTMLDivElement>(null);
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const [isInView, setIsInView] = useState(false);
+  const [videoPlaying, setVideoPlaying] = useState(false);
+
+  const fallbackMedia = '/lovable-uploads/ff9e6e48-049d-465a-8d2b-f6e8fed93522.png';
+  const mediaUrl = normalizeMediaUrl(post.media_url || '');
+  const normalizedPayloadMedia = (post.media || [])
+    .map((item) => ({
+      type: item.type,
+      url: normalizeMediaUrl(item.url),
+    }))
+    .filter((item) => Boolean(item.url));
+  const payloadMediaUrls = dedupeUrls(normalizedPayloadMedia.map((item) => item.url));
+  const normalizedPostAudioUrl = normalizeMediaUrl(post.audio_url || '');
+  const normalizedContentType = String(post.content_type || '').toLowerCase();
+  const isMusicPost = normalizedContentType === 'music';
+  const isVideoByType = normalizedContentType === 'video';
+  const normalizedImageUrls = (post.image_urls || [])
+    .map((url) => normalizeMediaUrl(url))
+    .filter(Boolean);
+  const mediaCandidates = dedupeUrls([
+    ...payloadMediaUrls,
+    mediaUrl,
+    ...normalizedImageUrls,
+    normalizedPostAudioUrl,
+  ].filter(Boolean));
+
+  const videoCandidates = dedupeUrls([
+    ...normalizedPayloadMedia.filter((item) => item.type === 'video').map((item) => item.url),
+    ...(isMusicPost ? [] : mediaCandidates.filter((url) => isVideoUrl(url))),
+  ]);
+  const imageCandidates = dedupeUrls([
+    ...normalizedPayloadMedia.filter((item) => item.type === 'image').map((item) => item.url),
+    ...normalizedImageUrls,
+    ...mediaCandidates.filter((url) => !isVideoUrl(url) && !isAudioUrl(url)),
+  ]);
+  const audioCandidates = dedupeUrls([
+    ...normalizedPayloadMedia.filter((item) => item.type === 'audio').map((item) => item.url),
+    normalizedPostAudioUrl,
+    ...mediaCandidates.filter((url) => isAudioUrl(url)),
+  ]);
+  const primaryVideoUrl = videoCandidates[0] || '';
+  const isVideoByUrl = videoCandidates.length > 0;
+  const isVideo = !isMusicPost && (isVideoByUrl || (isVideoByType && isVideoUrl(mediaUrl)));
+
+  const allImages = (() => {
+    const imgs = imageCandidates;
+    return imgs.length > 0 ? imgs : [fallbackMedia];
+  })();
+  const resolvedVideoSrc = primaryVideoUrl || mediaUrl;
+
+  useEffect(() => {
+    setImgIdx((current) => Math.min(current, Math.max(0, allImages.length - 1)));
+  }, [allImages.length]);
+
+  useEffect(() => {
+    setVideoPlaying(false);
+    const video = videoRef.current;
+    if (!video) return;
+    video.pause();
+    video.currentTime = 0;
+    delete video.dataset.previewSeeked;
+  }, [resolvedVideoSrc, post.id]);
+
+  const hasMultipleImages = allImages.length > 1;
+  const isProduct = post.content_type === 'new_product';
+  const isOrchard = post.content_type === 'new_orchard';
+  const isBook = post.content_type === 'new_book';
+  const isMusic = post.content_type === 'music';
+  const isSeed = isProduct || isOrchard || isBook;
+  const categoryText = String(post.category || post.product_type || post.content_type || '').toLowerCase();
+  const audioPreviewUrl = audioCandidates[0] || mediaUrl;
+  const hasAudio = !!(
+    (isMusic || categoryText.includes('music') || categoryText.includes('audio')) &&
+    audioPreviewUrl &&
+    !isVideo
+  );
+
+  useEffect(() => {
+    const el = cardRef.current;
+    if (!el) return;
+    const observer = new IntersectionObserver(
+      ([entry]) => setIsInView(entry.isIntersecting && entry.intersectionRatio > 0.55),
+      { threshold: [0.55] }
+    );
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, []);
+
+  useEffect(() => {
+    if (isInView || !hasAudio) return;
+    const localAudios = cardRef.current?.querySelectorAll('audio') ?? [];
+    localAudios.forEach((audioEl) => {
+      audioEl.pause();
+      audioEl.currentTime = 0;
+    });
+  }, [isInView, hasAudio]);
+
+  const getSeedTypeLabel = () => {
+    if (isMusic) return '🎵 Music';
+    if (isBook) return '📚 Book';
+    if (isOrchard) return '🌳 Orchard';
+    const cat = (post.category || post.product_type || '').toLowerCase();
+    if (cat.includes('music')) return '🎵 Music';
+    if (cat.includes('e-book') || cat.includes('ebook')) return '📱 E-Book';
+    if (cat.includes('book')) return '📚 Book';
+    if (cat.includes('art')) return '🎨 Art';
+    if (cat.includes('produce')) return '🥬 Produce';
+    if (cat.includes('file')) return '📄 File';
+    if (isProduct) return '🌱 Product';
+    return '🌱 Seed';
+  };
+
+  const handleShare = async () => {
+    const shareUrl = `${window.location.origin}/memry?post=${post.id}`;
+    try {
+      if (navigator.share) {
+        await navigator.share({ title: 'S2G Memry', text: post.caption, url: shareUrl });
+      } else {
+        await navigator.clipboard.writeText(shareUrl);
+        toast({ title: 'Link copied!' });
+      }
+    } catch {
+      await navigator.clipboard.writeText(shareUrl);
+      toast({ title: 'Link copied!' });
+    }
+  };
+
+  const handleSendMessage = async () => {
+    if (!inlineMsg.trim() || !user) return;
+    const realPostId = post.id.replace(/^(product|book|music|orchard)-/, '');
+    const { error } = await supabase.from('memry_comments').insert({
+      post_id: realPostId,
+      user_id: user.id,
+      content: inlineMsg.trim(),
+    });
+    if (!error) {
+      toast({ title: 'Message sent! 💬' });
+      setInlineMsg('');
+    }
+  };
+
+  const handlePrivateMessage = async () => {
+    if (!user) {
+      toast({ title: 'Sign in required', description: 'Please sign in to message', variant: 'destructive' });
+      return;
+    }
+    if (onPrivateMessage) {
+      onPrivateMessage(post.user_id, post.caption);
+    }
+  };
+
+  const handleBestow = (e?: React.MouseEvent) => {
+    if (e) { e.preventDefault(); e.stopPropagation(); }
+
+    const resolveId = (raw: string | undefined, prefix: string) =>
+      raw ? raw.replace(`${prefix}-`, '') : undefined;
+
+    const productId = resolveId(post.product_id, 'product');
+    const bookId = resolveId(post.book_id, 'book');
+
+    if ((isProduct || isMusic) && productId) {
+      addToBasket({
+        id: productId,
+        title: post.product_title || post.caption.replace(/^(🌱 SEED:|🎵 MUSIC:)\s*/i, ''),
+        price: post.product_price || 0,
+        cover_image_url: post.media_url,
+        sower_id: post.user_id,
+        bestowal_count: 1,
+        sowers: { display_name: post.profiles?.display_name || 'Sower' },
+      });
+      toast({ title: isMusic ? 'Track added to basket! 🎵' : 'Added to basket! 🛒' });
+      navigate('/products/basket');
+    } else if (isOrchard && post.orchard_id) {
+      navigate(`/orchard/${post.orchard_id}`);
+    } else if (isBook && bookId) {
+      addToBasket({
+        id: bookId,
+        title: post.product_title || post.caption.replace('📚 BOOK: ', ''),
+        price: post.product_price || 0,
+        cover_image_url: post.media_url,
+        sower_id: post.user_id,
+        bestowal_count: 1,
+        sowers: { display_name: post.profiles?.display_name || 'Sower' },
+      });
+      toast({ title: 'Book added to basket! 📚' });
+      navigate('/products/basket');
+    } else if (post.user_id) {
+      navigate(`/sower/${post.user_id}?bestow=true`);
+    }
+  };
+
+  return (
+    <div ref={cardRef} className="rounded-2xl overflow-hidden bg-card border border-border/30 shadow-md">
+      <div className="relative w-full" style={{ height: 340 }}>
+        {isMusic && !post.media_url && !post.image_urls?.length ? (
+          <div className="w-full h-full bg-gradient-to-br from-violet-700 via-purple-600 to-pink-500 flex items-center justify-center">
+            <Music className="w-20 h-20 text-white/30" />
+          </div>
+        ) : isVideo ? (
+          <>
+            <video
+              ref={videoRef}
+              src={resolvedVideoSrc}
+              className="absolute inset-0 z-[2] h-full w-full object-cover"
+              muted={false}
+              playsInline
+              preload="metadata"
+              loop
+              onLoadedMetadata={(e) => {
+                const vid = e.currentTarget;
+                if (vid.dataset.previewSeeked === '1') return;
+                const duration = Number.isFinite(vid.duration) ? vid.duration : 0;
+                if (duration <= 0.8) return;
+                try {
+                  const seekTo = Math.min(Math.max(duration * 0.08, 0.35), 2);
+                  vid.currentTime = seekTo;
+                  vid.dataset.previewSeeked = '1';
+                } catch {
+                  // Ignore seek failures on streams that disallow programmatic seeking early.
+                }
+              }}
+              onPlaying={() => setVideoPlaying(true)}
+              onPlay={() => setVideoPlaying(true)}
+              onError={() => setVideoPlaying(false)}
+              onPause={() => setVideoPlaying(false)}
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                const vid = videoRef.current;
+                if (!vid) return;
+                if (vid.paused) {
+                  vid.play().catch(() => {});
+                } else {
+                  vid.pause();
+                }
+              }}
+            />
             <div
               className="absolute bottom-3 right-3 z-[12] w-[108px] sm:w-[116px]"
               style={{ pointerEvents: 'auto' }}
