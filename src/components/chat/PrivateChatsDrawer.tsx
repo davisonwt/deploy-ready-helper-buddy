@@ -37,28 +37,41 @@ export const PrivateChatsDrawer: React.FC<PrivateChatsDrawerProps> = ({ isOpen, 
   const { toast } = useToast();
   const { startCall } = useCallManager();
   const [conversations, setConversations] = useState<ChatConversation[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedRoomId, setSelectedRoomId] = useState<string | null>(null);
   const [showNewChatDialog, setShowNewChatDialog] = useState(false);
   const [availableUsers, setAvailableUsers] = useState<any[]>([]);
+  const [loadingUsers, setLoadingUsers] = useState(false);
   const [selectedUsers, setSelectedUsers] = useState<string[]>([]);
   const [groupName, setGroupName] = useState('');
   const [chatType, setChatType] = useState<'direct' | 'group'>('direct');
   const [creatingChat, setCreatingChat] = useState(false);
 
   useEffect(() => {
-    if (user && isOpen) loadConversations();
-  }, [user, isOpen]);
+    if (!isOpen) {
+      setLoading(false);
+      return;
+    }
+
+    if (!user?.id) {
+      setConversations([]);
+      setLoading(false);
+      return;
+    }
+
+    loadConversations();
+  }, [user?.id, isOpen]);
 
   const loadConversations = async () => {
-    if (!user) {
+    if (!user?.id) {
       setConversations([]);
       setLoading(false);
       return;
     }
 
     setLoading(true);
+
     try {
       const { data: rooms, error: roomsError } = await supabase
         .from('chat_rooms')
@@ -141,25 +154,44 @@ export const PrivateChatsDrawer: React.FC<PrivateChatsDrawerProps> = ({ isOpen, 
   };
 
   const loadAvailableUsers = async () => {
-    if (!user) {
+    if (!user?.id) {
       setAvailableUsers([]);
       return;
     }
 
-    const { data, error } = await supabase
-      .from('profiles')
-      .select('id, user_id, display_name, avatar_url, first_name, last_name')
-      .neq('user_id', user.id)
-      .limit(50);
+    setLoadingUsers(true);
 
-    if (error) {
+    try {
+      const { data: allProfiles, error: allProfilesError } = await supabase.rpc('get_all_user_profiles');
+
+      if (!allProfilesError && Array.isArray(allProfiles)) {
+        const normalized = allProfiles.filter((profile: any) => profile?.user_id && profile.user_id !== user.id);
+        setAvailableUsers(normalized);
+        return;
+      }
+
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('id, user_id, display_name, avatar_url, first_name, last_name')
+        .neq('user_id', user.id)
+        .limit(50);
+
+      if (error) throw error;
+
+      setAvailableUsers((data || []).filter((profile: any) => profile.user_id && profile.user_id !== user.id));
+    } catch (error) {
       console.error('Error loading available users:', error);
       toast({ title: 'Error', description: 'Failed to load users', variant: 'destructive' });
       setAvailableUsers([]);
-      return;
+    } finally {
+      setLoadingUsers(false);
     }
+  };
 
-    setAvailableUsers((data || []).filter((profile: any) => profile.user_id && profile.user_id !== user.id));
+  const openNewChatDialog = async () => {
+    setChatType('direct');
+    setShowNewChatDialog(true);
+    await loadAvailableUsers();
   };
 
   const createNewChat = async (otherUserId: string) => {
@@ -167,7 +199,8 @@ export const PrivateChatsDrawer: React.FC<PrivateChatsDrawerProps> = ({ isOpen, 
     setCreatingChat(true);
     try {
       const { data: roomId, error } = await supabase.rpc('get_or_create_direct_room', {
-        user1_id: user.id, user2_id: otherUserId,
+        user1_id: user.id,
+        user2_id: otherUserId,
       });
       if (error) throw error;
       setSelectedRoomId(roomId);
@@ -187,7 +220,8 @@ export const PrivateChatsDrawer: React.FC<PrivateChatsDrawerProps> = ({ isOpen, 
       const { data: newRoom, error } = await supabase
         .from('chat_rooms')
         .insert({ room_type: 'group', name: groupName, created_by: user.id, is_active: true })
-        .select().single();
+        .select()
+        .single();
       if (error) throw error;
       await supabase.from('chat_participants').insert({ room_id: newRoom.id, user_id: user.id, is_active: true, is_moderator: true });
       await supabase.rpc('add_room_participants', { _room_id: newRoom.id, _user_ids: selectedUsers });
@@ -207,13 +241,14 @@ export const PrivateChatsDrawer: React.FC<PrivateChatsDrawerProps> = ({ isOpen, 
     ? conversations.filter(c => c.name.toLowerCase().includes(searchQuery.toLowerCase()))
     : conversations;
 
-  // If viewing a conversation, show it full-screen
   if (selectedRoomId) {
     return (
       <AnimatePresence>
         {isOpen && (
           <motion.div
-            initial={{ x: '100%' }} animate={{ x: 0 }} exit={{ x: '100%' }}
+            initial={{ x: '100%' }}
+            animate={{ x: 0 }}
+            exit={{ x: '100%' }}
             transition={{ type: 'spring', damping: 25, stiffness: 200 }}
             className="fixed inset-0 z-50 bg-background"
           >
@@ -228,26 +263,32 @@ export const PrivateChatsDrawer: React.FC<PrivateChatsDrawerProps> = ({ isOpen, 
     <AnimatePresence>
       {isOpen && (
         <>
-          {/* Backdrop */}
           <motion.div
-            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
             className="fixed inset-0 z-40 bg-background/60 backdrop-blur-sm lg:hidden"
             onClick={onClose}
           />
-          {/* Drawer */}
+
           <motion.div
-            initial={{ x: '100%' }} animate={{ x: 0 }} exit={{ x: '100%' }}
+            initial={{ x: '100%' }}
+            animate={{ x: 0 }}
+            exit={{ x: '100%' }}
             transition={{ type: 'spring', damping: 25, stiffness: 200 }}
             className="fixed right-0 top-0 bottom-0 z-50 w-full max-w-sm bg-card border-l border-border/30 flex flex-col"
           >
-            {/* Header */}
             <div className="flex items-center justify-between p-4 border-b border-border/30">
               <h2 className="text-lg font-bold text-foreground flex items-center gap-2">
                 <MessageCircle className="w-5 h-5 text-primary" /> My Chats
               </h2>
               <div className="flex items-center gap-2">
-                <Button size="sm" onClick={() => { loadAvailableUsers(); setShowNewChatDialog(true); }}
-                  style={{ backgroundColor: 'hsl(188 78% 41%)', color: 'white', border: 'none' }}>
+                <Button
+                  size="sm"
+                  onClick={openNewChatDialog}
+                  disabled={loadingUsers}
+                  style={{ backgroundColor: 'hsl(188 78% 41%)', color: 'white', border: 'none' }}
+                >
                   <Plus className="w-4 h-4" />
                 </Button>
                 <button onClick={onClose} className="p-2 rounded-full hover:bg-background/30">
@@ -256,7 +297,6 @@ export const PrivateChatsDrawer: React.FC<PrivateChatsDrawerProps> = ({ isOpen, 
               </div>
             </div>
 
-            {/* Search */}
             <div className="px-4 py-2">
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
@@ -269,7 +309,6 @@ export const PrivateChatsDrawer: React.FC<PrivateChatsDrawerProps> = ({ isOpen, 
               </div>
             </div>
 
-            {/* Chat list */}
             <ScrollArea className="flex-1">
               <div className="p-2 space-y-1">
                 {loading ? (
@@ -297,9 +336,7 @@ export const PrivateChatsDrawer: React.FC<PrivateChatsDrawerProps> = ({ isOpen, 
                     >
                       <Avatar className="w-10 h-10 border border-primary/20">
                         <AvatarImage src={chat.avatar_url || undefined} />
-                        <AvatarFallback className="bg-primary/20 text-foreground text-xs">
-                          {chat.name.charAt(0)}
-                        </AvatarFallback>
+                        <AvatarFallback className="bg-primary/20 text-foreground text-xs">{chat.name.charAt(0)}</AvatarFallback>
                       </Avatar>
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center justify-between">
@@ -310,59 +347,82 @@ export const PrivateChatsDrawer: React.FC<PrivateChatsDrawerProps> = ({ isOpen, 
                         </div>
                         <p className="text-xs text-muted-foreground truncate">{chat.last_message}</p>
                       </div>
-                      {chat.unread_count > 0 && (
-                        <Badge variant="destructive" className="px-1.5 py-0 text-[10px]">{chat.unread_count}</Badge>
-                      )}
+                      {chat.unread_count > 0 && <Badge variant="destructive" className="px-1.5 py-0 text-[10px]">{chat.unread_count}</Badge>}
                     </motion.div>
                   ))
                 )}
               </div>
             </ScrollArea>
 
-            {/* New Chat Dialog */}
             <Dialog open={showNewChatDialog} onOpenChange={setShowNewChatDialog}>
               <DialogContent className="max-w-md">
-                <DialogHeader><DialogTitle>New Conversation</DialogTitle></DialogHeader>
+                <DialogHeader>
+                  <DialogTitle>New Conversation</DialogTitle>
+                </DialogHeader>
                 <Tabs value={chatType} onValueChange={v => setChatType(v as any)} className="w-full" data-deadlink-watch-ignore="true">
                   <TabsList className="grid w-full grid-cols-2 mb-4" data-deadlink-watch-ignore="true">
                     <TabsTrigger value="direct" data-deadlink-watch-ignore="true">Direct Message</TabsTrigger>
                     <TabsTrigger value="group" data-deadlink-watch-ignore="true">Group Chat</TabsTrigger>
                   </TabsList>
+
                   <TabsContent value="direct" className="space-y-2 max-h-60 overflow-y-auto">
-                    {availableUsers.length === 0 ? (
+                    {loadingUsers ? (
+                      <p className="text-center text-muted-foreground py-6 text-sm">Loading users...</p>
+                    ) : availableUsers.length === 0 ? (
                       <p className="text-center text-muted-foreground py-6 text-sm">No users available. Try refreshing.</p>
-                    ) : availableUsers.map(p => {
-                      const name = p.display_name || `${p.first_name || ''} ${p.last_name || ''}`.trim() || 'Unknown';
-                      return (
-                        <div key={p.user_id} className="flex items-center gap-3 p-2 rounded-lg hover:bg-muted/30 cursor-pointer" onClick={() => createNewChat(p.user_id)}>
-                          <Avatar className="w-8 h-8">
-                            <AvatarImage src={p.avatar_url} />
-                            <AvatarFallback className="bg-primary/20 text-xs">{name.charAt(0)}</AvatarFallback>
-                          </Avatar>
-                          <span className="text-sm font-medium flex-1">{name}</span>
-                          <Button size="icon" variant="ghost" className="h-7 w-7" onClick={e => { e.stopPropagation(); startCall(p.user_id, name, 'audio'); }}>
-                            <Phone className="w-3.5 h-3.5" />
-                          </Button>
-                          <Button size="icon" variant="ghost" className="h-7 w-7" onClick={e => { e.stopPropagation(); startCall(p.user_id, name, 'video'); }}>
-                            <Video className="w-3.5 h-3.5" />
-                          </Button>
-                        </div>
-                      );
-                    })}
+                    ) : (
+                      availableUsers.map(p => {
+                        const name = p.display_name || `${p.first_name || ''} ${p.last_name || ''}`.trim() || 'Unknown';
+                        return (
+                          <div key={p.user_id} className="flex items-center gap-3 p-2 rounded-lg hover:bg-muted/30 cursor-pointer" onClick={() => createNewChat(p.user_id)}>
+                            <Avatar className="w-8 h-8">
+                              <AvatarImage src={p.avatar_url} />
+                              <AvatarFallback className="bg-primary/20 text-xs">{name.charAt(0)}</AvatarFallback>
+                            </Avatar>
+                            <span className="text-sm font-medium flex-1">{name}</span>
+                            <Button size="icon" variant="ghost" className="h-7 w-7" onClick={e => { e.stopPropagation(); startCall(p.user_id, name, 'audio'); }}>
+                              <Phone className="w-3.5 h-3.5" />
+                            </Button>
+                            <Button size="icon" variant="ghost" className="h-7 w-7" onClick={e => { e.stopPropagation(); startCall(p.user_id, name, 'video'); }}>
+                              <Video className="w-3.5 h-3.5" />
+                            </Button>
+                          </div>
+                        );
+                      })
+                    )}
                   </TabsContent>
+
                   <TabsContent value="group" className="space-y-3">
                     <Input placeholder="Group name" value={groupName} onChange={e => setGroupName(e.target.value)} />
                     <div className="text-xs text-muted-foreground">Select members ({selectedUsers.length})</div>
                     <div className="space-y-1 max-h-48 overflow-y-auto">
-                      {availableUsers.map(p => (
-                        <div key={p.user_id} className="flex items-center gap-2 p-2 rounded-lg hover:bg-muted/30 cursor-pointer" onClick={() => setSelectedUsers(prev => prev.includes(p.user_id) ? prev.filter(id => id !== p.user_id) : [...prev, p.user_id])}>
-                          <Checkbox checked={selectedUsers.includes(p.user_id)} />
-                          <Avatar className="w-7 h-7"><AvatarImage src={p.avatar_url} /><AvatarFallback className="bg-primary/20 text-[10px]">{(p.display_name || 'U').charAt(0)}</AvatarFallback></Avatar>
-                          <span className="text-xs">{p.display_name || `${p.first_name || ''} ${p.last_name || ''}`.trim() || 'Unknown'}</span>
-                        </div>
-                      ))}
+                      {loadingUsers ? (
+                        <p className="text-center text-muted-foreground py-4 text-xs">Loading users...</p>
+                      ) : availableUsers.length === 0 ? (
+                        <p className="text-center text-muted-foreground py-4 text-xs">No users available.</p>
+                      ) : (
+                        availableUsers.map(p => (
+                          <div
+                            key={p.user_id}
+                            className="flex items-center gap-2 p-2 rounded-lg hover:bg-muted/30 cursor-pointer"
+                            onClick={() => setSelectedUsers(prev => prev.includes(p.user_id) ? prev.filter(id => id !== p.user_id) : [...prev, p.user_id])}
+                          >
+                            <Checkbox checked={selectedUsers.includes(p.user_id)} />
+                            <Avatar className="w-7 h-7">
+                              <AvatarImage src={p.avatar_url} />
+                              <AvatarFallback className="bg-primary/20 text-[10px]">{(p.display_name || 'U').charAt(0)}</AvatarFallback>
+                            </Avatar>
+                            <span className="text-xs">{p.display_name || `${p.first_name || ''} ${p.last_name || ''}`.trim() || 'Unknown'}</span>
+                          </div>
+                        ))
+                      )}
                     </div>
-                    <Button onClick={createGroupChat} disabled={creatingChat || selectedUsers.length < 2 || !groupName.trim()} className="w-full" style={{ backgroundColor: 'hsl(188 78% 41%)', color: 'white' }}>
+                    <Button
+                      onClick={createGroupChat}
+                      disabled={creatingChat || selectedUsers.length < 2 || !groupName.trim()}
+                      className="w-full"
+                      style={{ backgroundColor: 'hsl(188 78% 41%)', color: 'white' }}
+                    >
                       Create Group
                     </Button>
                   </TabsContent>
