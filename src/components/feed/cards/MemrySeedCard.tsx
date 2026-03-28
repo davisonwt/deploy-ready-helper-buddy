@@ -168,10 +168,17 @@ const SeedAudioPreview: React.FC<{ audioUrl: string }> = ({ audioUrl }) => {
   }, []);
 
   return (
-    <div className="relative z-20 flex-shrink-0 w-[108px] sm:w-[116px]">
+    <div className="relative z-20 flex-shrink-0 w-[108px] sm:w-[116px]" style={{ pointerEvents: 'auto' }}>
       <audio ref={audioRef} preload="metadata" playsInline className="hidden" />
       <div className="h-8 flex items-center gap-1.5 bg-black/50 backdrop-blur-md rounded-full px-2">
-        <button onClick={togglePlay} className="text-white hover:scale-110 transition-transform flex-shrink-0" disabled={loading || !resolvedUrl}>
+        <button
+          type="button"
+          onClick={(e) => { e.preventDefault(); e.stopPropagation(); togglePlay(); }}
+          className="text-white hover:scale-110 transition-transform flex-shrink-0 border-0 p-0 bg-transparent appearance-none cursor-pointer"
+          style={{ WebkitTapHighlightColor: 'transparent' }}
+          disabled={loading || !resolvedUrl}
+          aria-label={playing ? 'Pause preview' : 'Play preview'}
+        >
           {playing ? <Pause className="w-3.5 h-3.5" /> : <Play className="w-3.5 h-3.5" />}
         </button>
         <div className="flex-1 h-[2px] bg-white/20 rounded-full overflow-hidden">
@@ -542,8 +549,9 @@ export const MemrySeedCard: React.FC<MemrySeedCardProps> = ({
           className={`absolute left-0 right-0 z-[9] px-3 ${
             isVideo ? 'bottom-12 pb-2' : 'bottom-0 pb-3'
           }`}
+          style={{ pointerEvents: 'none' }}
         >
-          <div className="flex items-center gap-2.5 mb-1.5">
+          <div className="flex items-center gap-2.5 mb-1.5" style={{ pointerEvents: 'auto' }}>
             <Link to={`/member/${post.user_id}`}>
               <Avatar className="w-9 h-9 border-2 border-white/70 shadow">
                 <AvatarImage src={post.profiles?.avatar_url} />
@@ -568,7 +576,7 @@ export const MemrySeedCard: React.FC<MemrySeedCardProps> = ({
             </div>
           </div>
 
-          <div className={`flex items-center justify-between gap-2 ${isVideo ? 'pr-2' : ''}`}>
+          <div className={`flex items-center justify-between gap-2 ${isVideo ? 'pr-2' : ''}`} style={{ pointerEvents: 'auto' }}>
             <p
               className={`text-white font-semibold line-clamp-2 drop-shadow flex-1 ${
                 isVideo ? 'text-sm leading-snug' : 'text-[16px] leading-tight'
