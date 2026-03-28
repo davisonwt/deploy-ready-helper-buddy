@@ -279,7 +279,9 @@ export const PrivateChatsDrawer: React.FC<PrivateChatsDrawerProps> = ({ isOpen, 
                     <TabsTrigger value="group">Group Chat</TabsTrigger>
                   </TabsList>
                   <TabsContent value="direct" className="space-y-2 max-h-60 overflow-y-auto">
-                    {availableUsers.map(p => {
+                    {availableUsers.length === 0 ? (
+                      <p className="text-center text-muted-foreground py-6 text-sm">No users available. Try refreshing.</p>
+                    ) : availableUsers.map(p => {
                       const name = p.display_name || `${p.first_name || ''} ${p.last_name || ''}`.trim() || 'Unknown';
                       return (
                         <div key={p.user_id} className="flex items-center gap-3 p-2 rounded-lg hover:bg-muted/30 cursor-pointer" onClick={() => createNewChat(p.user_id)}>
