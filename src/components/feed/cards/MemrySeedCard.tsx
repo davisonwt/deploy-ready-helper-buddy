@@ -173,9 +173,11 @@ const SeedAudioPreview: React.FC<{ audioUrl: string }> = ({ audioUrl }) => {
       <div className="h-8 flex items-center gap-1.5 bg-black/50 backdrop-blur-md rounded-full px-2">
         <button
           type="button"
+          onPointerDown={(e) => { e.preventDefault(); e.stopPropagation(); }}
+          onTouchStart={(e) => { e.preventDefault(); e.stopPropagation(); }}
           onClick={(e) => { e.preventDefault(); e.stopPropagation(); togglePlay(); }}
           className="text-white hover:scale-110 transition-transform flex-shrink-0 border-0 p-0 bg-transparent appearance-none cursor-pointer"
-          style={{ WebkitTapHighlightColor: 'transparent' }}
+          style={{ WebkitTapHighlightColor: 'transparent', touchAction: 'manipulation' }}
           disabled={loading || !resolvedUrl}
           aria-label={playing ? 'Pause preview' : 'Play preview'}
         >
