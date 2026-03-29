@@ -168,6 +168,23 @@ export const RadioSessionFeed: React.FC<RadioSessionFeedProps> = ({
               boxShadow: `0 10px 24px ${theme.shadow}`,
             }}
           >
+            {/* Radio studio banner image */}
+            <div className="relative h-[80px] overflow-hidden">
+              <img
+                src="/images/radio/radio-studio.jpg"
+                alt="Radio studio"
+                className="absolute inset-0 w-full h-full object-cover"
+                loading="lazy"
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent" />
+              {isLive && (
+                <div className="absolute top-2 left-2 flex items-center gap-1 bg-red-600/90 backdrop-blur-sm px-2 py-0.5 rounded-full">
+                  <span className="w-2 h-2 bg-white rounded-full animate-pulse" />
+                  <span className="text-[10px] font-bold text-white">ON AIR</span>
+                </div>
+              )}
+            </div>
+
             <div className="p-3">
               {/* Top row: Host + Status */}
               <div className="flex items-center justify-between mb-2">
