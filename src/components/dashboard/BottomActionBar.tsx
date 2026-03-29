@@ -11,9 +11,9 @@ interface BottomActionBarProps {
 
 export const BottomActionBar: React.FC<BottomActionBarProps> = ({ theme }) => {
   const [showMore, setShowMore] = useState(false);
+  const [plantModalOpen, setPlantModalOpen] = useState(false);
 
   const primaryActions = [
-    { to: '/create-orchard', icon: Plus, label: 'Plant' },
     { to: '/communications-hub', icon: MessageSquare, label: 'Chat' },
     { to: '/grove-station', icon: Radio, label: 'Radio' },
     { to: '/browse-orchards', icon: TreePine, label: 'Browse' },
