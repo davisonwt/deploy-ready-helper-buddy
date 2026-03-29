@@ -77,7 +77,7 @@ export const GigActionCards: React.FC<GigActionCardsProps> = ({ theme }) => {
                 <Ear className="w-4 h-4 text-white" />
               </div>
               <h3 className="font-bold text-white text-xs">Whisperer</h3>
-              <p className="text-[9px] text-white/70">Prayer help</p>
+              <p className="text-[9px] text-white/70">Marketing help</p>
             </button>
           </div>
         </div>
@@ -105,7 +105,7 @@ export const GigActionCards: React.FC<GigActionCardsProps> = ({ theme }) => {
             <GradientGatewayCard
               href="/become-whisperer"
               title="Whisperer"
-              subtitle="Prayer support"
+              subtitle="Content & marketing"
               icon={Ear}
               gradient="linear-gradient(135deg, #a21caf, #c026d3)"
             />

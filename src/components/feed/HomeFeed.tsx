@@ -275,6 +275,17 @@ export const HomeFeed: React.FC<HomeFeedProps> = ({
       />
 
       <div className="px-3 sm:px-4 space-y-5 pb-8">
+        {/* === GIG SERVICES: Book & Become (top of feed for easy access) === */}
+        <section>
+          <GigActionCards theme={{
+            textPrimary: 'hsl(var(--foreground))',
+            textSecondary: 'hsl(var(--muted-foreground))',
+            accent: 'hsl(var(--primary))',
+            secondaryButton: 'hsl(var(--muted))',
+            cardBorder: 'hsl(var(--border))',
+          } as any} />
+        </section>
+
         {/* === RADIO SESSIONS === */}
         {radioCards.length > 0 && (
           <section>
@@ -336,16 +347,6 @@ export const HomeFeed: React.FC<HomeFeedProps> = ({
         {/* === S2G MEMRY FEED (inline) === */}
         <InlineMemryFeed />
 
-        {/* === GIG SERVICES: Book & Become === */}
-        <section>
-          <GigActionCards theme={{
-            textPrimary: 'hsl(var(--foreground))',
-            textSecondary: 'hsl(var(--muted-foreground))',
-            accent: 'hsl(var(--primary))',
-            secondaryButton: 'hsl(var(--muted))',
-            cardBorder: 'hsl(var(--border))',
-          } as any} />
-        </section>
 
         {/* === CHAT ROOMS === */}
         {(chatRooms || []).length > 0 && (
