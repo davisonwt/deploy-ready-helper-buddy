@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
 import {
   Home, Sprout, TreePine, MessageSquare, GraduationCap,
@@ -6,6 +6,7 @@ import {
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
+import { PlantModal } from '@/components/grove/PlantModal';
 
 interface AppSidebarProps {
   radioLive?: boolean;
@@ -34,6 +35,7 @@ const adminItems = [
 
 export const AppSidebar: React.FC<AppSidebarProps> = ({ radioLive, userProfile }) => {
   const navigate = useNavigate();
+  const [plantModalOpen, setPlantModalOpen] = useState(false);
   const initials = (userProfile?.display_name || 'S')
     .split(' ')
     .map((w) => w[0])
@@ -124,7 +126,7 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({ radioLive, userProfile }
       {/* Plant Button */}
       <div className="px-2 pt-3">
         <button
-          onClick={() => navigate('/create-orchard')}
+          onClick={() => setPlantModalOpen(true)}
           className="w-full h-10 rounded-lg flex items-center justify-center gap-2 text-white text-sm font-semibold transition-opacity hover:opacity-90"
           style={{ backgroundColor: '#1D9E75' }}
         >
@@ -132,6 +134,8 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({ radioLive, userProfile }
           Plant
         </button>
       </div>
+
+      <PlantModal open={plantModalOpen} onOpenChange={setPlantModalOpen} />
     </div>
   );
 };
