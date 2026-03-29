@@ -61,30 +61,47 @@ export const SkillDropSubSection: React.FC<Props> = ({ theme }) => {
             return (
               <motion.div key={s.id} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.05 }}>
                 <div
-                  className="rounded-xl p-2.5 border cursor-pointer hover:scale-[1.01] transition-transform"
+                  className="rounded-xl border cursor-pointer hover:scale-[1.01] transition-transform overflow-hidden"
                   style={{ background: theme.cardBg, borderColor: isLive ? 'hsl(var(--destructive) / 0.45)' : theme.cardBorder }}
                   onClick={() => navigate('/communications-hub')}
                 >
-                  <div className="flex items-center gap-2">
-                    <Avatar className="w-7 h-7">
-                      <AvatarImage src={profile?.avatar_url || undefined} />
-                      <AvatarFallback className="text-[9px]" style={{ backgroundColor: theme.secondaryButton, color: theme.textPrimary }}>
-                        {profile?.display_name?.charAt(0) || '⚡'}
-                      </AvatarFallback>
-                    </Avatar>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-xs font-semibold truncate" style={{ color: theme.textPrimary }}>{s.title}</p>
-                      <div className="flex items-center gap-1 text-[9px]" style={{ color: theme.textSecondary }}>
-                        <Clock className="w-2.5 h-2.5" />
-                        {format(new Date(s.scheduled_at), 'MMM d, HH:mm')}
-                        {s.pricing_type !== 'free' && <span>· {s.pricing_type}</span>}
+                  {/* Banner image */}
+                  <div className="relative h-[60px] overflow-hidden">
+                    <img src="/images/sessions/skilldrop.jpg" alt="SkillDrop" className="absolute inset-0 w-full h-full object-cover" loading="lazy" />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
+                    {isLive && (
+                      <div className="absolute top-1.5 left-1.5 flex items-center gap-1 bg-red-600/90 backdrop-blur-sm px-1.5 py-0.5 rounded-full">
+                        <span className="w-1.5 h-1.5 bg-white rounded-full animate-pulse" />
+                        <span className="text-[8px] font-bold text-white">LIVE</span>
                       </div>
-                    </div>
-                    <div className="flex items-center gap-1">
-                      {isLive ? <LiveBadge /> : <UpcomingBadge />}
-                      <Button size="sm" className="text-[9px] h-5 px-2 rounded-full font-semibold" style={{ background: isLive ? theme.primaryButton : theme.secondaryButton, color: theme.textPrimary }}>
-                        {isLive ? 'Join' : 'View'}
-                      </Button>
+                    )}
+                  </div>
+                  <div className="p-2.5">
+                    <div className="flex items-center gap-2">
+                      <Avatar className="w-7 h-7">
+                        <AvatarImage src={profile?.avatar_url || undefined} />
+                        <AvatarFallback className="text-[9px]" style={{ backgroundColor: theme.secondaryButton, color: theme.textPrimary }}>
+                          {profile?.display_name?.charAt(0) || '⚡'}
+                        </AvatarFallback>
+                      </Avatar>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-xs font-semibold truncate" style={{ color: theme.textPrimary }}>{s.title}</p>
+                        <div className="flex items-center gap-1 text-[9px]" style={{ color: theme.textSecondary }}>
+                          <Clock className="w-2.5 h-2.5" />
+                          {format(new Date(s.scheduled_at), 'MMM d, HH:mm')}
+                          {s.pricing_type === 'free' ? (
+                            <span className="ml-1 text-green-500 font-semibold">FREE</span>
+                          ) : (
+                            <span className="ml-1 font-semibold" style={{ color: theme.accent }}>· {s.pricing_type}</span>
+                          )}
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-1">
+                        {isLive ? <LiveBadge /> : <UpcomingBadge />}
+                        <Button size="sm" className="text-[9px] h-5 px-2 rounded-full font-semibold" style={{ background: isLive ? theme.primaryButton : theme.secondaryButton, color: theme.textPrimary }}>
+                          {isLive ? 'Join' : 'View'}
+                        </Button>
+                      </div>
                     </div>
                   </div>
                 </div>

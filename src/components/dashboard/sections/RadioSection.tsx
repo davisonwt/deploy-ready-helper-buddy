@@ -194,6 +194,17 @@ export const RadioSection: React.FC<RadioSectionProps> = ({ theme }) => {
                 }}
                 onClick={() => handleJoin(slot)}
               >
+                {/* Radio studio banner */}
+                <div className="relative h-[60px] overflow-hidden">
+                  <img src="/images/radio/radio-studio.jpg" alt="Radio studio" className="absolute inset-0 w-full h-full object-cover" loading="lazy" />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
+                  {isLive && (
+                    <div className="absolute top-1.5 left-1.5 flex items-center gap-1 bg-red-600/90 backdrop-blur-sm px-1.5 py-0.5 rounded-full">
+                      <span className="w-1.5 h-1.5 bg-white rounded-full animate-pulse" />
+                      <span className="text-[8px] font-bold text-white">ON AIR</span>
+                    </div>
+                  )}
+                </div>
                 <div className="p-3">
                   <div className="flex items-center justify-between mb-2">
                     <div className="flex items-center gap-2">
