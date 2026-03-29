@@ -468,6 +468,48 @@ export type Database = {
           },
         ]
       }
+      availability_calendar: {
+        Row: {
+          available_date: string
+          created_at: string | null
+          estimated_hours_remaining: number | null
+          id: string
+          is_available: boolean | null
+          location_zone: string | null
+          max_distance_km_remaining: number | null
+          time_slots: Json | null
+          updated_at: string | null
+          user_id: string
+          user_type: string
+        }
+        Insert: {
+          available_date: string
+          created_at?: string | null
+          estimated_hours_remaining?: number | null
+          id?: string
+          is_available?: boolean | null
+          location_zone?: string | null
+          max_distance_km_remaining?: number | null
+          time_slots?: Json | null
+          updated_at?: string | null
+          user_id: string
+          user_type: string
+        }
+        Update: {
+          available_date?: string
+          created_at?: string | null
+          estimated_hours_remaining?: number | null
+          id?: string
+          is_available?: boolean | null
+          location_zone?: string | null
+          max_distance_km_remaining?: number | null
+          time_slots?: Json | null
+          updated_at?: string | null
+          user_id?: string
+          user_type?: string
+        }
+        Relationships: []
+      }
       available_achievements: {
         Row: {
           achievement_type: string
@@ -1573,61 +1615,112 @@ export type Database = {
       }
       community_drivers: {
         Row: {
+          background_check_status: string | null
           city: string | null
           contact_email: string
           contact_phone: string
           country: string | null
           created_at: string
+          current_lat: number | null
+          current_lng: number | null
+          daily_max_km: number | null
           delivery_radius_km: number | null
           distance_unit: string | null
+          driver_license_number: string | null
+          earnings_balance: number | null
           full_name: string
           id: string
+          insurance_doc_url: string | null
+          is_online: boolean | null
+          license_expiry: string | null
+          license_plate: string | null
           no_income_confirmed: boolean
+          rating: number | null
+          registration_doc_url: string | null
           service_areas: string[] | null
           status: string
+          stripe_connect_account_id: string | null
+          total_trips: number | null
           updated_at: string
           user_id: string
           vehicle_description: string
           vehicle_images: string[] | null
+          vehicle_make: string | null
+          vehicle_model: string | null
           vehicle_type: string
+          vehicle_year: number | null
         }
         Insert: {
+          background_check_status?: string | null
           city?: string | null
           contact_email: string
           contact_phone: string
           country?: string | null
           created_at?: string
+          current_lat?: number | null
+          current_lng?: number | null
+          daily_max_km?: number | null
           delivery_radius_km?: number | null
           distance_unit?: string | null
+          driver_license_number?: string | null
+          earnings_balance?: number | null
           full_name: string
           id?: string
+          insurance_doc_url?: string | null
+          is_online?: boolean | null
+          license_expiry?: string | null
+          license_plate?: string | null
           no_income_confirmed?: boolean
+          rating?: number | null
+          registration_doc_url?: string | null
           service_areas?: string[] | null
           status?: string
+          stripe_connect_account_id?: string | null
+          total_trips?: number | null
           updated_at?: string
           user_id: string
           vehicle_description: string
           vehicle_images?: string[] | null
+          vehicle_make?: string | null
+          vehicle_model?: string | null
           vehicle_type: string
+          vehicle_year?: number | null
         }
         Update: {
+          background_check_status?: string | null
           city?: string | null
           contact_email?: string
           contact_phone?: string
           country?: string | null
           created_at?: string
+          current_lat?: number | null
+          current_lng?: number | null
+          daily_max_km?: number | null
           delivery_radius_km?: number | null
           distance_unit?: string | null
+          driver_license_number?: string | null
+          earnings_balance?: number | null
           full_name?: string
           id?: string
+          insurance_doc_url?: string | null
+          is_online?: boolean | null
+          license_expiry?: string | null
+          license_plate?: string | null
           no_income_confirmed?: boolean
+          rating?: number | null
+          registration_doc_url?: string | null
           service_areas?: string[] | null
           status?: string
+          stripe_connect_account_id?: string | null
+          total_trips?: number | null
           updated_at?: string
           user_id?: string
           vehicle_description?: string
           vehicle_images?: string[] | null
+          vehicle_make?: string | null
+          vehicle_model?: string | null
           vehicle_type?: string
+          vehicle_year?: number | null
         }
         Relationships: []
       }
@@ -2533,6 +2626,231 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      gig_bookings: {
+        Row: {
+          actual_distance_km: number | null
+          actual_duration_min: number | null
+          admin_fee_amount: number | null
+          booking_dates: string[] | null
+          booking_type: Database["public"]["Enums"]["booking_type"]
+          cancellation_reason: string | null
+          created_at: string | null
+          customer_id: string
+          customer_notes: string | null
+          dropoff_address: string | null
+          dropoff_datetime: string | null
+          dropoff_lat: number | null
+          dropoff_lng: number | null
+          estimated_distance_km: number | null
+          estimated_duration_min: number | null
+          estimated_fare: number | null
+          final_fare: number | null
+          id: string
+          is_multi_day: boolean | null
+          is_round_trip: boolean | null
+          parent_booking_id: string | null
+          payment_status: Database["public"]["Enums"]["payment_status"] | null
+          pickup_address: string | null
+          pickup_datetime: string | null
+          pickup_lat: number | null
+          pickup_lng: number | null
+          platform_fee_amount: number | null
+          provider_earnings: number | null
+          provider_id: string
+          provider_notes: string | null
+          provider_type: string
+          return_dropoff_datetime: string | null
+          return_pickup_datetime: string | null
+          service_details: Json | null
+          status: Database["public"]["Enums"]["booking_status"] | null
+          stripe_payment_intent_id: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          actual_distance_km?: number | null
+          actual_duration_min?: number | null
+          admin_fee_amount?: number | null
+          booking_dates?: string[] | null
+          booking_type: Database["public"]["Enums"]["booking_type"]
+          cancellation_reason?: string | null
+          created_at?: string | null
+          customer_id: string
+          customer_notes?: string | null
+          dropoff_address?: string | null
+          dropoff_datetime?: string | null
+          dropoff_lat?: number | null
+          dropoff_lng?: number | null
+          estimated_distance_km?: number | null
+          estimated_duration_min?: number | null
+          estimated_fare?: number | null
+          final_fare?: number | null
+          id?: string
+          is_multi_day?: boolean | null
+          is_round_trip?: boolean | null
+          parent_booking_id?: string | null
+          payment_status?: Database["public"]["Enums"]["payment_status"] | null
+          pickup_address?: string | null
+          pickup_datetime?: string | null
+          pickup_lat?: number | null
+          pickup_lng?: number | null
+          platform_fee_amount?: number | null
+          provider_earnings?: number | null
+          provider_id: string
+          provider_notes?: string | null
+          provider_type: string
+          return_dropoff_datetime?: string | null
+          return_pickup_datetime?: string | null
+          service_details?: Json | null
+          status?: Database["public"]["Enums"]["booking_status"] | null
+          stripe_payment_intent_id?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          actual_distance_km?: number | null
+          actual_duration_min?: number | null
+          admin_fee_amount?: number | null
+          booking_dates?: string[] | null
+          booking_type?: Database["public"]["Enums"]["booking_type"]
+          cancellation_reason?: string | null
+          created_at?: string | null
+          customer_id?: string
+          customer_notes?: string | null
+          dropoff_address?: string | null
+          dropoff_datetime?: string | null
+          dropoff_lat?: number | null
+          dropoff_lng?: number | null
+          estimated_distance_km?: number | null
+          estimated_duration_min?: number | null
+          estimated_fare?: number | null
+          final_fare?: number | null
+          id?: string
+          is_multi_day?: boolean | null
+          is_round_trip?: boolean | null
+          parent_booking_id?: string | null
+          payment_status?: Database["public"]["Enums"]["payment_status"] | null
+          pickup_address?: string | null
+          pickup_datetime?: string | null
+          pickup_lat?: number | null
+          pickup_lng?: number | null
+          platform_fee_amount?: number | null
+          provider_earnings?: number | null
+          provider_id?: string
+          provider_notes?: string | null
+          provider_type?: string
+          return_dropoff_datetime?: string | null
+          return_pickup_datetime?: string | null
+          service_details?: Json | null
+          status?: Database["public"]["Enums"]["booking_status"] | null
+          stripe_payment_intent_id?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "gig_bookings_parent_booking_id_fkey"
+            columns: ["parent_booking_id"]
+            isOneToOne: false
+            referencedRelation: "gig_bookings"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      gig_live_tracking: {
+        Row: {
+          accuracy: number | null
+          booking_id: string
+          heading: number | null
+          id: string
+          lat: number
+          lng: number
+          provider_id: string
+          recorded_at: string | null
+          speed: number | null
+          status: Database["public"]["Enums"]["tracking_status"]
+        }
+        Insert: {
+          accuracy?: number | null
+          booking_id: string
+          heading?: number | null
+          id?: string
+          lat: number
+          lng: number
+          provider_id: string
+          recorded_at?: string | null
+          speed?: number | null
+          status: Database["public"]["Enums"]["tracking_status"]
+        }
+        Update: {
+          accuracy?: number | null
+          booking_id?: string
+          heading?: number | null
+          id?: string
+          lat?: number
+          lng?: number
+          provider_id?: string
+          recorded_at?: string | null
+          speed?: number | null
+          status?: Database["public"]["Enums"]["tracking_status"]
+        }
+        Relationships: [
+          {
+            foreignKeyName: "gig_live_tracking_booking_id_fkey"
+            columns: ["booking_id"]
+            isOneToOne: false
+            referencedRelation: "gig_bookings"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      gig_transactions: {
+        Row: {
+          amount: number
+          booking_id: string | null
+          breakdown: Json | null
+          created_at: string | null
+          currency: string | null
+          description: string | null
+          id: string
+          status: string | null
+          stripe_transaction_id: string | null
+          transaction_type: Database["public"]["Enums"]["transaction_type"]
+          user_id: string
+        }
+        Insert: {
+          amount: number
+          booking_id?: string | null
+          breakdown?: Json | null
+          created_at?: string | null
+          currency?: string | null
+          description?: string | null
+          id?: string
+          status?: string | null
+          stripe_transaction_id?: string | null
+          transaction_type: Database["public"]["Enums"]["transaction_type"]
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          booking_id?: string | null
+          breakdown?: Json | null
+          created_at?: string | null
+          currency?: string | null
+          description?: string | null
+          id?: string
+          status?: string | null
+          stripe_transaction_id?: string | null
+          transaction_type?: Database["public"]["Enums"]["transaction_type"]
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "gig_transactions_booking_id_fkey"
+            columns: ["booking_id"]
+            isOneToOne: false
+            referencedRelation: "gig_bookings"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       gosat_alerts: {
         Row: {
@@ -6607,6 +6925,7 @@ export type Database = {
       service_providers: {
         Row: {
           city: string | null
+          completed_jobs: number | null
           contact_email: string
           contact_phone: string
           country: string | null
@@ -6614,20 +6933,26 @@ export type Database = {
           custom_services: string[] | null
           description: string | null
           distance_unit: string | null
+          earnings_balance: number | null
           full_name: string
           hourly_rate: number | null
           id: string
           no_income_confirmed: boolean
           portfolio_images: string[] | null
+          rating: number | null
           service_areas: string[] | null
           service_radius: number | null
           services_offered: string[]
+          skills: Json | null
           status: string
+          stripe_connect_account_id: string | null
           updated_at: string
           user_id: string
+          verification_status: string | null
         }
         Insert: {
           city?: string | null
+          completed_jobs?: number | null
           contact_email: string
           contact_phone: string
           country?: string | null
@@ -6635,20 +6960,26 @@ export type Database = {
           custom_services?: string[] | null
           description?: string | null
           distance_unit?: string | null
+          earnings_balance?: number | null
           full_name: string
           hourly_rate?: number | null
           id?: string
           no_income_confirmed?: boolean
           portfolio_images?: string[] | null
+          rating?: number | null
           service_areas?: string[] | null
           service_radius?: number | null
           services_offered?: string[]
+          skills?: Json | null
           status?: string
+          stripe_connect_account_id?: string | null
           updated_at?: string
           user_id: string
+          verification_status?: string | null
         }
         Update: {
           city?: string | null
+          completed_jobs?: number | null
           contact_email?: string
           contact_phone?: string
           country?: string | null
@@ -6656,17 +6987,22 @@ export type Database = {
           custom_services?: string[] | null
           description?: string | null
           distance_unit?: string | null
+          earnings_balance?: number | null
           full_name?: string
           hourly_rate?: number | null
           id?: string
           no_income_confirmed?: boolean
           portfolio_images?: string[] | null
+          rating?: number | null
           service_areas?: string[] | null
           service_radius?: number | null
           services_offered?: string[]
+          skills?: Json | null
           status?: string
+          stripe_connect_account_id?: string | null
           updated_at?: string
           user_id?: string
+          verification_status?: string | null
         }
         Relationships: []
       }
@@ -6782,6 +7118,45 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      service_zones: {
+        Row: {
+          active_drivers_count: number | null
+          base_fare_per_km: number | null
+          boundary_geojson: Json | null
+          created_at: string | null
+          id: string
+          is_active: boolean | null
+          min_trip_minutes: number | null
+          name: string
+          surge_multiplier: number | null
+          updated_at: string | null
+        }
+        Insert: {
+          active_drivers_count?: number | null
+          base_fare_per_km?: number | null
+          boundary_geojson?: Json | null
+          created_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          min_trip_minutes?: number | null
+          name: string
+          surge_multiplier?: number | null
+          updated_at?: string | null
+        }
+        Update: {
+          active_drivers_count?: number | null
+          base_fare_per_km?: number | null
+          boundary_geojson?: Json | null
+          created_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          min_trip_minutes?: number | null
+          name?: string
+          surge_multiplier?: number | null
+          updated_at?: string | null
+        }
+        Relationships: []
       }
       session_documents: {
         Row: {
@@ -9223,6 +9598,7 @@ export type Database = {
           premium_category: Database["public"]["Enums"]["premium_room_category"]
         }[]
       }
+      calculate_booking_fees: { Args: { total_fare: number }; Returns: Json }
       calculate_music_purchase_total: {
         Args: { base_amount?: number }
         Returns: Json
@@ -9246,6 +9622,15 @@ export type Database = {
       check_dj_badges: { Args: { p_dj_id: string }; Returns: undefined }
       check_payment_idempotency: {
         Args: { idempotency_key_param: string; user_id_param: string }
+        Returns: Json
+      }
+      check_provider_availability: {
+        Args: {
+          p_date: string
+          p_distance_km?: number
+          p_duration_min?: number
+          p_provider_id: string
+        }
         Returns: Json
       }
       check_rate_limit_enhanced: {
@@ -9897,6 +10282,13 @@ export type Database = {
         | "radio_admin"
         | "moderator"
         | "courier"
+      booking_status:
+        | "pending"
+        | "confirmed"
+        | "in_progress"
+        | "completed"
+        | "cancelled"
+      booking_type: "ride" | "delivery" | "service"
       chat_message_type:
         | "text"
         | "verification"
@@ -9922,6 +10314,12 @@ export type Database = {
       file_type: "image" | "video" | "document" | "audio"
       orchard_status: "draft" | "active" | "paused" | "completed" | "cancelled"
       orchard_type: "standard" | "full_value"
+      payment_status:
+        | "pending"
+        | "authorized"
+        | "captured"
+        | "failed"
+        | "refunded"
       premium_room_category:
         | "marketing"
         | "cooking_nutrition"
@@ -9941,6 +10339,19 @@ export type Database = {
         | "business"
         | "ai_generated"
         | "live_call_in"
+      tracking_status:
+        | "en_route_to_pickup"
+        | "picking_up"
+        | "in_transit"
+        | "dropping_off"
+        | "completed"
+      transaction_type:
+        | "payment"
+        | "payout"
+        | "refund"
+        | "platform_fee"
+        | "admin_fee"
+        | "adjustment"
       verification_status: "pending" | "verified" | "rejected"
     }
     CompositeTypes: {
@@ -10084,6 +10495,14 @@ export const Constants = {
         "moderator",
         "courier",
       ],
+      booking_status: [
+        "pending",
+        "confirmed",
+        "in_progress",
+        "completed",
+        "cancelled",
+      ],
+      booking_type: ["ride", "delivery", "service"],
       chat_message_type: [
         "text",
         "verification",
@@ -10112,6 +10531,13 @@ export const Constants = {
       file_type: ["image", "video", "document", "audio"],
       orchard_status: ["draft", "active", "paused", "completed", "cancelled"],
       orchard_type: ["standard", "full_value"],
+      payment_status: [
+        "pending",
+        "authorized",
+        "captured",
+        "failed",
+        "refunded",
+      ],
       premium_room_category: [
         "marketing",
         "cooking_nutrition",
@@ -10132,6 +10558,21 @@ export const Constants = {
         "business",
         "ai_generated",
         "live_call_in",
+      ],
+      tracking_status: [
+        "en_route_to_pickup",
+        "picking_up",
+        "in_transit",
+        "dropping_off",
+        "completed",
+      ],
+      transaction_type: [
+        "payment",
+        "payout",
+        "refund",
+        "platform_fee",
+        "admin_fee",
+        "adjustment",
       ],
       verification_status: ["pending", "verified", "rejected"],
     },
