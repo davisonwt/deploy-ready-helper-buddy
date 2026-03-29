@@ -1,68 +1,38 @@
 
 
-# Integrate Chat, Voice & Video Calls into the Feed
+## Plan: Add Background Images to Gig Service Cards
 
-## The Problem
-Right now, to message or call a tribal member, you have to navigate away from the dashboard/feed to `/communications-hub`. This breaks the flow.
+### Why This Is a Good Idea
+The current cards use small abstract Lucide icons that don't communicate the breadth of each service. Real photos as card backgrounds will make the purpose instantly clear at a glance.
 
-## The Solution: Feed-Embedded Quick Chat FAB
+### Approach
+Use **AI-generated images** (via Nano banana) to create 6 compact, visually rich illustrations for each card, then store them in the project's `public/` folder. Each card gets a background image with a dark gradient overlay to keep white text readable.
 
-Add a **floating "Quick Connect" button** directly on the main dashboard feed (`SocialFeedDashboard`) that opens the existing `PrivateChatsDrawer` as an overlay -- no page navigation needed. This gives instant access to:
-- **Text chats** (existing conversations + start new)
-- **Voice calls** (one-tap audio call from user list)
-- **Video calls** (one-tap video call from user list)
+### Images to Generate
+| Card | Image Description |
+|------|-------------------|
+| **Ride** (Book) | Bakkie, delivery van, truck with trailer — transport/logistics feel |
+| **Service** (Book) | Collage of domestic worker, gardener, plumber, electrician — hands-on skilled work |
+| **Whisperer** (Book) | Person on phone/laptop with social media icons — content creator/marketer vibe |
+| **Driver** (Become) | Person standing next to their vehicle, keys in hand — "register your vehicle" |
+| **Services** (Become) | Skilled worker with tools ready — "offer your skills" |
+| **Whisperer** (Become) | Creative person with camera/laptop — "become a content creator" |
 
-All without ever leaving the feed.
+### Card Layout Change
+Each card will shift from the current small-icon style to:
+- **Background image** covering the full card
+- **Dark gradient overlay** (`linear-gradient(to top, rgba(0,0,0,0.7), rgba(0,0,0,0.2))`) for text contrast
+- **Text positioned at the bottom** over the overlay
+- Small icon badge retained in the top-left corner for quick recognition
+- Card height increased slightly (~100px) to give the image breathing room
 
-## What Changes
+### Files Changed
+1. **Generate 6 images** → save to `public/images/gig/`
+2. **`src/components/dashboard/sections/GigActionCards.tsx`** — Update all 6 Book cards to use background images with overlay
+3. **`src/components/dashboard/sections/GradientGatewayCard.tsx`** — Add optional `backgroundImage` prop, render as `backgroundImage` CSS with gradient overlay when provided
 
-### 1. Add PrivateChatsDrawer to SocialFeedDashboard
-- Import `PrivateChatsDrawer` into `SocialFeedDashboard.tsx`
-- Add a state variable `chatDrawerOpen`
-- Render the drawer as an overlay (it already handles its own slide-in animation)
-
-### 2. Add a Quick Connect FAB on the Feed
-- Add a floating action button (similar to the one in `ChatApp.tsx`) pinned to the bottom-right of the feed
-- Style: pill-shaped, themed, with a `MessageCircle` icon and "Chat" label
-- Position it above the `BottomActionBar` (z-index layering) so it doesn't overlap
-- Tapping it opens `PrivateChatsDrawer` right there on the feed
-
-### 3. Update BottomActionBar Chat Link
-- Change the "Chat" button in the bottom bar from navigating to `/communications-hub` to instead toggling the same drawer open
-- This requires lifting the drawer state or using a callback prop
-- Alternative (simpler): keep bottom bar as-is for full hub access, and add the FAB as the quick-access shortcut
-
-### 4. Conversation View Inline
-- When a user selects a conversation from the drawer, `UnifiedConversation` already renders inside the drawer as a full overlay
-- Voice/video call buttons are already wired in the drawer's user list
-- No additional work needed for the actual chat/call experience
-
-## Technical Details
-
-**Files modified:**
-- `src/components/dashboard/SocialFeedDashboard.tsx` -- add drawer + FAB
-- No new components needed; reuses existing `PrivateChatsDrawer`
-
-**The FAB:**
-```text
-┌─────────────────────────────┐
-│  Dashboard Feed (scrollable)│
-│                             │
-│  [Memry cards, sections...] │
-│                             │
-│                    ┌──────┐ │
-│                    │💬 Chat│ │  ← FAB (above bottom bar)
-│                    └──────┘ │
-│  ┌─ Bottom Action Bar ────┐ │
-│  │ Plant  Chat  Radio Browse│
-│  └─────────────────────────┘│
-└─────────────────────────────┘
-```
-
-**User flow:**
-1. Scrolling the feed, tap the Chat FAB
-2. Drawer slides in with your conversations + "Start New" button
-3. Tap a person → chat opens inline in the drawer
-4. Tap phone/video icon → call starts immediately
-5. Close drawer → back to feed, never left the page
+### Technical Detail
+- Cards use `style={{ backgroundImage: 'linear-gradient(...), url(/images/gig/ride.webp)', backgroundSize: 'cover' }}`
+- Images generated at ~400x300px, compressed WebP for fast loading
+- Fallback: gradient still shows if image fails to load
 
