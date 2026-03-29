@@ -361,7 +361,9 @@ const App = () => (
               <Route path="/stats" element={
                 <ProtectedRoute>
                   <RequireVerification>
-                    <StatsPage />
+                    <Layout>
+                      <StatsPage />
+                    </Layout>
                   </RequireVerification>
                 </ProtectedRoute>
               } />
