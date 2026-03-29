@@ -1,9 +1,15 @@
 import React, { useState } from 'react';
-import { Car, Wrench, Ear, CalendarPlus, HandHeart, ChevronRight } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { Car, Wrench, Ear, HandHeart } from 'lucide-react';
 import { DashboardTheme } from '@/utils/dashboardThemes';
 import { GradientGatewayCard } from './GradientGatewayCard';
 import { GigBookingModal } from '@/components/gig/GigBookingModal';
+
+import rideBookImg from '/images/gig/ride-book.jpg';
+import serviceBookImg from '/images/gig/service-book.jpg';
+import whispererBookImg from '/images/gig/whisperer-book.jpg';
+import driverBecomeImg from '/images/gig/driver-become.jpg';
+import servicesBecomeImg from '/images/gig/services-become.jpg';
+import whispererBecomeImg from '/images/gig/whisperer-become.jpg';
 
 interface GigActionCardsProps {
   theme: DashboardTheme;
@@ -46,38 +52,53 @@ export const GigActionCards: React.FC<GigActionCardsProps> = ({ theme }) => {
           <div className="grid grid-cols-3 gap-2">
             <button
               onClick={() => openBooking('ride')}
-              className="block rounded-2xl p-4 transition-all shadow-md text-left hover:scale-[1.02] active:scale-[0.98]"
-              style={{ background: 'linear-gradient(135deg, #0ea5e9, #2563eb)' }}
+              className="block rounded-2xl overflow-hidden transition-all shadow-md text-left hover:scale-[1.02] active:scale-[0.98] relative h-[100px]"
             >
-              <div className="w-9 h-9 rounded-xl bg-white/20 backdrop-blur-sm flex items-center justify-center mb-2">
-                <Car className="w-4 h-4 text-white" />
+              <img src={rideBookImg} alt="Ride" className="absolute inset-0 w-full h-full object-cover" loading="lazy" />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/30 to-black/10" />
+              <div className="relative h-full flex flex-col justify-between p-3">
+                <div className="w-7 h-7 rounded-lg bg-white/20 backdrop-blur-sm flex items-center justify-center">
+                  <Car className="w-3.5 h-3.5 text-white" />
+                </div>
+                <div>
+                  <h3 className="font-bold text-white text-xs">Ride</h3>
+                  <p className="text-[9px] text-white/80">Book a driver</p>
+                </div>
               </div>
-              <h3 className="font-bold text-white text-xs">Ride</h3>
-              <p className="text-[9px] text-white/70">Book a driver</p>
             </button>
 
             <button
               onClick={() => openBooking('service')}
-              className="block rounded-2xl p-4 transition-all shadow-md text-left hover:scale-[1.02] active:scale-[0.98]"
-              style={{ background: 'linear-gradient(135deg, #059669, #10b981)' }}
+              className="block rounded-2xl overflow-hidden transition-all shadow-md text-left hover:scale-[1.02] active:scale-[0.98] relative h-[100px]"
             >
-              <div className="w-9 h-9 rounded-xl bg-white/20 backdrop-blur-sm flex items-center justify-center mb-2">
-                <Wrench className="w-4 h-4 text-white" />
+              <img src={serviceBookImg} alt="Service" className="absolute inset-0 w-full h-full object-cover" loading="lazy" />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/30 to-black/10" />
+              <div className="relative h-full flex flex-col justify-between p-3">
+                <div className="w-7 h-7 rounded-lg bg-white/20 backdrop-blur-sm flex items-center justify-center">
+                  <Wrench className="w-3.5 h-3.5 text-white" />
+                </div>
+                <div>
+                  <h3 className="font-bold text-white text-xs">Service</h3>
+                  <p className="text-[9px] text-white/80">Tribal skills</p>
+                </div>
               </div>
-              <h3 className="font-bold text-white text-xs">Service</h3>
-              <p className="text-[9px] text-white/70">Tribal skills</p>
             </button>
 
             <button
               onClick={() => openBooking('whisperer')}
-              className="block rounded-2xl p-4 transition-all shadow-md text-left hover:scale-[1.02] active:scale-[0.98]"
-              style={{ background: 'linear-gradient(135deg, #9333ea, #db2777)' }}
+              className="block rounded-2xl overflow-hidden transition-all shadow-md text-left hover:scale-[1.02] active:scale-[0.98] relative h-[100px]"
             >
-              <div className="w-9 h-9 rounded-xl bg-white/20 backdrop-blur-sm flex items-center justify-center mb-2">
-                <Ear className="w-4 h-4 text-white" />
+              <img src={whispererBookImg} alt="Whisperer" className="absolute inset-0 w-full h-full object-cover" loading="lazy" />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/30 to-black/10" />
+              <div className="relative h-full flex flex-col justify-between p-3">
+                <div className="w-7 h-7 rounded-lg bg-white/20 backdrop-blur-sm flex items-center justify-center">
+                  <Ear className="w-3.5 h-3.5 text-white" />
+                </div>
+                <div>
+                  <h3 className="font-bold text-white text-xs">Whisperer</h3>
+                  <p className="text-[9px] text-white/80">Marketing help</p>
+                </div>
               </div>
-              <h3 className="font-bold text-white text-xs">Whisperer</h3>
-              <p className="text-[9px] text-white/70">Marketing help</p>
             </button>
           </div>
         </div>
@@ -94,6 +115,7 @@ export const GigActionCards: React.FC<GigActionCardsProps> = ({ theme }) => {
               subtitle="Register vehicle"
               icon={Car}
               gradient="linear-gradient(135deg, #d97706, #f59e0b)"
+              backgroundImage={driverBecomeImg}
             />
             <GradientGatewayCard
               href="/register-services"
@@ -101,6 +123,7 @@ export const GigActionCards: React.FC<GigActionCardsProps> = ({ theme }) => {
               subtitle="Offer your skills"
               icon={Wrench}
               gradient="linear-gradient(135deg, #b45309, #d97706)"
+              backgroundImage={servicesBecomeImg}
             />
             <GradientGatewayCard
               href="/become-whisperer"
@@ -108,6 +131,7 @@ export const GigActionCards: React.FC<GigActionCardsProps> = ({ theme }) => {
               subtitle="Content & marketing"
               icon={Ear}
               gradient="linear-gradient(135deg, #a21caf, #c026d3)"
+              backgroundImage={whispererBecomeImg}
             />
           </div>
         </div>
