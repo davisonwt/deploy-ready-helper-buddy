@@ -336,6 +336,17 @@ export const HomeFeed: React.FC<HomeFeedProps> = ({
         {/* === S2G MEMRY FEED (inline) === */}
         <InlineMemryFeed />
 
+        {/* === GIG SERVICES: Book & Become === */}
+        <section>
+          <GigActionCards theme={{
+            textPrimary: 'hsl(var(--foreground))',
+            textSecondary: 'hsl(var(--muted-foreground))',
+            accent: 'hsl(var(--primary))',
+            secondaryButton: 'hsl(var(--muted))',
+            cardBorder: 'hsl(var(--border))',
+          } as any} />
+        </section>
+
         {/* === CHAT ROOMS === */}
         {(chatRooms || []).length > 0 && (
           <section>
