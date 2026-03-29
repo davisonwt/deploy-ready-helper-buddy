@@ -289,7 +289,8 @@ export const MemrySeedCard: React.FC<MemrySeedCardProps> = ({
     (isMusic || categoryText.includes('music') || categoryText.includes('audio')) &&
     audioPreviewUrl &&
     isPlayableAudioUrl(audioPreviewUrl) &&
-    !isVideo
+    isPlayableAudioUrl(audioPreviewUrl) &&
+    !isVideo  );
   );
 
   const toggleVideoPlayback = () => {
