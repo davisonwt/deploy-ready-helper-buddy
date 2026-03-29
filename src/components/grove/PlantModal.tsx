@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { MessageSquare, Users, BookOpen, Radio, Sprout } from 'lucide-react';
+import { Sprout } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
 
@@ -13,36 +13,20 @@ interface PlantModalProps {
 
 const plantOptions = [
   {
-    id: 'chat_1on1',
-    title: 'Seed a 1-1',
-    description: 'Private conversation with direct messaging',
-    icon: MessageSquare,
-    href: '/chatapp',
-    color: 'text-blue-500 hover:bg-blue-500/10'
-  },
-  {
-    id: 'community',
-    title: 'Grow Community',
-    description: 'Group chat with unlimited participants',
-    icon: Users,
-    href: '/chatapp',
+    id: 'orchard',
+    title: 'Sow an Orchard',
+    description: 'Create a crowdfunding orchard for your community',
+    icon: Sprout,
+    href: '/orchards/new',
     color: 'text-green-500 hover:bg-green-500/10'
   },
   {
-    id: 'premium_room',
-    title: 'Host Room',
-    description: 'Educational session with uploads & access control',
-    icon: BookOpen,
-    href: '/create-premium-room',
-    color: 'text-purple-500 hover:bg-purple-500/10'
-  },
-  {
-    id: 'radio',
-    title: 'Tune Radio',
-    description: 'Live audio stream with co-hosts',
-    icon: Radio,
-    href: '/grove-station',
-    color: 'text-orange-500 hover:bg-orange-500/10'
+    id: 'seed',
+    title: 'Sow a Seed',
+    description: 'Share a product, service, or creative offering',
+    icon: Sprout,
+    href: '/sow',
+    color: 'text-amber-500 hover:bg-amber-500/10'
   }
 ];
 

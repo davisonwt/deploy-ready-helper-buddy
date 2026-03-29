@@ -336,6 +336,7 @@ export const PrivateChatsDrawer: React.FC<PrivateChatsDrawerProps> = ({ isOpen, 
             onClick={onClose}
           />
 
+          {!showNewChatDialog && (
           <motion.div
             initial={{ x: '100%' }}
             animate={{ x: 0 }}
@@ -421,125 +422,127 @@ export const PrivateChatsDrawer: React.FC<PrivateChatsDrawerProps> = ({ isOpen, 
               </div>
             </ScrollArea>
 
-            <Dialog open={showNewChatDialog} onOpenChange={setShowNewChatDialog}>
-              <DialogContent className="max-w-md p-0 overflow-hidden border-primary/20 bg-card">
-                <DialogHeader className="px-6 pt-6 pb-2">
-                  <DialogTitle className="text-xl font-bold text-foreground">New Conversation</DialogTitle>
-                </DialogHeader>
-                <Tabs value={chatType} onValueChange={v => setChatType(v as any)} className="w-full" data-deadlink-watch-ignore="true">
-                  <div className="px-5 pb-3">
-                    <TabsList className="grid w-full grid-cols-2 h-11 rounded-xl bg-muted/40 p-1" data-deadlink-watch-ignore="true">
-                      <TabsTrigger value="direct" className="rounded-lg text-sm font-semibold data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md transition-all" data-deadlink-watch-ignore="true">Direct Message</TabsTrigger>
-                      <TabsTrigger value="group" className="rounded-lg text-sm font-semibold data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md transition-all" data-deadlink-watch-ignore="true">Group Chat</TabsTrigger>
-                    </TabsList>
-                  </div>
-
-                  <TabsContent value="direct" className="mt-0">
-                    <ScrollArea className="max-h-[360px]">
-                      <div className="px-3 pb-4 space-y-1">
-                        {loadingUsers ? (
-                          <div className="flex flex-col items-center justify-center py-12 gap-2">
-                            <div className="w-8 h-8 border-2 border-primary/30 border-t-primary rounded-full animate-spin" />
-                            <p className="text-sm text-muted-foreground">Loading keepers...</p>
-                          </div>
-                        ) : backendDegraded ? (
-                          <p className="text-center text-muted-foreground py-10 text-sm">Cannot load users while backend is paused.</p>
-                        ) : availableUsers.length === 0 ? (
-                          <p className="text-center text-muted-foreground py-10 text-sm">No users available. Try refreshing.</p>
-                        ) : (
-                          availableUsers.map(p => {
-                            const name = p.display_name || `${p.first_name || ''} ${p.last_name || ''}`.trim() || 'Unknown';
-                            return (
-                              <motion.div
-                                key={p.user_id}
-                                whileHover={{ backgroundColor: 'hsl(var(--muted) / 0.3)' }}
-                                whileTap={{ scale: 0.98 }}
-                                className="flex items-center gap-3 px-3 py-3 rounded-xl cursor-pointer transition-colors"
-                                onClick={() => createNewChat(p.user_id)}
-                              >
-                                <Avatar className="w-11 h-11 ring-2 ring-primary/15 ring-offset-1 ring-offset-card">
-                                  <AvatarImage src={p.avatar_url} className="object-cover" />
-                                  <AvatarFallback className="bg-primary/20 text-foreground font-semibold text-sm">{name.charAt(0).toUpperCase()}</AvatarFallback>
-                                </Avatar>
-                                <span className="text-sm font-semibold text-foreground flex-1 truncate">{name}</span>
-                                <div className="flex items-center gap-1.5">
-                                  <Button
-                                    size="icon"
-                                    variant="outline"
-                                    className="h-9 w-9 rounded-full border-muted-foreground/20 hover:bg-primary/10 hover:border-primary/40 transition-all"
-                                    onClick={e => { e.stopPropagation(); startCall(p.user_id, name, 'audio'); }}
-                                  >
-                                    <Phone className="w-4 h-4 text-muted-foreground" />
-                                  </Button>
-                                  <Button
-                                    size="icon"
-                                    variant="outline"
-                                    className="h-9 w-9 rounded-full border-muted-foreground/20 hover:bg-primary/10 hover:border-primary/40 transition-all"
-                                    onClick={e => { e.stopPropagation(); startCall(p.user_id, name, 'video'); }}
-                                  >
-                                    <Video className="w-4 h-4 text-muted-foreground" />
-                                  </Button>
-                                </div>
-                              </motion.div>
-                            );
-                          })
-                        )}
-                      </div>
-                    </ScrollArea>
-                  </TabsContent>
-
-                  <TabsContent value="group" className="mt-0 px-5 pb-5 space-y-3">
-                    <Input placeholder="Group name" value={groupName} onChange={e => setGroupName(e.target.value)} className="h-10 bg-muted/20 border-border/30 rounded-lg" />
-                    <div className="text-xs text-muted-foreground font-medium">Select members ({selectedUsers.length})</div>
-                    <ScrollArea className="max-h-[240px]">
-                      <div className="space-y-1 pr-2">
-                        {loadingUsers ? (
-                          <div className="flex flex-col items-center justify-center py-8 gap-2">
-                            <div className="w-7 h-7 border-2 border-primary/30 border-t-primary rounded-full animate-spin" />
-                            <p className="text-xs text-muted-foreground">Loading keepers...</p>
-                          </div>
-                        ) : backendDegraded ? (
-                          <p className="text-center text-muted-foreground py-6 text-xs">Cannot load users while backend is paused.</p>
-                        ) : availableUsers.length === 0 ? (
-                          <p className="text-center text-muted-foreground py-6 text-xs">No users available.</p>
-                        ) : (
-                          availableUsers.map(p => {
-                            const name = p.display_name || `${p.first_name || ''} ${p.last_name || ''}`.trim() || 'Unknown';
-                            const isSelected = selectedUsers.includes(p.user_id);
-                            return (
-                              <motion.div
-                                key={p.user_id}
-                                whileTap={{ scale: 0.98 }}
-                                className={cn(
-                                  "flex items-center gap-3 px-3 py-2.5 rounded-xl cursor-pointer transition-all",
-                                  isSelected ? "bg-primary/10 ring-1 ring-primary/30" : "hover:bg-muted/20"
-                                )}
-                                onClick={() => setSelectedUsers(prev => prev.includes(p.user_id) ? prev.filter(id => id !== p.user_id) : [...prev, p.user_id])}
-                              >
-                                <Checkbox checked={isSelected} className="data-[state=checked]:bg-primary data-[state=checked]:border-primary" />
-                                <Avatar className="w-9 h-9 ring-1 ring-primary/10">
-                                  <AvatarImage src={p.avatar_url} className="object-cover" />
-                                  <AvatarFallback className="bg-primary/20 text-foreground text-xs font-semibold">{name.charAt(0).toUpperCase()}</AvatarFallback>
-                                </Avatar>
-                                <span className="text-sm font-medium text-foreground truncate">{name}</span>
-                              </motion.div>
-                            );
-                          })
-                        )}
-                      </div>
-                    </ScrollArea>
-                    <Button
-                      onClick={createGroupChat}
-                      disabled={creatingChat || selectedUsers.length < 2 || !groupName.trim()}
-                      className="w-full h-10 rounded-xl font-semibold bg-primary text-primary-foreground hover:bg-primary/90 transition-all shadow-md"
-                    >
-                      Create Group
-                    </Button>
-                  </TabsContent>
-                </Tabs>
-              </DialogContent>
-            </Dialog>
           </motion.div>
+          )}
+
+          <Dialog open={showNewChatDialog} onOpenChange={setShowNewChatDialog} modal={true}>
+            <DialogContent className="max-w-md p-0 overflow-hidden border-primary/20 bg-card z-[60]">
+              <DialogHeader className="px-6 pt-6 pb-2">
+                <DialogTitle className="text-xl font-bold text-foreground">New Conversation</DialogTitle>
+              </DialogHeader>
+              <Tabs value={chatType} onValueChange={v => setChatType(v as any)} className="w-full" data-deadlink-watch-ignore="true">
+                <div className="px-5 pb-3">
+                  <TabsList className="grid w-full grid-cols-2 h-11 rounded-xl bg-muted/40 p-1" data-deadlink-watch-ignore="true">
+                    <TabsTrigger value="direct" className="rounded-lg text-sm font-semibold data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md transition-all" data-deadlink-watch-ignore="true">Direct Message</TabsTrigger>
+                    <TabsTrigger value="group" className="rounded-lg text-sm font-semibold data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md transition-all" data-deadlink-watch-ignore="true">Group Chat</TabsTrigger>
+                  </TabsList>
+                </div>
+
+                <TabsContent value="direct" className="mt-0">
+                  <ScrollArea className="max-h-[360px]">
+                    <div className="px-3 pb-4 space-y-1">
+                      {loadingUsers ? (
+                        <div className="flex flex-col items-center justify-center py-12 gap-2">
+                          <div className="w-8 h-8 border-2 border-primary/30 border-t-primary rounded-full animate-spin" />
+                          <p className="text-sm text-muted-foreground">Loading keepers...</p>
+                        </div>
+                      ) : backendDegraded ? (
+                        <p className="text-center text-muted-foreground py-10 text-sm">Cannot load users while backend is paused.</p>
+                      ) : availableUsers.length === 0 ? (
+                        <p className="text-center text-muted-foreground py-10 text-sm">No users available. Try refreshing.</p>
+                      ) : (
+                        availableUsers.map(p => {
+                          const name = p.display_name || `${p.first_name || ''} ${p.last_name || ''}`.trim() || 'Unknown';
+                          return (
+                            <motion.div
+                              key={p.user_id}
+                              whileHover={{ backgroundColor: 'hsl(var(--muted) / 0.3)' }}
+                              whileTap={{ scale: 0.98 }}
+                              className="flex items-center gap-3 px-3 py-3 rounded-xl cursor-pointer transition-colors"
+                              onClick={() => createNewChat(p.user_id)}
+                            >
+                              <Avatar className="w-11 h-11 ring-2 ring-primary/15 ring-offset-1 ring-offset-card">
+                                <AvatarImage src={p.avatar_url} className="object-cover" />
+                                <AvatarFallback className="bg-primary/20 text-foreground font-semibold text-sm">{name.charAt(0).toUpperCase()}</AvatarFallback>
+                              </Avatar>
+                              <span className="text-sm font-semibold text-foreground flex-1 truncate">{name}</span>
+                              <div className="flex items-center gap-1.5">
+                                <Button
+                                  size="icon"
+                                  variant="outline"
+                                  className="h-9 w-9 rounded-full border-muted-foreground/20 hover:bg-primary/10 hover:border-primary/40 transition-all"
+                                  onClick={e => { e.stopPropagation(); startCall(p.user_id, name, 'audio'); }}
+                                >
+                                  <Phone className="w-4 h-4 text-muted-foreground" />
+                                </Button>
+                                <Button
+                                  size="icon"
+                                  variant="outline"
+                                  className="h-9 w-9 rounded-full border-muted-foreground/20 hover:bg-primary/10 hover:border-primary/40 transition-all"
+                                  onClick={e => { e.stopPropagation(); startCall(p.user_id, name, 'video'); }}
+                                >
+                                  <Video className="w-4 h-4 text-muted-foreground" />
+                                </Button>
+                              </div>
+                            </motion.div>
+                          );
+                        })
+                      )}
+                    </div>
+                  </ScrollArea>
+                </TabsContent>
+
+                <TabsContent value="group" className="mt-0 px-5 pb-5 space-y-3">
+                  <Input placeholder="Group name" value={groupName} onChange={e => setGroupName(e.target.value)} className="h-10 bg-muted/20 border-border/30 rounded-lg" />
+                  <div className="text-xs text-muted-foreground font-medium">Select members ({selectedUsers.length})</div>
+                  <ScrollArea className="max-h-[240px]">
+                    <div className="space-y-1 pr-2">
+                      {loadingUsers ? (
+                        <div className="flex flex-col items-center justify-center py-8 gap-2">
+                          <div className="w-7 h-7 border-2 border-primary/30 border-t-primary rounded-full animate-spin" />
+                          <p className="text-xs text-muted-foreground">Loading keepers...</p>
+                        </div>
+                      ) : backendDegraded ? (
+                        <p className="text-center text-muted-foreground py-6 text-xs">Cannot load users while backend is paused.</p>
+                      ) : availableUsers.length === 0 ? (
+                        <p className="text-center text-muted-foreground py-6 text-xs">No users available.</p>
+                      ) : (
+                        availableUsers.map(p => {
+                          const name = p.display_name || `${p.first_name || ''} ${p.last_name || ''}`.trim() || 'Unknown';
+                          const isSelected = selectedUsers.includes(p.user_id);
+                          return (
+                            <motion.div
+                              key={p.user_id}
+                              whileTap={{ scale: 0.98 }}
+                              className={cn(
+                                "flex items-center gap-3 px-3 py-2.5 rounded-xl cursor-pointer transition-all",
+                                isSelected ? "bg-primary/10 ring-1 ring-primary/30" : "hover:bg-muted/20"
+                              )}
+                              onClick={() => setSelectedUsers(prev => prev.includes(p.user_id) ? prev.filter(id => id !== p.user_id) : [...prev, p.user_id])}
+                            >
+                              <Checkbox checked={isSelected} className="data-[state=checked]:bg-primary data-[state=checked]:border-primary" />
+                              <Avatar className="w-9 h-9 ring-1 ring-primary/10">
+                                <AvatarImage src={p.avatar_url} className="object-cover" />
+                                <AvatarFallback className="bg-primary/20 text-foreground text-xs font-semibold">{name.charAt(0).toUpperCase()}</AvatarFallback>
+                              </Avatar>
+                              <span className="text-sm font-medium text-foreground truncate">{name}</span>
+                            </motion.div>
+                          );
+                        })
+                      )}
+                    </div>
+                  </ScrollArea>
+                  <Button
+                    onClick={createGroupChat}
+                    disabled={creatingChat || selectedUsers.length < 2 || !groupName.trim()}
+                    className="w-full h-10 rounded-xl font-semibold bg-primary text-primary-foreground hover:bg-primary/90 transition-all shadow-md"
+                  >
+                    Create Group
+                  </Button>
+                </TabsContent>
+              </Tabs>
+            </DialogContent>
+          </Dialog>
         </>
       )}
     </AnimatePresence>
