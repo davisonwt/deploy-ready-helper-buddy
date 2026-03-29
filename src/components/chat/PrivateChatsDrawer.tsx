@@ -541,6 +541,11 @@ export const PrivateChatsDrawer: React.FC<PrivateChatsDrawerProps> = ({ isOpen, 
               </DialogContent>
             </Dialog>
           </motion.div>
+          )}
+
+          <Dialog open={showNewChatDialog} onOpenChange={setShowNewChatDialog} modal={true}>
+            {/* Dialog renders via portal above everything */}
+          </Dialog>
         </>
       )}
     </AnimatePresence>
