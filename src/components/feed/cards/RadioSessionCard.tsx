@@ -73,7 +73,18 @@ export const RadioSessionCard: React.FC<{ data: RadioSessionData }> = ({ data })
       >
         {/* ── Image zone with dark radio gradient ── */}
         <div className="relative w-full" style={{ height: 200 }}>
-          <div className="w-full h-full bg-gradient-to-br from-[hsl(210_67%_8%)] via-[hsl(210_50%_14%)] to-[hsl(220_60%_10%)] flex flex-col items-center justify-center gap-3">
+          <div className="absolute inset-0">
+            <img
+              src="/images/radio/radio-studio.jpg"
+              alt="Radio studio background"
+              className="w-full h-full object-cover"
+              loading="lazy"
+              width={960}
+              height={512}
+            />
+            <div className="absolute inset-0 bg-gradient-to-br from-background/70 via-background/55 to-background/70" />
+          </div>
+          <div className="relative w-full h-full flex flex-col items-center justify-center gap-3">
             <Radio className="w-10 h-10 text-destructive/60" />
             <SyncBar />
           </div>
