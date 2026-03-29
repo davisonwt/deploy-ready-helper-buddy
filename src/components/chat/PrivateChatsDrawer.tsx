@@ -432,9 +432,9 @@ export const PrivateChatsDrawer: React.FC<PrivateChatsDrawerProps> = ({ isOpen, 
               </DialogHeader>
               <Tabs value={chatType} onValueChange={v => setChatType(v as any)} className="w-full" data-deadlink-watch-ignore="true">
                 <div className="px-5 pb-3">
-                  <TabsList className="grid w-full grid-cols-2 h-11 rounded-xl bg-muted/40 p-1" data-deadlink-watch-ignore="true">
-                    <TabsTrigger value="direct" className="rounded-lg text-sm font-semibold data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md transition-all" data-deadlink-watch-ignore="true">Direct Message</TabsTrigger>
-                    <TabsTrigger value="group" className="rounded-lg text-sm font-semibold data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md transition-all" data-deadlink-watch-ignore="true">Group Chat</TabsTrigger>
+                  <TabsList className="grid w-full grid-cols-2 h-auto gap-2 rounded-xl bg-transparent p-0" data-deadlink-watch-ignore="true">
+                    <TabsTrigger value="direct" className="h-12 rounded-xl border border-border/40 bg-muted/40 text-base font-semibold data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md transition-all" data-deadlink-watch-ignore="true">Direct Message</TabsTrigger>
+                    <TabsTrigger value="group" className="h-12 rounded-xl border border-border/40 bg-muted/40 text-base font-semibold data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md transition-all" data-deadlink-watch-ignore="true">Group Chat</TabsTrigger>
                   </TabsList>
                 </div>
 
