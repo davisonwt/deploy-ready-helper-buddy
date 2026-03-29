@@ -1,12 +1,13 @@
 import React, { useState } from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
 import {
-  Home, Sprout, TreePine, MessageSquare, GraduationCap,
-  Zap, Radio, Calendar, CloudRain, Settings, Plus, Users
+  Home, Sprout, TreePine, MessageSquare, Calendar,
+  CloudRain, Settings, Plus, Users, BarChart3
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { PlantModal } from '@/components/grove/PlantModal';
+import { useRoles } from '@/hooks/useRoles';
 
 interface AppSidebarProps {
   radioLive?: boolean;
@@ -19,14 +20,12 @@ interface AppSidebarProps {
 const navItems = [
   { to: '/dashboard', label: 'Feed', desc: 'Community updates', icon: Home, gradient: 'linear-gradient(135deg, #185FA5, #2E86DE)' },
   { to: '/my-orchards', label: 'My Garden', desc: 'Your seeds & orchards', icon: Sprout, gradient: 'linear-gradient(135deg, #3B6D11, #5A9E1E)' },
-  { to: '/browse-orchards', label: 'Orchards', desc: 'Browse all orchards', icon: TreePine, gradient: 'linear-gradient(135deg, #0F6E56, #1DAA85)' },
+  { to: '/browse-orchards', label: 'Tribal Gardens', desc: 'All tribal seeds & orchards', icon: TreePine, gradient: 'linear-gradient(135deg, #0F6E56, #1DAA85)' },
   { to: '/communications-hub', label: 'ChatApp', desc: 'Tribe messaging', icon: MessageSquare, gradient: 'linear-gradient(135deg, #1D9E75, #34D399)' },
-  { to: '/explore-sessions?type=classroom', label: 'Classrooms', desc: 'Learn & grow', icon: GraduationCap, gradient: 'linear-gradient(135deg, #378ADD, #60A5FA)' },
-  { to: '/explore-sessions?type=skilldrop', label: 'SkillDrop', desc: 'Share your skills', icon: Zap, gradient: 'linear-gradient(135deg, #534AB7, #7C6FE0)' },
-  { to: '/grove-station', label: 'Radio', desc: 'Live community radio', icon: Radio, gradient: 'linear-gradient(135deg, #E24B4A, #F87171)', liveIndicator: true },
   { to: '/enochian-calendar-design', label: '364yhvh Days', desc: "Creator's calendar", icon: Calendar, gradient: 'linear-gradient(135deg, #3C3489, #6355C7)' },
   { to: '/tithing', label: 'Let It Rain', desc: 'Bestow blessings', icon: CloudRain, gradient: 'linear-gradient(135deg, #533AB7, #8B5CF6)' },
   { to: '/my-s2g-tribe', label: 'My Tribe', desc: 'Invite & grow your tribe', icon: Users, gradient: 'linear-gradient(135deg, #0E7490, #22D3EE)' },
+  { to: '/stats', label: 'Stats', desc: 'Your progress & stats', icon: BarChart3, gradient: 'linear-gradient(135deg, #1E6A5A, #2DA88A)' },
 ];
 
 const adminItems = [
