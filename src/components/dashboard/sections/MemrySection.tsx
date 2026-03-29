@@ -64,6 +64,11 @@ export const MemrySection: React.FC<MemrySectionProps> = ({ theme }) => {
 
       <div className="border-t" style={{ borderColor: theme.cardBorder }} />
 
+      {/* === PLANT: Orchards & Seeds === */}
+      <PlantFeedCards theme={theme} />
+
+      <div className="border-t" style={{ borderColor: theme.cardBorder }} />
+
       {/* Browse Orchards */}
       <BrowseSection theme={theme} />
 
