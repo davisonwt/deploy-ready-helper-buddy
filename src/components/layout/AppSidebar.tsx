@@ -35,6 +35,7 @@ const adminItems = [
 export const AppSidebar: React.FC<AppSidebarProps> = ({ radioLive, userProfile }) => {
   const navigate = useNavigate();
   const [plantModalOpen, setPlantModalOpen] = useState(false);
+  const { isGosat, isAdmin } = useRoles();
   const initials = (userProfile?.display_name || 'S')
     .split(' ')
     .map((w) => w[0])
@@ -80,36 +81,6 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({ radioLive, userProfile }
               )}
               style={{ background: item.gradient }}
             >
-              <div className="relative w-9 h-9 rounded-lg bg-white/20 backdrop-blur-sm flex items-center justify-center flex-shrink-0">
-                <Icon className="w-4.5 h-4.5 text-white" />
-                {item.liveIndicator && radioLive && (
-                  <span className="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 bg-red-500 rounded-full animate-pulse ring-2 ring-white/50" />
-                )}
-              </div>
-              <div className="flex flex-col leading-tight min-w-0">
-                <span className="text-[13px] font-bold text-white truncate">{item.label}</span>
-                <span className="text-[10px] text-white/70 truncate">{item.desc}</span>
-              </div>
-            </NavLink>
-          );
-        })}
-      </nav>
-
-      {/* Admin */}
-      <div className="px-2 pt-2 border-t border-border/20 mt-1 space-y-2">
-        {adminItems.map((item) => {
-          const Icon = item.icon;
-          return (
-            <NavLink
-              key={item.to}
-              to={item.to}
-              className={({ isActive }) => cn(
-                'flex items-center gap-3 p-2.5 rounded-xl transition-all',
-                'hover:scale-[1.02] hover:shadow-lg',
-                isActive ? 'ring-2 ring-white/30 shadow-lg' : 'opacity-85 hover:opacity-100'
-              )}
-              style={{ background: item.gradient }}
-            >
               <div className="w-9 h-9 rounded-lg bg-white/20 backdrop-blur-sm flex items-center justify-center flex-shrink-0">
                 <Icon className="w-4.5 h-4.5 text-white" />
               </div>
@@ -120,7 +91,36 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({ radioLive, userProfile }
             </NavLink>
           );
         })}
-      </div>
+      </nav>
+
+      {/* Admin — only visible for GoSat/Admin roles */}
+      {(isGosat || isAdmin) && (
+        <div className="px-2 pt-2 border-t border-border/20 mt-1 space-y-2">
+          {adminItems.map((item) => {
+            const Icon = item.icon;
+            return (
+              <NavLink
+                key={item.to}
+                to={item.to}
+                className={({ isActive }) => cn(
+                  'flex items-center gap-3 p-2.5 rounded-xl transition-all',
+                  'hover:scale-[1.02] hover:shadow-lg',
+                  isActive ? 'ring-2 ring-white/30 shadow-lg' : 'opacity-85 hover:opacity-100'
+                )}
+                style={{ background: item.gradient }}
+              >
+                <div className="w-9 h-9 rounded-lg bg-white/20 backdrop-blur-sm flex items-center justify-center flex-shrink-0">
+                  <Icon className="w-4.5 h-4.5 text-white" />
+                </div>
+                <div className="flex flex-col leading-tight min-w-0">
+                  <span className="text-[13px] font-bold text-white truncate">{item.label}</span>
+                  <span className="text-[10px] text-white/70 truncate">{item.desc}</span>
+                </div>
+              </NavLink>
+            );
+          })}
+        </div>
+      )}
 
       {/* Plant Button */}
       <div className="px-2 pt-3">
