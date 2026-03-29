@@ -315,7 +315,7 @@ export const PrivateChatsDrawer: React.FC<PrivateChatsDrawerProps> = ({ isOpen, 
             animate={{ x: 0 }}
             exit={{ x: '100%' }}
             transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-            className="fixed inset-0 z-50 bg-background"
+            className="fixed inset-0 z-50 bg-background pointer-events-auto"
           >
             <UnifiedConversation roomId={selectedRoomId} onBack={() => setSelectedRoomId(null)} />
           </motion.div>
@@ -328,13 +328,15 @@ export const PrivateChatsDrawer: React.FC<PrivateChatsDrawerProps> = ({ isOpen, 
     <AnimatePresence>
       {isOpen && (
         <>
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 z-40 bg-background/60 backdrop-blur-sm lg:hidden"
-            onClick={onClose}
-          />
+          {!showNewChatDialog && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 z-40 bg-background/60 backdrop-blur-sm lg:hidden pointer-events-auto"
+              onClick={onClose}
+            />
+          )}
 
           {!showNewChatDialog && (
           <motion.div
@@ -342,7 +344,7 @@ export const PrivateChatsDrawer: React.FC<PrivateChatsDrawerProps> = ({ isOpen, 
             animate={{ x: 0 }}
             exit={{ x: '100%' }}
             transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-            className="fixed right-0 top-0 bottom-0 z-50 w-full max-w-sm bg-card border-l border-border/30 flex flex-col"
+            className="fixed right-0 top-0 bottom-0 z-50 w-full max-w-sm bg-card border-l border-border/30 flex flex-col pointer-events-auto"
           >
             <div className="flex items-center justify-between p-4 border-b border-border/30">
               <h2 className="text-lg font-bold text-foreground flex items-center gap-2">
