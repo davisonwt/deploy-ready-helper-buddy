@@ -539,13 +539,17 @@ export default function MemryPage({ embedded = false }: { embedded?: boolean }) 
         const isMusicProduct = (product.category || '').toLowerCase().includes('music') ||
           (product.file_url || '').match(/\.(mp3|wav|ogg|m4a|flac)(\?|$)/i) != null;
 
+        const normalizedImageUrls = (Array.isArray(product.image_urls) ? product.image_urls : [])
+          .filter(Boolean);
+        const preferredImage = normalizedImageUrls[0] || product.cover_image_url || '/lovable-uploads/ff9e6e48-049d-465a-8d2b-f6e8fed93522.png';
+
         return {
           id: `product-${product.id}`,
           // Use the actual auth user_id from sowers join, fallback to sower_id
           user_id: sowerUserId || product.sower_id || '',
           content_type: 'new_product' as const,
-          media_url: product.cover_image_url || '/lovable-uploads/ff9e6e48-049d-465a-8d2b-f6e8fed93522.png',
-          image_urls: product.image_urls?.length > 0 ? product.image_urls : undefined,
+          media_url: preferredImage,
+          image_urls: normalizedImageUrls.length > 0 ? normalizedImageUrls : undefined,
           audio_url: isMusicProduct ? (product.file_url || undefined) : undefined,
           caption: `🌱 SEED: ${product.title}`,
           likes_count: product.like_count || 0,
