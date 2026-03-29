@@ -293,7 +293,7 @@ export default function DashboardPage() {
           )}
 
           {chatDrawerOpen && (
-            <div className="absolute inset-0 pointer-events-auto" style={{ zIndex: 4 }}>
+            <div className="absolute inset-0 pointer-events-none" style={{ zIndex: 4 }}>
               <PrivateChatsDrawer
                 isOpen={true}
                 onClose={() => setChatDrawerOpen(false)}
