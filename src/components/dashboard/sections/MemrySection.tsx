@@ -7,6 +7,7 @@ import { BrowseSection } from './BrowseSection';
 import { ExploreSection } from './ExploreSection';
 import { KeeperHelpButton } from './KeeperHelpButton';
 import { GigActionCards } from './GigActionCards';
+import { PlantFeedCards } from './PlantFeedCards';
 
 interface MemrySectionProps {
   theme: DashboardTheme;
