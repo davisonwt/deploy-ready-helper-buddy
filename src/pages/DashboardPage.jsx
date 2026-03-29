@@ -16,6 +16,9 @@ import { HomeFeed } from '@/components/feed/HomeFeed';
 import { PrivateChatsDrawer } from '@/components/chat/PrivateChatsDrawer';
 import { PlantModal } from '@/components/grove/PlantModal';
 import { useQuery } from '@tanstack/react-query';
+import { CreateClassroomDialog } from '@/components/communication/CreateClassroomDialog';
+import { ScheduleSkillDropDialog } from '@/components/communication/ScheduleSkillDropDialog';
+import { CreateTrainingDialog } from '@/components/communication/CreateTrainingDialog';
 
 export default function DashboardPage() {
   const navigate = useNavigate();
@@ -26,6 +29,9 @@ export default function DashboardPage() {
   const [chatDrawerOpen, setChatDrawerOpen] = useState(false);
   const [goLiveOpen, setGoLiveOpen] = useState(false);
   const [plantModalOpen, setPlantModalOpen] = useState(false);
+  const [classroomDialogOpen, setClassroomDialogOpen] = useState(false);
+  const [skillDropDialogOpen, setSkillDropDialogOpen] = useState(false);
+  const [trainingDialogOpen, setTrainingDialogOpen] = useState(false);
 
   const fetchOrchards = async (filters = {}) => {
     try {
@@ -246,14 +252,14 @@ export default function DashboardPage() {
           <div className="fixed bottom-20 left-1/2 -translate-x-1/2 z-[102] w-56 space-y-2">
             <p className="text-[10px] font-bold uppercase tracking-wider text-white/70 px-1 mb-1">Go Live As…</p>
             {[
-              { href: '/communications-hub?tab=classroom', label: 'Classroom', sublabel: 'Teach & mentor', icon: '🎓', gradient: 'linear-gradient(135deg, #0891b2, #06b6d4)' },
-              { href: '/explore-sessions?type=skilldrop', label: 'SkillDrop', sublabel: 'Share a skill', icon: '⚡', gradient: 'linear-gradient(135deg, #2563eb, #7c3aed)' },
-              { href: '/communications-hub?tab=training', label: 'Training', sublabel: 'Lead a workout', icon: '💪', gradient: 'linear-gradient(135deg, #7c3aed, #db2777)' },
-              { href: '/radio-slot-application', label: 'Radio', sublabel: 'Go on air', icon: '📻', gradient: 'linear-gradient(135deg, #db2777, #ef4444)' },
-            ].map((opt) => (
+              { action: () => setClassroomDialogOpen(true), label: 'Classroom', sublabel: 'Teach & mentor', icon: '🎓', gradient: 'linear-gradient(135deg, #0891b2, #06b6d4)' },
+              { action: () => setSkillDropDialogOpen(true), label: 'SkillDrop', sublabel: 'Share a skill', icon: '⚡', gradient: 'linear-gradient(135deg, #2563eb, #7c3aed)' },
+              { action: () => setTrainingDialogOpen(true), label: 'Training', sublabel: 'Lead a workout', icon: '💪', gradient: 'linear-gradient(135deg, #7c3aed, #db2777)' },
+              { action: () => navigate('/radio-slot-application'), label: 'Radio', sublabel: 'Go on air', icon: '📻', gradient: 'linear-gradient(135deg, #db2777, #ef4444)' },
+            ].map((opt, i) => (
               <button
                 key={opt.label}
-                onClick={() => { setGoLiveOpen(false); navigate(opt.href); }}
+                onClick={() => { setGoLiveOpen(false); opt.action(); }}
                 className="flex w-full items-center gap-3 rounded-2xl p-3 shadow-lg text-left"
                 style={{ background: opt.gradient }}
               >
@@ -278,6 +284,22 @@ export default function DashboardPage() {
       )}
 
       <PlantModal open={plantModalOpen} onOpenChange={setPlantModalOpen} />
+
+      <CreateClassroomDialog
+        open={classroomDialogOpen}
+        onOpenChange={setClassroomDialogOpen}
+        onSuccess={() => setClassroomDialogOpen(false)}
+      />
+      <ScheduleSkillDropDialog
+        open={skillDropDialogOpen}
+        onOpenChange={setSkillDropDialogOpen}
+        onSuccess={() => setSkillDropDialogOpen(false)}
+      />
+      <CreateTrainingDialog
+        open={trainingDialogOpen}
+        onOpenChange={setTrainingDialogOpen}
+        onSuccess={() => setTrainingDialogOpen(false)}
+      />
     </>
   );
 }
