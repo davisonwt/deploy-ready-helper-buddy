@@ -180,68 +180,73 @@ export const InlineMemryFeed: React.FC = () => {
         const descriptor = [p.category, p.type, p.product_type].filter(Boolean).join(' ').toLowerCase();
         const normalizedType = String(p.type || '').toLowerCase();
         const isAudioCategory = ['music', 'audio', 'song', 'track'].some((token) => descriptor.includes(token));
-        const normalizedFileUrl = normalizeMediaUrl(p.file_url);
-        const normalizedAudioCandidates = dedupeUrls([
-          normalizeMediaUrl(p.audio_url),
-          normalizedFileUrl,
-          normalizeMediaUrl(p.track_url),
-          normalizeMediaUrl(p.preview_url),
-        ].filter(Boolean));
-        const preferredAudioUrl = normalizedAudioCandidates.find((url) => isPlayableAudioUrl(url)) || '';
-        const normalizedCoverUrl = normalizeMediaUrl(p.cover_image_url);
-        const normalizedImageUrls = (
-          Array.isArray(p.image_urls)
-            ? p.image_urls
-            : typeof p.image_urls === 'string'
-              ? [p.image_urls]
-              : []
-        )
-          .map((url: string) => normalizeMediaUrl(url))
-          .filter(Boolean);
-        const preferredImageUrl = normalizedImageUrls[0] || normalizedCoverUrl;
         const looksLikeMusic = normalizedType === 'music' || isAudioCategory;
-        const sourceForMedia = {
-          ...p,
-          file_url: preferredAudioUrl || p.file_url,
-          cover_image_url: preferredImageUrl || p.cover_image_url,
-          image_urls: normalizedImageUrls.length > 0 ? normalizedImageUrls : p.image_urls,
-          media_url: looksLikeMusic ? (preferredImageUrl || p.media_url) : p.media_url,
-        };
-        const mediaPayload = toMediaPayload(sourceForMedia, {
-          forceVideoUrl: !looksLikeMusic && isVideoUrl(normalizedFileUrl) ? normalizedFileUrl : undefined,
-          forceImageUrl: preferredImageUrl || undefined,
-          forceAudioUrl: preferredAudioUrl || (!looksLikeMusic && isPlayableAudioUrl(normalizedFileUrl) ? normalizedFileUrl : undefined),
-        });
-        const audioUrl = dedupeUrls([preferredAudioUrl, ...mediaPayload.audios].filter(Boolean)).find((url) => isPlayableAudioUrl(url)) || '';
-        const videoUrl = mediaPayload.videos[0] || '';
-        const imageUrls = mediaPayload.images.length > 0
-          ? mediaPayload.images
-          : (preferredImageUrl ? [preferredImageUrl] : []);
-        const primaryImage = imageUrls[0] || '';
-        const resolvedMusicPost = looksLikeMusic || !!audioUrl;
-        const mediaUrl = resolvedMusicPost
-          ? (primaryImage || FALLBACK_MEDIA)
-          : (videoUrl || primaryImage || audioUrl || FALLBACK_MEDIA);
 
-        allPosts.push({
-          id: `product-${p.id}`,
-          user_id: userId,
-          content_type: resolvedMusicPost ? 'music' : 'new_product',
-          media_url: mediaUrl,
-          media: mediaPayload.media,
-          image_urls: imageUrls.length > 0 ? imageUrls : undefined,
-          audio_url: audioUrl,
-          caption: `🌱 SEED: ${p.title}`,
-          likes_count: p.bestowal_count || 0,
-          comments_count: 0,
-          product_id: p.id,
-          product_price: p.price,
-          product_title: p.title,
-          product_type: p.product_type || undefined,
-          category: p.category || undefined,
-          profiles: profile ? { display_name: profile.display_name, avatar_url: profile.avatar_url, username: profile.username } : undefined,
-          content_category: 'seed',
-        });
+        if (looksLikeMusic) {
+          // ── MUSIC PRODUCTS: bypass normalizeMemryMedia entirely ──
+          // Strictly separate image from audio to prevent cross-contamination
+          const rawImageUrls = (Array.isArray(p.image_urls) ? p.image_urls : typeof p.image_urls === 'string' ? [p.image_urls] : []).filter(Boolean);
+          const coverImage = rawImageUrls[0] || p.cover_image_url || '';
+          const audioSource = p.file_url || p.audio_url || p.track_url || p.preview_url || '';
+          const displayImage = coverImage || FALLBACK_MEDIA;
+
+          console.log(`[InlineMemryFeed] 🎵 Music "${p.title}" → image: ${displayImage.slice(-60)}, audio: ${audioSource.slice(-60)}`);
+
+          allPosts.push({
+            id: `product-${p.id}`,
+            user_id: userId,
+            content_type: 'music',
+            media_url: displayImage,
+            media: [
+              ...(coverImage ? [{ type: 'image' as const, url: coverImage }] : []),
+              ...(audioSource ? [{ type: 'audio' as const, url: audioSource }] : []),
+            ],
+            image_urls: coverImage ? [coverImage] : undefined,
+            audio_url: audioSource || undefined,
+            caption: `🌱 SEED: ${p.title}`,
+            likes_count: p.bestowal_count || 0,
+            comments_count: 0,
+            product_id: p.id,
+            product_price: p.price,
+            product_title: p.title,
+            product_type: p.product_type || undefined,
+            category: p.category || undefined,
+            profiles: profile ? { display_name: profile.display_name, avatar_url: profile.avatar_url, username: profile.username } : undefined,
+            content_category: 'seed',
+          });
+        } else {
+          // ── NON-MUSIC PRODUCTS: use the full media normalizer ──
+          const normalizedFileUrl = normalizeMediaUrl(p.file_url);
+          const normalizedCoverUrl = normalizeMediaUrl(p.cover_image_url);
+          const normalizedImageUrls = (Array.isArray(p.image_urls) ? p.image_urls : []).map((url: string) => normalizeMediaUrl(url)).filter(Boolean);
+          const preferredImageUrl = normalizedImageUrls[0] || normalizedCoverUrl;
+          const mediaPayload = toMediaPayload(p, {
+            forceVideoUrl: isVideoUrl(normalizedFileUrl) ? normalizedFileUrl : undefined,
+            forceImageUrl: preferredImageUrl || undefined,
+          });
+          const videoUrl = mediaPayload.videos[0] || '';
+          const primaryImage = mediaPayload.images[0] || preferredImageUrl || '';
+          const mediaUrl = videoUrl || primaryImage || FALLBACK_MEDIA;
+
+          allPosts.push({
+            id: `product-${p.id}`,
+            user_id: userId,
+            content_type: 'new_product',
+            media_url: mediaUrl,
+            media: mediaPayload.media,
+            image_urls: mediaPayload.images.length > 0 ? mediaPayload.images : undefined,
+            caption: `🌱 SEED: ${p.title}`,
+            likes_count: p.bestowal_count || 0,
+            comments_count: 0,
+            product_id: p.id,
+            product_price: p.price,
+            product_title: p.title,
+            product_type: p.product_type || undefined,
+            category: p.category || undefined,
+            profiles: profile ? { display_name: profile.display_name, avatar_url: profile.avatar_url, username: profile.username } : undefined,
+            content_category: 'seed',
+          });
+        }
       });
 
       (orchards || []).forEach((o: any) => {

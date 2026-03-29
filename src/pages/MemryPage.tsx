@@ -547,7 +547,7 @@ export default function MemryPage({ embedded = false }: { embedded?: boolean }) 
           id: `product-${product.id}`,
           // Use the actual auth user_id from sowers join, fallback to sower_id
           user_id: sowerUserId || product.sower_id || '',
-          content_type: 'new_product' as const,
+          content_type: (isMusicProduct ? 'music' : 'new_product') as any,
           media_url: preferredImage,
           image_urls: normalizedImageUrls.length > 0 ? normalizedImageUrls : undefined,
           audio_url: isMusicProduct ? (product.file_url || undefined) : undefined,
