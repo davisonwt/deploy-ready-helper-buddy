@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import SunCalc from 'suncalc';
 import { MessageCircle, Video, Sprout } from 'lucide-react';
 import { motion } from 'framer-motion';
@@ -17,6 +18,7 @@ import { PlantModal } from '@/components/grove/PlantModal';
 import { useQuery } from '@tanstack/react-query';
 
 export default function DashboardPage() {
+  const navigate = useNavigate();
   const [communityUnread, setCommunityUnread] = useState(0);
   const { user, loading: authLoading } = useAuth();
   const [orchards, setOrchards] = useState([]);
@@ -249,11 +251,10 @@ export default function DashboardPage() {
               { href: '/communications-hub?tab=training', label: 'Training', sublabel: 'Lead a workout', icon: '💪', gradient: 'linear-gradient(135deg, #7c3aed, #db2777)' },
               { href: '/radio-slot-application', label: 'Radio', sublabel: 'Go on air', icon: '📻', gradient: 'linear-gradient(135deg, #db2777, #ef4444)' },
             ].map((opt) => (
-              <a
+              <button
                 key={opt.label}
-                href={opt.href}
-                onClick={() => setGoLiveOpen(false)}
-                className="flex items-center gap-3 rounded-2xl p-3 shadow-lg"
+                onClick={() => { setGoLiveOpen(false); navigate(opt.href); }}
+                className="flex w-full items-center gap-3 rounded-2xl p-3 shadow-lg text-left"
                 style={{ background: opt.gradient }}
               >
                 <span className="text-xl">{opt.icon}</span>
@@ -261,7 +262,7 @@ export default function DashboardPage() {
                   <span className="font-bold text-white text-xs block">{opt.label}</span>
                   <span className="text-[9px] text-white/60">{opt.sublabel}</span>
                 </div>
-              </a>
+              </button>
             ))}
           </div>
         </>
