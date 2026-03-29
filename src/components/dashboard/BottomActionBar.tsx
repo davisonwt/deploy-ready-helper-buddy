@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { Plus, MessageSquare, Radio, TreePine, MoreHorizontal, GraduationCap, Dumbbell, Zap, BookOpen, X } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { DashboardTheme } from '@/utils/dashboardThemes';
+import { PlantModal } from '@/components/grove/PlantModal';
 
 interface BottomActionBarProps {
   theme: DashboardTheme;

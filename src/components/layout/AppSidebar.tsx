@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
 import {
   Home, Sprout, TreePine, MessageSquare, GraduationCap,
@@ -124,7 +124,7 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({ radioLive, userProfile }
       {/* Plant Button */}
       <div className="px-2 pt-3">
         <button
-          onClick={() => navigate('/create-orchard')}
+          onClick={() => setPlantModalOpen(true)}
           className="w-full h-10 rounded-lg flex items-center justify-center gap-2 text-white text-sm font-semibold transition-opacity hover:opacity-90"
           style={{ backgroundColor: '#1D9E75' }}
         >
@@ -132,6 +132,8 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({ radioLive, userProfile }
           Plant
         </button>
       </div>
+
+      <PlantModal open={plantModalOpen} onOpenChange={setPlantModalOpen} />
     </div>
   );
 };
