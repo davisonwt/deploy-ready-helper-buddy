@@ -1,11 +1,12 @@
 import React from 'react';
-import { Camera, ChevronRight, User, Building2, Megaphone, Video, Ear, Car, Wrench } from 'lucide-react';
+import { Camera, ChevronRight, User, Building2, Megaphone, Video, Ear, Car, Wrench, CalendarPlus, HandHeart } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { DashboardTheme } from '@/utils/dashboardThemes';
 import { GradientGatewayCard } from './GradientGatewayCard';
 import { BrowseSection } from './BrowseSection';
 import { ExploreSection } from './ExploreSection';
 import { KeeperHelpButton } from './KeeperHelpButton';
+import { GigActionCards } from './GigActionCards';
 
 interface MemrySectionProps {
   theme: DashboardTheme;
@@ -54,6 +55,11 @@ export const MemrySection: React.FC<MemrySectionProps> = ({ theme }) => {
         ))}
       </div>
       <GradientGatewayCard {...memryCards[6]} className="w-full" />
+
+      <div className="border-t" style={{ borderColor: theme.cardBorder }} />
+
+      {/* === GIG ECONOMY: Book & Become === */}
+      <GigActionCards theme={theme} />
 
       <div className="border-t" style={{ borderColor: theme.cardBorder }} />
 
