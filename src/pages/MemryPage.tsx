@@ -551,6 +551,7 @@ export default function MemryPage({ embedded = false }: { embedded?: boolean }) 
           media_url: preferredImage,
           image_urls: normalizedImageUrls.length > 0 ? normalizedImageUrls : undefined,
           audio_url: isMusicProduct ? (product.file_url || undefined) : undefined,
+          content_type: isMusicProduct ? 'music' as any : 'new_product' as const,
           caption: `🌱 SEED: ${product.title}`,
           likes_count: product.like_count || 0,
           comments_count: 0,
