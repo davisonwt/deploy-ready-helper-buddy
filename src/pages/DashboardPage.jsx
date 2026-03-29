@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import SunCalc from 'suncalc';
 import { MessageCircle, Video, Sprout } from 'lucide-react';
 import { motion } from 'framer-motion';
