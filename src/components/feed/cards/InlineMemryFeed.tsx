@@ -48,6 +48,9 @@ interface FeedComment {
 
 const FALLBACK_MEDIA = '/lovable-uploads/ff9e6e48-049d-465a-8d2b-f6e8fed93522.png';
 
+const isManifestUrl = (url?: string) => /manifest\.json(?:[?#]|$)/i.test(String(url || ''));
+const isPlayableAudioUrl = (url?: string) => isAudioUrl(url) || isManifestUrl(url);
+
 const toMediaPayload = (
   source: any,
   options: {
@@ -61,9 +64,24 @@ const toMediaPayload = (
   const forcedImage = normalizeMediaUrl(options.forceImageUrl || '');
   const forcedAudio = normalizeMediaUrl(options.forceAudioUrl || '');
 
-  const videos = dedupeUrls([...(forcedVideo ? [forcedVideo] : []), ...normalized.videos]);
-  const images = dedupeUrls([...(forcedImage ? [forcedImage] : []), ...normalized.images]);
-  const audios = dedupeUrls([...(forcedAudio ? [forcedAudio] : []), ...normalized.audios]);
+  const normalizedVideos = normalized.videos.filter((url) => isVideoUrl(url));
+  const normalizedAudios = normalized.audios.filter((url) => isPlayableAudioUrl(url));
+  const normalizedImages = normalized.images.filter(
+    (url) => !isVideoUrl(url) && !isPlayableAudioUrl(url)
+  );
+
+  const videos = dedupeUrls([
+    ...(forcedVideo && isVideoUrl(forcedVideo) ? [forcedVideo] : []),
+    ...normalizedVideos,
+  ]);
+  const images = dedupeUrls([
+    ...(forcedImage && !isVideoUrl(forcedImage) && !isPlayableAudioUrl(forcedImage) ? [forcedImage] : []),
+    ...normalizedImages,
+  ]);
+  const audios = dedupeUrls([
+    ...(forcedAudio && isPlayableAudioUrl(forcedAudio) ? [forcedAudio] : []),
+    ...normalizedAudios,
+  ]);
 
   return {
     videos,
@@ -169,33 +187,41 @@ export const InlineMemryFeed: React.FC = () => {
           normalizeMediaUrl(p.track_url),
           normalizeMediaUrl(p.preview_url),
         ].filter(Boolean));
-        const preferredAudioUrl = normalizedAudioCandidates.find((url) => isAudioUrl(url) || url.includes('manifest.json')) || '';
+        const preferredAudioUrl = normalizedAudioCandidates.find((url) => isPlayableAudioUrl(url)) || '';
         const normalizedCoverUrl = normalizeMediaUrl(p.cover_image_url);
-        const normalizedImageUrls = (Array.isArray(p.image_urls) ? p.image_urls : [])
+        const normalizedImageUrls = (
+          Array.isArray(p.image_urls)
+            ? p.image_urls
+            : typeof p.image_urls === 'string'
+              ? [p.image_urls]
+              : []
+        )
           .map((url: string) => normalizeMediaUrl(url))
           .filter(Boolean);
         const preferredImageUrl = normalizedImageUrls[0] || normalizedCoverUrl;
         const looksLikeMusic = normalizedType === 'music' || isAudioCategory;
         const sourceForMedia = {
           ...p,
-          file_url: undefined,
+          file_url: preferredAudioUrl || p.file_url,
           cover_image_url: preferredImageUrl || p.cover_image_url,
           image_urls: normalizedImageUrls.length > 0 ? normalizedImageUrls : p.image_urls,
-          media_url: preferredImageUrl || p.media_url,
+          media_url: looksLikeMusic ? (preferredImageUrl || p.media_url) : p.media_url,
         };
         const mediaPayload = toMediaPayload(sourceForMedia, {
           forceVideoUrl: !looksLikeMusic && isVideoUrl(normalizedFileUrl) ? normalizedFileUrl : undefined,
           forceImageUrl: preferredImageUrl || undefined,
-          forceAudioUrl: preferredAudioUrl || (!looksLikeMusic && isAudioUrl(normalizedFileUrl) ? normalizedFileUrl : undefined),
+          forceAudioUrl: preferredAudioUrl || (!looksLikeMusic && isPlayableAudioUrl(normalizedFileUrl) ? normalizedFileUrl : undefined),
         });
-        const audioUrl = preferredAudioUrl || mediaPayload.audios[0];
+        const audioUrl = dedupeUrls([preferredAudioUrl, ...mediaPayload.audios].filter(Boolean)).find((url) => isPlayableAudioUrl(url)) || '';
         const videoUrl = mediaPayload.videos[0] || '';
-        const primaryImage = mediaPayload.images[0] || '';
+        const imageUrls = mediaPayload.images.length > 0
+          ? mediaPayload.images
+          : (preferredImageUrl ? [preferredImageUrl] : []);
+        const primaryImage = imageUrls[0] || '';
         const resolvedMusicPost = looksLikeMusic || !!audioUrl;
         const mediaUrl = resolvedMusicPost
           ? (primaryImage || FALLBACK_MEDIA)
           : (videoUrl || primaryImage || audioUrl || FALLBACK_MEDIA);
-        const imageUrls = mediaPayload.images;
 
         allPosts.push({
           id: `product-${p.id}`,
