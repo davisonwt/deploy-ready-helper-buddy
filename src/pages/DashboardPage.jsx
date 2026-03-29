@@ -216,9 +216,15 @@ export default function DashboardPage() {
       </AppShell>
 
       {overlayRoot && createPortal(
-        <>
+        <div
+          className="fixed inset-0 pointer-events-none"
+          style={{ zIndex: 2147483647, isolation: 'isolate' }}
+        >
           {/* Static bottom bar with Plant + Go Live + Chat */}
-          <div className="fixed inset-x-0 bottom-0 z-[2147483644] pointer-events-none border-t border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80">
+          <div
+            className="absolute inset-x-0 bottom-0 pointer-events-none border-t border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80"
+            style={{ zIndex: 1 }}
+          >
             <div className="mx-auto grid w-full max-w-screen-md grid-cols-3 gap-3 px-4 py-3 pointer-events-none">
               <button
                 onClick={() => setPlantModalOpen(true)}
@@ -253,15 +259,22 @@ export default function DashboardPage() {
           {/* Go Live options panel */}
           {goLiveOpen && (
             <>
-              <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[2147483645]" onClick={() => setGoLiveOpen(false)} />
-              <div className="fixed bottom-20 left-1/2 -translate-x-1/2 z-[2147483646] w-56 space-y-2">
+              <div
+                className="absolute inset-0 bg-black/50 backdrop-blur-sm pointer-events-auto"
+                style={{ zIndex: 2 }}
+                onClick={() => setGoLiveOpen(false)}
+              />
+              <div
+                className="absolute bottom-20 left-1/2 -translate-x-1/2 w-56 space-y-2 pointer-events-auto"
+                style={{ zIndex: 3 }}
+              >
                 <p className="text-[10px] font-bold uppercase tracking-wider text-white/70 px-1 mb-1">Go Live As…</p>
                 {[
                   { action: () => setClassroomDialogOpen(true), label: 'Classroom', sublabel: 'Teach & mentor', icon: '🎓', gradient: 'linear-gradient(135deg, #0891b2, #06b6d4)' },
                   { action: () => setSkillDropDialogOpen(true), label: 'SkillDrop', sublabel: 'Share a skill', icon: '⚡', gradient: 'linear-gradient(135deg, #2563eb, #7c3aed)' },
                   { action: () => setTrainingDialogOpen(true), label: 'Training', sublabel: 'Lead a workout', icon: '💪', gradient: 'linear-gradient(135deg, #7c3aed, #db2777)' },
                   { action: () => navigate('/radio-slot-application'), label: 'Radio', sublabel: 'Go on air', icon: '📻', gradient: 'linear-gradient(135deg, #db2777, #ef4444)' },
-                ].map((opt, i) => (
+                ].map((opt) => (
                   <button
                     key={opt.label}
                     onClick={() => { setGoLiveOpen(false); opt.action(); }}
@@ -280,14 +293,14 @@ export default function DashboardPage() {
           )}
 
           {chatDrawerOpen && (
-            <div className="fixed inset-0 z-[2147483646] pointer-events-auto">
+            <div className="absolute inset-0 pointer-events-auto" style={{ zIndex: 4 }}>
               <PrivateChatsDrawer
                 isOpen={true}
                 onClose={() => setChatDrawerOpen(false)}
               />
             </div>
           )}
-        </>,
+        </div>,
         overlayRoot
       )}
 
