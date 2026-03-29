@@ -63,10 +63,10 @@ const CommunicationsHub = lazy(() =>
 const DashboardPage = lazy(() => import("./pages/DashboardPage"));
 const StatsPage = lazy(() => import("./pages/StatsPage"));
 const ProfilePage = lazy(() => import("./pages/ProfilePage"));
-const BrowseOrchardsPage = lazy(() => import("./pages/BrowseOrchardsPage"));
+const BrowseOrchardsPage = lazy(() => import("./pages/TribalGardensPage"));
 const OrchardPage = lazy(() => import("./pages/OrchardPage"));
 const CreateOrchardPage = lazy(() => import("./pages/CreateOrchardPage"));
-const MyOrchardsPage = lazy(() => import("./pages/MyOrchardsPage"));
+const MyOrchardsPage = lazy(() => import("./pages/MyGardenPage"));
 const BasketPage = lazy(() => import("./pages/BasketPage"));
 const EditOrchardPage = lazy(() => import("./pages/EditOrchardPage"));
 const PremiumRoomsLanding = lazy(() => import("./pages/PremiumRoomsLanding"));
