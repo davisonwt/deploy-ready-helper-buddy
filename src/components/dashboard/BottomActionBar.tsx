@@ -70,6 +70,22 @@ export const BottomActionBar: React.FC<BottomActionBarProps> = ({ theme }) => {
         }}
       >
         <div className="max-w-md mx-auto flex items-center justify-around px-2 py-2">
+          {/* Plant button */}
+          <button
+            onClick={() => setPlantModalOpen(true)}
+            className="flex flex-col items-center gap-0.5 p-1.5 rounded-xl transition-colors min-w-[56px]"
+            onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = theme.secondaryButton; }}
+            onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = 'transparent'; }}
+          >
+            <div
+              className="w-9 h-9 rounded-full flex items-center justify-center"
+              style={{ backgroundColor: theme.accent + '20' }}
+            >
+              <Plus className="w-4 h-4" style={{ color: theme.accent }} />
+            </div>
+            <span className="text-[10px] font-medium" style={{ color: theme.textSecondary }}>Plant</span>
+          </button>
+
           {primaryActions.map(({ to, icon: Icon, label }) => (
             <Link
               key={to}
@@ -107,6 +123,8 @@ export const BottomActionBar: React.FC<BottomActionBarProps> = ({ theme }) => {
           </button>
         </div>
       </div>
+
+      <PlantModal open={plantModalOpen} onOpenChange={setPlantModalOpen} />
     </>
   );
 };
