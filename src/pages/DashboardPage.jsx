@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { useNavigate } from 'react-router-dom';
 import SunCalc from 'suncalc';
 import { MessageCircle, Video, Sprout } from 'lucide-react';
@@ -195,6 +196,8 @@ export default function DashboardPage() {
     );
   }
 
+  const overlayRoot = typeof document !== 'undefined' ? document.body : null;
+
   return (
     <>
       <AppShell
@@ -212,75 +215,80 @@ export default function DashboardPage() {
         </div>
       </AppShell>
 
-      {/* Static bottom bar with Plant + Go Live + Chat */}
-      <div className="fixed inset-x-0 bottom-0 z-[100] pointer-events-none border-t border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80">
-        <div className="mx-auto grid w-full max-w-screen-md grid-cols-3 gap-3 px-4 py-3 pointer-events-none">
-          <button
-            onClick={() => setPlantModalOpen(true)}
-            className="flex min-w-0 w-full items-center justify-center gap-2 rounded-full px-3 py-3 font-bold text-sm text-white shadow-lg pointer-events-auto"
-            style={{
-              background: 'linear-gradient(135deg, #166534, #22c55e)',
-            }}
-          >
-            <Sprout className="h-5 w-5" />
-            Plant
-          </button>
-          <button
-            onClick={() => setGoLiveOpen(!goLiveOpen)}
-            className="flex min-w-0 w-full items-center justify-center gap-2 rounded-full px-3 py-3 font-bold text-sm text-white shadow-lg pointer-events-auto"
-            style={{
-              background: 'linear-gradient(135deg, #dc2626, #f43f5e)',
-            }}
-          >
-            <Video className="h-5 w-5" />
-            Go Live
-          </button>
-          <button
-            onClick={() => setChatDrawerOpen(true)}
-            className="flex min-w-0 w-full items-center justify-center gap-2 rounded-full bg-primary px-3 py-3 font-bold text-sm text-primary-foreground shadow-lg pointer-events-auto"
-          >
-            <MessageCircle className="h-5 w-5" />
-            Chat
-          </button>
-        </div>
-      </div>
-
-      {/* Go Live options panel */}
-      {goLiveOpen && (
+      {overlayRoot && createPortal(
         <>
-          <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[101]" onClick={() => setGoLiveOpen(false)} />
-          <div className="fixed bottom-20 left-1/2 -translate-x-1/2 z-[102] w-56 space-y-2">
-            <p className="text-[10px] font-bold uppercase tracking-wider text-white/70 px-1 mb-1">Go Live As…</p>
-            {[
-              { action: () => setClassroomDialogOpen(true), label: 'Classroom', sublabel: 'Teach & mentor', icon: '🎓', gradient: 'linear-gradient(135deg, #0891b2, #06b6d4)' },
-              { action: () => setSkillDropDialogOpen(true), label: 'SkillDrop', sublabel: 'Share a skill', icon: '⚡', gradient: 'linear-gradient(135deg, #2563eb, #7c3aed)' },
-              { action: () => setTrainingDialogOpen(true), label: 'Training', sublabel: 'Lead a workout', icon: '💪', gradient: 'linear-gradient(135deg, #7c3aed, #db2777)' },
-              { action: () => navigate('/radio-slot-application'), label: 'Radio', sublabel: 'Go on air', icon: '📻', gradient: 'linear-gradient(135deg, #db2777, #ef4444)' },
-            ].map((opt, i) => (
+          {/* Static bottom bar with Plant + Go Live + Chat */}
+          <div className="fixed inset-x-0 bottom-0 z-[2147483644] pointer-events-none border-t border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80">
+            <div className="mx-auto grid w-full max-w-screen-md grid-cols-3 gap-3 px-4 py-3 pointer-events-none">
               <button
-                key={opt.label}
-                onClick={() => { setGoLiveOpen(false); opt.action(); }}
-                className="flex w-full items-center gap-3 rounded-2xl p-3 shadow-lg text-left"
-                style={{ background: opt.gradient }}
+                onClick={() => setPlantModalOpen(true)}
+                className="flex min-w-0 w-full items-center justify-center gap-2 rounded-full px-3 py-3 font-bold text-sm text-white shadow-lg pointer-events-auto"
+                style={{
+                  background: 'linear-gradient(135deg, #166534, #22c55e)',
+                }}
               >
-                <span className="text-xl">{opt.icon}</span>
-                <div>
-                  <span className="font-bold text-white text-xs block">{opt.label}</span>
-                  <span className="text-[9px] text-white/60">{opt.sublabel}</span>
-                </div>
+                <Sprout className="h-5 w-5" />
+                Plant
               </button>
-            ))}
+              <button
+                onClick={() => setGoLiveOpen(!goLiveOpen)}
+                className="flex min-w-0 w-full items-center justify-center gap-2 rounded-full px-3 py-3 font-bold text-sm text-white shadow-lg pointer-events-auto"
+                style={{
+                  background: 'linear-gradient(135deg, #dc2626, #f43f5e)',
+                }}
+              >
+                <Video className="h-5 w-5" />
+                Go Live
+              </button>
+              <button
+                onClick={() => setChatDrawerOpen(true)}
+                className="flex min-w-0 w-full items-center justify-center gap-2 rounded-full bg-primary px-3 py-3 font-bold text-sm text-primary-foreground shadow-lg pointer-events-auto"
+              >
+                <MessageCircle className="h-5 w-5" />
+                Chat
+              </button>
+            </div>
           </div>
-        </>
-      )}
 
-      {chatDrawerOpen && (
-        <div className="fixed inset-0 z-[110] pointer-events-auto">
-          <PrivateChatsDrawer
-            isOpen={true}
-            onClose={() => setChatDrawerOpen(false)}
-          />
-        </div>
+          {/* Go Live options panel */}
+          {goLiveOpen && (
+            <>
+              <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[2147483645]" onClick={() => setGoLiveOpen(false)} />
+              <div className="fixed bottom-20 left-1/2 -translate-x-1/2 z-[2147483646] w-56 space-y-2">
+                <p className="text-[10px] font-bold uppercase tracking-wider text-white/70 px-1 mb-1">Go Live As…</p>
+                {[
+                  { action: () => setClassroomDialogOpen(true), label: 'Classroom', sublabel: 'Teach & mentor', icon: '🎓', gradient: 'linear-gradient(135deg, #0891b2, #06b6d4)' },
+                  { action: () => setSkillDropDialogOpen(true), label: 'SkillDrop', sublabel: 'Share a skill', icon: '⚡', gradient: 'linear-gradient(135deg, #2563eb, #7c3aed)' },
+                  { action: () => setTrainingDialogOpen(true), label: 'Training', sublabel: 'Lead a workout', icon: '💪', gradient: 'linear-gradient(135deg, #7c3aed, #db2777)' },
+                  { action: () => navigate('/radio-slot-application'), label: 'Radio', sublabel: 'Go on air', icon: '📻', gradient: 'linear-gradient(135deg, #db2777, #ef4444)' },
+                ].map((opt, i) => (
+                  <button
+                    key={opt.label}
+                    onClick={() => { setGoLiveOpen(false); opt.action(); }}
+                    className="flex w-full items-center gap-3 rounded-2xl p-3 shadow-lg text-left"
+                    style={{ background: opt.gradient }}
+                  >
+                    <span className="text-xl">{opt.icon}</span>
+                    <div>
+                      <span className="font-bold text-white text-xs block">{opt.label}</span>
+                      <span className="text-[9px] text-white/60">{opt.sublabel}</span>
+                    </div>
+                  </button>
+                ))}
+              </div>
+            </>
+          )}
+
+          {chatDrawerOpen && (
+            <div className="fixed inset-0 z-[2147483646] pointer-events-auto">
+              <PrivateChatsDrawer
+                isOpen={true}
+                onClose={() => setChatDrawerOpen(false)}
+              />
+            </div>
+          )}
+        </>,
+        overlayRoot
       )}
 
       <PlantModal open={plantModalOpen} onOpenChange={setPlantModalOpen} />
