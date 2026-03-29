@@ -7,6 +7,7 @@ import { BrowseSection } from './BrowseSection';
 import { ExploreSection } from './ExploreSection';
 import { KeeperHelpButton } from './KeeperHelpButton';
 import { GigActionCards } from './GigActionCards';
+import { PlantFeedCards } from './PlantFeedCards';
 
 interface MemrySectionProps {
   theme: DashboardTheme;
@@ -60,6 +61,11 @@ export const MemrySection: React.FC<MemrySectionProps> = ({ theme }) => {
 
       {/* === GIG ECONOMY: Book & Become === */}
       <GigActionCards theme={theme} />
+
+      <div className="border-t" style={{ borderColor: theme.cardBorder }} />
+
+      {/* === PLANT: Orchards & Seeds === */}
+      <PlantFeedCards theme={theme} />
 
       <div className="border-t" style={{ borderColor: theme.cardBorder }} />
 
