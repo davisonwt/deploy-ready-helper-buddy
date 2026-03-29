@@ -35,6 +35,7 @@ const adminItems = [
 
 export const AppSidebar: React.FC<AppSidebarProps> = ({ radioLive, userProfile }) => {
   const navigate = useNavigate();
+  const [plantModalOpen, setPlantModalOpen] = useState(false);
   const initials = (userProfile?.display_name || 'S')
     .split(' ')
     .map((w) => w[0])
