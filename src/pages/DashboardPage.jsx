@@ -18,6 +18,7 @@ import { PlantModal } from '@/components/grove/PlantModal';
 import { useQuery } from '@tanstack/react-query';
 
 export default function DashboardPage() {
+  const navigate = useNavigate();
   const [communityUnread, setCommunityUnread] = useState(0);
   const { user, loading: authLoading } = useAuth();
   const [orchards, setOrchards] = useState([]);
