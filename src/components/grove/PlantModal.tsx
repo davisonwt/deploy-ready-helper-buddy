@@ -17,7 +17,7 @@ const plantOptions = [
     title: 'Sow an Orchard',
     description: 'Create a crowdfunding orchard for your community',
     icon: Sprout,
-    href: '/orchards/new',
+    href: '/create-orchard',
     color: 'text-green-500 hover:bg-green-500/10'
   },
   {
@@ -25,7 +25,7 @@ const plantOptions = [
     title: 'Sow a Seed',
     description: 'Share a product, service, or creative offering',
     icon: Sprout,
-    href: '/sow',
+    href: '/products/upload',
     color: 'text-amber-500 hover:bg-amber-500/10'
   }
 ];
