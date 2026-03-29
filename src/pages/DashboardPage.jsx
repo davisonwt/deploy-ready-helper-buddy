@@ -13,6 +13,7 @@ import { DashboardSkeleton } from '@/components/dashboard/DashboardSkeleton';
 import { AppShell } from '@/components/layout/AppShell';
 import { HomeFeed } from '@/components/feed/HomeFeed';
 import { PrivateChatsDrawer } from '@/components/chat/PrivateChatsDrawer';
+import { PlantModal } from '@/components/grove/PlantModal';
 import { useQuery } from '@tanstack/react-query';
 
 export default function DashboardPage() {
@@ -22,6 +23,7 @@ export default function DashboardPage() {
   const [orchardsLoading, setOrchardsLoading] = useState(false);
   const [chatDrawerOpen, setChatDrawerOpen] = useState(false);
   const [goLiveOpen, setGoLiveOpen] = useState(false);
+  const [plantModalOpen, setPlantModalOpen] = useState(false);
 
   const fetchOrchards = async (filters = {}) => {
     try {
@@ -205,8 +207,8 @@ export default function DashboardPage() {
       {/* Static bottom bar with Plant + Go Live + Chat */}
       <div className="fixed inset-x-0 bottom-0 z-[100] pointer-events-none border-t border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80">
         <div className="mx-auto grid w-full max-w-screen-md grid-cols-3 gap-3 px-4 py-3 pointer-events-none">
-          <a
-            href="/create-orchard"
+          <button
+            onClick={() => setPlantModalOpen(true)}
             className="flex min-w-0 w-full items-center justify-center gap-2 rounded-full px-3 py-3 font-bold text-sm text-white shadow-lg pointer-events-auto"
             style={{
               background: 'linear-gradient(135deg, #166534, #22c55e)',
@@ -214,7 +216,7 @@ export default function DashboardPage() {
           >
             <Sprout className="h-5 w-5" />
             Plant
-          </a>
+          </button>
           <button
             onClick={() => setGoLiveOpen(!goLiveOpen)}
             className="flex min-w-0 w-full items-center justify-center gap-2 rounded-full px-3 py-3 font-bold text-sm text-white shadow-lg pointer-events-auto"
@@ -273,6 +275,8 @@ export default function DashboardPage() {
           />
         </div>
       )}
+
+      <PlantModal open={plantModalOpen} onOpenChange={setPlantModalOpen} />
     </>
   );
 }
