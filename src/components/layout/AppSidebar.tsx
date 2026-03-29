@@ -6,6 +6,7 @@ import {
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
+import { PlantModal } from '@/components/grove/PlantModal';
 
 interface AppSidebarProps {
   radioLive?: boolean;
