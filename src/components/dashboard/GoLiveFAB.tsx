@@ -22,7 +22,7 @@ export const GoLiveFAB: React.FC = () => {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[60]"
+            className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[200]"
             onClick={() => setOpen(false)}
           />
         )}
@@ -36,7 +36,7 @@ export const GoLiveFAB: React.FC = () => {
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 40, scale: 0.9 }}
             transition={{ type: 'spring', damping: 25, stiffness: 300 }}
-            className="fixed bottom-24 right-4 md:right-56 z-[61] w-56 space-y-2"
+            className="fixed bottom-24 right-4 md:right-56 z-[201] w-56 space-y-2"
           >
             <p className="text-[10px] font-bold uppercase tracking-wider text-white/70 px-1 mb-1">
               Go Live As…
@@ -72,7 +72,7 @@ export const GoLiveFAB: React.FC = () => {
       <motion.button
         onClick={() => setOpen(!open)}
         whileTap={{ scale: 0.9 }}
-        className="fixed bottom-20 right-4 md:right-56 z-[61] w-14 h-14 rounded-full shadow-2xl flex items-center justify-center"
+        className="fixed bottom-20 right-4 md:right-56 z-[201] w-14 h-14 rounded-full shadow-2xl flex items-center justify-center"
         style={{
           background: open
             ? 'linear-gradient(135deg, #ef4444, #dc2626)'
