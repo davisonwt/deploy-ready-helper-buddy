@@ -280,10 +280,15 @@ export const MemrySeedCard: React.FC<MemrySeedCardProps> = ({
   const isMusic = post.content_type === 'music';
   const isSeed = isProduct || isOrchard || isBook;
   const categoryText = String(post.category || post.product_type || post.content_type || '').toLowerCase();
-  const audioPreviewUrl = audioCandidates[0] || mediaUrl;
+  // For music posts, prefer the explicit audio_url set by the feed mapper.
+  // Only fall back to audioCandidates/mediaUrl for non-music posts.
+  const audioPreviewUrl = isMusic
+    ? (post.audio_url || audioCandidates[0] || '')
+    : (audioCandidates[0] || mediaUrl);
   const hasAudio = !!(
     (isMusic || categoryText.includes('music') || categoryText.includes('audio')) &&
     audioPreviewUrl &&
+    isPlayableAudioUrl(audioPreviewUrl) &&
     !isVideo
   );
 
