@@ -336,6 +336,7 @@ export const PrivateChatsDrawer: React.FC<PrivateChatsDrawerProps> = ({ isOpen, 
             onClick={onClose}
           />
 
+          {!showNewChatDialog && (
           <motion.div
             initial={{ x: '100%' }}
             animate={{ x: 0 }}
