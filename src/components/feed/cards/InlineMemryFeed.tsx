@@ -163,30 +163,32 @@ export const InlineMemryFeed: React.FC = () => {
         const normalizedType = String(p.type || '').toLowerCase();
         const isAudioCategory = ['music', 'audio', 'song', 'track'].some((token) => descriptor.includes(token));
         const normalizedFileUrl = normalizeMediaUrl(p.file_url);
+        const normalizedAudioCandidates = dedupeUrls([
+          normalizeMediaUrl(p.audio_url),
+          normalizedFileUrl,
+          normalizeMediaUrl(p.track_url),
+          normalizeMediaUrl(p.preview_url),
+        ].filter(Boolean));
+        const preferredAudioUrl = normalizedAudioCandidates.find((url) => isAudioUrl(url) || url.includes('manifest.json')) || '';
         const normalizedCoverUrl = normalizeMediaUrl(p.cover_image_url);
         const normalizedImageUrls = (Array.isArray(p.image_urls) ? p.image_urls : [])
           .map((url: string) => normalizeMediaUrl(url))
           .filter(Boolean);
         const preferredImageUrl = normalizedImageUrls[0] || normalizedCoverUrl;
         const looksLikeMusic = normalizedType === 'music' || isAudioCategory;
-        const sourceForMedia = looksLikeMusic
-          ? {
-              ...p,
-              file_url: undefined,
-              cover_image_url: preferredImageUrl || p.cover_image_url,
-              media_url: preferredImageUrl || p.media_url,
-            }
-          : {
-              ...p,
-              cover_image_url: preferredImageUrl || p.cover_image_url,
-              media_url: preferredImageUrl || p.media_url,
-            };
+        const sourceForMedia = {
+          ...p,
+          file_url: undefined,
+          cover_image_url: preferredImageUrl || p.cover_image_url,
+          image_urls: normalizedImageUrls.length > 0 ? normalizedImageUrls : p.image_urls,
+          media_url: preferredImageUrl || p.media_url,
+        };
         const mediaPayload = toMediaPayload(sourceForMedia, {
           forceVideoUrl: !looksLikeMusic && isVideoUrl(normalizedFileUrl) ? normalizedFileUrl : undefined,
           forceImageUrl: preferredImageUrl || undefined,
-          forceAudioUrl: looksLikeMusic || isAudioUrl(normalizedFileUrl) ? normalizedFileUrl : undefined,
+          forceAudioUrl: preferredAudioUrl || (!looksLikeMusic && isAudioUrl(normalizedFileUrl) ? normalizedFileUrl : undefined),
         });
-        const audioUrl = mediaPayload.audios[0];
+        const audioUrl = preferredAudioUrl || mediaPayload.audios[0];
         const videoUrl = mediaPayload.videos[0] || '';
         const primaryImage = mediaPayload.images[0] || '';
         const resolvedMusicPost = looksLikeMusic || !!audioUrl;
