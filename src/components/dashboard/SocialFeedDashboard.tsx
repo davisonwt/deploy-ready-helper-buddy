@@ -115,6 +115,11 @@ export const SocialFeedDashboard: React.FC<SocialFeedDashboardProps> = ({
         <MemrySection theme={sectionThemes['memry']} />
       </DashboardSection>
 
+      {/* === PLANT: Orchards & Seeds Feed Cards === */}
+      <div className="px-3 max-w-2xl mx-auto py-4">
+        <PlantFeedCards theme={sectionThemes['memry']} />
+      </div>
+
       {/* === INTERSTITIAL: Tribal Music === */}
       <div className="px-4 max-w-md mx-auto">
         <MemryFeedCarousel variant="music" />
