@@ -14,6 +14,9 @@ import { unlockHtmlMediaElement } from '@/utils/unlockHtmlMediaElement';
 import { dedupeUrls, isAudioUrl, isVideoUrl, normalizeMediaUrl } from '@/utils/memryFeedMedia';
 
 
+const isManifestUrl = (url?: string) => /manifest\.json(?:[?#]|$)/i.test(String(url || ''));
+const isPlayableAudioUrl = (url?: string) => isAudioUrl(url) || isManifestUrl(url);
+
 interface MemrySeedCardProps {
   post: {
     id: string;
@@ -289,8 +292,7 @@ export const MemrySeedCard: React.FC<MemrySeedCardProps> = ({
     (isMusic || categoryText.includes('music') || categoryText.includes('audio')) &&
     audioPreviewUrl &&
     isPlayableAudioUrl(audioPreviewUrl) &&
-    isPlayableAudioUrl(audioPreviewUrl) &&
-    !isVideo  );
+    !isVideo
   );
 
   const toggleVideoPlayback = () => {
