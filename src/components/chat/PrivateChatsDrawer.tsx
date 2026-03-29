@@ -421,8 +421,8 @@ export const PrivateChatsDrawer: React.FC<PrivateChatsDrawerProps> = ({ isOpen, 
               </div>
             </ScrollArea>
 
-            <Dialog open={showNewChatDialog} onOpenChange={setShowNewChatDialog}>
-              <DialogContent className="max-w-md p-0 overflow-hidden border-primary/20 bg-card">
+            <Dialog open={showNewChatDialog} onOpenChange={setShowNewChatDialog} modal={true}>
+              <DialogContent className="max-w-md p-0 overflow-hidden border-primary/20 bg-card z-[60]">
                 <DialogHeader className="px-6 pt-6 pb-2">
                   <DialogTitle className="text-xl font-bold text-foreground">New Conversation</DialogTitle>
                 </DialogHeader>
