@@ -287,6 +287,18 @@ export const HomeFeed: React.FC<HomeFeedProps> = ({
           } as any} />
         </section>
 
+        {/* === PLANT: Sow Orchards & Seeds === */}
+        <section>
+          <PlantFeedCards theme={{
+            textPrimary: 'hsl(var(--foreground))',
+            textSecondary: 'hsl(var(--muted-foreground))',
+            accent: 'hsl(var(--primary))',
+            secondaryButton: 'hsl(var(--muted))',
+            cardBorder: 'hsl(var(--border))',
+            cardBg: 'hsl(var(--card))',
+          } as any} />
+        </section>
+
         {/* === RADIO SESSIONS === */}
         {radioCards.length > 0 && (
           <section>
