@@ -105,7 +105,7 @@ export const GigActionCards: React.FC<GigActionCardsProps> = ({ theme }) => {
             <GradientGatewayCard
               href="/become-whisperer"
               title="Whisperer"
-              subtitle="Prayer support"
+              subtitle="Content & marketing"
               icon={Ear}
               gradient="linear-gradient(135deg, #a21caf, #c026d3)"
             />
