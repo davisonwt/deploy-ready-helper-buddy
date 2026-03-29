@@ -16,6 +16,7 @@ import { DayBeadsFeedCard } from './cards/DayBeadsFeedCard';
 import { useState } from 'react';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { GigActionCards } from '@/components/dashboard/sections/GigActionCards';
+import { PlantFeedCards } from '@/components/dashboard/sections/PlantFeedCards';
 
 interface HomeFeedProps {
   profile: any;
@@ -283,6 +284,18 @@ export const HomeFeed: React.FC<HomeFeedProps> = ({
             accent: 'hsl(var(--primary))',
             secondaryButton: 'hsl(var(--muted))',
             cardBorder: 'hsl(var(--border))',
+          } as any} />
+        </section>
+
+        {/* === PLANT: Sow Orchards & Seeds === */}
+        <section>
+          <PlantFeedCards theme={{
+            textPrimary: 'hsl(var(--foreground))',
+            textSecondary: 'hsl(var(--muted-foreground))',
+            accent: 'hsl(var(--primary))',
+            secondaryButton: 'hsl(var(--muted))',
+            cardBorder: 'hsl(var(--border))',
+            cardBg: 'hsl(var(--card))',
           } as any} />
         </section>
 
