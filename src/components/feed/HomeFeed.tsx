@@ -15,6 +15,7 @@ import { DayBeadsFeedCard } from './cards/DayBeadsFeedCard';
 
 import { useState } from 'react';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
+import { GigActionCards } from '@/components/dashboard/sections/GigActionCards';
 
 interface HomeFeedProps {
   profile: any;
