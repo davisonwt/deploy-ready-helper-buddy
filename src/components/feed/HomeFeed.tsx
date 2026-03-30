@@ -18,6 +18,7 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/component
 import { GigActionCards } from '@/components/dashboard/sections/GigActionCards';
 import { PlantFeedCards } from '@/components/dashboard/sections/PlantFeedCards';
 import { GoLiveFeedCards } from '@/components/dashboard/sections/GoLiveFeedCards';
+import { ChatFeedCards } from '@/components/dashboard/sections/ChatFeedCards';
 
 interface HomeFeedProps {
   profile: any;
@@ -311,6 +312,19 @@ export const HomeFeed: React.FC<HomeFeedProps> = ({
             cardBg: 'hsl(var(--card))',
           } as any} />
         </section>
+
+        {/* === CHAT: 1-on-1 & Group === */}
+        <section>
+          <ChatFeedCards theme={{
+            textPrimary: 'hsl(var(--foreground))',
+            textSecondary: 'hsl(var(--muted-foreground))',
+            accent: 'hsl(var(--primary))',
+            secondaryButton: 'hsl(var(--muted))',
+            cardBorder: 'hsl(var(--border))',
+            cardBg: 'hsl(var(--card))',
+          } as any} />
+        </section>
+
         {radioCards.length > 0 && (
           <section>
             <div className="flex items-center gap-2 mb-2.5">
