@@ -456,29 +456,23 @@ export const MemrySeedCard: React.FC<MemrySeedCardProps> = ({
             <video
               ref={videoRef}
               src={resolvedVideoSrc}
-              className={`absolute inset-0 z-[2] h-full w-full object-cover pointer-events-none transition-opacity duration-200 ${videoReady ? 'opacity-100' : 'opacity-0'}`}
+              className="absolute inset-0 z-[2] h-full w-full object-cover pointer-events-none"
               muted={false}
               playsInline
               preload="auto"
               loop
-              poster={videoReady ? undefined : videoPoster}
+              poster={videoPoster}
+              onLoadedMetadata={() => setVideoReady(true)}
               onLoadedData={(e) => {
+                setVideoReady(true);
                 const vid = e.currentTarget;
-                if (vid.dataset.previewSeeked === '1') {
-                  setVideoReady(true);
-                  return;
-                }
+                if (vid.dataset.previewSeeked === '1') return;
                 const duration = Number.isFinite(vid.duration) ? vid.duration : 0;
-                if (duration <= 3) {
-                  setVideoReady(true);
-                  return;
-                }
+                if (duration <= 3) return;
                 try {
                   vid.currentTime = 1;
                   vid.dataset.previewSeeked = '1';
-                } catch {
-                  setVideoReady(true);
-                }
+                } catch {}
               }}
               onCanPlay={() => setVideoReady(true)}
               onSeeked={() => setVideoReady(true)}
