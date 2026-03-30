@@ -1,6 +1,7 @@
 import React from 'react';
 import { Sprout, TreePine, Leaf } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { Button } from '@/components/ui/button';
 import { DashboardTheme } from '@/utils/dashboardThemes';
 
 import standardOrchardImg from '/images/plant/standard-orchard.jpg';
