@@ -17,6 +17,7 @@ import { useState } from 'react';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { GigActionCards } from '@/components/dashboard/sections/GigActionCards';
 import { PlantFeedCards } from '@/components/dashboard/sections/PlantFeedCards';
+import { GoLiveFeedCards } from '@/components/dashboard/sections/GoLiveFeedCards';
 
 interface HomeFeedProps {
   profile: any;
@@ -299,7 +300,17 @@ export const HomeFeed: React.FC<HomeFeedProps> = ({
           } as any} />
         </section>
 
-        {/* === RADIO SESSIONS === */}
+        {/* === GO LIVE: Host Sessions === */}
+        <section>
+          <GoLiveFeedCards theme={{
+            textPrimary: 'hsl(var(--foreground))',
+            textSecondary: 'hsl(var(--muted-foreground))',
+            accent: 'hsl(var(--primary))',
+            secondaryButton: 'hsl(var(--muted))',
+            cardBorder: 'hsl(var(--border))',
+            cardBg: 'hsl(var(--card))',
+          } as any} />
+        </section>
         {radioCards.length > 0 && (
           <section>
             <div className="flex items-center gap-2 mb-2.5">

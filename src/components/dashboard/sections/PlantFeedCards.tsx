@@ -21,6 +21,7 @@ const plantCards = [
       'Create an orchard with hidden seeds inside bestowal pockets. The community bestows towards pockets — and harvesters receive the seed inside. Perfect for getting your community to help you reach your sowing goals.',
     image: standardOrchardImg,
     icon: TreePine,
+    buttonLabel: '🌳 Plant a Standard Orchard',
   },
   {
     href: '/create-orchard?type=fullvalue',
@@ -30,6 +31,7 @@ const plantCards = [
       'Each bestowal pocket contains a seed that grows into a fruit for the harvester. Like community-backed production — once enough pockets are bestowed, you can manufacture, deliver, and fulfil every harvest.',
     image: fullvalueOrchardImg,
     icon: Sprout,
+    buttonLabel: '🌱 Plant a Full Value Orchard',
   },
   {
     href: '/sow',
@@ -39,6 +41,7 @@ const plantCards = [
       'Seeds are anything you want to sow — vehicles, music, books, houses, produce, services, and more. List it, set a bestowal amount, and let the community harvest.',
     image: sowSeedImg,
     icon: Leaf,
+    buttonLabel: '🌾 Sow a Seed',
   },
 ];
 
@@ -91,11 +94,18 @@ export const PlantFeedCards: React.FC<PlantFeedCardsProps> = ({ theme }) => {
               </div>
             </div>
 
-            {/* Description */}
+            {/* Description + Button */}
             <div className="p-3" style={{ background: theme.cardBg }}>
-              <p className="text-[11px] leading-relaxed" style={{ color: theme.textSecondary }}>
+              <p className="text-[11px] leading-relaxed mb-2" style={{ color: theme.textSecondary }}>
                 {card.description}
               </p>
+              <Button
+                size="sm"
+                className="text-xs h-7 rounded-lg w-full"
+                onClick={(e) => e.stopPropagation()}
+              >
+                {card.buttonLabel}
+              </Button>
             </div>
           </Link>
         ))}
