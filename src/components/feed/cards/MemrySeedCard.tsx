@@ -429,7 +429,7 @@ export const MemrySeedCard: React.FC<MemrySeedCardProps> = ({
         </div>
       )}
 
-      <div className="relative w-full" style={{ height: 340 }}>
+      <div className="relative w-full h-[340px] bg-card overflow-hidden">
         {isMusic && !post.media_url && !post.image_urls?.length ? (
           <div className="w-full h-full bg-gradient-to-br from-violet-700 via-purple-600 to-pink-500 flex items-center justify-center">
             <Music className="w-20 h-20 text-white/30" />
@@ -439,7 +439,7 @@ export const MemrySeedCard: React.FC<MemrySeedCardProps> = ({
             <video
               ref={videoRef}
               src={resolvedVideoSrc}
-              className="absolute inset-0 z-[2] h-full w-full object-cover pointer-events-none"
+              className="absolute inset-0 z-[2] h-full w-full object-contain object-top pointer-events-none"
               muted={false}
               playsInline
               preload="metadata"
@@ -509,7 +509,7 @@ export const MemrySeedCard: React.FC<MemrySeedCardProps> = ({
           <img
             src={allImages[Math.min(imgIdx, allImages.length - 1)]}
             alt={post.caption}
-            className="w-full h-full object-cover"
+            className="block w-full h-full object-contain object-top"
             loading="lazy"
             decoding="async"
             onError={(e) => {

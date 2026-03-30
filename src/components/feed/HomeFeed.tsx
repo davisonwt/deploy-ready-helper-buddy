@@ -435,6 +435,7 @@ export const HomeFeed: React.FC<HomeFeedProps> = ({
             <p className="text-muted-foreground text-sm">Your feed is waking up… 🌱</p>
           </div>
         )}
+        </div>
       </div>
     </div>
   );
