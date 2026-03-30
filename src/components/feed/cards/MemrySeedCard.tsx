@@ -59,6 +59,13 @@ const toHandle = (value?: string) => {
   return v.replace(/\s+/g, '-').replace(/[^a-z0-9-_]/g, '').replace(/-+/g, '-').replace(/^-|-$/g, '') || 'sower';
 };
 
+const stripFeedTitlePrefix = (value?: string) =>
+  String(value || '')
+    .replace(/^(🌱\s*)?seed:\s*/i, '')
+    .replace(/^(🎵\s*)?music:\s*/i, '')
+    .replace(/^(📚\s*)?book:\s*/i, '')
+    .trim();
+
 // ── 30-second audio preview player ──
 const SeedAudioPreview: React.FC<{ audioUrl: string }> = ({ audioUrl }) => {
   const audioRef = useRef<HTMLAudioElement>(null);
@@ -287,8 +294,8 @@ export const MemrySeedCard: React.FC<MemrySeedCardProps> = ({
   const isBook = post.content_type === 'new_book';
   const isMusic = post.content_type === 'music';
   const isSeed = isProduct || isOrchard || isBook;
-  const titleText = post.product_title || post.caption;
-  const showTopTitle = isSeed || isMusic;
+  const titleText = stripFeedTitlePrefix(post.product_title || post.caption);
+  const showTopTitle = Boolean(titleText) && (isSeed || isMusic);
   const categoryText = String(post.category || post.product_type || post.content_type || '').toLowerCase();
   // For music posts, prefer the explicit audio_url set by the feed mapper.
   // Only fall back to audioCandidates/mediaUrl for non-music posts.
@@ -430,7 +437,7 @@ export const MemrySeedCard: React.FC<MemrySeedCardProps> = ({
     <div ref={cardRef} className="rounded-2xl overflow-hidden bg-card border border-border/30 shadow-md">
       <div className="relative w-full h-[340px] overflow-hidden bg-card">
         {(isSeed || isMusic || isProduct) && (
-          <div className="absolute top-3 left-3 right-3 z-20 flex flex-col gap-2 pr-16">
+          <div className="absolute top-3 left-3 right-3 z-[30] flex flex-col gap-2 pr-16">
             <div>
               <Badge className="bg-emerald-500 hover:bg-emerald-500 text-white text-[10px] font-bold px-2.5 py-1 shadow-lg">
                 {getSeedTypeLabel()} — New Available
@@ -451,12 +458,12 @@ export const MemrySeedCard: React.FC<MemrySeedCardProps> = ({
         ) : isVideo ? (
           <>
             {!videoReady && (
-              <div className="absolute inset-0 z-[1] bg-muted" aria-hidden="true" />
+              <div className="absolute inset-0 z-0 bg-transparent" aria-hidden="true" />
             )}
             <video
               ref={videoRef}
               src={resolvedVideoSrc}
-              className="absolute inset-0 z-[2] h-full w-full object-cover pointer-events-none"
+              className="relative z-[2] block h-full w-full object-cover pointer-events-none"
               muted={false}
               playsInline
               preload="auto"
@@ -546,13 +553,13 @@ export const MemrySeedCard: React.FC<MemrySeedCardProps> = ({
 
         {/* Top-right: Slide count pill */}
         {hasMultipleImages && (
-          <div className="absolute top-3 right-3 z-10 bg-black/60 text-white text-[11px] font-semibold px-2.5 py-1 rounded-full backdrop-blur-sm">
+          <div className="absolute top-3 right-3 z-[25] bg-black/60 text-white text-[11px] font-semibold px-2.5 py-1 rounded-full backdrop-blur-sm">
             {imgIdx + 1} / {allImages.length}
           </div>
         )}
 
         {!!post.sower_seed_number && (
-          <div className="absolute top-3 right-3 z-10 translate-y-8 bg-background/75 text-foreground text-[10px] font-bold px-2 py-0.5 rounded-full backdrop-blur-sm border border-border/50">
+          <div className="absolute top-3 right-3 z-[25] translate-y-8 bg-background/75 text-foreground text-[10px] font-bold px-2 py-0.5 rounded-full backdrop-blur-sm border border-border/50">
             Seed #{post.sower_seed_number}
           </div>
         )}
@@ -581,8 +588,8 @@ export const MemrySeedCard: React.FC<MemrySeedCardProps> = ({
         <div className="absolute bottom-0 left-0 right-0 h-28 bg-gradient-to-t from-black/80 via-black/40 to-transparent pointer-events-none" />
 
         {/* Sower row + title overlay at bottom of image */}
-        <div
-          className={`absolute left-0 right-0 z-[9] px-3 ${
+          <div
+            className={`absolute left-0 right-0 z-[20] px-3 ${
             isVideo ? 'bottom-12 pb-2' : 'bottom-0 pb-3'
           }`}
           style={{ pointerEvents: 'none' }}
