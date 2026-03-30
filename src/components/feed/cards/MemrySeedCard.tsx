@@ -215,6 +215,7 @@ export const MemrySeedCard: React.FC<MemrySeedCardProps> = ({
   const videoRef = useRef<HTMLVideoElement>(null);
   const [isInView, setIsInView] = useState(false);
   const [videoPlaying, setVideoPlaying] = useState(false);
+  const [videoReady, setVideoReady] = useState(false);
 
   const fallbackMedia = '/lovable-uploads/ff9e6e48-049d-465a-8d2b-f6e8fed93522.png';
   const mediaUrl = normalizeMediaUrl(post.media_url || '');
@@ -271,6 +272,7 @@ export const MemrySeedCard: React.FC<MemrySeedCardProps> = ({
   }, [allImages.length]);
 
   useEffect(() => {
+    setVideoReady(false);
     setVideoPlaying(false);
     const video = videoRef.current;
     if (!video) return;
@@ -448,30 +450,44 @@ export const MemrySeedCard: React.FC<MemrySeedCardProps> = ({
           </div>
         ) : isVideo ? (
           <>
+            {!videoReady && (
+              <div className="absolute inset-0 z-[1] bg-muted" aria-hidden="true" />
+            )}
             <video
               ref={videoRef}
               src={resolvedVideoSrc}
-              className="absolute inset-0 z-[2] h-full w-full object-cover pointer-events-none"
+              className={`absolute inset-0 z-[2] h-full w-full object-cover pointer-events-none transition-opacity duration-200 ${videoReady ? 'opacity-100' : 'opacity-0'}`}
               muted={false}
               playsInline
               preload="auto"
               loop
-              poster={videoPoster}
+              poster={videoReady ? undefined : videoPoster}
               onLoadedData={(e) => {
                 const vid = e.currentTarget;
-                if (vid.dataset.previewSeeked === '1') return;
+                if (vid.dataset.previewSeeked === '1') {
+                  setVideoReady(true);
+                  return;
+                }
                 const duration = Number.isFinite(vid.duration) ? vid.duration : 0;
-                if (duration <= 3) return;
+                if (duration <= 3) {
+                  setVideoReady(true);
+                  return;
+                }
                 try {
                   vid.currentTime = 1;
                   vid.dataset.previewSeeked = '1';
                 } catch {
-                  // Keep the first frame if seeking is not available.
+                  setVideoReady(true);
                 }
               }}
+              onCanPlay={() => setVideoReady(true)}
+              onSeeked={() => setVideoReady(true)}
               onPlaying={() => setVideoPlaying(true)}
               onPlay={() => setVideoPlaying(true)}
-              onError={() => setVideoPlaying(false)}
+              onError={() => {
+                setVideoPlaying(false);
+                setVideoReady(false);
+              }}
               onPause={() => setVideoPlaying(false)}
             />
             <button
