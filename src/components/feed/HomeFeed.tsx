@@ -279,6 +279,8 @@ export const HomeFeed: React.FC<HomeFeedProps> = ({
       />
 
       <div className="px-3 sm:px-4 space-y-5 pb-8">
+        {/* Sabbath / Feast Day Banner */}
+        <SabbathDashboardBanner />
         {/* === GIG SERVICES: Book & Become (top of feed for easy access) === */}
         <section>
           <GigActionCards theme={{
