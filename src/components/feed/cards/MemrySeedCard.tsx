@@ -257,9 +257,12 @@ export const MemrySeedCard: React.FC<MemrySeedCardProps> = ({
   const isVideoByUrl = videoCandidates.length > 0;
   const isVideo = !isMusicPost && (isVideoByUrl || (isVideoByType && isVideoUrl(mediaUrl)));
 
+  const videoPoster = imageCandidates[0] || undefined;
   const allImages = (() => {
     const imgs = imageCandidates;
-    return imgs.length > 0 ? imgs : [fallbackMedia];
+    if (imgs.length > 0) return imgs;
+    if (isVideo) return [];
+    return [fallbackMedia];
   })();
   const resolvedVideoSrc = primaryVideoUrl || mediaUrl;
 
@@ -451,9 +454,9 @@ export const MemrySeedCard: React.FC<MemrySeedCardProps> = ({
               className="absolute inset-0 z-[2] h-full w-full object-cover pointer-events-none"
               muted={false}
               playsInline
-              preload="metadata"
+              preload="auto"
               loop
-              poster={allImages[0] || undefined}
+              poster={videoPoster}
               onLoadedData={(e) => {
                 const vid = e.currentTarget;
                 if (vid.dataset.previewSeeked === '1') return;
