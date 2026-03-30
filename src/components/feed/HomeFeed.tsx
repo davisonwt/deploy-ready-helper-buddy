@@ -278,163 +278,164 @@ export const HomeFeed: React.FC<HomeFeedProps> = ({
         unreadMessages={unreadMessages}
       />
 
-      <div className="px-3 sm:px-4 space-y-5 pb-8">
-        {/* Feed Title */}
-        <h2 className="text-xl font-bold text-foreground pt-2">Social Feed</h2>
+      <div className="px-3 sm:px-4 pb-8">
+        <div className="pt-2 pb-4">
+          <h2 className="text-xl font-bold text-foreground">Social Feed</h2>
+        </div>
 
-        {/* Sabbath / Feast Day Banner */}
-        <SabbathDashboardBanner />
-        {/* === GIG SERVICES: Book & Become (top of feed for easy access) === */}
-        <section>
-          <GigActionCards theme={{
-            textPrimary: 'hsl(var(--foreground))',
-            textSecondary: 'hsl(var(--muted-foreground))',
-            accent: 'hsl(var(--primary))',
-            secondaryButton: 'hsl(var(--muted))',
-            cardBorder: 'hsl(var(--border))',
-          } as any} />
-        </section>
-
-        {/* === PLANT: Sow Orchards & Seeds === */}
-        <section>
-          <PlantFeedCards theme={{
-            textPrimary: 'hsl(var(--foreground))',
-            textSecondary: 'hsl(var(--muted-foreground))',
-            accent: 'hsl(var(--primary))',
-            secondaryButton: 'hsl(var(--muted))',
-            cardBorder: 'hsl(var(--border))',
-            cardBg: 'hsl(var(--card))',
-          } as any} />
-        </section>
-
-        {/* === GO LIVE: Host Sessions === */}
-        <section>
-          <GoLiveFeedCards theme={{
-            textPrimary: 'hsl(var(--foreground))',
-            textSecondary: 'hsl(var(--muted-foreground))',
-            accent: 'hsl(var(--primary))',
-            secondaryButton: 'hsl(var(--muted))',
-            cardBorder: 'hsl(var(--border))',
-            cardBg: 'hsl(var(--card))',
-          } as any} />
-        </section>
-
-        {/* === CHAT: 1-on-1 & Group === */}
-        <section>
-          <ChatFeedCards theme={{
-            textPrimary: 'hsl(var(--foreground))',
-            textSecondary: 'hsl(var(--muted-foreground))',
-            accent: 'hsl(var(--primary))',
-            secondaryButton: 'hsl(var(--muted))',
-            cardBorder: 'hsl(var(--border))',
-            cardBg: 'hsl(var(--card))',
-          } as any} />
-        </section>
-
-        {radioCards.length > 0 && (
+        <div className="space-y-5">
+          {/* Sabbath / Feast Day Banner */}
+          <SabbathDashboardBanner />
+          {/* === GIG SERVICES: Book & Become (top of feed for easy access) === */}
           <section>
-            <div className="flex items-center gap-2 mb-2.5">
-              <Radio className="w-4 h-4 text-destructive" />
-              <h2 className="text-sm font-bold text-foreground">Live Radio Sessions</h2>
-              <span className="w-1.5 h-1.5 rounded-full bg-destructive animate-pulse" />
-            </div>
-            <div className="space-y-3">
-              {radioCards.map((session) => (
-                <RadioSessionCard key={session.id} data={session} />
-              ))}
-            </div>
+            <GigActionCards theme={{
+              textPrimary: 'hsl(var(--foreground))',
+              textSecondary: 'hsl(var(--muted-foreground))',
+              accent: 'hsl(var(--primary))',
+              secondaryButton: 'hsl(var(--muted))',
+              cardBorder: 'hsl(var(--border))',
+            } as any} />
           </section>
-        )}
 
-        {/* === LIVE SESSIONS (Classroom, SkillDrop, Training) === */}
-        {((classroomSessions || []).length > 0 || (skilldropSessions || []).length > 0) && (
+          {/* === PLANT: Sow Orchards & Seeds === */}
           <section>
-            <div className="flex items-center gap-2 mb-2.5">
-              <Zap className="w-4 h-4 text-primary" />
-              <h2 className="text-sm font-bold text-foreground">Live Sessions</h2>
-            </div>
-            <div className="space-y-3">
-              {(classroomSessions || []).map((session) => (
-                <LiveSessionCard key={`cls-${session.id}`} data={session} />
-              ))}
-              {(skilldropSessions || []).map((session) => (
-                <LiveSessionCard key={`sd-${session.id}`} data={session} />
-              ))}
-            </div>
+            <PlantFeedCards theme={{
+              textPrimary: 'hsl(var(--foreground))',
+              textSecondary: 'hsl(var(--muted-foreground))',
+              accent: 'hsl(var(--primary))',
+              secondaryButton: 'hsl(var(--muted))',
+              cardBorder: 'hsl(var(--border))',
+              cardBg: 'hsl(var(--card))',
+            } as any} />
           </section>
-        )}
 
-        {(activeSowers || []).length > 0 && (
+          {/* === GO LIVE: Host Sessions === */}
           <section>
-            <Collapsible>
-              <CollapsibleTrigger className="w-full flex items-center justify-between group cursor-pointer mb-2.5">
-                <div className="flex items-center gap-2">
-                  <Sprout className="w-4 h-4 text-success" />
-                  <h2 className="text-sm font-bold text-foreground">Active Sowers</h2>
-                  <span className="text-[10px] text-muted-foreground bg-muted rounded-full px-1.5 py-0.5">{(activeSowers || []).length}</span>
-                </div>
-                <ChevronDown className="w-4 h-4 text-muted-foreground transition-transform group-data-[state=open]:rotate-180" />
-              </CollapsibleTrigger>
-              <CollapsibleContent>
-                <div className="space-y-2">
-                  {(activeSowers || []).map((sower: any, i: number) => (
-                    <ActiveSowerCard key={sower.userId} data={sower} index={i} />
-                  ))}
-                </div>
-              </CollapsibleContent>
-            </Collapsible>
+            <GoLiveFeedCards theme={{
+              textPrimary: 'hsl(var(--foreground))',
+              textSecondary: 'hsl(var(--muted-foreground))',
+              accent: 'hsl(var(--primary))',
+              secondaryButton: 'hsl(var(--muted))',
+              cardBorder: 'hsl(var(--border))',
+              cardBg: 'hsl(var(--card))',
+            } as any} />
           </section>
-        )}
 
-        <DayBeadsFeedCard calendarData={calendarData} />
-
-        {/* === S2G MEMRY FEED (inline) === */}
-        <InlineMemryFeed />
-
-
-        {/* === CHAT ROOMS === */}
-        {(chatRooms || []).length > 0 && (
+          {/* === CHAT: 1-on-1 & Group === */}
           <section>
-            <div className="flex items-center gap-2 mb-2.5">
-              <MessageSquare className="w-4 h-4 text-primary" />
-              <h2 className="text-sm font-bold text-foreground">Active Chats</h2>
-            </div>
-            <div className="space-y-2">
-              {(chatRooms || []).map((room: any, i: number) => (
-                <ChatRoomCard key={room.id} data={room} index={i} />
-              ))}
-            </div>
+            <ChatFeedCards theme={{
+              textPrimary: 'hsl(var(--foreground))',
+              textSecondary: 'hsl(var(--muted-foreground))',
+              accent: 'hsl(var(--primary))',
+              secondaryButton: 'hsl(var(--muted))',
+              cardBorder: 'hsl(var(--border))',
+              cardBg: 'hsl(var(--card))',
+            } as any} />
           </section>
-        )}
 
-        {/* === SEED POSTS === */}
-        {(seeds || []).length > 0 && (
-          <section>
-            <div className="space-y-3">
-              {seeds!.map((s: any) => (
-                <SeedPostCard
-                  key={`seed-${s.id}`}
-                  data={{
-                    id: s.id,
-                    title: s.title,
-                    content: s.content,
-                    author: s.profiles?.display_name || 'Community member',
-                    authorAvatar: s.profiles?.avatar_url,
-                    upvotes: s.upvotes || 0,
-                    replyCount: s.reply_count || 0,
-                    createdAt: s.created_at,
-                  }}
-                />
-              ))}
+          {radioCards.length > 0 && (
+            <section>
+              <div className="flex items-center gap-2 mb-2.5">
+                <Radio className="w-4 h-4 text-destructive" />
+                <h2 className="text-sm font-bold text-foreground">Live Radio Sessions</h2>
+                <span className="w-1.5 h-1.5 rounded-full bg-destructive animate-pulse" />
+              </div>
+              <div className="space-y-3">
+                {radioCards.map((session) => (
+                  <RadioSessionCard key={session.id} data={session} />
+                ))}
+              </div>
+            </section>
+          )}
+
+          {/* === LIVE SESSIONS (Classroom, SkillDrop, Training) === */}
+          {((classroomSessions || []).length > 0 || (skilldropSessions || []).length > 0) && (
+            <section>
+              <div className="flex items-center gap-2 mb-2.5">
+                <Zap className="w-4 h-4 text-primary" />
+                <h2 className="text-sm font-bold text-foreground">Live Sessions</h2>
+              </div>
+              <div className="space-y-3">
+                {(classroomSessions || []).map((session) => (
+                  <LiveSessionCard key={`cls-${session.id}`} data={session} />
+                ))}
+                {(skilldropSessions || []).map((session) => (
+                  <LiveSessionCard key={`sd-${session.id}`} data={session} />
+                ))}
+              </div>
+            </section>
+          )}
+
+          {(activeSowers || []).length > 0 && (
+            <section>
+              <Collapsible>
+                <CollapsibleTrigger className="w-full flex items-center justify-between group cursor-pointer mb-2.5">
+                  <div className="flex items-center gap-2">
+                    <Sprout className="w-4 h-4 text-success" />
+                    <h2 className="text-sm font-bold text-foreground">Active Sowers</h2>
+                    <span className="text-[10px] text-muted-foreground bg-muted rounded-full px-1.5 py-0.5">{(activeSowers || []).length}</span>
+                  </div>
+                  <ChevronDown className="w-4 h-4 text-muted-foreground transition-transform group-data-[state=open]:rotate-180" />
+                </CollapsibleTrigger>
+                <CollapsibleContent>
+                  <div className="space-y-2">
+                    {(activeSowers || []).map((sower: any, i: number) => (
+                      <ActiveSowerCard key={sower.userId} data={sower} index={i} />
+                    ))}
+                  </div>
+                </CollapsibleContent>
+              </Collapsible>
+            </section>
+          )}
+
+          <DayBeadsFeedCard calendarData={calendarData} />
+
+          {/* === S2G MEMRY FEED (inline) === */}
+          <InlineMemryFeed />
+
+          {/* === CHAT ROOMS === */}
+          {(chatRooms || []).length > 0 && (
+            <section>
+              <div className="flex items-center gap-2 mb-2.5">
+                <MessageSquare className="w-4 h-4 text-primary" />
+                <h2 className="text-sm font-bold text-foreground">Active Chats</h2>
+              </div>
+              <div className="space-y-2">
+                {(chatRooms || []).map((room: any, i: number) => (
+                  <ChatRoomCard key={room.id} data={room} index={i} />
+                ))}
+              </div>
+            </section>
+          )}
+
+          {/* === SEED POSTS === */}
+          {(seeds || []).length > 0 && (
+            <section>
+              <div className="space-y-3">
+                {seeds!.map((s: any) => (
+                  <SeedPostCard
+                    key={`seed-${s.id}`}
+                    data={{
+                      id: s.id,
+                      title: s.title,
+                      content: s.content,
+                      author: s.profiles?.display_name || 'Community member',
+                      authorAvatar: s.profiles?.avatar_url,
+                      upvotes: s.upvotes || 0,
+                      replyCount: s.reply_count || 0,
+                      createdAt: s.created_at,
+                    }}
+                  />
+                ))}
+              </div>
+            </section>
+          )}
+
+          {radioCards.length === 0 && (activeSowers || []).length === 0 && (chatRooms || []).length === 0 && (seeds || []).length === 0 && (
+            <div className="text-center py-12">
+              <p className="text-muted-foreground text-sm">Your feed is waking up… 🌱</p>
             </div>
-          </section>
-        )}
-
-        {radioCards.length === 0 && (activeSowers || []).length === 0 && (chatRooms || []).length === 0 && (seeds || []).length === 0 && (
-          <div className="text-center py-12">
-            <p className="text-muted-foreground text-sm">Your feed is waking up… 🌱</p>
-          </div>
-        )}
+          )}
         </div>
       </div>
     </div>

@@ -421,15 +421,15 @@ export const MemrySeedCard: React.FC<MemrySeedCardProps> = ({
 
   return (
     <div ref={cardRef} className="rounded-2xl overflow-hidden bg-card border border-border/30 shadow-md">
-      {(isSeed || isMusic || isProduct) && (
-        <div className="px-3 pt-3">
-          <Badge className="bg-emerald-500 hover:bg-emerald-500 text-white text-[10px] font-bold px-2.5 py-1 shadow-lg">
-            {getSeedTypeLabel()} — New Available
-          </Badge>
-        </div>
-      )}
-
       <div className="relative w-full h-[340px] bg-card overflow-hidden">
+        {(isSeed || isMusic || isProduct) && (
+          <div className="absolute top-3 left-3 z-20">
+            <Badge className="bg-emerald-500 hover:bg-emerald-500 text-white text-[10px] font-bold px-2.5 py-1 shadow-lg">
+              {getSeedTypeLabel()} — New Available
+            </Badge>
+          </div>
+        )}
+
         {isMusic && !post.media_url && !post.image_urls?.length ? (
           <div className="w-full h-full bg-gradient-to-br from-violet-700 via-purple-600 to-pink-500 flex items-center justify-center">
             <Music className="w-20 h-20 text-white/30" />
