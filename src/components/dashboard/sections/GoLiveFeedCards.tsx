@@ -1,76 +1,83 @@
 import React from 'react';
-import { Sprout, TreePine, Leaf } from 'lucide-react';
+import { Radio, GraduationCap, Zap, Dumbbell } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { DashboardTheme } from '@/utils/dashboardThemes';
 
-import standardOrchardImg from '/images/plant/standard-orchard.jpg';
-import fullvalueOrchardImg from '/images/plant/fullvalue-orchard.jpg';
-import sowSeedImg from '/images/plant/sow-a-seed.jpg';
+import classroomImg from '/images/golive/classroom.jpg';
+import skilldropImg from '/images/golive/skilldrop.jpg';
+import trainingImg from '/images/golive/training.jpg';
+import radioImg from '/images/golive/radio.jpg';
 
-interface PlantFeedCardsProps {
+interface GoLiveFeedCardsProps {
   theme: DashboardTheme;
 }
 
-const plantCards = [
+const goLiveCards = [
   {
-    href: '/create-orchard?type=standard',
-    title: 'Standard Orchard',
-    subtitle: 'Hide seeds within bestowal pockets',
+    href: '/go-live?type=classroom',
+    title: 'Classroom',
+    subtitle: 'Teach the community live',
     description:
-      'Create an orchard with hidden seeds inside bestowal pockets. The community bestows towards pockets — and harvesters receive the seed inside. Perfect for getting your community to help you reach your sowing goals.',
-    image: standardOrchardImg,
-    icon: TreePine,
-    buttonLabel: '🌳 Plant a Standard Orchard',
+      'Host a live classroom session where you teach, train, or present to the community. Set it as free or with a bestowal value — and go live when you\'re ready.',
+    image: classroomImg,
+    icon: GraduationCap,
   },
   {
-    href: '/create-orchard?type=fullvalue',
-    title: 'Full Value Orchard',
-    subtitle: 'Every pocket grows into a harvest',
+    href: '/go-live?type=skilldrop',
+    title: 'SkillDrop',
+    subtitle: 'Share a quick skill with the tribe',
     description:
-      'Each bestowal pocket contains a seed that grows into a fruit for the harvester. Like community-backed production — once enough pockets are bestowed, you can manufacture, deliver, and fulfil every harvest.',
-    image: fullvalueOrchardImg,
-    icon: Sprout,
-    buttonLabel: '🌱 Plant a Full Value Orchard',
+      'Drop a focused skill session — woodworking, coding, photography, music production, or anything you\'re great at. Quick, impactful, and community-driven.',
+    image: skilldropImg,
+    icon: Zap,
   },
   {
-    href: '/sow',
-    title: 'Sow a Seed',
-    subtitle: 'Make anything available to the community',
+    href: '/go-live?type=training',
+    title: 'Training',
+    subtitle: 'Health, baking, cooking & more',
     description:
-      'Seeds are anything you want to sow — vehicles, music, books, houses, produce, services, and more. List it, set a bestowal amount, and let the community harvest.',
-    image: sowSeedImg,
-    icon: Leaf,
-    buttonLabel: '🌾 Sow a Seed',
+      'Go live with a training session — fitness, yoga, baking, cooking, wellness coaching, or any hands-on skill. Help the community grow stronger together.',
+    image: trainingImg,
+    icon: Dumbbell,
+  },
+  {
+    href: '/radio-application',
+    title: 'Radio',
+    subtitle: 'Broadcast live to the community',
+    description:
+      'Apply to become a radio DJ and broadcast live shows to the entire community. Share music, discussions, interviews, and more from your own studio.',
+    image: radioImg,
+    icon: Radio,
   },
 ];
 
-export const PlantFeedCards: React.FC<PlantFeedCardsProps> = ({ theme }) => {
+export const GoLiveFeedCards: React.FC<GoLiveFeedCardsProps> = ({ theme }) => {
   return (
     <div className="space-y-3">
       {/* Section Label */}
       <div className="flex items-center gap-2">
         <div className="p-2 rounded-xl" style={{ background: theme.secondaryButton }}>
-          <Sprout className="w-5 h-5" style={{ color: theme.accent }} />
+          <Radio className="w-5 h-5" style={{ color: theme.accent }} />
         </div>
         <div>
           <h2 className="text-base font-extrabold tracking-tight" style={{ color: theme.textPrimary }}>
-            🌱 Plant
+            🎙️ Go Live
           </h2>
           <p className="text-[10px]" style={{ color: theme.textSecondary }}>
-            Sow orchards & seeds for the community to harvest
+            Host live sessions for the community
           </p>
         </div>
       </div>
 
       {/* Cards */}
       <div className="space-y-3">
-        {plantCards.map((card) => (
+        {goLiveCards.map((card) => (
           <Link
             key={card.title}
             to={card.href}
             className="block rounded-2xl overflow-hidden shadow-md transition-all hover:scale-[1.01] active:scale-[0.99]"
-            style={{ borderColor: theme.cardBorder, border: `1px solid ${theme.cardBorder}` }}
+            style={{ border: `1px solid ${theme.cardBorder}` }}
           >
             {/* Image */}
             <div className="relative h-[140px]">
@@ -104,7 +111,7 @@ export const PlantFeedCards: React.FC<PlantFeedCardsProps> = ({ theme }) => {
                 className="text-xs h-7 rounded-lg w-full"
                 onClick={(e) => e.stopPropagation()}
               >
-                {card.buttonLabel}
+                🎙️ Go Live!
               </Button>
             </div>
           </Link>
