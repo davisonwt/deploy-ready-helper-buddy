@@ -574,7 +574,7 @@ export const MemrySeedCard: React.FC<MemrySeedCardProps> = ({
           }`}
           style={{ pointerEvents: 'none' }}
         >
-          <div className="flex items-center gap-2.5 mb-1.5" style={{ pointerEvents: 'auto' }}>
+          <div className="flex items-start gap-2.5 mb-1.5" style={{ pointerEvents: 'auto' }}>
             <Link to={`/member/${post.user_id}`}>
               <Avatar className="w-9 h-9 border-2 border-white/70 shadow">
                 <AvatarImage src={post.profiles?.avatar_url} />
@@ -597,22 +597,25 @@ export const MemrySeedCard: React.FC<MemrySeedCardProps> = ({
               </div>
               <p className="text-white/60 text-[11px]">@{toHandle(post.profiles?.username || post.profiles?.display_name)}</p>
             </div>
-          </div>
 
-          <div className={`flex items-center justify-between gap-2 ${isVideo ? 'pr-2' : ''}`} style={{ pointerEvents: 'auto' }}>
-            {!showTopTitle && (
-              <p
-                className={`text-white font-semibold line-clamp-2 drop-shadow flex-1 ${
-                  isVideo ? 'text-sm leading-snug' : 'text-[16px] leading-tight'
-                }`}
-              >
-                {titleText}
-              </p>
-            )}
             {hasAudio && !!audioPreviewUrl && (
               <SeedAudioPreview audioUrl={audioPreviewUrl} />
             )}
           </div>
+
+          {!hasAudio && (
+            <div className={`flex items-center justify-between gap-2 ${isVideo ? 'pr-2' : ''}`} style={{ pointerEvents: 'auto' }}>
+              {!showTopTitle && (
+                <p
+                  className={`text-white font-semibold line-clamp-2 drop-shadow flex-1 ${
+                    isVideo ? 'text-sm leading-snug' : 'text-[16px] leading-tight'
+                  }`}
+                >
+                  {titleText}
+                </p>
+              )}
+            </div>
+          )}
         </div>
       </div>
 
