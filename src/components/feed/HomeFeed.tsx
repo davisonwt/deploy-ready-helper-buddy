@@ -19,6 +19,7 @@ import { GigActionCards } from '@/components/dashboard/sections/GigActionCards';
 import { PlantFeedCards } from '@/components/dashboard/sections/PlantFeedCards';
 import { GoLiveFeedCards } from '@/components/dashboard/sections/GoLiveFeedCards';
 import { ChatFeedCards } from '@/components/dashboard/sections/ChatFeedCards';
+import { SabbathDashboardBanner } from '@/components/SabbathDashboardBanner';
 
 interface HomeFeedProps {
   profile: any;
