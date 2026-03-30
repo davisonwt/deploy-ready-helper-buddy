@@ -286,51 +286,60 @@ export const HomeFeed: React.FC<HomeFeedProps> = ({
         <div className="space-y-5">
           {/* Sabbath / Feast Day Banner */}
           <SabbathDashboardBanner />
+
           {/* === GIG SERVICES: Book & Become (top of feed for easy access) === */}
           <section>
-            <GigActionCards theme={{
-              textPrimary: 'hsl(var(--foreground))',
-              textSecondary: 'hsl(var(--muted-foreground))',
-              accent: 'hsl(var(--primary))',
-              secondaryButton: 'hsl(var(--muted))',
-              cardBorder: 'hsl(var(--border))',
-            } as any} />
+            <GigActionCards
+              theme={{
+                textPrimary: 'hsl(var(--foreground))',
+                textSecondary: 'hsl(var(--muted-foreground))',
+                accent: 'hsl(var(--primary))',
+                secondaryButton: 'hsl(var(--muted))',
+                cardBorder: 'hsl(var(--border))',
+              } as any}
+            />
           </section>
 
           {/* === PLANT: Sow Orchards & Seeds === */}
           <section>
-            <PlantFeedCards theme={{
-              textPrimary: 'hsl(var(--foreground))',
-              textSecondary: 'hsl(var(--muted-foreground))',
-              accent: 'hsl(var(--primary))',
-              secondaryButton: 'hsl(var(--muted))',
-              cardBorder: 'hsl(var(--border))',
-              cardBg: 'hsl(var(--card))',
-            } as any} />
+            <PlantFeedCards
+              theme={{
+                textPrimary: 'hsl(var(--foreground))',
+                textSecondary: 'hsl(var(--muted-foreground))',
+                accent: 'hsl(var(--primary))',
+                secondaryButton: 'hsl(var(--muted))',
+                cardBorder: 'hsl(var(--border))',
+                cardBg: 'hsl(var(--card))',
+              } as any}
+            />
           </section>
 
           {/* === GO LIVE: Host Sessions === */}
           <section>
-            <GoLiveFeedCards theme={{
-              textPrimary: 'hsl(var(--foreground))',
-              textSecondary: 'hsl(var(--muted-foreground))',
-              accent: 'hsl(var(--primary))',
-              secondaryButton: 'hsl(var(--muted))',
-              cardBorder: 'hsl(var(--border))',
-              cardBg: 'hsl(var(--card))',
-            } as any} />
+            <GoLiveFeedCards
+              theme={{
+                textPrimary: 'hsl(var(--foreground))',
+                textSecondary: 'hsl(var(--muted-foreground))',
+                accent: 'hsl(var(--primary))',
+                secondaryButton: 'hsl(var(--muted))',
+                cardBorder: 'hsl(var(--border))',
+                cardBg: 'hsl(var(--card))',
+              } as any}
+            />
           </section>
 
           {/* === CHAT: 1-on-1 & Group === */}
           <section>
-            <ChatFeedCards theme={{
-              textPrimary: 'hsl(var(--foreground))',
-              textSecondary: 'hsl(var(--muted-foreground))',
-              accent: 'hsl(var(--primary))',
-              secondaryButton: 'hsl(var(--muted))',
-              cardBorder: 'hsl(var(--border))',
-              cardBg: 'hsl(var(--card))',
-            } as any} />
+            <ChatFeedCards
+              theme={{
+                textPrimary: 'hsl(var(--foreground))',
+                textSecondary: 'hsl(var(--muted-foreground))',
+                accent: 'hsl(var(--primary))',
+                secondaryButton: 'hsl(var(--muted))',
+                cardBorder: 'hsl(var(--border))',
+                cardBg: 'hsl(var(--card))',
+              } as any}
+            />
           </section>
 
           {radioCards.length > 0 && (
@@ -373,7 +382,9 @@ export const HomeFeed: React.FC<HomeFeedProps> = ({
                   <div className="flex items-center gap-2">
                     <Sprout className="w-4 h-4 text-success" />
                     <h2 className="text-sm font-bold text-foreground">Active Sowers</h2>
-                    <span className="text-[10px] text-muted-foreground bg-muted rounded-full px-1.5 py-0.5">{(activeSowers || []).length}</span>
+                    <span className="text-[10px] text-muted-foreground bg-muted rounded-full px-1.5 py-0.5">
+                      {(activeSowers || []).length}
+                    </span>
                   </div>
                   <ChevronDown className="w-4 h-4 text-muted-foreground transition-transform group-data-[state=open]:rotate-180" />
                 </CollapsibleTrigger>
@@ -431,11 +442,14 @@ export const HomeFeed: React.FC<HomeFeedProps> = ({
             </section>
           )}
 
-          {radioCards.length === 0 && (activeSowers || []).length === 0 && (chatRooms || []).length === 0 && (seeds || []).length === 0 && (
-            <div className="text-center py-12">
-              <p className="text-muted-foreground text-sm">Your feed is waking up… 🌱</p>
-            </div>
-          )}
+          {radioCards.length === 0 &&
+            (activeSowers || []).length === 0 &&
+            (chatRooms || []).length === 0 &&
+            (seeds || []).length === 0 && (
+              <div className="text-center py-12">
+                <p className="text-muted-foreground text-sm">Your feed is waking up… 🌱</p>
+              </div>
+            )}
         </div>
       </div>
     </div>
