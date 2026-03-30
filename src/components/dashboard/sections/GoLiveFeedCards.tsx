@@ -15,7 +15,7 @@ interface GoLiveFeedCardsProps {
 
 const goLiveCards = [
   {
-    href: '/explore-sessions?type=classroom',
+    href: '/communications-hub?tab=classroom&create=1',
     title: 'Classroom',
     subtitle: 'Teach the community live',
     description:
@@ -24,7 +24,7 @@ const goLiveCards = [
     icon: GraduationCap,
   },
   {
-    href: '/explore-sessions?type=skilldrop',
+    href: '/communications-hub?tab=skilldrop&create=1',
     title: 'SkillDrop',
     subtitle: 'Share a quick skill with the tribe',
     description:
@@ -33,7 +33,7 @@ const goLiveCards = [
     icon: Zap,
   },
   {
-    href: '/explore-sessions?type=training',
+    href: '/communications-hub?tab=training&create=1',
     title: 'Training',
     subtitle: 'Health, baking, cooking & more',
     description:
@@ -42,7 +42,7 @@ const goLiveCards = [
     icon: Dumbbell,
   },
   {
-    href: '/apply-radio-slot',
+    href: '/communications-hub?tab=radio&create=1',
     title: 'Radio',
     subtitle: 'Broadcast live to the community',
     description:
@@ -109,7 +109,6 @@ export const GoLiveFeedCards: React.FC<GoLiveFeedCardsProps> = ({ theme }) => {
               <Button
                 size="sm"
                 className="text-xs h-7 rounded-lg w-full"
-                onClick={(e) => e.stopPropagation()}
               >
                 🎙️ Go Live!
               </Button>

@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Zap, Users, Calendar, Presentation, Plus, MessageCircle } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
@@ -36,10 +37,18 @@ export const SkillDropMode: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [scheduleDialogOpen, setScheduleDialogOpen] = useState(false);
   const [activeSession, setActiveSession] = useState<SkillDropSession | null>(null);
+  const [searchParams] = useSearchParams();
 
   useEffect(() => {
     loadSessions();
   }, []);
+
+  useEffect(() => {
+    const shouldOpenCreate = searchParams.get('create') === '1' || searchParams.get('action') === 'create-skilldrop';
+    if (shouldOpenCreate) {
+      setScheduleDialogOpen(true);
+    }
+  }, [searchParams]);
 
   const loadSessions = async () => {
     try {

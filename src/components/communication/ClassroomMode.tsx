@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { BookOpen, Users, Calendar, Clock, Video, Plus } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -36,10 +37,18 @@ export const ClassroomMode: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
   const [activeSession, setActiveSession] = useState<ClassroomSession | null>(null);
+  const [searchParams] = useSearchParams();
 
   useEffect(() => {
     loadSessions();
   }, []);
+
+  useEffect(() => {
+    const shouldOpenCreate = searchParams.get('create') === '1' || searchParams.get('action') === 'create-classroom';
+    if (shouldOpenCreate) {
+      setCreateDialogOpen(true);
+    }
+  }, [searchParams]);
 
   const loadSessions = async () => {
     try {

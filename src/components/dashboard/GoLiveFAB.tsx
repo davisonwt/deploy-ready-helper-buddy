@@ -5,10 +5,10 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { createPortal } from 'react-dom';
 
 const liveOptions = [
-  { href: '/communications-hub?tab=classroom', label: 'Classroom', sublabel: 'Teach & mentor', icon: GraduationCap, gradient: 'linear-gradient(135deg, #0891b2, #06b6d4)' },
-  { href: '/explore-sessions?type=skilldrop', label: 'SkillDrop', sublabel: 'Share a skill', icon: Zap, gradient: 'linear-gradient(135deg, #2563eb, #7c3aed)' },
-  { href: '/communications-hub?tab=training', label: 'Training', sublabel: 'Lead a workout', icon: Dumbbell, gradient: 'linear-gradient(135deg, #7c3aed, #db2777)' },
-  { href: '/radio-slot-application', label: 'Radio', sublabel: 'Go on air', icon: Radio, gradient: 'linear-gradient(135deg, #db2777, #ef4444)' },
+  { href: '/communications-hub?tab=classroom&create=1', label: 'Classroom', sublabel: 'Teach & mentor', icon: GraduationCap, gradient: 'linear-gradient(135deg, #0891b2, #06b6d4)' },
+  { href: '/communications-hub?tab=skilldrop&create=1', label: 'SkillDrop', sublabel: 'Share a skill', icon: Zap, gradient: 'linear-gradient(135deg, #2563eb, #7c3aed)' },
+  { href: '/communications-hub?tab=training&create=1', label: 'Training', sublabel: 'Lead a workout', icon: Dumbbell, gradient: 'linear-gradient(135deg, #7c3aed, #db2777)' },
+  { href: '/communications-hub?tab=radio&create=1', label: 'Radio', sublabel: 'Go on air', icon: Radio, gradient: 'linear-gradient(135deg, #db2777, #ef4444)' },
 ];
 
 export const GoLiveFAB: React.FC = () => {

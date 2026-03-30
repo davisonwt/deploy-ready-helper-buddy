@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Dumbbell, Trophy, Star, TrendingUp, Plus, Lock, CheckCircle } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
@@ -27,6 +28,7 @@ export const TrainingMode: React.FC = () => {
   const [userXP, setUserXP] = useState(0);
   const [userLevel, setUserLevel] = useState(1);
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
+  const [searchParams] = useSearchParams();
   const [courses] = useState<Course[]>([
     {
       id: '1',
@@ -63,6 +65,13 @@ export const TrainingMode: React.FC = () => {
   useEffect(() => {
     loadUserProgress();
   }, [user]);
+
+  useEffect(() => {
+    const shouldOpenCreate = searchParams.get('create') === '1' || searchParams.get('action') === 'create-training';
+    if (shouldOpenCreate) {
+      setCreateDialogOpen(true);
+    }
+  }, [searchParams]);
 
   const loadUserProgress = async () => {
     if (!user) return;
