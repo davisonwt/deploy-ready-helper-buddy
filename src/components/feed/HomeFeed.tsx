@@ -279,6 +279,9 @@ export const HomeFeed: React.FC<HomeFeedProps> = ({
       />
 
       <div className="px-3 sm:px-4 space-y-5 pb-8">
+        {/* Feed Title */}
+        <h2 className="text-xl font-bold text-foreground pt-2">Social Feed</h2>
+
         {/* Sabbath / Feast Day Banner */}
         <SabbathDashboardBanner />
         {/* === GIG SERVICES: Book & Become (top of feed for easy access) === */}
