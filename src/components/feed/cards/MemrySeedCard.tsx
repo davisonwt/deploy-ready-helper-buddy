@@ -282,6 +282,8 @@ export const MemrySeedCard: React.FC<MemrySeedCardProps> = ({
   const isBook = post.content_type === 'new_book';
   const isMusic = post.content_type === 'music';
   const isSeed = isProduct || isOrchard || isBook;
+  const titleText = post.product_title || post.caption;
+  const showTopTitle = isSeed || isMusic;
   const categoryText = String(post.category || post.product_type || post.content_type || '').toLowerCase();
   // For music posts, prefer the explicit audio_url set by the feed mapper.
   // Only fall back to audioCandidates/mediaUrl for non-music posts.
@@ -423,10 +425,17 @@ export const MemrySeedCard: React.FC<MemrySeedCardProps> = ({
     <div ref={cardRef} className="rounded-2xl overflow-hidden bg-card border border-border/30 shadow-md">
       <div className="relative w-full h-[340px] overflow-hidden bg-card">
         {(isSeed || isMusic || isProduct) && (
-          <div className="absolute top-3 left-3 z-20">
-            <Badge className="bg-emerald-500 hover:bg-emerald-500 text-white text-[10px] font-bold px-2.5 py-1 shadow-lg">
-              {getSeedTypeLabel()} — New Available
-            </Badge>
+          <div className="absolute top-3 left-3 right-3 z-20 flex flex-col gap-2 pr-16">
+            <div>
+              <Badge className="bg-emerald-500 hover:bg-emerald-500 text-white text-[10px] font-bold px-2.5 py-1 shadow-lg">
+                {getSeedTypeLabel()} — New Available
+              </Badge>
+            </div>
+            {showTopTitle && (
+              <p className="max-w-full text-white font-semibold text-[16px] leading-tight drop-shadow line-clamp-2">
+                {titleText}
+              </p>
+            )}
           </div>
         )}
 
@@ -591,13 +600,15 @@ export const MemrySeedCard: React.FC<MemrySeedCardProps> = ({
           </div>
 
           <div className={`flex items-center justify-between gap-2 ${isVideo ? 'pr-2' : ''}`} style={{ pointerEvents: 'auto' }}>
-            <p
-              className={`text-white font-semibold line-clamp-2 drop-shadow flex-1 ${
-                isVideo ? 'text-sm leading-snug' : 'text-[16px] leading-tight'
-              }`}
-            >
-              {post.product_title || post.caption}
-            </p>
+            {!showTopTitle && (
+              <p
+                className={`text-white font-semibold line-clamp-2 drop-shadow flex-1 ${
+                  isVideo ? 'text-sm leading-snug' : 'text-[16px] leading-tight'
+                }`}
+              >
+                {titleText}
+              </p>
+            )}
             {hasAudio && !!audioPreviewUrl && (
               <SeedAudioPreview audioUrl={audioPreviewUrl} />
             )}
