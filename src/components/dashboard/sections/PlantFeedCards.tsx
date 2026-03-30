@@ -34,7 +34,7 @@ const plantCards = [
     buttonLabel: '🌱 Plant a Full Value Orchard',
   },
   {
-    href: '/sow',
+    href: '/products/upload',
     title: 'Sow a Seed',
     subtitle: 'Make anything available to the community',
     description:
