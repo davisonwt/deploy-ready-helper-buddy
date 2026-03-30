@@ -15,7 +15,7 @@ interface GoLiveFeedCardsProps {
 
 const goLiveCards = [
   {
-    href: '/go-live?type=classroom',
+    href: '/explore-sessions?type=classroom',
     title: 'Classroom',
     subtitle: 'Teach the community live',
     description:
@@ -24,7 +24,7 @@ const goLiveCards = [
     icon: GraduationCap,
   },
   {
-    href: '/go-live?type=skilldrop',
+    href: '/explore-sessions?type=skilldrop',
     title: 'SkillDrop',
     subtitle: 'Share a quick skill with the tribe',
     description:
@@ -33,7 +33,7 @@ const goLiveCards = [
     icon: Zap,
   },
   {
-    href: '/go-live?type=training',
+    href: '/explore-sessions?type=training',
     title: 'Training',
     subtitle: 'Health, baking, cooking & more',
     description:
@@ -42,7 +42,7 @@ const goLiveCards = [
     icon: Dumbbell,
   },
   {
-    href: '/radio-application',
+    href: '/apply-radio-slot',
     title: 'Radio',
     subtitle: 'Broadcast live to the community',
     description:
