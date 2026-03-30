@@ -279,10 +279,6 @@ export const HomeFeed: React.FC<HomeFeedProps> = ({
       />
 
       <div className="px-3 sm:px-4 pb-8">
-        <div className="pt-2 pb-4">
-          <h2 className="text-xl font-bold text-foreground">Social Feed</h2>
-        </div>
-
         <div className="space-y-5">
           {/* Sabbath / Feast Day Banner */}
           <SabbathDashboardBanner />
@@ -402,7 +398,10 @@ export const HomeFeed: React.FC<HomeFeedProps> = ({
           <DayBeadsFeedCard calendarData={calendarData} />
 
           {/* === S2G MEMRY FEED (inline) === */}
-          <InlineMemryFeed />
+          <section className="space-y-3">
+            <h2 className="text-xl font-bold text-foreground">Social Feed</h2>
+            <InlineMemryFeed />
+          </section>
 
           {/* === CHAT ROOMS === */}
           {(chatRooms || []).length > 0 && (

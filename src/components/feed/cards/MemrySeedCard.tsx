@@ -421,7 +421,7 @@ export const MemrySeedCard: React.FC<MemrySeedCardProps> = ({
 
   return (
     <div ref={cardRef} className="rounded-2xl overflow-hidden bg-card border border-border/30 shadow-md">
-      <div className="relative w-full h-[340px] bg-card overflow-hidden">
+      <div className="relative w-full h-[340px] overflow-hidden bg-card">
         {(isSeed || isMusic || isProduct) && (
           <div className="absolute top-3 left-3 z-20">
             <Badge className="bg-emerald-500 hover:bg-emerald-500 text-white text-[10px] font-bold px-2.5 py-1 shadow-lg">
@@ -439,7 +439,7 @@ export const MemrySeedCard: React.FC<MemrySeedCardProps> = ({
             <video
               ref={videoRef}
               src={resolvedVideoSrc}
-              className="absolute inset-0 z-[2] h-full w-full object-contain object-top pointer-events-none"
+              className="absolute inset-0 z-[2] h-full w-full object-cover pointer-events-none"
               muted={false}
               playsInline
               preload="metadata"
@@ -509,7 +509,7 @@ export const MemrySeedCard: React.FC<MemrySeedCardProps> = ({
           <img
             src={allImages[Math.min(imgIdx, allImages.length - 1)]}
             alt={post.caption}
-            className="block w-full h-full object-contain object-top"
+            className="absolute inset-0 h-full w-full object-cover"
             loading="lazy"
             decoding="async"
             onError={(e) => {
