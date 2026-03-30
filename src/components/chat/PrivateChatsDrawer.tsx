@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, MessageCircle, Plus, Search, Phone, Video } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
@@ -36,6 +37,7 @@ export const PrivateChatsDrawer: React.FC<PrivateChatsDrawerProps> = ({ isOpen, 
   const { user } = useAuth();
   const { toast } = useToast();
   const { startCall } = useCallManager();
+  const [searchParams] = useSearchParams();
   const [conversations, setConversations] = useState<ChatConversation[]>([]);
   const [loading, setLoading] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
@@ -48,6 +50,20 @@ export const PrivateChatsDrawer: React.FC<PrivateChatsDrawerProps> = ({ isOpen, 
   const [chatType, setChatType] = useState<'direct' | 'group'>('direct');
   const [creatingChat, setCreatingChat] = useState(false);
   const [backendDegraded, setBackendDegraded] = useState(false);
+
+  // Auto-open new chat dialog when newchat param is present
+  useEffect(() => {
+    if (isOpen) {
+      const newchat = searchParams.get('newchat');
+      if (newchat === 'direct') {
+        setChatType('direct');
+        setShowNewChatDialog(true);
+      } else if (newchat === 'group') {
+        setChatType('group');
+        setShowNewChatDialog(true);
+      }
+    }
+  }, [isOpen, searchParams]);
 
   const getErrorStatus = (error: any) => {
     const rawStatus = error?.status ?? error?.code ?? error?.statusCode;
