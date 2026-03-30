@@ -19,6 +19,7 @@ import { GigActionCards } from '@/components/dashboard/sections/GigActionCards';
 import { PlantFeedCards } from '@/components/dashboard/sections/PlantFeedCards';
 import { GoLiveFeedCards } from '@/components/dashboard/sections/GoLiveFeedCards';
 import { ChatFeedCards } from '@/components/dashboard/sections/ChatFeedCards';
+import { SabbathDashboardBanner } from '@/components/SabbathDashboardBanner';
 
 interface HomeFeedProps {
   profile: any;
@@ -278,6 +279,8 @@ export const HomeFeed: React.FC<HomeFeedProps> = ({
       />
 
       <div className="px-3 sm:px-4 space-y-5 pb-8">
+        {/* Sabbath / Feast Day Banner */}
+        <SabbathDashboardBanner />
         {/* === GIG SERVICES: Book & Become (top of feed for easy access) === */}
         <section>
           <GigActionCards theme={{
