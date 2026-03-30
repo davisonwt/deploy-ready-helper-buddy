@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { Badge } from '@/components/ui/badge';
 import { Users } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
@@ -82,6 +83,14 @@ export const RadioMode: React.FC = () => {
   const [editSlotData, setEditSlotData] = useState<EditableSlotData | null>(null);
   const [trackIndex, setTrackIndex] = useState(0);
   const audioRef = useRef<HTMLAudioElement | null>(null);
+  const [searchParams] = useSearchParams();
+
+  useEffect(() => {
+    const shouldOpenCreate = searchParams.get('create') === '1' || searchParams.get('action') === 'create-radio-session';
+    if (shouldOpenCreate) {
+      setScheduleDialogOpen(true);
+    }
+  }, [searchParams]);
 
   // Initialize audio element
   useEffect(() => {

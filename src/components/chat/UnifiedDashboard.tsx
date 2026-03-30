@@ -36,10 +36,18 @@ export const UnifiedDashboard: React.FC = () => {
 
   useEffect(() => {
     const roomId = searchParams.get('room');
-    if (roomId && activeMode !== 'chatapp') {
-      setActiveMode('chatapp');
+    const tab = searchParams.get('tab') as CommunicationMode | null;
+
+    if (roomId) {
+      if (activeMode !== 'chatapp') setActiveMode('chatapp');
+      return;
     }
-  }, [searchParams]);
+
+    const allowedTabs: CommunicationMode[] = ['chatapp', 'classroom', 'skilldrop', 'training', 'radio'];
+    if (tab && allowedTabs.includes(tab) && activeMode !== tab) {
+      setActiveMode(tab);
+    }
+  }, [searchParams, activeMode, setActiveMode]);
 
   const handleModeChange = (mode: CommunicationMode) => {
     setActiveMode(mode);
