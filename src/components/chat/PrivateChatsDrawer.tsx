@@ -14,6 +14,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Checkbox } from '@/components/ui/checkbox';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { formatDistanceToNow } from 'date-fns';
 import { UnifiedConversation } from './UnifiedConversation';
 import { cn } from '@/lib/utils';
@@ -48,6 +49,8 @@ export const PrivateChatsDrawer: React.FC<PrivateChatsDrawerProps> = ({ isOpen, 
   const [selectedUsers, setSelectedUsers] = useState<string[]>([]);
   const [groupName, setGroupName] = useState('');
   const [chatType, setChatType] = useState<'direct' | 'group'>('direct');
+  const [directSearchTerm, setDirectSearchTerm] = useState('');
+  const [selectedDirectUserId, setSelectedDirectUserId] = useState('');
   const [creatingChat, setCreatingChat] = useState(false);
   const [backendDegraded, setBackendDegraded] = useState(false);
 
@@ -58,9 +61,11 @@ export const PrivateChatsDrawer: React.FC<PrivateChatsDrawerProps> = ({ isOpen, 
       if (newchat === 'direct') {
         setChatType('direct');
         setShowNewChatDialog(true);
+        void loadAvailableUsers();
       } else if (newchat === 'group') {
         setChatType('group');
         setShowNewChatDialog(true);
+        void loadAvailableUsers();
       }
     }
   }, [isOpen, searchParams]);
@@ -322,6 +327,13 @@ export const PrivateChatsDrawer: React.FC<PrivateChatsDrawerProps> = ({ isOpen, 
     ? conversations.filter(c => c.name.toLowerCase().includes(searchQuery.toLowerCase()))
     : conversations;
 
+  const getDisplayName = (profile: any) =>
+    profile.display_name || `${profile.first_name || ''} ${profile.last_name || ''}`.trim() || 'Unknown';
+
+  const directUsers = directSearchTerm.trim()
+    ? availableUsers.filter((p) => getDisplayName(p).toLowerCase().includes(directSearchTerm.toLowerCase()))
+    : availableUsers;
+
   if (selectedRoomId) {
     return (
       <AnimatePresence>
@@ -448,15 +460,56 @@ export const PrivateChatsDrawer: React.FC<PrivateChatsDrawerProps> = ({ isOpen, 
               <DialogHeader className="px-6 pt-6 pb-2">
                 <DialogTitle className="text-xl font-bold text-foreground">New Conversation</DialogTitle>
               </DialogHeader>
-              <Tabs value={chatType} onValueChange={v => setChatType(v as any)} className="w-full" data-deadlink-watch-ignore="true">
+              <Tabs
+                value={chatType}
+                onValueChange={(v) => {
+                  setChatType(v as any);
+                  if (!loadingUsers && !backendDegraded && availableUsers.length === 0) {
+                    void loadAvailableUsers();
+                  }
+                }}
+                className="w-full"
+                data-deadlink-watch-ignore="true"
+              >
                 <div className="px-5 pb-3">
                   <TabsList className="grid w-full grid-cols-2 h-auto gap-2 rounded-xl bg-transparent p-0" data-deadlink-watch-ignore="true">
-                    <TabsTrigger value="direct" className="h-12 rounded-xl border border-border/40 bg-muted/40 text-base font-semibold data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md transition-all" data-deadlink-watch-ignore="true">Direct Message</TabsTrigger>
+                    <TabsTrigger value="direct" className="h-12 rounded-xl border border-border/40 bg-muted/40 text-base font-semibold data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md transition-all" data-deadlink-watch-ignore="true">1-on-1</TabsTrigger>
                     <TabsTrigger value="group" className="h-12 rounded-xl border border-border/40 bg-muted/40 text-base font-semibold data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md transition-all" data-deadlink-watch-ignore="true">Group Chat</TabsTrigger>
                   </TabsList>
                 </div>
 
                 <TabsContent value="direct" className="mt-0">
+                  <div className="px-4 pb-3 space-y-2">
+                    <p className="text-sm text-muted-foreground">Who do you want to chat directly with?</p>
+                    <Select value={selectedDirectUserId} onValueChange={setSelectedDirectUserId}>
+                      <SelectTrigger className="h-10 bg-muted/20 border-border/30 rounded-lg">
+                        <SelectValue placeholder="Select tribal member" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {directUsers.map((p) => (
+                          <SelectItem key={p.user_id} value={p.user_id}>
+                            {getDisplayName(p)}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <div className="relative">
+                      <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                      <Input
+                        value={directSearchTerm}
+                        onChange={(e) => setDirectSearchTerm(e.target.value)}
+                        placeholder="Type tribal member name..."
+                        className="pl-9 h-10 bg-muted/20 border-border/30 rounded-lg"
+                      />
+                    </div>
+                    <Button
+                      className="w-full h-10 rounded-xl font-semibold"
+                      onClick={() => selectedDirectUserId && createNewChat(selectedDirectUserId)}
+                      disabled={!selectedDirectUserId || creatingChat}
+                    >
+                      Start 1-on-1 Chat
+                    </Button>
+                  </div>
                   <ScrollArea className="max-h-[360px]">
                     <div className="px-3 pb-4 space-y-1">
                       {loadingUsers ? (
@@ -466,11 +519,11 @@ export const PrivateChatsDrawer: React.FC<PrivateChatsDrawerProps> = ({ isOpen, 
                         </div>
                       ) : backendDegraded ? (
                         <p className="text-center text-muted-foreground py-10 text-sm">Cannot load users while backend is paused.</p>
-                      ) : availableUsers.length === 0 ? (
+                      ) : directUsers.length === 0 ? (
                         <p className="text-center text-muted-foreground py-10 text-sm">No users available. Try refreshing.</p>
                       ) : (
-                        availableUsers.map(p => {
-                          const name = p.display_name || `${p.first_name || ''} ${p.last_name || ''}`.trim() || 'Unknown';
+                        directUsers.map(p => {
+                          const name = getDisplayName(p);
                           return (
                             <motion.div
                               key={p.user_id}
@@ -526,7 +579,7 @@ export const PrivateChatsDrawer: React.FC<PrivateChatsDrawerProps> = ({ isOpen, 
                         <p className="text-center text-muted-foreground py-6 text-xs">No users available.</p>
                       ) : (
                         availableUsers.map(p => {
-                          const name = p.display_name || `${p.first_name || ''} ${p.last_name || ''}`.trim() || 'Unknown';
+                          const name = getDisplayName(p);
                           const isSelected = selectedUsers.includes(p.user_id);
                           return (
                             <motion.div
