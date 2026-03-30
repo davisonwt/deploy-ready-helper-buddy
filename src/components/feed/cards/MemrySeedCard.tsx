@@ -453,17 +453,17 @@ export const MemrySeedCard: React.FC<MemrySeedCardProps> = ({
               playsInline
               preload="metadata"
               loop
-              onLoadedMetadata={(e) => {
+              poster={allImages[0] || undefined}
+              onLoadedData={(e) => {
                 const vid = e.currentTarget;
                 if (vid.dataset.previewSeeked === '1') return;
                 const duration = Number.isFinite(vid.duration) ? vid.duration : 0;
-                if (duration <= 0.8) return;
+                if (duration <= 3) return;
                 try {
-                  const seekTo = Math.min(Math.max(duration * 0.08, 0.35), 2);
-                  vid.currentTime = seekTo;
+                  vid.currentTime = 1;
                   vid.dataset.previewSeeked = '1';
                 } catch {
-                  // Ignore seek failures on streams that disallow programmatic seeking early.
+                  // Keep the first frame if seeking is not available.
                 }
               }}
               onPlaying={() => setVideoPlaying(true)}
