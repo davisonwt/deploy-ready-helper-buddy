@@ -3,7 +3,7 @@
  * Default view: UnifiedFeed (TikTok-style live feed)
  * Private chats accessible via drawer
  */
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { MessageCircle } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { UnifiedFeed } from './UnifiedFeed';
@@ -18,6 +18,14 @@ export const ChatApp: React.FC = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const [chatDrawerOpen, setChatDrawerOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<'feed' | 'circles' | 'community'>('feed');
+
+  // Auto-open the private chats drawer when newchat param is present
+  useEffect(() => {
+    const newchat = searchParams.get('newchat');
+    if (newchat === 'direct' || newchat === 'group') {
+      setChatDrawerOpen(true);
+    }
+  }, [searchParams]);
 
   // Handle room parameter from URL (e.g. from Memry message button)
   const roomId = searchParams.get('room');
