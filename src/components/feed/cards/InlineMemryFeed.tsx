@@ -98,6 +98,7 @@ const toMediaPayload = (
 
 export const InlineMemryFeed: React.FC = () => {
   const [posts, setPosts] = useState<MemryPost[]>([]);
+  const [providers, setProviders] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [user, setUser] = useState<any>(null);
   const [likedPostIds, setLikedPostIds] = useState<Set<string>>(new Set());
