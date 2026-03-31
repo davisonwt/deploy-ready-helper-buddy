@@ -113,6 +113,10 @@ export default function AdminDashboard() {
         <TabsContent value="bestowal-audit" className="mt-6">
           <BestowalAuditDashboard />
         </TabsContent>
+
+        <TabsContent value="providers" className="mt-6">
+          <ProviderApplicationsDashboard />
+        </TabsContent>
       </Tabs>
     </div>
   );
