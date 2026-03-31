@@ -435,105 +435,46 @@ export const MemrySeedCard: React.FC<MemrySeedCardProps> = ({
 
   return (
     <div ref={cardRef} className="rounded-2xl overflow-hidden bg-card border border-border/30 shadow-md">
-      <div className="relative w-full h-[340px] overflow-hidden bg-card">
-        {(isSeed || isMusic || isProduct) && (
-          <div className="absolute top-3 left-3 right-3 z-[30] flex flex-col gap-2 pr-16">
-            <div>
-              <Badge className="bg-emerald-500 hover:bg-emerald-500 text-white text-[10px] font-bold px-2.5 py-1 shadow-lg">
-                {getSeedTypeLabel()} — New Available
-              </Badge>
-            </div>
-            {showTopTitle && (
-              <p className="max-w-full text-white font-semibold text-[16px] leading-tight drop-shadow line-clamp-2">
-                {titleText}
-              </p>
-            )}
-          </div>
-        )}
+      {/* ── MEDIA CONTAINER — 3 layers: media (z-0), click target (z-10), overlays (z-20+) ── */}
+      <div className="relative w-full h-[340px] overflow-hidden bg-black">
 
+        {/* ═══ LAYER 0: MEDIA (image, video, or music gradient) ═══ */}
         {isMusic && !post.media_url && !post.image_urls?.length ? (
-          <div className="w-full h-full bg-gradient-to-br from-violet-700 via-purple-600 to-pink-500 flex items-center justify-center">
+          <div className="absolute inset-0 bg-gradient-to-br from-violet-700 via-purple-600 to-pink-500 flex items-center justify-center">
             <Music className="w-20 h-20 text-white/30" />
           </div>
         ) : isVideo ? (
-          <>
-            {!videoReady && (
-              <div className="absolute inset-0 z-0 bg-transparent" aria-hidden="true" />
-            )}
-            <video
-              ref={videoRef}
-              src={resolvedVideoSrc}
-              className="relative z-[2] block h-full w-full object-cover pointer-events-none"
-              muted={false}
-              playsInline
-              preload="auto"
-              loop
-              poster={videoPoster}
-              onLoadedMetadata={() => setVideoReady(true)}
-              onLoadedData={(e) => {
-                setVideoReady(true);
-                const vid = e.currentTarget;
-                if (vid.dataset.previewSeeked === '1') return;
-                const duration = Number.isFinite(vid.duration) ? vid.duration : 0;
-                if (duration <= 3) return;
-                try {
-                  vid.currentTime = 1;
-                  vid.dataset.previewSeeked = '1';
-                } catch {}
-              }}
-              onCanPlay={() => setVideoReady(true)}
-              onSeeked={() => setVideoReady(true)}
-              onPlaying={() => setVideoPlaying(true)}
-              onPlay={() => setVideoPlaying(true)}
-              onError={() => {
-                setVideoPlaying(false);
-                setVideoReady(false);
-              }}
-              onPause={() => setVideoPlaying(false)}
-            />
-            <button
-              type="button"
-              onClick={(e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                toggleVideoPlayback();
-              }}
-              className="absolute inset-0 z-[10] bg-transparent border-0 p-0"
-              aria-label={videoPlaying ? 'Pause video preview' : 'Play video preview'}
-            />
-            <div
-              className="absolute bottom-3 right-3 z-[30] w-[108px] sm:w-[116px]"
-              style={{ pointerEvents: 'auto' }}
-              onPointerDown={(e) => { e.stopPropagation(); }}
-              onTouchStart={(e) => { e.stopPropagation(); }}
-            >
-              <div className="h-8 flex items-center gap-1.5 bg-black/50 backdrop-blur-md rounded-full px-2">
-                <button
-                  type="button"
-                  data-deadlink-watch-ignore="true"
-                  onMouseDown={(e) => { e.stopPropagation(); }}
-                  onPointerDown={(e) => { e.stopPropagation(); }}
-                  onTouchStart={(e) => { e.stopPropagation(); }}
-                  onClick={(e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    toggleVideoPlayback();
-                  }}
-                  className="text-white hover:scale-110 transition-transform flex-shrink-0 border-0 p-0 bg-transparent appearance-none cursor-pointer"
-                  style={{ WebkitTapHighlightColor: 'transparent', touchAction: 'manipulation', pointerEvents: 'auto' }}
-                  aria-label={videoPlaying ? 'Pause video' : 'Play video'}
-                >
-                  {videoPlaying ? <Pause className="w-3.5 h-3.5" /> : <Play className="w-3.5 h-3.5" />}
-                </button>
-                <div className="flex-1 h-[2px] bg-white/20 rounded-full overflow-hidden">
-                  <div className="h-full bg-white rounded-full" />
-                </div>
-                <span className="text-white text-[8px] font-mono flex-shrink-0">
-                  {videoPlaying ? '▶' : '⏸'}
-                </span>
-              </div>
-            </div>
-          </>
+          <video
+            ref={videoRef}
+            src={resolvedVideoSrc}
+            className="absolute inset-0 h-full w-full object-cover"
+            muted={false}
+            playsInline
+            preload="auto"
+            loop
+            poster={videoPoster}
+            onLoadedMetadata={() => setVideoReady(true)}
+            onLoadedData={(e) => {
+              setVideoReady(true);
+              const vid = e.currentTarget;
+              if (vid.dataset.previewSeeked === '1') return;
+              const duration = Number.isFinite(vid.duration) ? vid.duration : 0;
+              if (duration <= 3) return;
+              try {
+                vid.currentTime = 1;
+                vid.dataset.previewSeeked = '1';
+              } catch {}
+            }}
+            onCanPlay={() => setVideoReady(true)}
+            onSeeked={() => setVideoReady(true)}
+            onPlaying={() => setVideoPlaying(true)}
+            onPlay={() => setVideoPlaying(true)}
+            onError={() => {
+              setVideoPlaying(false);
+              setVideoReady(false);
+            }}
+            onPause={() => setVideoPlaying(false)}
+          />
         ) : (
           <img
             src={allImages[Math.min(imgIdx, allImages.length - 1)]}
@@ -551,15 +492,48 @@ export const MemrySeedCard: React.FC<MemrySeedCardProps> = ({
           />
         )}
 
+        {/* ═══ LAYER 1: VIDEO PLAY/PAUSE click target ═══ */}
+        {isVideo && (
+          <button
+            type="button"
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              toggleVideoPlayback();
+            }}
+            className="absolute inset-0 z-10 bg-transparent border-0 p-0 cursor-pointer"
+            aria-label={videoPlaying ? 'Pause video preview' : 'Play video preview'}
+          />
+        )}
+
+        {/* ═══ LAYER 2: ALL OVERLAYS (badges, titles, sower row, controls) ═══ */}
+
+        {/* Top-left: Seed type badge + title */}
+        {(isSeed || isMusic || isProduct) && (
+          <div className="absolute top-3 left-3 right-3 z-20 flex flex-col gap-1.5 pointer-events-none" style={{ paddingRight: hasMultipleImages ? '4rem' : '1rem' }}>
+            <div>
+              <Badge className="bg-emerald-500 hover:bg-emerald-500 text-white text-[10px] font-bold px-2.5 py-1 shadow-lg pointer-events-auto">
+                {getSeedTypeLabel()} — New Available
+              </Badge>
+            </div>
+            {titleText && (
+              <p className="text-white font-semibold text-[16px] leading-tight drop-shadow line-clamp-2">
+                {titleText}
+              </p>
+            )}
+          </div>
+        )}
+
         {/* Top-right: Slide count pill */}
         {hasMultipleImages && (
-          <div className="absolute top-3 right-3 z-[25] bg-black/60 text-white text-[11px] font-semibold px-2.5 py-1 rounded-full backdrop-blur-sm">
+          <div className="absolute top-3 right-3 z-20 bg-black/60 text-white text-[11px] font-semibold px-2.5 py-1 rounded-full backdrop-blur-sm">
             {imgIdx + 1} / {allImages.length}
           </div>
         )}
 
+        {/* Top-right: Seed number badge (offset below slide count) */}
         {!!post.sower_seed_number && (
-          <div className="absolute top-3 right-3 z-[25] translate-y-8 bg-background/75 text-foreground text-[10px] font-bold px-2 py-0.5 rounded-full backdrop-blur-sm border border-border/50">
+          <div className="absolute top-3 right-3 z-20 translate-y-8 bg-background/75 text-foreground text-[10px] font-bold px-2 py-0.5 rounded-full backdrop-blur-sm border border-border/50">
             Seed #{post.sower_seed_number}
           </div>
         )}
@@ -570,14 +544,14 @@ export const MemrySeedCard: React.FC<MemrySeedCardProps> = ({
             <button
               onClick={() => setImgIdx(Math.max(0, imgIdx - 1))}
               disabled={imgIdx === 0}
-              className="absolute left-2 top-1/2 -translate-y-1/2 z-10 w-7 h-7 rounded-full bg-black/40 backdrop-blur-sm flex items-center justify-center text-white disabled:opacity-20"
+              className="absolute left-2 top-1/2 -translate-y-1/2 z-20 w-7 h-7 rounded-full bg-black/40 backdrop-blur-sm flex items-center justify-center text-white disabled:opacity-20"
             >
               <ChevronLeft className="w-4 h-4" />
             </button>
             <button
               onClick={() => setImgIdx(Math.min(allImages.length - 1, imgIdx + 1))}
               disabled={imgIdx === allImages.length - 1}
-              className="absolute right-2 top-1/2 -translate-y-1/2 z-10 w-7 h-7 rounded-full bg-black/40 backdrop-blur-sm flex items-center justify-center text-white disabled:opacity-20"
+              className="absolute right-2 top-1/2 -translate-y-1/2 z-20 w-7 h-7 rounded-full bg-black/40 backdrop-blur-sm flex items-center justify-center text-white disabled:opacity-20"
             >
               <ChevronRight className="w-4 h-4" />
             </button>
@@ -585,13 +559,11 @@ export const MemrySeedCard: React.FC<MemrySeedCardProps> = ({
         )}
 
         {/* Bottom gradient fade */}
-        <div className="absolute bottom-0 left-0 right-0 h-28 bg-gradient-to-t from-black/80 via-black/40 to-transparent pointer-events-none" />
+        <div className="absolute bottom-0 left-0 right-0 h-28 bg-gradient-to-t from-black/80 via-black/40 to-transparent pointer-events-none z-[15]" />
 
-        {/* Sower row + title overlay at bottom of image */}
-          <div
-            className={`absolute left-0 right-0 z-[20] px-3 ${
-            isVideo ? 'bottom-12 pb-2' : 'bottom-0 pb-3'
-          }`}
+        {/* Bottom: Sower row + audio/video controls */}
+        <div
+          className={`absolute left-0 right-0 z-20 px-3 ${isVideo ? 'bottom-12 pb-2' : 'bottom-0 pb-3'}`}
           style={{ pointerEvents: 'none' }}
         >
           <div className="flex items-start gap-2.5 mb-1.5" style={{ pointerEvents: 'auto' }}>
@@ -623,20 +595,48 @@ export const MemrySeedCard: React.FC<MemrySeedCardProps> = ({
             )}
           </div>
 
-          {!hasAudio && (
-            <div className={`flex items-center justify-between gap-2 ${isVideo ? 'pr-2' : ''}`} style={{ pointerEvents: 'auto' }}>
-              {!showTopTitle && (
-                <p
-                  className={`text-white font-semibold line-clamp-2 drop-shadow flex-1 ${
-                    isVideo ? 'text-sm leading-snug' : 'text-[16px] leading-tight'
-                  }`}
-                >
-                  {titleText}
-                </p>
-              )}
-            </div>
+          {/* Title for non-seed/non-music cards (seeds/music show title at top) */}
+          {!hasAudio && !(isSeed || isMusic) && titleText && (
+            <p className="text-white font-semibold text-[16px] leading-tight drop-shadow line-clamp-2" style={{ pointerEvents: 'auto' }}>
+              {titleText}
+            </p>
           )}
         </div>
+
+        {/* Video play/pause widget (bottom-right) */}
+        {isVideo && (
+          <div
+            className="absolute bottom-3 right-3 z-20 w-[108px] sm:w-[116px]"
+            style={{ pointerEvents: 'auto' }}
+            onPointerDown={(e) => e.stopPropagation()}
+            onTouchStart={(e) => e.stopPropagation()}
+          >
+            <div className="h-8 flex items-center gap-1.5 bg-black/50 backdrop-blur-md rounded-full px-2">
+              <button
+                type="button"
+                onMouseDown={(e) => e.stopPropagation()}
+                onPointerDown={(e) => e.stopPropagation()}
+                onTouchStart={(e) => e.stopPropagation()}
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  toggleVideoPlayback();
+                }}
+                className="text-white hover:scale-110 transition-transform flex-shrink-0 border-0 p-0 bg-transparent appearance-none cursor-pointer"
+                style={{ WebkitTapHighlightColor: 'transparent', touchAction: 'manipulation', pointerEvents: 'auto' }}
+                aria-label={videoPlaying ? 'Pause video' : 'Play video'}
+              >
+                {videoPlaying ? <Pause className="w-3.5 h-3.5" /> : <Play className="w-3.5 h-3.5" />}
+              </button>
+              <div className="flex-1 h-[2px] bg-white/20 rounded-full overflow-hidden">
+                <div className="h-full bg-white rounded-full" />
+              </div>
+              <span className="text-white text-[8px] font-mono flex-shrink-0">
+                {videoPlaying ? '▶' : '⏸'}
+              </span>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* ── CaaS AI Story Strip ── */}
