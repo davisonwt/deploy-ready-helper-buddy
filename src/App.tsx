@@ -170,7 +170,12 @@ const CommunityServicesPage = lazy(() => import("./pages/CommunityServicesPage")
 const ServiceProviderDashboardPage = lazy(() => import("./pages/ServiceProviderDashboardPage"));
 const MyServiceRequestsPage = lazy(() => import("./pages/MyServiceRequestsPage"));
 
-// Biz Ads
+// Providers (Farmers / Homesteaders / Manufacturers)
+const RegisterProviderPage = lazy(() => import("./pages/RegisterProviderPage"));
+const ProviderDashboardPage = lazy(() => import("./pages/ProviderDashboardPage"));
+const ProviderCatalogPage = lazy(() => import("./pages/ProviderCatalogPage"));
+
+
 const MyBizAdsPage = lazy(() => import("./pages/MyBizAdsPage"));
 const CommunityBizAdsPage = lazy(() => import("./pages/CommunityBizAdsPage"));
 
