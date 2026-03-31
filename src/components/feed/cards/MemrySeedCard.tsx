@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Heart, MessageCircle, Share2, Send, Gift, ChevronLeft, ChevronRight, Play, Pause, Music, MessageSquare, Lock } from 'lucide-react';
+import { Heart, MessageCircle, Share2, Send, Gift, ChevronLeft, ChevronRight, Play, Pause, Music, Lock } from 'lucide-react';
 import { SowerStoryStrip } from './SowerStoryStrip';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
@@ -12,7 +12,6 @@ import { resolveAudioUrl } from '@/utils/resolveAudioUrl';
 import { globalAudioManager } from '@/utils/globalAudioManager';
 import { unlockHtmlMediaElement } from '@/utils/unlockHtmlMediaElement';
 import { dedupeUrls, isAudioUrl, isVideoUrl, normalizeMediaUrl } from '@/utils/memryFeedMedia';
-
 
 const isManifestUrl = (url?: string) => /manifest\.json(?:[?#]|$)/i.test(String(url || ''));
 const isPlayableAudioUrl = (url?: string) => isAudioUrl(url) || isManifestUrl(url);
@@ -66,7 +65,7 @@ const stripFeedTitlePrefix = (value?: string) =>
     .replace(/^(📚\s*)?book:\s*/i, '')
     .trim();
 
-// ── 30-second audio preview player ──
+/* ── 30-second audio preview player ── */
 const SeedAudioPreview: React.FC<{ audioUrl: string }> = ({ audioUrl }) => {
   const audioRef = useRef<HTMLAudioElement>(null);
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -80,7 +79,6 @@ const SeedAudioPreview: React.FC<{ audioUrl: string }> = ({ audioUrl }) => {
     let cancelled = false;
     (async () => {
       try {
-        // Handle manifest.json for album products
         let urlToResolve = audioUrl;
         if (audioUrl.includes('manifest.json')) {
           try {
@@ -95,9 +93,7 @@ const SeedAudioPreview: React.FC<{ audioUrl: string }> = ({ audioUrl }) => {
         if (!cancelled) setResolvedUrl(audioUrl);
       }
     })();
-    return () => {
-      cancelled = true;
-    };
+    return () => { cancelled = true; };
   }, [audioUrl]);
 
   useEffect(() => {
@@ -115,7 +111,6 @@ const SeedAudioPreview: React.FC<{ audioUrl: string }> = ({ audioUrl }) => {
   const togglePlay = async () => {
     const audio = audioRef.current;
     if (!audio || !resolvedUrl) return;
-
     if (playing) {
       audio.pause();
       audio.currentTime = 0;
@@ -126,77 +121,48 @@ const SeedAudioPreview: React.FC<{ audioUrl: string }> = ({ audioUrl }) => {
       try {
         setLoading(true);
         await unlockHtmlMediaElement();
-        if (audio.src !== resolvedUrl) {
-          audio.src = resolvedUrl;
-          audio.load();
-        }
-        if (audio.currentTime >= PREVIEW_DURATION || audio.currentTime === 0) {
-          audio.currentTime = 0;
-        }
+        if (audio.src !== resolvedUrl) { audio.src = resolvedUrl; audio.load(); }
+        if (audio.currentTime >= PREVIEW_DURATION || audio.currentTime === 0) audio.currentTime = 0;
         globalAudioManager.play(audio);
         await audio.play();
         setPlaying(true);
         if (timeoutRef.current) clearTimeout(timeoutRef.current);
         timeoutRef.current = setTimeout(() => {
-          audio.pause();
-          audio.currentTime = 0;
-          setPlaying(false);
-          setCurrentTime(0);
+          audio.pause(); audio.currentTime = 0; setPlaying(false); setCurrentTime(0);
         }, PREVIEW_DURATION * 1000);
-      } catch {
-        setPlaying(false);
-      } finally {
-        setLoading(false);
-      }
+      } catch { setPlaying(false); } finally { setLoading(false); }
     }
   };
 
   useEffect(() => {
     const audio = audioRef.current;
     if (!audio) return;
-    const onTime = () => {
-      setCurrentTime(audio.currentTime);
-      if (audio.currentTime >= PREVIEW_DURATION) {
-        audio.pause();
-        audio.currentTime = 0;
-        setPlaying(false);
-      }
-    };
-    const onEnd = () => { setPlaying(false); };
-    const onPause = () => {
-      setPlaying(false);
-      if (audio.currentTime === 0) setCurrentTime(0);
-    };
+    const onTime = () => { setCurrentTime(audio.currentTime); if (audio.currentTime >= PREVIEW_DURATION) { audio.pause(); audio.currentTime = 0; setPlaying(false); } };
+    const onEnd = () => setPlaying(false);
+    const onPause = () => { setPlaying(false); if (audio.currentTime === 0) setCurrentTime(0); };
     audio.addEventListener('timeupdate', onTime);
     audio.addEventListener('ended', onEnd);
     audio.addEventListener('pause', onPause);
-    return () => {
-      audio.removeEventListener('timeupdate', onTime);
-      audio.removeEventListener('ended', onEnd);
-      audio.removeEventListener('pause', onPause);
-    };
+    return () => { audio.removeEventListener('timeupdate', onTime); audio.removeEventListener('ended', onEnd); audio.removeEventListener('pause', onPause); };
   }, []);
 
   return (
-    <div className="relative z-20 flex-shrink-0 w-[108px] sm:w-[116px]" style={{ pointerEvents: 'auto' }}>
+    <div className="flex-shrink-0 w-[108px] sm:w-[116px]">
       <audio ref={audioRef} preload="metadata" playsInline className="hidden" />
-      <div className="h-8 flex items-center gap-1.5 bg-black/50 backdrop-blur-md rounded-full px-2">
+      <div className="h-8 flex items-center gap-1.5 bg-muted/80 rounded-full px-2">
         <button
           type="button"
-          onPointerDown={(e) => { e.stopPropagation(); }}
-          onTouchStart={(e) => { e.stopPropagation(); }}
           onClick={(e) => { e.preventDefault(); e.stopPropagation(); togglePlay(); }}
-          className="text-white hover:scale-110 transition-transform flex-shrink-0 border-0 p-0 bg-transparent appearance-none cursor-pointer"
-          style={{ WebkitTapHighlightColor: 'transparent', touchAction: 'manipulation', pointerEvents: 'auto' }}
+          className="text-foreground hover:scale-110 transition-transform flex-shrink-0 border-0 p-0 bg-transparent cursor-pointer"
           disabled={loading || !resolvedUrl}
           aria-label={playing ? 'Pause preview' : 'Play preview'}
         >
           {playing ? <Pause className="w-3.5 h-3.5" /> : <Play className="w-3.5 h-3.5" />}
         </button>
-        <div className="flex-1 h-[2px] bg-white/20 rounded-full overflow-hidden">
-          <div className="h-full bg-white rounded-full transition-all" style={{ width: `${(currentTime / PREVIEW_DURATION) * 100}%` }} />
+        <div className="flex-1 h-[2px] bg-foreground/20 rounded-full overflow-hidden">
+          <div className="h-full bg-foreground rounded-full transition-all" style={{ width: `${(currentTime / PREVIEW_DURATION) * 100}%` }} />
         </div>
-        <span className="text-white text-[8px] font-mono flex-shrink-0">
+        <span className="text-foreground text-[8px] font-mono flex-shrink-0">
           {Math.floor(currentTime)}s/{PREVIEW_DURATION}s
         </span>
       </div>
@@ -204,14 +170,12 @@ const SeedAudioPreview: React.FC<{ audioUrl: string }> = ({ audioUrl }) => {
   );
 };
 
+/* ══════════════════════════════════════════════════════════════
+   REBUILT FROM SCRATCH — zero absolute, zero z-index, pure flow
+   ══════════════════════════════════════════════════════════════ */
+
 export const MemrySeedCard: React.FC<MemrySeedCardProps> = ({
-  post,
-  user,
-  isFollowing,
-  onLike,
-  onFollow,
-  onOpenComments,
-  onPrivateMessage,
+  post, user, isFollowing, onLike, onFollow, onOpenComments, onPrivateMessage,
 }) => {
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -222,30 +186,16 @@ export const MemrySeedCard: React.FC<MemrySeedCardProps> = ({
   const videoRef = useRef<HTMLVideoElement>(null);
   const [isInView, setIsInView] = useState(false);
   const [videoPlaying, setVideoPlaying] = useState(false);
-  const [videoReady, setVideoReady] = useState(false);
 
   const fallbackMedia = '/lovable-uploads/ff9e6e48-049d-465a-8d2b-f6e8fed93522.png';
   const mediaUrl = normalizeMediaUrl(post.media_url || '');
-  const normalizedPayloadMedia = (post.media || [])
-    .map((item) => ({
-      type: item.type,
-      url: normalizeMediaUrl(item.url),
-    }))
-    .filter((item) => Boolean(item.url));
+  const normalizedPayloadMedia = (post.media || []).map((item) => ({ type: item.type, url: normalizeMediaUrl(item.url) })).filter((item) => Boolean(item.url));
   const payloadMediaUrls = dedupeUrls(normalizedPayloadMedia.map((item) => item.url));
   const normalizedPostAudioUrl = normalizeMediaUrl(post.audio_url || '');
   const normalizedContentType = String(post.content_type || '').toLowerCase();
   const isMusicPost = normalizedContentType === 'music';
-  const isVideoByType = normalizedContentType === 'video';
-  const normalizedImageUrls = (post.image_urls || [])
-    .map((url) => normalizeMediaUrl(url))
-    .filter(Boolean);
-  const mediaCandidates = dedupeUrls([
-    ...payloadMediaUrls,
-    mediaUrl,
-    ...normalizedImageUrls,
-    normalizedPostAudioUrl,
-  ].filter(Boolean));
+  const normalizedImageUrls = (post.image_urls || []).map((url) => normalizeMediaUrl(url)).filter(Boolean);
+  const mediaCandidates = dedupeUrls([...payloadMediaUrls, mediaUrl, ...normalizedImageUrls, normalizedPostAudioUrl].filter(Boolean));
 
   const videoCandidates = dedupeUrls([
     ...normalizedPayloadMedia.filter((item) => item.type === 'video').map((item) => item.url),
@@ -261,11 +211,9 @@ export const MemrySeedCard: React.FC<MemrySeedCardProps> = ({
     normalizedPostAudioUrl,
     ...mediaCandidates.filter((url) => isAudioUrl(url)),
   ]);
-  const primaryVideoUrl = videoCandidates[0] || '';
-  const isVideoByUrl = videoCandidates.length > 0;
-  const isVideo = !isMusicPost && (isVideoByUrl || (isVideoByType && isVideoUrl(mediaUrl)));
 
-  const videoPoster = imageCandidates[0] || undefined;
+  const primaryVideoUrl = videoCandidates[0] || '';
+  const isVideo = !isMusicPost && (videoCandidates.length > 0 || (normalizedContentType === 'video' && isVideoUrl(mediaUrl)));
   const allImages = (() => {
     const imgs = imageCandidates;
     if (imgs.length > 0) return imgs;
@@ -273,59 +221,40 @@ export const MemrySeedCard: React.FC<MemrySeedCardProps> = ({
     return [fallbackMedia];
   })();
   const resolvedVideoSrc = primaryVideoUrl || mediaUrl;
-
-  useEffect(() => {
-    setImgIdx((current) => Math.min(current, Math.max(0, allImages.length - 1)));
-  }, [allImages.length]);
-
-  useEffect(() => {
-    setVideoReady(false);
-    setVideoPlaying(false);
-    const video = videoRef.current;
-    if (!video) return;
-    video.pause();
-    video.currentTime = 0;
-    delete video.dataset.previewSeeked;
-  }, [resolvedVideoSrc, post.id]);
-
   const hasMultipleImages = allImages.length > 1;
+
   const isProduct = post.content_type === 'new_product';
   const isOrchard = post.content_type === 'new_orchard';
   const isBook = post.content_type === 'new_book';
   const isMusic = post.content_type === 'music';
   const isSeed = isProduct || isOrchard || isBook;
   const titleText = stripFeedTitlePrefix(post.product_title || post.caption);
-  const showTopTitle = Boolean(titleText) && (isSeed || isMusic);
   const categoryText = String(post.category || post.product_type || post.content_type || '').toLowerCase();
-  // For music posts, prefer the explicit audio_url set by the feed mapper.
-  // Only fall back to audioCandidates/mediaUrl for non-music posts.
-  const audioPreviewUrl = isMusic
-    ? (post.audio_url || audioCandidates[0] || '')
-    : (audioCandidates[0] || mediaUrl);
-  const hasAudio = !!(
-    (isMusic || categoryText.includes('music') || categoryText.includes('audio')) &&
-    audioPreviewUrl &&
-    isPlayableAudioUrl(audioPreviewUrl) &&
-    !isVideo
-  );
+  const audioPreviewUrl = isMusic ? (post.audio_url || audioCandidates[0] || '') : (audioCandidates[0] || mediaUrl);
+  const hasAudio = !!((isMusic || categoryText.includes('music') || categoryText.includes('audio')) && audioPreviewUrl && isPlayableAudioUrl(audioPreviewUrl) && !isVideo);
+
+  useEffect(() => { setImgIdx((c) => Math.min(c, Math.max(0, allImages.length - 1))); }, [allImages.length]);
+
+  useEffect(() => {
+    setVideoPlaying(false);
+    const video = videoRef.current;
+    if (!video) return;
+    video.pause();
+    video.currentTime = 0;
+  }, [resolvedVideoSrc, post.id]);
 
   const toggleVideoPlayback = () => {
     const vid = videoRef.current;
     if (!vid) return;
-    if (vid.paused) {
-      vid.play().catch(() => {});
-    } else {
-      vid.pause();
-    }
+    if (vid.paused) vid.play().catch(() => {});
+    else vid.pause();
   };
 
+  /* Intersection observer for auto-pause */
   useEffect(() => {
     const el = cardRef.current;
     if (!el) return;
-    const observer = new IntersectionObserver(
-      ([entry]) => setIsInView(entry.isIntersecting && entry.intersectionRatio > 0.55),
-      { threshold: [0.55] }
-    );
+    const observer = new IntersectionObserver(([entry]) => setIsInView(entry.isIntersecting && entry.intersectionRatio > 0.55), { threshold: [0.55] });
     observer.observe(el);
     return () => observer.disconnect();
   }, []);
@@ -333,10 +262,7 @@ export const MemrySeedCard: React.FC<MemrySeedCardProps> = ({
   useEffect(() => {
     if (isInView || !hasAudio) return;
     const localAudios = cardRef.current?.querySelectorAll('audio') ?? [];
-    localAudios.forEach((audioEl) => {
-      audioEl.pause();
-      audioEl.currentTime = 0;
-    });
+    localAudios.forEach((audioEl) => { audioEl.pause(); audioEl.currentTime = 0; });
   }, [isInView, hasAudio]);
 
   const getSeedTypeLabel = () => {
@@ -357,75 +283,36 @@ export const MemrySeedCard: React.FC<MemrySeedCardProps> = ({
   const handleShare = async () => {
     const shareUrl = `${window.location.origin}/memry?post=${post.id}`;
     try {
-      if (navigator.share) {
-        await navigator.share({ title: 'S2G Memry', text: post.caption, url: shareUrl });
-      } else {
-        await navigator.clipboard.writeText(shareUrl);
-        toast({ title: 'Link copied!' });
-      }
-    } catch {
-      await navigator.clipboard.writeText(shareUrl);
-      toast({ title: 'Link copied!' });
-    }
+      if (navigator.share) await navigator.share({ title: 'S2G Memry', text: post.caption, url: shareUrl });
+      else { await navigator.clipboard.writeText(shareUrl); toast({ title: 'Link copied!' }); }
+    } catch { await navigator.clipboard.writeText(shareUrl); toast({ title: 'Link copied!' }); }
   };
 
   const handleSendMessage = async () => {
     if (!inlineMsg.trim() || !user) return;
     const realPostId = post.id.replace(/^(product|book|music|orchard)-/, '');
-    const { error } = await supabase.from('memry_comments').insert({
-      post_id: realPostId,
-      user_id: user.id,
-      content: inlineMsg.trim(),
-    });
-    if (!error) {
-      toast({ title: 'Message sent! 💬' });
-      setInlineMsg('');
-    }
+    const { error } = await supabase.from('memry_comments').insert({ post_id: realPostId, user_id: user.id, content: inlineMsg.trim() });
+    if (!error) { toast({ title: 'Message sent! 💬' }); setInlineMsg(''); }
   };
 
   const handlePrivateMessage = async () => {
-    if (!user) {
-      toast({ title: 'Sign in required', description: 'Please sign in to message', variant: 'destructive' });
-      return;
-    }
-    if (onPrivateMessage) {
-      onPrivateMessage(post.user_id, post.caption);
-    }
+    if (!user) { toast({ title: 'Sign in required', description: 'Please sign in to message', variant: 'destructive' }); return; }
+    if (onPrivateMessage) onPrivateMessage(post.user_id, post.caption);
   };
 
   const handleBestow = (e?: React.MouseEvent) => {
     if (e) { e.preventDefault(); e.stopPropagation(); }
-
-    const resolveId = (raw: string | undefined, prefix: string) =>
-      raw ? raw.replace(`${prefix}-`, '') : undefined;
-
+    const resolveId = (raw: string | undefined, prefix: string) => raw ? raw.replace(`${prefix}-`, '') : undefined;
     const productId = resolveId(post.product_id, 'product');
     const bookId = resolveId(post.book_id, 'book');
-
     if ((isProduct || isMusic) && productId) {
-      addToBasket({
-        id: productId,
-        title: post.product_title || post.caption.replace(/^(🌱 SEED:|🎵 MUSIC:)\s*/i, ''),
-        price: post.product_price || 0,
-        cover_image_url: post.media_url,
-        sower_id: post.user_id,
-        bestowal_count: 1,
-        sowers: { display_name: post.profiles?.display_name || 'Sower' },
-      });
+      addToBasket({ id: productId, title: post.product_title || post.caption.replace(/^(🌱 SEED:|🎵 MUSIC:)\s*/i, ''), price: post.product_price || 0, cover_image_url: post.media_url, sower_id: post.user_id, bestowal_count: 1, sowers: { display_name: post.profiles?.display_name || 'Sower' } });
       toast({ title: isMusic ? 'Track added to basket! 🎵' : 'Added to basket! 🛒' });
       navigate('/products/basket');
     } else if (isOrchard && post.orchard_id) {
       navigate(`/orchard/${post.orchard_id}`);
     } else if (isBook && bookId) {
-      addToBasket({
-        id: bookId,
-        title: post.product_title || post.caption.replace('📚 BOOK: ', ''),
-        price: post.product_price || 0,
-        cover_image_url: post.media_url,
-        sower_id: post.user_id,
-        bestowal_count: 1,
-        sowers: { display_name: post.profiles?.display_name || 'Sower' },
-      });
+      addToBasket({ id: bookId, title: post.product_title || post.caption.replace('📚 BOOK: ', ''), price: post.product_price || 0, cover_image_url: post.media_url, sower_id: post.user_id, bestowal_count: 1, sowers: { display_name: post.profiles?.display_name || 'Sower' } });
       toast({ title: 'Book added to basket! 📚' });
       navigate('/products/basket');
     } else if (post.user_id) {
@@ -433,213 +320,140 @@ export const MemrySeedCard: React.FC<MemrySeedCardProps> = ({
     }
   };
 
+  /* ════════════════════════════════════════════
+     RENDER — Pure document flow, NO absolute, NO z-index
+     ════════════════════════════════════════════ */
   return (
-    <div ref={cardRef} className="rounded-2xl overflow-hidden bg-card border border-border/30 shadow-md">
-      {/* ── MEDIA CONTAINER — 3 layers: media (z-0), click target (z-10), overlays (z-20+) ── */}
-      <div className="relative w-full h-[340px] overflow-hidden bg-black">
+    <div ref={cardRef} className="rounded-2xl overflow-hidden bg-card border border-border/30 shadow-md flex flex-col">
 
-        {/* ═══ LAYER 0: MEDIA (image, video, or music gradient) ═══ */}
+      {/* ── ROW 1: Seed type badge (only for seeds/music) ── */}
+      {(isSeed || isMusic) && (
+        <div className="px-3 py-2 bg-card flex items-center gap-2 flex-wrap">
+          <Badge className="bg-emerald-500 hover:bg-emerald-500 text-white text-[10px] font-bold px-2.5 py-1">
+            {getSeedTypeLabel()} — New Available
+          </Badge>
+          {!!post.sower_seed_number && (
+            <span className="text-muted-foreground text-[10px] font-bold">Seed #{post.sower_seed_number}</span>
+          )}
+        </div>
+      )}
+
+      {/* ── ROW 2: Title ── */}
+      {titleText && (
+        <div className="px-3 py-1.5 bg-card">
+          <p className="text-foreground font-semibold text-base leading-tight line-clamp-2">{titleText}</p>
+        </div>
+      )}
+
+      {/* ── ROW 3: Media (image / video / music gradient) — 100% width, aspect ratio ── */}
+      <div className="w-full">
         {isMusic && !post.media_url && !post.image_urls?.length ? (
-          <div className="absolute inset-0 bg-gradient-to-br from-violet-700 via-purple-600 to-pink-500 flex items-center justify-center">
+          /* Music gradient placeholder */
+          <div className="w-full aspect-[4/3] bg-gradient-to-br from-violet-700 via-purple-600 to-pink-500 flex items-center justify-center">
             <Music className="w-20 h-20 text-white/30" />
           </div>
         ) : isVideo ? (
-          <video
-            ref={videoRef}
-            src={resolvedVideoSrc}
-            className="absolute inset-0 h-full w-full object-cover"
-            muted={false}
-            playsInline
-            preload="auto"
-            loop
-            poster={videoPoster}
-            onLoadedMetadata={() => setVideoReady(true)}
-            onLoadedData={(e) => {
-              setVideoReady(true);
-              const vid = e.currentTarget;
-              if (vid.dataset.previewSeeked === '1') return;
-              const duration = Number.isFinite(vid.duration) ? vid.duration : 0;
-              if (duration <= 3) return;
-              try {
-                vid.currentTime = 1;
-                vid.dataset.previewSeeked = '1';
-              } catch {}
-            }}
-            onCanPlay={() => setVideoReady(true)}
-            onSeeked={() => setVideoReady(true)}
-            onPlaying={() => setVideoPlaying(true)}
-            onPlay={() => setVideoPlaying(true)}
-            onError={() => {
-              setVideoPlaying(false);
-              setVideoReady(false);
-            }}
-            onPause={() => setVideoPlaying(false)}
-          />
+          /* Video — native element, full width, correct aspect ratio */
+          <div className="w-full bg-black">
+            <video
+              ref={videoRef}
+              src={resolvedVideoSrc}
+              className="w-full block"
+              style={{ maxHeight: '400px', objectFit: 'cover' }}
+              muted={false}
+              playsInline
+              preload="auto"
+              loop
+              poster={imageCandidates[0] || undefined}
+              onPlaying={() => setVideoPlaying(true)}
+              onPlay={() => setVideoPlaying(true)}
+              onPause={() => setVideoPlaying(false)}
+              onError={() => setVideoPlaying(false)}
+            />
+          </div>
         ) : (
-          <img
-            src={allImages[Math.min(imgIdx, allImages.length - 1)]}
-            alt={post.caption}
-            className="absolute inset-0 h-full w-full object-cover"
-            loading="lazy"
-            decoding="async"
-            onError={(e) => {
-              const t = e.target as HTMLImageElement;
-              if (!t.dataset.fallback) {
-                t.dataset.fallback = '1';
-                t.src = fallbackMedia;
-              }
-            }}
-          />
-        )}
-
-        {/* ═══ LAYER 1: VIDEO PLAY/PAUSE click target ═══ */}
-        {isVideo && (
-          <button
-            type="button"
-            onClick={(e) => {
-              e.preventDefault();
-              e.stopPropagation();
-              toggleVideoPlayback();
-            }}
-            className="absolute inset-0 z-10 bg-transparent border-0 p-0 cursor-pointer"
-            aria-label={videoPlaying ? 'Pause video preview' : 'Play video preview'}
-          />
-        )}
-
-        {/* ═══ LAYER 2: ALL OVERLAYS (badges, titles, sower row, controls) ═══ */}
-
-        {/* Top-left: Seed type badge + title */}
-        {(isSeed || isMusic || isProduct) && (
-          <div className="absolute top-3 left-3 right-3 z-20 flex flex-col gap-1.5 pointer-events-none" style={{ paddingRight: hasMultipleImages ? '4rem' : '1rem' }}>
-            <div>
-              <Badge className="bg-emerald-500 hover:bg-emerald-500 text-white text-[10px] font-bold px-2.5 py-1 shadow-lg pointer-events-auto">
-                {getSeedTypeLabel()} — New Available
-              </Badge>
-            </div>
-            {titleText && (
-              <p className="text-white font-semibold text-[16px] leading-tight drop-shadow line-clamp-2">
-                {titleText}
-              </p>
-            )}
-          </div>
-        )}
-
-        {/* Top-right: Slide count pill */}
-        {hasMultipleImages && (
-          <div className="absolute top-3 right-3 z-20 bg-black/60 text-white text-[11px] font-semibold px-2.5 py-1 rounded-full backdrop-blur-sm">
-            {imgIdx + 1} / {allImages.length}
-          </div>
-        )}
-
-        {/* Top-right: Seed number badge (offset below slide count) */}
-        {!!post.sower_seed_number && (
-          <div className="absolute top-3 right-3 z-20 translate-y-8 bg-background/75 text-foreground text-[10px] font-bold px-2 py-0.5 rounded-full backdrop-blur-sm border border-border/50">
-            Seed #{post.sower_seed_number}
-          </div>
-        )}
-
-        {/* Image navigation arrows */}
-        {hasMultipleImages && (
-          <>
-            <button
-              onClick={() => setImgIdx(Math.max(0, imgIdx - 1))}
-              disabled={imgIdx === 0}
-              className="absolute left-2 top-1/2 -translate-y-1/2 z-20 w-7 h-7 rounded-full bg-black/40 backdrop-blur-sm flex items-center justify-center text-white disabled:opacity-20"
-            >
-              <ChevronLeft className="w-4 h-4" />
-            </button>
-            <button
-              onClick={() => setImgIdx(Math.min(allImages.length - 1, imgIdx + 1))}
-              disabled={imgIdx === allImages.length - 1}
-              className="absolute right-2 top-1/2 -translate-y-1/2 z-20 w-7 h-7 rounded-full bg-black/40 backdrop-blur-sm flex items-center justify-center text-white disabled:opacity-20"
-            >
-              <ChevronRight className="w-4 h-4" />
-            </button>
-          </>
-        )}
-
-        {/* Bottom gradient fade */}
-        <div className="absolute bottom-0 left-0 right-0 h-28 bg-gradient-to-t from-black/80 via-black/40 to-transparent pointer-events-none z-[15]" />
-
-        {/* Bottom: Sower row + audio/video controls */}
-        <div
-          className={`absolute left-0 right-0 z-20 px-3 ${isVideo ? 'bottom-12 pb-2' : 'bottom-0 pb-3'}`}
-          style={{ pointerEvents: 'none' }}
-        >
-          <div className="flex items-start gap-2.5 mb-1.5" style={{ pointerEvents: 'auto' }}>
-            <Link to={`/member/${post.user_id}`}>
-              <Avatar className="w-9 h-9 border-2 border-white/70 shadow">
-                <AvatarImage src={post.profiles?.avatar_url} />
-                <AvatarFallback className="bg-gradient-to-br from-pink-400 to-orange-400 text-white text-xs">
-                  {post.profiles?.display_name?.[0] || 'S'}
-                </AvatarFallback>
-              </Avatar>
-            </Link>
-            <div className="flex-1 min-w-0">
-              <div className="flex items-center gap-1.5 flex-wrap">
-                <Link to={`/member/${post.user_id}`} className="text-white font-bold text-sm truncate hover:underline">
-                  {post.profiles?.display_name || 'Sower'}
-                </Link>
-                {(isSeed || isMusic) && (
-                  <span className="bg-emerald-500/80 text-white text-[9px] font-bold px-1.5 py-0.5 rounded-full">{getSeedTypeLabel()}</span>
-                )}
-                {isFollowing && (
-                  <span className="bg-white/20 text-white/80 text-[9px] font-semibold px-1.5 py-0.5 rounded-full backdrop-blur-sm">Following</span>
-                )}
-              </div>
-              <p className="text-white/60 text-[11px]">@{toHandle(post.profiles?.username || post.profiles?.display_name)}</p>
-            </div>
-
-            {hasAudio && !!audioPreviewUrl && (
-              <SeedAudioPreview audioUrl={audioPreviewUrl} />
-            )}
-          </div>
-
-          {/* Title for non-seed/non-music cards (seeds/music show title at top) */}
-          {!hasAudio && !(isSeed || isMusic) && titleText && (
-            <p className="text-white font-semibold text-[16px] leading-tight drop-shadow line-clamp-2" style={{ pointerEvents: 'auto' }}>
-              {titleText}
-            </p>
-          )}
-        </div>
-
-        {/* Video play/pause widget (bottom-right) */}
-        {isVideo && (
-          <div
-            className="absolute bottom-3 right-3 z-20 w-[108px] sm:w-[116px]"
-            style={{ pointerEvents: 'auto' }}
-            onPointerDown={(e) => e.stopPropagation()}
-            onTouchStart={(e) => e.stopPropagation()}
-          >
-            <div className="h-8 flex items-center gap-1.5 bg-black/50 backdrop-blur-md rounded-full px-2">
-              <button
-                type="button"
-                onMouseDown={(e) => e.stopPropagation()}
-                onPointerDown={(e) => e.stopPropagation()}
-                onTouchStart={(e) => e.stopPropagation()}
-                onClick={(e) => {
-                  e.preventDefault();
-                  e.stopPropagation();
-                  toggleVideoPlayback();
-                }}
-                className="text-white hover:scale-110 transition-transform flex-shrink-0 border-0 p-0 bg-transparent appearance-none cursor-pointer"
-                style={{ WebkitTapHighlightColor: 'transparent', touchAction: 'manipulation', pointerEvents: 'auto' }}
-                aria-label={videoPlaying ? 'Pause video' : 'Play video'}
-              >
-                {videoPlaying ? <Pause className="w-3.5 h-3.5" /> : <Play className="w-3.5 h-3.5" />}
-              </button>
-              <div className="flex-1 h-[2px] bg-white/20 rounded-full overflow-hidden">
-                <div className="h-full bg-white rounded-full" />
-              </div>
-              <span className="text-white text-[8px] font-mono flex-shrink-0">
-                {videoPlaying ? '▶' : '⏸'}
-              </span>
-            </div>
+          /* Image — full width, normal flow */
+          <div className="w-full bg-black">
+            <img
+              src={allImages[Math.min(imgIdx, allImages.length - 1)]}
+              alt={post.caption}
+              className="w-full block"
+              style={{ maxHeight: '400px', objectFit: 'cover' }}
+              loading="lazy"
+              decoding="async"
+              onError={(e) => {
+                const t = e.target as HTMLImageElement;
+                if (!t.dataset.fallback) { t.dataset.fallback = '1'; t.src = fallbackMedia; }
+              }}
+            />
           </div>
         )}
       </div>
 
-      {/* ── CaaS AI Story Strip ── */}
+      {/* ── ROW 3b: Image navigation (only if multiple images) ── */}
+      {hasMultipleImages && (
+        <div className="flex items-center justify-center gap-3 py-1.5 bg-card">
+          <button
+            onClick={() => setImgIdx(Math.max(0, imgIdx - 1))}
+            disabled={imgIdx === 0}
+            className="w-7 h-7 rounded-full bg-muted flex items-center justify-center text-foreground disabled:opacity-20"
+          >
+            <ChevronLeft className="w-4 h-4" />
+          </button>
+          <span className="text-muted-foreground text-xs font-medium">{imgIdx + 1} / {allImages.length}</span>
+          <button
+            onClick={() => setImgIdx(Math.min(allImages.length - 1, imgIdx + 1))}
+            disabled={imgIdx === allImages.length - 1}
+            className="w-7 h-7 rounded-full bg-muted flex items-center justify-center text-foreground disabled:opacity-20"
+          >
+            <ChevronRight className="w-4 h-4" />
+          </button>
+        </div>
+      )}
+
+      {/* ── ROW 3c: Video play/pause button (only for video cards) ── */}
+      {isVideo && (
+        <div className="flex justify-end px-3 py-1.5 bg-card">
+          <button
+            type="button"
+            onClick={(e) => { e.preventDefault(); e.stopPropagation(); toggleVideoPlayback(); }}
+            className="h-8 flex items-center gap-1.5 bg-muted/80 rounded-full px-3"
+            aria-label={videoPlaying ? 'Pause video' : 'Play video'}
+          >
+            {videoPlaying ? <Pause className="w-3.5 h-3.5 text-foreground" /> : <Play className="w-3.5 h-3.5 text-foreground" />}
+            <span className="text-foreground text-xs font-medium">{videoPlaying ? 'Pause' : 'Play'}</span>
+          </button>
+        </div>
+      )}
+
+      {/* ── ROW 4: Sower avatar + name + audio preview ── */}
+      <div className="px-3 py-2 bg-card flex items-center gap-2.5">
+        <Link to={`/member/${post.user_id}`}>
+          <Avatar className="w-9 h-9 border-2 border-border shadow">
+            <AvatarImage src={post.profiles?.avatar_url} />
+            <AvatarFallback className="bg-gradient-to-br from-pink-400 to-orange-400 text-white text-xs">
+              {post.profiles?.display_name?.[0] || 'S'}
+            </AvatarFallback>
+          </Avatar>
+        </Link>
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-1.5 flex-wrap">
+            <Link to={`/member/${post.user_id}`} className="text-foreground font-bold text-sm truncate hover:underline">
+              {post.profiles?.display_name || 'Sower'}
+            </Link>
+            {(isSeed || isMusic) && (
+              <span className="bg-emerald-500/80 text-white text-[9px] font-bold px-1.5 py-0.5 rounded-full">{getSeedTypeLabel()}</span>
+            )}
+            {isFollowing && (
+              <span className="bg-muted text-muted-foreground text-[9px] font-semibold px-1.5 py-0.5 rounded-full">Following</span>
+            )}
+          </div>
+          <p className="text-muted-foreground text-[11px]">@{toHandle(post.profiles?.username || post.profiles?.display_name)}</p>
+        </div>
+        {hasAudio && !!audioPreviewUrl && <SeedAudioPreview audioUrl={audioPreviewUrl} />}
+      </div>
+
+      {/* ── ROW 5: Sower Story Strip ── */}
       <SowerStoryStrip
         seedId={post.id}
         sowerName={post.profiles?.display_name || 'Sower'}
@@ -652,44 +466,40 @@ export const MemrySeedCard: React.FC<MemrySeedCardProps> = ({
         currentUserId={user?.id}
       />
 
-      {/* ── Price display for books/music ── */}
+      {/* ── ROW 6: Bestowal Value (books/music only) ── */}
       {(isBook || isMusic) && post.product_price != null && post.product_price > 0 && (
         <div className="px-3 py-1.5 bg-card">
-          <span className="text-emerald-400 font-bold text-sm">
-            Bestowal Value: ${post.product_price.toFixed(2)}
-          </span>
+          <span className="text-emerald-400 font-bold text-sm">Bestowal Value: ${post.product_price.toFixed(2)}</span>
         </div>
       )}
 
-      {/* ── Section 2: Actions Row ── */}
+      {/* ── ROW 7: Action buttons row ── */}
       <div className="px-3 py-2.5 bg-card">
         <div className="flex items-center gap-3 flex-nowrap">
-          <button onClick={() => onLike(post.id)} className="flex items-center gap-1 bg-transparent border-none p-0 text-white/60 hover:text-pink-500 transition-colors">
+          <button onClick={() => onLike(post.id)} className="flex items-center gap-1 bg-transparent border-none p-0 text-muted-foreground hover:text-pink-500 transition-colors">
             <Heart className={`w-[18px] h-[18px] ${post.user_liked ? 'text-pink-500 fill-pink-500' : ''}`} />
             <span className="text-xs font-medium">{post.likes_count}</span>
           </button>
-          <button onClick={() => onOpenComments(post.id)} className="flex items-center gap-1 bg-transparent border-none p-0 text-white/60 hover:text-white transition-colors">
+          <button onClick={() => onOpenComments(post.id)} className="flex items-center gap-1 bg-transparent border-none p-0 text-muted-foreground hover:text-foreground transition-colors">
             <MessageCircle className="w-[18px] h-[18px]" />
             <span className="text-xs font-medium">{post.comments_count}</span>
           </button>
-          <button onClick={handleShare} className="bg-transparent border-none p-0 text-white/60 hover:text-white transition-colors">
+          <button onClick={handleShare} className="bg-transparent border-none p-0 text-muted-foreground hover:text-foreground transition-colors">
             <Share2 className="w-[18px] h-[18px]" />
           </button>
           {user && post.user_id !== user?.id && (
-            <button onClick={handlePrivateMessage} className="bg-transparent border-none p-0 text-white/60 hover:text-blue-400 transition-colors" title={`Private message ${post.profiles?.display_name || 'sower'}`}>
+            <button onClick={handlePrivateMessage} className="bg-transparent border-none p-0 text-muted-foreground hover:text-blue-400 transition-colors" title={`Private message ${post.profiles?.display_name || 'sower'}`}>
               <Lock className="w-[16px] h-[16px]" />
             </button>
           )}
           <div className="flex-1" />
           <Input
-            placeholder={user ? `Say something...` : 'Sign in to comment'}
+            placeholder={user ? 'Say something...' : 'Sign in to comment'}
             value={inlineMsg}
             onChange={(e) => setInlineMsg(e.target.value)}
             disabled={!user}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter') { e.preventDefault(); handleSendMessage(); }
-            }}
-            className="h-7 text-xs rounded-full px-3 w-[48%] min-w-[160px] bg-transparent border border-white/20 text-white/80 placeholder:text-white/30"
+            onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); handleSendMessage(); } }}
+            className="h-7 text-xs rounded-full px-3 w-[48%] min-w-[160px] bg-transparent border border-border text-foreground placeholder:text-muted-foreground"
           />
           {user && (
             <button onClick={handleSendMessage} className="w-7 h-7 rounded-full bg-emerald-500 hover:bg-emerald-600 flex items-center justify-center flex-shrink-0 transition-colors">
@@ -699,10 +509,10 @@ export const MemrySeedCard: React.FC<MemrySeedCardProps> = ({
         </div>
       </div>
 
-      {/* ── Section 3: Hairline divider ── */}
+      {/* ── ROW 8: Divider ── */}
       <div className="h-px bg-border/50" />
 
-      {/* ── Section 4: Bestow / Gift bar ── */}
+      {/* ── ROW 9: Bestow / Gift bar ── */}
       {(() => {
         const isHomemade = post.content_category === 'homemade' || post.content_category === 'testimony' || post.content_category === 'tutorial';
         const ctaLabel = isHomemade
