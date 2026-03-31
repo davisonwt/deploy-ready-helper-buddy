@@ -170,7 +170,12 @@ const CommunityServicesPage = lazy(() => import("./pages/CommunityServicesPage")
 const ServiceProviderDashboardPage = lazy(() => import("./pages/ServiceProviderDashboardPage"));
 const MyServiceRequestsPage = lazy(() => import("./pages/MyServiceRequestsPage"));
 
-// Biz Ads
+// Providers (Farmers / Homesteaders / Manufacturers)
+const RegisterProviderPage = lazy(() => import("./pages/RegisterProviderPage"));
+const ProviderDashboardPage = lazy(() => import("./pages/ProviderDashboardPage"));
+const ProviderCatalogPage = lazy(() => import("./pages/ProviderCatalogPage"));
+
+
 const MyBizAdsPage = lazy(() => import("./pages/MyBizAdsPage"));
 const CommunityBizAdsPage = lazy(() => import("./pages/CommunityBizAdsPage"));
 
@@ -956,6 +961,31 @@ const App = () => (
                   <Layout>
                     <Suspense fallback={<LoadingFallback />}>
                       <MyServiceRequestsPage />
+                    </Suspense>
+                  </Layout>
+                </ProtectedRoute>
+              } />
+
+              {/* Providers (Farmers / Homesteaders / Manufacturers) */}
+              <Route path="/register-provider" element={
+                <ProtectedRoute>
+                  <Suspense fallback={<LoadingFallback />}>
+                    <RegisterProviderPage />
+                  </Suspense>
+                </ProtectedRoute>
+              } />
+              <Route path="/provider-dashboard" element={
+                <ProtectedRoute allowedRoles={['provider']}>
+                  <Suspense fallback={<LoadingFallback />}>
+                    <ProviderDashboardPage />
+                  </Suspense>
+                </ProtectedRoute>
+              } />
+              <Route path="/provider/:providerId" element={
+                <ProtectedRoute>
+                  <Layout>
+                    <Suspense fallback={<LoadingFallback />}>
+                      <ProviderCatalogPage />
                     </Suspense>
                   </Layout>
                 </ProtectedRoute>

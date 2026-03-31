@@ -10,6 +10,8 @@ import { DriverApplicationsDashboard } from './DriverApplicationsDashboard';
 import { ServiceProviderApplicationsDashboard } from './ServiceProviderApplicationsDashboard';
 import BasicAnalytics from './BasicAnalytics';
 import { BestowalAuditDashboard } from './BestowalAuditDashboard';
+import { ProviderApplicationsDashboard } from './ProviderApplicationsDashboard';
+import { Sprout } from 'lucide-react';
 
 export default function AdminDashboard() {
   const [activeTab, setActiveTab] = useState('analytics');
@@ -68,6 +70,10 @@ export default function AdminDashboard() {
             <Eye className="h-4 w-4" />
             Bestowal Audit
           </TabsTrigger>
+          <TabsTrigger value="providers" className="flex items-center gap-2">
+            <Sprout className="h-4 w-4" />
+            Providers
+          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="analytics" className="mt-6">
@@ -106,6 +112,10 @@ export default function AdminDashboard() {
 
         <TabsContent value="bestowal-audit" className="mt-6">
           <BestowalAuditDashboard />
+        </TabsContent>
+
+        <TabsContent value="providers" className="mt-6">
+          <ProviderApplicationsDashboard />
         </TabsContent>
       </Tabs>
     </div>

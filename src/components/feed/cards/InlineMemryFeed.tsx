@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { Camera, Send } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { MemrySeedCard } from './MemrySeedCard';
+import { ProviderFeedCard } from './ProviderFeedCard';
 import { useNavigate } from 'react-router-dom';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -97,6 +98,7 @@ const toMediaPayload = (
 
 export const InlineMemryFeed: React.FC = () => {
   const [posts, setPosts] = useState<MemryPost[]>([]);
+  const [providers, setProviders] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [user, setUser] = useState<any>(null);
   const [likedPostIds, setLikedPostIds] = useState<Set<string>>(new Set());
@@ -125,6 +127,15 @@ export const InlineMemryFeed: React.FC = () => {
         if (likes) setLikedPostIds(new Set(likes.map(l => l.post_id)));
         if (follows) setFollowedUserIds(new Set(follows.map(f => f.following_id)));
       }
+
+      // Fetch approved providers for feed cards
+      const { data: approvedProviders } = await supabase
+        .from('providers')
+        .select('id, user_id, subtype, business_name, bio, city, country, logo_url, photos')
+        .eq('status', 'approved')
+        .order('approved_at', { ascending: false })
+        .limit(20);
+      if (approvedProviders) setProviders(approvedProviders);
 
       // Fetch products (seeds)
       const { data: products } = await supabase
@@ -517,17 +528,30 @@ export const InlineMemryFeed: React.FC = () => {
       </div>
 
       <div className="space-y-4">
-        {posts.map(post => (
-          <MemrySeedCard
-            key={post.id}
-            post={post}
-            user={user}
-            isFollowing={followedUserIds.has(post.user_id)}
-            onLike={handleLike}
-            onFollow={handleFollow}
-            onOpenComments={handleOpenComments}
-            onPrivateMessage={handlePrivateMessage}
-          />
+        {posts.map((post, idx) => (
+          <React.Fragment key={post.id}>
+            <MemrySeedCard
+              post={post}
+              user={user}
+              isFollowing={followedUserIds.has(post.user_id)}
+              onLike={handleLike}
+              onFollow={handleFollow}
+              onOpenComments={handleOpenComments}
+              onPrivateMessage={handlePrivateMessage}
+            />
+            {/* Interleave a provider card every 5 posts */}
+            {providers.length > 0 && (idx + 1) % 5 === 0 && providers[Math.floor(idx / 5) % providers.length] && (
+              <ProviderFeedCard
+                key={`provider-${providers[Math.floor(idx / 5) % providers.length].id}`}
+                provider={providers[Math.floor(idx / 5) % providers.length]}
+                onMessage={(userId) => handlePrivateMessage(userId, '')}
+              />
+            )}
+          </React.Fragment>
+        ))}
+        {/* Show providers at the end if feed is small */}
+        {posts.length < 5 && providers.map(p => (
+          <ProviderFeedCard key={`provider-${p.id}`} provider={p} onMessage={(userId) => handlePrivateMessage(userId, '')} />
         ))}
       </div>
 

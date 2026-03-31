@@ -4849,6 +4849,194 @@ export type Database = {
         }
         Relationships: []
       }
+      provider_orders: {
+        Row: {
+          buyer_id: string
+          courier_fee: number
+          created_at: string
+          delivery_address: string | null
+          delivery_city: string | null
+          delivery_country: string | null
+          delivery_type: string | null
+          id: string
+          platform_commission: number
+          product_id: string
+          provider_id: string
+          quantity: number
+          status: string
+          total_amount: number
+          unit_price: number
+          updated_at: string
+        }
+        Insert: {
+          buyer_id: string
+          courier_fee?: number
+          created_at?: string
+          delivery_address?: string | null
+          delivery_city?: string | null
+          delivery_country?: string | null
+          delivery_type?: string | null
+          id?: string
+          platform_commission?: number
+          product_id: string
+          provider_id: string
+          quantity?: number
+          status?: string
+          total_amount: number
+          unit_price: number
+          updated_at?: string
+        }
+        Update: {
+          buyer_id?: string
+          courier_fee?: number
+          created_at?: string
+          delivery_address?: string | null
+          delivery_city?: string | null
+          delivery_country?: string | null
+          delivery_type?: string | null
+          id?: string
+          platform_commission?: number
+          product_id?: string
+          provider_id?: string
+          quantity?: number
+          status?: string
+          total_amount?: number
+          unit_price?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "provider_orders_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "provider_products"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "provider_orders_provider_id_fkey"
+            columns: ["provider_id"]
+            isOneToOne: false
+            referencedRelation: "providers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      provider_products: {
+        Row: {
+          category: string | null
+          created_at: string
+          description: string | null
+          id: string
+          photos: string[] | null
+          price: number
+          provider_id: string
+          status: string
+          stock: number
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          category?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          photos?: string[] | null
+          price?: number
+          provider_id: string
+          status?: string
+          stock?: number
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          category?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          photos?: string[] | null
+          price?: number
+          provider_id?: string
+          status?: string
+          stock?: number
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "provider_products_provider_id_fkey"
+            columns: ["provider_id"]
+            isOneToOne: false
+            referencedRelation: "providers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      providers: {
+        Row: {
+          address_line: string | null
+          approved_at: string | null
+          bio: string | null
+          business_name: string
+          city: string | null
+          country: string | null
+          created_at: string
+          email: string | null
+          id: string
+          latitude: number | null
+          logo_url: string | null
+          longitude: number | null
+          payout_details: Json | null
+          phone: string | null
+          photos: string[] | null
+          status: string
+          subtype: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          address_line?: string | null
+          approved_at?: string | null
+          bio?: string | null
+          business_name: string
+          city?: string | null
+          country?: string | null
+          created_at?: string
+          email?: string | null
+          id?: string
+          latitude?: number | null
+          logo_url?: string | null
+          longitude?: number | null
+          payout_details?: Json | null
+          phone?: string | null
+          photos?: string[] | null
+          status?: string
+          subtype: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          address_line?: string | null
+          approved_at?: string | null
+          bio?: string | null
+          business_name?: string
+          city?: string | null
+          country?: string | null
+          created_at?: string
+          email?: string | null
+          id?: string
+          latitude?: number | null
+          logo_url?: string | null
+          longitude?: number | null
+          payout_details?: Json | null
+          phone?: string | null
+          photos?: string[] | null
+          status?: string
+          subtype?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       public_profiles: {
         Row: {
           avatar_url: string | null
@@ -10282,6 +10470,7 @@ export type Database = {
         | "radio_admin"
         | "moderator"
         | "courier"
+        | "provider"
       booking_status:
         | "pending"
         | "confirmed"
@@ -10494,6 +10683,7 @@ export const Constants = {
         "radio_admin",
         "moderator",
         "courier",
+        "provider",
       ],
       booking_status: [
         "pending",
