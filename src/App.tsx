@@ -966,6 +966,31 @@ const App = () => (
                 </ProtectedRoute>
               } />
 
+              {/* Providers (Farmers / Homesteaders / Manufacturers) */}
+              <Route path="/register-provider" element={
+                <ProtectedRoute>
+                  <Suspense fallback={<LoadingFallback />}>
+                    <RegisterProviderPage />
+                  </Suspense>
+                </ProtectedRoute>
+              } />
+              <Route path="/provider-dashboard" element={
+                <ProtectedRoute allowedRoles={['provider']}>
+                  <Suspense fallback={<LoadingFallback />}>
+                    <ProviderDashboardPage />
+                  </Suspense>
+                </ProtectedRoute>
+              } />
+              <Route path="/provider/:providerId" element={
+                <ProtectedRoute>
+                  <Layout>
+                    <Suspense fallback={<LoadingFallback />}>
+                      <ProviderCatalogPage />
+                    </Suspense>
+                  </Layout>
+                </ProtectedRoute>
+              } />
+
               {/* Binance Pay test page removed - using NOWPayments only */}
               
               {/* Admin Routes */}
