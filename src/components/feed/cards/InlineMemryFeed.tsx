@@ -128,6 +128,15 @@ export const InlineMemryFeed: React.FC = () => {
         if (follows) setFollowedUserIds(new Set(follows.map(f => f.following_id)));
       }
 
+      // Fetch approved providers for feed cards
+      const { data: approvedProviders } = await supabase
+        .from('providers')
+        .select('id, user_id, subtype, business_name, bio, city, country, logo_url, photos')
+        .eq('status', 'approved')
+        .order('approved_at', { ascending: false })
+        .limit(20);
+      if (approvedProviders) setProviders(approvedProviders);
+
       // Fetch products (seeds)
       const { data: products } = await supabase
         .from('products')
