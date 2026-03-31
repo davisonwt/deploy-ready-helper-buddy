@@ -1,38 +1,159 @@
 
 
-## Plan: Add Background Images to Gig Service Cards
+# Providers Feature — Complete Build Plan
 
-### Why This Is a Good Idea
-The current cards use small abstract Lucide icons that don't communicate the breadth of each service. Real photos as card backgrounds will make the purpose instantly clear at a glance.
+This is a large feature touching database, backend, feed integration, and multiple new pages. It will be built in **6 phases** to keep each step testable and avoid breaking existing functionality.
 
-### Approach
-Use **AI-generated images** (via Nano banana) to create 6 compact, visually rich illustrations for each card, then store them in the project's `public/` folder. Each card gets a background image with a dark gradient overlay to keep white text readable.
+---
 
-### Images to Generate
-| Card | Image Description |
-|------|-------------------|
-| **Ride** (Book) | Bakkie, delivery van, truck with trailer — transport/logistics feel |
-| **Service** (Book) | Collage of domestic worker, gardener, plumber, electrician — hands-on skilled work |
-| **Whisperer** (Book) | Person on phone/laptop with social media icons — content creator/marketer vibe |
-| **Driver** (Become) | Person standing next to their vehicle, keys in hand — "register your vehicle" |
-| **Services** (Become) | Skilled worker with tools ready — "offer your skills" |
-| **Whisperer** (Become) | Creative person with camera/laptop — "become a content creator" |
+## Phase 1: Database Schema
 
-### Card Layout Change
-Each card will shift from the current small-icon style to:
-- **Background image** covering the full card
-- **Dark gradient overlay** (`linear-gradient(to top, rgba(0,0,0,0.7), rgba(0,0,0,0.2))`) for text contrast
-- **Text positioned at the bottom** over the overlay
-- Small icon badge retained in the top-left corner for quick recognition
-- Card height increased slightly (~100px) to give the image breathing room
+New tables and enum additions via SQL migrations:
 
-### Files Changed
-1. **Generate 6 images** → save to `public/images/gig/`
-2. **`src/components/dashboard/sections/GigActionCards.tsx`** — Update all 6 Book cards to use background images with overlay
-3. **`src/components/dashboard/sections/GradientGatewayCard.tsx`** — Add optional `backgroundImage` prop, render as `backgroundImage` CSS with gradient overlay when provided
+**1. Add `provider` to `app_role` enum**
+```sql
+ALTER TYPE public.app_role ADD VALUE 'provider';
+```
 
-### Technical Detail
-- Cards use `style={{ backgroundImage: 'linear-gradient(...), url(/images/gig/ride.webp)', backgroundSize: 'cover' }}`
-- Images generated at ~400x300px, compressed WebP for fast loading
-- Fallback: gradient still shows if image fails to load
+**2. Create `providers` table**
+- `id` (uuid, PK)
+- `user_id` (uuid, FK → auth.users, unique, not null)
+- `subtype` (text: 'farmer' | 'homesteader' | 'manufacturer')
+- `business_name` (text, not null)
+- `bio` (text)
+- `address_line` (text), `city` (text), `country` (text)
+- `latitude` (numeric), `longitude` (numeric)
+- `phone` (text), `email` (text)
+- `payout_details` (jsonb) — wallet/bank info
+- `logo_url` (text), `photos` (text[])
+- `status` (text, default 'pending') — pending / approved / rejected
+- `approved_at` (timestamptz)
+- `created_at`, `updated_at` (timestamptz, defaults)
+- RLS: owners can read/insert their own row; admins/gosats can read all and update status
+
+**3. Create `provider_products` table**
+- `id` (uuid, PK)
+- `provider_id` (uuid, FK → providers)
+- `title` (text), `description` (text)
+- `price` (numeric), `stock` (integer)
+- `category` (text)
+- `photos` (text[])
+- `status` (text, default 'active')
+- `created_at`, `updated_at`
+- RLS: provider owner can CRUD; all authenticated can read active products
+
+**4. Create `provider_orders` table**
+- `id` (uuid, PK)
+- `provider_id` (uuid, FK → providers)
+- `product_id` (uuid, FK → provider_products)
+- `buyer_id` (uuid, FK → auth.users)
+- `quantity` (integer), `unit_price` (numeric), `total_amount` (numeric)
+- `courier_fee` (numeric, default 0)
+- `platform_commission` (numeric)
+- `status` (text: 'pending' → 'confirmed' → 'picked_up' → 'delivered' → 'completed')
+- `delivery_type` (text: 'local' | 'international')
+- `delivery_address` (text), `delivery_city` (text), `delivery_country` (text)
+- `created_at`, `updated_at`
+- RLS: buyer can read own orders; provider can read orders for their products; admins can read all
+
+**5. Create storage bucket** `provider-assets` (public) for logos and product photos.
+
+---
+
+## Phase 2: Provider Registration Form
+
+**New page: `RegisterProviderPage.tsx`** (route: `/register-provider`)
+
+Multi-step form:
+1. **Step 1** — Subtype selection (Farmer / Homesteader / Manufacturer) with visual cards
+2. **Step 2** — Business name, bio, phone, email
+3. **Step 3** — Address with city/country fields (latitude/longitude via manual input or a simple geocoding lookup)
+4. **Step 4** — Logo upload + farm/product photos (upload to `provider-assets` bucket)
+5. **Step 5** — Payout details (wallet address or bank reference)
+6. **Submit** — Inserts into `providers` table with status='pending', grants `provider` role after admin approval
+
+Uses the same clean card styling as existing registration forms. Mobile-first layout.
+
+---
+
+## Phase 3: Admin Approval Flow
+
+**Extend existing Admin Dashboard** (`AdminDashboardPage.jsx`) with a new "Provider Applications" tab, similar to the existing `ServiceProviderApplicationsDashboard`:
+- List all pending/approved/rejected providers
+- Show business name, subtype, bio, location, logo
+- Approve / Reject buttons
+- On approval: insert `provider` role into `user_roles` and set `providers.status = 'approved'`
+
+---
+
+## Phase 4: Provider Social Feed Card
+
+**New card component: `ProviderFeedCard.tsx`** in `src/components/feed/cards/`
+
+Follows the **clean vertical-stack architecture** (no absolute positioning, no z-index, no overlapping layers — per the established Memry card rules):
+1. Provider logo/photo (full-width, aspect-ratio maintained)
+2. Business name + subtype badge (Farmer 🌾 / Homesteader 🏡 / Manufacturer 🏭)
+3. Short bio
+4. Location (city + country)
+5. Three action buttons in normal document flow:
+   - **"Order Direct"** (primary, links to provider catalog)
+   - **"View Products"** (secondary, same destination)
+   - **"Message Provider"** (opens chat)
+
+**Feed integration in `InlineMemryFeed.tsx` / `HomeFeed.tsx`:**
+- Query approved providers and interleave `ProviderFeedCard` into the feed
+- Cards appear automatically once status = 'approved'
+
+---
+
+## Phase 5: Provider Dashboard & Product Catalog
+
+**New page: `ProviderDashboardPage.tsx`** (route: `/provider-dashboard`)
+- Only accessible to users with `provider` role
+- Tabs: **Products** | **Orders** | **Earnings**
+- **Products tab**: List own products, Add/Edit product form (title, description, price, stock, category, photos)
+- **Orders tab**: List incoming orders with status management (Confirm → Picked Up → Delivered → Completed)
+- **Earnings tab**: Summary of total sales, platform commission (15% split: 10% tithe + 5% admin), pending payouts
+
+**Public Provider Catalog page: `ProviderCatalogPage.tsx`** (route: `/provider/:providerId`)
+- Shows provider info header (logo, name, bio, location)
+- Grid of active products with photos, price, "Bestow" / "Order" button
+- Product detail modal with quantity selector
+- Delivery logic: compare buyer country vs provider country
+  - Same country → local delivery, check community Drivers list
+  - Different continent → add estimated courier surcharge to total
+
+---
+
+## Phase 6: Order & Delivery Flow + Bookkeeping
+
+**Order placement:**
+- Buyer selects product → chooses quantity → system calculates total (price × qty + courier fee if international)
+- Creates record in `provider_orders`
+- Platform commission auto-calculated (15%)
+
+**Order status management:**
+- Provider confirms order from their dashboard
+- Status progression: Pending → Confirmed → Picked Up → Delivered → Completed
+- Notifications via existing `send-notification` edge function
+
+**Bookkeeping:**
+- All orders tracked in `provider_orders` with commission and courier fee columns
+- Provider earnings visible in their dashboard
+- Admin can view all provider transactions in the existing admin payments area
+
+**Whisperer integration:**
+- Whisperers can share/promote Provider cards using existing sharing mechanics
+- Provider products appear as sharable content in the Whisperer flow
+
+---
+
+## Technical Notes
+
+- All new UI uses existing design system (rounded cards, blue-teal theme, cherry/leaf accents)
+- All buttons are large and mobile-friendly (h-12+ touch targets)
+- Provider cards follow the strict no-overlay, no-z-index rule established for Memry cards
+- Storage uploads use the existing Supabase storage pattern
+- The `app_role` enum gets a new `provider` value; the `RoleChecker` component already supports dynamic role arrays
+- Estimated implementation: 6 phases, each independently testable
 
