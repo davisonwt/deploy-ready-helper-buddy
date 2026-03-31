@@ -70,6 +70,10 @@ export default function AdminDashboard() {
             <Eye className="h-4 w-4" />
             Bestowal Audit
           </TabsTrigger>
+          <TabsTrigger value="providers" className="flex items-center gap-2">
+            <Sprout className="h-4 w-4" />
+            Providers
+          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="analytics" className="mt-6">
