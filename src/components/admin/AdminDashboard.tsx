@@ -10,6 +10,8 @@ import { DriverApplicationsDashboard } from './DriverApplicationsDashboard';
 import { ServiceProviderApplicationsDashboard } from './ServiceProviderApplicationsDashboard';
 import BasicAnalytics from './BasicAnalytics';
 import { BestowalAuditDashboard } from './BestowalAuditDashboard';
+import { ProviderApplicationsDashboard } from './ProviderApplicationsDashboard';
+import { Sprout } from 'lucide-react';
 
 export default function AdminDashboard() {
   const [activeTab, setActiveTab] = useState('analytics');
