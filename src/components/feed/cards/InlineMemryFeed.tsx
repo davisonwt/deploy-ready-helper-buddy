@@ -528,17 +528,30 @@ export const InlineMemryFeed: React.FC = () => {
       </div>
 
       <div className="space-y-4">
-        {posts.map(post => (
-          <MemrySeedCard
-            key={post.id}
-            post={post}
-            user={user}
-            isFollowing={followedUserIds.has(post.user_id)}
-            onLike={handleLike}
-            onFollow={handleFollow}
-            onOpenComments={handleOpenComments}
-            onPrivateMessage={handlePrivateMessage}
-          />
+        {posts.map((post, idx) => (
+          <React.Fragment key={post.id}>
+            <MemrySeedCard
+              post={post}
+              user={user}
+              isFollowing={followedUserIds.has(post.user_id)}
+              onLike={handleLike}
+              onFollow={handleFollow}
+              onOpenComments={handleOpenComments}
+              onPrivateMessage={handlePrivateMessage}
+            />
+            {/* Interleave a provider card every 5 posts */}
+            {providers.length > 0 && (idx + 1) % 5 === 0 && providers[Math.floor(idx / 5) % providers.length] && (
+              <ProviderFeedCard
+                key={`provider-${providers[Math.floor(idx / 5) % providers.length].id}`}
+                provider={providers[Math.floor(idx / 5) % providers.length]}
+                onMessage={(userId) => handlePrivateMessage(userId, '')}
+              />
+            )}
+          </React.Fragment>
+        ))}
+        {/* Show providers at the end if feed is small */}
+        {posts.length < 5 && providers.map(p => (
+          <ProviderFeedCard key={`provider-${p.id}`} provider={p} onMessage={(userId) => handlePrivateMessage(userId, '')} />
         ))}
       </div>
 
