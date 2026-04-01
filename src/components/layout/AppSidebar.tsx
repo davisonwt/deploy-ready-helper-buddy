@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
 import {
   Home, Sprout, TreePine, MessageSquare, Calendar,
-  CloudRain, Settings, Plus, Users, BarChart3
+  CloudRain, Settings, Plus, Users, BarChart3, Video, MessageCircle
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
