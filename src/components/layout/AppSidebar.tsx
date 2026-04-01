@@ -123,10 +123,10 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({ radioLive, userProfile }
       )}
 
       {/* Action Buttons */}
-      <div className="grid shrink-0 grid-cols-3 gap-2 px-2 pt-3">
+      <div className="flex shrink-0 flex-nowrap gap-1.5 px-2 pt-3">
         <button
           onClick={() => setPlantModalOpen(true)}
-          className="flex h-8 min-w-0 items-center justify-center gap-1 rounded-lg px-1 text-[10px] font-semibold leading-none text-white transition-opacity hover:opacity-90 sm:h-9 sm:gap-1.5 sm:px-2 sm:text-xs"
+          className="flex h-8 min-w-0 flex-1 basis-0 items-center justify-center gap-1 overflow-hidden rounded-lg px-1 text-[10px] font-semibold leading-none text-white transition-opacity hover:opacity-90 sm:h-9 sm:gap-1.5 sm:px-2 sm:text-xs"
           style={{ backgroundColor: '#1D9E75' }}
         >
           <Sprout className="h-3 w-3 shrink-0 sm:h-3.5 sm:w-3.5" />
@@ -134,7 +134,7 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({ radioLive, userProfile }
         </button>
         <button
           onClick={() => navigate('/communications-hub?tab=radio&create=1')}
-          className="flex h-8 min-w-0 items-center justify-center gap-1 rounded-lg px-1 text-[10px] font-semibold leading-none text-white transition-opacity hover:opacity-90 sm:h-9 sm:gap-1.5 sm:px-2 sm:text-xs"
+          className="flex h-8 min-w-0 flex-1 basis-0 items-center justify-center gap-1 overflow-hidden rounded-lg px-1 text-[10px] font-semibold leading-none text-white transition-opacity hover:opacity-90 sm:h-9 sm:gap-1.5 sm:px-2 sm:text-xs"
           style={{ backgroundColor: '#E24B4A' }}
         >
           <Video className="h-3 w-3 shrink-0 sm:h-3.5 sm:w-3.5" />
@@ -142,7 +142,7 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({ radioLive, userProfile }
         </button>
         <button
           onClick={() => navigate('/communications-hub')}
-          className="flex h-8 min-w-0 items-center justify-center gap-1 rounded-lg px-1 text-[10px] font-semibold leading-none text-white transition-opacity hover:opacity-90 sm:h-9 sm:gap-1.5 sm:px-2 sm:text-xs"
+          className="flex h-8 min-w-0 flex-1 basis-0 items-center justify-center gap-1 overflow-hidden rounded-lg px-1 text-[10px] font-semibold leading-none text-white transition-opacity hover:opacity-90 sm:h-9 sm:gap-1.5 sm:px-2 sm:text-xs"
           style={{ backgroundColor: '#0E9BAA' }}
         >
           <MessageCircle className="h-3 w-3 shrink-0 sm:h-3.5 sm:w-3.5" />
