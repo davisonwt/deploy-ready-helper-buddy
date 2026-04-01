@@ -8,7 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
-import { Car, Wrench, Ear, MapPin, Clock, Loader2, CalendarIcon } from 'lucide-react';
+import { Car, Wrench, Ear, MapPin, Clock, Loader2, CalendarIcon, Users } from 'lucide-react';
 import { useCreateBooking } from '@/hooks/useGigBookings';
 import { useSearchProviders } from '@/hooks/useGigBookings';
 import { toast } from 'sonner';
