@@ -64,6 +64,8 @@ const formSchema = z.object({
   distanceUnit: z.enum(distanceUnits).optional(),
   vehicleType: z.string().min(1, 'Please select a vehicle type'),
   vehicleDescription: z.string().min(10, 'Please provide at least 10 characters').max(500, 'Description too long'),
+  maxPassengers: z.number().min(1, 'At least 1 passenger').max(50).optional(),
+  maxCargoKg: z.number().min(1).max(50000).optional(),
   noIncomeConfirmed: z.boolean().refine(val => val === true, {
     message: 'You must confirm this declaration to proceed'
   }),
@@ -106,6 +108,8 @@ const VehicleRegistrationForm: React.FC = () => {
       distanceUnit: 'km' as DistanceUnit,
       vehicleType: undefined,
       vehicleDescription: '',
+      maxPassengers: undefined,
+      maxCargoKg: undefined,
       noIncomeConfirmed: false,
       termsAccepted: false,
     },
@@ -145,6 +149,8 @@ const VehicleRegistrationForm: React.FC = () => {
           distanceUnit: (data as any).distance_unit || 'km',
           vehicleType: data.vehicle_type,
           vehicleDescription: data.vehicle_description,
+          maxPassengers: (data as any).max_passengers || undefined,
+          maxCargoKg: (data as any).max_cargo_kg || undefined,
           noIncomeConfirmed: data.no_income_confirmed,
           termsAccepted: true,
         });
@@ -223,6 +229,8 @@ const VehicleRegistrationForm: React.FC = () => {
         vehicle_type: data.vehicleType,
         vehicle_description: data.vehicleDescription.trim(),
         vehicle_images: uploadedImageUrls,
+        max_passengers: data.maxPassengers || null,
+        max_cargo_kg: data.maxCargoKg || null,
         no_income_confirmed: data.noIncomeConfirmed,
         status: 'pending' as const,
         updated_at: new Date().toISOString(),
@@ -559,7 +567,7 @@ const VehicleRegistrationForm: React.FC = () => {
                       <FormLabel>Vehicle Description *</FormLabel>
                       <FormControl>
                         <Textarea
-                          placeholder="Describe your vehicle (make, model, year, capacity, any special features...)"
+                          placeholder="Describe your vehicle (make, model, year, any special features...)"
                           className="min-h-[120px]"
                           {...field}
                         />
@@ -571,6 +579,53 @@ const VehicleRegistrationForm: React.FC = () => {
                     </FormItem>
                   )}
                 />
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <FormField
+                    control={form.control}
+                    name="maxPassengers"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Max Passengers</FormLabel>
+                        <FormControl>
+                          <Input
+                            type="number"
+                            placeholder="e.g., 4"
+                            {...field}
+                            onChange={(e) => field.onChange(e.target.value ? parseInt(e.target.value) : undefined)}
+                            value={field.value ?? ''}
+                          />
+                        </FormControl>
+                        <FormDescription>
+                          How many passengers can ride?
+                        </FormDescription>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="maxCargoKg"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Max Cargo Weight (kg)</FormLabel>
+                        <FormControl>
+                          <Input
+                            type="number"
+                            placeholder="e.g., 500"
+                            {...field}
+                            onChange={(e) => field.onChange(e.target.value ? parseFloat(e.target.value) : undefined)}
+                            value={field.value ?? ''}
+                          />
+                        </FormControl>
+                        <FormDescription>
+                          Max load for parcels, sand, stone, etc.
+                        </FormDescription>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
               </div>
             )}
 
@@ -597,6 +652,12 @@ const VehicleRegistrationForm: React.FC = () => {
                     <p><span className="text-muted-foreground">Delivery Radius:</span> {form.getValues('deliveryRadius')} {form.getValues('distanceUnit') || 'km'}</p>
                   )}
                   <p><span className="text-muted-foreground">Vehicle:</span> {form.getValues('vehicleType')}</p>
+                  {form.getValues('maxPassengers') && (
+                    <p><span className="text-muted-foreground">Max Passengers:</span> {form.getValues('maxPassengers')}</p>
+                  )}
+                  {form.getValues('maxCargoKg') && (
+                    <p><span className="text-muted-foreground">Max Cargo:</span> {form.getValues('maxCargoKg')} kg</p>
+                  )}
                   <p><span className="text-muted-foreground">Photos:</span> {images.length + imageUrls.filter(u => !u.startsWith('blob:')).length} uploaded</p>
                 </div>
 

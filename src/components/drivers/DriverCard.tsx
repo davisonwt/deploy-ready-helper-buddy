@@ -28,6 +28,8 @@ interface Driver {
   city?: string;
   service_areas?: string[];
   delivery_radius_km?: number;
+  max_passengers?: number;
+  max_cargo_kg?: number;
 }
 
 interface DriverCardProps {
@@ -152,12 +154,24 @@ const DriverCard: React.FC<DriverCardProps> = ({ driver }) => {
             </div>
           )}
           
-          {/* Delivery radius */}
-          {driver.delivery_radius_km && (
-            <p className="text-xs text-muted-foreground mt-2">
-              Delivers up to {driver.delivery_radius_km} km
-            </p>
-          )}
+          {/* Capacity info */}
+          <div className="flex flex-wrap gap-2 mt-2">
+            {driver.max_passengers && (
+              <Badge variant="outline" className="text-xs">
+                👥 {driver.max_passengers} passengers
+              </Badge>
+            )}
+            {driver.max_cargo_kg && (
+              <Badge variant="outline" className="text-xs">
+                📦 {driver.max_cargo_kg} kg cargo
+              </Badge>
+            )}
+            {driver.delivery_radius_km && (
+              <Badge variant="outline" className="text-xs">
+                📍 {driver.delivery_radius_km} km radius
+              </Badge>
+            )}
+          </div>
         </CardContent>
 
         <CardFooter className="pt-0 flex gap-2">
