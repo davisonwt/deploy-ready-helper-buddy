@@ -108,6 +108,8 @@ const VehicleRegistrationForm: React.FC = () => {
       distanceUnit: 'km' as DistanceUnit,
       vehicleType: undefined,
       vehicleDescription: '',
+      maxPassengers: undefined,
+      maxCargoKg: undefined,
       noIncomeConfirmed: false,
       termsAccepted: false,
     },
