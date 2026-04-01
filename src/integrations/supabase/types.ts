@@ -4849,8 +4849,53 @@ export type Database = {
         }
         Relationships: []
       }
+      provider_escrow_transactions: {
+        Row: {
+          action: string
+          amount: number
+          created_at: string
+          from_wallet: string | null
+          id: string
+          notes: string | null
+          order_id: string
+          performed_by: string | null
+          to_wallet: string | null
+        }
+        Insert: {
+          action: string
+          amount?: number
+          created_at?: string
+          from_wallet?: string | null
+          id?: string
+          notes?: string | null
+          order_id: string
+          performed_by?: string | null
+          to_wallet?: string | null
+        }
+        Update: {
+          action?: string
+          amount?: number
+          created_at?: string
+          from_wallet?: string | null
+          id?: string
+          notes?: string | null
+          order_id?: string
+          performed_by?: string | null
+          to_wallet?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "provider_escrow_transactions_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "provider_orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       provider_orders: {
         Row: {
+          buyer_confirmed_at: string | null
           buyer_id: string
           courier_fee: number
           created_at: string
@@ -4858,17 +4903,27 @@ export type Database = {
           delivery_city: string | null
           delivery_country: string | null
           delivery_type: string | null
+          dispute_opened_at: string | null
+          dispute_reason: string | null
+          dispute_resolved_at: string | null
+          escrow_held_at: string | null
+          escrow_released_at: string | null
+          escrow_status: string
           id: string
+          payment_method: string | null
           platform_commission: number
           product_id: string
+          provider_confirmed_at: string | null
           provider_id: string
           quantity: number
           status: string
           total_amount: number
+          tx_reference: string | null
           unit_price: number
           updated_at: string
         }
         Insert: {
+          buyer_confirmed_at?: string | null
           buyer_id: string
           courier_fee?: number
           created_at?: string
@@ -4876,17 +4931,27 @@ export type Database = {
           delivery_city?: string | null
           delivery_country?: string | null
           delivery_type?: string | null
+          dispute_opened_at?: string | null
+          dispute_reason?: string | null
+          dispute_resolved_at?: string | null
+          escrow_held_at?: string | null
+          escrow_released_at?: string | null
+          escrow_status?: string
           id?: string
+          payment_method?: string | null
           platform_commission?: number
           product_id: string
+          provider_confirmed_at?: string | null
           provider_id: string
           quantity?: number
           status?: string
           total_amount: number
+          tx_reference?: string | null
           unit_price: number
           updated_at?: string
         }
         Update: {
+          buyer_confirmed_at?: string | null
           buyer_id?: string
           courier_fee?: number
           created_at?: string
@@ -4894,13 +4959,22 @@ export type Database = {
           delivery_city?: string | null
           delivery_country?: string | null
           delivery_type?: string | null
+          dispute_opened_at?: string | null
+          dispute_reason?: string | null
+          dispute_resolved_at?: string | null
+          escrow_held_at?: string | null
+          escrow_released_at?: string | null
+          escrow_status?: string
           id?: string
+          payment_method?: string | null
           platform_commission?: number
           product_id?: string
+          provider_confirmed_at?: string | null
           provider_id?: string
           quantity?: number
           status?: string
           total_amount?: number
+          tx_reference?: string | null
           unit_price?: number
           updated_at?: string
         }
