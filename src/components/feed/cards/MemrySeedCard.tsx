@@ -310,7 +310,7 @@ export const MemrySeedCard: React.FC<MemrySeedCardProps> = ({
       toast({ title: isMusic ? 'Track added to basket! 🎵' : 'Added to basket! 🛒' });
       navigate('/products/basket');
     } else if (isOrchard && post.orchard_id) {
-      navigate(`/orchard/${post.orchard_id}`);
+      navigate(`/animated-orchard/${post.orchard_id}`);
     } else if (isBook && bookId) {
       addToBasket({ id: bookId, title: post.product_title || post.caption.replace('📚 BOOK: ', ''), price: post.product_price || 0, cover_image_url: post.media_url, sower_id: post.user_id, bestowal_count: 1, sowers: { display_name: post.profiles?.display_name || 'Sower' } });
       toast({ title: 'Book added to basket! 📚' });
