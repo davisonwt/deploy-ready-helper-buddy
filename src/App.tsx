@@ -30,6 +30,7 @@ import NotFound from "./pages/NotFound";
 import LoginPage from "./pages/LoginPage";
 import RegisterPage from "./pages/RegisterPage";
 const PasswordResetSupportPage = lazy(() => import("./pages/PasswordResetSupportPage"));
+const ResetPasswordPage = lazy(() => import("./pages/ResetPasswordPage"));
 const SecurityQuestionsSetupPage = lazy(() => import("./pages/SecurityQuestionsSetupPage"));
 
 // DEFERRED LOADING: All other pages lazy loaded
