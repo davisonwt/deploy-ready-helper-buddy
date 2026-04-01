@@ -3,7 +3,7 @@ import { Camera, Send } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { MemrySeedCard } from './MemrySeedCard';
 import { ProviderFeedCard } from './ProviderFeedCard';
-import { ProviderActionCard } from './ProviderActionCard';
+
 import { useNavigate } from 'react-router-dom';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -529,8 +529,7 @@ export const InlineMemryFeed: React.FC = () => {
       </div>
 
       <div className="space-y-4">
-        {/* Provider registration/discovery action card at top */}
-        <ProviderActionCard theme={undefined} />
+        {/* Provider cards now merged into Services section on dashboard */}
 
         {posts.map((post, idx) => (
           <React.Fragment key={post.id}>
