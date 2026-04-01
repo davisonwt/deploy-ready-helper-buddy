@@ -1634,6 +1634,8 @@ export type Database = {
           is_online: boolean | null
           license_expiry: string | null
           license_plate: string | null
+          max_cargo_kg: number | null
+          max_passengers: number | null
           no_income_confirmed: boolean
           rating: number | null
           registration_doc_url: string | null
@@ -1670,6 +1672,8 @@ export type Database = {
           is_online?: boolean | null
           license_expiry?: string | null
           license_plate?: string | null
+          max_cargo_kg?: number | null
+          max_passengers?: number | null
           no_income_confirmed?: boolean
           rating?: number | null
           registration_doc_url?: string | null
@@ -1706,6 +1710,8 @@ export type Database = {
           is_online?: boolean | null
           license_expiry?: string | null
           license_plate?: string | null
+          max_cargo_kg?: number | null
+          max_passengers?: number | null
           no_income_confirmed?: boolean
           rating?: number | null
           registration_doc_url?: string | null
