@@ -61,6 +61,10 @@ const DriverDashboardPage: React.FC = () => {
   const [estimatedDuration, setEstimatedDuration] = useState('');
   const [quoteMessage, setQuoteMessage] = useState('');
 
+  // Check if driver has active bookings for location broadcast
+  const hasActiveBooking = requests.some(r => r.status === 'accepted');
+  useDriverLocationBroadcast(hasActiveBooking, user?.id);
+
   useEffect(() => {
     if (user) {
       fetchDriverData();
