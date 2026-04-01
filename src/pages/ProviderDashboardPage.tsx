@@ -9,8 +9,10 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { toast } from '@/hooks/use-toast';
-import { Package, ShoppingCart, DollarSign, Plus, Pencil, Trash2 } from 'lucide-react';
+import { Package, ShoppingCart, DollarSign, Plus, Pencil, Trash2, Shield } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { OrderTimeline } from '@/components/provider/OrderTimeline';
+import { EscrowBadge } from '@/components/provider/EscrowBadge';
 
 export default function ProviderDashboardPage() {
   const { user } = useAuth();
