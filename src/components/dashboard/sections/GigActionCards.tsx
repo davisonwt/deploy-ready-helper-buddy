@@ -41,9 +41,9 @@ export const GigActionCards: React.FC<GigActionCardsProps> = ({ theme }) => {
   ];
 
   const connectCards = [
-    { key: 'farmer', emoji: '🌾', label: 'Farmer', desc: 'Fresh produce', img: farmerImg, href: '/providers?type=farmer' },
-    { key: 'homesteader', emoji: '🏡', label: 'Homesteader', desc: 'Handmade goods', img: homesteaderImg, href: '/providers?type=homesteader' },
-    { key: 'manufacturer', emoji: '🏭', label: 'Manufacturer', desc: 'Produce at scale', img: manufacturerImg, href: '/providers?type=manufacturer' },
+    { key: 'farmer', emoji: '🌾', label: 'Farmer', desc: 'Fresh produce', img: connectFarmerImg, href: '/providers?type=farmer' },
+    { key: 'homesteader', emoji: '🏡', label: 'Homesteader', desc: 'Handmade goods', img: connectHomesteaderImg, href: '/providers?type=homesteader' },
+    { key: 'manufacturer', emoji: '🏭', label: 'Manufacturer', desc: 'Produce at scale', img: connectManufacturerImg, href: '/providers?type=manufacturer' },
   ];
 
   const becomeCards = [
