@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -16,9 +16,12 @@ interface SecurityQuestions {
   question_3: string;
 }
 
+const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const usernamePattern = /^[a-zA-Z0-9._-]{3,50}$/;
+
 export default function PasswordResetSupportPage() {
   const [step, setStep] = useState<Step>("email");
-  const [email, setEmail] = useState("");
+  const [identifier, setIdentifier] = useState("");
   const [questions, setQuestions] = useState<SecurityQuestions | null>(null);
   const [answer1, setAnswer1] = useState("");
   const [answer2, setAnswer2] = useState("");
@@ -33,11 +36,17 @@ export default function PasswordResetSupportPage() {
   const [adminRequestConfirm, setAdminRequestConfirm] = useState("");
   const navigate = useNavigate();
 
+  const normalizedIdentifier = useMemo(() => identifier.trim().toLowerCase(), [identifier]);
+
+  const isValidIdentifier = (value: string) => {
+    return emailPattern.test(value) || usernamePattern.test(value);
+  };
+
   const handleEmailSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!email.trim() || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-      setError("Please enter a valid email address");
+    if (!normalizedIdentifier || !isValidIdentifier(normalizedIdentifier)) {
+      setError("Please enter a valid ChatApp username or email address");
       return;
     }
 
@@ -48,7 +57,7 @@ export default function PasswordResetSupportPage() {
 
     try {
       const { data, error: fnError } = await supabase.functions.invoke("password-reset-with-security", {
-        body: { action: "get-questions", email: email.trim().toLowerCase() }
+        body: { action: "get-questions", identifier: normalizedIdentifier }
       });
 
       if (fnError) throw new Error(fnError.message);
@@ -64,6 +73,7 @@ export default function PasswordResetSupportPage() {
       if (data?.questions) {
         setQuestions(data.questions);
         setStep("questions");
+        setError("");
       }
     } catch (err: any) {
       setError(err.message || "An unexpected error occurred");
@@ -97,7 +107,7 @@ export default function PasswordResetSupportPage() {
       const { data, error: fnError } = await supabase.functions.invoke("password-reset-with-security", {
         body: {
           action: "verify-and-reset",
-          email: email.trim().toLowerCase(),
+          identifier: normalizedIdentifier,
           answer1: answer1.trim(),
           answer2: answer2.trim(),
           answer3: answer3.trim(),
@@ -133,7 +143,7 @@ export default function PasswordResetSupportPage() {
 
     try {
       const { data, error: fnError } = await supabase.functions.invoke("password-reset-request", {
-        body: { email: email.trim().toLowerCase(), newPassword: adminRequestPassword }
+        body: { email: normalizedIdentifier, newPassword: adminRequestPassword }
       });
 
       if (fnError) throw new Error(fnError.message);
@@ -369,7 +379,7 @@ export default function PasswordResetSupportPage() {
               Reset Your Password
             </CardTitle>
             <p className="text-sm text-muted-foreground mt-2">
-              Enter your email to retrieve your security questions.
+                Enter your ChatApp username or email to retrieve your security questions.
             </p>
           </CardHeader>
 
@@ -382,16 +392,16 @@ export default function PasswordResetSupportPage() {
               )}
 
               <div className="space-y-2">
-                <Label htmlFor="email" className="text-sm font-medium text-blue-700 flex items-center">
+                <Label htmlFor="identifier" className="text-sm font-medium text-blue-700 flex items-center">
                   <Mail className="h-4 w-4 mr-2 text-blue-500" />
-                  Email Address
+                  ChatApp Username or Email
                 </Label>
                 <Input
-                  id="email"
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  placeholder="your@email.com"
+                  id="identifier"
+                  type="text"
+                  value={identifier}
+                  onChange={(e) => setIdentifier(e.target.value)}
+                  placeholder="username or your@email.com"
                   className="w-full"
                   disabled={loading}
                   required
