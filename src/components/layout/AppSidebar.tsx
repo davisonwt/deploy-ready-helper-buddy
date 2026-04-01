@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
 import {
   Home, Sprout, TreePine, MessageSquare, Calendar,
-  CloudRain, Settings, Plus, Users, BarChart3
+  CloudRain, Settings, Plus, Users, BarChart3, Video, MessageCircle
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
@@ -44,7 +44,7 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({ radioLive, userProfile }
     .toUpperCase();
 
   return (
-    <div className="flex flex-col h-full py-4">
+    <div className="flex flex-col h-full py-4 overflow-hidden">
       {/* Logo + User */}
       <div className="px-3 mb-5">
         <NavLink to="/dashboard" className="flex items-center gap-2 mb-3">
@@ -122,15 +122,31 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({ radioLive, userProfile }
         </div>
       )}
 
-      {/* Plant Button */}
-      <div className="px-2 pt-3">
+      {/* Action Buttons */}
+      <div className="px-2 pt-3 flex gap-2">
         <button
           onClick={() => setPlantModalOpen(true)}
-          className="w-full h-10 rounded-lg flex items-center justify-center gap-2 text-white text-sm font-semibold transition-opacity hover:opacity-90"
+          className="flex-1 h-9 rounded-lg flex items-center justify-center gap-1.5 text-white text-xs font-semibold transition-opacity hover:opacity-90"
           style={{ backgroundColor: '#1D9E75' }}
         >
-          <Plus className="w-4 h-4" />
+          <Sprout className="w-3.5 h-3.5" />
           Plant
+        </button>
+        <button
+          onClick={() => navigate('/communications-hub?tab=radio&create=1')}
+          className="flex-1 h-9 rounded-lg flex items-center justify-center gap-1.5 text-white text-xs font-semibold transition-opacity hover:opacity-90"
+          style={{ backgroundColor: '#E24B4A' }}
+        >
+          <Video className="w-3.5 h-3.5" />
+          Go Live
+        </button>
+        <button
+          onClick={() => navigate('/communications-hub')}
+          className="flex-1 h-9 rounded-lg flex items-center justify-center gap-1.5 text-white text-xs font-semibold transition-opacity hover:opacity-90"
+          style={{ backgroundColor: '#0E9BAA' }}
+        >
+          <MessageCircle className="w-3.5 h-3.5" />
+          Chat
         </button>
       </div>
 
