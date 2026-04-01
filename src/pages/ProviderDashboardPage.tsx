@@ -175,6 +175,10 @@ export default function ProviderDashboardPage() {
     .filter((o: any) => o.status === 'completed')
     .reduce((sum: number, o: any) => sum + o.platform_commission, 0);
 
+  const fundsInEscrow = (orders || [])
+    .filter((o: any) => o.escrow_status === 'held')
+    .reduce((sum: number, o: any) => sum + (o.total_amount - o.platform_commission - o.courier_fee), 0);
+
   return (
     <Layout>
       <div className="container mx-auto p-6 space-y-6">
