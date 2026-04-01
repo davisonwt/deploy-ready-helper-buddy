@@ -16,6 +16,9 @@ import whispererBecomeImg from '/images/gig/whisperer-become.jpg';
 import farmerImg from '/images/providers/farmer.jpg';
 import homesteaderImg from '/images/providers/homesteader.jpg';
 import manufacturerImg from '/images/providers/manufacturer.jpg';
+import connectFarmerImg from '/images/providers/connect-farmer.jpg';
+import connectHomesteaderImg from '/images/providers/connect-homesteader.jpg';
+import connectManufacturerImg from '/images/providers/connect-manufacturer.jpg';
 
 interface GigActionCardsProps {
   theme: DashboardTheme;
@@ -38,9 +41,9 @@ export const GigActionCards: React.FC<GigActionCardsProps> = ({ theme }) => {
   ];
 
   const connectCards = [
-    { key: 'farmer', emoji: '🌾', label: 'Farmer', desc: 'Fresh produce', img: farmerImg, href: '/providers?type=farmer' },
-    { key: 'homesteader', emoji: '🏡', label: 'Homesteader', desc: 'Handmade goods', img: homesteaderImg, href: '/providers?type=homesteader' },
-    { key: 'manufacturer', emoji: '🏭', label: 'Manufacturer', desc: 'Produce at scale', img: manufacturerImg, href: '/providers?type=manufacturer' },
+    { key: 'farmer', emoji: '🌾', label: 'Farmer', desc: 'Fresh produce', img: connectFarmerImg, href: '/providers?type=farmer' },
+    { key: 'homesteader', emoji: '🏡', label: 'Homesteader', desc: 'Handmade goods', img: connectHomesteaderImg, href: '/providers?type=homesteader' },
+    { key: 'manufacturer', emoji: '🏭', label: 'Manufacturer', desc: 'Produce at scale', img: connectManufacturerImg, href: '/providers?type=manufacturer' },
   ];
 
   const becomeCards = [
