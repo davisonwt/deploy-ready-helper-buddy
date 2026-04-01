@@ -277,11 +277,11 @@ export const InlineMemryFeed: React.FC = () => {
           media_url: orchardMediaUrl,
           media: mediaPayload.media,
           image_urls: orchardImages.length > 0 ? orchardImages : undefined,
-          caption: `🌳 ORCHARD: ${o.name}`,
+          caption: `🌳 ORCHARD: ${o.title}`,
           likes_count: 0,
           comments_count: 0,
           orchard_id: o.id,
-          product_title: o.name,
+          product_title: o.title,
           profiles: profile ? { display_name: profile.display_name, avatar_url: profile.avatar_url, username: profile.username } : undefined,
           content_category: 'seed',
         });
