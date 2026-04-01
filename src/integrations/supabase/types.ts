@@ -1616,6 +1616,7 @@ export type Database = {
       community_drivers: {
         Row: {
           background_check_status: string | null
+          booking_score: number
           city: string | null
           contact_email: string
           contact_phone: string
@@ -1632,6 +1633,7 @@ export type Database = {
           id: string
           insurance_doc_url: string | null
           is_online: boolean | null
+          last_location_updated_at: string | null
           license_expiry: string | null
           license_plate: string | null
           max_cargo_kg: number | null
@@ -1654,6 +1656,7 @@ export type Database = {
         }
         Insert: {
           background_check_status?: string | null
+          booking_score?: number
           city?: string | null
           contact_email: string
           contact_phone: string
@@ -1670,6 +1673,7 @@ export type Database = {
           id?: string
           insurance_doc_url?: string | null
           is_online?: boolean | null
+          last_location_updated_at?: string | null
           license_expiry?: string | null
           license_plate?: string | null
           max_cargo_kg?: number | null
@@ -1692,6 +1696,7 @@ export type Database = {
         }
         Update: {
           background_check_status?: string | null
+          booking_score?: number
           city?: string | null
           contact_email?: string
           contact_phone?: string
@@ -1708,6 +1713,7 @@ export type Database = {
           id?: string
           insurance_doc_url?: string | null
           is_online?: boolean | null
+          last_location_updated_at?: string | null
           license_expiry?: string | null
           license_plate?: string | null
           max_cargo_kg?: number | null
