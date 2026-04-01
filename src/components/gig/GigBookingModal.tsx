@@ -124,9 +124,11 @@ export const GigBookingModal: React.FC<GigBookingModalProps> = ({
       return;
     }
 
+    const eligibleDrivers = drivers.filter((d: any) => !d.max_passengers || d.max_passengers >= parseInt(passengerCount || '1'));
+
     createBooking.mutate({
       booking_type: 'ride',
-      provider_id: drivers[0]?.user_id || '',
+      provider_id: eligibleDrivers.length > 0 ? eligibleDrivers[0]?.user_id : '',
       provider_type: 'driver',
       pickup_address: pickupAddress,
       dropoff_address: dropoffAddress,
@@ -136,6 +138,7 @@ export const GigBookingModal: React.FC<GigBookingModalProps> = ({
       estimated_distance_km: 20,
       estimated_fare: 25,
       customer_notes: customerNotes,
+      service_details: { passenger_count: parseInt(passengerCount || '1') },
     }, {
       onSuccess: () => onOpenChange(false),
     });

@@ -18,6 +18,8 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
+import { DriverAvailabilityToggle } from '@/components/gig/DriverAvailabilityToggle';
+import { useDriverLocationBroadcast } from '@/hooks/useDriverLocationBroadcast';
 
 interface QuoteRequest {
   id: string;
@@ -58,6 +60,10 @@ const DriverDashboardPage: React.FC = () => {
   const [quoteAmount, setQuoteAmount] = useState('');
   const [estimatedDuration, setEstimatedDuration] = useState('');
   const [quoteMessage, setQuoteMessage] = useState('');
+
+  // Check if driver has active bookings for location broadcast
+  const hasActiveBooking = requests.some(r => r.status === 'accepted');
+  useDriverLocationBroadcast(hasActiveBooking, user?.id);
 
   useEffect(() => {
     if (user) {
@@ -216,9 +222,19 @@ const DriverDashboardPage: React.FC = () => {
               </Badge>
             )}
           </div>
-        </div>
+          </div>
 
-        {/* Stats Cards */}
+          {/* Availability Toggle */}
+          {driverProfile && user && (
+            <DriverAvailabilityToggle
+              isOnline={driverProfile.is_online ?? false}
+              driverName={driverProfile.full_name}
+              userId={user.id}
+              onStatusChange={(online) => setDriverProfile({ ...driverProfile, is_online: online })}
+            />
+          )}
+
+          {/* Stats Cards */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
           <Card>
             <CardContent className="pt-6">
