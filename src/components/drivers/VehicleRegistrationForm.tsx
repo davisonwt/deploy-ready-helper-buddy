@@ -652,6 +652,12 @@ const VehicleRegistrationForm: React.FC = () => {
                     <p><span className="text-muted-foreground">Delivery Radius:</span> {form.getValues('deliveryRadius')} {form.getValues('distanceUnit') || 'km'}</p>
                   )}
                   <p><span className="text-muted-foreground">Vehicle:</span> {form.getValues('vehicleType')}</p>
+                  {form.getValues('maxPassengers') && (
+                    <p><span className="text-muted-foreground">Max Passengers:</span> {form.getValues('maxPassengers')}</p>
+                  )}
+                  {form.getValues('maxCargoKg') && (
+                    <p><span className="text-muted-foreground">Max Cargo:</span> {form.getValues('maxCargoKg')} kg</p>
+                  )}
                   <p><span className="text-muted-foreground">Photos:</span> {images.length + imageUrls.filter(u => !u.startsWith('blob:')).length} uploaded</p>
                 </div>
 
