@@ -2,7 +2,7 @@ import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { MapPin, ShoppingBag, Eye, MessageSquare } from 'lucide-react';
+import { MapPin, ShoppingBag, Eye, MessageSquare, Shield } from 'lucide-react';
 
 const SUBTYPE_META: Record<string, { icon: string; label: string; color: string }> = {
   farmer: { icon: '🌾', label: 'Farmer', color: 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200' },
@@ -34,7 +34,6 @@ export const ProviderFeedCard: React.FC<ProviderFeedCardProps> = ({ provider, on
 
   return (
     <div className="rounded-2xl overflow-hidden bg-card border border-border/30 shadow-md flex flex-col">
-      {/* Hero image */}
       {heroImage && (
         <div className="w-full">
           <img
@@ -46,9 +45,7 @@ export const ProviderFeedCard: React.FC<ProviderFeedCardProps> = ({ provider, on
         </div>
       )}
 
-      {/* Content */}
       <div className="p-4 space-y-3">
-        {/* Badge + Name */}
         <div className="flex items-center gap-2 flex-wrap">
           <Badge className={`${meta.color} text-xs font-semibold`}>
             {meta.icon} {meta.label}
@@ -69,7 +66,14 @@ export const ProviderFeedCard: React.FC<ProviderFeedCardProps> = ({ provider, on
           </div>
         )}
 
-        {/* Action buttons — normal flow, no overlap */}
+        {/* Escrow trust badge */}
+        <div className="flex items-center gap-1.5 p-2 rounded-xl bg-green-50 dark:bg-green-900/20 border border-green-200/50 dark:border-green-800/30">
+          <Shield className="w-3.5 h-3.5 text-green-600 dark:text-green-400" />
+          <p className="text-[11px] text-green-700 dark:text-green-400 font-medium">
+            Escrow protected — payment held until pickup confirmed
+          </p>
+        </div>
+
         <div className="flex flex-col gap-2 pt-2">
           <Button
             size="lg"

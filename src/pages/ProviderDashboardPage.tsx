@@ -9,8 +9,10 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { toast } from '@/hooks/use-toast';
-import { Package, ShoppingCart, DollarSign, Plus, Pencil, Trash2 } from 'lucide-react';
+import { Package, ShoppingCart, DollarSign, Plus, Pencil, Trash2, Shield } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { OrderTimeline } from '@/components/provider/OrderTimeline';
+import { EscrowBadge } from '@/components/provider/EscrowBadge';
 
 export default function ProviderDashboardPage() {
   const { user } = useAuth();
@@ -173,6 +175,10 @@ export default function ProviderDashboardPage() {
     .filter((o: any) => o.status === 'completed')
     .reduce((sum: number, o: any) => sum + o.platform_commission, 0);
 
+  const fundsInEscrow = (orders || [])
+    .filter((o: any) => o.escrow_status === 'held')
+    .reduce((sum: number, o: any) => sum + (o.total_amount - o.platform_commission - o.courier_fee), 0);
+
   return (
     <Layout>
       <div className="container mx-auto p-6 space-y-6">
@@ -227,10 +233,11 @@ export default function ProviderDashboardPage() {
           </TabsContent>
 
           <TabsContent value="orders" className="mt-4 space-y-4">
+            <EscrowBadge size="md" />
             {(!orders || orders.length === 0) && <p className="text-muted-foreground text-center py-8">No orders yet.</p>}
             {orders?.map((order: any) => (
               <Card key={order.id}>
-                <CardContent className="p-4 space-y-2">
+                <CardContent className="p-4 space-y-3">
                   <div className="flex justify-between items-start">
                     <div>
                       <p className="font-semibold text-foreground">Order #{order.id.slice(0, 8)}</p>
@@ -238,11 +245,36 @@ export default function ProviderDashboardPage() {
                       <p className="text-sm text-muted-foreground">Total: ${order.total_amount}</p>
                       {order.delivery_city && <p className="text-sm text-muted-foreground">📍 {order.delivery_city}, {order.delivery_country}</p>}
                     </div>
-                    <Badge variant={order.status === 'completed' ? 'default' : 'secondary'} className="capitalize">
-                      {order.status}
-                    </Badge>
+                    <div className="flex flex-col items-end gap-1">
+                      <Badge variant={order.status === 'completed' ? 'default' : 'secondary'} className="capitalize">
+                        {order.status?.replace('_', ' ')}
+                      </Badge>
+                      <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                        <Shield className="w-3 h-3" />
+                        <span className="capitalize">{order.escrow_status || 'pending'}</span>
+                      </div>
+                    </div>
                   </div>
-                  {nextStatus[order.status] && (
+                  {/* Order timeline */}
+                  <OrderTimeline status={order.status} />
+                  {/* Escrow info */}
+                  {order.escrow_status === 'held' && (
+                    <div className="flex items-center gap-2 p-2 rounded-xl bg-amber-50 dark:bg-amber-900/20 border border-amber-200/50 dark:border-amber-800/30">
+                      <Shield className="w-4 h-4 text-amber-600" />
+                      <span className="text-xs text-amber-700 dark:text-amber-400 font-medium">
+                        Funds in escrow — awaiting buyer confirmation
+                      </span>
+                    </div>
+                  )}
+                  {order.escrow_status === 'released' && (
+                    <div className="flex items-center gap-2 p-2 rounded-xl bg-green-50 dark:bg-green-900/20 border border-green-200/50 dark:border-green-800/30">
+                      <Shield className="w-4 h-4 text-green-600" />
+                      <span className="text-xs text-green-700 dark:text-green-400 font-medium">
+                        ✅ Funds released to your wallet
+                      </span>
+                    </div>
+                  )}
+                  {nextStatus[order.status] && order.escrow_status !== 'disputed' && (
                     <Button
                       size="sm"
                       onClick={() => updateOrderStatus.mutate({ orderId: order.id, newStatus: nextStatus[order.status] })}
@@ -255,12 +287,20 @@ export default function ProviderDashboardPage() {
             ))}
           </TabsContent>
 
-          <TabsContent value="earnings" className="mt-4">
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <TabsContent value="earnings" className="mt-4 space-y-4">
+            <EscrowBadge size="md" />
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
               <Card>
                 <CardContent className="p-6 text-center">
-                  <p className="text-sm text-muted-foreground">Total Earnings</p>
+                  <p className="text-sm text-muted-foreground">Released Earnings</p>
                   <p className="text-3xl font-bold text-primary">${totalEarnings.toFixed(2)}</p>
+                </CardContent>
+              </Card>
+              <Card>
+                <CardContent className="p-6 text-center">
+                  <p className="text-sm text-muted-foreground">In Escrow</p>
+                  <p className="text-3xl font-bold text-amber-600">${fundsInEscrow.toFixed(2)}</p>
+                  <p className="text-[10px] text-muted-foreground mt-1">Awaiting buyer confirmation</p>
                 </CardContent>
               </Card>
               <Card>
