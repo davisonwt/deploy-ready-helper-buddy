@@ -174,6 +174,7 @@ const MyServiceRequestsPage = lazy(() => import("./pages/MyServiceRequestsPage")
 const RegisterProviderPage = lazy(() => import("./pages/RegisterProviderPage"));
 const ProviderDashboardPage = lazy(() => import("./pages/ProviderDashboardPage"));
 const ProviderCatalogPage = lazy(() => import("./pages/ProviderCatalogPage"));
+const BuyerOrdersPage = lazy(() => import("./pages/BuyerOrdersPage"));
 
 
 const MyBizAdsPage = lazy(() => import("./pages/MyBizAdsPage"));
