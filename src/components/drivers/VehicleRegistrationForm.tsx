@@ -449,7 +449,7 @@ const VehicleRegistrationForm: React.FC = () => {
                             placeholder="Add a neighborhood or area (e.g., Sandton, CBD)"
                             value={newServiceArea}
                             onChange={(e) => setNewServiceArea(e.target.value)}
-                            onKeyPress={(e) => {
+                            onKeyDown={(e) => {
                               if (e.key === 'Enter') {
                                 e.preventDefault();
                                 addServiceArea();
