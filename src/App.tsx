@@ -300,11 +300,6 @@ const App = () => (
                   <PasswordResetSupportPage />
                 </Suspense>
               } />
-              <Route path="/reset-password" element={
-                <Suspense fallback={<LoadingFallback />}>
-                  <ResetPasswordPage />
-                </Suspense>
-              } />
               <Route path="/security-questions-setup" element={
                 <ProtectedRoute>
                   <Suspense fallback={<LoadingFallback />}>
