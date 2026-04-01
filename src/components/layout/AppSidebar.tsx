@@ -44,7 +44,7 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({ radioLive, userProfile }
     .toUpperCase();
 
   return (
-    <div className="flex flex-col h-full py-4">
+    <div className="flex flex-col h-full py-4 overflow-hidden">
       {/* Logo + User */}
       <div className="px-3 mb-5">
         <NavLink to="/dashboard" className="flex items-center gap-2 mb-3">
