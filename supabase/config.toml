@@ -29,7 +29,7 @@ file_size_limit = "100MiB"
 enabled = true
 port = 54328
 site_url = "http://localhost:3000"
-additional_redirect_urls = ["https://zuwkgasbkpjlxzsjzumu.supabase.co"]
+additional_redirect_urls = ["https://zuwkgasbkpjlxzsjzumu.supabase.co", "https://sow2growapp.lovable.app/reset-password", "https://id-preview--f76da68e-977d-42e6-85f3-ea2df1aea0df.lovable.app/reset-password"]
 jwt_expiry = 3600
 
 [functions]
