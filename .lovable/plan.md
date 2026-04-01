@@ -1,51 +1,52 @@
 
 
-# Redesign Provider Action Card to Match Gig Services Style
+# Unified "Services" Section — Merged Layout
 
-## What
+Keep the image-card style from the screenshot for all rows. One single section replaces both GigActionCards and ProviderActionCard.
 
-Redesign `ProviderActionCard` to use the same visual pattern as `GigActionCards` — a section header, then a row of 3 image-backed cards (Farmer, Homesteader, Manufacturer), each with a background photo, dark gradient overlay, icon, title, and subtitle. Below: the "Register as Provider" button, "Browse All Providers" button, and escrow badge.
-
-## Changes
-
-### 1. Add 3 provider background images
-Source or generate 3 stock-style images and place in `public/images/providers/`:
-- `farmer.jpg` — farmland, crops, fresh produce
-- `homesteader.jpg` — homestead, handmade goods, garden
-- `manufacturer.jpg` — factory, production line, packaging
-
-### 2. Rewrite `ProviderActionCard.tsx`
-Replace the current plain-row layout with the Gig Services pattern:
+## Layout
 
 ```text
 ┌─────────────────────────────────────────┐
-│ 🌿 icon  Providers                     │
-│          Sell directly to community     │
+│ 🤝 Services                            │
+│    Book, connect, or become a provider  │
 ├─────────────────────────────────────────┤
-│ 🌾 REGISTER AS                          │
-│ ┌──────────┐ ┌──────────┐ ┌──────────┐ │
-│ │  farmer  │ │homestead │ │manufactur│ │
-│ │  photo   │ │  photo   │ │  photo   │ │
-│ │ 🌾       │ │ 🏡       │ │ 🏭       │ │
-│ │ Farmer   │ │Homestead │ │Manufactur│ │
-│ │ Grow &.. │ │Handmade..│ │Produce.. │ │
-│ └──────────┘ └──────────┘ └──────────┘ │
-│                                         │
-│  [ Register as Provider ]  (primary)    │
-│  [ Browse All Providers ]  (outline)    │
-│  🔒 Escrow trust badge                 │
+│ 📅 BOOK A SERVICE                       │
+│ [Ride img] [Service img] [Whisperer img]│
+├─────────────────────────────────────────┤
+│ 🌿 CONNECT WITH PROVIDERS              │
+│ [Farmer img] [Homesteader] [Manufactur] │
+│  (links to /providers?type=farmer etc.) │
+├─────────────────────────────────────────┤
+│ 🌱 BECOME A PROVIDER                    │
+│ [Driver img] [Services img] [Whisp img] │
+│ [Farmer img] [Homest img] [Manuf img]   │
+│  (2 rows of 3, all image-backed cards)  │
+├─────────────────────────────────────────┤
+│ [ Register as Provider ]                │
+│ [ Browse All Providers → ]              │
+│ 🔒 Escrow badge                        │
 └─────────────────────────────────────────┘
 ```
 
-- Each subtype card is a clickable image card (same `h-[100px]`, rounded-2xl, with photo background + dark gradient overlay + icon + title + subtitle) — identical to the Gig "Book a Service" row
-- Clicking a subtype card navigates to `/register-provider?type=farmer` (pre-selects the subtype)
-- Section header uses theme styling like GigActionCards (icon + title + subtitle)
-- Accept `theme: DashboardTheme` prop to match surrounding sections
-- Keep the two buttons and escrow badge below
+Every row uses the same image-card style (h-[100px], rounded-2xl, photo background + dark gradient overlay + icon + title + subtitle) — exactly like the screenshot.
 
-### 3. Update `InlineMemryFeed.tsx`
-Pass the `theme` prop to `ProviderActionCard` (or use a default theme if rendered in feed context).
+## Changes
 
-### 4. Image sourcing
-Use royalty-free placeholder images. If no suitable images are available locally, use simple gradient fallbacks initially.
+### 1. Edit `GigActionCards.tsx`
+- Rename header: "Gig Services" → "Services"
+- Keep "Book a Service" row (Ride, Service, Whisperer) as-is
+- Add "Connect with Providers" row: 3 image cards (Farmer/Homesteader/Manufacturer) linking to `/providers?type=farmer` etc.
+- Expand "Become a Provider" row: 6 image cards in 2 rows of 3 (Driver, Services, Whisperer + Farmer, Homesteader, Manufacturer)
+- Add Register/Browse buttons and EscrowBadge at bottom
+- Import provider images from `public/images/providers/`
+
+### 2. Delete `ProviderActionCard.tsx`
+Content absorbed into GigActionCards.
+
+### 3. Edit `InlineMemryFeed.tsx`
+Remove ProviderActionCard import and rendering.
+
+### 4. Edit `MemrySection.tsx`
+No changes needed — already renders GigActionCards.
 
