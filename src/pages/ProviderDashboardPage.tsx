@@ -287,12 +287,20 @@ export default function ProviderDashboardPage() {
             ))}
           </TabsContent>
 
-          <TabsContent value="earnings" className="mt-4">
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <TabsContent value="earnings" className="mt-4 space-y-4">
+            <EscrowBadge size="md" />
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
               <Card>
                 <CardContent className="p-6 text-center">
-                  <p className="text-sm text-muted-foreground">Total Earnings</p>
+                  <p className="text-sm text-muted-foreground">Released Earnings</p>
                   <p className="text-3xl font-bold text-primary">${totalEarnings.toFixed(2)}</p>
+                </CardContent>
+              </Card>
+              <Card>
+                <CardContent className="p-6 text-center">
+                  <p className="text-sm text-muted-foreground">In Escrow</p>
+                  <p className="text-3xl font-bold text-amber-600">${fundsInEscrow.toFixed(2)}</p>
+                  <p className="text-[10px] text-muted-foreground mt-1">Awaiting buyer confirmation</p>
                 </CardContent>
               </Card>
               <Card>
