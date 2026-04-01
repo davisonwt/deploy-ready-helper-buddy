@@ -30,7 +30,6 @@ import NotFound from "./pages/NotFound";
 import LoginPage from "./pages/LoginPage";
 import RegisterPage from "./pages/RegisterPage";
 const PasswordResetSupportPage = lazy(() => import("./pages/PasswordResetSupportPage"));
-const ResetPasswordPage = lazy(() => import("./pages/ResetPasswordPage"));
 const SecurityQuestionsSetupPage = lazy(() => import("./pages/SecurityQuestionsSetupPage"));
 
 // DEFERRED LOADING: All other pages lazy loaded
@@ -299,11 +298,6 @@ const App = () => (
               <Route path="/password-reset-support" element={
                 <Suspense fallback={<LoadingFallback />}>
                   <PasswordResetSupportPage />
-                </Suspense>
-              } />
-              <Route path="/reset-password" element={
-                <Suspense fallback={<LoadingFallback />}>
-                  <ResetPasswordPage />
                 </Suspense>
               } />
               <Route path="/security-questions-setup" element={

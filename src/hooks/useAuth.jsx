@@ -287,7 +287,7 @@ export class AuthProviderClass extends React.Component {
 
   resetPassword = async (email) => {
     try {
-      const redirectTo = `${window.location.origin}/reset-password`
+      const redirectTo = `${window.location.origin}/login?reset=true`
       const { error } = await this.withRetry(() => supabase.auth.resetPasswordForEmail(email, { redirectTo }))
       if (error) {
         return { success: true, message: "If an account exists with that email, you will receive a reset link." }
