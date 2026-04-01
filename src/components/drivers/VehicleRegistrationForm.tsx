@@ -64,6 +64,8 @@ const formSchema = z.object({
   distanceUnit: z.enum(distanceUnits).optional(),
   vehicleType: z.string().min(1, 'Please select a vehicle type'),
   vehicleDescription: z.string().min(10, 'Please provide at least 10 characters').max(500, 'Description too long'),
+  maxPassengers: z.number().min(1, 'At least 1 passenger').max(50).optional(),
+  maxCargoKg: z.number().min(1).max(50000).optional(),
   noIncomeConfirmed: z.boolean().refine(val => val === true, {
     message: 'You must confirm this declaration to proceed'
   }),
