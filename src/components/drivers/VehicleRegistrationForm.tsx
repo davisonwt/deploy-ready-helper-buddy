@@ -149,6 +149,8 @@ const VehicleRegistrationForm: React.FC = () => {
           distanceUnit: (data as any).distance_unit || 'km',
           vehicleType: data.vehicle_type,
           vehicleDescription: data.vehicle_description,
+          maxPassengers: (data as any).max_passengers || undefined,
+          maxCargoKg: (data as any).max_cargo_kg || undefined,
           noIncomeConfirmed: data.no_income_confirmed,
           termsAccepted: true,
         });
