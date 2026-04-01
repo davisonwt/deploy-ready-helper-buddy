@@ -8,7 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
-import { Car, Wrench, Ear, MapPin, Clock, Loader2, CalendarIcon } from 'lucide-react';
+import { Car, Wrench, Ear, MapPin, Clock, Loader2, CalendarIcon, Users } from 'lucide-react';
 import { useCreateBooking } from '@/hooks/useGigBookings';
 import { useSearchProviders } from '@/hooks/useGigBookings';
 import { toast } from 'sonner';
@@ -51,6 +51,7 @@ export const GigBookingModal: React.FC<GigBookingModalProps> = ({
   const [estimatedHours, setEstimatedHours] = useState('1');
   const [isRoundTrip, setIsRoundTrip] = useState(false);
   const [customerNotes, setCustomerNotes] = useState('');
+  const [passengerCount, setPassengerCount] = useState('1');
 
   const selectedDatetime = useMemo(() => {
     if (!pickupDate || !pickupTime) return undefined;
@@ -214,6 +215,27 @@ export const GigBookingModal: React.FC<GigBookingModalProps> = ({
             </div>
 
             <DateTimePicker />
+
+            <div className="space-y-2">
+              <Label className="text-xs font-semibold">Number of Passengers</Label>
+              <div className="relative">
+                <Users className="absolute left-3 top-2.5 w-4 h-4 text-muted-foreground" />
+                <Input
+                  type="number"
+                  min="1"
+                  max="50"
+                  value={passengerCount}
+                  onChange={(e) => setPassengerCount(e.target.value)}
+                  className="pl-9"
+                  placeholder="How many passengers?"
+                />
+              </div>
+              {drivers.length > 0 && (
+                <p className="text-xs text-muted-foreground">
+                  {drivers.filter((d: any) => !d.max_passengers || d.max_passengers >= parseInt(passengerCount || '1')).length} driver(s) can accommodate {passengerCount} passenger(s)
+                </p>
+              )}
+            </div>
 
             <div className="flex items-center gap-2">
               <input
