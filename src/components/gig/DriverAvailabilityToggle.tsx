@@ -86,7 +86,7 @@ export const DriverAvailabilityToggle: React.FC<DriverAvailabilityToggleProps> =
           await supabase.rpc('insert_system_chat_message', {
             p_room_id: actualRoomId,
             p_content: message,
-            p_metadata: { type: 'driver_unavailable' },
+            p_system_metadata: { type: 'driver_unavailable' },
           });
         }
       }
