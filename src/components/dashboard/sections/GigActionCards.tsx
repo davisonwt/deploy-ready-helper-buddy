@@ -16,6 +16,9 @@ import whispererBecomeImg from '/images/gig/whisperer-become.jpg';
 import farmerImg from '/images/providers/farmer.jpg';
 import homesteaderImg from '/images/providers/homesteader.jpg';
 import manufacturerImg from '/images/providers/manufacturer.jpg';
+import connectFarmerImg from '/images/providers/connect-farmer.jpg';
+import connectHomesteaderImg from '/images/providers/connect-homesteader.jpg';
+import connectManufacturerImg from '/images/providers/connect-manufacturer.jpg';
 
 interface GigActionCardsProps {
   theme: DashboardTheme;
