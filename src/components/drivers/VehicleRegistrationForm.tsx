@@ -567,7 +567,7 @@ const VehicleRegistrationForm: React.FC = () => {
                       <FormLabel>Vehicle Description *</FormLabel>
                       <FormControl>
                         <Textarea
-                          placeholder="Describe your vehicle (make, model, year, capacity, any special features...)"
+                          placeholder="Describe your vehicle (make, model, year, any special features...)"
                           className="min-h-[120px]"
                           {...field}
                         />
@@ -579,6 +579,53 @@ const VehicleRegistrationForm: React.FC = () => {
                     </FormItem>
                   )}
                 />
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <FormField
+                    control={form.control}
+                    name="maxPassengers"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Max Passengers</FormLabel>
+                        <FormControl>
+                          <Input
+                            type="number"
+                            placeholder="e.g., 4"
+                            {...field}
+                            onChange={(e) => field.onChange(e.target.value ? parseInt(e.target.value) : undefined)}
+                            value={field.value ?? ''}
+                          />
+                        </FormControl>
+                        <FormDescription>
+                          How many passengers can ride?
+                        </FormDescription>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="maxCargoKg"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Max Cargo Weight (kg)</FormLabel>
+                        <FormControl>
+                          <Input
+                            type="number"
+                            placeholder="e.g., 500"
+                            {...field}
+                            onChange={(e) => field.onChange(e.target.value ? parseFloat(e.target.value) : undefined)}
+                            value={field.value ?? ''}
+                          />
+                        </FormControl>
+                        <FormDescription>
+                          Max load for parcels, sand, stone, etc.
+                        </FormDescription>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
               </div>
             )}
 
