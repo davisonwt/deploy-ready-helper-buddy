@@ -6,12 +6,10 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Calendar } from '@/components/ui/calendar';
 import { Car, Wrench, Ear, MapPin, Clock, Loader2 } from 'lucide-react';
 import { useCreateBooking } from '@/hooks/useGigBookings';
 import { useSearchProviders } from '@/hooks/useGigBookings';
 import { toast } from 'sonner';
-import { format } from 'date-fns';
 
 interface GigBookingModalProps {
   open: boolean;
@@ -23,7 +21,7 @@ export const GigBookingModal: React.FC<GigBookingModalProps> = ({
   open, onOpenChange, initialTab = 'ride',
 }) => {
   const [activeTab, setActiveTab] = useState(initialTab);
-  const [selectedDate, setSelectedDate] = useState<Date>();
+  const [pickupDatetime, setPickupDatetime] = useState('');
   const [pickupAddress, setPickupAddress] = useState('');
   const [dropoffAddress, setDropoffAddress] = useState('');
   const [serviceCategory, setServiceCategory] = useState('');
@@ -31,6 +29,13 @@ export const GigBookingModal: React.FC<GigBookingModalProps> = ({
   const [estimatedHours, setEstimatedHours] = useState('1');
   const [isRoundTrip, setIsRoundTrip] = useState(false);
   const [customerNotes, setCustomerNotes] = useState('');
+
+  // Minimum datetime is now (for the native input)
+  const minDatetime = new Date(Date.now() - new Date().getTimezoneOffset() * 60000)
+    .toISOString()
+    .slice(0, 16);
+
+  const selectedDate = pickupDatetime ? new Date(pickupDatetime) : undefined;
 
   const createBooking = useCreateBooking();
   const { data: driversData } = useSearchProviders('driver');
@@ -136,14 +141,18 @@ export const GigBookingModal: React.FC<GigBookingModalProps> = ({
             </div>
 
             <div className="space-y-2">
-              <Label className="text-xs font-semibold">Date</Label>
-              <Calendar
-                mode="single"
-                selected={selectedDate}
-                onSelect={setSelectedDate}
-                className="rounded-md border"
-                disabled={(date) => date < new Date()}
-              />
+              <Label className="text-xs font-semibold">Date & Time</Label>
+              <div className="relative">
+                <Clock className="absolute left-3 top-2.5 w-4 h-4 text-muted-foreground" />
+                <Input
+                  type="datetime-local"
+                  value={pickupDatetime}
+                  min={minDatetime}
+                  onChange={(e) => setPickupDatetime(e.target.value)}
+                  className="pl-9"
+                  required
+                />
+              </div>
             </div>
 
             <div className="flex items-center gap-2">
@@ -247,14 +256,18 @@ export const GigBookingModal: React.FC<GigBookingModalProps> = ({
             </div>
 
             <div className="space-y-2">
-              <Label className="text-xs font-semibold">Preferred Date</Label>
-              <Calendar
-                mode="single"
-                selected={selectedDate}
-                onSelect={setSelectedDate}
-                className="rounded-md border"
-                disabled={(date) => date < new Date()}
-              />
+              <Label className="text-xs font-semibold">Preferred Date & Time</Label>
+              <div className="relative">
+                <Clock className="absolute left-3 top-2.5 w-4 h-4 text-muted-foreground" />
+                <Input
+                  type="datetime-local"
+                  value={pickupDatetime}
+                  min={minDatetime}
+                  onChange={(e) => setPickupDatetime(e.target.value)}
+                  className="pl-9"
+                  required
+                />
+              </div>
             </div>
 
             {services.length > 0 && (
@@ -299,14 +312,18 @@ export const GigBookingModal: React.FC<GigBookingModalProps> = ({
             </div>
 
             <div className="space-y-2">
-              <Label className="text-xs font-semibold">Preferred Date</Label>
-              <Calendar
-                mode="single"
-                selected={selectedDate}
-                onSelect={setSelectedDate}
-                className="rounded-md border"
-                disabled={(date) => date < new Date()}
-              />
+              <Label className="text-xs font-semibold">Preferred Date & Time</Label>
+              <div className="relative">
+                <Clock className="absolute left-3 top-2.5 w-4 h-4 text-muted-foreground" />
+                <Input
+                  type="datetime-local"
+                  value={pickupDatetime}
+                  min={minDatetime}
+                  onChange={(e) => setPickupDatetime(e.target.value)}
+                  className="pl-9"
+                  required
+                />
+              </div>
             </div>
 
             <Button

@@ -31,20 +31,24 @@ Deno.serve(async (req) => {
   }
 
   try {
-    const { action, email, answer1, answer2, answer3, newPassword } = await req.json();
+    const { action, email, identifier, answer1, answer2, answer3, newPassword } = await req.json();
+
+    // Support both legacy "email" field and new "identifier" (username or email)
+    const lookupValue = (identifier || email || "").trim().toLowerCase();
+    const isEmail = lookupValue.includes("@");
 
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
     const clientIp = getClientIp(req);
-    const rateLimitIdentifier = `pw_reset:${email?.toLowerCase() || clientIp}`;
+    const rateLimitIdentifier = `pw_reset:${lookupValue || clientIp}`;
 
     // Action: get-questions - Returns security questions for an email
     if (action === "get-questions") {
-      if (!email) {
+      if (!lookupValue) {
         return new Response(
-          JSON.stringify({ error: "Email is required" }),
+          JSON.stringify({ error: "Username or email is required" }),
           { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
         );
       }
@@ -55,12 +59,15 @@ Deno.serve(async (req) => {
         return createRateLimitResponse(900);
       }
 
-      // Look up user via profiles table instead of listing all users
-      const { data: profileData } = await supabase
-        .from("profiles")
-        .select("user_id")
-        .ilike("email", email.trim())
-        .maybeSingle();
+      // Look up user via profiles table by email or username
+      let profileData: { user_id: string } | null = null;
+      if (isEmail) {
+        const { data } = await supabase.from("profiles").select("user_id").ilike("email", lookupValue).maybeSingle();
+        profileData = data;
+      } else {
+        const { data } = await supabase.from("profiles").select("user_id").ilike("username", lookupValue).maybeSingle();
+        profileData = data;
+      }
 
       let questions: { question_1: string; question_2: string; question_3: string } | null = null;
 
@@ -84,7 +91,7 @@ Deno.serve(async (req) => {
       if (!questions) {
         return new Response(
           JSON.stringify({
-            error: "If an account exists with this email and has security questions configured, they will be shown. Please verify your email address.",
+            error: "If an account exists with this username/email and has security questions configured, they will be shown. Please verify your details.",
           }),
           { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
         );
@@ -101,7 +108,7 @@ Deno.serve(async (req) => {
 
     // Action: verify-and-reset - Verify answers and reset password
     if (action === "verify-and-reset") {
-      if (!email || !answer1 || !answer2 || !answer3 || !newPassword) {
+      if (!lookupValue || !answer1 || !answer2 || !answer3 || !newPassword) {
         return new Response(
           JSON.stringify({ error: "All fields are required" }),
           { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
@@ -122,12 +129,15 @@ Deno.serve(async (req) => {
         return createRateLimitResponse(900);
       }
 
-      // Look up user via profiles table instead of listing all users
-      const { data: profileData } = await supabase
-        .from("profiles")
-        .select("user_id")
-        .ilike("email", email.trim())
-        .maybeSingle();
+      // Look up user via profiles table by email or username
+      let profileData: { user_id: string } | null = null;
+      if (isEmail) {
+        const { data } = await supabase.from("profiles").select("user_id").ilike("email", lookupValue).maybeSingle();
+        profileData = data;
+      } else {
+        const { data } = await supabase.from("profiles").select("user_id").ilike("username", lookupValue).maybeSingle();
+        profileData = data;
+      }
       
       if (!profileData?.user_id) {
         // Return same error as incorrect answers to prevent enumeration
@@ -164,7 +174,7 @@ Deno.serve(async (req) => {
         hash3 === securityData.answer_3_hash;
 
       if (!allCorrect) {
-        console.log(`Failed password reset attempt for ${email}: incorrect security answers`);
+        console.log(`Failed password reset attempt for ${lookupValue}: incorrect security answers`);
         return new Response(
           JSON.stringify({ error: "One or more security answers are incorrect. Please try again." }),
           { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
@@ -185,7 +195,7 @@ Deno.serve(async (req) => {
         );
       }
 
-      console.log(`Password successfully reset for ${email} via security questions`);
+      console.log(`Password successfully reset for ${lookupValue} via security questions`);
 
       return new Response(
         JSON.stringify({ 
