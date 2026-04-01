@@ -229,6 +229,8 @@ const VehicleRegistrationForm: React.FC = () => {
         vehicle_type: data.vehicleType,
         vehicle_description: data.vehicleDescription.trim(),
         vehicle_images: uploadedImageUrls,
+        max_passengers: data.maxPassengers || null,
+        max_cargo_kg: data.maxCargoKg || null,
         no_income_confirmed: data.noIncomeConfirmed,
         status: 'pending' as const,
         updated_at: new Date().toISOString(),
