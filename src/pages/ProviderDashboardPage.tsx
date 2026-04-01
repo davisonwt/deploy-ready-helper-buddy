@@ -229,10 +229,11 @@ export default function ProviderDashboardPage() {
           </TabsContent>
 
           <TabsContent value="orders" className="mt-4 space-y-4">
+            <EscrowBadge size="md" />
             {(!orders || orders.length === 0) && <p className="text-muted-foreground text-center py-8">No orders yet.</p>}
             {orders?.map((order: any) => (
               <Card key={order.id}>
-                <CardContent className="p-4 space-y-2">
+                <CardContent className="p-4 space-y-3">
                   <div className="flex justify-between items-start">
                     <div>
                       <p className="font-semibold text-foreground">Order #{order.id.slice(0, 8)}</p>
@@ -240,11 +241,36 @@ export default function ProviderDashboardPage() {
                       <p className="text-sm text-muted-foreground">Total: ${order.total_amount}</p>
                       {order.delivery_city && <p className="text-sm text-muted-foreground">📍 {order.delivery_city}, {order.delivery_country}</p>}
                     </div>
-                    <Badge variant={order.status === 'completed' ? 'default' : 'secondary'} className="capitalize">
-                      {order.status}
-                    </Badge>
+                    <div className="flex flex-col items-end gap-1">
+                      <Badge variant={order.status === 'completed' ? 'default' : 'secondary'} className="capitalize">
+                        {order.status?.replace('_', ' ')}
+                      </Badge>
+                      <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                        <Shield className="w-3 h-3" />
+                        <span className="capitalize">{order.escrow_status || 'pending'}</span>
+                      </div>
+                    </div>
                   </div>
-                  {nextStatus[order.status] && (
+                  {/* Order timeline */}
+                  <OrderTimeline status={order.status} />
+                  {/* Escrow info */}
+                  {order.escrow_status === 'held' && (
+                    <div className="flex items-center gap-2 p-2 rounded-xl bg-amber-50 dark:bg-amber-900/20 border border-amber-200/50 dark:border-amber-800/30">
+                      <Shield className="w-4 h-4 text-amber-600" />
+                      <span className="text-xs text-amber-700 dark:text-amber-400 font-medium">
+                        Funds in escrow — awaiting buyer confirmation
+                      </span>
+                    </div>
+                  )}
+                  {order.escrow_status === 'released' && (
+                    <div className="flex items-center gap-2 p-2 rounded-xl bg-green-50 dark:bg-green-900/20 border border-green-200/50 dark:border-green-800/30">
+                      <Shield className="w-4 h-4 text-green-600" />
+                      <span className="text-xs text-green-700 dark:text-green-400 font-medium">
+                        ✅ Funds released to your wallet
+                      </span>
+                    </div>
+                  )}
+                  {nextStatus[order.status] && order.escrow_status !== 'disputed' && (
                     <Button
                       size="sm"
                       onClick={() => updateOrderStatus.mutate({ orderId: order.id, newStatus: nextStatus[order.status] })}
