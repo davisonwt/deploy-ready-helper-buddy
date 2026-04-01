@@ -277,7 +277,7 @@ export const InlineMemryFeed: React.FC = () => {
           media_url: orchardMediaUrl,
           media: mediaPayload.media,
           image_urls: orchardImages.length > 0 ? orchardImages : undefined,
-          caption: `🌳 ORCHARD: ${o.name}`,
+          caption: `🌳 ORCHARD: ${o.title}`,
           likes_count: 0,
           comments_count: 0,
           orchard_id: o.id,
