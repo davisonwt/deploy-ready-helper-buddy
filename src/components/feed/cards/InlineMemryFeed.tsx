@@ -529,8 +529,7 @@ export const InlineMemryFeed: React.FC = () => {
       </div>
 
       <div className="space-y-4">
-        {/* Provider registration/discovery action card at top */}
-        <ProviderActionCard theme={undefined} />
+        {/* Provider cards now merged into Services section on dashboard */}
 
         {posts.map((post, idx) => (
           <React.Fragment key={post.id}>
