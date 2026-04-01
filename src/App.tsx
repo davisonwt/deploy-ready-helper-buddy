@@ -991,6 +991,13 @@ const App = () => (
                   </Layout>
                 </ProtectedRoute>
               } />
+              <Route path="/my-orders" element={
+                <ProtectedRoute>
+                  <Suspense fallback={<LoadingFallback />}>
+                    <BuyerOrdersPage />
+                  </Suspense>
+                </ProtectedRoute>
+              } />
 
               {/* Binance Pay test page removed - using NOWPayments only */}
               
