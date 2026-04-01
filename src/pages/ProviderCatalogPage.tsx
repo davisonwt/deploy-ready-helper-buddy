@@ -9,8 +9,9 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { toast } from '@/hooks/use-toast';
-import { MapPin, ShoppingBag, ArrowLeft } from 'lucide-react';
+import { MapPin, ShoppingBag, ArrowLeft, Shield } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { EscrowBadge } from '@/components/provider/EscrowBadge';
 
 const SUBTYPE_ICONS: Record<string, string> = { farmer: '🌾', homesteader: '🏡', manufacturer: '🏭' };
 const COMMISSION_RATE = 0.15;
@@ -66,8 +67,9 @@ export default function ProviderCatalogPage() {
       const subtotal = selectedProduct.price * quantity;
       const commission = subtotal * COMMISSION_RATE;
       const total = subtotal + courierFee;
+      const now = new Date().toISOString();
 
-      const { error } = await supabase.from('provider_orders').insert({
+      const { data: order, error } = await supabase.from('provider_orders').insert({
         provider_id: provider.id,
         product_id: selectedProduct.id,
         buyer_id: user.id,
@@ -80,12 +82,29 @@ export default function ProviderCatalogPage() {
         delivery_address: deliveryAddress.trim(),
         delivery_city: deliveryCity.trim(),
         delivery_country: deliveryCountry.trim(),
-      } as any);
+        escrow_status: 'held',
+        escrow_held_at: now,
+        status: 'pending',
+        payment_method: 'wallet',
+      } as any).select().single();
 
       if (error) throw error;
+
+      // Log escrow hold transaction
+      if (order) {
+        await supabase.from('provider_escrow_transactions' as any).insert({
+          order_id: order.id,
+          action: 'held',
+          amount: total,
+          from_wallet: 'buyer',
+          to_wallet: 's2g_escrow',
+          performed_by: user.id,
+          notes: `Escrow hold for order. Buyer pays $${total.toFixed(2)} into Sow2Grow escrow.`,
+        });
+      }
     },
     onSuccess: () => {
-      toast({ title: '🎉 Order Placed!', description: 'The provider will confirm your order soon.' });
+      toast({ title: '🎉 Order Placed!', description: 'Payment held in secure escrow until you confirm pickup.' });
       setOrderDialog(false);
       setSelectedProduct(null);
       setQuantity(1);
@@ -104,7 +123,6 @@ export default function ProviderCatalogPage() {
   return (
     <Layout>
       <div className="container mx-auto p-6 space-y-6 max-w-4xl">
-        {/* Back */}
         <Button variant="ghost" size="sm" onClick={() => navigate(-1)}>
           <ArrowLeft className="w-4 h-4 mr-1" /> Back
         </Button>
@@ -128,6 +146,9 @@ export default function ProviderCatalogPage() {
           </div>
         </div>
 
+        {/* Escrow trust badge */}
+        <EscrowBadge size="md" />
+
         {/* Products grid */}
         <h2 className="text-xl font-bold text-foreground">Products</h2>
         {(!products || products.length === 0) && (
@@ -148,6 +169,10 @@ export default function ProviderCatalogPage() {
                     {prod.stock > 0 ? `${prod.stock} available` : 'Out of stock'}
                   </Badge>
                 </div>
+                {/* Escrow badge per product */}
+                <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
+                  <Shield className="w-3 h-3" /> Escrow protected
+                </div>
                 <Button
                   className="w-full h-11"
                   disabled={prod.stock <= 0 || !user}
@@ -157,7 +182,7 @@ export default function ProviderCatalogPage() {
                     setOrderDialog(true);
                   }}
                 >
-                  <ShoppingBag className="w-4 h-4 mr-1" /> Order Now
+                  <ShoppingBag className="w-4 h-4 mr-1" /> Buy Direct
                 </Button>
               </CardContent>
             </Card>
@@ -176,6 +201,9 @@ export default function ProviderCatalogPage() {
                   <p className="font-bold text-foreground">{selectedProduct.title}</p>
                   <p className="text-primary font-semibold">${selectedProduct.price} each</p>
                 </div>
+
+                <EscrowBadge size="md" />
+
                 <div>
                   <label className="text-sm font-medium mb-1 block">Quantity</label>
                   <Input
@@ -210,6 +238,10 @@ export default function ProviderCatalogPage() {
                     <span>Total</span>
                     <span>${(subtotal + courierFee).toFixed(2)}</span>
                   </div>
+                  <div className="flex items-center gap-1.5 mt-2 pt-2 border-t text-xs text-muted-foreground">
+                    <Shield className="w-3 h-3" />
+                    Funds held in escrow — released only after you confirm pickup
+                  </div>
                 </div>
 
                 <Button
@@ -217,7 +249,7 @@ export default function ProviderCatalogPage() {
                   onClick={() => placeOrder.mutate()}
                   disabled={placeOrder.isPending || !deliveryCity.trim() || !deliveryCountry.trim()}
                 >
-                  {placeOrder.isPending ? 'Placing Order...' : `Place Order — $${(subtotal + courierFee).toFixed(2)}`}
+                  {placeOrder.isPending ? 'Placing Order...' : `Pay & Hold in Escrow — $${(subtotal + courierFee).toFixed(2)}`}
                 </Button>
               </div>
             )}
