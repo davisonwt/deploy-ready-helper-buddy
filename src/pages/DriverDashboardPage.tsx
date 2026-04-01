@@ -18,6 +18,8 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
+import { DriverAvailabilityToggle } from '@/components/gig/DriverAvailabilityToggle';
+import { useDriverLocationBroadcast } from '@/hooks/useDriverLocationBroadcast';
 
 interface QuoteRequest {
   id: string;
