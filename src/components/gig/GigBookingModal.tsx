@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -6,10 +6,31 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Car, Wrench, Ear, MapPin, Clock, Loader2 } from 'lucide-react';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Calendar } from '@/components/ui/calendar';
+import { Car, Wrench, Ear, MapPin, Clock, Loader2, CalendarIcon } from 'lucide-react';
 import { useCreateBooking } from '@/hooks/useGigBookings';
 import { useSearchProviders } from '@/hooks/useGigBookings';
 import { toast } from 'sonner';
+import { format } from 'date-fns';
+import { cn } from '@/lib/utils';
+
+// Generate time slots from 5:00 AM to 11:45 PM in 15-min intervals
+function generateTimeSlots(): { value: string; label: string }[] {
+  const slots: { value: string; label: string }[] = [];
+  for (let h = 5; h <= 23; h++) {
+    for (let m = 0; m < 60; m += 15) {
+      const h12 = h % 12 === 0 ? 12 : h % 12;
+      const ampm = h < 12 ? 'AM' : 'PM';
+      const label = `${h12}:${m.toString().padStart(2, '0')} ${ampm}`;
+      const value = `${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}`;
+      slots.push({ value, label });
+    }
+  }
+  return slots;
+}
+
+const TIME_SLOTS = generateTimeSlots();
 
 interface GigBookingModalProps {
   open: boolean;
@@ -21,7 +42,8 @@ export const GigBookingModal: React.FC<GigBookingModalProps> = ({
   open, onOpenChange, initialTab = 'ride',
 }) => {
   const [activeTab, setActiveTab] = useState(initialTab);
-  const [pickupDatetime, setPickupDatetime] = useState('');
+  const [pickupDate, setPickupDate] = useState<Date | undefined>();
+  const [pickupTime, setPickupTime] = useState('');
   const [pickupAddress, setPickupAddress] = useState('');
   const [dropoffAddress, setDropoffAddress] = useState('');
   const [serviceCategory, setServiceCategory] = useState('');
@@ -30,12 +52,13 @@ export const GigBookingModal: React.FC<GigBookingModalProps> = ({
   const [isRoundTrip, setIsRoundTrip] = useState(false);
   const [customerNotes, setCustomerNotes] = useState('');
 
-  // Minimum datetime is now (for the native input)
-  const minDatetime = new Date(Date.now() - new Date().getTimezoneOffset() * 60000)
-    .toISOString()
-    .slice(0, 16);
-
-  const selectedDate = pickupDatetime ? new Date(pickupDatetime) : undefined;
+  const selectedDatetime = useMemo(() => {
+    if (!pickupDate || !pickupTime) return undefined;
+    const [hours, minutes] = pickupTime.split(':').map(Number);
+    const dt = new Date(pickupDate);
+    dt.setHours(hours, minutes, 0, 0);
+    return dt;
+  }, [pickupDate, pickupTime]);
 
   const createBooking = useCreateBooking();
   const { data: driversData } = useSearchProviders('driver');
@@ -44,9 +67,59 @@ export const GigBookingModal: React.FC<GigBookingModalProps> = ({
   const drivers = driversData?.data || [];
   const services = servicesData?.data || [];
 
+  const DateTimePicker = () => (
+    <div className="space-y-3">
+      <div className="space-y-2">
+        <Label className="text-xs font-semibold">Date</Label>
+        <Popover>
+          <PopoverTrigger asChild>
+            <Button
+              variant="outline"
+              className={cn(
+                "w-full justify-start text-left font-normal",
+                !pickupDate && "text-muted-foreground"
+              )}
+            >
+              <CalendarIcon className="mr-2 h-4 w-4" />
+              {pickupDate ? format(pickupDate, "PPP") : <span>Pick a date</span>}
+            </Button>
+          </PopoverTrigger>
+          <PopoverContent className="w-auto p-0" align="start">
+            <Calendar
+              mode="single"
+              selected={pickupDate}
+              onSelect={setPickupDate}
+              disabled={(date) => date < new Date(new Date().setHours(0, 0, 0, 0))}
+              initialFocus
+              className={cn("p-3 pointer-events-auto")}
+            />
+          </PopoverContent>
+        </Popover>
+      </div>
+      <div className="space-y-2">
+        <Label className="text-xs font-semibold">Time</Label>
+        <Select value={pickupTime} onValueChange={setPickupTime}>
+          <SelectTrigger>
+            <div className="flex items-center gap-2">
+              <Clock className="w-4 h-4 text-muted-foreground" />
+              <SelectValue placeholder="Select a time" />
+            </div>
+          </SelectTrigger>
+          <SelectContent className="max-h-60">
+            {TIME_SLOTS.map((slot) => (
+              <SelectItem key={slot.value} value={slot.value}>
+                {slot.label}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+    </div>
+  );
+
   const handleSubmitRide = () => {
-    if (!pickupAddress || !selectedDate) {
-      toast.error('Please fill pickup address and select a date');
+    if (!pickupAddress || !selectedDatetime) {
+      toast.error('Please fill pickup address, date and time');
       return;
     }
 
@@ -56,7 +129,7 @@ export const GigBookingModal: React.FC<GigBookingModalProps> = ({
       provider_type: 'driver',
       pickup_address: pickupAddress,
       dropoff_address: dropoffAddress,
-      pickup_datetime: selectedDate.toISOString(),
+      pickup_datetime: selectedDatetime.toISOString(),
       is_round_trip: isRoundTrip,
       estimated_duration_min: 60,
       estimated_distance_km: 20,
@@ -68,7 +141,7 @@ export const GigBookingModal: React.FC<GigBookingModalProps> = ({
   };
 
   const handleSubmitService = () => {
-    if (!serviceCategory || !selectedDate || !jobDescription) {
+    if (!serviceCategory || !selectedDatetime || !jobDescription) {
       toast.error('Please fill all required service fields');
       return;
     }
@@ -78,7 +151,7 @@ export const GigBookingModal: React.FC<GigBookingModalProps> = ({
       provider_id: services[0]?.user_id || '',
       provider_type: 'service_provider',
       pickup_address: pickupAddress,
-      pickup_datetime: selectedDate.toISOString(),
+      pickup_datetime: selectedDatetime.toISOString(),
       estimated_duration_min: parseInt(estimatedHours) * 60,
       estimated_fare: parseInt(estimatedHours) * 30,
       service_details: {
@@ -140,20 +213,7 @@ export const GigBookingModal: React.FC<GigBookingModalProps> = ({
               </div>
             </div>
 
-            <div className="space-y-2">
-              <Label className="text-xs font-semibold">Date & Time</Label>
-              <div className="relative">
-                <Clock className="absolute left-3 top-2.5 w-4 h-4 text-muted-foreground" />
-                <Input
-                  type="datetime-local"
-                  value={pickupDatetime}
-                  min={minDatetime}
-                  onChange={(e) => setPickupDatetime(e.target.value)}
-                  className="pl-9"
-                  required
-                />
-              </div>
-            </div>
+            <DateTimePicker />
 
             <div className="flex items-center gap-2">
               <input
@@ -255,20 +315,7 @@ export const GigBookingModal: React.FC<GigBookingModalProps> = ({
               </div>
             </div>
 
-            <div className="space-y-2">
-              <Label className="text-xs font-semibold">Preferred Date & Time</Label>
-              <div className="relative">
-                <Clock className="absolute left-3 top-2.5 w-4 h-4 text-muted-foreground" />
-                <Input
-                  type="datetime-local"
-                  value={pickupDatetime}
-                  min={minDatetime}
-                  onChange={(e) => setPickupDatetime(e.target.value)}
-                  className="pl-9"
-                  required
-                />
-              </div>
-            </div>
+            <DateTimePicker />
 
             {services.length > 0 && (
               <div className="p-3 rounded-lg bg-muted/50">
@@ -311,32 +358,19 @@ export const GigBookingModal: React.FC<GigBookingModalProps> = ({
               />
             </div>
 
-            <div className="space-y-2">
-              <Label className="text-xs font-semibold">Preferred Date & Time</Label>
-              <div className="relative">
-                <Clock className="absolute left-3 top-2.5 w-4 h-4 text-muted-foreground" />
-                <Input
-                  type="datetime-local"
-                  value={pickupDatetime}
-                  min={minDatetime}
-                  onChange={(e) => setPickupDatetime(e.target.value)}
-                  className="pl-9"
-                  required
-                />
-              </div>
-            </div>
+            <DateTimePicker />
 
             <Button
               onClick={() => {
-                if (!jobDescription || !selectedDate) {
-                  toast.error('Please describe your prayer request and select a date');
+                if (!jobDescription || !selectedDatetime) {
+                  toast.error('Please describe your prayer request and select date & time');
                   return;
                 }
                 createBooking.mutate({
                   booking_type: 'service',
                   provider_id: '',
                   provider_type: 'service_provider',
-                  pickup_datetime: selectedDate.toISOString(),
+                  pickup_datetime: selectedDatetime.toISOString(),
                   estimated_duration_min: 30,
                   estimated_fare: 0,
                   service_details: {
