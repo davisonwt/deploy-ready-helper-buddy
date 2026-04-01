@@ -53,6 +53,7 @@ export const GigBookingModal: React.FC<GigBookingModalProps> = ({
   const [estimatedHours, setEstimatedHours] = useState('1');
   const [isRoundTrip, setIsRoundTrip] = useState(false);
   const [customerNotes, setCustomerNotes] = useState('');
+  const [passengerCount, setPassengerCount] = useState('1');
 
   const selectedDatetime = useMemo(() => {
     if (!pickupDate || !pickupTime) return undefined;
