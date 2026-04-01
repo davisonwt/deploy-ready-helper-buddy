@@ -59,8 +59,8 @@ export const AppShell: React.FC<AppShellProps> = ({
 
         {/* Left drawer — full sidebar navigation */}
         <Sheet open={leftOpen} onOpenChange={setLeftOpen}>
-          <SheetContent side="left" className="w-[85vw] max-w-[300px] p-0 bg-card overflow-hidden h-full">
-            <div onClick={() => setLeftOpen(false)} className="h-full overflow-y-auto">
+          <SheetContent side="left" className="flex h-[100dvh] w-[85vw] max-w-[300px] flex-col overflow-hidden bg-card p-0">
+            <div onClick={() => setLeftOpen(false)} className="min-h-0 flex-1 overflow-y-auto overscroll-contain">
               <AppSidebar radioLive={radioLive} />
             </div>
           </SheetContent>

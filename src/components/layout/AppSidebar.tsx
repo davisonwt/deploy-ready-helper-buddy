@@ -44,7 +44,7 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({ radioLive, userProfile }
     .toUpperCase();
 
   return (
-    <div className="flex flex-col h-full py-4 overflow-hidden">
+    <div className="flex h-full min-h-0 flex-col py-4 overflow-hidden">
       {/* Logo + User */}
       <div className="px-3 mb-5">
         <NavLink to="/dashboard" className="flex items-center gap-2 mb-3">
@@ -67,7 +67,7 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({ radioLive, userProfile }
       </div>
 
       {/* Nav Items — gradient cards */}
-      <nav className="flex-1 px-2 space-y-2 overflow-y-auto">
+      <nav className="min-h-0 flex-1 overflow-y-auto px-2 space-y-2 overscroll-contain">
         {navItems.map((item) => {
           const Icon = item.icon;
           return (
@@ -123,30 +123,30 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({ radioLive, userProfile }
       )}
 
       {/* Action Buttons */}
-      <div className="px-2 pt-3 flex gap-2">
+      <div className="grid shrink-0 grid-cols-3 gap-2 px-2 pt-3">
         <button
           onClick={() => setPlantModalOpen(true)}
-          className="flex-1 h-9 rounded-lg flex items-center justify-center gap-1.5 text-white text-xs font-semibold transition-opacity hover:opacity-90"
+          className="flex h-8 min-w-0 items-center justify-center gap-1 rounded-lg px-1 text-[10px] font-semibold leading-none text-white transition-opacity hover:opacity-90 sm:h-9 sm:gap-1.5 sm:px-2 sm:text-xs"
           style={{ backgroundColor: '#1D9E75' }}
         >
-          <Sprout className="w-3.5 h-3.5" />
-          Plant
+          <Sprout className="h-3 w-3 shrink-0 sm:h-3.5 sm:w-3.5" />
+          <span className="truncate whitespace-nowrap">Plant</span>
         </button>
         <button
           onClick={() => navigate('/communications-hub?tab=radio&create=1')}
-          className="flex-1 h-9 rounded-lg flex items-center justify-center gap-1.5 text-white text-xs font-semibold transition-opacity hover:opacity-90"
+          className="flex h-8 min-w-0 items-center justify-center gap-1 rounded-lg px-1 text-[10px] font-semibold leading-none text-white transition-opacity hover:opacity-90 sm:h-9 sm:gap-1.5 sm:px-2 sm:text-xs"
           style={{ backgroundColor: '#E24B4A' }}
         >
-          <Video className="w-3.5 h-3.5" />
-          Go Live
+          <Video className="h-3 w-3 shrink-0 sm:h-3.5 sm:w-3.5" />
+          <span className="truncate whitespace-nowrap">Go Live</span>
         </button>
         <button
           onClick={() => navigate('/communications-hub')}
-          className="flex-1 h-9 rounded-lg flex items-center justify-center gap-1.5 text-white text-xs font-semibold transition-opacity hover:opacity-90"
+          className="flex h-8 min-w-0 items-center justify-center gap-1 rounded-lg px-1 text-[10px] font-semibold leading-none text-white transition-opacity hover:opacity-90 sm:h-9 sm:gap-1.5 sm:px-2 sm:text-xs"
           style={{ backgroundColor: '#0E9BAA' }}
         >
-          <MessageCircle className="w-3.5 h-3.5" />
-          Chat
+          <MessageCircle className="h-3 w-3 shrink-0 sm:h-3.5 sm:w-3.5" />
+          <span className="truncate whitespace-nowrap">Chat</span>
         </button>
       </div>
 
