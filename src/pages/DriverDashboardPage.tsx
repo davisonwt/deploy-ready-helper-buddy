@@ -222,9 +222,19 @@ const DriverDashboardPage: React.FC = () => {
               </Badge>
             )}
           </div>
-        </div>
+          </div>
 
-        {/* Stats Cards */}
+          {/* Availability Toggle */}
+          {driverProfile && user && (
+            <DriverAvailabilityToggle
+              isOnline={driverProfile.is_online ?? false}
+              driverName={driverProfile.full_name}
+              userId={user.id}
+              onStatusChange={(online) => setDriverProfile({ ...driverProfile, is_online: online })}
+            />
+          )}
+
+          {/* Stats Cards */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
           <Card>
             <CardContent className="pt-6">
