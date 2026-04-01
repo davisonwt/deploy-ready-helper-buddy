@@ -28,6 +28,8 @@ interface Driver {
   city?: string;
   service_areas?: string[];
   delivery_radius_km?: number;
+  max_passengers?: number;
+  max_cargo_kg?: number;
 }
 
 interface DriverCardProps {
