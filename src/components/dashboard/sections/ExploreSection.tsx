@@ -78,6 +78,11 @@ export const ExploreSection: React.FC<ExploreSectionProps> = ({ theme }) => {
               <Wrench className="w-3.5 h-3.5" /> Services
             </Button>
           </Link>
+          <Link to="/stays">
+            <Button size="sm" className={btnClass} style={btnStyle}>
+              <BedDouble className="w-3.5 h-3.5" /> Stays
+            </Button>
+          </Link>
         </div>
       </div>
     </div>
