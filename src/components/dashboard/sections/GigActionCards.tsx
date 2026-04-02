@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Car, Wrench, Ear, HandHeart, Sprout, ArrowRight } from 'lucide-react';
+import { Car, Wrench, Ear, HandHeart, Sprout, ArrowRight, BedDouble } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { DashboardTheme } from '@/utils/dashboardThemes';
 import { GradientGatewayCard } from './GradientGatewayCard';
@@ -38,6 +38,7 @@ export const GigActionCards: React.FC<GigActionCardsProps> = ({ theme }) => {
     { key: 'ride', icon: Car, label: 'Ride', desc: 'Book a driver', img: rideBookImg, onClick: () => openBooking('ride') },
     { key: 'service', icon: Wrench, label: 'Service', desc: 'Tribal skills', img: serviceBookImg, onClick: () => openBooking('service') },
     { key: 'whisperer', icon: Ear, label: 'Whisperer', desc: 'Marketing help', img: whispererBookImg, onClick: () => openBooking('whisperer') },
+    { key: 'stays', icon: BedDouble, label: 'Stays', desc: 'Holiday & stays', img: '/images/gig/stays-book.jpg', onClick: () => navigate('/stays') },
   ];
 
   const connectCards = [
@@ -50,6 +51,7 @@ export const GigActionCards: React.FC<GigActionCardsProps> = ({ theme }) => {
     { icon: Car, label: 'Driver', desc: 'Register vehicle', img: driverBecomeImg, href: '/register-vehicle' },
     { icon: Wrench, label: 'Services', desc: 'Offer your skills', img: servicesBecomeImg, href: '/register-services' },
     { icon: Ear, label: 'Whisperer', desc: 'Content & marketing', img: whispererBecomeImg, href: '/become-whisperer' },
+    { icon: BedDouble, label: 'Stays', desc: 'List your property', img: '/images/gig/stays-become.jpg', href: '/list-your-stay' },
     { emoji: '🌾', label: 'Farmer', desc: 'Grow & sell', img: farmerImg, href: '/register-provider?type=farmer' },
     { emoji: '🏡', label: 'Homesteader', desc: 'Handmade goods', img: homesteaderImg, href: '/register-provider?type=homesteader' },
     { emoji: '🏭', label: 'Manufacturer', desc: 'Produce at scale', img: manufacturerImg, href: '/register-provider?type=manufacturer' },
@@ -80,7 +82,7 @@ export const GigActionCards: React.FC<GigActionCardsProps> = ({ theme }) => {
           <p className="text-[11px] font-semibold mb-2 uppercase tracking-wider" style={{ color: theme.textSecondary }}>
             📅 Book a Service
           </p>
-          <div className="grid grid-cols-3 gap-2">
+          <div className="grid grid-cols-4 gap-2">
             {bookCards.map((card) => (
               <button
                 key={card.key}
