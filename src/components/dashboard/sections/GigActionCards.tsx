@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Car, Wrench, Ear, HandHeart, Sprout, ArrowRight } from 'lucide-react';
+import { Car, Wrench, Ear, HandHeart, Sprout, ArrowRight, BedDouble } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { DashboardTheme } from '@/utils/dashboardThemes';
 import { GradientGatewayCard } from './GradientGatewayCard';
