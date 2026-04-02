@@ -953,7 +953,45 @@ const App = () => (
                 </ProtectedRoute>
               } />
 
-              <Route path="/service-provider-dashboard" element={
+              {/* Wandering Pillow - Holiday Stays */}
+              <Route path="/stays" element={
+                <ProtectedRoute>
+                  <Layout>
+                    <Suspense fallback={<LoadingFallback />}>
+                      <StaysDiscoveryPage />
+                    </Suspense>
+                  </Layout>
+                </ProtectedRoute>
+              } />
+              <Route path="/stays/:id" element={
+                <ProtectedRoute>
+                  <Layout>
+                    <Suspense fallback={<LoadingFallback />}>
+                      <StayDetailPage />
+                    </Suspense>
+                  </Layout>
+                </ProtectedRoute>
+              } />
+              <Route path="/list-your-stay" element={
+                <ProtectedRoute>
+                  <Layout>
+                    <Suspense fallback={<LoadingFallback />}>
+                      <ListYourStayPage />
+                    </Suspense>
+                  </Layout>
+                </ProtectedRoute>
+              } />
+              <Route path="/sower-stays-dashboard" element={
+                <ProtectedRoute>
+                  <Layout>
+                    <Suspense fallback={<LoadingFallback />}>
+                      <SowerStaysDashboard />
+                    </Suspense>
+                  </Layout>
+                </ProtectedRoute>
+              } />
+
+
                 <ProtectedRoute>
                   <Layout>
                     <Suspense fallback={<LoadingFallback />}>
