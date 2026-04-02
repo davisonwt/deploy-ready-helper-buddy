@@ -1,5 +1,5 @@
 import React from 'react';
-import { Compass, Music, BookOpen, MessageSquare, Megaphone, Car, Wrench } from 'lucide-react';
+import { Compass, Music, BookOpen, MessageSquare, Megaphone, Car, Wrench, BedDouble } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { DashboardTheme } from '@/utils/dashboardThemes';
