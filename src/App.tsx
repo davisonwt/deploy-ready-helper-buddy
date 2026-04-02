@@ -170,6 +170,12 @@ const CommunityServicesPage = lazy(() => import("./pages/CommunityServicesPage")
 const ServiceProviderDashboardPage = lazy(() => import("./pages/ServiceProviderDashboardPage"));
 const MyServiceRequestsPage = lazy(() => import("./pages/MyServiceRequestsPage"));
 
+// Wandering Pillow - Holiday Stays
+const StaysDiscoveryPage = lazy(() => import("./pages/StaysDiscoveryPage"));
+const StayDetailPage = lazy(() => import("./pages/StayDetailPage"));
+const ListYourStayPage = lazy(() => import("./pages/ListYourStayPage"));
+const SowerStaysDashboard = lazy(() => import("./pages/SowerStaysDashboard"));
+
 // Providers (Farmers / Homesteaders / Manufacturers)
 const RegisterProviderPage = lazy(() => import("./pages/RegisterProviderPage"));
 const ProviderDashboardPage = lazy(() => import("./pages/ProviderDashboardPage"));
@@ -942,6 +948,44 @@ const App = () => (
                   <Layout>
                     <Suspense fallback={<LoadingFallback />}>
                       <CommunityServicesPage />
+                    </Suspense>
+                  </Layout>
+                </ProtectedRoute>
+              } />
+
+              {/* Wandering Pillow - Holiday Stays */}
+              <Route path="/stays" element={
+                <ProtectedRoute>
+                  <Layout>
+                    <Suspense fallback={<LoadingFallback />}>
+                      <StaysDiscoveryPage />
+                    </Suspense>
+                  </Layout>
+                </ProtectedRoute>
+              } />
+              <Route path="/stays/:id" element={
+                <ProtectedRoute>
+                  <Layout>
+                    <Suspense fallback={<LoadingFallback />}>
+                      <StayDetailPage />
+                    </Suspense>
+                  </Layout>
+                </ProtectedRoute>
+              } />
+              <Route path="/list-your-stay" element={
+                <ProtectedRoute>
+                  <Layout>
+                    <Suspense fallback={<LoadingFallback />}>
+                      <ListYourStayPage />
+                    </Suspense>
+                  </Layout>
+                </ProtectedRoute>
+              } />
+              <Route path="/sower-stays-dashboard" element={
+                <ProtectedRoute>
+                  <Layout>
+                    <Suspense fallback={<LoadingFallback />}>
+                      <SowerStaysDashboard />
                     </Suspense>
                   </Layout>
                 </ProtectedRoute>

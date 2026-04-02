@@ -1,5 +1,5 @@
 import React from 'react';
-import { Compass, Music, BookOpen, MessageSquare, Megaphone, Car, Wrench } from 'lucide-react';
+import { Compass, Music, BookOpen, MessageSquare, Megaphone, Car, Wrench, BedDouble } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { DashboardTheme } from '@/utils/dashboardThemes';
@@ -76,6 +76,11 @@ export const ExploreSection: React.FC<ExploreSectionProps> = ({ theme }) => {
           <Link to="/register-services">
             <Button size="sm" className={btnClass} style={btnStyle}>
               <Wrench className="w-3.5 h-3.5" /> Services
+            </Button>
+          </Link>
+          <Link to="/stays">
+            <Button size="sm" className={btnClass} style={btnStyle}>
+              <BedDouble className="w-3.5 h-3.5" /> Stays
             </Button>
           </Link>
         </div>

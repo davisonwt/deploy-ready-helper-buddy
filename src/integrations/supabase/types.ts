@@ -8028,6 +8028,410 @@ export type Database = {
         }
         Relationships: []
       }
+      stay_availability: {
+        Row: {
+          custom_price: number | null
+          date: string
+          id: string
+          is_available: boolean | null
+          notes: string | null
+          unit_id: string
+        }
+        Insert: {
+          custom_price?: number | null
+          date: string
+          id?: string
+          is_available?: boolean | null
+          notes?: string | null
+          unit_id: string
+        }
+        Update: {
+          custom_price?: number | null
+          date?: string
+          id?: string
+          is_available?: boolean | null
+          notes?: string | null
+          unit_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "stay_availability_unit_id_fkey"
+            columns: ["unit_id"]
+            isOneToOne: false
+            referencedRelation: "stay_units"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      stay_bookings: {
+        Row: {
+          check_in: string
+          check_out: string
+          created_at: string
+          currency: string
+          guest_email: string | null
+          guest_id: string
+          guest_name: string | null
+          guest_phone: string | null
+          guests_count: number
+          id: string
+          listing_id: string
+          payment_reference: string | null
+          payment_status: string | null
+          sower_id: string
+          sower_message: string | null
+          special_requests: string | null
+          status: string
+          total_price: number
+          unit_id: string
+          updated_at: string
+        }
+        Insert: {
+          check_in: string
+          check_out: string
+          created_at?: string
+          currency?: string
+          guest_email?: string | null
+          guest_id: string
+          guest_name?: string | null
+          guest_phone?: string | null
+          guests_count?: number
+          id?: string
+          listing_id: string
+          payment_reference?: string | null
+          payment_status?: string | null
+          sower_id: string
+          sower_message?: string | null
+          special_requests?: string | null
+          status?: string
+          total_price: number
+          unit_id: string
+          updated_at?: string
+        }
+        Update: {
+          check_in?: string
+          check_out?: string
+          created_at?: string
+          currency?: string
+          guest_email?: string | null
+          guest_id?: string
+          guest_name?: string | null
+          guest_phone?: string | null
+          guests_count?: number
+          id?: string
+          listing_id?: string
+          payment_reference?: string | null
+          payment_status?: string | null
+          sower_id?: string
+          sower_message?: string | null
+          special_requests?: string | null
+          status?: string
+          total_price?: number
+          unit_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "stay_bookings_listing_id_fkey"
+            columns: ["listing_id"]
+            isOneToOne: false
+            referencedRelation: "stay_listings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "stay_bookings_unit_id_fkey"
+            columns: ["unit_id"]
+            isOneToOne: false
+            referencedRelation: "stay_units"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      stay_listings: {
+        Row: {
+          activities: string[] | null
+          address: string | null
+          amenities: string[] | null
+          avg_rating: number | null
+          business_name: string
+          cancellation_policy: string | null
+          check_in_time: string | null
+          check_out_time: string | null
+          city: string | null
+          country: string
+          cover_photo: string | null
+          created_at: string
+          description: string | null
+          farm_produce: string[] | null
+          house_rules: string | null
+          id: string
+          is_featured: boolean | null
+          latitude: number | null
+          linked_orchard_id: string | null
+          longitude: number | null
+          pet_friendly: boolean | null
+          photos: string[] | null
+          property_type: string
+          province: string | null
+          short_description: string | null
+          sower_id: string
+          status: string
+          total_reviews: number | null
+          updated_at: string
+        }
+        Insert: {
+          activities?: string[] | null
+          address?: string | null
+          amenities?: string[] | null
+          avg_rating?: number | null
+          business_name: string
+          cancellation_policy?: string | null
+          check_in_time?: string | null
+          check_out_time?: string | null
+          city?: string | null
+          country?: string
+          cover_photo?: string | null
+          created_at?: string
+          description?: string | null
+          farm_produce?: string[] | null
+          house_rules?: string | null
+          id?: string
+          is_featured?: boolean | null
+          latitude?: number | null
+          linked_orchard_id?: string | null
+          longitude?: number | null
+          pet_friendly?: boolean | null
+          photos?: string[] | null
+          property_type?: string
+          province?: string | null
+          short_description?: string | null
+          sower_id: string
+          status?: string
+          total_reviews?: number | null
+          updated_at?: string
+        }
+        Update: {
+          activities?: string[] | null
+          address?: string | null
+          amenities?: string[] | null
+          avg_rating?: number | null
+          business_name?: string
+          cancellation_policy?: string | null
+          check_in_time?: string | null
+          check_out_time?: string | null
+          city?: string | null
+          country?: string
+          cover_photo?: string | null
+          created_at?: string
+          description?: string | null
+          farm_produce?: string[] | null
+          house_rules?: string | null
+          id?: string
+          is_featured?: boolean | null
+          latitude?: number | null
+          linked_orchard_id?: string | null
+          longitude?: number | null
+          pet_friendly?: boolean | null
+          photos?: string[] | null
+          property_type?: string
+          province?: string | null
+          short_description?: string | null
+          sower_id?: string
+          status?: string
+          total_reviews?: number | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      stay_reviews: {
+        Row: {
+          booking_id: string
+          created_at: string
+          host_response: string | null
+          id: string
+          listing_id: string
+          rating: number
+          review_text: string | null
+          reviewer_id: string
+          updated_at: string
+        }
+        Insert: {
+          booking_id: string
+          created_at?: string
+          host_response?: string | null
+          id?: string
+          listing_id: string
+          rating: number
+          review_text?: string | null
+          reviewer_id: string
+          updated_at?: string
+        }
+        Update: {
+          booking_id?: string
+          created_at?: string
+          host_response?: string | null
+          id?: string
+          listing_id?: string
+          rating?: number
+          review_text?: string | null
+          reviewer_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "stay_reviews_booking_id_fkey"
+            columns: ["booking_id"]
+            isOneToOne: false
+            referencedRelation: "stay_bookings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "stay_reviews_listing_id_fkey"
+            columns: ["listing_id"]
+            isOneToOne: false
+            referencedRelation: "stay_listings"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      stay_seasonal_pricing: {
+        Row: {
+          created_at: string
+          end_date: string
+          id: string
+          min_nights: number | null
+          price_per_night: number
+          season_name: string
+          start_date: string
+          unit_id: string
+        }
+        Insert: {
+          created_at?: string
+          end_date: string
+          id?: string
+          min_nights?: number | null
+          price_per_night: number
+          season_name: string
+          start_date: string
+          unit_id: string
+        }
+        Update: {
+          created_at?: string
+          end_date?: string
+          id?: string
+          min_nights?: number | null
+          price_per_night?: number
+          season_name?: string
+          start_date?: string
+          unit_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "stay_seasonal_pricing_unit_id_fkey"
+            columns: ["unit_id"]
+            isOneToOne: false
+            referencedRelation: "stay_units"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      stay_units: {
+        Row: {
+          amenities: string[] | null
+          bathrooms: number | null
+          bedrooms: number | null
+          beds_description: string | null
+          created_at: string
+          currency: string
+          description: string | null
+          id: string
+          is_active: boolean | null
+          listing_id: string
+          max_guests: number
+          name: string
+          photos: string[] | null
+          price_per_night: number
+          unit_type: string | null
+          updated_at: string
+          weekend_price: number | null
+        }
+        Insert: {
+          amenities?: string[] | null
+          bathrooms?: number | null
+          bedrooms?: number | null
+          beds_description?: string | null
+          created_at?: string
+          currency?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean | null
+          listing_id: string
+          max_guests?: number
+          name: string
+          photos?: string[] | null
+          price_per_night?: number
+          unit_type?: string | null
+          updated_at?: string
+          weekend_price?: number | null
+        }
+        Update: {
+          amenities?: string[] | null
+          bathrooms?: number | null
+          bedrooms?: number | null
+          beds_description?: string | null
+          created_at?: string
+          currency?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean | null
+          listing_id?: string
+          max_guests?: number
+          name?: string
+          photos?: string[] | null
+          price_per_night?: number
+          unit_type?: string | null
+          updated_at?: string
+          weekend_price?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "stay_units_listing_id_fkey"
+            columns: ["listing_id"]
+            isOneToOne: false
+            referencedRelation: "stay_listings"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      stay_wishlists: {
+        Row: {
+          created_at: string
+          id: string
+          listing_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          listing_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          listing_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "stay_wishlists_listing_id_fkey"
+            columns: ["listing_id"]
+            isOneToOne: false
+            referencedRelation: "stay_listings"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       stream_analytics: {
         Row: {
           event_data: Json | null
