@@ -82,7 +82,7 @@ export const GigActionCards: React.FC<GigActionCardsProps> = ({ theme }) => {
           <p className="text-[11px] font-semibold mb-2 uppercase tracking-wider" style={{ color: theme.textSecondary }}>
             📅 Book a Service
           </p>
-          <div className="grid grid-cols-3 gap-2">
+          <div className="grid grid-cols-4 gap-2">
             {bookCards.map((card) => (
               <button
                 key={card.key}
