@@ -991,7 +991,7 @@ const App = () => (
                 </ProtectedRoute>
               } />
 
-
+              <Route path="/service-provider-dashboard" element={
                 <ProtectedRoute>
                   <Layout>
                     <Suspense fallback={<LoadingFallback />}>
