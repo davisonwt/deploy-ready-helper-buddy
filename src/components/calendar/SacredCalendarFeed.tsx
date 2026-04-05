@@ -77,6 +77,18 @@ function DayInfoPanel({ year, month, day, theme, enochianDate }: {
 }) {
   const navigate = useNavigate();
   const feast = getFeastDayName(month, day);
+
+  // Calculate Gregorian date for this YHWH date
+  const EPOCH_DATE = new Date(2025, 2, 20);
+  const monthDays = [30, 30, 31, 30, 30, 31, 30, 30, 31, 30, 30, 31];
+  let daysFromEpoch = 0;
+  const yearDiff = year - 6029;
+  daysFromEpoch += yearDiff * 364;
+  for (let i = 0; i < month - 1; i++) daysFromEpoch += monthDays[i];
+  daysFromEpoch += day - 1;
+  const gregorianDate = new Date(EPOCH_DATE);
+  gregorianDate.setDate(gregorianDate.getDate() + daysFromEpoch);
+  const gregFormatted = `${gregorianDate.getFullYear()}/${String(gregorianDate.getMonth() + 1).padStart(2, '0')}/${String(gregorianDate.getDate()).padStart(2, '0')}`;
   const noteKey = `M${month}_D${day}`;
   const dayNotes = sacredCalendarNotes?.[noteKey];
   const isSabbath = enochianDate?.weekDay === 7;
@@ -92,8 +104,11 @@ function DayInfoPanel({ year, month, day, theme, enochianDate }: {
         <div className="text-xs mt-1" style={{ color: theme.textSecondary }}>
           Month {month} • Year {year}
         </div>
-        <div className="text-xs" style={{ color: theme.textSecondary }}>
+        <div className="text-xs mt-1" style={{ color: theme.textSecondary }}>
           {TRIBES[month - 1]} • Part {enochianDate?.part || 1}/18
+        </div>
+        <div className="text-[10px] mt-0.5" style={{ color: theme.textSecondary, opacity: 0.7 }}>
+          Gregorian: {gregFormatted}
         </div>
       </div>
 
