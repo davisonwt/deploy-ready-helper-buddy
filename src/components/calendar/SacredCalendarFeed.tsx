@@ -82,7 +82,7 @@ function DayInfoPanel({ year, month, day, theme, enochianDate }: {
   const EPOCH_DATE = new Date(2025, 2, 20);
   const monthDays = [30, 30, 31, 30, 30, 31, 30, 30, 31, 30, 30, 31];
   let daysFromEpoch = 0;
-  const yearDiff = year - 6029;
+  const yearDiff = year - 6028;
   daysFromEpoch += yearDiff * 364;
   for (let i = 0; i < month - 1; i++) daysFromEpoch += monthDays[i];
   daysFromEpoch += day - 1;
