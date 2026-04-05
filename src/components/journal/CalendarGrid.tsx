@@ -491,7 +491,7 @@ export default function CalendarGrid({ entries: propEntries, onDateSelect }: Cal
                   </div>
 
                   {/* Gregorian date */}
-                  <div className="text-[9px] sm:text-[10px] text-muted-foreground leading-tight">
+                  <div className="text-[7px] sm:text-[8px] text-muted-foreground/70 leading-tight">
                     {day.gregorianDate.getFullYear()}/{String(day.gregorianDate.getMonth() + 1).padStart(2, '0')}/{String(day.gregorianDate.getDate()).padStart(2, '0')}
                   </div>
 
