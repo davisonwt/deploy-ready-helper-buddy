@@ -469,7 +469,7 @@ export default function CalendarGrid({ entries: propEntries, onDateSelect }: Cal
                   }
                 }}
                 className={`
-                  aspect-square p-2 rounded-lg border-2 transition-all
+                  min-h-[70px] sm:min-h-[90px] p-1 sm:p-2 rounded-lg border-2 transition-all w-full
                   ${isDotDay ? 'border-purple-500/60 bg-purple-900/30 hover:bg-purple-900/50' : ''}
                   ${!isDotDay && isToday ? 'border-primary bg-primary/10' : !isDotDay ? 'border-border' : ''}
                   ${!isDotDay && day.hasEntry ? 'bg-success/10 hover:bg-success/20' : !isDotDay ? 'hover:bg-muted/50' : ''}
@@ -478,61 +478,42 @@ export default function CalendarGrid({ entries: propEntries, onDateSelect }: Cal
                   ${!isDotDay && feastInfo ? 'ring-1 ring-cyan-400/60' : ''}
                   ${!isDotDay && isTequvahDay ? 'ring-2 ring-amber-500/50' : ''}
                 `}
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
+                whileHover={{ scale: 1.03 }}
+                whileTap={{ scale: 0.97 }}
               >
-                <div className="flex flex-col items-center justify-center h-full">
-                  {/* Day label */}
+                <div className="flex flex-col items-center justify-start h-full gap-0.5">
+                  {/* Day number */}
                   <div className={`
-                    text-lg font-bold mb-1
+                    text-sm sm:text-lg font-bold
                     ${isDotDay ? 'text-purple-300' : isToday ? 'text-primary' : 'text-foreground'}
                   `}>
                     {day.displayLabel || day.yhwhDate.day}
                   </div>
 
-                  {/* Gregorian date - SECONDARY */}
-                  <div className="text-xs text-muted-foreground text-center leading-tight">
-                    <div className="font-semibold">
-                      {day.gregorianDate.getFullYear()}/{String(day.gregorianDate.getMonth() + 1).padStart(2, '0')}/{String(day.gregorianDate.getDate()).padStart(2, '0')}
-                    </div>
+                  {/* Gregorian date */}
+                  <div className="text-[9px] sm:text-[10px] text-muted-foreground leading-tight">
+                    {day.gregorianDate.getFullYear()}/{String(day.gregorianDate.getMonth() + 1).padStart(2, '0')}/{String(day.gregorianDate.getDate()).padStart(2, '0')}
                   </div>
 
-                  {/* Indicators */}
-                  <div className="flex gap-1 mt-1 flex-wrap justify-center">
+                  {/* Compact indicators */}
+                  <div className="flex gap-0.5 mt-0.5 flex-wrap justify-center items-center">
                     {day.hasEntry && (
-                      <BookOpen className="h-3 w-3 text-success" />
+                      <BookOpen className="h-2.5 w-2.5 sm:h-3 sm:w-3 text-success" />
                     )}
                     {day.birthdays && day.birthdays.length > 0 && (
-                      <Badge className="bg-pink-500/20 text-pink-700 text-[8px] px-1 py-0" title={day.birthdays.map(b => b.person_name).join(', ')}>
-                        🎂 {day.birthdays.length}
-                      </Badge>
-                    )}
-                    {isShabbatDay && (
-                      <Badge className="bg-yellow-500/20 text-yellow-700 text-[8px] px-1 py-0">
-                        S
-                      </Badge>
+                      <span className="text-[8px]" title={day.birthdays.map(b => b.person_name).join(', ')}>🎂</span>
                     )}
                     {feastInfo && (
-                      <Badge
-                        className="bg-cyan-400/40 text-cyan-200 font-bold text-[9px] px-1.5 py-0 border border-cyan-400/80"
-                        title={feastInfo.name}
-                      >
-                        🕎 {feastInfo.name.length <= 8 ? feastInfo.name : 'F'}
-                      </Badge>
-                    )}
-                    {isTequvahDay && (
-                      <Badge className="bg-amber-500/20 text-amber-700 text-[8px] px-1 py-0">
-                        T
-                      </Badge>
+                      <span className="text-[8px]" title={feastInfo.name}>🕎</span>
                     )}
                     {(omerCount || []).map((oc, oi) => (
-                      <Badge 
+                      <span 
                         key={oi}
-                        className={`bg-black/30 font-bold text-[8px] px-1 py-0 border border-current ${oc.color}`}
-                        title={`${oc.label} Day ${oc.count}${oc.count % 7 === 0 ? ' (Sabbath ' + (oc.count / 7) + ')' : ''}`}
+                        className={`text-[7px] sm:text-[8px] font-bold ${oc.color}`}
+                        title={`${oc.label} Day ${oc.count}`}
                       >
-                        {oc.count}{oc.count % 7 === 0 ? '🕎' : ''}
-                      </Badge>
+                        {oc.count}
+                      </span>
                     ))}
                   </div>
                 </div>
