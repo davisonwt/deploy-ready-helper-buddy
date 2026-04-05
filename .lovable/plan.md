@@ -1,85 +1,63 @@
 
 
-# Gig Booking System — Driver Notifications, Live Tracking, Fair Distribution & Availability
+# Explainer Videos for S2G Platform — Each Feature, Its Own Video
 
-This plan covers 5 interconnected features for the ride booking system.
+## Overview
 
----
-
-## 1. Booking Notifications via ChatApp
-
-**What happens now:** When a booking is created, it's saved to the database but no notification is sent to the driver.
-
-**What we'll build:** After a booking is created in the `gig-bookings` edge function, send a ChatApp message to the driver using the existing `get_or_create_direct_room` + `insert_system_chat_message` RPCs (same pattern used for bestowal notifications).
-
-**Changes:**
-- **`supabase/functions/gig-bookings/index.ts`** — After the booking insert succeeds, look up the GoSat system user, create/get a direct room with the driver, and send a system message with booking details (pickup, dropoff, time, passenger count).
-- **Broadcast to eligible drivers** — When `provider_id` is empty or booking uses "find nearest" mode, query all approved drivers whose `max_passengers >= requested passengers`, then notify each via ChatApp. First driver to accept gets the booking.
+We'll create a series of animated MP4 explainer videos using **Remotion** (code-based motion graphics), each covering a distinct feature of the S2G platform. Each video will be 15-25 seconds, rendered at 1920x1080, with a consistent S2G brand aesthetic across all videos.
 
 ---
 
-## 2. Passenger-Based Driver Matching
+## Visual Direction
 
-**What happens now:** The booking modal sends to `drivers[0]` (first driver returned). No filtering by capacity.
-
-**What we'll build:**
-- **`gig-bookings` edge function `/search`** — Add `min_passengers` query param to filter `community_drivers` where `max_passengers >= min_passengers`.
-- **`GigBookingModal.tsx`** — Pass `passengerCount` into the booking payload as `service_details.passenger_count`. When creating a ride booking without a specific driver, set `provider_id` to empty and let the backend broadcast to eligible drivers.
-
----
-
-## 3. Live Driver Map (ETA tracking)
-
-**What we'll build:** A map component shown after a booking is confirmed, displaying the driver's live location and estimated arrival time.
-
-**Database changes:**
-- Add `last_location_updated_at` timestamp column to `community_drivers` (the table already has `current_lat` and `current_lng`).
-
-**New files:**
-- **`src/components/gig/DriverTrackingMap.tsx`** — Uses Leaflet (free, no API key) to render a map with driver pin and customer pin. Subscribes to Supabase Realtime on the `community_drivers` table filtered by driver ID for live `current_lat`/`current_lng` updates. Shows estimated distance/time using Haversine formula.
-
-**Driver-side location updates:**
-- **`src/hooks/useDriverLocationBroadcast.ts`** — When a driver has an active `in_progress` booking, uses `navigator.geolocation.watchPosition` to push location updates to `community_drivers.current_lat/lng` every 15 seconds.
+- **Palette**: Warm terracotta (`#B85042`), deep forest green (`#2C5F2D`), sandy cream (`#E7E8D1`), ochre gold (`#D4A843`), dark navy (`#001f3f`)
+- **Fonts**: Display: Playfair Display (warm, grounded). Body: Inter (clean, modern)
+- **Motion style**: Smooth spring-based reveals, card fly-ins, icon animations, text staggers
+- **Motifs**: Seed/sprout iconography, earth-tone gradients, organic rounded shapes
+- **Structure per video**: Hook title (2s) → Feature walkthrough with animated mockups (10-18s) → Closing tagline with S2G branding (3s)
 
 ---
 
-## 4. Fair Booking Distribution (Round-Robin)
+## Videos to Create (10 total)
 
-**What we'll build:** A scoring system so drivers who have had fewer recent bookings get priority.
-
-**Database changes:**
-- Add `booking_score` (integer, default 0) column to `community_drivers` — incremented each time a driver gets a booking, periodically reset.
-
-**Logic in `gig-bookings` edge function:**
-- When broadcasting a new ride request, sort eligible drivers by `booking_score ASC` (fewest bookings first), then by `rating DESC` as tiebreaker.
-- After a booking is confirmed, increment that driver's `booking_score`.
-- Add a simple daily reset: when checking scores, ignore bookings older than 24 hours (or use a scheduled function to reset weekly).
-
----
-
-## 5. Driver Unavailability Notification to S2G
-
-**What we'll build:** A button/toggle on the driver dashboard that marks them unavailable for the day and sends a ChatApp notification to S2G (GoSat system account).
-
-**Changes:**
-- **`src/components/gig/DriverAvailabilityToggle.tsx`** (new) — A toggle component. When a driver switches to "unavailable," it:
-  1. Updates `community_drivers.is_online = false`
-  2. Calls the `gig-availability` edge function to mark the date unavailable
-  3. Sends a ChatApp message to the GoSat system user: "🚗 [Driver Name] is not available today [date]. Reason: [optional reason]"
-- **Driver dashboard integration** — Add this toggle to the driver's booking management area.
+| # | Video | Duration | Key Visuals |
+|---|-------|----------|-------------|
+| 1 | **Platform Overview** — What is S2G? | ~20s | Community montage, feature icons flying in, tagline |
+| 2 | **Marketplace & Products** — Buy & sell as a Sower | ~20s | Product cards, basket flow, Sower profile |
+| 3 | **Services & Gig Booking** — Rides, skills, whisperers | ~20s | Service cards, booking modal mockup, driver tracking |
+| 4 | **The Wandering Pillow (Stays)** — Holiday marketplace | ~20s | Stay cards, discovery filters, booking flow |
+| 5 | **ChatApp & Communications** — Voice, video, messaging | ~20s | Chat bubbles, voice/video icons, DM flow |
+| 6 | **Radio & Music** — Grove Station, 364 TTT | ~20s | Radio player mockup, music waveform, live sessions |
+| 7 | **Training & Skill Drops** — Learning rooms | ~20s | Classroom cards, skill-drop icons, certificate |
+| 8 | **Sacred Calendar (YHVH Days)** — Enochian calendar | ~20s | Calendar grid animation, feast day highlights |
+| 9 | **GoSat Wallet & Tithing** — Financial features | ~20s | Wallet cards, tithe flow, earnings dashboard |
+| 10 | **AI Assistant & Tools** — AI-powered features | ~20s | Chat stream animation, sparkle effects, tool cards |
 
 ---
 
-## Technical Summary
+## Technical Approach
 
-| Area | Files Changed |
-|------|--------------|
-| Booking notifications | `supabase/functions/gig-bookings/index.ts` |
-| Driver matching | `supabase/functions/gig-bookings/index.ts`, `GigBookingModal.tsx` |
-| Live tracking map | New: `DriverTrackingMap.tsx`, `useDriverLocationBroadcast.ts`. Migration for `last_location_updated_at` |
-| Fair distribution | Migration for `booking_score`. Edge function logic |
-| Unavailability | New: `DriverAvailabilityToggle.tsx`. Uses existing edge functions + ChatApp RPCs |
-| Runtime error fix | Fix the current import error in `GigBookingModal.tsx` |
+1. **Set up a single Remotion project** in `remotion/` with shared brand components (background, title scene, closing scene)
+2. **Each video gets its own composition** registered in `Root.tsx` — can render them individually
+3. **Shared components**: `BrandBackground.tsx`, `TitleScene.tsx`, `ClosingScene.tsx`, `FeatureCard.tsx`, `IconReveal.tsx`
+4. **Render each video** via the programmatic render script to `/mnt/documents/` as separate MP4s (e.g., `s2g-explainer-01-overview.mp4`)
+5. **Frame checks** via `bunx remotion still` before full renders
 
-**Dependencies:** Leaflet + react-leaflet (already commonly available, free map tiles from OpenStreetMap — no API key needed).
+---
+
+## Implementation Order
+
+Due to rendering time constraints (~600s timeout per command), we'll build and render videos in batches:
+
+- **Batch 1**: Set up project + shared components, render videos 1-3
+- **Batch 2**: Render videos 4-6
+- **Batch 3**: Render videos 7-10
+
+Each video render takes ~1-2 minutes. We'll spot-check key frames before committing to full renders.
+
+---
+
+## Deliverables
+
+10 downloadable MP4 files in `/mnt/documents/`, each a self-contained explainer for one feature of the S2G platform, all sharing a cohesive S2G brand identity.
 
