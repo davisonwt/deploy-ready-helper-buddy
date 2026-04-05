@@ -431,7 +431,7 @@ export default function CalendarGrid({ entries: propEntries, onDateSelect }: Cal
         )}
 
         {/* Calendar Grid */}
-        <div className="grid grid-cols-7 gap-2">
+        <div className="grid grid-cols-7 gap-1 sm:gap-2">
           {/* Weekday headers */}
           {WEEKDAYS.map((day) => (
             <div
