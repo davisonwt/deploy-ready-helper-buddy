@@ -104,8 +104,11 @@ function DayInfoPanel({ year, month, day, theme, enochianDate }: {
         <div className="text-xs mt-1" style={{ color: theme.textSecondary }}>
           Month {month} • Year {year}
         </div>
-        <div className="text-xs" style={{ color: theme.textSecondary }}>
+        <div className="text-xs mt-1" style={{ color: theme.textSecondary }}>
           {TRIBES[month - 1]} • Part {enochianDate?.part || 1}/18
+        </div>
+        <div className="text-[10px] mt-0.5" style={{ color: theme.textSecondary, opacity: 0.7 }}>
+          Gregorian: {gregFormatted}
         </div>
       </div>
 
