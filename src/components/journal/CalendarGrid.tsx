@@ -436,7 +436,7 @@ export default function CalendarGrid({ entries: propEntries, onDateSelect }: Cal
           {WEEKDAYS.map((day) => (
             <div
               key={day}
-              className="text-center font-semibold text-muted-foreground py-2 text-sm"
+              className="text-center font-semibold text-muted-foreground py-1 sm:py-2 text-[10px] sm:text-sm truncate"
             >
               {day}
             </div>
