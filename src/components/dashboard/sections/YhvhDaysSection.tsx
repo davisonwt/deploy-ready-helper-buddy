@@ -1,5 +1,6 @@
 import React from 'react';
 import { Calendar, Gem, CircleDot, BookOpen } from 'lucide-react';
+import { OmerCountBanner } from '@/components/OmerCountBanner';
 import { DashboardTheme } from '@/utils/dashboardThemes';
 import { SabbathDashboardBanner } from '@/components/SabbathDashboardBanner';
 import SecurityQuestionsAlert from '@/components/auth/SecurityQuestionsAlert';
@@ -55,6 +56,9 @@ export const YhvhDaysSection: React.FC<YhvhDaysSectionProps> = ({
         <SecurityQuestionsAlert />
         <SabbathDashboardBanner />
       </div>
+
+      {/* Omer Count */}
+      <OmerCountBanner theme={theme} />
 
       {/* Gateway Cards */}
       <div className="grid grid-cols-2 gap-3">

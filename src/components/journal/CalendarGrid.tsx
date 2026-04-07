@@ -7,48 +7,17 @@ import { Badge } from '../ui/badge';
 import { calculateCreatorDate } from '@/utils/dashboardCalendar';
 import { getDaysOutOfTimeCount } from '@/utils/customCalendar';
 import { getFeastInfo } from '@/utils/gardenRestDays';
+import { getOmerCounts } from '@/utils/omerCount';
+
+function getOmerCount(month: number, day: number) {
+  return getOmerCounts(month, day).map(c => ({ count: c.count, label: c.shortLabel, color: c.color }));
+}
 import {
   calculateYhwhDateFromCivilDate,
   parseLocalDateKey,
   hasMeaningfulJournalEntry,
 } from '@/utils/journalDateMapping';
 import { JournalEntry } from './Journal';
-
-/**
- * Calculate the 50-day count number for Omer→Shavuot, →New Wine, →New Oil
- * Returns { count, label } or null if day is not in any count period.
- * 
- * Omer to Shavuot:   M1 D26 (day 1) → M3 D15 (day 50)
- * Count to New Wine:  M3 D15 (day 1) → M5 D3  (day 50)  ← day 50 of Omer = day 1 of Wine
- * Count to New Oil:   M5 D3  (day 1) → M6 D22 (day 50)  ← day 50 of Wine = day 1 of Oil
- */
-function getOmerCount(month: number, day: number): { count: number; label: string; color: string }[] {
-  const MONTH_DAYS = [30, 30, 31, 30, 30, 31, 30, 30, 31, 30, 30, 31];
-  
-  let dayOfYear = 0;
-  for (let m = 0; m < month - 1; m++) dayOfYear += MONTH_DAYS[m];
-  dayOfYear += day;
-  
-  // Omer start: M1 D26 = day 26
-  const omerStart = 26;
-  // New Wine start: M3 D15 = 30+30+15 = 75 (= omer day 50)
-  const newWineStart = 75;
-  // New Oil start: M5 D3 = 30+30+31+30+3 = 124 (= wine day 50)
-  const newOilStart = 124;
-  
-  const results: { count: number; label: string; color: string }[] = [];
-  
-  if (dayOfYear >= omerStart && dayOfYear < omerStart + 50) {
-    results.push({ count: dayOfYear - omerStart + 1, label: 'Omer', color: 'text-amber-400' });
-  }
-  if (dayOfYear >= newWineStart && dayOfYear < newWineStart + 50) {
-    results.push({ count: dayOfYear - newWineStart + 1, label: 'Wine', color: 'text-rose-400' });
-  }
-  if (dayOfYear >= newOilStart && dayOfYear < newOilStart + 50) {
-    results.push({ count: dayOfYear - newOilStart + 1, label: 'Oil', color: 'text-emerald-400' });
-  }
-  return results;
-}
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { BirthdayManager } from './BirthdayManager';

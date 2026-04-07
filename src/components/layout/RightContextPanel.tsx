@@ -1,5 +1,6 @@
 import React from 'react';
 import { Calendar, Sprout, Users, Radio, Leaf } from 'lucide-react';
+import { OmerCountBanner } from '@/components/OmerCountBanner';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -110,6 +111,9 @@ export const RightContextPanel: React.FC<RightContextPanelProps> = ({
           <p className="text-xs text-muted-foreground">Loading calendar…</p>
         )}
       </div>
+
+      {/* Omer Count */}
+      <OmerCountBanner compact />
 
       {/* Garden Tip */}
       <div className="rounded-xl bg-card/80 border border-border/20 p-3">

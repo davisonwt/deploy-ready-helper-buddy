@@ -11,6 +11,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { useNavigate } from 'react-router-dom';
 import { GardenGuideSection } from '@/components/garden/GardenGuideSection';
+import { OmerCountBanner } from '@/components/OmerCountBanner';
 import RemnantsWheelCalendar from '@/components/watch/RemnantsWheelCalendar';
 import {
   Month1Strand, Month2Strand, Month3Strand, Month4Strand,
@@ -355,6 +356,11 @@ export default function SacredCalendarFeed() {
           </div>
         </div>
       </motion.div>
+
+      {/* ─── Omer Count ─── */}
+      <div className="mx-auto max-w-2xl px-4 mb-3">
+        <OmerCountBanner theme={theme} />
+      </div>
 
       {/* ─── View Toggle ─── */}
       <div className="mx-auto max-w-2xl px-4 mb-3">

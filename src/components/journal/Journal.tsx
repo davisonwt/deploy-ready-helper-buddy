@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
+import { OmerCountBanner } from '@/components/OmerCountBanner';
 import { motion } from 'framer-motion';
 import { 
   BookOpen, 
@@ -404,6 +405,9 @@ export default function Journal({ initialYhwhYear, initialYhwhMonth, initialYhwh
           Export
         </Button>
       </div>
+
+      {/* Omer Count */}
+      <OmerCountBanner />
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
         <TabsList className="gap-4">
