@@ -112,6 +112,9 @@ export const RightContextPanel: React.FC<RightContextPanelProps> = ({
         )}
       </div>
 
+      {/* Omer Count */}
+      <OmerCountBanner compact />
+
       {/* Garden Tip */}
       <div className="rounded-xl bg-card/80 border border-border/20 p-3">
         <div className="flex items-center gap-2 mb-2">
