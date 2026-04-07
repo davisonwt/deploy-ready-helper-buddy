@@ -1,5 +1,6 @@
 import React from 'react';
 import { Calendar, Sprout, Users, Radio, Leaf } from 'lucide-react';
+import { OmerCountBanner } from '@/components/OmerCountBanner';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 
