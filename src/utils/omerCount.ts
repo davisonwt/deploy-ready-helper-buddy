@@ -22,11 +22,11 @@ function toDayOfYear(month: number, day: number): number {
   return d + day;
 }
 
-// Omer starts on M1 D19 (day 19)
-const OMER_START = toDayOfYear(1, 19);        // day 19
-const SHAVUOT_START = OMER_START + 49;        // day 68  (Omer day 50 = Wine day 1)
-const NEW_WINE_START = SHAVUOT_START;         // day 68
-const NEW_OIL_START = NEW_WINE_START + 49;    // day 117 (Wine day 50 = Oil day 1)
+// Omer starts on M1 D26 (day 26)
+const OMER_START = toDayOfYear(1, 26);        // day 26
+const SHAVUOT_START = OMER_START + 49;        // day 75  (M3 D15 — Omer day 50 = Wine day 1)
+const NEW_WINE_START = SHAVUOT_START;         // day 75
+const NEW_OIL_START = NEW_WINE_START + 49;    // day 124 (M5 D3 — Wine day 50 = Oil day 1)
 
 export interface OmerCycle {
   count: number;   // 1-50
