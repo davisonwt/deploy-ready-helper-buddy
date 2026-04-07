@@ -7,7 +7,11 @@ import { Badge } from '../ui/badge';
 import { calculateCreatorDate } from '@/utils/dashboardCalendar';
 import { getDaysOutOfTimeCount } from '@/utils/customCalendar';
 import { getFeastInfo } from '@/utils/gardenRestDays';
-import { getOmerCounts as getOmerCount } from '@/utils/omerCount';
+import { getOmerCounts } from '@/utils/omerCount';
+
+function getOmerCount(month: number, day: number) {
+  return getOmerCounts(month, day).map(c => ({ count: c.count, label: c.shortLabel, color: c.color }));
+}
 import {
   calculateYhwhDateFromCivilDate,
   parseLocalDateKey,
