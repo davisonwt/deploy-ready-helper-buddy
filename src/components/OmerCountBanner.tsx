@@ -1,11 +1,10 @@
 import React from 'react';
-import { getTodayOmerCounts, type OmerCycle } from '@/utils/omerCount';
+import { getTodayOmerCounts, getOmerCounts, type OmerCycle } from '@/utils/omerCount';
 import { DashboardTheme } from '@/utils/dashboardThemes';
 
 interface OmerCountBannerProps {
   theme?: DashboardTheme;
   compact?: boolean;
-  /** Override month/day instead of using today */
   month?: number;
   day?: number;
 }
@@ -16,8 +15,8 @@ export const OmerCountBanner: React.FC<OmerCountBannerProps> = ({
   month,
   day,
 }) => {
-  const cycles = month && day
-    ? (await import('@/utils/omerCount')).getOmerCounts(month, day)
+  const cycles = month != null && day != null
+    ? getOmerCounts(month, day)
     : getTodayOmerCounts();
 
   if (cycles.length === 0) return null;
@@ -95,7 +94,6 @@ function OmerCycleCard({
         </div>
       </div>
 
-      {/* Progress bar */}
       <div
         className="h-1.5 rounded-full overflow-hidden"
         style={{ background: theme?.secondaryButton ?? 'hsl(var(--muted))' }}
