@@ -1,8 +1,7 @@
-import React, { useState } from 'react';
-import { Car, Wrench, Ear, HandHeart, Sprout, ArrowRight, BedDouble } from 'lucide-react';
+import React, { useState, useRef, useCallback } from 'react';
+import { Car, Wrench, Ear, HandHeart, Sprout, ArrowRight, BedDouble, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { DashboardTheme } from '@/utils/dashboardThemes';
-import { GradientGatewayCard } from './GradientGatewayCard';
 import { GigBookingModal } from '@/components/gig/GigBookingModal';
 import { EscrowBadge } from '@/components/provider/EscrowBadge';
 import { Button } from '@/components/ui/button';
@@ -22,6 +21,29 @@ import connectManufacturerImg from '/images/providers/connect-manufacturer.jpg';
 
 interface GigActionCardsProps {
   theme: DashboardTheme;
+}
+
+function useCarousel(length: number) {
+  const [index, setIndex] = useState(0);
+  const scrollRef = useRef<HTMLDivElement>(null);
+
+  const scrollTo = useCallback((i: number) => {
+    const next = (i + length) % length;
+    setIndex(next);
+    if (scrollRef.current) {
+      const width = scrollRef.current.offsetWidth;
+      scrollRef.current.scrollTo({ left: width * next, behavior: 'smooth' });
+    }
+  }, [length]);
+
+  const handleScroll = useCallback(() => {
+    if (!scrollRef.current) return;
+    const width = scrollRef.current.offsetWidth;
+    const idx = Math.round(scrollRef.current.scrollLeft / width);
+    setIndex(idx);
+  }, []);
+
+  return { index, scrollRef, scrollTo, handleScroll };
 }
 
 export const GigActionCards: React.FC<GigActionCardsProps> = ({ theme }) => {
@@ -57,6 +79,9 @@ export const GigActionCards: React.FC<GigActionCardsProps> = ({ theme }) => {
     { emoji: '🏭', label: 'Manufacturer', desc: 'Produce at scale', img: manufacturerImg, href: '/register-provider?type=manufacturer' },
   ];
 
+  const bookCarousel = useCarousel(bookCards.length);
+  const connectCarousel = useCarousel(connectCards.length);
+
   return (
     <>
       <div className="space-y-3">
@@ -77,63 +102,116 @@ export const GigActionCards: React.FC<GigActionCardsProps> = ({ theme }) => {
           </div>
         </div>
 
-        {/* Book a Service Row */}
+        {/* Book a Service Carousel */}
         <div>
           <p className="text-[11px] font-semibold mb-2 uppercase tracking-wider" style={{ color: theme.textSecondary }}>
             📅 Book a Service
           </p>
-          <div className="grid grid-cols-4 gap-2">
-            {bookCards.map((card) => (
-              <button
-                key={card.key}
-                onClick={card.onClick}
-                className="block rounded-2xl overflow-hidden transition-all shadow-md text-left hover:scale-[1.02] active:scale-[0.98] relative h-[100px]"
-              >
-                <img src={card.img} alt={card.label} className="absolute inset-0 w-full h-full object-cover" loading="lazy" />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/30 to-black/10" />
-                <div className="relative h-full flex flex-col justify-between p-3">
-                  <div className="w-7 h-7 rounded-lg bg-white/20 backdrop-blur-sm flex items-center justify-center">
-                    <card.icon className="w-3.5 h-3.5 text-white" />
+          <div className="relative">
+            <div
+              ref={bookCarousel.scrollRef}
+              onScroll={bookCarousel.handleScroll}
+              className="flex overflow-x-auto snap-x snap-mandatory"
+              style={{ scrollbarWidth: 'none', msOverflowStyle: 'none', WebkitOverflowScrolling: 'touch' }}
+            >
+              <style>{`.book-carousel::-webkit-scrollbar { display: none; }`}</style>
+              {bookCards.map((card) => (
+                <button
+                  key={card.key}
+                  onClick={card.onClick}
+                  className="min-w-full flex-shrink-0 snap-center block rounded-2xl overflow-hidden transition-all shadow-md text-left hover:scale-[1.01] active:scale-[0.99] relative h-[160px]"
+                >
+                  <img src={card.img} alt={card.label} className="absolute inset-0 w-full h-full object-cover" loading="lazy" />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/30 to-black/10" />
+                  <div className="relative h-full flex flex-col justify-between p-4">
+                    <div className="w-9 h-9 rounded-xl bg-white/20 backdrop-blur-sm flex items-center justify-center">
+                      <card.icon className="w-5 h-5 text-white" />
+                    </div>
+                    <div>
+                      <h3 className="font-bold text-white text-lg">{card.label}</h3>
+                      <p className="text-xs text-white/80">{card.desc}</p>
+                    </div>
                   </div>
-                  <div>
-                    <h3 className="font-bold text-white text-xs">{card.label}</h3>
-                    <p className="text-[9px] text-white/80">{card.desc}</p>
-                  </div>
-                </div>
-              </button>
-            ))}
+                </button>
+              ))}
+            </div>
+            {/* Arrows */}
+            <button
+              onClick={() => bookCarousel.scrollTo(bookCarousel.index - 1)}
+              className="absolute left-2 top-1/2 -translate-y-1/2 z-20 w-8 h-8 rounded-full bg-white/80 hover:bg-white text-black flex items-center justify-center shadow-md"
+              aria-label="Previous"
+            >
+              <ChevronLeft className="w-4 h-4" />
+            </button>
+            <button
+              onClick={() => bookCarousel.scrollTo(bookCarousel.index + 1)}
+              className="absolute right-2 top-1/2 -translate-y-1/2 z-20 w-8 h-8 rounded-full bg-white/80 hover:bg-white text-black flex items-center justify-center shadow-md"
+              aria-label="Next"
+            >
+              <ChevronRight className="w-4 h-4" />
+            </button>
+            {/* Counter */}
+            <div className="absolute top-3 right-3 bg-black/60 text-white text-xs px-2 py-1 rounded-full z-10">
+              {bookCarousel.index + 1}/{bookCards.length}
+            </div>
           </div>
         </div>
 
-        {/* Connect with Providers Row */}
+        {/* Connect with Providers Carousel */}
         <div>
           <p className="text-[11px] font-semibold mb-2 uppercase tracking-wider" style={{ color: theme.textSecondary }}>
             🌿 Connect with Providers
           </p>
-          <div className="grid grid-cols-3 gap-2">
-            {connectCards.map((card) => (
-              <button
-                key={card.key}
-                onClick={() => navigate(card.href)}
-                className="block rounded-2xl overflow-hidden transition-all shadow-md text-left hover:scale-[1.02] active:scale-[0.98] relative h-[100px]"
-              >
-                <img src={card.img} alt={card.label} className="absolute inset-0 w-full h-full object-cover" loading="lazy" />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/30 to-black/10" />
-                <div className="relative h-full flex flex-col justify-between p-3">
-                  <div className="w-7 h-7 rounded-lg bg-white/20 backdrop-blur-sm flex items-center justify-center">
-                    <span className="text-sm">{card.emoji}</span>
+          <div className="relative">
+            <div
+              ref={connectCarousel.scrollRef}
+              onScroll={connectCarousel.handleScroll}
+              className="flex overflow-x-auto snap-x snap-mandatory"
+              style={{ scrollbarWidth: 'none', msOverflowStyle: 'none', WebkitOverflowScrolling: 'touch' }}
+            >
+              {connectCards.map((card) => (
+                <button
+                  key={card.key}
+                  onClick={() => navigate(card.href)}
+                  className="min-w-full flex-shrink-0 snap-center block rounded-2xl overflow-hidden transition-all shadow-md text-left hover:scale-[1.01] active:scale-[0.99] relative h-[160px]"
+                >
+                  <img src={card.img} alt={card.label} className="absolute inset-0 w-full h-full object-cover" loading="lazy" />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/30 to-black/10" />
+                  <div className="relative h-full flex flex-col justify-between p-4">
+                    <div className="w-9 h-9 rounded-xl bg-white/20 backdrop-blur-sm flex items-center justify-center">
+                      <span className="text-lg">{card.emoji}</span>
+                    </div>
+                    <div>
+                      <h3 className="font-bold text-white text-lg">{card.label}</h3>
+                      <p className="text-xs text-white/80">{card.desc}</p>
+                    </div>
                   </div>
-                  <div>
-                    <h3 className="font-bold text-white text-xs">{card.label}</h3>
-                    <p className="text-[9px] text-white/80">{card.desc}</p>
-                  </div>
-                </div>
-              </button>
-            ))}
+                </button>
+              ))}
+            </div>
+            {/* Arrows */}
+            <button
+              onClick={() => connectCarousel.scrollTo(connectCarousel.index - 1)}
+              className="absolute left-2 top-1/2 -translate-y-1/2 z-20 w-8 h-8 rounded-full bg-white/80 hover:bg-white text-black flex items-center justify-center shadow-md"
+              aria-label="Previous"
+            >
+              <ChevronLeft className="w-4 h-4" />
+            </button>
+            <button
+              onClick={() => connectCarousel.scrollTo(connectCarousel.index + 1)}
+              className="absolute right-2 top-1/2 -translate-y-1/2 z-20 w-8 h-8 rounded-full bg-white/80 hover:bg-white text-black flex items-center justify-center shadow-md"
+              aria-label="Next"
+            >
+              <ChevronRight className="w-4 h-4" />
+            </button>
+            {/* Counter */}
+            <div className="absolute top-3 right-3 bg-black/60 text-white text-xs px-2 py-1 rounded-full z-10">
+              {connectCarousel.index + 1}/{connectCards.length}
+            </div>
           </div>
         </div>
 
-        {/* Become a Provider Row (2 rows of 3) */}
+        {/* Become a Provider Row (unchanged grid) */}
         <div>
           <p className="text-[11px] font-semibold mb-2 uppercase tracking-wider" style={{ color: theme.textSecondary }}>
             🌱 Become a Provider
