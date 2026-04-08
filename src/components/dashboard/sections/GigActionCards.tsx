@@ -81,6 +81,7 @@ export const GigActionCards: React.FC<GigActionCardsProps> = ({ theme }) => {
 
   const bookCarousel = useCarousel(bookCards.length);
   const connectCarousel = useCarousel(connectCards.length);
+  const becomeCarousel = useCarousel(becomeCards.length);
 
   return (
     <>
@@ -211,31 +212,55 @@ export const GigActionCards: React.FC<GigActionCardsProps> = ({ theme }) => {
           </div>
         </div>
 
-        {/* Become a Provider Row (unchanged grid) */}
+        {/* Become a Provider Carousel */}
         <div>
           <p className="text-[11px] font-semibold mb-2 uppercase tracking-wider" style={{ color: theme.textSecondary }}>
             🌱 Become a Provider
           </p>
-          <div className="grid grid-cols-3 gap-2">
-            {becomeCards.map((card) => (
-              <button
-                key={card.label + '-become'}
-                onClick={() => navigate(card.href)}
-                className="block rounded-2xl overflow-hidden transition-all shadow-md text-left hover:scale-[1.02] active:scale-[0.98] relative h-[100px]"
-              >
-                <img src={card.img} alt={card.label} className="absolute inset-0 w-full h-full object-cover" loading="lazy" />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/30 to-black/10" />
-                <div className="relative h-full flex flex-col justify-between p-3">
-                  <div className="w-7 h-7 rounded-lg bg-white/20 backdrop-blur-sm flex items-center justify-center">
-                    {card.icon ? <card.icon className="w-3.5 h-3.5 text-white" /> : <span className="text-sm">{card.emoji}</span>}
+          <div className="relative">
+            <div
+              ref={becomeCarousel.scrollRef}
+              onScroll={becomeCarousel.handleScroll}
+              className="flex overflow-x-auto snap-x snap-mandatory"
+              style={{ scrollbarWidth: 'none', msOverflowStyle: 'none', WebkitOverflowScrolling: 'touch' }}
+            >
+              {becomeCards.map((card) => (
+                <button
+                  key={card.label + '-become'}
+                  onClick={() => navigate(card.href)}
+                  className="min-w-full flex-shrink-0 snap-center block rounded-2xl overflow-hidden transition-all shadow-md text-left hover:scale-[1.01] active:scale-[0.99] relative h-[160px]"
+                >
+                  <img src={card.img} alt={card.label} className="absolute inset-0 w-full h-full object-cover" loading="lazy" />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/30 to-black/10" />
+                  <div className="relative h-full flex flex-col justify-between p-4">
+                    <div className="w-9 h-9 rounded-xl bg-white/20 backdrop-blur-sm flex items-center justify-center">
+                      {card.icon ? <card.icon className="w-5 h-5 text-white" /> : <span className="text-lg">{card.emoji}</span>}
+                    </div>
+                    <div>
+                      <h3 className="font-bold text-white text-lg">{card.label}</h3>
+                      <p className="text-xs text-white/80">{card.desc}</p>
+                    </div>
                   </div>
-                  <div>
-                    <h3 className="font-bold text-white text-xs">{card.label}</h3>
-                    <p className="text-[9px] text-white/80">{card.desc}</p>
-                  </div>
-                </div>
-              </button>
-            ))}
+                </button>
+              ))}
+            </div>
+            <button
+              onClick={() => becomeCarousel.scrollTo(becomeCarousel.index - 1)}
+              className="absolute left-2 top-1/2 -translate-y-1/2 z-20 w-8 h-8 rounded-full bg-white/80 hover:bg-white text-black flex items-center justify-center shadow-md"
+              aria-label="Previous"
+            >
+              <ChevronLeft className="w-4 h-4" />
+            </button>
+            <button
+              onClick={() => becomeCarousel.scrollTo(becomeCarousel.index + 1)}
+              className="absolute right-2 top-1/2 -translate-y-1/2 z-20 w-8 h-8 rounded-full bg-white/80 hover:bg-white text-black flex items-center justify-center shadow-md"
+              aria-label="Next"
+            >
+              <ChevronRight className="w-4 h-4" />
+            </button>
+            <div className="absolute top-3 right-3 bg-black/60 text-white text-xs px-2 py-1 rounded-full z-10">
+              {becomeCarousel.index + 1}/{becomeCards.length}
+            </div>
           </div>
         </div>
 
