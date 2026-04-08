@@ -1,63 +1,29 @@
 
 
-# Explainer Videos for S2G Platform — Each Feature, Its Own Video
+# Convert "Book a Service" & "Connect with Providers" to Horizontal Carousels
 
-## Overview
+## What changes
 
-We'll create a series of animated MP4 explainer videos using **Remotion** (code-based motion graphics), each covering a distinct feature of the S2G platform. Each video will be 15-25 seconds, rendered at 1920x1080, with a consistent S2G brand aesthetic across all videos.
+Convert the two grid sections in `GigActionCards.tsx` into horizontally scrollable carousels that show **one card at a time** and scroll continuously (infinite loop).
 
----
+## How
 
-## Visual Direction
+**File: `src/components/dashboard/sections/GigActionCards.tsx`**
 
-- **Palette**: Warm terracotta (`#B85042`), deep forest green (`#2C5F2D`), sandy cream (`#E7E8D1`), ochre gold (`#D4A843`), dark navy (`#001f3f`)
-- **Fonts**: Display: Playfair Display (warm, grounded). Body: Inter (clean, modern)
-- **Motion style**: Smooth spring-based reveals, card fly-ins, icon animations, text staggers
-- **Motifs**: Seed/sprout iconography, earth-tone gradients, organic rounded shapes
-- **Structure per video**: Hook title (2s) → Feature walkthrough with animated mockups (10-18s) → Closing tagline with S2G branding (3s)
+1. **"Book a Service"** (lines 85-106): Replace `grid grid-cols-4` with a horizontal scroll container using CSS `snap-x snap-mandatory`, each card being `min-w-full snap-center`. Add left/right arrow buttons (ChevronLeft/ChevronRight) positioned at the sides. Make it wrap infinitely by cloning cards or using modular index navigation with `useRef` + `scrollTo`.
 
----
+2. **"Connect with Providers"** (lines 113-134): Same treatment -- replace `grid grid-cols-3` with a full-width horizontal snap carousel, one card visible at a time, with left/right arrows.
 
-## Videos to Create (10 total)
+3. Each card will be taller (~160px) since it now gets the full width, showing the image more prominently with the text overlay at the bottom.
 
-| # | Video | Duration | Key Visuals |
-|---|-------|----------|-------------|
-| 1 | **Platform Overview** — What is S2G? | ~20s | Community montage, feature icons flying in, tagline |
-| 2 | **Marketplace & Products** — Buy & sell as a Sower | ~20s | Product cards, basket flow, Sower profile |
-| 3 | **Services & Gig Booking** — Rides, skills, whisperers | ~20s | Service cards, booking modal mockup, driver tracking |
-| 4 | **The Wandering Pillow (Stays)** — Holiday marketplace | ~20s | Stay cards, discovery filters, booking flow |
-| 5 | **ChatApp & Communications** — Voice, video, messaging | ~20s | Chat bubbles, voice/video icons, DM flow |
-| 6 | **Radio & Music** — Grove Station, 364 TTT | ~20s | Radio player mockup, music waveform, live sessions |
-| 7 | **Training & Skill Drops** — Learning rooms | ~20s | Classroom cards, skill-drop icons, certificate |
-| 8 | **Sacred Calendar (YHVH Days)** — Enochian calendar | ~20s | Calendar grid animation, feast day highlights |
-| 9 | **GoSat Wallet & Tithing** — Financial features | ~20s | Wallet cards, tithe flow, earnings dashboard |
-| 10 | **AI Assistant & Tools** — AI-powered features | ~20s | Chat stream animation, sparkle effects, tool cards |
+4. Add a dot indicator or counter badge (e.g., "2/4") below each carousel for context.
 
----
+5. The "Become a Provider" grid stays as-is (no change requested).
 
-## Technical Approach
+## Technical details
 
-1. **Set up a single Remotion project** in `remotion/` with shared brand components (background, title scene, closing scene)
-2. **Each video gets its own composition** registered in `Root.tsx` — can render them individually
-3. **Shared components**: `BrandBackground.tsx`, `TitleScene.tsx`, `ClosingScene.tsx`, `FeatureCard.tsx`, `IconReveal.tsx`
-4. **Render each video** via the programmatic render script to `/mnt/documents/` as separate MP4s (e.g., `s2g-explainer-01-overview.mp4`)
-5. **Frame checks** via `bunx remotion still` before full renders
-
----
-
-## Implementation Order
-
-Due to rendering time constraints (~600s timeout per command), we'll build and render videos in batches:
-
-- **Batch 1**: Set up project + shared components, render videos 1-3
-- **Batch 2**: Render videos 4-6
-- **Batch 3**: Render videos 7-10
-
-Each video render takes ~1-2 minutes. We'll spot-check key frames before committing to full renders.
-
----
-
-## Deliverables
-
-10 downloadable MP4 files in `/mnt/documents/`, each a self-contained explainer for one feature of the S2G platform, all sharing a cohesive S2G brand identity.
+- Use the same scroll-snap pattern already used in `ImageCarousel.tsx` (native scroll, no library needed)
+- `useRef` for each scroll container, `useCallback` for `scrollTo` with smooth behavior
+- Arrows: white/80 rounded buttons matching existing carousel style
+- Infinite scroll: when reaching the last card and pressing next, scroll back to first (and vice versa)
 
