@@ -12,7 +12,7 @@ export const DASHBOARD_SECTIONS: DashboardSectionConfig[] = [
   { id: 'dashboard', label: 'Dashboard', icon: Home, themeOffset: 0 },
   { id: 'chatapp', label: 'ChatApp', icon: MessageSquare, themeOffset: 1 },
   { id: 'memry', label: 'S2G Memry', icon: Camera, themeOffset: 3 },
-  { id: '364yhvh', label: '364yhvh Days', icon: Calendar, themeOffset: 5 },
+  { id: '364yhvh', label: '364yhvh', icon: Calendar, themeOffset: 5 },
   { id: 'garden', label: 'My Garden', icon: Sprout, themeOffset: 7 },
   { id: 'letitrain', label: 'Let It Rain', icon: Cloud, themeOffset: 9 },
   { id: 'gosats', label: "GoSat's", icon: Settings, themeOffset: 11 },
