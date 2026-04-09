@@ -12,6 +12,7 @@ import { SeedEngagementWidget } from '../SeedEngagementWidget';
 import { getDayInfo } from '@/utils/sacredCalendar';
 import { GradientGatewayCard } from './GradientGatewayCard';
 import { KeeperHelpButton } from './KeeperHelpButton';
+import { SectionHeading } from './SectionHeading';
 
 interface YhvhDaysSectionProps {
   theme: DashboardTheme;
@@ -33,21 +34,13 @@ export const YhvhDaysSection: React.FC<YhvhDaysSectionProps> = ({
 
   return (
     <div className="space-y-4">
-      {/* Section Header */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <div className="p-2 rounded-xl" style={{ background: theme.secondaryButton }}>
-            <Calendar className="w-5 h-5" style={{ color: theme.accent }} />
-          </div>
-          <div>
-            <h2 className="text-lg font-extrabold tracking-tight" style={{ color: theme.textPrimary }}>
-              364yhvh Days
-            </h2>
-            <p className="text-[10px]" style={{ color: theme.textSecondary }}>
-              Sacred calendar, weather & community
-            </p>
-          </div>
-        </div>
+      <SectionHeading
+        icon={Calendar}
+        title="364yhvh Days"
+        subtitle="Sacred calendar, weather & community"
+        theme={theme}
+        gradientColors={['#be185d', '#a855f7']}
+        rightSlot={
         <KeeperHelpButton sectionName="364yhvh Days" />
       </div>
 

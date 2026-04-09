@@ -9,6 +9,7 @@ import { StatsCards } from '../StatsCards';
 import { GardenSection as GardenOrchards } from './GardenSection';
 import { KeeperContentGrid } from './KeeperContentGrid';
 import { KeeperHelpButton } from './KeeperHelpButton';
+import { SectionHeading } from './SectionHeading';
 
 interface MyGardenSectionProps {
   theme: DashboardTheme;
@@ -34,20 +35,12 @@ export const MyGardenSection: React.FC<MyGardenSectionProps> = ({ theme, stats }
 
   return (
     <div className="space-y-4">
-      {/* Section Header */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <div className="p-2 rounded-xl" style={{ background: theme.secondaryButton }}>
-            <Sprout className="w-5 h-5" style={{ color: theme.accent }} />
-          </div>
-          <div>
-            <h2 className="text-lg font-extrabold tracking-tight" style={{ color: theme.textPrimary }}>
-              My Garden
-            </h2>
-            <p className="text-[10px]" style={{ color: theme.textSecondary }}>
-              {stats.totalFollowers} followers · {stats.totalOrchards} seeds · {stats.totalBestowals} bestowals
-            </p>
-          </div>
+      <SectionHeading
+        icon={Sprout}
+        title="My Garden"
+        subtitle={`${stats.totalFollowers} followers · ${stats.totalOrchards} seeds · ${stats.totalBestowals} bestowals`}
+        theme={theme}
+        gradientColors={['#16a34a', '#4ade80']}
         </div>
         <KeeperHelpButton sectionName="My Garden" />
       </div>

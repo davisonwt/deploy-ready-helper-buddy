@@ -3,6 +3,7 @@ import { Sprout, TreePine, Leaf } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { DashboardTheme } from '@/utils/dashboardThemes';
+import { SectionHeading } from './SectionHeading';
 
 import standardOrchardImg from '/images/plant/standard-orchard.jpg';
 import fullvalueOrchardImg from '/images/plant/fullvalue-orchard.jpg';
@@ -48,20 +49,13 @@ const plantCards = [
 export const PlantFeedCards: React.FC<PlantFeedCardsProps> = ({ theme }) => {
   return (
     <div className="space-y-3">
-      {/* Section Label */}
-      <div className="flex items-center gap-2">
-        <div className="p-2 rounded-xl" style={{ background: theme.secondaryButton }}>
-          <Sprout className="w-5 h-5" style={{ color: theme.accent }} />
-        </div>
-        <div>
-          <h2 className="text-base font-extrabold tracking-tight" style={{ color: theme.textPrimary }}>
-            🌱 Plant
-          </h2>
-          <p className="text-[10px]" style={{ color: theme.textSecondary }}>
-            Sow orchards & seeds for the community to harvest
-          </p>
-        </div>
-      </div>
+      <SectionHeading
+        icon={Sprout}
+        title="🌱 Plant"
+        subtitle="Sow orchards & seeds for the community to harvest"
+        theme={theme}
+        gradientColors={['#16a34a', '#4ade80']}
+      />
 
       {/* Cards */}
       <div className="space-y-3">
