@@ -40,9 +40,8 @@ export const YhvhDaysSection: React.FC<YhvhDaysSectionProps> = ({
         subtitle="Sacred calendar, weather & community"
         theme={theme}
         gradientColors={['#be185d', '#a855f7']}
-        rightSlot={
-        <KeeperHelpButton sectionName="364yhvh Days" />
-      </div>
+        rightSlot={<KeeperHelpButton sectionName="364yhvh Days" />}
+      />
 
       {/* Alerts */}
       <div className="space-y-2">

@@ -41,9 +41,8 @@ export const MyGardenSection: React.FC<MyGardenSectionProps> = ({ theme, stats }
         subtitle={`${stats.totalFollowers} followers · ${stats.totalOrchards} seeds · ${stats.totalBestowals} bestowals`}
         theme={theme}
         gradientColors={['#16a34a', '#4ade80']}
-        </div>
-        <KeeperHelpButton sectionName="My Garden" />
-      </div>
+        rightSlot={<KeeperHelpButton sectionName="My Garden" />}
+      />
 
       {/* Quick Actions */}
       <div className="grid grid-cols-4 gap-2">
