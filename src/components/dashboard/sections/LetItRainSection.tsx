@@ -5,6 +5,7 @@ import { toast } from 'sonner';
 import { motion } from 'framer-motion';
 import { DashboardTheme } from '@/utils/dashboardThemes';
 import { KeeperHelpButton } from './KeeperHelpButton';
+import { SectionHeading } from './SectionHeading';
 
 interface LetItRainSectionProps {
   theme: DashboardTheme;
@@ -28,23 +29,14 @@ export const LetItRainSection: React.FC<LetItRainSectionProps> = ({ theme }) => 
 
   return (
     <div className="space-y-4">
-      {/* Section Header */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <div className="p-2 rounded-xl" style={{ background: theme.secondaryButton }}>
-            <Cloud className="w-5 h-5" style={{ color: theme.accent }} />
-          </div>
-          <div>
-            <h2 className="text-lg font-extrabold tracking-tight" style={{ color: theme.textPrimary }}>
-              Let It Rain
-            </h2>
-            <p className="text-[10px]" style={{ color: theme.textSecondary }}>
-              Bestow · Bless · Grow 💧
-            </p>
-          </div>
-        </div>
-        <KeeperHelpButton sectionName="Let It Rain" />
-      </div>
+      <SectionHeading
+        icon={Cloud}
+        title="Let It Rain"
+        subtitle="Bestow · Bless · Grow 💧"
+        theme={theme}
+        gradientColors={['#d97706', '#f59e0b']}
+        rightSlot={<KeeperHelpButton sectionName="Let It Rain" />}
+      />
 
       {/* Quick Bestow */}
       <div className="grid grid-cols-2 gap-3">

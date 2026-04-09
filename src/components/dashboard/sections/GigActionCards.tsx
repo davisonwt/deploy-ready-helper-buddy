@@ -5,6 +5,8 @@ import { DashboardTheme } from '@/utils/dashboardThemes';
 import { GigBookingModal } from '@/components/gig/GigBookingModal';
 import { EscrowBadge } from '@/components/provider/EscrowBadge';
 import { Button } from '@/components/ui/button';
+import { SectionHeading } from './SectionHeading';
+import { SubSectionLabel } from './SubSectionLabel';
 
 import rideBookImg from '/images/gig/ride-book.jpg';
 import serviceBookImg from '/images/gig/service-book.jpg';
@@ -86,28 +88,19 @@ export const GigActionCards: React.FC<GigActionCardsProps> = ({ theme }) => {
   return (
     <>
       <div className="space-y-3">
-        {/* Section Label */}
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <div className="p-2 rounded-xl" style={{ background: theme.secondaryButton }}>
-              <HandHeart className="w-5 h-5" style={{ color: theme.accent }} />
-            </div>
-            <div>
-              <h2 className="text-base font-extrabold tracking-tight" style={{ color: theme.textPrimary }}>
-                Services
-              </h2>
-              <p className="text-[10px]" style={{ color: theme.textSecondary }}>
-                Book, connect, or become a provider
-              </p>
-            </div>
-          </div>
-        </div>
+        <SectionHeading
+          icon={HandHeart}
+          title="Services"
+          subtitle="Book, connect, or become a provider"
+          theme={theme}
+          gradientColors={['#14b8a6', '#06b6d4']}
+        />
 
         {/* Book a Service Carousel */}
         <div>
-          <p className="text-[11px] font-semibold mb-2 uppercase tracking-wider" style={{ color: theme.textSecondary }}>
-            📅 Book a Service
-          </p>
+          <div className="mb-2">
+            <SubSectionLabel emoji="📅" label="Book a Service" gradientColors={['#0d9488', '#06b6d4']} />
+          </div>
           <div className="relative">
             <div
               ref={bookCarousel.scrollRef}
@@ -160,9 +153,9 @@ export const GigActionCards: React.FC<GigActionCardsProps> = ({ theme }) => {
 
         {/* Connect with Providers Carousel */}
         <div>
-          <p className="text-[11px] font-semibold mb-2 uppercase tracking-wider" style={{ color: theme.textSecondary }}>
-            🌿 Connect with Providers
-          </p>
+          <div className="mb-2">
+            <SubSectionLabel emoji="🌿" label="Connect with Providers" gradientColors={['#059669', '#10b981']} />
+          </div>
           <div className="relative">
             <div
               ref={connectCarousel.scrollRef}
@@ -214,9 +207,9 @@ export const GigActionCards: React.FC<GigActionCardsProps> = ({ theme }) => {
 
         {/* Become a Provider Carousel */}
         <div>
-          <p className="text-[11px] font-semibold mb-2 uppercase tracking-wider" style={{ color: theme.textSecondary }}>
-            🌱 Become a Provider
-          </p>
+          <div className="mb-2">
+            <SubSectionLabel emoji="🌱" label="Become a Provider" gradientColors={['#7c3aed', '#a855f7']} />
+          </div>
           <div className="relative">
             <div
               ref={becomeCarousel.scrollRef}

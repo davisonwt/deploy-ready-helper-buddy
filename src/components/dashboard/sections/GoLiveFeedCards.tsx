@@ -3,6 +3,7 @@ import { Radio, GraduationCap, Zap, Dumbbell } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { DashboardTheme } from '@/utils/dashboardThemes';
+import { SectionHeading } from './SectionHeading';
 
 import classroomImg from '/images/golive/classroom.jpg';
 import skilldropImg from '/images/golive/skilldrop.jpg';
@@ -55,20 +56,13 @@ const goLiveCards = [
 export const GoLiveFeedCards: React.FC<GoLiveFeedCardsProps> = ({ theme }) => {
   return (
     <div className="space-y-3">
-      {/* Section Label */}
-      <div className="flex items-center gap-2">
-        <div className="p-2 rounded-xl" style={{ background: theme.secondaryButton }}>
-          <Radio className="w-5 h-5" style={{ color: theme.accent }} />
-        </div>
-        <div>
-          <h2 className="text-base font-extrabold tracking-tight" style={{ color: theme.textPrimary }}>
-            🎙️ Go Live
-          </h2>
-          <p className="text-[10px]" style={{ color: theme.textSecondary }}>
-            Host live sessions for the community
-          </p>
-        </div>
-      </div>
+      <SectionHeading
+        icon={Radio}
+        title="🎙️ Go Live"
+        subtitle="Host live sessions for the community"
+        theme={theme}
+        gradientColors={['#dc2626', '#f97316']}
+      />
 
       {/* Cards */}
       <div className="space-y-3">

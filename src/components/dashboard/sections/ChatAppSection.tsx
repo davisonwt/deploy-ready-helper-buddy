@@ -3,6 +3,7 @@ import { MessageSquare, GraduationCap, Zap, Dumbbell, Radio } from 'lucide-react
 import { DashboardTheme } from '@/utils/dashboardThemes';
 import { GradientGatewayCard } from './GradientGatewayCard';
 import { KeeperHelpButton } from './KeeperHelpButton';
+import { SectionHeading } from './SectionHeading';
 
 interface ChatAppSectionProps {
   theme: DashboardTheme;
@@ -19,23 +20,14 @@ const chatAppCards = [
 export const ChatAppSection: React.FC<ChatAppSectionProps> = ({ theme }) => {
   return (
     <div className="space-y-4">
-      {/* Section Header */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <div className="p-2 rounded-xl" style={{ background: theme.secondaryButton }}>
-            <MessageSquare className="w-5 h-5" style={{ color: theme.accent }} />
-          </div>
-          <div>
-            <h2 className="text-lg font-extrabold tracking-tight" style={{ color: theme.textPrimary }}>
-              ChatApp
-            </h2>
-            <p className="text-[10px]" style={{ color: theme.textSecondary }}>
-              Connect, learn & listen — all in one place
-            </p>
-          </div>
-        </div>
-        <KeeperHelpButton sectionName="ChatApp" />
-      </div>
+      <SectionHeading
+        icon={MessageSquare}
+        title="ChatApp"
+        subtitle="Connect, learn & listen — all in one place"
+        theme={theme}
+        gradientColors={['#0d9488', '#06b6d4']}
+        rightSlot={<KeeperHelpButton sectionName="ChatApp" />}
+      />
 
       {/* Gateway Cards Grid */}
       <div className="grid grid-cols-2 gap-3">

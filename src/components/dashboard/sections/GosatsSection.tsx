@@ -5,6 +5,7 @@ import { motion } from 'framer-motion';
 import { DashboardTheme } from '@/utils/dashboardThemes';
 import { useRoles } from '@/hooks/useRoles';
 import { KeeperHelpButton } from './KeeperHelpButton';
+import { SectionHeading } from './SectionHeading';
 
 interface GosatsSectionProps {
   theme: DashboardTheme;
@@ -29,23 +30,14 @@ export const GosatsSection: React.FC<GosatsSectionProps> = ({ theme }) => {
 
   return (
     <div className="space-y-4">
-      {/* Section Header */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <div className="p-2 rounded-xl" style={{ background: theme.secondaryButton }}>
-            <Settings className="w-5 h-5" style={{ color: theme.accent }} />
-          </div>
-          <div>
-            <h2 className="text-lg font-extrabold tracking-tight" style={{ color: theme.textPrimary }}>
-              GoSat's
-            </h2>
-            <p className="text-[10px]" style={{ color: theme.textSecondary }}>
-              Administration & platform tools
-            </p>
-          </div>
-        </div>
-        {isAdminOrGosat && <KeeperHelpButton sectionName="GoSat's" />}
-      </div>
+      <SectionHeading
+        icon={Settings}
+        title="GoSat's"
+        subtitle="Administration & platform tools"
+        theme={theme}
+        gradientColors={['#ea580c', '#f97316']}
+        rightSlot={isAdminOrGosat ? <KeeperHelpButton sectionName="GoSat's" /> : undefined}
+      />
 
       {loading ? (
         <div className="rounded-2xl p-6 text-center" style={{ background: 'linear-gradient(135deg, #1c1917, #292524)' }}>

@@ -3,6 +3,7 @@ import { MessageSquare, Users } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { DashboardTheme } from '@/utils/dashboardThemes';
+import { SectionHeading } from './SectionHeading';
 
 import oneOnOneImg from '/images/chat/one-on-one.jpg';
 import groupChatImg from '/images/chat/group-chat.jpg';
@@ -37,20 +38,13 @@ const chatCards = [
 export const ChatFeedCards: React.FC<ChatFeedCardsProps> = ({ theme }) => {
   return (
     <div className="space-y-3">
-      {/* Section Label */}
-      <div className="flex items-center gap-2">
-        <div className="p-2 rounded-xl" style={{ background: theme.secondaryButton }}>
-          <MessageSquare className="w-5 h-5" style={{ color: theme.accent }} />
-        </div>
-        <div>
-          <h2 className="text-base font-extrabold tracking-tight" style={{ color: theme.textPrimary }}>
-            💬 Chat
-          </h2>
-          <p className="text-[10px]" style={{ color: theme.textSecondary }}>
-            Connect with sowers & bestowers
-          </p>
-        </div>
-      </div>
+      <SectionHeading
+        icon={MessageSquare}
+        title="💬 Chat"
+        subtitle="Connect with sowers & bestowers"
+        theme={theme}
+        gradientColors={['#0d9488', '#3b82f6']}
+      />
 
       {/* Cards */}
       <div className="space-y-3">
