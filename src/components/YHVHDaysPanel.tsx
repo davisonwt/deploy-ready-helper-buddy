@@ -78,7 +78,7 @@ export function YHVHDaysPanel({ isOpen, onClose }: YHVHDaysPanelProps) {
           <div className="text-center -mt-6">
             <h2 className="text-4xl font-bold flex items-center justify-center gap-4">
               <Calendar className="w-10 h-10 text-amber-400" />
-              <span>364yhvh Days</span>
+              <span>364yhvh</span>
             </h2>
             <p className="text-amber-300 text-lg mt-3">
               Experience the Creator's calendar systems
