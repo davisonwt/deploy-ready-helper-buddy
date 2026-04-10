@@ -366,30 +366,28 @@ export default function SacredCalendarFeed() {
         <OmerCountBanner theme={theme} />
       </div>
 
-      {/* ─── View Toggle ─── */}
+      {/* ─── View Toggle (4 options) ─── */}
       <div className="mx-auto max-w-2xl px-4 mb-3">
         <div className="flex justify-center">
-          <div className="inline-flex rounded-full p-1" style={{ background: theme.cardBg, border: `1px solid ${theme.cardBorder}` }}>
-            <button
-              onClick={() => setViewMode('beads')}
-              className={`px-4 py-1.5 rounded-full text-xs font-semibold transition-all ${viewMode === 'beads' ? 'shadow-lg' : 'opacity-60'}`}
-              style={{
-                background: viewMode === 'beads' ? theme.accent : 'transparent',
-                color: viewMode === 'beads' ? '#000' : theme.textSecondary,
-              }}
-            >
-              📿 Ed's Beads
-            </button>
-            <button
-              onClick={() => setViewMode('wheel')}
-              className={`px-4 py-1.5 rounded-full text-xs font-semibold transition-all ${viewMode === 'wheel' ? 'shadow-lg' : 'opacity-60'}`}
-              style={{
-                background: viewMode === 'wheel' ? theme.accent : 'transparent',
-                color: viewMode === 'wheel' ? '#000' : theme.textSecondary,
-              }}
-            >
-              ☸️ Wheel
-            </button>
+          <div className="inline-flex rounded-full p-1 flex-wrap gap-0.5" style={{ background: theme.cardBg, border: `1px solid ${theme.cardBorder}` }}>
+            {([
+              { id: 'beads' as const, emoji: '📿', label: "Ed's Beads" },
+              { id: 'wheel' as const, emoji: '☸️', label: 'Wheel' },
+              { id: 'studies' as const, emoji: '📖', label: 'Studies' },
+              { id: 'schedule' as const, emoji: '📅', label: 'Schedule' },
+            ]).map(tab => (
+              <button
+                key={tab.id}
+                onClick={() => setViewMode(tab.id)}
+                className={`px-3 py-1.5 rounded-full text-xs font-semibold transition-all ${viewMode === tab.id ? 'shadow-lg' : 'opacity-60'}`}
+                style={{
+                  background: viewMode === tab.id ? theme.accent : 'transparent',
+                  color: viewMode === tab.id ? '#000' : theme.textSecondary,
+                }}
+              >
+                {tab.emoji} {tab.label}
+              </button>
+            ))}
           </div>
         </div>
       </div>
