@@ -12,7 +12,7 @@ const moreItems = [
   { to: '/browse-orchards', label: 'Orchards', icon: TreePine, color: '#0F6E56' },
   { to: '/explore-sessions?type=classroom', label: 'Classrooms', icon: GraduationCap, color: '#378ADD' },
   { to: '/explore-sessions?type=skilldrop', label: 'SkillDrop', icon: Zap, color: '#534AB7' },
-  { to: '/enochian-calendar-design', label: '364yhvh Days', icon: Calendar, color: '#3C3489' },
+  { to: '/enochian-calendar-design', label: '364yhvh', icon: Calendar, color: '#3C3489' },
   { to: '/tithing', label: 'Let It Rain', icon: CloudRain, color: '#533AB7' },
   { to: '/admin/dashboard', label: "GoSat's", icon: Settings, color: '#BA7517' },
 ];

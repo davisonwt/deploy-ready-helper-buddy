@@ -289,7 +289,7 @@ function Layout({ children }) {
                 )
               })}
 
-              {/* 364yhvh Days Button */}
+              {/* 364yhvh Button */}
               <button
                 onClick={() => setIsYHVHDaysOpen(true)}
                 className={`flex items-center justify-center px-3 py-2 text-xs font-medium transition-all duration-300 border-2 
@@ -321,7 +321,7 @@ function Layout({ children }) {
                 }}
               >
                 <Calendar className="h-3 w-3 mr-1 flex-shrink-0" />
-                <span className="truncate text-center leading-tight">364yhvh days</span>
+                <span className="truncate text-center leading-tight">364yhvh</span>
               </button>
 
               {/* My Garden Button - replaces old "My Content" dropdown */}
@@ -580,7 +580,7 @@ function Layout({ children }) {
                 )
               })}
 
-              {/* Panel Buttons - 364yhvh days, My Garden, Let It Rain */}
+              {/* Panel Buttons - 364yhvh, My Garden, Let It Rain */}
               <button
                 onClick={() => { setIsYHVHDaysOpen(true); setIsMobileMenuOpen(false); }}
                 className={`flex items-center space-x-3 px-4 py-2.5 text-sm font-medium transition-all duration-200 border-2 w-full ${isYHVHDaysActive() ? 'shadow-lg' : ''}`}
@@ -595,7 +595,7 @@ function Layout({ children }) {
                 }}
               >
                 <Calendar className="h-4 w-4 flex-shrink-0" />
-                <span>364yhvh days</span>
+                <span>364yhvh</span>
               </button>
 
               <button

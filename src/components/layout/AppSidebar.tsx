@@ -22,7 +22,7 @@ const navItems = [
   { to: '/my-orchards', label: 'My Garden', desc: 'Your seeds & orchards', icon: Sprout, gradient: 'linear-gradient(135deg, #3B6D11, #5A9E1E)' },
   { to: '/browse-orchards', label: 'Tribal Gardens', desc: 'All tribal seeds & orchards', icon: TreePine, gradient: 'linear-gradient(135deg, #0F6E56, #1DAA85)' },
   { to: '/communications-hub', label: 'ChatApp', desc: 'Tribe messaging', icon: MessageSquare, gradient: 'linear-gradient(135deg, #1D9E75, #34D399)' },
-  { to: '/enochian-calendar-design', label: '364yhvh Days', desc: "Creator's calendar", icon: Calendar, gradient: 'linear-gradient(135deg, #3C3489, #6355C7)' },
+  { to: '/enochian-calendar-design', label: '364yhvh', desc: "Scripture & spiritual hub", icon: Calendar, gradient: 'linear-gradient(135deg, #3C3489, #6355C7)' },
   { to: '/tithing', label: 'Let It Rain', desc: 'Bestow blessings', icon: CloudRain, gradient: 'linear-gradient(135deg, #533AB7, #8B5CF6)' },
   { to: '/my-s2g-tribe', label: 'My Tribe', desc: 'Invite & grow your tribe', icon: Users, gradient: 'linear-gradient(135deg, #0E7490, #22D3EE)' },
   { to: '/stats', label: 'Stats', desc: 'Your progress & stats', icon: BarChart3, gradient: 'linear-gradient(135deg, #1E6A5A, #2DA88A)' },
