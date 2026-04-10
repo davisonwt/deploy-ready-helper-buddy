@@ -241,11 +241,15 @@ function FeastEventCards({ month, theme }: { month: number; theme: any }) {
 // ─── Main Feed Component ───
 export default function SacredCalendarFeed() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const { location } = useUserLocation();
   const [theme, setTheme] = useState(getCurrentTheme());
   const [activeMonth, setActiveMonth] = useState(1);
   const [selectedDay, setSelectedDay] = useState(1);
-  const [viewMode, setViewMode] = useState<'beads' | 'wheel'>('beads');
+  const initialView = (searchParams.get('view') as 'beads' | 'wheel' | 'studies' | 'schedule') || 'beads';
+  const [viewMode, setViewMode] = useState<'beads' | 'wheel' | 'studies' | 'schedule'>(
+    ['beads','wheel','studies','schedule'].includes(initialView) ? initialView : 'beads'
+  );
   const [direction, setDirection] = useState(0);
   const touchStartX = useRef(0);
 
