@@ -1,56 +1,87 @@
 
+Goal: make every 364yhvh entry point consistently say “364yhvh”, and turn the 364yhvh area into a proper scripture/spiritual hub with 4 options: Ed’s Beads, Wheel, Studies, and Schedule.
 
-# Beautify All Section Headings Across Dashboard & Feed
+What I found
+- The dashboard section nav is already labeled `364yhvh` in `src/components/dashboard/sectionConfig.ts`.
+- The old label still exists in other places, which is why you still see “364yhvh Days”:
+  - `src/components/layout/AppSidebar.tsx`
+  - `src/components/layout/MobileBottomTabs.tsx`
+  - `src/components/Layout.jsx`
+  - `src/components/YHVHDaysPanel.tsx`
+- The current 364yhvh dashboard section (`src/components/dashboard/sections/YhvhDaysSection.tsx`) only has 2 tabs: Days and Studies.
+- Your study-with-questions area already exists at route `/scriptural-study` in `src/pages/ScripturalStudyQA.tsx`.
+- The current “Wheel” route (`/wheels-in-itself`) just redirects back to `/enochian-calendar-design`, so it is not a true separate experience right now.
+- There is already reusable radio/session UI we can reuse for “Schedule”:
+  - `src/components/dashboard/sections/RadioSection.tsx`
+  - `src/components/radio/RadioSessionFeed.tsx`
 
-## Problem
+Implementation plan
+1. Rename every old “364yhvh Days” label to `364yhvh`
+- Update sidebar, mobile more menu, legacy top/menu buttons, and panel title text.
+- This fixes the specific “you did not rename the button” issue everywhere, not just in one navbar.
 
-All section headings (Services, Plant, Go Live, Chat, Social Feed, S2G Memry, Dashboard, ChatApp, 364yhvh Days, My Garden, Let It Rain, GoSat's) and sub-headings (BOOK A SERVICE, CONNECT WITH PROVIDERS, BECOME A PROVIDER) use plain text with basic styling — they look dull and lack visual distinction.
+2. Turn `YhvhDaysSection` into a 4-option hub
+- Replace the current 2-tab switcher with a 4-option spiritual hub:
+  - Ed’s Beads
+  - Wheel
+  - Studies
+  - Schedule
+- Keep the current beautiful heading style, but change the body so the first view matches the structure you described.
 
-## Design Direction
+3. Organize the four options clearly
+- Ed’s Beads
+  - Link to `/enochian-calendar-design`
+  - Keep this as the bead-based sacred calendar entry point
+- Wheel
+  - Keep a separate option visible in the hub
+  - Either route to the same calendar page in wheel mode or update the calendar page to support a direct wheel view
+- Studies
+  - Include the existing “Scriptural Study Q&A” here
+  - Also include the videos/study media entry here so all scripture study content lives together
+- Schedule
+  - Add a spiritual sessions area for live and pre-recorded listening/viewing tied to bead/diary/scripture content
 
-Add gradient text effects, subtle glow, and decorative accents to all headings to make them vibrant and premium-looking, while keeping the existing layout structure intact.
+4. Bring the study-with-questions section into 364yhvh
+- Add a clear “Scriptural Study Q&A” card inside the Studies area.
+- This points to the existing `/scriptural-study` page, so it is no longer hidden or hard to find on S2G.
+- If needed, also add a short description so users understand this is the question-based study section.
 
-**Main section headings** (h2): Gradient text using each section's theme accent colors, with a subtle text-shadow glow effect.
+5. Add a dedicated Schedule section for scripture/spiritual sessions
+- Reuse the existing radio/session card patterns so users can see:
+  - live sessions
+  - upcoming sessions
+  - pre-recorded / replay sessions
+- Theme this as part of 364yhvh instead of generic radio.
+- Include buttons like Join Live / Listen / View Schedule.
+- If appropriate, link through to `/grove-station?schedule=...` for playback while presenting it inside the 364yhvh hub as spiritual content.
 
-**Sub-headings** (BOOK A SERVICE, etc.): Replace plain uppercase text with a pill/badge style — a subtle gradient background with rounded corners, giving them a polished label look.
+6. Make Wheel a real selectable destination
+- Since `/wheels-in-itself` currently redirects away, I’ll align this so the Wheel option actually opens the wheel experience intentionally.
+- Best path: support a view-mode parameter/state on the calendar page so:
+  - Ed’s Beads opens bead mode
+  - Wheel opens wheel mode
 
-## Files to Edit
+Files to update
+- `src/components/dashboard/sections/YhvhDaysSection.tsx`
+- `src/components/layout/AppSidebar.tsx`
+- `src/components/layout/MobileBottomTabs.tsx`
+- `src/components/Layout.jsx`
+- `src/components/YHVHDaysPanel.tsx`
+- likely `src/components/calendar/SacredCalendarFeed.tsx` or routing logic for direct wheel mode
+- possibly a small new reusable subsection component for the 364yhvh Schedule area, using existing session UI patterns
 
-1. **Create `src/components/dashboard/sections/SectionHeading.tsx`** — A reusable component for all main section headings with:
-   - Gradient text effect using `background-clip: text` and `webkit-text-fill-color: transparent`
-   - Subtle text-shadow glow matching the section's accent color
-   - Consistent sizing and spacing
+Expected result
+- Every button/menu says `364yhvh`
+- Clicking 364yhvh takes users into a scripture/spiritual hub
+- The hub clearly offers:
+  - Ed’s Beads
+  - Wheel
+  - Studies
+  - Schedule
+- The existing Scriptural Study Q&A becomes easy to find under Studies
+- Schedule becomes the place to discover live and pre-recorded spiritual sessions connected to the bead/diary/study side of the app
 
-2. **Create `src/components/dashboard/sections/SubSectionLabel.tsx`** — A reusable component for sub-headings (BOOK A SERVICE, etc.) with:
-   - Pill-shaped container with subtle gradient background
-   - Icon + text layout with better spacing
-   - Slightly larger text (12px) with letter-spacing
-
-3. **Update 11 section files** to use the new heading components:
-   - `DashboardOverviewSection.tsx`
-   - `GigActionCards.tsx` (main heading + 3 sub-headings)
-   - `ChatAppSection.tsx`
-   - `MemrySection.tsx`
-   - `ChatFeedCards.tsx`
-   - `GoLiveFeedCards.tsx`
-   - `PlantFeedCards.tsx`
-   - `YhvhDaysSection.tsx`
-   - `MyGardenSection.tsx`
-   - `LetItRainSection.tsx`
-   - `GosatsSection.tsx`
-
-4. **Update `src/components/feed/HomeFeed.tsx`** — Style the "Social Feed" heading with gradient text
-
-## Visual Treatment
-
-**Main headings**: Each gets a two-tone gradient pulled from its section theme (e.g., Services gets teal-to-cyan, Plant gets green-to-emerald). The gradient text is paired with a faint colored glow behind it.
-
-**Sub-headings** (carousel labels): Transform from plain uppercase text into styled pills with a translucent gradient background, slightly rounded, with the emoji icon and text inside — giving them a tag/badge feel that pops against the dark background.
-
-## Technical Details
-
-- Gradient text via `backgroundImage` + `WebkitBackgroundClip: 'text'` + `WebkitTextFillColor: 'transparent'`
-- Glow via `textShadow: '0 0 20px rgba(accent, 0.3)'`
-- Sub-heading pills via `background: linear-gradient(...)` with `rgba` transparency + `border-radius` + padding
-- All colors derived from the existing `theme.accent` / `theme.textPrimary` to stay on-brand
-
+Technical note
+- I will not create a brand-new study system; I will connect the existing `/scriptural-study` feature into the 364yhvh hub.
+- I will reuse existing radio/session display patterns for Schedule so the feature fits the app and ships faster.
+- For Wheel, I will avoid leaving the current redirect behavior in place so that option feels real and intentional.
