@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ChevronLeft, ChevronRight, Circle, Cog, MapPin, RotateCcw, Star, Calendar, BookOpen, PenLine, Sprout } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Circle, Cog, MapPin, RotateCcw, Star, Calendar, BookOpen, PenLine, Sprout, Video, Radio, Clock, Play } from 'lucide-react';
 import { getCurrentTheme } from '@/utils/dashboardThemes';
 import { calculateCreatorDate } from '@/utils/dashboardCalendar';
 import { getCreatorTime } from '@/utils/customTime';
@@ -9,7 +9,7 @@ import { sacredCalendarNotes } from '@/data/sacredCalendarNotes';
 import { LocationVerification } from '@/components/calendar/LocationVerification';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams, Link } from 'react-router-dom';
 import { GardenGuideSection } from '@/components/garden/GardenGuideSection';
 import { OmerCountBanner } from '@/components/OmerCountBanner';
 import RemnantsWheelCalendar from '@/components/watch/RemnantsWheelCalendar';
@@ -241,11 +241,15 @@ function FeastEventCards({ month, theme }: { month: number; theme: any }) {
 // ─── Main Feed Component ───
 export default function SacredCalendarFeed() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const { location } = useUserLocation();
   const [theme, setTheme] = useState(getCurrentTheme());
   const [activeMonth, setActiveMonth] = useState(1);
   const [selectedDay, setSelectedDay] = useState(1);
-  const [viewMode, setViewMode] = useState<'beads' | 'wheel'>('beads');
+  const initialView = (searchParams.get('view') as 'beads' | 'wheel' | 'studies' | 'schedule') || 'beads';
+  const [viewMode, setViewMode] = useState<'beads' | 'wheel' | 'studies' | 'schedule'>(
+    ['beads','wheel','studies','schedule'].includes(initialView) ? initialView : 'beads'
+  );
   const [direction, setDirection] = useState(0);
   const touchStartX = useRef(0);
 
@@ -362,30 +366,28 @@ export default function SacredCalendarFeed() {
         <OmerCountBanner theme={theme} />
       </div>
 
-      {/* ─── View Toggle ─── */}
+      {/* ─── View Toggle (4 options) ─── */}
       <div className="mx-auto max-w-2xl px-4 mb-3">
         <div className="flex justify-center">
-          <div className="inline-flex rounded-full p-1" style={{ background: theme.cardBg, border: `1px solid ${theme.cardBorder}` }}>
-            <button
-              onClick={() => setViewMode('beads')}
-              className={`px-4 py-1.5 rounded-full text-xs font-semibold transition-all ${viewMode === 'beads' ? 'shadow-lg' : 'opacity-60'}`}
-              style={{
-                background: viewMode === 'beads' ? theme.accent : 'transparent',
-                color: viewMode === 'beads' ? '#000' : theme.textSecondary,
-              }}
-            >
-              📿 Ed's Beads
-            </button>
-            <button
-              onClick={() => setViewMode('wheel')}
-              className={`px-4 py-1.5 rounded-full text-xs font-semibold transition-all ${viewMode === 'wheel' ? 'shadow-lg' : 'opacity-60'}`}
-              style={{
-                background: viewMode === 'wheel' ? theme.accent : 'transparent',
-                color: viewMode === 'wheel' ? '#000' : theme.textSecondary,
-              }}
-            >
-              ☸️ Wheel
-            </button>
+          <div className="inline-flex rounded-full p-1 flex-wrap gap-0.5" style={{ background: theme.cardBg, border: `1px solid ${theme.cardBorder}` }}>
+            {([
+              { id: 'beads' as const, emoji: '📿', label: "Ed's Beads" },
+              { id: 'wheel' as const, emoji: '☸️', label: 'Wheel' },
+              { id: 'studies' as const, emoji: '📖', label: 'Studies' },
+              { id: 'schedule' as const, emoji: '📅', label: 'Schedule' },
+            ]).map(tab => (
+              <button
+                key={tab.id}
+                onClick={() => setViewMode(tab.id)}
+                className={`px-3 py-1.5 rounded-full text-xs font-semibold transition-all ${viewMode === tab.id ? 'shadow-lg' : 'opacity-60'}`}
+                style={{
+                  background: viewMode === tab.id ? theme.accent : 'transparent',
+                  color: viewMode === tab.id ? '#000' : theme.textSecondary,
+                }}
+              >
+                {tab.emoji} {tab.label}
+              </button>
+            ))}
           </div>
         </div>
       </div>
@@ -552,7 +554,7 @@ export default function SacredCalendarFeed() {
               </div>
             </div>
           </motion.div>
-        ) : (
+        ) : viewMode === 'wheel' ? (
           /* ─── Wheel View ─── */
           <motion.div key="wheel" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
             <div className="mx-auto max-w-2xl px-4">
@@ -560,7 +562,6 @@ export default function SacredCalendarFeed() {
                 <RemnantsWheelCalendar size={wheelSize} />
               </div>
 
-              {/* Week structure */}
               <div className="rounded-2xl p-4 mt-4" style={{ background: theme.cardBg, border: `1px solid ${theme.cardBorder}` }}>
                 <h3 className="text-sm font-semibold mb-3" style={{ color: theme.accent }}>Year-End Week Structure</h3>
                 <div className="space-y-1 text-[11px]" style={{ color: theme.textSecondary }}>
@@ -571,6 +572,137 @@ export default function SacredCalendarFeed() {
                   <p><span className="text-amber-400">Tequvah</span> — YHVH Day 4 = Man's Day 1 (New Year)</p>
                 </div>
               </div>
+            </div>
+          </motion.div>
+        ) : viewMode === 'studies' ? (
+          /* ─── Studies View ─── */
+          <motion.div key="studies" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
+            <div className="mx-auto max-w-2xl px-4 space-y-4">
+              {/* Scriptural Study Q&A */}
+              <Link
+                to="/scriptural-study"
+                className="block rounded-2xl p-5 transition-all hover:scale-[1.01]"
+                style={{ background: 'linear-gradient(135deg, #92400e, #d97706)', border: `1px solid ${theme.cardBorder}` }}
+              >
+                <div className="flex items-center gap-4">
+                  <div className="w-12 h-12 rounded-xl flex items-center justify-center" style={{ background: 'rgba(255,255,255,0.15)' }}>
+                    <BookOpen className="w-6 h-6 text-amber-200" />
+                  </div>
+                  <div>
+                    <h3 className="text-lg font-bold text-white">Scriptural Study Q&A</h3>
+                    <p className="text-xs text-white/70">End Times study companion — Victory Already Won</p>
+                  </div>
+                </div>
+              </Link>
+
+              {/* Videos */}
+              <Link
+                to="/364yhvh-videos"
+                className="block rounded-2xl p-5 transition-all hover:scale-[1.01]"
+                style={{ background: 'linear-gradient(135deg, #7c2d12, #b45309)', border: `1px solid ${theme.cardBorder}` }}
+              >
+                <div className="flex items-center gap-4">
+                  <div className="w-12 h-12 rounded-xl flex items-center justify-center" style={{ background: 'rgba(255,255,255,0.15)' }}>
+                    <Video className="w-6 h-6 text-amber-200" />
+                  </div>
+                  <div>
+                    <h3 className="text-lg font-bold text-white">Videos</h3>
+                    <p className="text-xs text-white/70">Watch & learn from scripture teachings</p>
+                  </div>
+                </div>
+              </Link>
+
+              {/* Study description */}
+              <div className="rounded-2xl p-5" style={{ background: theme.cardBg, border: `1px solid ${theme.cardBorder}` }}>
+                <div className="flex items-center gap-2 mb-2">
+                  <BookOpen className="w-5 h-5" style={{ color: theme.accent }} />
+                  <h3 className="text-sm font-bold" style={{ color: theme.textPrimary }}>The Complete Study</h3>
+                </div>
+                <p className="text-xs leading-relaxed" style={{ color: theme.textSecondary }}>
+                  Victory Already Won — an interactive study through 10 major End Times topics. Answer questions, light candles, and join live SkillDrop sessions to go deeper into the Word.
+                </p>
+                <Link
+                  to="/scriptural-study"
+                  className="inline-flex items-center gap-2 mt-3 px-4 py-2 rounded-lg text-xs font-semibold text-white transition-all hover:scale-105"
+                  style={{ background: theme.accent }}
+                >
+                  <BookOpen className="w-3.5 h-3.5" />
+                  Start Studying
+                </Link>
+              </div>
+            </div>
+          </motion.div>
+        ) : (
+          /* ─── Schedule View ─── */
+          <motion.div key="schedule" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
+            <div className="mx-auto max-w-2xl px-4 space-y-4">
+              <div
+                className="rounded-2xl p-5"
+                style={{ background: 'linear-gradient(135deg, #581c87, #7e22ce)' }}
+              >
+                <div className="flex items-center gap-3 mb-4">
+                  <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ background: 'rgba(255,255,255,0.15)' }}>
+                    <Radio className="w-5 h-5 text-purple-200" />
+                  </div>
+                  <div>
+                    <h3 className="text-base font-bold text-white">Live & Recorded Sessions</h3>
+                    <p className="text-xs text-white/60">Scripture teachings, bead studies & diary</p>
+                  </div>
+                </div>
+
+                <div className="space-y-2.5">
+                  <Link
+                    to="/grove-station"
+                    className="flex items-center gap-3 p-3 rounded-xl transition-all hover:scale-[1.02]"
+                    style={{ background: 'rgba(255,255,255,0.1)' }}
+                  >
+                    <div className="w-8 h-8 rounded-lg flex items-center justify-center bg-red-500/30">
+                      <Radio className="w-4 h-4 text-red-300" />
+                    </div>
+                    <div className="flex-1">
+                      <span className="text-sm font-semibold text-white">Live Now</span>
+                      <p className="text-[10px] text-white/50">Join active spiritual broadcasts</p>
+                    </div>
+                    <span className="w-2 h-2 rounded-full bg-red-400 animate-pulse" />
+                  </Link>
+
+                  <Link
+                    to="/explore-sessions?type=skilldrop"
+                    className="flex items-center gap-3 p-3 rounded-xl transition-all hover:scale-[1.02]"
+                    style={{ background: 'rgba(255,255,255,0.1)' }}
+                  >
+                    <div className="w-8 h-8 rounded-lg flex items-center justify-center bg-amber-500/30">
+                      <Clock className="w-4 h-4 text-amber-300" />
+                    </div>
+                    <div className="flex-1">
+                      <span className="text-sm font-semibold text-white">Upcoming Sessions</span>
+                      <p className="text-[10px] text-white/50">SkillDrop & classroom teachings</p>
+                    </div>
+                  </Link>
+
+                  <Link
+                    to="/364yhvh-videos"
+                    className="flex items-center gap-3 p-3 rounded-xl transition-all hover:scale-[1.02]"
+                    style={{ background: 'rgba(255,255,255,0.1)' }}
+                  >
+                    <div className="w-8 h-8 rounded-lg flex items-center justify-center bg-purple-500/30">
+                      <Play className="w-4 h-4 text-purple-300" />
+                    </div>
+                    <div className="flex-1">
+                      <span className="text-sm font-semibold text-white">Pre-recorded</span>
+                      <p className="text-[10px] text-white/50">Watch past teachings & replays</p>
+                    </div>
+                  </Link>
+                </div>
+              </div>
+
+              <Link
+                to="/communications-hub?tab=radio&create=1"
+                className="block w-full text-center py-3 rounded-xl text-sm font-semibold text-white transition-all hover:scale-[1.02]"
+                style={{ background: 'linear-gradient(135deg, #7c2d12, #b45309)' }}
+              >
+                🎙️ Go Live — Start a Spiritual Session
+              </Link>
             </div>
           </motion.div>
         )}
