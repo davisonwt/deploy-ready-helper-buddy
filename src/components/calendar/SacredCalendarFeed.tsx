@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ChevronLeft, ChevronRight, Circle, Cog, MapPin, RotateCcw, Star, Calendar, BookOpen, PenLine, Sprout } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Circle, Cog, MapPin, RotateCcw, Star, Calendar, BookOpen, PenLine, Sprout, Video, Radio, Clock, Play } from 'lucide-react';
 import { getCurrentTheme } from '@/utils/dashboardThemes';
 import { calculateCreatorDate } from '@/utils/dashboardCalendar';
 import { getCreatorTime } from '@/utils/customTime';
@@ -9,7 +9,7 @@ import { sacredCalendarNotes } from '@/data/sacredCalendarNotes';
 import { LocationVerification } from '@/components/calendar/LocationVerification';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams, Link } from 'react-router-dom';
 import { GardenGuideSection } from '@/components/garden/GardenGuideSection';
 import { OmerCountBanner } from '@/components/OmerCountBanner';
 import RemnantsWheelCalendar from '@/components/watch/RemnantsWheelCalendar';
