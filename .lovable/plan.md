@@ -1,87 +1,85 @@
 
-Goal: make every 364yhvh entry point consistently say “364yhvh”, and turn the 364yhvh area into a proper scripture/spiritual hub with 4 options: Ed’s Beads, Wheel, Studies, and Schedule.
 
-What I found
-- The dashboard section nav is already labeled `364yhvh` in `src/components/dashboard/sectionConfig.ts`.
-- The old label still exists in other places, which is why you still see “364yhvh Days”:
-  - `src/components/layout/AppSidebar.tsx`
-  - `src/components/layout/MobileBottomTabs.tsx`
-  - `src/components/Layout.jsx`
-  - `src/components/YHVHDaysPanel.tsx`
-- The current 364yhvh dashboard section (`src/components/dashboard/sections/YhvhDaysSection.tsx`) only has 2 tabs: Days and Studies.
-- Your study-with-questions area already exists at route `/scriptural-study` in `src/pages/ScripturalStudyQA.tsx`.
-- The current “Wheel” route (`/wheels-in-itself`) just redirects back to `/enochian-calendar-design`, so it is not a true separate experience right now.
-- There is already reusable radio/session UI we can reuse for “Schedule”:
-  - `src/components/dashboard/sections/RadioSection.tsx`
-  - `src/components/radio/RadioSessionFeed.tsx`
+# Study Upload Hub in 364yhvh Studies Tab
 
-Implementation plan
-1. Rename every old “364yhvh Days” label to `364yhvh`
-- Update sidebar, mobile more menu, legacy top/menu buttons, and panel title text.
-- This fixes the specific “you did not rename the button” issue everywhere, not just in one navbar.
+## What We're Building
 
-2. Turn `YhvhDaysSection` into a 4-option hub
-- Replace the current 2-tab switcher with a 4-option spiritual hub:
-  - Ed’s Beads
-  - Wheel
-  - Studies
-  - Schedule
-- Keep the current beautiful heading style, but change the body so the first view matches the structure you described.
+A full study upload and sharing system inside the **Studies** tab of 364yhvh. Sowers can upload studies (documents, voice notes, videos, or combinations), S2G auto-generates a cover image if none is provided, and each study automatically appears in the Social Feed with a short description, bestow button, and free gift button.
 
-3. Organize the four options clearly
-- Ed’s Beads
-  - Link to `/enochian-calendar-design`
-  - Keep this as the bead-based sacred calendar entry point
-- Wheel
-  - Keep a separate option visible in the hub
-  - Either route to the same calendar page in wheel mode or update the calendar page to support a direct wheel view
-- Studies
-  - Include the existing “Scriptural Study Q&A” here
-  - Also include the videos/study media entry here so all scripture study content lives together
-- Schedule
-  - Add a spiritual sessions area for live and pre-recorded listening/viewing tied to bead/diary/scripture content
+## How It Works
 
-4. Bring the study-with-questions section into 364yhvh
-- Add a clear “Scriptural Study Q&A” card inside the Studies area.
-- This points to the existing `/scriptural-study` page, so it is no longer hidden or hard to find on S2G.
-- If needed, also add a short description so users understand this is the question-based study section.
+1. **Upload Study** -- A new "Upload Study" button in the Studies tab opens a dedicated upload form where users provide:
+   - Title and description
+   - Main files: documents (.pdf, .docx), voice notes (.mp3, .wav, .m4a), videos (.mp4, .webm), or any combination
+   - Optional custom cover image
+   - Bestowal value (optional -- can be free)
+   - Tags/category
 
-5. Add a dedicated Schedule section for scripture/spiritual sessions
-- Reuse the existing radio/session card patterns so users can see:
-  - live sessions
-  - upcoming sessions
-  - pre-recorded / replay sessions
-- Theme this as part of 364yhvh instead of generic radio.
-- Include buttons like Join Live / Listen / View Schedule.
-- If appropriate, link through to `/grove-station?schedule=...` for playback while presenting it inside the 364yhvh hub as spiritual content.
+2. **Auto-Generate Cover Image** -- If the user doesn't upload their own cover, an edge function (`generate-study-cover`) calls Lovable AI's image generation model (`google/gemini-2.5-flash-image`) to create a beautiful cover based on the study title and description. The generated image is uploaded to Supabase Storage and saved as the `cover_image_url`.
 
-6. Make Wheel a real selectable destination
-- Since `/wheels-in-itself` currently redirects away, I’ll align this so the Wheel option actually opens the wheel experience intentionally.
-- Best path: support a view-mode parameter/state on the calendar page so:
-  - Ed’s Beads opens bead mode
-  - Wheel opens wheel mode
+3. **Auto-Post to Social Feed** -- After upload, a database trigger (or post-insert logic in the upload handler) creates a `memry_posts` entry with:
+   - The study's cover image
+   - A short description (first ~200 chars or a "1-min read" summary)
+   - Link to the full study
+   - A "Bestow" button if the study has a price
+   - A "Gift" button always visible so tribe members can send free gifts to the sower
 
-Files to update
-- `src/components/dashboard/sections/YhvhDaysSection.tsx`
-- `src/components/layout/AppSidebar.tsx`
-- `src/components/layout/MobileBottomTabs.tsx`
-- `src/components/Layout.jsx`
-- `src/components/YHVHDaysPanel.tsx`
-- likely `src/components/calendar/SacredCalendarFeed.tsx` or routing logic for direct wheel mode
-- possibly a small new reusable subsection component for the 364yhvh Schedule area, using existing session UI patterns
+4. **Study Feed Card in Social Feed** -- A new `StudyFeedCard` component renders these posts with the study cover, sower info, short description, and action buttons (Bestow / Gift).
 
-Expected result
-- Every button/menu says `364yhvh`
-- Clicking 364yhvh takes users into a scripture/spiritual hub
-- The hub clearly offers:
-  - Ed’s Beads
-  - Wheel
-  - Studies
-  - Schedule
-- The existing Scriptural Study Q&A becomes easy to find under Studies
-- Schedule becomes the place to discover live and pre-recorded spiritual sessions connected to the bead/diary/study side of the app
+## Technical Plan
 
-Technical note
-- I will not create a brand-new study system; I will connect the existing `/scriptural-study` feature into the 364yhvh hub.
-- I will reuse existing radio/session display patterns for Schedule so the feature fits the app and ships faster.
-- For Wheel, I will avoid leaving the current redirect behavior in place so that option feels real and intentional.
+### Step 1: Database -- Add `type = 'study'` support to `s2g_library_items`
+- The existing `s2g_library_items` table already has all needed columns (title, description, type, cover_image_url, price, file_url, user_id, is_public)
+- We'll use `type = 'study'` for these items
+- Add a migration to create a `study_feed_posts` entry or reuse `memry_posts` pattern for the social feed auto-post
+
+### Step 2: Edge Function -- `generate-study-cover`
+- Accepts: title, description, study_id
+- Uses Lovable AI image generation to create a cover
+- Uploads to `premium-room` storage bucket
+- Updates the `s2g_library_items` row with the generated `cover_image_url`
+
+### Step 3: Study Upload Form Component
+- New `StudyUploadForm.tsx` component specifically for studies
+- Supports multi-file upload (docs + audio + video)
+- Cover image upload (optional) with "auto-generate" fallback
+- Bestowal value input
+- After successful upload, calls `generate-study-cover` if no cover was provided, then creates a social feed post
+
+### Step 4: Social Feed Integration
+- After upload, insert a post into the feed (via `memry_posts` or similar table) with:
+  - Cover image as media
+  - Short description / 1-min read excerpt
+  - `product_id` linking to the study
+  - `content_type = 'study'`
+- New `StudyFeedCard` in `InlineMemryFeed` that renders bestow + gift buttons
+
+### Step 5: Update YhvhDaysSection Studies Tab
+- Add "Upload a Study" button at the top of the Studies tab
+- Show a list/feed of recent community studies below the existing cards
+- Each study card shows cover, title, short description, sower name
+
+### Files to Create
+- `src/components/studies/StudyUploadForm.tsx` -- upload form
+- `src/components/feed/cards/StudyFeedCard.tsx` -- social feed card with bestow/gift
+- `supabase/functions/generate-study-cover/index.ts` -- AI cover generation
+- `src/pages/StudyUploadPage.tsx` -- route wrapper
+
+### Files to Edit
+- `src/components/dashboard/sections/YhvhDaysSection.tsx` -- add upload button + study feed
+- `src/components/feed/cards/InlineMemryFeed.tsx` -- handle `content_type = 'study'` posts
+- `src/App.tsx` -- add `/upload-study` route
+- Database migration for any needed columns/triggers
+
+### Flow Summary
+```text
+User opens Studies tab
+  -> "Upload Study" button
+  -> StudyUploadForm (title, files, cover, bestowal)
+  -> Files uploaded to Supabase Storage
+  -> Row inserted into s2g_library_items (type='study')
+  -> If no cover: call generate-study-cover edge function
+  -> Auto-post to social feed with cover + description
+  -> Tribe sees study in Social Feed with Bestow / Gift buttons
+```
+
