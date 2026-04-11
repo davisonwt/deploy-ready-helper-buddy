@@ -157,6 +157,7 @@ const ScripturalStudyQA = lazy(() => import("./pages/ScripturalStudyQA"));
 const StudyAnswerPage = lazy(() => import("./pages/StudyAnswerPage"));
 const MemryPage = lazy(() => import("./pages/MemryPage"));
 const ExploreSessionsPage = lazy(() => import("./pages/ExploreSessionsPage"));
+const StudyUploadPage = lazy(() => import("./pages/StudyUploadPage"));
 
 // Community Drivers
 const RegisterVehiclePage = lazy(() => import("./pages/RegisterVehiclePage"));
@@ -772,6 +773,11 @@ const App = () => (
               <Route path="/upload" element={
                 <ProtectedRoute requireAuth>
                   <VideoUploadPage />
+                </ProtectedRoute>
+              } />
+              <Route path="/upload-study" element={
+                <ProtectedRoute requireAuth>
+                  <StudyUploadPage />
                 </ProtectedRoute>
               } />
 

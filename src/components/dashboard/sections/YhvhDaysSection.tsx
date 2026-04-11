@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Calendar, Gem, CircleDot, BookOpen, Video, Clock, Radio, Play, Eye } from 'lucide-react';
+import { Calendar, Gem, CircleDot, BookOpen, Video, Clock, Radio, Play, Eye, Upload } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { OmerCountBanner } from '@/components/OmerCountBanner';
 import { DashboardTheme } from '@/utils/dashboardThemes';
@@ -12,6 +12,7 @@ import { TopSowersTeaser } from '../TopSowersTeaser';
 import { SeedEngagementWidget } from '../SeedEngagementWidget';
 import { getDayInfo } from '@/utils/sacredCalendar';
 import { GradientGatewayCard } from './GradientGatewayCard';
+import StudyFeedList from '@/components/studies/StudyFeedList';
 import { KeeperHelpButton } from './KeeperHelpButton';
 import { SectionHeading } from './SectionHeading';
 import { SubSectionLabel } from './SubSectionLabel';
@@ -180,6 +181,15 @@ export const YhvhDaysSection: React.FC<YhvhDaysSectionProps> = ({
       {/* === Studies === */}
       {activeTab === 'studies' && (
         <div className="space-y-4">
+          <Link
+            to="/upload-study"
+            className="flex items-center justify-center gap-2 w-full py-3 rounded-xl text-sm font-semibold text-white transition-all hover:scale-[1.02]"
+            style={{ background: 'linear-gradient(135deg, #92400e, #d97706)' }}
+          >
+            <Upload className="w-4 h-4" />
+            Upload a Study
+          </Link>
+
           <GradientGatewayCard
             href="/scriptural-study"
             title="Scriptural Study Q&A"
@@ -214,6 +224,13 @@ export const YhvhDaysSection: React.FC<YhvhDaysSectionProps> = ({
               <BookOpen className="w-3.5 h-3.5" />
               Start Studying
             </Link>
+          </div>
+
+          <div
+            className="rounded-xl p-4 border"
+            style={{ background: theme.cardBg, borderColor: theme.cardBorder, boxShadow: `0 4px 16px ${theme.shadow}` }}
+          >
+            <StudyFeedList />
           </div>
         </div>
       )}
