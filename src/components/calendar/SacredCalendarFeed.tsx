@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ChevronLeft, ChevronRight, Circle, Cog, MapPin, RotateCcw, Star, Calendar, BookOpen, PenLine, Sprout, Video, Radio, Clock, Play } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Circle, Cog, MapPin, RotateCcw, Star, Calendar, BookOpen, PenLine, Sprout, Video, Radio, Clock, Play, Upload } from 'lucide-react';
 import { getCurrentTheme } from '@/utils/dashboardThemes';
 import { calculateCreatorDate } from '@/utils/dashboardCalendar';
 import { getCreatorTime } from '@/utils/customTime';
@@ -578,6 +578,16 @@ export default function SacredCalendarFeed() {
           /* ─── Studies View ─── */
           <motion.div key="studies" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
             <div className="mx-auto max-w-2xl px-4 space-y-4">
+              {/* Upload Study Button */}
+              <Link
+                to="/upload-study"
+                className="flex items-center justify-center gap-2 w-full py-3 rounded-xl text-sm font-semibold text-white transition-all hover:scale-[1.02]"
+                style={{ background: 'linear-gradient(135deg, #92400e, #d97706)' }}
+              >
+                <Upload className="w-4 h-4" />
+                Upload a Study
+              </Link>
+
               {/* Scriptural Study Q&A */}
               <Link
                 to="/scriptural-study"
@@ -629,6 +639,11 @@ export default function SacredCalendarFeed() {
                   <BookOpen className="w-3.5 h-3.5" />
                   Start Studying
                 </Link>
+              </div>
+
+              {/* Community Studies Feed */}
+              <div className="rounded-2xl p-4" style={{ background: theme.cardBg, border: `1px solid ${theme.cardBorder}` }}>
+                <StudyFeedList />
               </div>
             </div>
           </motion.div>
