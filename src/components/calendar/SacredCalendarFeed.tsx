@@ -13,6 +13,7 @@ import { useNavigate, useSearchParams, Link } from 'react-router-dom';
 import { GardenGuideSection } from '@/components/garden/GardenGuideSection';
 import { OmerCountBanner } from '@/components/OmerCountBanner';
 import RemnantsWheelCalendar from '@/components/watch/RemnantsWheelCalendar';
+import StudyFeedList from '@/components/studies/StudyFeedList';
 import {
   Month1Strand, Month2Strand, Month3Strand, Month4Strand,
   Month5Strand, Month6Strand, Month7Strand, Month8Strand,
