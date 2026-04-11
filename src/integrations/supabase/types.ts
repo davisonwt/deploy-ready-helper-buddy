@@ -3556,6 +3556,7 @@ export type Database = {
           recipe_ingredients: string[] | null
           recipe_instructions: string | null
           recipe_title: string | null
+          study_id: string | null
           thumbnail_url: string | null
           updated_at: string
           user_id: string
@@ -3572,6 +3573,7 @@ export type Database = {
           recipe_ingredients?: string[] | null
           recipe_instructions?: string | null
           recipe_title?: string | null
+          study_id?: string | null
           thumbnail_url?: string | null
           updated_at?: string
           user_id: string
@@ -3588,11 +3590,20 @@ export type Database = {
           recipe_ingredients?: string[] | null
           recipe_instructions?: string | null
           recipe_title?: string | null
+          study_id?: string | null
           thumbnail_url?: string | null
           updated_at?: string
           user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "memry_posts_study_id_fkey"
+            columns: ["study_id"]
+            isOneToOne: false
+            referencedRelation: "s2g_library_items"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       message_streaks: {
         Row: {
@@ -6974,6 +6985,7 @@ export type Database = {
       }
       s2g_library_items: {
         Row: {
+          additional_files: Json | null
           bestowal_count: number | null
           category: string | null
           cover_image_url: string | null
@@ -6993,6 +7005,7 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          additional_files?: Json | null
           bestowal_count?: number | null
           category?: string | null
           cover_image_url?: string | null
@@ -7012,6 +7025,7 @@ export type Database = {
           user_id: string
         }
         Update: {
+          additional_files?: Json | null
           bestowal_count?: number | null
           category?: string | null
           cover_image_url?: string | null
