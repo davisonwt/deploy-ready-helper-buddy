@@ -32,7 +32,7 @@ export default function StudyViewerPage() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('s2g_library_items')
-        .select('*')
+        .select('id, title, description, section_title, section_order, file_url, type')
         .eq('parent_study_id' as any, id!)
         .order('section_order' as any, { ascending: true });
       if (error) throw error;
