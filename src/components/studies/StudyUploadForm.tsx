@@ -8,7 +8,7 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Upload, Loader2, BookOpen, Image, FileText, Mic, Video, Gift, Coins } from 'lucide-react';
 import { toast } from 'sonner';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 
 interface UploadedFile {
   file: File;
@@ -18,18 +18,26 @@ interface UploadedFile {
 const ACCEPTED_DOCS = '.pdf,.docx,.doc,.txt,.md';
 const ACCEPTED_AUDIO = '.mp3,.wav,.m4a,.ogg,.aac';
 const ACCEPTED_VIDEO = '.mp4,.webm,.mov';
+const DEFAULT_COVER = '/lovable-uploads/ff9e6e48-049d-465a-8d2b-f6e8fed93522.png';
 
 export default function StudyUploadForm() {
   const { user } = useAuth();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const parentStudyId = searchParams.get('parent') || null;
+  const parentTitle = searchParams.get('parentTitle') || null;
+
   const [uploading, setUploading] = useState(false);
   const [title, setTitle] = useState('');
+  const [sectionTitle, setSectionTitle] = useState('');
   const [description, setDescription] = useState('');
   const [tags, setTags] = useState('');
   const [bestowalValue, setBestowalValue] = useState(0);
   const [coverImage, setCoverImage] = useState<File | null>(null);
   const [coverPreview, setCoverPreview] = useState('');
   const [studyFiles, setStudyFiles] = useState<UploadedFile[]>([]);
+
+  const isSection = !!parentStudyId;
 
   const handleCoverSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -51,21 +59,20 @@ export default function StudyUploadForm() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!user) { toast.error('Please login first'); return; }
-    if (!title.trim()) { toast.error('Title is required'); return; }
+    if (!isSection && !title.trim()) { toast.error('Title is required'); return; }
+    if (isSection && !sectionTitle.trim()) { toast.error('Section title is required'); return; }
     if (studyFiles.length === 0) { toast.error('Please add at least one file'); return; }
 
     setUploading(true);
     try {
-      // 1. Upload main file (first file)
+      // 1. Upload main file
       const mainFile = studyFiles[0].file;
       const mainExt = mainFile.name.split('.').pop();
       const mainPath = `${user.id}/studies/${Date.now()}-main.${mainExt}`;
-      
       const { error: mainUploadErr } = await supabase.storage
         .from('study-uploads')
         .upload(mainPath, mainFile, { contentType: mainFile.type });
       if (mainUploadErr) throw mainUploadErr;
-
       const { data: { publicUrl: mainUrl } } = supabase.storage
         .from('study-uploads').getPublicUrl(mainPath);
 
@@ -98,54 +105,80 @@ export default function StudyUploadForm() {
         coverUrl = publicUrl;
       }
 
-      // 4. Insert into s2g_library_items
+      // 4. Get next section_order if adding a section
+      let sectionOrder = 0;
+      if (isSection) {
+        const { data: existingSections } = await (supabase
+          .from('s2g_library_items') as any)
+          .select('section_order')
+          .eq('parent_study_id', parentStudyId)
+          .order('section_order', { ascending: false })
+          .limit(1);
+        sectionOrder = (existingSections?.[0]?.section_order ?? -1) + 1;
+      }
+
+      // 5. Insert into s2g_library_items
       const tagsArray = tags.split(',').map(t => t.trim()).filter(Boolean);
+      const insertData: any = {
+        user_id: user.id,
+        title: isSection ? (parentTitle || 'Study') : title.trim(),
+        description: description.trim() || null,
+        type: 'study',
+        file_url: mainUrl,
+        file_size: mainFile.size,
+        cover_image_url: coverUrl,
+        price: bestowalValue > 0 ? bestowalValue : 0,
+        tags: tagsArray.length > 0 ? tagsArray : null,
+        is_public: true,
+        category: 'scripture',
+        additional_files: additionalFiles.length > 0 ? additionalFiles : [],
+      };
+
+      if (isSection) {
+        insertData.parent_study_id = parentStudyId;
+        insertData.section_title = sectionTitle.trim();
+        insertData.section_order = sectionOrder;
+      }
+
       const { data: libItem, error: insertErr } = await supabase
         .from('s2g_library_items')
-        .insert({
-          user_id: user.id,
-          title: title.trim(),
-          description: description.trim() || null,
-          type: 'study',
-          file_url: mainUrl,
-          file_size: mainFile.size,
-          cover_image_url: coverUrl,
-          price: bestowalValue > 0 ? bestowalValue : 0,
-          tags: tagsArray.length > 0 ? tagsArray : null,
-          is_public: true,
-          category: 'scripture',
-          additional_files: additionalFiles.length > 0 ? additionalFiles : [],
-        })
+        .insert(insertData)
         .select()
         .single();
 
       if (insertErr) throw insertErr;
 
-      // 5. Generate cover if none provided
-      if (!coverUrl && libItem) {
+      // 6. Generate cover if none provided (main studies only)
+      if (!coverUrl && libItem && !isSection) {
         supabase.functions.invoke('generate-study-cover', {
           body: { title: title.trim(), description: description.trim(), study_id: libItem.id },
         }).catch(err => console.error('Cover generation failed:', err));
       }
 
-      // 6. Auto-post to social feed
-      const shortDesc = description.trim().length > 200 
-        ? description.trim().slice(0, 197) + '...' 
-        : description.trim() || `New study: ${title}`;
+      // 7. Auto-post to social feed (main studies only)
+      if (!isSection) {
+        const shortDesc = description.trim().length > 200 
+          ? description.trim().slice(0, 197) + '...' 
+          : description.trim() || `New study: ${title}`;
+        const feedMediaUrl = coverUrl || DEFAULT_COVER;
 
-      const feedMediaUrl = coverUrl || '/lovable-uploads/ff9e6e48-049d-465a-8d2b-f6e8fed93522.png';
+        await supabase.from('memry_posts').insert({
+          user_id: user.id,
+          content_type: 'study',
+          media_url: feedMediaUrl,
+          caption: `📖 New Study: ${title}\n\n${shortDesc}`,
+          content_category: 'scripture',
+          study_id: libItem.id,
+        });
+      }
 
-      await supabase.from('memry_posts').insert({
-        user_id: user.id,
-        content_type: 'study',
-        media_url: feedMediaUrl,
-        caption: `📖 New Study: ${title}\n\n${shortDesc}`,
-        content_category: 'scripture',
-        study_id: libItem.id,
-      });
-
-      toast.success('Study uploaded successfully!');
-      navigate('/enochian-calendar-design?view=studies');
+      toast.success(isSection ? 'Section added!' : 'Study uploaded successfully!');
+      
+      if (isSection && parentStudyId) {
+        navigate(`/study/${parentStudyId}`);
+      } else {
+        navigate('/enochian-calendar-design?view=studies');
+      }
     } catch (err: any) {
       console.error('Upload error:', err);
       toast.error(err.message || 'Failed to upload study');
@@ -165,17 +198,25 @@ export default function StudyUploadForm() {
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <BookOpen className="w-5 h-5" />
-          Upload a Study
+          {isSection ? `Add Section to: ${parentTitle}` : 'Upload a Study'}
         </CardTitle>
       </CardHeader>
       <CardContent>
         <form onSubmit={handleSubmit} className="space-y-5">
-          {/* Title */}
-          <div className="space-y-1.5">
-            <Label htmlFor="title">Study Title *</Label>
-            <Input id="title" value={title} onChange={e => setTitle(e.target.value)} 
-              placeholder="e.g. Victory Already Won — Part 3" required maxLength={200} />
-          </div>
+          {/* Title (main study) or Section Title */}
+          {isSection ? (
+            <div className="space-y-1.5">
+              <Label htmlFor="sectionTitle">Section Title *</Label>
+              <Input id="sectionTitle" value={sectionTitle} onChange={e => setSectionTitle(e.target.value)}
+                placeholder="e.g. Chapter 2 — The Remnant" required maxLength={200} />
+            </div>
+          ) : (
+            <div className="space-y-1.5">
+              <Label htmlFor="title">Study Title *</Label>
+              <Input id="title" value={title} onChange={e => setTitle(e.target.value)} 
+                placeholder="e.g. Victory Already Won — Part 3" required maxLength={200} />
+            </div>
+          )}
 
           {/* Description */}
           <div className="space-y-1.5">
@@ -185,20 +226,22 @@ export default function StudyUploadForm() {
               rows={4} maxLength={2000} />
           </div>
 
-          {/* Cover Image */}
-          <div className="space-y-1.5">
-            <Label>Cover Image (optional — AI will generate one if empty)</Label>
-            <div className="flex items-center gap-3">
-              <label className="flex items-center gap-2 px-4 py-2 rounded-lg border border-dashed cursor-pointer hover:bg-accent/50 transition-colors">
-                <Image className="w-4 h-4" />
-                <span className="text-sm">{coverImage ? coverImage.name : 'Choose image'}</span>
-                <input type="file" accept="image/*" onChange={handleCoverSelect} className="hidden" />
-              </label>
-              {coverPreview && (
-                <img src={coverPreview} alt="Cover preview" className="w-16 h-16 rounded-lg object-cover" />
-              )}
+          {/* Cover Image (main studies only) */}
+          {!isSection && (
+            <div className="space-y-1.5">
+              <Label>Cover Image (optional — AI will generate one if empty)</Label>
+              <div className="flex items-center gap-3">
+                <label className="flex items-center gap-2 px-4 py-2 rounded-lg border border-dashed cursor-pointer hover:bg-accent/50 transition-colors">
+                  <Image className="w-4 h-4" />
+                  <span className="text-sm">{coverImage ? coverImage.name : 'Choose image'}</span>
+                  <input type="file" accept="image/*" onChange={handleCoverSelect} className="hidden" />
+                </label>
+                {coverPreview && (
+                  <img src={coverPreview} alt="Cover preview" className="w-16 h-16 rounded-lg object-cover" />
+                )}
+              </div>
             </div>
-          </div>
+          )}
 
           {/* Study Files */}
           <div className="space-y-3">
@@ -224,7 +267,6 @@ export default function StudyUploadForm() {
               </label>
             </div>
 
-            {/* File List */}
             {studyFiles.length > 0 && (
               <div className="space-y-1.5">
                 {studyFiles.map((sf, i) => (
@@ -246,31 +288,32 @@ export default function StudyUploadForm() {
               placeholder="e.g. end times, revelation, prophecy" />
           </div>
 
-          {/* Bestowal */}
-          <div className="space-y-2">
-            <Label>Bestowal Value (USDC)</Label>
-            <div className="flex items-center gap-3">
-              <div className="flex items-center gap-2 flex-1">
-                <Coins className="w-4 h-4 text-amber-500" />
-                <Input type="number" min={0} step={0.01} value={bestowalValue}
-                  onChange={e => setBestowalValue(parseFloat(e.target.value) || 0)} />
+          {/* Bestowal (main studies only) */}
+          {!isSection && (
+            <div className="space-y-2">
+              <Label>Bestowal Value (USDC)</Label>
+              <div className="flex items-center gap-3">
+                <div className="flex items-center gap-2 flex-1">
+                  <Coins className="w-4 h-4 text-amber-500" />
+                  <Input type="number" min={0} step={0.01} value={bestowalValue}
+                    onChange={e => setBestowalValue(parseFloat(e.target.value) || 0)} />
+                </div>
+                <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                  <Gift className="w-3.5 h-3.5" />
+                  <span>{bestowalValue <= 0 ? 'Free study — gifts welcome' : `${bestowalValue} USDC to access`}</span>
+                </div>
               </div>
-              <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                <Gift className="w-3.5 h-3.5" />
-                <span>{bestowalValue <= 0 ? 'Free study — gifts welcome' : `${bestowalValue} USDC to access`}</span>
-              </div>
+              <p className="text-[10px] text-muted-foreground">
+                Set to 0 for free access. Tribe members can always send free gifts regardless.
+              </p>
             </div>
-            <p className="text-[10px] text-muted-foreground">
-              Set to 0 for free access. Tribe members can always send free gifts regardless.
-            </p>
-          </div>
+          )}
 
-          {/* Submit */}
-          <Button type="submit" disabled={uploading || !title.trim() || studyFiles.length === 0} className="w-full" size="lg">
+          <Button type="submit" disabled={uploading || (isSection ? !sectionTitle.trim() : !title.trim()) || studyFiles.length === 0} className="w-full" size="lg">
             {uploading ? (
-              <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Uploading Study...</>
+              <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Uploading...</>
             ) : (
-              <><Upload className="w-4 h-4 mr-2" /> Publish Study</>
+              <><Upload className="w-4 h-4 mr-2" /> {isSection ? 'Add Section' : 'Publish Study'}</>
             )}
           </Button>
         </form>

@@ -158,6 +158,7 @@ const StudyAnswerPage = lazy(() => import("./pages/StudyAnswerPage"));
 const MemryPage = lazy(() => import("./pages/MemryPage"));
 const ExploreSessionsPage = lazy(() => import("./pages/ExploreSessionsPage"));
 const StudyUploadPage = lazy(() => import("./pages/StudyUploadPage"));
+const StudyViewerPage = lazy(() => import("./pages/StudyViewerPage"));
 
 // Community Drivers
 const RegisterVehiclePage = lazy(() => import("./pages/RegisterVehiclePage"));
@@ -780,6 +781,7 @@ const App = () => (
                   <StudyUploadPage />
                 </ProtectedRoute>
               } />
+              <Route path="/study/:id" element={<StudyViewerPage />} />
 
                {/* AI Assistant - Redirect to Create Orchard */}
                <Route path="/ai-assistant" element={
