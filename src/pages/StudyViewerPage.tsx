@@ -30,13 +30,13 @@ export default function StudyViewerPage() {
   const { data: sections = [] } = useQuery({
     queryKey: ['study-sections', id],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from('s2g_library_items')
+      const { data, error } = await (supabase
+        .from('s2g_library_items') as any)
         .select('id, title, description, section_title, section_order, file_url, type')
-        .eq('parent_study_id' as any, id!)
-        .order('section_order' as any, { ascending: true });
+        .eq('parent_study_id', id!)
+        .order('section_order', { ascending: true });
       if (error) throw error;
-      return data || [];
+      return (data || []) as any[];
     },
     enabled: !!id,
   });
