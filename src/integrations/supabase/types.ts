@@ -6996,8 +6996,12 @@ export type Database = {
           file_url: string
           id: string
           is_public: boolean | null
+          parent_study_id: string | null
           preview_url: string | null
           price: number | null
+          section_order: number | null
+          section_title: string | null
+          study_number: number | null
           tags: string[] | null
           title: string
           type: string
@@ -7016,8 +7020,12 @@ export type Database = {
           file_url: string
           id?: string
           is_public?: boolean | null
+          parent_study_id?: string | null
           preview_url?: string | null
           price?: number | null
+          section_order?: number | null
+          section_title?: string | null
+          study_number?: number | null
           tags?: string[] | null
           title: string
           type?: string
@@ -7036,15 +7044,27 @@ export type Database = {
           file_url?: string
           id?: string
           is_public?: boolean | null
+          parent_study_id?: string | null
           preview_url?: string | null
           price?: number | null
+          section_order?: number | null
+          section_title?: string | null
+          study_number?: number | null
           tags?: string[] | null
           title?: string
           type?: string
           updated_at?: string | null
           user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "s2g_library_items_parent_study_id_fkey"
+            columns: ["parent_study_id"]
+            isOneToOne: false
+            referencedRelation: "s2g_library_items"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       seed_story_overrides: {
         Row: {
