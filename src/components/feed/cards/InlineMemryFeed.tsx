@@ -17,6 +17,7 @@ interface MemryPost {
   user_id: string;
   content_type: string;
   media_url: string;
+  created_at?: string;
   media?: { type: 'image' | 'video' | 'audio'; url: string }[];
   image_urls?: string[];
   audio_url?: string;
@@ -209,6 +210,7 @@ export const InlineMemryFeed: React.FC = () => {
             user_id: userId,
             content_type: 'music',
             media_url: displayImage,
+          created_at: p.created_at,
             media: [
               ...(coverImage ? [{ type: 'image' as const, url: coverImage }] : []),
               ...(audioSource ? [{ type: 'audio' as const, url: audioSource }] : []),
@@ -245,6 +247,7 @@ export const InlineMemryFeed: React.FC = () => {
             user_id: userId,
             content_type: 'new_product',
             media_url: mediaUrl,
+            created_at: p.created_at,
             media: mediaPayload.media,
             image_urls: mediaPayload.images.length > 0 ? mediaPayload.images : undefined,
             caption: `🌱 SEED: ${p.title}`,
@@ -275,6 +278,7 @@ export const InlineMemryFeed: React.FC = () => {
           user_id: o.user_id,
           content_type: 'new_orchard',
           media_url: orchardMediaUrl,
+          created_at: o.created_at,
           media: mediaPayload.media,
           image_urls: orchardImages.length > 0 ? orchardImages : undefined,
           caption: `🌳 ORCHARD: ${o.title}`,
@@ -302,6 +306,7 @@ export const InlineMemryFeed: React.FC = () => {
           user_id: userId,
           content_type: 'new_book',
           media_url: bookMediaUrl,
+          created_at: b.created_at,
           media: mediaPayload.media,
           image_urls: bookImages.length > 0 ? bookImages : undefined,
           caption: `📚 BOOK: ${b.title}`,
@@ -348,6 +353,7 @@ export const InlineMemryFeed: React.FC = () => {
           user_id: mp.user_id,
           content_type: resolvedContentType,
           media_url: mpMediaUrl,
+          created_at: mp.created_at,
           media: mediaPayload.media,
           image_urls: mpImages.length > 0 ? mpImages : undefined,
           audio_url: mpAudio,
@@ -359,7 +365,13 @@ export const InlineMemryFeed: React.FC = () => {
         });
       });
 
-      // Interleave by sower to avoid long same-sower streaks
+      allPosts.sort((a, b) => {
+        const aTime = a.created_at ? new Date(a.created_at).getTime() : 0;
+        const bTime = b.created_at ? new Date(b.created_at).getTime() : 0;
+        return bTime - aTime;
+      });
+
+      // Interleave by sower to avoid long same-sower streaks while preserving recency
       const bySower = new Map<string, MemryPost[]>();
       allPosts.forEach((post) => {
         const key = post.user_id || 'unknown';

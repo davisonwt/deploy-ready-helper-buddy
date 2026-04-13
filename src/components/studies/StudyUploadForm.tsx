@@ -157,12 +157,12 @@ export default function StudyUploadForm() {
 
       // 7. Auto-post to social feed (main studies only)
       if (!isSection) {
-        const shortDesc = description.trim().length > 200 
-          ? description.trim().slice(0, 197) + '...' 
+        const shortDesc = description.trim().length > 200
+          ? `${description.trim().slice(0, 197)}...`
           : description.trim() || `New study: ${title}`;
-        const feedMediaUrl = coverUrl || DEFAULT_COVER;
+        const feedMediaUrl = coverUrl || libItem.cover_image_url || DEFAULT_COVER;
 
-        await supabase.from('memry_posts').insert({
+        const { error: feedInsertErr } = await supabase.from('memry_posts').insert({
           user_id: user.id,
           content_type: 'study',
           media_url: feedMediaUrl,
@@ -170,6 +170,11 @@ export default function StudyUploadForm() {
           content_category: 'scripture',
           study_id: libItem.id,
         });
+
+        if (feedInsertErr) {
+          console.error('Study feed post creation failed:', feedInsertErr);
+          throw new Error(`Study uploaded, but social feed post failed: ${feedInsertErr.message}`);
+        }
       }
 
       toast.success(isSection ? 'Section added!' : 'Study uploaded successfully!');
