@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
 import {
   Home, Sprout, TreePine, MessageSquare, Calendar,
-  CloudRain, Settings, Plus, Users, BarChart3, Video, MessageCircle
+  CloudRain, Settings, Plus, Users, BarChart3, Video, MessageCircle, Sparkles
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
@@ -26,6 +26,7 @@ const navItems = [
   { to: '/tithing', label: 'Let It Rain', desc: 'Bestow blessings', icon: CloudRain, gradient: 'linear-gradient(135deg, #533AB7, #8B5CF6)' },
   { to: '/my-s2g-tribe', label: 'My Tribe', desc: 'Invite & grow your tribe', icon: Users, gradient: 'linear-gradient(135deg, #0E7490, #22D3EE)' },
   { to: '/stats', label: 'Stats', desc: 'Your progress & stats', icon: BarChart3, gradient: 'linear-gradient(135deg, #1E6A5A, #2DA88A)' },
+  { to: '/tribe-ambassador', label: 'Ambassador', desc: 'Join the inner circle', icon: Sparkles, gradient: 'linear-gradient(135deg, #0d9488, #f59e0b)' },
 ];
 
 const adminItems = [

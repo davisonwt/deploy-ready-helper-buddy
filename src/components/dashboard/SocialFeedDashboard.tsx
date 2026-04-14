@@ -19,6 +19,7 @@ import { PlantFeedCards } from './sections/PlantFeedCards';
 
 // Interstitial Memry carousels
 import { MemryFeedCarousel } from './sections/MemryFeedCarousel';
+import { FloatingAmbassadorOrb } from '../ambassador/FloatingAmbassadorOrb';
 
 interface SocialFeedDashboardProps {
   profile: any;
@@ -159,6 +160,9 @@ export const SocialFeedDashboard: React.FC<SocialFeedDashboardProps> = ({
       <DashboardSection ref={setSectionRef('gosats')} id="gosats" theme={sectionThemes['gosats']} className="pb-24">
         <GosatsSection theme={sectionThemes['gosats']} />
       </DashboardSection>
+
+      {/* Ambassador Discovery Orb */}
+      <FloatingAmbassadorOrb />
 
       {/* Go Live FAB */}
       <GoLiveFAB />

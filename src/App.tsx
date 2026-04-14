@@ -147,6 +147,8 @@ const CommunityMusicLibraryPage = lazy(() => import("./pages/CommunityMusicLibra
 const LibraryUploadForm = lazy(() => import("./components/library/LibraryUploadForm"));
 const LibraryItemEditPage = lazy(() => import("./pages/LibraryItemEditPage"));
 const AmbassadorThumbnailPage = lazy(() => import("./pages/AmbassadorThumbnailPage"));
+const TribeAmbassadorPage = lazy(() => import("./pages/TribeAmbassadorPage"));
+const AmbassadorHubPage = lazy(() => import("./pages/AmbassadorHubPage"));
 const GoSatGhostAccessThumbnailPage = lazy(() => import("./pages/GoSatGhostAccessThumbnailPage"));
 const TrueTequfahClock = lazy(() => import("./components/TrueTequfahClock"));
 const Sow2GrowCalendarPage = lazy(() => import("./pages/Sow2GrowCalendarPage"));
@@ -317,6 +319,16 @@ const App = () => (
               } />
               <Route path="/start-your-journey" element={<RegisterPage />} />
               <Route path="/ambassador-thumbnail" element={<AmbassadorThumbnailPage />} />
+              <Route path="/tribe-ambassador" element={<Suspense fallback={<LoadingFallback />}><TribeAmbassadorPage /></Suspense>} />
+              <Route path="/ambassador-hub" element={
+                <Layout>
+                  <Suspense fallback={<LoadingFallback />}>
+                    <ProtectedRoute>
+                      <AmbassadorHubPage />
+                    </ProtectedRoute>
+                  </Suspense>
+                </Layout>
+              } />
               <Route path="/gosat-ghost-access-thumbnail" element={<GoSatGhostAccessThumbnailPage />} />
               <Route path="/tequfah-clock" element={<TrueTequfahClock />} />
               <Route path="/sow2grow-calendar" element={<Sow2GrowCalendarPage />} />
