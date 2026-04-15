@@ -272,7 +272,7 @@ export default function YhvhOrchardsPage() {
                 </h1>
               </div>
               <p className='text-white/90 text-xl mb-4 backdrop-blur-sm bg-white/10 rounded-lg p-4 border border-white/20'>
-                Fully processed projects ready for community support and bestowals. Each orchard represents a completed project ready for community funding.
+                Fully processed orchards ready for community support and bestowals. Each orchard represents a completed seed ready for the community's care.
               </p>
               <div className='mt-6 flex flex-wrap gap-4 items-center justify-center'>
                 <Badge variant='outline' className='backdrop-blur-md bg-white/20 border-white/30 text-white px-4 py-2'>

@@ -18,7 +18,7 @@ import {
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import ChatMessage from './ChatMessage';
-import { DonateModal } from './DonateModal';
+import { BestowalModal } from './BestowalModal';
 import { useCallManager } from '@/hooks/useCallManager';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
@@ -42,7 +42,7 @@ export const ChatRoom: React.FC<ChatRoomProps> = ({ roomId, onBack }) => {
   const scrollAreaRef = useRef(null);
   
   
-  // Donations
+  // Bestowals
   const [showDonate, setShowDonate] = useState(false);
 
 
@@ -1000,8 +1000,8 @@ export const ChatRoom: React.FC<ChatRoomProps> = ({ roomId, onBack }) => {
         </DialogContent>
       </Dialog>
 
-      {/* Donate Modal */}
-      <DonateModal
+      {/* Bestowal Modal */}
+      <BestowalModal
         isOpen={showDonate}
         onClose={() => setShowDonate(false)}
         hostWallet={roomInfo?.created_by}

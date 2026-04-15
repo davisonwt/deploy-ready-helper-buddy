@@ -34,7 +34,7 @@ const QUICK_ORCHARD_TYPES = [
     description: 'For goals $1-100 USDC',
     icon: Gift,
     color: 'bg-purple-50 border-purple-200',
-    features: ['Fixed pocket count', 'Quick funding', 'Simple setup']
+    features: ['Fixed pocket count', 'Swift bestowal', 'Simple setup']
   }
 ];
 
