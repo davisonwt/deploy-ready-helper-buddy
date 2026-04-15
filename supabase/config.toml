@@ -146,3 +146,7 @@ verify_jwt = false
 # Referral System
 [functions.track-referral-click]
 verify_jwt = false
+
+# Orchard Shepherd AI Companion
+[functions.orchard-shepherd]
+verify_jwt = false

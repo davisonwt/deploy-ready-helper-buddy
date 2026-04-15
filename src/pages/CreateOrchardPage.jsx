@@ -12,6 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from ".
 import { Input } from "../components/ui/input"
 import { Textarea } from "../components/ui/textarea"
 import { QuickAIHelper } from "../components/ai/QuickAIHelper"
+import { ShepherdDescriptionHelper } from "../components/shepherd/ShepherdDescriptionHelper"
 import { OrchardMarketingAssistant } from "../components/ai/OrchardMarketingAssistant"
 import { QuickOrchardCreator } from "../components/orchards/QuickOrchardCreator"
 import EnhancedImageUpload from "../components/upload/EnhancedImageUpload"
@@ -812,6 +813,11 @@ const fetchOrchardById = async (oid) => {
                   onContentGenerated={(content) => setFormData(prev => ({ ...prev, description: content }))}
                   compact={true}
                   suggestions={["solar energy for community", "equipment to boost productivity", "sustainable farming initiative"]}
+                />
+                <ShepherdDescriptionHelper
+                  currentDescription={formData.description}
+                  orchardTitle={formData.title}
+                  onApply={(desc) => setFormData(prev => ({ ...prev, description: desc }))}
                 />
               </div>
               

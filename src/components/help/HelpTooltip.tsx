@@ -8,13 +8,13 @@ import {
 
 // Predefined explanations for app-specific terminology
 export const HELP_TERMS = {
-  orchards: 'Your crowdfunding projects that grow with community support',
-  sowing: 'Contributing funds to help projects grow',
-  rain: 'Sending tips or gifts to creators',
-  seeds: 'Starting funds for new projects',
-  bestowals: 'Contributions made to support projects',
-  whisperer: 'A community ambassador who shares the platform',
-  garden: 'Your personal dashboard with all your content and activities',
+  orchards: 'Living gardens where your seeds grow with the community\'s care',
+  sowing: 'Planting your vision into the community soil',
+  rain: 'Gentle gifts of encouragement to fellow sowers',
+  seeds: 'The beginning of something beautiful — your idea taking root',
+  bestowals: 'Heartfelt gifts that water someone\'s orchard',
+  whisperer: 'A community ambassador who shares the harvest with the world',
+  garden: 'Your personal sanctuary with all your seeds and stories',
 } as const
 
 interface HelpTooltipProps {

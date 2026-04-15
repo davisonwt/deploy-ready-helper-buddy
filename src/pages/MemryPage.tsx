@@ -2192,7 +2192,7 @@ export default function MemryPage({ embedded = false }: { embedded?: boolean }) 
         </DialogContent>
       </Dialog>
 
-      {/* Donate Modal */}
+      {/* Bestowal Modal */}
       <Dialog open={showBestowalModal} onOpenChange={setShowBestowalModal}>
         <DialogContent className="max-w-md bg-gradient-to-b from-[#FFF5E6] to-[#FFECD2] border-none rounded-3xl">
           <DialogHeader>

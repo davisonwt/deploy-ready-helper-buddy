@@ -1,11 +1,11 @@
 import { FC, useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { Heart, Share2, DollarSign, UserPlus, UserCheck, Copy, Check, Facebook, Mail } from 'lucide-react';
+import { Heart, Share2, UserPlus, UserCheck, Copy, Check, Facebook, Mail, Droplets } from 'lucide-react';
 import { useSocialActions } from '@/hooks/useSocialActions';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
-import { DonateModal } from '@/components/chat/DonateModal';
+import { BestowalModal } from '@/components/chat/BestowalModal';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 
@@ -289,7 +289,7 @@ export const SocialActionButtons: FC<SocialActionButtonsProps> = ({
           </PopoverContent>
         </Popover>
 
-        {/* Donate Button */}
+        {/* Bestow Button */}
         {!isOwner && user?.id !== ownerId && (
           <Button
             variant="outline"
@@ -298,13 +298,13 @@ export const SocialActionButtons: FC<SocialActionButtonsProps> = ({
             disabled={!user || !ownerWallet}
             className="gap-1"
           >
-            <DollarSign className="h-4 w-4" />
-            {!isCompact && <span>Donate</span>}
+            <Droplets className="h-4 w-4" />
+            {!isCompact && <span>Bestow</span>}
           </Button>
         )}
       </div>
 
-      <DonateModal
+      <BestowalModal
         isOpen={showDonate}
         onClose={() => setShowDonate(false)}
         hostWallet={ownerWallet}

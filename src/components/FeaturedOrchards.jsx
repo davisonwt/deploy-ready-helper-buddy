@@ -1,6 +1,6 @@
 import { ArrowRight } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
-import CrowdfundingCard from './CrowdfundingCard'
+import OrchardCard from './OrchardCard'
 
 const FeaturedOrchards = () => {
   const navigate = useNavigate()
@@ -78,7 +78,7 @@ const FeaturedOrchards = () => {
       {/* Cards grid */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {mockData.map((card) => (
-          <CrowdfundingCard
+          <OrchardCard
             key={card.id}
             cardData={card}
             onSupport={handleSupport}

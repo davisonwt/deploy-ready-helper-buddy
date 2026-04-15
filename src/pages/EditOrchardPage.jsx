@@ -499,7 +499,7 @@ export default function EditOrchardPage() {
                   >
                     <div className="text-center">
                       <h4 className="font-semibold">Standard Orchard</h4>
-                      <p className="text-sm opacity-70">Multiple pocket funding</p>
+                      <p className="text-sm opacity-70">Community-watered growth</p>
                     </div>
                   </Button>
                   <Button
@@ -514,7 +514,7 @@ export default function EditOrchardPage() {
                   >
                     <div className="text-center">
                       <h4 className="font-semibold">Full Value Orchard</h4>
-                      <p className="text-sm opacity-70">Complete funding required</p>
+                      <p className="text-sm opacity-70">Full harvest bestowal</p>
                     </div>
                   </Button>
                 </div>
