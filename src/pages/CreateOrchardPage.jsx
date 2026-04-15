@@ -813,6 +813,11 @@ const fetchOrchardById = async (oid) => {
                   compact={true}
                   suggestions={["solar energy for community", "equipment to boost productivity", "sustainable farming initiative"]}
                 />
+                <ShepherdDescriptionHelper
+                  currentDescription={formData.description}
+                  orchardTitle={formData.title}
+                  onApply={(desc) => setFormData(prev => ({ ...prev, description: desc }))}
+                />
               </div>
               
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
