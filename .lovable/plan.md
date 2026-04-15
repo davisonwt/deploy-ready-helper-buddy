@@ -1,93 +1,112 @@
 
 
-# Tribe Ambassador Program — Full Build Plan
+# CaaS Evolution Plan: Orchard Shepherd AI + Language/Tone Overhaul
 
-## What Exists Today
+## Summary
 
-- **Ambassador application form** at `/ambassador-thumbnail` — a long signup form with CAPTCHA, email verification, and admin review workflow
-- **`ambassador_applications` table** in Supabase with status tracking (pending/approved/rejected)
-- **Admin dashboard tab** for reviewing applications
-- No ambassador dashboard, no toolkit, no subscription, no cinematic onboarding
+Transform Sow2Grow into a warm, human-first Communication as a Service platform by: (1) introducing the "Orchard Shepherd" AI companion, (2) purging all transactional/legalistic language, (3) strengthening the CaaS people-first feel, and (4) softening the visual and interaction design.
 
-## What We're Building
+---
 
-A complete Ambassador ecosystem with 4 major pieces:
+## Phase 1: Language & Tone Overhaul (Start Here)
 
-### 1. Ambassador Landing / Discovery Page (`/tribe-ambassador`)
+Sweep the entire codebase and replace every instance of prohibited language with warm S2G terminology. This is the foundation — everything else builds on it.
 
-A cinematic dark-mode page with S2G signature colors (teal/green/gold neon accents on near-black). Sections:
+**Files and changes:**
 
-- **Hero** — Full-bleed dark gradient with animated floating orb particles, headline "Claim Your Throne. Unleash Your AI Legion.", $5/month callout
-- **Value Stack** — 6 animated benefit cards (Arsenal, Viral Forge, Growth Legion, Brochure Empire, Tribe Network, Legacy Builder) with glowing icons and hover effects
-- **"Why Ambassadors Win"** — Scrolling comparison (without vs with Ambassador) using animated reveal
-- **CTA** — "Become a Tribe Ambassador" button that triggers the upgrade flow
+| Current Term | S2G Replacement | Files Affected |
+|---|---|---|
+| "Donate" / "Donation" | "Bestow" / "Bestowal" | `DonateModal.tsx` → rename to `BestowalModal.tsx`, `SocialActionButtons.tsx`, `ChatRoom.tsx`, `MemryPage.tsx` |
+| "Confirm Donation" | "Send Your Bestowal" | `DonateModal.tsx` |
+| "crowdfunding" | "community orchard" | `HelpTooltip.tsx`, `PlantModal.tsx`, `CrowdfundingCard.jsx` → rename to `OrchardCard.jsx`, `FeaturedOrchards.jsx` |
+| "Funding Progress" | "Growth Journey" | `OrchardPage.jsx` |
+| "Contributing funds" | "Watering the orchard" | `HelpTooltip.tsx` |
+| "Multiple pocket funding" / "Complete funding required" | "Community-watered growth" / "Full harvest bestowal" | `EditOrchardPage.jsx`, `QuickOrchardCreator.jsx` |
+| "Quick funding" | "Swift bestowal" | `QuickOrchardCreator.jsx` |
+| "campaign" | "orchard" or "journey" | Global sweep |
 
-### 2. Ambassador Dashboard / Hub (`/ambassador-hub`)
+Also soften tooltip definitions in `HelpTooltip.tsx`:
+- orchards → "Living gardens where your seeds grow with the community's care"
+- sowing → "Planting your vision into the community soil"
+- rain → "Gentle gifts of encouragement to fellow sowers"
+- seeds → "The beginning of something beautiful — your idea taking root"
+- bestowals → "Heartfelt gifts that water someone's orchard"
 
-Protected route (only approved ambassadors). Sections:
+---
 
-- **Welcome header** with personalized greeting, Ambassador Seal badge, and status
-- **6 Toolkit Cards** in a responsive grid, each linking to its agent/feature:
-  - **Branded Arsenal** — links to AI asset generation (logos, banners, frames) using existing AI assistant infrastructure
-  - **Viral Forge Agent** — content creation interface with platform targeting
-  - **Growth Legion** — agent squad status dashboard with campaign metrics
-  - **Brochure & Offer Empire** — funnel/brochure builder UI
-  - **Tribe Network** — link to private ambassador chat channel
-  - **Legacy Builder** — Featured Ambassador spotlight + nomination
+## Phase 2: Orchard Shepherd AI Companion
 
-### 3. Floating Discovery Orb
+A warm, wise AI presence woven into key moments — not a chatbot, but a gentle guide that appears naturally.
 
-A pulsing glowing orb component added to the dashboard/feed that links to `/tribe-ambassador`. Visible to non-ambassadors only.
+### 2A: Edge Function — `orchard-shepherd`
 
-### 4. Onboarding & Activation Flow
+New Supabase Edge Function at `supabase/functions/orchard-shepherd/index.ts` using the existing Lovable AI Gateway. Accepts a `context` parameter indicating the moment type:
 
-After approval, a celebratory modal with particle effects, Ambassador Seal reveal, and quick-start actions.
+- **`sow-description`** — When creating a new Orchard, generates a warm, growth-metaphor description from the sower's rough input
+- **`progress-update`** — Given orchard stats (% filled, days active, bestower count), generates an uplifting progress message
+- **`harvest-story`** — When an orchard reaches 100%, crafts a celebratory "Harvest Story"
+- **`bestower-suggestion`** — After a bestowal, suggests other orchards that might resonate (soft, never pushy)
 
-## Technical Plan
+System prompt enforces S2G tone: warm, hopeful, gently spiritual, growth metaphors, never preachy or transactional.
 
-### Database
-- Add `is_ambassador` boolean + `ambassador_since` timestamp to profiles or use existing `ambassador_applications` status = 'approved' as the source of truth
-- Add `ambassador_subscription` table for $5/month tracking (or integrate with existing payment infrastructure)
+### 2B: Frontend Integration
 
-### New Files to Create
+| Location | Shepherd Feature | Component |
+|---|---|---|
+| `CreateOrchardPage.jsx` | "Let the Shepherd help you describe your seed" button — AI writes/rewrites the orchard description | New `ShepherdDescriptionHelper.tsx` |
+| `OrchardPage.jsx` | Replace static "Growth Journey" section with AI-generated progress narrative | New `ShepherdProgressCard.tsx` |
+| Orchard at 100% | Auto-generate and display a "Harvest Story" post in the feed | Trigger in `HomeFeed.tsx` |
+| Post-bestowal confirmation | Gentle card: "Other orchards that might warm your heart…" | New `ShepherdSuggestions.tsx` in `PaymentSuccessPage.tsx` |
 
-| File | Purpose |
-|------|---------|
-| `src/pages/TribeAmbassadorPage.tsx` | Landing/discovery page |
-| `src/pages/AmbassadorHubPage.tsx` | Dashboard hub (protected) |
-| `src/components/ambassador/AmbassadorHero.tsx` | Cinematic hero section |
-| `src/components/ambassador/AmbassadorValueStack.tsx` | 6 toolkit benefit cards |
-| `src/components/ambassador/AmbassadorToolkit.tsx` | Hub toolkit grid |
-| `src/components/ambassador/AmbassadorSeal.tsx` | Animated seal/badge component |
-| `src/components/ambassador/FloatingAmbassadorOrb.tsx` | Pulsing discovery orb |
-| `src/components/ambassador/AmbassadorActivationModal.tsx` | Celebratory onboarding modal |
-| `src/components/ambassador/ParticleBackground.tsx` | Canvas particle effects |
+### 2C: Shepherd Visual Identity
 
-### Files to Edit
+- Subtle leaf/sprout icon (🌿) next to AI-generated text
+- Soft green glow border (like the existing `AIStoryCard` green left border)
+- Label: "From the Orchard Shepherd" in small muted text
+- Never intrusive — feels like a whispered encouragement
 
-| File | Change |
-|------|--------|
-| `src/App.tsx` | Add `/tribe-ambassador` and `/ambassador-hub` routes |
-| `src/components/layout/AppSidebar.tsx` | Add Ambassador nav item |
-| `src/components/dashboard/SocialFeedDashboard.tsx` | Add FloatingAmbassadorOrb |
+---
 
-### Design System
+## Phase 3: CaaS — People-First Connection
 
-- **Background**: Near-black (`#0a0a0f`) with subtle radial gradients
-- **Primary accent**: S2G teal (`#0d9488` / `hsl(188 78% 41%)`)
-- **Secondary accent**: Gold (`#f59e0b`) for Ambassador-exclusive elements
-- **Glow effects**: CSS `box-shadow` with teal/gold spread, `animate-pulse` for orbs
-- **Typography**: Existing app fonts, but larger/bolder for hero sections
-- **Cards**: Glass-morphism (`bg-white/5 backdrop-blur-sm border border-white/10`)
-- **Particles**: Lightweight canvas-based floating dots in teal/gold
+### 3A: Profile Humanisation
+- On orchard pages, expand the sower section to show their story, avatar, and a warm "About the Sower" paragraph
+- Add a "Send a Word of Encouragement" button that opens direct messaging (links to existing ChatApp)
 
-### Payment Integration
+### 3B: Social Feed Warmth
+- Add gentle "dopamine moments": animated sprout growing when someone bestows, soft confetti of leaves
+- Replace any remaining dollar-sign icons with heart/sprout/rain icons in feed cards
+- Add warm empty-state messages: "The garden is quiet today… why not plant something beautiful?"
 
-The $5/month subscription will use the existing NOWPayments/PayPal infrastructure (consistent with S2G's financial philosophy). The ambassador status is granted upon admin approval of the application + active subscription.
+### 3C: Bestowal Flow Softening
+- Rename `BestowalUI.jsx` section headers from stats-heavy to story-driven: "This orchard's journey so far…"
+- Replace `$` currency icons with gentle rain/growth visuals
+- Post-bestowal: warm thank-you screen with Shepherd message instead of generic success
 
-### Scope Boundaries
+---
 
-- The toolkit cards in the hub will be **visual entry points** that link to existing features (AI assistant, chat, content creation) or show "Coming Soon" states for features not yet built
-- No new edge functions needed for Phase 1 — we leverage existing AI assistant and payment hooks
-- Voice command activation is noted but deferred to when a voice interface exists
+## Phase 4: Visual Polish
+
+- Soften the orchard progress bar: replace the flat `<Progress>` with an animated growing tree/vine visual (CSS-based, lightweight)
+- Warmer colour touches: more soft gold (#d4a574) and sage green (#8fbc8f) accents
+- Gentle micro-animations on bestowal (rain drops falling, seed sprouting)
+
+---
+
+## Technical Details
+
+- **AI calls**: All through `orchard-shepherd` edge function → Lovable AI Gateway (`google/gemini-3-flash-preview`)
+- **No new database tables** needed for Phase 1-2; the Shepherd generates text on-the-fly and optionally caches in existing `seed_story_overrides` pattern
+- **Rename files**: `DonateModal.tsx` → `BestowalModal.tsx`, `CrowdfundingCard.jsx` → `OrchardCard.jsx` (update all imports)
+- **~15 files edited** for language sweep, **~5 new components** for Shepherd, **1 new edge function**
+
+---
+
+## Suggested Implementation Order
+
+1. Language/tone sweep (Phase 1) — immediate, no dependencies
+2. Orchard Shepherd edge function (Phase 2A) — foundation for AI features
+3. Shepherd UI components (Phase 2B-C) — integrate into existing pages
+4. CaaS people-first enhancements (Phase 3) — build on clean language
+5. Visual polish (Phase 4) — final layer
 
