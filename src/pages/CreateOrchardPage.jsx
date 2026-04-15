@@ -12,6 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from ".
 import { Input } from "../components/ui/input"
 import { Textarea } from "../components/ui/textarea"
 import { QuickAIHelper } from "../components/ai/QuickAIHelper"
+import { ShepherdDescriptionHelper } from "../components/shepherd/ShepherdDescriptionHelper"
 import { OrchardMarketingAssistant } from "../components/ai/OrchardMarketingAssistant"
 import { QuickOrchardCreator } from "../components/orchards/QuickOrchardCreator"
 import EnhancedImageUpload from "../components/upload/EnhancedImageUpload"
