@@ -221,9 +221,20 @@ export const GigActionCards: React.FC<GigActionCardsProps> = ({ theme }) => {
                 <button
                   key={card.label + '-become'}
                   onClick={() => navigate(card.href)}
-                  className="min-w-full flex-shrink-0 snap-center block rounded-2xl overflow-hidden transition-all shadow-md text-left hover:scale-[1.01] active:scale-[0.99] relative h-[160px]"
+                  className="min-w-full flex-shrink-0 snap-center block rounded-2xl overflow-hidden transition-all shadow-md text-left hover:scale-[1.01] active:scale-[0.99] relative h-[220px]"
                 >
-                  <img src={card.img} alt={card.label} className="absolute inset-0 w-full h-full object-cover" loading="lazy" />
+                  {card.video ? (
+                    <video
+                      src={card.video}
+                      autoPlay
+                      muted
+                      loop
+                      playsInline
+                      className="absolute inset-0 w-full h-full object-cover"
+                    />
+                  ) : (
+                    <img src={card.img} alt={card.label} className="absolute inset-0 w-full h-full object-cover" loading="lazy" />
+                  )}
                   <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/30 to-black/10" />
                   <div className="relative h-full flex flex-col justify-between p-4">
                     <div className="w-9 h-9 rounded-xl bg-white/20 backdrop-blur-sm flex items-center justify-center">
