@@ -226,10 +226,9 @@ export const GigActionCards: React.FC<GigActionCardsProps> = ({ theme }) => {
                   {card.video ? (
                     <video
                       src={card.video}
-                      autoPlay
-                      muted
-                      loop
+                      controls
                       playsInline
+                      preload="metadata"
                       className="absolute inset-0 w-full h-full object-cover"
                     />
                   ) : (
