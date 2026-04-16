@@ -16,6 +16,7 @@ import { MyGardenSection } from './sections/MyGardenSection';
 import { LetItRainSection } from './sections/LetItRainSection';
 import { GosatsSection } from './sections/GosatsSection';
 import { PlantFeedCards } from './sections/PlantFeedCards';
+import { DriverPromoCard } from '../feed/cards/DriverPromoCard';
 
 // Interstitial Memry carousels
 import { MemryFeedCarousel } from './sections/MemryFeedCarousel';
@@ -119,6 +120,11 @@ export const SocialFeedDashboard: React.FC<SocialFeedDashboardProps> = ({
       {/* === PLANT: Orchards & Seeds Feed Cards === */}
       <div className="px-3 max-w-2xl mx-auto py-4">
         <PlantFeedCards theme={sectionThemes['memry']} />
+      </div>
+
+      {/* === DRIVER PROMO VIDEO CARD === */}
+      <div className="px-3 max-w-2xl mx-auto pb-4">
+        <DriverPromoCard />
       </div>
 
       {/* === INTERSTITIAL: Tribal Music === */}
