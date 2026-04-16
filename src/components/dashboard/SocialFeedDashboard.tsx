@@ -16,6 +16,7 @@ import { MyGardenSection } from './sections/MyGardenSection';
 import { LetItRainSection } from './sections/LetItRainSection';
 import { GosatsSection } from './sections/GosatsSection';
 import { PlantFeedCards } from './sections/PlantFeedCards';
+import { DriverPromoCard } from '../feed/cards/DriverPromoCard';
 
 // Interstitial Memry carousels
 import { MemryFeedCarousel } from './sections/MemryFeedCarousel';
