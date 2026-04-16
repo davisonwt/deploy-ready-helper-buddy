@@ -226,10 +226,12 @@ export const GigActionCards: React.FC<GigActionCardsProps> = ({ theme }) => {
                   {card.video ? (
                     <video
                       src={card.video}
-                      controls
+                      autoPlay
+                      muted
+                      loop
                       playsInline
                       preload="metadata"
-                      className="absolute inset-0 w-full h-full object-cover"
+                      className="absolute inset-0 w-full h-full object-cover pointer-events-none"
                     />
                   ) : (
                     <img src={card.img} alt={card.label} className="absolute inset-0 w-full h-full object-cover" loading="lazy" />
