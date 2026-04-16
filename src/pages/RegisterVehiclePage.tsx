@@ -31,6 +31,23 @@ const RegisterVehiclePage: React.FC = () => {
           </div>
         </div>
 
+        {/* Promo Video Banner */}
+        <div className="mb-8 rounded-2xl overflow-hidden shadow-lg border border-border/30">
+          <video
+            src="/videos/register_vehicle.mp4"
+            controls
+            playsInline
+            preload="metadata"
+            poster=""
+            className="w-full aspect-video object-cover"
+          />
+          <div className="p-4 bg-card">
+            <p className="text-sm text-muted-foreground text-center">
+              🌱 See how easy it is to register your vehicle and start serving the community
+            </p>
+          </div>
+        </div>
+
         {/* Registration Form */}
         <VehicleRegistrationForm />
       </div>
