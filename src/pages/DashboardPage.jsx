@@ -225,32 +225,32 @@ export default function DashboardPage() {
             className="absolute inset-x-0 bottom-0 pointer-events-none border-t border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80"
             style={{ zIndex: 1 }}
           >
-            <div className="mx-auto grid w-full max-w-screen-md grid-cols-3 gap-3 px-4 py-3 pointer-events-none">
+            <div className="mx-auto flex w-full max-w-screen-md items-center gap-2 px-3 py-2 pointer-events-none">
               <button
                 onClick={() => setPlantModalOpen(true)}
-                className="flex min-w-0 w-full items-center justify-center gap-2 rounded-full px-3 py-3 font-bold text-sm text-white shadow-lg pointer-events-auto"
+                className="flex flex-1 min-w-0 items-center justify-center gap-1.5 rounded-full px-2 py-2 font-bold text-xs text-white shadow-md pointer-events-auto"
                 style={{
                   background: 'linear-gradient(135deg, #166534, #22c55e)',
                 }}
               >
-                <Sprout className="h-5 w-5" />
+                <Sprout className="h-4 w-4 shrink-0" />
                 Plant
               </button>
               <button
                 onClick={() => setGoLiveOpen(!goLiveOpen)}
-                className="flex min-w-0 w-full items-center justify-center gap-2 rounded-full px-3 py-3 font-bold text-sm text-white shadow-lg pointer-events-auto"
+                className="flex flex-1 min-w-0 items-center justify-center gap-1.5 rounded-full px-2 py-2 font-bold text-xs text-white shadow-md pointer-events-auto"
                 style={{
                   background: 'linear-gradient(135deg, #dc2626, #f43f5e)',
                 }}
               >
-                <Video className="h-5 w-5" />
+                <Video className="h-4 w-4 shrink-0" />
                 Go Live
               </button>
               <button
                 onClick={() => setChatDrawerOpen(true)}
-                className="flex min-w-0 w-full items-center justify-center gap-2 rounded-full bg-primary px-3 py-3 font-bold text-sm text-primary-foreground shadow-lg pointer-events-auto"
+                className="flex flex-1 min-w-0 items-center justify-center gap-1.5 rounded-full bg-primary px-2 py-2 font-bold text-xs text-primary-foreground shadow-md pointer-events-auto"
               >
-                <MessageCircle className="h-5 w-5" />
+                <MessageCircle className="h-4 w-4 shrink-0" />
                 Chat
               </button>
             </div>
