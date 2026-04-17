@@ -99,7 +99,7 @@ export const GigActionCards: React.FC<GigActionCardsProps> = ({ theme }) => {
         {/* Book a Service Carousel */}
         <div>
           <div className="mb-2">
-            <SubSectionLabel emoji="📅" label="Book a Service" gradientColors={['#0d9488', '#06b6d4']} />
+            <SubSectionLabel emoji="📅" label="Book a S2G Wandering Service" gradientColors={['#0d9488', '#06b6d4']} />
           </div>
           <div className="relative">
             <div
