@@ -78,7 +78,7 @@ export const GigActionCards: React.FC<GigActionCardsProps> = ({ theme }) => {
     { icon: BedDouble, label: 'Become a Wandering Pillow Provider', desc: 'List your property', img: '/images/gig/stays-become.jpg', href: '/list-your-stay' },
     { emoji: '🌾', label: 'Become a Wandering Field', desc: 'Grow & sell', img: farmerImg, href: '/register-provider?type=farmer' },
     { emoji: '🏡', label: 'Become a Wandering Hearth', desc: 'Handmade goods', img: homesteaderImg, href: '/register-provider?type=homesteader' },
-    { emoji: '🏭', label: 'The Wandering Forge', desc: 'Produce at scale', img: manufacturerImg, href: '/register-provider?type=manufacturer' },
+    { emoji: '🏭', label: 'Become a Wandering Forge', desc: 'Produce at scale', img: manufacturerImg, href: '/register-provider?type=manufacturer' },
   ];
 
   const bookCarousel = useCarousel(bookCards.length);
