@@ -4795,6 +4795,7 @@ export type Database = {
             | null
           verified_at: string | null
           verifier_id: string | null
+          video_credits: number
           website: string | null
           youtube_url: string | null
         }
@@ -4831,6 +4832,7 @@ export type Database = {
             | null
           verified_at?: string | null
           verifier_id?: string | null
+          video_credits?: number
           website?: string | null
           youtube_url?: string | null
         }
@@ -4867,6 +4869,7 @@ export type Database = {
             | null
           verified_at?: string | null
           verifier_id?: string | null
+          video_credits?: number
           website?: string | null
           youtube_url?: string | null
         }
@@ -9567,6 +9570,63 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      video_jobs: {
+        Row: {
+          comfyui_job_id: string | null
+          completed_at: string | null
+          created_at: string
+          error_message: string | null
+          id: string
+          negative_prompt: string | null
+          prompt_used: string | null
+          retry_count: number
+          source_id: string
+          source_table: string
+          started_at: string | null
+          status: string
+          updated_at: string
+          user_id: string
+          video_url: string | null
+          workflow_tier: string
+        }
+        Insert: {
+          comfyui_job_id?: string | null
+          completed_at?: string | null
+          created_at?: string
+          error_message?: string | null
+          id?: string
+          negative_prompt?: string | null
+          prompt_used?: string | null
+          retry_count?: number
+          source_id: string
+          source_table: string
+          started_at?: string | null
+          status?: string
+          updated_at?: string
+          user_id: string
+          video_url?: string | null
+          workflow_tier?: string
+        }
+        Update: {
+          comfyui_job_id?: string | null
+          completed_at?: string | null
+          created_at?: string
+          error_message?: string | null
+          id?: string
+          negative_prompt?: string | null
+          prompt_used?: string | null
+          retry_count?: number
+          source_id?: string
+          source_table?: string
+          started_at?: string | null
+          status?: string
+          updated_at?: string
+          user_id?: string
+          video_url?: string | null
+          workflow_tier?: string
+        }
+        Relationships: []
       }
       video_likes: {
         Row: {
