@@ -74,7 +74,7 @@ export const GigActionCards: React.FC<GigActionCardsProps> = ({ theme }) => {
   const becomeCards = [
     { icon: Car, label: 'Become a Wandering Wheel Provider', desc: 'Register vehicle', img: driverBecomeImg, href: '/register-vehicle', video: '/videos/register_vehicle.mp4' },
     { icon: Wrench, label: 'Become a Wandering Hand Provider', desc: 'Offer your skills', img: servicesBecomeImg, href: '/register-services' },
-    { icon: Ear, label: 'The Wandering Whisper', desc: 'Content & marketing', img: whispererBecomeImg, href: '/become-whisperer' },
+    { icon: Ear, label: 'Become a Wondering Whisperer Provider', desc: 'Content & marketing', img: whispererBecomeImg, href: '/become-whisperer' },
     { icon: BedDouble, label: 'Become a Wandering Pillow Provider', desc: 'List your property', img: '/images/gig/stays-become.jpg', href: '/list-your-stay' },
     { emoji: '🌾', label: 'Farmer', desc: 'Grow & sell', img: farmerImg, href: '/register-provider?type=farmer' },
     { emoji: '🏡', label: 'Homesteader', desc: 'Handmade goods', img: homesteaderImg, href: '/register-provider?type=homesteader' },
