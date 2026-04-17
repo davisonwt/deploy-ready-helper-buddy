@@ -16,33 +16,33 @@ interface PlantFeedCardsProps {
 const plantCards = [
   {
     href: '/create-orchard?type=standard',
-    title: 'Standard Orchard',
-    subtitle: 'Hide seeds within bestowal pockets',
+    title: 'Community Orchard',
+    subtitle: 'Rally your community around a shared need',
     description:
-      'Create an orchard with hidden seeds inside bestowal pockets. The community bestows towards pockets — and harvesters receive the seed inside. Perfect for getting your community to help you reach your sowing goals.',
+      'Create an orchard with hidden seeds inside bestowal pockets. The community bestows towards pockets — and harvesters receive the seed inside. Perfect for group needs where your tribe helps you reach a shared goal together.',
     image: standardOrchardImg,
     icon: TreePine,
-    buttonLabel: '🌳 Plant a Standard Orchard',
+    buttonLabel: '🌳 Plant a Community Orchard',
   },
   {
     href: '/create-orchard?type=fullvalue',
-    title: 'Full Value Orchard',
-    subtitle: 'Every pocket grows into a harvest',
+    title: 'Production Orchard',
+    subtitle: 'Turn your business idea into real products & cash-flow',
     description:
       'Each bestowal pocket contains a seed that grows into a fruit for the harvester. Like community-backed production — once enough pockets are bestowed, you can manufacture, deliver, and fulfil every harvest.',
     image: fullvalueOrchardImg,
     icon: Sprout,
-    buttonLabel: '🌱 Plant a Full Value Orchard',
+    buttonLabel: '🌱 Plant a Production Orchard',
   },
   {
     href: '/products/upload',
-    title: 'Sow a Seed',
+    title: 'Single Seed',
     subtitle: 'Make anything available to the community',
     description:
       'Seeds are anything you want to sow — vehicles, music, books, houses, produce, services, and more. List it, set a bestowal amount, and let the community harvest.',
     image: sowSeedImg,
     icon: Leaf,
-    buttonLabel: '🌾 Sow a Seed',
+    buttonLabel: '🌾 Sow a Single Seed',
   },
 ];
 
