@@ -40,7 +40,7 @@ export const ChatFeedCards: React.FC<ChatFeedCardsProps> = ({ theme }) => {
     <div className="space-y-3">
       <SectionHeading
         icon={MessageSquare}
-        title="💬 Chat"
+        title="💬 S2G ChatApp"
         subtitle="Connect with sowers & bestowers"
         theme={theme}
         gradientColors={['#0d9488', '#3b82f6']}
