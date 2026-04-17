@@ -51,7 +51,7 @@ export const PlantFeedCards: React.FC<PlantFeedCardsProps> = ({ theme }) => {
     <div className="space-y-3">
       <SectionHeading
         icon={Sprout}
-        title="🌱 Plant"
+        title="🌱 SOW"
         subtitle="Sow orchards & seeds for the community to harvest"
         theme={theme}
         gradientColors={['#16a34a', '#4ade80']}
