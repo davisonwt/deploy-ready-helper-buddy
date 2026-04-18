@@ -100,6 +100,7 @@ const RadioPage = lazy(() => import("./components/radio/RadioPage"));
 const CreatePremiumRoomPage = lazy(() => import("./pages/CreatePremiumRoomPage").then(m => ({ default: m.CreatePremiumRoomPage })));
 const WalletSettingsPage = lazy(() => import("./pages/WalletSettingsPage"));
 const MyS2GTribePage = lazy(() => import("./pages/MyReferralCirclePage"));
+const MarketingVideosPage = lazy(() => import("./pages/MarketingVideosPage"));
 const GosatWalletsPage = lazy(() => import("./pages/GosatWalletsPage"));
 const GoSatChatPage = lazy(() => import("./pages/GoSatChatPage"));
 // BinancePayTestPage removed - using NOWPayments only
@@ -370,6 +371,17 @@ const App = () => (
                   <RequireVerification>
                     <Layout>
                       <MyS2GTribePage />
+                    </Layout>
+                  </RequireVerification>
+                </ProtectedRoute>
+              } />
+
+              {/* Tribal Marketing Videos */}
+              <Route path="/marketing-videos" element={
+                <ProtectedRoute>
+                  <RequireVerification>
+                    <Layout>
+                      <MarketingVideosPage />
                     </Layout>
                   </RequireVerification>
                 </ProtectedRoute>
