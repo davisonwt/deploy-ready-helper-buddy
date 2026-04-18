@@ -145,6 +145,25 @@ export default function MyReferralCirclePage() {
           theme={theme}
         />
 
+        {/* Marketing Videos CTA */}
+        <Link to="/marketing-videos" className="block">
+          <div
+            className="rounded-2xl p-5 mb-4 flex items-center gap-4 hover:opacity-95 transition-opacity shadow-lg"
+            style={{ background: theme.primaryButton }}
+          >
+            <div className="text-3xl">🎬</div>
+            <div className="flex-1">
+              <div className="font-bold text-base" style={{ color: theme.textPrimary }}>
+                Tribal Marketing Videos
+              </div>
+              <div className="text-xs opacity-90" style={{ color: theme.textPrimary }}>
+                Download S2G banner videos with your referral code burned in — share on WhatsApp, IG, X & more.
+              </div>
+            </div>
+            <Download className="w-5 h-5" style={{ color: theme.textPrimary }} />
+          </div>
+        </Link>
+
         {/* Share Tools */}
         <ReferralShareTools
           referralLink={referralLink}
