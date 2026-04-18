@@ -91,14 +91,16 @@ const BANNERS = {
     totalDur: 14.9,
   },
   "05-wandering-hand": {
-    title: "Offer your skills —",
-    invite: "become a Wandering Hand!",
-    midInvite: "Plumbers · electricians · cleaners · security",
+    title: "Need a helping hand —",
+    invite: "connect with Wandering Hands!",
+    midInvite: "Plumbers · electricians · mechanics · cleaners · engineers · doctors",
     cta: "Sign up on Sow2Grow",
     beats: ["a", "b", "c", "d"],
-    introImg: "05-wandering-hand-tools.jpg",
-    outroImg: "05-wandering-hand-handshake.jpg",
+    introImg: "05-wandering-hand-intro.jpg",
+    outroImg: "05-wandering-hand-outro.jpg",
     musicStart: 12,
+    // Energized VO ~14.2s; total = 1.4 lead + 14.2 + 1.5 tail ≈ 17.1s
+    totalDur: 17.1,
   },
   "06-wandering-whisperer": {
     title: "Amplify the tribe —",
