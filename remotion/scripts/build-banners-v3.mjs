@@ -82,22 +82,21 @@ Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
 
 function escFilter(p) { return p.replace(/\\/g, "/").replace(/:/g, "\\:").replace(/'/g, "\\'"); }
 
-// Build a 2.5s title card MP4: warm gradient + logo + big title + subtitle.
+const FONT = "/nix/store/xhanp47490n743s7zd27d8i9s1khg6c0-dejavu-fonts-minimal-2.37/share/fonts/truetype/DejaVuSans.ttf";
+
+// Build a 2.5s title card MP4 using -filter_complex with multiple lavfi inputs.
 async function buildTitleCard(out, title, subtitle, durSec = 2.5) {
   const titleEsc = title.replace(/'/g, "\\'");
   const subEsc = subtitle.replace(/'/g, "\\'");
-  // Solid warm cream gradient via lavfi + drawtext + logo overlay
-  const filter = [
-    `color=c=0xF5E8D0:s=1920x1080:d=${durSec}:r=30[bg]`,
-    `color=c=0xB85042:s=1920x300:d=${durSec}:r=30[band]`,
-    `[bg][band]overlay=0:780[base]`,
+  const fc = [
+    `[0:v][1:v]overlay=0:780[base]`,
     `movie='${escFilter(LOGO)}',scale=320:320:force_original_aspect_ratio=decrease[logo]`,
     `[base][logo]overlay=(W-w)/2:200:format=auto,format=yuv420p[withlogo]`,
-    `[withlogo]drawtext=fontfile=/nix/store/xhanp47490n743s7zd27d8i9s1khg6c0-dejavu-fonts-minimal-2.37/share/fonts/truetype/DejaVuSans.ttf:text='${titleEsc}':fontsize=82:fontcolor=0x2C5F2D:x=(w-text_w)/2:y=560:box=0[t1]`,
-    `[t1]drawtext=fontfile=/nix/store/xhanp47490n743s7zd27d8i9s1khg6c0-dejavu-fonts-minimal-2.37/share/fonts/truetype/DejaVuSans.ttf:text='${subEsc}':fontsize=44:fontcolor=white:x=(w-text_w)/2:y=860[v]`,
+    `[withlogo]drawtext=fontfile=${FONT}:text='${titleEsc}':fontsize=82:fontcolor=0x2C5F2D:x=(w-text_w)/2:y=560[t1]`,
+    `[t1]drawtext=fontfile=${FONT}:text='${subEsc}':fontsize=44:fontcolor=white:x=(w-text_w)/2:y=860[v]`,
   ].join(";");
   execSync(
-    `ffmpeg -y -f lavfi -i "${filter}" -map "[v]" -t ${durSec} -c:v libx264 -preset medium -crf 18 -pix_fmt yuv420p -r 30 -an "${out}"`,
+    `ffmpeg -y -f lavfi -i "color=c=0xF5E8D0:s=1920x1080:d=${durSec}:r=30" -f lavfi -i "color=c=0xB85042:s=1920x300:d=${durSec}:r=30" -filter_complex "${fc}" -map "[v]" -t ${durSec} -c:v libx264 -preset medium -crf 18 -pix_fmt yuv420p -r 30 -an "${out}"`,
     { stdio: "pipe" },
   );
 }
@@ -105,15 +104,14 @@ async function buildTitleCard(out, title, subtitle, durSec = 2.5) {
 async function buildOutroCard(out, cta, ctaSub, durSec = 3) {
   const ctaEsc = cta.replace(/'/g, "\\'");
   const subEsc = ctaSub.replace(/'/g, "\\'");
-  const filter = [
-    `color=c=0x2C5F2D:s=1920x1080:d=${durSec}:r=30[bg]`,
+  const fc = [
     `movie='${escFilter(LOGO)}',scale=400:400:force_original_aspect_ratio=decrease[logo]`,
-    `[bg][logo]overlay=(W-w)/2:140:format=auto,format=yuv420p[wl]`,
-    `[wl]drawtext=fontfile=/nix/store/xhanp47490n743s7zd27d8i9s1khg6c0-dejavu-fonts-minimal-2.37/share/fonts/truetype/DejaVuSans.ttf:text='${ctaEsc}':fontsize=84:fontcolor=0xF5E8D0:x=(w-text_w)/2:y=620:box=0[t1]`,
-    `[t1]drawtext=fontfile=/nix/store/xhanp47490n743s7zd27d8i9s1khg6c0-dejavu-fonts-minimal-2.37/share/fonts/truetype/DejaVuSans.ttf:text='${subEsc}':fontsize=44:fontcolor=0xFFD78A:x=(w-text_w)/2:y=760[v]`,
+    `[0:v][logo]overlay=(W-w)/2:140:format=auto,format=yuv420p[wl]`,
+    `[wl]drawtext=fontfile=${FONT}:text='${ctaEsc}':fontsize=84:fontcolor=0xF5E8D0:x=(w-text_w)/2:y=620[t1]`,
+    `[t1]drawtext=fontfile=${FONT}:text='${subEsc}':fontsize=44:fontcolor=0xFFD78A:x=(w-text_w)/2:y=760[v]`,
   ].join(";");
   execSync(
-    `ffmpeg -y -f lavfi -i "${filter}" -map "[v]" -t ${durSec} -c:v libx264 -preset medium -crf 18 -pix_fmt yuv420p -r 30 -an "${out}"`,
+    `ffmpeg -y -f lavfi -i "color=c=0x2C5F2D:s=1920x1080:d=${durSec}:r=30" -filter_complex "${fc}" -map "[v]" -t ${durSec} -c:v libx264 -preset medium -crf 18 -pix_fmt yuv420p -r 30 -an "${out}"`,
     { stdio: "pipe" },
   );
 }
