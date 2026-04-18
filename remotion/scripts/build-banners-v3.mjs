@@ -210,7 +210,9 @@ async function buildBeatClip(srcMp4, outMp4, targetDur) {
   const probe = execSync(`ffprobe -v error -show_entries format=duration -of default=nw=1:nk=1 "${srcMp4}"`).toString().trim();
   const srcDur = parseFloat(probe);
   const speed = (srcDur / targetDur).toFixed(4);
-  const fc = `[0:v]setpts=PTS/${speed},scale=1920:1080:force_original_aspect_ratio=decrease,pad=1920:1080:(ow-iw)/2:(oh-ih)/2,fps=30,${GRADE}[v]`;
+  // Match intro/outro framing: fill the 1920x1080 frame edge-to-edge (no black bars)
+  // by upscaling+cropping instead of letterboxing. Keeps every scene the same wide size.
+  const fc = `[0:v]setpts=PTS/${speed},scale=1920:1080:force_original_aspect_ratio=increase:flags=lanczos,crop=1920:1080,fps=30,${GRADE}[v]`;
   runFF(
     `ffmpeg -y -i "${srcMp4}" -filter_complex "${fc}" -map "[v]" -t ${targetDur} -c:v libx264 -preset medium -crf 18 -pix_fmt yuv420p -r 30 -an "${outMp4}"`,
     "step",
