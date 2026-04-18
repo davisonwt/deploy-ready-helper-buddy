@@ -282,7 +282,8 @@ export const GigActionCards: React.FC<GigActionCardsProps> = ({ theme }) => {
                               <Button
                                 size="sm"
                                 onClick={() => navigate(card.href)}
-                                className="flex-1 h-9 font-semibold"
+                                className="flex-1 h-9 font-semibold text-white border-0"
+                                style={{ background: 'linear-gradient(135deg, #7c3aed, #a855f7)' }}
                               >
                                 <UserPlus className="w-4 h-4 mr-1.5" />
                                 Register

@@ -34,11 +34,13 @@ const RegisterVehiclePage: React.FC = () => {
         {/* Promo Video Banner */}
         <div className="mb-8 rounded-2xl overflow-hidden shadow-lg border border-border/30">
           <video
-            src="/videos/register_vehicle.mp4"
+            src="/videos/banners/wandering-wheel.mp4"
             controls
+            autoPlay
+            muted
+            loop
             playsInline
             preload="metadata"
-            poster=""
             className="w-full aspect-video object-cover"
           />
           <div className="p-4 bg-card">
