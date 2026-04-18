@@ -199,7 +199,7 @@ async function buildImageCard(imgPath, out, durSec, zoomDir = "in") {
   const zoomExpr = zoomDir === "in"
     ? `min(zoom+0.0020,1.10)`
     : `if(lte(zoom,1.0),1.10,max(1.001,zoom-0.0020))`;
-  const fc = `[0:v]scale=3840:2160:force_original_aspect_ratio=increase,crop=3840:2160,zoompan=z='${zoomExpr}':d=${frames}:s=1920x1080:fps=30,${GRADE},format=yuv420p[v]`;
+  const fc = `[0:v]scale=3840:2160:force_original_aspect_ratio=increase:flags=lanczos,crop=3840:2160,zoompan=z='${zoomExpr}':d=${frames}:s=1920x1080:fps=30,${GRADE},format=yuv420p[v]`;
   runFF(
     `ffmpeg -y -loop 1 -t ${durSec} -i "${imgPath}" -filter_complex "${fc}" -map "[v]" -t ${durSec} -c:v libx264 -preset medium -crf 18 -pix_fmt yuv420p -r 30 -an "${out}"`,
     "step",
@@ -210,7 +210,9 @@ async function buildBeatClip(srcMp4, outMp4, targetDur) {
   const probe = execSync(`ffprobe -v error -show_entries format=duration -of default=nw=1:nk=1 "${srcMp4}"`).toString().trim();
   const srcDur = parseFloat(probe);
   const speed = (srcDur / targetDur).toFixed(4);
-  const fc = `[0:v]setpts=PTS/${speed},scale=1920:1080:force_original_aspect_ratio=decrease,pad=1920:1080:(ow-iw)/2:(oh-ih)/2,fps=30,${GRADE}[v]`;
+  // Match intro/outro framing: fill the 1920x1080 frame edge-to-edge (no black bars)
+  // by upscaling+cropping instead of letterboxing. Keeps every scene the same wide size.
+  const fc = `[0:v]setpts=PTS/${speed},scale=1920:1080:force_original_aspect_ratio=increase:flags=lanczos,crop=1920:1080,fps=30,${GRADE}[v]`;
   runFF(
     `ffmpeg -y -i "${srcMp4}" -filter_complex "${fc}" -map "[v]" -t ${targetDur} -c:v libx264 -preset medium -crf 18 -pix_fmt yuv420p -r 30 -an "${outMp4}"`,
     "step",
