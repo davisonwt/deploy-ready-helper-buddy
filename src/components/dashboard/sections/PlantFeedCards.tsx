@@ -70,30 +70,31 @@ export const PlantFeedCards: React.FC<PlantFeedCardsProps> = ({ theme }) => {
             className="block rounded-2xl overflow-hidden shadow-md transition-all hover:scale-[1.01] active:scale-[0.99]"
             style={{ borderColor: theme.cardBorder, border: `1px solid ${theme.cardBorder}` }}
           >
-            {/* Image / Video */}
+            {/* Static illustration (always visible) — video plays in lightbox */}
             <div className="relative h-[140px] bg-black">
-              {card.video ? (
-                <video
-                  src={card.video}
-                  poster={card.image}
-                  className="absolute inset-0 w-full h-full object-cover"
-                  autoPlay
-                  muted
-                  loop
-                  playsInline
-                  preload="metadata"
-                />
-              ) : (
-                <img
-                  src={card.image}
-                  alt={card.title}
-                  className="absolute inset-0 w-full h-full object-cover"
-                  loading="lazy"
-                  width={800}
-                  height={512}
-                />
-              )}
+              <img
+                src={card.image}
+                alt={card.title}
+                className="absolute inset-0 w-full h-full object-cover"
+                loading="lazy"
+                width={800}
+                height={512}
+              />
               <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent pointer-events-none" />
+              {card.video && (
+                <button
+                  type="button"
+                  aria-label={`Watch ${card.title} story`}
+                  className="absolute top-2 right-2 w-9 h-9 rounded-full bg-black/55 hover:bg-black/75 text-white flex items-center justify-center transition shadow-lg backdrop-blur-sm"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    setActiveVideo(card.video!);
+                  }}
+                >
+                  <Play className="w-4 h-4 fill-current ml-0.5" />
+                </button>
+              )}
               <div className="absolute bottom-3 left-3 right-3 flex items-end gap-2">
                 <div className="w-8 h-8 rounded-lg bg-white/20 backdrop-blur-sm flex items-center justify-center shrink-0">
                   <card.icon className="w-4 h-4 text-white" />
