@@ -148,6 +148,18 @@ const BANNERS = {
     outroImg: "10-wandering-forge-delivery.jpg",
     musicStart: 84,
   },
+  "11-classroom": {
+    title: "Have a skill to share —",
+    invite: "host a Live Classroom!",
+    midInvite: "Live voice & video · free or bestowal",
+    cta: "Sign up on Sow2Grow",
+    beats: ["a", "b", "c", "d"],
+    introImg: "11-classroom-intro.jpg",
+    outroImg: "11-classroom-outro.jpg",
+    musicStart: 96,
+    // VO ~9.8s raw → ~9.3s energized; total = 1.4 intro + 9.3 + 2 tail ≈ 12.7s
+    totalDur: 13.0,
+  },
 };
 
 async function download(url, dest) {

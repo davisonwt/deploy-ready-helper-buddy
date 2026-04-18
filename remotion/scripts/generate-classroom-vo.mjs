@@ -1,5 +1,6 @@
 // Generates the Classroom Go-Live banner voiceover with ElevenLabs.
-// Voice: George (JBFqnCBsd6RMkjVDRZzb) — softer, teacher-friendly settings.
+// Voice: George (JBFqnCBsd6RMkjVDRZzb) — energetic settings, the v3 build pipeline
+// will further pitch it +12% / tempo +6% to match the Wandering banner energy.
 //
 // Usage: node scripts/generate-classroom-vo.mjs
 
@@ -20,10 +21,10 @@ if (!API_KEY) {
   process.exit(1);
 }
 
-// ~12 seconds of warm, teacher-friendly narration matching the 4-scene visual.
+// Energetic VO script — matches Wandering banner cadence (host pitch + bestowal mention).
 const SCRIPT = {
   slug: "11-classroom",
-  text: "Welcome to Classrooms. Schedule a live session, free or with a small bestowal. Students from around the world join in. Teach, share, and grow — together.",
+  text: "Have a skill to share? Become a Classroom host on Sow2Grow! Teach live voice and video — from the young to the old. Share videos, documents, and voice notes with your tribe. Set it free, or set a small bestowal in USDT. Sign up on Sow2Grow.",
 };
 
 const res = await fetch(
@@ -35,11 +36,12 @@ const res = await fetch(
       text: SCRIPT.text,
       model_id: MODEL_ID,
       voice_settings: {
-        stability: 0.7,
+        // Slightly more expressive than the soft 0.7 read so post-energizing has headroom
+        stability: 0.45,
         similarity_boost: 0.8,
-        style: 0.2,
+        style: 0.55,
         use_speaker_boost: true,
-        speed: 1.0,
+        speed: 1.05,
       },
     }),
   }
