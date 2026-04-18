@@ -52,6 +52,18 @@ const BANNERS = {
     // VO is ~12.5s after energizing → needs ~14s playback + 1s music tail
     totalDur: 15.5,
   },
+  "02-production-orchard": {
+    title: "Have an idea — but no capital?",
+    invite: "Plant a Production Orchard.",
+    midInvite: "Half the pockets fill · the factory begins",
+    cta: "Sign up on Sow2Grow",
+    beats: ["a", "b", "b", "c"],
+    introImg: "02-production-orchard-intro.jpg",
+    outroImg: "02-production-orchard-outro.jpg",
+    musicStart: 18,
+    // VO is ~11.66s → after +6% tempo ≈ 11s; pad to 13.5s for music tail
+    totalDur: 13.5,
+  },
   "04-wandering-wheel": {
     title: "List your vehicle —",
     invite: "become a Wandering Wheel!",
