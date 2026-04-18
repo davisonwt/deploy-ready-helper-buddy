@@ -79,14 +79,16 @@ const BANNERS = {
     skipEnergize: true,
   },
   "04-wandering-wheel": {
-    title: "List your vehicle —",
+    title: "Got a vehicle —",
     invite: "become a Wandering Wheel!",
-    midInvite: "List your vehicle today",
+    midInvite: "People · parcels · shopping · farm · construction",
     cta: "Sign up on Sow2Grow",
-    beats: ["a", "b", "d", "c"],
-    introImg: "04-wandering-wheel-vehicles.jpg",
-    outroImg: "04-wandering-wheel-phone.jpg",
+    beats: ["a", "b", "c", "d"],
+    introImg: "04-wandering-wheel-intro.jpg",
+    outroImg: "04-wandering-wheel-outro.jpg",
     musicStart: 36,
+    // Energetic VO ~12s; total = 1.4 lead + 12 + 1.5 tail ≈ 14.9s
+    totalDur: 14.9,
   },
   "05-wandering-hand": {
     title: "Offer your skills —",
