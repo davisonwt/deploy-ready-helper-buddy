@@ -90,6 +90,16 @@ const BANNERS = {
     outroImg: "08-wandering-field-family.jpg",
     musicStart: 60,
   },
+  "09-wandering-hearth": {
+    title: "Craft with love —",
+    invite: "become a Wandering Hearth!",
+    midInvite: "Handmade · jam · candles · soap",
+    cta: "Sign up on Sow2Grow",
+    beats: ["a", "b", "c", "d"],
+    introImg: "09-wandering-hearth-jam.jpg",
+    outroImg: "09-wandering-hearth-unboxing.jpg",
+    musicStart: 72,
+  },
 };
 
 async function download(url, dest) {
