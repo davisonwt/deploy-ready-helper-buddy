@@ -126,7 +126,7 @@ async function buildBanner(slug) {
     `[logoBase]scale='200*(0.85+0.10*sin(t*PI))':-1:eval=frame[logoP]`,
     `[0:v][logoP]overlay=x='40':y='40+8*sin(t*PI*0.7)':format=auto:eval=frame[withlogo]`,
     // Title only during intro
-    `[withlogo]drawtext=fontfile=${FONT}:text='${titleEsc}':fontsize=64:fontcolor=white:bordercolor=0x2C5F2D:borderw=5:shadowcolor=0x000000AA:shadowx=2:shadowy=3:x=(w-text_w)/2:y=80:enable='between(t,0.2,1.5)'[t1]`,
+    `[withlogo]drawtext=fontfile=${FONT}:text='${titleEsc}':fontsize=52:fontcolor=white:bordercolor=0x2C5F2D:borderw=4:shadowcolor=0x000000AA:shadowx=2:shadowy=3:x=(w-text_w)/2:y=80:enable='between(t,0.2,1.5)'[t1]`,
     // CTA only during outro
     `[t1]drawtext=fontfile=${FONT}:text='${ctaEsc}':fontsize=70:fontcolor=0xF5E8D0:bordercolor=0x2C5F2D:borderw=6:shadowcolor=0x000000CC:shadowx=2:shadowy=3:x=(w-text_w)/2:y=h-160:enable='gte(t,9.0)'[v]`,
   ].join(";");
