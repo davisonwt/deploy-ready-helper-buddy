@@ -53,6 +53,7 @@ const HeroIcon: React.FC<{ emoji: string }> = ({ emoji }) => {
     <div style={{
       fontSize: 220, transform: `scale(${scale}) rotate(${rot}deg)`,
       filter: "drop-shadow(0 20px 40px rgba(0,0,0,0.2))",
+      fontFamily: emojiStack, lineHeight: 1,
     }}>{emoji}</div>
   );
 };
