@@ -73,8 +73,10 @@ const BANNERS = {
     introImg: "03-single-seed-intro.jpg",
     outroImg: "03-single-seed-outro.jpg",
     musicStart: 30,
-    // VO is ~9s → after +6% tempo ≈ 8.5s; pad to 13s for music tail
-    totalDur: 13.0,
+    // VO regenerated in clear English (~26s raw) → no pitch/tempo lift to keep it natural
+    // Total: 1.4s music intro + ~26s VO + 2s outro tail = ~29.5s
+    totalDur: 29.5,
+    skipEnergize: true,
   },
   "04-wandering-wheel": {
     title: "List your vehicle —",
