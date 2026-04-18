@@ -199,7 +199,7 @@ async function buildImageCard(imgPath, out, durSec, zoomDir = "in") {
   const zoomExpr = zoomDir === "in"
     ? `min(zoom+0.0020,1.10)`
     : `if(lte(zoom,1.0),1.10,max(1.001,zoom-0.0020))`;
-  const fc = `[0:v]scale=3840:2160:force_original_aspect_ratio=increase,crop=3840:2160,zoompan=z='${zoomExpr}':d=${frames}:s=1920x1080:fps=30,${GRADE},format=yuv420p[v]`;
+  const fc = `[0:v]scale=3840:2160:force_original_aspect_ratio=increase:flags=lanczos,crop=3840:2160,zoompan=z='${zoomExpr}':d=${frames}:s=1920x1080:fps=30,${GRADE},format=yuv420p[v]`;
   runFF(
     `ffmpeg -y -loop 1 -t ${durSec} -i "${imgPath}" -filter_complex "${fc}" -map "[v]" -t ${durSec} -c:v libx264 -preset medium -crf 18 -pix_fmt yuv420p -r 30 -an "${out}"`,
     "step",
