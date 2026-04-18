@@ -261,11 +261,15 @@ async function buildBanner(slug) {
 
   // VO energy v2 — much more excited
   // pitch +12% (asetrate*1.12), tempo +6% (atempo 0.945 to recover speed), brighter
+  // skipEnergize: gentler processing for already-clear synth voices (e.g. espeak English)
   const vo = path.join(VO_DIR, `${slug}.mp3`);
   const voEnergy = path.join(CACHE, `${slug}-vo-energy.mp3`);
   console.log("  ⚡ energizing VO (warm enthusiastic friend)");
+  const voFilter = cfg.skipEnergize
+    ? `equalizer=f=200:width_type=o:width=1:g=2,equalizer=f=3000:width_type=o:width=2:g=3,acompressor=threshold=-20dB:ratio=3:attack=5:release=80:makeup=2,volume=1.4`
+    : `asetrate=44100*1.12,aresample=44100,atempo=0.945,equalizer=f=3500:width_type=o:width=2:g=5,equalizer=f=200:width_type=o:width=1:g=2.5,equalizer=f=8000:width_type=o:width=2:g=3,acompressor=threshold=-20dB:ratio=4:attack=3:release=60:makeup=3,volume=1.65`;
   runFF(
-    `ffmpeg -y -i "${vo}" -af "asetrate=44100*1.12,aresample=44100,atempo=0.945,equalizer=f=3500:width_type=o:width=2:g=5,equalizer=f=200:width_type=o:width=1:g=2.5,equalizer=f=8000:width_type=o:width=2:g=3,acompressor=threshold=-20dB:ratio=4:attack=3:release=60:makeup=3,volume=1.65" "${voEnergy}"`,
+    `ffmpeg -y -i "${vo}" -af "${voFilter}" "${voEnergy}"`,
     "step",
   );
   const voEnergyDur = parseFloat(execSync(`ffprobe -v error -show_entries format=duration -of default=nw=1:nk=1 "${voEnergy}"`).toString().trim());
