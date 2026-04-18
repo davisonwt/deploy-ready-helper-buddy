@@ -168,8 +168,7 @@ async function buildBanner(slug) {
     `[1:v]scale=140:140:force_original_aspect_ratio=decrease[logo]`,
     `[0:v]subtitles='${escFilter(ass)}'[withcap]`,
     `[withcap][logo]overlay=40:40:format=auto[withlogo]`,
-    `[withlogo]drawtext=fontfile=${FONT}:text='${titleEsc}':fontsize=66:fontcolor=white:bordercolor=black:borderw=4:x=(w-text_w)/2:y=80:enable='between(t,0,1.9)'[t1]`,
-    `[t1]drawtext=fontfile=${FONT}:text='${ctaEsc}':fontsize=78:fontcolor=0xF5E8D0:bordercolor=0x2C5F2D:borderw=6:x=(w-text_w)/2:y=120:enable='gte(t,11.6)'[v]`,
+    `[withlogo]drawtext=fontfile=${FONT}:text='${titleEsc}':fontsize=64:fontcolor=white:bordercolor=0x2C5F2D:borderw=5:x=(w-text_w)/2:y=70:enable='between(t,0,1.9)'[v]`,
   ].join(";");
   execSync(
     `ffmpeg -y -i "${concat}" -i "${LOGO}" -filter_complex "${fc}" -map "[v]" -c:v libx264 -preset medium -crf 18 -pix_fmt yuv420p -an "${captioned}"`,
