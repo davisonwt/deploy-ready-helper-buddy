@@ -153,7 +153,7 @@ async function buildBanner(slug) {
     `[withBurst][logoP]overlay=x='160-overlay_w/2':y='160-overlay_h/2+8*sin(t*PI*0.7)':format=auto:eval=frame[withLogo]`,
     `[withLogo]drawtext=fontfile=${FONT}:text='${titleEsc}':fontsize=64:fontcolor=white:bordercolor=0x2C5F2D:borderw=5:shadowcolor=0x000000AA:shadowx=2:shadowy=3:x=(w-text_w)/2:y=70:enable='between(t,0.2,2.5)'[t0]`,
     `[t0]drawtext=fontfile=${FONT}:text='${inviteEsc}':fontsize=72:fontcolor=0xF5E8D0:bordercolor=0x2C5F2D:borderw=6:shadowcolor=0x000000CC:shadowx=2:shadowy=3:x=(w-text_w)/2:y=160:enable='between(t,0.5,2.7)'[t1]`,
-    `[t1]drawbox=x=0:y=h-220:w=w:h=140:color=0x2C5F2DCC:t=fill:enable='between(t,5.0,9.5)'[mb]`,
+    `[t1]drawbox=x=0:y=940:w=1920:h=140:color=0x2C5F2DCC:t=fill:enable='between(t,5.0,9.5)'[mb]`,
     `[mb]drawtext=fontfile=${FONT}:text='${midInviteEsc}':fontsize=66:fontcolor=0xF5E8D0:bordercolor=0x000000:borderw=3:shadowcolor=0x000000AA:shadowx=2:shadowy=2:x=(w-text_w)/2:y=h-180:enable='between(t,5.0,9.5)'[t2]`,
     `[t2]drawtext=fontfile=${FONT}:text='${ctaEsc}':fontsize=80:fontcolor=0xF5E8D0:bordercolor=0x2C5F2D:borderw=6:shadowcolor=0x000000CC:shadowx=2:shadowy=3:x=(w-text_w)/2:y=h-180:enable='gte(t,10.5)'[v]`,
   ].join(";");
