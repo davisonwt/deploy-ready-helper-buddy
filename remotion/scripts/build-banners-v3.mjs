@@ -169,8 +169,8 @@ const BANNERS = {
     introImg: "12-skilldrop-intro.jpg",
     outroImg: "12-skilldrop-outro.jpg",
     musicStart: 108,
-    // VO ~10.5s raw → ~10s energized; total = 1.4 intro + 10 + 2 tail ≈ 13.4s
-    totalDur: 13.5,
+    // Energized VO ~14.9s; total = 1.4 intro + 14.9 + 1.5 tail ≈ 17.8s
+    totalDur: 17.8,
   },
 };
 
