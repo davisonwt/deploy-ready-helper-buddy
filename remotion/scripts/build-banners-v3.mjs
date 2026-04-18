@@ -174,14 +174,14 @@ async function buildBanner(slug) {
   runFF(
     `ffmpeg -y -i "${branded}" -i "${voEnergy}" -stream_loop -1 -i "${MUSIC}" ` +
     `-filter_complex "` +
-      `[1:a]adelay=300|300,volume=1.0[vo];` +
+      `[1:a]adelay=300|300,volume=1.0,asplit=2[vo1][vo2];` +
       `[2:a]volume=0.18,afade=t=in:st=0:d=0.5,afade=t=out:st=${(finalDur - 0.8).toFixed(2)}:d=0.8[mus];` +
-      `[mus][vo]sidechaincompress=threshold=0.05:ratio=8:attack=20:release=250[musDuck];` +
-      `[vo][musDuck]amix=inputs=2:duration=first:dropout_transition=0:weights='1.0 0.9'[a]` +
+      `[mus][vo1]sidechaincompress=threshold=0.05:ratio=8:attack=20:release=250[musDuck];` +
+      `[vo2][musDuck]amix=inputs=2:duration=first:dropout_transition=0:weights='1.0 0.9'[a]` +
     `" ` +
     `-map 0:v:0 -map "[a]" -t ${finalDur.toFixed(2)} ` +
     `-c:v libx264 -preset medium -crf 18 -pix_fmt yuv420p -c:a aac -b:a 192k "${final}"`,
-    "step",
+    "mux",
   );
   const stat = await fs.stat(final);
   const dur = execSync(`ffprobe -v error -show_entries format=duration -of default=nw=1:nk=1 "${final}"`).toString().trim();
