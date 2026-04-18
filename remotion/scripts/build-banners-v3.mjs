@@ -70,6 +70,16 @@ const BANNERS = {
     outroImg: "06-wandering-whisperer-creator.jpg",
     musicStart: 24,
   },
+  "07-wandering-pillow": {
+    title: "Open your doors —",
+    invite: "become a Wandering Pillow!",
+    midInvite: "Host travellers · share your home",
+    cta: "Sign up on Sow2Grow",
+    beats: ["a", "b", "c", "d"],
+    introImg: "07-wandering-pillow-cottage.jpg",
+    outroImg: "07-wandering-pillow-breakfast.jpg",
+    musicStart: 48,
+  },
 };
 
 async function download(url, dest) {

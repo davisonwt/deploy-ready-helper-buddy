@@ -75,7 +75,7 @@ export const GigActionCards: React.FC<GigActionCardsProps> = ({ theme }) => {
     { icon: Car, label: 'Become a Wandering Wheel Provider', desc: 'Register vehicle', img: driverBecomeImg, href: '/register-vehicle', video: '/videos/banners/wandering-wheel.mp4' },
     { icon: Wrench, label: 'Become a Wandering Hand Provider', desc: 'Offer your skills', img: servicesBecomeImg, href: '/register-services', video: '/videos/banners/wandering-hand.mp4' },
     { icon: Ear, label: 'Become a Wondering Whisperer Provider', desc: 'Content & marketing', img: whispererBecomeImg, href: '/become-whisperer', video: '/videos/banners/wandering-whisperer.mp4' },
-    { icon: BedDouble, label: 'Become a Wandering Pillow Provider', desc: 'List your property', img: '/images/gig/stays-become.jpg', href: '/list-your-stay' },
+    { icon: BedDouble, label: 'Become a Wandering Pillow Provider', desc: 'List your property', img: '/images/gig/stays-become.jpg', href: '/list-your-stay', video: '/videos/banners/wandering-pillow.mp4' },
     { emoji: '🌾', label: 'Become a Wandering Field Provider', desc: 'Grow & sell', img: farmerImg, href: '/register-provider?type=farmer' },
     { emoji: '🏡', label: 'Become a Wandering Hearth Provider', desc: 'Handmade goods', img: homesteaderImg, href: '/register-provider?type=homesteader' },
     { emoji: '🏭', label: 'Become a Wandering Forge Provider', desc: 'Produce at scale', img: manufacturerImg, href: '/register-provider?type=manufacturer' },
