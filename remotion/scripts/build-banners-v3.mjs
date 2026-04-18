@@ -143,14 +143,10 @@ async function buildBanner(slug) {
   const branded = path.join(CACHE, `${slug}-brand.mp4`);
 
   const fc = [
-    `[2:v]colorkey=0x000000:0.30:0.20,format=rgba,scale=280:280[burstK]`,
-    `[burstK]rotate='t*0.6':c=none:ow=280:oh=280[burstR]`,
-    `[burstR]scale='280*(0.92+0.12*sin(t*PI*1.2))':-1:eval=frame[burstP]`,
     `[1:v]scale=170:170:force_original_aspect_ratio=decrease,format=rgba[logoBase]`,
     `[logoBase]rotate='0.08*sin(t*PI*0.8)':c=none:ow=170:oh=170[logoR]`,
     `[logoR]scale='170*(0.92+0.10*sin(t*PI*1.1))':-1:eval=frame[logoP]`,
-    `[0:v][burstP]overlay=x='160-overlay_w/2':y='160-overlay_h/2+8*sin(t*PI*0.7)':format=auto:eval=frame[withBurst]`,
-    `[withBurst][logoP]overlay=x='160-overlay_w/2':y='160-overlay_h/2+8*sin(t*PI*0.7)':format=auto:eval=frame[withLogo]`,
+    `[0:v][logoP]overlay=x='160-overlay_w/2':y='160-overlay_h/2+8*sin(t*PI*0.7)':format=auto:eval=frame[withLogo]`,
     `[withLogo]drawtext=fontfile=${FONT}:text='${titleEsc}':fontsize=64:fontcolor=white:bordercolor=0x2C5F2D:borderw=5:shadowcolor=0x000000AA:shadowx=2:shadowy=3:x=(w-text_w)/2:y=70:enable='between(t,0.2,2.5)'[t0]`,
     `[t0]drawtext=fontfile=${FONT}:text='${inviteEsc}':fontsize=72:fontcolor=0xF5E8D0:bordercolor=0x2C5F2D:borderw=6:shadowcolor=0x000000CC:shadowx=2:shadowy=3:x=(w-text_w)/2:y=160:enable='between(t,0.5,2.7)'[t1]`,
     `[t1]drawbox=x=0:y=940:w=1920:h=140:color=0x2C5F2DCC:t=fill:enable='between(t,5.0,9.5)'[mb]`,
@@ -159,7 +155,7 @@ async function buildBanner(slug) {
   ].join(";");
 
   runFF(
-    `ffmpeg -y -i "${concat}" -i "${LOGO}" -i "${SUNBURST}" -filter_complex "${fc}" -map "[v]" -c:v libx264 -preset medium -crf 18 -pix_fmt yuv420p -an "${branded}"`,
+    `ffmpeg -y -i "${concat}" -i "${LOGO}" -filter_complex "${fc}" -map "[v]" -c:v libx264 -preset medium -crf 18 -pix_fmt yuv420p -an "${branded}"`,
     "branding overlay",
   );
 

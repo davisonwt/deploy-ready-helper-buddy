@@ -271,10 +271,10 @@ export const GigActionCards: React.FC<GigActionCardsProps> = ({ theme }) => {
                             <div className="flex gap-2">
                               <Button
                                 size="sm"
-                                variant="secondary"
                                 onClick={() => setPlayingBanner(card.label)}
                                 disabled={!card.video}
-                                className="flex-1 h-9 bg-white/90 hover:bg-white text-black font-semibold disabled:opacity-40"
+                                className="flex-1 h-9 font-semibold text-white border-0 disabled:opacity-40"
+                                style={{ background: 'linear-gradient(135deg, #c026d3, #7c3aed)' }}
                               >
                                 <Play className="w-4 h-4 mr-1.5 fill-current" />
                                 Play
