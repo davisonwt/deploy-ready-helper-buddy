@@ -186,7 +186,7 @@ async function buildBanner(slug) {
   const voEnergy = path.join(CACHE, `${slug}-vo-energy.mp3`);
   console.log("  ⚡ energizing VO (warm enthusiastic friend)");
   runFF(
-    `ffmpeg -y -i "${vo}" -af "asetrate=44100*1.12,aresample=44100,atempo=0.945,equalizer=f=3500:width_type=o:width=2:g=5,equalizer=f=200:width_type=o:width=1:g=2.5,equalizer=f=8000:width_type=o:width=2:g=3,acompressor=threshold=-20dB:ratio=4:attack=3:release=60:makeup=3,volume=1.25" "${voEnergy}"`,
+    `ffmpeg -y -i "${vo}" -af "asetrate=44100*1.12,aresample=44100,atempo=0.945,equalizer=f=3500:width_type=o:width=2:g=5,equalizer=f=200:width_type=o:width=1:g=2.5,equalizer=f=8000:width_type=o:width=2:g=3,acompressor=threshold=-20dB:ratio=4:attack=3:release=60:makeup=3,volume=1.65" "${voEnergy}"`,
     "step",
   );
   const voEnergyDur = parseFloat(execSync(`ffprobe -v error -show_entries format=duration -of default=nw=1:nk=1 "${voEnergy}"`).toString().trim());
@@ -199,13 +199,13 @@ async function buildBanner(slug) {
   const swellStart = Math.max(voEndTime - 0.2, MUSIC_TAIL_START - 0.5);
   const final = path.join(OUT_DIR, `banner-${slug}.mp4`);
   console.log(`  ♪ mux: ${MUSIC_LEAD}s music intro → VO (${voEnergyDur.toFixed(2)}s) → music swells back at ${swellStart.toFixed(2)}s (total ${finalDur}s)`);
-  // Music volume curve: 0.65 (intro) → 0.32 (under VO) → 0.65 (outro)
-  // Use volume expression with time gates so music is LOUD when VO is silent
+  // Music volume curve: 0.70 (intro) → 0.16 (ducked under VO) → 0.70 (outro)
+  // Aggressive duck so VO sits clearly on top
   runFF(
     `ffmpeg -y -i "${branded}" -i "${voEnergy}" -ss ${cfg.musicStart ?? 36} -stream_loop -1 -i "${MUSIC}" ` +
     `-filter_complex "` +
       `[1:a]adelay=${voDelayMs}|${voDelayMs},volume=1.0[vo];` +
-      `[2:a]volume='if(lt(t,${MUSIC_LEAD - 0.2}),0.65,if(lt(t,${MUSIC_LEAD + 0.3}),0.65-0.33*(t-${MUSIC_LEAD - 0.2})/0.5,if(lt(t,${swellStart}),0.32,if(lt(t,${swellStart + 0.5}),0.32+0.33*(t-${swellStart})/0.5,0.65))))':eval=frame,afade=t=in:st=0:d=0.4,afade=t=out:st=${(finalDur - 1.0).toFixed(2)}:d=1.0[mus];` +
+      `[2:a]volume='if(lt(t,${MUSIC_LEAD - 0.2}),0.70,if(lt(t,${MUSIC_LEAD + 0.3}),0.70-0.54*(t-${MUSIC_LEAD - 0.2})/0.5,if(lt(t,${swellStart}),0.16,if(lt(t,${swellStart + 0.5}),0.16+0.54*(t-${swellStart})/0.5,0.70))))':eval=frame,afade=t=in:st=0:d=0.4,afade=t=out:st=${(finalDur - 1.0).toFixed(2)}:d=1.0[mus];` +
       `[vo][mus]amix=inputs=2:duration=longest:dropout_transition=0:weights='1.0 1.0',alimiter=limit=0.95[a]` +
     `" ` +
     `-map 0:v:0 -map "[a]" -t ${finalDur.toFixed(2)} ` +
