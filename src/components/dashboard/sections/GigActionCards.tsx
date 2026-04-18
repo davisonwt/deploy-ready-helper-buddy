@@ -1,5 +1,5 @@
 import React, { useState, useRef, useCallback } from 'react';
-import { Car, Wrench, Ear, HandHeart, Sprout, ArrowRight, BedDouble, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Car, Wrench, Ear, HandHeart, Sprout, ArrowRight, BedDouble, ChevronLeft, ChevronRight, Play, UserPlus, X } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { DashboardTheme } from '@/utils/dashboardThemes';
 import { GigBookingModal } from '@/components/gig/GigBookingModal';
@@ -72,7 +72,7 @@ export const GigActionCards: React.FC<GigActionCardsProps> = ({ theme }) => {
   ];
 
   const becomeCards = [
-    { icon: Car, label: 'Become a Wandering Wheel Provider', desc: 'Register vehicle', img: driverBecomeImg, href: '/register-vehicle', video: '/videos/register_vehicle.mp4' },
+    { icon: Car, label: 'Become a Wandering Wheel Provider', desc: 'Register vehicle', img: driverBecomeImg, href: '/register-vehicle', video: '/videos/banners/wandering-wheel.mp4' },
     { icon: Wrench, label: 'Become a Wandering Hand Provider', desc: 'Offer your skills', img: servicesBecomeImg, href: '/register-services' },
     { icon: Ear, label: 'Become a Wondering Whisperer Provider', desc: 'Content & marketing', img: whispererBecomeImg, href: '/become-whisperer' },
     { icon: BedDouble, label: 'Become a Wandering Pillow Provider', desc: 'List your property', img: '/images/gig/stays-become.jpg', href: '/list-your-stay' },
@@ -80,6 +80,8 @@ export const GigActionCards: React.FC<GigActionCardsProps> = ({ theme }) => {
     { emoji: '🏡', label: 'Become a Wandering Hearth Provider', desc: 'Handmade goods', img: homesteaderImg, href: '/register-provider?type=homesteader' },
     { emoji: '🏭', label: 'Become a Wandering Forge Provider', desc: 'Produce at scale', img: manufacturerImg, href: '/register-provider?type=manufacturer' },
   ];
+
+  const [playingBanner, setPlayingBanner] = useState<string | null>(null);
 
   const bookCarousel = useCarousel(bookCards.length);
   const connectCarousel = useCarousel(connectCards.length);
@@ -217,37 +219,82 @@ export const GigActionCards: React.FC<GigActionCardsProps> = ({ theme }) => {
               className="flex overflow-x-auto snap-x snap-mandatory"
               style={{ scrollbarWidth: 'none', msOverflowStyle: 'none', WebkitOverflowScrolling: 'touch' }}
             >
-              {becomeCards.map((card) => (
-                <button
-                  key={card.label + '-become'}
-                  onClick={() => navigate(card.href)}
-                  className="min-w-full flex-shrink-0 snap-center block rounded-2xl overflow-hidden transition-all shadow-md text-left hover:scale-[1.01] active:scale-[0.99] relative h-[220px]"
-                >
-                  {card.video ? (
-                    <video
-                      src={card.video}
-                      autoPlay
-                      muted
-                      loop
-                      playsInline
-                      preload="metadata"
-                      className="absolute inset-0 w-full h-full object-cover pointer-events-none"
-                    />
-                  ) : (
-                    <img src={card.img} alt={card.label} className="absolute inset-0 w-full h-full object-cover" loading="lazy" />
-                  )}
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/30 to-black/10" />
-                  <div className="relative h-full flex flex-col justify-between p-4">
-                    <div className="w-9 h-9 rounded-xl bg-white/20 backdrop-blur-sm flex items-center justify-center">
-                      {card.icon ? <card.icon className="w-5 h-5 text-white" /> : <span className="text-lg">{card.emoji}</span>}
-                    </div>
-                    <div>
-                      <h3 className="font-bold text-white text-lg">{card.label}</h3>
-                      <p className="text-xs text-white/80">{card.desc}</p>
-                    </div>
+              {becomeCards.map((card) => {
+                const isPlaying = playingBanner === card.label;
+                return (
+                  <div
+                    key={card.label + '-become'}
+                    className="min-w-full flex-shrink-0 snap-center block rounded-2xl overflow-hidden shadow-md relative h-[260px]"
+                  >
+                    {isPlaying && card.video ? (
+                      <>
+                        <video
+                          src={card.video}
+                          autoPlay
+                          controls
+                          playsInline
+                          className="absolute inset-0 w-full h-full object-cover bg-black"
+                        />
+                        <button
+                          onClick={() => setPlayingBanner(null)}
+                          className="absolute top-2 right-2 z-30 w-8 h-8 rounded-full bg-black/70 hover:bg-black text-white flex items-center justify-center"
+                          aria-label="Close video"
+                        >
+                          <X className="w-4 h-4" />
+                        </button>
+                      </>
+                    ) : (
+                      <>
+                        {card.video ? (
+                          <video
+                            src={card.video}
+                            autoPlay
+                            muted
+                            loop
+                            playsInline
+                            preload="metadata"
+                            className="absolute inset-0 w-full h-full object-cover pointer-events-none"
+                          />
+                        ) : (
+                          <img src={card.img} alt={card.label} className="absolute inset-0 w-full h-full object-cover" loading="lazy" />
+                        )}
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/40 to-black/10" />
+                        <div className="relative h-full flex flex-col justify-between p-4">
+                          <div className="w-9 h-9 rounded-xl bg-white/20 backdrop-blur-sm flex items-center justify-center">
+                            {card.icon ? <card.icon className="w-5 h-5 text-white" /> : <span className="text-lg">{card.emoji}</span>}
+                          </div>
+                          <div className="space-y-3">
+                            <div>
+                              <h3 className="font-bold text-white text-lg leading-tight">{card.label}</h3>
+                              <p className="text-xs text-white/80">{card.desc}</p>
+                            </div>
+                            <div className="flex gap-2">
+                              <Button
+                                size="sm"
+                                variant="secondary"
+                                onClick={() => setPlayingBanner(card.label)}
+                                disabled={!card.video}
+                                className="flex-1 h-9 bg-white/90 hover:bg-white text-black font-semibold disabled:opacity-40"
+                              >
+                                <Play className="w-4 h-4 mr-1.5 fill-current" />
+                                Play
+                              </Button>
+                              <Button
+                                size="sm"
+                                onClick={() => navigate(card.href)}
+                                className="flex-1 h-9 font-semibold"
+                              >
+                                <UserPlus className="w-4 h-4 mr-1.5" />
+                                Register
+                              </Button>
+                            </div>
+                          </div>
+                        </div>
+                      </>
+                    )}
                   </div>
-                </button>
-              ))}
+                );
+              })}
             </div>
             <button
               onClick={() => becomeCarousel.scrollTo(becomeCarousel.index - 1)}
