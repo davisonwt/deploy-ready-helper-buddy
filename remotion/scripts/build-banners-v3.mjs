@@ -121,8 +121,8 @@ const BANNERS = {
     introImg: "06-wandering-whisperer-book-intro.jpg",
     outroImg: "06-wandering-whisperer-book-outro.jpg",
     musicStart: 24,
-    // VO is short (~10s raw → ~9.5s energized); total = 1.4 lead + 9.5 + 1.5 tail ≈ 12.4s
-    totalDur: 12.4,
+    // Energized VO ~12.2s; total = 1.4 lead + 12.2 + 1.5 tail ≈ 15.1s
+    totalDur: 15.1,
   },
   "07-wandering-pillow": {
     title: "Open your doors —",
