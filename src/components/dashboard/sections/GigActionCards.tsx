@@ -1,5 +1,5 @@
 import React, { useState, useRef, useCallback } from 'react';
-import { Car, Wrench, Ear, HandHeart, Sprout, ArrowRight, BedDouble, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Car, Wrench, Ear, HandHeart, Sprout, ArrowRight, BedDouble, ChevronLeft, ChevronRight, Play, UserPlus, X } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { DashboardTheme } from '@/utils/dashboardThemes';
 import { GigBookingModal } from '@/components/gig/GigBookingModal';
