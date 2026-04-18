@@ -60,6 +60,16 @@ const BANNERS = {
     outroImg: "05-wandering-hand-handshake.jpg",
     musicStart: 12,
   },
+  "06-wandering-whisperer": {
+    title: "Amplify the tribe —",
+    invite: "become a Wandering Whisperer!",
+    midInvite: "Promote sellers · earn alongside",
+    cta: "Sign up on Sow2Grow",
+    beats: ["a", "b", "c", "d"],
+    introImg: "06-wandering-whisperer-phones.jpg",
+    outroImg: "06-wandering-whisperer-creator.jpg",
+    musicStart: 24,
+  },
 };
 
 async function download(url, dest) {
