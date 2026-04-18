@@ -63,9 +63,9 @@ async function buildImageCard(imgPath, out, durSec, zoomDir = "in") {
     ? `min(zoom+0.0020,1.10)`
     : `if(lte(zoom,1.0),1.10,max(1.001,zoom-0.0020))`;
   const fc = `[0:v]scale=3840:2160:force_original_aspect_ratio=increase,crop=3840:2160,zoompan=z='${zoomExpr}':d=${frames}:s=1920x1080:fps=30,${GRADE},format=yuv420p[v]`;
-  execSync(
+  runFF(
     `ffmpeg -y -loop 1 -t ${durSec} -i "${imgPath}" -filter_complex "${fc}" -map "[v]" -t ${durSec} -c:v libx264 -preset medium -crf 18 -pix_fmt yuv420p -r 30 -an "${out}"`,
-    { stdio: "pipe" },
+    "step",
   );
 }
 
@@ -74,9 +74,9 @@ async function buildBeatClip(srcMp4, outMp4, targetDur) {
   const srcDur = parseFloat(probe);
   const speed = (srcDur / targetDur).toFixed(4);
   const fc = `[0:v]setpts=PTS/${speed},scale=1920:1080:force_original_aspect_ratio=decrease,pad=1920:1080:(ow-iw)/2:(oh-ih)/2,fps=30,${GRADE}[v]`;
-  execSync(
+  runFF(
     `ffmpeg -y -i "${srcMp4}" -filter_complex "${fc}" -map "[v]" -t ${targetDur} -c:v libx264 -preset medium -crf 18 -pix_fmt yuv420p -r 30 -an "${outMp4}"`,
-    { stdio: "pipe" },
+    "step",
   );
 }
 
@@ -125,9 +125,9 @@ async function buildBanner(slug) {
   await fs.writeFile(concatList, all.map((c) => `file '${c}'`).join("\n"));
   const concat = path.join(CACHE, `${slug}-concat.mp4`);
   console.log("  ⧉ concat");
-  execSync(
+  runFF(
     `ffmpeg -y -f concat -safe 0 -i "${concatList}" -c:v libx264 -preset medium -crf 18 -pix_fmt yuv420p -r 30 -an "${concat}"`,
-    { stdio: "pipe" },
+    "step",
   );
 
   console.log("  ✎ animated logo + sunburst + title + CTA");
@@ -158,9 +158,9 @@ async function buildBanner(slug) {
   const vo = path.join(VO_DIR, `${slug}.mp3`);
   const voEnergy = path.join(CACHE, `${slug}-vo-energy.mp3`);
   console.log("  ⚡ energizing VO (warm enthusiastic friend)");
-  execSync(
+  runFF(
     `ffmpeg -y -i "${vo}" -af "asetrate=44100*1.12,aresample=44100,atempo=0.945,equalizer=f=3500:width_type=o:width=2:g=5,equalizer=f=200:width_type=o:width=1:g=2.5,equalizer=f=8000:width_type=o:width=2:g=3,acompressor=threshold=-20dB:ratio=4:attack=3:release=60:makeup=3,volume=1.25" "${voEnergy}"`,
-    { stdio: "pipe" },
+    "step",
   );
   const voEnergyDur = parseFloat(execSync(`ffprobe -v error -show_entries format=duration -of default=nw=1:nk=1 "${voEnergy}"`).toString().trim());
   console.log(`     energized VO duration: ${voEnergyDur.toFixed(2)}s`);
@@ -171,7 +171,7 @@ async function buildBanner(slug) {
   console.log(`  ♪ mux with music bed (final: ${finalDur.toFixed(2)}s)`);
   // [1] = VO (delay 300ms), [2] = music (loop, low volume, fade in/out)
   // Sidechain compress music against VO so VO sits on top cleanly
-  execSync(
+  runFF(
     `ffmpeg -y -i "${branded}" -i "${voEnergy}" -stream_loop -1 -i "${MUSIC}" ` +
     `-filter_complex "` +
       `[1:a]adelay=300|300,volume=1.0[vo];` +
@@ -181,7 +181,7 @@ async function buildBanner(slug) {
     `" ` +
     `-map 0:v:0 -map "[a]" -t ${finalDur.toFixed(2)} ` +
     `-c:v libx264 -preset medium -crf 18 -pix_fmt yuv420p -c:a aac -b:a 192k "${final}"`,
-    { stdio: "pipe" },
+    "step",
   );
   const stat = await fs.stat(final);
   const dur = execSync(`ffprobe -v error -show_entries format=duration -of default=nw=1:nk=1 "${final}"`).toString().trim();
