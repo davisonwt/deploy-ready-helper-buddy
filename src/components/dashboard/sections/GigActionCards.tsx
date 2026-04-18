@@ -78,7 +78,7 @@ export const GigActionCards: React.FC<GigActionCardsProps> = ({ theme }) => {
     { icon: BedDouble, label: 'Become a Wandering Pillow Provider', desc: 'List your property', img: '/images/gig/stays-become.jpg', href: '/list-your-stay', video: '/videos/banners/wandering-pillow.mp4' },
     { emoji: '🌾', label: 'Become a Wandering Field Provider', desc: 'Grow & sell', img: farmerImg, href: '/register-provider?type=farmer', video: '/videos/banners/wandering-field.mp4' },
     { emoji: '🏡', label: 'Become a Wandering Hearth Provider', desc: 'Handmade goods', img: homesteaderImg, href: '/register-provider?type=homesteader', video: '/videos/banners/wandering-hearth.mp4' },
-    { emoji: '🏭', label: 'Become a Wandering Forge Provider', desc: 'Produce at scale', img: manufacturerImg, href: '/register-provider?type=manufacturer' },
+    { emoji: '🏭', label: 'Become a Wandering Forge Provider', desc: 'Produce at scale', img: manufacturerImg, href: '/register-provider?type=manufacturer', video: '/videos/banners/wandering-forge.mp4' },
   ];
 
   const [playingBanner, setPlayingBanner] = useState<string | null>(null);
