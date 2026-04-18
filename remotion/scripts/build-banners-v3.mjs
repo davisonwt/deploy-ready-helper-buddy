@@ -90,6 +90,18 @@ const BANNERS = {
     // Energetic VO ~12s; total = 1.4 lead + 12 + 1.5 tail ≈ 14.9s
     totalDur: 14.9,
   },
+  "04-wandering-wheel-book": {
+    title: "Need a ride or a delivery?",
+    invite: "Book a Wandering Wheel.",
+    midInvite: "People · parcels · shopping · farm · construction",
+    cta: "Book a Wandering Wheel",
+    beats: ["a", "b", "c", "d"],
+    introImg: "04-wandering-wheel-book-intro.jpg",
+    outroImg: "04-wandering-wheel-book-outro.jpg",
+    musicStart: 36,
+    // Energetic VO ~13s; total = 1.4 lead + 13 + 1.6 tail ≈ 16s
+    totalDur: 16.0,
+  },
   "05-wandering-hand": {
     title: "Need a helping hand —",
     invite: "connect with Wandering Hands!",
