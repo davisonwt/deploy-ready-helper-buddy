@@ -135,8 +135,10 @@ async function buildBanner(slug) {
     "step",
   );
 
-  console.log("  ✎ animated logo + sunburst + title + CTA");
+  console.log("  ✎ animated logo + sunburst + title + invite + CTA");
   const titleEsc = cfg.title.replace(/'/g, "\\'");
+  const inviteEsc = cfg.invite.replace(/'/g, "\\'");
+  const midInviteEsc = cfg.midInvite.replace(/'/g, "\\'");
   const ctaEsc = cfg.cta.replace(/'/g, "\\'");
   const branded = path.join(CACHE, `${slug}-brand.mp4`);
 
@@ -149,8 +151,11 @@ async function buildBanner(slug) {
     `[logoR]scale='170*(0.92+0.10*sin(t*PI*1.1))':-1:eval=frame[logoP]`,
     `[0:v][burstP]overlay=x='160-overlay_w/2':y='160-overlay_h/2+8*sin(t*PI*0.7)':format=auto:eval=frame[withBurst]`,
     `[withBurst][logoP]overlay=x='160-overlay_w/2':y='160-overlay_h/2+8*sin(t*PI*0.7)':format=auto:eval=frame[withLogo]`,
-    `[withLogo]drawtext=fontfile=${FONT}:text='${titleEsc}':fontsize=52:fontcolor=white:bordercolor=0x2C5F2D:borderw=4:shadowcolor=0x000000AA:shadowx=2:shadowy=3:x=(w-text_w)/2:y=80:enable='between(t,0.2,2.5)'[t1]`,
-    `[t1]drawtext=fontfile=${FONT}:text='${ctaEsc}':fontsize=70:fontcolor=0xF5E8D0:bordercolor=0x2C5F2D:borderw=6:shadowcolor=0x000000CC:shadowx=2:shadowy=3:x=(w-text_w)/2:y=h-160:enable='gte(t,10.5)'[v]`,
+    `[withLogo]drawtext=fontfile=${FONT}:text='${titleEsc}':fontsize=64:fontcolor=white:bordercolor=0x2C5F2D:borderw=5:shadowcolor=0x000000AA:shadowx=2:shadowy=3:x=(w-text_w)/2:y=70:enable='between(t,0.2,2.5)'[t0]`,
+    `[t0]drawtext=fontfile=${FONT}:text='${inviteEsc}':fontsize=72:fontcolor=0xF5E8D0:bordercolor=0x2C5F2D:borderw=6:shadowcolor=0x000000CC:shadowx=2:shadowy=3:x=(w-text_w)/2:y=160:enable='between(t,0.5,2.7)'[t1]`,
+    `[t1]drawbox=x=0:y=h-220:w=w:h=140:color=0x2C5F2DCC:t=fill:enable='between(t,5.0,9.5)'[mb]`,
+    `[mb]drawtext=fontfile=${FONT}:text='${midInviteEsc}':fontsize=66:fontcolor=0xF5E8D0:bordercolor=0x000000:borderw=3:shadowcolor=0x000000AA:shadowx=2:shadowy=2:x=(w-text_w)/2:y=h-180:enable='between(t,5.0,9.5)'[t2]`,
+    `[t2]drawtext=fontfile=${FONT}:text='${ctaEsc}':fontsize=80:fontcolor=0xF5E8D0:bordercolor=0x2C5F2D:borderw=6:shadowcolor=0x000000CC:shadowx=2:shadowy=3:x=(w-text_w)/2:y=h-180:enable='gte(t,10.5)'[v]`,
   ].join(";");
 
   runFF(
