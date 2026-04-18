@@ -37,15 +37,25 @@ async function audioPromptUri() {
 }
 
 async function predict(prompt, audioUri) {
-  const create = await fetch("https://api.replicate.com/v1/predictions", {
-    method: "POST",
-    headers: { Authorization: `Bearer ${TOKEN}`, "Content-Type": "application/json" },
-    body: JSON.stringify({
-      version: VERSION,
-      input: { prompt, audio_prompt: audioUri, exaggeration: 0.5, cfg_weight: 0.5, temperature: 0.7 },
-    }),
-  });
-  if (!create.ok) throw new Error(`Replicate create: ${create.status} ${await create.text()}`);
+  let create, attempt = 0;
+  while (true) {
+    create = await fetch("https://api.replicate.com/v1/predictions", {
+      method: "POST",
+      headers: { Authorization: `Bearer ${TOKEN}`, "Content-Type": "application/json" },
+      body: JSON.stringify({
+        version: VERSION,
+        input: { prompt, audio_prompt: audioUri, exaggeration: 0.5, cfg_weight: 0.5, temperature: 0.7 },
+      }),
+    });
+    if (create.ok) break;
+    if (create.status === 429 && attempt < 10) {
+      const wait = 12000 + attempt * 3000;
+      console.log(`  rate-limited, waiting ${wait/1000}s…`);
+      await new Promise(r => setTimeout(r, wait));
+      attempt++; continue;
+    }
+    throw new Error(`Replicate create: ${create.status} ${await create.text()}`);
+  }
   const pred = await create.json();
   let id = pred.id;
   for (let i = 0; i < 80; i++) {
