@@ -172,6 +172,18 @@ const BANNERS = {
     // Energized VO ~14.9s; total = 1.4 intro + 14.9 + 1.5 tail ≈ 17.8s
     totalDur: 17.8,
   },
+  "13-training": {
+    title: "Train the tribe —",
+    invite: "host a Live Training session!",
+    midInvite: "Yoga · fitness · meditation · mindfulness",
+    cta: "Sign up on Sow2Grow",
+    beats: ["a", "b", "c", "d"],
+    introImg: "13-training-intro.jpg",
+    outroImg: "13-training-outro.jpg",
+    musicStart: 60,
+    // Calm VO ~10.5s energized; total = 1.4 intro + 10.5 + 1.5 tail ≈ 13.4s
+    totalDur: 13.4,
+  },
 };
 
 async function download(url, dest) {
