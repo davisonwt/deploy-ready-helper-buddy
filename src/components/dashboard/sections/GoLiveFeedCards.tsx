@@ -50,6 +50,7 @@ const goLiveCards: Array<{
     description:
       'Go live with a training session — fitness, yoga, baking, cooking, wellness coaching, or any hands-on skill. Help the community grow stronger together.',
     image: trainingImg,
+    video: '/videos/banners/training.mp4',
     icon: Dumbbell,
   },
   {
