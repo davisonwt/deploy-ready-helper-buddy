@@ -168,6 +168,18 @@ const BANNERS = {
     outroImg: "08-wandering-field-family.jpg",
     musicStart: 60,
   },
+  "08-wandering-field-book": {
+    title: "Want fresh produce, straight from the farm?",
+    invite: "Connect with a Wandering Field.",
+    midInvite: "Vegetables · herbs · fish · eggs · livestock",
+    cta: "Connect with Wandering Fields",
+    beats: ["a", "b", "c", "d"],
+    introImg: "08-wandering-field-book-intro.jpg",
+    outroImg: "08-wandering-field-book-outro.jpg",
+    musicStart: 60,
+    // Warm fresh VO ~13s; total = 1.4 lead + 13 + 1.6 tail ≈ 16s
+    totalDur: 16.0,
+  },
   "09-wandering-hearth": {
     title: "Craft with love —",
     invite: "become a Wandering Hearth!",

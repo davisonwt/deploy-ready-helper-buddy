@@ -66,7 +66,7 @@ export const GigActionCards: React.FC<GigActionCardsProps> = ({ theme }) => {
   ];
 
   const connectCards = [
-    { key: 'farmer', emoji: '🌾', label: 'The Wandering Field', desc: 'Fresh produce', img: connectFarmerImg, href: '/providers?type=farmer' },
+    { key: 'farmer', emoji: '🌾', label: 'The Wandering Field', desc: 'Fresh produce', img: connectFarmerImg, video: '/videos/banners/wandering-field-book.mp4', href: '/providers?type=farmer' },
     { key: 'homesteader', emoji: '🏡', label: 'The Wandering Hearth', desc: 'Handmade goods', img: connectHomesteaderImg, href: '/providers?type=homesteader' },
     { key: 'manufacturer', emoji: '🏭', label: 'The Wandering Forge', desc: 'Produce at scale', img: connectManufacturerImg, href: '/providers?type=manufacturer' },
   ];
