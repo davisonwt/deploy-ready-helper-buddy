@@ -80,18 +80,18 @@ async function buildBeatClip(srcMp4, outMp4, targetDur) {
   );
 }
 
-// Generate a transparent PNG sequence of a rotating golden sunburst ring (sparkles!)
-// Actually simpler: build it inline with ffmpeg's lavfi "life" or use a static glow PNG + rotate.
-// We'll create a radial glow PNG once with imagemagick-like ffmpeg trick.
-async function ensureSunburst() {
-  const dest = path.join(CACHE, "sunburst.png");
-  if (existsSync(dest)) return dest;
-  // Use ffmpeg to synthesize a 400x400 transparent radial gradient golden glow
-  execSync(
-    `ffmpeg -y -f lavfi -i "color=c=0x00000000:s=400x400:d=1,format=rgba,geq=r='if(lt(hypot(X-200,Y-200),190),255,0)':g='if(lt(hypot(X-200,Y-200),190),200+55*sin((X+Y)/15),0)':b='if(lt(hypot(X-200,Y-200),190),20+30*sin((X-Y)/12),0)':a='255*max(0,1-hypot(X-200,Y-200)/200)*0.55*(0.7+0.3*sin(atan2(Y-200,X-200)*16))'" -frames:v 1 "${dest}"`,
-    { stdio: "pipe" },
-  );
-  return dest;
+// Pre-rendered golden sunburst (black bg, will be color-keyed transparent at composite time)
+const SUNBURST = path.join(ROOT, "public/sunburst-sparkle.png");
+
+function runFF(cmd, label) {
+  try {
+    execSync(cmd, { stdio: "pipe" });
+  } catch (e) {
+    const stderr = e.stderr?.toString() ?? "";
+    const tail = stderr.split("\n").slice(-30).join("\n");
+    console.error(`\n✗ ffmpeg failed (${label}):\n${tail}\n`);
+    throw e;
+  }
 }
 
 async function buildBanner(slug) {
