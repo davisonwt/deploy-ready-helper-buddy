@@ -181,8 +181,8 @@ const BANNERS = {
     introImg: "13-training-intro.jpg",
     outroImg: "13-training-outro.jpg",
     musicStart: 60,
-    // Calm VO ~10.5s energized; total = 1.4 intro + 10.5 + 1.5 tail ≈ 13.4s
-    totalDur: 13.4,
+    // Calm VO ~13.3s energized; total = 1.4 lead + 13.3 + 1.5 tail ≈ 16.2s
+    totalDur: 16.2,
   },
 };
 
