@@ -175,7 +175,8 @@ async function buildBanner(slug) {
   console.log(`\n▶ ${slug}`);
 
   // v3.7 — let the music breathe: longer intro/outro cards = pure-music moments
-  const TOTAL = 13.0;
+  // Per-banner totalDur override allows longer voiceovers (e.g. community orchard ~14s VO)
+  const TOTAL = cfg.totalDur ?? 13.0;
   const INTRO = 2.5, OUTRO = 2.5;        // pure-music head & tail
   const MUSIC_LEAD = 1.4;                 // VO starts 1.4s in (music alone first)
   const MUSIC_TAIL_START = TOTAL - 2.0;   // music swells back up 2s before end
