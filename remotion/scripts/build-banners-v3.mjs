@@ -73,8 +73,8 @@ const BANNERS = {
     introImg: "03-single-seed-intro.jpg",
     outroImg: "03-single-seed-outro.jpg",
     musicStart: 30,
-    // VO is ~13s after energizing → needs ~14s playback + 1s music tail
-    totalDur: 15.5,
+    // VO is ~9s → after +6% tempo ≈ 8.5s; pad to 13s for music tail
+    totalDur: 13.0,
   },
   "04-wandering-wheel": {
     title: "List your vehicle —",
