@@ -40,6 +40,7 @@ const goLiveCards: Array<{
     description:
       'Drop a focused skill session — woodworking, coding, photography, music production, or anything you\'re great at. Quick, impactful, and community-driven.',
     image: skilldropImg,
+    video: '/videos/banners/skilldrop.mp4',
     icon: Zap,
   },
   {

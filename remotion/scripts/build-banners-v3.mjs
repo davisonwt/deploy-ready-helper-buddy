@@ -160,6 +160,18 @@ const BANNERS = {
     // VO ~9.8s raw → ~9.3s energized; total = 1.4 intro + 9.3 + 2 tail ≈ 12.7s
     totalDur: 13.0,
   },
+  "12-skilldrop": {
+    title: "Got a skill the tribe needs?",
+    invite: "Open a SkillDrop Room!",
+    midInvite: "Pottery · painting · cooking · repair",
+    cta: "Sign up on Sow2Grow",
+    beats: ["a", "b", "c", "d"],
+    introImg: "12-skilldrop-intro.jpg",
+    outroImg: "12-skilldrop-outro.jpg",
+    musicStart: 108,
+    // Energized VO ~14.9s; total = 1.4 intro + 14.9 + 1.5 tail ≈ 17.8s
+    totalDur: 17.8,
+  },
 };
 
 async function download(url, dest) {
