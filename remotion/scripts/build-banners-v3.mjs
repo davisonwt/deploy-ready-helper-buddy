@@ -44,7 +44,7 @@ const BANNERS = {
       { h: "Carry packages, produce, handmade goods", s: "Across every village", start: 2.2, end: 5.2 },
       { h: "The tribe books you with one tap", s: "S2G connects every job", start: 5.4, end: 8.4 },
       { h: "Deliver. Earn. Serve.", s: "Roll with Sow2Grow", start: 8.6, end: 11.4 },
-      { h: "Book a Wandering Wheel today", s: "Open Sow2Grow on your phone", start: 11.6, end: 14.0 },
+      { h: "Tap. Book. Done.", s: "Open Sow2Grow on your phone", start: 11.6, end: 14.0 },
     ],
   },
 };
@@ -168,8 +168,8 @@ async function buildBanner(slug) {
     `[1:v]scale=140:140:force_original_aspect_ratio=decrease[logo]`,
     `[0:v]subtitles='${escFilter(ass)}'[withcap]`,
     `[withcap][logo]overlay=40:40:format=auto[withlogo]`,
-    `[withlogo]drawtext=fontfile=${FONT}:text='${titleEsc}':fontsize=66:fontcolor=white:bordercolor=black:borderw=4:x=(w-text_w)/2:y=80:enable='between(t,0,2)'[t1]`,
-    `[t1]drawtext=fontfile=${FONT}:text='${ctaEsc}':fontsize=72:fontcolor=white:bordercolor=black:borderw=5:x=(w-text_w)/2:y=h-200:enable='gte(t,12.5)'[v]`,
+    `[withlogo]drawtext=fontfile=${FONT}:text='${titleEsc}':fontsize=66:fontcolor=white:bordercolor=black:borderw=4:x=(w-text_w)/2:y=80:enable='between(t,0,1.9)'[t1]`,
+    `[t1]drawtext=fontfile=${FONT}:text='${ctaEsc}':fontsize=78:fontcolor=0xF5E8D0:bordercolor=0x2C5F2D:borderw=6:x=(w-text_w)/2:y=120:enable='gte(t,11.6)'[v]`,
   ].join(";");
   execSync(
     `ffmpeg -y -i "${concat}" -i "${LOGO}" -filter_complex "${fc}" -map "[v]" -c:v libx264 -preset medium -crf 18 -pix_fmt yuv420p -an "${captioned}"`,
