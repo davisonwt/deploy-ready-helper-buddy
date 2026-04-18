@@ -208,6 +208,18 @@ const BANNERS = {
     // Warm VO ~10.5s raw → ~10s energized; total = 1.4 lead + 10 + 1.5 tail ≈ 12.9s
     totalDur: 12.9,
   },
+  "16-group-chat": {
+    title: "Bring the tribe together —",
+    invite: "start an S2G Group Chat!",
+    midInvite: "Text · voice · video · group calls · unlimited members",
+    cta: "Sign up on Sow2Grow",
+    beats: ["a", "b", "c", "d"],
+    introImg: "16-group-chat-intro.jpg",
+    outroImg: "16-group-chat-outro.jpg",
+    musicStart: 72,
+    // Warm VO ~13.5s raw → ~13s energized; total = 1.4 lead + 13 + 1.5 tail ≈ 15.9s
+    totalDur: 15.9,
+  },
 };
 
 async function download(url, dest) {

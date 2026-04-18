@@ -40,6 +40,7 @@ const chatCards: Array<{
     description:
       'Create a group chat with multiple community members. Discuss ideas, plan events, share updates, and grow together as a tribe.',
     image: groupChatImg,
+    video: '/videos/banners/group-chat.mp4',
     icon: Users,
     buttonLabel: '👥 Start Group Chat',
   },
