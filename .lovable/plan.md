@@ -1,93 +1,49 @@
 
+Yes — I understand the Community Orchard model completely. Let me restate it back so we're aligned, then present the plan.
 
-## What's wrong now
+## My understanding
 
-1. **Audio cuts off** — Chatterbox VOs are 12–18s long, but each video is only 10s. The mux truncates with `-shortest`, killing the end of the narration.
-2. **Visuals too static / too short** — one keyframe → one 10s AI motion clip = a slow drift, not a story. Your reference (the "Wandering Wheel" video) shows **multiple distinct scenes stitched together** (driver getting in cab, truck on road, package handoff, happy customer) — a mini-narrative, not a single moving image.
-3. **Pacing mismatch** — The reference videos run ~18–25s with 3–4 scene beats that match the voiceover line by line.
+A **Community Orchard** is a tribe-funded relief vehicle:
+1. **A need is identified** — a tribe member needs something tangible (a vehicle, rent, fuel, school fees, a fridge, medical bills, clothing, food).
+2. **An orchard is opened** with the total cost split into many **bestowal pockets** (e.g. a $2,000 vehicle = 200 pockets of $10, or 40 pockets of $50).
+3. **Tribe members bestow** freely into one or more pockets — small gifts, no single hero donor required.
+4. **When the last pocket fills**, the orchard is "complete" and the **seed is delivered** to the recipient (vehicle bought, rent paid, etc.).
 
-## The fix — a multi-scene pipeline
+It's micro-tithing meets community crowdfunding, framed in the S2G "sow / pocket / orchard / bestowal" language.
 
-For each banner, instead of `1 image → 1 clip`, I'll do:
+## Storyboard (3 beats, ~18s, matching the v3 cinematic style)
 
-```text
-VO script (15-20s)
-  ├─ Beat 1 (0-6s):  keyframe A → 6s AI clip   [hook / problem]
-  ├─ Beat 2 (6-12s): keyframe B → 6s AI clip   [the Sow2Grow solution]
-  ├─ Beat 3 (12-18s):keyframe C → 6s AI clip   [happy outcome / CTA]
-  └─ ffmpeg concat + VO mux (full length, no cutoff)
-```
+Same painterly cinematic look as Wandering Wheel — globally diverse cast, warm golden-hour grade, real-world scenes, no AI text on screen.
 
-So per banner: **3 keyframes + 3 AI clips + concat + VO mux + caption overlay** = a true 18-second mini-story matching the reference style.
+| Beat | Time | Visual | Caption (overlay) |
+|---|---|---|---|
+| **A — The Need** | 0–6s | A tribe member (e.g. a mother outside a modest home, or a father standing by a broken-down vehicle) shares a need. Other members listening warmly, hands on shoulders. | *"A tribe member has a need…"* |
+| **B — Pockets Filling** | 6–12s | Glowing tree with many luminous pockets along its branches; hands from many directions placing small golden seeds into pockets; pockets light up one by one as a counter visually fills. | *"The tribe fills the pockets — one bestowal at a time."* |
+| **C — Seed Delivered** | 12–18s | Recipient receiving the gift — keys to a vehicle handed over / rent paid receipt / fridge delivered to a kitchen. Joyful embrace, community celebrating around them. | *"Need fulfilled. The seed is delivered."* |
 
-## Visual direction — locked to your "Wandering Wheel" reference
+Closing card (last 2s): **"Open a Community Orchard"** + S2G mark.
 
-- **Cinematic painterly realism** (not cartoon, not Ghibli-stylized) — closer to a high-end Veo / Runway commercial
-- **Real-world scenes**: drivers in cabs, hands shaking, packages loaded, families receiving goods, farmers in fields
-- **Globally diverse cast** — African, Asian, European, Middle Eastern, Latin American characters across the 10 banners
-- **Warm cinematic color grade**: terracotta sunsets, golden hour, soft bokeh
-- **Camera movement**: dolly-in, slow push, handheld energy — never static
-- **No on-screen text from AI** (text tends to garble) — captions added cleanly via Remotion overlay after
+## What I'll build
 
-## Per-banner storyboard (3 beats each)
+1. **3 cinematic keyframes** (painterly realism, warm grade, diverse cast) → `remotion/keyframes/v3/01-community-orchard-{a,b,c}.jpg`
+2. **3 AI motion clips** (6s each, image-to-video) → `remotion/generated/v3/01-community-orchard-{a,b,c}.mp4.asset.json`
+3. **Voiceover** (Chatterbox, ~17s warm narration) covering the 3 beats
+4. **Final 18s MP4** assembled via `remotion/scripts/build-banners-v3.mjs` (concat → caption overlay → VO mux) → `public/videos/banners/community-orchard.mp4`
+5. **Flip the dashboard tile** in `src/pages/MarketingVideosPage.tsx` from `available: false` → `available: true` for `community-orchard` so tribe members can immediately download the personalized version with their referral code burned in
 
-| # | Banner | Beat 1 | Beat 2 | Beat 3 |
-|---|---|---|---|---|
-| 01 | Community Orchard | Tribe member raising a need | Glowing tree with 10 pockets filling | Vehicle delivered, joyful crowd |
-| 02 | Production Orchard | Maker sketching idea | Factory lighting up at 30% | Trucks rolling out worldwide |
-| 03 | Single Seed | Sower placing one seed | Pocket fills with light | Bestowal received, smile |
-| 04 | Wandering Wheel | Driver climbing into truck | Truck on open road, packages | Happy customer at door |
-| 05 | Wandering Hand | Plumber/electrician at work | Multi-skill montage | Tribe member thanking them |
-| 06 | Wandering Whisperer | Phone screens lighting up (IG/TikTok/X) | Whisperer creating posts | Sales pinging in for a sower |
-| 07 | Wandering Pillow | Cottage door opening | Traveller arriving with luggage | Guests around table at dawn |
-| 08 | Wandering Field | Farmer harvesting tomatoes | Crates loaded onto truck | Family unpacking fresh produce |
-| 09 | Wandering Hearth | Hands stirring jam / pouring candles | Wrapping handmade goods | Recipient unboxing with joy |
-| 10 | Wandering Forge | Workshop sparks flying | Furniture/tools assembled | Delivery handed over |
+## Voiceover script (~17s)
 
-## Caption overlay (Remotion, on top of AI footage)
+> "When a tribe member has a need — a vehicle, a home, fuel, food — the tribe responds. We open a Community Orchard, and together, one small bestowal at a time, we fill every pocket. When the last pocket glows, the seed is delivered. This is how we carry one another. Open a Community Orchard today."
 
-Captions stay clean, English, with subtitles, anchored bottom-center using the existing `Caption.tsx` — no more text generated by AI.
+## Files I'll touch
 
-## Output
+- `remotion/keyframes/v3/01-community-orchard-{a,b,c}.jpg` *(new — 3 keyframes)*
+- `remotion/generated/v3/01-community-orchard-{a,b,c}.mp4.asset.json` *(new — 3 AI clips)*
+- `remotion/generated/01-community-orchard-vo.mp3.asset.json` *(new — voiceover)*
+- `remotion/scripts/build-banners-v3.mjs` *(update captions for `01-community-orchard` block)*
+- `public/videos/banners/community-orchard.mp4` *(final rendered video, replaces the placeholder)*
+- `src/pages/MarketingVideosPage.tsx` *(set `available: true` for `community-orchard`)*
 
-- **Length per banner**: 18s (matches VO length, no cutoff)
-- **Resolution**: 1920×1080 / 30fps
-- **Format**: MP4 H.264 + AAC
-- **Location**: `/mnt/documents/s2g-banners/v3/banner-XX-*.mp4` (v3 so old ones stay for comparison)
+## Time / cost honesty
 
-## Cost / time honesty
-
-This is **30 keyframe images + 30 AI video clips** (vs the 10+10 last round). It's roughly 3× the generation cost and will take ~25–40 min to fully render all 10. To de-risk, I'll do it in two phases:
-
-- **Phase 1**: Build banner 04 "Wandering Wheel" first (your stated favorite look) as the proof. ~5 min.
-- **Phase 2** (after you approve the look): Run the other 9 in parallel batches. ~30 min.
-
-## Files I'll create / change
-
-- `remotion/keyframes/v3/<slug>-{a,b,c}.jpg` — 30 new keyframes
-- `remotion/generated/v3/<slug>-{a,b,c}.mp4.asset.json` — 30 AI clips
-- `remotion/scripts/build-banners-v3.mjs` — concats 3 clips + overlays Remotion captions + muxes VO
-- `remotion/src/banners/v3/Banner*.tsx` — new 18s caption tracks per banner
-- `remotion/src/Root.tsx` — register 10 new `banner-vN-*` compositions at 540 frames (18s)
-
-## Plan diagram
-
-```text
-   VO script (Chatterbox, ~18s)
-        │
-   ┌────┴─────┬──────────┐
-   ▼          ▼          ▼
- Image A    Image B    Image C       ← imagegen (painterly cinematic)
-   │          │          │
- Clip A 6s  Clip B 6s  Clip C 6s     ← videogen (image-to-video)
-   └────┬─────┴────┬─────┘
-        ▼          ▼
-   ffmpeg concat (18s silent video)
-        │
-        ▼
-   Remotion caption overlay (PNG sequence or compose)
-        │
-        ▼
-   ffmpeg mux + VO  →  final 18s MP4
-```
-
+~5–7 minutes total. 3 image gens + 3 video gens + 1 VO + 1 ffmpeg assembly. Same pipeline already proven on banners 04–10.
