@@ -64,6 +64,18 @@ const BANNERS = {
     // VO is ~11.66s → after +6% tempo ≈ 11s; pad to 13.5s for music tail
     totalDur: 13.5,
   },
+  "03-single-seed": {
+    title: "Got something to offer today?",
+    invite: "Sow a Single Seed.",
+    midInvite: "List it · set the bestowal · the tribe harvests",
+    cta: "Sign up on Sow2Grow",
+    beats: ["a", "b", "b", "c"],
+    introImg: "03-single-seed-intro.jpg",
+    outroImg: "03-single-seed-outro.jpg",
+    musicStart: 30,
+    // VO is ~13s after energizing → needs ~14s playback + 1s music tail
+    totalDur: 15.5,
+  },
   "04-wandering-wheel": {
     title: "List your vehicle —",
     invite: "become a Wandering Wheel!",
