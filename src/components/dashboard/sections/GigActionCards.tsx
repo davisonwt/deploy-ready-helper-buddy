@@ -1,5 +1,5 @@
 import React, { useState, useRef, useCallback } from 'react';
-import { Car, Wrench, Ear, HandHeart, Sprout, ArrowRight, BedDouble, ChevronLeft, ChevronRight, Play, UserPlus, X } from 'lucide-react';
+import { Car, Wrench, Ear, HandHeart, Sprout, ArrowRight, BedDouble, ChevronLeft, ChevronRight, Play, UserPlus, X, Calendar } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { DashboardTheme } from '@/utils/dashboardThemes';
 import { GigBookingModal } from '@/components/gig/GigBookingModal';
@@ -82,6 +82,7 @@ export const GigActionCards: React.FC<GigActionCardsProps> = ({ theme }) => {
   ];
 
   const [playingBanner, setPlayingBanner] = useState<string | null>(null);
+  const [playingBook, setPlayingBook] = useState<string | null>(null);
 
   const bookCarousel = useCarousel(bookCards.length);
   const connectCarousel = useCarousel(connectCards.length);
@@ -111,37 +112,84 @@ export const GigActionCards: React.FC<GigActionCardsProps> = ({ theme }) => {
               style={{ scrollbarWidth: 'none', msOverflowStyle: 'none', WebkitOverflowScrolling: 'touch' }}
             >
               <style>{`.book-carousel::-webkit-scrollbar { display: none; }`}</style>
-              {bookCards.map((card) => (
-                <button
-                  key={card.key}
-                  onClick={card.onClick}
-                  className="min-w-full flex-shrink-0 snap-center block rounded-2xl overflow-hidden transition-all shadow-md text-left hover:scale-[1.01] active:scale-[0.99] relative h-[160px]"
-                >
-                  {('video' in card && card.video) ? (
-                    <video
-                      src={card.video as string}
-                      autoPlay
-                      muted
-                      loop
-                      playsInline
-                      preload="metadata"
-                      className="absolute inset-0 w-full h-full object-cover pointer-events-none"
-                    />
-                  ) : (
-                    <img src={card.img} alt={card.label} className="absolute inset-0 w-full h-full object-cover" loading="lazy" />
-                  )}
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/30 to-black/10" />
-                  <div className="relative h-full flex flex-col justify-between p-4">
-                    <div className="w-9 h-9 rounded-xl bg-white/20 backdrop-blur-sm flex items-center justify-center">
-                      <card.icon className="w-5 h-5 text-white" />
-                    </div>
-                    <div>
-                      <h3 className="font-bold text-white text-lg">{card.label}</h3>
-                      <p className="text-xs text-white/80">{card.desc}</p>
-                    </div>
+              {bookCards.map((card) => {
+                const cardVideo = 'video' in card ? (card.video as string | undefined) : undefined;
+                const isPlaying = playingBook === card.key;
+                return (
+                  <div
+                    key={card.key}
+                    className="min-w-full flex-shrink-0 snap-center block rounded-2xl overflow-hidden shadow-md relative h-[260px]"
+                  >
+                    {isPlaying && cardVideo ? (
+                      <>
+                        <video
+                          src={cardVideo}
+                          autoPlay
+                          controls
+                          playsInline
+                          className="absolute inset-0 w-full h-full object-cover bg-black"
+                        />
+                        <button
+                          onClick={() => setPlayingBook(null)}
+                          className="absolute top-2 right-2 z-30 w-8 h-8 rounded-full bg-black/70 hover:bg-black text-white flex items-center justify-center"
+                          aria-label="Close video"
+                        >
+                          <X className="w-4 h-4" />
+                        </button>
+                      </>
+                    ) : (
+                      <>
+                        {cardVideo ? (
+                          <video
+                            src={cardVideo}
+                            autoPlay
+                            muted
+                            loop
+                            playsInline
+                            preload="metadata"
+                            className="absolute inset-0 w-full h-full object-cover pointer-events-none"
+                          />
+                        ) : (
+                          <img src={card.img} alt={card.label} className="absolute inset-0 w-full h-full object-cover" loading="lazy" />
+                        )}
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/40 to-black/10" />
+                        <div className="relative h-full flex flex-col justify-between p-4">
+                          <div className="w-9 h-9 rounded-xl bg-white/20 backdrop-blur-sm flex items-center justify-center">
+                            <card.icon className="w-5 h-5 text-white" />
+                          </div>
+                          <div className="space-y-3">
+                            <div>
+                              <h3 className="font-bold text-white text-lg leading-tight">{card.label}</h3>
+                              <p className="text-xs text-white/80">{card.desc}</p>
+                            </div>
+                            <div className="flex gap-2">
+                              <Button
+                                size="sm"
+                                onClick={() => setPlayingBook(card.key)}
+                                disabled={!cardVideo}
+                                className="flex-1 h-9 font-semibold !text-white !border-0 disabled:opacity-40 !bg-none"
+                                style={{ backgroundImage: 'linear-gradient(135deg, #c026d3, #7c3aed)', backgroundColor: 'transparent' }}
+                              >
+                                <Play className="w-4 h-4 mr-1.5 fill-current" />
+                                Play
+                              </Button>
+                              <Button
+                                size="sm"
+                                onClick={card.onClick}
+                                className="flex-1 h-9 font-semibold !text-white !border-0 !bg-none"
+                                style={{ backgroundImage: 'linear-gradient(135deg, #0d9488, #06b6d4)', backgroundColor: 'transparent' }}
+                              >
+                                <Calendar className="w-4 h-4 mr-1.5" />
+                                Book
+                              </Button>
+                            </div>
+                          </div>
+                        </div>
+                      </>
+                    )}
                   </div>
-                </button>
-              ))}
+                );
+              })}
             </div>
             {/* Arrows */}
             <button
