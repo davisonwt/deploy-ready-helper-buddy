@@ -43,7 +43,7 @@ const plantCards = [
     description:
       'Seeds are anything you want to sow — vehicles, music, books, houses, produce, services, and more. List it, set a bestowal amount, and let the community harvest.',
     image: sowSeedImg,
-    video: undefined as string | undefined,
+    video: '/videos/banners/single-seed.mp4',
     icon: Leaf,
     buttonLabel: '🌾 Sow a Single Seed',
   },
