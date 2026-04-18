@@ -99,8 +99,11 @@ async function buildBanner(slug) {
   if (!cfg) throw new Error(`No config for ${slug}`);
   console.log(`\n▶ ${slug}`);
 
-  const TOTAL = 10.5;
-  const INTRO = 1.5, OUTRO = 1.5;
+  // v3.7 — let the music breathe: longer intro/outro cards = pure-music moments
+  const TOTAL = 13.0;
+  const INTRO = 2.5, OUTRO = 2.5;        // pure-music head & tail
+  const MUSIC_LEAD = 1.4;                 // VO starts 1.4s in (music alone first)
+  const MUSIC_TAIL_START = TOTAL - 2.0;   // music swells back up 2s before end
   const beatDur = (TOTAL - INTRO - OUTRO) / cfg.beats.length;
 
   console.log("  ⬇ AI clips + retiming + saturate to", beatDur.toFixed(2), "s each");
@@ -144,8 +147,8 @@ async function buildBanner(slug) {
     `[logoR]scale='170*(0.92+0.10*sin(t*PI*1.1))':-1:eval=frame[logoP]`,
     `[0:v][burstP]overlay=x='160-overlay_w/2':y='160-overlay_h/2+8*sin(t*PI*0.7)':format=auto:eval=frame[withBurst]`,
     `[withBurst][logoP]overlay=x='160-overlay_w/2':y='160-overlay_h/2+8*sin(t*PI*0.7)':format=auto:eval=frame[withLogo]`,
-    `[withLogo]drawtext=fontfile=${FONT}:text='${titleEsc}':fontsize=52:fontcolor=white:bordercolor=0x2C5F2D:borderw=4:shadowcolor=0x000000AA:shadowx=2:shadowy=3:x=(w-text_w)/2:y=80:enable='between(t,0.2,1.5)'[t1]`,
-    `[t1]drawtext=fontfile=${FONT}:text='${ctaEsc}':fontsize=70:fontcolor=0xF5E8D0:bordercolor=0x2C5F2D:borderw=6:shadowcolor=0x000000CC:shadowx=2:shadowy=3:x=(w-text_w)/2:y=h-160:enable='gte(t,9.0)'[v]`,
+    `[withLogo]drawtext=fontfile=${FONT}:text='${titleEsc}':fontsize=52:fontcolor=white:bordercolor=0x2C5F2D:borderw=4:shadowcolor=0x000000AA:shadowx=2:shadowy=3:x=(w-text_w)/2:y=80:enable='between(t,0.2,2.5)'[t1]`,
+    `[t1]drawtext=fontfile=${FONT}:text='${ctaEsc}':fontsize=70:fontcolor=0xF5E8D0:bordercolor=0x2C5F2D:borderw=6:shadowcolor=0x000000CC:shadowx=2:shadowy=3:x=(w-text_w)/2:y=h-160:enable='gte(t,10.5)'[v]`,
   ].join(";");
 
   runFF(
@@ -165,20 +168,21 @@ async function buildBanner(slug) {
   const voEnergyDur = parseFloat(execSync(`ffprobe -v error -show_entries format=duration -of default=nw=1:nk=1 "${voEnergy}"`).toString().trim());
   console.log(`     energized VO duration: ${voEnergyDur.toFixed(2)}s`);
 
-  // Mux with music bed (ducked under VO)
-  const finalDur = Math.min(TOTAL, voEnergyDur + 0.6);
+  // Mux: pure music intro → VO with ducked music → pure music outro
+  const finalDur = TOTAL;
+  const voDelayMs = Math.round(MUSIC_LEAD * 1000);
+  const voEndTime = MUSIC_LEAD + voEnergyDur;
+  const swellStart = Math.max(voEndTime - 0.2, MUSIC_TAIL_START - 0.5);
   const final = path.join(OUT_DIR, `banner-${slug}.mp4`);
-  console.log(`  ♪ mux with music bed (final: ${finalDur.toFixed(2)}s)`);
-  // [1] = VO (delay 300ms), [2] = music (loop, low volume, fade in/out)
-  // Sidechain compress music against VO so VO sits on top cleanly
-  // Music starts at chorus (~36s into the track) and is louder + ducked under VO
+  console.log(`  ♪ mux: ${MUSIC_LEAD}s music intro → VO (${voEnergyDur.toFixed(2)}s) → music swells back at ${swellStart.toFixed(2)}s (total ${finalDur}s)`);
+  // Music volume curve: 0.65 (intro) → 0.32 (under VO) → 0.65 (outro)
+  // Use volume expression with time gates so music is LOUD when VO is silent
   runFF(
     `ffmpeg -y -i "${branded}" -i "${voEnergy}" -ss 36 -stream_loop -1 -i "${MUSIC}" ` +
     `-filter_complex "` +
-      `[1:a]adelay=300|300,volume=1.0,asplit=2[vo1][vo2];` +
-      `[2:a]volume=0.32,afade=t=in:st=0:d=0.5,afade=t=out:st=${(finalDur - 0.8).toFixed(2)}:d=0.8[mus];` +
-      `[mus][vo1]sidechaincompress=threshold=0.05:ratio=8:attack=20:release=250[musDuck];` +
-      `[vo2][musDuck]amix=inputs=2:duration=first:dropout_transition=0:weights='1.0 0.95'[a]` +
+      `[1:a]adelay=${voDelayMs}|${voDelayMs},volume=1.0[vo];` +
+      `[2:a]volume='if(lt(t,${MUSIC_LEAD - 0.2}),0.65,if(lt(t,${MUSIC_LEAD + 0.3}),0.65-0.33*(t-${MUSIC_LEAD - 0.2})/0.5,if(lt(t,${swellStart}),0.32,if(lt(t,${swellStart + 0.5}),0.32+0.33*(t-${swellStart})/0.5,0.65))))':eval=frame,afade=t=in:st=0:d=0.4,afade=t=out:st=${(finalDur - 1.0).toFixed(2)}:d=1.0[mus];` +
+      `[vo][mus]amix=inputs=2:duration=longest:dropout_transition=0:weights='1.0 1.0',alimiter=limit=0.95[a]` +
     `" ` +
     `-map 0:v:0 -map "[a]" -t ${finalDur.toFixed(2)} ` +
     `-c:v libx264 -preset medium -crf 18 -pix_fmt yuv420p -c:a aac -b:a 192k "${final}"`,
