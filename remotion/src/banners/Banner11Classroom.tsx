@@ -455,16 +455,20 @@ const Scene4CTA: React.FC = () => {
             color: "white", fontFamily: inter, fontWeight: 900, fontSize: 44,
             padding: "26px 70px", borderRadius: 999,
             boxShadow: `0 16px 50px ${TERRACOTTA}aa, 0 0 30px ${OCHRE}88`,
+            display: "flex", alignItems: "center", gap: 14,
           }}>
-            🎓 Host a Classroom
+            <span style={{ fontFamily: emojiStack }}>🎓</span>
+            <span>Host a Classroom</span>
           </div>
           <div style={{
             background: `linear-gradient(135deg, ${FOREST}, #4a8c4a)`,
             color: "white", fontFamily: inter, fontWeight: 800, fontSize: 36,
             padding: "20px 56px", borderRadius: 999,
             boxShadow: `0 12px 40px ${FOREST}aa`,
+            display: "flex", alignItems: "center", gap: 14,
           }}>
-            ✋🏽 Join a Classroom
+            <span style={{ fontFamily: emojiStack }}>✋🏽</span>
+            <span>Join a Classroom</span>
           </div>
         </div>
       </div>
