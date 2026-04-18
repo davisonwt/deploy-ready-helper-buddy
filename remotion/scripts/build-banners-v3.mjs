@@ -100,6 +100,16 @@ const BANNERS = {
     outroImg: "09-wandering-hearth-unboxing.jpg",
     musicStart: 72,
   },
+  "10-wandering-forge": {
+    title: "Build with purpose —",
+    invite: "become a Wandering Forge!",
+    midInvite: "Furniture · tools · handmade goods",
+    cta: "Sign up on Sow2Grow",
+    beats: ["a", "b", "c", "d"],
+    introImg: "10-wandering-forge-workshop.jpg",
+    outroImg: "10-wandering-forge-delivery.jpg",
+    musicStart: 84,
+  },
 };
 
 async function download(url, dest) {
