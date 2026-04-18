@@ -146,6 +146,18 @@ const BANNERS = {
     outroImg: "07-wandering-pillow-breakfast.jpg",
     musicStart: 48,
   },
+  "07-wandering-pillow-book": {
+    title: "Looking for a unique stay?",
+    invite: "Book a Wandering Pillow.",
+    midInvite: "Homes · guest houses · hotels · lodges · game farms",
+    cta: "Find Wandering Pillows",
+    beats: ["a", "b", "c", "d"],
+    introImg: "07-wandering-pillow-book-intro.jpg",
+    outroImg: "07-wandering-pillow-book-outro.jpg",
+    musicStart: 48,
+    // Warm welcoming VO ~13s; total = 1.4 lead + 13 + 1.6 tail ≈ 16s
+    totalDur: 16.0,
+  },
   "08-wandering-field": {
     title: "Sow your harvest —",
     invite: "become a Wandering Field!",
