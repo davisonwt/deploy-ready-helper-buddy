@@ -53,7 +53,14 @@ export const RemotionRoot = () => (
     <Composition id="banner-09-wandering-hearth" component={Banner09WanderingHearth} durationInFrames={BANNER_DUR} {...SHARED} />
     <Composition id="banner-10-wandering-forge" component={Banner10WanderingForge} durationInFrames={BANNER_DUR} {...SHARED} />
 
-    {/* Go Live explainers (20s) */}
-    <Composition id="banner-11-classroom" component={Banner11Classroom} durationInFrames={660} {...SHARED} />
+    {/* Go Live explainers — Classroom is a 12s vertical 9:16 illustrated explainer */}
+    <Composition
+      id="banner-11-classroom"
+      component={Banner11Classroom}
+      durationInFrames={360}
+      fps={30}
+      width={1080}
+      height={1920}
+    />
   </>
 );
