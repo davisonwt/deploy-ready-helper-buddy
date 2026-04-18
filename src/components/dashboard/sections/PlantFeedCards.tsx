@@ -70,21 +70,34 @@ export const PlantFeedCards: React.FC<PlantFeedCardsProps> = ({ theme }) => {
             className="block rounded-2xl overflow-hidden shadow-md transition-all hover:scale-[1.01] active:scale-[0.99]"
             style={{ borderColor: theme.cardBorder, border: `1px solid ${theme.cardBorder}` }}
           >
-            {/* Static illustration (always visible) — video plays in lightbox */}
+            {/* Cinematic banner video (autoplay, muted, looped). Click play btn for full audio in lightbox. */}
             <div className="relative h-[140px] bg-black">
-              <img
-                src={card.image}
-                alt={card.title}
-                className="absolute inset-0 w-full h-full object-cover"
-                loading="lazy"
-                width={800}
-                height={512}
-              />
+              {card.video ? (
+                <video
+                  src={card.video}
+                  poster={card.image}
+                  className="absolute inset-0 w-full h-full object-cover"
+                  autoPlay
+                  muted
+                  loop
+                  playsInline
+                  preload="metadata"
+                />
+              ) : (
+                <img
+                  src={card.image}
+                  alt={card.title}
+                  className="absolute inset-0 w-full h-full object-cover"
+                  loading="lazy"
+                  width={800}
+                  height={512}
+                />
+              )}
               <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent pointer-events-none" />
               {card.video && (
                 <button
                   type="button"
-                  aria-label={`Watch ${card.title} story`}
+                  aria-label={`Watch ${card.title} story with sound`}
                   className="absolute top-2 right-2 w-9 h-9 rounded-full bg-black/55 hover:bg-black/75 text-white flex items-center justify-center transition shadow-lg backdrop-blur-sm"
                   onClick={(e) => {
                     e.preventDefault();
