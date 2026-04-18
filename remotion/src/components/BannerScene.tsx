@@ -63,24 +63,30 @@ export const BannerScene: React.FC<BannerSceneProps> = ({
   emoji, eyebrow, heroTitle, cta, voice, captions, variant = "warm",
 }) => {
   const frame = useCurrentFrame();
-  const { fps } = useVideoConfig();
+  const { fps, durationInFrames } = useVideoConfig();
+
+  // Closing card always occupies the last ~2s of the composition,
+  // so longer voiceovers (e.g. 13s+) can finish before the CTA appears.
+  const closingFrom = Math.max(60, durationInFrames - 60);
+  const heroDuration = closingFrom; // hero/captions stretch up to the closing card
+  const closingDuration = durationInFrames - closingFrom;
 
   const eyebrowOp = interpolate(frame, [0, 15], [0, 1], { extrapolateRight: "clamp" });
   const titleS = spring({ frame: frame - 10, fps, config: { damping: 18 } });
   const titleY = interpolate(titleS, [0, 1], [40, 0]);
 
   // Closing fade-in for the CTA card
-  const closingS = spring({ frame: frame - 240, fps, config: { damping: 14 } });
+  const closingS = spring({ frame: frame - closingFrom, fps, config: { damping: 14 } });
   const closingScale = interpolate(closingS, [0, 1], [0.7, 1]);
-  const closingOp = interpolate(frame, [240, 270], [0, 1], { extrapolateRight: "clamp" });
+  const closingOp = interpolate(frame, [closingFrom, closingFrom + 30], [0, 1], { extrapolateRight: "clamp" });
 
   return (
     <AbsoluteFill>
       <BrandBackground variant={variant} />
       <GlowParticles count={50} color={variant === "warm" ? "#FFD78A" : "#A8E6CF"} />
 
-      {/* Hero block visible first 2 seconds, then drifts up subtly */}
-      <Sequence from={0} durationInFrames={240}>
+      {/* Hero block visible until the closing card */}
+      <Sequence from={0} durationInFrames={heroDuration}>
         <AbsoluteFill style={{ justifyContent: "flex-start", alignItems: "center", paddingTop: 120 }}>
           <div style={{
             fontFamily: inter, fontWeight: 700, fontSize: 28, color: TERRACOTTA,
@@ -108,7 +114,7 @@ export const BannerScene: React.FC<BannerSceneProps> = ({
       ))}
 
       {/* Closing card with the real logo and CTA */}
-      <Sequence from={240} durationInFrames={60}>
+      <Sequence from={closingFrom} durationInFrames={closingDuration}>
         <AbsoluteFill style={{
           justifyContent: "center", alignItems: "center",
           background: `radial-gradient(ellipse at center, rgba(255,247,230,0.85) 0%, transparent 70%)`,
