@@ -1,112 +1,93 @@
 
 
-# CaaS Evolution Plan: Orchard Shepherd AI + Language/Tone Overhaul
+## What's wrong now
 
-## Summary
+1. **Audio cuts off** — Chatterbox VOs are 12–18s long, but each video is only 10s. The mux truncates with `-shortest`, killing the end of the narration.
+2. **Visuals too static / too short** — one keyframe → one 10s AI motion clip = a slow drift, not a story. Your reference (the "Wandering Wheel" video) shows **multiple distinct scenes stitched together** (driver getting in cab, truck on road, package handoff, happy customer) — a mini-narrative, not a single moving image.
+3. **Pacing mismatch** — The reference videos run ~18–25s with 3–4 scene beats that match the voiceover line by line.
 
-Transform Sow2Grow into a warm, human-first Communication as a Service platform by: (1) introducing the "Orchard Shepherd" AI companion, (2) purging all transactional/legalistic language, (3) strengthening the CaaS people-first feel, and (4) softening the visual and interaction design.
+## The fix — a multi-scene pipeline
 
----
+For each banner, instead of `1 image → 1 clip`, I'll do:
 
-## Phase 1: Language & Tone Overhaul (Start Here)
+```text
+VO script (15-20s)
+  ├─ Beat 1 (0-6s):  keyframe A → 6s AI clip   [hook / problem]
+  ├─ Beat 2 (6-12s): keyframe B → 6s AI clip   [the Sow2Grow solution]
+  ├─ Beat 3 (12-18s):keyframe C → 6s AI clip   [happy outcome / CTA]
+  └─ ffmpeg concat + VO mux (full length, no cutoff)
+```
 
-Sweep the entire codebase and replace every instance of prohibited language with warm S2G terminology. This is the foundation — everything else builds on it.
+So per banner: **3 keyframes + 3 AI clips + concat + VO mux + caption overlay** = a true 18-second mini-story matching the reference style.
 
-**Files and changes:**
+## Visual direction — locked to your "Wandering Wheel" reference
 
-| Current Term | S2G Replacement | Files Affected |
-|---|---|---|
-| "Donate" / "Donation" | "Bestow" / "Bestowal" | `DonateModal.tsx` → rename to `BestowalModal.tsx`, `SocialActionButtons.tsx`, `ChatRoom.tsx`, `MemryPage.tsx` |
-| "Confirm Donation" | "Send Your Bestowal" | `DonateModal.tsx` |
-| "crowdfunding" | "community orchard" | `HelpTooltip.tsx`, `PlantModal.tsx`, `CrowdfundingCard.jsx` → rename to `OrchardCard.jsx`, `FeaturedOrchards.jsx` |
-| "Funding Progress" | "Growth Journey" | `OrchardPage.jsx` |
-| "Contributing funds" | "Watering the orchard" | `HelpTooltip.tsx` |
-| "Multiple pocket funding" / "Complete funding required" | "Community-watered growth" / "Full harvest bestowal" | `EditOrchardPage.jsx`, `QuickOrchardCreator.jsx` |
-| "Quick funding" | "Swift bestowal" | `QuickOrchardCreator.jsx` |
-| "campaign" | "orchard" or "journey" | Global sweep |
+- **Cinematic painterly realism** (not cartoon, not Ghibli-stylized) — closer to a high-end Veo / Runway commercial
+- **Real-world scenes**: drivers in cabs, hands shaking, packages loaded, families receiving goods, farmers in fields
+- **Globally diverse cast** — African, Asian, European, Middle Eastern, Latin American characters across the 10 banners
+- **Warm cinematic color grade**: terracotta sunsets, golden hour, soft bokeh
+- **Camera movement**: dolly-in, slow push, handheld energy — never static
+- **No on-screen text from AI** (text tends to garble) — captions added cleanly via Remotion overlay after
 
-Also soften tooltip definitions in `HelpTooltip.tsx`:
-- orchards → "Living gardens where your seeds grow with the community's care"
-- sowing → "Planting your vision into the community soil"
-- rain → "Gentle gifts of encouragement to fellow sowers"
-- seeds → "The beginning of something beautiful — your idea taking root"
-- bestowals → "Heartfelt gifts that water someone's orchard"
+## Per-banner storyboard (3 beats each)
 
----
+| # | Banner | Beat 1 | Beat 2 | Beat 3 |
+|---|---|---|---|---|
+| 01 | Community Orchard | Tribe member raising a need | Glowing tree with 10 pockets filling | Vehicle delivered, joyful crowd |
+| 02 | Production Orchard | Maker sketching idea | Factory lighting up at 30% | Trucks rolling out worldwide |
+| 03 | Single Seed | Sower placing one seed | Pocket fills with light | Bestowal received, smile |
+| 04 | Wandering Wheel | Driver climbing into truck | Truck on open road, packages | Happy customer at door |
+| 05 | Wandering Hand | Plumber/electrician at work | Multi-skill montage | Tribe member thanking them |
+| 06 | Wandering Whisperer | Phone screens lighting up (IG/TikTok/X) | Whisperer creating posts | Sales pinging in for a sower |
+| 07 | Wandering Pillow | Cottage door opening | Traveller arriving with luggage | Guests around table at dawn |
+| 08 | Wandering Field | Farmer harvesting tomatoes | Crates loaded onto truck | Family unpacking fresh produce |
+| 09 | Wandering Hearth | Hands stirring jam / pouring candles | Wrapping handmade goods | Recipient unboxing with joy |
+| 10 | Wandering Forge | Workshop sparks flying | Furniture/tools assembled | Delivery handed over |
 
-## Phase 2: Orchard Shepherd AI Companion
+## Caption overlay (Remotion, on top of AI footage)
 
-A warm, wise AI presence woven into key moments — not a chatbot, but a gentle guide that appears naturally.
+Captions stay clean, English, with subtitles, anchored bottom-center using the existing `Caption.tsx` — no more text generated by AI.
 
-### 2A: Edge Function — `orchard-shepherd`
+## Output
 
-New Supabase Edge Function at `supabase/functions/orchard-shepherd/index.ts` using the existing Lovable AI Gateway. Accepts a `context` parameter indicating the moment type:
+- **Length per banner**: 18s (matches VO length, no cutoff)
+- **Resolution**: 1920×1080 / 30fps
+- **Format**: MP4 H.264 + AAC
+- **Location**: `/mnt/documents/s2g-banners/v3/banner-XX-*.mp4` (v3 so old ones stay for comparison)
 
-- **`sow-description`** — When creating a new Orchard, generates a warm, growth-metaphor description from the sower's rough input
-- **`progress-update`** — Given orchard stats (% filled, days active, bestower count), generates an uplifting progress message
-- **`harvest-story`** — When an orchard reaches 100%, crafts a celebratory "Harvest Story"
-- **`bestower-suggestion`** — After a bestowal, suggests other orchards that might resonate (soft, never pushy)
+## Cost / time honesty
 
-System prompt enforces S2G tone: warm, hopeful, gently spiritual, growth metaphors, never preachy or transactional.
+This is **30 keyframe images + 30 AI video clips** (vs the 10+10 last round). It's roughly 3× the generation cost and will take ~25–40 min to fully render all 10. To de-risk, I'll do it in two phases:
 
-### 2B: Frontend Integration
+- **Phase 1**: Build banner 04 "Wandering Wheel" first (your stated favorite look) as the proof. ~5 min.
+- **Phase 2** (after you approve the look): Run the other 9 in parallel batches. ~30 min.
 
-| Location | Shepherd Feature | Component |
-|---|---|---|
-| `CreateOrchardPage.jsx` | "Let the Shepherd help you describe your seed" button — AI writes/rewrites the orchard description | New `ShepherdDescriptionHelper.tsx` |
-| `OrchardPage.jsx` | Replace static "Growth Journey" section with AI-generated progress narrative | New `ShepherdProgressCard.tsx` |
-| Orchard at 100% | Auto-generate and display a "Harvest Story" post in the feed | Trigger in `HomeFeed.tsx` |
-| Post-bestowal confirmation | Gentle card: "Other orchards that might warm your heart…" | New `ShepherdSuggestions.tsx` in `PaymentSuccessPage.tsx` |
+## Files I'll create / change
 
-### 2C: Shepherd Visual Identity
+- `remotion/keyframes/v3/<slug>-{a,b,c}.jpg` — 30 new keyframes
+- `remotion/generated/v3/<slug>-{a,b,c}.mp4.asset.json` — 30 AI clips
+- `remotion/scripts/build-banners-v3.mjs` — concats 3 clips + overlays Remotion captions + muxes VO
+- `remotion/src/banners/v3/Banner*.tsx` — new 18s caption tracks per banner
+- `remotion/src/Root.tsx` — register 10 new `banner-vN-*` compositions at 540 frames (18s)
 
-- Subtle leaf/sprout icon (🌿) next to AI-generated text
-- Soft green glow border (like the existing `AIStoryCard` green left border)
-- Label: "From the Orchard Shepherd" in small muted text
-- Never intrusive — feels like a whispered encouragement
+## Plan diagram
 
----
-
-## Phase 3: CaaS — People-First Connection
-
-### 3A: Profile Humanisation
-- On orchard pages, expand the sower section to show their story, avatar, and a warm "About the Sower" paragraph
-- Add a "Send a Word of Encouragement" button that opens direct messaging (links to existing ChatApp)
-
-### 3B: Social Feed Warmth
-- Add gentle "dopamine moments": animated sprout growing when someone bestows, soft confetti of leaves
-- Replace any remaining dollar-sign icons with heart/sprout/rain icons in feed cards
-- Add warm empty-state messages: "The garden is quiet today… why not plant something beautiful?"
-
-### 3C: Bestowal Flow Softening
-- Rename `BestowalUI.jsx` section headers from stats-heavy to story-driven: "This orchard's journey so far…"
-- Replace `$` currency icons with gentle rain/growth visuals
-- Post-bestowal: warm thank-you screen with Shepherd message instead of generic success
-
----
-
-## Phase 4: Visual Polish
-
-- Soften the orchard progress bar: replace the flat `<Progress>` with an animated growing tree/vine visual (CSS-based, lightweight)
-- Warmer colour touches: more soft gold (#d4a574) and sage green (#8fbc8f) accents
-- Gentle micro-animations on bestowal (rain drops falling, seed sprouting)
-
----
-
-## Technical Details
-
-- **AI calls**: All through `orchard-shepherd` edge function → Lovable AI Gateway (`google/gemini-3-flash-preview`)
-- **No new database tables** needed for Phase 1-2; the Shepherd generates text on-the-fly and optionally caches in existing `seed_story_overrides` pattern
-- **Rename files**: `DonateModal.tsx` → `BestowalModal.tsx`, `CrowdfundingCard.jsx` → `OrchardCard.jsx` (update all imports)
-- **~15 files edited** for language sweep, **~5 new components** for Shepherd, **1 new edge function**
-
----
-
-## Suggested Implementation Order
-
-1. Language/tone sweep (Phase 1) — immediate, no dependencies
-2. Orchard Shepherd edge function (Phase 2A) — foundation for AI features
-3. Shepherd UI components (Phase 2B-C) — integrate into existing pages
-4. CaaS people-first enhancements (Phase 3) — build on clean language
-5. Visual polish (Phase 4) — final layer
+```text
+   VO script (Chatterbox, ~18s)
+        │
+   ┌────┴─────┬──────────┐
+   ▼          ▼          ▼
+ Image A    Image B    Image C       ← imagegen (painterly cinematic)
+   │          │          │
+ Clip A 6s  Clip B 6s  Clip C 6s     ← videogen (image-to-video)
+   └────┬─────┴────┬─────┘
+        ▼          ▼
+   ffmpeg concat (18s silent video)
+        │
+        ▼
+   Remotion caption overlay (PNG sequence or compose)
+        │
+        ▼
+   ffmpeg mux + VO  →  final 18s MP4
+```
 
