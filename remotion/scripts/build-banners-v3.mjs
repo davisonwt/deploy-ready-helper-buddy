@@ -48,6 +48,17 @@ const BANNERS = {
     beats: ["a", "b", "d", "c"],
     introImg: "04-wandering-wheel-vehicles.jpg",
     outroImg: "04-wandering-wheel-phone.jpg",
+    musicStart: 36,
+  },
+  "05-wandering-hand": {
+    title: "Offer your skills —",
+    invite: "become a Wandering Hand!",
+    midInvite: "Plumbers · electricians · cleaners · security",
+    cta: "Sign up on Sow2Grow",
+    beats: ["a", "b", "c", "d"],
+    introImg: "05-wandering-hand-tools.jpg",
+    outroImg: "05-wandering-hand-handshake.jpg",
+    musicStart: 12,
   },
 };
 
