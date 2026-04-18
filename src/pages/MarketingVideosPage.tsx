@@ -34,7 +34,7 @@ const BANNERS: BannerVideo[] = [
   { id: "wandering-field",     title: "Wandering Field",     subtitle: "Grow & sell from your field",     emoji: "🌾", src: "/videos/banners/wandering-field.mp4",     available: true },
   { id: "wandering-hearth",    title: "Wandering Hearth",    subtitle: "Sell handmade goods",             emoji: "🏡", src: "/videos/banners/wandering-hearth.mp4",    available: true },
   { id: "wandering-forge",     title: "Wandering Forge",     subtitle: "Manufacture for the tribe",       emoji: "🏭", src: "/videos/banners/wandering-forge.mp4",     available: true },
-  { id: "community-orchard",   title: "Community Orchard",   subtitle: "Open a community-funded orchard", emoji: "🌳", src: "/videos/banners/community-orchard.mp4",   available: false },
+  { id: "community-orchard",   title: "Community Orchard",   subtitle: "Open a community-funded orchard", emoji: "🌳", src: "/videos/banners/community-orchard.mp4",   available: true },
   { id: "production-orchard",  title: "Production Orchard",  subtitle: "Fund a product into existence",   emoji: "🏗️", src: "/videos/banners/production-orchard.mp4",  available: false },
   { id: "single-seed",         title: "Single Seed",         subtitle: "Sow one offering today",          emoji: "🌱", src: "/videos/banners/single-seed.mp4",         available: false },
 ];
