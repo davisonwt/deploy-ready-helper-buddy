@@ -21,6 +21,7 @@ const plantCards = [
     description:
       'Create an orchard with hidden seeds inside bestowal pockets. The community bestows towards pockets — and harvesters receive the seed inside. Perfect for group needs where your tribe helps you reach a shared goal together.',
     image: standardOrchardImg,
+    video: '/videos/banners/community-orchard.mp4',
     icon: TreePine,
     buttonLabel: '🌳 Plant a Community Orchard',
   },
@@ -31,6 +32,7 @@ const plantCards = [
     description:
       'Each bestowal pocket contains a seed that grows into a fruit for the harvester. Like community-backed production — once enough pockets are bestowed, you can manufacture, deliver, and fulfil every harvest.',
     image: fullvalueOrchardImg,
+    video: undefined as string | undefined,
     icon: Sprout,
     buttonLabel: '🌱 Plant a Production Orchard',
   },
@@ -41,6 +43,7 @@ const plantCards = [
     description:
       'Seeds are anything you want to sow — vehicles, music, books, houses, produce, services, and more. List it, set a bestowal amount, and let the community harvest.',
     image: sowSeedImg,
+    video: undefined as string | undefined,
     icon: Leaf,
     buttonLabel: '🌾 Sow a Single Seed',
   },
@@ -66,17 +69,30 @@ export const PlantFeedCards: React.FC<PlantFeedCardsProps> = ({ theme }) => {
             className="block rounded-2xl overflow-hidden shadow-md transition-all hover:scale-[1.01] active:scale-[0.99]"
             style={{ borderColor: theme.cardBorder, border: `1px solid ${theme.cardBorder}` }}
           >
-            {/* Image */}
-            <div className="relative h-[140px]">
-              <img
-                src={card.image}
-                alt={card.title}
-                className="absolute inset-0 w-full h-full object-cover"
-                loading="lazy"
-                width={800}
-                height={512}
-              />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent" />
+            {/* Image / Video */}
+            <div className="relative h-[140px] bg-black">
+              {card.video ? (
+                <video
+                  src={card.video}
+                  poster={card.image}
+                  className="absolute inset-0 w-full h-full object-cover"
+                  autoPlay
+                  muted
+                  loop
+                  playsInline
+                  preload="metadata"
+                />
+              ) : (
+                <img
+                  src={card.image}
+                  alt={card.title}
+                  className="absolute inset-0 w-full h-full object-cover"
+                  loading="lazy"
+                  width={800}
+                  height={512}
+                />
+              )}
+              <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent pointer-events-none" />
               <div className="absolute bottom-3 left-3 right-3 flex items-end gap-2">
                 <div className="w-8 h-8 rounded-lg bg-white/20 backdrop-blur-sm flex items-center justify-center shrink-0">
                   <card.icon className="w-4 h-4 text-white" />
