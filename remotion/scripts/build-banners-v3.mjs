@@ -40,6 +40,16 @@ const FONT = "/nix/store/xhanp47490n743s7zd27d8i9s1khg6c0-dejavu-fonts-minimal-2
 const GRADE = "eq=saturation=1.35:contrast=1.10:brightness=0.02:gamma=0.95,unsharp=5:5:0.5";
 
 const BANNERS = {
+  "01-community-orchard": {
+    title: "When a tribe member has a need —",
+    invite: "the tribe answers.",
+    midInvite: "Open a Community Orchard · fill the pockets",
+    cta: "Sign up on Sow2Grow",
+    beats: ["a", "b", "b", "c"],
+    introImg: "01-community-orchard-intro.jpg",
+    outroImg: "01-community-orchard-outro.jpg",
+    musicStart: 6,
+  },
   "04-wandering-wheel": {
     title: "List your vehicle —",
     invite: "become a Wandering Wheel!",
