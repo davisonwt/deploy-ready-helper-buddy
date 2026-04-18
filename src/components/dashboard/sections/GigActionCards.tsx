@@ -61,7 +61,7 @@ export const GigActionCards: React.FC<GigActionCardsProps> = ({ theme }) => {
   const bookCards = [
     { key: 'ride', icon: Car, label: 'The Wandering Wheel', desc: 'Book a driver', img: rideBookImg, video: '/videos/banners/wandering-wheel-book.mp4', onClick: () => openBooking('ride') },
     { key: 'service', icon: Wrench, label: 'The Wandering Hand', desc: 'Tribal skills', img: serviceBookImg, video: '/videos/banners/wandering-hand-book.mp4', onClick: () => openBooking('service') },
-    { key: 'whisperer', icon: Ear, label: 'The Wandering Whisper', desc: 'Marketing help', img: whispererBookImg, onClick: () => openBooking('whisperer') },
+    { key: 'whisperer', icon: Ear, label: 'The Wandering Whisper', desc: 'Marketing help', img: whispererBookImg, video: '/videos/banners/wandering-whisperer-book.mp4', onClick: () => openBooking('whisperer') },
     { key: 'stays', icon: BedDouble, label: 'The Wondering Pillow', desc: 'Holiday & stays', img: '/images/gig/stays-book.jpg', onClick: () => navigate('/stays') },
   ];
 

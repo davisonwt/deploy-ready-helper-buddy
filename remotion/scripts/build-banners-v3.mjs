@@ -112,6 +112,18 @@ const BANNERS = {
     outroImg: "06-wandering-whisperer-creator.jpg",
     musicStart: 24,
   },
+  "06-wandering-whisperer-book": {
+    title: "Need to grow your seeds?",
+    invite: "Book a Wandering Whisperer.",
+    midInvite: "Expert promo plans · amplify your seeds",
+    cta: "Connect with a Whisperer",
+    beats: ["a", "b", "c", "d"],
+    introImg: "06-wandering-whisperer-book-intro.jpg",
+    outroImg: "06-wandering-whisperer-book-outro.jpg",
+    musicStart: 24,
+    // Energized VO ~12.2s; total = 1.4 lead + 12.2 + 1.5 tail ≈ 15.1s
+    totalDur: 15.1,
+  },
   "07-wandering-pillow": {
     title: "Open your doors —",
     invite: "become a Wandering Pillow!",
