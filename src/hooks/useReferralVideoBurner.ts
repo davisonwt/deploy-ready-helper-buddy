@@ -3,98 +3,73 @@
  * --------------------------------------------------------------
  * Personalizes a marketing banner MP4 in the browser by burning a
  * full-width bottom banner ("Join {name}'s tribe — sow2growapp.com/?ref=CODE")
- * into the video pixels using ffmpeg.wasm. Result is a true, shareable MP4
- * that carries the referral attribution wherever it travels.
+ * directly into the video pixels.
  *
- * Design notes:
- *  - ffmpeg.wasm is loaded ONCE per session and cached in module scope.
- *  - We render the overlay strip on a 1920×120 transparent PNG via canvas,
- *    then ask ffmpeg to overlay it on the bottom of the source video and
- *    re-encode (libx264, ultrafast preset, AAC audio passthrough).
- *  - All work is client-side: zero backend cost, no rate limits, offline-safe
- *    after the first ffmpeg load.
+ * Implementation: Canvas + MediaRecorder (native browser APIs, no WASM,
+ * no SharedArrayBuffer, no external CDN dependency, no CORS issues).
+ * The result is a real, shareable video file (WebM with VP9, or MP4 where
+ * supported) carrying the referral attribution wherever it travels.
+ *
+ * Why not ffmpeg.wasm?
+ *  - Requires loading ~25MB of WASM from a public CDN (CSP/network risk)
+ *  - Slow on large clips and prone to OOM in the browser tab
+ *  - Some hosting environments block SharedArrayBuffer
+ *  - MediaRecorder is supported in every evergreen browser and "just works"
  */
 import { useCallback, useRef, useState } from "react";
-import { FFmpeg } from "@ffmpeg/ffmpeg";
-import { fetchFile, toBlobURL } from "@ffmpeg/util";
 
-const FFMPEG_BASE = "https://unpkg.com/@ffmpeg/core@0.12.6/dist/umd";
-
-let ffmpegSingleton: FFmpeg | null = null;
-async function getFFmpeg(onLog?: (msg: string) => void): Promise<FFmpeg> {
-  if (ffmpegSingleton) return ffmpegSingleton;
-  const ffmpeg = new FFmpeg();
-  if (onLog) ffmpeg.on("log", ({ message }) => onLog(message));
-  await ffmpeg.load({
-    coreURL: await toBlobURL(`${FFMPEG_BASE}/ffmpeg-core.js`, "text/javascript"),
-    wasmURL: await toBlobURL(`${FFMPEG_BASE}/ffmpeg-core.wasm`, "application/wasm"),
-  });
-  ffmpegSingleton = ffmpeg;
-  return ffmpeg;
-}
-
-/** Render the referral banner strip as a 1920×120 PNG */
-async function renderBannerPng(
+/** Render the referral banner strip onto a canvas context (full width × 120px). */
+function paintBanner(
+  ctx: CanvasRenderingContext2D,
+  x: number,
+  y: number,
+  w: number,
+  h: number,
   inviterName: string,
   referralCode: string,
   shareUrl: string,
-): Promise<Uint8Array> {
-  const W = 1920;
-  const H = 120;
-  const canvas = document.createElement("canvas");
-  canvas.width = W;
-  canvas.height = H;
-  const ctx = canvas.getContext("2d")!;
-
-  // Warm gradient strip (matches S2G terracotta → ochre brand bar)
-  const grad = ctx.createLinearGradient(0, 0, W, 0);
-  grad.addColorStop(0, "rgba(184, 80, 66, 0.92)");   // terracotta
-  grad.addColorStop(1, "rgba(212, 168, 67, 0.92)");  // ochre
+) {
+  // Warm gradient strip (S2G terracotta → ochre)
+  const grad = ctx.createLinearGradient(x, y, x + w, y);
+  grad.addColorStop(0, "rgba(184, 80, 66, 0.94)");
+  grad.addColorStop(1, "rgba(212, 168, 67, 0.94)");
   ctx.fillStyle = grad;
-  ctx.fillRect(0, 0, W, H);
+  ctx.fillRect(x, y, w, h);
 
-  // Subtle top hairline
-  ctx.fillStyle = "rgba(255,255,255,0.35)";
-  ctx.fillRect(0, 0, W, 2);
+  // Top hairline
+  ctx.fillStyle = "rgba(255,255,255,0.4)";
+  ctx.fillRect(x, y, w, 2);
 
-  // Left side: "Join {inviter}'s tribe"
+  const cy = y + h / 2;
+
+  // Left text: "Join {inviter}'s tribe"
   ctx.fillStyle = "#FFFFFF";
   ctx.textBaseline = "middle";
-  ctx.font = "700 44px Inter, system-ui, -apple-system, sans-serif";
+  ctx.font = `700 ${Math.round(h * 0.36)}px Inter, system-ui, -apple-system, sans-serif`;
   const leftText = inviterName ? `Join ${inviterName}'s tribe` : "Join the S2G tribe";
-  ctx.fillText(leftText, 60, H / 2);
+  ctx.fillText(leftText, x + 32, cy);
 
-  // Right side: short link + code chip
-  ctx.font = "600 38px Inter, system-ui, -apple-system, sans-serif";
-  const linkText = shareUrl;
-  const linkMetrics = ctx.measureText(linkText);
-
-  // Code chip (right-most)
-  const chipPadX = 28;
-  const chipH = 64;
-  ctx.font = "800 36px 'JetBrains Mono', ui-monospace, monospace";
+  // Code chip on the right
+  const chipFontSize = Math.round(h * 0.32);
+  ctx.font = `800 ${chipFontSize}px 'JetBrains Mono', ui-monospace, monospace`;
   const codeMetrics = ctx.measureText(referralCode);
+  const chipPadX = 22;
+  const chipH = Math.round(h * 0.6);
   const chipW = codeMetrics.width + chipPadX * 2;
-  const chipX = W - chipW - 60;
-  const chipY = (H - chipH) / 2;
+  const chipX = x + w - chipW - 32;
+  const chipY = cy - chipH / 2;
 
-  // Chip background
-  ctx.fillStyle = "rgba(255,255,255,0.95)";
-  roundRect(ctx, chipX, chipY, chipW, chipH, 14);
+  ctx.fillStyle = "rgba(255,255,255,0.96)";
+  roundRect(ctx, chipX, chipY, chipW, chipH, 12);
   ctx.fill();
   ctx.fillStyle = "#B85042";
-  ctx.fillText(referralCode, chipX + chipPadX, H / 2);
+  ctx.fillText(referralCode, chipX + chipPadX, cy);
 
-  // Link text just left of chip
-  ctx.font = "600 38px Inter, system-ui, -apple-system, sans-serif";
+  // Share URL just left of chip
+  ctx.font = `600 ${Math.round(h * 0.3)}px Inter, system-ui, -apple-system, sans-serif`;
+  const linkMetrics = ctx.measureText(shareUrl);
   ctx.fillStyle = "#FFFFFF";
-  ctx.fillText(linkText, chipX - linkMetrics.width - 32, H / 2);
-
-  const blob: Blob = await new Promise((resolve) =>
-    canvas.toBlob((b) => resolve(b!), "image/png"),
-  );
-  const buf = new Uint8Array(await blob.arrayBuffer());
-  return buf;
+  ctx.fillText(shareUrl, chipX - linkMetrics.width - 24, cy);
 }
 
 function roundRect(
@@ -110,16 +85,28 @@ function roundRect(
   ctx.closePath();
 }
 
+/** Pick the best supported MediaRecorder MIME type. */
+function pickMimeType(): { mime: string; ext: string } {
+  const candidates: Array<{ mime: string; ext: string }> = [
+    { mime: "video/mp4;codecs=avc1.42E01E,mp4a.40.2", ext: "mp4" },
+    { mime: "video/mp4", ext: "mp4" },
+    { mime: "video/webm;codecs=vp9,opus", ext: "webm" },
+    { mime: "video/webm;codecs=vp8,opus", ext: "webm" },
+    { mime: "video/webm", ext: "webm" },
+  ];
+  for (const c of candidates) {
+    if (typeof MediaRecorder !== "undefined" && MediaRecorder.isTypeSupported(c.mime)) {
+      return c;
+    }
+  }
+  return { mime: "video/webm", ext: "webm" };
+}
+
 export interface BurnOptions {
-  /** Source MP4 URL (same-origin or CORS-enabled). */
   sourceUrl: string;
-  /** Friendly file name suggested to the user (without extension). */
   fileBaseName: string;
-  /** Inviter display name (e.g. "Sarah"). Used in "Join Sarah's tribe". */
   inviterName: string;
-  /** Referral code burned into the strip and used in the share URL. */
   referralCode: string;
-  /** Short share URL displayed on the strip (without protocol prefix is fine). */
   shareUrl: string;
 }
 
@@ -133,58 +120,116 @@ export function useReferralVideoBurner() {
     setError(null);
     setProgress(0);
     cancelRef.current = false;
+
+    if (typeof MediaRecorder === "undefined") {
+      setStage("error");
+      setError("Your browser doesn't support in-page video recording. Try Chrome, Edge, or Firefox.");
+      return;
+    }
+
+    const video = document.createElement("video");
+    video.crossOrigin = "anonymous";
+    video.playsInline = true;
+    video.muted = false;
+    video.preload = "auto";
+    video.src = opts.sourceUrl;
+
     try {
       setStage("loading");
-      const ffmpeg = await getFFmpeg();
-      ffmpeg.on("progress", ({ progress: p }) => {
-        if (!cancelRef.current) setProgress(Math.min(99, Math.round(p * 100)));
+      // Wait for metadata
+      await new Promise<void>((resolve, reject) => {
+        const onLoaded = () => { cleanup(); resolve(); };
+        const onErr = () => { cleanup(); reject(new Error("Could not load source video.")); };
+        const cleanup = () => {
+          video.removeEventListener("loadedmetadata", onLoaded);
+          video.removeEventListener("error", onErr);
+        };
+        video.addEventListener("loadedmetadata", onLoaded);
+        video.addEventListener("error", onErr);
+      });
+
+      const W = video.videoWidth || 1280;
+      const H = video.videoHeight || 720;
+      const bannerH = Math.max(80, Math.round(H * 0.11));
+      const duration = video.duration;
+      if (!isFinite(duration) || duration <= 0) {
+        throw new Error("Source video has no duration.");
+      }
+
+      const canvas = document.createElement("canvas");
+      canvas.width = W;
+      canvas.height = H;
+      const ctx = canvas.getContext("2d");
+      if (!ctx) throw new Error("Canvas not available.");
+
+      const fps = 30;
+      const stream = (canvas as HTMLCanvasElement).captureStream(fps);
+
+      // Try to attach audio from the source video using captureStream
+      try {
+        // @ts-expect-error: captureStream exists on HTMLMediaElement in modern browsers
+        const vStream: MediaStream | undefined = video.captureStream?.() ?? video.mozCaptureStream?.();
+        if (vStream) {
+          vStream.getAudioTracks().forEach((t) => stream.addTrack(t));
+        }
+      } catch {
+        // audio-less output is fine
+      }
+
+      const { mime, ext } = pickMimeType();
+      const recorder = new MediaRecorder(stream, {
+        mimeType: mime,
+        videoBitsPerSecond: 4_000_000,
+      });
+      const chunks: Blob[] = [];
+      recorder.ondataavailable = (e) => { if (e.data.size) chunks.push(e.data); };
+
+      const recordingDone = new Promise<Blob>((resolve, reject) => {
+        recorder.onstop = () => resolve(new Blob(chunks, { type: mime }));
+        recorder.onerror = (e: any) => reject(new Error(e?.error?.message || "Recording failed."));
       });
 
       setStage("burning");
-      const [videoBytes, overlayBytes] = await Promise.all([
-        fetchFile(opts.sourceUrl),
-        renderBannerPng(opts.inviterName, opts.referralCode, opts.shareUrl),
-      ]);
+      recorder.start(250);
 
-      await ffmpeg.writeFile("input.mp4", videoBytes);
-      await ffmpeg.writeFile("overlay.png", overlayBytes);
+      // Drive playback and draw frames onto canvas
+      video.currentTime = 0;
+      await video.play().catch(() => {
+        // Some browsers require user gesture; the click that started this counts.
+      });
 
-      // Overlay at the very bottom, full width.
-      // libx264 ultrafast keeps render time low; AAC re-encode preserves audio.
-      await ffmpeg.exec([
-        "-i", "input.mp4",
-        "-i", "overlay.png",
-        "-filter_complex", "[0:v][1:v]overlay=0:main_h-overlay_h:format=auto",
-        "-c:v", "libx264",
-        "-preset", "ultrafast",
-        "-crf", "23",
-        "-pix_fmt", "yuv420p",
-        "-c:a", "aac",
-        "-b:a", "128k",
-        "-movflags", "+faststart",
-        "output.mp4",
-      ]);
+      let raf = 0;
+      const draw = () => {
+        if (cancelRef.current) return;
+        ctx.drawImage(video, 0, 0, W, H);
+        paintBanner(ctx, 0, H - bannerH, W, bannerH, opts.inviterName, opts.referralCode, opts.shareUrl);
+        const p = Math.min(99, Math.round((video.currentTime / duration) * 100));
+        setProgress(p);
+        if (!video.ended && !video.paused) {
+          raf = requestAnimationFrame(draw);
+        }
+      };
+      raf = requestAnimationFrame(draw);
 
-      const data = (await ffmpeg.readFile("output.mp4")) as Uint8Array;
-      // Copy into a fresh ArrayBuffer-backed Uint8Array to satisfy strict BlobPart typing.
-      const out = new Uint8Array(data.byteLength);
-      out.set(data);
-      const blob = new Blob([out.buffer], { type: "video/mp4" });
+      await new Promise<void>((resolve) => {
+        const onEnd = () => { video.removeEventListener("ended", onEnd); resolve(); };
+        video.addEventListener("ended", onEnd);
+      });
+      cancelAnimationFrame(raf);
+
+      // Tiny tail to flush the last frame into the recorder
+      await new Promise((r) => setTimeout(r, 250));
+      recorder.stop();
+      const blob = await recordingDone;
+
       const url = URL.createObjectURL(blob);
-
-      // Trigger download
       const a = document.createElement("a");
       a.href = url;
-      a.download = `${opts.fileBaseName}-${opts.referralCode}.mp4`;
+      a.download = `${opts.fileBaseName}-${opts.referralCode}.${ext}`;
       document.body.appendChild(a);
       a.click();
       a.remove();
       setTimeout(() => URL.revokeObjectURL(url), 60_000);
-
-      // Cleanup ffmpeg FS
-      try { await ffmpeg.deleteFile("input.mp4"); } catch {}
-      try { await ffmpeg.deleteFile("overlay.png"); } catch {}
-      try { await ffmpeg.deleteFile("output.mp4"); } catch {}
 
       setProgress(100);
       setStage("done");
@@ -192,6 +237,10 @@ export function useReferralVideoBurner() {
       console.error("[referral-video-burner] failed", e);
       setError(e?.message || "Failed to personalize video.");
       setStage("error");
+    } finally {
+      try { video.pause(); } catch {}
+      video.removeAttribute("src");
+      video.load();
     }
   }, []);
 
