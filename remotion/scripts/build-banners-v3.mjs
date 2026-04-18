@@ -196,6 +196,18 @@ const BANNERS = {
     // Upbeat VO ~12s energized; total = 1.4 lead + 12 + 1.5 tail ≈ 14.9s
     totalDur: 14.9,
   },
+  "15-one-on-one": {
+    title: "Connect privately —",
+    invite: "start a 1-on-1 Chat!",
+    midInvite: "Text · voice · video · calls — full control",
+    cta: "Sign up on Sow2Grow",
+    beats: ["a", "b", "c", "d"],
+    introImg: "15-one-on-one-intro.jpg",
+    outroImg: "15-one-on-one-outro.jpg",
+    musicStart: 48,
+    // Warm VO ~10.5s raw → ~10s energized; total = 1.4 lead + 10 + 1.5 tail ≈ 12.9s
+    totalDur: 12.9,
+  },
 };
 
 async function download(url, dest) {
