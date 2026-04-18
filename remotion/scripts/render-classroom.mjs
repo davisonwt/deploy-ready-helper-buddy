@@ -41,8 +41,10 @@ await renderMedia({
 });
 
 const vo = path.join(VO_DIR, `${VO_SLUG}.mp3`);
+// Pad VO with silence so it doesn't truncate the video (-shortest cuts to shortest stream).
+// CTA scene plays after VO ends, so we need the full 12s of video.
 execSync(
-  `ffmpeg -y -i "${silent}" -i "${vo}" -c:v copy -c:a aac -b:a 192k -shortest "${final}"`,
+  `ffmpeg -y -i "${silent}" -i "${vo}" -filter_complex "[1:a]apad=pad_dur=3[a]" -map 0:v -map "[a]" -c:v copy -c:a aac -b:a 192k -shortest "${final}"`,
   { stdio: "pipe" }
 );
 await fs.unlink(silent).catch(() => {});
