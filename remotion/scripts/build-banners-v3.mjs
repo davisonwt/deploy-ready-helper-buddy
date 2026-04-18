@@ -130,40 +130,27 @@ async function buildBanner(slug) {
     { stdio: "pipe" },
   );
 
-  // Sunburst sparkle behind the logo
-  console.log("  ☀ generating sunburst sparkle layer");
-  const sunburst = await ensureSunburst();
-
   console.log("  ✎ animated logo + sunburst + title + CTA");
   const titleEsc = cfg.title.replace(/'/g, "\\'");
   const ctaEsc = cfg.cta.replace(/'/g, "\\'");
   const branded = path.join(CACHE, `${slug}-brand.mp4`);
 
-  // Layered overlay:
-  //   [0] base video  [1] logo PNG  [2] sunburst PNG
-  //   - sunburst rotates + pulses behind logo, top-left
-  //   - logo: breathing scale + bob + tiny rotation = "alive"
   const fc = [
-    // sunburst: rotate + scale-pulse behind logo
-    `[2:v]format=rgba,scale=240:240[burstBase]`,
-    `[burstBase]rotate='t*0.6':c=none:ow=240:oh=240[burstR]`,
-    `[burstR]scale='240*(0.95+0.10*sin(t*PI*1.2))':-1:eval=frame[burstP]`,
-    // logo: scale-pulse + tiny rotation
-    `[1:v]scale=180:180:force_original_aspect_ratio=decrease,format=rgba[logoBase]`,
-    `[logoBase]rotate='0.08*sin(t*PI*0.8)':c=none:ow=180:oh=180[logoR]`,
-    `[logoR]scale='180*(0.90+0.10*sin(t*PI*1.1))':-1:eval=frame[logoP]`,
-    // composite: burst first (under), then logo (on top)
-    `[0:v][burstP]overlay=x='50+(120-overlay_w/2)':y='50+(120-overlay_h/2)+8*sin(t*PI*0.7)':format=auto:eval=frame[withBurst]`,
-    `[withBurst][logoP]overlay=x='50+(120-overlay_w/2)':y='50+(120-overlay_h/2)+8*sin(t*PI*0.7)':format=auto:eval=frame[withLogo]`,
-    // intro title (centered top)
+    `[2:v]colorkey=0x000000:0.30:0.20,format=rgba,scale=280:280[burstK]`,
+    `[burstK]rotate='t*0.6':c=none:ow=280:oh=280[burstR]`,
+    `[burstR]scale='280*(0.92+0.12*sin(t*PI*1.2))':-1:eval=frame[burstP]`,
+    `[1:v]scale=170:170:force_original_aspect_ratio=decrease,format=rgba[logoBase]`,
+    `[logoBase]rotate='0.08*sin(t*PI*0.8)':c=none:ow=170:oh=170[logoR]`,
+    `[logoR]scale='170*(0.92+0.10*sin(t*PI*1.1))':-1:eval=frame[logoP]`,
+    `[0:v][burstP]overlay=x='160-overlay_w/2':y='160-overlay_h/2+8*sin(t*PI*0.7)':format=auto:eval=frame[withBurst]`,
+    `[withBurst][logoP]overlay=x='160-overlay_w/2':y='160-overlay_h/2+8*sin(t*PI*0.7)':format=auto:eval=frame[withLogo]`,
     `[withLogo]drawtext=fontfile=${FONT}:text='${titleEsc}':fontsize=52:fontcolor=white:bordercolor=0x2C5F2D:borderw=4:shadowcolor=0x000000AA:shadowx=2:shadowy=3:x=(w-text_w)/2:y=80:enable='between(t,0.2,1.5)'[t1]`,
-    // outro CTA (bottom)
     `[t1]drawtext=fontfile=${FONT}:text='${ctaEsc}':fontsize=70:fontcolor=0xF5E8D0:bordercolor=0x2C5F2D:borderw=6:shadowcolor=0x000000CC:shadowx=2:shadowy=3:x=(w-text_w)/2:y=h-160:enable='gte(t,9.0)'[v]`,
   ].join(";");
 
-  execSync(
-    `ffmpeg -y -i "${concat}" -i "${LOGO}" -i "${sunburst}" -filter_complex "${fc}" -map "[v]" -c:v libx264 -preset medium -crf 18 -pix_fmt yuv420p -an "${branded}"`,
-    { stdio: "pipe" },
+  runFF(
+    `ffmpeg -y -i "${concat}" -i "${LOGO}" -i "${SUNBURST}" -filter_complex "${fc}" -map "[v]" -c:v libx264 -preset medium -crf 18 -pix_fmt yuv420p -an "${branded}"`,
+    "branding overlay",
   );
 
   // VO energy v2 — much more excited
