@@ -80,6 +80,16 @@ const BANNERS = {
     outroImg: "07-wandering-pillow-breakfast.jpg",
     musicStart: 48,
   },
+  "08-wandering-field": {
+    title: "Sow your harvest —",
+    invite: "become a Wandering Field!",
+    midInvite: "Farm to tribe · no middleman",
+    cta: "Sign up on Sow2Grow",
+    beats: ["a", "b", "c", "d"],
+    introImg: "08-wandering-field-tomatoes.jpg",
+    outroImg: "08-wandering-field-family.jpg",
+    musicStart: 60,
+  },
 };
 
 async function download(url, dest) {
