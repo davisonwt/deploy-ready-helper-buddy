@@ -33,7 +33,7 @@ const FONT = "/nix/store/xhanp47490n743s7zd27d8i9s1khg6c0-dejavu-fonts-minimal-2
 
 const BANNERS = {
   "04-wandering-wheel": {
-    title: "Become a S2G Wandering Wheel",
+    title: "Register your vehicle — become a Wandering Wheel!",
     cta: "Book us on Sow2Grow",
     beats: ["a", "b", "d", "c"],
     introImg: "04-wandering-wheel-vehicles.jpg",
