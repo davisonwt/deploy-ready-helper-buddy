@@ -1,5 +1,5 @@
-import React from 'react';
-import { Sprout, TreePine, Leaf } from 'lucide-react';
+import React, { useState } from 'react';
+import { Sprout, TreePine, Leaf, Play, X } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { DashboardTheme } from '@/utils/dashboardThemes';
@@ -50,6 +50,7 @@ const plantCards = [
 ];
 
 export const PlantFeedCards: React.FC<PlantFeedCardsProps> = ({ theme }) => {
+  const [activeVideo, setActiveVideo] = useState<string | null>(null);
   return (
     <div className="space-y-3">
       <SectionHeading
@@ -104,11 +105,25 @@ export const PlantFeedCards: React.FC<PlantFeedCardsProps> = ({ theme }) => {
               </div>
             </div>
 
-            {/* Description + Button */}
-            <div className="p-3" style={{ background: theme.cardBg }}>
-              <p className="text-[11px] leading-relaxed mb-2" style={{ color: theme.textSecondary }}>
+            {/* Description + Buttons */}
+            <div className="p-3 space-y-2" style={{ background: theme.cardBg }}>
+              <p className="text-[11px] leading-relaxed" style={{ color: theme.textSecondary }}>
                 {card.description}
               </p>
+              {card.video && (
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="text-xs h-7 rounded-lg w-full gap-1.5"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    setActiveVideo(card.video!);
+                  }}
+                >
+                  <Play className="w-3 h-3 fill-current" /> Watch the story
+                </Button>
+              )}
               <Button
                 size="sm"
                 className="text-xs h-7 rounded-lg w-full"
@@ -120,6 +135,31 @@ export const PlantFeedCards: React.FC<PlantFeedCardsProps> = ({ theme }) => {
           </Link>
         ))}
       </div>
+
+      {/* Video lightbox */}
+      {activeVideo && (
+        <div
+          className="fixed inset-0 z-[100] bg-black/90 flex items-center justify-center p-4 animate-in fade-in"
+          onClick={() => setActiveVideo(null)}
+        >
+          <button
+            type="button"
+            aria-label="Close video"
+            className="absolute top-4 right-4 w-10 h-10 rounded-full bg-white/15 hover:bg-white/25 text-white flex items-center justify-center transition"
+            onClick={(e) => { e.stopPropagation(); setActiveVideo(null); }}
+          >
+            <X className="w-5 h-5" />
+          </button>
+          <video
+            src={activeVideo}
+            className="max-w-full max-h-full rounded-xl shadow-2xl"
+            controls
+            autoPlay
+            playsInline
+            onClick={(e) => e.stopPropagation()}
+          />
+        </div>
+      )}
     </div>
   );
 };
