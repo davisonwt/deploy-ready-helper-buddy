@@ -6,9 +6,12 @@ import { LogoMark } from "./LogoMark";
 import { VoiceTrack } from "./VoiceTrack";
 import { loadFont as loadInter } from "@remotion/google-fonts/Inter";
 import { loadFont as loadPlayfair } from "@remotion/google-fonts/PlayfairDisplay";
+import { loadFont as loadEmoji } from "@remotion/google-fonts/NotoColorEmoji";
 
 const { fontFamily: inter } = loadInter();
 const { fontFamily: playfair } = loadPlayfair();
+const { fontFamily: emojiFont } = loadEmoji();
+const emojiStack = `${emojiFont}, "Noto Color Emoji", "Apple Color Emoji", "Segoe UI Emoji", sans-serif`;
 
 const TERRACOTTA = "#B85042";
 const FOREST = "#2C5F2D";
