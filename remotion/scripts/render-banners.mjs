@@ -44,7 +44,8 @@ for (const id of COMPOSITIONS) {
     composition, serveUrl: bundled, codec: "h264",
     outputLocation: out, puppeteerInstance: browser,
     concurrency: 1,
-    // Audio is baked-in via <Audio> components — keep the default audio codec
+    audioCodec: "aac",
+    enforceAudioTrack: true,
   });
   const stat = await fs.stat(out);
   console.log(`✓ ${id} (${(stat.size / 1024 / 1024).toFixed(2)} MB)`);
