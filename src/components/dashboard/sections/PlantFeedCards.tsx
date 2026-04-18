@@ -50,6 +50,7 @@ const plantCards = [
 ];
 
 export const PlantFeedCards: React.FC<PlantFeedCardsProps> = ({ theme }) => {
+  const [activeVideo, setActiveVideo] = useState<string | null>(null);
   return (
     <div className="space-y-3">
       <SectionHeading
