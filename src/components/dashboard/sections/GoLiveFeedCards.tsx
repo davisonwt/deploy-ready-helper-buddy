@@ -60,6 +60,7 @@ const goLiveCards: Array<{
     description:
       'Apply to become a radio DJ and broadcast live shows to the entire community. Share music, discussions, interviews, and more from your own studio.',
     image: radioImg,
+    video: '/videos/banners/radio.mp4',
     icon: Radio,
   },
 ];

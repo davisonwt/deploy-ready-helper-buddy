@@ -184,6 +184,18 @@ const BANNERS = {
     // Calm VO ~13.3s energized; total = 1.4 lead + 13.3 + 1.5 tail ≈ 16.2s
     totalDur: 16.2,
   },
+  "14-radio": {
+    title: "Go live on the airwaves —",
+    invite: "host your own Radio show!",
+    midInvite: "Music · talk · product promos · ads",
+    cta: "Sign up on Sow2Grow",
+    beats: ["a", "b", "c", "d"],
+    introImg: "14-radio-intro.jpg",
+    outroImg: "14-radio-outro.jpg",
+    musicStart: 24,
+    // Upbeat VO ~12s energized; total = 1.4 lead + 12 + 1.5 tail ≈ 14.9s
+    totalDur: 14.9,
+  },
 };
 
 async function download(url, dest) {
