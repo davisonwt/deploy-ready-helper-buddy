@@ -192,7 +192,7 @@ async function buildBanner(slug) {
   // Music volume curve: 0.65 (intro) → 0.32 (under VO) → 0.65 (outro)
   // Use volume expression with time gates so music is LOUD when VO is silent
   runFF(
-    `ffmpeg -y -i "${branded}" -i "${voEnergy}" -ss 36 -stream_loop -1 -i "${MUSIC}" ` +
+    `ffmpeg -y -i "${branded}" -i "${voEnergy}" -ss ${cfg.musicStart ?? 36} -stream_loop -1 -i "${MUSIC}" ` +
     `-filter_complex "` +
       `[1:a]adelay=${voDelayMs}|${voDelayMs},volume=1.0[vo];` +
       `[2:a]volume='if(lt(t,${MUSIC_LEAD - 0.2}),0.65,if(lt(t,${MUSIC_LEAD + 0.3}),0.65-0.33*(t-${MUSIC_LEAD - 0.2})/0.5,if(lt(t,${swellStart}),0.32,if(lt(t,${swellStart + 0.5}),0.32+0.33*(t-${swellStart})/0.5,0.65))))':eval=frame,afade=t=in:st=0:d=0.4,afade=t=out:st=${(finalDur - 1.0).toFixed(2)}:d=1.0[mus];` +
