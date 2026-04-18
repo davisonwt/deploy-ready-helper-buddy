@@ -273,8 +273,8 @@ export const GigActionCards: React.FC<GigActionCardsProps> = ({ theme }) => {
                                 size="sm"
                                 onClick={() => setPlayingBanner(card.label)}
                                 disabled={!card.video}
-                                className="flex-1 h-9 font-semibold text-white border-0 disabled:opacity-40"
-                                style={{ background: 'linear-gradient(135deg, #c026d3, #7c3aed)' }}
+                                className="flex-1 h-9 font-semibold !text-white !border-0 disabled:opacity-40 !bg-none"
+                                style={{ backgroundImage: 'linear-gradient(135deg, #c026d3, #7c3aed)', backgroundColor: 'transparent' }}
                               >
                                 <Play className="w-4 h-4 mr-1.5 fill-current" />
                                 Play
@@ -282,8 +282,8 @@ export const GigActionCards: React.FC<GigActionCardsProps> = ({ theme }) => {
                               <Button
                                 size="sm"
                                 onClick={() => navigate(card.href)}
-                                className="flex-1 h-9 font-semibold text-white border-0"
-                                style={{ background: 'linear-gradient(135deg, #7c3aed, #a855f7)' }}
+                                className="flex-1 h-9 font-semibold !text-white !border-0"
+                                style={{ backgroundImage: 'linear-gradient(135deg, #7c3aed, #a855f7)', backgroundColor: 'transparent' }}
                               >
                                 <UserPlus className="w-4 h-4 mr-1.5" />
                                 Register
