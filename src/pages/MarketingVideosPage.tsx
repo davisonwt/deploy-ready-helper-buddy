@@ -8,7 +8,7 @@
  * stays attached.
  */
 import { Link } from "react-router-dom";
-import { ArrowLeft, Download, Loader2, CheckCircle2, AlertCircle, Sparkles } from "lucide-react";
+import { ArrowLeft, Download, Loader2, CheckCircle2, AlertCircle, Sparkles, Play, X } from "lucide-react";
 import { useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -44,6 +44,7 @@ export default function MarketingVideosPage() {
   const { code, inviterName, shareUrl, loading: refLoading } = useMyReferralCode();
   const { burnAndDownload, progress, stage, error, reset } = useReferralVideoBurner();
   const [activeId, setActiveId] = useState<string | null>(null);
+  const [previewing, setPreviewing] = useState<BannerVideo | null>(null);
 
   const handleDownload = async (banner: BannerVideo) => {
     if (!code) return;
@@ -103,18 +104,30 @@ export default function MarketingVideosPage() {
             const failed = isActive && stage === "error";
             return (
               <Card key={b.id} className="overflow-hidden" style={{ background: theme.cardBg, border: `1px solid ${theme.cardBorder}` }}>
-                <div className="relative aspect-video bg-black/40">
+                <div className="relative aspect-video bg-black/40 group">
                   {b.available ? (
-                    <video
-                      src={b.src}
-                      className="w-full h-full object-cover"
-                      muted
-                      loop
-                      playsInline
-                      preload="metadata"
-                      onMouseEnter={(e) => (e.currentTarget as HTMLVideoElement).play().catch(() => {})}
-                      onMouseLeave={(e) => { const v = e.currentTarget as HTMLVideoElement; v.pause(); v.currentTime = 0; }}
-                    />
+                    <>
+                      <video
+                        src={b.src}
+                        className="w-full h-full object-cover"
+                        muted
+                        loop
+                        playsInline
+                        preload="metadata"
+                        onMouseEnter={(e) => (e.currentTarget as HTMLVideoElement).play().catch(() => {})}
+                        onMouseLeave={(e) => { const v = e.currentTarget as HTMLVideoElement; v.pause(); v.currentTime = 0; }}
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setPreviewing(b)}
+                        aria-label={`Play ${b.title}`}
+                        className="absolute inset-0 flex items-center justify-center bg-black/30 opacity-0 group-hover:opacity-100 focus:opacity-100 transition-opacity"
+                      >
+                        <span className="w-16 h-16 rounded-full flex items-center justify-center shadow-2xl" style={{ background: theme.primaryButton }}>
+                          <Play className="w-7 h-7 ml-1" fill="currentColor" style={{ color: theme.textPrimary }} />
+                        </span>
+                      </button>
+                    </>
                   ) : (
                     <div className="w-full h-full flex items-center justify-center text-5xl opacity-60">{b.emoji}</div>
                   )}
