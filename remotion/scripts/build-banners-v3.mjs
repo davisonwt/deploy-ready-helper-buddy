@@ -171,13 +171,14 @@ async function buildBanner(slug) {
   console.log(`  ♪ mux with music bed (final: ${finalDur.toFixed(2)}s)`);
   // [1] = VO (delay 300ms), [2] = music (loop, low volume, fade in/out)
   // Sidechain compress music against VO so VO sits on top cleanly
+  // Music starts at chorus (~36s into the track) and is louder + ducked under VO
   runFF(
-    `ffmpeg -y -i "${branded}" -i "${voEnergy}" -stream_loop -1 -i "${MUSIC}" ` +
+    `ffmpeg -y -i "${branded}" -i "${voEnergy}" -ss 36 -stream_loop -1 -i "${MUSIC}" ` +
     `-filter_complex "` +
       `[1:a]adelay=300|300,volume=1.0,asplit=2[vo1][vo2];` +
-      `[2:a]volume=0.18,afade=t=in:st=0:d=0.5,afade=t=out:st=${(finalDur - 0.8).toFixed(2)}:d=0.8[mus];` +
+      `[2:a]volume=0.32,afade=t=in:st=0:d=0.5,afade=t=out:st=${(finalDur - 0.8).toFixed(2)}:d=0.8[mus];` +
       `[mus][vo1]sidechaincompress=threshold=0.05:ratio=8:attack=20:release=250[musDuck];` +
-      `[vo2][musDuck]amix=inputs=2:duration=first:dropout_transition=0:weights='1.0 0.9'[a]` +
+      `[vo2][musDuck]amix=inputs=2:duration=first:dropout_transition=0:weights='1.0 0.95'[a]` +
     `" ` +
     `-map 0:v:0 -map "[a]" -t ${finalDur.toFixed(2)} ` +
     `-c:v libx264 -preset medium -crf 18 -pix_fmt yuv420p -c:a aac -b:a 192k "${final}"`,
