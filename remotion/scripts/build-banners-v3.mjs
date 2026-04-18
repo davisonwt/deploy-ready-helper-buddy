@@ -41,8 +41,10 @@ const GRADE = "eq=saturation=1.35:contrast=1.10:brightness=0.02:gamma=0.95,unsha
 
 const BANNERS = {
   "04-wandering-wheel": {
-    title: "Register your vehicle — become a Wandering Wheel!",
-    cta: "Book us on Sow2Grow",
+    title: "List your vehicle —",
+    invite: "become a Wandering Wheel!",
+    midInvite: "List your vehicle today",
+    cta: "Sign up on Sow2Grow",
     beats: ["a", "b", "d", "c"],
     introImg: "04-wandering-wheel-vehicles.jpg",
     outroImg: "04-wandering-wheel-phone.jpg",
