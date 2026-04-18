@@ -66,7 +66,7 @@ export default function MarketingVideosPage() {
         </Link>
 
         {/* Hero */}
-        <div className="rounded-3xl p-6 md:p-8 mb-6 shadow-xl" style={{ background: theme.cardBackground, border: `1px solid ${theme.border}` }}>
+        <div className="rounded-3xl p-6 md:p-8 mb-6 shadow-xl" style={{ background: theme.cardBg, border: `1px solid ${theme.cardBorder}` }}>
           <div className="flex items-start gap-4">
             <div className="w-14 h-14 rounded-2xl flex items-center justify-center text-3xl" style={{ background: theme.primaryButton }}>
               <Sparkles className="w-7 h-7" style={{ color: theme.textPrimary }} />
@@ -102,7 +102,7 @@ export default function MarketingVideosPage() {
             const done = isActive && stage === "done";
             const failed = isActive && stage === "error";
             return (
-              <Card key={b.id} className="overflow-hidden" style={{ background: theme.cardBackground, border: `1px solid ${theme.border}` }}>
+              <Card key={b.id} className="overflow-hidden" style={{ background: theme.cardBg, border: `1px solid ${theme.cardBorder}` }}>
                 <div className="relative aspect-video bg-black/40">
                   {b.available ? (
                     <video

@@ -165,8 +165,11 @@ export function useReferralVideoBurner() {
         "output.mp4",
       ]);
 
-      const data = await ffmpeg.readFile("output.mp4");
-      const blob = new Blob([data as Uint8Array], { type: "video/mp4" });
+      const data = (await ffmpeg.readFile("output.mp4")) as Uint8Array;
+      // Copy into a fresh ArrayBuffer-backed Uint8Array to satisfy strict BlobPart typing.
+      const out = new Uint8Array(data.byteLength);
+      out.set(data);
+      const blob = new Blob([out.buffer], { type: "video/mp4" });
       const url = URL.createObjectURL(blob);
 
       // Trigger download
