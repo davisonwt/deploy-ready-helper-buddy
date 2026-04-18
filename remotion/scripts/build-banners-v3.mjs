@@ -49,6 +49,8 @@ const BANNERS = {
     introImg: "01-community-orchard-intro.jpg",
     outroImg: "01-community-orchard-outro.jpg",
     musicStart: 6,
+    // VO is ~12.5s after energizing → needs ~14s playback + 1s music tail
+    totalDur: 15.5,
   },
   "04-wandering-wheel": {
     title: "List your vehicle —",
