@@ -101,9 +101,9 @@ const BANNERS = {
     musicStart: 72,
   },
   "10-wandering-forge": {
-    title: "Build with purpose —",
+    title: "Manufacture for the tribe —",
     invite: "become a Wandering Forge!",
-    midInvite: "Furniture · tools · handmade goods",
+    midInvite: "Clothing · cutlery · electronics · more",
     cta: "Sign up on Sow2Grow",
     beats: ["a", "b", "c", "d"],
     introImg: "10-wandering-forge-workshop.jpg",
