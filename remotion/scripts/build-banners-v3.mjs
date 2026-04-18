@@ -114,18 +114,17 @@ async function buildBanner(slug) {
   );
 
   // 4. Animated transparent logo overlay + clean title (intro only) + CTA (outro only)
-  //    Logo: gentle scale pulse (1.0 → 1.08 → 1.0 every 2s) using overlay scale expression
-  //    Subtle rotation: ±3° sway
+  //    Logo animation: gentle "breathing" — scale pulse 130-160px + tiny vertical bob
   const titleEsc = cfg.title.replace(/'/g, "\\'");
   const ctaEsc = cfg.cta.replace(/'/g, "\\'");
   const branded = path.join(CACHE, `${slug}-brand.mp4`);
-  console.log("  ✎ animated logo + intro title + outro CTA");
-  // Pulsing logo size: 130 + 10*sin(t*PI) → 120-140px
-  // Sway rotation: 3*sin(t*PI/2) degrees
+  console.log("  ✎ animated transparent logo + intro title + outro CTA");
+  // Pre-scale logo to a generous 200px square; overlay scales it dynamically
   const fc = [
-    // Scale logo with time-varying size (pulse) + rotation
-    `[1:v]scale=160:160:force_original_aspect_ratio=decrease,format=rgba,rotate='0.05*sin(t*PI)':c=none:ow=rotw(0.05*sin(t*PI)):oh=roth(0.05*sin(t*PI))[logoR]`,
-    `[0:v][logoR]overlay=x='40+5*sin(t*PI)':y='40+3*sin(t*PI*0.7)':format=auto:eval=frame[withlogo]`,
+    `[1:v]scale=200:200:force_original_aspect_ratio=decrease,format=rgba[logoBase]`,
+    // overlay with time-varying scale — logo "breathes" 0.75→0.95 every 2s
+    `[logoBase]scale='200*(0.85+0.10*sin(t*PI))':-1:eval=frame[logoP]`,
+    `[0:v][logoP]overlay=x='40':y='40+8*sin(t*PI*0.7)':format=auto:eval=frame[withlogo]`,
     // Title only during intro
     `[withlogo]drawtext=fontfile=${FONT}:text='${titleEsc}':fontsize=64:fontcolor=white:bordercolor=0x2C5F2D:borderw=5:shadowcolor=0x000000AA:shadowx=2:shadowy=3:x=(w-text_w)/2:y=80:enable='between(t,0.2,1.5)'[t1]`,
     // CTA only during outro
