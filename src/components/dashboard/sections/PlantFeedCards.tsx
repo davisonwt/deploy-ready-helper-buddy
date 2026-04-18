@@ -32,7 +32,7 @@ const plantCards = [
     description:
       'Each bestowal pocket contains a seed that grows into a fruit for the harvester. Like community-backed production — once enough pockets are bestowed, you can manufacture, deliver, and fulfil every harvest.',
     image: fullvalueOrchardImg,
-    video: undefined as string | undefined,
+    video: '/videos/banners/production-orchard.mp4',
     icon: Sprout,
     buttonLabel: '🌱 Plant a Production Orchard',
   },
