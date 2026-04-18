@@ -37,6 +37,7 @@ const BANNERS: BannerVideo[] = [
   { id: "community-orchard",   title: "Community Orchard",   subtitle: "Open a community-funded orchard", emoji: "🌳", src: "/videos/banners/community-orchard.mp4",   available: true },
   { id: "production-orchard",  title: "Production Orchard",  subtitle: "Fund a product into existence",   emoji: "🏗️", src: "/videos/banners/production-orchard.mp4",  available: false },
   { id: "single-seed",         title: "Single Seed",         subtitle: "Sow one offering today",          emoji: "🌱", src: "/videos/banners/single-seed.mp4",         available: false },
+  { id: "classroom",           title: "Classroom",           subtitle: "Teach live · voice + video",      emoji: "🎓", src: "/videos/banners/classroom.mp4",           available: true },
 ];
 
 export default function MarketingVideosPage() {

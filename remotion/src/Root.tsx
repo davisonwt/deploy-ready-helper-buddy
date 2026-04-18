@@ -20,6 +20,7 @@ import { Banner07WanderingPillow } from "./banners/Banner07WanderingPillow";
 import { Banner08WanderingField } from "./banners/Banner08WanderingField";
 import { Banner09WanderingHearth } from "./banners/Banner09WanderingHearth";
 import { Banner10WanderingForge } from "./banners/Banner10WanderingForge";
+import { Banner11Classroom } from "./banners/Banner11Classroom";
 
 const SHARED = { fps: 30, width: 1920, height: 1080 };
 const DUR = 600;       // legacy 20s explainers
@@ -51,5 +52,8 @@ export const RemotionRoot = () => (
     <Composition id="banner-08-wandering-field" component={Banner08WanderingField} durationInFrames={BANNER_DUR} {...SHARED} />
     <Composition id="banner-09-wandering-hearth" component={Banner09WanderingHearth} durationInFrames={BANNER_DUR} {...SHARED} />
     <Composition id="banner-10-wandering-forge" component={Banner10WanderingForge} durationInFrames={BANNER_DUR} {...SHARED} />
+
+    {/* Go Live explainers (20s) */}
+    <Composition id="banner-11-classroom" component={Banner11Classroom} durationInFrames={660} {...SHARED} />
   </>
 );
