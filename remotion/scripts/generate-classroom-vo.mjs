@@ -20,10 +20,10 @@ if (!API_KEY) {
   process.exit(1);
 }
 
-// ~20 seconds of warm, teacher-friendly narration.
+// ~12 seconds of warm, teacher-friendly narration matching the 4-scene visual.
 const SCRIPT = {
   slug: "11-classroom",
-  text: "Go live as a Classroom on Sow2Grow. Teach with live voice and video, from the young to the old. Share videos, documents, and voice notes with your students, all in one room. Host for free, or set a small bestowal in USDT. Your knowledge is a seed. Plant it. Watch it grow.",
+  text: "Welcome to Classrooms. Schedule a live session, free or with a small bestowal. Students from around the world join in. Teach, share, and grow — together.",
 };
 
 const res = await fetch(
@@ -35,12 +35,11 @@ const res = await fetch(
       text: SCRIPT.text,
       model_id: MODEL_ID,
       voice_settings: {
-        // Softer, calmer read for an educational tone
         stability: 0.7,
         similarity_boost: 0.8,
         style: 0.2,
         use_speaker_boost: true,
-        speed: 0.95,
+        speed: 1.0,
       },
     }),
   }
