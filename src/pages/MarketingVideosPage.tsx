@@ -165,24 +165,82 @@ export default function MarketingVideosPage() {
                     </p>
                   )}
 
-                  <Button
-                    onClick={() => handleDownload(b)}
-                    disabled={!b.available || !code || busy}
-                    className="w-full font-semibold"
-                    style={{ background: theme.primaryButton, color: theme.textPrimary }}
-                  >
-                    {busy ? (
-                      <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Personalizing…</>
-                    ) : (
-                      <><Download className="w-4 h-4 mr-2" /> Download with my code</>
-                    )}
-                  </Button>
+                  <div className="grid grid-cols-2 gap-2">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={() => setPreviewing(b)}
+                      disabled={!b.available}
+                      className="w-full font-semibold"
+                      style={{ borderColor: theme.cardBorder, color: theme.textPrimary, background: "transparent" }}
+                    >
+                      <Play className="w-4 h-4 mr-2" fill="currentColor" /> Watch
+                    </Button>
+                    <Button
+                      onClick={() => handleDownload(b)}
+                      disabled={!b.available || !code || busy}
+                      className="w-full font-semibold"
+                      style={{ background: theme.primaryButton, color: theme.textPrimary }}
+                    >
+                      {busy ? (
+                        <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Personalizing…</>
+                      ) : (
+                        <><Download className="w-4 h-4 mr-2" /> Download</>
+                      )}
+                    </Button>
+                  </div>
                 </CardContent>
               </Card>
             );
           })}
         </div>
       </div>
+
+      {/* Fullscreen video preview */}
+      {previewing && (
+        <div
+          className="fixed inset-0 z-[100] flex items-center justify-center bg-black/85 backdrop-blur-sm p-4"
+          onClick={() => setPreviewing(null)}
+        >
+          <button
+            type="button"
+            aria-label="Close preview"
+            onClick={() => setPreviewing(null)}
+            className="absolute top-4 right-4 w-10 h-10 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center text-white"
+          >
+            <X className="w-5 h-5" />
+          </button>
+          <div
+            className="w-full max-w-4xl rounded-2xl overflow-hidden shadow-2xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <video
+              src={previewing.src}
+              className="w-full h-auto bg-black"
+              controls
+              autoPlay
+              playsInline
+            />
+            <div className="px-5 py-4 flex items-center justify-between gap-3" style={{ background: theme.cardBg }}>
+              <div className="min-w-0">
+                <div className="flex items-center gap-2">
+                  <span className="text-lg">{previewing.emoji}</span>
+                  <h3 className="font-bold text-base truncate" style={{ color: theme.textPrimary }}>{previewing.title}</h3>
+                </div>
+                <p className="text-xs mt-0.5" style={{ color: theme.textSecondary }}>{previewing.subtitle}</p>
+              </div>
+              <Button
+                onClick={() => { const b = previewing; setPreviewing(null); handleDownload(b); }}
+                disabled={!code}
+                className="font-semibold shrink-0"
+                style={{ background: theme.primaryButton, color: theme.textPrimary }}
+              >
+                <Download className="w-4 h-4 mr-2" /> Download with my code
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
