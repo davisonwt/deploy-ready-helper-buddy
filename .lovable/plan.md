@@ -1,129 +1,87 @@
 
-This is a massive multi-system feature. I need to scope it pragmatically — build a real, working foundation rather than a half-broken everything. Let me inspect the current ChatApp + Seed architecture to plan integration points.
-<lov-tool-use id="toolu_vrtx_01PKaJ9BJCdxxPAaGJoinZpn" name="code--list_dir" integration-id="code" data="{\"dir_path\": \"src/components/chat\"}">
-</lov-tool-use>
+# Tribal Hearts — Ambassador-Only Dating Garden
 
-<lov-tool-use id="toolu_vrtx_01DNsHLiEvzmQoKaHTZdHpzg" name="code--search_files" integration-id="code" data="{\"query\": \"seed\", \"include_patterns\": \"supabase/migrations/*.sql\"}">
-</lov-tool-use>
+A safe, warm, heterosexual-only dating haven layered on top of the existing Sow2Grow tribe. Reuses ChatApp, S2G Agents (Gentoo + Debian), Ambassador gating, and the garden aesthetic.
 
-<lov-tool-use id="toolu_vrtx_01F3r5MHF43PuWrJdE57TCA9" name="code--list_dir" integration-id="code" data="{\"dir_path\": \"supabase/functions\"}">
-</lov-tool-use>
+## Scope (single build)
 
-<lov-tool-use id="toolu_vrtx_013peEBCUtz5TNkKJJzM1GWh" name="code--list_dir" integration-id="code" data="{\"dir_path\": \"src/components/chat\"}">
-</lov-tool-use>
+### 1. Database (new tables, all RLS-protected)
 
-<lov-tool-use id="toolu_vrtx_01Tk241tgidxBADZQ8TFLdT7" name="code--list_dir" integration-id="code" data="{\"dir_path\": \"supabase/functions\"}">
-</lov-tool-use>
+- **`tribal_hearts_profiles`** — one per opted-in member
+  - `user_id` (PK, FK profiles), `gender` ('male'|'female'), `seeking` (auto-set opposite), `birthdate`, `age_verified` (bool), `photo_verified` (bool), `bio`, `values[]`, `interests[]`, `lifestyle` (jsonb), `location_country`, `location_region`, `timezone`, `distance_pref_km`, `status` ('active'|'paused'|'hidden'), `last_active_at`
+- **`tribal_hearts_answers`** — 10–15 onboarding Q&A rows used by AI to draft bio
+- **`tribal_hearts_matches`** — `member_a_id`, `member_b_id` (always stored male/female pair), `compatibility_score`, `match_reasons` (jsonb), `a_response`, `b_response`, `status` ('pending'|'mutual'|'declined'), `chat_room_id` (set when mutual), `created_at`
+- **`tribal_hearts_blocks`** — block / report records
+- **`tribal_hearts_safety_flags`** — AI moderation flags on chat content (links to `chat_messages`)
 
-<lov-tool-use id="toolu_vrtx_01KibNM9M2qD9rkUr135Hmv2" name="code--search_files" integration-id="code" data="{\"query\": \"CREATE TABLE.*seed\", \"include_patterns\": \"*.sql\", \"case_sensitive\": false}">
-</lov-tool-use>
-<lov-plan>
+**Hard constraint at DB level**: a check constraint + trigger on `tribal_hearts_matches` ensures one row is male, the other is female (strict heterosexual rule enforced server-side, not just UI).
 
-## Linux Open Source Family — Autonomous AI Agent Suite for Sow2Grow
+**RLS**: members see only their own profile + matches; admins see safety flags. Profile photos served via existing storage; no email/phone columns ever exposed.
 
-A coordinated tribe of 8 penguin/Tux-themed AI agents that take over **all** post-upload work for every Seed: marketing, branding, content, messaging, calls, analytics, and bookkeeping. Built on Lovable AI Gateway + Lovable Cloud + the existing ChatApp.
+### 2. Edge functions
 
-### The Family (8 agents, each with a system prompt + capabilities)
+- **`tribal-hearts-onboard`** — takes the 10–15 answers, calls Lovable AI (`google/gemini-3-flash-preview`) with tool-calling to produce a structured `{bio, values[], interests[], lifestyle{}}` draft. Member edits before saving.
+- **`tribal-hearts-matcher`** — daily + on-demand. Pulls active opposite-gender profiles, scores by shared values/interests/lifestyle/timezone/distance, writes top N pending matches. Reuses pattern from existing `agent-bestowal-matcher`.
+- **`tribal-hearts-icebreaker`** — Debian generates a respectful opening message when both sides accept.
+- **`tribal-hearts-moderate`** — runs on new chat messages within hearts-linked rooms, flags unsafe content (PII sharing, harassment) and writes to `tribal_hearts_safety_flags`. Uses AI gateway with structured output.
 
-| Agent | Role | Owns |
-|---|---|---|
-| 🐧 **Gentoo the Overseer** | Master Coordinator | Orchestrates every other agent, generates Bestowal Reports, drives proactive prompts |
-| 🎨 **Tux the Content Penguin** | Marketing | Posts, reels, stories, newsletters, content strategy |
-| 🛡️ **Ubuntu the Branding Guardian** | Branding | Voice/tone/palette consistency across all output |
-| 🪄 **Kali the Image Wizard** | Images | Banners, brochures, flyers (Nano Banana) |
-| 🎬 **Fedora the Video Director** | Videos | Voice-over videos in EN + local langs (multi-platform cuts) |
-| 💬 **Debian the Messenger** | Messaging | 2-way ChatApp messaging w/ customers + bestowars |
-| 📞 **Arch the Caller** | Calls | Receives & makes voice + video calls via Jitsi/ChatApp |
-| 📒 **Mint the Bookkeeper** | Finance | Invoicing, expenses, Bestowal Reports, financial summaries |
+### 3. Access gating
 
-### Architecture
+- Reuse `useAgentAccess` pattern → new `useTribalHeartsAccess` hook that requires Ambassador OR `s2g_agent_free_access`. Non-ambassadors see a warm upsell card pointing to `/tribe-ambassador`.
+- 18+ check: blocks profile creation if `birthdate` < 18 yrs.
+
+### 4. UI — new route `/tribal-hearts`
 
 ```text
-   ┌──────────────────────────── Member Dashboard ──────────────────────────┐
-   │  /linux-family   ← Agent Dashboard + Linux Terminal + Reports + Stats   │
-   └──────────┬─────────────────────────────────────────────────────────────┘
-              │
-   ┌──────────▼──────────┐    proactive nudges    ┌──────────────────────┐
-   │   Gentoo (Overseer) │ ◄────────────────────► │  ChatApp (existing)  │
-   └──────┬──────────────┘                        │  msgs / calls / video │
-          │ delegates                             └──────────────────────┘
-   ┌──────┼──────┬──────┬──────┬──────┬──────┬──────┐
-   ▼      ▼      ▼      ▼      ▼      ▼      ▼      ▼
-  Tux  Ubuntu  Kali  Fedora Debian Arch  Mint  (shared memory)
-   │      │      │      │      │      │      │
-   └──────┴──────┴──────┴──────┴──────┴──────┴── Lovable AI Gateway
-                                       (gemini-3-flash-preview / nano-banana)
+TribalHeartsPage
+├── HeartsHeader (garden gradient, hearts + petals motif)
+├── SafetyBanner ("All chats, voice & video stay safely inside Sow2Grow 😊")
+├── Tabs:
+│   ├── Garden     → MatchGarden (suggested matches as flower cards)
+│   ├── Chats      → links to existing PrivateChatsDrawer filtered to hearts rooms
+│   ├── My Profile → ProfileBuilder + edit
+│   └── Safety     → block list, pause matching, report history, guidelines
 ```
 
-### Database (new tables, RLS by `user_id`)
+Components:
+- **HeartsOnboardingWizard** — 10–15 question guided flow (values, faith, lifestyle, what you're looking for, timezone, distance). On finish → calls `tribal-hearts-onboard`, shows AI-drafted profile, member edits with "Improve with Gentoo" button.
+- **MatchCard** — flower-styled card: photo (verified badge if applicable), first name, age, country, top 3 shared values, "Accept 🌸" / "Pass 🍃" buttons. NO email/phone fields anywhere.
+- **MutualMatchModal** — celebratory bloom animation, "Start chatting safely in the ChatApp" CTA → opens existing `UnifiedConversation` with the auto-created room.
+- **PauseMatchingToggle**, **BlockButton**, **ReportButton** — one-tap safety controls.
+- **AgentNudgeBubble** — small Gentoo/Debian voice lines ("We found 3 wonderful matches who share your values…").
 
-1. `linux_family_agents` — per-member agent state (enabled, last_activity, persona overrides)
-2. `linux_family_memory` — agent ↔ seed long-term memory (key/value JSONB, retrieval by seed_id + agent)
-3. `linux_family_tasks` — queued/running/done tasks with `agent_name`, `seed_id`, `payload`, `result`, `status`
-4. `linux_family_suggestions` — proactive suggestions awaiting user yes/no (e.g. "create voice-over videos?")
-5. `linux_family_activity_log` — live activity stream for the dashboard
-6. `bestowal_reports` — generated weekly/on-demand reports (PDF/JSON snapshot, period, metrics)
-7. `seed_analytics_daily` — rollup of views/reach/clicks/messages/calls/bestowals per seed per day
-8. `linux_family_social_connections` — IG/FB/TikTok/WhatsApp tokens per member (encrypted refs)
-9. `linux_family_outbound_messages` — log of messages Debian sent to other bestowars
-10. `linux_family_call_log` — Arch's call log (incoming/outgoing, duration, transcript, outcome)
+### 5. Sidebar entry
 
-### Edge Functions (Deno, all behind `LOVABLE_API_KEY`)
+Add nav item to `AppSidebar.tsx` between "Ambassador" and "GoSat's":
+- Label: **Tribal Hearts**, desc: "Garden of connections", icon: `Heart`, gradient warm rose→garden green. Only renders when ambassador access is detected (otherwise hidden — keeps dashboard clean for non-ambassadors).
 
-- `linux-family-orchestrator` — Gentoo's main loop. Triggered on seed upload, on cron (hourly), and on-demand. Decides which sub-agent runs.
-- `agent-tux-content` — generates posts/reels/newsletters via AI Gateway, queues them.
-- `agent-ubuntu-brand` — brand guardian: takes any draft from Tux/Kali/Fedora and rewrites for tone consistency.
-- `agent-kali-images` — image generation (Nano Banana 2 → Pro for hero images).
-- `agent-fedora-video` — wraps existing `generate-video` + `chatterbox-tts` to produce multi-platform cuts.
-- `agent-debian-messenger` — sends/replies to ChatApp messages + outbound bestowar broadcasts. Uses existing `send-bulk-system-message` infra.
-- `agent-arch-caller` — initiates Jitsi rooms, sends call invitations into ChatApp, logs transcripts.
-- `agent-mint-bookkeeper` — pulls bestowal/payment data, builds Bestowal Report (HTML → PDF stored in `/storage`).
-- `linux-family-cron` — runs every hour (pg_cron + pg_net): rolls up analytics, fires weekly reports, emits proactive suggestions.
-- `linux-family-terminal` — parses `tux post "..."`, `gentoo report 7d`, `arch call <user>` etc.
+### 6. ChatApp integration (no duplication)
 
-### Frontend (new route `/linux-family`)
+- When a match becomes mutual, the matcher creates a normal `chat_rooms` row with metadata `{ source: 'tribal_hearts', match_id }`.
+- `PrivateChatsDrawer` already shows it. We add a small heart badge + persistent safety footer "Stay inside Sow2Grow — voice & video are right here" in rooms where `metadata.source === 'tribal_hearts'`.
+- Voice/video already exist (Jitsi). Nothing new — just surfaced inside the room header.
+- **`tribal-hearts-moderate`** runs via `chat_messages` insert trigger → edge function for hearts rooms only.
 
-- **Agent Dashboard** (`src/pages/LinuxFamilyHub.tsx`)
-  - Family roster with live status pills (idle / working / waiting on you)
-  - Live Activity Feed (Supabase realtime on `linux_family_activity_log`)
-  - Suggestion Inbox (Approve / Decline / Snooze each card)
-  - Stats grid per Seed (views, reach, msgs, calls, bestowals, conversion)
-  - Bestowal Reports library (download PDF, share in chat)
-- **Linux Terminal** (`src/components/linux-family/LinuxTerminal.tsx`) — playful green-on-black CLI w/ command parser
-- **Seed Upload Hook** — after a new seed is created, Gentoo greets the member in ChatApp:
-  *"🐧 Your Seed is planted! Shall the whole Linux Family start marketing it and generating bestowal reports for you?"*
-- **Agent Personality Cards** — penguin avatars (generated once via Kali) + warm bios
+### 7. Agent voice lines
 
-### ChatApp Integration
+Hardcoded warm copy in `src/lib/heartsAgentLines.ts` (no AI cost) for nudges and empty states. Used by `AgentNudgeBubble`. Examples per the spec.
 
-- Each agent has a system "bot user" profile (Gentoo, Tux, …) so messages appear inside existing rooms and the `PrivateChatsDrawer`.
-- Reuses `chat_rooms`, `chat_messages`, and Jitsi `CallInterface` — no new chat plumbing.
-- Two-way: incoming user messages addressed to an agent route into `linux-family-orchestrator` via realtime trigger.
+### 8. Memory
 
-### Proactive Suggestions Engine
+Save `mem://features/tribal-hearts` describing the feature scope, gating rules, strict-hetero DB constraint, in-house-only comms rule, and the four edge functions. Update `mem://index.md` Memories list.
 
-`linux-family-cron` evaluates rules per Seed and inserts suggestions, e.g.:
-- High views + low bestowals → *"Shall Arch make follow-up calls?"*
-- 7 days since last report → *"Want a Bestowal Report for the last 7 days?"*
-- No social tokens → *"Connect IG/FB/TikTok/WhatsApp so we can push content?"*
-- Strong performance → *"Shall Debian message other bestowars with a collaboration offer?"*
+## Out of scope (intentionally)
+- Payments — Ambassador subscription already handles the $5/mo gate.
+- Photo verification automation — we add the `photo_verified` flag + admin review path; full liveness check can come later.
+- Push notifications — uses existing chat notification rails.
 
-### Tech Choices
-
-- AI: Lovable AI Gateway, default `google/gemini-3-flash-preview`; `gemini-2.5-pro` for reports; `nano-banana` for images
-- Storage: existing Supabase buckets for generated images/videos/PDFs
-- Cron: `pg_cron` + `pg_net` calling `linux-family-cron`
-- Social pushing: stub adapters first (IG/FB/TikTok/WhatsApp) — will request user OAuth/secrets when they enable that suggestion (Phase 2)
-
-### Phased Build (single response, but sequenced)
-
-1. **Phase 1 — Backbone**: tables, RLS, agent registry, orchestrator + Gentoo + Mint, Agent Dashboard, Bestowal Reports, Activity Feed, Linux Terminal.
-2. **Phase 2 — Content tribe**: Tux + Ubuntu + Kali + Fedora wired to existing video/image/TTS functions.
-3. **Phase 3 — Comms tribe**: Debian (ChatApp 2-way) + Arch (Jitsi calls + transcripts) + outbound bestowar messaging.
-4. **Phase 4 — Proactive cron**: rules engine, weekly reports, suggestion inbox, seed-upload greeting.
-
-### What I will NOT do without explicit follow-up
-
-- Connect real Instagram/Facebook/TikTok/WhatsApp APIs (needs OAuth secrets per provider — Tux will *prompt* the member when ready).
-- Make real outbound PSTN phone calls (Arch uses Jitsi voice/video inside ChatApp; Twilio can be added later via the Twilio connector if you want true phone numbers).
-
+## Files to create
+- 5 migrations (tables, RLS, hetero-pair trigger, moderation trigger)
+- 4 edge functions (`tribal-hearts-onboard`, `tribal-hearts-matcher`, `tribal-hearts-icebreaker`, `tribal-hearts-moderate`)
+- `src/pages/TribalHearts.tsx` + route in `App.tsx`
+- `src/components/hearts/` (HeartsHeader, SafetyBanner, HeartsOnboardingWizard, MatchGarden, MatchCard, MutualMatchModal, AgentNudgeBubble, SafetyTab, ProfileBuilder)
+- `src/hooks/useTribalHeartsAccess.ts`, `useTribalHeartsProfile.ts`, `useTribalHeartsMatches.ts`
+- `src/lib/heartsAgentLines.ts`
+- Sidebar entry update in `AppSidebar.tsx`
+- Tiny ChatApp room badge + safety footer for hearts rooms
+- `mem://features/tribal-hearts` + index update
