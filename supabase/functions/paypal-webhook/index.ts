@@ -42,8 +42,8 @@ async function verifyWebhookSignature(req: Request, body: string): Promise<boole
   try {
     const webhookId = Deno.env.get('PAYPAL_WEBHOOK_ID');
     if (!webhookId) {
-      console.warn('⚠️ PAYPAL_WEBHOOK_ID not set, skipping signature verification');
-      return true; // Allow in dev, but log warning
+      console.error('❌ PAYPAL_WEBHOOK_ID not configured — rejecting webhook (fail closed)');
+      return false;
     }
 
     const accessToken = await getPayPalAccessToken();
