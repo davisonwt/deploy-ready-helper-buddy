@@ -10,6 +10,8 @@ import { GardenSection as GardenOrchards } from './GardenSection';
 import { KeeperContentGrid } from './KeeperContentGrid';
 import { KeeperHelpButton } from './KeeperHelpButton';
 import { SectionHeading } from './SectionHeading';
+import { VisualGardenShell } from '@/components/garden/VisualGardenShell';
+import { TribalScoreBadge } from '@/components/tribal/TribalScoreBadge';
 
 interface MyGardenSectionProps {
   theme: DashboardTheme;
@@ -41,8 +43,16 @@ export const MyGardenSection: React.FC<MyGardenSectionProps> = ({ theme, stats }
         subtitle={`${stats.totalFollowers} followers · ${stats.totalOrchards} seeds · ${stats.totalBestowals} bestowals`}
         theme={theme}
         gradientColors={['#16a34a', '#4ade80']}
-        rightSlot={<KeeperHelpButton sectionName="My Garden" />}
+        rightSlot={
+          <div className="flex items-center gap-2">
+            <TribalScoreBadge size="sm" showBadges />
+            <KeeperHelpButton sectionName="My Garden" />
+          </div>
+        }
       />
+
+      {/* Living Garden visualization */}
+      <VisualGardenShell compact />
 
       {/* Quick Actions */}
       <div className="grid grid-cols-4 gap-2">
