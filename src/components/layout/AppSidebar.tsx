@@ -69,7 +69,7 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({ radioLive, userProfile }
       </div>
 
       {/* Nav Items — gradient cards */}
-      <nav className="min-h-0 flex-1 overflow-y-auto px-2 space-y-2 overscroll-contain">
+      <nav className="px-2 space-y-2">
         {navItems.map((item) => {
           const Icon = item.icon;
           return (
