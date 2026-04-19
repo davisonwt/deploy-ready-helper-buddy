@@ -633,8 +633,7 @@ export default function ProfilePage() {
                 <InfoRow icon={Calendar} label="Member Since" value={userStats.joinedDate} theme={theme} />
                 <InfoRow icon={CheckCircle} label="Verification" value={userStats.verificationLevel} theme={theme} />
                 <InfoRow icon={Crown} label="Rank" value={userStats.communityRank} theme={theme} />
-                <InfoRow icon={Sprout} label="Role" value="Farm Stall Owner" theme={theme} />
-                <InfoRow icon={Star} label="Rating" value="4.8/5.0" theme={theme} />
+                <InfoRow icon={Star} label="Rating" value={userStats.avgRating != null ? `${userStats.avgRating.toFixed(1)}/5.0` : "No reviews yet"} theme={theme} />
               </div>
             </CollapsibleSection>
 
