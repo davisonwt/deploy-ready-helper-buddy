@@ -17,7 +17,7 @@ const SceneNeed: React.FC = () => {
   const bubbleScale = interpolate(bubbleS, [0, 1], [0.3, 1]);
   const bubbleFloat = Math.sin(f / 14) * 10;
 
-  const people = ["🧑‍🌾", "👩‍🦱", "🧔", "👵", "🧑", "👨‍🦳", "👩"];
+  const people = ["👨", "👩", "🧒", "👴", "👵", "👦", "👧"];
   return (
     <AbsoluteFill style={{ justifyContent: "center", alignItems: "center" }}>
       {/* Floating need bubble (centered, slightly above mid) */}
