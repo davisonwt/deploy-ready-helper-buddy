@@ -11,7 +11,8 @@ import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { toast } from '@/hooks/use-toast';
-import { Loader2, Terminal as TerminalIcon, FileText, Sparkles, Activity, Wand2 } from 'lucide-react';
+import { Loader2, Terminal as TerminalIcon, FileText, Sparkles, Activity, Wand2, MessageCircle, Phone } from 'lucide-react';
+import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 const AGENTS = [
@@ -32,11 +33,18 @@ export default function LinuxFamilyHub() {
   const [suggestions, setSuggestions] = useState<any[]>([]);
   const [reports, setReports] = useState<any[]>([]);
   const [seeds, setSeeds] = useState<any[]>([]);
+  const [outbound, setOutbound] = useState<any[]>([]);
+  const [calls, setCalls] = useState<any[]>([]);
   const [selectedSeed, setSelectedSeed] = useState<string>('');
   const [platform, setPlatform] = useState<string>('instagram');
   const [language, setLanguage] = useState<string>('English');
   const [pack, setPack] = useState<any>(null);
   const [packBusy, setPackBusy] = useState(false);
+  // Comms state
+  const [blastKind, setBlastKind] = useState<string>('collab_offer');
+  const [blastLimit, setBlastLimit] = useState<number>(10);
+  const [blastCustom, setBlastCustom] = useState<string>('');
+  const [blastBusy, setBlastBusy] = useState(false);
   const [terminal, setTerminal] = useState<{ cmd: string; out: string }[]>([
     { cmd: '', out: 'Welcome to the Linux Open Source Family terminal. Type "help".' },
   ]);
@@ -50,18 +58,22 @@ export default function LinuxFamilyHub() {
   };
 
   const refresh = async () => {
-    const [a, l, s, r, sd] = await Promise.all([
+    const [a, l, s, r, sd, ob, cl] = await Promise.all([
       supabase.from('linux_family_agents').select('*').order('agent_name'),
       supabase.from('linux_family_activity_log').select('*').order('created_at', { ascending: false }).limit(40),
       supabase.from('linux_family_suggestions').select('*').eq('status', 'pending').order('created_at', { ascending: false }),
       supabase.from('bestowal_reports').select('*').order('created_at', { ascending: false }).limit(10),
       supabase.from('orchards').select('id,title,description').eq('user_id', user!.id).order('created_at', { ascending: false }).limit(50),
+      supabase.from('linux_family_outbound_messages').select('*').order('created_at', { ascending: false }).limit(20),
+      supabase.from('linux_family_call_log').select('*').order('created_at', { ascending: false }).limit(20),
     ]);
     setAgents(a.data ?? []);
     setActivity(l.data ?? []);
     setSuggestions(s.data ?? []);
     setReports(r.data ?? []);
     setSeeds(sd.data ?? []);
+    setOutbound(ob.data ?? []);
+    setCalls(cl.data ?? []);
     if (!selectedSeed && sd.data?.[0]) setSelectedSeed(sd.data[0].id);
   };
 
@@ -134,6 +146,31 @@ export default function LinuxFamilyHub() {
     } finally { setPackBusy(false); }
   };
 
+  const runCommsBlast = async () => {
+    const seed = seeds.find(s => s.id === selectedSeed);
+    setBlastBusy(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('linux-family-orchestrator', {
+        body: {
+          action: 'comms_blast',
+          seed_id: seed?.id ?? null,
+          payload: {
+            seed_title: seed?.title ?? 'a Sow2Grow Seed',
+            seed_description: seed?.description ?? '',
+            message_kind: blastKind,
+            limit: blastLimit,
+            custom_text: blastCustom.trim() || null,
+          },
+        },
+      });
+      if (error) throw error;
+      toast({ title: '💬 Debian sent the broadcast', description: `Reached ${data?.sent ?? 0} bestowars.` });
+      refresh();
+    } catch (e: any) {
+      toast({ title: 'Broadcast failed', description: e.message, variant: 'destructive' });
+    } finally { setBlastBusy(false); }
+  };
+
   const statusFor = (key: string) => agents.find(a => a.agent_name === key)?.status ?? 'idle';
 
   return (
@@ -175,6 +212,7 @@ export default function LinuxFamilyHub() {
         <TabsList className="flex-wrap h-auto">
           <TabsTrigger value="suggestions" className="gap-1"><Sparkles className="w-3 h-3"/> Suggestions {suggestions.length>0 && <Badge variant="destructive" className="ml-1 text-[9px]">{suggestions.length}</Badge>}</TabsTrigger>
           <TabsTrigger value="studio" className="gap-1"><Wand2 className="w-3 h-3"/> Studio</TabsTrigger>
+          <TabsTrigger value="comms" className="gap-1"><MessageCircle className="w-3 h-3"/> Comms</TabsTrigger>
           <TabsTrigger value="activity" className="gap-1"><Activity className="w-3 h-3"/> Activity</TabsTrigger>
           <TabsTrigger value="reports" className="gap-1"><FileText className="w-3 h-3"/> Reports</TabsTrigger>
           <TabsTrigger value="terminal" className="gap-1"><TerminalIcon className="w-3 h-3"/> Terminal</TabsTrigger>
@@ -256,6 +294,98 @@ export default function LinuxFamilyHub() {
               </div>
             ))}
           </CardContent></Card>
+        </TabsContent>
+
+        <TabsContent value="comms">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            <Card><CardContent className="p-4 space-y-3">
+              <div className="flex items-center gap-2">
+                <MessageCircle className="w-4 h-4 text-primary" />
+                <div className="font-semibold text-sm">💬 Debian · Bestowar broadcast</div>
+              </div>
+              <p className="text-xs text-muted-foreground">
+                Debian will draft a warm tribal message and send it to other active sowers in the tribe — perfect for collab offers, launches, or community asks.
+              </p>
+              <div className="grid grid-cols-2 gap-2">
+                <Select value={blastKind} onValueChange={setBlastKind}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="collab_offer">Collaboration offer</SelectItem>
+                    <SelectItem value="launch_announcement">Launch announcement</SelectItem>
+                    <SelectItem value="community_ask">Community ask</SelectItem>
+                    <SelectItem value="thank_you">Thank-you note</SelectItem>
+                  </SelectContent>
+                </Select>
+                <Select value={String(blastLimit)} onValueChange={v => setBlastLimit(parseInt(v))}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    {[5, 10, 25, 50].map(n => <SelectItem key={n} value={String(n)}>{n} bestowars</SelectItem>)}
+                  </SelectContent>
+                </Select>
+              </div>
+              <Textarea
+                placeholder="Optional: write your own message. Leave blank and Debian will craft one for you."
+                value={blastCustom}
+                onChange={e => setBlastCustom(e.target.value)}
+                className="text-sm"
+                rows={3}
+              />
+              <Button onClick={runCommsBlast} disabled={blastBusy} className="gap-2 w-full">
+                {blastBusy ? <Loader2 className="w-4 h-4 animate-spin"/> : <MessageCircle className="w-4 h-4"/>}
+                Send tribal broadcast
+              </Button>
+
+              <div className="border-t pt-3 mt-2">
+                <div className="text-xs font-semibold mb-2">Recent outbound messages</div>
+                <ScrollArea className="h-[180px]">
+                  <div className="space-y-2">
+                    {outbound.length === 0 && <p className="text-xs text-muted-foreground">No messages sent yet.</p>}
+                    {outbound.map(m => (
+                      <div key={m.id} className="text-xs border-l-2 border-primary/40 pl-2 py-1">
+                        <div className="text-muted-foreground text-[10px]">
+                          {m.message_type} · {m.channel} · {new Date(m.created_at).toLocaleString()}
+                        </div>
+                        <div className="line-clamp-2">{m.message_body}</div>
+                      </div>
+                    ))}
+                  </div>
+                </ScrollArea>
+              </div>
+            </CardContent></Card>
+
+            <Card><CardContent className="p-4 space-y-3">
+              <div className="flex items-center gap-2">
+                <Phone className="w-4 h-4 text-primary" />
+                <div className="font-semibold text-sm">📞 Arch · Call log</div>
+              </div>
+              <p className="text-xs text-muted-foreground">
+                Arch handles voice & video calls inside ChatApp. Place calls from the Communications Hub or via the terminal — every call is logged here.
+              </p>
+              <div className="flex gap-2 text-xs">
+                <a href="/communications" className="text-primary underline">Open Communications Hub →</a>
+              </div>
+
+              <div className="border-t pt-3 mt-2">
+                <div className="text-xs font-semibold mb-2">Recent calls</div>
+                <ScrollArea className="h-[280px]">
+                  <div className="space-y-2">
+                    {calls.length === 0 && <p className="text-xs text-muted-foreground">No calls yet.</p>}
+                    {calls.map(c => (
+                      <div key={c.id} className="text-xs border-l-2 border-primary/40 pl-2 py-1">
+                        <div className="font-medium">
+                          {c.direction === 'outgoing' ? '↗' : '↘'} {c.call_type} · {c.outcome}
+                        </div>
+                        <div className="text-muted-foreground text-[10px]">
+                          {c.duration_seconds ? `${c.duration_seconds}s · ` : ''}{new Date(c.created_at).toLocaleString()}
+                        </div>
+                        {c.transcript && <div className="line-clamp-2 text-[11px] mt-1">{c.transcript}</div>}
+                      </div>
+                    ))}
+                  </div>
+                </ScrollArea>
+              </div>
+            </CardContent></Card>
+          </div>
         </TabsContent>
 
         <TabsContent value="activity">

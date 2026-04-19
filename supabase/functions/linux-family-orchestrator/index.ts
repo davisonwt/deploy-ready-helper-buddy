@@ -128,6 +128,61 @@ serve(async (req) => {
         return ok({ pack });
       }
 
+      case "comms_blast": {
+        // Debian sends a tribal broadcast to N other bestowars (sowers w/ at least 1 orchard)
+        const { seed_title = "your Seed", seed_description = "", message_kind = "collab_offer", limit = 10, custom_text = null } = (payload ?? {}) as any;
+        await setAgentStatus(user.id, "gentoo", "working");
+
+        // Pick recipients: other active sowers (exclude self), most recent first
+        const { data: others } = await admin
+          .from("orchards")
+          .select("user_id")
+          .neq("user_id", user.id)
+          .eq("status", "active")
+          .order("created_at", { ascending: false })
+          .limit(limit * 3);
+        const recipients = Array.from(new Set((others ?? []).map((o: any) => o.user_id))).slice(0, limit);
+
+        if (recipients.length === 0) {
+          await logActivity(user.id, "debian", "no_recipients", "💬 No other bestowars found to message yet.", {}, seed_id ?? null);
+          await setAgentStatus(user.id, "gentoo", "idle");
+          return ok({ sent: 0 });
+        }
+
+        const auth = req.headers.get("Authorization") ?? "";
+        const r = await fetch(`${Deno.env.get("SUPABASE_URL")!}/functions/v1/agent-debian-messenger`, {
+          method: "POST",
+          headers: { Authorization: auth, "Content-Type": "application/json" },
+          body: JSON.stringify({
+            mode: "send",
+            recipient_user_ids: recipients,
+            seed_title, message_kind, custom_text, seed_id,
+          }),
+        });
+        const dj = await r.json();
+        await logActivity(user.id, "gentoo", "comms_blast_done",
+          `🐧 → 💬 Debian reached out to ${dj.sent ?? 0} bestowars about "${seed_title}".`,
+          { count: dj.sent }, seed_id ?? null);
+        await setAgentStatus(user.id, "gentoo", "idle");
+        return ok({ sent: dj.sent ?? 0, body: dj.body });
+      }
+
+      case "arch_call": {
+        // Arch places a Jitsi call (audio/video) to a counterparty
+        const { counterparty_user_id, call_type = "video" } = (payload ?? {}) as any;
+        if (!counterparty_user_id) return ok({ error: "counterparty_user_id required" });
+        const auth = req.headers.get("Authorization") ?? "";
+        const r = await fetch(`${Deno.env.get("SUPABASE_URL")!}/functions/v1/agent-arch-caller`, {
+          method: "POST",
+          headers: { Authorization: auth, "Content-Type": "application/json" },
+          body: JSON.stringify({ mode: "place", counterparty_user_id, call_type, seed_id }),
+        });
+        const aj = await r.json();
+        await logActivity(user.id, "gentoo", "arch_call_placed",
+          `🐧 → 📞 Arch placed a ${call_type} call.`, { jitsi_room: aj.jitsi_room }, seed_id ?? null);
+        return ok(aj);
+      }
+
       case "respond_suggestion": {
         const { suggestion_id, decision } = payload as { suggestion_id: string; decision: "approved" | "declined" | "snoozed" };
         await admin.from("linux_family_suggestions").update({
