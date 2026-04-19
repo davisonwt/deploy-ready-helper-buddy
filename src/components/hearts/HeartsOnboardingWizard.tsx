@@ -137,8 +137,12 @@ export function HeartsOnboardingWizard({ onDone }: { onDone: () => void }) {
         </div>
         <div className="relative h-2 overflow-hidden rounded-full bg-muted">
           <div
-            className="absolute inset-y-0 left-0 rounded-full bg-gradient-to-r from-primary via-primary/90 to-rose-400 shadow-[0_0_12px_hsl(var(--primary)/0.6)] transition-all duration-500"
-            style={{ width: `${progress}%` }}
+            className="absolute inset-y-0 left-0 rounded-full transition-all duration-500"
+            style={{
+              width: `${progress}%`,
+              background: 'linear-gradient(90deg, hsl(var(--primary)), hsl(330 80% 65%))',
+              boxShadow: '0 0 12px hsl(var(--primary) / 0.6)',
+            }}
           />
         </div>
       </div>
