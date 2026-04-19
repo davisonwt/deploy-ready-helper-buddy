@@ -52,11 +52,19 @@ export default function TribalHearts() {
       {profileLoading ? (
         <div className="text-sm text-muted-foreground">Loading your profile…</div>
       ) : !profile ? (
-        <Card className="p-5">
-          <h2 className="mb-2 text-lg font-semibold">Plant your Tribal Hearts profile 🌱</h2>
-          <p className="mb-4 text-sm text-muted-foreground">
-            A short, fun guided flow — Gentoo will draft something warm and you can edit before publishing.
-          </p>
+        <Card className="overflow-hidden border-primary/20 p-5 shadow-xl backdrop-blur-md"
+              style={{ background: 'linear-gradient(160deg, hsl(var(--card)), hsl(var(--primary) / 0.06))' }}>
+          <div className="mb-4">
+            <div className="inline-flex items-center gap-1.5 rounded-full bg-primary/10 px-3 py-1 text-[11px] font-medium uppercase tracking-[0.16em] text-primary">
+              <Heart className="h-3 w-3" fill="currentColor" /> Begin your journey
+            </div>
+            <h2 className="mt-2 font-serif text-2xl font-semibold leading-tight text-foreground">
+              Plant your Tribal Hearts story
+            </h2>
+            <p className="mt-1 text-sm text-muted-foreground">
+              A short, warm conversation — Gentoo will weave your answers into something beautiful, then you make it your own.
+            </p>
+          </div>
           <HeartsOnboardingWizard onDone={reload} />
         </Card>
       ) : (
