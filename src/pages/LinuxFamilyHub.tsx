@@ -58,18 +58,22 @@ export default function LinuxFamilyHub() {
   };
 
   const refresh = async () => {
-    const [a, l, s, r, sd] = await Promise.all([
+    const [a, l, s, r, sd, ob, cl] = await Promise.all([
       supabase.from('linux_family_agents').select('*').order('agent_name'),
       supabase.from('linux_family_activity_log').select('*').order('created_at', { ascending: false }).limit(40),
       supabase.from('linux_family_suggestions').select('*').eq('status', 'pending').order('created_at', { ascending: false }),
       supabase.from('bestowal_reports').select('*').order('created_at', { ascending: false }).limit(10),
       supabase.from('orchards').select('id,title,description').eq('user_id', user!.id).order('created_at', { ascending: false }).limit(50),
+      supabase.from('linux_family_outbound_messages').select('*').order('created_at', { ascending: false }).limit(20),
+      supabase.from('linux_family_call_log').select('*').order('created_at', { ascending: false }).limit(20),
     ]);
     setAgents(a.data ?? []);
     setActivity(l.data ?? []);
     setSuggestions(s.data ?? []);
     setReports(r.data ?? []);
     setSeeds(sd.data ?? []);
+    setOutbound(ob.data ?? []);
+    setCalls(cl.data ?? []);
     if (!selectedSeed && sd.data?.[0]) setSelectedSeed(sd.data[0].id);
   };
 
