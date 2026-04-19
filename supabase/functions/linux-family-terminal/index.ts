@@ -18,7 +18,7 @@ serve(async (req) => {
     if (cmd === "help" || cmd === "" || cmd === "ls") {
       output = "Linux Family CLI\n────────────────\n" +
         Object.entries(AGENTS).map(([k,v])=>`  ${v.emoji} ${k.padEnd(8)} — ${v.role}`).join("\n") +
-        "\n\nExamples:\n  gentoo report 7\n  mint report 30\n  tux post \"new harvest\"\n  status\n  clear";
+        "\n\nExamples:\n  gentoo report 7\n  mint report 30\n  tux post \"new harvest\"\n  debian blast 10 Want to collab on this Seed?\n  arch call <user_id> video\n  status\n  clear";
     } else if (cmd === "status") {
       const { data } = await adminClient().from("linux_family_agents").select("agent_name,status,last_activity_at").eq("user_id", user.id);
       output = (data ?? []).map(a => `  ${AGENTS[a.agent_name as keyof typeof AGENTS]?.emoji ?? "•"} ${a.agent_name.padEnd(8)} ${a.status}`).join("\n");
