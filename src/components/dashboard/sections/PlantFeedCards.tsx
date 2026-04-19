@@ -127,8 +127,8 @@ export const PlantFeedCards: React.FC<PlantFeedCardsProps> = ({ theme }) => {
               {card.video && (
                 <Button
                   size="sm"
-                  variant="outline"
-                  className="text-xs h-7 rounded-lg w-full gap-1.5"
+                  className="text-xs h-7 rounded-lg w-full gap-1.5 font-semibold !text-white !border-0"
+                  style={{ backgroundImage: 'linear-gradient(135deg, #ec4899, #8b5cf6)', backgroundColor: 'transparent' }}
                   onClick={(e) => {
                     e.preventDefault();
                     e.stopPropagation();
@@ -140,7 +140,8 @@ export const PlantFeedCards: React.FC<PlantFeedCardsProps> = ({ theme }) => {
               )}
               <Button
                 size="sm"
-                className="text-xs h-7 rounded-lg w-full"
+                className="text-xs h-7 rounded-lg w-full font-semibold !text-white !border-0"
+                style={{ backgroundImage: 'linear-gradient(135deg, #10b981, #14b8a6)', backgroundColor: 'transparent' }}
                 onClick={(e) => e.stopPropagation()}
               >
                 {card.buttonLabel}
