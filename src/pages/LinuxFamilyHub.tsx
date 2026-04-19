@@ -146,7 +146,30 @@ export default function LinuxFamilyHub() {
     } finally { setPackBusy(false); }
   };
 
-  const statusFor = (key: string) => agents.find(a => a.agent_name === key)?.status ?? 'idle';
+  const runCommsBlast = async () => {
+    const seed = seeds.find(s => s.id === selectedSeed);
+    setBlastBusy(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('linux-family-orchestrator', {
+        body: {
+          action: 'comms_blast',
+          seed_id: seed?.id ?? null,
+          payload: {
+            seed_title: seed?.title ?? 'a Sow2Grow Seed',
+            seed_description: seed?.description ?? '',
+            message_kind: blastKind,
+            limit: blastLimit,
+            custom_text: blastCustom.trim() || null,
+          },
+        },
+      });
+      if (error) throw error;
+      toast({ title: '💬 Debian sent the broadcast', description: `Reached ${data?.sent ?? 0} bestowars.` });
+      refresh();
+    } catch (e: any) {
+      toast({ title: 'Broadcast failed', description: e.message, variant: 'destructive' });
+    } finally { setBlastBusy(false); }
+  };
 
   return (
     <div className="container mx-auto p-4 max-w-6xl space-y-4">
