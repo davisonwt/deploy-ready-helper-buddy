@@ -13,6 +13,8 @@ import { SectionHeading } from './SectionHeading';
 import { VisualGardenShell } from '@/components/garden/VisualGardenShell';
 import { TribalScoreBadge } from '@/components/tribal/TribalScoreBadge';
 import { TribalMatchesCards } from '@/components/tribal/TribalMatchesCards';
+import { LogisticsPulseCard } from '@/components/tribal/LogisticsPulseCard';
+import { PricingPulseCard } from '@/components/tribal/PricingPulseCard';
 
 interface MyGardenSectionProps {
   theme: DashboardTheme;
@@ -57,6 +59,20 @@ export const MyGardenSection: React.FC<MyGardenSectionProps> = ({ theme, stats }
 
       {/* Tribal Collaboration Matches (Phase 2) */}
       <TribalMatchesCards theme={theme} dispatchDm />
+
+      {/* Loaf + Sage intel (Phase 3) */}
+      <div className="grid gap-3 sm:grid-cols-2">
+        <LogisticsPulseCard theme={theme} />
+        <PricingPulseCard theme={theme} />
+      </div>
+
+      {/* Quick link to full matches inbox */}
+      <Link
+        to="/my-matches"
+        className="block rounded-xl border border-dashed border-primary/30 bg-primary/5 px-4 py-2.5 text-center text-xs font-semibold text-primary hover:border-primary/60 hover:bg-primary/10 transition"
+      >
+        Open full Tribal Matches inbox →
+      </Link>
 
       {/* Quick Actions */}
       <div className="grid grid-cols-4 gap-2">
