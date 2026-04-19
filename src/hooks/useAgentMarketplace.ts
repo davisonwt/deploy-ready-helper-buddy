@@ -70,6 +70,20 @@ export function useAgentMarketplace() {
     return { error };
   };
 
+  /** Paid install: creates a NOWPayments invoice and a pending install row.
+   *  Returns the invoice URL — caller should open it. The install is activated
+   *  by the nowpayments-webhook on confirmed payment. */
+  const startPaidInstall = async (templateId: string, customConfig: any = {}) => {
+    if (!user?.id) return { error: 'Not authenticated', invoiceUrl: null as string | null };
+    const { data, error } = await supabase.functions.invoke('create-agent-install-payment', {
+      body: { templateId, customConfig },
+    });
+    if (error) return { error: error.message || 'Could not start payment', invoiceUrl: null };
+    if (!data?.invoiceUrl) return { error: data?.error || 'Failed to create payment', invoiceUrl: null };
+    await refresh();
+    return { error: null, invoiceUrl: data.invoiceUrl as string };
+  };
+
   const toggleInstall = async (installId: string, enabled: boolean) => {
     const { error } = await supabase.from('agent_template_installs').update({ enabled }).eq('id', installId);
     if (!error) await refresh();
@@ -100,5 +114,5 @@ export function useAgentMarketplace() {
     return { error };
   };
 
-  return { templates, installs, myDrafts, loading, refresh, installTemplate, toggleInstall, uninstall, submitTemplate };
+  return { templates, installs, myDrafts, loading, refresh, installTemplate, startPaidInstall, toggleInstall, uninstall, submitTemplate };
 }

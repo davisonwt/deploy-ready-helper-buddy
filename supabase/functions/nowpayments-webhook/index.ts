@@ -239,11 +239,13 @@ serve(async (req) => {
       processed_at: new Date().toISOString(),
     });
 
-    // Determine if this is an orchard bestowal or product/tithe payment
+    // Determine if this is an orchard bestowal or product/tithe/agent payment
     const orderId = ipnData.order_id;
-    const isOrchardBestowal = !orderId.startsWith('product_') && 
-                              !orderId.startsWith('tithe_') && 
-                              !orderId.startsWith('freewill_');
+    const isAgentInstall = orderId.startsWith('agent_install_');
+    const isOrchardBestowal = !orderId.startsWith('product_') &&
+                              !orderId.startsWith('tithe_') &&
+                              !orderId.startsWith('freewill_') &&
+                              !isAgentInstall;
 
     // Map NOWPayments status to our status
     let paymentStatus: string;
@@ -277,6 +279,54 @@ serve(async (req) => {
 
     let bestowal: any = null;
     let growerUserId: string | null = null;
+
+    // ─── AGENT TEMPLATE INSTALL ─────────────────────────────────────
+    if (isAgentInstall) {
+      const installId = orderId.replace('agent_install_', '');
+      console.log('🤖 Agent install payment for install:', installId, 'status:', paymentStatus);
+
+      if (paymentStatus === 'completed') {
+        // Activate the install
+        const { data: install, error: instError } = await supabase
+          .from('agent_template_installs')
+          .update({ enabled: true, installed_at: new Date().toISOString() })
+          .eq('id', installId)
+          .select('id, template_id, user_id')
+          .single();
+
+        if (instError || !install) {
+          console.error('❌ Failed to activate agent install:', instError);
+        } else {
+          // Bump installs_count on the template
+          const { data: tplRow } = await supabase
+            .from('agent_templates')
+            .select('installs_count, author_id')
+            .eq('id', install.template_id)
+            .single();
+
+          if (tplRow) {
+            await supabase
+              .from('agent_templates')
+              .update({ installs_count: (tplRow.installs_count || 0) + 1 })
+              .eq('id', install.template_id);
+
+            // Credit author 85% as pending balance (released via standard sower payout flow)
+            const authorAmount = ipnData.price_amount * 0.85;
+            await updateSowerBalance(supabase, tplRow.author_id, authorAmount, 'add_available');
+            console.log(`💰 Credited template author $${authorAmount.toFixed(2)} for install ${installId}`);
+          }
+        }
+      } else if (paymentStatus === 'failed' || paymentStatus === 'expired') {
+        // Roll back the pending install
+        await supabase.from('agent_template_installs').delete().eq('id', installId).eq('enabled', false);
+        console.log('🗑️ Removed pending install due to failed payment:', installId);
+      }
+
+      return new Response(
+        JSON.stringify({ success: true, type: 'agent_install', status: paymentStatus }),
+        { headers: webhookHeaders }
+      );
+    }
 
     if (isOrchardBestowal) {
       // Get the bestowal by order_id

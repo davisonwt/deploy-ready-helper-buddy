@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Heart, MessageCircle, Share2, Send, Gift, ChevronLeft, ChevronRight, Play, Pause, Music, Lock } from 'lucide-react';
+import { Heart, MessageCircle, Share2, Send, Gift, ChevronLeft, ChevronRight, Play, Pause, Music, Lock, Sparkles } from 'lucide-react';
 import { SowerStoryStrip } from './SowerStoryStrip';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
@@ -50,6 +50,8 @@ interface MemrySeedCardProps {
   onFollow: (userId: string) => void;
   onOpenComments: (postId: string) => void;
   onPrivateMessage?: (targetUserId: string, seedCaption: string) => void;
+  /** True when this orchard has received an Elder Council blessing */
+  isBlessed?: boolean;
 }
 
 const toHandle = (value?: string) => {
@@ -175,7 +177,7 @@ const SeedAudioPreview: React.FC<{ audioUrl: string }> = ({ audioUrl }) => {
    ══════════════════════════════════════════════════════════════ */
 
 export const MemrySeedCard: React.FC<MemrySeedCardProps> = ({
-  post, user, isFollowing, onLike, onFollow, onOpenComments, onPrivateMessage,
+  post, user, isFollowing, onLike, onFollow, onOpenComments, onPrivateMessage, isBlessed = false,
 }) => {
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -443,6 +445,15 @@ export const MemrySeedCard: React.FC<MemrySeedCardProps> = ({
             </Link>
             {(isSeed || isMusic) && (
               <span className="bg-emerald-500/80 text-white text-[9px] font-bold px-1.5 py-0.5 rounded-full">{getSeedTypeLabel()}</span>
+            )}
+            {isOrchard && isBlessed && (
+              <span
+                title="Blessed by the Elder Council"
+                className="inline-flex items-center gap-0.5 bg-gradient-to-r from-amber-400 to-amber-600 text-white text-[9px] font-bold px-1.5 py-0.5 rounded-full shadow-sm"
+              >
+                <Sparkles className="w-2.5 h-2.5" />
+                Council Blessed
+              </span>
             )}
             {isFollowing && (
               <span className="bg-muted text-muted-foreground text-[9px] font-semibold px-1.5 py-0.5 rounded-full">Following</span>
