@@ -37,12 +37,12 @@ function pickFocusForMentee(s: ScoreRow): FocusArea {
 }
 
 function pickFocusForMentor(s: ScoreRow): FocusArea[] {
-  // Mentors offer their strongest areas
+  // Mentors offer their strongest areas (lowered floors so early-stage mentors qualify)
   const out: FocusArea[] = [];
-  if (s.orchards_count >= 5) out.push('orchard_growth');
-  if (s.bestowals_given_count >= 10) out.push('sales_velocity');
-  if (s.tribe_size >= 5) out.push('community_building');
-  if (s.reviews_avg_rating >= 4.5) out.push('spiritual_walk');
+  if (s.orchards_count >= 2) out.push('orchard_growth');
+  if (s.bestowals_given_count >= 3) out.push('sales_velocity');
+  if (s.tribe_size >= 2) out.push('community_building');
+  if (s.reviews_avg_rating >= 4.0) out.push('spiritual_walk');
   return out.length ? out : ['community_building'];
 }
 
@@ -67,11 +67,14 @@ async function findCandidatesForMentee(
 ) {
   const focus = pickFocusForMentee(menteeScore);
 
-  // Mentors must be score >= 500 AND not the mentee
+  // Mentors must score higher than the mentee AND meet a low floor (100)
+  // — keeps pairings meaningful while letting an early-stage tribe generate real matches
+  const MENTOR_FLOOR = 100;
+  const minMentorScore = Math.max(MENTOR_FLOOR, (menteeScore.score ?? 0) + 25);
   const { data: mentors } = await supabase
     .from('tribal_scores')
     .select('user_id, score, tier, orchards_count, bestowals_given_count, tribe_size, reviews_avg_rating')
-    .gte('score', 500)
+    .gte('score', minMentorScore)
     .neq('user_id', menteeId)
     .order('score', { ascending: false })
     .limit(20);
