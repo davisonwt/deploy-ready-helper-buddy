@@ -45,7 +45,7 @@ const BANNERS: BannerVideo[] = [
   { id: "wandering-pillow-book",      title: "Book a Wandering Pillow",    subtitle: "Find a stay with the tribe",       emoji: "🏨", src: "/videos/banners/wandering-pillow-book.mp4",      available: true },
   { id: "wandering-field-book",       title: "Connect with Wandering Field", subtitle: "Order fresh produce from farmers", emoji: "🥬", src: "/videos/banners/wandering-field-book.mp4",       available: true },
   { id: "wandering-hearth-book",      title: "Connect with Wandering Hearth", subtitle: "Order from homesteaders",       emoji: "🍞", src: "/videos/banners/wandering-hearth-book.mp4",      available: true },
-  { id: "wandering-forge-book",       title: "Connect with Wandering Forge", subtitle: "Order from tribal factories",    emoji: "📦", src: "/videos/banners/wandering-forge.mp4",            available: true },
+  { id: "wandering-forge-book",       title: "Connect with Wandering Forge", subtitle: "Order from tribal factories",    emoji: "📦", src: "/videos/banners/wandering-forge-book.mp4",       available: true },
 
   // — Plant & Sow —
   { id: "community-orchard",          title: "Community Orchard",          subtitle: "Open a community-funded orchard",  emoji: "🌳", src: "/videos/banners/community-orchard.mp4",          available: true },
