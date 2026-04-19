@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
-import { NavLink, useNavigate } from 'react-router-dom';
+import { NavLink } from 'react-router-dom';
 import {
   Home, Sprout, TreePine, MessageSquare, Calendar,
-  CloudRain, Settings, Plus, Users, BarChart3, Video, MessageCircle, Sparkles, Film, Bot
+  CloudRain, Settings, Users, BarChart3, Sparkles, Film, Bot
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
@@ -36,7 +36,6 @@ const adminItems = [
 ];
 
 export const AppSidebar: React.FC<AppSidebarProps> = ({ radioLive, userProfile }) => {
-  const navigate = useNavigate();
   const [plantModalOpen, setPlantModalOpen] = useState(false);
   const { isGosat, isAdmin } = useRoles();
   const initials = (userProfile?.display_name || 'S')
@@ -124,34 +123,6 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({ radioLive, userProfile }
           })}
         </div>
       )}
-
-      {/* Action Buttons */}
-      <div className="flex shrink-0 flex-nowrap gap-1.5 px-2 pt-3">
-        <button
-          onClick={() => setPlantModalOpen(true)}
-          className="pill-action shimmer-hover flex h-9 min-w-0 flex-1 basis-0 items-center justify-center gap-1.5 overflow-hidden px-2 text-[11px] leading-none text-white sm:h-10 sm:text-xs"
-          style={{ background: 'linear-gradient(135deg, #1D9E75 0%, #34D399 100%)' }}
-        >
-          <Sprout className="h-3.5 w-3.5 shrink-0" />
-          <span className="truncate whitespace-nowrap">Plant</span>
-        </button>
-        <button
-          onClick={() => navigate('/communications-hub?tab=radio&create=1')}
-          className="pill-action shimmer-hover flex h-9 min-w-0 flex-1 basis-0 items-center justify-center gap-1.5 overflow-hidden px-2 text-[11px] leading-none text-white sm:h-10 sm:text-xs"
-          style={{ background: 'linear-gradient(135deg, #E24B4A 0%, #F87171 100%)' }}
-        >
-          <Video className="h-3.5 w-3.5 shrink-0" />
-          <span className="truncate whitespace-nowrap">Go Live</span>
-        </button>
-        <button
-          onClick={() => navigate('/communications-hub')}
-          className="pill-action shimmer-hover flex h-9 min-w-0 flex-1 basis-0 items-center justify-center gap-1.5 overflow-hidden px-2 text-[11px] leading-none text-white sm:h-10 sm:text-xs"
-          style={{ background: 'linear-gradient(135deg, #0E9BAA 0%, #22D3EE 100%)' }}
-        >
-          <MessageCircle className="h-3.5 w-3.5 shrink-0" />
-          <span className="truncate whitespace-nowrap">Chat</span>
-        </button>
-      </div>
 
       <PlantModal open={plantModalOpen} onOpenChange={setPlantModalOpen} />
     </div>
