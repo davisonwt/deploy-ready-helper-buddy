@@ -15,6 +15,8 @@ import { YhvhDaysSection } from './sections/YhvhDaysSection';
 import { MyGardenSection } from './sections/MyGardenSection';
 import { LetItRainSection } from './sections/LetItRainSection';
 import { GosatsSection } from './sections/GosatsSection';
+import { AgentMarketplaceSection } from './sections/AgentMarketplaceSection';
+import { ElderCouncilSection } from './sections/ElderCouncilSection';
 import { PlantFeedCards } from './sections/PlantFeedCards';
 import { DriverPromoCard } from '../feed/cards/DriverPromoCard';
 
@@ -150,6 +152,16 @@ export const SocialFeedDashboard: React.FC<SocialFeedDashboardProps> = ({
       {/* === MY GARDEN SECTION === */}
       <DashboardSection ref={setSectionRef('garden')} id="garden" theme={sectionThemes['garden']}>
         <MyGardenSection theme={sectionThemes['garden']} stats={stats} />
+      </DashboardSection>
+
+      {/* === AGENT MARKETPLACE === */}
+      <DashboardSection ref={setSectionRef('agents')} id="agents" theme={sectionThemes['agents']}>
+        <AgentMarketplaceSection theme={sectionThemes['agents']} />
+      </DashboardSection>
+
+      {/* === ELDER COUNCIL === */}
+      <DashboardSection ref={setSectionRef('council')} id="council" theme={sectionThemes['council']}>
+        <ElderCouncilSection theme={sectionThemes['council']} />
       </DashboardSection>
 
       {/* === INTERSTITIAL: Tribal Biz Ads === */}

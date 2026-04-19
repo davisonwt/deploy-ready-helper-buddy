@@ -146,6 +146,155 @@ export type Database = {
         }
         Relationships: []
       }
+      agent_template_installs: {
+        Row: {
+          bestowal_id: string | null
+          custom_config: Json
+          enabled: boolean
+          id: string
+          installed_at: string
+          last_run_at: string | null
+          run_count: number
+          template_id: string
+          user_id: string
+        }
+        Insert: {
+          bestowal_id?: string | null
+          custom_config?: Json
+          enabled?: boolean
+          id?: string
+          installed_at?: string
+          last_run_at?: string | null
+          run_count?: number
+          template_id: string
+          user_id: string
+        }
+        Update: {
+          bestowal_id?: string | null
+          custom_config?: Json
+          enabled?: boolean
+          id?: string
+          installed_at?: string
+          last_run_at?: string | null
+          run_count?: number
+          template_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "agent_template_installs_bestowal_id_fkey"
+            columns: ["bestowal_id"]
+            isOneToOne: false
+            referencedRelation: "bestowals"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "agent_template_installs_template_id_fkey"
+            columns: ["template_id"]
+            isOneToOne: false
+            referencedRelation: "agent_templates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      agent_template_reviews: {
+        Row: {
+          created_at: string
+          decision: string
+          id: string
+          notes: string | null
+          reviewer_id: string
+          template_id: string
+        }
+        Insert: {
+          created_at?: string
+          decision: string
+          id?: string
+          notes?: string | null
+          reviewer_id: string
+          template_id: string
+        }
+        Update: {
+          created_at?: string
+          decision?: string
+          id?: string
+          notes?: string | null
+          reviewer_id?: string
+          template_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "agent_template_reviews_template_id_fkey"
+            columns: ["template_id"]
+            isOneToOne: false
+            referencedRelation: "agent_templates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      agent_templates: {
+        Row: {
+          author_id: string
+          category: string
+          created_at: string
+          currency: string
+          default_schedule: string | null
+          description: string
+          icon: string | null
+          id: string
+          install_bestowal_amount: number
+          installs_count: number
+          is_featured: boolean
+          name: string
+          prompt_template: string
+          rating_avg: number
+          rating_count: number
+          status: string
+          trigger_config: Json
+          updated_at: string
+        }
+        Insert: {
+          author_id: string
+          category?: string
+          created_at?: string
+          currency?: string
+          default_schedule?: string | null
+          description: string
+          icon?: string | null
+          id?: string
+          install_bestowal_amount?: number
+          installs_count?: number
+          is_featured?: boolean
+          name: string
+          prompt_template: string
+          rating_avg?: number
+          rating_count?: number
+          status?: string
+          trigger_config?: Json
+          updated_at?: string
+        }
+        Update: {
+          author_id?: string
+          category?: string
+          created_at?: string
+          currency?: string
+          default_schedule?: string | null
+          description?: string
+          icon?: string | null
+          id?: string
+          install_bestowal_amount?: number
+          installs_count?: number
+          is_featured?: boolean
+          name?: string
+          prompt_template?: string
+          rating_avg?: number
+          rating_count?: number
+          status?: string
+          trigger_config?: Json
+          updated_at?: string
+        }
+        Relationships: []
+      }
       ai_creations: {
         Row: {
           content_text: string | null
@@ -2085,6 +2234,50 @@ export type Database = {
         }
         Relationships: []
       }
+      council_decisions: {
+        Row: {
+          created_at: string
+          decision_type: string
+          entity_id: string | null
+          entity_type: string | null
+          id: string
+          notes: string | null
+          seat_id: string
+          user_id: string
+          vote: string
+        }
+        Insert: {
+          created_at?: string
+          decision_type: string
+          entity_id?: string | null
+          entity_type?: string | null
+          id?: string
+          notes?: string | null
+          seat_id: string
+          user_id: string
+          vote: string
+        }
+        Update: {
+          created_at?: string
+          decision_type?: string
+          entity_id?: string | null
+          entity_type?: string | null
+          id?: string
+          notes?: string | null
+          seat_id?: string
+          user_id?: string
+          vote?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "council_decisions_seat_id_fkey"
+            columns: ["seat_id"]
+            isOneToOne: false
+            referencedRelation: "elder_council_seats"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       courier_deliveries: {
         Row: {
           bestowal_id: string
@@ -2491,6 +2684,39 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      elder_council_seats: {
+        Row: {
+          id: string
+          is_active: boolean
+          notes: string | null
+          seat_type: string
+          seated_at: string
+          seated_by: string | null
+          term_ends_at: string | null
+          user_id: string
+        }
+        Insert: {
+          id?: string
+          is_active?: boolean
+          notes?: string | null
+          seat_type?: string
+          seated_at?: string
+          seated_by?: string | null
+          term_ends_at?: string | null
+          user_id: string
+        }
+        Update: {
+          id?: string
+          is_active?: boolean
+          notes?: string | null
+          seat_type?: string
+          seated_at?: string
+          seated_by?: string | null
+          term_ends_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
       }
       error_logs: {
         Row: {
@@ -4131,6 +4357,48 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      orchard_blessings: {
+        Row: {
+          created_at: string
+          granted_by_seat_id: string
+          granted_by_user_id: string
+          id: string
+          message: string | null
+          orchard_id: string
+        }
+        Insert: {
+          created_at?: string
+          granted_by_seat_id: string
+          granted_by_user_id: string
+          id?: string
+          message?: string | null
+          orchard_id: string
+        }
+        Update: {
+          created_at?: string
+          granted_by_seat_id?: string
+          granted_by_user_id?: string
+          id?: string
+          message?: string | null
+          orchard_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "orchard_blessings_granted_by_seat_id_fkey"
+            columns: ["granted_by_seat_id"]
+            isOneToOne: false
+            referencedRelation: "elder_council_seats"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "orchard_blessings_orchard_id_fkey"
+            columns: ["orchard_id"]
+            isOneToOne: false
+            referencedRelation: "orchards"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       orchard_likes: {
         Row: {
@@ -11133,6 +11401,7 @@ export type Database = {
         Args: { target_user_id: string }
         Returns: string
       }
+      current_council_seat_id: { Args: { _user_id: string }; Returns: string }
       decrypt_pii_data: { Args: { encrypted_data: string }; Returns: string }
       encrypt_pii_data: { Args: { data_text: string }; Returns: string }
       encrypt_pii_data_secure: { Args: { data_text: string }; Returns: string }
@@ -11527,6 +11796,7 @@ export type Database = {
         Returns: boolean
       }
       is_admin_or_gosat: { Args: { _user_id: string }; Returns: boolean }
+      is_council_member: { Args: { _user_id: string }; Returns: boolean }
       is_member_of_chat: {
         Args: { _room_id: string; _user_id?: string }
         Returns: boolean
