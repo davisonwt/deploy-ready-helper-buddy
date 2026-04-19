@@ -97,7 +97,7 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({ radioLive, userProfile }
 
       {/* Admin — only visible for GoSat/Admin roles */}
       {(isGosat || isAdmin) && (
-        <div className="px-2 pt-2 border-t border-border/20 mt-1 space-y-2">
+        <div className="px-2 pt-3 mt-auto border-t border-border/20 space-y-2">
           {adminItems.map((item) => {
             const Icon = item.icon;
             return (
