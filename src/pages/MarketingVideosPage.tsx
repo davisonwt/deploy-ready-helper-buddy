@@ -63,7 +63,7 @@ const BANNERS: BannerVideo[] = [
   { id: "group-chat",                 title: "Group Chat",                 subtitle: "Start a tribal group chat",        emoji: "👥", src: "/videos/banners/group-chat.mp4",                 available: true },
 
   // — Tribal Hearts —
-  { id: "tribal-hearts",              title: "Tribal Hearts",              subtitle: "Safe agent-powered tribal dating", emoji: "❤️", src: "/videos/tribal-hearts-trailer.mp4?v=8",          available: true },
+  { id: "tribal-hearts",              title: "Tribal Hearts",              subtitle: "Safe agent-powered tribal dating", emoji: "❤️", src: "/videos/tribal-hearts-trailer.mp4?v=9",          available: true },
 ];
 
 export default function MarketingVideosPage() {
