@@ -9,10 +9,20 @@ import {
   useCurrentFrame,
   useVideoConfig,
 } from "remotion";
-import { fontFamily as displayFont } from "@remotion/google-fonts/PlayfairDisplay";
-import { fontFamily as bodyFont } from "@remotion/google-fonts/DMSans";
+import { loadFont as loadPlayfair } from "@remotion/google-fonts/PlayfairDisplay";
+import { loadFont as loadDMSans } from "@remotion/google-fonts/DM Sans";
 
-type SceneVariant = "garden" | "ambassador" | "story" | "match" | "chat" | "safety" | "close";
+const { fontFamily: displayFont } = loadPlayfair("normal", {
+  weights: ["600", "700"],
+  subsets: ["latin"],
+  ignoreTooManyRequestsWarning: true,
+});
+
+const { fontFamily: bodyFont } = loadDMSans("normal", {
+  weights: ["400", "500", "700"],
+  subsets: ["latin"],
+  ignoreTooManyRequestsWarning: true,
+});
 
 type SceneDef = {
   eyebrow: string;
@@ -20,115 +30,203 @@ type SceneDef = {
   body: string;
   accent: string;
   duration: number;
-  variant: SceneVariant;
+  image: string;
+  imagePosition?: string;
+  pill?: string;
 };
 
 const PALETTE = {
-  bgTop: "#2A1020",
-  bgBottom: "#120813",
-  surface: "#FFF7F3",
-  rose: "#E56B87",
-  gold: "#E8B85C",
-  sage: "#88A977",
-  plum: "#6B3658",
-  ink: "#2C1624",
-  softInk: "#66495A",
+  blush: "#E48AA0",
+  gold: "#E1C16E",
+  sage: "#8DA377",
+  aqua: "#8BD3E6",
+  ivory: "#FFF7F0",
+  ink: "#2D1824",
+  plum: "#3B1F31",
+  mist: "rgba(255,247,240,0.78)",
 };
 
 const SCENES: SceneDef[] = [
   {
     eyebrow: "Safe tribal dating",
     title: "Welcome to Tribal Hearts",
-    body: "A calm, protected dating garden living inside the Sow2Grow tribe.",
-    accent: PALETTE.rose,
+    body: "A calm, protected dating garden inside Sow2Grow, made for intentional connection.",
+    accent: PALETTE.blush,
     duration: 109,
-    variant: "garden",
+    image: "tribal-hearts/hearts-hero.jpg",
+    imagePosition: "center center",
+    pill: "Ambassador members only",
   },
   {
-    eyebrow: "Ambassador-only access",
+    eyebrow: "Curated entry",
     title: "Real tribe members only",
-    body: "Entry is reserved for Ambassadors, keeping the space intentional and trusted.",
+    body: "Access is reserved for Ambassadors, keeping the space trusted, focused, and respectful.",
     accent: PALETTE.gold,
     duration: 133,
-    variant: "ambassador",
+    image: "tribal-hearts/hearts-hero.jpg",
+    imagePosition: "center 24%",
+    pill: "No random strangers",
   },
   {
-    eyebrow: "Guided onboarding",
+    eyebrow: "Guided profile flow",
     title: "Tell Gentoo your story",
-    body: "A warm guided flow helps shape your profile, then you refine it in your own voice.",
+    body: "A warm onboarding conversation shapes your first draft, then you refine it in your own voice.",
     accent: PALETTE.sage,
     duration: 127,
-    variant: "story",
+    image: "tribal-hearts/hearts-onboard.jpg",
+    imagePosition: "center center",
+    pill: "Warm guided onboarding",
+  },
+  {
+    eyebrow: "Soft cinematic tone",
+    title: "Let your story bloom",
+    body: "The experience feels gentle and human, with imagery and pacing that invite patience instead of pressure.",
+    accent: PALETTE.blush,
+    duration: 112,
+    image: "tribal-hearts/hearts-petals.jpg",
+    imagePosition: "center center",
+    pill: "Cinematic atmosphere",
   },
   {
     eyebrow: "Values-first matching",
     title: "Meet with intention",
-    body: "Discover men and women who align with your values, direction, and pace.",
-    accent: "#F08E74",
-    duration: 112,
-    variant: "match",
+    body: "Discover men and women who share your values, vision, and pace — before anything moves too fast.",
+    accent: PALETTE.aqua,
+    duration: 152,
+    image: "tribal-hearts/hearts-hero.jpg",
+    imagePosition: "center 58%",
+    pill: "Faith · warmth · direction",
   },
   {
     eyebrow: "Private connection",
-    title: "Keep chat inside ChatApp",
-    body: "Conversations stay in-house, so personal details are never pushed out too early.",
-    accent: "#7AA7A0",
-    duration: 152,
-    variant: "chat",
-  },
-  {
-    eyebrow: "Protection layer",
-    title: "AI safety watches over the garden",
-    body: "Moderation and safety checks help every connection stay respectful and secure.",
-    accent: "#C68CE6",
+    title: "Keep it inside ChatApp",
+    body: "Conversations stay in-house so private details are protected while trust grows naturally.",
+    accent: PALETTE.sage,
     duration: 126,
-    variant: "safety",
+    image: "tribal-hearts/hearts-onboard.jpg",
+    imagePosition: "center 42%",
+    pill: "No PII shared",
   },
   {
-    eyebrow: "Enter the garden",
-    title: "Let love grow naturally",
-    body: "Become an Ambassador and step into a dating space built for the tribe.",
-    accent: PALETTE.rose,
+    eyebrow: "Protected space",
+    title: "AI safety watches over the garden",
+    body: "Become an Ambassador and step into a dating experience shaped for care, privacy, and real tribe alignment.",
+    accent: PALETTE.gold,
     duration: 145,
-    variant: "close",
+    image: "tribal-hearts/hearts-petals.jpg",
+    imagePosition: "center center",
+    pill: "AI-moderated safety",
   },
 ];
 
-const PETALS = [
-  { left: 10, top: 14, size: 24, drift: 18 },
-  { left: 22, top: 68, size: 16, drift: 12 },
-  { left: 34, top: 22, size: 14, drift: 24 },
-  { left: 51, top: 60, size: 18, drift: 16 },
-  { left: 66, top: 16, size: 20, drift: 20 },
-  { left: 77, top: 74, size: 12, drift: 14 },
-  { left: 86, top: 32, size: 22, drift: 18 },
-];
+const TOTAL_DURATION = SCENES.reduce((sum, scene) => sum + scene.duration, 0);
 
-const MOTTO_LINES = ["Ambassador members only", "ChatApp only", "AI-moderated safety"];
+const LogoBadge: React.FC<{ accent: string; small?: boolean }> = ({ accent, small = false }) => {
+  const frame = useCurrentFrame();
+  const { fps } = useVideoConfig();
+  const reveal = spring({ frame, fps, config: { damping: 14, stiffness: 120 } });
+  const size = small ? 138 : 188;
 
-const FloatingPetals: React.FC<{ accent: string }> = ({ accent }) => {
+  return (
+    <div
+      style={{
+        width: size,
+        height: size,
+        borderRadius: 999,
+        background: "rgba(255,255,255,0.92)",
+        border: `6px solid ${accent}`,
+        boxShadow: "0 20px 50px rgba(0,0,0,0.24)",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        transform: `scale(${0.82 + reveal * 0.18})`,
+      }}
+    >
+      <div
+        style={{
+          width: size - 18,
+          height: size - 18,
+          borderRadius: 999,
+          border: `2px dashed ${accent}`,
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+        }}
+      >
+        <Img
+          src={staticFile("logo-transparent.png")}
+          style={{ width: size * 0.56, height: size * 0.56, objectFit: "contain" }}
+        />
+      </div>
+    </div>
+  );
+};
+
+const BackgroundImage: React.FC<{ src: string; position?: string }> = ({ src, position = "center center" }) => {
+  const frame = useCurrentFrame();
+  const scale = interpolate(frame, [0, 180], [1.08, 1.18], {
+    extrapolateLeft: "clamp",
+    extrapolateRight: "clamp",
+  });
+  const driftX = Math.sin(frame / 32) * 16;
+  const driftY = Math.cos(frame / 40) * 10;
+
+  return (
+    <>
+      <Img
+        src={staticFile(src)}
+        style={{
+          position: "absolute",
+          inset: -90,
+          width: "calc(100% + 180px)",
+          height: "calc(100% + 180px)",
+          objectFit: "cover",
+          objectPosition: position,
+          transform: `translate(${driftX}px, ${driftY}px) scale(${scale})`,
+          filter: "saturate(0.92) contrast(1.06) brightness(0.72)",
+        }}
+      />
+      <AbsoluteFill
+        style={{
+          background:
+            "linear-gradient(90deg, rgba(20,8,16,0.88) 0%, rgba(25,10,20,0.66) 36%, rgba(25,10,20,0.18) 68%, rgba(20,8,16,0.58) 100%)",
+        }}
+      />
+      <AbsoluteFill
+        style={{
+          background:
+            "linear-gradient(180deg, rgba(255,214,177,0.16) 0%, rgba(24,10,18,0.04) 25%, rgba(14,7,13,0.52) 100%)",
+        }}
+      />
+    </>
+  );
+};
+
+const FloatingDust: React.FC<{ accent: string }> = ({ accent }) => {
   const frame = useCurrentFrame();
 
   return (
     <>
-      {PETALS.map((petal, index) => {
-        const bob = Math.sin((frame + index * 9) / 18) * petal.drift;
-        const sway = Math.cos((frame + index * 11) / 25) * (petal.drift * 0.65);
-
+      {Array.from({ length: 12 }).map((_, index) => {
+        const left = 8 + ((index * 7.7) % 84);
+        const top = 6 + ((index * 11.3) % 80);
+        const size = 8 + (index % 4) * 5;
+        const offsetY = Math.sin((frame + index * 10) / 22) * (8 + index);
+        const offsetX = Math.cos((frame + index * 8) / 26) * (4 + index * 0.8);
         return (
           <div
-            key={`${petal.left}-${petal.top}`}
+            key={index}
             style={{
               position: "absolute",
-              left: `${petal.left}%`,
-              top: `${petal.top}%`,
-              width: petal.size,
-              height: petal.size,
+              left: `${left}%`,
+              top: `${top}%`,
+              width: size,
+              height: size,
               borderRadius: 999,
-              background: `radial-gradient(circle at 30% 30%, #fff7fb 0%, ${accent} 48%, rgba(255,255,255,0) 100%)`,
-              opacity: 0.5,
-              transform: `translate(${sway}px, ${bob}px) scale(${1 + Math.sin((frame + index * 7) / 30) * 0.08})`,
-              boxShadow: `0 0 40px ${accent}66`,
+              transform: `translate(${offsetX}px, ${offsetY}px)`,
+              background: `${accent}66`,
+              boxShadow: `0 0 28px ${accent}55`,
+              opacity: 0.65,
             }}
           />
         );
@@ -137,486 +235,238 @@ const FloatingPetals: React.FC<{ accent: string }> = ({ accent }) => {
   );
 };
 
-const BackgroundWash: React.FC<{ accent: string }> = ({ accent }) => {
-  const frame = useCurrentFrame();
-  const pulse = 1 + Math.sin(frame / 45) * 0.03;
-
-  return (
-    <AbsoluteFill
-      style={{
-        background: `radial-gradient(circle at 18% 22%, ${accent}33 0%, transparent 32%), radial-gradient(circle at 82% 18%, ${PALETTE.gold}22 0%, transparent 28%), linear-gradient(145deg, ${PALETTE.bgTop} 0%, ${PALETTE.bgBottom} 70%)`,
-        transform: `scale(${pulse})`,
-      }}
-    />
-  );
-};
-
-const GlassCard: React.FC<React.PropsWithChildren<{ accent: string; style?: React.CSSProperties }>> = ({ accent, style, children }) => (
-  <div
-    style={{
-      background: "linear-gradient(180deg, rgba(255,247,243,0.98) 0%, rgba(255,240,235,0.92) 100%)",
-      border: `1px solid ${accent}44`,
-      borderRadius: 38,
-      boxShadow: `0 25px 70px rgba(0,0,0,0.24), 0 0 0 1px rgba(255,255,255,0.22) inset`,
-      ...style,
-    }}
-  >
-    {children}
-  </div>
-);
-
-const GardenVisual: React.FC<{ accent: string }> = ({ accent }) => {
-  const frame = useCurrentFrame();
-  const blossom = spring({ frame, fps: 30, config: { damping: 14, stiffness: 90 } });
-
-  return (
-    <GlassCard accent={accent} style={{ width: 600, height: 600, padding: 48, position: "relative", overflow: "hidden" }}>
-      <div
-        style={{
-          position: "absolute",
-          inset: 36,
-          borderRadius: 999,
-          border: `2px solid ${accent}55`,
-          transform: `scale(${0.82 + blossom * 0.18}) rotate(${frame * 0.2}deg)`,
-        }}
-      />
-      <div
-        style={{
-          position: "absolute",
-          inset: 88,
-          borderRadius: 999,
-          border: `1px dashed ${PALETTE.gold}88`,
-          transform: `scale(${0.88 + blossom * 0.12}) rotate(${-frame * 0.18}deg)`,
-        }}
-      />
-      <div
-        style={{
-          position: "absolute",
-          left: "50%",
-          top: "50%",
-          width: 172,
-          height: 172,
-          marginLeft: -86,
-          marginTop: -86,
-          borderRadius: 999,
-          background: `radial-gradient(circle at 35% 30%, #fff, ${accent} 55%, ${PALETTE.plum} 100%)`,
-          boxShadow: `0 0 80px ${accent}88`,
-          transform: `scale(${0.9 + blossom * 0.14})`,
-        }}
-      />
-      <div
-        style={{
-          position: "absolute",
-          left: 120,
-          right: 120,
-          bottom: 94,
-          height: 130,
-          borderRadius: "50% 50% 42% 42%",
-          background: `linear-gradient(180deg, ${PALETTE.sage} 0%, #557347 100%)`,
-          filter: "blur(2px)",
-        }}
-      />
-    </GlassCard>
-  );
-};
-
-const AmbassadorVisual: React.FC<{ accent: string }> = ({ accent }) => {
-  const frame = useCurrentFrame();
-  const badgeScale = spring({ frame, fps: 30, config: { damping: 12, stiffness: 110 } });
-
-  return (
-    <GlassCard accent={accent} style={{ width: 600, height: 600, padding: 46, position: "relative", overflow: "hidden" }}>
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
-        <div>
-          <div style={{ fontFamily: bodyFont, fontSize: 22, letterSpacing: "0.22em", textTransform: "uppercase", color: PALETTE.softInk }}>
-            Access Layer
-          </div>
-          <div style={{ fontFamily: displayFont, fontSize: 54, color: PALETTE.ink, marginTop: 12 }}>Ambassador Gate</div>
-        </div>
-        <div style={{ padding: "14px 22px", borderRadius: 999, background: `${accent}22`, color: accent, fontFamily: bodyFont, fontWeight: 700 }}>
-          Members only
-        </div>
-      </div>
-      <div
-        style={{
-          position: "absolute",
-          left: "50%",
-          top: "53%",
-          width: 220,
-          height: 260,
-          marginLeft: -110,
-          marginTop: -130,
-          clipPath: "polygon(50% 0%, 90% 14%, 90% 56%, 50% 100%, 10% 56%, 10% 14%)",
-          background: `linear-gradient(180deg, ${accent} 0%, ${PALETTE.plum} 100%)`,
-          transform: `scale(${0.84 + badgeScale * 0.16})`,
-          boxShadow: `0 24px 60px ${accent}55`,
-        }}
-      />
-      <div
-        style={{
-          position: "absolute",
-          left: "50%",
-          top: "53%",
-          width: 120,
-          height: 120,
-          marginLeft: -60,
-          marginTop: -70,
-          borderRadius: 999,
-          background: "rgba(255,255,255,0.94)",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          fontSize: 56,
-          color: accent,
-        }}
-      >
-        ♡
-      </div>
-      <div style={{ position: "absolute", left: 74, right: 74, bottom: 74, display: "flex", gap: 16 }}>
-        {MOTTO_LINES.map((line) => (
-          <div key={line} style={{ flex: 1, padding: "18px 16px", borderRadius: 22, background: "rgba(255,255,255,0.72)", textAlign: "center", fontFamily: bodyFont, color: PALETTE.softInk, fontSize: 18 }}>
-            {line}
-          </div>
-        ))}
-      </div>
-    </GlassCard>
-  );
-};
-
-const StoryVisual: React.FC<{ accent: string }> = ({ accent }) => {
-  const frame = useCurrentFrame();
-  const rise = spring({ frame, fps: 30, config: { damping: 15, stiffness: 100 } });
-
-  return (
-    <GlassCard accent={accent} style={{ width: 600, height: 600, padding: 42, position: "relative", overflow: "hidden" }}>
-      <div style={{ display: "flex", alignItems: "center", gap: 20 }}>
-        <div style={{ width: 94, height: 94, borderRadius: 999, background: `linear-gradient(135deg, ${accent}, ${PALETTE.gold})`, boxShadow: `0 18px 40px ${accent}55` }} />
-        <div>
-          <div style={{ fontFamily: displayFont, fontSize: 50, color: PALETTE.ink }}>Gentoo listens</div>
-          <div style={{ fontFamily: bodyFont, fontSize: 24, color: PALETTE.softInk, marginTop: 6 }}>Warm questions. Your own final edit.</div>
-        </div>
-      </div>
-      <div
-        style={{
-          position: "absolute",
-          left: 54,
-          right: 54,
-          top: 180,
-          bottom: 56,
-          borderRadius: 30,
-          background: "rgba(255,255,255,0.78)",
-          padding: 30,
-          transform: `translateY(${24 - rise * 24}px)`,
-        }}
-      >
-        {[0, 1, 2, 3].map((line) => (
-          <div
-            key={line}
-            style={{
-              height: line === 2 ? 86 : 26,
-              borderRadius: 14,
-              background: line === 2 ? `${accent}18` : `${PALETTE.plum}10`,
-              marginBottom: 18,
-              width: line === 1 ? "86%" : line === 3 ? "72%" : "100%",
-            }}
-          />
-        ))}
-      </div>
-    </GlassCard>
-  );
-};
-
-const MatchVisual: React.FC<{ accent: string }> = ({ accent }) => {
-  const frame = useCurrentFrame();
-  const pulse = 1 + Math.sin(frame / 16) * 0.04;
-
-  return (
-    <div style={{ width: 600, height: 600, position: "relative" }}>
-      {[
-        { left: 10, top: 120, color: `${accent}22` },
-        { left: 320, top: 0, color: `${PALETTE.sage}26` },
-      ].map((blob, index) => (
-        <div
-          key={index}
-          style={{
-            position: "absolute",
-            left: blob.left,
-            top: blob.top,
-            width: 270,
-            height: 360,
-            borderRadius: 38,
-            background: blob.color,
-            filter: "blur(8px)",
-          }}
-        />
-      ))}
-      <GlassCard accent={accent} style={{ width: 255, height: 370, padding: 24, position: "absolute", left: 24, top: 110 }}>
-        <div style={{ height: 200, borderRadius: 28, background: `linear-gradient(135deg, ${accent}, ${PALETTE.gold})` }} />
-        <div style={{ fontFamily: displayFont, fontSize: 38, color: PALETTE.ink, marginTop: 22 }}>She</div>
-        <div style={{ fontFamily: bodyFont, fontSize: 20, color: PALETTE.softInk, marginTop: 10 }}>Faith · warmth · intention</div>
-      </GlassCard>
-      <GlassCard accent={accent} style={{ width: 255, height: 370, padding: 24, position: "absolute", right: 24, top: 110 }}>
-        <div style={{ height: 200, borderRadius: 28, background: `linear-gradient(135deg, ${PALETTE.sage}, ${PALETTE.plum})` }} />
-        <div style={{ fontFamily: displayFont, fontSize: 38, color: PALETTE.ink, marginTop: 22 }}>He</div>
-        <div style={{ fontFamily: bodyFont, fontSize: 20, color: PALETTE.softInk, marginTop: 10 }}>Vision · steadiness · care</div>
-      </GlassCard>
-      <div
-        style={{
-          position: "absolute",
-          left: "50%",
-          top: "50%",
-          width: 112,
-          height: 112,
-          marginLeft: -56,
-          marginTop: -56,
-          borderRadius: 999,
-          background: `radial-gradient(circle at 30% 30%, #fff, ${accent} 60%, ${PALETTE.plum})`,
-          boxShadow: `0 0 60px ${accent}88`,
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          color: "white",
-          fontSize: 44,
-          transform: `scale(${pulse})`,
-        }}
-      >
-        ♥
-      </div>
-    </div>
-  );
-};
-
-const ChatVisual: React.FC<{ accent: string }> = ({ accent }) => {
-  const frame = useCurrentFrame();
-
-  return (
-    <GlassCard accent={accent} style={{ width: 600, height: 600, padding: 34, position: "relative", overflow: "hidden" }}>
-      <div style={{ fontFamily: displayFont, fontSize: 54, color: PALETTE.ink, marginBottom: 24 }}>ChatApp only</div>
-      {[0, 1, 2, 3].map((bubble) => {
-        const fromLeft = bubble % 2 === 0;
-        const y = 118 + bubble * 92 + Math.sin((frame + bubble * 8) / 18) * 5;
-        const width = bubble === 1 ? 320 : bubble === 2 ? 280 : 250;
-
-        return (
-          <div
-            key={bubble}
-            style={{
-              position: "absolute",
-              top: y,
-              left: fromLeft ? 42 : undefined,
-              right: fromLeft ? undefined : 42,
-              width,
-              padding: "20px 24px",
-              borderRadius: 28,
-              background: fromLeft ? `${accent}22` : "rgba(255,255,255,0.82)",
-              border: `1px solid ${fromLeft ? accent : `${PALETTE.plum}18`}`,
-            }}
-          >
-            <div style={{ height: 14, borderRadius: 999, background: fromLeft ? `${accent}66` : `${PALETTE.softInk}22`, width: `${72 - bubble * 6}%` }} />
-          </div>
-        );
-      })}
-      <div style={{ position: "absolute", right: 36, top: 28, padding: "10px 18px", borderRadius: 999, background: `${accent}20`, color: accent, fontFamily: bodyFont, fontWeight: 700 }}>
-        No PII shared
-      </div>
-    </GlassCard>
-  );
-};
-
-const SafetyVisual: React.FC<{ accent: string }> = ({ accent }) => {
-  const frame = useCurrentFrame();
-  const ring = interpolate(frame, [0, 120], [0.88, 1.08], { extrapolateRight: "clamp" });
-
-  return (
-    <GlassCard accent={accent} style={{ width: 600, height: 600, padding: 48, position: "relative", overflow: "hidden" }}>
-      <div
-        style={{
-          position: "absolute",
-          left: "50%",
-          top: "50%",
-          width: 280,
-          height: 280,
-          marginLeft: -140,
-          marginTop: -140,
-          borderRadius: 999,
-          border: `2px solid ${accent}44`,
-          transform: `scale(${ring})`,
-        }}
-      />
-      <div
-        style={{
-          position: "absolute",
-          left: "50%",
-          top: "50%",
-          width: 180,
-          height: 220,
-          marginLeft: -90,
-          marginTop: -110,
-          clipPath: "polygon(50% 0%, 88% 12%, 88% 55%, 50% 100%, 12% 55%, 12% 12%)",
-          background: `linear-gradient(180deg, ${accent}, ${PALETTE.plum})`,
-          boxShadow: `0 24px 60px ${accent}44`,
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          color: "white",
-          fontSize: 58,
-        }}
-      >
-        ✦
-      </div>
-      <div style={{ position: "absolute", left: 56, right: 56, bottom: 68, display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 14 }}>
-        {["moderation", "trust", "respect"].map((item) => (
-          <div key={item} style={{ borderRadius: 20, padding: "18px 14px", background: "rgba(255,255,255,0.78)", textAlign: "center", fontFamily: bodyFont, fontSize: 20, color: PALETTE.softInk, textTransform: "capitalize" }}>
-            {item}
-          </div>
-        ))}
-      </div>
-    </GlassCard>
-  );
-};
-
-const CloseVisual: React.FC<{ accent: string }> = ({ accent }) => {
-  const frame = useCurrentFrame();
-  const reveal = spring({ frame, fps: 30, config: { damping: 16, stiffness: 110 } });
-
-  return (
-    <div style={{ width: 620, height: 620, position: "relative", display: "flex", alignItems: "center", justifyContent: "center" }}>
-      <div
-        style={{
-          position: "absolute",
-          inset: 44,
-          borderRadius: 999,
-          border: `1px solid ${accent}66`,
-          transform: `scale(${0.92 + reveal * 0.08})`,
-        }}
-      />
-      <div
-        style={{
-          position: "absolute",
-          inset: 88,
-          borderRadius: 999,
-          background: `radial-gradient(circle at 50% 45%, ${accent}28 0%, transparent 62%)`,
-          filter: "blur(6px)",
-        }}
-      />
-      <Img src={staticFile("logo-transparent.png")} style={{ width: 280, height: 280, objectFit: "contain", transform: `scale(${0.9 + reveal * 0.1})` }} />
-    </div>
-  );
-};
-
-const VisualPanel: React.FC<{ variant: SceneVariant; accent: string }> = ({ variant, accent }) => {
-  switch (variant) {
-    case "garden":
-      return <GardenVisual accent={accent} />;
-    case "ambassador":
-      return <AmbassadorVisual accent={accent} />;
-    case "story":
-      return <StoryVisual accent={accent} />;
-    case "match":
-      return <MatchVisual accent={accent} />;
-    case "chat":
-      return <ChatVisual accent={accent} />;
-    case "safety":
-      return <SafetyVisual accent={accent} />;
-    case "close":
-      return <CloseVisual accent={accent} />;
-  }
-};
-
-const Scene: React.FC<{ scene: SceneDef; index: number }> = ({ scene, index }) => {
+const TextPanel: React.FC<{ scene: SceneDef; index: number }> = ({ scene, index }) => {
   const frame = useCurrentFrame();
   const { fps, durationInFrames } = useVideoConfig();
-  const enter = spring({ frame, fps, config: { damping: 18, stiffness: 120 } });
-  const exit = interpolate(frame, [durationInFrames - 20, durationInFrames], [1, 0], {
+  const reveal = spring({ frame, fps, config: { damping: 18, stiffness: 130 } });
+  const outro = interpolate(frame, [durationInFrames - 18, durationInFrames], [1, 0], {
     extrapolateLeft: "clamp",
     extrapolateRight: "clamp",
   });
-  const textShift = 70 - enter * 70;
-  const visualShift = 90 - enter * 90;
-  const opacity = Math.min(1, enter + 0.15) * exit;
 
   return (
-    <AbsoluteFill>
-      <BackgroundWash accent={scene.accent} />
-      <FloatingPetals accent={scene.accent} />
+    <div
+      style={{
+        width: 720,
+        marginLeft: 108,
+        transform: `translateY(${36 - reveal * 36}px)`,
+        opacity: Math.min(1, reveal + 0.08) * outro,
+      }}
+    >
       <div
         style={{
-          flex: 1,
-          display: "grid",
-          gridTemplateColumns: "1.05fr 0.95fr",
-          padding: "110px 120px",
-          gap: 50,
+          display: "inline-flex",
           alignItems: "center",
-          opacity,
+          gap: 14,
+          padding: "14px 20px",
+          borderRadius: 999,
+          background: `${scene.accent}22`,
+          border: `1px solid ${scene.accent}66`,
+          color: PALETTE.ivory,
+          fontFamily: bodyFont,
+          fontWeight: 600,
+          fontSize: 18,
+          letterSpacing: "0.18em",
+          textTransform: "uppercase",
         }}
       >
-        <div style={{ transform: `translateY(${textShift}px)` }}>
-          <div
-            style={{
-              display: "inline-flex",
-              alignItems: "center",
-              gap: 14,
-              padding: "14px 22px",
-              borderRadius: 999,
-              background: `${scene.accent}24`,
-              color: "#FFF4F6",
-              fontFamily: bodyFont,
-              fontSize: 20,
-              letterSpacing: "0.18em",
-              textTransform: "uppercase",
-            }}
-          >
-            <span>{String(index + 1).padStart(2, "0")}</span>
-            <span>{scene.eyebrow}</span>
-          </div>
-          <div
-            style={{
-              fontFamily: displayFont,
-              color: PALETTE.surface,
-              fontSize: 96,
-              lineHeight: 0.96,
-              marginTop: 34,
-              maxWidth: 760,
-              textWrap: "balance",
-              textShadow: "0 12px 40px rgba(0,0,0,0.22)",
-            }}
-          >
-            {scene.title}
-          </div>
-          <div
-            style={{
-              fontFamily: bodyFont,
-              color: "rgba(255,247,243,0.86)",
-              fontSize: 31,
-              lineHeight: 1.35,
-              marginTop: 30,
-              maxWidth: 700,
-            }}
-          >
-            {scene.body}
-          </div>
+        <span>{String(index + 1).padStart(2, "0")}</span>
+        <span>{scene.eyebrow}</span>
+      </div>
+      <div
+        style={{
+          marginTop: 28,
+          fontFamily: displayFont,
+          fontSize: 96,
+          lineHeight: 0.94,
+          color: PALETTE.ivory,
+          textShadow: "0 14px 40px rgba(0,0,0,0.28)",
+          maxWidth: 680,
+        }}
+      >
+        {scene.title}
+      </div>
+      <div
+        style={{
+          marginTop: 26,
+          maxWidth: 640,
+          color: "rgba(255,247,240,0.9)",
+          fontFamily: bodyFont,
+          fontSize: 31,
+          lineHeight: 1.34,
+        }}
+      >
+        {scene.body}
+      </div>
+      {scene.pill ? (
+        <div
+          style={{
+            marginTop: 30,
+            display: "inline-flex",
+            alignItems: "center",
+            padding: "12px 18px",
+            borderRadius: 999,
+            background: PALETTE.mist,
+            color: PALETTE.ink,
+            fontFamily: bodyFont,
+            fontWeight: 700,
+            fontSize: 20,
+            boxShadow: "0 14px 34px rgba(0,0,0,0.16)",
+          }}
+        >
+          {scene.pill}
         </div>
-        <div style={{ display: "flex", justifyContent: "center", transform: `translateY(${visualShift}px)` }}>
-          <VisualPanel variant={scene.variant} accent={scene.accent} />
+      ) : null}
+    </div>
+  );
+};
+
+const RightVisual: React.FC<{ scene: SceneDef; index: number }> = ({ scene, index }) => {
+  const frame = useCurrentFrame();
+  const { fps } = useVideoConfig();
+  const rise = spring({ frame: frame - 6, fps, config: { damping: 16, stiffness: 110 } });
+  const floatY = Math.sin(frame / 20) * 10;
+  const imageScale = 1.02 + Math.sin(frame / 28) * 0.025;
+
+  return (
+    <div
+      style={{
+        position: "relative",
+        width: 690,
+        height: 760,
+        marginRight: 94,
+        transform: `translateY(${42 - rise * 42 + floatY}px)`,
+      }}
+    >
+      <div
+        style={{
+          position: "absolute",
+          inset: 0,
+          borderRadius: 38,
+          overflow: "hidden",
+          boxShadow: "0 28px 90px rgba(0,0,0,0.34)",
+          border: `1px solid ${scene.accent}55`,
+        }}
+      >
+        <Img
+          src={staticFile(scene.image)}
+          style={{
+            width: "100%",
+            height: "100%",
+            objectFit: "cover",
+            objectPosition: scene.imagePosition ?? "center center",
+            transform: `scale(${imageScale})`,
+            filter: "saturate(0.95) contrast(1.05)",
+          }}
+        />
+        <div
+          style={{
+            position: "absolute",
+            inset: 0,
+            background: "linear-gradient(180deg, rgba(19,9,15,0.04) 0%, rgba(19,9,15,0.48) 100%)",
+          }}
+        />
+      </div>
+
+      <div style={{ position: "absolute", top: -36, left: -36 }}>
+        <LogoBadge accent={PALETTE.aqua} small />
+      </div>
+
+      <div
+        style={{
+          position: "absolute",
+          right: 22,
+          bottom: 24,
+          padding: "16px 18px",
+          borderRadius: 24,
+          background: "rgba(255,247,240,0.84)",
+          color: PALETTE.ink,
+          fontFamily: bodyFont,
+          boxShadow: "0 16px 34px rgba(0,0,0,0.16)",
+          minWidth: 210,
+        }}
+      >
+        <div style={{ fontSize: 13, letterSpacing: "0.18em", textTransform: "uppercase", opacity: 0.68, fontWeight: 700 }}>
+          Tribal Hearts
+        </div>
+        <div style={{ marginTop: 8, fontSize: 24, fontWeight: 700 }}>{index === SCENES.length - 1 ? "Enter the garden" : "Sow2Grow"}</div>
+      </div>
+    </div>
+  );
+};
+
+const ClosingOverlay: React.FC = () => {
+  const frame = useCurrentFrame();
+  const { fps } = useVideoConfig();
+  const reveal = spring({ frame: frame - 16, fps, config: { damping: 16, stiffness: 120 } });
+  const opacity = interpolate(frame, [40, 100], [0, 1], {
+    extrapolateLeft: "clamp",
+    extrapolateRight: "clamp",
+  });
+
+  return (
+    <div
+      style={{
+        position: "absolute",
+        inset: 0,
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        opacity,
+      }}
+    >
+      <div
+        style={{
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+          gap: 24,
+          transform: `translateY(${30 - reveal * 30}px) scale(${0.92 + reveal * 0.08})`,
+        }}
+      >
+        <LogoBadge accent={PALETTE.aqua} />
+        <div style={{ fontFamily: displayFont, fontSize: 74, color: PALETTE.ivory, textShadow: "0 12px 40px rgba(0,0,0,0.28)" }}>
+          Let love grow naturally
         </div>
       </div>
+    </div>
+  );
+};
+
+const Scene: React.FC<{ scene: SceneDef; index: number }> = ({ scene, index }) => {
+  return (
+    <AbsoluteFill>
+      <BackgroundImage src={scene.image} position={scene.imagePosition} />
+      <FloatingDust accent={scene.accent} />
+      <div
+        style={{
+          position: "absolute",
+          inset: 0,
+          display: "grid",
+          gridTemplateColumns: "1.02fr 0.98fr",
+          alignItems: "center",
+        }}
+      >
+        <TextPanel scene={scene} index={index} />
+        <RightVisual scene={scene} index={index} />
+      </div>
+      {index === SCENES.length - 1 ? <ClosingOverlay /> : null}
     </AbsoluteFill>
   );
 };
 
-export const TRIBAL_HEARTS_TRAILER_DURATION = SCENES.reduce((sum, scene) => sum + scene.duration, 0);
+export const TRIBAL_HEARTS_TRAILER_DURATION = TOTAL_DURATION;
 
 export const TribalHeartsTrailer: React.FC = () => {
   let from = 0;
 
   return (
-    <AbsoluteFill style={{ backgroundColor: PALETTE.bgBottom }}>
+    <AbsoluteFill style={{ backgroundColor: PALETTE.plum }}>
       {SCENES.map((scene, index) => {
-        const currentFrom = from;
+        const start = from;
         from += scene.duration;
-
         return (
-          <Sequence key={scene.title} from={currentFrom} durationInFrames={scene.duration}>
+          <Sequence key={scene.title} from={start} durationInFrames={scene.duration}>
             <Scene scene={scene} index={index} />
           </Sequence>
         );
