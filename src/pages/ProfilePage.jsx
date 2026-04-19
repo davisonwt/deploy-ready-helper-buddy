@@ -2,6 +2,7 @@ import { useState, useRef, useEffect } from "react"
 import { useLocation } from "react-router-dom"
 import { useAuth } from "../hooks/useAuth"
 import { useToast } from "../hooks/use-toast"
+import { supabase } from "@/integrations/supabase/client"
 import { Button } from "../components/ui/button"
 import { Badge } from "../components/ui/badge"
 import { 
