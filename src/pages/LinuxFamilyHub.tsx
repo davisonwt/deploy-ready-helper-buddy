@@ -172,12 +172,75 @@ export default function LinuxFamilyHub() {
       </div>
 
       <Tabs defaultValue="suggestions">
-        <TabsList>
+        <TabsList className="flex-wrap h-auto">
           <TabsTrigger value="suggestions" className="gap-1"><Sparkles className="w-3 h-3"/> Suggestions {suggestions.length>0 && <Badge variant="destructive" className="ml-1 text-[9px]">{suggestions.length}</Badge>}</TabsTrigger>
+          <TabsTrigger value="studio" className="gap-1"><Wand2 className="w-3 h-3"/> Studio</TabsTrigger>
           <TabsTrigger value="activity" className="gap-1"><Activity className="w-3 h-3"/> Activity</TabsTrigger>
           <TabsTrigger value="reports" className="gap-1"><FileText className="w-3 h-3"/> Reports</TabsTrigger>
           <TabsTrigger value="terminal" className="gap-1"><TerminalIcon className="w-3 h-3"/> Terminal</TabsTrigger>
         </TabsList>
+
+        <TabsContent value="studio">
+          <Card><CardContent className="p-4 space-y-3">
+            <div className="text-sm text-muted-foreground">
+              Pick one of your Seeds. Tux drafts a post → Ubuntu polishes it for tribal voice → Kali generates a banner → Fedora drafts multi-platform video cuts.
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
+              <Select value={selectedSeed} onValueChange={setSelectedSeed}>
+                <SelectTrigger><SelectValue placeholder="Select a Seed" /></SelectTrigger>
+                <SelectContent>
+                  {seeds.length === 0 && <SelectItem value="__none" disabled>No Seeds yet — plant one first</SelectItem>}
+                  {seeds.map(s => <SelectItem key={s.id} value={s.id}>{s.title}</SelectItem>)}
+                </SelectContent>
+              </Select>
+              <Select value={platform} onValueChange={setPlatform}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="instagram">Instagram</SelectItem>
+                  <SelectItem value="facebook">Facebook</SelectItem>
+                  <SelectItem value="tiktok">TikTok</SelectItem>
+                  <SelectItem value="whatsapp">WhatsApp</SelectItem>
+                  <SelectItem value="youtube">YouTube</SelectItem>
+                </SelectContent>
+              </Select>
+              <Select value={language} onValueChange={setLanguage}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  {['English','Afrikaans','Zulu','Xhosa','Sotho','Spanish','French','Portuguese','Swahili'].map(l => (
+                    <SelectItem key={l} value={l}>{l}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <Button onClick={runContentPack} disabled={packBusy || !selectedSeed} className="gap-2">
+              {packBusy ? <Loader2 className="w-4 h-4 animate-spin"/> : <Wand2 className="w-4 h-4"/>}
+              Generate Content Pack
+            </Button>
+
+            {pack && (
+              <div className="space-y-3 mt-3 border-t pt-3">
+                {pack.banner_url && (
+                  <div>
+                    <div className="text-xs font-semibold mb-1">🪄 Kali · Banner</div>
+                    <img src={pack.banner_url} alt="Banner" className="rounded-lg border max-h-72 object-cover" />
+                  </div>
+                )}
+                <div>
+                  <div className="text-xs font-semibold mb-1">🛡️ Ubuntu · Polished post</div>
+                  <pre className="whitespace-pre-wrap text-sm bg-muted/40 rounded-lg p-3">{pack.polished_post}</pre>
+                </div>
+                <details className="text-xs">
+                  <summary className="cursor-pointer text-muted-foreground">🎨 Tux · Raw draft</summary>
+                  <pre className="whitespace-pre-wrap mt-2 bg-muted/30 rounded-lg p-3">{pack.raw_post}</pre>
+                </details>
+                <details>
+                  <summary className="cursor-pointer text-xs font-semibold">🎬 Fedora · Video plan ({pack.language})</summary>
+                  <pre className="whitespace-pre-wrap text-xs mt-2 bg-muted/40 rounded-lg p-3">{pack.video_plan}</pre>
+                </details>
+              </div>
+            )}
+          </CardContent></Card>
+        </TabsContent>
 
         <TabsContent value="suggestions">
           <Card><CardContent className="p-4 space-y-2">
