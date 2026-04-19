@@ -7314,6 +7314,27 @@ export type Database = {
         }
         Relationships: []
       }
+      s2g_agent_free_access: {
+        Row: {
+          created_at: string
+          granted_by: string
+          note: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          granted_by?: string
+          note?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          granted_by?: string
+          note?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       s2g_library_item_access: {
         Row: {
           access_type: string | null
@@ -11149,6 +11170,7 @@ export type Database = {
         Args: { target_role: string; target_user_id: string }
         Returns: Json
       }
+      has_free_agent_access: { Args: { _user_id: string }; Returns: boolean }
       has_premium_room_access: {
         Args: { _room_id: string; _user_id: string }
         Returns: boolean
