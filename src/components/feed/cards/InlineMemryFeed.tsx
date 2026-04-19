@@ -3,6 +3,7 @@ import { Camera, Send } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { MemrySeedCard } from './MemrySeedCard';
 import { ProviderFeedCard } from './ProviderFeedCard';
+import { useOrchardBlessings } from '@/hooks/useOrchardBlessings';
 
 import { useNavigate } from 'react-router-dom';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
