@@ -61,6 +61,7 @@ const CommunicationsHub = lazy(() =>
   })
 );
 const DashboardPage = lazy(() => import("./pages/DashboardPage"));
+const LinuxFamilyHub = lazy(() => import("./pages/LinuxFamilyHub"));
 const StatsPage = lazy(() => import("./pages/StatsPage"));
 const ProfilePage = lazy(() => import("./pages/ProfilePage"));
 const BrowseOrchardsPage = lazy(() => import("./pages/TribalGardensPage"));
@@ -391,6 +392,16 @@ const App = () => (
                 </ProtectedRoute>
               } />
               
+              <Route path="/linux-family" element={
+                <ProtectedRoute>
+                  <RequireVerification>
+                    <Layout>
+                      <LinuxFamilyHub />
+                    </Layout>
+                  </RequireVerification>
+                </ProtectedRoute>
+              } />
+
               <Route path="/stats" element={
                 <ProtectedRoute>
                   <RequireVerification>

@@ -606,6 +606,45 @@ export type Database = {
         }
         Relationships: []
       }
+      bestowal_reports: {
+        Row: {
+          created_at: string
+          html_snapshot: string | null
+          id: string
+          metrics: Json
+          pdf_url: string | null
+          period_end: string
+          period_start: string
+          report_type: string
+          seed_id: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          html_snapshot?: string | null
+          id?: string
+          metrics?: Json
+          pdf_url?: string | null
+          period_end: string
+          period_start: string
+          report_type?: string
+          seed_id?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          html_snapshot?: string | null
+          id?: string
+          metrics?: Json
+          pdf_url?: string | null
+          period_end?: string
+          period_start?: string
+          report_type?: string
+          seed_id?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       bestowals: {
         Row: {
           amount: number
@@ -3046,6 +3085,327 @@ export type Database = {
           yhwh_month?: number
           yhwh_weekday?: number | null
           yhwh_year?: number
+        }
+        Relationships: []
+      }
+      linux_family_activity_log: {
+        Row: {
+          activity_type: string
+          agent_name: string
+          created_at: string
+          id: string
+          message: string
+          metadata: Json | null
+          seed_id: string | null
+          user_id: string
+        }
+        Insert: {
+          activity_type: string
+          agent_name: string
+          created_at?: string
+          id?: string
+          message: string
+          metadata?: Json | null
+          seed_id?: string | null
+          user_id: string
+        }
+        Update: {
+          activity_type?: string
+          agent_name?: string
+          created_at?: string
+          id?: string
+          message?: string
+          metadata?: Json | null
+          seed_id?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      linux_family_agents: {
+        Row: {
+          agent_name: string
+          created_at: string
+          enabled: boolean
+          id: string
+          last_activity_at: string | null
+          persona_overrides: Json | null
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          agent_name: string
+          created_at?: string
+          enabled?: boolean
+          id?: string
+          last_activity_at?: string | null
+          persona_overrides?: Json | null
+          status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          agent_name?: string
+          created_at?: string
+          enabled?: boolean
+          id?: string
+          last_activity_at?: string | null
+          persona_overrides?: Json | null
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      linux_family_call_log: {
+        Row: {
+          call_type: string
+          counterparty_user_id: string | null
+          created_at: string
+          direction: string
+          duration_seconds: number | null
+          id: string
+          jitsi_room: string | null
+          notes: string | null
+          outcome: string | null
+          seed_id: string | null
+          transcript: string | null
+          user_id: string
+        }
+        Insert: {
+          call_type?: string
+          counterparty_user_id?: string | null
+          created_at?: string
+          direction: string
+          duration_seconds?: number | null
+          id?: string
+          jitsi_room?: string | null
+          notes?: string | null
+          outcome?: string | null
+          seed_id?: string | null
+          transcript?: string | null
+          user_id: string
+        }
+        Update: {
+          call_type?: string
+          counterparty_user_id?: string | null
+          created_at?: string
+          direction?: string
+          duration_seconds?: number | null
+          id?: string
+          jitsi_room?: string | null
+          notes?: string | null
+          outcome?: string | null
+          seed_id?: string | null
+          transcript?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      linux_family_memory: {
+        Row: {
+          agent_name: string
+          created_at: string
+          id: string
+          memory_key: string
+          memory_value: Json
+          seed_id: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          agent_name: string
+          created_at?: string
+          id?: string
+          memory_key: string
+          memory_value?: Json
+          seed_id?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          agent_name?: string
+          created_at?: string
+          id?: string
+          memory_key?: string
+          memory_value?: Json
+          seed_id?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      linux_family_outbound_messages: {
+        Row: {
+          agent_name: string
+          channel: string
+          created_at: string
+          id: string
+          message_body: string
+          message_type: string
+          recipient_room_id: string | null
+          recipient_user_id: string | null
+          replied_at: string | null
+          reply_text: string | null
+          seed_id: string | null
+          status: string
+          user_id: string
+        }
+        Insert: {
+          agent_name?: string
+          channel?: string
+          created_at?: string
+          id?: string
+          message_body: string
+          message_type?: string
+          recipient_room_id?: string | null
+          recipient_user_id?: string | null
+          replied_at?: string | null
+          reply_text?: string | null
+          seed_id?: string | null
+          status?: string
+          user_id: string
+        }
+        Update: {
+          agent_name?: string
+          channel?: string
+          created_at?: string
+          id?: string
+          message_body?: string
+          message_type?: string
+          recipient_room_id?: string | null
+          recipient_user_id?: string | null
+          replied_at?: string | null
+          reply_text?: string | null
+          seed_id?: string | null
+          status?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      linux_family_social_connections: {
+        Row: {
+          account_handle: string | null
+          created_at: string
+          id: string
+          is_connected: boolean
+          metadata: Json | null
+          platform: string
+          secret_ref: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          account_handle?: string | null
+          created_at?: string
+          id?: string
+          is_connected?: boolean
+          metadata?: Json | null
+          platform: string
+          secret_ref?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          account_handle?: string | null
+          created_at?: string
+          id?: string
+          is_connected?: boolean
+          metadata?: Json | null
+          platform?: string
+          secret_ref?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      linux_family_suggestions: {
+        Row: {
+          agent_name: string
+          created_at: string
+          description: string
+          expires_at: string | null
+          id: string
+          proposed_action: Json
+          responded_at: string | null
+          seed_id: string | null
+          status: string
+          suggestion_type: string
+          title: string
+          user_id: string
+        }
+        Insert: {
+          agent_name: string
+          created_at?: string
+          description: string
+          expires_at?: string | null
+          id?: string
+          proposed_action?: Json
+          responded_at?: string | null
+          seed_id?: string | null
+          status?: string
+          suggestion_type: string
+          title: string
+          user_id: string
+        }
+        Update: {
+          agent_name?: string
+          created_at?: string
+          description?: string
+          expires_at?: string | null
+          id?: string
+          proposed_action?: Json
+          responded_at?: string | null
+          seed_id?: string | null
+          status?: string
+          suggestion_type?: string
+          title?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      linux_family_tasks: {
+        Row: {
+          agent_name: string
+          completed_at: string | null
+          created_at: string
+          error: string | null
+          id: string
+          payload: Json
+          result: Json | null
+          seed_id: string | null
+          started_at: string | null
+          status: string
+          task_type: string
+          user_id: string
+        }
+        Insert: {
+          agent_name: string
+          completed_at?: string | null
+          created_at?: string
+          error?: string | null
+          id?: string
+          payload?: Json
+          result?: Json | null
+          seed_id?: string | null
+          started_at?: string | null
+          status?: string
+          task_type: string
+          user_id: string
+        }
+        Update: {
+          agent_name?: string
+          completed_at?: string | null
+          created_at?: string
+          error?: string | null
+          id?: string
+          payload?: Json
+          result?: Json | null
+          seed_id?: string | null
+          started_at?: string | null
+          status?: string
+          task_type?: string
+          user_id?: string
         }
         Relationships: []
       }
@@ -7069,6 +7429,54 @@ export type Database = {
           },
         ]
       }
+      seed_analytics_daily: {
+        Row: {
+          bestowals_amount: number
+          bestowals_count: number
+          calls: number
+          clicks: number
+          created_at: string
+          id: string
+          messages: number
+          metric_date: string
+          reach: number
+          seed_id: string
+          updated_at: string
+          user_id: string
+          views: number
+        }
+        Insert: {
+          bestowals_amount?: number
+          bestowals_count?: number
+          calls?: number
+          clicks?: number
+          created_at?: string
+          id?: string
+          messages?: number
+          metric_date: string
+          reach?: number
+          seed_id: string
+          updated_at?: string
+          user_id: string
+          views?: number
+        }
+        Update: {
+          bestowals_amount?: number
+          bestowals_count?: number
+          calls?: number
+          clicks?: number
+          created_at?: string
+          id?: string
+          messages?: number
+          metric_date?: string
+          reach?: number
+          seed_id?: string
+          updated_at?: string
+          user_id?: string
+          views?: number
+        }
+        Relationships: []
+      }
       seed_story_overrides: {
         Row: {
           created_at: string
@@ -10429,6 +10837,10 @@ export type Database = {
       encrypt_pii_data: { Args: { data_text: string }; Returns: string }
       encrypt_pii_data_secure: { Args: { data_text: string }; Returns: string }
       end_stream: { Args: { stream_id_param: string }; Returns: boolean }
+      ensure_linux_family_agents: {
+        Args: { _user_id: string }
+        Returns: undefined
+      }
       generate_invoice_number: { Args: never; Returns: string }
       generate_ref_code: { Args: never; Returns: string }
       generate_referral_code: { Args: never; Returns: string }
