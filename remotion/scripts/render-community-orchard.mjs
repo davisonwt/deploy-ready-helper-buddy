@@ -1,6 +1,6 @@
-// Renders only banner-01-community-orchard with the extended duration (14.4s).
+// Renders only banner-01-community-orchard with the extended duration (18s).
 // Uses apad to keep the audio stream alive for the full video length so the
-// final 1s music tail isn't truncated by ffmpeg's -shortest flag.
+// final music tail isn't truncated by ffmpeg's -shortest flag.
 import { bundle } from "@remotion/bundler";
 import { renderMedia, selectComposition, openBrowser } from "@remotion/renderer";
 import path from "node:path";
