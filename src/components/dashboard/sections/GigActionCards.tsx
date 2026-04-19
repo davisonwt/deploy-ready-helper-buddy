@@ -225,25 +225,40 @@ export const GigActionCards: React.FC<GigActionCardsProps> = ({ theme }) => {
               className="flex overflow-x-auto snap-x snap-mandatory"
               style={{ scrollbarWidth: 'none', msOverflowStyle: 'none', WebkitOverflowScrolling: 'touch' }}
             >
-              {connectCards.map((card) => (
-                <button
-                  key={card.key}
-                  onClick={() => navigate(card.href)}
-                  className="min-w-full flex-shrink-0 snap-center block rounded-2xl overflow-hidden transition-all shadow-md text-left hover:scale-[1.01] active:scale-[0.99] relative h-[160px]"
-                >
-                  <img src={card.img} alt={card.label} className="absolute inset-0 w-full h-full object-cover" loading="lazy" />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/30 to-black/10" />
-                  <div className="relative h-full flex flex-col justify-between p-4">
-                    <div className="w-9 h-9 rounded-xl bg-white/20 backdrop-blur-sm flex items-center justify-center">
-                      <span className="text-lg">{card.emoji}</span>
+              {connectCards.map((card) => {
+                const cardVideo = 'video' in card ? (card.video as string | undefined) : undefined;
+                return (
+                  <button
+                    key={card.key}
+                    onClick={() => navigate(card.href)}
+                    className="min-w-full flex-shrink-0 snap-center block rounded-2xl overflow-hidden transition-all shadow-md text-left hover:scale-[1.01] active:scale-[0.99] relative h-[160px]"
+                  >
+                    {cardVideo ? (
+                      <video
+                        src={cardVideo}
+                        autoPlay
+                        muted
+                        loop
+                        playsInline
+                        preload="metadata"
+                        className="absolute inset-0 w-full h-full object-cover pointer-events-none"
+                      />
+                    ) : (
+                      <img src={card.img} alt={card.label} className="absolute inset-0 w-full h-full object-cover" loading="lazy" />
+                    )}
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/30 to-black/10" />
+                    <div className="relative h-full flex flex-col justify-between p-4">
+                      <div className="w-9 h-9 rounded-xl bg-white/20 backdrop-blur-sm flex items-center justify-center">
+                        <span className="text-lg">{card.emoji}</span>
+                      </div>
+                      <div>
+                        <h3 className="font-bold text-white text-lg">{card.label}</h3>
+                        <p className="text-xs text-white/80">{card.desc}</p>
+                      </div>
                     </div>
-                    <div>
-                      <h3 className="font-bold text-white text-lg">{card.label}</h3>
-                      <p className="text-xs text-white/80">{card.desc}</p>
-                    </div>
-                  </div>
-                </button>
-              ))}
+                  </button>
+                );
+              })}
             </div>
             {/* Arrows */}
             <button
