@@ -31,6 +31,12 @@ export default function LinuxFamilyHub() {
   const [activity, setActivity] = useState<any[]>([]);
   const [suggestions, setSuggestions] = useState<any[]>([]);
   const [reports, setReports] = useState<any[]>([]);
+  const [seeds, setSeeds] = useState<any[]>([]);
+  const [selectedSeed, setSelectedSeed] = useState<string>('');
+  const [platform, setPlatform] = useState<string>('instagram');
+  const [language, setLanguage] = useState<string>('English');
+  const [pack, setPack] = useState<any>(null);
+  const [packBusy, setPackBusy] = useState(false);
   const [terminal, setTerminal] = useState<{ cmd: string; out: string }[]>([
     { cmd: '', out: 'Welcome to the Linux Open Source Family terminal. Type "help".' },
   ]);
