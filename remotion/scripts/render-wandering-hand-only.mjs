@@ -29,7 +29,7 @@ await renderMedia({
   outputLocation: SILENT, puppeteerInstance: browser,
   concurrency: 1, muted: true,
 });
-execSync(`ffmpeg -y -i "${SILENT}" -i "${VO}" -c:v copy -c:a aac -b:a 192k -shortest "${OUT}"`, { stdio: "pipe" });
+execSync(`ffmpeg -y -i "${SILENT}" -i "${VO}" -c:v copy -c:a aac -b:a 192k "${OUT}"`, { stdio: "pipe" });
 await fs.unlink(SILENT).catch(() => {});
 const stat = await fs.stat(OUT);
 console.log(`✓ ${OUT} (${(stat.size / 1024 / 1024).toFixed(2)} MB)`);
