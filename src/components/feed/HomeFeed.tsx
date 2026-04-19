@@ -20,6 +20,7 @@ import { PlantFeedCards } from '@/components/dashboard/sections/PlantFeedCards';
 import { GoLiveFeedCards } from '@/components/dashboard/sections/GoLiveFeedCards';
 import { ChatFeedCards } from '@/components/dashboard/sections/ChatFeedCards';
 import { SabbathDashboardBanner } from '@/components/SabbathDashboardBanner';
+import { TribalHeartsTrailerCard } from './cards/TribalHeartsTrailerCard';
 
 interface HomeFeedProps {
   profile: any;
@@ -337,6 +338,9 @@ export const HomeFeed: React.FC<HomeFeedProps> = ({
               } as any}
             />
           </section>
+
+          {/* === FEATURED: Tribal Hearts trailer (between ChatApp & Live Radio) === */}
+          <TribalHeartsTrailerCard />
 
           {radioCards.length > 0 && (
             <section>
