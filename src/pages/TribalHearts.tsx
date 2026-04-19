@@ -4,6 +4,7 @@
  */
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { HeartsHeader } from '@/components/hearts/HeartsHeader';
+import { SoulStoryStrip } from '@/components/hearts/SoulStoryStrip';
 import { SafetyBanner } from '@/components/hearts/SafetyBanner';
 import { MatchGarden } from '@/components/hearts/MatchGarden';
 import { HeartsOnboardingWizard } from '@/components/hearts/HeartsOnboardingWizard';
@@ -43,8 +44,9 @@ export default function TribalHearts() {
   }
 
   return (
-    <div className="mx-auto max-w-3xl space-y-4 p-4">
+    <div className="mx-auto max-w-3xl space-y-5 p-4 animate-fade-in">
       <HeartsHeader />
+      <SoulStoryStrip />
       <SafetyBanner />
 
       {profileLoading ? (
