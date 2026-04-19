@@ -17,14 +17,18 @@ serve(async (req) => {
     await admin.rpc("ensure_linux_family_agents", { _user_id: user.id });
 
     // ── Premium-agent gate: ambassador-only actions ──
-    // Free agents: gentoo, mint, debian. Premium: tux, ubuntu, kali, fedora, arch.
-    const PREMIUM_ACTIONS = new Set(["run_content_pack", "arch_call"]);
+    // Free agents: gentoo, mint (basic report), debian.
+    // Premium: tux, ubuntu, kali, fedora, arch, loaf, sage, mint-pro (tax_brief).
+    const PREMIUM_ACTIONS = new Set([
+      "run_content_pack", "arch_call",
+      "loaf_logistics", "sage_pricing", "mint_tax_brief",
+    ]);
     if (PREMIUM_ACTIONS.has(action)) {
       const { data: amb } = await admin.rpc("is_active_ambassador", { _user_id: user.id });
       if (!amb) {
         return new Response(JSON.stringify({
           error: "ambassador_required",
-          message: "This S2G Agent is reserved for Tribe Ambassadors. Upgrade for $5/month to unlock Tux, Ubuntu, Kali, Fedora & Arch.",
+          message: "This S2G Agent is reserved for Tribe Ambassadors. Upgrade for $5/month to unlock Tux, Ubuntu, Kali, Fedora, Arch, Loaf, Sage & Mint-Pro.",
           upgrade_url: "/tribe-ambassador",
         }), { status: 402, headers: { ...corsHeaders, "Content-Type": "application/json" } });
       }
@@ -198,6 +202,51 @@ serve(async (req) => {
         return ok(aj);
       }
 
+      case "loaf_logistics": {
+        // Forward to Loaf for an inventory + shipping brief
+        const auth = req.headers.get("Authorization") ?? "";
+        const r = await fetch(`${Deno.env.get("SUPABASE_URL")!}/functions/v1/agent-loaf-logistics`, {
+          method: "POST",
+          headers: { Authorization: auth, "Content-Type": "application/json" },
+          body: JSON.stringify({ window_days: payload?.window_days ?? 30, seed_id: seed_id ?? null }),
+        });
+        const lj = await r.json();
+        await logActivity(user.id, "gentoo", "loaf_dispatched",
+          `🐧 → 🥖 Loaf delivered a logistics brief.`, {}, seed_id ?? null);
+        return ok(lj);
+      }
+
+      case "sage_pricing": {
+        const auth = req.headers.get("Authorization") ?? "";
+        const r = await fetch(`${Deno.env.get("SUPABASE_URL")!}/functions/v1/agent-sage-pricing`, {
+          method: "POST",
+          headers: { Authorization: auth, "Content-Type": "application/json" },
+          body: JSON.stringify({ seed_id, target_currency: payload?.target_currency ?? "USDC" }),
+        });
+        const sj = await r.json();
+        await logActivity(user.id, "gentoo", "sage_dispatched",
+          `🐧 → 🔮 Sage delivered a pricing brief.`, {}, seed_id ?? null);
+        return ok(sj);
+      }
+
+      case "mint_tax_brief": {
+        const auth = req.headers.get("Authorization") ?? "";
+        const r = await fetch(`${Deno.env.get("SUPABASE_URL")!}/functions/v1/agent-mint-bookkeeper`, {
+          method: "POST",
+          headers: { Authorization: auth, "Content-Type": "application/json" },
+          body: JSON.stringify({
+            mode: "tax_brief",
+            period_days: payload?.period_days ?? 30,
+            country: payload?.country ?? null,
+            seed_id: seed_id ?? null,
+          }),
+        });
+        const mj = await r.json();
+        await logActivity(user.id, "gentoo", "mint_pro_dispatched",
+          `🐧 → 📒 Mint-Pro delivered a tax & compliance brief.`, {}, seed_id ?? null);
+        return ok(mj);
+      }
+
       case "respond_suggestion": {
         const { suggestion_id, decision } = payload as { suggestion_id: string; decision: "approved" | "declined" | "snoozed" };
         const { data: sug } = await admin.from("linux_family_suggestions")
@@ -270,7 +319,7 @@ serve(async (req) => {
       }
 
       default:
-        return ok({ family: AGENTS, hint: "actions: init | seed_planted | generate_report | respond_suggestion | summarize" });
+        return ok({ family: AGENTS, hint: "actions: init | seed_planted | generate_report | run_content_pack | comms_blast | arch_call | loaf_logistics | sage_pricing | mint_tax_brief | respond_suggestion | summarize" });
     }
   } catch (e) {
     console.error("gentoo error", e);
