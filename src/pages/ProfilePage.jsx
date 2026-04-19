@@ -296,10 +296,88 @@ export default function ProfilePage() {
     setEditing(false); setPictureError(""); setSocialLinksError({})
   }
 
-  const userStats = {
-    joinedDate: "January 2024", totalBestowed: 2450, totalReceived: 1800,
-    orchardsCreated: 3, orchardsSupported: 12, communityRank: "Faithful Sower", verificationLevel: "Verified"
+  // Real-time stats fetched from Supabase — NEVER hardcoded
+  const [userStats, setUserStats] = useState({
+    joinedDate: "—",
+    totalBestowed: 0,        // amount this user has BESTOWED to others
+    totalReceived: 0,        // amount this user has RECEIVED via their orchards
+    orchardsCreated: 0,
+    orchardsSupported: 0,    // distinct orchards this user has bestowed to
+    helpedCount: 0,          // people they've directly bestowed to
+    successRate: null,       // null when no completed bestowals yet
+    avgRating: null,         // null when no reviews yet
+    communityRank: "Seedling",
+    verificationLevel: "Unverified",
+    currencyCode: "USD",
+  })
+
+  useEffect(() => {
+    const userId = user?.id
+    if (!userId) return
+    let cancelled = false
+    ;(async () => {
+      try {
+        const currency = user?.preferred_currency || "USD"
+        const joined = user?.created_at ? new Date(user.created_at).toLocaleDateString(undefined, { year: "numeric", month: "long" }) : "—"
+
+        const [scoreRes, bestowedRes, orchardsRes, receivedRes] = await Promise.all([
+          supabase.from("tribal_scores")
+            .select("score, tier, orchards_count, bestowals_given_count, reviews_avg_rating")
+            .eq("user_id", userId).maybeSingle(),
+          supabase.from("bestowals")
+            .select("amount, payment_status, orchard_id")
+            .eq("bestower_id", userId),
+          supabase.from("orchards")
+            .select("id")
+            .eq("user_id", userId),
+          supabase.from("bestowals")
+            .select("amount, payment_status, orchards!inner(user_id)")
+            .eq("orchards.user_id", userId)
+            .eq("payment_status", "completed"),
+        ])
+
+        const completedBestowals = (bestowedRes.data || []).filter(b => b.payment_status === "completed")
+        const totalBestowed = completedBestowals.reduce((s, b) => s + Number(b.amount || 0), 0)
+        const totalReceived = (receivedRes.data || []).reduce((s, b) => s + Number(b.amount || 0), 0)
+        const orchardsSupported = new Set(completedBestowals.map(b => b.orchard_id)).size
+        const totalAttempts = (bestowedRes.data || []).length
+        const successRate = totalAttempts > 0 ? Math.round((completedBestowals.length / totalAttempts) * 100) : null
+
+        const score = scoreRes.data
+        const tierLabels = { seedling: "Seedling", sprout: "Sprout", sower: "Sower", mentor: "Mentor", elder: "Elder" }
+        const rank = score?.tier ? tierLabels[score.tier] || "Seedling" : "Seedling"
+        const verification = (score?.score ?? 0) >= 100 ? "Verified" : "Unverified"
+
+        if (!cancelled) {
+          setUserStats({
+            joinedDate: joined,
+            totalBestowed,
+            totalReceived,
+            orchardsCreated: (orchardsRes.data || []).length,
+            orchardsSupported,
+            helpedCount: orchardsSupported,
+            successRate,
+            avgRating: score?.reviews_avg_rating != null && Number(score.reviews_avg_rating) > 0 ? Number(score.reviews_avg_rating) : null,
+            communityRank: rank,
+            verificationLevel: verification,
+            currencyCode: currency,
+          })
+        }
+      } catch (err) {
+        console.error("[ProfilePage] failed to load stats", err)
+      }
+    })()
+    return () => { cancelled = true }
+  }, [user?.id, user?.preferred_currency, user?.created_at])
+
+  const formatMoney = (amount, code) => {
+    try {
+      return new Intl.NumberFormat(undefined, { style: "currency", currency: code || "USD", maximumFractionDigits: 0 }).format(Number(amount || 0))
+    } catch {
+      return `${code || ""} ${Math.round(Number(amount || 0))}`
+    }
   }
+
 
   if (showQuickSetup) return <QuickProfileSetup onComplete={() => setShowQuickSetup(false)} onClose={() => setShowQuickSetup(false)} />
 
