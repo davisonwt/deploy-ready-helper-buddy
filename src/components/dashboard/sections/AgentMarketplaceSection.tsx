@@ -161,39 +161,49 @@ export const AgentMarketplaceSection: React.FC<Props> = ({ theme }) => {
   );
 };
 
-const TemplateCard: React.FC<{ template: AgentTemplate; installed: boolean; onInstall: () => void; }> = ({ template, installed, onInstall }) => (
-  <motion.div
-    initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
-    className="rounded-xl bg-card border border-border/40 p-3"
-  >
-    <div className="flex items-start gap-3">
-      <div className="text-3xl">{template.icon || '🤖'}</div>
-      <div className="flex-1 min-w-0">
-        <div className="flex items-center gap-2">
-          <p className="text-sm font-bold text-foreground truncate">{template.name}</p>
-          {template.is_featured && <Sparkles className="w-3 h-3 text-amber-500" />}
+const TemplateCard: React.FC<{ template: AgentTemplate; installed: boolean; paying?: boolean; onInstall: () => void; }> = ({ template, installed, paying = false, onInstall }) => {
+  const isPaid = template.install_bestowal_amount > 0;
+  const label = installed
+    ? <><Check className="w-3 h-3 mr-1" /> Installed</>
+    : paying
+      ? 'Opening…'
+      : isPaid
+        ? `Bestow ${template.currency} ${template.install_bestowal_amount}`
+        : 'Install';
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
+      className="rounded-xl bg-card border border-border/40 p-3"
+    >
+      <div className="flex items-start gap-3">
+        <div className="text-3xl">{template.icon || '🤖'}</div>
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-2">
+            <p className="text-sm font-bold text-foreground truncate">{template.name}</p>
+            {template.is_featured && <Sparkles className="w-3 h-3 text-amber-500" />}
+          </div>
+          <p className="text-[11px] text-muted-foreground line-clamp-2 mt-0.5">{template.description}</p>
+          <div className="flex items-center gap-3 mt-2 text-[10px] text-muted-foreground">
+            <span className="capitalize">{template.category}</span>
+            <span>· {template.installs_count} installs</span>
+            {isPaid && (
+              <span className="text-primary font-semibold">{template.currency} {template.install_bestowal_amount}</span>
+            )}
+          </div>
         </div>
-        <p className="text-[11px] text-muted-foreground line-clamp-2 mt-0.5">{template.description}</p>
-        <div className="flex items-center gap-3 mt-2 text-[10px] text-muted-foreground">
-          <span className="capitalize">{template.category}</span>
-          <span>· {template.installs_count} installs</span>
-          {template.install_bestowal_amount > 0 && (
-            <span className="text-primary font-semibold">{template.currency} {template.install_bestowal_amount}</span>
-          )}
-        </div>
+        <Button
+          size="sm"
+          variant={installed ? 'secondary' : 'default'}
+          disabled={installed || paying}
+          onClick={onInstall}
+          className="shrink-0"
+        >
+          {label}
+        </Button>
       </div>
-      <Button
-        size="sm"
-        variant={installed ? 'secondary' : 'default'}
-        disabled={installed}
-        onClick={onInstall}
-        className="shrink-0"
-      >
-        {installed ? <><Check className="w-3 h-3 mr-1" /> Installed</> : 'Install'}
-      </Button>
-    </div>
-  </motion.div>
-);
+    </motion.div>
+  );
+};
 
 const SubmitTemplateDialog: React.FC<{ onSubmit: (p: any) => void }> = ({ onSubmit }) => {
   const [name, setName] = useState('');
