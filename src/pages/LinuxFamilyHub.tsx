@@ -11,7 +11,8 @@ import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { toast } from '@/hooks/use-toast';
-import { Loader2, Terminal as TerminalIcon, FileText, Sparkles, Activity } from 'lucide-react';
+import { Loader2, Terminal as TerminalIcon, FileText, Sparkles, Activity, Wand2 } from 'lucide-react';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 const AGENTS = [
   { key: 'gentoo', emoji: '🐧', name: 'Gentoo', role: 'Overseer', bio: 'Coordinates the whole family.' },
@@ -30,6 +31,12 @@ export default function LinuxFamilyHub() {
   const [activity, setActivity] = useState<any[]>([]);
   const [suggestions, setSuggestions] = useState<any[]>([]);
   const [reports, setReports] = useState<any[]>([]);
+  const [seeds, setSeeds] = useState<any[]>([]);
+  const [selectedSeed, setSelectedSeed] = useState<string>('');
+  const [platform, setPlatform] = useState<string>('instagram');
+  const [language, setLanguage] = useState<string>('English');
+  const [pack, setPack] = useState<any>(null);
+  const [packBusy, setPackBusy] = useState(false);
   const [terminal, setTerminal] = useState<{ cmd: string; out: string }[]>([
     { cmd: '', out: 'Welcome to the Linux Open Source Family terminal. Type "help".' },
   ]);
@@ -43,16 +50,19 @@ export default function LinuxFamilyHub() {
   };
 
   const refresh = async () => {
-    const [a, l, s, r] = await Promise.all([
+    const [a, l, s, r, sd] = await Promise.all([
       supabase.from('linux_family_agents').select('*').order('agent_name'),
       supabase.from('linux_family_activity_log').select('*').order('created_at', { ascending: false }).limit(40),
       supabase.from('linux_family_suggestions').select('*').eq('status', 'pending').order('created_at', { ascending: false }),
       supabase.from('bestowal_reports').select('*').order('created_at', { ascending: false }).limit(10),
+      supabase.from('orchards').select('id,title,description').eq('user_id', user!.id).order('created_at', { ascending: false }).limit(50),
     ]);
     setAgents(a.data ?? []);
     setActivity(l.data ?? []);
     setSuggestions(s.data ?? []);
     setReports(r.data ?? []);
+    setSeeds(sd.data ?? []);
+    if (!selectedSeed && sd.data?.[0]) setSelectedSeed(sd.data[0].id);
   };
 
   useEffect(() => {
@@ -95,6 +105,35 @@ export default function LinuxFamilyHub() {
     setTerminal(t => [...t, { cmd: sent, out: data?.output ?? '' }]);
   };
 
+  const runContentPack = async () => {
+    const seed = seeds.find(s => s.id === selectedSeed);
+    if (!seed) {
+      toast({ title: 'Pick a Seed first', description: 'Plant or select a Seed to generate a content pack.' });
+      return;
+    }
+    setPackBusy(true);
+    setPack(null);
+    try {
+      const { data, error } = await supabase.functions.invoke('linux-family-orchestrator', {
+        body: {
+          action: 'run_content_pack',
+          seed_id: seed.id,
+          payload: {
+            seed_title: seed.title,
+            seed_description: seed.description ?? '',
+            platform, language,
+          },
+        },
+      });
+      if (error) throw error;
+      setPack(data?.pack ?? null);
+      toast({ title: '🐧 Content pack ready', description: 'Tux, Ubuntu, Kali & Fedora delivered.' });
+      refresh();
+    } catch (e: any) {
+      toast({ title: 'Content pack failed', description: e.message, variant: 'destructive' });
+    } finally { setPackBusy(false); }
+  };
+
   const statusFor = (key: string) => agents.find(a => a.agent_name === key)?.status ?? 'idle';
 
   return (
@@ -133,12 +172,75 @@ export default function LinuxFamilyHub() {
       </div>
 
       <Tabs defaultValue="suggestions">
-        <TabsList>
+        <TabsList className="flex-wrap h-auto">
           <TabsTrigger value="suggestions" className="gap-1"><Sparkles className="w-3 h-3"/> Suggestions {suggestions.length>0 && <Badge variant="destructive" className="ml-1 text-[9px]">{suggestions.length}</Badge>}</TabsTrigger>
+          <TabsTrigger value="studio" className="gap-1"><Wand2 className="w-3 h-3"/> Studio</TabsTrigger>
           <TabsTrigger value="activity" className="gap-1"><Activity className="w-3 h-3"/> Activity</TabsTrigger>
           <TabsTrigger value="reports" className="gap-1"><FileText className="w-3 h-3"/> Reports</TabsTrigger>
           <TabsTrigger value="terminal" className="gap-1"><TerminalIcon className="w-3 h-3"/> Terminal</TabsTrigger>
         </TabsList>
+
+        <TabsContent value="studio">
+          <Card><CardContent className="p-4 space-y-3">
+            <div className="text-sm text-muted-foreground">
+              Pick one of your Seeds. Tux drafts a post → Ubuntu polishes it for tribal voice → Kali generates a banner → Fedora drafts multi-platform video cuts.
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
+              <Select value={selectedSeed} onValueChange={setSelectedSeed}>
+                <SelectTrigger><SelectValue placeholder="Select a Seed" /></SelectTrigger>
+                <SelectContent>
+                  {seeds.length === 0 && <SelectItem value="__none" disabled>No Seeds yet — plant one first</SelectItem>}
+                  {seeds.map(s => <SelectItem key={s.id} value={s.id}>{s.title}</SelectItem>)}
+                </SelectContent>
+              </Select>
+              <Select value={platform} onValueChange={setPlatform}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="instagram">Instagram</SelectItem>
+                  <SelectItem value="facebook">Facebook</SelectItem>
+                  <SelectItem value="tiktok">TikTok</SelectItem>
+                  <SelectItem value="whatsapp">WhatsApp</SelectItem>
+                  <SelectItem value="youtube">YouTube</SelectItem>
+                </SelectContent>
+              </Select>
+              <Select value={language} onValueChange={setLanguage}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  {['English','Afrikaans','Zulu','Xhosa','Sotho','Spanish','French','Portuguese','Swahili'].map(l => (
+                    <SelectItem key={l} value={l}>{l}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <Button onClick={runContentPack} disabled={packBusy || !selectedSeed} className="gap-2">
+              {packBusy ? <Loader2 className="w-4 h-4 animate-spin"/> : <Wand2 className="w-4 h-4"/>}
+              Generate Content Pack
+            </Button>
+
+            {pack && (
+              <div className="space-y-3 mt-3 border-t pt-3">
+                {pack.banner_url && (
+                  <div>
+                    <div className="text-xs font-semibold mb-1">🪄 Kali · Banner</div>
+                    <img src={pack.banner_url} alt="Banner" className="rounded-lg border max-h-72 object-cover" />
+                  </div>
+                )}
+                <div>
+                  <div className="text-xs font-semibold mb-1">🛡️ Ubuntu · Polished post</div>
+                  <pre className="whitespace-pre-wrap text-sm bg-muted/40 rounded-lg p-3">{pack.polished_post}</pre>
+                </div>
+                <details className="text-xs">
+                  <summary className="cursor-pointer text-muted-foreground">🎨 Tux · Raw draft</summary>
+                  <pre className="whitespace-pre-wrap mt-2 bg-muted/30 rounded-lg p-3">{pack.raw_post}</pre>
+                </details>
+                <details>
+                  <summary className="cursor-pointer text-xs font-semibold">🎬 Fedora · Video plan ({pack.language})</summary>
+                  <pre className="whitespace-pre-wrap text-xs mt-2 bg-muted/40 rounded-lg p-3">{pack.video_plan}</pre>
+                </details>
+              </div>
+            )}
+          </CardContent></Card>
+        </TabsContent>
 
         <TabsContent value="suggestions">
           <Card><CardContent className="p-4 space-y-2">
