@@ -224,7 +224,7 @@ export default function MarketingVideosPage() {
                     </p>
                   )}
 
-                  <div className="grid grid-cols-2 gap-2">
+                  <div className="grid grid-cols-3 gap-2">
                     <Button
                       type="button"
                       variant="outline"
@@ -233,7 +233,7 @@ export default function MarketingVideosPage() {
                       className="w-full font-semibold"
                       style={{ borderColor: theme.cardBorder, color: theme.textPrimary, background: "transparent" }}
                     >
-                      <Play className="w-4 h-4 mr-2" fill="currentColor" /> Watch
+                      <Play className="w-4 h-4 mr-1.5" fill="currentColor" /> Watch
                     </Button>
                     <Button
                       onClick={() => handleDownload(b)}
@@ -242,11 +242,82 @@ export default function MarketingVideosPage() {
                       style={{ background: theme.primaryButton, color: theme.textPrimary }}
                     >
                       {busy ? (
-                        <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Personalizing…</>
+                        <><Loader2 className="w-4 h-4 mr-1.5 animate-spin" /> …</>
                       ) : (
-                        <><Download className="w-4 h-4 mr-2" /> Download</>
+                        <><Download className="w-4 h-4 mr-1.5" /> Get</>
                       )}
                     </Button>
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <Button
+                          type="button"
+                          disabled={!b.available}
+                          className="w-full font-semibold !text-white !border-0"
+                          style={{ backgroundImage: "linear-gradient(135deg, #059669, #10b981)", backgroundColor: "transparent" }}
+                        >
+                          <Share2 className="w-4 h-4 mr-1.5" /> Share
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent
+                        className="w-64 p-2"
+                        style={{ background: theme.cardBg, borderColor: theme.cardBorder, color: theme.textPrimary }}
+                      >
+                        <div className="space-y-1">
+                          <p className="text-[11px] px-2 pt-1 pb-2 opacity-70" style={{ color: theme.textSecondary }}>
+                            Share <strong>{b.title}</strong> + your tribe link
+                          </p>
+                          <button
+                            type="button"
+                            onClick={() => handleNativeShare(b)}
+                            className="w-full flex items-center gap-2 px-2 py-2 rounded-md text-sm hover:bg-white/10 transition-colors"
+                          >
+                            <Share2 className="w-4 h-4" /> Device share sheet
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => openExternalShare(`https://wa.me/?text=${encodeURIComponent(buildShareText(b))}`)}
+                            className="w-full flex items-center gap-2 px-2 py-2 rounded-md text-sm hover:bg-white/10 transition-colors"
+                          >
+                            <MessageCircle className="w-4 h-4" style={{ color: "#25D366" }} /> WhatsApp
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => openExternalShare(`https://t.me/share/url?url=${encodeURIComponent(shareUrl)}&text=${encodeURIComponent(buildShareText(b))}`)}
+                            className="w-full flex items-center gap-2 px-2 py-2 rounded-md text-sm hover:bg-white/10 transition-colors"
+                          >
+                            <Send className="w-4 h-4" style={{ color: "#0088cc" }} /> Telegram
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => openExternalShare(`https://twitter.com/intent/tweet?text=${encodeURIComponent(buildShareText(b))}`)}
+                            className="w-full flex items-center gap-2 px-2 py-2 rounded-md text-sm hover:bg-white/10 transition-colors"
+                          >
+                            <Twitter className="w-4 h-4" style={{ color: "#1DA1F2" }} /> X / Twitter
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => openExternalShare(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(shareUrl)}&quote=${encodeURIComponent(buildShareText(b))}`)}
+                            className="w-full flex items-center gap-2 px-2 py-2 rounded-md text-sm hover:bg-white/10 transition-colors"
+                          >
+                            <Facebook className="w-4 h-4" style={{ color: "#1877F2" }} /> Facebook
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => openExternalShare(`mailto:?subject=${encodeURIComponent(`S2G · ${b.title}`)}&body=${encodeURIComponent(buildShareText(b))}`)}
+                            className="w-full flex items-center gap-2 px-2 py-2 rounded-md text-sm hover:bg-white/10 transition-colors"
+                          >
+                            <Mail className="w-4 h-4" /> Email
+                          </button>
+                          <button
+                            type="button"
+                            onClick={copyShareLink}
+                            className="w-full flex items-center gap-2 px-2 py-2 rounded-md text-sm hover:bg-white/10 transition-colors"
+                          >
+                            <Copy className="w-4 h-4" /> Copy invite link
+                          </button>
+                        </div>
+                      </PopoverContent>
+                    </Popover>
                   </div>
                 </CardContent>
               </Card>
