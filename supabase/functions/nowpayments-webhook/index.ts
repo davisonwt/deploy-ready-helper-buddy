@@ -239,11 +239,13 @@ serve(async (req) => {
       processed_at: new Date().toISOString(),
     });
 
-    // Determine if this is an orchard bestowal or product/tithe payment
+    // Determine if this is an orchard bestowal or product/tithe/agent payment
     const orderId = ipnData.order_id;
-    const isOrchardBestowal = !orderId.startsWith('product_') && 
-                              !orderId.startsWith('tithe_') && 
-                              !orderId.startsWith('freewill_');
+    const isAgentInstall = orderId.startsWith('agent_install_');
+    const isOrchardBestowal = !orderId.startsWith('product_') &&
+                              !orderId.startsWith('tithe_') &&
+                              !orderId.startsWith('freewill_') &&
+                              !isAgentInstall;
 
     // Map NOWPayments status to our status
     let paymentStatus: string;
