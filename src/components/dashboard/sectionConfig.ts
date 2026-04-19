@@ -1,4 +1,4 @@
-import { Home, MessageSquare, Camera, Calendar, Sprout, Cloud, Settings } from 'lucide-react';
+import { Home, MessageSquare, Camera, Calendar, Sprout, Cloud, Settings, Bot, Crown } from 'lucide-react';
 import { getThemeByIndex, DashboardTheme } from '@/utils/dashboardThemes';
 
 export interface DashboardSectionConfig {
@@ -14,6 +14,8 @@ export const DASHBOARD_SECTIONS: DashboardSectionConfig[] = [
   { id: 'memry', label: 'S2G Memry', icon: Camera, themeOffset: 3 },
   { id: '364yhvh', label: '364yhvh', icon: Calendar, themeOffset: 5 },
   { id: 'garden', label: 'My Garden', icon: Sprout, themeOffset: 7 },
+  { id: 'agents', label: 'Agents', icon: Bot, themeOffset: 8 },
+  { id: 'council', label: 'Council', icon: Crown, themeOffset: 10 },
   { id: 'letitrain', label: 'Let It Rain', icon: Cloud, themeOffset: 9 },
   { id: 'gosats', label: "GoSat's", icon: Settings, themeOffset: 11 },
 ];
