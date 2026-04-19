@@ -40,7 +40,7 @@ await browser.close({ silent: false });
 // Pad VO to match video length; do NOT use -shortest so we keep the music tail.
 // apad keeps the AAC stream alive (silence) for the final 1s after VO ends.
 execSync(
-  `ffmpeg -y -i "${silent}" -i "${VO}" -filter_complex "[1:a]apad[a]" -map 0:v -map "[a]" -c:v copy -c:a aac -b:a 192k -t 14.4 "${OUT}"`,
+  `ffmpeg -y -i "${silent}" -i "${VO}" -filter_complex "[1:a]apad[a]" -map 0:v -map "[a]" -c:v copy -c:a aac -b:a 192k -t 18 "${OUT}"`,
   { stdio: "inherit" },
 );
 await fs.unlink(silent).catch(() => {});
