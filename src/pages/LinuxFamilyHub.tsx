@@ -11,7 +11,8 @@ import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { toast } from '@/hooks/use-toast';
-import { Loader2, Terminal as TerminalIcon, FileText, Sparkles, Activity } from 'lucide-react';
+import { Loader2, Terminal as TerminalIcon, FileText, Sparkles, Activity, Wand2 } from 'lucide-react';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 const AGENTS = [
   { key: 'gentoo', emoji: '🐧', name: 'Gentoo', role: 'Overseer', bio: 'Coordinates the whole family.' },
