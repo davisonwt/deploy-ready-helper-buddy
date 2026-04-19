@@ -41,6 +41,8 @@ export interface BannerSceneProps {
   captions: BannerCaption[];
   /** Color variant for background glow */
   variant?: "warm" | "cool";
+  /** Optional cinematic illustrated scenes that play between the hero intro and the closing card */
+  cinematicScenes?: React.ReactNode;
 }
 
 const HeroIcon: React.FC<{ emoji: string }> = ({ emoji }) => {
@@ -64,7 +66,7 @@ const HeroIcon: React.FC<{ emoji: string }> = ({ emoji }) => {
  *  - 240–300f: closing CTA with logo
  */
 export const BannerScene: React.FC<BannerSceneProps> = ({
-  emoji, eyebrow, heroTitle, cta, voice, captions, variant = "warm",
+  emoji, eyebrow, heroTitle, cta, voice, captions, variant = "warm", cinematicScenes,
 }) => {
   const frame = useCurrentFrame();
   const { fps, durationInFrames } = useVideoConfig();
@@ -89,8 +91,8 @@ export const BannerScene: React.FC<BannerSceneProps> = ({
       <BrandBackground variant={variant} />
       <GlowParticles count={50} color={variant === "warm" ? "#FFD78A" : "#A8E6CF"} />
 
-      {/* Hero block visible until the closing card */}
-      <Sequence from={0} durationInFrames={heroDuration}>
+      {/* Hero block: full intro until ~2s, then either persists (no cinematic) or shrinks to a top ribbon */}
+      <Sequence from={0} durationInFrames={cinematicScenes ? 60 : heroDuration}>
         <AbsoluteFill style={{ justifyContent: "flex-start", alignItems: "center", paddingTop: 120 }}>
           <div style={{
             fontFamily: inter, fontWeight: 700, fontSize: 28, color: TERRACOTTA,
@@ -109,6 +111,32 @@ export const BannerScene: React.FC<BannerSceneProps> = ({
           </h1>
         </AbsoluteFill>
       </Sequence>
+
+      {/* Cinematic illustrated scenes (optional) — play after the intro, before the closing card */}
+      {cinematicScenes && (
+        <Sequence from={60} durationInFrames={Math.max(0, closingFrom - 60)}>
+          <AbsoluteFill>
+            {/* Compact title ribbon at the top */}
+            <div style={{
+              position: "absolute", top: 60, left: 0, right: 0, textAlign: "center",
+            }}>
+              <div style={{
+                fontFamily: inter, fontWeight: 700, fontSize: 20, color: TERRACOTTA,
+                letterSpacing: 5, textTransform: "uppercase", marginBottom: 6,
+              }}>
+                {eyebrow}
+              </div>
+              <h2 style={{
+                fontFamily: playfair, fontSize: 56, color: FOREST, fontWeight: 800,
+                margin: 0, textShadow: "0 4px 20px rgba(255,255,255,0.6)",
+              }}>
+                {heroTitle}
+              </h2>
+            </div>
+            {cinematicScenes}
+          </AbsoluteFill>
+        </Sequence>
+      )}
 
       {/* English captions with subtitle line */}
       {captions.map((c, i) => (
