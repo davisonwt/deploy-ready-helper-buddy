@@ -103,6 +103,12 @@ export const InlineMemryFeed: React.FC = () => {
   const [posts, setPosts] = useState<MemryPost[]>([]);
   const [providers, setProviders] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+
+  // Council blessings for visible orchards
+  const visibleOrchardIds = posts
+    .filter(p => p.content_type === 'new_orchard' && !!p.orchard_id)
+    .map(p => p.orchard_id as string);
+  const { blessedSet } = useOrchardBlessings(visibleOrchardIds);
   const [user, setUser] = useState<any>(null);
   const [likedPostIds, setLikedPostIds] = useState<Set<string>>(new Set());
   const [followedUserIds, setFollowedUserIds] = useState<Set<string>>(new Set());
@@ -554,6 +560,7 @@ export const InlineMemryFeed: React.FC = () => {
               onFollow={handleFollow}
               onOpenComments={handleOpenComments}
               onPrivateMessage={handlePrivateMessage}
+              isBlessed={!!post.orchard_id && blessedSet.has(post.orchard_id)}
             />
             {/* Interleave a provider card every 5 posts */}
             {providers.length > 0 && (idx + 1) % 5 === 0 && providers[Math.floor(idx / 5) % providers.length] && (
