@@ -45,10 +45,8 @@ export async function loadWalletConfig(
     ])
 
     if (!apiKey || !apiSecret) {
-      console.log(`No vault credentials found for ${prefix}`)
-
-      // Fallback: try reading from database (for migration period)
-      return await loadWalletConfigFallback(supabase, walletName, userId)
+      console.error(`No vault credentials found for ${prefix}. Configure secrets in Supabase Vault.`)
+      return null
     }
 
     return {
@@ -61,54 +59,6 @@ export async function loadWalletConfig(
   } catch (error) {
     console.error(`Error loading wallet config for ${walletName}:`, error)
     return null
-  }
-}
-
-/**
- * Fallback: read from plaintext database columns during migration period.
- * Remove this function once all credentials are migrated to Vault.
- */
-async function loadWalletConfigFallback(
-  supabase: any,
-  walletName: 's2gholding' | 's2gbestow' | 'user',
-  userId?: string
-): Promise<BinancePayConfig | null> {
-  console.warn(`⚠️ Falling back to plaintext DB credentials for ${walletName}. Migrate to Vault ASAP.`)
-
-  if (walletName === 'user' && userId) {
-    const { data, error } = await supabase
-      .from('user_wallets')
-      .select('api_key, api_secret, merchant_id')
-      .eq('user_id', userId)
-      .eq('wallet_origin', 'binance_pay')
-      .single()
-
-    if (error || !data || !data.api_key || !data.api_secret) return null
-
-    return {
-      apiKey: data.api_key,
-      apiSecret: data.api_secret,
-      merchantId: data.merchant_id || undefined,
-      baseUrl: 'https://bpay.binanceapi.com',
-      walletName: 'user'
-    }
-  } else {
-    const { data, error } = await supabase
-      .from('organization_wallets')
-      .select('api_key, api_secret, merchant_id')
-      .eq('wallet_name', walletName)
-      .eq('is_active', true)
-      .single()
-
-    if (error || !data || !data.api_key || !data.api_secret) return null
-
-    return {
-      apiKey: data.api_key,
-      apiSecret: data.api_secret,
-      merchantId: data.merchant_id || undefined,
-      baseUrl: 'https://bpay.binanceapi.com',
-      walletName
-    }
   }
 }
 
