@@ -48,7 +48,7 @@ export const TribalHeartsTrailerCard: React.FC = () => {
         <div className="relative aspect-video bg-black">
           <video
             ref={videoRef}
-            src="/videos/tribal-hearts-trailer.mp4?v=6"
+            src="/videos/tribal-hearts-trailer.mp4?v=7"
             muted={muted}
             playsInline
             preload="metadata"
