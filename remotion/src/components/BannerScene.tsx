@@ -41,6 +41,8 @@ export interface BannerSceneProps {
   captions: BannerCaption[];
   /** Color variant for background glow */
   variant?: "warm" | "cool";
+  /** Optional cinematic illustrated scenes that play between the hero intro and the closing card */
+  cinematicScenes?: React.ReactNode;
 }
 
 const HeroIcon: React.FC<{ emoji: string }> = ({ emoji }) => {
