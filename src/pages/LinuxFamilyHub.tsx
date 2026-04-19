@@ -14,6 +14,7 @@ import { toast } from '@/hooks/use-toast';
 import { Loader2, Terminal as TerminalIcon, FileText, Sparkles, Activity, Wand2, MessageCircle, Phone } from 'lucide-react';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { cn } from '@/lib/utils';
 
 const AGENTS = [
   { key: 'gentoo', emoji: '🐧', name: 'Gentoo', role: 'Overseer', bio: 'Coordinates the whole family.' },
