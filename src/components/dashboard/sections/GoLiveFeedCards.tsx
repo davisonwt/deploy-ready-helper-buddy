@@ -5,10 +5,10 @@ import { Button } from '@/components/ui/button';
 import { DashboardTheme } from '@/utils/dashboardThemes';
 import { SectionHeading } from './SectionHeading';
 
-import classroomImg from '/images/golive/classroom.jpg';
-import skilldropImg from '/images/golive/skilldrop.jpg';
-import trainingImg from '/images/golive/training.jpg';
-import radioImg from '/images/golive/radio.jpg';
+const classroomImg = '/images/golive/classroom.jpg';
+const skilldropImg = '/images/golive/skilldrop.jpg';
+const trainingImg = '/images/golive/training.jpg';
+const radioImg = '/images/golive/radio.jpg';
 
 interface GoLiveFeedCardsProps {
   theme: DashboardTheme;
