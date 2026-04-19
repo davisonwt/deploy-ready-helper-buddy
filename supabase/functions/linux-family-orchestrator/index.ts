@@ -16,6 +16,21 @@ serve(async (req) => {
     const admin = adminClient();
     await admin.rpc("ensure_linux_family_agents", { _user_id: user.id });
 
+    // ── Premium-agent gate: ambassador-only actions ──
+    // Free agents: gentoo, mint, debian. Premium: tux, ubuntu, kali, fedora, arch.
+    const PREMIUM_ACTIONS = new Set(["run_content_pack", "arch_call"]);
+    if (PREMIUM_ACTIONS.has(action)) {
+      const { data: amb } = await admin.rpc("is_active_ambassador", { _user_id: user.id });
+      if (!amb) {
+        return new Response(JSON.stringify({
+          error: "ambassador_required",
+          message: "This S2G Agent is reserved for Tribe Ambassadors. Upgrade for $5/month to unlock Tux, Ubuntu, Kali, Fedora & Arch.",
+          upgrade_url: "/tribe-ambassador",
+        }), { status: 402, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      }
+    }
+
+
     switch (action) {
       case "init": {
         await logActivity(user.id, "gentoo", "ready",

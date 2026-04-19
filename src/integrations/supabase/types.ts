@@ -11214,6 +11214,7 @@ export type Database = {
         }
         Returns: string
       }
+      is_active_ambassador: { Args: { _user_id: string }; Returns: boolean }
       is_active_participant: {
         Args: { _room_id: string; _user_id: string }
         Returns: boolean
