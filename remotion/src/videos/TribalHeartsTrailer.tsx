@@ -41,7 +41,7 @@ const SCENES: SceneDef[] = [
     title: "Welcome to Tribal Hearts",
     body: "A calm, protected dating garden living inside the Sow2Grow tribe.",
     accent: PALETTE.rose,
-    duration: 120,
+    duration: 109,
     variant: "garden",
   },
   {
@@ -49,7 +49,7 @@ const SCENES: SceneDef[] = [
     title: "Real tribe members only",
     body: "Entry is reserved for Ambassadors, keeping the space intentional and trusted.",
     accent: PALETTE.gold,
-    duration: 135,
+    duration: 133,
     variant: "ambassador",
   },
   {
@@ -57,7 +57,7 @@ const SCENES: SceneDef[] = [
     title: "Tell Gentoo your story",
     body: "A warm guided flow helps shape your profile, then you refine it in your own voice.",
     accent: PALETTE.sage,
-    duration: 135,
+    duration: 127,
     variant: "story",
   },
   {
@@ -65,7 +65,7 @@ const SCENES: SceneDef[] = [
     title: "Meet with intention",
     body: "Discover men and women who align with your values, direction, and pace.",
     accent: "#F08E74",
-    duration: 120,
+    duration: 112,
     variant: "match",
   },
   {
@@ -73,7 +73,7 @@ const SCENES: SceneDef[] = [
     title: "Keep chat inside ChatApp",
     body: "Conversations stay in-house, so personal details are never pushed out too early.",
     accent: "#7AA7A0",
-    duration: 150,
+    duration: 152,
     variant: "chat",
   },
   {
@@ -81,7 +81,7 @@ const SCENES: SceneDef[] = [
     title: "AI safety watches over the garden",
     body: "Moderation and safety checks help every connection stay respectful and secure.",
     accent: "#C68CE6",
-    duration: 135,
+    duration: 126,
     variant: "safety",
   },
   {
@@ -89,7 +89,7 @@ const SCENES: SceneDef[] = [
     title: "Let love grow naturally",
     body: "Become an Ambassador and step into a dating space built for the tribe.",
     accent: PALETTE.rose,
-    duration: 150,
+    duration: 145,
     variant: "close",
   },
 ];
