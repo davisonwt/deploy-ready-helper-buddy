@@ -67,11 +67,14 @@ async function findCandidatesForMentee(
 ) {
   const focus = pickFocusForMentee(menteeScore);
 
-  // Mentors must be score >= 500 AND not the mentee
+  // Mentors must score higher than the mentee AND meet a low floor (100)
+  // — keeps pairings meaningful while letting an early-stage tribe generate real matches
+  const MENTOR_FLOOR = 100;
+  const minMentorScore = Math.max(MENTOR_FLOOR, (menteeScore.score ?? 0) + 25);
   const { data: mentors } = await supabase
     .from('tribal_scores')
     .select('user_id, score, tier, orchards_count, bestowals_given_count, tribe_size, reviews_avg_rating')
-    .gte('score', 500)
+    .gte('score', minMentorScore)
     .neq('user_id', menteeId)
     .order('score', { ascending: false })
     .limit(20);
