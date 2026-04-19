@@ -36,6 +36,34 @@ serve(async (req) => {
         user_id: user.id, agent_name: "mint", task_type: "build_bestowal_report",
         payload: { period_days: days },
       });
+    } else if (agent === "debian" && rest[0] === "blast") {
+      const limit = Number(rest[1] ?? 10);
+      const text = rest.slice(2).join(" ");
+      const auth = req.headers.get("Authorization") ?? "";
+      await fetch(`${Deno.env.get("SUPABASE_URL")!}/functions/v1/linux-family-orchestrator`, {
+        method: "POST",
+        headers: { Authorization: auth, "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action: "comms_blast",
+          payload: { limit, message_kind: "collab_offer", custom_text: text || null, seed_title: "your Seed" },
+        }),
+      });
+      output = `💬 Debian dispatching tribal broadcast to ${limit} bestowars…`;
+    } else if (agent === "arch" && rest[0] === "call") {
+      const counterparty = rest[1];
+      const callType = rest[2] === "audio" ? "audio" : "video";
+      if (!counterparty) {
+        output = "usage: arch call <user_id> [audio|video]";
+      } else {
+        const auth = req.headers.get("Authorization") ?? "";
+        const r = await fetch(`${Deno.env.get("SUPABASE_URL")!}/functions/v1/linux-family-orchestrator`, {
+          method: "POST",
+          headers: { Authorization: auth, "Content-Type": "application/json" },
+          body: JSON.stringify({ action: "arch_call", payload: { counterparty_user_id: counterparty, call_type: callType } }),
+        });
+        const j = await r.json();
+        output = `📞 Arch placing a ${callType} call. Jitsi room: ${j.jitsi_room ?? "(pending)"}`;
+      }
     } else if (AGENTS[agent as keyof typeof AGENTS]) {
       output = `${AGENTS[agent as keyof typeof AGENTS].emoji} ${agent}: queued — "${arg || "no args"}"`;
       await adminClient().from("linux_family_tasks").insert({
