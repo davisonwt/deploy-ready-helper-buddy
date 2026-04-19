@@ -120,7 +120,8 @@ export const MentorshipInbox: React.FC = () => {
     let roomId = p.room_id;
     if (!roomId) {
       const { data: rid, error: rpcErr } = await supabase.rpc('get_or_create_direct_room', {
-        _other_user_id: p.partner_id,
+        user1_id: user.id,
+        user2_id: p.partner_id,
       });
       if (rpcErr) { toast.error('Could not create chat room'); return; }
       roomId = rid as string;
