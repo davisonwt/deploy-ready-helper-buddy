@@ -105,6 +105,35 @@ export default function LinuxFamilyHub() {
     setTerminal(t => [...t, { cmd: sent, out: data?.output ?? '' }]);
   };
 
+  const runContentPack = async () => {
+    const seed = seeds.find(s => s.id === selectedSeed);
+    if (!seed) {
+      toast({ title: 'Pick a Seed first', description: 'Plant or select a Seed to generate a content pack.' });
+      return;
+    }
+    setPackBusy(true);
+    setPack(null);
+    try {
+      const { data, error } = await supabase.functions.invoke('linux-family-orchestrator', {
+        body: {
+          action: 'run_content_pack',
+          seed_id: seed.id,
+          payload: {
+            seed_title: seed.title,
+            seed_description: seed.description ?? '',
+            platform, language,
+          },
+        },
+      });
+      if (error) throw error;
+      setPack(data?.pack ?? null);
+      toast({ title: '🐧 Content pack ready', description: 'Tux, Ubuntu, Kali & Fedora delivered.' });
+      refresh();
+    } catch (e: any) {
+      toast({ title: 'Content pack failed', description: e.message, variant: 'destructive' });
+    } finally { setPackBusy(false); }
+  };
+
   const statusFor = (key: string) => agents.find(a => a.agent_name === key)?.status ?? 'idle';
 
   return (
