@@ -343,10 +343,16 @@ export default function LinuxFamilyHub() {
                 </SelectContent>
               </Select>
             </div>
-            <Button onClick={runContentPack} disabled={packBusy || !selectedSeed} className="gap-2">
-              {packBusy ? <Loader2 className="w-4 h-4 animate-spin"/> : <Wand2 className="w-4 h-4"/>}
-              Generate Content Pack
-            </Button>
+            {isPro ? (
+              <Button onClick={runContentPack} disabled={packBusy || !selectedSeed} className="gap-2">
+                {packBusy ? <Loader2 className="w-4 h-4 animate-spin"/> : <Wand2 className="w-4 h-4"/>}
+                Generate Content Pack
+              </Button>
+            ) : (
+              <Button onClick={() => navigate('/tribe-ambassador')} className="gap-2 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 text-amber-950 font-semibold border-0">
+                <Crown className="w-4 h-4"/> Unlock with Ambassador ($5/mo)
+              </Button>
+            )}
 
             {pack && (
               <div className="space-y-3 mt-3 border-t pt-3">
