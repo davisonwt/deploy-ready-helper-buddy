@@ -9717,6 +9717,201 @@ export type Database = {
           },
         ]
       }
+      tribal_hearts_answers: {
+        Row: {
+          answer: string
+          created_at: string
+          id: string
+          question_key: string
+          question_text: string
+          user_id: string
+        }
+        Insert: {
+          answer: string
+          created_at?: string
+          id?: string
+          question_key: string
+          question_text: string
+          user_id: string
+        }
+        Update: {
+          answer?: string
+          created_at?: string
+          id?: string
+          question_key?: string
+          question_text?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      tribal_hearts_blocks: {
+        Row: {
+          blocked_id: string
+          blocker_id: string
+          created_at: string
+          id: string
+          is_report: boolean
+          reason: string | null
+        }
+        Insert: {
+          blocked_id: string
+          blocker_id: string
+          created_at?: string
+          id?: string
+          is_report?: boolean
+          reason?: string | null
+        }
+        Update: {
+          blocked_id?: string
+          blocker_id?: string
+          created_at?: string
+          id?: string
+          is_report?: boolean
+          reason?: string | null
+        }
+        Relationships: []
+      }
+      tribal_hearts_matches: {
+        Row: {
+          a_response: Database["public"]["Enums"]["hearts_response"]
+          b_response: Database["public"]["Enums"]["hearts_response"]
+          chat_room_id: string | null
+          compatibility_score: number
+          created_at: string
+          id: string
+          match_reasons: Json
+          member_a_id: string
+          member_b_id: string
+          status: Database["public"]["Enums"]["hearts_match_status"]
+          updated_at: string
+        }
+        Insert: {
+          a_response?: Database["public"]["Enums"]["hearts_response"]
+          b_response?: Database["public"]["Enums"]["hearts_response"]
+          chat_room_id?: string | null
+          compatibility_score?: number
+          created_at?: string
+          id?: string
+          match_reasons?: Json
+          member_a_id: string
+          member_b_id: string
+          status?: Database["public"]["Enums"]["hearts_match_status"]
+          updated_at?: string
+        }
+        Update: {
+          a_response?: Database["public"]["Enums"]["hearts_response"]
+          b_response?: Database["public"]["Enums"]["hearts_response"]
+          chat_room_id?: string | null
+          compatibility_score?: number
+          created_at?: string
+          id?: string
+          match_reasons?: Json
+          member_a_id?: string
+          member_b_id?: string
+          status?: Database["public"]["Enums"]["hearts_match_status"]
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      tribal_hearts_profiles: {
+        Row: {
+          age_verified: boolean
+          bio: string | null
+          birthdate: string
+          created_at: string
+          display_first_name: string | null
+          distance_pref_km: number | null
+          gender: Database["public"]["Enums"]["hearts_gender"]
+          interests: string[]
+          last_active_at: string
+          lifestyle: Json
+          location_country: string | null
+          location_region: string | null
+          photo_verified: boolean
+          seeking: Database["public"]["Enums"]["hearts_gender"]
+          status: Database["public"]["Enums"]["hearts_profile_status"]
+          timezone: string | null
+          updated_at: string
+          user_id: string
+          values_list: string[]
+        }
+        Insert: {
+          age_verified?: boolean
+          bio?: string | null
+          birthdate: string
+          created_at?: string
+          display_first_name?: string | null
+          distance_pref_km?: number | null
+          gender: Database["public"]["Enums"]["hearts_gender"]
+          interests?: string[]
+          last_active_at?: string
+          lifestyle?: Json
+          location_country?: string | null
+          location_region?: string | null
+          photo_verified?: boolean
+          seeking: Database["public"]["Enums"]["hearts_gender"]
+          status?: Database["public"]["Enums"]["hearts_profile_status"]
+          timezone?: string | null
+          updated_at?: string
+          user_id: string
+          values_list?: string[]
+        }
+        Update: {
+          age_verified?: boolean
+          bio?: string | null
+          birthdate?: string
+          created_at?: string
+          display_first_name?: string | null
+          distance_pref_km?: number | null
+          gender?: Database["public"]["Enums"]["hearts_gender"]
+          interests?: string[]
+          last_active_at?: string
+          lifestyle?: Json
+          location_country?: string | null
+          location_region?: string | null
+          photo_verified?: boolean
+          seeking?: Database["public"]["Enums"]["hearts_gender"]
+          status?: Database["public"]["Enums"]["hearts_profile_status"]
+          timezone?: string | null
+          updated_at?: string
+          user_id?: string
+          values_list?: string[]
+        }
+        Relationships: []
+      }
+      tribal_hearts_safety_flags: {
+        Row: {
+          category: string
+          created_at: string
+          details: Json
+          flagged_user_id: string | null
+          id: string
+          message_id: string | null
+          room_id: string | null
+          severity: string
+        }
+        Insert: {
+          category: string
+          created_at?: string
+          details?: Json
+          flagged_user_id?: string | null
+          id?: string
+          message_id?: string | null
+          room_id?: string | null
+          severity?: string
+        }
+        Update: {
+          category?: string
+          created_at?: string
+          details?: Json
+          flagged_user_id?: string | null
+          id?: string
+          message_id?: string | null
+          room_id?: string | null
+          severity?: string
+        }
+        Relationships: []
+      }
       tribal_matches: {
         Row: {
           confidence_score: number
@@ -12098,6 +12293,10 @@ export type Database = {
         | "payment"
       dj_role: "dj" | "program_director" | "station_manager" | "ai_host"
       file_type: "image" | "video" | "document" | "audio"
+      hearts_gender: "male" | "female"
+      hearts_match_status: "pending" | "mutual" | "declined" | "expired"
+      hearts_profile_status: "active" | "paused" | "hidden"
+      hearts_response: "pending" | "accepted" | "passed"
       orchard_status: "draft" | "active" | "paused" | "completed" | "cancelled"
       orchard_type: "standard" | "full_value"
       payment_status:
@@ -12316,6 +12515,10 @@ export const Constants = {
       ],
       dj_role: ["dj", "program_director", "station_manager", "ai_host"],
       file_type: ["image", "video", "document", "audio"],
+      hearts_gender: ["male", "female"],
+      hearts_match_status: ["pending", "mutual", "declined", "expired"],
+      hearts_profile_status: ["active", "paused", "hidden"],
+      hearts_response: ["pending", "accepted", "passed"],
       orchard_status: ["draft", "active", "paused", "completed", "cancelled"],
       orchard_type: ["standard", "full_value"],
       payment_status: [

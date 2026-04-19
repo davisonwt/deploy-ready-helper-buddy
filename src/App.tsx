@@ -62,6 +62,7 @@ const CommunicationsHub = lazy(() =>
 );
 const DashboardPage = lazy(() => import("./pages/DashboardPage"));
 const LinuxFamilyHub = lazy(() => import("./pages/LinuxFamilyHub"));
+const TribalHearts = lazy(() => import("./pages/TribalHearts"));
 const MyMatchesPage = lazy(() => import("./pages/MyMatchesPage"));
 const TribalEventsPage = lazy(() => import("./pages/TribalEventsPage"));
 const S2GAgentGreeter = lazy(() => import("@/components/agents/S2GAgentGreeter"));
@@ -326,6 +327,15 @@ const App = () => (
               <Route path="/start-your-journey" element={<RegisterPage />} />
               <Route path="/ambassador-thumbnail" element={<AmbassadorThumbnailPage />} />
               <Route path="/tribe-ambassador" element={<Suspense fallback={<LoadingFallback />}><TribeAmbassadorPage /></Suspense>} />
+              <Route path="/tribal-hearts" element={
+                <Layout>
+                  <Suspense fallback={<LoadingFallback />}>
+                    <ProtectedRoute>
+                      <TribalHearts />
+                    </ProtectedRoute>
+                  </Suspense>
+                </Layout>
+              } />
               <Route path="/ambassador-hub" element={
                 <Layout>
                   <Suspense fallback={<LoadingFallback />}>
