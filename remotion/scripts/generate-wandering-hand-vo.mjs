@@ -20,7 +20,7 @@ if (!API_KEY) {
 
 const SCRIPT = {
   slug: "05-wandering-hand",
-  text: "Need a helping hand? Connect with skilled Wandering Hands! Plumbers, electricians, mechanics, cleaners, engineers, doctors and many more — trusted tribe professionals at your door. Open the app, book a hand, get it done. Sign up on Sow2Grow.",
+  text: "Need a helping hand? Plumbers, electricians, cleaners — trusted tribe pros at your door. Book a hand on Sow2Grow.",
 };
 
 const res = await fetch(
