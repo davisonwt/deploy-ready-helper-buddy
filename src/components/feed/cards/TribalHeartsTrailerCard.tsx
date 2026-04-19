@@ -1,15 +1,14 @@
 import React, { useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Heart, Play, Pause, Volume2, VolumeX, UserPlus } from 'lucide-react';
+import { Heart, Play, Pause, UserPlus } from 'lucide-react';
 
 /**
  * Featured trailer card for Tribal Hearts — the safe, agent-powered dating
- * haven inside Sow2Grow. Manual play/pause only with inline audio.
+ * haven inside Sow2Grow. Single play/pause toggle button with native audio.
  */
 export const TribalHeartsTrailerCard: React.FC = () => {
   const videoRef = useRef<HTMLVideoElement>(null);
   const [playing, setPlaying] = useState(false);
-  const [muted, setMuted] = useState(false);
 
   const togglePlay = async () => {
     const v = videoRef.current;
@@ -17,7 +16,8 @@ export const TribalHeartsTrailerCard: React.FC = () => {
 
     try {
       if (v.paused || v.ended) {
-        v.currentTime = v.ended ? 0 : v.currentTime;
+        if (v.ended) v.currentTime = 0;
+        v.muted = false;
         await v.play();
         setPlaying(true);
       } else {
@@ -28,13 +28,6 @@ export const TribalHeartsTrailerCard: React.FC = () => {
       console.error('Failed to toggle trailer playback:', error);
       setPlaying(false);
     }
-  };
-
-  const toggleMute = () => {
-    const v = videoRef.current;
-    if (!v) return;
-    v.muted = !v.muted;
-    setMuted(v.muted);
   };
 
   return (
@@ -48,8 +41,7 @@ export const TribalHeartsTrailerCard: React.FC = () => {
         <div className="relative aspect-video bg-black">
           <video
             ref={videoRef}
-            src="/videos/tribal-hearts-trailer.mp4?v=8"
-            muted={muted}
+            src="/videos/tribal-hearts-trailer.mp4?v=9"
             playsInline
             preload="metadata"
             className="w-full h-full object-cover"
@@ -57,24 +49,6 @@ export const TribalHeartsTrailerCard: React.FC = () => {
             onPause={() => setPlaying(false)}
             onEnded={() => setPlaying(false)}
           />
-          <div className="absolute bottom-2 right-2 flex gap-2">
-            <button
-              type="button"
-              onClick={togglePlay}
-              className="w-9 h-9 rounded-full bg-black/60 backdrop-blur-sm flex items-center justify-center text-white hover:bg-black/80 transition"
-              aria-label={playing ? 'Pause' : 'Play'}
-            >
-              {playing ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4 ml-0.5" />}
-            </button>
-            <button
-              type="button"
-              onClick={toggleMute}
-              className="w-9 h-9 rounded-full bg-black/60 backdrop-blur-sm flex items-center justify-center text-white hover:bg-black/80 transition"
-              aria-label={muted ? 'Unmute' : 'Mute'}
-            >
-              {muted ? <VolumeX className="w-4 h-4" /> : <Volume2 className="w-4 h-4" />}
-            </button>
-          </div>
         </div>
         <div className="p-3 space-y-3">
           <p className="text-xs text-muted-foreground leading-relaxed">

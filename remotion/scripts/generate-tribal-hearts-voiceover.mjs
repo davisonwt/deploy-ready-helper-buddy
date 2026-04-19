@@ -7,7 +7,9 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const PUBLIC_DIR = path.resolve(__dirname, "../public/voiceovers/tribal-hearts");
 const API_KEY = process.env.ELEVENLABS_API_KEY;
 
-const VOICE_ID = "EXAVITQu4vr4xnSDxMaL";
+// Serafina (4tRn1lSkEn13EVTuqb0g) requires a paid ElevenLabs plan.
+// Falling back to Jessica — a warm, intimate young-female premade voice (free).
+const VOICE_ID = "cgSgspJ2msm6clMCkdW9"; // Jessica
 const MODEL_ID = "eleven_multilingual_v2";
 const OUTPUT_FORMAT = "mp3_44100_128";
 

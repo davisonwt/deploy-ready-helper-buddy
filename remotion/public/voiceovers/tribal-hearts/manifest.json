@@ -1,47 +1,47 @@
 {
-  "totalDuration": 29.628662,
+  "totalDuration": 29.907302,
   "scenes": [
     {
       "slug": "01-intro",
       "text": "Tribal Hearts is a safe dating garden inside Sow2Grow.",
       "outPath": "/dev-server/remotion/public/voiceovers/tribal-hearts/01-intro.mp3",
-      "duration": 3.622313
+      "duration": 3.668753
     },
     {
       "slug": "02-ambassadors",
       "text": "Ambassadors only — real tribe members, not random strangers.",
       "outPath": "/dev-server/remotion/public/voiceovers/tribal-hearts/02-ambassadors.mp3",
-      "duration": 4.411791
+      "duration": 4.829751
     },
     {
       "slug": "03-story",
       "text": "Tell Gentoo your story, then shape your profile your own way.",
       "outPath": "/dev-server/remotion/public/voiceovers/tribal-hearts/03-story.mp3",
-      "duration": 4.226032
+      "duration": 4.133152
     },
     {
       "slug": "04-match",
       "text": "Meet men and women who share your values, vision, and pace.",
       "outPath": "/dev-server/remotion/public/voiceovers/tribal-hearts/04-match.mp3",
-      "duration": 3.715193
+      "duration": 4.411791
     },
     {
       "slug": "05-chat",
       "text": "Chat only inside ChatApp, so your private details stay protected.",
       "outPath": "/dev-server/remotion/public/voiceovers/tribal-hearts/05-chat.mp3",
-      "duration": 5.06195
+      "duration": 4.365351
     },
     {
       "slug": "06-safety",
       "text": "AI safety watches over every connection with care and respect.",
       "outPath": "/dev-server/remotion/public/voiceovers/tribal-hearts/06-safety.mp3",
-      "duration": 4.179592
+      "duration": 4.226032
     },
     {
       "slug": "07-close",
       "text": "Become an Ambassador, enter the garden, and let love grow naturally.",
       "outPath": "/dev-server/remotion/public/voiceovers/tribal-hearts/07-close.mp3",
-      "duration": 4.411791
+      "duration": 4.272472
     }
   ],
   "finalOut": "/dev-server/remotion/public/voiceovers/tribal-hearts/tribal-hearts-full.mp3"
