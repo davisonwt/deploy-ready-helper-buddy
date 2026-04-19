@@ -62,7 +62,7 @@ const CommunicationsHub = lazy(() =>
 );
 const DashboardPage = lazy(() => import("./pages/DashboardPage"));
 const LinuxFamilyHub = lazy(() => import("./pages/LinuxFamilyHub"));
-import S2GAgentGreeter from "@/components/agents/S2GAgentGreeter";
+const S2GAgentGreeter = lazy(() => import("@/components/agents/S2GAgentGreeter"));
 const StatsPage = lazy(() => import("./pages/StatsPage"));
 const ProfilePage = lazy(() => import("./pages/ProfilePage"));
 const BrowseOrchardsPage = lazy(() => import("./pages/TribalGardensPage"));
