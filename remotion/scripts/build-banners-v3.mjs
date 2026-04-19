@@ -212,6 +212,18 @@ const BANNERS = {
     outroImg: "10-wandering-forge-delivery.jpg",
     musicStart: 84,
   },
+  "10-wandering-forge-book": {
+    title: "Need quality goods, factory direct?",
+    invite: "Connect with a Wandering Forge.",
+    midInvite: "Clothing · kitchenware · appliances · furniture",
+    cta: "Connect with Wandering Forge",
+    beats: ["a", "b", "c", "d"],
+    introImg: "10-wandering-forge-book-intro.jpg",
+    outroImg: "10-wandering-forge-book-outro.jpg",
+    musicStart: 84,
+    // Energized VO ~14.5s; total = 1.4 lead + 14.5 + 1.6 tail ≈ 17.5s
+    totalDur: 17.5,
+  },
   "11-classroom": {
     title: "Have a skill to share —",
     invite: "host a Live Classroom!",
