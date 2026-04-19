@@ -551,7 +551,7 @@ export const InlineMemryFeed: React.FC = () => {
         {/* Provider cards now merged into Services section on dashboard */}
 
         {posts.map((post, idx) => (
-          <React.Fragment key={post.id}>
+          <div key={post.id} className="space-y-4">
             <MemrySeedCard
               post={post}
               user={user}
@@ -565,12 +565,11 @@ export const InlineMemryFeed: React.FC = () => {
             {/* Interleave a provider card every 5 posts */}
             {providers.length > 0 && (idx + 1) % 5 === 0 && providers[Math.floor(idx / 5) % providers.length] && (
               <ProviderFeedCard
-                key={`provider-${providers[Math.floor(idx / 5) % providers.length].id}`}
                 provider={providers[Math.floor(idx / 5) % providers.length]}
                 onMessage={(userId) => handlePrivateMessage(userId, '')}
               />
             )}
-          </React.Fragment>
+          </div>
         ))}
         {/* Show providers at the end if feed is small */}
         {posts.length < 5 && providers.map(p => (
