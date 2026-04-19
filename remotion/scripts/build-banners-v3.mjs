@@ -49,8 +49,8 @@ const BANNERS = {
     introImg: "01-community-orchard-intro.jpg",
     outroImg: "01-community-orchard-outro.jpg",
     musicStart: 6,
-    // VO is ~12.5s after energizing → needs ~14s playback + 1s music tail
-    totalDur: 15.5,
+    // Raw VO 16.63s → energized ~15.7s; need 1.4 lead + 15.7 + 1.5 tail = 18.6s
+    totalDur: 18.6,
   },
   "02-production-orchard": {
     title: "Have an idea — but no capital?",
