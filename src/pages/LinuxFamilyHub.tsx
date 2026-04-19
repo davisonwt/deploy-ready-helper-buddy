@@ -55,7 +55,7 @@ export default function LinuxFamilyHub() {
       supabase.from('linux_family_activity_log').select('*').order('created_at', { ascending: false }).limit(40),
       supabase.from('linux_family_suggestions').select('*').eq('status', 'pending').order('created_at', { ascending: false }),
       supabase.from('bestowal_reports').select('*').order('created_at', { ascending: false }).limit(10),
-      supabase.from('orchards').select('id,name,description').eq('user_id', user!.id).order('created_at', { ascending: false }).limit(50),
+      supabase.from('orchards').select('id,title,description').eq('user_id', user!.id).order('created_at', { ascending: false }).limit(50),
     ]);
     setAgents(a.data ?? []);
     setActivity(l.data ?? []);
