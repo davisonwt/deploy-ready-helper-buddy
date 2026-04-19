@@ -84,7 +84,7 @@ export const AppShell: React.FC<AppShellProps> = ({
   return (
     <div className="min-h-screen bg-background flex">
       {/* Left Sidebar — fixed 220px */}
-      <aside className="w-[220px] flex-shrink-0 sticky top-0 h-screen overflow-y-auto border-r border-border/30 bg-card/60">
+      <aside className="w-[220px] flex-shrink-0 sticky top-0 h-screen overflow-y-auto overscroll-contain border-r border-border/30 bg-card/60 pb-28">
         <AppSidebar radioLive={radioLive} />
       </aside>
 
@@ -94,7 +94,7 @@ export const AppShell: React.FC<AppShellProps> = ({
       </main>
 
       {/* Right Panel — fixed 200px */}
-      <aside className="w-[200px] flex-shrink-0 sticky top-0 h-screen overflow-y-auto border-l border-border/30 bg-card/40">
+      <aside className="w-[200px] flex-shrink-0 sticky top-0 h-screen overflow-y-auto overscroll-contain border-r border-border/30 bg-card/40 pb-28">
         <RightContextPanel
           calendarData={calendarData}
           communityCount={communityCount}
