@@ -26,7 +26,9 @@ const AGENTS = [
   { key: 'fedora', emoji: '🎬', name: 'Fedora', role: 'Videos', bio: 'Voice-over video plans.' },
   { key: 'debian', emoji: '💬', name: 'Debian', role: 'Messaging', bio: 'Talks to customers & bestowars.' },
   { key: 'arch', emoji: '📞', name: 'Arch', role: 'Calls', bio: 'Voice & video via ChatApp.' },
-  { key: 'mint', emoji: '📒', name: 'Mint', role: 'Bookkeeper', bio: 'Bestowal Reports & finance.' },
+  { key: 'mint', emoji: '📒', name: 'Mint', role: 'Bookkeeper', bio: 'Reports + Pro tax & compliance.' },
+  { key: 'loaf', emoji: '🥖', name: 'Loaf', role: 'Logistics', bio: 'Inventory, demand, shipping.' },
+  { key: 'sage', emoji: '🔮', name: 'Sage', role: 'Pricing', bio: 'Multi-currency price oracle.' },
 ];
 
 export default function LinuxFamilyHub() {
@@ -189,6 +191,8 @@ export default function LinuxFamilyHub() {
     debian: { gradient: 'from-red-600/30 to-rose-500/20',   ring: 'ring-red-400/30',     iconBg: 'bg-red-500/20' },
     arch:   { gradient: 'from-cyan-600/30 to-sky-500/20',   ring: 'ring-cyan-400/30',    iconBg: 'bg-cyan-500/20' },
     mint:   { gradient: 'from-emerald-600/30 to-teal-500/20', ring: 'ring-emerald-400/30', iconBg: 'bg-emerald-500/20' },
+    loaf:   { gradient: 'from-amber-700/30 to-yellow-600/20', ring: 'ring-amber-400/30',  iconBg: 'bg-amber-500/20' },
+    sage:   { gradient: 'from-violet-600/30 to-indigo-500/20', ring: 'ring-violet-400/30', iconBg: 'bg-violet-500/20' },
   };
   const statusDot: Record<string, string> = {
     idle: 'bg-slate-400', working: 'bg-emerald-400 animate-pulse', waiting: 'bg-amber-400',
@@ -214,7 +218,7 @@ export default function LinuxFamilyHub() {
               </div>
             </div>
             <p className="text-sm text-foreground/80 mt-3 max-w-2xl">
-              Eight specialist agents run marketing, content, calls, messaging, and bookkeeping for every Seed you plant — automatically.
+              Ten specialist agents run marketing, content, calls, messaging, bookkeeping, logistics & pricing for every Seed you plant — automatically.
             </p>
           </div>
           <Button onClick={() => buildReport(7)} disabled={busy}
@@ -287,7 +291,7 @@ export default function LinuxFamilyHub() {
                 You have <span className="font-semibold text-emerald-400">Gentoo, Mint &amp; Debian</span> on your team.
                 Become a <span className="font-semibold text-amber-300">Tribe Ambassador ($5/mo)</span> to unlock <span className="font-semibold">Tux</span> (content),
                 <span className="font-semibold"> Ubuntu</span> (branding), <span className="font-semibold">Kali</span> (images),
-                <span className="font-semibold"> Fedora</span> (videos) &amp; <span className="font-semibold">Arch</span> (calls) — your whole AI marketing team on autopilot.
+                <span className="font-semibold"> Fedora</span> (videos), <span className="font-semibold">Arch</span> (calls), <span className="font-semibold">Loaf</span> (logistics), <span className="font-semibold">Sage</span> (pricing) &amp; <span className="font-semibold">Mint-Pro</span> (tax) — your whole AI marketing &amp; ops team on autopilot.
               </p>
             </div>
             <Button

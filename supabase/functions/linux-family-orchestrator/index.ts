@@ -319,7 +319,7 @@ serve(async (req) => {
       }
 
       default:
-        return ok({ family: AGENTS, hint: "actions: init | seed_planted | generate_report | respond_suggestion | summarize" });
+        return ok({ family: AGENTS, hint: "actions: init | seed_planted | generate_report | run_content_pack | comms_blast | arch_call | loaf_logistics | sage_pricing | mint_tax_brief | respond_suggestion | summarize" });
     }
   } catch (e) {
     console.error("gentoo error", e);
