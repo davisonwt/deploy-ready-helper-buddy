@@ -1,5 +1,6 @@
 import React, { useRef, useState } from 'react';
-import { Heart, Play, Pause, Volume2, VolumeX } from 'lucide-react';
+import { Link } from 'react-router-dom';
+import { Heart, Play, Pause, Volume2, VolumeX, UserPlus } from 'lucide-react';
 
 /**
  * Featured trailer card for Tribal Hearts — the safe, agent-powered dating
@@ -67,10 +68,26 @@ export const TribalHeartsTrailerCard: React.FC = () => {
             </button>
           </div>
         </div>
-        <div className="p-3">
+        <div className="p-3 space-y-3">
           <p className="text-xs text-muted-foreground leading-relaxed">
             Where love grows naturally inside the tribe — agent-powered, in-house ChatApp, no PII shared.
           </p>
+          <div className="flex gap-2">
+            <button
+              onClick={togglePlay}
+              className="flex-1 inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg bg-secondary text-secondary-foreground text-xs font-semibold hover:bg-secondary/80 transition"
+            >
+              {playing ? <Pause className="w-3.5 h-3.5" /> : <Play className="w-3.5 h-3.5" />}
+              {playing ? 'Pause' : 'Play'}
+            </button>
+            <Link
+              to="/tribal-hearts"
+              className="flex-1 inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg bg-pink-500 text-white text-xs font-semibold hover:bg-pink-600 transition"
+            >
+              <UserPlus className="w-3.5 h-3.5" />
+              Register
+            </Link>
+          </div>
         </div>
       </div>
     </section>
