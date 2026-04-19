@@ -11,7 +11,8 @@ import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { toast } from '@/hooks/use-toast';
-import { Loader2, Terminal as TerminalIcon, FileText, Sparkles, Activity, Wand2 } from 'lucide-react';
+import { Loader2, Terminal as TerminalIcon, FileText, Sparkles, Activity, Wand2, MessageCircle, Phone } from 'lucide-react';
+import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 const AGENTS = [
