@@ -441,16 +441,17 @@ export const GigActionCards: React.FC<GigActionCardsProps> = ({ theme }) => {
           <Button
             size="lg"
             onClick={() => navigate('/register-provider')}
-            className="w-full h-12 text-base font-semibold"
+            className="w-full h-12 text-base font-semibold !text-white !border-0"
+            style={{ backgroundImage: 'linear-gradient(135deg, #c026d3, #7c3aed)', backgroundColor: 'transparent' }}
           >
             <Sprout className="w-5 h-5 mr-2" />
             Register as Provider
           </Button>
           <Button
-            variant="outline"
             size="default"
             onClick={() => navigate('/providers')}
-            className="w-full h-11"
+            className="w-full h-11 font-semibold !text-white !border-0"
+            style={{ backgroundImage: 'linear-gradient(135deg, #14b8a6, #06b6d4)', backgroundColor: 'transparent' }}
           >
             Browse All Providers
             <ArrowRight className="w-4 h-4 ml-1" />

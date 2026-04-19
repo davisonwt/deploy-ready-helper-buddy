@@ -144,8 +144,8 @@ export const GoLiveFeedCards: React.FC<GoLiveFeedCardsProps> = ({ theme }) => {
               {card.video && (
                 <Button
                   size="sm"
-                  variant="outline"
-                  className="text-xs h-7 rounded-lg w-full gap-1.5"
+                  className="text-xs h-7 rounded-lg w-full gap-1.5 font-semibold !text-white !border-0"
+                  style={{ backgroundImage: 'linear-gradient(135deg, #ec4899, #8b5cf6)', backgroundColor: 'transparent' }}
                   onClick={(e) => {
                     e.preventDefault();
                     e.stopPropagation();
@@ -157,7 +157,8 @@ export const GoLiveFeedCards: React.FC<GoLiveFeedCardsProps> = ({ theme }) => {
               )}
               <Button
                 size="sm"
-                className="text-xs h-7 rounded-lg w-full"
+                className="text-xs h-7 rounded-lg w-full font-semibold !text-white !border-0"
+                style={{ backgroundImage: 'linear-gradient(135deg, #ef4444, #f97316)', backgroundColor: 'transparent' }}
               >
                 🎙️ Go Live!
               </Button>

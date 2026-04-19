@@ -125,8 +125,8 @@ export const ChatFeedCards: React.FC<ChatFeedCardsProps> = ({ theme }) => {
               {card.video && (
                 <Button
                   size="sm"
-                  variant="outline"
-                  className="text-xs h-7 rounded-lg w-full gap-1.5"
+                  className="text-xs h-7 rounded-lg w-full gap-1.5 font-semibold !text-white !border-0"
+                  style={{ backgroundImage: 'linear-gradient(135deg, #ec4899, #8b5cf6)', backgroundColor: 'transparent' }}
                   onClick={(e) => {
                     e.preventDefault();
                     e.stopPropagation();
@@ -136,7 +136,11 @@ export const ChatFeedCards: React.FC<ChatFeedCardsProps> = ({ theme }) => {
                   <Play className="w-3 h-3 fill-current" /> Watch the story
                 </Button>
               )}
-              <Button size="sm" className="text-xs h-7 rounded-lg w-full">
+              <Button
+                size="sm"
+                className="text-xs h-7 rounded-lg w-full font-semibold !text-white !border-0"
+                style={{ backgroundImage: 'linear-gradient(135deg, #06b6d4, #3b82f6)', backgroundColor: 'transparent' }}
+              >
                 {card.buttonLabel}
               </Button>
             </div>
