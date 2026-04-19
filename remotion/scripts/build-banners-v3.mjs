@@ -61,8 +61,8 @@ const BANNERS = {
     introImg: "02-production-orchard-intro.jpg",
     outroImg: "02-production-orchard-outro.jpg",
     musicStart: 18,
-    // VO is ~11.66s → after +6% tempo ≈ 11s; pad to 13.5s for music tail
-    totalDur: 13.5,
+    // Raw VO 13.56s → energized ~12.8s; need 1.4 lead + 12.8 + 1.5 tail = 15.7s
+    totalDur: 15.7,
   },
   "03-single-seed": {
     title: "Got something to offer today?",
