@@ -14,15 +14,26 @@ import { toast } from 'sonner';
 interface Props { theme: DashboardTheme; }
 
 export const AgentMarketplaceSection: React.FC<Props> = ({ theme }) => {
-  const { templates, installs, myDrafts, loading, installTemplate, toggleInstall, uninstall, submitTemplate } = useAgentMarketplace();
+  const { templates, installs, myDrafts, loading, installTemplate, startPaidInstall, toggleInstall, uninstall, submitTemplate } = useAgentMarketplace();
   const [activeTab, setActiveTab] = useState<'browse' | 'installed' | 'mine'>('browse');
   const [submitOpen, setSubmitOpen] = useState(false);
+  const [paying, setPaying] = useState<string | null>(null);
 
   const installedIds = new Set(installs.map(i => i.template_id));
 
   const handleInstall = async (t: AgentTemplate) => {
     if (t.install_bestowal_amount > 0) {
-      toast.info(`This agent requires a bestowal of ${t.currency} ${t.install_bestowal_amount}. Bestowal flow coming soon.`);
+      setPaying(t.id);
+      const { error, invoiceUrl } = await startPaidInstall(t.id);
+      setPaying(null);
+      if (error) {
+        toast.error(error);
+        return;
+      }
+      if (invoiceUrl) {
+        toast.success(`Opening payment for ${t.name}…`);
+        window.open(invoiceUrl, '_blank', 'noopener,noreferrer');
+      }
       return;
     }
     const { error } = await installTemplate(t.id);
