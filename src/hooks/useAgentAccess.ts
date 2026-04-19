@@ -11,7 +11,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 
 export const FREE_AGENTS = ['gentoo', 'mint', 'debian'] as const;
-export const PREMIUM_AGENTS = ['tux', 'ubuntu', 'kali', 'fedora', 'arch'] as const;
+export const PREMIUM_AGENTS = ['tux', 'ubuntu', 'kali', 'fedora', 'arch', 'loaf', 'sage'] as const;
 export type AgentKey = typeof FREE_AGENTS[number] | typeof PREMIUM_AGENTS[number];
 
 export function isPremiumAgent(key: string): boolean {

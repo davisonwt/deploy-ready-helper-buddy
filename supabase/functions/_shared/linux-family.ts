@@ -15,7 +15,9 @@ export const AGENTS = {
   fedora: { emoji: "🎬", title: "Fedora the Video Director", role: "Videos" },
   debian: { emoji: "💬", title: "Debian the Messenger", role: "Messaging" },
   arch: { emoji: "📞", title: "Arch the Caller", role: "Phone & Video Calls" },
-  mint: { emoji: "📒", title: "Mint the Bookkeeper", role: "Finance & Reports" },
+  mint: { emoji: "📒", title: "Mint the Bookkeeper", role: "Finance & Compliance" },
+  loaf: { emoji: "🥖", title: "Loaf the Logistics Penguin", role: "Inventory & Shipping" },
+  sage: { emoji: "🔮", title: "Sage the Pricing Oracle", role: "Pricing Intelligence" },
 } as const;
 
 export type AgentName = keyof typeof AGENTS;
