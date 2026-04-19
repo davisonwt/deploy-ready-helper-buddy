@@ -7,6 +7,7 @@ import { EscrowBadge } from '@/components/provider/EscrowBadge';
 import { Button } from '@/components/ui/button';
 import { SectionHeading } from './SectionHeading';
 import { SubSectionLabel } from './SubSectionLabel';
+import { CarouselBannerVideo } from './CarouselBannerVideo';
 
 const rideBookImg = '/images/gig/ride-book.jpg';
 const serviceBookImg = '/images/gig/service-book.jpg';
