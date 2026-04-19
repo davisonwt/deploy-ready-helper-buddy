@@ -6,7 +6,7 @@
  */
 import React, { useEffect, useMemo, useState, useCallback } from 'react';
 import { Link } from 'react-router-dom';
-import { Handshake, RefreshCw, Inbox, Sparkles, Check, X, MessageCircle, ArrowLeft } from 'lucide-react';
+import { Handshake, RefreshCw, Inbox, Sparkles, Check, X, MessageCircle, ArrowLeft, GraduationCap } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
@@ -15,6 +15,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { toast } from 'sonner';
+import { MentorshipInbox } from '@/components/tribal/MentorshipInbox';
 
 interface MatchRow {
   id: string;
