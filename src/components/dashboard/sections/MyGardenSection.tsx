@@ -15,6 +15,7 @@ import { TribalScoreBadge } from '@/components/tribal/TribalScoreBadge';
 import { TribalMatchesCards } from '@/components/tribal/TribalMatchesCards';
 import { LogisticsPulseCard } from '@/components/tribal/LogisticsPulseCard';
 import { PricingPulseCard } from '@/components/tribal/PricingPulseCard';
+import { EventsPulseCard } from '@/components/tribal/EventsPulseCard';
 
 interface MyGardenSectionProps {
   theme: DashboardTheme;
@@ -65,6 +66,9 @@ export const MyGardenSection: React.FC<MyGardenSectionProps> = ({ theme, stats }
         <LogisticsPulseCard theme={theme} />
         <PricingPulseCard theme={theme} />
       </div>
+
+      {/* Tribal Events (Phase 3.5) */}
+      <EventsPulseCard theme={theme} />
 
       {/* Quick link to full matches inbox */}
       <Link
