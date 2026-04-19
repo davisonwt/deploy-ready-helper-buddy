@@ -14,6 +14,7 @@ import { toast } from '@/hooks/use-toast';
 import { Loader2, Terminal as TerminalIcon, FileText, Sparkles, Activity, Wand2, MessageCircle, Phone } from 'lucide-react';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { cn } from '@/lib/utils';
 
 const AGENTS = [
   { key: 'gentoo', emoji: '🐧', name: 'Gentoo', role: 'Overseer', bio: 'Coordinates the whole family.' },
@@ -173,35 +174,81 @@ export default function LinuxFamilyHub() {
 
   const statusFor = (key: string) => agents.find(a => a.agent_name === key)?.status ?? 'idle';
 
+  // Per-agent visual identity (gradient + accent ring)
+  const agentStyle: Record<string, { gradient: string; ring: string; iconBg: string }> = {
+    gentoo: { gradient: 'from-slate-700/40 to-slate-900/40', ring: 'ring-slate-400/30', iconBg: 'bg-slate-500/20' },
+    tux:    { gradient: 'from-rose-600/30 to-orange-500/20', ring: 'ring-rose-400/30',  iconBg: 'bg-rose-500/20' },
+    ubuntu: { gradient: 'from-orange-600/30 to-amber-500/20', ring: 'ring-orange-400/30', iconBg: 'bg-orange-500/20' },
+    kali:   { gradient: 'from-fuchsia-600/30 to-purple-600/20', ring: 'ring-fuchsia-400/30', iconBg: 'bg-fuchsia-500/20' },
+    fedora: { gradient: 'from-blue-600/30 to-indigo-600/20', ring: 'ring-blue-400/30',   iconBg: 'bg-blue-500/20' },
+    debian: { gradient: 'from-red-600/30 to-rose-500/20',   ring: 'ring-red-400/30',     iconBg: 'bg-red-500/20' },
+    arch:   { gradient: 'from-cyan-600/30 to-sky-500/20',   ring: 'ring-cyan-400/30',    iconBg: 'bg-cyan-500/20' },
+    mint:   { gradient: 'from-emerald-600/30 to-teal-500/20', ring: 'ring-emerald-400/30', iconBg: 'bg-emerald-500/20' },
+  };
+  const statusDot: Record<string, string> = {
+    idle: 'bg-slate-400', working: 'bg-emerald-400 animate-pulse', waiting: 'bg-amber-400',
+  };
+
   return (
-    <div className="container mx-auto p-4 max-w-6xl space-y-4">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold flex items-center gap-2">🐧 S2G Agents</h1>
-          <p className="text-sm text-muted-foreground">Your loyal tribal AI workforce — running marketing, content, calls, messaging, and bookkeeping for every Seed you plant.</p>
+    <div className="container mx-auto p-4 max-w-6xl space-y-6">
+      {/* Hero Header */}
+      <div className="relative overflow-hidden rounded-2xl border border-border/40 bg-gradient-to-br from-emerald-900/40 via-teal-900/30 to-slate-900/50 p-6 shadow-xl">
+        <div className="absolute inset-0 opacity-30 pointer-events-none"
+             style={{ background: 'radial-gradient(60% 50% at 80% 0%, hsl(160 80% 60% / 0.25), transparent 60%), radial-gradient(50% 60% at 0% 100%, hsl(200 80% 60% / 0.18), transparent 60%)' }} />
+        <div className="relative flex flex-col md:flex-row md:items-start md:justify-between gap-4">
+          <div className="min-w-0 flex-1">
+            <div className="flex items-center gap-3">
+              <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center text-2xl shadow-lg shadow-emerald-500/30">
+                🐧
+              </div>
+              <div className="min-w-0">
+                <h1 className="text-2xl md:text-3xl font-bold tracking-tight bg-gradient-to-r from-emerald-200 to-teal-100 bg-clip-text text-transparent">
+                  S2G Agents
+                </h1>
+                <p className="text-xs text-emerald-200/70">Your loyal tribal AI workforce</p>
+              </div>
+            </div>
+            <p className="text-sm text-foreground/80 mt-3 max-w-2xl">
+              Eight specialist agents run marketing, content, calls, messaging, and bookkeeping for every Seed you plant — automatically.
+            </p>
+          </div>
+          <Button onClick={() => buildReport(7)} disabled={busy}
+                  className="shrink-0 gap-2 bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-400 hover:to-teal-500 text-white shadow-lg shadow-emerald-500/30 border-0">
+            {busy ? <Loader2 className="w-4 h-4 animate-spin"/> : <FileText className="w-4 h-4"/>}
+            Weekly Bestowal Report
+          </Button>
         </div>
-        <Button onClick={() => buildReport(7)} disabled={busy} className="gap-2">
-          {busy ? <Loader2 className="w-4 h-4 animate-spin"/> : <FileText className="w-4 h-4"/>}
-          Weekly Bestowal Report
-        </Button>
       </div>
 
       {/* Family Roster */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
         {AGENTS.map(a => {
           const s = statusFor(a.key);
+          const sty = agentStyle[a.key];
           return (
-            <Card key={a.key} className="glass-panel">
-              <CardContent className="p-3">
-                <div className="flex items-center gap-2">
-                  <div className="text-2xl">{a.emoji}</div>
-                  <div className="flex-1 min-w-0">
-                    <div className="font-semibold text-sm truncate">{a.name}</div>
-                    <div className="text-[10px] text-muted-foreground">{a.role}</div>
+            <Card key={a.key}
+                  className={cn(
+                    'group relative overflow-hidden border-border/40 bg-gradient-to-br backdrop-blur-sm transition-all duration-300',
+                    'hover:scale-[1.03] hover:shadow-xl hover:-translate-y-0.5 cursor-default',
+                    sty.gradient, `hover:ring-2 ${sty.ring}`
+                  )}>
+              <CardContent className="p-3 relative">
+                <div className="flex items-start gap-2.5">
+                  <div className={cn('w-10 h-10 rounded-xl flex items-center justify-center text-xl shrink-0 shadow-inner', sty.iconBg)}>
+                    {a.emoji}
                   </div>
-                  <Badge variant={s === 'working' ? 'default' : s === 'waiting' ? 'secondary' : 'outline'} className="text-[10px]">{s}</Badge>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center justify-between gap-1">
+                      <div className="font-bold text-sm truncate text-foreground">{a.name}</div>
+                      <div className="flex items-center gap-1 shrink-0">
+                        <span className={cn('w-1.5 h-1.5 rounded-full', statusDot[s] ?? statusDot.idle)} />
+                        <span className="text-[9px] uppercase tracking-wide text-muted-foreground">{s}</span>
+                      </div>
+                    </div>
+                    <div className="text-[10px] text-muted-foreground/90 font-medium uppercase tracking-wide">{a.role}</div>
+                    <p className="text-[11px] text-foreground/70 mt-1.5 line-clamp-2 leading-snug">{a.bio}</p>
+                  </div>
                 </div>
-                <p className="text-[11px] text-muted-foreground mt-1 line-clamp-2">{a.bio}</p>
               </CardContent>
             </Card>
           );
@@ -209,13 +256,13 @@ export default function LinuxFamilyHub() {
       </div>
 
       <Tabs defaultValue="suggestions">
-        <TabsList className="flex-wrap h-auto">
-          <TabsTrigger value="suggestions" className="gap-1"><Sparkles className="w-3 h-3"/> Suggestions {suggestions.length>0 && <Badge variant="destructive" className="ml-1 text-[9px]">{suggestions.length}</Badge>}</TabsTrigger>
-          <TabsTrigger value="studio" className="gap-1"><Wand2 className="w-3 h-3"/> Studio</TabsTrigger>
-          <TabsTrigger value="comms" className="gap-1"><MessageCircle className="w-3 h-3"/> Comms</TabsTrigger>
-          <TabsTrigger value="activity" className="gap-1"><Activity className="w-3 h-3"/> Activity</TabsTrigger>
-          <TabsTrigger value="reports" className="gap-1"><FileText className="w-3 h-3"/> Reports</TabsTrigger>
-          <TabsTrigger value="terminal" className="gap-1"><TerminalIcon className="w-3 h-3"/> Terminal</TabsTrigger>
+        <TabsList className="flex-wrap h-auto bg-muted/40 backdrop-blur-sm p-1 rounded-xl">
+          <TabsTrigger value="suggestions" className="gap-1.5 data-[state=active]:bg-background data-[state=active]:shadow"><Sparkles className="w-3.5 h-3.5"/> Suggestions {suggestions.length>0 && <Badge variant="destructive" className="ml-1 text-[9px] h-4 px-1.5">{suggestions.length}</Badge>}</TabsTrigger>
+          <TabsTrigger value="studio" className="gap-1.5 data-[state=active]:bg-background data-[state=active]:shadow"><Wand2 className="w-3.5 h-3.5"/> Studio</TabsTrigger>
+          <TabsTrigger value="comms" className="gap-1.5 data-[state=active]:bg-background data-[state=active]:shadow"><MessageCircle className="w-3.5 h-3.5"/> Comms</TabsTrigger>
+          <TabsTrigger value="activity" className="gap-1.5 data-[state=active]:bg-background data-[state=active]:shadow"><Activity className="w-3.5 h-3.5"/> Activity</TabsTrigger>
+          <TabsTrigger value="reports" className="gap-1.5 data-[state=active]:bg-background data-[state=active]:shadow"><FileText className="w-3.5 h-3.5"/> Reports</TabsTrigger>
+          <TabsTrigger value="terminal" className="gap-1.5 data-[state=active]:bg-background data-[state=active]:shadow"><TerminalIcon className="w-3.5 h-3.5"/> Terminal</TabsTrigger>
         </TabsList>
 
         <TabsContent value="studio">
