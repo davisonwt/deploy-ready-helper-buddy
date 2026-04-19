@@ -91,6 +91,7 @@ export const AgentMarketplaceSection: React.FC<Props> = ({ theme }) => {
               key={t.id}
               template={t}
               installed={installedIds.has(t.id)}
+              paying={paying === t.id}
               onInstall={() => handleInstall(t)}
             />
           ))}
