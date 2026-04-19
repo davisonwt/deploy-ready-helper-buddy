@@ -31,7 +31,7 @@ interface BannerVideo {
 const BANNERS: BannerVideo[] = [
   // — Become a Provider —
   { id: "wandering-wheel",            title: "Wandering Wheel",            subtitle: "Become a community driver",        emoji: "🚐", src: "/videos/banners/wandering-wheel.mp4",            available: true },
-  { id: "wandering-hand",             title: "Wandering Hand",             subtitle: "Offer hands-on tribal services",   emoji: "🛠️", src: "/videos/banners/wandering-hand.mp4",             available: true },
+  { id: "wandering-hand",             title: "Wandering Hand",             subtitle: "Offer hands-on tribal services",   emoji: "🛠️", src: "/videos/banners/wandering-hand-become.mp4",      available: true },
   { id: "wandering-whisperer",        title: "Wandering Whisperer",        subtitle: "Guide & sell for sowers",          emoji: "🎙️", src: "/videos/banners/wandering-whisperer.mp4",        available: true },
   { id: "wandering-pillow",           title: "Wandering Pillow",           subtitle: "Host travelers · holiday stays",   emoji: "🛏️", src: "/videos/banners/wandering-pillow.mp4",           available: true },
   { id: "wandering-field",            title: "Wandering Field",            subtitle: "Grow & sell from your field",      emoji: "🌾", src: "/videos/banners/wandering-field.mp4",            available: true },
