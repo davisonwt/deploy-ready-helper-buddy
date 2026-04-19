@@ -184,10 +184,13 @@ export const EnhancedSecureInput: React.FC<EnhancedSecureInputProps> = ({
   };
 
   const handleBlur = async (e: React.FocusEvent<HTMLInputElement>) => {
+    const inputName = e.currentTarget?.name ?? e.target?.name ?? props.name ?? 'unknown';
+    const currentValue = e.currentTarget?.value ?? e.target?.value ?? '';
+
     // Rate limiting check on blur
     if (rateLimitKey) {
       const isAllowed = await checkRateLimit(
-        `${rateLimitKey}_${e.target.name}`,
+        `${rateLimitKey}_${inputName}`,
         'input_validation',
         20, // 20 validations
         5   // per 5 minutes
@@ -201,7 +204,7 @@ export const EnhancedSecureInput: React.FC<EnhancedSecureInputProps> = ({
 
     // Strict email validation and normalization on blur only
     if (sanitizeType === 'email') {
-      const original = e.currentTarget.value;
+      const original = currentValue;
       const validated = sanitizeInput.email(original);
       if (!validated && original) {
         toast({
@@ -318,8 +321,10 @@ export const EnhancedSecureTextarea: React.FC<EnhancedSecureTextareaProps> = ({
   };
 
   const handleBlur = async (e: React.FocusEvent<HTMLTextAreaElement>) => {
+    const inputName = e.currentTarget?.name ?? e.target?.name ?? props.name ?? 'unknown';
+
     if (rateLimitKey) {
-      const isAllowed = await checkRateLimit(`${rateLimitKey}_${e.target.name}`, 'textarea_validation', 15, 10);
+      const isAllowed = await checkRateLimit(`${rateLimitKey}_${inputName}`, 'textarea_validation', 15, 10);
       if (!isAllowed) {
         e.preventDefault();
         return;
