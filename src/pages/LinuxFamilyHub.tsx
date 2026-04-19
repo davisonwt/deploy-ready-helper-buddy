@@ -296,6 +296,98 @@ export default function LinuxFamilyHub() {
           </CardContent></Card>
         </TabsContent>
 
+        <TabsContent value="comms">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            <Card><CardContent className="p-4 space-y-3">
+              <div className="flex items-center gap-2">
+                <MessageCircle className="w-4 h-4 text-primary" />
+                <div className="font-semibold text-sm">💬 Debian · Bestowar broadcast</div>
+              </div>
+              <p className="text-xs text-muted-foreground">
+                Debian will draft a warm tribal message and send it to other active sowers in the tribe — perfect for collab offers, launches, or community asks.
+              </p>
+              <div className="grid grid-cols-2 gap-2">
+                <Select value={blastKind} onValueChange={setBlastKind}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="collab_offer">Collaboration offer</SelectItem>
+                    <SelectItem value="launch_announcement">Launch announcement</SelectItem>
+                    <SelectItem value="community_ask">Community ask</SelectItem>
+                    <SelectItem value="thank_you">Thank-you note</SelectItem>
+                  </SelectContent>
+                </Select>
+                <Select value={String(blastLimit)} onValueChange={v => setBlastLimit(parseInt(v))}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    {[5, 10, 25, 50].map(n => <SelectItem key={n} value={String(n)}>{n} bestowars</SelectItem>)}
+                  </SelectContent>
+                </Select>
+              </div>
+              <Textarea
+                placeholder="Optional: write your own message. Leave blank and Debian will craft one for you."
+                value={blastCustom}
+                onChange={e => setBlastCustom(e.target.value)}
+                className="text-sm"
+                rows={3}
+              />
+              <Button onClick={runCommsBlast} disabled={blastBusy} className="gap-2 w-full">
+                {blastBusy ? <Loader2 className="w-4 h-4 animate-spin"/> : <MessageCircle className="w-4 h-4"/>}
+                Send tribal broadcast
+              </Button>
+
+              <div className="border-t pt-3 mt-2">
+                <div className="text-xs font-semibold mb-2">Recent outbound messages</div>
+                <ScrollArea className="h-[180px]">
+                  <div className="space-y-2">
+                    {outbound.length === 0 && <p className="text-xs text-muted-foreground">No messages sent yet.</p>}
+                    {outbound.map(m => (
+                      <div key={m.id} className="text-xs border-l-2 border-primary/40 pl-2 py-1">
+                        <div className="text-muted-foreground text-[10px]">
+                          {m.message_type} · {m.channel} · {new Date(m.created_at).toLocaleString()}
+                        </div>
+                        <div className="line-clamp-2">{m.message_body}</div>
+                      </div>
+                    ))}
+                  </div>
+                </ScrollArea>
+              </div>
+            </CardContent></Card>
+
+            <Card><CardContent className="p-4 space-y-3">
+              <div className="flex items-center gap-2">
+                <Phone className="w-4 h-4 text-primary" />
+                <div className="font-semibold text-sm">📞 Arch · Call log</div>
+              </div>
+              <p className="text-xs text-muted-foreground">
+                Arch handles voice & video calls inside ChatApp. Place calls from the Communications Hub or via the terminal — every call is logged here.
+              </p>
+              <div className="flex gap-2 text-xs">
+                <a href="/communications" className="text-primary underline">Open Communications Hub →</a>
+              </div>
+
+              <div className="border-t pt-3 mt-2">
+                <div className="text-xs font-semibold mb-2">Recent calls</div>
+                <ScrollArea className="h-[280px]">
+                  <div className="space-y-2">
+                    {calls.length === 0 && <p className="text-xs text-muted-foreground">No calls yet.</p>}
+                    {calls.map(c => (
+                      <div key={c.id} className="text-xs border-l-2 border-primary/40 pl-2 py-1">
+                        <div className="font-medium">
+                          {c.direction === 'outgoing' ? '↗' : '↘'} {c.call_type} · {c.outcome}
+                        </div>
+                        <div className="text-muted-foreground text-[10px]">
+                          {c.duration_seconds ? `${c.duration_seconds}s · ` : ''}{new Date(c.created_at).toLocaleString()}
+                        </div>
+                        {c.transcript && <div className="line-clamp-2 text-[11px] mt-1">{c.transcript}</div>}
+                      </div>
+                    ))}
+                  </div>
+                </ScrollArea>
+              </div>
+            </CardContent></Card>
+          </div>
+        </TabsContent>
+
         <TabsContent value="activity">
           <Card><CardContent className="p-0">
             <ScrollArea className="h-[400px]">
