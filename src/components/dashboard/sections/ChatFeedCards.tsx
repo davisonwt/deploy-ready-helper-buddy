@@ -5,8 +5,8 @@ import { Button } from '@/components/ui/button';
 import { DashboardTheme } from '@/utils/dashboardThemes';
 import { SectionHeading } from './SectionHeading';
 
-import oneOnOneImg from '/images/chat/one-on-one.jpg';
-import groupChatImg from '/images/chat/group-chat.jpg';
+const oneOnOneImg = '/images/chat/one-on-one.jpg';
+const groupChatImg = '/images/chat/group-chat.jpg';
 
 interface ChatFeedCardsProps {
   theme: DashboardTheme;

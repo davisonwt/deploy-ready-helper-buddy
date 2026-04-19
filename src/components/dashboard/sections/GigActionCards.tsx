@@ -8,18 +8,18 @@ import { Button } from '@/components/ui/button';
 import { SectionHeading } from './SectionHeading';
 import { SubSectionLabel } from './SubSectionLabel';
 
-import rideBookImg from '/images/gig/ride-book.jpg';
-import serviceBookImg from '/images/gig/service-book.jpg';
-import whispererBookImg from '/images/gig/whisperer-book.jpg';
-import driverBecomeImg from '/images/gig/driver-become.jpg';
-import servicesBecomeImg from '/images/gig/services-become.jpg';
-import whispererBecomeImg from '/images/gig/whisperer-become.jpg';
-import farmerImg from '/images/providers/farmer.jpg';
-import homesteaderImg from '/images/providers/homesteader.jpg';
-import manufacturerImg from '/images/providers/manufacturer.jpg';
-import connectFarmerImg from '/images/providers/connect-farmer.jpg';
-import connectHomesteaderImg from '/images/providers/connect-homesteader.jpg';
-import connectManufacturerImg from '/images/providers/connect-manufacturer.jpg';
+const rideBookImg = '/images/gig/ride-book.jpg';
+const serviceBookImg = '/images/gig/service-book.jpg';
+const whispererBookImg = '/images/gig/whisperer-book.jpg';
+const driverBecomeImg = '/images/gig/driver-become.jpg';
+const servicesBecomeImg = '/images/gig/services-become.jpg';
+const whispererBecomeImg = '/images/gig/whisperer-become.jpg';
+const farmerImg = '/images/providers/farmer.jpg';
+const homesteaderImg = '/images/providers/homesteader.jpg';
+const manufacturerImg = '/images/providers/manufacturer.jpg';
+const connectFarmerImg = '/images/providers/connect-farmer.jpg';
+const connectHomesteaderImg = '/images/providers/connect-homesteader.jpg';
+const connectManufacturerImg = '/images/providers/connect-manufacturer.jpg';
 
 interface GigActionCardsProps {
   theme: DashboardTheme;

@@ -5,9 +5,9 @@ import { Button } from '@/components/ui/button';
 import { DashboardTheme } from '@/utils/dashboardThemes';
 import { SectionHeading } from './SectionHeading';
 
-import standardOrchardImg from '/images/plant/standard-orchard.jpg';
-import fullvalueOrchardImg from '/images/plant/fullvalue-orchard.jpg';
-import sowSeedImg from '/images/plant/sow-a-seed.jpg';
+const standardOrchardImg = '/images/plant/standard-orchard.jpg';
+const fullvalueOrchardImg = '/images/plant/fullvalue-orchard.jpg';
+const sowSeedImg = '/images/plant/sow-a-seed.jpg';
 
 interface PlantFeedCardsProps {
   theme: DashboardTheme;
