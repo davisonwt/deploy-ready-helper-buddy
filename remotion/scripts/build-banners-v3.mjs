@@ -190,6 +190,18 @@ const BANNERS = {
     outroImg: "09-wandering-hearth-unboxing.jpg",
     musicStart: 72,
   },
+  "09-wandering-hearth-book": {
+    title: "Crave fresh bread & handmade goodness?",
+    invite: "Connect with a Wandering Hearth.",
+    midInvite: "Bread · honey · jam · soap · herbal teas",
+    cta: "Connect with Wandering Hearth",
+    beats: ["a", "b", "c", "d"],
+    introImg: "09-wandering-hearth-book-intro.jpg",
+    outroImg: "09-wandering-hearth-book-outro.jpg",
+    musicStart: 72,
+    // Energized VO ~17.2s; total = 1.4 lead + 17.2 + 1.6 tail ≈ 20.2s
+    totalDur: 20.2,
+  },
   "10-wandering-forge": {
     title: "Manufacture for the tribe —",
     invite: "become a Wandering Forge!",
