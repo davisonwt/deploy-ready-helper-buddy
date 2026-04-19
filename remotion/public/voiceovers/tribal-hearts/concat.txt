@@ -1,0 +1,7 @@
+file '/dev-server/remotion/public/voiceovers/tribal-hearts/01-intro.mp3'
+file '/dev-server/remotion/public/voiceovers/tribal-hearts/02-ambassadors.mp3'
+file '/dev-server/remotion/public/voiceovers/tribal-hearts/03-story.mp3'
+file '/dev-server/remotion/public/voiceovers/tribal-hearts/04-match.mp3'
+file '/dev-server/remotion/public/voiceovers/tribal-hearts/05-chat.mp3'
+file '/dev-server/remotion/public/voiceovers/tribal-hearts/06-safety.mp3'
+file '/dev-server/remotion/public/voiceovers/tribal-hearts/07-close.mp3'
