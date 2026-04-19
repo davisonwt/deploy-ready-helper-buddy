@@ -10,7 +10,7 @@ import {
   useVideoConfig,
 } from "remotion";
 import { loadFont as loadPlayfair } from "@remotion/google-fonts/PlayfairDisplay";
-import { loadFont as loadDMSans } from "@remotion/google-fonts/DM Sans";
+import { loadFont as loadDMSans } from "@remotion/google-fonts/DMSans";
 
 const { fontFamily: displayFont } = loadPlayfair("normal", {
   weights: ["600", "700"],
