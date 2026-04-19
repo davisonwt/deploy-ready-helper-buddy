@@ -1,9 +1,10 @@
 import { BannerScene, BannerCaption } from "../components/BannerScene";
 
+// VO ~13.6s (408 frames). Closing card appears at frame 390 (last 60f of 450).
 const captions: BannerCaption[] = [
-  { from: 60,  duration: 75, headline: "From idea to product", subtitle: "Sowers turn vision into supply" },
-  { from: 135, duration: 60, headline: "30% funded · production starts", subtitle: "Bestowals flow into 10 glowing pockets" },
-  { from: 195, duration: 45, headline: "Deliveries begin instantly", subtitle: "Factory direct to the tribe" },
+  { from: 60,  duration: 110, headline: "From idea to product", subtitle: "Sowers turn vision into supply" },
+  { from: 175, duration: 110, headline: "30% funded · production starts", subtitle: "Bestowals flow into 10 glowing pockets" },
+  { from: 290, duration: 95,  headline: "Deliveries begin instantly", subtitle: "Factory direct to the tribe" },
 ];
 
 export const Banner02ProductionOrchard: React.FC = () => (
