@@ -26,8 +26,10 @@ export function HeartsHeader() {
         <div className="inline-flex items-center gap-2 rounded-full border border-white/30 bg-white/10 px-3 py-1 text-[11px] font-medium uppercase tracking-[0.18em] text-white/95 backdrop-blur-md">
           <Sparkles className="h-3 w-3" /> Ambassador-only · Sacred space
         </div>
-        <h1 className="mt-3 text-3xl font-bold leading-tight text-white drop-shadow-lg sm:text-4xl">
-          Where soul meets <span className="italic text-primary-foreground/95">soul</span>.
+        <h1 className="mt-3 text-3xl font-bold leading-tight drop-shadow-lg sm:text-4xl">
+          <span style={{ color: '#D8D8D8' }}>Where soul meets</span>{' '}
+          <span className="italic" style={{ color: '#FF1493' }}>soul</span>
+          <span style={{ color: '#D8D8D8' }}>.</span>
         </h1>
         <p className="mt-2 max-w-xl text-sm leading-relaxed text-white/90 drop-shadow sm:text-base">
           A quiet, cinematic garden inside Sow2Grow where twin flames find each other —
