@@ -1,5 +1,6 @@
 import React, { useRef, useState } from 'react';
-import { Heart, Play, Pause, Volume2, VolumeX } from 'lucide-react';
+import { Link } from 'react-router-dom';
+import { Heart, Play, Pause, Volume2, VolumeX, UserPlus } from 'lucide-react';
 
 /**
  * Featured trailer card for Tribal Hearts — the safe, agent-powered dating
