@@ -2,6 +2,7 @@ import { useState, useRef, useEffect } from "react"
 import { useLocation } from "react-router-dom"
 import { useAuth } from "../hooks/useAuth"
 import { useToast } from "../hooks/use-toast"
+import { supabase } from "@/integrations/supabase/client"
 import { Button } from "../components/ui/button"
 import { Badge } from "../components/ui/badge"
 import { 
@@ -295,10 +296,88 @@ export default function ProfilePage() {
     setEditing(false); setPictureError(""); setSocialLinksError({})
   }
 
-  const userStats = {
-    joinedDate: "January 2024", totalBestowed: 2450, totalReceived: 1800,
-    orchardsCreated: 3, orchardsSupported: 12, communityRank: "Faithful Sower", verificationLevel: "Verified"
+  // Real-time stats fetched from Supabase — NEVER hardcoded
+  const [userStats, setUserStats] = useState({
+    joinedDate: "—",
+    totalBestowed: 0,        // amount this user has BESTOWED to others
+    totalReceived: 0,        // amount this user has RECEIVED via their orchards
+    orchardsCreated: 0,
+    orchardsSupported: 0,    // distinct orchards this user has bestowed to
+    helpedCount: 0,          // people they've directly bestowed to
+    successRate: null,       // null when no completed bestowals yet
+    avgRating: null,         // null when no reviews yet
+    communityRank: "Seedling",
+    verificationLevel: "Unverified",
+    currencyCode: "USD",
+  })
+
+  useEffect(() => {
+    const userId = user?.id
+    if (!userId) return
+    let cancelled = false
+    ;(async () => {
+      try {
+        const currency = user?.preferred_currency || "USD"
+        const joined = user?.created_at ? new Date(user.created_at).toLocaleDateString(undefined, { year: "numeric", month: "long" }) : "—"
+
+        const [scoreRes, bestowedRes, orchardsRes, receivedRes] = await Promise.all([
+          supabase.from("tribal_scores")
+            .select("score, tier, orchards_count, bestowals_given_count, reviews_avg_rating")
+            .eq("user_id", userId).maybeSingle(),
+          supabase.from("bestowals")
+            .select("amount, payment_status, orchard_id")
+            .eq("bestower_id", userId),
+          supabase.from("orchards")
+            .select("id")
+            .eq("user_id", userId),
+          supabase.from("bestowals")
+            .select("amount, payment_status, orchards!inner(user_id)")
+            .eq("orchards.user_id", userId)
+            .eq("payment_status", "completed"),
+        ])
+
+        const completedBestowals = (bestowedRes.data || []).filter(b => b.payment_status === "completed")
+        const totalBestowed = completedBestowals.reduce((s, b) => s + Number(b.amount || 0), 0)
+        const totalReceived = (receivedRes.data || []).reduce((s, b) => s + Number(b.amount || 0), 0)
+        const orchardsSupported = new Set(completedBestowals.map(b => b.orchard_id)).size
+        const totalAttempts = (bestowedRes.data || []).length
+        const successRate = totalAttempts > 0 ? Math.round((completedBestowals.length / totalAttempts) * 100) : null
+
+        const score = scoreRes.data
+        const tierLabels = { seedling: "Seedling", sprout: "Sprout", sower: "Sower", mentor: "Mentor", elder: "Elder" }
+        const rank = score?.tier ? tierLabels[score.tier] || "Seedling" : "Seedling"
+        const verification = (score?.score ?? 0) >= 100 ? "Verified" : "Unverified"
+
+        if (!cancelled) {
+          setUserStats({
+            joinedDate: joined,
+            totalBestowed,
+            totalReceived,
+            orchardsCreated: (orchardsRes.data || []).length,
+            orchardsSupported,
+            helpedCount: orchardsSupported,
+            successRate,
+            avgRating: score?.reviews_avg_rating != null && Number(score.reviews_avg_rating) > 0 ? Number(score.reviews_avg_rating) : null,
+            communityRank: rank,
+            verificationLevel: verification,
+            currencyCode: currency,
+          })
+        }
+      } catch (err) {
+        console.error("[ProfilePage] failed to load stats", err)
+      }
+    })()
+    return () => { cancelled = true }
+  }, [user?.id, user?.preferred_currency, user?.created_at])
+
+  const formatMoney = (amount, code) => {
+    try {
+      return new Intl.NumberFormat(undefined, { style: "currency", currency: code || "USD", maximumFractionDigits: 0 }).format(Number(amount || 0))
+    } catch {
+      return `${code || ""} ${Math.round(Number(amount || 0))}`
+    }
   }
+
 
   if (showQuickSetup) return <QuickProfileSetup onComplete={() => setShowQuickSetup(false)} onClose={() => setShowQuickSetup(false)} />
 
@@ -406,28 +485,30 @@ export default function ProfilePage() {
                   {user?.email}
                 </p>
 
-                {/* Badges */}
+                {/* Badges — only show what's actually true */}
                 <div className="flex flex-wrap justify-center gap-1.5 mb-4">
                   <span className="inline-flex items-center gap-1 text-[10px] font-medium px-2.5 py-1 rounded-full"
                     style={{ background: `${theme.accent}20`, color: theme.accent }}>
-                    <Sprout className="h-3 w-3" /> Farm Stall Owner
+                    <Sprout className="h-3 w-3" /> Sower
                   </span>
-                  <span className="inline-flex items-center gap-1 text-[10px] font-medium px-2.5 py-1 rounded-full"
-                    style={{ background: `${theme.accent}20`, color: theme.accent }}>
-                    <Shield className="h-3 w-3" /> {userStats.verificationLevel}
-                  </span>
+                  {userStats.verificationLevel === "Verified" && (
+                    <span className="inline-flex items-center gap-1 text-[10px] font-medium px-2.5 py-1 rounded-full"
+                      style={{ background: `${theme.accent}20`, color: theme.accent }}>
+                      <Shield className="h-3 w-3" /> Verified
+                    </span>
+                  )}
                   <span className="inline-flex items-center gap-1 text-[10px] font-medium px-2.5 py-1 rounded-full"
                     style={{ background: '#eab30820', color: '#eab308' }}>
                     <Crown className="h-3 w-3" /> {userStats.communityRank}
                   </span>
                 </div>
 
-                {/* Stats Row */}
+                {/* Stats Row — REAL data only */}
                 <div className="grid grid-cols-4 gap-2">
-                  <StatPill icon={Heart} label="Bestowed" value={`R${(userStats.totalBestowed / 1000).toFixed(1)}k`} color="#22c55e" theme={theme} />
-                  <StatPill icon={TrendingUp} label="Received" value={`R${(userStats.totalReceived / 1000).toFixed(1)}k`} color={theme.accent} theme={theme} />
+                  <StatPill icon={Heart} label="Bestowed" value={formatMoney(userStats.totalBestowed, userStats.currencyCode)} color="#22c55e" theme={theme} />
+                  <StatPill icon={TrendingUp} label="Received" value={formatMoney(userStats.totalReceived, userStats.currencyCode)} color={theme.accent} theme={theme} />
                   <StatPill icon={TreePine} label="Orchards" value={userStats.orchardsCreated} color="#a855f7" theme={theme} />
-                  <StatPill icon={Users} label="Helped" value="23" color="#f59e0b" theme={theme} />
+                  <StatPill icon={Users} label="Helped" value={userStats.helpedCount} color="#f59e0b" theme={theme} />
                 </div>
 
                 {/* Edit / Quick Setup Buttons */}
@@ -552,8 +633,7 @@ export default function ProfilePage() {
                 <InfoRow icon={Calendar} label="Member Since" value={userStats.joinedDate} theme={theme} />
                 <InfoRow icon={CheckCircle} label="Verification" value={userStats.verificationLevel} theme={theme} />
                 <InfoRow icon={Crown} label="Rank" value={userStats.communityRank} theme={theme} />
-                <InfoRow icon={Sprout} label="Role" value="Farm Stall Owner" theme={theme} />
-                <InfoRow icon={Star} label="Rating" value="4.8/5.0" theme={theme} />
+                <InfoRow icon={Star} label="Rating" value={userStats.avgRating != null ? `${userStats.avgRating.toFixed(1)}/5.0` : "No reviews yet"} theme={theme} />
               </div>
             </CollapsibleSection>
 
@@ -572,19 +652,25 @@ export default function ProfilePage() {
                 </div>
                 <h3 className="text-base font-bold mb-1" style={{ color: theme.textPrimary }}>Your Community Legacy</h3>
                 <p className="text-xs leading-relaxed mb-4" style={{ color: theme.textSecondary }}>
-                  Your generous spirit and faithful participation have helped create a thriving ecosystem.
+                  {userStats.helpedCount > 0
+                    ? "Your generous spirit and faithful participation are growing this ecosystem."
+                    : "Your story is just beginning. Bestow on an orchard or plant your own to start your legacy."}
                 </p>
                 <div className="grid grid-cols-3 gap-2 mb-4">
                   <div className="p-2 rounded-xl" style={{ background: '#22c55e15' }}>
-                    <div className="text-lg font-bold" style={{ color: '#22c55e' }}>23</div>
+                    <div className="text-lg font-bold" style={{ color: '#22c55e' }}>{userStats.helpedCount}</div>
                     <p className="text-[10px]" style={{ color: theme.textSecondary }}>Helped</p>
                   </div>
                   <div className="p-2 rounded-xl" style={{ background: `${theme.accent}15` }}>
-                    <div className="text-lg font-bold" style={{ color: theme.accent }}>89%</div>
+                    <div className="text-lg font-bold" style={{ color: theme.accent }}>
+                      {userStats.successRate != null ? `${userStats.successRate}%` : "—"}
+                    </div>
                     <p className="text-[10px]" style={{ color: theme.textSecondary }}>Success</p>
                   </div>
                   <div className="p-2 rounded-xl" style={{ background: '#f59e0b15' }}>
-                    <div className="text-lg font-bold" style={{ color: '#f59e0b' }}>4.8</div>
+                    <div className="text-lg font-bold" style={{ color: '#f59e0b' }}>
+                      {userStats.avgRating != null ? userStats.avgRating.toFixed(1) : "—"}
+                    </div>
                     <p className="text-[10px]" style={{ color: theme.textSecondary }}>Rating</p>
                   </div>
                 </div>
