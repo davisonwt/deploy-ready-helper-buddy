@@ -246,6 +246,8 @@ serve(async (req) => {
           `🐧 → 📒 Mint-Pro delivered a tax & compliance brief.`, {}, seed_id ?? null);
         return ok(mj);
       }
+
+      case "respond_suggestion": {
         const { suggestion_id, decision } = payload as { suggestion_id: string; decision: "approved" | "declined" | "snoozed" };
         const { data: sug } = await admin.from("linux_family_suggestions")
           .select("*").eq("id", suggestion_id).eq("user_id", user.id).maybeSingle();
