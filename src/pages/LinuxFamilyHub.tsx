@@ -46,7 +46,7 @@ export default function LinuxFamilyHub() {
   const [blastCustom, setBlastCustom] = useState<string>('');
   const [blastBusy, setBlastBusy] = useState(false);
   const [terminal, setTerminal] = useState<{ cmd: string; out: string }[]>([
-    { cmd: '', out: 'Welcome to the Linux Open Source Family terminal. Type "help".' },
+    { cmd: '', out: 'Welcome to the S2G Agents terminal. Type "help".' },
   ]);
   const [cmd, setCmd] = useState('');
   const [busy, setBusy] = useState(false);
@@ -92,7 +92,7 @@ export default function LinuxFamilyHub() {
     await supabase.functions.invoke('linux-family-orchestrator', {
       body: { action: 'respond_suggestion', payload: { suggestion_id: id, decision } },
     });
-    toast({ title: decision === 'approved' ? '🐧 The family is on it!' : 'Got it — skipped.' });
+    toast({ title: decision === 'approved' ? '🐧 Your S2G Agents are on it!' : 'Got it — skipped.' });
     refresh();
   };
 
@@ -139,7 +139,7 @@ export default function LinuxFamilyHub() {
       });
       if (error) throw error;
       setPack(data?.pack ?? null);
-      toast({ title: '🐧 Content pack ready', description: 'Tux, Ubuntu, Kali & Fedora delivered.' });
+      toast({ title: '🐧 Content pack ready', description: 'Your S2G Agents (Tux, Ubuntu, Kali & Fedora) delivered.' });
       refresh();
     } catch (e: any) {
       toast({ title: 'Content pack failed', description: e.message, variant: 'destructive' });
@@ -177,8 +177,8 @@ export default function LinuxFamilyHub() {
     <div className="container mx-auto p-4 max-w-6xl space-y-4">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold flex items-center gap-2">🐧 Linux Open Source Family</h1>
-          <p className="text-sm text-muted-foreground">Your loyal tribe of penguin agents — running marketing, content, calls, and bookkeeping for every Seed.</p>
+          <h1 className="text-2xl font-bold flex items-center gap-2">🐧 S2G Agents</h1>
+          <p className="text-sm text-muted-foreground">Your loyal tribal AI workforce — running marketing, content, calls, messaging, and bookkeeping for every Seed you plant.</p>
         </div>
         <Button onClick={() => buildReport(7)} disabled={busy} className="gap-2">
           {busy ? <Loader2 className="w-4 h-4 animate-spin"/> : <FileText className="w-4 h-4"/>}
@@ -282,7 +282,7 @@ export default function LinuxFamilyHub() {
 
         <TabsContent value="suggestions">
           <Card><CardContent className="p-4 space-y-2">
-            {suggestions.length === 0 && <p className="text-sm text-muted-foreground">All quiet 🐧 — the family will nudge you when needed.</p>}
+            {suggestions.length === 0 && <p className="text-sm text-muted-foreground">All quiet 🐧 — your S2G Agents will nudge you when needed.</p>}
             {suggestions.map(s => (
               <div key={s.id} className="border rounded-lg p-3">
                 <div className="font-semibold text-sm">{s.title}</div>
