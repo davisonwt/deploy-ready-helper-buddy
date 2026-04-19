@@ -5131,6 +5131,7 @@ export type Database = {
           email: string | null
           facebook_url: string | null
           first_name: string | null
+          garden_settings: Json
           has_complete_billing_info: boolean | null
           id: string
           instagram_url: string | null
@@ -5140,6 +5141,7 @@ export type Database = {
           location: string | null
           phone: string | null
           preferred_currency: string | null
+          preferred_language: string | null
           show_social_media: boolean | null
           suspended: boolean | null
           tiktok_url: string | null
@@ -5168,6 +5170,7 @@ export type Database = {
           email?: string | null
           facebook_url?: string | null
           first_name?: string | null
+          garden_settings?: Json
           has_complete_billing_info?: boolean | null
           id?: string
           instagram_url?: string | null
@@ -5177,6 +5180,7 @@ export type Database = {
           location?: string | null
           phone?: string | null
           preferred_currency?: string | null
+          preferred_language?: string | null
           show_social_media?: boolean | null
           suspended?: boolean | null
           tiktok_url?: string | null
@@ -5205,6 +5209,7 @@ export type Database = {
           email?: string | null
           facebook_url?: string | null
           first_name?: string | null
+          garden_settings?: Json
           has_complete_billing_info?: boolean | null
           id?: string
           instagram_url?: string | null
@@ -5214,6 +5219,7 @@ export type Database = {
           location?: string | null
           phone?: string | null
           preferred_currency?: string | null
+          preferred_language?: string | null
           show_social_media?: boolean | null
           suspended?: boolean | null
           tiktok_url?: string | null
@@ -9278,6 +9284,114 @@ export type Database = {
           },
         ]
       }
+      tribal_matches: {
+        Row: {
+          confidence_score: number
+          created_at: string
+          expires_at: string
+          id: string
+          match_reason: string
+          match_type: string
+          member_a_id: string
+          member_a_response: string | null
+          member_b_id: string
+          member_b_response: string | null
+          metadata: Json
+          seed_a_id: string | null
+          seed_b_id: string | null
+          status: string
+          suggested_action: string | null
+          updated_at: string
+        }
+        Insert: {
+          confidence_score?: number
+          created_at?: string
+          expires_at?: string
+          id?: string
+          match_reason: string
+          match_type?: string
+          member_a_id: string
+          member_a_response?: string | null
+          member_b_id: string
+          member_b_response?: string | null
+          metadata?: Json
+          seed_a_id?: string | null
+          seed_b_id?: string | null
+          status?: string
+          suggested_action?: string | null
+          updated_at?: string
+        }
+        Update: {
+          confidence_score?: number
+          created_at?: string
+          expires_at?: string
+          id?: string
+          match_reason?: string
+          match_type?: string
+          member_a_id?: string
+          member_a_response?: string | null
+          member_b_id?: string
+          member_b_response?: string | null
+          metadata?: Json
+          seed_a_id?: string | null
+          seed_b_id?: string | null
+          status?: string
+          suggested_action?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      tribal_scores: {
+        Row: {
+          badges: string[]
+          bestowals_given_count: number
+          bestowals_received_count: number
+          breakdown: Json
+          created_at: string
+          helpful_votes: number
+          last_recomputed_at: string
+          orchards_count: number
+          reviews_avg_rating: number
+          score: number
+          tier: string
+          tribe_size: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          badges?: string[]
+          bestowals_given_count?: number
+          bestowals_received_count?: number
+          breakdown?: Json
+          created_at?: string
+          helpful_votes?: number
+          last_recomputed_at?: string
+          orchards_count?: number
+          reviews_avg_rating?: number
+          score?: number
+          tier?: string
+          tribe_size?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          badges?: string[]
+          bestowals_given_count?: number
+          bestowals_received_count?: number
+          breakdown?: Json
+          created_at?: string
+          helpful_votes?: number
+          last_recomputed_at?: string
+          orchards_count?: number
+          reviews_avg_rating?: number
+          score?: number
+          tier?: string
+          tribe_size?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       typing: {
         Row: {
           id: string
@@ -11310,6 +11424,7 @@ export type Database = {
         Args: { p_referral_code: string; p_referred_user_id: string }
         Returns: Json
       }
+      recompute_tribal_score: { Args: { _user_id: string }; Returns: number }
       reject_join_request: { Args: { request_id: string }; Returns: boolean }
       reject_radio_schedule_slot: {
         Args: { approver_id_param: string; schedule_id_param: string }
