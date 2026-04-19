@@ -31,6 +31,9 @@ const AGENTS = [
 
 export default function LinuxFamilyHub() {
   const { user } = useAuth();
+  const navigate = useNavigate();
+  const { isAmbassador, hasFreeAccess, canUse } = useAgentAccess();
+  const isPro = isAmbassador || hasFreeAccess;
   const [agents, setAgents] = useState<any[]>([]);
   const [activity, setActivity] = useState<any[]>([]);
   const [suggestions, setSuggestions] = useState<any[]>([]);
@@ -227,25 +230,39 @@ export default function LinuxFamilyHub() {
         {AGENTS.map(a => {
           const s = statusFor(a.key);
           const sty = agentStyle[a.key];
+          const locked = isPremiumAgent(a.key) && !isPro;
           return (
             <Card key={a.key}
                   className={cn(
                     'group relative overflow-hidden border-border/40 bg-gradient-to-br backdrop-blur-sm transition-all duration-300',
                     'hover:scale-[1.03] hover:shadow-xl hover:-translate-y-0.5 cursor-default',
-                    sty.gradient, `hover:ring-2 ${sty.ring}`
+                    sty.gradient, `hover:ring-2 ${sty.ring}`,
+                    locked && 'opacity-75'
                   )}>
               <CardContent className="p-3 relative">
+                {locked && (
+                  <button
+                    onClick={() => navigate('/tribe-ambassador')}
+                    className="absolute top-1.5 right-1.5 z-10 flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-amber-500/90 hover:bg-amber-400 text-amber-950 text-[9px] font-bold uppercase tracking-wide shadow-md transition-colors"
+                    title="Ambassador-only — click to upgrade"
+                  >
+                    <Crown className="w-2.5 h-2.5" /> Pro
+                  </button>
+                )}
                 <div className="flex items-start gap-2.5">
-                  <div className={cn('w-10 h-10 rounded-xl flex items-center justify-center text-xl shrink-0 shadow-inner', sty.iconBg)}>
+                  <div className={cn('w-10 h-10 rounded-xl flex items-center justify-center text-xl shrink-0 shadow-inner relative', sty.iconBg)}>
                     {a.emoji}
+                    {locked && <Lock className="absolute -bottom-1 -right-1 w-3.5 h-3.5 text-amber-300 bg-background/80 rounded-full p-0.5" />}
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center justify-between gap-1">
                       <div className="font-bold text-sm truncate text-foreground">{a.name}</div>
-                      <div className="flex items-center gap-1 shrink-0">
-                        <span className={cn('w-1.5 h-1.5 rounded-full', statusDot[s] ?? statusDot.idle)} />
-                        <span className="text-[9px] uppercase tracking-wide text-muted-foreground">{s}</span>
-                      </div>
+                      {!locked && (
+                        <div className="flex items-center gap-1 shrink-0">
+                          <span className={cn('w-1.5 h-1.5 rounded-full', statusDot[s] ?? statusDot.idle)} />
+                          <span className="text-[9px] uppercase tracking-wide text-muted-foreground">{s}</span>
+                        </div>
+                      )}
                     </div>
                     <div className="text-[10px] text-muted-foreground/90 font-medium uppercase tracking-wide">{a.role}</div>
                     <p className="text-[11px] text-foreground/70 mt-1.5 line-clamp-2 leading-snug">{a.bio}</p>
@@ -256,6 +273,33 @@ export default function LinuxFamilyHub() {
           );
         })}
       </div>
+
+      {/* Soft upsell banner for free members */}
+      {!isPro && (
+        <div className="relative overflow-hidden rounded-xl border border-amber-500/30 bg-gradient-to-r from-amber-500/10 via-orange-500/10 to-amber-500/10 p-4">
+          <div className="flex items-start gap-3">
+            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center shrink-0 shadow-lg shadow-amber-500/30">
+              <Crown className="w-5 h-5 text-amber-950" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <div className="font-bold text-sm text-foreground">Unlock the full S2G Agent tribe</div>
+              <p className="text-xs text-muted-foreground mt-0.5">
+                You have <span className="font-semibold text-emerald-400">Gentoo, Mint &amp; Debian</span> on your team.
+                Become a <span className="font-semibold text-amber-300">Tribe Ambassador ($5/mo)</span> to unlock <span className="font-semibold">Tux</span> (content),
+                <span className="font-semibold"> Ubuntu</span> (branding), <span className="font-semibold">Kali</span> (images),
+                <span className="font-semibold"> Fedora</span> (videos) &amp; <span className="font-semibold">Arch</span> (calls) — your whole AI marketing team on autopilot.
+              </p>
+            </div>
+            <Button
+              size="sm"
+              onClick={() => navigate('/tribe-ambassador')}
+              className="shrink-0 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 text-amber-950 font-semibold border-0 shadow-md"
+            >
+              <Crown className="w-3.5 h-3.5 mr-1" /> Become Ambassador
+            </Button>
+          </div>
+        </div>
+      )}
 
       <Tabs defaultValue="suggestions">
         <TabsList className="flex-wrap h-auto bg-muted/40 backdrop-blur-sm p-1 rounded-xl">
