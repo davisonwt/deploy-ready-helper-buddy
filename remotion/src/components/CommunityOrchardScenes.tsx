@@ -9,42 +9,44 @@ const TERRACOTTA = "#B85042";
 const OCHRE = "#D4A843";
 const GOLD = "#FFD78A";
 
-/** Scene 1: Tribe gathers around a need (60–165) — silhouettes + floating need bubble. */
+/** Scene 1: Tribe gathers around a need (60–165) — people in a row + floating need bubble. */
 const SceneNeed: React.FC = () => {
   const f = useCurrentFrame();
   const { fps } = useVideoConfig();
-  const float = Math.sin(f / 14) * 8;
   const bubbleS = spring({ frame: f - 8, fps, config: { damping: 12 } });
+  const bubbleScale = interpolate(bubbleS, [0, 1], [0.3, 1]);
+  const bubbleFloat = Math.sin(f / 14) * 10;
 
   const people = ["🧑‍🌾", "👩‍🦱", "🧔", "👵", "🧑", "👨‍🦳", "👩"];
   return (
-    <AbsoluteFill style={{ justifyContent: "flex-end", alignItems: "center", paddingBottom: 180 }}>
-      {/* Floating need bubble */}
+    <AbsoluteFill style={{ justifyContent: "center", alignItems: "center" }}>
+      {/* Floating need bubble (centered, slightly above mid) */}
       <div style={{
-        transform: `translateY(${-180 + float}px) scale(${bubbleS})`,
-        background: "rgba(255,255,255,0.92)",
-        border: `4px solid ${TERRACOTTA}`,
-        borderRadius: 32,
-        padding: "22px 38px",
-        fontSize: 110,
+        transform: `translateY(${-100 + bubbleFloat}px) scale(${bubbleScale})`,
+        background: "rgba(255,255,255,0.95)",
+        border: `5px solid ${TERRACOTTA}`,
+        borderRadius: 36,
+        padding: "26px 46px",
+        fontSize: 130,
         fontFamily: emojiStack,
-        boxShadow: "0 20px 50px rgba(184,80,66,0.35)",
-        marginBottom: 40,
+        lineHeight: 1,
+        boxShadow: "0 24px 60px rgba(184,80,66,0.4)",
       }}>
         🚐
       </div>
-      {/* Tribe row */}
-      <div style={{ display: "flex", gap: 28 }}>
+      {/* Tribe row below the bubble */}
+      <div style={{ display: "flex", gap: 32, marginTop: 60 }}>
         {people.map((p, i) => {
-          const wobble = Math.sin((f + i * 18) / 18) * 6;
-          const enter = spring({ frame: f - i * 5, fps, config: { damping: 15 } });
+          const enter = spring({ frame: f - 12 - i * 4, fps, config: { damping: 15 } });
+          const wobble = Math.sin((f + i * 18) / 18) * 8;
           return (
             <div key={i} style={{
-              fontSize: 130,
+              fontSize: 140,
               fontFamily: emojiStack,
-              transform: `translateY(${interpolate(enter, [0, 1], [60, wobble])}px) scale(${enter})`,
-              filter: "drop-shadow(0 10px 20px rgba(0,0,0,0.25))",
               lineHeight: 1,
+              opacity: enter,
+              transform: `translateY(${interpolate(enter, [0, 1], [80, wobble])}px) scale(${interpolate(enter, [0, 1], [0.5, 1])})`,
+              filter: "drop-shadow(0 12px 22px rgba(0,0,0,0.28))",
             }}>{p}</div>
           );
         })}
