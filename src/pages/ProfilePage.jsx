@@ -652,19 +652,25 @@ export default function ProfilePage() {
                 </div>
                 <h3 className="text-base font-bold mb-1" style={{ color: theme.textPrimary }}>Your Community Legacy</h3>
                 <p className="text-xs leading-relaxed mb-4" style={{ color: theme.textSecondary }}>
-                  Your generous spirit and faithful participation have helped create a thriving ecosystem.
+                  {userStats.helpedCount > 0
+                    ? "Your generous spirit and faithful participation are growing this ecosystem."
+                    : "Your story is just beginning. Bestow on an orchard or plant your own to start your legacy."}
                 </p>
                 <div className="grid grid-cols-3 gap-2 mb-4">
                   <div className="p-2 rounded-xl" style={{ background: '#22c55e15' }}>
-                    <div className="text-lg font-bold" style={{ color: '#22c55e' }}>23</div>
+                    <div className="text-lg font-bold" style={{ color: '#22c55e' }}>{userStats.helpedCount}</div>
                     <p className="text-[10px]" style={{ color: theme.textSecondary }}>Helped</p>
                   </div>
                   <div className="p-2 rounded-xl" style={{ background: `${theme.accent}15` }}>
-                    <div className="text-lg font-bold" style={{ color: theme.accent }}>89%</div>
+                    <div className="text-lg font-bold" style={{ color: theme.accent }}>
+                      {userStats.successRate != null ? `${userStats.successRate}%` : "—"}
+                    </div>
                     <p className="text-[10px]" style={{ color: theme.textSecondary }}>Success</p>
                   </div>
                   <div className="p-2 rounded-xl" style={{ background: '#f59e0b15' }}>
-                    <div className="text-lg font-bold" style={{ color: '#f59e0b' }}>4.8</div>
+                    <div className="text-lg font-bold" style={{ color: '#f59e0b' }}>
+                      {userStats.avgRating != null ? userStats.avgRating.toFixed(1) : "—"}
+                    </div>
                     <p className="text-[10px]" style={{ color: theme.textSecondary }}>Rating</p>
                   </div>
                 </div>
