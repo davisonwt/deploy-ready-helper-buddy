@@ -27,17 +27,39 @@ interface BannerVideo {
 }
 
 const BANNERS: BannerVideo[] = [
-  { id: "wandering-wheel",     title: "Wandering Wheel",     subtitle: "Become a community driver",       emoji: "🚐", src: "/videos/banners/wandering-wheel.mp4",     available: true },
-  { id: "wandering-hand",      title: "Wandering Hand",      subtitle: "Offer hands-on tribal services",  emoji: "🛠️", src: "/videos/banners/wandering-hand.mp4",      available: true },
-  { id: "wandering-whisperer", title: "Wandering Whisperer", subtitle: "Guide & sell for sowers",         emoji: "🎙️", src: "/videos/banners/wandering-whisperer.mp4", available: true },
-  { id: "wandering-pillow",    title: "Wandering Pillow",    subtitle: "Host travelers · holiday stays",  emoji: "🛏️", src: "/videos/banners/wandering-pillow.mp4",    available: true },
-  { id: "wandering-field",     title: "Wandering Field",     subtitle: "Grow & sell from your field",     emoji: "🌾", src: "/videos/banners/wandering-field.mp4",     available: true },
-  { id: "wandering-hearth",    title: "Wandering Hearth",    subtitle: "Sell handmade goods",             emoji: "🏡", src: "/videos/banners/wandering-hearth.mp4",    available: true },
-  { id: "wandering-forge",     title: "Wandering Forge",     subtitle: "Manufacture for the tribe",       emoji: "🏭", src: "/videos/banners/wandering-forge.mp4",     available: true },
-  { id: "community-orchard",   title: "Community Orchard",   subtitle: "Open a community-funded orchard", emoji: "🌳", src: "/videos/banners/community-orchard.mp4",   available: true },
-  { id: "production-orchard",  title: "Production Orchard",  subtitle: "Fund a product into existence",   emoji: "🏗️", src: "/videos/banners/production-orchard.mp4",  available: false },
-  { id: "single-seed",         title: "Single Seed",         subtitle: "Sow one offering today",          emoji: "🌱", src: "/videos/banners/single-seed.mp4",         available: false },
-  { id: "classroom",           title: "Classroom",           subtitle: "Teach live · voice + video",      emoji: "🎓", src: "/videos/banners/classroom.mp4",           available: true },
+  // — Become a Provider —
+  { id: "wandering-wheel",            title: "Wandering Wheel",            subtitle: "Become a community driver",        emoji: "🚐", src: "/videos/banners/wandering-wheel.mp4",            available: true },
+  { id: "wandering-hand",             title: "Wandering Hand",             subtitle: "Offer hands-on tribal services",   emoji: "🛠️", src: "/videos/banners/wandering-hand.mp4",             available: true },
+  { id: "wandering-hand-become",      title: "Wandering Hand · Join",      subtitle: "Join as a tribal service provider",emoji: "🤝", src: "/videos/banners/wandering-hand-become.mp4",      available: true },
+  { id: "wandering-whisperer",        title: "Wandering Whisperer",        subtitle: "Guide & sell for sowers",          emoji: "🎙️", src: "/videos/banners/wandering-whisperer.mp4",        available: true },
+  { id: "wandering-pillow",           title: "Wandering Pillow",           subtitle: "Host travelers · holiday stays",   emoji: "🛏️", src: "/videos/banners/wandering-pillow.mp4",           available: true },
+  { id: "wandering-field",            title: "Wandering Field",            subtitle: "Grow & sell from your field",      emoji: "🌾", src: "/videos/banners/wandering-field.mp4",            available: true },
+  { id: "wandering-hearth",           title: "Wandering Hearth",           subtitle: "Sell handmade goods",              emoji: "🏡", src: "/videos/banners/wandering-hearth.mp4",           available: true },
+  { id: "wandering-forge",            title: "Wandering Forge",            subtitle: "Manufacture for the tribe",        emoji: "🏭", src: "/videos/banners/wandering-forge.mp4",            available: true },
+
+  // — Book a Service —
+  { id: "wandering-wheel-book",       title: "Book a Wandering Wheel",     subtitle: "Book a community driver",          emoji: "🚖", src: "/videos/banners/wandering-wheel-book.mp4",       available: true },
+  { id: "wandering-hand-book",        title: "Book a Wandering Hand",      subtitle: "Hire a tribal service provider",   emoji: "🧰", src: "/videos/banners/wandering-hand-book.mp4",        available: true },
+  { id: "wandering-whisperer-book",   title: "Book a Wandering Whisperer", subtitle: "Hire a guide & sales whisperer",   emoji: "🗣️", src: "/videos/banners/wandering-whisperer-book.mp4",   available: true },
+  { id: "wandering-pillow-book",      title: "Book a Wandering Pillow",    subtitle: "Find a stay with the tribe",       emoji: "🏨", src: "/videos/banners/wandering-pillow-book.mp4",      available: true },
+  { id: "wandering-field-book",       title: "Connect with Wandering Field", subtitle: "Order fresh produce from farmers", emoji: "🥬", src: "/videos/banners/wandering-field-book.mp4",       available: true },
+  { id: "wandering-hearth-book",      title: "Connect with Wandering Hearth", subtitle: "Order from homesteaders",       emoji: "🍞", src: "/videos/banners/wandering-hearth-book.mp4",      available: true },
+  { id: "wandering-forge-book",       title: "Connect with Wandering Forge", subtitle: "Order from tribal factories",    emoji: "📦", src: "/videos/banners/wandering-forge.mp4",            available: true },
+
+  // — Plant & Sow —
+  { id: "community-orchard",          title: "Community Orchard",          subtitle: "Open a community-funded orchard",  emoji: "🌳", src: "/videos/banners/community-orchard.mp4",          available: true },
+  { id: "production-orchard",         title: "Production Orchard",         subtitle: "Fund a product into existence",    emoji: "🏗️", src: "/videos/banners/production-orchard.mp4",         available: true },
+  { id: "single-seed",                title: "Single Seed",                subtitle: "Sow one offering today",           emoji: "🌱", src: "/videos/banners/single-seed.mp4",                available: true },
+
+  // — Live & Learn —
+  { id: "classroom",                  title: "Classroom",                  subtitle: "Teach live · voice + video",       emoji: "🎓", src: "/videos/banners/classroom.mp4",                  available: true },
+  { id: "skilldrop",                  title: "SkillDrop",                  subtitle: "Drop a live skill session",        emoji: "✨", src: "/videos/banners/skilldrop.mp4",                  available: true },
+  { id: "training",                   title: "Training",                   subtitle: "Run a live training session",      emoji: "🏋️", src: "/videos/banners/training.mp4",                   available: true },
+  { id: "radio",                      title: "364YHVH FM Radio",           subtitle: "Tune in to the tribal station",    emoji: "📻", src: "/videos/banners/radio.mp4",                      available: true },
+
+  // — Chat & Connect —
+  { id: "one-on-one",                 title: "1-on-1 Chat",                subtitle: "Start a private chat",             emoji: "💬", src: "/videos/banners/one-on-one.mp4",                 available: true },
+  { id: "group-chat",                 title: "Group Chat",                 subtitle: "Start a tribal group chat",        emoji: "👥", src: "/videos/banners/group-chat.mp4",                 available: true },
 ];
 
 export default function MarketingVideosPage() {
