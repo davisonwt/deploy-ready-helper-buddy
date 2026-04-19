@@ -48,7 +48,8 @@ export const RemotionRoot = () => (
     <Composition id="banner-03-single-seed" component={Banner03SingleSeed} durationInFrames={BANNER_DUR} {...SHARED} />
     <Composition id="banner-04-wandering-wheel" component={Banner04WanderingWheel} durationInFrames={BANNER_DUR} {...SHARED} />
     <Composition id="banner-05-wandering-hand" component={Banner05WanderingHand} durationInFrames={BANNER_DUR} {...SHARED} />
-    <Composition id="banner-06-wandering-whisperer" component={Banner06WanderingWhisperer} durationInFrames={BANNER_DUR} {...SHARED} />
+    {/* Wandering whisperer VO is ~10.7s; extend to 12s so VO finishes + ~1.3s music tail */}
+    <Composition id="banner-06-wandering-whisperer" component={Banner06WanderingWhisperer} durationInFrames={360} {...SHARED} />
     <Composition id="banner-07-wandering-pillow" component={Banner07WanderingPillow} durationInFrames={BANNER_DUR} {...SHARED} />
     <Composition id="banner-08-wandering-field" component={Banner08WanderingField} durationInFrames={BANNER_DUR} {...SHARED} />
     <Composition id="banner-09-wandering-hearth" component={Banner09WanderingHearth} durationInFrames={BANNER_DUR} {...SHARED} />
