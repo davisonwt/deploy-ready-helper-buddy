@@ -46,83 +46,84 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({ radioLive, userProfile }
     .toUpperCase();
 
   return (
-    <div className="flex h-full min-h-0 flex-col py-4 overflow-hidden">
+    <div className="flex h-full min-h-0 flex-col overflow-hidden py-4">
       {/* Logo + User */}
-      <div className="px-3 mb-5">
-        <NavLink to="/dashboard" className="flex items-center gap-2 mb-3">
-          <div className="w-8 h-8 rounded-lg bg-primary/20 flex items-center justify-center">
-            <Sprout className="w-5 h-5 text-primary" />
+      <div className="mb-5 shrink-0 px-3">
+        <NavLink to="/dashboard" className="mb-3 flex items-center gap-2">
+          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/20">
+            <Sprout className="h-5 w-5 text-primary" />
           </div>
           <div className="flex flex-col leading-tight">
-            <span className="text-sm font-bold text-foreground tracking-tight">Sow2Grow</span>
+            <span className="text-sm font-bold tracking-tight text-foreground">Sow2Grow</span>
             <span className="text-[10px] text-muted-foreground">364yhvh community farm</span>
           </div>
         </NavLink>
-        {/* User row */}
         <div className="flex items-center gap-2 px-1">
-          <Avatar className="w-7 h-7">
+          <Avatar className="h-7 w-7">
             {userProfile?.avatar_url && <AvatarImage src={userProfile.avatar_url} />}
-            <AvatarFallback className="text-[10px] bg-primary/20 text-primary">{initials}</AvatarFallback>
+            <AvatarFallback className="bg-primary/20 text-[10px] text-primary">{initials}</AvatarFallback>
           </Avatar>
-          <span className="text-xs text-foreground truncate">{userProfile?.display_name || 'Keeper'}</span>
+          <span className="truncate text-xs text-foreground">{userProfile?.display_name || 'Keeper'}</span>
         </div>
       </div>
 
-      {/* Nav Items — gradient cards */}
-      <nav className="px-2 space-y-2">
-        {navItems.map((item) => {
-          const Icon = item.icon;
-          return (
-            <NavLink
-              key={item.to}
-              to={item.to}
-              className={({ isActive }) => cn(
-                'flex items-center gap-3 p-2.5 rounded-xl transition-all',
-                'hover:scale-[1.02] hover:shadow-lg',
-                isActive ? 'ring-2 ring-white/30 shadow-lg' : 'opacity-85 hover:opacity-100'
-              )}
-              style={{ background: item.gradient }}
-            >
-              <div className="w-9 h-9 rounded-lg bg-white/20 backdrop-blur-sm flex items-center justify-center flex-shrink-0">
-                <Icon className="w-4.5 h-4.5 text-white" />
-              </div>
-              <div className="flex flex-col leading-tight min-w-0">
-                <span className="text-[13px] font-bold text-white truncate">{item.label}</span>
-                <span className="text-[10px] text-white/70 truncate">{item.desc}</span>
-              </div>
-            </NavLink>
-          );
-        })}
-      </nav>
+      <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-2">
+        <div className="flex min-h-full flex-col pb-28">
+          <nav className="space-y-2">
+            {navItems.map((item) => {
+              const Icon = item.icon;
+              return (
+                <NavLink
+                  key={item.to}
+                  to={item.to}
+                  className={({ isActive }) => cn(
+                    'flex items-center gap-3 rounded-xl p-2.5 transition-all',
+                    'hover:scale-[1.02] hover:shadow-lg',
+                    isActive ? 'ring-2 ring-white/30 shadow-lg' : 'opacity-85 hover:opacity-100'
+                  )}
+                  style={{ background: item.gradient }}
+                >
+                  <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg bg-white/20 backdrop-blur-sm">
+                    <Icon className="h-4.5 w-4.5 text-white" />
+                  </div>
+                  <div className="min-w-0 flex flex-col leading-tight">
+                    <span className="truncate text-[13px] font-bold text-white">{item.label}</span>
+                    <span className="truncate text-[10px] text-white/70">{item.desc}</span>
+                  </div>
+                </NavLink>
+              );
+            })}
+          </nav>
 
-      {/* Admin — only visible for GoSat/Admin roles */}
-      {(isGosat || isAdmin) && (
-        <div className="px-2 pt-3 mt-auto border-t border-border/20 space-y-2">
-          {adminItems.map((item) => {
-            const Icon = item.icon;
-            return (
-              <NavLink
-                key={item.to}
-                to={item.to}
-                className={({ isActive }) => cn(
-                  'flex items-center gap-3 p-2.5 rounded-xl transition-all',
-                  'hover:scale-[1.02] hover:shadow-lg',
-                  isActive ? 'ring-2 ring-white/30 shadow-lg' : 'opacity-85 hover:opacity-100'
-                )}
-                style={{ background: item.gradient }}
-              >
-                <div className="w-9 h-9 rounded-lg bg-white/20 backdrop-blur-sm flex items-center justify-center flex-shrink-0">
-                  <Icon className="w-4.5 h-4.5 text-white" />
-                </div>
-                <div className="flex flex-col leading-tight min-w-0">
-                  <span className="text-[13px] font-bold text-white truncate">{item.label}</span>
-                  <span className="text-[10px] text-white/70 truncate">{item.desc}</span>
-                </div>
-              </NavLink>
-            );
-          })}
+          {(isGosat || isAdmin) && (
+            <div className="mt-auto space-y-2 border-t border-border/20 pt-3">
+              {adminItems.map((item) => {
+                const Icon = item.icon;
+                return (
+                  <NavLink
+                    key={item.to}
+                    to={item.to}
+                    className={({ isActive }) => cn(
+                      'flex items-center gap-3 rounded-xl p-2.5 transition-all',
+                      'hover:scale-[1.02] hover:shadow-lg',
+                      isActive ? 'ring-2 ring-white/30 shadow-lg' : 'opacity-85 hover:opacity-100'
+                    )}
+                    style={{ background: item.gradient }}
+                  >
+                    <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg bg-white/20 backdrop-blur-sm">
+                      <Icon className="h-4.5 w-4.5 text-white" />
+                    </div>
+                    <div className="min-w-0 flex flex-col leading-tight">
+                      <span className="truncate text-[13px] font-bold text-white">{item.label}</span>
+                      <span className="truncate text-[10px] text-white/70">{item.desc}</span>
+                    </div>
+                  </NavLink>
+                );
+              })}
+            </div>
+          )}
         </div>
-      )}
+      </div>
 
       <PlantModal open={plantModalOpen} onOpenChange={setPlantModalOpen} />
     </div>
