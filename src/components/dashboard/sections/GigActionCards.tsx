@@ -7,6 +7,7 @@ import { EscrowBadge } from '@/components/provider/EscrowBadge';
 import { Button } from '@/components/ui/button';
 import { SectionHeading } from './SectionHeading';
 import { SubSectionLabel } from './SubSectionLabel';
+import { CarouselBannerVideo } from './CarouselBannerVideo';
 
 const rideBookImg = '/images/gig/ride-book.jpg';
 const serviceBookImg = '/images/gig/service-book.jpg';
@@ -140,15 +141,7 @@ export const GigActionCards: React.FC<GigActionCardsProps> = ({ theme }) => {
                     ) : (
                       <>
                         {cardVideo ? (
-                          <video
-                            src={cardVideo}
-                            autoPlay
-                            muted
-                            loop
-                            playsInline
-                            preload="metadata"
-                            className="absolute inset-0 w-full h-full object-cover pointer-events-none"
-                          />
+                          <CarouselBannerVideo src={cardVideo} fallbackImg={card.img} alt={card.label} />
                         ) : (
                           <img src={card.img} alt={card.label} className="absolute inset-0 w-full h-full object-cover" loading="lazy" />
                         )}
@@ -251,15 +244,7 @@ export const GigActionCards: React.FC<GigActionCardsProps> = ({ theme }) => {
                     ) : (
                       <>
                         {cardVideo ? (
-                          <video
-                            src={cardVideo}
-                            autoPlay
-                            muted
-                            loop
-                            playsInline
-                            preload="metadata"
-                            className="absolute inset-0 w-full h-full object-cover pointer-events-none"
-                          />
+                          <CarouselBannerVideo src={cardVideo} fallbackImg={card.img} alt={card.label} />
                         ) : (
                           <img src={card.img} alt={card.label} className="absolute inset-0 w-full h-full object-cover" loading="lazy" />
                         )}
@@ -361,15 +346,7 @@ export const GigActionCards: React.FC<GigActionCardsProps> = ({ theme }) => {
                     ) : (
                       <>
                         {card.video ? (
-                          <video
-                            src={card.video}
-                            autoPlay
-                            muted
-                            loop
-                            playsInline
-                            preload="metadata"
-                            className="absolute inset-0 w-full h-full object-cover pointer-events-none"
-                          />
+                          <CarouselBannerVideo src={card.video} fallbackImg={card.img} alt={card.label} />
                         ) : (
                           <img src={card.img} alt={card.label} className="absolute inset-0 w-full h-full object-cover" loading="lazy" />
                         )}
