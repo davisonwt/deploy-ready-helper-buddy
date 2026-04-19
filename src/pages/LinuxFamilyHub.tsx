@@ -171,6 +171,8 @@ export default function LinuxFamilyHub() {
     } finally { setBlastBusy(false); }
   };
 
+  const statusFor = (key: string) => agents.find(a => a.agent_name === key)?.status ?? 'idle';
+
   return (
     <div className="container mx-auto p-4 max-w-6xl space-y-4">
       <div className="flex items-center justify-between">
