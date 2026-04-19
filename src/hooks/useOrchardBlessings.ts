@@ -5,13 +5,15 @@ export interface OrchardBlessing {
   id: string;
   orchard_id: string;
   granted_by_user_id: string;
-  granted_at: string;
+  granted_by_seat_id: string;
+  created_at: string;
   message: string | null;
 }
 
 /**
  * Batch-fetches active council blessings for the given orchard IDs.
- * Returns a Set of orchard IDs that have at least one blessing.
+ * Returns a Set of orchard IDs that have at least one blessing,
+ * plus a per-orchard map of all blessings.
  */
 export function useOrchardBlessings(orchardIds: string[]) {
   const [blessedSet, setBlessedSet] = useState<Set<string>>(new Set());
@@ -34,7 +36,7 @@ export function useOrchardBlessings(orchardIds: string[]) {
 
     supabase
       .from('orchard_blessings')
-      .select('id, orchard_id, granted_by_user_id, granted_at, message')
+      .select('id, orchard_id, granted_by_user_id, granted_by_seat_id, created_at, message')
       .in('orchard_id', ids)
       .then(({ data, error }) => {
         if (cancelled) return;
