@@ -48,7 +48,7 @@ export const CarouselBannerVideo: React.FC<CarouselBannerVideoProps> = ({
       <img
         src={fallbackImg}
         alt={alt}
-        className="absolute inset-0 w-full h-full object-cover"
+        className="absolute inset-0 w-full h-full object-cover object-top"
         loading="lazy"
       />
     );
@@ -65,7 +65,7 @@ export const CarouselBannerVideo: React.FC<CarouselBannerVideoProps> = ({
       playsInline
       preload="auto"
       onError={handleError}
-      className="absolute inset-0 w-full h-full object-cover pointer-events-none"
+      className="absolute inset-0 w-full h-full object-cover object-top pointer-events-none"
     />
   );
 };
