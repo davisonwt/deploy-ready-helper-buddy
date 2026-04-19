@@ -31,23 +31,22 @@ export const StickyProfileBar: React.FC<StickyProfileBarProps> = ({
 
   return (
     <div
-      className="sticky top-0 z-40 backdrop-blur-xl border-b"
-      style={{
-        backgroundColor: theme.cardBg,
-        borderColor: theme.cardBorder,
-      }}
+      className="sticky top-0 z-40 elev-sticky grain-overlay"
+      style={{ borderColor: theme.cardBorder }}
     >
-      <div className="max-w-2xl mx-auto flex items-center justify-between px-4 py-2.5">
+      <div className="max-w-2xl mx-auto flex items-center justify-between px-4 py-3">
         {/* Left: Avatar + Greeting */}
         <div className="flex items-center gap-3 min-w-0">
-          <Link to="/profile">
-            <Avatar
-              className="w-9 h-9 border-2 ring-2"
+          <Link to="/profile" className="relative">
+            <span
+              aria-hidden
+              className="absolute inset-0 -m-[3px] rounded-full opacity-80"
               style={{
-                borderColor: theme.accent + '66',
-                boxShadow: `0 0 0 2px ${theme.accent}33`,
+                background: `conic-gradient(from 140deg, ${theme.accent}, hsl(var(--amber-500)), ${theme.accent})`,
+                filter: 'blur(2px)',
               }}
-            >
+            />
+            <Avatar className="relative w-10 h-10 ring-2 ring-background">
               <AvatarImage src={profile?.avatar_url || undefined} />
               <AvatarFallback
                 className="text-sm font-bold"
@@ -58,12 +57,12 @@ export const StickyProfileBar: React.FC<StickyProfileBarProps> = ({
             </Avatar>
           </Link>
           <div className="min-w-0">
-            <p className="text-sm font-bold truncate" style={{ color: theme.textPrimary }}>
-              Shalom, {displayName} 🌱
+            <p className="font-display text-[17px] leading-tight truncate" style={{ color: theme.textPrimary }}>
+              Shalom, <span className="text-gold-gradient font-medium">{displayName}</span> 🌱
             </p>
             {calendarData && (
-              <p className="text-[10px] truncate" style={{ color: theme.textSecondary }}>
-                Year {calendarData.year} • Month {calendarData.month} • Day {calendarData.dayOfMonth}
+              <p className="text-[10px] tracking-wide uppercase mt-0.5 truncate" style={{ color: theme.textSecondary, opacity: 0.85 }}>
+                Year {calendarData.year} · Month {calendarData.month} · Day {calendarData.dayOfMonth}
               </p>
             )}
           </div>

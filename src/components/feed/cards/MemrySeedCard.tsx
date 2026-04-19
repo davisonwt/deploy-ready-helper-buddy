@@ -326,7 +326,7 @@ export const MemrySeedCard: React.FC<MemrySeedCardProps> = ({
      RENDER — Pure document flow, NO absolute, NO z-index
      ════════════════════════════════════════════ */
   return (
-    <div ref={cardRef} className="rounded-2xl overflow-hidden bg-card border border-border/30 shadow-md flex flex-col">
+    <div ref={cardRef} className="premium-card grain-overlay overflow-hidden flex flex-col">
 
       {/* ── ROW 1: Seed type badge (only for seeds/music) ── */}
       {(isSeed || isMusic) && (
