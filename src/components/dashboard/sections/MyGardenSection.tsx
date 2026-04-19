@@ -10,6 +10,8 @@ import { GardenSection as GardenOrchards } from './GardenSection';
 import { KeeperContentGrid } from './KeeperContentGrid';
 import { KeeperHelpButton } from './KeeperHelpButton';
 import { SectionHeading } from './SectionHeading';
+import { VisualGardenShell } from '@/components/garden/VisualGardenShell';
+import { TribalScoreBadge } from '@/components/tribal/TribalScoreBadge';
 
 interface MyGardenSectionProps {
   theme: DashboardTheme;
