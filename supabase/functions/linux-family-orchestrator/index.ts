@@ -62,6 +62,72 @@ serve(async (req) => {
         return ok({ delegated: "mint" });
       }
 
+      case "run_content_pack": {
+        // Chain: Tux drafts → Ubuntu polishes → Kali banner → Fedora video plan
+        const { seed_title = "your Seed", seed_description = "", platform = "instagram", language = "English" } = (payload ?? {}) as any;
+        await setAgentStatus(user.id, "gentoo", "working");
+        await logActivity(user.id, "gentoo", "content_pack_started",
+          `🐧 Rallying Tux, Ubuntu, Kali & Fedora for "${seed_title}"…`, { seed_id, platform }, seed_id ?? null);
+
+        const auth = req.headers.get("Authorization") ?? "";
+        const base = Deno.env.get("SUPABASE_URL")!;
+        const callAgent = async (fn: string, body: unknown) => {
+          const r = await fetch(`${base}/functions/v1/${fn}`, {
+            method: "POST",
+            headers: { Authorization: auth, "Content-Type": "application/json" },
+            body: JSON.stringify(body),
+          });
+          if (!r.ok) throw new Error(`${fn} ${r.status}: ${await r.text()}`);
+          return r.json();
+        };
+
+        // 1. Tux drafts
+        const tux = await callAgent("agent-tux-content", {
+          format: "post", platform, seed_title, seed_description, seed_id,
+        });
+        // 2. Ubuntu polishes
+        const ubuntu = await callAgent("agent-ubuntu-brand", {
+          draft: tux.content, channel: platform, seed_id,
+        });
+        // 3. Kali banner (best-effort — image can fail without crashing the pack)
+        let banner_url: string | null = null;
+        try {
+          const kali = await callAgent("agent-kali-images", {
+            prompt: `Banner for "${seed_title}". ${seed_description}`.slice(0, 400),
+            kind: "banner", seed_id,
+          });
+          banner_url = kali.url ?? null;
+        } catch (e) {
+          console.warn("kali skipped:", (e as Error).message);
+          await logActivity(user.id, "kali", "image_skipped", `🪄 Image step skipped: ${(e as Error).message.slice(0, 80)}`, {}, seed_id ?? null);
+        }
+        // 4. Fedora video plan
+        const fedora = await callAgent("agent-fedora-video", {
+          seed_title, seed_description, language,
+          platforms: [platform === "all" ? "instagram" : platform, "tiktok", "youtube"],
+          seed_id,
+        });
+
+        // Persist pack to memory
+        const pack = {
+          polished_post: ubuntu.polished,
+          raw_post: tux.content,
+          banner_url,
+          video_plan: fedora.plan,
+          platform, language,
+          generated_at: new Date().toISOString(),
+        };
+        await admin.from("linux_family_memory").insert({
+          user_id: user.id, agent_name: "gentoo", seed_id: seed_id ?? null,
+          memory_key: `content_pack:${Date.now()}`, memory_value: pack,
+        });
+        await logActivity(user.id, "gentoo", "content_pack_done",
+          `🐧 Content pack ready for "${seed_title}" — post + banner + video plan.`,
+          { seed_id, has_banner: !!banner_url }, seed_id ?? null);
+        await setAgentStatus(user.id, "gentoo", "idle");
+        return ok({ pack });
+      }
+
       case "respond_suggestion": {
         const { suggestion_id, decision } = payload as { suggestion_id: string; decision: "approved" | "declined" | "snoozed" };
         await admin.from("linux_family_suggestions").update({
