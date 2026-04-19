@@ -212,6 +212,7 @@ export default function LinuxFamilyHub() {
         <TabsList className="flex-wrap h-auto">
           <TabsTrigger value="suggestions" className="gap-1"><Sparkles className="w-3 h-3"/> Suggestions {suggestions.length>0 && <Badge variant="destructive" className="ml-1 text-[9px]">{suggestions.length}</Badge>}</TabsTrigger>
           <TabsTrigger value="studio" className="gap-1"><Wand2 className="w-3 h-3"/> Studio</TabsTrigger>
+          <TabsTrigger value="comms" className="gap-1"><MessageCircle className="w-3 h-3"/> Comms</TabsTrigger>
           <TabsTrigger value="activity" className="gap-1"><Activity className="w-3 h-3"/> Activity</TabsTrigger>
           <TabsTrigger value="reports" className="gap-1"><FileText className="w-3 h-3"/> Reports</TabsTrigger>
           <TabsTrigger value="terminal" className="gap-1"><TerminalIcon className="w-3 h-3"/> Terminal</TabsTrigger>
