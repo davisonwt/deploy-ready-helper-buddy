@@ -7,7 +7,7 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const PUBLIC_DIR = path.resolve(__dirname, "../public/voiceovers/tribal-hearts");
 const API_KEY = process.env.ELEVENLABS_API_KEY;
 
-const VOICE_ID = "EXAVITQu4vr4xnSDxMaL";
+const VOICE_ID = "4tRn1lSkEn13EVTuqb0g"; // Serafina - Sensual Temptress
 const MODEL_ID = "eleven_multilingual_v2";
 const OUTPUT_FORMAT = "mp3_44100_128";
 
