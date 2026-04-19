@@ -6,7 +6,7 @@
  */
 import React, { useEffect, useMemo, useState, useCallback } from 'react';
 import { Link } from 'react-router-dom';
-import { Handshake, RefreshCw, Inbox, Sparkles, Check, X, MessageCircle, ArrowLeft } from 'lucide-react';
+import { Handshake, RefreshCw, Inbox, Sparkles, Check, X, MessageCircle, ArrowLeft, GraduationCap } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
@@ -15,6 +15,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { toast } from 'sonner';
+import { MentorshipInbox } from '@/components/tribal/MentorshipInbox';
 
 interface MatchRow {
   id: string;
@@ -198,52 +199,69 @@ export default function MyMatchesPage() {
       </header>
 
       <main className="max-w-2xl mx-auto px-4 py-4">
-        {loading ? (
-          <div className="rounded-2xl border border-dashed p-10 text-center text-sm text-muted-foreground">
-            Listening to the tribe…
-          </div>
-        ) : rows.length === 0 ? (
-          <button
-            onClick={refresh}
-            className="w-full rounded-2xl border border-dashed border-primary/40 bg-gradient-to-br from-primary/10 to-transparent p-8 text-center transition hover:border-primary/70"
-          >
-            <Sparkles className="h-7 w-7 text-primary mx-auto mb-2" />
-            <p className="text-sm font-semibold">No matches yet</p>
-            <p className="text-xs text-muted-foreground mt-1">
-              Tap to let Gentoo scan the tribe for warm collaborations.
-            </p>
-          </button>
-        ) : (
-          <Tabs defaultValue="pending" className="w-full">
-            <TabsList className="grid w-full grid-cols-3 mb-4">
-              <TabsTrigger value="pending" className="gap-1.5">
-                <Inbox className="h-3.5 w-3.5" />
-                Pending
-                {buckets.pending.length > 0 && (
-                  <Badge variant="secondary" className="ml-1 h-4 px-1.5 text-[10px]">{buckets.pending.length}</Badge>
-                )}
-              </TabsTrigger>
-              <TabsTrigger value="accepted">Accepted ({buckets.accepted.length})</TabsTrigger>
-              <TabsTrigger value="declined">Set aside ({buckets.declined.length})</TabsTrigger>
-            </TabsList>
+        <Tabs defaultValue="collabs" className="w-full">
+          <TabsList className="grid w-full grid-cols-2 mb-4">
+            <TabsTrigger value="collabs" className="gap-1.5">
+              <Handshake className="h-3.5 w-3.5" /> Collabs ({rows.length})
+            </TabsTrigger>
+            <TabsTrigger value="mentorship" className="gap-1.5">
+              <GraduationCap className="h-3.5 w-3.5" /> Mentorship
+            </TabsTrigger>
+          </TabsList>
 
-            <TabsContent value="pending" className="space-y-3">
-              {buckets.pending.length === 0
-                ? <p className="text-center text-sm text-muted-foreground py-8">All caught up 🌿</p>
-                : buckets.pending.map(renderCard)}
-            </TabsContent>
-            <TabsContent value="accepted" className="space-y-3">
-              {buckets.accepted.length === 0
-                ? <p className="text-center text-sm text-muted-foreground py-8">No accepted collabs yet.</p>
-                : buckets.accepted.map(renderCard)}
-            </TabsContent>
-            <TabsContent value="declined" className="space-y-3">
-              {buckets.declined.length === 0
-                ? <p className="text-center text-sm text-muted-foreground py-8">Nothing set aside.</p>
-                : buckets.declined.map(renderCard)}
-            </TabsContent>
-          </Tabs>
-        )}
+          <TabsContent value="collabs">
+            {loading ? (
+              <div className="rounded-2xl border border-dashed p-10 text-center text-sm text-muted-foreground">
+                Listening to the tribe…
+              </div>
+            ) : rows.length === 0 ? (
+              <button
+                onClick={refresh}
+                className="w-full rounded-2xl border border-dashed border-primary/40 bg-gradient-to-br from-primary/10 to-transparent p-8 text-center transition hover:border-primary/70"
+              >
+                <Sparkles className="h-7 w-7 text-primary mx-auto mb-2" />
+                <p className="text-sm font-semibold">No matches yet</p>
+                <p className="text-xs text-muted-foreground mt-1">
+                  Tap to let Gentoo scan the tribe for warm collaborations.
+                </p>
+              </button>
+            ) : (
+              <Tabs defaultValue="pending" className="w-full">
+                <TabsList className="grid w-full grid-cols-3 mb-4">
+                  <TabsTrigger value="pending" className="gap-1.5">
+                    <Inbox className="h-3.5 w-3.5" />
+                    Pending
+                    {buckets.pending.length > 0 && (
+                      <Badge variant="secondary" className="ml-1 h-4 px-1.5 text-[10px]">{buckets.pending.length}</Badge>
+                    )}
+                  </TabsTrigger>
+                  <TabsTrigger value="accepted">Accepted ({buckets.accepted.length})</TabsTrigger>
+                  <TabsTrigger value="declined">Set aside ({buckets.declined.length})</TabsTrigger>
+                </TabsList>
+
+                <TabsContent value="pending" className="space-y-3">
+                  {buckets.pending.length === 0
+                    ? <p className="text-center text-sm text-muted-foreground py-8">All caught up 🌿</p>
+                    : buckets.pending.map(renderCard)}
+                </TabsContent>
+                <TabsContent value="accepted" className="space-y-3">
+                  {buckets.accepted.length === 0
+                    ? <p className="text-center text-sm text-muted-foreground py-8">No accepted collabs yet.</p>
+                    : buckets.accepted.map(renderCard)}
+                </TabsContent>
+                <TabsContent value="declined" className="space-y-3">
+                  {buckets.declined.length === 0
+                    ? <p className="text-center text-sm text-muted-foreground py-8">Nothing set aside.</p>
+                    : buckets.declined.map(renderCard)}
+                </TabsContent>
+              </Tabs>
+            )}
+          </TabsContent>
+
+          <TabsContent value="mentorship">
+            <MentorshipInbox />
+          </TabsContent>
+        </Tabs>
       </main>
     </div>
   );
