@@ -43,7 +43,8 @@ export const RemotionRoot = () => (
     {/* S2G Banners (10s, English captions, Chatterbox voiceover, real logo) */}
     {/* Community orchard VO is ~16.6s; extend to 18s so VO finishes + ~1.4s music tail */}
     <Composition id="banner-01-community-orchard" component={Banner01CommunityOrchard} durationInFrames={540} {...SHARED} />
-    <Composition id="banner-02-production-orchard" component={Banner02ProductionOrchard} durationInFrames={BANNER_DUR} {...SHARED} />
+    {/* Production orchard VO is ~13.6s; extend to 15s so VO finishes + ~1.4s music tail */}
+    <Composition id="banner-02-production-orchard" component={Banner02ProductionOrchard} durationInFrames={450} {...SHARED} />
     <Composition id="banner-03-single-seed" component={Banner03SingleSeed} durationInFrames={BANNER_DUR} {...SHARED} />
     <Composition id="banner-04-wandering-wheel" component={Banner04WanderingWheel} durationInFrames={BANNER_DUR} {...SHARED} />
     <Composition id="banner-05-wandering-hand" component={Banner05WanderingHand} durationInFrames={BANNER_DUR} {...SHARED} />
