@@ -129,26 +129,26 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({ radioLive, userProfile }
       <div className="flex shrink-0 flex-nowrap gap-1.5 px-2 pt-3">
         <button
           onClick={() => setPlantModalOpen(true)}
-          className="flex h-8 min-w-0 flex-1 basis-0 items-center justify-center gap-1 overflow-hidden rounded-lg px-1 text-[10px] font-semibold leading-none text-white transition-opacity hover:opacity-90 sm:h-9 sm:gap-1.5 sm:px-2 sm:text-xs"
-          style={{ backgroundColor: '#1D9E75' }}
+          className="pill-action shimmer-hover flex h-9 min-w-0 flex-1 basis-0 items-center justify-center gap-1.5 overflow-hidden px-2 text-[11px] leading-none text-white sm:h-10 sm:text-xs"
+          style={{ background: 'linear-gradient(135deg, #1D9E75 0%, #34D399 100%)' }}
         >
-          <Sprout className="h-3 w-3 shrink-0 sm:h-3.5 sm:w-3.5" />
+          <Sprout className="h-3.5 w-3.5 shrink-0" />
           <span className="truncate whitespace-nowrap">Plant</span>
         </button>
         <button
           onClick={() => navigate('/communications-hub?tab=radio&create=1')}
-          className="flex h-8 min-w-0 flex-1 basis-0 items-center justify-center gap-1 overflow-hidden rounded-lg px-1 text-[10px] font-semibold leading-none text-white transition-opacity hover:opacity-90 sm:h-9 sm:gap-1.5 sm:px-2 sm:text-xs"
-          style={{ backgroundColor: '#E24B4A' }}
+          className="pill-action shimmer-hover flex h-9 min-w-0 flex-1 basis-0 items-center justify-center gap-1.5 overflow-hidden px-2 text-[11px] leading-none text-white sm:h-10 sm:text-xs"
+          style={{ background: 'linear-gradient(135deg, #E24B4A 0%, #F87171 100%)' }}
         >
-          <Video className="h-3 w-3 shrink-0 sm:h-3.5 sm:w-3.5" />
+          <Video className="h-3.5 w-3.5 shrink-0" />
           <span className="truncate whitespace-nowrap">Go Live</span>
         </button>
         <button
           onClick={() => navigate('/communications-hub')}
-          className="flex h-8 min-w-0 flex-1 basis-0 items-center justify-center gap-1 overflow-hidden rounded-lg px-1 text-[10px] font-semibold leading-none text-white transition-opacity hover:opacity-90 sm:h-9 sm:gap-1.5 sm:px-2 sm:text-xs"
-          style={{ backgroundColor: '#0E9BAA' }}
+          className="pill-action shimmer-hover flex h-9 min-w-0 flex-1 basis-0 items-center justify-center gap-1.5 overflow-hidden px-2 text-[11px] leading-none text-white sm:h-10 sm:text-xs"
+          style={{ background: 'linear-gradient(135deg, #0E9BAA 0%, #22D3EE 100%)' }}
         >
-          <MessageCircle className="h-3 w-3 shrink-0 sm:h-3.5 sm:w-3.5" />
+          <MessageCircle className="h-3.5 w-3.5 shrink-0" />
           <span className="truncate whitespace-nowrap">Chat</span>
         </button>
       </div>
