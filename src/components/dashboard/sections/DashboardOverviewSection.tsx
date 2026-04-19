@@ -7,6 +7,7 @@ import SecurityQuestionsAlert from '@/components/auth/SecurityQuestionsAlert';
 import { SectionHeading } from './SectionHeading';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
+import { EventsPulseCard } from '@/components/tribal/EventsPulseCard';
 
 interface DashboardOverviewSectionProps {
   theme: DashboardTheme;
@@ -95,6 +96,9 @@ export const DashboardOverviewSection: React.FC<DashboardOverviewSectionProps> =
           </motion.div>
         ))}
       </div>
+
+      {/* Tribal Events tile (Phase 3.5 polish) */}
+      <EventsPulseCard theme={theme} />
 
       {/* Calendar Quick View */}
       {calendarData && (
