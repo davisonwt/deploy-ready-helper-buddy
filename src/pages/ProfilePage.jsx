@@ -485,28 +485,30 @@ export default function ProfilePage() {
                   {user?.email}
                 </p>
 
-                {/* Badges */}
+                {/* Badges — only show what's actually true */}
                 <div className="flex flex-wrap justify-center gap-1.5 mb-4">
                   <span className="inline-flex items-center gap-1 text-[10px] font-medium px-2.5 py-1 rounded-full"
                     style={{ background: `${theme.accent}20`, color: theme.accent }}>
-                    <Sprout className="h-3 w-3" /> Farm Stall Owner
+                    <Sprout className="h-3 w-3" /> Sower
                   </span>
-                  <span className="inline-flex items-center gap-1 text-[10px] font-medium px-2.5 py-1 rounded-full"
-                    style={{ background: `${theme.accent}20`, color: theme.accent }}>
-                    <Shield className="h-3 w-3" /> {userStats.verificationLevel}
-                  </span>
+                  {userStats.verificationLevel === "Verified" && (
+                    <span className="inline-flex items-center gap-1 text-[10px] font-medium px-2.5 py-1 rounded-full"
+                      style={{ background: `${theme.accent}20`, color: theme.accent }}>
+                      <Shield className="h-3 w-3" /> Verified
+                    </span>
+                  )}
                   <span className="inline-flex items-center gap-1 text-[10px] font-medium px-2.5 py-1 rounded-full"
                     style={{ background: '#eab30820', color: '#eab308' }}>
                     <Crown className="h-3 w-3" /> {userStats.communityRank}
                   </span>
                 </div>
 
-                {/* Stats Row */}
+                {/* Stats Row — REAL data only */}
                 <div className="grid grid-cols-4 gap-2">
-                  <StatPill icon={Heart} label="Bestowed" value={`R${(userStats.totalBestowed / 1000).toFixed(1)}k`} color="#22c55e" theme={theme} />
-                  <StatPill icon={TrendingUp} label="Received" value={`R${(userStats.totalReceived / 1000).toFixed(1)}k`} color={theme.accent} theme={theme} />
+                  <StatPill icon={Heart} label="Bestowed" value={formatMoney(userStats.totalBestowed, userStats.currencyCode)} color="#22c55e" theme={theme} />
+                  <StatPill icon={TrendingUp} label="Received" value={formatMoney(userStats.totalReceived, userStats.currencyCode)} color={theme.accent} theme={theme} />
                   <StatPill icon={TreePine} label="Orchards" value={userStats.orchardsCreated} color="#a855f7" theme={theme} />
-                  <StatPill icon={Users} label="Helped" value="23" color="#f59e0b" theme={theme} />
+                  <StatPill icon={Users} label="Helped" value={userStats.helpedCount} color="#f59e0b" theme={theme} />
                 </div>
 
                 {/* Edit / Quick Setup Buttons */}
