@@ -3965,6 +3965,68 @@ export type Database = {
           },
         ]
       }
+      mentorship_pairings: {
+        Row: {
+          cadence: string
+          created_at: string
+          focus_area: string
+          id: string
+          match_reasoning: string | null
+          match_score: number | null
+          mentee_id: string
+          mentee_timezone: string | null
+          mentor_id: string
+          mentor_timezone: string | null
+          responded_at: string | null
+          room_id: string | null
+          status: string
+          suggested_at: string
+          updated_at: string
+        }
+        Insert: {
+          cadence?: string
+          created_at?: string
+          focus_area: string
+          id?: string
+          match_reasoning?: string | null
+          match_score?: number | null
+          mentee_id: string
+          mentee_timezone?: string | null
+          mentor_id: string
+          mentor_timezone?: string | null
+          responded_at?: string | null
+          room_id?: string | null
+          status?: string
+          suggested_at?: string
+          updated_at?: string
+        }
+        Update: {
+          cadence?: string
+          created_at?: string
+          focus_area?: string
+          id?: string
+          match_reasoning?: string | null
+          match_score?: number | null
+          mentee_id?: string
+          mentee_timezone?: string | null
+          mentor_id?: string
+          mentor_timezone?: string | null
+          responded_at?: string | null
+          room_id?: string | null
+          status?: string
+          suggested_at?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "mentorship_pairings_room_id_fkey"
+            columns: ["room_id"]
+            isOneToOne: false
+            referencedRelation: "chat_rooms"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       message_streaks: {
         Row: {
           id: string
@@ -9284,6 +9346,109 @@ export type Database = {
           },
         ]
       }
+      tribal_event_rsvps: {
+        Row: {
+          created_at: string
+          event_id: string
+          id: string
+          reminder_sent: boolean
+          status: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          event_id: string
+          id?: string
+          reminder_sent?: boolean
+          status?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          event_id?: string
+          id?: string
+          reminder_sent?: boolean
+          status?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tribal_event_rsvps_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "tribal_events"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      tribal_events: {
+        Row: {
+          capacity: number | null
+          category: string | null
+          circle_id: string | null
+          created_at: string
+          description: string | null
+          duration_minutes: number
+          event_type: string
+          host_id: string
+          id: string
+          is_auto_generated: boolean
+          jitsi_room_id: string | null
+          metadata: Json | null
+          region: string | null
+          starts_at: string
+          status: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          capacity?: number | null
+          category?: string | null
+          circle_id?: string | null
+          created_at?: string
+          description?: string | null
+          duration_minutes?: number
+          event_type: string
+          host_id: string
+          id?: string
+          is_auto_generated?: boolean
+          jitsi_room_id?: string | null
+          metadata?: Json | null
+          region?: string | null
+          starts_at: string
+          status?: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          capacity?: number | null
+          category?: string | null
+          circle_id?: string | null
+          created_at?: string
+          description?: string | null
+          duration_minutes?: number
+          event_type?: string
+          host_id?: string
+          id?: string
+          is_auto_generated?: boolean
+          jitsi_room_id?: string | null
+          metadata?: Json | null
+          region?: string | null
+          starts_at?: string
+          status?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tribal_events_circle_id_fkey"
+            columns: ["circle_id"]
+            isOneToOne: false
+            referencedRelation: "circles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       tribal_matches: {
         Row: {
           confidence_score: number
@@ -11199,6 +11364,34 @@ export type Database = {
           user_id: string
           viewer_count: number
         }[]
+      }
+      get_upcoming_tribal_events: {
+        Args: { _limit?: number }
+        Returns: {
+          capacity: number | null
+          category: string | null
+          circle_id: string | null
+          created_at: string
+          description: string | null
+          duration_minutes: number
+          event_type: string
+          host_id: string
+          id: string
+          is_auto_generated: boolean
+          jitsi_room_id: string | null
+          metadata: Json | null
+          region: string | null
+          starts_at: string
+          status: string
+          title: string
+          updated_at: string
+        }[]
+        SetofOptions: {
+          from: "*"
+          to: "tribal_events"
+          isOneToOne: false
+          isSetofReturn: true
+        }
       }
       get_user_billing_info: {
         Args: { target_user_id?: string }
