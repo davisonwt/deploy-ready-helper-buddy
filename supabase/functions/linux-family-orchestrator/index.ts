@@ -185,11 +185,57 @@ serve(async (req) => {
 
       case "respond_suggestion": {
         const { suggestion_id, decision } = payload as { suggestion_id: string; decision: "approved" | "declined" | "snoozed" };
+        const { data: sug } = await admin.from("linux_family_suggestions")
+          .select("*").eq("id", suggestion_id).eq("user_id", user.id).maybeSingle();
         await admin.from("linux_family_suggestions").update({
           status: decision, responded_at: new Date().toISOString(),
         }).eq("id", suggestion_id).eq("user_id", user.id);
         await logActivity(user.id, "gentoo", "suggestion_response",
-          `🐧 Member ${decision} a suggestion.`);
+          `🐧 Member ${decision} a suggestion${sug?.title ? `: "${sug.title}"` : ""}.`);
+
+        // If approved, execute the proposed action
+        if (decision === "approved" && sug?.proposed_action) {
+          const pa: any = sug.proposed_action;
+          const auth = req.headers.get("Authorization") ?? "";
+          const seedTitle = sug.seed_id
+            ? (await admin.from("orchards").select("title,description").eq("id", sug.seed_id).maybeSingle()).data
+            : null;
+
+          const callSelf = (body: unknown) => fetch(`${Deno.env.get("SUPABASE_URL")!}/functions/v1/linux-family-orchestrator`, {
+            method: "POST",
+            headers: { Authorization: auth, "Content-Type": "application/json" },
+            body: JSON.stringify(body),
+          });
+
+          if (pa.action === "build_report") {
+            await fetch(`${Deno.env.get("SUPABASE_URL")!}/functions/v1/agent-mint-bookkeeper`, {
+              method: "POST", headers: { Authorization: auth, "Content-Type": "application/json" },
+              body: JSON.stringify({ period_days: pa.period_days ?? 7 }),
+            });
+          } else if (pa.action === "comms_blast") {
+            await callSelf({
+              action: "comms_blast",
+              seed_id: sug.seed_id,
+              payload: {
+                seed_title: seedTitle?.title ?? "your Seed",
+                seed_description: seedTitle?.description ?? "",
+                message_kind: pa.message_kind ?? "collab_offer",
+                limit: pa.limit ?? 10,
+              },
+            });
+          } else if (pa.action === "run_content_pack") {
+            await callSelf({
+              action: "run_content_pack",
+              seed_id: sug.seed_id,
+              payload: {
+                seed_title: seedTitle?.title ?? "your Seed",
+                seed_description: seedTitle?.description ?? "",
+                platform: pa.platform ?? "instagram",
+                language: pa.language ?? "English",
+              },
+            });
+          }
+        }
         return ok({ ok: true });
       }
 

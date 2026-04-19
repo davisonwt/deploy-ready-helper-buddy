@@ -150,3 +150,7 @@ verify_jwt = false
 # Orchard Shepherd AI Companion
 [functions.orchard-shepherd]
 verify_jwt = false
+
+# Linux Family proactive cron (called by pg_cron, no user JWT)
+[functions.linux-family-cron]
+verify_jwt = false
