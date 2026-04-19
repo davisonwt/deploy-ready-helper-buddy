@@ -12,6 +12,7 @@ import { KeeperHelpButton } from './KeeperHelpButton';
 import { SectionHeading } from './SectionHeading';
 import { VisualGardenShell } from '@/components/garden/VisualGardenShell';
 import { TribalScoreBadge } from '@/components/tribal/TribalScoreBadge';
+import { TribalMatchesCards } from '@/components/tribal/TribalMatchesCards';
 
 interface MyGardenSectionProps {
   theme: DashboardTheme;
@@ -53,6 +54,9 @@ export const MyGardenSection: React.FC<MyGardenSectionProps> = ({ theme, stats }
 
       {/* Living Garden visualization */}
       <VisualGardenShell compact />
+
+      {/* Tribal Collaboration Matches (Phase 2) */}
+      <TribalMatchesCards theme={theme} dispatchDm />
 
       {/* Quick Actions */}
       <div className="grid grid-cols-4 gap-2">
