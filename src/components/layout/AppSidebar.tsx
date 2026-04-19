@@ -2,8 +2,9 @@ import React, { useState } from 'react';
 import { NavLink } from 'react-router-dom';
 import {
   Home, Sprout, TreePine, MessageSquare, Calendar,
-  CloudRain, Settings, Users, BarChart3, Sparkles, Film, Bot
+  CloudRain, Settings, Users, BarChart3, Sparkles, Film, Bot, Heart
 } from 'lucide-react';
+import { useTribalHeartsAccess } from '@/hooks/useTribalHeartsAccess';
 import { cn } from '@/lib/utils';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { PlantModal } from '@/components/grove/PlantModal';
@@ -31,6 +32,8 @@ const navItems = [
   { to: '/tribe-ambassador', label: 'Ambassador', desc: 'Join the inner circle', icon: Sparkles, gradient: 'linear-gradient(135deg, #0d9488, #f59e0b)' },
 ];
 
+const heartsItem = { to: '/tribal-hearts', label: 'Tribal Hearts', desc: 'Garden of connections', icon: Heart, gradient: 'linear-gradient(135deg, #E8537A, #5A9E1E)' };
+
 const adminItems = [
   { to: '/admin/dashboard', label: "GoSat's", desc: 'Admin dashboard', icon: Settings, gradient: 'linear-gradient(135deg, #BA7517, #D4952A)' },
 ];
@@ -38,6 +41,8 @@ const adminItems = [
 export const AppSidebar: React.FC<AppSidebarProps> = ({ radioLive, userProfile }) => {
   const [plantModalOpen, setPlantModalOpen] = useState(false);
   const { isGosat, isAdmin } = useRoles();
+  const { hasAccess: hasHeartsAccess } = useTribalHeartsAccess();
+  const visibleNavItems = hasHeartsAccess ? [...navItems, heartsItem] : navItems;
   const initials = (userProfile?.display_name || 'S')
     .split(' ')
     .map((w) => w[0])
@@ -70,7 +75,7 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({ radioLive, userProfile }
       <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-2">
         <div className="flex min-h-full flex-col pb-28">
           <nav className="space-y-2">
-            {navItems.map((item) => {
+            {visibleNavItems.map((item) => {
               const Icon = item.icon;
               return (
                 <NavLink
