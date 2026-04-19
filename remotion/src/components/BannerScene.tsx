@@ -66,7 +66,7 @@ const HeroIcon: React.FC<{ emoji: string }> = ({ emoji }) => {
  *  - 240–300f: closing CTA with logo
  */
 export const BannerScene: React.FC<BannerSceneProps> = ({
-  emoji, eyebrow, heroTitle, cta, voice, captions, variant = "warm",
+  emoji, eyebrow, heroTitle, cta, voice, captions, variant = "warm", cinematicScenes,
 }) => {
   const frame = useCurrentFrame();
   const { fps, durationInFrames } = useVideoConfig();
