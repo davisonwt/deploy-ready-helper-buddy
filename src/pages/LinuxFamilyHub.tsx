@@ -192,25 +192,26 @@ export default function LinuxFamilyHub() {
         </TabsContent>
 
         <TabsContent value="terminal">
-          <Card className="bg-black text-green-400 font-mono">
+          <Card style={{ background: 'hsl(0 0% 6%)', color: 'hsl(140 70% 65%)' }} className="font-mono">
             <CardContent className="p-3">
               <ScrollArea className="h-[320px]">
                 <div className="space-y-1 text-xs">
                   {terminal.map((t, i) => (
                     <div key={i}>
                       {t.cmd && <div>tux@s2g:~$ {t.cmd}</div>}
-                      <pre className="whitespace-pre-wrap text-green-300">{t.out}</pre>
+                      <pre className="whitespace-pre-wrap" style={{ color: 'hsl(140 60% 75%)' }}>{t.out}</pre>
                     </div>
                   ))}
                 </div>
               </ScrollArea>
-              <div className="flex items-center gap-2 mt-2 border-t border-green-900 pt-2">
+              <div className="flex items-center gap-2 mt-2 pt-2" style={{ borderTop: '1px solid hsl(140 40% 18%)' }}>
                 <span>tux@s2g:~$</span>
                 <input
                   value={cmd}
                   onChange={e => setCmd(e.target.value)}
                   onKeyDown={e => e.key === 'Enter' && runCmd()}
-                  className="flex-1 bg-transparent outline-none text-green-300"
+                  className="flex-1 bg-transparent outline-none"
+                  style={{ color: 'hsl(140 60% 75%)' }}
                   placeholder='try: help, status, mint report 7'
                   autoFocus
                 />
