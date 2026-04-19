@@ -32,7 +32,7 @@ export default function S2GAgentGreeter() {
         (payload: any) => {
           const row = payload.new;
           // Only react to seed-planted greetings or new suggestion creations
-          if (!['seed_planted_greeting', 'suggestion_created'].includes(row?.activity_type)) return;
+          if (!['seed_planted', 'seed_planted_greeting', 'suggestion_created'].includes(row?.activity_type)) return;
           // Dedupe by row id in sessionStorage so we don't spam
           try {
             const seen = JSON.parse(sessionStorage.getItem(SEEN_KEY) || '[]');

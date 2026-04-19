@@ -62,6 +62,7 @@ const CommunicationsHub = lazy(() =>
 );
 const DashboardPage = lazy(() => import("./pages/DashboardPage"));
 const LinuxFamilyHub = lazy(() => import("./pages/LinuxFamilyHub"));
+import S2GAgentGreeter from "@/components/agents/S2GAgentGreeter";
 const StatsPage = lazy(() => import("./pages/StatsPage"));
 const ProfilePage = lazy(() => import("./pages/ProfilePage"));
 const BrowseOrchardsPage = lazy(() => import("./pages/TribalGardensPage"));
@@ -298,6 +299,7 @@ const App = () => (
                 <IncomingCallOverlay />
                 <NotificationPrompt />
                 <ReferralCaptureProvider />
+                <S2GAgentGreeter />
                 <ErrorBoundary>
                     <Suspense fallback={<LoadingFallback />}>
                       <AccessibilityChecker />
@@ -393,6 +395,15 @@ const App = () => (
               } />
               
               <Route path="/linux-family" element={
+                <ProtectedRoute>
+                  <RequireVerification>
+                    <Layout>
+                      <LinuxFamilyHub />
+                    </Layout>
+                  </RequireVerification>
+                </ProtectedRoute>
+              } />
+              <Route path="/s2g-agents" element={
                 <ProtectedRoute>
                   <RequireVerification>
                     <Layout>
