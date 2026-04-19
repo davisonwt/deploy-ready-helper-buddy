@@ -37,12 +37,12 @@ function pickFocusForMentee(s: ScoreRow): FocusArea {
 }
 
 function pickFocusForMentor(s: ScoreRow): FocusArea[] {
-  // Mentors offer their strongest areas
+  // Mentors offer their strongest areas (lowered floors so early-stage mentors qualify)
   const out: FocusArea[] = [];
-  if (s.orchards_count >= 5) out.push('orchard_growth');
-  if (s.bestowals_given_count >= 10) out.push('sales_velocity');
-  if (s.tribe_size >= 5) out.push('community_building');
-  if (s.reviews_avg_rating >= 4.5) out.push('spiritual_walk');
+  if (s.orchards_count >= 2) out.push('orchard_growth');
+  if (s.bestowals_given_count >= 3) out.push('sales_velocity');
+  if (s.tribe_size >= 2) out.push('community_building');
+  if (s.reviews_avg_rating >= 4.0) out.push('spiritual_walk');
   return out.length ? out : ['community_building'];
 }
 
