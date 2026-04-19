@@ -84,6 +84,40 @@ export default function MarketingVideosPage() {
     });
   };
 
+  const buildShareText = (banner: BannerVideo) =>
+    `${banner.emoji} ${banner.title} — ${banner.subtitle}\n\nJoin my S2G tribe${inviterName ? ` (${inviterName})` : ""}: ${shareUrl}`;
+
+  const handleNativeShare = async (banner: BannerVideo) => {
+    const text = buildShareText(banner);
+    if (typeof navigator !== "undefined" && (navigator as any).share) {
+      try {
+        await (navigator as any).share({ title: `S2G · ${banner.title}`, text, url: shareUrl });
+        return;
+      } catch {
+        // user cancelled or share unavailable — fall through to copy
+      }
+    }
+    try {
+      await navigator.clipboard.writeText(text);
+      toast.success("Share message copied — paste it anywhere!");
+    } catch {
+      toast.error("Couldn't copy. Long-press to copy manually.");
+    }
+  };
+
+  const openExternalShare = (url: string) => {
+    window.open(url, "_blank", "noopener,noreferrer");
+  };
+
+  const copyShareLink = async () => {
+    try {
+      await navigator.clipboard.writeText(shareUrl);
+      toast.success("Tribe invite link copied!");
+    } catch {
+      toast.error("Couldn't copy link");
+    }
+  };
+
   return (
     <div className="min-h-screen pb-16" style={{ background: theme.background }}>
       <div className="max-w-6xl mx-auto px-4 pt-6">
