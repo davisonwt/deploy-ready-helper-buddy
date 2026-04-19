@@ -27,7 +27,7 @@ export function HeartsHeader() {
           <Sparkles className="h-3 w-3" /> Ambassador-only · Sacred space
         </div>
         <h1 className="mt-3 text-3xl font-bold leading-tight text-white drop-shadow-lg sm:text-4xl">
-          Where soul meets <span className="italic text-rose-100">soul</span>.
+          Where soul meets <span className="italic text-primary-foreground/95">soul</span>.
         </h1>
         <p className="mt-2 max-w-xl text-sm leading-relaxed text-white/90 drop-shadow sm:text-base">
           A quiet, cinematic garden inside Sow2Grow where twin flames find each other —
