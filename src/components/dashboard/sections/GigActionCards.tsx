@@ -153,10 +153,8 @@ export const GigActionCards: React.FC<GigActionCardsProps> = ({ theme }) => {
                           <img src={card.img} alt={card.label} className="absolute inset-0 w-full h-full object-cover" loading="lazy" />
                         )}
                         <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/40 to-black/10" />
-                        <div className="relative h-full flex flex-col justify-between p-4">
-                          <div className="w-9 h-9 rounded-xl bg-white/20 backdrop-blur-sm flex items-center justify-center">
-                            <card.icon className="w-5 h-5 text-white" />
-                          </div>
+                        <div className="relative h-full flex flex-col justify-end p-4">
+
                           <div className="space-y-3">
                             <div>
                               <h3 className="font-bold text-white text-lg leading-tight">{card.label}</h3>
@@ -266,10 +264,8 @@ export const GigActionCards: React.FC<GigActionCardsProps> = ({ theme }) => {
                           <img src={card.img} alt={card.label} className="absolute inset-0 w-full h-full object-cover" loading="lazy" />
                         )}
                         <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/40 to-black/10" />
-                        <div className="relative h-full flex flex-col justify-between p-4">
-                          <div className="w-9 h-9 rounded-xl bg-white/20 backdrop-blur-sm flex items-center justify-center">
-                            <span className="text-lg">{card.emoji}</span>
-                          </div>
+                        <div className="relative h-full flex flex-col justify-end p-4">
+
                           <div className="space-y-3">
                             <div>
                               <h3 className="font-bold text-white text-lg leading-tight">{card.label}</h3>
@@ -378,10 +374,8 @@ export const GigActionCards: React.FC<GigActionCardsProps> = ({ theme }) => {
                           <img src={card.img} alt={card.label} className="absolute inset-0 w-full h-full object-cover" loading="lazy" />
                         )}
                         <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/40 to-black/10" />
-                        <div className="relative h-full flex flex-col justify-between p-4">
-                          <div className="w-9 h-9 rounded-xl bg-white/20 backdrop-blur-sm flex items-center justify-center">
-                            {card.icon ? <card.icon className="w-5 h-5 text-white" /> : <span className="text-lg">{card.emoji}</span>}
-                          </div>
+                        <div className="relative h-full flex flex-col justify-end p-4">
+
                           <div className="space-y-3">
                             <div>
                               <h3 className="font-bold text-white text-lg leading-tight">{card.label}</h3>
