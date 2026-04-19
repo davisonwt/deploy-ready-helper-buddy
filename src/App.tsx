@@ -63,6 +63,7 @@ const CommunicationsHub = lazy(() =>
 const DashboardPage = lazy(() => import("./pages/DashboardPage"));
 const LinuxFamilyHub = lazy(() => import("./pages/LinuxFamilyHub"));
 const MyMatchesPage = lazy(() => import("./pages/MyMatchesPage"));
+const TribalEventsPage = lazy(() => import("./pages/TribalEventsPage"));
 const S2GAgentGreeter = lazy(() => import("@/components/agents/S2GAgentGreeter"));
 const StatsPage = lazy(() => import("./pages/StatsPage"));
 const ProfilePage = lazy(() => import("./pages/ProfilePage"));
@@ -418,6 +419,15 @@ const App = () => (
                   <RequireVerification>
                     <Layout>
                       <MyMatchesPage />
+                    </Layout>
+                  </RequireVerification>
+                </ProtectedRoute>
+              } />
+              <Route path="/tribal-events" element={
+                <ProtectedRoute>
+                  <RequireVerification>
+                    <Layout>
+                      <TribalEventsPage />
                     </Layout>
                   </RequireVerification>
                 </ProtectedRoute>
