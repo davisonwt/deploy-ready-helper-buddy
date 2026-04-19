@@ -202,7 +202,7 @@ const AdminDashboardPage = lazy(() => import("./pages/AdminDashboardPage"));
 const AdminRadioPage = lazy(() => import("./pages/AdminRadioPage"));
 const AdminSeedsPage = lazy(() => import("./pages/AdminSeedsPage"));
 const AdminPaymentsPage = lazy(() => import("./pages/AdminPaymentsPage"));
-const AuthDebugPage = lazy(() => import("./pages/AuthDebugPage"));
+// AuthDebugPage import removed — debug route was a security risk (token exposure).
 
 // Components
 import ProtectedRoute from "./components/ProtectedRoute";
@@ -358,12 +358,7 @@ const App = () => (
                 </Suspense>
               } />
               
-              {/* Debug route for auth issues */}
-              <Route path="/auth-debug" element={
-                <Suspense fallback={<div>Loading...</div>}>
-                  <AuthDebugPage />
-                </Suspense>
-              } />
+              {/* Auth debug route removed for security — exposed full session/token state. */}
               
               {/* My S2G Tribe */}
               <Route path="/my-s2g-tribe" element={

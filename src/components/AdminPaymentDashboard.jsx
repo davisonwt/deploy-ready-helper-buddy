@@ -31,7 +31,7 @@ export function AdminPaymentDashboard() {
     try {
       const { data, error } = await supabase
         .from('organization_wallets')
-        .select('*')
+        .select('id, wallet_name, wallet_address, blockchain, is_active, created_at, updated_at, merchant_id')
         .eq('is_active', true)
         .eq('blockchain', 'cronos')
         .order('created_at', { ascending: false })
