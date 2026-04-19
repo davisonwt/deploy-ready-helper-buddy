@@ -4,21 +4,28 @@ import { Heart, Play, Pause, Volume2, VolumeX, UserPlus } from 'lucide-react';
 
 /**
  * Featured trailer card for Tribal Hearts — the safe, agent-powered dating
- * haven inside Sow2Grow. Plays inline, muted by default, with click-to-unmute.
+ * haven inside Sow2Grow. Manual play/pause only with inline audio.
  */
 export const TribalHeartsTrailerCard: React.FC = () => {
   const videoRef = useRef<HTMLVideoElement>(null);
-  const [playing, setPlaying] = useState(true);
-  const [muted, setMuted] = useState(true);
+  const [playing, setPlaying] = useState(false);
+  const [muted, setMuted] = useState(false);
 
-  const togglePlay = () => {
+  const togglePlay = async () => {
     const v = videoRef.current;
     if (!v) return;
-    if (v.paused) {
-      v.play();
-      setPlaying(true);
-    } else {
-      v.pause();
+
+    try {
+      if (v.paused || v.ended) {
+        v.currentTime = v.ended ? 0 : v.currentTime;
+        await v.play();
+        setPlaying(true);
+      } else {
+        v.pause();
+        setPlaying(false);
+      }
+    } catch (error) {
+      console.error('Failed to toggle trailer playback:', error);
       setPlaying(false);
     }
   };
@@ -41,18 +48,18 @@ export const TribalHeartsTrailerCard: React.FC = () => {
         <div className="relative aspect-video bg-black">
           <video
             ref={videoRef}
-            src="/videos/tribal-hearts-trailer.mp4"
-            autoPlay
-            muted
-            loop
+            src="/videos/tribal-hearts-trailer.mp4?v=5"
+            muted={muted}
             playsInline
             preload="metadata"
             className="w-full h-full object-cover"
-            onClick={togglePlay}
+            onPlay={() => setPlaying(true)}
+            onPause={() => setPlaying(false)}
+            onEnded={() => setPlaying(false)}
           />
-          {/* Controls overlay */}
           <div className="absolute bottom-2 right-2 flex gap-2">
             <button
+              type="button"
               onClick={togglePlay}
               className="w-9 h-9 rounded-full bg-black/60 backdrop-blur-sm flex items-center justify-center text-white hover:bg-black/80 transition"
               aria-label={playing ? 'Pause' : 'Play'}
@@ -60,6 +67,7 @@ export const TribalHeartsTrailerCard: React.FC = () => {
               {playing ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4 ml-0.5" />}
             </button>
             <button
+              type="button"
               onClick={toggleMute}
               className="w-9 h-9 rounded-full bg-black/60 backdrop-blur-sm flex items-center justify-center text-white hover:bg-black/80 transition"
               aria-label={muted ? 'Unmute' : 'Mute'}
@@ -74,6 +82,7 @@ export const TribalHeartsTrailerCard: React.FC = () => {
           </p>
           <div className="flex gap-2">
             <button
+              type="button"
               onClick={togglePlay}
               className="flex-1 inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg bg-secondary text-secondary-foreground text-xs font-semibold hover:bg-secondary/80 transition"
             >
