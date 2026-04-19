@@ -8,11 +8,13 @@
  * stays attached.
  */
 import { Link } from "react-router-dom";
-import { ArrowLeft, Download, Loader2, CheckCircle2, AlertCircle, Sparkles, Play, X } from "lucide-react";
+import { ArrowLeft, Download, Loader2, CheckCircle2, AlertCircle, Sparkles, Play, X, Share2, Copy, Mail, MessageCircle, Send, Facebook, Twitter } from "lucide-react";
 import { useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { toast } from "sonner";
 import { useReferralVideoBurner } from "@/hooks/useReferralVideoBurner";
 import { useMyReferralCode } from "@/hooks/useMyReferralCode";
 import { getCurrentTheme } from "@/utils/dashboardThemes";
