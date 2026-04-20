@@ -308,7 +308,7 @@ const RightVisual: React.FC<{ scene: SceneDef; index: number }> = ({ scene, inde
         />
       </div>
 
-      <div style={{ position: "absolute", top: -36, left: -36 }}>
+      <div style={{ position: "absolute", top: 24, left: 24, zIndex: 5 }}>
         <LogoBadge accent={PALETTE.aqua} small />
       </div>
 
