@@ -47,106 +47,16 @@ const PALETTE = {
 };
 
 const SCENES: SceneDef[] = [
-  {
-    eyebrow: "Global garden",
-    title: "A living connection takes root",
-    body: "Across oceans and continents, something powerful is stretching from one heart to another.",
-    accent: PALETTE.blush,
-    duration: 120,
-    image: "tribal-hearts/01-map.jpeg",
-    imagePosition: "center center",
-    pill: "Across oceans and continents",
-  },
-  {
-    eyebrow: "Beyond swipes",
-    title: "Choose something deeper",
-    body: "Every single day, people just like you are choosing to sow something deeper than likes and swipes.",
-    accent: PALETTE.gold,
-    duration: 120,
-    image: "tribal-hearts/02-woman.jpeg",
-    imagePosition: "center center",
-    pill: "Deeper than likes and swipes",
-  },
-  {
-    eyebrow: "Real connection",
-    title: "They’re choosing Tribal Hearts",
-    body: "They’re choosing real connection. They’re choosing growth. They’re choosing Tribal Hearts.",
-    accent: PALETTE.sage,
-    duration: 120,
-    image: "tribal-hearts/03-man.jpeg",
-    imagePosition: "center center",
-    pill: "Growth with intention",
-  },
-  {
-    eyebrow: "Kindness blooms",
-    title: "A space for authentic souls",
-    body: "A space where kindness blooms, where authentic souls find each other, and where friendships and love grow naturally.",
-    accent: PALETTE.blush,
-    duration: 135,
-    image: "tribal-hearts/04-penguins.jpeg",
-    imagePosition: "center center",
-    pill: "Friendship and love bloom",
-  },
-  {
-    eyebrow: "Your tribe is waiting",
-    title: "From Cape Town to Brazil",
-    body: "From the streets of Cape Town to the shores of Brazil… from Lagos to India and beyond… your tribe is already waiting.",
-    accent: PALETTE.aqua,
-    duration: 150,
-    image: "tribal-hearts/05-global-profiles.jpeg",
-    imagePosition: "center center",
-    pill: "Cape Town · Lagos · Brazil · India",
-  },
-  {
-    eyebrow: "Feels like home",
-    title: "Meaningful conversations",
-    body: "Meaningful conversations. Heartfelt messages. A community that feels like home — even when you’re thousands of miles apart.",
-    accent: PALETTE.sage,
-    duration: 150,
-    image: "tribal-hearts/06-chat.jpeg",
-    imagePosition: "center center",
-    pill: "Heartfelt messages",
-  },
-  {
-    eyebrow: "Nurtured with care",
-    title: "The most beautiful relationships grow",
-    body: "Because the most beautiful relationships don’t just happen… they’re nurtured. They’re grown with intention and care.",
-    accent: PALETTE.gold,
-    duration: 150,
-    image: "tribal-hearts/07-couple.jpeg",
-    imagePosition: "center center",
-    pill: "Grown with intention and care",
-  },
-  {
-    eyebrow: "Garden of souls",
-    title: "Where your growth journey begins",
-    body: "Welcome to a garden of souls who uplift, support, and celebrate one another. This is where your growth journey begins.",
-    accent: PALETTE.aqua,
-    duration: 150,
-    image: "tribal-hearts/08-community.jpeg",
-    imagePosition: "center center",
-    pill: "Uplift · support · celebrate",
-  },
-  {
-    eyebrow: "Beautifully bloom",
-    title: "Sow the connection",
-    body: "Sow the connection… and watch love, friendship, and belonging beautifully bloom.",
-    accent: PALETTE.blush,
-    duration: 120,
-    image: "tribal-hearts/09-bloom.jpeg",
-    imagePosition: "center center",
-    pill: "Love, friendship, belonging",
-  },
-  {
-    eyebrow: "Sow2Grow presents",
-    title: "Find your tribe. Grow together.",
-    body: "Tribal Hearts.",
-    accent: PALETTE.gold,
-    duration: 120,
-    image: "tribal-hearts/10-logo.jpeg",
-    imagePosition: "center center",
-    pill: "Tribal Hearts",
-  },
+  { eyebrow: "Global garden", title: "A living connection takes root", body: "Across oceans and continents.", accent: PALETTE.blush, duration: 240, image: "tribal-hearts/01-map.jpeg", imagePosition: "center center" },
+  { eyebrow: "Beyond swipes", title: "Choose something deeper", body: "Sow something deeper than likes and swipes.", accent: PALETTE.gold, duration: 240, image: "tribal-hearts/02-woman.jpeg", imagePosition: "center center" },
+  { eyebrow: "Real connection", title: "They’re choosing Tribal Hearts", body: "Choosing growth. Choosing Tribal Hearts.", accent: PALETTE.sage, duration: 240, image: "tribal-hearts/03-man.jpeg", imagePosition: "center center" },
+  { eyebrow: "Kindness blooms", title: "A space for authentic souls", body: "Friendships and love grow naturally.", accent: PALETTE.blush, duration: 270, image: "tribal-hearts/04-penguins.jpeg", imagePosition: "center center" },
+  { eyebrow: "Your tribe is waiting", title: "From Cape Town to Brazil", body: "Lagos to India and beyond.", accent: PALETTE.aqua, duration: 300, image: "tribal-hearts/05-global-profiles.jpeg", imagePosition: "center center" },
+  { eyebrow: "Feels like home", title: "Meaningful conversations", body: "Heartfelt messages, miles apart.", accent: PALETTE.sage, duration: 300, image: "tribal-hearts/06-chat.jpeg", imagePosition: "center center" },
+  { eyebrow: "Nurtured with care", title: "The most beautiful relationships grow", body: "Grown with intention and care.", accent: PALETTE.gold, duration: 300, image: "tribal-hearts/07-couple.jpeg", imagePosition: "center center" },
+  { eyebrow: "Garden of souls", title: "Where your growth journey begins", body: "Uplift, support, celebrate.", accent: PALETTE.aqua, duration: 300, image: "tribal-hearts/08-community.jpeg", imagePosition: "center center" },
+  { eyebrow: "Beautifully bloom", title: "Sow the connection", body: "Watch love and belonging bloom.", accent: PALETTE.blush, duration: 240, image: "tribal-hearts/09-bloom.jpeg", imagePosition: "center center" },
+  { eyebrow: "Sow2Grow presents", title: "Find your tribe. Grow together.", body: "Tribal Hearts.", accent: PALETTE.gold, duration: 210, image: "tribal-hearts/10-logo.jpeg", imagePosition: "center center" },
 ];
 
 const TOTAL_DURATION = SCENES.reduce((sum, scene) => sum + scene.duration, 0);
@@ -468,19 +378,6 @@ const Scene: React.FC<{ scene: SceneDef; index: number }> = ({ scene, index }) =
     <AbsoluteFill>
       <BackgroundImage src={scene.image} position={scene.imagePosition} />
       <FloatingDust accent={scene.accent} />
-
-      <div
-        style={{
-          position: "absolute",
-          inset: 0,
-          display: "flex",
-          alignItems: "flex-start",
-          justifyContent: "flex-end",
-          padding: "56px 56px 0 0",
-        }}
-      >
-        <LogoBadge accent={index === SCENES.length - 1 ? PALETTE.gold : PALETTE.aqua} small />
-      </div>
     </AbsoluteFill>
   );
 };
