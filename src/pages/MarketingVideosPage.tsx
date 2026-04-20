@@ -394,7 +394,7 @@ export default function MarketingVideosPage() {
                           </button>
                           <button
                             type="button"
-                            onClick={copyShareLink}
+                            onClick={() => copyShareLink(b)}
                             className="w-full flex items-center gap-2 px-2 py-2 rounded-md text-sm hover:bg-white/10 transition-colors"
                           >
                             <Copy className="w-4 h-4" /> Copy invite link
