@@ -286,17 +286,16 @@ export const GigBookingModal: React.FC<GigBookingModalProps> = ({
               </div>
             )}
 
-            <Button
+            <SubmitButton
+              type="button"
               onClick={handleSubmitRide}
-              disabled={createBooking.isPending}
-              className="w-full"
+              loading={createBooking.isPending}
+              loadingLabel="Booking your ride…"
+              icon={Car}
+              size="md"
             >
-              {createBooking.isPending ? (
-                <><Loader2 className="w-4 h-4 animate-spin mr-2" /> Booking...</>
-              ) : (
-                <><Car className="w-4 h-4 mr-2" /> Book Ride</>
-              )}
-            </Button>
+              Book Ride
+            </SubmitButton>
           </TabsContent>
 
           {/* SERVICE TAB */}
@@ -367,24 +366,23 @@ export const GigBookingModal: React.FC<GigBookingModalProps> = ({
               </div>
             )}
 
-            <Button
+            <SubmitButton
+              type="button"
               onClick={handleSubmitService}
-              disabled={createBooking.isPending}
-              className="w-full"
+              loading={createBooking.isPending}
+              loadingLabel="Booking your provider…"
+              icon={Wrench}
+              size="md"
             >
-              {createBooking.isPending ? (
-                <><Loader2 className="w-4 h-4 animate-spin mr-2" /> Booking...</>
-              ) : (
-                <><Wrench className="w-4 h-4 mr-2" /> Book Service</>
-              )}
-            </Button>
+              Book Service
+            </SubmitButton>
           </TabsContent>
 
           {/* WHISPERER TAB */}
           <TabsContent value="whisperer" className="space-y-4 mt-4">
-            <div className="p-4 rounded-xl bg-gradient-to-br from-purple-500/10 to-pink-500/10 border border-purple-500/20">
+            <div className="p-4 rounded-xl bg-gradient-to-br from-amber-500/10 via-coral-500/10 to-primary/10 border border-amber-400/20">
               <div className="flex items-center gap-2 mb-2">
-                <Ear className="w-5 h-5 text-purple-500" />
+                <Heart className="w-5 h-5 text-amber-300" />
                 <h3 className="font-semibold text-sm">Prayer & Support</h3>
               </div>
               <p className="text-xs text-muted-foreground">
@@ -404,7 +402,8 @@ export const GigBookingModal: React.FC<GigBookingModalProps> = ({
 
             <DateTimePicker />
 
-            <Button
+            <SubmitButton
+              type="button"
               onClick={() => {
                 if (!jobDescription || !selectedDatetime) {
                   toast.error('Please describe your prayer request and select date & time');
@@ -426,17 +425,16 @@ export const GigBookingModal: React.FC<GigBookingModalProps> = ({
                   onSuccess: () => onOpenChange(false),
                 });
               }}
-              disabled={createBooking.isPending}
-              className="w-full bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700"
+              loading={createBooking.isPending}
+              loadingLabel="Sending your request…"
+              icon={Ear}
+              size="md"
             >
-              {createBooking.isPending ? (
-                <><Loader2 className="w-4 h-4 animate-spin mr-2" /> Submitting...</>
-              ) : (
-                <><Ear className="w-4 h-4 mr-2" /> Request Whisperer Session</>
-              )}
-            </Button>
+              Request Whisperer Session
+            </SubmitButton>
           </TabsContent>
         </Tabs>
+        </div>
       </DialogContent>
     </Dialog>
   );
