@@ -159,11 +159,11 @@ function roundRect(
 /** Pick the best supported MediaRecorder MIME type. */
 function pickMimeType(): { mime: string; ext: string } {
   const candidates: Array<{ mime: string; ext: string }> = [
-    { mime: "video/mp4;codecs=avc1.42E01E,mp4a.40.2", ext: "mp4" },
-    { mime: "video/mp4", ext: "mp4" },
     { mime: "video/webm;codecs=vp9,opus", ext: "webm" },
     { mime: "video/webm;codecs=vp8,opus", ext: "webm" },
     { mime: "video/webm", ext: "webm" },
+    { mime: "video/mp4;codecs=avc1.42E01E,mp4a.40.2", ext: "mp4" },
+    { mime: "video/mp4", ext: "mp4" },
   ];
   for (const c of candidates) {
     if (typeof MediaRecorder !== "undefined" && MediaRecorder.isTypeSupported(c.mime)) {
@@ -198,12 +198,16 @@ async function runBurn(
   const video = document.createElement("video");
   video.crossOrigin = "anonymous";
   video.playsInline = true;
-  // Must be muted=false so captureStream() exposes the audio track. We silence
-  // local playback via volume=0 so the user doesn't hear it during burning.
   video.muted = false;
-  video.volume = 0;
+  video.defaultMuted = false;
+  video.volume = 1;
   video.preload = "auto";
   video.src = opts.sourceUrl;
+
+  let audioContext: AudioContext | null = null;
+  let mediaSource: MediaElementAudioSourceNode | null = null;
+  let audioDestination: MediaStreamAudioDestinationNode | null = null;
+  let monitorGain: GainNode | null = null;
 
   try {
     onStage("loading");
@@ -233,24 +237,32 @@ async function runBurn(
     if (!ctx) throw new Error("Canvas not available.");
 
     const fps = 30;
-    const stream = (canvas as HTMLCanvasElement).captureStream(fps);
+    const canvasStream = (canvas as HTMLCanvasElement).captureStream(fps);
 
-    let hasAudio = false;
-    try {
-      // @ts-expect-error: captureStream exists on HTMLMediaElement in modern browsers
-      const vStream: MediaStream | undefined = video.captureStream?.() ?? video.mozCaptureStream?.();
-      if (vStream) {
-        const audioTracks = vStream.getAudioTracks();
-        audioTracks.forEach((t) => stream.addTrack(t));
-        hasAudio = audioTracks.length > 0;
-      }
-    } catch {
-      // audio-less output is fine
+    const AudioCtx = window.AudioContext || (window as typeof window & { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
+    if (!AudioCtx) {
+      throw new Error("Your browser doesn't support the audio engine needed for video export.");
     }
-    console.log("[referral-video-burner] audio tracks captured:", hasAudio);
+
+    audioContext = new AudioCtx();
+    await audioContext.resume();
+    mediaSource = audioContext.createMediaElementSource(video);
+    audioDestination = audioContext.createMediaStreamDestination();
+    monitorGain = audioContext.createGain();
+    monitorGain.gain.value = 0;
+
+    mediaSource.connect(audioDestination);
+    mediaSource.connect(monitorGain);
+    monitorGain.connect(audioContext.destination);
+
+    const composedStream = new MediaStream([
+      ...canvasStream.getVideoTracks(),
+      ...audioDestination.stream.getAudioTracks(),
+    ]);
+    console.log("[referral-video-burner] audio tracks captured:", audioDestination.stream.getAudioTracks().length > 0);
 
     const { mime, ext } = pickMimeType();
-    const recorder = new MediaRecorder(stream, {
+    const recorder = new MediaRecorder(composedStream, {
       mimeType: mime,
       videoBitsPerSecond: 4_000_000,
       audioBitsPerSecond: 128_000,
@@ -301,6 +313,10 @@ async function runBurn(
     onStage("done");
     return { blob, ext, mime };
   } finally {
+    try { mediaSource?.disconnect(); } catch {}
+    try { monitorGain?.disconnect(); } catch {}
+    try { audioDestination?.disconnect(); } catch {}
+    void audioContext?.close().catch(() => undefined);
     try { video.pause(); } catch {}
     video.removeAttribute("src");
     video.load();
