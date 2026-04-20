@@ -2,7 +2,6 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { getSecureCorsHeaders, validatePaymentAmount } from "../_shared/security.ts";
 
-// Same distribution as NOWPayments
 const S2G_WALLETS = {
   HOLDINGS: 'Hai8nC5rir14DFdiFTiC5NS4if5XYYgqGRRPctpfTdaM',
   ADMIN: 'Hai8nC5rir14DFdiFTiC5NS4if5XYYgqGRRPctpfTdaN',
@@ -30,7 +29,26 @@ interface CreateOrderRequest {
   productItems?: ProductItem[];
 }
 
-// Get PayPal access token via client credentials
+function respond(
+  corsHeaders: Record<string, string>,
+  ok: boolean,
+  payload: Record<string, unknown>,
+): Response {
+  return new Response(JSON.stringify({ success: ok, ...payload }), {
+    status: 200,
+    headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+  });
+}
+
+function normalizePaymentType(
+  paymentType: CreateOrderRequest['paymentType'],
+  orchardId?: string,
+): CreateOrderRequest['paymentType'] {
+  if (paymentType === 'orchard' && orchardId === 'tithing') return 'tithe';
+  if (paymentType === 'orchard' && orchardId === 'free-will-gift') return 'freewill';
+  return paymentType;
+}
+
 async function getPayPalAccessToken(): Promise<string> {
   const clientId = Deno.env.get('PAYPAL_CLIENT_ID')!;
   const clientSecret = Deno.env.get('PAYPAL_CLIENT_SECRET')!;
@@ -74,29 +92,34 @@ serve(async (req) => {
   const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
   const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
+  let errorStage = 'init';
+  let requestedPaymentType: CreateOrderRequest['paymentType'] | null = null;
+  let normalizedPaymentType: CreateOrderRequest['paymentType'] | null = null;
+  let orchardIdForDiagnostics: string | undefined;
+
   try {
-    // Authenticate user
+    errorStage = 'authenticate';
     const authHeader = req.headers.get('Authorization');
     if (!authHeader) {
-      return new Response(
-        JSON.stringify({ error: 'Missing authorization header' }),
-        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
+      return respond(corsHeaders, false, {
+        error: 'Missing authorization header',
+        diagnostics: { error_stage: 'authenticate' },
+      });
     }
 
     const token = authHeader.replace('Bearer ', '');
     const { data: { user }, error: authError } = await supabase.auth.getUser(token);
 
     if (authError || !user) {
-      return new Response(
-        JSON.stringify({ error: 'Unauthorized' }),
-        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
+      return respond(corsHeaders, false, {
+        error: 'Unauthorized',
+        diagnostics: { error_stage: 'authenticate' },
+      });
     }
 
     console.log('✅ PayPal: User authenticated:', user.id);
 
-    // Rate limiting: 5 payments per hour
+    errorStage = 'rate_limit';
     const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000).toISOString();
     const { count: recentPayments } = await supabase
       .from('bestowals')
@@ -105,28 +128,49 @@ serve(async (req) => {
       .gte('created_at', oneHourAgo);
 
     if (recentPayments && recentPayments >= 5) {
-      return new Response(
-        JSON.stringify({ error: 'Rate limit exceeded. Maximum 5 payments per hour.' }),
-        { status: 429, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
+      return respond(corsHeaders, false, {
+        error: 'Rate limit exceeded. Maximum 5 payments per hour.',
+        diagnostics: { error_stage: 'rate_limit' },
+      });
     }
 
-    // Parse request
+    errorStage = 'parse_request';
     const body: CreateOrderRequest = await req.json();
-    const { orchardId, amount, pocketsCount, message, currency = 'USD', paymentType = 'orchard', productItems } = body;
+    const {
+      orchardId,
+      amount,
+      pocketsCount,
+      message,
+      currency = 'USD',
+      paymentType = 'orchard',
+      productItems,
+    } = body;
 
-    console.log('📦 PayPal: Creating order:', { paymentType, amount, orchardId });
+    orchardIdForDiagnostics = orchardId;
+    requestedPaymentType = paymentType;
+    normalizedPaymentType = normalizePaymentType(paymentType, orchardId);
 
-    // Validate amount
+    console.log('📦 PayPal: Creating order:', {
+      requestedPaymentType,
+      normalizedPaymentType,
+      amount,
+      orchardId,
+    });
+
+    errorStage = 'validate_amount';
     const amountValidation = validatePaymentAmount(amount);
     if (!amountValidation.valid) {
-      return new Response(
-        JSON.stringify({ error: amountValidation.error }),
-        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
+      return respond(corsHeaders, false, {
+        error: amountValidation.error,
+        diagnostics: {
+          error_stage: 'validate_amount',
+          requested_payment_type: requestedPaymentType,
+          normalized_payment_type: normalizedPaymentType,
+        },
+      });
     }
 
-    // Get user profile
+    errorStage = 'load_profile';
     const { data: profile } = await supabase
       .from('profiles')
       .select('id')
@@ -134,7 +178,7 @@ serve(async (req) => {
       .single();
 
     let orderDescription = '';
-    let bestowalData: Record<string, any> = {
+    let bestowalData: Record<string, unknown> = {
       bestower_id: user.id,
       bestower_profile_id: profile?.id || null,
       amount,
@@ -145,13 +189,18 @@ serve(async (req) => {
       message: message || null,
     };
 
-    // Handle payment types (same logic as nowpayments)
-    if (paymentType === 'orchard' && orchardId) {
+    errorStage = 'build_order_payload';
+    if (normalizedPaymentType === 'orchard' && orchardId) {
       if (!pocketsCount || pocketsCount <= 0) {
-        return new Response(
-          JSON.stringify({ error: 'Invalid pockets count' }),
-          { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-        );
+        return respond(corsHeaders, false, {
+          error: 'Invalid pockets count',
+          diagnostics: {
+            error_stage: 'build_order_payload',
+            requested_payment_type: requestedPaymentType,
+            normalized_payment_type: normalizedPaymentType,
+            orchard_id: orchardId,
+          },
+        });
       }
 
       const { data: orchard, error: orchardError } = await supabase
@@ -161,25 +210,41 @@ serve(async (req) => {
         .single();
 
       if (orchardError || !orchard) {
-        return new Response(
-          JSON.stringify({ error: 'Orchard not found' }),
-          { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-        );
+        return respond(corsHeaders, false, {
+          error: 'Orchard not found',
+          diagnostics: {
+            error_stage: 'build_order_payload',
+            requested_payment_type: requestedPaymentType,
+            normalized_payment_type: normalizedPaymentType,
+            orchard_id: orchardId,
+          },
+        });
       }
 
       const expectedAmount = pocketsCount * (orchard.pocket_price || 0);
       if (Math.abs(amount - expectedAmount) > 0.01) {
-        return new Response(
-          JSON.stringify({ error: 'Amount does not match expected price' }),
-          { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-        );
+        return respond(corsHeaders, false, {
+          error: 'Amount does not match expected price',
+          diagnostics: {
+            error_stage: 'build_order_payload',
+            requested_payment_type: requestedPaymentType,
+            normalized_payment_type: normalizedPaymentType,
+            orchard_id: orchardId,
+            expected_amount: expectedAmount,
+          },
+        });
       }
 
       if (orchard.available_pockets < pocketsCount) {
-        return new Response(
-          JSON.stringify({ error: 'Not enough pockets available' }),
-          { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-        );
+        return respond(corsHeaders, false, {
+          error: 'Not enough pockets available',
+          diagnostics: {
+            error_stage: 'build_order_payload',
+            requested_payment_type: requestedPaymentType,
+            normalized_payment_type: normalizedPaymentType,
+            orchard_id: orchardId,
+          },
+        });
       }
 
       orderDescription = `Bestowal for orchard: ${orchard.title} (${pocketsCount} pocket${pocketsCount > 1 ? 's' : ''})`;
@@ -198,15 +263,17 @@ serve(async (req) => {
         holding_wallet: S2G_WALLETS.HOLDINGS,
         admin_wallet: S2G_WALLETS.ADMIN,
       };
-
-    } else if (paymentType === 'product' && productItems && productItems.length > 0) {
-      const productTitles = productItems.map(p => p.title).join(', ');
+    } else if (normalizedPaymentType === 'product' && productItems && productItems.length > 0) {
+      const productTitles = productItems.map((p) => p.title).join(', ');
       orderDescription = `Product bestowal: ${productTitles}`;
       bestowalData.pockets_count = productItems.length;
       bestowalData.distribution_data = {
         type: 'product',
-        products: productItems.map(p => ({
-          id: p.id, title: p.title, price: p.price, sower_id: p.sower_id,
+        products: productItems.map((p) => ({
+          id: p.id,
+          title: p.title,
+          price: p.price,
+          sower_id: p.sower_id,
           creator_amount: p.price * DISTRIBUTION.PRODUCT.CREATOR,
           whispers_amount: p.price * DISTRIBUTION.PRODUCT.WHISPERS,
           tithing_amount: p.price * DISTRIBUTION.PRODUCT.TITHING,
@@ -217,27 +284,32 @@ serve(async (req) => {
         holding_wallet: S2G_WALLETS.HOLDINGS,
         admin_wallet: S2G_WALLETS.ADMIN,
       };
-    } else if (paymentType === 'tithe' || paymentType === 'freewill') {
-      orderDescription = paymentType === 'tithe'
+    } else if (normalizedPaymentType === 'tithe' || normalizedPaymentType === 'freewill') {
+      orderDescription = normalizedPaymentType === 'tithe'
         ? `Tithing offering: $${amount}`
         : `Free-will gift: $${amount}`;
       bestowalData.pockets_count = 1;
       bestowalData.distribution_data = {
-        type: paymentType,
+        type: normalizedPaymentType,
         total_amount: amount,
         admin_wallet: S2G_WALLETS.ADMIN,
         destination: 'admin',
       };
     } else {
-      return new Response(
-        JSON.stringify({ error: 'Invalid payment type or missing required data' }),
-        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
+      return respond(corsHeaders, false, {
+        error: 'Invalid payment type or missing required data',
+        diagnostics: {
+          error_stage: 'build_order_payload',
+          requested_payment_type: requestedPaymentType,
+          normalized_payment_type: normalizedPaymentType,
+          orchard_id: orchardId,
+        },
+      });
     }
 
-    // Create bestowal record for orchard type
+    errorStage = 'create_internal_record';
     let bestowal: any = null;
-    if (paymentType === 'orchard') {
+    if (normalizedPaymentType === 'orchard') {
       const { data, error: bestowalError } = await supabase
         .from('bestowals')
         .insert(bestowalData)
@@ -250,8 +322,7 @@ serve(async (req) => {
       }
       bestowal = data;
       console.log('✅ Created bestowal:', bestowal.id);
-    } else if (paymentType === 'product' && productItems) {
-      // Create product bestowal
+    } else if (normalizedPaymentType === 'product' && productItems) {
       const { data: newProductBestowal, error: productError } = await supabase
         .from('product_bestowals')
         .insert({
@@ -274,15 +345,14 @@ serve(async (req) => {
       }
       bestowal = newProductBestowal || { id: `product_${Date.now()}_${Math.random().toString(36).substring(7)}` };
     } else {
-      bestowal = { id: `${paymentType}_${Date.now()}_${Math.random().toString(36).substring(7)}` };
+      bestowal = { id: `${normalizedPaymentType}_${Date.now()}_${Math.random().toString(36).substring(7)}` };
     }
 
-    // Build callback URLs
+    errorStage = 'create_paypal_order';
     const origin = req.headers.get('origin') || 'https://sow2growapp.lovable.app';
-    const returnUrl = `${origin}/payment-success?orderId=${bestowal.id}&provider=paypal&type=${paymentType}`;
+    const returnUrl = `${origin}/payment-success?orderId=${bestowal.id}&provider=paypal&type=${normalizedPaymentType}`;
     const cancelUrl = `${origin}/payment-cancelled?orderId=${bestowal.id}&provider=paypal`;
 
-    // Create PayPal order
     const accessToken = await getPayPalAccessToken();
     const baseUrl = getPayPalBaseUrl();
 
@@ -317,32 +387,51 @@ serve(async (req) => {
       const errorText = await paypalOrder.text();
       console.error('❌ PayPal API error:', paypalOrder.status, errorText);
 
-      if (paymentType === 'orchard' && bestowal?.id) {
+      if (normalizedPaymentType === 'orchard' && bestowal?.id) {
         await supabase.from('bestowals').update({ payment_status: 'failed' }).eq('id', bestowal.id);
       }
-      throw new Error(`PayPal API error: ${errorText}`);
+
+      return respond(corsHeaders, false, {
+        error: `PayPal API error: ${errorText}`,
+        diagnostics: {
+          error_stage: 'create_paypal_order',
+          requested_payment_type: requestedPaymentType,
+          normalized_payment_type: normalizedPaymentType,
+          orchard_id: orchardId,
+          paypal_status: paypalOrder.status,
+        },
+      });
     }
 
+    errorStage = 'parse_paypal_response';
     const paypalData = await paypalOrder.json();
     console.log('✅ PayPal order created:', paypalData.id);
 
-    // Find approval URL
     const approvalLink = paypalData.links?.find((l: any) => l.rel === 'approve');
     const approvalUrl = approvalLink?.href;
 
     if (!approvalUrl) {
-      throw new Error('No PayPal approval URL returned');
+      return respond(corsHeaders, false, {
+        error: 'No PayPal approval URL returned',
+        diagnostics: {
+          error_stage: 'parse_paypal_response',
+          requested_payment_type: requestedPaymentType,
+          normalized_payment_type: normalizedPaymentType,
+          orchard_id: orchardId,
+          paypal_order_id: paypalData.id,
+        },
+      });
     }
 
-    // Update bestowal with PayPal order ID
-    if (paymentType === 'orchard' && bestowal?.id) {
+    errorStage = 'update_internal_record';
+    if (normalizedPaymentType === 'orchard' && bestowal?.id) {
       await supabase.from('bestowals').update({
         payment_reference: paypalData.id,
         updated_at: new Date().toISOString(),
       }).eq('id', bestowal.id);
     }
 
-    // Audit log
+    errorStage = 'audit_log';
     await supabase.from('payment_audit_log').insert({
       user_id: user.id,
       action: 'create_paypal_order',
@@ -352,30 +441,30 @@ serve(async (req) => {
       ip_address: req.headers.get('x-forwarded-for') || req.headers.get('cf-connecting-ip') || 'unknown',
       metadata: {
         bestowal_id: bestowal.id,
-        payment_type: paymentType,
+        payment_type: normalizedPaymentType,
+        requested_payment_type: requestedPaymentType,
         paypal_order_id: paypalData.id,
         product_count: productItems?.length,
       },
     });
 
-    const responseData = {
-      success: true,
+    return respond(corsHeaders, true, {
       bestowalId: bestowal.id,
       paypalOrderId: paypalData.id,
       approvalUrl,
-      paymentType,
-    };
-
-    return new Response(
-      JSON.stringify(responseData),
-      { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-    );
-
+      paymentType: normalizedPaymentType,
+      requestedPaymentType,
+    });
   } catch (error) {
     console.error('❌ Error creating PayPal order:', error);
-    return new Response(
-      JSON.stringify({ error: 'Failed to create PayPal payment' }),
-      { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-    );
+    return respond(corsHeaders, false, {
+      error: error instanceof Error ? error.message : 'Failed to create PayPal payment',
+      diagnostics: {
+        error_stage: errorStage,
+        requested_payment_type: requestedPaymentType,
+        normalized_payment_type: normalizedPaymentType,
+        orchard_id: orchardIdForDiagnostics,
+      },
+    });
   }
 });
