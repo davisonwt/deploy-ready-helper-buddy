@@ -516,8 +516,19 @@ export default function RegisterPage() {
                     {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
                   </button>
                 </div>
+                {/* Live password requirements - so users (like Frank) know exactly what's expected */}
+                <ul className="mt-2 grid grid-cols-1 sm:grid-cols-3 gap-1 text-xs">
+                  <li className={pwdChecks.length ? "text-emerald-400" : "text-slate-400"}>
+                    {pwdChecks.length ? "✓" : "•"} At least 8 characters
+                  </li>
+                  <li className={pwdChecks.letter ? "text-emerald-400" : "text-slate-400"}>
+                    {pwdChecks.letter ? "✓" : "•"} Contains a letter
+                  </li>
+                  <li className={pwdChecks.number ? "text-emerald-400" : "text-slate-400"}>
+                    {pwdChecks.number ? "✓" : "•"} Contains a number
+                  </li>
+                </ul>
               </div>
-              
               <div className="space-y-2">
                 <label htmlFor="confirmPassword" className="text-sm font-semibold text-white">
                   Confirm Password
