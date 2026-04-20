@@ -126,35 +126,49 @@ export default function BasketPage() {
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              {basketItems.map((item) => (
-                <div key={item.id} className="flex items-center justify-between p-4 border rounded-lg">
-                  <div className="flex-1">
-                    <h4 className="font-semibold">{item.orchardTitle}</h4>
-                    <p className="text-sm text-gray-600">
-                      {item.quantity} × {Array.isArray(item.pockets) ? item.pockets.length : 0} pockets = {formatAmount(item.amount * item.quantity * (Array.isArray(item.pockets) ? item.pockets.length : 0))}
-                    </p>
-                    <p className="text-xs text-gray-500">
-                      Pockets: {Array.isArray(item.pockets) ? item.pockets.join(', ') : (item.pockets || 'None')}
-                    </p>
+              {basketItems.map((item) => {
+                const hasPockets = Array.isArray(item.pockets) && item.pockets.length > 0;
+                const multiplier = hasPockets ? item.pockets.length : 1;
+                const lineTotal = (Number(item.amount) || 0) * (item.quantity || 1) * multiplier;
+                return (
+                  <div key={item.id} className="flex items-center justify-between p-4 border rounded-lg">
+                    <div className="flex-1">
+                      <h4 className="font-semibold">{item.orchardTitle}</h4>
+                      <p className="text-sm text-gray-600">
+                        {hasPockets
+                          ? `${item.quantity} × ${item.pockets.length} pocket${item.pockets.length === 1 ? '' : 's'} = ${formatAmount(lineTotal)}`
+                          : `${item.quantity} × ${formatAmount(Number(item.amount) || 0)} = ${formatAmount(lineTotal)}`}
+                      </p>
+                      {hasPockets && (
+                        <p className="text-xs text-gray-500">
+                          Pockets: {item.pockets.join(', ')}
+                        </p>
+                      )}
+                      {item.frequency && (
+                        <p className="text-xs text-gray-500 capitalize">
+                          Frequency: {item.frequency}
+                        </p>
+                      )}
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Input
+                        type="number"
+                        min="1"
+                        value={item.quantity}
+                        onChange={(e) => updateQuantity(item.id, parseInt(e.target.value))}
+                        className="w-16"
+                      />
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => removeFromBasket(item.id)}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <Input
-                      type="number"
-                      min="1"
-                      value={item.quantity}
-                      onChange={(e) => updateQuantity(item.id, parseInt(e.target.value))}
-                      className="w-16"
-                    />
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => removeFromBasket(item.id)}
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                  </div>
-                </div>
-              ))}
+                );
+              })}
               
               <div className="border-t pt-4">
                 <div className="flex justify-between items-center font-bold text-lg">

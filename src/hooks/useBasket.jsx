@@ -90,8 +90,11 @@ export const BasketProvider = ({ children }) => {
   
   const getTotalAmount = () => {
     return basketItems.reduce((total, item) => {
-      const pocketCount = Array.isArray(item.pockets) ? item.pockets.length : 1;
-      return total + (Number(item.amount || 0) * (item.quantity ?? 0) * pocketCount);
+      // For pocket-based items (orchards), multiply by pocket count.
+      // For flat-amount items (tithing, free-will gifts, products), use 1.
+      const hasPockets = Array.isArray(item.pockets) && item.pockets.length > 0;
+      const multiplier = hasPockets ? item.pockets.length : 1;
+      return total + (Number(item.amount || 0) * (item.quantity ?? 1) * multiplier);
     }, 0);
   };
   
