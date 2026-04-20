@@ -22,6 +22,11 @@ export interface HeartsProfile {
   timezone: string | null;
   distance_pref_km: number | null;
   status: 'active' | 'paused' | 'hidden';
+  photos: string[];
+  voice_note_url: string | null;
+  voice_note_duration_sec: number | null;
+  seeking_intent: 'friendship' | 'courtship' | 'connection';
+  about_seen_at: string | null;
 }
 
 export function useTribalHeartsProfile() {
