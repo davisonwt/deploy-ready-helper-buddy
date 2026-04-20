@@ -218,9 +218,11 @@ export default function RegisterPage() {
   // Real-time password feedback
   const pwd = formData.password || ""
   const pwdChecks = {
-    length: pwd.length >= 8,
-    letter: /[A-Za-z]/.test(pwd),
+    length: pwd.length >= 12,
+    upper: /[A-Z]/.test(pwd),
+    lower: /[a-z]/.test(pwd),
     number: /[0-9]/.test(pwd),
+    special: /[^A-Za-z0-9]/.test(pwd),
     match: pwd.length > 0 && pwd === formData.confirmPassword,
   }
   
