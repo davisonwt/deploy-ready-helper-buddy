@@ -15,6 +15,7 @@ export function ProfileEditor() {
   const [country, setCountry] = useState('');
   const [region, setRegion] = useState('');
   const [distance, setDistance] = useState<string>('');
+  const [intent, setIntent] = useState<'friendship' | 'courtship' | 'connection'>('connection');
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
@@ -25,6 +26,7 @@ export function ProfileEditor() {
       setCountry(profile.location_country ?? '');
       setRegion(profile.location_region ?? '');
       setDistance(profile.distance_pref_km?.toString() ?? '');
+      setIntent((profile.seeking_intent as any) ?? 'connection');
     }
   }, [profile]);
 
@@ -40,7 +42,8 @@ export function ProfileEditor() {
         location_country: country,
         location_region: region,
         distance_pref_km: distance ? parseInt(distance) : null as any,
-      });
+        seeking_intent: intent,
+      } as any);
       toast.success('Profile updated 🌸');
     } catch (e: any) {
       toast.error(e?.message ?? 'Could not save');
@@ -50,8 +53,32 @@ export function ProfileEditor() {
   return (
     <div className="space-y-3">
       <div>
-        <Label>Bio</Label>
-        <Textarea rows={5} value={bio} onChange={e => setBio(e.target.value)} />
+        <Label>Heartfelt write-up</Label>
+        <Textarea
+          rows={6}
+          value={bio}
+          onChange={e => setBio(e.target.value)}
+          placeholder="Share who you are, what you treasure, and the kind of love or friendship you long for…"
+        />
+      </div>
+      <div>
+        <Label>Seeking</Label>
+        <div className="mt-1.5 grid grid-cols-3 gap-2">
+          {(['friendship', 'courtship', 'connection'] as const).map(opt => (
+            <button
+              key={opt}
+              type="button"
+              onClick={() => setIntent(opt)}
+              className={`rounded-xl border px-3 py-2 text-xs font-medium capitalize transition ${
+                intent === opt
+                  ? 'border-primary bg-primary/15 text-foreground shadow-sm'
+                  : 'border-border/50 bg-card/40 text-muted-foreground hover:border-border'
+              }`}
+            >
+              {opt === 'connection' ? 'Meaningful connection' : opt}
+            </button>
+          ))}
+        </div>
       </div>
       <div className="grid grid-cols-2 gap-3">
         <div><Label>Values</Label><Input value={values} onChange={e => setValues(e.target.value)} /></div>
