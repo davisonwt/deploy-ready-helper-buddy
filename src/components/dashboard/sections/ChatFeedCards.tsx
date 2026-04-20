@@ -123,10 +123,10 @@ export const ChatFeedCards: React.FC<ChatFeedCardsProps> = ({ theme }) => {
                 {card.description}
               </p>
               {card.video && (
-                <Button
-                  size="sm"
-                  className="text-xs h-7 rounded-lg w-full gap-1.5 font-semibold !text-white !border-0 shadow-md hover:shadow-lg transition-shadow"
-                  style={{ backgroundImage: 'linear-gradient(135deg, #134e4a, #1e3a8a)', backgroundColor: 'transparent' }}
+                <button
+                  type="button"
+                  className="text-xs h-7 rounded-lg w-full inline-flex items-center justify-center gap-1.5 font-semibold text-white border-0 shadow-md hover:shadow-lg hover:brightness-110 transition-all"
+                  style={{ background: 'linear-gradient(135deg, #134e4a 0%, #1e3a8a 100%)' }}
                   onClick={(e) => {
                     e.preventDefault();
                     e.stopPropagation();
@@ -134,15 +134,15 @@ export const ChatFeedCards: React.FC<ChatFeedCardsProps> = ({ theme }) => {
                   }}
                 >
                   <Play className="w-3 h-3 fill-current" /> Watch the story
-                </Button>
+                </button>
               )}
-              <Button
-                size="sm"
-                className="text-xs h-7 rounded-lg w-full font-semibold !text-white !border-0 shadow-md hover:shadow-lg transition-shadow"
-                style={{ backgroundImage: 'linear-gradient(135deg, #0d9488, #3b82f6)', backgroundColor: 'transparent' }}
+              <button
+                type="button"
+                className="text-xs h-7 rounded-lg w-full inline-flex items-center justify-center font-semibold text-white border-0 shadow-md hover:shadow-lg hover:brightness-110 transition-all"
+                style={{ background: 'linear-gradient(135deg, #14b8a6 0%, #3b82f6 100%)' }}
               >
                 {card.buttonLabel}
-              </Button>
+              </button>
             </div>
           </Link>
         ))}

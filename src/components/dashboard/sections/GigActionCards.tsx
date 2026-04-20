@@ -154,25 +154,25 @@ export const GigActionCards: React.FC<GigActionCardsProps> = ({ theme }) => {
                               <p className="text-xs text-white/80">{card.desc}</p>
                             </div>
                             <div className="flex gap-2">
-                              <Button
-                                size="sm"
+                              <button
+                                type="button"
                                 onClick={() => setPlayingBook(card.key)}
                                 disabled={!cardVideo}
-                                className="flex-1 h-9 font-semibold !text-white !border-0 disabled:opacity-40 !bg-none shadow-md hover:shadow-lg transition-shadow"
-                                style={{ backgroundImage: 'linear-gradient(135deg, #134e4a, #155e75)', backgroundColor: 'transparent' }}
+                                className="flex-1 h-9 inline-flex items-center justify-center rounded-2xl text-sm font-semibold text-white border-0 disabled:opacity-40 shadow-md hover:shadow-lg hover:brightness-110 transition-all"
+                                style={{ background: 'linear-gradient(135deg, #0f766e 0%, #0e7490 100%)' }}
                               >
                                 <Play className="w-4 h-4 mr-1.5 fill-current" />
                                 Play
-                              </Button>
-                              <Button
-                                size="sm"
+                              </button>
+                              <button
+                                type="button"
                                 onClick={card.onClick}
-                                className="flex-1 h-9 font-semibold !text-white !border-0 !bg-none shadow-md hover:shadow-lg transition-shadow"
-                                style={{ backgroundImage: 'linear-gradient(135deg, #14b8a6, #06b6d4)', backgroundColor: 'transparent' }}
+                                className="flex-1 h-9 inline-flex items-center justify-center rounded-2xl text-sm font-semibold text-white border-0 shadow-md hover:shadow-lg hover:brightness-110 transition-all"
+                                style={{ background: 'linear-gradient(135deg, #2dd4bf 0%, #22d3ee 100%)' }}
                               >
                                 <Calendar className="w-4 h-4 mr-1.5" />
                                 Book
-                              </Button>
+                              </button>
                             </div>
                           </div>
                         </div>
@@ -257,25 +257,25 @@ export const GigActionCards: React.FC<GigActionCardsProps> = ({ theme }) => {
                               <p className="text-xs text-white/80">{card.desc}</p>
                             </div>
                             <div className="flex gap-2">
-                              <Button
-                                size="sm"
+                              <button
+                                type="button"
                                 onClick={() => setPlayingBook(`connect-${card.key}`)}
                                 disabled={!cardVideo}
-                                className="flex-1 h-9 font-semibold !text-white !border-0 disabled:opacity-40 !bg-none shadow-md hover:shadow-lg transition-shadow"
-                                style={{ backgroundImage: 'linear-gradient(135deg, #064e3b, #065f46)', backgroundColor: 'transparent' }}
+                                className="flex-1 h-9 inline-flex items-center justify-center rounded-2xl text-sm font-semibold text-white border-0 disabled:opacity-40 shadow-md hover:shadow-lg hover:brightness-110 transition-all"
+                                style={{ background: 'linear-gradient(135deg, #047857 0%, #15803d 100%)' }}
                               >
                                 <Play className="w-4 h-4 mr-1.5 fill-current" />
                                 Play
-                              </Button>
-                              <Button
-                                size="sm"
+                              </button>
+                              <button
+                                type="button"
                                 onClick={() => navigate(card.href)}
-                                className="flex-1 h-9 font-semibold !text-white !border-0 !bg-none shadow-md hover:shadow-lg transition-shadow"
-                                style={{ backgroundImage: 'linear-gradient(135deg, #059669, #10b981)', backgroundColor: 'transparent' }}
+                                className="flex-1 h-9 inline-flex items-center justify-center rounded-2xl text-sm font-semibold text-white border-0 shadow-md hover:shadow-lg hover:brightness-110 transition-all"
+                                style={{ background: 'linear-gradient(135deg, #34d399 0%, #4ade80 100%)' }}
                               >
                                 <UserPlus className="w-4 h-4 mr-1.5" />
                                 Connect
-                              </Button>
+                              </button>
                             </div>
                           </div>
                         </div>
@@ -359,25 +359,25 @@ export const GigActionCards: React.FC<GigActionCardsProps> = ({ theme }) => {
                               <p className="text-xs text-white/80">{card.desc}</p>
                             </div>
                             <div className="flex gap-2">
-                              <Button
-                                size="sm"
+                              <button
+                                type="button"
                                 onClick={() => setPlayingBanner(card.label)}
                                 disabled={!card.video}
-                                className="flex-1 h-9 font-semibold !text-white !border-0 disabled:opacity-40 !bg-none shadow-md hover:shadow-lg transition-shadow"
-                                style={{ backgroundImage: 'linear-gradient(135deg, #4c1d95, #5b21b6)', backgroundColor: 'transparent' }}
+                                className="flex-1 h-9 inline-flex items-center justify-center rounded-2xl text-sm font-semibold text-white border-0 disabled:opacity-40 shadow-md hover:shadow-lg hover:brightness-110 transition-all"
+                                style={{ background: 'linear-gradient(135deg, #6d28d9 0%, #7c3aed 100%)' }}
                               >
                                 <Play className="w-4 h-4 mr-1.5 fill-current" />
                                 Play
-                              </Button>
-                              <Button
-                                size="sm"
+                              </button>
+                              <button
+                                type="button"
                                 onClick={() => navigate(card.href)}
-                                className="flex-1 h-9 font-semibold !text-white !border-0 shadow-md hover:shadow-lg transition-shadow"
-                                style={{ backgroundImage: 'linear-gradient(135deg, #7c3aed, #a855f7)', backgroundColor: 'transparent' }}
+                                className="flex-1 h-9 inline-flex items-center justify-center rounded-2xl text-sm font-semibold text-white border-0 shadow-md hover:shadow-lg hover:brightness-110 transition-all"
+                                style={{ background: 'linear-gradient(135deg, #a855f7 0%, #c084fc 100%)' }}
                               >
                                 <UserPlus className="w-4 h-4 mr-1.5" />
                                 Register
-                              </Button>
+                              </button>
                             </div>
                           </div>
                         </div>
@@ -409,24 +409,24 @@ export const GigActionCards: React.FC<GigActionCardsProps> = ({ theme }) => {
 
         {/* Buttons & Escrow */}
         <div className="flex flex-col gap-2">
-          <Button
-            size="lg"
+          <button
+            type="button"
             onClick={() => navigate('/register-provider')}
-            className="w-full h-12 text-base font-semibold !text-white !border-0 shadow-lg hover:shadow-xl transition-shadow"
-            style={{ backgroundImage: 'linear-gradient(135deg, #7c3aed, #a855f7)', backgroundColor: 'transparent' }}
+            className="w-full h-12 inline-flex items-center justify-center rounded-2xl text-base font-semibold text-white border-0 shadow-lg hover:shadow-xl hover:brightness-110 transition-all"
+            style={{ background: 'linear-gradient(135deg, #7c3aed 0%, #a855f7 100%)' }}
           >
             <Sprout className="w-5 h-5 mr-2" />
             Register as Provider
-          </Button>
-          <Button
-            size="default"
+          </button>
+          <button
+            type="button"
             onClick={() => navigate('/providers')}
-            className="w-full h-11 font-semibold !text-white !border-0 shadow-md hover:shadow-lg transition-shadow"
-            style={{ backgroundImage: 'linear-gradient(135deg, #14b8a6, #06b6d4)', backgroundColor: 'transparent' }}
+            className="w-full h-11 inline-flex items-center justify-center rounded-2xl text-sm font-semibold text-white border-0 shadow-md hover:shadow-lg hover:brightness-110 transition-all"
+            style={{ background: 'linear-gradient(135deg, #14b8a6 0%, #06b6d4 100%)' }}
           >
             Browse All Providers
             <ArrowRight className="w-4 h-4 ml-1" />
-          </Button>
+          </button>
         </div>
 
         <EscrowBadge size="sm" />

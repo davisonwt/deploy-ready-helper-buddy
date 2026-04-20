@@ -125,10 +125,10 @@ export const PlantFeedCards: React.FC<PlantFeedCardsProps> = ({ theme }) => {
                 {card.description}
               </p>
               {card.video && (
-                <Button
-                  size="sm"
-                  className="text-xs h-7 rounded-lg w-full gap-1.5 font-semibold !text-white !border-0 shadow-md hover:shadow-lg transition-shadow"
-                  style={{ backgroundImage: 'linear-gradient(135deg, #14532d, #166534)', backgroundColor: 'transparent' }}
+                <button
+                  type="button"
+                  className="text-xs h-7 rounded-lg w-full inline-flex items-center justify-center gap-1.5 font-semibold text-white border-0 shadow-md hover:shadow-lg hover:brightness-110 transition-all"
+                  style={{ background: 'linear-gradient(135deg, #14532d 0%, #166534 100%)' }}
                   onClick={(e) => {
                     e.preventDefault();
                     e.stopPropagation();
@@ -136,16 +136,16 @@ export const PlantFeedCards: React.FC<PlantFeedCardsProps> = ({ theme }) => {
                   }}
                 >
                   <Play className="w-3 h-3 fill-current" /> Watch the story
-                </Button>
+                </button>
               )}
-              <Button
-                size="sm"
-                className="text-xs h-7 rounded-lg w-full font-semibold !text-white !border-0 shadow-md hover:shadow-lg transition-shadow"
-                style={{ backgroundImage: 'linear-gradient(135deg, #16a34a, #4ade80)', backgroundColor: 'transparent' }}
+              <button
+                type="button"
+                className="text-xs h-7 rounded-lg w-full inline-flex items-center justify-center font-semibold text-white border-0 shadow-md hover:shadow-lg hover:brightness-110 transition-all"
+                style={{ background: 'linear-gradient(135deg, #15803d 0%, #16a34a 100%)', textShadow: '0 1px 2px rgba(0,0,0,0.4)' }}
                 onClick={(e) => e.stopPropagation()}
               >
                 {card.buttonLabel}
-              </Button>
+              </button>
             </div>
           </Link>
         ))}
