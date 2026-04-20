@@ -1,38 +1,25 @@
 import React from 'react';
-import { useNavigate } from 'react-router-dom';
-import { ArrowLeft } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import { Car, MapPin, DollarSign, Sparkles } from 'lucide-react';
 import VehicleRegistrationForm from '@/components/drivers/VehicleRegistrationForm';
+import { FormShell } from '@/components/forms';
 
 const RegisterVehiclePage: React.FC = () => {
-  const navigate = useNavigate();
-
   return (
-    <div className="min-h-screen bg-background">
-      <div className="container mx-auto px-4 py-8 max-w-2xl">
-        {/* Header */}
-        <div className="mb-8">
-          <Button
-            variant="ghost"
-            onClick={() => navigate(-1)}
-            className="mb-4"
-          >
-            <ArrowLeft className="h-4 w-4 mr-2" />
-            Back
-          </Button>
-          
-          <div className="text-center">
-            <h1 className="text-3xl font-bold text-foreground mb-2">
-              🚗 Help Grow Our Community!
-            </h1>
-            <p className="text-muted-foreground text-lg">
-              Offer your vehicle for deliveries, transport, or hauling services and connect with fellow sowers who need your help.
-            </p>
-          </div>
-        </div>
-
-        {/* Promo Video Banner */}
-        <div className="mb-8 rounded-2xl overflow-hidden shadow-lg border border-border/30">
+    <FormShell
+      icon={Car}
+      eyebrow="join the wandering wheel"
+      title="Help Grow Our Community"
+      subtitle="Offer your vehicle for deliveries, transport, or hauling and connect with fellow sowers who need your help."
+      backTo="/dashboard"
+      backLabel="Back to dashboard"
+      size="lg"
+      benefits={[
+        { icon: DollarSign, label: 'Earn on every trip' },
+        { icon: MapPin, label: 'Serve your local tribe' },
+        { icon: Sparkles, label: '60-second sign-up' },
+      ]}
+      heroSlot={
+        <div className="overflow-hidden rounded-2xl border border-amber-400/20 bg-card/40 shadow-[0_18px_50px_-20px_hsl(var(--amber-500)/0.45)] backdrop-blur-md">
           <video
             src="/videos/banners/wandering-wheel.mp4"
             controls
@@ -41,19 +28,16 @@ const RegisterVehiclePage: React.FC = () => {
             loop
             playsInline
             preload="metadata"
-            className="w-full aspect-video object-cover"
+            className="aspect-video w-full object-cover"
           />
-          <div className="p-4 bg-card">
-            <p className="text-sm text-muted-foreground text-center">
-              🌱 See how easy it is to register your vehicle and start serving the community
-            </p>
+          <div className="bg-card/60 p-3 text-center text-xs text-muted-foreground backdrop-blur-md">
+            🌱 See how easy it is to register your vehicle and start serving the community
           </div>
         </div>
-
-        {/* Registration Form */}
-        <VehicleRegistrationForm />
-      </div>
-    </div>
+      }
+    >
+      <VehicleRegistrationForm />
+    </FormShell>
   );
 };
 

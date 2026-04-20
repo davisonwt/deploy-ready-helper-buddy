@@ -8,8 +8,9 @@ import { WhispererReferralLinks } from '@/components/whisperers/WhispererReferra
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Megaphone, TrendingUp, Users, DollarSign, ArrowLeft, CheckCircle, Loader2 } from 'lucide-react';
+import { Megaphone, TrendingUp, Users, DollarSign, CheckCircle, Loader2, Sparkles } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { FormShell } from '@/components/forms';
 
 interface WhispererProfile {
   id: string;
@@ -111,53 +112,54 @@ export default function BecomeWhispererPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-background to-muted/20">
-      <div className="container max-w-3xl mx-auto px-4 py-8">
-        {/* Back Button */}
-        <Link to="/dashboard" className="inline-flex items-center text-muted-foreground hover:text-foreground mb-6">
-          <ArrowLeft className="h-4 w-4 mr-2" />
-          Back to Dashboard
-        </Link>
-
-        {/* Hero Section */}
+    <FormShell
+      icon={Megaphone}
+      eyebrow={existingProfile ? 'your whisperer hub' : 'become a marketing seed-spreader'}
+      title={existingProfile ? 'Your Whisperer Profile' : 'Become a Whisperer'}
+      subtitle={
+        existingProfile
+          ? 'Manage your profile, track earnings, and grow your reach across the tribe.'
+          : 'Join our community of marketing agents and help sowers spread their seeds to the world.'
+      }
+      backTo="/dashboard"
+      backLabel="Back to dashboard"
+      size="xl"
+      benefits={
+        existingProfile
+          ? undefined
+          : [
+              { icon: DollarSign, label: 'Earn commissions' },
+              { icon: Users, label: 'Build connections' },
+              { icon: Sparkles, label: 'Get verified' },
+            ]
+      }
+    >
+      <div className="space-y-8">
+        {/* Hero feature grid for new whisperers */}
         {!existingProfile && (
-          <Card className="mb-8 bg-gradient-to-br from-primary/10 via-accent/5 to-background border-primary/20">
-            <CardContent className="pt-8 pb-6">
-              <div className="text-center mb-6">
-                <div className="inline-flex p-4 rounded-full bg-primary/10 mb-4">
-                  <Megaphone className="h-10 w-10 text-primary" />
-                </div>
-                <h1 className="text-2xl sm:text-3xl font-bold mb-2">Become a Whisperer</h1>
-                <p className="text-muted-foreground max-w-md mx-auto">
-                  Join our community of marketing agents and help sowers spread their seeds to the world
-                </p>
+          <div className="grid gap-4 sm:grid-cols-3">
+            <div className="rounded-xl border border-foreground/10 bg-card/60 p-4 text-center backdrop-blur-md">
+              <div className="mx-auto mb-2 inline-flex rounded-full bg-primary/10 p-2">
+                <DollarSign className="h-5 w-5 text-primary" />
               </div>
-
-              <div className="grid gap-4 sm:grid-cols-3 mt-8">
-                <div className="text-center p-4">
-                  <div className="inline-flex p-2 rounded-full bg-primary/10 mb-2">
-                    <DollarSign className="h-5 w-5 text-primary" />
-                  </div>
-                  <h3 className="font-medium">Earn Commissions</h3>
-                  <p className="text-sm text-muted-foreground">Get paid for every bestowal on products you promote</p>
-                </div>
-                <div className="text-center p-4">
-                  <div className="inline-flex p-2 rounded-full bg-accent/10 mb-2">
-                    <Users className="h-5 w-5 text-accent-foreground" />
-                  </div>
-                  <h3 className="font-medium">Build Connections</h3>
-                  <p className="text-sm text-muted-foreground">Partner with sowers and grow together</p>
-                </div>
-                <div className="text-center p-4">
-                  <div className="inline-flex p-2 rounded-full bg-secondary/50 mb-2">
-                    <TrendingUp className="h-5 w-5 text-secondary-foreground" />
-                  </div>
-                  <h3 className="font-medium">Grow Your Brand</h3>
-                  <p className="text-sm text-muted-foreground">Showcase your skills and get verified</p>
-                </div>
+              <h3 className="font-medium">Earn Commissions</h3>
+              <p className="text-sm text-muted-foreground">Get paid for every bestowal on products you promote</p>
+            </div>
+            <div className="rounded-xl border border-foreground/10 bg-card/60 p-4 text-center backdrop-blur-md">
+              <div className="mx-auto mb-2 inline-flex rounded-full bg-accent/10 p-2">
+                <Users className="h-5 w-5 text-accent-foreground" />
               </div>
-            </CardContent>
-          </Card>
+              <h3 className="font-medium">Build Connections</h3>
+              <p className="text-sm text-muted-foreground">Partner with sowers and grow together</p>
+            </div>
+            <div className="rounded-xl border border-foreground/10 bg-card/60 p-4 text-center backdrop-blur-md">
+              <div className="mx-auto mb-2 inline-flex rounded-full bg-secondary/50 p-2">
+                <TrendingUp className="h-5 w-5 text-secondary-foreground" />
+              </div>
+              <h3 className="font-medium">Grow Your Brand</h3>
+              <p className="text-sm text-muted-foreground">Showcase your skills and get verified</p>
+            </div>
+          </div>
         )}
 
         {/* Existing Profile Stats */}
@@ -233,6 +235,6 @@ export default function BecomeWhispererPage() {
           }}
         />
       </div>
-    </div>
+    </FormShell>
   );
 }
