@@ -128,8 +128,8 @@ export default function MarketingVideosPage() {
 
   const copyShareLink = async () => {
     try {
-      await navigator.clipboard.writeText(shareUrl);
-      toast.success("Tribe invite link copied!");
+      await navigator.clipboard.writeText(sowerCtaUrl);
+      toast.success("Sower invite link copied!");
     } catch {
       toast.error("Couldn't copy link");
     }
@@ -299,7 +299,7 @@ export default function MarketingVideosPage() {
                           </button>
                           <button
                             type="button"
-                            onClick={() => openExternalShare(`https://t.me/share/url?url=${encodeURIComponent(shareUrl)}&text=${encodeURIComponent(buildShareText(b))}`)}
+                            onClick={() => openExternalShare(`https://t.me/share/url?url=${encodeURIComponent(sowerCtaUrl)}&text=${encodeURIComponent(buildShareText(b))}`)}
                             className="w-full flex items-center gap-2 px-2 py-2 rounded-md text-sm hover:bg-white/10 transition-colors"
                           >
                             <Send className="w-4 h-4" style={{ color: "#0088cc" }} /> Telegram
@@ -313,7 +313,7 @@ export default function MarketingVideosPage() {
                           </button>
                           <button
                             type="button"
-                            onClick={() => openExternalShare(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(shareUrl)}&quote=${encodeURIComponent(buildShareText(b))}`)}
+                            onClick={() => openExternalShare(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(sowerCtaUrl)}&quote=${encodeURIComponent(buildShareText(b))}`)}
                             className="w-full flex items-center gap-2 px-2 py-2 rounded-md text-sm hover:bg-white/10 transition-colors"
                           >
                             <Facebook className="w-4 h-4" style={{ color: "#1877F2" }} /> Facebook
