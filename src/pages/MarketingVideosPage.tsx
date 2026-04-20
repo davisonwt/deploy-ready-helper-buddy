@@ -26,50 +26,54 @@ interface BannerVideo {
   src: string;     // public path
   emoji: string;
   available: boolean;
+  /** CTA pill label burned onto the top-right of the personalized video. */
+  ctaLabel: string;
+  /** Landing path the CTA pill (and shared link) points the recipient to. */
+  ctaPath: string;
 }
 
 const BANNERS: BannerVideo[] = [
   // — Become a Provider —
-  { id: "wandering-wheel",            title: "Wandering Wheel",            subtitle: "Become a community driver",        emoji: "🚐", src: "/videos/banners/wandering-wheel.mp4",            available: true },
-  { id: "wandering-hand",             title: "Wandering Hand",             subtitle: "Offer hands-on tribal services",   emoji: "🛠️", src: "/videos/banners/wandering-hand-become.mp4",      available: true },
-  { id: "wandering-whisperer",        title: "Wandering Whisperer",        subtitle: "Guide & sell for sowers",          emoji: "🎙️", src: "/videos/banners/wandering-whisperer.mp4",        available: true },
-  { id: "wandering-pillow",           title: "Wandering Pillow",           subtitle: "Host travelers · holiday stays",   emoji: "🛏️", src: "/videos/banners/wandering-pillow.mp4",           available: true },
-  { id: "wandering-field",            title: "Wandering Field",            subtitle: "Grow & sell from your field",      emoji: "🌾", src: "/videos/banners/wandering-field.mp4",            available: true },
-  { id: "wandering-hearth",           title: "Wandering Hearth",           subtitle: "Sell handmade goods",              emoji: "🏡", src: "/videos/banners/wandering-hearth.mp4",           available: true },
-  { id: "wandering-forge",            title: "Wandering Forge",            subtitle: "Manufacture for the tribe",        emoji: "🏭", src: "/videos/banners/wandering-forge.mp4",            available: true },
+  { id: "wandering-wheel",            title: "Wandering Wheel",            subtitle: "Become a community driver",        emoji: "🚐", src: "/videos/banners/wandering-wheel.mp4",            available: true, ctaLabel: "Become a Wandering Wheel",       ctaPath: "/become-a-sower" },
+  { id: "wandering-hand",             title: "Wandering Hand",             subtitle: "Offer hands-on tribal services",   emoji: "🛠️", src: "/videos/banners/wandering-hand-become.mp4",      available: true, ctaLabel: "Become a Wandering Hand",        ctaPath: "/become-a-sower" },
+  { id: "wandering-whisperer",        title: "Wandering Whisperer",        subtitle: "Guide & sell for sowers",          emoji: "🎙️", src: "/videos/banners/wandering-whisperer.mp4",        available: true, ctaLabel: "Become a Wandering Whisperer",   ctaPath: "/become-a-sower" },
+  { id: "wandering-pillow",           title: "Wandering Pillow",           subtitle: "Host travelers · holiday stays",   emoji: "🛏️", src: "/videos/banners/wandering-pillow.mp4",           available: true, ctaLabel: "Become a Wandering Pillow",      ctaPath: "/become-a-sower" },
+  { id: "wandering-field",            title: "Wandering Field",            subtitle: "Grow & sell from your field",      emoji: "🌾", src: "/videos/banners/wandering-field.mp4",            available: true, ctaLabel: "Become a Wandering Field",       ctaPath: "/become-a-sower" },
+  { id: "wandering-hearth",           title: "Wandering Hearth",           subtitle: "Sell handmade goods",              emoji: "🏡", src: "/videos/banners/wandering-hearth.mp4",           available: true, ctaLabel: "Become a Wandering Hearth",      ctaPath: "/become-a-sower" },
+  { id: "wandering-forge",            title: "Wandering Forge",            subtitle: "Manufacture for the tribe",        emoji: "🏭", src: "/videos/banners/wandering-forge.mp4",            available: true, ctaLabel: "Become a Wandering Forge",       ctaPath: "/become-a-sower" },
 
   // — Book a Service —
-  { id: "wandering-wheel-book",       title: "Book a Wandering Wheel",     subtitle: "Book a community driver",          emoji: "🚖", src: "/videos/banners/wandering-wheel-book.mp4",       available: true },
-  { id: "wandering-hand-book",        title: "Book a Wandering Hand",      subtitle: "Hire a tribal service provider",   emoji: "🧰", src: "/videos/banners/wandering-hand-book.mp4",        available: true },
-  { id: "wandering-whisperer-book",   title: "Book a Wandering Whisperer", subtitle: "Hire a guide & sales whisperer",   emoji: "🗣️", src: "/videos/banners/wandering-whisperer-book.mp4",   available: true },
-  { id: "wandering-pillow-book",      title: "Book a Wandering Pillow",    subtitle: "Find a stay with the tribe",       emoji: "🏨", src: "/videos/banners/wandering-pillow-book.mp4",      available: true },
-  { id: "wandering-field-book",       title: "Connect with Wandering Field", subtitle: "Order fresh produce from farmers", emoji: "🥬", src: "/videos/banners/wandering-field-book.mp4",       available: true },
-  { id: "wandering-hearth-book",      title: "Connect with Wandering Hearth", subtitle: "Order from homesteaders",       emoji: "🍞", src: "/videos/banners/wandering-hearth-book.mp4",      available: true },
-  { id: "wandering-forge-book",       title: "Connect with Wandering Forge", subtitle: "Order from tribal factories",    emoji: "📦", src: "/videos/banners/wandering-forge-book.mp4",       available: true },
+  { id: "wandering-wheel-book",       title: "Book a Wandering Wheel",     subtitle: "Book a community driver",          emoji: "🚖", src: "/videos/banners/wandering-wheel-book.mp4",       available: true, ctaLabel: "Book a Wandering Wheel",         ctaPath: "/become-a-sower" },
+  { id: "wandering-hand-book",        title: "Book a Wandering Hand",      subtitle: "Hire a tribal service provider",   emoji: "🧰", src: "/videos/banners/wandering-hand-book.mp4",        available: true, ctaLabel: "Book a Wandering Hand",          ctaPath: "/become-a-sower" },
+  { id: "wandering-whisperer-book",   title: "Book a Wandering Whisperer", subtitle: "Hire a guide & sales whisperer",   emoji: "🗣️", src: "/videos/banners/wandering-whisperer-book.mp4",   available: true, ctaLabel: "Book a Wandering Whisperer",     ctaPath: "/become-a-sower" },
+  { id: "wandering-pillow-book",      title: "Book a Wandering Pillow",    subtitle: "Find a stay with the tribe",       emoji: "🏨", src: "/videos/banners/wandering-pillow-book.mp4",      available: true, ctaLabel: "Book a Wandering Pillow",        ctaPath: "/become-a-sower" },
+  { id: "wandering-field-book",       title: "Connect with Wandering Field", subtitle: "Order fresh produce from farmers", emoji: "🥬", src: "/videos/banners/wandering-field-book.mp4",       available: true, ctaLabel: "Order from Wandering Field",     ctaPath: "/become-a-sower" },
+  { id: "wandering-hearth-book",      title: "Connect with Wandering Hearth", subtitle: "Order from homesteaders",       emoji: "🍞", src: "/videos/banners/wandering-hearth-book.mp4",      available: true, ctaLabel: "Order from Wandering Hearth",    ctaPath: "/become-a-sower" },
+  { id: "wandering-forge-book",       title: "Connect with Wandering Forge", subtitle: "Order from tribal factories",    emoji: "📦", src: "/videos/banners/wandering-forge-book.mp4",       available: true, ctaLabel: "Order from Wandering Forge",     ctaPath: "/become-a-sower" },
 
   // — Plant & Sow —
-  { id: "community-orchard",          title: "Community Orchard",          subtitle: "Open a community-funded orchard",  emoji: "🌳", src: "/videos/banners/community-orchard.mp4",          available: true },
-  { id: "production-orchard",         title: "Production Orchard",         subtitle: "Fund a product into existence",    emoji: "🏗️", src: "/videos/banners/production-orchard.mp4",         available: true },
-  { id: "single-seed",                title: "Single Seed",                subtitle: "Sow one offering today",           emoji: "🌱", src: "/videos/banners/single-seed.mp4",                available: true },
+  { id: "community-orchard",          title: "Community Orchard",          subtitle: "Open a community-funded orchard",  emoji: "🌳", src: "/videos/banners/community-orchard.mp4",          available: true, ctaLabel: "Open a Community Orchard",       ctaPath: "/become-a-sower" },
+  { id: "production-orchard",         title: "Production Orchard",         subtitle: "Fund a product into existence",    emoji: "🏗️", src: "/videos/banners/production-orchard.mp4",         available: true, ctaLabel: "Fund a Production Orchard",      ctaPath: "/become-a-sower" },
+  { id: "single-seed",                title: "Single Seed",                subtitle: "Sow one offering today",           emoji: "🌱", src: "/videos/banners/single-seed.mp4",                available: true, ctaLabel: "Sow a Single Seed",              ctaPath: "/become-a-sower" },
 
   // — Live & Learn —
-  { id: "classroom",                  title: "Classroom",                  subtitle: "Teach live · voice + video",       emoji: "🎓", src: "/videos/banners/classroom.mp4",                  available: true },
-  { id: "skilldrop",                  title: "SkillDrop",                  subtitle: "Drop a live skill session",        emoji: "✨", src: "/videos/banners/skilldrop.mp4",                  available: true },
-  { id: "training",                   title: "Training",                   subtitle: "Run a live training session",      emoji: "🏋️", src: "/videos/banners/training.mp4",                   available: true },
-  { id: "radio",                      title: "364YHVH FM Radio",           subtitle: "Tune in to the tribal station",    emoji: "📻", src: "/videos/banners/radio.mp4",                      available: true },
+  { id: "classroom",                  title: "Classroom",                  subtitle: "Teach live · voice + video",       emoji: "🎓", src: "/videos/banners/classroom.mp4",                  available: true, ctaLabel: "Join the Classroom",             ctaPath: "/become-a-sower" },
+  { id: "skilldrop",                  title: "SkillDrop",                  subtitle: "Drop a live skill session",        emoji: "✨", src: "/videos/banners/skilldrop.mp4",                  available: true, ctaLabel: "Drop a SkillDrop",               ctaPath: "/become-a-sower" },
+  { id: "training",                   title: "Training",                   subtitle: "Run a live training session",      emoji: "🏋️", src: "/videos/banners/training.mp4",                   available: true, ctaLabel: "Join the Training",              ctaPath: "/become-a-sower" },
+  { id: "radio",                      title: "364YHVH FM Radio",           subtitle: "Tune in to the tribal station",    emoji: "📻", src: "/videos/banners/radio.mp4",                      available: true, ctaLabel: "Tune in to 364YHVH FM",          ctaPath: "/become-a-sower" },
 
   // — Chat & Connect —
-  { id: "one-on-one",                 title: "1-on-1 Chat",                subtitle: "Start a private chat",             emoji: "💬", src: "/videos/banners/one-on-one.mp4",                 available: true },
-  { id: "group-chat",                 title: "Group Chat",                 subtitle: "Start a tribal group chat",        emoji: "👥", src: "/videos/banners/group-chat.mp4",                 available: true },
+  { id: "one-on-one",                 title: "1-on-1 Chat",                subtitle: "Start a private chat",             emoji: "💬", src: "/videos/banners/one-on-one.mp4",                 available: true, ctaLabel: "Start a 1-on-1 Chat",            ctaPath: "/become-a-sower" },
+  { id: "group-chat",                 title: "Group Chat",                 subtitle: "Start a tribal group chat",        emoji: "👥", src: "/videos/banners/group-chat.mp4",                 available: true, ctaLabel: "Start a Group Chat",             ctaPath: "/become-a-sower" },
 
   // — Tribal Hearts —
-  { id: "tribal-hearts",              title: "Tribal Hearts",              subtitle: "Safe agent-powered tribal dating", emoji: "❤️", src: "/videos/tribal-hearts-trailer-v6.mp4",          available: true },
+  { id: "tribal-hearts",              title: "Tribal Hearts",              subtitle: "Safe agent-powered tribal dating", emoji: "❤️", src: "/videos/tribal-hearts-trailer-v6.mp4",          available: true, ctaLabel: "Become a Tribal Heart",          ctaPath: "/become-a-sower" },
 ];
 
 export default function MarketingVideosPage() {
   const theme = getCurrentTheme();
   const { code, inviterName, shareUrl, loading: refLoading } = useMyReferralCode();
-  const { burnAndDownload, progress, stage, error, reset } = useReferralVideoBurner();
+  const { burnAndDownload, burnToFile, progress, stage, error, reset } = useReferralVideoBurner();
   const [activeId, setActiveId] = useState<string | null>(null);
   const [previewing, setPreviewing] = useState<BannerVideo | null>(null);
 
@@ -83,33 +87,73 @@ export default function MarketingVideosPage() {
       inviterName,
       referralCode: code,
       shareUrl,
+      ctaLabel: banner.ctaLabel,
     });
   };
 
-  // The recipient's CTA link — opens our /become-a-sower landing page,
-  // pre-loaded with the inviter's referral code so attribution sticks.
-  const sowerCtaUrl = code
-    ? `https://sow2growapp.com/become-a-sower?ref=${encodeURIComponent(code)}`
-    : "https://sow2growapp.com/become-a-sower";
+  // Per-video CTA link — opens the matching landing page with the inviter's
+  // referral code pre-attached so attribution sticks.
+  const ctaUrlFor = (banner: BannerVideo) =>
+    code
+      ? `https://sow2growapp.com${banner.ctaPath}?ref=${encodeURIComponent(code)}`
+      : `https://sow2growapp.com${banner.ctaPath}`;
 
-  const buildShareText = (banner: BannerVideo) =>
-    `${banner.emoji} ${banner.title} — ${banner.subtitle}\n\nJoin my S2G tribe${inviterName ? ` (${inviterName})` : ""} & become a Sower:\n👉 ${sowerCtaUrl}`;
+  const buildShareText = (banner: BannerVideo) => {
+    const url = ctaUrlFor(banner);
+    return `${banner.emoji} ${banner.title} — ${banner.subtitle}\n\nJoin my S2G tribe${inviterName ? ` (${inviterName})` : ""} — ${banner.ctaLabel}:\n👉 ${url}`;
+  };
 
+  /** Share the personalized video file itself (with CTA + referral burned in)
+   *  via the device share sheet. Falls back to download + copy if the
+   *  Web Share API can't take files. */
   const handleNativeShare = async (banner: BannerVideo) => {
+    if (!code) {
+      toast.error("Loading your referral code… try again in a moment.");
+      return;
+    }
     const text = buildShareText(banner);
-    if (typeof navigator !== "undefined" && (navigator as any).share) {
+    const url = ctaUrlFor(banner);
+
+    setActiveId(banner.id);
+    reset();
+    toast.info("Personalising video for sharing… ~30–60s");
+
+    const file = await burnToFile({
+      sourceUrl: banner.src,
+      fileBaseName: `s2g-${banner.id}`,
+      inviterName,
+      referralCode: code,
+      shareUrl,
+      ctaLabel: banner.ctaLabel,
+    });
+
+    const nav = navigator as any;
+    if (file && nav.canShare && nav.canShare({ files: [file] })) {
       try {
-        await (navigator as any).share({ title: `S2G · ${banner.title}`, text, url: sowerCtaUrl });
+        await nav.share({ title: `S2G · ${banner.title}`, text, url, files: [file] });
         return;
       } catch {
-        // user cancelled or share unavailable — fall through to copy
+        // user cancelled — fall through
       }
     }
+
+    // Fallback: download the personalized file so the user can attach it
+    if (file) {
+      const dl = URL.createObjectURL(file);
+      const a = document.createElement("a");
+      a.href = dl;
+      a.download = file.name;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      setTimeout(() => URL.revokeObjectURL(dl), 60_000);
+      toast.success("Video saved! Attach it to your message.");
+    }
+
     try {
       await navigator.clipboard.writeText(text);
-      toast.success("Share message copied — paste it anywhere!");
     } catch {
-      toast.error("Couldn't copy. Long-press to copy manually.");
+      // ignore
     }
   };
 
@@ -126,10 +170,10 @@ export default function MarketingVideosPage() {
     document.body.removeChild(a);
   };
 
-  const copyShareLink = async () => {
+  const copyShareLink = async (banner: BannerVideo) => {
     try {
-      await navigator.clipboard.writeText(sowerCtaUrl);
-      toast.success("Sower invite link copied!");
+      await navigator.clipboard.writeText(ctaUrlFor(banner));
+      toast.success("Invite link copied!");
     } catch {
       toast.error("Couldn't copy link");
     }
@@ -218,7 +262,7 @@ export default function MarketingVideosPage() {
                       the inviter's referral code pre-attached. */}
                   {b.available && (
                     <a
-                      href={sowerCtaUrl}
+                      href={ctaUrlFor(b)}
                       target="_blank"
                       rel="noopener noreferrer"
                       onClick={(e) => e.stopPropagation()}
@@ -228,7 +272,7 @@ export default function MarketingVideosPage() {
                         color: theme.textPrimary,
                         boxShadow: `0 4px 12px ${theme.shadow}`,
                       }}
-                      aria-label="Become an S2G Sower"
+                      aria-label={b.ctaLabel}
                     >
                       <Sprout className="w-3 h-3 md:w-3.5 md:h-3.5" />
                       <span className="hidden sm:inline">Become an S2G Sower</span>
@@ -322,7 +366,7 @@ export default function MarketingVideosPage() {
                           </button>
                           <button
                             type="button"
-                            onClick={() => openExternalShare(`https://t.me/share/url?url=${encodeURIComponent(sowerCtaUrl)}&text=${encodeURIComponent(buildShareText(b))}`)}
+                            onClick={() => openExternalShare(`https://t.me/share/url?url=${encodeURIComponent(ctaUrlFor(b))}&text=${encodeURIComponent(buildShareText(b))}`)}
                             className="w-full flex items-center gap-2 px-2 py-2 rounded-md text-sm hover:bg-white/10 transition-colors"
                           >
                             <Send className="w-4 h-4" style={{ color: "#0088cc" }} /> Telegram
@@ -336,7 +380,7 @@ export default function MarketingVideosPage() {
                           </button>
                           <button
                             type="button"
-                            onClick={() => openExternalShare(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(sowerCtaUrl)}&quote=${encodeURIComponent(buildShareText(b))}`)}
+                            onClick={() => openExternalShare(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(ctaUrlFor(b))}&quote=${encodeURIComponent(buildShareText(b))}`)}
                             className="w-full flex items-center gap-2 px-2 py-2 rounded-md text-sm hover:bg-white/10 transition-colors"
                           >
                             <Facebook className="w-4 h-4" style={{ color: "#1877F2" }} /> Facebook
@@ -350,7 +394,7 @@ export default function MarketingVideosPage() {
                           </button>
                           <button
                             type="button"
-                            onClick={copyShareLink}
+                            onClick={() => copyShareLink(b)}
                             className="w-full flex items-center gap-2 px-2 py-2 rounded-md text-sm hover:bg-white/10 transition-colors"
                           >
                             <Copy className="w-4 h-4" /> Copy invite link

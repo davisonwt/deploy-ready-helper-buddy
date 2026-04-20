@@ -1,24 +1,24 @@
 /**
  * useReferralVideoBurner
  * --------------------------------------------------------------
- * Personalizes a marketing banner MP4 in the browser by burning a
- * full-width bottom banner ("Join {name}'s tribe — sow2growapp.com/?ref=CODE")
- * directly into the video pixels.
+ * Personalizes a marketing banner MP4 in the browser by burning:
+ *   1. A bottom referral strip ("Join {name}'s tribe — sow2growapp.com/?ref=CODE")
+ *   2. A top-right CTA pill ("Become a Wandering Driver", etc.) matching the
+ *      specific video's role/title.
  *
- * Implementation: Canvas + MediaRecorder (native browser APIs, no WASM,
- * no SharedArrayBuffer, no external CDN dependency, no CORS issues).
- * The result is a real, shareable video file (WebM with VP9, or MP4 where
- * supported) carrying the referral attribution wherever it travels.
+ * Both overlays are painted directly into the video pixels via Canvas +
+ * MediaRecorder, so the CTA + referral travel everywhere the file goes
+ * (WhatsApp, Telegram, Instagram, TikTok, AirDrop, email...).
  *
- * Why not ffmpeg.wasm?
- *  - Requires loading ~25MB of WASM from a public CDN (CSP/network risk)
- *  - Slow on large clips and prone to OOM in the browser tab
- *  - Some hosting environments block SharedArrayBuffer
- *  - MediaRecorder is supported in every evergreen browser and "just works"
+ * Two entry points:
+ *   - burnAndDownload(...) → triggers a browser download of the burned file
+ *   - burnToFile(...)      → returns the burned File object so the caller can
+ *                            hand it to navigator.share({ files: [...] })
+ *                            or upload it.
  */
 import { useCallback, useRef, useState } from "react";
 
-/** Render the referral banner strip onto a canvas context (full width × 120px). */
+/** Render the bottom referral strip (full width × ~11% of height). */
 function paintBanner(
   ctx: CanvasRenderingContext2D,
   x: number,
@@ -72,6 +72,77 @@ function paintBanner(
   ctx.fillText(shareUrl, chipX - linkMetrics.width - 24, cy);
 }
 
+/** Top-right CTA pill — e.g. "Become a Wandering Driver". */
+function paintCtaPill(
+  ctx: CanvasRenderingContext2D,
+  videoW: number,
+  videoH: number,
+  label: string,
+) {
+  if (!label) return;
+  const pillH = Math.max(48, Math.round(videoH * 0.075));
+  const fontSize = Math.round(pillH * 0.42);
+  ctx.font = `800 ${fontSize}px Inter, system-ui, -apple-system, sans-serif`;
+  ctx.textBaseline = "middle";
+
+  const text = label.toUpperCase();
+  const textW = ctx.measureText(text).width;
+  const sproutW = Math.round(pillH * 0.5);
+  const padX = Math.round(pillH * 0.55);
+  const gap = Math.round(pillH * 0.25);
+  const pillW = padX * 2 + sproutW + gap + textW;
+
+  const margin = Math.max(16, Math.round(videoH * 0.025));
+  const pillX = videoW - pillW - margin;
+  const pillY = margin;
+
+  // Drop shadow
+  ctx.save();
+  ctx.shadowColor = "rgba(0,0,0,0.45)";
+  ctx.shadowBlur = 14;
+  ctx.shadowOffsetY = 4;
+
+  // Pill background — warm S2G terracotta → ochre
+  const grad = ctx.createLinearGradient(pillX, pillY, pillX + pillW, pillY);
+  grad.addColorStop(0, "#B85042");
+  grad.addColorStop(1, "#D4A843");
+  ctx.fillStyle = grad;
+  roundRect(ctx, pillX, pillY, pillW, pillH, pillH / 2);
+  ctx.fill();
+  ctx.restore();
+
+  // Subtle inner highlight
+  ctx.fillStyle = "rgba(255,255,255,0.18)";
+  roundRect(ctx, pillX + 2, pillY + 2, pillW - 4, Math.max(6, pillH / 3), pillH / 2);
+  ctx.fill();
+
+  // Sprout glyph (simple two-leaf + stem) on the left
+  const cx = pillX + padX + sproutW / 2;
+  const cy = pillY + pillH / 2;
+  ctx.strokeStyle = "#FFFFFF";
+  ctx.fillStyle = "#FFFFFF";
+  ctx.lineWidth = Math.max(2, Math.round(pillH * 0.06));
+  ctx.lineCap = "round";
+  // Stem
+  ctx.beginPath();
+  ctx.moveTo(cx, cy + sproutW * 0.35);
+  ctx.lineTo(cx, cy - sproutW * 0.15);
+  ctx.stroke();
+  // Left leaf
+  ctx.beginPath();
+  ctx.ellipse(cx - sproutW * 0.22, cy - sproutW * 0.05, sproutW * 0.28, sproutW * 0.16, -0.6, 0, Math.PI * 2);
+  ctx.fill();
+  // Right leaf
+  ctx.beginPath();
+  ctx.ellipse(cx + sproutW * 0.22, cy - sproutW * 0.18, sproutW * 0.28, sproutW * 0.16, 0.6, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Label text
+  ctx.fillStyle = "#FFFFFF";
+  ctx.font = `800 ${fontSize}px Inter, system-ui, -apple-system, sans-serif`;
+  ctx.fillText(text, pillX + padX + sproutW + gap, cy);
+}
+
 function roundRect(
   ctx: CanvasRenderingContext2D,
   x: number, y: number, w: number, h: number, r: number,
@@ -108,6 +179,124 @@ export interface BurnOptions {
   inviterName: string;
   referralCode: string;
   shareUrl: string;
+  /** Optional CTA pill label burned into the top-right corner.
+   *  e.g. "Become a Wandering Driver". Pass empty string to skip. */
+  ctaLabel?: string;
+}
+
+/** Internal shared burn engine — returns the final Blob + extension. */
+async function runBurn(
+  opts: BurnOptions,
+  onStage: (s: "loading" | "burning" | "done" | "error") => void,
+  onProgress: (p: number) => void,
+  cancelRef: React.MutableRefObject<boolean>,
+): Promise<{ blob: Blob; ext: string; mime: string }> {
+  if (typeof MediaRecorder === "undefined") {
+    throw new Error("Your browser doesn't support in-page video recording. Try Chrome, Edge, or Firefox.");
+  }
+
+  const video = document.createElement("video");
+  video.crossOrigin = "anonymous";
+  video.playsInline = true;
+  video.muted = false;
+  video.preload = "auto";
+  video.src = opts.sourceUrl;
+
+  try {
+    onStage("loading");
+    await new Promise<void>((resolve, reject) => {
+      const onLoaded = () => { cleanup(); resolve(); };
+      const onErr = () => { cleanup(); reject(new Error("Could not load source video.")); };
+      const cleanup = () => {
+        video.removeEventListener("loadedmetadata", onLoaded);
+        video.removeEventListener("error", onErr);
+      };
+      video.addEventListener("loadedmetadata", onLoaded);
+      video.addEventListener("error", onErr);
+    });
+
+    const W = video.videoWidth || 1280;
+    const H = video.videoHeight || 720;
+    const bannerH = Math.max(80, Math.round(H * 0.11));
+    const duration = video.duration;
+    if (!isFinite(duration) || duration <= 0) {
+      throw new Error("Source video has no duration.");
+    }
+
+    const canvas = document.createElement("canvas");
+    canvas.width = W;
+    canvas.height = H;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) throw new Error("Canvas not available.");
+
+    const fps = 30;
+    const stream = (canvas as HTMLCanvasElement).captureStream(fps);
+
+    try {
+      // @ts-expect-error: captureStream exists on HTMLMediaElement in modern browsers
+      const vStream: MediaStream | undefined = video.captureStream?.() ?? video.mozCaptureStream?.();
+      if (vStream) {
+        vStream.getAudioTracks().forEach((t) => stream.addTrack(t));
+      }
+    } catch {
+      // audio-less output is fine
+    }
+
+    const { mime, ext } = pickMimeType();
+    const recorder = new MediaRecorder(stream, {
+      mimeType: mime,
+      videoBitsPerSecond: 4_000_000,
+    });
+    const chunks: Blob[] = [];
+    recorder.ondataavailable = (e) => { if (e.data.size) chunks.push(e.data); };
+
+    const recordingDone = new Promise<Blob>((resolve, reject) => {
+      recorder.onstop = () => resolve(new Blob(chunks, { type: mime }));
+      recorder.onerror = (e: any) => reject(new Error(e?.error?.message || "Recording failed."));
+    });
+
+    onStage("burning");
+    recorder.start(250);
+
+    video.currentTime = 0;
+    await video.play().catch(() => {});
+
+    let raf = 0;
+    const draw = () => {
+      if (cancelRef.current) return;
+      ctx.drawImage(video, 0, 0, W, H);
+      // Bottom referral strip
+      paintBanner(ctx, 0, H - bannerH, W, bannerH, opts.inviterName, opts.referralCode, opts.shareUrl);
+      // Top-right CTA pill (per-video role)
+      if (opts.ctaLabel) {
+        paintCtaPill(ctx, W, H, opts.ctaLabel);
+      }
+      const p = Math.min(99, Math.round((video.currentTime / duration) * 100));
+      onProgress(p);
+      if (!video.ended && !video.paused) {
+        raf = requestAnimationFrame(draw);
+      }
+    };
+    raf = requestAnimationFrame(draw);
+
+    await new Promise<void>((resolve) => {
+      const onEnd = () => { video.removeEventListener("ended", onEnd); resolve(); };
+      video.addEventListener("ended", onEnd);
+    });
+    cancelAnimationFrame(raf);
+
+    await new Promise((r) => setTimeout(r, 250));
+    recorder.stop();
+    const blob = await recordingDone;
+
+    onProgress(100);
+    onStage("done");
+    return { blob, ext, mime };
+  } finally {
+    try { video.pause(); } catch {}
+    video.removeAttribute("src");
+    video.load();
+  }
 }
 
 export function useReferralVideoBurner() {
@@ -120,108 +309,8 @@ export function useReferralVideoBurner() {
     setError(null);
     setProgress(0);
     cancelRef.current = false;
-
-    if (typeof MediaRecorder === "undefined") {
-      setStage("error");
-      setError("Your browser doesn't support in-page video recording. Try Chrome, Edge, or Firefox.");
-      return;
-    }
-
-    const video = document.createElement("video");
-    video.crossOrigin = "anonymous";
-    video.playsInline = true;
-    video.muted = false;
-    video.preload = "auto";
-    video.src = opts.sourceUrl;
-
     try {
-      setStage("loading");
-      // Wait for metadata
-      await new Promise<void>((resolve, reject) => {
-        const onLoaded = () => { cleanup(); resolve(); };
-        const onErr = () => { cleanup(); reject(new Error("Could not load source video.")); };
-        const cleanup = () => {
-          video.removeEventListener("loadedmetadata", onLoaded);
-          video.removeEventListener("error", onErr);
-        };
-        video.addEventListener("loadedmetadata", onLoaded);
-        video.addEventListener("error", onErr);
-      });
-
-      const W = video.videoWidth || 1280;
-      const H = video.videoHeight || 720;
-      const bannerH = Math.max(80, Math.round(H * 0.11));
-      const duration = video.duration;
-      if (!isFinite(duration) || duration <= 0) {
-        throw new Error("Source video has no duration.");
-      }
-
-      const canvas = document.createElement("canvas");
-      canvas.width = W;
-      canvas.height = H;
-      const ctx = canvas.getContext("2d");
-      if (!ctx) throw new Error("Canvas not available.");
-
-      const fps = 30;
-      const stream = (canvas as HTMLCanvasElement).captureStream(fps);
-
-      // Try to attach audio from the source video using captureStream
-      try {
-        // @ts-expect-error: captureStream exists on HTMLMediaElement in modern browsers
-        const vStream: MediaStream | undefined = video.captureStream?.() ?? video.mozCaptureStream?.();
-        if (vStream) {
-          vStream.getAudioTracks().forEach((t) => stream.addTrack(t));
-        }
-      } catch {
-        // audio-less output is fine
-      }
-
-      const { mime, ext } = pickMimeType();
-      const recorder = new MediaRecorder(stream, {
-        mimeType: mime,
-        videoBitsPerSecond: 4_000_000,
-      });
-      const chunks: Blob[] = [];
-      recorder.ondataavailable = (e) => { if (e.data.size) chunks.push(e.data); };
-
-      const recordingDone = new Promise<Blob>((resolve, reject) => {
-        recorder.onstop = () => resolve(new Blob(chunks, { type: mime }));
-        recorder.onerror = (e: any) => reject(new Error(e?.error?.message || "Recording failed."));
-      });
-
-      setStage("burning");
-      recorder.start(250);
-
-      // Drive playback and draw frames onto canvas
-      video.currentTime = 0;
-      await video.play().catch(() => {
-        // Some browsers require user gesture; the click that started this counts.
-      });
-
-      let raf = 0;
-      const draw = () => {
-        if (cancelRef.current) return;
-        ctx.drawImage(video, 0, 0, W, H);
-        paintBanner(ctx, 0, H - bannerH, W, bannerH, opts.inviterName, opts.referralCode, opts.shareUrl);
-        const p = Math.min(99, Math.round((video.currentTime / duration) * 100));
-        setProgress(p);
-        if (!video.ended && !video.paused) {
-          raf = requestAnimationFrame(draw);
-        }
-      };
-      raf = requestAnimationFrame(draw);
-
-      await new Promise<void>((resolve) => {
-        const onEnd = () => { video.removeEventListener("ended", onEnd); resolve(); };
-        video.addEventListener("ended", onEnd);
-      });
-      cancelAnimationFrame(raf);
-
-      // Tiny tail to flush the last frame into the recorder
-      await new Promise((r) => setTimeout(r, 250));
-      recorder.stop();
-      const blob = await recordingDone;
-
+      const { blob, ext } = await runBurn(opts, setStage, setProgress, cancelRef);
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
@@ -230,17 +319,30 @@ export function useReferralVideoBurner() {
       a.click();
       a.remove();
       setTimeout(() => URL.revokeObjectURL(url), 60_000);
-
-      setProgress(100);
-      setStage("done");
     } catch (e: any) {
-      console.error("[referral-video-burner] failed", e);
+      console.error("[referral-video-burner] download failed", e);
       setError(e?.message || "Failed to personalize video.");
       setStage("error");
-    } finally {
-      try { video.pause(); } catch {}
-      video.removeAttribute("src");
-      video.load();
+    }
+  }, []);
+
+  /** Burn the video and return a File ready for navigator.share or upload. */
+  const burnToFile = useCallback(async (opts: BurnOptions): Promise<File | null> => {
+    setError(null);
+    setProgress(0);
+    cancelRef.current = false;
+    try {
+      const { blob, ext, mime } = await runBurn(opts, setStage, setProgress, cancelRef);
+      return new File(
+        [blob],
+        `${opts.fileBaseName}-${opts.referralCode}.${ext}`,
+        { type: mime.split(";")[0] },
+      );
+    } catch (e: any) {
+      console.error("[referral-video-burner] burn-to-file failed", e);
+      setError(e?.message || "Failed to personalize video.");
+      setStage("error");
+      return null;
     }
   }, []);
 
@@ -250,5 +352,5 @@ export function useReferralVideoBurner() {
     setError(null);
   }, []);
 
-  return { burnAndDownload, progress, stage, error, reset };
+  return { burnAndDownload, burnToFile, progress, stage, error, reset };
 }
