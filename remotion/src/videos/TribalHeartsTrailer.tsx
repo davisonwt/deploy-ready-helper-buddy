@@ -378,19 +378,6 @@ const Scene: React.FC<{ scene: SceneDef; index: number }> = ({ scene, index }) =
     <AbsoluteFill>
       <BackgroundImage src={scene.image} position={scene.imagePosition} />
       <FloatingDust accent={scene.accent} />
-
-      <div
-        style={{
-          position: "absolute",
-          inset: 0,
-          display: "flex",
-          alignItems: "flex-start",
-          justifyContent: "flex-end",
-          padding: "56px 56px 0 0",
-        }}
-      >
-        <LogoBadge accent={index === SCENES.length - 1 ? PALETTE.gold : PALETTE.aqua} small />
-      </div>
     </AbsoluteFill>
   );
 };
