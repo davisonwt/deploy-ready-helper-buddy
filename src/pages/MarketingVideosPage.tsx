@@ -15,6 +15,7 @@ import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
 import { useReferralVideoBurner } from "@/hooks/useReferralVideoBurner";
 import { useMyReferralCode } from "@/hooks/useMyReferralCode";
 import { getCurrentTheme } from "@/utils/dashboardThemes";
@@ -70,6 +71,8 @@ const BANNERS: BannerVideo[] = [
   { id: "tribal-hearts",              title: "Tribal Hearts",              subtitle: "Safe agent-powered tribal dating", emoji: "❤️", src: "/videos/tribal-hearts-trailer-v6.mp4",          available: true, ctaLabel: "Become a Tribal Heart",          ctaPath: "/become-a-sower" },
 ];
 
+const SHARE_VIDEO_BUCKET = "chat-files";
+
 export default function MarketingVideosPage() {
   const theme = getCurrentTheme();
   const { code, inviterName, shareUrl, loading: refLoading } = useMyReferralCode();
@@ -103,6 +106,100 @@ export default function MarketingVideosPage() {
     return `${banner.emoji} ${banner.title} — ${banner.subtitle}\n\nJoin my S2G tribe${inviterName ? ` (${inviterName})` : ""} — ${banner.ctaLabel}:\n👉 ${url}`;
   };
 
+  const downloadBurnedFile = (file: File) => {
+    const dl = URL.createObjectURL(file);
+    const a = document.createElement("a");
+    a.href = dl;
+    a.download = file.name;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(() => URL.revokeObjectURL(dl), 60_000);
+  };
+
+  const uploadBurnedVideo = async (banner: BannerVideo, file: File) => {
+    const { data: authData } = await supabase.auth.getUser();
+    const ext = file.name.split(".").pop() || (file.type.includes("webm") ? "webm" : "mp4");
+    const shareId = typeof crypto !== "undefined" && "randomUUID" in crypto
+      ? crypto.randomUUID()
+      : `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+    const ownerId = authData.user?.id || "shared";
+    const path = `marketing-shares/${ownerId}/${banner.id}-${shareId}.${ext}`;
+
+    const { error: uploadError } = await supabase.storage
+      .from(SHARE_VIDEO_BUCKET)
+      .upload(path, file, {
+        cacheControl: "3600",
+        contentType: file.type || "video/mp4",
+        upsert: false,
+      });
+
+    if (uploadError) throw uploadError;
+
+    const { data: publicUrlData } = supabase.storage.from(SHARE_VIDEO_BUCKET).getPublicUrl(path);
+    if (publicUrlData?.publicUrl) {
+      return publicUrlData.publicUrl;
+    }
+
+    const { data: signedUrlData, error: signError } = await supabase.storage
+      .from(SHARE_VIDEO_BUCKET)
+      .createSignedUrl(path, 60 * 60 * 24 * 7);
+
+    if (signError || !signedUrlData?.signedUrl) {
+      throw signError || new Error("Could not create share link for the video.");
+    }
+
+    return signedUrlData.signedUrl;
+  };
+
+  const prepareShareVideo = async (banner: BannerVideo) => {
+    if (!code) {
+      toast.error("Loading your referral code… try again in a moment.");
+      return null;
+    }
+
+    setActiveId(banner.id);
+    reset();
+
+    const file = await burnToFile({
+      sourceUrl: banner.src,
+      fileBaseName: `s2g-${banner.id}`,
+      inviterName,
+      referralCode: code,
+      shareUrl,
+      ctaLabel: banner.ctaLabel,
+    });
+
+    if (!file) return null;
+
+    const hostedUrl = await uploadBurnedVideo(banner, file);
+    return { file, hostedUrl };
+  };
+
+  const handleWhatsAppShare = async (banner: BannerVideo) => {
+    try {
+      toast.info("Preparing WhatsApp video… ~30–60s");
+      const prepared = await prepareShareVideo(banner);
+      if (!prepared) return;
+
+      const message = `${buildShareText(banner)}\n\n🎬 Video:\n${prepared.hostedUrl}`;
+      window.location.href = `https://api.whatsapp.com/send?text=${encodeURIComponent(message)}`;
+      toast.success("WhatsApp share is ready.");
+    } catch (e) {
+      console.error("[marketing-videos] whatsapp share failed", e);
+      toast.error("Couldn't prepare the WhatsApp video link. The file was downloaded instead.");
+      const fallback = await burnToFile({
+        sourceUrl: banner.src,
+        fileBaseName: `s2g-${banner.id}`,
+        inviterName,
+        referralCode: code || "S2G",
+        shareUrl,
+        ctaLabel: banner.ctaLabel,
+      });
+      if (fallback) downloadBurnedFile(fallback);
+    }
+  };
+
   /** Share the personalized video file itself (with CTA + referral burned in)
    *  via the device share sheet. Falls back to download + copy if the
    *  Web Share API can't take files. */
@@ -114,39 +211,40 @@ export default function MarketingVideosPage() {
     const text = buildShareText(banner);
     const url = ctaUrlFor(banner);
 
-    setActiveId(banner.id);
-    reset();
     toast.info("Personalising video for sharing… ~30–60s");
 
-    const file = await burnToFile({
-      sourceUrl: banner.src,
-      fileBaseName: `s2g-${banner.id}`,
-      inviterName,
-      referralCode: code,
-      shareUrl,
-      ctaLabel: banner.ctaLabel,
-    });
+    let prepared: Awaited<ReturnType<typeof prepareShareVideo>> = null;
+    try {
+      prepared = await prepareShareVideo(banner);
+    } catch (e) {
+      console.error("[marketing-videos] device share preparation failed", e);
+    }
+    const file = prepared?.file ?? null;
+    const hostedUrl = prepared?.hostedUrl ?? url;
 
     const nav = navigator as any;
     if (file && nav.canShare && nav.canShare({ files: [file] })) {
       try {
         await nav.share({ title: `S2G · ${banner.title}`, text, url, files: [file] });
         return;
-      } catch {
+      } catch (e: any) {
+        if (e?.name === "AbortError") return;
         // user cancelled — fall through
+      }
+    }
+
+    if (nav.share) {
+      try {
+        await nav.share({ title: `S2G · ${banner.title}`, text, url: hostedUrl });
+        return;
+      } catch (e: any) {
+        if (e?.name === "AbortError") return;
       }
     }
 
     // Fallback: download the personalized file so the user can attach it
     if (file) {
-      const dl = URL.createObjectURL(file);
-      const a = document.createElement("a");
-      a.href = dl;
-      a.download = file.name;
-      document.body.appendChild(a);
-      a.click();
-      a.remove();
-      setTimeout(() => URL.revokeObjectURL(dl), 60_000);
+      downloadBurnedFile(file);
       toast.success("Video saved! Attach it to your message.");
     }
 
@@ -374,7 +472,7 @@ export default function MarketingVideosPage() {
                           </button>
                           <button
                             type="button"
-                            onClick={() => openExternalShare(`https://api.whatsapp.com/send?text=${encodeURIComponent(buildShareText(b))}`)}
+                            onClick={() => handleWhatsAppShare(b)}
                             className="w-full flex items-center gap-2 px-2 py-2 rounded-md text-sm hover:bg-white/10 transition-colors"
                           >
                             <MessageCircle className="w-4 h-4" style={{ color: "#25D366" }} /> WhatsApp
