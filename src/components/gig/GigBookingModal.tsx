@@ -172,20 +172,38 @@ export const GigBookingModal: React.FC<GigBookingModalProps> = ({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-md max-h-[85vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle className="text-lg font-bold">Book a Service</DialogTitle>
-        </DialogHeader>
+      <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto border-amber-400/20 bg-gradient-to-b from-background via-background to-amber-950/10 p-0">
+        {/* Cinematic header */}
+        <div className="relative overflow-hidden rounded-t-lg border-b border-amber-400/15 bg-gradient-to-br from-amber-500/15 via-coral-500/10 to-primary/15 px-6 pb-5 pt-6">
+          <div className="pointer-events-none absolute -right-8 -top-8 h-32 w-32 rounded-full bg-amber-400/15 blur-3xl" />
+          <div className="pointer-events-none absolute -bottom-10 -left-6 h-28 w-28 rounded-full bg-primary/15 blur-3xl" />
+          <DialogHeader className="relative z-10 text-left">
+            <div className="mb-3 inline-flex h-11 w-11 items-center justify-center rounded-2xl border border-amber-400/30 bg-gradient-to-br from-amber-500/25 via-coral-500/20 to-primary/25 shadow-[0_8px_24px_-10px_hsl(var(--amber-500)/0.5)]">
+              <Sparkles className="h-5 w-5 text-amber-300" />
+            </div>
+            <p className="mb-1 text-[10px] font-semibold uppercase tracking-[0.2em] text-amber-300/80">
+              sow2grow • tribal services
+            </p>
+            <DialogTitle className="font-display text-2xl font-bold leading-tight">
+              <span className="text-gold-gradient">Book a Service</span>
+            </DialogTitle>
+            <p className="mt-1.5 text-xs text-muted-foreground">
+              A ride, a helping hand, or a whispered prayer — your tribe is one tap away.
+            </p>
+            <div className="gold-rule mt-3 w-16" />
+          </DialogHeader>
+        </div>
 
+        <div className="px-6 pb-6 pt-4">
         <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as typeof activeTab)}>
-          <TabsList className="grid grid-cols-3 w-full">
-            <TabsTrigger value="ride" className="text-xs gap-1">
+          <TabsList className="grid grid-cols-3 w-full bg-muted/40">
+            <TabsTrigger value="ride" className="text-xs gap-1 data-[state=active]:bg-gradient-to-br data-[state=active]:from-amber-500/20 data-[state=active]:to-primary/20 data-[state=active]:text-foreground">
               <Car className="w-3.5 h-3.5" /> Ride
             </TabsTrigger>
-            <TabsTrigger value="service" className="text-xs gap-1">
+            <TabsTrigger value="service" className="text-xs gap-1 data-[state=active]:bg-gradient-to-br data-[state=active]:from-amber-500/20 data-[state=active]:to-primary/20 data-[state=active]:text-foreground">
               <Wrench className="w-3.5 h-3.5" /> Service
             </TabsTrigger>
-            <TabsTrigger value="whisperer" className="text-xs gap-1">
+            <TabsTrigger value="whisperer" className="text-xs gap-1 data-[state=active]:bg-gradient-to-br data-[state=active]:from-amber-500/20 data-[state=active]:to-primary/20 data-[state=active]:text-foreground">
               <Ear className="w-3.5 h-3.5" /> Whisperer
             </TabsTrigger>
           </TabsList>
