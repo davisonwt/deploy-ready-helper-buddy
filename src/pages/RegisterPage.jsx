@@ -71,21 +71,22 @@ export default function RegisterPage() {
       return
     }
     
-    // Friendlier password policy (8+ characters)
-    if (formData.password.length < 8) {
-      const msg = "Password must be at least 8 characters long."
+    // Strong password policy: 12+ chars, upper, lower, number, special
+    if (formData.password.length < 12) {
+      const msg = "Password must be at least 12 characters long."
       setError(msg)
       toast({ variant: "destructive", title: "Password too short", description: msg })
       setLoading(false)
       return
     }
-    
-    // Check for password complexity (letter + number)
-    const hasLetter = /[A-Za-z]/.test(formData.password);
+
+    const hasUpper = /[A-Z]/.test(formData.password);
+    const hasLower = /[a-z]/.test(formData.password);
     const hasNumber = /[0-9]/.test(formData.password);
-    
-    if (!hasLetter || !hasNumber) {
-      const msg = "Password must contain both letters and at least one number."
+    const hasSpecial = /[^A-Za-z0-9]/.test(formData.password);
+
+    if (!hasUpper || !hasLower || !hasNumber || !hasSpecial) {
+      const msg = "Password must contain uppercase letters, lowercase letters, numbers, and at least one special character (e.g. !@#$%)."
       setError(msg)
       toast({ variant: "destructive", title: "Password too simple", description: msg })
       setLoading(false)
