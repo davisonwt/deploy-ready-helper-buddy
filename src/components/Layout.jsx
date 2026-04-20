@@ -55,7 +55,7 @@ import { BackButton } from "./navigation/BackButton"
 import { MobileTabBar } from "./navigation/MobileTabBar"
 
 // Layout component as a standard function declaration to avoid any HOC/memo pitfalls
-function Layout({ children }) {
+function Layout({ children, minimal = false }) {
   // All hooks must be at the top level
   const location = useLocation()
   const navigate = useNavigate()
@@ -246,6 +246,7 @@ function Layout({ children }) {
             </div>
             
             {/* Desktop Navigation */}
+            {!minimal && (
             <nav className="hidden md:flex items-center space-x-2">
               {/* Primary Navigation Buttons */}
               {primaryNavigation.map((item) => {
@@ -431,6 +432,7 @@ function Layout({ children }) {
               )}
 
             </nav>
+            )}
             
             <div className="flex items-center space-x-4">
               <div className="hidden md:flex items-center space-x-3 ml-4">
@@ -530,20 +532,22 @@ function Layout({ children }) {
               </div>
               
               {/* Mobile menu button */}
-              <Button
-                variant="ghost"
-                size="icon"
-                className="md:hidden"
-                onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-              >
-                {isMobileMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
-              </Button>
+              {!minimal && (
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="md:hidden"
+                  onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+                >
+                  {isMobileMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+                </Button>
+              )}
             </div>
           </div>
         </div>
         
         {/* Mobile Navigation */}
-        {isMobileMenuOpen && (
+        {!minimal && isMobileMenuOpen && (
           <div className="md:hidden">
             <div 
               className="px-3 pt-3 pb-4 space-y-2 sm:px-4 border-t"
@@ -778,18 +782,22 @@ function Layout({ children }) {
       {/* OnboardingTour rendered at App root only */}
       
       
-      {/* My Garden Panel */}
-      <MyGardenPanel isOpen={isGardenOpen} onClose={() => setIsGardenOpen(false)} />
-      
-      {/* Let It Rain Panel */}
-      <LetItRainPanel isOpen={isLetItRainOpen} onClose={() => setIsLetItRainOpen(false)} />
-      
-      {/* 364yhvh Days Panel */}
-      <YHVHDaysPanel isOpen={isYHVHDaysOpen} onClose={() => setIsYHVHDaysOpen(false)} />
-      
-      
-      {/* Gosat Panel */}
-      <GosatPanel isOpen={isGosatOpen} onClose={() => setIsGosatOpen(false)} />
+      {!minimal && (
+        <>
+          {/* My Garden Panel */}
+          <MyGardenPanel isOpen={isGardenOpen} onClose={() => setIsGardenOpen(false)} />
+          
+          {/* Let It Rain Panel */}
+          <LetItRainPanel isOpen={isLetItRainOpen} onClose={() => setIsLetItRainOpen(false)} />
+          
+          {/* 364yhvh Days Panel */}
+          <YHVHDaysPanel isOpen={isYHVHDaysOpen} onClose={() => setIsYHVHDaysOpen(false)} />
+          
+          
+          {/* Gosat Panel */}
+          <GosatPanel isOpen={isGosatOpen} onClose={() => setIsGosatOpen(false)} />
+        </>
+      )}
 
 
       {/* Mobile Tab Bar */}

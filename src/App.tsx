@@ -570,7 +570,7 @@ const App = () => (
               {/* Financial Routes */}
               <Route path="/tithing" element={
                 <ProtectedRoute>
-                  <Layout>
+                  <Layout minimal>
                     <TithingPage />
                   </Layout>
                 </ProtectedRoute>
@@ -578,7 +578,7 @@ const App = () => (
               
               <Route path="/tithing-2" element={
                 <ProtectedRoute>
-                  <Layout>
+                  <Layout minimal>
                     <TithingPage />
                   </Layout>
                 </ProtectedRoute>
@@ -587,7 +587,7 @@ const App = () => (
               {/* Free Will Gifting */}
               <Route path="/free-will-gifting" element={
                 <ProtectedRoute>
-                  <Layout>
+                  <Layout minimal>
                     <FreeWillGiftingPage />
                   </Layout>
                 </ProtectedRoute>
@@ -605,7 +605,7 @@ const App = () => (
               {/* 364yhvh Orchards */}
               <Route path="/364yhvh-orchards" element={
                 <ProtectedRoute>
-                  <Layout>
+                  <Layout minimal>
                     <YhvhOrchardsPage />
                   </Layout>
                 </ProtectedRoute>
@@ -881,7 +881,7 @@ const App = () => (
               {/* Support Us */}
               <Route path="/support-us" element={
                 <ProtectedRoute>
-                  <Layout>
+                  <Layout minimal>
                     <Suspense fallback={<div>Loading...</div>}>
                       <SupportUsPage />
                     </Suspense>
