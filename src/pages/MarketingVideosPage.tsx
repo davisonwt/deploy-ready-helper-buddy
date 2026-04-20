@@ -355,20 +355,7 @@ export default function MarketingVideosPage() {
                     </span>
                   )}
 
-                  {/* S2G logo — top-left badge, consistent across every card */}
-                  {b.available && (
-                    <div
-                      className="absolute top-2 left-2 z-20 w-9 h-9 md:w-10 md:h-10 rounded-full overflow-hidden shadow-lg ring-2 ring-white/70 bg-white"
-                      aria-hidden="true"
-                    >
-                      <img
-                        src="/lovable-uploads/s2g-logo.jpg"
-                        alt=""
-                        className="w-full h-full object-cover"
-                        loading="lazy"
-                      />
-                    </div>
-                  )}
+                  {/* S2G logo overlay removed — the video itself already shows the sow2grow brand */}
 
                   {/* Top-right corner CTA — recipient-facing on shared videos.
                       Tapping it opens our /become-a-sower landing page with
