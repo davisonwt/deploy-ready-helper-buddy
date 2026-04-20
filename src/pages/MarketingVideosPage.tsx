@@ -8,7 +8,7 @@
  * stays attached.
  */
 import { Link } from "react-router-dom";
-import { ArrowLeft, Download, Loader2, CheckCircle2, AlertCircle, Sparkles, Play, X, Share2, Copy, Mail, MessageCircle, Send, Facebook, Twitter } from "lucide-react";
+import { ArrowLeft, Download, Loader2, CheckCircle2, AlertCircle, Sparkles, Play, X, Share2, Copy, Mail, MessageCircle, Send, Facebook, Twitter, Sprout } from "lucide-react";
 import { useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -86,14 +86,20 @@ export default function MarketingVideosPage() {
     });
   };
 
+  // The recipient's CTA link — opens our /become-a-sower landing page,
+  // pre-loaded with the inviter's referral code so attribution sticks.
+  const sowerCtaUrl = code
+    ? `https://sow2growapp.com/become-a-sower?ref=${encodeURIComponent(code)}`
+    : "https://sow2growapp.com/become-a-sower";
+
   const buildShareText = (banner: BannerVideo) =>
-    `${banner.emoji} ${banner.title} — ${banner.subtitle}\n\nJoin my S2G tribe${inviterName ? ` (${inviterName})` : ""}: ${shareUrl}`;
+    `${banner.emoji} ${banner.title} — ${banner.subtitle}\n\nJoin my S2G tribe${inviterName ? ` (${inviterName})` : ""} & become a Sower:\n👉 ${sowerCtaUrl}`;
 
   const handleNativeShare = async (banner: BannerVideo) => {
     const text = buildShareText(banner);
     if (typeof navigator !== "undefined" && (navigator as any).share) {
       try {
-        await (navigator as any).share({ title: `S2G · ${banner.title}`, text, url: shareUrl });
+        await (navigator as any).share({ title: `S2G · ${banner.title}`, text, url: sowerCtaUrl });
         return;
       } catch {
         // user cancelled or share unavailable — fall through to copy
@@ -122,8 +128,8 @@ export default function MarketingVideosPage() {
 
   const copyShareLink = async () => {
     try {
-      await navigator.clipboard.writeText(shareUrl);
-      toast.success("Tribe invite link copied!");
+      await navigator.clipboard.writeText(sowerCtaUrl);
+      toast.success("Sower invite link copied!");
     } catch {
       toast.error("Couldn't copy link");
     }
@@ -202,9 +208,32 @@ export default function MarketingVideosPage() {
                     <div className="w-full h-full flex items-center justify-center text-5xl opacity-60">{b.emoji}</div>
                   )}
                   {!b.available && (
-                    <span className="absolute top-2 right-2 text-[10px] uppercase tracking-wider px-2 py-1 rounded-full font-bold" style={{ background: theme.secondaryButton, color: theme.textPrimary }}>
+                    <span className="absolute top-2 left-2 text-[10px] uppercase tracking-wider px-2 py-1 rounded-full font-bold z-10" style={{ background: theme.secondaryButton, color: theme.textPrimary }}>
                       Coming soon
                     </span>
+                  )}
+
+                  {/* Top-right corner CTA — recipient-facing on shared videos.
+                      Tapping it opens our /become-a-sower landing page with
+                      the inviter's referral code pre-attached. */}
+                  {b.available && (
+                    <a
+                      href={sowerCtaUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      onClick={(e) => e.stopPropagation()}
+                      className="absolute top-2 right-2 z-20 inline-flex items-center gap-1 px-2.5 py-1.5 rounded-full text-[10px] md:text-[11px] font-bold uppercase tracking-wider shadow-lg backdrop-blur-md hover:scale-105 transition-transform"
+                      style={{
+                        background: theme.primaryButton,
+                        color: theme.textPrimary,
+                        boxShadow: `0 4px 12px ${theme.shadow}`,
+                      }}
+                      aria-label="Become an S2G Sower"
+                    >
+                      <Sprout className="w-3 h-3 md:w-3.5 md:h-3.5" />
+                      <span className="hidden sm:inline">Become an S2G Sower</span>
+                      <span className="sm:hidden">Become a Sower</span>
+                    </a>
                   )}
                 </div>
                 <CardContent className="p-4 space-y-3">
@@ -293,7 +322,7 @@ export default function MarketingVideosPage() {
                           </button>
                           <button
                             type="button"
-                            onClick={() => openExternalShare(`https://t.me/share/url?url=${encodeURIComponent(shareUrl)}&text=${encodeURIComponent(buildShareText(b))}`)}
+                            onClick={() => openExternalShare(`https://t.me/share/url?url=${encodeURIComponent(sowerCtaUrl)}&text=${encodeURIComponent(buildShareText(b))}`)}
                             className="w-full flex items-center gap-2 px-2 py-2 rounded-md text-sm hover:bg-white/10 transition-colors"
                           >
                             <Send className="w-4 h-4" style={{ color: "#0088cc" }} /> Telegram
@@ -307,7 +336,7 @@ export default function MarketingVideosPage() {
                           </button>
                           <button
                             type="button"
-                            onClick={() => openExternalShare(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(shareUrl)}&quote=${encodeURIComponent(buildShareText(b))}`)}
+                            onClick={() => openExternalShare(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(sowerCtaUrl)}&quote=${encodeURIComponent(buildShareText(b))}`)}
                             className="w-full flex items-center gap-2 px-2 py-2 rounded-md text-sm hover:bg-white/10 transition-colors"
                           >
                             <Facebook className="w-4 h-4" style={{ color: "#1877F2" }} /> Facebook
