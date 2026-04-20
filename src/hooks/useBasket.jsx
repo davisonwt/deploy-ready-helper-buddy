@@ -17,7 +17,17 @@ export const BasketProvider = ({ children }) => {
   useEffect(() => {
     const savedBasket = localStorage.getItem('sowBasket')
     if (savedBasket) {
-      setBasketItems(JSON.parse(savedBasket))
+      const parsedBasket = JSON.parse(savedBasket)
+      const normalizedBasket = parsedBasket.map((item) => ({
+        ...item,
+        type: item.type
+          ?? (item.orchardId === 'tithing'
+            ? 'tithing'
+            : item.orchardId === 'free-will-gift'
+              ? 'free_will_gift'
+              : 'orchard'),
+      }))
+      setBasketItems(normalizedBasket)
     }
   }, [])
   

@@ -60,7 +60,14 @@ export default function BasketPage() {
       return
     }
 
-    const basketTypes = [...new Set(basketItems.map((item) => item.type || 'orchard'))]
+    const resolveBasketItemType = (item) => {
+      if (item?.type) return item.type
+      if (item?.orchardId === 'tithing') return 'tithing'
+      if (item?.orchardId === 'free-will-gift') return 'free_will_gift'
+      return 'orchard'
+    }
+
+    const basketTypes = [...new Set(basketItems.map(resolveBasketItemType))]
     if (basketTypes.length > 1) {
       toast({
         title: "Separate checkout needed",
