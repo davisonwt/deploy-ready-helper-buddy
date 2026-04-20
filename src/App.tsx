@@ -109,6 +109,7 @@ const MyS2GTribePage = lazy(() => import("./pages/MyReferralCirclePage"));
 const MarketingVideosPage = lazy(() => import("./pages/MarketingVideosPage"));
 const GosatWalletsPage = lazy(() => import("./pages/GosatWalletsPage"));
 const GoSatChatPage = lazy(() => import("./pages/GoSatChatPage"));
+const AdminCreateUserPage = lazy(() => import("./pages/AdminCreateUserPage"));
 // BinancePayTestPage removed - using NOWPayments only
 const SowerProfile = lazy(() => import("./pages/SowerProfile"));
 const PublicProfilePage = lazy(() => import("./pages/PublicProfilePage"));
@@ -913,6 +914,17 @@ const App = () => (
                   <Suspense fallback={<LoadingFallback />}>
                     <GoSatChatPage />
                   </Suspense>
+                </ProtectedRoute>
+              } />
+
+              {/* Admin manual user registration */}
+              <Route path="/admin/create-user" element={
+                <ProtectedRoute allowedRoles={['admin', 'gosat']}>
+                  <Layout>
+                    <Suspense fallback={<LoadingFallback />}>
+                      <AdminCreateUserPage />
+                    </Suspense>
+                  </Layout>
                 </ProtectedRoute>
               } />
               
