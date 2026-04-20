@@ -15,6 +15,7 @@ import AudioUnlocker from "./components/audio/AudioUnlocker";
 import SoundUnlockBanner from "./components/audio/SoundUnlockBanner";
 import NotificationPrompt from "./components/NotificationPrompt";
 const InstallAppPage = lazy(() => import('./pages/InstallAppPage'));
+const BecomeSowerPage = lazy(() => import('./pages/BecomeSowerPage'));
 
 // Lazy load heavy components for better performance
 const EnhancedAnalyticsDashboard = lazy(() => import('./components/admin/EnhancedAnalyticsDashboard'));
@@ -385,6 +386,9 @@ const App = () => (
                   </RequireVerification>
                 </ProtectedRoute>
               } />
+
+              {/* Public CTA landing page from shared marketing videos */}
+              <Route path="/become-a-sower" element={<BecomeSowerPage />} />
 
               {/* Tribal Marketing Videos */}
               <Route path="/marketing-videos" element={
