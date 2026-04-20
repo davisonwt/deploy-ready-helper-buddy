@@ -64,25 +64,30 @@ export default function RegisterPage() {
     
     // Validation
     if (formData.password !== formData.confirmPassword) {
-      setError("Passwords do not match")
+      const msg = "Passwords do not match. Please re-type the same password in both boxes."
+      setError(msg)
+      toast({ variant: "destructive", title: "Passwords don't match", description: msg })
       setLoading(false)
       return
     }
     
-    // Stronger password policy (12+ characters)
-    if (formData.password.length < 12) {
-      setError("Password must be at least 12 characters for security")
+    // Friendlier password policy (8+ characters)
+    if (formData.password.length < 8) {
+      const msg = "Password must be at least 8 characters long."
+      setError(msg)
+      toast({ variant: "destructive", title: "Password too short", description: msg })
       setLoading(false)
       return
     }
     
-    // Check for password complexity
-    const hasUpperCase = /[A-Z]/.test(formData.password);
-    const hasLowerCase = /[a-z]/.test(formData.password);
+    // Check for password complexity (letter + number)
+    const hasLetter = /[A-Za-z]/.test(formData.password);
     const hasNumber = /[0-9]/.test(formData.password);
     
-    if (!hasUpperCase || !hasLowerCase || !hasNumber) {
-      setError("Password must contain uppercase, lowercase, and numbers")
+    if (!hasLetter || !hasNumber) {
+      const msg = "Password must contain both letters and at least one number."
+      setError(msg)
+      toast({ variant: "destructive", title: "Password too simple", description: msg })
       setLoading(false)
       return
     }
@@ -185,13 +190,37 @@ export default function RegisterPage() {
         // Navigate to security questions setup instead of chatapp
         navigate("/security-questions-setup")
       } else {
-        setError(result.error || "Registration failed")
+        const raw = (result.error || "Registration failed").toString()
+        const lower = raw.toLowerCase()
+        let friendly = raw
+        if (lower.includes('already') && (lower.includes('registered') || lower.includes('exists') || lower.includes('user'))) {
+          friendly = "An account with this email already exists. Please log in instead."
+        } else if (lower.includes('password') && lower.includes('weak')) {
+          friendly = "Password is too weak. Use at least 8 characters with letters and numbers."
+        } else if (lower.includes('rate') || lower.includes('too many')) {
+          friendly = "Too many attempts. Please wait a few minutes and try again."
+        } else if (lower.includes('invalid') && lower.includes('email')) {
+          friendly = "That email address looks invalid. Please double-check it."
+        }
+        setError(friendly)
+        toast({ variant: "destructive", title: "Registration failed", description: friendly })
       }
     } catch (err) {
-      setError("An unexpected error occurred")
+      const msg = err?.message || "An unexpected error occurred. Please try again."
+      setError(msg)
+      toast({ variant: "destructive", title: "Something went wrong", description: msg })
     } finally {
       setLoading(false)
     }
+  }
+  
+  // Real-time password feedback
+  const pwd = formData.password || ""
+  const pwdChecks = {
+    length: pwd.length >= 8,
+    letter: /[A-Za-z]/.test(pwd),
+    number: /[0-9]/.test(pwd),
+    match: pwd.length > 0 && pwd === formData.confirmPassword,
   }
   
   return (
@@ -287,7 +316,7 @@ export default function RegisterPage() {
                     </div>
                     <div className="ml-3">
                       <p className="text-sm text-red-800 font-medium">{error}</p>
-                      {error.includes('already exists') && (
+                      {(error.toLowerCase().includes('already') || error.toLowerCase().includes('exists') || error.toLowerCase().includes('log in')) && (
                         <div className="mt-2">
                           <Link 
                             to="/login" 
@@ -487,8 +516,19 @@ export default function RegisterPage() {
                     {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
                   </button>
                 </div>
+                {/* Live password requirements - so users (like Frank) know exactly what's expected */}
+                <ul className="mt-2 grid grid-cols-1 sm:grid-cols-3 gap-1 text-xs">
+                  <li className={pwdChecks.length ? "text-emerald-400" : "text-slate-400"}>
+                    {pwdChecks.length ? "✓" : "•"} At least 8 characters
+                  </li>
+                  <li className={pwdChecks.letter ? "text-emerald-400" : "text-slate-400"}>
+                    {pwdChecks.letter ? "✓" : "•"} Contains a letter
+                  </li>
+                  <li className={pwdChecks.number ? "text-emerald-400" : "text-slate-400"}>
+                    {pwdChecks.number ? "✓" : "•"} Contains a number
+                  </li>
+                </ul>
               </div>
-              
               <div className="space-y-2">
                 <label htmlFor="confirmPassword" className="text-sm font-semibold text-white">
                   Confirm Password
