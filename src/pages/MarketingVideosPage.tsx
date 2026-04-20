@@ -86,14 +86,20 @@ export default function MarketingVideosPage() {
     });
   };
 
+  // The recipient's CTA link — opens our /become-a-sower landing page,
+  // pre-loaded with the inviter's referral code so attribution sticks.
+  const sowerCtaUrl = code
+    ? `https://sow2growapp.com/become-a-sower?ref=${encodeURIComponent(code)}`
+    : "https://sow2growapp.com/become-a-sower";
+
   const buildShareText = (banner: BannerVideo) =>
-    `${banner.emoji} ${banner.title} — ${banner.subtitle}\n\nJoin my S2G tribe${inviterName ? ` (${inviterName})` : ""}: ${shareUrl}`;
+    `${banner.emoji} ${banner.title} — ${banner.subtitle}\n\nJoin my S2G tribe${inviterName ? ` (${inviterName})` : ""} & become a Sower:\n👉 ${sowerCtaUrl}`;
 
   const handleNativeShare = async (banner: BannerVideo) => {
     const text = buildShareText(banner);
     if (typeof navigator !== "undefined" && (navigator as any).share) {
       try {
-        await (navigator as any).share({ title: `S2G · ${banner.title}`, text, url: shareUrl });
+        await (navigator as any).share({ title: `S2G · ${banner.title}`, text, url: sowerCtaUrl });
         return;
       } catch {
         // user cancelled or share unavailable — fall through to copy
