@@ -235,6 +235,6 @@ export default function BecomeWhispererPage() {
           }}
         />
       </div>
-    </div>
+    </FormShell>
   );
 }
