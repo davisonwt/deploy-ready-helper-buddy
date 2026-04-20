@@ -499,6 +499,9 @@ export default function RegisterPage() {
                 <label htmlFor="password" className="text-sm font-semibold text-white">
                   Password
                 </label>
+                <p className="text-xs text-amber-200/90 bg-amber-900/20 border border-amber-500/30 rounded-md px-3 py-2">
+                  Your password must be <strong>at least 12 characters</strong> and include <strong>capital letters</strong>, <strong>small letters</strong>, <strong>numbers</strong> and at least one <strong>special character</strong> (e.g. ! @ # $ % &amp; *).
+                </p>
                 <div className="relative">
                   <Lock className="absolute left-4 top-1/2 transform -translate-y-1/2 h-5 w-5 text-slate-400 z-10" />
                   <input
@@ -508,7 +511,7 @@ export default function RegisterPage() {
                     value={formData.password}
                     onChange={handleChange}
                     className="w-full pl-12 pr-12 py-3 border-2 border-slate-600 bg-slate-700/80 rounded-xl focus:ring-2 focus:ring-green-400 focus:border-green-400 transition-all duration-300 text-white placeholder:text-slate-400 hover:border-slate-500 shadow-sm hover:shadow-md text-center"
-                    placeholder="Create a secure password"
+                    placeholder="At least 12 chars: Aa1! …"
                     required
                   />
                   <button
@@ -519,16 +522,22 @@ export default function RegisterPage() {
                     {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
                   </button>
                 </div>
-                {/* Live password requirements - so users (like Frank) know exactly what's expected */}
-                <ul className="mt-2 grid grid-cols-1 sm:grid-cols-3 gap-1 text-xs">
+                {/* Live password requirements */}
+                <ul className="mt-2 grid grid-cols-2 sm:grid-cols-5 gap-1 text-xs">
                   <li className={pwdChecks.length ? "text-emerald-400" : "text-slate-400"}>
-                    {pwdChecks.length ? "✓" : "•"} At least 8 characters
+                    {pwdChecks.length ? "✓" : "•"} 12+ characters
                   </li>
-                  <li className={pwdChecks.letter ? "text-emerald-400" : "text-slate-400"}>
-                    {pwdChecks.letter ? "✓" : "•"} Contains a letter
+                  <li className={pwdChecks.upper ? "text-emerald-400" : "text-slate-400"}>
+                    {pwdChecks.upper ? "✓" : "•"} Capital letter
+                  </li>
+                  <li className={pwdChecks.lower ? "text-emerald-400" : "text-slate-400"}>
+                    {pwdChecks.lower ? "✓" : "•"} Small letter
                   </li>
                   <li className={pwdChecks.number ? "text-emerald-400" : "text-slate-400"}>
-                    {pwdChecks.number ? "✓" : "•"} Contains a number
+                    {pwdChecks.number ? "✓" : "•"} Number
+                  </li>
+                  <li className={pwdChecks.special ? "text-emerald-400" : "text-slate-400"}>
+                    {pwdChecks.special ? "✓" : "•"} Special char
                   </li>
                 </ul>
               </div>
