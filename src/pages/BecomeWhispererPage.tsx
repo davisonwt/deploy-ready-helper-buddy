@@ -8,8 +8,9 @@ import { WhispererReferralLinks } from '@/components/whisperers/WhispererReferra
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Megaphone, TrendingUp, Users, DollarSign, ArrowLeft, CheckCircle, Loader2 } from 'lucide-react';
+import { Megaphone, TrendingUp, Users, DollarSign, CheckCircle, Loader2, Sparkles } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { FormShell } from '@/components/forms';
 
 interface WhispererProfile {
   id: string;
