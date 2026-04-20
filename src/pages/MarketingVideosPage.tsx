@@ -183,7 +183,7 @@ export default function MarketingVideosPage() {
       if (!prepared) return;
 
       const message = `${buildShareText(banner)}\n\n🎬 Video:\n${prepared.hostedUrl}`;
-      openExternalShare(`https://api.whatsapp.com/send?text=${encodeURIComponent(message)}`);
+      window.location.href = `https://api.whatsapp.com/send?text=${encodeURIComponent(message)}`;
       toast.success("WhatsApp share is ready.");
     } catch (e) {
       console.error("[marketing-videos] whatsapp share failed", e);
