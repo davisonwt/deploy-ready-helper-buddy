@@ -142,7 +142,7 @@ export function WelcomeAbout({ onEnter }: Props) {
         </Button>
 
         <p className="mt-8 text-[11px] uppercase tracking-[0.22em] text-white/40">
-          Find Your Tribe · Grow Together
+          Find Your souls flame · Grow Together into your tribe
         </p>
       </div>
     </div>
