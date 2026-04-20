@@ -316,7 +316,7 @@ export default function RegisterPage() {
                     </div>
                     <div className="ml-3">
                       <p className="text-sm text-red-800 font-medium">{error}</p>
-                      {error.includes('already exists') && (
+                      {(error.toLowerCase().includes('already') || error.toLowerCase().includes('exists') || error.toLowerCase().includes('log in')) && (
                         <div className="mt-2">
                           <Link 
                             to="/login" 
