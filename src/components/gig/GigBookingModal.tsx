@@ -196,15 +196,24 @@ export const GigBookingModal: React.FC<GigBookingModalProps> = ({
 
         <div className="px-6 pb-6 pt-4">
         <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as typeof activeTab)}>
-          <TabsList className="grid grid-cols-3 w-full bg-muted/40">
-            <TabsTrigger value="ride" className="text-xs gap-1 data-[state=active]:bg-gradient-to-br data-[state=active]:from-amber-500/20 data-[state=active]:to-primary/20 data-[state=active]:text-foreground">
-              <Car className="w-3.5 h-3.5" /> Ride
+          <TabsList className="grid grid-cols-3 w-full gap-1 bg-amber-950/30 border border-amber-500/20 p-1.5 h-auto">
+            <TabsTrigger
+              value="ride"
+              className="text-sm font-semibold gap-1.5 rounded-xl py-2.5 text-amber-100/70 hover:text-amber-50 transition-all data-[state=active]:bg-gradient-to-br data-[state=active]:from-amber-500 data-[state=active]:via-amber-600 data-[state=active]:to-orange-600 data-[state=active]:text-white data-[state=active]:shadow-[0_4px_16px_-4px_hsl(var(--amber-500)/0.6)] data-[state=active]:scale-100"
+            >
+              <Car className="w-4 h-4" /> Ride
             </TabsTrigger>
-            <TabsTrigger value="service" className="text-xs gap-1 data-[state=active]:bg-gradient-to-br data-[state=active]:from-amber-500/20 data-[state=active]:to-primary/20 data-[state=active]:text-foreground">
-              <Wrench className="w-3.5 h-3.5" /> Service
+            <TabsTrigger
+              value="service"
+              className="text-sm font-semibold gap-1.5 rounded-xl py-2.5 text-amber-100/70 hover:text-amber-50 transition-all data-[state=active]:bg-gradient-to-br data-[state=active]:from-amber-500 data-[state=active]:via-amber-600 data-[state=active]:to-orange-600 data-[state=active]:text-white data-[state=active]:shadow-[0_4px_16px_-4px_hsl(var(--amber-500)/0.6)] data-[state=active]:scale-100"
+            >
+              <Wrench className="w-4 h-4" /> Service
             </TabsTrigger>
-            <TabsTrigger value="whisperer" className="text-xs gap-1 data-[state=active]:bg-gradient-to-br data-[state=active]:from-amber-500/20 data-[state=active]:to-primary/20 data-[state=active]:text-foreground">
-              <Ear className="w-3.5 h-3.5" /> Whisperer
+            <TabsTrigger
+              value="whisperer"
+              className="text-sm font-semibold gap-1.5 rounded-xl py-2.5 text-amber-100/70 hover:text-amber-50 transition-all data-[state=active]:bg-gradient-to-br data-[state=active]:from-amber-500 data-[state=active]:via-amber-600 data-[state=active]:to-orange-600 data-[state=active]:text-white data-[state=active]:shadow-[0_4px_16px_-4px_hsl(var(--amber-500)/0.6)] data-[state=active]:scale-100"
+            >
+              <Ear className="w-4 h-4" /> Whisperer
             </TabsTrigger>
           </TabsList>
 
