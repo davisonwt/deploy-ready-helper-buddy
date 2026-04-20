@@ -73,7 +73,7 @@ const BANNERS: BannerVideo[] = [
 export default function MarketingVideosPage() {
   const theme = getCurrentTheme();
   const { code, inviterName, shareUrl, loading: refLoading } = useMyReferralCode();
-  const { burnAndDownload, progress, stage, error, reset } = useReferralVideoBurner();
+  const { burnAndDownload, burnToFile, progress, stage, error, reset } = useReferralVideoBurner();
   const [activeId, setActiveId] = useState<string | null>(null);
   const [previewing, setPreviewing] = useState<BannerVideo | null>(null);
 
