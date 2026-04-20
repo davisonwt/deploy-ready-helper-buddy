@@ -67,9 +67,9 @@ export const GigActionCards: React.FC<GigActionCardsProps> = ({ theme }) => {
   ];
 
   const connectCards = [
-    { key: 'farmer', emoji: '🌾', label: 'The Wandering Field', desc: 'Fresh produce', img: connectFarmerImg, video: '/videos/banners/wandering-field-book.mp4', href: '/products?provider=farmer' },
-    { key: 'homesteader', emoji: '🏡', label: 'The Wandering Hearth', desc: 'Handmade goods', img: connectHomesteaderImg, video: '/videos/banners/wandering-hearth-book.mp4', href: '/products?provider=homesteader' },
-    { key: 'manufacturer', emoji: '🏭', label: 'The Wandering Forge', desc: 'Produce at scale', img: connectManufacturerImg, video: '/videos/banners/wandering-forge-book.mp4', href: '/products?provider=manufacturer' },
+    { key: 'farmer', emoji: '🌾', label: 'The Wandering Field', desc: 'Fresh produce', img: connectFarmerImg, video: '/videos/banners/wandering-field-book.mp4', href: '/providers?type=farmer' },
+    { key: 'homesteader', emoji: '🏡', label: 'The Wandering Hearth', desc: 'Handmade goods', img: connectHomesteaderImg, video: '/videos/banners/wandering-hearth-book.mp4', href: '/providers?type=homesteader' },
+    { key: 'manufacturer', emoji: '🏭', label: 'The Wandering Forge', desc: 'Produce at scale', img: connectManufacturerImg, video: '/videos/banners/wandering-forge-book.mp4', href: '/providers?type=manufacturer' },
   ];
 
   const becomeCards = [
