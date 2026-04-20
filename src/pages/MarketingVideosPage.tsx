@@ -380,7 +380,7 @@ export default function MarketingVideosPage() {
                           </button>
                           <button
                             type="button"
-                            onClick={() => openExternalShare(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(sowerCtaUrl)}&quote=${encodeURIComponent(buildShareText(b))}`)}
+                            onClick={() => openExternalShare(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(ctaUrlFor(b))}&quote=${encodeURIComponent(buildShareText(b))}`)}
                             className="w-full flex items-center gap-2 px-2 py-2 rounded-md text-sm hover:bg-white/10 transition-colors"
                           >
                             <Facebook className="w-4 h-4" style={{ color: "#1877F2" }} /> Facebook
