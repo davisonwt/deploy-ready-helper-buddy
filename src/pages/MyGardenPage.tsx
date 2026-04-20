@@ -235,11 +235,14 @@ function OrchardCard({ orchard, onRefresh }: { orchard: any; onRefresh: () => vo
 }
 
 function SeedCard({ seed, onRefresh }: { seed: any; onRefresh: () => void }) {
+  // Prefer the freshly generated AI cover (image_urls[0]) over the legacy cover_image_url,
+  // matching the social feed behavior so music singles show their unique covers here too.
+  const coverSrc = (Array.isArray(seed.image_urls) && seed.image_urls[0]) || seed.cover_image_url;
   return (
     <Card className="bg-white/10 border-white/20 overflow-hidden">
       <div className="h-32 relative">
-        {seed.cover_image_url ? (
-          <img src={seed.cover_image_url} alt={seed.title} className="w-full h-full object-cover" />
+        {coverSrc ? (
+          <img src={coverSrc} alt={seed.title} className="w-full h-full object-cover" />
         ) : (
           <GradientPlaceholder title={seed.title} />
         )}
@@ -259,11 +262,12 @@ function SeedCard({ seed, onRefresh }: { seed: any; onRefresh: () => void }) {
 }
 
 function BookCard({ book }: { book: any }) {
+  const coverSrc = (Array.isArray(book.image_urls) && book.image_urls[0]) || book.cover_image_url;
   return (
     <Card className="bg-white/10 border-white/20 overflow-hidden">
       <div className="h-32 relative">
-        {book.cover_image_url ? (
-          <img src={book.cover_image_url} alt={book.title} className="w-full h-full object-cover" />
+        {coverSrc ? (
+          <img src={coverSrc} alt={book.title} className="w-full h-full object-cover" />
         ) : (
           <GradientPlaceholder title={book.title} />
         )}
