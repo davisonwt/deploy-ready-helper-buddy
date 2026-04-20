@@ -366,7 +366,7 @@ export default function MarketingVideosPage() {
                           </button>
                           <button
                             type="button"
-                            onClick={() => openExternalShare(`https://t.me/share/url?url=${encodeURIComponent(sowerCtaUrl)}&text=${encodeURIComponent(buildShareText(b))}`)}
+                            onClick={() => openExternalShare(`https://t.me/share/url?url=${encodeURIComponent(ctaUrlFor(b))}&text=${encodeURIComponent(buildShareText(b))}`)}
                             className="w-full flex items-center gap-2 px-2 py-2 rounded-md text-sm hover:bg-white/10 transition-colors"
                           >
                             <Send className="w-4 h-4" style={{ color: "#0088cc" }} /> Telegram
