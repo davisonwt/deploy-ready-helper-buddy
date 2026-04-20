@@ -108,7 +108,16 @@ export default function MarketingVideosPage() {
   };
 
   const openExternalShare = (url: string) => {
-    window.open(url, "_blank", "noopener,noreferrer");
+    // Use a temporary anchor + click instead of window.open to avoid
+    // Cross-Origin-Opener-Policy (COOP) mismatches that Firefox throws
+    // when popping up sites like WhatsApp Web from a COOP-protected page.
+    const a = document.createElement("a");
+    a.href = url;
+    a.target = "_blank";
+    a.rel = "noopener noreferrer";
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
   };
 
   const copyShareLink = async () => {
@@ -277,7 +286,7 @@ export default function MarketingVideosPage() {
                           </button>
                           <button
                             type="button"
-                            onClick={() => openExternalShare(`https://wa.me/?text=${encodeURIComponent(buildShareText(b))}`)}
+                            onClick={() => openExternalShare(`https://api.whatsapp.com/send?text=${encodeURIComponent(buildShareText(b))}`)}
                             className="w-full flex items-center gap-2 px-2 py-2 rounded-md text-sm hover:bg-white/10 transition-colors"
                           >
                             <MessageCircle className="w-4 h-4" style={{ color: "#25D366" }} /> WhatsApp
