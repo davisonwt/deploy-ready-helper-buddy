@@ -192,6 +192,7 @@ const SowerStaysDashboard = lazy(() => import("./pages/SowerStaysDashboard"));
 const RegisterProviderPage = lazy(() => import("./pages/RegisterProviderPage"));
 const ProviderDashboardPage = lazy(() => import("./pages/ProviderDashboardPage"));
 const ProviderCatalogPage = lazy(() => import("./pages/ProviderCatalogPage"));
+const ProvidersDirectoryPage = lazy(() => import("./pages/ProvidersDirectoryPage"));
 const BuyerOrdersPage = lazy(() => import("./pages/BuyerOrdersPage"));
 
 
@@ -1119,6 +1120,15 @@ const App = () => (
                   <Suspense fallback={<LoadingFallback />}>
                     <ProviderDashboardPage />
                   </Suspense>
+                </ProtectedRoute>
+              } />
+              <Route path="/providers" element={
+                <ProtectedRoute>
+                  <Layout>
+                    <Suspense fallback={<LoadingFallback />}>
+                      <ProvidersDirectoryPage />
+                    </Suspense>
+                  </Layout>
                 </ProtectedRoute>
               } />
               <Route path="/provider/:providerId" element={
