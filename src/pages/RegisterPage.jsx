@@ -197,7 +197,7 @@ export default function RegisterPage() {
         if (lower.includes('already') && (lower.includes('registered') || lower.includes('exists') || lower.includes('user'))) {
           friendly = "An account with this email already exists. Please log in instead."
         } else if (lower.includes('password') && lower.includes('weak')) {
-          friendly = "Password is too weak. Use at least 8 characters with letters and numbers."
+          friendly = "Password is too weak. Use at least 12 characters with uppercase, lowercase, numbers and a special character."
         } else if (lower.includes('rate') || lower.includes('too many')) {
           friendly = "Too many attempts. Please wait a few minutes and try again."
         } else if (lower.includes('invalid') && lower.includes('email')) {
