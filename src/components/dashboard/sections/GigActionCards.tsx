@@ -158,8 +158,8 @@ export const GigActionCards: React.FC<GigActionCardsProps> = ({ theme }) => {
                                 size="sm"
                                 onClick={() => setPlayingBook(card.key)}
                                 disabled={!cardVideo}
-                                className="flex-1 h-9 font-semibold !text-white !border-0 disabled:opacity-40 !bg-none"
-                                style={{ backgroundImage: 'linear-gradient(135deg, #c026d3, #7c3aed)', backgroundColor: 'transparent' }}
+                                className="flex-1 h-9 font-semibold !text-white !border-0 disabled:opacity-40 !bg-none shadow-md hover:shadow-lg transition-shadow"
+                                style={{ backgroundImage: 'linear-gradient(135deg, #134e4a, #155e75)', backgroundColor: 'transparent' }}
                               >
                                 <Play className="w-4 h-4 mr-1.5 fill-current" />
                                 Play
@@ -167,8 +167,8 @@ export const GigActionCards: React.FC<GigActionCardsProps> = ({ theme }) => {
                               <Button
                                 size="sm"
                                 onClick={card.onClick}
-                                className="flex-1 h-9 font-semibold !text-white !border-0 !bg-none"
-                                style={{ backgroundImage: 'linear-gradient(135deg, #0d9488, #06b6d4)', backgroundColor: 'transparent' }}
+                                className="flex-1 h-9 font-semibold !text-white !border-0 !bg-none shadow-md hover:shadow-lg transition-shadow"
+                                style={{ backgroundImage: 'linear-gradient(135deg, #14b8a6, #06b6d4)', backgroundColor: 'transparent' }}
                               >
                                 <Calendar className="w-4 h-4 mr-1.5" />
                                 Book
@@ -261,8 +261,8 @@ export const GigActionCards: React.FC<GigActionCardsProps> = ({ theme }) => {
                                 size="sm"
                                 onClick={() => setPlayingBook(`connect-${card.key}`)}
                                 disabled={!cardVideo}
-                                className="flex-1 h-9 font-semibold !text-white !border-0 disabled:opacity-40 !bg-none"
-                                style={{ backgroundImage: 'linear-gradient(135deg, #c026d3, #7c3aed)', backgroundColor: 'transparent' }}
+                                className="flex-1 h-9 font-semibold !text-white !border-0 disabled:opacity-40 !bg-none shadow-md hover:shadow-lg transition-shadow"
+                                style={{ backgroundImage: 'linear-gradient(135deg, #064e3b, #065f46)', backgroundColor: 'transparent' }}
                               >
                                 <Play className="w-4 h-4 mr-1.5 fill-current" />
                                 Play
@@ -270,7 +270,7 @@ export const GigActionCards: React.FC<GigActionCardsProps> = ({ theme }) => {
                               <Button
                                 size="sm"
                                 onClick={() => navigate(card.href)}
-                                className="flex-1 h-9 font-semibold !text-white !border-0 !bg-none"
+                                className="flex-1 h-9 font-semibold !text-white !border-0 !bg-none shadow-md hover:shadow-lg transition-shadow"
                                 style={{ backgroundImage: 'linear-gradient(135deg, #059669, #10b981)', backgroundColor: 'transparent' }}
                               >
                                 <UserPlus className="w-4 h-4 mr-1.5" />
@@ -363,8 +363,8 @@ export const GigActionCards: React.FC<GigActionCardsProps> = ({ theme }) => {
                                 size="sm"
                                 onClick={() => setPlayingBanner(card.label)}
                                 disabled={!card.video}
-                                className="flex-1 h-9 font-semibold !text-white !border-0 disabled:opacity-40 !bg-none"
-                                style={{ backgroundImage: 'linear-gradient(135deg, #c026d3, #7c3aed)', backgroundColor: 'transparent' }}
+                                className="flex-1 h-9 font-semibold !text-white !border-0 disabled:opacity-40 !bg-none shadow-md hover:shadow-lg transition-shadow"
+                                style={{ backgroundImage: 'linear-gradient(135deg, #4c1d95, #5b21b6)', backgroundColor: 'transparent' }}
                               >
                                 <Play className="w-4 h-4 mr-1.5 fill-current" />
                                 Play
@@ -372,7 +372,7 @@ export const GigActionCards: React.FC<GigActionCardsProps> = ({ theme }) => {
                               <Button
                                 size="sm"
                                 onClick={() => navigate(card.href)}
-                                className="flex-1 h-9 font-semibold !text-white !border-0"
+                                className="flex-1 h-9 font-semibold !text-white !border-0 shadow-md hover:shadow-lg transition-shadow"
                                 style={{ backgroundImage: 'linear-gradient(135deg, #7c3aed, #a855f7)', backgroundColor: 'transparent' }}
                               >
                                 <UserPlus className="w-4 h-4 mr-1.5" />
@@ -412,8 +412,8 @@ export const GigActionCards: React.FC<GigActionCardsProps> = ({ theme }) => {
           <Button
             size="lg"
             onClick={() => navigate('/register-provider')}
-            className="w-full h-12 text-base font-semibold !text-white !border-0"
-            style={{ backgroundImage: 'linear-gradient(135deg, #c026d3, #7c3aed)', backgroundColor: 'transparent' }}
+            className="w-full h-12 text-base font-semibold !text-white !border-0 shadow-lg hover:shadow-xl transition-shadow"
+            style={{ backgroundImage: 'linear-gradient(135deg, #7c3aed, #a855f7)', backgroundColor: 'transparent' }}
           >
             <Sprout className="w-5 h-5 mr-2" />
             Register as Provider
@@ -421,7 +421,7 @@ export const GigActionCards: React.FC<GigActionCardsProps> = ({ theme }) => {
           <Button
             size="default"
             onClick={() => navigate('/providers')}
-            className="w-full h-11 font-semibold !text-white !border-0"
+            className="w-full h-11 font-semibold !text-white !border-0 shadow-md hover:shadow-lg transition-shadow"
             style={{ backgroundImage: 'linear-gradient(135deg, #14b8a6, #06b6d4)', backgroundColor: 'transparent' }}
           >
             Browse All Providers

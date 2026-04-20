@@ -125,8 +125,8 @@ export const ChatFeedCards: React.FC<ChatFeedCardsProps> = ({ theme }) => {
               {card.video && (
                 <Button
                   size="sm"
-                  className="text-xs h-7 rounded-lg w-full gap-1.5 font-semibold !text-white !border-0"
-                  style={{ backgroundImage: 'linear-gradient(135deg, #ec4899, #8b5cf6)', backgroundColor: 'transparent' }}
+                  className="text-xs h-7 rounded-lg w-full gap-1.5 font-semibold !text-white !border-0 shadow-md hover:shadow-lg transition-shadow"
+                  style={{ backgroundImage: 'linear-gradient(135deg, #134e4a, #1e3a8a)', backgroundColor: 'transparent' }}
                   onClick={(e) => {
                     e.preventDefault();
                     e.stopPropagation();
@@ -138,8 +138,8 @@ export const ChatFeedCards: React.FC<ChatFeedCardsProps> = ({ theme }) => {
               )}
               <Button
                 size="sm"
-                className="text-xs h-7 rounded-lg w-full font-semibold !text-white !border-0"
-                style={{ backgroundImage: 'linear-gradient(135deg, #06b6d4, #3b82f6)', backgroundColor: 'transparent' }}
+                className="text-xs h-7 rounded-lg w-full font-semibold !text-white !border-0 shadow-md hover:shadow-lg transition-shadow"
+                style={{ backgroundImage: 'linear-gradient(135deg, #0d9488, #3b82f6)', backgroundColor: 'transparent' }}
               >
                 {card.buttonLabel}
               </Button>
