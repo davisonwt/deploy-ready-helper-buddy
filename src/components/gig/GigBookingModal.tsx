@@ -8,12 +8,13 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
-import { Car, Wrench, Ear, MapPin, Clock, Loader2, CalendarIcon, Users } from 'lucide-react';
+import { Car, Wrench, Ear, MapPin, Clock, Loader2, CalendarIcon, Users, Sparkles, Heart } from 'lucide-react';
 import { useCreateBooking } from '@/hooks/useGigBookings';
 import { useSearchProviders } from '@/hooks/useGigBookings';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
+import { SubmitButton } from '@/components/forms';
 
 // Generate time slots from 5:00 AM to 11:45 PM in 15-min intervals
 function generateTimeSlots(): { value: string; label: string }[] {
