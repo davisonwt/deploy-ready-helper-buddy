@@ -269,11 +269,11 @@ export function getPasswordValidationFeedback(password: string | undefined | nul
     return { isValid: false, feedback: ['Password is required'], strength }
   }
   
-  if (password.length < 10) {
-    feedback.push(`Password must be at least 10 characters (currently ${password.length})`)
+  if (password.length < 12) {
+    feedback.push(`Password must be at least 12 characters (currently ${password.length})`)
   } else if (password.length >= 16) {
     strength = 'very-strong'
-  } else if (password.length >= 12) {
+  } else if (password.length >= 14) {
     strength = 'strong'
   } else {
     strength = 'fair'
