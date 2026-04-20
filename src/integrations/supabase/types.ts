@@ -9815,6 +9815,7 @@ export type Database = {
       }
       tribal_hearts_profiles: {
         Row: {
+          about_seen_at: string | null
           age_verified: boolean
           bio: string | null
           birthdate: string
@@ -9828,14 +9829,19 @@ export type Database = {
           location_country: string | null
           location_region: string | null
           photo_verified: boolean
+          photos: string[]
           seeking: Database["public"]["Enums"]["hearts_gender"]
+          seeking_intent: string
           status: Database["public"]["Enums"]["hearts_profile_status"]
           timezone: string | null
           updated_at: string
           user_id: string
           values_list: string[]
+          voice_note_duration_sec: number | null
+          voice_note_url: string | null
         }
         Insert: {
+          about_seen_at?: string | null
           age_verified?: boolean
           bio?: string | null
           birthdate: string
@@ -9849,14 +9855,19 @@ export type Database = {
           location_country?: string | null
           location_region?: string | null
           photo_verified?: boolean
+          photos?: string[]
           seeking: Database["public"]["Enums"]["hearts_gender"]
+          seeking_intent?: string
           status?: Database["public"]["Enums"]["hearts_profile_status"]
           timezone?: string | null
           updated_at?: string
           user_id: string
           values_list?: string[]
+          voice_note_duration_sec?: number | null
+          voice_note_url?: string | null
         }
         Update: {
+          about_seen_at?: string | null
           age_verified?: boolean
           bio?: string | null
           birthdate?: string
@@ -9870,12 +9881,16 @@ export type Database = {
           location_country?: string | null
           location_region?: string | null
           photo_verified?: boolean
+          photos?: string[]
           seeking?: Database["public"]["Enums"]["hearts_gender"]
+          seeking_intent?: string
           status?: Database["public"]["Enums"]["hearts_profile_status"]
           timezone?: string | null
           updated_at?: string
           user_id?: string
           values_list?: string[]
+          voice_note_duration_sec?: number | null
+          voice_note_url?: string | null
         }
         Relationships: []
       }
@@ -12008,6 +12023,7 @@ export type Database = {
         Args: { _room_id: string; _user_id: string }
         Returns: boolean
       }
+      is_tribal_hearts_member: { Args: { _uid: string }; Returns: boolean }
       is_user_verified: { Args: { user_id_param?: string }; Returns: boolean }
       kick_user_from_room: {
         Args: {
