@@ -182,7 +182,9 @@ export class AuthProviderClass extends React.Component {
 
   login = async (email, password) => {
     try {
-      const { data, error } = await this.withRetry(() => supabase.auth.signInWithPassword({ email, password }))
+      // NEVER retry auth mutations - retries cause confusing "invalid credentials"
+      // errors when the first call actually succeeded but appeared slow.
+      const { data, error } = await supabase.auth.signInWithPassword({ email, password })
       if (error) return { success: false, error: error.message }
       return { success: true, user: data.user }
     } catch (e) {
@@ -195,7 +197,10 @@ export class AuthProviderClass extends React.Component {
       const currentDomain = window.location.origin
       const normalizedReferralCode = userData.referral_code?.trim().toUpperCase() || null
 
-      const { data, error } = await this.withRetry(() => supabase.auth.signUp({
+      // NEVER retry signUp - if the first call succeeded but timed out client-side,
+      // a retry returns "User already registered" or "Invalid credentials" which
+      // confuses brand-new users who just created their account.
+      const { data, error } = await supabase.auth.signUp({
         email: userData.email,
         password: userData.password,
         options: {
@@ -212,7 +217,7 @@ export class AuthProviderClass extends React.Component {
             referral_code: normalizedReferralCode,
           }
         }
-      }))
+      })
 
       if (error) return { success: false, error: error.message }
 
