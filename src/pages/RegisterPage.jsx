@@ -2,16 +2,20 @@ import { useState, useEffect } from "react"
 import { Link, useNavigate, useSearchParams } from "react-router-dom"
 import { useAuth } from "../hooks/useAuth"
 import { Button } from "../components/ui/button"
-import { Card, CardContent, CardHeader, CardTitle } from "../components/ui/card"
 import { Badge } from "../components/ui/badge"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue, SelectScrollUpButton, SelectScrollDownButton } from "../components/ui/select"
 import { SecureInput } from "../components/ui/secure-input"
-import { Sprout, Lock, Eye, EyeOff, ArrowLeft } from "lucide-react"
+import {
+  Sprout, Lock, Eye, EyeOff, Heart, Users, Globe2, Sparkles,
+  ShieldCheck, Gift
+} from "lucide-react"
 import { countries } from "../data/countries"
 import { supabase } from "@/integrations/supabase/client"
 import { useToast } from "@/hooks/use-toast"
 import { QuickRegistration } from "../components/auth/QuickRegistration"
 import { getReferralCode, clearReferralCookie } from "@/hooks/useReferralCapture"
+import { FormShell } from "@/components/forms/FormShell"
+import { SubmitButton } from "@/components/forms/SubmitButton"
 
 export default function RegisterPage() {
   const [formData, setFormData] = useState({
@@ -28,7 +32,6 @@ export default function RegisterPage() {
     referralCode: ""
   })
 
-  // Auto-fill referral code from cookie
   useEffect(() => {
     const cookieRef = getReferralCode();
     if (cookieRef) {
@@ -40,29 +43,24 @@ export default function RegisterPage() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState("")
   const [showQuickRegistration, setShowQuickRegistration] = useState(false)
-  
+
   const { register } = useAuth()
   const navigate = useNavigate()
   const { toast } = useToast()
 
-  // Show Quick Registration if user prefers it
   if (showQuickRegistration) {
     return <QuickRegistration />;
   }
-  
+
   const handleChange = (e) => {
-    setFormData({
-      ...formData,
-      [e.target.name]: e.target.value
-    })
+    setFormData({ ...formData, [e.target.name]: e.target.value })
   }
-  
+
   const handleSubmit = async (e) => {
     e.preventDefault()
     setLoading(true)
     setError("")
-    
-    // Validation
+
     if (formData.password !== formData.confirmPassword) {
       const msg = "Passwords do not match. Please re-type the same password in both boxes."
       setError(msg)
@@ -70,8 +68,7 @@ export default function RegisterPage() {
       setLoading(false)
       return
     }
-    
-    // Strong password policy: 12+ chars, upper, lower, number, special
+
     if (formData.password.length < 12) {
       const msg = "Password must be at least 12 characters long."
       setError(msg)
@@ -92,7 +89,7 @@ export default function RegisterPage() {
       setLoading(false)
       return
     }
-    
+
     try {
       const result = await register({
         email: formData.email,
@@ -107,31 +104,18 @@ export default function RegisterPage() {
         username: formData.email.split('@')[0],
         referral_code: formData.referralCode || null
       })
-      
-      if (result.success) {
-        // Clear referral cookie since it's now stored in user metadata
-        // and will be processed by the DB trigger on profile creation
-        if (formData.referralCode) {
-          clearReferralCookie();
-        }
 
-        // HTML escape function for email safety
+      if (result.success) {
+        if (formData.referralCode) clearReferralCookie();
+
         const escapeHtml = (text) => {
           if (!text) return '';
-          const map = {
-            '&': '&amp;',
-            '<': '&lt;',
-            '>': '&gt;',
-            '"': '&quot;',
-            "'": '&#39;'
-          };
+          const map = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' };
           return String(text).replace(/[&<>"']/g, (m) => map[m]);
         };
-        
-        // Send welcome email to user
+
         try {
-          console.log('Attempting to send welcome email...')
-          const emailResult = await supabase.functions.invoke('send_brevo_email', {
+          await supabase.functions.invoke('send_brevo_email', {
             body: {
               to: [formData.email],
               subject: "Welcome to sow2grow! 🌱",
@@ -152,7 +136,7 @@ export default function RegisterPage() {
                       </a>
                     </div>
                     <p style="color: #6b7280; font-style: italic; text-align: center; margin-top: 30px;">
-                      "Give, and it will be given to you. A good measure, pressed down, shaken together and running over, will be poured into your lap." - Luke 6:38
+                      "Give, and it will be given to you..." - Luke 6:38
                     </p>
                   </div>
                 </div>
@@ -160,15 +144,10 @@ export default function RegisterPage() {
               from: "shalom@sow2grow.org"
             }
           })
-          console.log('Welcome email result:', emailResult)
-        } catch (emailError) {
-          console.error('Failed to send welcome email:', emailError)
-        }
+        } catch (emailError) { console.error('Failed to send welcome email:', emailError) }
 
-        // Send admin notification
         try {
-          console.log('Attempting to send admin notification...')
-          const notificationResult = await supabase.functions.invoke('send-admin-notification', {
+          await supabase.functions.invoke('send-admin-notification', {
             body: {
               email: formData.email,
               firstName: formData.firstName,
@@ -178,17 +157,13 @@ export default function RegisterPage() {
               currency: formData.currency
             }
           })
-          console.log('Admin notification result:', notificationResult)
-        } catch (notificationError) {
-          console.error('Failed to send admin notification:', notificationError)
-        }
+        } catch (notificationError) { console.error('Failed to send admin notification:', notificationError) }
 
         toast({
-          title: "Welcome to sow2grow! 🌱",
-          description: "Please set up your security questions to protect your account.",
+          title: "🌱 Welcome to sow2grow!",
+          description: "Almost there — let's protect your account with security questions.",
         })
-        
-        // Navigate to security questions setup instead of chatapp
+
         navigate("/security-questions-setup")
       } else {
         const raw = (result.error || "Registration failed").toString()
@@ -214,8 +189,7 @@ export default function RegisterPage() {
       setLoading(false)
     }
   }
-  
-  // Real-time password feedback
+
   const pwd = formData.password || ""
   const pwdChecks = {
     length: pwd.length >= 12,
@@ -225,382 +199,251 @@ export default function RegisterPage() {
     special: /[^A-Za-z0-9]/.test(pwd),
     match: pwd.length > 0 && pwd === formData.confirmPassword,
   }
-  
-  return (
-    <div className="min-h-screen bg-[hsl(210,30%,20%)] flex items-center justify-center p-4 relative overflow-hidden">
-      {/* Enhanced animated background elements */}
-      <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-20 left-10 w-32 h-32 bg-green-200/30 rounded-full animate-pulse shadow-xl" style={{ animationDuration: "4s" }}></div>
-        <div className="absolute top-40 right-20 w-24 h-24 bg-blue-200/30 rounded-full animate-bounce shadow-lg" style={{ animationDuration: "3s", animationDelay: "1s" }}></div>
-        <div className="absolute bottom-32 left-1/4 w-40 h-40 bg-amber-200/20 rounded-full animate-pulse shadow-xl" style={{ animationDuration: "5s", animationDelay: "2s" }}></div>
-        <div className="absolute top-1/2 right-1/4 w-20 h-20 bg-green-300/20 rounded-full animate-bounce shadow-md" style={{ animationDuration: "4s", animationDelay: "3s" }}></div>
-        
-        {/* Floating particles */}
-        <div className="absolute top-1/3 left-1/3 w-4 h-4 bg-green-400/40 rounded-full animate-ping" style={{ animationDelay: "1s" }}></div>
-        <div className="absolute bottom-1/3 right-1/3 w-3 h-3 bg-blue-400/40 rounded-full animate-ping" style={{ animationDelay: "2s" }}></div>
-        <div className="absolute top-2/3 left-1/5 w-2 h-2 bg-amber-400/40 rounded-full animate-ping" style={{ animationDelay: "3s" }}></div>
-      </div>
-      
-      <div className="relative z-10 w-full max-w-lg">
-        {/* Beautiful back to home link */}
-        <Link to="/" className="inline-flex items-center text-green-700 hover:text-green-600 mb-8 transition-all duration-300 hover:scale-105 bg-white/70 backdrop-blur-sm px-4 py-2 rounded-full shadow-md hover:shadow-lg">
-          <ArrowLeft className="h-4 w-4 mr-2" />
-          <span className="font-medium">Back to sow2grow</span>
-        </Link>
-        
-        <Card className="bg-[hsl(210,40%,14%)] backdrop-blur-lg border border-emerald-500/30 shadow-2xl hover:shadow-3xl transition-all duration-500 overflow-hidden text-white">
-          {/* Beautiful gradient header */}
-          <div className="bg-gradient-to-r from-green-600 via-blue-600 to-green-600 p-1">
-            <div className="bg-[hsl(210,40%,14%)] rounded-t-lg">
-              <CardHeader className="text-center pb-8 pt-8">
-                {/* Logo */}
-                <div className="flex justify-center mb-6">
-                  <div className="w-24 h-24 rounded-2xl overflow-hidden shadow-2xl ring-4 ring-green-100">
-                    <img 
-                      src="https://zuwkgasbkpjlxzsjzumu.supabase.co/storage/v1/object/public/orchard-images/logo.jpeg" 
-                      alt="sow2grow logo" 
-                      className="w-full h-full object-cover"
-                    />
-                  </div>
-                </div>
-                <CardTitle className="text-3xl font-bold text-white mb-2" style={{ fontFamily: "Playfair Display, serif" }}>
-                  Join the sow2grow Community
-                </CardTitle>
-                <p className="text-slate-300 text-lg mb-4">Begin your journey in the 364yhvh community farm</p>
-                <div className="flex justify-center gap-2 mb-4">
-                  <Button 
-                    onClick={() => setShowQuickRegistration(true)}
-                    size="sm"
-                    className="bg-green-500 hover:bg-green-600"
-                  >
-                    Quick & Easy
-                  </Button>
-                  <Button 
-                    variant="outline"
-                    size="sm"
-                  >
-                    Complete Form
-                  </Button>
-                </div>
-                <div className="flex justify-center">
-                  <Badge className="bg-gradient-to-r from-blue-500 to-green-500 text-white border-0 px-6 py-3 text-base font-bold shadow-lg rounded-full">
-                    sow2grow • community farm stall
-                  </Badge>
-                </div>
-              </CardHeader>
-            </div>
-          </div>
-          
-          <CardContent className="p-8">
-            <form onSubmit={handleSubmit} className="space-y-6">
-              <div className="mb-6 p-4 bg-blue-900/50 border border-blue-400/30 rounded-lg">
-                <div className="flex items-start">
-                  <div className="flex-shrink-0">
-                    <svg className="h-5 w-5 text-blue-300" fill="currentColor" viewBox="0 0 20 20">
-                      <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
-                    </svg>
-                  </div>
-                  <div className="ml-3">
-                    <h3 className="text-sm font-medium text-blue-200">Account Policy</h3>
-                    <p className="text-sm text-blue-300 mt-1">
-                      Each email address is limited to one sow2grow account. If you already have an account, please use the login page instead.
-                    </p>
-                  </div>
-                </div>
-              </div>
-              
-              {error && (
-                <div className="bg-red-50 border-l-4 border-red-400 rounded-lg p-4 shadow-sm animate-fade-in">
-                  <div className="flex">
-                    <div className="flex-shrink-0">
-                      <svg className="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor">
-                        <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
-                      </svg>
-                    </div>
-                    <div className="ml-3">
-                      <p className="text-sm text-red-800 font-medium">{error}</p>
-                      {(error.toLowerCase().includes('already') || error.toLowerCase().includes('exists') || error.toLowerCase().includes('log in')) && (
-                        <div className="mt-2">
-                          <Link 
-                            to="/login" 
-                            className="inline-flex items-center px-3 py-1 text-xs font-medium text-blue-600 bg-blue-50 border border-blue-200 rounded-full hover:bg-blue-100 transition-colors"
-                          >
-                            Go to Login Page
-                          </Link>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              )}
-              
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="space-y-2">
-                  <label htmlFor="firstName" className="text-sm font-semibold text-white">
-                    First Name
-                  </label>
-                  <SecureInput
-                    id="firstName"
-                    name="firstName"
-                    type="text"
-                    value={formData.firstName}
-                    onChange={handleChange}
-                    sanitizeType="text"
-                    maxLength={50}
-                    rateLimitKey="registration_form"
-                    className="w-full px-4 py-3 border-2 border-slate-600 bg-slate-700/80 rounded-xl focus:ring-2 focus:ring-green-400 focus:border-green-400 transition-all duration-300 text-white placeholder:text-slate-400 hover:border-slate-500 shadow-sm hover:shadow-md text-center"
-                    placeholder="Enter first name"
-                    required
-                  />
-                </div>
-                
-                <div className="space-y-2">
-                  <label htmlFor="lastName" className="text-sm font-semibold text-white">
-                    Last Name
-                  </label>
-                  <SecureInput
-                    id="lastName"
-                    name="lastName"
-                    type="text"
-                    value={formData.lastName}
-                    onChange={handleChange}
-                    sanitizeType="text"
-                    maxLength={50}
-                    rateLimitKey="registration_form"
-                    className="w-full px-4 py-3 border-2 border-slate-600 bg-slate-700/80 rounded-xl focus:ring-2 focus:ring-green-400 focus:border-green-400 transition-all duration-300 text-white placeholder:text-slate-400 hover:border-slate-500 shadow-sm hover:shadow-md text-center"
-                    placeholder="Enter last name"
-                    required
-                  />
-                </div>
-              </div>
-              
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="space-y-2">
-                  <label htmlFor="email" className="text-sm font-semibold text-white">
-                    Email Address
-                  </label>
-                  <SecureInput
-                    id="email"
-                    name="email"
-                    type="email"
-                    value={formData.email}
-                    onChange={handleChange}
-                    sanitizeType="email"
-                    rateLimitKey="registration_form"
-                    className="w-full px-4 py-3 border-2 border-slate-600 bg-slate-700/80 rounded-xl focus:ring-2 focus:ring-blue-400 focus:border-blue-400 transition-all duration-300 text-white placeholder:text-slate-400 hover:border-slate-500 shadow-sm hover:shadow-md text-center"
-                    placeholder="your@email.com"
-                    required
-                  />
-                </div>
-                
-                <div className="space-y-2">
-                  <label htmlFor="phone" className="text-sm font-semibold text-white">
-                    Phone <span className="text-slate-400 font-normal">(Optional)</span>
-                  </label>
-                  <SecureInput
-                    id="phone"
-                    name="phone"
-                    type="tel"
-                    value={formData.phone}
-                    onChange={handleChange}
-                    sanitizeType="phone"
-                    rateLimitKey="registration_form"
-                    className="w-full px-4 py-3 border-2 border-slate-600 bg-slate-700/80 rounded-xl focus:ring-2 focus:ring-purple-400 focus:border-purple-400 transition-all duration-300 text-white placeholder:text-slate-400 hover:border-slate-500 shadow-sm hover:shadow-md text-center"
-                    placeholder="+1234567890"
-                  />
-                </div>
-              </div>
-              
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="space-y-2">
-                  <label htmlFor="location" className="text-sm font-semibold text-white">
-                    Country <span className="text-slate-400 font-normal">(Optional)</span>
-                  </label>
-                  <Select value={formData.location} onValueChange={(value) => setFormData({...formData, location: value, country: value})}>
-                    <SelectTrigger className="w-full px-4 py-3 border-2 border-slate-600 bg-slate-700/80 rounded-xl focus:ring-2 focus:ring-amber-400 focus:border-amber-400 transition-all duration-300 text-white hover:border-slate-500 shadow-sm hover:shadow-md text-center">
-                      <SelectValue placeholder="Select your country" />
-                    </SelectTrigger>
-                    <SelectContent className="bg-white border border-gray-200 shadow-lg z-50">
-                      <SelectScrollUpButton />
-                      {countries.map((country) => (
-                        <SelectItem 
-                          key={country.code} 
-                          value={country.name}
-                          className="hover:bg-gray-100 focus:bg-gray-100 cursor-pointer"
-                        >
-                          {country.name}
-                        </SelectItem>
-                      ))}
-                      <SelectScrollDownButton />
-                    </SelectContent>
-                  </Select>
-                </div>
-                
-                <div className="space-y-2">
-                  <label className="text-sm font-semibold text-white">
-                    Timezone <span className="text-slate-400 font-normal">(Auto-detected)</span>
-                  </label>
-                  <div className="w-full px-4 py-3 border-2 border-slate-600 bg-slate-700/80 rounded-xl text-white text-center text-sm">
-                    🌍 {formData.timezone} ({new Date().toLocaleTimeString()})
-                  </div>
-                </div>
-              </div>
-              
-              <div className="space-y-2">
-                <label className="text-sm font-semibold text-white">
-                  Preferred Currency
-                </label>
-                <Select value={formData.currency} onValueChange={(value) => setFormData({...formData, currency: value})}>
-                  <SelectTrigger className="w-full px-4 py-3 border-2 border-slate-600 bg-slate-700/80 rounded-xl focus:ring-2 focus:ring-purple-400 focus:border-purple-400 transition-all duration-300 text-white hover:border-slate-500 shadow-sm hover:shadow-md text-center">
-                    <SelectValue placeholder="Select currency" />
-                  </SelectTrigger>
-                  <SelectContent className="bg-white border border-gray-200 shadow-lg z-50">
-                    <SelectScrollUpButton />
-                    <SelectItem value="USD" className="hover:bg-gray-100 focus:bg-gray-100 cursor-pointer">USD - US Dollar</SelectItem>
-                    <SelectItem value="EUR" className="hover:bg-gray-100 focus:bg-gray-100 cursor-pointer">EUR - Euro</SelectItem>
-                    <SelectItem value="GBP" className="hover:bg-gray-100 focus:bg-gray-100 cursor-pointer">GBP - British Pound</SelectItem>
-                    <SelectItem value="CAD" className="hover:bg-gray-100 focus:bg-gray-100 cursor-pointer">CAD - Canadian Dollar</SelectItem>
-                    <SelectItem value="AUD" className="hover:bg-gray-100 focus:bg-gray-100 cursor-pointer">AUD - Australian Dollar</SelectItem>
-                    <SelectItem value="JPY" className="hover:bg-gray-100 focus:bg-gray-100 cursor-pointer">JPY - Japanese Yen</SelectItem>
-                    <SelectItem value="CHF" className="hover:bg-gray-100 focus:bg-gray-100 cursor-pointer">CHF - Swiss Franc</SelectItem>
-                    <SelectItem value="CNY" className="hover:bg-gray-100 focus:bg-gray-100 cursor-pointer">CNY - Chinese Yuan</SelectItem>
-                    <SelectItem value="INR" className="hover:bg-gray-100 focus:bg-gray-100 cursor-pointer">INR - Indian Rupee</SelectItem>
-                    <SelectItem value="BRL" className="hover:bg-gray-100 focus:bg-gray-100 cursor-pointer">BRL - Brazilian Real</SelectItem>
-                    <SelectItem value="ZAR" className="hover:bg-gray-100 focus:bg-gray-100 cursor-pointer">ZAR - South African Rand</SelectItem>
-                    <SelectItem value="MXN" className="hover:bg-gray-100 focus:bg-gray-100 cursor-pointer">MXN - Mexican Peso</SelectItem>
-                    <SelectItem value="KRW" className="hover:bg-gray-100 focus:bg-gray-100 cursor-pointer">KRW - South Korean Won</SelectItem>
-                    <SelectItem value="SGD" className="hover:bg-gray-100 focus:bg-gray-100 cursor-pointer">SGD - Singapore Dollar</SelectItem>
-                    <SelectItem value="NZD" className="hover:bg-gray-100 focus:bg-gray-100 cursor-pointer">NZD - New Zealand Dollar</SelectItem>
-                    <SelectScrollDownButton />
-                  </SelectContent>
-                </Select>
-              </div>
 
-              {/* Referral Code */}
-              <div className="space-y-2">
-                <label htmlFor="referralCode" className="text-sm font-semibold text-white">
-                  Referral Code <span className="text-slate-400 font-normal">(Optional)</span>
-                </label>
-                <SecureInput
-                  id="referralCode"
-                  name="referralCode"
-                  type="text"
-                  value={formData.referralCode}
-                  onChange={handleChange}
-                  sanitizeType="text"
-                  maxLength={15}
-                  rateLimitKey="registration_form"
-                  className="w-full px-4 py-3 border-2 border-slate-600 bg-slate-700/80 rounded-xl focus:ring-2 focus:ring-green-400 focus:border-green-400 transition-all duration-300 text-white placeholder:text-slate-400 hover:border-slate-500 shadow-sm hover:shadow-md text-center font-mono tracking-wider"
-                  placeholder="S2G-XXXXXXXX"
-                />
-              </div>
-              
-              <div className="space-y-2">
-                <label htmlFor="password" className="text-sm font-semibold text-white">
-                  Password
-                </label>
-                <p className="text-xs text-amber-200/90 bg-amber-900/20 border border-amber-500/30 rounded-md px-3 py-2">
-                  Your password must be <strong>at least 12 characters</strong> and include <strong>capital letters</strong>, <strong>small letters</strong>, <strong>numbers</strong> and at least one <strong>special character</strong> (e.g. ! @ # $ % &amp; *).
-                </p>
-                <div className="relative">
-                  <Lock className="absolute left-4 top-1/2 transform -translate-y-1/2 h-5 w-5 text-slate-400 z-10" />
-                  <input
-                    id="password"
-                    name="password"
-                    type={showPassword ? "text" : "password"}
-                    value={formData.password}
-                    onChange={handleChange}
-                    className="w-full pl-12 pr-12 py-3 border-2 border-slate-600 bg-slate-700/80 rounded-xl focus:ring-2 focus:ring-green-400 focus:border-green-400 transition-all duration-300 text-white placeholder:text-slate-400 hover:border-slate-500 shadow-sm hover:shadow-md text-center"
-                    placeholder="At least 12 chars: Aa1! …"
-                    required
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-4 top-1/2 transform -translate-y-1/2 text-slate-400 hover:text-green-400 transition-colors p-1 rounded-full hover:bg-green-50/20 z-10"
-                  >
-                    {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
-                  </button>
-                </div>
-                {/* Live password requirements */}
-                <ul className="mt-2 grid grid-cols-2 sm:grid-cols-5 gap-1 text-xs">
-                  <li className={pwdChecks.length ? "text-emerald-400" : "text-slate-400"}>
-                    {pwdChecks.length ? "✓" : "•"} 12+ characters
-                  </li>
-                  <li className={pwdChecks.upper ? "text-emerald-400" : "text-slate-400"}>
-                    {pwdChecks.upper ? "✓" : "•"} Capital letter
-                  </li>
-                  <li className={pwdChecks.lower ? "text-emerald-400" : "text-slate-400"}>
-                    {pwdChecks.lower ? "✓" : "•"} Small letter
-                  </li>
-                  <li className={pwdChecks.number ? "text-emerald-400" : "text-slate-400"}>
-                    {pwdChecks.number ? "✓" : "•"} Number
-                  </li>
-                  <li className={pwdChecks.special ? "text-emerald-400" : "text-slate-400"}>
-                    {pwdChecks.special ? "✓" : "•"} Special char
-                  </li>
-                </ul>
-              </div>
-              <div className="space-y-2">
-                <label htmlFor="confirmPassword" className="text-sm font-semibold text-white">
-                  Confirm Password
-                </label>
-                <div className="relative">
-                  <Lock className="absolute left-4 top-1/2 transform -translate-y-1/2 h-5 w-5 text-slate-400 z-10" />
-                  <input
-                    id="confirmPassword"
-                    name="confirmPassword"
-                    type={showConfirmPassword ? "text" : "password"}
-                    value={formData.confirmPassword}
-                    onChange={handleChange}
-                    className="w-full pl-12 pr-12 py-3 border-2 border-slate-600 bg-slate-700/80 rounded-xl focus:ring-2 focus:ring-green-400 focus:border-green-400 transition-all duration-300 text-white placeholder:text-slate-400 hover:border-slate-500 shadow-sm hover:shadow-md text-center"
-                    placeholder="Confirm your password"
-                    required
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                    className="absolute right-4 top-1/2 transform -translate-y-1/2 text-slate-400 hover:text-green-400 transition-colors p-1 rounded-full hover:bg-green-50/20 z-10"
-                  >
-                    {showConfirmPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
-                  </button>
-                </div>
-              </div>
-              
-              <Button 
-                type="submit" 
-                disabled={loading}
-                className="w-full bg-gradient-to-r from-blue-500 to-green-500 hover:from-blue-600 hover:to-green-600 text-white font-bold py-4 px-8 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-[1.02] focus:ring-4 focus:ring-blue-300"
-              >
-                <div className="flex items-center justify-center">
-                  {loading && <div className="animate-spin rounded-full h-5 w-5 border-2 border-white border-t-transparent mr-3"></div>}
-                  <Sprout className="h-5 w-5 mr-2" />
-                  <span>Become a sower and bestower</span>
-                </div>
-              </Button>
-            </form>
-            
-            <div className="mt-8 text-center">
-              <p className="text-slate-300">
-                Already part of our community?{" "}
-                <Link to="/login" className="text-amber-300 hover:text-amber-200 font-semibold transition-colors hover:underline">
-                  Sign In Here
-                </Link>
+  return (
+    <FormShell
+      backTo="/"
+      backLabel="Back to sow2grow"
+      eyebrow="Sow • Bestow • Belong"
+      icon={Sprout}
+      title="Plant Your Seed in the Garden"
+      subtitle="Join a global tribe of sowers and bestowers — where every gift returns a hundredfold. Your story starts the moment you sign up."
+      benefits={[
+        { icon: Users, label: 'Global tribal community' },
+        { icon: Heart, label: 'Bestow & receive freely' },
+        { icon: Globe2, label: 'Multi-currency, your timezone' },
+        { icon: ShieldCheck, label: 'Secure by default' },
+      ]}
+      size="lg"
+      footer={
+        <div className="text-center">
+          <p className="text-sm text-muted-foreground">
+            Already sowing with us?{' '}
+            <Link to="/login" className="font-semibold text-amber-300 underline-offset-4 transition-colors hover:text-amber-200 hover:underline">
+              Sign in here
+            </Link>
+          </p>
+        </div>
+      }
+    >
+      {/* Mode toggle */}
+      <div className="mb-6 flex flex-wrap items-center justify-center gap-3">
+        <Button
+          type="button"
+          onClick={() => setShowQuickRegistration(true)}
+          size="sm"
+          className="bg-gradient-to-r from-amber-500 to-coral-500 text-white hover:scale-105 hover:from-amber-400 hover:to-coral-400"
+        >
+          <Sparkles className="mr-1.5 h-4 w-4" />
+          60-Second Quick Join
+        </Button>
+        <Badge variant="secondary" className="border-amber-400/30 bg-amber-500/10 px-3 py-1.5 text-amber-200">
+          You're using the full registration form
+        </Badge>
+      </div>
+
+      <form onSubmit={handleSubmit} className="space-y-6">
+        {/* Account policy */}
+        <div className="rounded-xl border border-primary/20 bg-primary/5 p-4 backdrop-blur-sm">
+          <div className="flex items-start gap-3">
+            <Gift className="mt-0.5 h-5 w-5 flex-shrink-0 text-primary" />
+            <div className="space-y-1">
+              <h3 className="text-sm font-semibold text-foreground">One email, one orchard</h3>
+              <p className="text-xs leading-relaxed text-muted-foreground">
+                Each email is limited to one sow2grow account. Already have one? Use the login page.
               </p>
             </div>
-            
-            {/* Beautiful divider with scripture */}
-            <div className="mt-8 pt-6 border-t border-slate-700">
-              <div className="text-center bg-slate-800/50 rounded-xl p-4 shadow-sm">
-                <p className="text-sm text-slate-300 italic font-medium">
-                  "Give, and it will be given to you. A good measure, pressed down, shaken together and running over, will be poured into your lap."
-                </p>
-                <p className="text-xs text-slate-400 font-semibold mt-2">— Luke 6:38</p>
-              </div>
+          </div>
+        </div>
+
+        {error && (
+          <div className="animate-fade-in rounded-xl border-l-4 border-destructive bg-destructive/10 p-4">
+            <p className="text-sm font-medium text-destructive">{error}</p>
+            {(error.toLowerCase().includes('already') || error.toLowerCase().includes('exists') || error.toLowerCase().includes('log in')) && (
+              <Link
+                to="/login"
+                className="mt-2 inline-flex items-center rounded-full border border-primary/30 bg-primary/10 px-3 py-1 text-xs font-medium text-primary transition-colors hover:bg-primary/20"
+              >
+                Go to Login Page
+              </Link>
+            )}
+          </div>
+        )}
+
+        <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
+          <div className="space-y-2">
+            <label htmlFor="firstName" className="text-sm font-semibold text-foreground">First Name</label>
+            <SecureInput
+              id="firstName" name="firstName" type="text"
+              value={formData.firstName} onChange={handleChange}
+              sanitizeType="text" maxLength={50} rateLimitKey="registration_form"
+              className="w-full rounded-xl border-2 border-input-border bg-input px-4 py-3 text-foreground shadow-sm transition-all duration-300 placeholder:text-muted-foreground hover:border-primary/40 focus:border-primary focus:ring-2 focus:ring-primary/40"
+              placeholder="Your first name"
+              required
+            />
+          </div>
+          <div className="space-y-2">
+            <label htmlFor="lastName" className="text-sm font-semibold text-foreground">Last Name</label>
+            <SecureInput
+              id="lastName" name="lastName" type="text"
+              value={formData.lastName} onChange={handleChange}
+              sanitizeType="text" maxLength={50} rateLimitKey="registration_form"
+              className="w-full rounded-xl border-2 border-input-border bg-input px-4 py-3 text-foreground shadow-sm transition-all duration-300 placeholder:text-muted-foreground hover:border-primary/40 focus:border-primary focus:ring-2 focus:ring-primary/40"
+              placeholder="Your last name"
+              required
+            />
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
+          <div className="space-y-2">
+            <label htmlFor="email" className="text-sm font-semibold text-foreground">Email Address</label>
+            <SecureInput
+              id="email" name="email" type="email"
+              value={formData.email} onChange={handleChange}
+              sanitizeType="email" rateLimitKey="registration_form"
+              className="w-full rounded-xl border-2 border-input-border bg-input px-4 py-3 text-foreground shadow-sm transition-all duration-300 placeholder:text-muted-foreground hover:border-primary/40 focus:border-primary focus:ring-2 focus:ring-primary/40"
+              placeholder="your@email.com"
+              required
+            />
+          </div>
+          <div className="space-y-2">
+            <label htmlFor="phone" className="text-sm font-semibold text-foreground">
+              Phone <span className="font-normal text-muted-foreground">(Optional)</span>
+            </label>
+            <SecureInput
+              id="phone" name="phone" type="tel"
+              value={formData.phone} onChange={handleChange}
+              sanitizeType="phone" rateLimitKey="registration_form"
+              className="w-full rounded-xl border-2 border-input-border bg-input px-4 py-3 text-foreground shadow-sm transition-all duration-300 placeholder:text-muted-foreground hover:border-primary/40 focus:border-primary focus:ring-2 focus:ring-primary/40"
+              placeholder="+1234567890"
+            />
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
+          <div className="space-y-2">
+            <label htmlFor="location" className="text-sm font-semibold text-foreground">
+              Country <span className="font-normal text-muted-foreground">(Optional)</span>
+            </label>
+            <Select value={formData.location} onValueChange={(value) => setFormData({ ...formData, location: value, country: value })}>
+              <SelectTrigger className="w-full rounded-xl border-2 border-input-border bg-input px-4 py-3 text-foreground hover:border-primary/40 focus:border-primary focus:ring-2 focus:ring-primary/40">
+                <SelectValue placeholder="Select your country" />
+              </SelectTrigger>
+              <SelectContent className="z-50 max-h-72">
+                <SelectScrollUpButton />
+                {countries.map((country) => (
+                  <SelectItem key={country.code} value={country.name} className="cursor-pointer">
+                    {country.name}
+                  </SelectItem>
+                ))}
+                <SelectScrollDownButton />
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="space-y-2">
+            <label className="text-sm font-semibold text-foreground">
+              Timezone <span className="font-normal text-muted-foreground">(Auto)</span>
+            </label>
+            <div className="w-full truncate rounded-xl border-2 border-input-border bg-input px-4 py-3 text-sm text-foreground/80">
+              🌍 {formData.timezone}
             </div>
-          </CardContent>
-        </Card>
-      </div>
-    </div>
+          </div>
+        </div>
+
+        <div className="space-y-2">
+          <label className="text-sm font-semibold text-foreground">Preferred Currency</label>
+          <Select value={formData.currency} onValueChange={(value) => setFormData({ ...formData, currency: value })}>
+            <SelectTrigger className="w-full rounded-xl border-2 border-input-border bg-input px-4 py-3 text-foreground hover:border-primary/40 focus:border-primary focus:ring-2 focus:ring-primary/40">
+              <SelectValue placeholder="Select currency" />
+            </SelectTrigger>
+            <SelectContent className="z-50">
+              <SelectScrollUpButton />
+              {['USD','EUR','GBP','CAD','AUD','JPY','CHF','CNY','INR','BRL','ZAR','MXN','KRW','SGD','NZD'].map((c) => (
+                <SelectItem key={c} value={c} className="cursor-pointer">{c}</SelectItem>
+              ))}
+              <SelectScrollDownButton />
+            </SelectContent>
+          </Select>
+        </div>
+
+        <div className="space-y-2">
+          <label htmlFor="referralCode" className="text-sm font-semibold text-foreground">
+            Referral Code <span className="font-normal text-muted-foreground">(Optional)</span>
+          </label>
+          <SecureInput
+            id="referralCode" name="referralCode" type="text"
+            value={formData.referralCode} onChange={handleChange}
+            sanitizeType="text" maxLength={15} rateLimitKey="registration_form"
+            className="w-full rounded-xl border-2 border-amber-400/30 bg-amber-500/5 px-4 py-3 text-center font-mono tracking-[0.2em] text-foreground shadow-sm transition-all duration-300 placeholder:text-muted-foreground hover:border-amber-400/60 focus:border-amber-400 focus:ring-2 focus:ring-amber-400/40"
+            placeholder="S2G-XXXXXXXX"
+          />
+        </div>
+
+        {/* Password */}
+        <div className="space-y-2">
+          <label htmlFor="password" className="text-sm font-semibold text-foreground">Password</label>
+          <div className="rounded-lg border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-xs leading-relaxed text-amber-200">
+            🔐 At least <strong>12 characters</strong> with <strong>capitals</strong>, <strong>small letters</strong>, <strong>numbers</strong>, and a <strong>special character</strong> (e.g. ! @ # $ % &amp; *).
+          </div>
+          <div className="relative">
+            <Lock className="absolute left-4 top-1/2 z-10 h-5 w-5 -translate-y-1/2 text-muted-foreground" />
+            <input
+              id="password" name="password"
+              type={showPassword ? "text" : "password"}
+              value={formData.password} onChange={handleChange}
+              className="w-full rounded-xl border-2 border-input-border bg-input py-3 pl-12 pr-12 text-foreground shadow-sm transition-all duration-300 placeholder:text-muted-foreground hover:border-primary/40 focus:border-primary focus:ring-2 focus:ring-primary/40"
+              placeholder="At least 12 chars: Aa1! …"
+              required
+            />
+            <button
+              type="button"
+              onClick={() => setShowPassword(!showPassword)}
+              className="absolute right-4 top-1/2 z-10 -translate-y-1/2 rounded-full p-1 text-muted-foreground transition-colors hover:bg-primary/10 hover:text-primary"
+            >
+              {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+            </button>
+          </div>
+          <ul className="mt-2 grid grid-cols-2 gap-1 text-xs sm:grid-cols-5">
+            {[
+              ['length', '12+ chars'], ['upper', 'Capital'], ['lower', 'Small'], ['number', 'Number'], ['special', 'Special'],
+            ].map(([key, label]) => (
+              <li key={key} className={pwdChecks[key] ? "flex items-center gap-1 font-semibold text-emerald-400" : "flex items-center gap-1 text-muted-foreground"}>
+                <span>{pwdChecks[key] ? "✓" : "•"}</span> {label}
+              </li>
+            ))}
+          </ul>
+        </div>
+
+        <div className="space-y-2">
+          <label htmlFor="confirmPassword" className="text-sm font-semibold text-foreground">Confirm Password</label>
+          <div className="relative">
+            <Lock className="absolute left-4 top-1/2 z-10 h-5 w-5 -translate-y-1/2 text-muted-foreground" />
+            <input
+              id="confirmPassword" name="confirmPassword"
+              type={showConfirmPassword ? "text" : "password"}
+              value={formData.confirmPassword} onChange={handleChange}
+              className="w-full rounded-xl border-2 border-input-border bg-input py-3 pl-12 pr-12 text-foreground shadow-sm transition-all duration-300 placeholder:text-muted-foreground hover:border-primary/40 focus:border-primary focus:ring-2 focus:ring-primary/40"
+              placeholder="Confirm your password"
+              required
+            />
+            <button
+              type="button"
+              onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+              className="absolute right-4 top-1/2 z-10 -translate-y-1/2 rounded-full p-1 text-muted-foreground transition-colors hover:bg-primary/10 hover:text-primary"
+            >
+              {showConfirmPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+            </button>
+          </div>
+          {pwdChecks.match && (
+            <p className="mt-1 text-xs font-medium text-emerald-400 animate-fade-in">✓ Passwords match perfectly</p>
+          )}
+        </div>
+
+        <SubmitButton loading={loading} loadingLabel="Planting your seed…" icon={Sprout}>
+          Become a Sower & Bestower
+        </SubmitButton>
+      </form>
+    </FormShell>
   )
 }

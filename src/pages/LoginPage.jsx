@@ -3,12 +3,16 @@ import { Link, useNavigate, useSearchParams } from "react-router-dom"
 import { useAuth } from "../hooks/useAuth"
 import { useSecurityLogging } from "../hooks/useSecurityLogging"
 import { Button } from "../components/ui/button"
-import { Card, CardContent, CardHeader, CardTitle } from "../components/ui/card"
 import { Badge } from "../components/ui/badge"
 import { Alert, AlertDescription, AlertTitle } from "../components/ui/alert"
 import { useToast } from "../hooks/use-toast"
 import { EnhancedSecureInput } from "../components/security/EnhancedSecureInput"
-import { Sprout, Mail, Lock, Eye, EyeOff, ArrowLeft, Heart, Users, Sparkles, Shield, CheckCircle, MessageCircle } from "lucide-react"
+import {
+  Sprout, Mail, Lock, Eye, EyeOff, Heart, Users, Sparkles,
+  Shield, CheckCircle, Home
+} from "lucide-react"
+import { FormShell } from "@/components/forms/FormShell"
+import { SubmitButton } from "@/components/forms/SubmitButton"
 
 export default function LoginPage() {
   const [email, setEmail] = useState("")
@@ -16,34 +20,27 @@ export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState("")
-  const [mounted, setMounted] = useState(false)
   const [showForgotPassword, setShowForgotPassword] = useState(false)
   const [resetEmail, setResetEmail] = useState("")
   const [resetLoading, setResetLoading] = useState(false)
   const [resetMessage, setResetMessage] = useState("")
   const [securityViolations, setSecurityViolations] = useState(0)
-  
+
   const [searchParams] = useSearchParams();
   const isFirstTimeLogin = searchParams.get('firstTime') === 'true';
-  
-  const { login, loginAnonymously, resetPassword, isAuthenticated } = useAuth()
+
+  const { login, loginAnonymously, resetPassword } = useAuth()
   const { logSecurityEvent } = useSecurityLogging()
   const { toast } = useToast()
   const navigate = useNavigate()
-  
-  useEffect(() => {
-    setMounted(true)
-  }, [])
-  
+
   const handleSecurityViolation = async (violationType, details) => {
     setSecurityViolations(prev => prev + 1)
-    
     await logSecurityEvent('login_security_violation', {
       violation_type: violationType,
-      details: details,
+      details,
       violation_count: securityViolations + 1
     }, 'warning')
-    
     if (securityViolations >= 2) {
       toast({
         variant: "destructive",
@@ -52,12 +49,9 @@ export default function LoginPage() {
       })
     }
   }
-  
+
   const handleSubmit = async (e) => {
     e.preventDefault()
-    
-    console.log('🔥 LOGIN ATTEMPT START:', { email, securityViolations })
-    
     if (securityViolations >= 3) {
       toast({
         variant: "destructive",
@@ -66,33 +60,20 @@ export default function LoginPage() {
       })
       return
     }
-    
     setLoading(true)
     setError("")
-    
     try {
-      console.log('🔥 LOGIN: Calling auth.login...')
       const result = await login(email, password)
-      
-      console.log('🔥 LOGIN RESULT:', result)
-      
       if (result.success) {
-        console.log('✅ Login successful, navigating to dashboard...')
         toast({
-          title: "Welcome back!",
-          description: "You're being redirected to your dashboard...",
+          title: "🌱 Welcome back, sower!",
+          description: "Redirecting to your orchard…",
         })
-        // Small delay to ensure auth state is updated
-        setTimeout(() => {
-          console.log('🔥 NAVIGATING TO DASHBOARD')
-          navigate("/dashboard", { replace: true })
-        }, 50)
+        setTimeout(() => navigate("/dashboard", { replace: true }), 50)
       } else {
-        console.log('❌ LOGIN FAILED:', result.error)
         setError(result.error || "Login failed")
       }
     } catch (err) {
-      console.log('💥 LOGIN ERROR:', err)
       setError("An unexpected error occurred")
     } finally {
       setLoading(false)
@@ -102,15 +83,10 @@ export default function LoginPage() {
   const handleGuestAccess = async () => {
     setLoading(true)
     setError("")
-    
     try {
       const result = await loginAnonymously()
-      
-      if (result.success) {
-        navigate("/dashboard")
-      } else {
-        setError(result.error || "Guest access failed")
-      }
+      if (result.success) navigate("/dashboard")
+      else setError(result.error || "Guest access failed")
     } catch (err) {
       setError("An unexpected error occurred")
     } finally {
@@ -118,21 +94,12 @@ export default function LoginPage() {
     }
   }
 
-  const handlePasswordResetSupport = () => {
-    setShowForgotPassword(false)
-    setResetEmail("")
-    setResetMessage("")
-    navigate("/password-reset-support")
-  }
-
   const handleForgotPassword = async (e) => {
     e.preventDefault()
     setResetLoading(true)
     setResetMessage("")
-    
     try {
       const result = await resetPassword(resetEmail)
-      
       if (result.success) {
         setResetMessage("Password reset email sent! Check your inbox.")
         setTimeout(() => {
@@ -149,303 +116,189 @@ export default function LoginPage() {
       setResetLoading(false)
     }
   }
-  
+
   return (
-    <div className="min-h-screen bg-[hsl(210,30%,20%)] flex items-center justify-center p-4 relative overflow-hidden">
-      {/* Enhanced animated background elements */}
-      <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-20 left-10 w-32 h-32 bg-blue-200/30 rounded-full animate-pulse shadow-xl" style={{ animationDuration: "4s" }}></div>
-        <div className="absolute top-40 right-20 w-24 h-24 bg-green-200/30 rounded-full animate-bounce shadow-lg" style={{ animationDuration: "3s", animationDelay: "1s" }}></div>
-        <div className="absolute bottom-32 left-1/4 w-40 h-40 bg-amber-200/20 rounded-full animate-pulse shadow-xl" style={{ animationDuration: "5s", animationDelay: "2s" }}></div>
-        <div className="absolute top-1/3 right-1/3 w-16 h-16 bg-blue-300/20 rounded-full animate-ping shadow-md" style={{ animationDuration: "6s", animationDelay: "3s" }}></div>
-        <div className="absolute bottom-20 right-10 w-20 h-20 bg-green-300/20 rounded-full animate-pulse shadow-lg" style={{ animationDuration: "7s", animationDelay: "4s" }}></div>
-      </div>
-      
-      <div className={`relative z-10 w-full max-w-lg transition-all duration-1000 ${mounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}>
-        {/* Enhanced back button */}
-        <Link 
-          to="/" 
-          className="inline-flex items-center text-blue-700 hover:text-blue-600 mb-6 transition-all duration-300 hover:scale-105 font-medium group bg-white/70 backdrop-blur-sm px-4 py-2 rounded-full shadow-md hover:shadow-lg"
-        >
-          <ArrowLeft className="h-4 w-4 mr-2 transition-transform group-hover:-translate-x-1" />
-          Back to sow2grow
-        </Link>
-        
-        {/* Welcome message for community */}
-        <div className="text-center mb-6">
-          <div className="flex justify-center space-x-2 mb-3">
-            <div className="flex items-center bg-gradient-to-r from-green-100 to-green-200 px-3 py-1 rounded-full">
-              <Users className="h-4 w-4 text-green-600 mr-1" />
-              <span className="text-sm text-green-700 font-medium">Community</span>
-            </div>
-            <div className="flex items-center bg-gradient-to-r from-purple-100 to-purple-200 px-3 py-1 rounded-full">
-              <Heart className="h-4 w-4 text-purple-600 mr-1" />
-              <span className="text-sm text-purple-700 font-medium">Support</span>
-            </div>
+    <FormShell
+      backTo="/"
+      backLabel="Back to sow2grow"
+      eyebrow="Sow • Bestow • Belong"
+      icon={Home}
+      title="Welcome Home"
+      subtitle="Step back into your orchard. Your tribe has been waiting for you."
+      benefits={[
+        { icon: Users, label: 'Your community awaits' },
+        { icon: Heart, label: 'Continue your story' },
+        { icon: Sparkles, label: 'Keep growing' },
+      ]}
+      size="md"
+      footer={
+        <div className="space-y-3 text-center">
+          <div className="flex items-center justify-center gap-2 text-xs text-muted-foreground">
+            <Heart className="h-3 w-3 text-coral-400" />
+            <span className="italic">"Give, and it will be given to you…"</span>
+            <Heart className="h-3 w-3 text-coral-400" />
           </div>
-          <h1 className="text-2xl font-bold text-blue-600 mb-2" style={{ fontFamily: "Playfair Display, serif" }}>
-            Welcome Back to sow2grow
-          </h1>
-          <p className="text-muted-foreground text-sm leading-relaxed">
-            Enter your orchard and continue sowing & bestowing
-          </p>
+          <p className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground/70">Luke 6:38</p>
         </div>
-        
-        <Card className="bg-[hsl(210,40%,14%)] backdrop-blur-lg border border-emerald-500/30 shadow-2xl transition-all duration-500 hover:shadow-3xl text-white">
-          <CardHeader className="text-center pb-4">
-            <div className="flex justify-center mb-6">
-              <div className="w-24 h-24 rounded-full overflow-hidden shadow-2xl ring-4 ring-amber-600/60 ring-offset-2 ring-offset-[hsl(210,40%,14%)]">
-                <img 
-                  src="/lovable-uploads/s2g-logo.jpg" 
-                  alt="sow2grow logo" 
-                  className="w-full h-full object-cover"
-                />
-              </div>
-            </div>
-            <CardTitle className="text-xl text-white mb-2" style={{ fontFamily: "Playfair Display, serif" }}>
-              Enter Your Orchard
-            </CardTitle>
-            <Badge variant="secondary" className="bg-gradient-to-r from-blue-500 to-green-500 text-white border-0">
-              <Sprout className="h-3 w-3 mr-1" />
-              364yhvh Community Farm
-            </Badge>
-          </CardHeader>
-          
-          <CardContent className="space-y-6">
-            {isFirstTimeLogin && (
-              <Alert className="bg-emerald-50 border-emerald-500 dark:bg-emerald-950">
-                <CheckCircle className="h-4 w-4 text-emerald-600" />
-                <AlertTitle className="text-emerald-900 dark:text-emerald-100">
-                  Verification Complete
-                </AlertTitle>
-                <AlertDescription className="text-emerald-800 dark:text-emerald-200">
-                  Please log in for the first time to access all Sow2Grow features.
-                </AlertDescription>
-              </Alert>
-            )}
-            
-            <form onSubmit={handleSubmit} className="space-y-5">
-              {error && (
-                <div className="bg-destructive/10 border border-destructive/20 rounded-lg p-3 animate-fade-in">
-                  <p className="text-sm text-destructive font-medium">{error}</p>
-                </div>
-              )}
-              
-              <div className="space-y-2">
-                <label htmlFor="email" className="text-sm font-medium text-white flex items-center">
-                  <Mail className="h-4 w-4 mr-2 text-blue-400" />
-                  Username
-                </label>
-                <div className="relative group">
-                  <EnhancedSecureInput
-                    id="email"
-                    type="email"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    onSecurityViolation={handleSecurityViolation}
-                    sanitizeType="email"
-                    rateLimitKey="login_form"
-                    securityLevel="high"
-                    className="w-full px-4 py-3 border-2 border-slate-600 bg-slate-700/80 rounded-xl focus:ring-2 focus:ring-blue-400 focus:border-blue-400 transition-all duration-300 text-white placeholder:text-slate-400 hover:border-slate-500 shadow-sm hover:shadow-md"
-                    placeholder="your@email.com"
-                    required
-                    disabled={loading || securityViolations >= 3}
-                  />
-                  <div className="absolute inset-0 rounded-xl bg-gradient-to-r from-blue-400/5 to-green-400/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none"></div>
-                </div>
-              </div>
-              
-              <div className="space-y-2">
-                <label htmlFor="password" className="text-sm font-medium text-white flex items-center">
-                  <Lock className="h-4 w-4 mr-2 text-green-400" />
-                  Password
-                </label>
-                <div className="relative group">
-                  <EnhancedSecureInput
-                    id="password"
-                    type={showPassword ? "text" : "password"}
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    onSecurityViolation={handleSecurityViolation}
-                    sanitizeType="text"
-                    rateLimitKey="login_form"
-                    securityLevel="high"
-                    className="w-full px-4 py-3 border-2 border-slate-600 bg-slate-700/80 rounded-xl focus:ring-2 focus:ring-green-400 focus:border-green-400 transition-all duration-300 text-white placeholder:text-slate-400 hover:border-slate-500 shadow-sm hover:shadow-md pr-12"
-                    placeholder="Enter your password"
-                    required
-                    disabled={loading || securityViolations >= 3}
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-yellow-400 hover:text-yellow-300 transition-all duration-200 hover:scale-110"
-                    disabled={loading || securityViolations >= 3}
-                  >
-                    {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                  </button>
-                  <div className="absolute inset-0 rounded-xl bg-gradient-to-r from-green-400/5 to-blue-400/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none"></div>
-                </div>
-              </div>
-              
-              <Button
-                type="submit"
-                className="w-full bg-gradient-to-r from-blue-500 to-green-500 hover:from-blue-600 hover:to-green-600 text-white py-3 shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-[1.02] font-medium"
-                disabled={loading || securityViolations >= 3}
-              >
-                {loading ? (
-                  <div className="flex items-center">
-                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                    Entering Your Orchard...
-                  </div>
-                ) : (
-                  <div className="flex items-center">
-                    <Sparkles className="h-4 w-4 mr-2" />
-                    Sow or Bestow
-                  </div>
-                )}
-              </Button>
-              
-              {/* Security Status Indicator */}
-              {securityViolations > 0 && (
-                <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3">
-                  <div className="flex items-center gap-2">
-                    <Shield className="h-4 w-4 text-yellow-600" />
-                    <span className="text-xs text-yellow-700 font-medium">
-                      Security Enhanced Mode Active
-                    </span>
-                  </div>
-                  <p className="text-xs text-yellow-600 mt-1">
-                    Additional validation is being performed to protect your account.
-                  </p>
-                </div>
-              )}
-              
-              {/* Forgot Password */}
-              <div className="text-center">
-                <button
-                  type="button"
-                  className="text-sm text-amber-300 hover:text-amber-200 font-semibold transition-colors duration-200 underline underline-offset-4 decoration-amber-400/60 hover:decoration-amber-300 bg-slate-800/50 px-4 py-2 rounded-lg"
-                  onClick={() => setShowForgotPassword(true)}
-                >
-                  Forgot Password?
-                </button>
-              </div>
-            </form>
-            
-            <div className="relative">
-              <div className="absolute inset-0 flex items-center">
-                <div className="w-full border-t border-slate-700"></div>
-              </div>
-              <div className="relative flex justify-center text-xs uppercase">
-                <span className="bg-[hsl(210,40%,14%)] px-2 text-slate-400">New to our community?</span>
-              </div>
-            </div>
-            
-            <div className="text-center space-y-3">
-              <p className="text-sm text-slate-400 mb-3">
-                Ready to start sowing and bestowing?
-              </p>
-              <div className="flex flex-col gap-2">
-                <Link to="/register">
-                    <Button 
-                    variant="outline" 
-                    className="w-full border-blue-400/50 text-blue-300 hover:bg-blue-900/30 hover:border-blue-400 transition-all duration-300 hover:scale-105 font-medium"
-                  >
-                    <Users className="h-4 w-4 mr-2" />
-                    Join Our Community
-                  </Button>
-                </Link>
-                
-                <Button 
-                  variant="ghost" 
-                  onClick={handleGuestAccess}
-                  disabled={loading}
-                  className="w-full text-slate-400 hover:text-slate-200 hover:bg-slate-800/50 transition-all duration-300 text-sm"
-                >
-                  {loading ? (
-                    <div className="flex items-center">
-                      <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-gray-600 mr-2"></div>
-                      Accessing as Guest...
-                    </div>
-                  ) : (
-                    <>Continue as Guest</>
-                  )}
-                </Button>
-              </div>
-            </div>
-            
-            <div className="pt-4 border-t border-slate-700">
-              <div className="text-center space-y-2">
-                <div className="flex justify-center items-center space-x-2 text-xs text-slate-400">
-                  <Heart className="h-3 w-3 text-red-400" />
-                  <span>"Give, and it will be given to you..."</span>
-                  <Heart className="h-3 w-3 text-red-400" />
-                </div>
-                <p className="text-xs text-slate-500 italic">Luke 6:38</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-        
-        {/* Community stats preview */}
-        <div className="mt-6 grid grid-cols-3 gap-3 text-center">
-          <div className="bg-card/60 backdrop-blur-sm rounded-lg p-3 border border-border/50 hover:bg-card/80 transition-all duration-300">
-            <div className="text-lg font-bold text-primary">250+</div>
-            <div className="text-xs text-muted-foreground">Sowers</div>
+      }
+    >
+      {isFirstTimeLogin && (
+        <Alert className="mb-5 border-emerald-500/40 bg-emerald-500/10">
+          <CheckCircle className="h-4 w-4 text-emerald-400" />
+          <AlertTitle className="text-emerald-200">Verification Complete</AlertTitle>
+          <AlertDescription className="text-emerald-300/80">
+            Please log in for the first time to access all sow2grow features.
+          </AlertDescription>
+        </Alert>
+      )}
+
+      <form onSubmit={handleSubmit} className="space-y-5">
+        {error && (
+          <div className="animate-fade-in rounded-xl border-l-4 border-destructive bg-destructive/10 p-3">
+            <p className="text-sm font-medium text-destructive">{error}</p>
           </div>
-          <div className="bg-card/60 backdrop-blur-sm rounded-lg p-3 border border-border/50 hover:bg-card/80 transition-all duration-300">
-            <div className="text-lg font-bold text-secondary">180+</div>
-            <div className="text-xs text-muted-foreground">Bestowers</div>
+        )}
+
+        <div className="space-y-2">
+          <label htmlFor="email" className="flex items-center gap-2 text-sm font-semibold text-foreground">
+            <Mail className="h-4 w-4 text-amber-300" />
+            Email
+          </label>
+          <EnhancedSecureInput
+            id="email"
+            type="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            onSecurityViolation={handleSecurityViolation}
+            sanitizeType="email"
+            rateLimitKey="login_form"
+            securityLevel="high"
+            className="h-12 w-full rounded-xl border-2 border-input-border bg-input px-4 text-foreground shadow-sm transition-all duration-300 placeholder:text-muted-foreground hover:border-primary/40 focus:border-primary focus:ring-2 focus:ring-primary/40"
+            placeholder="your@email.com"
+            required
+            disabled={loading || securityViolations >= 3}
+          />
+        </div>
+
+        <div className="space-y-2">
+          <label htmlFor="password" className="flex items-center gap-2 text-sm font-semibold text-foreground">
+            <Lock className="h-4 w-4 text-amber-300" />
+            Password
+          </label>
+          <div className="relative">
+            <EnhancedSecureInput
+              id="password"
+              type={showPassword ? "text" : "password"}
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              onSecurityViolation={handleSecurityViolation}
+              sanitizeType="text"
+              rateLimitKey="login_form"
+              securityLevel="high"
+              className="h-12 w-full rounded-xl border-2 border-input-border bg-input px-4 pr-12 text-foreground shadow-sm transition-all duration-300 placeholder:text-muted-foreground hover:border-primary/40 focus:border-primary focus:ring-2 focus:ring-primary/40"
+              placeholder="Enter your password"
+              required
+              disabled={loading || securityViolations >= 3}
+            />
+            <button
+              type="button"
+              onClick={() => setShowPassword(!showPassword)}
+              className="absolute right-4 top-1/2 -translate-y-1/2 rounded-full p-1 text-muted-foreground transition-colors hover:bg-primary/10 hover:text-primary"
+              disabled={loading || securityViolations >= 3}
+            >
+              {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+            </button>
           </div>
-          <div className="bg-card/60 backdrop-blur-sm rounded-lg p-3 border border-border/50 hover:bg-card/80 transition-all duration-300">
-            <div className="text-lg font-bold text-accent">45+</div>
-            <div className="text-xs text-muted-foreground">Orchards</div>
+        </div>
+
+        <SubmitButton
+          loading={loading}
+          loadingLabel="Entering your orchard…"
+          icon={Sprout}
+          disabled={securityViolations >= 3}
+        >
+          Enter the Garden
+        </SubmitButton>
+
+        {securityViolations > 0 && (
+          <div className="rounded-lg border border-amber-500/30 bg-amber-500/10 p-3">
+            <div className="flex items-center gap-2">
+              <Shield className="h-4 w-4 text-amber-300" />
+              <span className="text-xs font-medium text-amber-200">Security Enhanced Mode Active</span>
+            </div>
           </div>
+        )}
+
+        <div className="text-center">
+          <button
+            type="button"
+            className="rounded-lg px-3 py-1.5 text-sm font-semibold text-amber-300 underline-offset-4 transition-colors hover:bg-amber-500/10 hover:text-amber-200 hover:underline"
+            onClick={() => setShowForgotPassword(true)}
+          >
+            Forgot Password?
+          </button>
+        </div>
+      </form>
+
+      {/* Divider */}
+      <div className="relative my-6">
+        <div className="absolute inset-0 flex items-center">
+          <div className="w-full border-t border-foreground/10" />
+        </div>
+        <div className="relative flex justify-center">
+          <span className="rounded-full bg-card/80 px-3 text-[10px] font-semibold uppercase tracking-[0.2em] text-muted-foreground">
+            New to our community?
+          </span>
         </div>
       </div>
 
-      {/* Forgot Password Modal */}
+      <div className="space-y-3">
+        <Link to="/register" className="block">
+          <Button
+            variant="outline"
+            className="h-12 w-full rounded-xl border-2 border-amber-400/40 bg-amber-500/5 text-amber-200 transition-all duration-300 hover:scale-[1.02] hover:border-amber-400/70 hover:bg-amber-500/10"
+          >
+            <Users className="mr-2 h-4 w-4" />
+            Join Our Tribe
+          </Button>
+        </Link>
+
+        <Button
+          variant="ghost"
+          onClick={handleGuestAccess}
+          disabled={loading}
+          className="h-10 w-full text-xs text-muted-foreground hover:bg-card/60 hover:text-foreground"
+        >
+          {loading ? "Accessing as guest…" : "Continue as Guest"}
+        </Button>
+      </div>
+
+      {/* Forgot password modal */}
       {showForgotPassword && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-2xl p-6 w-full max-w-md shadow-2xl">
-            <h3 className="text-xl font-bold text-blue-700 mb-4 text-center">Reset Password</h3>
-            
-            <div className="space-y-4">
-              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                <div className="flex items-center gap-2 mb-2">
-                  <Shield className="h-5 w-5 text-blue-600" />
-                  <span className="font-medium text-blue-700">Security Verification</span>
-                </div>
-                <p className="text-sm text-blue-600">
-                  You'll need to answer your security questions to verify your identity and reset your password.
-                </p>
+        <div className="fixed inset-0 z-[200] flex items-center justify-center bg-background/80 p-4 backdrop-blur-sm animate-fade-in">
+          <div className="premium-card w-full max-w-md p-6 animate-scale-in">
+            <h3 className="font-display mb-2 text-2xl font-bold text-foreground">Reset Password</h3>
+            <p className="mb-4 text-sm text-muted-foreground">Enter your email to receive a reset link.</p>
+            <form onSubmit={handleForgotPassword} className="space-y-4">
+              <input
+                type="email"
+                value={resetEmail}
+                onChange={(e) => setResetEmail(e.target.value)}
+                placeholder="your@email.com"
+                className="h-12 w-full rounded-xl border-2 border-input-border bg-input px-4 text-foreground"
+                required
+              />
+              {resetMessage && (
+                <p className={`text-sm ${resetMessage.includes('sent') ? 'text-emerald-400' : 'text-destructive'}`}>{resetMessage}</p>
+              )}
+              <div className="flex gap-2">
+                <Button type="button" variant="outline" onClick={() => setShowForgotPassword(false)} className="flex-1">Cancel</Button>
+                <SubmitButton loading={resetLoading} loadingLabel="Sending…" size="md" className="flex-1">Send Reset Link</SubmitButton>
               </div>
-              
-              <div className="flex gap-3">
-                <Button
-                  type="button"
-                  className="flex-1 w-full bg-primary text-primary-foreground hover:bg-primary/90"
-                  onClick={handlePasswordResetSupport}
-                >
-                  <Lock className="h-4 w-4 mr-2" />
-                  Reset My Password
-                </Button>
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => {
-                    setShowForgotPassword(false)
-                    setResetEmail("")
-                    setResetMessage("")
-                  }}
-                >
-                  Cancel
-                </Button>
-              </div>
-            </div>
+            </form>
           </div>
         </div>
       )}
-    </div>
+    </FormShell>
   )
 }
