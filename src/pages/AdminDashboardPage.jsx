@@ -348,21 +348,21 @@ export default function AdminDashboardPage() {
   }
 
   return (
-    <div className="min-h-screen" style={{ background: 'linear-gradient(165deg, #2d1810 0%, #3d1f14 30%, #4a2518 60%, #2a1a12 100%)' }}>
+    <div className="min-h-screen bg-background">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Header */}
-        <div className="max-w-4xl mx-auto p-6 rounded-2xl border border-amber-700/30 shadow-2xl mb-8" style={{ background: 'rgba(45, 24, 16, 0.8)', backdropFilter: 'blur(12px)' }}>
+        <div className="mx-auto mb-8 max-w-5xl rounded-3xl border border-border/60 bg-card/80 p-6 shadow-2xl backdrop-blur">
           <div className="text-center">
             <div className="flex justify-center mb-3">
-              <div className="p-3 bg-amber-600/20 rounded-full">
-                <Settings className="h-10 w-10 text-amber-400" />
+              <div className="rounded-full border border-primary/20 bg-primary/10 p-3 text-primary">
+                <Settings className="h-10 w-10" />
               </div>
             </div>
-            <h1 className="text-2xl font-bold text-amber-50 mb-1">Admin Dashboard</h1>
-            <p className="text-amber-300/60 text-sm mb-4">Comprehensive management hub</p>
+            <h1 className="font-display mb-1 text-3xl font-bold"><span className="text-gold-gradient">Admin Dashboard</span></h1>
+            <p className="mb-4 text-sm text-muted-foreground">Comprehensive management hub</p>
             <Button
               onClick={() => navigate('/gosat/chat')}
-              className="bg-gradient-to-r from-amber-600 to-orange-600 hover:from-amber-500 hover:to-orange-500 text-amber-50"
+              className="border border-primary/25 bg-primary/10 text-foreground hover:bg-primary/15"
             >
               <MessageCircle className="h-4 w-4 mr-2" />
               GoSat HQ Chat
@@ -373,7 +373,7 @@ export default function AdminDashboardPage() {
         {/* Main Dashboard Tabs */}
         <Tabs defaultValue="analytics" className="space-y-6">
           <div className="flex justify-center mb-8">
-            <TabsList className="bg-transparent p-0 h-auto grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-6 gap-4">
+            <TabsList className="grid h-auto w-full max-w-6xl grid-cols-2 gap-3 rounded-3xl border border-border/60 bg-card/60 p-3 sm:grid-cols-3 xl:grid-cols-4">
               {[
                 { value: 'analytics', label: 'Analytics' },
                 { value: 'users', label: 'Users' },
@@ -393,8 +393,7 @@ export default function AdminDashboardPage() {
                 <TabsTrigger
                   key={tab.value}
                   value={tab.value}
-                  className="border-2 border-amber-700/30 rounded-xl px-5 py-3 font-semibold shadow-lg hover:shadow-xl hover:scale-105 hover:border-amber-500/50 transition-all duration-300 data-[state=active]:bg-gradient-to-br data-[state=active]:from-amber-600 data-[state=active]:to-orange-600 data-[state=active]:text-amber-50 data-[state=active]:border-amber-500 data-[state=active]:shadow-2xl data-[state=active]:scale-105 text-amber-200/80"
-                  style={{ background: 'rgba(45, 24, 16, 0.7)' }}
+                  className="min-h-14 rounded-2xl border border-border/60 bg-background/40 px-4 py-3 font-medium text-foreground/80 transition-all duration-200 hover:border-primary/30 hover:bg-accent/40 hover:text-foreground data-[state=active]:border-primary/30 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-lg"
                 >
                   {tab.icon && <tab.icon className="w-4 h-4 mr-2" />}
                   {tab.label}
@@ -412,7 +411,7 @@ export default function AdminDashboardPage() {
           </TabsContent>
 
           <TabsContent value="payments">
-            <div className="rounded-lg border border-amber-700/30" style={{ background: 'rgba(45, 24, 16, 0.6)' }}>
+            <div className="rounded-3xl border border-border/60 bg-card/60 p-1 shadow-xl">
               <AdminPaymentDashboard />
             </div>
           </TabsContent>

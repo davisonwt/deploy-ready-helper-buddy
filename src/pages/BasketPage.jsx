@@ -60,12 +60,33 @@ export default function BasketPage() {
       return
     }
 
+    const basketTypes = [...new Set(basketItems.map((item) => item.type || 'orchard'))]
+    if (basketTypes.length > 1) {
+      toast({
+        title: "Separate checkout needed",
+        description: "Please check out orchard, tithing, and free-will gifts separately.",
+        variant: "destructive"
+      })
+      return
+    }
+
+    const primaryType = basketTypes[0]
+    const paymentType = primaryType === 'tithing'
+      ? 'tithe'
+      : primaryType === 'free_will_gift'
+        ? 'freewill'
+        : 'orchard'
+
     // Combine all basket items into one payment
     const combinedPayment = {
       orchardId: basketItems[0]?.orchardId,
+      orchardTitle: basketItems.length === 1 ? basketItems[0]?.orchardTitle : 'Bestowal Basket',
       amount: getTotalAmount(),
-      currency: basketItems[0]?.currency || 'USD',
+      currency: basketItems[0]?.currency || 'USDC',
       pockets: basketItems.flatMap(item => Array.isArray(item.pockets) ? item.pockets : []),
+      pocketsCount: basketItems.reduce((total, item) => total + ((Array.isArray(item.pockets) ? item.pockets.length : 0) * (item.quantity || 1)), 0),
+      paymentType,
+      message: invoiceForm.specialInstructions,
       invoiceInfo: invoiceForm
     }
 
@@ -286,7 +307,10 @@ export default function BasketPage() {
           amount={selectedBasketItem.amount}
           currency={selectedBasketItem.currency}
           orchardId={selectedBasketItem.orchardId}
-          pockets={selectedBasketItem.pockets}
+          orchardTitle={selectedBasketItem.orchardTitle}
+          pocketsCount={selectedBasketItem.pocketsCount}
+          paymentType={selectedBasketItem.paymentType}
+          message={selectedBasketItem.message}
           onPaymentComplete={handlePaymentComplete}
         />
       )}
