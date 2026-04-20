@@ -71,21 +71,22 @@ export default function RegisterPage() {
       return
     }
     
-    // Friendlier password policy (8+ characters)
-    if (formData.password.length < 8) {
-      const msg = "Password must be at least 8 characters long."
+    // Strong password policy: 12+ chars, upper, lower, number, special
+    if (formData.password.length < 12) {
+      const msg = "Password must be at least 12 characters long."
       setError(msg)
       toast({ variant: "destructive", title: "Password too short", description: msg })
       setLoading(false)
       return
     }
-    
-    // Check for password complexity (letter + number)
-    const hasLetter = /[A-Za-z]/.test(formData.password);
+
+    const hasUpper = /[A-Z]/.test(formData.password);
+    const hasLower = /[a-z]/.test(formData.password);
     const hasNumber = /[0-9]/.test(formData.password);
-    
-    if (!hasLetter || !hasNumber) {
-      const msg = "Password must contain both letters and at least one number."
+    const hasSpecial = /[^A-Za-z0-9]/.test(formData.password);
+
+    if (!hasUpper || !hasLower || !hasNumber || !hasSpecial) {
+      const msg = "Password must contain uppercase letters, lowercase letters, numbers, and at least one special character (e.g. !@#$%)."
       setError(msg)
       toast({ variant: "destructive", title: "Password too simple", description: msg })
       setLoading(false)
@@ -196,7 +197,7 @@ export default function RegisterPage() {
         if (lower.includes('already') && (lower.includes('registered') || lower.includes('exists') || lower.includes('user'))) {
           friendly = "An account with this email already exists. Please log in instead."
         } else if (lower.includes('password') && lower.includes('weak')) {
-          friendly = "Password is too weak. Use at least 8 characters with letters and numbers."
+          friendly = "Password is too weak. Use at least 12 characters with uppercase, lowercase, numbers and a special character."
         } else if (lower.includes('rate') || lower.includes('too many')) {
           friendly = "Too many attempts. Please wait a few minutes and try again."
         } else if (lower.includes('invalid') && lower.includes('email')) {
@@ -217,9 +218,11 @@ export default function RegisterPage() {
   // Real-time password feedback
   const pwd = formData.password || ""
   const pwdChecks = {
-    length: pwd.length >= 8,
-    letter: /[A-Za-z]/.test(pwd),
+    length: pwd.length >= 12,
+    upper: /[A-Z]/.test(pwd),
+    lower: /[a-z]/.test(pwd),
     number: /[0-9]/.test(pwd),
+    special: /[^A-Za-z0-9]/.test(pwd),
     match: pwd.length > 0 && pwd === formData.confirmPassword,
   }
   
@@ -496,6 +499,9 @@ export default function RegisterPage() {
                 <label htmlFor="password" className="text-sm font-semibold text-white">
                   Password
                 </label>
+                <p className="text-xs text-amber-200/90 bg-amber-900/20 border border-amber-500/30 rounded-md px-3 py-2">
+                  Your password must be <strong>at least 12 characters</strong> and include <strong>capital letters</strong>, <strong>small letters</strong>, <strong>numbers</strong> and at least one <strong>special character</strong> (e.g. ! @ # $ % &amp; *).
+                </p>
                 <div className="relative">
                   <Lock className="absolute left-4 top-1/2 transform -translate-y-1/2 h-5 w-5 text-slate-400 z-10" />
                   <input
@@ -505,7 +511,7 @@ export default function RegisterPage() {
                     value={formData.password}
                     onChange={handleChange}
                     className="w-full pl-12 pr-12 py-3 border-2 border-slate-600 bg-slate-700/80 rounded-xl focus:ring-2 focus:ring-green-400 focus:border-green-400 transition-all duration-300 text-white placeholder:text-slate-400 hover:border-slate-500 shadow-sm hover:shadow-md text-center"
-                    placeholder="Create a secure password"
+                    placeholder="At least 12 chars: Aa1! …"
                     required
                   />
                   <button
@@ -516,16 +522,22 @@ export default function RegisterPage() {
                     {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
                   </button>
                 </div>
-                {/* Live password requirements - so users (like Frank) know exactly what's expected */}
-                <ul className="mt-2 grid grid-cols-1 sm:grid-cols-3 gap-1 text-xs">
+                {/* Live password requirements */}
+                <ul className="mt-2 grid grid-cols-2 sm:grid-cols-5 gap-1 text-xs">
                   <li className={pwdChecks.length ? "text-emerald-400" : "text-slate-400"}>
-                    {pwdChecks.length ? "✓" : "•"} At least 8 characters
+                    {pwdChecks.length ? "✓" : "•"} 12+ characters
                   </li>
-                  <li className={pwdChecks.letter ? "text-emerald-400" : "text-slate-400"}>
-                    {pwdChecks.letter ? "✓" : "•"} Contains a letter
+                  <li className={pwdChecks.upper ? "text-emerald-400" : "text-slate-400"}>
+                    {pwdChecks.upper ? "✓" : "•"} Capital letter
+                  </li>
+                  <li className={pwdChecks.lower ? "text-emerald-400" : "text-slate-400"}>
+                    {pwdChecks.lower ? "✓" : "•"} Small letter
                   </li>
                   <li className={pwdChecks.number ? "text-emerald-400" : "text-slate-400"}>
-                    {pwdChecks.number ? "✓" : "•"} Contains a number
+                    {pwdChecks.number ? "✓" : "•"} Number
+                  </li>
+                  <li className={pwdChecks.special ? "text-emerald-400" : "text-slate-400"}>
+                    {pwdChecks.special ? "✓" : "•"} Special char
                   </li>
                 </ul>
               </div>
