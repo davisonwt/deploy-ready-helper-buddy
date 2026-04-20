@@ -262,7 +262,7 @@ export default function MarketingVideosPage() {
                       the inviter's referral code pre-attached. */}
                   {b.available && (
                     <a
-                      href={sowerCtaUrl}
+                      href={ctaUrlFor(b)}
                       target="_blank"
                       rel="noopener noreferrer"
                       onClick={(e) => e.stopPropagation()}
@@ -272,7 +272,7 @@ export default function MarketingVideosPage() {
                         color: theme.textPrimary,
                         boxShadow: `0 4px 12px ${theme.shadow}`,
                       }}
-                      aria-label="Become an S2G Sower"
+                      aria-label={b.ctaLabel}
                     >
                       <Sprout className="w-3 h-3 md:w-3.5 md:h-3.5" />
                       <span className="hidden sm:inline">Become an S2G Sower</span>
