@@ -234,8 +234,8 @@ export function validateEmail(email: string | undefined | null) {
 export function validatePassword(password: string | undefined | null): boolean {
   if (!password || typeof password !== 'string') return false
   
-  // Minimum 10 characters for security
-  if (password.length < 10) return false
+  // Minimum 12 characters for security
+  if (password.length < 12) return false
   
   // Must contain at least one uppercase letter
   if (!/[A-Z]/.test(password)) return false
