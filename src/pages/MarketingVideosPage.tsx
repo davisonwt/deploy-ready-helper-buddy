@@ -87,33 +87,73 @@ export default function MarketingVideosPage() {
       inviterName,
       referralCode: code,
       shareUrl,
+      ctaLabel: banner.ctaLabel,
     });
   };
 
-  // The recipient's CTA link — opens our /become-a-sower landing page,
-  // pre-loaded with the inviter's referral code so attribution sticks.
-  const sowerCtaUrl = code
-    ? `https://sow2growapp.com/become-a-sower?ref=${encodeURIComponent(code)}`
-    : "https://sow2growapp.com/become-a-sower";
+  // Per-video CTA link — opens the matching landing page with the inviter's
+  // referral code pre-attached so attribution sticks.
+  const ctaUrlFor = (banner: BannerVideo) =>
+    code
+      ? `https://sow2growapp.com${banner.ctaPath}?ref=${encodeURIComponent(code)}`
+      : `https://sow2growapp.com${banner.ctaPath}`;
 
-  const buildShareText = (banner: BannerVideo) =>
-    `${banner.emoji} ${banner.title} — ${banner.subtitle}\n\nJoin my S2G tribe${inviterName ? ` (${inviterName})` : ""} & become a Sower:\n👉 ${sowerCtaUrl}`;
+  const buildShareText = (banner: BannerVideo) => {
+    const url = ctaUrlFor(banner);
+    return `${banner.emoji} ${banner.title} — ${banner.subtitle}\n\nJoin my S2G tribe${inviterName ? ` (${inviterName})` : ""} — ${banner.ctaLabel}:\n👉 ${url}`;
+  };
 
+  /** Share the personalized video file itself (with CTA + referral burned in)
+   *  via the device share sheet. Falls back to download + copy if the
+   *  Web Share API can't take files. */
   const handleNativeShare = async (banner: BannerVideo) => {
+    if (!code) {
+      toast.error("Loading your referral code… try again in a moment.");
+      return;
+    }
     const text = buildShareText(banner);
-    if (typeof navigator !== "undefined" && (navigator as any).share) {
+    const url = ctaUrlFor(banner);
+
+    setActiveId(banner.id);
+    reset();
+    toast.info("Personalising video for sharing… ~30–60s");
+
+    const file = await burnToFile({
+      sourceUrl: banner.src,
+      fileBaseName: `s2g-${banner.id}`,
+      inviterName,
+      referralCode: code,
+      shareUrl,
+      ctaLabel: banner.ctaLabel,
+    });
+
+    const nav = navigator as any;
+    if (file && nav.canShare && nav.canShare({ files: [file] })) {
       try {
-        await (navigator as any).share({ title: `S2G · ${banner.title}`, text, url: sowerCtaUrl });
+        await nav.share({ title: `S2G · ${banner.title}`, text, url, files: [file] });
         return;
       } catch {
-        // user cancelled or share unavailable — fall through to copy
+        // user cancelled — fall through
       }
     }
+
+    // Fallback: download the personalized file so the user can attach it
+    if (file) {
+      const dl = URL.createObjectURL(file);
+      const a = document.createElement("a");
+      a.href = dl;
+      a.download = file.name;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      setTimeout(() => URL.revokeObjectURL(dl), 60_000);
+      toast.success("Video saved! Attach it to your message.");
+    }
+
     try {
       await navigator.clipboard.writeText(text);
-      toast.success("Share message copied — paste it anywhere!");
     } catch {
-      toast.error("Couldn't copy. Long-press to copy manually.");
+      // ignore
     }
   };
 
@@ -130,10 +170,10 @@ export default function MarketingVideosPage() {
     document.body.removeChild(a);
   };
 
-  const copyShareLink = async () => {
+  const copyShareLink = async (banner: BannerVideo) => {
     try {
-      await navigator.clipboard.writeText(sowerCtaUrl);
-      toast.success("Sower invite link copied!");
+      await navigator.clipboard.writeText(ctaUrlFor(banner));
+      toast.success("Invite link copied!");
     } catch {
       toast.error("Couldn't copy link");
     }
