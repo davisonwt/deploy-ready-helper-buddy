@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../hooks/useAuth'
 import { useBillingInfo } from '../hooks/useBillingInfo'
 import { useBasket } from '../hooks/useBasket'
@@ -22,6 +23,7 @@ import {
 
 export default function TithingPage() {
   const { user } = useAuth()
+  const navigate = useNavigate()
   const { billingInfo, hasCompleteBillingInfo } = useBillingInfo()
   const { addToBasket } = useBasket()
   const [amount, setAmount] = useState("")
@@ -48,8 +50,9 @@ export default function TithingPage() {
       }
       
       addToBasket(tithingItem)
-      setMessage("Tithing added to basket! Please proceed to checkout.")
+      setMessage("Tithing added to basket! Redirecting to checkout...")
       setAmount("")
+      setTimeout(() => navigate('/products/basket'), 600)
     } catch (error) {
       setMessage("There was an error adding tithing to basket.")
     } finally {
