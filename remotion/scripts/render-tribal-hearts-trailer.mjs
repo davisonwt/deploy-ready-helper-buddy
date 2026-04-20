@@ -8,7 +8,7 @@ import { execSync } from "node:child_process";
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ID = "tribal-hearts-trailer";
 const VO = path.resolve(__dirname, "../public/voiceovers/tribal-hearts/tribal-hearts-full.mp3");
-const OUT = path.resolve(__dirname, "../../public/videos/tribal-hearts-trailer.mp4");
+const OUT = path.resolve(__dirname, "../../public/videos/tribal-hearts-trailer-v7.mp4");
 const SILENT = `/tmp/${ID}-silent.mp4`;
 
 console.log("Bundling Tribal Hearts trailer…");

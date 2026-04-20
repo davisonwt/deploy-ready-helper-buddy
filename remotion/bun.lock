@@ -7,7 +7,7 @@
       "dependencies": {
         "@remotion/bundler": "^4.0.448",
         "@remotion/cli": "^4.0.448",
-        "@remotion/compositor-linux-x64-musl": "^4.0.448",
+        "@remotion/compositor-linux-x64-musl": "^4.0.450",
         "@remotion/fonts": "^4.0.448",
         "@remotion/google-fonts": "^4.0.448",
         "@remotion/renderer": "^4.0.448",
@@ -134,7 +134,7 @@
 
     "@remotion/compositor-linux-x64-gnu": ["@remotion/compositor-linux-x64-gnu@4.0.448", "https://europe-west4-npm.pkg.dev/lovable-core-prod/sandbox-npm-cache/@remotion/compositor-linux-x64-gnu/-/compositor-linux-x64-gnu-4.0.448.tgz", { "os": "linux", "cpu": "x64" }, "sha512-HdbR3Plifz1+VLO8VGtnP2+uW0PiX378jUQA+k0/anXqa4BDgLX5GptLeHK7bU0Iio/Hbu6wsEGLMmDr80U1/Q=="],
 
-    "@remotion/compositor-linux-x64-musl": ["@remotion/compositor-linux-x64-musl@4.0.448", "https://europe-west4-npm.pkg.dev/lovable-core-prod/sandbox-npm-cache/@remotion/compositor-linux-x64-musl/-/compositor-linux-x64-musl-4.0.448.tgz", { "os": "linux", "cpu": "x64" }, "sha512-7OK/AtkKWFFrzgZF7Ti6Ld9vIsQ4Uh61k9iKPsmAw0f3CeXHJIuG0m3uhcLoqaBsD35fnL9D12vHgXPHpHyjng=="],
+    "@remotion/compositor-linux-x64-musl": ["@remotion/compositor-linux-x64-musl@4.0.450", "https://europe-west1-npm.pkg.dev/lovable-core-prod/sandbox-npm-cache/@remotion/compositor-linux-x64-musl/-/compositor-linux-x64-musl-4.0.450.tgz", { "os": "linux", "cpu": "x64" }, "sha512-pcxLLDXlCAElc85z7bEfILctCYN5k1ThaFllWDOjZkC4FdR/NjIkJVX9OdNsHZjLdcgkcRKuHDGo/UEtPV5TSQ=="],
 
     "@remotion/compositor-win32-x64-msvc": ["@remotion/compositor-win32-x64-msvc@4.0.448", "https://europe-west4-npm.pkg.dev/lovable-core-prod/sandbox-npm-cache/@remotion/compositor-win32-x64-msvc/-/compositor-win32-x64-msvc-4.0.448.tgz", { "os": "win32", "cpu": "x64" }, "sha512-qjygadAQ+lEBmWRqM+KX1qWy69eXQLCkJ9xUkaLDWgtPkKNglvh+sBa2Nd9hp84ye4u+7fUO8MxKEPVSt2f54g=="],
 
@@ -499,6 +499,8 @@
     "yauzl": ["yauzl@2.10.0", "https://europe-west4-npm.pkg.dev/lovable-core-prod/sandbox-npm-cache/yauzl/-/yauzl-2.10.0.tgz", { "dependencies": { "buffer-crc32": "~0.2.3", "fd-slicer": "~1.1.0" } }, "sha512-p4a9I6X6nu6IhoGmBqAcbJy1mlC4j27vEPZX9F4L4/vZT3Lyq1VkFHw/V/PUcB9Buo+DG3iHkT0x3Qya58zc3g=="],
 
     "zod": ["zod@4.3.6", "https://europe-west4-npm.pkg.dev/lovable-core-prod/sandbox-npm-cache/zod/-/zod-4.3.6.tgz", {}, "sha512-rftlrkhHZOcjDwkGlnUtZZkvaPHCsDATp4pGpuOOMDaTdDDXF91wuVDJoWoPsKX/3YPQ5fHuF3STjcYyKr+Qhg=="],
+
+    "@remotion/renderer/@remotion/compositor-linux-x64-musl": ["@remotion/compositor-linux-x64-musl@4.0.448", "https://europe-west4-npm.pkg.dev/lovable-core-prod/sandbox-npm-cache/@remotion/compositor-linux-x64-musl/-/compositor-linux-x64-musl-4.0.448.tgz", { "os": "linux", "cpu": "x64" }, "sha512-7OK/AtkKWFFrzgZF7Ti6Ld9vIsQ4Uh61k9iKPsmAw0f3CeXHJIuG0m3uhcLoqaBsD35fnL9D12vHgXPHpHyjng=="],
 
     "@remotion/renderer/source-map": ["source-map@0.8.0-beta.0", "https://europe-west4-npm.pkg.dev/lovable-core-prod/sandbox-npm-cache/source-map/-/source-map-0.8.0-beta.0.tgz", { "dependencies": { "whatwg-url": "^7.0.0" } }, "sha512-2ymg6oRBpebeZi9UUNsgQ89bhx01TcTkmNTGnNO88imTmbSgy4nfujrgVEFKWpMTEGA11EDkTt7mqObTPdigIA=="],
 
