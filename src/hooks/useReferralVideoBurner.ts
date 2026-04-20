@@ -198,7 +198,10 @@ async function runBurn(
   const video = document.createElement("video");
   video.crossOrigin = "anonymous";
   video.playsInline = true;
+  // Must be muted=false so captureStream() exposes the audio track. We silence
+  // local playback via volume=0 so the user doesn't hear it during burning.
   video.muted = false;
+  video.volume = 0;
   video.preload = "auto";
   video.src = opts.sourceUrl;
 
@@ -232,20 +235,25 @@ async function runBurn(
     const fps = 30;
     const stream = (canvas as HTMLCanvasElement).captureStream(fps);
 
+    let hasAudio = false;
     try {
       // @ts-expect-error: captureStream exists on HTMLMediaElement in modern browsers
       const vStream: MediaStream | undefined = video.captureStream?.() ?? video.mozCaptureStream?.();
       if (vStream) {
-        vStream.getAudioTracks().forEach((t) => stream.addTrack(t));
+        const audioTracks = vStream.getAudioTracks();
+        audioTracks.forEach((t) => stream.addTrack(t));
+        hasAudio = audioTracks.length > 0;
       }
     } catch {
       // audio-less output is fine
     }
+    console.log("[referral-video-burner] audio tracks captured:", hasAudio);
 
     const { mime, ext } = pickMimeType();
     const recorder = new MediaRecorder(stream, {
       mimeType: mime,
       videoBitsPerSecond: 4_000_000,
+      audioBitsPerSecond: 128_000,
     });
     const chunks: Blob[] = [];
     recorder.ondataavailable = (e) => { if (e.data.size) chunks.push(e.data); };
