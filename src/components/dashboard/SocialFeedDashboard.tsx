@@ -23,6 +23,7 @@ import { DriverPromoCard } from '../feed/cards/DriverPromoCard';
 // Interstitial Memry carousels
 import { MemryFeedCarousel } from './sections/MemryFeedCarousel';
 import { FloatingAmbassadorOrb } from '../ambassador/FloatingAmbassadorOrb';
+import { FloatingHeartsOrb } from './FloatingHeartsOrb';
 
 interface SocialFeedDashboardProps {
   profile: any;
@@ -181,6 +182,9 @@ export const SocialFeedDashboard: React.FC<SocialFeedDashboardProps> = ({
 
       {/* Ambassador Discovery Orb */}
       <FloatingAmbassadorOrb />
+
+      {/* Tribal Hearts (Ambassador-only) */}
+      <FloatingHeartsOrb />
 
       {/* Go Live FAB */}
       <GoLiveFAB />
