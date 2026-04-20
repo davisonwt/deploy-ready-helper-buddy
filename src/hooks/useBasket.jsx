@@ -20,12 +20,11 @@ export const BasketProvider = ({ children }) => {
       const parsedBasket = JSON.parse(savedBasket)
       const normalizedBasket = parsedBasket.map((item) => ({
         ...item,
-        type: item.type
-          ?? (item.orchardId === 'tithing'
-            ? 'tithing'
-            : item.orchardId === 'free-will-gift'
-              ? 'free_will_gift'
-              : 'orchard'),
+        type: item.orchardId === 'tithing'
+          ? 'tithing'
+          : item.orchardId === 'free-will-gift'
+            ? 'free_will_gift'
+            : (item.type ?? 'orchard'),
       }))
       setBasketItems(normalizedBasket)
     }
