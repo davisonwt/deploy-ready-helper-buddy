@@ -103,20 +103,21 @@ export function WelcomeAbout({ onEnter }: Props) {
         <div className="mt-8 space-y-4 text-base leading-relaxed text-white/85 sm:text-lg">
           <p>
             Tribal Hearts is a sacred garden within Sow2Grow — a private space where only{' '}
-            <span className="text-amber-200">Tribe Ambassadors</span> come to sow real connection.
+            <span className="text-amber-200">Tribe Ambassadors</span> come to seek the one their soul recognises.
           </p>
           <p className="font-serif italic text-white">
             Here, hearts meet hearts.
             <br />
             Here, authenticity is the only language.
             <br />
-            Here, friendships bloom into something deeper, and meaningful relationships are nurtured with intention.
+            Here, two flames find each other and gently become one — weaving their lives, their people, and their purpose into a tribe of their own.
           </p>
           <p>
             This is not another dating app.
             <br />
             <span className="text-emerald-200">
-              This is a garden where souls who have already chosen growth come to find their tribe.
+              This is a garden where souls who have already chosen growth come to find their soul's flame —
+              and together become part of each other's tribe.
             </span>
           </p>
           <p className="font-serif italic text-white/90">
@@ -124,7 +125,7 @@ export function WelcomeAbout({ onEnter }: Props) {
             <br />
             Listen with care.
             <br />
-            And watch something beautiful take root.
+            And watch something sacred take root.
           </p>
         </div>
 
