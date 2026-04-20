@@ -52,7 +52,7 @@ export default function TithingPage() {
       addToBasket(tithingItem)
       setMessage("Tithing added to basket! Redirecting to checkout...")
       setAmount("")
-      setTimeout(() => navigate('/products/basket'), 600)
+      setTimeout(() => navigate('/basket'), 600)
     } catch (error) {
       setMessage("There was an error adding tithing to basket.")
     } finally {
