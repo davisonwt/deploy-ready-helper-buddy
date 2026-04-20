@@ -68,7 +68,7 @@ const BANNERS: BannerVideo[] = [
   { id: "group-chat",                 title: "Group Chat",                 subtitle: "Start a tribal group chat",        emoji: "👥", src: "/videos/banners/group-chat.mp4",                 available: true, ctaLabel: "Start a Group Chat",             ctaPath: "/become-a-sower" },
 
   // — Tribal Hearts —
-  { id: "tribal-hearts",              title: "Tribal Hearts",              subtitle: "Safe agent-powered tribal dating", emoji: "❤️", src: "/videos/tribal-hearts-trailer-v6.mp4",          available: true, ctaLabel: "Become a Tribal Heart",          ctaPath: "/become-a-sower" },
+  { id: "tribal-hearts",              title: "Tribal Hearts",              subtitle: "Safe agent-powered tribal dating", emoji: "❤️", src: "/videos/tribal-hearts-trailer-v7.mp4",          available: true, ctaLabel: "Become a Tribal Heart",          ctaPath: "/become-a-sower" },
 ];
 
 const SHARE_VIDEO_BUCKET = "chat-files";
