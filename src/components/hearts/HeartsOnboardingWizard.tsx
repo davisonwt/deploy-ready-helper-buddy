@@ -1,7 +1,7 @@
 /**
  * HeartsOnboardingWizard — Fireside sanctuary onboarding.
- * Sacred 3-act flow: 1) Name & origin   2) Spirit Path (element + warm questions)   3) Bestowal Pact + commit.
- * Same backend; Spirit Name → display_first_name; element/origin → lifestyle jsonb.
+ * Sacred 3-act flow: 1) Name & origin   2) Soul Path (element + warm questions)   3) Bestowal Pact + commit.
+ * Same backend; Soul Name → display_first_name; element/origin → lifestyle jsonb.
  */
 import { useState } from 'react';
 import { Input } from '@/components/ui/input';
@@ -40,7 +40,7 @@ export function HeartsOnboardingWizard({ onDone }: { onDone: () => void }) {
 
   function next() {
     if (!answers[q.key]?.trim()) { toast.error('Please share a quick answer 🌱'); return; }
-    if (step === 0 && !element) { toast.error('Choose your element to walk the Spirit Path 🔥'); return; }
+    if (step === 0 && !element) { toast.error('Choose your element to walk the Soul Path 🔥'); return; }
     if (isLast) draftProfile();
     else setStep(s => s + 1);
   }
@@ -67,7 +67,7 @@ export function HeartsOnboardingWizard({ onDone }: { onDone: () => void }) {
       const enrichedLifestyle = {
         ...(draft.lifestyle ?? {}),
         element,
-        spirit_name_origin: origin,
+        soul_name_origin: origin,
       };
       await save({
         display_first_name: answers.first_name,
@@ -157,7 +157,7 @@ export function HeartsOnboardingWizard({ onDone }: { onDone: () => void }) {
           <LotusHeartLogo size={48} />
           <div>
             <div className="inline-flex items-center gap-1.5 rounded-full border border-[hsl(var(--th-gold)/0.4)] bg-[hsl(var(--th-walnut-dark)/0.6)] px-2.5 py-1 text-[10px] font-medium uppercase tracking-[0.2em] text-[hsl(var(--th-gold-bright))]">
-              <Sparkles className="h-3 w-3" /> Walking the Spirit Path
+              <Sparkles className="h-3 w-3" /> Walking the Soul Path
             </div>
             <p className="th-serif mt-1 text-sm italic text-[hsl(var(--th-cream)/0.8)]">A few warm questions by the fire.</p>
           </div>
@@ -192,7 +192,7 @@ export function HeartsOnboardingWizard({ onDone }: { onDone: () => void }) {
             style={{ background: 'var(--th-wood-gradient-soft)', borderColor: 'hsl(var(--th-gold) / 0.3)' }}
           >
             <div className="th-serif mb-3 text-center text-sm text-[hsl(var(--th-gold-bright))]">
-              Choose your Element — the spirit your flame walks with
+              Choose your Element — the soul your flame walks with
             </div>
             <div className="grid grid-cols-4 gap-2">
               {(['earth', 'air', 'fire', 'water'] as Element[]).map(el => (
