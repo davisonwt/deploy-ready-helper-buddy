@@ -331,7 +331,7 @@ const App = () => (
               <Route path="/ambassador-thumbnail" element={<AmbassadorThumbnailPage />} />
               <Route path="/tribe-ambassador" element={<Suspense fallback={<LoadingFallback />}><TribeAmbassadorPage /></Suspense>} />
               <Route path="/tribal-hearts" element={
-                <Layout>
+                <Layout minimal>
                   <Suspense fallback={<LoadingFallback />}>
                     <ProtectedRoute>
                       <TribalHearts />
