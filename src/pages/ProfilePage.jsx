@@ -26,8 +26,12 @@ function FeedCard({ children, theme, delay = 0, className = "" }) {
       initial={{ opacity: 0, y: 16 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay, duration: 0.35 }}
-      className={`rounded-2xl overflow-hidden ${className}`}
-      style={{ background: theme.cardBg, border: `1px solid ${theme.cardBorder}` }}
+      className={`relative rounded-3xl overflow-hidden backdrop-blur-xl ${className}`}
+      style={{
+        background: `linear-gradient(145deg, ${theme.cardBg}, ${theme.textPrimary}05)`,
+        border: `1px solid ${theme.accent}25`,
+        boxShadow: `0 12px 40px -12px ${theme.shadow}, inset 0 1px 0 ${theme.textPrimary}08`,
+      }}
     >
       {children}
     </motion.div>
@@ -41,14 +45,30 @@ function CollapsibleSection({ title, icon: Icon, children, defaultOpen = false, 
     <FeedCard theme={theme} delay={delay}>
       <button
         onClick={() => setOpen(!open)}
-        className="w-full flex items-center justify-between px-4 py-3"
+        className="w-full flex items-center justify-between px-4 py-3.5 transition-colors hover:bg-white/[0.03]"
         style={{ color: theme.textPrimary }}
       >
-        <div className="flex items-center gap-2">
-          {Icon && <Icon className="h-4 w-4" style={{ color: theme.accent }} />}
-          <span className="text-sm font-semibold">{title}</span>
+        <div className="flex items-center gap-2.5">
+          {Icon && (
+            <div
+              className="flex h-8 w-8 items-center justify-center rounded-xl"
+              style={{
+                background: `linear-gradient(135deg, ${theme.accent}30, ${theme.accent}10)`,
+                border: `1px solid ${theme.accent}30`,
+              }}
+            >
+              <Icon className="h-4 w-4" style={{ color: theme.accent }} />
+            </div>
+          )}
+          <span className="text-sm font-semibold tracking-wide" style={{ color: theme.textPrimary }}>{title}</span>
         </div>
-        {open ? <ChevronUp className="h-4 w-4" style={{ color: theme.textSecondary }} /> : <ChevronDown className="h-4 w-4" style={{ color: theme.textSecondary }} />}
+        <ChevronDown
+          className="h-4 w-4 transition-transform duration-300"
+          style={{
+            color: theme.textSecondary,
+            transform: open ? 'rotate(180deg)' : 'rotate(0deg)',
+          }}
+        />
       </button>
       <AnimatePresence>
         {open && (
@@ -59,7 +79,12 @@ function CollapsibleSection({ title, icon: Icon, children, defaultOpen = false, 
             transition={{ duration: 0.2 }}
             className="overflow-hidden"
           >
-            <div className="px-4 pb-4">{children}</div>
+            <div
+              className="px-4 pb-4 pt-1 border-t"
+              style={{ borderColor: `${theme.accent}15` }}
+            >
+              <div className="pt-3">{children}</div>
+            </div>
           </motion.div>
         )}
       </AnimatePresence>
@@ -401,25 +426,35 @@ export default function ProfilePage() {
 
         {/* === Tab Switcher === */}
         <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }}
-          className="flex gap-1 p-1 rounded-2xl"
-          style={{ background: theme.cardBg, border: `1px solid ${theme.cardBorder}` }}
+          className="flex gap-1 p-1.5 rounded-2xl backdrop-blur-xl"
+          style={{
+            background: `linear-gradient(145deg, ${theme.cardBg}, ${theme.textPrimary}05)`,
+            border: `1px solid ${theme.accent}25`,
+            boxShadow: `0 8px 30px -12px ${theme.shadow}`,
+          }}
         >
           {[
             { key: "profile", label: "👤 Profile" },
             { key: "journal", label: "📖 Journal" },
             { key: "recipes", label: "🍳 Recipes" },
-          ].map(tab => (
-            <button key={tab.key}
-              onClick={() => setActiveView(tab.key)}
-              className="flex-1 py-2 rounded-xl text-xs font-semibold transition-all"
-              style={{
-                background: activeView === tab.key ? theme.accent : 'transparent',
-                color: activeView === tab.key ? '#fff' : theme.textSecondary,
-              }}
-            >
-              {tab.label}
-            </button>
-          ))}
+          ].map(tab => {
+            const active = activeView === tab.key
+            return (
+              <button key={tab.key}
+                onClick={() => setActiveView(tab.key)}
+                className="flex-1 py-2.5 rounded-xl text-xs font-semibold transition-all duration-300"
+                style={{
+                  background: active
+                    ? `linear-gradient(135deg, ${theme.accent}, ${theme.accentLight || theme.accent})`
+                    : 'transparent',
+                  color: active ? '#fff' : theme.textSecondary,
+                  boxShadow: active ? `0 6px 18px -4px ${theme.accent}80, inset 0 1px 0 ${theme.textPrimary}20` : 'none',
+                }}
+              >
+                {tab.label}
+              </button>
+            )
+          })}
         </motion.div>
 
         {/* === JOURNAL VIEW === */}
@@ -478,7 +513,15 @@ export default function ProfilePage() {
                   <p className="text-xs text-red-400 mb-2"><AlertCircle className="h-3 w-3 inline mr-1" />{pictureError}</p>
                 )}
 
-                <h1 className="text-xl font-bold mb-0.5" style={{ color: theme.textPrimary }}>
+                <h1
+                  className="text-2xl font-extrabold mb-1 tracking-tight"
+                  style={{
+                    backgroundImage: `linear-gradient(135deg, ${theme.textPrimary}, ${theme.accent})`,
+                    WebkitBackgroundClip: 'text',
+                    WebkitTextFillColor: 'transparent',
+                    backgroundClip: 'text',
+                  }}
+                >
                   {user?.display_name || user?.first_name || "My Profile"}
                 </h1>
                 <p className="text-xs mb-3" style={{ color: theme.textSecondary }}>
