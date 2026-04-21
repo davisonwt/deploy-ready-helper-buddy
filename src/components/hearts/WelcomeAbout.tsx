@@ -48,14 +48,13 @@ export function WelcomeAbout({ onEnter }: Props) {
           ✦ Ambassador-only · Sacred Fireside ✦
         </div>
 
-        <div className="mb-8 th-ember-pulse">
-          <TribalHeartsLogo size={160} />
+        <p className="th-serif mb-3 text-lg italic text-[hsl(var(--th-cream)/0.85)] sm:text-xl">
+          Welcome to
+        </p>
+        <div className="th-ember-pulse w-full max-w-2xl">
+          <TribalHeartsLogo banner size={220} />
         </div>
-
-        <h1 className="th-serif text-4xl font-semibold leading-tight sm:text-5xl">
-          <span className="text-[hsl(var(--th-cream))]">Welcome to </span>
-          <span className="th-gold-text italic">Tribal Hearts</span>
-        </h1>
+        <h1 className="sr-only">Welcome to Tribal Hearts</h1>
 
         <div className="mt-8 space-y-4 text-base leading-relaxed text-[hsl(var(--th-cream)/0.85)] sm:text-lg">
           <p>
