@@ -305,14 +305,98 @@ export function HeartsOnboardingWizard({ onDone }: { onDone: () => void }) {
         <Label className="th-serif text-lg leading-snug text-[hsl(var(--th-cream))]">
           {step === 0 ? 'What name shall the fireside call you by?' : q.text}
         </Label>
-        <Input
-          placeholder={q.placeholder}
-          value={answers[q.key] ?? ''}
-          onChange={e => setAnswers(a => ({ ...a, [q.key]: e.target.value }))}
-          onKeyDown={e => e.key === 'Enter' && next()}
-          autoFocus
-          className="h-12 rounded-xl border-[hsl(var(--th-gold)/0.3)] bg-[hsl(var(--th-walnut-dark)/0.5)] text-base text-[hsl(var(--th-cream))] placeholder:text-[hsl(var(--th-cream)/0.4)] backdrop-blur-sm focus-visible:ring-[hsl(var(--th-gold)/0.5)]"
-        />
+
+        {q.key === 'complexion_pref' ? (
+          (() => {
+            const { choice, custom } = decodeComplexion(answers.complexion_pref);
+            return (
+              <>
+                <p className="text-xs italic text-[hsl(var(--th-cream)/0.65)]">
+                  This only softly broadens or focuses your matches — no one is ever excluded based on appearance.
+                </p>
+                <div className="flex flex-wrap gap-2">
+                  {COMPLEXION_CHOICES.map(c => {
+                    const sel = choice === c.key;
+                    return (
+                      <button
+                        key={c.key}
+                        type="button"
+                        onClick={() => setAnswers(a => ({ ...a, complexion_pref: encodeComplexion(c.key, custom) }))}
+                        className={`rounded-full border px-3.5 py-2 text-sm transition ${
+                          sel
+                            ? 'border-[hsl(var(--th-gold-bright))] bg-[hsl(var(--th-walnut-mid))] text-[hsl(var(--th-gold-bright))] shadow-[0_0_14px_hsl(var(--th-gold)/0.35)]'
+                            : 'border-[hsl(var(--th-gold)/0.3)] bg-[hsl(var(--th-walnut-dark)/0.5)] text-[hsl(var(--th-cream)/0.85)] hover:border-[hsl(var(--th-gold)/0.6)]'
+                        }`}
+                      >
+                        {c.label}
+                      </button>
+                    );
+                  })}
+                </div>
+                {choice === 'describe' && (
+                  <Input
+                    autoFocus
+                    placeholder="In a few words…"
+                    maxLength={200}
+                    value={custom}
+                    onChange={e => setAnswers(a => ({ ...a, complexion_pref: encodeComplexion(choice, e.target.value) }))}
+                    className="h-12 rounded-xl border-[hsl(var(--th-gold)/0.3)] bg-[hsl(var(--th-walnut-dark)/0.5)] text-base text-[hsl(var(--th-cream))] placeholder:text-[hsl(var(--th-cream)/0.4)] backdrop-blur-sm focus-visible:ring-[hsl(var(--th-gold)/0.5)]"
+                  />
+                )}
+              </>
+            );
+          })()
+        ) : q.key === 'physical_prefs' ? (
+          (() => {
+            const { tags, custom } = decodePhysical(answers.physical_prefs);
+            const toggle = (k: string) => {
+              const next = tags.includes(k) ? tags.filter(t => t !== k) : [...tags, k];
+              setAnswers(a => ({ ...a, physical_prefs: encodePhysical(next, custom) }));
+            };
+            return (
+              <>
+                <p className="text-xs italic text-[hsl(var(--th-cream)/0.65)]">
+                  Pick any that resonate, or describe in your own words. Choose what feels true.
+                </p>
+                <div className="flex flex-wrap gap-2">
+                  {PHYSICAL_TAGS.map(t => {
+                    const sel = tags.includes(t.key);
+                    return (
+                      <button
+                        key={t.key}
+                        type="button"
+                        onClick={() => toggle(t.key)}
+                        className={`rounded-full border px-3.5 py-2 text-sm transition ${
+                          sel
+                            ? 'border-[hsl(var(--th-gold-bright))] bg-[hsl(var(--th-walnut-mid))] text-[hsl(var(--th-gold-bright))] shadow-[0_0_14px_hsl(var(--th-gold)/0.35)]'
+                            : 'border-[hsl(var(--th-gold)/0.3)] bg-[hsl(var(--th-walnut-dark)/0.5)] text-[hsl(var(--th-cream)/0.85)] hover:border-[hsl(var(--th-gold)/0.6)]'
+                        }`}
+                      >
+                        {t.label}
+                      </button>
+                    );
+                  })}
+                </div>
+                <Input
+                  placeholder="Describe in your own words (optional)"
+                  maxLength={250}
+                  value={custom}
+                  onChange={e => setAnswers(a => ({ ...a, physical_prefs: encodePhysical(tags, e.target.value) }))}
+                  className="h-12 rounded-xl border-[hsl(var(--th-gold)/0.3)] bg-[hsl(var(--th-walnut-dark)/0.5)] text-base text-[hsl(var(--th-cream))] placeholder:text-[hsl(var(--th-cream)/0.4)] backdrop-blur-sm focus-visible:ring-[hsl(var(--th-gold)/0.5)]"
+                />
+              </>
+            );
+          })()
+        ) : (
+          <Input
+            placeholder={q.placeholder}
+            value={answers[q.key] ?? ''}
+            onChange={e => setAnswers(a => ({ ...a, [q.key]: e.target.value }))}
+            onKeyDown={e => e.key === 'Enter' && next()}
+            autoFocus
+            className="h-12 rounded-xl border-[hsl(var(--th-gold)/0.3)] bg-[hsl(var(--th-walnut-dark)/0.5)] text-base text-[hsl(var(--th-cream))] placeholder:text-[hsl(var(--th-cream)/0.4)] backdrop-blur-sm focus-visible:ring-[hsl(var(--th-gold)/0.5)]"
+          />
+        )}
       </div>
 
       <div className="flex gap-2">
