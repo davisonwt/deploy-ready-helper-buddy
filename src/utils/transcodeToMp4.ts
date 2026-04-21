@@ -83,9 +83,13 @@ export async function transcodeToMp4(
     ]);
 
     const data = await ff.readFile(outputName);
-    // data is Uint8Array
-    const bytes = data instanceof Uint8Array ? data : new Uint8Array(data as ArrayBuffer);
-    return new Blob([bytes], { type: "video/mp4" });
+    // data may be Uint8Array or string — copy into a fresh ArrayBuffer-backed
+    // Uint8Array so the resulting Blob is portable across browsers (avoids
+    // SharedArrayBuffer typing issues on some TS lib targets).
+    const raw = typeof data === "string" ? new TextEncoder().encode(data) : (data as Uint8Array);
+    const buf = new ArrayBuffer(raw.byteLength);
+    new Uint8Array(buf).set(raw);
+    return new Blob([buf], { type: "video/mp4" });
   } finally {
     ff.off("progress", handleProgress);
     // Best-effort cleanup
