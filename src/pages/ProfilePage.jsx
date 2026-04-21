@@ -426,25 +426,35 @@ export default function ProfilePage() {
 
         {/* === Tab Switcher === */}
         <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }}
-          className="flex gap-1 p-1 rounded-2xl"
-          style={{ background: theme.cardBg, border: `1px solid ${theme.cardBorder}` }}
+          className="flex gap-1 p-1.5 rounded-2xl backdrop-blur-xl"
+          style={{
+            background: `linear-gradient(145deg, ${theme.cardBg}, ${theme.textPrimary}05)`,
+            border: `1px solid ${theme.accent}25`,
+            boxShadow: `0 8px 30px -12px ${theme.shadow}`,
+          }}
         >
           {[
             { key: "profile", label: "👤 Profile" },
             { key: "journal", label: "📖 Journal" },
             { key: "recipes", label: "🍳 Recipes" },
-          ].map(tab => (
-            <button key={tab.key}
-              onClick={() => setActiveView(tab.key)}
-              className="flex-1 py-2 rounded-xl text-xs font-semibold transition-all"
-              style={{
-                background: activeView === tab.key ? theme.accent : 'transparent',
-                color: activeView === tab.key ? '#fff' : theme.textSecondary,
-              }}
-            >
-              {tab.label}
-            </button>
-          ))}
+          ].map(tab => {
+            const active = activeView === tab.key
+            return (
+              <button key={tab.key}
+                onClick={() => setActiveView(tab.key)}
+                className="flex-1 py-2.5 rounded-xl text-xs font-semibold transition-all duration-300"
+                style={{
+                  background: active
+                    ? `linear-gradient(135deg, ${theme.accent}, ${theme.accentLight || theme.accent})`
+                    : 'transparent',
+                  color: active ? '#fff' : theme.textSecondary,
+                  boxShadow: active ? `0 6px 18px -4px ${theme.accent}80, inset 0 1px 0 ${theme.textPrimary}20` : 'none',
+                }}
+              >
+                {tab.label}
+              </button>
+            )
+          })}
         </motion.div>
 
         {/* === JOURNAL VIEW === */}
