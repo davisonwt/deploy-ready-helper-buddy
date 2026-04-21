@@ -123,7 +123,8 @@ export default function LoginPage() {
       backTo="/"
       backLabel="Back to sow2grow"
       eyebrow="Sow • Bestow • Belong"
-      icon={Home}
+      iconImage={s2gLogo}
+      iconImageAlt="Sow2Grow"
       title="Welcome Home"
       subtitle="Step back into your orchard. Your tribe has been waiting for you."
       benefits={[
