@@ -208,22 +208,40 @@ export function HeartsOnboardingWizard({ onDone }: { onDone: () => void }) {
             <div className="th-serif mb-3 text-center text-sm text-[hsl(var(--th-gold-bright))]">
               Origin of your shared name
             </div>
-            <div className="grid grid-cols-2 gap-2">
-              {ORIGINS.map(o => (
-                <button
-                  key={o.key}
-                  type="button"
-                  onClick={() => setOrigin(o.key)}
-                  className={`rounded-xl border p-2.5 text-left text-xs transition ${
-                    origin === o.key
-                      ? 'border-[hsl(var(--th-gold-bright))] bg-[hsl(var(--th-walnut-dark)/0.7)] shadow-[0_0_16px_hsl(var(--th-gold)/0.4)]'
-                      : 'border-[hsl(var(--th-gold)/0.25)] bg-[hsl(var(--th-walnut-dark)/0.4)] hover:border-[hsl(var(--th-gold)/0.5)]'
-                  }`}
-                >
-                  <div className="th-serif font-semibold text-[hsl(var(--th-gold-bright))]">{o.label}</div>
-                  <div className="mt-0.5 text-[hsl(var(--th-cream)/0.7)]">{o.desc}</div>
-                </button>
-              ))}
+            <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-2">
+              {ORIGINS.map(o => {
+                const isSel = origin === o.key;
+                return (
+                  <button
+                    key={o.key}
+                    type="button"
+                    onClick={() => setOrigin(o.key)}
+                    style={{
+                      background: isSel
+                        ? 'linear-gradient(135deg, hsl(var(--th-walnut-mid)), hsl(var(--th-walnut)))'
+                        : 'linear-gradient(135deg, hsl(var(--th-walnut)/0.85), hsl(var(--th-walnut-dark)/0.85))',
+                      borderColor: isSel ? 'hsl(var(--th-gold-bright))' : 'hsl(var(--th-gold) / 0.3)',
+                      boxShadow: isSel
+                        ? '0 0 18px hsl(var(--th-gold) / 0.45), inset 0 1px 0 hsl(var(--th-gold) / 0.25)'
+                        : 'inset 0 1px 0 hsl(var(--th-gold) / 0.1)',
+                    }}
+                    className="group flex flex-col items-start gap-1 rounded-xl border-2 px-3.5 py-3 text-left transition-all hover:scale-[1.015]"
+                  >
+                    <span
+                      className="th-serif text-[15px] font-semibold leading-tight"
+                      style={{
+                        color: 'hsl(var(--th-gold-bright))',
+                        textShadow: '0 1px 6px hsl(var(--th-ember) / 0.45)',
+                      }}
+                    >
+                      {o.label}
+                    </span>
+                    <span className="text-[12px] leading-snug text-[hsl(var(--th-cream)/0.78)]">
+                      {o.desc}
+                    </span>
+                  </button>
+                );
+              })}
             </div>
           </div>
         </>
