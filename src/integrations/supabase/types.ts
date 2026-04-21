@@ -11655,6 +11655,7 @@ export type Database = {
         Args: { _insight_id: string }
         Returns: Json
       }
+      get_hearts_gender: { Args: { _user_id: string }; Returns: string }
       get_message_streak: { Args: { user_id_param: string }; Returns: number }
       get_or_create_community_room: { Args: never; Returns: string }
       get_or_create_direct_room: {
