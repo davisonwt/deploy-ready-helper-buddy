@@ -26,6 +26,10 @@ interface FormShellProps {
   title: React.ReactNode;
   subtitle?: React.ReactNode;
   icon?: LucideIcon;
+  /** Optional image source to render instead of the lucide icon (e.g. s2g logo). */
+  iconImage?: string;
+  /** Alt text for iconImage. */
+  iconImageAlt?: string;
   benefits?: BenefitChip[];
   backTo?: string;
   backLabel?: string;
