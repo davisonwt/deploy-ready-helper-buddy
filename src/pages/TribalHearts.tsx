@@ -23,6 +23,7 @@ import { WelcomeAbout } from '@/components/hearts/WelcomeAbout';
 import { MeetTheTribe } from '@/components/hearts/MeetTheTribe';
 import { DailySparks } from '@/components/hearts/DailySparks';
 import { HeartsMediaUpload } from '@/components/hearts/HeartsMediaUpload';
+import { HeartsLanding } from '@/components/hearts/HeartsLanding';
 
 import { useTribalHeartsAccess } from '@/hooks/useTribalHeartsAccess';
 import { useTribalHeartsProfile } from '@/hooks/useTribalHeartsProfile';
@@ -51,87 +52,91 @@ export default function TribalHearts() {
   }
 
   if (accessLoading) {
-    return <div className="p-6 text-sm text-muted-foreground">Opening the garden gate…</div>;
+    return (
+      <div className="tribal-hearts-sanctuary min-h-[60vh] p-6 text-sm text-[hsl(var(--th-gold)/0.8)]">
+        Lighting the sanctuary fire…
+      </div>
+    );
   }
 
   if (!hasAccess) {
-    return (
-      <div className="mx-auto max-w-2xl space-y-4 p-4">
-        <HeartsHeader />
-        <Card className="space-y-3 p-6 text-center">
-          <Lock className="mx-auto h-8 w-8 text-primary" />
-          <h2 className="text-xl font-semibold">Tribal Hearts is for Ambassadors</h2>
-          <p className="text-sm text-muted-foreground">
-            A safe, sacred garden where only Tribe Ambassadors come to sow real connection.
-            Join the inner circle to enter the garden.
-          </p>
-          <Button asChild>
-            <Link to="/tribe-ambassador"><Heart className="mr-2 h-4 w-4" fill="currentColor" />Become an Ambassador</Link>
-          </Button>
-        </Card>
-      </div>
-    );
+    return <HeartsLanding />;
   }
 
   if (showAbout) return <WelcomeAbout onEnter={enterGarden} />;
 
   return (
-    <div className="mx-auto max-w-4xl space-y-5 p-4 animate-fade-in">
-      <div className="flex items-start justify-between gap-3">
-        <div className="flex-1">
-          <HeartsHeader />
+    <div className="tribal-hearts-sanctuary min-h-[calc(100vh-4rem)]">
+      <div className="relative mx-auto max-w-4xl space-y-5 p-4 animate-fade-in">
+        <HeartsHeader />
+
+        <div className="flex items-center justify-between gap-2">
+          <SafetyBanner />
         </div>
-      </div>
+        <div className="flex justify-end">
+          <Button
+            onClick={() => setShowAbout(true)}
+            size="sm"
+            variant="ghost"
+            className="text-xs text-[hsl(var(--th-gold)/0.7)] hover:bg-[hsl(var(--th-walnut-dark)/0.4)] hover:text-[hsl(var(--th-gold-bright))]"
+          >
+            <Info className="mr-1.5 h-3.5 w-3.5" /> About Tribal Hearts
+          </Button>
+        </div>
 
-      <div className="flex items-center justify-between gap-2">
-        <SafetyBanner />
-      </div>
-      <div className="flex justify-end">
-        <Button onClick={() => setShowAbout(true)} size="sm" variant="ghost" className="text-xs text-muted-foreground hover:text-foreground">
-          <Info className="mr-1.5 h-3.5 w-3.5" /> About Tribal Hearts
-        </Button>
-      </div>
-
-      {profileLoading ? (
-        <div className="text-sm text-muted-foreground">Loading your profile…</div>
-      ) : !profile ? (
-        <Card className="overflow-hidden border-primary/20 p-5 shadow-xl backdrop-blur-md"
-              style={{ background: 'linear-gradient(160deg, hsl(var(--card)), hsl(var(--primary) / 0.06))' }}>
-          <div className="mb-4">
-            <div className="inline-flex items-center gap-1.5 rounded-full bg-primary/10 px-3 py-1 text-[11px] font-medium uppercase tracking-[0.16em] text-primary">
-              <Heart className="h-3 w-3" fill="currentColor" /> Begin your journey
+        {profileLoading ? (
+          <div className="text-sm text-[hsl(var(--th-cream)/0.7)]">Loading your flame…</div>
+        ) : !profile ? (
+          <Card
+            className="overflow-hidden border-0 p-5 shadow-2xl backdrop-blur-md"
+            style={{
+              background: 'var(--th-wood-gradient-soft)',
+              border: '1px solid hsl(var(--th-gold) / 0.35)',
+              boxShadow: 'var(--th-inner-shadow), var(--th-glow-soft)',
+            }}
+          >
+            <div className="mb-4">
+              <div className="inline-flex items-center gap-1.5 rounded-full border border-[hsl(var(--th-gold)/0.4)] bg-[hsl(var(--th-walnut-dark)/0.5)] px-3 py-1 text-[11px] font-medium uppercase tracking-[0.18em] text-[hsl(var(--th-gold-bright))]">
+                <Heart className="h-3 w-3" fill="currentColor" /> Begin your journey
+              </div>
+              <h2 className="th-serif mt-2 text-3xl font-semibold leading-tight th-gold-text">
+                Plant your flame in the fireside
+              </h2>
+              <p className="mt-1 text-sm text-[hsl(var(--th-cream)/0.78)]">
+                A short, warm conversation by the fire — Gentoo will weave your answers into a sacred story, then you make it your own.
+              </p>
             </div>
-            <h2 className="mt-2 font-serif text-2xl font-semibold leading-tight text-foreground">
-              Plant your Tribal Hearts story
-            </h2>
-            <p className="mt-1 text-sm text-muted-foreground">
-              A short, warm conversation — Gentoo will weave your answers into something beautiful, then you make it your own.
-            </p>
-          </div>
-          <HeartsOnboardingWizard onDone={reload} />
-        </Card>
-      ) : (
-        <Tabs defaultValue="sparks" className="space-y-4">
-          <TabsList className="grid w-full grid-cols-4">
-            <TabsTrigger value="sparks">✨ Sparks</TabsTrigger>
-            <TabsTrigger value="garden">🌸 Garden</TabsTrigger>
-            <TabsTrigger value="profile">🌱 Profile</TabsTrigger>
-            <TabsTrigger value="safety">🛡️ Safety</TabsTrigger>
-          </TabsList>
-          <TabsContent value="sparks" className="space-y-5">
-            <DailySparks />
-            <MatchGarden />
-          </TabsContent>
-          <TabsContent value="garden">
-            <MeetTheTribe />
-          </TabsContent>
-          <TabsContent value="profile" className="space-y-5">
-            <HeartsMediaUpload />
-            <ProfileEditor />
-          </TabsContent>
-          <TabsContent value="safety"><SafetyTab /></TabsContent>
-        </Tabs>
-      )}
+            <HeartsOnboardingWizard onDone={reload} />
+          </Card>
+        ) : (
+          <Tabs defaultValue="sparks" className="space-y-4">
+            <TabsList
+              className="grid w-full grid-cols-4 border"
+              style={{
+                background: 'var(--th-wood-gradient-soft)',
+                borderColor: 'hsl(var(--th-gold) / 0.3)',
+              }}
+            >
+              <TabsTrigger value="sparks" className="data-[state=active]:bg-[hsl(var(--th-gold)/0.2)] data-[state=active]:text-[hsl(var(--th-gold-bright))]">✨ Sparks</TabsTrigger>
+              <TabsTrigger value="garden" className="data-[state=active]:bg-[hsl(var(--th-gold)/0.2)] data-[state=active]:text-[hsl(var(--th-gold-bright))]">🔥 Fireside</TabsTrigger>
+              <TabsTrigger value="profile" className="data-[state=active]:bg-[hsl(var(--th-gold)/0.2)] data-[state=active]:text-[hsl(var(--th-gold-bright))]">🌱 Flame</TabsTrigger>
+              <TabsTrigger value="safety" className="data-[state=active]:bg-[hsl(var(--th-gold)/0.2)] data-[state=active]:text-[hsl(var(--th-gold-bright))]">🛡️ Safety</TabsTrigger>
+            </TabsList>
+            <TabsContent value="sparks" className="space-y-5">
+              <DailySparks />
+              <MatchGarden />
+            </TabsContent>
+            <TabsContent value="garden">
+              <MeetTheTribe />
+            </TabsContent>
+            <TabsContent value="profile" className="space-y-5">
+              <HeartsMediaUpload />
+              <ProfileEditor />
+            </TabsContent>
+            <TabsContent value="safety"><SafetyTab /></TabsContent>
+          </Tabs>
+        )}
+      </div>
     </div>
   );
 }
