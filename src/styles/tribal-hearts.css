@@ -121,11 +121,16 @@
 .tribal-hearts-sanctuary button:has(> span) { background-color: transparent; }
 
 /* Tabs — softer active state: gold-bordered walnut (preserves icon legibility) */
+.tribal-hearts-sanctuary [role="tablist"] {
+  overflow: visible;
+  padding: 8px !important;
+}
 .tribal-hearts-sanctuary [role="tab"] {
   background-color: transparent !important;
   background-image: none !important;
   color: hsl(var(--th-cream) / 0.6) !important;
   border: 1px solid transparent !important;
+  margin: 2px !important;
   transition: all 0.25s ease;
 }
 .tribal-hearts-sanctuary [role="tab"]:hover {
@@ -139,10 +144,6 @@
   box-shadow:
     inset 0 1px 0 hsl(var(--th-gold) / 0.2),
     inset 0 0 14px hsl(var(--th-ember) / 0.3) !important;
-}
-.tribal-hearts-sanctuary [role="tablist"] {
-  overflow: hidden;
-  padding: 6px !important;
 }
 
 /* Stronger wood grain on the body — make the void feel like a fireside */
