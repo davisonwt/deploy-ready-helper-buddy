@@ -30,5 +30,7 @@ export const onboardingQuestions: Array<{ key: string; text: string; placeholder
   { key: 'interests', text: 'What do you love doing for fun?' },
   { key: 'looking_for', text: 'What kind of partner are you hoping to meet?' },
   { key: 'deal_makers', text: "What's something they'd do that would make you feel truly seen?" },
+  { key: 'complexion_pref', text: 'When you picture a partner, do you have a complexion preference?' },
+  { key: 'physical_prefs', text: 'Are there any physical qualities that draw you in?' },
   { key: 'distance', text: 'Are you open to meeting someone far away, or do you prefer nearby? (km)' },
 ];

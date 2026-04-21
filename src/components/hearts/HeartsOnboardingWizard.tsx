@@ -24,6 +24,37 @@ const ORIGINS = [
   { key: 'real',      label: 'Real Name', desc: 'My first name as it is' },
 ];
 
+const COMPLEXION_CHOICES: Array<{ key: string; label: string }> = [
+  { key: 'open_all',         label: 'Open to all' },
+  { key: 'no_preference',    label: 'No strong preference' },
+  { key: 'similar_to_mine',  label: 'Prefer similar to mine' },
+  { key: 'describe',         label: 'Prefer to describe in my own words' },
+];
+
+const PHYSICAL_TAGS: Array<{ key: string; label: string }> = [
+  { key: 'height', label: 'Height' },
+  { key: 'build',  label: 'Build' },
+  { key: 'style',  label: 'Style' },
+  { key: 'energy', label: 'Energy (calm / outgoing)' },
+];
+
+function encodeComplexion(choice: string, custom: string) {
+  return JSON.stringify({ choice, custom: custom.trim() || undefined });
+}
+function decodeComplexion(raw?: string): { choice: string; custom: string } {
+  if (!raw) return { choice: '', custom: '' };
+  try { const p = JSON.parse(raw); return { choice: p.choice ?? '', custom: p.custom ?? '' }; }
+  catch { return { choice: '', custom: '' }; }
+}
+function encodePhysical(tags: string[], custom: string) {
+  return JSON.stringify({ tags, custom: custom.trim() || undefined });
+}
+function decodePhysical(raw?: string): { tags: string[]; custom: string } {
+  if (!raw) return { tags: [], custom: '' };
+  try { const p = JSON.parse(raw); return { tags: Array.isArray(p.tags) ? p.tags : [], custom: p.custom ?? '' }; }
+  catch { return { tags: [], custom: '' }; }
+}
+
 export function HeartsOnboardingWizard({ onDone }: { onDone: () => void }) {
   const { save } = useTribalHeartsProfile();
   const [step, setStep] = useState(0);
@@ -39,7 +70,17 @@ export function HeartsOnboardingWizard({ onDone }: { onDone: () => void }) {
   const progress = ((step + 1) / onboardingQuestions.length) * 100;
 
   function next() {
-    if (!answers[q.key]?.trim()) { toast.error('Please share a quick answer 🌱'); return; }
+    const raw = answers[q.key];
+    if (q.key === 'complexion_pref') {
+      const { choice, custom } = decodeComplexion(raw);
+      if (!choice) { toast.error('Please pick one option 🌱'); return; }
+      if (choice === 'describe' && !custom.trim()) { toast.error('Please share a few words 🌱'); return; }
+    } else if (q.key === 'physical_prefs') {
+      const { tags, custom } = decodePhysical(raw);
+      if (tags.length === 0 && !custom.trim()) { toast.error('Pick at least one or describe in your own words 🌱'); return; }
+    } else if (!raw?.trim()) {
+      toast.error('Please share a quick answer 🌱'); return;
+    }
     if (step === 0 && !element) { toast.error('Choose your element to walk the Soul Path 🔥'); return; }
     if (isLast) draftProfile();
     else setStep(s => s + 1);
@@ -64,10 +105,18 @@ export function HeartsOnboardingWizard({ onDone }: { onDone: () => void }) {
     setSaving(true);
     try {
       const gender = (answers.gender ?? '').toLowerCase().includes('woman') ? 'female' : 'male';
+      const complexion = decodeComplexion(answers.complexion_pref);
+      const physical = decodePhysical(answers.physical_prefs);
       const enrichedLifestyle = {
         ...(draft.lifestyle ?? {}),
         element,
         soul_name_origin: origin,
+        complexion_pref: complexion.choice
+          ? { choice: complexion.choice, ...(complexion.custom ? { custom: complexion.custom } : {}) }
+          : undefined,
+        physical_prefs: (physical.tags.length || physical.custom)
+          ? { tags: physical.tags, ...(physical.custom ? { custom: physical.custom } : {}) }
+          : undefined,
       };
       await save({
         display_first_name: answers.first_name,
@@ -256,14 +305,98 @@ export function HeartsOnboardingWizard({ onDone }: { onDone: () => void }) {
         <Label className="th-serif text-lg leading-snug text-[hsl(var(--th-cream))]">
           {step === 0 ? 'What name shall the fireside call you by?' : q.text}
         </Label>
-        <Input
-          placeholder={q.placeholder}
-          value={answers[q.key] ?? ''}
-          onChange={e => setAnswers(a => ({ ...a, [q.key]: e.target.value }))}
-          onKeyDown={e => e.key === 'Enter' && next()}
-          autoFocus
-          className="h-12 rounded-xl border-[hsl(var(--th-gold)/0.3)] bg-[hsl(var(--th-walnut-dark)/0.5)] text-base text-[hsl(var(--th-cream))] placeholder:text-[hsl(var(--th-cream)/0.4)] backdrop-blur-sm focus-visible:ring-[hsl(var(--th-gold)/0.5)]"
-        />
+
+        {q.key === 'complexion_pref' ? (
+          (() => {
+            const { choice, custom } = decodeComplexion(answers.complexion_pref);
+            return (
+              <>
+                <p className="text-xs italic text-[hsl(var(--th-cream)/0.65)]">
+                  This only softly broadens or focuses your matches — no one is ever excluded based on appearance.
+                </p>
+                <div className="flex flex-wrap gap-2">
+                  {COMPLEXION_CHOICES.map(c => {
+                    const sel = choice === c.key;
+                    return (
+                      <button
+                        key={c.key}
+                        type="button"
+                        onClick={() => setAnswers(a => ({ ...a, complexion_pref: encodeComplexion(c.key, custom) }))}
+                        className={`rounded-full border px-3.5 py-2 text-sm transition ${
+                          sel
+                            ? 'border-[hsl(var(--th-gold-bright))] bg-[hsl(var(--th-walnut-mid))] text-[hsl(var(--th-gold-bright))] shadow-[0_0_14px_hsl(var(--th-gold)/0.35)]'
+                            : 'border-[hsl(var(--th-gold)/0.3)] bg-[hsl(var(--th-walnut-dark)/0.5)] text-[hsl(var(--th-cream)/0.85)] hover:border-[hsl(var(--th-gold)/0.6)]'
+                        }`}
+                      >
+                        {c.label}
+                      </button>
+                    );
+                  })}
+                </div>
+                {choice === 'describe' && (
+                  <Input
+                    autoFocus
+                    placeholder="In a few words…"
+                    maxLength={200}
+                    value={custom}
+                    onChange={e => setAnswers(a => ({ ...a, complexion_pref: encodeComplexion(choice, e.target.value) }))}
+                    className="h-12 rounded-xl border-[hsl(var(--th-gold)/0.3)] bg-[hsl(var(--th-walnut-dark)/0.5)] text-base text-[hsl(var(--th-cream))] placeholder:text-[hsl(var(--th-cream)/0.4)] backdrop-blur-sm focus-visible:ring-[hsl(var(--th-gold)/0.5)]"
+                  />
+                )}
+              </>
+            );
+          })()
+        ) : q.key === 'physical_prefs' ? (
+          (() => {
+            const { tags, custom } = decodePhysical(answers.physical_prefs);
+            const toggle = (k: string) => {
+              const next = tags.includes(k) ? tags.filter(t => t !== k) : [...tags, k];
+              setAnswers(a => ({ ...a, physical_prefs: encodePhysical(next, custom) }));
+            };
+            return (
+              <>
+                <p className="text-xs italic text-[hsl(var(--th-cream)/0.65)]">
+                  Pick any that resonate, or describe in your own words. Choose what feels true.
+                </p>
+                <div className="flex flex-wrap gap-2">
+                  {PHYSICAL_TAGS.map(t => {
+                    const sel = tags.includes(t.key);
+                    return (
+                      <button
+                        key={t.key}
+                        type="button"
+                        onClick={() => toggle(t.key)}
+                        className={`rounded-full border px-3.5 py-2 text-sm transition ${
+                          sel
+                            ? 'border-[hsl(var(--th-gold-bright))] bg-[hsl(var(--th-walnut-mid))] text-[hsl(var(--th-gold-bright))] shadow-[0_0_14px_hsl(var(--th-gold)/0.35)]'
+                            : 'border-[hsl(var(--th-gold)/0.3)] bg-[hsl(var(--th-walnut-dark)/0.5)] text-[hsl(var(--th-cream)/0.85)] hover:border-[hsl(var(--th-gold)/0.6)]'
+                        }`}
+                      >
+                        {t.label}
+                      </button>
+                    );
+                  })}
+                </div>
+                <Input
+                  placeholder="Describe in your own words (optional)"
+                  maxLength={250}
+                  value={custom}
+                  onChange={e => setAnswers(a => ({ ...a, physical_prefs: encodePhysical(tags, e.target.value) }))}
+                  className="h-12 rounded-xl border-[hsl(var(--th-gold)/0.3)] bg-[hsl(var(--th-walnut-dark)/0.5)] text-base text-[hsl(var(--th-cream))] placeholder:text-[hsl(var(--th-cream)/0.4)] backdrop-blur-sm focus-visible:ring-[hsl(var(--th-gold)/0.5)]"
+                />
+              </>
+            );
+          })()
+        ) : (
+          <Input
+            placeholder={q.placeholder}
+            value={answers[q.key] ?? ''}
+            onChange={e => setAnswers(a => ({ ...a, [q.key]: e.target.value }))}
+            onKeyDown={e => e.key === 'Enter' && next()}
+            autoFocus
+            className="h-12 rounded-xl border-[hsl(var(--th-gold)/0.3)] bg-[hsl(var(--th-walnut-dark)/0.5)] text-base text-[hsl(var(--th-cream))] placeholder:text-[hsl(var(--th-cream)/0.4)] backdrop-blur-sm focus-visible:ring-[hsl(var(--th-gold)/0.5)]"
+          />
+        )}
       </div>
 
       <div className="flex gap-2">
