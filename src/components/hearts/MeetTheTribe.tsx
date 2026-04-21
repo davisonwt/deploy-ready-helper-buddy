@@ -18,10 +18,10 @@ export function MeetTheTribe() {
   const { profiles, loading } = useHeartsDiscovery();
   const [openProfile, setOpenProfile] = useState<HeartsBrowseProfile | null>(null);
 
-  const title = profile?.gender === 'male' ? 'Meet the Sisters' : 'Meet the Brothers';
+  const title = 'Meet Your Potential Soul-Flame';
   const sub = profile?.gender === 'male'
-    ? 'Sisters who have already chosen growth — opening their hearts in the garden.'
-    : 'Brothers who have already chosen growth — opening their hearts in the garden.';
+    ? 'Kindred souls who have already chosen growth — opening their hearts by the fireside.'
+    : 'Kindred souls who have already chosen growth — opening their hearts by the fireside.';
 
   async function sendHeartFromSheet(p: HeartsBrowseProfile) {
     if (!user?.id) return;
