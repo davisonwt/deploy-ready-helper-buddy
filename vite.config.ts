@@ -93,5 +93,8 @@ export default defineConfig(({ mode, command }) => ({
       '@solana/web3.js',
       '@solana/spl-token',
     ],
+    // ffmpeg.wasm ships pre-bundled ESM that Vite's dep optimizer chokes on.
+    // Excluding lets the browser load it as a native ES module on demand.
+    exclude: ['@ffmpeg/ffmpeg', '@ffmpeg/util'],
   },
 }));

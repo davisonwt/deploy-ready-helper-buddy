@@ -344,17 +344,27 @@ export function useReferralVideoBurner() {
     try {
       const { blob, ext, mime } = await runBurn(opts, setStage, setProgress, cancelRef);
 
-      // Always deliver an MP4 — WebM doesn't open in Windows Media Player,
-      // iOS Photos, AirDrop, iMessage, most TVs, etc. Transcode if needed.
+      // Try to deliver an MP4 — WebM doesn't open in Windows Media Player,
+      // iOS Photos, AirDrop, iMessage, most TVs, etc. Transcode if possible;
+      // gracefully fall back to the original WebM if the wasm transcoder
+      // cannot load (e.g. the page lacks SharedArrayBuffer / cross-origin
+      // isolation, or the CDN is blocked).
       let finalBlob = blob;
       let finalExt = ext;
       if (!isAlreadyMp4(mime)) {
         setStage("burning");
         setProgress(0);
-        finalBlob = await transcodeToMp4(blob, {
-          onProgress: (r) => setProgress(Math.round(r * 100)),
-        });
-        finalExt = "mp4";
+        try {
+          finalBlob = await transcodeToMp4(blob, {
+            onProgress: (r) => setProgress(Math.round(r * 100)),
+          });
+          finalExt = "mp4";
+        } catch (transErr) {
+          console.warn("[referral-video-burner] mp4 transcode unavailable, delivering original recording:", transErr);
+          // Keep original blob/ext (webm). Most modern players (VLC, Chrome,
+          // Android, recent Windows 11) play it; a small note in the UI
+          // already warns the user.
+        }
         setStage("done");
         setProgress(100);
       }
@@ -382,18 +392,23 @@ export function useReferralVideoBurner() {
     try {
       const { blob, ext, mime } = await runBurn(opts, setStage, setProgress, cancelRef);
 
-      // Same as above — guarantee MP4 output for universal playback.
+      // Same as above — try MP4, but degrade gracefully to WebM rather than
+      // surfacing a fatal "Failed to personalize video" error.
       let finalBlob = blob;
       let finalExt = ext;
       let finalMime = mime.split(";")[0];
       if (!isAlreadyMp4(mime)) {
         setStage("burning");
         setProgress(0);
-        finalBlob = await transcodeToMp4(blob, {
-          onProgress: (r) => setProgress(Math.round(r * 100)),
-        });
-        finalExt = "mp4";
-        finalMime = "video/mp4";
+        try {
+          finalBlob = await transcodeToMp4(blob, {
+            onProgress: (r) => setProgress(Math.round(r * 100)),
+          });
+          finalExt = "mp4";
+          finalMime = "video/mp4";
+        } catch (transErr) {
+          console.warn("[referral-video-burner] mp4 transcode unavailable, sharing original recording:", transErr);
+        }
         setStage("done");
         setProgress(100);
       }
