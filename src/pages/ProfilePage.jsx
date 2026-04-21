@@ -14,8 +14,7 @@ import {
 import { QuickProfileSetup } from "../components/profile/QuickProfileSetup"
 import Journal from "../components/journal/Journal"
 import RecipesPage from "./RecipesPage"
-import SecurityQuestionsAlert from "../components/auth/SecurityQuestionsAlert"
-import SecuritySettingsCard from "../components/profile/SecuritySettingsCard"
+import { ThemedSecurityAlert, ThemedSecuritySettings } from "../components/profile/ThemedSecuritySection"
 import { getCurrentTheme } from "@/utils/dashboardThemes"
 import { motion, AnimatePresence } from "framer-motion"
 
@@ -477,7 +476,7 @@ export default function ProfilePage() {
         {activeView === "profile" && (
           <>
             {/* Security Alert */}
-            <SecurityQuestionsAlert />
+            <ThemedSecurityAlert theme={theme} />
 
             {/* Hero Card — Avatar + Name + Badges + Stats */}
             <FeedCard theme={theme} delay={0.05}>
@@ -682,7 +681,7 @@ export default function ProfilePage() {
 
             {/* Security Settings */}
             <CollapsibleSection title="Security Settings" icon={Shield} theme={theme} delay={0.25}>
-              <SecuritySettingsCard />
+              <ThemedSecuritySettings theme={theme} />
             </CollapsibleSection>
 
             {/* Community Legacy */}
