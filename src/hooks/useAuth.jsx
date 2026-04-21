@@ -59,16 +59,39 @@ export class AuthProviderClass extends React.Component {
       // Silently ignore timeout setup errors - non-critical
     }
 
-    // Auth state changes (sync updates + async profile fetch)
+    // Restore initial session FIRST so we never briefly report
+    // "unauthenticated" while the session is still being read from storage.
+    // This prevents ProtectedRoute from redirecting logged-in users to /login
+    // on page refresh / tab switch.
+    let initialSession = null
+    try {
+      const { data: { session } } = await this.withRetry(() => supabase.auth.getSession())
+      initialSession = session
+    } catch (e) {
+      logError('Auth init getSession failed', { message: e.message, stack: e.stack })
+    }
+
+    // Apply initial session + user + loading=false in a SINGLE setState so
+    // isAuthenticated flips atomically (no false-negative frame).
+    safeSetState({
+      session: initialSession,
+      user: initialSession?.user || null,
+      loading: false,
+    })
+    if (initialSession?.user) {
+      // Fire-and-forget profile enrichment
+      setTimeout(() => this.safeFetchProfile(initialSession.user), 0)
+    }
+
+    // NOW subscribe to subsequent auth changes (sign in / sign out / refresh).
+    // Ignore the duplicate INITIAL_SESSION echo we already handled above to
+    // avoid clobbering the freshly-set user with a stale null.
     try {
       const { data: { subscription } } = supabase.auth.onAuthStateChange((event, sess) => {
-        safeSetState({ session: sess, loading: false })
+        if (event === 'INITIAL_SESSION') return
+        safeSetState({ session: sess, user: sess?.user || null, loading: false })
         if (sess?.user) {
-          safeSetState({ user: sess.user })
-          // Defer profile enrichment to next tick
           setTimeout(() => this.safeFetchProfile(sess.user), 0)
-        } else {
-          safeSetState({ user: null })
         }
       })
       this._authSub = subscription
@@ -76,17 +99,8 @@ export class AuthProviderClass extends React.Component {
       logError('Auth onAuthStateChange failed', { message: e.message, stack: e.stack })
     }
 
-    // Initial session with retry
-    try {
-      const { data: { session } } = await this.withRetry(() => supabase.auth.getSession())
-      safeSetState({ session, loading: false })
-      if (session?.user) await this.safeFetchProfile(session.user)
-      const end = (typeof performance !== 'undefined' && performance.now) ? performance.now() : Date.now()
-      logInfo('Auth initialization complete', { durationMs: end - this._initStart })
-    } catch (e) {
-      logError('Auth init failed', { message: e.message, stack: e.stack })
-      safeSetState({ loading: false, user: null })
-    }
+    const end = (typeof performance !== 'undefined' && performance.now) ? performance.now() : Date.now()
+    logInfo('Auth initialization complete', { durationMs: end - this._initStart, hasSession: !!initialSession })
   }
 
   componentWillUnmount() {
@@ -400,7 +414,7 @@ export class AuthProviderClass extends React.Component {
       logout: this.logout,
       resetPassword: this.resetPassword,
       updateProfile: this.updateProfile,
-      isAuthenticated: !!this.state.session && !!this.state.user,
+      isAuthenticated: !!this.state.session,
       // expose recovery for debug tooling
       reinitializeAuth: this.reinitializeAuth,
     }

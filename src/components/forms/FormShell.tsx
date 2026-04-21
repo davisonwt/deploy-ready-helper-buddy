@@ -26,6 +26,10 @@ interface FormShellProps {
   title: React.ReactNode;
   subtitle?: React.ReactNode;
   icon?: LucideIcon;
+  /** Optional image source to render instead of the lucide icon (e.g. s2g logo). */
+  iconImage?: string;
+  /** Alt text for iconImage. */
+  iconImageAlt?: string;
   benefits?: BenefitChip[];
   backTo?: string;
   backLabel?: string;
@@ -52,6 +56,8 @@ export const FormShell: React.FC<FormShellProps> = ({
   title,
   subtitle,
   icon: Icon = Sparkles,
+  iconImage,
+  iconImageAlt = 'Sow2Grow',
   benefits,
   backTo,
   backLabel = 'Back',
@@ -91,8 +97,12 @@ export const FormShell: React.FC<FormShellProps> = ({
 
         {/* Hero block */}
         <div className="mb-6 w-full text-center animate-fade-in">
-          <div className="mx-auto mb-4 inline-flex h-14 w-14 items-center justify-center rounded-2xl border border-amber-400/30 bg-gradient-to-br from-amber-500/20 via-coral-500/15 to-primary/20 shadow-[0_8px_30px_-12px_hsl(var(--amber-500)/0.5)]">
-            <Icon className="h-7 w-7 text-amber-300" />
+          <div className="mx-auto mb-4 inline-flex h-14 w-14 items-center justify-center overflow-hidden rounded-2xl border border-amber-400/30 bg-gradient-to-br from-amber-500/20 via-coral-500/15 to-primary/20 shadow-[0_8px_30px_-12px_hsl(var(--amber-500)/0.5)]">
+            {iconImage ? (
+              <img src={iconImage} alt={iconImageAlt} className="h-full w-full object-cover" />
+            ) : (
+              <Icon className="h-7 w-7 text-amber-300" />
+            )}
           </div>
 
           {eyebrow && (

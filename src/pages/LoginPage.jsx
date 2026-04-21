@@ -9,10 +9,11 @@ import { useToast } from "../hooks/use-toast"
 import { EnhancedSecureInput } from "../components/security/EnhancedSecureInput"
 import {
   Sprout, Mail, Lock, Eye, EyeOff, Heart, Users, Sparkles,
-  Shield, CheckCircle, Home
+  Shield, CheckCircle
 } from "lucide-react"
 import { FormShell } from "@/components/forms/FormShell"
 import { SubmitButton } from "@/components/forms/SubmitButton"
+import s2gLogo from "/lovable-uploads/s2g-logo.jpg"
 
 export default function LoginPage() {
   const [email, setEmail] = useState("")
@@ -122,7 +123,8 @@ export default function LoginPage() {
       backTo="/"
       backLabel="Back to sow2grow"
       eyebrow="Sow • Bestow • Belong"
-      icon={Home}
+      iconImage={s2gLogo}
+      iconImageAlt="Sow2Grow"
       title="Welcome Home"
       subtitle="Step back into your orchard. Your tribe has been waiting for you."
       benefits={[
