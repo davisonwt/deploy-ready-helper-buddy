@@ -335,11 +335,27 @@ export function useReferralVideoBurner() {
     setProgress(0);
     cancelRef.current = false;
     try {
-      const { blob, ext } = await runBurn(opts, setStage, setProgress, cancelRef);
-      const url = URL.createObjectURL(blob);
+      const { blob, ext, mime } = await runBurn(opts, setStage, setProgress, cancelRef);
+
+      // Always deliver an MP4 — WebM doesn't open in Windows Media Player,
+      // iOS Photos, AirDrop, iMessage, most TVs, etc. Transcode if needed.
+      let finalBlob = blob;
+      let finalExt = ext;
+      if (!isAlreadyMp4(mime)) {
+        setStage("burning");
+        setProgress(0);
+        finalBlob = await transcodeToMp4(blob, {
+          onProgress: (r) => setProgress(Math.round(r * 100)),
+        });
+        finalExt = "mp4";
+        setStage("done");
+        setProgress(100);
+      }
+
+      const url = URL.createObjectURL(finalBlob);
       const a = document.createElement("a");
       a.href = url;
-      a.download = `${opts.fileBaseName}-${opts.referralCode}.${ext}`;
+      a.download = `${opts.fileBaseName}-${opts.referralCode}.${finalExt}`;
       document.body.appendChild(a);
       a.click();
       a.remove();
@@ -358,10 +374,27 @@ export function useReferralVideoBurner() {
     cancelRef.current = false;
     try {
       const { blob, ext, mime } = await runBurn(opts, setStage, setProgress, cancelRef);
+
+      // Same as above — guarantee MP4 output for universal playback.
+      let finalBlob = blob;
+      let finalExt = ext;
+      let finalMime = mime.split(";")[0];
+      if (!isAlreadyMp4(mime)) {
+        setStage("burning");
+        setProgress(0);
+        finalBlob = await transcodeToMp4(blob, {
+          onProgress: (r) => setProgress(Math.round(r * 100)),
+        });
+        finalExt = "mp4";
+        finalMime = "video/mp4";
+        setStage("done");
+        setProgress(100);
+      }
+
       return new File(
-        [blob],
-        `${opts.fileBaseName}-${opts.referralCode}.${ext}`,
-        { type: mime.split(";")[0] },
+        [finalBlob],
+        `${opts.fileBaseName}-${opts.referralCode}.${finalExt}`,
+        { type: finalMime },
       );
     } catch (e: any) {
       console.error("[referral-video-burner] burn-to-file failed", e);
