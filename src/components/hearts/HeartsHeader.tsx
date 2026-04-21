@@ -2,7 +2,7 @@
  * HeartsHeader — sanctuary banner (wood + gold lotus, replaces meadow image).
  */
 import { Heart, Shield } from 'lucide-react';
-import { LotusHeartLogo } from './atoms/LotusHeartLogo';
+import { TribalHeartsLogo } from './atoms/TribalHeartsLogo';
 
 export function HeartsHeader() {
   return (
@@ -21,8 +21,8 @@ export function HeartsHeader() {
            style={{ background: 'radial-gradient(circle, hsl(var(--th-gold) / 0.22), transparent 70%)' }} />
 
       <div className="relative flex flex-col items-center px-6 py-10 text-center sm:flex-row sm:items-center sm:gap-6 sm:py-8 sm:text-left">
-        <div className="th-ember-pulse rounded-full p-1">
-          <LotusHeartLogo size={84} />
+        <div className="th-ember-pulse">
+          <TribalHeartsLogo size={96} />
         </div>
         <div className="mt-4 sm:mt-0">
           <div className="inline-flex items-center gap-2 rounded-full border border-[hsl(var(--th-gold)/0.4)] bg-[hsl(var(--th-walnut-dark)/0.5)] px-3 py-1 text-[10px] font-medium uppercase tracking-[0.2em] text-[hsl(var(--th-gold-bright))] backdrop-blur-md">
