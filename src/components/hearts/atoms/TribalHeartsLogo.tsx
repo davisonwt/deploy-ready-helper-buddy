@@ -16,43 +16,21 @@ interface Props {
 export function TribalHeartsLogo({ size = 120, className, banner = false }: Props) {
   if (banner) {
     return (
-      <div
+      <img
+        src={wordmarkSrc}
+        alt="Tribal Hearts"
         className={className}
         style={{
-          position: 'relative',
           width: '100%',
+          height: 'auto',
           maxWidth: size * 3,
           margin: '0 auto',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          padding: '12px 8px',
+          display: 'block',
+          background: 'transparent',
+          filter:
+            'drop-shadow(0 1px 0 hsl(38 72% 66% / 0.25)) drop-shadow(0 0 14px hsl(38 72% 66% / 0.35)) drop-shadow(0 0 36px hsl(22 78% 44% / 0.28))',
         }}
-      >
-        <span
-          aria-hidden
-          style={{
-            position: 'absolute',
-            inset: 0,
-            background:
-              'radial-gradient(ellipse at 50% 50%, hsl(41 84% 71% / 0.28), hsl(22 78% 44% / 0.12) 55%, transparent 78%)',
-            filter: 'blur(6px)',
-            pointerEvents: 'none',
-          }}
-        />
-        <img
-          src={wordmarkSrc}
-          alt="Tribal Hearts"
-          style={{
-            position: 'relative',
-            width: '100%',
-            height: 'auto',
-            display: 'block',
-            filter:
-              'drop-shadow(0 1px 0 hsl(38 72% 66% / 0.35)) drop-shadow(0 0 12px hsl(38 72% 66% / 0.45)) drop-shadow(0 0 32px hsl(22 78% 44% / 0.35))',
-          }}
-        />
-      </div>
+      />
     );
   }
   return (
