@@ -10,6 +10,7 @@ import { Video08Calendar } from "./videos/Video08Calendar";
 import { Video09Wallet } from "./videos/Video09Wallet";
 import { Video10AI } from "./videos/Video10AI";
 import { TribalHeartsTrailer, TRIBAL_HEARTS_TRAILER_DURATION } from "./videos/TribalHeartsTrailer";
+import { OnboardingSower, ONBOARDING_SOWER_DURATION } from "./videos/OnboardingSower";
 
 import { Banner01CommunityOrchard } from "./banners/Banner01CommunityOrchard";
 import { Banner02ProductionOrchard } from "./banners/Banner02ProductionOrchard";
@@ -41,6 +42,7 @@ export const RemotionRoot = () => (
     <Composition id="v09-wallet" component={Video09Wallet} durationInFrames={DUR} {...SHARED} />
     <Composition id="v10-ai" component={Video10AI} durationInFrames={DUR} {...SHARED} />
     <Composition id="tribal-hearts-trailer" component={TribalHeartsTrailer} durationInFrames={TRIBAL_HEARTS_TRAILER_DURATION} {...SHARED} />
+    <Composition id="onboarding-sower" component={OnboardingSower} durationInFrames={ONBOARDING_SOWER_DURATION} {...SHARED} />
 
     {/* S2G Banners (10s, English captions, Chatterbox voiceover, real logo) */}
     {/* Community orchard VO is ~16.6s; extend to 18s so VO finishes + ~1.4s music tail */}

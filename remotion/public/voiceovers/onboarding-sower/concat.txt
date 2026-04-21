@@ -1,0 +1,7 @@
+file '/dev-server/remotion/public/voiceovers/onboarding-sower/_padded-01-welcome.mp3'
+file '/dev-server/remotion/public/voiceovers/onboarding-sower/_padded-02-plant-seed.mp3'
+file '/dev-server/remotion/public/voiceovers/onboarding-sower/_padded-03-tell-us.mp3'
+file '/dev-server/remotion/public/voiceovers/onboarding-sower/_padded-04-lock-in.mp3'
+file '/dev-server/remotion/public/voiceovers/onboarding-sower/_padded-05-sign-in.mp3'
+file '/dev-server/remotion/public/voiceovers/onboarding-sower/_padded-06-secure.mp3'
+file '/dev-server/remotion/public/voiceovers/onboarding-sower/_padded-07-outro.mp3'
