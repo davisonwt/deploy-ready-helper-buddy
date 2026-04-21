@@ -40,7 +40,8 @@ const SCENES = [
 ];
 
 const FPS = 30;
-const SCENE_FRAMES = [180, 180, 240, 270, 240, 270, 150];
+// Scene frame counts MUST match SCENES[].duration in OnboardingSower.tsx
+const SCENE_FRAMES = [420, 330, 360, 510, 330, 450, 150]; // 85s total
 const SCENE_SECONDS = SCENE_FRAMES.map((f) => f / FPS);
 
 await fs.mkdir(PUBLIC_DIR, { recursive: true });
