@@ -34,6 +34,9 @@ interface BannerVideo {
 }
 
 const BANNERS: BannerVideo[] = [
+  // — Onboarding (sticky first) —
+  { id: "onboarding-sower",           title: "Become a Sower in 60 Seconds", subtitle: "Step-by-step onboarding walkthrough", emoji: "🌱", src: "/videos/onboarding-sower-v1.mp4",                available: true, ctaLabel: "Become a Sower & Bestower",      ctaPath: "/become-a-sower" },
+
   // — Become a Provider —
   { id: "wandering-wheel",            title: "Wandering Wheel",            subtitle: "Become a community driver",        emoji: "🚐", src: "/videos/banners/wandering-wheel.mp4",            available: true, ctaLabel: "Become a Wandering Wheel",       ctaPath: "/become-a-sower" },
   { id: "wandering-hand",             title: "Wandering Hand",             subtitle: "Offer hands-on tribal services",   emoji: "🛠️", src: "/videos/banners/wandering-hand-become.mp4",      available: true, ctaLabel: "Become a Wandering Hand",        ctaPath: "/become-a-sower" },
