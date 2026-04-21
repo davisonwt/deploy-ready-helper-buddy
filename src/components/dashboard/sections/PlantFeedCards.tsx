@@ -146,12 +146,12 @@ export const PlantFeedCards: React.FC<PlantFeedCardsProps> = ({ theme }) => {
                 type="button"
                 className="text-xs h-7 rounded-lg w-full inline-flex items-center justify-center font-semibold text-white border-0 shadow-md hover:shadow-lg hover:brightness-110 transition-all"
                 style={{ background: 'linear-gradient(135deg, #15803d 0%, #16a34a 100%)', textShadow: '0 1px 2px rgba(0,0,0,0.4)' }}
-                onClick={(e) => e.stopPropagation()}
+                onClick={(e) => { e.stopPropagation(); navigate(card.href); }}
               >
                 {card.buttonLabel}
               </button>
             </div>
-          </Link>
+          </div>
         ))}
       </div>
 
