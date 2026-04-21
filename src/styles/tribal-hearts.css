@@ -120,3 +120,13 @@
 /* Element glyph circles → kill any inherited blue tints */
 .tribal-hearts-sanctuary button:has(> span) { background-color: transparent; }
 
+/* Tabs — active gets warm gold gradient, inactive stays transparent walnut */
+.tribal-hearts-sanctuary [role="tab"] {
+  background-color: transparent !important;
+  background-image: none !important;
+}
+.tribal-hearts-sanctuary [role="tab"][data-state="active"] {
+  background-image: var(--th-gold-gradient) !important;
+  color: hsl(var(--th-walnut-dark)) !important;
+}
+
