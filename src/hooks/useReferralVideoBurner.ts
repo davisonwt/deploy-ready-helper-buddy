@@ -17,6 +17,7 @@
  *                            or upload it.
  */
 import { useCallback, useRef, useState } from "react";
+import { transcodeToMp4, isAlreadyMp4 } from "@/utils/transcodeToMp4";
 
 /** Render the bottom referral strip (full width × ~11% of height). */
 function paintBanner(
