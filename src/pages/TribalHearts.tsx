@@ -74,14 +74,16 @@ export default function TribalHearts() {
           <SafetyBanner />
         </div>
         <div className="flex justify-end">
-          <Button
+          <button
             onClick={() => setShowAbout(true)}
-            size="sm"
-            variant="ghost"
-            className="text-xs text-[hsl(var(--th-gold)/0.7)] hover:bg-[hsl(var(--th-walnut-dark)/0.4)] hover:text-[hsl(var(--th-gold-bright))]"
+            className="inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-medium uppercase tracking-[0.14em] text-[hsl(var(--th-gold-bright))] backdrop-blur-md transition-colors hover:bg-[hsl(var(--th-walnut-dark)/0.7)]"
+            style={{
+              background: 'hsl(var(--th-walnut-dark) / 0.5)',
+              borderColor: 'hsl(var(--th-gold) / 0.35)',
+            }}
           >
-            <Info className="mr-1.5 h-3.5 w-3.5" /> About Tribal Hearts
-          </Button>
+            <Info className="h-3.5 w-3.5" /> About Tribal Hearts
+          </button>
         </div>
 
         {profileLoading ? (
@@ -111,16 +113,30 @@ export default function TribalHearts() {
         ) : (
           <Tabs defaultValue="sparks" className="space-y-4">
             <TabsList
-              className="grid w-full grid-cols-4 border"
+              className="grid h-auto w-full grid-cols-4 gap-1 rounded-2xl border p-1.5"
               style={{
-                background: 'var(--th-wood-gradient-soft)',
+                background: 'linear-gradient(135deg, hsl(var(--th-walnut) / 0.85), hsl(var(--th-walnut-dark) / 0.92))',
                 borderColor: 'hsl(var(--th-gold) / 0.3)',
+                boxShadow: 'inset 0 1px 0 hsl(var(--th-gold) / 0.12)',
               }}
             >
-              <TabsTrigger value="sparks" className="data-[state=active]:bg-[hsl(var(--th-gold)/0.2)] data-[state=active]:text-[hsl(var(--th-gold-bright))]">✨ Sparks</TabsTrigger>
-              <TabsTrigger value="garden" className="data-[state=active]:bg-[hsl(var(--th-gold)/0.2)] data-[state=active]:text-[hsl(var(--th-gold-bright))]">🔥 Fireside</TabsTrigger>
-              <TabsTrigger value="profile" className="data-[state=active]:bg-[hsl(var(--th-gold)/0.2)] data-[state=active]:text-[hsl(var(--th-gold-bright))]">🌱 Flame</TabsTrigger>
-              <TabsTrigger value="safety" className="data-[state=active]:bg-[hsl(var(--th-gold)/0.2)] data-[state=active]:text-[hsl(var(--th-gold-bright))]">🛡️ Safety</TabsTrigger>
+              {[
+                { v: 'sparks', label: '✨ Sparks' },
+                { v: 'garden', label: '🔥 Fireside' },
+                { v: 'profile', label: '🌱 Flame' },
+                { v: 'safety', label: '🛡️ Safety' },
+              ].map(t => (
+                <TabsTrigger
+                  key={t.v}
+                  value={t.v}
+                  className="rounded-xl bg-transparent text-xs font-medium uppercase tracking-[0.14em] text-[hsl(var(--th-cream)/0.65)] transition-all hover:text-[hsl(var(--th-gold-bright))] data-[state=active]:text-[hsl(var(--th-walnut-dark))] data-[state=active]:shadow-[0_4px_14px_hsl(var(--th-ember)/0.35)] sm:text-sm"
+                  style={{
+                    backgroundImage: 'none',
+                  }}
+                >
+                  <span className="th-tab-label">{t.label}</span>
+                </TabsTrigger>
+              ))}
             </TabsList>
             <TabsContent value="sparks" className="space-y-5">
               <DailySparks />

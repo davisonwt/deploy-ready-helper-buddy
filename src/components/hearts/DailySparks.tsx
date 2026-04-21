@@ -14,27 +14,39 @@ export function DailySparks() {
   return (
     <div className="space-y-3">
       <div
-        className="relative overflow-hidden rounded-2xl border border-amber-400/30 p-4 shadow-2xl"
+        className="relative overflow-hidden rounded-2xl border p-5 shadow-2xl"
         style={{
-          background:
-            'linear-gradient(135deg, hsl(45 60% 12% / 0.85), hsl(150 40% 10% / 0.85))',
-          boxShadow:
-            '0 0 30px hsl(45 95% 55% / 0.18), inset 0 0 40px hsl(45 95% 55% / 0.06)',
+          background: 'linear-gradient(135deg, hsl(var(--th-walnut) / 0.9), hsl(var(--th-walnut-dark) / 0.95))',
+          borderColor: 'hsl(var(--th-gold) / 0.32)',
+          boxShadow: 'inset 0 1px 0 hsl(var(--th-gold) / 0.14), var(--th-glow-soft)',
         }}
       >
-        <div className="pointer-events-none absolute -right-10 -top-10 h-32 w-32 rounded-full bg-amber-400/20 blur-3xl animate-pulse" />
-        <div className="pointer-events-none absolute -bottom-10 -left-10 h-32 w-32 rounded-full bg-emerald-400/15 blur-3xl" />
+        <div className="pointer-events-none absolute -right-12 -top-12 h-36 w-36 rounded-full"
+             style={{ background: 'radial-gradient(circle, hsl(var(--th-ember) / 0.3), transparent 70%)' }} />
+        <div className="pointer-events-none absolute -bottom-12 -left-10 h-36 w-36 rounded-full"
+             style={{ background: 'radial-gradient(circle, hsl(var(--th-gold) / 0.18), transparent 70%)' }} />
         <div className="relative flex items-start justify-between gap-3">
-          <div>
-            <div className="inline-flex items-center gap-1.5 rounded-full bg-amber-400/10 px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.18em] text-amber-200">
+          <div className="min-w-0">
+            <div className="inline-flex items-center gap-1.5 rounded-full border border-[hsl(var(--th-gold)/0.4)] bg-[hsl(var(--th-walnut-dark)/0.55)] px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-[hsl(var(--th-gold-bright))]">
               <Sparkles className="h-3 w-3" /> Today's Sparks
             </div>
-            <h3 className="mt-1.5 font-serif text-xl font-semibold text-white">From the Garden</h3>
-            <p className="text-xs text-white/70">
+            <h3 className="th-serif mt-2 text-2xl font-semibold leading-tight">
+              <span className="th-gold-text">From the Garden</span>
+            </h3>
+            <p className="mt-1 text-xs leading-relaxed text-[hsl(var(--th-cream)/0.72)]">
               Souls our agents felt a quiet resonance with — chosen for you today.
             </p>
           </div>
-          <Button onClick={refresh} disabled={refreshing} size="sm" variant="secondary" className="shrink-0">
+          <Button
+            onClick={refresh}
+            disabled={refreshing}
+            size="sm"
+            className="shrink-0 border text-[hsl(var(--th-gold-bright))]"
+            style={{
+              background: 'hsl(var(--th-walnut-dark) / 0.7)',
+              borderColor: 'hsl(var(--th-gold) / 0.4)',
+            }}
+          >
             <RefreshCw className={`mr-1.5 h-3.5 w-3.5 ${refreshing ? 'animate-spin' : ''}`} />
             {refreshing ? '…' : 'Refresh'}
           </Button>
@@ -42,10 +54,16 @@ export function DailySparks() {
       </div>
 
       {loading ? (
-        <div className="text-sm text-muted-foreground">Listening for sparks…</div>
+        <div className="text-sm text-[hsl(var(--th-cream)/0.7)]">Listening for sparks…</div>
       ) : sparks.length === 0 ? (
-        <div className="rounded-2xl border border-dashed border-border/50 p-6 text-center">
-          <p className="text-sm text-muted-foreground">
+        <div
+          className="rounded-2xl border border-dashed p-6 text-center"
+          style={{
+            borderColor: 'hsl(var(--th-gold) / 0.3)',
+            background: 'hsl(var(--th-walnut-dark) / 0.35)',
+          }}
+        >
+          <p className="text-sm text-[hsl(var(--th-cream)/0.75)]">
             No sparks yet — refresh, or browse the garden to send the first heart 🌸
           </p>
         </div>
