@@ -26,8 +26,12 @@ function FeedCard({ children, theme, delay = 0, className = "" }) {
       initial={{ opacity: 0, y: 16 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay, duration: 0.35 }}
-      className={`rounded-2xl overflow-hidden ${className}`}
-      style={{ background: theme.cardBg, border: `1px solid ${theme.cardBorder}` }}
+      className={`relative rounded-3xl overflow-hidden backdrop-blur-xl ${className}`}
+      style={{
+        background: `linear-gradient(145deg, ${theme.cardBg}, ${theme.textPrimary}05)`,
+        border: `1px solid ${theme.accent}25`,
+        boxShadow: `0 12px 40px -12px ${theme.shadow}, inset 0 1px 0 ${theme.textPrimary}08`,
+      }}
     >
       {children}
     </motion.div>
@@ -41,14 +45,30 @@ function CollapsibleSection({ title, icon: Icon, children, defaultOpen = false, 
     <FeedCard theme={theme} delay={delay}>
       <button
         onClick={() => setOpen(!open)}
-        className="w-full flex items-center justify-between px-4 py-3"
+        className="w-full flex items-center justify-between px-4 py-3.5 transition-colors hover:bg-white/[0.03]"
         style={{ color: theme.textPrimary }}
       >
-        <div className="flex items-center gap-2">
-          {Icon && <Icon className="h-4 w-4" style={{ color: theme.accent }} />}
-          <span className="text-sm font-semibold">{title}</span>
+        <div className="flex items-center gap-2.5">
+          {Icon && (
+            <div
+              className="flex h-8 w-8 items-center justify-center rounded-xl"
+              style={{
+                background: `linear-gradient(135deg, ${theme.accent}30, ${theme.accent}10)`,
+                border: `1px solid ${theme.accent}30`,
+              }}
+            >
+              <Icon className="h-4 w-4" style={{ color: theme.accent }} />
+            </div>
+          )}
+          <span className="text-sm font-semibold tracking-wide" style={{ color: theme.textPrimary }}>{title}</span>
         </div>
-        {open ? <ChevronUp className="h-4 w-4" style={{ color: theme.textSecondary }} /> : <ChevronDown className="h-4 w-4" style={{ color: theme.textSecondary }} />}
+        <ChevronDown
+          className="h-4 w-4 transition-transform duration-300"
+          style={{
+            color: theme.textSecondary,
+            transform: open ? 'rotate(180deg)' : 'rotate(0deg)',
+          }}
+        />
       </button>
       <AnimatePresence>
         {open && (
@@ -59,7 +79,12 @@ function CollapsibleSection({ title, icon: Icon, children, defaultOpen = false, 
             transition={{ duration: 0.2 }}
             className="overflow-hidden"
           >
-            <div className="px-4 pb-4">{children}</div>
+            <div
+              className="px-4 pb-4 pt-1 border-t"
+              style={{ borderColor: `${theme.accent}15` }}
+            >
+              <div className="pt-3">{children}</div>
+            </div>
           </motion.div>
         )}
       </AnimatePresence>
