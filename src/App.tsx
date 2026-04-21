@@ -956,7 +956,7 @@ const App = () => (
               {/* User Routes */}
               <Route path="/profile" element={
                 <ProtectedRoute>
-                  <Layout>
+                  <Layout minimal>
                     <ProfilePage />
                   </Layout>
                 </ProtectedRoute>
