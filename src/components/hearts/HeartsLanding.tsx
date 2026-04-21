@@ -3,7 +3,7 @@
  * Shown to non-Ambassadors as the gate, with single CTA to Ambassador page.
  */
 import { Link } from 'react-router-dom';
-import { LotusHeartLogo } from './atoms/LotusHeartLogo';
+import { TribalHeartsLogo } from './atoms/TribalHeartsLogo';
 import { GlowButton } from './atoms/GlowButton';
 import { SacredFooterGlyphs } from './atoms/SacredFooterGlyphs';
 import { Heart } from 'lucide-react';
@@ -12,8 +12,8 @@ export function HeartsLanding() {
   return (
     <div className="tribal-hearts-sanctuary relative min-h-[calc(100vh-4rem)]">
       <div className="relative mx-auto flex min-h-[calc(100vh-4rem)] max-w-2xl flex-col items-center justify-center px-6 py-14 text-center">
-        <div className="mb-8 th-ember-pulse rounded-full p-1">
-          <LotusHeartLogo size={140} />
+        <div className="mb-8 th-ember-pulse">
+          <TribalHeartsLogo size={180} />
         </div>
 
         <h1 className="th-serif text-5xl font-semibold leading-tight th-gold-text sm:text-6xl">

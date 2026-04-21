@@ -2,7 +2,7 @@
  * WelcomeAbout — sacred sanctuary welcome (re-skinned to fireside vibe).
  */
 import { Heart } from 'lucide-react';
-import { LotusHeartLogo } from './atoms/LotusHeartLogo';
+import { TribalHeartsLogo } from './atoms/TribalHeartsLogo';
 import { GlowButton } from './atoms/GlowButton';
 import { SacredFooterGlyphs } from './atoms/SacredFooterGlyphs';
 import { useEffect, useState } from 'react';
@@ -48,8 +48,8 @@ export function WelcomeAbout({ onEnter }: Props) {
           ✦ Ambassador-only · Sacred Fireside ✦
         </div>
 
-        <div className="mb-8 th-ember-pulse rounded-full p-1">
-          <LotusHeartLogo size={120} />
+        <div className="mb-8 th-ember-pulse">
+          <TribalHeartsLogo size={160} />
         </div>
 
         <h1 className="th-serif text-4xl font-semibold leading-tight sm:text-5xl">
