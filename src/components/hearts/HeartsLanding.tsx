@@ -12,13 +12,13 @@ export function HeartsLanding() {
   return (
     <div className="tribal-hearts-sanctuary relative min-h-[calc(100vh-4rem)]">
       <div className="relative mx-auto flex min-h-[calc(100vh-4rem)] max-w-2xl flex-col items-center justify-center px-6 py-14 text-center">
-        <div className="mb-8 th-ember-pulse">
-          <TribalHeartsLogo size={180} />
+        <div className="mb-4 th-ember-pulse">
+          <TribalHeartsLogo size={140} />
         </div>
-
-        <h1 className="th-serif text-5xl font-semibold leading-tight th-gold-text sm:text-6xl">
-          Tribal Hearts
-        </h1>
+        <div className="th-ember-pulse w-full max-w-xl">
+          <TribalHeartsLogo banner size={240} />
+        </div>
+        <h1 className="sr-only">Tribal Hearts</h1>
 
         <p className="th-serif mt-4 text-lg italic text-[hsl(var(--th-cream)/0.85)] sm:text-xl">
           Where soul recognises soul.
