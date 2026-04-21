@@ -313,7 +313,7 @@ export default function MarketingVideosPage() {
 
         {/* Note about first-render */}
         <p className="text-xs mb-4 text-center opacity-75" style={{ color: theme.textSecondary }}>
-          First download sets up the in-browser video engine (~25 MB, one-time). After that, each personalization takes ~30–60 seconds.
+          First download sets up the in-browser video engine (~25 MB, one-time). After that, each personalization takes ~30–90 seconds and exports as universal MP4 (plays on any phone or PC).
         </p>
 
         {/* Grid */}
