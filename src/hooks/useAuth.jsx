@@ -414,7 +414,7 @@ export class AuthProviderClass extends React.Component {
       logout: this.logout,
       resetPassword: this.resetPassword,
       updateProfile: this.updateProfile,
-      isAuthenticated: !!this.state.session && !!this.state.user,
+      isAuthenticated: !!this.state.session,
       // expose recovery for debug tooling
       reinitializeAuth: this.reinitializeAuth,
     }
