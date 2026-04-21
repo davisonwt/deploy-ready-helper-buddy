@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Sprout, TreePine, Leaf, Play, X } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { DashboardTheme } from '@/utils/dashboardThemes';
 import { SectionHeading } from './SectionHeading';
@@ -51,6 +51,7 @@ const plantCards = [
 
 export const PlantFeedCards: React.FC<PlantFeedCardsProps> = ({ theme }) => {
   const [activeVideo, setActiveVideo] = useState<string | null>(null);
+  const navigate = useNavigate();
   return (
     <div className="space-y-3">
       <SectionHeading
@@ -64,10 +65,13 @@ export const PlantFeedCards: React.FC<PlantFeedCardsProps> = ({ theme }) => {
       {/* Cards */}
       <div className="space-y-3">
         {plantCards.map((card) => (
-          <Link
+          <div
             key={card.title}
-            to={card.href}
-            className="block rounded-2xl overflow-hidden shadow-md transition-all hover:scale-[1.01] active:scale-[0.99]"
+            role="button"
+            tabIndex={0}
+            onClick={() => navigate(card.href)}
+            onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); navigate(card.href); } }}
+            className="block rounded-2xl overflow-hidden shadow-md transition-all hover:scale-[1.01] active:scale-[0.99] cursor-pointer"
             style={{ borderColor: theme.cardBorder, border: `1px solid ${theme.cardBorder}` }}
           >
             {/* Cinematic banner video (autoplay, muted, looped). Click play btn for full audio in lightbox. */}
@@ -142,12 +146,12 @@ export const PlantFeedCards: React.FC<PlantFeedCardsProps> = ({ theme }) => {
                 type="button"
                 className="text-xs h-7 rounded-lg w-full inline-flex items-center justify-center font-semibold text-white border-0 shadow-md hover:shadow-lg hover:brightness-110 transition-all"
                 style={{ background: 'linear-gradient(135deg, #15803d 0%, #16a34a 100%)', textShadow: '0 1px 2px rgba(0,0,0,0.4)' }}
-                onClick={(e) => e.stopPropagation()}
+                onClick={(e) => { e.stopPropagation(); navigate(card.href); }}
               >
                 {card.buttonLabel}
               </button>
             </div>
-          </Link>
+          </div>
         ))}
       </div>
 
