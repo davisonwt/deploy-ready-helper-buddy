@@ -70,7 +70,17 @@ export function HeartsOnboardingWizard({ onDone }: { onDone: () => void }) {
   const progress = ((step + 1) / onboardingQuestions.length) * 100;
 
   function next() {
-    if (!answers[q.key]?.trim()) { toast.error('Please share a quick answer 🌱'); return; }
+    const raw = answers[q.key];
+    if (q.key === 'complexion_pref') {
+      const { choice, custom } = decodeComplexion(raw);
+      if (!choice) { toast.error('Please pick one option 🌱'); return; }
+      if (choice === 'describe' && !custom.trim()) { toast.error('Please share a few words 🌱'); return; }
+    } else if (q.key === 'physical_prefs') {
+      const { tags, custom } = decodePhysical(raw);
+      if (tags.length === 0 && !custom.trim()) { toast.error('Pick at least one or describe in your own words 🌱'); return; }
+    } else if (!raw?.trim()) {
+      toast.error('Please share a quick answer 🌱'); return;
+    }
     if (step === 0 && !element) { toast.error('Choose your element to walk the Soul Path 🔥'); return; }
     if (isLast) draftProfile();
     else setStep(s => s + 1);
