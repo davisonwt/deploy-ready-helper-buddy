@@ -1,51 +1,70 @@
 
 
-# Sower Onboarding Explainer Video
+## Add Two Required Preference Questions to Tribal Hearts Onboarding
 
-A cinematic 6-scene explainer (≈45s) walking new users through the exact path from landing page → sign-up form → first login → security questions setup. Uses the 8 screenshots you uploaded as the "hero" visuals so users see the *actual* UI they will encounter.
+Add **Complexion preference** and **Physical preferences** as two new required questions in the Tribal Hearts onboarding flow, positioned where they read naturally alongside existing partner-preference questions.
 
-## Story Arc & Voiceover Script
+### Where they fit in the flow
 
-| # | Scene (≈duration) | Screenshot | Voiceover line |
-|---|---|---|---|
-| 1 | **Welcome** (6s) | `register.jpeg` (welcome to sow2grow landing) | *"Welcome to sow2grow — the farm stall of the 364yhvh community. Becoming a sower takes just 60 seconds. Let's walk through it together."* |
-| 2 | **Plant your seed** (6s) | `register_2.jpeg` (Plant Your Seed in the Garden) | *"Tap 'Sow your first seed', then choose the full registration form to plant your seed in the garden."* |
-| 3 | **Tell us about you** (8s) | `register_3.jpeg` (name/email/country form) | *"Add your name, email and country. Phone and referral code are optional — only one orchard per email."* |
-| 4 | **Lock it in** (8s) | `register_4.jpeg` + `register_5a.jpeg` (password + Become a Sower button) | *"Pick your currency, then create a strong password — 12 characters with a capital, number and special. Tap 'Become a Sower & Bestower' and your orchard is born."* |
-| 5 | **First sign-in** (7s) | `register_5b.jpeg` + `register_6.jpeg` (Welcome Home + Enter the Garden) | *"Next time, sign in from the welcome home screen. Enter your email and password and tap 'Enter the Garden'."* |
-| 6 | **Secure your recovery** (8s) | `register_7.jpeg` (dashboard with gear highlighted) | *"Super important: on your dashboard, tap the gear icon (top right) and set up your three security questions. This is how you recover your password if you ever forget it."* |
-| 7 | **Outro** (4s) | sow2grow logo + sparkles | *"You're home. Welcome to the tribe."* |
+Today's question order (in `src/lib/heartsAgentLines.ts`):
+1. first_name → 2. gender → 3. birthdate → 4. country → 5. region → 6. faith → 7. values → 8. family_goals → 9. lifestyle → 10. interests → 11. **looking_for** → 12. **deal_makers** → 13. distance
 
-Total ≈47s.
+The new questions belong with the partner-preference cluster (looking_for / deal_makers), so the new order becomes:
 
-## Visual & Motion Direction
-
-- **Aesthetic**: matches existing banner system — Playfair Display headings + DM Sans body, walnut/gold/blush palette (`#E1C16E` gold, `#E48AA0` blush, `#3B1F31` plum bg) consistent with the brand.
-- **"Phone-frame" device mock**: each screenshot is presented inside a rounded device-like card with soft glow, so it reads as "look at the actual app" not a slideshow.
-- **Highlight pings**: animated golden circle/arrow pings draw the eye to the *exact* button being described in the voiceover ("Sow your first seed", "Become a Sower & Bestower", gear icon, etc.).
-- **Step counter**: persistent corner pill `Step 1 of 6 → Step 6 of 6` so users always know where they are.
-- **Motion**: gentle Ken Burns zoom on screenshots, springy entrance for headings, soft cross-fade transitions between scenes.
-- **Audio**: ElevenLabs voiceover (warm, friendly female voice — same pipeline as existing banners) + subtle ambient music bed.
-
-## Technical Plan
-
-1. **Copy 8 screenshots** from `user-uploads://` into `remotion/public/onboarding/01..08.jpeg`.
-2. **Generate voiceover** via existing ElevenLabs script pattern → `remotion/public/voiceovers/onboarding-sower.mp3` (one continuous track, scenes timed to match).
-3. **Create scene component** `remotion/src/videos/OnboardingSower.tsx` — single composition, 7 sequenced scenes, reusing the proven `LogoBadge`/Ken Burns/highlight-ping patterns from `TribalHeartsTrailer.tsx`.
-4. **Register composition** `onboarding-sower` in `remotion/src/Root.tsx` (1920×1080, 30 fps, ≈1410 frames).
-5. **Render script** `remotion/scripts/render-onboarding-sower.mjs` (clone of existing render scripts) → outputs `/mnt/documents/onboarding-sower.mp4`.
-6. **Deliver** as a downloadable `<lov-artifact>` MP4.
-
-## Files to Create
-
-```text
-remotion/public/onboarding/01-landing.jpeg ... 08-dashboard.jpeg
-remotion/public/voiceovers/onboarding-sower.mp3
-remotion/src/videos/OnboardingSower.tsx
-remotion/scripts/generate-onboarding-sower-vo.mjs
-remotion/scripts/render-onboarding-sower.mjs
-remotion/src/Root.tsx        (add 1 Composition entry)
+```
+… → looking_for → deal_makers → complexion_pref (NEW) → physical_prefs (NEW) → distance
 ```
 
-No app code is touched — this is a self-contained Remotion video that renders to MP4.
+This keeps "distance" as the closing logistical question and groups all "what kind of partner" prompts together.
+
+### The two new questions
+
+**1. Complexion preference** (`complexion_pref`)
+- Prompt: *"When you picture a partner, do you have a complexion preference?"*
+- Helper text shown in the question card: *"This only softly broadens or focuses your matches — no one is ever excluded based on appearance."*
+- Single-select chip choices (one must be picked):
+  - Open to all
+  - No strong preference
+  - Prefer similar to mine
+  - Prefer to describe in my own words → reveals a small free-text input
+
+**2. Physical preferences** (`physical_prefs`)
+- Prompt: *"Are there any physical qualities that draw you in?"*
+- Helper text: *"Pick any that resonate, or describe in your own words. All optional in spirit — choose what feels true."*
+- Multi-select chips: **Height · Build · Style · Energy (calm / outgoing)**
+- Plus a short free-text field: *"Describe in your own words (optional)"*
+- Required = at least one chip selected OR the free-text filled in.
+
+Both questions live in the same warm fireside card style as the rest of the wizard (gold-on-walnut, `th-serif`, `GlowButton` nav).
+
+### How answers are stored
+
+- The two answers are added to the existing `answers` map in `HeartsOnboardingWizard.tsx` and submitted to the `tribal-hearts-onboard` edge function as part of the standard `payload` array (no schema change — `tribal_hearts_answers` already accepts arbitrary `question_key` rows).
+- On `commit()`, the structured values are also folded into `lifestyle` jsonb on `tribal_hearts_profiles` so they're available to matching:
+  ```
+  lifestyle: {
+    …existing,
+    complexion_pref: { choice: 'prefer_similar' | 'open_all' | …, custom?: string },
+    physical_prefs:  { tags: ['height','build',…], custom?: string },
+  }
+  ```
+- No DB migration required.
+
+### Files to change
+
+| File | Change |
+|---|---|
+| `src/lib/heartsAgentLines.ts` | Add the two question entries to `onboardingQuestions` in the new positions |
+| `src/components/hearts/HeartsOnboardingWizard.tsx` | Render chip-style UI for these two `question_key`s instead of the default `<Input>`; update `next()` validation; pass structured shapes into `lifestyle` on commit |
+| `src/components/hearts/ProfileEditor.tsx` | Add read/edit of `lifestyle.complexion_pref` and `lifestyle.physical_prefs` so members can change them later |
+
+### Validation rules (required, per your choice)
+
+- Complexion: a chip must be selected; if "Prefer to describe" is chosen, the free-text must be non-empty (zod-style trim + max 200 chars).
+- Physical: at least one chip selected OR the free-text non-empty (max 250 chars).
+- Errors show inline via the existing `toast.error` pattern (same UX as today's "Please share a quick answer 🌱").
+
+### Out of scope
+
+- No matching algorithm changes in this pass — answers are stored and shown on profiles only. Wiring them into the match scorer can be a separate task once you've seen real answers come in.
 
