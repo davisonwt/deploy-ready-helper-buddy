@@ -121,10 +121,10 @@ export default function TribalHearts() {
               }}
             >
               {[
-                { v: 'sparks', label: '✨ Sparks' },
-                { v: 'garden', label: '🔥 Fireside' },
-                { v: 'profile', label: '🌱 Flame' },
-                { v: 'safety', label: '🛡️ Safety' },
+                { v: 'sparks', label: 'Sparks', icon: '✨' },
+                { v: 'garden', label: 'Fireside', icon: '🔥' },
+                { v: 'profile', label: 'Flame', icon: '🌱' },
+                { v: 'safety', label: 'Safety', icon: '🛡' },
               ].map(t => (
                 <TabsTrigger
                   key={t.v}
@@ -134,7 +134,10 @@ export default function TribalHearts() {
                     backgroundImage: 'none',
                   }}
                 >
-                  <span className="th-tab-label">{t.label}</span>
+                  <span className="th-tab-label inline-flex items-center gap-1.5">
+                    <span className="th-tab-glyph">{t.icon}</span>
+                    {t.label}
+                  </span>
                 </TabsTrigger>
               ))}
             </TabsList>
