@@ -120,13 +120,29 @@
 /* Element glyph circles → kill any inherited blue tints */
 .tribal-hearts-sanctuary button:has(> span) { background-color: transparent; }
 
-/* Tabs — active gets warm gold gradient, inactive stays transparent walnut */
+/* Tabs — softer active state: gold-bordered walnut (preserves icon legibility) */
 .tribal-hearts-sanctuary [role="tab"] {
   background-color: transparent !important;
   background-image: none !important;
+  color: hsl(var(--th-cream) / 0.6) !important;
+  transition: all 0.25s ease;
+}
+.tribal-hearts-sanctuary [role="tab"]:hover {
+  color: hsl(var(--th-gold-bright)) !important;
 }
 .tribal-hearts-sanctuary [role="tab"][data-state="active"] {
-  background-image: var(--th-gold-gradient) !important;
-  color: hsl(var(--th-walnut-dark)) !important;
+  background-color: hsl(var(--th-walnut-dark) / 0.85) !important;
+  background-image: none !important;
+  color: hsl(var(--th-gold-bright)) !important;
+  border: 1px solid hsl(var(--th-gold) / 0.5) !important;
+  box-shadow:
+    inset 0 1px 0 hsl(var(--th-gold) / 0.2),
+    0 0 18px hsl(var(--th-ember) / 0.35),
+    0 0 32px hsl(var(--th-gold) / 0.18) !important;
+}
+
+/* Stronger wood grain on the body — make the void feel like a fireside */
+.tribal-hearts-sanctuary::before {
+  opacity: 0.32 !important;
 }
 
