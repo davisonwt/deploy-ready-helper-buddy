@@ -51,6 +51,7 @@ const plantCards = [
 
 export const PlantFeedCards: React.FC<PlantFeedCardsProps> = ({ theme }) => {
   const [activeVideo, setActiveVideo] = useState<string | null>(null);
+  const navigate = useNavigate();
   return (
     <div className="space-y-3">
       <SectionHeading
@@ -64,10 +65,13 @@ export const PlantFeedCards: React.FC<PlantFeedCardsProps> = ({ theme }) => {
       {/* Cards */}
       <div className="space-y-3">
         {plantCards.map((card) => (
-          <Link
+          <div
             key={card.title}
-            to={card.href}
-            className="block rounded-2xl overflow-hidden shadow-md transition-all hover:scale-[1.01] active:scale-[0.99]"
+            role="button"
+            tabIndex={0}
+            onClick={() => navigate(card.href)}
+            onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); navigate(card.href); } }}
+            className="block rounded-2xl overflow-hidden shadow-md transition-all hover:scale-[1.01] active:scale-[0.99] cursor-pointer"
             style={{ borderColor: theme.cardBorder, border: `1px solid ${theme.cardBorder}` }}
           >
             {/* Cinematic banner video (autoplay, muted, looped). Click play btn for full audio in lightbox. */}
