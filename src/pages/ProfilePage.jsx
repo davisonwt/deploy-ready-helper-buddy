@@ -26,11 +26,11 @@ function FeedCard({ children, theme, delay = 0, className = "" }) {
       initial={{ opacity: 0, y: 16 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay, duration: 0.35 }}
-      className={`relative rounded-3xl overflow-hidden backdrop-blur-xl ${className}`}
+      className={`relative rounded-3xl overflow-hidden ${className}`}
       style={{
-        background: `linear-gradient(145deg, ${theme.cardBg}, ${theme.textPrimary}05)`,
-        border: `1px solid ${theme.accent}25`,
-        boxShadow: `0 12px 40px -12px ${theme.shadow}, inset 0 1px 0 ${theme.textPrimary}08`,
+        background: theme.cardBg,
+        border: `1px solid ${theme.accent}30`,
+        boxShadow: `0 12px 40px -12px ${theme.shadow}, inset 0 1px 0 ${theme.accent}15`,
       }}
     >
       {children}
