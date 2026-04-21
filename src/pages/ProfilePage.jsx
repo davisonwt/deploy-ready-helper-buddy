@@ -43,9 +43,15 @@ function CollapsibleSection({ title, icon: Icon, children, defaultOpen = false, 
   return (
     <FeedCard theme={theme} delay={delay}>
       <button
+        type="button"
         onClick={() => setOpen(!open)}
-        className="w-full flex items-center justify-between px-4 py-3.5 transition-colors hover:bg-white/[0.03]"
-        style={{ color: theme.textPrimary }}
+        className="w-full flex items-center justify-between px-4 py-3.5 transition-colors hover:bg-white/[0.03] border-0 outline-none"
+        style={{
+          color: theme.textPrimary,
+          background: 'transparent',
+          backgroundColor: 'transparent',
+          backgroundImage: 'none',
+        }}
       >
         <div className="flex items-center gap-2.5">
           {Icon && (
