@@ -1,0 +1,84 @@
+/**
+ * Tribal Hearts — Fireside Sanctuary theme tokens.
+ * Walnut wood, firelight gold, ember orange, parchment cream.
+ * Loaded globally; only applied via .tribal-hearts-sanctuary scope.
+ */
+
+.tribal-hearts-sanctuary {
+  /* Sanctuary palette (HSL) */
+  --th-walnut-dark: 22 35% 9%;
+  --th-walnut: 24 32% 14%;
+  --th-walnut-mid: 26 30% 19%;
+  --th-walnut-light: 28 28% 26%;
+  --th-ember: 22 78% 44%;       /* #D97706 */
+  --th-gold: 38 72% 66%;        /* #E8B86B */
+  --th-gold-bright: 41 84% 71%; /* #F4C77A */
+  --th-parchment: 38 55% 92%;
+  --th-cream: 36 40% 88%;
+  --th-rose-glow: 12 70% 55%;
+
+  /* Surfaces */
+  --th-wood-gradient:
+    radial-gradient(ellipse at 30% 20%, hsl(var(--th-walnut-mid)) 0%, hsl(var(--th-walnut)) 45%, hsl(var(--th-walnut-dark)) 100%);
+  --th-wood-gradient-soft:
+    linear-gradient(160deg, hsl(var(--th-walnut-mid) / 0.92), hsl(var(--th-walnut) / 0.95));
+  --th-gold-gradient: linear-gradient(135deg, hsl(var(--th-gold-bright)), hsl(var(--th-gold)) 50%, hsl(var(--th-ember)));
+
+  /* Glow shadows */
+  --th-glow-soft: 0 0 24px hsl(var(--th-gold) / 0.35), 0 0 48px hsl(var(--th-ember) / 0.18);
+  --th-glow-strong: 0 0 32px hsl(var(--th-gold) / 0.55), 0 0 72px hsl(var(--th-ember) / 0.32);
+  --th-inner-shadow: inset 0 1px 0 hsl(var(--th-gold) / 0.18), inset 0 -24px 60px hsl(var(--th-walnut-dark) / 0.6);
+}
+
+/* Ambient sanctuary background — wood grain via SVG noise */
+.tribal-hearts-sanctuary {
+  color: hsl(var(--th-cream));
+  background:
+    radial-gradient(ellipse at 50% -10%, hsl(var(--th-ember) / 0.18) 0%, transparent 55%),
+    radial-gradient(ellipse at 80% 110%, hsl(var(--th-gold) / 0.10) 0%, transparent 55%),
+    var(--th-wood-gradient);
+  background-attachment: fixed;
+}
+
+/* Wood grain overlay using subtle SVG noise */
+.tribal-hearts-sanctuary::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  opacity: 0.18;
+  mix-blend-mode: overlay;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='400' height='400'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.012 0.6' numOctaves='2' seed='5'/><feColorMatrix values='0 0 0 0 0.18  0 0 0 0 0.10  0 0 0 0 0.04  0 0 0 0.7 0'/></filter><rect width='100%25' height='100%25' filter='url(%23n)'/></svg>");
+}
+
+/* Display font already loaded via Playfair Display */
+.tribal-hearts-sanctuary .th-serif {
+  font-family: 'Playfair Display', 'Cinzel', serif;
+  letter-spacing: 0.01em;
+}
+
+/* Glow text helper */
+.tribal-hearts-sanctuary .th-gold-text {
+  background-image: var(--th-gold-gradient);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  text-shadow: 0 0 22px hsl(var(--th-gold) / 0.25);
+}
+
+/* Ember pulse animation */
+@keyframes thEmberPulse {
+  0%, 100% { box-shadow: var(--th-glow-soft); }
+  50%      { box-shadow: var(--th-glow-strong); }
+}
+.tribal-hearts-sanctuary .th-ember-pulse {
+  animation: thEmberPulse 4s ease-in-out infinite;
+}
+
+/* Floating ember particles */
+@keyframes thEmberFloat {
+  0%   { transform: translateY(0) translateX(0); opacity: 0; }
+  10%  { opacity: 0.8; }
+  100% { transform: translateY(-110vh) translateX(20px); opacity: 0; }
+}
