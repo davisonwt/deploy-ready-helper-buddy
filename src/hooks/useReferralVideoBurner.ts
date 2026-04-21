@@ -17,6 +17,7 @@
  *                            or upload it.
  */
 import { useCallback, useRef, useState } from "react";
+import { transcodeToMp4, isAlreadyMp4 } from "@/utils/transcodeToMp4";
 
 /** Render the bottom referral strip (full width × ~11% of height). */
 function paintBanner(
@@ -158,12 +159,19 @@ function roundRect(
 
 /** Pick the best supported MediaRecorder MIME type. */
 function pickMimeType(): { mime: string; ext: string } {
+  // Prefer MP4 — it's the only format that opens on every phone / PC out of
+  // the box (iOS Photos, Windows Media Player, AirDrop, iMessage, WhatsApp,
+  // most SmartTVs). Safari & recent Chrome can record MP4 natively.
+  // WebM is the universal fallback in Chromium; we transcode it to MP4
+  // post-recording (see transcodeToMp4.ts) so the user always gets a
+  // universally playable file.
   const candidates: Array<{ mime: string; ext: string }> = [
+    { mime: "video/mp4;codecs=avc1.42E01E,mp4a.40.2", ext: "mp4" },
+    { mime: "video/mp4;codecs=avc1,mp4a", ext: "mp4" },
+    { mime: "video/mp4", ext: "mp4" },
     { mime: "video/webm;codecs=vp9,opus", ext: "webm" },
     { mime: "video/webm;codecs=vp8,opus", ext: "webm" },
     { mime: "video/webm", ext: "webm" },
-    { mime: "video/mp4;codecs=avc1.42E01E,mp4a.40.2", ext: "mp4" },
-    { mime: "video/mp4", ext: "mp4" },
   ];
   for (const c of candidates) {
     if (typeof MediaRecorder !== "undefined" && MediaRecorder.isTypeSupported(c.mime)) {
@@ -334,11 +342,27 @@ export function useReferralVideoBurner() {
     setProgress(0);
     cancelRef.current = false;
     try {
-      const { blob, ext } = await runBurn(opts, setStage, setProgress, cancelRef);
-      const url = URL.createObjectURL(blob);
+      const { blob, ext, mime } = await runBurn(opts, setStage, setProgress, cancelRef);
+
+      // Always deliver an MP4 — WebM doesn't open in Windows Media Player,
+      // iOS Photos, AirDrop, iMessage, most TVs, etc. Transcode if needed.
+      let finalBlob = blob;
+      let finalExt = ext;
+      if (!isAlreadyMp4(mime)) {
+        setStage("burning");
+        setProgress(0);
+        finalBlob = await transcodeToMp4(blob, {
+          onProgress: (r) => setProgress(Math.round(r * 100)),
+        });
+        finalExt = "mp4";
+        setStage("done");
+        setProgress(100);
+      }
+
+      const url = URL.createObjectURL(finalBlob);
       const a = document.createElement("a");
       a.href = url;
-      a.download = `${opts.fileBaseName}-${opts.referralCode}.${ext}`;
+      a.download = `${opts.fileBaseName}-${opts.referralCode}.${finalExt}`;
       document.body.appendChild(a);
       a.click();
       a.remove();
@@ -357,10 +381,27 @@ export function useReferralVideoBurner() {
     cancelRef.current = false;
     try {
       const { blob, ext, mime } = await runBurn(opts, setStage, setProgress, cancelRef);
+
+      // Same as above — guarantee MP4 output for universal playback.
+      let finalBlob = blob;
+      let finalExt = ext;
+      let finalMime = mime.split(";")[0];
+      if (!isAlreadyMp4(mime)) {
+        setStage("burning");
+        setProgress(0);
+        finalBlob = await transcodeToMp4(blob, {
+          onProgress: (r) => setProgress(Math.round(r * 100)),
+        });
+        finalExt = "mp4";
+        finalMime = "video/mp4";
+        setStage("done");
+        setProgress(100);
+      }
+
       return new File(
-        [blob],
-        `${opts.fileBaseName}-${opts.referralCode}.${ext}`,
-        { type: mime.split(";")[0] },
+        [finalBlob],
+        `${opts.fileBaseName}-${opts.referralCode}.${finalExt}`,
+        { type: finalMime },
       );
     } catch (e: any) {
       console.error("[referral-video-burner] burn-to-file failed", e);
