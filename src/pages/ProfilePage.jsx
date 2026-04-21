@@ -513,7 +513,15 @@ export default function ProfilePage() {
                   <p className="text-xs text-red-400 mb-2"><AlertCircle className="h-3 w-3 inline mr-1" />{pictureError}</p>
                 )}
 
-                <h1 className="text-xl font-bold mb-0.5" style={{ color: theme.textPrimary }}>
+                <h1
+                  className="text-2xl font-extrabold mb-1 tracking-tight"
+                  style={{
+                    backgroundImage: `linear-gradient(135deg, ${theme.textPrimary}, ${theme.accent})`,
+                    WebkitBackgroundClip: 'text',
+                    WebkitTextFillColor: 'transparent',
+                    backgroundClip: 'text',
+                  }}
+                >
                   {user?.display_name || user?.first_name || "My Profile"}
                 </h1>
                 <p className="text-xs mb-3" style={{ color: theme.textSecondary }}>
