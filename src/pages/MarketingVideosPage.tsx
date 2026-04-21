@@ -378,8 +378,14 @@ export default function MarketingVideosPage() {
                       aria-label={b.ctaLabel}
                     >
                       <Sprout className="w-3 h-3 md:w-3.5 md:h-3.5" />
-                      <span className="hidden sm:inline">Become an S2G Sower</span>
-                      <span className="sm:hidden">Become a Sower</span>
+                      {b.id === "onboarding-sower" ? (
+                        <span>S2G On-boarding</span>
+                      ) : (
+                        <>
+                          <span className="hidden sm:inline">Become an S2G Sower</span>
+                          <span className="sm:hidden">Become a Sower</span>
+                        </>
+                      )}
                     </a>
                   )}
                 </div>
