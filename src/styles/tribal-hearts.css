@@ -82,3 +82,41 @@
   10%  { opacity: 0.8; }
   100% { transform: translateY(-110vh) translateX(20px); opacity: 0; }
 }
+
+/* === Sanctuary-scoped overrides for shared components === */
+
+/* Agent nudge bubble → walnut + gold */
+.tribal-hearts-sanctuary .th-agent-bubble {
+  background: linear-gradient(135deg, hsl(var(--th-walnut)/0.85), hsl(var(--th-walnut-dark)/0.9)) !important;
+  border-color: hsl(var(--th-gold) / 0.35) !important;
+  box-shadow: inset 0 1px 0 hsl(var(--th-gold) / 0.12);
+}
+.tribal-hearts-sanctuary .th-agent-icon {
+  background: radial-gradient(circle at 35% 30%, hsl(var(--th-gold) / 0.4), hsl(var(--th-walnut-dark)) 75%) !important;
+  border: 1px solid hsl(var(--th-gold) / 0.45);
+}
+.tribal-hearts-sanctuary .th-agent-bot { color: hsl(var(--th-gold-bright)) !important; }
+.tribal-hearts-sanctuary .th-agent-label { color: hsl(var(--th-gold-bright)) !important; letter-spacing: 0.18em; }
+.tribal-hearts-sanctuary .th-agent-msg   { color: hsl(var(--th-cream)) !important; }
+
+/* Inputs & textareas inside the sanctuary → warm wood w/ gold focus */
+.tribal-hearts-sanctuary input,
+.tribal-hearts-sanctuary textarea {
+  background-color: hsl(var(--th-walnut-dark) / 0.55) !important;
+  border-color: hsl(var(--th-gold) / 0.3) !important;
+  color: hsl(var(--th-cream)) !important;
+}
+.tribal-hearts-sanctuary input::placeholder,
+.tribal-hearts-sanctuary textarea::placeholder {
+  color: hsl(var(--th-cream) / 0.4) !important;
+}
+.tribal-hearts-sanctuary input:focus-visible,
+.tribal-hearts-sanctuary textarea:focus-visible {
+  outline: none !important;
+  border-color: hsl(var(--th-gold-bright)) !important;
+  box-shadow: 0 0 0 2px hsl(var(--th-gold) / 0.35), 0 0 18px hsl(var(--th-ember) / 0.25) !important;
+}
+
+/* Element glyph circles → kill any inherited blue tints */
+.tribal-hearts-sanctuary button:has(> span) { background-color: transparent; }
+
