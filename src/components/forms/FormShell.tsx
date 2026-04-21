@@ -56,6 +56,8 @@ export const FormShell: React.FC<FormShellProps> = ({
   title,
   subtitle,
   icon: Icon = Sparkles,
+  iconImage,
+  iconImageAlt = 'Sow2Grow',
   benefits,
   backTo,
   backLabel = 'Back',
