@@ -12,6 +12,7 @@ import { CryptoComProvider } from '@/providers/CryptoComProvider';
 import { clearRoleCache } from '@/hooks/useUserRoles';
 import { logReactDiagnostics } from '@/utils/reactDuplicateDetector';
 import "./index.css";
+import "./styles/tribal-hearts.css";
 import React from "react";
 import * as ReactDOMPkg from "react-dom";
 import '@/utils/confetti'; // Initialize confetti utility

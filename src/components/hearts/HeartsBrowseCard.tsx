@@ -126,31 +126,40 @@ export function HeartsBrowseCard({ profile, onOpen }: Props) {
   return (
     <Card
       onClick={() => onOpen(profile)}
-      className="group relative cursor-pointer overflow-hidden border-emerald-500/15 bg-gradient-to-br from-card via-card/95 to-emerald-500/5 shadow-lg transition hover:shadow-2xl hover:shadow-amber-400/10"
+      className="group relative cursor-pointer overflow-hidden border-0 transition hover:scale-[1.02]"
+      style={{
+        background: 'var(--th-wood-gradient-soft)',
+        border: '1px solid hsl(var(--th-gold) / 0.28)',
+        boxShadow: 'var(--th-inner-shadow), 0 8px 24px hsl(0 0% 0% / 0.4)',
+      }}
     >
-      <div className="relative aspect-[4/5] w-full overflow-hidden bg-muted">
+      <div className="relative aspect-[4/5] w-full overflow-hidden">
         {coverUrl ? (
-          <img src={coverUrl} alt={profile.display_first_name ?? 'Tribe member'} className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-105" />
+          <img
+            src={coverUrl}
+            alt={profile.display_first_name ?? 'Tribe member'}
+            className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-105"
+          />
         ) : (
           <div
             className="flex h-full w-full items-center justify-center"
-            style={{ background: 'linear-gradient(135deg, hsl(150 30% 15%), hsl(45 30% 12%))' }}
+            style={{ background: 'radial-gradient(circle, hsl(var(--th-walnut-mid)), hsl(var(--th-walnut-dark)))' }}
           >
-            <User className="h-12 w-12 text-white/30" />
+            <User className="h-12 w-12 text-[hsl(var(--th-gold)/0.4)]" />
           </div>
         )}
-        {/* Bottom gradient + name */}
-        <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/85 via-black/30 to-transparent p-3">
+        {/* Golden gradient overlay */}
+        <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-[hsl(var(--th-walnut-dark))] via-[hsl(var(--th-walnut-dark)/0.4)] to-transparent p-3">
           <div className="flex items-center gap-2">
-            <div className="truncate text-base font-semibold text-white drop-shadow">
+            <div className="th-serif truncate text-base font-semibold text-[hsl(var(--th-cream))] drop-shadow">
               {profile.display_first_name ?? 'A kindred soul'}{age ? `, ${age}` : ''}
             </div>
             {profile.photo_verified && (
-              <ShieldCheck className="h-4 w-4 text-emerald-300" />
+              <ShieldCheck className="h-4 w-4 text-[hsl(var(--th-gold-bright))]" />
             )}
           </div>
           {(profile.location_country || profile.location_region) && (
-            <div className="mt-0.5 flex items-center gap-1 text-[11px] text-white/80">
+            <div className="mt-0.5 flex items-center gap-1 text-[11px] text-[hsl(var(--th-cream)/0.8)]">
               <MapPin className="h-3 w-3" />
               {[profile.location_region, profile.location_country].filter(Boolean).join(', ')}
             </div>
@@ -160,7 +169,7 @@ export function HeartsBrowseCard({ profile, onOpen }: Props) {
         {profile.voice_note_url && (
           <button
             onClick={toggleVoice}
-            className="absolute right-2 top-2 inline-flex items-center gap-1 rounded-full bg-black/60 px-2 py-1 text-[10px] font-medium text-white backdrop-blur-md hover:bg-black/80"
+            className="absolute right-2 top-2 inline-flex items-center gap-1 rounded-full border border-[hsl(var(--th-gold)/0.4)] bg-[hsl(var(--th-walnut-dark)/0.7)] px-2 py-1 text-[10px] font-medium text-[hsl(var(--th-gold-bright))] backdrop-blur-md hover:bg-[hsl(var(--th-walnut-dark))]"
           >
             {playing ? <Pause className="h-3 w-3" /> : <Play className="h-3 w-3" />}
             voice
@@ -169,18 +178,24 @@ export function HeartsBrowseCard({ profile, onOpen }: Props) {
       </div>
 
       <div className="space-y-2 p-3">
-        <Badge variant="outline" className="border-amber-400/30 bg-amber-400/5 text-[10px] text-amber-200">
+        <Badge
+          variant="outline"
+          className="border-[hsl(var(--th-gold)/0.4)] bg-[hsl(var(--th-walnut-dark)/0.4)] text-[10px] text-[hsl(var(--th-gold-bright))]"
+        >
           Seeking · {intentLabel}
         </Badge>
         {profile.bio && (
-          <p className="line-clamp-2 text-[13px] leading-snug text-foreground/85">{profile.bio}</p>
+          <p className="line-clamp-2 text-[13px] leading-snug text-[hsl(var(--th-cream)/0.85)]">{profile.bio}</p>
         )}
         <Button
           onClick={sendHeart}
           disabled={sending}
           size="sm"
-          className="mt-1 w-full rounded-full text-white shadow-md"
-          style={{ background: 'linear-gradient(135deg, #E8537A, #D97706)' }}
+          className="mt-1 w-full rounded-full font-semibold text-[hsl(var(--th-walnut-dark))] shadow-md hover:scale-[1.02]"
+          style={{
+            background: 'var(--th-gold-gradient)',
+            boxShadow: 'var(--th-glow-soft)',
+          }}
         >
           <Heart className="mr-1 h-4 w-4" fill="currentColor" /> Send a heart
         </Button>

@@ -1,50 +1,52 @@
-import { Heart, Sparkles, Shield } from 'lucide-react';
-import heroImg from '@/assets/hearts-hero.jpg';
+/**
+ * HeartsHeader — sanctuary banner (wood + gold lotus, replaces meadow image).
+ */
+import { Heart, Shield } from 'lucide-react';
+import { LotusHeartLogo } from './atoms/LotusHeartLogo';
 
 export function HeartsHeader() {
   return (
-    <div className="relative overflow-hidden rounded-3xl border border-border/30 shadow-2xl">
-      {/* Cinematic background */}
-      <img
-        src={heroImg}
-        alt="Two souls walking together through a sunrise meadow of wildflowers"
-        width={1920}
-        height={1088}
-        className="absolute inset-0 h-full w-full object-cover"
-      />
-      {/* Layered glow + readability gradient */}
-      <div className="absolute inset-0 bg-gradient-to-t from-background via-background/40 to-transparent" />
-      <div
-        className="absolute inset-0 mix-blend-soft-light opacity-80"
-        style={{ background: 'linear-gradient(135deg, hsl(var(--primary) / 0.55), hsl(330 80% 65% / 0.45) 50%, transparent 80%)' }}
-      />
-      <div className="absolute -right-10 -top-10 h-40 w-40 rounded-full bg-white/20 blur-3xl animate-pulse" />
-      <div className="absolute -bottom-12 -left-10 h-48 w-48 rounded-full bg-primary/30 blur-3xl" />
+    <div
+      className="relative overflow-hidden rounded-3xl border"
+      style={{
+        background: 'var(--th-wood-gradient)',
+        borderColor: 'hsl(var(--th-gold) / 0.3)',
+        boxShadow: 'var(--th-inner-shadow), var(--th-glow-soft)',
+      }}
+    >
+      {/* Ember glow orbs */}
+      <div className="pointer-events-none absolute -right-10 -top-10 h-48 w-48 rounded-full"
+           style={{ background: 'radial-gradient(circle, hsl(var(--th-ember) / 0.35), transparent 70%)' }} />
+      <div className="pointer-events-none absolute -bottom-10 -left-10 h-56 w-56 rounded-full"
+           style={{ background: 'radial-gradient(circle, hsl(var(--th-gold) / 0.22), transparent 70%)' }} />
 
-      {/* Content */}
-      <div className="relative px-6 pb-7 pt-32 sm:pb-9 sm:pt-44">
-        <div className="inline-flex items-center gap-2 rounded-full border border-white/30 bg-white/10 px-3 py-1 text-[11px] font-medium uppercase tracking-[0.18em] text-white/95 backdrop-blur-md">
-          <Sparkles className="h-3 w-3" /> Ambassador-only · Sacred space
+      <div className="relative flex flex-col items-center px-6 py-10 text-center sm:flex-row sm:items-center sm:gap-6 sm:py-8 sm:text-left">
+        <div className="th-ember-pulse rounded-full p-1">
+          <LotusHeartLogo size={84} />
         </div>
-        <h1 className="mt-3 text-3xl font-bold leading-tight drop-shadow-lg sm:text-4xl">
-          <span style={{ color: '#D8D8D8' }}>Where soul meets</span>{' '}
-          <span className="italic" style={{ color: '#FF1493' }}>soul</span>
-          <span style={{ color: '#D8D8D8' }}>.</span>
-        </h1>
-        <p className="mt-2 max-w-xl text-sm leading-relaxed text-white/90 drop-shadow sm:text-base">
-          A quiet, cinematic garden inside Sow2Grow where twin flames find each other —
-          guided gently by our Linux-family agents, protected always by our in-house ChatApp.
-        </p>
-        <div className="mt-4 flex flex-wrap items-center gap-2 text-[11px] text-white/90">
-          <span className="inline-flex items-center gap-1 rounded-full bg-white/15 px-2.5 py-1 backdrop-blur-md">
-            <Heart className="h-3 w-3" fill="currentColor" /> Hetero-only · 18+
-          </span>
-          <span className="inline-flex items-center gap-1 rounded-full bg-white/15 px-2.5 py-1 backdrop-blur-md">
-            <Shield className="h-3 w-3" /> AI-monitored safety
-          </span>
-          <span className="inline-flex items-center gap-1 rounded-full bg-white/15 px-2.5 py-1 backdrop-blur-md">
-            🌱 Stays inside Sow2Grow
-          </span>
+        <div className="mt-4 sm:mt-0">
+          <div className="inline-flex items-center gap-2 rounded-full border border-[hsl(var(--th-gold)/0.4)] bg-[hsl(var(--th-walnut-dark)/0.5)] px-3 py-1 text-[10px] font-medium uppercase tracking-[0.2em] text-[hsl(var(--th-gold-bright))] backdrop-blur-md">
+            ✦ Sacred Fireside · Ambassador-only
+          </div>
+          <h1 className="th-serif mt-3 text-3xl font-semibold leading-tight sm:text-4xl">
+            <span className="text-[hsl(var(--th-cream))]">Where soul meets </span>
+            <span className="th-gold-text italic">soul.</span>
+          </h1>
+          <p className="mt-2 max-w-xl text-sm leading-relaxed text-[hsl(var(--th-cream)/0.78)] sm:text-[15px]">
+            A quiet, firelit garden where twin flames find each other — protected always
+            by our in-house ChatApp. No contact ever leaves the sanctuary.
+          </p>
+          <div className="mt-3 flex flex-wrap items-center justify-center gap-2 text-[11px] text-[hsl(var(--th-cream)/0.85)] sm:justify-start">
+            <span className="inline-flex items-center gap-1 rounded-full border border-[hsl(var(--th-gold)/0.25)] bg-[hsl(var(--th-walnut-dark)/0.4)] px-2.5 py-1 backdrop-blur-md">
+              <Heart className="h-3 w-3 text-[hsl(var(--th-gold-bright))]" fill="currentColor" /> Hetero · 18+
+            </span>
+            <span className="inline-flex items-center gap-1 rounded-full border border-[hsl(var(--th-gold)/0.25)] bg-[hsl(var(--th-walnut-dark)/0.4)] px-2.5 py-1 backdrop-blur-md">
+              <Shield className="h-3 w-3 text-[hsl(var(--th-gold-bright))]" /> AI-monitored safety
+            </span>
+            <span className="inline-flex items-center gap-1 rounded-full border border-[hsl(var(--th-gold)/0.25)] bg-[hsl(var(--th-walnut-dark)/0.4)] px-2.5 py-1 backdrop-blur-md">
+              🌱 Stays inside Sow2Grow
+            </span>
+          </div>
         </div>
       </div>
     </div>

@@ -59,24 +59,30 @@ export function MeetTheTribe() {
 
   return (
     <div className="space-y-4">
-      <div className="rounded-2xl border border-emerald-500/15 p-4 text-center"
-        style={{ background: 'linear-gradient(135deg, hsl(150 40% 12% / 0.5), hsl(45 40% 10% / 0.4))' }}>
-        <div className="inline-flex items-center gap-1.5 rounded-full bg-amber-400/10 px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-amber-200">
-          <Sparkles className="h-3 w-3" /> The Garden
+      <div
+        className="relative overflow-hidden rounded-2xl border p-5 text-center"
+        style={{
+          background: 'var(--th-wood-gradient-soft)',
+          borderColor: 'hsl(var(--th-gold) / 0.3)',
+          boxShadow: 'var(--th-inner-shadow)',
+        }}
+      >
+        <div className="inline-flex items-center gap-1.5 rounded-full border border-[hsl(var(--th-gold)/0.4)] bg-[hsl(var(--th-walnut-dark)/0.5)] px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.22em] text-[hsl(var(--th-gold-bright))]">
+          <Sparkles className="h-3 w-3" /> The Sanctuary
         </div>
-        <h2 className="mt-2 font-serif text-2xl font-semibold text-foreground">{title}</h2>
-        <p className="mt-1 text-sm text-muted-foreground">{sub}</p>
+        <h2 className="th-serif mt-2 text-3xl font-semibold th-gold-text">{title}</h2>
+        <p className="mt-1 text-sm text-[hsl(var(--th-cream)/0.78)]">{sub}</p>
       </div>
 
       {loading ? (
-        <div className="flex items-center justify-center py-10 text-sm text-muted-foreground">
-          <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Opening the garden gate…
+        <div className="flex items-center justify-center py-10 text-sm text-[hsl(var(--th-cream)/0.7)]">
+          <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Lighting the fireside…
         </div>
       ) : profiles.length === 0 ? (
-        <div className="rounded-2xl border border-dashed border-border/50 p-10 text-center">
-          <Sparkles className="mx-auto mb-2 h-6 w-6 text-amber-400" />
-          <p className="text-sm text-muted-foreground">
-            The garden is quiet today — fresh souls bloom every day. Check back soon. 🌱
+        <div className="rounded-2xl border border-dashed border-[hsl(var(--th-gold)/0.3)] bg-[hsl(var(--th-walnut-dark)/0.4)] p-10 text-center">
+          <Sparkles className="mx-auto mb-2 h-6 w-6 text-[hsl(var(--th-gold-bright))]" />
+          <p className="text-sm text-[hsl(var(--th-cream)/0.78)]">
+            The fireside is quiet today — fresh souls bloom every day. Return soon. 🔥
           </p>
         </div>
       ) : (
