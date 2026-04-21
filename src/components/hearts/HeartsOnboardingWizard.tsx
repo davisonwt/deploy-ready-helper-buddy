@@ -105,10 +105,18 @@ export function HeartsOnboardingWizard({ onDone }: { onDone: () => void }) {
     setSaving(true);
     try {
       const gender = (answers.gender ?? '').toLowerCase().includes('woman') ? 'female' : 'male';
+      const complexion = decodeComplexion(answers.complexion_pref);
+      const physical = decodePhysical(answers.physical_prefs);
       const enrichedLifestyle = {
         ...(draft.lifestyle ?? {}),
         element,
         soul_name_origin: origin,
+        complexion_pref: complexion.choice
+          ? { choice: complexion.choice, ...(complexion.custom ? { custom: complexion.custom } : {}) }
+          : undefined,
+        physical_prefs: (physical.tags.length || physical.custom)
+          ? { tags: physical.tags, ...(physical.custom ? { custom: physical.custom } : {}) }
+          : undefined,
       };
       await save({
         display_first_name: answers.first_name,
