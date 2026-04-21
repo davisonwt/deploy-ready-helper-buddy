@@ -43,6 +43,7 @@ export const RemotionRoot = () => (
     <Composition id="v10-ai" component={Video10AI} durationInFrames={DUR} {...SHARED} />
     <Composition id="tribal-hearts-trailer" component={TribalHeartsTrailer} durationInFrames={TRIBAL_HEARTS_TRAILER_DURATION} {...SHARED} />
     <Composition id="onboarding-sower" component={OnboardingSower} durationInFrames={ONBOARDING_SOWER_DURATION} {...SHARED} />
+    {/* ONBOARDING_SOWER_DURATION = 2850 frames (95s) — matches user voiceover length */}
 
     {/* S2G Banners (10s, English captions, Chatterbox voiceover, real logo) */}
     {/* Community orchard VO is ~16.6s; extend to 18s so VO finishes + ~1.4s music tail */}
