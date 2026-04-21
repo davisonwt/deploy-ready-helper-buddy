@@ -392,18 +392,23 @@ export function useReferralVideoBurner() {
     try {
       const { blob, ext, mime } = await runBurn(opts, setStage, setProgress, cancelRef);
 
-      // Same as above — guarantee MP4 output for universal playback.
+      // Same as above — try MP4, but degrade gracefully to WebM rather than
+      // surfacing a fatal "Failed to personalize video" error.
       let finalBlob = blob;
       let finalExt = ext;
       let finalMime = mime.split(";")[0];
       if (!isAlreadyMp4(mime)) {
         setStage("burning");
         setProgress(0);
-        finalBlob = await transcodeToMp4(blob, {
-          onProgress: (r) => setProgress(Math.round(r * 100)),
-        });
-        finalExt = "mp4";
-        finalMime = "video/mp4";
+        try {
+          finalBlob = await transcodeToMp4(blob, {
+            onProgress: (r) => setProgress(Math.round(r * 100)),
+          });
+          finalExt = "mp4";
+          finalMime = "video/mp4";
+        } catch (transErr) {
+          console.warn("[referral-video-burner] mp4 transcode unavailable, sharing original recording:", transErr);
+        }
         setStage("done");
         setProgress(100);
       }
