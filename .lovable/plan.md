@@ -1,80 +1,51 @@
 
 
-## Tribal Hearts — "Fireside Sanctuary" visual & flow redesign
+# Sower Onboarding Explainer Video
 
-### Vision in one line
-Re-skin the entire Tribal Hearts journey as a **warm walnut-wood, firelit, sacred sanctuary** — Spirit Names, elemental glyphs, golden glow — matching your 21 reference images. No backend changes; the safety rails (Ambassador-only, hetero, in-house chat, no PII) stay exactly as they are.
+A cinematic 6-scene explainer (≈45s) walking new users through the exact path from landing page → sign-up form → first login → security questions setup. Uses the 8 screenshots you uploaded as the "hero" visuals so users see the *actual* UI they will encounter.
 
-### What you'll see (mapped to your images)
+## Story Arc & Voiceover Script
 
-| Your reference | What we build |
-|---|---|
-| #17 "Intro/Waitlist" splash | New **HeartsLanding** screen: lotus-heart logo, "Tribal Hearts", single "Enter the Sanctuary" button, sow2grow seal at bottom |
-| #10 "Join the Tribe" form | Redesigned **HeartsOnboardingWizard step 1** — Spirit Name, Date of Birth, Village/Community, Real Name (private), "Begin Your Search" |
-| #11 "Define Your Spirit Path" | **Onboarding step 2** — Earth/Air/Fire/Water element picker + interest chips + Spirit Name origin (Heritage/Nature/Mythology) |
-| #18 "Define Your Bestowal Pact" | **Onboarding step 3** — confirms Ambassador $5/mo + 10% tithing + 5% admin fee, "Continue Journey" |
-| #19 "Tribal Profile" | Redesigned **profile card** — large portrait in golden frame, Spirit Name in serif, element badge (top-right), 3 interest icon-tiles, "Send a Message" |
-| #13/#14 "Explore New Connections" | Redesigned **HeartsBrowseCard** + **HeartsProfileSheet** — wood panel, gold-rimmed circular portrait, Spirit Name, 2-3 trait icons, bio, Like + Send Message + voice/video icons |
-| #15/#20 fireside chat | Re-skinned **ChatApp room** for Tribal Hearts matches — wood background, golden glowing speech bubbles, "Secured via Sow 2 Grow — No Contact Shared" footer, gift/voice/video buttons |
-| #16/#21 fireside video call | Re-skinned **call view** stacking both portraits with Spirit Names, golden frame, mute / end / flip-camera glowing icons |
+| # | Scene (≈duration) | Screenshot | Voiceover line |
+|---|---|---|---|
+| 1 | **Welcome** (6s) | `register.jpeg` (welcome to sow2grow landing) | *"Welcome to sow2grow — the farm stall of the 364yhvh community. Becoming a sower takes just 60 seconds. Let's walk through it together."* |
+| 2 | **Plant your seed** (6s) | `register_2.jpeg` (Plant Your Seed in the Garden) | *"Tap 'Sow your first seed', then choose the full registration form to plant your seed in the garden."* |
+| 3 | **Tell us about you** (8s) | `register_3.jpeg` (name/email/country form) | *"Add your name, email and country. Phone and referral code are optional — only one orchard per email."* |
+| 4 | **Lock it in** (8s) | `register_4.jpeg` + `register_5a.jpeg` (password + Become a Sower button) | *"Pick your currency, then create a strong password — 12 characters with a capital, number and special. Tap 'Become a Sower & Bestower' and your orchard is born."* |
+| 5 | **First sign-in** (7s) | `register_5b.jpeg` + `register_6.jpeg` (Welcome Home + Enter the Garden) | *"Next time, sign in from the welcome home screen. Enter your email and password and tap 'Enter the Garden'."* |
+| 6 | **Secure your recovery** (8s) | `register_7.jpeg` (dashboard with gear highlighted) | *"Super important: on your dashboard, tap the gear icon (top right) and set up your three security questions. This is how you recover your password if you ever forget it."* |
+| 7 | **Outro** (4s) | sow2grow logo + sparkles | *"You're home. Welcome to the tribe."* |
 
-### What changes (visual only — zero schema changes)
+Total ≈47s.
 
-**1. New design tokens (`src/styles/tribal-hearts.css`)**
-Walnut wood gradient, firelight gold (#E8B86B / #F4C77A), ember orange (#D97706), parchment cream, sacred-glow shadow, serif display font (Cinzel or similar — already in use elsewhere).
+## Visual & Motion Direction
 
-**2. New shared atoms (`src/components/hearts/atoms/`)**
-- `WoodPanel` — walnut gradient + heart-watermark + soft inner shadow
-- `GoldFrame` — golden ring with ember glow (for portraits & buttons)
-- `GlowButton` — the warm pill button from images #10/#18/#19
-- `ElementGlyph` — Earth/Air/Fire/Water round icons
-- `SacredFooterGlyphs` — the tree-of-life · clasped-hands · lotus-heart row
+- **Aesthetic**: matches existing banner system — Playfair Display headings + DM Sans body, walnut/gold/blush palette (`#E1C16E` gold, `#E48AA0` blush, `#3B1F31` plum bg) consistent with the brand.
+- **"Phone-frame" device mock**: each screenshot is presented inside a rounded device-like card with soft glow, so it reads as "look at the actual app" not a slideshow.
+- **Highlight pings**: animated golden circle/arrow pings draw the eye to the *exact* button being described in the voiceover ("Sow your first seed", "Become a Sower & Bestower", gear icon, etc.).
+- **Step counter**: persistent corner pill `Step 1 of 6 → Step 6 of 6` so users always know where they are.
+- **Motion**: gentle Ken Burns zoom on screenshots, springy entrance for headings, soft cross-fade transitions between scenes.
+- **Audio**: ElevenLabs voiceover (warm, friendly female voice — same pipeline as existing banners) + subtle ambient music bed.
 
-**3. New screens / re-skinned components**
-- **`HeartsLanding.tsx`** (new) — replaces the current "Lock / Become Ambassador" gate look with image #17's sanctuary splash; for non-Ambassadors the "Enter the Sanctuary" button routes to `/tribe-ambassador`.
-- **`WelcomeAbout.tsx`** — re-skinned to wood-panel + golden glyphs (currently functional but plain).
-- **`HeartsOnboardingWizard.tsx`** — same questions/data, restyled as 3 sacred steps (#10 → #11 → #18). Adds optional "Spirit Name" field stored as `display_first_name`. Element + origin saved into existing `lifestyle` jsonb (no migration).
-- **`HeartsBrowseCard.tsx` + `HeartsProfileSheet.tsx`** — re-skinned to images #13/#14/#19.
-- **`MeetTheTribe.tsx`** header — wood banner, "Meet the Sisters / Brothers" in serif gold.
-- **Tribal Hearts chat & call skin** — when ChatApp opens a `tribal_hearts_matches` room, apply the wood/gold theme (#15, #20) and show the "Secured via Sow 2 Grow — No Contact Shared" lock badge. Call view (#16, #21) gets the same treatment via a `tribal-hearts` className on the call shell.
+## Technical Plan
 
-**4. Asset generation**
-Generate 6 lightweight SVG glyphs (lotus-heart logo, tree-of-life, clasped hands, Earth/Air/Fire/Water) into `src/assets/hearts/` so it stays crisp, fast, and on-brand — no heavy AI imagery in the actual UI (your reference photos are mood, not assets).
+1. **Copy 8 screenshots** from `user-uploads://` into `remotion/public/onboarding/01..08.jpeg`.
+2. **Generate voiceover** via existing ElevenLabs script pattern → `remotion/public/voiceovers/onboarding-sower.mp3` (one continuous track, scenes timed to match).
+3. **Create scene component** `remotion/src/videos/OnboardingSower.tsx` — single composition, 7 sequenced scenes, reusing the proven `LogoBadge`/Ken Burns/highlight-ping patterns from `TribalHeartsTrailer.tsx`.
+4. **Register composition** `onboarding-sower` in `remotion/src/Root.tsx` (1920×1080, 30 fps, ≈1410 frames).
+5. **Render script** `remotion/scripts/render-onboarding-sower.mjs` (clone of existing render scripts) → outputs `/mnt/documents/onboarding-sower.mp4`.
+6. **Deliver** as a downloadable `<lov-artifact>` MP4.
 
-### What we deliberately keep unchanged
-- Ambassador gate (`useTribalHeartsAccess`)
-- DB-enforced hetero matching, 18+, RLS policies, all 4 edge functions
-- ChatApp itself — only the **skin** of Tribal Hearts rooms changes; the messaging engine is untouched
-- No emails, no phones, no off-platform contact ever surfaced
-- All current data in `tribal_hearts_profiles` continues to work (Spirit Name = `display_first_name`, element/origin = `lifestyle.element` / `lifestyle.spirit_name_origin`)
+## Files to Create
 
-### Feasibility & honest trade-offs
-- **100% achievable** with our existing stack (React + Tailwind + the design tokens we already use for warm-palette financial surfaces).
-- The reference images use heavy photographic mood lighting; we'll capture the **feeling** with CSS gradients + subtle wood-grain SVG + golden glow shadows — much faster than real images and identical vibe in-app.
-- Performance stays excellent (SVG glyphs, no extra deps).
-- Estimated scope: ~12 files touched/created, no DB migration, no edge function changes.
+```text
+remotion/public/onboarding/01-landing.jpeg ... 08-dashboard.jpeg
+remotion/public/voiceovers/onboarding-sower.mp3
+remotion/src/videos/OnboardingSower.tsx
+remotion/scripts/generate-onboarding-sower-vo.mjs
+remotion/scripts/render-onboarding-sower.mjs
+remotion/src/Root.tsx        (add 1 Composition entry)
+```
 
-### Files that will change / be created
-**Created**
-- `src/styles/tribal-hearts.css` (theme tokens + wood-grain background)
-- `src/components/hearts/atoms/WoodPanel.tsx`
-- `src/components/hearts/atoms/GoldFrame.tsx`
-- `src/components/hearts/atoms/GlowButton.tsx`
-- `src/components/hearts/atoms/ElementGlyph.tsx`
-- `src/components/hearts/atoms/SacredFooterGlyphs.tsx`
-- `src/components/hearts/HeartsLanding.tsx`
-- `src/assets/hearts/` (6 SVGs)
-
-**Updated (visual re-skin only)**
-- `src/pages/TribalHearts.tsx` (gate → HeartsLanding, wrap in sanctuary background)
-- `src/components/hearts/WelcomeAbout.tsx`
-- `src/components/hearts/HeartsOnboardingWizard.tsx` (adds Spirit Name + Element + Origin steps)
-- `src/components/hearts/HeartsBrowseCard.tsx`
-- `src/components/hearts/HeartsProfileSheet.tsx`
-- `src/components/hearts/MeetTheTribe.tsx`
-- `src/components/hearts/HeartsHeader.tsx`
-- ChatApp room shell — add `tribal-hearts` themed wrapper when `match_id` is from `tribal_hearts_matches`
-
-### After approval
-You'll get the full sanctuary look end-to-end: splash → onboarding → garden browse → profile → chat → call, all in the firelit walnut/gold language from your 21 references — and Julia (and every Ambassador) will feel they've stepped into something truly sacred, not just another dating app.
+No app code is touched — this is a self-contained Remotion video that renders to MP4.
 
