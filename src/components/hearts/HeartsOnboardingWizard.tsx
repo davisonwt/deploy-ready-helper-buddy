@@ -24,6 +24,37 @@ const ORIGINS = [
   { key: 'real',      label: 'Real Name', desc: 'My first name as it is' },
 ];
 
+const COMPLEXION_CHOICES: Array<{ key: string; label: string }> = [
+  { key: 'open_all',         label: 'Open to all' },
+  { key: 'no_preference',    label: 'No strong preference' },
+  { key: 'similar_to_mine',  label: 'Prefer similar to mine' },
+  { key: 'describe',         label: 'Prefer to describe in my own words' },
+];
+
+const PHYSICAL_TAGS: Array<{ key: string; label: string }> = [
+  { key: 'height', label: 'Height' },
+  { key: 'build',  label: 'Build' },
+  { key: 'style',  label: 'Style' },
+  { key: 'energy', label: 'Energy (calm / outgoing)' },
+];
+
+function encodeComplexion(choice: string, custom: string) {
+  return JSON.stringify({ choice, custom: custom.trim() || undefined });
+}
+function decodeComplexion(raw?: string): { choice: string; custom: string } {
+  if (!raw) return { choice: '', custom: '' };
+  try { const p = JSON.parse(raw); return { choice: p.choice ?? '', custom: p.custom ?? '' }; }
+  catch { return { choice: '', custom: '' }; }
+}
+function encodePhysical(tags: string[], custom: string) {
+  return JSON.stringify({ tags, custom: custom.trim() || undefined });
+}
+function decodePhysical(raw?: string): { tags: string[]; custom: string } {
+  if (!raw) return { tags: [], custom: '' };
+  try { const p = JSON.parse(raw); return { tags: Array.isArray(p.tags) ? p.tags : [], custom: p.custom ?? '' }; }
+  catch { return { tags: [], custom: '' }; }
+}
+
 export function HeartsOnboardingWizard({ onDone }: { onDone: () => void }) {
   const { save } = useTribalHeartsProfile();
   const [step, setStep] = useState(0);
