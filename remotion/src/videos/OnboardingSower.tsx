@@ -62,7 +62,7 @@ const SCENES: SceneDef[] = [
     body: "The farm stall of the 364yhvh community.",
     image: "onboarding/01-landing.jpeg",
     imagePosition: "center top",
-    duration: 420,
+    duration: 469, // ~15.6s — Scene 1 welcome
   },
   {
     step: 2,
@@ -72,7 +72,7 @@ const SCENES: SceneDef[] = [
     image: "onboarding/02-plant-seed.jpeg",
     imagePosition: "center top",
     hotspots: [{ x: 50, y: 62, label: "Sow your first seed" }],
-    duration: 330,
+    duration: 369, // ~12.3s
   },
   {
     step: 3,
@@ -82,7 +82,7 @@ const SCENES: SceneDef[] = [
     image: "onboarding/03-form-name.jpeg",
     imagePosition: "center top",
     hotspots: [{ x: 50, y: 50, label: "Fill in your details" }],
-    duration: 360,
+    duration: 402, // ~13.4s
   },
   {
     step: 4,
@@ -92,7 +92,7 @@ const SCENES: SceneDef[] = [
     image: "onboarding/05-become-sower.jpeg",
     imagePosition: "center bottom",
     hotspots: [{ x: 50, y: 78, label: "Become a Sower & Bestower" }],
-    duration: 510,
+    duration: 570, // ~19s
   },
   {
     step: 5,
@@ -102,7 +102,7 @@ const SCENES: SceneDef[] = [
     image: "onboarding/07-enter-garden.jpeg",
     imagePosition: "center center",
     hotspots: [{ x: 50, y: 70, label: "Enter the Garden" }],
-    duration: 330,
+    duration: 369, // ~12.3s
   },
   {
     step: 6,
@@ -112,7 +112,7 @@ const SCENES: SceneDef[] = [
     image: "onboarding/08-dashboard-gear.jpeg",
     imagePosition: "right top",
     hotspots: [{ x: 92, y: 12, label: "Tap the gear icon" }],
-    duration: 450,
+    duration: 503, // ~16.8s
   },
   {
     step: 7,
@@ -121,7 +121,7 @@ const SCENES: SceneDef[] = [
     body: "Your orchard is planted. 🌱",
     image: "onboarding/01-landing.jpeg",
     imagePosition: "center top",
-    duration: 150,
+    duration: 168, // ~5.6s outro
   },
 ];
 
