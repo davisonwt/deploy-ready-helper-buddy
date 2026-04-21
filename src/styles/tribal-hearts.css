@@ -146,6 +146,12 @@
     inset 0 0 14px hsl(var(--th-ember) / 0.3) !important;
 }
 
+/* Tame any off-theme emoji colors (e.g., the blue shield) into firelight gold */
+.tribal-hearts-sanctuary .th-tab-glyph {
+  display: inline-block;
+  filter: sepia(0.85) saturate(1.4) hue-rotate(-12deg) brightness(1.05);
+}
+
 /* Stronger wood grain on the body — make the void feel like a fireside */
 .tribal-hearts-sanctuary::before {
   opacity: 0.32 !important;
