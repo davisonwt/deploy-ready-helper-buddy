@@ -548,13 +548,22 @@ export default function MarketingVideosPage() {
             className="w-full max-w-4xl rounded-2xl overflow-hidden shadow-2xl"
             onClick={(e) => e.stopPropagation()}
           >
-            <video
-              src={previewing.src}
-              className="w-full h-auto bg-black"
-              controls
-              autoPlay
-              playsInline
-            />
+            <div className="relative bg-black">
+              {previewing.id === "onboarding-sower" && (
+                <img
+                  src={S2G_LOGO_URL}
+                  alt="Sow2Grow logo"
+                  className="absolute top-4 left-4 z-10 h-14 w-14 rounded-full border-2 border-white/80 bg-white/90 object-contain p-1 shadow-lg"
+                />
+              )}
+              <video
+                src={previewing.src}
+                className="w-full h-auto bg-black"
+                controls
+                autoPlay
+                playsInline
+              />
+            </div>
             <div className="px-5 py-4 flex items-center justify-between gap-3" style={{ background: theme.cardBg }}>
               <div className="min-w-0">
                 <div className="flex items-center gap-2">
