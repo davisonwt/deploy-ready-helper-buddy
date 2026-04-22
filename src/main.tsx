@@ -50,14 +50,10 @@ window.addEventListener('unhandledrejection', (event) => {
      reason.message?.includes('Importing a module script failed') ||
      reason.message?.includes('error loading dynamically imported module'))
   ) {
-    const reloadKey = 'chunk-reload-ts';
-    const lastReload = Number(sessionStorage.getItem(reloadKey) || '0');
-    // Only auto-reload once per 30 seconds to avoid infinite loops
-    if (Date.now() - lastReload > 30000) {
-      sessionStorage.setItem(reloadKey, String(Date.now()));
-      window.location.reload();
-      return;
-    }
+    logError('Dynamic import failed; auto-reload suppressed to avoid reload loops', {
+      message: reason.message,
+      hostname: window.location.hostname,
+    });
   }
 
   logError('Unhandled promise rejection', {
@@ -99,37 +95,9 @@ try {
   // Detect duplicate React instances
   const duplication = logReactDiagnostics(React, ReactDOMPkg);
   if (duplication?.hasDuplicate) {
-    // Aggressive fix: immediately clear all caches and reload
-    console.error('⚠️ CRITICAL: Duplicate React detected. Clearing caches and reloading...');
-    
-    try {
-      // Set flag to prevent SW from re-registering
-      localStorage.setItem('sw:disabled', '1');
-      
-      // Unregister all service workers
-      if ('serviceWorker' in navigator) {
-        navigator.serviceWorker.getRegistrations().then(registrations => {
-          registrations.forEach(registration => registration.unregister());
-        });
-      }
-      
-      // Clear all caches
-      if ('caches' in window) {
-        caches.keys().then(names => {
-          names.forEach(name => caches.delete(name));
-        });
-      }
-      
-      // Force hard reload immediately - don't wait, don't initialize React
-      window.location.reload();
-      // Exit early to prevent React initialization
-      throw new Error('Duplicate React detected - reloading page');
-    } catch (error) {
-      console.error('Failed to clear caches:', error);
-      // If cleanup fails, still try to reload and exit
-      window.location.reload();
-      throw error; // Prevent React from initializing
-    }
+    logError('Duplicate React detected; auto-reload suppressed to avoid reload loops', {
+      hostname: window.location.hostname,
+    });
   }
 } catch (e) {
   console.warn('Version check failed', e);
