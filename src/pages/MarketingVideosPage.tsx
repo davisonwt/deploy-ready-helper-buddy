@@ -35,7 +35,7 @@ interface BannerVideo {
 
 const BANNERS: BannerVideo[] = [
   // — Onboarding (sticky first) —
-  { id: "onboarding-sower",           title: "Become a Sower in 60 Seconds", subtitle: "Step-by-step onboarding walkthrough", emoji: "🌱", src: "/videos/onboarding-sower-v2.mp4?v=logo-fix-11",        available: true, ctaLabel: "Become a Sower & Bestower",      ctaPath: "/become-a-sower" },
+  { id: "onboarding-sower",           title: "Become a Sower in 60 Seconds", subtitle: "Step-by-step onboarding walkthrough", emoji: "🌱", src: "/videos/onboarding-sower-v2.mp4?v=no-logo-1",        available: true, ctaLabel: "Become a Sower & Bestower",      ctaPath: "/become-a-sower" },
 
   // — Become a Provider —
   { id: "wandering-wheel",            title: "Wandering Wheel",            subtitle: "Become a community driver",        emoji: "🚐", src: "/videos/banners/wandering-wheel.mp4",            available: true, ctaLabel: "Become a Wandering Wheel",       ctaPath: "/become-a-sower" },
@@ -71,7 +71,7 @@ const BANNERS: BannerVideo[] = [
   { id: "group-chat",                 title: "Group Chat",                 subtitle: "Start a tribal group chat",        emoji: "👥", src: "/videos/banners/group-chat.mp4",                 available: true, ctaLabel: "Start a Group Chat",             ctaPath: "/become-a-sower" },
 
   // — Tribal Hearts —
-  { id: "tribal-hearts",              title: "Tribal Hearts",              subtitle: "Safe agent-powered tribal dating", emoji: "❤️", src: "/videos/tribal-hearts-trailer-v7.mp4?v=logo-fix-11", available: true, ctaLabel: "Become a Tribal Heart",          ctaPath: "/become-a-sower" },
+  { id: "tribal-hearts",              title: "Tribal Hearts",              subtitle: "Safe agent-powered tribal dating", emoji: "❤️", src: "/videos/tribal-hearts-trailer-v2.mp4?v=restore-voice-1", available: true, ctaLabel: "Become a Tribal Heart",          ctaPath: "/become-a-sower" },
 ];
 
 const SHARE_VIDEO_BUCKET = "chat-files";
