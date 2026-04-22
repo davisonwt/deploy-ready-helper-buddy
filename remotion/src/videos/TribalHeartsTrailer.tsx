@@ -46,6 +46,8 @@ const PALETTE = {
   mist: "rgba(255,247,240,0.78)",
 };
 
+const LOGO_ACCENT = "#5ED7E5";
+
 const SCENES: SceneDef[] = [
   { eyebrow: "Global garden", title: "A living connection takes root", body: "Across oceans and continents.", accent: PALETTE.blush, duration: 240, image: "tribal-hearts/01-map.jpeg", imagePosition: "center center" },
   { eyebrow: "Beyond swipes", title: "Choose something deeper", body: "Sow something deeper than likes and swipes.", accent: PALETTE.gold, duration: 240, image: "tribal-hearts/02-woman.jpeg", imagePosition: "center center" },
@@ -309,7 +311,7 @@ const RightVisual: React.FC<{ scene: SceneDef; index: number }> = ({ scene, inde
       </div>
 
       <div style={{ position: "absolute", top: 82, left: 82, zIndex: 5 }}>
-        <LogoBadge accent={PALETTE.aqua} small />
+        <LogoBadge accent={LOGO_ACCENT} small />
       </div>
 
       <div
@@ -364,7 +366,7 @@ const ClosingOverlay: React.FC = () => {
           transform: `translateY(${30 - reveal * 30}px) scale(${0.92 + reveal * 0.08})`,
         }}
       >
-        <LogoBadge accent={PALETTE.aqua} />
+        <LogoBadge accent={LOGO_ACCENT} />
         <div style={{ fontFamily: displayFont, fontSize: 74, color: PALETTE.ivory, textShadow: "0 12px 40px rgba(0,0,0,0.28)" }}>
           Let love grow naturally
         </div>
