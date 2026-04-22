@@ -358,15 +358,6 @@ export default function MarketingVideosPage() {
                     </span>
                   )}
 
-                  {(b.id === "onboarding-sower" || b.id === "tribal-hearts") && (
-                    <img
-                      src="/lovable-uploads/s2g-logo.jpg"
-                      alt="sow2grow logo"
-                      className="absolute top-2 left-2 z-20 h-10 w-10 rounded-lg object-contain shadow-lg md:h-12 md:w-12"
-                      style={{ background: theme.cardBg, border: `1px solid ${theme.cardBorder}` }}
-                    />
-                  )}
-
                   {/* Top-right corner CTA — recipient-facing on shared videos.
                       Tapping it opens our /become-a-sower landing page with
                       the inviter's referral code pre-attached. */}
