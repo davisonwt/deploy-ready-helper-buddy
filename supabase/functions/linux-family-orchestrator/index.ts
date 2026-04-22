@@ -69,6 +69,106 @@ serve(async (req) => {
         return ok({ tasks_queued: tasks.length });
       }
 
+      case "intelligent_listing_start": {
+        const raw = String(payload?.raw_description ?? "").trim();
+        if (raw.length < 10 || raw.length > 1200) return bad("Describe your Seed in 10–1200 characters.");
+        await setAgentStatus(user.id, "gentoo", "working");
+
+        const parsed = parseSeedDescription(raw);
+        const now = new Date().toISOString();
+        const sessionPayload = buildIntelligentListingSession(raw, parsed, now);
+        const { data: session, error } = await admin.from("intelligent_listing_sessions").insert({
+          user_id: user.id,
+          raw_description: raw,
+          parsed_details: parsed,
+          current_stage: "awaiting_approval",
+          ...sessionPayload,
+        }).select().single();
+        if (error) throw error;
+
+        await Promise.all([
+          logActivity(user.id, "gentoo", "intelligent_listing_started", "🐧 Gentoo gathered the Orchard Companions around your Seed.", { session_id: session.id }),
+          logActivity(user.id, "sage", "pricing_ready", "🔮 Sage prepared a fair starting price.", { session_id: session.id }),
+          logActivity(user.id, "loaf", "logistics_ready", "🥖 Loaf prepared fulfillment paths.", { session_id: session.id }),
+          logActivity(user.id, "debian", "copy_ready", "💬 Debian prepared listing words for approval.", { session_id: session.id }),
+        ]);
+        await setAgentStatus(user.id, "gentoo", "idle");
+        return ok({ session });
+      }
+
+      case "intelligent_listing_refresh": {
+        const sessionId = String(payload?.session_id ?? "");
+        const session = await getListingSession(admin, user.id, sessionId);
+        return ok({ session });
+      }
+
+      case "intelligent_listing_approve_price":
+      case "intelligent_listing_approve_logistics":
+      case "intelligent_listing_approve_publish": {
+        const sessionId = String(payload?.session_id ?? "");
+        const session = await getListingSession(admin, user.id, sessionId);
+        const approvalKey = action.replace("intelligent_listing_approve_", "");
+        const approvals = { ...(session.approvals ?? {}), [approvalKey]: { approved: true, at: new Date().toISOString() } };
+        const analytics_events = appendSessionEvent(session.analytics_events, `approval_${approvalKey}_clicked`);
+        const { data: updated, error } = await admin.from("intelligent_listing_sessions")
+          .update({ approvals, analytics_events })
+          .eq("id", sessionId).eq("user_id", user.id).select().single();
+        if (error) throw error;
+        await logActivity(user.id, "gentoo", "approval_recorded", `🐧 Approval saved: ${approvalKey}.`, { session_id: sessionId });
+        return ok({ session: updated });
+      }
+
+      case "intelligent_listing_publish": {
+        const sessionId = String(payload?.session_id ?? "");
+        const session = await getListingSession(admin, user.id, sessionId);
+        const approvals = session.approvals ?? {};
+        if (!approvals.price?.approved || !approvals.logistics?.approved || !approvals.publish?.approved) {
+          return bad("Approve price, logistics, and publishing before going live.");
+        }
+        if (session.final_product_id) return ok({ session, product_id: session.final_product_id });
+
+        const { data: profile } = await admin.from("profiles").select("display_name").eq("user_id", user.id).maybeSingle();
+        const { data: existingSower } = await admin.from("sowers").select("id").eq("user_id", user.id).maybeSingle();
+        let sowerId = existingSower?.id;
+        if (!sowerId) {
+          const { data: sower, error: sowerError } = await admin.from("sowers").insert({
+            user_id: user.id,
+            display_name: profile?.display_name || user.email?.split("@")[0] || "Seed Keeper",
+          }).select("id").single();
+          if (sowerError) throw sowerError;
+          sowerId = sower.id;
+        }
+
+        const title = session.debian_copy?.title ?? session.parsed_details?.title ?? "Fresh Seed";
+        const description = `${session.debian_copy?.description ?? session.raw_description}\n\nFulfillment: ${session.loaf_logistics?.recommended ?? "local-first"}. Bestowal welcome.`;
+        const price = Number(session.sage_pricing?.suggested_total ?? session.sage_pricing?.base_price ?? 0);
+        const { data: product, error: productError } = await admin.from("products").insert({
+          sower_id: sowerId,
+          title,
+          description,
+          type: session.parsed_details?.type ?? "produce",
+          category: session.parsed_details?.category ?? "fresh-produce",
+          license_type: "paid",
+          price,
+          file_url: "intelligent-listing://companion-prepared",
+          cover_image_url: session.kali_media?.image_url ?? null,
+          image_urls: session.kali_media?.image_url ? [session.kali_media.image_url] : [],
+          tags: ["orchard-companions", "intelligent-listing", ...(session.parsed_details?.tags ?? [])],
+          metadata: { intelligent_listing_session_id: session.id, companion_outputs: true, logistics: session.loaf_logistics, payment: session.mint_payment },
+          delivery_type: session.loaf_logistics?.recommended_delivery_type ?? "local_pickup",
+          status: "active",
+        }).select("id").single();
+        if (productError) throw productError;
+
+        const analytics_events = appendSessionEvent(session.analytics_events, "listing_published");
+        const { data: updated, error } = await admin.from("intelligent_listing_sessions")
+          .update({ current_stage: "published", final_product_id: product.id, published_at: new Date().toISOString(), analytics_events })
+          .eq("id", sessionId).eq("user_id", user.id).select().single();
+        if (error) throw error;
+        await logActivity(user.id, "gentoo", "intelligent_listing_published", `🐧 Your Seed is live: ${title}.`, { session_id: sessionId, product_id: product.id });
+        return ok({ session: updated, product_id: product.id });
+      }
+
       case "generate_report": {
         // Delegate to Mint
         await admin.from("linux_family_tasks").insert({
@@ -331,4 +431,89 @@ serve(async (req) => {
 
 function ok(data: unknown) {
   return new Response(JSON.stringify(data), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
+}
+
+function bad(message: string) {
+  return new Response(JSON.stringify({ error: message }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+}
+
+function appendSessionEvent(events: unknown, event: string) {
+  const list = Array.isArray(events) ? events : [];
+  return [...list, { event, at: new Date().toISOString() }];
+}
+
+async function getListingSession(admin: ReturnType<typeof adminClient>, userId: string, sessionId: string) {
+  if (!/^[0-9a-f-]{36}$/i.test(sessionId)) throw new Error("Valid session_id required");
+  const { data, error } = await admin.from("intelligent_listing_sessions")
+    .select("*").eq("id", sessionId).eq("user_id", userId).maybeSingle();
+  if (error) throw error;
+  if (!data) throw new Error("Listing session not found");
+  return data as any;
+}
+
+function parseSeedDescription(raw: string) {
+  const lower = raw.toLowerCase();
+  const quantity = raw.match(/\b\d+(?:\.\d+)?\s?(?:kg|kilo|kilos|lb|lbs|boxes|crates|bunches|items|units)\b/i)?.[0] ?? null;
+  const type = /tomato|lettuce|produce|veg|fruit|harvest|organic|kg\b/.test(lower) ? "produce" : "product";
+  const titleWords = raw.replace(/["“”]/g, "").split(/[,.]/)[0].trim().split(/\s+/).slice(0, 7).join(" ");
+  return {
+    title: titleWords || "Fresh Seed",
+    type,
+    category: type === "produce" ? "fresh-produce" : "community-offering",
+    quantity,
+    locality: /local|nearby|pickup|collect/.test(lower) ? "local-first" : "local-first, global optional",
+    deadline: raw.match(/\b(?:by|before)\s+[A-Z]?[a-z]+day\b/i)?.[0] ?? null,
+    tags: [type, /organic/.test(lower) ? "organic" : null, /local/.test(lower) ? "local" : null].filter(Boolean),
+  };
+}
+
+function buildIntelligentListingSession(raw: string, parsed: any, now: string) {
+  const base = parsed.type === "produce" ? 25 : 15;
+  const price = parsed.quantity?.match(/\d+(?:\.\d+)?/) ? Math.max(base, Number(parsed.quantity.match(/\d+(?:\.\d+)?/)![0]) * 1.15) : base;
+  return {
+    sage_pricing: {
+      base_price: Number(price.toFixed(2)),
+      suggested_total: Number((price * 1.15).toFixed(2)),
+      currency: "USDC",
+      fairness_note: "Includes S2G's 15% community model while keeping the Seed Keeper's value visible.",
+      generated_at: now,
+    },
+    loaf_logistics: {
+      recommended: parsed.locality,
+      recommended_delivery_type: "local_pickup",
+      options: ["Local pickup", "Nearby delivery", "Hold for buyer call"],
+      note: parsed.deadline ? `Prioritize fulfillment ${parsed.deadline}.` : "Keep fulfillment local-first unless the Seed Keeper chooses wider reach.",
+      generated_at: now,
+    },
+    debian_copy: {
+      title: parsed.title,
+      description: `${raw}\n\nPrepared with Orchard Companions for a values-led local-first listing.`,
+      call_to_action: "Bestow, buy, message, or request a call.",
+      generated_at: now,
+    },
+    kali_media: {
+      image_prompt: `Warm natural product photo for ${parsed.title}, honest marketplace style, no text overlay`,
+      image_url: null,
+      generated_at: now,
+    },
+    fedora_story: {
+      script: `A Seed Keeper shares ${parsed.title}. Local-first, fair, and ready for the tribe to support.`,
+      duration_seconds: 15,
+      generated_at: now,
+    },
+    mint_payment: {
+      buy_now_ready: true,
+      bestowal_ready: true,
+      note: "Payment setup will use the existing S2G product bestowal and purchase rails after publish.",
+      generated_at: now,
+    },
+    approvals: {},
+    analytics_events: [
+      { event: "started_intelligent_listing", at: now },
+      { event: "description_submitted", at: now },
+      { event: "pricing_generated", at: now },
+      { event: "logistics_generated", at: now },
+      { event: "content_generated", at: now },
+    ],
+  };
 }

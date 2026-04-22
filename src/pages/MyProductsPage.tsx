@@ -5,7 +5,7 @@ import { useAuth } from '@/hooks/useAuth';
 import ProductCard from '@/components/products/ProductCard';
 import CategoryFilter from '@/components/products/CategoryFilter';
 import SowerBooksSection from '@/components/products/SowerBooksSection';
-import { Loader2, Package, Upload, Plus, Users } from 'lucide-react';
+import { Loader2, Package, Upload, Plus, Users, Sparkles } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -159,6 +159,12 @@ export default function MyProductsPage() {
                 Manage your uploaded seeds — music, books, art, produce & digital content.
               </p>
               <div className="flex flex-wrap gap-3 justify-center">
+                <Link to="/products/companion-listing">
+                  <Button size="lg" className='backdrop-blur-md bg-white/20 border-white/30 text-white hover:bg-white/30'>
+                    <Sparkles className="w-5 h-5 mr-2" />
+                    Plant with Companion Help
+                  </Button>
+                </Link>
                 <Link to="/products/upload">
                   <Button size="lg" className='backdrop-blur-md bg-white/20 border-white/30 text-white hover:bg-white/30'>
                     <Upload className="w-5 h-5 mr-2" />
