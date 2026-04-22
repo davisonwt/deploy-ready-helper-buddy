@@ -144,6 +144,29 @@ function paintCtaPill(
   ctx.fillText(text, pillX + padX + sproutW + gap, cy);
 }
 
+function paintLogo(ctx: CanvasRenderingContext2D, videoW: number, videoH: number, logo: HTMLImageElement) {
+  const size = Math.max(54, Math.round(videoH * 0.095));
+  const margin = Math.max(18, Math.round(videoH * 0.04));
+  const x = margin;
+  const y = margin;
+
+  ctx.save();
+  ctx.shadowColor = "rgba(0,0,0,0.28)";
+  ctx.shadowBlur = 16;
+  ctx.shadowOffsetY = 4;
+  ctx.fillStyle = "rgba(255,255,255,0.92)";
+  roundRect(ctx, x, y, size, size, size / 2);
+  ctx.fill();
+  ctx.clip();
+  ctx.drawImage(logo, x + size * 0.12, y + size * 0.12, size * 0.76, size * 0.76);
+  ctx.restore();
+
+  ctx.strokeStyle = "rgba(255,255,255,0.75)";
+  ctx.lineWidth = Math.max(2, Math.round(size * 0.035));
+  roundRect(ctx, x, y, size, size, size / 2);
+  ctx.stroke();
+}
+
 function roundRect(
   ctx: CanvasRenderingContext2D,
   x: number, y: number, w: number, h: number, r: number,
@@ -190,6 +213,8 @@ export interface BurnOptions {
   /** Optional CTA pill label burned into the top-right corner.
    *  e.g. "Become a Wandering Driver". Pass empty string to skip. */
   ctaLabel?: string;
+  /** Optional brand mark burned into the top-left corner. */
+  logoUrl?: string;
 }
 
 /** Internal shared burn engine — returns the final Blob + extension. */
@@ -243,6 +268,8 @@ async function runBurn(
     canvas.height = H;
     const ctx = canvas.getContext("2d");
     if (!ctx) throw new Error("Canvas not available.");
+
+    const logo = opts.logoUrl ? await loadImage(opts.logoUrl).catch(() => null) : null;
 
     const fps = 30;
     const canvasStream = (canvas as HTMLCanvasElement).captureStream(fps);
@@ -298,6 +325,9 @@ async function runBurn(
       // Top-right CTA pill (per-video role)
       if (opts.ctaLabel) {
         paintCtaPill(ctx, W, H, opts.ctaLabel);
+      }
+      if (logo) {
+        paintLogo(ctx, W, H, logo);
       }
       const p = Math.min(99, Math.round((video.currentTime / duration) * 100));
       onProgress(p);
