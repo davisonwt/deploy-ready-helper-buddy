@@ -12,6 +12,7 @@ import {
 } from "remotion";
 import { loadFont as loadPlayfair } from "@remotion/google-fonts/PlayfairDisplay";
 import { loadFont as loadDMSans } from "@remotion/google-fonts/DMSans";
+import { CornerLogo } from "../components/CornerLogo";
 
 const { fontFamily: displayFont } = loadPlayfair("normal", {
   weights: ["600", "700"],
@@ -517,6 +518,8 @@ export const OnboardingSower: React.FC = () => {
           </Sequence>
         );
       })}
+
+      <CornerLogo />
 
       {/* Voiceover (single padded track) */}
       <Audio src={staticFile("voiceovers/onboarding-sower/onboarding-sower-full.mp3")} />
