@@ -180,6 +180,16 @@ function roundRect(
   ctx.closePath();
 }
 
+function loadImage(src: string): Promise<HTMLImageElement> {
+  return new Promise((resolve, reject) => {
+    const image = new Image();
+    image.crossOrigin = "anonymous";
+    image.onload = () => resolve(image);
+    image.onerror = () => reject(new Error("Could not load logo image."));
+    image.src = src;
+  });
+}
+
 /** Pick the best supported MediaRecorder MIME type. */
 function pickMimeType(): { mime: string; ext: string } {
   // Prefer MP4 — it's the only format that opens on every phone / PC out of
