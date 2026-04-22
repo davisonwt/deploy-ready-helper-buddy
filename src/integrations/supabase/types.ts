@@ -3230,6 +3230,66 @@ export type Database = {
           },
         ]
       }
+      intelligent_listing_sessions: {
+        Row: {
+          analytics_events: Json
+          approvals: Json
+          created_at: string
+          current_stage: string
+          debian_copy: Json
+          fedora_story: Json
+          final_product_id: string | null
+          id: string
+          kali_media: Json
+          loaf_logistics: Json
+          mint_payment: Json
+          parsed_details: Json
+          published_at: string | null
+          raw_description: string
+          sage_pricing: Json
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          analytics_events?: Json
+          approvals?: Json
+          created_at?: string
+          current_stage?: string
+          debian_copy?: Json
+          fedora_story?: Json
+          final_product_id?: string | null
+          id?: string
+          kali_media?: Json
+          loaf_logistics?: Json
+          mint_payment?: Json
+          parsed_details?: Json
+          published_at?: string | null
+          raw_description: string
+          sage_pricing?: Json
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          analytics_events?: Json
+          approvals?: Json
+          created_at?: string
+          current_stage?: string
+          debian_copy?: Json
+          fedora_story?: Json
+          final_product_id?: string | null
+          id?: string
+          kali_media?: Json
+          loaf_logistics?: Json
+          mint_payment?: Json
+          parsed_details?: Json
+          published_at?: string | null
+          raw_description?: string
+          sage_pricing?: Json
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       journal_entries: {
         Row: {
           answered_prayers: Json | null
