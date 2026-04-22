@@ -35,7 +35,7 @@ interface BannerVideo {
 
 const BANNERS: BannerVideo[] = [
   // — Onboarding (sticky first) —
-  { id: "onboarding-sower",           title: "Become a Sower in 60 Seconds", subtitle: "Step-by-step onboarding walkthrough", emoji: "🌱", src: "/videos/onboarding-sower-v2.mp4?v=no-logo-1",        available: true, ctaLabel: "Become a Sower & Bestower",      ctaPath: "/become-a-sower" },
+  { id: "onboarding-sower",           title: "Become a Sower in 60 Seconds", subtitle: "Step-by-step onboarding walkthrough", emoji: "🌱", src: "/videos/onboarding-sower-v1.mp4",                available: true, ctaLabel: "Become a Sower & Bestower",      ctaPath: "/become-a-sower" },
 
   // — Become a Provider —
   { id: "wandering-wheel",            title: "Wandering Wheel",            subtitle: "Become a community driver",        emoji: "🚐", src: "/videos/banners/wandering-wheel.mp4",            available: true, ctaLabel: "Become a Wandering Wheel",       ctaPath: "/become-a-sower" },
@@ -71,7 +71,7 @@ const BANNERS: BannerVideo[] = [
   { id: "group-chat",                 title: "Group Chat",                 subtitle: "Start a tribal group chat",        emoji: "👥", src: "/videos/banners/group-chat.mp4",                 available: true, ctaLabel: "Start a Group Chat",             ctaPath: "/become-a-sower" },
 
   // — Tribal Hearts —
-  { id: "tribal-hearts",              title: "Tribal Hearts",              subtitle: "Safe agent-powered tribal dating", emoji: "❤️", src: "/videos/tribal-hearts-trailer-v2.mp4?v=restore-voice-1", available: true, ctaLabel: "Become a Tribal Heart",          ctaPath: "/become-a-sower" },
+  { id: "tribal-hearts",              title: "Tribal Hearts",              subtitle: "Safe agent-powered tribal dating", emoji: "❤️", src: "/videos/tribal-hearts-trailer-v7.mp4",          available: true, ctaLabel: "Become a Tribal Heart",          ctaPath: "/become-a-sower" },
 ];
 
 const SHARE_VIDEO_BUCKET = "chat-files";
@@ -358,6 +358,8 @@ export default function MarketingVideosPage() {
                     </span>
                   )}
 
+                  {/* S2G logo overlay removed — the video itself already shows the sow2grow brand */}
+
                   {/* Top-right corner CTA — recipient-facing on shared videos.
                       Tapping it opens our /become-a-sower landing page with
                       the inviter's referral code pre-attached. */}
@@ -535,15 +537,13 @@ export default function MarketingVideosPage() {
             className="w-full max-w-4xl rounded-2xl overflow-hidden shadow-2xl"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="relative bg-black">
-              <video
-                src={previewing.src}
-                className="w-full h-auto bg-black"
-                controls
-                autoPlay
-                playsInline
-              />
-            </div>
+            <video
+              src={previewing.src}
+              className="w-full h-auto bg-black"
+              controls
+              autoPlay
+              playsInline
+            />
             <div className="px-5 py-4 flex items-center justify-between gap-3" style={{ background: theme.cardBg }}>
               <div className="min-w-0">
                 <div className="flex items-center gap-2">

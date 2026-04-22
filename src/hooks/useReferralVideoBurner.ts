@@ -144,43 +144,6 @@ function paintCtaPill(
   ctx.fillText(text, pillX + padX + sproutW + gap, cy);
 }
 
-function paintLogo(ctx: CanvasRenderingContext2D, videoW: number, videoH: number, logo: HTMLImageElement) {
-  const size = 138;
-  const x = 24;
-  const y = 24;
-  const accent = "#5ED7E5";
-
-  ctx.save();
-  ctx.shadowColor = "rgba(0,0,0,0.24)";
-  ctx.shadowBlur = 20;
-  ctx.shadowOffsetY = 4;
-  ctx.fillStyle = "rgba(255,255,255,0.92)";
-  ctx.beginPath();
-  ctx.arc(x + size / 2, y + size / 2, size / 2, 0, Math.PI * 2);
-  ctx.fill();
-  ctx.restore();
-
-  ctx.save();
-  ctx.strokeStyle = accent;
-  ctx.lineWidth = 6;
-  ctx.beginPath();
-  ctx.arc(x + size / 2, y + size / 2, size / 2 - 3, 0, Math.PI * 2);
-  ctx.stroke();
-  ctx.restore();
-
-  ctx.save();
-  ctx.strokeStyle = accent;
-  ctx.lineWidth = 2;
-  ctx.setLineDash([5, 5]);
-  ctx.beginPath();
-  ctx.arc(x + size / 2, y + size / 2, (size - 18) / 2, 0, Math.PI * 2);
-  ctx.stroke();
-  ctx.restore();
-
-  const logoSize = size * 0.56;
-  ctx.drawImage(logo, x + (size - logoSize) / 2, y + (size - logoSize) / 2, logoSize, logoSize);
-}
-
 function roundRect(
   ctx: CanvasRenderingContext2D,
   x: number, y: number, w: number, h: number, r: number,
@@ -192,16 +155,6 @@ function roundRect(
   ctx.arcTo(x, y + h, x, y, r);
   ctx.arcTo(x, y, x + w, y, r);
   ctx.closePath();
-}
-
-function loadImage(src: string): Promise<HTMLImageElement> {
-  return new Promise((resolve, reject) => {
-    const image = new Image();
-    image.crossOrigin = "anonymous";
-    image.onload = () => resolve(image);
-    image.onerror = () => reject(new Error("Could not load logo image."));
-    image.src = src;
-  });
 }
 
 /** Pick the best supported MediaRecorder MIME type. */
@@ -285,8 +238,6 @@ async function runBurn(
       throw new Error("Source video has no duration.");
     }
 
-    const logo = await loadImage("/logo-transparent.png");
-
     const canvas = document.createElement("canvas");
     canvas.width = W;
     canvas.height = H;
@@ -342,7 +293,6 @@ async function runBurn(
     const draw = () => {
       if (cancelRef.current) return;
       ctx.drawImage(video, 0, 0, W, H);
-      paintLogo(ctx, W, H, logo);
       // Bottom referral strip
       paintBanner(ctx, 0, H - bannerH, W, bannerH, opts.inviterName, opts.referralCode, opts.shareUrl);
       // Top-right CTA pill (per-video role)

@@ -46,8 +46,6 @@ const PALETTE = {
   mist: "rgba(255,247,240,0.78)",
 };
 
-const LOGO_ACCENT = "#5ED7E5";
-
 const SCENES: SceneDef[] = [
   { eyebrow: "Global garden", title: "A living connection takes root", body: "Across oceans and continents.", accent: PALETTE.blush, duration: 240, image: "tribal-hearts/01-map.jpeg", imagePosition: "center center" },
   { eyebrow: "Beyond swipes", title: "Choose something deeper", body: "Sow something deeper than likes and swipes.", accent: PALETTE.gold, duration: 240, image: "tribal-hearts/02-woman.jpeg", imagePosition: "center center" },
@@ -67,7 +65,7 @@ const LogoBadge: React.FC<{ accent: string; small?: boolean }> = ({ accent, smal
   const frame = useCurrentFrame();
   const { fps } = useVideoConfig();
   const reveal = spring({ frame, fps, config: { damping: 14, stiffness: 120 } });
-  const size = small ? 156 : 188;
+  const size = small ? 138 : 188;
 
   return (
     <div
@@ -310,8 +308,8 @@ const RightVisual: React.FC<{ scene: SceneDef; index: number }> = ({ scene, inde
         />
       </div>
 
-      <div style={{ position: "absolute", top: 82, left: 82, zIndex: 5 }}>
-        <LogoBadge accent={LOGO_ACCENT} small />
+      <div style={{ position: "absolute", top: 24, left: 24, zIndex: 5 }}>
+        <LogoBadge accent={PALETTE.aqua} small />
       </div>
 
       <div
@@ -366,7 +364,7 @@ const ClosingOverlay: React.FC = () => {
           transform: `translateY(${30 - reveal * 30}px) scale(${0.92 + reveal * 0.08})`,
         }}
       >
-        <LogoBadge accent={LOGO_ACCENT} />
+        <LogoBadge accent={PALETTE.aqua} />
         <div style={{ fontFamily: displayFont, fontSize: 74, color: PALETTE.ivory, textShadow: "0 12px 40px rgba(0,0,0,0.28)" }}>
           Let love grow naturally
         </div>
@@ -376,28 +374,10 @@ const ClosingOverlay: React.FC = () => {
 };
 
 const Scene: React.FC<{ scene: SceneDef; index: number }> = ({ scene, index }) => {
-  const isClosing = index === SCENES.length - 1;
-
   return (
     <AbsoluteFill>
       <BackgroundImage src={scene.image} position={scene.imagePosition} />
       <FloatingDust accent={scene.accent} />
-      {!isClosing ? (
-        <div
-          style={{
-            position: "absolute",
-            inset: 0,
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "space-between",
-          }}
-        >
-          <TextPanel scene={scene} index={index} />
-          <RightVisual scene={scene} index={index} />
-        </div>
-      ) : (
-        <ClosingOverlay />
-      )}
     </AbsoluteFill>
   );
 };
