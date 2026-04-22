@@ -8,8 +8,8 @@ import { execSync } from "node:child_process";
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ID = "onboarding-sower";
 const VO = path.resolve(__dirname, "../public/voiceovers/onboarding-sower/onboarding-sower-full.mp3");
-const OUT = path.resolve(__dirname, "../../public/videos/onboarding-sower-v1.mp4");
-const ARTIFACT = "/mnt/documents/onboarding-sower-v1.mp4";
+const OUT = path.resolve(__dirname, "../../public/videos/onboarding-sower-v2.mp4");
+const ARTIFACT = "/mnt/documents/onboarding-sower-v2.mp4";
 const SILENT = `/tmp/${ID}-silent.mp4`;
 
 await fs.mkdir(path.dirname(OUT), { recursive: true });
