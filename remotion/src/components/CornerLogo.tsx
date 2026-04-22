@@ -7,23 +7,19 @@ export const CornerLogo: React.FC = () => {
     <div
       style={{
         position: "absolute",
-        top: 48,
-        left: 56,
+        top: 80,
+        left: 84,
         zIndex: 40,
-        width: 140,
-        height: 140,
-        borderRadius: 16,
-        overflow: "hidden",
-        background: "rgba(255,255,255,0.92)",
-        boxShadow: "0 8px 32px rgba(0,0,0,0.15)",
       }}
     >
       <Img
         src={staticFile("logo.jpeg")}
         style={{
-          width: "100%",
-          height: "100%",
+          width: 140,
+          height: "auto",
           objectFit: "contain",
+          borderRadius: 16,
+          boxShadow: "0 8px 32px rgba(0,0,0,0.15)",
         }}
       />
     </div>
