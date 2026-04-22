@@ -8,16 +8,16 @@ export const corsHeaders = {
 };
 
 export const AGENTS = {
-  gentoo: { emoji: "🐧", title: "Gentoo the Overseer", role: "Master Coordinator" },
-  tux: { emoji: "🎨", title: "Tux the Content Penguin", role: "Marketing & Content" },
-  ubuntu: { emoji: "🛡️", title: "Ubuntu the Branding Guardian", role: "Branding" },
-  kali: { emoji: "🪄", title: "Kali the Image Wizard", role: "Images" },
-  fedora: { emoji: "🎬", title: "Fedora the Video Director", role: "Videos" },
-  debian: { emoji: "💬", title: "Debian the Messenger", role: "Messaging" },
-  arch: { emoji: "📞", title: "Arch the Caller", role: "Phone & Video Calls" },
-  mint: { emoji: "📒", title: "Mint the Bookkeeper", role: "Finance & Compliance" },
-  loaf: { emoji: "🥖", title: "Loaf the Logistics Penguin", role: "Inventory & Shipping" },
-  sage: { emoji: "🔮", title: "Sage the Pricing Oracle", role: "Pricing Intelligence" },
+  gentoo: { emoji: "🐧", title: "Gentoo the Grove Overseer", role: "Grove Overseer" },
+  tux: { emoji: "🎨", title: "Tux the Story Sower", role: "Story Sowing" },
+  ubuntu: { emoji: "🛡️", title: "Ubuntu the Voice Guardian", role: "Voice Guarding" },
+  kali: { emoji: "🪄", title: "Kali the Vision Weaver", role: "Vision Weaving" },
+  fedora: { emoji: "🎬", title: "Fedora the Reel Keeper", role: "Reel Keeping" },
+  debian: { emoji: "💬", title: "Debian the Hearth Messenger", role: "Hearth Messaging" },
+  arch: { emoji: "📞", title: "Arch the Bridge Caller", role: "Bridge Calling" },
+  mint: { emoji: "📒", title: "Mint the Pocket Keeper", role: "Pocket Keeping" },
+  loaf: { emoji: "🥖", title: "Loaf the Storehouse Steward", role: "Storehouse Stewardship" },
+  sage: { emoji: "🔮", title: "Sage the Harvest Oracle", role: "Harvest Guidance" },
 } as const;
 
 export type AgentName = keyof typeof AGENTS;

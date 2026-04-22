@@ -75,7 +75,7 @@ export const PricingPulseCard: React.FC<Props> = ({ theme }) => {
       {needsAmb ? (
         <Link to="/become-ambassador" className="block rounded-xl border border-dashed border-violet-500/40 bg-violet-500/5 p-3 text-center">
           <Lock className="h-4 w-4 text-violet-600 mx-auto mb-1" />
-          <p className="text-xs font-semibold">Sage is an Ambassador agent ($5/mo)</p>
+          <p className="text-xs font-semibold">Sage is an Ambassador Orchard Companion ($5/mo)</p>
           <p className="text-[10px] text-muted-foreground">Tap to unlock pricing intelligence.</p>
         </Link>
       ) : error ? (

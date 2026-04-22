@@ -1,6 +1,6 @@
 /**
- * Linux Open Source Family — Agent Hub
- * Dashboard for the 8 penguin agents that run a member's Sow2Grow operations.
+ * Orchard Companions — hidden helper hub
+ * Dashboard for the Orchard Companions that help run a member's Sow2Grow operations.
  */
 import React, { useEffect, useMemo, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
@@ -19,16 +19,16 @@ import { useAgentAccess, isPremiumAgent } from '@/hooks/useAgentAccess';
 import { useNavigate } from 'react-router-dom';
 
 const AGENTS = [
-  { key: 'gentoo', emoji: '🐧', name: 'Gentoo', role: 'Overseer', bio: 'Coordinates the whole family.' },
-  { key: 'tux', emoji: '🎨', name: 'Tux', role: 'Content', bio: 'Posts, reels, newsletters.' },
-  { key: 'ubuntu', emoji: '🛡️', name: 'Ubuntu', role: 'Branding', bio: 'Keeps the voice on-tribe.' },
-  { key: 'kali', emoji: '🪄', name: 'Kali', role: 'Images', bio: 'Banners, brochures, flyers.' },
-  { key: 'fedora', emoji: '🎬', name: 'Fedora', role: 'Videos', bio: 'Voice-over video plans.' },
-  { key: 'debian', emoji: '💬', name: 'Debian', role: 'Messaging', bio: 'Talks to customers & bestowars.' },
-  { key: 'arch', emoji: '📞', name: 'Arch', role: 'Calls', bio: 'Voice & video via ChatApp.' },
-  { key: 'mint', emoji: '📒', name: 'Mint', role: 'Bookkeeper', bio: 'Reports + Pro tax & compliance.' },
-  { key: 'loaf', emoji: '🥖', name: 'Loaf', role: 'Logistics', bio: 'Inventory, demand, shipping.' },
-  { key: 'sage', emoji: '🔮', name: 'Sage', role: 'Pricing', bio: 'Multi-currency price oracle.' },
+  { key: 'gentoo', emoji: '🐧', name: 'Gentoo', role: 'Grove Overseer', bio: 'Coordinates the whole orchard.' },
+  { key: 'tux', emoji: '🎨', name: 'Tux', role: 'Story Sower', bio: 'Posts, reels, newsletters.' },
+  { key: 'ubuntu', emoji: '🛡️', name: 'Ubuntu', role: 'Voice Guardian', bio: 'Keeps the voice on-tribe.' },
+  { key: 'kali', emoji: '🪄', name: 'Kali', role: 'Vision Weaver', bio: 'Banners, brochures, flyers.' },
+  { key: 'fedora', emoji: '🎬', name: 'Fedora', role: 'Reel Keeper', bio: 'Voice-over video plans.' },
+  { key: 'debian', emoji: '💬', name: 'Debian', role: 'Hearth Messenger', bio: 'Talks to customers & bestowars.' },
+  { key: 'arch', emoji: '📞', name: 'Arch', role: 'Bridge Caller', bio: 'Voice & video via ChatApp.' },
+  { key: 'mint', emoji: '📒', name: 'Mint', role: 'Pocket Keeper', bio: 'Reports + Pro tax & compliance.' },
+  { key: 'loaf', emoji: '🥖', name: 'Loaf', role: 'Storehouse Steward', bio: 'Inventory, demand, shipping.' },
+  { key: 'sage', emoji: '🔮', name: 'Sage', role: 'Harvest Oracle', bio: 'Multi-currency price guidance.' },
 ];
 
 export default function LinuxFamilyHub() {
@@ -54,7 +54,7 @@ export default function LinuxFamilyHub() {
   const [blastCustom, setBlastCustom] = useState<string>('');
   const [blastBusy, setBlastBusy] = useState(false);
   const [terminal, setTerminal] = useState<{ cmd: string; out: string }[]>([
-    { cmd: '', out: 'Welcome to the S2G Agents terminal. Type "help".' },
+    { cmd: '', out: 'Welcome to the Orchard Companions terminal. Type "help".' },
   ]);
   const [cmd, setCmd] = useState('');
   const [busy, setBusy] = useState(false);
@@ -100,7 +100,7 @@ export default function LinuxFamilyHub() {
     await supabase.functions.invoke('linux-family-orchestrator', {
       body: { action: 'respond_suggestion', payload: { suggestion_id: id, decision } },
     });
-    toast({ title: decision === 'approved' ? '🐧 Your S2G Agents are on it!' : 'Got it — skipped.' });
+    toast({ title: decision === 'approved' ? '🐧 Your Orchard Companions are on it!' : 'Got it — skipped.' });
     refresh();
   };
 
@@ -147,7 +147,7 @@ export default function LinuxFamilyHub() {
       });
       if (error) throw error;
       setPack(data?.pack ?? null);
-      toast({ title: '🐧 Content pack ready', description: 'Your S2G Agents (Tux, Ubuntu, Kali & Fedora) delivered.' });
+      toast({ title: '🐧 Content pack ready', description: 'Your Orchard Companions (Tux, Ubuntu, Kali & Fedora) delivered.' });
       refresh();
     } catch (e: any) {
       toast({ title: 'Content pack failed', description: e.message, variant: 'destructive' });
@@ -212,13 +212,13 @@ export default function LinuxFamilyHub() {
               </div>
               <div className="min-w-0">
                 <h1 className="text-2xl md:text-3xl font-bold tracking-tight bg-gradient-to-r from-emerald-200 to-teal-100 bg-clip-text text-transparent">
-                  S2G Agents
+                  Orchard Companions
                 </h1>
-                <p className="text-xs text-emerald-200/70">Your loyal tribal AI workforce</p>
+                <p className="text-xs text-emerald-200/70">Your hidden orchard helpers</p>
               </div>
             </div>
             <p className="text-sm text-foreground/80 mt-3 max-w-2xl">
-              Ten specialist agents run marketing, content, calls, messaging, bookkeeping, logistics & pricing for every Seed you plant — automatically.
+              Ten specialist Orchard Companions help with marketing, content, calls, messaging, bookkeeping, logistics & pricing for every Seed you plant.
             </p>
           </div>
           <Button onClick={() => buildReport(7)} disabled={busy}
@@ -286,12 +286,12 @@ export default function LinuxFamilyHub() {
               <Crown className="w-5 h-5 text-amber-950" />
             </div>
             <div className="flex-1 min-w-0">
-              <div className="font-bold text-sm text-foreground">Unlock the full S2G Agent tribe</div>
+              <div className="font-bold text-sm text-foreground">Unlock the full Orchard Companions circle</div>
               <p className="text-xs text-muted-foreground mt-0.5">
                 You have <span className="font-semibold text-emerald-400">Gentoo, Mint &amp; Debian</span> on your team.
                 Become a <span className="font-semibold text-amber-300">Tribe Ambassador ($5/mo)</span> to unlock <span className="font-semibold">Tux</span> (content),
                 <span className="font-semibold"> Ubuntu</span> (branding), <span className="font-semibold">Kali</span> (images),
-                <span className="font-semibold"> Fedora</span> (videos), <span className="font-semibold">Arch</span> (calls), <span className="font-semibold">Loaf</span> (logistics), <span className="font-semibold">Sage</span> (pricing) &amp; <span className="font-semibold">Mint-Pro</span> (tax) — your whole AI marketing &amp; ops team on autopilot.
+                <span className="font-semibold"> Fedora</span> (videos), <span className="font-semibold">Arch</span> (calls), <span className="font-semibold">Loaf</span> (logistics), <span className="font-semibold">Sage</span> (pricing) &amp; <span className="font-semibold">Mint-Pro</span> (tax) — your whole orchard marketing &amp; ops circle.
               </p>
             </div>
             <Button
@@ -385,7 +385,7 @@ export default function LinuxFamilyHub() {
 
         <TabsContent value="suggestions">
           <Card><CardContent className="p-4 space-y-2">
-            {suggestions.length === 0 && <p className="text-sm text-muted-foreground">All quiet 🐧 — your S2G Agents will nudge you when needed.</p>}
+            {suggestions.length === 0 && <p className="text-sm text-muted-foreground">All quiet 🐧 — your Orchard Companions will nudge you when needed.</p>}
             {suggestions.map(s => (
               <div key={s.id} className="border rounded-lg p-3">
                 <div className="font-semibold text-sm">{s.title}</div>
@@ -495,7 +495,7 @@ export default function LinuxFamilyHub() {
           <Card><CardContent className="p-0">
             <ScrollArea className="h-[400px]">
               <div className="p-4 space-y-2">
-                {activity.length === 0 && <p className="text-sm text-muted-foreground">No activity yet — the family is warming up.</p>}
+                {activity.length === 0 && <p className="text-sm text-muted-foreground">No activity yet — the companions are warming up.</p>}
                 {activity.map(a => (
                   <div key={a.id} className="text-sm border-l-2 border-primary/40 pl-3 py-1">
                     <div>{a.message}</div>

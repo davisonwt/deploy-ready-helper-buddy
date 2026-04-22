@@ -1,7 +1,7 @@
 /**
  * LogisticsPulseCard — compact "My Garden" widget that lazily invokes
  * Loaf the Logistics Penguin to show sales velocity + reorder hints.
- * Ambassador-only (the agent itself enforces gating; we surface a soft upsell).
+ * Ambassador-only (the companion enforces gating; we surface a soft upsell).
  */
 import React, { useState, useCallback } from 'react';
 import { Package, RefreshCw, Lock, TrendingUp } from 'lucide-react';
@@ -66,7 +66,7 @@ export const LogisticsPulseCard: React.FC<Props> = ({ theme }) => {
       {needsAmb ? (
         <Link to="/become-ambassador" className="block rounded-xl border border-dashed border-amber-500/40 bg-amber-500/5 p-3 text-center">
           <Lock className="h-4 w-4 text-amber-600 mx-auto mb-1" />
-          <p className="text-xs font-semibold">Loaf is an Ambassador agent ($5/mo)</p>
+          <p className="text-xs font-semibold">Loaf is an Ambassador Orchard Companion ($5/mo)</p>
           <p className="text-[10px] text-muted-foreground">Tap to unlock logistics intelligence.</p>
         </Link>
       ) : error ? (

@@ -14,9 +14,9 @@ interface Props {
 }
 
 /**
- * TribalMatchesCards — soft, warm horizontal stack of agent-suggested
+ * TribalMatchesCards — soft, warm horizontal stack of companion-suggested
  * collaborations between the current member and other Sow2Grow tribe members.
- * Lives inside My Garden and is also reachable from the S2G Agents hub.
+ * Lives inside My Garden and is also reachable from the Orchard Companions hub.
  */
 export const TribalMatchesCards: React.FC<Props> = ({ theme, dispatchDm = true }) => {
   const { matches, loading, refreshing, refresh, respond } = useTribalMatches();
