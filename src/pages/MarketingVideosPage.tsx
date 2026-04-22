@@ -21,6 +21,7 @@ import { useMyReferralCode } from "@/hooks/useMyReferralCode";
 import { getCurrentTheme } from "@/utils/dashboardThemes";
 
 const S2G_LOGO_URL = "/lovable-uploads/s2g-logo.jpg";
+const S2G_VIDEO_LOGO_CLASS = "absolute z-20 rounded-full border-[3px] border-[#8FB3C9] bg-white/90 object-contain p-[10px] shadow-lg outline outline-1 outline-offset-[-8px] outline-[#8FB3C9]/70";
 
 interface BannerVideo {
   id: string;
@@ -367,7 +368,7 @@ export default function MarketingVideosPage() {
                     <img
                       src={S2G_LOGO_URL}
                       alt="Sow2Grow logo"
-                      className="absolute top-3 left-3 z-20 h-12 w-12 rounded-full border-2 border-white/80 bg-white/90 object-contain p-1 shadow-lg md:h-14 md:w-14"
+                      className={`${S2G_VIDEO_LOGO_CLASS} top-3 left-3 h-16 w-16 md:h-20 md:w-20`}
                     />
                   )}
 
@@ -553,7 +554,7 @@ export default function MarketingVideosPage() {
                 <img
                   src={S2G_LOGO_URL}
                   alt="Sow2Grow logo"
-                  className="absolute top-4 left-4 z-10 h-14 w-14 rounded-full border-2 border-white/80 bg-white/90 object-contain p-1 shadow-lg"
+                  className={`${S2G_VIDEO_LOGO_CLASS} top-4 left-4 h-20 w-20`}
                 />
               )}
               <video
