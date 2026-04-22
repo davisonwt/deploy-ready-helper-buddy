@@ -20,9 +20,6 @@ import { useReferralVideoBurner } from "@/hooks/useReferralVideoBurner";
 import { useMyReferralCode } from "@/hooks/useMyReferralCode";
 import { getCurrentTheme } from "@/utils/dashboardThemes";
 
-const S2G_LOGO_URL = "/logo-transparent.png";
-const S2G_VIDEO_LOGO_CLASS = "absolute z-20 rounded-full border-[3px] border-cyan-300 bg-white/90 object-contain p-2 shadow-lg ring-1 ring-inset ring-cyan-300/70";
-
 interface BannerVideo {
   id: string;
   title: string;
@@ -97,7 +94,6 @@ export default function MarketingVideosPage() {
       referralCode: code,
       shareUrl,
       ctaLabel: banner.ctaLabel,
-      logoUrl: banner.id === "onboarding-sower" ? S2G_LOGO_URL : undefined,
     });
   };
 
@@ -175,7 +171,6 @@ export default function MarketingVideosPage() {
       referralCode: code,
       shareUrl,
       ctaLabel: banner.ctaLabel,
-      logoUrl: banner.id === "onboarding-sower" ? S2G_LOGO_URL : undefined,
     });
 
     if (!file) return null;
@@ -203,7 +198,6 @@ export default function MarketingVideosPage() {
         referralCode: code || "S2G",
         shareUrl,
         ctaLabel: banner.ctaLabel,
-        logoUrl: banner.id === "onboarding-sower" ? S2G_LOGO_URL : undefined,
       });
       if (fallback) downloadBurnedFile(fallback);
     }
@@ -362,14 +356,6 @@ export default function MarketingVideosPage() {
                     <span className="absolute top-2 left-2 text-[10px] uppercase tracking-wider px-2 py-1 rounded-full font-bold z-10" style={{ background: theme.secondaryButton, color: theme.textPrimary }}>
                       Coming soon
                     </span>
-                  )}
-
-                  {b.id === "onboarding-sower" && (
-                    <img
-                      src={S2G_LOGO_URL}
-                      alt="Sow2Grow logo"
-                      className={`${S2G_VIDEO_LOGO_CLASS} top-3 left-3 h-14 w-14 md:h-16 md:w-16`}
-                    />
                   )}
 
                   {/* Top-right corner CTA — recipient-facing on shared videos.
@@ -550,13 +536,6 @@ export default function MarketingVideosPage() {
             onClick={(e) => e.stopPropagation()}
           >
             <div className="relative bg-black">
-              {previewing.id === "onboarding-sower" && (
-                <img
-                  src={S2G_LOGO_URL}
-                  alt="Sow2Grow logo"
-                  className={`${S2G_VIDEO_LOGO_CLASS} top-4 left-4 h-16 w-16`}
-                />
-              )}
               <video
                 src={previewing.src}
                 className="w-full h-auto bg-black"
