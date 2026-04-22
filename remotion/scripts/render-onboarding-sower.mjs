@@ -46,7 +46,7 @@ await browser.close({ silent: false });
 
 const durationSeconds = composition.durationInFrames / composition.fps;
 execSync(
-  `ffmpeg -y -i "${SILENT}" -i "${VO}" -filter_complex "[1:a]apad[a]" -map 0:v -map "[a]" -c:v copy -c:a aac -b:a 192k -t ${durationSeconds.toFixed(3)} "${OUT}"`,
+  `ffmpeg -y -i "${SILENT}" -i "${VO}" -filter_complex "[1:a]apad[a]" -map 0:v -map "[a]" -c:v copy -c:a aac -b:a 192k -movflags +faststart -t ${durationSeconds.toFixed(3)} "${OUT}"`,
   { stdio: "inherit" }
 );
 
