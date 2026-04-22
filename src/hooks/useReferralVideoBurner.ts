@@ -145,26 +145,36 @@ function paintCtaPill(
 }
 
 function paintLogo(ctx: CanvasRenderingContext2D, videoW: number, videoH: number, logo: HTMLImageElement) {
-  const size = Math.max(54, Math.round(videoH * 0.095));
+  const size = Math.max(86, Math.round(videoH * 0.14));
   const margin = Math.max(18, Math.round(videoH * 0.04));
   const x = margin;
   const y = margin;
+  const accent = "#8FB3C9";
 
   ctx.save();
-  ctx.shadowColor = "rgba(0,0,0,0.28)";
-  ctx.shadowBlur = 16;
-  ctx.shadowOffsetY = 4;
+  ctx.shadowColor = "rgba(0,0,0,0.24)";
+  ctx.shadowBlur = 22;
+  ctx.shadowOffsetY = 8;
   ctx.fillStyle = "rgba(255,255,255,0.92)";
   roundRect(ctx, x, y, size, size, size / 2);
   ctx.fill();
-  ctx.clip();
-  ctx.drawImage(logo, x + size * 0.12, y + size * 0.12, size * 0.76, size * 0.76);
   ctx.restore();
 
-  ctx.strokeStyle = "rgba(255,255,255,0.75)";
-  ctx.lineWidth = Math.max(2, Math.round(size * 0.035));
+  ctx.strokeStyle = accent;
+  ctx.lineWidth = Math.max(4, Math.round(size * 0.055));
   roundRect(ctx, x, y, size, size, size / 2);
   ctx.stroke();
+
+  const inset = Math.round(size * 0.095);
+  ctx.save();
+  ctx.strokeStyle = accent;
+  ctx.lineWidth = Math.max(1.5, Math.round(size * 0.018));
+  ctx.setLineDash([Math.max(2, size * 0.018), Math.max(3, size * 0.018)]);
+  roundRect(ctx, x + inset, y + inset, size - inset * 2, size - inset * 2, (size - inset * 2) / 2);
+  ctx.stroke();
+  ctx.restore();
+
+  ctx.drawImage(logo, x + size * 0.22, y + size * 0.22, size * 0.56, size * 0.56);
 }
 
 function roundRect(
