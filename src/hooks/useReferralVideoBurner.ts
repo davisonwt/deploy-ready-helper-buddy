@@ -233,8 +233,6 @@ export interface BurnOptions {
   /** Optional CTA pill label burned into the top-right corner.
    *  e.g. "Become a Wandering Driver". Pass empty string to skip. */
   ctaLabel?: string;
-  /** Optional brand mark burned into the top-left corner. */
-  logoUrl?: string;
 }
 
 /** Internal shared burn engine — returns the final Blob + extension. */
@@ -288,8 +286,6 @@ async function runBurn(
     canvas.height = H;
     const ctx = canvas.getContext("2d");
     if (!ctx) throw new Error("Canvas not available.");
-
-    const logo = opts.logoUrl ? await loadImage(opts.logoUrl).catch(() => null) : null;
 
     const fps = 30;
     const canvasStream = (canvas as HTMLCanvasElement).captureStream(fps);
@@ -345,9 +341,6 @@ async function runBurn(
       // Top-right CTA pill (per-video role)
       if (opts.ctaLabel) {
         paintCtaPill(ctx, W, H, opts.ctaLabel);
-      }
-      if (logo) {
-        paintLogo(ctx, W, H, logo);
       }
       const p = Math.min(99, Math.round((video.currentTime / duration) * 100));
       onProgress(p);
