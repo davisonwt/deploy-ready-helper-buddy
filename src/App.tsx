@@ -122,6 +122,7 @@ const SupportUsPage = lazy(() => import("./pages/SupportUsPage"));
 const WeatherPage = lazy(() => import("./pages/WeatherPage"));
 const ProductsPage = lazy(() => import("./pages/ProductsPage"));
 const MyProductsPage = lazy(() => import("./pages/MyProductsPage"));
+const IntelligentListingPage = lazy(() => import("./pages/IntelligentListingPage"));
 const BecomeWhispererPage = lazy(() => import("./pages/BecomeWhispererPage"));
 const SowerWhispererManagementPage = lazy(() => import("./pages/SowerWhispererManagementPage"));
 const WhispererEarningsDashboardPage = lazy(() => import("./pages/WhispererEarningsDashboardPage"));
@@ -1277,6 +1278,15 @@ const App = () => (
                   <Layout>
                     <Suspense fallback={<LoadingFallback />}>
                       <UploadForm />
+                    </Suspense>
+                  </Layout>
+                </ProtectedRoute>
+              } />
+              <Route path="/products/companion-listing" element={
+                <ProtectedRoute>
+                  <Layout>
+                    <Suspense fallback={<LoadingFallback />}>
+                      <IntelligentListingPage />
                     </Suspense>
                   </Layout>
                 </ProtectedRoute>
