@@ -145,36 +145,40 @@ function paintCtaPill(
 }
 
 function paintLogo(ctx: CanvasRenderingContext2D, videoW: number, videoH: number, logo: HTMLImageElement) {
-  const size = Math.max(58, Math.round(videoH * 0.095));
-  const margin = Math.max(18, Math.round(videoH * 0.04));
-  const x = margin;
-  const y = margin;
-  const accent = "#67E8F9";
+  const size = 138;
+  const x = 24;
+  const y = 24;
+  const accent = "#5ED7E5";
 
   ctx.save();
   ctx.shadowColor = "rgba(0,0,0,0.24)";
-  ctx.shadowBlur = 16;
+  ctx.shadowBlur = 20;
   ctx.shadowOffsetY = 4;
   ctx.fillStyle = "rgba(255,255,255,0.92)";
-  roundRect(ctx, x, y, size, size, size / 2);
+  ctx.beginPath();
+  ctx.arc(x + size / 2, y + size / 2, size / 2, 0, Math.PI * 2);
   ctx.fill();
   ctx.restore();
 
-  ctx.strokeStyle = accent;
-  ctx.lineWidth = Math.max(3, Math.round(size * 0.05));
-  roundRect(ctx, x, y, size, size, size / 2);
-  ctx.stroke();
-
-  const inset = Math.round(size * 0.09);
   ctx.save();
   ctx.strokeStyle = accent;
-  ctx.lineWidth = Math.max(1.5, Math.round(size * 0.018));
-  ctx.setLineDash([Math.max(2, size * 0.018), Math.max(3, size * 0.018)]);
-  roundRect(ctx, x + inset, y + inset, size - inset * 2, size - inset * 2, (size - inset * 2) / 2);
+  ctx.lineWidth = 6;
+  ctx.beginPath();
+  ctx.arc(x + size / 2, y + size / 2, size / 2 - 3, 0, Math.PI * 2);
   ctx.stroke();
   ctx.restore();
 
-  ctx.drawImage(logo, x + size * 0.2, y + size * 0.2, size * 0.6, size * 0.6);
+  ctx.save();
+  ctx.strokeStyle = accent;
+  ctx.lineWidth = 2;
+  ctx.setLineDash([5, 5]);
+  ctx.beginPath();
+  ctx.arc(x + size / 2, y + size / 2, (size - 18) / 2, 0, Math.PI * 2);
+  ctx.stroke();
+  ctx.restore();
+
+  const logoSize = size * 0.56;
+  ctx.drawImage(logo, x + (size - logoSize) / 2, y + (size - logoSize) / 2, logoSize, logoSize);
 }
 
 function roundRect(
@@ -281,6 +285,8 @@ async function runBurn(
       throw new Error("Source video has no duration.");
     }
 
+    const logo = await loadImage("/logo-transparent.png");
+
     const canvas = document.createElement("canvas");
     canvas.width = W;
     canvas.height = H;
@@ -336,6 +342,7 @@ async function runBurn(
     const draw = () => {
       if (cancelRef.current) return;
       ctx.drawImage(video, 0, 0, W, H);
+      paintLogo(ctx, W, H, logo);
       // Bottom referral strip
       paintBanner(ctx, 0, H - bannerH, W, bannerH, opts.inviterName, opts.referralCode, opts.shareUrl);
       // Top-right CTA pill (per-video role)
