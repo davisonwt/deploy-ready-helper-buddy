@@ -153,7 +153,7 @@ export function WhispererSelector({
           />
         </div>
         <CardDescription className="text-sm">
-          Invite marketing agents to promote your product (max {maxWhisperers})
+          Invite Whisperers to promote your product (max {maxWhisperers})
         </CardDescription>
       </CardHeader>
 

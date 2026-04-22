@@ -27,7 +27,7 @@ const navItems = [
   { to: '/tithing', label: 'Let It Rain', desc: 'Bestow blessings', icon: CloudRain, gradient: 'linear-gradient(135deg, #533AB7, #8B5CF6)' },
   { to: '/my-s2g-tribe', label: 'My Tribe', desc: 'Invite & grow your tribe', icon: Users, gradient: 'linear-gradient(135deg, #0E7490, #22D3EE)' },
   { to: '/marketing-videos', label: 'Marketing Videos', desc: 'Share videos with your code', icon: Film, gradient: 'linear-gradient(135deg, #B85042, #D4A843)' },
-  { to: '/s2g-agents', label: 'S2G Agents', desc: 'Your tribal AI workforce', icon: Bot, gradient: 'linear-gradient(135deg, #1F2937, #4B5563)' },
+  { to: '/s2g-agents', label: 'Orchard Companions', desc: 'Hidden orchard helpers', icon: Bot, gradient: 'linear-gradient(135deg, #1F2937, #4B5563)' },
   { to: '/stats', label: 'Stats', desc: 'Your progress & stats', icon: BarChart3, gradient: 'linear-gradient(135deg, #1E6A5A, #2DA88A)' },
   { to: '/tribe-ambassador', label: 'Ambassador', desc: 'Join the inner circle', icon: Sparkles, gradient: 'linear-gradient(135deg, #0d9488, #f59e0b)' },
 ];

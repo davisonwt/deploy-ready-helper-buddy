@@ -1,5 +1,5 @@
 /**
- * S2GAgentGreeter
+ * OrchardCompanionGreeter
  * Mounts globally. Listens for new linux_family_activity_log rows for the current user
  * and shows a toast nudging them to open /s2g-agents (e.g. when Gentoo greets them
  * after a Seed is planted).
@@ -12,7 +12,7 @@ import { toast } from '@/hooks/use-toast';
 
 const SEEN_KEY = 's2g_agent_greeter_seen';
 
-export default function S2GAgentGreeter() {
+export default function OrchardCompanionGreeter() {
   const { user } = useAuth();
   const navigate = useNavigate();
 
@@ -40,8 +40,8 @@ export default function S2GAgentGreeter() {
             sessionStorage.setItem(SEEN_KEY, JSON.stringify([...seen.slice(-50), row.id]));
           } catch {}
           toast({
-            title: row.message?.slice(0, 80) || '🐧 Your S2G Agents are working',
-            description: 'Open the S2G Agents hub to review and approve their suggestions.',
+            title: row.message?.slice(0, 80) || '🐧 Your Orchard Companions are working',
+            description: 'Open the Orchard Companions hub to review and approve their suggestions.',
             action: (
               <button
                 onClick={() => navigate('/s2g-agents')}

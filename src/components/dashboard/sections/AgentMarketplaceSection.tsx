@@ -37,7 +37,7 @@ export const AgentMarketplaceSection: React.FC<Props> = ({ theme }) => {
       return;
     }
     const { error } = await installTemplate(t.id);
-    if (error) toast.error('Could not install agent');
+    if (error) toast.error('Could not invite companion');
     else toast.success(`${t.name} installed`);
   };
 
@@ -45,8 +45,8 @@ export const AgentMarketplaceSection: React.FC<Props> = ({ theme }) => {
     <div className="space-y-4">
       <SectionHeading
         icon={Bot}
-        title="Agent Marketplace"
-        subtitle="Install AI agents or publish your own"
+        title="Companion Marketplace"
+        subtitle="Invite Orchard Companions or publish your own"
         theme={theme}
         gradientColors={['#a855f7', '#ec4899']}
         rightSlot={
@@ -96,7 +96,7 @@ export const AgentMarketplaceSection: React.FC<Props> = ({ theme }) => {
             />
           ))}
           {templates.length === 0 && (
-            <p className="text-xs text-muted-foreground text-center py-4">No agents available yet.</p>
+            <p className="text-xs text-muted-foreground text-center py-4">No companions available yet.</p>
           )}
         </div>
       )}
@@ -129,7 +129,7 @@ export const AgentMarketplaceSection: React.FC<Props> = ({ theme }) => {
             );
           })}
           {installs.length === 0 && (
-            <p className="text-xs text-muted-foreground text-center py-4">No agents installed yet. Browse the marketplace.</p>
+            <p className="text-xs text-muted-foreground text-center py-4">No companions invited yet. Browse the marketplace.</p>
           )}
         </div>
       )}
@@ -153,7 +153,7 @@ export const AgentMarketplaceSection: React.FC<Props> = ({ theme }) => {
             </div>
           ))}
           {myDrafts.length === 0 && (
-            <p className="text-xs text-muted-foreground text-center py-4">You haven't submitted any agents yet.</p>
+            <p className="text-xs text-muted-foreground text-center py-4">You haven't submitted any companions yet.</p>
           )}
         </div>
       )}
@@ -216,7 +216,7 @@ const SubmitTemplateDialog: React.FC<{ onSubmit: (p: any) => void }> = ({ onSubm
   return (
     <DialogContent>
       <DialogHeader>
-        <DialogTitle>Publish an Agent Template</DialogTitle>
+        <DialogTitle>Publish a Companion Template</DialogTitle>
       </DialogHeader>
       <div className="space-y-3">
         <div className="grid grid-cols-[60px_1fr] gap-2">
@@ -226,7 +226,7 @@ const SubmitTemplateDialog: React.FC<{ onSubmit: (p: any) => void }> = ({ onSubm
           </div>
           <div>
             <Label className="text-xs">Name</Label>
-            <Input value={name} onChange={e => setName(e.target.value)} placeholder="My Helpful Agent" />
+            <Input value={name} onChange={e => setName(e.target.value)} placeholder="My Helpful Companion" />
           </div>
         </div>
         <div>
@@ -239,7 +239,7 @@ const SubmitTemplateDialog: React.FC<{ onSubmit: (p: any) => void }> = ({ onSubm
         </div>
         <div>
           <Label className="text-xs">Prompt template</Label>
-          <Textarea value={prompt} onChange={e => setPrompt(e.target.value)} rows={4} placeholder="Describe what the agent should do..." />
+          <Textarea value={prompt} onChange={e => setPrompt(e.target.value)} rows={4} placeholder="Describe what the companion should do..." />
         </div>
         <div>
           <Label className="text-xs">Install bestowal (USD, 0 = free)</Label>
