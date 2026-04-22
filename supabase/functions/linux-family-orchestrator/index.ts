@@ -432,3 +432,88 @@ serve(async (req) => {
 function ok(data: unknown) {
   return new Response(JSON.stringify(data), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
 }
+
+function bad(message: string) {
+  return new Response(JSON.stringify({ error: message }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+}
+
+function appendSessionEvent(events: unknown, event: string) {
+  const list = Array.isArray(events) ? events : [];
+  return [...list, { event, at: new Date().toISOString() }];
+}
+
+async function getListingSession(admin: ReturnType<typeof adminClient>, userId: string, sessionId: string) {
+  if (!/^[0-9a-f-]{36}$/i.test(sessionId)) throw new Error("Valid session_id required");
+  const { data, error } = await admin.from("intelligent_listing_sessions")
+    .select("*").eq("id", sessionId).eq("user_id", userId).maybeSingle();
+  if (error) throw error;
+  if (!data) throw new Error("Listing session not found");
+  return data as any;
+}
+
+function parseSeedDescription(raw: string) {
+  const lower = raw.toLowerCase();
+  const quantity = raw.match(/\b\d+(?:\.\d+)?\s?(?:kg|kilo|kilos|lb|lbs|boxes|crates|bunches|items|units)\b/i)?.[0] ?? null;
+  const type = /tomato|lettuce|produce|veg|fruit|harvest|organic|kg\b/.test(lower) ? "produce" : "product";
+  const titleWords = raw.replace(/["“”]/g, "").split(/[,.]/)[0].trim().split(/\s+/).slice(0, 7).join(" ");
+  return {
+    title: titleWords || "Fresh Seed",
+    type,
+    category: type === "produce" ? "fresh-produce" : "community-offering",
+    quantity,
+    locality: /local|nearby|pickup|collect/.test(lower) ? "local-first" : "local-first, global optional",
+    deadline: raw.match(/\b(?:by|before)\s+[A-Z]?[a-z]+day\b/i)?.[0] ?? null,
+    tags: [type, /organic/.test(lower) ? "organic" : null, /local/.test(lower) ? "local" : null].filter(Boolean),
+  };
+}
+
+function buildIntelligentListingSession(raw: string, parsed: any, now: string) {
+  const base = parsed.type === "produce" ? 25 : 15;
+  const price = parsed.quantity?.match(/\d+(?:\.\d+)?/) ? Math.max(base, Number(parsed.quantity.match(/\d+(?:\.\d+)?/)![0]) * 1.15) : base;
+  return {
+    sage_pricing: {
+      base_price: Number(price.toFixed(2)),
+      suggested_total: Number((price * 1.15).toFixed(2)),
+      currency: "USDC",
+      fairness_note: "Includes S2G's 15% community model while keeping the Seed Keeper's value visible.",
+      generated_at: now,
+    },
+    loaf_logistics: {
+      recommended: parsed.locality,
+      recommended_delivery_type: "local_pickup",
+      options: ["Local pickup", "Nearby delivery", "Hold for buyer call"],
+      note: parsed.deadline ? `Prioritize fulfillment ${parsed.deadline}.` : "Keep fulfillment local-first unless the Seed Keeper chooses wider reach.",
+      generated_at: now,
+    },
+    debian_copy: {
+      title: parsed.title,
+      description: `${raw}\n\nPrepared with Orchard Companions for a values-led local-first listing.`,
+      call_to_action: "Bestow, buy, message, or request a call.",
+      generated_at: now,
+    },
+    kali_media: {
+      image_prompt: `Warm natural product photo for ${parsed.title}, honest marketplace style, no text overlay`,
+      image_url: null,
+      generated_at: now,
+    },
+    fedora_story: {
+      script: `A Seed Keeper shares ${parsed.title}. Local-first, fair, and ready for the tribe to support.`,
+      duration_seconds: 15,
+      generated_at: now,
+    },
+    mint_payment: {
+      buy_now_ready: true,
+      bestowal_ready: true,
+      note: "Payment setup will use the existing S2G product bestowal and purchase rails after publish.",
+      generated_at: now,
+    },
+    approvals: {},
+    analytics_events: [
+      { event: "started_intelligent_listing", at: now },
+      { event: "description_submitted", at: now },
+      { event: "pricing_generated", at: now },
+      { event: "logistics_generated", at: now },
+      { event: "content_generated", at: now },
+    ],
+  };
+}
