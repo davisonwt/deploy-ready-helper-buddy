@@ -65,7 +65,7 @@ const LogoBadge: React.FC<{ accent: string; small?: boolean }> = ({ accent, smal
   const frame = useCurrentFrame();
   const { fps } = useVideoConfig();
   const reveal = spring({ frame, fps, config: { damping: 14, stiffness: 120 } });
-  const size = small ? 138 : 188;
+  const size = small ? 156 : 188;
 
   return (
     <div
@@ -308,7 +308,7 @@ const RightVisual: React.FC<{ scene: SceneDef; index: number }> = ({ scene, inde
         />
       </div>
 
-      <div style={{ position: "absolute", top: 24, left: 24, zIndex: 5 }}>
+      <div style={{ position: "absolute", top: 82, left: 82, zIndex: 5 }}>
         <LogoBadge accent={PALETTE.aqua} small />
       </div>
 
