@@ -374,10 +374,28 @@ const ClosingOverlay: React.FC = () => {
 };
 
 const Scene: React.FC<{ scene: SceneDef; index: number }> = ({ scene, index }) => {
+  const isClosing = index === SCENES.length - 1;
+
   return (
     <AbsoluteFill>
       <BackgroundImage src={scene.image} position={scene.imagePosition} />
       <FloatingDust accent={scene.accent} />
+      {!isClosing ? (
+        <div
+          style={{
+            position: "absolute",
+            inset: 0,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+          }}
+        >
+          <TextPanel scene={scene} index={index} />
+          <RightVisual scene={scene} index={index} />
+        </div>
+      ) : (
+        <ClosingOverlay />
+      )}
     </AbsoluteFill>
   );
 };

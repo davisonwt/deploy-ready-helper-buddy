@@ -180,7 +180,7 @@ const LogoBadge: React.FC = () => {
   const frame = useCurrentFrame();
   const { fps } = useVideoConfig();
   const reveal = spring({ frame, fps, config: { damping: 14, stiffness: 120 } });
-  const size = 138;
+  const size = 156;
 
   return (
     <div
@@ -549,7 +549,7 @@ export const OnboardingSower: React.FC = () => {
     <AbsoluteFill style={{ backgroundColor: PALETTE.plum }}>
       <SanctuaryBackground />
       <FloatingDust />
-      <div style={{ position: "absolute", top: 24, left: 24, zIndex: 5 }}>
+      <div style={{ position: "absolute", top: 82, left: 82, zIndex: 5 }}>
         <LogoBadge />
       </div>
 
