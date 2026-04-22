@@ -28,6 +28,7 @@ const PALETTE = {
   gold: "#E1C16E",
   goldGlow: "#F5D98C",
   blush: "#E48AA0",
+  aqua: "#5ED7E5",
   ivory: "#FFF7F0",
   ink: "#2D1824",
   plum: "#3B1F31",
@@ -172,6 +173,47 @@ const FloatingDust: React.FC = () => {
         );
       })}
     </AbsoluteFill>
+  );
+};
+
+const LogoBadge: React.FC = () => {
+  const frame = useCurrentFrame();
+  const { fps } = useVideoConfig();
+  const reveal = spring({ frame, fps, config: { damping: 14, stiffness: 120 } });
+  const size = 138;
+
+  return (
+    <div
+      style={{
+        width: size,
+        height: size,
+        borderRadius: 999,
+        background: "rgba(255,255,255,0.92)",
+        border: `6px solid ${PALETTE.aqua}`,
+        boxShadow: "0 20px 50px rgba(0,0,0,0.24)",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        transform: `scale(${0.82 + reveal * 0.18})`,
+      }}
+    >
+      <div
+        style={{
+          width: size - 18,
+          height: size - 18,
+          borderRadius: 999,
+          border: `2px dashed ${PALETTE.aqua}`,
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+        }}
+      >
+        <Img
+          src={staticFile("logo-transparent.png")}
+          style={{ width: size * 0.56, height: size * 0.56, objectFit: "contain" }}
+        />
+      </div>
+    </div>
   );
 };
 
@@ -507,6 +549,9 @@ export const OnboardingSower: React.FC = () => {
     <AbsoluteFill style={{ backgroundColor: PALETTE.plum }}>
       <SanctuaryBackground />
       <FloatingDust />
+      <div style={{ position: "absolute", top: 24, left: 24, zIndex: 5 }}>
+        <LogoBadge />
+      </div>
 
       {SCENES.map((scene, index) => {
         const start = from;
