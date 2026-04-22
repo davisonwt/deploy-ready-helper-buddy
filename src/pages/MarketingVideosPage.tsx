@@ -20,6 +20,8 @@ import { useReferralVideoBurner } from "@/hooks/useReferralVideoBurner";
 import { useMyReferralCode } from "@/hooks/useMyReferralCode";
 import { getCurrentTheme } from "@/utils/dashboardThemes";
 
+const S2G_LOGO_URL = "/lovable-uploads/s2g-logo.jpg";
+
 interface BannerVideo {
   id: string;
   title: string;
@@ -94,6 +96,7 @@ export default function MarketingVideosPage() {
       referralCode: code,
       shareUrl,
       ctaLabel: banner.ctaLabel,
+      logoUrl: banner.id === "onboarding-sower" ? S2G_LOGO_URL : undefined,
     });
   };
 
@@ -171,6 +174,7 @@ export default function MarketingVideosPage() {
       referralCode: code,
       shareUrl,
       ctaLabel: banner.ctaLabel,
+      logoUrl: banner.id === "onboarding-sower" ? S2G_LOGO_URL : undefined,
     });
 
     if (!file) return null;
@@ -198,6 +202,7 @@ export default function MarketingVideosPage() {
         referralCode: code || "S2G",
         shareUrl,
         ctaLabel: banner.ctaLabel,
+        logoUrl: banner.id === "onboarding-sower" ? S2G_LOGO_URL : undefined,
       });
       if (fallback) downloadBurnedFile(fallback);
     }
@@ -358,7 +363,13 @@ export default function MarketingVideosPage() {
                     </span>
                   )}
 
-                  {/* S2G logo overlay removed — the video itself already shows the sow2grow brand */}
+                  {b.id === "onboarding-sower" && (
+                    <img
+                      src={S2G_LOGO_URL}
+                      alt="Sow2Grow logo"
+                      className="absolute top-3 left-3 z-20 h-12 w-12 rounded-full border-2 border-white/80 bg-white/90 object-contain p-1 shadow-lg md:h-14 md:w-14"
+                    />
+                  )}
 
                   {/* Top-right corner CTA — recipient-facing on shared videos.
                       Tapping it opens our /become-a-sower landing page with
