@@ -5,7 +5,7 @@ import { Link } from 'react-router-dom';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Loader2, TreePine, Package, Music, BookOpen, Plus, Eye, Edit, Share2, Trash2, PauseCircle, PlayCircle } from 'lucide-react';
+import { Loader2, TreePine, Package, Music, BookOpen, Plus, Eye, Edit, Share2, Trash2, PauseCircle, PlayCircle, Sparkles } from 'lucide-react';
 import { toast } from 'sonner';
 import { formatCurrency } from '@/utils/formatters';
 import { ImageCarousel } from '@/components/products/ImageCarousel';
@@ -77,6 +77,11 @@ export default function MyGardenPage() {
         <h1 className="text-3xl font-bold text-white mb-1">My Garden</h1>
         <p className="text-white/70 text-sm">Everything you've sown — orchards, seeds, music & library</p>
         <div className="flex justify-center gap-3 mt-4">
+          <Link to="/products/companion-listing">
+            <Button size="sm" className="bg-white/20 border border-white/30 text-white hover:bg-white/30">
+              <Sparkles className="w-4 h-4 mr-1" /> Companion Help
+            </Button>
+          </Link>
           <Link to="/create-orchard">
             <Button size="sm" className="bg-white/20 border border-white/30 text-white hover:bg-white/30">
               <Plus className="w-4 h-4 mr-1" /> New Orchard
