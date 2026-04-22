@@ -549,6 +549,9 @@ export const OnboardingSower: React.FC = () => {
     <AbsoluteFill style={{ backgroundColor: PALETTE.plum }}>
       <SanctuaryBackground />
       <FloatingDust />
+      <div style={{ position: "absolute", top: 24, left: 24, zIndex: 5 }}>
+        <LogoBadge />
+      </div>
 
       {SCENES.map((scene, index) => {
         const start = from;
