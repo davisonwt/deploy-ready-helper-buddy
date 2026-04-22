@@ -16,7 +16,7 @@ export default function AmbassadorHubPage() {
             <h1 className="text-2xl sm:text-3xl font-extrabold text-white">
               Welcome to the Inner Circle
             </h1>
-            <p className="text-amber-300 font-medium">Your AI Empire Awaits, Ambassador</p>
+            <p className="text-amber-300 font-medium">Your Orchard Companions Await, Ambassador</p>
           </div>
         </div>
 
@@ -31,7 +31,7 @@ export default function AmbassadorHubPage() {
           <div className="w-3 h-3 rounded-full bg-teal-400 animate-pulse" />
           <div>
             <p className="text-white font-medium text-sm">Ambassador Status: <span className="text-teal-400">Active</span></p>
-            <p className="text-white/40 text-xs">Your AI agents are standing by. Select a tool below to deploy them.</p>
+            <p className="text-white/40 text-xs">Your Orchard Companions are standing by. Select a tool below to invite their help.</p>
           </div>
         </div>
 

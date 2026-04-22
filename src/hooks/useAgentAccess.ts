@@ -1,5 +1,5 @@
 /**
- * useAgentAccess — determines which S2G Agents the current member can use.
+ * useAgentAccess — determines which Orchard Companions the current member can use.
  *
  * Free for everyone:  gentoo, mint, debian
  * Ambassador-only:    tux, ubuntu, kali, fedora, arch

@@ -1,4 +1,4 @@
-// 🐧 Linux Terminal — command parser
+// 🐧 Orchard Companions Terminal — command parser
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { corsHeaders, userClient, adminClient, AGENTS, logActivity } from "../_shared/linux-family.ts";
 
@@ -16,7 +16,7 @@ serve(async (req) => {
 
     let output = "";
     if (cmd === "help" || cmd === "" || cmd === "ls") {
-      output = "Linux Family CLI\n────────────────\n" +
+      output = "Orchard Companions CLI\n────────────────\n" +
         Object.entries(AGENTS).map(([k,v])=>`  ${v.emoji} ${k.padEnd(8)} — ${v.role}`).join("\n") +
         "\n\nExamples:\n  gentoo report 7\n  mint report 30\n  tux post \"new harvest\"\n  debian blast 10 Want to collab on this Seed?\n  arch call <user_id> video\n  status\n  clear";
     } else if (cmd === "status") {
@@ -62,7 +62,7 @@ serve(async (req) => {
           body: JSON.stringify({ action: "arch_call", payload: { counterparty_user_id: counterparty, call_type: callType } }),
         });
         const j = await r.json();
-        output = `📞 Arch placing a ${callType} call. Jitsi room: ${j.jitsi_room ?? "(pending)"}`;
+        output = `📞 Arch opening a ${callType} bridge. Room: ${j.jitsi_room ?? "(pending)"}`;
       }
     } else if (AGENTS[agent as keyof typeof AGENTS]) {
       output = `${AGENTS[agent as keyof typeof AGENTS].emoji} ${agent}: queued — "${arg || "no args"}"`;
