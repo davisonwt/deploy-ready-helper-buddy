@@ -1,6 +1,6 @@
 import React, { useMemo, useEffect } from 'react'
 import { YHVHWheelCalendar } from './YHVHWheelCalendar'
-import { useVisualEditor } from '@/contexts/VisualEditorContext'
+import { ElementConfig, useVisualEditor } from '@/contexts/VisualEditorContext'
 import { DraggableControls } from '../visual-editor/DraggableControls'
 
 // Import constants from wheel calendar
@@ -54,11 +54,11 @@ export function YHVHWheelCalendarEditable(props: YHVHWheelCalendarEditableProps)
   }, [isEditorMode, setSelectedElementId])
 
   // Get configs for different elements
-  const centerHubConfig = elementConfigs['wheel-center-hub'] || {}
-  const sunCircleConfig = elementConfigs['wheel-sun-circle'] || {}
-  const weeksCircleConfig = elementConfigs['wheel-weeks-circle'] || {}
-  const dayPartsConfig = elementConfigs['wheel-day-parts'] || {}
-  const daysCircleConfig = elementConfigs['wheel-days-circle'] || {}
+  const centerHubConfig = (elementConfigs['wheel-center-hub'] || {}) as Partial<ElementConfig>
+  const sunCircleConfig = (elementConfigs['wheel-sun-circle'] || {}) as Partial<ElementConfig>
+  const weeksCircleConfig = (elementConfigs['wheel-weeks-circle'] || {}) as Partial<ElementConfig>
+  const dayPartsConfig = (elementConfigs['wheel-day-parts'] || {}) as Partial<ElementConfig>
+  const daysCircleConfig = (elementConfigs['wheel-days-circle'] || {}) as Partial<ElementConfig>
 
   // Calculate radii with overrides from editor
   const baseRadii = {
