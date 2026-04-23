@@ -1,10 +1,10 @@
 import { PropsWithChildren } from 'react';
 import { CallManagerContext } from '@/contexts/CallManagerContext';
-import { useCallManager } from '@/hooks/useCallManager';
+import { useCallManagerInternal } from '@/hooks/useCallManager';
 
 export const CallManagerProvider = ({ children }: PropsWithChildren) => {
   // Create the call manager value via the hook
-  const value = useCallManager();
+  const value = useCallManagerInternal();
   return (
     <CallManagerContext.Provider value={value}>
       {children}
