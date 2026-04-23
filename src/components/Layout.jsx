@@ -47,8 +47,6 @@ import { SupportPanel } from "./SupportPanel"
 import { GosatPanel } from "./GosatPanel"
 // Lazy load CommunityChatButton to avoid React initialization issues
 const CommunityChatButton = lazy(() => import("./community/CommunityChatButton").then(m => ({ default: m.CommunityChatButton })))
-// Lazy load AuthButton wrapper that handles React dispatcher errors
-const LazyAuthButton = lazy(() => import("./firebase/AuthButtonWrapper").then(m => ({ default: m.default })))
 import { useAppContext } from "../contexts/AppContext"
 import { getCurrentTheme } from '@/utils/dashboardThemes'
 import { JitsiVideoWindow, startJitsiCall } from "./video/JitsiVideoWindow"
@@ -428,13 +426,6 @@ function Layout({ children }) {
             
             <div className="flex items-center space-x-4">
               <div className="hidden md:flex items-center space-x-3 ml-4">
-                {/* Firebase Auth Button - only render after mount and React is ready */}
-                {isMounted && typeof window !== 'undefined' && document.readyState === 'complete' && (
-                  <Suspense fallback={null}>
-                    <LazyAuthButton />
-                  </Suspense>
-                )}
-                
                 {/* Voice Commands Button */}
                 <button
                   onClick={() => setShowVoiceCommands(true)}
