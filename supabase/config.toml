@@ -22,18 +22,13 @@ pop3_port = 54326
 
 [storage]
 enabled = true
-port = 54327
 file_size_limit = "100MiB"
 
 [auth]
 enabled = true
-port = 54328
 site_url = "http://localhost:3000"
 additional_redirect_urls = ["https://zuwkgasbkpjlxzsjzumu.supabase.co"]
 jwt_expiry = 3600
-
-[functions]
-enabled = true
 
 [functions.create-paypal-order]
 verify_jwt = true
@@ -115,3 +110,6 @@ verify_jwt = true
 
 [functions.cryptomus-webhook]
 verify_jwt = false
+
+[functions.generate-sower-story]
+verify_jwt = true
