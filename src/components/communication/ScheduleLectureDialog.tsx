@@ -35,7 +35,7 @@ export const ScheduleLectureDialog: React.FC<ScheduleLectureDialogProps> = ({
 
     setLoading(true);
     try {
-      const { error } = await supabase.from('lecture_halls').insert({
+      const { error } = await (supabase as any).from('lecture_halls').insert({
         title: formData.title,
         description: formData.description,
         scheduled_at: new Date(formData.scheduled_at).toISOString(),

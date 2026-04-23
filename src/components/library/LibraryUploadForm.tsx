@@ -155,7 +155,7 @@ export default function LibraryUploadForm() {
       }
 
       // Create library item
-      const { error: insertError } = await supabase
+      const { error: insertError } = await (supabase as any)
         .from('s2g_library_items')
         .insert({
           user_id: user.id,
