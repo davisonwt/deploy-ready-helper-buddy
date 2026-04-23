@@ -292,6 +292,20 @@ const useCallManagerInternal = () => {
       return null;
     }
 
+    // Remove any existing channel from Supabase's internal registry before
+    // creating a new one. supabase.channel(name) returns the existing instance
+    // if the name is already registered, so chaining .on('postgres_changes')
+    // on that already-subscribed instance throws the "cannot add callbacks
+    // after subscribe()" error.
+    if (channelRef.current) {
+      try {
+        supabase.removeChannel(channelRef.current);
+      } catch (e) {
+        console.warn('📞 [CALL] Error removing existing channel before re-setup:', e);
+      }
+      channelRef.current = null;
+    }
+
     console.log('📞 [CALL] Setting up call management channel');
     
     const channel = supabase
@@ -466,9 +480,12 @@ const useCallManagerInternal = () => {
             if (channelRef.current && hasUser && userId) {
               console.log('📞 [CALL] Retrying channel subscription after error');
               try {
-                channelRef.current.unsubscribe();
+                // removeChannel fully purges the channel from Supabase's registry;
+                // plain .unsubscribe() leaves the name registered, causing
+                // "cannot add postgres_changes callbacks after subscribe()" on retry.
+                supabase.removeChannel(channelRef.current);
               } catch (e) {
-                console.warn('📞 [CALL] Error unsubscribing from failed channel:', e);
+                console.warn('📞 [CALL] Error removing failed channel:', e);
               }
               channelRef.current = null;
               // Small delay before retry to avoid rapid retries
