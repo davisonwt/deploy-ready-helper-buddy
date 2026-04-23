@@ -306,10 +306,26 @@ const useCallManagerInternal = () => {
       channelRef.current = null;
     }
 
+    const channelName = `${CALL_CONSTANTS.CHANNEL_PREFIX}${userId}`;
+    const channelTopic = `realtime:${channelName}`;
+
+    // Supabase can keep a subscribed channel in its registry after React remounts,
+    // even when this hook's ref is empty. Remove matching registered channels first
+    // so the next `.channel(...).on(...).subscribe()` chain gets a clean instance.
+    supabase.getChannels?.()
+      ?.filter((registeredChannel) => registeredChannel.topic === channelTopic || registeredChannel.topic === channelName)
+      .forEach((registeredChannel) => {
+        try {
+          supabase.removeChannel(registeredChannel);
+        } catch (e) {
+          console.warn('📞 [CALL] Error removing registered channel before setup:', e);
+        }
+      });
+
     console.log('📞 [CALL] Setting up call management channel');
     
     const channel = supabase
-      .channel(`${CALL_CONSTANTS.CHANNEL_PREFIX}${userId}`, {
+      .channel(channelName, {
         config: {
           broadcast: { self: false, ack: true }
         }
@@ -1029,9 +1045,15 @@ const useCallManagerInternal = () => {
     }
     loadCallHistory();
 
-    // CRITICAL FIX: Don't cleanup on dependency changes - only on unmount
     return () => {
-      // Only cleanup on actual unmount
+      if (channelRef.current) {
+        try {
+          supabase.removeChannel(channelRef.current);
+        } catch (e) {
+          console.warn('📞 [CALL] Error cleaning up call channel:', e);
+        }
+        channelRef.current = null;
+      }
     };
   }, [hasUser, userId, loadCallHistory]);
   
