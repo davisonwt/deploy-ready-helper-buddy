@@ -38,7 +38,7 @@ export const LectureMode: React.FC = () => {
 
   const loadLectures = async () => {
     try {
-      const { data, error } = await supabase
+      const { data, error } = await (supabase as any)
         .from('lecture_halls')
         .select(`
           *,
@@ -51,7 +51,7 @@ export const LectureMode: React.FC = () => {
         .limit(20);
 
       if (error) throw error;
-      setLectures(data || []);
+      setLectures((data || []) as LectureHall[]);
     } catch (error) {
       console.error('Error loading lectures:', error);
     } finally {

@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react'
-import { useVisualEditor } from '@/contexts/VisualEditorContext'
+import { ElementConfig, useVisualEditor } from '@/contexts/VisualEditorContext'
 
 interface EditableTextProps {
   elementId: string
@@ -9,7 +9,7 @@ interface EditableTextProps {
   fontSize?: number
   fill?: string
   textAnchor?: 'start' | 'middle' | 'end'
-  dominantBaseline?: 'auto' | 'middle' | 'hanging' | 'baseline'
+  dominantBaseline?: React.SVGProps<SVGTextElement>['dominantBaseline']
   transform?: string
   className?: string
   onTextChange?: (text: string) => void
@@ -34,10 +34,13 @@ export function EditableText({
   const inputRef = useRef<HTMLInputElement>(null)
   const textRef = useRef<SVGTextElement>(null)
 
-  const config = elementConfigs[elementId] || {}
+  const config = (elementConfigs[elementId] || {}) as Partial<ElementConfig>
   const displayText = config.text ?? text
   const configX = config.x ?? x
   const configY = config.y ?? y
+
+  const [screenX, setScreenX] = useState(0)
+  const [screenY, setScreenY] = useState(0)
 
   useEffect(() => {
     if (isEditing && inputRef.current) {
@@ -74,6 +77,14 @@ export function EditableText({
     }
   }
 
+  useEffect(() => {
+    if (textRef.current && isEditing) {
+      const rect = textRef.current.getBoundingClientRect()
+      setScreenX(rect.left)
+      setScreenY(rect.top)
+    }
+  }, [isEditing, configX, configY])
+
   if (!isEditorMode) {
     return (
       <text
@@ -93,18 +104,6 @@ export function EditableText({
   }
 
   const isSelected = selectedElementId === elementId
-
-  // Calculate screen position for input overlay
-  const [screenX, setScreenX] = useState(0)
-  const [screenY, setScreenY] = useState(0)
-
-  useEffect(() => {
-    if (textRef.current && isEditing) {
-      const rect = textRef.current.getBoundingClientRect()
-      setScreenX(rect.left)
-      setScreenY(rect.top)
-    }
-  }, [isEditing, configX, configY])
 
   return (
     <>

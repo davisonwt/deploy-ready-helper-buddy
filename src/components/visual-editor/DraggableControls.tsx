@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react'
-import { useVisualEditor } from '@/contexts/VisualEditorContext'
+import { ElementConfig, useVisualEditor } from '@/contexts/VisualEditorContext'
 import { GripVertical, Move, Maximize2 } from 'lucide-react'
 
 interface DraggableControlsProps {
@@ -46,7 +46,7 @@ export function DraggableControls({
   const [dragStart, setDragStart] = useState({ x: 0, y: 0 })
   const containerRef = useRef<HTMLDivElement>(null)
 
-  const config = elementConfigs[elementId] || {}
+  const config = (elementConfigs[elementId] || {}) as Partial<ElementConfig>
   const x = config.x ?? defaultX
   const y = config.y ?? defaultY
   const width = config.width ?? defaultWidth

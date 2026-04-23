@@ -92,7 +92,7 @@ export const useRadioBestowal = () => {
 
       // Create invoice for bestower
       const invoiceNumber = `INV-${Date.now()}`;
-      await supabase.from('payment_invoices').insert({
+      await (supabase as any).from('payment_invoices').insert({
         invoice_number: invoiceNumber,
         user_id: data.listenerId,
         amount: data.amount,

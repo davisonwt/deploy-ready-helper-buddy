@@ -178,8 +178,7 @@ export default function PublicMusicLibrary() {
     }
 
     try {
-      // @ts-ignore - New table not yet in types
-      await supabase.from('music_downloads').insert({
+      await (supabase as any).from('music_downloads').insert({
         user_id: user.id,
         track_id: track.id
       });
