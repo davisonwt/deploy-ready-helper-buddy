@@ -77,6 +77,14 @@ export function EditableText({
     }
   }
 
+  useEffect(() => {
+    if (textRef.current && isEditing) {
+      const rect = textRef.current.getBoundingClientRect()
+      setScreenX(rect.left)
+      setScreenY(rect.top)
+    }
+  }, [isEditing, configX, configY])
+
   if (!isEditorMode) {
     return (
       <text
@@ -96,14 +104,6 @@ export function EditableText({
   }
 
   const isSelected = selectedElementId === elementId
-
-  useEffect(() => {
-    if (textRef.current && isEditing) {
-      const rect = textRef.current.getBoundingClientRect()
-      setScreenX(rect.left)
-      setScreenY(rect.top)
-    }
-  }, [isEditing, configX, configY])
 
   return (
     <>
