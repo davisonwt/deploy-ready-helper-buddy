@@ -1219,6 +1219,9 @@ const useCallManagerInternal = () => {
 
 export const useCallManager = () => {
   const ctx = useContext(CallManagerContext);
-  const fallback = useCallManagerInternal();
-  return ctx || fallback;
+  if (ctx) {
+    return ctx;
+  }
+
+  return useCallManagerInternal();
 };
