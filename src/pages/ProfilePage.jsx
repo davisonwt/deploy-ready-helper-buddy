@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from "react"
 import { useLocation } from "react-router-dom"
+import { supabase } from "@/integrations/supabase/client"
 import { useAuth } from "../hooks/useAuth"
 import { useToast } from "../hooks/use-toast"
 import { Button } from "../components/ui/button"
@@ -36,7 +37,10 @@ import {
   Sparkles,
   Crown,
   Award,
-  TreePine
+  TreePine,
+  Copy,
+  Check,
+  Loader2
 } from "lucide-react"
 import { QuickProfileSetup } from "../components/profile/QuickProfileSetup"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "../components/ui/tabs"
@@ -55,7 +59,23 @@ export default function ProfilePage() {
   const [showQuickSetup, setShowQuickSetup] = useState(false)
   const [activeTab, setActiveTab] = useState("profile")
   const fileInputRef = useRef(null)
-  
+
+  const [stats, setStats] = useState({
+    joinedDate: "",
+    totalBestowed: 0,
+    totalReceived: 0,
+    orchardsCreated: 0,
+    orchardsSupported: 0,
+    peopleHelped: 0,
+    communityRank: "Faithful Sower",
+    verificationLevel: "Member",
+  })
+  const [statsLoading, setStatsLoading] = useState(true)
+  const [generatingStory, setGeneratingStory] = useState(false)
+  const [storyData, setStoryData] = useState(null)
+  const [storyError, setStoryError] = useState("")
+  const [copiedField, setCopiedField] = useState("")
+
   useEffect(() => {
     setMounted(true)
     
@@ -255,7 +275,34 @@ export default function ProfilePage() {
     }))
     setPictureError("")
   }
-  
+
+  const handleGenerateStory = async () => {
+    setGeneratingStory(true)
+    setStoryError("")
+    try {
+      const { data, error } = await supabase.functions.invoke('generate-sower-story', {
+        body: { user_id: user.id },
+      })
+      if (error) throw error
+      setStoryData(data?.data || data)
+    } catch (err) {
+      console.error('Story generation error:', err)
+      setStoryError("Failed to generate your story. Please try again.")
+    } finally {
+      setGeneratingStory(false)
+    }
+  }
+
+  const copyToClipboard = async (text, field) => {
+    try {
+      await navigator.clipboard.writeText(text)
+      setCopiedField(field)
+      setTimeout(() => setCopiedField(""), 2000)
+    } catch {
+      toast({ title: "Copy failed", variant: "destructive", duration: 2000 })
+    }
+  }
+
   // Get social media platform icon
   const getSocialIcon = (platform) => {
     switch (platform) {
@@ -274,16 +321,57 @@ export default function ProfilePage() {
     }
   }
   
-  // Mock user stats
-  const userStats = {
-    joinedDate: "January 2024",
-    totalBestowed: 2450,
-    totalReceived: 1800,
-    orchardsCreated: 3,
-    orchardsSupported: 12,
-    communityRank: "Faithful Sower",
-    verificationLevel: "Verified"
-  }
+  useEffect(() => {
+    if (!user?.id) return
+    const fetchStats = async () => {
+      setStatsLoading(true)
+      try {
+        const { data: orchards } = await supabase
+          .from('orchards')
+          .select('id')
+          .eq('user_id', user.id)
+        const orchardIds = (orchards || []).map(o => o.id)
+
+        let totalReceived = 0
+        let peopleHelped = 0
+        if (orchardIds.length > 0) {
+          const { data: received } = await supabase
+            .from('bestowals')
+            .select('amount, bestower_id')
+            .in('orchard_id', orchardIds)
+            .eq('payment_status', 'completed')
+          totalReceived = (received || []).reduce((s, b) => s + Number(b.amount), 0)
+          peopleHelped = new Set((received || []).map(b => b.bestower_id)).size
+        }
+
+        const { data: given } = await supabase
+          .from('bestowals')
+          .select('amount, orchard_id')
+          .eq('bestower_id', user.id)
+          .eq('payment_status', 'completed')
+        const totalBestowed = (given || []).reduce((s, b) => s + Number(b.amount), 0)
+        const orchardsSupported = new Set((given || []).map(b => b.orchard_id)).size
+
+        setStats({
+          joinedDate: user.created_at
+            ? new Date(user.created_at).toLocaleDateString('en-US', { month: 'long', year: 'numeric' })
+            : 'Community Member',
+          totalBestowed,
+          totalReceived,
+          orchardsCreated: orchards?.length || 0,
+          orchardsSupported,
+          peopleHelped,
+          communityRank: user.verification_status === 'verified' ? 'Verified Sower' : 'Faithful Sower',
+          verificationLevel: user.verification_status === 'verified' ? 'Verified' : 'Member',
+        })
+      } catch (err) {
+        console.error('Stats fetch error:', err)
+      } finally {
+        setStatsLoading(false)
+      }
+    }
+    fetchStats()
+  }, [user?.id])
 
   // Show Quick Setup if requested
   if (showQuickSetup) {
@@ -409,26 +497,26 @@ export default function ProfilePage() {
                 </Badge>
                 <Badge variant="secondary" className="bg-primary/10 text-primary border-primary/20 px-4 py-2 text-sm font-medium hover:bg-primary/20 transition-colors">
                   <Shield className="h-4 w-4 mr-2" />
-                  {userStats.verificationLevel}
+                  {stats.verificationLevel}
                 </Badge>
                 <Badge variant="secondary" className="bg-warning/10 text-warning border-warning/20 px-4 py-2 text-sm font-medium hover:bg-warning/20 transition-colors">
                   <Crown className="h-4 w-4 mr-2" />
-                  {userStats.communityRank}
+                  {stats.communityRank}
                 </Badge>
               </div>
               
               {/* Community Stats Preview */}
               <div className="grid grid-cols-3 gap-6 max-w-md mx-auto">
                 <div className="text-center">
-                  <div className="text-2xl font-bold text-success">{userStats.orchardsCreated}</div>
+                  <div className="text-2xl font-bold text-success">{statsLoading ? "—" : stats.orchardsCreated}</div>
                   <div className="text-sm text-muted-foreground">Orchards</div>
                 </div>
                 <div className="text-center">
-                  <div className="text-2xl font-bold text-primary">{userStats.orchardsSupported}</div>
+                  <div className="text-2xl font-bold text-primary">{statsLoading ? "—" : stats.orchardsSupported}</div>
                   <div className="text-sm text-muted-foreground">Supported</div>
                 </div>
                 <div className="text-center">
-                  <div className="text-2xl font-bold text-secondary">23</div>
+                  <div className="text-2xl font-bold text-secondary">{statsLoading ? "—" : stats.peopleHelped}</div>
                   <div className="text-sm text-muted-foreground">People Helped</div>
                 </div>
               </div>
@@ -1028,8 +1116,70 @@ export default function ProfilePage() {
                     </div>
                   )}
                 </div>
+                {/* Twitter / X */}
+                <div className="p-6 bg-muted/20 rounded-xl border border-border/50 hover:border-border transition-all duration-300">
+                  <div className="flex items-center gap-3 mb-4">
+                    <div className="w-12 h-12 bg-black rounded-full flex items-center justify-center shadow-lg">
+                      <Twitter className="h-6 w-6 text-white" />
+                    </div>
+                    <div>
+                      <h3 className="text-foreground font-semibold text-lg">Twitter / X</h3>
+                    </div>
+                  </div>
+                  {editing ? (
+                    <div className="space-y-3">
+                      <input
+                        type="url"
+                        name="twitter_url"
+                        value={formData.twitter_url}
+                        onChange={handleChange}
+                        className="w-full px-4 py-3 border border-border bg-card rounded-lg focus:ring-2 focus:ring-primary focus:border-primary transition-all duration-300 text-[#001f3f] placeholder:text-[#001f3f]/60"
+                        placeholder="https://twitter.com/username"
+                      />
+                      {socialLinksError.twitter && (
+                        <p className="text-destructive text-xs flex items-center gap-1">
+                          <AlertCircle className="h-3 w-3" />
+                          {socialLinksError.twitter}
+                        </p>
+                      )}
+                      {formData.twitter_url && (
+                        <Button
+                          onClick={() => setFormData(prev => ({ ...prev, twitter_url: "" }))}
+                          variant="outline"
+                          size="sm"
+                          className="w-full"
+                        >
+                          Disconnect
+                        </Button>
+                      )}
+                    </div>
+                  ) : (
+                    <div>
+                      {user?.twitter_url ? (
+                        <div className="space-y-3">
+                          <a
+                            href={user.twitter_url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center gap-2 text-primary hover:text-primary/80 transition-colors font-medium"
+                          >
+                            <Twitter className="h-4 w-4" />
+                            View Profile
+                          </a>
+                          <div className="px-4 py-2 bg-success/10 text-success rounded-lg text-sm font-medium border border-success/20">
+                            Connected
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="px-4 py-2 bg-muted/50 text-foreground rounded-lg text-sm font-medium border border-border/50">
+                          Not connected
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
               </div>
-              
+
               {/* Enhanced Social Media Preview */}
               {!editing && user?.show_social_media && (
                 <div className="mt-8 p-6 bg-gradient-to-br from-primary/5 to-secondary/5 rounded-xl border border-primary/20">
@@ -1082,6 +1232,17 @@ export default function ProfilePage() {
                         YouTube
                       </a>
                     )}
+                    {user?.twitter_url && (
+                      <a
+                        href={user.twitter_url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-2 px-4 py-3 bg-black text-white rounded-xl hover:bg-black/80 transition-all duration-300 hover:scale-105 shadow-lg"
+                      >
+                        <Twitter className="h-4 w-4" />
+                        Twitter / X
+                      </a>
+                    )}
                   </div>
                 </div>
               )}
@@ -1095,7 +1256,7 @@ export default function ProfilePage() {
                 <div className="w-16 h-16 bg-success/10 rounded-full flex items-center justify-center mx-auto mb-4 shadow-lg">
                   <Heart className="h-8 w-8 text-success" />
                 </div>
-                <div className="text-3xl font-bold text-success mb-2">R{userStats.totalBestowed.toLocaleString()}</div>
+                <div className="text-3xl font-bold text-success mb-2">{statsLoading ? "—" : `R${stats.totalBestowed.toLocaleString()}`}</div>
                 <p className="text-sm text-muted-foreground font-medium">Total Bestowed</p>
                 <p className="text-xs text-muted-foreground mt-1">Spreading abundance</p>
               </CardContent>
@@ -1106,7 +1267,7 @@ export default function ProfilePage() {
                 <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4 shadow-lg">
                   <TrendingUp className="h-8 w-8 text-primary" />
                 </div>
-                <div className="text-3xl font-bold text-primary mb-2">R{userStats.totalReceived.toLocaleString()}</div>
+                <div className="text-3xl font-bold text-primary mb-2">{statsLoading ? "—" : `R${stats.totalReceived.toLocaleString()}`}</div>
                 <p className="text-sm text-muted-foreground font-medium">Total Received</p>
                 <p className="text-xs text-muted-foreground mt-1">Community support</p>
               </CardContent>
@@ -1117,7 +1278,7 @@ export default function ProfilePage() {
                 <div className="w-16 h-16 bg-secondary/10 rounded-full flex items-center justify-center mx-auto mb-4 shadow-lg">
                   <Users className="h-8 w-8 text-secondary" />
                 </div>
-                <div className="text-3xl font-bold text-secondary mb-2">{userStats.orchardsSupported}</div>
+                <div className="text-3xl font-bold text-secondary mb-2">{statsLoading ? "—" : stats.orchardsSupported}</div>
                 <p className="text-sm text-muted-foreground font-medium">Orchards Supported</p>
                 <p className="text-xs text-muted-foreground mt-1">Growing together</p>
               </CardContent>
@@ -1140,21 +1301,21 @@ export default function ProfilePage() {
                   <span className="text-muted-foreground font-medium">Member Since</span>
                   <div className="flex items-center gap-2 text-foreground font-semibold">
                     <Calendar className="h-4 w-4" />
-                    {userStats.joinedDate}
+                    {stats.joinedDate}
                   </div>
                 </div>
                 <div className="flex items-center justify-between py-3 px-4 bg-muted/30 rounded-xl">
                   <span className="text-muted-foreground font-medium">Verification Level</span>
                   <Badge variant="secondary" className="bg-primary/10 text-primary border-primary/20">
                     <CheckCircle className="h-3 w-3 mr-1" />
-                    {userStats.verificationLevel}
+                    {stats.verificationLevel}
                   </Badge>
                 </div>
                 <div className="flex items-center justify-between py-3 px-4 bg-muted/30 rounded-xl">
                   <span className="text-muted-foreground font-medium">Community Rank</span>
                   <Badge variant="secondary" className="bg-warning/10 text-warning border-warning/20">
                     <Crown className="h-3 w-3 mr-1" />
-                    {userStats.communityRank}
+                    {stats.communityRank}
                   </Badge>
                 </div>
                 <div className="flex items-center justify-between py-3 px-4 bg-muted/30 rounded-xl">
@@ -1179,15 +1340,15 @@ export default function ProfilePage() {
               <CardContent className="space-y-6">
                 <div className="flex items-center justify-between py-3 px-4 bg-muted/30 rounded-xl">
                   <span className="text-muted-foreground font-medium">Orchards Created</span>
-                  <span className="text-foreground font-bold text-lg">{userStats.orchardsCreated}</span>
+                  <span className="text-foreground font-bold text-lg">{stats.orchardsCreated}</span>
                 </div>
                 <div className="flex items-center justify-between py-3 px-4 bg-muted/30 rounded-xl">
                   <span className="text-muted-foreground font-medium">Orchards Supported</span>
-                  <span className="text-foreground font-bold text-lg">{userStats.orchardsSupported}</span>
+                  <span className="text-foreground font-bold text-lg">{stats.orchardsSupported}</span>
                 </div>
                 <div className="flex items-center justify-between py-3 px-4 bg-muted/30 rounded-xl">
                   <span className="text-muted-foreground font-medium">Total Impact</span>
-                  <span className="text-foreground font-bold text-lg">R{(userStats.totalBestowed + userStats.totalReceived).toLocaleString()}</span>
+                  <span className="text-foreground font-bold text-lg">R{(stats.totalBestowed + stats.totalReceived).toLocaleString()}</span>
                 </div>
                 <div className="flex items-center justify-between py-3 px-4 bg-muted/30 rounded-xl">
                   <span className="text-muted-foreground font-medium">Community Rating</span>
@@ -1219,7 +1380,7 @@ export default function ProfilePage() {
               
               <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-8">
                 <div className="text-center p-6 bg-success/10 rounded-2xl border border-success/20">
-                  <div className="text-4xl font-bold text-success mb-2">23</div>
+                  <div className="text-4xl font-bold text-success mb-2">{statsLoading ? "—" : stats.peopleHelped}</div>
                   <p className="text-sm text-muted-foreground font-medium">People Helped</p>
                 </div>
                 <div className="text-center p-6 bg-primary/10 rounded-2xl border border-primary/20">
@@ -1236,6 +1397,161 @@ export default function ProfilePage() {
                 "From generous hearts flow endless blessings, and in faithful hands, every seed finds its season."
               </blockquote>
               <cite className="text-sm text-muted-foreground">— 364yhvh Community Wisdom</cite>
+            </CardContent>
+          </Card>
+
+          {/* ✨ AI Story Generator */}
+          <Card className="bg-gradient-to-br from-purple-500/10 via-card to-pink-500/10 border-purple-500/20 shadow-2xl">
+            <CardContent className="p-8">
+              <div className="flex flex-col items-center text-center mb-6">
+                <div className="w-16 h-16 bg-gradient-to-br from-purple-500 to-pink-500 rounded-full flex items-center justify-center shadow-xl mb-4">
+                  <Sparkles className="h-8 w-8 text-white" />
+                </div>
+                <h3 className="text-2xl font-bold text-foreground mb-2" style={{ fontFamily: "Playfair Display, serif" }}>
+                  Your Sower Story
+                </h3>
+                <p className="text-muted-foreground max-w-md">
+                  Let AI craft a personalised story, tagline, and social media captions from your profile and community activity.
+                </p>
+              </div>
+
+              <div className="flex justify-center mb-6">
+                <Button
+                  onClick={handleGenerateStory}
+                  disabled={generatingStory}
+                  className="bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white px-8 py-3 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105 text-base font-semibold"
+                >
+                  {generatingStory ? (
+                    <>
+                      <Loader2 className="h-5 w-5 mr-2 animate-spin" />
+                      Generating your story…
+                    </>
+                  ) : (
+                    <>
+                      <Sparkles className="h-5 w-5 mr-2" />
+                      ✨ Generate My Story
+                    </>
+                  )}
+                </Button>
+              </div>
+
+              {storyError && (
+                <div className="mb-6 p-4 bg-destructive/10 border border-destructive/20 rounded-xl text-destructive text-sm flex items-center gap-2 justify-center">
+                  <AlertCircle className="h-4 w-4 flex-shrink-0" />
+                  {storyError}
+                </div>
+              )}
+
+              {storyData && (
+                <div className="space-y-6 animate-fade-in">
+                  {/* Tagline */}
+                  <div className="p-5 bg-gradient-to-r from-purple-500/10 to-pink-500/10 rounded-2xl border border-purple-500/20">
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="text-xs font-semibold uppercase tracking-wider text-purple-400">Tagline</span>
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        onClick={() => copyToClipboard(storyData.tagline, "tagline")}
+                        className="h-7 px-2 text-muted-foreground hover:text-foreground"
+                      >
+                        {copiedField === "tagline" ? <Check className="h-3.5 w-3.5 text-success" /> : <Copy className="h-3.5 w-3.5" />}
+                      </Button>
+                    </div>
+                    <p className="text-lg font-semibold text-foreground italic">"{storyData.tagline}"</p>
+                  </div>
+
+                  {/* Story */}
+                  <div className="p-5 bg-muted/30 rounded-2xl border border-border/50">
+                    <div className="flex items-center justify-between mb-3">
+                      <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Your Story</span>
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        onClick={() => copyToClipboard(storyData.story, "story")}
+                        className="h-7 px-2 text-muted-foreground hover:text-foreground"
+                      >
+                        {copiedField === "story" ? <Check className="h-3.5 w-3.5 text-success" /> : <Copy className="h-3.5 w-3.5" />}
+                      </Button>
+                    </div>
+                    <p className="text-foreground leading-relaxed whitespace-pre-line">{storyData.story}</p>
+                  </div>
+
+                  {/* Social Captions */}
+                  <div className="space-y-3">
+                    <h4 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">Social Media Captions</h4>
+                    {[
+                      { key: "instagram_caption", label: "Instagram", icon: <Instagram className="h-4 w-4" />, color: "from-purple-500 to-pink-500" },
+                      { key: "facebook_caption",  label: "Facebook",  icon: <Facebook className="h-4 w-4" />,  color: "from-blue-500 to-blue-600" },
+                      { key: "twitter_caption",   label: "Twitter / X", icon: <Twitter className="h-4 w-4" />,  color: "from-gray-700 to-black" },
+                    ].map(({ key, label, icon, color }) => (
+                      <div key={key} className="p-4 bg-muted/20 rounded-xl border border-border/50">
+                        <div className="flex items-center justify-between mb-2">
+                          <div className={`flex items-center gap-2 text-sm font-semibold bg-gradient-to-r ${color} bg-clip-text text-transparent`}>
+                            {icon}
+                            {label}
+                          </div>
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            onClick={() => copyToClipboard(storyData[key], key)}
+                            className="h-7 px-2 text-muted-foreground hover:text-foreground"
+                          >
+                            {copiedField === key ? <Check className="h-3.5 w-3.5 text-success" /> : <Copy className="h-3.5 w-3.5" />}
+                          </Button>
+                        </div>
+                        <p className="text-sm text-foreground leading-relaxed">{storyData[key]}</p>
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* Hashtags */}
+                  <div className="p-5 bg-muted/20 rounded-2xl border border-border/50">
+                    <div className="flex items-center justify-between mb-3">
+                      <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Hashtags</span>
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        onClick={() => copyToClipboard(storyData.hashtags.map(h => `#${h}`).join(' '), "hashtags")}
+                        className="h-7 px-2 text-muted-foreground hover:text-foreground"
+                      >
+                        {copiedField === "hashtags" ? <Check className="h-3.5 w-3.5 text-success" /> : <Copy className="h-3.5 w-3.5" />}
+                        <span className="ml-1 text-xs">Copy all</span>
+                      </Button>
+                    </div>
+                    <div className="flex flex-wrap gap-2">
+                      {storyData.hashtags.map((tag, i) => (
+                        <button
+                          key={i}
+                          onClick={() => copyToClipboard(`#${tag}`, `tag-${i}`)}
+                          className="px-3 py-1.5 bg-primary/10 text-primary border border-primary/20 rounded-full text-sm font-medium hover:bg-primary/20 transition-colors"
+                        >
+                          #{tag}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Brochure Intro */}
+                  <div className="p-5 bg-muted/20 rounded-2xl border border-border/50">
+                    <div className="flex items-center justify-between mb-3">
+                      <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Brochure Intro</span>
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        onClick={() => copyToClipboard(storyData.brochure_intro, "brochure")}
+                        className="h-7 px-2 text-muted-foreground hover:text-foreground"
+                      >
+                        {copiedField === "brochure" ? <Check className="h-3.5 w-3.5 text-success" /> : <Copy className="h-3.5 w-3.5" />}
+                      </Button>
+                    </div>
+                    <p className="text-sm text-foreground leading-relaxed italic">{storyData.brochure_intro}</p>
+                  </div>
+
+                  <p className="text-center text-xs text-muted-foreground">
+                    Generated {new Date(storyData.generated_at).toLocaleDateString('en-US', { dateStyle: 'medium' })} · Click any hashtag or caption to copy
+                  </p>
+                </div>
+              )}
             </CardContent>
           </Card>
               </TabsContent>
