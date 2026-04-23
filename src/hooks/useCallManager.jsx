@@ -6,7 +6,7 @@ import { stopAllRingtones } from '@/lib/ringtone';
 import { CALL_CONSTANTS, isCallStale, isDuplicateCall } from './callUtils';
 import { CallManagerContext } from '@/contexts/CallManagerContext';
 
-const useCallManagerInternal = () => {
+export const useCallManagerInternal = () => {
   const { user } = useAuth();
   const { toast } = useToast();
   
@@ -1217,11 +1217,20 @@ const useCallManagerInternal = () => {
   };
 };
 
+const CALL_MANAGER_FALLBACK = {
+  currentCall: null,
+  incomingCall: null,
+  outgoingCall: null,
+  callHistory: [],
+  callQueue: [],
+  startCall: () => Promise.resolve(null),
+  answerCall: () => Promise.resolve(),
+  declineCall: () => Promise.resolve(),
+  endCall: () => Promise.resolve(),
+  loadCallHistory: () => Promise.resolve()
+};
+
 export const useCallManager = () => {
   const ctx = useContext(CallManagerContext);
-  if (ctx) {
-    return ctx;
-  }
-
-  return useCallManagerInternal();
+  return ctx || CALL_MANAGER_FALLBACK;
 };
