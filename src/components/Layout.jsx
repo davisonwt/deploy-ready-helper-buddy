@@ -785,11 +785,11 @@ function Layout({ children }) {
 
       {/* Community Chat Floating Button - Lazy loaded to avoid React init issues */}
       <Suspense fallback={null}>
-        <CommunityChatButton />
+        {/* <CommunityChatButton /> */}
       </Suspense>
 
       {/* Your Progress Button & Modal */}
-      <ProgressButton />
+      {/* <ProgressButton /> */}
 
       {/* Jitsi Video Window */}
       {jitsiCall && (

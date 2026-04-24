@@ -193,7 +193,7 @@ const App = () => (
                 <LiveSessionPlaylistProvider>
                   <TooltipProvider>
               <ThemeProvider defaultTheme="system" storageKey="sow2grow-ui-theme">
-                <EditorModeToggle />
+                {/* <EditorModeToggle /> */}
                 <NavigationMonitor />
                 <DeadLinkDetector />
                 <Toaster />
@@ -855,10 +855,10 @@ const App = () => (
                   </ResponsiveLayout>
                   </Suspense>
                 </ErrorBoundary>
-              <LiveActivityWidget />
-              <FloatingBasketButton />
-              <OnboardingTour />
-              <HelpModal />
+              {/* <LiveActivityWidget /> */}
+              {/* <FloatingBasketButton /> */}
+              {/* <OnboardingTour /> */}
+              {/* <HelpModal /> */}
             </ThemeProvider>
           </TooltipProvider>
         </LiveSessionPlaylistProvider>

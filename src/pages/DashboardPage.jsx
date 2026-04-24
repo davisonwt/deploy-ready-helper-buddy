@@ -1,970 +1,553 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import { useAuth } from '../hooks/useAuth'
-import { useOrchards } from '../hooks/useOrchards'
-import { useBestowals } from '../hooks/useBestowals.jsx'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Button } from '@/components/ui/button'
-import { Badge } from '@/components/ui/badge'
-import { Link } from 'react-router-dom'
-import { 
-  Sprout, 
-  TreePine, 
-  Heart, 
-  TrendingUp, 
-  Users, 
-  DollarSign,
-  Plus,
-  Calendar,
-  User,
-  Globe,
-  Clock,
-  MessageSquare,
-  BarChart3,
-  Trophy,
-  Shield,
-  Loader2
-} from 'lucide-react'
-import { formatCurrency } from '../utils/formatters'
-import LiveTimezoneDisplay from '@/components/dashboard/LiveTimezoneDisplay'
+import { Link, useNavigate } from 'react-router-dom'
 import { supabase } from "@/integrations/supabase/client"
-import LiveActivityWidget from '@/components/LiveActivityWidget'
-import { GamificationHUD } from '@/components/gamification/GamificationHUD'
-import { SecurityAlertsPanel } from '@/components/security/SecurityAlertsPanel'
-// Binance Pay - no wallet connection needed
-import { BinanceWalletManager } from '@/components/wallet/BinanceWalletManager'
-import { getCreatorTime } from '@/utils/customTime'
-import { getCreatorDateSync } from '@/utils/customCalendar'
-import { getDayInfo } from '@/utils/sacredCalendar'
-import { getCurrentTheme } from '@/utils/dashboardThemes'
-import { AmbassadorThumbnail } from '@/components/marketing/AmbassadorThumbnail'
-import { GoSatGhostAccessThumbnail } from '@/components/marketing/GoSatGhostAccessThumbnail'
-import { StatsCards } from '@/components/dashboard/StatsCards'
-import { StatsFloatingButton } from '@/components/dashboard/StatsFloatingButton'
-import { TopSowersTeaser } from '@/components/dashboard/TopSowersTeaser'
 
+const SEEDS = [
+  {
+    id: 1,
+    name: 'The Wandering Wheel',
+    type: 'SERVICE',
+    status: 'Flowing',
+    activity: '12 people interacting',
+    description: 'Need a ride or a delivery?',
+    image: 'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=800&q=80',
+    color: '#0e7490',
+    glow: '#06b6d4',
+    playPath: '/grove-station',
+    bookPath: '/browse-orchards',
+  },
+  {
+    id: 2,
+    name: 'Community Harvest',
+    type: 'ORCHARD',
+    status: 'Growing',
+    activity: '38 sowers contributing',
+    description: 'Seeds becoming orchards',
+    image: 'https://images.unsplash.com/photo-1488459716781-31db52582fe9?w=800&q=80',
+    color: '#166534',
+    glow: '#22c55e',
+    playPath: '/browse-orchards',
+    bookPath: '/browse-orchards',
+  },
+  {
+    id: 3,
+    name: 'Grove Station',
+    type: 'RADIO',
+    status: 'Live',
+    activity: '39 listeners tuned in',
+    description: 'Your community is broadcasting',
+    image: 'https://images.unsplash.com/photo-1478737270239-2f02b77fc618?w=800&q=80',
+    color: '#7c3aed',
+    glow: '#a78bfa',
+    playPath: '/grove-station',
+    bookPath: '/grove-station',
+  },
+  {
+    id: 4,
+    name: 'Sacred Calendar',
+    type: 'FEAST',
+    status: 'Counting',
+    activity: 'Omer 8 of 50',
+    description: 'Walking toward Shavu\'ot',
+    image: 'https://images.unsplash.com/photo-1518531933037-91b2f5f229cc?w=800&q=80',
+    color: '#92400e',
+    glow: '#f59e0b',
+    playPath: '/364yhvh-days',
+    bookPath: '/364yhvh-days',
+  },
+]
 
-export default function DashboardPage() {
-  const { user, loading: authLoading } = useAuth()
-  // Replaced useOrchards hook to avoid hook dispatcher bug
-  const [orchards, setOrchards] = useState([])
-  const [orchardsLoading, setOrchardsLoading] = useState(false)
-  const fetchOrchards = async (filters = {}) => {
-    try {
-      setOrchardsLoading(true)
-      let query = supabase
-        .from('orchards')
-        .select(`*`)
-        .eq('status', 'active')
-        .order('created_at', { ascending: false })
-      if (filters.category && filters.category !== 'all') {
-        query = query.eq('category', filters.category)
-      }
-      if (filters.search) {
-        query = query.or(`title.ilike.%${filters.search}%,description.ilike.%${filters.search}%`)
-      }
-      const { data, error: fetchError } = await query
-      if (fetchError) throw fetchError
-      setOrchards(data || [])
-    } catch (err) {
-      console.error('Dashboard: Error fetching orchards:', err)
-    } finally {
-      setOrchardsLoading(false)
-    }
-  }
-  const { getUserBestowals, loading: bestowalsLoading } = useBestowals()
-  const [userOrchards, setUserOrchards] = useState([])
-  const [userBestowals, setUserBestowals] = useState([])
+const NAV = [
+  { label: 'SeedFlow', sub: 'Your living feed', emoji: '🌊', path: '/dashboard', color: '#2563eb' },
+  { label: 'My Garden', sub: 'Seeds & orchards', emoji: '🌱', path: '/my-orchards', color: '#16a34a' },
+  { label: 'Orchards', sub: 'All tribal orchards', emoji: '🌳', path: '/browse-orchards', color: '#0d9488' },
+  { label: 'Conversations', sub: 'Tribe messaging', emoji: '💬', path: '/chatapp', color: '#0891b2' },
+  { label: '364yhvh', sub: 'Scripture & feasts', emoji: '📅', path: '/364yhvh-days', color: '#7c3aed' },
+  { label: 'Let It Rain', sub: 'Bestow blessings', emoji: '🌧️', path: '/let-it-rain', color: '#6d28d9' },
+]
+
+const GROWTH_TIPS = [
+  'Your seeds are in motion. Something is growing.',
+  'The tribe moves when you move. Plant something today.',
+  'Every bestowal is a seed. Every seed becomes a harvest.',
+  'You\'ve entered SeedFlow. Things are already happening.',
+]
+
+export default function SeedFlowDashboard() {
+  const { user } = useAuth()
+  const navigate = useNavigate()
   const [profile, setProfile] = useState(null)
-  const [stats, setStats] = useState({
-    totalOrchards: 0,
-    totalBestowals: 0,
-    totalRaised: 0,
-    totalSupported: 0,
-    totalFollowers: 0,
-    newFollowers: 0
-  })
-  const [activeUsers, setActiveUsers] = useState(0)
-  const [error, setError] = useState(null)
-  const [userRoles, setUserRoles] = useState([])
-  const [rolesLoading, setRolesLoading] = useState(false)
-  const isAdminOrGosat = userRoles.includes('admin') || userRoles.includes('gosat')
-  
-  // Custom time state for display
-  const [currentTime, setCurrentTime] = useState(new Date())
-  const [userLat, setUserLat] = useState(-26.2) // Default: South Africa
-  const [userLon, setUserLon] = useState(28.0) // Default: South Africa
-  const [customDate, setCustomDate] = useState(null)
-  const [calendarData, setCalendarData] = useState(null)
-  
-  // Helper function to get sunrise/sunset times (using user-provided times)
-  const getSunriseSunsetTimes = (date) => {
-    // Create new date objects to avoid mutating the original
-    const sunrise = new Date(date.getFullYear(), date.getMonth(), date.getDate(), 5, 13, 0, 0)
-    const sunset = new Date(date.getFullYear(), date.getMonth(), date.getDate(), 19, 26, 0, 0)
-    
-    return { sunrise, sunset }
-  }
+  const [activeIdx, setActiveIdx] = useState(0)
+  const [pulse, setPulse] = useState(false)
+  const [stats, setStats] = useState({ sowers: 4, orchards: 0, seeds: 56, members: 0 })
+  const [tip] = useState(GROWTH_TIPS[Math.floor(Math.random() * GROWTH_TIPS.length)])
+  const [activePath, setActivePath] = useState('/dashboard')
+  const intervalRef = useRef(null)
 
-  // Calculate calendar data directly (without CalendarWheel component)
+  const sacredDate = { year: 6029, month: 2, day: 3, omer: 8, omerTotal: 50, nextFeast: "Shavu'ot" }
+
   useEffect(() => {
-    const updateCalendarData = () => {
-      // Get current LOCAL time - no internet, no UTC conversion, just local time
-      const now = new Date()
-      const localYear = now.getFullYear()
-      const localMonth = now.getMonth()
-      const localDate = now.getDate()
-      const localHour = now.getHours()
-      const localMinute = now.getMinutes()
-      
-      // IMPORTANT: Day starts at sunrise (05:13), not midnight!
-      // Compare current LOCAL time with sunrise time (05:13)
-      const currentTimeMinutes = localHour * 60 + localMinute
-      const sunriseTimeMinutes = 5 * 60 + 13 // 05:13 = 313 minutes
-      
-      const isBeforeSunrise = currentTimeMinutes < sunriseTimeMinutes
-      
-      // Debug logs only in development
-      if (process.env.NODE_ENV === 'development') {
-        console.log(`[Dashboard] ===== SUNRISE CHECK =====`)
-        console.log(`[Dashboard] Current LOCAL time: ${localHour}:${localMinute.toString().padStart(2, '0')}:${now.getSeconds().toString().padStart(2, '0')}`)
-        console.log(`[Dashboard] Sunrise time: 05:13 (313 minutes)`)
-        console.log(`[Dashboard] Current time in minutes: ${currentTimeMinutes}`)
-        console.log(`[Dashboard] Is before sunrise? ${isBeforeSunrise}`)
-        console.log(`[Dashboard] Current Gregorian date: ${localYear}-${localMonth + 1}-${localDate}`)
-      }
-      
-      // If current time is before sunrise, we're still on the previous calendar day
-      let effectiveYear = localYear
-      let effectiveMonth = localMonth
-      let effectiveDate = localDate
-      
-      if (isBeforeSunrise) {
-        // Still on previous day - go back one day using date arithmetic
-        const prevDayDate = new Date(localYear, localMonth, localDate)
-        prevDayDate.setDate(prevDayDate.getDate() - 1)
-        effectiveYear = prevDayDate.getFullYear()
-        effectiveMonth = prevDayDate.getMonth()
-        effectiveDate = prevDayDate.getDate()
-        if (process.env.NODE_ENV === 'development') {
-          console.log(`[Dashboard] ⚠️ BEFORE SUNRISE - Using PREVIOUS day: ${effectiveYear}-${effectiveMonth + 1}-${effectiveDate}`)
-        }
-      } else {
-        if (process.env.NODE_ENV === 'development') {
-          console.log(`[Dashboard] ✅ AFTER SUNRISE - Using CURRENT day: ${effectiveYear}-${effectiveMonth + 1}-${effectiveDate}`)
-        }
-      }
-      
-      // Calculate Creator date using PURE LOCAL date arithmetic (NO UTC, NO getTime())
-      // Epoch: March 20, 2025 = Year 6028, Month 1, Day 1 (LOCAL time)
-      const epochYear = 2025
-      const epochMonth = 2 // March (0-indexed)
-      const epochDate = 20
-      
-      // Calculate days difference using PURE date arithmetic (no milliseconds, no UTC)
-      let totalDays = 0
-      
-      // Count days from epoch to effective date using local date components only
-      let currentYear = epochYear
-      let currentMonth = epochMonth
-      let currentDate = epochDate
-      
-      const gregorianDaysPerMonth = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]
-      
-      // Check for leap years
-      const isLeapYear = (year) => (year % 4 === 0 && year % 100 !== 0) || (year % 400 === 0)
-      
-      while (currentYear < effectiveYear || 
-             (currentYear === effectiveYear && currentMonth < effectiveMonth) ||
-             (currentYear === effectiveYear && currentMonth === effectiveMonth && currentDate < effectiveDate)) {
-        totalDays++
-        currentDate++
-        
-        let daysInCurrentMonth = gregorianDaysPerMonth[currentMonth]
-        if (currentMonth === 1 && isLeapYear(currentYear)) {
-          daysInCurrentMonth = 29 // February in leap year
-        }
-        
-        if (currentDate > daysInCurrentMonth) {
-          currentDate = 1
-          currentMonth++
-          if (currentMonth > 11) {
-            currentMonth = 0
-            currentYear++
-          }
-        }
-      }
-      
-      if (process.env.NODE_ENV === 'development') {
-        console.log(`[Dashboard] Effective LOCAL: ${effectiveYear}-${effectiveMonth + 1}-${effectiveDate}`)
-        console.log(`[Dashboard] Epoch LOCAL: ${epochYear}-${epochMonth + 1}-${epochDate}`)
-        console.log(`[Dashboard] Days since epoch (PURE LOCAL): ${totalDays}`)
-      }
-      
-      // Calculate Creator calendar date
-      const daysPerMonth = [30, 30, 31, 30, 30, 31, 30, 30, 31, 30, 30, 31]
-      let year = 6028
-      let remainingDays = totalDays
-      
-      // Calculate year
-      while (remainingDays >= 365) {
-        remainingDays -= 365
-        year++
-      }
-      
-      // Calculate month and day
-      let month = 1
-      let day = remainingDays + 1
-      
-      while (day > daysPerMonth[month - 1]) {
-        day -= daysPerMonth[month - 1]
-        month++
-        if (month > 12) {
-          month = 1
-          year++
-        }
-      }
-      
-      // Weekday: Year starts on "Day 4" (weekday 4)
-      const weekDay = ((totalDays % 7) + 4) % 7 || 7
-      
-      const creatorDate = { year, month, day, weekDay }
-      if (process.env.NODE_ENV === 'development') {
-        console.log(`[Dashboard] Creator date result: Year ${creatorDate.year}, Month ${creatorDate.month}, Day ${creatorDate.day}, Weekday ${creatorDate.weekDay}`)
-      }
-      const creatorTime = getCreatorTime(now, userLat, userLon) // Use current time for time parts
-      
-      // Calculate day of year
-      const monthDays = [30, 30, 31, 30, 30, 31, 30, 30, 31, 30, 30, 31]
-      let dayOfYear = 0
-      for (let i = 0; i < creatorDate.month - 1; i++) {
-        dayOfYear += monthDays[i]
-      }
-      dayOfYear += creatorDate.day
-      
-      if (process.env.NODE_ENV === 'development') {
-        console.log(`[Dashboard] Day of year calculated: ${dayOfYear}`)
-      }
-      
-      const dayInfo = getDayInfo(dayOfYear)
-      
-      // Create timestamp string in LOCAL time (not UTC)
-      // Format: YYYY-MM-DDTHH:mm:ss (local time, no timezone)
-      const localTimestamp = `${localYear}-${String(localMonth + 1).padStart(2, '0')}-${String(localDate).padStart(2, '0')}T${String(localHour).padStart(2, '0')}:${String(localMinute).padStart(2, '0')}:${String(now.getSeconds()).padStart(2, '0')}`
-      
-      const newCalendarData = {
-        year: creatorDate.year,
-        month: creatorDate.month,
-        dayOfMonth: creatorDate.day,
-        weekday: creatorDate.weekDay,
-        part: creatorTime.part,
-        dayOfYear: dayOfYear,
-        season: dayInfo.isFeast ? dayInfo.feastName || 'Feast Day' : (creatorDate.weekDay === 7 ? 'Sabbath Day' : 'Regular Day'),
-        timestamp: localTimestamp // Use LOCAL time string, not UTC ISO string
-      }
-      
-      if (process.env.NODE_ENV === 'development') {
-        console.log(`[Dashboard] Setting calendar data:`, newCalendarData)
-      }
-      setCalendarData(newCalendarData)
-    }
-    
-    // Run immediately and update every minute
-    updateCalendarData()
-    const interval = setInterval(updateCalendarData, 60000) // Update every minute
-    
-    return () => clearInterval(interval)
-  }, [userLat, userLon])
-  
-  // Theme system - rotates every 2 hours
-  const [currentTheme, setCurrentTheme] = useState(getCurrentTheme())
-  
-  // Update theme every hour to check for 2-hour rotation
+    if (!user) return
+    supabase.from('profiles').select('first_name, last_name, avatar_url').eq('user_id', user.id).single()
+      .then(({ data }) => data && setProfile(data))
+    supabase.from('sowers').select('*', { count: 'exact', head: true }).eq('is_verified', true)
+      .then(({ count }) => setStats(s => ({ ...s, sowers: count || 4 })))
+    supabase.from('orchards').select('*', { count: 'exact', head: true }).eq('status', 'active')
+      .then(({ count }) => setStats(s => ({ ...s, orchards: count || 0 })))
+    supabase.from('seeds').select('*', { count: 'exact', head: true })
+      .then(({ count }) => setStats(s => ({ ...s, seeds: count || 56 })))
+  }, [user])
+
   useEffect(() => {
-    const updateTheme = () => {
-      setCurrentTheme(getCurrentTheme())
-    }
-    updateTheme() // Initial set
-    const interval = setInterval(updateTheme, 60 * 60 * 1000) // Check every hour
-    return () => clearInterval(interval)
+    intervalRef.current = setInterval(() => {
+      setPulse(true)
+      setTimeout(() => setPulse(false), 600)
+      setActiveIdx(i => (i + 1) % SEEDS.length)
+    }, 5000)
+    return () => clearInterval(intervalRef.current)
   }, [])
 
-  // Binance Pay - no wallet state needed
+  const activeSeed = SEEDS[activeIdx]
+  const displayName = profile?.first_name || user?.email?.split('@')[0] || 'Friend'
 
-  useEffect(() => {
-    let mounted = true
-    const loadRoles = async () => {
-      if (!user?.id) { setUserRoles([]); return }
-      try {
-        setRolesLoading(true)
-        const { data, error } = await supabase
-          .from('user_roles')
-          .select('role')
-          .eq('user_id', user.id)
-        if (error) throw error
-        if (!mounted) return
-        setUserRoles((data || []).map(r => r.role))
-      } catch (e) {
-        if (mounted) setUserRoles([])
-      } finally {
-        if (mounted) setRolesLoading(false)
-      }
-    }
-    loadRoles()
-    return () => { mounted = false }
-  }, [user?.id])
-
-  // Get user location and update custom time
-  useEffect(() => {
-    // Try to get user's location from browser
-    if (navigator.geolocation) {
-      navigator.geolocation.getCurrentPosition(
-        (position) => {
-          setUserLat(position.coords.latitude)
-          setUserLon(position.coords.longitude)
-        },
-        () => {
-          // Fallback to default if geolocation fails
-          console.log('Using default location (South Africa: -26.2°N, 28.0°E)')
-        }
-      )
-    }
-    
-    // Initialize custom date (with sunrise-based calculation)
-    const now = new Date()
-    const localYear = now.getFullYear()
-    const localMonth = now.getMonth()
-    const localDate = now.getDate()
-    const localHour = now.getHours()
-    const localMinute = now.getMinutes()
-    
-    const currentTimeMinutes = localHour * 60 + localMinute
-    const sunriseTimeMinutes = 5 * 60 + 13 // 05:13
-    
-    let effectiveYear = localYear
-    let effectiveMonth = localMonth
-    let effectiveDate = localDate
-    
-    if (currentTimeMinutes < sunriseTimeMinutes) {
-      const prevDay = new Date(localYear, localMonth, localDate - 1)
-      effectiveYear = prevDay.getFullYear()
-      effectiveMonth = prevDay.getMonth()
-      effectiveDate = prevDay.getDate()
-    }
-    
-    const normalizedDate = new Date(effectiveYear, effectiveMonth, effectiveDate, 12, 0, 0, 0)
-    setCustomDate(getCreatorDateSync(normalizedDate))
-  }, [])
-
-  // Update time every second
-  useEffect(() => {
-    const interval = setInterval(() => {
-      const now = new Date()
-      setCurrentTime(now)
-      
-      // Use sunrise-based day calculation - LOCAL time only
-      const localYear = now.getFullYear()
-      const localMonth = now.getMonth()
-      const localDate = now.getDate()
-      const localHour = now.getHours()
-      const localMinute = now.getMinutes()
-      
-      const currentTimeMinutes = localHour * 60 + localMinute
-      const sunriseTimeMinutes = 5 * 60 + 13 // 05:13
-      
-      let effectiveYear = localYear
-      let effectiveMonth = localMonth
-      let effectiveDate = localDate
-      
-      if (currentTimeMinutes < sunriseTimeMinutes) {
-        const prevDay = new Date(localYear, localMonth, localDate - 1)
-        effectiveYear = prevDay.getFullYear()
-        effectiveMonth = prevDay.getMonth()
-        effectiveDate = prevDay.getDate()
-      }
-      
-      const normalizedDate = new Date(effectiveYear, effectiveMonth, effectiveDate, 12, 0, 0, 0)
-      setCustomDate(getCreatorDateSync(normalizedDate))
-    }, 1000)
-
-    return () => clearInterval(interval)
-  }, [])
-
-  useEffect(() => {
-    if (user && !authLoading) {
-      if (process.env.NODE_ENV === 'development') {
-        console.log('🔍 Dashboard: Starting data fetch for user:', user.id)
-      }
-      setError(null)
-      
-      // Fetch user profile
-      const fetchProfile = async () => {
-        try {
-          const { data, error } = await supabase
-            .from('profiles')
-            .select('*') // User can see their own complete profile
-            .eq('user_id', user.id)
-            .maybeSingle()
-          
-          if (error && error.code !== 'PGRST116') { // Ignore "no rows returned" error
-            const errorMessage = error.message || error.details || error.hint || JSON.stringify(error) || 'Unknown error'
-            console.error('❌ Dashboard: Error fetching profile:', {
-              message: errorMessage,
-              code: error.code,
-              details: error.details,
-              hint: error.hint,
-              fullError: error
-            })
-            setError(`Failed to load profile: ${errorMessage}`)
-          } else {
-            setProfile(data)
-            if (process.env.NODE_ENV === 'development') {
-              console.log('✅ Dashboard: Profile loaded', data ? 'with data' : 'no profile found')
-            }
-          }
-        } catch (error) {
-          const errorMessage = error?.message || error?.toString() || JSON.stringify(error) || 'Unknown error'
-          console.error('❌ Dashboard: Error fetching profile:', {
-            message: errorMessage,
-            error: error,
-            stack: error?.stack
-          })
-          setError(`Failed to load profile: ${errorMessage}`)
-        }
-      }
-      
-      // Fetch all orchards first (the hook doesn't support user filtering)
-      const fetchData = async () => {
-        try {
-          await fetchOrchards()
-          if (process.env.NODE_ENV === 'development') {
-            console.log('✅ Dashboard: Orchards fetched successfully')
-          }
-        } catch (error) {
-          console.error('❌ Dashboard: Error fetching orchards:', error)
-          setError('Failed to load orchards')
-        }
-      }
-      
-      // Fetch user's bestowals
-      const fetchUserBestowals = async () => {
-        try {
-          if (process.env.NODE_ENV === 'development') {
-            console.log('🔍 Dashboard: Fetching user bestowals...')
-          }
-          const result = await getUserBestowals()
-          if (result.success) {
-            setUserBestowals(result.data)
-            if (process.env.NODE_ENV === 'development') {
-              console.log('✅ Dashboard: Bestowals fetched successfully:', result.data.length)
-            }
-          } else {
-            console.error('❌ Dashboard: Failed to fetch bestowals:', result.error)
-            setUserBestowals([])
-          }
-        } catch (error) {
-          console.error('❌ Dashboard: Error fetching bestowals:', error)
-          setUserBestowals([])
-        }
-      }
-      
-      // Execute all data fetching
-      Promise.all([
-        fetchProfile(),
-        fetchData(),
-        fetchActiveUsers(),
-        fetchUserBestowals(),
-        fetchFollowerStats()
-      ]).catch(err => {
-        console.error('❌ Dashboard: Error in data fetching:', err)
-        setError('Failed to load dashboard data')
-      })
-    }
-  }, [user, authLoading])
-
-  const fetchFollowerStats = async () => {
-    if (!user?.id) return
-    try {
-      if (process.env.NODE_ENV === 'development') {
-        console.log('🔍 Dashboard: Fetching follower stats...')
-      }
-      const sevenDaysAgo = new Date()
-      sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7)
-
-      // Get total followers
-      const { data: followers, error: followersError } = await supabase
-        .from('followers')
-        .select('id')
-        .eq('following_id', user.id)
-
-      // Get new followers (last 7 days)
-      const { data: newFollowers, error: newFollowersError } = await supabase
-        .from('followers')
-        .select('id')
-        .eq('following_id', user.id)
-        .gte('created_at', sevenDaysAgo.toISOString())
-
-      if (followersError) throw followersError
-      if (newFollowersError) throw newFollowersError
-
-      setStats(prev => ({
-        ...prev,
-        totalFollowers: followers?.length || 0,
-        newFollowers: newFollowers?.length || 0
-      }))
-
-      if (process.env.NODE_ENV === 'development') {
-        console.log('✅ Dashboard: Followers:', followers?.length || 0, 'New:', newFollowers?.length || 0)
-      }
-    } catch (error) {
-      console.error('❌ Dashboard: Error fetching follower stats:', error)
-    }
-  }
-
-  const fetchActiveUsers = async () => {
-    try {
-      if (process.env.NODE_ENV === 'development') {
-        console.log('🔍 Dashboard: Fetching active users...')
-      }
-      // Get active users (users who have been active in the last 30 days)
-      const thirtyDaysAgo = new Date()
-      thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30)
-      if (process.env.NODE_ENV === 'development') {
-        console.log('📅 Dashboard: Looking for activity since:', thirtyDaysAgo.toISOString())
-      }
-
-      // Get users who created orchards in last 30 days
-      const { data: orchardUsers, error: orchardError } = await supabase
-        .from('orchards')
-        .select('user_id')
-        .gte('created_at', thirtyDaysAgo.toISOString())
-
-      if (process.env.NODE_ENV === 'development') {
-        console.log('🌳 Dashboard: Orchard users:', orchardUsers?.length || 0, orchardError)
-      }
-
-      // Get users who made bestowals in last 30 days
-      const { data: bestowalUsers, error: bestowalError } = await supabase
-        .from('bestowals')
-        .select('bestower_id')
-        .gte('created_at', thirtyDaysAgo.toISOString())
-
-      if (process.env.NODE_ENV === 'development') {
-        console.log('💝 Dashboard: Bestowal users:', bestowalUsers?.length || 0, bestowalError)
-      }
-
-      // Get users who sent messages in last 30 days
-      const { data: messageUsers, error: messageError } = await supabase
-        .from('chat_messages')
-        .select('sender_id')
-        .gte('created_at', thirtyDaysAgo.toISOString())
-
-      if (process.env.NODE_ENV === 'development') {
-        console.log('💬 Dashboard: Message users:', messageUsers?.length || 0, messageError)
-      }
-
-      // Combine all unique user IDs
-      const activeUserIds = new Set([
-        ...(orchardUsers?.map(u => u.user_id) || []),
-        ...(bestowalUsers?.map(u => u.bestower_id) || []),
-        ...(messageUsers?.map(u => u.sender_id) || [])
-      ])
-
-      if (process.env.NODE_ENV === 'development') {
-        console.log('👥 Dashboard: Total active users:', activeUserIds.size)
-      }
-      setActiveUsers(activeUserIds.size)
-    } catch (error) {
-      console.error('❌ Dashboard: Error fetching active users:', error)
-    }
-  }
-
-  useEffect(() => {
-    // Filter user's orchards
-    const userCreatedOrchards = orchards.filter(orchard => orchard.user_id === user?.id)
-    setUserOrchards(userCreatedOrchards)
-
-    // Calculate stats
-    const totalRaised = userCreatedOrchards.reduce((sum, orchard) => 
-      sum + (orchard.filled_pockets * orchard.pocket_price || 0), 0
-    )
-
-    setStats(prev => ({
-      ...prev,
-      totalOrchards: userCreatedOrchards.length,
-      totalBestowals: userBestowals.length,
-      totalRaised: totalRaised,
-      totalSupported: userBestowals.reduce((sum, bestowal) => 
-        sum + (bestowal.amount || 0), 0
-      )
-    }))
-  }, [orchards, userBestowals, user])
-
-
-  // Show loading screen while auth is loading or data is loading
-  if (authLoading || orchardsLoading || bestowalsLoading) {
-    if (process.env.NODE_ENV === 'development') {
-      console.log('🔄 Dashboard: Loading state - auth:', authLoading, 'orchards:', orchardsLoading, 'bestowals:', bestowalsLoading)
-    }
-    const theme = getCurrentTheme()
-    return (
-      <div className="min-h-screen flex items-center justify-center" style={{ background: theme.background }}>
-        <div className="text-center backdrop-blur-xl rounded-2xl p-8 border" style={{ backgroundColor: theme.cardBg, borderColor: theme.cardBorder }}>
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 mx-auto mb-4" style={{ borderColor: theme.accent }}></div>
-          <p style={{ color: theme.textPrimary }}>Loading your dashboard...</p>
-        </div>
-      </div>
-    )
-  }
-
-  // Show error state if there's an error
-  if (error) {
-    const theme = getCurrentTheme()
-    return (
-      <div className="min-h-screen flex items-center justify-center" style={{ background: theme.background }}>
-        <div className="text-center backdrop-blur-xl rounded-2xl p-8 border" style={{ backgroundColor: theme.cardBg, borderColor: theme.cardBorder }}>
-          <p className="mb-4" style={{ color: theme.textPrimary }}>{error}</p>
-          <Button 
-            onClick={() => window.location.reload()}
-            style={{
-              background: theme.primaryButton,
-              color: theme.textPrimary,
-            }}
-          >
-            Retry
-          </Button>
-        </div>
-      </div>
-    )
+  const styles = {
+    root: {
+      display: 'flex', height: '100vh', width: '100vw',
+      background: '#060a12', color: '#e2e8f0',
+      fontFamily: "'DM Sans', 'Segoe UI', system-ui, sans-serif",
+      overflow: 'hidden', position: 'fixed', top: 0, left: 0, zIndex: 50,
+    },
+    sidebar: {
+      width: 260, minWidth: 260,
+      background: '#0a0f1a',
+      borderRight: '1px solid rgba(255,255,255,0.06)',
+      display: 'flex', flexDirection: 'column', height: '100vh',
+    },
+    logoArea: {
+      padding: '18px 14px 14px',
+      borderBottom: '1px solid rgba(255,255,255,0.05)',
+    },
+    logoRow: {
+      display: 'flex', alignItems: 'center', gap: 10, marginBottom: 10,
+    },
+    logoIcon: {
+      width: 36, height: 36, borderRadius: 9,
+      background: 'linear-gradient(135deg, #22c55e 0%, #16a34a 100%)',
+      display: 'flex', alignItems: 'center', justifyContent: 'center',
+      fontSize: 17,
+    },
+    logoText: { fontWeight: 700, fontSize: 15, color: '#fff', lineHeight: 1.2 },
+    logoSub: { fontSize: 11, color: '#4b5563', lineHeight: 1 },
+    keeperBadge: {
+      display: 'flex', alignItems: 'center', gap: 8,
+      padding: '7px 10px', background: '#111827',
+      borderRadius: 8, cursor: 'pointer',
+    },
+    keeperDot: {
+      width: 26, height: 26, borderRadius: '50%',
+      background: '#1e293b', display: 'flex', alignItems: 'center',
+      justifyContent: 'center', fontSize: 12, fontWeight: 700, color: '#64748b',
+    },
+    nav: {
+      flex: 1, padding: '10px 8px',
+      overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 3,
+    },
+    navItem: (isActive, color) => ({
+      display: 'flex', alignItems: 'center', gap: 11,
+      padding: '10px 12px', borderRadius: 10, cursor: 'pointer',
+      background: isActive ? color + '22' : 'transparent',
+      border: isActive ? `1px solid ${color}44` : '1px solid transparent',
+      transition: 'all 0.15s ease', textDecoration: 'none',
+    }),
+    navEmoji: (isActive, color) => ({
+      width: 32, height: 32, borderRadius: 8, fontSize: 16,
+      background: isActive ? color + '33' : '#111827',
+      display: 'flex', alignItems: 'center', justifyContent: 'center',
+      border: isActive ? `1px solid ${color}55` : '1px solid transparent',
+    }),
+    navLabel: { fontWeight: 600, fontSize: 13, color: '#e2e8f0', lineHeight: 1.2 },
+    navSub: { fontSize: 11, color: '#4b5563', lineHeight: 1 },
+    bottomBar: {
+      padding: '10px 8px',
+      borderTop: '1px solid rgba(255,255,255,0.05)',
+      display: 'flex', gap: 6,
+    },
+    btnPlant: {
+      flex: 1, padding: '11px 0',
+      background: 'linear-gradient(135deg, #16a34a, #15803d)',
+      border: 'none', borderRadius: 22, color: '#fff',
+      fontWeight: 700, fontSize: 12, cursor: 'pointer',
+      display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 5,
+    },
+    btnLive: {
+      flex: 1, padding: '11px 0',
+      background: 'linear-gradient(135deg, #dc2626, #b91c1c)',
+      border: 'none', borderRadius: 22, color: '#fff',
+      fontWeight: 700, fontSize: 12, cursor: 'pointer',
+      display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 5,
+    },
+    btnChat: {
+      flex: 1, padding: '11px 0',
+      background: '#111827', border: '1px solid #1f2937',
+      borderRadius: 22, color: '#9ca3af',
+      fontWeight: 700, fontSize: 12, cursor: 'pointer',
+      display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 5,
+    },
+    center: { flex: 1, display: 'flex', flexDirection: 'column', overflowY: 'auto' },
+    header: {
+      padding: '18px 22px 14px',
+      borderBottom: '1px solid rgba(255,255,255,0.05)',
+      background: '#080d17',
+      display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+    },
+    avatar: {
+      width: 44, height: 44, borderRadius: '50%',
+      background: 'linear-gradient(135deg, #3b82f6, #6366f1)',
+      display: 'flex', alignItems: 'center', justifyContent: 'center',
+      fontSize: 19, overflow: 'hidden', flexShrink: 0,
+    },
+    greeting: { fontSize: 18, fontWeight: 700, color: '#f1f5f9', marginBottom: 2 },
+    greetingSub: { fontSize: 12, color: '#4b5563' },
+    seedflowLabel: {
+      display: 'inline-flex', alignItems: 'center', gap: 6,
+      background: '#0f172a', border: '1px solid #1e293b',
+      borderRadius: 20, padding: '5px 12px',
+      fontSize: 12, color: '#64748b',
+    },
+    content: { padding: '18px 22px', flex: 1 },
+    sectionLabel: {
+      fontSize: 11, fontWeight: 700, letterSpacing: '0.12em',
+      color: '#374151', textTransform: 'uppercase', marginBottom: 12,
+      display: 'flex', alignItems: 'center', gap: 7,
+    },
+    liveTag: {
+      background: '#dc262622', border: '1px solid #dc262644',
+      color: '#f87171', fontSize: 10, fontWeight: 700,
+      padding: '2px 7px', borderRadius: 10, letterSpacing: '0.1em',
+    },
+    seedCard: {
+      position: 'relative', borderRadius: 16, overflow: 'hidden',
+      marginBottom: 14, height: 320,
+      background: '#111827',
+      border: `1px solid ${activeSeed.color}44`,
+      transition: 'border-color 0.6s ease',
+      boxShadow: `0 0 40px ${activeSeed.glow}18`,
+    },
+    seedImg: {
+      position: 'absolute', inset: 0, width: '100%', height: '100%',
+      objectFit: 'cover', opacity: 0.45,
+    },
+    seedOverlay: {
+      position: 'absolute', inset: 0,
+      background: `linear-gradient(to top, #060a12 0%, ${activeSeed.color}22 50%, transparent 100%)`,
+    },
+    seedCounter: {
+      position: 'absolute', top: 14, right: 14,
+      background: 'rgba(6,10,18,0.7)', backdropFilter: 'blur(4px)',
+      borderRadius: 20, padding: '4px 11px',
+      fontSize: 12, color: '#cbd5e1', fontWeight: 600,
+      border: '1px solid rgba(255,255,255,0.08)',
+    },
+    seedType: {
+      position: 'absolute', top: 14, left: 14,
+      background: activeSeed.color + 'cc', borderRadius: 6,
+      padding: '3px 9px', fontSize: 10, fontWeight: 800,
+      color: '#fff', letterSpacing: '0.12em',
+    },
+    seedActivity: {
+      position: 'absolute', top: '38%', left: '50%',
+      transform: 'translate(-50%, -50%)',
+      textAlign: 'center',
+    },
+    activityDot: {
+      width: 8, height: 8, borderRadius: '50%',
+      background: activeSeed.glow, display: 'inline-block',
+      marginRight: 6, animation: 'pulse 2s infinite',
+    },
+    activityText: { fontSize: 13, color: activeSeed.glow, fontWeight: 600 },
+    seedDesc: {
+      position: 'absolute', top: '52%', left: '50%',
+      transform: 'translate(-50%, -50%)',
+      fontSize: 16, color: 'rgba(255,255,255,0.7)',
+      fontStyle: 'italic', textAlign: 'center', width: '80%',
+    },
+    seedBottom: {
+      position: 'absolute', bottom: 0, left: 0, right: 0, padding: '14px 18px',
+    },
+    seedName: { fontSize: 20, fontWeight: 800, color: '#f1f5f9', marginBottom: 2 },
+    seedStatus: {
+      display: 'inline-flex', alignItems: 'center', gap: 5,
+      fontSize: 12, color: activeSeed.glow, marginBottom: 12, fontWeight: 600,
+    },
+    statusDot: {
+      width: 6, height: 6, borderRadius: '50%', background: activeSeed.glow,
+    },
+    seedBtns: { display: 'flex', gap: 8 },
+    btnPlay: {
+      flex: 1, padding: '11px 0',
+      background: activeSeed.color + 'cc',
+      border: `1px solid ${activeSeed.color}`,
+      borderRadius: 10, color: '#fff',
+      fontWeight: 700, fontSize: 13, cursor: 'pointer',
+      display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7,
+    },
+    btnBook: {
+      flex: 1, padding: '11px 0',
+      background: `linear-gradient(135deg, ${activeSeed.glow}, ${activeSeed.color})`,
+      border: 'none', borderRadius: 10, color: '#fff',
+      fontWeight: 700, fontSize: 13, cursor: 'pointer',
+      display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7,
+    },
+    seedDots: {
+      display: 'flex', gap: 6, justifyContent: 'center', marginBottom: 14,
+    },
+    dot: (isActive) => ({
+      width: isActive ? 20 : 6, height: 6, borderRadius: 3,
+      background: isActive ? activeSeed.glow : '#1e293b',
+      transition: 'all 0.4s ease', cursor: 'pointer',
+    }),
+    connectBtn: {
+      width: '100%', padding: '13px 0',
+      background: 'transparent',
+      border: `1px solid ${activeSeed.color}66`,
+      borderRadius: 12, color: activeSeed.glow,
+      fontWeight: 700, fontSize: 13, cursor: 'pointer',
+      display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+      letterSpacing: '0.05em', transition: 'all 0.2s',
+    },
+    rightPanel: {
+      width: 248, minWidth: 248,
+      background: '#080d17',
+      borderLeft: '1px solid rgba(255,255,255,0.05)',
+      padding: '18px 14px', overflowY: 'auto',
+      display: 'flex', flexDirection: 'column', gap: 22,
+    },
+    panelSection: { display: 'flex', flexDirection: 'column', gap: 8 },
+    panelTitle: {
+      fontSize: 10, fontWeight: 700, color: '#374151',
+      letterSpacing: '0.12em', textTransform: 'uppercase',
+      display: 'flex', alignItems: 'center', gap: 6,
+    },
+    dateYear: { fontSize: 22, fontWeight: 800, color: '#f1f5f9', marginBottom: 2 },
+    dateLine: { fontSize: 13, color: '#4b5563', lineHeight: 1.9 },
+    omerBadge: {
+      background: '#1c1400', border: '1px solid #92400e44',
+      borderRadius: 10, padding: '10px 12px',
+      display: 'flex', alignItems: 'center', gap: 9,
+    },
+    omerText: { fontSize: 14, fontWeight: 700, color: '#f59e0b' },
+    omerNext: { fontSize: 13, color: '#4b5563' },
+    growthCard: {
+      background: '#0a0f1a', border: '1px solid rgba(255,255,255,0.05)',
+      borderRadius: 10, padding: '12px 12px',
+    },
+    growthTitle: { fontSize: 12, fontWeight: 700, color: '#22c55e', marginBottom: 10 },
+    growthRow: {
+      display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+      padding: '7px 0', borderBottom: '1px solid rgba(255,255,255,0.04)',
+    },
+    growthLabel: { fontSize: 12, color: '#4b5563' },
+    growthVal: { fontSize: 14, fontWeight: 700, color: '#f1f5f9' },
+    tipBox: {
+      background: '#0a0f1a', border: '1px solid rgba(255,255,255,0.05)',
+      borderRadius: 10, padding: '12px',
+      fontSize: 12, color: '#6b7280', lineHeight: 1.7,
+      fontStyle: 'italic',
+    },
   }
 
   return (
-    <div className="min-h-screen relative" style={{ background: currentTheme.background }}>
-      {/* Content wrapper */}
-      <div className="relative z-10">
-        {/* Welcome Section with Profile Picture - Mobile Responsive */}
-        <div 
-          className="max-w-4xl mx-auto p-4 sm:p-6 md:p-8 rounded-xl sm:rounded-2xl border shadow-xl sm:shadow-2xl mb-4 sm:mb-6 md:mb-8 mt-2 sm:mt-4 backdrop-blur-xl"
-          style={{
-            backgroundColor: currentTheme.cardBg,
-            borderColor: currentTheme.cardBorder,
-            boxShadow: `0 20px 25px -5px ${currentTheme.shadow}, 0 10px 10px -5px ${currentTheme.shadow}`,
-            position: 'relative',
-            zIndex: 1
-          }}
-        >
-          {/* User Icon and Info - Side by Side */}
-          <div className="flex flex-col gap-4 w-full">
-            {/* Top Section: User Icon and Welcome Info */}
-            <div className="flex items-center gap-4 sm:gap-6">
-              {/* User Icon */}
-              <div 
-                className="w-14 h-14 sm:w-16 sm:h-16 md:w-20 md:h-20 rounded-full overflow-hidden border-2 sm:border-3 md:border-4 shadow-md sm:shadow-lg flex-shrink-0"
-                style={{ borderColor: currentTheme.accent }}
-              >
-                {user?.avatar_url ? (
-                  <img 
-                    src={user.avatar_url} 
-                    alt="Profile" 
-                    className="w-full h-full object-cover"
-                  />
-                ) : (
-                  <div 
-                    className="w-full h-full flex items-center justify-center"
-                    style={{ background: currentTheme.primaryButton }}
-                  >
-                    <User className="h-6 w-6 sm:h-8 sm:w-8 md:h-10 md:w-10" style={{ color: currentTheme.textPrimary }} />
-                  </div>
-                )}
-              </div>
-              
-              {/* Welcome Message - Next to Icon */}
-              <div className="min-w-0 flex-1">
-                <h1 className="text-lg sm:text-xl md:text-2xl lg:text-3xl font-bold truncate" style={{ color: currentTheme.textPrimary }}>
-                  Welcome back, {profile?.first_name || profile?.display_name || 'Friend'}!
-                </h1>
-                <p className="text-sm sm:text-base md:text-lg" style={{ color: currentTheme.textSecondary }}>
-                  Ready to grow your orchard today?
-                </p>
-                <p className="text-xs sm:text-sm mt-1" style={{ color: currentTheme.textSecondary }}>
-                  Payment Method: USDC (USD Coin)
-                </p>
+    <>
+      <style>{`
+        @keyframes pulse {
+          0%, 100% { opacity: 1; transform: scale(1); }
+          50% { opacity: 0.5; transform: scale(0.8); }
+        }
+        @keyframes breathe {
+          0%, 100% { box-shadow: 0 0 20px ${activeSeed.glow}15; }
+          50% { box-shadow: 0 0 40px ${activeSeed.glow}30; }
+        }
+        .seed-card-anim { animation: breathe 4s ease-in-out infinite; }
+        .nav-link:hover { opacity: 0.85; }
+        .connect-btn:hover { background: ${activeSeed.color}15 !important; }
+      `}</style>
+
+      <div style={styles.root}>
+        {/* SIDEBAR */}
+        <div style={styles.sidebar}>
+          <div style={styles.logoArea}>
+            <div style={styles.logoRow}>
+              <div style={styles.logoIcon}>🌱</div>
+              <div>
+                <div style={styles.logoText}>Sow2Grow</div>
+                <div style={styles.logoSub}>364yhvh community farm</div>
               </div>
             </div>
-
-            {/* Divider Line */}
-            <div className="w-full border-t my-4" style={{ borderColor: currentTheme.textSecondary + '40' }}></div>
-
-            {/* Calendar Info Text - Centered */}
-            {calendarData && (
-              <div className="w-full space-y-2 text-center" style={{ color: '#b48f50' }}>
-                <div className="text-base sm:text-lg font-bold">
-                  Year {calendarData.year} • Month {calendarData.month} • Day {calendarData.dayOfMonth}
-                </div>
-                <div className="text-sm sm:text-base">
-                  Weekday {calendarData.weekday} • Part {calendarData.part}/18
-                </div>
-                <div className="text-xs sm:text-sm opacity-80">
-                  Day {calendarData.dayOfYear} of 364 • {calendarData.season}
-                </div>
-                <div className="text-xs font-mono opacity-60">
-                  {/* Display current LOCAL time - each user sees their own timezone */}
-                  {currentTime.toLocaleString(undefined, { 
-                    // Use user's LOCAL timezone - no hardcoded timezone!
-                    weekday: 'long',
-                    year: 'numeric',
-                    month: 'long',
-                    day: 'numeric',
-                    hour: '2-digit',
-                    minute: '2-digit',
-                    second: '2-digit'
-                  })}
-                </div>
-                <div className="text-xs opacity-50 italic mt-2">
-                  Creator's wheels never lie • forever in sync
-                </div>
-              </div>
-            )}
-          </div>
-        </div>
-      </div>
-
-      <div className="max-w-7xl mx-auto px-3 sm:px-4 md:px-6 lg:px-8 py-4 sm:py-6 md:py-8">
-        {/* Addictive Stats Cards */}
-        <div className="mb-6">
-          <StatsCards />
-        </div>
-
-        {/* Top Sowers Teaser */}
-        <div className="mb-6">
-          <TopSowersTeaser />
-        </div>
-
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 md:gap-8">
-          <div className="lg:col-span-1 wallet-tour">
-            <BinanceWalletManager 
-              className="shadow-xl backdrop-blur-xl"
-              style={{
-                backgroundColor: currentTheme.cardBg,
-                borderColor: currentTheme.cardBorder,
-              }}
-            />
+            <div style={styles.keeperBadge}>
+              <div style={styles.keeperDot}>S</div>
+              <span style={{ fontSize: 13, color: '#9ca3af' }}>Keeper</span>
+            </div>
           </div>
 
-          {/* Global Timezone Support */}
-          <Card 
-            className="lg:col-span-1 border shadow-xl timezone-tour backdrop-blur-xl"
-            style={{
-              backgroundColor: currentTheme.cardBg,
-              borderColor: currentTheme.cardBorder,
-            }}
-          >
-            <CardHeader className="p-4 sm:p-5 md:p-6">
-              <CardTitle className="flex items-center text-base sm:text-lg" style={{ color: currentTheme.textPrimary }}>
-                <Globe className="h-4 w-4 sm:h-5 sm:w-5 mr-2" style={{ color: currentTheme.accent }} />
-                Global Time Zones
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="p-4 sm:p-5 md:p-6 pt-0">
-              <LiveTimezoneDisplay />
-              <div className="mt-3 sm:mt-4 pt-2 sm:pt-3 border-t" style={{ borderColor: currentTheme.cardBorder }}>
-                <Link to="/grove-station">
-                  <button 
-                    className="w-full inline-flex items-center justify-center whitespace-nowrap rounded-full border-2 px-4 py-2 text-sm sm:text-base font-medium transition-all duration-200 shadow-sm disabled:pointer-events-none disabled:opacity-50"
-                    style={{
-                      color: currentTheme.textPrimary,
-                      borderColor: currentTheme.accent,
-                      backgroundColor: currentTheme.secondaryButton,
-                    }}
-                    onMouseEnter={(e) => {
-                      e.currentTarget.style.backgroundColor = currentTheme.accent;
-                      e.currentTarget.style.borderColor = currentTheme.accent;
-                      e.currentTarget.style.color = currentTheme.textPrimary;
-                    }}
-                    onMouseLeave={(e) => {
-                      e.currentTarget.style.backgroundColor = currentTheme.secondaryButton;
-                      e.currentTarget.style.borderColor = currentTheme.accent;
-                      e.currentTarget.style.color = currentTheme.textPrimary;
-                    }}
-                  >
-                    <Clock className="h-3 w-3 sm:h-4 sm:w-4 mr-2" />
-                    View Radio Schedule
-                  </button>
+          <nav style={styles.nav}>
+            {NAV.map(item => {
+              const isActive = activePath === item.path
+              return (
+                <Link key={item.label} to={item.path} className="nav-link"
+                  onClick={() => setActivePath(item.path)}
+                  style={styles.navItem(isActive, item.color)}>
+                  <div style={styles.navEmoji(isActive, item.color)}>{item.emoji}</div>
+                  <div>
+                    <div style={styles.navLabel}>{item.label}</div>
+                    <div style={styles.navSub}>{item.sub}</div>
+                  </div>
                 </Link>
-              </div>
-            </CardContent>
-          </Card>
+              )
+            })}
+          </nav>
+
+          <div style={styles.bottomBar}>
+            <Link to="/create-orchard" style={{ flex: 1, textDecoration: 'none' }}>
+              <button style={styles.btnPlant}>🌱 Plant Seed</button>
+            </Link>
+            <Link to="/grove-station" style={{ flex: 1, textDecoration: 'none' }}>
+              <button style={styles.btnLive}>🔴 Go Live</button>
+            </Link>
+            <Link to="/chatapp" style={{ flex: 1, textDecoration: 'none' }}>
+              <button style={styles.btnChat}>💬 Enter Chat</button>
+            </Link>
+          </div>
         </div>
 
-
-        {/* Marketing Thumbnails Section */}
-        <div className="mt-4 sm:mt-6 md:mt-8 space-y-4 sm:space-y-6">
-          <Card 
-            className="border shadow-xl backdrop-blur-xl overflow-hidden"
-            style={{
-              backgroundColor: currentTheme.cardBg,
-              borderColor: currentTheme.cardBorder,
-            }}
-          >
-            <CardContent className="p-0">
-              <div className="aspect-video w-full">
-                <AmbassadorThumbnail />
+        {/* CENTER */}
+        <div style={styles.center}>
+          {/* Header */}
+          <div style={styles.header}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+              <div style={styles.avatar}>
+                {profile?.avatar_url
+                  ? <img src={profile.avatar_url} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                  : '🧑'}
               </div>
-            </CardContent>
-          </Card>
-
-          <Card 
-            className="border shadow-xl backdrop-blur-xl overflow-hidden"
-            style={{
-              backgroundColor: currentTheme.cardBg,
-              borderColor: currentTheme.cardBorder,
-            }}
-          >
-            <CardContent className="p-0">
-              <div className="aspect-video w-full">
-                <GoSatGhostAccessThumbnail />
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Quick Actions */}
-        <Card 
-          className="mt-4 sm:mt-6 md:mt-8 border shadow-xl quick-actions-tour backdrop-blur-xl"
-          style={{
-            backgroundColor: currentTheme.cardBg,
-            borderColor: currentTheme.cardBorder,
-          }}
-        >
-          <CardHeader className="p-4 sm:p-5 md:p-6">
-            <CardTitle className="text-base sm:text-lg" style={{ color: currentTheme.textPrimary }}>Quick Actions</CardTitle>
-          </CardHeader>
-          <CardContent className="p-4 sm:p-5 md:p-6 pt-0">
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 sm:gap-4">
-              <Link to="/create-orchard">
-                <Button 
-                  className="w-full h-16 sm:h-20 border shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105 font-medium"
-                  style={{
-                    background: currentTheme.primaryButton,
-                    color: currentTheme.textPrimary,
-                    borderColor: currentTheme.accent,
-                  }}
-                >
-                  <div className="text-center">
-                    <Plus className="h-5 w-5 sm:h-6 sm:w-6 mx-auto mb-1 sm:mb-2" />
-                    <span className="text-sm sm:text-base">Plant New Seed</span>
-                  </div>
-                </Button>
-              </Link>
-              
-              <div
-                className="w-full border shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105 hover:-translate-y-1 rounded-lg p-3 sm:p-4 pb-4 sm:pb-6 cursor-pointer font-medium overflow-visible backdrop-blur-md"
-                style={{
-                  backgroundColor: currentTheme.cardBg,
-                  borderColor: currentTheme.cardBorder,
-                }}
-              >
-                <div className="text-center mb-2 sm:mb-3">
-                  <TreePine className="h-5 w-5 sm:h-6 sm:w-6 mx-auto mb-1 sm:mb-2" style={{ color: currentTheme.textPrimary }} />
-                  <span className="font-medium text-sm sm:text-base" style={{ color: currentTheme.textPrimary }}>Browse Orchards</span>
+              <div>
+                <div style={styles.greeting}>
+                  🌊 Welcome back — your seeds are in motion
                 </div>
-                <div className="flex justify-center space-x-2 sm:space-x-3 mt-3 sm:mt-4">
-                  <Link to="/browse-orchards">
-                    <div 
-                      className="group w-8 h-8 sm:w-10 sm:h-10 rounded-full border-2 flex items-center justify-center hover:scale-110 hover:-translate-y-1 transition-all duration-300"
-                      style={{
-                        borderColor: currentTheme.accent,
-                        backgroundColor: currentTheme.cardBg,
-                      }}
-                      onMouseEnter={(e) => {
-                        e.currentTarget.style.backgroundColor = currentTheme.accent;
-                        e.currentTarget.style.borderColor = currentTheme.accent;
-                      }}
-                      onMouseLeave={(e) => {
-                        e.currentTarget.style.backgroundColor = currentTheme.cardBg;
-                        e.currentTarget.style.borderColor = currentTheme.accent;
-                      }}
-                    >
-                      <Users className="h-4 w-4 sm:h-5 sm:w-5 transition-colors" style={{ color: currentTheme.textPrimary }} />
-                    </div>
-                  </Link>
-                  <Link to="/my-orchards">
-                    <div 
-                      className="group w-8 h-8 sm:w-10 sm:h-10 rounded-full border-2 flex items-center justify-center hover:scale-110 hover:-translate-y-1 transition-all duration-300"
-                      style={{
-                        borderColor: currentTheme.accent,
-                        backgroundColor: currentTheme.cardBg,
-                      }}
-                      onMouseEnter={(e) => {
-                        e.currentTarget.style.backgroundColor = currentTheme.accent;
-                        e.currentTarget.style.borderColor = currentTheme.accent;
-                      }}
-                      onMouseLeave={(e) => {
-                        e.currentTarget.style.backgroundColor = currentTheme.cardBg;
-                        e.currentTarget.style.borderColor = currentTheme.accent;
-                      }}
-                    >
-                      <User className="h-4 w-4 sm:h-5 sm:w-5 transition-colors" style={{ color: currentTheme.textPrimary }} />
-                    </div>
-                  </Link>
-                  <Link 
-                    to="/364yhvh-orchards"
-                    onClick={(e) => {
-                      console.log('🔗 Navigating to 364yhvh-orchards page');
-                    }}
-                  >
-                    <div 
-                      className="group w-8 h-8 sm:w-10 sm:h-10 rounded-full border-2 flex items-center justify-center hover:scale-110 hover:-translate-y-1 transition-all duration-300 cursor-pointer"
-                      style={{
-                        borderColor: currentTheme.accent,
-                        backgroundColor: currentTheme.cardBg,
-                      }}
-                      onMouseEnter={(e) => {
-                        e.currentTarget.style.backgroundColor = currentTheme.accent;
-                        e.currentTarget.style.borderColor = currentTheme.accent;
-                      }}
-                      onMouseLeave={(e) => {
-                        e.currentTarget.style.backgroundColor = currentTheme.cardBg;
-                        e.currentTarget.style.borderColor = currentTheme.accent;
-                      }}
-                    >
-                      <Heart className="h-4 w-4 sm:h-5 sm:w-5 transition-colors" style={{ color: currentTheme.textPrimary }} />
-                    </div>
-                  </Link>
+                <div style={styles.greetingSub}>
+                  Shalom, {displayName} · Year {sacredDate.year} · Month {sacredDate.month} · Day {sacredDate.day}
                 </div>
               </div>
-              
-              <Link to="/profile">
-                <Button 
-                  className="w-full h-16 sm:h-20 border shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105 font-medium"
-                  style={{
-                    background: currentTheme.primaryButton,
-                    color: currentTheme.textPrimary,
-                    borderColor: currentTheme.accent,
-                  }}
-                >
-                  <div className="text-center">
-                    {user?.avatar_url ? (
-                      <img 
-                        src={user.avatar_url} 
-                        alt="Profile" 
-                        className="w-6 h-6 sm:w-8 sm:h-8 rounded-full mx-auto mb-1 sm:mb-2 border-2"
-                        style={{ borderColor: currentTheme.accent }}
-                      />
-                    ) : (
-                      <User className="h-5 w-5 sm:h-6 sm:w-6 mx-auto mb-1 sm:mb-2" />
-                    )}
-                    <span className="text-sm sm:text-base">My Profile</span>
-                  </div>
-                </Button>
-              </Link>
-
             </div>
-          </CardContent>
-        </Card>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
+              <div style={styles.seedflowLabel}>
+                <span style={{ width: 7, height: 7, borderRadius: '50%', background: '#22c55e', display: 'inline-block', animation: 'pulse 2s infinite' }} />
+                SeedFlow active
+              </div>
+            </div>
+          </div>
+
+          {/* Content */}
+          <div style={styles.content}>
+            <div style={styles.sectionLabel}>
+              <span>Seeds in motion</span>
+              <span style={styles.liveTag}>LIVE</span>
+            </div>
+
+            {/* Seed Card */}
+            <div style={{ ...styles.seedCard }} className="seed-card-anim">
+              <img src={activeSeed.image} alt="" style={styles.seedImg} />
+              <div style={styles.seedOverlay} />
+              <div style={styles.seedCounter}>{activeIdx + 1}/{SEEDS.length}</div>
+              <div style={styles.seedType}>{activeSeed.type}</div>
+
+              <div style={styles.seedActivity}>
+                <span style={styles.activityDot} />
+                <span style={styles.activityText}>{activeSeed.activity}</span>
+              </div>
+              <div style={styles.seedDesc}>{activeSeed.description}</div>
+
+              <div style={styles.seedBottom}>
+                <div style={styles.seedName}>{activeSeed.name}</div>
+                <div style={styles.seedStatus}>
+                  <span style={styles.statusDot} />
+                  {activeSeed.status}
+                </div>
+                <div style={styles.seedBtns}>
+                  <Link to={activeSeed.playPath} style={{ flex: 1, textDecoration: 'none' }}>
+                    <button style={styles.btnPlay}>▶ Play</button>
+                  </Link>
+                  <Link to={activeSeed.bookPath} style={{ flex: 1, textDecoration: 'none' }}>
+                    <button style={styles.btnBook}>📅 Enter</button>
+                  </Link>
+                </div>
+              </div>
+            </div>
+
+            {/* Dots */}
+            <div style={styles.seedDots}>
+              {SEEDS.map((_, i) => (
+                <div key={i} style={styles.dot(i === activeIdx)}
+                  onClick={() => { setActiveIdx(i); clearInterval(intervalRef.current) }} />
+              ))}
+            </div>
+
+            {/* Connect */}
+            <Link to="/browse-orchards" style={{ textDecoration: 'none' }}>
+              <button style={styles.connectBtn} className="connect-btn">
+                🌿 STEP INTO THE ORCHARD — FIND YOUR SEED
+              </button>
+            </Link>
+          </div>
+        </div>
+
+        {/* RIGHT PANEL */}
+        <div style={styles.rightPanel}>
+          {/* Today */}
+          <div style={styles.panelSection}>
+            <div style={styles.panelTitle}>📅 TODAY</div>
+            <div style={styles.dateYear}>Year {sacredDate.year}</div>
+            <div style={styles.dateLine}>
+              Month {sacredDate.month} · Day {sacredDate.day}<br />
+              Day 1 · Regular Day
+            </div>
+          </div>
+
+          {/* Omer */}
+          <div style={styles.omerBadge}>
+            <span style={{ fontSize: 18 }}>🌾</span>
+            <div>
+              <div style={styles.omerText}>Omer {sacredDate.omer}/{sacredDate.omerTotal}</div>
+              <div style={styles.omerNext}>→ {sacredDate.nextFeast}</div>
+            </div>
+          </div>
+
+          {/* Growth */}
+          <div style={styles.panelSection}>
+            <div style={styles.panelTitle}>🌱 YOUR GROWTH</div>
+            <div style={styles.growthCard}>
+              <div style={styles.growthTitle}>Seeds this week</div>
+              {[
+                { label: 'Seeds planted', val: stats.seeds },
+                { label: 'Seeds growing', val: stats.orchards },
+                { label: 'Active sowers', val: stats.sowers },
+                { label: 'Harvest forming', val: stats.members },
+              ].map(({ label, val }) => (
+                <div key={label} style={styles.growthRow}>
+                  <span style={styles.growthLabel}>{label}</span>
+                  <span style={styles.growthVal}>{val}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Tip */}
+          <div style={styles.panelSection}>
+            <div style={styles.panelTitle}>💡 SEEDFLOW TIP</div>
+            <div style={styles.tipBox}>"{tip}"</div>
+          </div>
+        </div>
       </div>
-      
-      {/* Floating Stats Button */}
-      <StatsFloatingButton />
-    </div>
+    </>
   )
 }
