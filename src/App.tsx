@@ -244,13 +244,11 @@ const App = () => (
               <Route path="/my-orchards" element={
                 <ProtectedRoute><MyOrchardsPage /></ProtectedRoute>
               } />
-             <Route path="/live-seed/:orchardId" element={
-  <ProtectedRoute><LiveSeedPage /></ProtectedRoute>
-} />
-<Route path="/learn-share" element={
-  <ProtectedRoute><LearnSharePage /></ProtectedRoute>
-} />
+              <Route path="/live-seed/:orchardId" element={
                 <ProtectedRoute><LiveSeedPage /></ProtectedRoute>
+              } />
+              <Route path="/learn-share" element={
+                <ProtectedRoute><LearnSharePage /></ProtectedRoute>
               } />
               <Route path="/tithing" element={
                 <ProtectedRoute><Layout><TithingPage /></Layout></ProtectedRoute>
