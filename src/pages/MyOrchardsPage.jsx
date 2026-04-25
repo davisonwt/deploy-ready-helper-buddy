@@ -106,8 +106,7 @@ export default function MyOrchardsPage() {
   }
 
   return (
-    <div className='min-h-screen relative overflow-hidden'>
-      <style>{`
+     <div style={{position:'fixed',inset:0,zIndex:9999,overflowY:'auto'}}>  <style>{`
         @keyframes gradient {
           0% { background-position: 0% 50%; }
           50% { background-position: 100% 50%; }
