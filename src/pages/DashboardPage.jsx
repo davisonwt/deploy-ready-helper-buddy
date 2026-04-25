@@ -378,7 +378,7 @@ export default function SeedFlowDashboard() {
         <div style={styles.sidebar}>
           <div style={styles.logoArea}>
             <div style={styles.logoRow}>
-              <div style={styles.logoIcon}>🌱</div>
+             <img src="/favicon.png" alt="S2G" style={{ width: 36, height: 36, borderRadius: 9, objectFit: 'cover' }} />
               <div>
                 <div style={styles.logoText}>Sow2Grow</div>
                 <div style={styles.logoSub}>364yhvh community farm</div>
