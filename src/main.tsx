@@ -10,38 +10,20 @@ import { logInfo, logError } from "@/lib/logging";
 import { queryClient } from "./lib/queryPersistence";
 import { CryptoComProvider } from '@/providers/CryptoComProvider';
 import { clearRoleCache } from '@/hooks/useUserRoles';
-import { logReactDiagnostics } from '@/utils/reactDuplicateDetector';
 import "./index.css";
-import React from "react";
-import * as ReactDOMPkg from "react-dom";
-import '@/utils/confetti'; // Initialize confetti utility
 import { startGardenParticles } from '@/utils/confetti';
+import '@/utils/confetti';
 
-// Verify Standards Mode before React initialization
-if (typeof document !== 'undefined') {
-  if (document.compatMode !== 'CSS1Compat') {
-    console.error('❌ CRITICAL: Quirks Mode detected! React may not work correctly.');
-    console.error('Document mode:', document.compatMode);
-    console.error('DOCTYPE:', document.doctype ? document.doctype.name : 'MISSING');
-    // Don't block initialization, but log the error
-  } else {
-    console.log('✅ Standards Mode confirmed');
-  }
-}
-
-// Extend Window interface for cache clearing
 declare global {
   interface Window {
     clearRoleCache: typeof clearRoleCache;
   }
 }
 
-// Expose cache clearing for logout
 if (typeof window !== 'undefined') {
   window.clearRoleCache = clearRoleCache;
 }
 
-// Global error handling
 window.addEventListener('error', (event) => {
   logError('Global error caught', {
     message: event.message,
@@ -59,80 +41,14 @@ window.addEventListener('unhandledrejection', (event) => {
   });
 });
 
-// Defer performance monitoring to avoid blocking
-if ('performance' in window && import.meta.env.DEV) {
-  setTimeout(() => {
-    const navTiming = performance.getEntriesByType('navigation')[0] as PerformanceNavigationTiming;
-    if (navTiming) {
-      logInfo('⚡ Load Performance', {
-        'Total Load': `${Math.round(navTiming.loadEventEnd - navTiming.loadEventStart)}ms`,
-        'DOM Ready': `${Math.round(navTiming.domContentLoadedEventEnd - navTiming.fetchStart)}ms`,
-        'TTFB': `${Math.round(navTiming.responseStart - navTiming.requestStart)}ms`,
-      });
-    }
-  }, 1000);
-}
-
-// Query client is now imported from lib/queryPersistence.ts for better caching
-
-// Log app initialization
 logInfo('Application starting', {
   environment: import.meta.env.DEV ? 'development' : 'production',
   userAgent: navigator.userAgent,
   timestamp: new Date().toISOString(),
 });
 
-// Version sanity check (detect multiple React copies)
-try {
-  console.groupCollapsed('Version Check');
-  console.log('React version:', (React as { version?: string }).version);
-  console.log('React DOM version:', (ReactDOMPkg as { version?: string }).version);
-  console.groupEnd();
-  
-  // Detect duplicate React instances
-  const duplication = logReactDiagnostics(React, ReactDOMPkg);
-  if (duplication?.hasDuplicate) {
-    // Aggressive fix: immediately clear all caches and reload
-    console.error('⚠️ CRITICAL: Duplicate React detected. Clearing caches and reloading...');
-    
-    try {
-      // Set flag to prevent SW from re-registering
-      localStorage.setItem('sw:disabled', '1');
-      
-      // Unregister all service workers
-      if ('serviceWorker' in navigator) {
-        navigator.serviceWorker.getRegistrations().then(registrations => {
-          registrations.forEach(registration => registration.unregister());
-        });
-      }
-      
-      // Clear all caches
-      if ('caches' in window) {
-        caches.keys().then(names => {
-          names.forEach(name => caches.delete(name));
-        });
-      }
-      
-      // Force hard reload immediately - don't wait, don't initialize React
-      window.location.reload();
-      // Exit early to prevent React initialization
-      throw new Error('Duplicate React detected - reloading page');
-    } catch (error) {
-      console.error('Failed to clear caches:', error);
-      // If cleanup fails, still try to reload and exit
-      window.location.reload();
-      throw error; // Prevent React from initializing
-    }
-  }
-} catch (e) {
-  console.warn('Version check failed', e);
-}
-
-// Defer service worker registration - ONLY IN PRODUCTION
 if (!import.meta.env.DEV && 'serviceWorker' in navigator) {
-  // Wait for page to fully load and become idle
   window.addEventListener('load', () => {
-    // Use requestIdleCallback to defer SW registration
     if ('requestIdleCallback' in window) {
       requestIdleCallback(() => registerServiceWorker(), { timeout: 2000 });
     } else {
@@ -141,7 +57,6 @@ if (!import.meta.env.DEV && 'serviceWorker' in navigator) {
   });
 }
 
-// Auto-start floating garden particles when page loads
 if (typeof window !== 'undefined') {
   window.addEventListener('load', () => {
     startGardenParticles();
@@ -150,27 +65,18 @@ if (typeof window !== 'undefined') {
 
 async function registerServiceWorker() {
   try {
-    // Check if SW is disabled
-    if (localStorage.getItem('sw:disabled') === '1') {
-      return;
-    }
-
+    if (localStorage.getItem('sw:disabled') === '1') return;
     const registration = await navigator.serviceWorker.register('/sw.js?v=2025-11-08-v3');
-    
-    // Only update if page is visible (don't interrupt user)
     if (document.visibilityState === 'visible') {
       registration.update();
     }
   } catch (error) {
-    // Silently fail - don't block app functionality
     console.warn('Service worker registration skipped:', error.message);
   }
 }
 
 const rootElement = document.getElementById("root");
-if (!rootElement) {
-  throw new Error("Root element not found");
-}
+if (!rootElement) throw new Error("Root element not found");
 
 createRoot(rootElement).render(
   <StrictMode>
