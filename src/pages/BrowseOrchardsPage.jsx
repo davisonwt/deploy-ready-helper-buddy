@@ -3,7 +3,7 @@ import { Link } from "react-router-dom"
 import { useAuth } from "../hooks/useAuth"
 import { Button } from "../components/ui/button"
 import { Progress } from "../components/ui/progress"
-import { Heart, Eye, MapPin, Users, RefreshCw, Loader2, Sprout, User, Edit, Trash2, Zap, TrendingUp, Star } from "lucide-react"
+import { Heart, RefreshCw, Loader2, Sprout, User, Edit, Trash2 } from "lucide-react"
 import { useCurrency } from "../hooks/useCurrency"
 import { supabase } from "@/integrations/supabase/client"
 import { toast } from "sonner"
@@ -75,14 +75,11 @@ function OrchardCard({ orchard, index }) {
       style={{
         background: 'linear-gradient(135deg, #0f172a 0%, #1e293b 100%)',
         border: `1px solid ${typeConfig.border}`,
-        borderRadius: 20,
-        overflow: 'hidden',
+        borderRadius: 20, overflow: 'hidden',
         boxShadow: isHot ? `0 0 30px ${typeConfig.color}30` : '0 4px 20px rgba(0,0,0,0.3)',
-        display: 'flex',
-        flexDirection: 'column',
+        display: 'flex', flexDirection: 'column',
       }}
     >
-      {/* Image */}
       <div style={{ position: 'relative', height: 200 }}>
         {orchard.main_image ? (
           <img src={orchard.main_image} alt={orchard.title} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
@@ -90,46 +87,23 @@ function OrchardCard({ orchard, index }) {
           <GradientPlaceholder type="orchard" title={orchard.title} className="w-full h-full" size="lg" />
         )}
         <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, #0f172a 0%, transparent 60%)' }} />
-        
-        {/* Type Badge */}
-        <div style={{
-          position: 'absolute', top: 12, left: 12,
-          background: typeConfig.bg, border: `1px solid ${typeConfig.border}`,
-          borderRadius: 20, padding: '4px 10px',
-          display: 'flex', alignItems: 'center', gap: 5,
-          backdropFilter: 'blur(8px)'
-        }}>
+        <div style={{ position: 'absolute', top: 12, left: 12, background: typeConfig.bg, border: `1px solid ${typeConfig.border}`, borderRadius: 20, padding: '4px 10px', display: 'flex', alignItems: 'center', gap: 5, backdropFilter: 'blur(8px)' }}>
           <span style={{ fontSize: 14 }}>{typeConfig.emoji}</span>
           <span style={{ fontSize: 11, fontWeight: 700, color: typeConfig.color }}>{typeConfig.label}</span>
         </div>
-
-        {/* Hot badge */}
         {isHot && (
-          <motion.div
-            animate={{ scale: [1, 1.1, 1] }}
-            transition={{ duration: 1.5, repeat: Infinity }}
-            style={{
-              position: 'absolute', top: 12, right: 12,
-              background: 'rgba(239,68,68,0.9)', borderRadius: 20,
-              padding: '4px 10px', display: 'flex', alignItems: 'center', gap: 4
-            }}
-          >
+          <motion.div animate={{ scale: [1, 1.1, 1] }} transition={{ duration: 1.5, repeat: Infinity }}
+            style={{ position: 'absolute', top: 12, right: 12, background: 'rgba(239,68,68,0.9)', borderRadius: 20, padding: '4px 10px' }}>
             <span style={{ fontSize: 10, fontWeight: 800, color: '#fff' }}>🔥 HOT</span>
           </motion.div>
         )}
-
-        {/* Role badge bottom left */}
         <div style={{ position: 'absolute', bottom: 12, left: 12 }}>
-          <span style={{
-            background: 'rgba(0,0,0,0.7)', borderRadius: 12, padding: '3px 8px',
-            fontSize: 11, color: '#94a3b8', backdropFilter: 'blur(4px)'
-          }}>
+          <span style={{ background: 'rgba(0,0,0,0.7)', borderRadius: 12, padding: '3px 8px', fontSize: 11, color: '#94a3b8', backdropFilter: 'blur(4px)' }}>
             {WANDERING_ROLES.find(r => r.value === orchard.category)?.emoji} {orchard.category}
           </span>
         </div>
       </div>
 
-      {/* Content */}
       <div style={{ padding: '16px', flex: 1, display: 'flex', flexDirection: 'column', gap: 12 }}>
         <div>
           <h3 style={{ fontSize: 16, fontWeight: 700, color: '#f1f5f9', marginBottom: 4, lineHeight: 1.3 }}>{orchard.title}</h3>
@@ -138,24 +112,16 @@ function OrchardCard({ orchard, index }) {
             {orchard.location && <span>📍 {orchard.location}</span>}
           </div>
         </div>
-
-        <p style={{ fontSize: 13, color: '#94a3b8', lineHeight: 1.5, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
-          {orchard.description}
-        </p>
-
+        <p style={{ fontSize: 13, color: '#94a3b8', lineHeight: 1.5, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>{orchard.description}</p>
         <UrgencyBar percentage={orchard.completion_percentage} />
-
-        {/* Stats */}
         <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12 }}>
           <div style={{ textAlign: 'center' }}>
             <div style={{ color: '#94a3b8' }}>Pocket</div>
             <div style={{ color: typeConfig.color, fontWeight: 700, fontSize: 15 }}>${pocketPrice}</div>
           </div>
           <div style={{ textAlign: 'center' }}>
-            <div style={{ color: '#94a3b8' }}>Pockets Left</div>
-            <div style={{ color: '#f1f5f9', fontWeight: 700, fontSize: 15 }}>
-              {Math.max(0, (orchard.total_pockets || 0) - (orchard.filled_pockets || 0))}
-            </div>
+            <div style={{ color: '#94a3b8' }}>Left</div>
+            <div style={{ color: '#f1f5f9', fontWeight: 700, fontSize: 15 }}>{Math.max(0, (orchard.total_pockets || 0) - (orchard.filled_pockets || 0))}</div>
           </div>
           <div style={{ textAlign: 'center' }}>
             <div style={{ color: '#94a3b8' }}>Supporters</div>
@@ -167,39 +133,28 @@ function OrchardCard({ orchard, index }) {
           </div>
         </div>
 
-        {/* Bestow Button */}
-        <Link to={`/animated-orchard/${orchard.id}`} style={{ textDecoration: 'none' }}>
-          <motion.button
-            whileHover={{ scale: 1.03 }}
-            whileTap={{ scale: 0.97 }}
-            style={{
-              width: '100%', padding: '14px 0',
-              background: `linear-gradient(135deg, ${typeConfig.color}, ${typeConfig.color}99)`,
-              border: 'none', borderRadius: 12, color: '#fff',
-              fontWeight: 800, fontSize: 15, cursor: 'pointer',
-              display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
-              boxShadow: `0 4px 20px ${typeConfig.color}40`,
-            }}
-          >
-            <Heart style={{ width: 18, height: 18 }} />
-            Bestow from ${pocketPrice}
-          </motion.button>
-        </Link>
+        <div style={{ display: 'flex', gap: 8 }}>
+          <Link to={`/animated-orchard/${orchard.id}`} style={{ flex: 1, textDecoration: 'none' }}>
+            <motion.button whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }}
+              style={{ width: '100%', padding: '14px 0', background: `linear-gradient(135deg, ${typeConfig.color}, ${typeConfig.color}99)`, border: 'none', borderRadius: 12, color: '#fff', fontWeight: 800, fontSize: 15, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, boxShadow: `0 4px 20px ${typeConfig.color}40` }}>
+              <Heart style={{ width: 18, height: 18 }} />
+              Bestow from ${pocketPrice}
+            </motion.button>
+          </Link>
+          <Link to={`/live-seed/${orchard.id}`} style={{ textDecoration: 'none' }}>
+            <motion.button whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }}
+              style={{ padding: '14px 16px', background: 'rgba(239,68,68,0.15)', border: '1px solid rgba(239,68,68,0.4)', borderRadius: 12, color: '#ef4444', fontWeight: 800, fontSize: 13, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6 }}>
+              🔴 Go Live
+            </motion.button>
+          </Link>
+        </div>
 
-        {/* Owner actions */}
         {orchard.isOwner && (
           <div style={{ display: 'flex', gap: 8 }}>
             <Link to={`/edit-orchard/${orchard.id}`} style={{ flex: 1, textDecoration: 'none' }}>
-              <button style={{ width: '100%', padding: '8px 0', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 8, color: '#94a3b8', fontSize: 12, cursor: 'pointer' }}>
-                ✏️ Edit
-              </button>
+              <button style={{ width: '100%', padding: '8px 0', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 8, color: '#94a3b8', fontSize: 12, cursor: 'pointer' }}>✏️ Edit</button>
             </Link>
-            <button
-              onClick={orchard.onDelete}
-              style={{ flex: 1, padding: '8px 0', background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.2)', borderRadius: 8, color: '#ef4444', fontSize: 12, cursor: 'pointer' }}
-            >
-              🗑️ Delete
-            </button>
+            <button onClick={orchard.onDelete} style={{ flex: 1, padding: '8px 0', background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.2)', borderRadius: 8, color: '#ef4444', fontSize: 12, cursor: 'pointer' }}>🗑️ Delete</button>
           </div>
         )}
       </div>
@@ -273,21 +228,14 @@ export default function BrowseOrchardsPage() {
   return (
     <div style={{ minHeight: '100vh', background: 'linear-gradient(135deg, #020617 0%, #0f172a 50%, #020617 100%)', color: '#f1f5f9' }}>
       <style>{`
-        @keyframes pulse-glow {
-          0%, 100% { box-shadow: 0 0 10px rgba(16,185,129,0.3); }
-          50% { box-shadow: 0 0 25px rgba(16,185,129,0.6); }
-        }
-        .live-dot {
-          width: 8px; height: 8px; border-radius: 50%; background: #10b981;
-          animation: pulse-glow 2s infinite;
-        }
+        @keyframes pulse-glow { 0%,100%{box-shadow:0 0 10px rgba(16,185,129,0.3)} 50%{box-shadow:0 0 25px rgba(16,185,129,0.6)} }
+        .live-dot { width:8px;height:8px;border-radius:50%;background:#10b981;animation:pulse-glow 2s infinite; }
       `}</style>
 
-      {/* Header */}
       <div style={{ padding: '24px 20px 0', maxWidth: 1200, margin: '0 auto' }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 24 }}>
           <div>
-           <Link to="/dashboard" style={{ textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: 6, color: '#64748b', fontSize: 13, marginBottom: 16, padding: '6px 12px', background: 'rgba(255,255,255,0.05)', borderRadius: 8, border: '1px solid rgba(255,255,255,0.08)' }}>← Back to Dashboard</Link>
+            <Link to="/dashboard" style={{ textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: 6, color: '#64748b', fontSize: 13, marginBottom: 16, padding: '6px 12px', background: 'rgba(255,255,255,0.05)', borderRadius: 8, border: '1px solid rgba(255,255,255,0.08)' }}>← Back to Dashboard</Link>
             <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 4 }}>
               <div className="live-dot" />
               <span style={{ fontSize: 12, color: '#10b981', fontWeight: 700, letterSpacing: '0.1em' }}>LIVE ORCHARDS</span>
@@ -296,12 +244,11 @@ export default function BrowseOrchardsPage() {
             <p style={{ fontSize: 14, color: '#64748b', margin: '4px 0 0' }}>Every bestow plants a seed that changes a life 🌱</p>
           </div>
           <button onClick={fetchOrchards} disabled={loading} style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 10, padding: '10px 16px', color: '#94a3b8', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6 }}>
-            {loading ? <Loader2 style={{ width: 16, height: 16, animation: 'spin 1s linear infinite' }} /> : <RefreshCw style={{ width: 16, height: 16 }} />}
+            {loading ? <Loader2 style={{ width: 16, height: 16 }} /> : <RefreshCw style={{ width: 16, height: 16 }} />}
             Refresh
           </button>
         </div>
 
-        {/* Stats bar */}
         <div style={{ display: 'flex', gap: 12, marginBottom: 24, flexWrap: 'wrap' }}>
           {[
             { label: 'Active Orchards', value: orchards.length, icon: '🌳', color: '#10b981' },
@@ -318,82 +265,44 @@ export default function BrowseOrchardsPage() {
           ))}
         </div>
 
-        {/* Wandering Role Filter */}
         <div style={{ marginBottom: 16 }}>
           <div style={{ fontSize: 11, fontWeight: 700, color: '#64748b', letterSpacing: '0.1em', marginBottom: 8 }}>FILTER BY WANDERING ROLE</div>
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
             {WANDERING_ROLES.map(role => (
-              <motion.button
-                key={role.value}
-                whileTap={{ scale: 0.95 }}
-                onClick={() => setSelectedRole(role.value)}
-                style={{
-                  padding: '8px 14px', borderRadius: 20, border: 'none', cursor: 'pointer',
-                  fontWeight: 600, fontSize: 13,
-                  background: selectedRole === role.value ? 'linear-gradient(135deg, #10b981, #059669)' : 'rgba(255,255,255,0.05)',
-                  color: selectedRole === role.value ? '#fff' : '#94a3b8',
-                  boxShadow: selectedRole === role.value ? '0 4px 15px rgba(16,185,129,0.4)' : 'none',
-                  transition: 'all 0.2s',
-                }}
-              >
+              <motion.button key={role.value} whileTap={{ scale: 0.95 }} onClick={() => setSelectedRole(role.value)}
+                style={{ padding: '8px 14px', borderRadius: 20, border: 'none', cursor: 'pointer', fontWeight: 600, fontSize: 13, background: selectedRole === role.value ? 'linear-gradient(135deg, #10b981, #059669)' : 'rgba(255,255,255,0.05)', color: selectedRole === role.value ? '#fff' : '#94a3b8', boxShadow: selectedRole === role.value ? '0 4px 15px rgba(16,185,129,0.4)' : 'none', transition: 'all 0.2s' }}>
                 {role.emoji} {role.label}
               </motion.button>
             ))}
           </div>
         </div>
 
-        {/* Orchard Type Filter */}
         <div style={{ marginBottom: 20 }}>
           <div style={{ fontSize: 11, fontWeight: 700, color: '#64748b', letterSpacing: '0.1em', marginBottom: 8 }}>FILTER BY TYPE</div>
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
             {ORCHARD_TYPES.map(type => (
-              <motion.button
-                key={type.value}
-                whileTap={{ scale: 0.95 }}
-                onClick={() => setSelectedType(type.value)}
-                style={{
-                  padding: '8px 14px', borderRadius: 20, border: `1px solid ${selectedType === type.value ? (type.color || '#10b981') : 'rgba(255,255,255,0.08)'}`,
-                  cursor: 'pointer', fontWeight: 600, fontSize: 13,
-                  background: selectedType === type.value ? `${type.color || '#10b981'}22` : 'rgba(255,255,255,0.03)',
-                  color: selectedType === type.value ? (type.color || '#10b981') : '#94a3b8',
-                  transition: 'all 0.2s',
-                }}
-              >
+              <motion.button key={type.value} whileTap={{ scale: 0.95 }} onClick={() => setSelectedType(type.value)}
+                style={{ padding: '8px 14px', borderRadius: 20, border: `1px solid ${selectedType === type.value ? (type.color || '#10b981') : 'rgba(255,255,255,0.08)'}`, cursor: 'pointer', fontWeight: 600, fontSize: 13, background: selectedType === type.value ? `${type.color || '#10b981'}22` : 'rgba(255,255,255,0.03)', color: selectedType === type.value ? (type.color || '#10b981') : '#94a3b8', transition: 'all 0.2s' }}>
                 {type.emoji && `${type.emoji} `}{type.label}
-                {type.desc && selectedType === type.value && <span style={{ fontSize: 10, marginLeft: 6, opacity: 0.7 }}>— {type.desc}</span>}
               </motion.button>
             ))}
           </div>
         </div>
 
-        {/* Sort */}
         <div style={{ display: 'flex', gap: 8, marginBottom: 24 }}>
-          {[
-            { label: '🕐 Newest', value: 'newest' },
-            { label: '🔥 Hottest', value: 'hottest' },
-            { label: '💚 Cheapest', value: 'cheapest' },
-          ].map(s => (
-            <button
-              key={s.value}
-              onClick={() => setSortBy(s.value)}
-              style={{
-                padding: '7px 14px', borderRadius: 10, border: 'none', cursor: 'pointer',
-                background: sortBy === s.value ? 'rgba(255,255,255,0.15)' : 'rgba(255,255,255,0.04)',
-                color: sortBy === s.value ? '#fff' : '#64748b',
-                fontWeight: 600, fontSize: 13, transition: 'all 0.2s',
-              }}
-            >
+          {[{ label: '🕐 Newest', value: 'newest' }, { label: '🔥 Hottest', value: 'hottest' }, { label: '💚 Cheapest', value: 'cheapest' }].map(s => (
+            <button key={s.value} onClick={() => setSortBy(s.value)}
+              style={{ padding: '7px 14px', borderRadius: 10, border: 'none', cursor: 'pointer', background: sortBy === s.value ? 'rgba(255,255,255,0.15)' : 'rgba(255,255,255,0.04)', color: sortBy === s.value ? '#fff' : '#64748b', fontWeight: 600, fontSize: 13, transition: 'all 0.2s' }}>
               {s.label}
             </button>
           ))}
         </div>
       </div>
 
-      {/* Grid */}
       <div style={{ maxWidth: 1200, margin: '0 auto', padding: '0 20px 40px' }}>
         {loading ? (
           <div style={{ display: 'flex', justifyContent: 'center', padding: '60px 0' }}>
-            <Loader2 style={{ width: 40, height: 40, color: '#10b981', animation: 'spin 1s linear infinite' }} />
+            <Loader2 style={{ width: 40, height: 40, color: '#10b981' }} />
           </div>
         ) : filtered.length === 0 ? (
           <div style={{ textAlign: 'center', padding: '60px 0' }}>
@@ -401,10 +310,8 @@ export default function BrowseOrchardsPage() {
             <h3 style={{ color: '#f1f5f9', fontSize: 20, marginBottom: 8 }}>No orchards found</h3>
             <p style={{ color: '#64748b' }}>Try a different filter or be the first to plant!</p>
             <Link to="/create-orchard">
-              <motion.button
-                whileHover={{ scale: 1.05 }}
-                style={{ marginTop: 20, padding: '12px 24px', background: 'linear-gradient(135deg, #10b981, #059669)', border: 'none', borderRadius: 12, color: '#fff', fontWeight: 700, fontSize: 15, cursor: 'pointer' }}
-              >
+              <motion.button whileHover={{ scale: 1.05 }}
+                style={{ marginTop: 20, padding: '12px 24px', background: 'linear-gradient(135deg, #10b981, #059669)', border: 'none', borderRadius: 12, color: '#fff', fontWeight: 700, fontSize: 15, cursor: 'pointer' }}>
                 🌱 Plant First Seed
               </motion.button>
             </Link>
@@ -416,9 +323,7 @@ export default function BrowseOrchardsPage() {
             </div>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: 20 }}>
               <AnimatePresence>
-                {filtered.map((orchard, i) => (
-                  <OrchardCard key={orchard.id} orchard={orchard} index={i} />
-                ))}
+                {filtered.map((orchard, i) => <OrchardCard key={orchard.id} orchard={orchard} index={i} />)}
               </AnimatePresence>
             </div>
           </>
