@@ -2,287 +2,426 @@ import { useState, useEffect, useMemo } from "react"
 import { Link } from "react-router-dom"
 import { useAuth } from "../hooks/useAuth"
 import { Button } from "../components/ui/button"
-import { Card, CardContent, CardHeader, CardTitle } from "../components/ui/card"
-import { Badge } from "../components/ui/badge"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../components/ui/select"
 import { Progress } from "../components/ui/progress"
-import { Heart, Eye, MapPin, Users, Grid, List, RefreshCw, Loader2, Sprout, User, TreePine, Edit, Trash2 } from "lucide-react"
+import { Heart, Eye, MapPin, Users, RefreshCw, Loader2, Sprout, User, Edit, Trash2, Zap, TrendingUp, Star } from "lucide-react"
 import { useCurrency } from "../hooks/useCurrency"
-import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from "@/components/ui/carousel"
 import { supabase } from "@/integrations/supabase/client"
 import { toast } from "sonner"
 import { processOrchardsUrls } from "../utils/urlUtils"
 import { GradientPlaceholder } from "@/components/ui/GradientPlaceholder"
+import { motion, AnimatePresence } from "framer-motion"
 
 const WANDERING_ROLES = [
-  { label: 'Wheel 🚗',      value: 'Wheel' },
-  { label: 'Hand 🤲',       value: 'Hand' },
-  { label: 'Whisperer 🌬️', value: 'Whisperer' },
-  { label: 'Pillow 🛏️',    value: 'Pillow' },
-  { label: 'Field 🌾',      value: 'Field' },
-  { label: 'Hearth 🔥',     value: 'Hearth' },
-  { label: 'Heart 💚',      value: 'Heart' },
-  { label: 'Forge ⚒️',      value: 'Forge' },
-  { label: 'Story 🎥',      value: 'Story' },
+  { label: 'All Roles', value: 'all', emoji: '🌿' },
+  { label: 'Wheel', value: 'Wheel', emoji: '🚗' },
+  { label: 'Hand', value: 'Hand', emoji: '🤲' },
+  { label: 'Whisperer', value: 'Whisperer', emoji: '🌬️' },
+  { label: 'Pillow', value: 'Pillow', emoji: '🛏️' },
+  { label: 'Field', value: 'Field', emoji: '🌾' },
+  { label: 'Hearth', value: 'Hearth', emoji: '🔥' },
+  { label: 'Heart', value: 'Heart', emoji: '💚' },
+  { label: 'Forge', value: 'Forge', emoji: '⚒️' },
+  { label: 'Story', value: 'Story', emoji: '🎥' },
 ]
+
+const ORCHARD_TYPES = [
+  { label: 'All Types', value: 'all' },
+  { label: 'Community', value: 'community', emoji: '🏘️', color: '#6366f1', desc: 'Tribe funds a need together' },
+  { label: 'Production', value: 'production', emoji: '🏭', color: '#f59e0b', desc: 'Fund a product into existence' },
+  { label: 'Single Seed', value: 'single_seed', emoji: '🌱', color: '#10b981', desc: 'One seed, one bestow' },
+]
+
+const TYPE_CONFIG = {
+  community: { color: '#6366f1', bg: 'rgba(99,102,241,0.15)', border: 'rgba(99,102,241,0.4)', emoji: '🏘️', label: 'Community Orchard' },
+  production: { color: '#f59e0b', bg: 'rgba(245,158,11,0.15)', border: 'rgba(245,158,11,0.4)', emoji: '🏭', label: 'Production Orchard' },
+  single_seed: { color: '#10b981', bg: 'rgba(16,185,129,0.15)', border: 'rgba(16,185,129,0.4)', emoji: '🌱', label: 'Single Seed' },
+  full_value: { color: '#10b981', bg: 'rgba(16,185,129,0.15)', border: 'rgba(16,185,129,0.4)', emoji: '🌱', label: 'Single Seed' },
+}
+
+function UrgencyBar({ percentage }) {
+  const isHot = percentage >= 70
+  const isWarm = percentage >= 40
+  const color = isHot ? '#ef4444' : isWarm ? '#f59e0b' : '#10b981'
+  const label = isHot ? '🔥 Almost Full!' : isWarm ? '⚡ Filling Fast' : '🌱 Just Started'
+  return (
+    <div className="space-y-1">
+      <div className="flex justify-between items-center">
+        <span style={{ fontSize: 11, color, fontWeight: 700 }}>{label}</span>
+        <span style={{ fontSize: 12, color: '#fff', fontWeight: 700 }}>{percentage}%</span>
+      </div>
+      <div style={{ height: 8, background: 'rgba(255,255,255,0.1)', borderRadius: 4, overflow: 'hidden' }}>
+        <motion.div
+          initial={{ width: 0 }}
+          animate={{ width: `${percentage}%` }}
+          transition={{ duration: 1, ease: 'easeOut' }}
+          style={{ height: '100%', background: `linear-gradient(90deg, ${color}, ${color}99)`, borderRadius: 4, boxShadow: `0 0 8px ${color}` }}
+        />
+      </div>
+    </div>
+  )
+}
+
+function OrchardCard({ orchard, index }) {
+  const typeConfig = TYPE_CONFIG[orchard.orchard_type] || TYPE_CONFIG.single_seed
+  const isHot = orchard.completion_percentage >= 70
+  const pocketPrice = orchard.pocket_bestow || orchard.pocket_price || 2
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 30 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ delay: index * 0.05, duration: 0.4 }}
+      whileHover={{ y: -4, scale: 1.01 }}
+      style={{
+        background: 'linear-gradient(135deg, #0f172a 0%, #1e293b 100%)',
+        border: `1px solid ${typeConfig.border}`,
+        borderRadius: 20,
+        overflow: 'hidden',
+        boxShadow: isHot ? `0 0 30px ${typeConfig.color}30` : '0 4px 20px rgba(0,0,0,0.3)',
+        display: 'flex',
+        flexDirection: 'column',
+      }}
+    >
+      {/* Image */}
+      <div style={{ position: 'relative', height: 200 }}>
+        {orchard.main_image ? (
+          <img src={orchard.main_image} alt={orchard.title} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+        ) : (
+          <GradientPlaceholder type="orchard" title={orchard.title} className="w-full h-full" size="lg" />
+        )}
+        <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, #0f172a 0%, transparent 60%)' }} />
+        
+        {/* Type Badge */}
+        <div style={{
+          position: 'absolute', top: 12, left: 12,
+          background: typeConfig.bg, border: `1px solid ${typeConfig.border}`,
+          borderRadius: 20, padding: '4px 10px',
+          display: 'flex', alignItems: 'center', gap: 5,
+          backdropFilter: 'blur(8px)'
+        }}>
+          <span style={{ fontSize: 14 }}>{typeConfig.emoji}</span>
+          <span style={{ fontSize: 11, fontWeight: 700, color: typeConfig.color }}>{typeConfig.label}</span>
+        </div>
+
+        {/* Hot badge */}
+        {isHot && (
+          <motion.div
+            animate={{ scale: [1, 1.1, 1] }}
+            transition={{ duration: 1.5, repeat: Infinity }}
+            style={{
+              position: 'absolute', top: 12, right: 12,
+              background: 'rgba(239,68,68,0.9)', borderRadius: 20,
+              padding: '4px 10px', display: 'flex', alignItems: 'center', gap: 4
+            }}
+          >
+            <span style={{ fontSize: 10, fontWeight: 800, color: '#fff' }}>🔥 HOT</span>
+          </motion.div>
+        )}
+
+        {/* Role badge bottom left */}
+        <div style={{ position: 'absolute', bottom: 12, left: 12 }}>
+          <span style={{
+            background: 'rgba(0,0,0,0.7)', borderRadius: 12, padding: '3px 8px',
+            fontSize: 11, color: '#94a3b8', backdropFilter: 'blur(4px)'
+          }}>
+            {WANDERING_ROLES.find(r => r.value === orchard.category)?.emoji} {orchard.category}
+          </span>
+        </div>
+      </div>
+
+      {/* Content */}
+      <div style={{ padding: '16px', flex: 1, display: 'flex', flexDirection: 'column', gap: 12 }}>
+        <div>
+          <h3 style={{ fontSize: 16, fontWeight: 700, color: '#f1f5f9', marginBottom: 4, lineHeight: 1.3 }}>{orchard.title}</h3>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12, fontSize: 12, color: '#64748b' }}>
+            <span>👤 {orchard.grower_name}</span>
+            {orchard.location && <span>📍 {orchard.location}</span>}
+          </div>
+        </div>
+
+        <p style={{ fontSize: 13, color: '#94a3b8', lineHeight: 1.5, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
+          {orchard.description}
+        </p>
+
+        <UrgencyBar percentage={orchard.completion_percentage} />
+
+        {/* Stats */}
+        <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12 }}>
+          <div style={{ textAlign: 'center' }}>
+            <div style={{ color: '#94a3b8' }}>Pocket</div>
+            <div style={{ color: typeConfig.color, fontWeight: 700, fontSize: 15 }}>${pocketPrice}</div>
+          </div>
+          <div style={{ textAlign: 'center' }}>
+            <div style={{ color: '#94a3b8' }}>Pockets Left</div>
+            <div style={{ color: '#f1f5f9', fontWeight: 700, fontSize: 15 }}>
+              {Math.max(0, (orchard.total_pockets || 0) - (orchard.filled_pockets || 0))}
+            </div>
+          </div>
+          <div style={{ textAlign: 'center' }}>
+            <div style={{ color: '#94a3b8' }}>Supporters</div>
+            <div style={{ color: '#f1f5f9', fontWeight: 700, fontSize: 15 }}>{orchard.supporters || 0}</div>
+          </div>
+          <div style={{ textAlign: 'center' }}>
+            <div style={{ color: '#94a3b8' }}>Views</div>
+            <div style={{ color: '#f1f5f9', fontWeight: 700, fontSize: 15 }}>{orchard.views || 0}</div>
+          </div>
+        </div>
+
+        {/* Bestow Button */}
+        <Link to={`/animated-orchard/${orchard.id}`} style={{ textDecoration: 'none' }}>
+          <motion.button
+            whileHover={{ scale: 1.03 }}
+            whileTap={{ scale: 0.97 }}
+            style={{
+              width: '100%', padding: '14px 0',
+              background: `linear-gradient(135deg, ${typeConfig.color}, ${typeConfig.color}99)`,
+              border: 'none', borderRadius: 12, color: '#fff',
+              fontWeight: 800, fontSize: 15, cursor: 'pointer',
+              display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+              boxShadow: `0 4px 20px ${typeConfig.color}40`,
+            }}
+          >
+            <Heart style={{ width: 18, height: 18 }} />
+            Bestow from ${pocketPrice}
+          </motion.button>
+        </Link>
+
+        {/* Owner actions */}
+        {orchard.isOwner && (
+          <div style={{ display: 'flex', gap: 8 }}>
+            <Link to={`/edit-orchard/${orchard.id}`} style={{ flex: 1, textDecoration: 'none' }}>
+              <button style={{ width: '100%', padding: '8px 0', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 8, color: '#94a3b8', fontSize: 12, cursor: 'pointer' }}>
+                ✏️ Edit
+              </button>
+            </Link>
+            <button
+              onClick={orchard.onDelete}
+              style={{ flex: 1, padding: '8px 0', background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.2)', borderRadius: 8, color: '#ef4444', fontSize: 12, cursor: 'pointer' }}
+            >
+              🗑️ Delete
+            </button>
+          </div>
+        )}
+      </div>
+    </motion.div>
+  )
+}
 
 export default function BrowseOrchardsPage() {
   const { user } = useAuth()
   const { formatAmount } = useCurrency()
   const [orchards, setOrchards] = useState([])
   const [loading, setLoading] = useState(false)
-  const [error, setError] = useState(null)
   const [selectedRole, setSelectedRole] = useState("all")
+  const [selectedType, setSelectedType] = useState("all")
   const [sortBy, setSortBy] = useState("newest")
-  const [viewMode, setViewMode] = useState("grid")
 
   const fetchOrchards = async () => {
     try {
       setLoading(true)
-      setError(null)
       const { data, error } = await supabase
         .from('orchards')
         .select(`*, profiles:profile_id (first_name, last_name, display_name, location)`)
         .eq('status', 'active')
         .order('created_at', { ascending: false })
-      if (error) { setError('Failed to load orchards'); return }
+      if (error) throw error
       setOrchards(data || [])
     } catch (err) {
-      setError('Failed to load orchards')
+      toast.error('Failed to load orchards')
     } finally {
       setLoading(false)
     }
   }
 
-  const deleteOrchard = async (id) => {
-    try {
-      const { error } = await supabase.from('orchards').delete().eq('id', id)
-      if (error) throw error
-      return { success: true }
-    } catch (err) {
-      return { success: false, error: err.message }
-    }
-  }
-
   useEffect(() => { fetchOrchards() }, [])
 
-  const handleDeleteOrchard = async (orchardId) => {
-    if (!window.confirm('Are you sure you want to delete this orchard?')) return
-    const result = await deleteOrchard(orchardId)
-    if (result.success) { toast.success('Orchard deleted'); fetchOrchards() }
-    else toast.error(result.error || 'Failed to delete')
+  const handleDelete = async (orchardId) => {
+    if (!window.confirm('Delete this orchard?')) return
+    const { error } = await supabase.from('orchards').delete().eq('id', orchardId)
+    if (error) toast.error('Failed to delete')
+    else { toast.success('Deleted'); fetchOrchards() }
   }
 
-  const processedOrchards = useMemo(() => {
+  const processed = useMemo(() => {
     const withUrls = processOrchardsUrls(orchards)
-    return withUrls.map(o => ({
-      ...o,
-      completion_percentage: o.total_pockets
-        ? Math.round((o.filled_pockets / ((o.intended_pockets && o.intended_pockets > 1) ? o.intended_pockets : o.total_pockets)) * 100)
-        : 0,
-      raised_amount: (o.filled_pockets || 0) * (o.pocket_price || 0),
-      goal_amount: ((o.intended_pockets && o.intended_pockets > 1) ? o.intended_pockets : o.total_pockets || 0) * (o.pocket_price || 0),
-      grower_name: o.profiles?.display_name || `${o.profiles?.first_name || ''} ${o.profiles?.last_name || ''}`.trim() || 'Anonymous Sower',
-      main_image: o.images?.[0] || null
-    }))
-  }, [orchards])
-
-  const filteredOrchards = useMemo(() => {
-    let results = processedOrchards
-    if (selectedRole !== "all") results = results.filter(o => o.category === selectedRole)
-    results.sort((a, b) => {
-      switch (sortBy) {
-        case 'newest': return new Date(b.created_at) - new Date(a.created_at)
-        case 'oldest': return new Date(a.created_at) - new Date(b.created_at)
-        case 'progress': return (b.completion_percentage || 0) - (a.completion_percentage || 0)
-        case 'amount': return (b.goal_amount || 0) - (a.goal_amount || 0)
-        default: return 0
+    return withUrls.map(o => {
+      const total = (o.intended_pockets && o.intended_pockets > 1) ? o.intended_pockets : o.total_pockets || 1
+      return {
+        ...o,
+        completion_percentage: Math.min(100, Math.round(((o.filled_pockets || 0) / total) * 100)),
+        grower_name: o.profiles?.display_name || `${o.profiles?.first_name || ''} ${o.profiles?.last_name || ''}`.trim() || 'Anonymous Sower',
+        main_image: o.images?.[0] || null,
+        isOwner: user && o.user_id === user.id,
+        onDelete: () => handleDelete(o.id),
       }
     })
-    return results
-  }, [processedOrchards, selectedRole, sortBy])
+  }, [orchards, user])
 
-  const OrchardCard = ({ orchard }) => (
-    <Card className="bg-white/90 backdrop-blur-sm border-nav-community/30 hover:shadow-xl transition-all flex flex-col h-full">
-      <div className="relative">
-        {orchard.main_image ? (
-          <img src={orchard.main_image} alt={orchard.title} className="w-full h-48 object-cover rounded-t-lg" />
-        ) : (
-          <GradientPlaceholder type="orchard" title={orchard.title} className="w-full h-48 rounded-t-lg" size="lg" />
-        )}
-        <div className="absolute top-4 right-4">
-          <Badge className="bg-emerald-500/90 text-white border-0">
-            {WANDERING_ROLES.find(r => r.value === orchard.category)?.label || orchard.category}
-          </Badge>
-        </div>
-      </div>
-      <CardHeader className="pb-4">
-        <CardTitle className="text-lg text-green-700 mb-2 line-clamp-2">{orchard.title}</CardTitle>
-        <div className="flex items-center space-x-4 text-sm text-green-600">
-          <span className="flex items-center"><User className="h-4 w-4 mr-1" />{orchard.grower_name}</span>
-          {orchard.location && <span className="flex items-center"><MapPin className="h-4 w-4 mr-1" />{orchard.location}</span>}
-        </div>
-      </CardHeader>
-      <CardContent className="flex-1 flex flex-col">
-        <div className="space-y-4 flex-1">
-          <p className="text-green-600 text-sm line-clamp-3">{orchard.description}</p>
-          <div>
-            <div className="flex items-center justify-between mb-2">
-              <span className="text-sm text-green-600">Progress</span>
-              <span className="text-sm font-medium text-green-700">{orchard.completion_percentage}%</span>
-            </div>
-            <Progress value={orchard.completion_percentage} className="h-2" />
-          </div>
-          <div className="grid grid-cols-2 gap-4 text-sm">
-            <div><span className="text-green-600">Raised:</span><p className="font-medium text-green-700">{formatAmount(orchard.raised_amount)}</p></div>
-            <div><span className="text-green-600">Goal:</span><p className="font-medium text-green-700">{formatAmount(orchard.goal_amount)}</p></div>
-          </div>
-          <div className="flex items-center justify-between text-sm text-green-500">
-            <span className="flex items-center"><Eye className="h-4 w-4 mr-1" />{orchard.views || 0} views</span>
-            <span className="flex items-center"><Users className="h-4 w-4 mr-1" />{orchard.supporters || 0} supporters</span>
-          </div>
-          <div className="flex gap-2 pt-2 mt-auto">
-            <Link to={`/animated-orchard/${orchard.id}`} className="flex-1">
-              <Button className="w-full text-white shadow-lg font-medium" style={{ background: 'linear-gradient(135deg, #3b82f6 0%, #60a5fa 50%, #8b5cf6 100%)', border: '2px solid #1e40af' }}>
-                <Heart className="h-4 w-4 mr-2" />Bestow into this Orchard
-              </Button>
-            </Link>
-          </div>
-          {user && orchard.user_id === user.id && (
-            <div className="flex flex-wrap gap-2 pt-2 border-t border-nav-community/20 mt-2">
-              <Link to={`/edit-orchard/${orchard.id}`} className="flex-1 min-w-[100px]">
-                <Button variant="outline" size="sm" className="w-full border-nav-community/30 text-green-700 hover:bg-nav-community/10">
-                  <Edit className="h-4 w-4 mr-1" />Edit
-                </Button>
-              </Link>
-              <Button variant="outline" size="sm" onClick={() => handleDeleteOrchard(orchard.id)} className="border-destructive/30 text-destructive hover:bg-destructive/10 flex-1 min-w-[100px]">
-                <Trash2 className="h-4 w-4 mr-1" />Delete
-              </Button>
-            </div>
-          )}
-        </div>
-      </CardContent>
-    </Card>
-  )
+  const filtered = useMemo(() => {
+    let results = processed
+    if (selectedRole !== 'all') results = results.filter(o => o.category === selectedRole)
+    if (selectedType !== 'all') results = results.filter(o => o.orchard_type === selectedType)
+    results.sort((a, b) => {
+      if (sortBy === 'newest') return new Date(b.created_at) - new Date(a.created_at)
+      if (sortBy === 'hottest') return b.completion_percentage - a.completion_percentage
+      if (sortBy === 'cheapest') return (a.pocket_bestow || a.pocket_price || 0) - (b.pocket_bestow || b.pocket_price || 0)
+      return 0
+    })
+    return results
+  }, [processed, selectedRole, selectedType, sortBy])
 
   return (
-    <div className="min-h-screen relative pb-24" style={{ backgroundColor: '#001f3f' }}>
-      <div className="fixed top-0 left-0 w-full h-full bg-black/30 z-10"></div>
-      <div className="relative z-20">
-        {/* Header */}
-        <div className="max-w-4xl mx-auto p-8 rounded-2xl border shadow-2xl mb-8 mt-4 bg-white/90">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-6">
-              <div className="w-20 h-20 rounded-full overflow-hidden border-4 border-nav-community shadow-lg">
-                {user?.avatar_url ? (
-                  <img src={user.avatar_url} alt="Profile" className="w-full h-full object-cover" />
-                ) : (
-                  <div className="w-full h-full bg-gradient-to-br from-nav-community to-nav-community/80 flex items-center justify-center">
-                    <User className="h-10 w-10 text-green-700" />
-                  </div>
-                )}
-              </div>
-              <div>
-                <h1 className="text-3xl font-bold px-8 py-4 rounded-lg" style={{ color: 'hsl(137, 80%, 65%)', textShadow: '2px 2px 4px hsl(137, 80%, 45%)' }}>
-                  Community Orchards
-                </h1>
-                <p className="text-lg" style={{ color: '#0b6623' }}>Every bestowal helps dreams grow! 🌱</p>
-                <p className="text-sm mt-1" style={{ color: '#0b6623' }}>Payment Method: USDC (USD Coin)</p>
-              </div>
+    <div style={{ minHeight: '100vh', background: 'linear-gradient(135deg, #020617 0%, #0f172a 50%, #020617 100%)', color: '#f1f5f9' }}>
+      <style>{`
+        @keyframes pulse-glow {
+          0%, 100% { box-shadow: 0 0 10px rgba(16,185,129,0.3); }
+          50% { box-shadow: 0 0 25px rgba(16,185,129,0.6); }
+        }
+        .live-dot {
+          width: 8px; height: 8px; border-radius: 50%; background: #10b981;
+          animation: pulse-glow 2s infinite;
+        }
+      `}</style>
+
+      {/* Header */}
+      <div style={{ padding: '24px 20px 0', maxWidth: 1200, margin: '0 auto' }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 24 }}>
+          <div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 4 }}>
+              <div className="live-dot" />
+              <span style={{ fontSize: 12, color: '#10b981', fontWeight: 700, letterSpacing: '0.1em' }}>LIVE ORCHARDS</span>
             </div>
-            <Button variant="outline" onClick={fetchOrchards} disabled={loading} className="border-nav-community text-green-700 hover:bg-nav-community/10">
-              {loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <RefreshCw className="mr-2 h-4 w-4" />}
-              Refresh
-            </Button>
+            <h1 style={{ fontSize: 28, fontWeight: 800, color: '#f1f5f9', margin: 0 }}>Community Orchards</h1>
+            <p style={{ fontSize: 14, color: '#64748b', margin: '4px 0 0' }}>Every bestow plants a seed that changes a life 🌱</p>
           </div>
+          <button onClick={fetchOrchards} disabled={loading} style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 10, padding: '10px 16px', color: '#94a3b8', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6 }}>
+            {loading ? <Loader2 style={{ width: 16, height: 16, animation: 'spin 1s linear infinite' }} /> : <RefreshCw style={{ width: 16, height: 16 }} />}
+            Refresh
+          </button>
         </div>
 
-        {/* Wandering Role Filter Tabs */}
-        <div className="max-w-6xl mx-auto px-4 mb-6">
-          <div className="flex flex-wrap gap-2 justify-center">
-            <button
-              onClick={() => setSelectedRole('all')}
-              className={`px-4 py-2 rounded-full text-sm font-semibold transition-all ${selectedRole === 'all' ? 'bg-emerald-500 text-white' : 'bg-white/20 text-white hover:bg-white/30'}`}
-            >
-              🌿 All Roles
-            </button>
+        {/* Stats bar */}
+        <div style={{ display: 'flex', gap: 12, marginBottom: 24, flexWrap: 'wrap' }}>
+          {[
+            { label: 'Active Orchards', value: orchards.length, icon: '🌳', color: '#10b981' },
+            { label: 'Hot (70%+)', value: processed.filter(o => o.completion_percentage >= 70).length, icon: '🔥', color: '#ef4444' },
+            { label: 'Min Bestow', value: '$2', icon: '💚', color: '#6366f1' },
+          ].map(stat => (
+            <div key={stat.label} style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 12, padding: '10px 16px', display: 'flex', alignItems: 'center', gap: 8 }}>
+              <span style={{ fontSize: 18 }}>{stat.icon}</span>
+              <div>
+                <div style={{ fontSize: 18, fontWeight: 800, color: stat.color }}>{stat.value}</div>
+                <div style={{ fontSize: 11, color: '#64748b' }}>{stat.label}</div>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {/* Wandering Role Filter */}
+        <div style={{ marginBottom: 16 }}>
+          <div style={{ fontSize: 11, fontWeight: 700, color: '#64748b', letterSpacing: '0.1em', marginBottom: 8 }}>FILTER BY WANDERING ROLE</div>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
             {WANDERING_ROLES.map(role => (
-              <button
+              <motion.button
                 key={role.value}
+                whileTap={{ scale: 0.95 }}
                 onClick={() => setSelectedRole(role.value)}
-                className={`px-4 py-2 rounded-full text-sm font-semibold transition-all ${selectedRole === role.value ? 'bg-emerald-500 text-white' : 'bg-white/20 text-white hover:bg-white/30'}`}
+                style={{
+                  padding: '8px 14px', borderRadius: 20, border: 'none', cursor: 'pointer',
+                  fontWeight: 600, fontSize: 13,
+                  background: selectedRole === role.value ? 'linear-gradient(135deg, #10b981, #059669)' : 'rgba(255,255,255,0.05)',
+                  color: selectedRole === role.value ? '#fff' : '#94a3b8',
+                  boxShadow: selectedRole === role.value ? '0 4px 15px rgba(16,185,129,0.4)' : 'none',
+                  transition: 'all 0.2s',
+                }}
               >
-                {role.label}
-              </button>
+                {role.emoji} {role.label}
+              </motion.button>
             ))}
           </div>
         </div>
 
-        {/* Sort + View Controls */}
-        <div className="max-w-6xl mx-auto px-4 mb-6 flex justify-between items-center">
-          <Select value={sortBy} onValueChange={setSortBy}>
-            <SelectTrigger className="w-44 bg-white/90">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="newest">Newest First</SelectItem>
-              <SelectItem value="oldest">Oldest First</SelectItem>
-              <SelectItem value="progress">Most Progress</SelectItem>
-              <SelectItem value="amount">Highest Amount</SelectItem>
-            </SelectContent>
-          </Select>
-          <div className="flex gap-2">
-            <Button variant={viewMode === "grid" ? "default" : "outline"} size="sm" onClick={() => setViewMode("grid")} className="bg-white/20 text-white border-white/30">
-              <Grid className="h-4 w-4" />
-            </Button>
-            <Button variant={viewMode === "list" ? "default" : "outline"} size="sm" onClick={() => setViewMode("list")} className="bg-white/20 text-white border-white/30">
-              <List className="h-4 w-4" />
-            </Button>
+        {/* Orchard Type Filter */}
+        <div style={{ marginBottom: 20 }}>
+          <div style={{ fontSize: 11, fontWeight: 700, color: '#64748b', letterSpacing: '0.1em', marginBottom: 8 }}>FILTER BY TYPE</div>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+            {ORCHARD_TYPES.map(type => (
+              <motion.button
+                key={type.value}
+                whileTap={{ scale: 0.95 }}
+                onClick={() => setSelectedType(type.value)}
+                style={{
+                  padding: '8px 14px', borderRadius: 20, border: `1px solid ${selectedType === type.value ? (type.color || '#10b981') : 'rgba(255,255,255,0.08)'}`,
+                  cursor: 'pointer', fontWeight: 600, fontSize: 13,
+                  background: selectedType === type.value ? `${type.color || '#10b981'}22` : 'rgba(255,255,255,0.03)',
+                  color: selectedType === type.value ? (type.color || '#10b981') : '#94a3b8',
+                  transition: 'all 0.2s',
+                }}
+              >
+                {type.emoji && `${type.emoji} `}{type.label}
+                {type.desc && selectedType === type.value && <span style={{ fontSize: 10, marginLeft: 6, opacity: 0.7 }}>— {type.desc}</span>}
+              </motion.button>
+            ))}
           </div>
         </div>
 
-        <div className="container mx-auto px-4 pb-32">
-          {loading ? (
-            <div className="flex justify-center items-center py-12 bg-white/80 rounded-2xl mx-auto max-w-md">
-              <Loader2 className="h-8 w-8 animate-spin text-green-600" />
-              <span className="ml-2 text-green-700">Loading orchards...</span>
-            </div>
-          ) : error ? (
-            <Card className="bg-red-50/90 border-red-200">
-              <CardContent className="p-8 text-center">
-                <p className="text-red-600 mb-4">{error}</p>
-                <Button onClick={fetchOrchards} variant="outline" className="border-red-300 text-red-600">Try Again</Button>
-              </CardContent>
-            </Card>
-          ) : filteredOrchards.length === 0 ? (
-            <Card className="bg-white/90 border-nav-community/30">
-              <CardContent className="p-12 text-center">
-                <Sprout className="h-16 w-16 mx-auto text-green-400 mb-4" />
-                <h3 className="text-xl font-semibold text-green-700 mb-2">No orchards found</h3>
-                <p className="text-green-600 mb-6">Try a different role filter</p>
-                <Link to="/create-orchard">
-                  <Button className="bg-nav-community text-green-700"><Sprout className="h-4 w-4 mr-2" />Plant First Seed</Button>
-                </Link>
-              </CardContent>
-            </Card>
-          ) : viewMode === "grid" ? (
-            <Carousel opts={{ align: "start", loop: true }} className="w-full pb-16">
-              <CarouselContent className="-ml-2 md:-ml-4">
-                {filteredOrchards.map(orchard => (
-                  <CarouselItem key={orchard.id} className="pl-2 md:pl-4 md:basis-1/2 lg:basis-1/3">
-                    <OrchardCard orchard={orchard} />
-                  </CarouselItem>
-                ))}
-              </CarouselContent>
-              <CarouselPrevious className="absolute left-2 top-1/2 -translate-y-1/2 z-30 h-9 w-9 rounded-full bg-background/90 border border-primary shadow-md" />
-              <CarouselNext className="absolute right-2 top-1/2 -translate-y-1/2 z-30 h-9 w-9 rounded-full bg-background/90 border border-primary shadow-md" />
-            </Carousel>
-          ) : (
-            <div className="grid gap-6 pb-16 grid-cols-1 max-w-4xl mx-auto">
-              {filteredOrchards.map(orchard => <OrchardCard key={orchard.id} orchard={orchard} />)}
-            </div>
-          )}
+        {/* Sort */}
+        <div style={{ display: 'flex', gap: 8, marginBottom: 24 }}>
+          {[
+            { label: '🕐 Newest', value: 'newest' },
+            { label: '🔥 Hottest', value: 'hottest' },
+            { label: '💚 Cheapest', value: 'cheapest' },
+          ].map(s => (
+            <button
+              key={s.value}
+              onClick={() => setSortBy(s.value)}
+              style={{
+                padding: '7px 14px', borderRadius: 10, border: 'none', cursor: 'pointer',
+                background: sortBy === s.value ? 'rgba(255,255,255,0.15)' : 'rgba(255,255,255,0.04)',
+                color: sortBy === s.value ? '#fff' : '#64748b',
+                fontWeight: 600, fontSize: 13, transition: 'all 0.2s',
+              }}
+            >
+              {s.label}
+            </button>
+          ))}
         </div>
+      </div>
+
+      {/* Grid */}
+      <div style={{ maxWidth: 1200, margin: '0 auto', padding: '0 20px 40px' }}>
+        {loading ? (
+          <div style={{ display: 'flex', justifyContent: 'center', padding: '60px 0' }}>
+            <Loader2 style={{ width: 40, height: 40, color: '#10b981', animation: 'spin 1s linear infinite' }} />
+          </div>
+        ) : filtered.length === 0 ? (
+          <div style={{ textAlign: 'center', padding: '60px 0' }}>
+            <div style={{ fontSize: 48, marginBottom: 16 }}>🌱</div>
+            <h3 style={{ color: '#f1f5f9', fontSize: 20, marginBottom: 8 }}>No orchards found</h3>
+            <p style={{ color: '#64748b' }}>Try a different filter or be the first to plant!</p>
+            <Link to="/create-orchard">
+              <motion.button
+                whileHover={{ scale: 1.05 }}
+                style={{ marginTop: 20, padding: '12px 24px', background: 'linear-gradient(135deg, #10b981, #059669)', border: 'none', borderRadius: 12, color: '#fff', fontWeight: 700, fontSize: 15, cursor: 'pointer' }}
+              >
+                🌱 Plant First Seed
+              </motion.button>
+            </Link>
+          </div>
+        ) : (
+          <>
+            <div style={{ fontSize: 13, color: '#64748b', marginBottom: 16 }}>
+              Showing <span style={{ color: '#10b981', fontWeight: 700 }}>{filtered.length}</span> orchards
+            </div>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: 20 }}>
+              <AnimatePresence>
+                {filtered.map((orchard, i) => (
+                  <OrchardCard key={orchard.id} orchard={orchard} index={i} />
+                ))}
+              </AnimatePresence>
+            </div>
+          </>
+        )}
       </div>
     </div>
   )
