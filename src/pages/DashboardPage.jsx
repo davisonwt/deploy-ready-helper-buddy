@@ -385,11 +385,10 @@ export default function SeedFlowDashboard() {
               </div>
             </div>
             <div style={styles.keeperBadge}>
-              <div style={styles.keeperDot}>S</div>
-              <span style={{ fontSize: 13, color: '#9ca3af' }}>Keeper</span>
+             <div style={styles.keeperDot}>{displayName?.charAt(0)?.toUpperCase() || 'S'}</div>
+              <span style={{ fontSize: 13, color: '#9ca3af' }}>{profile?.membership_tier || 'Elder'}</span> 
             </div>
           </div>
-
           <nav style={styles.nav}>
             {NAV.map(item => {
               const isActive = activePath === item.path
