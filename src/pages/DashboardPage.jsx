@@ -49,7 +49,7 @@ const SEEDS = [
     type: 'FEAST',
     status: 'Counting',
     activity: 'Omer 8 of 50',
-    description: 'Walking toward Shavu\'ot',
+    description: "Walking toward Shavu'ot",
     image: 'https://images.unsplash.com/photo-1518531933037-91b2f5f229cc?w=800&q=80',
     color: '#92400e',
     glow: '#f59e0b',
@@ -71,7 +71,7 @@ const GROWTH_TIPS = [
   'Your seeds are in motion. Something is growing.',
   'The tribe moves when you move. Plant something today.',
   'Every bestowal is a seed. Every seed becomes a harvest.',
-  'You\'ve entered SeedFlow. Things are already happening.',
+  "You've entered SeedFlow. Things are already happening.",
 ]
 
 export default function SeedFlowDashboard() {
@@ -89,7 +89,7 @@ export default function SeedFlowDashboard() {
 
   useEffect(() => {
     if (!user) return
-    supabase.from('profiles').select('first_name, last_name, avatar_url').eq('user_id', user.id).single()
+    supabase.from('profiles').select('first_name, last_name, avatar_url, membership_tier').eq('user_id', user.id).single()
       .then(({ data }) => data && setProfile(data))
     supabase.from('sowers').select('*', { count: 'exact', head: true }).eq('is_verified', true)
       .then(({ count }) => setStats(s => ({ ...s, sowers: count || 4 })))
@@ -130,12 +130,6 @@ export default function SeedFlowDashboard() {
     },
     logoRow: {
       display: 'flex', alignItems: 'center', gap: 10, marginBottom: 10,
-    },
-    logoIcon: {
-      width: 36, height: 36, borderRadius: 9,
-      background: 'linear-gradient(135deg, #22c55e 0%, #16a34a 100%)',
-      display: 'flex', alignItems: 'center', justifyContent: 'center',
-      fontSize: 17,
     },
     logoText: { fontWeight: 700, fontSize: 15, color: '#fff', lineHeight: 1.2 },
     logoSub: { fontSize: 11, color: '#4b5563', lineHeight: 1 },
@@ -378,15 +372,15 @@ export default function SeedFlowDashboard() {
         <div style={styles.sidebar}>
           <div style={styles.logoArea}>
             <div style={styles.logoRow}>
-             <img src="/favicon.png" alt="S2G" style={{ width: 36, height: 36, borderRadius: 9, objectFit: 'cover' }} />
+              <img src="/favicon.png" alt="S2G" style={{ width: 36, height: 36, borderRadius: 9, objectFit: 'cover' }} />
               <div>
                 <div style={styles.logoText}>Sow2Grow</div>
                 <div style={styles.logoSub}>364yhvh community farm</div>
               </div>
             </div>
             <div style={styles.keeperBadge}>
-             <div style={styles.keeperDot}>{displayName?.charAt(0)?.toUpperCase() || 'S'}</div>
-              <span style={{ fontSize: 13, color: '#9ca3af' }}>{profile?.membership_tier || 'Elder'}</span> 
+              <div style={styles.keeperDot}>{displayName?.charAt(0)?.toUpperCase() || 'S'}</div>
+              <span style={{ fontSize: 13, color: '#9ca3af' }}>{profile?.membership_tier || 'Sower'}</span>
             </div>
           </div>
           <nav style={styles.nav}>
@@ -421,7 +415,6 @@ export default function SeedFlowDashboard() {
 
         {/* CENTER */}
         <div style={styles.center}>
-          {/* Header */}
           <div style={styles.header}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
               <div style={styles.avatar}>
@@ -430,9 +423,7 @@ export default function SeedFlowDashboard() {
                   : '🧑'}
               </div>
               <div>
-                <div style={styles.greeting}>
-                  🌊 Welcome back — your seeds are in motion
-                </div>
+                <div style={styles.greeting}>🌊 Welcome back — your seeds are in motion</div>
                 <div style={styles.greetingSub}>
                   Shalom, {displayName} · Year {sacredDate.year} · Month {sacredDate.month} · Day {sacredDate.day}
                 </div>
@@ -446,26 +437,22 @@ export default function SeedFlowDashboard() {
             </div>
           </div>
 
-          {/* Content */}
           <div style={styles.content}>
             <div style={styles.sectionLabel}>
               <span>Seeds in motion</span>
               <span style={styles.liveTag}>LIVE</span>
             </div>
 
-            {/* Seed Card */}
             <div style={{ ...styles.seedCard }} className="seed-card-anim">
               <img src={activeSeed.image} alt="" style={styles.seedImg} />
               <div style={styles.seedOverlay} />
               <div style={styles.seedCounter}>{activeIdx + 1}/{SEEDS.length}</div>
               <div style={styles.seedType}>{activeSeed.type}</div>
-
               <div style={styles.seedActivity}>
                 <span style={styles.activityDot} />
                 <span style={styles.activityText}>{activeSeed.activity}</span>
               </div>
               <div style={styles.seedDesc}>{activeSeed.description}</div>
-
               <div style={styles.seedBottom}>
                 <div style={styles.seedName}>{activeSeed.name}</div>
                 <div style={styles.seedStatus}>
@@ -483,7 +470,6 @@ export default function SeedFlowDashboard() {
               </div>
             </div>
 
-            {/* Dots */}
             <div style={styles.seedDots}>
               {SEEDS.map((_, i) => (
                 <div key={i} style={styles.dot(i === activeIdx)}
@@ -491,7 +477,6 @@ export default function SeedFlowDashboard() {
               ))}
             </div>
 
-            {/* Connect */}
             <Link to="/browse-orchards" style={{ textDecoration: 'none' }}>
               <button style={styles.connectBtn} className="connect-btn">
                 🌿 STEP INTO THE ORCHARD — FIND YOUR SEED
@@ -502,7 +487,6 @@ export default function SeedFlowDashboard() {
 
         {/* RIGHT PANEL */}
         <div style={styles.rightPanel}>
-          {/* Today */}
           <div style={styles.panelSection}>
             <div style={styles.panelTitle}>📅 TODAY</div>
             <div style={styles.dateYear}>Year {sacredDate.year}</div>
@@ -511,8 +495,6 @@ export default function SeedFlowDashboard() {
               Day 1 · Regular Day
             </div>
           </div>
-
-          {/* Omer */}
           <div style={styles.omerBadge}>
             <span style={{ fontSize: 18 }}>🌾</span>
             <div>
@@ -520,8 +502,6 @@ export default function SeedFlowDashboard() {
               <div style={styles.omerNext}>→ {sacredDate.nextFeast}</div>
             </div>
           </div>
-
-          {/* Growth */}
           <div style={styles.panelSection}>
             <div style={styles.panelTitle}>🌱 YOUR GROWTH</div>
             <div style={styles.growthCard}>
@@ -539,8 +519,6 @@ export default function SeedFlowDashboard() {
               ))}
             </div>
           </div>
-
-          {/* Tip */}
           <div style={styles.panelSection}>
             <div style={styles.panelTitle}>💡 SEEDFLOW TIP</div>
             <div style={styles.tipBox}>"{tip}"</div>
