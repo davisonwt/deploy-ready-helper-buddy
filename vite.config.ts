@@ -59,13 +59,16 @@ export default defineConfig(({ mode, command }) => ({
       'react-dom/client', 
       'react/jsx-runtime', 
       'react-router-dom', 
-      '@tanstack/react-query'
+      '@tanstack/react-query',
+      'scheduler',
     ],
     alias: {
       // Force single React instance
       'react': path.resolve(__dirname, './node_modules/react'),
       'react-dom': path.resolve(__dirname, './node_modules/react-dom'),
       'react/jsx-runtime': path.resolve(__dirname, './node_modules/react/jsx-runtime.js'),
+      'react-dom/client': path.resolve(__dirname, './node_modules/react-dom/client.js'),
+      'scheduler': path.resolve(__dirname, './node_modules/scheduler'),
       "@": path.resolve(__dirname, "./src"),
       // Add Node.js polyfills for browser
       buffer: 'buffer',
