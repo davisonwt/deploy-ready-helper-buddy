@@ -262,7 +262,7 @@ const App = () => (
               <Route path="/seed-submission" element={
                 <ProtectedRoute><Layout><SeedSubmissionPage /></Layout></ProtectedRoute>
               } />
-              <Route path="/364yhvh-orchards" element={
+              <Route path="/364yhvh-days" element={
                 <ProtectedRoute><Layout><YhvhOrchardsPage /></Layout></ProtectedRoute>
               } />
               <Route path="/grove-feed" element={
