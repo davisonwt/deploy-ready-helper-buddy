@@ -287,6 +287,7 @@ export default function BrowseOrchardsPage() {
       <div style={{ padding: '24px 20px 0', maxWidth: 1200, margin: '0 auto' }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 24 }}>
           <div>
+           <Link to="/dashboard" style={{ textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: 6, color: '#64748b', fontSize: 13, marginBottom: 16, padding: '6px 12px', background: 'rgba(255,255,255,0.05)', borderRadius: 8, border: '1px solid rgba(255,255,255,0.08)' }}>← Back to Dashboard</Link>
             <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 4 }}>
               <div className="live-dot" />
               <span style={{ fontSize: 12, color: '#10b981', fontWeight: 700, letterSpacing: '0.1em' }}>LIVE ORCHARDS</span>
