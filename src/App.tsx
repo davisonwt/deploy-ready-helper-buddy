@@ -128,7 +128,7 @@ const AdminPaymentsPage = lazy(() => import("./pages/AdminPaymentsPage"));
 const AuthDebugPage = lazy(() => import("./pages/AuthDebugPage"));
 const LiveSeedPage = lazy(() => import("./pages/LiveSeedPage"));
 const LearnSharePage = lazy(() => import("./pages/LearnSharePage"));
-
+const WanderingDirectoryPage = lazy(() => import("./pages/WanderingDirectoryPage"));
 import ProtectedRoute from "./components/ProtectedRoute";
 import { RequireVerification } from "./components/auth/RequireVerification";
 import Layout from "./components/Layout";
@@ -249,6 +249,8 @@ const App = () => (
               } />
               <Route path="/learn-share" element={
                 <ProtectedRoute><LearnSharePage /></ProtectedRoute>
+              } /><Route path="/wandering-directory" element={
+              <ProtectedRoute><WanderingDirectoryPage /></ProtectedRoute>
               } />
               <Route path="/tithing" element={
                 <ProtectedRoute><Layout><TithingPage /></Layout></ProtectedRoute>
