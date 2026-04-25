@@ -126,6 +126,7 @@ const AdminRadioPage = lazy(() => import("./pages/AdminRadioPage"));
 const AdminSeedsPage = lazy(() => import("./pages/AdminSeedsPage"));
 const AdminPaymentsPage = lazy(() => import("./pages/AdminPaymentsPage"));
 const AuthDebugPage = lazy(() => import("./pages/AuthDebugPage"));
+const LiveSeedPage = lazy(() => import("./pages/LiveSeedPage"));
 
 import ProtectedRoute from "./components/ProtectedRoute";
 import { RequireVerification } from "./components/auth/RequireVerification";
@@ -212,9 +213,9 @@ const App = () => (
               <Route path="/regrow-access" element={
                 <ProtectedRoute><RequireVerification><Layout><BrowseOrchardsPage /></Layout></RequireVerification></ProtectedRoute>
               } />
-             <Route path="/browse-orchards" element={
-               <ProtectedRoute><RequireVerification><BrowseOrchardsPage /></RequireVerification></ProtectedRoute>
-             } />
+              <Route path="/browse-orchards" element={
+                <ProtectedRoute><RequireVerification><BrowseOrchardsPage /></RequireVerification></ProtectedRoute>
+              } />
               <Route path="/orchards/:orchardId" element={
                 <ProtectedRoute><RequireVerification><Layout><OrchardPage /></Layout></RequireVerification></ProtectedRoute>
               } />
@@ -239,14 +240,12 @@ const App = () => (
               <Route path="/orchard-created" element={
                 <ProtectedRoute><Layout><OrchardCreatedPage /></Layout></ProtectedRoute>
               } />
-
-              {/* MY GARDEN - no Layout wrapper */}
               <Route path="/my-orchards" element={
-                <ProtectedRoute>
-                  <MyOrchardsPage />
-                </ProtectedRoute>
+                <ProtectedRoute><MyOrchardsPage /></ProtectedRoute>
               } />
-
+              <Route path="/live-seed/:orchardId" element={
+                <ProtectedRoute><LiveSeedPage /></ProtectedRoute>
+              } />
               <Route path="/tithing" element={
                 <ProtectedRoute><Layout><TithingPage /></Layout></ProtectedRoute>
               } />
