@@ -33,23 +33,7 @@ export default defineConfig(({ mode, command }) => ({
   build: {
     outDir: 'dist',
     sourcemap: true, // For error tracking and debugging
-    rollupOptions: {
-      output: {
-        manualChunks: {
-          vendor: ['react', 'react-dom', '@tanstack/react-query'],
-          ui: ['@radix-ui/react-dialog', '@radix-ui/react-dropdown-menu', '@radix-ui/react-toast'],
-          supabase: ['@supabase/supabase-js', '@supabase/auth-helpers-react'],
-          solana: ['@solana/web3.js', '@solana/wallet-adapter-react'],
-          admin: [
-            './src/components/admin/EnhancedAnalyticsDashboard',
-            './src/components/admin/UserManagementDashboard',
-            './src/components/admin/ContentModerationDashboard'
-          ],
-          marketing: ['./src/components/marketing/CommissionDashboard'],
-          gamification: ['./src/components/gamification/GamificationDashboard'],
-        },
-      },
-    },
+    rollupOptions: {},
     minify: 'esbuild', // Use esbuild (built-in, faster than terser)
   },
   resolve: {
