@@ -234,7 +234,7 @@ export default function SeedFlowDashboard() {
       width: 260, minWidth: 260,
       background: '#0a0f1a',
       borderRight: '1px solid rgba(255,255,255,0.06)',
-      display: 'flex', flexDirection: 'column', height: '100vh',
+      display: 'flex', flexDirection: 'column', height: '100vh', paddingBottom: 70, overflowY: 'auto',
     },
     logoArea: {
       padding: '18px 14px 14px',
