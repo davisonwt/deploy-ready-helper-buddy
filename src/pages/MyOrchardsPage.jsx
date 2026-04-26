@@ -15,6 +15,7 @@ import { formatCurrency } from '../utils/formatters'
 import { GradientPlaceholder } from '@/components/ui/GradientPlaceholder'
 import { processOrchardsUrls } from '../utils/urlUtils'
 import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from '@/components/ui/carousel'
+import LivingButton from '../components/LivingButton'
 
 const WANDERING_ROLES = [
   { label: 'Wheel 🚗',      value: 'Wheel' },
@@ -106,7 +107,8 @@ export default function MyOrchardsPage() {
   }
 
   return (
-     <div style={{position:'fixed',inset:0,zIndex:9999,overflowY:'auto'}}>  <style>{`
+    <div style={{position:'fixed',inset:0,zIndex:9999,overflowY:'auto'}}>
+      <style>{`
         @keyframes gradient {
           0% { background-position: 0% 50%; }
           50% { background-position: 100% 50%; }
@@ -114,7 +116,6 @@ export default function MyOrchardsPage() {
         }
       `}</style>
 
-      {/* Animated Background */}
       <div className='fixed inset-0 z-0'>
         <div className='absolute inset-0' style={{
           background: 'linear-gradient(135deg, #10b981 0%, #059669 25%, #047857 50%, #065f46 75%, #064e3b 100%)',
@@ -140,7 +141,6 @@ export default function MyOrchardsPage() {
       </div>
 
       <div className='relative z-10'>
-        {/* Hero */}
         <div className='relative overflow-hidden border-b border-white/20 backdrop-blur-md bg-white/10'>
           <div className='relative container mx-auto px-4 py-16'>
             <motion.div
@@ -158,18 +158,18 @@ export default function MyOrchardsPage() {
                 Manage and tend to your growing seeds. Watch each one blossom into something meaningful.
               </p>
               <p className='text-white/70 text-sm mb-6'>
-                Payment Method: USDC (USD Coin) • Total Raised: {formatCurrency(getTotalRaised())}
+                Payment Method: USDC (USD Coin) · Total Raised: {formatCurrency(getTotalRaised())}
               </p>
               <div className='flex flex-wrap items-center justify-center gap-4'>
-                <Link to="/create-orchard">
-                  <Button size="lg" className='backdrop-blur-md bg-white/20 border-white/30 text-white hover:bg-white/30'>
-                    <Plus className="h-5 w-5 mr-2" />Sow New Seed
-                  </Button>
+                <Link to="/create-orchard" style={{ textDecoration: 'none', minWidth: 200 }}>
+                  <LivingButton variant="enter" height={50} borderRadius={12} fontSize={14} letterSpacing="1px">
+                    <Plus size={18} /> Sow New Seed
+                  </LivingButton>
                 </Link>
-                <Link to="/community-offering">
-                  <Button size="lg" variant="outline" className='backdrop-blur-md bg-white/20 border-white/30 text-white hover:bg-white/30'>
-                    <Sparkles className="h-5 w-5 mr-2" />AI Offering Generator
-                  </Button>
+                <Link to="/community-offering" style={{ textDecoration: 'none', minWidth: 200 }}>
+                  <LivingButton variant="share" height={50} borderRadius={12} fontSize={14} letterSpacing="1px">
+                    <Sparkles size={18} /> AI Offering Generator
+                  </LivingButton>
                 </Link>
               </div>
             </motion.div>
@@ -177,7 +177,6 @@ export default function MyOrchardsPage() {
         </div>
 
         <div className='container mx-auto px-4 py-8'>
-          {/* Stats */}
           <div className='grid grid-cols-1 md:grid-cols-3 gap-6 mb-8'>
             <Card className='backdrop-blur-md bg-white/20 border-white/30 shadow-2xl'>
               <CardContent className='p-6'>
@@ -214,7 +213,6 @@ export default function MyOrchardsPage() {
             </Card>
           </div>
 
-          {/* Filters */}
           <div className='mb-8 space-y-4'>
             <div className='flex justify-center'>
               <div className='min-w-[240px]'>
@@ -249,7 +247,6 @@ export default function MyOrchardsPage() {
             </div>
           </div>
 
-          {/* Seeds Grid */}
           <div className='backdrop-blur-md bg-white/20 border-white/30 shadow-2xl rounded-2xl p-6 md:p-8'>
             {userSeeds.length === 0 ? (
               <Card className='backdrop-blur-md bg-white/20 border-white/30 shadow-2xl'>
@@ -264,10 +261,10 @@ export default function MyOrchardsPage() {
                       : 'Start your journey by sowing your first seed'}
                   </p>
                   {statusFilter === 'all' && selectedRole === 'all' && (
-                    <Link to="/create-orchard">
-                      <Button className='backdrop-blur-md bg-white/20 border-white/30 text-white hover:bg-white/30'>
-                        <Plus className="h-4 w-4 mr-2" />Sow Your First Seed
-                      </Button>
+                    <Link to="/create-orchard" style={{ textDecoration: 'none' }}>
+                      <LivingButton variant="enter" height={44} borderRadius={10} fontSize={13} letterSpacing="1px">
+                        <Plus size={16} /> Sow Your First Seed
+                      </LivingButton>
                     </Link>
                   )}
                 </CardContent>
@@ -336,44 +333,47 @@ export default function MyOrchardsPage() {
                                 <Calendar className='h-4 w-4 mr-1' />
                                 Sown {new Date(seed.created_at).toLocaleDateString()}
                               </div>
+
+                              {/* Action buttons */}
                               <div className="flex flex-wrap gap-2 pt-2 mt-auto">
-                                <Link to={`/orchards/${seed.id}`} className='flex-1 min-w-[100px]'>
+                                <Link to={`/orchards/${seed.id}`} className='flex-1 min-w-[80px]' style={{ textDecoration: 'none' }}>
                                   <Button variant='outline' size='sm' className='w-full backdrop-blur-md bg-white/20 border-white/30 text-white hover:bg-white/30'>
                                     <Eye className='h-4 w-4 mr-1' />View
                                   </Button>
                                 </Link>
-                                <Link to={`/edit-orchard/${seed.id}`} className='flex-1 min-w-[100px]'>
+                                <Link to={`/edit-orchard/${seed.id}`} className='flex-1 min-w-[80px]' style={{ textDecoration: 'none' }}>
                                   <Button variant='outline' size='sm' className='w-full backdrop-blur-md bg-white/20 border-white/30 text-white hover:bg-white/30'>
                                     <Edit className='h-4 w-4 mr-1' />Edit
                                   </Button>
                                 </Link>
-                                <Button
-                                  variant='outline' size='sm'
-                                  className='flex-1 min-w-[100px] backdrop-blur-md bg-white/20 border-white/30 text-white hover:bg-white/30'
+                                <button
+                                  className='flex-1 min-w-[60px]'
+                                  style={{ background: 'rgba(255,255,255,0.1)', border: '1px solid rgba(255,255,255,0.2)', borderRadius: 8, color: '#fff', cursor: 'pointer', padding: '6px 8px' }}
                                   onClick={() => {
                                     navigator.clipboard.writeText(`${window.location.origin}/animated-orchard/${seed.id}`)
                                     toast.success('Seed link copied!')
                                   }}
                                 >
-                                  <Share2 className='h-4 w-4' />
-                                </Button>
-                                <Link to={`/live-seed/${seed.id}`} className='flex-1 min-w-[100px]'>
-                                  <Button
-                                    size='sm'
-                                    className='w-full font-bold text-white border-0'
-                                    style={{ background: 'linear-gradient(135deg, #ef4444, #dc2626)', boxShadow: '0 0 12px rgba(239,68,68,0.5)' }}
-                                  >
-                                    <Radio className='h-4 w-4 mr-1 animate-pulse' />Go Live
-                                  </Button>
-                                </Link>
-                                <Button
-                                  variant='outline' size='sm'
-                                  onClick={() => handleDeleteSeed(seed.id)}
-                                  className='backdrop-blur-md bg-red-500/20 border-red-300/50 text-red-200 hover:bg-red-500/30'
-                                >
-                                  <Trash2 className='h-4 w-4' />
-                                </Button>
+                                  <Share2 size={14} />
+                                </button>
                               </div>
+
+                              {/* Go Live — full width living button */}
+                              <div style={{ marginTop: 8 }}>
+                                <Link to={`/live-seed/${seed.id}`} style={{ textDecoration: 'none', display: 'block' }}>
+                                  <LivingButton variant="live" height={44} borderRadius={10} fontSize={13} letterSpacing="1px">
+                                    Go Live
+                                  </LivingButton>
+                                </Link>
+                              </div>
+
+                              <Button
+                                variant='outline' size='sm'
+                                onClick={() => handleDeleteSeed(seed.id)}
+                                className='w-full backdrop-blur-md bg-red-500/20 border-red-300/50 text-red-200 hover:bg-red-500/30 mt-1'
+                              >
+                                <Trash2 className='h-4 w-4 mr-1' />Delete
+                              </Button>
                             </div>
                           </CardContent>
                         </Card>
