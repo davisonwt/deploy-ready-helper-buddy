@@ -436,7 +436,7 @@ export default function SeedFlowDashboard() {
       <div style={styles.root}>
 
         {/* ── SeedFlow fixed strip across very top ── */}
-        <SeedFlow height={38} seedCount={36} zIndex={200} />
+        
 
         {/* ── SIDEBAR ─────────────────────────────────────────── */}
         <div style={styles.sidebar}>
