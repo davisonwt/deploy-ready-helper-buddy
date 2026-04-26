@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react'
 import { useAuth } from '../hooks/useAuth'
 import { Link, useNavigate } from 'react-router-dom'
 import { supabase } from "@/integrations/supabase/client"
-
+import SeedFlow from '../components/SeedFlow'
 import LivingButton from '../components/LivingButton'
 
 const SEEDS = [
@@ -228,7 +228,7 @@ export default function SeedFlowDashboard() {
       display: 'flex', height: '100vh', width: '100vw',
       background: '#060a12', color: '#e2e8f0',
       fontFamily: "'DM Sans', 'Segoe UI', system-ui, sans-serif",
-      overflow: 'hidden', position: 'fixed', top: 0, left: 0, zIndex: 50,
+      overflow: 'hidden', position: 'fixed', top: 38, left: 0, zIndex: 50, paddingBottom: 70,
     },
     sidebar: {
       width: 260, minWidth: 260,
@@ -436,7 +436,7 @@ export default function SeedFlowDashboard() {
       <div style={styles.root}>
 
         {/* ── SeedFlow fixed strip across very top ── */}
-        
+        <SeedFlow fixed height={38} seedCount={36} zIndex={200} />
 
         {/* ── SIDEBAR ─────────────────────────────────────────── */}
         <div style={styles.sidebar}>
@@ -471,24 +471,6 @@ export default function SeedFlowDashboard() {
             })}
           </nav>
 
-          {/* ── Bottom action buttons — now living ── */}
-          <div style={styles.bottomBar}>
-            <Link to="/create-orchard" style={{ flex: 1, textDecoration: 'none' }}>
-              <LivingButton variant="enter" height={44} borderRadius={22} fontSize={11} letterSpacing="1px">
-                🌱 Plant Seed
-              </LivingButton>
-            </Link>
-            <Link to="/grove-station" style={{ flex: 1, textDecoration: 'none' }}>
-              <LivingButton variant="live" height={44} borderRadius={22} fontSize={11} letterSpacing="1px">
-                Go Live
-              </LivingButton>
-            </Link>
-            <Link to="/chatapp" style={{ flex: 1, textDecoration: 'none' }}>
-              <LivingButton variant="share" height={44} borderRadius={22} fontSize={11} letterSpacing="1px">
-                💬 Chat
-              </LivingButton>
-            </Link>
-          </div>
         </div>
 
         {/* ── CENTER ──────────────────────────────────────────── */}
@@ -628,6 +610,30 @@ export default function SeedFlowDashboard() {
           </div>
         </div>
 
+        {/* ── Full width bottom bar ── */}
+        <div style={{
+          position: 'fixed', bottom: 0, left: 0, right: 0,
+          display: 'flex', gap: 8, padding: '10px 12px',
+          background: '#080d17',
+          borderTop: '1px solid rgba(255,255,255,0.06)',
+          zIndex: 100,
+        }}>
+          <Link to="/create-orchard" style={{ flex: 1, textDecoration: 'none' }}>
+            <LivingButton variant="enter" height={50} borderRadius={14} fontSize={12} letterSpacing="1px">
+              🌱 Plant Seed
+            </LivingButton>
+          </Link>
+          <Link to="/grove-station" style={{ flex: 1, textDecoration: 'none' }}>
+            <LivingButton variant="live" height={50} borderRadius={14} fontSize={12} letterSpacing="1px">
+              Go Live
+            </LivingButton>
+          </Link>
+          <Link to="/chatapp" style={{ flex: 1, textDecoration: 'none' }}>
+            <LivingButton variant="share" height={50} borderRadius={14} fontSize={12} letterSpacing="1px">
+              💬 Chat
+            </LivingButton>
+          </Link>
+        </div>
       </div>
     </>
   )
