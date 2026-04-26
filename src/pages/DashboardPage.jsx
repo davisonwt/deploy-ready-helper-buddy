@@ -2,8 +2,6 @@ import React, { useState, useEffect, useRef } from 'react'
 import { useAuth } from '../hooks/useAuth'
 import { Link, useNavigate } from 'react-router-dom'
 import { supabase } from "@/integrations/supabase/client"
-import SeedFlow from '../components/SeedFlow'
-import LivingButton from '../components/LivingButton'
 
 const SEEDS = [
   {
@@ -51,7 +49,7 @@ const SEEDS = [
     type: 'FEAST',
     status: 'Counting',
     activity: 'Omer 8 of 50',
-    description: "Walking toward Shavu'ot",
+    description: 'Walking toward Shavu\'ot',
     image: 'https://images.unsplash.com/photo-1518531933037-91b2f5f229cc?w=800&q=80',
     color: '#92400e',
     glow: '#f59e0b',
@@ -61,21 +59,19 @@ const SEEDS = [
 ]
 
 const NAV = [
-  { label: 'SeedFlow',      sub: 'Your living feed',    emoji: '🌊', path: '/dashboard',            color: '#2563eb' },
-  { label: 'My Garden',     sub: 'Seeds & orchards',    emoji: '🌱', path: '/my-orchards',           color: '#16a34a' },
-  { label: 'Learn & Share', sub: 'Grow your tribe',     emoji: '🎬', path: '/learn-share',           color: '#10b981' },
-  { label: 'Directory',     sub: 'Find your tribe',     emoji: '🌍', path: '/wandering-directory',   color: '#6366f1' },
-  { label: 'Orchards',      sub: 'All tribal orchards', emoji: '🌳', path: '/browse-orchards',       color: '#0d9488' },
-  { label: 'Conversations', sub: 'Tribe messaging',     emoji: '💬', path: '/chatapp',               color: '#0891b2' },
-  { label: '364yhvh',       sub: 'Scripture & feasts',  emoji: '📅', path: '/364yhvh-days',          color: '#7c3aed' },
-  { label: 'Let It Rain',   sub: 'Bestow blessings',    emoji: '🌧️', path: '/let-it-rain',           color: '#6d28d9' },
+  { label: 'SeedFlow', sub: 'Your living feed', emoji: '🌊', path: '/dashboard', color: '#2563eb' },
+  { label: 'My Garden', sub: 'Seeds & orchards', emoji: '🌱', path: '/my-orchards', color: '#16a34a' },
+  { label: 'Orchards', sub: 'All tribal orchards', emoji: '🌳', path: '/browse-orchards', color: '#0d9488' },
+  { label: 'Conversations', sub: 'Tribe messaging', emoji: '💬', path: '/chatapp', color: '#0891b2' },
+  { label: '364yhvh', sub: 'Scripture & feasts', emoji: '📅', path: '/364yhvh-days', color: '#7c3aed' },
+  { label: 'Let It Rain', sub: 'Bestow blessings', emoji: '🌧️', path: '/let-it-rain', color: '#6d28d9' },
 ]
 
 const GROWTH_TIPS = [
   'Your seeds are in motion. Something is growing.',
   'The tribe moves when you move. Plant something today.',
   'Every bestowal is a seed. Every seed becomes a harvest.',
-  "You've entered SeedFlow. Things are already happening.",
+  'You\'ve entered SeedFlow. Things are already happening.',
 ]
 
 export default function SeedFlowDashboard() {
@@ -84,7 +80,6 @@ export default function SeedFlowDashboard() {
   const [profile, setProfile] = useState(null)
   const [activeIdx, setActiveIdx] = useState(0)
   const [pulse, setPulse] = useState(false)
-  const [isPlaying, setIsPlaying] = useState(false)
   const [stats, setStats] = useState({ sowers: 4, orchards: 0, seeds: 56, members: 0 })
   const [tip] = useState(GROWTH_TIPS[Math.floor(Math.random() * GROWTH_TIPS.length)])
   const [activePath, setActivePath] = useState('/dashboard')
@@ -136,6 +131,12 @@ export default function SeedFlowDashboard() {
     logoRow: {
       display: 'flex', alignItems: 'center', gap: 10, marginBottom: 10,
     },
+    logoIcon: {
+      width: 36, height: 36, borderRadius: 9,
+      background: 'linear-gradient(135deg, #22c55e 0%, #16a34a 100%)',
+      display: 'flex', alignItems: 'center', justifyContent: 'center',
+      fontSize: 17,
+    },
     logoText: { fontWeight: 700, fontSize: 15, color: '#fff', lineHeight: 1.2 },
     logoSub: { fontSize: 11, color: '#4b5563', lineHeight: 1 },
     keeperBadge: {
@@ -171,6 +172,27 @@ export default function SeedFlowDashboard() {
       padding: '10px 8px',
       borderTop: '1px solid rgba(255,255,255,0.05)',
       display: 'flex', gap: 6,
+    },
+    btnPlant: {
+      flex: 1, padding: '11px 0',
+      background: 'linear-gradient(135deg, #16a34a, #15803d)',
+      border: 'none', borderRadius: 22, color: '#fff',
+      fontWeight: 700, fontSize: 12, cursor: 'pointer',
+      display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 5,
+    },
+    btnLive: {
+      flex: 1, padding: '11px 0',
+      background: 'linear-gradient(135deg, #dc2626, #b91c1c)',
+      border: 'none', borderRadius: 22, color: '#fff',
+      fontWeight: 700, fontSize: 12, cursor: 'pointer',
+      display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 5,
+    },
+    btnChat: {
+      flex: 1, padding: '11px 0',
+      background: '#111827', border: '1px solid #1f2937',
+      borderRadius: 22, color: '#9ca3af',
+      fontWeight: 700, fontSize: 12, cursor: 'pointer',
+      display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 5,
     },
     center: { flex: 1, display: 'flex', flexDirection: 'column', overflowY: 'auto' },
     header: {
@@ -262,6 +284,21 @@ export default function SeedFlowDashboard() {
       width: 6, height: 6, borderRadius: '50%', background: activeSeed.glow,
     },
     seedBtns: { display: 'flex', gap: 8 },
+    btnPlay: {
+      flex: 1, padding: '11px 0',
+      background: activeSeed.color + 'cc',
+      border: `1px solid ${activeSeed.color}`,
+      borderRadius: 10, color: '#fff',
+      fontWeight: 700, fontSize: 13, cursor: 'pointer',
+      display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7,
+    },
+    btnBook: {
+      flex: 1, padding: '11px 0',
+      background: `linear-gradient(135deg, ${activeSeed.glow}, ${activeSeed.color})`,
+      border: 'none', borderRadius: 10, color: '#fff',
+      fontWeight: 700, fontSize: 13, cursor: 'pointer',
+      display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7,
+    },
     seedDots: {
       display: 'flex', gap: 6, justifyContent: 'center', marginBottom: 14,
     },
@@ -270,6 +307,15 @@ export default function SeedFlowDashboard() {
       background: isActive ? activeSeed.glow : '#1e293b',
       transition: 'all 0.4s ease', cursor: 'pointer',
     }),
+    connectBtn: {
+      width: '100%', padding: '13px 0',
+      background: 'transparent',
+      border: `1px solid ${activeSeed.color}66`,
+      borderRadius: 12, color: activeSeed.glow,
+      fontWeight: 700, fontSize: 13, cursor: 'pointer',
+      display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+      letterSpacing: '0.05em', transition: 'all 0.2s',
+    },
     rightPanel: {
       width: 248, minWidth: 248,
       background: '#080d17',
@@ -324,11 +370,11 @@ export default function SeedFlowDashboard() {
         }
         .seed-card-anim { animation: breathe 4s ease-in-out infinite; }
         .nav-link:hover { opacity: 0.85; }
+        .connect-btn:hover { background: ${activeSeed.color}15 !important; }
       `}</style>
 
       <div style={styles.root}>
-
-        {/* ── SIDEBAR ─────────────────────────────────────────── */}
+        {/* SIDEBAR */}
         <div style={styles.sidebar}>
           <div style={styles.logoArea}>
             <div style={styles.logoRow}>
@@ -343,7 +389,6 @@ export default function SeedFlowDashboard() {
               <span style={{ fontSize: 13, color: '#9ca3af' }}>{profile?.membership_tier || 'Sower'}</span>
             </div>
           </div>
-
           <nav style={styles.nav}>
             {NAV.map(item => {
               const isActive = activePath === item.path
@@ -361,32 +406,22 @@ export default function SeedFlowDashboard() {
             })}
           </nav>
 
-          {/* ── Bottom action buttons — now living ── */}
           <div style={styles.bottomBar}>
             <Link to="/create-orchard" style={{ flex: 1, textDecoration: 'none' }}>
-              <LivingButton variant="enter" height={44} borderRadius={22} fontSize={11} letterSpacing="1px">
-                🌱 Plant Seed
-              </LivingButton>
+              <button style={styles.btnPlant}>🌱 Plant Seed</button>
             </Link>
             <Link to="/grove-station" style={{ flex: 1, textDecoration: 'none' }}>
-              <LivingButton variant="live" height={44} borderRadius={22} fontSize={11} letterSpacing="1px">
-                Go Live
-              </LivingButton>
+              <button style={styles.btnLive}>🔴 Go Live</button>
             </Link>
             <Link to="/chatapp" style={{ flex: 1, textDecoration: 'none' }}>
-              <LivingButton variant="share" height={44} borderRadius={22} fontSize={11} letterSpacing="1px">
-                💬 Chat
-              </LivingButton>
+              <button style={styles.btnChat}>💬 Enter Chat</button>
             </Link>
           </div>
         </div>
 
-        {/* ── CENTER ──────────────────────────────────────────── */}
+        {/* CENTER */}
         <div style={styles.center}>
-
-          {/* ── SeedFlow strip — seeds drift across the top ── */}
-          <SeedFlow height={36} seedCount={26} style={{ borderRadius: 0, border: 'none', borderBottom: '1px solid rgba(255,255,255,0.04)' }} />
-
+          {/* Header */}
           <div style={styles.header}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
               <div style={styles.avatar}>
@@ -395,7 +430,9 @@ export default function SeedFlowDashboard() {
                   : '🧑'}
               </div>
               <div>
-                <div style={styles.greeting}>🌊 Welcome back — your seeds are in motion</div>
+                <div style={styles.greeting}>
+                  🌊 Welcome back — your seeds are in motion
+                </div>
                 <div style={styles.greetingSub}>
                   Shalom, {displayName} · Year {sacredDate.year} · Month {sacredDate.month} · Day {sacredDate.day}
                 </div>
@@ -409,61 +446,44 @@ export default function SeedFlowDashboard() {
             </div>
           </div>
 
+          {/* Content */}
           <div style={styles.content}>
             <div style={styles.sectionLabel}>
               <span>Seeds in motion</span>
               <span style={styles.liveTag}>LIVE</span>
             </div>
 
-            {/* ── Seed showcase card ── */}
+            {/* Seed Card */}
             <div style={{ ...styles.seedCard }} className="seed-card-anim">
               <img src={activeSeed.image} alt="" style={styles.seedImg} />
               <div style={styles.seedOverlay} />
               <div style={styles.seedCounter}>{activeIdx + 1}/{SEEDS.length}</div>
               <div style={styles.seedType}>{activeSeed.type}</div>
+
               <div style={styles.seedActivity}>
                 <span style={styles.activityDot} />
                 <span style={styles.activityText}>{activeSeed.activity}</span>
               </div>
               <div style={styles.seedDesc}>{activeSeed.description}</div>
+
               <div style={styles.seedBottom}>
                 <div style={styles.seedName}>{activeSeed.name}</div>
                 <div style={styles.seedStatus}>
                   <span style={styles.statusDot} />
                   {activeSeed.status}
                 </div>
-
-                {/* ── Living Play + Enter buttons ── */}
                 <div style={styles.seedBtns}>
                   <Link to={activeSeed.playPath} style={{ flex: 1, textDecoration: 'none' }}>
-                    <LivingButton
-                      variant="play"
-                      isPlaying={isPlaying}
-                      onClick={() => setIsPlaying(p => !p)}
-                      height={44}
-                      borderRadius={10}
-                      fontSize={13}
-                      letterSpacing="0px"
-                    >
-                      {isPlaying ? '⏸ Pause' : '▶ Play'}
-                    </LivingButton>
+                    <button style={styles.btnPlay}>▶ Play</button>
                   </Link>
                   <Link to={activeSeed.bookPath} style={{ flex: 1, textDecoration: 'none' }}>
-                    <LivingButton
-                      variant="enter"
-                      height={44}
-                      borderRadius={10}
-                      fontSize={13}
-                      letterSpacing="0px"
-                    >
-                      📅 Enter
-                    </LivingButton>
+                    <button style={styles.btnBook}>📅 Enter</button>
                   </Link>
                 </div>
               </div>
             </div>
 
-            {/* ── Dots ── */}
+            {/* Dots */}
             <div style={styles.seedDots}>
               {SEEDS.map((_, i) => (
                 <div key={i} style={styles.dot(i === activeIdx)}
@@ -471,24 +491,18 @@ export default function SeedFlowDashboard() {
               ))}
             </div>
 
-            {/* ── Step Into the Orchard — living gate button ── */}
+            {/* Connect */}
             <Link to="/browse-orchards" style={{ textDecoration: 'none' }}>
-              <LivingButton
-                variant="stepInto"
-                height={56}
-                borderRadius={14}
-                fontSize={11}
-                fontWeight={800}
-                letterSpacing="2px"
-              >
+              <button style={styles.connectBtn} className="connect-btn">
                 🌿 STEP INTO THE ORCHARD — FIND YOUR SEED
-              </LivingButton>
+              </button>
             </Link>
           </div>
         </div>
 
-        {/* ── RIGHT PANEL ─────────────────────────────────────── */}
+        {/* RIGHT PANEL */}
         <div style={styles.rightPanel}>
+          {/* Today */}
           <div style={styles.panelSection}>
             <div style={styles.panelTitle}>📅 TODAY</div>
             <div style={styles.dateYear}>Year {sacredDate.year}</div>
@@ -497,6 +511,8 @@ export default function SeedFlowDashboard() {
               Day 1 · Regular Day
             </div>
           </div>
+
+          {/* Omer */}
           <div style={styles.omerBadge}>
             <span style={{ fontSize: 18 }}>🌾</span>
             <div>
@@ -504,15 +520,17 @@ export default function SeedFlowDashboard() {
               <div style={styles.omerNext}>→ {sacredDate.nextFeast}</div>
             </div>
           </div>
+
+          {/* Growth */}
           <div style={styles.panelSection}>
             <div style={styles.panelTitle}>🌱 YOUR GROWTH</div>
             <div style={styles.growthCard}>
               <div style={styles.growthTitle}>Seeds this week</div>
               {[
-                { label: 'Seeds planted',  val: stats.seeds    },
-                { label: 'Seeds growing',  val: stats.orchards },
-                { label: 'Active sowers',  val: stats.sowers   },
-                { label: 'Harvest forming',val: stats.members  },
+                { label: 'Seeds planted', val: stats.seeds },
+                { label: 'Seeds growing', val: stats.orchards },
+                { label: 'Active sowers', val: stats.sowers },
+                { label: 'Harvest forming', val: stats.members },
               ].map(({ label, val }) => (
                 <div key={label} style={styles.growthRow}>
                   <span style={styles.growthLabel}>{label}</span>
@@ -521,12 +539,13 @@ export default function SeedFlowDashboard() {
               ))}
             </div>
           </div>
+
+          {/* Tip */}
           <div style={styles.panelSection}>
             <div style={styles.panelTitle}>💡 SEEDFLOW TIP</div>
             <div style={styles.tipBox}>"{tip}"</div>
           </div>
         </div>
-
       </div>
     </>
   )
