@@ -189,26 +189,20 @@ export default function LearnSharePage() {
                   {/* Living Buttons */}
                   <div style={{ display: 'flex', gap: 8, alignItems: 'stretch' }}>
 
-                    {/* Share — video color with glow */}
-                    <motion.button
-                      whileHover={{ scale: 1.03, boxShadow: `0 0 20px ${video.color}66` }}
-                      whileTap={{ scale: 0.97 }}
-                      onClick={() => handleShare(video)}
-                      style={{
-                        flex: 1, height: 42, padding: '0 16px',
-                        background: `linear-gradient(135deg, ${video.color}cc, ${video.color}88)`,
-                        border: `1px solid ${video.color}66`,
-                        borderRadius: 10, color: '#fff',
-                        fontWeight: 700, fontSize: 13,
-                        cursor: 'pointer', display: 'flex',
-                        alignItems: 'center', justifyContent: 'center', gap: 6,
-                        boxShadow: `0 4px 15px ${video.color}33`,
-                        transition: 'box-shadow 0.3s',
-                        letterSpacing: '1px',
-                      }}
-                    >
-                      ↗ Share
-                    </motion.button>
+                    {/* Share — living constellation effect */}
+                    <div style={{ flex: 1 }}>
+                      <LivingButton
+                        variant="share"
+                        height={42}
+                        borderRadius={10}
+                        fontSize={12}
+                        letterSpacing="1px"
+                        fontWeight={700}
+                        onClick={() => handleShare(video)}
+                      >
+                        ↗ Share
+                      </LivingButton>
+                    </div>
 
                     {/* Copy Script — small icon */}
                     <motion.button
