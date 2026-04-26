@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react'
 import { useAuth } from '../hooks/useAuth'
 import { Link, useNavigate } from 'react-router-dom'
 import { supabase } from "@/integrations/supabase/client"
-import SeedFlow from '../components/SeedFlow'
+
 import LivingButton from '../components/LivingButton'
 
 const SEEDS = [
