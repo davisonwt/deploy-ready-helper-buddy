@@ -279,7 +279,7 @@ export default function SeedFlowDashboard() {
       borderTop: '1px solid rgba(255,255,255,0.05)',
       display: 'flex', gap: 6,
     },
-    center: { flex: 1, display: 'flex', flexDirection: 'column', overflowY: 'auto', overflowX: 'hidden' },
+    center: { flex: 1, display: 'flex', flexDirection: 'column', overflowY: 'auto', overflowX: 'hidden', paddingBottom: 80 },
     header: {
       padding: '18px 22px 14px',
       borderBottom: '1px solid rgba(255,255,255,0.05)',
