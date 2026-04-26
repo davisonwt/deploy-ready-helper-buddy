@@ -4,6 +4,7 @@ import { Link } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { toast } from 'sonner'
 import LivingButton from '../components/LivingButton'
+import RoleButton, { ROLE_CONFIG } from '../components/RoleButton'
 
 const REFERRAL_CODES = {
   '04754d57-d41d-4ea7-93df-542047a6785b': 'S2G-XDAVU6VP'
@@ -121,27 +122,63 @@ export default function LearnSharePage() {
           🌿 Share any video with your referral code embedded. When someone registers via your link, they join your tribe. You earn <span style={{ color: '#10b981', fontWeight: 700 }}>1%</span> on every bestowal made on their seeds — forever.
         </div>
 
-        {/* Role Filter */}
-        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginBottom: 28 }}>
-          {ROLES.map(role => (
-            <motion.button
-              key={role.value}
-              whileTap={{ scale: 0.95 }}
-              onClick={() => setSelectedRole(role.value)}
-              style={{
-                padding: '7px 14px', borderRadius: 20, border: 'none', cursor: 'pointer',
-                fontWeight: 600, fontSize: 13,
-                background: selectedRole === role.value
-                  ? `linear-gradient(135deg, ${role.color || '#10b981'}, ${role.color || '#059669'})`
-                  : 'rgba(255,255,255,0.05)',
-                color: selectedRole === role.value ? '#fff' : '#94a3b8',
-                boxShadow: selectedRole === role.value ? `0 4px 15px ${role.color || '#10b981'}40` : 'none',
-                transition: 'all 0.2s',
-              }}
-            >
-              {role.emoji} {role.label}
-            </motion.button>
+        {/* Role Filter — living role buttons */}
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginBottom: 28, alignItems: 'center' }}>
+          {/* All button */}
+          <motion.button
+            whileTap={{ scale: 0.95 }}
+            onClick={() => setSelectedRole('all')}
+            style={{
+              padding: '7px 16px', borderRadius: 20, border: 'none', cursor: 'pointer',
+              fontWeight: 600, fontSize: 13, height: 36,
+              background: selectedRole === 'all'
+                ? 'linear-gradient(135deg, #10b981, #059669)'
+                : 'rgba(255,255,255,0.05)',
+              color: selectedRole === 'all' ? '#fff' : '#94a3b8',
+              boxShadow: selectedRole === 'all' ? '0 4px 15px #10b98140' : 'none',
+              transition: 'all 0.2s',
+            }}
+          >
+            🌿 All
+          </motion.button>
+
+          {/* 9 Wandering Role buttons — living animations */}
+          {Object.entries(ROLE_CONFIG).map(([key, role]) => (
+            <div key={key} style={{ width: 90, height: 64 }}>
+              <RoleButton
+                role={key}
+                size="sm"
+                selected={selectedRole === role.name}
+                onClick={() => setSelectedRole(role.name)}
+                showBubbles={false}
+              />
+            </div>
           ))}
+
+          {/* Platform + Orchard plain buttons */}
+          {['Platform', 'Orchard'].map(label => {
+            const colors = { Platform: '#0ea5e9', Orchard: '#16a34a' }
+            const emojis = { Platform: '🏛️', Orchard: '🌳' }
+            return (
+              <motion.button
+                key={label}
+                whileTap={{ scale: 0.95 }}
+                onClick={() => setSelectedRole(label)}
+                style={{
+                  padding: '7px 14px', borderRadius: 20, border: 'none', cursor: 'pointer',
+                  fontWeight: 600, fontSize: 13, height: 36,
+                  background: selectedRole === label
+                    ? `linear-gradient(135deg, ${colors[label]}, ${colors[label]}88)`
+                    : 'rgba(255,255,255,0.05)',
+                  color: selectedRole === label ? '#fff' : '#94a3b8',
+                  boxShadow: selectedRole === label ? `0 4px 15px ${colors[label]}40` : 'none',
+                  transition: 'all 0.2s',
+                }}
+              >
+                {emojis[label]} {label}
+              </motion.button>
+            )
+          })}
         </div>
 
         {/* Video Grid */}
