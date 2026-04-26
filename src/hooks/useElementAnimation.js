@@ -583,63 +583,117 @@ export const BUTTON_ANIMATIONS = {
     });
   },
 
-  // 🌿 STEP INTO ORCHARD — gate swings open into golden light
+  // 🌿 STEP INTO ORCHARD — curtain rolls up, light floods through, footprints walk away
   stepInto(ctx, w, h, t, hT) {
     ctx.clearRect(0, 0, w, h);
     ctx.fillStyle = '#030a04'; ctx.fillRect(0, 0, w, h);
-    const cx = w / 2;
-    if (hT > 0.05) {
-      const lg = ctx.createRadialGradient(cx, h / 2, 0, cx, h / 2, w * 0.4 * hT);
-      lg.addColorStop(0, `rgba(255,240,180,${hT * 0.5})`);
-      lg.addColorStop(0.3, `rgba(180,255,150,${hT * 0.25})`);
-      lg.addColorStop(0.6, `rgba(234,179,8,${hT * 0.1})`);
-      lg.addColorStop(1, 'rgba(0,0,0,0)');
-      ctx.fillStyle = lg; ctx.fillRect(0, 0, w, h);
-    }
-    const gateY = h * 0.18, gateH = h * 0.6, gateW = Math.min(w * 0.38, 48);
-    const postColor = 'rgba(34,197,94,0.7)';
-    ctx.fillStyle = postColor;
-    ctx.fillRect(cx - gateW - 8, gateY, 6, gateH);
-    ctx.fillRect(cx + gateW + 2, gateY, 6, gateH);
-    const openAngle = hT * Math.PI * 0.48;
-    // Left gate leaf
-    ctx.save(); ctx.translate(cx - gateW, gateY + gateH / 2); ctx.rotate(openAngle);
-    const lgc = ctx.createLinearGradient(-gateW, 0, 0, 0);
-    lgc.addColorStop(0, `rgba(15,80,25,${0.8 - hT * 0.3})`);
-    lgc.addColorStop(1, `rgba(34,197,94,${0.6 - hT * 0.2})`);
-    ctx.fillStyle = lgc; ctx.fillRect(-gateW, -gateH / 2, gateW, gateH);
-    for (let p = 0; p < 4; p++) {
-      ctx.beginPath(); ctx.moveTo(-gateW, -gateH / 2 + p * (gateH / 4));
-      ctx.lineTo(0, -gateH / 2 + p * (gateH / 4));
-      ctx.strokeStyle = 'rgba(34,197,94,0.3)'; ctx.lineWidth = 0.5; ctx.stroke();
-    }
-    ctx.restore();
-    // Right gate leaf
-    ctx.save(); ctx.translate(cx + gateW, gateY + gateH / 2); ctx.rotate(-openAngle);
-    const rgc = ctx.createLinearGradient(0, 0, gateW, 0);
-    rgc.addColorStop(0, `rgba(34,197,94,${0.6 - hT * 0.2})`);
-    rgc.addColorStop(1, `rgba(15,80,25,${0.8 - hT * 0.3})`);
-    ctx.fillStyle = rgc; ctx.fillRect(0, -gateH / 2, gateW, gateH);
-    for (let p = 0; p < 4; p++) {
-      ctx.beginPath(); ctx.moveTo(0, -gateH / 2 + p * (gateH / 4));
-      ctx.lineTo(gateW, -gateH / 2 + p * (gateH / 4));
-      ctx.strokeStyle = 'rgba(34,197,94,0.3)'; ctx.lineWidth = 0.5; ctx.stroke();
-    }
-    ctx.restore();
-    if (hT > 0.3) {
-      for (let i = 0; i < 12; i++) {
-        const life = ((t * 0.008 + i * 0.083) % 1);
-        const px = cx + (Math.sin(i * 2.3) * 25) * life + Math.sin(t * 0.02 + i) * 12;
-        const py = gateY + gateH * 0.2 + life * gateH * 0.55 + Math.sin(t * 0.03 + i) * 8;
-        const pa = ((hT - 0.3) / 0.7) * Math.sin(life * Math.PI) * 0.8;
-        ctx.save(); ctx.translate(px, py); ctx.rotate(t * 0.02 + i);
-        ctx.beginPath(); ctx.ellipse(0, 0, 3, 5, 0, 0, Math.PI * 2);
-        ctx.fillStyle = `rgba(180,255,160,${pa})`; ctx.fill(); ctx.restore();
+
+    // Light beneath — intensifies as curtain rises
+    const lg = ctx.createRadialGradient(w/2, h, 0, w/2, h, w * 0.75);
+    lg.addColorStop(0, `rgba(255,240,160,${0.03 + hT * 0.55})`);
+    lg.addColorStop(0.3, `rgba(200,255,140,${0.01 + hT * 0.22})`);
+    lg.addColorStop(0.6, `rgba(234,179,8,${hT * 0.1})`);
+    lg.addColorStop(1, 'rgba(0,0,0,0)');
+    ctx.fillStyle = lg; ctx.fillRect(0, 0, w, h);
+
+    // Light rays fanning upward through gap
+    if (hT > 0.08) {
+      for (let r = 0; r < 7; r++) {
+        const angle = -Math.PI/2 + (r - 3) * 0.18;
+        const rayLen = h * 1.3 * hT;
+        const rx = w/2 + Math.cos(angle) * rayLen;
+        const ry = h + Math.sin(angle) * rayLen;
+        const rg = ctx.createLinearGradient(w/2, h, rx, ry);
+        rg.addColorStop(0, `rgba(255,240,160,${hT * 0.14})`);
+        rg.addColorStop(1, 'rgba(255,240,160,0)');
+        ctx.beginPath();
+        ctx.moveTo(w/2 - 10, h); ctx.lineTo(rx - 25, ry);
+        ctx.lineTo(rx + 25, ry); ctx.lineTo(w/2 + 10, h);
+        ctx.closePath(); ctx.fillStyle = rg; ctx.fill();
       }
     }
-    ctx.beginPath(); ctx.moveTo(cx - 3, h); ctx.lineTo(cx - 1, gateY + gateH);
-    ctx.lineTo(cx + 1, gateY + gateH); ctx.lineTo(cx + 3, h); ctx.closePath();
-    ctx.fillStyle = `rgba(255,240,150,${hT * 0.4})`; ctx.fill();
+
+    // Curtain rolls upward from bottom
+    const curtainTop = h * (1 - hT * 0.93);
+    const curtainH = h - curtainTop;
+
+    if (curtainH > 2) {
+      // Main curtain fabric
+      const cg = ctx.createLinearGradient(0, curtainTop, 0, h);
+      cg.addColorStop(0, `rgba(8,22,12,${0.96 - hT * 0.25})`);
+      cg.addColorStop(0.5, 'rgba(5,16,8,0.98)');
+      cg.addColorStop(1, 'rgba(10,26,14,0.98)');
+      ctx.fillStyle = cg; ctx.fillRect(0, curtainTop, w, curtainH);
+
+      // Fabric fold shading
+      for (let fold = 0; fold < 9; fold++) {
+        const fx = (fold / 8) * w;
+        const fd = 7 + Math.sin(fold * 1.4 + t * 0.015) * 3;
+        const fg = ctx.createLinearGradient(fx - 20, 0, fx + 20, 0);
+        fg.addColorStop(0, 'rgba(22,55,28,0.5)');
+        fg.addColorStop(0.5, 'rgba(8,20,10,0.15)');
+        fg.addColorStop(1, 'rgba(22,55,28,0.5)');
+        ctx.fillStyle = fg;
+        ctx.fillRect(fx - fd, curtainTop, fd * 2, curtainH);
+      }
+
+      // Rolled top edge curl
+      const rollH = 14 + hT * 6;
+      const rollG = ctx.createLinearGradient(0, curtainTop, 0, curtainTop + rollH);
+      rollG.addColorStop(0, 'rgba(45,110,55,0.95)');
+      rollG.addColorStop(0.5, 'rgba(22,65,30,0.95)');
+      rollG.addColorStop(1, 'rgba(8,22,12,0.8)');
+      ctx.fillStyle = rollG;
+      ctx.beginPath(); ctx.moveTo(0, curtainTop + rollH);
+      for (let x = 0; x <= w; x += 6) {
+        ctx.lineTo(x, curtainTop + Math.sin(x * 0.07 + t * 0.025) * 4);
+      }
+      ctx.lineTo(w, curtainTop + rollH); ctx.closePath(); ctx.fill();
+
+      // Shadow under roll
+      const shg = ctx.createLinearGradient(0, curtainTop + rollH, 0, curtainTop + rollH + 18);
+      shg.addColorStop(0, 'rgba(0,0,0,0.45)');
+      shg.addColorStop(1, 'rgba(0,0,0,0)');
+      ctx.fillStyle = shg; ctx.fillRect(0, curtainTop + rollH, w, 18);
+    }
+
+    // Path in perspective
+    if (hT > 0.25) {
+      const pa = Math.min(1, (hT - 0.25) / 0.4) * 0.35;
+      ctx.beginPath();
+      ctx.moveTo(w/2 - 28, h * 0.92);
+      ctx.lineTo(w/2 - 1, h * 0.28);
+      ctx.lineTo(w/2 + 1, h * 0.28);
+      ctx.lineTo(w/2 + 28, h * 0.92);
+      ctx.closePath();
+      ctx.fillStyle = `rgba(255,240,150,${pa})`; ctx.fill();
+    }
+
+    // Footprints walking away in perspective
+    if (hT > 0.45) {
+      const fa = Math.min(1, (hT - 0.45) / 0.45);
+      const numSteps = 7;
+      for (let s = 0; s < numSteps; s++) {
+        const progress = s / (numSteps - 1);
+        const stepY = h * 0.88 - progress * h * 0.58;
+        const side = s % 2 === 0 ? -1 : 1;
+        const stepX = w/2 + side * (16 - progress * 13);
+        const scale = 1 - progress * 0.7;
+        const stepA = fa * (1 - progress * 0.45) * (Math.sin(t * 0.035 + s * 0.6) * 0.12 + 0.88);
+        ctx.save();
+        ctx.translate(stepX, stepY); ctx.scale(scale, scale);
+        ctx.rotate(side * 0.15);
+        ctx.beginPath();
+        ctx.ellipse(0, 0, 5, 9, 0, 0, Math.PI * 2);
+        ctx.fillStyle = `rgba(255,240,160,${stepA * 0.75})`; ctx.fill();
+        for (let toe = 0; toe < 4; toe++) {
+          ctx.beginPath();
+          ctx.arc(-3.5 + toe * 2.4, -8, 1.8, 0, Math.PI * 2);
+          ctx.fillStyle = `rgba(255,240,160,${stepA * 0.55})`; ctx.fill();
+        }
+        ctx.restore();
+      }
+    }
   },
 };
 
