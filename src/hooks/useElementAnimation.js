@@ -700,4 +700,3 @@ export function createSeeds(count = 30) {
     type: Math.random() > 0.4 ? 'seed' : 'wisp',
   }));
 }
-
