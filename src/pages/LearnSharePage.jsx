@@ -124,22 +124,28 @@ export default function LearnSharePage() {
 
         {/* Role Filter — living role buttons */}
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginBottom: 28, alignItems: 'center' }}>
-          {/* All button */}
+          {/* All button — same size as role buttons */}
           <motion.button
             whileTap={{ scale: 0.95 }}
+            whileHover={{ scale: 1.05 }}
             onClick={() => setSelectedRole('all')}
             style={{
-              padding: '7px 16px', borderRadius: 20, border: 'none', cursor: 'pointer',
-              fontWeight: 600, fontSize: 13, height: 36,
+              width: 90, height: 64, borderRadius: 18, border: 'none', cursor: 'pointer',
+              fontWeight: 600, fontSize: 11, letterSpacing: 2,
+              textTransform: 'uppercase',
               background: selectedRole === 'all'
-                ? 'linear-gradient(135deg, #10b981, #059669)'
-                : 'rgba(255,255,255,0.05)',
-              color: selectedRole === 'all' ? '#fff' : '#94a3b8',
-              boxShadow: selectedRole === 'all' ? '0 4px 15px #10b98140' : 'none',
-              transition: 'all 0.2s',
+                ? 'linear-gradient(135deg, #10b98133, #05966922)'
+                : 'rgba(255,255,255,0.03)',
+              color: selectedRole === 'all' ? '#10b981' : '#64748b',
+              boxShadow: selectedRole === 'all' ? '0 0 20px #10b98133, inset 0 0 20px #10b98111' : 'none',
+              border: selectedRole === 'all' ? '1px solid #10b98144' : '1px solid rgba(255,255,255,0.06)',
+              transition: 'all 0.3s',
+              display: 'flex', flexDirection: 'column',
+              alignItems: 'center', justifyContent: 'center', gap: 5,
             }}
           >
-            🌿 All
+            <span style={{ fontSize: 22 }}>🌿</span>
+            All
           </motion.button>
 
           {/* 9 Wandering Role buttons — living animations */}
@@ -155,27 +161,34 @@ export default function LearnSharePage() {
             </div>
           ))}
 
-          {/* Platform + Orchard plain buttons */}
+          {/* Platform + Orchard — same size as role buttons */}
           {['Platform', 'Orchard'].map(label => {
             const colors = { Platform: '#0ea5e9', Orchard: '#16a34a' }
             const emojis = { Platform: '🏛️', Orchard: '🌳' }
+            const isSelected = selectedRole === label
             return (
               <motion.button
                 key={label}
                 whileTap={{ scale: 0.95 }}
+                whileHover={{ scale: 1.05 }}
                 onClick={() => setSelectedRole(label)}
                 style={{
-                  padding: '7px 14px', borderRadius: 20, border: 'none', cursor: 'pointer',
-                  fontWeight: 600, fontSize: 13, height: 36,
-                  background: selectedRole === label
-                    ? `linear-gradient(135deg, ${colors[label]}, ${colors[label]}88)`
-                    : 'rgba(255,255,255,0.05)',
-                  color: selectedRole === label ? '#fff' : '#94a3b8',
-                  boxShadow: selectedRole === label ? `0 4px 15px ${colors[label]}40` : 'none',
-                  transition: 'all 0.2s',
+                  width: 90, height: 64, borderRadius: 18, border: 'none', cursor: 'pointer',
+                  fontWeight: 600, fontSize: 11, letterSpacing: 2,
+                  textTransform: 'uppercase',
+                  background: isSelected
+                    ? `linear-gradient(135deg, ${colors[label]}33, ${colors[label]}22)`
+                    : 'rgba(255,255,255,0.03)',
+                  color: isSelected ? colors[label] : '#64748b',
+                  boxShadow: isSelected ? `0 0 20px ${colors[label]}33, inset 0 0 20px ${colors[label]}11` : 'none',
+                  border: isSelected ? `1px solid ${colors[label]}44` : '1px solid rgba(255,255,255,0.06)',
+                  transition: 'all 0.3s',
+                  display: 'flex', flexDirection: 'column',
+                  alignItems: 'center', justifyContent: 'center', gap: 5,
                 }}
               >
-                {emojis[label]} {label}
+                <span style={{ fontSize: 22 }}>{emojis[label]}</span>
+                {label}
               </motion.button>
             )
           })}
