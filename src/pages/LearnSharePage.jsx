@@ -150,7 +150,7 @@ export default function LearnSharePage() {
 
           {/* 9 Wandering Role buttons — living animations */}
           {Object.entries(ROLE_CONFIG).map(([key, role]) => (
-            <div key={key} style={{ width: 90, height: 64 }}>
+            <div key={key} style={{ width: 90, height: 64, overflow: 'hidden', borderRadius: 18 }}>
               <RoleButton
                 role={key}
                 size="sm"
