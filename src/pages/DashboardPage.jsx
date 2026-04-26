@@ -492,7 +492,7 @@ export default function SeedFlowDashboard() {
         <div style={styles.center}>
 
           {/* ── SeedFlow strip — seeds drift across the top ── */}
-          <SeedFlow height={36} seedCount={26} style={{ borderRadius: 0, border: 'none', borderBottom: '1px solid rgba(255,255,255,0.04)' }} />
+          <SeedFlow height={44} seedCount={36} style={{ borderRadius: 0, border: 'none', borderBottom: '1px solid rgba(255,255,255,0.04)' }} />
 
           <div style={styles.header}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
