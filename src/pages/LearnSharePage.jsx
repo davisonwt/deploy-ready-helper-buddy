@@ -3,7 +3,7 @@ import { useAuth } from '../hooks/useAuth'
 import { Link } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { toast } from 'sonner'
-import LivingButton from '../components/LivingButton'
+
 
 const REFERRAL_CODES = {
   '04754d57-d41d-4ea7-93df-542047a6785b': 'S2G-XDAVU6VP'
