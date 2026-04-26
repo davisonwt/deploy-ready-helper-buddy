@@ -3,13 +3,14 @@ import { Link } from "react-router-dom"
 import { useAuth } from "../hooks/useAuth"
 import { Button } from "../components/ui/button"
 import { Progress } from "../components/ui/progress"
-import { Heart, RefreshCw, Loader2, Sprout, User, Edit, Trash2 } from "lucide-react"
+import { Heart, RefreshCw, Loader2 } from "lucide-react"
 import { useCurrency } from "../hooks/useCurrency"
 import { supabase } from "@/integrations/supabase/client"
 import { toast } from "sonner"
 import { processOrchardsUrls } from "../utils/urlUtils"
 import { GradientPlaceholder } from "@/components/ui/GradientPlaceholder"
 import { motion, AnimatePresence } from "framer-motion"
+import LivingButton from "../components/LivingButton"
 
 const WANDERING_ROLES = [
   { label: 'All Roles', value: 'all', emoji: '🌿' },
@@ -133,20 +134,22 @@ function OrchardCard({ orchard, index }) {
           </div>
         </div>
 
+        {/* Living buttons */}
         <div style={{ display: 'flex', gap: 8 }}>
-          <Link to={`/animated-orchard/${orchard.id}`} style={{ flex: 1, textDecoration: 'none' }}>
-            <motion.button whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }}
-              style={{ width: '100%', padding: '14px 0', background: `linear-gradient(135deg, ${typeConfig.color}, ${typeConfig.color}99)`, border: 'none', borderRadius: 12, color: '#fff', fontWeight: 800, fontSize: 15, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, boxShadow: `0 4px 20px ${typeConfig.color}40` }}>
-              <Heart style={{ width: 18, height: 18 }} />
-              Bestow from ${pocketPrice}
-            </motion.button>
-          </Link>
-          <Link to={`/live-seed/${orchard.id}`} style={{ textDecoration: 'none' }}>
-            <motion.button whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }}
-              style={{ padding: '14px 16px', background: 'rgba(239,68,68,0.15)', border: '1px solid rgba(239,68,68,0.4)', borderRadius: 12, color: '#ef4444', fontWeight: 800, fontSize: 13, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6 }}>
-              🔴 Go Live
-            </motion.button>
-          </Link>
+          <div style={{ flex: 1 }}>
+            <Link to={`/animated-orchard/${orchard.id}`} style={{ textDecoration: 'none', display: 'block' }}>
+              <LivingButton variant="enter" height={48} borderRadius={12} fontSize={14} letterSpacing="0px">
+                <Heart size={16} /> Bestow from ${pocketPrice}
+              </LivingButton>
+            </Link>
+          </div>
+          <div style={{ width: 100, flexShrink: 0 }}>
+            <Link to={`/live-seed/${orchard.id}`} style={{ textDecoration: 'none', display: 'block' }}>
+              <LivingButton variant="live" height={48} borderRadius={12} fontSize={13} letterSpacing="0px">
+                Go Live
+              </LivingButton>
+            </Link>
+          </div>
         </div>
 
         {orchard.isOwner && (
@@ -309,11 +312,10 @@ export default function BrowseOrchardsPage() {
             <div style={{ fontSize: 48, marginBottom: 16 }}>🌱</div>
             <h3 style={{ color: '#f1f5f9', fontSize: 20, marginBottom: 8 }}>No orchards found</h3>
             <p style={{ color: '#64748b' }}>Try a different filter or be the first to plant!</p>
-            <Link to="/create-orchard">
-              <motion.button whileHover={{ scale: 1.05 }}
-                style={{ marginTop: 20, padding: '12px 24px', background: 'linear-gradient(135deg, #10b981, #059669)', border: 'none', borderRadius: 12, color: '#fff', fontWeight: 700, fontSize: 15, cursor: 'pointer' }}>
+            <Link to="/create-orchard" style={{ textDecoration: 'none', display: 'inline-block', marginTop: 20 }}>
+              <LivingButton variant="enter" height={50} borderRadius={12} fontSize={15} letterSpacing="0px">
                 🌱 Plant First Seed
-              </motion.button>
+              </LivingButton>
             </Link>
           </div>
         ) : (
