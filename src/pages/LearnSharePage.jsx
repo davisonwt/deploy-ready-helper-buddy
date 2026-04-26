@@ -3,6 +3,7 @@ import { useAuth } from '../hooks/useAuth'
 import { Link } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { toast } from 'sonner'
+import LivingButton from '../components/LivingButton'
 
 const REFERRAL_CODES = {
   '04754d57-d41d-4ea7-93df-542047a6785b': 'S2G-XDAVU6VP'
@@ -185,37 +186,58 @@ export default function LearnSharePage() {
                   </div>
                   <div style={{ fontSize: 12, color: '#64748b', marginBottom: 14, lineHeight: 1.4 }}>{video.desc}</div>
 
-                  {/* Buttons */}
-                  <div style={{ display: 'flex', gap: 8 }}>
-                    {/* Share */}
-                    <motion.button
-                      whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }}
-                      onClick={() => handleShare(video)}
-                      style={{ flex: 1, padding: '10px 0', background: video.color, border: 'none', borderRadius: 10, color: '#fff', fontWeight: 700, fontSize: 13, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}
-                    >
-                      ↗ Share
-                    </motion.button>
+                  {/* Living Buttons */}
+                  <div style={{ display: 'flex', gap: 8, alignItems: 'stretch' }}>
 
-                    {/* Copy Script */}
+                    {/* Share — living constellation effect */}
+                    <div style={{ flex: 1 }}>
+                      <LivingButton
+                        variant="share"
+                        height={42}
+                        borderRadius={10}
+                        fontSize={12}
+                        letterSpacing="1px"
+                        fontWeight={700}
+                        onClick={() => handleShare(video)}
+                      >
+                        ↗ Share
+                      </LivingButton>
+                    </div>
+
+                    {/* Copy Script — small icon */}
                     <motion.button
-                      whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }}
+                      whileHover={{ scale: 1.08 }} whileTap={{ scale: 0.95 }}
                       onClick={() => handleCopyScript(video)}
-                      style={{ padding: '10px 12px', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 10, color: '#94a3b8', fontSize: 13, cursor: 'pointer' }}
                       title="Copy share script"
+                      style={{
+                        width: 42, height: 42, flexShrink: 0,
+                        background: 'rgba(255,255,255,0.04)',
+                        border: '1px solid rgba(255,255,255,0.1)',
+                        borderRadius: 10, color: '#94a3b8',
+                        fontSize: 16, cursor: 'pointer',
+                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                        transition: 'background 0.2s, border-color 0.2s',
+                      }}
                     >
                       📋
                     </motion.button>
 
-                    {/* Go Live */}
-                    <Link to={`/live-seed/learn-${video.role.toLowerCase()}-${video.id}`} style={{ textDecoration: 'none' }}>
-                      <motion.button
-                        whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }}
-                        style={{ padding: '10px 12px', background: 'rgba(239,68,68,0.15)', border: '1px solid rgba(239,68,68,0.4)', borderRadius: 10, color: '#ef4444', fontSize: 13, cursor: 'pointer' }}
-                        title="Go Live — teach this topic live"
-                      >
-                        🔴
-                      </motion.button>
-                    </Link>
+                    {/* Go Live — breathing pulse */}
+                    <div style={{ width: 42, flexShrink: 0 }}>
+                      <Link to={`/live-seed/learn-${video.role.toLowerCase()}-${video.id}`} style={{ textDecoration: 'none', display: 'block', height: 42 }}>
+                        <LivingButton
+                          variant="live"
+                          height={42}
+                          borderRadius={10}
+                          fontSize={14}
+                          letterSpacing="0px"
+                          fontWeight={400}
+                        >
+                          {''}
+                        </LivingButton>
+                      </Link>
+                    </div>
+
                   </div>
                 </div>
               </motion.div>
