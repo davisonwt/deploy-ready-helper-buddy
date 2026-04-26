@@ -3,8 +3,9 @@ import { useAuth } from '../hooks/useAuth'
 import { Link } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { toast } from 'sonner'
-import LivingButton from '../components/LivingButton'
+import RoleButton, { ROLE_CONFIG } from '../components/RoleButton'
 
+// ── Colored Living Button — share animation in any color ────────────────────
 
 const REFERRAL_CODES = {
   '04754d57-d41d-4ea7-93df-542047a6785b': 'S2G-XDAVU6VP'
@@ -122,27 +123,76 @@ export default function LearnSharePage() {
           🌿 Share any video with your referral code embedded. When someone registers via your link, they join your tribe. You earn <span style={{ color: '#10b981', fontWeight: 700 }}>1%</span> on every bestowal made on their seeds — forever.
         </div>
 
-        {/* Role Filter */}
-        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginBottom: 28 }}>
-          {ROLES.map(role => (
-            <motion.button
-              key={role.value}
-              whileTap={{ scale: 0.95 }}
-              onClick={() => setSelectedRole(role.value)}
-              style={{
-                padding: '7px 14px', borderRadius: 20, border: 'none', cursor: 'pointer',
-                fontWeight: 600, fontSize: 13,
-                background: selectedRole === role.value
-                  ? `linear-gradient(135deg, ${role.color || '#10b981'}, ${role.color || '#059669'})`
-                  : 'rgba(255,255,255,0.05)',
-                color: selectedRole === role.value ? '#fff' : '#94a3b8',
-                boxShadow: selectedRole === role.value ? `0 4px 15px ${role.color || '#10b981'}40` : 'none',
-                transition: 'all 0.2s',
-              }}
-            >
-              {role.emoji} {role.label}
-            </motion.button>
+        {/* Role Filter — living role buttons */}
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginBottom: 28, alignItems: 'center' }}>
+          {/* All button — same size as role buttons */}
+          <motion.button
+            whileTap={{ scale: 0.95 }}
+            whileHover={{ scale: 1.05 }}
+            onClick={() => setSelectedRole('all')}
+            style={{
+              width: 90, height: 64, borderRadius: 18, border: 'none', cursor: 'pointer',
+              fontWeight: 600, fontSize: 11, letterSpacing: 2,
+              textTransform: 'uppercase',
+              background: selectedRole === 'all'
+                ? 'linear-gradient(135deg, #10b98133, #05966922)'
+                : 'rgba(255,255,255,0.03)',
+              color: selectedRole === 'all' ? '#10b981' : '#64748b',
+              boxShadow: selectedRole === 'all' ? '0 0 20px #10b98133, inset 0 0 20px #10b98111' : 'none',
+              border: selectedRole === 'all' ? '1px solid #10b98144' : '1px solid rgba(255,255,255,0.06)',
+              transition: 'all 0.3s',
+              display: 'flex', flexDirection: 'column',
+              alignItems: 'center', justifyContent: 'center', gap: 5,
+            }}
+          >
+            <span style={{ fontSize: 22 }}>🌿</span>
+            All
+          </motion.button>
+
+          {/* 9 Wandering Role buttons — living animations */}
+          {Object.entries(ROLE_CONFIG).map(([key, role]) => (
+            <div key={key} style={{ width: 90, height: 64 }}>
+              <RoleButton
+                role={key}
+                size="sm"
+                selected={selectedRole === role.name}
+                onClick={() => setSelectedRole(role.name)}
+                showBubbles={false}
+              />
+            </div>
           ))}
+
+          {/* Platform + Orchard — same size as role buttons */}
+          {['Platform', 'Orchard'].map(label => {
+            const colors = { Platform: '#0ea5e9', Orchard: '#16a34a' }
+            const emojis = { Platform: '🏛️', Orchard: '🌳' }
+            const isSelected = selectedRole === label
+            return (
+              <motion.button
+                key={label}
+                whileTap={{ scale: 0.95 }}
+                whileHover={{ scale: 1.05 }}
+                onClick={() => setSelectedRole(label)}
+                style={{
+                  width: 90, height: 64, borderRadius: 18, border: 'none', cursor: 'pointer',
+                  fontWeight: 600, fontSize: 11, letterSpacing: 2,
+                  textTransform: 'uppercase',
+                  background: isSelected
+                    ? `linear-gradient(135deg, ${colors[label]}33, ${colors[label]}22)`
+                    : 'rgba(255,255,255,0.03)',
+                  color: isSelected ? colors[label] : '#64748b',
+                  boxShadow: isSelected ? `0 0 20px ${colors[label]}33, inset 0 0 20px ${colors[label]}11` : 'none',
+                  border: isSelected ? `1px solid ${colors[label]}44` : '1px solid rgba(255,255,255,0.06)',
+                  transition: 'all 0.3s',
+                  display: 'flex', flexDirection: 'column',
+                  alignItems: 'center', justifyContent: 'center', gap: 5,
+                }}
+              >
+                <span style={{ fontSize: 22 }}>{emojis[label]}</span>
+                {label}
+              </motion.button>
+            )
+          })}
         </div>
 
         {/* Video Grid */}
@@ -187,58 +237,34 @@ export default function LearnSharePage() {
                   </div>
                   <div style={{ fontSize: 12, color: '#64748b', marginBottom: 14, lineHeight: 1.4 }}>{video.desc}</div>
 
-                  {/* Living Buttons */}
-                  <div style={{ display: 'flex', gap: 8, alignItems: 'stretch' }}>
-
-                    {/* Share — living constellation effect */}
-                    <div style={{ flex: 1 }}>
-                      <LivingButton
-                        variant="share"
-                        height={42}
-                        borderRadius={10}
-                        fontSize={12}
-                        letterSpacing="1px"
-                        fontWeight={700}
-                        onClick={() => handleShare(video)}
-                      >
-                        ↗ Share
-                      </LivingButton>
-                    </div>
-
-                    {/* Copy Script — small icon */}
+                  {/* Buttons */}
+                  <div style={{ display: 'flex', gap: 8 }}>
                     <motion.button
-                      whileHover={{ scale: 1.08 }} whileTap={{ scale: 0.95 }}
+                      whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }}
+                      onClick={() => handleShare(video)}
+                      style={{ flex: 1, padding: '10px 0', background: video.color, border: 'none', borderRadius: 10, color: '#fff', fontWeight: 700, fontSize: 13, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}
+                    >
+                      ↗ Share
+                    </motion.button>
+
+                    {/* Copy Script */}
+                    <motion.button
+                      whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }}
                       onClick={() => handleCopyScript(video)}
+                      style={{ padding: '10px 12px', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 10, color: '#94a3b8', fontSize: 13, cursor: 'pointer' }}
                       title="Copy share script"
-                      style={{
-                        width: 42, height: 42, flexShrink: 0,
-                        background: 'rgba(255,255,255,0.04)',
-                        border: '1px solid rgba(255,255,255,0.1)',
-                        borderRadius: 10, color: '#94a3b8',
-                        fontSize: 16, cursor: 'pointer',
-                        display: 'flex', alignItems: 'center', justifyContent: 'center',
-                        transition: 'background 0.2s, border-color 0.2s',
-                      }}
                     >
                       📋
                     </motion.button>
 
-                    {/* Go Live — breathing pulse */}
-                    <div style={{ width: 42, flexShrink: 0 }}>
-                      <Link to={`/live-seed/learn-${video.role.toLowerCase()}-${video.id}`} style={{ textDecoration: 'none', display: 'block', height: 42 }}>
-                        <LivingButton
-                          variant="live"
-                          height={42}
-                          borderRadius={10}
-                          fontSize={14}
-                          letterSpacing="0px"
-                          fontWeight={400}
-                        >
-                          {''}
-                        </LivingButton>
-                      </Link>
-                    </div>
-
+                    <Link to={`/live-seed/learn-${video.role.toLowerCase()}-${video.id}`} style={{ textDecoration: 'none' }}>
+                      <motion.button
+                        whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }}
+                        style={{ padding: '10px 12px', background: 'rgba(239,68,68,0.15)', border: '1px solid rgba(239,68,68,0.4)', borderRadius: 10, color: '#ef4444', fontSize: 13, cursor: 'pointer' }}
+                      >
+                        🔴
+                      </motion.button>
+                    </Link>
                   </div>
                 </div>
               </motion.div>
