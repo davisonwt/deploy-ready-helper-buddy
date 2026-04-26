@@ -136,14 +136,14 @@ function OrchardCard({ orchard, index }) {
 
         {/* Living buttons */}
         <div style={{ display: 'flex', gap: 8 }}>
-          <div style={{ flex: 1, overflow: 'hidden', borderRadius: 12 }}>
+          <div style={{ flex: 1 }}>
             <Link to={`/animated-orchard/${orchard.id}`} style={{ textDecoration: 'none', display: 'block' }}>
               <LivingButton variant="enter" height={48} borderRadius={12} fontSize={14} letterSpacing="0px">
                 <Heart size={16} /> Bestow from ${pocketPrice}
               </LivingButton>
             </Link>
           </div>
-          <div style={{ width: 100, flexShrink: 0, overflow: 'hidden', borderRadius: 12 }}>
+          <div style={{ width: 100, flexShrink: 0 }}>
             <Link to={`/live-seed/${orchard.id}`} style={{ textDecoration: 'none', display: 'block' }}>
               <LivingButton variant="live" height={48} borderRadius={12} fontSize={13} letterSpacing="0px">
                 Go Live
