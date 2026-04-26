@@ -279,7 +279,7 @@ export default function SeedFlowDashboard() {
       borderTop: '1px solid rgba(255,255,255,0.05)',
       display: 'flex', gap: 6,
     },
-    center: { flex: 1, display: 'flex', flexDirection: 'column', overflowY: 'auto' },
+    center: { flex: 1, display: 'flex', flexDirection: 'column', overflowY: 'auto', overflowX: 'hidden' },
     header: {
       padding: '18px 22px 14px',
       borderBottom: '1px solid rgba(255,255,255,0.05)',
@@ -435,6 +435,9 @@ export default function SeedFlowDashboard() {
 
       <div style={styles.root}>
 
+        {/* ── SeedFlow fixed strip across very top ── */}
+        <SeedFlow fixed height={38} seedCount={36} zIndex={200} />
+
         {/* ── SIDEBAR ─────────────────────────────────────────── */}
         <div style={styles.sidebar}>
           <div style={styles.logoArea}>
@@ -490,9 +493,6 @@ export default function SeedFlowDashboard() {
 
         {/* ── CENTER ──────────────────────────────────────────── */}
         <div style={styles.center}>
-
-          {/* ── SeedFlow strip — seeds drift across the top ── */}
-          <SeedFlow height={44} seedCount={36} style={{ borderRadius: 0, border: 'none', borderBottom: '1px solid rgba(255,255,255,0.04)' }} />
 
           <div style={styles.header}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
