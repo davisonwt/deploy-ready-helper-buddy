@@ -106,8 +106,7 @@ export default function MyOrchardsPage() {
   }
 
   return (
-    <div style={{position:'fixed',inset:0,zIndex:9999,overflowY:'auto'}}>
-      <style>{`
+     <div style={{position:'fixed',inset:0,zIndex:9999,overflowY:'auto'}}>  <style>{`
         @keyframes gradient {
           0% { background-position: 0% 50%; }
           50% { background-position: 100% 50%; }
@@ -115,6 +114,7 @@ export default function MyOrchardsPage() {
         }
       `}</style>
 
+      {/* Animated Background */}
       <div className='fixed inset-0 z-0'>
         <div className='absolute inset-0' style={{
           background: 'linear-gradient(135deg, #10b981 0%, #059669 25%, #047857 50%, #065f46 75%, #064e3b 100%)',
@@ -140,6 +140,7 @@ export default function MyOrchardsPage() {
       </div>
 
       <div className='relative z-10'>
+        {/* Hero */}
         <div className='relative overflow-hidden border-b border-white/20 backdrop-blur-md bg-white/10'>
           <div className='relative container mx-auto px-4 py-16'>
             <motion.div
@@ -176,6 +177,7 @@ export default function MyOrchardsPage() {
         </div>
 
         <div className='container mx-auto px-4 py-8'>
+          {/* Stats */}
           <div className='grid grid-cols-1 md:grid-cols-3 gap-6 mb-8'>
             <Card className='backdrop-blur-md bg-white/20 border-white/30 shadow-2xl'>
               <CardContent className='p-6'>
@@ -212,6 +214,7 @@ export default function MyOrchardsPage() {
             </Card>
           </div>
 
+          {/* Filters */}
           <div className='mb-8 space-y-4'>
             <div className='flex justify-center'>
               <div className='min-w-[240px]'>
@@ -246,6 +249,7 @@ export default function MyOrchardsPage() {
             </div>
           </div>
 
+          {/* Seeds Grid */}
           <div className='backdrop-blur-md bg-white/20 border-white/30 shadow-2xl rounded-2xl p-6 md:p-8'>
             {userSeeds.length === 0 ? (
               <Card className='backdrop-blur-md bg-white/20 border-white/30 shadow-2xl'>
