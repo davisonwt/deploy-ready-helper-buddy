@@ -144,10 +144,8 @@ export default function WanderingDirectoryPage() {
   const getAvatar = (m) => m.logo_url || m.avatar_url || m.cover_photo || null
 
   return (
-    <>
     <div style={s.root}>
       <div style={s.header}>
-        <a href='/dashboard' style={{ display:'inline-flex', alignItems:'center', gap:6, color:'#64748b', fontSize:13, marginBottom:16, padding:'6px 12px', background:'rgba(255,255,255,0.05)', borderRadius:8, border:'1px solid rgba(255,255,255,0.08)', textDecoration:'none' }}>Back to Dashboard</a>
         <div style={s.title}>🌿 The Wandering Directory</div>
         <div style={s.sub}>Find skilled tribe members ready to serve, create, and connect</div>
       </div>
@@ -242,4 +240,3 @@ export default function WanderingDirectoryPage() {
     </div>
   )
 }
-
