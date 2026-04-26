@@ -1,10 +1,116 @@
-import { useState } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useAuth } from '../hooks/useAuth'
 import { Link } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { toast } from 'sonner'
 import LivingButton from '../components/LivingButton'
 import RoleButton, { ROLE_CONFIG } from '../components/RoleButton'
+
+// ── Colored Living Button — share animation in any color ────────────────────
+function ColoredLivingButton({ color, onClick, children, height = 42, variant = 'share' }) {
+  const canvasRef = useRef(null)
+  const frameRef = useRef(0)
+  const hoverRef = useRef(0)
+  const hoveredRef = useRef(false)
+  const rafRef = useRef(null)
+  const [isHovered, setIsHovered] = useState(false)
+
+  const hex = color
+  const r = parseInt(hex.slice(1,3),16)
+  const g = parseInt(hex.slice(3,5),16)
+  const b = parseInt(hex.slice(5,7),16)
+
+  useEffect(() => {
+    const canvas = canvasRef.current
+    if (!canvas) return
+    const ctx = canvas.getContext('2d')
+    function resize() { canvas.width = canvas.offsetWidth || 300; canvas.height = canvas.offsetHeight || height }
+    resize()
+    function loop() {
+      frameRef.current++
+      const target = hoveredRef.current ? 1 : 0
+      hoverRef.current += (target - hoverRef.current) * 0.07
+      if (canvas.width !== canvas.offsetWidth && canvas.offsetWidth > 0) resize()
+      const f = frameRef.current, hT = hoverRef.current, w = canvas.width, h = canvas.height
+      ctx.clearRect(0, 0, w, h)
+
+      if (variant === 'share') {
+        // Constellation — seed travels outward in card color
+        const cx = w / 2, cy = h / 2
+        const cg = ctx.createRadialGradient(cx, cy, 0, cx, cy, 10 + hT * 6)
+        cg.addColorStop(0, `rgba(${r},${g},${b},${0.8 + hT * 0.2})`)
+        cg.addColorStop(1, `rgba(${r},${g},${b},0)`)
+        ctx.fillStyle = cg; ctx.beginPath(); ctx.arc(cx, cy, 10 + hT * 6, 0, Math.PI * 2); ctx.fill()
+        const nodes = [{x:w*0.08,y:h*0.2},{x:w*0.88,y:h*0.15},{x:w*0.92,y:h*0.7},{x:w*0.55,y:h*0.9},{x:w*0.05,y:h*0.75},{x:w*0.3,y:h*0.08},{x:w*0.75,y:h*0.88}]
+        const travel = (f * 0.01) % 1
+        nodes.forEach((n, i) => {
+          const delay = i * 0.12
+          const localT = Math.max(0, Math.min(1, (travel - delay) * 2))
+          const arrived = 0.15 + hT * 0.85
+          ctx.beginPath(); ctx.moveTo(cx, cy); ctx.lineTo(n.x, n.y)
+          ctx.strokeStyle = `rgba(${r},${g},${b},${localT * arrived * 0.2})`
+          ctx.lineWidth = 0.7; ctx.setLineDash([3, 6]); ctx.stroke(); ctx.setLineDash([])
+          const na = arrived * (0.3 + Math.sin(f * 0.04 + i) * 0.15)
+          const ng = ctx.createRadialGradient(n.x, n.y, 0, n.x, n.y, 6 + hT * 3)
+          ng.addColorStop(0, `rgba(${r},${g},${b},${na})`); ng.addColorStop(1, `rgba(${r},${g},${b},0)`)
+          ctx.fillStyle = ng; ctx.beginPath(); ctx.arc(n.x, n.y, 6 + hT * 3, 0, Math.PI * 2); ctx.fill()
+          ctx.beginPath(); ctx.arc(n.x, n.y, 2, 0, Math.PI * 2)
+          ctx.fillStyle = `rgba(${r},${g},${b},${na * 1.5})`; ctx.fill()
+        })
+      } else {
+        // Live — breathing in card color
+        const cx = w / 2, cy = h / 2
+        const inhale = Math.sin(f * 0.022) * 0.5 + 0.5
+        for (let ring = 0; ring < 4; ring++) {
+          const rad = 15 + ring * 12 + inhale * (8 + ring * 5) * (0.4 + hT * 0.6)
+          const a = (1 - ring / 4) * (0.05 + inhale * 0.1 + hT * 0.12)
+          const rg = ctx.createRadialGradient(cx, cy, rad * 0.5, cx, cy, rad)
+          rg.addColorStop(0, `rgba(${r},${g},${b},${a})`); rg.addColorStop(1, `rgba(${r},${g},${b},0)`)
+          ctx.fillStyle = rg; ctx.fillRect(0, 0, w, h)
+        }
+        const pPhase = ((f * 0.022 / Math.PI) % 1)
+        const pR = pPhase * (w * 0.45)
+        ctx.beginPath(); ctx.arc(cx, cy, pR, 0, Math.PI * 2)
+        ctx.strokeStyle = `rgba(${r},${g},${b},${(1 - pPhase) * (0.25 + hT * 0.35)})`
+        ctx.lineWidth = 1.2; ctx.stroke()
+        const coreR = 6 + inhale * 4 * (0.5 + hT * 0.5)
+        const cg2 = ctx.createRadialGradient(cx, cy, 0, cx, cy, coreR * 2)
+        cg2.addColorStop(0, `rgba(255,255,255,${0.7 + inhale * 0.3})`)
+        cg2.addColorStop(0.3, `rgba(${r},${g},${b},${0.8 + inhale * 0.2})`)
+        cg2.addColorStop(1, `rgba(${r},${g},${b},0)`)
+        ctx.fillStyle = cg2; ctx.beginPath(); ctx.arc(cx, cy, coreR * 2, 0, Math.PI * 2); ctx.fill()
+      }
+      rafRef.current = requestAnimationFrame(loop)
+    }
+    rafRef.current = requestAnimationFrame(loop)
+    return () => cancelAnimationFrame(rafRef.current)
+  }, [color, variant])
+
+  return (
+    <button
+      onClick={onClick}
+      onMouseEnter={() => { hoveredRef.current = true; setIsHovered(true) }}
+      onMouseLeave={() => { hoveredRef.current = false; setIsHovered(false) }}
+      style={{
+        position: 'relative', width: '100%', height,
+        borderRadius: 10, overflow: 'hidden',
+        border: `1px solid ${color}66`,
+        background: `${color}cc`,
+        cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
+        color: '#fff', fontWeight: 700, fontSize: 13,
+        transition: 'transform 0.2s, box-shadow 0.3s',
+        transform: isHovered ? 'scale(1.03)' : 'none',
+        boxShadow: isHovered ? `0 6px 20px ${color}55` : `0 2px 10px ${color}33`,
+        outline: 'none', padding: 0,
+      }}
+    >
+      <canvas ref={canvasRef} style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', pointerEvents: 'none' }} />
+      <span style={{ position: 'relative', zIndex: 2, display: 'flex', alignItems: 'center', gap: 6, pointerEvents: 'none' }}>
+        {children}
+      </span>
+    </button>
+  )
+}
 
 const REFERRAL_CODES = {
   '04754d57-d41d-4ea7-93df-542047a6785b': 'S2G-XDAVU6VP'
@@ -238,14 +344,12 @@ export default function LearnSharePage() {
 
                   {/* Buttons */}
                   <div style={{ display: 'flex', gap: 8 }}>
-                    {/* Share */}
-                    <motion.button
-                      whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }}
-                      onClick={() => handleShare(video)}
-                      style={{ flex: 1, padding: '10px 0', background: video.color, border: 'none', borderRadius: 10, color: '#fff', fontWeight: 700, fontSize: 13, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}
-                    >
-                      ↗ Share
-                    </motion.button>
+                    {/* Share — living constellation in card color */}
+                    <div style={{ flex: 1 }}>
+                      <ColoredLivingButton color={video.color} onClick={() => handleShare(video)} height={42} variant="share">
+                        ↗ Share
+                      </ColoredLivingButton>
+                    </div>
 
                     {/* Copy Script */}
                     <motion.button
@@ -257,16 +361,14 @@ export default function LearnSharePage() {
                       📋
                     </motion.button>
 
-                    {/* Go Live */}
-                    <Link to={`/live-seed/learn-${video.role.toLowerCase()}-${video.id}`} style={{ textDecoration: 'none' }}>
-                      <motion.button
-                        whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }}
-                        style={{ padding: '10px 12px', background: 'rgba(239,68,68,0.15)', border: '1px solid rgba(239,68,68,0.4)', borderRadius: 10, color: '#ef4444', fontSize: 13, cursor: 'pointer' }}
-                        title="Go Live"
-                      >
-                        🔴
-                      </motion.button>
-                    </Link>
+                    {/* Go Live — breathing in red */}
+                    <div style={{ width: 42, flexShrink: 0 }}>
+                      <Link to={`/live-seed/learn-${video.role.toLowerCase()}-${video.id}`} style={{ textDecoration: 'none', display: 'block' }}>
+                        <ColoredLivingButton color="#ef4444" height={42} variant="live">
+                          🔴
+                        </ColoredLivingButton>
+                      </Link>
+                    </div>
                   </div>
                 </div>
               </motion.div>
