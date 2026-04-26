@@ -256,7 +256,7 @@ export default function SeedFlowDashboard() {
       justifyContent: 'center', fontSize: 12, fontWeight: 700, color: '#64748b',
     },
     nav: {
-      flex: 1, padding: '10px 8px',
+      flex: 1, padding: '10px 8px 80px',
       overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 3,
     },
     navItem: (isActive, color) => ({
