@@ -171,7 +171,7 @@ export default function SeedFlow({
       pointerEvents: 'none',
       overflow: 'hidden',
       borderBottom: '1px solid rgba(234,179,8,0.08)',
-      background: 'rgba(234,179,8,0.02)',
+      background: '#060a12',
       ...extraStyle,
     }}>
       <canvas ref={canvasRef} style={{ display: 'block', width: '100%', height: '100%' }} />
