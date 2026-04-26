@@ -75,31 +75,19 @@ const VARIANT_CONFIG = {
 // ─── Pulse dot (for Live button) ─────────────────────────────────────────────
 function PulseDot({ color }) {
   return (
-    <span style={{
-      display: 'inline-block',
-      width: 9,
-      height: 9,
-      borderRadius: '50%',
-      background: color,
-      boxShadow: `0 0 0 0 ${color}80`,
-      animation: 'pulseDot 1.5s ease infinite',
-      flexShrink: 0,
-    }} />
+    <>
+      <style>{`@keyframes s2gPulse{0%{box-shadow:0 0 0 0 rgba(239,68,68,0.6)}70%{box-shadow:0 0 0 10px rgba(239,68,68,0)}100%{box-shadow:0 0 0 0 rgba(239,68,68,0)}}`}</style>
+      <span style={{
+        display: 'inline-block',
+        width: 9,
+        height: 9,
+        borderRadius: '50%',
+        background: color,
+        animation: 's2gPulse 1.5s ease infinite',
+        flexShrink: 0,
+      }} />
+    </>
   );
-}
-
-// Inject pulse keyframes once
-if (typeof document !== 'undefined' && !document.getElementById('s2g-pulse-style')) {
-  const style = document.createElement('style');
-  style.id = 's2g-pulse-style';
-  style.textContent = `
-    @keyframes pulseDot {
-      0%   { box-shadow: 0 0 0 0 rgba(239,68,68,0.6); }
-      70%  { box-shadow: 0 0 0 10px rgba(239,68,68,0); }
-      100% { box-shadow: 0 0 0 0 rgba(239,68,68,0); }
-    }
-  `;
-  document.head.appendChild(style);
 }
 
 // ─── Component ────────────────────────────────────────────────────────────────
