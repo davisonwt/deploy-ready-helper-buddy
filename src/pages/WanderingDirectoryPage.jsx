@@ -144,6 +144,7 @@ export default function WanderingDirectoryPage() {
   const getAvatar = (m) => m.logo_url || m.avatar_url || m.cover_photo || null
 
   return (
+    <>
     <div style={s.root}>
       <div style={s.header}>
         <div style={s.title}>🌿 The Wandering Directory</div>
