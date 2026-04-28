@@ -107,7 +107,7 @@ export default function MyOrchardsPage() {
   }
 
   return (
-    <div style={{position:'fixed',inset:0,zIndex:9999,overflowY:'auto'}}>
+    <div style={{position:'relative',overflowY:'auto'}}>
       <style>{`
         @keyframes gradient {
           0% { background-position: 0% 50%; }
