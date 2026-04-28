@@ -12,8 +12,8 @@ const ROLES = [
   { key: 'field', label: 'Wandering Field', emoji: '🌾', table: 'providers' },
   { key: 'heart', label: 'Wandering Heart', emoji: '💚', table: 'tribal_hearts_profiles' },
   { key: 'forge', label: 'Wandering Forge', emoji: '⚒️', table: 'providers' },
-  { key: 'story', label: 'Wandering Story', emoji: '🎥', table: 'providers' },
-  { key: 'hearth', label: 'Wandering Hearth', emoji: '🔥', table: 'providers' },
+  { key: 'story', label: 'Story Teller', emoji: '🎥', table: 'providers' },
+  { key: 'hearth', label: 'Hearth Creator', emoji: '🔥', table: 'providers' },
 ]
 
 const ROLE_COLORS = {
@@ -62,11 +62,11 @@ export default function WanderingDirectoryPage() {
       }
       if (activeRole === 'all' || activeRole === 'story') {
         const { data } = await supabase.from('providers').select('*').eq('status', 'approved').eq('subtype', 'story').limit(20)
-        if (data) data.forEach(item => results.push({ ...item, _role: 'story', _roleLabel: 'Wandering Story', _roleEmoji: '🎥', _color: ROLE_COLORS.story }))
+        if (data) data.forEach(item => results.push({ ...item, _role: 'story', _roleLabel: 'Story Teller', _roleEmoji: '🎥', _color: ROLE_COLORS.story }))
       }
       if (activeRole === 'all' || activeRole === 'hearth') {
         const { data } = await supabase.from('providers').select('*').eq('status', 'approved').eq('subtype', 'hearth').limit(20)
-        if (data) data.forEach(item => results.push({ ...item, _role: 'hearth', _roleLabel: 'Wandering Hearth', _roleEmoji: '🔥', _color: ROLE_COLORS.hearth }))
+        if (data) data.forEach(item => results.push({ ...item, _role: 'hearth', _roleLabel: 'Hearth Creator', _roleEmoji: '🔥', _color: ROLE_COLORS.hearth }))
       }
       setMembers(results)
     } catch (err) {
@@ -192,5 +192,3 @@ export default function WanderingDirectoryPage() {
     </div>
   )
 }
-
-
