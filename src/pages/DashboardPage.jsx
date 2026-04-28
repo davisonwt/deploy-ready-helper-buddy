@@ -1,4 +1,4 @@
-﻿import React, { useState, useEffect, useRef } from 'react'
+ï»¿import React, { useState, useEffect, useRef } from 'react'
 import { useAuth } from '../hooks/useAuth'
 import { Link, useNavigate } from 'react-router-dom'
 import { supabase } from "@/integrations/supabase/client"
@@ -59,16 +59,16 @@ const SEEDS = [
 ]
 
 const NAV = [
-  { label: 'SeedFlow', sub: 'Your living feed', emoji: 'ðŸŒŠ', path: '/dashboard', color: '#2563eb' },
-  { label: 'My Garden', sub: 'Seeds & orchards', emoji: 'ðŸŒ±', path: '/my-orchards', color: '#16a34a' },
-  { label: 'Learn & Share', sub: 'Grow your tribe', emoji: '🎬', path: '/learn-share', color: '#10b981' },
-  { label: 'Directory', sub: 'Find your tribe', emoji: '🌍', path: '/wandering-directory', color: '#6366f1' },
-  { label: 'Orchards', sub: 'All tribal orchards', emoji: 'ðŸŒ³', path: '/browse-orchards', color: '#0d9488' },
-  { label: 'Conversations', sub: 'Tribe messaging', emoji: '💬', path: '/chatapp', color: '#0891b2' },
-  { label: '364yhvh', sub: 'Scripture & feasts', emoji: '📅', path: '/364yhvh-days', color: '#7c3aed' },
-  { label: 'Wandering Hearts', sub: 'Tribal connections', emoji: '💚', path: '/wandering-hearts', color: '#dc2626' },
-  { label: "Gosat's", sub: 'Elder management', emoji: '🏛', path: '/gosats', color: '#7c3aed' },
-  { label: 'Let It Rain', sub: 'Bestow blessings', emoji: '🌧', path: '/let-it-rain', color: '#6d28d9' },
+  { label: 'SeedFlow',         sub: 'Your living feed',    emoji: '🌊', path: '/dashboard',            color: '#2563eb' },
+  { label: 'My Garden',        sub: 'Seeds & orchards',    emoji: '🌱', path: '/my-orchards',           color: '#16a34a' },
+  { label: 'Learn & Share',    sub: 'Grow your tribe',     emoji: '🎬', path: '/learn-share',           color: '#10b981' },
+  { label: 'Directory',        sub: 'Find your tribe',     emoji: '🌍', path: '/wandering-directory',   color: '#6366f1' },
+  { label: 'Orchards',         sub: 'All tribal orchards', emoji: '🌳', path: '/browse-orchards',       color: '#0d9488' },
+  { label: 'Conversations',    sub: 'Tribe messaging',     emoji: '💬', path: '/chatapp',               color: '#0891b2' },
+  { label: '364yhvh',          sub: 'Scripture & feasts',  emoji: '📅', path: '/364yhvh-days',          color: '#7c3aed' },
+  { label: 'Wandering Hearts', sub: 'Tribal connections',  emoji: '💚', path: '/wandering-hearts',      color: '#dc2626' },
+  { label: "Gosat's",        sub: 'Elder management',    emoji: '🏛', path: '/gosats',                color: '#7c3aed' },
+  { label: 'Let It Rain',      sub: 'Bestow blessings',    emoji: '🌧', path: '/let-it-rain',           color: '#6d28d9' },
 ]
 
 const GROWTH_TIPS = [
@@ -412,13 +412,13 @@ export default function SeedFlowDashboard() {
 
           <div style={styles.bottomBar}>
             <Link to="/create-orchard" style={{ flex: 1, textDecoration: 'none' }}>
-              <button style={styles.btnPlant}>ðŸŒ± Plant Seed</button>
+              <button style={styles.btnPlant}>Ã°Å¸ÅÂ± Plant Seed</button>
             </Link>
             <Link to="/grove-station" style={{ flex: 1, textDecoration: 'none' }}>
-              <button style={styles.btnLive}>ðŸ”´ Go Live</button>
+              <button style={styles.btnLive}>Ã°Å¸âÂ´ Go Live</button>
             </Link>
             <Link to="/chatapp" style={{ flex: 1, textDecoration: 'none' }}>
-              <button style={styles.btnChat}>ðŸ’¬ Enter Chat</button>
+              <button style={styles.btnChat}>Ã°Å¸âÂ¬ Enter Chat</button>
             </Link>
           </div>
         </div>
@@ -431,14 +431,14 @@ export default function SeedFlowDashboard() {
               <div style={styles.avatar}>
                 {profile?.avatar_url
                   ? <img src={profile.avatar_url} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                  : 'ðŸ§‘'}
+                  : 'Ã°Å¸Â§â'}
               </div>
               <div>
                 <div style={styles.greeting}>
-                  ðŸŒŠ Welcome back â€” your seeds are in motion
+                  Ã°Å¸ÅÅ  Welcome back Ã¢â¬â your seeds are in motion
                 </div>
                 <div style={styles.greetingSub}>
-                  Shalom, {displayName} Â· Year {sacredDate.year} Â· Month {sacredDate.month} Â· Day {sacredDate.day}
+                  Shalom, {displayName} ÃÂ· Year {sacredDate.year} ÃÂ· Month {sacredDate.month} ÃÂ· Day {sacredDate.day}
                 </div>
               </div>
             </div>
@@ -478,10 +478,10 @@ export default function SeedFlowDashboard() {
                 </div>
                 <div style={styles.seedBtns}>
                   <Link to={activeSeed.playPath} style={{ flex: 1, textDecoration: 'none' }}>
-                    <button style={styles.btnPlay}>â–¶ Play</button>
+                    <button style={styles.btnPlay}>Ã¢âÂ¶ Play</button>
                   </Link>
                   <Link to={activeSeed.bookPath} style={{ flex: 1, textDecoration: 'none' }}>
-                    <button style={styles.btnBook}>ðŸ“… Enter</button>
+                    <button style={styles.btnBook}>Ã°Å¸ââ¦ Enter</button>
                   </Link>
                 </div>
               </div>
@@ -498,7 +498,7 @@ export default function SeedFlowDashboard() {
             {/* Connect */}
             <Link to="/browse-orchards" style={{ textDecoration: 'none' }}>
               <button style={styles.connectBtn} className="connect-btn">
-                ðŸŒ¿ STEP INTO THE ORCHARD â€” FIND YOUR SEED
+                Ã°Å¸ÅÂ¿ STEP INTO THE ORCHARD Ã¢â¬â FIND YOUR SEED
               </button>
             </Link>
           </div>
@@ -508,26 +508,26 @@ export default function SeedFlowDashboard() {
         <div style={styles.rightPanel}>
           {/* Today */}
           <div style={styles.panelSection}>
-            <div style={styles.panelTitle}>ðŸ“… TODAY</div>
+            <div style={styles.panelTitle}>Ã°Å¸ââ¦ TODAY</div>
             <div style={styles.dateYear}>Year {sacredDate.year}</div>
             <div style={styles.dateLine}>
-              Month {sacredDate.month} Â· Day {sacredDate.day}<br />
-              Day 1 Â· Regular Day
+              Month {sacredDate.month} ÃÂ· Day {sacredDate.day}<br />
+              Day 1 ÃÂ· Regular Day
             </div>
           </div>
 
           {/* Omer */}
           <div style={styles.omerBadge}>
-            <span style={{ fontSize: 18 }}>ðŸŒ¾</span>
+            <span style={{ fontSize: 18 }}>Ã°Å¸ÅÂ¾</span>
             <div>
               <div style={styles.omerText}>Omer {sacredDate.omer}/{sacredDate.omerTotal}</div>
-              <div style={styles.omerNext}>â†’ {sacredDate.nextFeast}</div>
+              <div style={styles.omerNext}>Ã¢â â {sacredDate.nextFeast}</div>
             </div>
           </div>
 
           {/* Growth */}
           <div style={styles.panelSection}>
-            <div style={styles.panelTitle}>ðŸŒ± YOUR GROWTH</div>
+            <div style={styles.panelTitle}>Ã°Å¸ÅÂ± YOUR GROWTH</div>
             <div style={styles.growthCard}>
               <div style={styles.growthTitle}>Seeds this week</div>
               {[
@@ -546,7 +546,7 @@ export default function SeedFlowDashboard() {
 
           {/* Tip */}
           <div style={styles.panelSection}>
-            <div style={styles.panelTitle}>ðŸ’¡ SEEDFLOW TIP</div>
+            <div style={styles.panelTitle}>Ã°Å¸âÂ¡ SEEDFLOW TIP</div>
             <div style={styles.tipBox}>"{tip}"</div>
           </div>
         </div>
