@@ -12,8 +12,8 @@ const ROLES = [
   { key: 'field', label: 'Wandering Field', emoji: '🌾', table: 'providers' },
   { key: 'heart', label: 'Wandering Heart', emoji: '💚', table: 'tribal_hearts_profiles' },
   { key: 'forge', label: 'Wandering Forge', emoji: '⚒️', table: 'providers' },
-  { key: 'story', label: 'Story Teller', emoji: '🎥', table: 'providers' },
-  { key: 'hearth', label: 'Hearth Creator', emoji: '🔥', table: 'providers' },
+  { key: 'story', label: 'Wandering Story', emoji: '🎥', table: 'providers' },
+  { key: 'hearth', label: 'Wandering Hearth', emoji: '🔥', table: 'providers' },
 ]
 
 const ROLE_COLORS = {
@@ -192,3 +192,4 @@ export default function WanderingDirectoryPage() {
     </div>
   )
 }
+
