@@ -1,19 +1,19 @@
-﻿import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { supabase } from "@/integrations/supabase/client"
 import { useAuth } from '../hooks/useAuth'
 
 const ROLES = [
-  { key: 'all', label: 'All', emoji: 'ðŸŒ¿' },
-  { key: 'wheel', label: 'Wandering Wheel', emoji: 'ðŸš—', table: 'community_drivers' },
-  { key: 'hand', label: 'Wandering Hand', emoji: 'ðŸ¤²', table: 'service_providers' },
-  { key: 'whisperer', label: 'Whisperer', emoji: 'ðŸŒ¬ï¸', table: 'whisperers' },
-  { key: 'pillow', label: 'Wandering Pillow', emoji: 'ðŸ›ï¸', table: 'stay_listings' },
-  { key: 'field', label: 'Wandering Field', emoji: 'ðŸŒ¾', table: 'providers' },
-  { key: 'heart', label: 'Wandering Heart', emoji: 'ðŸ’š', table: 'tribal_hearts_profiles' },
-  { key: 'forge', label: 'Wandering Forge', emoji: 'âš’ï¸', table: 'providers' },
-  { key: 'story', label: 'Wandering Story', emoji: 'ðŸŽ¥', table: 'providers' },
-  { key: 'hearth', label: 'Wandering Hearth', emoji: 'ðŸ”¥', table: 'providers' },
+  { key: 'all', label: 'All', emoji: '🌿' },
+  { key: 'wheel', label: 'Wandering Wheel', emoji: '🚗', table: 'community_drivers' },
+  { key: 'hand', label: 'Wandering Hand', emoji: '🤲', table: 'service_providers' },
+  { key: 'whisperer', label: 'Whisperer', emoji: '🌬️', table: 'whisperers' },
+  { key: 'pillow', label: 'Wandering Pillow', emoji: '🛏️', table: 'stay_listings' },
+  { key: 'field', label: 'Wandering Field', emoji: '🌾', table: 'providers' },
+  { key: 'heart', label: 'Wandering Heart', emoji: '💚', table: 'tribal_hearts_profiles' },
+  { key: 'forge', label: 'Wandering Forge', emoji: '⚒️', table: 'providers' },
+  { key: 'story', label: 'Wandering Story', emoji: '🎥', table: 'providers' },
+  { key: 'hearth', label: 'Wandering Hearth', emoji: '🔥', table: 'providers' },
 ]
 
 const ROLE_COLORS = {
@@ -45,28 +45,28 @@ export default function WanderingDirectoryPage() {
           _roleEmoji: roleEmoji, _color: ROLE_COLORS[roleKey],
         }))
       }
-      if (activeRole === 'all' || activeRole === 'wheel') await fetchRole('community_drivers', 'wheel', 'Wandering Wheel', 'ðŸš—')
-      if (activeRole === 'all' || activeRole === 'hand') await fetchRole('service_providers', 'hand', 'Wandering Hand', 'ðŸ¤²')
-      if (activeRole === 'all' || activeRole === 'whisperer') await fetchRole('whisperers', 'whisperer', 'Whisperer', 'ðŸŒ¬ï¸')
+      if (activeRole === 'all' || activeRole === 'wheel') await fetchRole('community_drivers', 'wheel', 'Wandering Wheel', '🚗')
+      if (activeRole === 'all' || activeRole === 'hand') await fetchRole('service_providers', 'hand', 'Wandering Hand', '🤲')
+      if (activeRole === 'all' || activeRole === 'whisperer') await fetchRole('whisperers', 'whisperer', 'Whisperer', '🌬️')
       if (activeRole === 'all' || activeRole === 'pillow') {
         const { data } = await supabase.from('stay_listings').select('*').eq('status', 'approved').limit(20)
-        if (data) data.forEach(item => results.push({ ...item, _role: 'pillow', _roleLabel: 'Wandering Pillow', _roleEmoji: 'ðŸ›ï¸', _color: ROLE_COLORS.pillow }))
+        if (data) data.forEach(item => results.push({ ...item, _role: 'pillow', _roleLabel: 'Wandering Pillow', _roleEmoji: '🛏️', _color: ROLE_COLORS.pillow }))
       }
       if (activeRole === 'all' || activeRole === 'field') {
         const { data } = await supabase.from('providers').select('*').eq('status', 'approved').eq('subtype', 'farmer').limit(20)
-        if (data) data.forEach(item => results.push({ ...item, _role: 'field', _roleLabel: 'Wandering Field', _roleEmoji: 'ðŸŒ¾', _color: ROLE_COLORS.field }))
+        if (data) data.forEach(item => results.push({ ...item, _role: 'field', _roleLabel: 'Wandering Field', _roleEmoji: '🌾', _color: ROLE_COLORS.field }))
       }
       if (activeRole === 'all' || activeRole === 'forge') {
         const { data } = await supabase.from('providers').select('*').eq('status', 'approved').eq('subtype', 'manufacturer').limit(20)
-        if (data) data.forEach(item => results.push({ ...item, _role: 'forge', _roleLabel: 'Wandering Forge', _roleEmoji: 'âš’ï¸', _color: ROLE_COLORS.forge }))
+        if (data) data.forEach(item => results.push({ ...item, _role: 'forge', _roleLabel: 'Wandering Forge', _roleEmoji: '⚒️', _color: ROLE_COLORS.forge }))
       }
       if (activeRole === 'all' || activeRole === 'story') {
         const { data } = await supabase.from('providers').select('*').eq('status', 'approved').eq('subtype', 'story').limit(20)
-        if (data) data.forEach(item => results.push({ ...item, _role: 'story', _roleLabel: 'Story Teller', _roleEmoji: 'ðŸŽ¥', _color: ROLE_COLORS.story }))
+        if (data) data.forEach(item => results.push({ ...item, _role: 'story', _roleLabel: 'Wandering Story', _roleEmoji: '🎥', _color: ROLE_COLORS.story }))
       }
       if (activeRole === 'all' || activeRole === 'hearth') {
         const { data } = await supabase.from('providers').select('*').eq('status', 'approved').eq('subtype', 'hearth').limit(20)
-        if (data) data.forEach(item => results.push({ ...item, _role: 'hearth', _roleLabel: 'Hearth Creator', _roleEmoji: 'ðŸ”¥', _color: ROLE_COLORS.hearth }))
+        if (data) data.forEach(item => results.push({ ...item, _role: 'hearth', _roleLabel: 'Wandering Hearth', _roleEmoji: '🔥', _color: ROLE_COLORS.hearth }))
       }
       setMembers(results)
     } catch (err) {
@@ -92,11 +92,14 @@ export default function WanderingDirectoryPage() {
     input: { flex: 1, background: '#0d1117', border: '1px solid #1e2430', borderRadius: 10, padding: '10px 14px', color: '#e2e8f0', fontSize: 14, outline: 'none' },
     roleRow: { display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 28 },
     roleBtn: (active, color) => ({
-      padding: '8px 14px', borderRadius: 20, border: `1px solid ${active ? color : '#1e2430'}`,
-      background: active ? color + '22' : 'transparent', color: active ? color : '#6b7280',
-      fontSize: 13, fontWeight: 600, cursor: 'pointer', transition: 'all 0.2s',
+      padding: '8px 14px', borderRadius: 20,
+      border: `1px solid ${active ? color : '#1e2430'}`,
+      background: active ? color + '22' : 'transparent',
+      color: active ? color : '#6b7280',
+      fontSize: 13, fontWeight: 600, cursor: 'pointer',
+      transition: 'all 0.2s',
       display: 'flex', alignItems: 'center', gap: 6,
-      boxShadow: active ? ('0 0 12px ' + color + '66') : 'none',
+      boxShadow: active ? ('0 0 14px ' + color + '66') : 'none',
     }),
     grid: { display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 16 },
     card: (color) => ({ background: '#0d1117', border: `1px solid ${color}33`, borderRadius: 14, overflow: 'hidden', cursor: 'pointer', transition: 'all 0.2s', textDecoration: 'none' }),
@@ -124,17 +127,11 @@ export default function WanderingDirectoryPage() {
   return (
     <div style={s.root}>
       <style>{`
-        @keyframes roleGlow {
-          0%, 100% { box-shadow: 0 0 8px currentColor; }
-          50% { box-shadow: 0 0 18px currentColor; }
-        }
-        .role-btn-active {
-          animation: roleGlow 2s ease-in-out infinite;
-        }
+        @keyframes roleGlow { 0%,100%{opacity:1} 50%{opacity:0.7} }
       `}</style>
       <Link to="/dashboard" style={s.backBtn}>&#8592; Back to Dashboard</Link>
       <div style={s.header}>
-        <div style={s.title}>ðŸŒ¿ The Wandering Directory</div>
+        <div style={s.title}>&#127807; The Wandering Directory</div>
         <div style={s.sub}>Find skilled tribe members ready to serve, create, and connect</div>
       </div>
 
@@ -168,7 +165,7 @@ export default function WanderingDirectoryPage() {
         <div style={s.loadingRow}><div style={{ color: '#4b5563', fontSize: 14 }}>Finding tribe members...</div></div>
       ) : filtered.length === 0 ? (
         <div style={s.emptyState}>
-          <div style={{ fontSize: 48, marginBottom: 12 }}>ðŸŒ±</div>
+          <div style={{ fontSize: 48, marginBottom: 12 }}>&#127807;</div>
           <div style={{ fontSize: 16, fontWeight: 600, color: '#6b7280', marginBottom: 8 }}>No tribe members found yet</div>
           <div style={{ fontSize: 14 }}>Be the first to register this Wandering role</div>
         </div>
@@ -189,7 +186,7 @@ export default function WanderingDirectoryPage() {
                 </div>
                 <div style={s.cardDesc}>{getDesc(m) ? getDesc(m).slice(0, 100) + (getDesc(m).length > 100 ? '...' : '') : 'Tribe member'}</div>
                 <div style={s.cardFooter}>
-                  <div style={s.cardLocation}>ðŸ“ {getLocation(m)}</div>
+                  <div style={s.cardLocation}>&#128205; {getLocation(m)}</div>
                   <button style={s.bookBtn(m._color)} onClick={e => e.preventDefault()}>
                     {m._role === 'heart' ? 'Connect' : m._role === 'whisperer' ? 'Invite' : 'Book'}
                   </button>
@@ -202,4 +199,3 @@ export default function WanderingDirectoryPage() {
     </div>
   )
 }
-
