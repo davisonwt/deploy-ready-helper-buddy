@@ -12,8 +12,8 @@ const ROLES = [
   { key: 'field', label: 'Wandering Field', emoji: '🌾', table: 'providers' },
   { key: 'heart', label: 'Wandering Heart', emoji: '💚', table: 'tribal_hearts_profiles' },
   { key: 'forge', label: 'Wandering Forge', emoji: '⚒️', table: 'providers' },
-  { key: 'story', label: 'Wandering Story', emoji: '🎥', table: 'providers' },
-  { key: 'hearth', label: 'Wandering Hearth', emoji: '🔥', table: 'providers' },
+  { key: 'story', label: 'Story Teller', emoji: '🎥', table: 'providers' },
+  { key: 'hearth', label: 'Hearth Creator', emoji: '🔥', table: 'providers' },
 ]
 
 const ROLE_COLORS = {
@@ -94,8 +94,9 @@ export default function WanderingDirectoryPage() {
     roleBtn: (active, color) => ({
       padding: '8px 14px', borderRadius: 20, border: `1px solid ${active ? color : '#1e2430'}`,
       background: active ? color + '22' : 'transparent', color: active ? color : '#6b7280',
-      fontSize: 13, fontWeight: 600, cursor: 'pointer', transition: 'all 0.15s',
+      fontSize: 13, fontWeight: 600, cursor: 'pointer', transition: 'all 0.2s',
       display: 'flex', alignItems: 'center', gap: 6,
+      boxShadow: active ? ('0 0 12px ' + color + '66') : 'none',
     }),
     grid: { display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 16 },
     card: (color) => ({ background: '#0d1117', border: `1px solid ${color}33`, borderRadius: 14, overflow: 'hidden', cursor: 'pointer', transition: 'all 0.2s', textDecoration: 'none' }),
@@ -122,6 +123,15 @@ export default function WanderingDirectoryPage() {
 
   return (
     <div style={s.root}>
+      <style>{`
+        @keyframes roleGlow {
+          0%, 100% { box-shadow: 0 0 8px currentColor; }
+          50% { box-shadow: 0 0 18px currentColor; }
+        }
+        .role-btn-active {
+          animation: roleGlow 2s ease-in-out infinite;
+        }
+      `}</style>
       <Link to="/dashboard" style={s.backBtn}>&#8592; Back to Dashboard</Link>
       <div style={s.header}>
         <div style={s.title}>🌿 The Wandering Directory</div>
@@ -192,4 +202,3 @@ export default function WanderingDirectoryPage() {
     </div>
   )
 }
-
