@@ -410,6 +410,36 @@ export default function UploadForm() {
                 </div>
 
                 <div>
+                  <Label>Your Wandering identity (optional)</Label>
+                  <p className="text-xs text-muted-foreground mb-3">
+                    Pick the badge that represents who you are as a tribe member. This is separate from what you sell — it helps buyers find their kind of sower.
+                  </p>
+                  <div className="flex flex-wrap gap-2">
+                    {WANDERING_BADGES.filter((b) => !b.routeOverride).map((b) => {
+                      const active = wanderingRole === b.key;
+                      return (
+                        <button
+                          key={b.key}
+                          type="button"
+                          onClick={() => setWanderingRole(active ? null : b.key)}
+                          className={`px-3 py-2 rounded-xl text-xs font-bold tracking-wider border transition flex items-center gap-2 ${
+                            active ? 'border-2' : 'border-border hover:bg-muted'
+                          }`}
+                          style={{
+                            background: active ? `${b.color}22` : undefined,
+                            borderColor: active ? b.color : undefined,
+                            color: active ? b.color : undefined,
+                          }}
+                          title={b.description}
+                        >
+                          <span className="text-lg">{b.emoji}</span> {b.label}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                <div>
                   <Label htmlFor="category">Category, subcategories & tags *</Label>
                   <p className="text-xs text-muted-foreground mb-3">
                     Pick a category, then add subcategories and tags so buyers can find you. Trust tags are locked until you upload verified credentials.
