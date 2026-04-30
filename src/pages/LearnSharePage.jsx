@@ -218,18 +218,30 @@ export default function LearnSharePage() {
               >
                 {/* Video Area */}
                 <div
-                  style={{ position: 'relative', height: 160, background: `${video.color}10`, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: video.url ? 'pointer' : 'default' }}
+                  style={{ position: 'relative', height: 160, background: `${video.color}10`, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: video.url ? 'pointer' : 'default', overflow: 'hidden' }}
                   onClick={() => video.url && setPlayingId(playingId === video.id ? null : video.id)}
                 >
                   {video.url && playingId === video.id ? (
-                    <video src={video.url} autoPlay controls style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                    <video src={video.url} autoPlay controls playsInline style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                   ) : (
                     <>
-                      <div style={{ width: 56, height: 56, borderRadius: '50%', background: video.url ? video.color : 'rgba(255,255,255,0.08)', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: video.url ? `0 0 20px ${video.color}60` : 'none' }}>
+                      {video.url && (
+                        <video
+                          src={`${video.url}#t=0.5`}
+                          preload="metadata"
+                          muted
+                          playsInline
+                          style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', opacity: 0.55 }}
+                        />
+                      )}
+                      <div style={{ position: 'relative', width: 56, height: 56, borderRadius: '50%', background: video.url ? video.color : 'rgba(255,255,255,0.08)', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: video.url ? `0 0 20px ${video.color}60` : 'none' }}>
                         <span style={{ fontSize: 22, color: '#fff' }}>▶</span>
                       </div>
                       {!video.url && (
                         <div style={{ position: 'absolute', top: 10, right: 10, background: '#1e293b', borderRadius: 6, padding: '3px 8px', fontSize: 10, fontWeight: 800, color: '#64748b', letterSpacing: '0.1em' }}>SOON</div>
+                      )}
+                      {video.url && (
+                        <div style={{ position: 'absolute', top: 10, right: 10, background: video.color, borderRadius: 6, padding: '3px 8px', fontSize: 10, fontWeight: 800, color: '#fff', letterSpacing: '0.1em' }}>PLAY</div>
                       )}
                     </>
                   )}
