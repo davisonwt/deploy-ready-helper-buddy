@@ -35,6 +35,8 @@ export default function DJMusicUpload({ trigger }) {
     tags: []
   })
   const [newTag, setNewTag] = useState('')
+  const [wanderingRole, setWanderingRole] = useState(null)
+  const [taxonomy, setTaxonomy] = useState({ categoryId: null, subcategoryIds: [], tagIds: [] })
 
   const { fetchTracks, djProfile } = useDJPlaylist()
   const { directUpload, uploading } = useDirectMusicUpload()
