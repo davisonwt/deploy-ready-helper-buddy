@@ -8,6 +8,7 @@ import {
   BondingAnimation,
   TribalHeart,
 } from '@/components/tribal-hearts/BondingAnimation';
+import { TribalHeartsOnboarding } from '@/components/tribal-hearts/TribalHeartsOnboarding';
 import { useTribalHearts } from '@/hooks/useTribalHearts';
 import { TribalAudio } from '@/hooks/useTribalHeartsAudio';
 import { toast } from '@/hooks/use-toast';
@@ -160,13 +161,9 @@ const TribalHeartsPage: React.FC = () => {
             </p>
           </div>
         ) : !myProfile ? (
-          <EmptyState
-            heroImg={heroImg}
-            title="Find your tribe. Protect your heart."
-            body="Set up your Tribal Hearts profile to begin the journey."
-            cta="Begin my journey"
-            onCta={() => navigate('/dashboard')}
-          />
+          <div className="fixed inset-0 z-40">
+            <TribalHeartsOnboarding onComplete={() => window.location.reload()} />
+          </div>
         ) : profiles.length === 0 ? (
           <EmptyState
             heroImg={heroImg}
