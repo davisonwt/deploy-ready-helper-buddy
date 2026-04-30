@@ -352,6 +352,15 @@ function WeekBeads({ sacred }) {
           </span>
         )}
       </div>
+      {picked && (
+        <BeadPopup
+          isOpen={!!picked}
+          onClose={() => setPicked(null)}
+          year={picked.year}
+          month={picked.month}
+          day={picked.day}
+        />
+      )}
     </div>
   )
 }
