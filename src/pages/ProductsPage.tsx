@@ -328,6 +328,14 @@ export default function ProductsPage() {
         </p>
       </div>
 
+      {/* Wandering identity badges (top nav) */}
+      <div className="px-6 max-w-6xl mx-auto w-full">
+        <WanderingBadgeBar
+          activeRole={wanderingRole}
+          onRoleChange={setWanderingRole}
+        />
+      </div>
+
       {/* Universal marketplace filter (categories + tag combinations) */}
       <div className="px-6 pb-4 max-w-6xl mx-auto w-full">
         <MarketplaceFilterBar
