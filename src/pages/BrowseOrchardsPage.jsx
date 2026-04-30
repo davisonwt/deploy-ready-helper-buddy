@@ -230,6 +230,51 @@ export default function BrowseOrchardsPage() {
 
   useEffect(() => { fetchOrchards() }, [])
 
+  useEffect(() => {
+    if (activeTab === 'orchards' || music.length || books.length || videos.length) return
+    let cancelled = false
+    ;(async () => {
+      setMediaLoading(true)
+      try {
+        const [musicRes, booksRes, videosRes] = await Promise.all([
+          supabase.from('dj_music_tracks')
+            .select('id, track_title, music_genre, genre, created_at, dj_id, radio_djs:dj_id (user_id, profiles:user_id (first_name, last_name, display_name))')
+            .eq('is_public', true)
+            .order('created_at', { ascending: false })
+            .limit(60),
+          supabase.from('sower_books')
+            .select('id, title, cover_image_url, image_urls, user_id, created_at, profiles:user_id (first_name, last_name, display_name)')
+            .eq('is_public', true)
+            .order('created_at', { ascending: false })
+            .limit(60),
+          supabase.from('community_videos')
+            .select('id, title, thumbnail_url, video_url, uploader_id, created_at, profiles:uploader_profile_id (first_name, last_name, display_name)')
+            .order('created_at', { ascending: false })
+            .limit(60),
+        ])
+        if (cancelled) return
+        const sowerName = (p) => p?.display_name || `${p?.first_name || ''} ${p?.last_name || ''}`.trim() || 'Anonymous Sower'
+        setMusic((musicRes.data || []).map(m => ({
+          id: m.id, title: m.track_title, image: null, emoji: '🎵',
+          sower: sowerName(m.radio_djs?.profiles), link: '/music-library',
+        })))
+        setBooks((booksRes.data || []).map(b => ({
+          id: b.id, title: b.title, image: b.cover_image_url || (b.image_urls && b.image_urls[0]) || null, emoji: '📚',
+          sower: sowerName(b.profiles), link: `/seed/${b.id}`,
+        })))
+        setVideos((videosRes.data || []).map(v => ({
+          id: v.id, title: v.title, image: v.thumbnail_url || null, emoji: '🎬',
+          sower: sowerName(v.profiles), link: '/community-videos',
+        })))
+      } catch (e) {
+        console.error('media load error', e)
+      } finally {
+        if (!cancelled) setMediaLoading(false)
+      }
+    })()
+    return () => { cancelled = true }
+  }, [activeTab])
+
   const handleDelete = async (orchardId) => {
     if (!window.confirm('Delete this orchard?')) return
     const { error } = await supabase.from('orchards').delete().eq('id', orchardId)
