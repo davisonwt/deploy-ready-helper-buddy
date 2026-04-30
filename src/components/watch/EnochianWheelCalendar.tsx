@@ -124,7 +124,7 @@ const calculateSabbathDays = (month: number): number[] => {
   return sabbathDays;
 };
 
-const Month1Strand = ({ dayOfMonth, year }: { dayOfMonth: number; year: number }) => {
+export const Month1Strand = ({ dayOfMonth, year }: { dayOfMonth: number; year: number }) => {
   const [showBloodDrop, setShowBloodDrop] = useState(false);
   const [currentPart, setCurrentPart] = useState(0);
   const [selectedBead, setSelectedBead] = useState<{ year: number; month: number; day: number } | null>(null);
@@ -392,7 +392,7 @@ const Month1Strand = ({ dayOfMonth, year }: { dayOfMonth: number; year: number }
 
 
 
-const Month2Strand = ({ dayOfMonth, year }: { dayOfMonth: number; year: number }) => {
+export const Month2Strand = ({ dayOfMonth, year }: { dayOfMonth: number; year: number }) => {
   const [showBloodDrop, setShowBloodDrop] = useState(false);
   const [currentPart, setCurrentPart] = useState(0);
   const [selectedBead, setSelectedBead] = useState<{ year: number; month: number; day: number } | null>(null);
@@ -763,7 +763,7 @@ const Month2Strand = ({ dayOfMonth, year }: { dayOfMonth: number; year: number }
 
 
 
-const Month3Strand = ({ dayOfMonth, year }: { dayOfMonth: number; year: number }) => {
+export const Month3Strand = ({ dayOfMonth, year }: { dayOfMonth: number; year: number }) => {
   const [showBloodDrop, setShowBloodDrop] = useState(false);
   const [currentPart, setCurrentPart] = useState(0);
   const [selectedBead, setSelectedBead] = useState<{ year: number; month: number; day: number } | null>(null);
@@ -1159,7 +1159,7 @@ const Month3Strand = ({ dayOfMonth, year }: { dayOfMonth: number; year: number }
 
 
 
-const Month4Strand = ({ dayOfMonth, year }: { dayOfMonth: number; year: number }) => {
+export const Month4Strand = ({ dayOfMonth, year }: { dayOfMonth: number; year: number }) => {
   const [selectedBead, setSelectedBead] = useState<{ year: number; month: number; day: number } | null>(null);
   const [showBloodDrop, setShowBloodDrop] = useState(false);
   const [currentPart, setCurrentPart] = useState(0);
@@ -1593,7 +1593,7 @@ const Month4Strand = ({ dayOfMonth, year }: { dayOfMonth: number; year: number }
 
 
 
-const Month5Strand = ({ dayOfMonth, year }: { dayOfMonth: number; year: number }) => {
+export const Month5Strand = ({ dayOfMonth, year }: { dayOfMonth: number; year: number }) => {
   const [selectedBead, setSelectedBead] = useState<{ year: number; month: number; day: number } | null>(null);
   const [showBloodDrop, setShowBloodDrop] = useState(false);
   const [currentPart, setCurrentPart] = useState(0);
@@ -1991,7 +1991,7 @@ const Month5Strand = ({ dayOfMonth, year }: { dayOfMonth: number; year: number }
 
 
 
-const Month6Strand = ({ dayOfMonth, year }: { dayOfMonth: number; year: number }) => {
+export const Month6Strand = ({ dayOfMonth, year }: { dayOfMonth: number; year: number }) => {
   const [selectedBead, setSelectedBead] = useState<{ year: number; month: number; day: number } | null>(null);
   const [showBloodDrop, setShowBloodDrop] = useState(false);
   const [currentPart, setCurrentPart] = useState(0);
@@ -2410,7 +2410,7 @@ const Month6Strand = ({ dayOfMonth, year }: { dayOfMonth: number; year: number }
 
 
 
-const Month7Strand = ({ dayOfMonth, year }: { dayOfMonth: number; year: number }) => {
+export const Month7Strand = ({ dayOfMonth, year }: { dayOfMonth: number; year: number }) => {
   const [selectedBead, setSelectedBead] = useState<{ year: number; month: number; day: number } | null>(null);
   const [showBloodDrop, setShowBloodDrop] = useState(false);
   const [currentPart, setCurrentPart] = useState(0);
@@ -2768,7 +2768,7 @@ const Month7Strand = ({ dayOfMonth, year }: { dayOfMonth: number; year: number }
 
 
 
-const Month8Strand = ({ dayOfMonth, year }: { dayOfMonth: number; year: number }) => {
+export const Month8Strand = ({ dayOfMonth, year }: { dayOfMonth: number; year: number }) => {
   const [selectedBead, setSelectedBead] = useState<{ year: number; month: number; day: number } | null>(null);
   const [showBloodDrop, setShowBloodDrop] = useState(false);
   const [currentPart, setCurrentPart] = useState(0);
@@ -3123,7 +3123,7 @@ const Month8Strand = ({ dayOfMonth, year }: { dayOfMonth: number; year: number }
 
 
 
-const Month9Strand = ({ dayOfMonth, year }: { dayOfMonth: number; year: number }) => {
+export const Month9Strand = ({ dayOfMonth, year }: { dayOfMonth: number; year: number }) => {
   const [selectedBead, setSelectedBead] = useState<{ year: number; month: number; day: number } | null>(null);
   const [showBloodDrop, setShowBloodDrop] = useState(false);
   const [currentPart, setCurrentPart] = useState(0);
@@ -3356,7 +3356,7 @@ const Month9Strand = ({ dayOfMonth, year }: { dayOfMonth: number; year: number }
 
 
 
-const Month10Strand = ({ dayOfMonth, year }: { dayOfMonth: number; year: number }) => {
+export const Month10Strand = ({ dayOfMonth, year }: { dayOfMonth: number; year: number }) => {
   const [selectedBead, setSelectedBead] = useState<{ year: number; month: number; day: number } | null>(null);
   const [showBloodDrop, setShowBloodDrop] = useState(false);
   const [currentPart, setCurrentPart] = useState(0);
@@ -3654,7 +3654,7 @@ const Month10Strand = ({ dayOfMonth, year }: { dayOfMonth: number; year: number 
 
 
 
-const Month11Strand = ({ dayOfMonth, year }: { dayOfMonth: number; year: number }) => {
+export const Month11Strand = ({ dayOfMonth, year }: { dayOfMonth: number; year: number }) => {
   const [selectedBead, setSelectedBead] = useState<{ year: number; month: number; day: number } | null>(null);
   const [showBloodDrop, setShowBloodDrop] = useState(false);
   const [currentPart, setCurrentPart] = useState(0);
@@ -3956,7 +3956,7 @@ const Month11Strand = ({ dayOfMonth, year }: { dayOfMonth: number; year: number 
 
 
 
-const Month12Strand = ({ dayOfMonth, year }: { dayOfMonth: number; year: number }) => {
+export const Month12Strand = ({ dayOfMonth, year }: { dayOfMonth: number; year: number }) => {
   const [selectedBead, setSelectedBead] = useState<{ year: number; month: number; day: number } | null>(null);
   const [showBloodDrop, setShowBloodDrop] = useState(false);
   const [currentPart, setCurrentPart] = useState(0);
