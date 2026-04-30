@@ -23,6 +23,19 @@ const DAY_NAMES = ['Day 1', 'Day 2', 'Day 3', 'Day 4', 'Day 5', 'Day 6', 'Day 7'
 const CREATOR_EPOCH = new Date('2025-03-20T00:00:00Z');
 const sunriseCache = new Map<string, Promise<Date>>();
 
+function formatLocalDate(date: Date): string {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+}
+
+function getCivilDayDiff(date: Date): number {
+  const epochDay = Date.UTC(2025, 2, 20);
+  const localDay = Date.UTC(date.getFullYear(), date.getMonth(), date.getDate());
+  return Math.floor((localDay - epochDay) / (24 * 60 * 60 * 1000));
+}
+
 /**
  * Check if a year is a long Sabbath year (simplified - adjust based on actual rules)
  * Placeholder: Set true for years needing 1-2 extra days post-52nd Sabbath
@@ -46,7 +59,7 @@ export function getDaysInMonth(month: number): number {
  * Uses sunrise-sunset API or fallback calculation
  */
 async function getSunriseTime(date: Date, lat: number, lon: number): Promise<Date> {
-  const dateStr = date.toISOString().split('T')[0];
+  const dateStr = formatLocalDate(date);
   const cacheKey = `${dateStr}:${lat.toFixed(3)}:${lon.toFixed(3)}`;
   const cached = sunriseCache.get(cacheKey);
   if (cached) return cached;
@@ -139,8 +152,7 @@ export async function getCreatorDate(
     effectiveDate = await getEffectiveDate(gregorianDate, lat, lon);
   }
   
-  const msDiff = effectiveDate.getTime() - CREATOR_EPOCH.getTime();
-  const totalDays = Math.floor(msDiff / (24 * 60 * 60 * 1000));
+  const totalDays = getCivilDayDiff(effectiveDate);
 
   let year = 6028;
   let remainingDays = totalDays;
@@ -164,8 +176,8 @@ export async function getCreatorDate(
     }
   }
 
-  // Weekday: Year starts on "Day 4" (your rule). Sabbath = 7
-  const weekDay = ((totalDays % 7) + 4) % 7 || 7;  // 1-6 work, 7=Sabbath
+  // Weekday: observed anchor — 2026-04-30 is Day 3 of the week.
+  const weekDay = ((totalDays + 2) % 7) + 1;  // 1-6 work, 7=Sabbath
 
   return {
     year,
@@ -180,8 +192,7 @@ export async function getCreatorDate(
  * Uses midnight-based day start
  */
 export function getCreatorDateSync(gregorianDate: Date = new Date()): CustomDate {
-  const msDiff = gregorianDate.getTime() - CREATOR_EPOCH.getTime();
-  const totalDays = Math.floor(msDiff / (24 * 60 * 60 * 1000));
+  const totalDays = getCivilDayDiff(gregorianDate);
 
   let year = 6028;
   let remainingDays = totalDays;
@@ -205,8 +216,8 @@ export function getCreatorDateSync(gregorianDate: Date = new Date()): CustomDate
     }
   }
 
-  // Weekday: Year starts on "Day 4" (your rule). Sabbath = 7
-  const weekDay = ((totalDays % 7) + 4) % 7 || 7;  // 1-6 work, 7=Sabbath
+  // Weekday: observed anchor — 2026-04-30 is Day 3 of the week.
+  const weekDay = ((totalDays + 2) % 7) + 1;  // 1-6 work, 7=Sabbath
 
   return {
     year,

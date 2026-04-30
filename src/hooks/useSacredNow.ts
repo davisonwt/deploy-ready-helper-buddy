@@ -85,11 +85,15 @@ export function useSacredNow(tickMs = 60_000): SacredNow {
   // Recompute sunrise-based date whenever the clock ticks or location changes
   useEffect(() => {
     let cancelled = false;
+    const midnightDate = getCreatorDateSync(now);
+    setDate(midnightDate);
     const run = async () => {
       try {
         const d = await getCreatorDate(now, true, location.lat, location.lon);
         if (cancelled) return;
-        setDate(d);
+        const midnightDoy = toDayOfYear(midnightDate);
+        const sunriseDoy = toDayOfYear(d);
+        setDate(sunriseDoy < midnightDoy ? midnightDate : d);
         setSunriseAware(true);
       } catch {
         if (cancelled) return;

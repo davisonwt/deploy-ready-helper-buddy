@@ -206,6 +206,8 @@ export default function SeedFlowDashboard() {
     year: sacred.date.year,
     month: sacred.date.month,
     day: sacred.date.day,
+    weekDay: sacred.weekDay,
+    dayType: sacred.isSabbath ? 'Sabbath' : sacred.isFeast ? sacred.feastName || 'Feast Day' : 'Regular Day',
     omer: sacred.omer ?? 0,
     omerTotal: sacred.omerTotal,
     nextFeast: sacred.nextFeast,
@@ -595,7 +597,7 @@ export default function SeedFlowDashboard() {
             <div style={styles.dateYear}>Year {sacredDate.year}</div>
             <div style={styles.dateLine}>
               Month {sacredDate.month} · Day {sacredDate.day}<br />
-              Day 1 · Regular Day
+              Day {sacredDate.weekDay} · {sacredDate.dayType}
             </div>
           </div>
           <OmerBadge omer={sacredDate.omer} omerTotal={sacredDate.omerTotal} nextFeast={sacredDate.nextFeast} />
