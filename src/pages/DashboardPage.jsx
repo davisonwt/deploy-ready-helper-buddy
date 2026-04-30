@@ -710,17 +710,25 @@ export default function SeedFlowDashboard() {
           </div>
 
           <div style={styles.content}>
+            {/* ── Day's Beads — current week strand ── */}
             <div style={styles.sectionLabel}>
-              <span>Seeds in motion</span>
-              <span style={styles.liveTag}>LIVE</span>
+              <span>💎 Day's Beads</span>
+            </div>
+            <WeekBeads sacred={sacred} />
+
+            <div style={styles.sectionLabel}>
+              <span>{userCards.length ? 'Your Seeds' : 'Seeds in motion'}</span>
+              <span style={styles.liveTag}>{userCards.length ? 'YOURS' : 'LIVE'}</span>
             </div>
 
             {/* ── Seed showcase card ── */}
             <div style={{ ...styles.seedCard }} className="seed-card-anim">
               <img src={activeSeed.image} alt="" style={styles.seedImg} />
               <div style={styles.seedOverlay} />
-              <div style={styles.seedCounter}>{activeIdx + 1}/{SEEDS.length}</div>
-              <div style={styles.seedType}>{activeSeed.type}</div>
+              <div style={styles.seedCounter}>{safeIdx + 1}/{displaySeeds.length}</div>
+              <div style={styles.seedType}>
+                {activeSeed.emoji ? `${activeSeed.emoji} ` : ''}{activeSeed.type}
+              </div>
               <div style={styles.seedActivity}>
                 <span style={styles.activityDot} />
                 <span style={styles.activityText}>{activeSeed.activity}</span>
@@ -756,17 +764,26 @@ export default function SeedFlowDashboard() {
                       fontSize={13}
                       letterSpacing="0px"
                     >
-                      📅 Enter
+                      📅 Open
                     </LivingButton>
                   </Link>
                 </div>
               </div>
             </div>
 
+            {!userCards.length && (
+              <div style={{
+                fontSize: 12, color: '#64748b', textAlign: 'center',
+                marginBottom: 10, fontStyle: 'italic',
+              }}>
+                You haven't planted any seeds yet — tap "Plant Seed" below to start.
+              </div>
+            )}
+
             {/* ── Dots ── */}
             <div style={styles.seedDots}>
-              {SEEDS.map((_, i) => (
-                <div key={i} style={styles.dot(i === activeIdx)}
+              {displaySeeds.map((_, i) => (
+                <div key={i} style={styles.dot(i === safeIdx)}
                   onClick={() => { setActiveIdx(i); clearInterval(intervalRef.current) }} />
               ))}
             </div>
