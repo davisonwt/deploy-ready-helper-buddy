@@ -1462,6 +1462,7 @@ export type Database = {
           is_system_room: boolean | null
           max_capacity: number | null
           max_participants: number | null
+          metadata: Json | null
           name: string | null
           orchard_id: string | null
           premium_category:
@@ -1488,6 +1489,7 @@ export type Database = {
           is_system_room?: boolean | null
           max_capacity?: number | null
           max_participants?: number | null
+          metadata?: Json | null
           name?: string | null
           orchard_id?: string | null
           premium_category?:
@@ -1514,6 +1516,7 @@ export type Database = {
           is_system_room?: boolean | null
           max_capacity?: number | null
           max_participants?: number | null
+          metadata?: Json | null
           name?: string | null
           orchard_id?: string | null
           premium_category?:
@@ -5529,6 +5532,7 @@ export type Database = {
           last_login: string | null
           last_name: string | null
           location: string | null
+          membership_tier: string | null
           phone: string | null
           preferred_currency: string | null
           preferred_language: string | null
@@ -5568,6 +5572,7 @@ export type Database = {
           last_login?: string | null
           last_name?: string | null
           location?: string | null
+          membership_tier?: string | null
           phone?: string | null
           preferred_currency?: string | null
           preferred_language?: string | null
@@ -5607,6 +5612,7 @@ export type Database = {
           last_login?: string | null
           last_name?: string | null
           location?: string | null
+          membership_tier?: string | null
           phone?: string | null
           preferred_currency?: string | null
           preferred_language?: string | null
@@ -10990,6 +10996,167 @@ export type Database = {
         }
         Relationships: []
       }
+      wandering_heart_connections: {
+        Row: {
+          chat_room_id: string | null
+          created_at: string | null
+          id: string
+          receiver_user_id: string
+          sender_message: string | null
+          sender_user_id: string
+          status: string
+          updated_at: string | null
+        }
+        Insert: {
+          chat_room_id?: string | null
+          created_at?: string | null
+          id?: string
+          receiver_user_id: string
+          sender_message?: string | null
+          sender_user_id: string
+          status?: string
+          updated_at?: string | null
+        }
+        Update: {
+          chat_room_id?: string | null
+          created_at?: string | null
+          id?: string
+          receiver_user_id?: string
+          sender_message?: string | null
+          sender_user_id?: string
+          status?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "wandering_heart_connections_chat_room_id_fkey"
+            columns: ["chat_room_id"]
+            isOneToOne: false
+            referencedRelation: "chat_rooms"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      wandering_heart_feed_events: {
+        Row: {
+          avatar_url: string | null
+          bio_snippet: string | null
+          core_values: string[] | null
+          created_at: string | null
+          event_type: string
+          gender: string | null
+          heart_name: string
+          id: string
+          is_public: boolean | null
+          location: string | null
+          subject_user_id: string
+        }
+        Insert: {
+          avatar_url?: string | null
+          bio_snippet?: string | null
+          core_values?: string[] | null
+          created_at?: string | null
+          event_type: string
+          gender?: string | null
+          heart_name: string
+          id?: string
+          is_public?: boolean | null
+          location?: string | null
+          subject_user_id: string
+        }
+        Update: {
+          avatar_url?: string | null
+          bio_snippet?: string | null
+          core_values?: string[] | null
+          created_at?: string | null
+          event_type?: string
+          gender?: string | null
+          heart_name?: string
+          id?: string
+          is_public?: boolean | null
+          location?: string | null
+          subject_user_id?: string
+        }
+        Relationships: []
+      }
+      wandering_hearts: {
+        Row: {
+          age_range: string | null
+          avatar_url: string | null
+          bio: string | null
+          core_values: string[] | null
+          created_at: string | null
+          faith_compatibility: string | null
+          faith_statement: string | null
+          gender: string | null
+          heart_name: string
+          id: string
+          is_active: boolean | null
+          is_verified: boolean | null
+          location: string | null
+          location_openness: string | null
+          open_to: string[] | null
+          partner_description: string | null
+          preferred_age_from: string | null
+          preferred_age_to: string | null
+          relationship_intention: string | null
+          relationship_pace: number | null
+          updated_at: string | null
+          user_id: string
+          visibility: string | null
+        }
+        Insert: {
+          age_range?: string | null
+          avatar_url?: string | null
+          bio?: string | null
+          core_values?: string[] | null
+          created_at?: string | null
+          faith_compatibility?: string | null
+          faith_statement?: string | null
+          gender?: string | null
+          heart_name: string
+          id?: string
+          is_active?: boolean | null
+          is_verified?: boolean | null
+          location?: string | null
+          location_openness?: string | null
+          open_to?: string[] | null
+          partner_description?: string | null
+          preferred_age_from?: string | null
+          preferred_age_to?: string | null
+          relationship_intention?: string | null
+          relationship_pace?: number | null
+          updated_at?: string | null
+          user_id: string
+          visibility?: string | null
+        }
+        Update: {
+          age_range?: string | null
+          avatar_url?: string | null
+          bio?: string | null
+          core_values?: string[] | null
+          created_at?: string | null
+          faith_compatibility?: string | null
+          faith_statement?: string | null
+          gender?: string | null
+          heart_name?: string
+          id?: string
+          is_active?: boolean | null
+          is_verified?: boolean | null
+          location?: string | null
+          location_openness?: string | null
+          open_to?: string[] | null
+          partner_description?: string | null
+          preferred_age_from?: string | null
+          preferred_age_to?: string | null
+          relationship_intention?: string | null
+          relationship_pace?: number | null
+          updated_at?: string | null
+          user_id?: string
+          visibility?: string | null
+        }
+        Relationships: []
+      }
       weekly_playlists: {
         Row: {
           created_at: string
@@ -12375,7 +12542,12 @@ export type Database = {
       hearts_profile_status: "active" | "paused" | "hidden"
       hearts_response: "pending" | "accepted" | "passed"
       orchard_status: "draft" | "active" | "paused" | "completed" | "cancelled"
-      orchard_type: "standard" | "full_value"
+      orchard_type:
+        | "standard"
+        | "full_value"
+        | "community"
+        | "production"
+        | "single_seed"
       payment_status:
         | "pending"
         | "authorized"
@@ -12597,7 +12769,13 @@ export const Constants = {
       hearts_profile_status: ["active", "paused", "hidden"],
       hearts_response: ["pending", "accepted", "passed"],
       orchard_status: ["draft", "active", "paused", "completed", "cancelled"],
-      orchard_type: ["standard", "full_value"],
+      orchard_type: [
+        "standard",
+        "full_value",
+        "community",
+        "production",
+        "single_seed",
+      ],
       payment_status: [
         "pending",
         "authorized",
