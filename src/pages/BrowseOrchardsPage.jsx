@@ -438,6 +438,8 @@ export default function BrowseOrchardsPage() {
               </div>
             </>
           )
+        ) : activeTab === 'seeds' ? (
+          <MediaGrid kind="seeds" items={tribeSeeds} loading={mediaLoading} />
         ) : activeTab === 'music' ? (
           <MediaGrid kind="music" items={music} loading={mediaLoading} />
         ) : activeTab === 'books' ? (
