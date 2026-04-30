@@ -23,6 +23,19 @@ const DAY_NAMES = ['Day 1', 'Day 2', 'Day 3', 'Day 4', 'Day 5', 'Day 6', 'Day 7'
 const CREATOR_EPOCH = new Date('2025-03-20T00:00:00Z');
 const sunriseCache = new Map<string, Promise<Date>>();
 
+function formatLocalDate(date: Date): string {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+}
+
+function getCivilDayDiff(date: Date): number {
+  const epochDay = Date.UTC(2025, 2, 20);
+  const localDay = Date.UTC(date.getFullYear(), date.getMonth(), date.getDate());
+  return Math.floor((localDay - epochDay) / (24 * 60 * 60 * 1000));
+}
+
 /**
  * Check if a year is a long Sabbath year (simplified - adjust based on actual rules)
  * Placeholder: Set true for years needing 1-2 extra days post-52nd Sabbath
@@ -46,7 +59,7 @@ export function getDaysInMonth(month: number): number {
  * Uses sunrise-sunset API or fallback calculation
  */
 async function getSunriseTime(date: Date, lat: number, lon: number): Promise<Date> {
-  const dateStr = date.toISOString().split('T')[0];
+  const dateStr = formatLocalDate(date);
   const cacheKey = `${dateStr}:${lat.toFixed(3)}:${lon.toFixed(3)}`;
   const cached = sunriseCache.get(cacheKey);
   if (cached) return cached;
