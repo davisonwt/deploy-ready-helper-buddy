@@ -135,9 +135,9 @@ export async function getCreatorDate(
   let year = 6028;
   let remainingDays = totalDays;
 
-  // Calculate year
-  while (remainingDays >= (365 + (isLongYear(year) ? 1 : 0))) {
-    remainingDays -= 365 + (isLongYear(year) ? 1 : 0);
+  // Creator's year is 364 days (52 × 7), plus 1-2 days-out-of-time on long years.
+  while (remainingDays >= (364 + (isLongYear(year) ? 1 : 0))) {
+    remainingDays -= 364 + (isLongYear(year) ? 1 : 0);
     year++;
   }
 
@@ -176,9 +176,9 @@ export function getCreatorDateSync(gregorianDate: Date = new Date()): CustomDate
   let year = 6028;
   let remainingDays = totalDays;
 
-  // Calculate year
-  while (remainingDays >= (365 + (isLongYear(year) ? 1 : 0))) {
-    remainingDays -= 365 + (isLongYear(year) ? 1 : 0);
+  // Creator's year is 364 days (52 × 7), plus 1-2 days-out-of-time on long years.
+  while (remainingDays >= (364 + (isLongYear(year) ? 1 : 0))) {
+    remainingDays -= 364 + (isLongYear(year) ? 1 : 0);
     year++;
   }
 
