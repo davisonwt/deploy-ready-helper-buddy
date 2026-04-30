@@ -68,7 +68,10 @@ export default function VideoUploadModal({ isOpen, onClose }) {
     const result = await uploadVideo(file, {
       title: title.trim(),
       description: description.trim() || null,
-      tags: tagsArray
+      tags: tagsArray,
+      wandering_role: wanderingRole,
+      subcategoryIds: taxonomy.subcategoryIds,
+      tagIds: taxonomy.tagIds,
     })
 
     console.log('🎬 VideoUploadModal: Upload result:', result)
@@ -79,6 +82,8 @@ export default function VideoUploadModal({ isOpen, onClose }) {
       setTitle('')
       setDescription('')
       setTags('')
+      setWanderingRole(null)
+      setTaxonomy({ categoryId: null, subcategoryIds: [], tagIds: [] })
       onClose()
     }
   }
@@ -88,11 +93,13 @@ export default function VideoUploadModal({ isOpen, onClose }) {
     setTitle('')
     setDescription('')
     setTags('')
+    setWanderingRole(null)
+    setTaxonomy({ categoryId: null, subcategoryIds: [], tagIds: [] })
   }
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-md">
+      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Video className="h-5 w-5" />
