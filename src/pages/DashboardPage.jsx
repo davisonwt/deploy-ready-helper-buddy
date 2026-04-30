@@ -236,10 +236,10 @@ export default function SeedFlowDashboard() {
     intervalRef.current = setInterval(() => {
       setPulse(true)
       setTimeout(() => setPulse(false), 600)
-      setActiveIdx(i => (i + 1) % SEEDS.length)
+      setActiveIdx(i => (i + 1) % Math.max(mySeeds.length || SEEDS.length, 1))
     }, 5000)
     return () => clearInterval(intervalRef.current)
-  }, [])
+  }, [mySeeds.length])
 
   // Build display list from user's own seeds (preferred) or fallback showcase.
   const CATEGORY_META = {
