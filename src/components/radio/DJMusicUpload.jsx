@@ -178,7 +178,10 @@ export default function DJMusicUpload({ trigger }) {
           genre: albumData.genre,
           tags: [...albumData.tags, albumData.albumTitle],
           type: 'music',
-          duration: 0
+          duration: 0,
+          wandering_role: wanderingRole,
+          subcategoryIds: taxonomy.subcategoryIds,
+          tagIds: taxonomy.tagIds,
         }
 
         const result = await directUpload(file, trackInfo, djProfile)
