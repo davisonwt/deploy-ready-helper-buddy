@@ -36,11 +36,19 @@ const WANDERING_ROLES = [
 
 export default function MyOrchardsPage() {
   const { user } = useAuth()
+  const navigate = useNavigate()
   const [userSeeds, setUserSeeds] = useState([])
   const [statusFilter, setStatusFilter] = useState('all')
   const [selectedRole, setSelectedRole] = useState('all')
   const [seeds, setSeeds] = useState([])
   const [loading, setLoading] = useState(false)
+
+  // Per-category lists for the new "5 vertical sections" view
+  const [mySeeds, setMySeeds] = useState([])
+  const [myOrchards, setMyOrchards] = useState([])
+  const [myMusic, setMyMusic] = useState([])
+  const [myBooks, setMyBooks] = useState([])
+  const [myVideos, setMyVideos] = useState([])
 
   const fetchSeeds = async () => {
     try {
