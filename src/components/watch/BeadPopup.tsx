@@ -16,7 +16,7 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import {
   X, FileText, Image as ImageIcon, Heart, Sparkles, Calendar, Star,
-  Mic, Video, Bell, Sprout, Plus, Trash2, Check, BookOpen, Save,
+  Mic, Video, Bell, Sprout, Plus, Trash2, Check, BookOpen, Save, ArrowLeft,
 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { calculateCreatorDate } from '@/utils/dashboardCalendar';
@@ -321,6 +321,16 @@ export function BeadPopup({ isOpen, onClose, year, month, day }: BeadPopupProps)
 
         {/* Header */}
         <div className="p-5 border-b border-purple-500/30 flex-shrink-0">
+          <Button
+            type="button"
+            onClick={onClose}
+            variant="outline"
+            size="sm"
+            className="mb-4 gap-2 border-border/60 bg-background/20 text-primary-foreground hover:bg-accent/30"
+          >
+            <ArrowLeft className="h-4 w-4" />
+            Back to Diary Dates
+          </Button>
           <div className="flex items-start justify-between">
             <div className="flex-1">
               <h2 className="text-2xl md:text-3xl font-bold text-white mb-2">
@@ -529,6 +539,13 @@ export function BeadPopup({ isOpen, onClose, year, month, day }: BeadPopupProps)
               </div>
             </div>
           )}
+        </div>
+
+        <div className="border-t border-border/40 bg-background/20 p-4">
+          <Button type="button" onClick={onClose} className="w-full gap-2">
+            <ArrowLeft className="h-4 w-4" />
+            Back to Diary Dates
+          </Button>
         </div>
       </motion.div>
     </div>
