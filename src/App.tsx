@@ -67,6 +67,7 @@ const PaymentSuccessPage = lazy(() => import("./pages/PaymentSuccessPage"));
 const FreeWillGiftingPage = lazy(() => import("./pages/FreeWillGiftingPage"));
 const SeedSubmissionPage = lazy(() => import("./pages/SeedSubmissionPage"));
 const YhvhOrchardsPage = lazy(() => import("./pages/YhvhOrchardsPage"));
+const Yhvh364Page = lazy(() => import("./pages/Yhvh364Page"));
 const RadioSlotApplicationPage = lazy(() => import("./pages/RadioSlotApplicationPage"));
 const PremiumRoomsPage = lazy(() => import("./pages/PremiumRoomsPage"));
 const CommunityVideosPage = lazy(() => import("./pages/CommunityVideosPage"));
@@ -265,6 +266,9 @@ const App = () => (
                 <ProtectedRoute><Layout><SeedSubmissionPage /></Layout></ProtectedRoute>
               } />
               <Route path="/364yhvh-days" element={
+                <ProtectedRoute><Layout><Yhvh364Page /></Layout></ProtectedRoute>
+              } />
+              <Route path="/364yhvh-orchards" element={
                 <ProtectedRoute><Layout><YhvhOrchardsPage /></Layout></ProtectedRoute>
               } />
               <Route path="/grove-feed" element={
