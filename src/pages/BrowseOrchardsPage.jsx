@@ -334,6 +334,19 @@ export default function BrowseOrchardsPage() {
           </button>
         </div>
 
+        <div style={{ display: 'flex', gap: 8, marginBottom: 20, flexWrap: 'wrap', borderBottom: '1px solid rgba(255,255,255,0.08)', paddingBottom: 12 }}>
+          {TABS.map(t => (
+            <button key={t.value} onClick={() => setActiveTab(t.value)}
+              style={{ padding: '10px 18px', borderRadius: 12, border: 'none', cursor: 'pointer', fontWeight: 700, fontSize: 14,
+                background: activeTab === t.value ? 'linear-gradient(135deg, #10b981, #059669)' : 'rgba(255,255,255,0.04)',
+                color: activeTab === t.value ? '#fff' : '#94a3b8',
+                boxShadow: activeTab === t.value ? '0 4px 15px rgba(16,185,129,0.4)' : 'none', transition: 'all 0.2s' }}>
+              {t.emoji} {t.label}
+            </button>
+          ))}
+        </div>
+
+        {activeTab === 'orchards' && (<>
         <div style={{ display: 'flex', gap: 12, marginBottom: 24, flexWrap: 'wrap' }}>
           {[
             { label: 'Active Orchards', value: orchards.length, icon: '🌳', color: '#10b981' },
@@ -382,6 +395,7 @@ export default function BrowseOrchardsPage() {
             </button>
           ))}
         </div>
+        </>)}
       </div>
 
       <div style={{ maxWidth: 1200, margin: '0 auto', padding: '0 20px 40px' }}>
