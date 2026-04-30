@@ -4,6 +4,7 @@ import { Link, useNavigate } from 'react-router-dom'
 import { supabase } from "@/integrations/supabase/client"
 import SeedFlow from '../components/SeedFlow'
 import LivingButton from '../components/LivingButton'
+import { useSacredNow } from '../hooks/useSacredNow'
 
 const SEEDS = [
   {
@@ -199,7 +200,16 @@ export default function SeedFlowDashboard() {
   const [activePath, setActivePath] = useState('/dashboard')
   const intervalRef = useRef(null)
 
-  const sacredDate = { year: 6029, month: 2, day: 3, omer: 8, omerTotal: 50, nextFeast: "Shavu'ot" }
+  // Live sunrise-based sacred date — ticks every minute, rolls at user's local sunrise.
+  const sacred = useSacredNow()
+  const sacredDate = {
+    year: sacred.date.year,
+    month: sacred.date.month,
+    day: sacred.date.day,
+    omer: sacred.omer ?? 0,
+    omerTotal: sacred.omerTotal,
+    nextFeast: sacred.nextFeast,
+  }
 
   useEffect(() => {
     if (!user) return
