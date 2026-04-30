@@ -196,6 +196,7 @@ export default function SeedFlowDashboard() {
   const [pulse, setPulse] = useState(false)
   const [isPlaying, setIsPlaying] = useState(false)
   const [stats, setStats] = useState({ sowers: 4, orchards: 0, seeds: 56, members: 0 })
+  const [mySeeds, setMySeeds] = useState([])
   const [tip] = useState(GROWTH_TIPS[Math.floor(Math.random() * GROWTH_TIPS.length)])
   const [activePath, setActivePath] = useState('/dashboard')
   const intervalRef = useRef(null)
