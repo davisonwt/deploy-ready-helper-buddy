@@ -9,6 +9,7 @@ import { toast } from 'sonner';
 import { formatCurrency } from '@/lib/utils';
 import { launchConfetti, floatingScore, playSoundEffect } from '@/utils/confetti';
 import MarketplaceFilterBar from '@/components/marketplace/MarketplaceFilterBar';
+import WanderingBadgeBar, { type WanderingRole } from '@/components/marketplace/WanderingBadgeBar';
 
 const ITEMS_PER_PAGE = 20;
 
@@ -90,6 +91,7 @@ export default function ProductsPage() {
   // Universal marketplace filters (category + tag combination)
   const [marketCategoryId, setMarketCategoryId] = useState<string | null>(null);
   const [marketTagIds, setMarketTagIds] = useState<string[]>([]);
+  const [wanderingRole, setWanderingRole] = useState<WanderingRole | null>(null);
 
   // Fetch product IDs that carry ALL selected tag IDs (intersection filter)
   const { data: taggedProductIds } = useQuery({
@@ -116,7 +118,7 @@ export default function ProductsPage() {
     isFetchingNextPage,
     isLoading,
   } = useInfiniteQuery({
-    queryKey: ['products', selectedCategory, selectedSort, marketCategoryId, taggedProductIds],
+    queryKey: ['products', selectedCategory, selectedSort, marketCategoryId, wanderingRole, taggedProductIds],
     initialPageParam: 0,
     queryFn: async ({ pageParam }: { pageParam: number }) => {
       let query = supabase
@@ -140,6 +142,11 @@ export default function ProductsPage() {
       // Apply marketplace category filter (new taxonomy — stored in same `category` column as UUID)
       if (marketCategoryId) {
         query = query.eq('category', marketCategoryId);
+      }
+
+      // Apply Wandering role identity filter (badge bar)
+      if (wanderingRole) {
+        query = query.eq('wandering_role', wanderingRole);
       }
 
       // Apply tag-intersection filter
