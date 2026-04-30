@@ -62,16 +62,16 @@ const SEEDS = [
 ]
 
 const NAV = [
-  { label: 'SeedFlow',         sub: 'Your living feed',    emoji: '🌊', path: '/dashboard',            color: '#2563eb' },
-  { label: 'My Garden',        sub: 'Seeds & orchards',    emoji: '🌱', path: '/my-orchards',           color: '#16a34a' },
-  { label: 'Learn & Share',    sub: 'Grow your tribe',     emoji: '🎬', path: '/learn-share',           color: '#10b981' },
-  { label: 'Directory',        sub: 'Find your tribe',     emoji: '🌍', path: '/wandering-directory',   color: '#6366f1' },
-  { label: 'Orchards',         sub: 'All tribal orchards', emoji: '🌳', path: '/browse-orchards',       color: '#0d9488' },
-  { label: 'Conversations',    sub: 'Tribe messaging',     emoji: '💬', path: '/chatapp',               color: '#0891b2' },
-  { label: '364yhvh',          sub: 'Scripture & feasts',  emoji: '📅', path: '/364yhvh-days',          color: '#7c3aed' },
-  { label: 'Wandering Hearts', sub: 'Tribal connections',  emoji: '💚', path: '/wandering-hearts',      color: '#dc2626' },
-  { label: "Gosat's",          sub: 'Elder management',    emoji: '🏛', path: '/gosats',                color: '#7c3aed' },
-  { label: 'Let It Rain',      sub: 'Bestow blessings',    emoji: '🌧', path: '/let-it-rain',           color: '#6d28d9' },
+  { label: 'Feed',             sub: 'Community updates',         emoji: '🏠', path: '/dashboard',            color: '#2563eb' },
+  { label: 'My Garden',        sub: 'Your seeds & orchards',     emoji: '🌱', path: '/my-orchards',           color: '#16a34a' },
+  { label: 'Tribal Gardens',   sub: 'All tribal seeds & orchards', emoji: '🌳', path: '/browse-orchards',     color: '#0d9488' },
+  { label: 'ChatApp',          sub: 'Tribe messaging',           emoji: '💬', path: '/chatapp',               color: '#0891b2' },
+  { label: '364yhvh',          sub: 'Scripture & spiritual hub', emoji: '📅', path: '/364yhvh-days',          color: '#7c3aed' },
+  { label: 'Let It Rain',      sub: 'Bestow blessings',          emoji: '🌧', path: '/let-it-rain',           color: '#6d28d9' },
+  { label: 'Learn & Share',    sub: 'Explainer videos',          emoji: '🎬', path: '/learn-share',           color: '#10b981' },
+  { label: 'Directory',        sub: 'Find your tribe',           emoji: '🌍', path: '/wandering-directory',   color: '#6366f1' },
+  { label: 'Wandering Hearts', sub: 'Tribal connections',        emoji: '💚', path: '/wandering-hearts',      color: '#dc2626' },
+  { label: "Gosat's",          sub: 'Elder management',          emoji: '🏛', path: '/gosats',                color: '#7c3aed' },
 ]
 
 const GROWTH_TIPS = [
