@@ -12,6 +12,7 @@ import { toast } from 'sonner';
 import { useNavigate } from 'react-router-dom';
 import JSZip from 'jszip';
 import CategoryTagPicker from '@/components/marketplace/CategoryTagPicker';
+import { WANDERING_BADGES, type WanderingRole } from '@/components/marketplace/WanderingBadgeBar';
 
 export default function UploadForm() {
   const { user } = useAuth();
@@ -32,6 +33,7 @@ export default function UploadForm() {
   const [taxonomy, setTaxonomy] = useState<{ categoryId: string | null; subcategoryIds: string[]; tagIds: string[] }>({
     categoryId: null, subcategoryIds: [], tagIds: [],
   });
+  const [wanderingRole, setWanderingRole] = useState<WanderingRole | null>(null);
   const [albumFiles, setAlbumFiles] = useState<File[]>([]);
   const [zipFile, setZipFile] = useState<File | null>(null);
   const [extractingZip, setExtractingZip] = useState(false);
@@ -280,6 +282,7 @@ export default function UploadForm() {
           description: formData.description,
           type: formData.type,
           category: formData.category,
+          wandering_role: wanderingRole,
           license_type: formData.license_type,
           price: totalPrice, // Store total price
           cover_image_url: coverUrl.publicUrl,
@@ -404,6 +407,36 @@ export default function UploadForm() {
                       Albums must have 8+ songs. Upload as ZIP or select multiple files.
                     </p>
                   )}
+                </div>
+
+                <div>
+                  <Label>Your Wandering identity (optional)</Label>
+                  <p className="text-xs text-muted-foreground mb-3">
+                    Pick the badge that represents who you are as a tribe member. This is separate from what you sell — it helps buyers find their kind of sower.
+                  </p>
+                  <div className="flex flex-wrap gap-2">
+                    {WANDERING_BADGES.filter((b) => !b.routeOverride).map((b) => {
+                      const active = wanderingRole === b.key;
+                      return (
+                        <button
+                          key={b.key}
+                          type="button"
+                          onClick={() => setWanderingRole(active ? null : b.key)}
+                          className={`px-3 py-2 rounded-xl text-xs font-bold tracking-wider border transition flex items-center gap-2 ${
+                            active ? 'border-2' : 'border-border hover:bg-muted'
+                          }`}
+                          style={{
+                            background: active ? `${b.color}22` : undefined,
+                            borderColor: active ? b.color : undefined,
+                            color: active ? b.color : undefined,
+                          }}
+                          title={b.description}
+                        >
+                          <span className="text-lg">{b.emoji}</span> {b.label}
+                        </button>
+                      );
+                    })}
+                  </div>
                 </div>
 
                 <div>
