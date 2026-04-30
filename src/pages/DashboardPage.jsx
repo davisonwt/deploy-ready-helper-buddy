@@ -468,17 +468,7 @@ export default function SeedFlowDashboard() {
       })
   }, [user])
 
-  useEffect(() => {
-    const total = (mySeeds.length + bestowedOrchards.length) || SEEDS.length
-    intervalRef.current = setInterval(() => {
-      setPulse(true)
-      setTimeout(() => setPulse(false), 600)
-      setActiveIdx(i => (i + 1) % Math.max(total, 1))
-    }, 5000)
-    return () => clearInterval(intervalRef.current)
-  }, [mySeeds.length, bestowedOrchards.length])
-
-  // Build display list from user's own seeds (preferred) or fallback showcase.
+  // Build display list from user's own content (preferred) or fallback showcase.
   const CATEGORY_META = {
     music:     { color: '#16a34a', glow: '#22c55e', emoji: '🎵', label: 'Music' },
     video:     { color: '#dc2626', glow: '#f87171', emoji: '🎬', label: 'Video' },
@@ -488,11 +478,12 @@ export default function SeedFlowDashboard() {
     service:   { color: '#0e7490', glow: '#06b6d4', emoji: '🛠', label: 'Service' },
     teaching:  { color: '#7c3aed', glow: '#a78bfa', emoji: '📖', label: 'Teaching' },
     prayer:    { color: '#92400e', glow: '#f59e0b', emoji: '🙏', label: 'Prayer' },
+    book:      { color: '#7c2d12', glow: '#fb923c', emoji: '📚', label: 'Book' },
     other:     { color: '#475569', glow: '#94a3b8', emoji: '🌱', label: 'Seed' },
   }
   const catMeta = (c) => CATEGORY_META[(c || 'other').toLowerCase()] || CATEGORY_META.other
 
-  const mineCards = mySeeds.map((s) => {
+  const seedCards = mySeeds.map((s) => {
     const meta = catMeta(s.category)
     return {
       id: `seed-${s.id}`,
@@ -502,36 +493,84 @@ export default function SeedFlowDashboard() {
       activity: meta.label,
       description: s.description || 'A seed you planted',
       image: (s.images && s.images[0]) || 'https://images.unsplash.com/photo-1488459716781-31db52582fe9?w=800&q=80',
-      color: meta.color,
-      glow: meta.glow,
-      emoji: meta.emoji,
-      playPath: `/seed/${s.id}`,
-      bookPath: `/seed/${s.id}`,
-      mine: true,
-      badge: { label: 'mine', emoji: '🌱', color: '#22c55e' },
+      color: meta.color, glow: meta.glow, emoji: meta.emoji,
+      playPath: `/seed/${s.id}`, bookPath: `/seed/${s.id}`,
+      mine: true, badge: { label: 'seed', emoji: '🌱', color: '#22c55e' },
     }
   })
+
+  const orchardCards = myOrchards.map((o) => {
+    const meta = catMeta(o.category)
+    return {
+      id: `myorchard-${o.id}`,
+      name: o.title || 'My Orchard',
+      type: (o.orchard_type || meta.label).toString().toUpperCase().replace('_', ' '),
+      status: 'Yours',
+      activity: meta.label,
+      description: o.description || 'An orchard you are growing',
+      image: (o.images && o.images[0]) || 'https://images.unsplash.com/photo-1488459716781-31db52582fe9?w=800&q=80',
+      color: '#16a34a', glow: '#4ade80', emoji: '🌳',
+      playPath: `/animated-orchard/${o.id}`, bookPath: `/animated-orchard/${o.id}`,
+      mine: true, badge: { label: 'orchard', emoji: '🌳', color: '#22c55e' },
+    }
+  })
+
+  const musicCards = myMusic.map((m) => ({
+    id: `music-${m.id}`,
+    name: m.track_title || 'Untitled Track',
+    type: 'MUSIC',
+    status: 'Yours',
+    activity: m.music_genre || m.genre || 'Music',
+    description: m.music_mood || 'A song you have sown',
+    image: 'https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=800&q=80',
+    color: '#0ea5e9', glow: '#38bdf8', emoji: '🎵',
+    playPath: `/music-library`, bookPath: `/music-library`,
+    mine: true, badge: { label: 'music', emoji: '🎵', color: '#38bdf8' },
+  }))
+
+  const bookCards = myBooks.map((b) => ({
+    id: `book-${b.id}`,
+    name: b.title || 'Untitled Book',
+    type: 'BOOK',
+    status: 'Yours',
+    activity: b.genre || 'Book',
+    description: b.description || 'A book you have written',
+    image: b.cover_image_url || (b.image_urls && b.image_urls[0]) || 'https://images.unsplash.com/photo-1543002588-bfa74002ed7e?w=800&q=80',
+    color: '#7c2d12', glow: '#fb923c', emoji: '📚',
+    playPath: `/seed/${b.id}`, bookPath: `/seed/${b.id}`,
+    mine: true, badge: { label: 'book', emoji: '📚', color: '#fb923c' },
+  }))
+
+  const videoCards = myVideos.map((v) => ({
+    id: `video-${v.id}`,
+    name: v.title || 'Untitled Video',
+    type: 'VIDEO',
+    status: 'Yours',
+    activity: 'Video',
+    description: v.description || 'A video you have shared',
+    image: v.thumbnail_url || 'https://images.unsplash.com/photo-1485846234645-a62644f84728?w=800&q=80',
+    color: '#dc2626', glow: '#f87171', emoji: '🎬',
+    playPath: `/community-videos`, bookPath: `/community-videos`,
+    mine: true, badge: { label: 'video', emoji: '🎬', color: '#f87171' },
+  }))
 
   const bestowedCards = bestowedOrchards.map((o) => {
     const meta = catMeta(o.category)
     return {
-      id: `orchard-${o.id}`,
+      id: `bestowed-${o.id}`,
       name: o.title || 'Tribe Orchard',
       type: (o.orchard_type || meta.label).toString().toUpperCase().replace('_', ' '),
       status: 'Tending',
       activity: meta.label,
       description: o.description || 'A seed you are tending in the tribe',
       image: (o.images && o.images[0]) || 'https://images.unsplash.com/photo-1488459716781-31db52582fe9?w=800&q=80',
-      color: '#15803d',
-      glow: '#4ade80',
-      emoji: '💚',
-      playPath: `/animated-orchard/${o.id}`,
-      bookPath: `/animated-orchard/${o.id}`,
-      mine: false,
-      badge: { label: 'bestowed', emoji: '💚', color: '#4ade80' },
+      color: '#15803d', glow: '#4ade80', emoji: '💚',
+      playPath: `/animated-orchard/${o.id}`, bookPath: `/animated-orchard/${o.id}`,
+      mine: false, badge: { label: 'bestowed', emoji: '💚', color: '#4ade80' },
     }
   })
 
+  const mineCards = [...seedCards, ...orchardCards, ...musicCards, ...bookCards, ...videoCards]
   const userCards = [...mineCards, ...bestowedCards]
   const displaySeeds = userCards.length ? userCards : SEEDS
   const safeIdx = activeIdx % Math.max(displaySeeds.length, 1)
