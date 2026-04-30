@@ -241,7 +241,41 @@ export default function SeedFlowDashboard() {
     return () => clearInterval(intervalRef.current)
   }, [])
 
-  const activeSeed = SEEDS[activeIdx]
+  // Build display list from user's own seeds (preferred) or fallback showcase.
+  const CATEGORY_META = {
+    music:     { color: '#16a34a', glow: '#22c55e', emoji: '🎵', label: 'Music' },
+    video:     { color: '#dc2626', glow: '#f87171', emoji: '🎬', label: 'Video' },
+    art:       { color: '#a16207', glow: '#f59e0b', emoji: '🎨', label: 'Art' },
+    craft:     { color: '#9a3412', glow: '#fb923c', emoji: '🪡', label: 'Craft' },
+    food:      { color: '#65a30d', glow: '#a3e635', emoji: '🍞', label: 'Food' },
+    service:   { color: '#0e7490', glow: '#06b6d4', emoji: '🛠', label: 'Service' },
+    teaching:  { color: '#7c3aed', glow: '#a78bfa', emoji: '📖', label: 'Teaching' },
+    prayer:    { color: '#92400e', glow: '#f59e0b', emoji: '🙏', label: 'Prayer' },
+    other:     { color: '#475569', glow: '#94a3b8', emoji: '🌱', label: 'Seed' },
+  }
+  const catMeta = (c) => CATEGORY_META[(c || 'other').toLowerCase()] || CATEGORY_META.other
+
+  const userCards = mySeeds.map((s) => {
+    const meta = catMeta(s.category)
+    return {
+      id: s.id,
+      name: s.title || 'Untitled Seed',
+      type: meta.label.toUpperCase(),
+      status: 'Yours',
+      activity: meta.label,
+      description: s.description || 'A seed you planted',
+      image: (s.images && s.images[0]) || 'https://images.unsplash.com/photo-1488459716781-31db52582fe9?w=800&q=80',
+      color: meta.color,
+      glow: meta.glow,
+      emoji: meta.emoji,
+      playPath: `/seed/${s.id}`,
+      bookPath: `/seed/${s.id}`,
+      mine: true,
+    }
+  })
+  const displaySeeds = userCards.length ? userCards : SEEDS
+  const safeIdx = activeIdx % Math.max(displaySeeds.length, 1)
+  const activeSeed = displaySeeds[safeIdx] || SEEDS[0]
   const displayName = profile?.first_name || user?.email?.split('@')[0] || 'Friend'
 
   const styles = {
