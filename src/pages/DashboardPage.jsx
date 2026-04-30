@@ -85,7 +85,7 @@ const NAV = [
   { label: 'Let It Rain',      sub: 'Bestow blessings',          emoji: '🌧', path: '/let-it-rain',           color: '#6d28d9' },
   { label: 'Learn & Share',    sub: 'Explainer videos',          emoji: '🎬', path: '/learn-share',           color: '#10b981' },
   { label: 'Directory',        sub: 'Find your tribe',           emoji: '🌍', path: '/wandering-directory',   color: '#6366f1' },
-  { label: 'Wandering Hearts', sub: 'Tribal connections',        emoji: '💚', path: '/wandering-hearts',      color: '#dc2626' },
+  { label: 'Wandering Hearts', sub: 'Tribal connections',        emoji: '💚', path: '/tribal-hearts',         color: '#dc2626' },
   { label: "Gosat's",          sub: 'Elder management',          emoji: '🏛', path: '/gosats',                color: '#7c3aed' },
 ]
 
