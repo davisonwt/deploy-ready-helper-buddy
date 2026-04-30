@@ -138,11 +138,19 @@ export default function WanderingDirectoryPage() {
       {user && (
         <div style={s.registerBanner}>
           <div>
-            <div style={{ fontSize: 14, fontWeight: 600, color: '#e2e8f0', marginBottom: 2 }}>Are you a Wandering member?</div>
-            <div style={{ fontSize: 14, color: '#9ca3af' }}>Register your role and appear in the directory</div>
+            <div style={{ fontSize: 14, fontWeight: 600, color: '#e2e8f0', marginBottom: 2 }}>
+              {activeRole === 'heart' ? 'Want to find your tribal match?' : 'Are you a Wandering member?'}
+            </div>
+            <div style={{ fontSize: 14, color: '#9ca3af' }}>
+              {activeRole === 'heart'
+                ? 'Create your Tribal Heart profile and join the circle'
+                : 'Register your role and appear in the directory'}
+            </div>
           </div>
-          <Link to="/register-wandering">
-            <button style={s.registerBtn}>Register a Role</button>
+          <Link to={activeRole === 'heart' ? '/tribal-hearts' : '/register-wandering'}>
+            <button style={s.registerBtn}>
+              {activeRole === 'heart' ? '💚 Become a Tribal Heart' : 'Register a Role'}
+            </button>
           </Link>
         </div>
       )}
