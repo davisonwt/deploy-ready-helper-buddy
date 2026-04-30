@@ -321,6 +321,16 @@ export default function ProductsPage() {
         </p>
       </div>
 
+      {/* Universal marketplace filter (categories + tag combinations) */}
+      <div className="px-6 pb-4 max-w-6xl mx-auto w-full">
+        <MarketplaceFilterBar
+          categoryId={marketCategoryId}
+          tagIds={marketTagIds}
+          onCategoryChange={setMarketCategoryId}
+          onTagsChange={setMarketTagIds}
+        />
+      </div>
+
       {/* Quick Picks Carousel */}
       {quickPicks.length > 0 && (
         <div className="px-6 pb-8">
