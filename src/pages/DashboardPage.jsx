@@ -188,6 +188,157 @@ function OmerBadge({ omer, omerTotal, nextFeast }) {
   )
 }
 
+// ── Day's Beads — current week strand, today highlighted ────────────────────
+function WeekBeads({ sacred }) {
+  // 7 days of the current week. weekDay 1..6 = work, 7 = Sabbath.
+  const today = sacred.weekDay // 1..7
+  const monthDay = sacred.date.day
+  const beads = Array.from({ length: 7 }, (_, i) => {
+    const wd = i + 1 // 1..7
+    const offset = wd - today
+    const dayNum = monthDay + offset
+    const isToday = wd === today
+    const isSabbath = wd === 7
+    return { wd, dayNum, isToday, isSabbath }
+  })
+
+  return (
+    <div style={{
+      background: 'linear-gradient(180deg, #0a0f1a 0%, #060a12 100%)',
+      border: '1px solid rgba(245,158,11,0.18)',
+      borderRadius: 16,
+      padding: '14px 16px 12px',
+      marginBottom: 16,
+      boxShadow: '0 0 30px rgba(245,158,11,0.06)',
+    }}>
+      <div style={{
+        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+        marginBottom: 10,
+      }}>
+        <div>
+          <div style={{ fontSize: 11, color: '#64748b', letterSpacing: '0.08em' }}>
+            Today in Creator's Count
+          </div>
+          <div style={{ fontSize: 18, fontWeight: 800, color: '#f1f5f9', marginTop: 2 }}>
+            Year {sacred.date.year} · Day {sacred.dayOfYear}
+          </div>
+        </div>
+        <div style={{
+          display: 'inline-flex', alignItems: 'center', gap: 5,
+          fontSize: 11, color: '#22d3ee',
+          background: 'rgba(34,211,238,0.08)', border: '1px solid rgba(34,211,238,0.25)',
+          borderRadius: 14, padding: '4px 10px', fontWeight: 700,
+        }}>
+          ✦ Live Daily
+        </div>
+      </div>
+
+      <div style={{
+        background: '#040810', borderRadius: 14, padding: '14px 8px 10px',
+        border: '1px solid rgba(255,255,255,0.04)',
+        position: 'relative', overflow: 'hidden',
+      }}>
+        <div style={{
+          position: 'absolute', inset: 0,
+          background: 'radial-gradient(ellipse at center, rgba(245,158,11,0.18), transparent 70%)',
+          pointerEvents: 'none',
+        }} />
+        <div style={{
+          position: 'relative',
+          display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: 4,
+        }}>
+          {beads.map((b) => {
+            const bg = b.isToday
+              ? 'radial-gradient(circle at 30% 30%, #7dd3fc, #0284c7 70%)'
+              : b.isSabbath
+                ? 'radial-gradient(circle at 30% 30%, #fde68a, #b45309 75%)'
+                : 'radial-gradient(circle at 30% 30%, #e2e8f0, #475569 75%)'
+            const ring = b.isToday
+              ? '0 0 18px #38bdf8aa, inset 0 0 6px #bae6fd'
+              : b.isSabbath
+                ? '0 0 14px #f59e0b88, inset 0 0 4px #fde68a'
+                : 'inset 0 0 4px rgba(0,0,0,0.5)'
+            return (
+              <div key={b.wd} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4 }}>
+                <div style={{
+                  width: 38, height: 38, borderRadius: '50%',
+                  background: bg, boxShadow: ring,
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  fontSize: 12, fontWeight: 800,
+                  color: b.isToday ? '#0c1220' : b.isSabbath ? '#3a1d04' : '#1f2937',
+                  border: b.isToday ? '2px solid #7dd3fc' : '1px solid rgba(255,255,255,0.15)',
+                }}>
+                  {b.dayNum > 0 ? b.dayNum : ''}
+                </div>
+                <div style={{ fontSize: 10, color: b.isToday ? '#38bdf8' : b.isSabbath ? '#f59e0b' : '#475569', fontWeight: 700 }}>
+                  {b.isSabbath ? 'שבת' : b.wd}
+                </div>
+                {b.isToday && (
+                  <div style={{ fontSize: 9, color: '#f472b6', fontWeight: 800, letterSpacing: '0.1em' }}>
+                    TODAY
+                  </div>
+                )}
+              </div>
+            )
+          })}
+        </div>
+        <div style={{
+          marginTop: 8, textAlign: 'center', fontSize: 10,
+          color: '#92400e', letterSpacing: '0.18em', fontWeight: 700,
+        }}>
+          MONTH {sacred.date.month} · WEEK {Math.ceil(sacred.dayOfYear / 7)}
+        </div>
+      </div>
+
+      <div style={{
+        display: 'flex', flexWrap: 'wrap', gap: 6, marginTop: 10,
+      }}>
+        <span style={{
+          fontSize: 10, fontWeight: 700, color: '#cbd5e1',
+          background: '#0f172a', border: '1px solid rgba(255,255,255,0.08)',
+          borderRadius: 10, padding: '4px 9px',
+        }}>
+          M{sacred.date.month} · D{sacred.date.day}
+        </span>
+        <span style={{
+          fontSize: 10, fontWeight: 700, color: '#cbd5e1',
+          background: '#0f172a', border: '1px solid rgba(255,255,255,0.08)',
+          borderRadius: 10, padding: '4px 9px',
+        }}>
+          Day {sacred.weekDay}
+        </span>
+        {sacred.omer && (
+          <span style={{
+            fontSize: 10, fontWeight: 700, color: '#fbbf24',
+            background: 'rgba(245,158,11,0.1)', border: '1px solid rgba(245,158,11,0.3)',
+            borderRadius: 10, padding: '4px 9px',
+          }}>
+            🌾 Omer {sacred.omer}/{sacred.omerTotal}
+          </span>
+        )}
+        {sacred.isFeast && (
+          <span style={{
+            fontSize: 10, fontWeight: 700, color: '#f472b6',
+            background: 'rgba(244,114,182,0.1)', border: '1px solid rgba(244,114,182,0.3)',
+            borderRadius: 10, padding: '4px 9px',
+          }}>
+            🍷 {sacred.feastName}
+          </span>
+        )}
+        {sacred.isSabbath && (
+          <span style={{
+            fontSize: 10, fontWeight: 700, color: '#fde68a',
+            background: 'rgba(245,158,11,0.12)', border: '1px solid rgba(245,158,11,0.35)',
+            borderRadius: 10, padding: '4px 9px',
+          }}>
+            ✡ Sabbath
+          </span>
+        )}
+      </div>
+    </div>
+  )
+}
+
 export default function SeedFlowDashboard() {
   const { user } = useAuth()
   const navigate = useNavigate()
@@ -196,6 +347,7 @@ export default function SeedFlowDashboard() {
   const [pulse, setPulse] = useState(false)
   const [isPlaying, setIsPlaying] = useState(false)
   const [stats, setStats] = useState({ sowers: 4, orchards: 0, seeds: 56, members: 0 })
+  const [mySeeds, setMySeeds] = useState([])
   const [tip] = useState(GROWTH_TIPS[Math.floor(Math.random() * GROWTH_TIPS.length)])
   const [activePath, setActivePath] = useState('/dashboard')
   const intervalRef = useRef(null)
@@ -223,18 +375,58 @@ export default function SeedFlowDashboard() {
       .then(({ count }) => setStats(s => ({ ...s, orchards: count || 0 })))
     supabase.from('seeds').select('*', { count: 'exact', head: true })
       .then(({ count }) => setStats(s => ({ ...s, seeds: count || 56 })))
+    supabase.from('seeds')
+      .select('id, title, description, category, images, video_url, created_at')
+      .eq('gifter_id', user.id)
+      .order('created_at', { ascending: false })
+      .limit(12)
+      .then(({ data }) => setMySeeds(data || []))
   }, [user])
 
   useEffect(() => {
     intervalRef.current = setInterval(() => {
       setPulse(true)
       setTimeout(() => setPulse(false), 600)
-      setActiveIdx(i => (i + 1) % SEEDS.length)
+      setActiveIdx(i => (i + 1) % Math.max(mySeeds.length || SEEDS.length, 1))
     }, 5000)
     return () => clearInterval(intervalRef.current)
-  }, [])
+  }, [mySeeds.length])
 
-  const activeSeed = SEEDS[activeIdx]
+  // Build display list from user's own seeds (preferred) or fallback showcase.
+  const CATEGORY_META = {
+    music:     { color: '#16a34a', glow: '#22c55e', emoji: '🎵', label: 'Music' },
+    video:     { color: '#dc2626', glow: '#f87171', emoji: '🎬', label: 'Video' },
+    art:       { color: '#a16207', glow: '#f59e0b', emoji: '🎨', label: 'Art' },
+    craft:     { color: '#9a3412', glow: '#fb923c', emoji: '🪡', label: 'Craft' },
+    food:      { color: '#65a30d', glow: '#a3e635', emoji: '🍞', label: 'Food' },
+    service:   { color: '#0e7490', glow: '#06b6d4', emoji: '🛠', label: 'Service' },
+    teaching:  { color: '#7c3aed', glow: '#a78bfa', emoji: '📖', label: 'Teaching' },
+    prayer:    { color: '#92400e', glow: '#f59e0b', emoji: '🙏', label: 'Prayer' },
+    other:     { color: '#475569', glow: '#94a3b8', emoji: '🌱', label: 'Seed' },
+  }
+  const catMeta = (c) => CATEGORY_META[(c || 'other').toLowerCase()] || CATEGORY_META.other
+
+  const userCards = mySeeds.map((s) => {
+    const meta = catMeta(s.category)
+    return {
+      id: s.id,
+      name: s.title || 'Untitled Seed',
+      type: meta.label.toUpperCase(),
+      status: 'Yours',
+      activity: meta.label,
+      description: s.description || 'A seed you planted',
+      image: (s.images && s.images[0]) || 'https://images.unsplash.com/photo-1488459716781-31db52582fe9?w=800&q=80',
+      color: meta.color,
+      glow: meta.glow,
+      emoji: meta.emoji,
+      playPath: `/seed/${s.id}`,
+      bookPath: `/seed/${s.id}`,
+      mine: true,
+    }
+  })
+  const displaySeeds = userCards.length ? userCards : SEEDS
+  const safeIdx = activeIdx % Math.max(displaySeeds.length, 1)
+  const activeSeed = displaySeeds[safeIdx] || SEEDS[0]
   const displayName = profile?.first_name || user?.email?.split('@')[0] || 'Friend'
 
   const styles = {
@@ -518,17 +710,25 @@ export default function SeedFlowDashboard() {
           </div>
 
           <div style={styles.content}>
+            {/* ── Day's Beads — current week strand ── */}
             <div style={styles.sectionLabel}>
-              <span>Seeds in motion</span>
-              <span style={styles.liveTag}>LIVE</span>
+              <span>💎 Day's Beads</span>
+            </div>
+            <WeekBeads sacred={sacred} />
+
+            <div style={styles.sectionLabel}>
+              <span>{userCards.length ? 'Your Seeds' : 'Seeds in motion'}</span>
+              <span style={styles.liveTag}>{userCards.length ? 'YOURS' : 'LIVE'}</span>
             </div>
 
             {/* ── Seed showcase card ── */}
             <div style={{ ...styles.seedCard }} className="seed-card-anim">
               <img src={activeSeed.image} alt="" style={styles.seedImg} />
               <div style={styles.seedOverlay} />
-              <div style={styles.seedCounter}>{activeIdx + 1}/{SEEDS.length}</div>
-              <div style={styles.seedType}>{activeSeed.type}</div>
+              <div style={styles.seedCounter}>{safeIdx + 1}/{displaySeeds.length}</div>
+              <div style={styles.seedType}>
+                {activeSeed.emoji ? `${activeSeed.emoji} ` : ''}{activeSeed.type}
+              </div>
               <div style={styles.seedActivity}>
                 <span style={styles.activityDot} />
                 <span style={styles.activityText}>{activeSeed.activity}</span>
@@ -564,17 +764,26 @@ export default function SeedFlowDashboard() {
                       fontSize={13}
                       letterSpacing="0px"
                     >
-                      📅 Enter
+                      📅 Open
                     </LivingButton>
                   </Link>
                 </div>
               </div>
             </div>
 
+            {!userCards.length && (
+              <div style={{
+                fontSize: 12, color: '#64748b', textAlign: 'center',
+                marginBottom: 10, fontStyle: 'italic',
+              }}>
+                You haven't planted any seeds yet — tap "Plant Seed" below to start.
+              </div>
+            )}
+
             {/* ── Dots ── */}
             <div style={styles.seedDots}>
-              {SEEDS.map((_, i) => (
-                <div key={i} style={styles.dot(i === activeIdx)}
+              {displaySeeds.map((_, i) => (
+                <div key={i} style={styles.dot(i === safeIdx)}
                   onClick={() => { setActiveIdx(i); clearInterval(intervalRef.current) }} />
               ))}
             </div>
