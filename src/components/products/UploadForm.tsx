@@ -11,6 +11,7 @@ import { Upload, Loader2, CheckCircle2, Disc, Music, X } from 'lucide-react';
 import { toast } from 'sonner';
 import { useNavigate } from 'react-router-dom';
 import JSZip from 'jszip';
+import CategoryTagPicker from '@/components/marketplace/CategoryTagPicker';
 
 export default function UploadForm() {
   const { user } = useAuth();
@@ -28,6 +29,9 @@ export default function UploadForm() {
   const [coverImage, setCoverImage] = useState<File | null>(null);
   const [mainFile, setMainFile] = useState<File | null>(null);
   const [releaseType, setReleaseType] = useState<'single' | 'album'>('single');
+  const [taxonomy, setTaxonomy] = useState<{ categoryId: string | null; subcategoryIds: string[]; tagIds: string[] }>({
+    categoryId: null, subcategoryIds: [], tagIds: [],
+  });
   const [albumFiles, setAlbumFiles] = useState<File[]>([]);
   const [zipFile, setZipFile] = useState<File | null>(null);
   const [extractingZip, setExtractingZip] = useState(false);
@@ -268,7 +272,7 @@ export default function UploadForm() {
       const totalPrice = basePrice * 1.15; // Add 15% (10% + 5%)
 
       // Create product
-      const { error: productError } = await supabase
+      const { data: insertedProduct, error: productError } = await supabase
         .from('products')
         .insert({
           sower_id: sowerId,
@@ -281,9 +285,39 @@ export default function UploadForm() {
           cover_image_url: coverUrl.publicUrl,
           file_url: fileUrlPublic,
           tags: [...formData.tags.split(',').map(t => t.trim()).filter(Boolean), releaseType]
-        });
+        })
+        .select('id')
+        .single();
 
       if (productError) throw productError;
+
+      // Persist marketplace taxonomy (subcategories + tags) into junction tables
+      if (insertedProduct?.id && user) {
+        if (taxonomy.subcategoryIds.length) {
+          await (supabase.from('listing_subcategories' as any) as any).insert(
+            taxonomy.subcategoryIds.map((sid) => ({
+              listing_type: 'product',
+              listing_id: insertedProduct.id,
+              subcategory_id: sid,
+              owner_user_id: user.id,
+            }))
+          );
+        }
+        if (taxonomy.tagIds.length) {
+          const { error: tagErr } = await (supabase.from('listing_tags' as any) as any).insert(
+            taxonomy.tagIds.map((tid) => ({
+              listing_type: 'product',
+              listing_id: insertedProduct.id,
+              tag_id: tid,
+              owner_user_id: user.id,
+            }))
+          );
+          if (tagErr) {
+            // Trigger blocks unverified trust tags — surface the message but keep the product live
+            toast.warning(`Some tags could not be applied: ${tagErr.message}`);
+          }
+        }
+      }
 
       // Award XP for uploading product (100 XP) - use type assertion for RPC
       if (user) {
@@ -373,13 +407,24 @@ export default function UploadForm() {
                 </div>
 
                 <div>
-                  <Label htmlFor="category">Category</Label>
-                  <Input
-                    id="category"
-                    placeholder="e.g., education, entertainment"
-                    value={formData.category}
-                    onChange={(e) => setFormData({ ...formData, category: e.target.value })}
+                  <Label htmlFor="category">Category, subcategories & tags *</Label>
+                  <p className="text-xs text-muted-foreground mb-3">
+                    Pick a category, then add subcategories and tags so buyers can find you. Trust tags are locked until you upload verified credentials.
+                  </p>
+                  <CategoryTagPicker
+                    categoryId={taxonomy.categoryId}
+                    subcategoryIds={taxonomy.subcategoryIds}
+                    tagIds={taxonomy.tagIds}
+                    onChange={(next) => {
+                      setTaxonomy(next);
+                      // Mirror selection into legacy free-text column for backward-compat queries
+                      if (next.categoryId !== taxonomy.categoryId) {
+                        setFormData((fd) => ({ ...fd, category: next.categoryId || '' }));
+                      }
+                    }}
                   />
+                  {/* Hidden free-text category kept for backward-compat: derived from selected category label */}
+                  <Input type="hidden" value={formData.category} readOnly />
                 </div>
 
                 <div>

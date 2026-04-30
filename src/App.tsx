@@ -95,6 +95,7 @@ const SupportUsPage = lazy(() => import("./pages/SupportUsPage"));
 const ProductsPage = lazy(() => import("./pages/ProductsPage"));
 const MyProductsPage = lazy(() => import("./pages/MyProductsPage"));
 const UploadForm = lazy(() => import("./components/products/UploadForm"));
+const SellerCredentialsPage = lazy(() => import("./pages/SellerCredentialsPage"));
 const EditForm = lazy(() => import("./components/products/EditForm"));
 const ProductBasketPage = lazy(() => import("./pages/ProductBasketPage"));
 const MusicLibraryPage = lazy(() =>
@@ -429,6 +430,9 @@ const App = () => (
               } />
               <Route path="/products/upload" element={
                 <ProtectedRoute><Layout><Suspense fallback={<LoadingFallback />}><UploadForm /></Suspense></Layout></ProtectedRoute>
+              } />
+              <Route path="/seller/credentials" element={
+                <ProtectedRoute><Layout><Suspense fallback={<LoadingFallback />}><SellerCredentialsPage /></Suspense></Layout></ProtectedRoute>
               } />
               <Route path="/products/edit/:id" element={
                 <ProtectedRoute><Layout><Suspense fallback={<LoadingFallback />}><EditForm /></Suspense></Layout></ProtectedRoute>

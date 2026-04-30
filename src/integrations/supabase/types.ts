@@ -3698,6 +3698,76 @@ export type Database = {
         }
         Relationships: []
       }
+      listing_subcategories: {
+        Row: {
+          created_at: string
+          id: string
+          listing_id: string
+          listing_type: string
+          owner_user_id: string
+          subcategory_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          listing_id: string
+          listing_type: string
+          owner_user_id: string
+          subcategory_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          listing_id?: string
+          listing_type?: string
+          owner_user_id?: string
+          subcategory_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "listing_subcategories_subcategory_id_fkey"
+            columns: ["subcategory_id"]
+            isOneToOne: false
+            referencedRelation: "marketplace_subcategories"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      listing_tags: {
+        Row: {
+          created_at: string
+          id: string
+          listing_id: string
+          listing_type: string
+          owner_user_id: string
+          tag_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          listing_id: string
+          listing_type: string
+          owner_user_id: string
+          tag_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          listing_id?: string
+          listing_type?: string
+          owner_user_id?: string
+          tag_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "listing_tags_tag_id_fkey"
+            columns: ["tag_id"]
+            isOneToOne: false
+            referencedRelation: "marketplace_tags"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       live_call_participants: {
         Row: {
           call_session_id: string
@@ -4096,6 +4166,113 @@ export type Database = {
           updated_at?: string
           user_id?: string
           viewer_count?: number | null
+        }
+        Relationships: []
+      }
+      marketplace_categories: {
+        Row: {
+          created_at: string
+          icon: string | null
+          id: string
+          is_active: boolean
+          label: string
+          slug: string
+          sort_order: number
+        }
+        Insert: {
+          created_at?: string
+          icon?: string | null
+          id?: string
+          is_active?: boolean
+          label: string
+          slug: string
+          sort_order?: number
+        }
+        Update: {
+          created_at?: string
+          icon?: string | null
+          id?: string
+          is_active?: boolean
+          label?: string
+          slug?: string
+          sort_order?: number
+        }
+        Relationships: []
+      }
+      marketplace_subcategories: {
+        Row: {
+          category_id: string
+          created_at: string
+          id: string
+          is_active: boolean
+          label: string
+          slug: string
+          sort_order: number
+        }
+        Insert: {
+          category_id: string
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          label: string
+          slug: string
+          sort_order?: number
+        }
+        Update: {
+          category_id?: string
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          label?: string
+          slug?: string
+          sort_order?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "marketplace_subcategories_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "marketplace_categories"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      marketplace_tags: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          is_active: boolean
+          label: string
+          required_credential_type: string | null
+          requires_verification: boolean
+          slug: string
+          sort_order: number
+          tag_group: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          label: string
+          required_credential_type?: string | null
+          requires_verification?: boolean
+          slug: string
+          sort_order?: number
+          tag_group: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          label?: string
+          required_credential_type?: string | null
+          requires_verification?: boolean
+          slug?: string
+          sort_order?: number
+          tag_group?: string
         }
         Relationships: []
       }
@@ -8025,6 +8202,54 @@ export type Database = {
             referencedColumns: ["user_id"]
           },
         ]
+      }
+      seller_credentials: {
+        Row: {
+          created_at: string
+          credential_type: string
+          expires_at: string | null
+          file_url: string | null
+          id: string
+          notes: string | null
+          rejection_reason: string | null
+          reviewed_at: string | null
+          reviewed_by: string | null
+          status: Database["public"]["Enums"]["verification_status"]
+          submitted_at: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          credential_type: string
+          expires_at?: string | null
+          file_url?: string | null
+          id?: string
+          notes?: string | null
+          rejection_reason?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: Database["public"]["Enums"]["verification_status"]
+          submitted_at?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          credential_type?: string
+          expires_at?: string | null
+          file_url?: string | null
+          id?: string
+          notes?: string | null
+          rejection_reason?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: Database["public"]["Enums"]["verification_status"]
+          submitted_at?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
       }
       service_provider_availability: {
         Row: {
@@ -12235,6 +12460,7 @@ export type Database = {
       }
       is_admin_or_gosat: { Args: { _user_id: string }; Returns: boolean }
       is_council_member: { Args: { _user_id: string }; Returns: boolean }
+      is_marketplace_admin: { Args: { _uid: string }; Returns: boolean }
       is_member_of_chat: {
         Args: { _room_id: string; _user_id?: string }
         Returns: boolean
@@ -12586,7 +12812,12 @@ export type Database = {
         | "platform_fee"
         | "admin_fee"
         | "adjustment"
-      verification_status: "pending" | "verified" | "rejected"
+      verification_status:
+        | "pending"
+        | "verified"
+        | "rejected"
+        | "not_submitted"
+        | "expired"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -12819,7 +13050,13 @@ export const Constants = {
         "admin_fee",
         "adjustment",
       ],
-      verification_status: ["pending", "verified", "rejected"],
+      verification_status: [
+        "pending",
+        "verified",
+        "rejected",
+        "not_submitted",
+        "expired",
+      ],
     },
   },
 } as const
