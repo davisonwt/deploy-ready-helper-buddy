@@ -2360,6 +2360,7 @@ export type Database = {
         Row: {
           artist_name: string | null
           bpm: number | null
+          cover_image_url: string | null
           created_at: string
           dj_id: string
           duration_seconds: number | null
@@ -2385,6 +2386,7 @@ export type Database = {
         Insert: {
           artist_name?: string | null
           bpm?: number | null
+          cover_image_url?: string | null
           created_at?: string
           dj_id: string
           duration_seconds?: number | null
@@ -2410,6 +2412,7 @@ export type Database = {
         Update: {
           artist_name?: string | null
           bpm?: number | null
+          cover_image_url?: string | null
           created_at?: string
           dj_id?: string
           duration_seconds?: number | null
