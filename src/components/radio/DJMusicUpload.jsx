@@ -10,6 +10,8 @@ import { Card, CardContent } from '@/components/ui/card'
 import { Upload, Music, X, Plus, Disc } from 'lucide-react'
 import { useDJPlaylist } from '@/hooks/useDJPlaylist'
 import { useDirectMusicUpload } from '@/hooks/useDirectMusicUpload'
+import WanderingRolePicker from '@/components/marketplace/WanderingRolePicker'
+import CategoryTagPicker from '@/components/marketplace/CategoryTagPicker'
 
 export default function DJMusicUpload({ trigger }) {
   const [isOpen, setIsOpen] = useState(false)
@@ -33,6 +35,8 @@ export default function DJMusicUpload({ trigger }) {
     tags: []
   })
   const [newTag, setNewTag] = useState('')
+  const [wanderingRole, setWanderingRole] = useState(null)
+  const [taxonomy, setTaxonomy] = useState({ categoryId: null, subcategoryIds: [], tagIds: [] })
 
   const { fetchTracks, djProfile } = useDJPlaylist()
   const { directUpload, uploading } = useDirectMusicUpload()
@@ -143,7 +147,13 @@ export default function DJMusicUpload({ trigger }) {
         return
       }
 
-      const result = await directUpload(files[0], trackData, djProfile)
+      const enrichedTrack = {
+        ...trackData,
+        wandering_role: wanderingRole,
+        subcategoryIds: taxonomy.subcategoryIds,
+        tagIds: taxonomy.tagIds,
+      }
+      const result = await directUpload(files[0], enrichedTrack, djProfile)
       
       if (result) {
         resetForm()
@@ -168,7 +178,10 @@ export default function DJMusicUpload({ trigger }) {
           genre: albumData.genre,
           tags: [...albumData.tags, albumData.albumTitle],
           type: 'music',
-          duration: 0
+          duration: 0,
+          wandering_role: wanderingRole,
+          subcategoryIds: taxonomy.subcategoryIds,
+          tagIds: taxonomy.tagIds,
         }
 
         const result = await directUpload(file, trackInfo, djProfile)
@@ -201,6 +214,8 @@ export default function DJMusicUpload({ trigger }) {
       genre: '',
       tags: []
     })
+    setWanderingRole(null)
+    setTaxonomy({ categoryId: null, subcategoryIds: [], tagIds: [] })
     setIsOpen(false)
   }
 
@@ -281,7 +296,7 @@ export default function DJMusicUpload({ trigger }) {
         </div>
       )}
 
-      <DialogContent className="max-w-2xl">
+      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Music className="h-5 w-5" />
@@ -545,6 +560,21 @@ export default function DJMusicUpload({ trigger }) {
                 </Badge>
               ))}
             </div>
+          </div>
+
+          {/* Wandering identity */}
+          <div className="border-t pt-4">
+            <WanderingRolePicker value={wanderingRole} onChange={setWanderingRole} />
+          </div>
+
+          {/* Marketplace category + tags */}
+          <div className="border-t pt-4">
+            <CategoryTagPicker
+              categoryId={taxonomy.categoryId}
+              subcategoryIds={taxonomy.subcategoryIds}
+              tagIds={taxonomy.tagIds}
+              onChange={setTaxonomy}
+            />
           </div>
 
           {/* Submit */}

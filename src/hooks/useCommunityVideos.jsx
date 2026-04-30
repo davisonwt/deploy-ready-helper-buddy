@@ -117,12 +117,42 @@ export function useCommunityVideos() {
           duration_seconds: Math.round(duration),
           file_size: file.size,
           orchard_id: metadata.orchard_id || null,
+          wandering_role: metadata.wandering_role || null,
           status: 'approved'
         })
         .select()
         .single()
 
       if (error) throw error
+
+      // Persist marketplace taxonomy (subcategories + tags) into junction tables
+      try {
+        const subIds = metadata.subcategoryIds || []
+        const tagIds = metadata.tagIds || []
+        if (data?.id && subIds.length) {
+          await supabase.from('listing_subcategories').insert(
+            subIds.map((sid) => ({
+              listing_type: 'video',
+              listing_id: data.id,
+              subcategory_id: sid,
+              owner_user_id: user.id,
+            }))
+          )
+        }
+        if (data?.id && tagIds.length) {
+          const { error: tagErr } = await supabase.from('listing_tags').insert(
+            tagIds.map((tid) => ({
+              listing_type: 'video',
+              listing_id: data.id,
+              tag_id: tid,
+              owner_user_id: user.id,
+            }))
+          )
+          if (tagErr) console.warn('Some video tags blocked:', tagErr.message)
+        }
+      } catch (junctionErr) {
+        console.warn('Marketplace taxonomy save failed:', junctionErr)
+      }
 
       toast({
         title: "Success",

@@ -64,7 +64,8 @@ export const useDirectMusicUpload = () => {
           tags: trackData.tags || [],
           bpm: trackData.bpm || null,
           genre: trackData.genre || null,
-          is_explicit: trackData.explicit || false
+          is_explicit: trackData.explicit || false,
+          wandering_role: trackData.wandering_role || null
         })
         .select()
         .single()
@@ -75,15 +76,44 @@ export const useDirectMusicUpload = () => {
       }
 
       console.log('🔥 Track created:', trackRecord)
-      
+
+      // Persist marketplace taxonomy junctions for this music listing
+      try {
+        const subIds = trackData.subcategoryIds || []
+        const tagIds = trackData.tagIds || []
+        if (trackRecord?.id && subIds.length) {
+          await supabase.from('listing_subcategories').insert(
+            subIds.map((sid) => ({
+              listing_type: 'music',
+              listing_id: trackRecord.id,
+              subcategory_id: sid,
+              owner_user_id: user.id,
+            }))
+          )
+        }
+        if (trackRecord?.id && tagIds.length) {
+          const { error: tagErr } = await supabase.from('listing_tags').insert(
+            tagIds.map((tid) => ({
+              listing_type: 'music',
+              listing_id: trackRecord.id,
+              tag_id: tid,
+              owner_user_id: user.id,
+            }))
+          )
+          if (tagErr) console.warn('Some music tags blocked:', tagErr.message)
+        }
+      } catch (junctionErr) {
+        console.warn('Music marketplace taxonomy save failed:', junctionErr)
+      }
+
       // Award XP for uploading music (100 XP)
       await supabase.rpc('add_xp_to_current_user', { amount: 100 }).catch((err) => {
         console.error('Failed to award XP:', err);
         // Don't fail the upload if XP award fails
       });
-      
+
       toast.success('Track uploaded successfully!')
-      
+
       return trackRecord
       
     } catch (error) {

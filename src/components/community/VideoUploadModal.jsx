@@ -6,6 +6,8 @@ import { Textarea } from '@/components/ui/textarea'
 import { Label } from '@/components/ui/label'
 import { Upload, Video, X } from 'lucide-react'
 import { useCommunityVideos } from '@/hooks/useCommunityVideos.jsx'
+import WanderingRolePicker from '@/components/marketplace/WanderingRolePicker'
+import CategoryTagPicker from '@/components/marketplace/CategoryTagPicker'
 
 export default function VideoUploadModal({ isOpen, onClose }) {
   const [file, setFile] = useState(null)
@@ -13,6 +15,8 @@ export default function VideoUploadModal({ isOpen, onClose }) {
   const [description, setDescription] = useState('')
   const [tags, setTags] = useState('')
   const [dragActive, setDragActive] = useState(false)
+  const [wanderingRole, setWanderingRole] = useState(null)
+  const [taxonomy, setTaxonomy] = useState({ categoryId: null, subcategoryIds: [], tagIds: [] })
   const { uploadVideo, uploading } = useCommunityVideos()
 
   const handleFileSelect = (selectedFile) => {
@@ -64,7 +68,10 @@ export default function VideoUploadModal({ isOpen, onClose }) {
     const result = await uploadVideo(file, {
       title: title.trim(),
       description: description.trim() || null,
-      tags: tagsArray
+      tags: tagsArray,
+      wandering_role: wanderingRole,
+      subcategoryIds: taxonomy.subcategoryIds,
+      tagIds: taxonomy.tagIds,
     })
 
     console.log('🎬 VideoUploadModal: Upload result:', result)
@@ -75,6 +82,8 @@ export default function VideoUploadModal({ isOpen, onClose }) {
       setTitle('')
       setDescription('')
       setTags('')
+      setWanderingRole(null)
+      setTaxonomy({ categoryId: null, subcategoryIds: [], tagIds: [] })
       onClose()
     }
   }
@@ -84,11 +93,13 @@ export default function VideoUploadModal({ isOpen, onClose }) {
     setTitle('')
     setDescription('')
     setTags('')
+    setWanderingRole(null)
+    setTaxonomy({ categoryId: null, subcategoryIds: [], tagIds: [] })
   }
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-md">
+      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Video className="h-5 w-5" />
@@ -200,6 +211,21 @@ export default function VideoUploadModal({ isOpen, onClose }) {
             <p className="text-xs text-muted-foreground">
               Separate tags with commas
             </p>
+          </div>
+
+          {/* Wandering identity */}
+          <div className="border-t pt-4">
+            <WanderingRolePicker value={wanderingRole} onChange={setWanderingRole} />
+          </div>
+
+          {/* Marketplace category + tags */}
+          <div className="border-t pt-4">
+            <CategoryTagPicker
+              categoryId={taxonomy.categoryId}
+              subcategoryIds={taxonomy.subcategoryIds}
+              tagIds={taxonomy.tagIds}
+              onChange={setTaxonomy}
+            />
           </div>
 
           {/* Action Buttons */}

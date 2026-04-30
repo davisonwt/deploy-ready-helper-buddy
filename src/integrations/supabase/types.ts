@@ -2126,6 +2126,7 @@ export type Database = {
           uploader_profile_id: string | null
           video_url: string
           view_count: number | null
+          wandering_role: string | null
         }
         Insert: {
           comment_count?: number | null
@@ -2145,6 +2146,7 @@ export type Database = {
           uploader_profile_id?: string | null
           video_url: string
           view_count?: number | null
+          wandering_role?: string | null
         }
         Update: {
           comment_count?: number | null
@@ -2164,6 +2166,7 @@ export type Database = {
           uploader_profile_id?: string | null
           video_url?: string
           view_count?: number | null
+          wandering_role?: string | null
         }
         Relationships: [
           {
@@ -2377,6 +2380,7 @@ export type Database = {
           updated_at: string
           upload_date: string
           wallet_address: string | null
+          wandering_role: string | null
         }
         Insert: {
           artist_name?: string | null
@@ -2401,6 +2405,7 @@ export type Database = {
           updated_at?: string
           upload_date?: string
           wallet_address?: string | null
+          wandering_role?: string | null
         }
         Update: {
           artist_name?: string | null
@@ -2425,6 +2430,7 @@ export type Database = {
           updated_at?: string
           upload_date?: string
           wallet_address?: string | null
+          wandering_role?: string | null
         }
         Relationships: [
           {
@@ -8902,6 +8908,7 @@ export type Database = {
           title: string
           updated_at: string
           user_id: string
+          wandering_role: string | null
           whisperer_commission_percent: number | null
         }
         Insert: {
@@ -8929,6 +8936,7 @@ export type Database = {
           title: string
           updated_at?: string
           user_id: string
+          wandering_role?: string | null
           whisperer_commission_percent?: number | null
         }
         Update: {
@@ -8956,6 +8964,7 @@ export type Database = {
           title?: string
           updated_at?: string
           user_id?: string
+          wandering_role?: string | null
           whisperer_commission_percent?: number | null
         }
         Relationships: [
