@@ -153,6 +153,22 @@ function Layout({ children }) {
   // NOTE: "My Content" has been replaced with "My Garden" panel - removed from here
   const groupedNavigation = [
     {
+      name: "Explore",
+      icon: Sparkles,
+      className: 'explore-tour',
+      items: [
+        { name: "Marketing Videos", href: "/marketing-videos", icon: Video },
+        { name: "Community Videos", href: "/community-videos", icon: Video },
+        { name: "Grove Feed", href: "/grove-feed", icon: Sprout },
+        { name: "Wandering Directory", href: "/wandering-directory", icon: Users },
+        { name: "Premium Rooms", href: "/premium-rooms", icon: Crown },
+        { name: "Live Rooms", href: "/live-rooms", icon: Radio },
+        { name: "AI Assistant", href: "/ai-assistant", icon: Sparkles },
+        { name: "Stats", href: "/stats", icon: BarChart3 },
+        { name: "Search", href: "/search", icon: Search }
+      ]
+    },
+    {
       name: "Let It Rain",
       icon: Cloud, // Using Cloud icon to match My Garden button style
       className: 'tithing-tour',
