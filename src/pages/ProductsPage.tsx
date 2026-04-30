@@ -116,7 +116,7 @@ export default function ProductsPage() {
     isFetchingNextPage,
     isLoading,
   } = useInfiniteQuery({
-    queryKey: ['products', selectedCategory, selectedSort],
+    queryKey: ['products', selectedCategory, selectedSort, marketCategoryId, taggedProductIds],
     initialPageParam: 0,
     queryFn: async ({ pageParam }: { pageParam: number }) => {
       let query = supabase
@@ -132,12 +132,23 @@ export default function ProductsPage() {
         `)
         .range(pageParam, pageParam + ITEMS_PER_PAGE - 1);
 
-      // Apply category filter
+      // Apply legacy category filter
       if (selectedCategory !== 'all' && selectedCategory !== 'trending') {
         query = query.eq('category', selectedCategory);
       }
 
-      // Apply sorting - if trending filter is selected, sort by bestowal_count
+      // Apply marketplace category filter (new taxonomy — stored in same `category` column as UUID)
+      if (marketCategoryId) {
+        query = query.eq('category', marketCategoryId);
+      }
+
+      // Apply tag-intersection filter
+      if (taggedProductIds) {
+        if (taggedProductIds.length === 0) return [];
+        query = query.in('id', taggedProductIds);
+      }
+
+      // Apply sorting
       if (selectedCategory === 'trending' || selectedSort === 'Trending') {
         query = query.order('bestowal_count', { ascending: false });
       } else {
