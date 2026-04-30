@@ -717,7 +717,14 @@ export default function SeedFlowDashboard() {
             <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
               <div style={styles.avatar}>
                 {profile?.avatar_url
-                  ? <img src={profile.avatar_url} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                  ? <img
+                      src={profile.avatar_url}
+                      alt="Your avatar"
+                      loading="lazy"
+                      decoding="async"
+                      style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '50%' }}
+                      onError={(e) => { e.currentTarget.style.display = 'none' }}
+                    />
                   : '🧑'}
               </div>
               <div>
