@@ -4,6 +4,8 @@ import { Link } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { toast } from 'sonner'
 import RoleButton, { ROLE_CONFIG } from '../components/RoleButton'
+import becomeASowerVideo from '../assets/explainers/become-a-sower.mp4'
+import becomeABestowerVideo from '../assets/explainers/become-a-bestower.mpeg'
 
 // ── Colored Living Button — share animation in any color ────────────────────
 
@@ -46,7 +48,7 @@ const VIDEOS = [
   { id: 12, role: 'Hearth',    title: 'Bestow a Hearth Seed',       desc: 'How to support a creator through bestowal',        color: '#f97316', emoji: '🔥', url: VID('s2g gift of giving 1280x720.mp4') },
   { id: 13, role: 'Forge',     title: 'Become a Wandering Forge',   desc: 'How to list your craft & manufacturing skills',    color: '#64748b', emoji: '⚒️', url: null },
   { id: 14, role: 'Forge',     title: 'Commission a Forge',         desc: 'How to order custom made items',                   color: '#64748b', emoji: '⚒️', url: null },
-  { id: 15, role: 'Heart',     title: 'Become a Wandering Heart',   desc: 'How to offer care & community support',            color: '#10b981', emoji: '💚', url: VID('s2g divine presence.mp4') },
+  { id: 15, role: 'Heart',     title: 'Become a Wandering Heart',   desc: 'How to offer care & community support',            color: '#10b981', emoji: '💚', url: becomeABestowerVideo },
   { id: 16, role: 'Heart',     title: 'Find a Heart',               desc: 'How to find care & support in your tribe',         color: '#10b981', emoji: '💚', url: VID('s2g light & love bestow 1280x720.mp4') },
   { id: 17, role: 'Story',     title: 'Become a Story Teller',      desc: 'How to share your content & media',                color: '#6366f1', emoji: '🎥', url: VID('s2g sound 1280x720.mp4') },
   { id: 18, role: 'Story',     title: 'Watch a Story',              desc: 'How to find & support tribe storytellers',         color: '#6366f1', emoji: '🎥', url: VID('seeds 1 mp4.mp4') },
@@ -65,7 +67,7 @@ const VIDEOS = [
   { id: 31, role: 'Orchard',   title: 'Let It Rain',                desc: 'How to bestow blessings to the tribe',             color: '#16a34a', emoji: '🌳', url: VID('s2g let it rain bring the rainbow 1280x720.mp4') },
   { id: 32, role: 'Orchard',   title: 'The Music Library',          desc: 'How to upload and share your music',               color: '#16a34a', emoji: '🌳', url: VID('s2g sound 1280x720.mp4') },
   { id: 33, role: 'Orchard',   title: 'S2G Wallet Setup',           desc: 'How to set up USDC payments',                      color: '#16a34a', emoji: '🌳', url: VID('tithing 1280x720.mp4') },
-  { id: 34, role: 'Orchard',   title: 'Become a Sower & Grower',    desc: 'The complete S2G onboarding guide',                color: '#16a34a', emoji: '🌳', url: VID('s2g  become a sower and grower (1).mp4') },
+  { id: 34, role: 'Orchard',   title: 'Become a Sower & Grower',    desc: 'The complete S2G onboarding guide',                color: '#16a34a', emoji: '🌳', url: becomeASowerVideo },
 ]
 
 export default function LearnSharePage() {
