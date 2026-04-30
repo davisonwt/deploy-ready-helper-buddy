@@ -28,7 +28,9 @@ export function useCommunityVideos() {
             avatar_url
           )
         `)
-        .eq('status', 'approved')
+      query = user
+        ? query.or(`status.eq.approved,uploader_id.eq.${user.id}`)
+        : query.eq('status', 'approved')
 
       // Apply sorting
       switch (options.sortBy) {
@@ -98,7 +100,18 @@ export function useCommunityVideos() {
         filteredVideos = filteredVideos.filter((video) => counts.get(video.id)?.size === options.tagIds.length)
       }
 
-      setVideos(filteredVideos)
+      const refreshedVideos = await Promise.all(filteredVideos.map(async (video) => {
+        if (!video.video_url) return video
+        const marker = '/object/sign/videos/'
+        const objectPath = video.video_url.includes(marker)
+          ? decodeURIComponent(video.video_url.split(marker)[1].split('?')[0])
+          : video.video_url.startsWith('http') ? null : video.video_url
+        if (!objectPath) return video
+        const { data: signed } = await supabase.storage.from('videos').createSignedUrl(objectPath, 3600)
+        return signed?.signedUrl ? { ...video, video_url: signed.signedUrl } : video
+      }))
+
+      setVideos(refreshedVideos)
     } catch (error) {
       console.error('Error fetching videos:', error)
       toast({
