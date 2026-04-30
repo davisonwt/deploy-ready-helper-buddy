@@ -213,6 +213,21 @@ export default function VideoUploadModal({ isOpen, onClose }) {
             </p>
           </div>
 
+          {/* Wandering identity */}
+          <div className="border-t pt-4">
+            <WanderingRolePicker value={wanderingRole} onChange={setWanderingRole} />
+          </div>
+
+          {/* Marketplace category + tags */}
+          <div className="border-t pt-4">
+            <CategoryTagPicker
+              categoryId={taxonomy.categoryId}
+              subcategoryIds={taxonomy.subcategoryIds}
+              tagIds={taxonomy.tagIds}
+              onChange={setTaxonomy}
+            />
+          </div>
+
           {/* Action Buttons */}
           <div className="flex gap-2 pt-2">
             <Button
