@@ -407,6 +407,24 @@ export default function SeedFlowDashboard() {
       .order('created_at', { ascending: false })
       .limit(12)
       .then(({ data }) => setMySeeds(data || []))
+
+    // Seeds I've bestowed into — orchards the user has supported
+    supabase.from('bestowals')
+      .select('orchard_id, created_at, orchards:orchard_id (id, title, description, category, images, orchard_type, created_at)')
+      .eq('bestower_id', user.id)
+      .order('created_at', { ascending: false })
+      .limit(12)
+      .then(({ data }) => {
+        const seen = new Set()
+        const unique = []
+        for (const b of data || []) {
+          if (b.orchards && !seen.has(b.orchards.id)) {
+            seen.add(b.orchards.id)
+            unique.push(b.orchards)
+          }
+        }
+        setBestowedOrchards(unique)
+      })
   }, [user])
 
   useEffect(() => {
