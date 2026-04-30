@@ -53,10 +53,52 @@ export function useCommunityVideos() {
         query = query.or(`title.ilike.%${options.search}%,description.ilike.%${options.search}%,tags.cs.{${options.search}}`)
       }
 
+      if (options.activeRole) {
+        query = query.eq('wandering_role', options.activeRole)
+      }
+
       const { data, error } = await query.limit(20)
 
       if (error) throw error
-      setVideos(data || [])
+
+      let filteredVideos = data || []
+      if (options.categoryId) {
+        const { data: subcategoryRows, error: subcategoryError } = await supabase
+          .from('marketplace_subcategories')
+          .select('id')
+          .eq('category_id', options.categoryId)
+        if (subcategoryError) throw subcategoryError
+        const subcategoryIds = (subcategoryRows || []).map((row) => row.id)
+        if (!subcategoryIds.length) {
+          setVideos([])
+          return
+        }
+        const { data: listingRows, error: listingError } = await supabase
+          .from('listing_subcategories')
+          .select('listing_id')
+          .eq('listing_type', 'video')
+          .in('subcategory_id', subcategoryIds)
+        if (listingError) throw listingError
+        const listingIds = new Set((listingRows || []).map((row) => row.listing_id))
+        filteredVideos = filteredVideos.filter((video) => listingIds.has(video.id))
+      }
+
+      if (options.tagIds?.length) {
+        const { data: tagRows, error: tagError } = await supabase
+          .from('listing_tags')
+          .select('listing_id, tag_id')
+          .eq('listing_type', 'video')
+          .in('tag_id', options.tagIds)
+        if (tagError) throw tagError
+        const counts = new Map()
+        ;(tagRows || []).forEach((row) => {
+          if (!counts.has(row.listing_id)) counts.set(row.listing_id, new Set())
+          counts.get(row.listing_id).add(row.tag_id)
+        })
+        filteredVideos = filteredVideos.filter((video) => counts.get(video.id)?.size === options.tagIds.length)
+      }
+
+      setVideos(filteredVideos)
     } catch (error) {
       console.error('Error fetching videos:', error)
       toast({
