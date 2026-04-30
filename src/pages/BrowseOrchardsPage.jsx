@@ -162,6 +162,41 @@ function OrchardCard({ orchard, index }) {
   )
 }
 
+function MediaGrid({ kind, items, loading }) {
+  if (loading) return <div style={{ display: 'flex', justifyContent: 'center', padding: '60px 0' }}><Loader2 style={{ width: 40, height: 40, color: '#10b981' }} /></div>
+  if (!items.length) return <div style={{ textAlign: 'center', padding: '60px 0', color: '#64748b' }}>No {kind} from the tribe yet.</div>
+  return (
+    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))', gap: 16 }}>
+      {items.map((it, i) => (
+        <motion.div key={it.id} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.03 }}
+          style={{ background: 'linear-gradient(135deg, #0f172a 0%, #1e293b 100%)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 16, overflow: 'hidden' }}>
+          <div style={{ aspectRatio: '16/9', background: '#020617', position: 'relative', overflow: 'hidden' }}>
+            {it.image ? <img src={it.image} alt={it.title} style={{ width: '100%', height: '100%', objectFit: 'cover' }} loading="lazy" />
+              : <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 42 }}>{it.emoji}</div>}
+            <div style={{ position: 'absolute', top: 8, left: 8, padding: '3px 8px', borderRadius: 8, background: 'rgba(0,0,0,0.6)', fontSize: 11, color: '#fff', fontWeight: 700 }}>{it.emoji} {kind.toUpperCase()}</div>
+          </div>
+          <div style={{ padding: 12 }}>
+            <div style={{ fontWeight: 700, color: '#f1f5f9', fontSize: 14, marginBottom: 4, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{it.title}</div>
+            <div style={{ fontSize: 12, color: '#64748b', marginBottom: 8 }}>by {it.sower || 'Anonymous Sower'}</div>
+            {it.link && (
+              <Link to={it.link} style={{ textDecoration: 'none' }}>
+                <button style={{ width: '100%', padding: '8px 0', background: 'linear-gradient(135deg, #10b981, #059669)', border: 'none', borderRadius: 8, color: '#fff', fontWeight: 700, fontSize: 12, cursor: 'pointer' }}>Open</button>
+              </Link>
+            )}
+          </div>
+        </motion.div>
+      ))}
+    </div>
+  )
+}
+
+const TABS = [
+  { value: 'orchards', label: 'Orchards', emoji: '🌳' },
+  { value: 'music', label: 'Music', emoji: '🎵' },
+  { value: 'books', label: 'Books', emoji: '📚' },
+  { value: 'videos', label: 'Videos', emoji: '🎬' },
+]
+
 export default function BrowseOrchardsPage() {
   const { user } = useAuth()
   const { formatAmount } = useCurrency()
@@ -170,6 +205,11 @@ export default function BrowseOrchardsPage() {
   const [selectedRole, setSelectedRole] = useState("all")
   const [selectedType, setSelectedType] = useState("all")
   const [sortBy, setSortBy] = useState("newest")
+  const [activeTab, setActiveTab] = useState('orchards')
+  const [music, setMusic] = useState([])
+  const [books, setBooks] = useState([])
+  const [videos, setVideos] = useState([])
+  const [mediaLoading, setMediaLoading] = useState(false)
 
   const fetchOrchards = async () => {
     try {
@@ -189,6 +229,51 @@ export default function BrowseOrchardsPage() {
   }
 
   useEffect(() => { fetchOrchards() }, [])
+
+  useEffect(() => {
+    if (activeTab === 'orchards' || music.length || books.length || videos.length) return
+    let cancelled = false
+    ;(async () => {
+      setMediaLoading(true)
+      try {
+        const [musicRes, booksRes, videosRes] = await Promise.all([
+          supabase.from('dj_music_tracks')
+            .select('id, track_title, music_genre, genre, created_at, dj_id, radio_djs:dj_id (user_id, profiles:user_id (first_name, last_name, display_name))')
+            .eq('is_public', true)
+            .order('created_at', { ascending: false })
+            .limit(60),
+          supabase.from('sower_books')
+            .select('id, title, cover_image_url, image_urls, user_id, created_at, profiles:user_id (first_name, last_name, display_name)')
+            .eq('is_public', true)
+            .order('created_at', { ascending: false })
+            .limit(60),
+          supabase.from('community_videos')
+            .select('id, title, thumbnail_url, video_url, uploader_id, created_at, profiles:uploader_profile_id (first_name, last_name, display_name)')
+            .order('created_at', { ascending: false })
+            .limit(60),
+        ])
+        if (cancelled) return
+        const sowerName = (p) => p?.display_name || `${p?.first_name || ''} ${p?.last_name || ''}`.trim() || 'Anonymous Sower'
+        setMusic((musicRes.data || []).map(m => ({
+          id: m.id, title: m.track_title, image: null, emoji: '🎵',
+          sower: sowerName(m.radio_djs?.profiles), link: '/music-library',
+        })))
+        setBooks((booksRes.data || []).map(b => ({
+          id: b.id, title: b.title, image: b.cover_image_url || (b.image_urls && b.image_urls[0]) || null, emoji: '📚',
+          sower: sowerName(b.profiles), link: `/seed/${b.id}`,
+        })))
+        setVideos((videosRes.data || []).map(v => ({
+          id: v.id, title: v.title, image: v.thumbnail_url || null, emoji: '🎬',
+          sower: sowerName(v.profiles), link: '/community-videos',
+        })))
+      } catch (e) {
+        console.error('media load error', e)
+      } finally {
+        if (!cancelled) setMediaLoading(false)
+      }
+    })()
+    return () => { cancelled = true }
+  }, [activeTab])
 
   const handleDelete = async (orchardId) => {
     if (!window.confirm('Delete this orchard?')) return
@@ -249,6 +334,19 @@ export default function BrowseOrchardsPage() {
           </button>
         </div>
 
+        <div style={{ display: 'flex', gap: 8, marginBottom: 20, flexWrap: 'wrap', borderBottom: '1px solid rgba(255,255,255,0.08)', paddingBottom: 12 }}>
+          {TABS.map(t => (
+            <button key={t.value} onClick={() => setActiveTab(t.value)}
+              style={{ padding: '10px 18px', borderRadius: 12, border: 'none', cursor: 'pointer', fontWeight: 700, fontSize: 14,
+                background: activeTab === t.value ? 'linear-gradient(135deg, #10b981, #059669)' : 'rgba(255,255,255,0.04)',
+                color: activeTab === t.value ? '#fff' : '#94a3b8',
+                boxShadow: activeTab === t.value ? '0 4px 15px rgba(16,185,129,0.4)' : 'none', transition: 'all 0.2s' }}>
+              {t.emoji} {t.label}
+            </button>
+          ))}
+        </div>
+
+        {activeTab === 'orchards' && (<>
         <div style={{ display: 'flex', gap: 12, marginBottom: 24, flexWrap: 'wrap' }}>
           {[
             { label: 'Active Orchards', value: orchards.length, icon: '🌳', color: '#10b981' },
@@ -297,36 +395,45 @@ export default function BrowseOrchardsPage() {
             </button>
           ))}
         </div>
+        </>)}
       </div>
 
       <div style={{ maxWidth: 1200, margin: '0 auto', padding: '0 20px 40px' }}>
-        {loading ? (
-          <div style={{ display: 'flex', justifyContent: 'center', padding: '60px 0' }}>
-            <Loader2 style={{ width: 40, height: 40, color: '#10b981' }} />
-          </div>
-        ) : filtered.length === 0 ? (
-          <div style={{ textAlign: 'center', padding: '60px 0' }}>
-            <div style={{ fontSize: 48, marginBottom: 16 }}>🌱</div>
-            <h3 style={{ color: '#f1f5f9', fontSize: 20, marginBottom: 8 }}>No orchards found</h3>
-            <p style={{ color: '#64748b' }}>Try a different filter or be the first to plant!</p>
-            <Link to="/create-orchard" style={{ textDecoration: 'none' }}>
-              <motion.button whileHover={{ scale: 1.05 }}
-                style={{ marginTop: 20, padding: '12px 24px', background: 'linear-gradient(135deg, #10b981, #059669)', border: 'none', borderRadius: 12, color: '#fff', fontWeight: 700, fontSize: 15, cursor: 'pointer' }}>
-                🌱 Plant First Seed
-              </motion.button>
-            </Link>
-          </div>
+        {activeTab === 'orchards' ? (
+          loading ? (
+            <div style={{ display: 'flex', justifyContent: 'center', padding: '60px 0' }}>
+              <Loader2 style={{ width: 40, height: 40, color: '#10b981' }} />
+            </div>
+          ) : filtered.length === 0 ? (
+            <div style={{ textAlign: 'center', padding: '60px 0' }}>
+              <div style={{ fontSize: 48, marginBottom: 16 }}>🌱</div>
+              <h3 style={{ color: '#f1f5f9', fontSize: 20, marginBottom: 8 }}>No orchards found</h3>
+              <p style={{ color: '#64748b' }}>Try a different filter or be the first to plant!</p>
+              <Link to="/create-orchard" style={{ textDecoration: 'none' }}>
+                <motion.button whileHover={{ scale: 1.05 }}
+                  style={{ marginTop: 20, padding: '12px 24px', background: 'linear-gradient(135deg, #10b981, #059669)', border: 'none', borderRadius: 12, color: '#fff', fontWeight: 700, fontSize: 15, cursor: 'pointer' }}>
+                  🌱 Plant First Seed
+                </motion.button>
+              </Link>
+            </div>
+          ) : (
+            <>
+              <div style={{ fontSize: 13, color: '#64748b', marginBottom: 16 }}>
+                Showing <span style={{ color: '#10b981', fontWeight: 700 }}>{filtered.length}</span> orchards
+              </div>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: 20 }}>
+                <AnimatePresence>
+                  {filtered.map((orchard, i) => <OrchardCard key={orchard.id} orchard={orchard} index={i} />)}
+                </AnimatePresence>
+              </div>
+            </>
+          )
+        ) : activeTab === 'music' ? (
+          <MediaGrid kind="music" items={music} loading={mediaLoading} />
+        ) : activeTab === 'books' ? (
+          <MediaGrid kind="books" items={books} loading={mediaLoading} />
         ) : (
-          <>
-            <div style={{ fontSize: 13, color: '#64748b', marginBottom: 16 }}>
-              Showing <span style={{ color: '#10b981', fontWeight: 700 }}>{filtered.length}</span> orchards
-            </div>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: 20 }}>
-              <AnimatePresence>
-                {filtered.map((orchard, i) => <OrchardCard key={orchard.id} orchard={orchard} index={i} />)}
-              </AnimatePresence>
-            </div>
-          </>
+          <MediaGrid kind="videos" items={videos} loading={mediaLoading} />
         )}
       </div>
     </div>
