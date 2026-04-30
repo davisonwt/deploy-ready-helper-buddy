@@ -269,16 +269,24 @@ function WeekBeads({ sacred }) {
                 : 'inset 0 0 4px rgba(0,0,0,0.5)'
             return (
               <div key={b.wd} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4 }}>
-                <div style={{
-                  width: 38, height: 38, borderRadius: '50%',
-                  background: bg, boxShadow: ring,
-                  display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  fontSize: 12, fontWeight: 800,
-                  color: b.isToday ? '#0c1220' : b.isSabbath ? '#3a1d04' : '#1f2937',
-                  border: b.isToday ? '2px solid #7dd3fc' : '1px solid rgba(255,255,255,0.15)',
-                }}>
+                <button
+                  type="button"
+                  onClick={() => setPicked(b.target)}
+                  title={`Open ${b.target.year}/${b.target.month}/${b.target.day}`}
+                  style={{
+                    width: 38, height: 38, borderRadius: '50%',
+                    background: bg, boxShadow: ring,
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    fontSize: 12, fontWeight: 800, cursor: 'pointer',
+                    color: b.isToday ? '#0c1220' : b.isSabbath ? '#3a1d04' : '#1f2937',
+                    border: b.isToday ? '2px solid #7dd3fc' : '1px solid rgba(255,255,255,0.15)',
+                    transition: 'transform 0.15s',
+                  }}
+                  onMouseEnter={e => e.currentTarget.style.transform = 'scale(1.1)'}
+                  onMouseLeave={e => e.currentTarget.style.transform = 'scale(1)'}
+                >
                   {b.dayNum > 0 ? b.dayNum : ''}
-                </div>
+                </button>
                 <div style={{ fontSize: 10, color: b.isToday ? '#38bdf8' : b.isSabbath ? '#f59e0b' : '#475569', fontWeight: 700 }}>
                   {b.isSabbath ? 'שבת' : b.wd}
                 </div>
