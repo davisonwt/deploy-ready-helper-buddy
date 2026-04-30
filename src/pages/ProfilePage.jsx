@@ -146,49 +146,64 @@ export default function ProfilePage() {
   const handleFileUpload = async (event) => {
     const file = event.target.files[0]
     if (!file) return
-    
+
     // Validate file type
     if (!file.type.match(/^image\/(jpeg|png|webp)$/)) {
       setPictureError("Please upload a JPEG, PNG, or WebP image")
       return
     }
-    
-    // Validate file size (5MB limit)
+
+    // Validate file size (5MB limit on the SOURCE file)
     if (file.size > 5 * 1024 * 1024) {
       setPictureError("Image size must be less than 5MB")
       return
     }
-    
+
     setUploadingPicture(true)
     setPictureError("")
-    
+
     try {
-      // Convert to base64
-      const reader = new FileReader()
-      reader.onload = async (e) => {
-        const base64Data = e.target.result
-        
-        // Set the image directly (simplified without backend validation)
-        setFormData(prev => ({
-          ...prev,
-          avatar_url: base64Data
-        }))
-        setPictureError("")
-        setUploadingPicture(false)
-      }
-      
-      reader.onerror = () => {
-        setPictureError("Failed to read the image file")
-        setUploadingPicture(false)
-      }
-      
-      reader.readAsDataURL(file)
-    } catch (error) {
-      setPictureError("Failed to process the image")
+      // Resize/compress to a small square JPEG so the DB doesn't get bloated
+      // (multi-MB base64 strings freeze the dashboard render)
+      const resized = await new Promise((resolve, reject) => {
+        const reader = new FileReader()
+        reader.onerror = () => reject(new Error("Failed to read the image file"))
+        reader.onload = (e) => {
+          const img = new Image()
+          img.onerror = () => reject(new Error("Failed to decode the image"))
+          img.onload = () => {
+            const TARGET = 320 // px square — crisp on retina, tiny in bytes
+            const canvas = document.createElement("canvas")
+            canvas.width = TARGET
+            canvas.height = TARGET
+            const ctx = canvas.getContext("2d")
+            // Cover-crop centered
+            const scale = Math.max(TARGET / img.width, TARGET / img.height)
+            const w = img.width * scale
+            const h = img.height * scale
+            const dx = (TARGET - w) / 2
+            const dy = (TARGET - h) / 2
+            ctx.imageSmoothingQuality = "high"
+            ctx.drawImage(img, dx, dy, w, h)
+            resolve(canvas.toDataURL("image/jpeg", 0.82))
+          }
+          img.src = e.target.result
+        }
+        reader.readAsDataURL(file)
+      })
+
+      setFormData(prev => ({
+        ...prev,
+        avatar_url: resized
+      }))
+      setPictureError("")
+    } catch (err) {
+      setPictureError(err?.message || "Failed to process image")
+    } finally {
       setUploadingPicture(false)
     }
   }
-  
+
   const validateSocialLinks = async () => {
     // Simplified validation without backend API
     const errors = {}
