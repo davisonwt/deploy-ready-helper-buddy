@@ -583,6 +583,54 @@ export default function SeedFlowDashboard() {
   const activeSeed = displaySeeds[safeIdx] || SEEDS[0]
   const displayName = profile?.first_name || user?.email?.split('@')[0] || 'Friend'
 
+  // ── Owner action handlers (shared across all 5 sliders) ──
+  const handleEdit = (card) => {
+    const rid = card.rawId
+    if (card.id.startsWith('orchard-')) navigate(`/create-orchard?edit=${rid}`)
+    else if (card.id.startsWith('seed-')) navigate(`/seed/${rid}?edit=1`)
+    else if (card.id.startsWith('music-')) navigate(`/music-library?edit=${rid}`)
+    else if (card.id.startsWith('book-')) navigate(`/my-s2g-library?edit=${rid}`)
+    else if (card.id.startsWith('video-')) navigate(`/community-videos?edit=${rid}`)
+  }
+  const handleRepost = (card) => {
+    toast.success(`Reposted "${card.title}" to the tribe feed`)
+  }
+  const handlePark = (card) => {
+    toast(`Parked "${card.title}" — hidden from public until you re-publish.`)
+  }
+  const handleDelete = async (card) => {
+    if (!confirm(`Delete "${card.title}"? This cannot be undone.`)) return
+    const tableMap = {
+      'seed-': 'seeds', 'orchard-': 'orchards', 'music-': 'dj_music_tracks',
+      'book-': 'sower_books', 'video-': 'community_videos',
+    }
+    const prefix = Object.keys(tableMap).find(p => card.id.startsWith(p))
+    if (!prefix) return
+    try {
+      await deleteRow(supabase, tableMap[prefix], card.rawId)
+      toast.success(`"${card.title}" deleted`)
+      // Optimistic local removal
+      if (prefix === 'seed-') setMySeeds(s => s.filter(x => x.id !== card.rawId))
+      if (prefix === 'orchard-') setMyOrchards(s => s.filter(x => x.id !== card.rawId))
+      if (prefix === 'music-') setMyMusic(s => s.filter(x => x.id !== card.rawId))
+      if (prefix === 'book-') setMyBooks(s => s.filter(x => x.id !== card.rawId))
+      if (prefix === 'video-') setMyVideos(s => s.filter(x => x.id !== card.rawId))
+    } catch (e) {
+      toast.error(`Could not delete: ${e.message}`)
+    }
+  }
+  const ownerHandlers = { onEdit: handleEdit, onRepost: handleRepost, onPark: handlePark, onDelete: handleDelete }
+
+  // Build per-category card lists for the 5 stacked sliders.
+  const seedSliderCards    = mySeeds.map(s   => buildSeedCard(s, ownerHandlers))
+  const orchardSliderCards = [
+    ...myOrchards.map(o => buildOrchardCard(o, ownerHandlers)),
+    ...bestowedOrchards.map(o => buildOrchardCard(o, {}, { bestowed: true })),
+  ]
+  const musicSliderCards   = myMusic.map(m   => buildMusicCard(m, ownerHandlers))
+  const bookSliderCards    = myBooks.map(b   => buildBookCard(b, ownerHandlers))
+  const videoSliderCards   = myVideos.map(v  => buildVideoCard(v, ownerHandlers))
+
   useEffect(() => {
     const total = displaySeeds.length
     intervalRef.current = setInterval(() => {
