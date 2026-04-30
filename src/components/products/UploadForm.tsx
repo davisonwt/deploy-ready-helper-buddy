@@ -11,6 +11,7 @@ import { Upload, Loader2, CheckCircle2, Disc, Music, X } from 'lucide-react';
 import { toast } from 'sonner';
 import { useNavigate } from 'react-router-dom';
 import JSZip from 'jszip';
+import CategoryTagPicker from '@/components/marketplace/CategoryTagPicker';
 
 export default function UploadForm() {
   const { user } = useAuth();
@@ -28,6 +29,9 @@ export default function UploadForm() {
   const [coverImage, setCoverImage] = useState<File | null>(null);
   const [mainFile, setMainFile] = useState<File | null>(null);
   const [releaseType, setReleaseType] = useState<'single' | 'album'>('single');
+  const [taxonomy, setTaxonomy] = useState<{ categoryId: string | null; subcategoryIds: string[]; tagIds: string[] }>({
+    categoryId: null, subcategoryIds: [], tagIds: [],
+  });
   const [albumFiles, setAlbumFiles] = useState<File[]>([]);
   const [zipFile, setZipFile] = useState<File | null>(null);
   const [extractingZip, setExtractingZip] = useState(false);
