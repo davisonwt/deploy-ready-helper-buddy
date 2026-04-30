@@ -297,6 +297,20 @@ export default function MyOrchardsPage() {
             </Card>
           </div>
 
+          {/* ── 5 vertical category sections — your full living garden ── */}
+          <div className='mb-8'>
+            <MyGardenSection title="Seeds"    emoji="🌱" accent="#22c55e" cards={seedCards}
+              emptyHint="No seeds yet — sow your first one above." />
+            <MyGardenSection title="Orchards" emoji="🌳" accent="#16a34a" cards={orchardCards}
+              emptyHint="No orchards yet — your created orchards live here." />
+            <MyGardenSection title="Music"    emoji="🎵" accent="#0ea5e9" cards={musicCards}
+              emptyHint="No tracks yet — drop a song from your Music Library." />
+            <MyGardenSection title="Books"    emoji="📚" accent="#fb923c" cards={bookCards}
+              emptyHint="No books yet — upload one in My S2G Library." />
+            <MyGardenSection title="Videos"   emoji="🎬" accent="#f87171" cards={videoCards}
+              emptyHint="No videos yet — share one in Community Videos." />
+          </div>
+
           <div className='mb-8 space-y-4'>
             <div className='flex justify-center'>
               <div className='min-w-[240px]'>
