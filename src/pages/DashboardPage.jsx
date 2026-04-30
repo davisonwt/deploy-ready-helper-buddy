@@ -374,6 +374,7 @@ export default function SeedFlowDashboard() {
   const [isPlaying, setIsPlaying] = useState(false)
   const [stats, setStats] = useState({ sowers: 4, orchards: 0, seeds: 56, members: 0 })
   const [mySeeds, setMySeeds] = useState([])
+  const [bestowedOrchards, setBestowedOrchards] = useState([])
   const [tip] = useState(GROWTH_TIPS[Math.floor(Math.random() * GROWTH_TIPS.length)])
   const [activePath, setActivePath] = useState('/dashboard')
   const intervalRef = useRef(null)
@@ -407,16 +408,35 @@ export default function SeedFlowDashboard() {
       .order('created_at', { ascending: false })
       .limit(12)
       .then(({ data }) => setMySeeds(data || []))
+
+    // Seeds I've bestowed into — orchards the user has supported
+    supabase.from('bestowals')
+      .select('orchard_id, created_at, orchards:orchard_id (id, title, description, category, images, orchard_type, created_at)')
+      .eq('bestower_id', user.id)
+      .order('created_at', { ascending: false })
+      .limit(12)
+      .then(({ data }) => {
+        const seen = new Set()
+        const unique = []
+        for (const b of data || []) {
+          if (b.orchards && !seen.has(b.orchards.id)) {
+            seen.add(b.orchards.id)
+            unique.push(b.orchards)
+          }
+        }
+        setBestowedOrchards(unique)
+      })
   }, [user])
 
   useEffect(() => {
+    const total = (mySeeds.length + bestowedOrchards.length) || SEEDS.length
     intervalRef.current = setInterval(() => {
       setPulse(true)
       setTimeout(() => setPulse(false), 600)
-      setActiveIdx(i => (i + 1) % Math.max(mySeeds.length || SEEDS.length, 1))
+      setActiveIdx(i => (i + 1) % Math.max(total, 1))
     }, 5000)
     return () => clearInterval(intervalRef.current)
-  }, [mySeeds.length])
+  }, [mySeeds.length, bestowedOrchards.length])
 
   // Build display list from user's own seeds (preferred) or fallback showcase.
   const CATEGORY_META = {
@@ -432,10 +452,10 @@ export default function SeedFlowDashboard() {
   }
   const catMeta = (c) => CATEGORY_META[(c || 'other').toLowerCase()] || CATEGORY_META.other
 
-  const userCards = mySeeds.map((s) => {
+  const mineCards = mySeeds.map((s) => {
     const meta = catMeta(s.category)
     return {
-      id: s.id,
+      id: `seed-${s.id}`,
       name: s.title || 'Untitled Seed',
       type: meta.label.toUpperCase(),
       status: 'Yours',
@@ -448,8 +468,31 @@ export default function SeedFlowDashboard() {
       playPath: `/seed/${s.id}`,
       bookPath: `/seed/${s.id}`,
       mine: true,
+      badge: { label: 'mine', emoji: '🌱', color: '#22c55e' },
     }
   })
+
+  const bestowedCards = bestowedOrchards.map((o) => {
+    const meta = catMeta(o.category)
+    return {
+      id: `orchard-${o.id}`,
+      name: o.title || 'Tribe Orchard',
+      type: (o.orchard_type || meta.label).toString().toUpperCase().replace('_', ' '),
+      status: 'Tending',
+      activity: meta.label,
+      description: o.description || 'A seed you are tending in the tribe',
+      image: (o.images && o.images[0]) || 'https://images.unsplash.com/photo-1488459716781-31db52582fe9?w=800&q=80',
+      color: '#15803d',
+      glow: '#4ade80',
+      emoji: '💚',
+      playPath: `/animated-orchard/${o.id}`,
+      bookPath: `/animated-orchard/${o.id}`,
+      mine: false,
+      badge: { label: 'bestowed', emoji: '💚', color: '#4ade80' },
+    }
+  })
+
+  const userCards = [...mineCards, ...bestowedCards]
   const displaySeeds = userCards.length ? userCards : SEEDS
   const safeIdx = activeIdx % Math.max(displaySeeds.length, 1)
   const activeSeed = displaySeeds[safeIdx] || SEEDS[0]
@@ -770,8 +813,8 @@ export default function SeedFlowDashboard() {
             <WeekBeads sacred={sacred} />
 
             <div style={styles.sectionLabel}>
-              <span>{userCards.length ? 'Your Seeds' : 'Seeds in motion'}</span>
-              <span style={styles.liveTag}>{userCards.length ? 'YOURS' : 'LIVE'}</span>
+              <span>{userCards.length ? 'Your Living Garden' : 'Seeds in motion'}</span>
+              <span style={styles.liveTag}>{userCards.length ? `${mineCards.length}🌱 · ${bestowedCards.length}💚` : 'LIVE'}</span>
             </div>
 
             {/* ── Seed showcase card ── */}
@@ -782,6 +825,21 @@ export default function SeedFlowDashboard() {
               <div style={styles.seedType}>
                 {activeSeed.emoji ? `${activeSeed.emoji} ` : ''}{activeSeed.type}
               </div>
+              {activeSeed.badge && (
+                <div style={{
+                  position: 'absolute', top: 14, right: 64,
+                  padding: '4px 10px', borderRadius: 999,
+                  background: `${activeSeed.badge.color}22`,
+                  border: `1px solid ${activeSeed.badge.color}66`,
+                  color: activeSeed.badge.color,
+                  fontSize: 11, fontWeight: 800, letterSpacing: '0.5px',
+                  backdropFilter: 'blur(6px)', textTransform: 'uppercase',
+                  display: 'flex', alignItems: 'center', gap: 4, zIndex: 2,
+                }}>
+                  <span>{activeSeed.badge.emoji}</span>
+                  <span>{activeSeed.badge.label}</span>
+                </div>
+              )}
               <div style={styles.seedActivity}>
                 <span style={styles.activityDot} />
                 <span style={styles.activityText}>{activeSeed.activity}</span>
