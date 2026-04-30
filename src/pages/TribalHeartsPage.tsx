@@ -8,6 +8,7 @@ import {
   BondingAnimation,
   TribalHeart,
 } from '@/components/tribal-hearts/BondingAnimation';
+import { TribalHeartsOnboarding } from '@/components/tribal-hearts/TribalHeartsOnboarding';
 import { useTribalHearts } from '@/hooks/useTribalHearts';
 import { TribalAudio } from '@/hooks/useTribalHeartsAudio';
 import { toast } from '@/hooks/use-toast';
