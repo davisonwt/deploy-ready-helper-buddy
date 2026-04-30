@@ -903,7 +903,7 @@ export default function SeedFlowDashboard() {
 
             <div style={styles.sectionLabel}>
               <span>{userCards.length ? 'Your Living Garden' : 'Seeds in motion'}</span>
-              <span style={styles.liveTag}>{userCards.length ? `${mineCards.length}🌱 · ${bestowedCards.length}💚` : 'LIVE'}</span>
+              <span style={styles.liveTag}>{userCards.length ? `${mineCards.length} mine · ${bestowedCards.length}💚` : 'LIVE'}</span>
             </div>
 
             {/* ── Seed showcase card ── */}
