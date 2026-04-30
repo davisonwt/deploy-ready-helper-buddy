@@ -162,6 +162,41 @@ function OrchardCard({ orchard, index }) {
   )
 }
 
+function MediaGrid({ kind, items, loading }) {
+  if (loading) return <div style={{ display: 'flex', justifyContent: 'center', padding: '60px 0' }}><Loader2 style={{ width: 40, height: 40, color: '#10b981' }} /></div>
+  if (!items.length) return <div style={{ textAlign: 'center', padding: '60px 0', color: '#64748b' }}>No {kind} from the tribe yet.</div>
+  return (
+    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))', gap: 16 }}>
+      {items.map((it, i) => (
+        <motion.div key={it.id} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.03 }}
+          style={{ background: 'linear-gradient(135deg, #0f172a 0%, #1e293b 100%)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 16, overflow: 'hidden' }}>
+          <div style={{ aspectRatio: '16/9', background: '#020617', position: 'relative', overflow: 'hidden' }}>
+            {it.image ? <img src={it.image} alt={it.title} style={{ width: '100%', height: '100%', objectFit: 'cover' }} loading="lazy" />
+              : <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 42 }}>{it.emoji}</div>}
+            <div style={{ position: 'absolute', top: 8, left: 8, padding: '3px 8px', borderRadius: 8, background: 'rgba(0,0,0,0.6)', fontSize: 11, color: '#fff', fontWeight: 700 }}>{it.emoji} {kind.toUpperCase()}</div>
+          </div>
+          <div style={{ padding: 12 }}>
+            <div style={{ fontWeight: 700, color: '#f1f5f9', fontSize: 14, marginBottom: 4, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{it.title}</div>
+            <div style={{ fontSize: 12, color: '#64748b', marginBottom: 8 }}>by {it.sower || 'Anonymous Sower'}</div>
+            {it.link && (
+              <Link to={it.link} style={{ textDecoration: 'none' }}>
+                <button style={{ width: '100%', padding: '8px 0', background: 'linear-gradient(135deg, #10b981, #059669)', border: 'none', borderRadius: 8, color: '#fff', fontWeight: 700, fontSize: 12, cursor: 'pointer' }}>Open</button>
+              </Link>
+            )}
+          </div>
+        </motion.div>
+      ))}
+    </div>
+  )
+}
+
+const TABS = [
+  { value: 'orchards', label: 'Orchards', emoji: '🌳' },
+  { value: 'music', label: 'Music', emoji: '🎵' },
+  { value: 'books', label: 'Books', emoji: '📚' },
+  { value: 'videos', label: 'Videos', emoji: '🎬' },
+]
+
 export default function BrowseOrchardsPage() {
   const { user } = useAuth()
   const { formatAmount } = useCurrency()
@@ -170,6 +205,11 @@ export default function BrowseOrchardsPage() {
   const [selectedRole, setSelectedRole] = useState("all")
   const [selectedType, setSelectedType] = useState("all")
   const [sortBy, setSortBy] = useState("newest")
+  const [activeTab, setActiveTab] = useState('orchards')
+  const [music, setMusic] = useState([])
+  const [books, setBooks] = useState([])
+  const [videos, setVideos] = useState([])
+  const [mediaLoading, setMediaLoading] = useState(false)
 
   const fetchOrchards = async () => {
     try {
