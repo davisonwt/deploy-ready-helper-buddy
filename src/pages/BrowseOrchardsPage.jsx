@@ -192,6 +192,7 @@ function MediaGrid({ kind, items, loading }) {
 
 const TABS = [
   { value: 'orchards', label: 'Orchards', emoji: '🌳' },
+  { value: 'seeds', label: 'Seeds', emoji: '🌱' },
   { value: 'music', label: 'Music', emoji: '🎵' },
   { value: 'books', label: 'Books', emoji: '📚' },
   { value: 'videos', label: 'Videos', emoji: '🎬' },
@@ -206,6 +207,7 @@ export default function BrowseOrchardsPage() {
   const [selectedType, setSelectedType] = useState("all")
   const [sortBy, setSortBy] = useState("newest")
   const [activeTab, setActiveTab] = useState('orchards')
+  const [tribeSeeds, setTribeSeeds] = useState([])
   const [music, setMusic] = useState([])
   const [books, setBooks] = useState([])
   const [videos, setVideos] = useState([])
@@ -231,12 +233,16 @@ export default function BrowseOrchardsPage() {
   useEffect(() => { fetchOrchards() }, [])
 
   useEffect(() => {
-    if (activeTab === 'orchards' || music.length || books.length || videos.length) return
+    if (activeTab === 'orchards' || tribeSeeds.length || music.length || books.length || videos.length) return
     let cancelled = false
     ;(async () => {
       setMediaLoading(true)
       try {
-        const [musicRes, booksRes, videosRes] = await Promise.all([
+        const [seedsRes, musicRes, booksRes, videosRes] = await Promise.all([
+          supabase.from('seeds')
+            .select('id, title, description, images, gifter_id, created_at, profiles:gifter_id (first_name, last_name, display_name)')
+            .order('created_at', { ascending: false })
+            .limit(60),
           supabase.from('dj_music_tracks')
             .select('id, track_title, music_genre, genre, created_at, dj_id, radio_djs:dj_id (user_id, profiles:user_id (first_name, last_name, display_name))')
             .eq('is_public', true)
@@ -254,6 +260,10 @@ export default function BrowseOrchardsPage() {
         ])
         if (cancelled) return
         const sowerName = (p) => p?.display_name || `${p?.first_name || ''} ${p?.last_name || ''}`.trim() || 'Anonymous Sower'
+        setTribeSeeds((seedsRes.data || []).map(s => ({
+          id: s.id, title: s.title, image: (s.images && s.images[0]) || null, emoji: '🌱',
+          sower: sowerName(s.profiles), link: `/seed/${s.id}`,
+        })))
         setMusic((musicRes.data || []).map(m => ({
           id: m.id, title: m.track_title, image: null, emoji: '🎵',
           sower: sowerName(m.radio_djs?.profiles), link: '/music-library',
