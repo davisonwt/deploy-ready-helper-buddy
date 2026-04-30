@@ -224,6 +224,12 @@ export default function SeedFlowDashboard() {
       .then(({ count }) => setStats(s => ({ ...s, orchards: count || 0 })))
     supabase.from('seeds').select('*', { count: 'exact', head: true })
       .then(({ count }) => setStats(s => ({ ...s, seeds: count || 56 })))
+    supabase.from('seeds')
+      .select('id, title, description, category, images, video_url, created_at')
+      .eq('gifter_id', user.id)
+      .order('created_at', { ascending: false })
+      .limit(12)
+      .then(({ data }) => setMySeeds(data || []))
   }, [user])
 
   useEffect(() => {
