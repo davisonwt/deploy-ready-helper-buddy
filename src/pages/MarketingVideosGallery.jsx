@@ -269,6 +269,9 @@ export default function MarketingVideosGallery() {
           </div>
         </div>
 
+        {/* S2G House Reel — curated brand videos from orchard-videos bucket */}
+        <S2GHouseReel />
+
         {/* Videos Grid */}
         <div className='container mx-auto px-4 py-8'>
           {filteredVideos.length === 0 ? (
