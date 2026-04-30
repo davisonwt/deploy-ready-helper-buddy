@@ -271,23 +271,27 @@ export default function SeedFlowDashboard() {
     },
     nav: {
       flex: 1, padding: '10px 8px',
-      overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 3,
+      overflowY: 'auto', minHeight: 0,
+      display: 'flex', flexDirection: 'column', gap: 6,
     },
     navItem: (isActive, color) => ({
       display: 'flex', alignItems: 'center', gap: 11,
-      padding: '10px 12px', borderRadius: 10, cursor: 'pointer',
-      background: isActive ? color + '22' : 'transparent',
-      border: isActive ? `1px solid ${color}44` : '1px solid transparent',
+      padding: '12px 14px', borderRadius: 12, cursor: 'pointer',
+      background: isActive
+        ? `linear-gradient(135deg, ${color}55, ${color}33)`
+        : `linear-gradient(135deg, ${color}33, ${color}1a)`,
+      border: isActive ? `1px solid ${color}` : `1px solid ${color}44`,
+      boxShadow: isActive ? `0 0 18px ${color}66` : `inset 0 1px 0 ${color}22`,
       transition: 'all 0.15s ease', textDecoration: 'none',
     }),
     navEmoji: (isActive, color) => ({
-      width: 32, height: 32, borderRadius: 8, fontSize: 16,
-      background: isActive ? color + '33' : '#111827',
+      width: 36, height: 36, borderRadius: 9, fontSize: 18,
+      background: isActive ? color + '66' : color + '33',
       display: 'flex', alignItems: 'center', justifyContent: 'center',
-      border: isActive ? `1px solid ${color}55` : '1px solid transparent',
+      border: `1px solid ${color}66`, flexShrink: 0,
     }),
-    navLabel: { fontWeight: 600, fontSize: 13, color: '#e2e8f0', lineHeight: 1.2 },
-    navSub: { fontSize: 11, color: '#4b5563', lineHeight: 1 },
+    navLabel: { fontWeight: 700, fontSize: 14, color: '#f1f5f9', lineHeight: 1.2 },
+    navSub: { fontSize: 11, color: 'rgba(226,232,240,0.65)', lineHeight: 1.3, marginTop: 2 },
     bottomBar: {
       padding: '10px 8px',
       borderTop: '1px solid rgba(255,255,255,0.05)',
