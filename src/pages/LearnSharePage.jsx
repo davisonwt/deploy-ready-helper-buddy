@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { toast } from 'sonner'
 import RoleButton, { ROLE_CONFIG } from '../components/RoleButton'
 import becomeASowerVideo from '../assets/explainers/become-a-sower.mp4'
-import becomeABestowerVideo from '../assets/explainers/become-a-bestower.mpeg'
+import becomeABestowerVideo from '../assets/explainers/become-a-bestower.mp4'
 
 // ── Colored Living Button — share animation in any color ────────────────────
 
