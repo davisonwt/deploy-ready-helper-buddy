@@ -180,7 +180,7 @@ export default function WanderingDirectoryPage() {
       ) : (
         <div style={s.grid}>
           {filtered.map((m, i) => (
-            <Link key={i} to={`/wandering/${m._role}/${m.id}`} style={s.card(m._color)}>
+            <Link key={i} to={m._role === 'heart' ? '/tribal-hearts' : `/wandering/${m._role}/${m.id}`} style={s.card(m._color)}>
               <div style={s.cardTop(m._color)} />
               <div style={s.cardBody}>
                 <div style={s.cardHeader}>
