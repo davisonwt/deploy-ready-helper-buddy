@@ -562,6 +562,21 @@ export default function DJMusicUpload({ trigger }) {
             </div>
           </div>
 
+          {/* Wandering identity */}
+          <div className="border-t pt-4">
+            <WanderingRolePicker value={wanderingRole} onChange={setWanderingRole} />
+          </div>
+
+          {/* Marketplace category + tags */}
+          <div className="border-t pt-4">
+            <CategoryTagPicker
+              categoryId={taxonomy.categoryId}
+              subcategoryIds={taxonomy.subcategoryIds}
+              tagIds={taxonomy.tagIds}
+              onChange={setTaxonomy}
+            />
+          </div>
+
           {/* Submit */}
           <div className="flex justify-end gap-2">
             <Button type="button" variant="outline" onClick={() => setIsOpen(false)}>
