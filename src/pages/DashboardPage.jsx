@@ -451,10 +451,10 @@ export default function SeedFlowDashboard() {
   }
   const catMeta = (c) => CATEGORY_META[(c || 'other').toLowerCase()] || CATEGORY_META.other
 
-  const userCards = mySeeds.map((s) => {
+  const mineCards = mySeeds.map((s) => {
     const meta = catMeta(s.category)
     return {
-      id: s.id,
+      id: `seed-${s.id}`,
       name: s.title || 'Untitled Seed',
       type: meta.label.toUpperCase(),
       status: 'Yours',
@@ -467,8 +467,31 @@ export default function SeedFlowDashboard() {
       playPath: `/seed/${s.id}`,
       bookPath: `/seed/${s.id}`,
       mine: true,
+      badge: { label: 'mine', emoji: '🌱', color: '#22c55e' },
     }
   })
+
+  const bestowedCards = bestowedOrchards.map((o) => {
+    const meta = catMeta(o.category)
+    return {
+      id: `orchard-${o.id}`,
+      name: o.title || 'Tribe Orchard',
+      type: (o.orchard_type || meta.label).toString().toUpperCase().replace('_', ' '),
+      status: 'Tending',
+      activity: meta.label,
+      description: o.description || 'A seed you are tending in the tribe',
+      image: (o.images && o.images[0]) || 'https://images.unsplash.com/photo-1488459716781-31db52582fe9?w=800&q=80',
+      color: '#15803d',
+      glow: '#4ade80',
+      emoji: '💚',
+      playPath: `/animated-orchard/${o.id}`,
+      bookPath: `/animated-orchard/${o.id}`,
+      mine: false,
+      badge: { label: 'bestowed', emoji: '💚', color: '#4ade80' },
+    }
+  })
+
+  const userCards = [...mineCards, ...bestowedCards]
   const displaySeeds = userCards.length ? userCards : SEEDS
   const safeIdx = activeIdx % Math.max(displaySeeds.length, 1)
   const activeSeed = displaySeeds[safeIdx] || SEEDS[0]
