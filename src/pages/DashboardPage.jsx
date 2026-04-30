@@ -429,13 +429,14 @@ export default function SeedFlowDashboard() {
   }, [user])
 
   useEffect(() => {
+    const total = (mySeeds.length + bestowedOrchards.length) || SEEDS.length
     intervalRef.current = setInterval(() => {
       setPulse(true)
       setTimeout(() => setPulse(false), 600)
-      setActiveIdx(i => (i + 1) % Math.max(mySeeds.length || SEEDS.length, 1))
+      setActiveIdx(i => (i + 1) % Math.max(total, 1))
     }, 5000)
     return () => clearInterval(intervalRef.current)
-  }, [mySeeds.length])
+  }, [mySeeds.length, bestowedOrchards.length])
 
   // Build display list from user's own seeds (preferred) or fallback showcase.
   const CATEGORY_META = {
