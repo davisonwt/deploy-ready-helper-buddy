@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { motion } from 'framer-motion';
@@ -12,12 +12,17 @@ import { useLiveSessionPlaylist } from '@/contexts/LiveSessionPlaylistContext';
 import { Music, Users, Radio, Disc, Podcast, Loader2 } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { PlaylistBrowser } from '@/components/music/PlaylistBrowser';
+import WanderingBadgeBar, { type WanderingRole } from '@/components/marketplace/WanderingBadgeBar';
+import MarketplaceFilterBar from '@/components/marketplace/MarketplaceFilterBar';
 
 export default function MusicLibraryPage() {
   const { user } = useAuth();
   const albumBuilder = useAlbumBuilder();
   const livePlaylist = useLiveSessionPlaylist();
   const [activeTab, setActiveTab] = useState('my-music');
+  const [activeRole, setActiveRole] = useState<WanderingRole | null>(null);
+  const [categoryId, setCategoryId] = useState<string | null>(null);
+  const [tagIds, setTagIds] = useState<string[]>([]);
 
   const handleAlbumTrackSelect = (track: any) => {
     if (albumBuilder.isTrackSelected(track.id)) {
@@ -87,7 +92,7 @@ export default function MusicLibraryPage() {
 
   // Fetch all public community music - ALL tracks from ALL users
   const { data: communityMusic = [], isLoading: loadingCommunity } = useQuery({
-    queryKey: ['community-music'],
+    queryKey: ['community-music', activeRole, categoryId, tagIds],
     queryFn: async () => {
       console.log('🎵 Fetching community music...');
       
@@ -111,6 +116,46 @@ export default function MusicLibraryPage() {
       console.log('🎤 Unique DJ IDs found:', djIds.length);
       
       // Fetch DJ profiles to get user IDs
+      let filteredTracks = tracks || [];
+
+      if (activeRole) {
+        filteredTracks = filteredTracks.filter((track) => track.wandering_role === activeRole);
+      }
+
+      if (categoryId) {
+        const { data: subcategoryRows, error: subcategoryError } = await supabase
+          .from('marketplace_subcategories' as any)
+          .select('id')
+          .eq('category_id', categoryId);
+        if (subcategoryError) throw subcategoryError;
+        const subcategoryIds = (subcategoryRows || []).map((row: any) => row.id);
+        if (!subcategoryIds.length) return [];
+
+        const { data: listingRows, error: listingError } = await supabase
+          .from('listing_subcategories' as any)
+          .select('listing_id')
+          .eq('listing_type', 'music')
+          .in('subcategory_id', subcategoryIds);
+        if (listingError) throw listingError;
+        const listingIds = new Set((listingRows || []).map((row: any) => row.listing_id));
+        filteredTracks = filteredTracks.filter((track) => listingIds.has(track.id));
+      }
+
+      if (tagIds.length) {
+        const { data: tagRows, error: tagError } = await supabase
+          .from('listing_tags' as any)
+          .select('listing_id, tag_id')
+          .eq('listing_type', 'music')
+          .in('tag_id', tagIds);
+        if (tagError) throw tagError;
+        const counts = new Map<string, Set<string>>();
+        (tagRows || []).forEach((row: any) => {
+          if (!counts.has(row.listing_id)) counts.set(row.listing_id, new Set());
+          counts.get(row.listing_id)?.add(row.tag_id);
+        });
+        filteredTracks = filteredTracks.filter((track) => counts.get(track.id)?.size === tagIds.length);
+      }
+
       let userIds: string[] = [];
       if (djIds.length > 0) {
         const { data: djProfiles, error: djError } = await supabase
@@ -158,7 +203,7 @@ export default function MusicLibraryPage() {
       }
       
       // Transform the data to include profile info
-      const transformedTracks = (tracks || []).map(track => {
+      const transformedTracks = filteredTracks.map(track => {
         const userId = djToUserMap.get(track.dj_id);
         const profile = userId ? profileMap.get(userId) : null;
         return {
@@ -172,6 +217,11 @@ export default function MusicLibraryPage() {
       return transformedTracks;
     }
   });
+
+  const filteredMyMusic = useMemo(() => {
+    if (!activeRole) return myMusic;
+    return myMusic.filter((track: any) => track.wandering_role === activeRole);
+  }, [activeRole, myMusic]);
 
   return (
     <div className='min-h-screen relative overflow-hidden'>
@@ -234,6 +284,14 @@ export default function MusicLibraryPage() {
           </div>
         </div>
 
+        <WanderingBadgeBar activeRole={activeRole} onRoleChange={setActiveRole} />
+        <MarketplaceFilterBar
+          categoryId={categoryId}
+          tagIds={tagIds}
+          onCategoryChange={setCategoryId}
+          onTagsChange={setTagIds}
+        />
+
         <Tabs value={activeTab} onValueChange={setActiveTab} className='space-y-6'>
           <TabsList className='backdrop-blur-md bg-white/20 border-white/30'>
             <TabsTrigger value='my-music' className='gap-2 text-white data-[state=active]:bg-white/30'>
@@ -272,8 +330,8 @@ export default function MusicLibraryPage() {
                     <Loader2 className='w-8 h-8 animate-spin text-white' />
                   </div>
                 ) : (
-                  <MusicLibraryTable 
-                    tracks={myMusic} 
+                    <MusicLibraryTable 
+                    tracks={filteredMyMusic} 
                     showBestowalButton={false}
                     showEditButton={true}
                   />
