@@ -15,6 +15,8 @@ export default function VideoUploadModal({ isOpen, onClose }) {
   const [description, setDescription] = useState('')
   const [tags, setTags] = useState('')
   const [dragActive, setDragActive] = useState(false)
+  const [wanderingRole, setWanderingRole] = useState(null)
+  const [taxonomy, setTaxonomy] = useState({ categoryId: null, subcategoryIds: [], tagIds: [] })
   const { uploadVideo, uploading } = useCommunityVideos()
 
   const handleFileSelect = (selectedFile) => {
