@@ -214,6 +214,8 @@ export default function DJMusicUpload({ trigger }) {
       genre: '',
       tags: []
     })
+    setWanderingRole(null)
+    setTaxonomy({ categoryId: null, subcategoryIds: [], tagIds: [] })
     setIsOpen(false)
   }
 
