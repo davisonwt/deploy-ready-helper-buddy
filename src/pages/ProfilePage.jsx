@@ -244,20 +244,28 @@ export default function ProfilePage() {
         setLoading(false)
         return
       }
-      
+
       const result = await updateProfile(formData)
       if (result.success) {
         setEditing(false)
         setPictureError("")
         setSocialLinksError({})
+      } else {
+        // Surface the real reason instead of silently failing
+        const msg = result?.error || "Failed to save profile"
+        console.error("Profile save failed:", msg, "avatar size:", formData.avatar_url?.length || 0)
+        setPictureError(msg.includes("avatar") || (formData.avatar_url?.length || 0) > 200000
+          ? `Could not save: ${msg}. Try a smaller image.`
+          : `Could not save: ${msg}`)
       }
     } catch (error) {
       console.error("Error updating profile:", error)
+      setPictureError(`Save error: ${error.message || error}`)
     } finally {
       setLoading(false)
     }
   }
-  
+
   const handleCancel = () => {
     setFormData({
       first_name: user?.first_name || "",
