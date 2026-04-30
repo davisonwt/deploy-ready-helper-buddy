@@ -7,16 +7,38 @@ import RoleButton, { ROLE_CONFIG } from '../components/RoleButton'
 import becomeASowerVideo from '../assets/explainers/become-a-sower.mp4'
 import becomeABestowerVideo from '../assets/explainers/become-a-bestower.mp4'
 import becomeAWanderingHeartVideo from '../assets/explainers/become-a-wandering-heart.mp4'
-import communityOrchardVideo from '../assets/explainers/01-community-orchard.mp4'
-import productionOrchardVideo from '../assets/explainers/02-production-orchard.mp4'
-import singleSeedVideo from '../assets/explainers/03-single-seed.mp4'
-import becomeAWanderingWheelVideo from '../assets/explainers/04-wandering-wheel.mp4'
-import becomeAWanderingHandVideo from '../assets/explainers/05-wandering-hand.mp4'
-import becomeAWhispererVideo from '../assets/explainers/06-wandering-whisperer.mp4'
-import becomeAWanderingPillowVideo from '../assets/explainers/07-wandering-pillow.mp4'
-import becomeAWanderingFieldVideo from '../assets/explainers/08-wandering-field.mp4'
-import becomeAHearthCreatorVideo from '../assets/explainers/09-wandering-hearth.mp4'
-import becomeAWanderingForgeVideo from '../assets/explainers/10-wandering-forge.mp4'
+
+// Banner videos (correct mapping per user instructions)
+import communityOrchardVideo from '../assets/banners/banner-01-community-orchard.mp4'
+import productionOrchardVideo from '../assets/banners/banner-02-production-orchard.mp4'
+import singleSeedVideo from '../assets/banners/banner-03-single-seed.mp4'
+
+import becomeAWanderingWheelVideo from '../assets/banners/banner-04-wandering-wheel.mp4'
+import bookAWanderingWheelVideo from '../assets/banners/banner-04-wandering-wheel-book.mp4'
+
+import becomeAWanderingHandVideo from '../assets/banners/banner-05-wandering-hand.mp4'
+
+import becomeAWhispererVideo from '../assets/banners/banner-06-wandering-whisperer.mp4'
+import bookAWhispererVideo from '../assets/banners/banner-06-wandering-whisperer-book.mp4'
+
+import becomeAWanderingPillowVideo from '../assets/banners/banner-07-wandering-pillow.mp4'
+import reserveAStayVideo from '../assets/banners/banner-07-wandering-pillow-book.mp4'
+
+import becomeAWanderingFieldVideo from '../assets/banners/banner-08-wandering-field.mp4'
+import orderFromTheFieldVideo from '../assets/banners/banner-08-wandering-field-book.mp4'
+
+import becomeAHearthCreatorVideo from '../assets/banners/banner-09-wandering-hearth.mp4'
+import bestowAHearthSeedVideo from '../assets/banners/banner-09-wandering-hearth-book.mp4'
+
+import becomeAWanderingForgeVideo from '../assets/banners/banner-10-wandering-forge.mp4'
+import commissionAForgeVideo from '../assets/banners/banner-10-wandering-forge-book.mp4'
+
+import classroomVideo from '../assets/banners/banner-11-classroom.mp4'
+import skilldropVideo from '../assets/banners/banner-12-skilldrop.mp4'
+import trainingVideo from '../assets/banners/banner-13-training.mp4'
+import radioVideo from '../assets/banners/banner-14-radio.mp4'
+import oneOnOneVideo from '../assets/banners/banner-15-one-on-one.mp4'
+import groupChatVideo from '../assets/banners/banner-16-group-chat.mp4'
 
 // ── Colored Living Button — share animation in any color ────────────────────
 
