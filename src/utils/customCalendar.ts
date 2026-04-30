@@ -152,8 +152,7 @@ export async function getCreatorDate(
     effectiveDate = await getEffectiveDate(gregorianDate, lat, lon);
   }
   
-  const msDiff = effectiveDate.getTime() - CREATOR_EPOCH.getTime();
-  const totalDays = Math.floor(msDiff / (24 * 60 * 60 * 1000));
+  const totalDays = getCivilDayDiff(effectiveDate);
 
   let year = 6028;
   let remainingDays = totalDays;
@@ -193,8 +192,7 @@ export async function getCreatorDate(
  * Uses midnight-based day start
  */
 export function getCreatorDateSync(gregorianDate: Date = new Date()): CustomDate {
-  const msDiff = gregorianDate.getTime() - CREATOR_EPOCH.getTime();
-  const totalDays = Math.floor(msDiff / (24 * 60 * 60 * 1000));
+  const totalDays = getCivilDayDiff(gregorianDate);
 
   let year = 6028;
   let remainingDays = totalDays;
