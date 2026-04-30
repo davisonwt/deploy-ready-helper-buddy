@@ -16,9 +16,10 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { YHVHWheelCalendarLive } from '@/components/watch/YHVHWheelCalendar';
-import EnochianWheelCalendar from '@/components/watch/EnochianWheelCalendar';
+import BeadCalendarNavigator from '@/components/watch/BeadCalendarNavigator';
 import { LocationVerification } from '@/components/calendar/LocationVerification';
 import Journal from '@/components/journal/Journal';
+import GardenSetup from '@/components/garden/GardenSetup';
 import { useSacredNow } from '@/hooks/useSacredNow';
 
 const GARDEN_TIPS: Record<number, string[]> = {
@@ -121,16 +122,13 @@ export default function Yhvh364Page() {
             </Card>
           </TabsContent>
 
-          {/* Bead strands per month */}
+          {/* Bead strands per month — flip between months */}
           <TabsContent value="beads" className="mt-4">
-            <Card className="border-purple-500/30 bg-purple-950/20">
-              <CardHeader>
-                <CardTitle className="text-purple-200">Month Bead Strands</CardTitle>
-              </CardHeader>
-              <CardContent className="max-h-[70vh] overflow-y-auto">
-                <EnochianWheelCalendar />
-              </CardContent>
-            </Card>
+            <BeadCalendarNavigator
+              currentMonth={sacred.date.month}
+              currentDay={sacred.date.day}
+              currentYear={sacred.date.year}
+            />
           </TabsContent>
 
           {/* Diary / Journal */}
@@ -140,7 +138,7 @@ export default function Yhvh364Page() {
             </motion.div>
           </TabsContent>
 
-          {/* Garden Tips */}
+          {/* Garden Tips + Setup */}
           <TabsContent value="garden" className="mt-4 space-y-4">
             <GardenTipCard month={sacred.date.month} dayOfYear={sacred.dayOfYear} />
             <Card className="border-emerald-500/20 bg-black/40">
@@ -155,6 +153,7 @@ export default function Yhvh364Page() {
                 ))}
               </CardContent>
             </Card>
+            <GardenSetup />
           </TabsContent>
         </Tabs>
       </div>
