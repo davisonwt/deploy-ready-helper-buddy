@@ -415,7 +415,13 @@ export default function UploadForm() {
                     categoryId={taxonomy.categoryId}
                     subcategoryIds={taxonomy.subcategoryIds}
                     tagIds={taxonomy.tagIds}
-                    onChange={setTaxonomy}
+                    onChange={(next) => {
+                      setTaxonomy(next);
+                      // Mirror selection into legacy free-text column for backward-compat queries
+                      if (next.categoryId !== taxonomy.categoryId) {
+                        setFormData((fd) => ({ ...fd, category: next.categoryId || '' }));
+                      }
+                    }}
                   />
                   {/* Hidden free-text category kept for backward-compat: derived from selected category label */}
                   <Input type="hidden" value={formData.category} readOnly />
