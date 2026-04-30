@@ -5,6 +5,15 @@ import { supabase } from "@/integrations/supabase/client"
 import SeedFlow from '../components/SeedFlow'
 import LivingButton from '../components/LivingButton'
 import { useSacredNow } from '../hooks/useSacredNow'
+import { BeadPopup } from '../components/watch/BeadPopup'
+
+const DAYS_PER_MONTH = [30, 30, 31, 30, 30, 31, 30, 30, 31, 30, 30, 31]
+function shiftYhwhDate(year, month, day, offset) {
+  let m = month, d = day + offset, y = year
+  while (d < 1) { m -= 1; if (m < 1) { m = 12; y -= 1 } d += DAYS_PER_MONTH[m - 1] }
+  while (d > DAYS_PER_MONTH[m - 1]) { d -= DAYS_PER_MONTH[m - 1]; m += 1; if (m > 12) { m = 1; y += 1 } }
+  return { year: y, month: m, day: d }
+}
 
 const SEEDS = [
   {
@@ -192,14 +201,14 @@ function OmerBadge({ omer, omerTotal, nextFeast }) {
 function WeekBeads({ sacred }) {
   // 7 days of the current week. weekDay 1..6 = work, 7 = Sabbath.
   const today = sacred.weekDay // 1..7
-  const monthDay = sacred.date.day
+  const [picked, setPicked] = useState(null) // {year,month,day}
   const beads = Array.from({ length: 7 }, (_, i) => {
     const wd = i + 1 // 1..7
     const offset = wd - today
-    const dayNum = monthDay + offset
+    const target = shiftYhwhDate(sacred.date.year, sacred.date.month, sacred.date.day, offset)
     const isToday = wd === today
     const isSabbath = wd === 7
-    return { wd, dayNum, isToday, isSabbath }
+    return { wd, dayNum: target.day, target, isToday, isSabbath }
   })
 
   return (
@@ -260,16 +269,24 @@ function WeekBeads({ sacred }) {
                 : 'inset 0 0 4px rgba(0,0,0,0.5)'
             return (
               <div key={b.wd} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4 }}>
-                <div style={{
-                  width: 38, height: 38, borderRadius: '50%',
-                  background: bg, boxShadow: ring,
-                  display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  fontSize: 12, fontWeight: 800,
-                  color: b.isToday ? '#0c1220' : b.isSabbath ? '#3a1d04' : '#1f2937',
-                  border: b.isToday ? '2px solid #7dd3fc' : '1px solid rgba(255,255,255,0.15)',
-                }}>
+                <button
+                  type="button"
+                  onClick={() => setPicked(b.target)}
+                  title={`Open ${b.target.year}/${b.target.month}/${b.target.day}`}
+                  style={{
+                    width: 38, height: 38, borderRadius: '50%',
+                    background: bg, boxShadow: ring,
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    fontSize: 12, fontWeight: 800, cursor: 'pointer',
+                    color: b.isToday ? '#0c1220' : b.isSabbath ? '#3a1d04' : '#1f2937',
+                    border: b.isToday ? '2px solid #7dd3fc' : '1px solid rgba(255,255,255,0.15)',
+                    transition: 'transform 0.15s',
+                  }}
+                  onMouseEnter={e => e.currentTarget.style.transform = 'scale(1.1)'}
+                  onMouseLeave={e => e.currentTarget.style.transform = 'scale(1)'}
+                >
                   {b.dayNum > 0 ? b.dayNum : ''}
-                </div>
+                </button>
                 <div style={{ fontSize: 10, color: b.isToday ? '#38bdf8' : b.isSabbath ? '#f59e0b' : '#475569', fontWeight: 700 }}>
                   {b.isSabbath ? 'שבת' : b.wd}
                 </div>
@@ -335,6 +352,15 @@ function WeekBeads({ sacred }) {
           </span>
         )}
       </div>
+      {picked && (
+        <BeadPopup
+          isOpen={!!picked}
+          onClose={() => setPicked(null)}
+          year={picked.year}
+          month={picked.month}
+          day={picked.day}
+        />
+      )}
     </div>
   )
 }
