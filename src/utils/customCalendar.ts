@@ -21,6 +21,7 @@ const DAY_NAMES = ['Day 1', 'Day 2', 'Day 3', 'Day 4', 'Day 5', 'Day 6', 'Day 7'
 
 // Epoch: Tequvah (Vernal Equinox) March 20, 2025 = Year 6028, Month 1, Day 1
 const CREATOR_EPOCH = new Date('2025-03-20T00:00:00Z');
+const sunriseCache = new Map<string, Promise<Date>>();
 
 /**
  * Check if a year is a long Sabbath year (simplified - adjust based on actual rules)
@@ -28,8 +29,8 @@ const CREATOR_EPOCH = new Date('2025-03-20T00:00:00Z');
  */
 function isLongYear(year: number): boolean {
   // Based on tequvah observation—update annually
-  // Example: 6028 is common year
-  return false;
+  // 6028 carried one day outside the 364-day count before Year 6029 began.
+  return year === 6028;
 }
 
 /**
@@ -45,8 +46,13 @@ export function getDaysInMonth(month: number): number {
  * Uses sunrise-sunset API or fallback calculation
  */
 async function getSunriseTime(date: Date, lat: number, lon: number): Promise<Date> {
+  const dateStr = date.toISOString().split('T')[0];
+  const cacheKey = `${dateStr}:${lat.toFixed(3)}:${lon.toFixed(3)}`;
+  const cached = sunriseCache.get(cacheKey);
+  if (cached) return cached;
+
+  const sunrisePromise = (async () => {
   try {
-    const dateStr = date.toISOString().split('T')[0];
     const url = `https://api.sunrise-sunset.org/json?lat=${lat}&lng=${lon}&date=${dateStr}&formatted=0`;
     const response = await fetch(url);
     const data = await response.json();
@@ -71,6 +77,10 @@ async function getSunriseTime(date: Date, lat: number, lon: number): Promise<Dat
   const sunrise = new Date(date);
   sunrise.setHours(Math.floor(sunriseMinutes / 60), sunriseMinutes % 60, 0, 0);
   return sunrise;
+  })();
+
+  sunriseCache.set(cacheKey, sunrisePromise);
+  return sunrisePromise;
 }
 
 /**
