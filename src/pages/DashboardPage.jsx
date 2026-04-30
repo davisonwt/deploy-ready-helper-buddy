@@ -239,16 +239,16 @@ export default function SeedFlowDashboard() {
 
   const styles = {
     root: {
-      display: 'flex', height: '100vh', width: '100vw',
+      display: 'flex', height: 'calc(100vh - 38px - 70px)', width: '100vw',
       background: '#060a12', color: '#e2e8f0',
       fontFamily: "'DM Sans', 'Segoe UI', system-ui, sans-serif",
-      overflow: 'hidden', position: 'fixed', top: 38, left: 0, zIndex: 50, paddingBottom: 70,
+      overflow: 'hidden', position: 'fixed', top: 38, left: 0, zIndex: 50,
     },
     sidebar: {
       width: 260, minWidth: 260,
       background: '#0a0f1a',
       borderRight: '1px solid rgba(255,255,255,0.06)',
-      display: 'flex', flexDirection: 'column', height: '100vh',
+      display: 'flex', flexDirection: 'column', height: '100%', minHeight: 0,
     },
     logoArea: {
       padding: '18px 14px 14px',
