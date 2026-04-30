@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Progress } from '@/components/ui/progress'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { Sprout, Plus, Eye, Users, TrendingUp, Calendar, DollarSign, Edit, Share2, MapPin, Trash2, Sparkles, Loader2, Radio } from 'lucide-react'
 import { toast } from "sonner"
 import { supabase } from '@/integrations/supabase/client'
@@ -16,6 +16,11 @@ import { GradientPlaceholder } from '@/components/ui/GradientPlaceholder'
 import { processOrchardsUrls } from '../utils/urlUtils'
 import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from '@/components/ui/carousel'
 import LivingButton from '../components/LivingButton'
+import MyGardenSection from '../components/garden/MyGardenSection'
+import {
+  buildSeedCard, buildOrchardCard, buildMusicCard,
+  buildBookCard, buildVideoCard, deleteRow,
+} from '../components/garden/seedCardBuilders'
 
 const WANDERING_ROLES = [
   { label: 'Wheel 🚗',      value: 'Wheel' },
