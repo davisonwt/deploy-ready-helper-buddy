@@ -239,16 +239,16 @@ export default function SeedFlowDashboard() {
 
   const styles = {
     root: {
-      display: 'flex', height: '100vh', width: '100vw',
+      display: 'flex', height: 'calc(100vh - 38px - 70px)', width: '100vw',
       background: '#060a12', color: '#e2e8f0',
       fontFamily: "'DM Sans', 'Segoe UI', system-ui, sans-serif",
-      overflow: 'hidden', position: 'fixed', top: 38, left: 0, zIndex: 50, paddingBottom: 70,
+      overflow: 'hidden', position: 'fixed', top: 38, left: 0, zIndex: 50,
     },
     sidebar: {
       width: 260, minWidth: 260,
       background: '#0a0f1a',
       borderRight: '1px solid rgba(255,255,255,0.06)',
-      display: 'flex', flexDirection: 'column', height: '100vh',
+      display: 'flex', flexDirection: 'column', height: '100%', minHeight: 0,
     },
     logoArea: {
       padding: '18px 14px 14px',
@@ -271,23 +271,27 @@ export default function SeedFlowDashboard() {
     },
     nav: {
       flex: 1, padding: '10px 8px',
-      overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 3,
+      overflowY: 'auto', minHeight: 0,
+      display: 'flex', flexDirection: 'column', gap: 6,
     },
     navItem: (isActive, color) => ({
       display: 'flex', alignItems: 'center', gap: 11,
-      padding: '10px 12px', borderRadius: 10, cursor: 'pointer',
-      background: isActive ? color + '22' : 'transparent',
-      border: isActive ? `1px solid ${color}44` : '1px solid transparent',
+      padding: '12px 14px', borderRadius: 12, cursor: 'pointer',
+      background: isActive
+        ? `linear-gradient(135deg, ${color}55, ${color}33)`
+        : `linear-gradient(135deg, ${color}33, ${color}1a)`,
+      border: isActive ? `1px solid ${color}` : `1px solid ${color}44`,
+      boxShadow: isActive ? `0 0 18px ${color}66` : `inset 0 1px 0 ${color}22`,
       transition: 'all 0.15s ease', textDecoration: 'none',
     }),
     navEmoji: (isActive, color) => ({
-      width: 32, height: 32, borderRadius: 8, fontSize: 16,
-      background: isActive ? color + '33' : '#111827',
+      width: 36, height: 36, borderRadius: 9, fontSize: 18,
+      background: isActive ? color + '66' : color + '33',
       display: 'flex', alignItems: 'center', justifyContent: 'center',
-      border: isActive ? `1px solid ${color}55` : '1px solid transparent',
+      border: `1px solid ${color}66`, flexShrink: 0,
     }),
-    navLabel: { fontWeight: 600, fontSize: 13, color: '#e2e8f0', lineHeight: 1.2 },
-    navSub: { fontSize: 11, color: '#4b5563', lineHeight: 1 },
+    navLabel: { fontWeight: 700, fontSize: 14, color: '#f1f5f9', lineHeight: 1.2 },
+    navSub: { fontSize: 11, color: 'rgba(226,232,240,0.65)', lineHeight: 1.3, marginTop: 2 },
     bottomBar: {
       padding: '10px 8px',
       borderTop: '1px solid rgba(255,255,255,0.05)',
@@ -397,6 +401,7 @@ export default function SeedFlowDashboard() {
       borderLeft: '1px solid rgba(255,255,255,0.05)',
       padding: '18px 14px', overflowY: 'auto',
       display: 'flex', flexDirection: 'column', gap: 22,
+      height: '100%', minHeight: 0,
     },
     panelSection: { display: 'flex', flexDirection: 'column', gap: 8 },
     panelTitle: {
