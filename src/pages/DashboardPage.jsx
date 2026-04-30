@@ -825,6 +825,21 @@ export default function SeedFlowDashboard() {
               <div style={styles.seedType}>
                 {activeSeed.emoji ? `${activeSeed.emoji} ` : ''}{activeSeed.type}
               </div>
+              {activeSeed.badge && (
+                <div style={{
+                  position: 'absolute', top: 14, right: 64,
+                  padding: '4px 10px', borderRadius: 999,
+                  background: `${activeSeed.badge.color}22`,
+                  border: `1px solid ${activeSeed.badge.color}66`,
+                  color: activeSeed.badge.color,
+                  fontSize: 11, fontWeight: 800, letterSpacing: '0.5px',
+                  backdropFilter: 'blur(6px)', textTransform: 'uppercase',
+                  display: 'flex', alignItems: 'center', gap: 4, zIndex: 2,
+                }}>
+                  <span>{activeSeed.badge.emoji}</span>
+                  <span>{activeSeed.badge.label}</span>
+                </div>
+              )}
               <div style={styles.seedActivity}>
                 <span style={styles.activityDot} />
                 <span style={styles.activityText}>{activeSeed.activity}</span>
