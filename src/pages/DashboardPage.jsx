@@ -577,6 +577,16 @@ export default function SeedFlowDashboard() {
   const activeSeed = displaySeeds[safeIdx] || SEEDS[0]
   const displayName = profile?.first_name || user?.email?.split('@')[0] || 'Friend'
 
+  useEffect(() => {
+    const total = displaySeeds.length
+    intervalRef.current = setInterval(() => {
+      setPulse(true)
+      setTimeout(() => setPulse(false), 600)
+      setActiveIdx(i => (i + 1) % Math.max(total, 1))
+    }, 5000)
+    return () => clearInterval(intervalRef.current)
+  }, [displaySeeds.length])
+
   const styles = {
     root: {
       display: 'flex', height: 'calc(100vh - 38px - 70px)', width: '100vw',
