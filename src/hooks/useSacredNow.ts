@@ -45,8 +45,13 @@ function toDayOfYear(d: CustomDate): number {
  * Omer counting starts the day after Pesach (Month 1, Day 16) and runs 50 days
  * to Shavuot (Month 3, Day 6 in this calendar — the "Feast of Weeks").
  */
-const OMER_START_DOY = toDayOfYear({ year: 0, month: 1, day: 16, weekDay: 1 }); // 16
-const OMER_END_DOY = OMER_START_DOY + 49; // inclusive day 50
+/**
+ * Omer counting in this calendar: Omer 1 = doy 26 (the day after the
+ * Wave-Sheaf / first Sunday after Unleavened Bread). Omer 50 = doy 75 = Shavu'ot.
+ * Anchored from observed reality: 2026-04-30 = M2D12 = doy 42 = Omer 17.
+ */
+const OMER_START_DOY = 26;
+const OMER_END_DOY = OMER_START_DOY + 49; // inclusive day 50 = doy 75
 
 function computeOmer(dayOfYear: number): number | null {
   if (dayOfYear < OMER_START_DOY || dayOfYear > OMER_END_DOY) return null;
