@@ -6,6 +6,12 @@ import SeedFlow from '../components/SeedFlow'
 import LivingButton from '../components/LivingButton'
 import { useSacredNow } from '../hooks/useSacredNow'
 import { BeadPopup } from '../components/watch/BeadPopup'
+import SeedSlider from '../components/garden/SeedSlider'
+import {
+  buildSeedCard, buildOrchardCard, buildMusicCard,
+  buildBookCard, buildVideoCard, deleteRow,
+} from '../components/garden/seedCardBuilders'
+import { toast } from 'sonner'
 
 const DAYS_PER_MONTH = [30, 30, 31, 30, 30, 31, 30, 30, 31, 30, 30, 31]
 function shiftYhwhDate(year, month, day, offset) {
@@ -577,6 +583,54 @@ export default function SeedFlowDashboard() {
   const activeSeed = displaySeeds[safeIdx] || SEEDS[0]
   const displayName = profile?.first_name || user?.email?.split('@')[0] || 'Friend'
 
+  // ── Owner action handlers (shared across all 5 sliders) ──
+  const handleEdit = (card) => {
+    const rid = card.rawId
+    if (card.id.startsWith('orchard-')) navigate(`/create-orchard?edit=${rid}`)
+    else if (card.id.startsWith('seed-')) navigate(`/seed/${rid}?edit=1`)
+    else if (card.id.startsWith('music-')) navigate(`/music-library?edit=${rid}`)
+    else if (card.id.startsWith('book-')) navigate(`/my-s2g-library?edit=${rid}`)
+    else if (card.id.startsWith('video-')) navigate(`/community-videos?edit=${rid}`)
+  }
+  const handleRepost = (card) => {
+    toast.success(`Reposted "${card.title}" to the tribe feed`)
+  }
+  const handlePark = (card) => {
+    toast(`Parked "${card.title}" — hidden from public until you re-publish.`)
+  }
+  const handleDelete = async (card) => {
+    if (!confirm(`Delete "${card.title}"? This cannot be undone.`)) return
+    const tableMap = {
+      'seed-': 'seeds', 'orchard-': 'orchards', 'music-': 'dj_music_tracks',
+      'book-': 'sower_books', 'video-': 'community_videos',
+    }
+    const prefix = Object.keys(tableMap).find(p => card.id.startsWith(p))
+    if (!prefix) return
+    try {
+      await deleteRow(supabase, tableMap[prefix], card.rawId)
+      toast.success(`"${card.title}" deleted`)
+      // Optimistic local removal
+      if (prefix === 'seed-') setMySeeds(s => s.filter(x => x.id !== card.rawId))
+      if (prefix === 'orchard-') setMyOrchards(s => s.filter(x => x.id !== card.rawId))
+      if (prefix === 'music-') setMyMusic(s => s.filter(x => x.id !== card.rawId))
+      if (prefix === 'book-') setMyBooks(s => s.filter(x => x.id !== card.rawId))
+      if (prefix === 'video-') setMyVideos(s => s.filter(x => x.id !== card.rawId))
+    } catch (e) {
+      toast.error(`Could not delete: ${e.message}`)
+    }
+  }
+  const ownerHandlers = { onEdit: handleEdit, onRepost: handleRepost, onPark: handlePark, onDelete: handleDelete }
+
+  // Build per-category card lists for the 5 stacked sliders.
+  const seedSliderCards    = mySeeds.map(s   => buildSeedCard(s, ownerHandlers))
+  const orchardSliderCards = [
+    ...myOrchards.map(o => buildOrchardCard(o, ownerHandlers)),
+    ...bestowedOrchards.map(o => buildOrchardCard(o, {}, { bestowed: true })),
+  ]
+  const musicSliderCards   = myMusic.map(m   => buildMusicCard(m, ownerHandlers))
+  const bookSliderCards    = myBooks.map(b   => buildBookCard(b, ownerHandlers))
+  const videoSliderCards   = myVideos.map(v  => buildVideoCard(v, ownerHandlers))
+
   useEffect(() => {
     const total = displaySeeds.length
     intervalRef.current = setInterval(() => {
@@ -906,70 +960,17 @@ export default function SeedFlowDashboard() {
               <span style={styles.liveTag}>{userCards.length ? `${mineCards.length} mine · ${bestowedCards.length}💚` : 'LIVE'}</span>
             </div>
 
-            {/* ── Seed showcase card ── */}
-            <div style={{ ...styles.seedCard }} className="seed-card-anim">
-              <img src={activeSeed.image} alt="" style={styles.seedImg} />
-              <div style={styles.seedOverlay} />
-              <div style={styles.seedCounter}>{safeIdx + 1}/{displaySeeds.length}</div>
-              <div style={styles.seedType}>
-                {activeSeed.emoji ? `${activeSeed.emoji} ` : ''}{activeSeed.type}
-              </div>
-              {activeSeed.badge && (
-                <div style={{
-                  position: 'absolute', top: 14, right: 64,
-                  padding: '4px 10px', borderRadius: 999,
-                  background: `${activeSeed.badge.color}22`,
-                  border: `1px solid ${activeSeed.badge.color}66`,
-                  color: activeSeed.badge.color,
-                  fontSize: 11, fontWeight: 800, letterSpacing: '0.5px',
-                  backdropFilter: 'blur(6px)', textTransform: 'uppercase',
-                  display: 'flex', alignItems: 'center', gap: 4, zIndex: 2,
-                }}>
-                  <span>{activeSeed.badge.emoji}</span>
-                  <span>{activeSeed.badge.label}</span>
-                </div>
-              )}
-              <div style={styles.seedActivity}>
-                <span style={styles.activityDot} />
-                <span style={styles.activityText}>{activeSeed.activity}</span>
-              </div>
-              <div style={styles.seedDesc}>{activeSeed.description}</div>
-              <div style={styles.seedBottom}>
-                <div style={styles.seedName}>{activeSeed.name}</div>
-                <div style={styles.seedStatus}>
-                  <span style={styles.statusDot} />
-                  {activeSeed.status}
-                </div>
-
-                {/* ── Living Play + Enter buttons ── */}
-                <div style={styles.seedBtns}>
-                  <Link to={activeSeed.playPath} style={{ flex: 1, textDecoration: 'none' }}>
-                    <LivingButton
-                      variant="play"
-                      isPlaying={isPlaying}
-                      onClick={() => setIsPlaying(p => !p)}
-                      height={44}
-                      borderRadius={10}
-                      fontSize={13}
-                      letterSpacing="0px"
-                    >
-                      {isPlaying ? '⏸ Pause' : '▶ Play'}
-                    </LivingButton>
-                  </Link>
-                  <Link to={activeSeed.bookPath} style={{ flex: 1, textDecoration: 'none' }}>
-                    <LivingButton
-                      variant="enter"
-                      height={44}
-                      borderRadius={10}
-                      fontSize={13}
-                      letterSpacing="0px"
-                    >
-                      📅 Open
-                    </LivingButton>
-                  </Link>
-                </div>
-              </div>
-            </div>
+            {/* ── 5 stacked auto-rotating category sliders ── */}
+            <SeedSlider title="Seeds"    emoji="🌱" accent="#22c55e" cards={seedSliderCards}
+              emptyHint="No seeds yet — plant one with the button below." />
+            <SeedSlider title="Orchards" emoji="🌳" accent="#16a34a" cards={orchardSliderCards}
+              emptyHint="No orchards yet — your own + bestowed will live here." />
+            <SeedSlider title="Music"    emoji="🎵" accent="#0ea5e9" cards={musicSliderCards}
+              emptyHint="No tracks yet — drop a song from your Music Library." />
+            <SeedSlider title="Books"    emoji="📚" accent="#fb923c" cards={bookSliderCards}
+              emptyHint="No books yet — upload one in My S2G Library." />
+            <SeedSlider title="Videos"   emoji="🎬" accent="#f87171" cards={videoSliderCards}
+              emptyHint="No videos yet — share one in Community Videos." />
 
             {!userCards.length && (
               <div style={{
@@ -979,14 +980,6 @@ export default function SeedFlowDashboard() {
                 You haven't planted any seeds yet — tap "Plant Seed" below to start.
               </div>
             )}
-
-            {/* ── Dots ── */}
-            <div style={styles.seedDots}>
-              {displaySeeds.map((_, i) => (
-                <div key={i} style={styles.dot(i === safeIdx)}
-                  onClick={() => { setActiveIdx(i); clearInterval(intervalRef.current) }} />
-              ))}
-            </div>
 
             {/* ── Step Into the Orchard — living gate button ── */}
             <Link to="/browse-orchards" style={{ textDecoration: 'none' }}>

@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Progress } from '@/components/ui/progress'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { Sprout, Plus, Eye, Users, TrendingUp, Calendar, DollarSign, Edit, Share2, MapPin, Trash2, Sparkles, Loader2, Radio } from 'lucide-react'
 import { toast } from "sonner"
 import { supabase } from '@/integrations/supabase/client'
@@ -16,6 +16,11 @@ import { GradientPlaceholder } from '@/components/ui/GradientPlaceholder'
 import { processOrchardsUrls } from '../utils/urlUtils'
 import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from '@/components/ui/carousel'
 import LivingButton from '../components/LivingButton'
+import MyGardenSection from '../components/garden/MyGardenSection'
+import {
+  buildSeedCard, buildOrchardCard, buildMusicCard,
+  buildBookCard, buildVideoCard, deleteRow,
+} from '../components/garden/seedCardBuilders'
 
 const WANDERING_ROLES = [
   { label: 'Wheel 🚗',      value: 'Wheel' },
@@ -31,11 +36,19 @@ const WANDERING_ROLES = [
 
 export default function MyOrchardsPage() {
   const { user } = useAuth()
+  const navigate = useNavigate()
   const [userSeeds, setUserSeeds] = useState([])
   const [statusFilter, setStatusFilter] = useState('all')
   const [selectedRole, setSelectedRole] = useState('all')
   const [seeds, setSeeds] = useState([])
   const [loading, setLoading] = useState(false)
+
+  // Per-category lists for the new "5 vertical sections" view
+  const [mySeeds, setMySeeds] = useState([])
+  const [myOrchards, setMyOrchards] = useState([])
+  const [myMusic, setMyMusic] = useState([])
+  const [myBooks, setMyBooks] = useState([])
+  const [myVideos, setMyVideos] = useState([])
 
   const fetchSeeds = async () => {
     try {
@@ -76,6 +89,77 @@ export default function MyOrchardsPage() {
     if (selectedRole !== 'all') filtered = filtered.filter(s => s.category === selectedRole)
     setUserSeeds(filtered)
   }, [seeds, user, statusFilter, selectedRole])
+
+  // ── Fetch all 5 categories of user's content for the My Garden sections ──
+  const fetchAllMyContent = async () => {
+    if (!user) return
+    const [seedsRes, orchardsRes, booksRes, vidsRes, djsRes] = await Promise.all([
+      supabase.from('seeds').select('id, title, description, category, images, video_url, created_at')
+        .eq('gifter_id', user.id).order('created_at', { ascending: false }).limit(50),
+      supabase.from('orchards').select('id, title, description, category, images, orchard_type, created_at')
+        .eq('user_id', user.id).order('created_at', { ascending: false }).limit(50),
+      supabase.from('sower_books').select('id, title, description, cover_image_url, image_urls, genre, created_at')
+        .eq('user_id', user.id).order('created_at', { ascending: false }).limit(50),
+      supabase.from('community_videos').select('id, title, description, thumbnail_url, video_url, created_at')
+        .eq('uploader_id', user.id).order('created_at', { ascending: false }).limit(50),
+      supabase.from('radio_djs').select('id').eq('user_id', user.id),
+    ])
+    setMySeeds(seedsRes.data || [])
+    setMyOrchards(orchardsRes.data || [])
+    setMyBooks(booksRes.data || [])
+    setMyVideos(vidsRes.data || [])
+    const djIds = (djsRes.data || []).map(d => d.id)
+    if (djIds.length) {
+      const { data } = await supabase.from('dj_music_tracks')
+        .select('id, track_title, genre, file_url, music_genre, music_mood, created_at')
+        .in('dj_id', djIds).order('created_at', { ascending: false }).limit(50)
+      setMyMusic(data || [])
+    } else {
+      setMyMusic([])
+    }
+  }
+
+  useEffect(() => { fetchAllMyContent() }, [user])
+
+  // ── Owner action handlers shared across all 5 sections ──
+  const handleEditCard = (card) => {
+    const rid = card.rawId
+    if (card.id.startsWith('orchard-')) navigate(`/edit-orchard/${rid}`)
+    else if (card.id.startsWith('seed-'))   navigate(`/seed/${rid}?edit=1`)
+    else if (card.id.startsWith('music-'))  navigate(`/music-library?edit=${rid}`)
+    else if (card.id.startsWith('book-'))   navigate(`/my-s2g-library?edit=${rid}`)
+    else if (card.id.startsWith('video-'))  navigate(`/community-videos?edit=${rid}`)
+  }
+  const handleRepostCard = (card) => toast.success(`Reposted "${card.title}" to the tribe feed`)
+  const handleParkCard   = (card) => toast(`Parked "${card.title}" — hidden until you re-publish.`)
+  const handleDeleteCard = async (card) => {
+    if (!window.confirm(`Delete "${card.title}"? This cannot be undone.`)) return
+    const tableMap = {
+      'seed-': 'seeds', 'orchard-': 'orchards', 'music-': 'dj_music_tracks',
+      'book-': 'sower_books', 'video-': 'community_videos',
+    }
+    const prefix = Object.keys(tableMap).find(p => card.id.startsWith(p))
+    if (!prefix) return
+    try {
+      await deleteRow(supabase, tableMap[prefix], card.rawId)
+      toast.success(`"${card.title}" deleted`)
+      fetchAllMyContent()
+      if (prefix === 'orchard-') fetchSeeds()
+    } catch (e) {
+      toast.error(`Could not delete: ${e.message}`)
+    }
+  }
+  const ownerHandlers = {
+    onEdit: handleEditCard, onRepost: handleRepostCard,
+    onPark: handleParkCard, onDelete: handleDeleteCard,
+  }
+
+  // Build per-category card lists for the 5 vertical sections
+  const seedCards    = mySeeds.map(s    => buildSeedCard(s, ownerHandlers))
+  const orchardCards = myOrchards.map(o => buildOrchardCard(o, ownerHandlers))
+  const musicCards   = myMusic.map(m    => buildMusicCard(m, ownerHandlers))
+  const bookCards    = myBooks.map(b    => buildBookCard(b, ownerHandlers))
+  const videoCards   = myVideos.map(v   => buildVideoCard(v, ownerHandlers))
 
   const getCompletionPercentage = (seed) => {
     const total = (seed.intended_pockets && seed.intended_pockets > 1) ? seed.intended_pockets : seed.total_pockets || 1
@@ -211,6 +295,20 @@ export default function MyOrchardsPage() {
                 </div>
               </CardContent>
             </Card>
+          </div>
+
+          {/* ── 5 vertical category sections — your full living garden ── */}
+          <div className='mb-8'>
+            <MyGardenSection title="Seeds"    emoji="🌱" accent="#22c55e" cards={seedCards}
+              emptyHint="No seeds yet — sow your first one above." />
+            <MyGardenSection title="Orchards" emoji="🌳" accent="#16a34a" cards={orchardCards}
+              emptyHint="No orchards yet — your created orchards live here." />
+            <MyGardenSection title="Music"    emoji="🎵" accent="#0ea5e9" cards={musicCards}
+              emptyHint="No tracks yet — drop a song from your Music Library." />
+            <MyGardenSection title="Books"    emoji="📚" accent="#fb923c" cards={bookCards}
+              emptyHint="No books yet — upload one in My S2G Library." />
+            <MyGardenSection title="Videos"   emoji="🎬" accent="#f87171" cards={videoCards}
+              emptyHint="No videos yet — share one in Community Videos." />
           </div>
 
           <div className='mb-8 space-y-4'>
