@@ -1,5 +1,5 @@
-import { useState, useEffect, useRef, useCallback } from 'react';
-import { useInfiniteQuery } from '@tanstack/react-query';
+import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
+import { useInfiniteQuery, useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useProductBasket } from '@/contexts/ProductBasketContext';
 import { useNavigate, useSearchParams } from 'react-router-dom';
@@ -8,6 +8,7 @@ import { motion } from 'framer-motion';
 import { toast } from 'sonner';
 import { formatCurrency } from '@/lib/utils';
 import { launchConfetti, floatingScore, playSoundEffect } from '@/utils/confetti';
+import MarketplaceFilterBar from '@/components/marketplace/MarketplaceFilterBar';
 
 const ITEMS_PER_PAGE = 20;
 
@@ -85,6 +86,28 @@ export default function ProductsPage() {
   const [activeFilter, setActiveFilter] = useState<string>(filterParam);
   const { addToBasket } = useProductBasket();
   const navigate = useNavigate();
+
+  // Universal marketplace filters (category + tag combination)
+  const [marketCategoryId, setMarketCategoryId] = useState<string | null>(null);
+  const [marketTagIds, setMarketTagIds] = useState<string[]>([]);
+
+  // Fetch product IDs that carry ALL selected tag IDs (intersection filter)
+  const { data: taggedProductIds } = useQuery({
+    queryKey: ['products-by-tags', marketTagIds],
+    queryFn: async () => {
+      if (marketTagIds.length === 0) return null;
+      const { data, error } = await supabase
+        .from('listing_tags' as any)
+        .select('listing_id, tag_id')
+        .eq('listing_type', 'product')
+        .in('tag_id', marketTagIds);
+      if (error) throw error;
+      const counts: Record<string, number> = {};
+      (data || []).forEach((r: any) => { counts[r.listing_id] = (counts[r.listing_id] || 0) + 1; });
+      return Object.entries(counts).filter(([, c]) => c >= marketTagIds.length).map(([id]) => id);
+    },
+    enabled: marketTagIds.length > 0,
+  });
 
   const {
     data,
