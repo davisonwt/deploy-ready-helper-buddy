@@ -111,7 +111,7 @@ export default function MyOrchardsPage() {
     const djIds = (djsRes.data || []).map(d => d.id)
     if (djIds.length) {
       const { data } = await supabase.from('dj_music_tracks')
-        .select('id, track_title, genre, file_url, music_genre, music_mood, created_at')
+        .select('id, track_title, genre, file_url, cover_image_url, music_genre, music_mood, created_at')
         .in('dj_id', djIds).order('created_at', { ascending: false }).limit(50)
       setMyMusic(data || [])
     } else {
