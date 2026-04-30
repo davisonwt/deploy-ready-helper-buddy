@@ -218,6 +218,9 @@ const App = () => (
               <Route path="/regrow-access" element={
                 <ProtectedRoute><RequireVerification><Layout><BrowseOrchardsPage /></Layout></RequireVerification></ProtectedRoute>
               } />
+              <Route path="/tribal-hearts" element={
+                <ProtectedRoute><RequireVerification><TribalHeartsPage /></RequireVerification></ProtectedRoute>
+              } />
               <Route path="/browse-orchards" element={
                 <ProtectedRoute><RequireVerification><BrowseOrchardsPage /></RequireVerification></ProtectedRoute>
               } />
