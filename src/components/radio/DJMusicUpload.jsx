@@ -147,7 +147,13 @@ export default function DJMusicUpload({ trigger }) {
         return
       }
 
-      const result = await directUpload(files[0], trackData, djProfile)
+      const enrichedTrack = {
+        ...trackData,
+        wandering_role: wanderingRole,
+        subcategoryIds: taxonomy.subcategoryIds,
+        tagIds: taxonomy.tagIds,
+      }
+      const result = await directUpload(files[0], enrichedTrack, djProfile)
       
       if (result) {
         resetForm()
