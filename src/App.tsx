@@ -96,6 +96,7 @@ const ProductsPage = lazy(() => import("./pages/ProductsPage"));
 const MyProductsPage = lazy(() => import("./pages/MyProductsPage"));
 const UploadForm = lazy(() => import("./components/products/UploadForm"));
 const SellerCredentialsPage = lazy(() => import("./pages/SellerCredentialsPage"));
+const TribalHeartsPage = lazy(() => import("./pages/TribalHeartsPage"));
 const AdminCredentialsPage = lazy(() => import("./pages/AdminCredentialsPage"));
 const EditForm = lazy(() => import("./components/products/EditForm"));
 const ProductBasketPage = lazy(() => import("./pages/ProductBasketPage"));
