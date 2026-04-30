@@ -399,33 +399,41 @@ export default function BrowseOrchardsPage() {
       </div>
 
       <div style={{ maxWidth: 1200, margin: '0 auto', padding: '0 20px 40px' }}>
-        {loading ? (
-          <div style={{ display: 'flex', justifyContent: 'center', padding: '60px 0' }}>
-            <Loader2 style={{ width: 40, height: 40, color: '#10b981' }} />
-          </div>
-        ) : filtered.length === 0 ? (
-          <div style={{ textAlign: 'center', padding: '60px 0' }}>
-            <div style={{ fontSize: 48, marginBottom: 16 }}>🌱</div>
-            <h3 style={{ color: '#f1f5f9', fontSize: 20, marginBottom: 8 }}>No orchards found</h3>
-            <p style={{ color: '#64748b' }}>Try a different filter or be the first to plant!</p>
-            <Link to="/create-orchard" style={{ textDecoration: 'none' }}>
-              <motion.button whileHover={{ scale: 1.05 }}
-                style={{ marginTop: 20, padding: '12px 24px', background: 'linear-gradient(135deg, #10b981, #059669)', border: 'none', borderRadius: 12, color: '#fff', fontWeight: 700, fontSize: 15, cursor: 'pointer' }}>
-                🌱 Plant First Seed
-              </motion.button>
-            </Link>
-          </div>
+        {activeTab === 'orchards' ? (
+          loading ? (
+            <div style={{ display: 'flex', justifyContent: 'center', padding: '60px 0' }}>
+              <Loader2 style={{ width: 40, height: 40, color: '#10b981' }} />
+            </div>
+          ) : filtered.length === 0 ? (
+            <div style={{ textAlign: 'center', padding: '60px 0' }}>
+              <div style={{ fontSize: 48, marginBottom: 16 }}>🌱</div>
+              <h3 style={{ color: '#f1f5f9', fontSize: 20, marginBottom: 8 }}>No orchards found</h3>
+              <p style={{ color: '#64748b' }}>Try a different filter or be the first to plant!</p>
+              <Link to="/create-orchard" style={{ textDecoration: 'none' }}>
+                <motion.button whileHover={{ scale: 1.05 }}
+                  style={{ marginTop: 20, padding: '12px 24px', background: 'linear-gradient(135deg, #10b981, #059669)', border: 'none', borderRadius: 12, color: '#fff', fontWeight: 700, fontSize: 15, cursor: 'pointer' }}>
+                  🌱 Plant First Seed
+                </motion.button>
+              </Link>
+            </div>
+          ) : (
+            <>
+              <div style={{ fontSize: 13, color: '#64748b', marginBottom: 16 }}>
+                Showing <span style={{ color: '#10b981', fontWeight: 700 }}>{filtered.length}</span> orchards
+              </div>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: 20 }}>
+                <AnimatePresence>
+                  {filtered.map((orchard, i) => <OrchardCard key={orchard.id} orchard={orchard} index={i} />)}
+                </AnimatePresence>
+              </div>
+            </>
+          )
+        ) : activeTab === 'music' ? (
+          <MediaGrid kind="music" items={music} loading={mediaLoading} />
+        ) : activeTab === 'books' ? (
+          <MediaGrid kind="books" items={books} loading={mediaLoading} />
         ) : (
-          <>
-            <div style={{ fontSize: 13, color: '#64748b', marginBottom: 16 }}>
-              Showing <span style={{ color: '#10b981', fontWeight: 700 }}>{filtered.length}</span> orchards
-            </div>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: 20 }}>
-              <AnimatePresence>
-                {filtered.map((orchard, i) => <OrchardCard key={orchard.id} orchard={orchard} index={i} />)}
-              </AnimatePresence>
-            </div>
-          </>
+          <MediaGrid kind="videos" items={videos} loading={mediaLoading} />
         )}
       </div>
     </div>
