@@ -374,6 +374,10 @@ export default function SeedFlowDashboard() {
   const [isPlaying, setIsPlaying] = useState(false)
   const [stats, setStats] = useState({ sowers: 4, orchards: 0, seeds: 56, members: 0 })
   const [mySeeds, setMySeeds] = useState([])
+  const [myOrchards, setMyOrchards] = useState([])
+  const [myMusic, setMyMusic] = useState([])
+  const [myBooks, setMyBooks] = useState([])
+  const [myVideos, setMyVideos] = useState([])
   const [bestowedOrchards, setBestowedOrchards] = useState([])
   const [tip] = useState(GROWTH_TIPS[Math.floor(Math.random() * GROWTH_TIPS.length)])
   const [activePath, setActivePath] = useState('/dashboard')
@@ -406,8 +410,44 @@ export default function SeedFlowDashboard() {
       .select('id, title, description, category, images, video_url, created_at')
       .eq('gifter_id', user.id)
       .order('created_at', { ascending: false })
-      .limit(12)
+      .limit(20)
       .then(({ data }) => setMySeeds(data || []))
+
+    // My orchards
+    supabase.from('orchards')
+      .select('id, title, description, category, images, orchard_type, created_at')
+      .eq('user_id', user.id)
+      .order('created_at', { ascending: false })
+      .limit(20)
+      .then(({ data }) => setMyOrchards(data || []))
+
+    // My music tracks (via radio_djs link)
+    supabase.from('radio_djs').select('id').eq('user_id', user.id).then(async ({ data: djs }) => {
+      const djIds = (djs || []).map(d => d.id)
+      if (!djIds.length) { setMyMusic([]); return }
+      const { data } = await supabase.from('dj_music_tracks')
+        .select('id, track_title, genre, file_url, music_genre, music_mood, created_at')
+        .in('dj_id', djIds)
+        .order('created_at', { ascending: false })
+        .limit(30)
+      setMyMusic(data || [])
+    })
+
+    // My books
+    supabase.from('sower_books')
+      .select('id, title, description, cover_image_url, image_urls, genre, created_at')
+      .eq('user_id', user.id)
+      .order('created_at', { ascending: false })
+      .limit(20)
+      .then(({ data }) => setMyBooks(data || []))
+
+    // My community videos
+    supabase.from('community_videos')
+      .select('id, title, description, thumbnail_url, video_url, created_at')
+      .eq('uploader_id', user.id)
+      .order('created_at', { ascending: false })
+      .limit(20)
+      .then(({ data }) => setMyVideos(data || []))
 
     // Seeds I've bestowed into — orchards the user has supported
     supabase.from('bestowals')
