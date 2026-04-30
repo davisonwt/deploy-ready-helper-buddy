@@ -177,7 +177,7 @@ export default function LearnSharePage() {
             whileHover={{ scale: 1.05 }}
             onClick={() => setSelectedRole('all')}
             style={{
-              width: 90, height: 64, borderRadius: 18, border: 'none', cursor: 'pointer',
+              width: 90, height: 64, borderRadius: 18, cursor: 'pointer',
               fontWeight: 600, fontSize: 11, letterSpacing: 2,
               textTransform: 'uppercase',
               background: selectedRole === 'all'
@@ -220,7 +220,7 @@ export default function LearnSharePage() {
                 whileHover={{ scale: 1.05 }}
                 onClick={() => setSelectedRole(label)}
                 style={{
-                  width: 90, height: 64, borderRadius: 18, border: 'none', cursor: 'pointer',
+                  width: 90, height: 64, borderRadius: 18, cursor: 'pointer',
                   fontWeight: 600, fontSize: 11, letterSpacing: 2,
                   textTransform: 'uppercase',
                   background: isSelected

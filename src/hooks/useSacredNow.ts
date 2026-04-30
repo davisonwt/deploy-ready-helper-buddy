@@ -85,15 +85,16 @@ export function useSacredNow(tickMs = 60_000): SacredNow {
   // Recompute sunrise-based date whenever the clock ticks or location changes
   useEffect(() => {
     let cancelled = false;
-    const midnightDate = getCreatorDateSync(now);
-    setDate(midnightDate);
+    // Don't pre-set midnight date — it would flash the wrong (post-midnight)
+    // day before the sunrise-aware calc returns. Wait for the real answer.
     const run = async () => {
       try {
         const d = await getCreatorDate(now, true, location.lat, location.lon);
         if (cancelled) return;
-        const midnightDoy = toDayOfYear(midnightDate);
-        const sunriseDoy = toDayOfYear(d);
-        setDate(sunriseDoy < midnightDoy ? midnightDate : d);
+        // Trust the sunrise-aware date. Before local sunrise, this correctly
+        // returns YESTERDAY's sacred day. The previous "max(midnight, sunrise)"
+        // guard defeated the whole point of sunrise rollover.
+        setDate(d);
         setSunriseAware(true);
       } catch {
         if (cancelled) return;
