@@ -813,8 +813,8 @@ export default function SeedFlowDashboard() {
             <WeekBeads sacred={sacred} />
 
             <div style={styles.sectionLabel}>
-              <span>{userCards.length ? 'Your Seeds' : 'Seeds in motion'}</span>
-              <span style={styles.liveTag}>{userCards.length ? 'YOURS' : 'LIVE'}</span>
+              <span>{userCards.length ? 'Your Living Garden' : 'Seeds in motion'}</span>
+              <span style={styles.liveTag}>{userCards.length ? `${mineCards.length}🌱 · ${bestowedCards.length}💚` : 'LIVE'}</span>
             </div>
 
             {/* ── Seed showcase card ── */}
