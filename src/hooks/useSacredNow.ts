@@ -8,7 +8,7 @@
  * anywhere else that needs to know "what sacred day is it right now?".
  */
 
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useState } from 'react';
 import { useUserLocation } from './useUserLocation';
 import { getCreatorDate, getCreatorDateSync, type CustomDate } from '@/utils/customCalendar';
 import { getDayInfo } from '@/utils/sacredCalendar';
@@ -75,7 +75,6 @@ export function useSacredNow(tickMs = 60_000): SacredNow {
   const [date, setDate] = useState<CustomDate>(() => getCreatorDateSync(new Date()));
   const [sunriseAware, setSunriseAware] = useState(false);
   const [loading, setLoading] = useState(true);
-  const lastKey = useRef<string>('');
 
   // Tick clock
   useEffect(() => {
@@ -100,15 +99,7 @@ export function useSacredNow(tickMs = 60_000): SacredNow {
         if (!cancelled) setLoading(false);
       }
     };
-    // Throttle: only refetch sunrise once per local calendar day
-    const key = `${now.getFullYear()}-${now.getMonth()}-${now.getDate()}-${location.lat}-${location.lon}`;
-    if (key !== lastKey.current) {
-      lastKey.current = key;
-      run();
-    } else {
-      // Still update the snapshot synchronously so consumers stay fresh
-      setDate(getCreatorDateSync(now));
-    }
+    run();
     return () => {
       cancelled = true;
     };
