@@ -176,8 +176,8 @@ export async function getCreatorDate(
     }
   }
 
-  // Weekday: Year starts on "Day 4" (your rule). Sabbath = 7
-  const weekDay = ((totalDays % 7) + 4) % 7 || 7;  // 1-6 work, 7=Sabbath
+  // Weekday: observed anchor — 2026-04-30 is Day 3 of the week.
+  const weekDay = ((totalDays + 2) % 7) + 1;  // 1-6 work, 7=Sabbath
 
   return {
     year,
@@ -216,8 +216,8 @@ export function getCreatorDateSync(gregorianDate: Date = new Date()): CustomDate
     }
   }
 
-  // Weekday: Year starts on "Day 4" (your rule). Sabbath = 7
-  const weekDay = ((totalDays % 7) + 4) % 7 || 7;  // 1-6 work, 7=Sabbath
+  // Weekday: observed anchor — 2026-04-30 is Day 3 of the week.
+  const weekDay = ((totalDays + 2) % 7) + 1;  // 1-6 work, 7=Sabbath
 
   return {
     year,
