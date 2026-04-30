@@ -10088,6 +10088,8 @@ export type Database = {
           match_reasons: Json
           member_a_id: string
           member_b_id: string
+          spark_message: string | null
+          spark_voice_url: string | null
           status: Database["public"]["Enums"]["hearts_match_status"]
           updated_at: string
         }
@@ -10101,6 +10103,8 @@ export type Database = {
           match_reasons?: Json
           member_a_id: string
           member_b_id: string
+          spark_message?: string | null
+          spark_voice_url?: string | null
           status?: Database["public"]["Enums"]["hearts_match_status"]
           updated_at?: string
         }
@@ -10114,6 +10118,8 @@ export type Database = {
           match_reasons?: Json
           member_a_id?: string
           member_b_id?: string
+          spark_message?: string | null
+          spark_voice_url?: string | null
           status?: Database["public"]["Enums"]["hearts_match_status"]
           updated_at?: string
         }
@@ -12603,6 +12609,10 @@ export type Database = {
         Args: { call_session_id_param: string }
         Returns: undefined
       }
+      respond_tribal_hearts_spark: {
+        Args: { _accept: boolean; _match_id: string }
+        Returns: Json
+      }
       search_user_profiles: {
         Args: { search_term: string }
         Returns: {
@@ -12653,6 +12663,10 @@ export type Database = {
           isOneToOne: true
           isSetofReturn: false
         }
+      }
+      send_tribal_hearts_spark: {
+        Args: { _message?: string; _recipient_id: string; _voice_url?: string }
+        Returns: Json
       }
       store_payment_idempotency: {
         Args: {

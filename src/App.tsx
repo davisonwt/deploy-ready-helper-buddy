@@ -96,6 +96,7 @@ const ProductsPage = lazy(() => import("./pages/ProductsPage"));
 const MyProductsPage = lazy(() => import("./pages/MyProductsPage"));
 const UploadForm = lazy(() => import("./components/products/UploadForm"));
 const SellerCredentialsPage = lazy(() => import("./pages/SellerCredentialsPage"));
+const TribalHeartsPage = lazy(() => import("./pages/TribalHeartsPage"));
 const AdminCredentialsPage = lazy(() => import("./pages/AdminCredentialsPage"));
 const EditForm = lazy(() => import("./components/products/EditForm"));
 const ProductBasketPage = lazy(() => import("./pages/ProductBasketPage"));
@@ -216,6 +217,9 @@ const App = () => (
               } />
               <Route path="/regrow-access" element={
                 <ProtectedRoute><RequireVerification><Layout><BrowseOrchardsPage /></Layout></RequireVerification></ProtectedRoute>
+              } />
+              <Route path="/tribal-hearts" element={
+                <ProtectedRoute><RequireVerification><TribalHeartsPage /></RequireVerification></ProtectedRoute>
               } />
               <Route path="/browse-orchards" element={
                 <ProtectedRoute><RequireVerification><BrowseOrchardsPage /></RequireVerification></ProtectedRoute>
