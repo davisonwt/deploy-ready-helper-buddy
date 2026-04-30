@@ -6,6 +6,8 @@ import { Textarea } from '@/components/ui/textarea'
 import { Label } from '@/components/ui/label'
 import { Upload, Video, X } from 'lucide-react'
 import { useCommunityVideos } from '@/hooks/useCommunityVideos.jsx'
+import WanderingRolePicker from '@/components/marketplace/WanderingRolePicker'
+import CategoryTagPicker from '@/components/marketplace/CategoryTagPicker'
 
 export default function VideoUploadModal({ isOpen, onClose }) {
   const [file, setFile] = useState(null)
