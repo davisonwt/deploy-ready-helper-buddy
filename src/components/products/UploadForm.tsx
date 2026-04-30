@@ -12,6 +12,7 @@ import { toast } from 'sonner';
 import { useNavigate } from 'react-router-dom';
 import JSZip from 'jszip';
 import CategoryTagPicker from '@/components/marketplace/CategoryTagPicker';
+import { WANDERING_BADGES, type WanderingRole } from '@/components/marketplace/WanderingBadgeBar';
 
 export default function UploadForm() {
   const { user } = useAuth();
@@ -32,6 +33,7 @@ export default function UploadForm() {
   const [taxonomy, setTaxonomy] = useState<{ categoryId: string | null; subcategoryIds: string[]; tagIds: string[] }>({
     categoryId: null, subcategoryIds: [], tagIds: [],
   });
+  const [wanderingRole, setWanderingRole] = useState<WanderingRole | null>(null);
   const [albumFiles, setAlbumFiles] = useState<File[]>([]);
   const [zipFile, setZipFile] = useState<File | null>(null);
   const [extractingZip, setExtractingZip] = useState(false);
@@ -280,6 +282,7 @@ export default function UploadForm() {
           description: formData.description,
           type: formData.type,
           category: formData.category,
+          wandering_role: wanderingRole,
           license_type: formData.license_type,
           price: totalPrice, // Store total price
           cover_image_url: coverUrl.publicUrl,
