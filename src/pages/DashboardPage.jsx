@@ -188,6 +188,157 @@ function OmerBadge({ omer, omerTotal, nextFeast }) {
   )
 }
 
+// ── Day's Beads — current week strand, today highlighted ────────────────────
+function WeekBeads({ sacred }) {
+  // 7 days of the current week. weekDay 1..6 = work, 7 = Sabbath.
+  const today = sacred.weekDay // 1..7
+  const monthDay = sacred.date.day
+  const beads = Array.from({ length: 7 }, (_, i) => {
+    const wd = i + 1 // 1..7
+    const offset = wd - today
+    const dayNum = monthDay + offset
+    const isToday = wd === today
+    const isSabbath = wd === 7
+    return { wd, dayNum, isToday, isSabbath }
+  })
+
+  return (
+    <div style={{
+      background: 'linear-gradient(180deg, #0a0f1a 0%, #060a12 100%)',
+      border: '1px solid rgba(245,158,11,0.18)',
+      borderRadius: 16,
+      padding: '14px 16px 12px',
+      marginBottom: 16,
+      boxShadow: '0 0 30px rgba(245,158,11,0.06)',
+    }}>
+      <div style={{
+        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+        marginBottom: 10,
+      }}>
+        <div>
+          <div style={{ fontSize: 11, color: '#64748b', letterSpacing: '0.08em' }}>
+            Today in Creator's Count
+          </div>
+          <div style={{ fontSize: 18, fontWeight: 800, color: '#f1f5f9', marginTop: 2 }}>
+            Year {sacred.date.year} · Day {sacred.dayOfYear}
+          </div>
+        </div>
+        <div style={{
+          display: 'inline-flex', alignItems: 'center', gap: 5,
+          fontSize: 11, color: '#22d3ee',
+          background: 'rgba(34,211,238,0.08)', border: '1px solid rgba(34,211,238,0.25)',
+          borderRadius: 14, padding: '4px 10px', fontWeight: 700,
+        }}>
+          ✦ Live Daily
+        </div>
+      </div>
+
+      <div style={{
+        background: '#040810', borderRadius: 14, padding: '14px 8px 10px',
+        border: '1px solid rgba(255,255,255,0.04)',
+        position: 'relative', overflow: 'hidden',
+      }}>
+        <div style={{
+          position: 'absolute', inset: 0,
+          background: 'radial-gradient(ellipse at center, rgba(245,158,11,0.18), transparent 70%)',
+          pointerEvents: 'none',
+        }} />
+        <div style={{
+          position: 'relative',
+          display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: 4,
+        }}>
+          {beads.map((b) => {
+            const bg = b.isToday
+              ? 'radial-gradient(circle at 30% 30%, #7dd3fc, #0284c7 70%)'
+              : b.isSabbath
+                ? 'radial-gradient(circle at 30% 30%, #fde68a, #b45309 75%)'
+                : 'radial-gradient(circle at 30% 30%, #e2e8f0, #475569 75%)'
+            const ring = b.isToday
+              ? '0 0 18px #38bdf8aa, inset 0 0 6px #bae6fd'
+              : b.isSabbath
+                ? '0 0 14px #f59e0b88, inset 0 0 4px #fde68a'
+                : 'inset 0 0 4px rgba(0,0,0,0.5)'
+            return (
+              <div key={b.wd} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4 }}>
+                <div style={{
+                  width: 38, height: 38, borderRadius: '50%',
+                  background: bg, boxShadow: ring,
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  fontSize: 12, fontWeight: 800,
+                  color: b.isToday ? '#0c1220' : b.isSabbath ? '#3a1d04' : '#1f2937',
+                  border: b.isToday ? '2px solid #7dd3fc' : '1px solid rgba(255,255,255,0.15)',
+                }}>
+                  {b.dayNum > 0 ? b.dayNum : ''}
+                </div>
+                <div style={{ fontSize: 10, color: b.isToday ? '#38bdf8' : b.isSabbath ? '#f59e0b' : '#475569', fontWeight: 700 }}>
+                  {b.isSabbath ? 'שבת' : b.wd}
+                </div>
+                {b.isToday && (
+                  <div style={{ fontSize: 9, color: '#f472b6', fontWeight: 800, letterSpacing: '0.1em' }}>
+                    TODAY
+                  </div>
+                )}
+              </div>
+            )
+          })}
+        </div>
+        <div style={{
+          marginTop: 8, textAlign: 'center', fontSize: 10,
+          color: '#92400e', letterSpacing: '0.18em', fontWeight: 700,
+        }}>
+          MONTH {sacred.date.month} · WEEK {Math.ceil(sacred.dayOfYear / 7)}
+        </div>
+      </div>
+
+      <div style={{
+        display: 'flex', flexWrap: 'wrap', gap: 6, marginTop: 10,
+      }}>
+        <span style={{
+          fontSize: 10, fontWeight: 700, color: '#cbd5e1',
+          background: '#0f172a', border: '1px solid rgba(255,255,255,0.08)',
+          borderRadius: 10, padding: '4px 9px',
+        }}>
+          M{sacred.date.month} · D{sacred.date.day}
+        </span>
+        <span style={{
+          fontSize: 10, fontWeight: 700, color: '#cbd5e1',
+          background: '#0f172a', border: '1px solid rgba(255,255,255,0.08)',
+          borderRadius: 10, padding: '4px 9px',
+        }}>
+          Day {sacred.weekDay}
+        </span>
+        {sacred.omer && (
+          <span style={{
+            fontSize: 10, fontWeight: 700, color: '#fbbf24',
+            background: 'rgba(245,158,11,0.1)', border: '1px solid rgba(245,158,11,0.3)',
+            borderRadius: 10, padding: '4px 9px',
+          }}>
+            🌾 Omer {sacred.omer}/{sacred.omerTotal}
+          </span>
+        )}
+        {sacred.isFeast && (
+          <span style={{
+            fontSize: 10, fontWeight: 700, color: '#f472b6',
+            background: 'rgba(244,114,182,0.1)', border: '1px solid rgba(244,114,182,0.3)',
+            borderRadius: 10, padding: '4px 9px',
+          }}>
+            🍷 {sacred.feastName}
+          </span>
+        )}
+        {sacred.isSabbath && (
+          <span style={{
+            fontSize: 10, fontWeight: 700, color: '#fde68a',
+            background: 'rgba(245,158,11,0.12)', border: '1px solid rgba(245,158,11,0.35)',
+            borderRadius: 10, padding: '4px 9px',
+          }}>
+            ✡ Sabbath
+          </span>
+        )}
+      </div>
+    </div>
+  )
+}
+
 export default function SeedFlowDashboard() {
   const { user } = useAuth()
   const navigate = useNavigate()
