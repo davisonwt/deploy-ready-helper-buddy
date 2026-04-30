@@ -87,8 +87,13 @@ export function MusicLibraryTable({
       audioElement.currentTime = 0;
     }
 
+    const rawUrl = track.preview_url || track.file_url;
+    const audioUrl = rawUrl?.startsWith('http')
+      ? rawUrl
+      : supabase.storage.from('music-tracks').getPublicUrl(rawUrl).data.publicUrl;
+
     // Create new audio element for 30-second preview
-    const audio = new Audio(track.preview_url || track.file_url);
+    const audio = new Audio(audioUrl);
     audio.volume = 0.7;
     
     // Limit to 30 seconds for preview

@@ -432,7 +432,7 @@ export default function SeedFlowDashboard() {
       const djIds = (djs || []).map(d => d.id)
       if (!djIds.length) { setMyMusic([]); return }
       const { data } = await supabase.from('dj_music_tracks')
-        .select('id, track_title, genre, file_url, music_genre, music_mood, created_at')
+        .select('id, track_title, genre, file_url, cover_image_url, music_genre, music_mood, created_at')
         .in('dj_id', djIds)
         .order('created_at', { ascending: false })
         .limit(30)
@@ -528,7 +528,7 @@ export default function SeedFlowDashboard() {
     status: 'Yours',
     activity: m.music_genre || m.genre || 'Music',
     description: m.music_mood || 'A song you have sown',
-    image: 'https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=800&q=80',
+    image: m.cover_image_url || 'https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=800&q=80',
     color: '#0ea5e9', glow: '#38bdf8', emoji: '🎵',
     playPath: `/music-library`, bookPath: `/music-library`,
     mine: true, badge: { label: 'music', emoji: '🎵', color: '#38bdf8' },

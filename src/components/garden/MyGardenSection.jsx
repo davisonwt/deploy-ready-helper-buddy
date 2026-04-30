@@ -40,6 +40,12 @@ function GardenCard({ card, accent, navigate }) {
 
   const goLive = () => navigate(`/grove-station?seed=${encodeURIComponent(card.liveKey || card.id)}`)
   const handlePlay = () => {
+    if (previewing) {
+      audioRef.current?.pause()
+      videoRef.current?.pause()
+      setPreviewing(false)
+      return
+    }
     if (card.mediaKind === 'audio' && card.mediaUrl) {
       setPreviewing(true)
       setTimeout(() => audioRef.current?.play().catch(() => {}), 0)
@@ -76,6 +82,7 @@ function GardenCard({ card, accent, navigate }) {
         )}
         {previewing && card.mediaKind === 'video' && card.mediaUrl && (
           <video ref={videoRef} src={card.mediaUrl} controls style={styles.previewVideo}
+            muted={false}
             onEnded={() => setPreviewing(false)} />
         )}
       </div>

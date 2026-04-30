@@ -73,6 +73,12 @@ export default function SeedSlider({
   }
 
   const handlePlay = () => {
+    if (previewing) {
+      audioRef.current?.pause()
+      videoRef.current?.pause()
+      setPreviewing(false)
+      return
+    }
     if (active.mediaKind === 'audio' && active.mediaUrl) {
       setPreviewing(true)
       setTimeout(() => audioRef.current?.play().catch(() => {}), 0)
@@ -109,6 +115,7 @@ export default function SeedSlider({
             ref={videoRef}
             src={active.mediaUrl}
             controls
+            muted={false}
             style={styles.previewVideo}
             onEnded={() => setPreviewing(false)}
           />

@@ -50,6 +50,18 @@ export const useDirectMusicUpload = () => {
         .from('music-tracks')
         .getPublicUrl(fileName)
 
+      let coverImageUrl = null
+      if (trackData.coverImageFile) {
+        const coverExt = trackData.coverImageFile.name.split('.').pop() || 'jpg'
+        const coverName = `${user.id}/covers/${Date.now()}-${crypto.randomUUID()}.${coverExt}`
+        const { error: coverError } = await supabase.storage
+          .from('music-tracks')
+          .upload(coverName, trackData.coverImageFile, { contentType: trackData.coverImageFile.type, upsert: false })
+        if (coverError) throw coverError
+        const { data: coverPublic } = supabase.storage.from('music-tracks').getPublicUrl(coverName)
+        coverImageUrl = coverPublic?.publicUrl || null
+      }
+
       // Insert track record
       const { data: trackRecord, error: insertError } = await supabase
         .from('dj_music_tracks')
@@ -65,7 +77,8 @@ export const useDirectMusicUpload = () => {
           bpm: trackData.bpm || null,
           genre: trackData.genre || null,
           is_explicit: trackData.explicit || false,
-          wandering_role: trackData.wandering_role || null
+          wandering_role: trackData.wandering_role || null,
+          cover_image_url: coverImageUrl
         })
         .select()
         .single()

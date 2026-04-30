@@ -6,9 +6,14 @@ import { useAuth } from '@/hooks/useAuth'
 import { QuickAIHelper } from '@/components/ai/QuickAIHelper'
 import VideoFeed from '@/components/community/VideoFeed.jsx'
 import VideoUploadModal from '@/components/community/VideoUploadModal.jsx'
+import WanderingBadgeBar from '@/components/marketplace/WanderingBadgeBar'
+import MarketplaceFilterBar from '@/components/marketplace/MarketplaceFilterBar'
 
 export default function CommunityVideosPage() {
   const [showUploadModal, setShowUploadModal] = useState(false)
+  const [activeRole, setActiveRole] = useState(null)
+  const [categoryId, setCategoryId] = useState(null)
+  const [tagIds, setTagIds] = useState([])
   const { user } = useAuth()
 
   return (
@@ -47,6 +52,16 @@ export default function CommunityVideosPage() {
           </div>
         </div>
       </div>
+
+        <div className="max-w-6xl mx-auto px-4 pt-6">
+          <WanderingBadgeBar activeRole={activeRole} onRoleChange={setActiveRole} />
+          <MarketplaceFilterBar
+            categoryId={categoryId}
+            tagIds={tagIds}
+            onCategoryChange={setCategoryId}
+            onTagsChange={setTagIds}
+          />
+        </div>
 
       {/* Stats Cards */}
       <div className="max-w-6xl mx-auto px-4 py-6">
@@ -178,7 +193,7 @@ export default function CommunityVideosPage() {
         )}
 
           {/* Video Feed */}
-          <VideoFeed />
+          <VideoFeed activeRole={activeRole} categoryId={categoryId} tagIds={tagIds} />
         </div>
       </div>
 

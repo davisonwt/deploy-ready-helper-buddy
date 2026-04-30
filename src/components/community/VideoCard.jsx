@@ -12,7 +12,7 @@ import VideoCommentsModal from './VideoCommentsModal.jsx'
 
 export default function VideoCard({ video, onVideoClick, showDeleteOption = false, onDelete }) {
   const [isPlaying, setIsPlaying] = useState(false)
-  const [isMuted, setIsMuted] = useState(true)
+  const [isMuted, setIsMuted] = useState(false)
   const [showComments, setShowComments] = useState(false)
   const [hasViewed, setHasViewed] = useState(false)
   const [videoError, setVideoError] = useState(false)
@@ -157,7 +157,10 @@ export default function VideoCard({ video, onVideoClick, showDeleteOption = fals
                 size="lg"
                 variant="secondary"
                 className="bg-white/20 hover:bg-white/30 text-white border-0"
-                onClick={handlePlayPause}
+                onClick={(e) => {
+                  e.stopPropagation()
+                  handlePlayPause()
+                }}
               >
                 {isPlaying ? (
                   <Pause className="h-8 w-8" />

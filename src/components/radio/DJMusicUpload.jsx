@@ -16,6 +16,7 @@ import CategoryTagPicker from '@/components/marketplace/CategoryTagPicker'
 export default function DJMusicUpload({ trigger }) {
   const [isOpen, setIsOpen] = useState(false)
   const [files, setFiles] = useState([])
+  const [coverImageFile, setCoverImageFile] = useState(null)
   const [releaseType, setReleaseType] = useState('single') // 'single' or 'album'
   const [dragActive, setDragActive] = useState(false)
   const [trackData, setTrackData] = useState({
@@ -149,6 +150,7 @@ export default function DJMusicUpload({ trigger }) {
 
       const enrichedTrack = {
         ...trackData,
+        coverImageFile,
         wandering_role: wanderingRole,
         subcategoryIds: taxonomy.subcategoryIds,
         tagIds: taxonomy.tagIds,
@@ -179,6 +181,7 @@ export default function DJMusicUpload({ trigger }) {
           tags: [...albumData.tags, albumData.albumTitle],
           type: 'music',
           duration: 0,
+          coverImageFile,
           wandering_role: wanderingRole,
           subcategoryIds: taxonomy.subcategoryIds,
           tagIds: taxonomy.tagIds,
@@ -198,6 +201,7 @@ export default function DJMusicUpload({ trigger }) {
 
   const resetForm = () => {
     setFiles([])
+    setCoverImageFile(null)
     setTrackData({
       title: '',
       artist: '',
@@ -495,6 +499,17 @@ export default function DJMusicUpload({ trigger }) {
                   readOnly
                   className="bg-muted"
                 />
+              </div>
+
+              <div className="space-y-2 md:col-span-2">
+                <Label htmlFor="coverImage">Music seed image / cover art</Label>
+                <Input
+                  id="coverImage"
+                  type="file"
+                  accept="image/*"
+                  onChange={(e) => setCoverImageFile(e.target.files?.[0] || null)}
+                />
+                {coverImageFile && <p className="text-sm text-muted-foreground">Using {coverImageFile.name}</p>}
               </div>
             </div>
           ) : (

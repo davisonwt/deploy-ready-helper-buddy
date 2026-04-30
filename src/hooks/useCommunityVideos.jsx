@@ -28,7 +28,9 @@ export function useCommunityVideos() {
             avatar_url
           )
         `)
-        .eq('status', 'approved')
+      query = user
+        ? query.or(`status.eq.approved,uploader_id.eq.${user.id}`)
+        : query.eq('status', 'approved')
 
       // Apply sorting
       switch (options.sortBy) {
@@ -53,10 +55,63 @@ export function useCommunityVideos() {
         query = query.or(`title.ilike.%${options.search}%,description.ilike.%${options.search}%,tags.cs.{${options.search}}`)
       }
 
+      if (options.activeRole) {
+        query = query.eq('wandering_role', options.activeRole)
+      }
+
       const { data, error } = await query.limit(20)
 
       if (error) throw error
-      setVideos(data || [])
+
+      let filteredVideos = data || []
+      if (options.categoryId) {
+        const { data: subcategoryRows, error: subcategoryError } = await supabase
+          .from('marketplace_subcategories')
+          .select('id')
+          .eq('category_id', options.categoryId)
+        if (subcategoryError) throw subcategoryError
+        const subcategoryIds = (subcategoryRows || []).map((row) => row.id)
+        if (!subcategoryIds.length) {
+          setVideos([])
+          return
+        }
+        const { data: listingRows, error: listingError } = await supabase
+          .from('listing_subcategories')
+          .select('listing_id')
+          .eq('listing_type', 'video')
+          .in('subcategory_id', subcategoryIds)
+        if (listingError) throw listingError
+        const listingIds = new Set((listingRows || []).map((row) => row.listing_id))
+        filteredVideos = filteredVideos.filter((video) => listingIds.has(video.id))
+      }
+
+      if (options.tagIds?.length) {
+        const { data: tagRows, error: tagError } = await supabase
+          .from('listing_tags')
+          .select('listing_id, tag_id')
+          .eq('listing_type', 'video')
+          .in('tag_id', options.tagIds)
+        if (tagError) throw tagError
+        const counts = new Map()
+        ;(tagRows || []).forEach((row) => {
+          if (!counts.has(row.listing_id)) counts.set(row.listing_id, new Set())
+          counts.get(row.listing_id).add(row.tag_id)
+        })
+        filteredVideos = filteredVideos.filter((video) => counts.get(video.id)?.size === options.tagIds.length)
+      }
+
+      const refreshedVideos = await Promise.all(filteredVideos.map(async (video) => {
+        if (!video.video_url) return video
+        const marker = '/object/sign/videos/'
+        const objectPath = video.video_url.includes(marker)
+          ? decodeURIComponent(video.video_url.split(marker)[1].split('?')[0])
+          : video.video_url.startsWith('http') ? null : video.video_url
+        if (!objectPath) return video
+        const { data: signed } = await supabase.storage.from('videos').createSignedUrl(objectPath, 3600)
+        return signed?.signedUrl ? { ...video, video_url: signed.signedUrl } : video
+      }))
+
+      setVideos(refreshedVideos)
     } catch (error) {
       console.error('Error fetching videos:', error)
       toast({
