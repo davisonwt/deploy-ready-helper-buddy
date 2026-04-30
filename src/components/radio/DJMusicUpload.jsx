@@ -10,6 +10,8 @@ import { Card, CardContent } from '@/components/ui/card'
 import { Upload, Music, X, Plus, Disc } from 'lucide-react'
 import { useDJPlaylist } from '@/hooks/useDJPlaylist'
 import { useDirectMusicUpload } from '@/hooks/useDirectMusicUpload'
+import WanderingRolePicker from '@/components/marketplace/WanderingRolePicker'
+import CategoryTagPicker from '@/components/marketplace/CategoryTagPicker'
 
 export default function DJMusicUpload({ trigger }) {
   const [isOpen, setIsOpen] = useState(false)
