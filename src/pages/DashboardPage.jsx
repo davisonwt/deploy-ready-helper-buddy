@@ -401,6 +401,7 @@ export default function SeedFlowDashboard() {
       borderLeft: '1px solid rgba(255,255,255,0.05)',
       padding: '18px 14px', overflowY: 'auto',
       display: 'flex', flexDirection: 'column', gap: 22,
+      height: '100%', minHeight: 0,
     },
     panelSection: { display: 'flex', flexDirection: 'column', gap: 8 },
     panelTitle: {
