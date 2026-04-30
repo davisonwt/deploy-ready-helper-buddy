@@ -5576,6 +5576,7 @@ export type Database = {
           title: string
           type: string | null
           updated_at: string | null
+          wandering_role: string | null
           whisperer_commission_percent: number | null
         }
         Insert: {
@@ -5608,6 +5609,7 @@ export type Database = {
           title: string
           type?: string | null
           updated_at?: string | null
+          wandering_role?: string | null
           whisperer_commission_percent?: number | null
         }
         Update: {
@@ -5640,6 +5642,7 @@ export type Database = {
           title?: string
           type?: string | null
           updated_at?: string | null
+          wandering_role?: string | null
           whisperer_commission_percent?: number | null
         }
         Relationships: [
@@ -11882,6 +11885,24 @@ export type Database = {
       }
     }
     Views: {
+      admin_pending_credentials_v: {
+        Row: {
+          avatar_url: string | null
+          credential_type: string | null
+          display_name: string | null
+          expires_at: string | null
+          file_url: string | null
+          id: string | null
+          notes: string | null
+          rejection_reason: string | null
+          reviewed_at: string | null
+          reviewed_by: string | null
+          status: Database["public"]["Enums"]["verification_status"] | null
+          submitted_at: string | null
+          user_id: string | null
+        }
+        Relationships: []
+      }
       profiles_public: {
         Row: {
           avatar_url: string | null
