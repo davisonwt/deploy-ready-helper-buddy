@@ -269,6 +269,9 @@ export default function MarketingVideosGallery() {
           </div>
         </div>
 
+        {/* S2G House Reel — curated brand videos from orchard-videos bucket */}
+        <S2GHouseReel />
+
         {/* Videos Grid */}
         <div className='container mx-auto px-4 py-8'>
           {filteredVideos.length === 0 ? (
@@ -479,6 +482,89 @@ export default function MarketingVideosGallery() {
           100% { background-position: 0% 50%; }
         }
       `}</style>
+    </div>
+  )
+}
+
+// ── S2G House Reel ─────────────────────────────────────────────────────────
+// Curated brand films from the orchard-videos bucket. These are the official
+// S2G explainers / brand poetry pieces, separate from creator-uploaded
+// marketing in the carousel below.
+const S2G_VID = (file) =>
+  `https://zuwkgasbkpjlxzsjzumu.supabase.co/storage/v1/object/public/orchard-videos/${encodeURI(file)}`
+
+const HOUSE_REEL = [
+  { title: 'Become a Sower & Grower',     desc: 'The complete S2G onboarding film',          src: S2G_VID('s2g  become a sower and grower (1).mp4') },
+  { title: 'How Bestowing Works',         desc: 'Pockets, bestowals, and the harvest',       src: S2G_VID('bestowers main mp4.mp4') },
+  { title: 'Community Orchards',          desc: 'Tribe needs become orchards',               src: S2G_VID('orchards main mp4.mp4') },
+  { title: 'My Orchard',                  desc: 'Your garden of seeds',                       src: S2G_VID('s2g my orchard (1).mp4') },
+  { title: 'Free-Will Giving',            desc: '1% forever through your tribe',             src: S2G_VID('free-will giving.mp4') },
+  { title: 'Let It Rain',                 desc: 'Bestow blessings on the tribe',             src: S2G_VID('s2g let it rain bring the rainbow 1280x720.mp4') },
+  { title: 'Tithing',                     desc: 'Wallet & USDC settlement',                  src: S2G_VID('tithing 1280x720.mp4') },
+  { title: 'Harvest Time',                desc: 'When seeds become fruit',                   src: S2G_VID('s2g harvest 1280x720 (1).mp4') },
+  { title: 'Light & Love Bestow',         desc: 'The heart of the platform',                 src: S2G_VID('s2g light & love bestow 1280x720.mp4') },
+  { title: 'Divine Presence',             desc: 'Sacred time, sacred work',                  src: S2G_VID('s2g divine presence.mp4') },
+  { title: 'Gift of Giving',              desc: 'Why we bestow',                              src: S2G_VID('s2g gift of giving 1280x720.mp4') },
+  { title: 'Grow Into Blossoms',          desc: "Sunlight's love",                            src: S2G_VID('s2g grow into blossoms, sunlight\'s love 1280x720.mp4') },
+]
+
+function S2GHouseReel() {
+  const [activeId, setActiveId] = React.useState(null)
+
+  const toggle = (i) => setActiveId(prev => (prev === i ? null : i))
+
+  return (
+    <div className='container mx-auto px-4 pt-8'>
+      <div className='flex items-center justify-between mb-4'>
+        <div>
+          <h2 className='text-2xl md:text-3xl font-bold text-white drop-shadow'>S2G House Reel</h2>
+          <p className='text-white/80 text-sm mt-1'>Official brand films from Sow2Grow</p>
+        </div>
+        <Badge className='bg-white/20 backdrop-blur-md border border-white/30 text-white'>
+          {HOUSE_REEL.length} films
+        </Badge>
+      </div>
+
+      <div className='grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4'>
+        {HOUSE_REEL.map((v, i) => (
+          <div
+            key={v.src}
+            className='group relative rounded-2xl overflow-hidden border border-white/20 bg-black/40 backdrop-blur-md cursor-pointer'
+            onClick={() => toggle(i)}
+          >
+            <div className='aspect-video relative bg-black'>
+              {activeId === i ? (
+                <video
+                  src={v.src}
+                  autoPlay
+                  controls
+                  playsInline
+                  className='w-full h-full object-cover'
+                />
+              ) : (
+                <>
+                  <video
+                    src={`${v.src}#t=0.5`}
+                    preload='metadata'
+                    muted
+                    playsInline
+                    className='w-full h-full object-cover opacity-70 group-hover:opacity-100'
+                  />
+                  <div className='absolute inset-0 flex items-center justify-center'>
+                    <div className='w-14 h-14 rounded-full bg-white/90 flex items-center justify-center shadow-2xl'>
+                      <Play className='w-6 h-6 text-black ml-1' />
+                    </div>
+                  </div>
+                </>
+              )}
+            </div>
+            <div className='p-3'>
+              <div className='font-semibold text-white text-sm leading-tight'>{v.title}</div>
+              <div className='text-xs text-white/70 mt-0.5'>{v.desc}</div>
+            </div>
+          </div>
+        ))}
+      </div>
     </div>
   )
 }
