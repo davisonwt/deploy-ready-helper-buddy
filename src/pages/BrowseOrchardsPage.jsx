@@ -135,18 +135,16 @@ function OrchardCard({ orchard, index }) {
         </div>
 
         <div style={{ display: 'flex', gap: 8 }}>
-          <Link to={`/animated-orchard/${orchard.id}`} style={{ flex: 1, textDecoration: 'none' }}>
-            <motion.button whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }}
-              style={{ width: '100%', padding: '14px 0', background: `linear-gradient(135deg, ${typeConfig.color}, ${typeConfig.color}99)`, border: 'none', borderRadius: 12, color: '#fff', fontWeight: 800, fontSize: 15, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, boxShadow: `0 4px 20px ${typeConfig.color}40` }}>
-              <Heart style={{ width: 18, height: 18 }} />
-              Bestow from ${pocketPrice}
-            </motion.button>
+          <Link to={`/animated-orchard/${orchard.id}`} style={{ flex: 2, textDecoration: 'none' }}>
+            <LivingButton variant="enter" height={48} borderRadius={12} fontSize={13} letterSpacing="1px">
+              <Heart style={{ width: 16, height: 16 }} />
+              Bestow ${pocketPrice}
+            </LivingButton>
           </Link>
-          <Link to={`/live-seed/${orchard.id}`} style={{ textDecoration: 'none' }}>
-            <motion.button whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }}
-              style={{ padding: '14px 16px', background: 'rgba(239,68,68,0.15)', border: '1px solid rgba(239,68,68,0.4)', borderRadius: 12, color: '#ef4444', fontWeight: 800, fontSize: 13, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6 }}>
-              🔴 Go Live
-            </motion.button>
+          <Link to={`/live-seed/${orchard.id}`} style={{ flex: 1, textDecoration: 'none' }}>
+            <LivingButton variant="live" height={48} borderRadius={12} fontSize={12} letterSpacing="1px">
+              Go Live
+            </LivingButton>
           </Link>
         </div>
 
@@ -181,7 +179,9 @@ function MediaGrid({ kind, items, loading }) {
             <div style={{ fontSize: 12, color: '#64748b', marginBottom: 8 }}>by {it.sower || 'Anonymous Sower'}</div>
             {it.link && (
               <Link to={it.link} style={{ textDecoration: 'none' }}>
-                <button style={{ width: '100%', padding: '8px 0', background: 'linear-gradient(135deg, #10b981, #059669)', border: 'none', borderRadius: 8, color: '#fff', fontWeight: 700, fontSize: 12, cursor: 'pointer' }}>Open</button>
+                <LivingButton variant="enter" height={40} borderRadius={10} fontSize={12} letterSpacing="1px">
+                  Open
+                </LivingButton>
               </Link>
             )}
           </div>
