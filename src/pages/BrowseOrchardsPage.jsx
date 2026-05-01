@@ -10,6 +10,7 @@ import { toast } from "sonner"
 import { processOrchardsUrls } from "../utils/urlUtils"
 import { GradientPlaceholder } from "@/components/ui/GradientPlaceholder"
 import { motion, AnimatePresence } from "framer-motion"
+import LivingButton from "../components/LivingButton"
 
 const WANDERING_ROLES = [
   { label: 'All Roles', value: 'all', emoji: '🌿' },
