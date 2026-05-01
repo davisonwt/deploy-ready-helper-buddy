@@ -1433,6 +1433,30 @@ export default function ProfilePage() {
                         Twitter / X
                       </a>
                     )}
+                    {user?.linkedin_url && (
+                      <a href={user.linkedin_url} target="_blank" rel="noopener noreferrer"
+                        className="inline-flex items-center gap-2 px-4 py-3 bg-[#0A66C2] text-white rounded-xl hover:opacity-90 transition-all duration-300 hover:scale-105 shadow-lg">
+                        LinkedIn
+                      </a>
+                    )}
+                    {user?.pinterest_url && (
+                      <a href={user.pinterest_url} target="_blank" rel="noopener noreferrer"
+                        className="inline-flex items-center gap-2 px-4 py-3 bg-[#E60023] text-white rounded-xl hover:opacity-90 transition-all duration-300 hover:scale-105 shadow-lg">
+                        Pinterest
+                      </a>
+                    )}
+                    {user?.whatsapp_url && (
+                      <a href={user.whatsapp_url} target="_blank" rel="noopener noreferrer"
+                        className="inline-flex items-center gap-2 px-4 py-3 bg-[#25D366] text-white rounded-xl hover:opacity-90 transition-all duration-300 hover:scale-105 shadow-lg">
+                        WhatsApp
+                      </a>
+                    )}
+                    {user?.telegram_url && (
+                      <a href={user.telegram_url} target="_blank" rel="noopener noreferrer"
+                        className="inline-flex items-center gap-2 px-4 py-3 bg-[#229ED9] text-white rounded-xl hover:opacity-90 transition-all duration-300 hover:scale-105 shadow-lg">
+                        Telegram
+                      </a>
+                    )}
                   </div>
                 </div>
               )}
