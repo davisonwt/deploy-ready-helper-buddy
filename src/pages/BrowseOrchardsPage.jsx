@@ -482,6 +482,31 @@ export default function BrowseOrchardsPage() {
           <MediaGrid kind="videos" items={videos} loading={mediaLoading} />
         )}
       </div>
+
+      {/* ── Sticky tribal action bar — Plant / Go Live / Chat ── */}
+      <div style={{
+        position: 'fixed', bottom: 0, left: 0, right: 0,
+        display: 'flex', gap: 8, padding: '10px 12px',
+        background: 'rgba(8,13,23,0.95)', backdropFilter: 'blur(10px)',
+        borderTop: '1px solid rgba(16,185,129,0.15)',
+        zIndex: 100,
+      }}>
+        <Link to="/create-orchard" style={{ flex: 1, textDecoration: 'none' }}>
+          <LivingButton variant="enter" height={48} borderRadius={14} fontSize={12} letterSpacing="1px">
+            🌱 Plant Seed
+          </LivingButton>
+        </Link>
+        <Link to="/grove-station" style={{ flex: 1, textDecoration: 'none' }}>
+          <LivingButton variant="live" height={48} borderRadius={14} fontSize={12} letterSpacing="1px">
+            Go Live
+          </LivingButton>
+        </Link>
+        <Link to="/chatapp" style={{ flex: 1, textDecoration: 'none' }}>
+          <LivingButton variant="share" height={48} borderRadius={14} fontSize={12} letterSpacing="1px">
+            💬 Chat
+          </LivingButton>
+        </Link>
+      </div>
     </div>
   )
 }
