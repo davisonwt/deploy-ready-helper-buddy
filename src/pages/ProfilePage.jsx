@@ -103,6 +103,10 @@ export default function ProfilePage() {
     facebook_url: user?.facebook_url || "",
     twitter_url: user?.twitter_url || "",
     youtube_url: user?.youtube_url || "",
+    linkedin_url: user?.linkedin_url || "",
+    pinterest_url: user?.pinterest_url || "",
+    whatsapp_url: user?.whatsapp_url || "",
+    telegram_url: user?.telegram_url || "",
     show_social_media: user?.show_social_media !== false,
     avatar_url: user?.avatar_url || null,
     preferred_currency: user?.preferred_currency || "USD",
@@ -126,6 +130,10 @@ export default function ProfilePage() {
         facebook_url: user?.facebook_url || "",
         twitter_url: user?.twitter_url || "",
         youtube_url: user?.youtube_url || "",
+        linkedin_url: user?.linkedin_url || "",
+        pinterest_url: user?.pinterest_url || "",
+        whatsapp_url: user?.whatsapp_url || "",
+        telegram_url: user?.telegram_url || "",
         show_social_media: user?.show_social_media !== false,
         avatar_url: user?.avatar_url || null,
         preferred_currency: user?.preferred_currency || "USD",
@@ -230,6 +238,22 @@ export default function ProfilePage() {
     if (formData.youtube_url && !urlPattern.test(formData.youtube_url)) {
       errors.youtube = "Please enter a valid YouTube URL"
     }
+
+    if (formData.linkedin_url && !urlPattern.test(formData.linkedin_url)) {
+      errors.linkedin = "Please enter a valid LinkedIn URL"
+    }
+
+    if (formData.pinterest_url && !urlPattern.test(formData.pinterest_url)) {
+      errors.pinterest = "Please enter a valid Pinterest URL"
+    }
+
+    if (formData.whatsapp_url && !urlPattern.test(formData.whatsapp_url)) {
+      errors.whatsapp = "Please enter a valid WhatsApp URL (e.g. https://wa.me/<number>)"
+    }
+
+    if (formData.telegram_url && !urlPattern.test(formData.telegram_url)) {
+      errors.telegram = "Please enter a valid Telegram URL (e.g. https://t.me/<username>)"
+    }
     
     setSocialLinksError(errors)
     return Object.keys(errors).length === 0
@@ -280,6 +304,10 @@ export default function ProfilePage() {
       facebook_url: user?.facebook_url || "",
       twitter_url: user?.twitter_url || "",
       youtube_url: user?.youtube_url || "",
+      linkedin_url: user?.linkedin_url || "",
+      pinterest_url: user?.pinterest_url || "",
+      whatsapp_url: user?.whatsapp_url || "",
+      telegram_url: user?.telegram_url || "",
       show_social_media: user?.show_social_media !== false,
       avatar_url: user?.avatar_url || null,
       preferred_currency: user?.preferred_currency || "USD",
