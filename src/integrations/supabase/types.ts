@@ -5720,13 +5720,16 @@ export type Database = {
           is_chatapp_verified: boolean | null
           last_login: string | null
           last_name: string | null
+          linkedin_url: string | null
           location: string | null
           membership_tier: string | null
           phone: string | null
+          pinterest_url: string | null
           preferred_currency: string | null
           preferred_language: string | null
           show_social_media: boolean | null
           suspended: boolean | null
+          telegram_url: string | null
           tiktok_url: string | null
           timezone: string | null
           twitter_url: string | null
@@ -5742,6 +5745,7 @@ export type Database = {
           verifier_id: string | null
           video_credits: number
           website: string | null
+          whatsapp_url: string | null
           youtube_url: string | null
         }
         Insert: {
@@ -5760,13 +5764,16 @@ export type Database = {
           is_chatapp_verified?: boolean | null
           last_login?: string | null
           last_name?: string | null
+          linkedin_url?: string | null
           location?: string | null
           membership_tier?: string | null
           phone?: string | null
+          pinterest_url?: string | null
           preferred_currency?: string | null
           preferred_language?: string | null
           show_social_media?: boolean | null
           suspended?: boolean | null
+          telegram_url?: string | null
           tiktok_url?: string | null
           timezone?: string | null
           twitter_url?: string | null
@@ -5782,6 +5789,7 @@ export type Database = {
           verifier_id?: string | null
           video_credits?: number
           website?: string | null
+          whatsapp_url?: string | null
           youtube_url?: string | null
         }
         Update: {
@@ -5800,13 +5808,16 @@ export type Database = {
           is_chatapp_verified?: boolean | null
           last_login?: string | null
           last_name?: string | null
+          linkedin_url?: string | null
           location?: string | null
           membership_tier?: string | null
           phone?: string | null
+          pinterest_url?: string | null
           preferred_currency?: string | null
           preferred_language?: string | null
           show_social_media?: boolean | null
           suspended?: boolean | null
+          telegram_url?: string | null
           tiktok_url?: string | null
           timezone?: string | null
           twitter_url?: string | null
@@ -5822,6 +5833,7 @@ export type Database = {
           verifier_id?: string | null
           video_credits?: number
           website?: string | null
+          whatsapp_url?: string | null
           youtube_url?: string | null
         }
         Relationships: []
