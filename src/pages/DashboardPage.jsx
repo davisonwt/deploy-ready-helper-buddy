@@ -87,7 +87,7 @@ const NAV = [
   { label: 'Directory',        sub: 'Find your tribe',           emoji: '🌍', path: '/wandering-directory',   color: '#6366f1' },
   { label: 'Wandering Hearts', sub: 'Tribal connections',        emoji: '💚', path: '/tribal-hearts',         color: '#dc2626' },
   { label: 'My Tribe',         sub: 'Your invitation code & tribe', emoji: '🌿', path: '/my-tribe',           color: '#22c55e' },
-  { label: "Gosat's",          sub: 'Elder management',          emoji: '🏛', path: '/gosats',                color: '#7c3aed' },
+  { label: "Gosat's",          sub: 'Elder management',          emoji: '🏛', path: '/admin',                 color: '#7c3aed' },
 ]
 
 const GROWTH_TIPS = [
