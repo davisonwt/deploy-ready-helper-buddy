@@ -26,8 +26,14 @@ export default function MyTribePage() {
   const [tribe, setTribe] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
-  const inviteUrl = code ? burnReferralCode(`${window.location.origin}/register`, code) : "";
-  const inviteText = `🌱 Join my tribe on Sow2Grow — a global tribal marketplace where every seed grows together.\n\n${inviteUrl}`;
+  // Always use the public production domain so shared links render with the S2G site preview/logo
+  const inviteOrigin = (typeof window !== "undefined" && /lovable(project)?\.(app|com)|localhost|127\.0\.0\.1/.test(window.location.hostname))
+    ? "https://sow2growapp.com"
+    : (typeof window !== "undefined" ? window.location.origin : "https://sow2growapp.com");
+  const inviteUrl = code ? burnReferralCode(`${inviteOrigin}/register`, code) : "";
+  const inviteText = code
+    ? `🌱 You're invited to join my tribe on Sow2Grow — a global tribal marketplace where every seed grows together.\n\nUse my invitation code: ${code}\nRegister here: ${inviteUrl}\n\n(When you sign up from this link, you automatically join my tribe forever.)`
+    : "";
 
   useEffect(() => {
     if (!user?.id) return;
@@ -126,9 +132,9 @@ export default function MyTribePage() {
               <>
                 <div className="flex flex-wrap items-center gap-3">
                   <div className="font-mono text-2xl md:text-3xl font-bold text-emerald-500 tracking-wider">{code}</div>
-                  <Button size="sm" variant="outline" onClick={() => copy(code, "code")}>
+                  <Button size="sm" variant="outline" onClick={() => copy(inviteText, "code")}>
                     {copied === "code" ? <Check className="h-4 w-4 mr-1" /> : <Copy className="h-4 w-4 mr-1" />}
-                    {copied === "code" ? "Copied" : "Copy code"}
+                    {copied === "code" ? "Copied invitation" : "Copy invitation"}
                   </Button>
                 </div>
                 <div>
