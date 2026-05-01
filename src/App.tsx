@@ -20,6 +20,7 @@ const ContentModerationDashboard = lazy(() => import('./components/admin/Content
 const CommissionDashboard = lazy(() => import('./components/marketing/CommissionDashboard'));
 const GamificationDashboard = lazy(() => import('./components/gamification/GamificationDashboard'));
 const AdvancedSearchPage = lazy(() => import('./pages/AdvancedSearchPage'));
+const MyTribePage = lazy(() => import('./pages/MyTribePage'));
 
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
@@ -411,6 +412,9 @@ const App = () => (
               <Route path="/payment-success" element={<PaymentSuccessPage />} />
               <Route path="/commissions" element={
                 <ProtectedRoute><Layout><Suspense fallback={<LoadingFallback />}><CommissionDashboard /></Suspense></Layout></ProtectedRoute>
+              } />
+              <Route path="/my-tribe" element={
+                <ProtectedRoute><Suspense fallback={<LoadingFallback />}><MyTribePage /></Suspense></ProtectedRoute>
               } />
               <Route path="/achievements" element={
                 <ProtectedRoute><Layout><Suspense fallback={<LoadingFallback />}><GamificationDashboard /></Suspense></Layout></ProtectedRoute>
