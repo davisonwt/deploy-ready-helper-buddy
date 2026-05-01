@@ -10,6 +10,7 @@ import { toast } from "sonner"
 import { processOrchardsUrls } from "../utils/urlUtils"
 import { GradientPlaceholder } from "@/components/ui/GradientPlaceholder"
 import { motion, AnimatePresence } from "framer-motion"
+import LivingButton from "../components/LivingButton"
 
 const WANDERING_ROLES = [
   { label: 'All Roles', value: 'all', emoji: '🌿' },
@@ -134,18 +135,16 @@ function OrchardCard({ orchard, index }) {
         </div>
 
         <div style={{ display: 'flex', gap: 8 }}>
-          <Link to={`/animated-orchard/${orchard.id}`} style={{ flex: 1, textDecoration: 'none' }}>
-            <motion.button whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }}
-              style={{ width: '100%', padding: '14px 0', background: `linear-gradient(135deg, ${typeConfig.color}, ${typeConfig.color}99)`, border: 'none', borderRadius: 12, color: '#fff', fontWeight: 800, fontSize: 15, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, boxShadow: `0 4px 20px ${typeConfig.color}40` }}>
-              <Heart style={{ width: 18, height: 18 }} />
-              Bestow from ${pocketPrice}
-            </motion.button>
+          <Link to={`/animated-orchard/${orchard.id}`} style={{ flex: 2, textDecoration: 'none' }}>
+            <LivingButton variant="enter" height={48} borderRadius={12} fontSize={13} letterSpacing="1px">
+              <Heart style={{ width: 16, height: 16 }} />
+              Bestow ${pocketPrice}
+            </LivingButton>
           </Link>
-          <Link to={`/live-seed/${orchard.id}`} style={{ textDecoration: 'none' }}>
-            <motion.button whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }}
-              style={{ padding: '14px 16px', background: 'rgba(239,68,68,0.15)', border: '1px solid rgba(239,68,68,0.4)', borderRadius: 12, color: '#ef4444', fontWeight: 800, fontSize: 13, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6 }}>
-              🔴 Go Live
-            </motion.button>
+          <Link to={`/live-seed/${orchard.id}`} style={{ flex: 1, textDecoration: 'none' }}>
+            <LivingButton variant="live" height={48} borderRadius={12} fontSize={12} letterSpacing="1px">
+              Go Live
+            </LivingButton>
           </Link>
         </div>
 
@@ -180,7 +179,9 @@ function MediaGrid({ kind, items, loading }) {
             <div style={{ fontSize: 12, color: '#64748b', marginBottom: 8 }}>by {it.sower || 'Anonymous Sower'}</div>
             {it.link && (
               <Link to={it.link} style={{ textDecoration: 'none' }}>
-                <button style={{ width: '100%', padding: '8px 0', background: 'linear-gradient(135deg, #10b981, #059669)', border: 'none', borderRadius: 8, color: '#fff', fontWeight: 700, fontSize: 12, cursor: 'pointer' }}>Open</button>
+                <LivingButton variant="enter" height={40} borderRadius={10} fontSize={12} letterSpacing="1px">
+                  Open
+                </LivingButton>
               </Link>
             )}
           </div>
@@ -321,24 +322,57 @@ export default function BrowseOrchardsPage() {
   }, [processed, selectedRole, selectedType, sortBy])
 
   return (
-    <div style={{ minHeight: '100vh', background: 'linear-gradient(135deg, #020617 0%, #0f172a 50%, #020617 100%)', color: '#f1f5f9' }}>
+    <div style={{ minHeight: '100vh', background: 'linear-gradient(135deg, #020617 0%, #0f172a 50%, #020617 100%)', color: '#f1f5f9', paddingBottom: 90 }}>
       <style>{`
         @keyframes pulse-glow { 0%,100%{box-shadow:0 0 10px rgba(16,185,129,0.3)} 50%{box-shadow:0 0 25px rgba(16,185,129,0.6)} }
         .live-dot { width:8px;height:8px;border-radius:50%;background:#10b981;animation:pulse-glow 2s infinite; }
+        @keyframes orchardBuzz {
+          0%,100% { transform: translateY(0); opacity: 0.8; }
+          50% { transform: translateY(-3px); opacity: 1; }
+        }
+        @keyframes fireflyDrift {
+          0% { transform: translate(0,0); opacity: 0; }
+          20% { opacity: 1; }
+          80% { opacity: 1; }
+          100% { transform: translate(120px,-60px); opacity: 0; }
+        }
+        .firefly { position:absolute; width:4px; height:4px; border-radius:50%; background:#fbbf24; box-shadow:0 0 8px #fbbf24; animation: fireflyDrift 6s linear infinite; }
       `}</style>
 
-      <div style={{ padding: '24px 20px 0', maxWidth: 1200, margin: '0 auto' }}>
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 24 }}>
+      {/* ── Buzzing tribal welcome banner ── */}
+      <div style={{
+        position: 'relative', overflow: 'hidden',
+        background: 'radial-gradient(ellipse at top, rgba(16,185,129,0.18) 0%, rgba(2,6,23,0) 70%)',
+        borderBottom: '1px solid rgba(16,185,129,0.15)',
+        padding: '18px 20px 20px',
+      }}>
+        {/* fireflies */}
+        {[...Array(8)].map((_,i)=>(
+          <span key={i} className="firefly" style={{
+            left: `${10 + i*11}%`, top: `${30 + (i%3)*20}%`,
+            animationDelay: `${i*0.7}s`,
+          }} />
+        ))}
+        <div style={{ maxWidth: 1200, margin: '0 auto', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16, flexWrap: 'wrap', position: 'relative' }}>
           <div>
-            <Link to="/dashboard" style={{ textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: 6, color: '#64748b', fontSize: 13, marginBottom: 16, padding: '6px 12px', background: 'rgba(255,255,255,0.05)', borderRadius: 8, border: '1px solid rgba(255,255,255,0.08)' }}>← Back to Dashboard</Link>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 4 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 6 }}>
               <div className="live-dot" />
-              <span style={{ fontSize: 12, color: '#10b981', fontWeight: 700, letterSpacing: '0.1em' }}>LIVE ORCHARDS</span>
+              <span style={{ fontSize: 11, color: '#10b981', fontWeight: 800, letterSpacing: '0.2em' }}>YOU'VE STEPPED INTO THE ORCHARD</span>
             </div>
-            <h1 style={{ fontSize: 28, fontWeight: 800, color: '#f1f5f9', margin: 0 }}>Community Orchards</h1>
-            <p style={{ fontSize: 14, color: '#64748b', margin: '4px 0 0' }}>Every bestow plants a seed that changes a life 🌱</p>
+            <h1 style={{ fontSize: 26, fontWeight: 800, margin: 0, background: 'linear-gradient(135deg,#10b981,#22c55e,#fbbf24)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', animation: 'orchardBuzz 3s ease-in-out infinite' }}>
+              The tribe is buzzing — find your seed 🌿
+            </h1>
+            <p style={{ fontSize: 13, color: '#94a3b8', margin: '4px 0 0' }}>
+              Bestow on someone's vision · Sow your own · Or step into a Live Seed and meet the tribe
+            </p>
           </div>
-          <button onClick={fetchOrchards} disabled={loading} style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 10, padding: '10px 16px', color: '#94a3b8', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6 }}>
+          <Link to="/dashboard" style={{ textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: 6, color: '#64748b', fontSize: 13, padding: '8px 14px', background: 'rgba(255,255,255,0.05)', borderRadius: 10, border: '1px solid rgba(255,255,255,0.08)' }}>← Dashboard</Link>
+        </div>
+      </div>
+
+      <div style={{ padding: '16px 20px 0', maxWidth: 1200, margin: '0 auto' }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', marginBottom: 16 }}>
+          <button onClick={fetchOrchards} disabled={loading} style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 10, padding: '8px 14px', color: '#94a3b8', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6 }}>
             {loading ? <Loader2 style={{ width: 16, height: 16 }} /> : <RefreshCw style={{ width: 16, height: 16 }} />}
             Refresh
           </button>
@@ -447,6 +481,31 @@ export default function BrowseOrchardsPage() {
         ) : (
           <MediaGrid kind="videos" items={videos} loading={mediaLoading} />
         )}
+      </div>
+
+      {/* ── Sticky tribal action bar — Plant / Go Live / Chat ── */}
+      <div style={{
+        position: 'fixed', bottom: 0, left: 0, right: 0,
+        display: 'flex', gap: 8, padding: '10px 12px',
+        background: 'rgba(8,13,23,0.95)', backdropFilter: 'blur(10px)',
+        borderTop: '1px solid rgba(16,185,129,0.15)',
+        zIndex: 100,
+      }}>
+        <Link to="/create-orchard" style={{ flex: 1, textDecoration: 'none' }}>
+          <LivingButton variant="enter" height={48} borderRadius={14} fontSize={12} letterSpacing="1px">
+            🌱 Plant Seed
+          </LivingButton>
+        </Link>
+        <Link to="/grove-station" style={{ flex: 1, textDecoration: 'none' }}>
+          <LivingButton variant="live" height={48} borderRadius={14} fontSize={12} letterSpacing="1px">
+            Go Live
+          </LivingButton>
+        </Link>
+        <Link to="/chatapp" style={{ flex: 1, textDecoration: 'none' }}>
+          <LivingButton variant="share" height={48} borderRadius={14} fontSize={12} letterSpacing="1px">
+            💬 Chat
+          </LivingButton>
+        </Link>
       </div>
     </div>
   )
