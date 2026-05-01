@@ -84,6 +84,17 @@ export default function MyTribePage() {
   const sharePI  = () => open(`https://pinterest.com/pin/create/button/?url=${encodeURIComponent(inviteUrl)}&description=${encodeURIComponent("Join my tribe on Sow2Grow 🌱")}`);
   const shareTW  = () => open(`https://twitter.com/intent/tweet?text=${encodeURIComponent("🌱 Join my tribe on Sow2Grow")}&url=${encodeURIComponent(inviteUrl)}`);
   const shareEmail = () => { window.location.href = `mailto:?subject=${encodeURIComponent("Join my tribe on Sow2Grow")}&body=${encodeURIComponent(inviteText)}`; };
+  const copyForPaste = async (label: string) => {
+    try {
+      await navigator.clipboard.writeText(`${inviteText}\n#Sow2Grow #Tribe`);
+      toast({ title: `Copied for ${label}`, description: `Paste into your ${label} caption, bio, or description.` });
+    } catch {
+      toast({ title: "Copy failed", variant: "destructive" as any });
+    }
+  };
+  const shareTikTok    = () => copyForPaste("TikTok");
+  const shareInstagram = () => copyForPaste("Instagram");
+  const shareYouTube   = () => copyForPaste("YouTube");
 
   return (
     <div className="min-h-screen bg-background text-foreground">
@@ -139,6 +150,9 @@ export default function MyTribePage() {
                     <Button size="sm" variant="outline" onClick={sharePI}>Pinterest</Button>
                     <Button size="sm" variant="outline" onClick={shareFB}><Facebook className="h-4 w-4 mr-1" /> Facebook</Button>
                     <Button size="sm" variant="outline" onClick={shareTW}>X (Twitter)</Button>
+                    <Button size="sm" variant="outline" onClick={shareTikTok}>TikTok</Button>
+                    <Button size="sm" variant="outline" onClick={shareInstagram}>Instagram</Button>
+                    <Button size="sm" variant="outline" onClick={shareYouTube}>YouTube</Button>
                     <Button size="sm" variant="outline" onClick={shareEmail}><Mail className="h-4 w-4 mr-1" /> Email</Button>
                   </div>
                 </div>
