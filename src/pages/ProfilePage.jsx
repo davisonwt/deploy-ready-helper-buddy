@@ -1229,6 +1229,145 @@ export default function ProfilePage() {
                     </div>
                   )}
                 </div>
+                {/* LinkedIn */}
+                <div className="p-6 bg-muted/20 rounded-xl border border-border/50 hover:border-border transition-all duration-300">
+                  <div className="flex items-center gap-3 mb-4">
+                    <div className="w-12 h-12 bg-[#0A66C2] rounded-full flex items-center justify-center shadow-lg">
+                      <svg className="h-6 w-6 text-white" viewBox="0 0 24 24" fill="currentColor"><path d="M20.452 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.356V9h3.414v1.561h.046c.477-.9 1.637-1.852 3.37-1.852 3.602 0 4.268 2.37 4.268 5.455v6.288zM5.337 7.433a2.062 2.062 0 01-2.063-2.065 2.064 2.064 0 112.063 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/></svg>
+                    </div>
+                    <div><h3 className="text-foreground font-semibold text-lg">LinkedIn</h3></div>
+                  </div>
+                  {editing ? (
+                    <div className="space-y-3">
+                      <input type="url" name="linkedin_url" value={formData.linkedin_url} onChange={handleChange}
+                        className="w-full px-4 py-3 border border-border bg-card rounded-lg focus:ring-2 focus:ring-primary focus:border-primary transition-all duration-300 text-[#001f3f] placeholder:text-[#001f3f]/60"
+                        placeholder="https://linkedin.com/in/username" />
+                      {socialLinksError.linkedin && (
+                        <p className="text-destructive text-xs flex items-center gap-1"><AlertCircle className="h-3 w-3" />{socialLinksError.linkedin}</p>
+                      )}
+                      {formData.linkedin_url && (
+                        <Button onClick={() => setFormData(prev => ({ ...prev, linkedin_url: "" }))} variant="outline" size="sm" className="w-full">Disconnect</Button>
+                      )}
+                    </div>
+                  ) : (
+                    <div>
+                      {user?.linkedin_url ? (
+                        <div className="space-y-3">
+                          <a href={user.linkedin_url} target="_blank" rel="noopener noreferrer"
+                            className="inline-flex items-center gap-2 text-primary hover:text-primary/80 transition-colors font-medium">View Profile</a>
+                          <div className="px-4 py-2 bg-success/10 text-success rounded-lg text-sm font-medium border border-success/20">Connected</div>
+                        </div>
+                      ) : (
+                        <div className="px-4 py-2 bg-muted/50 text-foreground rounded-lg text-sm font-medium border border-border/50">Not connected</div>
+                      )}
+                    </div>
+                  )}
+                </div>
+
+                {/* Pinterest */}
+                <div className="p-6 bg-muted/20 rounded-xl border border-border/50 hover:border-border transition-all duration-300">
+                  <div className="flex items-center gap-3 mb-4">
+                    <div className="w-12 h-12 bg-[#E60023] rounded-full flex items-center justify-center shadow-lg">
+                      <svg className="h-6 w-6 text-white" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.4 0 0 5.4 0 12c0 5 3.1 9.3 7.5 11-.1-.9-.2-2.4 0-3.4.2-.9 1.4-5.7 1.4-5.7s-.4-.7-.4-1.8c0-1.7 1-3 2.2-3 1 0 1.5.8 1.5 1.7 0 1-.7 2.6-1 4-.3 1.2.6 2.2 1.8 2.2 2.1 0 3.8-2.3 3.8-5.5 0-2.9-2.1-4.9-5-4.9-3.4 0-5.4 2.6-5.4 5.2 0 1 .4 2.1.9 2.7.1.1.1.2.1.3l-.3 1.4c-.1.2-.2.3-.4.2-1.5-.7-2.4-2.9-2.4-4.7 0-3.8 2.8-7.4 8-7.4 4.2 0 7.5 3 7.5 7 0 4.2-2.6 7.5-6.3 7.5-1.2 0-2.4-.6-2.8-1.4l-.8 2.9c-.3 1.1-1 2.5-1.5 3.4 1.1.3 2.3.5 3.5.5 6.6 0 12-5.4 12-12S18.6 0 12 0z"/></svg>
+                    </div>
+                    <div><h3 className="text-foreground font-semibold text-lg">Pinterest</h3></div>
+                  </div>
+                  {editing ? (
+                    <div className="space-y-3">
+                      <input type="url" name="pinterest_url" value={formData.pinterest_url} onChange={handleChange}
+                        className="w-full px-4 py-3 border border-border bg-card rounded-lg focus:ring-2 focus:ring-primary focus:border-primary transition-all duration-300 text-[#001f3f] placeholder:text-[#001f3f]/60"
+                        placeholder="https://pinterest.com/username" />
+                      {socialLinksError.pinterest && (
+                        <p className="text-destructive text-xs flex items-center gap-1"><AlertCircle className="h-3 w-3" />{socialLinksError.pinterest}</p>
+                      )}
+                      {formData.pinterest_url && (
+                        <Button onClick={() => setFormData(prev => ({ ...prev, pinterest_url: "" }))} variant="outline" size="sm" className="w-full">Disconnect</Button>
+                      )}
+                    </div>
+                  ) : (
+                    <div>
+                      {user?.pinterest_url ? (
+                        <div className="space-y-3">
+                          <a href={user.pinterest_url} target="_blank" rel="noopener noreferrer"
+                            className="inline-flex items-center gap-2 text-primary hover:text-primary/80 transition-colors font-medium">View Profile</a>
+                          <div className="px-4 py-2 bg-success/10 text-success rounded-lg text-sm font-medium border border-success/20">Connected</div>
+                        </div>
+                      ) : (
+                        <div className="px-4 py-2 bg-muted/50 text-foreground rounded-lg text-sm font-medium border border-border/50">Not connected</div>
+                      )}
+                    </div>
+                  )}
+                </div>
+
+                {/* WhatsApp */}
+                <div className="p-6 bg-muted/20 rounded-xl border border-border/50 hover:border-border transition-all duration-300">
+                  <div className="flex items-center gap-3 mb-4">
+                    <div className="w-12 h-12 bg-[#25D366] rounded-full flex items-center justify-center shadow-lg">
+                      <svg className="h-6 w-6 text-white" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884"/></svg>
+                    </div>
+                    <div><h3 className="text-foreground font-semibold text-lg">WhatsApp</h3></div>
+                  </div>
+                  {editing ? (
+                    <div className="space-y-3">
+                      <input type="url" name="whatsapp_url" value={formData.whatsapp_url} onChange={handleChange}
+                        className="w-full px-4 py-3 border border-border bg-card rounded-lg focus:ring-2 focus:ring-primary focus:border-primary transition-all duration-300 text-[#001f3f] placeholder:text-[#001f3f]/60"
+                        placeholder="https://wa.me/27821234567" />
+                      {socialLinksError.whatsapp && (
+                        <p className="text-destructive text-xs flex items-center gap-1"><AlertCircle className="h-3 w-3" />{socialLinksError.whatsapp}</p>
+                      )}
+                      {formData.whatsapp_url && (
+                        <Button onClick={() => setFormData(prev => ({ ...prev, whatsapp_url: "" }))} variant="outline" size="sm" className="w-full">Disconnect</Button>
+                      )}
+                    </div>
+                  ) : (
+                    <div>
+                      {user?.whatsapp_url ? (
+                        <div className="space-y-3">
+                          <a href={user.whatsapp_url} target="_blank" rel="noopener noreferrer"
+                            className="inline-flex items-center gap-2 text-primary hover:text-primary/80 transition-colors font-medium">Message on WhatsApp</a>
+                          <div className="px-4 py-2 bg-success/10 text-success rounded-lg text-sm font-medium border border-success/20">Connected</div>
+                        </div>
+                      ) : (
+                        <div className="px-4 py-2 bg-muted/50 text-foreground rounded-lg text-sm font-medium border border-border/50">Not connected</div>
+                      )}
+                    </div>
+                  )}
+                </div>
+
+                {/* Telegram */}
+                <div className="p-6 bg-muted/20 rounded-xl border border-border/50 hover:border-border transition-all duration-300">
+                  <div className="flex items-center gap-3 mb-4">
+                    <div className="w-12 h-12 bg-[#229ED9] rounded-full flex items-center justify-center shadow-lg">
+                      <svg className="h-6 w-6 text-white" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm5.568 8.16l-1.58 7.44c-.12.54-.44.67-.89.42l-2.46-1.81-1.19 1.14c-.13.13-.24.24-.49.24l.17-2.43 4.33-3.91c.19-.17-.04-.26-.29-.1l-5.35 3.37-2.31-.72c-.5-.16-.51-.5.11-.74l9.03-3.48c.42-.16.78.1.65.73z"/></svg>
+                    </div>
+                    <div><h3 className="text-foreground font-semibold text-lg">Telegram</h3></div>
+                  </div>
+                  {editing ? (
+                    <div className="space-y-3">
+                      <input type="url" name="telegram_url" value={formData.telegram_url} onChange={handleChange}
+                        className="w-full px-4 py-3 border border-border bg-card rounded-lg focus:ring-2 focus:ring-primary focus:border-primary transition-all duration-300 text-[#001f3f] placeholder:text-[#001f3f]/60"
+                        placeholder="https://t.me/username" />
+                      {socialLinksError.telegram && (
+                        <p className="text-destructive text-xs flex items-center gap-1"><AlertCircle className="h-3 w-3" />{socialLinksError.telegram}</p>
+                      )}
+                      {formData.telegram_url && (
+                        <Button onClick={() => setFormData(prev => ({ ...prev, telegram_url: "" }))} variant="outline" size="sm" className="w-full">Disconnect</Button>
+                      )}
+                    </div>
+                  ) : (
+                    <div>
+                      {user?.telegram_url ? (
+                        <div className="space-y-3">
+                          <a href={user.telegram_url} target="_blank" rel="noopener noreferrer"
+                            className="inline-flex items-center gap-2 text-primary hover:text-primary/80 transition-colors font-medium">Open Telegram</a>
+                          <div className="px-4 py-2 bg-success/10 text-success rounded-lg text-sm font-medium border border-success/20">Connected</div>
+                        </div>
+                      ) : (
+                        <div className="px-4 py-2 bg-muted/50 text-foreground rounded-lg text-sm font-medium border border-border/50">Not connected</div>
+                      )}
+                    </div>
+                  )}
+                </div>
               </div>
 
               {/* Enhanced Social Media Preview */}
