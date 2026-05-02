@@ -582,24 +582,12 @@ input::placeholder, textarea::placeholder, select::placeholder {
 
 /* Mobile responsiveness improvements */
 @layer base {
-  /* Base button styles */
-  button,
-  .button,
-  button[type="button"],
-  button[type="submit"],
-  button[type="reset"] {
-    @apply inline-flex items-center justify-center px-4 py-2 rounded-lg
-           font-semibold text-base transition-colors duration-200
-           bg-primary text-primary-foreground;
+  /* Base button styles — zero-specificity defaults so utility classes always win */
+  :where(button, .button, button[type="button"], button[type="submit"], button[type="reset"]) {
+    @apply inline-flex items-center justify-center transition-colors duration-200;
   }
-  
-  button:hover:not(:disabled),
-  .button:hover:not(:disabled) {
-    @apply bg-primary-hover text-primary-foreground;
-  }
-  
-  button:disabled,
-  .button:disabled {
+
+  :where(button:disabled, .button:disabled) {
     @apply opacity-60 cursor-not-allowed;
   }
 
@@ -621,18 +609,6 @@ input::placeholder, textarea::placeholder, select::placeholder {
     /* Reduce padding/gaps globally */
     .container { @apply px-3; }
     section { @apply py-8; }
-
-    /* Ensure minimum touch target sizes (48x48px) */
-    button,
-    .btn,
-    .Button,
-    [role="button"],
-    .touch-target,
-    .pocket-button,
-    .amount-btn {
-      min-height: 48px;
-      min-width: 48px;
-    }
 
     /* Stack form elements vertically */
     form { @apply flex-col gap-3; }
