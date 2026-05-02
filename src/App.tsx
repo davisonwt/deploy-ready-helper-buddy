@@ -100,6 +100,7 @@ const UploadForm = lazy(() => import("./components/products/UploadForm"));
 const SellerCredentialsPage = lazy(() => import("./pages/SellerCredentialsPage"));
 const TribalHeartsPage = lazy(() => import("./pages/TribalHeartsPage"));
 const AdminCredentialsPage = lazy(() => import("./pages/AdminCredentialsPage"));
+const AdminAttachCoversPage = lazy(() => import("./pages/AdminAttachCoversPage"));
 const EditForm = lazy(() => import("./components/products/EditForm"));
 const ProductBasketPage = lazy(() => import("./pages/ProductBasketPage"));
 const MusicLibraryPage = lazy(() =>
@@ -449,6 +450,9 @@ const App = () => (
               } />
               <Route path="/admin/credentials" element={
                 <ProtectedRoute><Layout><Suspense fallback={<LoadingFallback />}><AdminCredentialsPage /></Suspense></Layout></ProtectedRoute>
+              } />
+              <Route path="/admin/attach-covers" element={
+                <ProtectedRoute><Layout><Suspense fallback={<LoadingFallback />}><AdminAttachCoversPage /></Suspense></Layout></ProtectedRoute>
               } />
               <Route path="/products/edit/:id" element={
                 <ProtectedRoute><Layout><Suspense fallback={<LoadingFallback />}><EditForm /></Suspense></Layout></ProtectedRoute>
