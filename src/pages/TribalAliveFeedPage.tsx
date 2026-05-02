@@ -388,11 +388,6 @@ export default function TribalAliveFeedPage() {
         </div>
       </header>
 
-      {/* Wandering badge filter */}
-      <div className="relative z-20 px-2 sm:px-4">
-        <WanderingBadgeBar activeRole={wanderingRole} onRoleChange={setWanderingRole} />
-      </div>
-
       {/* Vertical snap feed */}
       <main
         ref={containerRef}
@@ -430,6 +425,11 @@ export default function TribalAliveFeedPage() {
           ))
         )}
       </main>
+
+      {/* Wandering badge filter — pinned to the bottom, always visible */}
+      <div className="relative z-30 border-t border-white/10 bg-black/70 backdrop-blur-md px-2 sm:px-4 pt-2 pb-[max(env(safe-area-inset-bottom),0.5rem)]">
+        <WanderingBadgeBar activeRole={wanderingRole} onRoleChange={setWanderingRole} />
+      </div>
 
       {/* Jitsi overlay */}
       <AnimatePresence>
