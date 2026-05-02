@@ -159,7 +159,7 @@ export const TribalHeartsOnboarding: React.FC<Props> = ({ onComplete }) => {
         </button>
       )}
 
-      <main className="relative z-10 min-h-screen flex items-center justify-center px-5 py-24">
+      <main className="relative z-10 min-h-screen flex items-start sm:items-center justify-center px-5 pt-24 pb-32">
         <AnimatePresence mode="wait" custom={direction}>
           <motion.div
             key={step}
