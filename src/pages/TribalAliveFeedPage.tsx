@@ -533,12 +533,22 @@ function FeedCard({
 
   return (
     <div className="relative h-full w-full overflow-hidden bg-gradient-to-b from-slate-950 via-slate-900 to-emerald-950">
-      {/* Background media */}
+      {/* Blurred ambient background (fills, but doesn't crop the real media) */}
+      {item.image && (
+        <img
+          src={item.image}
+          alt=""
+          aria-hidden
+          className="absolute inset-0 h-full w-full object-cover opacity-40 blur-2xl scale-110"
+        />
+      )}
+
+      {/* Foreground media — fully visible, never cropped on phone */}
       {item.video_url ? (
         <video
           ref={videoRef}
           src={item.video_url}
-          className="absolute inset-0 h-full w-full object-cover opacity-80"
+          className="absolute inset-0 h-full w-full object-contain"
           playsInline
           muted={false}
           preload="metadata"
@@ -547,7 +557,7 @@ function FeedCard({
         <img
           src={item.image}
           alt={item.title}
-          className="absolute inset-0 h-full w-full object-cover opacity-70"
+          className="absolute inset-0 h-full w-full object-contain"
         />
       ) : (
         <div className="absolute inset-0 flex items-center justify-center text-[20rem] opacity-10">
@@ -558,7 +568,7 @@ function FeedCard({
         <audio ref={audioRef} src={item.audio_url} preload="metadata" />
       )}
 
-      <div className="absolute inset-0 bg-gradient-to-b from-black/30 via-black/10 to-black/80" />
+      <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-transparent to-black/85 pointer-events-none" />
 
       {/* Right action rail */}
       <div className="absolute bottom-32 right-3 z-10 flex flex-col items-center gap-5 sm:right-5">
