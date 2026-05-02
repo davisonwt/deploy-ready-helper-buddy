@@ -31,6 +31,7 @@ const TribalHeartsPage: React.FC = () => {
     open: false,
   });
   const [soundOn, setSoundOn] = useState(true);
+  const [editProfileOpen, setEditProfileOpen] = useState(false);
 
   // Unlock audio on first interaction
   useEffect(() => {
