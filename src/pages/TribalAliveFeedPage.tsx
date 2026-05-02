@@ -343,6 +343,74 @@ export default function TribalAliveFeedPage() {
                 />
               ) : null}
             </div>
+
+            {/* Tribe garden — every seed, product & broadcast from everyone */}
+            <div className="mt-8">
+              <div className="mb-3 flex items-center gap-2">
+                <TreePine className="h-4 w-4 text-emerald-300" />
+                <h2 className="text-sm font-bold uppercase tracking-widest text-emerald-200">
+                  The whole tribe garden
+                </h2>
+                <span className="text-xs text-white/50">· {discover.length} items</span>
+              </div>
+              {loading ? (
+                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3">
+                  {Array.from({ length: 6 }).map((_, i) => (
+                    <div key={i} className="h-40 animate-pulse rounded-2xl bg-white/5" />
+                  ))}
+                </div>
+              ) : discover.length === 0 ? (
+                <div className="rounded-2xl border border-dashed border-white/10 p-6 text-center text-sm text-white/60">
+                  Nothing planted yet. Be the first to sow a seed, list a product, or go live on the radio.
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3">
+                  {discover.slice(0, 24).map((item) => (
+                    <motion.div
+                      key={`${item.kind}-${item.id}`}
+                      initial={{ opacity: 0, y: 8 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      className="group overflow-hidden rounded-2xl border border-white/10 bg-gradient-to-br from-slate-900/70 to-emerald-950/40 transition hover:border-emerald-400/40"
+                    >
+                      <Link to={item.href} className="block">
+                        <div className="relative aspect-video w-full bg-emerald-500/10">
+                          {item.image ? (
+                            <img src={item.image} alt={item.title} className="h-full w-full object-cover transition group-hover:scale-[1.03]" />
+                          ) : (
+                            <div className="flex h-full w-full items-center justify-center text-4xl">{item.badge}</div>
+                          )}
+                          <div className="absolute left-2 top-2 rounded-full bg-black/60 px-2 py-0.5 text-xs backdrop-blur">
+                            {item.badge} {item.kind}
+                          </div>
+                        </div>
+                        <div className="p-3">
+                          <h3 className="line-clamp-1 text-sm font-bold text-white">{item.title}</h3>
+                          <p className="mt-0.5 line-clamp-1 text-[11px] text-white/60">by {item.sower}</p>
+                        </div>
+                      </Link>
+                      <div className="flex items-center justify-between gap-2 border-t border-white/5 p-2">
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          className="h-7 px-2 text-[11px] text-emerald-200 hover:bg-emerald-500/10"
+                          onClick={() => handleGoLive({ id: item.id, title: item.title, image: item.image })}
+                        >
+                          <Video className="mr-1 h-3 w-3" /> Go live
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          className="h-7 px-2 text-[11px] text-white/70 hover:bg-white/10"
+                          onClick={() => handleShare(item)}
+                        >
+                          <Share2 className="mr-1 h-3 w-3" /> Share
+                        </Button>
+                      </div>
+                    </motion.div>
+                  ))}
+                </div>
+              )}
+            </div>
           </div>
 
           {/* Side: pulse + bloom feed */}
