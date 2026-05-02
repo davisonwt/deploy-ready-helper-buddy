@@ -337,66 +337,10 @@ export default function TribalAliveFeedPage() {
 
   return (
     <div className="fixed inset-0 flex flex-col bg-black text-white">
-      {/* Top bar — Following / For You / Local */}
-      <header className="relative z-20 flex items-center justify-between px-4 py-3">
-        <button
-          onClick={() => navigate('/dashboard')}
-          className="flex items-center gap-2 text-white/80 hover:text-white"
-          aria-label="Back to my orchard"
-        >
-          <ArrowLeft className="h-4 w-4" />
-          <span className="hidden sm:inline text-sm">SeedFlow</span>
-          <span className="text-xl">🌱</span>
-        </button>
-
-        <nav className="flex items-center gap-6 text-sm font-semibold">
-          {(['following', 'foryou', 'local'] as FeedTab[]).map((t) => (
-            <button
-              key={t}
-              onClick={() => setTab(t)}
-              className={cn(
-                'relative pb-1 transition',
-                tab === t ? 'text-white' : 'text-white/50 hover:text-white/80'
-              )}
-            >
-              {t === 'following' ? 'Following' : t === 'foryou' ? 'For You' : 'Local'}
-              {tab === t && (
-                <motion.span
-                  layoutId="tabUnderline"
-                  className="absolute -bottom-0.5 left-0 right-0 h-0.5 rounded-full bg-amber-400"
-                />
-              )}
-            </button>
-          ))}
-        </nav>
-
-        <div className="flex items-center gap-3">
-          <button
-            onClick={() => navigate('/products')}
-            className="rounded-full bg-white/10 p-2 hover:bg-white/20"
-            aria-label="Search"
-          >
-            <Search className="h-4 w-4" />
-          </button>
-          <button
-            onClick={() => navigate('/notifications')}
-            className="rounded-full bg-white/10 p-2 hover:bg-white/20"
-            aria-label="Notifications"
-          >
-            <Bell className="h-4 w-4" />
-          </button>
-        </div>
-      </header>
-
-      {/* Wandering badge filter — pinned to the top, horizontally scrollable */}
-      <div className="relative z-20 border-b border-white/10 bg-black/70 backdrop-blur-md px-2 sm:px-4 pt-1">
-        <WanderingBadgeBar activeRole={wanderingRole} onRoleChange={setWanderingRole} />
-      </div>
-
-      {/* Vertical snap feed */}
+      {/* Vertical snap feed — full bleed under the overlays */}
       <main
         ref={containerRef}
-        className="relative flex-1 snap-y snap-mandatory overflow-y-auto overscroll-contain"
+        className="absolute inset-0 snap-y snap-mandatory overflow-y-auto overscroll-contain"
         style={{ scrollSnapStop: 'always' }}
       >
         {loading ? (
@@ -430,6 +374,83 @@ export default function TribalAliveFeedPage() {
           ))
         )}
       </main>
+
+      {/* Top overlay: Back + Following / For You / Local + Search/Bell */}
+      <header className="absolute inset-x-0 top-0 z-20 flex items-center justify-between px-3 py-2 bg-gradient-to-b from-black/70 to-transparent">
+        <button
+          onClick={() => navigate('/dashboard')}
+          className="flex items-center gap-1.5 text-white/90 hover:text-white"
+          aria-label="Back to my orchard"
+        >
+          <ArrowLeft className="h-4 w-4" />
+          <span className="text-sm font-semibold">SeedFlow</span>
+          <span className="text-base">🌱</span>
+        </button>
+
+        <nav className="flex items-center gap-5 text-sm font-semibold">
+          {(['following', 'foryou', 'local'] as FeedTab[]).map((t) => (
+            <button
+              key={t}
+              onClick={() => setTab(t)}
+              className={cn(
+                'relative pb-1 transition',
+                tab === t ? 'text-white' : 'text-white/55 hover:text-white/80'
+              )}
+            >
+              {t === 'following' ? 'Following' : t === 'foryou' ? 'For You' : 'Local'}
+              {tab === t && (
+                <motion.span
+                  layoutId="tabUnderline"
+                  className="absolute -bottom-0.5 left-0 right-0 h-0.5 rounded-full bg-amber-400"
+                />
+              )}
+            </button>
+          ))}
+        </nav>
+
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => navigate('/products')}
+            className="rounded-full bg-white/10 p-1.5 hover:bg-white/20"
+            aria-label="Search"
+          >
+            <Search className="h-4 w-4" />
+          </button>
+          <button
+            onClick={() => navigate('/notifications')}
+            className="rounded-full bg-white/10 p-1.5 hover:bg-white/20"
+            aria-label="Notifications"
+          >
+            <Bell className="h-4 w-4" />
+          </button>
+        </div>
+      </header>
+
+      {/* Wandering pill-filter — overlay row just below the header, horizontally scrollable */}
+      <div className="absolute inset-x-0 top-11 z-20 overflow-x-auto px-2 py-1.5 [&::-webkit-scrollbar]:hidden">
+        <div className="flex min-w-max gap-2">
+          <FilterPill
+            active={wanderingRole === null}
+            color="#22c55e"
+            emoji="🌿"
+            label="All Seeds"
+            onClick={() => setWanderingRole(null)}
+          />
+          {WANDERING_BADGES.map((b) => (
+            <FilterPill
+              key={b.key}
+              active={wanderingRole === b.key}
+              color={b.color}
+              emoji={b.emoji}
+              label={`Wandering ${b.label.charAt(0) + b.label.slice(1).toLowerCase()}`}
+              onClick={() => {
+                if (b.key === 'heart') { navigate('/tribal-hearts'); return; }
+                setWanderingRole(wanderingRole === b.key ? null : b.key);
+              }}
+            />
+          ))}
+        </div>
+      </div>
 
 
       {/* Jitsi overlay */}
