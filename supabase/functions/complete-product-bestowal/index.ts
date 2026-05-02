@@ -52,6 +52,9 @@ serve(async (req) => {
       return createErrorResponse('Product not found', 404, req);
     }
 
+    // Resolve product title up-front so it's available for the accounting record below.
+    const productTitle = product.title || 'Product';
+
     // Calculate distribution
     const tithingAmount = amount * 0.10; // 10% tithing
     const adminFee = amount * 0.05; // 5% admin fee
@@ -138,7 +141,7 @@ serve(async (req) => {
 
     const sowerName = sowerProfile?.display_name || sowerProfile?.first_name || 'Sower';
     const bestowerName = bestowerProfile?.display_name || bestowerProfile?.first_name || 'Friend';
-    const productTitle = product.title || 'Product';
+    // (productTitle is declared earlier — keep names here for readability.)
 
     // 1. Send Gosat → Bestower (Invoice/Proof)
     if (gosatUser?.user_id) {
