@@ -607,7 +607,7 @@ function FeedCard({
       </div>
 
       {/* Left content stack */}
-      <div className="absolute bottom-4 left-3 right-24 z-10 sm:left-5 sm:right-28">
+      <div className="absolute bottom-4 left-3 right-16 z-10 sm:left-5 sm:right-20">
         {badge && (
           <div
             className="mb-2 inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-bold"
