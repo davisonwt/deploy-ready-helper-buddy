@@ -807,6 +807,9 @@ function FeedCard({
 
       {/* Left content stack — compact identity only, no oversized seed title overlay */}
       <div className="absolute bottom-4 left-3 right-16 z-10 sm:left-5 sm:right-20">
+        <div className="mb-2 max-w-md rounded-lg bg-black/50 px-2.5 py-1.5 text-xs font-semibold leading-tight text-white/90 backdrop-blur-md ring-1 ring-white/10">
+          {item.title}
+        </div>
         <div className="flex max-w-md items-center gap-2 rounded-xl bg-black/55 p-2.5 backdrop-blur-md ring-1 ring-white/15">
           <div className="h-10 w-10 shrink-0 overflow-hidden rounded-full border border-white/30 bg-white/10">
             {item.sower_avatar ? (
