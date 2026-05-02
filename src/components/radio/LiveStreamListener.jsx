@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react'
+import React, { useState, useEffect, useRef, useId } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -78,7 +78,7 @@ export function LiveStreamListener({ liveSession, currentShow }) {
   const setupRealtimeSubscriptions = () => {
     // Subscribe to host changes
     const hostsSubscription = supabase
-      .channel(`live-hosts-${liveSession.id}`)
+      .channel(`live-hosts-listener-${liveSession.id}-${channelKey}`)
       .on('postgres_changes', 
         { 
           event: '*', 
@@ -92,7 +92,7 @@ export function LiveStreamListener({ liveSession, currentShow }) {
 
     // Subscribe to session updates (using secure view)
     const sessionSubscription = supabase
-      .channel(`live-session-${liveSession.id}`)
+      .channel(`live-session-listener-${liveSession.id}-${channelKey}`)
       .on('postgres_changes',
         { 
           event: 'UPDATE', 
