@@ -136,7 +136,7 @@ export const TribalHeartsOnboarding: React.FC<Props> = ({ onComplete }) => {
 
   return (
     <div
-      className="min-h-screen relative overflow-hidden"
+      className="min-h-screen relative overflow-y-auto overflow-x-hidden"
       style={{
         background:
           'radial-gradient(ellipse at top, hsl(20 30% 12%) 0%, hsl(20 35% 7%) 60%, hsl(0 0% 4%) 100%)',
