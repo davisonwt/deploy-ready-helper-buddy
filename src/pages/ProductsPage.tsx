@@ -317,14 +317,32 @@ export default function ProductsPage() {
 
   return (
     <div className="bg-gradient-to-br from-indigo-950 via-purple-900 to-teal-900 min-h-screen text-white">
-      {/* Header */}
-      <div className="text-center py-12 px-6">
-        <h1 className="text-5xl md:text-6xl font-bold flex items-center justify-center gap-4">
-          <span className="text-7xl">Community Creations</span>
+      {/* Top bar with Back */}
+      <div className="sticky top-0 z-30 backdrop-blur bg-black/30 border-b border-white/10">
+        <div className="max-w-6xl mx-auto px-4 py-2 flex items-center justify-between">
+          <button
+            onClick={() => (window.history.length > 1 ? navigate(-1) : navigate('/dashboard'))}
+            className="flex items-center gap-2 text-white/80 hover:text-white text-sm font-medium"
+            aria-label="Go back"
+          >
+            <span aria-hidden>←</span> Back
+          </button>
+          <button
+            onClick={() => navigate('/dashboard')}
+            className="text-xs text-white/60 hover:text-white"
+          >
+            My Orchard
+          </button>
+        </div>
+      </div>
+
+      {/* Header (compact) */}
+      <div className="text-center py-6 px-6">
+        <h1 className="text-3xl md:text-4xl font-bold">
+          Community Creations
         </h1>
-        <p className="text-yellow-200 text-xl mt-4 max-w-2xl mx-auto">
-          Discover amazing music, art, courses & digital gifts from our family of creators.<br />
-          Every bestow helps someone's orchard grow 🌱
+        <p className="text-yellow-200/90 text-sm md:text-base mt-2 max-w-2xl mx-auto">
+          Music, art, courses & digital gifts from our family of creators. Every bestow grows an orchard 🌱
         </p>
       </div>
 
