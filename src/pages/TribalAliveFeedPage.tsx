@@ -643,6 +643,9 @@ function FeedCard({
             </button>
           )}
         </div>
+        <div className="mt-2 max-w-md truncate text-sm font-semibold leading-tight text-white/90 sm:text-base">
+          {item.title}
+        </div>
 
         {item.description && (
           <p className="mt-1 line-clamp-2 max-w-md text-sm text-white/80">{item.description}</p>
