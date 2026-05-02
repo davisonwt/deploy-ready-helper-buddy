@@ -592,39 +592,14 @@ function FeedCard({
 
       <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-transparent to-black/85 pointer-events-none" />
 
-      {/* Right action rail — TikTok-style vertical column, fully on-screen */}
-      <div className="absolute right-1.5 bottom-24 z-10 flex flex-col items-center gap-2.5 sm:right-2.5 sm:gap-3">
-        <RailButton
-          icon={<MessageCircle className="h-4 w-4" />}
-          label="Msg"
-          onClick={onMessage}
-        />
-        <RailButton
-          icon={<Mic className="h-4 w-4" />}
-          label="Voice"
-          onClick={onVoice}
-        />
-        <RailButton
-          icon={<Video className="h-4 w-4" />}
-          label="Video"
-          onClick={onVideo}
-        />
-        <RailButton
-          icon={<Heart className="h-4 w-4" />}
-          label="Like"
-          onClick={onShare}
-        />
-        <RailButton
-          icon={<Radio className="h-4 w-4" />}
-          label="Live"
-          onClick={onGoLive}
-          accent
-        />
-        <RailButton
-          icon={<Share2 className="h-4 w-4" />}
-          label="Share"
-          onClick={onShare}
-        />
+      {/* Right action rail — TikTok-style vertical column over the media */}
+      <div className="absolute right-2 bottom-28 z-10 flex flex-col items-center gap-3 sm:right-3 sm:gap-4">
+        <RailButton icon={<MessageCircle className="h-5 w-5" />} label="Message" onClick={onMessage} />
+        <RailButton icon={<Mic className="h-5 w-5" />} label="Voice" onClick={onVoice} />
+        <RailButton icon={<Video className="h-5 w-5" />} label="Video" onClick={onVideo} />
+        <RailButton icon={<Heart className="h-5 w-5" />} label="Like" onClick={onShare} />
+        <RailButton icon={<Radio className="h-5 w-5" />} label="Go Live" onClick={onGoLive} accent />
+        <RailButton icon={<Share2 className="h-5 w-5" />} label="Share" onClick={onShare} />
       </div>
 
       {/* Left content stack */}
