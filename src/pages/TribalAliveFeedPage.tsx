@@ -817,60 +817,64 @@ export default function TribalAliveFeedPage() {
         </div>
       </header>
 
-      {/* Wandering pill-filter — overlay row just below the header, horizontally scrollable */}
-      <div className="absolute inset-x-0 top-11 z-20 overflow-x-auto px-2 py-1.5 [&::-webkit-scrollbar]:hidden">
-        <div className="flex min-w-max gap-2">
-          <FilterPill
-            active={wanderingRole === null}
-            color="#22c55e"
-            emoji="🌿"
-            label="All Seeds"
-            onClick={() => setWanderingRole(null)}
-          />
-          {WANDERING_BADGES.map((b) => (
-            <FilterPill
-              key={b.key}
-              active={wanderingRole === b.key}
-              color={b.color}
-              emoji={b.emoji}
-              label={`Wandering ${b.label.charAt(0) + b.label.slice(1).toLowerCase()}`}
-              onClick={() => {
-                if (b.key === 'heart') { navigate('/tribal-hearts'); return; }
-                setWanderingRole(wanderingRole === b.key ? null : b.key);
-              }}
-            />
-          ))}
+      {/* Compact filter row — two dropdowns instead of two pill rows */}
+      <div className="absolute inset-x-0 top-11 z-20 flex items-center gap-2 px-3 py-1.5">
+        {/* Wandering / sower-identity dropdown */}
+        <div className="relative">
+          <select
+            aria-label="Filter by wandering identity"
+            value={wanderingRole ?? ''}
+            onChange={(e) => {
+              const v = e.target.value;
+              if (v === 'heart') { navigate('/tribal-hearts'); return; }
+              setWanderingRole(v ? (v as WanderingRole) : null);
+            }}
+            className="appearance-none rounded-full bg-black/55 backdrop-blur-md text-white text-xs font-medium pl-3 pr-7 py-1.5 border border-white/15 hover:bg-black/70 focus:outline-none focus:ring-1 focus:ring-emerald-400 cursor-pointer"
+          >
+            <option value="">🌿 All Seeds</option>
+            {WANDERING_BADGES.map((b) => (
+              <option key={b.key} value={b.key}>
+                {b.emoji} Wandering {b.label.charAt(0) + b.label.slice(1).toLowerCase()}
+              </option>
+            ))}
+          </select>
+          <ChevronDown className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-white/70" />
         </div>
-      </div>
 
-      {/* Sessions / content-kind filter — second pill row */}
-      <div className="absolute inset-x-0 top-[5.25rem] z-20 overflow-x-auto px-2 py-1.5 [&::-webkit-scrollbar]:hidden">
-        <div className="flex min-w-max gap-2">
-          {([
-            { key: null,             emoji: '✨', label: 'All',           color: '#a78bfa' },
-            { key: 'music',          emoji: '🎵', label: 'Music',         color: '#f97316' },
-            { key: 'video',          emoji: '🎬', label: 'Videos',        color: '#0ea5e9' },
-            { key: 'story',          emoji: '📖', label: 'Stories',       color: '#84cc16' },
-            { key: 'book',           emoji: '📚', label: 'Books',         color: '#eab308' },
-            { key: 'radio_live',     emoji: '🔴', label: 'Radio · Live',  color: '#ef4444' },
-            { key: 'radio_recorded', emoji: '📻', label: 'Radio · Recorded', color: '#f59e0b' },
-            { key: 'classroom',      emoji: '🎓', label: 'Classroom',     color: '#22d3ee' },
-            { key: 'skilldrop',      emoji: '🛠️', label: 'SkillDrop',     color: '#a855f7' },
-            { key: 'premium_room',   emoji: '👑', label: 'Premium Room',  color: '#ec4899' },
-            { key: 'orchard',        emoji: '🌳', label: 'Orchards',      color: '#22c55e' },
-            { key: 'product',        emoji: '🛍️', label: 'Products',      color: '#14b8a6' },
-            { key: 'seed',           emoji: '🌱', label: 'Seeds',         color: '#10b981' },
-          ] as Array<{ key: FeedKind | null; emoji: string; label: string; color: string }>).map((k) => (
-            <FilterPill
-              key={k.label}
-              active={kindFilter === k.key}
-              color={k.color}
-              emoji={k.emoji}
-              label={k.label}
-              onClick={() => setKindFilter(kindFilter === k.key ? null : k.key)}
-            />
-          ))}
+        {/* Content-kind dropdown */}
+        <div className="relative">
+          <select
+            aria-label="Filter by content type"
+            value={kindFilter ?? ''}
+            onChange={(e) => setKindFilter((e.target.value || null) as FeedKind | null)}
+            className="appearance-none rounded-full bg-black/55 backdrop-blur-md text-white text-xs font-medium pl-3 pr-7 py-1.5 border border-white/15 hover:bg-black/70 focus:outline-none focus:ring-1 focus:ring-emerald-400 cursor-pointer"
+          >
+            <option value="">✨ All</option>
+            <option value="music">🎵 Music</option>
+            <option value="video">🎬 Videos</option>
+            <option value="story">📖 Stories</option>
+            <option value="book">📚 Books</option>
+            <option value="radio_live">🔴 Radio · Live</option>
+            <option value="radio_recorded">📻 Radio · Recorded</option>
+            <option value="classroom">🎓 Classroom</option>
+            <option value="skilldrop">🛠️ SkillDrop</option>
+            <option value="premium_room">👑 Premium Room</option>
+            <option value="orchard">🌳 Orchards</option>
+            <option value="product">🛍️ Products</option>
+            <option value="seed">🌱 Seeds</option>
+          </select>
+          <ChevronDown className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-white/70" />
         </div>
+
+        {/* Active-filter chip resets */}
+        {(wanderingRole || kindFilter) && (
+          <button
+            onClick={() => { setWanderingRole(null); setKindFilter(null); }}
+            className="ml-auto rounded-full bg-white/10 hover:bg-white/20 text-white/80 text-[10px] px-2 py-1"
+          >
+            Clear filters ✕
+          </button>
+        )}
       </div>
 
 
