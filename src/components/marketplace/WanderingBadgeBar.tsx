@@ -2,7 +2,7 @@ import { useNavigate } from 'react-router-dom';
 
 export type WanderingRole =
   | 'field' | 'hand' | 'hearth' | 'pillow' | 'whisperer'
-  | 'story' | 'heart' | 'forge' | 'wheel';
+  | 'story' | 'studies' | 'heart' | 'forge' | 'wheel';
 
 export interface WanderingBadge {
   key: WanderingRole;
@@ -21,6 +21,7 @@ export const WANDERING_BADGES: WanderingBadge[] = [
   { key: 'pillow',    label: 'PILLOW',    emoji: '🛏️', color: '#db2777', description: 'Travel & stays' },
   { key: 'whisperer', label: 'WHISPERER', emoji: '🌬️', color: '#7c3aed', description: 'Marketers & content builders' },
   { key: 'story',     label: 'STORY',     emoji: '🎥', color: '#6366f1', description: 'Home videos' },
+  { key: 'studies',   label: 'STUDIES',   emoji: '📓', color: '#0ea5e9', description: 'Studies & research' },
   { key: 'hearth',    label: 'HEARTH',    emoji: '🔥', color: '#f97316', description: 'Homesteaders' },
   { key: 'forge',     label: 'FORGE',     emoji: '⚒️', color: '#ea580c', description: 'Direct from factories' },
   { key: 'wheel',     label: 'WHEEL',     emoji: '🚗', color: '#0891b2', description: 'Vehicles' },

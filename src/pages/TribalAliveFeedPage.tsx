@@ -39,7 +39,7 @@ import { launchConfetti, playSoundEffect } from '@/utils/confetti';
 type FeedTab = 'following' | 'foryou' | 'local';
 
 type FeedKind =
-  | 'seed' | 'product' | 'music' | 'video' | 'story' | 'book'
+  | 'seed' | 'product' | 'music' | 'video' | 'story' | 'book' | 'studies'
   | 'radio_live' | 'radio_recorded' | 'classroom' | 'skilldrop' | 'premium_room' | 'orchard';
 
 interface FeedItem {
@@ -859,6 +859,7 @@ export default function TribalAliveFeedPage() {
             <option value="classroom">🎓 Classroom</option>
             <option value="skilldrop">🛠️ SkillDrop</option>
             <option value="premium_room">👑 Premium Room</option>
+            <option value="studies">📓 Studies</option>
             <option value="orchard">🌳 Orchards</option>
             <option value="product">🛍️ Products</option>
             <option value="seed">🌱 Seeds</option>
