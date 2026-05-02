@@ -351,6 +351,12 @@ export default function TribalAliveFeedPage() {
             title: b.title || 'Untitled book',
             description: b.description,
             image: b.cover_image_url || (b.image_urls && b.image_urls[0]) || null,
+            images: (() => {
+              const arr: string[] = [];
+              if (b.cover_image_url) arr.push(b.cover_image_url);
+              if (Array.isArray(b.image_urls)) b.image_urls.forEach((u: string) => { if (u && !arr.includes(u)) arr.push(u); });
+              return arr.length ? arr : null;
+            })(),
             price: Number(b.bestowal_value ?? 0) || null,
             sower_id: owner,
             sower_name: sowerName(profileMap[owner]),
@@ -414,6 +420,7 @@ export default function TribalAliveFeedPage() {
           title: o.title || 'Orchard',
           description: o.description,
           image: (o.images && o.images[0]) || null,
+          images: Array.isArray(o.images) ? o.images.filter(Boolean) : null,
           video_url: o.video_url || null,
           sower_id: o.user_id,
           sower_name: sowerName(profileMap[o.user_id]),
