@@ -82,26 +82,24 @@ type ActionPanelState = {
   error?: string | null;
 } | null;
 
-const sowerName = (p: any) =>
-  p?.display_name ||
-  `${p?.first_name || ''} ${p?.last_name || ''}`.trim() ||
-  'Tribe member';
+const sowerName = (p: any) => {
+  const dn = (p?.display_name || '').trim();
+  if (dn) return dn;
+  const full = `${p?.first_name || ''} ${p?.last_name || ''}`.trim();
+  if (full) return full;
+  const first = (p?.first_name || '').trim();
+  if (first) return first;
+  return 'Sower';
+};
 
 const wanderingFor = (item: { kind: FeedItem['kind']; wandering_role?: string | null; type?: string | null }): WanderingRole | null => {
+  // Always respect the sower's chosen wandering identity if present
   if (item.wandering_role && WANDERING_BADGES.find((b) => b.key === item.wandering_role as WanderingRole)) {
     return item.wandering_role as WanderingRole;
   }
-  if (item.kind === 'video') return 'story';
-  if (item.kind === 'radio') return 'whisperer';
-  if (item.kind === 'seed') return 'hearth';
-  // products: lean on type
-  switch ((item.type || '').toLowerCase()) {
-    case 'music': return 'whisperer';
-    case 'book': case 'ebook': return 'story';
-    case 'video': return 'story';
-    case 'home': return 'pillow';
-    default: return null;
-  }
+  // No auto-derivation from media type — wandering badge = seller identity, not category.
+  // Without an explicit choice, show no badge rather than a misleading one.
+  return null;
 };
 
 export default function TribalAliveFeedPage() {
@@ -179,8 +177,13 @@ export default function TribalAliveFeedPage() {
         }));
 
         const productItems: FeedItem[] = (productsRes.data || []).map((p: any) => {
-          const isAudio = (p.type || '').toLowerCase() === 'music' || /\.(mp3|wav|m4a|ogg)(\?|$)/i.test(p.file_url || '');
-          const isVideo = (p.type || '').toLowerCase() === 'video' || /\.(mp4|webm|mov)(\?|$)/i.test(p.file_url || '');
+          const typeLc = (p.type || '').toLowerCase();
+          const isMusic = typeLc === 'music';
+          const isAudio = isMusic || /\.(mp3|wav|m4a|ogg)(\?|$)/i.test(p.file_url || '');
+          // Only treat as fullscreen video if the product is explicitly a video — never for music,
+          // even when the music file is a .mp4 (lyric/album-art video). That keeps baked-in titles
+          // from blowing up across the entire feed card.
+          const isVideo = !isMusic && (typeLc === 'video' || /\.(mp4|webm|mov)(\?|$)/i.test(p.file_url || ''));
           return {
             key: `product-${p.id}`, kind: 'product', id: p.id,
             title: p.title || 'Untitled creation',
