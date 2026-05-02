@@ -22,6 +22,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import {
   Play, Pause, Heart, MessageCircle, Mic, Video, Share2,
   Search, Bell, Radio, ArrowLeft, Gift, Sparkles, Loader2, X, Send, Square,
+  ChevronLeft, ChevronRight, ChevronDown,
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
