@@ -79,7 +79,7 @@ export default function TribalAliveFeedPage() {
     let cancelled = false;
     (async () => {
       try {
-        const [seedsRes, productsRes, radioRes] = await Promise.all([
+        const [seedsRes, productsRes, radioRes, videosRes] = await Promise.all([
           supabase
             .from('seeds')
             .select('id, title, description, images, gifter_id, created_at, profiles:gifter_id (first_name, last_name, display_name)')
@@ -96,6 +96,11 @@ export default function TribalAliveFeedPage() {
             .select('id, status, started_at, ended_at, created_at, schedule_id, radio_schedule:schedule_id (show_id, radio_shows:show_id (show_name, description, show_image_url, dj_id, radio_djs:dj_id (display_name, first_name, last_name)))')
             .order('created_at', { ascending: false })
             .limit(20),
+          supabase
+            .from('community_videos')
+            .select('id, title, description, video_url, thumbnail_url, uploader_id, created_at, profiles:uploader_id (first_name, last_name, display_name)')
+            .order('created_at', { ascending: false })
+            .limit(40),
         ]);
 
         if (cancelled) return;
