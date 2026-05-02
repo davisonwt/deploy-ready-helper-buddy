@@ -858,7 +858,7 @@ export default function SeedFlowDashboard() {
         .nav-link:hover { opacity: 0.85; }
         .s2g-mobile-panel-tab, .s2g-mobile-backdrop { display: none; }
         @media (max-width: 768px) {
-          .s2g-dashboard-root { top: 0 !important; height: 100vh !important; height: 100dvh !important; padding-bottom: 70px; }
+          .s2g-dashboard-root { top: 38px !important; height: calc(100vh - 38px - 70px) !important; height: calc(100dvh - 38px - 70px) !important; }
           .s2g-dashboard-center { width: 100vw !important; flex: 1 1 100% !important; }
           .s2g-dashboard-header { padding: 12px 48px !important; }
           .s2g-dashboard-header h1, .s2g-dashboard-header h2 { font-size: inherit !important; }
