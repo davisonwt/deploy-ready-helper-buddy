@@ -4,8 +4,8 @@
 // and a ⋯ owner menu (Edit · Delete · Repost · Park) when the seed is the user's own.
 
 import { useEffect, useRef, useState } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
-import LivingButton from '../LivingButton'
+import { useNavigate } from 'react-router-dom'
+import LivingSeedCard from './LivingSeedCard'
 
 /**
  * card shape:
