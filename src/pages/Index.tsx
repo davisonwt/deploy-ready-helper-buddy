@@ -278,7 +278,7 @@ function IndexContent() {
             </div>
             
             <div className="space-y-6 sm:space-y-8">
-              <div className="bg-white p-6 sm:p-8 rounded-2xl shadow-lg border border-blue-100">
+              <div className="bg-card/80 backdrop-blur p-6 sm:p-8 rounded-2xl shadow-xl border border-accent/20 hover:border-accent/40 hover:shadow-2xl transition-all">
                 <h3 className="text-xl sm:text-2xl font-bold mb-4 sm:mb-6" style={{ color: '#B2C9E2' }}>bestowers (cultivators and harvesters)</h3>
                 <div className="space-y-3 sm:space-y-4 text-left">
                   <div className="flex items-center space-x-3">
