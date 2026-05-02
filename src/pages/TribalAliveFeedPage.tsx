@@ -32,7 +32,7 @@ import { useTribalLiveOrchard } from '@/hooks/useTribalLiveOrchard';
 import { JITSI_DOMAIN } from '@/lib/jitsi-config';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
-import WanderingBadgeBar, { type WanderingRole, WANDERING_BADGES } from '@/components/marketplace/WanderingBadgeBar';
+import { type WanderingRole, WANDERING_BADGES } from '@/components/marketplace/WanderingBadgeBar';
 import { launchConfetti, playSoundEffect } from '@/utils/confetti';
 
 type FeedTab = 'following' | 'foryou' | 'local';
