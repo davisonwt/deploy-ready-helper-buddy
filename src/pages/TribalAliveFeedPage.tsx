@@ -712,15 +712,15 @@ function RailButton({
     <button onClick={onClick} className="flex flex-col items-center gap-0.5 text-white/90 hover:text-white">
       <span
         className={cn(
-          'flex h-10 w-10 items-center justify-center rounded-full backdrop-blur transition active:scale-90',
+          'flex h-9 w-9 items-center justify-center rounded-full backdrop-blur transition active:scale-90',
           accent
-            ? 'bg-gradient-to-br from-rose-500 to-orange-500 shadow-[0_0_16px_rgba(244,63,94,0.6)]'
-            : 'bg-white/15 hover:bg-white/25'
+            ? 'bg-gradient-to-br from-rose-500 to-orange-500 shadow-[0_0_12px_rgba(244,63,94,0.55)]'
+            : 'bg-black/55 ring-1 ring-white/20 hover:bg-black/70'
         )}
       >
         {icon}
       </span>
-      <span className="text-[9px] font-semibold drop-shadow leading-none">{label}</span>
+      <span className="text-[8px] font-semibold drop-shadow leading-none">{label}</span>
     </button>
   );
 }
