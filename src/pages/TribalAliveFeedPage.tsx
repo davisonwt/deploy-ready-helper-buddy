@@ -852,7 +852,6 @@ export default function TribalAliveFeedPage() {
             <option value="">✨ All</option>
             <option value="music">🎵 Music</option>
             <option value="video">🎬 Videos</option>
-            <option value="story">📖 Stories</option>
             <option value="book">📚 Books</option>
             <option value="radio_live">🔴 Radio · Live</option>
             <option value="radio_recorded">📻 Radio · Recorded</option>
