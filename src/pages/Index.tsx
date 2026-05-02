@@ -305,7 +305,7 @@ function IndexContent() {
       </section>
 
       {/* Process Video Sections */}
-      <section className="py-12 sm:py-16 md:py-20 bg-gradient-to-b from-green-50 to-white">
+      <section className="py-12 sm:py-16 md:py-20 bg-gradient-to-b from-card/40 to-background">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 space-y-12 sm:space-y-16 md:space-y-20">
           {/* Seeds Section */}
           <div className="text-center relative">
