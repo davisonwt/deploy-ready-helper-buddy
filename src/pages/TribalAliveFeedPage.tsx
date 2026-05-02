@@ -37,9 +37,13 @@ import { launchConfetti, playSoundEffect } from '@/utils/confetti';
 
 type FeedTab = 'following' | 'foryou' | 'local';
 
+type FeedKind =
+  | 'seed' | 'product' | 'music' | 'video' | 'story' | 'book'
+  | 'radio_live' | 'radio_recorded' | 'classroom' | 'skilldrop' | 'premium_room' | 'orchard';
+
 interface FeedItem {
   key: string;
-  kind: 'seed' | 'product' | 'radio' | 'video';
+  kind: FeedKind;
   id: string;
   title: string;
   description?: string | null;
