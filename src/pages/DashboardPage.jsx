@@ -950,9 +950,9 @@ export default function SeedFlowDashboard() {
         </div>
 
         {/* ── CENTER ──────────────────────────────────────────── */}
-        <div style={styles.center}>
+        <div className="s2g-dashboard-center" style={styles.center}>
 
-          <div style={styles.header}>
+          <div className="s2g-dashboard-header" style={styles.header}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
               <div style={styles.avatar}>
                 {profile?.avatar_url
@@ -1001,7 +1001,7 @@ export default function SeedFlowDashboard() {
             </div>
           </div>
 
-          <div style={styles.content}>
+          <div className="s2g-dashboard-content" style={styles.content}>
             {/* ── Day's Beads — current week strand ── */}
             <div style={styles.sectionLabel}>
               <span>💎 Day's Beads</span>
@@ -1051,7 +1051,7 @@ export default function SeedFlowDashboard() {
         </div>
 
         {/* ── RIGHT PANEL ─────────────────────────────────────── */}
-        <div style={styles.rightPanel}>
+        <div className={`s2g-dashboard-right-panel ${mobilePanel === 'right' ? 'is-open' : ''}`} style={styles.rightPanel}>
           <div style={styles.panelSection}>
             <div style={styles.panelTitle}>📅 TODAY</div>
             <div style={styles.dateYear}>Year {sacredDate.year}</div>
