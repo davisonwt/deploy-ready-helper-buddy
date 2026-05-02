@@ -327,12 +327,14 @@ export default function TribalAliveFeedPage() {
       roomId = room.id as string;
     }
 
+    const { error: selfPartErr } = await supabase
+      .from('chat_participants')
+      .upsert({ room_id: roomId, user_id: user.id, is_active: true }, { onConflict: 'room_id,user_id', ignoreDuplicates: false });
+    if (selfPartErr) throw selfPartErr;
+
     const { error: partErr } = await supabase
       .from('chat_participants')
-      .upsert([
-        { room_id: roomId, user_id: user.id, is_active: true },
-        { room_id: roomId, user_id: item.sower_id, is_active: true },
-      ], { onConflict: 'room_id,user_id', ignoreDuplicates: false });
+      .upsert({ room_id: roomId, user_id: item.sower_id, is_active: true }, { onConflict: 'room_id,user_id', ignoreDuplicates: false });
     if (partErr) throw partErr;
 
     return roomId;
