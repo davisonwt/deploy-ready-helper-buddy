@@ -826,6 +826,36 @@ export default function TribalAliveFeedPage() {
         </div>
       </div>
 
+      {/* Sessions / content-kind filter — second pill row */}
+      <div className="absolute inset-x-0 top-[5.25rem] z-20 overflow-x-auto px-2 py-1.5 [&::-webkit-scrollbar]:hidden">
+        <div className="flex min-w-max gap-2">
+          {([
+            { key: null,             emoji: '✨', label: 'All',           color: '#a78bfa' },
+            { key: 'music',          emoji: '🎵', label: 'Music',         color: '#f97316' },
+            { key: 'video',          emoji: '🎬', label: 'Videos',        color: '#0ea5e9' },
+            { key: 'story',          emoji: '📖', label: 'Stories',       color: '#84cc16' },
+            { key: 'book',           emoji: '📚', label: 'Books',         color: '#eab308' },
+            { key: 'radio_live',     emoji: '🔴', label: 'Radio · Live',  color: '#ef4444' },
+            { key: 'radio_recorded', emoji: '📻', label: 'Radio · Recorded', color: '#f59e0b' },
+            { key: 'classroom',      emoji: '🎓', label: 'Classroom',     color: '#22d3ee' },
+            { key: 'skilldrop',      emoji: '🛠️', label: 'SkillDrop',     color: '#a855f7' },
+            { key: 'premium_room',   emoji: '👑', label: 'Premium Room',  color: '#ec4899' },
+            { key: 'orchard',        emoji: '🌳', label: 'Orchards',      color: '#22c55e' },
+            { key: 'product',        emoji: '🛍️', label: 'Products',      color: '#14b8a6' },
+            { key: 'seed',           emoji: '🌱', label: 'Seeds',         color: '#10b981' },
+          ] as Array<{ key: FeedKind | null; emoji: string; label: string; color: string }>).map((k) => (
+            <FilterPill
+              key={k.label}
+              active={kindFilter === k.key}
+              color={k.color}
+              emoji={k.emoji}
+              label={k.label}
+              onClick={() => setKindFilter(kindFilter === k.key ? null : k.key)}
+            />
+          ))}
+        </div>
+      </div>
+
 
       {/* Jitsi overlay */}
       <AnimatePresence>
