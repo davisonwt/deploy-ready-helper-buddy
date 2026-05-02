@@ -805,67 +805,50 @@ function FeedCard({
         <RailButton icon={<Share2 className="h-4 w-4" />} label="Share" onClick={onShare} />
       </div>
 
-      {/* Left content stack — single grouped sower card */}
+      {/* Left content stack — compact identity only, no oversized seed title overlay */}
       <div className="absolute bottom-4 left-3 right-16 z-10 sm:left-5 sm:right-20">
-        <div className="inline-flex max-w-full flex-col gap-2 rounded-2xl bg-black/45 p-3 backdrop-blur-sm ring-1 ring-white/10">
-          {/* Row 1: badge + follow */}
-          <div className="flex items-center gap-2">
-            {badge && (
-              <div
-                className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide"
-                style={{
-                  background: `linear-gradient(135deg, ${badge.color}40, ${badge.color}15)`,
-                  border: `1px solid ${badge.color}66`,
-                  color: badge.color,
-                }}
-              >
-                <span>{badge.emoji}</span> {badge.label}
-              </div>
-            )}
-            {item.sower_id && (
-              <button
-                onClick={onFollow}
-                className={cn(
-                  'ml-auto rounded-full px-3 py-0.5 text-[11px] font-bold transition',
-                  isFollowing
-                    ? 'bg-white/20 text-white hover:bg-white/30'
-                    : 'bg-white text-black hover:scale-105'
-                )}
-              >
-                {isFollowing ? 'Following' : 'Follow'}
-              </button>
+        <div className="flex max-w-md items-center gap-2 rounded-xl bg-black/55 p-2.5 backdrop-blur-md ring-1 ring-white/15">
+          <div className="h-10 w-10 shrink-0 overflow-hidden rounded-full border border-white/30 bg-white/10">
+            {item.sower_avatar ? (
+              <img src={item.sower_avatar} alt="" className="h-full w-full object-cover" />
+            ) : (
+              <div className="flex h-full w-full items-center justify-center text-sm font-semibold">{item.sower_name[0]}</div>
             )}
           </div>
-
-          {/* Row 2: avatar + name + handle */}
-          <div className="flex items-center gap-2">
-            <div className="h-9 w-9 shrink-0 overflow-hidden rounded-full border border-white/30 bg-white/10">
-              {item.sower_avatar ? (
-                <img src={item.sower_avatar} alt="" className="h-full w-full object-cover" />
-              ) : (
-                <div className="flex h-full w-full items-center justify-center text-sm font-semibold">{item.sower_name[0]}</div>
+          <div className="min-w-0 flex-1">
+            <div className="truncate text-base font-bold leading-tight">{item.sower_name}</div>
+            <div className="mt-1 flex min-w-0 items-center gap-1.5">
+              {badge && (
+                <span
+                  className="inline-flex shrink-0 items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-bold uppercase leading-none"
+                  style={{
+                    background: `linear-gradient(135deg, ${badge.color}40, ${badge.color}15)`,
+                    border: `1px solid ${badge.color}66`,
+                    color: badge.color,
+                  }}
+                >
+                  <span>{badge.emoji}</span> {badge.label}{item.kind === 'product' && item.audio_url ? ' · Music' : ''}
+                </span>
+              )}
+              {showBestow && (
+                <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-amber-500/20 px-2 py-0.5 text-[10px] font-bold leading-none text-amber-200 ring-1 ring-amber-400/50">
+                  <Gift className="h-3 w-3" /> R{Number(item.price ?? 2).toFixed(0)}
+                </span>
               )}
             </div>
-            <div className="min-w-0 flex-1">
-              <div className="truncate text-sm font-bold leading-tight">{item.sower_name}</div>
-              {item.sower_handle && <div className="truncate text-[11px] text-white/60 leading-tight">@{item.sower_handle}</div>}
-            </div>
           </div>
-
-          {/* Row 3: title + bestow chip */}
-          <div className="flex items-center gap-2">
-            <div className="min-w-0 flex-1 truncate text-sm font-semibold text-white/95">
-              {item.title}
-            </div>
-            {showBestow && (
-              <div className="inline-flex shrink-0 items-center gap-1 rounded-full bg-amber-500/20 px-2 py-0.5 text-[11px] font-bold text-amber-200 ring-1 ring-amber-400/50">
-                <Gift className="h-3 w-3" /> R{Number(item.price ?? 2).toFixed(0)}
-              </div>
-            )}
-          </div>
-
-          {item.description && (
-            <p className="line-clamp-2 max-w-md text-xs text-white/75">{item.description}</p>
+          {item.sower_id && (
+            <button
+              onClick={onFollow}
+              className={cn(
+                'shrink-0 rounded-full px-3 py-1 text-xs font-bold transition',
+                isFollowing
+                  ? 'bg-white/20 text-white hover:bg-white/30'
+                  : 'bg-primary text-primary-foreground hover:scale-105'
+              )}
+            >
+              {isFollowing ? 'Following' : 'Follow'}
+            </button>
           )}
         </div>
 
