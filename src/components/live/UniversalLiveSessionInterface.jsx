@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react'
+import React, { useState, useEffect, useRef, useId } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -44,6 +44,7 @@ export function UniversalLiveSessionInterface({
 }) {
   const { user } = useAuth()
   const { toast } = useToast()
+  const channelKey = useId().replace(/:/g, '')
   
   // Session state
   const [activeHosts, setActiveHosts] = useState([])
@@ -92,7 +93,7 @@ export function UniversalLiveSessionInterface({
     const setupSubscriptions = () => {
       // Subscribe to active hosts changes
       const hostsSubscription = supabase
-        .channel(`live-hosts-${sessionData.id}`)
+        .channel(`live-hosts-uli-${sessionData.id}-${channelKey}`)
         .on('postgres_changes', 
           { 
             event: '*', 
@@ -106,7 +107,7 @@ export function UniversalLiveSessionInterface({
 
       // Subscribe to call queue changes
       const queueSubscription = supabase
-        .channel(`call-queue-${sessionData.id}`)
+        .channel(`call-queue-uli-${sessionData.id}-${channelKey}`)
         .on('postgres_changes', 
           { 
             event: '*', 
@@ -120,7 +121,7 @@ export function UniversalLiveSessionInterface({
 
       // Subscribe to messages
       const messagesSubscription = supabase
-        .channel(`live-messages-${sessionData.id}`)
+        .channel(`live-messages-uli-${sessionData.id}-${channelKey}`)
         .on('postgres_changes',
           { 
             event: '*', 
@@ -134,7 +135,7 @@ export function UniversalLiveSessionInterface({
 
       // Subscribe to guest requests
       const guestsSubscription = supabase
-        .channel(`guest-requests-${sessionData.id}`)
+        .channel(`guest-requests-uli-${sessionData.id}-${channelKey}`)
         .on('postgres_changes',
           { 
             event: '*', 
