@@ -85,11 +85,11 @@ export default function BasketPage() {
 
   if (!user) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-green-50 to-emerald-50 flex items-center justify-center">
-        <Card className="p-8 text-center">
-          <h2 className="text-2xl font-bold mb-4">Please Log In</h2>
-          <p className="mb-4">You need to be logged in to view your basket.</p>
-          <Button onClick={() => navigate('/login')}>Go to Login</Button>
+      <div className="min-h-screen bg-background flex items-center justify-center p-4">
+        <Card className="p-8 text-center max-w-md w-full animate-fade-in">
+          <h2 className="text-2xl font-bold mb-4 text-foreground">Please Log In</h2>
+          <p className="mb-6 text-muted-foreground">You need to be logged in to view your basket.</p>
+          <Button onClick={() => navigate('/login')} className="w-full">Go to Login</Button>
         </Card>
       </div>
     )
@@ -97,23 +97,23 @@ export default function BasketPage() {
 
   if (basketItems.length === 0) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-green-50 to-emerald-50 flex items-center justify-center">
-        <Card className="p-8 text-center">
-          <ShoppingCart className="h-16 w-16 mx-auto mb-4 text-gray-400" />
-          <h2 className="text-2xl font-bold mb-4">Your Basket is Empty</h2>
-          <p className="mb-4">Add some orchard pockets to your basket to continue.</p>
-          <Button onClick={() => navigate('/browse-orchards')}>Browse Orchards</Button>
+      <div className="min-h-screen bg-background flex items-center justify-center p-4">
+        <Card className="p-8 text-center max-w-md w-full animate-fade-in">
+          <ShoppingCart className="h-16 w-16 mx-auto mb-4 text-muted-foreground" />
+          <h2 className="text-2xl font-bold mb-3 text-foreground">Your Basket is Empty</h2>
+          <p className="mb-6 text-muted-foreground">Add some orchard pockets to your basket to continue.</p>
+          <Button onClick={() => navigate('/browse-orchards')} className="w-full">Browse Orchards</Button>
         </Card>
       </div>
     )
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-green-50 to-emerald-50 p-4">
-      <div className="container mx-auto max-w-4xl">
+    <div className="min-h-screen bg-background p-4 sm:p-6">
+      <div className="container mx-auto max-w-5xl animate-fade-in">
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-green-800 mb-2">Your Bestowal Basket 🛒</h1>
-          <p className="text-green-600">Review your selection and provide invoice details</p>
+          <h1 className="text-3xl sm:text-4xl font-bold mb-2 bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">Your Bestowal Basket 🛒</h1>
+          <p className="text-muted-foreground">Review your selection and provide invoice details</p>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
