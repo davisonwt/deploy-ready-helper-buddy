@@ -562,17 +562,24 @@ export default function TribalAliveFeedPage() {
           <span className="text-base">🌱</span>
         </button>
 
-        <nav className="flex items-center gap-5 text-sm font-semibold">
+        <nav className="flex items-center gap-4 text-xs sm:text-sm font-semibold">
           {(['following', 'foryou', 'local'] as FeedTab[]).map((t) => (
             <button
               key={t}
               onClick={() => setTab(t)}
               className={cn(
-                'relative pb-1 transition',
+                'relative pb-1 transition whitespace-nowrap',
                 tab === t ? 'text-white' : 'text-white/55 hover:text-white/80'
               )}
+              title={
+                t === 'following'
+                  ? 'Inner Circle — mutual connections, your closest trust layer'
+                  : t === 'foryou'
+                  ? 'Tribe Feed — full network activity'
+                  : 'Around Me — geo-local seeds & products'
+              }
             >
-              {t === 'following' ? 'Following' : t === 'foryou' ? 'For You' : 'Local'}
+              {t === 'following' ? 'Inner Circle' : t === 'foryou' ? 'Tribe Feed' : 'Around Me'}
               {tab === t && (
                 <motion.span
                   layoutId="tabUnderline"
