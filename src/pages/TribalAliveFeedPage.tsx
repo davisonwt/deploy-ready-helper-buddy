@@ -666,7 +666,8 @@ export default function TribalAliveFeedPage() {
   };
 
   const handleBestow = (item: FeedItem) => {
-    if (item.kind !== 'product' && item.kind !== 'seed') {
+    // Live radio is the only kind that isn't bestowable — just navigate to the room.
+    if (item.kind === 'radio_live') {
       navigate(item.href);
       return;
     }
