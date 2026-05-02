@@ -247,6 +247,12 @@ export default function TribalAliveFeedPage() {
             description: p.description,
             image: p.cover_image_url || (p.image_urls && p.image_urls[0]) || null,
             images: (() => {
+              // For music singles: ONLY use the cover art, never image_urls
+              // (image_urls often contain the sower's profile/portrait photos,
+              // which the user does NOT want shown as the song cover).
+              if (isMusic) {
+                return p.cover_image_url ? [p.cover_image_url] : null;
+              }
               const arr: string[] = [];
               if (p.cover_image_url) arr.push(p.cover_image_url);
               if (Array.isArray(p.image_urls)) p.image_urls.forEach((u: string) => { if (u && !arr.includes(u)) arr.push(u); });
