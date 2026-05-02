@@ -388,6 +388,11 @@ export default function TribalAliveFeedPage() {
         </div>
       </header>
 
+      {/* Wandering badge filter — pinned to the top, horizontally scrollable */}
+      <div className="relative z-20 border-b border-white/10 bg-black/70 backdrop-blur-md px-2 sm:px-4 pt-1">
+        <WanderingBadgeBar activeRole={wanderingRole} onRoleChange={setWanderingRole} />
+      </div>
+
       {/* Vertical snap feed */}
       <main
         ref={containerRef}
