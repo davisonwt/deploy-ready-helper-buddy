@@ -388,6 +388,7 @@ export default function SeedFlowDashboard() {
   const [bestowedOrchards, setBestowedOrchards] = useState([])
   const [tip] = useState(GROWTH_TIPS[Math.floor(Math.random() * GROWTH_TIPS.length)])
   const [activePath, setActivePath] = useState('/dashboard')
+  const [mobilePanel, setMobilePanel] = useState(null)
   const intervalRef = useRef(null)
 
   // Live sunrise-based sacred date — ticks every minute, rolls at user's local sunrise.
@@ -855,15 +856,66 @@ export default function SeedFlowDashboard() {
         }
         .seed-card-anim { animation: breathe 4s ease-in-out infinite; }
         .nav-link:hover { opacity: 0.85; }
+        .s2g-mobile-panel-tab, .s2g-mobile-backdrop { display: none; }
+        @media (max-width: 768px) {
+          .s2g-dashboard-root { top: 0 !important; height: 100vh !important; height: 100dvh !important; padding-bottom: 70px; }
+          .s2g-dashboard-center { width: 100vw !important; flex: 1 1 100% !important; }
+          .s2g-dashboard-header { padding: 12px 48px !important; }
+          .s2g-dashboard-header h1, .s2g-dashboard-header h2 { font-size: inherit !important; }
+          .s2g-dashboard-header > div:first-child { min-width: 0; }
+          .s2g-dashboard-header > div:first-child > div:last-child { min-width: 0; }
+          .s2g-dashboard-header > div:first-child > div:last-child > div:first-child { font-size: 14px !important; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: calc(100vw - 150px); }
+          .s2g-dashboard-header > div:last-child { display: none !important; }
+          .s2g-dashboard-content { padding: 14px 10px 18px !important; }
+          .s2g-dashboard-sidebar, .s2g-dashboard-right-panel {
+            position: fixed !important; top: 38px !important; bottom: 70px !important; height: auto !important;
+            z-index: 180 !important; transition: transform 0.24s ease !important;
+            box-shadow: 0 22px 70px rgba(0,0,0,0.55); max-width: min(84vw, 310px);
+          }
+          .s2g-dashboard-sidebar { left: 0 !important; transform: translateX(-105%); }
+          .s2g-dashboard-right-panel { right: 0 !important; transform: translateX(105%); }
+          .s2g-dashboard-sidebar.is-open, .s2g-dashboard-right-panel.is-open { transform: translateX(0); }
+          .s2g-mobile-panel-tab {
+            display: inline-flex; position: fixed; top: 50%; transform: translateY(-50%); z-index: 190;
+            width: 36px; height: 68px; align-items: center; justify-content: center;
+            border: 1px solid rgba(255,255,255,0.16); background: rgba(8,13,23,0.88);
+            color: #f8fafc; backdrop-filter: blur(12px); font-size: 20px;
+          }
+          .s2g-mobile-panel-tab-left { left: 0; border-radius: 0 18px 18px 0; }
+          .s2g-mobile-panel-tab-right { right: 0; border-radius: 18px 0 0 18px; }
+          .s2g-mobile-backdrop.is-open { display: block; position: fixed; inset: 38px 0 70px; z-index: 170; background: rgba(0,0,0,0.45); }
+        }
       `}</style>
 
-      <div style={styles.root}>
+      <div className="s2g-dashboard-root" style={styles.root}>
 
         {/* ── SeedFlow fixed strip across very top ── */}
         <SeedFlow fixed height={38} seedCount={36} zIndex={200} />
+        <button
+          type="button"
+          className="s2g-mobile-panel-tab s2g-mobile-panel-tab-left"
+          aria-label="Open dashboard menu"
+          onClick={() => setMobilePanel(mobilePanel === 'left' ? null : 'left')}
+        >
+          ☰
+        </button>
+        <button
+          type="button"
+          className="s2g-mobile-panel-tab s2g-mobile-panel-tab-right"
+          aria-label="Open today panel"
+          onClick={() => setMobilePanel(mobilePanel === 'right' ? null : 'right')}
+        >
+          📅
+        </button>
+        <button
+          type="button"
+          aria-label="Close side panel"
+          className={`s2g-mobile-backdrop ${mobilePanel ? 'is-open' : ''}`}
+          onClick={() => setMobilePanel(null)}
+        />
 
         {/* ── SIDEBAR ─────────────────────────────────────────── */}
-        <div style={styles.sidebar}>
+        <div className={`s2g-dashboard-sidebar ${mobilePanel === 'left' ? 'is-open' : ''}`} style={styles.sidebar}>
           <div style={styles.logoArea}>
             <div style={styles.logoRow}>
               <img src="/favicon.png" alt="S2G" style={{ width: 36, height: 36, borderRadius: 9, objectFit: 'cover' }} />
@@ -883,7 +935,7 @@ export default function SeedFlowDashboard() {
               const isActive = activePath === item.path
               return (
                 <Link key={item.label} to={item.path} className="nav-link"
-                  onClick={() => setActivePath(item.path)}
+                  onClick={() => { setActivePath(item.path); setMobilePanel(null) }}
                   style={styles.navItem(isActive, item.color)}>
                   <div style={styles.navEmoji(isActive, item.color)}>{item.emoji}</div>
                   <div>
