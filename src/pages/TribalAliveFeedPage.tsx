@@ -222,6 +222,7 @@ export default function TribalAliveFeedPage() {
           title: s.title || 'Untitled seed',
           description: s.description,
           image: (s.images && s.images[0]) || null,
+          images: Array.isArray(s.images) ? s.images.filter(Boolean) : null,
           video_url: s.video_url || null,
           sower_id: s.gifter_id,
           sower_name: sowerName(profileMap[s.gifter_id]),
@@ -244,6 +245,12 @@ export default function TribalAliveFeedPage() {
             title: p.title || 'Untitled creation',
             description: p.description,
             image: p.cover_image_url || (p.image_urls && p.image_urls[0]) || null,
+            images: (() => {
+              const arr: string[] = [];
+              if (p.cover_image_url) arr.push(p.cover_image_url);
+              if (Array.isArray(p.image_urls)) p.image_urls.forEach((u: string) => { if (u && !arr.includes(u)) arr.push(u); });
+              return arr.length ? arr : null;
+            })(),
             audio_url: isAudio ? p.file_url : null,
             video_url: isVideo ? p.file_url : null,
             price: Number(p.price ?? 2),
