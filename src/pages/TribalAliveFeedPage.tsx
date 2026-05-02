@@ -887,6 +887,210 @@ function FeedCard({
   );
 }
 
+function SeedActionPanel({
+  panel, currentUserId, onClose, onSendText, onSendVoice, onGift,
+}: {
+  panel: NonNullable<ActionPanelState>;
+  currentUserId: string | null;
+  onClose: () => void;
+  onSendText: (text: string) => Promise<void>;
+  onSendVoice: (audioBlob: Blob, duration: number) => Promise<void>;
+  onGift: (amount: number | 'heart') => Promise<void>;
+}) {
+  const [text, setText] = useState('');
+  const [sending, setSending] = useState(false);
+  const [recording, setRecording] = useState(false);
+  const [seconds, setSeconds] = useState(0);
+  const recorderRef = useRef<MediaRecorder | null>(null);
+  const chunksRef = useRef<Blob[]>([]);
+  const streamRef = useRef<MediaStream | null>(null);
+  const secondsRef = useRef(0);
+  const messagesEndRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [panel.messages.length, panel.loading]);
+
+  useEffect(() => {
+    secondsRef.current = seconds;
+  }, [seconds]);
+
+  useEffect(() => {
+    if (!recording) return undefined;
+    const timer = window.setInterval(() => setSeconds((value) => value + 1), 1000);
+    return () => window.clearInterval(timer);
+  }, [recording]);
+
+  useEffect(() => () => {
+    streamRef.current?.getTracks().forEach((track) => track.stop());
+  }, []);
+
+  const submitText = async () => {
+    if (!text.trim() || sending) return;
+    setSending(true);
+    try {
+      await onSendText(text);
+      setText('');
+    } finally {
+      setSending(false);
+    }
+  };
+
+  const startRecording = async () => {
+    if (sending) return;
+    setSending(true);
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      streamRef.current = stream;
+      const mimeType = MediaRecorder.isTypeSupported('audio/webm;codecs=opus') ? 'audio/webm;codecs=opus' : 'audio/webm';
+      const recorder = new MediaRecorder(stream, { mimeType });
+      recorderRef.current = recorder;
+      chunksRef.current = [];
+      secondsRef.current = 0;
+      setSeconds(0);
+
+      recorder.ondataavailable = (event) => {
+        if (event.data.size > 0) chunksRef.current.push(event.data);
+      };
+      recorder.onstop = async () => {
+        const duration = Math.max(1, secondsRef.current);
+        const blob = new Blob(chunksRef.current, { type: 'audio/webm' });
+        stream.getTracks().forEach((track) => track.stop());
+        streamRef.current = null;
+        setRecording(false);
+        setSending(true);
+        try {
+          await onSendVoice(blob, duration);
+        } finally {
+          setSending(false);
+          setSeconds(0);
+        }
+      };
+
+      recorder.start();
+      setRecording(true);
+    } finally {
+      setSending(false);
+    }
+  };
+
+  const stopRecording = () => {
+    if (recorderRef.current?.state === 'recording') recorderRef.current.stop();
+  };
+
+  const sendGift = async (amount: number | 'heart') => {
+    if (sending) return;
+    setSending(true);
+    try {
+      await onGift(amount);
+    } finally {
+      setSending(false);
+    }
+  };
+
+  const title = panel.mode === 'message'
+    ? 'Seed messages'
+    : panel.mode === 'voice'
+    ? 'Voice messages'
+    : 'Freewill gifts';
+
+  return (
+    <motion.div
+      initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+      className="fixed inset-0 z-40 flex items-end justify-center bg-background/70 px-3 pb-4 backdrop-blur-sm sm:items-center sm:pb-0"
+      onClick={onClose}
+    >
+      <motion.section
+        initial={{ y: 28, scale: 0.98 }} animate={{ y: 0, scale: 1 }} exit={{ y: 28, scale: 0.98 }}
+        className="flex max-h-[82dvh] w-full max-w-lg flex-col overflow-hidden rounded-2xl border border-border bg-card text-card-foreground shadow-2xl"
+        onClick={(event) => event.stopPropagation()}
+      >
+        <div className="flex items-start justify-between gap-3 border-b border-border px-4 py-3">
+          <div className="min-w-0">
+            <h2 className="truncate text-base font-bold">{title}</h2>
+            <p className="truncate text-xs text-muted-foreground">{panel.item.title} · {panel.item.sower_name}</p>
+          </div>
+          <button onClick={onClose} className="rounded-full p-1 text-muted-foreground hover:bg-muted hover:text-foreground" aria-label="Close">
+            <X className="h-5 w-5" />
+          </button>
+        </div>
+
+        {panel.mode === 'gift' ? (
+          <div className="space-y-4 p-4">
+            <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
+              {[
+                { label: '10c', value: 0.1 },
+                { label: '50c', value: 0.5 },
+                { label: '$1', value: 1 },
+                { label: '$5', value: 5 },
+                { label: '$10', value: 10 },
+              ].map((gift) => (
+                <Button key={gift.label} disabled={sending} onClick={() => sendGift(gift.value)} className="h-12 rounded-full">
+                  {gift.label}
+                </Button>
+              ))}
+              <Button disabled={sending} variant="outline" onClick={() => sendGift('heart')} className="h-12 rounded-full gap-2">
+                <Heart className="h-4 w-4" /> Heart
+              </Button>
+            </div>
+          </div>
+        ) : (
+          <>
+            <div className="min-h-0 flex-1 space-y-3 overflow-y-auto p-4">
+              {panel.loading ? (
+                <div className="flex justify-center py-8"><Loader2 className="h-6 w-6 animate-spin text-primary" /></div>
+              ) : panel.error ? (
+                <p className="rounded-lg bg-destructive/10 p-3 text-sm text-destructive">{panel.error}</p>
+              ) : panel.messages.length === 0 ? (
+                <p className="rounded-lg bg-muted p-3 text-sm text-muted-foreground">No messages for this seed yet.</p>
+              ) : (
+                panel.messages.map((message) => {
+                  const mine = message.sender_id === currentUserId;
+                  const sender = message.sender_profile?.display_name || message.sender_profile?.first_name || (mine ? 'You' : panel.item.sower_name);
+                  return (
+                    <div key={message.id} className={cn('flex', mine ? 'justify-end' : 'justify-start')}>
+                      <div className={cn('max-w-[82%] rounded-2xl px-3 py-2 text-sm', mine ? 'bg-primary text-primary-foreground' : 'bg-muted text-foreground')}>
+                        <div className="mb-1 text-[10px] font-semibold opacity-70">{sender}</div>
+                        {message.file_url ? <audio controls src={message.file_url} className="h-9 max-w-full" /> : <p className="whitespace-pre-wrap">{message.content}</p>}
+                      </div>
+                    </div>
+                  );
+                })
+              )}
+              <div ref={messagesEndRef} />
+            </div>
+
+            <div className="border-t border-border p-3">
+              {panel.mode === 'message' ? (
+                <div className="flex items-end gap-2">
+                  <textarea
+                    value={text}
+                    onChange={(event) => setText(event.target.value)}
+                    rows={2}
+                    placeholder="Write a message..."
+                    className="min-h-12 flex-1 resize-none rounded-xl border border-input bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-ring"
+                  />
+                  <Button disabled={sending || !text.trim()} onClick={submitText} size="icon" className="h-12 w-12 rounded-full" aria-label="Send message">
+                    {sending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
+                  </Button>
+                </div>
+              ) : (
+                <div className="flex items-center justify-between gap-3">
+                  <div className="text-sm font-semibold tabular-nums">{recording ? `Recording ${seconds}s` : 'Tap to record a voice message'}</div>
+                  <Button disabled={sending && !recording} onClick={recording ? stopRecording : startRecording} className="h-12 rounded-full gap-2">
+                    {recording ? <Square className="h-4 w-4 fill-current" /> : <Mic className="h-4 w-4" />}
+                    {recording ? 'Stop' : 'Record'}
+                  </Button>
+                </div>
+              )}
+            </div>
+          </>
+        )}
+      </motion.section>
+    </motion.div>
+  );
+}
+
 function RailButton({
   icon, label, onClick, accent,
 }: { icon: React.ReactNode; label: string; onClick: () => void; accent?: boolean }) {
