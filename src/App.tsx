@@ -51,6 +51,7 @@ const DashboardPage = lazy(() => import("./pages/DashboardPage"));
 const StatsPage = lazy(() => import("./pages/StatsPage"));
 const ProfilePage = lazy(() => import("./pages/ProfilePage"));
 const BrowseOrchardsPage = lazy(() => import("./pages/BrowseOrchardsPage"));
+const TribalAliveFeedPage = lazy(() => import("./pages/TribalAliveFeedPage"));
 const OrchardPage = lazy(() => import("./pages/OrchardPage"));
 const CreateOrchardPage = lazy(() => import("./pages/CreateOrchardPage"));
 const MyOrchardsPage = lazy(() => import("./pages/MyOrchardsPage"));
@@ -224,6 +225,9 @@ const App = () => (
               } />
               <Route path="/browse-orchards" element={
                 <ProtectedRoute><RequireVerification><BrowseOrchardsPage /></RequireVerification></ProtectedRoute>
+              } />
+              <Route path="/orchard-alive" element={
+                <ProtectedRoute><RequireVerification><Layout><TribalAliveFeedPage /></Layout></RequireVerification></ProtectedRoute>
               } />
               <Route path="/orchards/:orchardId" element={
                 <ProtectedRoute><RequireVerification><Layout><OrchardPage /></Layout></RequireVerification></ProtectedRoute>

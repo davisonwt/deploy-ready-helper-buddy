@@ -983,7 +983,7 @@ export default function SeedFlowDashboard() {
             )}
 
             {/* ── Step Into the Orchard — living gate button ── */}
-            <Link to="/browse-orchards" style={{ textDecoration: 'none' }}>
+            <Link to="/orchard-alive" style={{ textDecoration: 'none' }}>
               <LivingButton
                 variant="stepInto"
                 height={56}
@@ -992,7 +992,7 @@ export default function SeedFlowDashboard() {
                 fontWeight={800}
                 letterSpacing="2px"
               >
-                🌿 STEP INTO THE ORCHARD — FIND YOUR SEED
+                🌿 STEP INTO THE ORCHARD — FIND YOUR TRIBE'S SEEDS
               </LivingButton>
             </Link>
           </div>
