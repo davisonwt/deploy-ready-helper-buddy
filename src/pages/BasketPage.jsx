@@ -116,28 +116,28 @@ export default function BasketPage() {
           <p className="text-muted-foreground">Review your selection and provide invoice details</p>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-8">
           {/* Basket Items */}
-          <Card>
+          <Card className="hover:shadow-xl transition-shadow">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
-                <ShoppingCart className="h-5 w-5" />
+                <ShoppingCart className="h-5 w-5 text-primary" />
                 Basket Items ({getTotalItems()})
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               {basketItems.map((item) => (
-                <div key={item.id} className="flex items-center justify-between p-4 border rounded-lg">
-                  <div className="flex-1">
-                    <h4 className="font-semibold">{item.orchardTitle}</h4>
-                    <p className="text-sm text-gray-600">
+                <div key={item.id} className="flex items-center justify-between p-4 border border-border rounded-lg hover:border-primary/50 transition-colors">
+                  <div className="flex-1 min-w-0">
+                    <h4 className="font-semibold text-foreground truncate">{item.orchardTitle}</h4>
+                    <p className="text-sm text-muted-foreground">
                       {item.quantity} × {Array.isArray(item.pockets) ? item.pockets.length : 0} pockets = {formatAmount(item.amount * item.quantity * (Array.isArray(item.pockets) ? item.pockets.length : 0))}
                     </p>
-                    <p className="text-xs text-gray-500">
+                    <p className="text-xs text-muted-foreground/80 truncate">
                       Pockets: {Array.isArray(item.pockets) ? item.pockets.join(', ') : (item.pockets || 'None')}
                     </p>
                   </div>
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-2 ml-3">
                     <Input
                       type="number"
                       min="1"
@@ -149,6 +149,7 @@ export default function BasketPage() {
                       variant="outline"
                       size="sm"
                       onClick={() => removeFromBasket(item.id)}
+                      className="hover:bg-destructive hover:text-destructive-foreground hover:border-destructive transition-colors"
                     >
                       <Trash2 className="h-4 w-4" />
                     </Button>
@@ -156,10 +157,10 @@ export default function BasketPage() {
                 </div>
               ))}
               
-              <div className="border-t pt-4">
+              <div className="border-t border-border pt-4">
                 <div className="flex justify-between items-center font-bold text-lg">
-                  <span>Total:</span>
-                  <span>{formatAmount(getTotalAmount())}</span>
+                  <span className="text-foreground">Total:</span>
+                  <span className="text-primary">{formatAmount(getTotalAmount())}</span>
                 </div>
               </div>
             </CardContent>
