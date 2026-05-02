@@ -730,18 +730,38 @@ function RailButton({
   icon, label, onClick, accent,
 }: { icon: React.ReactNode; label: string; onClick: () => void; accent?: boolean }) {
   return (
-    <button onClick={onClick} className="flex flex-col items-center gap-0.5 text-white/90 hover:text-white">
+    <button onClick={onClick} className="flex flex-col items-center gap-1 text-white/95 hover:text-white">
       <span
         className={cn(
-          'flex h-9 w-9 items-center justify-center rounded-full backdrop-blur transition active:scale-90',
+          'flex h-11 w-11 items-center justify-center rounded-full backdrop-blur transition active:scale-90',
           accent
-            ? 'bg-gradient-to-br from-rose-500 to-orange-500 shadow-[0_0_12px_rgba(244,63,94,0.55)]'
-            : 'bg-black/55 ring-1 ring-white/20 hover:bg-black/70'
+            ? 'bg-gradient-to-br from-rose-500 to-orange-500 shadow-[0_0_14px_rgba(244,63,94,0.6)]'
+            : 'bg-black/45 ring-1 ring-white/20 hover:bg-black/65'
         )}
       >
         {icon}
       </span>
-      <span className="text-[8px] font-semibold drop-shadow leading-none">{label}</span>
+      <span className="text-[10px] font-semibold drop-shadow leading-none">{label}</span>
+    </button>
+  );
+}
+
+function FilterPill({
+  active, color, emoji, label, onClick,
+}: { active: boolean; color: string; emoji: string; label: string; onClick: () => void }) {
+  return (
+    <button
+      onClick={onClick}
+      className={cn(
+        'flex shrink-0 items-center gap-1.5 rounded-full px-3 py-1 text-xs font-bold backdrop-blur transition whitespace-nowrap',
+        active
+          ? 'text-white shadow-[0_0_14px_rgba(0,0,0,0.5)]'
+          : 'bg-black/40 text-white/80 ring-1 ring-white/15 hover:bg-black/60'
+      )}
+      style={active ? { background: `linear-gradient(135deg, ${color}, ${color}cc)`, boxShadow: `0 0 16px ${color}66` } : undefined}
+    >
+      <span aria-hidden>{emoji}</span>
+      <span>{label}</span>
     </button>
   );
 }
