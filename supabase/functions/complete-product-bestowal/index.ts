@@ -141,7 +141,7 @@ serve(async (req) => {
 
     const sowerName = sowerProfile?.display_name || sowerProfile?.first_name || 'Sower';
     const bestowerName = bestowerProfile?.display_name || bestowerProfile?.first_name || 'Friend';
-    const productTitle = product.title || 'Product';
+    // (productTitle is declared earlier — keep names here for readability.)
 
     // 1. Send Gosat → Bestower (Invoice/Proof)
     if (gosatUser?.user_id) {
