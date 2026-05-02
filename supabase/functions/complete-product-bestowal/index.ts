@@ -52,6 +52,9 @@ serve(async (req) => {
       return createErrorResponse('Product not found', 404, req);
     }
 
+    // Resolve product title up-front so it's available for the accounting record below.
+    const productTitle = product.title || 'Product';
+
     // Calculate distribution
     const tithingAmount = amount * 0.10; // 10% tithing
     const adminFee = amount * 0.05; // 5% admin fee
