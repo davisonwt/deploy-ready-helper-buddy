@@ -388,6 +388,11 @@ export default function TribalAliveFeedPage() {
         </div>
       </header>
 
+      {/* Wandering badge filter — pinned to the top, horizontally scrollable */}
+      <div className="relative z-20 border-b border-white/10 bg-black/70 backdrop-blur-md px-2 sm:px-4 pt-1">
+        <WanderingBadgeBar activeRole={wanderingRole} onRoleChange={setWanderingRole} />
+      </div>
+
       {/* Vertical snap feed */}
       <main
         ref={containerRef}
@@ -426,10 +431,6 @@ export default function TribalAliveFeedPage() {
         )}
       </main>
 
-      {/* Wandering badge filter — pinned to the bottom, always visible */}
-      <div className="relative z-30 border-t border-white/10 bg-black/70 backdrop-blur-md px-2 sm:px-4 pt-2 pb-[max(env(safe-area-inset-bottom),0.5rem)]">
-        <WanderingBadgeBar activeRole={wanderingRole} onRoleChange={setWanderingRole} />
-      </div>
 
       {/* Jitsi overlay */}
       <AnimatePresence>
@@ -570,43 +571,43 @@ function FeedCard({
 
       <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-transparent to-black/85 pointer-events-none" />
 
-      {/* Right action rail */}
-      <div className="absolute bottom-32 right-3 z-10 flex flex-col items-center gap-5 sm:right-5">
+      {/* Right action rail — compact, fully on-screen */}
+      <div className="absolute right-2 top-1/2 z-10 flex -translate-y-1/2 flex-col items-center gap-3 sm:right-3 sm:gap-4">
         <RailButton
-          icon={<MessageCircle className="h-6 w-6" />}
+          icon={<MessageCircle className="h-5 w-5" />}
           label="Message"
           onClick={onMessage}
         />
         <RailButton
-          icon={<Mic className="h-6 w-6" />}
+          icon={<Mic className="h-5 w-5" />}
           label="Voice"
           onClick={onVoice}
         />
         <RailButton
-          icon={<Video className="h-6 w-6" />}
+          icon={<Video className="h-5 w-5" />}
           label="Video"
           onClick={onVideo}
         />
         <RailButton
-          icon={<Heart className="h-6 w-6" />}
+          icon={<Heart className="h-5 w-5" />}
           label="Like"
           onClick={onShare}
         />
         <RailButton
-          icon={<Radio className="h-6 w-6" />}
+          icon={<Radio className="h-5 w-5" />}
           label="Go Live"
           onClick={onGoLive}
           accent
         />
         <RailButton
-          icon={<Share2 className="h-5 w-5" />}
+          icon={<Share2 className="h-4 w-4" />}
           label="Share"
           onClick={onShare}
         />
       </div>
 
       {/* Left content stack */}
-      <div className="absolute bottom-4 left-3 right-24 z-10 sm:left-5 sm:right-28">
+      <div className="absolute bottom-4 left-3 right-16 z-10 sm:left-5 sm:right-20">
         {badge && (
           <div
             className="mb-2 inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-bold"
@@ -708,18 +709,18 @@ function RailButton({
   icon, label, onClick, accent,
 }: { icon: React.ReactNode; label: string; onClick: () => void; accent?: boolean }) {
   return (
-    <button onClick={onClick} className="flex flex-col items-center gap-1 text-white/90 hover:text-white">
+    <button onClick={onClick} className="flex flex-col items-center gap-0.5 text-white/90 hover:text-white">
       <span
         className={cn(
-          'flex h-12 w-12 items-center justify-center rounded-full backdrop-blur transition active:scale-90',
+          'flex h-10 w-10 items-center justify-center rounded-full backdrop-blur transition active:scale-90',
           accent
-            ? 'bg-gradient-to-br from-rose-500 to-orange-500 shadow-[0_0_20px_rgba(244,63,94,0.6)]'
+            ? 'bg-gradient-to-br from-rose-500 to-orange-500 shadow-[0_0_16px_rgba(244,63,94,0.6)]'
             : 'bg-white/15 hover:bg-white/25'
         )}
       >
         {icon}
       </span>
-      <span className="text-[10px] font-semibold drop-shadow">{label}</span>
+      <span className="text-[9px] font-semibold drop-shadow leading-none">{label}</span>
     </button>
   );
 }
