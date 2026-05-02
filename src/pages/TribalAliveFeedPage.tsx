@@ -571,31 +571,31 @@ function FeedCard({
 
       <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-transparent to-black/85 pointer-events-none" />
 
-      {/* Right action rail — compact, fully on-screen */}
-      <div className="absolute right-2 top-1/2 z-10 flex -translate-y-1/2 flex-col items-center gap-3 sm:right-3 sm:gap-4">
+      {/* Right action rail — TikTok-style vertical column, fully on-screen */}
+      <div className="absolute right-1.5 bottom-24 z-10 flex flex-col items-center gap-2.5 sm:right-2.5 sm:gap-3">
         <RailButton
-          icon={<MessageCircle className="h-5 w-5" />}
-          label="Message"
+          icon={<MessageCircle className="h-4 w-4" />}
+          label="Msg"
           onClick={onMessage}
         />
         <RailButton
-          icon={<Mic className="h-5 w-5" />}
+          icon={<Mic className="h-4 w-4" />}
           label="Voice"
           onClick={onVoice}
         />
         <RailButton
-          icon={<Video className="h-5 w-5" />}
+          icon={<Video className="h-4 w-4" />}
           label="Video"
           onClick={onVideo}
         />
         <RailButton
-          icon={<Heart className="h-5 w-5" />}
+          icon={<Heart className="h-4 w-4" />}
           label="Like"
           onClick={onShare}
         />
         <RailButton
-          icon={<Radio className="h-5 w-5" />}
-          label="Go Live"
+          icon={<Radio className="h-4 w-4" />}
+          label="Live"
           onClick={onGoLive}
           accent
         />
@@ -712,15 +712,15 @@ function RailButton({
     <button onClick={onClick} className="flex flex-col items-center gap-0.5 text-white/90 hover:text-white">
       <span
         className={cn(
-          'flex h-10 w-10 items-center justify-center rounded-full backdrop-blur transition active:scale-90',
+          'flex h-9 w-9 items-center justify-center rounded-full backdrop-blur transition active:scale-90',
           accent
-            ? 'bg-gradient-to-br from-rose-500 to-orange-500 shadow-[0_0_16px_rgba(244,63,94,0.6)]'
-            : 'bg-white/15 hover:bg-white/25'
+            ? 'bg-gradient-to-br from-rose-500 to-orange-500 shadow-[0_0_12px_rgba(244,63,94,0.55)]'
+            : 'bg-black/55 ring-1 ring-white/20 hover:bg-black/70'
         )}
       >
         {icon}
       </span>
-      <span className="text-[9px] font-semibold drop-shadow leading-none">{label}</span>
+      <span className="text-[8px] font-semibold drop-shadow leading-none">{label}</span>
     </button>
   );
 }

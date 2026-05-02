@@ -43,8 +43,8 @@ export default function WanderingBadgeBar({ activeRole, onRoleChange }: Props) {
   };
 
   return (
-    <div className="w-full overflow-x-auto pb-2 mb-4">
-      <div className="flex gap-3 min-w-max px-1">
+    <div className="w-full overflow-x-auto pb-1.5 mb-2">
+      <div className="flex gap-2 min-w-max px-1">
         {WANDERING_BADGES.map((b) => {
           const active = activeRole === b.key;
           return (
@@ -52,7 +52,7 @@ export default function WanderingBadgeBar({ activeRole, onRoleChange }: Props) {
               key={b.key}
               onClick={() => handleClick(b)}
               title={b.description}
-              className={`group flex flex-col items-center justify-center w-24 h-24 rounded-2xl border transition-all flex-shrink-0 ${
+              className={`group flex flex-col items-center justify-center w-16 h-16 rounded-xl border transition-all flex-shrink-0 ${
                 active
                   ? 'border-2 scale-105'
                   : 'border-white/10 hover:border-white/30 hover:scale-105'
@@ -62,12 +62,12 @@ export default function WanderingBadgeBar({ activeRole, onRoleChange }: Props) {
                   ? `linear-gradient(135deg, ${b.color}33, ${b.color}11)`
                   : 'rgba(13, 17, 23, 0.6)',
                 borderColor: active ? b.color : undefined,
-                boxShadow: active ? `0 0 24px ${b.color}55` : undefined,
+                boxShadow: active ? `0 0 18px ${b.color}55` : undefined,
               }}
             >
-              <div className="text-3xl mb-1" aria-hidden>{b.emoji}</div>
+              <div className="text-xl leading-none mb-0.5" aria-hidden>{b.emoji}</div>
               <div
-                className="text-[10px] font-bold tracking-widest"
+                className="text-[9px] font-bold tracking-wider leading-none"
                 style={{ color: active ? b.color : '#94a3b8' }}
               >
                 {b.label}
