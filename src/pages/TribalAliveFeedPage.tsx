@@ -37,9 +37,13 @@ import { launchConfetti, playSoundEffect } from '@/utils/confetti';
 
 type FeedTab = 'following' | 'foryou' | 'local';
 
+type FeedKind =
+  | 'seed' | 'product' | 'music' | 'video' | 'story' | 'book'
+  | 'radio_live' | 'radio_recorded' | 'classroom' | 'skilldrop' | 'premium_room' | 'orchard';
+
 interface FeedItem {
   key: string;
-  kind: 'seed' | 'product' | 'radio' | 'video';
+  kind: FeedKind;
   id: string;
   title: string;
   description?: string | null;
@@ -112,6 +116,7 @@ export default function TribalAliveFeedPage() {
 
   const [tab, setTab] = useState<FeedTab>('foryou');
   const [wanderingRole, setWanderingRole] = useState<WanderingRole | null>(null);
+  const [kindFilter, setKindFilter] = useState<FeedKind | null>(null);
   const [items, setItems] = useState<FeedItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeIdx, setActiveIdx] = useState(0);
@@ -122,34 +127,73 @@ export default function TribalAliveFeedPage() {
   const containerRef = useRef<HTMLDivElement>(null);
   const cardRefs = useRef<Array<HTMLDivElement | null>>([]);
 
-  // Load everything everyone planted
+  // Load everything everyone planted across ALL content surfaces
   useEffect(() => {
     let cancelled = false;
     (async () => {
       setLoading(true);
       try {
-        const [seedsRes, productsRes, radioRes, videosRes] = await Promise.all([
+        const [
+          seedsRes, productsRes, djTracksRes, radioLiveRes, radioRecRes,
+          videosRes, memryRes, booksRes, premiumRes, classRes, skillRes, orchardsRes,
+        ] = await Promise.all([
           supabase.from('seeds')
             .select('id, title, description, images, video_url, gifter_id, category, created_at')
-            .order('created_at', { ascending: false }).limit(60),
+            .order('created_at', { ascending: false }).limit(40),
           supabase.from('products')
             .select('id, title, description, type, cover_image_url, image_urls, file_url, price, sower_id, wandering_role, created_at')
             .eq('status', 'active')
             .order('created_at', { ascending: false }).limit(80),
+          supabase.from('dj_music_tracks')
+            .select('id, track_title, artist_name, file_url, cover_image_url, preview_url, price, dj_id, wandering_role, music_genre, upload_date, created_at, radio_djs!inner(id, user_id, dj_name, avatar_url)')
+            .eq('is_public', true)
+            .order('upload_date', { ascending: false }).limit(80),
           supabase.from('radio_live_sessions')
             .select('id, status, started_at, ended_at, created_at, schedule_id')
-            .order('created_at', { ascending: false }).limit(30),
+            .order('created_at', { ascending: false }).limit(20),
+          supabase.from('radio_automated_sessions')
+            .select('id, schedule_id, playback_status, current_track_index, created_at')
+            .order('created_at', { ascending: false }).limit(20),
           supabase.from('community_videos')
             .select('id, title, description, video_url, thumbnail_url, uploader_id, created_at')
-            .order('created_at', { ascending: false }).limit(60),
+            .order('created_at', { ascending: false }).limit(40),
+          supabase.from('memry_posts')
+            .select('id, user_id, content_type, media_url, thumbnail_url, caption, content_category, created_at')
+            .order('created_at', { ascending: false }).limit(40),
+          supabase.from('sower_books')
+            .select('id, title, description, cover_image_url, image_urls, sower_id, user_id, bestowal_value, wandering_role, created_at')
+            .eq('is_available', true)
+            .order('created_at', { ascending: false }).limit(20),
+          supabase.from('premium_rooms')
+            .select('id, title, description, room_type, price, artwork, creator_id, created_at')
+            .eq('is_public', true)
+            .order('created_at', { ascending: false }).limit(20),
+          supabase.from('classroom_sessions')
+            .select('id, title, description, instructor_id, recording_url, scheduled_at, status, session_fee, is_free, created_at')
+            .order('created_at', { ascending: false }).limit(20),
+          supabase.from('skilldrop_sessions')
+            .select('id, title, description, presenter_id, recording_url, scheduled_at, status, session_fee, created_at')
+            .order('created_at', { ascending: false }).limit(20),
+          supabase.from('orchards')
+            .select('id, title, description, images, video_url, user_id, category, status, created_at')
+            .eq('status', 'active')
+            .order('created_at', { ascending: false }).limit(30),
         ]);
 
         if (cancelled) return;
 
+        // Collect every user_id we need to resolve to a profile
         const sowerIds = Array.from(new Set([
           ...(seedsRes.data || []).map((s: any) => s.gifter_id),
           ...(productsRes.data || []).map((p: any) => p.sower_id),
           ...(videosRes.data || []).map((v: any) => v.uploader_id),
+          ...(memryRes.data || []).map((m: any) => m.user_id),
+          ...(booksRes.data || []).map((b: any) => b.user_id || b.sower_id),
+          ...(premiumRes.data || []).map((r: any) => r.creator_id),
+          ...(classRes.data || []).map((c: any) => c.instructor_id),
+          ...(skillRes.data || []).map((c: any) => c.presenter_id),
+          ...(orchardsRes.data || []).map((o: any) => o.user_id),
+          ...((djTracksRes.data || []).map((t: any) => t.radio_djs?.user_id)),
         ].filter(Boolean)));
 
         const profileMap: Record<string, any> = {};
@@ -168,6 +212,9 @@ export default function TribalAliveFeedPage() {
           });
         }
 
+        const handleOf = (p: any) =>
+          p?.display_name?.toLowerCase().replace(/\s+/g, '') || null;
+
         const seedItems: FeedItem[] = (seedsRes.data || []).map((s: any) => ({
           key: `seed-${s.id}`, kind: 'seed', id: s.id,
           title: s.title || 'Untitled seed',
@@ -177,7 +224,7 @@ export default function TribalAliveFeedPage() {
           sower_id: s.gifter_id,
           sower_name: sowerName(profileMap[s.gifter_id]),
           sower_avatar: profileMap[s.gifter_id]?.avatar_url || null,
-          sower_handle: profileMap[s.gifter_id]?.display_name?.toLowerCase().replace(/\s+/g, '') || null,
+          sower_handle: handleOf(profileMap[s.gifter_id]),
           wandering_role: wanderingFor({ kind: 'seed' }),
           created_at: s.created_at,
           href: `/seed/${s.id}`,
@@ -187,12 +234,11 @@ export default function TribalAliveFeedPage() {
           const typeLc = (p.type || '').toLowerCase();
           const isMusic = typeLc === 'music';
           const isAudio = isMusic || /\.(mp3|wav|m4a|ogg)(\?|$)/i.test(p.file_url || '');
-          // Only treat as fullscreen video if the product is explicitly a video — never for music,
-          // even when the music file is a .mp4 (lyric/album-art video). That keeps baked-in titles
-          // from blowing up across the entire feed card.
           const isVideo = !isMusic && (typeLc === 'video' || /\.(mp4|webm|mov)(\?|$)/i.test(p.file_url || ''));
+          const isBook  = typeLc === 'ebook' || typeLc === 'book';
+          const kind: FeedKind = isMusic ? 'music' : isBook ? 'book' : isVideo ? 'video' : 'product';
           return {
-            key: `product-${p.id}`, kind: 'product', id: p.id,
+            key: `product-${p.id}`, kind, id: p.id,
             title: p.title || 'Untitled creation',
             description: p.description,
             image: p.cover_image_url || (p.image_urls && p.image_urls[0]) || null,
@@ -202,23 +248,56 @@ export default function TribalAliveFeedPage() {
             sower_id: p.sower_id,
             sower_name: sowerName(profileMap[p.sower_id]),
             sower_avatar: profileMap[p.sower_id]?.avatar_url || null,
-            sower_handle: profileMap[p.sower_id]?.display_name?.toLowerCase().replace(/\s+/g, '') || null,
+            sower_handle: handleOf(profileMap[p.sower_id]),
             wandering_role: wanderingFor({ kind: 'product', wandering_role: p.wandering_role || (isMusic ? 'hearth' : null), type: p.type }),
             created_at: p.created_at,
             href: `/products`,
           };
         });
 
-        const radioItems: FeedItem[] = (radioRes.data || []).map((r: any) => ({
-          key: `radio-${r.id}`, kind: 'radio', id: r.id,
-          title: r.status === 'live' ? '🔴 Live tribal radio' : 'Recorded radio session',
-          description: r.status === 'live' ? 'Live now in the orchard' : 'A past broadcast — tap to listen',
+        // 🎵 DJ tracks (Davison's 26 songs etc.) — these were missing from the feed
+        const djItems: FeedItem[] = (djTracksRes.data || []).map((t: any) => {
+          const dj = t.radio_djs || {};
+          const ownerId = dj.user_id || null;
+          return {
+            key: `dj-${t.id}`, kind: 'music', id: t.id,
+            title: t.track_title || 'Untitled track',
+            description: t.artist_name || dj.dj_name || null,
+            image: t.cover_image_url || null,
+            audio_url: t.preview_url || t.file_url || null,
+            price: Number(t.price ?? 2),
+            sower_id: ownerId,
+            sower_name: sowerName(profileMap[ownerId]) !== 'Sower' ? sowerName(profileMap[ownerId]) : (dj.dj_name || 'Sower'),
+            sower_avatar: profileMap[ownerId]?.avatar_url || dj.avatar_url || null,
+            sower_handle: handleOf(profileMap[ownerId]),
+            wandering_role: (t.wandering_role as WanderingRole) || 'hearth',
+            created_at: t.upload_date || t.created_at,
+            href: `/grove-station`,
+          };
+        });
+
+        const radioLiveItems: FeedItem[] = (radioLiveRes.data || []).map((r: any) => ({
+          key: `radio-live-${r.id}`, kind: 'radio_live', id: r.id,
+          title: r.status === 'live' ? '🔴 Live tribal radio' : 'Radio session (live archive)',
+          description: r.status === 'live' ? 'Live now in the orchard — tap to join' : 'A past live broadcast',
           image: null,
           sower_id: null,
           sower_name: 'Tribal Radio',
           wandering_role: 'whisperer',
           created_at: r.created_at,
           href: `/grove-station?session=${r.id}`,
+        }));
+
+        const radioRecItems: FeedItem[] = (radioRecRes.data || []).map((r: any) => ({
+          key: `radio-rec-${r.id}`, kind: 'radio_recorded', id: r.id,
+          title: '📻 Pre-recorded radio session',
+          description: 'Tap to listen to this scheduled broadcast',
+          image: null,
+          sower_id: null,
+          sower_name: 'Tribal Radio',
+          wandering_role: 'whisperer',
+          created_at: r.created_at,
+          href: `/grove-station?automated=${r.id}`,
         }));
 
         const videoItems: FeedItem[] = (videosRes.data || []).map((v: any) => ({
@@ -230,14 +309,117 @@ export default function TribalAliveFeedPage() {
           sower_id: v.uploader_id,
           sower_name: sowerName(profileMap[v.uploader_id]),
           sower_avatar: profileMap[v.uploader_id]?.avatar_url || null,
-          sower_handle: profileMap[v.uploader_id]?.display_name?.toLowerCase().replace(/\s+/g, '') || null,
+          sower_handle: handleOf(profileMap[v.uploader_id]),
           wandering_role: 'story',
           created_at: v.created_at,
           href: `/community-videos`,
         }));
 
-        const merged = [...seedItems, ...productItems, ...radioItems, ...videoItems]
-          .sort((a, b) => (b.created_at || '').localeCompare(a.created_at || ''));
+        // 📖 Memry posts (Coming Into Truth's intro videos, Amber's photo, etc.)
+        const storyItems: FeedItem[] = (memryRes.data || []).map((m: any) => {
+          const isVid = (m.content_type || '').toLowerCase() === 'video' || /\.(mp4|webm|mov)(\?|$)/i.test(m.media_url || '');
+          return {
+            key: `memry-${m.id}`, kind: 'story', id: m.id,
+            title: m.caption?.split('\n')[0]?.slice(0, 80) || 'Tribal story',
+            description: m.caption,
+            image: m.thumbnail_url || (!isVid ? m.media_url : null),
+            video_url: isVid ? m.media_url : null,
+            sower_id: m.user_id,
+            sower_name: sowerName(profileMap[m.user_id]),
+            sower_avatar: profileMap[m.user_id]?.avatar_url || null,
+            sower_handle: handleOf(profileMap[m.user_id]),
+            wandering_role: 'story',
+            created_at: m.created_at,
+            href: `/memry`,
+          };
+        });
+
+        // 📚 Sower books (Davison's shadow-measurement book etc.)
+        const bookItems: FeedItem[] = (booksRes.data || []).map((b: any) => {
+          const owner = b.user_id || b.sower_id;
+          return {
+            key: `book-${b.id}`, kind: 'book', id: b.id,
+            title: b.title || 'Untitled book',
+            description: b.description,
+            image: b.cover_image_url || (b.image_urls && b.image_urls[0]) || null,
+            price: Number(b.bestowal_value ?? 0) || null,
+            sower_id: owner,
+            sower_name: sowerName(profileMap[owner]),
+            sower_avatar: profileMap[owner]?.avatar_url || null,
+            sower_handle: handleOf(profileMap[owner]),
+            wandering_role: (b.wandering_role as WanderingRole) || 'story',
+            created_at: b.created_at,
+            href: `/products`,
+          };
+        });
+
+        const premiumItems: FeedItem[] = (premiumRes.data || []).map((r: any) => ({
+          key: `premium-${r.id}`, kind: 'premium_room', id: r.id,
+          title: r.title || 'Premium room',
+          description: r.description,
+          image: r.artwork || null,
+          price: Number(r.price ?? 0) || null,
+          sower_id: r.creator_id,
+          sower_name: sowerName(profileMap[r.creator_id]),
+          sower_avatar: profileMap[r.creator_id]?.avatar_url || null,
+          sower_handle: handleOf(profileMap[r.creator_id]),
+          wandering_role: 'whisperer',
+          created_at: r.created_at,
+          href: `/premium-room/${r.id}`,
+        }));
+
+        const classItems: FeedItem[] = (classRes.data || []).map((c: any) => ({
+          key: `class-${c.id}`, kind: 'classroom', id: c.id,
+          title: c.title || 'Classroom session',
+          description: c.description,
+          image: null,
+          video_url: c.recording_url || null,
+          price: c.is_free ? 0 : Number(c.session_fee ?? 0),
+          sower_id: c.instructor_id,
+          sower_name: sowerName(profileMap[c.instructor_id]),
+          sower_avatar: profileMap[c.instructor_id]?.avatar_url || null,
+          sower_handle: handleOf(profileMap[c.instructor_id]),
+          wandering_role: 'whisperer',
+          created_at: c.created_at,
+          href: `/classroom`,
+        }));
+
+        const skillItems: FeedItem[] = (skillRes.data || []).map((c: any) => ({
+          key: `skill-${c.id}`, kind: 'skilldrop', id: c.id,
+          title: c.title || 'SkillDrop',
+          description: c.description,
+          image: null,
+          video_url: c.recording_url || null,
+          price: Number(c.session_fee ?? 0),
+          sower_id: c.presenter_id,
+          sower_name: sowerName(profileMap[c.presenter_id]),
+          sower_avatar: profileMap[c.presenter_id]?.avatar_url || null,
+          sower_handle: handleOf(profileMap[c.presenter_id]),
+          wandering_role: 'whisperer',
+          created_at: c.created_at,
+          href: `/skilldrop`,
+        }));
+
+        const orchardItems: FeedItem[] = (orchardsRes.data || []).map((o: any) => ({
+          key: `orchard-${o.id}`, kind: 'orchard', id: o.id,
+          title: o.title || 'Orchard',
+          description: o.description,
+          image: (o.images && o.images[0]) || null,
+          video_url: o.video_url || null,
+          sower_id: o.user_id,
+          sower_name: sowerName(profileMap[o.user_id]),
+          sower_avatar: profileMap[o.user_id]?.avatar_url || null,
+          sower_handle: handleOf(profileMap[o.user_id]),
+          wandering_role: null,
+          created_at: o.created_at,
+          href: `/orchard/${o.id}`,
+        }));
+
+        const merged = [
+          ...seedItems, ...productItems, ...djItems, ...radioLiveItems, ...radioRecItems,
+          ...videoItems, ...storyItems, ...bookItems, ...premiumItems,
+          ...classItems, ...skillItems, ...orchardItems,
+        ].sort((a, b) => (b.created_at || '').localeCompare(a.created_at || ''));
 
         setItems(merged);
       } catch (e) {
@@ -253,14 +435,14 @@ export default function TribalAliveFeedPage() {
   const filtered = useMemo(() => {
     let list = items;
     if (wanderingRole) list = list.filter((i) => i.wandering_role === wanderingRole);
+    if (kindFilter) list = list.filter((i) => i.kind === kindFilter);
     if (tab === 'following' && followingIds.size > 0) {
       list = list.filter((i) => i.sower_id && followingIds.has(i.sower_id));
     } else if (tab === 'following') {
-      // No follows yet — show empty hint
       list = [];
     }
     return list;
-  }, [items, wanderingRole, tab, followingIds]);
+  }, [items, wanderingRole, kindFilter, tab, followingIds]);
 
   // Snap-scroll: track which card is centered → autoplays its preview
   useEffect(() => {
@@ -639,6 +821,36 @@ export default function TribalAliveFeedPage() {
                 if (b.key === 'heart') { navigate('/tribal-hearts'); return; }
                 setWanderingRole(wanderingRole === b.key ? null : b.key);
               }}
+            />
+          ))}
+        </div>
+      </div>
+
+      {/* Sessions / content-kind filter — second pill row */}
+      <div className="absolute inset-x-0 top-[5.25rem] z-20 overflow-x-auto px-2 py-1.5 [&::-webkit-scrollbar]:hidden">
+        <div className="flex min-w-max gap-2">
+          {([
+            { key: null,             emoji: '✨', label: 'All',           color: '#a78bfa' },
+            { key: 'music',          emoji: '🎵', label: 'Music',         color: '#f97316' },
+            { key: 'video',          emoji: '🎬', label: 'Videos',        color: '#0ea5e9' },
+            { key: 'story',          emoji: '📖', label: 'Stories',       color: '#84cc16' },
+            { key: 'book',           emoji: '📚', label: 'Books',         color: '#eab308' },
+            { key: 'radio_live',     emoji: '🔴', label: 'Radio · Live',  color: '#ef4444' },
+            { key: 'radio_recorded', emoji: '📻', label: 'Radio · Recorded', color: '#f59e0b' },
+            { key: 'classroom',      emoji: '🎓', label: 'Classroom',     color: '#22d3ee' },
+            { key: 'skilldrop',      emoji: '🛠️', label: 'SkillDrop',     color: '#a855f7' },
+            { key: 'premium_room',   emoji: '👑', label: 'Premium Room',  color: '#ec4899' },
+            { key: 'orchard',        emoji: '🌳', label: 'Orchards',      color: '#22c55e' },
+            { key: 'product',        emoji: '🛍️', label: 'Products',      color: '#14b8a6' },
+            { key: 'seed',           emoji: '🌱', label: 'Seeds',         color: '#10b981' },
+          ] as Array<{ key: FeedKind | null; emoji: string; label: string; color: string }>).map((k) => (
+            <FilterPill
+              key={k.label}
+              active={kindFilter === k.key}
+              color={k.color}
+              emoji={k.emoji}
+              label={k.label}
+              onClick={() => setKindFilter(kindFilter === k.key ? null : k.key)}
             />
           ))}
         </div>
