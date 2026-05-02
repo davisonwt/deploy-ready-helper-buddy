@@ -245,7 +245,7 @@ function IndexContent() {
       </section>
 
       {/* How it Works Section */}
-      <section className="py-12 sm:py-16 md:py-20 bg-gradient-to-b from-white to-green-50">
+      <section className="py-12 sm:py-16 md:py-20 bg-gradient-to-b from-background to-card/40">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold mb-4 sm:mb-8" style={{ color: '#D69759' }}>How s2g farm mall works</h2>
           <p className="text-base sm:text-lg md:text-xl mb-8 sm:mb-16 italic px-4" style={{ color: '#BCC4E9' }}>
