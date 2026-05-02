@@ -21,7 +21,7 @@ import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Play, Pause, Heart, MessageCircle, Mic, Video, Share2,
-  Search, Bell, Radio, ArrowLeft, Gift, Sparkles, Loader2,
+  Search, Bell, Radio, ArrowLeft, Gift, Sparkles, Loader2, X, Send, Square,
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
@@ -55,6 +55,32 @@ interface FeedItem {
   created_at: string;
   href: string;
 }
+
+interface SeedMessage {
+  id: string;
+  sender_id: string;
+  content: string | null;
+  message_type: string;
+  file_url?: string | null;
+  file_name?: string | null;
+  file_type?: string | null;
+  created_at: string;
+  sender_profile?: {
+    display_name?: string | null;
+    first_name?: string | null;
+    last_name?: string | null;
+    avatar_url?: string | null;
+  } | null;
+}
+
+type ActionPanelState = {
+  mode: 'message' | 'voice' | 'gift';
+  item: FeedItem;
+  roomId?: string | null;
+  messages: SeedMessage[];
+  loading: boolean;
+  error?: string | null;
+} | null;
 
 const sowerName = (p: any) =>
   p?.display_name ||
@@ -93,6 +119,7 @@ export default function TribalAliveFeedPage() {
   const [activeIdx, setActiveIdx] = useState(0);
   const [activeRoom, setActiveRoom] = useState<{ room: string; title: string; mode: 'audio' | 'video' } | null>(null);
   const [followingIds, setFollowingIds] = useState<Set<string>>(new Set());
+  const [actionPanel, setActionPanel] = useState<ActionPanelState>(null);
 
   const containerRef = useRef<HTMLDivElement>(null);
   const cardRefs = useRef<Array<HTMLDivElement | null>>([]);
@@ -260,9 +287,165 @@ export default function TribalAliveFeedPage() {
       if (navigator.share) await navigator.share({ title: item.title, text, url });
       else {
         await navigator.clipboard.writeText(text);
-        toast({ title: 'Invitation copied', description: 'Your referral code is burned into the link.' });
+        toast({ title: 'Share link copied', description: 'Your referral code is burned into the link.' });
       }
     } catch {/* dismissed */}
+  };
+
+  const ensureSeedRoom = async (item: FeedItem) => {
+    if (!user) { navigate('/login'); return null; }
+    if (!item.sower_id) {
+      toast({ title: 'No sower attached', description: 'This seed has no contactable creator.' });
+      return null;
+    }
+    if (item.sower_id === user.id) {
+      toast({ title: 'That is you 🌱', description: 'You are looking at your own seed.' });
+      return null;
+    }
+
+    const { data: rows, error: findErr } = await supabase
+      .from('chat_participants')
+      .select('room_id, user_id, chat_rooms!inner(id, room_type, is_active)')
+      .eq('chat_rooms.room_type', 'direct')
+      .eq('chat_rooms.is_active', true)
+      .in('user_id', [user.id, item.sower_id]);
+    if (findErr) throw findErr;
+
+    const counts: Record<string, number> = {};
+    (rows || []).forEach((row: any) => {
+      if (row?.room_id) counts[row.room_id] = (counts[row.room_id] || 0) + 1;
+    });
+    let roomId = Object.entries(counts).find(([, count]) => count >= 2)?.[0] || null;
+
+    if (!roomId) {
+      const { data: room, error: roomErr } = await supabase
+        .from('chat_rooms')
+        .insert({ name: `Seed chat · ${item.title}`.slice(0, 80), room_type: 'direct', created_by: user.id, is_active: true })
+        .select('id')
+        .single();
+      if (roomErr) throw roomErr;
+      roomId = room.id as string;
+    }
+
+    const { error: partErr } = await supabase
+      .from('chat_participants')
+      .upsert([
+        { room_id: roomId, user_id: user.id, is_active: true },
+        { room_id: roomId, user_id: item.sower_id, is_active: true },
+      ], { onConflict: 'room_id,user_id', ignoreDuplicates: false });
+    if (partErr) throw partErr;
+
+    return roomId;
+  };
+
+  const fetchSeedMessages = async (roomId: string, item: FeedItem): Promise<SeedMessage[]> => {
+    const { data, error } = await supabase
+      .from('chat_messages')
+      .select('*')
+      .eq('room_id', roomId)
+      .order('created_at', { ascending: true });
+    if (error) throw error;
+
+    const needle = item.title.trim().toLowerCase();
+    const seedMessages = (data || []).filter((message: any) =>
+      (message.content || '').toLowerCase().includes(needle)
+    );
+    const senderIds = Array.from(new Set(seedMessages.map((m: any) => m.sender_id).filter(Boolean)));
+    if (!senderIds.length) return seedMessages as SeedMessage[];
+
+    const { data: profiles } = await supabase
+      .from('profiles')
+      .select('user_id, display_name, first_name, last_name, avatar_url')
+      .in('user_id', senderIds as string[]);
+    return seedMessages.map((message: any) => ({
+      ...message,
+      sender_profile: (profiles || []).find((profile: any) => profile.user_id === message.sender_id) || null,
+    })) as SeedMessage[];
+  };
+
+  const openActionPanel = async (mode: 'message' | 'voice' | 'gift', item: FeedItem) => {
+    if (!user) { navigate('/login'); return; }
+    setActionPanel({ mode, item, messages: [], loading: mode !== 'gift', roomId: null });
+    if (mode === 'gift') return;
+
+    try {
+      const roomId = await ensureSeedRoom(item);
+      if (!roomId) { setActionPanel(null); return; }
+      const messages = await fetchSeedMessages(roomId, item);
+      setActionPanel({ mode, item, roomId, messages, loading: false });
+    } catch (error: any) {
+      console.error('Seed action panel error:', error);
+      setActionPanel({ mode, item, messages: [], roomId: null, loading: false, error: error.message || 'Could not open this seed conversation.' });
+    }
+  };
+
+  const refreshActionMessages = async (roomId: string, item: FeedItem, mode: 'message' | 'voice') => {
+    const messages = await fetchSeedMessages(roomId, item);
+    setActionPanel({ mode, item, roomId, messages, loading: false });
+  };
+
+  const sendSeedText = async (text: string) => {
+    if (!actionPanel || !user) return;
+    const roomId = actionPanel.roomId || await ensureSeedRoom(actionPanel.item);
+    if (!roomId) return;
+    await supabase.rpc('send_chat_message', {
+      p_room_id: roomId,
+      p_content: `🌱 ${actionPanel.item.title}\n${text.trim()}`,
+      p_message_type: 'text',
+    });
+    await refreshActionMessages(roomId, actionPanel.item, 'message');
+  };
+
+  const sendSeedVoice = async (audioBlob: Blob, duration: number) => {
+    if (!actionPanel || !user) return;
+    const roomId = actionPanel.roomId || await ensureSeedRoom(actionPanel.item);
+    if (!roomId) return;
+    const fileName = `voice-${actionPanel.item.kind}-${actionPanel.item.id}-${Date.now()}.webm`;
+    const filePath = `${user.id}/seed-voice/${fileName}`;
+    const { error: uploadError } = await supabase.storage
+      .from('chat-files')
+      .upload(filePath, audioBlob, { contentType: 'audio/webm', upsert: false });
+    if (uploadError) throw uploadError;
+
+    const { data: { publicUrl } } = supabase.storage.from('chat-files').getPublicUrl(filePath);
+    await supabase.rpc('send_chat_message', {
+      p_room_id: roomId,
+      p_content: `🎙️ Voice message for ${actionPanel.item.title} (${duration}s)`,
+      p_message_type: 'voice',
+      p_file_url: publicUrl,
+      p_file_name: fileName,
+      p_file_type: 'audio' as any,
+      p_file_size: audioBlob.size,
+    });
+    await refreshActionMessages(roomId, actionPanel.item, 'voice');
+  };
+
+  const handleFreewillGift = async (amount: number | 'heart') => {
+    if (!actionPanel || !user) return;
+    const item = actionPanel.item;
+    if (amount === 'heart') {
+      const roomId = await ensureSeedRoom(item);
+      if (!roomId) return;
+      await supabase.rpc('send_chat_message', {
+        p_room_id: roomId,
+        p_content: `❤️ A heart for ${item.title}`,
+        p_message_type: 'text',
+      });
+      toast({ title: 'Heart sent', description: `Sent to ${item.sower_name}.` });
+      setActionPanel(null);
+      return;
+    }
+
+    addToBasket({
+      id: `freewill-${item.kind}-${item.id}-${amount}-${Date.now()}`,
+      title: `Freewill gift to ${item.sower_name} · ${item.title}`,
+      price: amount,
+      cover_image_url: item.image || undefined,
+      sower_id: item.sower_id || undefined,
+      bestowal_count: 0,
+      sowers: { display_name: item.sower_name },
+    } as any);
+    toast({ title: 'Gift added', description: `$${amount < 1 ? amount.toFixed(2) : amount} freewill gift is in your basket.` });
   };
 
   const handleBestow = (item: FeedItem) => {
@@ -284,28 +467,17 @@ export default function TribalAliveFeedPage() {
     navigate('/products/basket');
   };
 
-  // Open private 1:1 ChatApp DM thread with sower
+  // Open seed-specific ChatApp message panel with the sower
   const handleMessage = (item: FeedItem) => {
-    if (!user) { navigate('/login'); return; }
-    if (!item.sower_id) {
-      toast({ title: 'No sower attached', description: 'This item has no contactable creator.' });
-      return;
-    }
-    if (item.sower_id === user.id) {
-      toast({ title: 'That is you 🌱', description: 'You are looking at your own seed.' });
-      return;
-    }
-    // Route into the in-house ChatApp with the sower as the target
-    navigate(`/communications-hub?dm=${item.sower_id}#chats`);
+    openActionPanel('message', item);
   };
 
-  // 1:1 Jitsi audio call
+  // Seed-specific voice message panel
   const handleVoice = (item: FeedItem) => {
-    if (!user) { navigate('/login'); return; }
-    if (!item.sower_id) return;
-    const room = `s2g_dm_${[user.id, item.sower_id].sort().join('_').replace(/-/g, '')}_audio`;
-    setActiveRoom({ room, title: `Voice with ${item.sower_name}`, mode: 'audio' });
+    openActionPanel('voice', item);
   };
+
+  const handleGift = (item: FeedItem) => openActionPanel('gift', item);
 
   // 1:1 Jitsi video call
   const handleVideo = (item: FeedItem) => {
