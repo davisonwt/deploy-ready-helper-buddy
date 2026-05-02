@@ -199,7 +199,7 @@ function IndexContent() {
       </section>
 
       {/* Three Features Cards */}
-      <section className="py-12 sm:py-16 md:py-20 bg-gradient-to-b from-green-50 to-blue-50">
+      <section className="py-12 sm:py-16 md:py-20 bg-gradient-to-b from-background via-card/30 to-background">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6 sm:gap-8 md:gap-12">
             <Card className="text-center bg-gradient-to-br from-pink-100 to-pink-50 border-pink-200 hover:shadow-lg transition-all duration-300">
