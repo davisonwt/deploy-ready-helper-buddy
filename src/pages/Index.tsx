@@ -254,7 +254,7 @@ function IndexContent() {
           
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8 sm:gap-12 md:gap-16 items-start">
             <div className="space-y-6 sm:space-y-8">
-              <div className="bg-white p-6 sm:p-8 rounded-2xl shadow-lg border border-green-100">
+              <div className="bg-card/80 backdrop-blur p-6 sm:p-8 rounded-2xl shadow-xl border border-primary/20 hover:border-primary/40 hover:shadow-2xl transition-all">
                 <h3 className="text-xl sm:text-2xl font-bold mb-4 sm:mb-6" style={{ color: '#9DD6AD' }}>sower (farm stall owners)</h3>
                 <div className="space-y-3 sm:space-y-4 text-left">
                   <div className="flex items-center space-x-3">
