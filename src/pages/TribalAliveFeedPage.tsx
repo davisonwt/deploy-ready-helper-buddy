@@ -934,7 +934,17 @@ function FeedCard({
   const videoRef = useRef<HTMLVideoElement>(null);
   const [playing, setPlaying] = useState(false);
   const [time, setTime] = useState(0);
+  const [imgIdx, setImgIdx] = useState(0);
   const PREVIEW = 45; // seconds
+
+  const gallery = (item.images && item.images.length > 0)
+    ? item.images
+    : (item.image ? [item.image] : []);
+  const hasGallery = gallery.length > 1;
+  const currentImg = gallery[imgIdx] || item.image || null;
+
+  // Reset to first image when card changes
+  useEffect(() => { setImgIdx(0); }, [item.key]);
 
   // Stop media when card leaves view
   useEffect(() => {
@@ -987,9 +997,9 @@ function FeedCard({
   return (
     <div className="relative h-full w-full overflow-hidden bg-gradient-to-b from-slate-950 via-slate-900 to-emerald-950">
       {/* Blurred ambient background (fills, but doesn't crop the real media) */}
-      {item.image && (
+      {currentImg && (
         <img
-          src={item.image}
+          src={currentImg}
           alt=""
           aria-hidden
           className="absolute inset-0 h-full w-full object-cover opacity-40 blur-2xl scale-110"
@@ -1006,11 +1016,12 @@ function FeedCard({
           muted={false}
           preload="metadata"
         />
-      ) : item.image ? (
+      ) : currentImg ? (
         <img
-          src={item.image}
+          key={currentImg}
+          src={currentImg}
           alt={item.title}
-          className="absolute inset-0 h-full w-full object-cover"
+          className="absolute inset-0 h-full w-full object-cover animate-fade-in"
         />
       ) : (
         <div className="absolute inset-0 flex items-center justify-center text-[20rem] opacity-10">
@@ -1019,6 +1030,39 @@ function FeedCard({
       )}
       {item.audio_url && (
         <audio ref={audioRef} src={item.audio_url} preload="metadata" />
+      )}
+
+      {/* Image carousel arrows + dots — only when there are multiple images */}
+      {hasGallery && !item.video_url && (
+        <>
+          <button
+            type="button"
+            onClick={(e) => { e.stopPropagation(); setImgIdx((i) => (i - 1 + gallery.length) % gallery.length); }}
+            aria-label="Previous image"
+            className="absolute left-2 top-1/2 -translate-y-1/2 z-10 grid h-10 w-10 place-items-center rounded-full bg-black/50 text-white backdrop-blur-sm hover:bg-black/70 transition"
+          >
+            <ChevronLeft className="h-5 w-5" />
+          </button>
+          <button
+            type="button"
+            onClick={(e) => { e.stopPropagation(); setImgIdx((i) => (i + 1) % gallery.length); }}
+            aria-label="Next image"
+            className="absolute right-2 top-1/2 -translate-y-1/2 z-10 grid h-10 w-10 place-items-center rounded-full bg-black/50 text-white backdrop-blur-sm hover:bg-black/70 transition"
+          >
+            <ChevronRight className="h-5 w-5" />
+          </button>
+          <div className="absolute left-1/2 top-3 -translate-x-1/2 z-10 flex gap-1.5 rounded-full bg-black/50 px-2 py-1 backdrop-blur-sm">
+            {gallery.map((_, i) => (
+              <span
+                key={i}
+                className={cn(
+                  'h-1.5 rounded-full transition-all',
+                  i === imgIdx ? 'w-4 bg-white' : 'w-1.5 bg-white/40'
+                )}
+              />
+            ))}
+          </div>
+        </>
       )}
 
       <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-transparent to-black/85 pointer-events-none" />
