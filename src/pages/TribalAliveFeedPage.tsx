@@ -1002,7 +1002,9 @@ function FeedCard({
   }, []);
 
   const badge = WANDERING_BADGES.find((b) => b.key === item.wandering_role);
-  const showBestow = item.kind === 'product' || item.kind === 'seed';
+  // All sower creations (seeds, products, music, books, videos, stories, orchards) are bestowable.
+  // Only pure live broadcasts (radio_live) keep a non-bestow CTA.
+  const showBestow = item.kind !== 'radio_live';
   const previewable = !!(item.audio_url || item.video_url);
 
   return (
