@@ -29,10 +29,6 @@ export default function SeedSlider({
   const navigate = useNavigate()
   const [idx, setIdx] = useState(0)
   const [paused, setPaused] = useState(false)
-  const [menuOpenId, setMenuOpenId] = useState(null)
-  const [previewing, setPreviewing] = useState(false)
-  const audioRef = useRef(null)
-  const videoRef = useRef(null)
 
   const total = cards.length
   const safeIdx = total ? idx % total : 0
@@ -40,17 +36,10 @@ export default function SeedSlider({
 
   // auto-rotate
   useEffect(() => {
-    if (!total || paused || previewing) return
+    if (!total || paused) return
     const t = setInterval(() => setIdx((i) => (i + 1) % total), intervalMs)
     return () => clearInterval(t)
-  }, [total, paused, previewing, intervalMs])
-
-  // stop preview when slide changes
-  useEffect(() => {
-    setPreviewing(false)
-    if (audioRef.current) { audioRef.current.pause(); audioRef.current.currentTime = 0 }
-    if (videoRef.current) { videoRef.current.pause(); videoRef.current.currentTime = 0 }
-  }, [safeIdx])
+  }, [total, paused, intervalMs])
 
   if (!total) {
     return (
@@ -67,30 +56,6 @@ export default function SeedSlider({
     )
   }
 
-  const goLive = (card) => {
-    // Go-live URL convention: /grove-station?seed={liveKey}
-    navigate(`/grove-station?seed=${encodeURIComponent(card.liveKey || card.id)}`)
-  }
-
-  const handlePlay = () => {
-    if (previewing) {
-      audioRef.current?.pause()
-      videoRef.current?.pause()
-      setPreviewing(false)
-      return
-    }
-    if (active.mediaKind === 'audio' && active.mediaUrl) {
-      setPreviewing(true)
-      setTimeout(() => audioRef.current?.play().catch(() => {}), 0)
-    } else if (active.mediaKind === 'video' && active.mediaUrl) {
-      setPreviewing(true)
-      setTimeout(() => videoRef.current?.play().catch(() => {}), 0)
-    } else {
-      // Books / orchards / generic seeds — no inline media → just open
-      navigate(active.openPath)
-    }
-  }
-
   return (
     <section
       style={styles.wrap(accent)}
@@ -105,89 +70,21 @@ export default function SeedSlider({
         <span style={styles.count}>{safeIdx + 1}/{total}</span>
       </header>
 
-      <div style={styles.card(accent)}>
-        <img src={active.image} alt="" style={styles.img} />
-        <div style={styles.overlay(accent)} />
-
-        {/* Inline preview overlays */}
-        {previewing && active.mediaKind === 'video' && active.mediaUrl && (
-          <video
-            ref={videoRef}
-            src={active.mediaUrl}
-            controls
-            muted={false}
-            style={styles.previewVideo}
-            onEnded={() => setPreviewing(false)}
-          />
-        )}
-        {previewing && active.mediaKind === 'audio' && active.mediaUrl && (
-          <div style={styles.audioBar}>
-            <audio
-              ref={audioRef}
-              src={active.mediaUrl}
-              controls
-              style={{ width: '100%' }}
-              onEnded={() => setPreviewing(false)}
-            />
-          </div>
-        )}
-
-        {/* Top-left badge */}
-        {active.badge && (
-          <div style={styles.badge(active.badge.color)}>
-            <span>{active.badge.emoji}</span>
-            <span>{active.badge.label}</span>
-          </div>
-        )}
-
-        {/* Owner ⋯ menu */}
-        {active.mine && (
-          <div style={styles.menuWrap}>
-            <button
-              type="button"
-              onClick={() => setMenuOpenId(menuOpenId === active.id ? null : active.id)}
-              style={styles.menuBtn}
-              aria-label="Seed actions"
-            >
-              ⋯
-            </button>
-            {menuOpenId === active.id && (
-              <div style={styles.menu} onMouseLeave={() => setMenuOpenId(null)}>
-                <MenuItem label="✏️ Edit"   onClick={() => { setMenuOpenId(null); active.onEdit?.(active) }} />
-                <MenuItem label="♻️ Repost" onClick={() => { setMenuOpenId(null); active.onRepost?.(active) }} />
-                <MenuItem label="⏸ Park"   onClick={() => { setMenuOpenId(null); active.onPark?.(active) }} />
-                <MenuItem label="🗑 Delete" onClick={() => { setMenuOpenId(null); active.onDelete?.(active) }} danger />
-              </div>
-            )}
-          </div>
-        )}
-
-        {/* Title block */}
-        <div style={styles.body}>
-          <div style={styles.cardTitle}>{active.title}</div>
-          {active.subtitle && <div style={styles.cardSubtitle}>{active.subtitle}</div>}
-
-          <div style={styles.btnRow}>
-            <div style={{ flex: 1 }}>
-              <LivingButton variant="play" isPlaying={previewing} onClick={handlePlay}
-                height={40} borderRadius={10} fontSize={12} letterSpacing="0px">
-                {previewing ? '⏸ Pause' : '▶ Play'}
-              </LivingButton>
-            </div>
-            <Link to={active.openPath} style={{ flex: 1, textDecoration: 'none' }}>
-              <LivingButton variant="enter" height={40} borderRadius={10} fontSize={12} letterSpacing="0px">
-                📂 Open
-              </LivingButton>
-            </Link>
-            <div style={{ flex: 1 }}>
-              <LivingButton variant="live" onClick={() => goLive(active)}
-                height={40} borderRadius={10} fontSize={12} letterSpacing="0px">
-                🔴 Go Live
-              </LivingButton>
-            </div>
-          </div>
-        </div>
-      </div>
+      <LivingSeedCard
+        seedId={active.liveKey || active.rawId || active.id}
+        title={active.title}
+        subtitle={active.subtitle}
+        image={active.image}
+        openPath={active.openPath}
+        mediaUrl={active.mediaUrl}
+        mediaKind={active.mediaKind}
+        badge={active.badge}
+        mine={active.mine}
+        onEdit={active.onEdit ? () => active.onEdit(active) : undefined}
+        onDelete={active.onDelete ? () => active.onDelete(active) : undefined}
+        onRepost={active.onRepost ? () => active.onRepost(active) : undefined}
+        onPark={active.onPark ? () => active.onPark(active) : undefined}
+      />
 
       {/* Dots */}
       <div style={styles.dots}>
@@ -202,21 +99,6 @@ export default function SeedSlider({
         ))}
       </div>
     </section>
-  )
-}
-
-function MenuItem({ label, onClick, danger }) {
-  return (
-    <button type="button" onClick={onClick} style={{
-      display: 'block', width: '100%', textAlign: 'left',
-      padding: '8px 12px', background: 'transparent', border: 'none',
-      color: danger ? '#f87171' : '#e2e8f0', fontSize: 13, cursor: 'pointer',
-    }}
-      onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(255,255,255,0.06)'}
-      onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
-    >
-      {label}
-    </button>
   )
 }
 
