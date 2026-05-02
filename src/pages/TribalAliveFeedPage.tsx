@@ -116,6 +116,7 @@ export default function TribalAliveFeedPage() {
 
   const [tab, setTab] = useState<FeedTab>('foryou');
   const [wanderingRole, setWanderingRole] = useState<WanderingRole | null>(null);
+  const [kindFilter, setKindFilter] = useState<FeedKind | null>(null);
   const [items, setItems] = useState<FeedItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeIdx, setActiveIdx] = useState(0);
