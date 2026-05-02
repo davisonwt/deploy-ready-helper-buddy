@@ -23,6 +23,7 @@ import { MusicPurchaseInterface } from './MusicPurchaseInterface'
 export function LiveStreamListener({ liveSession, currentShow }) {
   const { user } = useAuth()
   const { toast } = useToast()
+  const channelKey = useId().replace(/:/g, '')
   const [isPlaying, setIsPlaying] = useState(false)
   const [volume, setVolume] = useState(0.8)
   const [muted, setMuted] = useState(false)
