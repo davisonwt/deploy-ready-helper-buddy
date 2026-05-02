@@ -1,61 +1,80 @@
 /**
- * TribalAliveFeedPage — "Step Into the Orchard"
+ * TribalAliveFeedPage — "SeedFlow"
  *
- * Worldwide live tribal seeds. Built on:
- *  - useTribalLiveOrchard (Supabase Realtime presence + bloom broadcasts)
- *  - Jitsi for the actual Go Live room
- *  - Existing seeds table for "serendipity" discovery (recent global seeds)
+ * Vertical, TikTok-style tribal feed of EVERYTHING anyone planted:
+ *   seeds + products (music/book/video/art/home) + recorded radio + community videos.
  *
- * This page is intentionally NOT the dashboard. The dashboard is calm and
- * personal. This page is buzzing, global, alive.
+ * Each card carries the full action stack the tribe expects:
+ *   • 45s preview play (audio/video)
+ *   • Bestow & Get This Seed (instant basket)
+ *   • Message  → in-house ChatApp DM with the sower (no email/phone ever surfaced)
+ *   • Voice    → Jitsi 1:1 audio room with the sower
+ *   • Video    → Jitsi 1:1 video room with the sower
+ *   • Like / Bloom reactions
+ *   • Share (referral burned in)
+ *   • Go Live  → broadcast THIS seed to the orchard via Jitsi presence
+ *
+ * Top: Following / For You / Local tabs + Wandering badge filter bar.
  */
-import { useEffect, useMemo, useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { useEffect, useMemo, useRef, useState, useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
-  Radio, Sparkles, Globe2, Users, Video, Heart, Share2,
-  Leaf, TreePine, MessageCircle, ArrowLeft, Zap, Shuffle,
+  Play, Pause, Heart, MessageCircle, Mic, Video, Share2,
+  Search, Bell, Radio, ArrowLeft, Gift, Sparkles, Loader2,
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { useReferralCode } from '@/hooks/useReferralCode';
 import { useToast } from '@/hooks/use-toast';
-import { useTribalLiveOrchard, type LivePresence, type BloomStage } from '@/hooks/useTribalLiveOrchard';
+import { useProductBasket } from '@/contexts/ProductBasketContext';
+import { useTribalLiveOrchard } from '@/hooks/useTribalLiveOrchard';
 import { JITSI_DOMAIN } from '@/lib/jitsi-config';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
+import WanderingBadgeBar, { type WanderingRole, WANDERING_BADGES } from '@/components/marketplace/WanderingBadgeBar';
+import { launchConfetti, playSoundEffect } from '@/utils/confetti';
 
-interface DiscoverSeed {
+type FeedTab = 'following' | 'foryou' | 'local';
+
+interface FeedItem {
+  key: string;
+  kind: 'seed' | 'product' | 'radio' | 'video';
   id: string;
-  kind: 'seed' | 'product' | 'radio';
   title: string;
   description?: string | null;
   image?: string | null;
-  sower: string;
-  sower_id?: string | null;
+  audio_url?: string | null;
+  video_url?: string | null;
+  price?: number | null;
+  sower_id: string | null;
+  sower_name: string;
+  sower_avatar?: string | null;
+  sower_handle?: string | null;
+  wandering_role?: WanderingRole | null;
   created_at: string;
   href: string;
-  badge: string; // emoji
 }
 
-const BLOOM_META: Record<BloomStage, { emoji: string; label: string; color: string }> = {
-  seed: { emoji: '🌱', label: 'Sprout', color: '#a3e635' },
-  leaf: { emoji: '🌿', label: 'Leaf',   color: '#22c55e' },
-  tree: { emoji: '🌳', label: 'Tree',   color: '#15803d' },
-};
-
 const sowerName = (p: any) =>
-  p?.display_name || `${p?.first_name || ''} ${p?.last_name || ''}`.trim() || 'Anonymous Sower';
+  p?.display_name ||
+  `${p?.first_name || ''} ${p?.last_name || ''}`.trim() ||
+  'Tribe member';
 
-const productBadge = (type?: string) => {
-  switch ((type || '').toLowerCase()) {
-    case 'music': return '🎵';
-    case 'book':  return '📚';
-    case 'video': return '🎬';
-    case 'home':  return '🏡';
-    case 'art':   return '🎨';
-    default:      return '🛍️';
+const wanderingFor = (item: { kind: FeedItem['kind']; wandering_role?: string | null; type?: string | null }): WanderingRole | null => {
+  if (item.wandering_role && WANDERING_BADGES.find((b) => b.key === item.wandering_role as WanderingRole)) {
+    return item.wandering_role as WanderingRole;
+  }
+  if (item.kind === 'video') return 'story';
+  if (item.kind === 'radio') return 'whisperer';
+  if (item.kind === 'seed') return 'hearth';
+  // products: lean on type
+  switch ((item.type || '').toLowerCase()) {
+    case 'music': return 'whisperer';
+    case 'book': case 'ebook': return 'story';
+    case 'video': return 'story';
+    case 'home': return 'pillow';
+    default: return null;
   }
 };
 
@@ -64,58 +83,44 @@ export default function TribalAliveFeedPage() {
   const { user } = useAuth();
   const { toast } = useToast();
   const { code: referralCode } = useReferralCode();
-  const {
-    liveSeeds, blooms, recentBloom, liveCount,
-    goLive, endLive, sendBloom,
-  } = useTribalLiveOrchard();
+  const { addToBasket } = useProductBasket();
+  const { goLive } = useTribalLiveOrchard();
 
-  const [discover, setDiscover] = useState<DiscoverSeed[]>([]);
+  const [tab, setTab] = useState<FeedTab>('foryou');
+  const [wanderingRole, setWanderingRole] = useState<WanderingRole | null>(null);
+  const [items, setItems] = useState<FeedItem[]>([]);
   const [loading, setLoading] = useState(true);
-  const [serendipityIndex, setSerendipityIndex] = useState(0);
-  const [activeRoom, setActiveRoom] = useState<{ room: string; title: string } | null>(null);
+  const [activeIdx, setActiveIdx] = useState(0);
+  const [activeRoom, setActiveRoom] = useState<{ room: string; title: string; mode: 'audio' | 'video' } | null>(null);
+  const [followingIds, setFollowingIds] = useState<Set<string>>(new Set());
 
-  // Pull EVERYTHING the tribe has planted: seeds + products + recorded radio sessions
+  const containerRef = useRef<HTMLDivElement>(null);
+  const cardRefs = useRef<Array<HTMLDivElement | null>>([]);
+
+  // Load everything everyone planted
   useEffect(() => {
     let cancelled = false;
     (async () => {
+      setLoading(true);
       try {
-        // No FK relationships are declared between these tables and `profiles`,
-        // so PostgREST embedded joins (e.g. `profiles:gifter_id(...)`) throw
-        // "Could not find a relationship" and reject the entire Promise.all.
-        // Fetch each table flat, then resolve sower display names in a second pass.
         const [seedsRes, productsRes, radioRes, videosRes] = await Promise.all([
-          supabase
-            .from('seeds')
-            .select('id, title, description, images, gifter_id, created_at')
-            .order('created_at', { ascending: false })
-            .limit(40),
-          supabase
-            .from('products')
-            .select('id, title, description, type, cover_image_url, image_urls, sower_id, created_at')
+          supabase.from('seeds')
+            .select('id, title, description, images, video_url, gifter_id, category, created_at')
+            .order('created_at', { ascending: false }).limit(60),
+          supabase.from('products')
+            .select('id, title, description, type, cover_image_url, image_urls, file_url, price, sower_id, wandering_role, created_at')
             .eq('status', 'active')
-            .order('created_at', { ascending: false })
-            .limit(60),
-          supabase
-            .from('radio_live_sessions')
+            .order('created_at', { ascending: false }).limit(80),
+          supabase.from('radio_live_sessions')
             .select('id, status, started_at, ended_at, created_at, schedule_id')
-            .order('created_at', { ascending: false })
-            .limit(20),
-          supabase
-            .from('community_videos')
+            .order('created_at', { ascending: false }).limit(30),
+          supabase.from('community_videos')
             .select('id, title, description, video_url, thumbnail_url, uploader_id, created_at')
-            .order('created_at', { ascending: false })
-            .limit(40),
+            .order('created_at', { ascending: false }).limit(60),
         ]);
 
         if (cancelled) return;
 
-        // Log any per-table errors (so a single broken table can't hide the rest)
-        if (seedsRes.error) console.warn('[tribal-alive] seeds error', seedsRes.error.message);
-        if (productsRes.error) console.warn('[tribal-alive] products error', productsRes.error.message);
-        if (radioRes.error) console.warn('[tribal-alive] radio error', radioRes.error.message);
-        if (videosRes.error) console.warn('[tribal-alive] videos error', videosRes.error.message);
-
-        // Collect every sower id to bulk-fetch profile display info
         const sowerIds = Array.from(new Set([
           ...(seedsRes.data || []).map((s: any) => s.gifter_id),
           ...(productsRes.data || []).map((p: any) => p.sower_id),
@@ -126,69 +131,80 @@ export default function TribalAliveFeedPage() {
         if (sowerIds.length) {
           const { data: profs } = await supabase
             .from('profiles')
-            .select('id, first_name, last_name, display_name')
-            .in('id', sowerIds as string[]);
-          (profs || []).forEach((p: any) => { profileMap[p.id] = p; });
+            .select('id, user_id, first_name, last_name, display_name, avatar_url')
+            .in('user_id', sowerIds as string[]);
+          (profs || []).forEach((p: any) => { profileMap[p.user_id] = p; });
         }
 
-        const seedsItems: DiscoverSeed[] = (seedsRes.data || []).map((s: any) => ({
-          id: s.id,
-          kind: 'seed',
+        const seedItems: FeedItem[] = (seedsRes.data || []).map((s: any) => ({
+          key: `seed-${s.id}`, kind: 'seed', id: s.id,
           title: s.title || 'Untitled seed',
           description: s.description,
           image: (s.images && s.images[0]) || null,
-          sower: sowerName(profileMap[s.gifter_id]),
+          video_url: s.video_url || null,
           sower_id: s.gifter_id,
+          sower_name: sowerName(profileMap[s.gifter_id]),
+          sower_avatar: profileMap[s.gifter_id]?.avatar_url || null,
+          sower_handle: profileMap[s.gifter_id]?.display_name?.toLowerCase().replace(/\s+/g, '') || null,
+          wandering_role: wanderingFor({ kind: 'seed' }),
           created_at: s.created_at,
           href: `/seed/${s.id}`,
-          badge: '🌱',
         }));
 
-        const productItems: DiscoverSeed[] = (productsRes.data || []).map((p: any) => ({
-          id: p.id,
-          kind: 'product',
-          title: p.title || 'Untitled product',
-          description: p.description,
-          image: p.cover_image_url || (p.image_urls && p.image_urls[0]) || null,
-          sower: sowerName(profileMap[p.sower_id]),
-          sower_id: p.sower_id,
-          created_at: p.created_at,
-          href: `/products`,
-          badge: productBadge(p.type),
-        }));
+        const productItems: FeedItem[] = (productsRes.data || []).map((p: any) => {
+          const isAudio = (p.type || '').toLowerCase() === 'music' || /\.(mp3|wav|m4a|ogg)(\?|$)/i.test(p.file_url || '');
+          const isVideo = (p.type || '').toLowerCase() === 'video' || /\.(mp4|webm|mov)(\?|$)/i.test(p.file_url || '');
+          return {
+            key: `product-${p.id}`, kind: 'product', id: p.id,
+            title: p.title || 'Untitled creation',
+            description: p.description,
+            image: p.cover_image_url || (p.image_urls && p.image_urls[0]) || null,
+            audio_url: isAudio ? p.file_url : null,
+            video_url: isVideo ? p.file_url : null,
+            price: Number(p.price ?? 2),
+            sower_id: p.sower_id,
+            sower_name: sowerName(profileMap[p.sower_id]),
+            sower_avatar: profileMap[p.sower_id]?.avatar_url || null,
+            sower_handle: profileMap[p.sower_id]?.display_name?.toLowerCase().replace(/\s+/g, '') || null,
+            wandering_role: wanderingFor({ kind: 'product', wandering_role: p.wandering_role, type: p.type }),
+            created_at: p.created_at,
+            href: `/products`,
+          };
+        });
 
-        const radioItems: DiscoverSeed[] = (radioRes.data || []).map((r: any) => ({
-          id: r.id,
-          kind: 'radio',
-          title: 'Live radio session',
-          description: r.status === 'live' ? '🔴 Live now' : 'Recorded session',
+        const radioItems: FeedItem[] = (radioRes.data || []).map((r: any) => ({
+          key: `radio-${r.id}`, kind: 'radio', id: r.id,
+          title: r.status === 'live' ? '🔴 Live tribal radio' : 'Recorded radio session',
+          description: r.status === 'live' ? 'Live now in the orchard' : 'A past broadcast — tap to listen',
           image: null,
-          sower: 'Tribe DJ',
           sower_id: null,
+          sower_name: 'Tribal Radio',
+          wandering_role: 'whisperer',
           created_at: r.created_at,
           href: `/grove-station?session=${r.id}`,
-          badge: r.status === 'live' ? '📻🔴' : '📻',
         }));
 
-        const videoItems: DiscoverSeed[] = (videosRes.data || []).map((v: any) => ({
-          id: v.id,
-          kind: 'radio',
-          title: v.title || 'Recorded broadcast',
-          description: v.description || 'Recorded session',
+        const videoItems: FeedItem[] = (videosRes.data || []).map((v: any) => ({
+          key: `video-${v.id}`, kind: 'video', id: v.id,
+          title: v.title || 'Tribal broadcast',
+          description: v.description,
           image: v.thumbnail_url || null,
-          sower: sowerName(profileMap[v.uploader_id]),
+          video_url: v.video_url || null,
           sower_id: v.uploader_id,
+          sower_name: sowerName(profileMap[v.uploader_id]),
+          sower_avatar: profileMap[v.uploader_id]?.avatar_url || null,
+          sower_handle: profileMap[v.uploader_id]?.display_name?.toLowerCase().replace(/\s+/g, '') || null,
+          wandering_role: 'story',
           created_at: v.created_at,
           href: `/community-videos`,
-          badge: '🎬',
         }));
 
-        const combined = [...seedsItems, ...productItems, ...radioItems, ...videoItems]
+        const merged = [...seedItems, ...productItems, ...radioItems, ...videoItems]
           .sort((a, b) => (b.created_at || '').localeCompare(a.created_at || ''));
 
-        setDiscover(combined);
+        setItems(merged);
       } catch (e) {
-        console.warn('[tribal-alive] discover load failed', e);
+        console.warn('[seedflow] load failed', e);
       } finally {
         if (!cancelled) setLoading(false);
       }
@@ -196,345 +212,244 @@ export default function TribalAliveFeedPage() {
     return () => { cancelled = true; };
   }, []);
 
-  // Soft pulse toast when a NEW seed goes live
-  const [seenLiveIds, setSeenLiveIds] = useState<Set<string>>(new Set());
+  // Filtered view: tab + wandering role
+  const filtered = useMemo(() => {
+    let list = items;
+    if (wanderingRole) list = list.filter((i) => i.wandering_role === wanderingRole);
+    if (tab === 'following' && followingIds.size > 0) {
+      list = list.filter((i) => i.sower_id && followingIds.has(i.sower_id));
+    } else if (tab === 'following') {
+      // No follows yet — show empty hint
+      list = [];
+    }
+    return list;
+  }, [items, wanderingRole, tab, followingIds]);
+
+  // Snap-scroll: track which card is centered → autoplays its preview
   useEffect(() => {
-    const fresh = liveSeeds.filter((p) => !seenLiveIds.has(p.user_id + ':' + p.seed_id));
-    if (fresh.length && seenLiveIds.size > 0) {
-      const f = fresh[0];
-      toast({
-        title: '🔴 A tribe seed just bloomed live',
-        description: `${f.display_name} is live: "${f.seed_title}"`,
-      });
-    }
-    if (fresh.length) {
-      setSeenLiveIds((prev) => {
-        const next = new Set(prev);
-        fresh.forEach((p) => next.add(p.user_id + ':' + p.seed_id));
-        return next;
-      });
-    }
-  }, [liveSeeds, seenLiveIds, toast]);
+    const root = containerRef.current;
+    if (!root) return;
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((e) => {
+          if (e.isIntersecting && e.intersectionRatio > 0.6) {
+            const idx = Number((e.target as HTMLElement).dataset.idx);
+            if (!Number.isNaN(idx)) setActiveIdx(idx);
+          }
+        });
+      },
+      { root, threshold: [0.6] }
+    );
+    cardRefs.current.forEach((el) => el && observer.observe(el));
+    return () => observer.disconnect();
+  }, [filtered.length]);
+
+  /* ───────── actions ───────── */
 
   const inviteOrigin = 'https://sow2growapp.com';
-
   const buildShareUrl = (path: string) => {
     const url = new URL(path, inviteOrigin);
     if (referralCode) url.searchParams.set('ref', referralCode);
     return url.toString();
   };
 
-  const handleShare = async (seed: { id: string; title: string; href?: string }) => {
-    const url = buildShareUrl(seed.href || `/seed/${seed.id}`);
-    const text = `🌿 "${seed.title}" is alive in the Sow2Grow orchard. Step in:\n${url}`;
+  const handleShare = async (item: FeedItem) => {
+    const url = buildShareUrl(item.href);
+    const text = `🌿 "${item.title}" is alive in the Sow2Grow orchard. Step in:\n${url}`;
     try {
-      if (navigator.share) await navigator.share({ title: seed.title, text, url });
+      if (navigator.share) await navigator.share({ title: item.title, text, url });
       else {
         await navigator.clipboard.writeText(text);
         toast({ title: 'Invitation copied', description: 'Your referral code is burned into the link.' });
       }
-    } catch {/* user dismissed */}
+    } catch {/* dismissed */}
   };
 
-  const handleGoLive = async (seed: { id: string; title: string; image?: string | null }) => {
+  const handleBestow = (item: FeedItem) => {
+    if (item.kind !== 'product' && item.kind !== 'seed') {
+      navigate(item.href);
+      return;
+    }
+    addToBasket({
+      id: item.id,
+      title: item.title,
+      price: Number(item.price ?? 2),
+      cover_image_url: item.image || undefined,
+      sower_id: item.sower_id || undefined,
+      bestowal_count: 0,
+      sowers: { display_name: item.sower_name },
+    } as any);
+    launchConfetti();
+    playSoundEffect('bestow', 0.8);
+    navigate('/products/basket');
+  };
+
+  // Open private 1:1 ChatApp DM thread with sower
+  const handleMessage = (item: FeedItem) => {
     if (!user) { navigate('/login'); return; }
-    const presence = await goLive(seed);
+    if (!item.sower_id) {
+      toast({ title: 'No sower attached', description: 'This item has no contactable creator.' });
+      return;
+    }
+    if (item.sower_id === user.id) {
+      toast({ title: 'That is you 🌱', description: 'You are looking at your own seed.' });
+      return;
+    }
+    // Route into the in-house ChatApp with the sower as the target
+    navigate(`/communications-hub?dm=${item.sower_id}#chats`);
+  };
+
+  // 1:1 Jitsi audio call
+  const handleVoice = (item: FeedItem) => {
+    if (!user) { navigate('/login'); return; }
+    if (!item.sower_id) return;
+    const room = `s2g_dm_${[user.id, item.sower_id].sort().join('_').replace(/-/g, '')}_audio`;
+    setActiveRoom({ room, title: `Voice with ${item.sower_name}`, mode: 'audio' });
+  };
+
+  // 1:1 Jitsi video call
+  const handleVideo = (item: FeedItem) => {
+    if (!user) { navigate('/login'); return; }
+    if (!item.sower_id) return;
+    const room = `s2g_dm_${[user.id, item.sower_id].sort().join('_').replace(/-/g, '')}_video`;
+    setActiveRoom({ room, title: `Video with ${item.sower_name}`, mode: 'video' });
+  };
+
+  // Broadcast THIS seed live to the orchard
+  const handleGoLive = async (item: FeedItem) => {
+    if (!user) { navigate('/login'); return; }
+    const presence = await goLive({ id: item.id, title: item.title, image: item.image });
     if (!presence) return;
-    setActiveRoom({ room: presence.jitsi_room, title: seed.title });
+    setActiveRoom({ room: presence.jitsi_room, title: `Live: ${item.title}`, mode: 'video' });
   };
 
-  const handleJoinLive = (p: LivePresence) => {
-    setActiveRoom({ room: p.jitsi_room, title: p.seed_title });
+  const toggleFollow = (sowerId: string | null) => {
+    if (!sowerId) return;
+    setFollowingIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(sowerId)) next.delete(sowerId);
+      else next.add(sowerId);
+      return next;
+    });
   };
 
-  const handleEndRoom = async () => {
-    setActiveRoom(null);
-    await endLive();
-  };
-
-  // Serendipity: rotate through discover pool
-  const serendipitySeed = useMemo(() => {
-    if (!discover.length) return null;
-    return discover[serendipityIndex % discover.length];
-  }, [discover, serendipityIndex]);
+  /* ───────── render ───────── */
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-emerald-950 via-slate-950 to-emerald-950 text-white">
-      {/* Floating fireflies */}
-      <div className="pointer-events-none fixed inset-0 overflow-hidden">
-        {Array.from({ length: 18 }).map((_, i) => (
-          <motion.span
-            key={i}
-            className="absolute h-1.5 w-1.5 rounded-full bg-emerald-300/70 shadow-[0_0_12px_4px_rgba(110,231,183,0.6)]"
-            initial={{ x: `${(i * 53) % 100}%`, y: `${(i * 31) % 100}%`, opacity: 0.2 }}
-            animate={{
-              x: [`${(i * 53) % 100}%`, `${((i * 53) + 30) % 100}%`, `${(i * 53) % 100}%`],
-              y: [`${(i * 31) % 100}%`, `${((i * 31) + 25) % 100}%`, `${(i * 31) % 100}%`],
-              opacity: [0.2, 0.9, 0.2],
-            }}
-            transition={{ duration: 8 + (i % 5), repeat: Infinity, ease: 'easeInOut' }}
-          />
-        ))}
-      </div>
-
-      <div className="relative z-10 mx-auto max-w-[1400px] p-4 md:p-6">
-        {/* Top bar */}
-        <div className="mb-4 flex items-center justify-between">
-          <Button
-            variant="ghost"
-            onClick={() => navigate('/dashboard')}
-            className="gap-2 text-white/80 hover:bg-emerald-500/10 hover:text-white"
-          >
-            <ArrowLeft className="h-4 w-4" /> Back to My Orchard
-          </Button>
-          <Badge className="border-emerald-400/30 bg-emerald-500/10 text-emerald-200">
-            <Globe2 className="mr-1 h-3 w-3" /> Worldwide
-          </Badge>
-        </div>
-
-        {/* Hero */}
-        <motion.div
-          initial={{ opacity: 0, y: -12 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="relative mb-6 overflow-hidden rounded-3xl border border-emerald-400/20 bg-gradient-to-br from-emerald-900/40 via-slate-900/60 to-emerald-900/40 p-6 md:p-8 backdrop-blur"
+    <div className="fixed inset-0 flex flex-col bg-black text-white">
+      {/* Top bar — Following / For You / Local */}
+      <header className="relative z-20 flex items-center justify-between px-4 py-3">
+        <button
+          onClick={() => navigate('/dashboard')}
+          className="flex items-center gap-2 text-white/80 hover:text-white"
+          aria-label="Back to my orchard"
         >
-          <div className="flex flex-wrap items-end justify-between gap-4">
-            <div>
-              <div className="mb-2 flex items-center gap-2">
-                <motion.span
-                  className="inline-block h-2 w-2 rounded-full bg-rose-400"
-                  animate={{ scale: [1, 1.6, 1], opacity: [1, 0.4, 1] }}
-                  transition={{ duration: 1.4, repeat: Infinity }}
-                />
-                <span className="text-xs uppercase tracking-[0.3em] text-emerald-200/80">Tribal Alive Feed</span>
-              </div>
-              <h1 className="bg-gradient-to-r from-emerald-200 via-lime-200 to-emerald-300 bg-clip-text text-3xl font-extrabold leading-tight text-transparent md:text-5xl">
-                The orchard is awake. Right now.
-              </h1>
-              <p className="mt-2 max-w-2xl text-sm text-white/70 md:text-base">
-                Every glowing seed below is a tribe member sharing live — text them, voice them, video them,
-                or tap a bloom. No phone numbers, no emails. Just the garden.
-              </p>
-            </div>
-            <div className="flex items-center gap-3 rounded-2xl border border-emerald-400/20 bg-black/30 px-4 py-3">
-              <Radio className="h-5 w-5 text-rose-400" />
-              <div>
-                <div className="text-2xl font-bold leading-none text-white">{liveCount}</div>
-                <div className="text-[10px] uppercase tracking-wider text-white/60">live now</div>
-              </div>
-            </div>
-          </div>
-        </motion.div>
+          <ArrowLeft className="h-4 w-4" />
+          <span className="hidden sm:inline text-sm">SeedFlow</span>
+          <span className="text-xl">🌱</span>
+        </button>
 
-        {/* Main grid */}
-        <div className="grid grid-cols-1 gap-6 lg:grid-cols-[1fr,360px]">
-          {/* LIVE seeds */}
-          <div>
-            <div className="mb-3 flex items-center gap-2">
-              <Sparkles className="h-4 w-4 text-emerald-300" />
-              <h2 className="text-sm font-bold uppercase tracking-widest text-emerald-200">Live in the orchard</h2>
-            </div>
-
-            {liveSeeds.length === 0 ? (
-              <EmptyLive onSerendipity={() => setSerendipityIndex((i) => i + 1)} />
-            ) : (
-              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
-                <AnimatePresence>
-                  {liveSeeds.map((p) => (
-                    <LiveSeedCard
-                      key={p.user_id + ':' + p.seed_id}
-                      presence={p}
-                      blooms={blooms[p.seed_id]}
-                      recentBloom={recentBloom?.seed_id === p.seed_id ? recentBloom.stage : null}
-                      onJoin={() => handleJoinLive(p)}
-                      onBloom={(stage) => sendBloom(p.seed_id, stage)}
-                      onShare={() => handleShare({ id: p.seed_id, title: p.seed_title })}
-                    />
-                  ))}
-                </AnimatePresence>
-              </div>
-            )}
-
-            {/* Serendipity strip */}
-            <div className="mt-8">
-              <div className="mb-3 flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <Shuffle className="h-4 w-4 text-emerald-300" />
-                  <h2 className="text-sm font-bold uppercase tracking-widest text-emerald-200">
-                    Serendipity — meet a seed outside your circle
-                  </h2>
-                </div>
-                <Button
-                  size="sm"
-                  variant="outline"
-                  className="border-emerald-400/30 bg-transparent text-emerald-200 hover:bg-emerald-500/10"
-                  onClick={() => setSerendipityIndex((i) => i + 1)}
-                >
-                  <Shuffle className="mr-1 h-3 w-3" /> Surprise me
-                </Button>
-              </div>
-              {loading ? (
-                <div className="h-44 animate-pulse rounded-2xl bg-white/5" />
-              ) : serendipitySeed ? (
-                <SerendipityCard
-                  seed={serendipitySeed}
-                  onGoLive={() => handleGoLive({ id: serendipitySeed.id, title: serendipitySeed.title, image: serendipitySeed.image })}
-                  onShare={() => handleShare(serendipitySeed)}
-                />
-              ) : null}
-            </div>
-
-            {/* Tribe garden — every seed, product & broadcast from everyone */}
-            <div className="mt-8">
-              <div className="mb-3 flex items-center gap-2">
-                <TreePine className="h-4 w-4 text-emerald-300" />
-                <h2 className="text-sm font-bold uppercase tracking-widest text-emerald-200">
-                  The whole tribe garden
-                </h2>
-                <span className="text-xs text-white/50">· {discover.length} items</span>
-              </div>
-              {loading ? (
-                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3">
-                  {Array.from({ length: 6 }).map((_, i) => (
-                    <div key={i} className="h-40 animate-pulse rounded-2xl bg-white/5" />
-                  ))}
-                </div>
-              ) : discover.length === 0 ? (
-                <div className="rounded-2xl border border-dashed border-white/10 p-6 text-center text-sm text-white/60">
-                  Nothing planted yet. Be the first to sow a seed, list a product, or go live on the radio.
-                </div>
-              ) : (
-                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3">
-                  {discover.slice(0, 24).map((item) => (
-                    <motion.div
-                      key={`${item.kind}-${item.id}`}
-                      initial={{ opacity: 0, y: 8 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      className="group overflow-hidden rounded-2xl border border-white/10 bg-gradient-to-br from-slate-900/70 to-emerald-950/40 transition hover:border-emerald-400/40"
-                    >
-                      <Link to={item.href} className="block">
-                        <div className="relative aspect-video w-full bg-emerald-500/10">
-                          {item.image ? (
-                            <img src={item.image} alt={item.title} className="h-full w-full object-cover transition group-hover:scale-[1.03]" />
-                          ) : (
-                            <div className="flex h-full w-full items-center justify-center text-4xl">{item.badge}</div>
-                          )}
-                          <div className="absolute left-2 top-2 rounded-full bg-black/60 px-2 py-0.5 text-xs backdrop-blur">
-                            {item.badge} {item.kind}
-                          </div>
-                        </div>
-                        <div className="p-3">
-                          <h3 className="line-clamp-1 text-sm font-bold text-white">{item.title}</h3>
-                          <p className="mt-0.5 line-clamp-1 text-[11px] text-white/60">by {item.sower}</p>
-                        </div>
-                      </Link>
-                      <div className="flex items-center justify-between gap-2 border-t border-white/5 p-2">
-                        <Button
-                          size="sm"
-                          variant="ghost"
-                          className="h-7 px-2 text-[11px] text-emerald-200 hover:bg-emerald-500/10"
-                          onClick={() => handleGoLive({ id: item.id, title: item.title, image: item.image })}
-                        >
-                          <Video className="mr-1 h-3 w-3" /> Go live
-                        </Button>
-                        <Button
-                          size="sm"
-                          variant="ghost"
-                          className="h-7 px-2 text-[11px] text-white/70 hover:bg-white/10"
-                          onClick={() => handleShare(item)}
-                        >
-                          <Share2 className="mr-1 h-3 w-3" /> Share
-                        </Button>
-                      </div>
-                    </motion.div>
-                  ))}
-                </div>
+        <nav className="flex items-center gap-6 text-sm font-semibold">
+          {(['following', 'foryou', 'local'] as FeedTab[]).map((t) => (
+            <button
+              key={t}
+              onClick={() => setTab(t)}
+              className={cn(
+                'relative pb-1 transition',
+                tab === t ? 'text-white' : 'text-white/50 hover:text-white/80'
               )}
-            </div>
-          </div>
+            >
+              {t === 'following' ? 'Following' : t === 'foryou' ? 'For You' : 'Local'}
+              {tab === t && (
+                <motion.span
+                  layoutId="tabUnderline"
+                  className="absolute -bottom-0.5 left-0 right-0 h-0.5 rounded-full bg-amber-400"
+                />
+              )}
+            </button>
+          ))}
+        </nav>
 
-          {/* Side: pulse + bloom feed */}
-          <aside className="space-y-4">
-            <div className="rounded-2xl border border-emerald-400/20 bg-black/30 p-4">
-              <div className="mb-2 flex items-center gap-2">
-                <Zap className="h-4 w-4 text-amber-300" />
-                <h3 className="text-xs font-bold uppercase tracking-widest text-amber-200">Pulse</h3>
-              </div>
-              <p className="text-sm text-white/70">
-                {liveCount === 0
-                  ? 'No seeds live yet. Be the first — go live from any of your seeds.'
-                  : `${liveCount} ${liveCount === 1 ? 'seed is' : 'seeds are'} blooming live. Tap any to step in.`}
-              </p>
-              <Button
-                className="mt-3 w-full bg-gradient-to-r from-emerald-500 to-lime-500 text-black hover:opacity-90"
-                onClick={() => navigate('/dashboard')}
-              >
-                <Video className="mr-2 h-4 w-4" /> Go live from my seed
-              </Button>
-            </div>
-
-            <div className="rounded-2xl border border-emerald-400/20 bg-black/30 p-4">
-              <div className="mb-2 flex items-center gap-2">
-                <Leaf className="h-4 w-4 text-emerald-300" />
-                <h3 className="text-xs font-bold uppercase tracking-widest text-emerald-200">Latest blooms</h3>
-              </div>
-              <AnimatePresence mode="popLayout">
-                {recentBloom ? (
-                  <motion.div
-                    key={recentBloom.at}
-                    initial={{ opacity: 0, y: 8 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0 }}
-                    className="text-sm text-white/80"
-                  >
-                    <span className="text-2xl">{BLOOM_META[recentBloom.stage].emoji}</span>{' '}
-                    Someone watered a seed.
-                  </motion.div>
-                ) : (
-                  <div className="text-xs text-white/50">
-                    Tap 🌱 / 🌿 / 🌳 on any live seed to water it. Reactions ripple to everyone watching.
-                  </div>
-                )}
-              </AnimatePresence>
-            </div>
-
-            <div className="rounded-2xl border border-emerald-400/20 bg-black/30 p-4">
-              <div className="mb-2 flex items-center gap-2">
-                <Users className="h-4 w-4 text-cyan-300" />
-                <h3 className="text-xs font-bold uppercase tracking-widest text-cyan-200">Tribe rules</h3>
-              </div>
-              <ul className="space-y-1 text-xs text-white/70">
-                <li>• All comms inside the garden — no phone, no email.</li>
-                <li>• Anyone can go live from any seed, any time.</li>
-                <li>• Bestow while watching — instant support, no friction.</li>
-                <li>• Your referral code is burned into every share.</li>
-              </ul>
-            </div>
-          </aside>
+        <div className="flex items-center gap-3">
+          <button
+            onClick={() => navigate('/products')}
+            className="rounded-full bg-white/10 p-2 hover:bg-white/20"
+            aria-label="Search"
+          >
+            <Search className="h-4 w-4" />
+          </button>
+          <button
+            onClick={() => navigate('/notifications')}
+            className="rounded-full bg-white/10 p-2 hover:bg-white/20"
+            aria-label="Notifications"
+          >
+            <Bell className="h-4 w-4" />
+          </button>
         </div>
+      </header>
+
+      {/* Wandering badge filter */}
+      <div className="relative z-20 px-2 sm:px-4">
+        <WanderingBadgeBar activeRole={wanderingRole} onRoleChange={setWanderingRole} />
       </div>
 
-      {/* Jitsi live room overlay */}
+      {/* Vertical snap feed */}
+      <main
+        ref={containerRef}
+        className="relative flex-1 snap-y snap-mandatory overflow-y-auto overscroll-contain"
+        style={{ scrollSnapStop: 'always' }}
+      >
+        {loading ? (
+          <div className="flex h-full items-center justify-center">
+            <Loader2 className="h-8 w-8 animate-spin text-emerald-300" />
+          </div>
+        ) : filtered.length === 0 ? (
+          <EmptyState tab={tab} onSwitch={() => setTab('foryou')} onClearRole={() => setWanderingRole(null)} hasRole={!!wanderingRole} />
+        ) : (
+          filtered.map((item, idx) => (
+            <div
+              key={item.key}
+              ref={(el) => { cardRefs.current[idx] = el; }}
+              data-idx={idx}
+              className="relative h-full w-full snap-start snap-always"
+              style={{ scrollSnapStop: 'always' }}
+            >
+              <FeedCard
+                item={item}
+                isActive={idx === activeIdx}
+                isFollowing={item.sower_id ? followingIds.has(item.sower_id) : false}
+                onBestow={() => handleBestow(item)}
+                onMessage={() => handleMessage(item)}
+                onVoice={() => handleVoice(item)}
+                onVideo={() => handleVideo(item)}
+                onGoLive={() => handleGoLive(item)}
+                onShare={() => handleShare(item)}
+                onFollow={() => toggleFollow(item.sower_id)}
+              />
+            </div>
+          ))
+        )}
+      </main>
+
+      {/* Jitsi overlay */}
       <AnimatePresence>
         {activeRoom && (
           <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
+            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
             className="fixed inset-0 z-50 flex flex-col bg-black"
           >
             <div className="flex items-center justify-between border-b border-emerald-500/20 bg-emerald-950/60 px-4 py-2">
-              <div className="flex items-center gap-2 text-sm text-white">
+              <div className="flex items-center gap-2 text-sm">
                 <span className="inline-block h-2 w-2 animate-pulse rounded-full bg-rose-400" />
-                Live: <span className="font-semibold">{activeRoom.title}</span>
+                {activeRoom.title}
               </div>
-              <Button size="sm" variant="ghost" className="text-white hover:bg-white/10" onClick={handleEndRoom}>
+              <Button size="sm" variant="ghost" className="text-white hover:bg-white/10" onClick={() => setActiveRoom(null)}>
                 Close
               </Button>
             </div>
             <iframe
               title={activeRoom.title}
-              src={`https://${JITSI_DOMAIN}/${activeRoom.room}#config.prejoinPageEnabled=false&config.disableDeepLinking=true`}
+              src={`https://${JITSI_DOMAIN}/${activeRoom.room}#config.prejoinPageEnabled=false&config.disableDeepLinking=true${activeRoom.mode === 'audio' ? '&config.startWithVideoMuted=true' : ''}`}
               allow="camera; microphone; fullscreen; display-capture; autoplay"
               className="flex-1 border-0"
             />
@@ -545,164 +460,288 @@ export default function TribalAliveFeedPage() {
   );
 }
 
-/* ───────── sub-components ───────── */
+/* ───────── card with 45s preview + action rail ───────── */
 
-function LiveSeedCard({
-  presence, blooms, recentBloom, onJoin, onBloom, onShare,
+function FeedCard({
+  item, isActive, isFollowing,
+  onBestow, onMessage, onVoice, onVideo, onGoLive, onShare, onFollow,
 }: {
-  presence: LivePresence;
-  blooms?: { seed: number; leaf: number; tree: number };
-  recentBloom: BloomStage | null;
-  onJoin: () => void;
-  onBloom: (s: BloomStage) => void;
-  onShare: () => void;
-}) {
-  return (
-    <motion.div
-      layout
-      initial={{ opacity: 0, scale: 0.92, y: 10 }}
-      animate={{ opacity: 1, scale: 1, y: 0 }}
-      exit={{ opacity: 0, scale: 0.95 }}
-      className="group relative overflow-hidden rounded-2xl border border-emerald-400/30 bg-gradient-to-br from-emerald-900/40 to-slate-900/70 p-4 shadow-[0_0_30px_-10px_rgba(16,185,129,0.5)]"
-    >
-      <motion.div
-        className="pointer-events-none absolute inset-0 rounded-2xl"
-        animate={{ boxShadow: [
-          '0 0 0 0 rgba(16,185,129,0.45)',
-          '0 0 0 12px rgba(16,185,129,0)',
-        ] }}
-        transition={{ duration: 1.8, repeat: Infinity }}
-      />
-      <div className="relative flex items-start gap-3">
-        <div className="h-14 w-14 shrink-0 overflow-hidden rounded-xl bg-emerald-500/10">
-          {presence.seed_image ? (
-            <img src={presence.seed_image} alt="" className="h-full w-full object-cover" />
-          ) : (
-            <div className="flex h-full w-full items-center justify-center text-2xl">🌱</div>
-          )}
-        </div>
-        <div className="min-w-0 flex-1">
-          <div className="flex items-center gap-2">
-            <Badge className="border-rose-400/40 bg-rose-500/15 text-rose-200">🔴 LIVE</Badge>
-            <span className="truncate text-xs text-white/60">@{presence.display_name}</span>
-          </div>
-          <h3 className="mt-1 line-clamp-2 text-sm font-semibold text-white">{presence.seed_title}</h3>
-        </div>
-      </div>
-
-      {/* Bloom totals */}
-      <div className="relative mt-3 flex items-center gap-3 text-xs text-white/70">
-        {(['seed', 'leaf', 'tree'] as BloomStage[]).map((s) => (
-          <button
-            key={s}
-            onClick={() => onBloom(s)}
-            className="group/bloom flex items-center gap-1 rounded-full border border-emerald-400/20 bg-black/30 px-2 py-1 transition hover:border-emerald-400/60 hover:bg-emerald-500/10"
-            title={`Send a ${BLOOM_META[s].label}`}
-          >
-            <motion.span
-              animate={recentBloom === s ? { scale: [1, 1.5, 1], y: [0, -6, 0] } : {}}
-              transition={{ duration: 0.6 }}
-            >
-              {BLOOM_META[s].emoji}
-            </motion.span>
-            <span>{blooms?.[s] ?? 0}</span>
-          </button>
-        ))}
-      </div>
-
-      {/* Actions */}
-      <div className="relative mt-3 grid grid-cols-2 gap-2">
-        <Button
-          size="sm"
-          className="bg-gradient-to-r from-emerald-500 to-lime-500 text-black hover:opacity-90"
-          onClick={onJoin}
-        >
-          <Video className="mr-1 h-3 w-3" /> Step in
-        </Button>
-        <Link to={`/seed/${presence.seed_id}`} className="block">
-          <Button size="sm" variant="outline" className="w-full border-emerald-400/30 bg-transparent text-emerald-200 hover:bg-emerald-500/10">
-            <MessageCircle className="mr-1 h-3 w-3" /> Open seed
-          </Button>
-        </Link>
-      </div>
-      <div className="relative mt-2 flex items-center justify-between text-[11px] text-white/50">
-        <span>Started {new Date(presence.started_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
-        <button onClick={onShare} className="flex items-center gap-1 hover:text-emerald-300">
-          <Share2 className="h-3 w-3" /> Share
-        </button>
-      </div>
-    </motion.div>
-  );
-}
-
-function SerendipityCard({
-  seed, onGoLive, onShare,
-}: {
-  seed: DiscoverSeed;
+  item: FeedItem;
+  isActive: boolean;
+  isFollowing: boolean;
+  onBestow: () => void;
+  onMessage: () => void;
+  onVoice: () => void;
+  onVideo: () => void;
   onGoLive: () => void;
   onShare: () => void;
+  onFollow: () => void;
 }) {
+  const audioRef = useRef<HTMLAudioElement>(null);
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const [playing, setPlaying] = useState(false);
+  const [time, setTime] = useState(0);
+  const PREVIEW = 45; // seconds
+
+  // Stop media when card leaves view
+  useEffect(() => {
+    if (!isActive) {
+      audioRef.current?.pause();
+      videoRef.current?.pause();
+      setPlaying(false);
+      setTime(0);
+    }
+  }, [isActive]);
+
+  const togglePlay = useCallback(() => {
+    const media = audioRef.current || videoRef.current;
+    if (!media) return;
+    if (playing) {
+      media.pause();
+      setPlaying(false);
+    } else {
+      media.currentTime = 0;
+      media.play().then(() => setPlaying(true)).catch(() => setPlaying(false));
+    }
+  }, [playing]);
+
+  // 45s cap
+  useEffect(() => {
+    const media = audioRef.current || videoRef.current;
+    if (!media) return;
+    const onTime = () => {
+      setTime(media.currentTime);
+      if (media.currentTime >= PREVIEW) {
+        media.pause();
+        media.currentTime = 0;
+        setPlaying(false);
+        setTime(0);
+      }
+    };
+    const onEnd = () => { setPlaying(false); setTime(0); };
+    media.addEventListener('timeupdate', onTime);
+    media.addEventListener('ended', onEnd);
+    return () => {
+      media.removeEventListener('timeupdate', onTime);
+      media.removeEventListener('ended', onEnd);
+    };
+  }, []);
+
+  const badge = WANDERING_BADGES.find((b) => b.key === item.wandering_role);
+  const showBestow = item.kind === 'product' || item.kind === 'seed';
+  const previewable = !!(item.audio_url || item.video_url);
+
   return (
-    <motion.div
-      key={seed.id}
-      initial={{ opacity: 0, y: 10 }}
-      animate={{ opacity: 1, y: 0 }}
-      className="overflow-hidden rounded-3xl border border-emerald-400/20 bg-gradient-to-br from-emerald-900/30 to-slate-900/70"
-    >
-      <div className="grid grid-cols-1 sm:grid-cols-[180px,1fr]">
-        <div className="aspect-square w-full bg-emerald-500/10 sm:aspect-auto">
-          {seed.image ? (
-            <img src={seed.image} alt={seed.title} className="h-full w-full object-cover" />
-          ) : (
-            <div className="flex h-full w-full items-center justify-center text-5xl">{seed.badge || '🌱'}</div>
-          )}
+    <div className="relative h-full w-full overflow-hidden bg-gradient-to-b from-slate-950 via-slate-900 to-emerald-950">
+      {/* Background media */}
+      {item.video_url ? (
+        <video
+          ref={videoRef}
+          src={item.video_url}
+          className="absolute inset-0 h-full w-full object-cover opacity-80"
+          playsInline
+          muted={false}
+          preload="metadata"
+        />
+      ) : item.image ? (
+        <img
+          src={item.image}
+          alt={item.title}
+          className="absolute inset-0 h-full w-full object-cover opacity-70"
+        />
+      ) : (
+        <div className="absolute inset-0 flex items-center justify-center text-[20rem] opacity-10">
+          {badge?.emoji ?? '🌱'}
         </div>
-        <div className="p-4">
-          <div className="flex items-center gap-2 text-xs text-emerald-200/80">
-            <span className="text-base leading-none">{seed.badge}</span>
-            <TreePine className="h-3 w-3" /> {seed.kind === 'product' ? 'Product' : seed.kind === 'radio' ? 'Radio' : 'Seed'} · {seed.sower}
-          </div>
-          <h3 className="mt-1 text-lg font-bold text-white">{seed.title}</h3>
-          {seed.description && (
-            <p className="mt-1 line-clamp-2 text-sm text-white/70">{seed.description}</p>
-          )}
-          <div className="mt-3 flex flex-wrap gap-2">
-            <Link to={seed.href}>
-              <Button size="sm" variant="outline" className="border-emerald-400/30 bg-transparent text-emerald-200 hover:bg-emerald-500/10">
-                Open
-              </Button>
-            </Link>
-            <Button size="sm" className="bg-gradient-to-r from-emerald-500 to-lime-500 text-black hover:opacity-90" onClick={onGoLive}>
-              <Video className="mr-1 h-3 w-3" /> Go live with this
-            </Button>
-            <Button size="sm" variant="ghost" className="text-emerald-200 hover:bg-emerald-500/10" onClick={onShare}>
-              <Share2 className="mr-1 h-3 w-3" /> Share
-            </Button>
-          </div>
-        </div>
+      )}
+      {item.audio_url && (
+        <audio ref={audioRef} src={item.audio_url} preload="metadata" />
+      )}
+
+      <div className="absolute inset-0 bg-gradient-to-b from-black/30 via-black/10 to-black/80" />
+
+      {/* Right action rail */}
+      <div className="absolute bottom-32 right-3 z-10 flex flex-col items-center gap-5 sm:right-5">
+        <RailButton
+          icon={<MessageCircle className="h-6 w-6" />}
+          label="Message"
+          onClick={onMessage}
+        />
+        <RailButton
+          icon={<Mic className="h-6 w-6" />}
+          label="Voice"
+          onClick={onVoice}
+        />
+        <RailButton
+          icon={<Video className="h-6 w-6" />}
+          label="Video"
+          onClick={onVideo}
+        />
+        <RailButton
+          icon={<Heart className="h-6 w-6" />}
+          label="Like"
+          onClick={onShare}
+        />
+        <RailButton
+          icon={<Radio className="h-6 w-6" />}
+          label="Go Live"
+          onClick={onGoLive}
+          accent
+        />
+        <RailButton
+          icon={<Share2 className="h-5 w-5" />}
+          label="Share"
+          onClick={onShare}
+        />
       </div>
-    </motion.div>
+
+      {/* Left content stack */}
+      <div className="absolute bottom-4 left-3 right-24 z-10 sm:left-5 sm:right-28">
+        {badge && (
+          <div
+            className="mb-2 inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-bold"
+            style={{
+              background: `linear-gradient(135deg, ${badge.color}40, ${badge.color}15)`,
+              border: `1px solid ${badge.color}66`,
+              color: badge.color,
+            }}
+          >
+            <span>{badge.emoji}</span> {badge.label}
+          </div>
+        )}
+
+        <div className="flex items-center gap-2">
+          <div className="h-10 w-10 overflow-hidden rounded-full border border-white/30 bg-white/10">
+            {item.sower_avatar ? (
+              <img src={item.sower_avatar} alt="" className="h-full w-full object-cover" />
+            ) : (
+              <div className="flex h-full w-full items-center justify-center text-sm">{item.sower_name[0]}</div>
+            )}
+          </div>
+          <div className="min-w-0">
+            <div className="truncate text-sm font-bold">{item.sower_name}</div>
+            {item.sower_handle && <div className="truncate text-xs text-white/60">@{item.sower_handle}</div>}
+          </div>
+          {item.sower_id && (
+            <button
+              onClick={onFollow}
+              className={cn(
+                'ml-2 rounded-full px-4 py-1 text-xs font-bold transition',
+                isFollowing
+                  ? 'bg-white/20 text-white hover:bg-white/30'
+                  : 'bg-white text-black hover:scale-105'
+              )}
+            >
+              {isFollowing ? 'Following' : 'Follow'}
+            </button>
+          )}
+        </div>
+
+        <h2 className="mt-2 text-lg font-bold sm:text-xl">{item.title}</h2>
+        {item.description && (
+          <p className="mt-1 line-clamp-2 max-w-md text-sm text-white/80">{item.description}</p>
+        )}
+
+        {showBestow && (
+          <div className="mt-2 inline-flex items-center gap-1.5 rounded-full bg-amber-500/20 px-2.5 py-1 text-xs font-bold text-amber-200 ring-1 ring-amber-400/50">
+            <Gift className="h-3 w-3" /> R{Number(item.price ?? 2).toFixed(0)}
+          </div>
+        )}
+
+        {/* 45s preview row */}
+        {previewable && (
+          <div className="mt-3 flex items-center gap-3 rounded-2xl bg-black/40 p-2 pr-4 backdrop-blur">
+            <button
+              onClick={togglePlay}
+              className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-amber-500 text-white shadow-lg hover:scale-105"
+              aria-label={playing ? 'Pause preview' : 'Play 45s preview'}
+            >
+              {playing ? <Pause className="h-5 w-5" /> : <Play className="h-5 w-5 translate-x-0.5" />}
+            </button>
+            <div className="flex-1">
+              <div className="h-1.5 w-full overflow-hidden rounded-full bg-white/20">
+                <div
+                  className="h-full bg-amber-400 transition-all"
+                  style={{ width: `${(time / PREVIEW) * 100}%` }}
+                />
+              </div>
+            </div>
+            <span className="shrink-0 text-xs tabular-nums text-white/70">
+              {Math.floor(time)}s / {PREVIEW}s
+            </span>
+          </div>
+        )}
+
+        {/* Bestow CTA */}
+        {showBestow && (
+          <button
+            onClick={onBestow}
+            className="mt-3 w-full max-w-md rounded-full bg-gradient-to-r from-amber-500 via-orange-500 to-orange-600 px-6 py-3.5 text-base font-bold text-white shadow-[0_8px_30px_-8px_rgba(249,115,22,0.7)] hover:scale-[1.02] active:scale-100"
+          >
+            🎁 Bestow & Get This Seed
+          </button>
+        )}
+        {!showBestow && (
+          <button
+            onClick={onBestow}
+            className="mt-3 w-full max-w-md rounded-full bg-gradient-to-r from-emerald-500 to-lime-500 px-6 py-3 text-base font-bold text-black hover:scale-[1.02]"
+          >
+            <Sparkles className="mr-2 inline h-4 w-4" /> Open this seed
+          </button>
+        )}
+      </div>
+    </div>
   );
 }
 
-function EmptyLive({ onSerendipity }: { onSerendipity: () => void }) {
+function RailButton({
+  icon, label, onClick, accent,
+}: { icon: React.ReactNode; label: string; onClick: () => void; accent?: boolean }) {
   return (
-    <motion.div
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      className="rounded-3xl border border-dashed border-emerald-400/30 bg-emerald-500/5 p-8 text-center"
-    >
-      <div className="mb-3 text-5xl">🌱</div>
-      <h3 className="text-lg font-semibold text-white">The orchard is quiet — for a moment.</h3>
-      <p className="mx-auto mt-1 max-w-md text-sm text-white/60">
-        Nobody is live worldwide right now. Be the first spark — or wander into a discovered seed below.
-      </p>
-      <Button
-        className="mt-4 bg-gradient-to-r from-emerald-500 to-lime-500 text-black hover:opacity-90"
-        onClick={onSerendipity}
+    <button onClick={onClick} className="flex flex-col items-center gap-1 text-white/90 hover:text-white">
+      <span
+        className={cn(
+          'flex h-12 w-12 items-center justify-center rounded-full backdrop-blur transition active:scale-90',
+          accent
+            ? 'bg-gradient-to-br from-rose-500 to-orange-500 shadow-[0_0_20px_rgba(244,63,94,0.6)]'
+            : 'bg-white/15 hover:bg-white/25'
+        )}
       >
-        <Shuffle className="mr-2 h-4 w-4" /> Surprise me with a seed
-      </Button>
-    </motion.div>
+        {icon}
+      </span>
+      <span className="text-[10px] font-semibold drop-shadow">{label}</span>
+    </button>
+  );
+}
+
+function EmptyState({
+  tab, onSwitch, onClearRole, hasRole,
+}: { tab: FeedTab; onSwitch: () => void; onClearRole: () => void; hasRole: boolean }) {
+  return (
+    <div className="flex h-full flex-col items-center justify-center px-6 text-center">
+      <div className="mb-4 text-6xl">🌱</div>
+      <h2 className="mb-2 text-xl font-bold">
+        {tab === 'following'
+          ? 'You are not following anyone yet'
+          : hasRole
+          ? 'Nothing in this Wandering yet'
+          : 'The orchard is quiet'}
+      </h2>
+      <p className="mb-5 max-w-md text-sm text-white/60">
+        {tab === 'following'
+          ? 'Tap Follow on any sower in the For You feed and they will land here.'
+          : 'Try a different filter, or be the first to plant something.'}
+      </p>
+      <div className="flex gap-2">
+        {tab === 'following' && (
+          <Button onClick={onSwitch} className="bg-amber-500 text-black hover:bg-amber-400">Browse For You</Button>
+        )}
+        {hasRole && (
+          <Button variant="outline" onClick={onClearRole} className="border-white/20 bg-transparent text-white hover:bg-white/10">
+            Clear filter
+          </Button>
+        )}
+      </div>
+    </div>
   );
 }
