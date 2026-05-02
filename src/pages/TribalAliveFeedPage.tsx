@@ -551,7 +551,7 @@ export default function TribalAliveFeedPage() {
       </main>
 
       {/* Top overlay: Back + Following / For You / Local + Search/Bell */}
-      <header className="absolute inset-x-0 top-0 z-20 flex items-center justify-between px-3 py-2 bg-gradient-to-b from-black/70 to-transparent">
+      <header className="absolute inset-x-0 top-0 z-20 flex items-center justify-between gap-2 px-4 pr-5 py-2 pt-[max(0.5rem,env(safe-area-inset-top))] bg-gradient-to-b from-black/70 to-transparent">
         <button
           onClick={() => navigate('/dashboard')}
           className="flex items-center gap-1.5 text-white/90 hover:text-white"
