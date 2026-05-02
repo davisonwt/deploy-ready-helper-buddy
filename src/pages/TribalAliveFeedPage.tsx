@@ -154,11 +154,18 @@ export default function TribalAliveFeedPage() {
 
         const profileMap: Record<string, any> = {};
         if (sowerIds.length) {
-          const { data: profs } = await supabase
-            .from('profiles')
-            .select('id, user_id, first_name, last_name, display_name, avatar_url')
-            .in('user_id', sowerIds as string[]);
-          (profs || []).forEach((p: any) => { profileMap[p.user_id] = p; });
+          const [byUserId, byProfileId] = await Promise.all([
+            supabase.from('profiles')
+              .select('id, user_id, first_name, last_name, display_name, avatar_url')
+              .in('user_id', sowerIds as string[]),
+            supabase.from('profiles')
+              .select('id, user_id, first_name, last_name, display_name, avatar_url')
+              .in('id', sowerIds as string[]),
+          ]);
+          [...(byUserId.data || []), ...(byProfileId.data || [])].forEach((p: any) => {
+            if (p.user_id) profileMap[p.user_id] = p;
+            if (p.id) profileMap[p.id] = p;
+          });
         }
 
         const seedItems: FeedItem[] = (seedsRes.data || []).map((s: any) => ({
@@ -196,7 +203,7 @@ export default function TribalAliveFeedPage() {
             sower_name: sowerName(profileMap[p.sower_id]),
             sower_avatar: profileMap[p.sower_id]?.avatar_url || null,
             sower_handle: profileMap[p.sower_id]?.display_name?.toLowerCase().replace(/\s+/g, '') || null,
-            wandering_role: wanderingFor({ kind: 'product', wandering_role: p.wandering_role, type: p.type }),
+            wandering_role: wanderingFor({ kind: 'product', wandering_role: p.wandering_role || (isMusic ? 'hearth' : null), type: p.type }),
             created_at: p.created_at,
             href: `/products`,
           };
