@@ -666,7 +666,8 @@ export default function TribalAliveFeedPage() {
   };
 
   const handleBestow = (item: FeedItem) => {
-    if (item.kind !== 'product' && item.kind !== 'seed') {
+    // Live radio is the only kind that isn't bestowable — just navigate to the room.
+    if (item.kind === 'radio_live') {
       navigate(item.href);
       return;
     }
@@ -1002,7 +1003,9 @@ function FeedCard({
   }, []);
 
   const badge = WANDERING_BADGES.find((b) => b.key === item.wandering_role);
-  const showBestow = item.kind === 'product' || item.kind === 'seed';
+  // All sower creations (seeds, products, music, books, videos, stories, orchards) are bestowable.
+  // Only pure live broadcasts (radio_live) keep a non-bestow CTA.
+  const showBestow = item.kind !== 'radio_live';
   const previewable = !!(item.audio_url || item.video_url);
 
   return (
