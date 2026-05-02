@@ -571,36 +571,36 @@ function FeedCard({
 
       <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-transparent to-black/85 pointer-events-none" />
 
-      {/* Right action rail */}
-      <div className="absolute bottom-32 right-3 z-10 flex flex-col items-center gap-5 sm:right-5">
+      {/* Right action rail — compact, fully on-screen */}
+      <div className="absolute right-2 top-1/2 z-10 flex -translate-y-1/2 flex-col items-center gap-3 sm:right-3 sm:gap-4">
         <RailButton
-          icon={<MessageCircle className="h-6 w-6" />}
+          icon={<MessageCircle className="h-5 w-5" />}
           label="Message"
           onClick={onMessage}
         />
         <RailButton
-          icon={<Mic className="h-6 w-6" />}
+          icon={<Mic className="h-5 w-5" />}
           label="Voice"
           onClick={onVoice}
         />
         <RailButton
-          icon={<Video className="h-6 w-6" />}
+          icon={<Video className="h-5 w-5" />}
           label="Video"
           onClick={onVideo}
         />
         <RailButton
-          icon={<Heart className="h-6 w-6" />}
+          icon={<Heart className="h-5 w-5" />}
           label="Like"
           onClick={onShare}
         />
         <RailButton
-          icon={<Radio className="h-6 w-6" />}
+          icon={<Radio className="h-5 w-5" />}
           label="Go Live"
           onClick={onGoLive}
           accent
         />
         <RailButton
-          icon={<Share2 className="h-5 w-5" />}
+          icon={<Share2 className="h-4 w-4" />}
           label="Share"
           onClick={onShare}
         />
