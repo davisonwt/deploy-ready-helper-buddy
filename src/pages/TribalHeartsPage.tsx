@@ -161,17 +161,20 @@ const TribalHeartsPage: React.FC = () => {
               Listening for kindred hearts…
             </p>
           </div>
-        ) : !myProfile ? (
+        ) : !myProfile || editProfileOpen ? (
           <div className="fixed inset-0 z-40">
-            <TribalHeartsOnboarding onComplete={() => window.location.reload()} />
+            <TribalHeartsOnboarding onComplete={() => {
+              setEditProfileOpen(false);
+              window.location.reload();
+            }} />
           </div>
         ) : profiles.length === 0 ? (
           <EmptyState
             heroImg={heroImg}
             title="The fire rests for now."
-            body="No new tribe members nearby. Check back as the circle grows."
-            cta="Refresh"
-            onCta={() => window.location.reload()}
+            body="Complete (or refine) your Wandering Heart profile so the tribe can find you. The more your heart speaks, the warmer the circle around you grows."
+            cta="Complete my Wandering Heart profile"
+            onCta={() => setEditProfileOpen(true)}
           />
         ) : (
           <AnimatePresence mode="wait">
