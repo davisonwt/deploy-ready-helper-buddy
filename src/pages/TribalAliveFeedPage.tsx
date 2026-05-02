@@ -538,6 +538,7 @@ export default function TribalAliveFeedPage() {
                 onMessage={() => handleMessage(item)}
                 onVoice={() => handleVoice(item)}
                 onVideo={() => handleVideo(item)}
+                onGift={() => handleGift(item)}
                 onGoLive={() => handleGoLive(item)}
                 onShare={() => handleShare(item)}
                 onFollow={() => toggleFollow(item.sower_id)}
@@ -627,6 +628,16 @@ export default function TribalAliveFeedPage() {
 
       {/* Jitsi overlay */}
       <AnimatePresence>
+        {actionPanel && (
+          <SeedActionPanel
+            panel={actionPanel}
+            currentUserId={user?.id || null}
+            onClose={() => setActionPanel(null)}
+            onSendText={sendSeedText}
+            onSendVoice={sendSeedVoice}
+            onGift={handleFreewillGift}
+          />
+        )}
         {activeRoom && (
           <motion.div
             initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
@@ -658,7 +669,7 @@ export default function TribalAliveFeedPage() {
 
 function FeedCard({
   item, isActive, isFollowing,
-  onBestow, onMessage, onVoice, onVideo, onGoLive, onShare, onFollow,
+  onBestow, onMessage, onVoice, onVideo, onGift, onGoLive, onShare, onFollow,
 }: {
   item: FeedItem;
   isActive: boolean;
@@ -667,6 +678,7 @@ function FeedCard({
   onMessage: () => void;
   onVoice: () => void;
   onVideo: () => void;
+  onGift: () => void;
   onGoLive: () => void;
   onShare: () => void;
   onFollow: () => void;
@@ -769,7 +781,7 @@ function FeedCard({
         <RailButton icon={<MessageCircle className="h-4 w-4" />} label="Message" onClick={onMessage} />
         <RailButton icon={<Mic className="h-4 w-4" />} label="Voice" onClick={onVoice} />
         <RailButton icon={<Video className="h-4 w-4" />} label="Video" onClick={onVideo} />
-        <RailButton icon={<Heart className="h-4 w-4" />} label="Like" onClick={onShare} />
+        <RailButton icon={<Heart className="h-4 w-4" />} label="Heart" onClick={onGift} />
         <RailButton icon={<Radio className="h-4 w-4" />} label="Go Live" onClick={onGoLive} accent />
         <RailButton icon={<Share2 className="h-4 w-4" />} label="Share" onClick={onShare} />
       </div>
