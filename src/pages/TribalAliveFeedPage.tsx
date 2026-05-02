@@ -48,6 +48,7 @@ interface FeedItem {
   title: string;
   description?: string | null;
   image?: string | null;
+  images?: string[] | null;
   audio_url?: string | null;
   video_url?: string | null;
   price?: number | null;
