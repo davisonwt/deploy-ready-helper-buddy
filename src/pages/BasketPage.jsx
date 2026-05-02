@@ -167,15 +167,15 @@ export default function BasketPage() {
           </Card>
 
           {/* Invoice Information */}
-          <Card>
+          <Card className="hover:shadow-xl transition-shadow">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
-                <CreditCard className="h-5 w-5" />
+                <CreditCard className="h-5 w-5 text-primary" />
                 Invoice Information
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <Label htmlFor="fullName">Full Name *</Label>
                   <Input
@@ -207,7 +207,7 @@ export default function BasketPage() {
                 />
               </div>
               
-              <div className="grid grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 <div>
                   <Label htmlFor="city">City</Label>
                   <Input
@@ -248,15 +248,15 @@ export default function BasketPage() {
                 />
               </div>
               
-              <div className="pt-4 border-t">
+              <div className="pt-4 border-t border-border">
                 <Button 
                   onClick={handleMakeItRain}
-                  className="w-full bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white font-bold py-3"
+                  className="w-full bg-gradient-to-r from-primary to-accent hover:opacity-90 text-primary-foreground font-bold py-3 transition-all hover:scale-[1.02] shadow-lg hover:shadow-xl"
                   size="lg"
                 >
                   🌧️ Make It Rain! ({formatAmount(getTotalAmount())})
                 </Button>
-                <p className="text-xs text-gray-500 mt-2 text-center">
+                <p className="text-xs text-muted-foreground mt-2 text-center">
                   Click to proceed to payment options
                 </p>
               </div>
