@@ -184,8 +184,8 @@ export default function TribalAliveFeedPage() {
     return url.toString();
   };
 
-  const handleShare = async (seed: { id: string; title: string }) => {
-    const url = buildShareUrl(`/seed/${seed.id}`);
+  const handleShare = async (seed: { id: string; title: string; href?: string }) => {
+    const url = buildShareUrl(seed.href || `/seed/${seed.id}`);
     const text = `🌿 "${seed.title}" is alive in the Sow2Grow orchard. Step in:\n${url}`;
     try {
       if (navigator.share) await navigator.share({ title: seed.title, text, url });
@@ -546,25 +546,26 @@ function SerendipityCard({
           {seed.image ? (
             <img src={seed.image} alt={seed.title} className="h-full w-full object-cover" />
           ) : (
-            <div className="flex h-full w-full items-center justify-center text-5xl">🌱</div>
+            <div className="flex h-full w-full items-center justify-center text-5xl">{seed.badge || '🌱'}</div>
           )}
         </div>
         <div className="p-4">
           <div className="flex items-center gap-2 text-xs text-emerald-200/80">
-            <TreePine className="h-3 w-3" /> Discover · {seed.sower}
+            <span className="text-base leading-none">{seed.badge}</span>
+            <TreePine className="h-3 w-3" /> {seed.kind === 'product' ? 'Product' : seed.kind === 'radio' ? 'Radio' : 'Seed'} · {seed.sower}
           </div>
           <h3 className="mt-1 text-lg font-bold text-white">{seed.title}</h3>
           {seed.description && (
             <p className="mt-1 line-clamp-2 text-sm text-white/70">{seed.description}</p>
           )}
           <div className="mt-3 flex flex-wrap gap-2">
-            <Link to={`/seed/${seed.id}`}>
+            <Link to={seed.href}>
               <Button size="sm" variant="outline" className="border-emerald-400/30 bg-transparent text-emerald-200 hover:bg-emerald-500/10">
-                Open seed
+                Open
               </Button>
             </Link>
             <Button size="sm" className="bg-gradient-to-r from-emerald-500 to-lime-500 text-black hover:opacity-90" onClick={onGoLive}>
-              <Video className="mr-1 h-3 w-3" /> Go live with this seed
+              <Video className="mr-1 h-3 w-3" /> Go live with this
             </Button>
             <Button size="sm" variant="ghost" className="text-emerald-200 hover:bg-emerald-500/10" onClick={onShare}>
               <Share2 className="mr-1 h-3 w-3" /> Share
