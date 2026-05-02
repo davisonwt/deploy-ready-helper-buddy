@@ -21,7 +21,7 @@ import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Play, Pause, Heart, MessageCircle, Mic, Video, Share2,
-  Search, Bell, Radio, ArrowLeft, Gift, Sparkles, Loader2,
+  Search, Bell, Radio, ArrowLeft, Gift, Sparkles, Loader2, X, Send, Square,
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
@@ -55,6 +55,32 @@ interface FeedItem {
   created_at: string;
   href: string;
 }
+
+interface SeedMessage {
+  id: string;
+  sender_id: string;
+  content: string | null;
+  message_type: string;
+  file_url?: string | null;
+  file_name?: string | null;
+  file_type?: string | null;
+  created_at: string;
+  sender_profile?: {
+    display_name?: string | null;
+    first_name?: string | null;
+    last_name?: string | null;
+    avatar_url?: string | null;
+  } | null;
+}
+
+type ActionPanelState = {
+  mode: 'message' | 'voice' | 'gift';
+  item: FeedItem;
+  roomId?: string | null;
+  messages: SeedMessage[];
+  loading: boolean;
+  error?: string | null;
+} | null;
 
 const sowerName = (p: any) =>
   p?.display_name ||
@@ -93,6 +119,7 @@ export default function TribalAliveFeedPage() {
   const [activeIdx, setActiveIdx] = useState(0);
   const [activeRoom, setActiveRoom] = useState<{ room: string; title: string; mode: 'audio' | 'video' } | null>(null);
   const [followingIds, setFollowingIds] = useState<Set<string>>(new Set());
+  const [actionPanel, setActionPanel] = useState<ActionPanelState>(null);
 
   const containerRef = useRef<HTMLDivElement>(null);
   const cardRefs = useRef<Array<HTMLDivElement | null>>([]);
@@ -260,9 +287,167 @@ export default function TribalAliveFeedPage() {
       if (navigator.share) await navigator.share({ title: item.title, text, url });
       else {
         await navigator.clipboard.writeText(text);
-        toast({ title: 'Invitation copied', description: 'Your referral code is burned into the link.' });
+        toast({ title: 'Share link copied', description: 'Your referral code is burned into the link.' });
       }
     } catch {/* dismissed */}
+  };
+
+  const ensureSeedRoom = async (item: FeedItem) => {
+    if (!user) { navigate('/login'); return null; }
+    if (!item.sower_id) {
+      toast({ title: 'No sower attached', description: 'This seed has no contactable creator.' });
+      return null;
+    }
+    if (item.sower_id === user.id) {
+      toast({ title: 'That is you 🌱', description: 'You are looking at your own seed.' });
+      return null;
+    }
+
+    const { data: rows, error: findErr } = await supabase
+      .from('chat_participants')
+      .select('room_id, user_id, chat_rooms!inner(id, room_type, is_active)')
+      .eq('chat_rooms.room_type', 'direct')
+      .eq('chat_rooms.is_active', true)
+      .in('user_id', [user.id, item.sower_id]);
+    if (findErr) throw findErr;
+
+    const counts: Record<string, number> = {};
+    (rows || []).forEach((row: any) => {
+      if (row?.room_id) counts[row.room_id] = (counts[row.room_id] || 0) + 1;
+    });
+    let roomId = Object.entries(counts).find(([, count]) => count >= 2)?.[0] || null;
+
+    if (!roomId) {
+      const { data: room, error: roomErr } = await supabase
+        .from('chat_rooms')
+        .insert({ name: `Seed chat · ${item.title}`.slice(0, 80), room_type: 'direct', created_by: user.id, is_active: true })
+        .select('id')
+        .single();
+      if (roomErr) throw roomErr;
+      roomId = room.id as string;
+    }
+
+    const { error: selfPartErr } = await supabase
+      .from('chat_participants')
+      .upsert({ room_id: roomId, user_id: user.id, is_active: true }, { onConflict: 'room_id,user_id', ignoreDuplicates: false });
+    if (selfPartErr) throw selfPartErr;
+
+    const { error: partErr } = await supabase
+      .from('chat_participants')
+      .upsert({ room_id: roomId, user_id: item.sower_id, is_active: true }, { onConflict: 'room_id,user_id', ignoreDuplicates: false });
+    if (partErr) throw partErr;
+
+    return roomId;
+  };
+
+  const fetchSeedMessages = async (roomId: string, item: FeedItem): Promise<SeedMessage[]> => {
+    const { data, error } = await supabase
+      .from('chat_messages')
+      .select('*')
+      .eq('room_id', roomId)
+      .order('created_at', { ascending: true });
+    if (error) throw error;
+
+    const needle = item.title.trim().toLowerCase();
+    const seedMessages = (data || []).filter((message: any) =>
+      (message.content || '').toLowerCase().includes(needle)
+    );
+    const senderIds = Array.from(new Set(seedMessages.map((m: any) => m.sender_id).filter(Boolean)));
+    if (!senderIds.length) return seedMessages as SeedMessage[];
+
+    const { data: profiles } = await supabase
+      .from('profiles')
+      .select('user_id, display_name, first_name, last_name, avatar_url')
+      .in('user_id', senderIds as string[]);
+    return seedMessages.map((message: any) => ({
+      ...message,
+      sender_profile: (profiles || []).find((profile: any) => profile.user_id === message.sender_id) || null,
+    })) as SeedMessage[];
+  };
+
+  const openActionPanel = async (mode: 'message' | 'voice' | 'gift', item: FeedItem) => {
+    if (!user) { navigate('/login'); return; }
+    setActionPanel({ mode, item, messages: [], loading: mode !== 'gift', roomId: null });
+    if (mode === 'gift') return;
+
+    try {
+      const roomId = await ensureSeedRoom(item);
+      if (!roomId) { setActionPanel(null); return; }
+      const messages = await fetchSeedMessages(roomId, item);
+      setActionPanel({ mode, item, roomId, messages, loading: false });
+    } catch (error: any) {
+      console.error('Seed action panel error:', error);
+      setActionPanel({ mode, item, messages: [], roomId: null, loading: false, error: error.message || 'Could not open this seed conversation.' });
+    }
+  };
+
+  const refreshActionMessages = async (roomId: string, item: FeedItem, mode: 'message' | 'voice') => {
+    const messages = await fetchSeedMessages(roomId, item);
+    setActionPanel({ mode, item, roomId, messages, loading: false });
+  };
+
+  const sendSeedText = async (text: string) => {
+    if (!actionPanel || !user) return;
+    const roomId = actionPanel.roomId || await ensureSeedRoom(actionPanel.item);
+    if (!roomId) return;
+    await supabase.rpc('send_chat_message', {
+      p_room_id: roomId,
+      p_content: `🌱 ${actionPanel.item.title}\n${text.trim()}`,
+      p_message_type: 'text',
+    });
+    await refreshActionMessages(roomId, actionPanel.item, 'message');
+  };
+
+  const sendSeedVoice = async (audioBlob: Blob, duration: number) => {
+    if (!actionPanel || !user) return;
+    const roomId = actionPanel.roomId || await ensureSeedRoom(actionPanel.item);
+    if (!roomId) return;
+    const fileName = `voice-${actionPanel.item.kind}-${actionPanel.item.id}-${Date.now()}.webm`;
+    const filePath = `${user.id}/seed-voice/${fileName}`;
+    const { error: uploadError } = await supabase.storage
+      .from('chat-files')
+      .upload(filePath, audioBlob, { contentType: 'audio/webm', upsert: false });
+    if (uploadError) throw uploadError;
+
+    const { data: { publicUrl } } = supabase.storage.from('chat-files').getPublicUrl(filePath);
+    await supabase.rpc('send_chat_message', {
+      p_room_id: roomId,
+      p_content: `🎙️ Voice message for ${actionPanel.item.title} (${duration}s)`,
+      p_message_type: 'voice',
+      p_file_url: publicUrl,
+      p_file_name: fileName,
+      p_file_type: 'audio' as any,
+      p_file_size: audioBlob.size,
+    });
+    await refreshActionMessages(roomId, actionPanel.item, 'voice');
+  };
+
+  const handleFreewillGift = async (amount: number | 'heart') => {
+    if (!actionPanel || !user) return;
+    const item = actionPanel.item;
+    if (amount === 'heart') {
+      const roomId = await ensureSeedRoom(item);
+      if (!roomId) return;
+      await supabase.rpc('send_chat_message', {
+        p_room_id: roomId,
+        p_content: `❤️ A heart for ${item.title}`,
+        p_message_type: 'text',
+      });
+      toast({ title: 'Heart sent', description: `Sent to ${item.sower_name}.` });
+      setActionPanel(null);
+      return;
+    }
+
+    addToBasket({
+      id: `freewill-${item.kind}-${item.id}-${amount}-${Date.now()}`,
+      title: `Freewill gift to ${item.sower_name} · ${item.title}`,
+      price: amount,
+      cover_image_url: item.image || undefined,
+      sower_id: item.sower_id || undefined,
+      bestowal_count: 0,
+      sowers: { display_name: item.sower_name },
+    } as any);
+    toast({ title: 'Gift added', description: `$${amount < 1 ? amount.toFixed(2) : amount} freewill gift is in your basket.` });
   };
 
   const handleBestow = (item: FeedItem) => {
@@ -284,28 +469,17 @@ export default function TribalAliveFeedPage() {
     navigate('/products/basket');
   };
 
-  // Open private 1:1 ChatApp DM thread with sower
+  // Open seed-specific ChatApp message panel with the sower
   const handleMessage = (item: FeedItem) => {
-    if (!user) { navigate('/login'); return; }
-    if (!item.sower_id) {
-      toast({ title: 'No sower attached', description: 'This item has no contactable creator.' });
-      return;
-    }
-    if (item.sower_id === user.id) {
-      toast({ title: 'That is you 🌱', description: 'You are looking at your own seed.' });
-      return;
-    }
-    // Route into the in-house ChatApp with the sower as the target
-    navigate(`/communications-hub?dm=${item.sower_id}#chats`);
+    openActionPanel('message', item);
   };
 
-  // 1:1 Jitsi audio call
+  // Seed-specific voice message panel
   const handleVoice = (item: FeedItem) => {
-    if (!user) { navigate('/login'); return; }
-    if (!item.sower_id) return;
-    const room = `s2g_dm_${[user.id, item.sower_id].sort().join('_').replace(/-/g, '')}_audio`;
-    setActiveRoom({ room, title: `Voice with ${item.sower_name}`, mode: 'audio' });
+    openActionPanel('voice', item);
   };
+
+  const handleGift = (item: FeedItem) => openActionPanel('gift', item);
 
   // 1:1 Jitsi video call
   const handleVideo = (item: FeedItem) => {
@@ -366,6 +540,7 @@ export default function TribalAliveFeedPage() {
                 onMessage={() => handleMessage(item)}
                 onVoice={() => handleVoice(item)}
                 onVideo={() => handleVideo(item)}
+                onGift={() => handleGift(item)}
                 onGoLive={() => handleGoLive(item)}
                 onShare={() => handleShare(item)}
                 onFollow={() => toggleFollow(item.sower_id)}
@@ -455,6 +630,16 @@ export default function TribalAliveFeedPage() {
 
       {/* Jitsi overlay */}
       <AnimatePresence>
+        {actionPanel && (
+          <SeedActionPanel
+            panel={actionPanel}
+            currentUserId={user?.id || null}
+            onClose={() => setActionPanel(null)}
+            onSendText={sendSeedText}
+            onSendVoice={sendSeedVoice}
+            onGift={handleFreewillGift}
+          />
+        )}
         {activeRoom && (
           <motion.div
             initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
@@ -486,7 +671,7 @@ export default function TribalAliveFeedPage() {
 
 function FeedCard({
   item, isActive, isFollowing,
-  onBestow, onMessage, onVoice, onVideo, onGoLive, onShare, onFollow,
+  onBestow, onMessage, onVoice, onVideo, onGift, onGoLive, onShare, onFollow,
 }: {
   item: FeedItem;
   isActive: boolean;
@@ -495,6 +680,7 @@ function FeedCard({
   onMessage: () => void;
   onVoice: () => void;
   onVideo: () => void;
+  onGift: () => void;
   onGoLive: () => void;
   onShare: () => void;
   onFollow: () => void;
@@ -597,7 +783,7 @@ function FeedCard({
         <RailButton icon={<MessageCircle className="h-4 w-4" />} label="Message" onClick={onMessage} />
         <RailButton icon={<Mic className="h-4 w-4" />} label="Voice" onClick={onVoice} />
         <RailButton icon={<Video className="h-4 w-4" />} label="Video" onClick={onVideo} />
-        <RailButton icon={<Heart className="h-4 w-4" />} label="Like" onClick={onShare} />
+        <RailButton icon={<Heart className="h-4 w-4" />} label="Heart" onClick={onGift} />
         <RailButton icon={<Radio className="h-4 w-4" />} label="Go Live" onClick={onGoLive} accent />
         <RailButton icon={<Share2 className="h-4 w-4" />} label="Share" onClick={onShare} />
       </div>
@@ -700,6 +886,210 @@ function FeedCard({
         )}
       </div>
     </div>
+  );
+}
+
+function SeedActionPanel({
+  panel, currentUserId, onClose, onSendText, onSendVoice, onGift,
+}: {
+  panel: NonNullable<ActionPanelState>;
+  currentUserId: string | null;
+  onClose: () => void;
+  onSendText: (text: string) => Promise<void>;
+  onSendVoice: (audioBlob: Blob, duration: number) => Promise<void>;
+  onGift: (amount: number | 'heart') => Promise<void>;
+}) {
+  const [text, setText] = useState('');
+  const [sending, setSending] = useState(false);
+  const [recording, setRecording] = useState(false);
+  const [seconds, setSeconds] = useState(0);
+  const recorderRef = useRef<MediaRecorder | null>(null);
+  const chunksRef = useRef<Blob[]>([]);
+  const streamRef = useRef<MediaStream | null>(null);
+  const secondsRef = useRef(0);
+  const messagesEndRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [panel.messages.length, panel.loading]);
+
+  useEffect(() => {
+    secondsRef.current = seconds;
+  }, [seconds]);
+
+  useEffect(() => {
+    if (!recording) return undefined;
+    const timer = window.setInterval(() => setSeconds((value) => value + 1), 1000);
+    return () => window.clearInterval(timer);
+  }, [recording]);
+
+  useEffect(() => () => {
+    streamRef.current?.getTracks().forEach((track) => track.stop());
+  }, []);
+
+  const submitText = async () => {
+    if (!text.trim() || sending) return;
+    setSending(true);
+    try {
+      await onSendText(text);
+      setText('');
+    } finally {
+      setSending(false);
+    }
+  };
+
+  const startRecording = async () => {
+    if (sending) return;
+    setSending(true);
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      streamRef.current = stream;
+      const mimeType = MediaRecorder.isTypeSupported('audio/webm;codecs=opus') ? 'audio/webm;codecs=opus' : 'audio/webm';
+      const recorder = new MediaRecorder(stream, { mimeType });
+      recorderRef.current = recorder;
+      chunksRef.current = [];
+      secondsRef.current = 0;
+      setSeconds(0);
+
+      recorder.ondataavailable = (event) => {
+        if (event.data.size > 0) chunksRef.current.push(event.data);
+      };
+      recorder.onstop = async () => {
+        const duration = Math.max(1, secondsRef.current);
+        const blob = new Blob(chunksRef.current, { type: 'audio/webm' });
+        stream.getTracks().forEach((track) => track.stop());
+        streamRef.current = null;
+        setRecording(false);
+        setSending(true);
+        try {
+          await onSendVoice(blob, duration);
+        } finally {
+          setSending(false);
+          setSeconds(0);
+        }
+      };
+
+      recorder.start();
+      setRecording(true);
+    } finally {
+      setSending(false);
+    }
+  };
+
+  const stopRecording = () => {
+    if (recorderRef.current?.state === 'recording') recorderRef.current.stop();
+  };
+
+  const sendGift = async (amount: number | 'heart') => {
+    if (sending) return;
+    setSending(true);
+    try {
+      await onGift(amount);
+    } finally {
+      setSending(false);
+    }
+  };
+
+  const title = panel.mode === 'message'
+    ? 'Seed messages'
+    : panel.mode === 'voice'
+    ? 'Voice messages'
+    : 'Freewill gifts';
+
+  return (
+    <motion.div
+      initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+      className="fixed inset-0 z-40 flex items-end justify-center bg-background/70 px-3 pb-4 backdrop-blur-sm sm:items-center sm:pb-0"
+      onClick={onClose}
+    >
+      <motion.section
+        initial={{ y: 28, scale: 0.98 }} animate={{ y: 0, scale: 1 }} exit={{ y: 28, scale: 0.98 }}
+        className="flex max-h-[82dvh] w-full max-w-lg flex-col overflow-hidden rounded-2xl border border-border bg-card text-card-foreground shadow-2xl"
+        onClick={(event) => event.stopPropagation()}
+      >
+        <div className="flex items-start justify-between gap-3 border-b border-border px-4 py-3">
+          <div className="min-w-0">
+            <h2 className="truncate text-base font-bold">{title}</h2>
+            <p className="truncate text-xs text-muted-foreground">{panel.item.title} · {panel.item.sower_name}</p>
+          </div>
+          <button onClick={onClose} className="rounded-full p-1 text-muted-foreground hover:bg-muted hover:text-foreground" aria-label="Close">
+            <X className="h-5 w-5" />
+          </button>
+        </div>
+
+        {panel.mode === 'gift' ? (
+          <div className="space-y-4 p-4">
+            <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
+              {[
+                { label: '10c', value: 0.1 },
+                { label: '50c', value: 0.5 },
+                { label: '$1', value: 1 },
+                { label: '$5', value: 5 },
+                { label: '$10', value: 10 },
+              ].map((gift) => (
+                <Button key={gift.label} disabled={sending} onClick={() => sendGift(gift.value)} className="h-12 rounded-full">
+                  {gift.label}
+                </Button>
+              ))}
+              <Button disabled={sending} variant="outline" onClick={() => sendGift('heart')} className="h-12 rounded-full gap-2">
+                <Heart className="h-4 w-4" /> Heart
+              </Button>
+            </div>
+          </div>
+        ) : (
+          <>
+            <div className="min-h-0 flex-1 space-y-3 overflow-y-auto p-4">
+              {panel.loading ? (
+                <div className="flex justify-center py-8"><Loader2 className="h-6 w-6 animate-spin text-primary" /></div>
+              ) : panel.error ? (
+                <p className="rounded-lg bg-destructive/10 p-3 text-sm text-destructive">{panel.error}</p>
+              ) : panel.messages.length === 0 ? (
+                <p className="rounded-lg bg-muted p-3 text-sm text-muted-foreground">No messages for this seed yet.</p>
+              ) : (
+                panel.messages.map((message) => {
+                  const mine = message.sender_id === currentUserId;
+                  const sender = message.sender_profile?.display_name || message.sender_profile?.first_name || (mine ? 'You' : panel.item.sower_name);
+                  return (
+                    <div key={message.id} className={cn('flex', mine ? 'justify-end' : 'justify-start')}>
+                      <div className={cn('max-w-[82%] rounded-2xl px-3 py-2 text-sm', mine ? 'bg-primary text-primary-foreground' : 'bg-muted text-foreground')}>
+                        <div className="mb-1 text-[10px] font-semibold opacity-70">{sender}</div>
+                        {message.file_url ? <audio controls src={message.file_url} className="h-9 max-w-full" /> : <p className="whitespace-pre-wrap">{message.content}</p>}
+                      </div>
+                    </div>
+                  );
+                })
+              )}
+              <div ref={messagesEndRef} />
+            </div>
+
+            <div className="border-t border-border p-3">
+              {panel.mode === 'message' ? (
+                <div className="flex items-end gap-2">
+                  <textarea
+                    value={text}
+                    onChange={(event) => setText(event.target.value)}
+                    rows={2}
+                    placeholder="Write a message..."
+                    className="min-h-12 flex-1 resize-none rounded-xl border border-input bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-ring"
+                  />
+                  <Button disabled={sending || !text.trim()} onClick={submitText} size="icon" className="h-12 w-12 rounded-full" aria-label="Send message">
+                    {sending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
+                  </Button>
+                </div>
+              ) : (
+                <div className="flex items-center justify-between gap-3">
+                  <div className="text-sm font-semibold tabular-nums">{recording ? `Recording ${seconds}s` : 'Tap to record a voice message'}</div>
+                  <Button disabled={sending && !recording} onClick={recording ? stopRecording : startRecording} className="h-12 rounded-full gap-2">
+                    {recording ? <Square className="h-4 w-4 fill-current" /> : <Mic className="h-4 w-4" />}
+                    {recording ? 'Stop' : 'Record'}
+                  </Button>
+                </div>
+              )}
+            </div>
+          </>
+        )}
+      </motion.section>
+    </motion.div>
   );
 }
 
