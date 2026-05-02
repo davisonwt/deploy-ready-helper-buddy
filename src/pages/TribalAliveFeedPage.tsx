@@ -22,6 +22,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import {
   Play, Pause, Heart, MessageCircle, Mic, Video, Share2,
   Search, Bell, Radio, ArrowLeft, Gift, Sparkles, Loader2, X, Send, Square,
+  ChevronLeft, ChevronRight, ChevronDown,
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
@@ -48,6 +49,7 @@ interface FeedItem {
   title: string;
   description?: string | null;
   image?: string | null;
+  images?: string[] | null;
   audio_url?: string | null;
   video_url?: string | null;
   price?: number | null;
@@ -221,6 +223,7 @@ export default function TribalAliveFeedPage() {
           title: s.title || 'Untitled seed',
           description: s.description,
           image: (s.images && s.images[0]) || null,
+          images: Array.isArray(s.images) ? s.images.filter(Boolean) : null,
           video_url: s.video_url || null,
           sower_id: s.gifter_id,
           sower_name: sowerName(profileMap[s.gifter_id]),
@@ -243,6 +246,12 @@ export default function TribalAliveFeedPage() {
             title: p.title || 'Untitled creation',
             description: p.description,
             image: p.cover_image_url || (p.image_urls && p.image_urls[0]) || null,
+            images: (() => {
+              const arr: string[] = [];
+              if (p.cover_image_url) arr.push(p.cover_image_url);
+              if (Array.isArray(p.image_urls)) p.image_urls.forEach((u: string) => { if (u && !arr.includes(u)) arr.push(u); });
+              return arr.length ? arr : null;
+            })(),
             audio_url: isAudio ? p.file_url : null,
             video_url: isVideo ? p.file_url : null,
             price: Number(p.price ?? 2),
@@ -343,6 +352,12 @@ export default function TribalAliveFeedPage() {
             title: b.title || 'Untitled book',
             description: b.description,
             image: b.cover_image_url || (b.image_urls && b.image_urls[0]) || null,
+            images: (() => {
+              const arr: string[] = [];
+              if (b.cover_image_url) arr.push(b.cover_image_url);
+              if (Array.isArray(b.image_urls)) b.image_urls.forEach((u: string) => { if (u && !arr.includes(u)) arr.push(u); });
+              return arr.length ? arr : null;
+            })(),
             price: Number(b.bestowal_value ?? 0) || null,
             sower_id: owner,
             sower_name: sowerName(profileMap[owner]),
@@ -406,6 +421,7 @@ export default function TribalAliveFeedPage() {
           title: o.title || 'Orchard',
           description: o.description,
           image: (o.images && o.images[0]) || null,
+          images: Array.isArray(o.images) ? o.images.filter(Boolean) : null,
           video_url: o.video_url || null,
           sower_id: o.user_id,
           sower_name: sowerName(profileMap[o.user_id]),
@@ -801,60 +817,64 @@ export default function TribalAliveFeedPage() {
         </div>
       </header>
 
-      {/* Wandering pill-filter — overlay row just below the header, horizontally scrollable */}
-      <div className="absolute inset-x-0 top-11 z-20 overflow-x-auto px-2 py-1.5 [&::-webkit-scrollbar]:hidden">
-        <div className="flex min-w-max gap-2">
-          <FilterPill
-            active={wanderingRole === null}
-            color="#22c55e"
-            emoji="🌿"
-            label="All Seeds"
-            onClick={() => setWanderingRole(null)}
-          />
-          {WANDERING_BADGES.map((b) => (
-            <FilterPill
-              key={b.key}
-              active={wanderingRole === b.key}
-              color={b.color}
-              emoji={b.emoji}
-              label={`Wandering ${b.label.charAt(0) + b.label.slice(1).toLowerCase()}`}
-              onClick={() => {
-                if (b.key === 'heart') { navigate('/tribal-hearts'); return; }
-                setWanderingRole(wanderingRole === b.key ? null : b.key);
-              }}
-            />
-          ))}
+      {/* Compact filter row — two dropdowns instead of two pill rows */}
+      <div className="absolute inset-x-0 top-11 z-20 flex items-center gap-2 px-3 py-1.5">
+        {/* Wandering / sower-identity dropdown */}
+        <div className="relative">
+          <select
+            aria-label="Filter by wandering identity"
+            value={wanderingRole ?? ''}
+            onChange={(e) => {
+              const v = e.target.value;
+              if (v === 'heart') { navigate('/tribal-hearts'); return; }
+              setWanderingRole(v ? (v as WanderingRole) : null);
+            }}
+            className="appearance-none rounded-full bg-black/55 backdrop-blur-md text-white text-xs font-medium pl-3 pr-7 py-1.5 border border-white/15 hover:bg-black/70 focus:outline-none focus:ring-1 focus:ring-emerald-400 cursor-pointer"
+          >
+            <option value="">🌿 All Seeds</option>
+            {WANDERING_BADGES.map((b) => (
+              <option key={b.key} value={b.key}>
+                {b.emoji} Wandering {b.label.charAt(0) + b.label.slice(1).toLowerCase()}
+              </option>
+            ))}
+          </select>
+          <ChevronDown className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-white/70" />
         </div>
-      </div>
 
-      {/* Sessions / content-kind filter — second pill row */}
-      <div className="absolute inset-x-0 top-[5.25rem] z-20 overflow-x-auto px-2 py-1.5 [&::-webkit-scrollbar]:hidden">
-        <div className="flex min-w-max gap-2">
-          {([
-            { key: null,             emoji: '✨', label: 'All',           color: '#a78bfa' },
-            { key: 'music',          emoji: '🎵', label: 'Music',         color: '#f97316' },
-            { key: 'video',          emoji: '🎬', label: 'Videos',        color: '#0ea5e9' },
-            { key: 'story',          emoji: '📖', label: 'Stories',       color: '#84cc16' },
-            { key: 'book',           emoji: '📚', label: 'Books',         color: '#eab308' },
-            { key: 'radio_live',     emoji: '🔴', label: 'Radio · Live',  color: '#ef4444' },
-            { key: 'radio_recorded', emoji: '📻', label: 'Radio · Recorded', color: '#f59e0b' },
-            { key: 'classroom',      emoji: '🎓', label: 'Classroom',     color: '#22d3ee' },
-            { key: 'skilldrop',      emoji: '🛠️', label: 'SkillDrop',     color: '#a855f7' },
-            { key: 'premium_room',   emoji: '👑', label: 'Premium Room',  color: '#ec4899' },
-            { key: 'orchard',        emoji: '🌳', label: 'Orchards',      color: '#22c55e' },
-            { key: 'product',        emoji: '🛍️', label: 'Products',      color: '#14b8a6' },
-            { key: 'seed',           emoji: '🌱', label: 'Seeds',         color: '#10b981' },
-          ] as Array<{ key: FeedKind | null; emoji: string; label: string; color: string }>).map((k) => (
-            <FilterPill
-              key={k.label}
-              active={kindFilter === k.key}
-              color={k.color}
-              emoji={k.emoji}
-              label={k.label}
-              onClick={() => setKindFilter(kindFilter === k.key ? null : k.key)}
-            />
-          ))}
+        {/* Content-kind dropdown */}
+        <div className="relative">
+          <select
+            aria-label="Filter by content type"
+            value={kindFilter ?? ''}
+            onChange={(e) => setKindFilter((e.target.value || null) as FeedKind | null)}
+            className="appearance-none rounded-full bg-black/55 backdrop-blur-md text-white text-xs font-medium pl-3 pr-7 py-1.5 border border-white/15 hover:bg-black/70 focus:outline-none focus:ring-1 focus:ring-emerald-400 cursor-pointer"
+          >
+            <option value="">✨ All</option>
+            <option value="music">🎵 Music</option>
+            <option value="video">🎬 Videos</option>
+            <option value="story">📖 Stories</option>
+            <option value="book">📚 Books</option>
+            <option value="radio_live">🔴 Radio · Live</option>
+            <option value="radio_recorded">📻 Radio · Recorded</option>
+            <option value="classroom">🎓 Classroom</option>
+            <option value="skilldrop">🛠️ SkillDrop</option>
+            <option value="premium_room">👑 Premium Room</option>
+            <option value="orchard">🌳 Orchards</option>
+            <option value="product">🛍️ Products</option>
+            <option value="seed">🌱 Seeds</option>
+          </select>
+          <ChevronDown className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-white/70" />
         </div>
+
+        {/* Active-filter chip resets */}
+        {(wanderingRole || kindFilter) && (
+          <button
+            onClick={() => { setWanderingRole(null); setKindFilter(null); }}
+            className="ml-auto rounded-full bg-white/10 hover:bg-white/20 text-white/80 text-[10px] px-2 py-1"
+          >
+            Clear filters ✕
+          </button>
+        )}
       </div>
 
 
@@ -919,7 +939,17 @@ function FeedCard({
   const videoRef = useRef<HTMLVideoElement>(null);
   const [playing, setPlaying] = useState(false);
   const [time, setTime] = useState(0);
+  const [imgIdx, setImgIdx] = useState(0);
   const PREVIEW = 45; // seconds
+
+  const gallery = (item.images && item.images.length > 0)
+    ? item.images
+    : (item.image ? [item.image] : []);
+  const hasGallery = gallery.length > 1;
+  const currentImg = gallery[imgIdx] || item.image || null;
+
+  // Reset to first image when card changes
+  useEffect(() => { setImgIdx(0); }, [item.key]);
 
   // Stop media when card leaves view
   useEffect(() => {
@@ -972,9 +1002,9 @@ function FeedCard({
   return (
     <div className="relative h-full w-full overflow-hidden bg-gradient-to-b from-slate-950 via-slate-900 to-emerald-950">
       {/* Blurred ambient background (fills, but doesn't crop the real media) */}
-      {item.image && (
+      {currentImg && (
         <img
-          src={item.image}
+          src={currentImg}
           alt=""
           aria-hidden
           className="absolute inset-0 h-full w-full object-cover opacity-40 blur-2xl scale-110"
@@ -991,11 +1021,12 @@ function FeedCard({
           muted={false}
           preload="metadata"
         />
-      ) : item.image ? (
+      ) : currentImg ? (
         <img
-          src={item.image}
+          key={currentImg}
+          src={currentImg}
           alt={item.title}
-          className="absolute inset-0 h-full w-full object-cover"
+          className="absolute inset-0 h-full w-full object-cover animate-fade-in"
         />
       ) : (
         <div className="absolute inset-0 flex items-center justify-center text-[20rem] opacity-10">
@@ -1004,6 +1035,39 @@ function FeedCard({
       )}
       {item.audio_url && (
         <audio ref={audioRef} src={item.audio_url} preload="metadata" />
+      )}
+
+      {/* Image carousel arrows + dots — only when there are multiple images */}
+      {hasGallery && !item.video_url && (
+        <>
+          <button
+            type="button"
+            onClick={(e) => { e.stopPropagation(); setImgIdx((i) => (i - 1 + gallery.length) % gallery.length); }}
+            aria-label="Previous image"
+            className="absolute left-2 top-1/2 -translate-y-1/2 z-10 grid h-10 w-10 place-items-center rounded-full bg-black/50 text-white backdrop-blur-sm hover:bg-black/70 transition"
+          >
+            <ChevronLeft className="h-5 w-5" />
+          </button>
+          <button
+            type="button"
+            onClick={(e) => { e.stopPropagation(); setImgIdx((i) => (i + 1) % gallery.length); }}
+            aria-label="Next image"
+            className="absolute right-2 top-1/2 -translate-y-1/2 z-10 grid h-10 w-10 place-items-center rounded-full bg-black/50 text-white backdrop-blur-sm hover:bg-black/70 transition"
+          >
+            <ChevronRight className="h-5 w-5" />
+          </button>
+          <div className="absolute left-1/2 top-3 -translate-x-1/2 z-10 flex gap-1.5 rounded-full bg-black/50 px-2 py-1 backdrop-blur-sm">
+            {gallery.map((_, i) => (
+              <span
+                key={i}
+                className={cn(
+                  'h-1.5 rounded-full transition-all',
+                  i === imgIdx ? 'w-4 bg-white' : 'w-1.5 bg-white/40'
+                )}
+              />
+            ))}
+          </div>
+        </>
       )}
 
       <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-transparent to-black/85 pointer-events-none" />
