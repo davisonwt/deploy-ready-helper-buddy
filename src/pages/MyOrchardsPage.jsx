@@ -381,12 +381,12 @@ export default function MyOrchardsPage() {
                               <GradientPlaceholder type="orchard" title={seed.title} className="w-full h-48 rounded-t-lg" size="lg" />
                             )}
                             <div className="absolute top-4 right-4">
-                              <Badge className={seed.status === 'active' ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-700'}>
+                              <Badge className={seed.status === 'active' ? 'bg-emerald-500/90 text-white border-0 shadow-lg' : 'bg-muted/90 text-muted-foreground border-0 shadow-lg'}>
                                 {seed.status}
                               </Badge>
                             </div>
                             <div className="absolute top-4 left-4">
-                              <Badge className="bg-emerald-100 text-emerald-700 border-0">
+                              <Badge className="bg-primary/90 text-primary-foreground border-0 shadow-lg backdrop-blur">
                                 {WANDERING_ROLES.find(r => r.value === seed.category)?.label || seed.category}
                               </Badge>
                             </div>
