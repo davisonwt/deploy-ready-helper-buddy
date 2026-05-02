@@ -148,7 +148,20 @@ export default function TribalAliveFeedPage() {
           };
         });
 
-        const combined = [...seedsItems, ...productItems, ...radioItems]
+        const videoItems: DiscoverSeed[] = (videosRes.data || []).map((v: any) => ({
+          id: v.id,
+          kind: 'radio', // grouped under broadcasts visually
+          title: v.title || 'Recorded broadcast',
+          description: v.description || 'Recorded session',
+          image: v.thumbnail_url || null,
+          sower: sowerName(v.profiles),
+          sower_id: v.uploader_id,
+          created_at: v.created_at,
+          href: `/community-videos`,
+          badge: '🎬',
+        }));
+
+        const combined = [...seedsItems, ...productItems, ...radioItems, ...videoItems]
           .sort((a, b) => (b.created_at || '').localeCompare(a.created_at || ''));
 
         setDiscover(combined);
