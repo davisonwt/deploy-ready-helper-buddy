@@ -562,17 +562,24 @@ export default function TribalAliveFeedPage() {
           <span className="text-base">🌱</span>
         </button>
 
-        <nav className="flex items-center gap-5 text-sm font-semibold">
+        <nav className="flex items-center gap-4 text-xs sm:text-sm font-semibold">
           {(['following', 'foryou', 'local'] as FeedTab[]).map((t) => (
             <button
               key={t}
               onClick={() => setTab(t)}
               className={cn(
-                'relative pb-1 transition',
+                'relative pb-1 transition whitespace-nowrap',
                 tab === t ? 'text-white' : 'text-white/55 hover:text-white/80'
               )}
+              title={
+                t === 'following'
+                  ? 'Inner Circle — mutual connections, your closest trust layer'
+                  : t === 'foryou'
+                  ? 'Tribe Feed — full network activity'
+                  : 'Around Me — geo-local seeds & products'
+              }
             >
-              {t === 'following' ? 'Following' : t === 'foryou' ? 'For You' : 'Local'}
+              {t === 'following' ? 'Inner Circle' : t === 'foryou' ? 'Tribe Feed' : 'Around Me'}
               {tab === t && (
                 <motion.span
                   layoutId="tabUnderline"
@@ -1141,19 +1148,19 @@ function EmptyState({
       <div className="mb-4 text-6xl">🌱</div>
       <h2 className="mb-2 text-xl font-bold">
         {tab === 'following'
-          ? 'You are not following anyone yet'
+          ? 'Your Inner Circle is empty'
           : hasRole
           ? 'Nothing in this Wandering yet'
           : 'The orchard is quiet'}
       </h2>
       <p className="mb-5 max-w-md text-sm text-white/60">
         {tab === 'following'
-          ? 'Tap Follow on any sower in the For You feed and they will land here.'
+          ? 'Inner Circle shows mutual connections — your closest trust layer. Follow sowers in the Tribe Feed and once they follow back they appear here.'
           : 'Try a different filter, or be the first to plant something.'}
       </p>
       <div className="flex gap-2">
         {tab === 'following' && (
-          <Button onClick={onSwitch} className="bg-amber-500 text-black hover:bg-amber-400">Browse For You</Button>
+          <Button onClick={onSwitch} className="bg-amber-500 text-black hover:bg-amber-400">Browse Tribe Feed</Button>
         )}
         {hasRole && (
           <Button variant="outline" onClick={onClearRole} className="border-white/20 bg-transparent text-white hover:bg-white/10">
