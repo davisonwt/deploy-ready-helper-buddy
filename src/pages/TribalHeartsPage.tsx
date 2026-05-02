@@ -162,7 +162,7 @@ const TribalHeartsPage: React.FC = () => {
             </p>
           </div>
         ) : !myProfile || editProfileOpen ? (
-          <div className="fixed inset-0 z-40">
+          <div className="fixed inset-0 z-40 overflow-y-auto overscroll-contain">
             <TribalHeartsOnboarding onComplete={() => {
               setEditProfileOpen(false);
               window.location.reload();
