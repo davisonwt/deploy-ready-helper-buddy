@@ -155,8 +155,9 @@ export default function TribalAliveFeedPage() {
             .select('id, schedule_id, playback_status, current_track_index, created_at')
             .order('created_at', { ascending: false }).limit(20),
           supabase.from('community_videos')
-            .select('id, title, description, video_url, thumbnail_url, uploader_id, created_at')
-            .order('created_at', { ascending: false }).limit(40),
+            .select('id, title, description, video_url, thumbnail_url, uploader_id, created_at, status')
+            .in('status', ['approved', 'published'])
+            .order('created_at', { ascending: false }).limit(60),
           supabase.from('memry_posts')
             .select('id, user_id, content_type, media_url, thumbnail_url, caption, content_category, created_at')
             .order('created_at', { ascending: false }).limit(40),
