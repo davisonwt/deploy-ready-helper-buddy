@@ -859,6 +859,7 @@ export default function TribalAliveFeedPage() {
             <option value="classroom">🎓 Classroom</option>
             <option value="skilldrop">🛠️ SkillDrop</option>
             <option value="premium_room">👑 Premium Room</option>
+            <option value="studies">📓 Studies</option>
             <option value="orchard">🌳 Orchards</option>
             <option value="product">🛍️ Products</option>
             <option value="seed">🌱 Seeds</option>
