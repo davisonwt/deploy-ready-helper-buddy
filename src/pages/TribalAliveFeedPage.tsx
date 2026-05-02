@@ -177,8 +177,13 @@ export default function TribalAliveFeedPage() {
         }));
 
         const productItems: FeedItem[] = (productsRes.data || []).map((p: any) => {
-          const isAudio = (p.type || '').toLowerCase() === 'music' || /\.(mp3|wav|m4a|ogg)(\?|$)/i.test(p.file_url || '');
-          const isVideo = (p.type || '').toLowerCase() === 'video' || /\.(mp4|webm|mov)(\?|$)/i.test(p.file_url || '');
+          const typeLc = (p.type || '').toLowerCase();
+          const isMusic = typeLc === 'music';
+          const isAudio = isMusic || /\.(mp3|wav|m4a|ogg)(\?|$)/i.test(p.file_url || '');
+          // Only treat as fullscreen video if the product is explicitly a video — never for music,
+          // even when the music file is a .mp4 (lyric/album-art video). That keeps baked-in titles
+          // from blowing up across the entire feed card.
+          const isVideo = !isMusic && (typeLc === 'video' || /\.(mp4|webm|mov)(\?|$)/i.test(p.file_url || ''));
           return {
             key: `product-${p.id}`, kind: 'product', id: p.id,
             title: p.title || 'Untitled creation',
