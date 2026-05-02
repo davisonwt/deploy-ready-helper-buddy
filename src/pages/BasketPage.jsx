@@ -85,11 +85,11 @@ export default function BasketPage() {
 
   if (!user) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-green-50 to-emerald-50 flex items-center justify-center">
-        <Card className="p-8 text-center">
-          <h2 className="text-2xl font-bold mb-4">Please Log In</h2>
-          <p className="mb-4">You need to be logged in to view your basket.</p>
-          <Button onClick={() => navigate('/login')}>Go to Login</Button>
+      <div className="min-h-screen bg-background flex items-center justify-center p-4">
+        <Card className="p-8 text-center max-w-md w-full animate-fade-in">
+          <h2 className="text-2xl font-bold mb-4 text-foreground">Please Log In</h2>
+          <p className="mb-6 text-muted-foreground">You need to be logged in to view your basket.</p>
+          <Button onClick={() => navigate('/login')} className="w-full">Go to Login</Button>
         </Card>
       </div>
     )
@@ -97,47 +97,47 @@ export default function BasketPage() {
 
   if (basketItems.length === 0) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-green-50 to-emerald-50 flex items-center justify-center">
-        <Card className="p-8 text-center">
-          <ShoppingCart className="h-16 w-16 mx-auto mb-4 text-gray-400" />
-          <h2 className="text-2xl font-bold mb-4">Your Basket is Empty</h2>
-          <p className="mb-4">Add some orchard pockets to your basket to continue.</p>
-          <Button onClick={() => navigate('/browse-orchards')}>Browse Orchards</Button>
+      <div className="min-h-screen bg-background flex items-center justify-center p-4">
+        <Card className="p-8 text-center max-w-md w-full animate-fade-in">
+          <ShoppingCart className="h-16 w-16 mx-auto mb-4 text-muted-foreground" />
+          <h2 className="text-2xl font-bold mb-3 text-foreground">Your Basket is Empty</h2>
+          <p className="mb-6 text-muted-foreground">Add some orchard pockets to your basket to continue.</p>
+          <Button onClick={() => navigate('/browse-orchards')} className="w-full">Browse Orchards</Button>
         </Card>
       </div>
     )
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-green-50 to-emerald-50 p-4">
-      <div className="container mx-auto max-w-4xl">
+    <div className="min-h-screen bg-background p-4 sm:p-6">
+      <div className="container mx-auto max-w-5xl animate-fade-in">
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-green-800 mb-2">Your Bestowal Basket 🛒</h1>
-          <p className="text-green-600">Review your selection and provide invoice details</p>
+          <h1 className="text-3xl sm:text-4xl font-bold mb-2 bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">Your Bestowal Basket 🛒</h1>
+          <p className="text-muted-foreground">Review your selection and provide invoice details</p>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-8">
           {/* Basket Items */}
-          <Card>
+          <Card className="hover:shadow-xl transition-shadow">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
-                <ShoppingCart className="h-5 w-5" />
+                <ShoppingCart className="h-5 w-5 text-primary" />
                 Basket Items ({getTotalItems()})
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               {basketItems.map((item) => (
-                <div key={item.id} className="flex items-center justify-between p-4 border rounded-lg">
-                  <div className="flex-1">
-                    <h4 className="font-semibold">{item.orchardTitle}</h4>
-                    <p className="text-sm text-gray-600">
+                <div key={item.id} className="flex items-center justify-between p-4 border border-border rounded-lg hover:border-primary/50 transition-colors">
+                  <div className="flex-1 min-w-0">
+                    <h4 className="font-semibold text-foreground truncate">{item.orchardTitle}</h4>
+                    <p className="text-sm text-muted-foreground">
                       {item.quantity} × {Array.isArray(item.pockets) ? item.pockets.length : 0} pockets = {formatAmount(item.amount * item.quantity * (Array.isArray(item.pockets) ? item.pockets.length : 0))}
                     </p>
-                    <p className="text-xs text-gray-500">
+                    <p className="text-xs text-muted-foreground/80 truncate">
                       Pockets: {Array.isArray(item.pockets) ? item.pockets.join(', ') : (item.pockets || 'None')}
                     </p>
                   </div>
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-2 ml-3">
                     <Input
                       type="number"
                       min="1"
@@ -149,6 +149,7 @@ export default function BasketPage() {
                       variant="outline"
                       size="sm"
                       onClick={() => removeFromBasket(item.id)}
+                      className="hover:bg-destructive hover:text-destructive-foreground hover:border-destructive transition-colors"
                     >
                       <Trash2 className="h-4 w-4" />
                     </Button>
@@ -156,25 +157,25 @@ export default function BasketPage() {
                 </div>
               ))}
               
-              <div className="border-t pt-4">
+              <div className="border-t border-border pt-4">
                 <div className="flex justify-between items-center font-bold text-lg">
-                  <span>Total:</span>
-                  <span>{formatAmount(getTotalAmount())}</span>
+                  <span className="text-foreground">Total:</span>
+                  <span className="text-primary">{formatAmount(getTotalAmount())}</span>
                 </div>
               </div>
             </CardContent>
           </Card>
 
           {/* Invoice Information */}
-          <Card>
+          <Card className="hover:shadow-xl transition-shadow">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
-                <CreditCard className="h-5 w-5" />
+                <CreditCard className="h-5 w-5 text-primary" />
                 Invoice Information
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <Label htmlFor="fullName">Full Name *</Label>
                   <Input
@@ -206,7 +207,7 @@ export default function BasketPage() {
                 />
               </div>
               
-              <div className="grid grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 <div>
                   <Label htmlFor="city">City</Label>
                   <Input
@@ -247,15 +248,15 @@ export default function BasketPage() {
                 />
               </div>
               
-              <div className="pt-4 border-t">
+              <div className="pt-4 border-t border-border">
                 <Button 
                   onClick={handleMakeItRain}
-                  className="w-full bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white font-bold py-3"
+                  className="w-full bg-gradient-to-r from-primary to-accent hover:opacity-90 text-primary-foreground font-bold py-3 transition-all hover:scale-[1.02] shadow-lg hover:shadow-xl"
                   size="lg"
                 >
                   🌧️ Make It Rain! ({formatAmount(getTotalAmount())})
                 </Button>
-                <p className="text-xs text-gray-500 mt-2 text-center">
+                <p className="text-xs text-muted-foreground mt-2 text-center">
                   Click to proceed to payment options
                 </p>
               </div>

@@ -199,7 +199,7 @@ function IndexContent() {
       </section>
 
       {/* Three Features Cards */}
-      <section className="py-12 sm:py-16 md:py-20 bg-gradient-to-b from-green-50 to-blue-50">
+      <section className="py-12 sm:py-16 md:py-20 bg-gradient-to-b from-background via-card/30 to-background">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6 sm:gap-8 md:gap-12">
             <Card className="text-center bg-gradient-to-br from-pink-100 to-pink-50 border-pink-200 hover:shadow-lg transition-all duration-300">
@@ -245,7 +245,7 @@ function IndexContent() {
       </section>
 
       {/* How it Works Section */}
-      <section className="py-12 sm:py-16 md:py-20 bg-gradient-to-b from-white to-green-50">
+      <section className="py-12 sm:py-16 md:py-20 bg-gradient-to-b from-background to-card/40">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold mb-4 sm:mb-8" style={{ color: '#D69759' }}>How s2g farm mall works</h2>
           <p className="text-base sm:text-lg md:text-xl mb-8 sm:mb-16 italic px-4" style={{ color: '#BCC4E9' }}>
@@ -254,7 +254,7 @@ function IndexContent() {
           
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8 sm:gap-12 md:gap-16 items-start">
             <div className="space-y-6 sm:space-y-8">
-              <div className="bg-white p-6 sm:p-8 rounded-2xl shadow-lg border border-green-100">
+              <div className="bg-card/80 backdrop-blur p-6 sm:p-8 rounded-2xl shadow-xl border border-primary/20 hover:border-primary/40 hover:shadow-2xl transition-all">
                 <h3 className="text-xl sm:text-2xl font-bold mb-4 sm:mb-6" style={{ color: '#9DD6AD' }}>sower (farm stall owners)</h3>
                 <div className="space-y-3 sm:space-y-4 text-left">
                   <div className="flex items-center space-x-3">
@@ -278,7 +278,7 @@ function IndexContent() {
             </div>
             
             <div className="space-y-6 sm:space-y-8">
-              <div className="bg-white p-6 sm:p-8 rounded-2xl shadow-lg border border-blue-100">
+              <div className="bg-card/80 backdrop-blur p-6 sm:p-8 rounded-2xl shadow-xl border border-accent/20 hover:border-accent/40 hover:shadow-2xl transition-all">
                 <h3 className="text-xl sm:text-2xl font-bold mb-4 sm:mb-6" style={{ color: '#B2C9E2' }}>bestowers (cultivators and harvesters)</h3>
                 <div className="space-y-3 sm:space-y-4 text-left">
                   <div className="flex items-center space-x-3">
@@ -305,7 +305,7 @@ function IndexContent() {
       </section>
 
       {/* Process Video Sections */}
-      <section className="py-12 sm:py-16 md:py-20 bg-gradient-to-b from-green-50 to-white">
+      <section className="py-12 sm:py-16 md:py-20 bg-gradient-to-b from-card/40 to-background">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 space-y-12 sm:space-y-16 md:space-y-20">
           {/* Seeds Section */}
           <div className="text-center relative">
