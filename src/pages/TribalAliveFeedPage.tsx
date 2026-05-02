@@ -79,31 +79,57 @@ export default function TribalAliveFeedPage() {
     let cancelled = false;
     (async () => {
       try {
+        // No FK relationships are declared between these tables and `profiles`,
+        // so PostgREST embedded joins (e.g. `profiles:gifter_id(...)`) throw
+        // "Could not find a relationship" and reject the entire Promise.all.
+        // Fetch each table flat, then resolve sower display names in a second pass.
         const [seedsRes, productsRes, radioRes, videosRes] = await Promise.all([
           supabase
             .from('seeds')
-            .select('id, title, description, images, gifter_id, created_at, profiles:gifter_id (first_name, last_name, display_name)')
+            .select('id, title, description, images, gifter_id, created_at')
             .order('created_at', { ascending: false })
             .limit(40),
           supabase
             .from('products')
-            .select('id, title, description, type, cover_image_url, image_urls, sower_id, created_at, sowers:sower_id (display_name, first_name, last_name)')
+            .select('id, title, description, type, cover_image_url, image_urls, sower_id, created_at')
             .eq('status', 'active')
             .order('created_at', { ascending: false })
             .limit(60),
           supabase
             .from('radio_live_sessions')
-            .select('id, status, started_at, ended_at, created_at, schedule_id, radio_schedule:schedule_id (show_id, radio_shows:show_id (show_name, description, show_image_url, dj_id, radio_djs:dj_id (display_name, first_name, last_name)))')
+            .select('id, status, started_at, ended_at, created_at, schedule_id')
             .order('created_at', { ascending: false })
             .limit(20),
           supabase
             .from('community_videos')
-            .select('id, title, description, video_url, thumbnail_url, uploader_id, created_at, profiles:uploader_id (first_name, last_name, display_name)')
+            .select('id, title, description, video_url, thumbnail_url, uploader_id, created_at')
             .order('created_at', { ascending: false })
             .limit(40),
         ]);
 
         if (cancelled) return;
+
+        // Log any per-table errors (so a single broken table can't hide the rest)
+        if (seedsRes.error) console.warn('[tribal-alive] seeds error', seedsRes.error.message);
+        if (productsRes.error) console.warn('[tribal-alive] products error', productsRes.error.message);
+        if (radioRes.error) console.warn('[tribal-alive] radio error', radioRes.error.message);
+        if (videosRes.error) console.warn('[tribal-alive] videos error', videosRes.error.message);
+
+        // Collect every sower id to bulk-fetch profile display info
+        const sowerIds = Array.from(new Set([
+          ...(seedsRes.data || []).map((s: any) => s.gifter_id),
+          ...(productsRes.data || []).map((p: any) => p.sower_id),
+          ...(videosRes.data || []).map((v: any) => v.uploader_id),
+        ].filter(Boolean)));
+
+        const profileMap: Record<string, any> = {};
+        if (sowerIds.length) {
+          const { data: profs } = await supabase
+            .from('profiles')
+            .select('id, first_name, last_name, display_name')
+            .in('id', sowerIds as string[]);
+          (profs || []).forEach((p: any) => { profileMap[p.id] = p; });
+        }
 
         const seedsItems: DiscoverSeed[] = (seedsRes.data || []).map((s: any) => ({
           id: s.id,
@@ -111,7 +137,7 @@ export default function TribalAliveFeedPage() {
           title: s.title || 'Untitled seed',
           description: s.description,
           image: (s.images && s.images[0]) || null,
-          sower: sowerName(s.profiles),
+          sower: sowerName(profileMap[s.gifter_id]),
           sower_id: s.gifter_id,
           created_at: s.created_at,
           href: `/seed/${s.id}`,
@@ -124,37 +150,33 @@ export default function TribalAliveFeedPage() {
           title: p.title || 'Untitled product',
           description: p.description,
           image: p.cover_image_url || (p.image_urls && p.image_urls[0]) || null,
-          sower: sowerName(p.sowers),
+          sower: sowerName(profileMap[p.sower_id]),
           sower_id: p.sower_id,
           created_at: p.created_at,
           href: `/products`,
           badge: productBadge(p.type),
         }));
 
-        const radioItems: DiscoverSeed[] = (radioRes.data || []).map((r: any) => {
-          const show = r?.radio_schedule?.radio_shows;
-          const dj = show?.radio_djs;
-          return {
-            id: r.id,
-            kind: 'radio',
-            title: show?.show_name || 'Live radio session',
-            description: show?.description || (r.status === 'live' ? '🔴 Live now' : 'Recorded session'),
-            image: show?.show_image_url || null,
-            sower: sowerName(dj),
-            sower_id: show?.dj_id,
-            created_at: r.created_at,
-            href: `/grove-station?session=${r.id}`,
-            badge: r.status === 'live' ? '📻🔴' : '📻',
-          };
-        });
+        const radioItems: DiscoverSeed[] = (radioRes.data || []).map((r: any) => ({
+          id: r.id,
+          kind: 'radio',
+          title: 'Live radio session',
+          description: r.status === 'live' ? '🔴 Live now' : 'Recorded session',
+          image: null,
+          sower: 'Tribe DJ',
+          sower_id: null,
+          created_at: r.created_at,
+          href: `/grove-station?session=${r.id}`,
+          badge: r.status === 'live' ? '📻🔴' : '📻',
+        }));
 
         const videoItems: DiscoverSeed[] = (videosRes.data || []).map((v: any) => ({
           id: v.id,
-          kind: 'radio', // grouped under broadcasts visually
+          kind: 'radio',
           title: v.title || 'Recorded broadcast',
           description: v.description || 'Recorded session',
           image: v.thumbnail_url || null,
-          sower: sowerName(v.profiles),
+          sower: sowerName(profileMap[v.uploader_id]),
           sower_id: v.uploader_id,
           created_at: v.created_at,
           href: `/community-videos`,
