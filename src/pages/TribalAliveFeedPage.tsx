@@ -438,11 +438,23 @@ export default function TribalAliveFeedPage() {
           href: `/orchard/${o.id}`,
         }));
 
-        const merged = [
+        const mergedRaw = [
           ...seedItems, ...productItems, ...djItems, ...radioLiveItems, ...radioRecItems,
           ...videoItems, ...storyItems, ...bookItems, ...premiumItems,
           ...classItems, ...skillItems, ...orchardItems,
         ].sort((a, b) => (b.created_at || '').localeCompare(a.created_at || ''));
+
+        // De-duplicate music singles: the same song often exists in both
+        // `products` (type=music) and `dj_music_tracks`. Keep the first
+        // occurrence per (owner, normalized title) for music/audio kinds.
+        const seenMusic = new Set<string>();
+        const merged = mergedRaw.filter((it) => {
+          if (it.kind !== 'music') return true;
+          const key = `${it.sower_id || 'anon'}::${(it.title || '').trim().toLowerCase()}`;
+          if (seenMusic.has(key)) return false;
+          seenMusic.add(key);
+          return true;
+        });
 
         setItems(merged);
       } catch (e) {
