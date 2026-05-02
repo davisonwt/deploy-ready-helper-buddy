@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react'
+import React, { useState, useEffect, useRef, useId } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -37,6 +37,7 @@ import { useAuth } from '@/hooks/useAuth'
 export function LiveStreamInterface({ djProfile, currentShow, onEndShow }) {
   const { user } = useAuth()
   const { toast } = useToast()
+  const channelKey = useId().replace(/:/g, '')
   const [isLive, setIsLive] = useState(false)
   const [liveSession, setLiveSession] = useState(null)
   const [activeHosts, setActiveHosts] = useState([])
@@ -137,7 +138,7 @@ export function LiveStreamInterface({ djProfile, currentShow, onEndShow }) {
 
     // Subscribe to host changes
     const hostsSubscription = supabase
-      .channel(`live-hosts-${liveSession.id}`)
+      .channel(`live-hosts-lsi-${liveSession.id}-${channelKey}`)
       .on('postgres_changes', 
         { 
           event: '*', 
@@ -151,7 +152,7 @@ export function LiveStreamInterface({ djProfile, currentShow, onEndShow }) {
 
     // Subscribe to guest requests
     const guestsSubscription = supabase
-      .channel(`guest-requests-${liveSession.id}`)
+      .channel(`guest-requests-lsi-${liveSession.id}-${channelKey}`)
       .on('postgres_changes',
         { 
           event: '*', 
@@ -168,7 +169,7 @@ export function LiveStreamInterface({ djProfile, currentShow, onEndShow }) {
 
     // Subscribe to session updates (using secure view)
     const sessionSubscription = supabase
-      .channel(`live-session-${liveSession.id}`)
+      .channel(`live-session-lsi-${liveSession.id}-${channelKey}`)
       .on('postgres_changes',
         { 
           event: 'UPDATE', 
