@@ -311,11 +311,12 @@ const StepIntent: React.FC<{ draft: Draft; update: any }> = ({ draft, update }) 
 
 const StepAgeLocation: React.FC<{ draft: Draft; update: any }> = ({ draft, update }) => {
   const currentYear = new Date().getFullYear();
-  const minDate = `${currentYear - 80}-01-01`;
-  const maxDate = `${currentYear - 18}-12-31`;
+  const oldestYear = currentYear - 80;
+  const youngestYear = currentYear - 18;
+  // Years listed newest→oldest so eligible ages appear first
+  const years = Array.from({ length: youngestYear - oldestYear + 1 }, (_, i) => youngestYear - i);
   const age = draft.birthYear ? currentYear - draft.birthYear : null;
   const tooYoung = draft.birthYear !== null && age !== null && age < 18;
-  const dateValue = draft.birthYear ? `${draft.birthYear}-06-15` : '';
 
   return (
     <div>
@@ -323,27 +324,32 @@ const StepAgeLocation: React.FC<{ draft: Draft; update: any }> = ({ draft, updat
       <div className="mt-8 space-y-5">
         <div>
           <label className="text-sm mb-2 block" style={{ color: 'hsl(38 40% 70%)' }}>
-            Date you were born
+            Year you were born
           </label>
-          <input
-            type="date"
-            min={minDate}
-            max={maxDate}
-            value={dateValue}
-            onChange={(e) => {
-              const v = e.target.value; // "YYYY-MM-DD" or ""
-              if (!v) { update('birthYear', null); return; }
-              const year = parseInt(v.slice(0, 4), 10);
-              update('birthYear', Number.isFinite(year) ? year : null);
-            }}
-            className="w-full p-4 rounded-2xl text-lg outline-none"
+          <select
+            value={draft.birthYear ?? ''}
+            onChange={(e) => update('birthYear', e.target.value ? Number(e.target.value) : null)}
+            className="w-full p-4 rounded-2xl text-lg outline-none appearance-none cursor-pointer"
             style={{
               background: 'hsl(20 25% 10%)',
               border: `1px solid ${tooYoung ? 'hsl(15 70% 50%)' : 'hsl(25 30% 22%)'}`,
               color: 'hsl(38 90% 88%)',
-              colorScheme: 'dark',
+              backgroundImage:
+                "url(\"data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%23d4a574' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><polyline points='6 9 12 15 18 9'/></svg>\")",
+              backgroundRepeat: 'no-repeat',
+              backgroundPosition: 'right 1rem center',
+              paddingRight: '2.5rem',
             }}
-          />
+          >
+            <option value="" style={{ background: 'hsl(20 25% 10%)' }}>
+              — choose your birth year —
+            </option>
+            {years.map((y) => (
+              <option key={y} value={y} style={{ background: 'hsl(20 25% 10%)' }}>
+                {y}
+              </option>
+            ))}
+          </select>
           {age !== null && (
             <p
               className="text-xs mt-1.5 italic"
