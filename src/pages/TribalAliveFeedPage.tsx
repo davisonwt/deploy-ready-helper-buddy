@@ -570,7 +570,7 @@ function FeedCard({
         <video
           ref={videoRef}
           src={item.video_url}
-          className="absolute inset-0 h-full w-full object-contain"
+          className="absolute inset-0 h-full w-full object-cover"
           playsInline
           muted={false}
           preload="metadata"
@@ -579,7 +579,7 @@ function FeedCard({
         <img
           src={item.image}
           alt={item.title}
-          className="absolute inset-0 h-full w-full object-contain"
+          className="absolute inset-0 h-full w-full object-cover"
         />
       ) : (
         <div className="absolute inset-0 flex items-center justify-center text-[20rem] opacity-10">
