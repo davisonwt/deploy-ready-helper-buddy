@@ -593,13 +593,13 @@ function FeedCard({
       <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-transparent to-black/85 pointer-events-none" />
 
       {/* Right action rail — TikTok-style vertical column over the media */}
-      <div className="absolute right-2 bottom-28 z-10 flex flex-col items-center gap-3 sm:right-3 sm:gap-4">
-        <RailButton icon={<MessageCircle className="h-5 w-5" />} label="Message" onClick={onMessage} />
-        <RailButton icon={<Mic className="h-5 w-5" />} label="Voice" onClick={onVoice} />
-        <RailButton icon={<Video className="h-5 w-5" />} label="Video" onClick={onVideo} />
-        <RailButton icon={<Heart className="h-5 w-5" />} label="Like" onClick={onShare} />
-        <RailButton icon={<Radio className="h-5 w-5" />} label="Go Live" onClick={onGoLive} accent />
-        <RailButton icon={<Share2 className="h-5 w-5" />} label="Share" onClick={onShare} />
+      <div className="absolute right-2 bottom-10 z-10 flex max-h-[calc(100dvh-9.5rem)] flex-col items-center justify-end gap-1.5 sm:right-3 sm:bottom-12 sm:gap-2">
+        <RailButton icon={<MessageCircle className="h-4 w-4" />} label="Message" onClick={onMessage} />
+        <RailButton icon={<Mic className="h-4 w-4" />} label="Voice" onClick={onVoice} />
+        <RailButton icon={<Video className="h-4 w-4" />} label="Video" onClick={onVideo} />
+        <RailButton icon={<Heart className="h-4 w-4" />} label="Like" onClick={onShare} />
+        <RailButton icon={<Radio className="h-4 w-4" />} label="Go Live" onClick={onGoLive} accent />
+        <RailButton icon={<Share2 className="h-4 w-4" />} label="Share" onClick={onShare} />
       </div>
 
       {/* Left content stack */}
@@ -643,8 +643,10 @@ function FeedCard({
             </button>
           )}
         </div>
+        <div className="mt-2 max-w-md truncate text-sm font-semibold leading-tight text-white/90 sm:text-base">
+          {item.title}
+        </div>
 
-        <h2 className="mt-2 text-lg font-bold sm:text-xl">{item.title}</h2>
         {item.description && (
           <p className="mt-1 line-clamp-2 max-w-md text-sm text-white/80">{item.description}</p>
         )}
@@ -705,18 +707,18 @@ function RailButton({
   icon, label, onClick, accent,
 }: { icon: React.ReactNode; label: string; onClick: () => void; accent?: boolean }) {
   return (
-    <button onClick={onClick} className="flex flex-col items-center gap-1 text-white/95 hover:text-white">
+    <button onClick={onClick} className="flex flex-col items-center gap-0.5 text-white/95 hover:text-white">
       <span
         className={cn(
-          'flex h-11 w-11 items-center justify-center rounded-full backdrop-blur transition active:scale-90',
+          'flex h-8 w-8 items-center justify-center rounded-full backdrop-blur transition active:scale-90 sm:h-9 sm:w-9',
           accent
-            ? 'bg-gradient-to-br from-rose-500 to-orange-500 shadow-[0_0_14px_rgba(244,63,94,0.6)]'
+            ? 'bg-gradient-to-br from-rose-500 to-orange-500 shadow-[0_0_10px_rgba(244,63,94,0.55)]'
             : 'bg-black/45 ring-1 ring-white/20 hover:bg-black/65'
         )}
       >
         {icon}
       </span>
-      <span className="text-[10px] font-semibold drop-shadow leading-none">{label}</span>
+      <span className="text-[8px] font-semibold drop-shadow leading-none sm:text-[9px]">{label}</span>
     </button>
   );
 }
