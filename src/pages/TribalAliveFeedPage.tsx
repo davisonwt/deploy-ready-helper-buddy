@@ -709,18 +709,18 @@ function RailButton({
   icon, label, onClick, accent,
 }: { icon: React.ReactNode; label: string; onClick: () => void; accent?: boolean }) {
   return (
-    <button onClick={onClick} className="flex flex-col items-center gap-1 text-white/90 hover:text-white">
+    <button onClick={onClick} className="flex flex-col items-center gap-0.5 text-white/90 hover:text-white">
       <span
         className={cn(
-          'flex h-12 w-12 items-center justify-center rounded-full backdrop-blur transition active:scale-90',
+          'flex h-10 w-10 items-center justify-center rounded-full backdrop-blur transition active:scale-90',
           accent
-            ? 'bg-gradient-to-br from-rose-500 to-orange-500 shadow-[0_0_20px_rgba(244,63,94,0.6)]'
+            ? 'bg-gradient-to-br from-rose-500 to-orange-500 shadow-[0_0_16px_rgba(244,63,94,0.6)]'
             : 'bg-white/15 hover:bg-white/25'
         )}
       >
         {icon}
       </span>
-      <span className="text-[10px] font-semibold drop-shadow">{label}</span>
+      <span className="text-[9px] font-semibold drop-shadow leading-none">{label}</span>
     </button>
   );
 }
