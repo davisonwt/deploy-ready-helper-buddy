@@ -435,14 +435,14 @@ export default function TribalAliveFeedPage() {
   const filtered = useMemo(() => {
     let list = items;
     if (wanderingRole) list = list.filter((i) => i.wandering_role === wanderingRole);
+    if (kindFilter) list = list.filter((i) => i.kind === kindFilter);
     if (tab === 'following' && followingIds.size > 0) {
       list = list.filter((i) => i.sower_id && followingIds.has(i.sower_id));
     } else if (tab === 'following') {
-      // No follows yet — show empty hint
       list = [];
     }
     return list;
-  }, [items, wanderingRole, tab, followingIds]);
+  }, [items, wanderingRole, kindFilter, tab, followingIds]);
 
   // Snap-scroll: track which card is centered → autoplays its preview
   useEffect(() => {
