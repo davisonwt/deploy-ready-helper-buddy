@@ -224,7 +224,7 @@ function Layout({ children }) {
   // Immersive routes render full-screen (TikTok-style feeds, video calls, etc.)
   // and must NOT show the global header/footer, otherwise the footer
   // (sow2grow / 364yhvh community farm / Luke 6:38) leaks over the feed.
-  const IMMERSIVE_ROUTES = ['/tribal-feed', '/seedflow'];
+  const IMMERSIVE_ROUTES = ['/tribal-feed', '/seedflow', '/orchard-alive'];
   const isImmersive = IMMERSIVE_ROUTES.some(
     (r) => location.pathname === r || location.pathname.startsWith(r + '/')
   );
