@@ -220,7 +220,23 @@ function Layout({ children }) {
   }
   
   const isActive = (href) => location.pathname === href
-  
+
+  // Immersive routes render full-screen (TikTok-style feeds, video calls, etc.)
+  // and must NOT show the global header/footer, otherwise the footer
+  // (sow2grow / 364yhvh community farm / Luke 6:38) leaks over the feed.
+  const IMMERSIVE_ROUTES = ['/tribal-feed', '/seedflow'];
+  const isImmersive = IMMERSIVE_ROUTES.some(
+    (r) => location.pathname === r || location.pathname.startsWith(r + '/')
+  );
+
+  if (isImmersive) {
+    return (
+      <div className="min-h-screen" style={{ background: currentTheme.background }}>
+        {children}
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen" style={{ background: currentTheme.background }}>
       {/* Navigation Header */}
