@@ -1,0 +1,357 @@
+/**
+ * LivingSeedCard — the universal "alive" seed card.
+ *
+ * Drop this anywhere a seed/orchard/music/book/video tile shows up and it
+ * automatically:
+ *   • shows a live pulse ring when someone (you or anyone) is broadcasting on this seed
+ *   • lets the owner / any tribe member tap "Go Live" → opens a Jitsi room in an overlay
+ *   • streams bloom reactions (🌱 → 🌿 → 🌳) to all viewers via Supabase Realtime
+ *   • supports inline audio/video preview, Open, Share-with-referral
+ *   • carries the same LivingButton animations used everywhere else
+ *
+ * Built on the existing useTribalLiveOrchard hook (presence + broadcast),
+ * the existing JITSI_DOMAIN, the existing LivingButton component,
+ * and the existing useReferralCode hook. No new tables, no DB writes.
+ */
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
+import { motion, AnimatePresence } from 'framer-motion';
+import { Share2, X, Video, MessageCircle } from 'lucide-react';
+import LivingButton from '@/components/LivingButton';
+import { useTribalLiveOrchard, type BloomStage } from '@/hooks/useTribalLiveOrchard';
+import { useReferralCode } from '@/hooks/useReferralCode';
+import { useToast } from '@/hooks/use-toast';
+import { JITSI_DOMAIN } from '@/lib/jitsi-config';
+import { useAuth } from '@/hooks/useAuth';
+
+export interface LivingSeedCardProps {
+  /** Stable seed/item id — used for the realtime channel key */
+  seedId: string;
+  title: string;
+  subtitle?: string;
+  image?: string | null;
+  /** Path to open the full seed page */
+  openPath: string;
+  /** Optional inline media for ▶ Play */
+  mediaUrl?: string | null;
+  mediaKind?: 'audio' | 'video' | 'book' | 'orchard' | 'seed';
+  /** Top-left badge */
+  badge?: { emoji: string; label: string; color: string };
+  /** Owner ⋯ menu only renders when true */
+  mine?: boolean;
+  onEdit?: () => void;
+  onDelete?: () => void;
+  onRepost?: () => void;
+  onPark?: () => void;
+  /** Visual size — 'compact' for sliders, 'full' for feed pages */
+  size?: 'compact' | 'full';
+  className?: string;
+}
+
+const BLOOM_META: Record<BloomStage, { emoji: string; label: string }> = {
+  seed: { emoji: '🌱', label: 'Sprout' },
+  leaf: { emoji: '🌿', label: 'Leaf' },
+  tree: { emoji: '🌳', label: 'Tree' },
+};
+
+export default function LivingSeedCard({
+  seedId, title, subtitle, image, openPath,
+  mediaUrl, mediaKind = 'seed',
+  badge, mine, onEdit, onDelete, onRepost, onPark,
+  size = 'compact', className = '',
+}: LivingSeedCardProps) {
+  const navigate = useNavigate();
+  const { user } = useAuth();
+  const { toast } = useToast();
+  const { code: referralCode } = useReferralCode();
+  const { liveSeeds, blooms, recentBloom, goLive, endLive, sendBloom } = useTribalLiveOrchard();
+
+  const [previewing, setPreviewing] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [activeRoom, setActiveRoom] = useState<string | null>(null);
+  const audioRef = useRef<HTMLAudioElement>(null);
+  const videoRef = useRef<HTMLVideoElement>(null);
+
+  // who's live on THIS seed right now
+  const liveHere = useMemo(
+    () => liveSeeds.filter((p) => p.seed_id === seedId),
+    [liveSeeds, seedId]
+  );
+  const isLiveHere = liveHere.length > 0;
+  const myBlooms = blooms[seedId] || { seed: 0, leaf: 0, tree: 0 };
+  const recentForMe = recentBloom?.seed_id === seedId ? recentBloom.stage : null;
+
+  // Stop preview if media changes
+  useEffect(() => {
+    setPreviewing(false);
+    audioRef.current?.pause();
+    videoRef.current?.pause();
+  }, [mediaUrl, seedId]);
+
+  const handlePlay = () => {
+    if (previewing) {
+      audioRef.current?.pause();
+      videoRef.current?.pause();
+      setPreviewing(false);
+      return;
+    }
+    if ((mediaKind === 'audio' || mediaKind === 'video') && mediaUrl) {
+      setPreviewing(true);
+      setTimeout(() => {
+        if (mediaKind === 'audio') audioRef.current?.play().catch(() => {});
+        else videoRef.current?.play().catch(() => {});
+      }, 0);
+    } else {
+      navigate(openPath);
+    }
+  };
+
+  const handleGoLive = async () => {
+    if (!user) { navigate('/login'); return; }
+    // If someone else is already live on this seed, join their room
+    if (isLiveHere) {
+      setActiveRoom(liveHere[0].jitsi_room);
+      return;
+    }
+    const presence = await goLive({ id: seedId, title, image: image || undefined });
+    if (presence) setActiveRoom(presence.jitsi_room);
+  };
+
+  const handleEndRoom = async () => {
+    setActiveRoom(null);
+    await endLive();
+  };
+
+  const handleShare = async () => {
+    const url = new URL(openPath, 'https://sow2growapp.com');
+    if (referralCode) url.searchParams.set('ref', referralCode);
+    const text = `🌿 "${title}" is alive in the Sow2Grow orchard. Step in:\n${url.toString()}`;
+    try {
+      if (navigator.share) await navigator.share({ title, text, url: url.toString() });
+      else {
+        await navigator.clipboard.writeText(text);
+        toast({ title: 'Invitation copied', description: 'Your referral code is burned in.' });
+      }
+    } catch {/* dismissed */}
+  };
+
+  const cardHeight = size === 'full' ? 360 : 280;
+
+  return (
+    <>
+      <section
+        className={`relative overflow-hidden rounded-2xl border bg-[#0a0f1a] ${className}`}
+        style={{
+          borderColor: isLiveHere ? 'rgba(239,68,68,0.55)' : 'rgba(34,197,94,0.27)',
+          boxShadow: isLiveHere
+            ? '0 0 36px -6px rgba(239,68,68,0.45)'
+            : '0 0 24px rgba(34,197,94,0.06)',
+          height: cardHeight,
+          transition: 'border-color 0.4s, box-shadow 0.4s',
+        }}
+      >
+        {/* live pulse ring */}
+        {isLiveHere && (
+          <motion.div
+            className="pointer-events-none absolute inset-0 rounded-2xl"
+            animate={{ boxShadow: [
+              '0 0 0 0 rgba(239,68,68,0.45)',
+              '0 0 0 14px rgba(239,68,68,0)',
+            ] }}
+            transition={{ duration: 1.6, repeat: Infinity }}
+          />
+        )}
+
+        {image && <img src={image} alt="" className="absolute inset-0 h-full w-full object-cover opacity-50" />}
+        <div
+          className="absolute inset-0"
+          style={{ background: 'linear-gradient(to top, #060a12 0%, rgba(34,197,94,0.13) 60%, transparent 100%)' }}
+        />
+
+        {/* inline preview */}
+        {previewing && mediaKind === 'video' && mediaUrl && (
+          <video
+            ref={videoRef}
+            src={mediaUrl}
+            controls
+            className="absolute inset-0 z-10 h-full w-full bg-black object-contain"
+            onEnded={() => setPreviewing(false)}
+          />
+        )}
+        {previewing && mediaKind === 'audio' && mediaUrl && (
+          <div className="absolute left-3 right-3 top-3 z-10 rounded-lg bg-[#060a12]/85 p-2 backdrop-blur">
+            <audio
+              ref={audioRef}
+              src={mediaUrl}
+              controls
+              className="w-full"
+              onEnded={() => setPreviewing(false)}
+            />
+          </div>
+        )}
+
+        {/* badge */}
+        {badge && (
+          <div
+            className="absolute left-3 top-3 z-[2] inline-flex items-center gap-1 rounded-full px-2 py-1 text-[10px] font-extrabold uppercase tracking-wider backdrop-blur"
+            style={{
+              background: `${badge.color}22`,
+              border: `1px solid ${badge.color}66`,
+              color: badge.color,
+            }}
+          >
+            <span>{badge.emoji}</span>
+            <span>{badge.label}</span>
+          </div>
+        )}
+
+        {/* live chip */}
+        {isLiveHere && (
+          <div className="absolute right-3 top-3 z-[3] inline-flex items-center gap-1 rounded-full border border-rose-400/50 bg-rose-500/20 px-2 py-1 text-[10px] font-bold uppercase tracking-wider text-rose-100 backdrop-blur">
+            <span className="inline-block h-1.5 w-1.5 animate-pulse rounded-full bg-rose-400" />
+            Live · {liveHere.length}
+          </div>
+        )}
+
+        {/* owner menu */}
+        {mine && !isLiveHere && (
+          <div className="absolute right-3 top-3 z-[4]">
+            <button
+              type="button"
+              onClick={() => setMenuOpen((v) => !v)}
+              className="flex h-8 w-8 items-center justify-center rounded-full border border-white/15 bg-[#060a12]/70 text-lg font-extrabold text-slate-200 backdrop-blur"
+              aria-label="Seed actions"
+            >⋯</button>
+            {menuOpen && (
+              <div
+                className="absolute right-0 top-10 min-w-[140px] rounded-lg border border-white/10 bg-[#0a0f1a] py-1 shadow-2xl"
+                onMouseLeave={() => setMenuOpen(false)}
+              >
+                <MenuItem label="✏️ Edit"   onClick={() => { setMenuOpen(false); onEdit?.(); }} />
+                <MenuItem label="♻️ Repost" onClick={() => { setMenuOpen(false); onRepost?.(); }} />
+                <MenuItem label="⏸ Park"   onClick={() => { setMenuOpen(false); onPark?.(); }} />
+                <MenuItem label="🗑 Delete" onClick={() => { setMenuOpen(false); onDelete?.(); }} danger />
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* content */}
+        <div className="absolute bottom-0 left-0 right-0 z-[2] p-3">
+          <div className="text-base font-extrabold leading-tight text-slate-100">{title}</div>
+          {subtitle && <div className="mt-0.5 line-clamp-1 text-xs text-slate-300/70">{subtitle}</div>}
+
+          {/* bloom row */}
+          <div className="mt-2 flex items-center gap-1.5 text-[11px] text-white/70">
+            {(['seed', 'leaf', 'tree'] as BloomStage[]).map((s) => (
+              <button
+                key={s}
+                onClick={() => sendBloom(seedId, s)}
+                className="flex items-center gap-1 rounded-full border border-emerald-400/20 bg-black/35 px-1.5 py-0.5 transition hover:border-emerald-400/60 hover:bg-emerald-500/10"
+                title={`Send a ${BLOOM_META[s].label}`}
+              >
+                <motion.span
+                  animate={recentForMe === s ? { scale: [1, 1.6, 1], y: [0, -6, 0] } : {}}
+                  transition={{ duration: 0.6 }}
+                >{BLOOM_META[s].emoji}</motion.span>
+                <span>{myBlooms[s]}</span>
+              </button>
+            ))}
+            <button
+              onClick={handleShare}
+              className="ml-auto flex items-center gap-1 rounded-full border border-white/10 bg-black/35 px-1.5 py-0.5 text-white/60 hover:text-emerald-300"
+              title="Share with my referral"
+            >
+              <Share2 className="h-3 w-3" /> Share
+            </button>
+          </div>
+
+          {/* action row */}
+          <div className="mt-2 flex gap-1.5">
+            <div className="flex-1">
+              <LivingButton
+                variant="play"
+                isPlaying={previewing}
+                onClick={handlePlay}
+                height={38}
+                borderRadius={10}
+                fontSize={11}
+                letterSpacing="0px"
+              >
+                {previewing ? '⏸ Pause' : '▶ Play'}
+              </LivingButton>
+            </div>
+            <Link to={openPath} className="flex-1" style={{ textDecoration: 'none' }}>
+              <LivingButton variant="enter" height={38} borderRadius={10} fontSize={11} letterSpacing="0px">
+                📂 Open
+              </LivingButton>
+            </Link>
+            <div className="flex-1">
+              <LivingButton
+                variant="live"
+                onClick={handleGoLive}
+                height={38}
+                borderRadius={10}
+                fontSize={11}
+                letterSpacing="0px"
+              >
+                {isLiveHere ? '🔴 Step in' : '🔴 Go Live'}
+              </LivingButton>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Jitsi overlay */}
+      <AnimatePresence>
+        {activeRoom && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[1000] flex flex-col bg-black"
+          >
+            <div className="flex items-center justify-between border-b border-emerald-500/20 bg-emerald-950/60 px-4 py-2 text-white">
+              <div className="flex items-center gap-2 text-sm">
+                <span className="inline-block h-2 w-2 animate-pulse rounded-full bg-rose-400" />
+                Live: <span className="font-semibold">{title}</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => navigate(openPath)}
+                  className="flex items-center gap-1 rounded px-2 py-1 text-xs hover:bg-white/10"
+                >
+                  <MessageCircle className="h-3 w-3" /> Open seed
+                </button>
+                <button
+                  onClick={handleEndRoom}
+                  className="flex items-center gap-1 rounded px-2 py-1 text-xs hover:bg-white/10"
+                >
+                  <X className="h-3 w-3" /> Close
+                </button>
+              </div>
+            </div>
+            <iframe
+              title={title}
+              src={`https://${JITSI_DOMAIN}/${activeRoom}#config.prejoinPageEnabled=false&config.disableDeepLinking=true`}
+              allow="camera; microphone; fullscreen; display-capture; autoplay"
+              className="flex-1 border-0"
+            />
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </>
+  );
+}
+
+function MenuItem({ label, onClick, danger }: { label: string; onClick: () => void; danger?: boolean }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={`block w-full px-3 py-2 text-left text-[13px] hover:bg-white/5 ${danger ? 'text-rose-400' : 'text-slate-200'}`}
+    >
+      {label}
+    </button>
+  );
+}
