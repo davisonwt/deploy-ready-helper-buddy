@@ -28,12 +28,15 @@ import { cn } from '@/lib/utils';
 
 interface DiscoverSeed {
   id: string;
+  kind: 'seed' | 'product' | 'radio';
   title: string;
   description?: string | null;
   image?: string | null;
   sower: string;
   sower_id?: string | null;
   created_at: string;
+  href: string;
+  badge: string; // emoji
 }
 
 const BLOOM_META: Record<BloomStage, { emoji: string; label: string; color: string }> = {
@@ -44,6 +47,17 @@ const BLOOM_META: Record<BloomStage, { emoji: string; label: string; color: stri
 
 const sowerName = (p: any) =>
   p?.display_name || `${p?.first_name || ''} ${p?.last_name || ''}`.trim() || 'Anonymous Sower';
+
+const productBadge = (type?: string) => {
+  switch ((type || '').toLowerCase()) {
+    case 'music': return '🎵';
+    case 'book':  return '📚';
+    case 'video': return '🎬';
+    case 'home':  return '🏡';
+    case 'art':   return '🎨';
+    default:      return '🛍️';
+  }
+};
 
 export default function TribalAliveFeedPage() {
   const navigate = useNavigate();
@@ -60,28 +74,97 @@ export default function TribalAliveFeedPage() {
   const [serendipityIndex, setSerendipityIndex] = useState(0);
   const [activeRoom, setActiveRoom] = useState<{ room: string; title: string } | null>(null);
 
-  // Pull a global pool of recent seeds for serendipity / fallback when nobody's live yet
+  // Pull EVERYTHING the tribe has planted: seeds + products + recorded radio sessions
   useEffect(() => {
     let cancelled = false;
     (async () => {
       try {
-        const { data } = await supabase
-          .from('seeds')
-          .select('id, title, description, images, gifter_id, created_at, profiles:gifter_id (first_name, last_name, display_name)')
-          .order('created_at', { ascending: false })
-          .limit(60);
+        const [seedsRes, productsRes, radioRes, videosRes] = await Promise.all([
+          supabase
+            .from('seeds')
+            .select('id, title, description, images, gifter_id, created_at, profiles:gifter_id (first_name, last_name, display_name)')
+            .order('created_at', { ascending: false })
+            .limit(40),
+          supabase
+            .from('products')
+            .select('id, title, description, type, cover_image_url, image_urls, sower_id, created_at, sowers:sower_id (display_name, first_name, last_name)')
+            .eq('status', 'active')
+            .order('created_at', { ascending: false })
+            .limit(60),
+          supabase
+            .from('radio_live_sessions')
+            .select('id, status, started_at, ended_at, created_at, schedule_id, radio_schedule:schedule_id (show_id, radio_shows:show_id (show_name, description, show_image_url, dj_id, radio_djs:dj_id (display_name, first_name, last_name)))')
+            .order('created_at', { ascending: false })
+            .limit(20),
+          supabase
+            .from('community_videos')
+            .select('id, title, description, video_url, thumbnail_url, uploader_id, created_at, profiles:uploader_id (first_name, last_name, display_name)')
+            .order('created_at', { ascending: false })
+            .limit(40),
+        ]);
+
         if (cancelled) return;
-        setDiscover(
-          (data || []).map((s: any) => ({
-            id: s.id,
-            title: s.title || 'Untitled seed',
-            description: s.description,
-            image: (s.images && s.images[0]) || null,
-            sower: sowerName(s.profiles),
-            sower_id: s.gifter_id,
-            created_at: s.created_at,
-          }))
-        );
+
+        const seedsItems: DiscoverSeed[] = (seedsRes.data || []).map((s: any) => ({
+          id: s.id,
+          kind: 'seed',
+          title: s.title || 'Untitled seed',
+          description: s.description,
+          image: (s.images && s.images[0]) || null,
+          sower: sowerName(s.profiles),
+          sower_id: s.gifter_id,
+          created_at: s.created_at,
+          href: `/seed/${s.id}`,
+          badge: '🌱',
+        }));
+
+        const productItems: DiscoverSeed[] = (productsRes.data || []).map((p: any) => ({
+          id: p.id,
+          kind: 'product',
+          title: p.title || 'Untitled product',
+          description: p.description,
+          image: p.cover_image_url || (p.image_urls && p.image_urls[0]) || null,
+          sower: sowerName(p.sowers),
+          sower_id: p.sower_id,
+          created_at: p.created_at,
+          href: `/products`,
+          badge: productBadge(p.type),
+        }));
+
+        const radioItems: DiscoverSeed[] = (radioRes.data || []).map((r: any) => {
+          const show = r?.radio_schedule?.radio_shows;
+          const dj = show?.radio_djs;
+          return {
+            id: r.id,
+            kind: 'radio',
+            title: show?.show_name || 'Live radio session',
+            description: show?.description || (r.status === 'live' ? '🔴 Live now' : 'Recorded session'),
+            image: show?.show_image_url || null,
+            sower: sowerName(dj),
+            sower_id: show?.dj_id,
+            created_at: r.created_at,
+            href: `/grove-station?session=${r.id}`,
+            badge: r.status === 'live' ? '📻🔴' : '📻',
+          };
+        });
+
+        const videoItems: DiscoverSeed[] = (videosRes.data || []).map((v: any) => ({
+          id: v.id,
+          kind: 'radio', // grouped under broadcasts visually
+          title: v.title || 'Recorded broadcast',
+          description: v.description || 'Recorded session',
+          image: v.thumbnail_url || null,
+          sower: sowerName(v.profiles),
+          sower_id: v.uploader_id,
+          created_at: v.created_at,
+          href: `/community-videos`,
+          badge: '🎬',
+        }));
+
+        const combined = [...seedsItems, ...productItems, ...radioItems, ...videoItems]
+          .sort((a, b) => (b.created_at || '').localeCompare(a.created_at || ''));
+
+        setDiscover(combined);
       } catch (e) {
         console.warn('[tribal-alive] discover load failed', e);
       } finally {
@@ -119,8 +202,8 @@ export default function TribalAliveFeedPage() {
     return url.toString();
   };
 
-  const handleShare = async (seed: { id: string; title: string }) => {
-    const url = buildShareUrl(`/seed/${seed.id}`);
+  const handleShare = async (seed: { id: string; title: string; href?: string }) => {
+    const url = buildShareUrl(seed.href || `/seed/${seed.id}`);
     const text = `🌿 "${seed.title}" is alive in the Sow2Grow orchard. Step in:\n${url}`;
     try {
       if (navigator.share) await navigator.share({ title: seed.title, text, url });
@@ -277,6 +360,74 @@ export default function TribalAliveFeedPage() {
                   onShare={() => handleShare(serendipitySeed)}
                 />
               ) : null}
+            </div>
+
+            {/* Tribe garden — every seed, product & broadcast from everyone */}
+            <div className="mt-8">
+              <div className="mb-3 flex items-center gap-2">
+                <TreePine className="h-4 w-4 text-emerald-300" />
+                <h2 className="text-sm font-bold uppercase tracking-widest text-emerald-200">
+                  The whole tribe garden
+                </h2>
+                <span className="text-xs text-white/50">· {discover.length} items</span>
+              </div>
+              {loading ? (
+                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3">
+                  {Array.from({ length: 6 }).map((_, i) => (
+                    <div key={i} className="h-40 animate-pulse rounded-2xl bg-white/5" />
+                  ))}
+                </div>
+              ) : discover.length === 0 ? (
+                <div className="rounded-2xl border border-dashed border-white/10 p-6 text-center text-sm text-white/60">
+                  Nothing planted yet. Be the first to sow a seed, list a product, or go live on the radio.
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3">
+                  {discover.slice(0, 24).map((item) => (
+                    <motion.div
+                      key={`${item.kind}-${item.id}`}
+                      initial={{ opacity: 0, y: 8 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      className="group overflow-hidden rounded-2xl border border-white/10 bg-gradient-to-br from-slate-900/70 to-emerald-950/40 transition hover:border-emerald-400/40"
+                    >
+                      <Link to={item.href} className="block">
+                        <div className="relative aspect-video w-full bg-emerald-500/10">
+                          {item.image ? (
+                            <img src={item.image} alt={item.title} className="h-full w-full object-cover transition group-hover:scale-[1.03]" />
+                          ) : (
+                            <div className="flex h-full w-full items-center justify-center text-4xl">{item.badge}</div>
+                          )}
+                          <div className="absolute left-2 top-2 rounded-full bg-black/60 px-2 py-0.5 text-xs backdrop-blur">
+                            {item.badge} {item.kind}
+                          </div>
+                        </div>
+                        <div className="p-3">
+                          <h3 className="line-clamp-1 text-sm font-bold text-white">{item.title}</h3>
+                          <p className="mt-0.5 line-clamp-1 text-[11px] text-white/60">by {item.sower}</p>
+                        </div>
+                      </Link>
+                      <div className="flex items-center justify-between gap-2 border-t border-white/5 p-2">
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          className="h-7 px-2 text-[11px] text-emerald-200 hover:bg-emerald-500/10"
+                          onClick={() => handleGoLive({ id: item.id, title: item.title, image: item.image })}
+                        >
+                          <Video className="mr-1 h-3 w-3" /> Go live
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          className="h-7 px-2 text-[11px] text-white/70 hover:bg-white/10"
+                          onClick={() => handleShare(item)}
+                        >
+                          <Share2 className="mr-1 h-3 w-3" /> Share
+                        </Button>
+                      </div>
+                    </motion.div>
+                  ))}
+                </div>
+              )}
             </div>
           </div>
 
@@ -481,25 +632,26 @@ function SerendipityCard({
           {seed.image ? (
             <img src={seed.image} alt={seed.title} className="h-full w-full object-cover" />
           ) : (
-            <div className="flex h-full w-full items-center justify-center text-5xl">🌱</div>
+            <div className="flex h-full w-full items-center justify-center text-5xl">{seed.badge || '🌱'}</div>
           )}
         </div>
         <div className="p-4">
           <div className="flex items-center gap-2 text-xs text-emerald-200/80">
-            <TreePine className="h-3 w-3" /> Discover · {seed.sower}
+            <span className="text-base leading-none">{seed.badge}</span>
+            <TreePine className="h-3 w-3" /> {seed.kind === 'product' ? 'Product' : seed.kind === 'radio' ? 'Radio' : 'Seed'} · {seed.sower}
           </div>
           <h3 className="mt-1 text-lg font-bold text-white">{seed.title}</h3>
           {seed.description && (
             <p className="mt-1 line-clamp-2 text-sm text-white/70">{seed.description}</p>
           )}
           <div className="mt-3 flex flex-wrap gap-2">
-            <Link to={`/seed/${seed.id}`}>
+            <Link to={seed.href}>
               <Button size="sm" variant="outline" className="border-emerald-400/30 bg-transparent text-emerald-200 hover:bg-emerald-500/10">
-                Open seed
+                Open
               </Button>
             </Link>
             <Button size="sm" className="bg-gradient-to-r from-emerald-500 to-lime-500 text-black hover:opacity-90" onClick={onGoLive}>
-              <Video className="mr-1 h-3 w-3" /> Go live with this seed
+              <Video className="mr-1 h-3 w-3" /> Go live with this
             </Button>
             <Button size="sm" variant="ghost" className="text-emerald-200 hover:bg-emerald-500/10" onClick={onShare}>
               <Share2 className="mr-1 h-3 w-3" /> Share

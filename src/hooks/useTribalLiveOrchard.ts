@@ -3,13 +3,14 @@
  * --------------------
  * Ephemeral, realtime "who is alive in the orchard right now" hook.
  *
- * - Joins a single global Supabase Realtime presence channel.
- * - Tracks the current user when they "Go Live" on a seed.
- * - Streams bloom reactions (🌱 → 🌿 → 🌳) via broadcast.
- *
- * No DB writes. When a session ends, presence vanishes — that is the design.
+ * IMPORTANT: This hook uses a MODULE-LEVEL singleton channel + pub/sub fanout.
+ * Many components (every LivingSeedCard) call this hook simultaneously. We must
+ * NEVER create more than one Supabase channel named 'tribal-orchard:global',
+ * otherwise Supabase Realtime throws:
+ *   "cannot add `presence` callbacks for realtime:tribal-orchard:global after `subscribe()`"
+ * because the second channel object is the same already-subscribed instance.
  */
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState, useSyncExternalStore } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 
@@ -23,7 +24,7 @@ export interface LivePresence {
   seed_title: string;
   seed_image?: string | null;
   jitsi_room: string;
-  started_at: string; // ISO
+  started_at: string;
 }
 
 export interface BloomEvent {
@@ -33,58 +34,86 @@ export interface BloomEvent {
   at: number;
 }
 
-const CHANNEL = 'tribal-orchard:global';
+const CHANNEL_NAME = 'tribal-orchard:global';
 
+// ─── module-level singleton store ────────────────────────────────────────────
+type Store = {
+  liveSeeds: LivePresence[];
+  blooms: Record<string, { seed: number; leaf: number; tree: number }>;
+  recentBloom: BloomEvent | null;
+};
+
+let storeState: Store = { liveSeeds: [], blooms: {}, recentBloom: null };
+const listeners = new Set<() => void>();
+const subscribe = (l: () => void) => { listeners.add(l); return () => listeners.delete(l); };
+const getSnapshot = () => storeState;
+const setStore = (next: Partial<Store>) => {
+  storeState = { ...storeState, ...next };
+  listeners.forEach((l) => l());
+};
+
+let channel: ReturnType<typeof supabase.channel> | null = null;
+let refCount = 0;
+let myPresenceMap: Map<string, LivePresence> = new Map(); // tracks live presences by seed_id (for owner's untrack)
+
+function ensureChannel(presenceKey: string) {
+  if (channel) return channel;
+  const ch = supabase.channel(CHANNEL_NAME, { config: { presence: { key: presenceKey } } });
+
+  ch.on('presence', { event: 'sync' }, () => {
+    const state = ch.presenceState() as Record<string, LivePresence[]>;
+    const flat: LivePresence[] = [];
+    Object.values(state).forEach((arr) => arr.forEach((p) => p?.seed_id && flat.push(p)));
+    flat.sort((a, b) => (b.started_at || '').localeCompare(a.started_at || ''));
+    setStore({ liveSeeds: flat });
+  });
+
+  ch.on('broadcast', { event: 'bloom' }, ({ payload }) => {
+    const ev = payload as BloomEvent;
+    if (!ev?.seed_id || !ev?.stage) return;
+    const prev = storeState.blooms[ev.seed_id] || { seed: 0, leaf: 0, tree: 0 };
+    setStore({
+      blooms: { ...storeState.blooms, [ev.seed_id]: { ...prev, [ev.stage]: prev[ev.stage] + 1 } },
+      recentBloom: ev,
+    });
+  });
+
+  ch.subscribe();
+  channel = ch;
+  return ch;
+}
+
+function teardownChannel() {
+  if (!channel) return;
+  try { channel.untrack(); } catch {}
+  supabase.removeChannel(channel);
+  channel = null;
+  myPresenceMap = new Map();
+  setStore({ liveSeeds: [], blooms: {}, recentBloom: null });
+}
+
+// ─── hook ────────────────────────────────────────────────────────────────────
 export function useTribalLiveOrchard() {
   const { user } = useAuth();
-  const [liveSeeds, setLiveSeeds] = useState<LivePresence[]>([]);
-  const [blooms, setBlooms] = useState<Record<string, { seed: number; leaf: number; tree: number }>>({});
-  const [recentBloom, setRecentBloom] = useState<BloomEvent | null>(null);
-  const channelRef = useRef<ReturnType<typeof supabase.channel> | null>(null);
-  const myPresenceRef = useRef<LivePresence | null>(null);
+  const presenceKey = user?.id || 'anon';
+  const state = useSyncExternalStore(subscribe, getSnapshot, getSnapshot);
 
-  // --- subscribe ---
   useEffect(() => {
-    const ch = supabase.channel(CHANNEL, {
-      config: { presence: { key: user?.id || `anon-${Math.random().toString(36).slice(2)}` } },
-    });
-
-    ch.on('presence', { event: 'sync' }, () => {
-      const state = ch.presenceState() as Record<string, LivePresence[]>;
-      const flat: LivePresence[] = [];
-      Object.values(state).forEach((arr) => arr.forEach((p) => flat.push(p)));
-      // newest first
-      flat.sort((a, b) => (b.started_at || '').localeCompare(a.started_at || ''));
-      setLiveSeeds(flat);
-    });
-
-    ch.on('broadcast', { event: 'bloom' }, ({ payload }) => {
-      const ev = payload as BloomEvent;
-      if (!ev?.seed_id || !ev?.stage) return;
-      setBlooms((prev) => {
-        const cur = prev[ev.seed_id] || { seed: 0, leaf: 0, tree: 0 };
-        return { ...prev, [ev.seed_id]: { ...cur, [ev.stage]: cur[ev.stage] + 1 } };
-      });
-      setRecentBloom(ev);
-    });
-
-    ch.subscribe();
-    channelRef.current = ch;
-
+    ensureChannel(presenceKey);
+    refCount++;
     return () => {
-      try {
-        if (myPresenceRef.current) ch.untrack();
-      } catch {}
-      supabase.removeChannel(ch);
-      channelRef.current = null;
-      myPresenceRef.current = null;
+      refCount--;
+      if (refCount <= 0) {
+        refCount = 0;
+        teardownChannel();
+      }
     };
-  }, [user?.id]);
+  }, [presenceKey]);
 
-  // --- actions ---
   const goLive = useCallback(
     async (seed: { id: string; title: string; image?: string | null }) => {
-      if (!channelRef.current || !user?.id) return null;
+      const ch = ensureChannel(presenceKey);
+      if (!user?.id) return null;
       const room = `s2g_seed_${seed.id.replace(/-/g, '')}_${Date.now().toString(36)}`;
       const presence: LivePresence = {
         user_id: user.id,
@@ -100,38 +129,46 @@ export function useTribalLiveOrchard() {
         jitsi_room: room,
         started_at: new Date().toISOString(),
       };
-      myPresenceRef.current = presence;
-      await channelRef.current.track(presence);
+      myPresenceMap.set(seed.id, presence);
+      // Track the most recent presence (Supabase presence per key is replace-style)
+      await ch.track(presence);
       return presence;
     },
-    [user]
+    [presenceKey, user]
   );
 
   const endLive = useCallback(async () => {
-    if (!channelRef.current) return;
-    try { await channelRef.current.untrack(); } catch {}
-    myPresenceRef.current = null;
+    if (!channel) return;
+    try { await channel.untrack(); } catch {}
+    myPresenceMap.clear();
   }, []);
 
   const sendBloom = useCallback(
     (seedId: string, stage: BloomStage) => {
-      const ch = channelRef.current;
-      if (!ch || !user?.id) return;
+      const ch = ensureChannel(presenceKey);
+      if (!user?.id) return;
       const ev: BloomEvent = { seed_id: seedId, stage, from: user.id, at: Date.now() };
       ch.send({ type: 'broadcast', event: 'bloom', payload: ev });
-      // optimistic local update
-      setBlooms((prev) => {
-        const cur = prev[seedId] || { seed: 0, leaf: 0, tree: 0 };
-        return { ...prev, [seedId]: { ...cur, [stage]: cur[stage] + 1 } };
+      const prev = storeState.blooms[seedId] || { seed: 0, leaf: 0, tree: 0 };
+      setStore({
+        blooms: { ...storeState.blooms, [seedId]: { ...prev, [stage]: prev[stage] + 1 } },
+        recentBloom: ev,
       });
-      setRecentBloom(ev);
     },
-    [user?.id]
+    [presenceKey, user?.id]
   );
 
-  // --- derived ---
-  const liveCount = liveSeeds.length;
-  const isLive = useMemo(() => Boolean(myPresenceRef.current), [liveSeeds]);
+  const liveCount = state.liveSeeds.length;
+  const isLive = useMemo(() => myPresenceMap.size > 0, [state.liveSeeds]);
 
-  return { liveSeeds, blooms, recentBloom, liveCount, isLive, goLive, endLive, sendBloom };
+  return {
+    liveSeeds: state.liveSeeds,
+    blooms: state.blooms,
+    recentBloom: state.recentBloom,
+    liveCount,
+    isLive,
+    goLive,
+    endLive,
+    sendBloom,
+  };
 }
