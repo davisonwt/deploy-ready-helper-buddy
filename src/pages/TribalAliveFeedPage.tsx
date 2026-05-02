@@ -337,66 +337,10 @@ export default function TribalAliveFeedPage() {
 
   return (
     <div className="fixed inset-0 flex flex-col bg-black text-white">
-      {/* Top bar — Following / For You / Local */}
-      <header className="relative z-20 flex items-center justify-between px-4 py-3">
-        <button
-          onClick={() => navigate('/dashboard')}
-          className="flex items-center gap-2 text-white/80 hover:text-white"
-          aria-label="Back to my orchard"
-        >
-          <ArrowLeft className="h-4 w-4" />
-          <span className="hidden sm:inline text-sm">SeedFlow</span>
-          <span className="text-xl">🌱</span>
-        </button>
-
-        <nav className="flex items-center gap-6 text-sm font-semibold">
-          {(['following', 'foryou', 'local'] as FeedTab[]).map((t) => (
-            <button
-              key={t}
-              onClick={() => setTab(t)}
-              className={cn(
-                'relative pb-1 transition',
-                tab === t ? 'text-white' : 'text-white/50 hover:text-white/80'
-              )}
-            >
-              {t === 'following' ? 'Following' : t === 'foryou' ? 'For You' : 'Local'}
-              {tab === t && (
-                <motion.span
-                  layoutId="tabUnderline"
-                  className="absolute -bottom-0.5 left-0 right-0 h-0.5 rounded-full bg-amber-400"
-                />
-              )}
-            </button>
-          ))}
-        </nav>
-
-        <div className="flex items-center gap-3">
-          <button
-            onClick={() => navigate('/products')}
-            className="rounded-full bg-white/10 p-2 hover:bg-white/20"
-            aria-label="Search"
-          >
-            <Search className="h-4 w-4" />
-          </button>
-          <button
-            onClick={() => navigate('/notifications')}
-            className="rounded-full bg-white/10 p-2 hover:bg-white/20"
-            aria-label="Notifications"
-          >
-            <Bell className="h-4 w-4" />
-          </button>
-        </div>
-      </header>
-
-      {/* Wandering badge filter — pinned to the top, horizontally scrollable */}
-      <div className="relative z-20 border-b border-white/10 bg-black/70 backdrop-blur-md px-2 sm:px-4 pt-1">
-        <WanderingBadgeBar activeRole={wanderingRole} onRoleChange={setWanderingRole} />
-      </div>
-
-      {/* Vertical snap feed */}
+      {/* Vertical snap feed — full bleed under the overlays */}
       <main
         ref={containerRef}
-        className="relative flex-1 snap-y snap-mandatory overflow-y-auto overscroll-contain"
+        className="absolute inset-0 snap-y snap-mandatory overflow-y-auto overscroll-contain"
         style={{ scrollSnapStop: 'always' }}
       >
         {loading ? (
@@ -430,6 +374,83 @@ export default function TribalAliveFeedPage() {
           ))
         )}
       </main>
+
+      {/* Top overlay: Back + Following / For You / Local + Search/Bell */}
+      <header className="absolute inset-x-0 top-0 z-20 flex items-center justify-between px-3 py-2 bg-gradient-to-b from-black/70 to-transparent">
+        <button
+          onClick={() => navigate('/dashboard')}
+          className="flex items-center gap-1.5 text-white/90 hover:text-white"
+          aria-label="Back to my orchard"
+        >
+          <ArrowLeft className="h-4 w-4" />
+          <span className="text-sm font-semibold">SeedFlow</span>
+          <span className="text-base">🌱</span>
+        </button>
+
+        <nav className="flex items-center gap-5 text-sm font-semibold">
+          {(['following', 'foryou', 'local'] as FeedTab[]).map((t) => (
+            <button
+              key={t}
+              onClick={() => setTab(t)}
+              className={cn(
+                'relative pb-1 transition',
+                tab === t ? 'text-white' : 'text-white/55 hover:text-white/80'
+              )}
+            >
+              {t === 'following' ? 'Following' : t === 'foryou' ? 'For You' : 'Local'}
+              {tab === t && (
+                <motion.span
+                  layoutId="tabUnderline"
+                  className="absolute -bottom-0.5 left-0 right-0 h-0.5 rounded-full bg-amber-400"
+                />
+              )}
+            </button>
+          ))}
+        </nav>
+
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => navigate('/products')}
+            className="rounded-full bg-white/10 p-1.5 hover:bg-white/20"
+            aria-label="Search"
+          >
+            <Search className="h-4 w-4" />
+          </button>
+          <button
+            onClick={() => navigate('/notifications')}
+            className="rounded-full bg-white/10 p-1.5 hover:bg-white/20"
+            aria-label="Notifications"
+          >
+            <Bell className="h-4 w-4" />
+          </button>
+        </div>
+      </header>
+
+      {/* Wandering pill-filter — overlay row just below the header, horizontally scrollable */}
+      <div className="absolute inset-x-0 top-11 z-20 overflow-x-auto px-2 py-1.5 [&::-webkit-scrollbar]:hidden">
+        <div className="flex min-w-max gap-2">
+          <FilterPill
+            active={wanderingRole === null}
+            color="#22c55e"
+            emoji="🌿"
+            label="All Seeds"
+            onClick={() => setWanderingRole(null)}
+          />
+          {WANDERING_BADGES.map((b) => (
+            <FilterPill
+              key={b.key}
+              active={wanderingRole === b.key}
+              color={b.color}
+              emoji={b.emoji}
+              label={`Wandering ${b.label.charAt(0) + b.label.slice(1).toLowerCase()}`}
+              onClick={() => {
+                if (b.key === 'heart') { navigate('/tribal-hearts'); return; }
+                setWanderingRole(wanderingRole === b.key ? null : b.key);
+              }}
+            />
+          ))}
+        </div>
+      </div>
 
 
       {/* Jitsi overlay */}
@@ -549,7 +570,7 @@ function FeedCard({
         <video
           ref={videoRef}
           src={item.video_url}
-          className="absolute inset-0 h-full w-full object-contain"
+          className="absolute inset-0 h-full w-full object-cover"
           playsInline
           muted={false}
           preload="metadata"
@@ -558,7 +579,7 @@ function FeedCard({
         <img
           src={item.image}
           alt={item.title}
-          className="absolute inset-0 h-full w-full object-contain"
+          className="absolute inset-0 h-full w-full object-cover"
         />
       ) : (
         <div className="absolute inset-0 flex items-center justify-center text-[20rem] opacity-10">
@@ -571,39 +592,14 @@ function FeedCard({
 
       <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-transparent to-black/85 pointer-events-none" />
 
-      {/* Right action rail — TikTok-style vertical column, fully on-screen */}
-      <div className="absolute right-1.5 bottom-24 z-10 flex flex-col items-center gap-2.5 sm:right-2.5 sm:gap-3">
-        <RailButton
-          icon={<MessageCircle className="h-4 w-4" />}
-          label="Msg"
-          onClick={onMessage}
-        />
-        <RailButton
-          icon={<Mic className="h-4 w-4" />}
-          label="Voice"
-          onClick={onVoice}
-        />
-        <RailButton
-          icon={<Video className="h-4 w-4" />}
-          label="Video"
-          onClick={onVideo}
-        />
-        <RailButton
-          icon={<Heart className="h-4 w-4" />}
-          label="Like"
-          onClick={onShare}
-        />
-        <RailButton
-          icon={<Radio className="h-4 w-4" />}
-          label="Live"
-          onClick={onGoLive}
-          accent
-        />
-        <RailButton
-          icon={<Share2 className="h-4 w-4" />}
-          label="Share"
-          onClick={onShare}
-        />
+      {/* Right action rail — TikTok-style vertical column over the media */}
+      <div className="absolute right-2 bottom-28 z-10 flex flex-col items-center gap-3 sm:right-3 sm:gap-4">
+        <RailButton icon={<MessageCircle className="h-5 w-5" />} label="Message" onClick={onMessage} />
+        <RailButton icon={<Mic className="h-5 w-5" />} label="Voice" onClick={onVoice} />
+        <RailButton icon={<Video className="h-5 w-5" />} label="Video" onClick={onVideo} />
+        <RailButton icon={<Heart className="h-5 w-5" />} label="Like" onClick={onShare} />
+        <RailButton icon={<Radio className="h-5 w-5" />} label="Go Live" onClick={onGoLive} accent />
+        <RailButton icon={<Share2 className="h-5 w-5" />} label="Share" onClick={onShare} />
       </div>
 
       {/* Left content stack */}
@@ -709,18 +705,38 @@ function RailButton({
   icon, label, onClick, accent,
 }: { icon: React.ReactNode; label: string; onClick: () => void; accent?: boolean }) {
   return (
-    <button onClick={onClick} className="flex flex-col items-center gap-0.5 text-white/90 hover:text-white">
+    <button onClick={onClick} className="flex flex-col items-center gap-1 text-white/95 hover:text-white">
       <span
         className={cn(
-          'flex h-9 w-9 items-center justify-center rounded-full backdrop-blur transition active:scale-90',
+          'flex h-11 w-11 items-center justify-center rounded-full backdrop-blur transition active:scale-90',
           accent
-            ? 'bg-gradient-to-br from-rose-500 to-orange-500 shadow-[0_0_12px_rgba(244,63,94,0.55)]'
-            : 'bg-black/55 ring-1 ring-white/20 hover:bg-black/70'
+            ? 'bg-gradient-to-br from-rose-500 to-orange-500 shadow-[0_0_14px_rgba(244,63,94,0.6)]'
+            : 'bg-black/45 ring-1 ring-white/20 hover:bg-black/65'
         )}
       >
         {icon}
       </span>
-      <span className="text-[8px] font-semibold drop-shadow leading-none">{label}</span>
+      <span className="text-[10px] font-semibold drop-shadow leading-none">{label}</span>
+    </button>
+  );
+}
+
+function FilterPill({
+  active, color, emoji, label, onClick,
+}: { active: boolean; color: string; emoji: string; label: string; onClick: () => void }) {
+  return (
+    <button
+      onClick={onClick}
+      className={cn(
+        'flex shrink-0 items-center gap-1.5 rounded-full px-3 py-1 text-xs font-bold backdrop-blur transition whitespace-nowrap',
+        active
+          ? 'text-white shadow-[0_0_14px_rgba(0,0,0,0.5)]'
+          : 'bg-black/40 text-white/80 ring-1 ring-white/15 hover:bg-black/60'
+      )}
+      style={active ? { background: `linear-gradient(135deg, ${color}, ${color}cc)`, boxShadow: `0 0 16px ${color}66` } : undefined}
+    >
+      <span aria-hidden>{emoji}</span>
+      <span>{label}</span>
     </button>
   );
 }
