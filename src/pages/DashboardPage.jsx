@@ -932,7 +932,30 @@ export default function SeedFlowDashboard() {
 
           <nav style={styles.nav}>
             {NAV.map(item => {
-              const isActive = activePath === item.path
+              const isAction = typeof item.path === 'string' && item.path.startsWith('action:')
+              const isActive = !isAction && activePath === item.path
+              const handleAction = (e) => {
+                if (!isAction) return
+                e.preventDefault()
+                const action = item.path.split(':')[1]
+                if (action === 'let-it-rain') {
+                  window.dispatchEvent(new CustomEvent('s2g-open-let-it-rain'))
+                }
+                setMobilePanel(null)
+              }
+              if (isAction) {
+                return (
+                  <a key={item.label} href="#" className="nav-link"
+                    onClick={handleAction}
+                    style={styles.navItem(false, item.color)}>
+                    <div style={styles.navEmoji(false, item.color)}>{item.emoji}</div>
+                    <div>
+                      <div style={styles.navLabel}>{item.label}</div>
+                      <div style={styles.navSub}>{item.sub}</div>
+                    </div>
+                  </a>
+                )
+              }
               return (
                 <Link key={item.label} to={item.path} className="nav-link"
                   onClick={() => { setActivePath(item.path); setMobilePanel(null) }}
