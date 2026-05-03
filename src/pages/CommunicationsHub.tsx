@@ -74,31 +74,31 @@ export default function CommunicationsHub() {
         const slug = `${title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')}-${Date.now()}`;
         const { data, error } = await supabase.from('live_rooms' as any).insert({ name: title.trim(), slug, description, max_participants: 2, created_by: user.id, is_active: true }).select('id').single();
         if (error) throw error;
-        actionUrl = `/live-rooms?room=${data.id}`;
+        actionUrl = `/live-rooms?room=${(data as any).id}`;
       } else if (kind === 'community_chat') {
         const { data, error } = await supabase.from('chat_rooms' as any).insert({ name: title.trim(), description, room_type: 'group', created_by: user.id, is_active: true, metadata: { scheduled_at: when, files: uploaded, price } }).select('id').single();
         if (error) throw error;
-        actionUrl = `/chatapp?room=${data.id}`;
+        actionUrl = `/chatapp?room=${(data as any).id}`;
       } else if (kind === 'classroom') {
         const { data, error } = await supabase.from('classroom_sessions' as any).insert({ title: title.trim(), description, scheduled_at: when, instructor_id: user.id, is_free: isFree, session_fee: price, status: 'scheduled' }).select('id').single();
         if (error) throw error;
-        actionUrl = `/orchard-alive?classroom=${data.id}`;
+        actionUrl = `/orchard-alive?classroom=${(data as any).id}`;
       } else if (kind === 'skilldrop') {
-        const { data, error } = await supabase.from('skilldrop_sessions').insert({ title: title.trim(), description, scheduled_at: when, presenter_id: user.id, pricing_type: isFree ? 'free' : 'bestowal', session_fee: price, status: 'scheduled' }).select('id').single();
+        const { data, error } = await supabase.from('skilldrop_sessions' as any).insert({ title: title.trim(), description, scheduled_at: when, presenter_id: user.id, pricing_type: isFree ? 'free' : 'bestowal', session_fee: price, status: 'scheduled' }).select('id').single();
         if (error) throw error;
-        actionUrl = `/orchard-alive?skilldrop=${data.id}`;
+        actionUrl = `/orchard-alive?skilldrop=${(data as any).id}`;
       } else if (kind === 'radio') {
-        const { data, error } = await supabase.from('radio_broadcasts').insert({ title: title.trim(), description, scheduled_at: when, broadcaster_id: user.id, status: 'scheduled', thumbnail_url: uploaded.find(f => f.type.startsWith('image/'))?.url || null }).select('id').single();
+        const { data, error } = await supabase.from('radio_broadcasts' as any).insert({ title: title.trim(), description, scheduled_at: when, broadcaster_id: user.id, status: 'scheduled', thumbnail_url: uploaded.find(f => f.type.startsWith('image/'))?.url || null }).select('id').single();
         if (error) throw error;
-        actionUrl = `/grove-station?radio=${data.id}`;
+        actionUrl = `/grove-station?radio=${(data as any).id}`;
       } else {
-        const { data, error } = await supabase.from('premium_rooms').insert({ creator_id: user.id, title: title.trim(), description, room_type: 'training', is_public: true, price, pricing_type: isFree ? 'free' : 'bestowal', documents: uploaded, artwork: uploaded.filter(f => f.type.startsWith('image/')), music: uploaded.filter(f => f.type.startsWith('audio/')) }).select('id').single();
+        const { data, error } = await supabase.from('premium_rooms' as any).insert({ creator_id: user.id, title: title.trim(), description, room_type: 'training', is_public: true, price, pricing_type: isFree ? 'free' : 'bestowal', documents: uploaded, artwork: uploaded.filter(f => f.type.startsWith('image/')), music: uploaded.filter(f => f.type.startsWith('audio/')) }).select('id').single();
         if (error) throw error;
-        actionUrl = `/premium-room/${data.id}`;
+        actionUrl = `/premium-room/${(data as any).id}`;
       }
 
       if (invitees.length) {
-        await supabase.from('user_notifications').insert(invitees.map(userId => ({ user_id: userId, type: 'live_invite', title: `${active.label} invite`, message: title.trim(), action_url: actionUrl })) as any).then(() => null);
+        await supabase.from('user_notifications' as any).insert(invitees.map(userId => ({ user_id: userId, type: 'live_invite', title: `${active.label} invite`, message: title.trim(), action_url: actionUrl })) as any).then(() => null);
       }
       toast.success(`${active.label} ready to push live.`);
       setTitle(''); setDescription(''); setFiles([]); setInvitees([]);
