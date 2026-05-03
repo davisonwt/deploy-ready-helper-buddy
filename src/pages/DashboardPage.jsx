@@ -4,6 +4,7 @@ import { Link, useNavigate } from 'react-router-dom'
 import { supabase } from "@/integrations/supabase/client"
 import SeedFlow from '../components/SeedFlow'
 import LivingButton from '../components/LivingButton'
+import { LetItRainPanel } from '../components/LetItRainPanel'
 import { useSacredNow } from '../hooks/useSacredNow'
 import { BeadPopup } from '../components/watch/BeadPopup'
 import SeedSlider from '../components/garden/SeedSlider'
@@ -81,7 +82,6 @@ const NAV = [
   { label: 'My Garden',        sub: 'Your seeds & orchards',     emoji: '🌱', path: '/my-orchards',           color: '#16a34a' },
   { label: 'Tribal Gardens',   sub: 'All tribal seeds & orchards', emoji: '🌳', path: '/browse-orchards',     color: '#0d9488' },
   { label: 'ChatApp',          sub: 'Tribe messaging',           emoji: '💬', path: '/chatapp',               color: '#0891b2' },
-  { label: 'Go Live',          sub: '1-on-1 · Classroom · Radio', emoji: '🔴', path: '/communications-hub',   color: '#ef4444' },
   { label: '364yhvh',          sub: 'Scripture & spiritual hub', emoji: '📅', path: '/364yhvh-days',          color: '#7c3aed' },
   { label: 'Let It Rain',      sub: 'Bestow blessings',          emoji: '🌧', path: 'action:let-it-rain',     color: '#6d28d9' },
   { label: 'Learn & Share',    sub: 'Explainer videos',          emoji: '🎬', path: '/learn-share',           color: '#10b981' },
