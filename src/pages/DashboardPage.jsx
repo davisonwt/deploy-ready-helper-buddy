@@ -4,6 +4,7 @@ import { Link, useNavigate } from 'react-router-dom'
 import { supabase } from "@/integrations/supabase/client"
 import SeedFlow from '../components/SeedFlow'
 import LivingButton from '../components/LivingButton'
+import { LetItRainPanel } from '../components/LetItRainPanel'
 import { useSacredNow } from '../hooks/useSacredNow'
 import { BeadPopup } from '../components/watch/BeadPopup'
 import SeedSlider from '../components/garden/SeedSlider'
@@ -81,7 +82,6 @@ const NAV = [
   { label: 'My Garden',        sub: 'Your seeds & orchards',     emoji: '🌱', path: '/my-orchards',           color: '#16a34a' },
   { label: 'Tribal Gardens',   sub: 'All tribal seeds & orchards', emoji: '🌳', path: '/browse-orchards',     color: '#0d9488' },
   { label: 'ChatApp',          sub: 'Tribe messaging',           emoji: '💬', path: '/chatapp',               color: '#0891b2' },
-  { label: 'Go Live',          sub: '1-on-1 · Classroom · Radio', emoji: '🔴', path: '/communications-hub',   color: '#ef4444' },
   { label: '364yhvh',          sub: 'Scripture & spiritual hub', emoji: '📅', path: '/364yhvh-days',          color: '#7c3aed' },
   { label: 'Let It Rain',      sub: 'Bestow blessings',          emoji: '🌧', path: 'action:let-it-rain',     color: '#6d28d9' },
   { label: 'Learn & Share',    sub: 'Explainer videos',          emoji: '🎬', path: '/learn-share',           color: '#10b981' },
@@ -389,6 +389,7 @@ export default function SeedFlowDashboard() {
   const [tip] = useState(GROWTH_TIPS[Math.floor(Math.random() * GROWTH_TIPS.length)])
   const [activePath, setActivePath] = useState('/dashboard')
   const [mobilePanel, setMobilePanel] = useState(null)
+  const [isLetItRainOpen, setIsLetItRainOpen] = useState(false)
   const intervalRef = useRef(null)
 
   // Live sunrise-based sacred date — ticks every minute, rolls at user's local sunrise.
@@ -939,7 +940,7 @@ export default function SeedFlowDashboard() {
                 e.preventDefault()
                 const action = item.path.split(':')[1]
                 if (action === 'let-it-rain') {
-                  window.dispatchEvent(new CustomEvent('s2g-open-let-it-rain'))
+                  setIsLetItRainOpen(true)
                 }
                 setMobilePanel(null)
               }
@@ -1120,17 +1121,13 @@ export default function SeedFlowDashboard() {
               🌱 Plant Seed
             </LivingButton>
           </Link>
-          <Link to="/grove-station" style={{ flex: 1, textDecoration: 'none' }}>
-            <LivingButton variant="live" height={50} borderRadius={14} fontSize={12} letterSpacing="1px">
-              Go Live
-            </LivingButton>
-          </Link>
           <Link to="/chatapp" style={{ flex: 1, textDecoration: 'none' }}>
             <LivingButton variant="share" height={50} borderRadius={14} fontSize={12} letterSpacing="1px">
               💬 Chat
             </LivingButton>
           </Link>
         </div>
+        <LetItRainPanel isOpen={isLetItRainOpen} onClose={() => setIsLetItRainOpen(false)} />
       </div>
     </>
   )
