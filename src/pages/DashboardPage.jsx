@@ -389,6 +389,7 @@ export default function SeedFlowDashboard() {
   const [tip] = useState(GROWTH_TIPS[Math.floor(Math.random() * GROWTH_TIPS.length)])
   const [activePath, setActivePath] = useState('/dashboard')
   const [mobilePanel, setMobilePanel] = useState(null)
+  const [isLetItRainOpen, setIsLetItRainOpen] = useState(false)
   const intervalRef = useRef(null)
 
   // Live sunrise-based sacred date — ticks every minute, rolls at user's local sunrise.
@@ -939,7 +940,7 @@ export default function SeedFlowDashboard() {
                 e.preventDefault()
                 const action = item.path.split(':')[1]
                 if (action === 'let-it-rain') {
-                  window.dispatchEvent(new CustomEvent('s2g-open-let-it-rain'))
+                  setIsLetItRainOpen(true)
                 }
                 setMobilePanel(null)
               }
@@ -1120,17 +1121,13 @@ export default function SeedFlowDashboard() {
               🌱 Plant Seed
             </LivingButton>
           </Link>
-          <Link to="/grove-station" style={{ flex: 1, textDecoration: 'none' }}>
-            <LivingButton variant="live" height={50} borderRadius={14} fontSize={12} letterSpacing="1px">
-              Go Live
-            </LivingButton>
-          </Link>
           <Link to="/chatapp" style={{ flex: 1, textDecoration: 'none' }}>
             <LivingButton variant="share" height={50} borderRadius={14} fontSize={12} letterSpacing="1px">
               💬 Chat
             </LivingButton>
           </Link>
         </div>
+        <LetItRainPanel isOpen={isLetItRainOpen} onClose={() => setIsLetItRainOpen(false)} />
       </div>
     </>
   )
