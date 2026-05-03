@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from "react"
-import { Link } from "react-router-dom"
+import { Link, useNavigate } from "react-router-dom"
 import { useAuth } from "../hooks/useAuth"
 import { Button } from "../components/ui/button"
 import { Progress } from "../components/ui/progress"
@@ -201,6 +201,7 @@ const TABS = [
 
 export default function BrowseOrchardsPage() {
   const { user } = useAuth()
+  const navigate = useNavigate()
   const { formatAmount } = useCurrency()
   const [orchards, setOrchards] = useState([])
   const [loading, setLoading] = useState(false)
@@ -234,7 +235,7 @@ export default function BrowseOrchardsPage() {
   useEffect(() => { fetchOrchards() }, [])
 
   useEffect(() => {
-    if (activeTab === 'orchards' || tribeSeeds.length || music.length || books.length || videos.length) return
+    if (activeTab === 'orchards') return
     let cancelled = false
     ;(async () => {
       setMediaLoading(true)
@@ -251,7 +252,7 @@ export default function BrowseOrchardsPage() {
             .order('created_at', { ascending: false })
             .limit(60),
           supabase.from('dj_music_tracks')
-            .select('id, track_title, music_genre, genre, created_at, dj_id, radio_djs:dj_id (user_id, profiles:user_id (first_name, last_name, display_name))')
+            .select('id, track_title, artist_name, music_genre, genre, cover_image_url, file_url, created_at')
             .eq('is_public', true)
             .order('created_at', { ascending: false })
             .limit(60),
@@ -261,7 +262,8 @@ export default function BrowseOrchardsPage() {
             .order('created_at', { ascending: false })
             .limit(60),
           supabase.from('community_videos')
-            .select('id, title, thumbnail_url, video_url, uploader_id, created_at, profiles:uploader_profile_id (first_name, last_name, display_name)')
+            .select('id, title, description, thumbnail_url, video_url, uploader_id, created_at, profiles:uploader_profile_id (first_name, last_name, display_name)')
+            .eq('status', 'approved')
             .order('created_at', { ascending: false })
             .limit(60),
         ])
@@ -277,14 +279,16 @@ export default function BrowseOrchardsPage() {
         }))
         setTribeSeeds([...seedsFromTable, ...seedsFromOrchards])
         setMusic((musicRes.data || []).map(m => ({
-          id: m.id, title: m.track_title, image: null, emoji: '🎵',
-          sower: sowerName(m.radio_djs?.profiles), link: '/music-library',
+          id: m.id, title: m.track_title, image: m.cover_image_url || null, emoji: '🎵',
+          sower: m.artist_name || 'Tribe Music', link: '/music-library',
         })))
         setBooks((booksRes.data || []).map(b => ({
           id: b.id, title: b.title, image: b.cover_image_url || (b.image_urls && b.image_urls[0]) || null, emoji: '📚',
-          sower: sowerName(b.profiles), link: `/seed/${b.id}`,
+          sower: sowerName(b.profiles), link: '/my-s2g-library',
         })))
-        setVideos((videosRes.data || []).map(v => ({
+        setVideos((videosRes.data || [])
+          .filter(v => !String(v.title || '').toLowerCase().includes('broadcast') && !String(v.description || '').toLowerCase().includes('auto-imported from orchard upload'))
+          .map(v => ({
           id: v.id, title: v.title, image: v.thumbnail_url || null, emoji: '🎬',
           sower: sowerName(v.profiles), link: '/community-videos',
         })))
@@ -349,6 +353,14 @@ export default function BrowseOrchardsPage() {
         }
         .firefly { position:absolute; width:4px; height:4px; border-radius:50%; background:#fbbf24; box-shadow:0 0 8px #fbbf24; animation: fireflyDrift 6s linear infinite; }
       `}</style>
+
+      <button
+        type="button"
+        onClick={() => navigate(-1)}
+        style={{ position: 'sticky', top: 10, left: 20, zIndex: 120, margin: '12px 0 0 20px', display: 'inline-flex', alignItems: 'center', gap: 8, padding: '12px 18px', borderRadius: 14, border: '1px solid rgba(16,185,129,0.35)', background: 'rgba(2,6,23,0.92)', color: '#f1f5f9', fontWeight: 800, fontSize: 15, cursor: 'pointer', boxShadow: '0 10px 30px rgba(0,0,0,0.35)' }}
+      >
+        ← Go Back
+      </button>
 
       {/* ── Buzzing tribal welcome banner ── */}
       <div style={{
