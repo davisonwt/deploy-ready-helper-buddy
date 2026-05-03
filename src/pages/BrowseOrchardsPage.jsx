@@ -518,11 +518,6 @@ export default function BrowseOrchardsPage() {
             🌱 Plant Seed
           </LivingButton>
         </Link>
-        <Link to="/grove-station" style={{ flex: 1, textDecoration: 'none' }}>
-          <LivingButton variant="live" height={48} borderRadius={14} fontSize={12} letterSpacing="1px">
-            Go Live
-          </LivingButton>
-        </Link>
         <Link to="/chatapp" style={{ flex: 1, textDecoration: 'none' }}>
           <LivingButton variant="share" height={48} borderRadius={14} fontSize={12} letterSpacing="1px">
             💬 Chat
