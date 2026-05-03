@@ -8,7 +8,7 @@ import { Badge } from '@/components/ui/badge'
 import { Progress } from '@/components/ui/progress'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Link, useNavigate } from 'react-router-dom'
-import { Sprout, Plus, Eye, Users, TrendingUp, Calendar, DollarSign, Edit, Share2, MapPin, Trash2, Sparkles, Loader2, Radio } from 'lucide-react'
+import { Sprout, Plus, Eye, Users, TrendingUp, Calendar, DollarSign, Edit, Share2, MapPin, Trash2, Sparkles, Loader2, Radio, ArrowLeft } from 'lucide-react'
 import { toast } from "sonner"
 import { supabase } from '@/integrations/supabase/client'
 import { formatCurrency } from '../utils/formatters'
@@ -225,6 +225,16 @@ export default function MyOrchardsPage() {
       </div>
 
       <div className='relative z-10'>
+        <div className='sticky top-3 z-50 px-4 pt-3'>
+          <button
+            type='button'
+            onClick={() => navigate(-1)}
+            className='inline-flex items-center gap-2 rounded-xl border border-white/30 bg-background/90 px-4 py-3 text-sm font-extrabold text-foreground shadow-2xl backdrop-blur-md hover:bg-card'
+          >
+            <ArrowLeft className='h-4 w-4' />
+            Go Back
+          </button>
+        </div>
         <div className='relative overflow-hidden border-b border-white/20 backdrop-blur-md bg-white/10'>
           <div className='relative container mx-auto px-4 py-16'>
             <motion.div
