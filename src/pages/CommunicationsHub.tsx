@@ -40,7 +40,7 @@ export default function CommunicationsHub() {
 
   useEffect(() => {
     let cancelled = false;
-    supabase.from('profiles').select('id, user_id, display_name, first_name, last_name, avatar_url').limit(36).then(({ data }) => {
+    supabase.from('profiles' as any).select('id, user_id, display_name, first_name, last_name, avatar_url').limit(36).then(({ data }) => {
       if (!cancelled) setProfiles((data || []).filter((p: any) => p.user_id && p.user_id !== user?.id));
     });
     return () => { cancelled = true; };
@@ -72,15 +72,15 @@ export default function CommunicationsHub() {
 
       if (kind === 'one_on_one') {
         const slug = `${title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')}-${Date.now()}`;
-        const { data, error } = await supabase.from('live_rooms').insert({ name: title.trim(), slug, description, max_participants: 2, created_by: user.id, is_active: true }).select('id').single();
+        const { data, error } = await supabase.from('live_rooms' as any).insert({ name: title.trim(), slug, description, max_participants: 2, created_by: user.id, is_active: true }).select('id').single();
         if (error) throw error;
         actionUrl = `/live-rooms?room=${data.id}`;
       } else if (kind === 'community_chat') {
-        const { data, error } = await supabase.from('chat_rooms').insert({ name: title.trim(), description, room_type: 'group', created_by: user.id, is_active: true, metadata: { scheduled_at: when, files: uploaded, price } }).select('id').single();
+        const { data, error } = await supabase.from('chat_rooms' as any).insert({ name: title.trim(), description, room_type: 'group', created_by: user.id, is_active: true, metadata: { scheduled_at: when, files: uploaded, price } }).select('id').single();
         if (error) throw error;
         actionUrl = `/chatapp?room=${data.id}`;
       } else if (kind === 'classroom') {
-        const { data, error } = await supabase.from('classroom_sessions').insert({ title: title.trim(), description, scheduled_at: when, instructor_id: user.id, is_free: isFree, session_fee: price, status: 'scheduled' }).select('id').single();
+        const { data, error } = await supabase.from('classroom_sessions' as any).insert({ title: title.trim(), description, scheduled_at: when, instructor_id: user.id, is_free: isFree, session_fee: price, status: 'scheduled' }).select('id').single();
         if (error) throw error;
         actionUrl = `/orchard-alive?classroom=${data.id}`;
       } else if (kind === 'skilldrop') {
