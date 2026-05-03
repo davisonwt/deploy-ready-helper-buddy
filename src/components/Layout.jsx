@@ -114,7 +114,14 @@ function Layout({ children }) {
       window.removeEventListener('jitsi-start-call', handleJitsiStart)
     }
   }, [])
-  
+
+  // Listen for global "Let It Rain" open event (dashboard sidebar)
+  useEffect(() => {
+    const open = () => setIsLetItRainOpen(true)
+    window.addEventListener('s2g-open-let-it-rain', open)
+    return () => window.removeEventListener('s2g-open-let-it-rain', open)
+  }, [])
+
   // Update theme every 2 hours
   useEffect(() => {
     const themeInterval = setInterval(() => {

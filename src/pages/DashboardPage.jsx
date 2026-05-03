@@ -77,14 +77,14 @@ const SEEDS = [
 ]
 
 const NAV = [
-  { label: 'Feed',             sub: 'Community updates',         emoji: '🏠', path: '/dashboard',            color: '#2563eb' },
+  { label: 'SeedFlow',         sub: 'Community updates',         emoji: '🏠', path: '/dashboard',            color: '#2563eb' },
   { label: 'My Garden',        sub: 'Your seeds & orchards',     emoji: '🌱', path: '/my-orchards',           color: '#16a34a' },
   { label: 'Tribal Gardens',   sub: 'All tribal seeds & orchards', emoji: '🌳', path: '/browse-orchards',     color: '#0d9488' },
   { label: 'ChatApp',          sub: 'Tribe messaging',           emoji: '💬', path: '/chatapp',               color: '#0891b2' },
+  { label: 'Go Live',          sub: '1-on-1 · Classroom · Radio', emoji: '🔴', path: '/communications-hub',   color: '#ef4444' },
   { label: '364yhvh',          sub: 'Scripture & spiritual hub', emoji: '📅', path: '/364yhvh-days',          color: '#7c3aed' },
-  { label: 'Let It Rain',      sub: 'Bestow blessings',          emoji: '🌧', path: '/let-it-rain',           color: '#6d28d9' },
+  { label: 'Let It Rain',      sub: 'Bestow blessings',          emoji: '🌧', path: 'action:let-it-rain',     color: '#6d28d9' },
   { label: 'Learn & Share',    sub: 'Explainer videos',          emoji: '🎬', path: '/learn-share',           color: '#10b981' },
-  { label: 'Directory',        sub: 'Find your tribe',           emoji: '🌍', path: '/wandering-directory',   color: '#6366f1' },
   { label: 'Wandering Hearts', sub: 'Tribal connections',        emoji: '💚', path: '/tribal-hearts',         color: '#dc2626' },
   { label: 'My Tribe',         sub: 'Your invitation code & tribe', emoji: '🌿', path: '/my-tribe',           color: '#22c55e' },
   { label: "Gosat's",          sub: 'Elder management',          emoji: '🏛', path: '/admin',                 color: '#7c3aed' },
@@ -932,7 +932,30 @@ export default function SeedFlowDashboard() {
 
           <nav style={styles.nav}>
             {NAV.map(item => {
-              const isActive = activePath === item.path
+              const isAction = typeof item.path === 'string' && item.path.startsWith('action:')
+              const isActive = !isAction && activePath === item.path
+              const handleAction = (e) => {
+                if (!isAction) return
+                e.preventDefault()
+                const action = item.path.split(':')[1]
+                if (action === 'let-it-rain') {
+                  window.dispatchEvent(new CustomEvent('s2g-open-let-it-rain'))
+                }
+                setMobilePanel(null)
+              }
+              if (isAction) {
+                return (
+                  <a key={item.label} href="#" className="nav-link"
+                    onClick={handleAction}
+                    style={styles.navItem(false, item.color)}>
+                    <div style={styles.navEmoji(false, item.color)}>{item.emoji}</div>
+                    <div>
+                      <div style={styles.navLabel}>{item.label}</div>
+                      <div style={styles.navSub}>{item.sub}</div>
+                    </div>
+                  </a>
+                )
+              }
               return (
                 <Link key={item.label} to={item.path} className="nav-link"
                   onClick={() => { setActivePath(item.path); setMobilePanel(null) }}

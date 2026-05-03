@@ -239,9 +239,15 @@ export default function BrowseOrchardsPage() {
     ;(async () => {
       setMediaLoading(true)
       try {
-        const [seedsRes, musicRes, booksRes, videosRes] = await Promise.all([
+        const [seedsRes, orchardSeedsRes, musicRes, booksRes, videosRes] = await Promise.all([
           supabase.from('seeds')
             .select('id, title, description, images, gifter_id, created_at, profiles:gifter_id (first_name, last_name, display_name)')
+            .order('created_at', { ascending: false })
+            .limit(60),
+          // Also include all tribe orchards as seeds (every orchard IS a seed)
+          supabase.from('orchards')
+            .select('id, title, description, images, user_id, created_at, profiles:profile_id (first_name, last_name, display_name)')
+            .eq('status', 'active')
             .order('created_at', { ascending: false })
             .limit(60),
           supabase.from('dj_music_tracks')
@@ -261,10 +267,15 @@ export default function BrowseOrchardsPage() {
         ])
         if (cancelled) return
         const sowerName = (p) => p?.display_name || `${p?.first_name || ''} ${p?.last_name || ''}`.trim() || 'Anonymous Sower'
-        setTribeSeeds((seedsRes.data || []).map(s => ({
-          id: s.id, title: s.title, image: (s.images && s.images[0]) || null, emoji: '🌱',
+        const seedsFromTable = (seedsRes.data || []).map(s => ({
+          id: `seed-${s.id}`, title: s.title, image: (s.images && s.images[0]) || null, emoji: '🌱',
           sower: sowerName(s.profiles), link: `/seed/${s.id}`,
-        })))
+        }))
+        const seedsFromOrchards = (orchardSeedsRes.data || []).map(o => ({
+          id: `orch-${o.id}`, title: o.title, image: (o.images && o.images[0]) || null, emoji: '🌳',
+          sower: sowerName(o.profiles), link: `/orchard/${o.id}`,
+        }))
+        setTribeSeeds([...seedsFromTable, ...seedsFromOrchards])
         setMusic((musicRes.data || []).map(m => ({
           id: m.id, title: m.track_title, image: null, emoji: '🎵',
           sower: sowerName(m.radio_djs?.profiles), link: '/music-library',
