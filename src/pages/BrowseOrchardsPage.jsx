@@ -242,55 +242,76 @@ export default function BrowseOrchardsPage() {
       try {
         const [seedsRes, orchardSeedsRes, musicRes, booksRes, videosRes] = await Promise.all([
           supabase.from('seeds')
-            .select('id, title, description, images, gifter_id, created_at, profiles:gifter_id (first_name, last_name, display_name)')
+            .select('id, title, description, images, gifter_id, created_at')
             .order('created_at', { ascending: false })
             .limit(60),
           // Also include all tribe orchards as seeds (every orchard IS a seed)
           supabase.from('orchards')
-            .select('id, title, description, images, user_id, created_at, profiles:profile_id (first_name, last_name, display_name)')
+            .select('id, title, description, images, user_id, profile_id, created_at')
             .eq('status', 'active')
             .order('created_at', { ascending: false })
             .limit(60),
           supabase.from('dj_music_tracks')
-            .select('id, track_title, artist_name, music_genre, genre, cover_image_url, file_url, created_at')
+            .select('id, track_title, artist_name, music_genre, genre, cover_image_url, file_url, dj_id, upload_date, created_at')
             .eq('is_public', true)
-            .order('created_at', { ascending: false })
+            .order('upload_date', { ascending: false })
             .limit(60),
           supabase.from('sower_books')
-            .select('id, title, cover_image_url, image_urls, user_id, created_at, profiles:user_id (first_name, last_name, display_name)')
+            .select('id, title, cover_image_url, image_urls, user_id, sower_id, created_at')
+            .eq('is_available', true)
             .order('created_at', { ascending: false })
             .limit(60),
           supabase.from('community_videos')
-            .select('id, title, description, thumbnail_url, video_url, uploader_id, created_at, profiles:uploader_profile_id (first_name, last_name, display_name)')
-            .eq('status', 'approved')
+            .select('id, title, description, thumbnail_url, video_url, uploader_id, uploader_profile_id, created_at')
+            .in('status', ['approved', 'published'])
             .order('created_at', { ascending: false })
             .limit(60),
         ])
         if (cancelled) return
+        const djIds = (musicRes.data || []).map(m => m.dj_id).filter(Boolean)
+        const { data: djs } = djIds.length
+          ? await supabase.from('radio_djs').select('id, user_id, dj_name, avatar_url').in('id', djIds)
+          : { data: [] }
+        const djMap = new Map((djs || []).map(d => [d.id, d]))
+        const profileIds = Array.from(new Set([
+          ...(seedsRes.data || []).map(s => s.gifter_id),
+          ...(orchardSeedsRes.data || []).flatMap(o => [o.user_id, o.profile_id]),
+          ...(booksRes.data || []).flatMap(b => [b.user_id, b.sower_id]),
+          ...(videosRes.data || []).flatMap(v => [v.uploader_id, v.uploader_profile_id]),
+          ...(djs || []).map(d => d.user_id),
+        ].filter(Boolean)))
+        const { data: profiles } = profileIds.length
+          ? await supabase.from('profiles').select('id, user_id, first_name, last_name, display_name').or(`id.in.(${profileIds.join(',')}),user_id.in.(${profileIds.join(',')})`)
+          : { data: [] }
+        const profileMap = new Map()
+        ;(profiles || []).forEach(p => { if (p.id) profileMap.set(p.id, p); if (p.user_id) profileMap.set(p.user_id, p) })
         const sowerName = (p) => p?.display_name || `${p?.first_name || ''} ${p?.last_name || ''}`.trim() || 'Anonymous Sower'
         const seedsFromTable = (seedsRes.data || []).map(s => ({
           id: `seed-${s.id}`, title: s.title, image: (s.images && s.images[0]) || null, emoji: '🌱',
-          sower: sowerName(s.profiles), link: `/seed/${s.id}`,
+          sower: sowerName(profileMap.get(s.gifter_id)), link: '/orchard-alive', created_at: s.created_at,
         }))
         const seedsFromOrchards = (orchardSeedsRes.data || []).map(o => ({
           id: `orch-${o.id}`, title: o.title, image: (o.images && o.images[0]) || null, emoji: '🌳',
-          sower: sowerName(o.profiles), link: `/orchard/${o.id}`,
+          sower: sowerName(profileMap.get(o.user_id) || profileMap.get(o.profile_id)), link: `/orchard/${o.id}`, created_at: o.created_at,
         }))
-        setTribeSeeds([...seedsFromTable, ...seedsFromOrchards])
-        setMusic((musicRes.data || []).map(m => ({
+        const musicItems = (musicRes.data || []).map(m => ({
           id: m.id, title: m.track_title, image: m.cover_image_url || null, emoji: '🎵',
-          sower: m.artist_name || 'Tribe Music', link: '/music-library',
-        })))
-        setBooks((booksRes.data || []).map(b => ({
+          sower: m.artist_name || djMap.get(m.dj_id)?.dj_name || 'Tribe Music', link: '/music-library', created_at: m.upload_date || m.created_at,
+        }))
+        const bookItems = (booksRes.data || []).map(b => ({
           id: b.id, title: b.title, image: b.cover_image_url || (b.image_urls && b.image_urls[0]) || null, emoji: '📚',
-          sower: sowerName(b.profiles), link: '/my-s2g-library',
-        })))
-        setVideos((videosRes.data || [])
+          sower: sowerName(profileMap.get(b.user_id) || profileMap.get(b.sower_id)), link: '/my-s2g-library', created_at: b.created_at,
+        }))
+        const videoItems = (videosRes.data || [])
           .filter(v => !String(v.title || '').toLowerCase().includes('broadcast') && !String(v.description || '').toLowerCase().includes('auto-imported from orchard upload'))
           .map(v => ({
           id: v.id, title: v.title, image: v.thumbnail_url || null, emoji: '🎬',
-          sower: sowerName(v.profiles), link: '/community-videos',
-        })))
+          sower: sowerName(profileMap.get(v.uploader_id) || profileMap.get(v.uploader_profile_id)), link: '/community-videos', created_at: v.created_at,
+        }))
+        setTribeSeeds([...seedsFromTable, ...seedsFromOrchards, ...musicItems, ...bookItems, ...videoItems].sort((a, b) => new Date(b.created_at) - new Date(a.created_at)))
+        setMusic(musicItems)
+        setBooks(bookItems)
+        setVideos(videoItems)
       } catch (e) {
         console.error('media load error', e)
       } finally {
