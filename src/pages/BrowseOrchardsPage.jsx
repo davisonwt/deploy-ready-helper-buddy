@@ -258,7 +258,6 @@ export default function BrowseOrchardsPage() {
             .limit(60),
           supabase.from('sower_books')
             .select('id, title, cover_image_url, image_urls, user_id, created_at, profiles:user_id (first_name, last_name, display_name)')
-            .eq('is_public', true)
             .order('created_at', { ascending: false })
             .limit(60),
           supabase.from('community_videos')
