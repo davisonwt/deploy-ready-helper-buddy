@@ -11,7 +11,7 @@ export const YHVHWheelCalendar = ({ size = 720 }: { size?: number }) => {
   const center = safeSize / 2;
   const dayAngle = ((sacred.dayOfYear - 1) / 364) * 360 - 90;
   const weekAngle = ((sacred.weekDay - 1) / 7) * 360 - 90;
-  const partAngle = (((sacred.partOfDay || 1) - 1) / 18) * 360 - 90;
+  const partAngle = ((new Date().getHours() % 18) / 18) * 360 - 90;
   const polar = (radius: number, angle: number) => ({
     x: center + radius * Math.cos((angle * Math.PI) / 180),
     y: center + radius * Math.sin((angle * Math.PI) / 180),
