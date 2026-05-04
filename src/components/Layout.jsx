@@ -240,6 +240,7 @@ function Layout({ children }) {
   if (isImmersive) {
     return (
       <div className="min-h-screen" style={{ background: currentTheme.background }}>
+        <SacredDayBanner />
         {children}
       </div>
     );
@@ -247,6 +248,7 @@ function Layout({ children }) {
 
   return (
     <div className="min-h-screen" style={{ background: currentTheme.background }}>
+      <SacredDayBanner />
       {/* Navigation Header */}
       <header 
         className="backdrop-blur-sm border-b sticky top-0 z-50"
