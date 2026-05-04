@@ -448,13 +448,53 @@ export default function TribalAliveFeedPage() {
         // `products` (type=music) and `dj_music_tracks`. Keep the first
         // occurrence per (owner, normalized title) for music/audio kinds.
         const seenMusic = new Set<string>();
-        const merged = mergedRaw.filter((it) => {
+        const deduped = mergedRaw.filter((it) => {
           if (it.kind !== 'music') return true;
           const key = `${it.sower_id || 'anon'}::${(it.title || '').trim().toLowerCase()}`;
           if (seenMusic.has(key)) return false;
           seenMusic.add(key);
           return true;
         });
+
+        // Weighted interleave by sower: the sower with the most seeds gets
+        // a bigger slice of each round (e.g. 3 of theirs, then 1-2 of the
+        // next, then 1 of the smallest), so the feed feels alive with the
+        // tribe rather than dominated by one voice OR starved of the most
+        // active sower.
+        const buckets = new Map<string, FeedItem[]>();
+        deduped.forEach((it) => {
+          const k = it.sower_id || `__anon-${it.kind}`;
+          if (!buckets.has(k)) buckets.set(k, []);
+          buckets.get(k)!.push(it);
+        });
+        const ranked = Array.from(buckets.entries())
+          .sort((a, b) => b[1].length - a[1].length); // most seeds first
+
+        const max = ranked[0]?.[1].length || 1;
+        const weightFor = (count: number) => {
+          const ratio = count / max;
+          if (ratio >= 0.66) return 3;
+          if (ratio >= 0.33) return 2;
+          return 1;
+        };
+
+        const merged: FeedItem[] = [];
+        const cursors = new Map<string, number>(ranked.map(([k]) => [k, 0]));
+        let drained = false;
+        while (!drained) {
+          drained = true;
+          for (const [k, list] of ranked) {
+            const take = weightFor(list.length);
+            const start = cursors.get(k) || 0;
+            const slice = list.slice(start, start + take);
+            if (slice.length) {
+              merged.push(...slice);
+              cursors.set(k, start + slice.length);
+              drained = false;
+            }
+          }
+        }
+
 
         setItems(merged);
       } catch (e) {
