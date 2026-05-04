@@ -13,6 +13,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import IncomingCallOverlay from "./components/chat/IncomingCallOverlay";
 import AudioUnlocker from "./components/audio/AudioUnlocker";
 import SoundUnlockBanner from "./components/audio/SoundUnlockBanner";
+import SacredDayBanner from "./components/SacredDayBanner";
 
 const EnhancedAnalyticsDashboard = lazy(() => import('./components/admin/EnhancedAnalyticsDashboard'));
 const UserManagementDashboard = lazy(() => import('./components/admin/UserManagementDashboard'));
@@ -188,6 +189,7 @@ const App = () => (
                 <AudioUnlocker />
                 <SoundUnlockBanner />
                 <NotificationBanner />
+                <SacredDayBanner />
                 <IncomingCallOverlay />
                 <ErrorBoundary>
                     <Suspense fallback={<LoadingFallback />}>
