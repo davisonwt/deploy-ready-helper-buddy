@@ -50,6 +50,7 @@ const CommunityChatButton = lazy(() => import("./community/CommunityChatButton")
 import { useAppContext } from "../contexts/AppContext"
 import { getCurrentTheme } from '@/utils/dashboardThemes'
 import { JitsiVideoWindow, startJitsiCall } from "./video/JitsiVideoWindow"
+import SacredDayBanner from "./SacredDayBanner"
 
 // Layout component as a standard function declaration to avoid any HOC/memo pitfalls
 function Layout({ children }) {
@@ -239,6 +240,7 @@ function Layout({ children }) {
   if (isImmersive) {
     return (
       <div className="min-h-screen" style={{ background: currentTheme.background }}>
+        <SacredDayBanner />
         {children}
       </div>
     );
@@ -246,6 +248,7 @@ function Layout({ children }) {
 
   return (
     <div className="min-h-screen" style={{ background: currentTheme.background }}>
+      <SacredDayBanner />
       {/* Navigation Header */}
       <header 
         className="backdrop-blur-sm border-b sticky top-0 z-50"
