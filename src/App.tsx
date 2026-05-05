@@ -397,12 +397,12 @@ const App = () => (
               } />
               <Route path="/admin/dashboard" element={
                 <ProtectedRoute allowedRoles={['admin', 'gosat']}>
-                  <Layout><AdminDashboardPage /></Layout>
+                  <AdminDashboardPage />
                 </ProtectedRoute>
               } />
               <Route path="/admin" element={
                 <ProtectedRoute allowedRoles={['admin', 'gosat']}>
-                  <Layout><Suspense fallback={<div>Loading...</div>}><AdminDashboardPage /></Suspense></Layout>
+                  <Suspense fallback={<div>Loading...</div>}><AdminDashboardPage /></Suspense>
                 </ProtectedRoute>
               } />
               <Route path="/admin/radio" element={
