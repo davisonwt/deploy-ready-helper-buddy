@@ -103,10 +103,11 @@ export default function MyTribePage() {
   const shareYouTube   = () => copyForPaste("YouTube");
 
   return (
-    <div className="min-h-screen bg-background text-foreground">
-      <div className="max-w-5xl mx-auto px-4 py-6 space-y-6">
-        <Link to="/dashboard" className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground">
-          <ArrowLeft size={16} /> Back to Dashboard
+    <div className="min-h-screen bg-gradient-to-br from-slate-950 via-emerald-950 to-indigo-950 text-foreground relative">
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_15%,rgba(16,185,129,0.18),transparent_55%),radial-gradient(circle_at_80%_70%,rgba(168,85,247,0.16),transparent_55%),radial-gradient(circle_at_50%_95%,rgba(56,189,248,0.14),transparent_55%)] pointer-events-none" />
+      <div className="relative max-w-5xl mx-auto px-4 py-6 space-y-6">
+        <Link to="/dashboard" className="inline-flex items-center gap-2 text-sm text-emerald-300 hover:text-emerald-200">
+          <ArrowLeft size={16} /> Go Back
         </Link>
 
         <header className="space-y-2">
