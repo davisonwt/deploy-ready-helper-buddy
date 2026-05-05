@@ -115,13 +115,13 @@ export default function CommunicationsHub() {
       <div className="relative mx-auto max-w-7xl px-4 py-5">
         <Button variant="ghost" onClick={() => navigate('/dashboard')} className="mb-4 gap-2 text-cyan-300 hover:text-cyan-200 hover:bg-cyan-500/10"><ArrowLeft className="h-4 w-4" /> Go Back</Button>
         <section className="grid gap-5 lg:grid-cols-[360px_1fr]">
-          <div className="rounded-lg border border-border bg-card/80 p-4 shadow-2xl">
+          <div className="rounded-lg border border-cyan-400/30 bg-gradient-to-br from-slate-900/90 via-indigo-950/70 to-slate-900/90 backdrop-blur p-4 shadow-[0_0_50px_rgba(56,189,248,0.18)]">
             <div className="mb-4 flex items-center gap-3"><MessageCircle className="h-7 w-7 text-primary" /><h1 className="text-2xl font-black">ChatApp Go-Live</h1></div>
             <div className="grid gap-2">
               {LAUNCH_TYPES.map(t => <button key={t.id} onClick={() => setKind(t.id)} className={`flex items-center justify-between rounded-md border px-4 py-3 text-left font-bold transition ${kind === t.id ? 'border-primary bg-primary text-primary-foreground' : 'border-border bg-secondary hover:bg-accent'}`}><span className="flex items-center gap-3">{t.icon}{t.label}</span>{kind === t.id && <Check className="h-4 w-4" />}</button>)}
             </div>
           </div>
-          <motion.div key={kind} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="rounded-lg border border-border bg-card/80 p-5 shadow-2xl">
+          <motion.div key={kind} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="rounded-lg border border-fuchsia-400/30 bg-gradient-to-br from-slate-900/90 via-violet-950/70 to-slate-900/90 backdrop-blur p-5 shadow-[0_0_50px_rgba(217,70,239,0.18)]">
             <div className="mb-5 flex flex-wrap items-center justify-between gap-3"><h2 className="flex items-center gap-3 text-3xl font-black">{active.icon}{active.label}</h2><span className="rounded-md bg-primary/15 px-3 py-1 text-sm font-bold text-primary">ready to push live</span></div>
             <div className="grid gap-4 md:grid-cols-2">
               <Input value={title} onChange={e => setTitle(e.target.value)} placeholder="Session title" />
