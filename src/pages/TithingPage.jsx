@@ -17,11 +17,13 @@ import {
   Gift,
   Star,
   Sparkles,
-  HandHeart
+  HandHeart,
+  ArrowLeft
 } from "lucide-react"
 
 export default function TithingPage() {
   const { user } = useAuth()
+  const navigate = useNavigate()
   const { billingInfo, hasCompleteBillingInfo } = useBillingInfo()
   const { addToBasket } = useBasket()
   const [amount, setAmount] = useState("")
@@ -75,15 +77,16 @@ export default function TithingPage() {
   const suggestedAmounts = [50, 100, 200, 500, 1000]
 
   return (
-    <div className="min-h-screen relative" style={{ backgroundColor: '#001f3f' }}>
-      
-      {/* Solid dark overlay for better readability */}
-      <div className="absolute inset-0 bg-gradient-to-br from-black/80 via-black/70 to-black/80"></div>
+    <div className="min-h-screen relative bg-gradient-to-br from-slate-950 via-indigo-950 to-fuchsia-950">
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_20%,rgba(236,72,153,0.18),transparent_55%),radial-gradient(circle_at_80%_30%,rgba(56,189,248,0.18),transparent_55%),radial-gradient(circle_at_50%_85%,rgba(168,85,247,0.18),transparent_55%)] pointer-events-none" />
       
       {/* Content */}
-      <div className="relative z-10">
+      <div className="relative z-10 px-4 pt-5">
+        <Button variant="ghost" onClick={() => navigate('/dashboard')} className="mb-4 gap-2 text-pink-200 hover:text-pink-100 hover:bg-pink-500/10">
+          <ArrowLeft className="h-4 w-4" /> Go Back
+        </Button>
         {/* Welcome Section with Profile Picture */}
-        <div className="max-w-4xl mx-auto p-8 rounded-2xl border shadow-2xl mb-8 mt-4 bg-white/90">
+        <div className="max-w-4xl mx-auto p-8 rounded-2xl border border-pink-400/30 shadow-[0_0_60px_rgba(236,72,153,0.18)] mb-8 mt-2 bg-gradient-to-br from-slate-900/90 via-fuchsia-950/60 to-slate-900/90 backdrop-blur">
           <div className="flex items-center space-x-6">
             <div className="w-20 h-20 rounded-full overflow-hidden border-4 border-nav-tithing shadow-lg">
               {user?.avatar_url ? (

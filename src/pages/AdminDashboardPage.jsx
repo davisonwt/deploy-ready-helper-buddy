@@ -23,6 +23,7 @@ import {
   TreePine,
   Eye,
   ArrowRight,
+  ArrowLeft,
   Check,
   X,
   Radio
@@ -335,18 +336,22 @@ export default function AdminDashboardPage() {
   }
 
   return (
-    <div className="min-h-screen bg-background">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-indigo-950 text-foreground">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+        <Button variant="ghost" onClick={() => navigate('/dashboard')} className="mb-4 gap-2 text-cyan-300 hover:text-cyan-200 hover:bg-cyan-500/10">
+          <ArrowLeft className="h-4 w-4" /> Go Back
+        </Button>
         {/* Header */}
-        <div className="max-w-4xl mx-auto p-8 rounded-2xl border shadow-2xl mb-8 bg-card text-card-foreground">
-          <div className="text-center">
+        <div className="relative overflow-hidden max-w-4xl mx-auto p-8 rounded-2xl border border-cyan-500/30 shadow-[0_0_60px_rgba(34,211,238,0.15)] mb-8 bg-gradient-to-br from-slate-900/90 via-indigo-950/70 to-slate-900/90 backdrop-blur">
+          <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_20%,rgba(34,211,238,0.15),transparent_60%),radial-gradient(circle_at_70%_80%,rgba(168,85,247,0.12),transparent_60%)] pointer-events-none" />
+          <div className="relative text-center">
             <div className="flex justify-center mb-4">
-              <div className="p-4 bg-primary/20 rounded-full">
-                <Settings className="h-12 w-12 text-primary" />
+              <div className="p-4 bg-cyan-500/20 rounded-full ring-2 ring-cyan-400/40 shadow-[0_0_30px_rgba(34,211,238,0.4)] animate-pulse">
+                <Settings className="h-12 w-12 text-cyan-300" />
               </div>
             </div>
-            <h1 className="text-3xl font-bold text-primary mb-2">Admin Dashboard</h1>
-            <p className="text-muted-foreground">Comprehensive management hub</p>
+            <h1 className="text-4xl font-black bg-gradient-to-r from-cyan-300 via-sky-300 to-violet-300 bg-clip-text text-transparent mb-2">Gosat's — Admin Dashboard</h1>
+            <p className="text-cyan-200/70">Elder management · Comprehensive hub</p>
           </div>
         </div>
 
