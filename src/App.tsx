@@ -268,10 +268,10 @@ const App = () => (
               <ProtectedRoute><WanderingDirectoryPage /></ProtectedRoute>
               } />
               <Route path="/tithing" element={
-                <ProtectedRoute><Layout><TithingPage /></Layout></ProtectedRoute>
+                <ProtectedRoute><TithingPage /></ProtectedRoute>
               } />
               <Route path="/tithing-2" element={
-                <ProtectedRoute><Layout><TithingPage /></Layout></ProtectedRoute>
+                <ProtectedRoute><TithingPage /></ProtectedRoute>
               } />
               <Route path="/free-will-gifting" element={
                 <ProtectedRoute><Layout><FreeWillGiftingPage /></Layout></ProtectedRoute>
@@ -280,7 +280,7 @@ const App = () => (
                 <ProtectedRoute><Layout><SeedSubmissionPage /></Layout></ProtectedRoute>
               } />
               <Route path="/364yhvh-days" element={
-                <ProtectedRoute><Layout><Yhvh364Page /></Layout></ProtectedRoute>
+                <ProtectedRoute><Yhvh364Page /></ProtectedRoute>
               } />
               <Route path="/364yhvh-orchards" element={
                 <ProtectedRoute><Layout><YhvhOrchardsPage /></Layout></ProtectedRoute>
