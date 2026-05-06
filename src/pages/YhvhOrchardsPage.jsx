@@ -80,7 +80,6 @@ export default function YhvhOrchardsPage() {
   const [orchards, setOrchards] = useState([])
   const [loading, setLoading] = useState(true)
   const [selectedCategory, setSelectedCategory] = useState('all')
-  const navigate = useNavigate()
 
   const categories = [
     "The Gift of Accessories", 
