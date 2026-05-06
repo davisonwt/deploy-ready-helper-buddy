@@ -1,4 +1,4 @@
-import { Lock } from "lucide-react";
+import { Lock, Leaf, Nut } from "lucide-react";
 import type { CompanionEntitlement } from "@/hooks/useCompanions";
 
 interface Props {
@@ -50,12 +50,20 @@ export default function CompanionCard({ c, onOpen }: Props) {
       </div>
       <p className="text-sm text-slate-400 line-clamp-2">{c.summary}</p>
       <div className="flex items-center justify-between mt-auto pt-2">
-        <span className="text-xs text-slate-500">
-          {locked
-            ? "Not in your tier"
-            : unlimited
-            ? "Unlimited this month"
-            : `${c.remaining ?? 0} of ${c.monthly_quota} left`}
+        <span className="text-xs text-slate-500 inline-flex items-center gap-1.5">
+          {locked ? (
+            <>
+              <Nut className="h-3.5 w-3.5 text-amber-400/80" />
+              Not in your tier
+            </>
+          ) : (
+            <>
+              <Leaf className="h-3.5 w-3.5 text-emerald-300/90" />
+              {unlimited
+                ? "Unlimited this month"
+                : `${c.remaining ?? 0} of ${c.monthly_quota} left`}
+            </>
+          )}
         </span>
         <button
           onClick={onOpen}
