@@ -83,6 +83,7 @@ const PremiumRoomsPage = lazy(() => import("./pages/PremiumRoomsPage"));
 const CommunityVideosPage = lazy(() => import("./pages/CommunityVideosPage"));
 const MarketingVideosGallery = lazy(() => import("./pages/MarketingVideosGallery.jsx"));
 const AIAssistantPage = lazy(() => import("./pages/AIAssistantPage"));
+const CompanionsHubPage = lazy(() => import("./pages/CompanionsHubPage"));
 const CommunityOfferingPage = lazy(() => import("./pages/CommunityOfferingPage"));
 const TestBasketPage = lazy(() => import("./pages/TestBasketPage"));
 const GroveStationPage = lazy(() => import("./pages/GroveStationPage"));
