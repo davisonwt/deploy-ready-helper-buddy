@@ -453,12 +453,26 @@ export default function BrowseOrchardsPage() {
         <div style={{ marginBottom: 16 }}>
           <div style={{ fontSize: 11, fontWeight: 700, color: '#64748b', letterSpacing: '0.1em', marginBottom: 8 }}>FILTER BY WANDERING ROLE</div>
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
-            {WANDERING_ROLES.map(role => (
-              <motion.button key={role.value} whileTap={{ scale: 0.95 }} onClick={() => setSelectedRole(role.value)}
-                style={{ padding: '8px 14px', borderRadius: 20, border: 'none', cursor: 'pointer', fontWeight: 600, fontSize: 13, background: selectedRole === role.value ? 'linear-gradient(135deg, #22d3ee, #0891b2)' : 'rgba(255,255,255,0.05)', color: selectedRole === role.value ? '#fff' : '#94a3b8', boxShadow: selectedRole === role.value ? '0 4px 15px rgba(34,211,238,0.35)' : 'none', transition: 'all 0.2s' }}>
-                {role.emoji} {role.label}
-              </motion.button>
-            ))}
+            {WANDERING_ROLES.map(role => {
+              const active = selectedRole === role.value
+              return (
+                <motion.button key={role.value}
+                  whileTap={{ scale: 0.94 }} whileHover={{ y: -2, scale: 1.03 }}
+                  onClick={() => setSelectedRole(role.value)}
+                  style={{
+                    padding: '10px 16px', borderRadius: 999, cursor: 'pointer',
+                    fontWeight: 700, fontSize: 13,
+                    display: 'inline-flex', alignItems: 'center', gap: 8,
+                    background: active ? 'linear-gradient(135deg, rgba(34,211,238,0.25), rgba(8,145,178,0.10))' : 'rgba(15,23,42,0.6)',
+                    color: active ? '#e0f7ff' : '#cbd5e1',
+                    border: `1px solid ${active ? 'rgba(34,211,238,0.65)' : 'rgba(255,255,255,0.10)'}`,
+                    boxShadow: active ? '0 0 24px rgba(34,211,238,0.35), inset 0 0 18px rgba(34,211,238,0.10)' : '0 2px 10px rgba(0,0,0,0.25)',
+                    backdropFilter: 'blur(8px)', transition: 'all 0.25s',
+                  }}>
+                  <span style={{ fontSize: 16 }}>{role.emoji}</span> {role.label}
+                </motion.button>
+              )
+            })}
           </div>
         </div>
 
