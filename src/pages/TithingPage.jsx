@@ -3,29 +3,41 @@ import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../hooks/useAuth'
 import { useBillingInfo } from '../hooks/useBillingInfo'
 import { useBasket } from '../hooks/useBasket'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { Badge } from '@/components/ui/badge'
 import BillingInfoForm from '@/components/BillingInfoForm'
 import PaymentModal from '@/components/PaymentModal'
-import { 
-  Heart, 
-  DollarSign, 
-  Calendar, 
-  User,
-  Gift,
-  Star,
-  Sparkles,
-  HandHeart,
-  ArrowLeft
+import { MidnightShell, MidnightCard } from '@/components/shell/MidnightShell'
+import { motion } from 'framer-motion'
+import {
+  Heart, DollarSign, User, Gift, Star, Sparkles, HandHeart,
 } from "lucide-react"
+
+const SUGGESTED = [50, 100, 200, 500, 1000]
+const FREQS = ['weekly', 'monthly', 'yearly']
+
+function PillButton({ active, onClick, children, accent = 'cyan' }) {
+  const ring = active
+    ? accent === 'amber'
+      ? 'border-amber-400/70 text-amber-200 bg-gradient-to-br from-amber-500/25 to-amber-600/10 shadow-[0_0_24px_rgba(245,158,11,0.35)]'
+      : 'border-cyan-400/70 text-cyan-100 bg-gradient-to-br from-cyan-500/25 to-cyan-700/10 shadow-[0_0_24px_rgba(34,211,238,0.35)]'
+    : 'border-white/10 text-slate-300 bg-white/5 hover:bg-white/10 hover:border-white/20'
+  return (
+    <motion.button
+      type="button"
+      whileTap={{ scale: 0.96 }}
+      whileHover={{ y: -2 }}
+      onClick={onClick}
+      className={`px-4 py-3 rounded-2xl border font-semibold text-sm transition-all backdrop-blur ${ring}`}
+    >
+      {children}
+    </motion.button>
+  )
+}
 
 export default function TithingPage() {
   const { user } = useAuth()
   const navigate = useNavigate()
-  const { billingInfo, hasCompleteBillingInfo } = useBillingInfo()
   const { addToBasket } = useBasket()
   const [amount, setAmount] = useState("")
   const [frequency, setFrequency] = useState("monthly")
@@ -33,309 +45,159 @@ export default function TithingPage() {
   const [message, setMessage] = useState("")
   const [showBillingForm, setShowBillingForm] = useState(false)
   const [showPaymentModal, setShowPaymentModal] = useState(false)
-  const [pendingTithingData, setPendingTithingData] = useState(null)
+  const [pendingTithingData] = useState(null)
 
   const handleSubmit = async (e) => {
     e.preventDefault()
     setLoading(true)
-    
     try {
-      // Add tithing item to basket
-      const tithingItem = {
-        orchardId: 'tithing',
-        orchardTitle: 'Tithing Contribution',
-        amount: parseFloat(amount),
-        currency: 'USDC',
-        pockets: [],
-        type: 'tithing',
-        frequency: frequency
-      }
-      
-      addToBasket(tithingItem)
+      addToBasket({
+        orchardId: 'tithing', orchardTitle: 'Tithing Contribution',
+        amount: parseFloat(amount), currency: 'USDC', pockets: [],
+        type: 'tithing', frequency,
+      })
       setMessage("Tithing added to basket! Please proceed to checkout.")
       setAmount("")
-    } catch (error) {
+    } catch {
       setMessage("There was an error adding tithing to basket.")
-    } finally {
-      setLoading(false)
-    }
+    } finally { setLoading(false) }
   }
-
-  const handleBillingInfoComplete = () => {
-    setShowBillingForm(false)
-    if (pendingTithingData) {
-      setShowPaymentModal(true)
-    }
-  }
-
-  const handlePaymentComplete = () => {
-    setShowPaymentModal(false)
-    setPendingTithingData(null)
-    setAmount("")
-    setMessage("Your tithing has been processed successfully!")
-  }
-
-  const suggestedAmounts = [50, 100, 200, 500, 1000]
 
   return (
-    <div className="min-h-screen relative bg-gradient-to-br from-slate-950 via-indigo-950 to-fuchsia-950">
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_20%,rgba(236,72,153,0.18),transparent_55%),radial-gradient(circle_at_80%_30%,rgba(56,189,248,0.18),transparent_55%),radial-gradient(circle_at_50%_85%,rgba(168,85,247,0.18),transparent_55%)] pointer-events-none" />
-      
-      {/* Content */}
-      <div className="relative z-10 px-4 pt-5">
-        <Button variant="ghost" onClick={() => navigate('/dashboard')} className="mb-4 gap-2 text-pink-200 hover:text-pink-100 hover:bg-pink-500/10">
-          <ArrowLeft className="h-4 w-4" /> Go Back
-        </Button>
-        {/* Welcome Section with Profile Picture */}
-        <div className="max-w-4xl mx-auto p-8 rounded-2xl border border-pink-400/30 shadow-[0_0_60px_rgba(236,72,153,0.18)] mb-8 mt-2 bg-gradient-to-br from-slate-900/90 via-fuchsia-950/60 to-slate-900/90 backdrop-blur">
-          <div className="flex items-center space-x-6">
-            <div className="w-20 h-20 rounded-full overflow-hidden border-4 border-nav-tithing shadow-lg">
-              {user?.avatar_url ? (
-                <img 
-                  src={user.avatar_url} 
-                  alt="Profile" 
-                  className="w-full h-full object-cover"
-                />
-              ) : (
-                <div className="w-full h-full bg-gradient-to-br from-nav-tithing to-nav-tithing/80 flex items-center justify-center">
-                  <User className="h-10 w-10 text-red-700" />
-                </div>
-              )}
-            </div>
-            <div>
-              <h1 className="text-3xl font-bold px-8 py-4 rounded-lg" style={{ 
-                color: 'hsl(0, 100%, 84%)', 
-                textShadow: '2px 2px 4px hsl(0, 100%, 64%)'
-              }}>
-                Tithing
-              </h1>
-              <p className="text-lg" style={{ color: '#c71585' }}>
-                Honor elohim with your faithful giving
-              </p>
-              <p className="text-sm mt-1" style={{ color: '#c71585' }}>
-                Payment Method: USDC (USD Coin)
-              </p>
-            </div>
-          </div>
-        </div>
-
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          {/* Header with solid background */}
-          <div className="max-w-2xl mx-auto text-center mb-8 px-8 py-6 bg-white/90 rounded-3xl shadow-lg">
-            <div className="flex items-center justify-center mb-4">
-              <div className="p-3 bg-red-100/80 rounded-full mr-4">
-                <HandHeart className="h-12 w-12 text-red-700" />
+    <MidnightShell
+      icon={<HandHeart className="h-6 w-6" />}
+      title="Tithing"
+      subtitle="Honor elohim with your faithful giving · settled in USDC"
+    >
+      {/* Profile / scripture banner */}
+      <MidnightCard accent="amber">
+        <div className="flex items-center gap-5">
+          <div className="w-16 h-16 rounded-full overflow-hidden border-2 border-amber-400/40 shadow-[0_0_24px_rgba(245,158,11,0.25)] shrink-0">
+            {user?.avatar_url ? (
+              <img src={user.avatar_url} alt="Profile" className="w-full h-full object-cover" />
+            ) : (
+              <div className="w-full h-full bg-gradient-to-br from-amber-500/30 to-cyan-500/20 flex items-center justify-center">
+                <User className="h-7 w-7 text-amber-200" />
               </div>
-              <h2 className="text-2xl font-bold" style={{ 
-                color: 'hsl(320, 100%, 60%)', 
-                textShadow: '1px 1px 2px rgba(0,0,0,0.2)' 
-              }}>Faithful Tithing</h2>
-            </div>
-            <p className="max-w-2xl mx-auto" style={{ 
-              color: 'hsl(320, 100%, 60%)',
-              textShadow: '1px 1px 2px rgba(0,0,0,0.1)'
-            }}>
-              "Bring the whole tithe into the storehouse, that there may be food in my house. Test me in this," says yhvh (the creator) Almighty, "and see if I will not throw open the floodgates of heaven and pour out so much blessing that there will not be room enough to store it." - Malachi 3:10
-            </p>
+            )}
           </div>
-
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-            {/* Tithing Form */}
-            <Card className="bg-white/90 backdrop-blur-sm border-white/50 shadow-xl">
-              <CardHeader>
-                <CardTitle className="flex items-center" style={{ 
-                  color: 'hsl(200, 100%, 50%)', 
-                  textShadow: '1px 1px 2px rgba(0,0,0,0.2)' 
-                }}>
-                  <HandHeart className="h-5 w-5 mr-2" />
-                  Set Up Your Tithe
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <form onSubmit={handleSubmit} className="space-y-6">
-                  <div>
-                    <Label htmlFor="amount" style={{ color: 'hsl(200, 100%, 50%)' }}>
-                      Tithe Amount (USDC)
-                    </Label>
-                    <Input
-                      id="amount"
-                      type="number"
-                      value={amount}
-                      onChange={(e) => setAmount(e.target.value)}
-                      placeholder="Enter amount"
-                      className="border-nav-tithing/30 focus:border-nav-tithing"
-                    />
-                  </div>
-
-                  <div>
-                    <Label style={{ color: 'hsl(200, 100%, 50%)' }}>Suggested Amounts</Label>
-                    <div className="grid grid-cols-3 gap-2 mt-2">
-                      {suggestedAmounts.map((suggAmount) => (
-                        <Button
-                          key={suggAmount}
-                          type="button"
-                          variant={amount === suggAmount.toString() ? 'default' : 'outline'}
-                          size="sm"
-                          onClick={() => setAmount(suggAmount.toString())}
-                          className={amount === suggAmount.toString() ? 'bg-nav-tithing text-red-700' : 'border-nav-tithing/30 text-red-700'}
-                        >
-                          ${suggAmount}
-                        </Button>
-                      ))}
-                    </div>
-                  </div>
-
-                  <div>
-                    <Label style={{ color: 'hsl(200, 100%, 50%)' }}>Frequency</Label>
-                    <div className="grid grid-cols-3 gap-2 mt-2">
-                      {['weekly', 'monthly', 'yearly'].map((freq) => (
-                        <Button
-                          key={freq}
-                          type="button"
-                          variant={frequency === freq ? 'default' : 'outline'}
-                          size="sm"
-                          onClick={() => setFrequency(freq)}
-                          className={frequency === freq ? 'bg-nav-tithing text-red-700' : 'border-nav-tithing/30 text-red-700'}
-                        >
-                          {freq.charAt(0).toUpperCase() + freq.slice(1)}
-                        </Button>
-                      ))}
-                    </div>
-                  </div>
-
-                  <Button
-                    type="submit"
-                    disabled={loading || !amount}
-                    className="w-full bg-nav-tithing hover:bg-nav-tithing/90 text-red-700"
-                  >
-                    {loading ? (
-                      <>
-                        <div className="animate-spin rounded-full h-4 w-4 border-2 border-red-700 border-t-transparent mr-2" />
-                        Processing Tithe...
-                      </>
-                    ) : (
-                      <>
-                        <Heart className="h-4 w-4 mr-2" />
-                        Give Tithe
-                      </>
-                    )}
-                  </Button>
-
-                  {message && (
-                    <div className="p-4 bg-nav-tithing/20 border border-nav-tithing/30 rounded-lg">
-                      <p className="text-red-700 text-center">{message}</p>
-                    </div>
-                  )}
-                </form>
-              </CardContent>
-            </Card>
-
-            {/* Information & Scripture */}
-            <div className="space-y-6">
-              <Card className="bg-white/90 backdrop-blur-sm border-white/50 shadow-xl">
-                <CardHeader>
-                  <CardTitle className="flex items-center" style={{ 
-                    color: 'hsl(120, 100%, 40%)', 
-                    textShadow: '1px 1px 2px rgba(0,0,0,0.2)' 
-                  }}>
-                    <Sparkles className="h-5 w-5 mr-2" />
-                    Why We Tithe
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-4 text-sm" style={{ color: 'hsl(120, 100%, 40%)' }}>
-                    <div className="flex items-start space-x-2">
-                      <Heart className="h-4 w-4 mt-0.5 text-red-500" />
-                      <p>Tithing is an act of worship and obedience to elohim</p>
-                    </div>
-                    <div className="flex items-start space-x-2">
-                      <Gift className="h-4 w-4 mt-0.5 text-red-500" />
-                      <p>It supports our community projects</p>
-                    </div>
-                    <div className="flex items-start space-x-2">
-                      <Star className="h-4 w-4 mt-0.5 text-red-500" />
-                      <p>elohim promises to bless faithful givers</p>
-                    </div>
-                    <div className="flex items-start space-x-2">
-                      <HandHeart className="h-4 w-4 mt-0.5 text-red-500" />
-                      <p>It helps build elohim's kingdom on earth</p>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-
-              <Card className="bg-white/90 backdrop-blur-sm border-white/50 shadow-xl">
-                <CardHeader>
-                  <CardTitle className="flex items-center" style={{ 
-                    color: 'hsl(45, 100%, 50%)', 
-                    textShadow: '1px 1px 2px rgba(0,0,0,0.2)' 
-                  }}>
-                    <DollarSign className="h-5 w-5 mr-2" />
-                    Tithing Statistics
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-4">
-                    <div className="flex justify-between items-center">
-                      <span style={{ color: 'hsl(45, 100%, 50%)' }}>This Month</span>
-                      <Badge variant="secondary" className="bg-nav-tithing/30 text-red-700">
-                        $0
-                      </Badge>
-                    </div>
-                    <div className="flex justify-between items-center">
-                      <span style={{ color: 'hsl(45, 100%, 50%)' }}>This Year</span>
-                      <Badge variant="secondary" className="bg-nav-tithing/30 text-red-700">
-                        $0
-                      </Badge>
-                    </div>
-                    <div className="flex justify-between items-center">
-                      <span style={{ color: 'hsl(45, 100%, 50%)' }}>Total Given</span>
-                      <Badge variant="secondary" className="bg-nav-tithing/30 text-red-700">
-                        $0
-                      </Badge>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-
-              <Card className="bg-white/90 backdrop-blur-sm border-white/50 shadow-xl">
-                <CardContent className="p-6">
-                  <blockquote className="text-red-600 italic text-center">
-                    "Each of you should give what you have decided in your heart to give, not reluctantly or under compulsion, for elohim loves a cheerful giver."
-                    <br />
-                    <cite className="text-red-700 font-semibold not-italic">- 2 Corinthians 9:7</cite>
-                  </blockquote>
-                </CardContent>
-              </Card>
-            </div>
-          </div>
+          <p className="text-sm text-slate-300 italic leading-relaxed">
+            "Bring the whole tithe into the storehouse… and see if I will not throw open the floodgates of heaven." — Malachi 3:10
+          </p>
         </div>
+      </MidnightCard>
 
-        {/* Billing Info Form Modal */}
-        {showBillingForm && (
-          <BillingInfoForm
-            isOpen={showBillingForm}
-            onClose={() => setShowBillingForm(false)}
-            onComplete={handleBillingInfoComplete}
-          />
-        )}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Tithing Form */}
+        <MidnightCard accent="cyan">
+          <div className="flex items-center gap-2 mb-5">
+            <HandHeart className="h-5 w-5 text-cyan-300" />
+            <h2 className="text-lg font-bold text-white">Set Up Your Tithe</h2>
+          </div>
+          <form onSubmit={handleSubmit} className="space-y-6">
+            <div>
+              <Label htmlFor="amount" className="text-slate-300">Tithe Amount (USDC)</Label>
+              <Input
+                id="amount" type="number" value={amount}
+                onChange={(e) => setAmount(e.target.value)} placeholder="Enter amount"
+                className="mt-2 bg-white/5 border-white/10 text-white placeholder:text-slate-500 focus-visible:ring-cyan-400/40 focus-visible:border-cyan-400/50"
+              />
+            </div>
 
-        {/* Payment Modal */}
-        {showPaymentModal && pendingTithingData && (
-          <PaymentModal
-            isOpen={showPaymentModal}
-            onClose={() => setShowPaymentModal(false)}
-            paymentDetails={{
-              orchardTitle: 'Tithing Contribution',
-              amount: pendingTithingData.amount,
-              currency: 'USDC',
-              pockets: [],
-              type: 'tithing'
-            }}
-            onPaymentComplete={handlePaymentComplete}
-          />
-        )}
+            <div>
+              <Label className="text-slate-300">Suggested Amounts</Label>
+              <div className="grid grid-cols-3 gap-2 mt-2">
+                {SUGGESTED.map((s) => (
+                  <PillButton key={s} active={amount === String(s)} onClick={() => setAmount(String(s))}>
+                    ${s}
+                  </PillButton>
+                ))}
+              </div>
+            </div>
+
+            <div>
+              <Label className="text-slate-300">Frequency</Label>
+              <div className="grid grid-cols-3 gap-2 mt-2">
+                {FREQS.map((f) => (
+                  <PillButton key={f} active={frequency === f} onClick={() => setFrequency(f)} accent="amber">
+                    {f.charAt(0).toUpperCase() + f.slice(1)}
+                  </PillButton>
+                ))}
+              </div>
+            </div>
+
+            <motion.button
+              type="submit" disabled={loading || !amount}
+              whileHover={{ scale: 1.01 }} whileTap={{ scale: 0.98 }}
+              className="w-full py-4 rounded-2xl font-bold text-base text-white border border-amber-400/50 bg-gradient-to-r from-amber-500/30 via-amber-500/20 to-cyan-500/20 hover:from-amber-500/40 hover:to-cyan-500/30 shadow-[0_0_30px_rgba(245,158,11,0.25)] disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+            >
+              {loading ? (
+                <span className="inline-flex items-center gap-2">
+                  <span className="animate-spin rounded-full h-4 w-4 border-2 border-amber-300 border-t-transparent" />
+                  Processing Tithe…
+                </span>
+              ) : (
+                <span className="inline-flex items-center gap-2"><Heart className="h-4 w-4" /> Give Tithe</span>
+              )}
+            </motion.button>
+
+            {message && (
+              <div className="p-4 rounded-xl bg-cyan-500/10 border border-cyan-400/30 text-cyan-100 text-sm text-center">
+                {message}
+              </div>
+            )}
+          </form>
+        </MidnightCard>
+
+        {/* Side info */}
+        <div className="space-y-6">
+          <MidnightCard accent="violet">
+            <div className="flex items-center gap-2 mb-4">
+              <Sparkles className="h-5 w-5 text-violet-300" />
+              <h3 className="text-base font-bold text-white">Why We Tithe</h3>
+            </div>
+            <ul className="space-y-3 text-sm text-slate-300">
+              <li className="flex gap-2"><Heart className="h-4 w-4 mt-0.5 text-rose-400 shrink-0" /> An act of worship and obedience</li>
+              <li className="flex gap-2"><Gift className="h-4 w-4 mt-0.5 text-amber-300 shrink-0" /> It supports our community projects</li>
+              <li className="flex gap-2"><Star className="h-4 w-4 mt-0.5 text-cyan-300 shrink-0" /> Promised blessing for faithful givers</li>
+              <li className="flex gap-2"><HandHeart className="h-4 w-4 mt-0.5 text-emerald-300 shrink-0" /> Helps build the kingdom on earth</li>
+            </ul>
+          </MidnightCard>
+
+          <MidnightCard accent="amber">
+            <div className="flex items-center gap-2 mb-4">
+              <DollarSign className="h-5 w-5 text-amber-300" />
+              <h3 className="text-base font-bold text-white">Tithing Statistics</h3>
+            </div>
+            <div className="space-y-3">
+              {[['This Month','$0'],['This Year','$0'],['Total Given','$0']].map(([k,v]) => (
+                <div key={k} className="flex justify-between items-center text-sm">
+                  <span className="text-slate-400">{k}</span>
+                  <span className="px-3 py-1 rounded-full bg-amber-400/10 border border-amber-400/30 text-amber-200 font-semibold">{v}</span>
+                </div>
+              ))}
+            </div>
+          </MidnightCard>
+
+          <MidnightCard accent="rose">
+            <blockquote className="text-sm text-slate-300 italic text-center leading-relaxed">
+              "Each of you should give what you have decided in your heart to give… for elohim loves a cheerful giver."
+              <div className="mt-2 text-rose-300 not-italic font-semibold text-xs">— 2 Corinthians 9:7</div>
+            </blockquote>
+          </MidnightCard>
+        </div>
       </div>
-    </div>
+
+      {showBillingForm && (
+        <BillingInfoForm isOpen={showBillingForm} onClose={() => setShowBillingForm(false)} onComplete={() => setShowBillingForm(false)} />
+      )}
+      {showPaymentModal && pendingTithingData && (
+        <PaymentModal
+          isOpen={showPaymentModal} onClose={() => setShowPaymentModal(false)}
+          paymentDetails={{ orchardTitle: 'Tithing Contribution', amount: pendingTithingData.amount, currency: 'USDC', pockets: [], type: 'tithing' }}
+          onPaymentComplete={() => setShowPaymentModal(false)}
+        />
+      )}
+    </MidnightShell>
   )
 }
