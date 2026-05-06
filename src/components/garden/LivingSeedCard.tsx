@@ -21,9 +21,9 @@ import LivingButton from '@/components/LivingButton';
 import { useTribalLiveOrchard, type BloomStage } from '@/hooks/useTribalLiveOrchard';
 import { useReferralCode } from '@/hooks/useReferralCode';
 import { useToast } from '@/hooks/use-toast';
-import { JITSI_DOMAIN } from '@/lib/jitsi-config';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
+import LiveStage from '@/components/live/LiveStage';
 
 export interface LivingSeedCardProps {
   /** Stable seed/item id — used for the realtime channel key */
