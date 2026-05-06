@@ -1108,7 +1108,7 @@ export default function SeedFlowDashboard() {
             </div>
 
             {/* ── 5 stacked auto-rotating category sliders ── */}
-            <SeedSlider title="Seeds" emoji="🌱" accent="#22c55e" cards={seedSliderCards}
+            <SeedSlider title="Seed" emoji="🌱" accent="#22c55e" cards={seedSliderCards}
               emptyHint="No seeds yet — plant one with the button below." />
             <SeedSlider title="Orchards" emoji="🌳" accent="#16a34a" cards={orchardSliderCards}
               emptyHint="No orchards yet — your own + bestowed will live here." />

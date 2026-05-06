@@ -11,28 +11,34 @@ const FALLBACK_IMG = {
 }
 
 export function buildSeedCard(s, handlers = {}) {
+  const images = Array.isArray(s.images) ? s.images.filter(Boolean) : []
   return {
     id: `seed-${s.id}`,
     rawId: s.id,
     title: s.title || 'Untitled Seed',
     subtitle: s.description || s.category || 'A seed you planted',
-    image: (s.images && s.images[0]) || FALLBACK_IMG.seed,
+    image: images[0] || FALLBACK_IMG.seed,
+    images,
     badge: { emoji: '🌱', label: 'mine', color: '#22c55e' },
     openPath: `/seed/${s.id}`,
     liveKey: `seed:${s.id}`,
     mediaKind: 'seed',
     mine: true,
+    seedRow: s,
+    whispererSharePct: Number(s.whisperer_share_pct ?? 10),
     ...handlers,
   }
 }
 
 export function buildOrchardCard(o, handlers = {}, opts = {}) {
+  const images = Array.isArray(o.images) ? o.images.filter(Boolean) : []
   return {
     id: `orchard-${o.id}`,
     rawId: o.id,
     title: o.title || 'My Orchard',
     subtitle: o.description || o.category || 'An orchard you are growing',
-    image: (o.images && o.images[0]) || FALLBACK_IMG.orchard,
+    image: images[0] || FALLBACK_IMG.orchard,
+    images,
     badge: opts.bestowed
       ? { emoji: '💚', label: 'bestowed', color: '#4ade80' }
       : { emoji: '🌳', label: 'mine', color: '#22c55e' },
@@ -40,6 +46,8 @@ export function buildOrchardCard(o, handlers = {}, opts = {}) {
     liveKey: `orchard:${o.id}`,
     mediaKind: 'orchard',
     mine: !opts.bestowed,
+    seedRow: o,
+    whispererSharePct: Number(o.whisperer_share_pct ?? 10),
     ...handlers,
   }
 }
@@ -51,28 +59,35 @@ export function buildMusicCard(m, handlers = {}) {
     title: m.track_title || 'Untitled Track',
     subtitle: m.music_mood || m.music_genre || m.genre || 'A song you have sown',
     image: m.cover_image_url || m.cover_url || FALLBACK_IMG.music,
+    images: [m.cover_image_url || m.cover_url].filter(Boolean),
     badge: { emoji: '🎵', label: 'music', color: '#38bdf8' },
     openPath: `/music-library`,
     liveKey: `music:${m.id}`,
     mediaKind: 'audio',
     mediaUrl: m.file_url,
     mine: true,
+    seedRow: m,
+    whispererSharePct: Number(m.whisperer_share_pct ?? 10),
     ...handlers,
   }
 }
 
 export function buildBookCard(b, handlers = {}) {
+  const images = [b.cover_image_url, ...(Array.isArray(b.image_urls) ? b.image_urls : [])].filter(Boolean)
   return {
     id: `book-${b.id}`,
     rawId: b.id,
     title: b.title || 'Untitled Book',
     subtitle: b.description || b.genre || 'A book you have written',
-    image: b.cover_image_url || (b.image_urls && b.image_urls[0]) || FALLBACK_IMG.book,
+    image: images[0] || FALLBACK_IMG.book,
+    images,
     badge: { emoji: '📚', label: 'book', color: '#fb923c' },
     openPath: `/my-s2g-library`,
     liveKey: `book:${b.id}`,
     mediaKind: 'book',
     mine: true,
+    seedRow: b,
+    whispererSharePct: Number(b.whisperer_share_pct ?? 10),
     ...handlers,
   }
 }
@@ -84,12 +99,15 @@ export function buildVideoCard(v, handlers = {}) {
     title: v.title || 'Untitled Video',
     subtitle: v.description || 'A video you have shared',
     image: v.thumbnail_url || v.video_url || FALLBACK_IMG.video,
+    images: [v.thumbnail_url].filter(Boolean),
     badge: { emoji: '🎬', label: 'video', color: '#f87171' },
     openPath: `/community-videos`,
     liveKey: `video:${v.id}`,
     mediaKind: 'video',
     mediaUrl: v.video_url,
     mine: true,
+    seedRow: v,
+    whispererSharePct: Number(v.whisperer_share_pct ?? 10),
     ...handlers,
   }
 }
