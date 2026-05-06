@@ -1102,7 +1102,6 @@ export default function SeedFlowDashboard() {
                   <circle cx="12" cy="12" r="3" />
                 </svg>
               </Link>
-            </div>
           </div>
 
           <div className="s2g-dashboard-content" style={styles.content}>
