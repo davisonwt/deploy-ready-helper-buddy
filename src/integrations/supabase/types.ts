@@ -4720,6 +4720,7 @@ export type Database = {
           video_url: string | null
           views: number
           whisperer_commission_percent: number | null
+          whisperer_share_pct: number
           why_needed: string | null
         }
         Insert: {
@@ -4763,6 +4764,7 @@ export type Database = {
           video_url?: string | null
           views?: number
           whisperer_commission_percent?: number | null
+          whisperer_share_pct?: number
           why_needed?: string | null
         }
         Update: {
@@ -4806,6 +4808,7 @@ export type Database = {
           video_url?: string | null
           views?: number
           whisperer_commission_percent?: number | null
+          whisperer_share_pct?: number
           why_needed?: string | null
         }
         Relationships: [
