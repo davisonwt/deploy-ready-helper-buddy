@@ -208,94 +208,45 @@ export default function YhvhOrchardsPage() {
 
   if (loading) {
     return (
-      <div className='min-h-screen flex items-center justify-center' style={{
-        background: 'linear-gradient(135deg, #8b5cf6 0%, #7c3aed 25%, #6d28d9 50%, #5b21b6 75%, #4c1d95 100%)',
-        backgroundSize: '400% 400%',
-        animation: 'gradient 15s ease infinite'
-      }}>
-        <Loader2 className='w-12 h-12 animate-spin text-white' />
+      <div className='min-h-screen flex items-center justify-center text-slate-100' style={{ background: 'linear-gradient(180deg, #0a0f1a 0%, #060a12 100%)' }}>
+        <Loader2 className='w-12 h-12 animate-spin text-cyan-300' />
       </div>
     )
   }
 
   return (
-    <div className='min-h-screen relative overflow-hidden'>
-      {/* Creative Animated Background */}
-      <div className='fixed inset-0 z-0'>
-        <div className='absolute inset-0' style={{
-          background: 'linear-gradient(135deg, #8b5cf6 0%, #7c3aed 25%, #6d28d9 50%, #5b21b6 75%, #4c1d95 100%)',
-          backgroundSize: '400% 400%',
-          animation: 'gradient 20s ease infinite'
-        }} />
-        <div className='absolute inset-0 bg-black/20' />
-        {/* Floating orbs */}
-        {[...Array(6)].map((_, i) => (
-          <motion.div
-            key={i}
-            className='absolute rounded-full blur-3xl opacity-30'
-            style={{
-              width: `${200 + i * 100}px`,
-              height: `${200 + i * 100}px`,
-              background: `radial-gradient(circle, rgba(${139 - i * 5}, ${92 - i * 3}, ${246 - i * 2}, 0.6), transparent)`,
-              left: `${10 + i * 15}%`,
-              top: `${10 + i * 12}%`,
-            }}
-            animate={{
-              x: [0, 100, 0],
-              y: [0, 50, 0],
-              scale: [1, 1.2, 1],
-            }}
-            transition={{
-              duration: 10 + i * 2,
-              repeat: Infinity,
-              ease: 'easeInOut'
-            }}
-          />
-        ))}
-      </div>
-      
-      <div className='relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8'>
-        <Button onClick={() => navigate(-1)} variant='outline' className='mb-4 bg-white/10 backdrop-blur-md border-white/30 text-white hover:bg-white/20'>← Go Back</Button>
-        {/* Hero Header */}
-        <div className='relative overflow-hidden border-b border-white/20 backdrop-blur-md bg-white/10 rounded-2xl mb-8 mt-4'>
-          <div className='relative container mx-auto px-4 py-16'>
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              className='text-center max-w-4xl mx-auto'
-            >
+    <div className='min-h-screen text-slate-100 relative' style={{ background: 'linear-gradient(180deg, #0a0f1a 0%, #060a12 100%)' }}>
+      <div aria-hidden className='pointer-events-none fixed inset-0 -z-0' style={{ background: 'radial-gradient(ellipse 80% 50% at 50% -10%, rgba(34,211,238,0.10), transparent 60%), radial-gradient(ellipse 60% 40% at 90% 100%, rgba(245,158,11,0.08), transparent 60%)' }} />
+
+      <div className='relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6'>
+        <Button onClick={() => navigate(-1)} variant='ghost' className='mb-4 gap-2 text-cyan-300 hover:text-cyan-200 hover:bg-cyan-500/10'>← Go Back</Button>
+
+        {/* Hero Header — midnight glass */}
+        <div className='relative overflow-hidden rounded-2xl mb-8 border border-cyan-400/25 bg-[#0f172a]/80 backdrop-blur shadow-[0_0_40px_rgba(34,211,238,0.10)]'>
+          <div className='relative container mx-auto px-4 py-12'>
+            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className='text-center max-w-4xl mx-auto'>
               <div className='flex items-center justify-center gap-4 mb-6'>
-                <div className='p-4 rounded-2xl bg-white/20 backdrop-blur-md border border-white/30'>
-                  <Sprout className='w-16 h-16 text-white' />
+                <div className='p-4 rounded-2xl bg-cyan-500/15 border border-cyan-400/30 shadow-[0_0_25px_rgba(34,211,238,0.30)]'>
+                  <Sprout className='w-12 h-12 text-cyan-300' />
                 </div>
-                <h1 className='text-6xl font-bold text-white drop-shadow-2xl'>
-                  S2G Community Orchards
-                </h1>
+                <h1 className='text-4xl md:text-5xl font-black text-white drop-shadow-[0_2px_8px_rgba(34,211,238,0.25)]'>S2G Community Orchards</h1>
               </div>
-              <p className='text-white/90 text-xl mb-4 backdrop-blur-sm bg-white/10 rounded-lg p-4 border border-white/20'>
+              <p className='text-slate-300/90 text-base md:text-lg mb-6 rounded-xl bg-white/5 border border-white/10 p-4'>
                 Fully processed projects ready for community support and bestowals. Each orchard represents a completed project ready for community funding.
               </p>
-              <div className='mt-6 flex flex-wrap gap-4 items-center justify-center'>
-                <Badge variant='outline' className='backdrop-blur-md bg-white/20 border-white/30 text-white px-4 py-2'>
-                  {filteredOrchards.length} Active Orchards
-                </Badge>
-                <Badge variant='outline' className='backdrop-blur-md bg-white/20 border-white/30 text-white px-4 py-2'>
-                  Community Funded
-                </Badge>
-                <Badge variant='outline' className='backdrop-blur-md bg-white/20 border-white/30 text-white px-4 py-2'>
-                  Growing Together
-                </Badge>
+              <div className='mt-2 flex flex-wrap gap-3 items-center justify-center'>
+                <span className='rounded-full px-4 py-2 text-sm font-bold border border-cyan-400/30 bg-cyan-500/15 text-cyan-100'>{filteredOrchards.length} Active Orchards</span>
+                <span className='rounded-full px-4 py-2 text-sm font-bold border border-emerald-400/30 bg-emerald-500/15 text-emerald-100'>Community Funded</span>
+                <span className='rounded-full px-4 py-2 text-sm font-bold border border-amber-400/30 bg-amber-500/15 text-amber-100'>Growing Together</span>
                 <div className='min-w-[200px]'>
                   <Select value={selectedCategory} onValueChange={setSelectedCategory}>
-                    <SelectTrigger className='backdrop-blur-md bg-white/20 border-white/30 text-white'>
+                    <SelectTrigger className='border-violet-400/30 bg-violet-500/10 text-violet-100 hover:bg-violet-500/15 transition'>
                       <SelectValue placeholder='Filter by Category' />
                     </SelectTrigger>
-                    <SelectContent className='bg-white border border-border z-50'>
+                    <SelectContent className='bg-[#0f172a]/95 border-violet-400/30 z-50'>
                       <SelectItem value='all'>All Categories</SelectItem>
                       {categories.map((category) => (
-                        <SelectItem key={category} value={category}>
-                          {category}
-                        </SelectItem>
+                        <SelectItem key={category} value={category}>{category}</SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
