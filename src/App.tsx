@@ -14,6 +14,12 @@ import IncomingCallOverlay from "./components/chat/IncomingCallOverlay";
 import AudioUnlocker from "./components/audio/AudioUnlocker";
 import SoundUnlockBanner from "./components/audio/SoundUnlockBanner";
 import SacredDayBanner from "./components/SacredDayBanner";
+import { useReferralCapture } from "./hooks/useReferralCapture";
+
+function ReferralCaptureMount() {
+  useReferralCapture();
+  return null;
+}
 
 const EnhancedAnalyticsDashboard = lazy(() => import('./components/admin/EnhancedAnalyticsDashboard'));
 const UserManagementDashboard = lazy(() => import('./components/admin/UserManagementDashboard'));
@@ -190,6 +196,7 @@ const App = () => (
                 <SoundUnlockBanner />
                 <NotificationBanner />
                 <SacredDayBanner />
+                <ReferralCaptureMount />
                 <IncomingCallOverlay />
                 <ErrorBoundary>
                     <Suspense fallback={<LoadingFallback />}>
