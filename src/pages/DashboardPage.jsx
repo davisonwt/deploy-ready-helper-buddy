@@ -1078,11 +1078,6 @@ export default function SeedFlowDashboard() {
                  </div>
                </div>
              </div>
-             <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
-               <div style={styles.seedflowLabel}>
-                 <span style={{ width: 7, height: 7, borderRadius: '50%', background: '#22c55e', display: 'inline-block', animation: 'pulse 2s infinite' }} />
-                 SeedFlow active
-               </div>
               <Link
                 to="/profile"
                 aria-label="Open your profile & settings"
