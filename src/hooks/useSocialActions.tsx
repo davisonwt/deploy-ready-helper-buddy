@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
+import { ensureReferralCode, burnReferralCode } from '@/lib/referral';
 import { toast } from 'sonner';
 
 export function useSocialActions() {
@@ -151,10 +152,24 @@ export function useSocialActions() {
     }
   };
 
-  const shareContent = async (type: 'product' | 'orchard', id: string, title: string) => {
+  const shareContent = async (type: 'product' | 'orchard' | 'video' | 'seed' | 'page', id: string, title: string) => {
     try {
-      const url = `${window.location.origin}/${type === 'product' ? 'products' : 'orchard'}/${id}`;
-      
+      const path =
+        type === 'product' ? `/products/${id}` :
+        type === 'orchard' ? `/orchard/${id}` :
+        type === 'video'   ? `/video/${id}` :
+        type === 'seed'    ? `/seed/${id}` :
+        id.startsWith('/') ? id : `/${id}`;
+      let url = `${window.location.origin}${path}`;
+      // Burn the sharer's invitation code into every share so new sign-ups join their tribe
+      if (user?.id) {
+        try {
+          const { code } = await ensureReferralCode(user.id);
+          url = burnReferralCode(url, code);
+        } catch (e) {
+          console.warn('[shareContent] could not attach referral code:', e);
+        }
+      }
       if (navigator.share) {
         try {
           await navigator.share({ title, url });
