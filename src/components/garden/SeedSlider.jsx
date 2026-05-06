@@ -75,11 +75,13 @@ export default function SeedSlider({
         title={active.title}
         subtitle={active.subtitle}
         image={active.image}
+        images={active.images}
         openPath={active.openPath}
         mediaUrl={active.mediaUrl}
         mediaKind={active.mediaKind}
         badge={active.badge}
         mine={active.mine}
+        whispererSharePct={active.whispererSharePct}
         onEdit={active.onEdit ? () => active.onEdit(active) : undefined}
         onDelete={active.onDelete ? () => active.onDelete(active) : undefined}
         onRepost={active.onRepost ? () => active.onRepost(active) : undefined}
