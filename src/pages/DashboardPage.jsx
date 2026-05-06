@@ -1062,11 +1062,12 @@ export default function SeedFlowDashboard() {
                 <div style={{
                   display: 'inline-flex', alignItems: 'center', gap: 8,
                   padding: '8px 14px', borderRadius: 12,
-                  background: 'linear-gradient(135deg,#16a34a,#22c55e,#84cc16)',
-                  color: '#fff', fontWeight: 800, fontSize: 11, letterSpacing: '1.5px',
-                  border: '1px solid rgba(255,255,255,0.25)',
+                  background: 'linear-gradient(135deg, rgba(22,163,74,0.25), rgba(34,197,94,0.18), rgba(132,204,22,0.22))',
+                  backdropFilter: 'blur(12px)', WebkitBackdropFilter: 'blur(12px)',
+                  color: '#dcfce7', fontWeight: 800, fontSize: 11, letterSpacing: '1.5px',
+                  border: '1px solid rgba(134,239,172,0.45)',
                   textTransform: 'uppercase',
-                  boxShadow: '0 6px 20px rgba(34,197,94,0.35)',
+                  boxShadow: '0 6px 24px rgba(34,197,94,0.25), inset 0 1px 0 rgba(255,255,255,0.12)',
                 }}>
                   🌿 Tribal Feeds
                 </div>
