@@ -1148,22 +1148,24 @@ function FeedCard({
       {/* Image carousel arrows + dots — only when there are multiple images */}
       {hasGallery && !item.video_url && (
         <>
-          <button
-            type="button"
-            onClick={(e) => { e.stopPropagation(); setImgIdx((i) => (i - 1 + gallery.length) % gallery.length); }}
-            aria-label="Previous image"
-            className="absolute left-2 top-1/2 -translate-y-1/2 z-10 grid h-10 w-10 place-items-center rounded-full bg-black/50 text-white backdrop-blur-sm hover:bg-black/70 transition"
-          >
-            <ChevronLeft className="h-5 w-5" />
-          </button>
-          <button
-            type="button"
-            onClick={(e) => { e.stopPropagation(); setImgIdx((i) => (i + 1) % gallery.length); }}
-            aria-label="Next image"
-            className="absolute right-2 top-1/2 -translate-y-1/2 z-10 grid h-10 w-10 place-items-center rounded-full bg-black/50 text-white backdrop-blur-sm hover:bg-black/70 transition"
-          >
-            <ChevronRight className="h-5 w-5" />
-          </button>
+          <div className="absolute left-2 top-1/2 -translate-y-1/2 z-20 flex items-center gap-2 sm:left-3">
+            <button
+              type="button"
+              onClick={(e) => { e.stopPropagation(); setImgIdx((i) => (i - 1 + gallery.length) % gallery.length); }}
+              aria-label="Previous image"
+              className="grid h-10 w-10 place-items-center rounded-full bg-black/60 text-white backdrop-blur-md ring-1 ring-white/20 hover:bg-black/80 transition"
+            >
+              <ChevronLeft className="h-5 w-5" />
+            </button>
+            <button
+              type="button"
+              onClick={(e) => { e.stopPropagation(); setImgIdx((i) => (i + 1) % gallery.length); }}
+              aria-label="Next image"
+              className="grid h-10 w-10 place-items-center rounded-full bg-black/60 text-white backdrop-blur-md ring-1 ring-white/20 hover:bg-black/80 transition"
+            >
+              <ChevronRight className="h-5 w-5" />
+            </button>
+          </div>
           <div className="absolute left-1/2 top-3 -translate-x-1/2 z-10 flex gap-1.5 rounded-full bg-black/50 px-2 py-1 backdrop-blur-sm">
             {gallery.map((_, i) => (
               <span
