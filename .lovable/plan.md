@@ -1,94 +1,98 @@
-## Goals
 
-1. Rename Seeds slider heading → "Seed" (singular).
-2. Add left/right arrows on the seed card to swipe through ALL uploaded images for that seed (currently only `images[0]` shows).
-3. Make the Go Live overlay actually show the seed's media (images, video, audio, document) on the right-hand side instead of a blank panel — so guests can see/hear what the host is talking about.
-4. Add a "whisperer bestowal %" field to seeds/orchards so the sower can declare what cut a tribe member earns when they host a live session and a bestowal happens during it.
-5. Upgrade the Go Live overlay into a proper hosted live-room with: video OR faceless mode (image / typing canvas), inline chat, guest video tiles, host mute/unmute control. Make this the standard for Classroom / Skill Drop / Training / Radio too.
+## Goal
 
----
+Turn the current black-screen Jitsi iframe into a TikTok/Discord/Zoom-style **Stage** where:
+- Host is always pinned in a big "Host" tile.
+- Guests appear in small "Guest Boxes" alongside (up to 6 visible).
+- A new **Presentation Panel** on the left lets the host show images, slides, or type on a whiteboard — so when guests join, they see either the host's face OR the host's presentation.
+- Anyone can request to join the call as voice‑only or video — the host approves/declines and can mute/unmute / bump them back to chat.
 
-## Plan
+This becomes the universal pattern for every Go Live surface: seeds (`LivingSeedCard`), Classroom, DropSkill, Training, Radio, Clubhouse.
 
-### 1. Singular heading + image carousel inside the card
+## What Changes (User-Facing)
 
-**`src/pages/DashboardPage.jsx`** (line 1111)
-- Change `title="Seeds"` → `title="Seed"`.
-
-**`src/components/garden/seedCardBuilders.js`**
-- Add an `images: string[]` field on every card (seed/orchard/music/book/video) — pass the full array, not just `[0]`.
-
-**`src/components/garden/SeedSlider.jsx`** + **`src/components/garden/LivingSeedCard.tsx`**
-- Add `images?: string[]` prop on `LivingSeedCard`.
-- Inside the card, when `images.length > 1`, render small left/right chevrons over the image area and a tiny dot row, controlling a local `imgIdx` state. Falls back to single image when only 1 exists.
-
-### 2. Whisperer bestowal % on seeds
-
-**New migration** (`supabase/migrations/...add_whisperer_share.sql`)
-- `ALTER TABLE public.orchards ADD COLUMN whisperer_share_pct numeric NOT NULL DEFAULT 10 CHECK (whisperer_share_pct >= 0 AND whisperer_share_pct <= 50);`
-- Same column on `seeds` if it's a separate table (verify during build).
-
-**Sower edit / create form** (`src/pages/CreateOrchardPage` / seed editor)
-- Add a slider/number input "Whisperer share % — what tribe members earn when they host a live session on your seed" (default 10%, max 50%).
-- Save into `whisperer_share_pct`.
-
-**Display on the seed card and live overlay**
-- Show a small chip "🎤 Whisperer earns X%" so anyone considering going live sees the reward.
-
-**Bestowal payout split**
-- When a bestowal is created during a live session (presence on this seed_id is active and host ≠ sower), credit `amount * whisperer_share_pct/100` to the host's wallet, the rest to the sower. Implement in the existing bestowal edge function (`process-bestowal` or equivalent — locate during build).
-
-### 3. Live room overlay — show the seed's media + chat + guest tiles
-
-Currently `LivingSeedCard` opens a full-screen iframe to Jitsi only. Replace with a 2-column overlay (matches the layout of `LiveSeedPage.jsx`):
+**1. Left "Stage" replaces the plain Jitsi iframe**
 
 ```text
-┌──────── Live Header (Live · title · whisperer% · Close) ────────┐
-│                                  │                              │
-│   Jitsi iframe (host + guests)   │   Seed media panel:          │
-│   - host can mute/unmute via     │   • image carousel           │
-│     Jitsi moderator controls     │   • inline video player      │
-│   - "Faceless mode" button:      │   • inline audio player      │
-│     overlays an image OR a       │   • document viewer (pdf)    │
-│     typing canvas on the host's  │   ──────────────────────     │
-│     video track                  │   Inline chat (Supabase      │
-│                                  │   realtime broadcast on      │
-│                                  │   channel `live:<seedId>`)   │
-└──────────────────────────────────┴──────────────────────────────┘
+┌──────────────────────────────────────────┬──────── Right panel ────────┐
+│  [HOST TILE — big]      🎤 Speaking      │  🌱 SEED MEDIA              │
+│  ┌────────────────┐                      │  coffee mugs x6             │
+│  │   host video   │   Presentation tab   │  (image carousel 1/3)       │
+│  │   or whiteboard│   [📷 Image]         │                             │
+│  │   or slide     │   [✍️  Whiteboard]    │  💬 LIVE CHAT               │
+│  │                │   [📺 Video]         │  davison.taljaard           │
+│  └────────────────┘                      │  hi davison!                │
+│  Guests:                                 │                             │
+│  ┌──┐ ┌──┐ ┌──┐ ┌──┐ ┌──┐ ┌──┐ +3      │  [Ask the host…]  ➤         │
+│  │g1│ │g2│ │g3│ │g4│ │g5│ │g6│         │                             │
+│  └──┘ └──┘ └──┘ └──┘ └──┘ └──┘         │  ─────────────              │
+│  Hand raises (waiting): @nina, @sam      │  🙋 Request to join         │
+│                                          │   ( 🎤 Voice ) ( 🎥 Video ) │
+└──────────────────────────────────────────┴─────────────────────────────┘
 ```
 
-**Implementation**
+**2. Guest "Request to join" flow**
+- Every viewer sees two buttons in the right panel: **🎤 Join with voice** and **🎥 Join with video**.
+- A request hits the host's "Hand raises" tray with Approve / Decline.
+- On approve, the guest's Jitsi participant is unmuted/un-video-muted and pinned into a guest box.
+- Host can mute / unmute / remove any guest from their tile menu (⋯).
 
-- Promote the overlay JSX in `LivingSeedCard.tsx` into a new component `src/components/live/LiveRoomOverlay.tsx` taking `{ seed, room, onClose }`.
-- Fetch seed media on open (`orchards` row + related uploads) so the right panel renders.
-- Use existing `useTribalLiveOrchard` broadcast for chat messages (new `event: 'chat'`).
-- Add a "Faceless" toggle: host picks an image or opens a typed canvas; uses Jitsi's `setVideoInputDevice` + a hidden `<canvas>` captured via `captureStream()` and fed into Jitsi via `executeCommand('setVirtualBackground'...)` — fall back to a simple "Image only" overlay rendered above the iframe if Jitsi command refuses.
-- Host moderator controls: pass `userInfo` + `JWT`-less moderator flag (`config.startAsModerator`) and expose mute/unmute buttons by calling `executeCommand('muteParticipant', participantId)` on a participant list pulled from `participantsChanged`.
+**3. Host Presentation Panel (the "whiteboard/images" area)**
+- Tabs above the host tile:
+  - **🎥 Camera** — host's webcam (default).
+  - **📷 Image** — picks any image from the seed's `images[]` and broadcasts it as the stage. Left/right arrows page through.
+  - **✍️ Whiteboard** — a `<textarea>` + simple draw `<canvas>` the host types/draws on; rendered to all guests via Supabase broadcast (`event: 'stage'`) — no extra deps.
+  - **📺 Video / Audio** — plays the seed's `mediaUrl` to all guests in sync (broadcast `play/pause/seek` events).
+- Faceless mode (already there) becomes one preset of this panel.
 
-### 4. Apply the same overlay to other live entry points
+**4. Moderation**
+- Host‑only controls: mute participant, mute everyone, kick, lock stage, end live.
+- Guests can never speak unless approved — enforced by Jitsi `executeCommand('muteParticipant', id)` immediately on join, then unmuted only when host approves.
+- All comms remain inside the room; no email/phone surfaced (already a project rule).
 
-Reuse `LiveRoomOverlay` from:
-- `src/pages/LiveSeedPage.jsx` (replace its current 2-column iframe block).
-- Classroom/Drop-Skill/Training launchers in `src/components/video/JitsiButtons.tsx` and `src/pages/ClubhousePage.jsx`.
-- Radio: `src/components/radio/RadioLiveSessionManager.jsx` — pass `audioOnly: true` so the seed-media panel still shows but the iframe starts video-muted.
+## Technical Implementation
 
-This makes the same controlled live experience the standard everywhere.
+### New component: `src/components/live/LiveStage.tsx`
+Single source of truth for the stage UI. Takes:
+```ts
+{
+  seedId, title, subtitle, images, mediaUrl, mediaKind,
+  jitsiRoom, isHost, whispererSharePct,
+  onClose
+}
+```
+Internally:
+- Mounts the Jitsi External API (`new JitsiMeetExternalAPI(...)`) into a hidden DOM node — we use Jitsi for audio/video transport but render our own grid via `executeCommand('pinParticipant', id)` + custom CSS layout (Jitsi tile mode hidden, we display our own `<div>` per participant by pulling video tracks via `getIFrameRef` + `videoConferenceJoined` / `participantJoined` / `participantLeft` listeners).
+- For simplicity in v1: keep the Jitsi iframe visible but `setTileView(true)` and overlay our own header + presentation tabs + guest hand-raise tray on top — fastest path to the layout in the screenshot.
 
----
+### Stage broadcast channel: `stage:${seedId}`
+Supabase Realtime broadcast events:
+- `stage_mode` → `{ mode: 'camera' | 'image' | 'whiteboard' | 'video', imageUrl?, text?, drawDataUrl?, mediaTime? }`
+- `raise_hand` → `{ user_id, name, avatar, want: 'voice' | 'video' }`
+- `approve_hand` / `deny_hand` → `{ user_id }`
+- `kick` / `force_mute` → `{ user_id }`
 
-## Files touched
+Only the host writes mode/approve/kick; everyone can write `raise_hand`.
 
-- `src/pages/DashboardPage.jsx` — heading rename
-- `src/components/garden/seedCardBuilders.js` — pass `images` array
-- `src/components/garden/SeedSlider.jsx` — forward `images`
-- `src/components/garden/LivingSeedCard.tsx` — image carousel + use new overlay
-- `src/components/live/LiveRoomOverlay.tsx` — new
-- `src/pages/LiveSeedPage.jsx` — adopt overlay
-- `src/components/video/JitsiButtons.tsx`, `src/pages/ClubhousePage.jsx`, `src/components/radio/RadioLiveSessionManager.jsx` — adopt overlay
-- `src/pages/CreateOrchardPage.jsx` (and seed editor) — whisperer % input
-- `supabase/migrations/<timestamp>_whisperer_share.sql` — new column
-- `supabase/functions/process-bestowal/index.ts` (or actual function name found during build) — split payout when host present
+### Jitsi command map (host‑only)
+- approve voice: `executeCommand('toggleParticipantsPane'); executeCommand('overwriteConfig', { startAudioMuted: 99 });` then `executeCommand('askToUnmute', participantId)`
+- approve video: same + `executeCommand('startVideo', participantId)` (custom — done by sending a side broadcast the guest's client listens for and toggles its own track).
+- mute one: `executeCommand('muteParticipant', participantId)`
+- kick: `executeCommand('kickParticipant', participantId)`
 
-## Open question
+### Files touched
+- **NEW** `src/components/live/LiveStage.tsx` — the unified stage.
+- **NEW** `src/components/live/HostPresentation.tsx` — Camera / Image / Whiteboard / Video tabs.
+- **NEW** `src/components/live/GuestBoxes.tsx` — small participant tiles + hand‑raise tray.
+- **NEW** `src/hooks/useLiveStage.ts` — wraps the `stage:${seedId}` broadcast channel + hand-raise queue.
+- **EDIT** `src/components/garden/LivingSeedCard.tsx` — replace the inline `<iframe>` overlay (lines 422‑436) with `<LiveStage … />`. Keep the right panel (Seed Media + Live Chat) untouched.
+- **EDIT** `src/pages/LiveSeedPage.jsx` — use `<LiveStage>`.
+- **EDIT** `src/components/video/JitsiButtons.tsx` — Classroom / Radio / Orchard buttons open `<LiveStage>` instead of `startJitsiCall(...)`.
+- **EDIT** `src/components/radio/LiveVideoCallInterface.tsx` — swap `JitsiRoom` for `<LiveStage isHost={isHost} />`.
+- **EDIT** `src/pages/ClubhousePage.jsx` — same swap.
 
-Default whisperer share — confirm **10% (max 50%)** as the seeded default, or pick a different number?
+### DB
+No new tables. Hand‑raises live only in the realtime channel for the duration of the call.
+
+### Open question
+Default cap on **simultaneous guests on stage** — propose **6 visible boxes + an overflow drawer** (matches the screenshot grid and avoids Jitsi performance cliffs on mobile). OK?

@@ -21,9 +21,9 @@ import LivingButton from '@/components/LivingButton';
 import { useTribalLiveOrchard, type BloomStage } from '@/hooks/useTribalLiveOrchard';
 import { useReferralCode } from '@/hooks/useReferralCode';
 import { useToast } from '@/hooks/use-toast';
-import { JITSI_DOMAIN } from '@/lib/jitsi-config';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
+import LiveStage from '@/components/live/LiveStage';
 
 export interface LivingSeedCardProps {
   /** Stable seed/item id — used for the realtime channel key */
@@ -420,19 +420,17 @@ export default function LivingSeedCard({
             </div>
 
             <div className="flex flex-1 min-h-0 flex-col md:flex-row">
-              {/* LEFT: video conf */}
+              {/* LEFT: Stage (host video + presentation tabs + guest boxes) */}
               <div className="relative flex-1 min-h-[40vh] bg-black">
-                <iframe
+                <LiveStage
+                  seedId={seedId}
                   title={title}
-                  src={`https://${JITSI_DOMAIN}/${activeRoom}#config.prejoinPageEnabled=false&config.disableDeepLinking=true&config.startWithVideoMuted=${faceless}&userInfo.displayName=%22${encodeURIComponent((user as any)?.user_metadata?.display_name || user?.email?.split('@')[0] || 'Tribe')}%22`}
-                  allow="camera; microphone; fullscreen; display-capture; autoplay"
-                  className="absolute inset-0 h-full w-full border-0"
+                  jitsiRoom={activeRoom}
+                  isHost={liveHere[0]?.user_id === user?.id || (!isLiveHere)}
+                  images={imgList}
+                  mediaUrl={mediaUrl}
+                  mediaKind={mediaKind}
                 />
-                {faceless && currentImage && (
-                  <div className="pointer-events-none absolute inset-0 z-[2] flex items-center justify-center bg-black/85">
-                    <img src={currentImage} alt="" className="max-h-full max-w-full object-contain" />
-                  </div>
-                )}
               </div>
 
               {/* RIGHT: seed media + chat */}
