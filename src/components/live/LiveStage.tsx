@@ -20,21 +20,29 @@ import { motion } from 'framer-motion';
 import {
   Camera, Image as ImageIcon, PencilLine, Film,
   Hand, Mic, MicOff, Video, VideoOff, X, Check, UserMinus,
-  ChevronLeft, ChevronRight,
+  ChevronLeft, ChevronRight, Music, Heart, Search,
 } from 'lucide-react';
 import { JITSI_DOMAIN } from '@/lib/jitsi-config';
 import { useAuth } from '@/hooks/useAuth';
-import { useLiveStage, type StageMode } from '@/hooks/useLiveStage';
+import { useLiveStage, type StageMode, type NowPlaying } from '@/hooks/useLiveStage';
+import { supabase } from '@/integrations/supabase/client';
+import QuickBestowModal from '@/components/bestow/QuickBestowModal';
 
 export interface LiveStageProps {
   seedId: string;
   title: string;
   jitsiRoom: string;
   isHost: boolean;
+  /** When true, host gets a tribal-music dropdown to pick the playing seed */
+  isRadio?: boolean;
+  /** seed owner — bestowals default to this user */
+  sowerUserId?: string | null;
   images?: string[];
   mediaUrl?: string | null;
   mediaKind?: 'audio' | 'video' | 'book' | 'orchard' | 'seed';
   className?: string;
+  /** Whisperer % the host of the live earns from each bestowal */
+  whispererSharePct?: number;
 }
 
 const TABS: { mode: StageMode; icon: typeof Camera; label: string; hostOnly?: boolean }[] = [
@@ -44,10 +52,20 @@ const TABS: { mode: StageMode; icon: typeof Camera; label: string; hostOnly?: bo
   { mode: 'video',      icon: Film,       label: 'Media' },
 ];
 
+interface MusicSeedOption {
+  id: string;
+  title: string;
+  user_id: string;
+  audio_url: string | null;
+  image: string | null;
+}
+
 export default function LiveStage({
   seedId, title, jitsiRoom, isHost,
+  isRadio = false, sowerUserId,
   images = [], mediaUrl, mediaKind,
   className = '',
+  whispererSharePct = 10,
 }: LiveStageProps) {
   const { user } = useAuth();
   const {
