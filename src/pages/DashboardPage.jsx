@@ -1045,48 +1045,44 @@ export default function SeedFlowDashboard() {
                     />
                   : '🧑'}
               </div>
-              <div>
-                <div style={styles.greeting}>Welcome back, {displayName} — your seeds are in motion</div>
-                <div style={styles.greetingSub}>
-                  Shalom · Year {sacredDate.year} · Month {sacredDate.month} · Day {sacredDate.day}
-                </div>
-              </div>
-            </div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
-            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 8 }}>
-              <div style={styles.seedflowLabel}>
-                <span style={{ width: 7, height: 7, borderRadius: '50%', background: '#22c55e', display: 'inline-block', animation: 'pulse 2s infinite' }} />
-                SeedFlow active
-              </div>
-              <Link to="/orchard-alive" style={{ textDecoration: 'none' }}>
-                <div style={{
-                  display: 'inline-flex', alignItems: 'center', gap: 8,
-                  padding: '8px 14px', borderRadius: 12,
-                  background: 'linear-gradient(135deg, rgba(22,163,74,0.25), rgba(34,197,94,0.18), rgba(132,204,22,0.22))',
-                  backdropFilter: 'blur(12px)', WebkitBackdropFilter: 'blur(12px)',
-                  color: '#dcfce7', fontWeight: 800, fontSize: 11, letterSpacing: '1.5px',
-                  border: '1px solid rgba(134,239,172,0.45)',
-                  textTransform: 'uppercase',
-                  boxShadow: '0 6px 24px rgba(34,197,94,0.25), inset 0 1px 0 rgba(255,255,255,0.12)',
-                }}>
-                  🌿 Tribal Feeds
-                </div>
-              </Link>
-              <Link to="/companions" style={{ textDecoration: 'none' }}>
-                <div style={{
-                  display: 'inline-flex', alignItems: 'center', gap: 8,
-                  padding: '8px 14px', borderRadius: 12,
-                  background: 'linear-gradient(135deg, rgba(99,102,241,0.25), rgba(139,92,246,0.18), rgba(236,72,153,0.22))',
-                  backdropFilter: 'blur(12px)', WebkitBackdropFilter: 'blur(12px)',
-                  color: '#ede9fe', fontWeight: 800, fontSize: 11, letterSpacing: '1.5px',
-                  border: '1px solid rgba(196,181,253,0.45)',
-                  textTransform: 'uppercase',
-                  boxShadow: '0 6px 24px rgba(139,92,246,0.25), inset 0 1px 0 rgba(255,255,255,0.12)',
-                }}>
-                  🐧 Orchard Companions
-                </div>
-              </Link>
-            </div>
+               <div>
+                 <div style={styles.greeting}>Welcome back, {displayName} — your seeds are in motion</div>
+                 <div style={styles.greetingSub}>
+                   Shalom · Year {sacredDate.year} · Month {sacredDate.month} · Day {sacredDate.day}
+                 </div>
+                 <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 8, marginTop: 10 }}>
+                   <Link to="/orchard-alive" style={{ textDecoration: 'none' }}>
+                     <div style={{
+                       ...styles.seedflowLabel,
+                       background: 'linear-gradient(135deg, rgba(22,163,74,0.25), rgba(34,197,94,0.18), rgba(132,204,22,0.22))',
+                       backdropFilter: 'blur(12px)', WebkitBackdropFilter: 'blur(12px)',
+                       border: '1px solid rgba(134,239,172,0.45)',
+                       color: '#dcfce7', fontWeight: 700,
+                       boxShadow: '0 4px 16px rgba(34,197,94,0.2), inset 0 1px 0 rgba(255,255,255,0.12)',
+                     }}>
+                       🌿 Tribal Feeds
+                     </div>
+                   </Link>
+                   <Link to="/companions" style={{ textDecoration: 'none' }}>
+                     <div style={{
+                       ...styles.seedflowLabel,
+                       background: 'linear-gradient(135deg, rgba(99,102,241,0.25), rgba(139,92,246,0.18), rgba(236,72,153,0.22))',
+                       backdropFilter: 'blur(12px)', WebkitBackdropFilter: 'blur(12px)',
+                       border: '1px solid rgba(196,181,253,0.45)',
+                       color: '#ede9fe', fontWeight: 700,
+                       boxShadow: '0 4px 16px rgba(139,92,246,0.2), inset 0 1px 0 rgba(255,255,255,0.12)',
+                     }}>
+                       🐧 Orchard Companions
+                     </div>
+                   </Link>
+                 </div>
+               </div>
+             </div>
+             <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
+               <div style={styles.seedflowLabel}>
+                 <span style={{ width: 7, height: 7, borderRadius: '50%', background: '#22c55e', display: 'inline-block', animation: 'pulse 2s infinite' }} />
+                 SeedFlow active
+               </div>
               <Link
                 to="/profile"
                 aria-label="Open your profile & settings"
