@@ -137,11 +137,30 @@ export function useTribalLiveOrchard() {
     [presenceKey, user]
   );
 
-  const endLive = useCallback(async () => {
-    if (!channel) return;
-    try { await channel.untrack(); } catch {}
+  const endLive = useCallback(async (opts?: { seedId?: string; seedTitle?: string; transcript?: string; bestowers?: Array<{ user_id: string; name?: string; amount?: number; chat_snippet?: string }> }) => {
+    if (channel) {
+      try { await channel.untrack(); } catch {}
+    }
     myPresenceMap.clear();
-  }, []);
+    // Fire-and-forget Grove harvest pipeline
+    try {
+      if (user?.id) {
+        const { supabase } = await import("@/integrations/supabase/client");
+        await supabase.functions.invoke("grove-session-harvest", {
+          body: {
+            sower_id: user.id,
+            session_id: opts?.seedId,
+            session_kind: "live_room",
+            seed_title: opts?.seedTitle ?? "your seed",
+            transcript: opts?.transcript ?? "",
+            bestowers: opts?.bestowers ?? [],
+          },
+        });
+      }
+    } catch (e) {
+      console.warn("grove-session-harvest dispatch failed", e);
+    }
+  }, [channel, user?.id]);
 
   const sendBloom = useCallback(
     (seedId: string, stage: BloomStage) => {
