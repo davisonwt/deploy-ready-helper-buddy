@@ -1050,8 +1050,12 @@ export default function SeedFlowDashboard() {
                  <div style={styles.greetingSub}>
                    Shalom · Year {sacredDate.year} · Month {sacredDate.month} · Day {sacredDate.day}
                  </div>
-                 <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 8, marginTop: 10 }}>
-                   <Link to="/orchard-alive" style={{ textDecoration: 'none' }}>
+                  <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 8, marginTop: 10 }}>
+                    <div style={{ ...styles.seedflowLabel, whiteSpace: 'nowrap' }}>
+                      <span style={{ width: 7, height: 7, borderRadius: '50%', background: '#22c55e', display: 'inline-block', animation: 'pulse 2s infinite' }} />
+                      SeedFlow active
+                    </div>
+                    <Link to="/orchard-alive" style={{ textDecoration: 'none' }}>
                      <div style={{
                        ...styles.seedflowLabel,
                        background: 'linear-gradient(135deg, rgba(22,163,74,0.25), rgba(34,197,94,0.18), rgba(132,204,22,0.22))',
