@@ -1,12 +1,13 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { ArrowLeft, BookOpen, Calendar, Check, DollarSign, Dumbbell, FileUp, Loader2, MessageCircle, Radio, Users, Video, Zap } from 'lucide-react';
+import { ArrowLeft, BookOpen, Calendar, Check, ChevronDown, DollarSign, Dumbbell, FileUp, Loader2, MessageCircle, Radio, Users, Video, X, Zap } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { toast } from 'sonner';
 
 type LaunchKind = 'one_on_one' | 'community_chat' | 'classroom' | 'skilldrop' | 'training' | 'radio';
