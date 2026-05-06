@@ -350,8 +350,8 @@ export default function AdminDashboardPage() {
                 <Settings className="h-12 w-12 text-cyan-300" />
               </div>
             </div>
-            <h1 className="text-4xl font-black bg-gradient-to-r from-cyan-300 via-sky-300 to-violet-300 bg-clip-text text-transparent mb-2">Gosat's — Admin Dashboard</h1>
-            <p className="text-cyan-200/70">Elder management · Comprehensive hub</p>
+            <h1 className="text-4xl font-black text-cyan-100 mb-2 drop-shadow-[0_2px_8px_rgba(34,211,238,0.45)]">Gosat's — Admin Dashboard</h1>
+            <p className="text-cyan-100/90 font-medium drop-shadow-[0_1px_4px_rgba(0,0,0,0.6)]">Elder management · Comprehensive hub</p>
           </div>
         </div>
 
