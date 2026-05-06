@@ -1,131 +1,113 @@
+# The Grove — Agent Architecture for S2G
 
-# Orchard Companions — S2G AI-CaaS rebuild
+You already have the right bones: Jitsi handles voice/video, ChatApp (`chat_rooms` + `chat_messages`) is the in-house text nervous system, and 10 tree agents (Linden, Maple, Cypress, Willow, Birch, Elm, Hickory, Beech, Alder, Hawthorn) already live in `s2g_companions` with quotas, entitlements, and a working `companion-invoke` edge function. The gaps the brief identifies are:
 
-Bring the 10 companions back as a real, tier-gated AI service layer powering Sow2Grow (not a bolt-on chatbot). Each companion is a server-side capability with its own quota per tier, callable from the UI and (later) from automations.
+1. The **narrative agents** (Acorn, Root, Bud) and **live-room agents** (Hive, Nectar, Petal) and **harvest agents** (Grain, Sheaf, Thresh) and **orchestrator** (Groundskeeper) don't exist yet.
+2. There's no **session-end pipeline** — when a Jitsi room ends, nothing automatically thanks bestowers, scores relationships, or coaches the sower.
+3. There's no **agent dispatch table** so messages from Grain/Sheaf/Thresh land natively inside ChatApp as first-class system messages.
+4. **Groundskeeper** (the always-on floating chat) doesn't exist as UI.
 
-## 1. Tiers and access matrix
+Plan below skips the Node/Express bridge from your reference doc — we don't need it. The same job is done with Supabase edge functions + a ChatApp dispatch table, which keeps everything inside Lovable Cloud and the existing `chat_messages` table.
 
-Four tiers (price tags shown to user, USDC settled):
+## Phase 1 — Extend the agent registry (DB + code)
 
-| Tier | Price | Code value |
-|---|---|---|
-| Sower | Free | `sower` |
-| Keeper | $4.99/mo | `keeper` |
-| Ambassador | $19.99/mo | `ambassador` |
-| Council | $29.99/mo | `council` (highest tier you described) |
+Add the 11 missing agents to `s2g_companions` and `s2g_companion_entitlements` so the whole Grove is one uniform catalog. Each gets a system prompt, tree emoji, tier mapping, and short tribe-facing summary.
 
-Founders (Davison/Ed/Amber/Ezra) keep free access via existing `s2g_agent_free_access` table — treated as `council` for entitlement.
+| New slug | Layer | Title | Tier access |
+|---|---|---|---|
+| `acorn` | Narrative | Seed Intake | All tiers, quotas per tier |
+| `root` | Narrative | Identity Forger | Keeper+ |
+| `bud` | Narrative | Promise Designer | Keeper+ |
+| `hive` | Live | Room Conductor | Ambassador+ |
+| `nectar` | Live | Engagement Alchemist | Ambassador+ |
+| `petal` | Live | Audience Matcher | Ambassador+ |
+| `grain` | Harvest | Follow-Up Forger | All tiers (auto) |
+| `sheaf` | Harvest | Relationship Gardener | Keeper+ (auto) |
+| `thresh` | Harvest | Feedback Distiller | Keeper+ (auto) |
+| `groundskeeper` | Orchestration | Entry Steward | All tiers, unlimited |
 
-The 10 companions and their per-tier entitlement (see your matrix):
+Add a new `layer` column to `s2g_companions` (`narrative` / `infrastructure` / `live` / `harvest` / `orchestration`) so the Companions Hub can group them visually.
+
+System prompts in `companion-invoke/index.ts` are extended in the same shape we already use, each carrying the warm/pastoral voice and Sow2Grow vocabulary.
+
+## Phase 2 — The harvest pipeline (replaces the Node bridge)
+
+Two new tables and two new edge functions.
+
+**`grove_session_events`** — append-only log of session lifecycle events (`session_started`, `session_ended`, `recording_ready`, `bestowal_received`). Source = any `live_rooms` / `radio_live_sessions` / `classroom_sessions` / `skilldrop_sessions` row. RLS: sower owns own.
+
+**`grove_relationship_scores`** — `(bestower_id, sower_id)` PK with `tier` (`new` / `returning` / `core` / `patron`), `sessions_attended`, `total_bestowed`, `consecutive_support`, `last_session_at`. Updated by Sheaf. RLS: sower can read rows where they're the sower; bestower can read own.
+
+**Edge function `grove-session-harvest`** — invoked when a live room ends (we wire it into the existing "end session" handlers in `useTribalLiveOrchard`, radio session controls, etc.). It:
+
+1. Loads session metadata (sower, participants who bestowed, totals, chat transcript, recording URL if any).
+2. In parallel calls:
+   - **Grain** → AI-generated personalized thank-yous per bestower, posted into ChatApp as system message from agent `grain`, plus a sower summary.
+   - **Sheaf** → updates `grove_relationship_scores`, posts staggered nurture messages (immediate / +1h / +24h) using the dispatch table.
+   - **Thresh** → AI session analysis (peaks, sentiment, conversion, room-fit), posted to sower in ChatApp.
+   - **Birch** → archives recording metadata, sends sower the access link.
+3. Pipes Thresh insights into **Hawthorn** for "next session" prediction.
+
+**Edge function `grove-dispatch`** — single endpoint any agent calls to send a message into ChatApp. It picks (or creates) a 1:1 chat room between the agent's system user and the recipient, inserts into `chat_messages` with `message_type = 'agent'` and a JSON `metadata` payload (`agent`, `event`, `session_id`, `priority`). This makes every agent message first-class in the existing chat UI — no separate notifications layer.
+
+A `grove_message_queue` table backs Sheaf's staggered sends; a `pg_cron` job ticks every minute and flushes due rows through `grove-dispatch`.
 
 ```text
-                Sower         Keeper           Ambassador          Council
-🐧 Gentoo       Greeting      Daily summary    Full coordination   Full + governance
-🎨 Tux          3 posts/mo    10 posts/mo      Unlimited + sched.  Unlimited
-🛡️ Ubuntu       On request    On request       Auto-review all     Auto-review all
-🪄 Kali         3 imgs/mo     10 imgs/mo       Unlimited           Unlimited
-🎬 Fedora       —             —                Full                Full
-💬 Debian       —             Manual drafts    Auto-outreach       Auto-outreach
-📞 Arch         HearthCall    HearthCall       Full routing        Full routing
-📒 Mint         Basic summary Weekly report    Full finance        Full finance
-🥖 Loaf         —             Basic tracking   Full logistics      Full logistics
-🔮 Sage         —             Basic insights   Full oracle         Oracle + council
+Live room ends
+   │
+   ▼
+grove-session-harvest  ──► Grain   ─┐
+                       ──► Sheaf  ──┼─► grove-dispatch ─► chat_messages (ChatApp)
+                       ──► Thresh ──┤
+                       ──► Birch   ─┘
+                       ──► Hawthorn (next-session forecast)
 ```
 
-## 2. Database (migration)
+## Phase 3 — Narrative onboarding flow (Acorn → Root → Maple → Bud → Willow)
 
-New tables in `public`:
+A new route `/plant-a-seed` walks a first-time sower through a guided interview:
 
-- `s2g_companions` (catalog, seed-loaded)
-  - `slug` (gentoo/tux/ubuntu/kali/fedora/debian/arch/mint/loaf/sage), `name`, `title`, `emoji`, `summary`, `category` (`coordination|content|review|image|video|messaging|calling|finance|logistics|insight`), `default_model`, `is_active`.
-- `s2g_companion_entitlements`
-  - `(companion_slug, tier)` PK; `mode` enum (`none|basic|standard|full|full_plus`); `monthly_quota` int nullable (null = unlimited, 0 = none); `notes`.
-- `s2g_companion_usage`
-  - `user_id`, `companion_slug`, `period_yyyymm` (text), `count` int, `last_used_at`. Unique on (`user_id`,`companion_slug`,`period_yyyymm`).
-- `s2g_companion_runs` (audit/history)
-  - `user_id`, `companion_slug`, `tier_at_run`, `model`, `input_summary`, `output_summary`, `tokens_in`, `tokens_out`, `status`, `error`, `created_at`.
+1. **Acorn** asks 5–8 warm seed-intake questions (product nature, place, season, hardest part).
+2. **Root** runs after Acorn finishes — separate AI call that distills identity (location, history, struggles, dreams) into a structured JSON identity profile, stored on `seeds` as `identity_profile jsonb`.
+3. **Maple** (already exists) generates the public narrative, stored as `seeds.story_md`.
+4. **Bud** generates 3–5 bestowal tiers with emotional hooks → stored in a new `seed_bestowal_tiers` table.
+5. **Willow** (already exists) generates the hero image.
+6. Sower reviews, edits, taps "Plant" → `seeds.status = 'live'` and the existing Go-Live button appears.
 
-Helper SECURITY DEFINER function:
-- `get_effective_tier(_user uuid)` → returns `sower|keeper|ambassador|council`, factoring `s2g_agent_free_access` (council) and `profiles.membership_tier`.
-- `check_and_consume_companion_quota(_user uuid, _slug text)` → returns `{ allowed boolean, mode text, remaining int|null, reset_on date }` and increments usage atomically when allowed.
+All five steps reuse `companion-invoke` — no new AI plumbing. Each step has its own visible step-card so the sower sees which tree is working.
 
-RLS:
-- `s2g_companions`, `s2g_companion_entitlements`: public read.
-- `s2g_companion_usage`, `s2g_companion_runs`: owner-only read; writes via service-role only (edge functions).
+## Phase 4 — Groundskeeper (floating orchestrator)
 
-Seed entitlements from the matrix above.
+A persistent floating chat bubble visible on every authenticated route (`<GroundskeeperWidget />` mounted in `App.tsx`). It calls `companion-invoke` with `companion: 'groundskeeper'`. The Groundskeeper system prompt teaches it to:
 
-## 3. Edge functions (Lovable AI Gateway)
+- Speak as a wise, slightly archaic grove steward.
+- Know every other tree-agent and what each does.
+- When the user asks something tree-specific ("plan a reel", "draft thank-yous"), respond with a short routing note ("Birch tends recordings — opening that branch for you") and then a button that opens that companion's drawer (reusing existing `CompanionDrawer`).
+- Pull in proactive nudges (e.g. "Sarah's Radio session starts in 10 min") from the new `grove_session_events` table.
 
-Single unified router function so we don't duplicate boilerplate:
+## Technical notes (for the curious)
 
-- `companion-invoke` (POST, JWT-verified)
-  - Input: `{ companion: slug, action: string, input: {...}, stream?: boolean }`
-  - Steps: validate JWT → resolve effective tier → call `check_and_consume_companion_quota` → load companion config → build per-companion system prompt → call `https://ai.gateway.lovable.dev/v1/chat/completions` with `google/gemini-3-flash-preview` (text) or `google/gemini-2.5-flash-image` (Kali) or video tool for Fedora → stream tokens back as SSE; log to `s2g_companion_runs`.
-  - Surfaces 402/429 from gateway as user-friendly errors.
+- All new edge functions use the same CORS allow-list we already standardised (`x-my-custom-header` included).
+- All AI calls go through `LOVABLE_API_KEY` / Lovable AI gateway — no extra secrets.
+- New tables get RLS:
+  - `grove_session_events`: sower or participant can read own; insert via service role only.
+  - `grove_relationship_scores`: sower reads own; bestower reads own; writes via service role.
+  - `grove_message_queue`: service role only.
+- We hook session-end into the existing live-room "end" handlers (`useTribalLiveOrchard`, radio session controls, classroom/skilldrop end buttons) — no Jitsi webhook server needed.
+- Quotas continue to use the existing `check_and_consume_companion_quota` RPC.
 
-Companion-specific actions handled inside the router:
+## What you get after Phase 4
 
-- Gentoo: `daily_briefing`, `route_task`, `login_greeting`
-- Tux: `draft_post`, `caption`, `content_calendar`
-- Ubuntu: `review_tone` (also exposed as a pre-publish hook)
-- Kali: `generate_image`, `refine_image` (image model)
-- Fedora: `generate_video_brief` (text plan; real video gen stays opt-in)
-- Debian: `draft_message`, `auto_outreach` (Ambassador+ only — server enforces)
-- Arch: `start_hearthcall`, `route_call` (wraps existing Jitsi flow)
-- Mint: `weekly_report`, `bestowal_summary` (queries existing tables)
-- Loaf: `stock_snapshot`, `delivery_status` (queries products/orders)
-- Sage: `price_suggestion`, `post_timing_insight`
+- All 21 Grove agents live, named, prompted, and quota-managed.
+- A first-time sower can go upload → interview → live story → tiers → hero image → "Plant" in one guided flow.
+- Every live session that ends fires Grain (thanks), Sheaf (relationship), Thresh (coaching), Birch (archive), Hawthorn (forecast) — landing as system messages inside ChatApp, no email needed.
+- A floating Groundskeeper on every page that delegates to the right tree.
 
-A second function `companion-entitlements` (GET) returns the calling user's effective tier + per-companion remaining quota for the UI.
+## Suggested rollout order
 
-## 4. Frontend
+1. **Phase 1** (registry extension) — small, safe, immediately visible on `/companions`.
+2. **Phase 4** (Groundskeeper widget) — high user-perceived value, no DB risk.
+3. **Phase 2** (harvest pipeline) — biggest engineering chunk, but everything else flows from it.
+4. **Phase 3** (narrative onboarding) — best done after the harvest pipeline so the loop closes.
 
-New pages/components (semantic tokens, glassy cards consistent with existing dashboard):
-
-- `src/pages/CompanionsHubPage.tsx` route `/companions` — grid of 10 companion cards (emoji, name, title, summary, your tier badge, "remaining this month", `Open` button). Uses `companion-entitlements`.
-- `src/components/companions/CompanionCard.tsx`
-- `src/components/companions/CompanionDrawer.tsx` — opens a chat/action drawer per companion; streams via `companion-invoke`. Renders markdown with `react-markdown`. Uses `useSacredNow()` for timestamps.
-- `src/components/companions/UpgradeTierDialog.tsx` — shown when quota exceeded or capability locked; deep-links into existing pricing.
-- `src/lib/companions/registry.ts` — slug → emoji/name/title/category/intro prompt; single source of truth used in UI and edge function (mirrored).
-- `src/hooks/useCompanions.ts` — fetches entitlements; exposes `invoke(companion, action, input)` with quota error toasts.
-
-Dashboard integration:
-- New "Orchard Companions" panel on `DashboardPage` showing top 4 (Gentoo, Tux, Kali, Mint) with their remaining quota and a `See all` link to `/companions`.
-- Top nav: add Companions link (Ambassador-only items still get a lock icon for lower tiers).
-
-Wire into existing flows:
-- Replace ad-hoc `useAIAssistant`, `SmartHashtagGenerator`, `OrchardMarketingAssistant`, `CommunityOfferingGenerator`, `VideoCreationWizard` calls to go through `companion-invoke` (Tux for content, Kali for images, Fedora for video, Mint for finance summaries). Keep existing UI; swap the network layer.
-
-## 5. Tier display and gating
-
-- `useEffectiveTier()` hook (wraps `get_effective_tier` RPC).
-- `<RequiresTier min="ambassador">` wrapper component greys out / shows upgrade CTA for locked companions/actions.
-- Founder accounts always render as Council with no quota counters.
-
-## 6. Telemetry and growth loop
-
-- Every successful run writes to `s2g_companion_runs` with token counts → enables future "tribe gets smarter as it grows" features (per-tribe fine-tuning context, leaderboard of helpful companions, Sage drawing from aggregate insights).
-- Admin page `/admin/companions` (admin role only): usage by tier, quota saturation, top failing actions.
-
-## Technical details
-
-- Edge functions live in `supabase/functions/companion-invoke/index.ts` and `supabase/functions/companion-entitlements/index.ts`. Both: secure CORS (allowlisted origins via existing `_shared/security.ts`), JWT verification in code, zod input validation, SSE streaming for `companion-invoke`.
-- All AI calls go through Lovable AI Gateway with `LOVABLE_API_KEY` (already configured). Default model `google/gemini-3-flash-preview`; Kali uses `google/gemini-2.5-flash-image`; Sage/Mint reports use `google/gemini-2.5-pro` for higher quality.
-- Quota reset is calendar-month based via `period_yyyymm`; "remaining" computed as `monthly_quota - count` (null quota = unlimited).
-- All new tables enable RLS with owner-only policies on user-scoped rows; catalog tables are public-read.
-- No service-role key ever touches the client; only edge functions read it.
-
-## Out of scope (this pass)
-
-- Actually generating final long-form videos for Fedora (we only generate the brief/plan; real video gen remains the existing wizard).
-- Auto-running Ubuntu reviews on every existing post — we add the action and the pre-publish hook, but don't retro-scan history.
-- Charging logic for tiers — we use existing `profiles.membership_tier` + `s2g_agent_free_access`. Switching plans stays in the existing billing flow.
-
-## What you'll see when this ships
-
-- New `/companions` hub with all 10 companions.
-- Companion cards on the dashboard with live quota.
-- Each companion opens a chat drawer that streams answers and respects your tier.
-- Existing AI helpers (hashtags, offerings, video wizard) keep working but route through the companion system.
-- Founders get unlimited everything automatically.
+Reply with which phase to start, or say "go" and I'll build all four in order.
