@@ -421,7 +421,8 @@ const fetchOrchardById = async (oid) => {
         images: allImageUrls,
         video_url: videoUrl,
         allow_commission_marketing: allowCommissionMarketing,
-        commission_rate: allowCommissionMarketing ? parseFloat(commissionRate) : null
+        commission_rate: allowCommissionMarketing ? parseFloat(commissionRate) : null,
+        whisperer_share_pct: Math.max(0, Math.min(50, parseFloat(formData.whisperer_share_pct) || 10))
       }
 
       console.log('🔧 Creating orchard with data:', orchardData)
