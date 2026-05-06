@@ -12123,6 +12123,7 @@ export type Database = {
         Args: { _user_id: string }
         Returns: undefined
       }
+      fn_orchard_owner: { Args: { _orchard_id: string }; Returns: string }
       generate_invoice_number: { Args: never; Returns: string }
       generate_ref_code: { Args: never; Returns: string }
       generate_referral_code: { Args: never; Returns: string }
