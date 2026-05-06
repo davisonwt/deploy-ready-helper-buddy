@@ -1053,11 +1053,25 @@ export default function SeedFlowDashboard() {
               </div>
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 8 }}>
               <div style={styles.seedflowLabel}>
                 <span style={{ width: 7, height: 7, borderRadius: '50%', background: '#22c55e', display: 'inline-block', animation: 'pulse 2s infinite' }} />
                 SeedFlow active
               </div>
-              <Link
+              <Link to="/orchard-alive" style={{ textDecoration: 'none' }}>
+                <div style={{
+                  display: 'inline-flex', alignItems: 'center', gap: 8,
+                  padding: '8px 14px', borderRadius: 12,
+                  background: 'linear-gradient(135deg,#16a34a,#22c55e,#84cc16)',
+                  color: '#fff', fontWeight: 800, fontSize: 11, letterSpacing: '1.5px',
+                  border: '1px solid rgba(255,255,255,0.25)',
+                  textTransform: 'uppercase',
+                  boxShadow: '0 6px 20px rgba(34,197,94,0.35)',
+                }}>
+                  🌿 Tribal Feeds
+                </div>
+              </Link>
+            </div>
                 to="/profile"
                 aria-label="Open your profile & settings"
                 title="Profile & settings"
