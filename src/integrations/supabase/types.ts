@@ -3242,6 +3242,114 @@ export type Database = {
           },
         ]
       }
+      grove_message_queue: {
+        Row: {
+          agent_slug: string
+          attempts: number
+          body: string
+          created_at: string
+          delivered_at: string | null
+          delivery_error: string | null
+          id: string
+          metadata: Json
+          recipient_id: string
+          scheduled_for: string
+        }
+        Insert: {
+          agent_slug: string
+          attempts?: number
+          body: string
+          created_at?: string
+          delivered_at?: string | null
+          delivery_error?: string | null
+          id?: string
+          metadata?: Json
+          recipient_id: string
+          scheduled_for?: string
+        }
+        Update: {
+          agent_slug?: string
+          attempts?: number
+          body?: string
+          created_at?: string
+          delivered_at?: string | null
+          delivery_error?: string | null
+          id?: string
+          metadata?: Json
+          recipient_id?: string
+          scheduled_for?: string
+        }
+        Relationships: []
+      }
+      grove_relationship_scores: {
+        Row: {
+          bestower_id: string
+          consecutive_support: number
+          last_session_at: string | null
+          marked_core_by_sower: boolean
+          notes: string | null
+          sessions_attended: number
+          sower_id: string
+          tier: string
+          total_bestowed: number
+          updated_at: string
+        }
+        Insert: {
+          bestower_id: string
+          consecutive_support?: number
+          last_session_at?: string | null
+          marked_core_by_sower?: boolean
+          notes?: string | null
+          sessions_attended?: number
+          sower_id: string
+          tier?: string
+          total_bestowed?: number
+          updated_at?: string
+        }
+        Update: {
+          bestower_id?: string
+          consecutive_support?: number
+          last_session_at?: string | null
+          marked_core_by_sower?: boolean
+          notes?: string | null
+          sessions_attended?: number
+          sower_id?: string
+          tier?: string
+          total_bestowed?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      grove_session_events: {
+        Row: {
+          created_at: string
+          event_type: string
+          id: string
+          payload: Json
+          session_id: string
+          session_kind: string
+          sower_id: string
+        }
+        Insert: {
+          created_at?: string
+          event_type: string
+          id?: string
+          payload?: Json
+          session_id: string
+          session_kind: string
+          sower_id: string
+        }
+        Update: {
+          created_at?: string
+          event_type?: string
+          id?: string
+          payload?: Json
+          session_id?: string
+          session_kind?: string
+          sower_id?: string
+        }
+        Relationships: []
+      }
       intelligent_listing_sessions: {
         Row: {
           analytics_events: Json
@@ -8066,6 +8174,7 @@ export type Database = {
           default_model: string
           emoji: string
           is_active: boolean
+          layer: string
           name: string
           slug: string
           sort_order: number
@@ -8078,6 +8187,7 @@ export type Database = {
           default_model?: string
           emoji: string
           is_active?: boolean
+          layer?: string
           name: string
           slug: string
           sort_order?: number
@@ -8090,6 +8200,7 @@ export type Database = {
           default_model?: string
           emoji?: string
           is_active?: boolean
+          layer?: string
           name?: string
           slug?: string
           sort_order?: number
@@ -12791,6 +12902,10 @@ export type Database = {
       respond_tribal_hearts_spark: {
         Args: { _accept: boolean; _match_id: string }
         Returns: Json
+      }
+      s2g_relationship_tier_for_score: {
+        Args: { _marked_core: boolean; _sessions: number; _total: number }
+        Returns: string
       }
       search_user_profiles: {
         Args: { search_term: string }
