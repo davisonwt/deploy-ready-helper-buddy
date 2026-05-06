@@ -414,7 +414,7 @@ export default function AdminDashboardPage() {
           </TabsContent>
 
           <TabsContent value="payments">
-            <div className="bg-white rounded-lg border">
+            <div className="rounded-2xl border border-cyan-400/25 bg-[#0f172a]/80 backdrop-blur shadow-[0_0_40px_rgba(34,211,238,0.10)]">
               <AdminPaymentDashboard />
             </div>
           </TabsContent>
