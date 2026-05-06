@@ -371,6 +371,9 @@ const App = () => (
               <Route path="/ai-assistant" element={
                 <ProtectedRoute><Layout><CreateOrchardPage /></Layout></ProtectedRoute>
               } />
+              <Route path="/companions" element={
+                <ProtectedRoute><Layout><Suspense fallback={<div>Loading...</div>}><CompanionsHubPage /></Suspense></Layout></ProtectedRoute>
+              } />
               <Route path="/community-offering" element={
                 <ProtectedRoute>
                   <Suspense fallback={<div>Loading...</div>}><CommunityOfferingPage /></Suspense>
