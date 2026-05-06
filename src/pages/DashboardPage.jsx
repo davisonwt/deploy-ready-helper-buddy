@@ -1072,6 +1072,7 @@ export default function SeedFlowDashboard() {
                 </div>
               </Link>
             </div>
+              <Link
                 to="/profile"
                 aria-label="Open your profile & settings"
                 title="Profile & settings"
