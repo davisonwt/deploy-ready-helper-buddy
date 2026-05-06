@@ -35,8 +35,8 @@ const ORCHARD_TYPES = [
 const TYPE_CONFIG = {
   community: { color: '#6366f1', bg: 'rgba(99,102,241,0.15)', border: 'rgba(99,102,241,0.4)', emoji: '🏘️', label: 'Community Orchard' },
   production: { color: '#f59e0b', bg: 'rgba(245,158,11,0.15)', border: 'rgba(245,158,11,0.4)', emoji: '🏭', label: 'Production Orchard' },
-  single_seed: { color: '#10b981', bg: 'rgba(16,185,129,0.15)', border: 'rgba(16,185,129,0.4)', emoji: '🌱', label: 'Single Seed' },
-  full_value: { color: '#10b981', bg: 'rgba(16,185,129,0.15)', border: 'rgba(16,185,129,0.4)', emoji: '🌱', label: 'Single Seed' },
+  single_seed: { color: '#10b981', bg: 'rgba(34,211,238,0.15)', border: 'rgba(34,211,238,0.35)', emoji: '🌱', label: 'Single Seed' },
+  full_value: { color: '#10b981', bg: 'rgba(34,211,238,0.15)', border: 'rgba(34,211,238,0.35)', emoji: '🌱', label: 'Single Seed' },
 }
 
 function UrgencyBar({ percentage }) {
@@ -359,7 +359,7 @@ export default function BrowseOrchardsPage() {
   return (
     <div style={{ minHeight: '100vh', background: 'linear-gradient(135deg, #020617 0%, #0f172a 50%, #020617 100%)', color: '#f1f5f9', paddingBottom: 90 }}>
       <style>{`
-        @keyframes pulse-glow { 0%,100%{box-shadow:0 0 10px rgba(16,185,129,0.3)} 50%{box-shadow:0 0 25px rgba(16,185,129,0.6)} }
+        @keyframes pulse-glow { 0%,100%{box-shadow:0 0 10px rgba(34,211,238,0.30)} 50%{box-shadow:0 0 25px rgba(34,211,238,0.55)} }
         .live-dot { width:8px;height:8px;border-radius:50%;background:#10b981;animation:pulse-glow 2s infinite; }
         @keyframes orchardBuzz {
           0%,100% { transform: translateY(0); opacity: 0.8; }
@@ -377,7 +377,7 @@ export default function BrowseOrchardsPage() {
       <button
         type="button"
         onClick={() => navigate(-1)}
-        style={{ position: 'sticky', top: 10, left: 20, zIndex: 120, margin: '12px 0 0 20px', display: 'inline-flex', alignItems: 'center', gap: 8, padding: '12px 18px', borderRadius: 14, border: '1px solid rgba(16,185,129,0.35)', background: 'rgba(2,6,23,0.92)', color: '#f1f5f9', fontWeight: 800, fontSize: 15, cursor: 'pointer', boxShadow: '0 10px 30px rgba(0,0,0,0.35)' }}
+        style={{ position: 'sticky', top: 10, left: 20, zIndex: 120, margin: '12px 0 0 20px', display: 'inline-flex', alignItems: 'center', gap: 8, padding: '12px 18px', borderRadius: 14, border: '1px solid rgba(34,211,238,0.30)', background: 'rgba(2,6,23,0.92)', color: '#f1f5f9', fontWeight: 800, fontSize: 15, cursor: 'pointer', boxShadow: '0 10px 30px rgba(0,0,0,0.35)' }}
       >
         ← Go Back
       </button>
@@ -385,8 +385,8 @@ export default function BrowseOrchardsPage() {
       {/* ── Buzzing tribal welcome banner ── */}
       <div style={{
         position: 'relative', overflow: 'hidden',
-        background: 'radial-gradient(ellipse at top, rgba(16,185,129,0.18) 0%, rgba(2,6,23,0) 70%)',
-        borderBottom: '1px solid rgba(16,185,129,0.15)',
+        background: 'radial-gradient(ellipse at top, rgba(34,211,238,0.14) 0%, rgba(2,6,23,0) 70%)',
+        borderBottom: '1px solid rgba(34,211,238,0.15)',
         padding: '18px 20px 20px',
       }}>
         {/* fireflies */}
@@ -425,9 +425,9 @@ export default function BrowseOrchardsPage() {
           {TABS.map(t => (
             <button key={t.value} onClick={() => setActiveTab(t.value)}
               style={{ padding: '10px 18px', borderRadius: 12, border: 'none', cursor: 'pointer', fontWeight: 700, fontSize: 14,
-                background: activeTab === t.value ? 'linear-gradient(135deg, #10b981, #059669)' : 'rgba(255,255,255,0.04)',
+                background: activeTab === t.value ? 'linear-gradient(135deg, #22d3ee, #0891b2)' : 'rgba(255,255,255,0.04)',
                 color: activeTab === t.value ? '#fff' : '#94a3b8',
-                boxShadow: activeTab === t.value ? '0 4px 15px rgba(16,185,129,0.4)' : 'none', transition: 'all 0.2s' }}>
+                boxShadow: activeTab === t.value ? '0 4px 15px rgba(34,211,238,0.35)' : 'none', transition: 'all 0.2s' }}>
               {t.emoji} {t.label}
             </button>
           ))}
@@ -455,7 +455,7 @@ export default function BrowseOrchardsPage() {
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
             {WANDERING_ROLES.map(role => (
               <motion.button key={role.value} whileTap={{ scale: 0.95 }} onClick={() => setSelectedRole(role.value)}
-                style={{ padding: '8px 14px', borderRadius: 20, border: 'none', cursor: 'pointer', fontWeight: 600, fontSize: 13, background: selectedRole === role.value ? 'linear-gradient(135deg, #10b981, #059669)' : 'rgba(255,255,255,0.05)', color: selectedRole === role.value ? '#fff' : '#94a3b8', boxShadow: selectedRole === role.value ? '0 4px 15px rgba(16,185,129,0.4)' : 'none', transition: 'all 0.2s' }}>
+                style={{ padding: '8px 14px', borderRadius: 20, border: 'none', cursor: 'pointer', fontWeight: 600, fontSize: 13, background: selectedRole === role.value ? 'linear-gradient(135deg, #22d3ee, #0891b2)' : 'rgba(255,255,255,0.05)', color: selectedRole === role.value ? '#fff' : '#94a3b8', boxShadow: selectedRole === role.value ? '0 4px 15px rgba(34,211,238,0.35)' : 'none', transition: 'all 0.2s' }}>
                 {role.emoji} {role.label}
               </motion.button>
             ))}
@@ -498,7 +498,7 @@ export default function BrowseOrchardsPage() {
               <p style={{ color: '#64748b' }}>Try a different filter or be the first to plant!</p>
               <Link to="/create-orchard" style={{ textDecoration: 'none' }}>
                 <motion.button whileHover={{ scale: 1.05 }}
-                  style={{ marginTop: 20, padding: '12px 24px', background: 'linear-gradient(135deg, #10b981, #059669)', border: 'none', borderRadius: 12, color: '#fff', fontWeight: 700, fontSize: 15, cursor: 'pointer' }}>
+                  style={{ marginTop: 20, padding: '12px 24px', background: 'linear-gradient(135deg, #22d3ee, #0891b2)', border: 'none', borderRadius: 12, color: '#fff', fontWeight: 700, fontSize: 15, cursor: 'pointer' }}>
                   🌱 Plant First Seed
                 </motion.button>
               </Link>
@@ -531,7 +531,7 @@ export default function BrowseOrchardsPage() {
         position: 'fixed', bottom: 0, left: 0, right: 0,
         display: 'flex', gap: 8, padding: '10px 12px',
         background: 'rgba(8,13,23,0.95)', backdropFilter: 'blur(10px)',
-        borderTop: '1px solid rgba(16,185,129,0.15)',
+        borderTop: '1px solid rgba(34,211,238,0.15)',
         zIndex: 100,
       }}>
         <Link to="/create-orchard" style={{ flex: 1, textDecoration: 'none' }}>
