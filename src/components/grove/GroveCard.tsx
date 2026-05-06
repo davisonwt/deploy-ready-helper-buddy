@@ -1,5 +1,6 @@
 import { motion, AnimatePresence } from 'framer-motion';
-import { Users, User, BookOpen, Radio, Play, Download, Lock, Sparkles, Leaf, Apple, FileText, Music, Image as ImageIcon, Video, Share2 } from 'lucide-react';
+import { Users, User, BookOpen, Radio, Play, Download, Lock, Sparkles, Leaf, Apple, FileText, Music, Image as ImageIcon, Video, Share2, Heart } from 'lucide-react';
+import QuickBestowModal from '@/components/bestow/QuickBestowModal';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -34,6 +35,7 @@ export function GroveCard({ grove, onEngage, onHarvest }: GroveCardProps) {
   const config = typeConfig[grove.type];
   const TypeIcon = config.icon;
   const [showFruits, setShowFruits] = useState(false);
+  const [bestowOpen, setBestowOpen] = useState(false);
 
   // Bloom animation for card entrance
   const bloomVariants = {
