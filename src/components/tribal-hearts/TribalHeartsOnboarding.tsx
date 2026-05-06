@@ -98,7 +98,7 @@ export const TribalHeartsOnboarding: React.FC<Props> = ({ onComplete }) => {
         birthdate: birthdate!,
         gender: draft.gender!,
         seeking: draft.seeking!,
-        seeking_intent: draft.intent || 'open',
+        seeking_intent: draft.intent || 'connection',
         bio: draft.bio.trim() || null,
         interests: draft.interests,
         photos: draft.photos,
