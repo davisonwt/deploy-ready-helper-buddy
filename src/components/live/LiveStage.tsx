@@ -276,15 +276,27 @@ export default function LiveStage({
 
         {/* Media mode */}
         {stage.mode === 'video' && (
-          <div className="absolute inset-0 flex items-center justify-center bg-black">
-            {mediaUrl && mediaKind === 'video' && (
-              <video src={mediaUrl} controls={isHost} autoPlay className="max-h-full max-w-full" />
+          <div className="absolute inset-0 flex flex-col items-center justify-center bg-black p-3">
+            {nowPlaying.image && activeMediaKind === 'audio' && (
+              <img src={nowPlaying.image} alt="" className="mb-3 max-h-[55%] max-w-[80%] rounded object-contain" />
             )}
-            {mediaUrl && mediaKind === 'audio' && (
-              <audio src={mediaUrl} controls={isHost} autoPlay className="w-2/3" />
+            {activeMediaUrl && activeMediaKind === 'video' && (
+              <video src={activeMediaUrl} controls autoPlay className="max-h-full max-w-full" />
             )}
-            {!mediaUrl && (
-              <div className="text-white/40 text-sm">No media attached to this seed.</div>
+            {activeMediaUrl && activeMediaKind === 'audio' && (
+              <audio src={activeMediaUrl} controls autoPlay className="w-[80%]" />
+            )}
+            {!activeMediaUrl && (
+              <div className="text-white/40 text-sm">
+                {isRadio && isHost
+                  ? 'Pick a tribal music seed below to start playing.'
+                  : 'No media attached to this seed.'}
+              </div>
+            )}
+            {nowPlaying.title && activeMediaUrl && (
+              <div className="mt-3 rounded-full border border-emerald-400/30 bg-black/60 px-3 py-1 text-xs">
+                🎵 Now playing: <span className="font-bold text-emerald-300">{nowPlaying.title}</span>
+              </div>
             )}
           </div>
         )}
