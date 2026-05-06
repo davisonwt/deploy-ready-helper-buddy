@@ -924,7 +924,7 @@ export default function TribalAliveFeedPage() {
       </div>
 
       {/* Compact filter row — two dropdowns instead of two pill rows */}
-      <div className="absolute inset-x-0 top-[5.5rem] z-20 flex items-center gap-2 px-3 py-1.5">
+      <div className="absolute inset-x-0 top-[10.5rem] z-20 flex items-center gap-2 px-3 py-1.5">
         {/* Wandering / sower-identity dropdown */}
         <div className="relative">
           <select
