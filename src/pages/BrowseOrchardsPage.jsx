@@ -440,11 +440,18 @@ export default function BrowseOrchardsPage() {
             { label: 'Hot (70%+)', value: processed.filter(o => o.completion_percentage >= 70).length, icon: '🔥', color: '#ef4444' },
             { label: 'Min Bestow', value: '$2', icon: '💚', color: '#6366f1' },
           ].map(stat => (
-            <div key={stat.label} style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 12, padding: '10px 16px', display: 'flex', alignItems: 'center', gap: 8 }}>
-              <span style={{ fontSize: 18 }}>{stat.icon}</span>
+            <div key={stat.label} style={{
+              background: 'rgba(15,23,42,0.7)',
+              border: `1px solid ${stat.color}40`,
+              borderRadius: 16, padding: '12px 18px',
+              display: 'flex', alignItems: 'center', gap: 12,
+              boxShadow: `0 0 24px ${stat.color}22`,
+              backdropFilter: 'blur(8px)',
+            }}>
+              <div style={{ width: 38, height: 38, borderRadius: 12, background: `${stat.color}22`, border: `1px solid ${stat.color}55`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18 }}>{stat.icon}</div>
               <div>
-                <div style={{ fontSize: 18, fontWeight: 800, color: stat.color }}>{stat.value}</div>
-                <div style={{ fontSize: 11, color: '#64748b' }}>{stat.label}</div>
+                <div style={{ fontSize: 20, fontWeight: 800, color: stat.color }}>{stat.value}</div>
+                <div style={{ fontSize: 11, color: '#94a3b8', letterSpacing: '.05em' }}>{stat.label}</div>
               </div>
             </div>
           ))}
