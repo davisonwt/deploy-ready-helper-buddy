@@ -1,4 +1,4 @@
-import { Lock } from "lucide-react";
+import { Lock, Leaf, Nut } from "lucide-react";
 import type { CompanionEntitlement } from "@/hooks/useCompanions";
 
 interface Props {
