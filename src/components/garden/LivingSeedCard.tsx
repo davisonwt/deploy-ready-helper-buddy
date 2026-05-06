@@ -78,6 +78,18 @@ export default function LivingSeedCard({
   const audioRef = useRef<HTMLAudioElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
 
+  // image carousel
+  const imgList = (images && images.length ? images : (image ? [image] : [])).filter(Boolean) as string[];
+  const [imgIdx, setImgIdx] = useState(0);
+  const safeImgIdx = imgList.length ? imgIdx % imgList.length : 0;
+  const currentImage = imgList[safeImgIdx] || image || null;
+
+  // live overlay state
+  const [faceless, setFaceless] = useState(false);
+  const [chatMsgs, setChatMsgs] = useState<Array<{ id: string; from: string; text: string; at: number }>>([]);
+  const [chatDraft, setChatDraft] = useState('');
+  const [overlayImgIdx, setOverlayImgIdx] = useState(0);
+
   // who's live on THIS seed right now
   const liveHere = useMemo(
     () => liveSeeds.filter((p) => p.seed_id === seedId),
