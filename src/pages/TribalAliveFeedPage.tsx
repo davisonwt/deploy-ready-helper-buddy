@@ -538,6 +538,22 @@ export default function TribalAliveFeedPage() {
     return () => observer.disconnect();
   }, [filtered.length]);
 
+  /* ───────── auto-advance: prompt at 15s, roll at 21s ───────── */
+  const [autoPrompt, setAutoPrompt] = useState(false);
+  const [autoPaused, setAutoPaused] = useState(false);
+
+  useEffect(() => {
+    setAutoPrompt(false);
+    if (autoPaused || filtered.length < 2) return;
+    const promptT = setTimeout(() => setAutoPrompt(true), 15000);
+    const advanceT = setTimeout(() => {
+      const next = cardRefs.current[activeIdx + 1];
+      if (next) next.scrollIntoView({ behavior: 'smooth' });
+      setAutoPrompt(false);
+    }, 21000);
+    return () => { clearTimeout(promptT); clearTimeout(advanceT); };
+  }, [activeIdx, filtered.length, autoPaused]);
+
   /* ───────── actions ───────── */
 
   const inviteOrigin = 'https://sow2growapp.com';
