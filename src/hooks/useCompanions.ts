@@ -9,6 +9,7 @@ export interface CompanionEntitlement {
   emoji: string;
   summary: string;
   category: string;
+  layer: "narrative" | "infrastructure" | "live" | "harvest" | "orchestration";
   default_model: string;
   mode: "none" | "basic" | "standard" | "full" | "full_plus";
   monthly_quota: number | null;
