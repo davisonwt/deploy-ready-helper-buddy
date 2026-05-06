@@ -118,28 +118,28 @@ All colors MUST be HSL.
   --charcoal-900: 210 20% 10%; /* #111827 */
 
   /* Glass morphism effects */
-  --glass-bg: 212 49% 24%; /* card color with 70% opacity */
-  --glass-border: 0 0% 100%; /* white with 10% opacity */
-  --glass-shadow: 0 0% 0%; /* black with 20% opacity */
-  --glass-glow: 188 78% 41%; /* teal glow */
+  --glass-bg: 222 47% 11%;
+  --glass-border: 0 0% 100%;
+  --glass-shadow: 0 0% 0%;
+  --glass-glow: 189 94% 55%;
 
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 210 11% 71%; /* #ADB5BD - Light gray borders */
-    --input: 212 49% 24%; /* #1E3A5C - Input background */
-    --ring: 188 78% 41%;  /* #17A2B8 - Teal ring */
+    --border: 217 33% 22%; /* slate-700/40 */
+    --input: 222 47% 11%;
+    --ring: 189 94% 55%;
 
     --radius: 0.5rem;
 
-    --sidebar-background: 212 49% 24%; /* #1E3A5C - Card color */
-    --sidebar-foreground: 210 17% 98%; /* #F8F9FA - Off-white */
-    --sidebar-primary: 188 78% 41%;  /* #17A2B8 - Teal */
-    --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 212 49% 24%;  /* #1E3A5C */
+    --sidebar-background: 222 47% 11%;
+    --sidebar-foreground: 210 17% 98%;
+    --sidebar-primary: 189 94% 55%;
+    --sidebar-primary-foreground: 222 47% 11%;
+    --sidebar-accent: 217 33% 17%;
     --sidebar-accent-foreground: 210 17% 98%;
-    --sidebar-border: 210 11% 71%; /* #ADB5BD */
-    --sidebar-ring: 188 78% 41%;  /* #17A2B8 - Teal */
+    --sidebar-border: 217 33% 22%;
+    --sidebar-ring: 189 94% 55%;
 
     --success: 142 76% 36%;  /* Keep green for success */
     --success-foreground: 0 0% 100%;
