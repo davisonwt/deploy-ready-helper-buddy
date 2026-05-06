@@ -65,10 +65,10 @@ export function LetItRainPanel({ isOpen, onClose }: LetItRainPanelProps) {
   ]
 
   const quickActions = [
-    { href: '/tithing', label: 'Tithing', color: 'bg-blue-600 hover:bg-blue-500', icon: HandHeart },
-    { href: '/free-will-gifting', label: 'Free-Will Gift', color: 'bg-purple-600 hover:bg-purple-500', icon: Gift },
-    { href: '#', label: 'Quick Rain 0.50', color: 'bg-green-600 hover:bg-green-500', onClick: quickRain },
-    { href: '#', label: 'Body Rain 1.00', color: 'bg-teal-600 hover:bg-teal-500', onClick: rainAmount },
+    { href: '/tithing', label: 'Tithing', color: 'bg-cyan-500/15 hover:bg-cyan-500/25 border border-cyan-400/30 text-cyan-100', icon: HandHeart },
+    { href: '/free-will-gifting', label: 'Free-Will Gift', color: 'bg-amber-500/15 hover:bg-amber-500/25 border border-amber-400/30 text-amber-100', icon: Gift },
+    { href: '#', label: 'Quick Rain 0.50', color: 'bg-cyan-500/15 hover:bg-cyan-500/25 border border-cyan-400/30 text-cyan-100', onClick: quickRain },
+    { href: '#', label: 'Body Rain 1.00', color: 'bg-amber-500/15 hover:bg-amber-500/25 border border-amber-400/30 text-amber-100', onClick: rainAmount },
   ]
 
   if (!isOpen) {
@@ -82,7 +82,7 @@ export function LetItRainPanel({ isOpen, onClose }: LetItRainPanelProps) {
           onClick={closePanel}
           className="absolute inset-0 bg-black/70 backdrop-blur-sm transition-opacity duration-500 opacity-100"
         />
-        <div className="absolute inset-y-0 left-0 w-full max-w-lg bg-gradient-to-br from-blue-950 via-indigo-900 to-purple-900 shadow-2xl transform transition-transform duration-500 pointer-events-auto overflow-y-auto translate-x-0">
+        <div className="absolute inset-y-0 left-0 w-full max-w-lg shadow-2xl transform transition-transform duration-500 pointer-events-auto overflow-y-auto translate-x-0" style={{ background: 'linear-gradient(180deg, #0a0f1a 0%, #060a12 100%)' }}>
           <div className="p-8 pb-32 space-y-8 text-white">
             <div className="flex justify-end">
               <button
@@ -98,7 +98,7 @@ export function LetItRainPanel({ isOpen, onClose }: LetItRainPanelProps) {
                 <Cloud className="w-10 h-10" />
                 <span>Let It Rain!</span>
               </h2>
-              <p className="text-yellow-300 text-lg mt-3">
+              <p className="text-amber-300 text-lg mt-3">
                 Support the work · Bless the community · Make it rain! 💧
               </p>
             </div>
@@ -140,13 +140,13 @@ export function LetItRainPanel({ isOpen, onClose }: LetItRainPanelProps) {
                   key={index}
                   to={card.href}
                   onClick={closePanel}
-                  className="garden-card relative overflow-hidden flex items-center justify-between bg-white/10 hover:bg-white/20 backdrop-blur-lg rounded-3xl p-6 transition-all hover:scale-105 shadow-xl"
+                  className="garden-card relative overflow-hidden flex items-center justify-between bg-[#0f172a]/70 hover:bg-[#0f172a]/90 backdrop-blur-lg border border-cyan-400/15 rounded-3xl p-6 transition-all hover:scale-105 shadow-xl"
                 >
                   <div className="flex items-center gap-4">
-                    {card.icon && <card.icon className="w-8 h-8 text-blue-300" />}
+                    {card.icon && <card.icon className="w-8 h-8 text-cyan-300" />}
                     <div>
-                      <div className="font-semibold text-lg">{card.title}</div>
-                      <span className="text-blue-200 text-sm">{card.subtitle}</span>
+                      <div className="font-semibold text-lg text-white">{card.title}</div>
+                      <span className="text-slate-400 text-sm">{card.subtitle}</span>
                     </div>
                   </div>
                 </Link>
