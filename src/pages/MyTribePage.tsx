@@ -102,143 +102,158 @@ export default function MyTribePage() {
   const shareInstagram = () => copyForPaste("Instagram");
   const shareYouTube   = () => copyForPaste("YouTube");
 
+  const ShareBtn = ({ onClick, children, accent = 'cyan' }: any) => {
+    const ring =
+      accent === 'amber'
+        ? 'border-amber-400/40 hover:border-amber-300/70 text-amber-100 hover:shadow-[0_0_18px_rgba(245,158,11,0.35)]'
+        : accent === 'rose'
+        ? 'border-rose-400/40 hover:border-rose-300/70 text-rose-100 hover:shadow-[0_0_18px_rgba(244,63,94,0.35)]'
+        : 'border-cyan-400/40 hover:border-cyan-300/70 text-cyan-100 hover:shadow-[0_0_18px_rgba(34,211,238,0.35)]'
+    return (
+      <button
+        onClick={onClick}
+        className={`px-4 py-2 rounded-2xl text-sm font-semibold bg-white/5 hover:bg-white/10 border ${ring} backdrop-blur transition-all hover:-translate-y-0.5 active:scale-95`}
+      >
+        {children}
+      </button>
+    )
+  }
+
   return (
-    <div className="min-h-screen text-slate-100 relative" style={{ background: 'linear-gradient(180deg, #0a0f1a 0%, #060a12 100%)' }}>
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_15%,rgba(16,185,129,0.18),transparent_55%),radial-gradient(circle_at_80%_70%,rgba(168,85,247,0.16),transparent_55%),radial-gradient(circle_at_50%_95%,rgba(56,189,248,0.14),transparent_55%)] pointer-events-none" />
+    <div
+      className="min-h-screen text-slate-100 relative"
+      style={{ background: 'linear-gradient(180deg, #0a0f1a 0%, #060a12 100%)' }}
+    >
+      <div
+        aria-hidden
+        className="pointer-events-none fixed inset-0"
+        style={{
+          background:
+            'radial-gradient(ellipse 80% 50% at 50% -10%, rgba(34,211,238,0.08), transparent 60%), radial-gradient(ellipse 60% 40% at 90% 100%, rgba(245,158,11,0.06), transparent 60%)',
+        }}
+      />
       <div className="relative max-w-5xl mx-auto px-4 py-6 space-y-6">
-        <Link to="/dashboard" className="inline-flex items-center gap-2 text-sm text-emerald-300 hover:text-emerald-200">
+        <Link to="/dashboard" className="inline-flex items-center gap-2 rounded-xl px-3 py-2 text-sm font-semibold text-slate-200 bg-white/5 hover:bg-white/10 border border-white/10 transition">
           <ArrowLeft size={16} /> Go Back
         </Link>
 
         <header className="space-y-2">
-          <div className="flex items-center gap-2 text-emerald-500 text-xs font-bold tracking-wider">
+          <div className="flex items-center gap-2 text-cyan-300 text-xs font-bold tracking-[0.2em]">
             <Sparkles size={14} /> MY TRIBE
           </div>
-          <h1 className="text-3xl font-bold">Your tribe grows from your invitation</h1>
-          <p className="text-sm text-muted-foreground max-w-2xl">
+          <h1 className="text-3xl font-bold text-white drop-shadow-[0_2px_8px_rgba(34,211,238,0.25)]">Your tribe grows from your invitation</h1>
+          <p className="text-sm text-slate-300/80 max-w-2xl">
             Every link, video, seed, or post you share from Sow2Grow carries your unique invitation code.
             Anyone who registers from your share automatically becomes a member of <em>your</em> tribe — forever.
           </p>
         </header>
 
         {/* Code card */}
-        <Card className="border-emerald-500/40 bg-gradient-to-br from-emerald-500/10 via-transparent to-transparent">
-          <CardHeader>
-            <CardTitle className="text-base">Your unique invitation code</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            {codeLoading ? (
-              <div className="h-10 w-48 bg-muted animate-pulse rounded" />
-            ) : code ? (
-              <>
-                <div className="flex flex-wrap items-center gap-3">
-                  <div className="font-mono text-2xl md:text-3xl font-bold text-emerald-500 tracking-wider">{code}</div>
-                  <Button size="sm" variant="outline" onClick={() => copy(inviteText, "code")}>
-                    {copied === "code" ? <Check className="h-4 w-4 mr-1" /> : <Copy className="h-4 w-4 mr-1" />}
-                    {copied === "code" ? "Copied invitation" : "Copy invitation"}
-                  </Button>
+        <div className="rounded-2xl border border-cyan-400/25 bg-[#0f172a]/80 backdrop-blur p-5 shadow-[0_0_40px_rgba(34,211,238,0.10)]">
+          <div className="text-base font-bold text-white mb-4">Your unique invitation code</div>
+          {codeLoading ? (
+            <div className="h-10 w-48 bg-white/10 animate-pulse rounded" />
+          ) : code ? (
+            <div className="space-y-5">
+              <div className="flex flex-wrap items-center gap-3">
+                <div className="font-mono text-2xl md:text-3xl font-extrabold tracking-wider bg-gradient-to-r from-cyan-300 to-amber-200 bg-clip-text text-transparent">
+                  {code}
                 </div>
-                <div>
-                  <label className="text-xs text-muted-foreground">Your invitation link</label>
-                  <div className="flex items-center gap-2 mt-1">
-                    <Input value={inviteUrl} readOnly className="font-mono text-xs" />
-                    <Button size="icon" onClick={() => copy(inviteUrl, "link")} aria-label="Copy invite link">
-                      {copied === "link" ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
-                    </Button>
-                  </div>
-                </div>
+                <ShareBtn onClick={() => copy(inviteText, "code")}>
+                  {copied === "code" ? <Check className="h-4 w-4 inline mr-1" /> : <Copy className="h-4 w-4 inline mr-1" />}
+                  {copied === "code" ? "Copied invitation" : "Copy invitation"}
+                </ShareBtn>
+              </div>
 
-                <div>
-                  <div className="text-xs text-muted-foreground mb-2">Share your invitation</div>
-                  <div className="flex flex-wrap gap-2">
-                    <Button size="sm" variant="outline" onClick={shareWA}>WhatsApp</Button>
-                    <Button size="sm" variant="outline" onClick={shareTG}>Telegram</Button>
-                    <Button size="sm" variant="outline" onClick={shareLI}><Linkedin className="h-4 w-4 mr-1" /> LinkedIn</Button>
-                    <Button size="sm" variant="outline" onClick={sharePI}>Pinterest</Button>
-                    <Button size="sm" variant="outline" onClick={shareFB}><Facebook className="h-4 w-4 mr-1" /> Facebook</Button>
-                    <Button size="sm" variant="outline" onClick={shareTW}>X (Twitter)</Button>
-                    <Button size="sm" variant="outline" onClick={shareTikTok}>TikTok</Button>
-                    <Button size="sm" variant="outline" onClick={shareInstagram}>Instagram</Button>
-                    <Button size="sm" variant="outline" onClick={shareYouTube}>YouTube</Button>
-                    <Button size="sm" variant="outline" onClick={shareEmail}><Mail className="h-4 w-4 mr-1" /> Email</Button>
-                  </div>
+              <div>
+                <label className="text-xs text-slate-400">Your invitation link</label>
+                <div className="flex items-center gap-2 mt-1">
+                  <Input value={inviteUrl} readOnly className="font-mono text-xs bg-white/5 border-white/10 text-slate-200" />
+                  <button
+                    onClick={() => copy(inviteUrl, "link")}
+                    aria-label="Copy invite link"
+                    className="h-10 w-10 rounded-xl bg-white/5 hover:bg-white/10 border border-cyan-400/30 hover:border-cyan-300/60 text-cyan-200 flex items-center justify-center transition hover:-translate-y-0.5"
+                  >
+                    {copied === "link" ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
+                  </button>
                 </div>
-              </>
-            ) : (
-              <p className="text-sm text-muted-foreground">Sign in to view your invitation code.</p>
-            )}
-          </CardContent>
-        </Card>
+              </div>
+
+              <div>
+                <div className="text-xs text-slate-400 mb-2">Share your invitation</div>
+                <div className="flex flex-wrap gap-2">
+                  <ShareBtn accent="amber" onClick={shareWA}>WhatsApp</ShareBtn>
+                  <ShareBtn onClick={shareTG}>Telegram</ShareBtn>
+                  <ShareBtn onClick={shareLI}><Linkedin className="h-4 w-4 inline mr-1" /> LinkedIn</ShareBtn>
+                  <ShareBtn accent="rose" onClick={sharePI}>Pinterest</ShareBtn>
+                  <ShareBtn onClick={shareFB}><Facebook className="h-4 w-4 inline mr-1" /> Facebook</ShareBtn>
+                  <ShareBtn onClick={shareTW}>X (Twitter)</ShareBtn>
+                  <ShareBtn accent="rose" onClick={shareTikTok}>TikTok</ShareBtn>
+                  <ShareBtn accent="rose" onClick={shareInstagram}>Instagram</ShareBtn>
+                  <ShareBtn accent="amber" onClick={shareYouTube}>YouTube</ShareBtn>
+                  <ShareBtn onClick={shareEmail}><Mail className="h-4 w-4 inline mr-1" /> Email</ShareBtn>
+                </div>
+              </div>
+            </div>
+          ) : (
+            <p className="text-sm text-slate-400">Sign in to view your invitation code.</p>
+          )}
+        </div>
 
         {/* Stats */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-sm">Tribe size</CardTitle>
-              <Users className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{stats.total}</div>
-              <p className="text-xs text-muted-foreground">{stats.completed} active</p>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-sm">Total earned</CardTitle>
-              <TrendingUp className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">${stats.earnings.toFixed(2)}</div>
-              <p className="text-xs text-muted-foreground">From tribe activity</p>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-sm">Conversion</CardTitle>
-              <Sparkles className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">
-                {stats.total > 0 ? ((stats.completed / stats.total) * 100).toFixed(0) : 0}%
+          {[
+            { label: 'Tribe size', value: stats.total, sub: `${stats.completed} active`, icon: Users, color: 'cyan' },
+            { label: 'Total earned', value: `$${stats.earnings.toFixed(2)}`, sub: 'From tribe activity', icon: TrendingUp, color: 'amber' },
+            { label: 'Conversion', value: `${stats.total > 0 ? ((stats.completed / stats.total) * 100).toFixed(0) : 0}%`, sub: 'Of your invites bloom', icon: Sparkles, color: 'violet' },
+          ].map((s) => {
+            const Icon = s.icon
+            const ring =
+              s.color === 'amber' ? 'border-amber-400/25 shadow-[0_0_30px_rgba(245,158,11,0.10)] text-amber-200'
+              : s.color === 'violet' ? 'border-violet-400/25 shadow-[0_0_30px_rgba(139,92,246,0.10)] text-violet-200'
+              : 'border-cyan-400/25 shadow-[0_0_30px_rgba(34,211,238,0.10)] text-cyan-200'
+            return (
+              <div key={s.label} className={`rounded-2xl border bg-[#0f172a]/80 backdrop-blur p-5 ${ring}`}>
+                <div className="flex items-center justify-between">
+                  <span className="text-xs uppercase tracking-wider text-slate-400">{s.label}</span>
+                  <Icon className="h-4 w-4 opacity-70" />
+                </div>
+                <div className="text-3xl font-extrabold text-white mt-2">{s.value}</div>
+                <p className="text-xs text-slate-400 mt-1">{s.sub}</p>
               </div>
-              <p className="text-xs text-muted-foreground">Of your invites bloom</p>
-            </CardContent>
-          </Card>
+            )
+          })}
         </div>
 
         {/* Tribe list */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-base">Your tribe members</CardTitle>
-          </CardHeader>
-          <CardContent>
-            {loading ? (
-              <div className="text-sm text-muted-foreground">Loading…</div>
-            ) : tribe.length === 0 ? (
-              <div className="text-center py-8 text-muted-foreground text-sm">
-                No tribe members yet. Share your invitation link to plant the first seed.
-              </div>
-            ) : (
-              <div className="divide-y divide-border">
-                {tribe.map((r) => (
-                  <div key={r.id} className="flex items-center justify-between py-3 text-sm">
-                    <div className="font-mono text-xs text-muted-foreground">
-                      Member #{String(r.referred_id).slice(0, 8)}
-                    </div>
-                    <div className="flex items-center gap-3">
-                      <span className="text-xs text-muted-foreground">
-                        {new Date(r.created_at).toLocaleDateString()}
-                      </span>
-                      <Badge variant={r.status === "completed" ? "default" : "secondary"}>
-                        {r.status}
-                      </Badge>
-                    </div>
+        <div className="rounded-2xl border border-white/10 bg-[#0f172a]/80 backdrop-blur p-5">
+          <div className="text-base font-bold text-white mb-4">Your tribe members</div>
+          {loading ? (
+            <div className="text-sm text-slate-400">Loading…</div>
+          ) : tribe.length === 0 ? (
+            <div className="text-center py-8 text-slate-400 text-sm">
+              No tribe members yet. Share your invitation link to plant the first seed.
+            </div>
+          ) : (
+            <div className="divide-y divide-white/5">
+              {tribe.map((r) => (
+                <div key={r.id} className="flex items-center justify-between py-3 text-sm">
+                  <div className="font-mono text-xs text-slate-400">
+                    Member #{String(r.referred_id).slice(0, 8)}
                   </div>
-                ))}
-              </div>
-            )}
-          </CardContent>
-        </Card>
+                  <div className="flex items-center gap-3">
+                    <span className="text-xs text-slate-500">
+                      {new Date(r.created_at).toLocaleDateString()}
+                    </span>
+                    <Badge variant={r.status === "completed" ? "default" : "secondary"}>
+                      {r.status}
+                    </Badge>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );
