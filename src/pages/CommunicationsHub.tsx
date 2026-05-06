@@ -110,7 +110,7 @@ export default function CommunicationsHub() {
   };
 
   return (
-    <main className="min-h-screen bg-gradient-to-br from-slate-950 via-indigo-950 to-violet-950 text-foreground relative">
+    <main className="min-h-screen text-slate-100 relative" style={{ background: 'linear-gradient(180deg, #0a0f1a 0%, #060a12 100%)' }}>
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_15%_20%,rgba(56,189,248,0.18),transparent_55%),radial-gradient(circle_at_85%_30%,rgba(236,72,153,0.16),transparent_55%),radial-gradient(circle_at_50%_90%,rgba(168,85,247,0.18),transparent_55%)] pointer-events-none" />
       <div className="relative mx-auto max-w-7xl px-4 py-5">
         <Button variant="ghost" onClick={() => navigate('/dashboard')} className="mb-4 gap-2 text-cyan-300 hover:text-cyan-200 hover:bg-cyan-500/10"><ArrowLeft className="h-4 w-4" /> Go Back</Button>

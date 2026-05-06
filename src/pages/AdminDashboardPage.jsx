@@ -336,7 +336,7 @@ export default function AdminDashboardPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-indigo-950 text-foreground">
+    <div className="min-h-screen text-slate-100" style={{ background: 'linear-gradient(180deg, #0a0f1a 0%, #060a12 100%)' }}>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
         <Button variant="ghost" onClick={() => navigate('/dashboard')} className="mb-4 gap-2 text-cyan-300 hover:text-cyan-200 hover:bg-cyan-500/10">
           <ArrowLeft className="h-4 w-4" /> Go Back
