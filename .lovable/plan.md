@@ -1,99 +1,77 @@
+## Goal
 
-## Answer to your question
-"Tell me where the radio Go Live button lives…" — yes, that was a question to you, but ignore it. I'll just turn on the radio music dropdown automatically wherever a host opens a live session whose seed type is `RADIO` / `radio_station` (`isRadio` flag already plumbed). No action needed from you.
-
----
-
-## What I'll build
-
-### 1. Invitation codes actually bind new sign-ups to the inviter's tribe
-
-**Problem:** the share link does carry `?ref=CODE`, but `RegisterPage.jsx` and `useAuth.register` never read it, so no `referrals` row is ever written — that's why `referrals` is empty and nobody appears in anyone's tribe.
-
-**Fix:**
-- On `RegisterPage` mount (and `QuickRegistration`), read `?ref=` from `window.location.search` AND from `localStorage` (set by a tiny `useReferralCapture` hook on the public landing/register routes so the code survives the OAuth/email-confirm bounce).
-- Pass `referral_code` into `supabase.auth.signUp({ options: { data: { referral_code } } })` so it lands in `raw_user_meta_data`.
-- Update the `handle_new_user` trigger (or add a sibling trigger) to:
-  1. Look up `affiliates.id` by `referral_code` from `raw_user_meta_data`.
-  2. Insert into `public.referrals (referrer_id, referred_id, status, commission_rate)` with `status='active'`.
-  3. Bump `affiliates.total_referrals`.
-- Add a SECURITY DEFINER RPC `claim_referral_code(code text)` so an already-registered user (Bianca, Ernie, Vickee, etc.) can self-attach if the trigger missed them.
-
-### 2. Backfill the existing tribe links (one-time SQL migration)
-
-Davison Taljaard = `04754d57-d41d-4ea7-93df-542047a6785b`. He has no `affiliates` row yet — create one first.
+At the top of the Tribal Feed (`/orchard-alive`), add a sticky "Live Now" placeholder strip that lets a tribe member jump into any active live session — radio, 1-on-1, community chat, classroom, SkillDrop, training and premium rooms — without leaving the feed.
 
 ```text
-Davison (root)
-├── every existing user EXCEPT Bianca/Ernie/Vickee → referrals(referrer=Davison)
-└── Bianca Liebenberg (b19c9972…) → referrals(referrer=Davison)
-    ├── Ernie Matthews (4dfc2eb7…) → referrals(referrer=Bianca)
-    └── Vickee Fleetwood (bdb3153f…) → referrals(referrer=Bianca)
+┌──────────────────────────────────────────────────────────────────┐
+│  ●LIVE NOW   [ All ][ Radio ][ Classroom ][ SkillDrop ]…    7  │
+│  ─────────────────────────────────────────────────────  Open →  │
+│   "Friday Night Tribe"  ·  Davison  ·  Radio  ·  41 listening   │
+└──────────────────────────────────────────────────────────────────┘
 ```
 
-Skip the 4 founders (Davison/Ed/Amber/Ezra) and any user who already has a referrer.
+Tap the strip → opens the new `Live Lounge` page where the user can scroll through every active live session and pick one to join.
 
-### 3. Dashboard widgets — Tribe size, Wallet bestowals, Unread messages
+## What to build
 
-Add a 3-tile strip at the top of `DashboardPage.jsx` (above SeedFlow), each tile clickable:
+### 1. New page — `Live Lounge` (`/live-lounge`)
 
-| Tile | Source | Click → |
-|---|---|---|
-| **My Tribe** — count of `referrals` where `referrer_id = my_affiliate.id` + 3 newest member avatars | `referrals` + `profiles` | `/my-tribe` |
-| **Bestowals received** — sum of `bestowals.amount_usdc` where `recipient_id = me`, plus last 3 bestowal notes | `bestowals` / `product_bestowals` | `/wallet` |
-| **Unread messages** — count of `chat_messages` in my rooms where `created_at > my last_read_at` | `chat_messages` + `chat_room_members` | `/chatapp?filter=unread` |
+A vertically scrollable list of every active live session, grouped by kind:
 
-Real-time refresh via Supabase Realtime on `referrals`, `bestowals`, `chat_messages`.
+- **1-on-1 Live** — `live_rooms` where `is_active = true`
+- **Community Chat** — `chat_rooms` (active flag)
+- **Classroom** — `classroom_sessions` (status active / live)
+- **SkillDrop** — `skilldrop_sessions` (status live)
+- **Training / Premium Room** — `premium_rooms` where `is_live = true` (or has active `live_streams` row)
+- **Radio** — `radio_live_sessions` (status `live`)
 
-### 4. Fix unreadable Admin heading (Image 2)
+Each card shows: kind badge, title, host name + avatar, listeners/participants count, started-at, "Join" CTA. Filter chips at the top (`All / 1-on-1 / Community / Classroom / SkillDrop / Training / Radio`). Empty state per kind: "No live sessions yet — be the first to go live" with a button linking to `/communications-hub`.
 
-`AdminDashboardPage.jsx` line 353 uses `bg-gradient-to-r from-cyan-300 via-sky-300 to-violet-300 bg-clip-text text-transparent` — on the deep-navy admin background the text is washed out. Switch to solid `text-cyan-100` with a subtle text-shadow (or brighten the gradient stops to `cyan-200/sky-100/violet-200` and add `drop-shadow`). Same treatment for the subtitle.
+Joining behavior:
+- Radio → `/radio-sessions?session=:id`
+- 1-on-1 / Community / Premium / Training → existing room route (Jitsi)
+- Classroom / SkillDrop → respective session pages
 
----
+Reuses `MidnightShell` for unified aesthetic.
 
-## Technical details
+### 2. New strip — `LiveNowStrip` placed at top of Tribal Feed
 
-**Migration 1 — referral capture trigger update**
-```sql
-create or replace function public.handle_new_user()
-returns trigger language plpgsql security definer set search_path=public as $$
-declare
-  v_code text := new.raw_user_meta_data->>'referral_code';
-  v_ref_aff uuid;
-begin
-  -- existing profile/affiliate creation stays
-  if v_code is not null then
-    select id into v_ref_aff from affiliates where referral_code = v_code;
-    if v_ref_aff is not null then
-      insert into referrals(referrer_id, referred_id, status, commission_rate)
-      values (v_ref_aff, new.id, 'active', 10)
-      on conflict do nothing;
-      update affiliates set total_referrals = total_referrals + 1
-        where id = v_ref_aff;
-    end if;
-  end if;
-  return new;
-end$$;
+Sticky inside the feed header (below the SeedFlow row and tabs, above the dropdowns). Polls or subscribes to a single aggregate count + most-recent live session every 30s.
+
+Renders:
+- `● LIVE NOW · n` pill (red dot pulse)
+- Quick-filter chip row: All · Radio · Classroom · SkillDrop · Training · 1-on-1 · Community
+- One ticker line showing the most recent live ("Friday Night Tribe · Davison · Radio · 41 listening")
+- Right-side `Open Lounge →` CTA
+
+Clicking any chip opens the Lounge with that filter pre-applied (`/live-lounge?kind=radio`). Clicking the ticker opens the lounge or jumps directly into that session if only one is active. If `n === 0`, the strip becomes a soft prompt: "No tribe members live right now — Go Live →" linking to `/communications-hub`.
+
+### 3. Route registration
+
+Add lazy route in `src/App.tsx`:
+```text
+/live-lounge → ProtectedRoute > Layout > LiveLoungePage
 ```
 
-**Migration 2 — backfill**
-```sql
--- 1. Ensure Davison has affiliates row
-insert into affiliates(user_id, referral_code, commission_rate)
-select '04754d57-d41d-4ea7-93df-542047a6785b','S2G-DAVISON',10
-where not exists (select 1 from affiliates where user_id='04754d57-d41d-4ea7-93df-542047a6785b');
+### 4. Shared hook — `useLiveSessions(kind?)`
 
--- 2. Bianca → Davison; Ernie/Vickee → Bianca; everyone else → Davison
--- (script writes referrals + bumps total_referrals, skipping founders)
-```
+`src/hooks/useLiveSessions.ts` — fetches the active rows from each table in parallel, normalizes into one shape `{ id, kind, title, host, hostAvatar, count, startedAt, joinPath }`, exposes `{ sessions, total, byKind, loading, refresh }`. Realtime subscription where the table supports it (radio_live_sessions, live_rooms); 30s polling fallback otherwise.
 
-**Files touched**
-- `supabase/migrations/<ts>_tribe_referral_binding.sql` (new)
-- `src/hooks/useReferralCapture.ts` (new — reads `?ref`, stores in localStorage)
-- `src/pages/RegisterPage.jsx`, `src/components/auth/QuickRegistration.tsx` — pass code to signUp
-- `src/pages/DashboardPage.jsx` — top widgets row
-- `src/components/dashboard/TribeStatTile.tsx`, `BestowalStatTile.tsx`, `UnreadStatTile.tsx` (new)
-- `src/pages/AdminDashboardPage.jsx` — readable heading
-- `src/pages/ChatappPage.jsx` — accept `?filter=unread`
+## Technical notes
 
-No new tables; uses existing `affiliates`, `referrals`, `bestowals`, `chat_messages`.
+- **Files to add**
+  - `src/pages/LiveLoungePage.tsx`
+  - `src/components/live/LiveNowStrip.tsx`
+  - `src/hooks/useLiveSessions.ts`
+- **Files to edit**
+  - `src/pages/TribalAliveFeedPage.tsx` — mount `<LiveNowStrip />` just below the SeedFlow header
+  - `src/App.tsx` — register `/live-lounge` route
+- **Aesthetic** — both new surfaces use `MidnightShell` + cyan/amber accents to match the Dashboard.
+- **No DB migrations** — read-only over existing tables.
+- **Performance** — single hook, parallel queries, 30s revalidation, suspense-friendly.
+
+## Out of scope (not in this pass)
+
+- Going live itself (already handled by `/communications-hub`).
+- Listener count accuracy beyond what each table already exposes.
+- Push notifications when someone goes live.
