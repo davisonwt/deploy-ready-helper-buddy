@@ -1093,7 +1093,7 @@ export default function SeedFlowDashboard() {
             </div>
 
             {/* ── 5 stacked auto-rotating category sliders ── */}
-            <SeedSlider title="SeedFlow" emoji="🌱" accent="#22c55e" cards={seedSliderCards}
+            <SeedSlider title="Seeds" emoji="🌱" accent="#22c55e" cards={seedSliderCards}
               emptyHint="No seeds yet — plant one with the button below." />
             <SeedSlider title="Orchards" emoji="🌳" accent="#16a34a" cards={orchardSliderCards}
               emptyHint="No orchards yet — your own + bestowed will live here." />
@@ -1113,19 +1113,7 @@ export default function SeedFlowDashboard() {
               </div>
             )}
 
-            {/* ── Step Into the Orchard — living gate button ── */}
-            <Link to="/orchard-alive" style={{ textDecoration: 'none' }}>
-              <LivingButton
-                variant="stepInto"
-                height={56}
-                borderRadius={14}
-                fontSize={11}
-                fontWeight={800}
-                letterSpacing="2px"
-              >
-                🌿 STEP INTO THE ORCHARD — FIND YOUR TRIBE'S SEEDS
-              </LivingButton>
-            </Link>
+            {/* Step Into the Orchard moved to floating button (see fixed wrapper below) */}
           </div>
         </div>
 
