@@ -28,10 +28,9 @@ interface Draft {
 const STEPS = 6;
 
 const INTENTS = [
-  { key: 'love', label: 'Looking for love', emoji: '💞' },
-  { key: 'serious', label: 'Serious relationship', emoji: '🌳' },
-  { key: 'friends', label: 'New friends first', emoji: '🤝' },
-  { key: 'curious', label: 'Curious & open', emoji: '✨' },
+  { key: 'courtship', label: 'Courtship — looking for love', emoji: '💞' },
+  { key: 'friendship', label: 'Friendship first', emoji: '🤝' },
+  { key: 'connection', label: 'Open connection', emoji: '✨' },
 ];
 
 const INTERESTS = [
@@ -99,7 +98,7 @@ export const TribalHeartsOnboarding: React.FC<Props> = ({ onComplete }) => {
         birthdate: birthdate!,
         gender: draft.gender!,
         seeking: draft.seeking!,
-        seeking_intent: draft.intent || 'open',
+        seeking_intent: draft.intent || 'connection',
         bio: draft.bio.trim() || null,
         interests: draft.interests,
         photos: draft.photos,

@@ -372,7 +372,7 @@ const App = () => (
                 <ProtectedRoute><Layout><CreateOrchardPage /></Layout></ProtectedRoute>
               } />
               <Route path="/companions" element={
-                <ProtectedRoute><Layout><Suspense fallback={<div>Loading...</div>}><CompanionsHubPage /></Suspense></Layout></ProtectedRoute>
+                <ProtectedRoute><Suspense fallback={<div>Loading...</div>}><CompanionsHubPage /></Suspense></ProtectedRoute>
               } />
               <Route path="/community-offering" element={
                 <ProtectedRoute>
