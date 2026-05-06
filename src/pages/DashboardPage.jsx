@@ -915,17 +915,16 @@ export default function SeedFlowDashboard() {
         .nav-link:hover { opacity: 0.85; }
         .s2g-mobile-panel-tab, .s2g-mobile-backdrop { display: none; }
         @media (max-width: 768px) {
-          .s2g-dashboard-root { top: 38px !important; height: calc(100vh - 38px - 70px) !important; height: calc(100dvh - 38px - 70px) !important; }
+          .s2g-dashboard-root { top: 0 !important; height: calc(100vh - 70px) !important; height: calc(100dvh - 70px) !important; }
           .s2g-dashboard-center { width: 100vw !important; flex: 1 1 100% !important; }
           .s2g-dashboard-header { padding: 12px 48px !important; }
           .s2g-dashboard-header h1, .s2g-dashboard-header h2 { font-size: inherit !important; }
           .s2g-dashboard-header > div:first-child { min-width: 0; }
           .s2g-dashboard-header > div:first-child > div:last-child { min-width: 0; }
           .s2g-dashboard-header > div:first-child > div:last-child > div:first-child { font-size: 14px !important; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: calc(100vw - 150px); }
-          .s2g-dashboard-header > div:last-child { display: none !important; }
           .s2g-dashboard-content { padding: 14px 10px 18px !important; }
           .s2g-dashboard-sidebar, .s2g-dashboard-right-panel {
-            position: fixed !important; top: 38px !important; bottom: 70px !important; height: auto !important;
+            position: fixed !important; top: 0 !important; bottom: 70px !important; height: auto !important;
             z-index: 180 !important; transition: transform 0.24s ease !important;
             box-shadow: 0 22px 70px rgba(0,0,0,0.55); max-width: min(84vw, 310px);
           }
@@ -940,7 +939,7 @@ export default function SeedFlowDashboard() {
           }
           .s2g-mobile-panel-tab-left { left: 0; border-radius: 0 18px 18px 0; }
           .s2g-mobile-panel-tab-right { right: 0; border-radius: 18px 0 0 18px; }
-          .s2g-mobile-backdrop.is-open { display: block; position: fixed; inset: 38px 0 70px; z-index: 170; background: rgba(0,0,0,0.45); }
+          .s2g-mobile-backdrop.is-open { display: block; position: fixed; inset: 0 0 70px; z-index: 170; background: rgba(0,0,0,0.45); }
         }
       `}</style>
 
