@@ -1218,10 +1218,26 @@ const fetchOrchardById = async (oid) => {
                   </p>
                 </div>
               )}
+              {/* Whisperer Share — paid out when a tribe member hosts a live session on this seed */}
+              <div className="border-t border-blue-100 pt-4">
+                <label className="block text-sm font-medium text-amber-600 mb-2">
+                  🎤 Whisperer Share (%) — earned by tribe members who host a live session on your seed
+                </label>
+                <input
+                  type="number"
+                  min="0"
+                  max="50"
+                  step="1"
+                  value={formData.whisperer_share_pct}
+                  onChange={(e) => setFormData(prev => ({ ...prev, whisperer_share_pct: e.target.value }))}
+                  className="w-32 rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-amber-500 focus:outline-none"
+                />
+                <p className="text-xs text-gray-600 mt-1">
+                  When a tribe member goes Live on this seed and someone bestows during that session, they earn this % of the bestowal. (0–50%, default 10%)
+                </p>
+              </div>
             </CardContent>
           </Card>
-          
-          {/* Media Upload */}
           <Card className="bg-white/90 backdrop-blur-sm border-green-200 shadow-lg">
             <CardHeader>
               <CardTitle style={{ color: '#fb923c' }} className="flex items-center gap-2">
