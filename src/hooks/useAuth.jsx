@@ -147,6 +147,15 @@ export class AuthProviderClass extends React.Component {
   register = async (userData) => {
     try {
       const currentDomain = window.location.origin
+      // Pull pending referral code (URL ?ref= or saved by useReferralCapture)
+      let referral_code = userData.referral_code || null
+      if (!referral_code) {
+        try {
+          const u = new URL(window.location.href)
+          referral_code = u.searchParams.get('ref') || localStorage.getItem('s2g_pending_ref') || null
+          if (referral_code) referral_code = referral_code.trim().toUpperCase()
+        } catch {}
+      }
       const { data, error } = await this.withRetry(() => supabase.auth.signUp({
         email: userData.email,
         password: userData.password,
@@ -160,11 +169,19 @@ export class AuthProviderClass extends React.Component {
             preferred_currency: userData.currency,
             timezone: userData.timezone,
             country: userData.country,
-            username: userData.username || userData.email?.split('@')[0]
+            username: userData.username || userData.email?.split('@')[0],
+            ...(referral_code ? { referral_code } : {})
           }
         }
       }))
       if (error) return { success: false, error: error.message }
+      // Best-effort: also call claim_referral_code RPC after signup so it sticks even if trigger missed it
+      if (referral_code && data?.user?.id) {
+        try {
+          await supabase.rpc('claim_referral_code', { p_code: referral_code })
+          localStorage.removeItem('s2g_pending_ref')
+        } catch {}
+      }
       return { success: true, user: data.user }
     } catch (e) {
       return { success: false, error: e.message }

@@ -13,6 +13,7 @@ import {
   buildBookCard, buildVideoCard, deleteRow,
 } from '../components/garden/seedCardBuilders'
 import { toast } from 'sonner'
+import DashboardTribeStats from '../components/dashboard/DashboardTribeStats'
 
 const DAYS_PER_MONTH = [30, 30, 31, 30, 30, 31, 30, 30, 31, 30, 30, 31]
 function shiftYhwhDate(year, month, day, offset) {
@@ -1081,6 +1082,9 @@ export default function SeedFlowDashboard() {
           </div>
 
           <div className="s2g-dashboard-content" style={styles.content}>
+            {/* ── Tribe size · Bestowals · Unread messages ── */}
+            <DashboardTribeStats />
+
             {/* ── Day's Beads — current week strand ── */}
             <div style={styles.sectionLabel}>
               <span>💎 Day's Beads</span>

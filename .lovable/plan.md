@@ -1,98 +1,99 @@
 
-## Goal
+## Answer to your question
+"Tell me where the radio Go Live button lives…" — yes, that was a question to you, but ignore it. I'll just turn on the radio music dropdown automatically wherever a host opens a live session whose seed type is `RADIO` / `radio_station` (`isRadio` flag already plumbed). No action needed from you.
 
-Turn the current black-screen Jitsi iframe into a TikTok/Discord/Zoom-style **Stage** where:
-- Host is always pinned in a big "Host" tile.
-- Guests appear in small "Guest Boxes" alongside (up to 6 visible).
-- A new **Presentation Panel** on the left lets the host show images, slides, or type on a whiteboard — so when guests join, they see either the host's face OR the host's presentation.
-- Anyone can request to join the call as voice‑only or video — the host approves/declines and can mute/unmute / bump them back to chat.
+---
 
-This becomes the universal pattern for every Go Live surface: seeds (`LivingSeedCard`), Classroom, DropSkill, Training, Radio, Clubhouse.
+## What I'll build
 
-## What Changes (User-Facing)
+### 1. Invitation codes actually bind new sign-ups to the inviter's tribe
 
-**1. Left "Stage" replaces the plain Jitsi iframe**
+**Problem:** the share link does carry `?ref=CODE`, but `RegisterPage.jsx` and `useAuth.register` never read it, so no `referrals` row is ever written — that's why `referrals` is empty and nobody appears in anyone's tribe.
+
+**Fix:**
+- On `RegisterPage` mount (and `QuickRegistration`), read `?ref=` from `window.location.search` AND from `localStorage` (set by a tiny `useReferralCapture` hook on the public landing/register routes so the code survives the OAuth/email-confirm bounce).
+- Pass `referral_code` into `supabase.auth.signUp({ options: { data: { referral_code } } })` so it lands in `raw_user_meta_data`.
+- Update the `handle_new_user` trigger (or add a sibling trigger) to:
+  1. Look up `affiliates.id` by `referral_code` from `raw_user_meta_data`.
+  2. Insert into `public.referrals (referrer_id, referred_id, status, commission_rate)` with `status='active'`.
+  3. Bump `affiliates.total_referrals`.
+- Add a SECURITY DEFINER RPC `claim_referral_code(code text)` so an already-registered user (Bianca, Ernie, Vickee, etc.) can self-attach if the trigger missed them.
+
+### 2. Backfill the existing tribe links (one-time SQL migration)
+
+Davison Taljaard = `04754d57-d41d-4ea7-93df-542047a6785b`. He has no `affiliates` row yet — create one first.
 
 ```text
-┌──────────────────────────────────────────┬──────── Right panel ────────┐
-│  [HOST TILE — big]      🎤 Speaking      │  🌱 SEED MEDIA              │
-│  ┌────────────────┐                      │  coffee mugs x6             │
-│  │   host video   │   Presentation tab   │  (image carousel 1/3)       │
-│  │   or whiteboard│   [📷 Image]         │                             │
-│  │   or slide     │   [✍️  Whiteboard]    │  💬 LIVE CHAT               │
-│  │                │   [📺 Video]         │  davison.taljaard           │
-│  └────────────────┘                      │  hi davison!                │
-│  Guests:                                 │                             │
-│  ┌──┐ ┌──┐ ┌──┐ ┌──┐ ┌──┐ ┌──┐ +3      │  [Ask the host…]  ➤         │
-│  │g1│ │g2│ │g3│ │g4│ │g5│ │g6│         │                             │
-│  └──┘ └──┘ └──┘ └──┘ └──┘ └──┘         │  ─────────────              │
-│  Hand raises (waiting): @nina, @sam      │  🙋 Request to join         │
-│                                          │   ( 🎤 Voice ) ( 🎥 Video ) │
-└──────────────────────────────────────────┴─────────────────────────────┘
+Davison (root)
+├── every existing user EXCEPT Bianca/Ernie/Vickee → referrals(referrer=Davison)
+└── Bianca Liebenberg (b19c9972…) → referrals(referrer=Davison)
+    ├── Ernie Matthews (4dfc2eb7…) → referrals(referrer=Bianca)
+    └── Vickee Fleetwood (bdb3153f…) → referrals(referrer=Bianca)
 ```
 
-**2. Guest "Request to join" flow**
-- Every viewer sees two buttons in the right panel: **🎤 Join with voice** and **🎥 Join with video**.
-- A request hits the host's "Hand raises" tray with Approve / Decline.
-- On approve, the guest's Jitsi participant is unmuted/un-video-muted and pinned into a guest box.
-- Host can mute / unmute / remove any guest from their tile menu (⋯).
+Skip the 4 founders (Davison/Ed/Amber/Ezra) and any user who already has a referrer.
 
-**3. Host Presentation Panel (the "whiteboard/images" area)**
-- Tabs above the host tile:
-  - **🎥 Camera** — host's webcam (default).
-  - **📷 Image** — picks any image from the seed's `images[]` and broadcasts it as the stage. Left/right arrows page through.
-  - **✍️ Whiteboard** — a `<textarea>` + simple draw `<canvas>` the host types/draws on; rendered to all guests via Supabase broadcast (`event: 'stage'`) — no extra deps.
-  - **📺 Video / Audio** — plays the seed's `mediaUrl` to all guests in sync (broadcast `play/pause/seek` events).
-- Faceless mode (already there) becomes one preset of this panel.
+### 3. Dashboard widgets — Tribe size, Wallet bestowals, Unread messages
 
-**4. Moderation**
-- Host‑only controls: mute participant, mute everyone, kick, lock stage, end live.
-- Guests can never speak unless approved — enforced by Jitsi `executeCommand('muteParticipant', id)` immediately on join, then unmuted only when host approves.
-- All comms remain inside the room; no email/phone surfaced (already a project rule).
+Add a 3-tile strip at the top of `DashboardPage.jsx` (above SeedFlow), each tile clickable:
 
-## Technical Implementation
+| Tile | Source | Click → |
+|---|---|---|
+| **My Tribe** — count of `referrals` where `referrer_id = my_affiliate.id` + 3 newest member avatars | `referrals` + `profiles` | `/my-tribe` |
+| **Bestowals received** — sum of `bestowals.amount_usdc` where `recipient_id = me`, plus last 3 bestowal notes | `bestowals` / `product_bestowals` | `/wallet` |
+| **Unread messages** — count of `chat_messages` in my rooms where `created_at > my last_read_at` | `chat_messages` + `chat_room_members` | `/chatapp?filter=unread` |
 
-### New component: `src/components/live/LiveStage.tsx`
-Single source of truth for the stage UI. Takes:
-```ts
-{
-  seedId, title, subtitle, images, mediaUrl, mediaKind,
-  jitsiRoom, isHost, whispererSharePct,
-  onClose
-}
+Real-time refresh via Supabase Realtime on `referrals`, `bestowals`, `chat_messages`.
+
+### 4. Fix unreadable Admin heading (Image 2)
+
+`AdminDashboardPage.jsx` line 353 uses `bg-gradient-to-r from-cyan-300 via-sky-300 to-violet-300 bg-clip-text text-transparent` — on the deep-navy admin background the text is washed out. Switch to solid `text-cyan-100` with a subtle text-shadow (or brighten the gradient stops to `cyan-200/sky-100/violet-200` and add `drop-shadow`). Same treatment for the subtitle.
+
+---
+
+## Technical details
+
+**Migration 1 — referral capture trigger update**
+```sql
+create or replace function public.handle_new_user()
+returns trigger language plpgsql security definer set search_path=public as $$
+declare
+  v_code text := new.raw_user_meta_data->>'referral_code';
+  v_ref_aff uuid;
+begin
+  -- existing profile/affiliate creation stays
+  if v_code is not null then
+    select id into v_ref_aff from affiliates where referral_code = v_code;
+    if v_ref_aff is not null then
+      insert into referrals(referrer_id, referred_id, status, commission_rate)
+      values (v_ref_aff, new.id, 'active', 10)
+      on conflict do nothing;
+      update affiliates set total_referrals = total_referrals + 1
+        where id = v_ref_aff;
+    end if;
+  end if;
+  return new;
+end$$;
 ```
-Internally:
-- Mounts the Jitsi External API (`new JitsiMeetExternalAPI(...)`) into a hidden DOM node — we use Jitsi for audio/video transport but render our own grid via `executeCommand('pinParticipant', id)` + custom CSS layout (Jitsi tile mode hidden, we display our own `<div>` per participant by pulling video tracks via `getIFrameRef` + `videoConferenceJoined` / `participantJoined` / `participantLeft` listeners).
-- For simplicity in v1: keep the Jitsi iframe visible but `setTileView(true)` and overlay our own header + presentation tabs + guest hand-raise tray on top — fastest path to the layout in the screenshot.
 
-### Stage broadcast channel: `stage:${seedId}`
-Supabase Realtime broadcast events:
-- `stage_mode` → `{ mode: 'camera' | 'image' | 'whiteboard' | 'video', imageUrl?, text?, drawDataUrl?, mediaTime? }`
-- `raise_hand` → `{ user_id, name, avatar, want: 'voice' | 'video' }`
-- `approve_hand` / `deny_hand` → `{ user_id }`
-- `kick` / `force_mute` → `{ user_id }`
+**Migration 2 — backfill**
+```sql
+-- 1. Ensure Davison has affiliates row
+insert into affiliates(user_id, referral_code, commission_rate)
+select '04754d57-d41d-4ea7-93df-542047a6785b','S2G-DAVISON',10
+where not exists (select 1 from affiliates where user_id='04754d57-d41d-4ea7-93df-542047a6785b');
 
-Only the host writes mode/approve/kick; everyone can write `raise_hand`.
+-- 2. Bianca → Davison; Ernie/Vickee → Bianca; everyone else → Davison
+-- (script writes referrals + bumps total_referrals, skipping founders)
+```
 
-### Jitsi command map (host‑only)
-- approve voice: `executeCommand('toggleParticipantsPane'); executeCommand('overwriteConfig', { startAudioMuted: 99 });` then `executeCommand('askToUnmute', participantId)`
-- approve video: same + `executeCommand('startVideo', participantId)` (custom — done by sending a side broadcast the guest's client listens for and toggles its own track).
-- mute one: `executeCommand('muteParticipant', participantId)`
-- kick: `executeCommand('kickParticipant', participantId)`
+**Files touched**
+- `supabase/migrations/<ts>_tribe_referral_binding.sql` (new)
+- `src/hooks/useReferralCapture.ts` (new — reads `?ref`, stores in localStorage)
+- `src/pages/RegisterPage.jsx`, `src/components/auth/QuickRegistration.tsx` — pass code to signUp
+- `src/pages/DashboardPage.jsx` — top widgets row
+- `src/components/dashboard/TribeStatTile.tsx`, `BestowalStatTile.tsx`, `UnreadStatTile.tsx` (new)
+- `src/pages/AdminDashboardPage.jsx` — readable heading
+- `src/pages/ChatappPage.jsx` — accept `?filter=unread`
 
-### Files touched
-- **NEW** `src/components/live/LiveStage.tsx` — the unified stage.
-- **NEW** `src/components/live/HostPresentation.tsx` — Camera / Image / Whiteboard / Video tabs.
-- **NEW** `src/components/live/GuestBoxes.tsx` — small participant tiles + hand‑raise tray.
-- **NEW** `src/hooks/useLiveStage.ts` — wraps the `stage:${seedId}` broadcast channel + hand-raise queue.
-- **EDIT** `src/components/garden/LivingSeedCard.tsx` — replace the inline `<iframe>` overlay (lines 422‑436) with `<LiveStage … />`. Keep the right panel (Seed Media + Live Chat) untouched.
-- **EDIT** `src/pages/LiveSeedPage.jsx` — use `<LiveStage>`.
-- **EDIT** `src/components/video/JitsiButtons.tsx` — Classroom / Radio / Orchard buttons open `<LiveStage>` instead of `startJitsiCall(...)`.
-- **EDIT** `src/components/radio/LiveVideoCallInterface.tsx` — swap `JitsiRoom` for `<LiveStage isHost={isHost} />`.
-- **EDIT** `src/pages/ClubhousePage.jsx` — same swap.
-
-### DB
-No new tables. Hand‑raises live only in the realtime channel for the duration of the call.
-
-### Open question
-Default cap on **simultaneous guests on stage** — propose **6 visible boxes + an overflow drawer** (matches the screenshot grid and avoids Jitsi performance cliffs on mobile). OK?
+No new tables; uses existing `affiliates`, `referrals`, `bestowals`, `chat_messages`.

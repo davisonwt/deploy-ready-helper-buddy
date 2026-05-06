@@ -12110,6 +12110,7 @@ export type Database = {
         Args: { provider_param: string; webhook_id_param: string }
         Returns: boolean
       }
+      claim_referral_code: { Args: { p_code: string }; Returns: Json }
       cleanup_expired_idempotency_keys: { Args: never; Returns: undefined }
       cleanup_inactive_voice_clones: { Args: never; Returns: number }
       cleanup_old_rate_limits: { Args: never; Returns: undefined }
