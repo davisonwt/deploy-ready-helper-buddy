@@ -11,6 +11,15 @@ import { useAuth } from '@/hooks/useAuth';
 
 export type StageMode = 'camera' | 'image' | 'whiteboard' | 'video';
 
+export interface NowPlaying {
+  seed_id: string;
+  title: string;
+  sower_user_id?: string | null;
+  media_url?: string | null;
+  media_kind?: 'audio' | 'video' | null;
+  image?: string | null;
+}
+
 export interface StagePayload {
   mode: StageMode;
   imageUrl?: string | null;
@@ -18,6 +27,9 @@ export interface StagePayload {
   text?: string;
   mediaPlaying?: boolean;
   mediaTime?: number;
+  mediaUrl?: string | null;
+  mediaKind?: 'audio' | 'video' | null;
+  nowPlaying?: NowPlaying | null;
   at: number;
 }
 
