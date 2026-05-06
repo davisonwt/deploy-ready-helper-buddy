@@ -479,22 +479,50 @@ export default function BrowseOrchardsPage() {
         <div style={{ marginBottom: 20 }}>
           <div style={{ fontSize: 11, fontWeight: 700, color: '#64748b', letterSpacing: '0.1em', marginBottom: 8 }}>FILTER BY TYPE</div>
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
-            {ORCHARD_TYPES.map(type => (
-              <motion.button key={type.value} whileTap={{ scale: 0.95 }} onClick={() => setSelectedType(type.value)}
-                style={{ padding: '8px 14px', borderRadius: 20, border: `1px solid ${selectedType === type.value ? (type.color || '#10b981') : 'rgba(255,255,255,0.08)'}`, cursor: 'pointer', fontWeight: 600, fontSize: 13, background: selectedType === type.value ? `${type.color || '#10b981'}22` : 'rgba(255,255,255,0.03)', color: selectedType === type.value ? (type.color || '#10b981') : '#94a3b8', transition: 'all 0.2s' }}>
-                {type.emoji && `${type.emoji} `}{type.label}
-              </motion.button>
-            ))}
+            {ORCHARD_TYPES.map(type => {
+              const active = selectedType === type.value
+              const c = type.color || '#22d3ee'
+              return (
+                <motion.button key={type.value}
+                  whileTap={{ scale: 0.94 }} whileHover={{ y: -2, scale: 1.03 }}
+                  onClick={() => setSelectedType(type.value)}
+                  style={{
+                    padding: '10px 16px', borderRadius: 999, cursor: 'pointer',
+                    fontWeight: 700, fontSize: 13,
+                    display: 'inline-flex', alignItems: 'center', gap: 8,
+                    background: active ? `linear-gradient(135deg, ${c}33, ${c}10)` : 'rgba(15,23,42,0.6)',
+                    color: active ? '#fff' : '#cbd5e1',
+                    border: `1px solid ${active ? `${c}aa` : 'rgba(255,255,255,0.10)'}`,
+                    boxShadow: active ? `0 0 24px ${c}55, inset 0 0 18px ${c}22` : '0 2px 10px rgba(0,0,0,0.25)',
+                    backdropFilter: 'blur(8px)', transition: 'all 0.25s',
+                  }}>
+                  {type.emoji && <span style={{ fontSize: 16 }}>{type.emoji}</span>} {type.label}
+                </motion.button>
+              )
+            })}
           </div>
         </div>
 
-        <div style={{ display: 'flex', gap: 8, marginBottom: 24 }}>
-          {[{ label: '🕐 Newest', value: 'newest' }, { label: '🔥 Hottest', value: 'hottest' }, { label: '💚 Cheapest', value: 'cheapest' }].map(s => (
-            <button key={s.value} onClick={() => setSortBy(s.value)}
-              style={{ padding: '7px 14px', borderRadius: 10, border: 'none', cursor: 'pointer', background: sortBy === s.value ? 'rgba(255,255,255,0.15)' : 'rgba(255,255,255,0.04)', color: sortBy === s.value ? '#fff' : '#64748b', fontWeight: 600, fontSize: 13, transition: 'all 0.2s' }}>
-              {s.label}
-            </button>
-          ))}
+        <div style={{ display: 'flex', gap: 10, marginBottom: 24, flexWrap: 'wrap' }}>
+          {[{ label: '🕐 Newest', value: 'newest', c: '#22d3ee' }, { label: '🔥 Hottest', value: 'hottest', c: '#f97316' }, { label: '💚 Cheapest', value: 'cheapest', c: '#10b981' }].map(s => {
+            const active = sortBy === s.value
+            return (
+              <motion.button key={s.value}
+                whileTap={{ scale: 0.94 }} whileHover={{ y: -2 }}
+                onClick={() => setSortBy(s.value)}
+                style={{
+                  padding: '9px 16px', borderRadius: 12, cursor: 'pointer',
+                  background: active ? `linear-gradient(135deg, ${s.c}33, ${s.c}10)` : 'rgba(15,23,42,0.6)',
+                  color: active ? '#fff' : '#94a3b8',
+                  border: `1px solid ${active ? `${s.c}aa` : 'rgba(255,255,255,0.10)'}`,
+                  boxShadow: active ? `0 0 18px ${s.c}55` : 'none',
+                  fontWeight: 700, fontSize: 13, transition: 'all 0.25s',
+                  backdropFilter: 'blur(8px)',
+                }}>
+                {s.label}
+              </motion.button>
+            )
+          })}
         </div>
         </>)}
       </div>
