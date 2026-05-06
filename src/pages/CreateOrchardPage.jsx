@@ -130,6 +130,7 @@ const fetchOrchardById = async (oid) => {
     expected_completion: "",
     features: "",
     video_url: "",
+    whisperer_share_pct: "10",
     currency: "USDC"
   })
   
