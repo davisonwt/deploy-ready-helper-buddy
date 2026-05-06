@@ -140,6 +140,30 @@ export default function LivingSeedCard({
     await endLive();
   };
 
+  // ── Live-room chat (Supabase realtime broadcast) ──
+  useEffect(() => {
+    if (!activeRoom) return;
+    const ch = supabase.channel(`liveroom:${seedId}`);
+    ch.on('broadcast', { event: 'chat' }, ({ payload }) => {
+      setChatMsgs(m => [...m.slice(-99), payload as any]);
+    }).subscribe();
+    return () => { supabase.removeChannel(ch); };
+  }, [activeRoom, seedId]);
+
+  const sendChat = () => {
+    const text = chatDraft.trim();
+    if (!text || !activeRoom) return;
+    const msg = {
+      id: Math.random().toString(36).slice(2),
+      from: (user as any)?.user_metadata?.display_name || user?.email?.split('@')[0] || 'Guest',
+      text,
+      at: Date.now(),
+    };
+    supabase.channel(`liveroom:${seedId}`).send({ type: 'broadcast', event: 'chat', payload: msg });
+    setChatMsgs(m => [...m.slice(-99), msg]);
+    setChatDraft('');
+  };
+
   const handleShare = async () => {
     const url = new URL(openPath, 'https://sow2growapp.com');
     if (referralCode) url.searchParams.set('ref', referralCode);
