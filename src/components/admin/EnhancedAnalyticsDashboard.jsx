@@ -218,105 +218,78 @@ export function EnhancedAnalyticsDashboard() {
     );
   }
 
+  const aliveBtn =
+    "inline-flex items-center justify-center gap-2 px-4 py-2 rounded-2xl text-sm font-semibold text-cyan-100 bg-white/5 hover:bg-white/10 border border-cyan-400/40 hover:border-cyan-300/70 backdrop-blur transition-all hover:-translate-y-0.5 active:scale-95 shadow-[0_0_18px_rgba(34,211,238,0.18)] hover:shadow-[0_0_24px_rgba(34,211,238,0.35)]"
+  const aliveBtnAmber =
+    "inline-flex items-center justify-center gap-2 px-4 py-2 rounded-2xl text-sm font-semibold text-amber-100 bg-white/5 hover:bg-white/10 border border-amber-400/40 hover:border-amber-300/70 backdrop-blur transition-all hover:-translate-y-0.5 active:scale-95 shadow-[0_0_18px_rgba(245,158,11,0.18)] hover:shadow-[0_0_24px_rgba(245,158,11,0.35)]"
+
+  const MetricCard = ({ title, value, accent = 'cyan', trend, sub, Icon }) => {
+    const ring =
+      accent === 'amber' ? 'border-amber-400/25 shadow-[0_0_30px_rgba(245,158,11,0.10)]'
+      : accent === 'violet' ? 'border-violet-400/25 shadow-[0_0_30px_rgba(139,92,246,0.10)]'
+      : accent === 'emerald' ? 'border-emerald-400/25 shadow-[0_0_30px_rgba(16,185,129,0.10)]'
+      : 'border-cyan-400/25 shadow-[0_0_30px_rgba(34,211,238,0.10)]'
+    const iconColor =
+      accent === 'amber' ? 'text-amber-300'
+      : accent === 'violet' ? 'text-violet-300'
+      : accent === 'emerald' ? 'text-emerald-300'
+      : 'text-cyan-300'
+    return (
+      <div className={`rounded-2xl border bg-[#0f172a]/80 backdrop-blur p-5 ${ring}`}>
+        <div className="flex items-start justify-between">
+          <div>
+            <p className="text-xs uppercase tracking-wider text-slate-400">{title}</p>
+            <p className="text-3xl font-extrabold text-white mt-2">{value}</p>
+            {trend !== undefined && (
+              <div className="flex items-center mt-1">
+                {trend > 0
+                  ? <TrendingUp className="h-4 w-4 text-emerald-400 mr-1" />
+                  : <TrendingDown className="h-4 w-4 text-rose-400 mr-1" />}
+                <span className={`text-sm ${trend > 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
+                  {Math.abs(trend).toFixed(1)}%
+                </span>
+              </div>
+            )}
+            {sub && <p className="text-xs text-slate-400 mt-1">{sub}</p>}
+          </div>
+          {Icon && <Icon className={`h-7 w-7 ${iconColor} opacity-90`} />}
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div className="space-y-6">
       {/* Controls */}
-      <div className="flex justify-between items-center">
-        <div className="flex items-center space-x-4">
-          <Select value={dateRange} onValueChange={setDateRange}>
-            <SelectTrigger className="w-48">
-              <SelectValue placeholder="Select date range" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="7">Last 7 days</SelectItem>
-              <SelectItem value="30">Last 30 days</SelectItem>
-              <SelectItem value="90">Last 90 days</SelectItem>
-              <SelectItem value="365">Last year</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-        
-        <div className="flex space-x-2">
-          <Button onClick={fetchAnalytics} variant="outline">
-            <RefreshCw className="h-4 w-4 mr-2" />
-            Refresh
-          </Button>
-          <Button onClick={handleExportData} variant="outline">
-            <Download className="h-4 w-4 mr-2" />
-            Export
-          </Button>
+      <div className="flex flex-wrap justify-between items-center gap-3">
+        <Select value={dateRange} onValueChange={setDateRange}>
+          <SelectTrigger className="w-48 bg-white/5 border-white/10 text-slate-100 hover:bg-white/10">
+            <SelectValue placeholder="Select date range" />
+          </SelectTrigger>
+          <SelectContent className="bg-[#0f172a] border-white/10 text-slate-100">
+            <SelectItem value="7">Last 7 days</SelectItem>
+            <SelectItem value="30">Last 30 days</SelectItem>
+            <SelectItem value="90">Last 90 days</SelectItem>
+            <SelectItem value="365">Last year</SelectItem>
+          </SelectContent>
+        </Select>
+
+        <div className="flex gap-2">
+          <button onClick={fetchAnalytics} className={aliveBtn}>
+            <RefreshCw className="h-4 w-4" /> Refresh
+          </button>
+          <button onClick={handleExportData} className={aliveBtnAmber}>
+            <Download className="h-4 w-4" /> Export
+          </button>
         </div>
       </div>
 
       {/* Key Metrics */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        <Card>
-          <CardContent className="pt-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-muted-foreground">Total Users</p>
-                <p className="text-2xl font-bold">{analytics.overview.totalUsers.toLocaleString()}</p>
-                <div className="flex items-center mt-1">
-                  {analytics.overview.userGrowth > 0 ? 
-                    <TrendingUp className="h-4 w-4 text-green-600 mr-1" /> :
-                    <TrendingDown className="h-4 w-4 text-red-600 mr-1" />
-                  }
-                  <span className={`text-sm ${analytics.overview.userGrowth > 0 ? 'text-green-600' : 'text-red-600'}`}>
-                    {Math.abs(analytics.overview.userGrowth).toFixed(1)}%
-                  </span>
-                </div>
-              </div>
-              <Users className="h-8 w-8 text-primary" />
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="pt-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-muted-foreground">Total Revenue</p>
-                <p className="text-2xl font-bold">${analytics.overview.totalRevenue.toLocaleString()}</p>
-                <div className="flex items-center mt-1">
-                  {analytics.overview.revenueGrowth > 0 ? 
-                    <TrendingUp className="h-4 w-4 text-green-600 mr-1" /> :
-                    <TrendingDown className="h-4 w-4 text-red-600 mr-1" />
-                  }
-                  <span className={`text-sm ${analytics.overview.revenueGrowth > 0 ? 'text-green-600' : 'text-red-600'}`}>
-                    {Math.abs(analytics.overview.revenueGrowth).toFixed(1)}%
-                  </span>
-                </div>
-              </div>
-              <DollarSign className="h-8 w-8 text-green-600" />
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="pt-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-muted-foreground">Active Orchards</p>
-                <p className="text-2xl font-bold">{analytics.overview.totalOrchards}</p>
-                <p className="text-sm text-muted-foreground">Total created</p>
-              </div>
-              <Sprout className="h-8 w-8 text-blue-600" />
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="pt-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-muted-foreground">Conversion Rate</p>
-                <p className="text-2xl font-bold">{analytics.conversionRate.toFixed(1)}%</p>
-                <p className="text-sm text-muted-foreground">Orchard to bestowal</p>
-              </div>
-              <Target className="h-8 w-8 text-purple-600" />
-            </div>
-          </CardContent>
-        </Card>
+        <MetricCard title="Total Users" value={analytics.overview.totalUsers.toLocaleString()} trend={analytics.overview.userGrowth} Icon={Users} accent="cyan" />
+        <MetricCard title="Total Revenue" value={`$${analytics.overview.totalRevenue.toLocaleString()}`} trend={analytics.overview.revenueGrowth} Icon={DollarSign} accent="emerald" />
+        <MetricCard title="Active Orchards" value={analytics.overview.totalOrchards} sub="Total created" Icon={Sprout} accent="amber" />
+        <MetricCard title="Conversion Rate" value={`${analytics.conversionRate.toFixed(1)}%`} sub="Orchard to bestowal" Icon={Target} accent="violet" />
       </div>
 
       <Tabs defaultValue="overview" className="space-y-6">

@@ -440,11 +440,18 @@ export default function BrowseOrchardsPage() {
             { label: 'Hot (70%+)', value: processed.filter(o => o.completion_percentage >= 70).length, icon: '🔥', color: '#ef4444' },
             { label: 'Min Bestow', value: '$2', icon: '💚', color: '#6366f1' },
           ].map(stat => (
-            <div key={stat.label} style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 12, padding: '10px 16px', display: 'flex', alignItems: 'center', gap: 8 }}>
-              <span style={{ fontSize: 18 }}>{stat.icon}</span>
+            <div key={stat.label} style={{
+              background: 'rgba(15,23,42,0.7)',
+              border: `1px solid ${stat.color}40`,
+              borderRadius: 16, padding: '12px 18px',
+              display: 'flex', alignItems: 'center', gap: 12,
+              boxShadow: `0 0 24px ${stat.color}22`,
+              backdropFilter: 'blur(8px)',
+            }}>
+              <div style={{ width: 38, height: 38, borderRadius: 12, background: `${stat.color}22`, border: `1px solid ${stat.color}55`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18 }}>{stat.icon}</div>
               <div>
-                <div style={{ fontSize: 18, fontWeight: 800, color: stat.color }}>{stat.value}</div>
-                <div style={{ fontSize: 11, color: '#64748b' }}>{stat.label}</div>
+                <div style={{ fontSize: 20, fontWeight: 800, color: stat.color }}>{stat.value}</div>
+                <div style={{ fontSize: 11, color: '#94a3b8', letterSpacing: '.05em' }}>{stat.label}</div>
               </div>
             </div>
           ))}
@@ -453,34 +460,76 @@ export default function BrowseOrchardsPage() {
         <div style={{ marginBottom: 16 }}>
           <div style={{ fontSize: 11, fontWeight: 700, color: '#64748b', letterSpacing: '0.1em', marginBottom: 8 }}>FILTER BY WANDERING ROLE</div>
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
-            {WANDERING_ROLES.map(role => (
-              <motion.button key={role.value} whileTap={{ scale: 0.95 }} onClick={() => setSelectedRole(role.value)}
-                style={{ padding: '8px 14px', borderRadius: 20, border: 'none', cursor: 'pointer', fontWeight: 600, fontSize: 13, background: selectedRole === role.value ? 'linear-gradient(135deg, #22d3ee, #0891b2)' : 'rgba(255,255,255,0.05)', color: selectedRole === role.value ? '#fff' : '#94a3b8', boxShadow: selectedRole === role.value ? '0 4px 15px rgba(34,211,238,0.35)' : 'none', transition: 'all 0.2s' }}>
-                {role.emoji} {role.label}
-              </motion.button>
-            ))}
+            {WANDERING_ROLES.map(role => {
+              const active = selectedRole === role.value
+              return (
+                <motion.button key={role.value}
+                  whileTap={{ scale: 0.94 }} whileHover={{ y: -2, scale: 1.03 }}
+                  onClick={() => setSelectedRole(role.value)}
+                  style={{
+                    padding: '10px 16px', borderRadius: 999, cursor: 'pointer',
+                    fontWeight: 700, fontSize: 13,
+                    display: 'inline-flex', alignItems: 'center', gap: 8,
+                    background: active ? 'linear-gradient(135deg, rgba(34,211,238,0.25), rgba(8,145,178,0.10))' : 'rgba(15,23,42,0.6)',
+                    color: active ? '#e0f7ff' : '#cbd5e1',
+                    border: `1px solid ${active ? 'rgba(34,211,238,0.65)' : 'rgba(255,255,255,0.10)'}`,
+                    boxShadow: active ? '0 0 24px rgba(34,211,238,0.35), inset 0 0 18px rgba(34,211,238,0.10)' : '0 2px 10px rgba(0,0,0,0.25)',
+                    backdropFilter: 'blur(8px)', transition: 'all 0.25s',
+                  }}>
+                  <span style={{ fontSize: 16 }}>{role.emoji}</span> {role.label}
+                </motion.button>
+              )
+            })}
           </div>
         </div>
 
         <div style={{ marginBottom: 20 }}>
           <div style={{ fontSize: 11, fontWeight: 700, color: '#64748b', letterSpacing: '0.1em', marginBottom: 8 }}>FILTER BY TYPE</div>
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
-            {ORCHARD_TYPES.map(type => (
-              <motion.button key={type.value} whileTap={{ scale: 0.95 }} onClick={() => setSelectedType(type.value)}
-                style={{ padding: '8px 14px', borderRadius: 20, border: `1px solid ${selectedType === type.value ? (type.color || '#10b981') : 'rgba(255,255,255,0.08)'}`, cursor: 'pointer', fontWeight: 600, fontSize: 13, background: selectedType === type.value ? `${type.color || '#10b981'}22` : 'rgba(255,255,255,0.03)', color: selectedType === type.value ? (type.color || '#10b981') : '#94a3b8', transition: 'all 0.2s' }}>
-                {type.emoji && `${type.emoji} `}{type.label}
-              </motion.button>
-            ))}
+            {ORCHARD_TYPES.map(type => {
+              const active = selectedType === type.value
+              const c = type.color || '#22d3ee'
+              return (
+                <motion.button key={type.value}
+                  whileTap={{ scale: 0.94 }} whileHover={{ y: -2, scale: 1.03 }}
+                  onClick={() => setSelectedType(type.value)}
+                  style={{
+                    padding: '10px 16px', borderRadius: 999, cursor: 'pointer',
+                    fontWeight: 700, fontSize: 13,
+                    display: 'inline-flex', alignItems: 'center', gap: 8,
+                    background: active ? `linear-gradient(135deg, ${c}33, ${c}10)` : 'rgba(15,23,42,0.6)',
+                    color: active ? '#fff' : '#cbd5e1',
+                    border: `1px solid ${active ? `${c}aa` : 'rgba(255,255,255,0.10)'}`,
+                    boxShadow: active ? `0 0 24px ${c}55, inset 0 0 18px ${c}22` : '0 2px 10px rgba(0,0,0,0.25)',
+                    backdropFilter: 'blur(8px)', transition: 'all 0.25s',
+                  }}>
+                  {type.emoji && <span style={{ fontSize: 16 }}>{type.emoji}</span>} {type.label}
+                </motion.button>
+              )
+            })}
           </div>
         </div>
 
-        <div style={{ display: 'flex', gap: 8, marginBottom: 24 }}>
-          {[{ label: '🕐 Newest', value: 'newest' }, { label: '🔥 Hottest', value: 'hottest' }, { label: '💚 Cheapest', value: 'cheapest' }].map(s => (
-            <button key={s.value} onClick={() => setSortBy(s.value)}
-              style={{ padding: '7px 14px', borderRadius: 10, border: 'none', cursor: 'pointer', background: sortBy === s.value ? 'rgba(255,255,255,0.15)' : 'rgba(255,255,255,0.04)', color: sortBy === s.value ? '#fff' : '#64748b', fontWeight: 600, fontSize: 13, transition: 'all 0.2s' }}>
-              {s.label}
-            </button>
-          ))}
+        <div style={{ display: 'flex', gap: 10, marginBottom: 24, flexWrap: 'wrap' }}>
+          {[{ label: '🕐 Newest', value: 'newest', c: '#22d3ee' }, { label: '🔥 Hottest', value: 'hottest', c: '#f97316' }, { label: '💚 Cheapest', value: 'cheapest', c: '#10b981' }].map(s => {
+            const active = sortBy === s.value
+            return (
+              <motion.button key={s.value}
+                whileTap={{ scale: 0.94 }} whileHover={{ y: -2 }}
+                onClick={() => setSortBy(s.value)}
+                style={{
+                  padding: '9px 16px', borderRadius: 12, cursor: 'pointer',
+                  background: active ? `linear-gradient(135deg, ${s.c}33, ${s.c}10)` : 'rgba(15,23,42,0.6)',
+                  color: active ? '#fff' : '#94a3b8',
+                  border: `1px solid ${active ? `${s.c}aa` : 'rgba(255,255,255,0.10)'}`,
+                  boxShadow: active ? `0 0 18px ${s.c}55` : 'none',
+                  fontWeight: 700, fontSize: 13, transition: 'all 0.25s',
+                  backdropFilter: 'blur(8px)',
+                }}>
+                {s.label}
+              </motion.button>
+            )
+          })}
         </div>
         </>)}
       </div>
