@@ -113,3 +113,8 @@ verify_jwt = false
 
 [functions.generate-sower-story]
 verify_jwt = true
+[functions.companion-invoke]
+verify_jwt = true
+
+[functions.companion-entitlements]
+verify_jwt = true

@@ -83,6 +83,7 @@ const PremiumRoomsPage = lazy(() => import("./pages/PremiumRoomsPage"));
 const CommunityVideosPage = lazy(() => import("./pages/CommunityVideosPage"));
 const MarketingVideosGallery = lazy(() => import("./pages/MarketingVideosGallery.jsx"));
 const AIAssistantPage = lazy(() => import("./pages/AIAssistantPage"));
+const CompanionsHubPage = lazy(() => import("./pages/CompanionsHubPage"));
 const CommunityOfferingPage = lazy(() => import("./pages/CommunityOfferingPage"));
 const TestBasketPage = lazy(() => import("./pages/TestBasketPage"));
 const GroveStationPage = lazy(() => import("./pages/GroveStationPage"));
@@ -369,6 +370,9 @@ const App = () => (
               } />
               <Route path="/ai-assistant" element={
                 <ProtectedRoute><Layout><CreateOrchardPage /></Layout></ProtectedRoute>
+              } />
+              <Route path="/companions" element={
+                <ProtectedRoute><Layout><Suspense fallback={<div>Loading...</div>}><CompanionsHubPage /></Suspense></Layout></ProtectedRoute>
               } />
               <Route path="/community-offering" element={
                 <ProtectedRoute>

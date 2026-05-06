@@ -7947,6 +7947,157 @@ export type Database = {
         }
         Relationships: []
       }
+      s2g_companion_entitlements: {
+        Row: {
+          companion_slug: string
+          mode: string
+          monthly_quota: number | null
+          notes: string | null
+          tier: string
+        }
+        Insert: {
+          companion_slug: string
+          mode: string
+          monthly_quota?: number | null
+          notes?: string | null
+          tier: string
+        }
+        Update: {
+          companion_slug?: string
+          mode?: string
+          monthly_quota?: number | null
+          notes?: string | null
+          tier?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "s2g_companion_entitlements_companion_slug_fkey"
+            columns: ["companion_slug"]
+            isOneToOne: false
+            referencedRelation: "s2g_companions"
+            referencedColumns: ["slug"]
+          },
+        ]
+      }
+      s2g_companion_runs: {
+        Row: {
+          action: string | null
+          companion_slug: string
+          created_at: string
+          error: string | null
+          id: string
+          input_summary: string | null
+          model: string | null
+          output_summary: string | null
+          status: string
+          tier_at_run: string | null
+          tokens_in: number | null
+          tokens_out: number | null
+          user_id: string
+        }
+        Insert: {
+          action?: string | null
+          companion_slug: string
+          created_at?: string
+          error?: string | null
+          id?: string
+          input_summary?: string | null
+          model?: string | null
+          output_summary?: string | null
+          status?: string
+          tier_at_run?: string | null
+          tokens_in?: number | null
+          tokens_out?: number | null
+          user_id: string
+        }
+        Update: {
+          action?: string | null
+          companion_slug?: string
+          created_at?: string
+          error?: string | null
+          id?: string
+          input_summary?: string | null
+          model?: string | null
+          output_summary?: string | null
+          status?: string
+          tier_at_run?: string | null
+          tokens_in?: number | null
+          tokens_out?: number | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      s2g_companion_usage: {
+        Row: {
+          companion_slug: string
+          count: number
+          last_used_at: string
+          period_yyyymm: string
+          user_id: string
+        }
+        Insert: {
+          companion_slug: string
+          count?: number
+          last_used_at?: string
+          period_yyyymm: string
+          user_id: string
+        }
+        Update: {
+          companion_slug?: string
+          count?: number
+          last_used_at?: string
+          period_yyyymm?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "s2g_companion_usage_companion_slug_fkey"
+            columns: ["companion_slug"]
+            isOneToOne: false
+            referencedRelation: "s2g_companions"
+            referencedColumns: ["slug"]
+          },
+        ]
+      }
+      s2g_companions: {
+        Row: {
+          category: string
+          created_at: string
+          default_model: string
+          emoji: string
+          is_active: boolean
+          name: string
+          slug: string
+          sort_order: number
+          summary: string
+          title: string
+        }
+        Insert: {
+          category: string
+          created_at?: string
+          default_model?: string
+          emoji: string
+          is_active?: boolean
+          name: string
+          slug: string
+          sort_order?: number
+          summary: string
+          title: string
+        }
+        Update: {
+          category?: string
+          created_at?: string
+          default_model?: string
+          emoji?: string
+          is_active?: boolean
+          name?: string
+          slug?: string
+          sort_order?: number
+          summary?: string
+          title?: string
+        }
+        Relationships: []
+      }
       s2g_library_item_access: {
         Row: {
           access_type: string | null
@@ -12085,6 +12236,10 @@ export type Database = {
         Args: { schedule_id_param: string }
         Returns: boolean
       }
+      check_and_consume_companion_quota: {
+        Args: { _slug: string; _user: string }
+        Returns: Json
+      }
       check_chat_rate_limit: {
         Args: { p_room_id: string; p_user_id: string }
         Returns: boolean
@@ -12165,6 +12320,7 @@ export type Database = {
       }
       get_current_radio_show: { Args: never; Returns: Json }
       get_current_week_id: { Args: never; Returns: string }
+      get_effective_tier: { Args: { _user: string }; Returns: string }
       get_gosat_insight_details: {
         Args: { _insight_id: string }
         Returns: Json
