@@ -1,0 +1,330 @@
+/**
+ * LiveStage — universal "Go Live" stage layout.
+ *
+ * Layout:
+ *   ┌──────────────────────────────────────┐
+ *   │  HOST tile (camera | image | board)   │
+ *   │  ┌─────────────────────────────────┐ │
+ *   │  │       big presentation          │ │
+ *   │  └─────────────────────────────────┘ │
+ *   │  Guest boxes: [g1][g2][g3][g4]…      │
+ *   │  Hand-raise tray (host only)         │
+ *   └──────────────────────────────────────┘
+ *
+ * Built on top of the existing Jitsi iframe (audio/video transport) plus
+ * a Supabase realtime broadcast channel (`stage:${seedId}`) for the
+ * presentation mode + hand-raise queue. No new DB tables.
+ */
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { motion } from 'framer-motion';
+import {
+  Camera, Image as ImageIcon, PencilLine, Film,
+  Hand, Mic, MicOff, Video, VideoOff, X, Check, UserMinus,
+  ChevronLeft, ChevronRight,
+} from 'lucide-react';
+import { JITSI_DOMAIN } from '@/lib/jitsi-config';
+import { useAuth } from '@/hooks/useAuth';
+import { useLiveStage, type StageMode } from '@/hooks/useLiveStage';
+
+export interface LiveStageProps {
+  seedId: string;
+  title: string;
+  jitsiRoom: string;
+  isHost: boolean;
+  images?: string[];
+  mediaUrl?: string | null;
+  mediaKind?: 'audio' | 'video' | 'book' | 'orchard' | 'seed';
+  className?: string;
+}
+
+const TABS: { mode: StageMode; icon: typeof Camera; label: string; hostOnly?: boolean }[] = [
+  { mode: 'camera',     icon: Camera,     label: 'Camera' },
+  { mode: 'image',      icon: ImageIcon,  label: 'Image' },
+  { mode: 'whiteboard', icon: PencilLine, label: 'Board' },
+  { mode: 'video',      icon: Film,       label: 'Media' },
+];
+
+export default function LiveStage({
+  seedId, title, jitsiRoom, isHost,
+  images = [], mediaUrl, mediaKind,
+  className = '',
+}: LiveStageProps) {
+  const { user } = useAuth();
+  const {
+    stage, setStageMode,
+    hands, raiseHand, cancelHand, approveHand, denyHand,
+    approved, removeGuest, toggleMute,
+    myHandRaised, iAmApproved,
+  } = useLiveStage(seedId, { isHost, enabled: true });
+
+  const [boardText, setBoardText] = useState('');
+  const imgList = images.filter(Boolean);
+
+  // Push board text changes (debounced) when host edits
+  useEffect(() => {
+    if (!isHost || stage.mode !== 'whiteboard') return;
+    const t = setTimeout(() => {
+      setStageMode({ mode: 'whiteboard', text: boardText });
+    }, 250);
+    return () => clearTimeout(t);
+  }, [boardText, isHost, stage.mode, setStageMode]);
+
+  // Sync board text when guest receives a stage update
+  useEffect(() => {
+    if (!isHost && stage.mode === 'whiteboard' && typeof stage.text === 'string') {
+      setBoardText(stage.text);
+    }
+  }, [isHost, stage.mode, stage.text]);
+
+  const displayName = (user as any)?.user_metadata?.display_name || user?.email?.split('@')[0] || 'Tribe';
+
+  // Whether the local user should actually have a Jitsi audio/video transport
+  // Hosts always join; viewers only join when approved (so we save bandwidth).
+  const inCall = isHost || iAmApproved;
+
+  const jitsiSrc = useMemo(() => {
+    const startMuted = !isHost && approved.find(g => g.user_id === user?.id)?.muted ? 1 : 0;
+    const startVideoMuted = !isHost && (approved.find(g => g.user_id === user?.id)?.mode !== 'video') ? 1 : 0;
+    return `https://${JITSI_DOMAIN}/${jitsiRoom}#config.prejoinPageEnabled=false&config.disableDeepLinking=true&config.startWithAudioMuted=${startMuted}&config.startWithVideoMuted=${startVideoMuted}&userInfo.displayName=%22${encodeURIComponent(displayName)}%22`;
+  }, [jitsiRoom, isHost, approved, user?.id, displayName]);
+
+  // Stage content (what occupies the big tile)
+  const stageImage = stage.mode === 'image'
+    ? (stage.imageUrl || imgList[(stage.imageIdx ?? 0) % Math.max(imgList.length, 1)])
+    : null;
+
+  return (
+    <div className={`flex h-full w-full flex-col bg-black text-white ${className}`}>
+      {/* Host presentation tabs */}
+      {isHost && (
+        <div className="flex items-center gap-1 border-b border-white/10 bg-black/60 px-2 py-1">
+          {TABS.map(t => {
+            const Icon = t.icon;
+            const active = stage.mode === t.mode;
+            return (
+              <button
+                key={t.mode}
+                onClick={() => setStageMode({ mode: t.mode, imageUrl: t.mode === 'image' ? imgList[0] : null, imageIdx: 0 })}
+                className={`flex items-center gap-1 rounded-md px-2 py-1 text-[11px] font-bold uppercase tracking-wider transition ${
+                  active ? 'bg-emerald-500 text-black' : 'text-white/70 hover:bg-white/10'
+                }`}
+              >
+                <Icon className="h-3 w-3" /> {t.label}
+              </button>
+            );
+          })}
+          <span className="ml-auto text-[10px] text-white/40">Stage</span>
+        </div>
+      )}
+
+      {/* Big stage area */}
+      <div className="relative flex-1 min-h-0 bg-black">
+        {/* Camera mode → Jitsi iframe */}
+        {stage.mode === 'camera' && inCall && (
+          <iframe
+            title={title}
+            src={jitsiSrc}
+            allow="camera; microphone; fullscreen; display-capture; autoplay"
+            className="absolute inset-0 h-full w-full border-0"
+          />
+        )}
+        {stage.mode === 'camera' && !inCall && (
+          <div className="absolute inset-0 flex items-center justify-center">
+            <div className="text-center text-white/50">
+              <div className="text-sm">Host's camera is live.</div>
+              <div className="mt-1 text-xs">Raise your hand to join the call →</div>
+            </div>
+          </div>
+        )}
+
+        {/* Image mode */}
+        {stage.mode === 'image' && (
+          <div className="absolute inset-0 flex items-center justify-center bg-black">
+            {stageImage ? (
+              <img src={stageImage} alt="" className="max-h-full max-w-full object-contain" />
+            ) : (
+              <div className="text-white/40 text-sm">No images uploaded for this seed.</div>
+            )}
+            {isHost && imgList.length > 1 && (
+              <>
+                <button
+                  onClick={() => {
+                    const next = ((stage.imageIdx ?? 0) - 1 + imgList.length) % imgList.length;
+                    setStageMode({ mode: 'image', imageUrl: imgList[next], imageIdx: next });
+                  }}
+                  className="absolute left-3 top-1/2 -translate-y-1/2 flex h-9 w-9 items-center justify-center rounded-full bg-black/60 hover:bg-black/85"
+                >
+                  <ChevronLeft className="h-5 w-5" />
+                </button>
+                <button
+                  onClick={() => {
+                    const next = ((stage.imageIdx ?? 0) + 1) % imgList.length;
+                    setStageMode({ mode: 'image', imageUrl: imgList[next], imageIdx: next });
+                  }}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 flex h-9 w-9 items-center justify-center rounded-full bg-black/60 hover:bg-black/85"
+                >
+                  <ChevronRight className="h-5 w-5" />
+                </button>
+                <div className="absolute bottom-3 left-1/2 -translate-x-1/2 rounded-full bg-black/60 px-3 py-1 text-xs font-bold">
+                  {((stage.imageIdx ?? 0) % imgList.length) + 1} / {imgList.length}
+                </div>
+              </>
+            )}
+          </div>
+        )}
+
+        {/* Whiteboard mode */}
+        {stage.mode === 'whiteboard' && (
+          <div className="absolute inset-0 bg-[#0b1120] p-4">
+            {isHost ? (
+              <textarea
+                value={boardText}
+                onChange={(e) => setBoardText(e.target.value)}
+                placeholder="Type your presentation, notes, or scripture here…"
+                className="h-full w-full resize-none rounded-lg border border-emerald-500/20 bg-black/40 p-4 font-mono text-base leading-relaxed text-emerald-100 placeholder:text-white/30 focus:border-emerald-400/60 focus:outline-none"
+              />
+            ) : (
+              <div className="h-full w-full overflow-auto whitespace-pre-wrap rounded-lg border border-emerald-500/20 bg-black/40 p-4 font-mono text-base leading-relaxed text-emerald-100">
+                {boardText || <span className="italic text-white/30">Host hasn't written anything yet…</span>}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Media mode */}
+        {stage.mode === 'video' && (
+          <div className="absolute inset-0 flex items-center justify-center bg-black">
+            {mediaUrl && mediaKind === 'video' && (
+              <video src={mediaUrl} controls={isHost} autoPlay className="max-h-full max-w-full" />
+            )}
+            {mediaUrl && mediaKind === 'audio' && (
+              <audio src={mediaUrl} controls={isHost} autoPlay className="w-2/3" />
+            )}
+            {!mediaUrl && (
+              <div className="text-white/40 text-sm">No media attached to this seed.</div>
+            )}
+          </div>
+        )}
+
+        {/* Picture-in-picture host camera when not in camera mode (host preview) */}
+        {isHost && stage.mode !== 'camera' && (
+          <div className="absolute bottom-3 right-3 z-[5] h-32 w-44 overflow-hidden rounded-lg border border-emerald-500/30 bg-black shadow-2xl">
+            <iframe
+              title="host-cam"
+              src={jitsiSrc}
+              allow="camera; microphone; autoplay"
+              className="h-full w-full border-0"
+            />
+          </div>
+        )}
+      </div>
+
+      {/* Guest boxes row */}
+      {(approved.length > 0 || isHost) && (
+        <div className="flex items-center gap-2 border-t border-white/10 bg-black/70 px-3 py-2 overflow-x-auto">
+          <span className="text-[10px] font-bold uppercase tracking-wider text-white/50">On stage</span>
+          {approved.length === 0 && (
+            <span className="text-xs text-white/30 italic">No guests on stage yet</span>
+          )}
+          {approved.slice(0, 6).map(g => (
+            <div
+              key={g.user_id}
+              className="relative flex h-14 w-20 flex-shrink-0 items-center justify-center rounded-md border border-emerald-500/30 bg-emerald-950/40 text-[10px]"
+              title={g.name}
+            >
+              {g.mode === 'video' ? <Video className="h-4 w-4 text-emerald-300" /> : <Mic className="h-4 w-4 text-emerald-300" />}
+              <span className="absolute bottom-0 left-0 right-0 truncate bg-black/60 px-1 text-center">{g.name}</span>
+              {isHost && (
+                <div className="absolute -top-2 -right-2 flex gap-0.5">
+                  <button
+                    onClick={() => toggleMute(g.user_id, !g.muted)}
+                    className="flex h-5 w-5 items-center justify-center rounded-full bg-amber-500 text-black hover:bg-amber-400"
+                    title={g.muted ? 'Unmute' : 'Mute'}
+                  >
+                    {g.muted ? <MicOff className="h-3 w-3" /> : <Mic className="h-3 w-3" />}
+                  </button>
+                  <button
+                    onClick={() => removeGuest(g.user_id)}
+                    className="flex h-5 w-5 items-center justify-center rounded-full bg-rose-500 text-white hover:bg-rose-400"
+                    title="Remove from stage"
+                  >
+                    <UserMinus className="h-3 w-3" />
+                  </button>
+                </div>
+              )}
+            </div>
+          ))}
+          {approved.length > 6 && (
+            <span className="text-xs text-white/50">+{approved.length - 6}</span>
+          )}
+        </div>
+      )}
+
+      {/* Host: hand-raise tray */}
+      {isHost && hands.length > 0 && (
+        <div className="border-t border-amber-500/30 bg-amber-950/30 px-3 py-2">
+          <div className="text-[10px] font-bold uppercase tracking-wider text-amber-300">
+            🙋 Hand raises ({hands.length})
+          </div>
+          <div className="mt-1 flex flex-wrap gap-1.5">
+            {hands.map(h => (
+              <motion.div
+                key={h.user_id}
+                initial={{ opacity: 0, y: 4 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="flex items-center gap-1.5 rounded-full border border-amber-500/40 bg-black/40 px-2 py-1 text-xs"
+              >
+                {h.want === 'video' ? <Video className="h-3 w-3 text-amber-300" /> : <Mic className="h-3 w-3 text-amber-300" />}
+                <span className="font-bold">{h.name}</span>
+                <button
+                  onClick={() => approveHand(h)}
+                  className="flex h-5 w-5 items-center justify-center rounded-full bg-emerald-500 text-black hover:bg-emerald-400"
+                  title="Approve"
+                ><Check className="h-3 w-3" /></button>
+                <button
+                  onClick={() => denyHand(h.user_id)}
+                  className="flex h-5 w-5 items-center justify-center rounded-full bg-rose-500 text-white hover:bg-rose-400"
+                  title="Decline"
+                ><X className="h-3 w-3" /></button>
+              </motion.div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Guest: request-to-join controls */}
+      {!isHost && !iAmApproved && (
+        <div className="flex items-center justify-center gap-2 border-t border-white/10 bg-black/70 px-3 py-2">
+          <Hand className="h-4 w-4 text-amber-300" />
+          {!myHandRaised ? (
+            <>
+              <span className="text-xs text-white/70">Request to join the live:</span>
+              <button
+                onClick={() => raiseHand('voice')}
+                className="flex items-center gap-1 rounded-md border border-emerald-400/40 bg-emerald-500/10 px-2 py-1 text-xs font-bold hover:bg-emerald-500/20"
+              >
+                <Mic className="h-3 w-3" /> Voice
+              </button>
+              <button
+                onClick={() => raiseHand('video')}
+                className="flex items-center gap-1 rounded-md border border-cyan-400/40 bg-cyan-500/10 px-2 py-1 text-xs font-bold hover:bg-cyan-500/20"
+              >
+                <Video className="h-3 w-3" /> Video
+              </button>
+            </>
+          ) : (
+            <>
+              <span className="text-xs text-amber-300 italic">Hand raised — waiting for host…</span>
+              <button
+                onClick={cancelHand}
+                className="flex items-center gap-1 rounded-md border border-white/20 bg-black/40 px-2 py-1 text-xs hover:bg-white/10"
+              >
+                <X className="h-3 w-3" /> Cancel
+              </button>
+            </>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
