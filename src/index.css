@@ -12,23 +12,23 @@ All colors MUST be HSL.
 
 @layer base {
   :root {
-    /* NEW DESIGN SYSTEM - Navy Blue Theme */
-    --background: 210 67% 12%; /* #0A1931 - Deep navy blue */
-    --foreground: 210 17% 98%; /* #F8F9FA - Off-white for body text */
+    /* MIDNIGHT DASHBOARD THEME — match MidnightShell aesthetic */
+    --background: 220 38% 6%; /* #0a0f1a - midnight navy */
+    --foreground: 210 17% 98%;
 
-    --card: 212 49% 24%; /* #1E3A5C - Lighter blue for cards */
-    --card-foreground: 210 17% 98%; /* #F8F9FA - Off-white text on cards */
+    --card: 222 47% 11%; /* #0f172a - glassy slate */
+    --card-foreground: 210 17% 98%;
 
-    --popover: 212 49% 24%; /* #1E3A5C - Same as cards */
+    --popover: 222 47% 11%;
     --popover-foreground: 210 17% 98%;
 
-  /* Primary interactive color - Teal/Cyan */
-  --primary: 188 78% 41%;  /* #17A2B8 - Vibrant teal for buttons */
-  --primary-foreground: 0 0% 100%; /* #FFFFFF - White text on primary */
+  /* Primary interactive color - Cyan */
+  --primary: 189 94% 55%;  /* #22d3ee */
+  --primary-foreground: 222 47% 11%;
 
-  /* Secondary - for alternative buttons */
-  --secondary: 212 49% 24%;  /* #1E3A5C - Card color */
-  --secondary-foreground: 0 0% 100%;
+  /* Secondary - subtle glass surface */
+  --secondary: 217 33% 17%;  /* slate-800 */
+  --secondary-foreground: 210 17% 98%;
 
   /* Muted text and helpers */
   --muted: 210 11% 71%;  /* #ADB5BD - Light gray for muted text */
