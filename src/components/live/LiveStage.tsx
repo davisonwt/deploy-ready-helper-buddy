@@ -20,21 +20,29 @@ import { motion } from 'framer-motion';
 import {
   Camera, Image as ImageIcon, PencilLine, Film,
   Hand, Mic, MicOff, Video, VideoOff, X, Check, UserMinus,
-  ChevronLeft, ChevronRight,
+  ChevronLeft, ChevronRight, Music, Heart, Search,
 } from 'lucide-react';
 import { JITSI_DOMAIN } from '@/lib/jitsi-config';
 import { useAuth } from '@/hooks/useAuth';
-import { useLiveStage, type StageMode } from '@/hooks/useLiveStage';
+import { useLiveStage, type StageMode, type NowPlaying } from '@/hooks/useLiveStage';
+import { supabase } from '@/integrations/supabase/client';
+import QuickBestowModal from '@/components/bestow/QuickBestowModal';
 
 export interface LiveStageProps {
   seedId: string;
   title: string;
   jitsiRoom: string;
   isHost: boolean;
+  /** When true, host gets a tribal-music dropdown to pick the playing seed */
+  isRadio?: boolean;
+  /** seed owner — bestowals default to this user */
+  sowerUserId?: string | null;
   images?: string[];
   mediaUrl?: string | null;
   mediaKind?: 'audio' | 'video' | 'book' | 'orchard' | 'seed';
   className?: string;
+  /** Whisperer % the host of the live earns from each bestowal */
+  whispererSharePct?: number;
 }
 
 const TABS: { mode: StageMode; icon: typeof Camera; label: string; hostOnly?: boolean }[] = [
@@ -44,10 +52,20 @@ const TABS: { mode: StageMode; icon: typeof Camera; label: string; hostOnly?: bo
   { mode: 'video',      icon: Film,       label: 'Media' },
 ];
 
+interface MusicSeedOption {
+  id: string;
+  title: string;
+  user_id: string;
+  audio_url: string | null;
+  image: string | null;
+}
+
 export default function LiveStage({
   seedId, title, jitsiRoom, isHost,
+  isRadio = false, sowerUserId,
   images = [], mediaUrl, mediaKind,
   className = '',
+  whispererSharePct = 10,
 }: LiveStageProps) {
   const { user } = useAuth();
   const {
@@ -60,6 +78,72 @@ export default function LiveStage({
   const [boardText, setBoardText] = useState('');
   const imgList = images.filter(Boolean);
 
+  // Bestow modal (guests bestow toward the now-playing seed)
+  const [bestowOpen, setBestowOpen] = useState(false);
+
+  // Radio: tribal-music seed library + "now playing"
+  const [musicLib, setMusicLib] = useState<MusicSeedOption[]>([]);
+  const [musicLoading, setMusicLoading] = useState(false);
+  const [musicSearch, setMusicSearch] = useState('');
+  const [pickerOpen, setPickerOpen] = useState(false);
+
+  useEffect(() => {
+    if (!isRadio || !isHost || musicLib.length > 0) return;
+    setMusicLoading(true);
+    (async () => {
+      const { data, error } = await supabase
+        .from('orchards')
+        .select('id, title, user_id, audio_url, images')
+        .ilike('category', '%music%')
+        .not('audio_url', 'is', null)
+        .order('created_at', { ascending: false })
+        .limit(200);
+      if (!error && data) {
+        setMusicLib(
+          (data as any[]).map((o) => ({
+            id: o.id,
+            title: o.title,
+            user_id: o.user_id,
+            audio_url: o.audio_url,
+            image: Array.isArray(o.images) && o.images.length ? o.images[0] : null,
+          }))
+        );
+      }
+      setMusicLoading(false);
+    })();
+  }, [isRadio, isHost, musicLib.length]);
+
+  const filteredMusic = useMemo(
+    () => (musicSearch
+      ? musicLib.filter(m => m.title.toLowerCase().includes(musicSearch.toLowerCase()))
+      : musicLib),
+    [musicLib, musicSearch]
+  );
+
+  const playMusicSeed = (m: MusicSeedOption) => {
+    const np: NowPlaying = {
+      seed_id: m.id,
+      title: m.title,
+      sower_user_id: m.user_id,
+      media_url: m.audio_url,
+      media_kind: 'audio',
+      image: m.image,
+    };
+    setStageMode({ mode: 'video', mediaUrl: m.audio_url, mediaKind: 'audio', nowPlaying: np });
+    setPickerOpen(false);
+  };
+
+  const nowPlaying: NowPlaying = (stage.nowPlaying as NowPlaying) || {
+    seed_id: seedId,
+    title,
+    sower_user_id: sowerUserId ?? null,
+    media_url: mediaUrl ?? null,
+    media_kind: (mediaKind === 'audio' || mediaKind === 'video') ? mediaKind : null,
+    image: imgList[0] ?? null,
+  };
+  const activeMediaUrl = stage.mediaUrl ?? mediaUrl ?? null;
+  const activeMediaKind = stage.mediaKind ?? (mediaKind === 'audio' || mediaKind === 'video' ? mediaKind : null);
+
   // Push board text changes (debounced) when host edits
   useEffect(() => {
     if (!isHost || stage.mode !== 'whiteboard') return;
@@ -69,7 +153,6 @@ export default function LiveStage({
     return () => clearTimeout(t);
   }, [boardText, isHost, stage.mode, setStageMode]);
 
-  // Sync board text when guest receives a stage update
   useEffect(() => {
     if (!isHost && stage.mode === 'whiteboard' && typeof stage.text === 'string') {
       setBoardText(stage.text);
@@ -114,6 +197,57 @@ export default function LiveStage({
             );
           })}
           <span className="ml-auto text-[10px] text-white/40">Stage</span>
+        </div>
+      )}
+
+      {/* Radio: tribal-music dropdown for the host */}
+      {isRadio && isHost && (
+        <div className="relative border-b border-white/10 bg-emerald-950/30 px-2 py-1.5">
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => setPickerOpen(v => !v)}
+              className="flex items-center gap-1.5 rounded-md border border-emerald-400/40 bg-black/40 px-2 py-1 text-[11px] font-bold uppercase tracking-wider text-emerald-200 hover:bg-emerald-500/10"
+            >
+              <Music className="h-3 w-3" />
+              {nowPlaying?.title && stage.nowPlaying ? `🎵 ${nowPlaying.title}` : 'Pick tribal music'}
+            </button>
+            <span className="text-[10px] text-white/50">
+              {musicLoading ? 'Loading library…' : `${musicLib.length} music seeds`}
+            </span>
+          </div>
+          {pickerOpen && (
+            <div className="absolute left-2 right-2 top-full z-30 mt-1 max-h-72 overflow-y-auto rounded-lg border border-emerald-500/30 bg-[#0a1320] shadow-2xl">
+              <div className="sticky top-0 flex items-center gap-1 border-b border-white/10 bg-[#0a1320] p-2">
+                <Search className="h-3 w-3 text-white/40" />
+                <input
+                  autoFocus
+                  value={musicSearch}
+                  onChange={(e) => setMusicSearch(e.target.value)}
+                  placeholder="Search music seeds…"
+                  className="flex-1 bg-transparent text-xs text-white placeholder:text-white/30 focus:outline-none"
+                />
+                <button onClick={() => setPickerOpen(false)} className="text-white/50 hover:text-white"><X className="h-3 w-3" /></button>
+              </div>
+              {filteredMusic.length === 0 && (
+                <div className="p-3 text-center text-xs text-white/40">No music seeds found.</div>
+              )}
+              {filteredMusic.map((m) => (
+                <button
+                  key={m.id}
+                  type="button"
+                  onClick={() => playMusicSeed(m)}
+                  className="flex w-full items-center gap-2 border-b border-white/5 p-2 text-left text-xs hover:bg-emerald-500/10"
+                >
+                  {m.image
+                    ? <img src={m.image} alt="" className="h-8 w-8 flex-shrink-0 rounded object-cover" />
+                    : <div className="h-8 w-8 flex-shrink-0 rounded bg-emerald-500/10" />}
+                  <span className="flex-1 truncate text-white/85">{m.title}</span>
+                  <Music className="h-3 w-3 text-emerald-400" />
+                </button>
+              ))}
+            </div>
+          )}
         </div>
       )}
 
@@ -193,15 +327,27 @@ export default function LiveStage({
 
         {/* Media mode */}
         {stage.mode === 'video' && (
-          <div className="absolute inset-0 flex items-center justify-center bg-black">
-            {mediaUrl && mediaKind === 'video' && (
-              <video src={mediaUrl} controls={isHost} autoPlay className="max-h-full max-w-full" />
+          <div className="absolute inset-0 flex flex-col items-center justify-center bg-black p-3">
+            {nowPlaying.image && activeMediaKind === 'audio' && (
+              <img src={nowPlaying.image} alt="" className="mb-3 max-h-[55%] max-w-[80%] rounded object-contain" />
             )}
-            {mediaUrl && mediaKind === 'audio' && (
-              <audio src={mediaUrl} controls={isHost} autoPlay className="w-2/3" />
+            {activeMediaUrl && activeMediaKind === 'video' && (
+              <video src={activeMediaUrl} controls autoPlay className="max-h-full max-w-full" />
             )}
-            {!mediaUrl && (
-              <div className="text-white/40 text-sm">No media attached to this seed.</div>
+            {activeMediaUrl && activeMediaKind === 'audio' && (
+              <audio src={activeMediaUrl} controls autoPlay className="w-[80%]" />
+            )}
+            {!activeMediaUrl && (
+              <div className="text-white/40 text-sm">
+                {isRadio && isHost
+                  ? 'Pick a tribal music seed below to start playing.'
+                  : 'No media attached to this seed.'}
+              </div>
+            )}
+            {nowPlaying.title && activeMediaUrl && (
+              <div className="mt-3 rounded-full border border-emerald-400/30 bg-black/60 px-3 py-1 text-xs">
+                🎵 Now playing: <span className="font-bold text-emerald-300">{nowPlaying.title}</span>
+              </div>
             )}
           </div>
         )}
@@ -325,6 +471,32 @@ export default function LiveStage({
           )}
         </div>
       )}
+
+      {/* Universal Bestow CTA — guests bestow toward the now-playing seed */}
+      {!isHost && nowPlaying.sower_user_id && nowPlaying.sower_user_id !== user?.id && (
+        <div className="flex items-center justify-between gap-2 border-t border-rose-500/20 bg-rose-950/20 px-3 py-2">
+          <div className="flex items-center gap-1.5 text-xs text-rose-100">
+            <Heart className="h-3.5 w-3.5 text-rose-400" />
+            <span className="truncate">Support “{nowPlaying.title}”</span>
+          </div>
+          <button
+            onClick={() => setBestowOpen(true)}
+            className="flex items-center gap-1 rounded-md bg-rose-500 px-3 py-1 text-xs font-bold text-white hover:bg-rose-400"
+          >
+            <Heart className="h-3 w-3" /> Bestow
+          </button>
+        </div>
+      )}
+
+      <QuickBestowModal
+        open={bestowOpen}
+        onClose={() => setBestowOpen(false)}
+        orchardId={nowPlaying.seed_id}
+        seedTitle={nowPlaying.title}
+        sowerUserId={nowPlaying.sower_user_id || ''}
+        hostUserId={isRadio ? (user?.id ?? null) : (sowerUserId ?? null)}
+        whispererSharePct={whispererSharePct}
+      />
     </div>
   );
 }

@@ -26,31 +26,27 @@ import { supabase } from '@/integrations/supabase/client';
 import LiveStage from '@/components/live/LiveStage';
 
 export interface LivingSeedCardProps {
-  /** Stable seed/item id — used for the realtime channel key */
   seedId: string;
   title: string;
   subtitle?: string;
   image?: string | null;
-  /** All uploaded images for this seed — left/right arrows page through them */
   images?: string[];
-  /** Path to open the full seed page */
   openPath: string;
-  /** Optional inline media for ▶ Play */
   mediaUrl?: string | null;
   mediaKind?: 'audio' | 'video' | 'book' | 'orchard' | 'seed';
-  /** Top-left badge */
   badge?: { emoji: string; label: string; color: string };
-  /** Owner ⋯ menu only renders when true */
   mine?: boolean;
   onEdit?: () => void;
   onDelete?: () => void;
   onRepost?: () => void;
   onPark?: () => void;
-  /** Visual size — 'compact' for sliders, 'full' for feed pages */
   size?: 'compact' | 'full';
   className?: string;
-  /** % share the host (whisperer) earns when bestowals happen during a live session */
   whispererSharePct?: number;
+  /** sower (orchard owner) — used by the Bestow flow */
+  sowerUserId?: string | null;
+  /** radio mode unlocks the host music dropdown inside LiveStage */
+  isRadio?: boolean;
 }
 
 const BLOOM_META: Record<BloomStage, { emoji: string; label: string }> = {
@@ -65,6 +61,7 @@ export default function LivingSeedCard({
   badge, mine, onEdit, onDelete, onRepost, onPark,
   size = 'compact', className = '',
   whispererSharePct = 10,
+  sowerUserId, isRadio = false,
 }: LivingSeedCardProps) {
   const navigate = useNavigate();
   const { user } = useAuth();
@@ -427,6 +424,9 @@ export default function LivingSeedCard({
                   title={title}
                   jitsiRoom={activeRoom}
                   isHost={liveHere[0]?.user_id === user?.id || (!isLiveHere)}
+                  isRadio={isRadio}
+                  sowerUserId={sowerUserId}
+                  whispererSharePct={whispererSharePct}
                   images={imgList}
                   mediaUrl={mediaUrl}
                   mediaKind={mediaKind}
