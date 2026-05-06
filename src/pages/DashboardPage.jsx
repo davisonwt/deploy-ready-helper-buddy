@@ -945,8 +945,7 @@ export default function SeedFlowDashboard() {
 
       <div className="s2g-dashboard-root" style={styles.root}>
 
-        {/* ── SeedFlow fixed strip across very top ── */}
-        <SeedFlow fixed height={38} seedCount={36} zIndex={200} />
+        {/* SeedFlow top strip removed per request */}
         <button
           type="button"
           className="s2g-mobile-panel-tab s2g-mobile-panel-tab-left"
