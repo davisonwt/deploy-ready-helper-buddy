@@ -122,7 +122,7 @@ export function MyGardenPanel({ isOpen, onClose }: MyGardenPanelProps) {
         {/* Sliding panel */}
         <div
           id="garden-panel"
-          className="absolute inset-y-0 left-0 w-full max-w-lg bg-gradient-to-br from-purple-950 via-indigo-900 to-teal-900 shadow-2xl transform transition-transform duration-500 pointer-events-auto overflow-y-auto translate-x-0"
+          className="absolute inset-y-0 left-0 w-full max-w-lg shadow-2xl transform transition-transform duration-500 pointer-events-auto overflow-y-auto translate-x-0" style={{ background: 'linear-gradient(180deg, #0a0f1a 0%, #060a12 100%)' }}
         >
           <div className="p-8 pb-32 space-y-8 text-white">
             {/* Close X */}
