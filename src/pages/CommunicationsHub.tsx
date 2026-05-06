@@ -1,12 +1,13 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { ArrowLeft, BookOpen, Calendar, Check, DollarSign, Dumbbell, FileUp, Loader2, MessageCircle, Radio, Users, Video, Zap } from 'lucide-react';
+import { ArrowLeft, BookOpen, Calendar, Check, ChevronDown, DollarSign, Dumbbell, FileUp, Loader2, MessageCircle, Radio, Users, Video, X, Zap } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { toast } from 'sonner';
 
 type LaunchKind = 'one_on_one' | 'community_chat' | 'classroom' | 'skilldrop' | 'training' | 'radio';
@@ -115,26 +116,82 @@ export default function CommunicationsHub() {
       <div className="relative mx-auto max-w-7xl px-4 py-5">
         <Button variant="ghost" onClick={() => navigate('/dashboard')} className="mb-4 gap-2 text-cyan-300 hover:text-cyan-200 hover:bg-cyan-500/10"><ArrowLeft className="h-4 w-4" /> Go Back</Button>
         <section className="grid gap-5 lg:grid-cols-[360px_1fr]">
-          <div className="rounded-lg border border-cyan-400/30 bg-gradient-to-br from-slate-900/90 via-indigo-950/70 to-slate-900/90 backdrop-blur p-4 shadow-[0_0_50px_rgba(56,189,248,0.18)]">
-            <div className="mb-4 flex items-center gap-3"><MessageCircle className="h-7 w-7 text-primary" /><h1 className="text-2xl font-black">ChatApp Go-Live</h1></div>
-            <div className="grid gap-2">
-              {LAUNCH_TYPES.map(t => <button key={t.id} onClick={() => setKind(t.id)} className={`flex items-center justify-between rounded-md border px-4 py-3 text-left font-bold transition ${kind === t.id ? 'border-primary bg-primary text-primary-foreground' : 'border-border bg-secondary hover:bg-accent'}`}><span className="flex items-center gap-3">{t.icon}{t.label}</span>{kind === t.id && <Check className="h-4 w-4" />}</button>)}
+          <div className="rounded-2xl border border-cyan-400/25 bg-[#0f172a]/80 backdrop-blur p-4 shadow-[0_0_40px_rgba(34,211,238,0.10)]">
+            <div className="mb-4 flex items-center gap-3"><MessageCircle className="h-7 w-7 text-cyan-300" /><h1 className="text-2xl font-black text-white">ChatApp Go-Live</h1></div>
+            <div className="grid gap-3">
+              {LAUNCH_TYPES.map((t, idx) => {
+                const accents = [
+                  { ring: 'ring-cyan-400/40', glow: 'shadow-[0_0_25px_rgba(34,211,238,0.35)]', bg: 'from-cyan-500/15 to-cyan-500/5', icon: 'text-cyan-300', border: 'border-cyan-400/30' },
+                  { ring: 'ring-emerald-400/40', glow: 'shadow-[0_0_25px_rgba(16,185,129,0.35)]', bg: 'from-emerald-500/15 to-emerald-500/5', icon: 'text-emerald-300', border: 'border-emerald-400/30' },
+                  { ring: 'ring-violet-400/40', glow: 'shadow-[0_0_25px_rgba(139,92,246,0.35)]', bg: 'from-violet-500/15 to-violet-500/5', icon: 'text-violet-300', border: 'border-violet-400/30' },
+                  { ring: 'ring-amber-400/40', glow: 'shadow-[0_0_25px_rgba(245,158,11,0.35)]', bg: 'from-amber-500/15 to-amber-500/5', icon: 'text-amber-300', border: 'border-amber-400/30' },
+                  { ring: 'ring-rose-400/40', glow: 'shadow-[0_0_25px_rgba(244,114,182,0.35)]', bg: 'from-rose-500/15 to-rose-500/5', icon: 'text-rose-300', border: 'border-rose-400/30' },
+                  { ring: 'ring-sky-400/40', glow: 'shadow-[0_0_25px_rgba(56,189,248,0.35)]', bg: 'from-sky-500/15 to-sky-500/5', icon: 'text-sky-300', border: 'border-sky-400/30' },
+                ];
+                const a = accents[idx % accents.length];
+                const isActive = kind === t.id;
+                return (
+                  <motion.button key={t.id} onClick={() => setKind(t.id)} whileHover={{ y: -2 }} whileTap={{ scale: 0.97 }} className={`flex items-center justify-between rounded-xl border ${a.border} bg-gradient-to-br ${a.bg} backdrop-blur px-4 py-3 text-left font-bold text-white transition-all hover:${a.glow} ${isActive ? `ring-2 ${a.ring} ${a.glow}` : ''}`}>
+                    <span className="flex items-center gap-3"><span className={a.icon}>{t.icon}</span>{t.label}</span>
+                    {isActive && <Check className={`h-5 w-5 ${a.icon}`} />}
+                  </motion.button>
+                );
+              })}
             </div>
           </div>
-          <motion.div key={kind} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="rounded-lg border border-fuchsia-400/30 bg-gradient-to-br from-slate-900/90 via-violet-950/70 to-slate-900/90 backdrop-blur p-5 shadow-[0_0_50px_rgba(217,70,239,0.18)]">
-            <div className="mb-5 flex flex-wrap items-center justify-between gap-3"><h2 className="flex items-center gap-3 text-3xl font-black">{active.icon}{active.label}</h2><span className="rounded-md bg-primary/15 px-3 py-1 text-sm font-bold text-primary">ready to push live</span></div>
+          <motion.div key={kind} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="rounded-2xl border border-fuchsia-400/25 bg-[#0f172a]/80 backdrop-blur p-5 shadow-[0_0_40px_rgba(217,70,239,0.10)]">
+            <div className="mb-5 flex flex-wrap items-center justify-between gap-3"><h2 className="flex items-center gap-3 text-3xl font-black text-white">{active.icon}{active.label}</h2><span className="rounded-md bg-cyan-500/15 border border-cyan-400/30 px-3 py-1 text-sm font-bold text-cyan-200">ready to push live</span></div>
             <div className="grid gap-4 md:grid-cols-2">
               <Input value={title} onChange={e => setTitle(e.target.value)} placeholder="Session title" />
               <div className="relative"><Calendar className="pointer-events-none absolute left-3 top-3 h-4 w-4 text-muted-foreground" /><Input className="pl-10" type="datetime-local" value={scheduledAt} onChange={e => setScheduledAt(e.target.value)} /></div>
               <Textarea className="md:col-span-2" value={description} onChange={e => setDescription(e.target.value)} placeholder="What is happening live?" />
-              <div className="rounded-md border border-border bg-background/50 p-3">
+              <div className="rounded-xl border border-white/10 bg-white/5 p-3">
                 <div className="mb-2 flex gap-2"><Button type="button" variant={isFree ? 'default' : 'outline'} onClick={() => setIsFree(true)}>Free</Button><Button type="button" variant={!isFree ? 'default' : 'outline'} onClick={() => setIsFree(false)}>Bestowal</Button></div>
                 {!isFree && <div className="relative"><DollarSign className="pointer-events-none absolute left-3 top-3 h-4 w-4 text-muted-foreground" /><Input className="pl-10" value={amount} onChange={e => setAmount(e.target.value)} inputMode="decimal" placeholder="USDC amount" /></div>}
               </div>
-              <label className="flex cursor-pointer flex-col items-center justify-center rounded-md border border-dashed border-border bg-background/50 p-4 text-center hover:bg-accent/20"><FileUp className="mb-2 h-7 w-7 text-primary" /><span className="font-bold">Upload files, images, videos, audio</span><span className="text-xs text-muted-foreground">{files.length ? `${files.length} file(s) selected` : 'Choose files'}</span><input className="hidden" type="file" multiple onChange={e => setFiles(Array.from(e.target.files || []))} /></label>
+              <label className="flex cursor-pointer flex-col items-center justify-center rounded-xl border border-dashed border-white/15 bg-white/5 p-4 text-center hover:bg-white/10"><FileUp className="mb-2 h-7 w-7 text-cyan-300" /><span className="font-bold text-white">Upload files, images, videos, audio</span><span className="text-xs text-slate-400">{files.length ? `${files.length} file(s) selected` : 'Choose files'}</span><input className="hidden" type="file" multiple onChange={e => setFiles(Array.from(e.target.files || []))} /></label>
             </div>
-            <div className="mt-5 rounded-md border border-border bg-background/50 p-3"><div className="mb-3 text-sm font-black uppercase tracking-wide text-muted-foreground">Invite tribe members</div><div className="flex flex-wrap gap-2">{profiles.map(p => { const selected = invitees.includes(p.user_id); return <button key={p.user_id} onClick={() => setInvitees(v => selected ? v.filter(id => id !== p.user_id) : [...v, p.user_id])} className={`rounded-md border px-3 py-2 text-sm font-bold ${selected ? 'border-primary bg-primary text-primary-foreground' : 'border-border bg-secondary'}`}>{p.display_name || `${p.first_name || ''} ${p.last_name || ''}`.trim() || 'Sower'}</button>; })}</div></div>
-            <Button onClick={createLaunch} disabled={saving} className="mt-5 h-14 w-full gap-2 text-lg font-black">{saving ? <Loader2 className="h-5 w-5 animate-spin" /> : <Zap className="h-5 w-5" />} Create & Invite</Button>
+            <div className="mt-5 rounded-xl border border-white/10 bg-white/5 p-3">
+              <div className="mb-2 text-sm font-black uppercase tracking-wide text-cyan-200/80">Invite tribe members</div>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <button type="button" className="flex w-full items-center justify-between rounded-xl border border-cyan-400/30 bg-[#0f172a]/80 backdrop-blur px-4 py-3 text-left font-bold text-white hover:bg-cyan-500/10 transition">
+                    <span>{invitees.length ? `${invitees.length} tribe member${invitees.length > 1 ? 's' : ''} invited` : 'Choose tribe members…'}</span>
+                    <ChevronDown className="h-4 w-4 text-cyan-300" />
+                  </button>
+                </PopoverTrigger>
+                <PopoverContent align="start" className="w-[min(560px,90vw)] max-h-[60vh] overflow-y-auto p-2 bg-[#0f172a]/95 border-cyan-400/30">
+                  <div className="grid gap-1">
+                    {profiles.map(p => {
+                      const selected = invitees.includes(p.user_id);
+                      const name = p.display_name || `${p.first_name || ''} ${p.last_name || ''}`.trim() || 'Sower';
+                      return (
+                        <button key={p.user_id} type="button" onClick={() => setInvitees(v => selected ? v.filter(id => id !== p.user_id) : [...v, p.user_id])} className={`flex items-center justify-between rounded-lg px-3 py-2 text-sm font-semibold transition ${selected ? 'bg-cyan-500/20 text-cyan-100 ring-1 ring-cyan-400/40' : 'text-slate-200 hover:bg-white/5'}`}>
+                            <span>{name}</span>
+                            {selected && <Check className="h-4 w-4 text-cyan-300" />}
+                          </button>
+                      );
+                    })}
+                    {!profiles.length && <div className="p-3 text-sm text-slate-400">No tribe members found yet.</div>}
+                  </div>
+                </PopoverContent>
+              </Popover>
+              {invitees.length > 0 && (
+                <div className="mt-3 flex flex-wrap gap-2">
+                  {invitees.map(id => {
+                    const p = profiles.find(pp => pp.user_id === id);
+                    const name = p?.display_name || `${p?.first_name || ''} ${p?.last_name || ''}`.trim() || 'Sower';
+                    return (
+                      <span key={id} className="inline-flex items-center gap-1 rounded-full border border-cyan-400/30 bg-cyan-500/15 px-3 py-1 text-xs font-bold text-cyan-100">
+                        {name}
+                        <button type="button" onClick={() => setInvitees(v => v.filter(x => x !== id))} className="ml-1 hover:text-white"><X className="h-3 w-3" /></button>
+                      </span>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+            <Button onClick={createLaunch} disabled={saving} className="mt-5 h-14 w-full gap-2 text-lg font-black bg-gradient-to-r from-cyan-500 to-violet-500 hover:from-cyan-400 hover:to-violet-400 text-white shadow-[0_0_30px_rgba(34,211,238,0.35)]">{saving ? <Loader2 className="h-5 w-5 animate-spin" /> : <Zap className="h-5 w-5" />} Create & Invite</Button>
           </motion.div>
         </section>
       </div>

@@ -12,23 +12,23 @@ All colors MUST be HSL.
 
 @layer base {
   :root {
-    /* NEW DESIGN SYSTEM - Navy Blue Theme */
-    --background: 210 67% 12%; /* #0A1931 - Deep navy blue */
-    --foreground: 210 17% 98%; /* #F8F9FA - Off-white for body text */
+    /* MIDNIGHT DASHBOARD THEME — match MidnightShell aesthetic */
+    --background: 220 38% 6%; /* #0a0f1a - midnight navy */
+    --foreground: 210 17% 98%;
 
-    --card: 212 49% 24%; /* #1E3A5C - Lighter blue for cards */
-    --card-foreground: 210 17% 98%; /* #F8F9FA - Off-white text on cards */
+    --card: 222 47% 11%; /* #0f172a - glassy slate */
+    --card-foreground: 210 17% 98%;
 
-    --popover: 212 49% 24%; /* #1E3A5C - Same as cards */
+    --popover: 222 47% 11%;
     --popover-foreground: 210 17% 98%;
 
-  /* Primary interactive color - Teal/Cyan */
-  --primary: 188 78% 41%;  /* #17A2B8 - Vibrant teal for buttons */
-  --primary-foreground: 0 0% 100%; /* #FFFFFF - White text on primary */
+  /* Primary interactive color - Cyan */
+  --primary: 189 94% 55%;  /* #22d3ee */
+  --primary-foreground: 222 47% 11%;
 
-  /* Secondary - for alternative buttons */
-  --secondary: 212 49% 24%;  /* #1E3A5C - Card color */
-  --secondary-foreground: 0 0% 100%;
+  /* Secondary - subtle glass surface */
+  --secondary: 217 33% 17%;  /* slate-800 */
+  --secondary-foreground: 210 17% 98%;
 
   /* Muted text and helpers */
   --muted: 210 11% 71%;  /* #ADB5BD - Light gray for muted text */
@@ -42,11 +42,11 @@ All colors MUST be HSL.
   --heading-secondary: 210 17% 98%; /* #F8F9FA - Off-white for H3, H4 */
   
   /* Form inputs */
-  --input-bg: 212 49% 24%; /* #1E3A5C - Input background */
-  --input-text: 0 0% 100%; /* #FFFFFF - Input text */
-  --input-border: 210 11% 71%; /* #ADB5BD - Default border */
-  --input-border-focus: 213 71% 58%; /* #4A90E2 - Focus border */
-  --input-placeholder: 210 11% 46%; /* #6C757D - Placeholder text */
+  --input-bg: 222 47% 14%;
+  --input-text: 210 17% 98%;
+  --input-border: 217 33% 25%;
+  --input-border-focus: 189 94% 55%;
+  --input-placeholder: 215 20% 55%;
   
   /* sow2grow theme colors (legacy support) */
   --s2g-green: 142 76% 36%;
@@ -118,28 +118,28 @@ All colors MUST be HSL.
   --charcoal-900: 210 20% 10%; /* #111827 */
 
   /* Glass morphism effects */
-  --glass-bg: 212 49% 24%; /* card color with 70% opacity */
-  --glass-border: 0 0% 100%; /* white with 10% opacity */
-  --glass-shadow: 0 0% 0%; /* black with 20% opacity */
-  --glass-glow: 188 78% 41%; /* teal glow */
+  --glass-bg: 222 47% 11%;
+  --glass-border: 0 0% 100%;
+  --glass-shadow: 0 0% 0%;
+  --glass-glow: 189 94% 55%;
 
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 210 11% 71%; /* #ADB5BD - Light gray borders */
-    --input: 212 49% 24%; /* #1E3A5C - Input background */
-    --ring: 188 78% 41%;  /* #17A2B8 - Teal ring */
+    --border: 217 33% 22%; /* slate-700/40 */
+    --input: 222 47% 11%;
+    --ring: 189 94% 55%;
 
     --radius: 0.5rem;
 
-    --sidebar-background: 212 49% 24%; /* #1E3A5C - Card color */
-    --sidebar-foreground: 210 17% 98%; /* #F8F9FA - Off-white */
-    --sidebar-primary: 188 78% 41%;  /* #17A2B8 - Teal */
-    --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 212 49% 24%;  /* #1E3A5C */
+    --sidebar-background: 222 47% 11%;
+    --sidebar-foreground: 210 17% 98%;
+    --sidebar-primary: 189 94% 55%;
+    --sidebar-primary-foreground: 222 47% 11%;
+    --sidebar-accent: 217 33% 17%;
     --sidebar-accent-foreground: 210 17% 98%;
-    --sidebar-border: 210 11% 71%; /* #ADB5BD */
-    --sidebar-ring: 188 78% 41%;  /* #17A2B8 - Teal */
+    --sidebar-border: 217 33% 22%;
+    --sidebar-ring: 189 94% 55%;
 
     --success: 142 76% 36%;  /* Keep green for success */
     --success-foreground: 0 0% 100%;
