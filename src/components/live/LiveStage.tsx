@@ -200,6 +200,57 @@ export default function LiveStage({
         </div>
       )}
 
+      {/* Radio: tribal-music dropdown for the host */}
+      {isRadio && isHost && (
+        <div className="relative border-b border-white/10 bg-emerald-950/30 px-2 py-1.5">
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => setPickerOpen(v => !v)}
+              className="flex items-center gap-1.5 rounded-md border border-emerald-400/40 bg-black/40 px-2 py-1 text-[11px] font-bold uppercase tracking-wider text-emerald-200 hover:bg-emerald-500/10"
+            >
+              <Music className="h-3 w-3" />
+              {nowPlaying?.title && stage.nowPlaying ? `🎵 ${nowPlaying.title}` : 'Pick tribal music'}
+            </button>
+            <span className="text-[10px] text-white/50">
+              {musicLoading ? 'Loading library…' : `${musicLib.length} music seeds`}
+            </span>
+          </div>
+          {pickerOpen && (
+            <div className="absolute left-2 right-2 top-full z-30 mt-1 max-h-72 overflow-y-auto rounded-lg border border-emerald-500/30 bg-[#0a1320] shadow-2xl">
+              <div className="sticky top-0 flex items-center gap-1 border-b border-white/10 bg-[#0a1320] p-2">
+                <Search className="h-3 w-3 text-white/40" />
+                <input
+                  autoFocus
+                  value={musicSearch}
+                  onChange={(e) => setMusicSearch(e.target.value)}
+                  placeholder="Search music seeds…"
+                  className="flex-1 bg-transparent text-xs text-white placeholder:text-white/30 focus:outline-none"
+                />
+                <button onClick={() => setPickerOpen(false)} className="text-white/50 hover:text-white"><X className="h-3 w-3" /></button>
+              </div>
+              {filteredMusic.length === 0 && (
+                <div className="p-3 text-center text-xs text-white/40">No music seeds found.</div>
+              )}
+              {filteredMusic.map((m) => (
+                <button
+                  key={m.id}
+                  type="button"
+                  onClick={() => playMusicSeed(m)}
+                  className="flex w-full items-center gap-2 border-b border-white/5 p-2 text-left text-xs hover:bg-emerald-500/10"
+                >
+                  {m.image
+                    ? <img src={m.image} alt="" className="h-8 w-8 flex-shrink-0 rounded object-cover" />
+                    : <div className="h-8 w-8 flex-shrink-0 rounded bg-emerald-500/10" />}
+                  <span className="flex-1 truncate text-white/85">{m.title}</span>
+                  <Music className="h-3 w-3 text-emerald-400" />
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
       {/* Big stage area */}
       <div className="relative flex-1 min-h-0 bg-black">
         {/* Camera mode → Jitsi iframe */}
