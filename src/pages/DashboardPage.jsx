@@ -766,6 +766,7 @@ export default function SeedFlowDashboard() {
       borderBottom: '1px solid rgba(255,255,255,0.05)',
       background: '#080d17',
       display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+      position: 'sticky', top: 0, zIndex: 10,
     },
     avatar: {
       width: 44, height: 44, borderRadius: '50%',
