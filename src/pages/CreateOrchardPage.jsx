@@ -181,6 +181,7 @@ const fetchOrchardById = async (oid) => {
           expected_completion: orchard.expected_completion || "",
           features: orchard.features ? orchard.features.join(", ") : "",
           video_url: orchard.video_url || "",
+          whisperer_share_pct: (orchard.whisperer_share_pct ?? 10).toString(),
           currency: "USDC"
         })
         
