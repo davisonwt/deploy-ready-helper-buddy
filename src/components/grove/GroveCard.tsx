@@ -234,6 +234,19 @@ export function GroveCard({ grove, onEngage, onHarvest }: GroveCardProps) {
             </motion.div>
           )}
 
+          {/* Quick Bestow */}
+          <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={(e) => { e.stopPropagation(); setBestowOpen(true); }}
+              className="gap-1 text-rose-500 hover:bg-rose-500/10"
+              title="Bestow on this seed"
+            >
+              <Heart className="h-4 w-4" /> Bestow
+            </Button>
+          </motion.div>
+
           {/* Viral Share Button */}
           <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
             <Button
@@ -241,7 +254,6 @@ export function GroveCard({ grove, onEngage, onHarvest }: GroveCardProps) {
               size="sm"
               onClick={(e) => {
                 e.stopPropagation();
-                // Implement share functionality
                 if (navigator.share) {
                   navigator.share({
                     title: grove.title,
@@ -257,6 +269,14 @@ export function GroveCard({ grove, onEngage, onHarvest }: GroveCardProps) {
           </motion.div>
         </div>
       </Card>
+
+      <QuickBestowModal
+        open={bestowOpen}
+        onClose={() => setBestowOpen(false)}
+        orchardId={grove.id}
+        seedTitle={grove.title}
+        sowerUserId={grove.creator_id}
+      />
     </motion.div>
   );
 }
