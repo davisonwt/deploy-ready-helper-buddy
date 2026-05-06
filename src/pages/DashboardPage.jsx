@@ -1087,6 +1087,21 @@ export default function SeedFlowDashboard() {
             </div>
             <WeekBeads sacred={sacred} />
 
+            {/* ── Step Into the Orchard — between Day's Beads and Living Garden ── */}
+            <Link to="/orchard-alive" style={{ textDecoration: 'none', display: 'block', margin: '14px 0' }}>
+              <div style={{
+                display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10,
+                padding: '14px 18px', borderRadius: 14,
+                background: 'linear-gradient(135deg,#16a34a,#22c55e,#84cc16)',
+                color: '#fff', fontWeight: 800, fontSize: 12, letterSpacing: '2px',
+                border: '1px solid rgba(255,255,255,0.25)',
+                textTransform: 'uppercase',
+                boxShadow: '0 10px 30px rgba(34,197,94,0.35)',
+              }}>
+                🌿 Step Into The Orchard — Find Your Tribe's Seeds
+              </div>
+            </Link>
+
             <div style={styles.sectionLabel}>
               <span>{userCards.length ? 'Your Living Garden' : 'Seeds in motion'}</span>
               <span style={styles.liveTag}>{userCards.length ? `${mineCards.length} mine · ${bestowedCards.length}💚` : 'LIVE'}</span>
