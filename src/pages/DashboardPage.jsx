@@ -702,10 +702,10 @@ export default function SeedFlowDashboard() {
 
   const styles = {
     root: {
-      display: 'flex', height: 'calc(100vh - 38px - 70px)', width: '100vw',
+      display: 'flex', height: 'calc(100vh - 70px)', width: '100vw',
       background: '#060a12', color: '#e2e8f0',
       fontFamily: "'DM Sans', 'Segoe UI', system-ui, sans-serif",
-      overflow: 'hidden', position: 'fixed', top: 38, left: 0, zIndex: 50,
+      overflow: 'hidden', position: 'fixed', top: 0, left: 0, zIndex: 50,
     },
     sidebar: {
       width: 260, minWidth: 260,
@@ -766,6 +766,7 @@ export default function SeedFlowDashboard() {
       borderBottom: '1px solid rgba(255,255,255,0.05)',
       background: '#080d17',
       display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+      position: 'sticky', top: 0, zIndex: 10,
     },
     avatar: {
       width: 44, height: 44, borderRadius: '50%',
@@ -915,17 +916,16 @@ export default function SeedFlowDashboard() {
         .nav-link:hover { opacity: 0.85; }
         .s2g-mobile-panel-tab, .s2g-mobile-backdrop { display: none; }
         @media (max-width: 768px) {
-          .s2g-dashboard-root { top: 38px !important; height: calc(100vh - 38px - 70px) !important; height: calc(100dvh - 38px - 70px) !important; }
+          .s2g-dashboard-root { top: 0 !important; height: calc(100vh - 70px) !important; height: calc(100dvh - 70px) !important; }
           .s2g-dashboard-center { width: 100vw !important; flex: 1 1 100% !important; }
           .s2g-dashboard-header { padding: 12px 48px !important; }
           .s2g-dashboard-header h1, .s2g-dashboard-header h2 { font-size: inherit !important; }
           .s2g-dashboard-header > div:first-child { min-width: 0; }
           .s2g-dashboard-header > div:first-child > div:last-child { min-width: 0; }
           .s2g-dashboard-header > div:first-child > div:last-child > div:first-child { font-size: 14px !important; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: calc(100vw - 150px); }
-          .s2g-dashboard-header > div:last-child { display: none !important; }
           .s2g-dashboard-content { padding: 14px 10px 18px !important; }
           .s2g-dashboard-sidebar, .s2g-dashboard-right-panel {
-            position: fixed !important; top: 38px !important; bottom: 70px !important; height: auto !important;
+            position: fixed !important; top: 0 !important; bottom: 70px !important; height: auto !important;
             z-index: 180 !important; transition: transform 0.24s ease !important;
             box-shadow: 0 22px 70px rgba(0,0,0,0.55); max-width: min(84vw, 310px);
           }
@@ -940,14 +940,13 @@ export default function SeedFlowDashboard() {
           }
           .s2g-mobile-panel-tab-left { left: 0; border-radius: 0 18px 18px 0; }
           .s2g-mobile-panel-tab-right { right: 0; border-radius: 18px 0 0 18px; }
-          .s2g-mobile-backdrop.is-open { display: block; position: fixed; inset: 38px 0 70px; z-index: 170; background: rgba(0,0,0,0.45); }
+          .s2g-mobile-backdrop.is-open { display: block; position: fixed; inset: 0 0 70px; z-index: 170; background: rgba(0,0,0,0.45); }
         }
       `}</style>
 
       <div className="s2g-dashboard-root" style={styles.root}>
 
-        {/* ── SeedFlow fixed strip across very top ── */}
-        <SeedFlow fixed height={38} seedCount={36} zIndex={200} />
+        {/* SeedFlow top strip removed per request */}
         <button
           type="button"
           className="s2g-mobile-panel-tab s2g-mobile-panel-tab-left"
@@ -1054,10 +1053,25 @@ export default function SeedFlowDashboard() {
               </div>
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 8 }}>
               <div style={styles.seedflowLabel}>
                 <span style={{ width: 7, height: 7, borderRadius: '50%', background: '#22c55e', display: 'inline-block', animation: 'pulse 2s infinite' }} />
                 SeedFlow active
               </div>
+              <Link to="/orchard-alive" style={{ textDecoration: 'none' }}>
+                <div style={{
+                  display: 'inline-flex', alignItems: 'center', gap: 8,
+                  padding: '8px 14px', borderRadius: 12,
+                  background: 'linear-gradient(135deg,#16a34a,#22c55e,#84cc16)',
+                  color: '#fff', fontWeight: 800, fontSize: 11, letterSpacing: '1.5px',
+                  border: '1px solid rgba(255,255,255,0.25)',
+                  textTransform: 'uppercase',
+                  boxShadow: '0 6px 20px rgba(34,197,94,0.35)',
+                }}>
+                  🌿 Tribal Feeds
+                </div>
+              </Link>
+            </div>
               <Link
                 to="/profile"
                 aria-label="Open your profile & settings"
@@ -1091,20 +1105,8 @@ export default function SeedFlowDashboard() {
             </div>
             <WeekBeads sacred={sacred} />
 
-            {/* ── Step Into the Orchard — between Day's Beads and Living Garden ── */}
-            <Link to="/orchard-alive" style={{ textDecoration: 'none', display: 'block', margin: '14px 0' }}>
-              <div style={{
-                display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10,
-                padding: '14px 18px', borderRadius: 14,
-                background: 'linear-gradient(135deg,#16a34a,#22c55e,#84cc16)',
-                color: '#fff', fontWeight: 800, fontSize: 12, letterSpacing: '2px',
-                border: '1px solid rgba(255,255,255,0.25)',
-                textTransform: 'uppercase',
-                boxShadow: '0 10px 30px rgba(34,197,94,0.35)',
-              }}>
-                🌿 Step Into The Orchard — Find Your Tribe's Seeds
-              </div>
-            </Link>
+            {/* Tribal Feeds button moved to header under SeedFlow active */}
+
 
             <div style={styles.sectionLabel}>
               <span>{userCards.length ? 'Your Living Garden' : 'Seeds in motion'}</span>
