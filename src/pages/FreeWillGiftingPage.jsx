@@ -211,6 +211,9 @@ export default function FreeWillGiftingPage() {
       
       {/* Content */}
       <div className="relative z-10">
+        <div className="max-w-4xl mx-auto px-4 pt-4">
+          <Button onClick={() => navigate(-1)} variant="outline" className="bg-white/10 backdrop-blur-md border-white/30 text-white hover:bg-white/20">← Go Back</Button>
+        </div>
         {/* Welcome Section with Profile Picture */}
         <div className="max-w-4xl mx-auto p-8 rounded-2xl border shadow-2xl mb-8 mt-4 bg-white/90">
           <div className="flex items-center space-x-6">

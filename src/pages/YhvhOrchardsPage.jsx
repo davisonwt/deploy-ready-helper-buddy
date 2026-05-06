@@ -34,6 +34,7 @@ import { processOrchardsUrls } from '../utils/urlUtils'
 
 export default function YhvhOrchardsPage() {
   const { user } = useAuth()
+  const navigate = useNavigate()
   const deleteOrchard = async (id) => {
     try {
       const { error } = await supabase
@@ -255,6 +256,7 @@ export default function YhvhOrchardsPage() {
       </div>
       
       <div className='relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8'>
+        <Button onClick={() => navigate(-1)} variant='outline' className='mb-4 bg-white/10 backdrop-blur-md border-white/30 text-white hover:bg-white/20'>← Go Back</Button>
         {/* Hero Header */}
         <div className='relative overflow-hidden border-b border-white/20 backdrop-blur-md bg-white/10 rounded-2xl mb-8 mt-4'>
           <div className='relative container mx-auto px-4 py-16'>
