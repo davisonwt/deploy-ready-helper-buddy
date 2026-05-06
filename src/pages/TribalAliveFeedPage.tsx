@@ -35,6 +35,7 @@ import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { type WanderingRole, WANDERING_BADGES } from '@/components/marketplace/WanderingBadgeBar';
 import { launchConfetti, playSoundEffect } from '@/utils/confetti';
+import { LiveNowStrip } from '@/components/live/LiveNowStrip';
 
 type FeedTab = 'following' | 'foryou' | 'local';
 
@@ -915,8 +916,13 @@ export default function TribalAliveFeedPage() {
         </div>
       </header>
 
+      {/* Live Now strip — quick jump into any active tribe live session */}
+      <div className="absolute inset-x-0 top-11 z-30">
+        <LiveNowStrip />
+      </div>
+
       {/* Compact filter row — two dropdowns instead of two pill rows */}
-      <div className="absolute inset-x-0 top-11 z-20 flex items-center gap-2 px-3 py-1.5">
+      <div className="absolute inset-x-0 top-[5.5rem] z-20 flex items-center gap-2 px-3 py-1.5">
         {/* Wandering / sower-identity dropdown */}
         <div className="relative">
           <select
