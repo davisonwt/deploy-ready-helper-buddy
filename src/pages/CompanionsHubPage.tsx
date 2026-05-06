@@ -25,6 +25,21 @@ export default function CompanionsHubPage() {
       }}
     >
       <div className="container max-w-6xl mx-auto p-4 sm:p-6">
+        <Link
+          to="/dashboard"
+          className="inline-flex items-center gap-2 mb-5 px-3 py-1.5 rounded-full text-xs font-bold uppercase tracking-wider transition-all"
+          style={{
+            background: "linear-gradient(135deg, rgba(15,23,42,0.85), rgba(2,6,23,0.85))",
+            backdropFilter: "blur(12px)",
+            WebkitBackdropFilter: "blur(12px)",
+            border: "1px solid rgba(148,163,184,0.25)",
+            color: "#cbd5e1",
+            textDecoration: "none",
+            boxShadow: "0 4px 14px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.05)",
+          }}
+        >
+          <ArrowLeft className="h-3.5 w-3.5" /> Back to Dashboard
+        </Link>
         <header className="mb-6 flex items-start justify-between gap-4 flex-wrap">
           <div>
             <h1
