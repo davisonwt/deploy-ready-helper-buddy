@@ -402,7 +402,7 @@ export default function BrowseOrchardsPage() {
               <div className="live-dot" />
               <span style={{ fontSize: 11, color: '#10b981', fontWeight: 800, letterSpacing: '0.2em' }}>YOU'VE STEPPED INTO THE ORCHARD</span>
             </div>
-            <h1 style={{ fontSize: 26, fontWeight: 800, margin: 0, background: 'linear-gradient(135deg,#10b981,#22c55e,#fbbf24)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', animation: 'orchardBuzz 3s ease-in-out infinite' }}>
+            <h1 style={{ fontSize: 26, fontWeight: 800, margin: 0, color: '#e0f2fe', textShadow: '0 2px 12px rgba(34,211,238,0.35)', animation: 'orchardBuzz 3s ease-in-out infinite' }}>
               The tribe is buzzing — find your seed 🌿
             </h1>
             <p style={{ fontSize: 13, color: '#94a3b8', margin: '4px 0 0' }}>
