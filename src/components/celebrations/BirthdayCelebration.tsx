@@ -102,11 +102,12 @@ export function BirthdayCelebration({ onCountChange, className }: Props) {
           >
             <div className="text-[11px] uppercase tracking-wider text-amber-300/90 font-semibold flex items-center gap-1.5">
               <Sparkles className="h-3 w-3" />
-              Tribe celebration · today is {dayBorn} they were created
+              Tribe celebration 🎉
             </div>
             <div className="text-sm text-white truncate">
-              <span className="font-semibold text-amber-100">{m.display_name}</span>
-              <span className="text-white/70"> — let's bless them with a free-will gift 🎁</span>
+              <span className="text-white/80">Today is </span>
+              <span className="font-semibold text-amber-100">{m.display_name}'s</span>
+              <span className="text-white/80"> b-day!!! Let's give a blessing!!! 🎁</span>
             </div>
           </motion.div>
         </AnimatePresence>
