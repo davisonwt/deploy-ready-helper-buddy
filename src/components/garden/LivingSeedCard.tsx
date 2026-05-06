@@ -16,13 +16,14 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Share2, X, Video, MessageCircle } from 'lucide-react';
+import { Share2, X, MessageCircle, ChevronLeft, ChevronRight, Mic, MicOff, EyeOff, Eye, Send } from 'lucide-react';
 import LivingButton from '@/components/LivingButton';
 import { useTribalLiveOrchard, type BloomStage } from '@/hooks/useTribalLiveOrchard';
 import { useReferralCode } from '@/hooks/useReferralCode';
 import { useToast } from '@/hooks/use-toast';
 import { JITSI_DOMAIN } from '@/lib/jitsi-config';
 import { useAuth } from '@/hooks/useAuth';
+import { supabase } from '@/integrations/supabase/client';
 
 export interface LivingSeedCardProps {
   /** Stable seed/item id — used for the realtime channel key */
@@ -30,6 +31,8 @@ export interface LivingSeedCardProps {
   title: string;
   subtitle?: string;
   image?: string | null;
+  /** All uploaded images for this seed — left/right arrows page through them */
+  images?: string[];
   /** Path to open the full seed page */
   openPath: string;
   /** Optional inline media for ▶ Play */
@@ -46,6 +49,8 @@ export interface LivingSeedCardProps {
   /** Visual size — 'compact' for sliders, 'full' for feed pages */
   size?: 'compact' | 'full';
   className?: string;
+  /** % share the host (whisperer) earns when bestowals happen during a live session */
+  whispererSharePct?: number;
 }
 
 const BLOOM_META: Record<BloomStage, { emoji: string; label: string }> = {
@@ -55,10 +60,11 @@ const BLOOM_META: Record<BloomStage, { emoji: string; label: string }> = {
 };
 
 export default function LivingSeedCard({
-  seedId, title, subtitle, image, openPath,
+  seedId, title, subtitle, image, images, openPath,
   mediaUrl, mediaKind = 'seed',
   badge, mine, onEdit, onDelete, onRepost, onPark,
   size = 'compact', className = '',
+  whispererSharePct = 10,
 }: LivingSeedCardProps) {
   const navigate = useNavigate();
   const { user } = useAuth();
