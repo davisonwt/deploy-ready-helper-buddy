@@ -1192,27 +1192,6 @@ export default function SeedFlowDashboard() {
         </div>
         <LetItRainPanel isOpen={isLetItRainOpen} onClose={() => setIsLetItRainOpen(false)} />
 
-        {/* Floating Step Into the Orchard button */}
-        <Link to="/orchard-alive" style={{
-          position: 'fixed',
-          right: 16,
-          bottom: 80,
-          zIndex: 150,
-          textDecoration: 'none',
-          boxShadow: '0 10px 30px rgba(34,197,94,0.45), 0 0 24px rgba(34,197,94,0.35)',
-          borderRadius: 999,
-        }}>
-          <div style={{
-            display: 'flex', alignItems: 'center', gap: 8,
-            padding: '12px 18px', borderRadius: 999,
-            background: 'linear-gradient(135deg,#16a34a,#22c55e,#84cc16)',
-            color: '#fff', fontWeight: 800, fontSize: 12, letterSpacing: '1.5px',
-            border: '1px solid rgba(255,255,255,0.25)',
-            textTransform: 'uppercase',
-          }}>
-            🌿 Step Into The Orchard
-          </div>
-        </Link>
       </div>
     </>
   )
