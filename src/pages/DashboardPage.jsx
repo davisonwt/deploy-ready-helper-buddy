@@ -1093,7 +1093,7 @@ export default function SeedFlowDashboard() {
             </div>
 
             {/* ── 5 stacked auto-rotating category sliders ── */}
-            <SeedSlider title="SeedFlow" emoji="🌱" accent="#22c55e" cards={seedSliderCards}
+            <SeedSlider title="Seeds" emoji="🌱" accent="#22c55e" cards={seedSliderCards}
               emptyHint="No seeds yet — plant one with the button below." />
             <SeedSlider title="Orchards" emoji="🌳" accent="#16a34a" cards={orchardSliderCards}
               emptyHint="No orchards yet — your own + bestowed will live here." />
@@ -1113,19 +1113,7 @@ export default function SeedFlowDashboard() {
               </div>
             )}
 
-            {/* ── Step Into the Orchard — living gate button ── */}
-            <Link to="/orchard-alive" style={{ textDecoration: 'none' }}>
-              <LivingButton
-                variant="stepInto"
-                height={56}
-                borderRadius={14}
-                fontSize={11}
-                fontWeight={800}
-                letterSpacing="2px"
-              >
-                🌿 STEP INTO THE ORCHARD — FIND YOUR TRIBE'S SEEDS
-              </LivingButton>
-            </Link>
+            {/* Step Into the Orchard moved to floating button (see fixed wrapper below) */}
           </div>
         </div>
 
@@ -1188,6 +1176,28 @@ export default function SeedFlowDashboard() {
           </Link>
         </div>
         <LetItRainPanel isOpen={isLetItRainOpen} onClose={() => setIsLetItRainOpen(false)} />
+
+        {/* Floating Step Into the Orchard button */}
+        <Link to="/orchard-alive" style={{
+          position: 'fixed',
+          right: 16,
+          bottom: 80,
+          zIndex: 150,
+          textDecoration: 'none',
+          boxShadow: '0 10px 30px rgba(34,197,94,0.45), 0 0 24px rgba(34,197,94,0.35)',
+          borderRadius: 999,
+        }}>
+          <div style={{
+            display: 'flex', alignItems: 'center', gap: 8,
+            padding: '12px 18px', borderRadius: 999,
+            background: 'linear-gradient(135deg,#16a34a,#22c55e,#84cc16)',
+            color: '#fff', fontWeight: 800, fontSize: 12, letterSpacing: '1.5px',
+            border: '1px solid rgba(255,255,255,0.25)',
+            textTransform: 'uppercase',
+          }}>
+            🌿 Step Into The Orchard
+          </div>
+        </Link>
       </div>
     </>
   )
