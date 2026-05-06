@@ -183,7 +183,7 @@ export default function MyOrchardsPage() {
   if (loading) {
     return (
       <div className='min-h-screen flex items-center justify-center' style={{
-        background: 'linear-gradient(135deg, #10b981 0%, #059669 25%, #047857 50%, #065f46 75%, #064e3b 100%)',
+        background: 'linear-gradient(180deg, #0a0f1a 0%, #060a12 100%)',
       }}>
         <Loader2 className='w-12 h-12 animate-spin text-white' />
       </div>
@@ -202,24 +202,26 @@ export default function MyOrchardsPage() {
 
       <div className='fixed inset-0 z-0'>
         <div className='absolute inset-0' style={{
-          background: 'linear-gradient(135deg, #10b981 0%, #059669 25%, #047857 50%, #065f46 75%, #064e3b 100%)',
-          backgroundSize: '400% 400%',
-          animation: 'gradient 20s ease infinite'
+          background: 'linear-gradient(180deg, #0a0f1a 0%, #060a12 100%)',
         }} />
-        <div className='absolute inset-0 bg-black/20' />
-        {[...Array(6)].map((_, i) => (
+        <div className='absolute inset-0' style={{
+          background: 'radial-gradient(ellipse 80% 50% at 50% -10%, rgba(34,211,238,0.10), transparent 60%), radial-gradient(ellipse 60% 40% at 90% 100%, rgba(245,158,11,0.06), transparent 60%)',
+        }} />
+        {[...Array(4)].map((_, i) => (
           <motion.div
             key={i}
-            className='absolute rounded-full blur-3xl opacity-30'
+            className='absolute rounded-full blur-3xl opacity-20'
             style={{
-              width: `${200 + i * 100}px`,
-              height: `${200 + i * 100}px`,
-              background: `radial-gradient(circle, rgba(${16 + i * 10}, ${185 - i * 5}, ${129 - i * 3}, 0.6), transparent)`,
-              left: `${10 + i * 15}%`,
-              top: `${10 + i * 12}%`,
+              width: `${260 + i * 120}px`,
+              height: `${260 + i * 120}px`,
+              background: i % 2 === 0
+                ? 'radial-gradient(circle, rgba(34,211,238,0.35), transparent)'
+                : 'radial-gradient(circle, rgba(245,158,11,0.25), transparent)',
+              left: `${10 + i * 22}%`,
+              top: `${15 + i * 14}%`,
             }}
-            animate={{ x: [0, 100, 0], y: [0, 50, 0], scale: [1, 1.2, 1] }}
-            transition={{ duration: 10 + i * 2, repeat: Infinity, ease: 'easeInOut' }}
+            animate={{ x: [0, 80, 0], y: [0, 40, 0], scale: [1, 1.15, 1] }}
+            transition={{ duration: 12 + i * 2, repeat: Infinity, ease: 'easeInOut' }}
           />
         ))}
       </div>
@@ -235,23 +237,23 @@ export default function MyOrchardsPage() {
             Go Back
           </button>
         </div>
-        <div className='relative overflow-hidden border-b border-white/20 backdrop-blur-md bg-white/10'>
-          <div className='relative container mx-auto px-4 py-16'>
+        <div className='relative overflow-hidden border-b border-cyan-400/15 backdrop-blur-md bg-[#0f172a]/60'>
+          <div className='relative container mx-auto px-4 py-12'>
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               className='text-center max-w-4xl mx-auto'
             >
               <div className='flex items-center justify-center gap-4 mb-6'>
-                <div className='p-4 rounded-2xl bg-white/20 backdrop-blur-md border border-white/30'>
-                  <Sprout className='w-16 h-16 text-white' />
+                <div className='p-4 rounded-2xl bg-cyan-400/10 backdrop-blur-md border border-cyan-400/30'>
+                  <Sprout className='w-12 h-12 text-cyan-300' />
                 </div>
-                <h1 className='text-6xl font-bold text-white drop-shadow-2xl'>My Garden</h1>
+                <h1 className='text-4xl sm:text-5xl font-bold text-white drop-shadow-[0_2px_8px_rgba(34,211,238,0.25)]'>My Garden</h1>
               </div>
-              <p className='text-white/90 text-xl mb-4 backdrop-blur-sm bg-white/10 rounded-lg p-4 border border-white/20'>
+              <p className='text-slate-200/90 text-base sm:text-lg mb-4 max-w-2xl mx-auto'>
                 Manage and tend to your growing seeds. Watch each one blossom into something meaningful.
               </p>
-              <p className='text-white/70 text-sm mb-6'>
+              <p className='text-slate-400 text-sm mb-6'>
                 Payment Method: USDC (USD Coin) · Total Raised: {formatCurrency(getTotalRaised())}
               </p>
               <div className='flex flex-wrap items-center justify-center gap-4'>
@@ -272,33 +274,33 @@ export default function MyOrchardsPage() {
 
         <div className='container mx-auto px-4 py-8'>
           <div className='grid grid-cols-1 md:grid-cols-3 gap-6 mb-8'>
-            <Card className='backdrop-blur-md bg-white/20 border-white/30 shadow-2xl'>
+            <Card className='backdrop-blur bg-[#0f172a]/70 border border-cyan-400/15 shadow-2xl'>
               <CardContent className='p-6'>
                 <div className='flex items-center justify-between'>
                   <div>
-                    <p className='text-sm font-medium text-white/80'>Total Seeds</p>
+                    <p className='text-sm font-medium text-slate-300'>Total Seeds</p>
                     <p className='text-2xl font-bold text-white'>{userSeeds.length}</p>
                   </div>
                   <Sprout className='h-8 w-8 text-white' />
                 </div>
               </CardContent>
             </Card>
-            <Card className='backdrop-blur-md bg-white/20 border-white/30 shadow-2xl'>
+            <Card className='backdrop-blur bg-[#0f172a]/70 border border-cyan-400/15 shadow-2xl'>
               <CardContent className='p-6'>
                 <div className='flex items-center justify-between'>
                   <div>
-                    <p className='text-sm font-medium text-white/80'>Total Raised</p>
+                    <p className='text-sm font-medium text-slate-300'>Total Raised</p>
                     <p className='text-2xl font-bold text-white'>{formatCurrency(getTotalRaised())}</p>
                   </div>
                   <DollarSign className='h-8 w-8 text-white' />
                 </div>
               </CardContent>
             </Card>
-            <Card className='backdrop-blur-md bg-white/20 border-white/30 shadow-2xl'>
+            <Card className='backdrop-blur bg-[#0f172a]/70 border border-cyan-400/15 shadow-2xl'>
               <CardContent className='p-6'>
                 <div className='flex items-center justify-between'>
                   <div>
-                    <p className='text-sm font-medium text-white/80'>Active Seeds</p>
+                    <p className='text-sm font-medium text-slate-300'>Active Seeds</p>
                     <p className='text-2xl font-bold text-white'>{userSeeds.filter(s => s.status === 'active').length}</p>
                   </div>
                   <TrendingUp className='h-8 w-8 text-white' />
@@ -325,7 +327,7 @@ export default function MyOrchardsPage() {
             <div className='flex justify-center'>
               <div className='min-w-[240px]'>
                 <Select value={selectedRole} onValueChange={setSelectedRole}>
-                  <SelectTrigger className='backdrop-blur-md bg-white/20 border-white/30 text-white'>
+                  <SelectTrigger className='backdrop-blur bg-[#0f172a]/70 border border-cyan-400/15 text-white'>
                     <SelectValue placeholder='Filter by Wandering Role' />
                   </SelectTrigger>
                   <SelectContent className='bg-white border border-border z-50'>
@@ -346,7 +348,7 @@ export default function MyOrchardsPage() {
                     onClick={() => setStatusFilter(status)}
                     className={statusFilter === status
                       ? 'backdrop-blur-md bg-white/30 border-white/40 text-white hover:bg-white/40'
-                      : 'backdrop-blur-md bg-white/20 border-white/30 text-white hover:bg-white/30'}
+                      : 'backdrop-blur bg-[#0f172a]/70 border border-cyan-400/15 text-white hover:bg-[#0f172a]/90'}
                   >
                     {status.charAt(0).toUpperCase() + status.slice(1)}
                   </Button>
@@ -355,15 +357,15 @@ export default function MyOrchardsPage() {
             </div>
           </div>
 
-          <div className='backdrop-blur-md bg-white/20 border-white/30 shadow-2xl rounded-2xl p-6 md:p-8'>
+          <div className='backdrop-blur bg-[#0f172a]/70 border border-cyan-400/15 shadow-2xl rounded-2xl p-6 md:p-8'>
             {userSeeds.length === 0 ? (
-              <Card className='backdrop-blur-md bg-white/20 border-white/30 shadow-2xl'>
+              <Card className='backdrop-blur bg-[#0f172a]/70 border border-cyan-400/15 shadow-2xl'>
                 <CardContent className='p-12 text-center'>
-                  <Sprout className='h-16 w-16 mx-auto text-white/70 mb-4' />
+                  <Sprout className='h-16 w-16 mx-auto text-slate-400 mb-4' />
                   <h3 className='text-xl font-semibold text-white mb-2'>
                     {statusFilter !== 'all' || selectedRole !== 'all' ? 'No seeds found' : 'No seeds yet'}
                   </h3>
-                  <p className='text-white/70 mb-6'>
+                  <p className='text-slate-400 mb-6'>
                     {statusFilter !== 'all' || selectedRole !== 'all'
                       ? 'Try adjusting your filters'
                       : 'Start your journey by sowing your first seed'}
@@ -383,7 +385,7 @@ export default function MyOrchardsPage() {
                   <CarouselContent className="-ml-2 md:-ml-4">
                     {userSeeds.map((seed) => (
                       <CarouselItem key={seed.id} className="pl-2 md:pl-4 md:basis-1/2 lg:basis-1/3">
-                        <Card className='backdrop-blur-md bg-white/20 border-white/30 shadow-2xl hover:shadow-3xl transition-all flex flex-col'>
+                        <Card className='backdrop-blur bg-[#0f172a]/70 border border-cyan-400/15 shadow-2xl hover:shadow-3xl transition-all flex flex-col'>
                           <div className="relative">
                             {seed.images?.[0] ? (
                               <img src={seed.images[0]} alt={seed.title} className="w-full h-48 object-cover rounded-t-lg" />
@@ -403,7 +405,7 @@ export default function MyOrchardsPage() {
                           </div>
                           <CardHeader className="pb-4">
                             <CardTitle className='text-lg text-white mb-2 line-clamp-2'>{seed.title}</CardTitle>
-                            <div className='flex items-center space-x-4 text-sm text-white/80'>
+                            <div className='flex items-center space-x-4 text-sm text-slate-300'>
                               <span className="flex items-center"><Eye className="h-4 w-4 mr-1" />{seed.views || 0}</span>
                               <span className="flex items-center"><Users className="h-4 w-4 mr-1" />{seed.supporters || 0}</span>
                               {seed.location && <span className="flex items-center"><MapPin className="h-4 w-4 mr-1" />{seed.location}</span>}
@@ -411,33 +413,33 @@ export default function MyOrchardsPage() {
                           </CardHeader>
                           <CardContent className="flex-1 flex flex-col">
                             <div className="space-y-4 flex-1">
-                              <p className='text-white/80 text-sm line-clamp-2 mb-3'>{seed.description}</p>
+                              <p className='text-slate-300 text-sm line-clamp-2 mb-3'>{seed.description}</p>
                               {seed.pocket_bestow && (
                                 <div className="mb-3 p-2 bg-purple-500/20 border border-purple-400/50 rounded-lg">
                                   <div className="flex items-center justify-between">
-                                    <span className="text-xs text-white/70">Pocket Bestow</span>
+                                    <span className="text-xs text-slate-400">Pocket Bestow</span>
                                     <Badge className="bg-purple-500/30 text-white border-purple-400/50">{formatCurrency(seed.pocket_bestow)}</Badge>
                                   </div>
                                 </div>
                               )}
                               <div>
                                 <div className='flex items-center justify-between mb-2'>
-                                  <span className='text-sm text-white/80'>Growth</span>
+                                  <span className='text-sm text-slate-300'>Growth</span>
                                   <span className='text-sm font-medium text-white'>{getCompletionPercentage(seed)}%</span>
                                 </div>
                                 <Progress value={getCompletionPercentage(seed)} className='h-2' />
                               </div>
                               <div className='flex items-center justify-between text-sm'>
-                                <span className='text-white/80'>Raised:</span>
+                                <span className='text-slate-300'>Raised:</span>
                                 <span className='font-medium text-white'>{formatCurrency((seed.filled_pockets || 0) * (seed.pocket_bestow || 0))}</span>
                               </div>
                               <div className='flex items-center justify-between text-sm'>
-                                <span className='text-white/80'>Goal:</span>
+                                <span className='text-slate-300'>Goal:</span>
                                 <span className='font-medium text-white'>
                                   {formatCurrency(((seed.intended_pockets && seed.intended_pockets > 1) ? seed.intended_pockets : seed.total_pockets || 0) * (seed.pocket_bestow || 0))}
                                 </span>
                               </div>
-                              <div className='flex items-center text-sm text-white/70'>
+                              <div className='flex items-center text-sm text-slate-400'>
                                 <Calendar className='h-4 w-4 mr-1' />
                                 Sown {new Date(seed.created_at).toLocaleDateString()}
                               </div>
@@ -445,12 +447,12 @@ export default function MyOrchardsPage() {
                               {/* Action buttons */}
                               <div className="flex flex-wrap gap-2 pt-2 mt-auto">
                                 <Link to={`/orchards/${seed.id}`} className='flex-1 min-w-[80px]' style={{ textDecoration: 'none' }}>
-                                  <Button variant='outline' size='sm' className='w-full backdrop-blur-md bg-white/20 border-white/30 text-white hover:bg-white/30'>
+                                  <Button variant='outline' size='sm' className='w-full backdrop-blur bg-[#0f172a]/70 border border-cyan-400/15 text-white hover:bg-[#0f172a]/90'>
                                     <Eye className='h-4 w-4 mr-1' />View
                                   </Button>
                                 </Link>
                                 <Link to={`/edit-orchard/${seed.id}`} className='flex-1 min-w-[80px]' style={{ textDecoration: 'none' }}>
-                                  <Button variant='outline' size='sm' className='w-full backdrop-blur-md bg-white/20 border-white/30 text-white hover:bg-white/30'>
+                                  <Button variant='outline' size='sm' className='w-full backdrop-blur bg-[#0f172a]/70 border border-cyan-400/15 text-white hover:bg-[#0f172a]/90'>
                                     <Edit className='h-4 w-4 mr-1' />Edit
                                   </Button>
                                 </Link>
@@ -488,8 +490,8 @@ export default function MyOrchardsPage() {
                       </CarouselItem>
                     ))}
                   </CarouselContent>
-                  <CarouselPrevious className='absolute -left-4 top-1/2 -translate-y-1/2 backdrop-blur-md bg-white/20 border-white/30 text-white hover:bg-white/30' />
-                  <CarouselNext className='absolute -right-4 top-1/2 -translate-y-1/2 backdrop-blur-md bg-white/20 border-white/30 text-white hover:bg-white/30' />
+                  <CarouselPrevious className='absolute -left-4 top-1/2 -translate-y-1/2 backdrop-blur bg-[#0f172a]/70 border border-cyan-400/15 text-white hover:bg-[#0f172a]/90' />
+                  <CarouselNext className='absolute -right-4 top-1/2 -translate-y-1/2 backdrop-blur bg-[#0f172a]/70 border border-cyan-400/15 text-white hover:bg-[#0f172a]/90' />
                 </Carousel>
               </div>
             )}
