@@ -1,8 +1,9 @@
 import { useState } from "react";
+import { Link } from "react-router-dom";
 import { useCompanions, type CompanionEntitlement } from "@/hooks/useCompanions";
 import CompanionCard from "@/components/companions/CompanionCard";
 import CompanionDrawer from "@/components/companions/CompanionDrawer";
-import { Loader2, Sparkles } from "lucide-react";
+import { Loader2, Sparkles, ArrowLeft } from "lucide-react";
 import { TIER_LABEL } from "@/lib/companions/registry";
 
 export default function CompanionsHubPage() {
