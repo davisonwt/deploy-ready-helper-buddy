@@ -166,6 +166,8 @@ import { logError } from "@/lib/logging";
 import { NavigationMonitor } from "@/components/monitoring/NavigationMonitor";
 import { DeadLinkDetector } from "@/components/monitoring/DeadLinkDetector";
 import { NotificationBanner } from "@/components/NotificationBanner";
+import GroundskeeperWidget from "@/components/grove/GroundskeeperWidget";
+const PlantASeedPage = lazy(() => import("./pages/PlantASeedPage"));
 
 const LoadingFallback = () => (
   <Card className="m-4">
@@ -492,8 +494,12 @@ const App = () => (
               <Route path="/s2g-community-music" element={
                 <Layout><Suspense fallback={<LoadingFallback />}><S2GCommunityMusicPage /></Suspense></Layout>
               } />
+              <Route path="/plant-a-seed" element={
+                <ProtectedRoute><Layout><Suspense fallback={<LoadingFallback />}><PlantASeedPage /></Suspense></Layout></ProtectedRoute>
+              } />
               <Route path="*" element={<NotFound />} />
             </Routes>
+            <GroundskeeperWidget />
                       </ResponsiveLayout>
                     </Suspense>
                 </ErrorBoundary>
