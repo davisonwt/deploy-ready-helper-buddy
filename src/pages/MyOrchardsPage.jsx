@@ -183,7 +183,7 @@ export default function MyOrchardsPage() {
   if (loading) {
     return (
       <div className='min-h-screen flex items-center justify-center' style={{
-        background: 'linear-gradient(135deg, #10b981 0%, #059669 25%, #047857 50%, #065f46 75%, #064e3b 100%)',
+        background: 'linear-gradient(180deg, #0a0f1a 0%, #060a12 100%)',
       }}>
         <Loader2 className='w-12 h-12 animate-spin text-white' />
       </div>
@@ -202,24 +202,26 @@ export default function MyOrchardsPage() {
 
       <div className='fixed inset-0 z-0'>
         <div className='absolute inset-0' style={{
-          background: 'linear-gradient(135deg, #10b981 0%, #059669 25%, #047857 50%, #065f46 75%, #064e3b 100%)',
-          backgroundSize: '400% 400%',
-          animation: 'gradient 20s ease infinite'
+          background: 'linear-gradient(180deg, #0a0f1a 0%, #060a12 100%)',
         }} />
-        <div className='absolute inset-0 bg-black/20' />
-        {[...Array(6)].map((_, i) => (
+        <div className='absolute inset-0' style={{
+          background: 'radial-gradient(ellipse 80% 50% at 50% -10%, rgba(34,211,238,0.10), transparent 60%), radial-gradient(ellipse 60% 40% at 90% 100%, rgba(245,158,11,0.06), transparent 60%)',
+        }} />
+        {[...Array(4)].map((_, i) => (
           <motion.div
             key={i}
-            className='absolute rounded-full blur-3xl opacity-30'
+            className='absolute rounded-full blur-3xl opacity-20'
             style={{
-              width: `${200 + i * 100}px`,
-              height: `${200 + i * 100}px`,
-              background: `radial-gradient(circle, rgba(${16 + i * 10}, ${185 - i * 5}, ${129 - i * 3}, 0.6), transparent)`,
-              left: `${10 + i * 15}%`,
-              top: `${10 + i * 12}%`,
+              width: `${260 + i * 120}px`,
+              height: `${260 + i * 120}px`,
+              background: i % 2 === 0
+                ? 'radial-gradient(circle, rgba(34,211,238,0.35), transparent)'
+                : 'radial-gradient(circle, rgba(245,158,11,0.25), transparent)',
+              left: `${10 + i * 22}%`,
+              top: `${15 + i * 14}%`,
             }}
-            animate={{ x: [0, 100, 0], y: [0, 50, 0], scale: [1, 1.2, 1] }}
-            transition={{ duration: 10 + i * 2, repeat: Infinity, ease: 'easeInOut' }}
+            animate={{ x: [0, 80, 0], y: [0, 40, 0], scale: [1, 1.15, 1] }}
+            transition={{ duration: 12 + i * 2, repeat: Infinity, ease: 'easeInOut' }}
           />
         ))}
       </div>
@@ -235,23 +237,23 @@ export default function MyOrchardsPage() {
             Go Back
           </button>
         </div>
-        <div className='relative overflow-hidden border-b border-white/20 backdrop-blur-md bg-white/10'>
-          <div className='relative container mx-auto px-4 py-16'>
+        <div className='relative overflow-hidden border-b border-cyan-400/15 backdrop-blur-md bg-[#0f172a]/60'>
+          <div className='relative container mx-auto px-4 py-12'>
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               className='text-center max-w-4xl mx-auto'
             >
               <div className='flex items-center justify-center gap-4 mb-6'>
-                <div className='p-4 rounded-2xl bg-white/20 backdrop-blur-md border border-white/30'>
-                  <Sprout className='w-16 h-16 text-white' />
+                <div className='p-4 rounded-2xl bg-cyan-400/10 backdrop-blur-md border border-cyan-400/30'>
+                  <Sprout className='w-12 h-12 text-cyan-300' />
                 </div>
-                <h1 className='text-6xl font-bold text-white drop-shadow-2xl'>My Garden</h1>
+                <h1 className='text-4xl sm:text-5xl font-bold text-white drop-shadow-[0_2px_8px_rgba(34,211,238,0.25)]'>My Garden</h1>
               </div>
-              <p className='text-white/90 text-xl mb-4 backdrop-blur-sm bg-white/10 rounded-lg p-4 border border-white/20'>
+              <p className='text-slate-200/90 text-base sm:text-lg mb-4 max-w-2xl mx-auto'>
                 Manage and tend to your growing seeds. Watch each one blossom into something meaningful.
               </p>
-              <p className='text-white/70 text-sm mb-6'>
+              <p className='text-slate-400 text-sm mb-6'>
                 Payment Method: USDC (USD Coin) · Total Raised: {formatCurrency(getTotalRaised())}
               </p>
               <div className='flex flex-wrap items-center justify-center gap-4'>
