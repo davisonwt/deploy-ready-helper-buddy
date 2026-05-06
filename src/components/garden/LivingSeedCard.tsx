@@ -329,9 +329,13 @@ export default function LivingSeedCard({
                 <span>{myBlooms[s]}</span>
               </button>
             ))}
+            <span
+              className="ml-auto rounded-full border border-amber-400/30 bg-amber-500/10 px-1.5 py-0.5 text-[10px] font-bold text-amber-300"
+              title="Whisperer share — what tribe members earn for hosting a live session on this seed"
+            >🎤 {whispererSharePct}%</span>
             <button
               onClick={handleShare}
-              className="ml-auto flex items-center gap-1 rounded-full border border-white/10 bg-black/35 px-1.5 py-0.5 text-white/60 hover:text-emerald-300"
+              className="flex items-center gap-1 rounded-full border border-white/10 bg-black/35 px-1.5 py-0.5 text-white/60 hover:text-emerald-300"
               title="Share with my referral"
             >
               <Share2 className="h-3 w-3" /> Share
