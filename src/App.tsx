@@ -243,6 +243,9 @@ const App = () => (
               <Route path="/live-lounge" element={
                 <ProtectedRoute><Layout><LiveLoungePage /></Layout></ProtectedRoute>
               } />
+              <Route path="/live-lounge" element={
+                <ProtectedRoute><Layout><LiveLoungePage /></Layout></ProtectedRoute>
+              } />
               <Route path="/orchards/:orchardId" element={
                 <ProtectedRoute><RequireVerification><Layout><OrchardPage /></Layout></RequireVerification></ProtectedRoute>
               } />
