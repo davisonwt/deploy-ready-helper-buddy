@@ -471,6 +471,32 @@ export default function LiveStage({
           )}
         </div>
       )}
+
+      {/* Universal Bestow CTA — guests bestow toward the now-playing seed */}
+      {!isHost && nowPlaying.sower_user_id && nowPlaying.sower_user_id !== user?.id && (
+        <div className="flex items-center justify-between gap-2 border-t border-rose-500/20 bg-rose-950/20 px-3 py-2">
+          <div className="flex items-center gap-1.5 text-xs text-rose-100">
+            <Heart className="h-3.5 w-3.5 text-rose-400" />
+            <span className="truncate">Support “{nowPlaying.title}”</span>
+          </div>
+          <button
+            onClick={() => setBestowOpen(true)}
+            className="flex items-center gap-1 rounded-md bg-rose-500 px-3 py-1 text-xs font-bold text-white hover:bg-rose-400"
+          >
+            <Heart className="h-3 w-3" /> Bestow
+          </button>
+        </div>
+      )}
+
+      <QuickBestowModal
+        open={bestowOpen}
+        onClose={() => setBestowOpen(false)}
+        orchardId={nowPlaying.seed_id}
+        seedTitle={nowPlaying.title}
+        sowerUserId={nowPlaying.sower_user_id || ''}
+        hostUserId={isRadio ? (user?.id ?? null) : (sowerUserId ?? null)}
+        whispererSharePct={whispererSharePct}
+      />
     </div>
   );
 }
