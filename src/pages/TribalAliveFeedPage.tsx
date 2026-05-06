@@ -36,6 +36,7 @@ import { cn } from '@/lib/utils';
 import { type WanderingRole, WANDERING_BADGES } from '@/components/marketplace/WanderingBadgeBar';
 import { launchConfetti, playSoundEffect } from '@/utils/confetti';
 import { LiveNowStrip } from '@/components/live/LiveNowStrip';
+import { BirthdayCelebration } from '@/components/celebrations/BirthdayCelebration';
 
 type FeedTab = 'following' | 'foryou' | 'local';
 
@@ -916,8 +917,9 @@ export default function TribalAliveFeedPage() {
         </div>
       </header>
 
-      {/* Live Now strip — quick jump into any active tribe live session */}
+      {/* Tribe celebrations + Live Now strip — festive birthday banner above live sessions */}
       <div className="absolute inset-x-0 top-11 z-30">
+        <BirthdayCelebration />
         <LiveNowStrip />
       </div>
 
