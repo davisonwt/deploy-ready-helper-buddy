@@ -5712,6 +5712,7 @@ export type Database = {
           bio: string | null
           country: string | null
           created_at: string
+          date_of_birth: string | null
           display_name: string | null
           email: string | null
           facebook_url: string | null
@@ -5730,6 +5731,7 @@ export type Database = {
           pinterest_url: string | null
           preferred_currency: string | null
           preferred_language: string | null
+          show_birthday: boolean | null
           show_social_media: boolean | null
           suspended: boolean | null
           telegram_url: string | null
@@ -5756,6 +5758,7 @@ export type Database = {
           bio?: string | null
           country?: string | null
           created_at?: string
+          date_of_birth?: string | null
           display_name?: string | null
           email?: string | null
           facebook_url?: string | null
@@ -5774,6 +5777,7 @@ export type Database = {
           pinterest_url?: string | null
           preferred_currency?: string | null
           preferred_language?: string | null
+          show_birthday?: boolean | null
           show_social_media?: boolean | null
           suspended?: boolean | null
           telegram_url?: string | null
@@ -5800,6 +5804,7 @@ export type Database = {
           bio?: string | null
           country?: string | null
           created_at?: string
+          date_of_birth?: string | null
           display_name?: string | null
           email?: string | null
           facebook_url?: string | null
@@ -5818,6 +5823,7 @@ export type Database = {
           pinterest_url?: string | null
           preferred_currency?: string | null
           preferred_language?: string | null
+          show_birthday?: boolean | null
           show_social_media?: boolean | null
           suspended?: boolean | null
           telegram_url?: string | null

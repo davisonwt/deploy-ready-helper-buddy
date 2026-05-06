@@ -1,0 +1,1 @@
+UPDATE public.profiles SET date_of_birth='1980-05-06', show_birthday=true WHERE user_id='04754d57-d41d-4ea7-93df-542047a6785b';
