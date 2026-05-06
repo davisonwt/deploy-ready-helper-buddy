@@ -78,6 +78,72 @@ export default function LiveStage({
   const [boardText, setBoardText] = useState('');
   const imgList = images.filter(Boolean);
 
+  // Bestow modal (guests bestow toward the now-playing seed)
+  const [bestowOpen, setBestowOpen] = useState(false);
+
+  // Radio: tribal-music seed library + "now playing"
+  const [musicLib, setMusicLib] = useState<MusicSeedOption[]>([]);
+  const [musicLoading, setMusicLoading] = useState(false);
+  const [musicSearch, setMusicSearch] = useState('');
+  const [pickerOpen, setPickerOpen] = useState(false);
+
+  useEffect(() => {
+    if (!isRadio || !isHost || musicLib.length > 0) return;
+    setMusicLoading(true);
+    (async () => {
+      const { data, error } = await supabase
+        .from('orchards')
+        .select('id, title, user_id, audio_url, images')
+        .ilike('category', '%music%')
+        .not('audio_url', 'is', null)
+        .order('created_at', { ascending: false })
+        .limit(200);
+      if (!error && data) {
+        setMusicLib(
+          (data as any[]).map((o) => ({
+            id: o.id,
+            title: o.title,
+            user_id: o.user_id,
+            audio_url: o.audio_url,
+            image: Array.isArray(o.images) && o.images.length ? o.images[0] : null,
+          }))
+        );
+      }
+      setMusicLoading(false);
+    })();
+  }, [isRadio, isHost, musicLib.length]);
+
+  const filteredMusic = useMemo(
+    () => (musicSearch
+      ? musicLib.filter(m => m.title.toLowerCase().includes(musicSearch.toLowerCase()))
+      : musicLib),
+    [musicLib, musicSearch]
+  );
+
+  const playMusicSeed = (m: MusicSeedOption) => {
+    const np: NowPlaying = {
+      seed_id: m.id,
+      title: m.title,
+      sower_user_id: m.user_id,
+      media_url: m.audio_url,
+      media_kind: 'audio',
+      image: m.image,
+    };
+    setStageMode({ mode: 'video', mediaUrl: m.audio_url, mediaKind: 'audio', nowPlaying: np });
+    setPickerOpen(false);
+  };
+
+  const nowPlaying: NowPlaying = (stage.nowPlaying as NowPlaying) || {
+    seed_id: seedId,
+    title,
+    sower_user_id: sowerUserId ?? null,
+    media_url: mediaUrl ?? null,
+    media_kind: (mediaKind === 'audio' || mediaKind === 'video') ? mediaKind : null,
+    image: imgList[0] ?? null,
+  };
+  const activeMediaUrl = stage.mediaUrl ?? mediaUrl ?? null;
+  const activeMediaKind = stage.mediaKind ?? (mediaKind === 'audio' || mediaKind === 'video' ? mediaKind : null);
+
   // Push board text changes (debounced) when host edits
   useEffect(() => {
     if (!isHost || stage.mode !== 'whiteboard') return;
@@ -87,7 +153,6 @@ export default function LiveStage({
     return () => clearTimeout(t);
   }, [boardText, isHost, stage.mode, setStageMode]);
 
-  // Sync board text when guest receives a stage update
   useEffect(() => {
     if (!isHost && stage.mode === 'whiteboard' && typeof stage.text === 'string') {
       setBoardText(stage.text);
