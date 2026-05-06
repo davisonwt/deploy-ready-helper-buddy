@@ -239,14 +239,14 @@ function WeekBeads({ sacred }) {
             Year {sacred.date.year} · Day {sacred.dayOfYear}
           </div>
         </div>
-        <div style={{
+        <Link to="/364yhvh-days?tab=journal" style={{
           display: 'inline-flex', alignItems: 'center', gap: 5,
-          fontSize: 11, color: '#22d3ee',
+          fontSize: 11, color: '#22d3ee', textDecoration: 'none',
           background: 'rgba(34,211,238,0.08)', border: '1px solid rgba(34,211,238,0.25)',
           borderRadius: 14, padding: '4px 10px', fontWeight: 700,
         }}>
-          ✦ Live Daily
-        </div>
+          ✦ Journal / Diary
+        </Link>
       </div>
 
       <div style={{
@@ -1038,7 +1038,7 @@ export default function SeedFlowDashboard() {
             </div>
 
             {/* ── 5 stacked auto-rotating category sliders ── */}
-            <SeedSlider title="Seeds"    emoji="🌱" accent="#22c55e" cards={seedSliderCards}
+            <SeedSlider title="SeedFlow" emoji="🌱" accent="#22c55e" cards={seedSliderCards}
               emptyHint="No seeds yet — plant one with the button below." />
             <SeedSlider title="Orchards" emoji="🌳" accent="#16a34a" cards={orchardSliderCards}
               emptyHint="No orchards yet — your own + bestowed will live here." />
