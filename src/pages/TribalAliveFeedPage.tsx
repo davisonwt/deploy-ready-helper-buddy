@@ -834,6 +834,29 @@ export default function TribalAliveFeedPage() {
         )}
       </main>
 
+      {/* Auto-advance prompt: appears at 15s, advances at 21s unless dismissed */}
+      {autoPrompt && !autoPaused && (
+        <div className="absolute left-1/2 -translate-x-1/2 bottom-24 z-30 bg-black/80 backdrop-blur border border-emerald-400/40 rounded-2xl px-4 py-3 shadow-[0_0_30px_rgba(16,185,129,0.35)] flex items-center gap-3 animate-fade-in">
+          <span className="text-sm text-emerald-100">Roll to next seed in 6s?</span>
+          <button
+            onClick={() => { setAutoPaused(true); setAutoPrompt(false); }}
+            className="px-3 py-1.5 rounded-full text-xs font-bold bg-white/10 hover:bg-white/20 text-white border border-white/20"
+          >
+            Stay here
+          </button>
+          <button
+            onClick={() => {
+              const next = cardRefs.current[activeIdx + 1];
+              if (next) next.scrollIntoView({ behavior: 'smooth' });
+              setAutoPrompt(false);
+            }}
+            className="px-3 py-1.5 rounded-full text-xs font-bold bg-emerald-500 hover:bg-emerald-400 text-black"
+          >
+            Roll now →
+          </button>
+        </div>
+      )}
+
       {/* Top overlay: Back + Following / For You / Local + Search/Bell */}
       <header className="absolute inset-x-0 top-0 z-20 flex items-center justify-between gap-2 px-4 pr-5 py-2 pt-[max(0.5rem,env(safe-area-inset-top))] bg-gradient-to-b from-black/70 to-transparent">
         <button
