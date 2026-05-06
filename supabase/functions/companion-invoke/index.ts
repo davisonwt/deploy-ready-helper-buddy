@@ -106,7 +106,7 @@ serve(async (req) => {
       .select("default_model")
       .eq("slug", companion)
       .single();
-    const isImage = companion === "kali";
+    const isImage = companion === "willow";
     const model = isImage ? IMAGE_MODEL : comp?.default_model ?? "google/gemini-3-flash-preview";
 
     const finalMessages = [
