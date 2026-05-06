@@ -180,7 +180,37 @@ export default function LivingSeedCard({
           />
         )}
 
-        {image && <img src={image} alt="" className="absolute inset-0 h-full w-full object-cover opacity-50" />}
+        {currentImage && (
+          <img
+            key={currentImage}
+            src={currentImage}
+            alt=""
+            className="absolute inset-0 h-full w-full object-cover opacity-50 transition-opacity duration-500"
+          />
+        )}
+        {imgList.length > 1 && (
+          <>
+            <button
+              type="button"
+              aria-label="Previous image"
+              onClick={(e) => { e.stopPropagation(); setImgIdx(i => (i - 1 + imgList.length) % imgList.length); }}
+              className="absolute left-2 top-1/2 z-[5] -translate-y-1/2 flex h-8 w-8 items-center justify-center rounded-full border border-white/15 bg-black/55 text-white backdrop-blur hover:bg-black/80"
+            >
+              <ChevronLeft className="h-4 w-4" />
+            </button>
+            <button
+              type="button"
+              aria-label="Next image"
+              onClick={(e) => { e.stopPropagation(); setImgIdx(i => (i + 1) % imgList.length); }}
+              className="absolute right-2 top-1/2 z-[5] -translate-y-1/2 flex h-8 w-8 items-center justify-center rounded-full border border-white/15 bg-black/55 text-white backdrop-blur hover:bg-black/80"
+            >
+              <ChevronRight className="h-4 w-4" />
+            </button>
+            <div className="absolute left-1/2 top-2 z-[5] -translate-x-1/2 rounded-full border border-white/15 bg-black/55 px-2 py-0.5 text-[10px] font-bold text-white/80 backdrop-blur">
+              {safeImgIdx + 1}/{imgList.length}
+            </div>
+          </>
+        )}
         <div
           className="absolute inset-0"
           style={{ background: 'linear-gradient(to top, #060a12 0%, rgba(34,197,94,0.13) 60%, transparent 100%)' }}
