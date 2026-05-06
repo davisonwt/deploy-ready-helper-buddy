@@ -42,11 +42,11 @@ All colors MUST be HSL.
   --heading-secondary: 210 17% 98%; /* #F8F9FA - Off-white for H3, H4 */
   
   /* Form inputs */
-  --input-bg: 212 49% 24%; /* #1E3A5C - Input background */
-  --input-text: 0 0% 100%; /* #FFFFFF - Input text */
-  --input-border: 210 11% 71%; /* #ADB5BD - Default border */
-  --input-border-focus: 213 71% 58%; /* #4A90E2 - Focus border */
-  --input-placeholder: 210 11% 46%; /* #6C757D - Placeholder text */
+  --input-bg: 222 47% 14%;
+  --input-text: 210 17% 98%;
+  --input-border: 217 33% 25%;
+  --input-border-focus: 189 94% 55%;
+  --input-placeholder: 215 20% 55%;
   
   /* sow2grow theme colors (legacy support) */
   --s2g-green: 142 76% 36%;
