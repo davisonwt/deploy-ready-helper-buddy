@@ -76,7 +76,7 @@ export default function GroundskeeperWidget() {
             }
           }}
           aria-label="Open Groundskeeper"
-          className="fixed bottom-5 right-5 z-[60] h-14 w-14 rounded-full flex items-center justify-center transition-transform hover:scale-105"
+          className={`fixed bottom-5 ${sideClass} z-[60] h-14 w-14 rounded-full flex items-center justify-center transition-transform hover:scale-105`}
           style={{
             background:
               "linear-gradient(135deg, rgba(22,163,74,0.85), rgba(132,204,22,0.85))",
