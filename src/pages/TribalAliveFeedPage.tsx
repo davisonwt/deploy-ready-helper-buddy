@@ -36,6 +36,7 @@ import { cn } from '@/lib/utils';
 import { type WanderingRole, WANDERING_BADGES } from '@/components/marketplace/WanderingBadgeBar';
 import { launchConfetti, playSoundEffect } from '@/utils/confetti';
 import { LiveNowStrip } from '@/components/live/LiveNowStrip';
+import LiveStage from '@/components/live/LiveStage';
 import { BirthdayCelebration } from '@/components/celebrations/BirthdayCelebration';
 
 type FeedTab = 'following' | 'foryou' | 'local';
@@ -116,7 +117,7 @@ export default function TribalAliveFeedPage() {
   const { toast } = useToast();
   const { code: referralCode } = useReferralCode();
   const { addToBasket } = useProductBasket();
-  const { goLive } = useTribalLiveOrchard();
+  const { goLive, endLive, liveSeeds } = useTribalLiveOrchard();
 
   const [tab, setTab] = useState<FeedTab>('foryou');
   const [wanderingRole, setWanderingRole] = useState<WanderingRole | null>(null);
@@ -124,7 +125,20 @@ export default function TribalAliveFeedPage() {
   const [items, setItems] = useState<FeedItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeIdx, setActiveIdx] = useState(0);
-  const [activeRoom, setActiveRoom] = useState<{ room: string; title: string; mode: 'audio' | 'video' } | null>(null);
+  const [activeRoom, setActiveRoom] = useState<{
+    room: string;
+    title: string;
+    mode: 'audio' | 'video';
+    /** When set, render the rich LiveStage overlay (host's Go-Live) instead of a bare 1:1 Jitsi iframe */
+    liveSeed?: {
+      seedId: string;
+      isHost: boolean;
+      sowerUserId?: string | null;
+      images?: string[];
+      mediaUrl?: string | null;
+      mediaKind?: 'audio' | 'video';
+    } | null;
+  } | null>(null);
   const [followingIds, setFollowingIds] = useState<Set<string>>(new Set());
   const [actionPanel, setActionPanel] = useState<ActionPanelState>(null);
 
@@ -775,12 +789,48 @@ export default function TribalAliveFeedPage() {
     setActiveRoom({ room, title: `Video with ${item.sower_name}`, mode: 'video' });
   };
 
-  // Broadcast THIS seed live to the orchard
+  // Broadcast THIS seed live to the orchard (host) — or step into an existing live (viewer)
   const handleGoLive = async (item: FeedItem) => {
     if (!user) { navigate('/login'); return; }
+    const imgs = (item.images && item.images.length ? item.images : (item.image ? [item.image] : [])).filter(Boolean) as string[];
+    const mediaKind: 'audio' | 'video' | undefined =
+      item.audio_url ? 'audio' : item.video_url ? 'video' : undefined;
+    const mediaUrl = item.audio_url || item.video_url || null;
+
+    // If someone in the orchard is already live on this seed, JOIN their room instead.
+    const liveHere = liveSeeds.find((p) => p.seed_id === item.id);
+    if (liveHere) {
+      setActiveRoom({
+        room: liveHere.jitsi_room,
+        title: `Live: ${item.title}`,
+        mode: 'video',
+        liveSeed: {
+          seedId: item.id,
+          isHost: liveHere.user_id === user.id,
+          sowerUserId: item.sower_id,
+          images: imgs,
+          mediaUrl,
+          mediaKind,
+        },
+      });
+      return;
+    }
+
     const presence = await goLive({ id: item.id, title: item.title, image: item.image });
     if (!presence) return;
-    setActiveRoom({ room: presence.jitsi_room, title: `Live: ${item.title}`, mode: 'video' });
+    setActiveRoom({
+      room: presence.jitsi_room,
+      title: `Live: ${item.title}`,
+      mode: 'video',
+      liveSeed: {
+        seedId: item.id,
+        isHost: true,
+        sowerUserId: item.sower_id,
+        images: imgs,
+        mediaUrl,
+        mediaKind,
+      },
+    });
   };
 
   const toggleFollow = (sowerId: string | null) => {
@@ -1002,20 +1052,49 @@ export default function TribalAliveFeedPage() {
             className="fixed inset-0 z-50 flex flex-col bg-black"
           >
             <div className="flex items-center justify-between border-b border-emerald-500/20 bg-emerald-950/60 px-4 py-2">
-              <div className="flex items-center gap-2 text-sm">
+              <div className="flex items-center gap-2 text-sm text-white">
                 <span className="inline-block h-2 w-2 animate-pulse rounded-full bg-rose-400" />
                 {activeRoom.title}
+                {activeRoom.liveSeed?.isHost && (
+                  <span className="ml-2 rounded-full border border-amber-400/30 bg-amber-500/10 px-2 py-0.5 text-[10px] font-bold text-amber-300">
+                    🎤 You are hosting
+                  </span>
+                )}
               </div>
-              <Button size="sm" variant="ghost" className="text-white hover:bg-white/10" onClick={() => setActiveRoom(null)}>
+              <Button
+                size="sm"
+                variant="ghost"
+                className="text-white hover:bg-white/10"
+                onClick={async () => {
+                  if (activeRoom.liveSeed?.isHost) {
+                    await endLive({ seedId: activeRoom.liveSeed.seedId, seedTitle: activeRoom.title });
+                  }
+                  setActiveRoom(null);
+                }}
+              >
                 Close
               </Button>
             </div>
-            <iframe
-              title={activeRoom.title}
-              src={`https://${JITSI_DOMAIN}/${activeRoom.room}#config.prejoinPageEnabled=false&config.disableDeepLinking=true${activeRoom.mode === 'audio' ? '&config.startWithVideoMuted=true' : ''}`}
-              allow="camera; microphone; fullscreen; display-capture; autoplay"
-              className="flex-1 border-0"
-            />
+            {activeRoom.liveSeed ? (
+              <LiveStage
+                seedId={activeRoom.liveSeed.seedId}
+                title={activeRoom.title}
+                jitsiRoom={activeRoom.room}
+                isHost={activeRoom.liveSeed.isHost}
+                sowerUserId={activeRoom.liveSeed.sowerUserId ?? null}
+                images={activeRoom.liveSeed.images ?? []}
+                mediaUrl={activeRoom.liveSeed.mediaUrl ?? null}
+                mediaKind={activeRoom.liveSeed.mediaKind}
+                className="flex-1"
+              />
+            ) : (
+              <iframe
+                title={activeRoom.title}
+                src={`https://${JITSI_DOMAIN}/${activeRoom.room}#config.prejoinPageEnabled=false&config.disableDeepLinking=true${activeRoom.mode === 'audio' ? '&config.startWithVideoMuted=true' : ''}`}
+                allow="camera; microphone; fullscreen; display-capture; autoplay"
+                className="flex-1 border-0"
+              />
+            )}
           </motion.div>
         )}
       </AnimatePresence>

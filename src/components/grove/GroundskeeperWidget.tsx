@@ -1,7 +1,12 @@
 import { useState, useRef, useEffect } from "react";
+import { useLocation } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { Loader2, Send, X, TreePine } from "lucide-react";
+
+// Routes where the right-edge action rail is full-bleed; move the bubble to
+// the bottom-left there so it never hides a rail button (Share, Go Live, etc.)
+const LEFT_SIDE_ROUTES = ["/orchard-alive", "/tribal-hearts"];
 
 interface Msg {
   role: "user" | "assistant";
@@ -15,6 +20,10 @@ export default function GroundskeeperWidget() {
   const [input, setInput] = useState("");
   const [busy, setBusy] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
+  const location = useLocation();
+  const sideClass = LEFT_SIDE_ROUTES.some((p) => location.pathname.startsWith(p))
+    ? "left-5 right-auto"
+    : "right-5 left-auto";
 
   useEffect(() => {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight });
@@ -67,7 +76,7 @@ export default function GroundskeeperWidget() {
             }
           }}
           aria-label="Open Groundskeeper"
-          className="fixed bottom-5 right-5 z-[60] h-14 w-14 rounded-full flex items-center justify-center transition-transform hover:scale-105"
+          className={`fixed bottom-5 ${sideClass} z-[60] h-14 w-14 rounded-full flex items-center justify-center transition-transform hover:scale-105`}
           style={{
             background:
               "linear-gradient(135deg, rgba(22,163,74,0.85), rgba(132,204,22,0.85))",
@@ -85,7 +94,7 @@ export default function GroundskeeperWidget() {
       {/* Drawer */}
       {open && (
         <div
-          className="fixed bottom-5 right-5 z-[60] w-[360px] max-w-[92vw] h-[520px] max-h-[80vh] rounded-2xl flex flex-col overflow-hidden"
+          className={`fixed bottom-5 ${sideClass} z-[60] w-[360px] max-w-[92vw] h-[520px] max-h-[80vh] rounded-2xl flex flex-col overflow-hidden`}
           style={{
             background:
               "linear-gradient(180deg, rgba(15,23,42,0.95), rgba(2,6,23,0.95))",
