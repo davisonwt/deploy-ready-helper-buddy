@@ -94,7 +94,7 @@ export default function GroundskeeperWidget() {
       {/* Drawer */}
       {open && (
         <div
-          className="fixed bottom-5 right-5 z-[60] w-[360px] max-w-[92vw] h-[520px] max-h-[80vh] rounded-2xl flex flex-col overflow-hidden"
+          className={`fixed bottom-5 ${sideClass} z-[60] w-[360px] max-w-[92vw] h-[520px] max-h-[80vh] rounded-2xl flex flex-col overflow-hidden`}
           style={{
             background:
               "linear-gradient(180deg, rgba(15,23,42,0.95), rgba(2,6,23,0.95))",
