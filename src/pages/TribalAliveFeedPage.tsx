@@ -789,12 +789,48 @@ export default function TribalAliveFeedPage() {
     setActiveRoom({ room, title: `Video with ${item.sower_name}`, mode: 'video' });
   };
 
-  // Broadcast THIS seed live to the orchard
+  // Broadcast THIS seed live to the orchard (host) — or step into an existing live (viewer)
   const handleGoLive = async (item: FeedItem) => {
     if (!user) { navigate('/login'); return; }
+    const imgs = (item.images && item.images.length ? item.images : (item.image ? [item.image] : [])).filter(Boolean) as string[];
+    const mediaKind: 'audio' | 'video' | undefined =
+      item.audio_url ? 'audio' : item.video_url ? 'video' : undefined;
+    const mediaUrl = item.audio_url || item.video_url || null;
+
+    // If someone in the orchard is already live on this seed, JOIN their room instead.
+    const liveHere = liveSeeds.find((p) => p.seed_id === item.id);
+    if (liveHere) {
+      setActiveRoom({
+        room: liveHere.jitsi_room,
+        title: `Live: ${item.title}`,
+        mode: 'video',
+        liveSeed: {
+          seedId: item.id,
+          isHost: liveHere.user_id === user.id,
+          sowerUserId: item.sower_id,
+          images: imgs,
+          mediaUrl,
+          mediaKind,
+        },
+      });
+      return;
+    }
+
     const presence = await goLive({ id: item.id, title: item.title, image: item.image });
     if (!presence) return;
-    setActiveRoom({ room: presence.jitsi_room, title: `Live: ${item.title}`, mode: 'video' });
+    setActiveRoom({
+      room: presence.jitsi_room,
+      title: `Live: ${item.title}`,
+      mode: 'video',
+      liveSeed: {
+        seedId: item.id,
+        isHost: true,
+        sowerUserId: item.sower_id,
+        images: imgs,
+        mediaUrl,
+        mediaKind,
+      },
+    });
   };
 
   const toggleFollow = (sowerId: string | null) => {
