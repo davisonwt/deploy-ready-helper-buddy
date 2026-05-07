@@ -36,6 +36,7 @@ import { cn } from '@/lib/utils';
 import { type WanderingRole, WANDERING_BADGES } from '@/components/marketplace/WanderingBadgeBar';
 import { launchConfetti, playSoundEffect } from '@/utils/confetti';
 import { LiveNowStrip } from '@/components/live/LiveNowStrip';
+import LiveStage from '@/components/live/LiveStage';
 import { BirthdayCelebration } from '@/components/celebrations/BirthdayCelebration';
 
 type FeedTab = 'following' | 'foryou' | 'local';
