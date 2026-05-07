@@ -20,6 +20,10 @@ export default function GroundskeeperWidget() {
   const [input, setInput] = useState("");
   const [busy, setBusy] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
+  const location = useLocation();
+  const sideClass = LEFT_SIDE_ROUTES.some((p) => location.pathname.startsWith(p))
+    ? "left-5 right-auto"
+    : "right-5 left-auto";
 
   useEffect(() => {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight });
