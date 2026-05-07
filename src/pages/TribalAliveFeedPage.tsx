@@ -125,7 +125,20 @@ export default function TribalAliveFeedPage() {
   const [items, setItems] = useState<FeedItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeIdx, setActiveIdx] = useState(0);
-  const [activeRoom, setActiveRoom] = useState<{ room: string; title: string; mode: 'audio' | 'video' } | null>(null);
+  const [activeRoom, setActiveRoom] = useState<{
+    room: string;
+    title: string;
+    mode: 'audio' | 'video';
+    /** When set, render the rich LiveStage overlay (host's Go-Live) instead of a bare 1:1 Jitsi iframe */
+    liveSeed?: {
+      seedId: string;
+      isHost: boolean;
+      sowerUserId?: string | null;
+      images?: string[];
+      mediaUrl?: string | null;
+      mediaKind?: 'audio' | 'video';
+    } | null;
+  } | null>(null);
   const [followingIds, setFollowingIds] = useState<Set<string>>(new Set());
   const [actionPanel, setActionPanel] = useState<ActionPanelState>(null);
 
