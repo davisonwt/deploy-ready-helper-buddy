@@ -1052,20 +1052,49 @@ export default function TribalAliveFeedPage() {
             className="fixed inset-0 z-50 flex flex-col bg-black"
           >
             <div className="flex items-center justify-between border-b border-emerald-500/20 bg-emerald-950/60 px-4 py-2">
-              <div className="flex items-center gap-2 text-sm">
+              <div className="flex items-center gap-2 text-sm text-white">
                 <span className="inline-block h-2 w-2 animate-pulse rounded-full bg-rose-400" />
                 {activeRoom.title}
+                {activeRoom.liveSeed?.isHost && (
+                  <span className="ml-2 rounded-full border border-amber-400/30 bg-amber-500/10 px-2 py-0.5 text-[10px] font-bold text-amber-300">
+                    🎤 You are hosting
+                  </span>
+                )}
               </div>
-              <Button size="sm" variant="ghost" className="text-white hover:bg-white/10" onClick={() => setActiveRoom(null)}>
+              <Button
+                size="sm"
+                variant="ghost"
+                className="text-white hover:bg-white/10"
+                onClick={async () => {
+                  if (activeRoom.liveSeed?.isHost) {
+                    await endLive({ seedId: activeRoom.liveSeed.seedId, seedTitle: activeRoom.title });
+                  }
+                  setActiveRoom(null);
+                }}
+              >
                 Close
               </Button>
             </div>
-            <iframe
-              title={activeRoom.title}
-              src={`https://${JITSI_DOMAIN}/${activeRoom.room}#config.prejoinPageEnabled=false&config.disableDeepLinking=true${activeRoom.mode === 'audio' ? '&config.startWithVideoMuted=true' : ''}`}
-              allow="camera; microphone; fullscreen; display-capture; autoplay"
-              className="flex-1 border-0"
-            />
+            {activeRoom.liveSeed ? (
+              <LiveStage
+                seedId={activeRoom.liveSeed.seedId}
+                title={activeRoom.title}
+                jitsiRoom={activeRoom.room}
+                isHost={activeRoom.liveSeed.isHost}
+                sowerUserId={activeRoom.liveSeed.sowerUserId ?? null}
+                images={activeRoom.liveSeed.images ?? []}
+                mediaUrl={activeRoom.liveSeed.mediaUrl ?? null}
+                mediaKind={activeRoom.liveSeed.mediaKind}
+                className="flex-1"
+              />
+            ) : (
+              <iframe
+                title={activeRoom.title}
+                src={`https://${JITSI_DOMAIN}/${activeRoom.room}#config.prejoinPageEnabled=false&config.disableDeepLinking=true${activeRoom.mode === 'audio' ? '&config.startWithVideoMuted=true' : ''}`}
+                allow="camera; microphone; fullscreen; display-capture; autoplay"
+                className="flex-1 border-0"
+              />
+            )}
           </motion.div>
         )}
       </AnimatePresence>
