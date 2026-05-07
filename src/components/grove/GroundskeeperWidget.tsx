@@ -1,7 +1,12 @@
 import { useState, useRef, useEffect } from "react";
+import { useLocation } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { Loader2, Send, X, TreePine } from "lucide-react";
+
+// Routes where the right-edge action rail is full-bleed; move the bubble to
+// the bottom-left there so it never hides a rail button (Share, Go Live, etc.)
+const LEFT_SIDE_ROUTES = ["/orchard-alive", "/tribal-hearts"];
 
 interface Msg {
   role: "user" | "assistant";
