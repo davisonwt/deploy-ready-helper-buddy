@@ -117,7 +117,7 @@ export default function TribalAliveFeedPage() {
   const { toast } = useToast();
   const { code: referralCode } = useReferralCode();
   const { addToBasket } = useProductBasket();
-  const { goLive } = useTribalLiveOrchard();
+  const { goLive, endLive, liveSeeds } = useTribalLiveOrchard();
 
   const [tab, setTab] = useState<FeedTab>('foryou');
   const [wanderingRole, setWanderingRole] = useState<WanderingRole | null>(null);
