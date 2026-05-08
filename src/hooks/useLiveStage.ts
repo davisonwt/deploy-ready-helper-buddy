@@ -94,6 +94,18 @@ export function useLiveStage(seedId: string | null, opts: { isHost: boolean; ena
       const { user_id, muted } = payload as any;
       setApproved(prev => prev.map(g => g.user_id === user_id ? { ...g, muted } : g));
     });
+    ch.on('broadcast', { event: 'request_spotlight' }, ({ payload }) => {
+      const r = payload as SpotlightRequest;
+      setSpotlightRequests(prev => prev.find(x => x.user_id === r.user_id) ? prev : [...prev, r]);
+    });
+    ch.on('broadcast', { event: 'cancel_spotlight_request' }, ({ payload }) => {
+      setSpotlightRequests(prev => prev.filter(r => r.user_id !== (payload as any).user_id));
+    });
+    ch.on('broadcast', { event: 'set_spotlight' }, ({ payload }) => {
+      const { user_id } = payload as { user_id: string | null };
+      setStage(prev => ({ ...prev, spotlightUserId: user_id, at: Date.now() }));
+      if (user_id) setSpotlightRequests(prev => prev.filter(r => r.user_id !== user_id));
+    });
 
     ch.subscribe();
     return () => { supabase.removeChannel(ch); chRef.current = null; };
