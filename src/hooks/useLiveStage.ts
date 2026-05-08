@@ -165,11 +165,43 @@ export function useLiveStage(seedId: string | null, opts: { isHost: boolean; ena
     send('force_mute', { user_id: userId, muted });
   }, [isHost, send]);
 
+  const setSpotlight = useCallback((userId: string | null) => {
+    if (!isHost) return;
+    setStage(prev => ({ ...prev, spotlightUserId: userId, at: Date.now() }));
+    setSpotlightRequests(prev => userId ? prev.filter(r => r.user_id !== userId) : prev);
+    send('set_spotlight', { user_id: userId });
+  }, [isHost, send]);
+
+  const requestSpotlight = useCallback(() => {
+    if (!user) return;
+    const r: SpotlightRequest = {
+      user_id: user.id,
+      name: (user as any)?.user_metadata?.display_name || user.email?.split('@')[0] || 'Guest',
+      at: Date.now(),
+    };
+    send('request_spotlight', r);
+  }, [user, send]);
+
+  const cancelSpotlightRequest = useCallback(() => {
+    if (!user) return;
+    setSpotlightRequests(prev => prev.filter(r => r.user_id !== user.id));
+    send('cancel_spotlight_request', { user_id: user.id });
+  }, [user, send]);
+
+  const denySpotlight = useCallback((userId: string) => {
+    if (!isHost) return;
+    setSpotlightRequests(prev => prev.filter(r => r.user_id !== userId));
+    send('cancel_spotlight_request', { user_id: userId });
+  }, [isHost, send]);
+
   return {
     stage, setStageMode,
     hands, raiseHand, cancelHand, approveHand, denyHand,
     approved, removeGuest, toggleMute,
+    spotlightRequests, setSpotlight, requestSpotlight, cancelSpotlightRequest, denySpotlight,
     myHandRaised: !!user && hands.some(h => h.user_id === user.id),
     iAmApproved: !!user && approved.some(g => g.user_id === user.id),
+    mySpotlightRequested: !!user && spotlightRequests.some(r => r.user_id === user.id),
+    iAmSpotlighted: !!user && stage.spotlightUserId === user.id,
   };
 }
