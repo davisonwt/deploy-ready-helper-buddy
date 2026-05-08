@@ -383,44 +383,135 @@ export default function LiveStage({
         )}
       </div>
 
-      {/* Guest boxes row */}
+      {/* Guest boxes row — Discord/TikTok style "seats" */}
       {(approved.length > 0 || isHost) && (
-        <div className="flex items-center gap-2 border-t border-white/10 bg-black/70 px-3 py-2 overflow-x-auto">
-          <span className="text-[10px] font-bold uppercase tracking-wider text-white/50">On stage</span>
+        <div className="flex items-stretch gap-2 border-t border-white/10 bg-gradient-to-b from-black/80 to-black/95 px-3 py-2.5 overflow-x-auto">
+          {/* Host's own seat */}
+          <div
+            className={`relative flex h-24 w-32 flex-shrink-0 flex-col items-center justify-center rounded-lg border-2 ${
+              !spotlightUserId ? 'border-amber-400 shadow-[0_0_18px_rgba(251,191,36,0.45)]' : 'border-emerald-500/40'
+            } bg-emerald-950/50`}
+            title="Host"
+          >
+            <Crown className="h-6 w-6 text-amber-300" />
+            <span className="mt-1 text-[10px] font-bold uppercase tracking-wider text-amber-200">Host</span>
+            {!spotlightUserId && (
+              <span className="absolute top-1 right-1 rounded-full bg-amber-400 px-1.5 py-0.5 text-[9px] font-bold text-black">BIG</span>
+            )}
+          </div>
+
           {approved.length === 0 && (
-            <span className="text-xs text-white/30 italic">No guests on stage yet</span>
-          )}
-          {approved.slice(0, 6).map(g => (
-            <div
-              key={g.user_id}
-              className="relative flex h-14 w-20 flex-shrink-0 items-center justify-center rounded-md border border-emerald-500/30 bg-emerald-950/40 text-[10px]"
-              title={g.name}
-            >
-              {g.mode === 'video' ? <Video className="h-4 w-4 text-emerald-300" /> : <Mic className="h-4 w-4 text-emerald-300" />}
-              <span className="absolute bottom-0 left-0 right-0 truncate bg-black/60 px-1 text-center">{g.name}</span>
-              {isHost && (
-                <div className="absolute -top-2 -right-2 flex gap-0.5">
-                  <button
-                    onClick={() => toggleMute(g.user_id, !g.muted)}
-                    className="flex h-5 w-5 items-center justify-center rounded-full bg-amber-500 text-black hover:bg-amber-400"
-                    title={g.muted ? 'Unmute' : 'Mute'}
-                  >
-                    {g.muted ? <MicOff className="h-3 w-3" /> : <Mic className="h-3 w-3" />}
-                  </button>
-                  <button
-                    onClick={() => removeGuest(g.user_id)}
-                    className="flex h-5 w-5 items-center justify-center rounded-full bg-rose-500 text-white hover:bg-rose-400"
-                    title="Remove from stage"
-                  >
-                    <UserMinus className="h-3 w-3" />
-                  </button>
-                </div>
-              )}
+            <div className="flex h-24 flex-1 items-center justify-center rounded-lg border-2 border-dashed border-white/10 px-4 text-xs text-white/40 italic">
+              Empty seats — guests can raise their hand to join
             </div>
-          ))}
-          {approved.length > 6 && (
-            <span className="text-xs text-white/50">+{approved.length - 6}</span>
           )}
+
+          {approved.map(g => {
+            const isLit = g.user_id === spotlightUserId;
+            return (
+              <div
+                key={g.user_id}
+                className={`relative flex h-24 w-32 flex-shrink-0 flex-col items-center justify-center rounded-lg border-2 ${
+                  isLit ? 'border-amber-400 shadow-[0_0_18px_rgba(251,191,36,0.45)]' : 'border-emerald-500/40'
+                } bg-emerald-950/40`}
+                title={g.name}
+              >
+                {g.avatar ? (
+                  <img src={g.avatar} alt={g.name} className="h-10 w-10 rounded-full object-cover" />
+                ) : (
+                  <div className="flex h-10 w-10 items-center justify-center rounded-full bg-emerald-500/20 text-base font-bold text-emerald-200">
+                    {g.name.charAt(0).toUpperCase()}
+                  </div>
+                )}
+                <div className="mt-1 flex items-center gap-1 text-[10px] text-emerald-200">
+                  {g.mode === 'video'
+                    ? <Video className="h-3 w-3" />
+                    : (g.muted ? <MicOff className="h-3 w-3 text-rose-400" /> : <Mic className="h-3 w-3" />)}
+                  <span className="max-w-[80px] truncate font-bold">{g.name}</span>
+                </div>
+                {isLit && (
+                  <span className="absolute top-1 left-1 rounded-full bg-amber-400 px-1.5 py-0.5 text-[9px] font-bold text-black">BIG</span>
+                )}
+
+                {/* Host controls */}
+                {isHost && (
+                  <div className="absolute -top-2 -right-2 flex gap-0.5">
+                    <button
+                      onClick={() => setSpotlight(isLit ? null : g.user_id)}
+                      className={`flex h-5 w-5 items-center justify-center rounded-full ${
+                        isLit ? 'bg-amber-400 text-black' : 'bg-amber-500 text-black hover:bg-amber-400'
+                      }`}
+                      title={isLit ? 'Remove from big screen' : 'Send to big screen'}
+                    >
+                      <Star className="h-3 w-3" />
+                    </button>
+                    <button
+                      onClick={() => toggleMute(g.user_id, !g.muted)}
+                      className="flex h-5 w-5 items-center justify-center rounded-full bg-sky-500 text-black hover:bg-sky-400"
+                      title={g.muted ? 'Unmute' : 'Mute'}
+                    >
+                      {g.muted ? <MicOff className="h-3 w-3" /> : <Mic className="h-3 w-3" />}
+                    </button>
+                    <button
+                      onClick={() => removeGuest(g.user_id)}
+                      className="flex h-5 w-5 items-center justify-center rounded-full bg-rose-500 text-white hover:bg-rose-400"
+                      title="Remove from stage"
+                    >
+                      <UserMinus className="h-3 w-3" />
+                    </button>
+                  </div>
+                )}
+
+                {/* Guest's own seat: request big screen */}
+                {!isHost && iAmApproved && g.user_id === user?.id && !isLit && (
+                  <button
+                    onClick={mySpotlightRequested ? cancelSpotlightRequest : requestSpotlight}
+                    className={`absolute -bottom-2 left-1/2 -translate-x-1/2 flex items-center gap-1 rounded-full border px-2 py-0.5 text-[9px] font-bold ${
+                      mySpotlightRequested
+                        ? 'border-amber-400 bg-amber-500/30 text-amber-200'
+                        : 'border-amber-400/60 bg-black text-amber-200 hover:bg-amber-500/20'
+                    }`}
+                    title="Ask the host for the big screen"
+                  >
+                    <Star className="h-2.5 w-2.5" />
+                    {mySpotlightRequested ? 'Asked…' : 'Ask big'}
+                  </button>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      )}
+
+      {/* Host: spotlight requests tray */}
+      {isHost && spotlightRequests.length > 0 && (
+        <div className="border-t border-amber-500/30 bg-gradient-to-r from-amber-950/40 to-amber-900/20 px-3 py-2">
+          <div className="text-[10px] font-bold uppercase tracking-wider text-amber-300">
+            ⭐ Big-screen requests ({spotlightRequests.length})
+          </div>
+          <div className="mt-1 flex flex-wrap gap-1.5">
+            {spotlightRequests.map(r => (
+              <motion.div
+                key={r.user_id}
+                initial={{ opacity: 0, y: 4 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="flex items-center gap-1.5 rounded-full border border-amber-500/40 bg-black/40 px-2 py-1 text-xs"
+              >
+                <Star className="h-3 w-3 text-amber-300" />
+                <span className="font-bold">{r.name}</span>
+                <button
+                  onClick={() => setSpotlight(r.user_id)}
+                  className="flex h-5 w-5 items-center justify-center rounded-full bg-emerald-500 text-black hover:bg-emerald-400"
+                  title="Send to big screen"
+                ><Check className="h-3 w-3" /></button>
+                <button
+                  onClick={() => denySpotlight(r.user_id)}
+                  className="flex h-5 w-5 items-center justify-center rounded-full bg-rose-500 text-white hover:bg-rose-400"
+                  title="Decline"
+                ><X className="h-3 w-3" /></button>
+              </motion.div>
+            ))}
+          </div>
         </div>
       )}
 
