@@ -257,6 +257,20 @@ export default function LiveStage({
 
       {/* Big stage area */}
       <div className="relative flex-1 min-h-0 bg-black">
+        {/* Spotlight banner — who currently owns the big screen */}
+        {spotlightedGuest && stage.mode === 'camera' && (
+          <div className="absolute top-2 left-1/2 z-20 -translate-x-1/2 flex items-center gap-2 rounded-full border border-amber-400/60 bg-amber-500/20 px-3 py-1 text-xs font-bold text-amber-100 backdrop-blur">
+            <Crown className="h-3.5 w-3.5 text-amber-300" />
+            On the big screen: <span className="text-amber-300">{spotlightedGuest.name}</span>
+            {isHost && (
+              <button
+                onClick={() => setSpotlight(null)}
+                className="ml-1 flex h-5 w-5 items-center justify-center rounded-full bg-black/40 hover:bg-black/70"
+                title="Return spotlight to host"
+              ><X className="h-3 w-3" /></button>
+            )}
+          </div>
+        )}
         {/* Camera mode → Jitsi iframe */}
         {stage.mode === 'camera' && inCall && (
           <iframe
