@@ -30,6 +30,14 @@ export interface StagePayload {
   mediaUrl?: string | null;
   mediaKind?: 'audio' | 'video' | null;
   nowPlaying?: NowPlaying | null;
+  /** user_id of the approved guest currently spotlighted on the big screen (null = host) */
+  spotlightUserId?: string | null;
+  at: number;
+}
+
+export interface SpotlightRequest {
+  user_id: string;
+  name: string;
   at: number;
 }
 
