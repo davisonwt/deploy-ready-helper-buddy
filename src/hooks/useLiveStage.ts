@@ -61,9 +61,10 @@ export function useLiveStage(seedId: string | null, opts: { isHost: boolean; ena
   const { user } = useAuth();
   const { isHost, enabled } = opts;
 
-  const [stage, setStage] = useState<StagePayload>({ mode: 'camera', at: Date.now() });
+  const [stage, setStage] = useState<StagePayload>({ mode: 'camera', spotlightUserId: null, at: Date.now() });
   const [hands, setHands] = useState<HandRaise[]>([]);
   const [approved, setApproved] = useState<ApprovedGuest[]>([]);
+  const [spotlightRequests, setSpotlightRequests] = useState<SpotlightRequest[]>([]);
   const chRef = useRef<ReturnType<typeof supabase.channel> | null>(null);
 
   useEffect(() => {
