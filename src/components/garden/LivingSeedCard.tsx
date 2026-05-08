@@ -16,14 +16,13 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Share2, X, MessageCircle, ChevronLeft, ChevronRight, Mic, MicOff, EyeOff, Eye, Send } from 'lucide-react';
+import { Share2, ChevronLeft, ChevronRight } from 'lucide-react';
 import LivingButton from '@/components/LivingButton';
 import { useTribalLiveOrchard, type BloomStage } from '@/hooks/useTribalLiveOrchard';
 import { useReferralCode } from '@/hooks/useReferralCode';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/useAuth';
-import { supabase } from '@/integrations/supabase/client';
-import LiveStage from '@/components/live/LiveStage';
+import LiveStageOverlay from '@/components/live/LiveStageOverlay';
 
 export interface LivingSeedCardProps {
   seedId: string;
