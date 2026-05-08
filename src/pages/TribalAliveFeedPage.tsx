@@ -37,6 +37,7 @@ import { type WanderingRole, WANDERING_BADGES } from '@/components/marketplace/W
 import { launchConfetti, playSoundEffect } from '@/utils/confetti';
 import { LiveNowStrip } from '@/components/live/LiveNowStrip';
 import LiveStage from '@/components/live/LiveStage';
+import LiveStageOverlay from '@/components/live/LiveStageOverlay';
 import { BirthdayCelebration } from '@/components/celebrations/BirthdayCelebration';
 
 type FeedTab = 'following' | 'foryou' | 'local';
