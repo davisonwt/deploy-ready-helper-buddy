@@ -30,6 +30,14 @@ export interface StagePayload {
   mediaUrl?: string | null;
   mediaKind?: 'audio' | 'video' | null;
   nowPlaying?: NowPlaying | null;
+  /** user_id of the approved guest currently spotlighted on the big screen (null = host) */
+  spotlightUserId?: string | null;
+  at: number;
+}
+
+export interface SpotlightRequest {
+  user_id: string;
+  name: string;
   at: number;
 }
 
@@ -53,9 +61,10 @@ export function useLiveStage(seedId: string | null, opts: { isHost: boolean; ena
   const { user } = useAuth();
   const { isHost, enabled } = opts;
 
-  const [stage, setStage] = useState<StagePayload>({ mode: 'camera', at: Date.now() });
+  const [stage, setStage] = useState<StagePayload>({ mode: 'camera', spotlightUserId: null, at: Date.now() });
   const [hands, setHands] = useState<HandRaise[]>([]);
   const [approved, setApproved] = useState<ApprovedGuest[]>([]);
+  const [spotlightRequests, setSpotlightRequests] = useState<SpotlightRequest[]>([]);
   const chRef = useRef<ReturnType<typeof supabase.channel> | null>(null);
 
   useEffect(() => {
@@ -84,6 +93,18 @@ export function useLiveStage(seedId: string | null, opts: { isHost: boolean; ena
     ch.on('broadcast', { event: 'force_mute' }, ({ payload }) => {
       const { user_id, muted } = payload as any;
       setApproved(prev => prev.map(g => g.user_id === user_id ? { ...g, muted } : g));
+    });
+    ch.on('broadcast', { event: 'request_spotlight' }, ({ payload }) => {
+      const r = payload as SpotlightRequest;
+      setSpotlightRequests(prev => prev.find(x => x.user_id === r.user_id) ? prev : [...prev, r]);
+    });
+    ch.on('broadcast', { event: 'cancel_spotlight_request' }, ({ payload }) => {
+      setSpotlightRequests(prev => prev.filter(r => r.user_id !== (payload as any).user_id));
+    });
+    ch.on('broadcast', { event: 'set_spotlight' }, ({ payload }) => {
+      const { user_id } = payload as { user_id: string | null };
+      setStage(prev => ({ ...prev, spotlightUserId: user_id, at: Date.now() }));
+      if (user_id) setSpotlightRequests(prev => prev.filter(r => r.user_id !== user_id));
     });
 
     ch.subscribe();
@@ -144,11 +165,43 @@ export function useLiveStage(seedId: string | null, opts: { isHost: boolean; ena
     send('force_mute', { user_id: userId, muted });
   }, [isHost, send]);
 
+  const setSpotlight = useCallback((userId: string | null) => {
+    if (!isHost) return;
+    setStage(prev => ({ ...prev, spotlightUserId: userId, at: Date.now() }));
+    setSpotlightRequests(prev => userId ? prev.filter(r => r.user_id !== userId) : prev);
+    send('set_spotlight', { user_id: userId });
+  }, [isHost, send]);
+
+  const requestSpotlight = useCallback(() => {
+    if (!user) return;
+    const r: SpotlightRequest = {
+      user_id: user.id,
+      name: (user as any)?.user_metadata?.display_name || user.email?.split('@')[0] || 'Guest',
+      at: Date.now(),
+    };
+    send('request_spotlight', r);
+  }, [user, send]);
+
+  const cancelSpotlightRequest = useCallback(() => {
+    if (!user) return;
+    setSpotlightRequests(prev => prev.filter(r => r.user_id !== user.id));
+    send('cancel_spotlight_request', { user_id: user.id });
+  }, [user, send]);
+
+  const denySpotlight = useCallback((userId: string) => {
+    if (!isHost) return;
+    setSpotlightRequests(prev => prev.filter(r => r.user_id !== userId));
+    send('cancel_spotlight_request', { user_id: userId });
+  }, [isHost, send]);
+
   return {
     stage, setStageMode,
     hands, raiseHand, cancelHand, approveHand, denyHand,
     approved, removeGuest, toggleMute,
+    spotlightRequests, setSpotlight, requestSpotlight, cancelSpotlightRequest, denySpotlight,
     myHandRaised: !!user && hands.some(h => h.user_id === user.id),
     iAmApproved: !!user && approved.some(g => g.user_id === user.id),
+    mySpotlightRequested: !!user && spotlightRequests.some(r => r.user_id === user.id),
+    iAmSpotlighted: !!user && stage.spotlightUserId === user.id,
   };
 }
