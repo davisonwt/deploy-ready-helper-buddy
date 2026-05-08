@@ -72,8 +72,12 @@ export default function LiveStage({
     stage, setStageMode,
     hands, raiseHand, cancelHand, approveHand, denyHand,
     approved, removeGuest, toggleMute,
-    myHandRaised, iAmApproved,
+    spotlightRequests, setSpotlight, requestSpotlight, cancelSpotlightRequest, denySpotlight,
+    myHandRaised, iAmApproved, mySpotlightRequested, iAmSpotlighted,
   } = useLiveStage(seedId, { isHost, enabled: true });
+
+  const spotlightUserId = stage.spotlightUserId ?? null;
+  const spotlightedGuest = approved.find(g => g.user_id === spotlightUserId) ?? null;
 
   const [boardText, setBoardText] = useState('');
   const imgList = images.filter(Boolean);
