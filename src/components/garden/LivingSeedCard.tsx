@@ -81,10 +81,8 @@ export default function LivingSeedCard({
   const currentImage = imgList[safeImgIdx] || image || null;
 
   // live overlay state
-  const [faceless, setFaceless] = useState(false);
-  const [chatMsgs, setChatMsgs] = useState<Array<{ id: string; from: string; text: string; at: number }>>([]);
-  const [chatDraft, setChatDraft] = useState('');
   const [overlayImgIdx, setOverlayImgIdx] = useState(0);
+  void overlayImgIdx; void setOverlayImgIdx; // (kept for future inline use)
 
   // who's live on THIS seed right now
   const liveHere = useMemo(
