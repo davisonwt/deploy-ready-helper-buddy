@@ -20,7 +20,7 @@ import { motion } from 'framer-motion';
 import {
   Camera, Image as ImageIcon, PencilLine, Film,
   Hand, Mic, MicOff, Video, VideoOff, X, Check, UserMinus,
-  ChevronLeft, ChevronRight, Music, Heart, Search,
+  ChevronLeft, ChevronRight, Music, Heart, Search, Star, Crown,
 } from 'lucide-react';
 import { JITSI_DOMAIN } from '@/lib/jitsi-config';
 import { useAuth } from '@/hooks/useAuth';
