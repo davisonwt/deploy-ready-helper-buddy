@@ -99,6 +99,10 @@ const sowerName = (p: any) => {
   if (full) return full;
   const first = (p?.first_name || '').trim();
   if (first) return first;
+  const uname = (p?.username || '').trim();
+  if (uname) return uname;
+  const email = (p?.email || '').trim();
+  if (email) return email.split('@')[0];
   return 'Sower';
 };
 
