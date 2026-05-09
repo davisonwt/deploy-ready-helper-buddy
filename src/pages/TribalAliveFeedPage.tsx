@@ -607,6 +607,21 @@ export default function TribalAliveFeedPage() {
       return null;
     }
 
+    // Verify the sower actually has an auth user before we try to insert into
+    // chat_participants — otherwise the FK to auth.users blows up.
+    const { data: sowerProfile } = await supabase
+      .from('profiles')
+      .select('user_id')
+      .eq('user_id', item.sower_id)
+      .maybeSingle();
+    if (!sowerProfile?.user_id) {
+      toast({
+        title: 'Sower not reachable',
+        description: 'This seed was planted by an account that no longer exists.',
+      });
+      return null;
+    }
+
     const { data: rows, error: findErr } = await supabase
       .from('chat_participants')
       .select('room_id, user_id, chat_rooms!inner(id, room_type, is_active)')
@@ -638,8 +653,10 @@ export default function TribalAliveFeedPage() {
 
     const { error: partErr } = await supabase
       .from('chat_participants')
-      .upsert({ room_id: roomId, user_id: item.sower_id, is_active: true }, { onConflict: 'room_id,user_id', ignoreDuplicates: false });
-    if (partErr) throw partErr;
+      .upsert({ room_id: roomId, user_id: item.sower_id, is_active: true }, { onConflict: 'room_id,user_id', ignoreDuplicates: true });
+    // Swallow FK violations cleanly — we've already verified the profile, but
+    // older legacy seeds may still be linked to a deleted auth.users row.
+    if (partErr && !/foreign key/i.test(partErr.message || '')) throw partErr;
 
     return roomId;
   };
