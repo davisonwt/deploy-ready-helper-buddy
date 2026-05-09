@@ -1106,6 +1106,9 @@ export default function SeedFlowDashboard() {
           </div>
 
           <div className="s2g-dashboard-content" style={styles.content}>
+            {/* ── Live now strip — anyone going live shows up here instantly ── */}
+            <LiveNowStrip className="mb-3" />
+
             {/* ── Tribe size · Bestowals · Unread messages ── */}
             <DashboardTribeStats />
 
