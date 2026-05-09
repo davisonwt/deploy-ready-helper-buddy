@@ -10,7 +10,7 @@ import { useTribalLiveOrchard, type LivePresence } from '@/hooks/useTribalLiveOr
 import LiveStageOverlay from '@/components/live/LiveStageOverlay';
 import { useAuth } from '@/hooks/useAuth';
 
-export default function LiveNowStrip({ className = '' }: { className?: string }) {
+function LiveNowStrip({ className = '' }: { className?: string }) {
   const navigate = useNavigate();
   const { user } = useAuth();
   const { liveSeeds, endLive } = useTribalLiveOrchard();
