@@ -105,3 +105,5 @@ function LiveNowStrip({ className = '' }: { className?: string }) {
   );
 }
 export { LiveNowStrip };
+
+export default LiveNowStrip;
