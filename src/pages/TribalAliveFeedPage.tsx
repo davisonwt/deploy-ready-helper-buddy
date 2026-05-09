@@ -224,10 +224,10 @@ export default function TribalAliveFeedPage() {
         if (sowerIds.length) {
           const [byUserId, byProfileId] = await Promise.all([
             supabase.from('profiles')
-              .select('id, user_id, first_name, last_name, display_name, avatar_url')
+              .select('id, user_id, first_name, last_name, display_name, username, email, avatar_url')
               .in('user_id', sowerIds as string[]),
             supabase.from('profiles')
-              .select('id, user_id, first_name, last_name, display_name, avatar_url')
+              .select('id, user_id, first_name, last_name, display_name, username, email, avatar_url')
               .in('id', sowerIds as string[]),
           ]);
           [...(byUserId.data || []), ...(byProfileId.data || [])].forEach((p: any) => {
