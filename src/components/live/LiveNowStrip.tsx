@@ -104,4 +104,4 @@ export default function LiveNowStrip({ className = '' }: { className?: string })
     </>
   );
 }
-export { default as LiveNowStrip };
+export { LiveNowStrip };
