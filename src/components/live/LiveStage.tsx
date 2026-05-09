@@ -553,18 +553,20 @@ export default function LiveStage({
           <Hand className="h-4 w-4 text-amber-300" />
           {!myHandRaised ? (
             <>
-              <span className="text-xs text-white/70">Request to join the live:</span>
+              <span className="text-xs text-white/70">Ask to come up:</span>
               <button
                 onClick={() => raiseHand('voice')}
                 className="flex items-center gap-1 rounded-md border border-emerald-400/40 bg-emerald-500/10 px-2 py-1 text-xs font-bold hover:bg-emerald-500/20"
+                title="Join with voice only — your face stays hidden"
               >
-                <Mic className="h-3 w-3" /> Voice
+                <Mic className="h-3 w-3" /> Faceless
               </button>
               <button
                 onClick={() => raiseHand('video')}
                 className="flex items-center gap-1 rounded-md border border-cyan-400/40 bg-cyan-500/10 px-2 py-1 text-xs font-bold hover:bg-cyan-500/20"
+                title="Join with camera on"
               >
-                <Video className="h-3 w-3" /> Video
+                <Video className="h-3 w-3" /> Camera on
               </button>
             </>
           ) : (
