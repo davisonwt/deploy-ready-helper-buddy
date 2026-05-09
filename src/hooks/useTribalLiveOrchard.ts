@@ -34,7 +34,8 @@ export interface BloomEvent {
   at: number;
 }
 
-const CHANNEL_NAME = 'tribal-orchard:global';
+// Bumped to v2 on 2026-05-09 to flush all stale active-live presences.
+const CHANNEL_NAME = 'tribal-orchard:global:v2';
 
 // ─── module-level singleton store ────────────────────────────────────────────
 type Store = {
