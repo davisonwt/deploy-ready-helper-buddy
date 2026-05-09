@@ -59,6 +59,7 @@ const StatsPage = lazy(() => import("./pages/StatsPage"));
 const ProfilePage = lazy(() => import("./pages/ProfilePage"));
 const BrowseOrchardsPage = lazy(() => import("./pages/BrowseOrchardsPage"));
 const TribalAliveFeedPage = lazy(() => import("./pages/TribalAliveFeedPage"));
+const LiveRoomDetailPage = lazy(() => import("./pages/LiveRoomDetailPage"));
 const LiveLoungePage = lazy(() => import("./pages/LiveLoungePage"));
 const OrchardPage = lazy(() => import("./pages/OrchardPage"));
 const CreateOrchardPage = lazy(() => import("./pages/CreateOrchardPage"));
