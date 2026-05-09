@@ -59,6 +59,7 @@ const StatsPage = lazy(() => import("./pages/StatsPage"));
 const ProfilePage = lazy(() => import("./pages/ProfilePage"));
 const BrowseOrchardsPage = lazy(() => import("./pages/BrowseOrchardsPage"));
 const TribalAliveFeedPage = lazy(() => import("./pages/TribalAliveFeedPage"));
+const LiveRoomDetailPage = lazy(() => import("./pages/LiveRoomDetailPage"));
 const LiveLoungePage = lazy(() => import("./pages/LiveLoungePage"));
 const OrchardPage = lazy(() => import("./pages/OrchardPage"));
 const CreateOrchardPage = lazy(() => import("./pages/CreateOrchardPage"));
@@ -242,6 +243,9 @@ const App = () => (
               } />
               <Route path="/orchard-alive" element={
                 <ProtectedRoute><RequireVerification><Layout><TribalAliveFeedPage /></Layout></RequireVerification></ProtectedRoute>
+              } />
+              <Route path="/live/:seedId/room" element={
+                <ProtectedRoute><RequireVerification><Layout><LiveRoomDetailPage /></Layout></RequireVerification></ProtectedRoute>
               } />
               <Route path="/live-lounge" element={
                 <ProtectedRoute><Layout><LiveLoungePage /></Layout></ProtectedRoute>

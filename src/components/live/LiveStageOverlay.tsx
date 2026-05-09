@@ -15,7 +15,7 @@ import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import {
-  X, MessageCircle, ChevronLeft, ChevronRight, EyeOff, Eye, Send,
+  X, MessageCircle, ChevronLeft, ChevronRight, EyeOff, Eye, Send, Users, Radio,
 } from 'lucide-react';
 import LiveStage from '@/components/live/LiveStage';
 import { useAuth } from '@/hooks/useAuth';
@@ -103,12 +103,28 @@ export default function LiveStageOverlay({
             {faceless ? <Eye className="h-3 w-3" /> : <EyeOff className="h-3 w-3" />}
             {faceless ? 'Show face' : 'Faceless'}
           </button>
+          <button
+            onClick={() => navigate(`/live/${seedId}/room`)}
+            className="flex items-center gap-1 rounded px-2 py-1 text-xs hover:bg-white/10"
+            title="See everyone joined / queued / in the pocket"
+          >
+            <Users className="h-3 w-3" /> See everyone
+          </button>
           {openPath && (
             <button
               onClick={() => navigate(openPath)}
               className="flex items-center gap-1 rounded px-2 py-1 text-xs hover:bg-white/10"
             >
               <MessageCircle className="h-3 w-3" /> Open seed
+            </button>
+          )}
+          {isHost && (
+            <button
+              onClick={onClose}
+              className="flex items-center gap-1 rounded border border-rose-500/40 bg-rose-500/10 px-2 py-1 text-xs font-bold text-rose-200 hover:bg-rose-500/20"
+              title="End your live for everyone"
+            >
+              <Radio className="h-3 w-3" /> End live
             </button>
           )}
           <button

@@ -1,98 +1,109 @@
-import React from 'react'
-import { Link, useNavigate } from 'react-router-dom'
-import { Radio, GraduationCap, Zap, Dumbbell, Video, Users, ChevronRight } from 'lucide-react'
-import { useLiveSessions, LiveKind, liveKindLabel } from '@/hooks/useLiveSessions'
+/**
+ * LiveNowStrip — pinned strip of currently-live seeds.
+ * Mounted on the Dashboard and on the Tribal Feeds page so every tribe
+ * member is notified the moment someone goes live and can join in one tap.
+ */
+import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { Radio, Users, ArrowRight } from 'lucide-react';
+import { useTribalLiveOrchard, type LivePresence } from '@/hooks/useTribalLiveOrchard';
+import LiveStageOverlay from '@/components/live/LiveStageOverlay';
+import { useAuth } from '@/hooks/useAuth';
 
-const KIND_ICONS: Record<LiveKind, React.ReactNode> = {
-  radio: <Radio className="h-3.5 w-3.5" />,
-  one_on_one: <Video className="h-3.5 w-3.5" />,
-  community_chat: <Users className="h-3.5 w-3.5" />,
-  classroom: <GraduationCap className="h-3.5 w-3.5" />,
-  skilldrop: <Zap className="h-3.5 w-3.5" />,
-  training: <Dumbbell className="h-3.5 w-3.5" />,
-}
+function LiveNowStrip({ className = '' }: { className?: string }) {
+  const navigate = useNavigate();
+  const { user } = useAuth();
+  const { liveSeeds, endLive } = useTribalLiveOrchard();
+  const [joining, setJoining] = useState<LivePresence | null>(null);
 
-const ORDER: LiveKind[] = ['radio', 'classroom', 'skilldrop', 'training', 'one_on_one', 'community_chat']
-
-export function LiveNowStrip() {
-  const navigate = useNavigate()
-  const { all, total, byKind, loading } = useLiveSessions()
-  const top = all[0]
+  if (!liveSeeds || liveSeeds.length === 0) return null;
 
   return (
-    <div
-      className="w-full border-b border-cyan-400/15"
-      style={{ background: 'linear-gradient(180deg, rgba(10,15,26,0.92) 0%, rgba(6,10,18,0.85) 100%)', backdropFilter: 'blur(8px)' }}
-    >
-      <div className="max-w-5xl mx-auto px-3 py-2 flex items-center gap-2 flex-wrap">
-        <Link
-          to="/live-lounge"
-          className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-rose-500/15 border border-rose-400/40 text-rose-200 text-[11px] font-bold"
-        >
-          <span className="relative flex h-2 w-2">
-            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-400 opacity-75" />
-            <span className="relative inline-flex rounded-full h-2 w-2 bg-rose-500" />
+    <>
+      <section
+        className={`relative w-full overflow-hidden rounded-2xl border border-rose-500/30 bg-gradient-to-r from-rose-950/40 via-black/40 to-emerald-950/30 p-3 ${className}`}
+      >
+        <div className="mb-2 flex items-center justify-between text-xs">
+          <div className="flex items-center gap-2 font-extrabold uppercase tracking-wider text-rose-300">
+            <span className="relative flex h-2 w-2">
+              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-rose-400 opacity-75" />
+              <span className="relative inline-flex h-2 w-2 rounded-full bg-rose-500" />
+            </span>
+            Live now in the orchard
+          </div>
+          <span className="rounded-full border border-rose-400/40 bg-rose-500/10 px-2 py-0.5 font-bold text-rose-200">
+            {liveSeeds.length}
           </span>
-          LIVE NOW · {loading ? '…' : total}
-        </Link>
-
-        <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar">
-          {ORDER.map((k) => {
-            const c = byKind[k] || 0
-            return (
-              <button
-                key={k}
-                onClick={() => navigate(`/live-lounge?kind=${k}`)}
-                className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-[11px] font-semibold border transition whitespace-nowrap ${
-                  c > 0
-                    ? 'bg-cyan-500/15 border-cyan-400/40 text-cyan-100 hover:bg-cyan-500/25'
-                    : 'bg-white/[0.03] border-white/10 text-slate-400 hover:bg-white/[0.06]'
-                }`}
-              >
-                {KIND_ICONS[k]}
-                {liveKindLabel(k)}
-                {c > 0 && <span className="ml-0.5 text-cyan-300">{c}</span>}
-              </button>
-            )
-          })}
         </div>
 
-        <Link
-          to="/live-lounge"
-          className="ml-auto inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-amber-500/15 border border-amber-400/40 text-amber-200 text-[11px] font-bold hover:bg-amber-500/25"
-        >
-          Open Lounge <ChevronRight className="h-3 w-3" />
-        </Link>
-      </div>
+        <div className="flex gap-2 overflow-x-auto pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+          {liveSeeds.map((p) => (
+            <article
+              key={`${p.user_id}-${p.seed_id}`}
+              className="relative flex w-[260px] flex-shrink-0 overflow-hidden rounded-xl border border-rose-500/30 bg-black/55 backdrop-blur"
+            >
+              <div className="relative h-[88px] w-[88px] flex-shrink-0 bg-emerald-900/40">
+                {p.seed_image ? (
+                  <img src={p.seed_image} alt="" className="h-full w-full object-cover" />
+                ) : (
+                  <div className="flex h-full w-full items-center justify-center text-2xl">🌱</div>
+                )}
+                <span className="absolute left-1 top-1 inline-flex items-center gap-1 rounded-full bg-rose-600 px-1.5 py-0.5 text-[9px] font-extrabold uppercase tracking-wider text-white">
+                  <Radio className="h-2.5 w-2.5" /> Live
+                </span>
+              </div>
+              <div className="flex flex-1 flex-col justify-between p-2">
+                <div className="min-w-0">
+                  <div className="truncate text-xs font-extrabold text-white">{p.seed_title}</div>
+                  <div className="mt-0.5 flex items-center gap-1 truncate text-[10px] text-emerald-200/80">
+                    <Users className="h-2.5 w-2.5" /> {p.display_name || 'Tribe member'}
+                  </div>
+                </div>
+                <div className="flex items-center gap-1.5">
+                  <button
+                    onClick={() => setJoining(p)}
+                    className="flex flex-1 items-center justify-center gap-1 rounded-md bg-emerald-500 px-2 py-1.5 text-[11px] font-extrabold text-black hover:bg-emerald-400"
+                  >
+                    Join the live <ArrowRight className="h-3 w-3" />
+                  </button>
+                  <button
+                    onClick={() => navigate(`/live/${p.seed_id}/room`)}
+                    className="rounded-md border border-white/15 bg-black/40 px-2 py-1.5 text-[10px] font-bold text-white/80 hover:bg-white/10"
+                    title="See everyone in this live"
+                  >
+                    See all
+                  </button>
+                  {user?.id === p.user_id && (
+                    <button
+                      onClick={async () => { await endLive({ seedId: p.seed_id, seedTitle: p.seed_title }); }}
+                      className="rounded-md border border-rose-500/40 bg-rose-500/10 px-2 py-1.5 text-[10px] font-bold text-rose-200 hover:bg-rose-500/20"
+                      title="End your live"
+                    >
+                      End
+                    </button>
+                  )}
+                </div>
+              </div>
+            </article>
+          ))}
+        </div>
+      </section>
 
-      {total > 0 && top && (
-        <button
-          onClick={() => navigate(top.joinPath)}
-          className="w-full max-w-5xl mx-auto px-3 pb-2 -mt-0.5 flex items-center gap-2 text-left text-[11px] text-slate-300 hover:text-white truncate"
-        >
-          <span className="text-rose-300">●</span>
-          <span className="font-semibold text-slate-100 truncate">{top.title}</span>
-          <span className="text-slate-500">·</span>
-          <span className="truncate">{top.hostName}</span>
-          <span className="text-slate-500">·</span>
-          <span className="text-cyan-300">{liveKindLabel(top.kind)}</span>
-          {top.count > 0 && (
-            <>
-              <span className="text-slate-500">·</span>
-              <span>{top.count} listening</span>
-            </>
-          )}
-        </button>
+      {joining && (
+        <LiveStageOverlay
+          seedId={joining.seed_id}
+          title={joining.seed_title}
+          subtitle={`Hosted by ${joining.display_name}`}
+          jitsiRoom={joining.jitsi_room}
+          isHost={joining.user_id === user?.id}
+          images={joining.seed_image ? [joining.seed_image] : []}
+          openPath={`/seed/${joining.seed_id}`}
+          onClose={() => setJoining(null)}
+        />
       )}
-
-      {!loading && total === 0 && (
-        <Link
-          to="/communications-hub"
-          className="block w-full max-w-5xl mx-auto px-3 pb-2 -mt-0.5 text-[11px] text-slate-400 hover:text-cyan-200"
-        >
-          No tribe members live right now — <span className="text-amber-300 font-semibold">Go Live →</span>
-        </Link>
-      )}
-    </div>
-  )
+    </>
+  );
 }
+export { LiveNowStrip };
+
+export default LiveNowStrip;

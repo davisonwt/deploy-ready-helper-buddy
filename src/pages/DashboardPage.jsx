@@ -14,6 +14,7 @@ import {
 } from '../components/garden/seedCardBuilders'
 import { toast } from 'sonner'
 import DashboardTribeStats from '../components/dashboard/DashboardTribeStats'
+import LiveNowStrip from '@/components/live/LiveNowStrip'
 
 const DAYS_PER_MONTH = [30, 30, 31, 30, 30, 31, 30, 30, 31, 30, 30, 31]
 function shiftYhwhDate(year, month, day, offset) {
@@ -1105,6 +1106,9 @@ export default function SeedFlowDashboard() {
           </div>
 
           <div className="s2g-dashboard-content" style={styles.content}>
+            {/* ── Live now strip — anyone going live shows up here instantly ── */}
+            <LiveNowStrip className="mb-3" />
+
             {/* ── Tribe size · Bestowals · Unread messages ── */}
             <DashboardTribeStats />
 
