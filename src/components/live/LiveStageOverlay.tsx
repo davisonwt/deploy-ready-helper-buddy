@@ -15,7 +15,7 @@ import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import {
-  X, MessageCircle, ChevronLeft, ChevronRight, EyeOff, Eye, Send,
+  X, MessageCircle, ChevronLeft, ChevronRight, EyeOff, Eye, Send, Users, Radio,
 } from 'lucide-react';
 import LiveStage from '@/components/live/LiveStage';
 import { useAuth } from '@/hooks/useAuth';
