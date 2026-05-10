@@ -34,7 +34,7 @@ export default function WalletSettingsPage() {
     try {
       const { data, error } = await supabase
         .from('user_wallets')
-        .select('wallet_address, api_key, api_secret, merchant_id')
+        .select('wallet_address')
         .eq('user_id', user.id)
         .eq('wallet_type', 'binance_pay')
         .maybeSingle()
@@ -43,9 +43,16 @@ export default function WalletSettingsPage() {
 
       if (data) {
         setWalletAddress(data.wallet_address || '')
-        setApiKey(data.api_key || '')
-        setApiSecret(data.api_secret || '')
-        setMerchantId(data.merchant_id || '')
+      }
+
+      // Credentials are write-only for security; fetch only presence flags.
+      // @ts-ignore - rpc typing
+      const { data: status } = await supabase.rpc('user_wallet_credentials_status')
+      const row = Array.isArray(status) ? status[0] : status
+      if (row) {
+        setApiKey(row.has_api_key ? '••••••••' : '')
+        setApiSecret(row.has_api_secret ? '••••••••' : '')
+        setMerchantId(row.has_merchant_id ? '••••••••' : '')
       }
     } catch (error) {
       console.error('Error loading wallet:', error)
