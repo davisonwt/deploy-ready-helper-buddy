@@ -94,6 +94,7 @@ export default function WalletSettingsPage() {
       if (existing) {
         const { error } = await supabase
           .from('user_wallets')
+          // @ts-ignore - dynamic partial update
           .update(updatePayload)
           .eq('id', existing.id)
 
@@ -101,6 +102,7 @@ export default function WalletSettingsPage() {
       } else {
         const { error } = await supabase
           .from('user_wallets')
+          // @ts-ignore - dynamic partial insert
           .insert({
             user_id: user.id,
             wallet_type: 'binance_pay',
