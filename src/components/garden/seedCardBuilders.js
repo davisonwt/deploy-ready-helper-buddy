@@ -21,7 +21,7 @@ export function buildSeedCard(s, handlers = {}) {
     images,
     badge: { emoji: '🌱', label: 'mine', color: '#22c55e' },
     openPath: `/seed/${s.id}`,
-    liveKey: `seed:${s.id}`,
+    liveKey: s.id,
     mediaKind: 'seed',
     mine: true,
     seedRow: s,
