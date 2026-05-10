@@ -104,10 +104,11 @@ export function useTribalLiveOrchard() {
     refCount++;
     return () => {
       refCount--;
-      if (refCount <= 0) {
-        refCount = 0;
-        teardownChannel();
-      }
+      // NOTE: We intentionally do NOT teardown the singleton channel on refCount=0.
+      // SPA navigation briefly drops refCount to 0 between page transitions, and
+      // tearing down the channel would untrack the host's live presence — making
+      // the live falsely appear "ended" when the host clicks "See everyone" or
+      // simply navigates within the app.
     };
   }, [presenceKey]);
 

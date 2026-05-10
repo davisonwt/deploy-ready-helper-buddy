@@ -103,7 +103,7 @@ const sowerName = (p: any) => {
   if (uname) return uname;
   const email = (p?.email || '').trim();
   if (email) return email.split('@')[0];
-  return 'Sower';
+  return 'Anonymous';
 };
 
 const wanderingFor = (item: { kind: FeedItem['kind']; wandering_role?: string | null; type?: string | null }): WanderingRole | null => {
@@ -304,7 +304,7 @@ export default function TribalAliveFeedPage() {
             audio_url: t.preview_url || t.file_url || null,
             price: Number(t.price ?? 2),
             sower_id: ownerId,
-            sower_name: sowerName(profileMap[ownerId]) !== 'Sower' ? sowerName(profileMap[ownerId]) : (dj.dj_name || 'Sower'),
+            sower_name: sowerName(profileMap[ownerId]) !== 'Anonymous' ? sowerName(profileMap[ownerId]) : (dj.dj_name || 'Anonymous'),
             sower_avatar: profileMap[ownerId]?.avatar_url || dj.avatar_url || null,
             sower_handle: handleOf(profileMap[ownerId]),
             wandering_role: (t.wandering_role as WanderingRole) || 'hearth',
