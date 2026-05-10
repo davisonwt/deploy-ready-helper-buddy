@@ -245,7 +245,10 @@ const App = () => (
                 <ProtectedRoute><RequireVerification><Layout><TribalAliveFeedPage /></Layout></RequireVerification></ProtectedRoute>
               } />
               <Route path="/live/:seedId/room" element={
-                <ProtectedRoute><RequireVerification><Layout><LiveRoomDetailPage /></Layout></RequireVerification></ProtectedRoute>
+                <ProtectedRoute><RequireVerification><LiveRoomDetailPage /></RequireVerification></ProtectedRoute>
+              } />
+              <Route path="/seed/:seedId" element={
+                <ProtectedRoute><RequireVerification><LiveRoomDetailPage /></RequireVerification></ProtectedRoute>
               } />
               <Route path="/live-lounge" element={
                 <ProtectedRoute><Layout><LiveLoungePage /></Layout></ProtectedRoute>
