@@ -5035,7 +5035,6 @@ export type Database = {
           email: string
           expires_at: string
           id: string
-          password_hash: string
           requested_at: string
           reviewed_at: string | null
           reviewed_by: string | null
@@ -5046,7 +5045,6 @@ export type Database = {
           email: string
           expires_at?: string
           id?: string
-          password_hash: string
           requested_at?: string
           reviewed_at?: string | null
           reviewed_by?: string | null
@@ -5057,7 +5055,6 @@ export type Database = {
           email?: string
           expires_at?: string
           id?: string
-          password_hash?: string
           requested_at?: string
           reviewed_at?: string | null
           reviewed_by?: string | null
@@ -13060,6 +13057,14 @@ export type Database = {
       user_is_in_room: {
         Args: { check_room_id: string; check_user_id: string }
         Returns: boolean
+      }
+      user_wallet_credentials_status: {
+        Args: never
+        Returns: {
+          has_api_key: boolean
+          has_api_secret: boolean
+          has_merchant_id: boolean
+        }[]
       }
       validate_file_download_access: {
         Args: { p_file_url: string; p_room_id: string; p_user_id: string }
