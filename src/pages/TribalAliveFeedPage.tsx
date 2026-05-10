@@ -103,7 +103,7 @@ const sowerName = (p: any) => {
   if (uname) return uname;
   const email = (p?.email || '').trim();
   if (email) return email.split('@')[0];
-  return 'Sower';
+  return 'Anonymous';
 };
 
 const wanderingFor = (item: { kind: FeedItem['kind']; wandering_role?: string | null; type?: string | null }): WanderingRole | null => {
