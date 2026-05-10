@@ -83,33 +83,35 @@ export default function UserWalletSettingsPage() {
 
       if (fetchError) throw fetchError
 
+      const MASK = '••••••••'
+      const updatePayload: Record<string, unknown> = {
+        wallet_address: walletAddress,
+        is_active: true,
+        is_primary: true,
+      }
+      if (apiKey && apiKey !== MASK) updatePayload.api_key = apiKey
+      if (apiSecret && apiSecret !== MASK) updatePayload.api_secret = apiSecret
+      if (merchantId !== MASK) updatePayload.merchant_id = merchantId
+
       if (existing) {
         const { error } = await supabase
           .from('user_wallets')
-          .update({
-            wallet_address: walletAddress,
-            api_key: apiKey,
-            api_secret: apiSecret,
-            merchant_id: merchantId,
-            is_active: true,
-            is_primary: true,
-          })
+          // @ts-ignore - dynamic partial update
+          .update(updatePayload)
           .eq('id', existing.id)
 
         if (error) throw error
       } else {
+        const insertPayload = {
+          user_id: user.id,
+          wallet_type: 'binance_pay',
+          wallet_address: walletAddress,
+          ...updatePayload,
+        }
         const { error } = await supabase
           .from('user_wallets')
-          .insert({
-            user_id: user.id,
-            wallet_address: walletAddress,
-            wallet_type: 'binance_pay',
-            is_active: true,
-            is_primary: true,
-            api_key: apiKey,
-            api_secret: apiSecret,
-            merchant_id: merchantId,
-          })
+          // @ts-ignore - dynamic partial insert
+          .insert(insertPayload)
 
         if (error) throw error
       }
