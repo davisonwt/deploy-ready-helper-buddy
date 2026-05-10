@@ -100,14 +100,16 @@ export default function WalletSettingsPage() {
 
         if (error) throw error
       } else {
+        const insertPayload = {
+          user_id: user.id,
+          wallet_type: 'binance_pay',
+          wallet_address: walletAddress,
+          ...updatePayload,
+        }
         const { error } = await supabase
           .from('user_wallets')
           // @ts-ignore - dynamic partial insert
-          .insert({
-            user_id: user.id,
-            wallet_type: 'binance_pay',
-            ...updatePayload,
-          })
+          .insert(insertPayload)
 
         if (error) throw error
       }
