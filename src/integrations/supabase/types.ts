@@ -12438,6 +12438,13 @@ export type Database = {
       }
       get_hearts_gender: { Args: { _user_id: string }; Returns: string }
       get_message_streak: { Args: { user_id_param: string }; Returns: number }
+      get_my_stream_credentials: {
+        Args: { _stream_id: string }
+        Returns: {
+          rtmp_url: string
+          stream_key: string
+        }[]
+      }
       get_or_create_community_room: { Args: never; Returns: string }
       get_or_create_direct_room: {
         Args: { user1_id: string; user2_id: string }
