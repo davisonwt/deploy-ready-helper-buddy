@@ -58,6 +58,7 @@ const DashboardPage = lazy(() => import("./pages/DashboardPage"));
 const BulkUploadWizardPage = lazy(() => import("./pages/BulkUploadWizardPage"));
 const BulkSowerPage = lazy(() => import("./pages/BulkSowerPage"));
 const BulkSeedFeedPage = lazy(() => import("./pages/BulkSeedFeedPage"));
+const BulkProductDetailPage = lazy(() => import("./pages/BulkProductDetailPage"));
 const StatsPage = lazy(() => import("./pages/StatsPage"));
 const ProfilePage = lazy(() => import("./pages/ProfilePage"));
 const BrowseOrchardsPage = lazy(() => import("./pages/BrowseOrchardsPage"));
@@ -244,6 +245,9 @@ const App = () => (
               } />
               <Route path="/bulk/sower/:slug/feed" element={
                 <Suspense fallback={<LoadingFallback />}><BulkSeedFeedPage /></Suspense>
+              } />
+              <Route path="/bulk/products/:slug" element={
+                <Suspense fallback={<LoadingFallback />}><BulkProductDetailPage /></Suspense>
               } />
               <Route path="/stats" element={
                 <ProtectedRoute><RequireVerification><StatsPage /></RequireVerification></ProtectedRoute>
