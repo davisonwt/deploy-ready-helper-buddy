@@ -55,7 +55,7 @@ export default function SeedFlow({
 
   useEffect(() => {
     if (!showAds || ads.length === 0) return;
-    const id = setInterval(() => setAdTick((t) => t + 1), 1000);
+    const id = setInterval(() => setAdTick((t) => t + 1), 200);
     return () => clearInterval(id);
   }, [showAds, ads.length]);
 
