@@ -37,7 +37,7 @@ const IMG_BUCKET = 'orchard-images';
 export default function BulkUploadWizardPage() {
   const navigate = useNavigate();
   const { toast } = useToast();
-  const [step, setStep] = useState<1 | 2 | 3>(1);
+  const [step, setStep] = useState<1 | 2 | 3 | 4 | 5>(1);
   const [file, setFile] = useState<File | null>(null);
   const [parsing, setParsing] = useState(false);
   const [progress, setProgress] = useState(0);
