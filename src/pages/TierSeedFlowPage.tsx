@@ -31,6 +31,7 @@ interface SeedRow {
 }
 
 export default function TierSeedFlowPage({ tier }: Props) {
+  const navigate = useNavigate();
   const cfg = TIER_BY_ID[tier];
   const [companies, setCompanies] = useState<CompanyRow[]>([]);
   const [seeds, setSeeds] = useState<SeedRow[]>([]);
