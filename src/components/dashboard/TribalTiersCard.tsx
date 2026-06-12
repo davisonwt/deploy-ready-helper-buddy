@@ -26,12 +26,12 @@ export default function TribalTiersCard() {
           <Link
             key={t.id}
             to={`/${t.slug}`}
-            className="group relative rounded-xl border border-border bg-background/40 hover:border-primary/60 transition-colors overflow-hidden text-left"
+            className="group relative rounded-xl border border-border bg-background/40 hover:border-primary/60 transition-colors text-left"
             style={{ boxShadow: `inset 0 0 0 1px ${t.accent}22` }}
             aria-label={`${t.label} — ${t.tagline}`}
           >
             {/* Illustration */}
-            <div className="relative aspect-[4/3] w-full overflow-hidden">
+            <div className="relative aspect-[4/3] w-full overflow-hidden rounded-t-xl">
               <img
                 src={t.image}
                 alt={`${t.label} illustration`}
