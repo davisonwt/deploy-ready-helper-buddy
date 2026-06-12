@@ -2,7 +2,7 @@
  * useSacredNow — single source of truth for the current sacred date.
  *
  * Ticks every 60 seconds. The day rolls at the USER'S local sunrise (not midnight).
- * Exposes Creator date (Year/Month/Day), weekday, Omer count, and next feast.
+ * Exposes Creator date (Year/Month/Day), weekday, 50-day feast count, and next feast.
  *
  * Foundation for the 364yhvh bead calendar, dashboard "Today" widget, and
  * anywhere else that needs to know "what sacred day is it right now?".
@@ -23,7 +23,7 @@ export interface SacredNow {
   isSabbath: boolean;
   isFeast: boolean;
   feastName?: string;
-  /** Omer count 1..50 if currently in the Omer window, else null. */
+  /** Current 50-day feast count 1..50 if currently in a count window, else null. */
   omer: number | null;
   omerTotal: 50;
   nextFeast: string;
@@ -42,27 +42,35 @@ function toDayOfYear(d: CustomDate): number {
 }
 
 /**
- * Omer counting starts the day after Pesach (Month 1, Day 16) and runs 50 days
- * to Shavuot (Month 3, Day 6 in this calendar — the "Feast of Weeks").
- */
-/**
- * Omer counting in this calendar: Omer 1 = doy 26 (the day after the
- * Wave-Sheaf / first Sunday after Unleavened Bread). Omer 50 = doy 75 = Shavu'ot.
- * Anchored from observed reality: 2026-04-30 = M2D12 = doy 42 = Omer 17.
+ * Chained 50-day feast counts.
+ * Shavu'ot's 50th day (doy 75) is also day 1 toward Feast of New Wine.
+ * Feast of New Wine (doy 124) begins the count toward Feast of New Oil.
  */
 const OMER_START_DOY = 26;
-const OMER_END_DOY = OMER_START_DOY + 49; // inclusive day 50 = doy 75
+const SHAVUOT_DOY = 75;
+const NEW_WINE_DOY = 124;
+const NEW_OIL_DOY = 173;
 
 function computeOmer(dayOfYear: number): number | null {
-  if (dayOfYear < OMER_START_DOY || dayOfYear > OMER_END_DOY) return null;
-  return dayOfYear - OMER_START_DOY + 1;
+  if (dayOfYear >= SHAVUOT_DOY && dayOfYear <= NEW_WINE_DOY) {
+    return dayOfYear - SHAVUOT_DOY + 1;
+  }
+  if (dayOfYear > NEW_WINE_DOY && dayOfYear <= NEW_OIL_DOY) {
+    return dayOfYear - NEW_WINE_DOY + 1;
+  }
+  if (dayOfYear >= OMER_START_DOY && dayOfYear < SHAVUOT_DOY) {
+    return dayOfYear - OMER_START_DOY + 1;
+  }
+  return null;
 }
 
 /** Very small "what's next" feast lookup so the dashboard can show context. */
 function nextFeastFor(dayOfYear: number): string {
   if (dayOfYear < 1) return 'New Year';
   if (dayOfYear < 15) return 'Pesach';
-  if (dayOfYear <= OMER_END_DOY) return "Shavu'ot";
+  if (dayOfYear < SHAVUOT_DOY) return "Shavu'ot";
+  if (dayOfYear <= NEW_WINE_DOY) return 'Feast of New Wine';
+  if (dayOfYear <= NEW_OIL_DOY) return 'Feast of New Oil';
   if (dayOfYear < 184) return 'Yom Teruah';
   if (dayOfYear < 191) return 'Yom Kippur';
   if (dayOfYear < 196) return 'Sukkot';

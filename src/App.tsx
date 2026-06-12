@@ -279,11 +279,11 @@ const App = () => (
               } />
               <Route path="/factories" element={<Layout><FactoriesDirectoryPage /></Layout>} />
               <Route path="/factories/:slug" element={<Layout><FactoryDetailPage /></Layout>} />
-              <Route path="/homestead" element={<Layout><TierSeedFlowPage tier="homestead" /></Layout>} />
-              <Route path="/grove" element={<Layout><TierSeedFlowPage tier="grove" /></Layout>} />
-              <Route path="/orchard" element={<Layout><TierSeedFlowPage tier="orchard" /></Layout>} />
-              <Route path="/estate" element={<Layout><TierSeedFlowPage tier="estate" /></Layout>} />
-              <Route path="/harvest-works" element={<Layout><TierSeedFlowPage tier="harvest_works" /></Layout>} />
+              <Route path="/homestead" element={<TierSeedFlowPage tier="homestead" />} />
+              <Route path="/grove" element={<TierSeedFlowPage tier="grove" />} />
+              <Route path="/orchard" element={<TierSeedFlowPage tier="orchard" />} />
+              <Route path="/estate" element={<TierSeedFlowPage tier="estate" />} />
+              <Route path="/harvest-works" element={<TierSeedFlowPage tier="harvest_works" />} />
               <Route path="/live/:seedId/room" element={
                 <ProtectedRoute><RequireVerification><LiveRoomDetailPage /></RequireVerification></ProtectedRoute>
               } />
