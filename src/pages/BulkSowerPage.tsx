@@ -13,12 +13,11 @@ type Sower = {
   id: string;
   slug: string | null;
   display_name: string | null;
-  avatar_url: string | null;
+  logo_url: string | null;
   banner_url: string | null;
   bio: string | null;
   tagline: string | null;
-  verified: boolean | null;
-  follower_count: number | null;
+  is_verified: boolean | null;
 };
 
 const PAGE_SIZE = 24;
