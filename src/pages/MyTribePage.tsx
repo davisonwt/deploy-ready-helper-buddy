@@ -40,27 +40,43 @@ export default function MyTribePage() {
     let cancelled = false;
     (async () => {
       try {
-        const { data: aff } = await supabase
+        const { data: affRows } = await supabase
           .from("affiliates")
-          .select("id, earnings, total_referrals")
+          .select("id, earnings, total_referrals, created_at")
           .eq("user_id", user.id)
-          .maybeSingle();
+          .order("created_at", { ascending: true });
+        const aff = affRows?.[0];
         if (cancelled || !aff) {
           setLoading(false);
           return;
         }
+        const affIds = (affRows || []).map((a) => a.id);
         const { data: refs } = await supabase
           .from("referrals")
           .select("id, referred_id, status, commission_amount, created_at")
-          .eq("referrer_id", aff.id)
+          .in("referrer_id", affIds)
           .order("created_at", { ascending: false });
-        if (cancelled) return;
         const list = refs || [];
-        setTribe(list);
+
+        // Hydrate profiles for each referred user
+        const referredIds = Array.from(new Set(list.map((r: any) => r.referred_id).filter(Boolean)));
+        let profileMap: Record<string, any> = {};
+        if (referredIds.length) {
+          const { data: profs } = await supabase
+            .from("profiles")
+            .select("user_id, first_name, last_name, display_name, avatar_url")
+            .in("user_id", referredIds);
+          (profs || []).forEach((p: any) => { profileMap[p.user_id] = p; });
+        }
+        const enriched = list.map((r: any) => ({ ...r, profile: profileMap[r.referred_id] || null }));
+
+        if (cancelled) return;
+        setTribe(enriched);
+        const totalEarnings = (affRows || []).reduce((sum, a: any) => sum + Number(a.earnings || 0), 0);
         setStats({
           total: list.length || aff.total_referrals || 0,
           completed: list.filter((r: any) => r.status === "completed").length,
-          earnings: Number(aff.earnings || 0),
+          earnings: totalEarnings,
         });
       } catch (err) {
         console.warn("[MyTribePage] load failed:", err);
@@ -70,6 +86,7 @@ export default function MyTribePage() {
     })();
     return () => { cancelled = true; };
   }, [user?.id]);
+
 
   const copy = async (value: string, kind: "code" | "link") => {
     try {
