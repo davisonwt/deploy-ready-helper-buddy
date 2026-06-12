@@ -55,6 +55,7 @@ const CommunicationsHub = lazy(() =>
   })
 );
 const DashboardPage = lazy(() => import("./pages/DashboardPage"));
+const BulkUploadWizardPage = lazy(() => import("./pages/BulkUploadWizardPage"));
 const StatsPage = lazy(() => import("./pages/StatsPage"));
 const ProfilePage = lazy(() => import("./pages/ProfilePage"));
 const BrowseOrchardsPage = lazy(() => import("./pages/BrowseOrchardsPage"));
@@ -226,6 +227,13 @@ const App = () => (
                 <ProtectedRoute>
                   <RequireVerification>
                     <DashboardPage />
+                  </RequireVerification>
+                </ProtectedRoute>
+              } />
+              <Route path="/dashboard/sower/upload" element={
+                <ProtectedRoute>
+                  <RequireVerification>
+                    <Suspense fallback={<LoadingFallback />}><BulkUploadWizardPage /></Suspense>
                   </RequireVerification>
                 </ProtectedRoute>
               } />
