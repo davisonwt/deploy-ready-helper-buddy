@@ -42,7 +42,7 @@ export default function BulkSowerPage() {
       setLoading(true);
       const { data, error } = await supabase
         .from('sowers')
-        .select('id, slug, display_name, avatar_url, banner_url, bio, tagline, verified, follower_count')
+        .select('id, slug, display_name, logo_url, banner_url, bio, tagline, verified, follower_count')
         .eq('slug', slug!)
         .maybeSingle();
       if (cancelled) return;
@@ -82,7 +82,7 @@ export default function BulkSowerPage() {
     const to = from + PAGE_SIZE - 1;
     const { data, error } = await supabase
       .from('products')
-      .select('*, sowers:sower_id (id, display_name, avatar_url, slug, user_id)')
+      .select('*, sowers:sower_id (id, display_name, logo_url, slug, user_id)')
       .eq('sower_id', sower.id)
       .neq('status', 'archived')
       .order('created_at', { ascending: false })
@@ -135,13 +135,13 @@ export default function BulkSowerPage() {
         <Card>
           <CardContent className="p-4 md:p-6 flex flex-col md:flex-row items-start md:items-end gap-4">
             <Avatar className="h-24 w-24 ring-4 ring-background">
-              <AvatarImage src={sower.avatar_url ?? undefined} />
+              <AvatarImage src={sower.logo_url ?? undefined} />
               <AvatarFallback>{sower.display_name?.[0] ?? 'S'}</AvatarFallback>
             </Avatar>
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-2 flex-wrap">
                 <h1 className="text-2xl font-bold">{sower.display_name || 'Sower'}</h1>
-                {sower.verified && <Badge variant="default" className="gap-1"><Star className="h-3 w-3" /> Verified</Badge>}
+                {sower.is_verified && <Badge variant="default" className="gap-1"><Star className="h-3 w-3" /> Verified</Badge>}
                 <Badge variant="secondary">Bulk Sower</Badge>
               </div>
               {sower.tagline && <p className="text-sm text-muted-foreground mt-1">{sower.tagline}</p>}
@@ -170,7 +170,7 @@ export default function BulkSowerPage() {
           </CardContent></Card>
           <Card><CardContent className="p-4 text-center">
             <Users className="h-5 w-5 mx-auto text-primary mb-1" />
-            <div className="text-2xl font-bold">{sower.follower_count ?? 0}</div>
+            <div className="text-2xl font-bold">0</div>
             <div className="text-xs text-muted-foreground">Followers</div>
           </CardContent></Card>
         </div>
