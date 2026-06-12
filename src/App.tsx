@@ -229,6 +229,13 @@ const App = () => (
                   </RequireVerification>
                 </ProtectedRoute>
               } />
+              <Route path="/dashboard/sower/upload" element={
+                <ProtectedRoute>
+                  <RequireVerification>
+                    <Suspense fallback={<LoadingFallback />}><BulkUploadWizardPage /></Suspense>
+                  </RequireVerification>
+                </ProtectedRoute>
+              } />
               <Route path="/stats" element={
                 <ProtectedRoute><RequireVerification><StatsPage /></RequireVerification></ProtectedRoute>
               } />
