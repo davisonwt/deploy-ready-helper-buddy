@@ -28,6 +28,13 @@ interface SeedRow {
   image_urls: string[] | null;
   price: number | null;
   company_id: string | null;
+  sower_id: string | null;
+}
+
+interface SowerGroup {
+  id: string;
+  name: string;
+  avatar_url: string | null;
 }
 
 export default function TierSeedFlowPage({ tier }: Props) {
