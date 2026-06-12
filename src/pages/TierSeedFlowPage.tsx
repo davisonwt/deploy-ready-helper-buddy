@@ -89,13 +89,24 @@ export default function TierSeedFlowPage({ tier }: Props) {
         if (sowerIds.length > 0) {
           const { data: profileRows } = await supabase
             .from('profiles')
-            .select('id, display_name, full_name, username, avatar_url')
-            .in('id', sowerIds);
-          sowerGroups = (profileRows || []).map((p: any) => ({
-            id: p.id,
-            name: p.display_name || p.full_name || p.username || 'Sower',
-            avatar_url: p.avatar_url || null,
-          }));
+            .select('user_id, display_name, first_name, last_name, username, avatar_url')
+            .in('user_id', sowerIds);
+          const found = new Map<string, SowerGroup>();
+          (profileRows || []).forEach((p: any) => {
+            found.set(p.user_id, {
+              id: p.user_id,
+              name:
+                p.display_name ||
+                [p.first_name, p.last_name].filter(Boolean).join(' ') ||
+                p.username ||
+                'Sower',
+              avatar_url: p.avatar_url || null,
+            });
+          });
+          // Include sowers even if their profile row is missing so seeds still surface
+          sowerGroups = sowerIds.map(
+            (sid) => found.get(sid) || { id: sid, name: 'Sower', avatar_url: null }
+          );
         }
       }
 
