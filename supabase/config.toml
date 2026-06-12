@@ -118,3 +118,6 @@ verify_jwt = true
 
 [functions.companion-entitlements]
 verify_jwt = true
+
+[functions.bulk-parse-products]
+verify_jwt = true
