@@ -508,7 +508,7 @@ function ImagesStep({
         <div className="text-sm text-muted-foreground">{totalWithImages} / {rows.length} have images</div>
         <div className="flex gap-2">
           <Button variant="outline" onClick={onBack}>Back</Button>
-          <Button disabled title="Review &amp; publish — coming in next step">
+          <Button onClick={onContinue}>
             Continue → Review &amp; publish <ChevronRight className="h-4 w-4 ml-1" />
           </Button>
         </div>
