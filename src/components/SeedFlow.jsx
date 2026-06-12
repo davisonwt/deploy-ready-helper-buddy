@@ -1,4 +1,5 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
+import { supabase } from '@/integrations/supabase/client';
 
 const CYCLE = 360;
 const PHASE_LEFT = 140;
@@ -26,12 +27,37 @@ export default function SeedFlow({
   height = 40,
   seedCount = 36,
   zIndex = 50,
+  showAds = true,
   style: extraStyle = {},
 }) {
   const canvasRef = useRef(null);
   const seedsRef  = useRef(null);
   const rafRef    = useRef(null);
   const frameRef  = useRef(0);
+  const [ads, setAds] = useState([]);
+  const [adTick, setAdTick] = useState(0);
+
+  useEffect(() => {
+    if (!showAds) return;
+    let alive = true;
+    (async () => {
+      const { data } = await supabase
+        .from('companies')
+        .select('id, slug, name, logo_url')
+        .eq('is_verified', true)
+        .eq('ads_enabled', true)
+        .not('logo_url', 'is', null)
+        .limit(40);
+      if (alive && data) setAds(data);
+    })();
+    return () => { alive = false; };
+  }, [showAds]);
+
+  useEffect(() => {
+    if (!showAds || ads.length === 0) return;
+    const id = setInterval(() => setAdTick((t) => t + 1), 200);
+    return () => clearInterval(id);
+  }, [showAds, ads.length]);
 
   useEffect(() => {
     seedsRef.current = createSeeds(seedCount);
@@ -175,6 +201,59 @@ export default function SeedFlow({
       ...extraStyle,
     }}>
       <canvas ref={canvasRef} style={{ display: 'block', width: '100%', height: '100%' }} />
+      {showAds && ads.length > 0 && (() => {
+        const slots = Math.min(4, ads.length);
+        const visible = [];
+        for (let i = 0; i < slots; i++) {
+          visible.push(ads[(adTick * 1 + i * 7) % ads.length]);
+        }
+        const size = Math.max(22, Math.min(34, height - 8));
+        const cycleSec = 22;
+        const now = Date.now() / 1000;
+        return visible.map((c, i) => {
+          const phase = (now / cycleSec + i / slots) % 1;
+          const left = `${(phase * 110 - 5).toFixed(2)}%`;
+          const top = (height - size) / 2;
+          return (
+            <a
+              key={`${c.id}-${i}`}
+              href={`/factories/${c.slug}`}
+              title={c.name}
+              style={{
+                position: 'absolute',
+                left,
+                top,
+                width: size,
+                height: size,
+                borderRadius: '50%',
+                overflow: 'hidden',
+                border: '1.5px solid rgba(234,179,8,0.55)',
+                boxShadow: '0 0 12px rgba(234,179,8,0.35)',
+                background: '#0b1220',
+                pointerEvents: 'auto',
+                transition: 'transform 200ms ease, box-shadow 200ms ease',
+                transform: 'translateZ(0)',
+                display: 'block',
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.transform = 'scale(1.18)';
+                e.currentTarget.style.boxShadow = '0 0 18px rgba(234,179,8,0.75)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.transform = 'scale(1)';
+                e.currentTarget.style.boxShadow = '0 0 12px rgba(234,179,8,0.35)';
+              }}
+            >
+              <img
+                src={c.logo_url}
+                alt={c.name}
+                style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
+                loading="lazy"
+              />
+            </a>
+          );
+        });
+      })()}
     </div>
   );
 }
