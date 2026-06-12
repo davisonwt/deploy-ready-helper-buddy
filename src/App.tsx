@@ -59,6 +59,8 @@ const BulkUploadWizardPage = lazy(() => import("./pages/BulkUploadWizardPage"));
 const BulkSowerPage = lazy(() => import("./pages/BulkSowerPage"));
 const BulkSeedFeedPage = lazy(() => import("./pages/BulkSeedFeedPage"));
 const BulkProductDetailPage = lazy(() => import("./pages/BulkProductDetailPage"));
+const BulkDirectoryPage = lazy(() => import("./pages/BulkDirectoryPage"));
+const BulkWhispererDashboardPage = lazy(() => import("./pages/BulkWhispererDashboardPage"));
 const StatsPage = lazy(() => import("./pages/StatsPage"));
 const ProfilePage = lazy(() => import("./pages/ProfilePage"));
 const BrowseOrchardsPage = lazy(() => import("./pages/BrowseOrchardsPage"));
@@ -246,9 +248,17 @@ const App = () => (
               <Route path="/bulk/sower/:slug/feed" element={
                 <Suspense fallback={<LoadingFallback />}><BulkSeedFeedPage /></Suspense>
               } />
-              <Route path="/bulk/products/:slug" element={
-                <Suspense fallback={<LoadingFallback />}><BulkProductDetailPage /></Suspense>
-              } />
+               <Route path="/bulk/products/:slug" element={
+                 <Suspense fallback={<LoadingFallback />}><BulkProductDetailPage /></Suspense>
+               } />
+               <Route path="/bulk/directory" element={
+                 <Suspense fallback={<LoadingFallback />}><BulkDirectoryPage /></Suspense>
+               } />
+               <Route path="/bulk/whisperer" element={
+                 <ProtectedRoute>
+                   <Suspense fallback={<LoadingFallback />}><BulkWhispererDashboardPage /></Suspense>
+                 </ProtectedRoute>
+               } />
               <Route path="/stats" element={
                 <ProtectedRoute><RequireVerification><StatsPage /></RequireVerification></ProtectedRoute>
               } />
