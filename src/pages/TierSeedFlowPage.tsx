@@ -29,12 +29,15 @@ interface SeedRow {
   price: number | null;
   company_id: string | null;
   sower_id: string | null;
+  type: string | null;
+  category: string | null;
 }
 
 interface SowerGroup {
   id: string;
   name: string;
   avatar_url: string | null;
+  slug: string | null;
 }
 
 export default function TierSeedFlowPage({ tier }: Props) {
