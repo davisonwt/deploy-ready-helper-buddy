@@ -2257,6 +2257,57 @@ export type Database = {
           },
         ]
       }
+      companies: {
+        Row: {
+          about: string | null
+          ads_enabled: boolean
+          banner_url: string | null
+          created_at: string
+          id: string
+          is_factory: boolean
+          is_verified: boolean
+          logo_url: string | null
+          name: string
+          owner_user_id: string
+          slug: string
+          tagline: string | null
+          updated_at: string
+          website: string | null
+        }
+        Insert: {
+          about?: string | null
+          ads_enabled?: boolean
+          banner_url?: string | null
+          created_at?: string
+          id?: string
+          is_factory?: boolean
+          is_verified?: boolean
+          logo_url?: string | null
+          name: string
+          owner_user_id: string
+          slug: string
+          tagline?: string | null
+          updated_at?: string
+          website?: string | null
+        }
+        Update: {
+          about?: string | null
+          ads_enabled?: boolean
+          banner_url?: string | null
+          created_at?: string
+          id?: string
+          is_factory?: boolean
+          is_verified?: boolean
+          logo_url?: string | null
+          name?: string
+          owner_user_id?: string
+          slug?: string
+          tagline?: string | null
+          updated_at?: string
+          website?: string | null
+        }
+        Relationships: []
+      }
       content_flags: {
         Row: {
           ai_confidence: number | null
@@ -5769,6 +5820,7 @@ export type Database = {
           bulk_upload_id: string | null
           category: string | null
           commission_fixed: number | null
+          company_id: string | null
           cover_image_url: string | null
           created_at: string | null
           delivery_type: string | null
@@ -5807,6 +5859,7 @@ export type Database = {
           bulk_upload_id?: string | null
           category?: string | null
           commission_fixed?: number | null
+          company_id?: string | null
           cover_image_url?: string | null
           created_at?: string | null
           delivery_type?: string | null
@@ -5845,6 +5898,7 @@ export type Database = {
           bulk_upload_id?: string | null
           category?: string | null
           commission_fixed?: number | null
+          company_id?: string | null
           cover_image_url?: string | null
           created_at?: string | null
           delivery_type?: string | null
@@ -5878,6 +5932,13 @@ export type Database = {
           whisperer_commission_percent?: number | null
         }
         Relationships: [
+          {
+            foreignKeyName: "products_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "products_sower_id_fkey"
             columns: ["sower_id"]
