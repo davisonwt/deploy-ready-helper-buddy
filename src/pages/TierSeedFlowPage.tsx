@@ -28,6 +28,13 @@ interface SeedRow {
   image_urls: string[] | null;
   price: number | null;
   company_id: string | null;
+  sower_id: string | null;
+}
+
+interface SowerGroup {
+  id: string;
+  name: string;
+  avatar_url: string | null;
 }
 
 export default function TierSeedFlowPage({ tier }: Props) {
@@ -35,6 +42,7 @@ export default function TierSeedFlowPage({ tier }: Props) {
   const cfg = TIER_BY_ID[tier];
   const [companies, setCompanies] = useState<CompanyRow[]>([]);
   const [seeds, setSeeds] = useState<SeedRow[]>([]);
+  const [sowers, setSowers] = useState<SowerGroup[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -54,17 +62,48 @@ export default function TierSeedFlowPage({ tier }: Props) {
       setCompanies(list);
 
       const ids = list.map((c) => c.id);
-      if (ids.length > 0) {
-        const { data: productRows } = await supabase
+      const companyProducts = ids.length > 0
+        ? (await supabase
+            .from('products')
+            .select('id, title, cover_image_url, image_urls, price, company_id, sower_id')
+            .in('company_id', ids)
+            .limit(60)).data as SeedRow[] | null
+        : [];
+
+      let individualSeeds: SeedRow[] = [];
+      let sowerGroups: SowerGroup[] = [];
+
+      // Homestead = individual sowers (no company yet). Show every solo-sown seed here.
+      if (tier === 'homestead') {
+        const { data: soloRows } = await supabase
           .from('products')
-          .select('id, title, cover_image_url, image_urls, price, company_id')
-          .in('company_id', ids)
-          .limit(60);
-        if (alive) setSeeds((productRows as SeedRow[]) || []);
-      } else {
-        setSeeds([]);
+          .select('id, title, cover_image_url, image_urls, price, company_id, sower_id')
+          .is('company_id', null)
+          .not('sower_id', 'is', null)
+          .limit(200);
+        individualSeeds = (soloRows as SeedRow[]) || [];
+
+        const sowerIds = Array.from(
+          new Set(individualSeeds.map((s) => s.sower_id).filter(Boolean) as string[])
+        );
+        if (sowerIds.length > 0) {
+          const { data: profileRows } = await supabase
+            .from('profiles')
+            .select('id, display_name, full_name, username, avatar_url')
+            .in('id', sowerIds);
+          sowerGroups = (profileRows || []).map((p: any) => ({
+            id: p.id,
+            name: p.display_name || p.full_name || p.username || 'Sower',
+            avatar_url: p.avatar_url || null,
+          }));
+        }
       }
-      if (alive) setLoading(false);
+
+      if (alive) {
+        setSeeds([...(companyProducts || []), ...individualSeeds]);
+        setSowers(sowerGroups);
+        setLoading(false);
+      }
     })();
     return () => {
       alive = false;
@@ -81,6 +120,19 @@ export default function TierSeedFlowPage({ tier }: Props) {
     }
     return map;
   }, [seeds]);
+
+  const seedsBySower = useMemo(() => {
+    const map = new Map<string, SeedRow[]>();
+    for (const s of seeds) {
+      if (s.company_id || !s.sower_id) continue;
+      const arr = map.get(s.sower_id) || [];
+      arr.push(s);
+      map.set(s.sower_id, arr);
+    }
+    return map;
+  }, [seeds]);
+
+  const hasAny = companies.length > 0 || sowers.length > 0;
 
   return (
     <main className="min-h-screen bg-background text-foreground relative">
@@ -142,7 +194,7 @@ export default function TierSeedFlowPage({ tier }: Props) {
       <section className="container max-w-6xl mx-auto px-4 py-8">
         {loading ? (
           <div className="text-sm text-muted-foreground">Loading {cfg.label} sowers…</div>
-        ) : companies.length === 0 ? (
+        ) : !hasAny ? (
           <div className="rounded-xl border border-dashed border-border p-8 text-center">
             <div className="text-3xl mb-2">{cfg.emoji}</div>
             <h2 className="font-semibold mb-1">No {cfg.label} sowers yet</h2>
@@ -221,6 +273,68 @@ export default function TierSeedFlowPage({ tier }: Props) {
                       ))}
                     </div>
                   )}
+                </article>
+              );
+            })}
+
+            {sowers.map((p) => {
+              const list = seedsBySower.get(p.id) || [];
+              if (list.length === 0) return null;
+              return (
+                <article
+                  key={`sower-${p.id}`}
+                  className="rounded-2xl border border-border bg-card overflow-hidden"
+                  style={{ borderColor: `${cfg.accent}33` }}
+                >
+                  <header className="flex items-center gap-3 p-4 border-b border-border">
+                    <div className="h-12 w-12 rounded-full bg-background border border-border overflow-hidden flex items-center justify-center shrink-0">
+                      {p.avatar_url ? (
+                        <img src={p.avatar_url} alt={p.name} className="h-full w-full object-cover" />
+                      ) : (
+                        <span className="text-lg">{cfg.emoji}</span>
+                      )}
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <h2 className="font-semibold truncate">{p.name}</h2>
+                      <p className="text-xs text-muted-foreground truncate">Individual sower · {list.length} seed{list.length === 1 ? '' : 's'}</p>
+                    </div>
+                    <Link
+                      to={`/sower/${p.id}`}
+                      className="text-xs px-3 py-1.5 rounded-lg border border-border hover:border-primary/60 hover:text-primary transition-colors"
+                    >
+                      Visit page →
+                    </Link>
+                  </header>
+
+                  <div className="p-4 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+                    {list.slice(0, 8).map((s) => (
+                      <Link
+                        key={s.id}
+                        to={`/seed/${s.id}`}
+                        className="rounded-lg overflow-hidden border border-border bg-background hover:border-primary/60 transition-colors"
+                      >
+                        <div
+                          className="aspect-square bg-muted"
+                          style={{
+                            backgroundImage: (() => {
+                              const img = s.cover_image_url || (s.image_urls && s.image_urls[0]);
+                              return img ? `url(${img})` : undefined;
+                            })(),
+                            backgroundSize: 'cover',
+                            backgroundPosition: 'center',
+                          }}
+                        />
+                        <div className="p-2">
+                          <div className="text-xs font-medium truncate">{s.title}</div>
+                          {s.price != null && (
+                            <div className="text-[11px] text-muted-foreground">
+                              ${Number(s.price).toFixed(2)}
+                            </div>
+                          )}
+                        </div>
+                      </Link>
+                    ))}
+                  </div>
                 </article>
               );
             })}
