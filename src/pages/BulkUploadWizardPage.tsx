@@ -9,6 +9,8 @@ import { Progress } from '@/components/ui/progress';
 import { useToast } from '@/hooks/use-toast';
 import { Upload, FileSpreadsheet, FileText, AlertCircle, CheckCircle2, ArrowLeft, Sprout, ImagePlus, X, Star, GripVertical, ChevronRight } from 'lucide-react';
 
+type ProductImage = { url: string; path: string };
+
 type ParsedRow = {
   idx: number;
   raw: Record<string, unknown>;
@@ -23,16 +25,19 @@ type ParsedRow = {
     stock_qty?: number;
   };
   issues: string[];
+  images?: ProductImage[];
 };
 
 type Summary = { total: number; valid: number; with_issues: number; lower_accuracy: boolean };
 
 const ACCEPT = '.csv,.xlsx,.xls,.txt,.pdf,.docx';
+const MAX_IMAGES = 5;
+const IMG_BUCKET = 'orchard-images';
 
 export default function BulkUploadWizardPage() {
   const navigate = useNavigate();
   const { toast } = useToast();
-  const [step, setStep] = useState<1 | 2>(1);
+  const [step, setStep] = useState<1 | 2 | 3>(1);
   const [file, setFile] = useState<File | null>(null);
   const [parsing, setParsing] = useState(false);
   const [progress, setProgress] = useState(0);
