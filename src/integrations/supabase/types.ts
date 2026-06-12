@@ -2271,6 +2271,7 @@ export type Database = {
           owner_user_id: string
           slug: string
           tagline: string | null
+          tier: Database["public"]["Enums"]["company_tier"]
           updated_at: string
           website: string | null
         }
@@ -2287,6 +2288,7 @@ export type Database = {
           owner_user_id: string
           slug: string
           tagline?: string | null
+          tier?: Database["public"]["Enums"]["company_tier"]
           updated_at?: string
           website?: string | null
         }
@@ -2303,6 +2305,7 @@ export type Database = {
           owner_user_id?: string
           slug?: string
           tagline?: string | null
+          tier?: Database["public"]["Enums"]["company_tier"]
           updated_at?: string
           website?: string | null
         }
@@ -13300,6 +13303,12 @@ export type Database = {
         | "verification"
         | "system"
         | "payment"
+      company_tier:
+        | "homestead"
+        | "grove"
+        | "orchard"
+        | "estate"
+        | "harvest_works"
       dj_role: "dj" | "program_director" | "station_manager" | "ai_host"
       file_type: "image" | "video" | "document" | "audio"
       hearts_gender: "male" | "female"
@@ -13531,6 +13540,13 @@ export const Constants = {
         "verification",
         "system",
         "payment",
+      ],
+      company_tier: [
+        "homestead",
+        "grove",
+        "orchard",
+        "estate",
+        "harvest_works",
       ],
       dj_role: ["dj", "program_director", "station_manager", "ai_host"],
       file_type: ["image", "video", "document", "audio"],
