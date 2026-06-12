@@ -40,6 +40,12 @@ interface SowerGroup {
   slug: string | null;
 }
 
+const normalizeSongTitle = (title: string | null | undefined) =>
+  (title || '')
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, ' ')
+    .trim();
+
 export default function TierSeedFlowPage({ tier }: Props) {
   const navigate = useNavigate();
   const cfg = TIER_BY_ID[tier];
@@ -78,13 +84,27 @@ export default function TierSeedFlowPage({ tier }: Props) {
 
       // Homestead = individual sowers (no company yet). Show every solo-sown seed here.
       if (tier === 'homestead') {
+        const { data: djCoverRows } = await supabase
+          .from('dj_music_tracks')
+          .select('track_title, cover_image_url')
+          .not('cover_image_url', 'is', null);
+        const generatedCoverByTitle = new Map<string, string>();
+        (djCoverRows || []).forEach((track: any) => {
+          const key = normalizeSongTitle(track.track_title);
+          if (key && track.cover_image_url) generatedCoverByTitle.set(key, track.cover_image_url);
+        });
+
         const { data: soloRows } = await supabase
           .from('products')
           .select('id, title, cover_image_url, image_urls, price, company_id, sower_id, type, category')
           .is('company_id', null)
           .not('sower_id', 'is', null)
           .limit(500);
-        individualSeeds = (soloRows as SeedRow[]) || [];
+        individualSeeds = ((soloRows as SeedRow[]) || []).map((seed) => {
+          if ((seed.type || '').toLowerCase() !== 'music') return seed;
+          const generatedCover = generatedCoverByTitle.get(normalizeSongTitle(seed.title));
+          return generatedCover ? { ...seed, cover_image_url: generatedCover } : seed;
+        });
 
         // Pull every sower so we can include orchard-only sowers + map user_id -> sower id
         const { data: allSowerRows } = await supabase
