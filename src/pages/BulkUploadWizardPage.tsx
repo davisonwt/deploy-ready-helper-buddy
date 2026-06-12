@@ -194,9 +194,28 @@ export default function BulkUploadWizardPage() {
         sowerId={sowerId}
         jobId={jobId}
         onBack={() => setStep(2)}
+        onContinue={() => setStep(4)}
         onUpdate={(idx, images) => setRows((prev) => prev.map((r) => r.idx === idx ? { ...r, images } : r))}
       />
     );
+  }
+
+  // ---------- Step 4: Review & publish ----------
+  if (step === 4) {
+    return (
+      <PublishStep
+        rows={rows}
+        sowerId={sowerId}
+        jobId={jobId}
+        onBack={() => setStep(3)}
+        onPublished={(count) => { setPublishedCount(count); setStep(5); }}
+      />
+    );
+  }
+
+  // ---------- Step 5: Success ----------
+  if (step === 5) {
+    return <SuccessStep count={publishedCount} sowerId={sowerId} onDone={() => navigate('/dashboard')} />;
   }
 
   // ---------- Step 2: Review table ----------
