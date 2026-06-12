@@ -24,7 +24,8 @@ interface CompanyRow {
 interface SeedRow {
   id: string;
   title: string;
-  image_url: string | null;
+  cover_image_url: string | null;
+  image_urls: string[] | null;
   price: number | null;
   company_id: string | null;
 }
@@ -55,7 +56,7 @@ export default function TierSeedFlowPage({ tier }: Props) {
       if (ids.length > 0) {
         const { data: productRows } = await supabase
           .from('products')
-          .select('id, title, image_url, price, company_id')
+          .select('id, title, cover_image_url, image_urls, price, company_id')
           .in('company_id', ids)
           .limit(60);
         if (alive) setSeeds((productRows as SeedRow[]) || []);
