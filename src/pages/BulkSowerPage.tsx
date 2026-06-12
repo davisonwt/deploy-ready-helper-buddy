@@ -42,7 +42,7 @@ export default function BulkSowerPage() {
       setLoading(true);
       const { data, error } = await supabase
         .from('sowers')
-        .select('id, slug, display_name, logo_url, banner_url, bio, tagline, verified, follower_count')
+        .select('id, slug, display_name, logo_url, banner_url, bio, tagline, is_verified')
         .eq('slug', slug!)
         .maybeSingle();
       if (cancelled) return;
