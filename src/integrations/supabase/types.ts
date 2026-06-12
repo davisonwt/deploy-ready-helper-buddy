@@ -12980,6 +12980,10 @@ export type Database = {
         Returns: boolean
       }
       is_admin_or_gosat: { Args: { _user_id: string }; Returns: boolean }
+      is_chat_room_participant: {
+        Args: { _room_id: string; _user_id: string }
+        Returns: boolean
+      }
       is_council_member: { Args: { _user_id: string }; Returns: boolean }
       is_marketplace_admin: { Args: { _uid: string }; Returns: boolean }
       is_member_of_chat: {
