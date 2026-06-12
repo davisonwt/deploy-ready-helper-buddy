@@ -42,6 +42,7 @@ export default function TierSeedFlowPage({ tier }: Props) {
   const cfg = TIER_BY_ID[tier];
   const [companies, setCompanies] = useState<CompanyRow[]>([]);
   const [seeds, setSeeds] = useState<SeedRow[]>([]);
+  const [sowers, setSowers] = useState<SowerGroup[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -61,17 +62,48 @@ export default function TierSeedFlowPage({ tier }: Props) {
       setCompanies(list);
 
       const ids = list.map((c) => c.id);
-      if (ids.length > 0) {
-        const { data: productRows } = await supabase
+      const companyProducts = ids.length > 0
+        ? (await supabase
+            .from('products')
+            .select('id, title, cover_image_url, image_urls, price, company_id, sower_id')
+            .in('company_id', ids)
+            .limit(60)).data as SeedRow[] | null
+        : [];
+
+      let individualSeeds: SeedRow[] = [];
+      let sowerGroups: SowerGroup[] = [];
+
+      // Homestead = individual sowers (no company yet). Show every solo-sown seed here.
+      if (tier === 'homestead') {
+        const { data: soloRows } = await supabase
           .from('products')
-          .select('id, title, cover_image_url, image_urls, price, company_id')
-          .in('company_id', ids)
-          .limit(60);
-        if (alive) setSeeds((productRows as SeedRow[]) || []);
-      } else {
-        setSeeds([]);
+          .select('id, title, cover_image_url, image_urls, price, company_id, sower_id')
+          .is('company_id', null)
+          .not('sower_id', 'is', null)
+          .limit(200);
+        individualSeeds = (soloRows as SeedRow[]) || [];
+
+        const sowerIds = Array.from(
+          new Set(individualSeeds.map((s) => s.sower_id).filter(Boolean) as string[])
+        );
+        if (sowerIds.length > 0) {
+          const { data: profileRows } = await supabase
+            .from('profiles')
+            .select('id, display_name, full_name, username, avatar_url')
+            .in('id', sowerIds);
+          sowerGroups = (profileRows || []).map((p: any) => ({
+            id: p.id,
+            name: p.display_name || p.full_name || p.username || 'Sower',
+            avatar_url: p.avatar_url || null,
+          }));
+        }
       }
-      if (alive) setLoading(false);
+
+      if (alive) {
+        setSeeds([...(companyProducts || []), ...individualSeeds]);
+        setSowers(sowerGroups);
+        setLoading(false);
+      }
     })();
     return () => {
       alive = false;
@@ -88,6 +120,19 @@ export default function TierSeedFlowPage({ tier }: Props) {
     }
     return map;
   }, [seeds]);
+
+  const seedsBySower = useMemo(() => {
+    const map = new Map<string, SeedRow[]>();
+    for (const s of seeds) {
+      if (s.company_id || !s.sower_id) continue;
+      const arr = map.get(s.sower_id) || [];
+      arr.push(s);
+      map.set(s.sower_id, arr);
+    }
+    return map;
+  }, [seeds]);
+
+  const hasAny = companies.length > 0 || sowers.length > 0;
 
   return (
     <main className="min-h-screen bg-background text-foreground relative">
