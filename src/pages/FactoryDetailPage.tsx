@@ -21,8 +21,8 @@ type Product = {
   slug: string | null;
   title: string;
   price: number | null;
-  currency: string | null;
-  image_url: string | null;
+  cover_image_url: string | null;
+  image_urls: string[] | null;
 };
 
 export default function FactoryDetailPage() {
@@ -45,7 +45,7 @@ export default function FactoryDetailPage() {
         document.title = `${c.name} — Sow2Grow`;
         const { data: p } = await supabase
           .from("products")
-          .select("id, slug, title, price, currency, image_url")
+          .select("id, slug, title, price, cover_image_url, image_urls")
           .eq("company_id", c.id)
           .neq("status", "archived")
           .order("created_at", { ascending: false })
@@ -131,15 +131,15 @@ export default function FactoryDetailPage() {
                   className="rounded-xl overflow-hidden border border-border bg-card hover:border-primary/60 transition-colors"
                 >
                   <div className="aspect-square bg-muted">
-                    {p.image_url && (
-                      <img src={p.image_url} alt={p.title} className="h-full w-full object-cover" />
+                    {(p.cover_image_url || p.image_urls?.[0]) && (
+                      <img src={p.cover_image_url || p.image_urls![0]} alt={p.title} className="h-full w-full object-cover" />
                     )}
                   </div>
                   <div className="p-2">
                     <div className="text-xs font-medium truncate">{p.title}</div>
                     {p.price != null && (
                       <div className="text-[11px] text-muted-foreground mt-0.5">
-                        {p.currency || "USDC"} {Number(p.price).toFixed(2)}
+                        USDC {Number(p.price).toFixed(2)}
                       </div>
                     )}
                   </div>
