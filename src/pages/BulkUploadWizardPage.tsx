@@ -267,9 +267,13 @@ export default function BulkUploadWizardPage() {
         </div>
         <div className="flex gap-2">
           <Button variant="outline" disabled>Save as draft</Button>
-          <Button disabled>Continue → Images (next step)</Button>
+          <Button onClick={() => setStep(3)} disabled={rows.length === 0}>
+            Continue → Images <ChevronRight className="h-4 w-4 ml-1" />
+          </Button>
         </div>
       </div>
     </div>
   );
+
+  // ----- end render guard (TS exhaustiveness) -----
 }
