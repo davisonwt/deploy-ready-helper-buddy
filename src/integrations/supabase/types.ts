@@ -1118,6 +1118,71 @@ export type Database = {
           },
         ]
       }
+      bulk_upload_jobs: {
+        Row: {
+          created_at: string
+          error_rows: number
+          file_name: string | null
+          file_size_bytes: number | null
+          file_type: string | null
+          id: string
+          parse_error: string | null
+          parsed_rows: Json
+          published_count: number
+          scheduled_at: string | null
+          sower_id: string | null
+          status: string
+          total_rows: number
+          updated_at: string
+          user_id: string
+          valid_rows: number
+        }
+        Insert: {
+          created_at?: string
+          error_rows?: number
+          file_name?: string | null
+          file_size_bytes?: number | null
+          file_type?: string | null
+          id?: string
+          parse_error?: string | null
+          parsed_rows?: Json
+          published_count?: number
+          scheduled_at?: string | null
+          sower_id?: string | null
+          status?: string
+          total_rows?: number
+          updated_at?: string
+          user_id: string
+          valid_rows?: number
+        }
+        Update: {
+          created_at?: string
+          error_rows?: number
+          file_name?: string | null
+          file_size_bytes?: number | null
+          file_type?: string | null
+          id?: string
+          parse_error?: string | null
+          parsed_rows?: Json
+          published_count?: number
+          scheduled_at?: string | null
+          sower_id?: string | null
+          status?: string
+          total_rows?: number
+          updated_at?: string
+          user_id?: string
+          valid_rows?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bulk_upload_jobs_sower_id_fkey"
+            columns: ["sower_id"]
+            isOneToOne: false
+            referencedRelation: "sowers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       call_sessions: {
         Row: {
           accepted_at: string | null
@@ -5549,6 +5614,41 @@ export type Database = {
           },
         ]
       }
+      product_images: {
+        Row: {
+          created_at: string
+          id: string
+          is_primary: boolean
+          product_id: string
+          sort_order: number
+          url: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_primary?: boolean
+          product_id: string
+          sort_order?: number
+          url: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_primary?: boolean
+          product_id?: string
+          sort_order?: number
+          url?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "product_images_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       product_likes: {
         Row: {
           created_at: string
@@ -5666,7 +5766,9 @@ export type Database = {
         Row: {
           artist_name: string | null
           bestowal_count: number | null
+          bulk_upload_id: string | null
           category: string | null
+          commission_fixed: number | null
           cover_image_url: string | null
           created_at: string | null
           delivery_type: string | null
@@ -5687,8 +5789,11 @@ export type Database = {
           music_mood: string | null
           play_count: number | null
           price: number | null
+          sku: string | null
+          slug: string | null
           sower_id: string | null
           status: string | null
+          stock_qty: number | null
           tags: string[] | null
           title: string
           type: string | null
@@ -5699,7 +5804,9 @@ export type Database = {
         Insert: {
           artist_name?: string | null
           bestowal_count?: number | null
+          bulk_upload_id?: string | null
           category?: string | null
+          commission_fixed?: number | null
           cover_image_url?: string | null
           created_at?: string | null
           delivery_type?: string | null
@@ -5720,8 +5827,11 @@ export type Database = {
           music_mood?: string | null
           play_count?: number | null
           price?: number | null
+          sku?: string | null
+          slug?: string | null
           sower_id?: string | null
           status?: string | null
+          stock_qty?: number | null
           tags?: string[] | null
           title: string
           type?: string | null
@@ -5732,7 +5842,9 @@ export type Database = {
         Update: {
           artist_name?: string | null
           bestowal_count?: number | null
+          bulk_upload_id?: string | null
           category?: string | null
+          commission_fixed?: number | null
           cover_image_url?: string | null
           created_at?: string | null
           delivery_type?: string | null
@@ -5753,8 +5865,11 @@ export type Database = {
           music_mood?: string | null
           play_count?: number | null
           price?: number | null
+          sku?: string | null
+          slug?: string | null
           sower_id?: string | null
           status?: string | null
+          stock_qty?: number | null
           tags?: string[] | null
           title?: string
           type?: string | null
@@ -9382,34 +9497,43 @@ export type Database = {
       }
       sowers: {
         Row: {
+          banner_url: string | null
           bio: string | null
           created_at: string | null
           display_name: string
           id: string
           is_verified: boolean | null
           logo_url: string | null
+          slug: string | null
+          tagline: string | null
           updated_at: string | null
           user_id: string | null
           wallet_address: string | null
         }
         Insert: {
+          banner_url?: string | null
           bio?: string | null
           created_at?: string | null
           display_name: string
           id?: string
           is_verified?: boolean | null
           logo_url?: string | null
+          slug?: string | null
+          tagline?: string | null
           updated_at?: string | null
           user_id?: string | null
           wallet_address?: string | null
         }
         Update: {
+          banner_url?: string | null
           bio?: string | null
           created_at?: string | null
           display_name?: string
           id?: string
           is_verified?: boolean | null
           logo_url?: string | null
+          slug?: string | null
+          tagline?: string | null
           updated_at?: string | null
           user_id?: string | null
           wallet_address?: string | null
@@ -12911,6 +13035,7 @@ export type Database = {
         Args: { _marked_core: boolean; _sessions: number; _total: number }
         Returns: string
       }
+      s2g_slugify: { Args: { _input: string }; Returns: string }
       search_user_profiles: {
         Args: { search_term: string }
         Returns: {

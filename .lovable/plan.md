@@ -1,89 +1,188 @@
-# Plan — Live Rooms 2.0 + Dashboard / Sower fixes
+# Bulk Product Uploader — Build Plan
 
-Big batch of related fixes. Grouped by area, in order.
-
-## 1. Bugfix — sower names showing as "Sower" (image 3)
-
-Wherever a seed is rendered (dashboard "MY SEEDS", Living Seed cards, Live placeholder), we currently fall back to the literal string `"Sower"` when no name is found. Resolve the real name from the same source we already use elsewhere:
-- `profiles.display_name` → `profiles.first_name + last_name` → `profiles.username` → email prefix → "Sower"
-
-Apply in:
-- `src/components/garden/LivingSeedCard.tsx`
-- `src/pages/DashboardPage.jsx` (MY SEEDS section)
-- new live placeholder card (see §3)
-
-## 2. Bugfix — user can't see their own seeds on dashboard (image 2)
-
-Inspect the dashboard query that powers "MY SEEDS / your own". The dashboard currently shows "No orchards yet — your own + bestowed will live here." even when the user has seeds. Likely an RLS or `user_id` filter mismatch (e.g. filtering on `seed.owner_id` while data is `seed.sower_id`, or query returning bestowed-only rows). Fix the query and add a visible empty-state distinction between "no seeds planted" and "no bestowals yet".
-
-## 3. Live notifications across Dashboard + Tribal Feeds
-
-Today `useTribalLiveOrchard` already tracks who is live globally via Supabase presence on `tribal-orchard:global`. We will surface this:
-
-**a. Dashboard** — new `<LiveNowStrip />` near the top of `DashboardPage`, hidden when no one is live. Each card:
-  - Seed image / product cover
-  - LIVE pulse badge
-  - Host avatar + real name
-  - "Join the Live" button → opens `LiveStageOverlay` as guest
-
-**b. Tribal Feeds (`TribalAliveFeedPage`)** — same strip pinned at the top, plus an inline notice item in the feed when a new live starts.
-
-## 4. "Live Pocket" — host invites guests up + faceless/camera
-
-Already in `useLiveStage`: `raiseHand('voice'|'video')` + `approveHand`. We extend the host UI on `LiveStage` and the guest UI on the new "Joiners page":
-- Guest taps **Ask to come up** → choose **Faceless (voice)** or **Camera on (video)**
-- Host sees request in tray → **Bring up** → guest enters the pocket
-- Pocket already supports up to N seats with mute/spotlight/remove
-
-## 5. Second Live page — `/live/:seedId/room`
-
-New route `LiveRoomDetailPage` opened from a "See everyone" button on the overlay. Shows:
-- **Front stage** (left): host + currently spotlighted speaker only (mirrors what main view shows)
-- **Pocket** (right top): approved guests with faceless/camera state
-- **Queue** (right middle): hand-raised list with want=voice/video and Ask-Big requests
-- **Joiners** (right bottom): everyone present (from presence) with avatar + display_name
-- **Host tools panel**: product image carousel + videos for the seed
-- **Inline chat**: existing `liveroom:${seedId}` broadcast channel
-
-Front-stage `LiveStageOverlay` keeps showing only host + spotlighted speaker + names list (no full grid).
-
-## 6. Delete buttons on seeds and lives
-
-- **Seed delete**: trash button on each owned seed card (Dashboard MY SEEDS + Living Seed card when `sower_id === user.id`). Confirm dialog → `delete from seeds where id = ? and sower_id = auth.uid()`. RLS already restricts; we'll add a delete policy if missing.
-- **Live delete (end live)**: red "End Live" button visible to host inside `LiveStageOverlay` and on the Live Now strip cards (host only). Calls existing `endLive()` + untracks presence.
-
-## 7. Reset all currently-active lives
-
-Lives are ephemeral Supabase **presence** records — there is no DB row to delete. Two safe actions:
-- Server: bump the channel name to `tribal-orchard:global:v2` so all stale presences are dropped instantly.
-- Also clear any `live_streams` / `live_sessions` rows flagged `is_live = true` via a one-shot SQL update setting them to ended (for any DB-backed live rows, if present).
-
-## 8. Bugfix — `chat_participants_user_id_fkey` violation (image 1)
-
-Seed messages tries to insert into `chat_participants` with a `user_id` that no longer exists in `auth.users` (or the wrong column). Fix:
-- Change the seed-message open flow to look up an existing chat by `(seed_id, sower_id, viewer_id)` and only insert participants that exist in `auth.users`.
-- Wrap in an upsert/`on conflict do nothing` so re-opens don't re-insert.
-- Skip insert when `user_id == null`.
+A staged build that extends existing S2G systems (products, sowers, whisperers, directory) rather than duplicating them. All new public routes live under `/bulk/*` so nothing in your current routing, wandering-badges system, or SowerProfile breaks.
 
 ---
 
-## Technical notes
+## Phase 0 — Schema & Storage (one migration, one bucket)
 
-**Files to add**
-- `src/components/live/LiveNowStrip.tsx`
-- `src/pages/LiveRoomDetailPage.tsx`
-- route entry in `src/App.tsx` for `/live/:seedId/room`
+Additive only. No drops, no renames. All existing pages keep working.
 
-**Files to edit**
-- `src/components/garden/LivingSeedCard.tsx` — real sower name + delete button
-- `src/pages/DashboardPage.jsx` — fix "MY SEEDS" query, real name, mount `<LiveNowStrip />`, delete button
-- `src/pages/TribalAliveFeedPage.tsx` — mount `<LiveNowStrip />`, slim front stage
-- `src/components/live/LiveStageOverlay.tsx` — open second page button, host-only End Live
-- `src/components/live/LiveStage.tsx` — guest "Ask to come up" picker (faceless/camera)
-- `src/hooks/useLiveStage.ts` — already exposes everything needed
-- `src/hooks/useChat.jsx` (or seed-chat opener) — fix participant insert
-- `src/hooks/useTribalLiveOrchard.ts` — bump channel to `:v2`
+### `products` (add columns)
+- `slug text unique` — generated from name + short hash
+- `commission_pct numeric(5,2)` — whisperer commission %
+- `commission_fixed numeric(12,2)` — fixed-amount alt
+- `stock_qty integer`
+- `sku text`
+- `bulk_upload_id uuid` — links row back to its upload job
+- `status text default 'draft'` — `draft | live | archived`
+- (existing `metadata jsonb` already holds extra fields)
 
-**DB migration (one)**
-- (If missing) `seeds` delete RLS policy: `using (auth.uid() = sower_id)`
-- One-time UPDATE on any `is_live` flagged rows in `live_*` tables to mark ended.
+### `sowers` (add columns)
+- `slug text unique`
+- `banner_url text`
+- `bio text`
+- `tagline text`
+
+### New `product_images`
+```
+id uuid pk, product_id uuid fk products, url text, sort_order int, is_primary bool, created_at
+```
+Up to 5 rows per product. RLS: public read; sower writes only their own.
+
+### New `bulk_upload_jobs`
+```
+id uuid pk, sower_id uuid fk sowers, user_id uuid,
+file_name text, file_type text, file_size_bytes int,
+status text ('uploaded'|'parsing'|'parsed'|'published'|'failed'),
+total_rows int, valid_rows int, error_rows int,
+parsed_rows jsonb,            -- staging area before publish
+parse_error text,
+published_count int default 0,
+created_at, updated_at
+```
+RLS: sower owns their job.
+
+### Reuse (no new table)
+- `product_whisperer_assignments` (already 13 cols) — used for whisperer "My Assigned Products"
+- `whisperers`, `whisperer_clicks`, `whisperer_conversions`, `whisperer_earnings` — already wired
+- `seeds` table — left alone; "Seed Feed" reads directly from `products`
+
+### Storage
+- New bucket `product-images` (public read, sower write). Path: `{sower_id}/{product_id}/{n}.{ext}`.
+
+### Backfill
+- One-time UPDATE: generate `slug` for existing sowers and products that don't have one.
+
+---
+
+## Phase 1 — Bulk Upload Wizard (the wow moment)
+
+Route: `/dashboard/sower/upload` (new, under existing dashboard).
+
+Entry point: add a single "Bulk Upload Products — 10+ Products? Upload in bulk" button on the existing `DashboardPage`. No other dashboard changes.
+
+### Edge function `bulk-parse-products`
+Server-side parser. Accepts an uploaded file via signed URL, returns normalized rows + per-row validation.
+
+Format support:
+- **CSV** — `papaparse` via npm
+- **XLSX** — `xlsx` via npm (SheetJS)
+- **TXT** — line/tab/comma sniff
+- **PDF** — `unpdf` (Deno-friendly) — text-layout best-effort, flagged as "lower accuracy" in the UI when used
+- **DOCX** — unzip + read `word/document.xml`, extract tables/paragraphs
+
+Flexible column mapping (case/space/synonym tolerant):
+`name|product|title`, `description|desc`, `price|amount|cost`,
+`commission|commission_pct|whisperer_%`, `category`, `sku|code`,
+`stock|qty|quantity`.
+
+Returns `{ rows: [{raw, normalized, issues: []}], summary }`. Writes to `bulk_upload_jobs.parsed_rows` so the wizard can reload state.
+
+### Wizard UI (5 steps, framer-motion transitions)
+1. **Drop zone** — drag/drop, animated seed→sprout loader during parse
+2. **Review table** — editable grid (uses `@tanstack/react-table` already in deps), inline edit, sticky header, status badges (✅/⚠️/❌), bulk actions, "Fix all issues" jump, live row counter
+3. **Images per row** — side panel with 5 slots, drag-reorder (already have `@dnd-kit` patterns or use HTML5 DnD), "copy images to similar products" helper, progress "180/248"
+4. **Review & confirm** — totals, commission summary, live preview panel of the sower brand page, "Save as draft" / "Schedule" / "Plant your products"
+5. **Success** — bloom animation, links to brand page / feed / share
+
+All S2G microcopy ("Planting your products…", "Your seeds are live!"). All shadcn + existing tokens. No new color classes.
+
+---
+
+## Phase 2 — Sower Brand Page + Seed Social Feed (second wow moment)
+
+### `/bulk/sower/:slug` — brand page
+- Hero: banner, logo, name, verified, tagline, stats row (Products / Whisperers / Sold / Rating)
+- Actions: Follow, View Seed Feed, Become a Whisperer (modal), Share
+- Product grid using **existing `ProductCard`** (your memory rule — do not deviate)
+- Filter/sort bar, infinite scroll (`useInfiniteQuery`), skeletons, empty state
+
+### `/bulk/sower/:slug/feed` — seed social feed
+- Full-screen vertical scroll-snap (CSS `scroll-snap-type: y mandatory`)
+- Each card: 5-image carousel (embla, already in deps), name, expandable desc, price, commission badge, Add to Cart, Share-to-Live, Whisperer "Market this product" (generates trackable link via existing `whisperer_referral_links`)
+- Lazy image loading, side dot progress
+- Top tabs: All / New Arrivals / Best Commission / Trending
+- Virtualized via `react-window`-style windowing already in `OptimizedList` for 1000+ rows
+
+---
+
+## Phase 3 — Product Detail Page
+
+### `/bulk/products/:slug`
+- Image gallery with thumbnail strip (up to 5)
+- Name, full description, price, commission callout for whisperers
+- Sower strip linking to `/bulk/sower/:slug`
+- Share buttons, Add to Cart / Enquire (reuses existing `ProductBasketContext`)
+- Related products from same sower (horizontal `ProductCard` scroll)
+- Breadcrumb
+- SEO: `<title>`, meta description, OG image = primary product image, JSON-LD `Product` schema
+
+---
+
+## Phase 4 — Discovery
+
+### `/bulk/directory` (new, parallel to existing `/products` & `WanderingDirectoryPage` — does not touch them)
+- Sower-centric directory (existing is product-centric)
+- Search, filter (category, product-count range, commission range, location, rating, "has active live" toggle)
+- Sower cards with logo, name, product count, top-3 thumbs, rating, commission range, "Bulk Sower" badge, View Page / View Feed
+- Sort: Most Products / Top Rated / Newest / Highest Commission / Most Active
+
+### Global product search
+- Extends existing `AdvancedSearchPage` with bulk-product filters (price, commission, sower). No new page.
+
+### Whisperer dashboard panel
+- New section on existing whisperer dashboard: "Sowers to Market", "My Assigned Products", "Shareable Product Links", "Commission Tracker". Reads from existing `whisperer_*` tables + new bulk-flagged products.
+
+---
+
+## Phase 5 — Sower Dashboard additions
+
+On existing `DashboardPage` (additive, no removals):
+- "My Products" tab — table of products, status pills, row actions (Edit / Duplicate / Archive / Delete)
+- Bulk edit mode (price, commission)
+- Per-product analytics (Views / Clicks / Shares / Sales / Commission paid) — read from existing `seed_analytics_daily` + `whisperer_*` tables
+- Upload history (lists `bulk_upload_jobs`)
+- Quick links to brand page + seed feed
+
+---
+
+## Routes summary (all new, no overrides)
+
+```
+/dashboard/sower/upload         Bulk upload wizard
+/bulk/sower/:slug               Sower brand page
+/bulk/sower/:slug/feed          Seed social feed
+/bulk/products/:slug            Product detail
+/bulk/directory                 Sower directory
+```
+
+Existing `/products`, `/products/:id`, `/sower/...`, `SowerProfile`, `WanderingDirectoryPage`, `MyProductsPage` are **untouched**.
+
+---
+
+## Out of scope (confirmed)
+Payments, live-session hosting, in-app sower↔whisperer chat, multi-currency conversion logic.
+
+---
+
+## Build order I will actually ship in (one phase = one approval cycle)
+
+1. **Phase 0** — migration + storage bucket (needs your DB approval)
+2. **Phase 1** — `bulk-parse-products` edge function + wizard UI
+3. **Phase 2** — brand page + seed feed
+4. **Phase 3** — product detail
+5. **Phase 4** — directory + whisperer panel + search extension
+6. **Phase 5** — dashboard additions
+
+After each phase ships I'll stop and wait for you to test before moving on. This keeps each piece high-quality and reversible.
+
+---
+
+## Risks I'm flagging now
+- **PDF/DOCX parsing accuracy** is inherently variable on arbitrary layouts. The wizard will surface every row as "⚠️ Needs review" by default for these two formats so nothing publishes silently wrong.
+- **`slug` uniqueness** on backfill — collisions resolved with a 6-char hash suffix.
+- **Storage bucket public read** may be blocked by your workspace policy; if so, I'll fall back to signed URLs.
+- I will not touch `seeds`, `orchards`, `wandering_hearts`, or tribal-hearts code in any phase.
+
+Reply "approved" to start Phase 0, or tell me what to change.
