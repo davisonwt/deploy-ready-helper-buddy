@@ -122,6 +122,32 @@ export default function TierSeedFlowPage({ tier }: Props) {
               category: o.category || null,
             });
           });
+
+          // Pull each sower's books and merge as seeds
+          const sowerIdsForBooks = Array.from(sowerById.keys());
+          if (sowerIdsForBooks.length > 0) {
+            const { data: bookRows } = await supabase
+              .from('sower_books')
+              .select('id, title, cover_image_url, image_urls, bestowal_value, sower_id, category')
+              .in('sower_id', sowerIdsForBooks)
+              .eq('status', 'active')
+              .limit(500);
+            (bookRows || []).forEach((b: any) => {
+              if (!b.sower_id) return;
+              const imgs = Array.isArray(b.image_urls) ? b.image_urls : [];
+              individualSeeds.push({
+                id: b.id,
+                title: b.title,
+                cover_image_url: b.cover_image_url || imgs[0] || null,
+                image_urls: imgs,
+                price: b.bestowal_value ?? null,
+                company_id: null,
+                sower_id: b.sower_id,
+                type: 'book',
+                category: b.category || null,
+              });
+            });
+          }
         }
 
         // Build sower groups for every sower that has at least one seed (product or orchard)
