@@ -290,3 +290,209 @@ export default function BulkUploadWizardPage() {
 
   // ----- end render guard (TS exhaustiveness) -----
 }
+
+// =============================================================
+// Step 3 — Images per row
+// =============================================================
+function ImagesStep({
+  rows, sowerId, jobId, onBack, onUpdate,
+}: {
+  rows: ParsedRow[];
+  sowerId: string | null;
+  jobId: string | null;
+  onBack: () => void;
+  onUpdate: (idx: number, images: ProductImage[]) => void;
+}) {
+  const { toast } = useToast();
+  const [activeIdx, setActiveIdx] = useState<number>(rows[0]?.idx ?? 0);
+  const [uploading, setUploading] = useState(false);
+  const [dragFrom, setDragFrom] = useState<number | null>(null);
+
+  const active = rows.find((r) => r.idx === activeIdx) ?? rows[0];
+  const images = active?.images ?? [];
+
+  const uploadFiles = async (files: FileList | File[]) => {
+    if (!sowerId || !jobId || !active) {
+      toast({ title: 'Missing sower or job', variant: 'destructive' });
+      return;
+    }
+    const remaining = MAX_IMAGES - images.length;
+    const toUpload = Array.from(files).slice(0, remaining);
+    if (!toUpload.length) return;
+    setUploading(true);
+    const next: ProductImage[] = [...images];
+    try {
+      for (const f of toUpload) {
+        if (!f.type.startsWith('image/')) continue;
+        if (f.size > 5 * 1024 * 1024) {
+          toast({ title: `${f.name} skipped`, description: 'Max 5MB per image.', variant: 'destructive' });
+          continue;
+        }
+        const ext = f.name.split('.').pop()?.toLowerCase() || 'jpg';
+        const path = `products/${sowerId}/${jobId}_${active.idx}/${Date.now()}_${next.length}.${ext}`;
+        const { error } = await supabase.storage.from(IMG_BUCKET).upload(path, f, { upsert: false, contentType: f.type });
+        if (error) throw error;
+        const { data: pub } = supabase.storage.from(IMG_BUCKET).getPublicUrl(path);
+        next.push({ url: pub.publicUrl, path });
+      }
+      onUpdate(active.idx, next);
+    } catch (e) {
+      toast({ title: 'Upload failed', description: e instanceof Error ? e.message : String(e), variant: 'destructive' });
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const removeImage = async (i: number) => {
+    if (!active) return;
+    const img = images[i];
+    const next = images.filter((_, j) => j !== i);
+    onUpdate(active.idx, next);
+    if (img?.path) await supabase.storage.from(IMG_BUCKET).remove([img.path]);
+  };
+
+  const moveImage = (from: number, to: number) => {
+    if (!active || from === to) return;
+    const next = [...images];
+    const [m] = next.splice(from, 1);
+    next.splice(to, 0, m);
+    onUpdate(active.idx, next);
+  };
+
+  const totalWithImages = rows.filter((r) => (r.images?.length ?? 0) > 0).length;
+
+  return (
+    <div className="container max-w-7xl py-8 space-y-4">
+      <div className="flex items-center justify-between">
+        <Button variant="ghost" size="sm" onClick={onBack}>
+          <ArrowLeft className="h-4 w-4 mr-1" /> Back to review
+        </Button>
+        <div className="text-sm text-muted-foreground">
+          {totalWithImages} / {rows.length} products with images
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-[280px_1fr] gap-4">
+        {/* Row list */}
+        <Card className="max-h-[70vh] overflow-y-auto">
+          <CardHeader className="py-3 sticky top-0 bg-card z-10 border-b">
+            <CardTitle className="text-sm">Products ({rows.length})</CardTitle>
+          </CardHeader>
+          <CardContent className="p-0">
+            {rows.map((r) => {
+              const count = r.images?.length ?? 0;
+              const isActive = r.idx === activeIdx;
+              return (
+                <button
+                  key={r.idx}
+                  onClick={() => setActiveIdx(r.idx)}
+                  className={`w-full text-left px-3 py-2 border-b flex items-center gap-2 hover:bg-muted/50 transition ${isActive ? 'bg-primary/10' : ''}`}
+                >
+                  <div className="flex-1 min-w-0">
+                    <div className="truncate text-sm font-medium">{r.normalized.name || `Row ${r.idx + 1}`}</div>
+                    <div className="text-xs text-muted-foreground">
+                      {count > 0 ? `${count}/${MAX_IMAGES} images` : 'No images'}
+                    </div>
+                  </div>
+                  {count > 0 && <CheckCircle2 className="h-4 w-4 text-primary shrink-0" />}
+                </button>
+              );
+            })}
+          </CardContent>
+        </Card>
+
+        {/* Active product images */}
+        <Card>
+          <CardHeader className="py-3">
+            <CardTitle className="text-base">{active?.normalized.name || `Row ${(active?.idx ?? 0) + 1}`}</CardTitle>
+            <CardDescription>Up to {MAX_IMAGES} images. First image is the primary. Drag to reorder.</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3">
+              {Array.from({ length: MAX_IMAGES }).map((_, i) => {
+                const img = images[i];
+                if (img) {
+                  return (
+                    <div
+                      key={i}
+                      draggable
+                      onDragStart={() => setDragFrom(i)}
+                      onDragOver={(e) => e.preventDefault()}
+                      onDrop={() => { if (dragFrom !== null) moveImage(dragFrom, i); setDragFrom(null); }}
+                      className="relative group aspect-square rounded-lg overflow-hidden border bg-muted"
+                    >
+                      <img src={img.url} alt="" className="w-full h-full object-cover" />
+                      {i === 0 && (
+                        <Badge className="absolute top-1 left-1 gap-1"><Star className="h-3 w-3" /> Primary</Badge>
+                      )}
+                      <button
+                        onClick={() => removeImage(i)}
+                        className="absolute top-1 right-1 bg-background/80 rounded-full p-1 opacity-0 group-hover:opacity-100 transition"
+                        aria-label="Remove"
+                      >
+                        <X className="h-3 w-3" />
+                      </button>
+                      <div className="absolute bottom-1 right-1 bg-background/80 rounded p-0.5 opacity-0 group-hover:opacity-100">
+                        <GripVertical className="h-3 w-3" />
+                      </div>
+                    </div>
+                  );
+                }
+                return (
+                  <label
+                    key={i}
+                    className="aspect-square rounded-lg border-2 border-dashed flex flex-col items-center justify-center gap-2 cursor-pointer hover:border-primary hover:bg-primary/5 transition"
+                    onDragOver={(e) => e.preventDefault()}
+                    onDrop={(e) => { e.preventDefault(); uploadFiles(e.dataTransfer.files); }}
+                  >
+                    <ImagePlus className="h-6 w-6 text-muted-foreground" />
+                    <span className="text-xs text-muted-foreground">Slot {i + 1}</span>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      multiple
+                      className="hidden"
+                      onChange={(e) => { if (e.target.files) uploadFiles(e.target.files); e.target.value = ''; }}
+                    />
+                  </label>
+                );
+              })}
+            </div>
+
+            {uploading && (
+              <div className="mt-4 flex items-center gap-2 text-sm text-muted-foreground">
+                <Sprout className="h-4 w-4 animate-pulse text-primary" /> Uploading…
+              </div>
+            )}
+
+            <div className="mt-6 flex items-center justify-between">
+              <p className="text-xs text-muted-foreground">Max 5MB per image. JPG / PNG / WEBP.</p>
+              <Button
+                variant="outline"
+                size="sm"
+                disabled={!active || rows.findIndex(r => r.idx === activeIdx) >= rows.length - 1}
+                onClick={() => {
+                  const i = rows.findIndex(r => r.idx === activeIdx);
+                  if (i >= 0 && i < rows.length - 1) setActiveIdx(rows[i + 1].idx);
+                }}
+              >
+                Next product <ChevronRight className="h-4 w-4 ml-1" />
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      <div className="flex justify-between items-center sticky bottom-4 bg-background/80 backdrop-blur p-3 rounded-lg border">
+        <div className="text-sm text-muted-foreground">{totalWithImages} / {rows.length} have images</div>
+        <div className="flex gap-2">
+          <Button variant="outline" onClick={onBack}>Back</Button>
+          <Button disabled title="Review &amp; publish — coming in next step">
+            Continue → Review &amp; publish <ChevronRight className="h-4 w-4 ml-1" />
+          </Button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
