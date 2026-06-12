@@ -150,10 +150,9 @@ export default function TierSeedFlowPage({ tier }: Props) {
       {/* Themed ambient backdrop */}
       <div
         aria-hidden
-        className="pointer-events-none absolute inset-0 opacity-60"
+        className="pointer-events-none absolute inset-x-0 top-0 h-[360px] opacity-40"
         style={{ background: cfg.gradient }}
       />
-      <div aria-hidden className="pointer-events-none absolute inset-0 bg-background/70" />
 
       <div className="relative z-10">
         {/* Go Back pill — matches My Garden */}
