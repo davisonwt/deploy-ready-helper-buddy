@@ -366,6 +366,8 @@ export default function TierSeedFlowPage({ tier }: Props) {
                         physical: 'Physical Goods',
                         digital: 'Digital Goods',
                         service: 'Services',
+                        product: 'Physical Goods',
+                        orchard: 'Orchards (Bee-hives, Honey & more)',
                         other: 'Other Seeds',
                       };
                       return map[k] || k.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
