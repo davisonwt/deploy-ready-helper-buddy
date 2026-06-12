@@ -517,3 +517,249 @@ function ImagesStep({
   );
 }
 
+// =============================================================
+// Step 4 — Review & publish
+// =============================================================
+function PublishStep({
+  rows, sowerId, jobId, onBack, onPublished,
+}: {
+  rows: ParsedRow[];
+  sowerId: string | null;
+  jobId: string | null;
+  onBack: () => void;
+  onPublished: (count: number) => void;
+}) {
+  const { toast } = useToast();
+  const [publishing, setPublishing] = useState(false);
+  const [progress, setProgress] = useState(0);
+  const [scheduleAt, setScheduleAt] = useState<string>('');
+
+  const validRows = rows.filter((r) => r.issues.length === 0);
+  const totalImages = rows.reduce((s, r) => s + (r.images?.length ?? 0), 0);
+  const avgPrice = validRows.length
+    ? validRows.reduce((s, r) => s + (r.normalized.price ?? 0), 0) / validRows.length : 0;
+  const avgCommission = (() => {
+    const arr = validRows.filter(r => r.normalized.commission_pct !== undefined);
+    if (!arr.length) return null;
+    return arr.reduce((s, r) => s + (r.normalized.commission_pct ?? 0), 0) / arr.length;
+  })();
+
+  const publish = async (asDraft: boolean) => {
+    if (!sowerId || !jobId) {
+      toast({ title: 'Missing sower or job', variant: 'destructive' });
+      return;
+    }
+    if (validRows.length === 0) {
+      toast({ title: 'Nothing to publish', description: 'Fix issues in step 2 first.', variant: 'destructive' });
+      return;
+    }
+    setPublishing(true);
+    setProgress(5);
+
+    let published = 0;
+    try {
+      const status = asDraft ? 'draft' : (scheduleAt ? 'draft' : 'active');
+      for (let i = 0; i < validRows.length; i++) {
+        const r = validRows[i];
+        const n = r.normalized;
+        const productPayload: Record<string, unknown> = {
+          sower_id: sowerId,
+          title: n.name!,
+          description: n.description ?? null,
+          price: n.price ?? 0,
+          category: n.category ?? null,
+          sku: n.sku ?? null,
+          stock_qty: n.stock_qty ?? null,
+          whisperer_commission_percent: n.commission_pct ?? null,
+          commission_fixed: n.commission_fixed ?? null,
+          bulk_upload_id: jobId,
+          status,
+          delivery_type: 'physical',
+          file_url: '',
+          image_urls: (r.images ?? []).map((im) => im.url),
+          cover_image_url: r.images?.[0]?.url ?? null,
+        };
+        const { data: prod, error: pErr } = await supabase
+          .from('products').insert(productPayload).select('id').single();
+        if (pErr) throw pErr;
+
+        if (r.images?.length) {
+          const imgRows = r.images.map((im, idx) => ({
+            product_id: prod.id,
+            url: im.url,
+            sort_order: idx,
+            is_primary: idx === 0,
+          }));
+          const { error: iErr } = await supabase.from('product_images').insert(imgRows);
+          if (iErr) throw iErr;
+        }
+        published++;
+        setProgress(5 + Math.floor((published / validRows.length) * 90));
+      }
+
+      await supabase.from('bulk_upload_jobs').update({
+        status: scheduleAt ? 'draft' : 'published',
+        published_count: published,
+        scheduled_at: scheduleAt ? new Date(scheduleAt).toISOString() : null,
+      }).eq('id', jobId);
+
+      setProgress(100);
+      onPublished(published);
+    } catch (e) {
+      toast({
+        title: 'Publish failed',
+        description: e instanceof Error ? e.message : String(e),
+        variant: 'destructive',
+      });
+    } finally {
+      setPublishing(false);
+    }
+  };
+
+  return (
+    <div className="container max-w-5xl py-8 space-y-4">
+      <div className="flex items-center justify-between">
+        <Button variant="ghost" size="sm" onClick={onBack} disabled={publishing}>
+          <ArrowLeft className="h-4 w-4 mr-1" /> Back to images
+        </Button>
+      </div>
+
+      <div className="text-center space-y-1">
+        <h1 className="text-2xl font-bold">Almost ready to plant</h1>
+        <p className="text-muted-foreground text-sm">Review the totals below and plant your seeds when you're happy.</p>
+      </div>
+
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+        <Card><CardContent className="p-4">
+          <div className="text-xs text-muted-foreground">Products to plant</div>
+          <div className="text-2xl font-bold text-primary">{validRows.length}</div>
+          <div className="text-xs text-muted-foreground">of {rows.length} parsed</div>
+        </CardContent></Card>
+        <Card><CardContent className="p-4">
+          <div className="text-xs text-muted-foreground">Images attached</div>
+          <div className="text-2xl font-bold">{totalImages}</div>
+        </CardContent></Card>
+        <Card><CardContent className="p-4">
+          <div className="text-xs text-muted-foreground">Avg price</div>
+          <div className="text-2xl font-bold">${avgPrice.toFixed(2)}</div>
+        </CardContent></Card>
+        <Card><CardContent className="p-4">
+          <div className="text-xs text-muted-foreground">Avg whisperer %</div>
+          <div className="text-2xl font-bold">{avgCommission !== null ? `${avgCommission.toFixed(1)}%` : '—'}</div>
+        </CardContent></Card>
+      </div>
+
+      {rows.length - validRows.length > 0 && (
+        <Card className="border-amber-500/40 bg-amber-500/5">
+          <CardContent className="p-3 flex items-center gap-2 text-sm">
+            <AlertCircle className="h-4 w-4 text-amber-600" />
+            {rows.length - validRows.length} row(s) with issues will be skipped. Go back to step 2 to fix them.
+          </CardContent>
+        </Card>
+      )}
+
+      <Card>
+        <CardHeader className="py-3">
+          <CardTitle className="text-base">Preview (first 8)</CardTitle>
+          <CardDescription>This is what will go live on your sower page.</CardDescription>
+        </CardHeader>
+        <CardContent className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+          {validRows.slice(0, 8).map((r) => (
+            <div key={r.idx} className="rounded-lg border overflow-hidden">
+              <div className="aspect-square bg-muted">
+                {r.images?.[0]?.url
+                  ? <img src={r.images[0].url} alt="" className="w-full h-full object-cover" />
+                  : <div className="w-full h-full flex items-center justify-center text-muted-foreground"><ImagePlus className="h-6 w-6" /></div>}
+              </div>
+              <div className="p-2">
+                <div className="text-sm font-medium truncate">{r.normalized.name}</div>
+                <div className="text-xs text-muted-foreground">${(r.normalized.price ?? 0).toFixed(2)}</div>
+              </div>
+            </div>
+          ))}
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader className="py-3">
+          <CardTitle className="text-base">Schedule (optional)</CardTitle>
+          <CardDescription>Leave empty to publish immediately.</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <Input type="datetime-local" value={scheduleAt} onChange={(e) => setScheduleAt(e.target.value)} className="max-w-xs" />
+        </CardContent>
+      </Card>
+
+      {publishing && (
+        <Card>
+          <CardContent className="p-4 space-y-2">
+            <div className="flex items-center gap-2 text-sm">
+              <Sprout className="h-4 w-4 animate-pulse text-primary" />
+              Planting your seeds…
+            </div>
+            <Progress value={progress} />
+          </CardContent>
+        </Card>
+      )}
+
+      <div className="flex justify-between items-center sticky bottom-4 bg-background/80 backdrop-blur p-3 rounded-lg border">
+        <Button variant="ghost" onClick={onBack} disabled={publishing}>Back</Button>
+        <div className="flex gap-2">
+          <Button variant="outline" onClick={() => publish(true)} disabled={publishing}>Save as draft</Button>
+          <Button onClick={() => publish(false)} disabled={publishing || validRows.length === 0}>
+            {scheduleAt ? 'Schedule planting' : 'Plant your products'}
+          </Button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// =============================================================
+// Step 5 — Success
+// =============================================================
+function SuccessStep({
+  count, sowerId, onDone,
+}: {
+  count: number;
+  sowerId: string | null;
+  onDone: () => void;
+}) {
+  const navigate = useNavigate();
+  const [slug, setSlug] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!sowerId) return;
+    supabase.from('sowers').select('slug').eq('id', sowerId).maybeSingle()
+      .then(({ data }) => setSlug(data?.slug ?? null));
+  }, [sowerId]);
+
+  return (
+    <div className="container max-w-2xl py-16 text-center space-y-6">
+      <div className="flex justify-center">
+        <div className="relative">
+          <div className="absolute inset-0 rounded-full bg-primary/20 animate-ping" />
+          <div className="relative bg-primary text-primary-foreground rounded-full p-6">
+            <Sprout className="h-12 w-12" />
+          </div>
+        </div>
+      </div>
+      <div className="space-y-2">
+        <h1 className="text-3xl font-bold">Your seeds are live!</h1>
+        <p className="text-muted-foreground">
+          {count} product{count === 1 ? '' : 's'} planted successfully.
+        </p>
+      </div>
+      <div className="flex flex-wrap justify-center gap-2">
+        {slug && (
+          <>
+            <Button onClick={() => navigate(`/bulk/sower/${slug}`)}>View your brand page</Button>
+            <Button variant="outline" onClick={() => navigate(`/bulk/sower/${slug}/feed`)}>Open seed feed</Button>
+          </>
+        )}
+        <Button variant="ghost" onClick={onDone}>Back to dashboard</Button>
+      </div>
+    </div>
+  );
+}
+
