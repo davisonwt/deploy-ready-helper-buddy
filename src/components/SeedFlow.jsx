@@ -1,4 +1,5 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
+import { supabase } from '@/integrations/supabase/client';
 
 const CYCLE = 360;
 const PHASE_LEFT = 140;
@@ -26,12 +27,37 @@ export default function SeedFlow({
   height = 40,
   seedCount = 36,
   zIndex = 50,
+  showAds = true,
   style: extraStyle = {},
 }) {
   const canvasRef = useRef(null);
   const seedsRef  = useRef(null);
   const rafRef    = useRef(null);
   const frameRef  = useRef(0);
+  const [ads, setAds] = useState([]);
+  const [adTick, setAdTick] = useState(0);
+
+  useEffect(() => {
+    if (!showAds) return;
+    let alive = true;
+    (async () => {
+      const { data } = await supabase
+        .from('companies')
+        .select('id, slug, name, logo_url')
+        .eq('is_verified', true)
+        .eq('ads_enabled', true)
+        .not('logo_url', 'is', null)
+        .limit(40);
+      if (alive && data) setAds(data);
+    })();
+    return () => { alive = false; };
+  }, [showAds]);
+
+  useEffect(() => {
+    if (!showAds || ads.length === 0) return;
+    const id = setInterval(() => setAdTick((t) => t + 1), 1000);
+    return () => clearInterval(id);
+  }, [showAds, ads.length]);
 
   useEffect(() => {
     seedsRef.current = createSeeds(seedCount);
