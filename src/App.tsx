@@ -63,6 +63,7 @@ const BulkDirectoryPage = lazy(() => import("./pages/BulkDirectoryPage"));
 const BulkWhispererDashboardPage = lazy(() => import("./pages/BulkWhispererDashboardPage"));
 const FactoriesDirectoryPage = lazy(() => import("./pages/FactoriesDirectoryPage"));
 const FactoryDetailPage = lazy(() => import("./pages/FactoryDetailPage"));
+const TierSeedFlowPage = lazy(() => import("./pages/TierSeedFlowPage"));
 const StatsPage = lazy(() => import("./pages/StatsPage"));
 const ProfilePage = lazy(() => import("./pages/ProfilePage"));
 const BrowseOrchardsPage = lazy(() => import("./pages/BrowseOrchardsPage"));
@@ -278,6 +279,11 @@ const App = () => (
               } />
               <Route path="/factories" element={<Layout><FactoriesDirectoryPage /></Layout>} />
               <Route path="/factories/:slug" element={<Layout><FactoryDetailPage /></Layout>} />
+              <Route path="/homestead" element={<Layout><TierSeedFlowPage tier="homestead" /></Layout>} />
+              <Route path="/grove" element={<Layout><TierSeedFlowPage tier="grove" /></Layout>} />
+              <Route path="/orchard" element={<Layout><TierSeedFlowPage tier="orchard" /></Layout>} />
+              <Route path="/estate" element={<Layout><TierSeedFlowPage tier="estate" /></Layout>} />
+              <Route path="/harvest-works" element={<Layout><TierSeedFlowPage tier="harvest_works" /></Layout>} />
               <Route path="/live/:seedId/room" element={
                 <ProtectedRoute><RequireVerification><LiveRoomDetailPage /></RequireVerification></ProtectedRoute>
               } />
