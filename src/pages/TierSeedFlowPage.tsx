@@ -194,7 +194,7 @@ export default function TierSeedFlowPage({ tier }: Props) {
       <section className="container max-w-6xl mx-auto px-4 py-8">
         {loading ? (
           <div className="text-sm text-muted-foreground">Loading {cfg.label} sowers…</div>
-        ) : companies.length === 0 ? (
+        ) : !hasAny ? (
           <div className="rounded-xl border border-dashed border-border p-8 text-center">
             <div className="text-3xl mb-2">{cfg.emoji}</div>
             <h2 className="font-semibold mb-1">No {cfg.label} sowers yet</h2>
@@ -273,6 +273,68 @@ export default function TierSeedFlowPage({ tier }: Props) {
                       ))}
                     </div>
                   )}
+                </article>
+              );
+            })}
+
+            {sowers.map((p) => {
+              const list = seedsBySower.get(p.id) || [];
+              if (list.length === 0) return null;
+              return (
+                <article
+                  key={`sower-${p.id}`}
+                  className="rounded-2xl border border-border bg-card overflow-hidden"
+                  style={{ borderColor: `${cfg.accent}33` }}
+                >
+                  <header className="flex items-center gap-3 p-4 border-b border-border">
+                    <div className="h-12 w-12 rounded-full bg-background border border-border overflow-hidden flex items-center justify-center shrink-0">
+                      {p.avatar_url ? (
+                        <img src={p.avatar_url} alt={p.name} className="h-full w-full object-cover" />
+                      ) : (
+                        <span className="text-lg">{cfg.emoji}</span>
+                      )}
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <h2 className="font-semibold truncate">{p.name}</h2>
+                      <p className="text-xs text-muted-foreground truncate">Individual sower · {list.length} seed{list.length === 1 ? '' : 's'}</p>
+                    </div>
+                    <Link
+                      to={`/sower/${p.id}`}
+                      className="text-xs px-3 py-1.5 rounded-lg border border-border hover:border-primary/60 hover:text-primary transition-colors"
+                    >
+                      Visit page →
+                    </Link>
+                  </header>
+
+                  <div className="p-4 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+                    {list.slice(0, 8).map((s) => (
+                      <Link
+                        key={s.id}
+                        to={`/seed/${s.id}`}
+                        className="rounded-lg overflow-hidden border border-border bg-background hover:border-primary/60 transition-colors"
+                      >
+                        <div
+                          className="aspect-square bg-muted"
+                          style={{
+                            backgroundImage: (() => {
+                              const img = s.cover_image_url || (s.image_urls && s.image_urls[0]);
+                              return img ? `url(${img})` : undefined;
+                            })(),
+                            backgroundSize: 'cover',
+                            backgroundPosition: 'center',
+                          }}
+                        />
+                        <div className="p-2">
+                          <div className="text-xs font-medium truncate">{s.title}</div>
+                          {s.price != null && (
+                            <div className="text-[11px] text-muted-foreground">
+                              ${Number(s.price).toFixed(2)}
+                            </div>
+                          )}
+                        </div>
+                      </Link>
+                    ))}
+                  </div>
                 </article>
               );
             })}
