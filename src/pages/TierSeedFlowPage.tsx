@@ -224,6 +224,24 @@ export default function TierSeedFlowPage({ tier }: Props) {
 
         {/* Centered hero — matches My Garden */}
         <div className="relative overflow-hidden border-b border-white/10 backdrop-blur-md bg-[#0f172a]/60">
+          {/* Tier banner illustration */}
+          {cfg.image && (
+            <>
+              <img
+                src={cfg.image}
+                alt=""
+                aria-hidden
+                className="absolute inset-0 h-full w-full object-cover opacity-30"
+              />
+              <div
+                aria-hidden
+                className="absolute inset-0"
+                style={{
+                  background: `linear-gradient(to bottom, ${cfg.accent}26 0%, rgba(15,23,42,0.85) 100%)`,
+                }}
+              />
+            </>
+          )}
           <div className="relative container mx-auto px-4 py-12">
             <div className="text-center max-w-4xl mx-auto">
               <div className="flex items-center justify-center gap-4 mb-6">
