@@ -191,7 +191,10 @@ export default function TierSeedFlowPage({ tier }: Props) {
                           <div
                             className="aspect-square bg-muted"
                             style={{
-                              backgroundImage: s.image_url ? `url(${s.image_url})` : undefined,
+                              backgroundImage: (() => {
+                                const img = s.cover_image_url || (s.image_urls && s.image_urls[0]);
+                                return img ? `url(${img})` : undefined;
+                              })(),
                               backgroundSize: 'cover',
                               backgroundPosition: 'center',
                             }}
