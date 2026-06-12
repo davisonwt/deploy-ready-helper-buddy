@@ -580,7 +580,7 @@ function PublishStep({
           cover_image_url: r.images?.[0]?.url ?? null,
         };
         const { data: prod, error: pErr } = await supabase
-          .from('products').insert(productPayload).select('id').single();
+          .from('products').insert(productPayload as any).select('id').single();
         if (pErr) throw pErr;
 
         if (r.images?.length) {
