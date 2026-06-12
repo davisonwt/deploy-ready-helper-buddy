@@ -61,6 +61,8 @@ const BulkSeedFeedPage = lazy(() => import("./pages/BulkSeedFeedPage"));
 const BulkProductDetailPage = lazy(() => import("./pages/BulkProductDetailPage"));
 const BulkDirectoryPage = lazy(() => import("./pages/BulkDirectoryPage"));
 const BulkWhispererDashboardPage = lazy(() => import("./pages/BulkWhispererDashboardPage"));
+const FactoriesDirectoryPage = lazy(() => import("./pages/FactoriesDirectoryPage"));
+const FactoryDetailPage = lazy(() => import("./pages/FactoryDetailPage"));
 const StatsPage = lazy(() => import("./pages/StatsPage"));
 const ProfilePage = lazy(() => import("./pages/ProfilePage"));
 const BrowseOrchardsPage = lazy(() => import("./pages/BrowseOrchardsPage"));
@@ -274,6 +276,8 @@ const App = () => (
               <Route path="/orchard-alive" element={
                 <ProtectedRoute><RequireVerification><Layout><TribalAliveFeedPage /></Layout></RequireVerification></ProtectedRoute>
               } />
+              <Route path="/factories" element={<Layout><FactoriesDirectoryPage /></Layout>} />
+              <Route path="/factories/:slug" element={<Layout><FactoryDetailPage /></Layout>} />
               <Route path="/live/:seedId/room" element={
                 <ProtectedRoute><RequireVerification><LiveRoomDetailPage /></RequireVerification></ProtectedRoute>
               } />
