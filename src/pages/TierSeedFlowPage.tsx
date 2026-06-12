@@ -1,9 +1,9 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { ArrowLeft, BadgeCheck, Factory } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import SeedFlow from '@/components/SeedFlow';
-import { TIERS, type Tier, TIER_BY_ID } from '@/lib/tiers';
+import { type Tier, TIER_BY_ID } from '@/lib/tiers';
 
 interface Props {
   tier: Tier;
