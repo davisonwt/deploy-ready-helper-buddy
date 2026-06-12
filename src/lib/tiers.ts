@@ -1,5 +1,10 @@
 // Business tier metadata for the 5 SeedFlow tiers.
 // Order matters (Homestead → Harvest Works).
+import homesteadImg from '@/assets/tier-homestead.jpg';
+import groveImg from '@/assets/tier-grove.jpg';
+import orchardImg from '@/assets/tier-orchard.jpg';
+import estateImg from '@/assets/tier-estate.jpg';
+import harvestWorksImg from '@/assets/tier-harvest-works.jpg';
 
 export type Tier = 'homestead' | 'grove' | 'orchard' | 'estate' | 'harvest_works';
 
@@ -12,6 +17,8 @@ export interface TierConfig {
   description: string;
   accent: string;        // Tailwind/CSS hex used as themed accent
   gradient: string;      // CSS gradient for hero
+  image: string;         // Imported illustration for the tier
+  explainer: string;     // Longer hover-popup explanation
 }
 
 export const TIERS: TierConfig[] = [
