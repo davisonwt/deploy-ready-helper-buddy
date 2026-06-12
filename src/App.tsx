@@ -237,6 +237,12 @@ const App = () => (
                   </RequireVerification>
                 </ProtectedRoute>
               } />
+              <Route path="/bulk/sower/:slug" element={
+                <Suspense fallback={<LoadingFallback />}><BulkSowerPage /></Suspense>
+              } />
+              <Route path="/bulk/sower/:slug/feed" element={
+                <Suspense fallback={<LoadingFallback />}><BulkSeedFeedPage /></Suspense>
+              } />
               <Route path="/stats" element={
                 <ProtectedRoute><RequireVerification><StatsPage /></RequireVerification></ProtectedRoute>
               } />
