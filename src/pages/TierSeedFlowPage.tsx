@@ -29,12 +29,15 @@ interface SeedRow {
   price: number | null;
   company_id: string | null;
   sower_id: string | null;
+  type: string | null;
+  category: string | null;
 }
 
 interface SowerGroup {
   id: string;
   name: string;
   avatar_url: string | null;
+  slug: string | null;
 }
 
 export default function TierSeedFlowPage({ tier }: Props) {
@@ -65,7 +68,7 @@ export default function TierSeedFlowPage({ tier }: Props) {
       const companyProducts = ids.length > 0
         ? (await supabase
             .from('products')
-            .select('id, title, cover_image_url, image_urls, price, company_id, sower_id')
+            .select('id, title, cover_image_url, image_urls, price, company_id, sower_id, type, category')
             .in('company_id', ids)
             .limit(60)).data as SeedRow[] | null
         : [];
@@ -77,35 +80,33 @@ export default function TierSeedFlowPage({ tier }: Props) {
       if (tier === 'homestead') {
         const { data: soloRows } = await supabase
           .from('products')
-          .select('id, title, cover_image_url, image_urls, price, company_id, sower_id')
+          .select('id, title, cover_image_url, image_urls, price, company_id, sower_id, type, category')
           .is('company_id', null)
           .not('sower_id', 'is', null)
-          .limit(200);
+          .limit(500);
         individualSeeds = (soloRows as SeedRow[]) || [];
 
         const sowerIds = Array.from(
           new Set(individualSeeds.map((s) => s.sower_id).filter(Boolean) as string[])
         );
         if (sowerIds.length > 0) {
-          const { data: profileRows } = await supabase
-            .from('profiles')
-            .select('user_id, display_name, first_name, last_name, username, avatar_url')
-            .in('user_id', sowerIds);
+          // products.sower_id -> sowers.id (NOT profiles)
+          const { data: sowerRows } = await supabase
+            .from('sowers')
+            .select('id, display_name, slug, logo_url')
+            .in('id', sowerIds);
           const found = new Map<string, SowerGroup>();
-          (profileRows || []).forEach((p: any) => {
-            found.set(p.user_id, {
-              id: p.user_id,
-              name:
-                p.display_name ||
-                [p.first_name, p.last_name].filter(Boolean).join(' ') ||
-                p.username ||
-                'Sower',
-              avatar_url: p.avatar_url || null,
+          (sowerRows || []).forEach((s: any) => {
+            found.set(s.id, {
+              id: s.id,
+              name: s.display_name || 'Sower',
+              avatar_url: s.logo_url || null,
+              slug: s.slug || null,
             });
           });
-          // Include sowers even if their profile row is missing so seeds still surface
           sowerGroups = sowerIds.map(
-            (sid) => found.get(sid) || { id: sid, name: 'Sower', avatar_url: null }
+            (sid) =>
+              found.get(sid) || { id: sid, name: 'Sower', avatar_url: null, slug: null }
           );
         }
       }
@@ -309,42 +310,79 @@ export default function TierSeedFlowPage({ tier }: Props) {
                       <p className="text-xs text-muted-foreground truncate">Individual sower · {list.length} seed{list.length === 1 ? '' : 's'}</p>
                     </div>
                     <Link
-                      to={`/sower/${p.id}`}
+                      to={p.slug ? `/sower/${p.slug}` : `/sower/${p.id}`}
                       className="text-xs px-3 py-1.5 rounded-lg border border-border hover:border-primary/60 hover:text-primary transition-colors"
                     >
                       Visit page →
                     </Link>
                   </header>
 
-                  <div className="p-4 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
-                    {list.slice(0, 8).map((s) => (
-                      <Link
-                        key={s.id}
-                        to={`/seed/${s.id}`}
-                        className="rounded-lg overflow-hidden border border-border bg-background hover:border-primary/60 transition-colors"
-                      >
-                        <div
-                          className="aspect-square bg-muted"
-                          style={{
-                            backgroundImage: (() => {
-                              const img = s.cover_image_url || (s.image_urls && s.image_urls[0]);
-                              return img ? `url(${img})` : undefined;
-                            })(),
-                            backgroundSize: 'cover',
-                            backgroundPosition: 'center',
-                          }}
-                        />
-                        <div className="p-2">
-                          <div className="text-xs font-medium truncate">{s.title}</div>
-                          {s.price != null && (
-                            <div className="text-[11px] text-muted-foreground">
-                              ${Number(s.price).toFixed(2)}
+                  {(() => {
+                    // Group this sower's seeds by type (music, book, video, art, etc.)
+                    const groups = new Map<string, SeedRow[]>();
+                    for (const s of list) {
+                      const key = (s.type || s.category || 'other').toString().toLowerCase();
+                      const arr = groups.get(key) || [];
+                      arr.push(s);
+                      groups.set(key, arr);
+                    }
+                    const labelFor = (k: string) => {
+                      const map: Record<string, string> = {
+                        music: 'Music',
+                        book: 'Books',
+                        books: 'Books',
+                        video: 'Videos',
+                        videos: 'Videos',
+                        art: 'Art',
+                        course: 'Courses',
+                        physical: 'Physical Goods',
+                        digital: 'Digital Goods',
+                        service: 'Services',
+                        other: 'Other Seeds',
+                      };
+                      return map[k] || k.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
+                    };
+                    return (
+                      <div className="p-4 space-y-5">
+                        {Array.from(groups.entries()).map(([key, items]) => (
+                          <div key={key}>
+                            <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-2">
+                              {labelFor(key)} · {items.length}
+                            </h3>
+                            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+                              {items.map((s) => (
+                                <Link
+                                  key={s.id}
+                                  to={`/seed/${s.id}`}
+                                  className="rounded-lg overflow-hidden border border-border bg-background hover:border-primary/60 transition-colors"
+                                >
+                                  <div
+                                    className="aspect-square bg-muted"
+                                    style={{
+                                      backgroundImage: (() => {
+                                        const img = s.cover_image_url || (s.image_urls && s.image_urls[0]);
+                                        return img ? `url(${img})` : undefined;
+                                      })(),
+                                      backgroundSize: 'cover',
+                                      backgroundPosition: 'center',
+                                    }}
+                                  />
+                                  <div className="p-2">
+                                    <div className="text-xs font-medium truncate">{s.title}</div>
+                                    {s.price != null && (
+                                      <div className="text-[11px] text-muted-foreground">
+                                        ${Number(s.price).toFixed(2)}
+                                      </div>
+                                    )}
+                                  </div>
+                                </Link>
+                              ))}
                             </div>
-                          )}
-                        </div>
-                      </Link>
-                    ))}
-                  </div>
+                          </div>
+                        ))}
+                      </div>
+                    );
+                  })()}
                 </article>
               );
             })}
