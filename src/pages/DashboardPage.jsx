@@ -14,6 +14,7 @@ import {
 } from '../components/garden/seedCardBuilders'
 import { toast } from 'sonner'
 import DashboardTribeStats from '../components/dashboard/DashboardTribeStats'
+import TribalTiersCard from '../components/dashboard/TribalTiersCard'
 import LiveNowStrip from '@/components/live/LiveNowStrip'
 
 const DAYS_PER_MONTH = [30, 30, 31, 30, 30, 31, 30, 30, 31, 30, 30, 31]
@@ -1111,6 +1112,9 @@ export default function SeedFlowDashboard() {
 
             {/* ── Tribe size · Bestowals · Unread messages ── */}
             <DashboardTribeStats />
+
+            {/* ── Tribal Tiers — jump to each SeedFlow by business scale ── */}
+            <TribalTiersCard />
 
             {/* ── Day's Beads — current week strand ── */}
             <div style={styles.sectionLabel}>
