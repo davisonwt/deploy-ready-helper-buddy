@@ -315,12 +315,13 @@ export default function BulkUploadWizardPage() {
 // Step 3 — Images per row
 // =============================================================
 function ImagesStep({
-  rows, sowerId, jobId, onBack, onUpdate,
+  rows, sowerId, jobId, onBack, onContinue, onUpdate,
 }: {
   rows: ParsedRow[];
   sowerId: string | null;
   jobId: string | null;
   onBack: () => void;
+  onContinue: () => void;
   onUpdate: (idx: number, images: ProductImage[]) => void;
 }) {
   const { toast } = useToast();
