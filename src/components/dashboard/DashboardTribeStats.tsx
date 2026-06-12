@@ -16,12 +16,22 @@ export default function DashboardTribeStats() {
 
   const reload = React.useCallback(async () => {
     if (!user?.id) return;
-    // Tribe size = referrals where I'm the referrer
-    const { count: tCount } = await supabase
-      .from("referral_circle")
-      .select("id", { count: "exact", head: true })
-      .eq("referrer_id", user.id);
-    setTribeCount(tCount || 0);
+    // Tribe size = referrals where I'm the referrer (matches /my-tribe)
+    const { data: affRows } = await supabase
+      .from("affiliates")
+      .select("id")
+      .eq("user_id", user.id);
+    const affIds = (affRows || []).map((a) => a.id);
+    if (affIds.length) {
+      const { count: tCount } = await supabase
+        .from("referrals")
+        .select("id", { count: "exact", head: true })
+        .in("referrer_id", affIds);
+      setTribeCount(tCount || 0);
+    } else {
+      setTribeCount(0);
+    }
+
 
     // Bestowals received: orchards owned by me
     try {
@@ -73,7 +83,7 @@ export default function DashboardTribeStats() {
     if (!user?.id) return;
     const ch = supabase
       .channel(`dash-stats-${user.id}`)
-      .on("postgres_changes", { event: "*", schema: "public", table: "referral_circle" }, reload)
+      .on("postgres_changes", { event: "*", schema: "public", table: "referrals" }, reload)
       .on("postgres_changes", { event: "*", schema: "public", table: "bestowals" }, reload)
       .on("postgres_changes", { event: "*", schema: "public", table: "chat_messages" }, reload)
       .subscribe();
