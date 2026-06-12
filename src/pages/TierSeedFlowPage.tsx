@@ -83,52 +83,61 @@ export default function TierSeedFlowPage({ tier }: Props) {
   }, [seeds]);
 
   return (
-    <main className="min-h-screen bg-background text-foreground">
-      {/* Themed hero */}
-      <header
-        className="border-b border-border"
+    <main className="min-h-screen bg-background text-foreground relative">
+      {/* Themed ambient backdrop */}
+      <div
+        aria-hidden
+        className="pointer-events-none absolute inset-0 opacity-60"
         style={{ background: cfg.gradient }}
-      >
-        <div className="container max-w-6xl mx-auto px-4 pt-6 pb-4">
-          <Link
-            to="/dashboard"
-            className="inline-flex items-center gap-1 text-xs text-white/80 hover:text-white mb-3"
+      />
+      <div aria-hidden className="pointer-events-none absolute inset-0 bg-background/70" />
+
+      <div className="relative z-10">
+        {/* Go Back pill — matches My Garden */}
+        <div className="sticky top-3 z-50 px-4 pt-3">
+          <button
+            type="button"
+            onClick={() => navigate(-1)}
+            className="inline-flex items-center gap-2 rounded-xl border border-white/30 bg-background/90 px-4 py-3 text-sm font-extrabold text-foreground shadow-2xl backdrop-blur-md hover:bg-card"
           >
-            <ArrowLeft className="h-3.5 w-3.5" /> Back to dashboard
-          </Link>
-          <div className="flex items-center gap-3">
-            <div className="text-4xl">{cfg.emoji}</div>
-            <div>
-              <h1 className="text-2xl sm:text-3xl font-bold text-white">{cfg.label}</h1>
-              <p className="text-sm text-white/80">{cfg.description}</p>
+            <ArrowLeft className="h-4 w-4" />
+            Go Back
+          </button>
+        </div>
+
+        {/* Centered hero — matches My Garden */}
+        <div className="relative overflow-hidden border-b border-white/10 backdrop-blur-md bg-[#0f172a]/60">
+          <div className="relative container mx-auto px-4 py-12">
+            <div className="text-center max-w-4xl mx-auto">
+              <div className="flex items-center justify-center gap-4 mb-6">
+                <div
+                  className="p-4 rounded-2xl backdrop-blur-md border text-5xl leading-none"
+                  style={{
+                    background: `${cfg.accent}1a`,
+                    borderColor: `${cfg.accent}4d`,
+                  }}
+                >
+                  {cfg.emoji}
+                </div>
+                <h1
+                  className="text-4xl sm:text-5xl font-bold text-white"
+                  style={{ textShadow: `0 2px 8px ${cfg.accent}40` }}
+                >
+                  {cfg.label}
+                </h1>
+              </div>
+              <p className="text-slate-200/90 text-base sm:text-lg mb-2 max-w-2xl mx-auto">
+                {cfg.description}
+              </p>
+              <p className="text-slate-400 text-sm">{cfg.tagline}</p>
             </div>
           </div>
 
-          {/* Tier switcher */}
-          <nav className="mt-4 flex flex-wrap gap-2">
-            {TIERS.map((t) => {
-              const active = t.id === tier;
-              return (
-                <Link
-                  key={t.id}
-                  to={`/${t.slug}`}
-                  className="px-2.5 py-1 rounded-full text-[11px] font-medium border transition-colors"
-                  style={{
-                    background: active ? t.accent : 'rgba(255,255,255,0.06)',
-                    color: active ? '#0b1220' : 'rgba(255,255,255,0.85)',
-                    borderColor: active ? t.accent : 'rgba(255,255,255,0.18)',
-                  }}
-                >
-                  {t.emoji} {t.label}
-                </Link>
-              );
-            })}
-          </nav>
+          {/* Themed SeedFlow strip */}
+          <SeedFlow height={42} seedCount={32} zIndex={1} />
         </div>
+      </div>
 
-        {/* Themed SeedFlow strip */}
-        <SeedFlow height={42} seedCount={32} zIndex={1} />
-      </header>
 
       <section className="container max-w-6xl mx-auto px-4 py-8">
         {loading ? (
