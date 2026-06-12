@@ -83,7 +83,7 @@ export default function DashboardTribeStats() {
     if (!user?.id) return;
     const ch = supabase
       .channel(`dash-stats-${user.id}`)
-      .on("postgres_changes", { event: "*", schema: "public", table: "referral_circle" }, reload)
+      .on("postgres_changes", { event: "*", schema: "public", table: "referrals" }, reload)
       .on("postgres_changes", { event: "*", schema: "public", table: "bestowals" }, reload)
       .on("postgres_changes", { event: "*", schema: "public", table: "chat_messages" }, reload)
       .subscribe();
