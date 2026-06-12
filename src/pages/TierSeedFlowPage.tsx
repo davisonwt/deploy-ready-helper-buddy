@@ -86,29 +86,57 @@ export default function TierSeedFlowPage({ tier }: Props) {
           .limit(500);
         individualSeeds = (soloRows as SeedRow[]) || [];
 
-        const sowerIds = Array.from(
-          new Set(individualSeeds.map((s) => s.sower_id).filter(Boolean) as string[])
-        );
-        if (sowerIds.length > 0) {
-          // products.sower_id -> sowers.id (NOT profiles)
-          const { data: sowerRows } = await supabase
-            .from('sowers')
-            .select('id, display_name, slug, logo_url')
-            .in('id', sowerIds);
-          const found = new Map<string, SowerGroup>();
-          (sowerRows || []).forEach((s: any) => {
-            found.set(s.id, {
-              id: s.id,
-              name: s.display_name || 'Sower',
-              avatar_url: s.logo_url || null,
-              slug: s.slug || null,
+        // Pull every sower so we can include orchard-only sowers + map user_id -> sower id
+        const { data: allSowerRows } = await supabase
+          .from('sowers')
+          .select('id, user_id, display_name, slug, logo_url');
+        const sowerById = new Map<string, any>();
+        const sowerIdByUserId = new Map<string, string>();
+        (allSowerRows || []).forEach((s: any) => {
+          sowerById.set(s.id, s);
+          if (s.user_id) sowerIdByUserId.set(s.user_id, s.id);
+        });
+
+        // Pull this sower's tribe of orchards (bee-hives, honey, etc.) and merge as seeds
+        const sowerUserIds = Array.from(sowerIdByUserId.keys());
+        if (sowerUserIds.length > 0) {
+          const { data: orchardRows } = await supabase
+            .from('orchards')
+            .select('id, title, images, pocket_price, seed_value, user_id, category')
+            .in('user_id', sowerUserIds)
+            .eq('status', 'active')
+            .limit(500);
+          (orchardRows || []).forEach((o: any) => {
+            const sid = sowerIdByUserId.get(o.user_id);
+            if (!sid) return;
+            const imgs = Array.isArray(o.images) ? o.images : [];
+            individualSeeds.push({
+              id: o.id,
+              title: o.title,
+              cover_image_url: imgs[0] || null,
+              image_urls: imgs,
+              price: o.pocket_price ?? o.seed_value ?? null,
+              company_id: null,
+              sower_id: sid,
+              type: 'orchard',
+              category: o.category || null,
             });
           });
-          sowerGroups = sowerIds.map(
-            (sid) =>
-              found.get(sid) || { id: sid, name: 'Sower', avatar_url: null, slug: null }
-          );
         }
+
+        // Build sower groups for every sower that has at least one seed (product or orchard)
+        const activeSowerIds = Array.from(
+          new Set(individualSeeds.map((s) => s.sower_id).filter(Boolean) as string[])
+        );
+        sowerGroups = activeSowerIds.map((sid) => {
+          const s = sowerById.get(sid);
+          return {
+            id: sid,
+            name: s?.display_name || 'Sower',
+            avatar_url: s?.logo_url || null,
+            slug: s?.slug || null,
+          };
+        });
       }
 
       if (alive) {
@@ -338,6 +366,8 @@ export default function TierSeedFlowPage({ tier }: Props) {
                         physical: 'Physical Goods',
                         digital: 'Digital Goods',
                         service: 'Services',
+                        product: 'Physical Goods',
+                        orchard: 'Orchards (Bee-hives, Honey & more)',
                         other: 'Other Seeds',
                       };
                       return map[k] || k.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
