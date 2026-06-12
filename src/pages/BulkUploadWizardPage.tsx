@@ -186,6 +186,19 @@ export default function BulkUploadWizardPage() {
     );
   }
 
+  // ---------- Step 3: Images ----------
+  if (step === 3) {
+    return (
+      <ImagesStep
+        rows={rows}
+        sowerId={sowerId}
+        jobId={jobId}
+        onBack={() => setStep(2)}
+        onUpdate={(idx, images) => setRows((prev) => prev.map((r) => r.idx === idx ? { ...r, images } : r))}
+      />
+    );
+  }
+
   // ---------- Step 2: Review table ----------
   return (
     <div className="container max-w-7xl py-8 space-y-4">
