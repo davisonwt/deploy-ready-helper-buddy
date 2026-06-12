@@ -253,22 +253,42 @@ export default function MyTribePage() {
             </div>
           ) : (
             <div className="divide-y divide-white/5">
-              {tribe.map((r) => (
-                <div key={r.id} className="flex items-center justify-between py-3 text-sm">
-                  <div className="font-mono text-xs text-slate-400">
-                    Member #{String(r.referred_id).slice(0, 8)}
+              {tribe.map((r) => {
+                const p = r.profile;
+                const name = p
+                  ? (p.display_name?.trim() ||
+                     [p.first_name, p.last_name].filter(Boolean).join(" ").trim() ||
+                     `Member #${String(r.referred_id).slice(0, 8)}`)
+                  : `Member #${String(r.referred_id).slice(0, 8)}`;
+                const initials = (name || "?").split(/\s+/).map((s: string) => s[0]).slice(0, 2).join("").toUpperCase();
+                return (
+                  <div key={r.id} className="flex items-center justify-between py-3 text-sm">
+                    <div className="flex items-center gap-3 min-w-0">
+                      {p?.avatar_url ? (
+                        <img src={p.avatar_url} alt={name} className="h-8 w-8 rounded-full object-cover border border-white/10" />
+                      ) : (
+                        <div className="h-8 w-8 rounded-full bg-cyan-500/15 border border-cyan-400/30 text-cyan-200 text-xs font-bold flex items-center justify-center">
+                          {initials || "?"}
+                        </div>
+                      )}
+                      <div className="min-w-0">
+                        <div className="text-slate-100 font-medium truncate">{name}</div>
+                        <div className="font-mono text-[10px] text-slate-500 truncate">{String(r.referred_id).slice(0, 8)}</div>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <span className="text-xs text-slate-500">
+                        {new Date(r.created_at).toLocaleDateString()}
+                      </span>
+                      <Badge variant={r.status === "completed" ? "default" : "secondary"}>
+                        {r.status}
+                      </Badge>
+                    </div>
                   </div>
-                  <div className="flex items-center gap-3">
-                    <span className="text-xs text-slate-500">
-                      {new Date(r.created_at).toLocaleDateString()}
-                    </span>
-                    <Badge variant={r.status === "completed" ? "default" : "secondary"}>
-                      {r.status}
-                    </Badge>
-                  </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
+
           )}
         </div>
       </div>
