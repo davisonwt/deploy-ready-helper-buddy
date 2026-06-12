@@ -46,6 +46,7 @@ export default function BulkUploadWizardPage() {
   const [jobId, setJobId] = useState<string | null>(null);
   const [sowerId, setSowerId] = useState<string | null>(null);
   const [dragOver, setDragOver] = useState(false);
+  const [publishedCount, setPublishedCount] = useState(0);
 
   useEffect(() => {
     (async () => {
