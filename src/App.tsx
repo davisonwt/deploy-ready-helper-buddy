@@ -56,6 +56,8 @@ const CommunicationsHub = lazy(() =>
 );
 const DashboardPage = lazy(() => import("./pages/DashboardPage"));
 const BulkUploadWizardPage = lazy(() => import("./pages/BulkUploadWizardPage"));
+const BulkSowerPage = lazy(() => import("./pages/BulkSowerPage"));
+const BulkSeedFeedPage = lazy(() => import("./pages/BulkSeedFeedPage"));
 const StatsPage = lazy(() => import("./pages/StatsPage"));
 const ProfilePage = lazy(() => import("./pages/ProfilePage"));
 const BrowseOrchardsPage = lazy(() => import("./pages/BrowseOrchardsPage"));
