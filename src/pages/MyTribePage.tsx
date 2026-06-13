@@ -56,7 +56,30 @@ export default function MyTribePage() {
           .select("id, referred_id, status, commission_amount, created_at")
           .in("referrer_id", affIds)
           .order("created_at", { ascending: false });
-        const list = refs || [];
+        const { data: circleRows } = await supabase
+          .from("referral_circle")
+          .select("id, referred_user_id, status, referred_at")
+          .eq("referrer_id", user.id)
+          .order("referred_at", { ascending: false });
+        const memberMap = new Map<string, any>();
+        (refs || []).forEach((r: any) => {
+          if (!r.referred_id) return;
+          memberMap.set(r.referred_id, { ...r, referred_id: r.referred_id, created_at: r.created_at, source: "referrals" });
+        });
+        (circleRows || []).forEach((r: any) => {
+          if (!r.referred_user_id || memberMap.has(r.referred_user_id)) return;
+          memberMap.set(r.referred_user_id, {
+            id: r.id,
+            referred_id: r.referred_user_id,
+            status: r.status || "active",
+            commission_amount: 0,
+            created_at: r.referred_at,
+            source: "referral_circle",
+          });
+        });
+        const list = Array.from(memberMap.values()).sort(
+          (a: any, b: any) => new Date(b.created_at || 0).getTime() - new Date(a.created_at || 0).getTime()
+        );
 
         // Hydrate profiles for each referred user
         const referredIds = Array.from(new Set(list.map((r: any) => r.referred_id).filter(Boolean)));
@@ -75,7 +98,7 @@ export default function MyTribePage() {
         const totalEarnings = (affRows || []).reduce((sum, a: any) => sum + Number(a.earnings || 0), 0);
         setStats({
           total: list.length || aff.total_referrals || 0,
-          completed: list.filter((r: any) => r.status === "completed").length,
+          completed: list.filter((r: any) => r.status === "completed" || r.status === "active").length,
           earnings: totalEarnings,
         });
       } catch (err) {
