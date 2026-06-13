@@ -393,6 +393,25 @@ export default function SeedFlowDashboard() {
   const [activePath, setActivePath] = useState('/dashboard')
   const [mobilePanel, setMobilePanel] = useState(null)
   const [isLetItRainOpen, setIsLetItRainOpen] = useState(false)
+  const [tribalFeedsOpen, setTribalFeedsOpen] = useState(false)
+  const tribalFeedsRef = useRef(null)
+  useEffect(() => {
+    if (!tribalFeedsOpen) return
+    const onDocClick = (e) => {
+      if (tribalFeedsRef.current && !tribalFeedsRef.current.contains(e.target)) {
+        setTribalFeedsOpen(false)
+      }
+    }
+    document.addEventListener('mousedown', onDocClick)
+    return () => document.removeEventListener('mousedown', onDocClick)
+  }, [tribalFeedsOpen])
+  const TRIBAL_FEED_TIERS = [
+    { slug: 'homestead', label: 'Homestead', emoji: '🏡' },
+    { slug: 'grove', label: 'Grove', emoji: '🌳' },
+    { slug: 'orchard', label: 'Orchard', emoji: '🍎' },
+    { slug: 'estate', label: 'Estate', emoji: '🏛️' },
+    { slug: 'harvest-works', label: 'Harvest Works', emoji: '🏭' },
+  ]
   const intervalRef = useRef(null)
 
   // Live sunrise-based sacred date — ticks every minute, rolls at user's local sunrise.
