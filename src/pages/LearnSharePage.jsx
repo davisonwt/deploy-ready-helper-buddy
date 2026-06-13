@@ -117,8 +117,12 @@ export default function LearnSharePage() {
   const referralCode = REFERRAL_CODES[user?.id] || 'S2G-XXXXXX'
   const filtered = selectedRole === 'all' ? VIDEOS : VIDEOS.filter(v => v.role === selectedRole)
 
+  // Always share the public Sow2Grow domain so link previews show S2G branding
+  // (not the internal lovableproject.com preview, which shows Lovable's OG card).
+  const PUBLIC_ORIGIN = 'https://sow2growapp.com'
+
   const handleShare = async (video) => {
-    const shareUrl = `${window.location.origin}/register?ref=${referralCode}`
+    const shareUrl = `${PUBLIC_ORIGIN}/register?ref=${referralCode}`
     const text = `🌱 ${video.title} — ${video.desc}\n\nWatch & join Sow2Grow: ${shareUrl}`
     try {
       if (navigator.share) {
@@ -134,10 +138,11 @@ export default function LearnSharePage() {
   }
 
   const handleCopyScript = async (video) => {
-    const script = `Hey! 👋 Check out this video about S2G — ${video.title}.\n${video.desc}\n\nJoin our tribe 🌱 ${window.location.origin}/register?ref=${referralCode}`
+    const script = `Hey! 👋 Check out this video about S2G — ${video.title}.\n${video.desc}\n\nJoin our tribe 🌱 ${PUBLIC_ORIGIN}/register?ref=${referralCode}`
     await navigator.clipboard.writeText(script)
     toast.success('Script copied!')
   }
+
 
   return (
     <div style={{ minHeight: '100vh', background: 'linear-gradient(135deg, #020617 0%, #0f172a 100%)', color: '#f1f5f9' }}>
