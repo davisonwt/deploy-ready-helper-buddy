@@ -79,7 +79,7 @@ export function useRoles(): UseRolesResult {
 
       const { data: profiles, error: profilesError } = await supabase
         .from('profiles')
-        .select('id, user_id, display_name, avatar_url, first_name, last_name, verification_status, created_at')
+        .select('id, user_id, display_name, username, email, phone, location, avatar_url, first_name, last_name, verification_status, last_login, created_at')
         .order('created_at', { ascending: false })
 
       if (profilesError) {
@@ -97,6 +97,11 @@ export function useRoles(): UseRolesResult {
 
       const combined = (profiles || []).map((profile: any) => ({
         ...profile,
+        display_name:
+          profile.display_name ||
+          [profile.first_name, profile.last_name].filter(Boolean).join(' ').trim() ||
+          profile.username ||
+          `User ${String(profile.user_id).slice(0, 8)}`,
         user_roles: (userRolesData || []).filter((r: any) => r.user_id === profile.user_id),
       }))
 
