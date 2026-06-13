@@ -5,8 +5,6 @@ import { useReferralCode } from "@/hooks/useReferralCode";
 import { supabase } from "@/integrations/supabase/client";
 import { burnReferralCode } from "@/lib/referral";
 import { toast } from "@/hooks/use-toast";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -50,21 +48,51 @@ export default function MyTribePage() {
           setLoading(false);
           return;
         }
-        const affIds = (affRows || []).map((a) => a.id);
-        const { data: refs } = await supabase
-          .from("referrals")
-          .select("id, referred_id, status, commission_amount, created_at")
-          .in("referrer_id", affIds)
-          .order("created_at", { ascending: false });
-        const list = refs || [];
+        const affIds = Array.from(new Set((affRows || []).map((a) => a.id).filter(Boolean)));
+        const refChunks = await Promise.all(
+          Array.from({ length: Math.ceil(affIds.length / 25) }, (_, idx) => affIds.slice(idx * 25, idx * 25 + 25))
+            .filter((chunk) => chunk.length > 0)
+            .map((chunk) =>
+              supabase
+                .from("referrals")
+                .select("id, referred_id, status, commission_amount, created_at")
+                .in("referrer_id", chunk)
+                .order("created_at", { ascending: false })
+            )
+        );
+        const refs = refChunks.flatMap(({ data }) => data || []);
+        const { data: circleRows } = await supabase
+          .from("referral_circle")
+          .select("id, referred_user_id, status, referred_at")
+          .eq("referrer_id", user.id)
+          .order("referred_at", { ascending: false });
+        const memberMap = new Map<string, any>();
+        (refs || []).forEach((r: any) => {
+          if (!r.referred_id) return;
+          memberMap.set(r.referred_id, { ...r, referred_id: r.referred_id, created_at: r.created_at, source: "referrals" });
+        });
+        (circleRows || []).forEach((r: any) => {
+          if (!r.referred_user_id || memberMap.has(r.referred_user_id)) return;
+          memberMap.set(r.referred_user_id, {
+            id: r.id,
+            referred_id: r.referred_user_id,
+            status: r.status || "active",
+            commission_amount: 0,
+            created_at: r.referred_at,
+            source: "referral_circle",
+          });
+        });
+        const list = Array.from(memberMap.values()).sort(
+          (a: any, b: any) => new Date(b.created_at || 0).getTime() - new Date(a.created_at || 0).getTime()
+        );
 
         // Hydrate profiles for each referred user
         const referredIds = Array.from(new Set(list.map((r: any) => r.referred_id).filter(Boolean)));
         let profileMap: Record<string, any> = {};
         if (referredIds.length) {
           const { data: profs } = await supabase
-            .from("profiles")
-            .select("user_id, first_name, last_name, display_name, avatar_url")
+            .from("public_profiles")
+            .select("user_id, display_name, username, avatar_url")
             .in("user_id", referredIds);
           (profs || []).forEach((p: any) => { profileMap[p.user_id] = p; });
         }
@@ -75,7 +103,7 @@ export default function MyTribePage() {
         const totalEarnings = (affRows || []).reduce((sum, a: any) => sum + Number(a.earnings || 0), 0);
         setStats({
           total: list.length || aff.total_referrals || 0,
-          completed: list.filter((r: any) => r.status === "completed").length,
+          completed: list.filter((r: any) => r.status === "completed" || r.status === "active").length,
           earnings: totalEarnings,
         });
       } catch (err) {
@@ -257,6 +285,7 @@ export default function MyTribePage() {
                 const p = r.profile;
                 const name = p
                   ? (p.display_name?.trim() ||
+                     p.username?.trim() ||
                      [p.first_name, p.last_name].filter(Boolean).join(" ").trim() ||
                      `Member #${String(r.referred_id).slice(0, 8)}`)
                   : `Member #${String(r.referred_id).slice(0, 8)}`;
