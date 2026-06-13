@@ -160,6 +160,32 @@ export default function TribalAliveFeedPage() {
   const containerRef = useRef<HTMLDivElement>(null);
   const cardRefs = useRef<Array<HTMLDivElement | null>>([]);
 
+  // Resolve which sower user_ids belong to the selected Tribal Feed tier
+  useEffect(() => {
+    let cancelled = false;
+    if (!tierFilter) { setTierSowerIds(null); return; }
+    (async () => {
+      if (tierFilter === 'homestead') {
+        // Homestead = users who do NOT own a company (solo sowers)
+        const { data } = await supabase.from('companies').select('owner_user_id');
+        if (cancelled) return;
+        const companyOwners = new Set((data || []).map((r: any) => r.owner_user_id).filter(Boolean));
+        // Sentinel: empty set means "no allowlist by id" → we'll instead use an exclusion set
+        // Encode exclusion by negating later; here we store owners under a Symbol-keyed Set wrapper.
+        (companyOwners as any).__exclude = true;
+        setTierSowerIds(companyOwners as any);
+      } else {
+        const { data } = await supabase
+          .from('companies')
+          .select('owner_user_id')
+          .eq('tier', tierFilter);
+        if (cancelled) return;
+        setTierSowerIds(new Set((data || []).map((r: any) => r.owner_user_id).filter(Boolean)));
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [tierFilter]);
+
   // Load everything everyone planted across ALL content surfaces
   useEffect(() => {
     let cancelled = false;
