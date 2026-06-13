@@ -70,23 +70,46 @@ export default function SeedSlider({
         <span style={styles.count}>{safeIdx + 1}/{total}</span>
       </header>
 
-      <LivingSeedCard
-        seedId={active.liveKey || active.rawId || active.id}
-        title={active.title}
-        subtitle={active.subtitle}
-        image={active.image}
-        images={active.images}
-        openPath={active.openPath}
-        mediaUrl={active.mediaUrl}
-        mediaKind={active.mediaKind}
-        badge={active.badge}
-        mine={active.mine}
-        whispererSharePct={active.whispererSharePct}
-        onEdit={active.onEdit ? () => active.onEdit(active) : undefined}
-        onDelete={active.onDelete ? () => active.onDelete(active) : undefined}
-        onRepost={active.onRepost ? () => active.onRepost(active) : undefined}
-        onPark={active.onPark ? () => active.onPark(active) : undefined}
-      />
+      <div style={{ position: 'relative' }}>
+        <LivingSeedCard
+          seedId={active.liveKey || active.rawId || active.id}
+          title={active.title}
+          subtitle={active.subtitle}
+          image={active.image}
+          images={active.images}
+          openPath={active.openPath}
+          mediaUrl={active.mediaUrl}
+          mediaKind={active.mediaKind}
+          badge={active.badge}
+          mine={active.mine}
+          whispererSharePct={active.whispererSharePct}
+          onEdit={active.onEdit ? () => active.onEdit(active) : undefined}
+          onDelete={active.onDelete ? () => active.onDelete(active) : undefined}
+          onRepost={active.onRepost ? () => active.onRepost(active) : undefined}
+          onPark={active.onPark ? () => active.onPark(active) : undefined}
+        />
+
+        {total > 1 && (
+          <>
+            <button
+              type="button"
+              onClick={() => setIdx((i) => (i - 1 + total) % total)}
+              style={{ ...styles.arrow(accent), left: 8 }}
+              aria-label="Previous"
+            >
+              ‹
+            </button>
+            <button
+              type="button"
+              onClick={() => setIdx((i) => (i + 1) % total)}
+              style={{ ...styles.arrow(accent), right: 8 }}
+              aria-label="Next"
+            >
+              ›
+            </button>
+          </>
+        )}
+      </div>
 
       {/* Dots */}
       <div style={styles.dots}>
