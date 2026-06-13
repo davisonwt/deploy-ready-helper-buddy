@@ -575,9 +575,9 @@ export default function RegisterPage() {
             <div className="mt-8 pt-6 border-t border-gray-200">
               <div className="text-center bg-gradient-to-r from-green-50 to-blue-50 rounded-xl p-4 shadow-sm">
                 <p className="text-sm text-green-700 italic font-medium">
-                  "Give, and it will be given to you. A good measure, pressed down, shaken together and running over, will be poured into your lap."
+                  "Because the poor one does not cease from the land. Therefore I am commanding you, saying, 'You shall certainly open your hand to your brother, to your poor and to your needy one, in your land.'"
                 </p>
-                <p className="text-xs text-green-600 font-semibold mt-2">— Luke 6:38</p>
+                <p className="text-xs text-green-600 font-semibold mt-2">— Deḇarim (Deuteronomy) 15:11</p>
               </div>
             </div>
           </CardContent>
