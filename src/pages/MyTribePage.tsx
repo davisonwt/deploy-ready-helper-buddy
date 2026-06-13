@@ -48,12 +48,19 @@ export default function MyTribePage() {
           setLoading(false);
           return;
         }
-        const affIds = (affRows || []).map((a) => a.id);
-        const { data: refs } = await supabase
-          .from("referrals")
-          .select("id, referred_id, status, commission_amount, created_at")
-          .in("referrer_id", affIds)
-          .order("created_at", { ascending: false });
+        const affIds = Array.from(new Set((affRows || []).map((a) => a.id).filter(Boolean)));
+        const refChunks = await Promise.all(
+          Array.from({ length: Math.ceil(affIds.length / 25) }, (_, idx) => affIds.slice(idx * 25, idx * 25 + 25))
+            .filter((chunk) => chunk.length > 0)
+            .map((chunk) =>
+              supabase
+                .from("referrals")
+                .select("id, referred_id, status, commission_amount, created_at")
+                .in("referrer_id", chunk)
+                .order("created_at", { ascending: false })
+            )
+        );
+        const refs = refChunks.flatMap(({ data }) => data || []);
         const { data: circleRows } = await supabase
           .from("referral_circle")
           .select("id, referred_user_id, status, referred_at")
