@@ -178,7 +178,7 @@ export default function TribalAliveFeedPage() {
         const { data } = await supabase
           .from('companies')
           .select('owner_user_id')
-          .eq('tier', tierFilter);
+          .eq('tier', tierFilter as any);
         if (cancelled) return;
         setTierSowerIds(new Set((data || []).map((r: any) => r.owner_user_id).filter(Boolean)));
       }
