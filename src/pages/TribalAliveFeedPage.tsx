@@ -118,6 +118,16 @@ const wanderingFor = (item: { kind: FeedItem['kind']; wandering_role?: string | 
 
 export default function TribalAliveFeedPage() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const tierFilter = searchParams.get('tier'); // 'homestead'|'grove'|'orchard'|'estate'|'harvest_works'|null
+  const TIER_LABELS: Record<string, { label: string; emoji: string }> = {
+    homestead: { label: 'Homestead', emoji: '🏡' },
+    grove: { label: 'Grove', emoji: '🌳' },
+    orchard: { label: 'Orchard', emoji: '🍎' },
+    estate: { label: 'Estate', emoji: '🏛️' },
+    harvest_works: { label: 'Harvest Works', emoji: '🏭' },
+  };
+  const [tierSowerIds, setTierSowerIds] = useState<Set<string> | null>(null);
   const { user } = useAuth();
   const { toast } = useToast();
   const { code: referralCode } = useReferralCode();
