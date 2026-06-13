@@ -58,8 +58,8 @@ export default function BulkUploadWizardPage() {
   }, []);
 
   const handleFile = useCallback(async (f: File) => {
-    if (f.size > 20 * 1024 * 1024) {
-      toast({ title: 'File too large', description: 'Maximum 20MB.', variant: 'destructive' });
+    if (f.size > 50 * 1024 * 1024) {
+      toast({ title: 'File too large', description: 'Maximum 50MB.', variant: 'destructive' });
       return;
     }
     setFile(f);
@@ -171,7 +171,7 @@ export default function BulkUploadWizardPage() {
                     <Badge key={t} variant="secondary">{t}</Badge>
                   ))}
                 </div>
-                <p className="text-xs text-muted-foreground pt-2">Max 20MB · PDF/DOCX flagged for review</p>
+                <p className="text-xs text-muted-foreground pt-2">Max 50MB · PDF/DOCX flagged for review</p>
               </>
             )}
           </CardContent>
