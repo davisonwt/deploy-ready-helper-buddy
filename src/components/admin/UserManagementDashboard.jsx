@@ -28,6 +28,7 @@ import { toast } from 'sonner';
 import { useRoles } from '@/hooks/useRoles';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
+import { formatAppDate } from '@/lib/dates';
 
 export function UserManagementDashboard() {
   const { user } = useAuth();
@@ -154,11 +155,17 @@ export function UserManagementDashboard() {
   };
 
   const getStatusBadge = (user) => {
-    if (user.email_confirmed_at) {
+    if (!user.suspended) {
       return <Badge variant="default" className="bg-green-100 text-green-800">Active</Badge>;
     }
-    return <Badge variant="secondary">Inactive</Badge>;
+    return <Badge variant="secondary">Suspended</Badge>;
   };
+
+  const getDisplayName = (profile) =>
+    profile.display_name ||
+    [profile.first_name, profile.last_name].filter(Boolean).join(' ').trim() ||
+    profile.username ||
+    `User ${String(profile.user_id).slice(0, 8)}`;
 
   if (!isAdminOrGosat) {
     return (
@@ -282,7 +289,7 @@ export function UserManagementDashboard() {
               <TableHeader>
                 <TableRow>
                   <TableHead>User</TableHead>
-                  <TableHead>Email</TableHead>
+                  <TableHead>Username / Email</TableHead>
                   <TableHead>Roles</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead>Joined</TableHead>
@@ -301,18 +308,23 @@ export function UserManagementDashboard() {
                     <TableRow key={user.user_id}>
                       <TableCell>
                         <div className="flex items-center space-x-3">
-                          <div className="w-8 h-8 bg-primary/10 rounded-full flex items-center justify-center">
-                            <User className="h-4 w-4 text-primary" />
-                          </div>
+                          {user.avatar_url ? (
+                            <img src={user.avatar_url} alt={getDisplayName(user)} className="w-8 h-8 rounded-full object-cover border" />
+                          ) : (
+                            <div className="w-8 h-8 bg-primary/10 rounded-full flex items-center justify-center">
+                              <User className="h-4 w-4 text-primary" />
+                            </div>
+                          )}
                           <div>
                             <p className="font-medium">
-                              {user.display_name || `${user.first_name} ${user.last_name}` || 'Anonymous'}
+                              {getDisplayName(user)}
                             </p>
+                            <p className="text-xs text-muted-foreground font-mono">{String(user.user_id).slice(0, 8)}</p>
                           </div>
                         </div>
                       </TableCell>
                       <TableCell className="font-mono text-sm">
-                        {user.email || 'No email'}
+                        {user.username || user.email || 'No username'}
                       </TableCell>
                       <TableCell>
                         {getRoleBadge(user.user_roles)}
@@ -321,7 +333,7 @@ export function UserManagementDashboard() {
                         {getStatusBadge(user)}
                       </TableCell>
                       <TableCell>
-                        {user.created_at ? new Date(user.created_at).toLocaleDateString() : 'N/A'}
+                        {formatAppDate(user.created_at)}
                       </TableCell>
                       <TableCell>
                         <div className="flex items-center space-x-2">
@@ -384,9 +396,9 @@ export function UserManagementDashboard() {
                 </div>
                 <div>
                   <h3 className="text-xl font-semibold">
-                    {selectedUser.display_name || `${selectedUser.first_name} ${selectedUser.last_name}` || 'Anonymous'}
+                    {getDisplayName(selectedUser)}
                   </h3>
-                  <p className="text-muted-foreground">{selectedUser.email}</p>
+                  <p className="text-muted-foreground">{selectedUser.username || selectedUser.email}</p>
                   <div className="flex items-center space-x-2 mt-2">
                     {getRoleBadge(selectedUser.user_roles)}
                     {getStatusBadge(selectedUser)}
@@ -409,7 +421,7 @@ export function UserManagementDashboard() {
                     </div>
                     <div>
                       <label className="text-sm font-medium">Joined</label>
-                      <p className="text-sm">{new Date(selectedUser.created_at).toLocaleDateString()}</p>
+                      <p className="text-sm">{formatAppDate(selectedUser.created_at)}</p>
                     </div>
                     <div>
                       <label className="text-sm font-medium">Phone</label>
