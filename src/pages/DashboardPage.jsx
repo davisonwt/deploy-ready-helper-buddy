@@ -376,7 +376,7 @@ function WeekBeads({ sacred }) {
 }
 
 export default function SeedFlowDashboard() {
-  const { user } = useAuth()
+  const { user, logout } = useAuth()
   const navigate = useNavigate()
   const [profile, setProfile] = useState(null)
   const [activeIdx, setActiveIdx] = useState(0)
