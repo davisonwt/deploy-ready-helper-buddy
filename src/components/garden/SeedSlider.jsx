@@ -198,11 +198,21 @@ const styles = {
   cardSubtitle: { fontSize: 12, color: 'rgba(226,232,240,0.7)', marginBottom: 10 },
   btnRow: { display: 'flex', gap: 6 },
 
-  dots: { display: 'flex', justifyContent: 'center', gap: 5, marginTop: 10 },
+  dots: { display: 'flex', justifyContent: 'center', gap: 5, marginTop: 10, flexWrap: 'wrap' },
   dot: (isActive, accent) => ({
     width: isActive ? 18 : 6, height: 6, borderRadius: 3,
     background: isActive ? accent : '#1e293b',
     transition: 'all 0.3s ease', cursor: 'pointer',
     border: 'none', padding: 0,
+  }),
+  arrow: (accent) => ({
+    position: 'absolute', top: '50%', transform: 'translateY(-50%)',
+    width: 40, height: 40, borderRadius: '50%',
+    background: 'rgba(6,10,18,0.75)',
+    border: `1px solid ${accent}66`,
+    color: '#f1f5f9', fontSize: 26, fontWeight: 700, lineHeight: 1,
+    display: 'flex', alignItems: 'center', justifyContent: 'center',
+    cursor: 'pointer', zIndex: 5, backdropFilter: 'blur(6px)',
+    boxShadow: `0 4px 14px ${accent}44`,
   }),
 }
