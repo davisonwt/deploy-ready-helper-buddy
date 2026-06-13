@@ -145,6 +145,23 @@ export class AuthProviderClass extends React.Component {
   }
 
   register = async (userData) => {
+    const logAttempt = async (success, error) => {
+      try {
+        await supabase.from('signup_attempts').insert({
+          email: userData.email || null,
+          first_name: userData.first_name || null,
+          last_name: userData.last_name || null,
+          success,
+          error_code: error?.code || error?.name || null,
+          error_message: error?.message || (typeof error === 'string' ? error : null),
+          user_agent: typeof navigator !== 'undefined' ? navigator.userAgent : null,
+          referral_code: userData.referral_code || null,
+        })
+      } catch (logErr) {
+        console.error('Failed to log signup attempt:', logErr)
+      }
+    }
+
     try {
       const currentDomain = window.location.origin
       // Pull pending referral code (URL ?ref= or saved by useReferralCapture)
@@ -174,7 +191,10 @@ export class AuthProviderClass extends React.Component {
           }
         }
       }))
-      if (error) return { success: false, error: error.message }
+      if (error) {
+        await logAttempt(false, error)
+        return { success: false, error: error.message, code: error.code || error.name }
+      }
       // Best-effort: also call claim_referral_code RPC after signup so it sticks even if trigger missed it
       if (referral_code && data?.user?.id) {
         try {
@@ -182,11 +202,14 @@ export class AuthProviderClass extends React.Component {
           localStorage.removeItem('s2g_pending_ref')
         } catch {}
       }
+      await logAttempt(true, null)
       return { success: true, user: data.user }
     } catch (e) {
-      return { success: false, error: e.message }
+      await logAttempt(false, e)
+      return { success: false, error: e?.message || 'Unknown error', code: e?.code || e?.name }
     }
   }
+
 
   loginAnonymously = async () => {
     try {
