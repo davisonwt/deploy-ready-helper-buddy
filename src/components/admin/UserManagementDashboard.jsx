@@ -97,6 +97,7 @@ export function UserManagementDashboard() {
   const filteredUsers = users.filter(user => {
     const matchesSearch = 
       user.display_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      user.username?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       user.first_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       user.last_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       user.email?.toLowerCase().includes(searchTerm.toLowerCase());
@@ -105,8 +106,8 @@ export function UserManagementDashboard() {
       user.user_roles?.some(role => role.role === roleFilter);
 
     const matchesStatus = statusFilter === 'all' ||
-      (statusFilter === 'active' && user.email_confirmed_at) ||
-      (statusFilter === 'inactive' && !user.email_confirmed_at);
+      (statusFilter === 'active' && !user.suspended) ||
+      (statusFilter === 'inactive' && user.suspended);
 
     return matchesSearch && matchesRole && matchesStatus;
   });
