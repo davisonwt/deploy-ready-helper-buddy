@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { ShieldCheck, Lock } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -13,10 +13,11 @@ import { useAuth } from "@/hooks/useAuth";
 export default function OnboardingSecurityPage() {
   const navigate = useNavigate();
   const { toast } = useToast();
-  const { isAuthenticated, loading } = useAuth();
+  const { user, isAuthenticated, loading, reinitializeAuth } = useAuth();
   const [picks, setPicks] = useState<string[]>(["", "", ""]);
   const [answers, setAnswers] = useState<string[]>(["", "", ""]);
   const [submitting, setSubmitting] = useState(false);
+  const [checkingExisting, setCheckingExisting] = useState(true);
 
   const available = useMemo(
     () =>
@@ -27,10 +28,41 @@ export default function OnboardingSecurityPage() {
     [picks]
   );
 
-  if (!loading && !isAuthenticated) {
-    navigate("/login", { replace: true });
-    return null;
-  }
+  useEffect(() => {
+    if (loading) return;
+    if (!isAuthenticated || !user?.id) {
+      navigate("/login", { replace: true });
+      return;
+    }
+
+    let cancelled = false;
+    (async () => {
+      const [{ data: profile }, { data: securityQuestions }] = await Promise.all([
+        supabase
+          .from("profiles")
+          .select("security_setup_complete")
+          .eq("user_id", user.id)
+          .maybeSingle(),
+        supabase
+          .from("user_security_questions")
+          .select("user_id")
+          .eq("user_id", user.id)
+          .maybeSingle(),
+      ]);
+      if (cancelled) return;
+      if (profile?.security_setup_complete || securityQuestions?.user_id) {
+        navigate("/dashboard", { replace: true });
+        return;
+      }
+      setCheckingExisting(false);
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [isAuthenticated, loading, navigate, user?.id]);
+
+  if (loading || checkingExisting) return null;
 
   const canSubmit =
     picks.every((p) => p.trim().length > 0) &&
@@ -54,6 +86,7 @@ export default function OnboardingSecurityPage() {
       title: "You're all set 🔒",
       description: "Your account is fully activated. All communication on Sow2Grow stays private.",
     });
+    await reinitializeAuth?.();
     navigate("/dashboard", { replace: true });
   };
 
