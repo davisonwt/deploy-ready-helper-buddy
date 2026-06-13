@@ -46,6 +46,9 @@ export interface LivingSeedCardProps {
   sowerUserId?: string | null;
   /** radio mode unlocks the host music dropdown inside LiveStage */
   isRadio?: boolean;
+  showCardNavigation?: boolean;
+  onPreviousCard?: () => void;
+  onNextCard?: () => void;
 }
 
 const BLOOM_META: Record<BloomStage, { emoji: string; label: string }> = {
@@ -61,6 +64,7 @@ export default function LivingSeedCard({
   size = 'compact', className = '',
   whispererSharePct = 10,
   sowerUserId, isRadio = false,
+  showCardNavigation = false, onPreviousCard, onNextCard,
 }: LivingSeedCardProps) {
   const navigate = useNavigate();
   const { user } = useAuth();
@@ -211,6 +215,27 @@ export default function LivingSeedCard({
           className="absolute inset-0"
           style={{ background: 'linear-gradient(to top, #060a12 0%, rgba(34,197,94,0.13) 60%, transparent 100%)' }}
         />
+
+        {showCardNavigation && (
+          <>
+            <button
+              type="button"
+              aria-label="Previous seed"
+              onClick={(e) => { e.preventDefault(); e.stopPropagation(); onPreviousCard?.(); }}
+              className="absolute left-3 top-1/2 z-[20] flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full border border-white/25 bg-[#060a12]/85 text-slate-50 shadow-2xl backdrop-blur transition hover:bg-[#0f172a]"
+            >
+              <ChevronLeft className="h-7 w-7" />
+            </button>
+            <button
+              type="button"
+              aria-label="Next seed"
+              onClick={(e) => { e.preventDefault(); e.stopPropagation(); onNextCard?.(); }}
+              className="absolute right-3 top-1/2 z-[20] flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full border border-white/25 bg-[#060a12]/85 text-slate-50 shadow-2xl backdrop-blur transition hover:bg-[#0f172a]"
+            >
+              <ChevronRight className="h-7 w-7" />
+            </button>
+          </>
+        )}
 
         {/* inline preview */}
         {previewing && mediaKind === 'video' && mediaUrl && (

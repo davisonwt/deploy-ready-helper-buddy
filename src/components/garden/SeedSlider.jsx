@@ -33,6 +33,8 @@ export default function SeedSlider({
   const total = cards.length
   const safeIdx = total ? idx % total : 0
   const active = cards[safeIdx]
+  const goPrevious = () => setIdx((i) => (i - 1 + total) % total)
+  const goNext = () => setIdx((i) => (i + 1) % total)
 
   // auto-rotate
   useEffect(() => {
@@ -83,32 +85,14 @@ export default function SeedSlider({
           badge={active.badge}
           mine={active.mine}
           whispererSharePct={active.whispererSharePct}
+          showCardNavigation={total > 1}
+          onPreviousCard={goPrevious}
+          onNextCard={goNext}
           onEdit={active.onEdit ? () => active.onEdit(active) : undefined}
           onDelete={active.onDelete ? () => active.onDelete(active) : undefined}
           onRepost={active.onRepost ? () => active.onRepost(active) : undefined}
           onPark={active.onPark ? () => active.onPark(active) : undefined}
         />
-
-        {total > 1 && (
-          <>
-            <button
-              type="button"
-              onClick={() => setIdx((i) => (i - 1 + total) % total)}
-              style={{ ...styles.arrow(accent), left: 8 }}
-              aria-label="Previous"
-            >
-              ‹
-            </button>
-            <button
-              type="button"
-              onClick={() => setIdx((i) => (i + 1) % total)}
-              style={{ ...styles.arrow(accent), right: 8 }}
-              aria-label="Next"
-            >
-              ›
-            </button>
-          </>
-        )}
       </div>
 
       {/* Dots */}
@@ -204,15 +188,5 @@ const styles = {
     background: isActive ? accent : '#1e293b',
     transition: 'all 0.3s ease', cursor: 'pointer',
     border: 'none', padding: 0,
-  }),
-  arrow: (accent) => ({
-    position: 'absolute', top: '50%', transform: 'translateY(-50%)',
-    width: 40, height: 40, borderRadius: '50%',
-    background: 'rgba(6,10,18,0.75)',
-    border: `1px solid ${accent}66`,
-    color: '#f1f5f9', fontSize: 26, fontWeight: 700, lineHeight: 1,
-    display: 'flex', alignItems: 'center', justifyContent: 'center',
-    cursor: 'pointer', zIndex: 5, backdropFilter: 'blur(6px)',
-    boxShadow: `0 4px 14px ${accent}44`,
   }),
 }
