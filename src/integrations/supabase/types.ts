@@ -9074,6 +9074,48 @@ export type Database = {
         }
         Relationships: []
       }
+      signup_attempts: {
+        Row: {
+          created_at: string
+          email: string | null
+          error_code: string | null
+          error_message: string | null
+          first_name: string | null
+          id: string
+          ip_text: string | null
+          last_name: string | null
+          referral_code: string | null
+          success: boolean
+          user_agent: string | null
+        }
+        Insert: {
+          created_at?: string
+          email?: string | null
+          error_code?: string | null
+          error_message?: string | null
+          first_name?: string | null
+          id?: string
+          ip_text?: string | null
+          last_name?: string | null
+          referral_code?: string | null
+          success?: boolean
+          user_agent?: string | null
+        }
+        Update: {
+          created_at?: string
+          email?: string | null
+          error_code?: string | null
+          error_message?: string | null
+          first_name?: string | null
+          id?: string
+          ip_text?: string | null
+          last_name?: string | null
+          referral_code?: string | null
+          success?: boolean
+          user_agent?: string | null
+        }
+        Relationships: []
+      }
       skilldrop_host_applications: {
         Row: {
           created_at: string

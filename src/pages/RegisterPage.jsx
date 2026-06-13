@@ -6,7 +6,9 @@ import { Card, CardContent, CardHeader, CardTitle } from "../components/ui/card"
 import { Badge } from "../components/ui/badge"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue, SelectScrollUpButton, SelectScrollDownButton } from "../components/ui/select"
 import { SecureInput } from "../components/ui/secure-input"
-import { Sprout, Lock, Eye, EyeOff, ArrowLeft } from "lucide-react"
+import { Sprout, Lock, Eye, EyeOff, ArrowLeft, Info, Check, X } from "lucide-react"
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "../components/ui/tooltip"
+
 import { countries } from "../data/countries"
 import { supabase } from "@/integrations/supabase/client"
 import { useToast } from "@/hooks/use-toast"
@@ -47,36 +49,39 @@ export default function RegisterPage() {
     })
   }
   
+  // Password policy checks (live)
+  const pw = formData.password
+  const pwChecks = {
+    length: pw.length >= 12,
+    upper: /[A-Z]/.test(pw),
+    lower: /[a-z]/.test(pw),
+    number: /[0-9]/.test(pw),
+    special: /[^A-Za-z0-9]/.test(pw),
+  }
+  const pwAllOk = Object.values(pwChecks).every(Boolean)
+
   const handleSubmit = async (e) => {
     e.preventDefault()
     setLoading(true)
     setError("")
-    
+
     // Validation
     if (formData.password !== formData.confirmPassword) {
-      setError("Passwords do not match")
+      const msg = "Passwords do not match"
+      setError(msg)
+      toast({ variant: "destructive", title: "Check password", description: msg })
       setLoading(false)
       return
     }
-    
-    // Stronger password policy (12+ characters)
-    if (formData.password.length < 12) {
-      setError("Password must be at least 12 characters for security")
+
+    if (!pwAllOk) {
+      const msg = "Password must be 12+ chars with uppercase, lowercase, number, and special character"
+      setError(msg)
+      toast({ variant: "destructive", title: "Weak password", description: msg })
       setLoading(false)
       return
     }
-    
-    // Check for password complexity
-    const hasUpperCase = /[A-Z]/.test(formData.password);
-    const hasLowerCase = /[a-z]/.test(formData.password);
-    const hasNumber = /[0-9]/.test(formData.password);
-    
-    if (!hasUpperCase || !hasLowerCase || !hasNumber) {
-      setError("Password must contain uppercase, lowercase, and numbers")
-      setLoading(false)
-      return
-    }
-    
+
     try {
       const result = await register({
         email: formData.email,
@@ -88,9 +93,9 @@ export default function RegisterPage() {
         currency: formData.currency,
         timezone: formData.timezone,
         country: formData.location,
-        username: formData.email.split('@')[0] // Set username from email
+        username: formData.email.split('@')[0]
       })
-      
+
       if (result.success) {
         // HTML escape function for email safety
         const escapeHtml = (text) => {
@@ -104,7 +109,7 @@ export default function RegisterPage() {
           };
           return String(text).replace(/[&<>"']/g, (m) => map[m]);
         };
-        
+
         // Send welcome email to user
         try {
           console.log('Attempting to send welcome email...')
@@ -164,17 +169,42 @@ export default function RegisterPage() {
           title: "Welcome to sow2grow! 🌱",
           description: "Please verify your account in ChatApp to continue.",
         })
-        
+
         navigate("/chatapp")
       } else {
-        setError(result.error || "Registration failed")
+        const raw = result.error || "Registration failed"
+        // Friendly translations for common Supabase auth errors
+        let friendly = raw
+        const lower = raw.toLowerCase()
+        if (lower.includes('already registered') || lower.includes('already exists') || lower.includes('user already')) {
+          friendly = "An account with this email already exists. Please sign in or reset your password."
+        } else if (lower.includes('invalid email')) {
+          friendly = "That email address looks invalid. Please double-check it."
+        } else if (lower.includes('password')) {
+          friendly = raw // password-specific messages from server are usually clear
+        } else if (lower.includes('network') || lower.includes('failed to fetch')) {
+          friendly = "Network error — please check your internet connection and try again."
+        } else if (lower.includes('rate') || lower.includes('too many')) {
+          friendly = "Too many attempts. Please wait a minute and try again."
+        }
+        setError(friendly)
+        toast({
+          variant: "destructive",
+          title: "Registration failed",
+          description: friendly,
+        })
+        console.error('Registration failed:', { raw, code: result.code })
       }
     } catch (err) {
-      setError("An unexpected error occurred")
+      const msg = err?.message || "An unexpected error occurred"
+      setError(msg)
+      toast({ variant: "destructive", title: "Unexpected error", description: msg })
+      console.error('Registration threw:', err)
     } finally {
       setLoading(false)
     }
   }
+
   
   return (
     <div className="min-h-screen bg-gradient-to-br from-green-50 via-blue-50 to-amber-50 flex items-center justify-center p-4 relative overflow-hidden">
@@ -427,9 +457,32 @@ export default function RegisterPage() {
               </div>
               
               <div className="space-y-2">
-                <label htmlFor="password" className="text-sm font-semibold text-green-700">
-                  Password
-                </label>
+                <div className="flex items-center gap-2">
+                  <label htmlFor="password" className="text-sm font-semibold text-green-700">
+                    Password
+                  </label>
+                  <TooltipProvider delayDuration={150}>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <button type="button" aria-label="Password requirements" className="text-gray-400 hover:text-green-600 transition-colors">
+                          <Info className="h-4 w-4" />
+                        </button>
+                      </TooltipTrigger>
+                      <TooltipContent side="right" className="max-w-xs">
+                        <div className="text-xs space-y-1">
+                          <p className="font-semibold mb-1">Password must contain:</p>
+                          <ul className="space-y-0.5">
+                            <li>• At least 12 characters</li>
+                            <li>• 1 uppercase letter (A-Z)</li>
+                            <li>• 1 lowercase letter (a-z)</li>
+                            <li>• 1 number (0-9)</li>
+                            <li>• 1 special character (!@#$%^&*)</li>
+                          </ul>
+                        </div>
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
+                </div>
                 <div className="relative">
                   <Lock className="absolute left-4 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400 z-10" />
                   <input
@@ -438,6 +491,7 @@ export default function RegisterPage() {
                     type={showPassword ? "text" : "password"}
                     value={formData.password}
                     onChange={handleChange}
+                    title="Must be 12+ chars with uppercase, lowercase, number, and special character"
                     className="w-full pl-12 pr-12 py-3 border-2 border-gray-200 bg-olive-green rounded-xl focus:ring-2 focus:ring-green-400 focus:border-green-400 transition-all duration-300 text-light-beige hover:border-gray-300 shadow-sm hover:shadow-md text-center"
                     placeholder="Create a secure password"
                     required
@@ -450,7 +504,24 @@ export default function RegisterPage() {
                     {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
                   </button>
                 </div>
+                {formData.password.length > 0 && (
+                  <ul className="grid grid-cols-2 gap-x-3 gap-y-1 text-xs mt-2 px-1">
+                    {[
+                      { ok: pwChecks.length, label: '12+ characters' },
+                      { ok: pwChecks.upper, label: 'Uppercase letter' },
+                      { ok: pwChecks.lower, label: 'Lowercase letter' },
+                      { ok: pwChecks.number, label: 'Number' },
+                      { ok: pwChecks.special, label: 'Special character' },
+                    ].map((c) => (
+                      <li key={c.label} className={`flex items-center gap-1 ${c.ok ? 'text-green-600' : 'text-gray-500'}`}>
+                        {c.ok ? <Check className="h-3 w-3" /> : <X className="h-3 w-3" />}
+                        <span>{c.label}</span>
+                      </li>
+                    ))}
+                  </ul>
+                )}
               </div>
+
               
               <div className="space-y-2">
                 <label htmlFor="confirmPassword" className="text-sm font-semibold text-green-700">
