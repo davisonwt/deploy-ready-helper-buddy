@@ -33,6 +33,9 @@ import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 import LoginPage from "./pages/LoginPage";
 import RegisterPage from "./pages/RegisterPage";
+import OnboardingSecurityPage from "./pages/OnboardingSecurityPage";
+import ForgotPasswordPage from "./pages/ForgotPasswordPage";
+
 
 const ChatApp = lazy(() => import("./pages/ChatApp"));
 const GroveFeedPage = lazy(() => import("./pages/GroveFeedPage"));
@@ -353,13 +356,19 @@ const App = () => (
                 <ProtectedRoute><Layout><GroveFeedPage /></Layout></ProtectedRoute>
               } />
               <Route path="/communications-hub" element={
-                <ProtectedRoute>
+                <ProtectedRoute allowIncompleteSetup>
                   <Suspense fallback={<div className="flex items-center justify-center min-h-screen"><div className="text-xl">Loading...</div></div>}>
                     <CommunicationsHub />
                   </Suspense>
                 </ProtectedRoute>
               } />
               <Route path="/chatapp" element={<Navigate to="/communications-hub#chats" replace />} />
+              <Route path="/onboarding/security" element={
+                <ProtectedRoute allowIncompleteSetup>
+                  <OnboardingSecurityPage />
+                </ProtectedRoute>
+              } />
+              <Route path="/forgot-password" element={<ForgotPasswordPage />} />
               <Route path="/radio-slot-application" element={
                 <ProtectedRoute><Layout><RadioSlotApplicationPage /></Layout></ProtectedRoute>
               } />
