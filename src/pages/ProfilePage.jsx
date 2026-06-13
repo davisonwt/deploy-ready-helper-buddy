@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from "react"
-import { useLocation } from "react-router-dom"
+import { useLocation, useNavigate } from "react-router-dom"
 import { supabase } from "@/integrations/supabase/client"
 import { useAuth } from "../hooks/useAuth"
 import { useToast } from "../hooks/use-toast"
@@ -40,15 +40,18 @@ import {
   TreePine,
   Copy,
   Check,
-  Loader2
+  Loader2,
+  LogOut,
+  ArrowLeft
 } from "lucide-react"
 import { QuickProfileSetup } from "../components/profile/QuickProfileSetup"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "../components/ui/tabs"
 import Journal from "../components/journal/Journal"
 
 export default function ProfilePage() {
-  const { user, updateProfile } = useAuth()
+  const { user, updateProfile, logout } = useAuth()
   const location = useLocation()
+  const navigate = useNavigate()
   const { toast } = useToast()
   const [editing, setEditing] = useState(false)
   const [loading, setLoading] = useState(false)
@@ -448,6 +451,30 @@ export default function ProfilePage() {
       {/* Content */}
       <div className={`relative z-10 transition-all duration-1000 ${mounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}>
         <div className="max-w-6xl mx-auto space-y-8 p-6">
+          {/* Top action bar */}
+          <div className="flex items-center justify-between gap-3 pt-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => navigate('/dashboard')}
+              className="bg-white/5 border-white/20 text-white hover:bg-white/10"
+            >
+              <ArrowLeft className="h-4 w-4 mr-2" />
+              Back to Dashboard
+            </Button>
+            <Button
+              variant="destructive"
+              size="sm"
+              onClick={async () => {
+                await logout()
+                navigate('/login')
+              }}
+            >
+              <LogOut className="h-4 w-4 mr-2" />
+              Log out
+            </Button>
+          </div>
+
           {/* Tabs for Profile and Journal */}
           <div className="flex justify-center mb-6">
             <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">

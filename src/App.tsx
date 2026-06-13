@@ -451,7 +451,7 @@ const App = () => (
                 <ProtectedRoute><Layout><BrowseOrchardsPage /></Layout></ProtectedRoute>
               } />
               <Route path="/profile" element={
-                <ProtectedRoute><Layout><ProfilePage /></Layout></ProtectedRoute>
+                <ProtectedRoute><ProfilePage /></ProtectedRoute>
               } />
               <Route path="/wallet-settings" element={
                 <ProtectedRoute><Layout><WalletSettingsPage /></Layout></ProtectedRoute>
