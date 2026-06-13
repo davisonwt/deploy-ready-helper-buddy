@@ -40,7 +40,9 @@ import {
   TreePine,
   Copy,
   Check,
-  Loader2
+  Loader2,
+  LogOut,
+  ArrowLeft
 } from "lucide-react"
 import { QuickProfileSetup } from "../components/profile/QuickProfileSetup"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "../components/ui/tabs"
