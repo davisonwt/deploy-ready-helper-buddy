@@ -100,6 +100,16 @@ export function MyGardenPanel({ isOpen, onClose }: MyGardenPanelProps) {
     { href: '#', label: 'Rain Now', color: 'bg-red-600 hover:bg-red-500', onClick: quickRain } // Quick Rain action
   ]
 
+  // Tribal Tiers — SeedFlows by scale (mirrors dashboard tier card)
+  const tribalTiers = [
+    { href: '/homestead',     emoji: '🏠', title: 'Homestead',     subtitle: 'Individual sowers · single-owned home businesses' },
+    { href: '/grove',         emoji: '🌳', title: 'Grove',          subtitle: 'Small businesses with a tight tribe' },
+    { href: '/orchard',       emoji: '🍎', title: 'Orchard',        subtitle: 'Medium businesses with rows of fruit' },
+    { href: '/estate',        emoji: '🏛️', title: 'Estate',         subtitle: 'Large businesses with sprawling reach' },
+    { href: '/harvest-works', emoji: '🏭', title: 'Harvest Works',  subtitle: 'Factories & manufacturing networks' },
+    { href: '/dashboard/sower/upload', emoji: '📤', title: 'Bulk Upload Products', subtitle: 'Upload CSV / Excel / PDF — many products at once', badge: 'New' },
+  ]
+
   // Don't render anything if panel is closed
   if (!isOpen) {
     return null
