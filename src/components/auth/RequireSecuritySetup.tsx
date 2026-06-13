@@ -28,17 +28,20 @@ export function RequireSecuritySetup({ children }: Props) {
       return;
     }
     (async () => {
-      const { data, error } = await supabase
+      const [{ data: profile }, { data: securityQuestions }] = await Promise.all([
+        supabase
         .from("profiles")
         .select("security_setup_complete")
         .eq("user_id", user.id)
-        .maybeSingle();
+          .maybeSingle(),
+        supabase
+          .from("user_security_questions")
+          .select("user_id")
+          .eq("user_id", user.id)
+          .maybeSingle(),
+      ]);
       if (cancelled) return;
-      if (error) {
-        setStatus("incomplete");
-        return;
-      }
-      setStatus(data?.security_setup_complete ? "complete" : "incomplete");
+      setStatus(profile?.security_setup_complete || securityQuestions?.user_id ? "complete" : "incomplete");
     })();
     return () => {
       cancelled = true;
