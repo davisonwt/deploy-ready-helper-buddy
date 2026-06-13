@@ -17,7 +17,7 @@
  * Top: Following / For You / Local tabs + Wandering badge filter bar.
  */
 import { useEffect, useMemo, useRef, useState, useCallback } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Play, Pause, Heart, MessageCircle, Mic, Video, Share2,
@@ -118,6 +118,16 @@ const wanderingFor = (item: { kind: FeedItem['kind']; wandering_role?: string | 
 
 export default function TribalAliveFeedPage() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const tierFilter = searchParams.get('tier'); // 'homestead'|'grove'|'orchard'|'estate'|'harvest_works'|null
+  const TIER_LABELS: Record<string, { label: string; emoji: string }> = {
+    homestead: { label: 'Homestead', emoji: '🏡' },
+    grove: { label: 'Grove', emoji: '🌳' },
+    orchard: { label: 'Orchard', emoji: '🍎' },
+    estate: { label: 'Estate', emoji: '🏛️' },
+    harvest_works: { label: 'Harvest Works', emoji: '🏭' },
+  };
+  const [tierSowerIds, setTierSowerIds] = useState<Set<string> | null>(null);
   const { user } = useAuth();
   const { toast } = useToast();
   const { code: referralCode } = useReferralCode();
@@ -149,6 +159,32 @@ export default function TribalAliveFeedPage() {
 
   const containerRef = useRef<HTMLDivElement>(null);
   const cardRefs = useRef<Array<HTMLDivElement | null>>([]);
+
+  // Resolve which sower user_ids belong to the selected Tribal Feed tier
+  useEffect(() => {
+    let cancelled = false;
+    if (!tierFilter) { setTierSowerIds(null); return; }
+    (async () => {
+      if (tierFilter === 'homestead') {
+        // Homestead = users who do NOT own a company (solo sowers)
+        const { data } = await supabase.from('companies').select('owner_user_id');
+        if (cancelled) return;
+        const companyOwners = new Set((data || []).map((r: any) => r.owner_user_id).filter(Boolean));
+        // Sentinel: empty set means "no allowlist by id" → we'll instead use an exclusion set
+        // Encode exclusion by negating later; here we store owners under a Symbol-keyed Set wrapper.
+        (companyOwners as any).__exclude = true;
+        setTierSowerIds(companyOwners as any);
+      } else {
+        const { data } = await supabase
+          .from('companies')
+          .select('owner_user_id')
+          .eq('tier', tierFilter as any);
+        if (cancelled) return;
+        setTierSowerIds(new Set((data || []).map((r: any) => r.owner_user_id).filter(Boolean)));
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [tierFilter]);
 
   // Load everything everyone planted across ALL content surfaces
   useEffect(() => {
@@ -532,13 +568,20 @@ export default function TribalAliveFeedPage() {
     let list = items;
     if (wanderingRole) list = list.filter((i) => i.wandering_role === wanderingRole);
     if (kindFilter) list = list.filter((i) => i.kind === kindFilter);
+    if (tierSowerIds) {
+      const exclude = (tierSowerIds as any).__exclude === true;
+      list = list.filter((i) => {
+        if (!i.sower_id) return false;
+        return exclude ? !tierSowerIds.has(i.sower_id) : tierSowerIds.has(i.sower_id);
+      });
+    }
     if (tab === 'following' && followingIds.size > 0) {
       list = list.filter((i) => i.sower_id && followingIds.has(i.sower_id));
     } else if (tab === 'following') {
       list = [];
     }
     return list;
-  }, [items, wanderingRole, kindFilter, tab, followingIds]);
+  }, [items, wanderingRole, kindFilter, tab, followingIds, tierSowerIds]);
 
   // Snap-scroll: track which card is centered → autoplays its preview
   useEffect(() => {
@@ -941,6 +984,12 @@ export default function TribalAliveFeedPage() {
           <ArrowLeft className="h-4 w-4" />
           <span className="text-sm font-semibold">SeedFlow</span>
           <span className="text-base">🌱</span>
+          {tierFilter && TIER_LABELS[tierFilter] && (
+            <span className="ml-2 inline-flex items-center gap-1 rounded-full bg-emerald-500/20 border border-emerald-300/40 px-2 py-0.5 text-[11px] font-semibold text-emerald-100">
+              <span>{TIER_LABELS[tierFilter].emoji}</span>
+              <span>{TIER_LABELS[tierFilter].label}</span>
+            </span>
+          )}
         </button>
 
         <nav className="flex items-center gap-4 text-xs sm:text-sm font-semibold">
