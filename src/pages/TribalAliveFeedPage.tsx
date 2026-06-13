@@ -568,6 +568,13 @@ export default function TribalAliveFeedPage() {
     let list = items;
     if (wanderingRole) list = list.filter((i) => i.wandering_role === wanderingRole);
     if (kindFilter) list = list.filter((i) => i.kind === kindFilter);
+    if (tierSowerIds) {
+      const exclude = (tierSowerIds as any).__exclude === true;
+      list = list.filter((i) => {
+        if (!i.sower_id) return false;
+        return exclude ? !tierSowerIds.has(i.sower_id) : tierSowerIds.has(i.sower_id);
+      });
+    }
     if (tab === 'following' && followingIds.size > 0) {
       list = list.filter((i) => i.sower_id && followingIds.has(i.sower_id));
     } else if (tab === 'following') {
