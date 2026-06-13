@@ -4,6 +4,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useReferralCode } from "@/hooks/useReferralCode";
 import { supabase } from "@/integrations/supabase/client";
 import { burnReferralCode } from "@/lib/referral";
+import { formatAppDate } from "@/lib/dates";
 import { toast } from "@/hooks/use-toast";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -38,72 +39,34 @@ export default function MyTribePage() {
     let cancelled = false;
     (async () => {
       try {
-        const { data: affRows } = await supabase
+        const [{ data: affRows }, { data: tribeRows, error: tribeError }] = await Promise.all([
+          supabase
           .from("affiliates")
           .select("id, earnings, total_referrals, created_at")
           .eq("user_id", user.id)
-          .order("created_at", { ascending: true });
-        const aff = affRows?.[0];
-        if (cancelled || !aff) {
-          setLoading(false);
-          return;
-        }
-        const affIds = Array.from(new Set((affRows || []).map((a) => a.id).filter(Boolean)));
-        const refChunks = await Promise.all(
-          Array.from({ length: Math.ceil(affIds.length / 25) }, (_, idx) => affIds.slice(idx * 25, idx * 25 + 25))
-            .filter((chunk) => chunk.length > 0)
-            .map((chunk) =>
-              supabase
-                .from("referrals")
-                .select("id, referred_id, status, commission_amount, created_at")
-                .in("referrer_id", chunk)
-                .order("created_at", { ascending: false })
-            )
-        );
-        const refs = refChunks.flatMap(({ data }) => data || []);
-        const { data: circleRows } = await supabase
-          .from("referral_circle")
-          .select("id, referred_user_id, status, referred_at")
-          .eq("referrer_id", user.id)
-          .order("referred_at", { ascending: false });
-        const memberMap = new Map<string, any>();
-        (refs || []).forEach((r: any) => {
-          if (!r.referred_id) return;
-          memberMap.set(r.referred_id, { ...r, referred_id: r.referred_id, created_at: r.created_at, source: "referrals" });
-        });
-        (circleRows || []).forEach((r: any) => {
-          if (!r.referred_user_id || memberMap.has(r.referred_user_id)) return;
-          memberMap.set(r.referred_user_id, {
-            id: r.id,
-            referred_id: r.referred_user_id,
-            status: r.status || "active",
-            commission_amount: 0,
-            created_at: r.referred_at,
-            source: "referral_circle",
-          });
-        });
-        const list = Array.from(memberMap.values()).sort(
-          (a: any, b: any) => new Date(b.created_at || 0).getTime() - new Date(a.created_at || 0).getTime()
-        );
+          .order("created_at", { ascending: true }),
+          supabase.rpc("get_my_tribe_members" as any),
+        ]);
 
-        // Hydrate profiles for each referred user
-        const referredIds = Array.from(new Set(list.map((r: any) => r.referred_id).filter(Boolean)));
-        let profileMap: Record<string, any> = {};
-        if (referredIds.length) {
-          const { data: profs } = await supabase
-            .from("public_profiles")
-            .select("user_id, display_name, username, avatar_url")
-            .in("user_id", referredIds);
-          (profs || []).forEach((p: any) => { profileMap[p.user_id] = p; });
-        }
-        const enriched = list.map((r: any) => ({ ...r, profile: profileMap[r.referred_id] || null }));
+        if (tribeError) throw tribeError;
+
+        const enriched = (tribeRows || []).map((member: any) => ({
+          ...member,
+          referred_id: member.user_id,
+          created_at: member.referred_at,
+          profile: {
+            display_name: member.display_name,
+            username: member.username,
+            avatar_url: member.avatar_url,
+          },
+        }));
 
         if (cancelled) return;
         setTribe(enriched);
         const totalEarnings = (affRows || []).reduce((sum, a: any) => sum + Number(a.earnings || 0), 0);
         setStats({
-          total: list.length || aff.total_referrals || 0,
-          completed: list.filter((r: any) => r.status === "completed" || r.status === "active").length,
+          total: enriched.length,
+          completed: enriched.filter((r: any) => ["completed", "active", "joined"].includes(r.status)).length,
           earnings: totalEarnings,
         });
       } catch (err) {
@@ -302,13 +265,17 @@ export default function MyTribePage() {
                       )}
                       <div className="min-w-0">
                         <div className="text-slate-100 font-medium truncate">{name}</div>
-                        <div className="font-mono text-[10px] text-slate-500 truncate">{String(r.referred_id).slice(0, 8)}</div>
+                        <div className="font-mono text-[10px] text-slate-500 truncate">
+                          {p?.username && p.username !== name ? `${p.username} · ` : ""}{String(r.referred_id).slice(0, 8)}
+                          {r.depth > 1 && r.referrer_name ? ` · invited by ${r.referrer_name}` : ""}
+                        </div>
                       </div>
                     </div>
                     <div className="flex items-center gap-3">
                       <span className="text-xs text-slate-500">
-                        {new Date(r.created_at).toLocaleDateString()}
+                        {formatAppDate(r.created_at)}
                       </span>
+                      {r.depth > 1 && <Badge variant="outline">level {r.depth}</Badge>}
                       <Badge variant={r.status === "completed" ? "default" : "secondary"}>
                         {r.status}
                       </Badge>
