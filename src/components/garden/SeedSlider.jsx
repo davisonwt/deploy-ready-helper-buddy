@@ -70,23 +70,46 @@ export default function SeedSlider({
         <span style={styles.count}>{safeIdx + 1}/{total}</span>
       </header>
 
-      <LivingSeedCard
-        seedId={active.liveKey || active.rawId || active.id}
-        title={active.title}
-        subtitle={active.subtitle}
-        image={active.image}
-        images={active.images}
-        openPath={active.openPath}
-        mediaUrl={active.mediaUrl}
-        mediaKind={active.mediaKind}
-        badge={active.badge}
-        mine={active.mine}
-        whispererSharePct={active.whispererSharePct}
-        onEdit={active.onEdit ? () => active.onEdit(active) : undefined}
-        onDelete={active.onDelete ? () => active.onDelete(active) : undefined}
-        onRepost={active.onRepost ? () => active.onRepost(active) : undefined}
-        onPark={active.onPark ? () => active.onPark(active) : undefined}
-      />
+      <div style={{ position: 'relative' }}>
+        <LivingSeedCard
+          seedId={active.liveKey || active.rawId || active.id}
+          title={active.title}
+          subtitle={active.subtitle}
+          image={active.image}
+          images={active.images}
+          openPath={active.openPath}
+          mediaUrl={active.mediaUrl}
+          mediaKind={active.mediaKind}
+          badge={active.badge}
+          mine={active.mine}
+          whispererSharePct={active.whispererSharePct}
+          onEdit={active.onEdit ? () => active.onEdit(active) : undefined}
+          onDelete={active.onDelete ? () => active.onDelete(active) : undefined}
+          onRepost={active.onRepost ? () => active.onRepost(active) : undefined}
+          onPark={active.onPark ? () => active.onPark(active) : undefined}
+        />
+
+        {total > 1 && (
+          <>
+            <button
+              type="button"
+              onClick={() => setIdx((i) => (i - 1 + total) % total)}
+              style={{ ...styles.arrow(accent), left: 8 }}
+              aria-label="Previous"
+            >
+              ‹
+            </button>
+            <button
+              type="button"
+              onClick={() => setIdx((i) => (i + 1) % total)}
+              style={{ ...styles.arrow(accent), right: 8 }}
+              aria-label="Next"
+            >
+              ›
+            </button>
+          </>
+        )}
+      </div>
 
       {/* Dots */}
       <div style={styles.dots}>
@@ -175,11 +198,21 @@ const styles = {
   cardSubtitle: { fontSize: 12, color: 'rgba(226,232,240,0.7)', marginBottom: 10 },
   btnRow: { display: 'flex', gap: 6 },
 
-  dots: { display: 'flex', justifyContent: 'center', gap: 5, marginTop: 10 },
+  dots: { display: 'flex', justifyContent: 'center', gap: 5, marginTop: 10, flexWrap: 'wrap' },
   dot: (isActive, accent) => ({
     width: isActive ? 18 : 6, height: 6, borderRadius: 3,
     background: isActive ? accent : '#1e293b',
     transition: 'all 0.3s ease', cursor: 'pointer',
     border: 'none', padding: 0,
+  }),
+  arrow: (accent) => ({
+    position: 'absolute', top: '50%', transform: 'translateY(-50%)',
+    width: 40, height: 40, borderRadius: '50%',
+    background: 'rgba(6,10,18,0.75)',
+    border: `1px solid ${accent}66`,
+    color: '#f1f5f9', fontSize: 26, fontWeight: 700, lineHeight: 1,
+    display: 'flex', alignItems: 'center', justifyContent: 'center',
+    cursor: 'pointer', zIndex: 5, backdropFilter: 'blur(6px)',
+    boxShadow: `0 4px 14px ${accent}44`,
   }),
 }
