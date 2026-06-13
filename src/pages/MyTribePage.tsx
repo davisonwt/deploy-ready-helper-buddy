@@ -50,7 +50,9 @@ export default function MyTribePage() {
 
         if (tribeError) throw tribeError;
 
-        const enriched = (tribeRows || []).map((member: any) => ({
+        const directTribeRows = (tribeRows || []).filter((member: any) => Number(member.depth || 1) === 1);
+
+        const enriched = directTribeRows.map((member: any) => ({
           ...member,
           referred_id: member.user_id,
           created_at: member.referred_at,
@@ -267,7 +269,7 @@ export default function MyTribePage() {
                         <div className="text-slate-100 font-medium truncate">{name}</div>
                         <div className="font-mono text-[10px] text-slate-500 truncate">
                           {p?.username && p.username !== name ? `${p.username} · ` : ""}{String(r.referred_id).slice(0, 8)}
-                          {r.depth > 1 && r.referrer_name ? ` · invited by ${r.referrer_name}` : ""}
+                          {r.referrer_name ? ` · invited by ${r.referrer_name}` : ""}
                         </div>
                       </div>
                     </div>
@@ -275,7 +277,6 @@ export default function MyTribePage() {
                       <span className="text-xs text-slate-500">
                         {formatAppDate(r.created_at)}
                       </span>
-                      {r.depth > 1 && <Badge variant="outline">level {r.depth}</Badge>}
                       <Badge variant={r.status === "completed" ? "default" : "secondary"}>
                         {r.status}
                       </Badge>
