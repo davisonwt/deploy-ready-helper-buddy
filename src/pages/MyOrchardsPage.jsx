@@ -8,7 +8,7 @@ import { Badge } from '@/components/ui/badge'
 import { Progress } from '@/components/ui/progress'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Link, useNavigate } from 'react-router-dom'
-import { Sprout, Plus, Eye, Users, TrendingUp, Calendar, DollarSign, Edit, Share2, MapPin, Trash2, Sparkles, Loader2, Radio, ArrowLeft } from 'lucide-react'
+import { Sprout, Plus, Eye, Users, TrendingUp, Calendar, DollarSign, Edit, Share2, MapPin, Trash2, Sparkles, Loader2, Radio, ArrowLeft, Upload } from 'lucide-react'
 import { toast } from "sonner"
 import { supabase } from '@/integrations/supabase/client'
 import { formatCurrency } from '../utils/formatters'
@@ -32,6 +32,14 @@ const WANDERING_ROLES = [
   { label: 'Heart 💚',      value: 'Heart' },
   { label: 'Forge ⚒️',      value: 'Forge' },
   { label: 'Story 🎥',      value: 'Story' },
+]
+
+const SOWER_TIER_LINKS = [
+  { href: '/homestead', emoji: '🏠', label: 'Homestead' },
+  { href: '/grove', emoji: '🌳', label: 'Grove' },
+  { href: '/orchard', emoji: '🍎', label: 'Orchard' },
+  { href: '/estate', emoji: '🏛️', label: 'Estate' },
+  { href: '/harvest-works', emoji: '🏭', label: 'Harvest Works' },
 ]
 
 export default function MyOrchardsPage() {
@@ -262,11 +270,29 @@ export default function MyOrchardsPage() {
                     <Plus size={18} /> Sow New Seed
                   </LivingButton>
                 </Link>
+                <Link to="/dashboard/sower/upload" style={{ textDecoration: 'none', minWidth: 200 }}>
+                  <LivingButton variant="enter" height={50} borderRadius={12} fontSize={14} letterSpacing="1px">
+                    <Upload size={18} /> Bulk Upload
+                  </LivingButton>
+                </Link>
                 <Link to="/community-offering" style={{ textDecoration: 'none', minWidth: 200 }}>
                   <LivingButton variant="share" height={50} borderRadius={12} fontSize={14} letterSpacing="1px">
                     <Sparkles size={18} /> AI Offering Generator
                   </LivingButton>
                 </Link>
+              </div>
+              <div className='mt-5 flex flex-wrap items-center justify-center gap-2'>
+                <span className='text-xs font-semibold uppercase tracking-wider text-slate-300'>SeedFlows by scale</span>
+                {SOWER_TIER_LINKS.map((tier) => (
+                  <Link
+                    key={tier.href}
+                    to={tier.href}
+                    className='inline-flex items-center gap-1 rounded-full border border-cyan-400/20 bg-[#0f172a]/70 px-3 py-2 text-xs font-semibold text-slate-100 no-underline hover:border-cyan-300/60 hover:bg-cyan-400/10'
+                  >
+                    <span aria-hidden='true'>{tier.emoji}</span>
+                    {tier.label}
+                  </Link>
+                ))}
               </div>
             </motion.div>
           </div>
