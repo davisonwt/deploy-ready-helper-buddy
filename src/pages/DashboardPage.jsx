@@ -1076,18 +1076,61 @@ export default function SeedFlowDashboard() {
                       <span style={{ width: 7, height: 7, borderRadius: '50%', background: '#22c55e', display: 'inline-block', animation: 'pulse 2s infinite' }} />
                       SeedFlow active
                     </div>
-                    <Link to="/orchard-alive" style={{ textDecoration: 'none' }}>
-                     <div style={{
-                       ...styles.seedflowLabel,
-                       background: 'linear-gradient(135deg, rgba(22,163,74,0.25), rgba(34,197,94,0.18), rgba(132,204,22,0.22))',
-                       backdropFilter: 'blur(12px)', WebkitBackdropFilter: 'blur(12px)',
-                       border: '1px solid rgba(134,239,172,0.45)',
-                       color: '#dcfce7', fontWeight: 700,
-                       boxShadow: '0 4px 16px rgba(34,197,94,0.2), inset 0 1px 0 rgba(255,255,255,0.12)',
-                     }}>
-                       🌿 Tribal Feeds
-                     </div>
-                   </Link>
+                    <div ref={tribalFeedsRef} style={{ position: 'relative' }}>
+                      <button
+                        type="button"
+                        onClick={() => setTribalFeedsOpen((v) => !v)}
+                        aria-haspopup="menu"
+                        aria-expanded={tribalFeedsOpen}
+                        style={{
+                          ...styles.seedflowLabel,
+                          background: 'linear-gradient(135deg, rgba(22,163,74,0.25), rgba(34,197,94,0.18), rgba(132,204,22,0.22))',
+                          backdropFilter: 'blur(12px)', WebkitBackdropFilter: 'blur(12px)',
+                          border: '1px solid rgba(134,239,172,0.45)',
+                          color: '#dcfce7', fontWeight: 700,
+                          boxShadow: '0 4px 16px rgba(34,197,94,0.2), inset 0 1px 0 rgba(255,255,255,0.12)',
+                          cursor: 'pointer',
+                          display: 'inline-flex', alignItems: 'center', gap: 6,
+                        }}
+                      >
+                        🌿 Tribal Feeds <span style={{ fontSize: 10, opacity: 0.8 }}>▾</span>
+                      </button>
+                      {tribalFeedsOpen && (
+                        <div
+                          role="menu"
+                          style={{
+                            position: 'absolute', top: 'calc(100% + 6px)', left: 0, zIndex: 50,
+                            minWidth: 200,
+                            background: 'rgba(10,15,12,0.96)',
+                            backdropFilter: 'blur(16px)', WebkitBackdropFilter: 'blur(16px)',
+                            border: '1px solid rgba(134,239,172,0.35)',
+                            borderRadius: 14,
+                            padding: 6,
+                            boxShadow: '0 12px 40px rgba(0,0,0,0.5)',
+                          }}
+                        >
+                          {TRIBAL_FEED_TIERS.map((t) => (
+                            <Link
+                              key={t.slug}
+                              to={`/${t.slug}`}
+                              onClick={() => setTribalFeedsOpen(false)}
+                              role="menuitem"
+                              style={{
+                                display: 'flex', alignItems: 'center', gap: 10,
+                                padding: '10px 12px', borderRadius: 10,
+                                color: '#dcfce7', textDecoration: 'none',
+                                fontSize: 14, fontWeight: 600,
+                              }}
+                              onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(34,197,94,0.15)' }}
+                              onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent' }}
+                            >
+                              <span style={{ fontSize: 16 }}>{t.emoji}</span>
+                              {t.label}
+                            </Link>
+                          ))}
+                        </div>
+                      )}
+                    </div>
                    <Link to="/companions" style={{ textDecoration: 'none' }}>
                      <div style={{
                        ...styles.seedflowLabel,
