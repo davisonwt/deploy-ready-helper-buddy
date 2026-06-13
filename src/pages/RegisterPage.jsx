@@ -243,9 +243,9 @@ export default function RegisterPage() {
                     />
                   </div>
                 </div>
-                <CardTitle className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-green-600 bg-clip-text text-transparent mb-2" style={{ fontFamily: "Playfair Display, serif" }}>
+                <h1 className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-green-600 bg-clip-text text-transparent mb-2" style={{ fontFamily: "Playfair Display, serif" }}>
                   Join the sow2grow Community
-                </CardTitle>
+                </h1>
                 <p className="text-gray-600 text-lg mb-4">Begin your journey in the 364yhvh community farm</p>
                 <div className="flex justify-center gap-2 mb-4">
                   <Button 

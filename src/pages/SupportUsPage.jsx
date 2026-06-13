@@ -1,5 +1,5 @@
 import React from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { WalletHelpModal } from '@/components/wallet/WalletHelpModal';
 
 export default function SupportUsPage() {
@@ -7,7 +7,9 @@ export default function SupportUsPage() {
     <main className="container mx-auto py-8">
       <Card>
         <CardHeader className="flex flex-row items-center justify-between">
-          <CardTitle>Support Us with Binance Pay (USDC)</CardTitle>
+          <h1 className="text-2xl font-semibold leading-none tracking-tight">
+            Support Us with Binance Pay (USDC)
+          </h1>
           <WalletHelpModal />
         </CardHeader>
         <CardContent className="space-y-2">
