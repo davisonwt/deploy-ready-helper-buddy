@@ -12687,6 +12687,20 @@ export type Database = {
           stream_key: string
         }[]
       }
+      get_my_tribe_members: {
+        Args: never
+        Returns: {
+          avatar_url: string
+          depth: number
+          display_name: string
+          referred_at: string
+          referrer_id: string
+          referrer_name: string
+          status: string
+          user_id: string
+          username: string
+        }[]
+      }
       get_or_create_community_room: { Args: never; Returns: string }
       get_or_create_direct_room: {
         Args: { user1_id: string; user2_id: string }
