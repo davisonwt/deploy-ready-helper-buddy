@@ -5,8 +5,6 @@ import { useReferralCode } from "@/hooks/useReferralCode";
 import { supabase } from "@/integrations/supabase/client";
 import { burnReferralCode } from "@/lib/referral";
 import { toast } from "@/hooks/use-toast";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -86,8 +84,8 @@ export default function MyTribePage() {
         let profileMap: Record<string, any> = {};
         if (referredIds.length) {
           const { data: profs } = await supabase
-            .from("profiles")
-            .select("user_id, first_name, last_name, display_name, avatar_url")
+            .from("public_profiles")
+            .select("user_id, display_name, username, avatar_url")
             .in("user_id", referredIds);
           (profs || []).forEach((p: any) => { profileMap[p.user_id] = p; });
         }
@@ -280,6 +278,7 @@ export default function MyTribePage() {
                 const p = r.profile;
                 const name = p
                   ? (p.display_name?.trim() ||
+                     p.username?.trim() ||
                      [p.first_name, p.last_name].filter(Boolean).join(" ").trim() ||
                      `Member #${String(r.referred_id).slice(0, 8)}`)
                   : `Member #${String(r.referred_id).slice(0, 8)}`;
