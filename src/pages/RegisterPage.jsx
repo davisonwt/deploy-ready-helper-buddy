@@ -47,36 +47,39 @@ export default function RegisterPage() {
     })
   }
   
+  // Password policy checks (live)
+  const pw = formData.password
+  const pwChecks = {
+    length: pw.length >= 12,
+    upper: /[A-Z]/.test(pw),
+    lower: /[a-z]/.test(pw),
+    number: /[0-9]/.test(pw),
+    special: /[^A-Za-z0-9]/.test(pw),
+  }
+  const pwAllOk = Object.values(pwChecks).every(Boolean)
+
   const handleSubmit = async (e) => {
     e.preventDefault()
     setLoading(true)
     setError("")
-    
+
     // Validation
     if (formData.password !== formData.confirmPassword) {
-      setError("Passwords do not match")
+      const msg = "Passwords do not match"
+      setError(msg)
+      toast({ variant: "destructive", title: "Check password", description: msg })
       setLoading(false)
       return
     }
-    
-    // Stronger password policy (12+ characters)
-    if (formData.password.length < 12) {
-      setError("Password must be at least 12 characters for security")
+
+    if (!pwAllOk) {
+      const msg = "Password must be 12+ chars with uppercase, lowercase, number, and special character"
+      setError(msg)
+      toast({ variant: "destructive", title: "Weak password", description: msg })
       setLoading(false)
       return
     }
-    
-    // Check for password complexity
-    const hasUpperCase = /[A-Z]/.test(formData.password);
-    const hasLowerCase = /[a-z]/.test(formData.password);
-    const hasNumber = /[0-9]/.test(formData.password);
-    
-    if (!hasUpperCase || !hasLowerCase || !hasNumber) {
-      setError("Password must contain uppercase, lowercase, and numbers")
-      setLoading(false)
-      return
-    }
-    
+
     try {
       const result = await register({
         email: formData.email,
@@ -88,9 +91,9 @@ export default function RegisterPage() {
         currency: formData.currency,
         timezone: formData.timezone,
         country: formData.location,
-        username: formData.email.split('@')[0] // Set username from email
+        username: formData.email.split('@')[0]
       })
-      
+
       if (result.success) {
         // HTML escape function for email safety
         const escapeHtml = (text) => {
@@ -104,7 +107,7 @@ export default function RegisterPage() {
           };
           return String(text).replace(/[&<>"']/g, (m) => map[m]);
         };
-        
+
         // Send welcome email to user
         try {
           console.log('Attempting to send welcome email...')
@@ -164,17 +167,42 @@ export default function RegisterPage() {
           title: "Welcome to sow2grow! 🌱",
           description: "Please verify your account in ChatApp to continue.",
         })
-        
+
         navigate("/chatapp")
       } else {
-        setError(result.error || "Registration failed")
+        const raw = result.error || "Registration failed"
+        // Friendly translations for common Supabase auth errors
+        let friendly = raw
+        const lower = raw.toLowerCase()
+        if (lower.includes('already registered') || lower.includes('already exists') || lower.includes('user already')) {
+          friendly = "An account with this email already exists. Please sign in or reset your password."
+        } else if (lower.includes('invalid email')) {
+          friendly = "That email address looks invalid. Please double-check it."
+        } else if (lower.includes('password')) {
+          friendly = raw // password-specific messages from server are usually clear
+        } else if (lower.includes('network') || lower.includes('failed to fetch')) {
+          friendly = "Network error — please check your internet connection and try again."
+        } else if (lower.includes('rate') || lower.includes('too many')) {
+          friendly = "Too many attempts. Please wait a minute and try again."
+        }
+        setError(friendly)
+        toast({
+          variant: "destructive",
+          title: "Registration failed",
+          description: friendly,
+        })
+        console.error('Registration failed:', { raw, code: result.code })
       }
     } catch (err) {
-      setError("An unexpected error occurred")
+      const msg = err?.message || "An unexpected error occurred"
+      setError(msg)
+      toast({ variant: "destructive", title: "Unexpected error", description: msg })
+      console.error('Registration threw:', err)
     } finally {
       setLoading(false)
     }
   }
+
   
   return (
     <div className="min-h-screen bg-gradient-to-br from-green-50 via-blue-50 to-amber-50 flex items-center justify-center p-4 relative overflow-hidden">
