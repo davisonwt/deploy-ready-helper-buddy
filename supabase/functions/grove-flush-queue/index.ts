@@ -13,6 +13,22 @@ serve(async (req) => {
   try {
     const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
     const SERVICE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+    const CRON_SECRET = Deno.env.get("CRON_SECRET");
+
+    // Require a shared cron secret so this flush endpoint can't be triggered by anonymous callers.
+    const authHeader = req.headers.get("authorization") ?? "";
+    const provided = authHeader.toLowerCase().startsWith("bearer ")
+      ? authHeader.slice(7).trim()
+      : "";
+    const isServiceRole = !!SERVICE_KEY && provided === SERVICE_KEY;
+    const isCron = !!CRON_SECRET && provided === CRON_SECRET;
+    if (!isServiceRole && !isCron) {
+      return new Response(JSON.stringify({ error: "unauthorized" }), {
+        status: 401,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
     const admin = createClient(SUPABASE_URL, SERVICE_KEY);
 
     const { data: due } = await admin

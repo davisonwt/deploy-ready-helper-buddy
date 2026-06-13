@@ -460,7 +460,7 @@ const App = () => (
                 <ProtectedRoute><Layout><BinancePayTestPage /></Layout></ProtectedRoute>
               } />
               <Route path="/admin/analytics" element={
-                <ProtectedRoute><Layout><AdminAnalyticsPage /></Layout></ProtectedRoute>
+                <ProtectedRoute allowedRoles={['admin', 'gosat']}><Layout><AdminAnalyticsPage /></Layout></ProtectedRoute>
               } />
               <Route path="/admin/dashboard" element={
                 <ProtectedRoute allowedRoles={['admin', 'gosat']}>
@@ -518,10 +518,10 @@ const App = () => (
                 <ProtectedRoute><Layout><Suspense fallback={<LoadingFallback />}><SellerCredentialsPage /></Suspense></Layout></ProtectedRoute>
               } />
               <Route path="/admin/credentials" element={
-                <ProtectedRoute><Layout><Suspense fallback={<LoadingFallback />}><AdminCredentialsPage /></Suspense></Layout></ProtectedRoute>
+                <ProtectedRoute allowedRoles={['admin', 'gosat']}><Layout><Suspense fallback={<LoadingFallback />}><AdminCredentialsPage /></Suspense></Layout></ProtectedRoute>
               } />
               <Route path="/admin/attach-covers" element={
-                <ProtectedRoute><Layout><Suspense fallback={<LoadingFallback />}><AdminAttachCoversPage /></Suspense></Layout></ProtectedRoute>
+                <ProtectedRoute allowedRoles={['admin', 'gosat']}><Layout><Suspense fallback={<LoadingFallback />}><AdminAttachCoversPage /></Suspense></Layout></ProtectedRoute>
               } />
               <Route path="/products/edit/:id" element={
                 <ProtectedRoute><Layout><Suspense fallback={<LoadingFallback />}><EditForm /></Suspense></Layout></ProtectedRoute>
