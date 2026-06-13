@@ -457,9 +457,32 @@ export default function RegisterPage() {
               </div>
               
               <div className="space-y-2">
-                <label htmlFor="password" className="text-sm font-semibold text-green-700">
-                  Password
-                </label>
+                <div className="flex items-center gap-2">
+                  <label htmlFor="password" className="text-sm font-semibold text-green-700">
+                    Password
+                  </label>
+                  <TooltipProvider delayDuration={150}>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <button type="button" aria-label="Password requirements" className="text-gray-400 hover:text-green-600 transition-colors">
+                          <Info className="h-4 w-4" />
+                        </button>
+                      </TooltipTrigger>
+                      <TooltipContent side="right" className="max-w-xs">
+                        <div className="text-xs space-y-1">
+                          <p className="font-semibold mb-1">Password must contain:</p>
+                          <ul className="space-y-0.5">
+                            <li>• At least 12 characters</li>
+                            <li>• 1 uppercase letter (A-Z)</li>
+                            <li>• 1 lowercase letter (a-z)</li>
+                            <li>• 1 number (0-9)</li>
+                            <li>• 1 special character (!@#$%^&*)</li>
+                          </ul>
+                        </div>
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
+                </div>
                 <div className="relative">
                   <Lock className="absolute left-4 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400 z-10" />
                   <input
@@ -468,6 +491,7 @@ export default function RegisterPage() {
                     type={showPassword ? "text" : "password"}
                     value={formData.password}
                     onChange={handleChange}
+                    title="Must be 12+ chars with uppercase, lowercase, number, and special character"
                     className="w-full pl-12 pr-12 py-3 border-2 border-gray-200 bg-olive-green rounded-xl focus:ring-2 focus:ring-green-400 focus:border-green-400 transition-all duration-300 text-light-beige hover:border-gray-300 shadow-sm hover:shadow-md text-center"
                     placeholder="Create a secure password"
                     required
@@ -480,7 +504,24 @@ export default function RegisterPage() {
                     {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
                   </button>
                 </div>
+                {formData.password.length > 0 && (
+                  <ul className="grid grid-cols-2 gap-x-3 gap-y-1 text-xs mt-2 px-1">
+                    {[
+                      { ok: pwChecks.length, label: '12+ characters' },
+                      { ok: pwChecks.upper, label: 'Uppercase letter' },
+                      { ok: pwChecks.lower, label: 'Lowercase letter' },
+                      { ok: pwChecks.number, label: 'Number' },
+                      { ok: pwChecks.special, label: 'Special character' },
+                    ].map((c) => (
+                      <li key={c.label} className={`flex items-center gap-1 ${c.ok ? 'text-green-600' : 'text-gray-500'}`}>
+                        {c.ok ? <Check className="h-3 w-3" /> : <X className="h-3 w-3" />}
+                        <span>{c.label}</span>
+                      </li>
+                    ))}
+                  </ul>
+                )}
               </div>
+
               
               <div className="space-y-2">
                 <label htmlFor="confirmPassword" className="text-sm font-semibold text-green-700">
