@@ -1,0 +1,36 @@
+# Sow2Grow
+
+> A global tribal marketplace where sowers plant seeds, bestowers fund growth, and orchards turn community support into sustainable impact. USDC is the settlement currency. AI agents — publicly called "Orchard Companions" — help members run their orchards.
+
+Sow2Grow uses a sacred terminology: **Sow** (plant a seed/idea), **Bestow** (fund a sower), **Orchard** (a sower's living tribe), **Seed** (a fundable project). The Directory lists products for sale; Orchards is where the sower journey and tribe live — they are intentionally distinct destinations.
+
+## Pages
+
+- [Home](/): Landing page introducing the Sow2Grow tribal marketplace.
+- [Browse Orchards](/browse-orchards): Discover sower orchards and their living tribes.
+- [Bulk Directory](/bulk/directory): Sower directory grouped by tribe and category.
+- [Wandering Directory](/wandering-directory): Marketplace filtered by the nine wandering badges (seller identities).
+- [Products](/products): The Sow2Grow product marketplace.
+- [Factories](/factories): Directory of tribal factories and bulk producers.
+- [Sow2Grow Calendar](/sow2grow-calendar): The sacred bead calendar — Enoch / Ezekiel identity revealer.
+- [Tequfah Clock](/tequfah-clock): Live sacred-time clock based on observed Jerusalem sunrise.
+- [Live Rooms](/live-rooms): Active live community rooms.
+- [Live Lounge](/live-lounge): Always-on community lounge.
+- [Premium Rooms](/premium-rooms): Ambassador-only premium rooms.
+- [Community Videos](/community-videos): Member-submitted videos.
+- [Music Library](/music-library): Community music library.
+- [Radio](/radio): Sow2Grow live radio.
+- [Radio Sessions](/radio-sessions): Past and upcoming radio sessions.
+- [Grove Feed](/grove-feed): Live grove activity and orchard updates.
+- [Companions](/companions): Orchard Companions hub (Gentoo, Mint, Debian, Tux, Ubuntu, Kali, Fedora, Arch).
+- [Community Offering](/community-offering): Free-will community offerings.
+- [Tithing](/tithing): Tithing flow.
+- [Free-Will Gifting](/free-will-gifting): Direct gifting to sowers.
+- [Support Us](/support-us): Support Sow2Grow with Binance Pay (USDC).
+- [Tribal Hearts](/tribal-hearts): Ambassador-only safe heterosexual dating garden (18+).
+
+## Optional
+
+- [Login](/login): Sign in.
+- [Register](/register): Create an account and start your sower journey.
+- [Search](/search): Site search.

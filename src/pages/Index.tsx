@@ -100,6 +100,7 @@ function IndexContent() {
                 onClick={() => setShowVoiceCommands(true)}
                 className="hover-scale h-9 w-9 sm:h-10 sm:w-10 inline-flex items-center justify-center rounded-lg transition-all duration-200"
                 title="Voice Commands"
+                aria-label="Voice Commands"
                 style={{
                   color: currentTheme.textSecondary,
                   backgroundColor: 'transparent'
@@ -113,7 +114,7 @@ function IndexContent() {
                   e.currentTarget.style.backgroundColor = 'transparent';
                 }}
               >
-                <Mic className="h-4 w-4 sm:h-5 sm:w-5" />
+                <Mic className="h-4 w-4 sm:h-5 sm:w-5" aria-hidden="true" />
               </button>
               
               <AdminButton />
@@ -207,7 +208,7 @@ function IndexContent() {
                 <div className="w-12 h-12 sm:w-16 sm:h-16 bg-pink-400 rounded-full flex items-center justify-center mx-auto mb-4 sm:mb-6">
                   <Heart className="w-6 h-6 sm:w-8 sm:h-8 text-white" />
                 </div>
-                <h3 className="text-xl sm:text-2xl font-bold text-brown-800 mb-3 sm:mb-4">scriptural giving</h3>
+                <h2 className="text-xl sm:text-2xl font-bold text-brown-800 mb-3 sm:mb-4">scriptural giving</h2>
                 <p className="text-sm sm:text-base text-brown-700 leading-relaxed italic">
                   give with joy, not just duty,<br />
                   first fruits and love, your tithe of beauty.
@@ -220,7 +221,7 @@ function IndexContent() {
                 <div className="w-12 h-12 sm:w-16 sm:h-16 bg-green-500 rounded-full flex items-center justify-center mx-auto mb-4 sm:mb-6">
                   <Users className="w-6 h-6 sm:w-8 sm:h-8 text-white" />
                 </div>
-                <h3 className="text-xl sm:text-2xl font-bold text-brown-800 mb-3 sm:mb-4">community support</h3>
+                <h2 className="text-xl sm:text-2xl font-bold text-brown-800 mb-3 sm:mb-4">community support</h2>
                 <p className="text-sm sm:text-base text-brown-700 leading-relaxed italic">
                   sowers sow, bestowers flow;<br />
                   shared harvest makes the body grow.
@@ -233,7 +234,7 @@ function IndexContent() {
                 <div className="w-12 h-12 sm:w-16 sm:h-16 bg-purple-500 rounded-full flex items-center justify-center mx-auto mb-4 sm:mb-6">
                   <Gift className="w-6 h-6 sm:w-8 sm:h-8 text-white" />
                 </div>
-                <h3 className="text-xl sm:text-2xl font-bold text-brown-800 mb-3 sm:mb-4">s2g farm mall</h3>
+                <h2 className="text-xl sm:text-2xl font-bold text-brown-800 mb-3 sm:mb-4">s2g farm mall</h2>
                 <p className="text-sm sm:text-base text-brown-700 leading-relaxed italic">
                   each stall blooms, each hand gives;<br />
                   fruit shared fresh, the body lives.

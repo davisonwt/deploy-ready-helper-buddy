@@ -12,3 +12,13 @@ Allow: /
 
 User-agent: *
 Allow: /
+Disallow: /admin/
+Disallow: /gosat/
+Disallow: /auth-debug
+Disallow: /wallet-settings
+Disallow: /basket
+Disallow: /test-basket
+Disallow: /payment-success
+Disallow: /payment-cancelled
+
+Sitemap: https://sow2growapp.com/sitemap.xml

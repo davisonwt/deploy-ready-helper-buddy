@@ -65,6 +65,8 @@ export default function Sow2GrowCalendar() {
 
   return (
     <div className="fixed inset-0 bg-gradient-to-br from-black via-slate-900 to-black text-amber-50 overflow-hidden">
+      <h1 className="sr-only">Sow2Grow Sacred Bead Calendar — Enoch &amp; Ezekiel Identity Revealer</h1>
+
 
       {/* TOP: BIRTH DATE PICKER */}
       <div className="absolute top-8 left-1/2 -translate-x-1/2 z-50">
