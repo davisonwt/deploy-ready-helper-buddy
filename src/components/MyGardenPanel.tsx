@@ -185,6 +185,34 @@ export function MyGardenPanel({ isOpen, onClose }: MyGardenPanelProps) {
               })}
             </div>
 
+            {/* Tribal Tiers — SeedFlows by scale */}
+            <div className="space-y-3">
+              <h3 className="text-sm font-semibold uppercase tracking-wider text-yellow-300/80 px-1">
+                🌐 Tribal Tiers — SeedFlows by scale
+              </h3>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                {tribalTiers.map((tier) => (
+                  <Link
+                    key={tier.href}
+                    to={tier.href}
+                    onClick={closeGarden}
+                    className="relative flex items-start gap-3 bg-white/5 hover:bg-white/15 border border-white/10 hover:border-yellow-400/40 rounded-2xl p-4 transition-all hover:scale-[1.02]"
+                  >
+                    <span className="text-2xl leading-none">{tier.emoji}</span>
+                    <div className="min-w-0">
+                      <div className="font-semibold text-base truncate">{tier.title}</div>
+                      <div className="text-teal-200/80 text-xs leading-snug">{tier.subtitle}</div>
+                    </div>
+                    {tier.badge && (
+                      <span className="absolute top-2 right-2 bg-yellow-400 text-black text-[10px] font-bold px-2 py-0.5 rounded-full">
+                        {tier.badge}
+                      </span>
+                    )}
+                  </Link>
+                ))}
+              </div>
+            </div>
+
             {/* Garden cards */}
             <div className="space-y-5">
               {gardenCards.map((card, index) => {
