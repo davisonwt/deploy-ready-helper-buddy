@@ -58,35 +58,22 @@ export function OrganizationWalletCredentials() {
   const loadCredentials = async () => {
     setLoading(true)
     try {
+      // SECURITY: api_key / api_secret are no longer readable from the client.
+      // We only load non-secret fields here; the admin re-enters secrets when updating.
       const { data, error } = await supabase
         .from('organization_wallets')
-        .select('wallet_name, api_key, api_secret, merchant_id')
+        .select('wallet_name, merchant_id')
         .in('wallet_name', ['s2gholding', 's2gbestow', 's2gdavison'])
 
       if (error) throw error
 
       data?.forEach(wallet => {
         if (wallet.wallet_name === 's2gholding') {
-          setS2gholding(prev => ({
-            ...prev,
-            api_key: wallet.api_key || '',
-            api_secret: wallet.api_secret || '',
-            merchant_id: wallet.merchant_id || ''
-          }))
+          setS2gholding(prev => ({ ...prev, merchant_id: wallet.merchant_id || '' }))
         } else if (wallet.wallet_name === 's2gbestow') {
-          setS2gbestow(prev => ({
-            ...prev,
-            api_key: wallet.api_key || '',
-            api_secret: wallet.api_secret || '',
-            merchant_id: wallet.merchant_id || ''
-          }))
+          setS2gbestow(prev => ({ ...prev, merchant_id: wallet.merchant_id || '' }))
         } else if (wallet.wallet_name === 's2gdavison') {
-          setS2gdavison(prev => ({
-            ...prev,
-            api_key: wallet.api_key || '',
-            api_secret: wallet.api_secret || '',
-            merchant_id: wallet.merchant_id || ''
-          }))
+          setS2gdavison(prev => ({ ...prev, merchant_id: wallet.merchant_id || '' }))
         }
       })
     } catch (error) {
@@ -96,6 +83,7 @@ export function OrganizationWalletCredentials() {
       setLoading(false)
     }
   }
+
 
   const saveCredentials = async (walletName: string, credentials: WalletCredentials) => {
     setSaving(true)
