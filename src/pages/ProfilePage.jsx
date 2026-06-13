@@ -49,8 +49,9 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "../components/ui/tabs"
 import Journal from "../components/journal/Journal"
 
 export default function ProfilePage() {
-  const { user, updateProfile } = useAuth()
+  const { user, updateProfile, logout } = useAuth()
   const location = useLocation()
+  const navigate = useNavigate()
   const { toast } = useToast()
   const [editing, setEditing] = useState(false)
   const [loading, setLoading] = useState(false)
