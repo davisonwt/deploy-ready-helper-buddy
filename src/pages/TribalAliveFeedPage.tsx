@@ -984,6 +984,12 @@ export default function TribalAliveFeedPage() {
           <ArrowLeft className="h-4 w-4" />
           <span className="text-sm font-semibold">SeedFlow</span>
           <span className="text-base">🌱</span>
+          {tierFilter && TIER_LABELS[tierFilter] && (
+            <span className="ml-2 inline-flex items-center gap-1 rounded-full bg-emerald-500/20 border border-emerald-300/40 px-2 py-0.5 text-[11px] font-semibold text-emerald-100">
+              <span>{TIER_LABELS[tierFilter].emoji}</span>
+              <span>{TIER_LABELS[tierFilter].label}</span>
+            </span>
+          )}
         </button>
 
         <nav className="flex items-center gap-4 text-xs sm:text-sm font-semibold">
