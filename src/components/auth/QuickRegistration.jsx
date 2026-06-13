@@ -81,13 +81,14 @@ export function QuickRegistration() {
         setStep(3);
         toast({
           title: "Welcome to sow2grow! 🌱",
-          description: "Your account has been created successfully",
+          description: "Let's secure your account — no email or phone needed.",
         });
-        
-        // Redirect after a short delay
+
+        // Redirect to mandatory security setup
         setTimeout(() => {
-          navigate('/');
-        }, 2000);
+          navigate('/onboarding/security', { replace: true });
+        }, 1200);
+
       } else {
         setError(result.error || 'Registration failed');
       }

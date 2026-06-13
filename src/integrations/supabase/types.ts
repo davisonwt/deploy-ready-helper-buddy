@@ -5158,6 +5158,8 @@ export type Database = {
           reviewed_at: string | null
           reviewed_by: string | null
           status: string
+          token: string | null
+          user_id: string | null
         }
         Insert: {
           created_at?: string
@@ -5168,6 +5170,8 @@ export type Database = {
           reviewed_at?: string | null
           reviewed_by?: string | null
           status?: string
+          token?: string | null
+          user_id?: string | null
         }
         Update: {
           created_at?: string
@@ -5178,6 +5182,8 @@ export type Database = {
           reviewed_at?: string | null
           reviewed_by?: string | null
           status?: string
+          token?: string | null
+          user_id?: string | null
         }
         Relationships: []
       }
@@ -6000,6 +6006,7 @@ export type Database = {
           display_name: string | null
           email: string | null
           facebook_url: string | null
+          failed_recovery_attempts: number
           first_name: string | null
           garden_settings: Json
           has_complete_billing_info: boolean | null
@@ -6015,6 +6022,8 @@ export type Database = {
           pinterest_url: string | null
           preferred_currency: string | null
           preferred_language: string | null
+          recovery_locked_until: string | null
+          security_setup_complete: boolean
           show_birthday: boolean | null
           show_social_media: boolean | null
           suspended: boolean | null
@@ -6046,6 +6055,7 @@ export type Database = {
           display_name?: string | null
           email?: string | null
           facebook_url?: string | null
+          failed_recovery_attempts?: number
           first_name?: string | null
           garden_settings?: Json
           has_complete_billing_info?: boolean | null
@@ -6061,6 +6071,8 @@ export type Database = {
           pinterest_url?: string | null
           preferred_currency?: string | null
           preferred_language?: string | null
+          recovery_locked_until?: string | null
+          security_setup_complete?: boolean
           show_birthday?: boolean | null
           show_social_media?: boolean | null
           suspended?: boolean | null
@@ -6092,6 +6104,7 @@ export type Database = {
           display_name?: string | null
           email?: string | null
           facebook_url?: string | null
+          failed_recovery_attempts?: number
           first_name?: string | null
           garden_settings?: Json
           has_complete_billing_info?: boolean | null
@@ -6107,6 +6120,8 @@ export type Database = {
           pinterest_url?: string | null
           preferred_currency?: string | null
           preferred_language?: string | null
+          recovery_locked_until?: string | null
+          security_setup_complete?: boolean
           show_birthday?: boolean | null
           show_social_media?: boolean | null
           suspended?: boolean | null
@@ -12830,6 +12845,14 @@ export type Database = {
         }[]
       }
       get_safe_profile_fields: { Args: never; Returns: string[] }
+      get_security_questions_for_email: {
+        Args: { p_email: string }
+        Returns: {
+          question_1: string
+          question_2: string
+          question_3: string
+        }[]
+      }
       get_security_questions_for_reset: {
         Args: { user_email: string }
         Returns: {
@@ -13201,6 +13224,17 @@ export type Database = {
         Args: { _message?: string; _recipient_id: string; _voice_url?: string }
         Returns: Json
       }
+      set_security_questions: {
+        Args: {
+          a1: string
+          a2: string
+          a3: string
+          q1: string
+          q2: string
+          q3: string
+        }
+        Returns: undefined
+      }
       store_payment_idempotency: {
         Args: {
           idempotency_key_param: string
@@ -13304,6 +13338,15 @@ export type Database = {
       validate_file_download_access: {
         Args: { p_file_url: string; p_room_id: string; p_user_id: string }
         Returns: boolean
+      }
+      verify_security_answers_and_issue_token: {
+        Args: { p_a1: string; p_a2: string; p_a3: string; p_email: string }
+        Returns: {
+          locked: boolean
+          message: string
+          success: boolean
+          token: string
+        }[]
       }
     }
     Enums: {
