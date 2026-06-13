@@ -58,8 +58,8 @@ export default function BulkUploadWizardPage() {
   }, []);
 
   const handleFile = useCallback(async (f: File) => {
-    if (f.size > 20 * 1024 * 1024) {
-      toast({ title: 'File too large', description: 'Maximum 20MB.', variant: 'destructive' });
+    if (f.size > 50 * 1024 * 1024) {
+      toast({ title: 'File too large', description: 'Maximum 50MB.', variant: 'destructive' });
       return;
     }
     setFile(f);
