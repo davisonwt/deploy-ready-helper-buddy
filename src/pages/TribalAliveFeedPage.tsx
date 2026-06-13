@@ -17,7 +17,7 @@
  * Top: Following / For You / Local tabs + Wandering badge filter bar.
  */
 import { useEffect, useMemo, useRef, useState, useCallback } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Play, Pause, Heart, MessageCircle, Mic, Video, Share2,
