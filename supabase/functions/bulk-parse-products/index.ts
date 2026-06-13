@@ -155,7 +155,7 @@ Deno.serve(async (req) => {
     const file = form.get('file') as File | null;
     const sowerId = form.get('sower_id') as string | null;
     if (!file) return new Response(JSON.stringify({ error: 'file is required' }), { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
-    if (file.size > 20 * 1024 * 1024) return new Response(JSON.stringify({ error: 'File exceeds 20MB' }), { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+    if (file.size > 50 * 1024 * 1024) return new Response(JSON.stringify({ error: 'File exceeds 50MB' }), { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
 
     const fileType = detectType(file.name, file.type);
     const buf = await file.arrayBuffer();
