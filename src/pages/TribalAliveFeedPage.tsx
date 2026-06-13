@@ -581,7 +581,7 @@ export default function TribalAliveFeedPage() {
       list = [];
     }
     return list;
-  }, [items, wanderingRole, kindFilter, tab, followingIds]);
+  }, [items, wanderingRole, kindFilter, tab, followingIds, tierSowerIds]);
 
   // Snap-scroll: track which card is centered → autoplays its preview
   useEffect(() => {
