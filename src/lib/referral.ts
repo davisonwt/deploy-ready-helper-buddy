@@ -25,6 +25,9 @@ export async function ensureReferralCode(
     .from("affiliates")
     .select("id, referral_code")
     .eq("user_id", userId)
+    .eq("is_active", true)
+    .order("created_at", { ascending: true })
+    .limit(1)
     .maybeSingle();
 
   if (readErr && readErr.code !== "PGRST116") throw readErr;
