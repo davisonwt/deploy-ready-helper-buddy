@@ -171,7 +171,7 @@ export default function BulkUploadWizardPage() {
                     <Badge key={t} variant="secondary">{t}</Badge>
                   ))}
                 </div>
-                <p className="text-xs text-muted-foreground pt-2">Max 20MB · PDF/DOCX flagged for review</p>
+                <p className="text-xs text-muted-foreground pt-2">Max 50MB · PDF/DOCX flagged for review</p>
               </>
             )}
           </CardContent>
