@@ -406,11 +406,11 @@ export default function SeedFlowDashboard() {
     return () => document.removeEventListener('mousedown', onDocClick)
   }, [tribalFeedsOpen])
   const TRIBAL_FEED_TIERS = [
-    { slug: 'homestead', label: 'Homestead', emoji: '🏡' },
-    { slug: 'grove', label: 'Grove', emoji: '🌳' },
-    { slug: 'orchard', label: 'Orchard', emoji: '🍎' },
-    { slug: 'estate', label: 'Estate', emoji: '🏛️' },
-    { slug: 'harvest-works', label: 'Harvest Works', emoji: '🏭' },
+    { tier: 'homestead', label: 'Homestead', emoji: '🏡' },
+    { tier: 'grove', label: 'Grove', emoji: '🌳' },
+    { tier: 'orchard', label: 'Orchard', emoji: '🍎' },
+    { tier: 'estate', label: 'Estate', emoji: '🏛️' },
+    { tier: 'harvest_works', label: 'Harvest Works', emoji: '🏭' },
   ]
   const intervalRef = useRef(null)
 
