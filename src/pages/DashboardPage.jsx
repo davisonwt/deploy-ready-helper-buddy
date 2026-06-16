@@ -1084,28 +1084,28 @@ export default function SeedFlowDashboard() {
                </div>
              </div>
 
-             {/* full-width action row: Tribal Feeds · Orchard Companions · Log out · Settings */}
-             <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 8, width: '100%', marginTop: 4 }}>
-                <div ref={tribalFeedsRef} style={{ position: 'relative' }}>
-                  <button
-                    type="button"
-                    onClick={() => setTribalFeedsOpen((v) => !v)}
-                    aria-haspopup="menu"
-                    aria-expanded={tribalFeedsOpen}
-                    style={{
-                      ...styles.seedflowLabel,
-                      background: 'linear-gradient(135deg, rgba(22,163,74,0.25), rgba(34,197,94,0.18), rgba(132,204,22,0.22))',
-                      backdropFilter: 'blur(12px)', WebkitBackdropFilter: 'blur(12px)',
-                      border: '1px solid rgba(134,239,172,0.45)',
-                      color: '#dcfce7', fontWeight: 700,
-                      boxShadow: '0 4px 16px rgba(34,197,94,0.2), inset 0 1px 0 rgba(255,255,255,0.12)',
-                      cursor: 'pointer',
-                      display: 'inline-flex', alignItems: 'center', gap: 6,
-                      padding: '5px 10px', fontSize: 12,
-                    }}
-                  >
-                    🌿 Tribal Feeds <span style={{ fontSize: 10, opacity: 0.8 }}>▾</span>
-                  </button>
+              {/* single-row actions: Feeds · Companions · Log out · Settings — kept inline on mobile */}
+              <div style={{ display: 'flex', flexWrap: 'nowrap', alignItems: 'center', gap: 6, width: '100%', marginTop: 4 }}>
+                 <div ref={tribalFeedsRef} style={{ position: 'relative', flexShrink: 0 }}>
+                   <button
+                     type="button"
+                     onClick={() => setTribalFeedsOpen((v) => !v)}
+                     aria-haspopup="menu"
+                     aria-expanded={tribalFeedsOpen}
+                     style={{
+                       ...styles.seedflowLabel,
+                       background: 'linear-gradient(135deg, rgba(22,163,74,0.25), rgba(34,197,94,0.18), rgba(132,204,22,0.22))',
+                       backdropFilter: 'blur(12px)', WebkitBackdropFilter: 'blur(12px)',
+                       border: '1px solid rgba(134,239,172,0.45)',
+                       color: '#dcfce7', fontWeight: 700,
+                       boxShadow: '0 4px 16px rgba(34,197,94,0.2), inset 0 1px 0 rgba(255,255,255,0.12)',
+                       cursor: 'pointer',
+                       display: 'inline-flex', alignItems: 'center', gap: 4,
+                       padding: '4px 8px', fontSize: 11, whiteSpace: 'nowrap',
+                     }}
+                   >
+                     🌿 Feeds <span style={{ fontSize: 9, opacity: 0.8 }}>▾</span>
+                   </button>
                   {tribalFeedsOpen && (
                     <div
                       role="menu"
