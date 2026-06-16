@@ -1039,11 +1039,20 @@ export default function SeedFlowDashboard() {
                   style={styles.navItem(isActive, item.color)}>
                   <div style={styles.navEmoji(isActive, item.color)}>{item.emoji}</div>
                   <div>
-                    <div style={styles.navLabel}>{item.label}</div>
+                    <div style={styles.navLabel}>
+                      {item.label}
+                      {isActive && item.label === 'SeedFlow' && (
+                        <span style={{ marginLeft: 8, display: 'inline-flex', alignItems: 'center', gap: 4, fontSize: 10, fontWeight: 700, color: '#22c55e', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                          <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#22c55e', display: 'inline-block', animation: 'pulse 2s infinite' }} />
+                          Active
+                        </span>
+                      )}
+                    </div>
                     <div style={styles.navSub}>{item.sub}</div>
                   </div>
                 </Link>
               )
+
             })}
           </nav>
 
@@ -1073,10 +1082,7 @@ export default function SeedFlowDashboard() {
                    Shalom · Year {sacredDate.year} · Month {sacredDate.month} · Day {sacredDate.day}
                  </div>
                   <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 8, marginTop: 12 }}>
-                    <div style={{ ...styles.seedflowLabel, whiteSpace: 'nowrap' }}>
-                      <span style={{ width: 7, height: 7, borderRadius: '50%', background: '#22c55e', display: 'inline-block', animation: 'pulse 2s infinite' }} />
-                      SeedFlow active
-                    </div>
+
                     <div ref={tribalFeedsRef} style={{ position: 'relative' }}>
                       <button
                         type="button"
