@@ -1147,7 +1147,7 @@ export default function SeedFlowDashboard() {
                  </div>
                </div>
              </div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0, marginLeft: 'auto' }}>
                 <button
                   type="button"
                   onClick={async () => {
