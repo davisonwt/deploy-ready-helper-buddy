@@ -1052,8 +1052,9 @@ export default function SeedFlowDashboard() {
         {/* ── CENTER ──────────────────────────────────────────── */}
         <div className="s2g-dashboard-center" style={styles.center}>
 
-          <div className="s2g-dashboard-header" style={styles.header}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+          <div className="s2g-dashboard-header" style={{ ...styles.header, flexWrap: 'wrap', rowGap: 12 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12, flex: '1 1 240px', minWidth: 0 }}>
+
               <div style={styles.avatar}>
                 {profile?.avatar_url
                   ? <img
