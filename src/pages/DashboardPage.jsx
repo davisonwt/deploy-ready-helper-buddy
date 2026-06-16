@@ -1142,48 +1142,48 @@ export default function SeedFlowDashboard() {
                     </div>
                   )}
                 </div>
-               <Link to="/companions" style={{ textDecoration: 'none' }}>
-                 <div style={{
-                   ...styles.seedflowLabel,
-                   background: 'linear-gradient(135deg, rgba(99,102,241,0.25), rgba(139,92,246,0.18), rgba(236,72,153,0.22))',
-                   backdropFilter: 'blur(12px)', WebkitBackdropFilter: 'blur(12px)',
-                   border: '1px solid rgba(196,181,253,0.45)',
-                   color: '#ede9fe', fontWeight: 700,
-                   boxShadow: '0 4px 16px rgba(139,92,246,0.2), inset 0 1px 0 rgba(255,255,255,0.12)',
-                   padding: '5px 10px', fontSize: 12,
-                 }}>
-                   🐧 Orchard Companions
-                 </div>
-               </Link>
+                <Link to="/companions" style={{ textDecoration: 'none', flexShrink: 0 }}>
+                  <div style={{
+                    ...styles.seedflowLabel,
+                    background: 'linear-gradient(135deg, rgba(99,102,241,0.25), rgba(139,92,246,0.18), rgba(236,72,153,0.22))',
+                    backdropFilter: 'blur(12px)', WebkitBackdropFilter: 'blur(12px)',
+                    border: '1px solid rgba(196,181,253,0.45)',
+                    color: '#ede9fe', fontWeight: 700,
+                    boxShadow: '0 4px 16px rgba(139,92,246,0.2), inset 0 1px 0 rgba(255,255,255,0.12)',
+                    padding: '4px 8px', fontSize: 11, whiteSpace: 'nowrap',
+                  }}>
+                    🐧 Companions
+                  </div>
+                </Link>
 
-               <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginLeft: 'auto' }}>
-                 <button
-                   type="button"
-                   onClick={async () => {
-                     try { await logout() } catch {}
-                     navigate('/login')
-                   }}
-                   aria-label="Log out"
-                   title="Log out"
-                   style={{
-                     display: 'inline-flex', alignItems: 'center', gap: 6,
-                     padding: '6px 10px', borderRadius: 999,
-                     background: 'rgba(239,68,68,0.12)',
-                     border: '1px solid rgba(239,68,68,0.45)',
-                     color: '#fecaca', cursor: 'pointer',
-                     fontSize: 12, fontWeight: 600,
-                     transition: 'all 0.2s',
-                   }}
-                   onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(239,68,68,0.25)'; e.currentTarget.style.color = '#fff' }}
-                   onMouseLeave={(e) => { e.currentTarget.style.background = 'rgba(239,68,68,0.12)'; e.currentTarget.style.color = '#fecaca' }}
-                 >
-                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                     <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
-                     <polyline points="16 17 21 12 16 7" />
-                     <line x1="21" y1="12" x2="9" y2="12" />
-                   </svg>
-                   Log out
-                 </button>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginLeft: 'auto', flexShrink: 0 }}>
+                  <button
+                    type="button"
+                    onClick={async () => {
+                      try { await logout() } catch {}
+                      navigate('/login')
+                    }}
+                    aria-label="Log out"
+                    title="Log out"
+                    style={{
+                      display: 'inline-flex', alignItems: 'center', gap: 4,
+                      padding: '4px 8px', borderRadius: 999,
+                      background: 'rgba(239,68,68,0.12)',
+                      border: '1px solid rgba(239,68,68,0.45)',
+                      color: '#fecaca', cursor: 'pointer',
+                      fontSize: 11, fontWeight: 600, whiteSpace: 'nowrap',
+                      transition: 'all 0.2s',
+                    }}
+                    onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(239,68,68,0.25)'; e.currentTarget.style.color = '#fff' }}
+                    onMouseLeave={(e) => { e.currentTarget.style.background = 'rgba(239,68,68,0.12)'; e.currentTarget.style.color = '#fecaca' }}
+                  >
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+                      <polyline points="16 17 21 12 16 7" />
+                      <line x1="21" y1="12" x2="9" y2="12" />
+                    </svg>
+                    Log out
+                  </button>
                  <Link
                    to="/profile"
                    aria-label="Open your profile & settings"
