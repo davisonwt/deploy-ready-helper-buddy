@@ -1206,6 +1206,7 @@ export default function SeedFlowDashboard() {
                   </svg>
                 </Link>
               </div>
+            </div>
           </div>
 
           <div className="s2g-dashboard-content" style={styles.content}>
