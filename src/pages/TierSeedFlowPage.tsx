@@ -346,12 +346,12 @@ export default function TierSeedFlowPage({ tier }: Props) {
                   {list.length === 0 ? (
                     <div className="p-4 text-xs text-muted-foreground">No seeds yet.</div>
                   ) : (
-                    <div className="p-4 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
-                      {list.slice(0, 8).map((s) => (
+                    <div className="p-4 flex gap-3 overflow-x-auto snap-x snap-mandatory [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+                      {list.slice(0, 12).map((s) => (
                         <Link
                           key={s.id}
                           to={`/seed/${s.id}`}
-                          className="rounded-lg overflow-hidden border border-border bg-background hover:border-primary/60 transition-colors"
+                          className="snap-start shrink-0 w-40 rounded-lg overflow-hidden border border-border bg-background hover:border-primary/60 transition-colors"
                         >
                           <div
                             className="aspect-square bg-muted"
@@ -375,6 +375,7 @@ export default function TierSeedFlowPage({ tier }: Props) {
                         </Link>
                       ))}
                     </div>
+
                   )}
                 </article>
               );
