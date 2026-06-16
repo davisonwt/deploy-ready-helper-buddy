@@ -222,20 +222,21 @@ export default function LivingSeedCard({
               type="button"
               aria-label="Previous seed"
               onClick={(e) => { e.preventDefault(); e.stopPropagation(); onPreviousCard?.(); }}
-              className="absolute left-3 top-1/2 z-[20] flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full border border-white/25 bg-[#060a12]/85 text-slate-50 shadow-2xl backdrop-blur transition hover:bg-[#0f172a]"
+              className="absolute left-2 top-16 z-[20] flex h-10 w-10 items-center justify-center rounded-full border border-white/25 bg-[#060a12]/85 text-slate-50 shadow-2xl backdrop-blur transition hover:bg-[#0f172a]"
             >
-              <ChevronLeft className="h-7 w-7" />
+              <ChevronLeft className="h-6 w-6" />
             </button>
             <button
               type="button"
               aria-label="Next seed"
               onClick={(e) => { e.preventDefault(); e.stopPropagation(); onNextCard?.(); }}
-              className="absolute right-3 top-1/2 z-[20] flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full border border-white/25 bg-[#060a12]/85 text-slate-50 shadow-2xl backdrop-blur transition hover:bg-[#0f172a]"
+              className="absolute right-2 top-16 z-[20] flex h-10 w-10 items-center justify-center rounded-full border border-white/25 bg-[#060a12]/85 text-slate-50 shadow-2xl backdrop-blur transition hover:bg-[#0f172a]"
             >
-              <ChevronRight className="h-7 w-7" />
+              <ChevronRight className="h-6 w-6" />
             </button>
           </>
         )}
+
 
         {/* inline preview */}
         {previewing && mediaKind === 'video' && mediaUrl && (
