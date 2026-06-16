@@ -1,0 +1,2 @@
+UPDATE public.dj_music_tracks SET cover_image_url = '/__l5e/assets-v1/6fb5699f-8890-4cf2-a464-b81b3b3e4279/written_in_sand.jpg' WHERE id = '3a381c4e-19f1-4bbc-bbbb-922f55760ab2';
+UPDATE public.dj_music_tracks SET cover_image_url = '/__l5e/assets-v1/ccfdb0eb-135d-43fb-809a-eb152e255ccf/true_fast.jpg' WHERE id = '7fe0fb45-316d-46dd-b83c-e135c1162498';
