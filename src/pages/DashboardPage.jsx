@@ -1073,10 +1073,7 @@ export default function SeedFlowDashboard() {
                    Shalom · Year {sacredDate.year} · Month {sacredDate.month} · Day {sacredDate.day}
                  </div>
                   <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 8, marginTop: 12 }}>
-                    <div style={{ ...styles.seedflowLabel, whiteSpace: 'nowrap' }}>
-                      <span style={{ width: 7, height: 7, borderRadius: '50%', background: '#22c55e', display: 'inline-block', animation: 'pulse 2s infinite' }} />
-                      SeedFlow active
-                    </div>
+
                     <div ref={tribalFeedsRef} style={{ position: 'relative' }}>
                       <button
                         type="button"
