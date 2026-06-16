@@ -443,12 +443,12 @@ export default function TierSeedFlowPage({ tier }: Props) {
                             <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-2">
                               {labelFor(key)} · {items.length}
                             </h3>
-                            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+                            <div className="flex gap-3 overflow-x-auto snap-x snap-mandatory -mx-4 px-4 pb-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
                               {items.map((s) => (
                                 <Link
                                   key={s.id}
                                   to={`/seed/${s.id}`}
-                                  className="rounded-lg overflow-hidden border border-border bg-background hover:border-primary/60 transition-colors"
+                                  className="snap-start shrink-0 w-40 rounded-lg overflow-hidden border border-border bg-background hover:border-primary/60 transition-colors"
                                 >
                                   <div
                                     className="aspect-square bg-muted"
@@ -474,6 +474,7 @@ export default function TierSeedFlowPage({ tier }: Props) {
                             </div>
                           </div>
                         ))}
+
                       </div>
                     );
                   })()}
