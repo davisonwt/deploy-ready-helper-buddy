@@ -222,20 +222,21 @@ export default function LivingSeedCard({
               type="button"
               aria-label="Previous seed"
               onClick={(e) => { e.preventDefault(); e.stopPropagation(); onPreviousCard?.(); }}
-              className="absolute left-3 top-1/2 z-[20] flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full border border-white/25 bg-[#060a12]/85 text-slate-50 shadow-2xl backdrop-blur transition hover:bg-[#0f172a]"
+              className="absolute left-2 top-16 z-[20] flex h-10 w-10 items-center justify-center rounded-full border border-white/25 bg-[#060a12]/85 text-slate-50 shadow-2xl backdrop-blur transition hover:bg-[#0f172a]"
             >
-              <ChevronLeft className="h-7 w-7" />
+              <ChevronLeft className="h-6 w-6" />
             </button>
             <button
               type="button"
               aria-label="Next seed"
               onClick={(e) => { e.preventDefault(); e.stopPropagation(); onNextCard?.(); }}
-              className="absolute right-3 top-1/2 z-[20] flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full border border-white/25 bg-[#060a12]/85 text-slate-50 shadow-2xl backdrop-blur transition hover:bg-[#0f172a]"
+              className="absolute right-2 top-16 z-[20] flex h-10 w-10 items-center justify-center rounded-full border border-white/25 bg-[#060a12]/85 text-slate-50 shadow-2xl backdrop-blur transition hover:bg-[#0f172a]"
             >
-              <ChevronRight className="h-7 w-7" />
+              <ChevronRight className="h-6 w-6" />
             </button>
           </>
         )}
+
 
         {/* inline preview */}
         {previewing && mediaKind === 'video' && mediaUrl && (
@@ -340,8 +341,8 @@ export default function LivingSeedCard({
           </div>
 
           {/* action row */}
-          <div className="mt-2 flex gap-1.5">
-            <div className="flex-1">
+          <div className="mt-2 flex flex-wrap gap-1.5">
+            <div className="flex-1 min-w-[70px]">
               <LivingButton
                 variant="play"
                 isPlaying={previewing}
@@ -354,12 +355,21 @@ export default function LivingSeedCard({
                 {previewing ? '⏸ Pause' : '▶ Play'}
               </LivingButton>
             </div>
-            <Link to={openPath} className="flex-1" style={{ textDecoration: 'none' }}>
+            <Link to={openPath} className="flex-1 min-w-[70px]" style={{ textDecoration: 'none' }}>
               <LivingButton variant="enter" height={38} borderRadius={10} fontSize={11} letterSpacing="0px">
                 📂 Open
               </LivingButton>
             </Link>
-            <div className="flex-1">
+            <button
+              type="button"
+              onClick={(e) => { e.preventDefault(); e.stopPropagation(); navigate(`${openPath}?action=bestow`); }}
+              className="flex-1 min-w-[70px] inline-flex items-center justify-center rounded-[10px] border border-amber-400/60 bg-gradient-to-r from-amber-500/30 to-yellow-500/25 text-[11px] font-extrabold uppercase tracking-wider text-amber-100 hover:from-amber-500/45 hover:to-yellow-500/40 transition"
+              style={{ height: 38 }}
+              aria-label="Bestow to this seed"
+            >
+              🎁 Bestow
+            </button>
+            <div className="flex-1 min-w-[70px]">
               <LivingButton
                 variant="live"
                 onClick={handleGoLive}
@@ -372,6 +382,7 @@ export default function LivingSeedCard({
               </LivingButton>
             </div>
           </div>
+
         </div>
       </section>
 

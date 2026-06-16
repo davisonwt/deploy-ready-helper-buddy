@@ -1052,8 +1052,9 @@ export default function SeedFlowDashboard() {
         {/* ── CENTER ──────────────────────────────────────────── */}
         <div className="s2g-dashboard-center" style={styles.center}>
 
-          <div className="s2g-dashboard-header" style={styles.header}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+          <div className="s2g-dashboard-header" style={{ ...styles.header, flexWrap: 'wrap', rowGap: 12 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12, flex: '1 1 240px', minWidth: 0 }}>
+
               <div style={styles.avatar}>
                 {profile?.avatar_url
                   ? <img
@@ -1071,7 +1072,7 @@ export default function SeedFlowDashboard() {
                  <div style={styles.greetingSub}>
                    Shalom · Year {sacredDate.year} · Month {sacredDate.month} · Day {sacredDate.day}
                  </div>
-                  <div style={{ display: 'flex', flexWrap: 'nowrap', alignItems: 'center', gap: 8, marginTop: 18 }}>
+                  <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 8, marginTop: 12 }}>
                     <div style={{ ...styles.seedflowLabel, whiteSpace: 'nowrap' }}>
                       <span style={{ width: 7, height: 7, borderRadius: '50%', background: '#22c55e', display: 'inline-block', animation: 'pulse 2s infinite' }} />
                       SeedFlow active
@@ -1146,7 +1147,7 @@ export default function SeedFlowDashboard() {
                  </div>
                </div>
              </div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0, marginLeft: 'auto' }}>
                 <button
                   type="button"
                   onClick={async () => {
