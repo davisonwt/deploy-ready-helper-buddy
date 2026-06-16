@@ -341,8 +341,8 @@ export default function LivingSeedCard({
           </div>
 
           {/* action row */}
-          <div className="mt-2 flex gap-1.5">
-            <div className="flex-1">
+          <div className="mt-2 flex flex-wrap gap-1.5">
+            <div className="flex-1 min-w-[70px]">
               <LivingButton
                 variant="play"
                 isPlaying={previewing}
@@ -355,12 +355,21 @@ export default function LivingSeedCard({
                 {previewing ? '⏸ Pause' : '▶ Play'}
               </LivingButton>
             </div>
-            <Link to={openPath} className="flex-1" style={{ textDecoration: 'none' }}>
+            <Link to={openPath} className="flex-1 min-w-[70px]" style={{ textDecoration: 'none' }}>
               <LivingButton variant="enter" height={38} borderRadius={10} fontSize={11} letterSpacing="0px">
                 📂 Open
               </LivingButton>
             </Link>
-            <div className="flex-1">
+            <button
+              type="button"
+              onClick={(e) => { e.preventDefault(); e.stopPropagation(); navigate(`${openPath}?action=bestow`); }}
+              className="flex-1 min-w-[70px] inline-flex items-center justify-center rounded-[10px] border border-amber-400/60 bg-gradient-to-r from-amber-500/30 to-yellow-500/25 text-[11px] font-extrabold uppercase tracking-wider text-amber-100 hover:from-amber-500/45 hover:to-yellow-500/40 transition"
+              style={{ height: 38 }}
+              aria-label="Bestow to this seed"
+            >
+              🎁 Bestow
+            </button>
+            <div className="flex-1 min-w-[70px]">
               <LivingButton
                 variant="live"
                 onClick={handleGoLive}
@@ -373,6 +382,7 @@ export default function LivingSeedCard({
               </LivingButton>
             </div>
           </div>
+
         </div>
       </section>
 
