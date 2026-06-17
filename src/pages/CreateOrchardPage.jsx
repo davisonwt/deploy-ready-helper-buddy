@@ -1386,7 +1386,6 @@ const fetchOrchardById = async (oid) => {
           </div>
         </form>
       </div>
-      </div>
     </div>
   )
 }
