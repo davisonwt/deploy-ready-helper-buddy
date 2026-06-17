@@ -688,68 +688,38 @@ const fetchOrchardById = async (oid) => {
   }
   
   return (
-    <div className="min-h-screen relative overflow-hidden" style={{ backgroundColor: '#001f3f' }}>
-      
-      {/* Overlay for better text readability */}
-      <div className="absolute inset-0 backdrop-blur-[2px]" style={{ backgroundColor: '#fdffb630' }}></div>
-      
+    <div className="min-h-screen bg-background relative overflow-hidden">
       {/* Content Container */}
-      <div className="relative z-10">
-      {/* Welcome Section with Profile Picture */}
-      <div className="max-w-4xl mx-auto p-8 rounded-2xl border shadow-2xl mb-8 mt-4 bg-white/90">
-        <div className="flex items-center space-x-6">
-          <div className="w-20 h-20 rounded-full overflow-hidden border-4 border-nav-create shadow-lg">
-            {user?.avatar_url ? (
-              <img 
-                src={user.avatar_url} 
-                alt="Profile" 
-                className="w-full h-full object-cover"
-              />
-            ) : (
-              <div className="w-full h-full bg-gradient-to-br from-nav-create to-nav-create/80 flex items-center justify-center">
-                <User className="h-10 w-10 text-yellow-700" />
-              </div>
-            )}
-          </div>
-          <div>
-            <h1 className="text-3xl font-bold px-8 py-4 rounded-lg" style={{ 
-              color: 'hsl(45, 90%, 55%)', 
-              textShadow: '2px 2px 4px hsl(45, 90%, 35%)'
-            }}>
-              {isEdit ? "Edit Orchard" : "Create New Orchard"}
-            </h1>
-            <p className="text-lg" style={{ color: '#cc5500' }}>
-              {isEdit ? "Update your orchard details" : "Plant a new seed in our community"}
-            </p>
-            <p className="text-sm mt-1" style={{ color: '#cc5500' }}>
-              Payment Method: USDC (USD Coin)
-            </p>
-          </div>
-        </div>
-      </div>
+      <div className="relative z-10 container max-w-4xl py-8 px-4 space-y-8">
 
-      <div className="max-w-4xl mx-auto space-y-8 px-4">
-        {/* Header */}
-        <div className="text-center">
-          <div className="bg-nav-create/10 backdrop-blur-sm rounded-3xl p-8 mx-auto max-w-3xl border border-nav-create/30 shadow-2xl">
-            <div className="flex justify-center mb-4">
-              <div className="w-16 h-16 bg-nav-create/30 rounded-full flex items-center justify-center shadow-lg">
-                <Sprout className="h-8 w-8 text-yellow-700 animate-pulse" />
-              </div>
-            </div>
-            <h2 className="text-2xl font-bold text-nav-create mb-4">
-              {isEdit ? "Edit Your Orchard" : "Sow a New Seed"}
-            </h2>
-            <p className="text-lg text-yellow-600 max-w-2xl mx-auto">
-              {isEdit ? "Update your orchard details and grow your community support" : "Create a new orchard in your farm stall within the sow2grow community farm."} 
-              Share your need with the community and watch it grow with their support.
-            </p>
-            <Badge className="mt-4 bg-nav-create text-yellow-700">
-              <Plus className="h-3 w-3 mr-1" />
-              6-Step Creation Process
+        {/* Back to Dashboard */}
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={() => navigate('/dashboard')}
+          className="rounded-full"
+        >
+          <ArrowLeft className="h-4 w-4 mr-2" /> Dashboard
+        </Button>
+
+        {/* Polished centered hero — matches Bulk Plant Your Seeds */}
+        <div className="text-center space-y-3">
+          <h1 className="text-4xl md:text-5xl font-bold tracking-tight text-foreground">
+            {isEdit ? "Edit Your Orchard" : "Create New Orchard"}
+          </h1>
+          <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
+            {isEdit
+              ? "Update your orchard details and grow your community support."
+              : "Plant a new seed in our community. Share your need and watch it grow with support."}
+          </p>
+          <div className="flex justify-center">
+            <Badge variant="secondary" className="text-xs">
+              Payment Method: USDC (USD Coin)
             </Badge>
           </div>
         </div>
+
+      
       
         <form onSubmit={handleSubmit} className="space-y-8">
           {/* Basic Information */}

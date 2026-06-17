@@ -312,10 +312,10 @@ const App = () => (
                 <ProtectedRoute><RequireVerification><Layout><OrchardErrorPage /></Layout></RequireVerification></ProtectedRoute>
               } />
               <Route path="/create-orchard" element={
-                <ProtectedRoute><RequireVerification><Layout><CreateOrchardPage /></Layout></RequireVerification></ProtectedRoute>
+                <ProtectedRoute><RequireVerification><CreateOrchardPage /></RequireVerification></ProtectedRoute>
               } />
               <Route path="/plant-new-seed" element={
-                <ProtectedRoute><RequireVerification><Layout><CreateOrchardPage /></Layout></RequireVerification></ProtectedRoute>
+                <ProtectedRoute><RequireVerification><CreateOrchardPage /></RequireVerification></ProtectedRoute>
               } />
               <Route path="/edit-orchard/:orchardId" element={
                 <ProtectedRoute><Layout><EditOrchardPage /></Layout></ProtectedRoute>
