@@ -58,24 +58,35 @@ export function QuickProfileSetup({ onComplete, onClose }) {
       return;
     }
 
+    if (!user?.id) {
+      toast({ title: "Not signed in", description: "Please sign in to upload a photo", variant: "destructive" });
+      return;
+    }
+
     setUploadingPhoto(true);
-    
+
     try {
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        setFormData(prev => ({
-          ...prev,
-          avatar_url: e.target.result
-        }));
-        setUploadingPhoto(false);
-      };
-      reader.readAsDataURL(file);
+      const ext = (file.name.split('.').pop() || 'jpg').toLowerCase();
+      const path = `${user.id}/avatars/${Date.now()}.${ext}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from('orchard-images')
+        .upload(path, file, { cacheControl: '3600', upsert: false, contentType: file.type });
+
+      if (uploadError) throw uploadError;
+
+      const { data: pub } = supabase.storage.from('orchard-images').getPublicUrl(path);
+
+      setFormData(prev => ({ ...prev, avatar_url: pub.publicUrl }));
+      toast({ title: "Photo ready ✨", description: "Click Complete Setup to save." });
     } catch (error) {
+      console.error('Avatar upload error:', error);
       toast({
         title: "Upload failed",
-        description: "Failed to process the image",
+        description: error.message || "Failed to upload the image",
         variant: "destructive"
       });
+    } finally {
       setUploadingPhoto(false);
     }
   };
