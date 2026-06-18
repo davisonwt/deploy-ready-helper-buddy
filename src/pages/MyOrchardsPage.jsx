@@ -173,8 +173,10 @@ export default function MyOrchardsPage() {
     }
     const prefix = Object.keys(tableMap).find(p => card.id.startsWith(p))
     if (!prefix) return
+    // Music cards can come from either dj_music_tracks or products — honor seedRow.__table
+    const table = (prefix === 'music-' && card.seedRow?.__table) || tableMap[prefix]
     try {
-      await deleteRow(supabase, tableMap[prefix], card.rawId)
+      await deleteRow(supabase, table, card.rawId)
       toast.success(`"${card.title}" deleted`)
       fetchAllMyContent()
       if (prefix === 'orchard-') fetchSeeds()
@@ -182,6 +184,7 @@ export default function MyOrchardsPage() {
       toast.error(`Could not delete: ${e.message}`)
     }
   }
+
   const ownerHandlers = {
     onEdit: handleEditCard, onRepost: handleRepostCard,
     onPark: handleParkCard, onDelete: handleDeleteCard,
