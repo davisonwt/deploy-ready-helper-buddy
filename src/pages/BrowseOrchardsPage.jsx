@@ -368,28 +368,28 @@ export default function BrowseOrchardsPage() {
           sower: p.artist_name || nameFromSower(p.sower_id), link: '/music-library', created_at: p.created_at,
         }))
         const booksFromProducts = productRows.filter(p => p.type === 'ebook' || p.type === 'book').map(p => ({
-          id: `prod-${p.id}`, title: p.title, image: p.cover_image_url || (p.image_urls && p.image_urls[0]) || null, emoji: '📚',
+          id: `prod-${p.id}`, title: p.title, image: firstImage(p.image_urls, p.cover_image_url), emoji: '📚',
           sower: nameFromSower(p.sower_id), link: '/my-s2g-library', created_at: p.created_at,
         }))
         const seedsFromProducts = productRows.filter(p => !['music','ebook','book'].includes(p.type)).map(p => ({
-          id: `prod-${p.id}`, title: p.title, image: p.cover_image_url || (p.image_urls && p.image_urls[0]) || null, emoji: '🌱',
+          id: `prod-${p.id}`, title: p.title, image: firstImage(p.image_urls, p.cover_image_url), emoji: '🌱',
           sower: nameFromSower(p.sower_id), link: '/products', created_at: p.created_at,
         }))
         const musicItems = [
-          ...(musicRes.data || []).map(m => ({
+          ...musicRows.map(m => ({
             id: m.id, title: m.track_title, image: m.cover_image_url || null, emoji: '🎵',
             sower: m.artist_name || djMap.get(m.dj_id)?.dj_name || 'Tribe Music', link: '/music-library', created_at: m.upload_date || m.created_at,
           })),
           ...musicFromProducts,
         ]
         const bookItems = [
-          ...(booksRes.data || []).map(b => ({
-            id: b.id, title: b.title, image: b.cover_image_url || (b.image_urls && b.image_urls[0]) || null, emoji: '📚',
+          ...bookRows.map(b => ({
+            id: b.id, title: b.title, image: firstImage(b.image_urls, b.cover_image_url), emoji: '📚',
             sower: sowerName(profileMap.get(b.user_id) || profileMap.get(b.sower_id)), link: '/my-s2g-library', created_at: b.created_at,
           })),
           ...booksFromProducts,
         ]
-        const videoItems = (videosRes.data || [])
+        const videoItems = videoRows
           .filter(v => !String(v.title || '').toLowerCase().includes('broadcast') && !String(v.description || '').toLowerCase().includes('auto-imported from orchard upload'))
           .map(v => ({
           id: v.id, title: v.title, image: v.thumbnail_url || null, emoji: '🎬',
