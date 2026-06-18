@@ -12627,66 +12627,6 @@ export type Database = {
         }
         Relationships: []
       }
-      tribal_hearts_browse: {
-        Row: {
-          age: number | null
-          age_verified: boolean | null
-          bio: string | null
-          display_first_name: string | null
-          gender: Database["public"]["Enums"]["hearts_gender"] | null
-          interests: string[] | null
-          last_active_at: string | null
-          location_country: string | null
-          location_region: string | null
-          photo_verified: boolean | null
-          photos: string[] | null
-          seeking: Database["public"]["Enums"]["hearts_gender"] | null
-          seeking_intent: string | null
-          user_id: string | null
-          values_list: string[] | null
-          voice_note_duration_sec: number | null
-          voice_note_url: string | null
-        }
-        Insert: {
-          age?: never
-          age_verified?: boolean | null
-          bio?: string | null
-          display_first_name?: string | null
-          gender?: Database["public"]["Enums"]["hearts_gender"] | null
-          interests?: string[] | null
-          last_active_at?: string | null
-          location_country?: string | null
-          location_region?: string | null
-          photo_verified?: boolean | null
-          photos?: string[] | null
-          seeking?: Database["public"]["Enums"]["hearts_gender"] | null
-          seeking_intent?: string | null
-          user_id?: string | null
-          values_list?: string[] | null
-          voice_note_duration_sec?: number | null
-          voice_note_url?: string | null
-        }
-        Update: {
-          age?: never
-          age_verified?: boolean | null
-          bio?: string | null
-          display_first_name?: string | null
-          gender?: Database["public"]["Enums"]["hearts_gender"] | null
-          interests?: string[] | null
-          last_active_at?: string | null
-          location_country?: string | null
-          location_region?: string | null
-          photo_verified?: boolean | null
-          photos?: string[] | null
-          seeking?: Database["public"]["Enums"]["hearts_gender"] | null
-          seeking_intent?: string | null
-          user_id?: string | null
-          values_list?: string[] | null
-          voice_note_duration_sec?: number | null
-          voice_note_url?: string | null
-        }
-        Relationships: []
-      }
     }
     Functions: {
       add_room_participants: {
@@ -12846,6 +12786,28 @@ export type Database = {
       get_gosat_insight_details: {
         Args: { _insight_id: string }
         Returns: Json
+      }
+      get_hearts_browse: {
+        Args: { p_limit?: number; p_offset?: number }
+        Returns: {
+          age: number
+          age_verified: boolean
+          bio: string
+          display_first_name: string
+          gender: string
+          interests: string[]
+          last_active_at: string
+          location_country: string
+          location_region: string
+          photo_verified: boolean
+          photos: string[]
+          seeking: string
+          seeking_intent: string
+          user_id: string
+          values_list: string[]
+          voice_note_duration_sec: number
+          voice_note_url: string
+        }[]
       }
       get_hearts_gender: { Args: { _user_id: string }; Returns: string }
       get_message_streak: { Args: { user_id_param: string }; Returns: number }
