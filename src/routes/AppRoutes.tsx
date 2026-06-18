@@ -296,6 +296,9 @@ const AppRoutes = () => (
     <Route path="/music-library" element={
       <Layout><Suspense fallback={<LoadingFallback />}><MusicLibraryPage /></Suspense></Layout>
     } />
+    <Route path="/my-radio-opt-in" element={
+      <ProtectedRoute><Layout><Suspense fallback={<LoadingFallback />}><MyRadioOptInPage /></Suspense></Layout></ProtectedRoute>
+    } />
     <Route path="/apply-radio-slot" element={
       <ProtectedRoute><Layout><RadioSlotApplicationPage /></Layout></ProtectedRoute>
     } />
