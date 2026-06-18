@@ -1,5 +1,6 @@
-import { Suspense } from 'react';
+import { Suspense, lazy } from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
+const TrustPage = lazy(() => import('@/pages/TrustPage'));
 import { Card, CardContent } from '@/components/ui/card';
 import ProtectedRoute from '@/components/ProtectedRoute';
 import { RequireVerification } from '@/components/auth/RequireVerification';
@@ -450,6 +451,7 @@ const AppRoutes = () => (
     <Route path="/plant-a-seed" element={
       <ProtectedRoute><Layout><Suspense fallback={<LoadingFallback />}><PlantASeedPage /></Suspense></Layout></ProtectedRoute>
     } />
+    <Route path="/trust" element={<Suspense fallback={<LoadingFallback />}><TrustPage /></Suspense>} />
     <Route path="*" element={<NotFound />} />
   </Routes>
 );
