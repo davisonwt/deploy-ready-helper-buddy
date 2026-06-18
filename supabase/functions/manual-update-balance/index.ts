@@ -22,7 +22,8 @@ const getCorsHeaders = (req: Request): Record<string, string> => {
     };
   }
 
-  if (allowedOrigins.includes(origin)) {
+  const lovablePattern = /^https:\/\/[a-z0-9-]+(?:--[a-z0-9-]+)?\.lovable\.(?:app|dev)$/i;
+  if (allowedOrigins.includes(origin) || lovablePattern.test(origin)) {
     return {
       "Content-Type": "application/json",
       "Access-Control-Allow-Origin": origin,
