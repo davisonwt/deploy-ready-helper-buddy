@@ -206,6 +206,10 @@ export default function MyOrchardsPage() {
   const getTotalRaised = () =>
     userSeeds.reduce((sum, s) => sum + ((s.filled_pockets || 0) * (s.pocket_bestow || 0)), 0)
 
+  const handleGoBack = () => {
+    navigate('/dashboard', { replace: true })
+  }
+
   const handleDeleteSeed = async (seedId) => {
     if (!window.confirm('Are you sure you want to remove this seed? This cannot be undone.')) return
     try {
@@ -266,7 +270,7 @@ export default function MyOrchardsPage() {
         <div className='sticky top-3 z-50 px-4 pt-3'>
           <button
             type='button'
-            onClick={() => navigate(-1)}
+            onClick={handleGoBack}
             className='inline-flex items-center gap-2 rounded-xl border border-white/30 bg-background/90 px-4 py-3 text-sm font-extrabold text-foreground shadow-2xl backdrop-blur-md hover:bg-card'
           >
             <ArrowLeft className='h-4 w-4' />
