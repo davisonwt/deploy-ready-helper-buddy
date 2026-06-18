@@ -4,10 +4,7 @@ import { Button } from '../../ui/button'
 import { Input } from '../../ui/input'
 import { calculateCreatorDate } from '@/utils/dashboardCalendar'
 import { getCreatorTime } from '@/utils/customTime'
-import { useFirebaseAuth } from '@/hooks/useFirebaseAuth'
 import { useAuth } from '@/hooks/useAuth'
-import { isFirebaseConfigured } from '@/integrations/firebase/config'
-import { saveJournalEntry } from '@/integrations/firebase/firestore'
 import { supabase } from '@/integrations/supabase/client'
 import { useToast } from '@/hooks/use-toast'
 
@@ -19,10 +16,8 @@ interface PrayerFormProps {
 }
 
 export function PrayerForm({ selectedDate, yhwhDate, onClose, onSave }: PrayerFormProps) {
-  const { user: firebaseUser } = useFirebaseAuth()
-  const { user: supabaseUser } = useAuth()
+  const { user } = useAuth()
   const { toast } = useToast()
-  const user = firebaseUser || supabaseUser
 
   const [prayerRequests, setPrayerRequests] = useState<string[]>([])
   const [answeredPrayers, setAnsweredPrayers] = useState<string[]>([])
@@ -36,41 +31,21 @@ export function PrayerForm({ selectedDate, yhwhDate, onClose, onSave }: PrayerFo
 
   const loadEntry = async () => {
     if (!user) return
-    
-    const yhwhDateStr = `Month${yhwhDate.month}Day${yhwhDate.day}`
-    
-    if (isFirebaseConfigured && firebaseUser) {
-      try {
-        const { getJournalEntry } = await import('@/integrations/firebase/firestore')
-        const result = await getJournalEntry(firebaseUser.uid, yhwhDateStr)
-        if (result.success && result.data) {
-          const entry = result.data
-          setPrayerRequests(entry.prayerRequests || [])
-          setAnsweredPrayers(entry.answeredPrayers || [])
-        }
-      } catch (error) {
-        console.error('Error loading entry:', error)
+    try {
+      const { data } = await supabase
+        .from('journal_entries')
+        .select('prayer_requests, answered_prayers')
+        .eq('user_id', user.id)
+        .eq('yhwh_year', yhwhDate.year)
+        .eq('yhwh_month', yhwhDate.month)
+        .eq('yhwh_day', yhwhDate.day)
+        .maybeSingle()
+      if (data) {
+        setPrayerRequests(Array.isArray(data.prayer_requests) ? data.prayer_requests as string[] : [])
+        setAnsweredPrayers(Array.isArray(data.answered_prayers) ? data.answered_prayers as string[] : [])
       }
-    }
-    
-    if (supabaseUser) {
-      try {
-        const { data } = await supabase
-          .from('journal_entries')
-          .select('prayer_requests, answered_prayers')
-          .eq('user_id', supabaseUser.id)
-          .eq('yhwh_year', yhwhDate.year)
-          .eq('yhwh_month', yhwhDate.month)
-          .eq('yhwh_day', yhwhDate.day)
-          .single()
-        
-        if (data) {
-          setPrayerRequests(Array.isArray(data.prayer_requests) ? data.prayer_requests as string[] : [])
-          setAnsweredPrayers(Array.isArray(data.answered_prayers) ? data.answered_prayers as string[] : [])
-        }
-      } catch (error) {
-        // Entry doesn't exist yet
-      }
+    } catch (error) {
+      // Entry doesn't exist yet
     }
   }
 
@@ -91,93 +66,52 @@ export function PrayerForm({ selectedDate, yhwhDate, onClose, onSave }: PrayerFo
 
   const handleSave = async () => {
     if (!user) {
-      toast({
-        title: 'Please sign in',
-        description: 'You need to be signed in to save entries',
-      })
+      toast({ title: 'Please sign in', description: 'You need to be signed in to save entries' })
       return
     }
 
     setSaving(true)
-    
-    const yhwhDateStr = `Month${yhwhDate.month}Day${yhwhDate.day}`
     const time = getCreatorTime(selectedDate, 0, 0)
-    
-    const entryData = {
-      yhwhYear: yhwhDate.year,
-      yhwhMonth: yhwhDate.month,
-      yhwhDay: yhwhDate.day,
-      yhwhWeekday: yhwhDate.weekDay,
-      yhwhDayOfYear: yhwhDate.dayOfYear,
-      gregorianDate: selectedDate.toISOString().split('T')[0],
-      prayerRequests,
-      answeredPrayers,
-      partOfYowm: time.part,
-      watch: Math.floor(time.part / 4.5) + 1,
-      isShabbat: yhwhDate.weekDay === 7,
-      isTequvah: false,
-    }
-    
+    const gregorianDateStr = selectedDate.toISOString().split('T')[0]
+
     try {
-      if (isFirebaseConfigured && firebaseUser) {
-        await saveJournalEntry(firebaseUser.uid, yhwhDateStr, entryData)
+      const { data: existingEntry } = await supabase
+        .from('journal_entries')
+        .select('id')
+        .eq('user_id', user.id)
+        .eq('yhwh_year', yhwhDate.year)
+        .eq('yhwh_month', yhwhDate.month)
+        .eq('yhwh_day', yhwhDate.day)
+        .maybeSingle()
+
+      const entryPayload: any = {
+        user_id: user.id,
+        yhwh_year: yhwhDate.year,
+        yhwh_month: yhwhDate.month,
+        yhwh_day: yhwhDate.day,
+        yhwh_weekday: yhwhDate.weekDay,
+        yhwh_day_of_year: yhwhDate.dayOfYear || 1,
+        gregorian_date: gregorianDateStr,
+        prayer_requests: prayerRequests || [],
+        answered_prayers: answeredPrayers || [],
+        part_of_yowm: time.part || null,
+        watch: Math.floor((time.part || 0) / 4.5) + 1 || null,
+        is_shabbat: yhwhDate.weekDay === 7,
+        is_tequvah: false,
       }
-      
-      if (supabaseUser) {
-        const gregorianDateStr = selectedDate.toISOString().split('T')[0]
-        
-        const { data: existingEntry } = await supabase
-          .from('journal_entries')
-          .select('id')
-          .eq('user_id', supabaseUser.id)
-          .eq('yhwh_year', yhwhDate.year)
-          .eq('yhwh_month', yhwhDate.month)
-          .eq('yhwh_day', yhwhDate.day)
-          .maybeSingle()
-        
-        const entryPayload: any = {
-          user_id: supabaseUser.id,
-          yhwh_year: yhwhDate.year,
-          yhwh_month: yhwhDate.month,
-          yhwh_day: yhwhDate.day,
-          yhwh_weekday: yhwhDate.weekDay,
-          yhwh_day_of_year: yhwhDate.dayOfYear || 1,
-          gregorian_date: gregorianDateStr,
-          prayer_requests: prayerRequests || [],
-          answered_prayers: answeredPrayers || [],
-          part_of_yowm: time.part || null,
-          watch: Math.floor((time.part || 0) / 4.5) + 1 || null,
-          is_shabbat: yhwhDate.weekDay === 7,
-          is_tequvah: false,
-        }
-        
-        if (existingEntry) {
-          await supabase
-            .from('journal_entries')
-            .update(entryPayload)
-            .eq('id', existingEntry.id)
-        } else {
-          await supabase
-            .from('journal_entries')
-            .insert(entryPayload)
-        }
-        
-        window.dispatchEvent(new CustomEvent('journalEntriesUpdated'))
+
+      if (existingEntry) {
+        await supabase.from('journal_entries').update(entryPayload).eq('id', existingEntry.id)
+      } else {
+        await supabase.from('journal_entries').insert(entryPayload)
       }
-      
-      toast({
-        title: 'Saved!',
-        description: 'Your prayers have been saved',
-      })
-      
+
+      window.dispatchEvent(new CustomEvent('journalEntriesUpdated'))
+      toast({ title: 'Saved!', description: 'Your prayers have been saved' })
       onSave?.()
     } catch (error) {
       console.error('Error saving:', error)
-      toast({
-        title: 'Error',
-        description: 'Failed to save entry',
-        variant: 'destructive',
-      })
+      toast({ title: 'Error', description: 'Failed to save entry', variant: 'destructive' })
     } finally {
       setSaving(false)
     }
@@ -218,12 +152,7 @@ export function PrayerForm({ selectedDate, yhwhDate, onClose, onSave }: PrayerFo
               {prayerRequests.map((prayer, idx) => (
                 <div key={idx} className="bg-white/10 p-3 rounded-lg flex justify-between items-start">
                   <p className="flex-1">{prayer}</p>
-                  <Button
-                    onClick={() => markPrayerAnswered(idx)}
-                    size="sm"
-                    variant="outline"
-                    className="ml-2"
-                  >
+                  <Button onClick={() => markPrayerAnswered(idx)} size="sm" variant="outline" className="ml-2">
                     Mark Answered
                   </Button>
                 </div>
@@ -249,18 +178,10 @@ export function PrayerForm({ selectedDate, yhwhDate, onClose, onSave }: PrayerFo
       </div>
 
       <div className="flex-shrink-0 p-6 border-t border-white/10 flex gap-3">
-        <Button
-          onClick={handleSave}
-          disabled={saving}
-          className="flex-1 bg-pink-600 hover:bg-pink-500"
-        >
+        <Button onClick={handleSave} disabled={saving} className="flex-1 bg-pink-600 hover:bg-pink-500">
           {saving ? 'Saving...' : 'Save Prayers'}
         </Button>
-        <Button
-          onClick={onClose}
-          variant="outline"
-          className="bg-white/10 border-white/20 text-white hover:bg-white/20"
-        >
+        <Button onClick={onClose} variant="outline" className="bg-white/10 border-white/20 text-white hover:bg-white/20">
           Close
         </Button>
       </div>

@@ -3531,26 +3531,35 @@ export type Database = {
       }
       journal_entries: {
         Row: {
+          ai_prompt: string | null
           answered_prayers: Json | null
           content: string | null
           created_at: string
+          dream_entry: string | null
+          fasting_type: string | null
           feast: string | null
           gratitude: string | null
           gregorian_date: string
           id: string
           images: string[] | null
           is_shabbat: boolean | null
+          is_special_day: boolean | null
           is_tequvah: boolean | null
           mood: string | null
           part_of_yowm: number | null
           prayer_requests: Json | null
+          prophetic_words: string[] | null
           recipes: Json | null
+          special_day_person: string | null
+          special_day_type: string | null
           tags: string[] | null
+          tithes_offerings: Json | null
           updated_at: string
           user_id: string
           videos: string[] | null
           voice_notes: string[] | null
           watch: number | null
+          water_intake: number | null
           yhwh_day: number
           yhwh_day_of_year: number | null
           yhwh_month: number
@@ -3558,26 +3567,35 @@ export type Database = {
           yhwh_year: number
         }
         Insert: {
+          ai_prompt?: string | null
           answered_prayers?: Json | null
           content?: string | null
           created_at?: string
+          dream_entry?: string | null
+          fasting_type?: string | null
           feast?: string | null
           gratitude?: string | null
           gregorian_date: string
           id?: string
           images?: string[] | null
           is_shabbat?: boolean | null
+          is_special_day?: boolean | null
           is_tequvah?: boolean | null
           mood?: string | null
           part_of_yowm?: number | null
           prayer_requests?: Json | null
+          prophetic_words?: string[] | null
           recipes?: Json | null
+          special_day_person?: string | null
+          special_day_type?: string | null
           tags?: string[] | null
+          tithes_offerings?: Json | null
           updated_at?: string
           user_id: string
           videos?: string[] | null
           voice_notes?: string[] | null
           watch?: number | null
+          water_intake?: number | null
           yhwh_day: number
           yhwh_day_of_year?: number | null
           yhwh_month: number
@@ -3585,26 +3603,35 @@ export type Database = {
           yhwh_year: number
         }
         Update: {
+          ai_prompt?: string | null
           answered_prayers?: Json | null
           content?: string | null
           created_at?: string
+          dream_entry?: string | null
+          fasting_type?: string | null
           feast?: string | null
           gratitude?: string | null
           gregorian_date?: string
           id?: string
           images?: string[] | null
           is_shabbat?: boolean | null
+          is_special_day?: boolean | null
           is_tequvah?: boolean | null
           mood?: string | null
           part_of_yowm?: number | null
           prayer_requests?: Json | null
+          prophetic_words?: string[] | null
           recipes?: Json | null
+          special_day_person?: string | null
+          special_day_type?: string | null
           tags?: string[] | null
+          tithes_offerings?: Json | null
           updated_at?: string
           user_id?: string
           videos?: string[] | null
           voice_notes?: string[] | null
           watch?: number | null
+          water_intake?: number | null
           yhwh_day?: number
           yhwh_day_of_year?: number | null
           yhwh_month?: number

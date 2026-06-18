@@ -1,15 +1,11 @@
 import React, { useState, useEffect, useRef } from 'react'
-import { Image as ImageIcon, Mic, Video, X, Trash2, Play, Pause } from 'lucide-react'
+import { Image as ImageIcon, Mic, Video, X, Trash2, Pause } from 'lucide-react'
 import { Button } from '../../ui/button'
 import { Input } from '../../ui/input'
 import { Badge } from '../../ui/badge'
 import { calculateCreatorDate } from '@/utils/dashboardCalendar'
 import { getCreatorTime } from '@/utils/customTime'
-import { useFirebaseAuth } from '@/hooks/useFirebaseAuth'
 import { useAuth } from '@/hooks/useAuth'
-import { isFirebaseConfigured } from '@/integrations/firebase/config'
-import { saveJournalEntry } from '@/integrations/firebase/firestore'
-import { uploadUserPhoto, uploadVoiceNote, uploadVideo } from '@/integrations/firebase/storage'
 import { supabase } from '@/integrations/supabase/client'
 import { useToast } from '@/hooks/use-toast'
 
@@ -20,11 +16,32 @@ interface MediaFormProps {
   onSave?: () => void
 }
 
+/**
+ * Upload a file to the `journal-media` Supabase storage bucket and return a public URL.
+ * Path pattern is `${userId}/<folder>/<filename>` — required by the bucket's RLS policies.
+ */
+async function uploadToJournalMedia(
+  userId: string,
+  folder: 'photos' | 'voice' | 'videos',
+  file: File
+): Promise<string | null> {
+  const safeName = file.name.replace(/\s+/g, '_')
+  const path = `${userId}/${folder}/${Date.now()}_${safeName}`
+  const { error } = await supabase.storage.from('journal-media').upload(path, file, {
+    upsert: false,
+    contentType: file.type || undefined,
+  })
+  if (error) {
+    console.error('journal-media upload failed:', error)
+    return null
+  }
+  const { data } = supabase.storage.from('journal-media').getPublicUrl(path)
+  return data.publicUrl
+}
+
 export function MediaForm({ selectedDate, yhwhDate, onClose, onSave }: MediaFormProps) {
-  const { user: firebaseUser } = useFirebaseAuth()
-  const { user: supabaseUser } = useAuth()
+  const { user } = useAuth()
   const { toast } = useToast()
-  const user = firebaseUser || supabaseUser
 
   const [photos, setPhotos] = useState<string[]>([])
   const [photoFiles, setPhotoFiles] = useState<File[]>([])
@@ -48,80 +65,50 @@ export function MediaForm({ selectedDate, yhwhDate, onClose, onSave }: MediaForm
 
   const loadEntry = async () => {
     if (!user) return
-    
-    const yhwhDateStr = `Month${yhwhDate.month}Day${yhwhDate.day}`
-    
-    if (isFirebaseConfigured && firebaseUser) {
-      try {
-        const { getJournalEntry } = await import('@/integrations/firebase/firestore')
-        const result = await getJournalEntry(firebaseUser.uid, yhwhDateStr)
-        if (result.success && result.data) {
-          const entry = result.data
-          setPhotos(entry.photos || [])
-          setVoiceNotes(entry.voiceNotes || [])
-          setVideos(entry.videos || [])
+    try {
+      const { data } = await supabase
+        .from('journal_entries' as any)
+        .select('images, voice_notes, videos')
+        .eq('user_id', user.id)
+        .eq('yhwh_year', yhwhDate.year)
+        .eq('yhwh_month', yhwhDate.month)
+        .eq('yhwh_day', yhwhDate.day)
+        .maybeSingle()
+
+      if (data) {
+        setPhotos(((data as any).images || []) as string[])
+        setVideos(((data as any).videos || []) as string[])
+        if ((data as any).voice_notes) {
+          setVoiceNotes(
+            ((data as any).voice_notes as string[]).map((url: string) => ({ url, transcript: '', duration: 0 }))
+          )
         }
-      } catch (error) {
-        console.error('Error loading entry:', error)
       }
-    }
-    
-    if (supabaseUser) {
-      try {
-        const { data } = await supabase
-          .from('journal_entries' as any)
-          .select('images, voice_notes, videos')
-          .eq('user_id', supabaseUser.id)
-          .eq('yhwh_year', yhwhDate.year)
-          .eq('yhwh_month', yhwhDate.month)
-          .eq('yhwh_day', yhwhDate.day)
-          .maybeSingle()
-        
-        if (data) {
-          setPhotos(((data as any).images || []) as string[])
-          setVideos(((data as any).videos || []) as string[])
-          if ((data as any).voice_notes) {
-            setVoiceNotes(((data as any).voice_notes as string[]).map((url: string) => ({ url, transcript: '', duration: 0 })))
-          }
-        }
-      } catch (error) {
-        // Entry doesn't exist yet
-      }
+    } catch (error) {
+      // Entry doesn't exist yet
     }
   }
 
   const handlePhotoSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files) {
-      setPhotoFiles(Array.from(e.target.files))
-    }
+    if (e.target.files) setPhotoFiles(Array.from(e.target.files))
   }
 
   const uploadPhotos = async () => {
     if (!user || photoFiles.length === 0) return
-    
     setUploadingPhotos(true)
     try {
       const uploadedUrls: string[] = []
       for (const file of photoFiles) {
-        const result = await uploadUserPhoto(user.uid, file)
-        if (result.success) {
-          uploadedUrls.push(result.url)
-        }
+        const url = await uploadToJournalMedia(user.id, 'photos', file)
+        if (url) uploadedUrls.push(url)
       }
       setPhotos([...photos, ...uploadedUrls])
       setPhotoFiles([])
-      toast({
-        title: 'Photos uploaded!',
-        description: `${uploadedUrls.length} photo(s) uploaded successfully`,
-      })
-      await handleSave()
+      toast({ title: 'Photos uploaded!', description: `${uploadedUrls.length} photo(s) uploaded successfully` })
+      await handleSave([...photos, ...uploadedUrls], voiceNotes, videos)
     } catch (error) {
       console.error('Error uploading photos:', error)
-      toast({
-        title: 'Upload failed',
-        description: 'Failed to upload photos',
-        variant: 'destructive',
-      })
+      toast({ title: 'Upload failed', description: 'Failed to upload photos', variant: 'destructive' })
     } finally {
       setUploadingPhotos(false)
     }
@@ -139,18 +126,16 @@ export function MediaForm({ selectedDate, yhwhDate, onClose, onSave }: MediaForm
       }
 
       mediaRecorder.onstop = async () => {
-        const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/wav' })
+        const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' })
         if (user) {
           try {
-            const file = new File([audioBlob], `voice_${Date.now()}.wav`, { type: 'audio/wav' })
-            const result = await uploadVoiceNote(user.uid, file)
-            if (result.success) {
-              setVoiceNotes([...voiceNotes, { url: result.url, transcript: '', duration: recordingTime }])
-              toast({
-                title: 'Voice note recorded!',
-                description: 'Voice note saved successfully',
-              })
-              await handleSave()
+            const file = new File([audioBlob], `voice_${Date.now()}.webm`, { type: 'audio/webm' })
+            const url = await uploadToJournalMedia(user.id, 'voice', file)
+            if (url) {
+              const next = [...voiceNotes, { url, transcript: '', duration: recordingTime }]
+              setVoiceNotes(next)
+              toast({ title: 'Voice note recorded!', description: 'Voice note saved successfully' })
+              await handleSave(photos, next, videos)
             }
           } catch (error) {
             console.error('Error uploading voice note:', error)
@@ -162,7 +147,7 @@ export function MediaForm({ selectedDate, yhwhDate, onClose, onSave }: MediaForm
       mediaRecorder.start()
       setIsRecording(true)
       setRecordingTime(0)
-      
+
       const interval = setInterval(() => {
         setRecordingTime(prev => prev + 1)
       }, 1000)
@@ -172,11 +157,7 @@ export function MediaForm({ selectedDate, yhwhDate, onClose, onSave }: MediaForm
       })
     } catch (error) {
       console.error('Error starting recording:', error)
-      toast({
-        title: 'Recording failed',
-        description: 'Could not access microphone',
-        variant: 'destructive',
-      })
+      toast({ title: 'Recording failed', description: 'Could not access microphone', variant: 'destructive' })
     }
   }
 
@@ -188,130 +169,80 @@ export function MediaForm({ selectedDate, yhwhDate, onClose, onSave }: MediaForm
   }
 
   const handleVideoSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files) {
-      setVideoFiles(Array.from(e.target.files))
-    }
+    if (e.target.files) setVideoFiles(Array.from(e.target.files))
   }
 
   const uploadVideos = async () => {
     if (!user || videoFiles.length === 0) return
-    
     try {
       const uploadedUrls: string[] = []
       for (const file of videoFiles) {
-        const result = await uploadVideo(user.uid, file)
-        if (result.success) {
-          uploadedUrls.push(result.url)
-        }
+        const url = await uploadToJournalMedia(user.id, 'videos', file)
+        if (url) uploadedUrls.push(url)
       }
       setVideos([...videos, ...uploadedUrls])
       setVideoFiles([])
-      toast({
-        title: 'Videos uploaded!',
-        description: `${uploadedUrls.length} video(s) uploaded successfully`,
-      })
-      await handleSave()
+      toast({ title: 'Videos uploaded!', description: `${uploadedUrls.length} video(s) uploaded successfully` })
+      await handleSave(photos, voiceNotes, [...videos, ...uploadedUrls])
     } catch (error) {
       console.error('Error uploading videos:', error)
-      toast({
-        title: 'Upload failed',
-        description: 'Failed to upload videos',
-        variant: 'destructive',
-      })
+      toast({ title: 'Upload failed', description: 'Failed to upload videos', variant: 'destructive' })
     }
   }
 
-  const handleSave = async () => {
+  const handleSave = async (
+    photosArg = photos,
+    voiceArg = voiceNotes,
+    videosArg = videos
+  ) => {
     if (!user) {
-      toast({
-        title: 'Please sign in',
-        description: 'You need to be signed in to save entries',
-      })
+      toast({ title: 'Please sign in', description: 'You need to be signed in to save entries' })
       return
     }
 
     setSaving(true)
-    
-    const yhwhDateStr = `Month${yhwhDate.month}Day${yhwhDate.day}`
     const time = getCreatorTime(selectedDate, 0, 0)
-    
-    const entryData = {
-      yhwhYear: yhwhDate.year,
-      yhwhMonth: yhwhDate.month,
-      yhwhDay: yhwhDate.day,
-      yhwhWeekday: yhwhDate.weekDay,
-      yhwhDayOfYear: yhwhDate.dayOfYear,
-      gregorianDate: selectedDate.toISOString().split('T')[0],
-      photos,
-      voiceNotes,
-      videos,
-      partOfYowm: time.part,
-      watch: Math.floor(time.part / 4.5) + 1,
-      isShabbat: yhwhDate.weekDay === 7,
-      isTequvah: false,
-    }
-    
+    const gregorianDateStr = selectedDate.toISOString().split('T')[0]
+
     try {
-      if (isFirebaseConfigured && firebaseUser) {
-        await saveJournalEntry(firebaseUser.uid, yhwhDateStr, entryData)
+      const { data: existingEntry } = await supabase
+        .from('journal_entries')
+        .select('id')
+        .eq('user_id', user.id)
+        .eq('yhwh_year', yhwhDate.year)
+        .eq('yhwh_month', yhwhDate.month)
+        .eq('yhwh_day', yhwhDate.day)
+        .maybeSingle()
+
+      const entryPayload: any = {
+        user_id: user.id,
+        yhwh_year: yhwhDate.year,
+        yhwh_month: yhwhDate.month,
+        yhwh_day: yhwhDate.day,
+        yhwh_weekday: yhwhDate.weekDay,
+        yhwh_day_of_year: yhwhDate.dayOfYear || 1,
+        gregorian_date: gregorianDateStr,
+        images: photosArg || [],
+        voice_notes: voiceArg.map(v => v.url) || [],
+        videos: videosArg || [],
+        part_of_yowm: time.part || null,
+        watch: Math.floor((time.part || 0) / 4.5) + 1 || null,
+        is_shabbat: yhwhDate.weekDay === 7,
+        is_tequvah: false,
       }
-      
-      if (supabaseUser) {
-        const gregorianDateStr = selectedDate.toISOString().split('T')[0]
-        
-        const { data: existingEntry } = await supabase
-          .from('journal_entries')
-          .select('id')
-          .eq('user_id', supabaseUser.id)
-          .eq('yhwh_year', yhwhDate.year)
-          .eq('yhwh_month', yhwhDate.month)
-          .eq('yhwh_day', yhwhDate.day)
-          .single()
-        
-        const entryPayload = {
-          user_id: supabaseUser.id,
-          yhwh_year: yhwhDate.year,
-          yhwh_month: yhwhDate.month,
-          yhwh_day: yhwhDate.day,
-          yhwh_weekday: yhwhDate.weekDay,
-          yhwh_day_of_year: yhwhDate.dayOfYear || 1,
-          gregorian_date: gregorianDateStr,
-          images: photos || [],
-          voice_notes: voiceNotes.map(v => v.url) || [],
-          videos: videos || [],
-          part_of_yowm: time.part || null,
-          watch: Math.floor((time.part || 0) / 4.5) + 1 || null,
-          is_shabbat: yhwhDate.weekDay === 7,
-          is_tequvah: false,
-        }
-        
-        if (existingEntry) {
-          await supabase
-            .from('journal_entries')
-            .update(entryPayload)
-            .eq('id', existingEntry.id)
-        } else {
-          await supabase
-            .from('journal_entries')
-            .insert(entryPayload)
-        }
-        
-        window.dispatchEvent(new CustomEvent('journalEntriesUpdated'))
+
+      if (existingEntry) {
+        await supabase.from('journal_entries').update(entryPayload).eq('id', existingEntry.id)
+      } else {
+        await supabase.from('journal_entries').insert(entryPayload)
       }
-      
-      toast({
-        title: 'Saved!',
-        description: 'Your media has been saved',
-      })
-      
+
+      window.dispatchEvent(new CustomEvent('journalEntriesUpdated'))
+      toast({ title: 'Saved!', description: 'Your media has been saved' })
       onSave?.()
     } catch (error) {
       console.error('Error saving:', error)
-      toast({
-        title: 'Error',
-        description: 'Failed to save entry',
-        variant: 'destructive',
-      })
+      toast({ title: 'Error', description: 'Failed to save entry', variant: 'destructive' })
     } finally {
       setSaving(false)
     }
@@ -319,14 +250,10 @@ export function MediaForm({ selectedDate, yhwhDate, onClose, onSave }: MediaForm
 
   return (
     <div className="h-full flex flex-col bg-gradient-to-br from-purple-950 via-indigo-900 to-pink-900 text-white overflow-hidden">
-      {/* Header */}
       <div className="flex-shrink-0 p-6 border-b border-white/10">
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-2xl font-bold">Add Media</h2>
-          <button
-            onClick={onClose}
-            className="text-2xl hover:scale-125 transition"
-          >
+          <button onClick={onClose} className="text-2xl hover:scale-125 transition">
             <X className="w-6 h-6" />
           </button>
         </div>
@@ -335,9 +262,7 @@ export function MediaForm({ selectedDate, yhwhDate, onClose, onSave }: MediaForm
         </p>
       </div>
 
-      {/* Scrollable Content */}
       <div className="flex-1 overflow-y-auto p-6 space-y-6">
-        {/* Photos */}
         <div>
           <label className="text-sm font-medium mb-2 block flex items-center gap-2">
             <ImageIcon className="h-4 w-4" />
@@ -362,8 +287,9 @@ export function MediaForm({ selectedDate, yhwhDate, onClose, onSave }: MediaForm
                   <img src={url} alt={`Photo ${idx + 1}`} className="w-full h-32 object-cover rounded" />
                   <button
                     onClick={() => {
-                      setPhotos(photos.filter((_, i) => i !== idx))
-                      handleSave()
+                      const next = photos.filter((_, i) => i !== idx)
+                      setPhotos(next)
+                      handleSave(next, voiceNotes, videos)
                     }}
                     className="absolute top-1 right-1 bg-red-500 rounded-full p-1 opacity-0 group-hover:opacity-100 transition"
                   >
@@ -375,7 +301,6 @@ export function MediaForm({ selectedDate, yhwhDate, onClose, onSave }: MediaForm
           )}
         </div>
 
-        {/* Voice Notes */}
         <div>
           <label className="text-sm font-medium mb-2 block flex items-center gap-2">
             <Mic className="h-4 w-4" />
@@ -406,7 +331,6 @@ export function MediaForm({ selectedDate, yhwhDate, onClose, onSave }: MediaForm
           )}
         </div>
 
-        {/* Videos */}
         <div>
           <label className="text-sm font-medium mb-2 block flex items-center gap-2">
             <Video className="h-4 w-4" />
@@ -435,24 +359,14 @@ export function MediaForm({ selectedDate, yhwhDate, onClose, onSave }: MediaForm
         </div>
       </div>
 
-      {/* Footer Actions */}
       <div className="flex-shrink-0 p-6 border-t border-white/10 flex gap-3">
-        <Button
-          onClick={handleSave}
-          disabled={saving}
-          className="flex-1 bg-purple-600 hover:bg-purple-500"
-        >
+        <Button onClick={() => handleSave()} disabled={saving} className="flex-1 bg-purple-600 hover:bg-purple-500">
           {saving ? 'Saving...' : 'Save Media'}
         </Button>
-        <Button
-          onClick={onClose}
-          variant="outline"
-          className="bg-white/10 border-white/20 text-white hover:bg-white/20"
-        >
+        <Button onClick={onClose} variant="outline" className="bg-white/10 border-white/20 text-white hover:bg-white/20">
           Close
         </Button>
       </div>
     </div>
   )
 }
-

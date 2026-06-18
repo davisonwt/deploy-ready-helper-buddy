@@ -4,10 +4,7 @@ import { Button } from '../../ui/button'
 import { Textarea } from '../../ui/textarea'
 import { calculateCreatorDate } from '@/utils/dashboardCalendar'
 import { getCreatorTime } from '@/utils/customTime'
-import { useFirebaseAuth } from '@/hooks/useFirebaseAuth'
 import { useAuth } from '@/hooks/useAuth'
-import { isFirebaseConfigured } from '@/integrations/firebase/config'
-import { saveJournalEntry } from '@/integrations/firebase/firestore'
 import { supabase } from '@/integrations/supabase/client'
 import { useToast } from '@/hooks/use-toast'
 
@@ -19,10 +16,8 @@ interface SpiritualFormProps {
 }
 
 export function SpiritualForm({ selectedDate, yhwhDate, onClose, onSave }: SpiritualFormProps) {
-  const { user: firebaseUser } = useFirebaseAuth()
-  const { user: supabaseUser } = useAuth()
+  const { user } = useAuth()
   const { toast } = useToast()
-  const user = firebaseUser || supabaseUser
 
   const [propheticWords, setPropheticWords] = useState<string[]>([])
   const [newPropheticWord, setNewPropheticWord] = useState('')
@@ -37,21 +32,21 @@ export function SpiritualForm({ selectedDate, yhwhDate, onClose, onSave }: Spiri
 
   const loadEntry = async () => {
     if (!user) return
-    
-    const yhwhDateStr = `Month${yhwhDate.month}Day${yhwhDate.day}`
-    
-    if (isFirebaseConfigured && firebaseUser) {
-      try {
-        const { getJournalEntry } = await import('@/integrations/firebase/firestore')
-        const result = await getJournalEntry(firebaseUser.uid, yhwhDateStr)
-        if (result.success && result.data) {
-          const entry = result.data
-          setPropheticWords(entry.propheticWords || [])
-          setAiPrompt(entry.aiPrompt || '')
-        }
-      } catch (error) {
-        console.error('Error loading entry:', error)
+    try {
+      const { data } = await supabase
+        .from('journal_entries' as any)
+        .select('prophetic_words, ai_prompt')
+        .eq('user_id', user.id)
+        .eq('yhwh_year', yhwhDate.year)
+        .eq('yhwh_month', yhwhDate.month)
+        .eq('yhwh_day', yhwhDate.day)
+        .maybeSingle()
+      if (data) {
+        setPropheticWords(((data as any).prophetic_words || []) as string[])
+        setAiPrompt(((data as any).ai_prompt || '') as string)
       }
+    } catch (error) {
+      // Entry doesn't exist yet
     }
   }
 
@@ -66,7 +61,6 @@ export function SpiritualForm({ selectedDate, yhwhDate, onClose, onSave }: Spiri
   const generateAIPrompt = async () => {
     setLoadingAI(true)
     try {
-      // Simple AI prompt generation (can be enhanced with actual AI API)
       const prompts = [
         "What is YHVH speaking to you today?",
         "How is the Creator moving in your life?",
@@ -85,51 +79,55 @@ export function SpiritualForm({ selectedDate, yhwhDate, onClose, onSave }: Spiri
 
   const handleSave = async () => {
     if (!user) {
-      toast({
-        title: 'Please sign in',
-        description: 'You need to be signed in to save entries',
-      })
+      toast({ title: 'Please sign in', description: 'You need to be signed in to save entries' })
       return
     }
 
     setSaving(true)
-    
-    const yhwhDateStr = `Month${yhwhDate.month}Day${yhwhDate.day}`
     const time = getCreatorTime(selectedDate, 0, 0)
-    
-    const entryData = {
-      yhwhYear: yhwhDate.year,
-      yhwhMonth: yhwhDate.month,
-      yhwhDay: yhwhDate.day,
-      yhwhWeekday: yhwhDate.weekDay,
-      yhwhDayOfYear: yhwhDate.dayOfYear,
-      gregorianDate: selectedDate.toISOString().split('T')[0],
-      propheticWords,
-      aiPrompt,
-      partOfYowm: time.part,
-      watch: Math.floor(time.part / 4.5) + 1,
-      isShabbat: yhwhDate.weekDay === 7,
-      isTequvah: false,
-    }
-    
+    const gregorianDateStr = selectedDate.toISOString().split('T')[0]
+
     try {
-      if (isFirebaseConfigured && firebaseUser) {
-        await saveJournalEntry(firebaseUser.uid, yhwhDateStr, entryData)
+      const { data: existingEntry } = await supabase
+        .from('journal_entries' as any)
+        .select('id')
+        .eq('user_id', user.id)
+        .eq('yhwh_year', yhwhDate.year)
+        .eq('yhwh_month', yhwhDate.month)
+        .eq('yhwh_day', yhwhDate.day)
+        .maybeSingle()
+
+      const entryPayload: any = {
+        user_id: user.id,
+        yhwh_year: yhwhDate.year,
+        yhwh_month: yhwhDate.month,
+        yhwh_day: yhwhDate.day,
+        yhwh_weekday: yhwhDate.weekDay,
+        yhwh_day_of_year: yhwhDate.dayOfYear || 1,
+        gregorian_date: gregorianDateStr,
+        prophetic_words: propheticWords || [],
+        ai_prompt: aiPrompt || null,
+        part_of_yowm: time.part || null,
+        watch: Math.floor((time.part || 0) / 4.5) + 1 || null,
+        is_shabbat: yhwhDate.weekDay === 7,
+        is_tequvah: false,
       }
-      
-      toast({
-        title: 'Saved!',
-        description: 'Your spiritual entry has been saved',
-      })
-      
+
+      if (existingEntry) {
+        await supabase
+          .from('journal_entries' as any)
+          .update(entryPayload)
+          .eq('id', (existingEntry as any).id)
+      } else {
+        await supabase.from('journal_entries' as any).insert(entryPayload)
+      }
+
+      window.dispatchEvent(new CustomEvent('journalEntriesUpdated'))
+      toast({ title: 'Saved!', description: 'Your spiritual entry has been saved' })
       onSave?.()
     } catch (error) {
       console.error('Error saving:', error)
-      toast({
-        title: 'Error',
-        description: 'Failed to save entry',
-        variant: 'destructive',
-      })
+      toast({ title: 'Error', description: 'Failed to save entry', variant: 'destructive' })
     } finally {
       setSaving(false)
     }
@@ -153,7 +151,6 @@ export function SpiritualForm({ selectedDate, yhwhDate, onClose, onSave }: Spiri
       </div>
 
       <div className="flex-1 overflow-y-auto p-6 space-y-6">
-        {/* Prophetic Words / Rhema */}
         <div className="bg-gradient-to-r from-yellow-900/50 to-orange-900/50 p-4 rounded-lg border-2 border-yellow-500">
           <label className="text-sm font-medium mb-2 block flex items-center gap-2">
             <Sparkles className="h-4 w-4 text-yellow-400" />
@@ -180,14 +177,9 @@ export function SpiritualForm({ selectedDate, yhwhDate, onClose, onSave }: Spiri
           )}
         </div>
 
-        {/* AI Daily Prompt */}
         <div className="bg-white/10 p-4 rounded-lg">
           <label className="text-sm font-medium mb-2 block">AI Daily Prompt</label>
-          <Button
-            onClick={generateAIPrompt}
-            disabled={loadingAI}
-            className="mb-2"
-          >
+          <Button onClick={generateAIPrompt} disabled={loadingAI} className="mb-2">
             {loadingAI ? 'Generating...' : 'Inspire Me'}
           </Button>
           {aiPrompt && (
@@ -199,18 +191,10 @@ export function SpiritualForm({ selectedDate, yhwhDate, onClose, onSave }: Spiri
       </div>
 
       <div className="flex-shrink-0 p-6 border-t border-white/10 flex gap-3">
-        <Button
-          onClick={handleSave}
-          disabled={saving}
-          className="flex-1 bg-yellow-600 hover:bg-yellow-500"
-        >
+        <Button onClick={handleSave} disabled={saving} className="flex-1 bg-yellow-600 hover:bg-yellow-500">
           {saving ? 'Saving...' : 'Save Spiritual Entry'}
         </Button>
-        <Button
-          onClick={onClose}
-          variant="outline"
-          className="bg-white/10 border-white/20 text-white hover:bg-white/20"
-        >
+        <Button onClick={onClose} variant="outline" className="bg-white/10 border-white/20 text-white hover:bg-white/20">
           Close
         </Button>
       </div>

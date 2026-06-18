@@ -4,7 +4,7 @@
  */
 
 import { useState, useEffect, useRef } from 'react'
-import { X, Camera, Mic, Video, Heart, BookOpen, Moon, Droplet, Gift, Users, Smile, Sparkles, FileText, Share2, Download, Image as ImageIcon, Trash2, Play, Pause, Volume2, MessageSquare } from 'lucide-react'
+import { X, Mic, Video, Moon, Droplet, Sparkles, FileText, Download, Image as ImageIcon, Trash2, Pause } from 'lucide-react'
 import { Button } from '../ui/button'
 import { Textarea } from '../ui/textarea'
 import { Input } from '../ui/input'
@@ -12,15 +12,32 @@ import { Badge } from '../ui/badge'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../ui/tabs'
 import { calculateCreatorDate } from '@/utils/dashboardCalendar'
 import { getCreatorTime } from '@/utils/customTime'
-import { useFirebaseAuth } from '@/hooks/useFirebaseAuth'
 import { useAuth } from '@/hooks/useAuth'
-import { isFirebaseConfigured } from '@/integrations/firebase/config'
-import { db } from '@/integrations/firebase/config'
-import { collection, addDoc, serverTimestamp } from 'firebase/firestore'
-import { saveJournalEntry, getJournalEntry, postToRemnantWall } from '@/integrations/firebase/firestore'
-import { uploadUserPhoto, uploadVoiceNote, uploadVideo } from '@/integrations/firebase/storage'
 import { supabase } from '@/integrations/supabase/client'
 import { useToast } from '@/hooks/use-toast'
+
+/**
+ * Upload a file to the `journal-media` Supabase storage bucket and return a public URL.
+ * Path pattern is `${userId}/<folder>/<filename>` — required by the bucket's RLS policies.
+ */
+async function uploadToJournalMedia(
+  userId: string,
+  folder: 'photos' | 'voice' | 'videos',
+  file: File
+): Promise<string | null> {
+  const safeName = file.name.replace(/\s+/g, '_')
+  const path = `${userId}/${folder}/${Date.now()}_${safeName}`
+  const { error } = await supabase.storage.from('journal-media').upload(path, file, {
+    upsert: false,
+    contentType: file.type || undefined,
+  })
+  if (error) {
+    console.error('journal-media upload failed:', error)
+    return null
+  }
+  const { data } = supabase.storage.from('journal-media').getPublicUrl(path)
+  return data.publicUrl
+}
 
 interface DayEntryPanelProps {
   isOpen: boolean
@@ -31,10 +48,8 @@ interface DayEntryPanelProps {
 }
 
 export function DayEntryPanel({ isOpen, onClose, selectedDate, yhwhDate, initialTab = 'notes' }: DayEntryPanelProps) {
-  const { user: firebaseUser, isAuthenticated } = useFirebaseAuth()
-  const { user: supabaseUser } = useAuth()
+  const { user } = useAuth()
   const { toast } = useToast()
-  const user = firebaseUser || supabaseUser
   
   // Rich Text Notes
   const [richText, setRichText] = useState('')
@@ -169,137 +184,107 @@ export function DayEntryPanel({ isOpen, onClose, selectedDate, yhwhDate, initial
     }
   }, [isOpen, selectedDate])
 
-  // Load existing entry for this day
+  // Load existing entry for this day from Supabase
   const loadDayEntry = async () => {
-    if (!isFirebaseConfigured || !user) return
-    
-    const yhwhDateStr = `Month${yhwhDate.month}Day${yhwhDate.day}`
-    const result = await getJournalEntry(user.uid, yhwhDateStr)
-    
-    if (result.success && result.data) {
-      const entry = result.data
-      setRichText(entry.richText || '')
-      setPhotos(entry.photos || [])
-      setVoiceNotes(entry.voiceNotes || [])
-      setVideos(entry.videos || [])
-      setIsSpecialDay(entry.isSpecialDay || false)
-      setSpecialDayType(entry.specialDayType || null)
-      setSpecialDayPerson(entry.specialDayPerson || '')
-      setPrayerRequests(entry.prayerRequests || [])
-      setAnsweredPrayers(entry.answeredPrayers || [])
-      setDreamEntry(entry.dreamEntry || '')
-      setFastingType(entry.fastingType || 'none')
-      setWaterIntake(entry.waterIntake || 0)
-      setTithesOfferings(entry.tithesOfferings || [])
-      setFamilyTags(entry.familyTags || [])
-      setMood(entry.mood || null)
-      setGratitude(entry.gratitude || '')
-      setPropheticWords(entry.propheticWords || [])
-      setAiPrompt(entry.aiPrompt || '')
+    if (!user) return
+    try {
+      const { data } = await supabase
+        .from('journal_entries' as any)
+        .select('*')
+        .eq('user_id', user.id)
+        .eq('yhwh_year', yhwhDate.year)
+        .eq('yhwh_month', yhwhDate.month)
+        .eq('yhwh_day', yhwhDate.day)
+        .maybeSingle()
+
+      if (data) {
+        const d = data as any
+        setRichText(d.content || '')
+        setPhotos(d.images || [])
+        setVoiceNotes(((d.voice_notes || []) as string[]).map((url: string) => ({ url, transcript: '', duration: 0 })))
+        setVideos(d.videos || [])
+        setIsSpecialDay(!!d.is_special_day)
+        setSpecialDayType((d.special_day_type || null) as any)
+        setSpecialDayPerson(d.special_day_person || '')
+        setPrayerRequests(Array.isArray(d.prayer_requests) ? d.prayer_requests : [])
+        setAnsweredPrayers(Array.isArray(d.answered_prayers) ? d.answered_prayers : [])
+        setDreamEntry(d.dream_entry || '')
+        setFastingType((d.fasting_type || 'none') as any)
+        setWaterIntake(Number(d.water_intake) || 0)
+        setTithesOfferings(Array.isArray(d.tithes_offerings) ? d.tithes_offerings : [])
+        setFamilyTags(d.tags || [])
+        setMood((d.mood || null) as any)
+        setGratitude(d.gratitude || '')
+        setPropheticWords(d.prophetic_words || [])
+        setAiPrompt(d.ai_prompt || '')
+      }
+    } catch (error) {
+      // Entry doesn't exist yet
     }
   }
 
-  // Auto-save function
+  // Auto-save function (Supabase only)
   const autoSave = async () => {
     if (!user) return
-    
-    const yhwhDateStr = `Month${yhwhDate.month}Day${yhwhDate.day}`
-    // Use default location (can be enhanced later)
+
     const time = getCreatorTime(selectedDate, 0, 0)
-    
-    const entryData = {
-      yhwhYear: yhwhDate.year,
-      yhwhMonth: yhwhDate.month,
-      yhwhDay: yhwhDate.day,
-      yhwhWeekday: yhwhDate.weekDay,
-      yhwhDayOfYear: yhwhDate.dayOfYear,
-      gregorianDate: selectedDate.toISOString().split('T')[0],
-      richText,
-      photos,
-      voiceNotes,
-      videos,
-      isSpecialDay,
-      specialDayType,
-      specialDayPerson,
-      prayerRequests,
-      answeredPrayers,
-      dreamEntry,
-      fastingType,
-      waterIntake,
-      tithesOfferings,
-      familyTags,
-      mood,
-      gratitude,
-      propheticWords,
-      aiPrompt,
-      partOfYowm: time.part,
-      watch: Math.floor(time.part / 4.5) + 1,
-      isShabbat: yhwhDate.weekDay === 7,
-      isTequvah: false,
-    }
-    
-    // Save to Firebase (if configured)
-    if (isFirebaseConfigured && firebaseUser) {
-      await saveJournalEntry(firebaseUser.uid, yhwhDateStr, entryData)
-    }
-    
-    // Save to Supabase journal_entries (for Journal component sync)
-    if (supabaseUser) {
-      try {
-        const gregorianDateStr = selectedDate.toISOString().split('T')[0]
-        
-        // Check if entry already exists
-        const { data: existingEntry } = await supabase
-          .from('journal_entries' as any)
-          .select('id')
-          .eq('user_id', supabaseUser.id)
-          .eq('yhwh_year', yhwhDate.year)
-          .eq('yhwh_month', yhwhDate.month)
-          .eq('yhwh_day', yhwhDate.day)
-          .maybeSingle()
-        
-        const entryPayload = {
-          user_id: supabaseUser.id,
-          yhwh_year: yhwhDate.year,
-          yhwh_month: yhwhDate.month,
-          yhwh_day: yhwhDate.day,
-          yhwh_weekday: yhwhDate.weekDay,
-          yhwh_day_of_year: yhwhDate.dayOfYear || 1,
-          gregorian_date: gregorianDateStr,
-          content: richText || '',
-          mood: mood || null,
-          tags: familyTags || [],
-          images: photos || [],
-          voice_notes: voiceNotes.map(v => v.url) || [],
-          videos: videos || [],
-          prayer_requests: prayerRequests || [],
-          answered_prayers: answeredPrayers || [],
-          gratitude: gratitude || null,
-          part_of_yowm: time.part || null,
-          watch: Math.floor((time.part || 0) / 4.5) + 1 || null,
-          is_shabbat: yhwhDate.weekDay === 7,
-          is_tequvah: false,
-          feast: null,
-        }
-        
-        if (existingEntry) {
-          // Update existing entry
-          await supabase
-            .from('journal_entries' as any)
-            .update(entryPayload)
-            .eq('id', (existingEntry as any).id)
-        } else {
-          // Insert new entry
-          await supabase
-            .from('journal_entries' as any)
-            .insert(entryPayload)
-        }
-        
-        // Emit event to refresh journal
-        window.dispatchEvent(new CustomEvent('journalEntriesUpdated'))
-      } catch (error) {
-        console.error('Error saving to Supabase:', error)
+    const gregorianDateStr = selectedDate.toISOString().split('T')[0]
+
+    try {
+      const { data: existingEntry } = await supabase
+        .from('journal_entries' as any)
+        .select('id')
+        .eq('user_id', user.id)
+        .eq('yhwh_year', yhwhDate.year)
+        .eq('yhwh_month', yhwhDate.month)
+        .eq('yhwh_day', yhwhDate.day)
+        .maybeSingle()
+
+      const entryPayload: any = {
+        user_id: user.id,
+        yhwh_year: yhwhDate.year,
+        yhwh_month: yhwhDate.month,
+        yhwh_day: yhwhDate.day,
+        yhwh_weekday: yhwhDate.weekDay,
+        yhwh_day_of_year: yhwhDate.dayOfYear || 1,
+        gregorian_date: gregorianDateStr,
+        content: richText || '',
+        mood: mood || null,
+        tags: familyTags || [],
+        images: photos || [],
+        voice_notes: voiceNotes.map(v => v.url) || [],
+        videos: videos || [],
+        prayer_requests: prayerRequests || [],
+        answered_prayers: answeredPrayers || [],
+        gratitude: gratitude || null,
+        dream_entry: dreamEntry || null,
+        prophetic_words: propheticWords || [],
+        ai_prompt: aiPrompt || null,
+        is_special_day: isSpecialDay,
+        special_day_type: specialDayType || null,
+        special_day_person: specialDayPerson || null,
+        fasting_type: fastingType,
+        water_intake: waterIntake || 0,
+        tithes_offerings: tithesOfferings || [],
+        part_of_yowm: time.part || null,
+        watch: Math.floor((time.part || 0) / 4.5) + 1 || null,
+        is_shabbat: yhwhDate.weekDay === 7,
+        is_tequvah: false,
+        feast: null,
       }
+
+      if (existingEntry) {
+        await supabase
+          .from('journal_entries' as any)
+          .update(entryPayload)
+          .eq('id', (existingEntry as any).id)
+      } else {
+        await supabase.from('journal_entries' as any).insert(entryPayload)
+      }
+
+      window.dispatchEvent(new CustomEvent('journalEntriesUpdated'))
+    } catch (error) {
+      console.error('Error saving to Supabase:', error)
     }
   }
 
@@ -318,18 +303,16 @@ export function DayEntryPanel({ isOpen, onClose, selectedDate, yhwhDate, initial
   }
 
   const uploadPhotos = async () => {
-    if (!isFirebaseConfigured || !user || photoFiles.length === 0) return
-    
+    if (!user || photoFiles.length === 0) return
+
     setUploadingPhotos(true)
     const uploadedUrls: string[] = []
-    
+
     for (const file of photoFiles) {
-      const result = await uploadUserPhoto(user.uid, file)
-      if (result.success) {
-        uploadedUrls.push(result.url)
-      }
+      const url = await uploadToJournalMedia(user.id, 'photos', file)
+      if (url) uploadedUrls.push(url)
     }
-    
+
     setPhotos([...photos, ...uploadedUrls])
     setPhotoFiles([])
     setUploadingPhotos(false)
@@ -349,27 +332,22 @@ export function DayEntryPanel({ isOpen, onClose, selectedDate, yhwhDate, initial
       }
       
       mediaRecorder.onstop = async () => {
-        const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/wav' })
-        const audioUrl = URL.createObjectURL(audioBlob)
-        
-        // Upload to Firebase Storage
-        if (isFirebaseConfigured && user) {
-          const file = new File([audioBlob], `voice_${Date.now()}.wav`, { type: 'audio/wav' })
-          const result = await uploadVoiceNote(user.uid, file)
-          
-          if (result.success) {
-            // Transcribe using Web Speech API
+        const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' })
+
+        if (user) {
+          const file = new File([audioBlob], `voice_${Date.now()}.webm`, { type: 'audio/webm' })
+          const url = await uploadToJournalMedia(user.id, 'voice', file)
+          if (url) {
             const transcript = await transcribeAudio(audioBlob)
-            
             setVoiceNotes(prev => [...prev, {
-              url: result.url,
+              url,
               transcript,
               duration: recordingTime
             }])
             await autoSave()
           }
         }
-        
+
         stream.getTracks().forEach(track => track.stop())
       }
       
@@ -457,17 +435,15 @@ export function DayEntryPanel({ isOpen, onClose, selectedDate, yhwhDate, initial
   }
 
   const uploadVideos = async () => {
-    if (!isFirebaseConfigured || !user || videoFiles.length === 0) return
-    
+    if (!user || videoFiles.length === 0) return
+
     const uploadedUrls: string[] = []
-    
+
     for (const file of videoFiles) {
-      const result = await uploadVideo(user.uid, file)
-      if (result.success) {
-        uploadedUrls.push(result.url)
-      }
+      const url = await uploadToJournalMedia(user.id, 'videos', file)
+      if (url) uploadedUrls.push(url)
     }
-    
+
     setVideos([...videos, ...uploadedUrls])
     setVideoFiles([])
     await autoSave()
@@ -541,86 +517,12 @@ Meditate on the significance of this day in the Creator's calendar. What does th
 
   // Export as PDF
   const exportToPDF = () => {
-    // This would use a PDF library like jsPDF
     toast({
       title: 'Exporting',
       description: 'PDF export feature coming soon'
     })
   }
 
-  // Share to Remnant Wall
-  const shareToRemnantWall = async () => {
-    if (!isFirebaseConfigured || !user) {
-      toast({
-        title: 'Sign In Required',
-        description: 'Please sign in to share',
-        variant: 'destructive'
-      })
-      return
-    }
-
-    const yhwhDateStr = `Month ${yhwhDate.month} Day ${yhwhDate.day}`
-    const result = await postToRemnantWall({
-      yhwhDate: yhwhDateStr,
-      type: 'journal',
-      text: richText || 'Shared a day entry',
-      photoURLs: photos,
-      voiceNoteURL: voiceNotes[0]?.url || null,
-      videoURL: videos[0] || null,
-      authorUID: firebaseUser.uid,
-      authorDisplayName: firebaseUser.displayName || 'Anonymous',
-      anonymityLevel: 1,
-    })
-
-    if (result.success) {
-      toast({
-        title: 'Shared',
-        description: 'Day entry shared to Remnant Wall'
-      })
-    }
-  }
-
-  // Share to S2G Chatapp All
-  const shareToS2GChat = async () => {
-    if (!isFirebaseConfigured || !db || !firebaseUser) {
-      toast({
-        title: 'Sign In Required',
-        description: 'Please sign in with Firebase to share to S2G Chatapp',
-        variant: 'destructive'
-      })
-      return
-    }
-
-    try {
-      const yhwhDateStr = `Month ${yhwhDate.month}, Day ${yhwhDate.day}`
-      const shareText = richText 
-        ? `${yhwhDateStr}: ${richText.substring(0, 500)}${richText.length > 500 ? '...' : ''}`
-        : `Sharing my day entry for ${yhwhDateStr}`
-
-      await addDoc(collection(db, 'community_chat'), {
-        text: shareText,
-        authorUID: firebaseUser.uid,
-        authorDisplayName: firebaseUser.displayName || firebaseUser.email || 'Anonymous',
-        createdAt: serverTimestamp(),
-        warningCount: 0,
-        isDeleted: false,
-        sharedFrom: 'calendar',
-        yhwhDate: yhwhDateStr,
-      })
-
-      toast({
-        title: 'Shared to S2G Chatapp',
-        description: 'Your day entry has been shared to the community chat'
-      })
-    } catch (error: any) {
-      console.error('Error sharing to S2G Chatapp:', error)
-      toast({
-        title: 'Error',
-        description: 'Failed to share to S2G Chatapp: ' + (error.message || 'Unknown error'),
-        variant: 'destructive'
-      })
-    }
-  }
 
   if (!isOpen) {
     return null
@@ -716,14 +618,6 @@ Meditate on the significance of this day in the Creator's calendar. What does th
               <Button onClick={exportToPDF} variant="outline" size="sm">
                 <Download className="h-4 w-4 mr-2" />
                 Export PDF
-              </Button>
-              <Button onClick={shareToRemnantWall} variant="outline" size="sm">
-                <Share2 className="h-4 w-4 mr-2" />
-                Share to Wall
-              </Button>
-              <Button onClick={shareToS2GChat} variant="outline" size="sm">
-                <MessageSquare className="h-4 w-4 mr-2" />
-                Share to S2G Chatapp
               </Button>
             </div>
 
