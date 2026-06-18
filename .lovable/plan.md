@@ -1,75 +1,89 @@
-# Private Onboarding & Security-Questions Gate
 
-Replace email/phone verification with a mandatory in-app security-questions setup. Until completed, the user can only access the 1-on-1 ChatApp.
+# Security Re-scan + `premium-room` Investigation
 
-## 1. Database (Supabase migration)
+## 1. Re-scan results — all prior CRITICAL/HIGH still resolved
 
-- Add `profiles.security_setup_complete boolean not null default false`.
-- Add `profiles.failed_recovery_attempts int not null default 0` and `recovery_locked_until timestamptz`.
-- Reuse existing `user_security_questions` table (already present, 10 cols, 3 policies). Verify columns; if missing, add: `user_id uuid`, `question_key text`, `answer_hash text`, `created_at`. Hash answers with `crypt()` (pgcrypto) — never store plaintext.
-- RPC `public.set_security_questions(questions jsonb)` — security definer, hashes each answer with `crypt(answer, gen_salt('bf'))`, inserts 3+ rows for `auth.uid()`, sets `security_setup_complete = true`. Requires `>= 3` entries.
-- RPC `public.verify_security_answers(p_email text, p_answers jsonb)` — checks hashes for the user matching `p_email`, increments `failed_recovery_attempts`, locks for 30 min after 3 fails. Returns a short-lived recovery token (stored in `password_reset_requests`).
+Just ran both `security--run_security_scan` (204 findings) and `supabase--linter` (199 issues). **Every finding is level=warn — zero errors, zero criticals.** No regressions.
 
-## 2. Registration changes
+| Item | Status |
+|---|---|
+| C1 `wallet_balances` — owner write policies removed | ✅ in place |
+| C2 `sower_balances` / `sower_payouts` — user UPDATE revoked | ✅ |
+| C3 `product_bestowals` — tightened policies | ✅ |
+| C4 `create-binance-pay-order` — server-side `pocket_price × pocketsCount ±0.01` validation | ✅ live in `supabase/functions/create-binance-pay-order/index.ts` |
+| H1 `bestowals` policies | ✅ |
+| H2 `usdc_transactions` | ✅ |
+| H3 `organization_wallets` | ✅ |
+| H4 `profiles` | ✅ |
+| M1 `study-uploads` bucket private | ✅ confirmed `storage.buckets.public = false` |
+| M3 `tribal_hearts_profiles` browse via `get_hearts_browse` RPC | ✅ |
+| M4 `user_wallets` policy consolidation | ✅ |
+| M5 `seller_credentials` self-verify guard | ✅ |
+| L3 CORS Lovable-preview regex | ✅ |
 
-- `QuickRegistration.jsx` and `RegisterPage.jsx`: remove any email-verification messaging; immediately sign user in (already does). Do NOT call `send-welcome-email`. Remove any phone-number fields if present.
-- After signup success, navigate to `/onboarding/security` instead of `/`.
+### New issues vs the original audit
 
-## 3. Route gate
+- **NEW — paywall bypass risk on `premium-room` bucket** (see §2 below). Only material new finding.
+- All other warns are the previously-acknowledged `SECURITY DEFINER`-callable-by-anon/authenticated noise (~200 entries) — intentional RPCs (`has_role`, `get_hearts_browse`, `update_wallet_balance_secure`, password-reset helpers, audit helpers). No change recommended.
+- **L1 leaked-password protection** still requires a manual toggle in Supabase Auth dashboard (unchanged).
 
-New component `src/components/auth/RequireSecuritySetup.tsx`:
-- If `loading` → spinner.
-- If not authenticated → render children (ProtectedRoute handles redirect).
-- Fetch `profiles.security_setup_complete` for `auth.uid()`.
-- If `false` and current path is not `/onboarding/security` or `/chatapp` (1-on-1 only) → `<Navigate to="/onboarding/security" replace />`.
-- If `true` → render children.
+---
 
-Wrap every protected route in `src/App.tsx` with `RequireSecuritySetup` (compose inside `ProtectedRoute` for simplicity — add an `enforceSecuritySetup` default-true prop).
+## 2. `premium-room` bucket investigation
 
-## 4. Onboarding screen
+### What's in it
 
-`src/pages/OnboardingSecurityPage.tsx`:
-- Fullscreen, non-dismissable.
-- Explanatory copy about in-house comms / no phone/email sharing.
-- List of 7 canonical questions (keys + labels). User picks 3 distinct, answers each (min 2 chars, trimmed, lowercased before hashing client-side? No — send plaintext over HTTPS to RPC, hash server-side with bcrypt).
-- Submit → call `set_security_questions` RPC → on success invalidate profile cache → redirect `/dashboard`.
+`storage.buckets`: `id=premium-room`, **`public=true`**.
 
-## 5. ChatApp onboarding banner
+Sampled `storage.objects` rows (multiple users, Nov 2025 → Mar 2026):
 
-In the 1-on-1 ChatApp page, if `security_setup_complete = false`, show a top banner linking to `/onboarding/security`. User can chat but nothing else.
+```text
+covers/<user_uuid>/<unix-ms>.jpg|.png        ← cover images
+products/<user_uuid>/<unix-ms>.MOV|.mp3      ← product media (video / audio)
+```
 
-## 6. Password recovery
+Folder layout (`covers/` + `products/` per user) and content types (sellable MOV/MP3) match the **premium content sale flow** (tables `premium_rooms`, `premium_item_purchases`, `premium_room_access`).
 
-`src/pages/ForgotPasswordPage.tsx` (replace or add):
-- Step 1: enter email.
-- Step 2: fetch chosen question keys (RPC `get_security_questions_for_email`), prompt answers.
-- Step 3: on success use returned recovery token + new password → RPC `complete_password_reset(token, new_password)` which calls `auth.admin.update_user_by_id` from an edge function `reset-password-via-questions` (service role).
-- After 3 fails → show "Account locked. Contact support via in-app ChatApp."
+### Who writes / reads it
 
-Edge function `reset-password-via-questions` (verify_jwt = false): validates token from `password_reset_requests`, updates password using service role.
+- **Zero references** to the literal string `premium-room` anywhere in `src/` or `supabase/functions/`. So uploads aren't happening through the current repo — likely an older path, Supabase Studio, or external uploader. Worth confirming with you which UI is producing these uploads.
+- Storage RLS policies on `storage.objects` for this bucket:
 
-## 7. Disable welcome email
+```text
+"Allow authenticated access to premium-room"   cmd=ALL    USING bucket_id='premium-room'   ← NO owner / payment check
+"Authenticated upload premium-room"            INSERT     WITH CHECK owner-folder match
+"Authenticated update premium-room"            UPDATE     USING owner-folder match
+"Authenticated delete premium-room"            DELETE     USING owner-folder match
+```
 
-- Remove invocation of `send-welcome-email` from signup paths (search & strip).
-- Leave the function file in place (no-op) to avoid breaking other callers.
+INSERT/UPDATE/DELETE are correctly scoped to the uploader's own folder. **SELECT is wide-open to any authenticated user.** And because `public=true`, **anyone — no auth at all — can fetch any file directly** via:
 
-## 8. Files touched
+```text
+https://zuwkgasbkpjlxzsjzumu.supabase.co/storage/v1/object/public/premium-room/products/<uid>/<filename>
+```
 
-- new: `supabase/migrations/<ts>_security_setup.sql`
-- new: `supabase/functions/reset-password-via-questions/index.ts`
-- new: `src/pages/OnboardingSecurityPage.tsx`
-- new: `src/pages/ForgotPasswordPage.tsx` (or update existing)
-- new: `src/components/auth/RequireSecuritySetup.tsx`
-- new: `src/lib/securityQuestions.ts` (canonical question list)
-- edit: `src/App.tsx` (routes + gate wrapping)
-- edit: `src/components/ProtectedRoute.jsx` (compose security gate)
-- edit: `src/components/auth/QuickRegistration.jsx` (redirect to onboarding, drop welcome email + any phone field)
-- edit: `src/pages/RegisterPage.jsx` (same)
-- edit: ChatApp page (banner when not complete)
+### Finding — Paywall bypass (HIGH)
 
-## 9. Out of scope (will not touch)
+If any `products/*.MOV` / `*.mp3` files are sold as premium content, **a non-paying user who obtains or guesses a URL can download the full file without ever triggering the purchase/access check**. Filenames are predictable Unix-ms timestamps (e.g. `1764356355631.MOV`), making URL guessing more feasible than random UUIDs. Nothing on the Supabase side links storage reads to `premium_item_purchases` / `premium_room_access`.
 
-- Existing `is_chatapp_verified` flow stays as-is unless it conflicts; we gate on the new `security_setup_complete` field instead. `RequireVerification` left in place but bypassed by feature flag if already disabled.
-- No phone number field is added; if any exists I will only remove from registration UI, not drop DB columns.
+Whether this is a real-money exposure depends on whether `products/` are the same assets gated by `premium_rooms` / `premium_item_purchases`. The bucket name and content strongly suggest yes.
 
-Confirm and I'll implement in this order: migration → gate component → onboarding page → register redirects → password recovery → app route wiring.
+### Proposed fix (NOT applied — awaiting your go-ahead)
+
+1. **Confirm** with you that `premium-room/products/*` is paid/gated content.
+2. Flip bucket to private: `UPDATE storage.buckets SET public=false WHERE id='premium-room'`.
+3. Drop `"Allow authenticated access to premium-room"`. Replace SELECT with a policy that allows reads only when:
+   - `auth.uid()::text = (storage.foldername(name))[1]` (owner), OR
+   - caller has a matching row in `premium_item_purchases` / `premium_room_access` for that asset, OR
+   - caller has `admin` role.
+4. Frontend fetches via **signed URLs** (`createSignedUrl`, short TTL ~5–15 min) issued by an edge function that first verifies payment/access.
+5. Optional hardening: future uploads use random UUIDs instead of timestamps so legacy URLs aren't guessable during transition.
+6. Audit the uploader path (not in repo) so flipping private doesn't break a live seller flow.
+
+### Questions before I implement
+
+- (a) Are `premium-room/products/*` files actually the assets sold through `premium_rooms` / `premium_item_purchases`? Or is "premium-room" repurposed for something else?
+- (b) Stop-gap (private + tightened SELECT only) or full fix (also build signed-URL edge function + update consuming UI)? Per scope-lock I won't start the broader option without explicit yes.
+- (c) Since the uploader isn't in the current `src/`, do you know which app/page uploads here so the read path can be verified before changing anything?
+
+No code or DB changes have been made.
