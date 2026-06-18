@@ -45,6 +45,46 @@ const normalizeSongTitle = (title) =>
     .replace(/[^a-z0-9]+/g, ' ')
     .trim()
 
+const firstImage = (...sources) => {
+  for (const source of sources) {
+    if (Array.isArray(source)) {
+      const found = source.find(Boolean)
+      if (found) return found
+    } else if (source) {
+      return source
+    }
+  }
+  return null
+}
+
+const safeList = (result, label) => {
+  if (result?.error) {
+    console.warn(`Tribal Gardens ${label} load skipped`, result.error)
+    return []
+  }
+  return result?.data || []
+}
+
+function MediaThumb({ item, kind }) {
+  const [failed, setFailed] = useState(false)
+  return (
+    <div style={{ aspectRatio: '16/9', background: '#020617', position: 'relative', overflow: 'hidden' }}>
+      {item.image && !failed ? (
+        <img
+          src={item.image}
+          alt={item.title || kind}
+          style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+          loading="lazy"
+          onError={() => setFailed(true)}
+        />
+      ) : (
+        <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 42 }}>{item.emoji}</div>
+      )}
+      <div style={{ position: 'absolute', top: 8, left: 8, padding: '3px 8px', borderRadius: 8, background: 'rgba(0,0,0,0.6)', fontSize: 11, color: '#fff', fontWeight: 700 }}>{item.emoji} {kind.toUpperCase()}</div>
+    </div>
+  )
+}
+
 function UrgencyBar({ percentage }) {
   const isHot = percentage >= 70
   const isWarm = percentage >= 40
@@ -175,11 +215,7 @@ function MediaGrid({ kind, items, loading }) {
       {items.map((it, i) => (
         <motion.div key={it.id} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.03 }}
           style={{ background: 'linear-gradient(135deg, #0f172a 0%, #1e293b 100%)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 16, overflow: 'hidden' }}>
-          <div style={{ aspectRatio: '16/9', background: '#020617', position: 'relative', overflow: 'hidden' }}>
-            {it.image ? <img src={it.image} alt={it.title} style={{ width: '100%', height: '100%', objectFit: 'cover' }} loading="lazy" />
-              : <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 42 }}>{it.emoji}</div>}
-            <div style={{ position: 'absolute', top: 8, left: 8, padding: '3px 8px', borderRadius: 8, background: 'rgba(0,0,0,0.6)', fontSize: 11, color: '#fff', fontWeight: 700 }}>{it.emoji} {kind.toUpperCase()}</div>
-          </div>
+          <MediaThumb item={it} kind={kind} />
           <div style={{ padding: 12 }}>
             <div style={{ fontWeight: 700, color: '#f1f5f9', fontSize: 14, marginBottom: 4, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{it.title}</div>
             <div style={{ fontSize: 12, color: '#64748b', marginBottom: 8 }}>by {it.sower || 'Anonymous Sower'}</div>
@@ -214,7 +250,7 @@ export default function BrowseOrchardsPage() {
   const [selectedRole, setSelectedRole] = useState("all")
   const [selectedType, setSelectedType] = useState("all")
   const [sortBy, setSortBy] = useState("newest")
-  const [activeTab, setActiveTab] = useState('orchards')
+  const [activeTab, setActiveTab] = useState('seeds')
   const [tribeSeeds, setTribeSeeds] = useState([])
   const [music, setMusic] = useState([])
   const [books, setBooks] = useState([])
@@ -279,22 +315,28 @@ export default function BrowseOrchardsPage() {
             .limit(200),
         ])
         if (cancelled) return
-        const djIds = (musicRes.data || []).map(m => m.dj_id).filter(Boolean)
+        const seedsRows = safeList(seedsRes, 'seeds')
+        const orchardRows = safeList(orchardSeedsRes, 'orchards')
+        const musicRows = safeList(musicRes, 'music')
+        const bookRows = safeList(booksRes, 'books')
+        const videoRows = safeList(videosRes, 'videos')
+        const productRows = safeList(productsRes, 'products')
+        const djIds = musicRows.map(m => m.dj_id).filter(Boolean)
         const { data: djs } = djIds.length
           ? await supabase.from('radio_djs').select('id, user_id, dj_name, avatar_url').in('id', djIds)
           : { data: [] }
         const djMap = new Map((djs || []).map(d => [d.id, d]))
-        const sowerIds = Array.from(new Set((productsRes.data || []).map(p => p.sower_id).filter(Boolean)
-          .concat((booksRes.data || []).map(b => b.sower_id).filter(Boolean))))
+        const sowerIds = Array.from(new Set(productRows.map(p => p.sower_id).filter(Boolean)
+          .concat(bookRows.map(b => b.sower_id).filter(Boolean))))
         const { data: sowersRows } = sowerIds.length
           ? await supabase.from('sowers').select('id, user_id, display_name').in('id', sowerIds)
           : { data: [] }
         const sowerMap = new Map((sowersRows || []).map(s => [s.id, s]))
         const profileIds = Array.from(new Set([
-          ...(seedsRes.data || []).map(s => s.gifter_id),
-          ...(orchardSeedsRes.data || []).flatMap(o => [o.user_id, o.profile_id]),
-          ...(booksRes.data || []).flatMap(b => [b.user_id, b.sower_id]),
-          ...(videosRes.data || []).flatMap(v => [v.uploader_id, v.uploader_profile_id]),
+          ...seedsRows.map(s => s.gifter_id),
+          ...orchardRows.flatMap(o => [o.user_id, o.profile_id]),
+          ...bookRows.flatMap(b => [b.user_id, b.sower_id]),
+          ...videoRows.flatMap(v => [v.uploader_id, v.uploader_profile_id]),
           ...(djs || []).map(d => d.user_id),
           ...(sowersRows || []).map(s => s.user_id),
         ].filter(Boolean)))
@@ -309,46 +351,45 @@ export default function BrowseOrchardsPage() {
           return s?.display_name || sowerName(profileMap.get(s?.user_id)) || 'Anonymous Sower'
         }
         const musicCoverByTitle = new Map()
-        ;(musicRes.data || []).forEach(m => {
+        ;(musicRows || []).forEach(m => {
           const key = normalizeSongTitle(m.track_title)
           if (key && m.cover_image_url) musicCoverByTitle.set(key, m.cover_image_url)
         })
-        const seedsFromTable = (seedsRes.data || []).map(s => ({
-          id: `seed-${s.id}`, title: s.title, image: (s.images && s.images[0]) || null, emoji: '🌱',
+        const seedsFromTable = seedsRows.map(s => ({
+          id: `seed-${s.id}`, title: s.title, image: firstImage(s.images), emoji: '🌱',
           sower: sowerName(profileMap.get(s.gifter_id)), link: '/orchard-alive', created_at: s.created_at,
         }))
-        const seedsFromOrchards = (orchardSeedsRes.data || []).map(o => ({
-          id: `orch-${o.id}`, title: o.title, image: (o.images && o.images[0]) || null, emoji: '🌳',
+        const seedsFromOrchards = orchardRows.map(o => ({
+          id: `orch-${o.id}`, title: o.title, image: firstImage(o.images), emoji: '🌳',
           sower: sowerName(profileMap.get(o.user_id) || profileMap.get(o.profile_id)), link: `/orchard/${o.id}`, created_at: o.created_at,
         }))
-        const productRows = productsRes.data || []
         const musicFromProducts = productRows.filter(p => p.type === 'music').map(p => ({
-          id: `prod-${p.id}`, title: p.title, image: p.cover_image_url || musicCoverByTitle.get(normalizeSongTitle(p.title)) || null, emoji: '🎵',
+          id: `prod-${p.id}`, title: p.title, image: firstImage(p.image_urls, p.cover_image_url, musicCoverByTitle.get(normalizeSongTitle(p.title))), emoji: '🎵',
           sower: p.artist_name || nameFromSower(p.sower_id), link: '/music-library', created_at: p.created_at,
         }))
         const booksFromProducts = productRows.filter(p => p.type === 'ebook' || p.type === 'book').map(p => ({
-          id: `prod-${p.id}`, title: p.title, image: p.cover_image_url || (p.image_urls && p.image_urls[0]) || null, emoji: '📚',
+          id: `prod-${p.id}`, title: p.title, image: firstImage(p.image_urls, p.cover_image_url), emoji: '📚',
           sower: nameFromSower(p.sower_id), link: '/my-s2g-library', created_at: p.created_at,
         }))
         const seedsFromProducts = productRows.filter(p => !['music','ebook','book'].includes(p.type)).map(p => ({
-          id: `prod-${p.id}`, title: p.title, image: p.cover_image_url || (p.image_urls && p.image_urls[0]) || null, emoji: '🌱',
+          id: `prod-${p.id}`, title: p.title, image: firstImage(p.image_urls, p.cover_image_url), emoji: '🌱',
           sower: nameFromSower(p.sower_id), link: '/products', created_at: p.created_at,
         }))
         const musicItems = [
-          ...(musicRes.data || []).map(m => ({
+          ...musicRows.map(m => ({
             id: m.id, title: m.track_title, image: m.cover_image_url || null, emoji: '🎵',
             sower: m.artist_name || djMap.get(m.dj_id)?.dj_name || 'Tribe Music', link: '/music-library', created_at: m.upload_date || m.created_at,
           })),
           ...musicFromProducts,
         ]
         const bookItems = [
-          ...(booksRes.data || []).map(b => ({
-            id: b.id, title: b.title, image: b.cover_image_url || (b.image_urls && b.image_urls[0]) || null, emoji: '📚',
+          ...bookRows.map(b => ({
+            id: b.id, title: b.title, image: firstImage(b.image_urls, b.cover_image_url), emoji: '📚',
             sower: sowerName(profileMap.get(b.user_id) || profileMap.get(b.sower_id)), link: '/my-s2g-library', created_at: b.created_at,
           })),
           ...booksFromProducts,
         ]
-        const videoItems = (videosRes.data || [])
+        const videoItems = videoRows
           .filter(v => !String(v.title || '').toLowerCase().includes('broadcast') && !String(v.description || '').toLowerCase().includes('auto-imported from orchard upload'))
           .map(v => ({
           id: v.id, title: v.title, image: v.thumbnail_url || null, emoji: '🎬',

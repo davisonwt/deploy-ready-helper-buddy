@@ -10,6 +10,18 @@ const FALLBACK_IMG = {
   video:   'https://images.unsplash.com/photo-1485846234645-a62644f84728?w=800&q=80',
 }
 
+const firstImage = (...sources) => {
+  for (const source of sources) {
+    if (Array.isArray(source)) {
+      const found = source.find(Boolean)
+      if (found) return found
+    } else if (source) {
+      return source
+    }
+  }
+  return null
+}
+
 export function buildSeedCard(s, handlers = {}) {
   const images = Array.isArray(s.images) ? s.images.filter(Boolean) : []
   return {
@@ -54,14 +66,14 @@ export function buildOrchardCard(o, handlers = {}, opts = {}) {
 
 export function buildMusicCard(m, handlers = {}) {
   const images = Array.isArray(m.image_urls) ? m.image_urls.filter(Boolean) : []
-  const coverImage = images[0] || m.cover_image_url || m.cover_url || FALLBACK_IMG.music
+  const coverImage = firstImage(images, m.cover_image_url, m.cover_url) || FALLBACK_IMG.music
   return {
     id: `music-${m.id}`,
     rawId: m.id,
     title: m.track_title || 'Untitled Track',
     subtitle: m.music_mood || m.music_genre || m.genre || 'A song you have sown',
     image: coverImage,
-    images: images.length ? images : [m.cover_image_url || m.cover_url].filter(Boolean),
+    images: images.length ? images : [firstImage(m.cover_image_url, m.cover_url)].filter(Boolean),
     badge: { emoji: '🎵', label: 'music', color: '#38bdf8' },
     openPath: `/music-library`,
     liveKey: `music:${m.id}`,

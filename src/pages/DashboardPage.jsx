@@ -416,6 +416,18 @@ export default function SeedFlowDashboard() {
   ]
   const intervalRef = useRef(null)
 
+  const firstImage = (...sources) => {
+    for (const source of sources) {
+      if (Array.isArray(source)) {
+        const found = source.find(Boolean)
+        if (found) return found
+      } else if (source) {
+        return source
+      }
+    }
+    return null
+  }
+
   // Live sunrise-based sacred date — ticks every minute, rolls at user's local sunrise.
   const sacred = useSacredNow()
   const sacredDate = {
@@ -482,7 +494,7 @@ export default function SeedFlowDashboard() {
             const productImages = Array.isArray(p.image_urls) ? p.image_urls.filter(Boolean) : []
             productMusic.push({
               id: p.id, track_title: p.title, genre: p.music_genre,
-              file_url: p.file_url, cover_image_url: productImages[0] || p.cover_image_url,
+              file_url: p.file_url, cover_image_url: firstImage(productImages, p.cover_image_url),
               image_urls: productImages,
               music_genre: p.music_genre, music_mood: p.music_mood,
               created_at: p.created_at,

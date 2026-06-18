@@ -75,14 +75,16 @@ export default function LivingSeedCard({
   const [previewing, setPreviewing] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const [activeRoom, setActiveRoom] = useState<string | null>(null);
+  const [failedImages, setFailedImages] = useState<Record<string, true>>({});
   const audioRef = useRef<HTMLAudioElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
 
   // image carousel
   const imgList = (images && images.length ? images : (image ? [image] : [])).filter(Boolean) as string[];
+  const visibleImgList = imgList.filter((src) => !failedImages[src]);
   const [imgIdx, setImgIdx] = useState(0);
-  const safeImgIdx = imgList.length ? imgIdx % imgList.length : 0;
-  const currentImage = imgList[safeImgIdx] || image || null;
+  const safeImgIdx = visibleImgList.length ? imgIdx % visibleImgList.length : 0;
+  const currentImage = visibleImgList[safeImgIdx] || null;
 
   // live overlay state
   const [overlayImgIdx, setOverlayImgIdx] = useState(0);
@@ -186,14 +188,15 @@ export default function LivingSeedCard({
             src={currentImage}
             alt=""
             className="absolute inset-0 h-full w-full object-cover opacity-50 transition-opacity duration-500"
+            onError={() => setFailedImages((prev) => ({ ...prev, [currentImage]: true }))}
           />
         )}
-        {imgList.length > 1 && (
+        {visibleImgList.length > 1 && (
           <>
             <button
               type="button"
               aria-label="Previous image"
-              onClick={(e) => { e.stopPropagation(); setImgIdx(i => (i - 1 + imgList.length) % imgList.length); }}
+              onClick={(e) => { e.stopPropagation(); setImgIdx(i => (i - 1 + visibleImgList.length) % visibleImgList.length); }}
               className="absolute left-2 top-1/2 z-[5] -translate-y-1/2 flex h-8 w-8 items-center justify-center rounded-full border border-white/15 bg-black/55 text-white backdrop-blur hover:bg-black/80"
             >
               <ChevronLeft className="h-4 w-4" />
@@ -201,13 +204,13 @@ export default function LivingSeedCard({
             <button
               type="button"
               aria-label="Next image"
-              onClick={(e) => { e.stopPropagation(); setImgIdx(i => (i + 1) % imgList.length); }}
+              onClick={(e) => { e.stopPropagation(); setImgIdx(i => (i + 1) % visibleImgList.length); }}
               className="absolute right-2 top-1/2 z-[5] -translate-y-1/2 flex h-8 w-8 items-center justify-center rounded-full border border-white/15 bg-black/55 text-white backdrop-blur hover:bg-black/80"
             >
               <ChevronRight className="h-4 w-4" />
             </button>
             <div className="absolute left-1/2 top-2 z-[5] -translate-x-1/2 rounded-full border border-white/15 bg-black/55 px-2 py-0.5 text-[10px] font-bold text-white/80 backdrop-blur">
-              {safeImgIdx + 1}/{imgList.length}
+              {safeImgIdx + 1}/{visibleImgList.length}
             </div>
           </>
         )}
