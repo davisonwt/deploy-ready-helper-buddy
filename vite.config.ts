@@ -83,8 +83,7 @@ export default defineConfig(({ mode, command }) => ({
       'stream-browserify',
       'assert',
       'process',
-      '@solana/web3.js',
-      '@solana/spl-token',
     ],
   },
+
 }));
