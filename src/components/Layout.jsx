@@ -45,8 +45,6 @@ import { MyGardenPanel } from "./MyGardenPanel"
 import { LetItRainPanel } from "./LetItRainPanel"
 import { SupportPanel } from "./SupportPanel"
 import { GosatPanel } from "./GosatPanel"
-// Lazy load CommunityChatButton to avoid React initialization issues
-const CommunityChatButton = lazy(() => import("./community/CommunityChatButton").then(m => ({ default: m.CommunityChatButton })))
 import { useAppContext } from "../contexts/AppContext"
 import { getCurrentTheme } from '@/utils/dashboardThemes'
 import { JitsiVideoWindow, startJitsiCall } from "./video/JitsiVideoWindow"
