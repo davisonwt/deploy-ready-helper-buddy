@@ -62,4 +62,23 @@ export default tseslint.config(
         "react-hooks/rules-of-hooks": "warn",
     },
   },
+  // Slice 8 — TS ratchet.
+  // Flag any *new* .js / .jsx file under src/ with a one-time warning so
+  // contributors are nudged toward .ts / .tsx. Existing .jsx files are
+  // grandfathered in (there are ~180 of them; opportunistic conversion only,
+  // never big-bang). See CONTRIBUTING.md for the rule.
+  {
+    files: ["src/**/*.{js,jsx}"],
+    rules: {
+      "no-restricted-syntax": [
+        "warn",
+        {
+          selector: "Program",
+          message:
+            "TS ratchet: new files must be .ts or .tsx. Convert this file to .tsx opportunistically when you next touch it (see CONTRIBUTING.md).",
+        },
+      ],
+    },
+  },
 );
+
