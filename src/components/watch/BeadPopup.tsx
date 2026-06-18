@@ -20,10 +20,7 @@ import {
 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { calculateCreatorDate } from '@/utils/dashboardCalendar';
-import { useFirebaseAuth } from '@/hooks/useFirebaseAuth';
 import { useAuth } from '@/hooks/useAuth';
-import { isFirebaseConfigured } from '@/integrations/firebase/config';
-import { getJournalEntry } from '@/integrations/firebase/firestore';
 import { supabase } from '@/integrations/supabase/client';
 import { Badge } from '../ui/badge';
 import { Button } from '../ui/button';
@@ -162,9 +159,7 @@ function fileToDataUrl(file: File): Promise<string> {
 // ---------- Component ----------
 
 export function BeadPopup({ isOpen, onClose, year, month, day }: BeadPopupProps) {
-  const { user: firebaseUser } = useFirebaseAuth();
-  const { user: supabaseUser } = useAuth();
-  const user = firebaseUser || supabaseUser;
+  const { user } = useAuth();
 
   const [journalEntry, setJournalEntry] = useState<any>(null);
   const [yhwhDate, setYhwhDate] = useState<ReturnType<typeof calculateCreatorDate> | null>(null);
@@ -198,25 +193,18 @@ export function BeadPopup({ isOpen, onClose, year, month, day }: BeadPopupProps)
     if (!isOpen || !user || !yhwhDate) return;
     (async () => {
       try {
-        const yhwhDateStr = `Month${yhwhDate.month}Day${yhwhDate.day}`;
-        if (isFirebaseConfigured && firebaseUser) {
-          const r = await getJournalEntry(firebaseUser.uid, yhwhDateStr);
-          if (r.success && r.data) { setJournalEntry(r.data); return; }
-        }
-        if (supabaseUser) {
-          const { data } = await supabase
-            .from('journal_entries')
-            .select('content')
-            .eq('user_id', supabaseUser.id)
-            .eq('yhwh_year', yhwhDate.year)
-            .eq('yhwh_month', yhwhDate.month)
-            .eq('yhwh_day', yhwhDate.day)
-            .maybeSingle();
-          if (data?.content) setJournalEntry(data.content);
-        }
+        const { data } = await supabase
+          .from('journal_entries')
+          .select('content')
+          .eq('user_id', user.id)
+          .eq('yhwh_year', yhwhDate.year)
+          .eq('yhwh_month', yhwhDate.month)
+          .eq('yhwh_day', yhwhDate.day)
+          .maybeSingle();
+        if (data?.content) setJournalEntry(data.content);
       } catch (e) { console.error('journal load failed', e); }
     })();
-  }, [isOpen, user, yhwhDate, firebaseUser, supabaseUser]);
+  }, [isOpen, user, yhwhDate]);
 
   // Schedule reminders via Notifications API
   useEffect(() => {
