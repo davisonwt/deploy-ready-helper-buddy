@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { ArrowLeft, BadgeCheck, ExternalLink, Factory } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { fetchProductsByCompany } from "@/api/products";
 
 type Company = {
   id: string;
@@ -43,13 +44,7 @@ export default function FactoryDetailPage() {
       setCompany((c as Company) || null);
       if (c?.id) {
         document.title = `${c.name} — Sow2Grow`;
-        const { data: p } = await supabase
-          .from("products")
-          .select("id, slug, title, price, cover_image_url, image_urls")
-          .eq("company_id", c.id)
-          .neq("status", "archived")
-          .order("created_at", { ascending: false })
-          .limit(60);
+        const { data: p } = await fetchProductsByCompany(c.id, 60);
         setProducts((p as Product[]) || []);
       }
       setLoading(false);

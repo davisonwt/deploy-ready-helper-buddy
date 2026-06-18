@@ -2,6 +2,7 @@ import { useEffect, useState, useRef } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import useEmblaCarousel from 'embla-carousel-react';
 import { supabase } from '@/integrations/supabase/client';
+import { fetchProductsBySowerPaginated } from '@/api/products';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card } from '@/components/ui/card';
@@ -54,18 +55,19 @@ export default function BulkSeedFeedPage() {
     setLoading(true);
     const from = p * PAGE_SIZE;
     const to = from + PAGE_SIZE - 1;
-    let q = supabase
-      .from('products')
-      .select('*, sowers:sower_id (id, display_name, slug, logo_url, user_id)')
-      .eq('sower_id', sower.id)
-      .neq('status', 'archived');
 
-    if (tab === 'new') q = q.order('created_at', { ascending: false });
-    else if (tab === 'commission') q = q.order('whisperer_commission_percent', { ascending: false, nullsFirst: false });
-    else if (tab === 'trending') q = q.order('bestowal_count', { ascending: false, nullsFirst: false });
-    else q = q.order('created_at', { ascending: false });
+    const orderBy =
+      tab === 'commission'
+        ? { column: 'whisperer_commission_percent', ascending: false, nullsFirst: false }
+        : tab === 'trending'
+        ? { column: 'bestowal_count', ascending: false, nullsFirst: false }
+        : { column: 'created_at', ascending: false };
 
-    const { data, error } = await q.range(from, to);
+    const { data, error } = await fetchProductsBySowerPaginated(sower.id, {
+      from,
+      to,
+      orderBy,
+    });
     setLoading(false);
     if (error) {
       toast({ title: 'Could not load feed', description: error.message, variant: 'destructive' });

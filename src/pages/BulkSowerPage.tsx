@@ -1,6 +1,11 @@
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
+import {
+  countActiveProductsForSower,
+  fetchProductIdsForSower,
+  fetchProductsBySowerPaginated,
+} from '@/api/products';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -53,14 +58,12 @@ export default function BulkSowerPage() {
       }
       setSower(data as Sower);
 
-      const { count } = await supabase
-        .from('products').select('id', { count: 'exact', head: true })
-        .eq('sower_id', data.id).neq('status', 'archived');
+      const { count } = await countActiveProductsForSower(data.id);
 
       const { data: bestowals } = await supabase
         .from('product_bestowals').select('id', { count: 'exact', head: true })
         .in('product_id',
-          (await supabase.from('products').select('id').eq('sower_id', data.id)).data?.map((p: any) => p.id) ?? []
+          (await fetchProductIdsForSower(data.id)).data?.map((p: any) => p.id) ?? []
         ) as any;
 
       setStats({ products: count ?? 0, sold: bestowals?.length ?? 0 });
@@ -80,13 +83,11 @@ export default function BulkSowerPage() {
     setLoadingMore(true);
     const from = p * PAGE_SIZE;
     const to = from + PAGE_SIZE - 1;
-    const { data, error } = await supabase
-      .from('products')
-      .select('*, sowers:sower_id (id, display_name, logo_url, slug, user_id)')
-      .eq('sower_id', sower.id)
-      .neq('status', 'archived')
-      .order('created_at', { ascending: false })
-      .range(from, to);
+    const { data, error } = await fetchProductsBySowerPaginated(sower.id, {
+      from,
+      to,
+      orderBy: { column: 'created_at', ascending: false },
+    });
     setLoadingMore(false);
     if (error) {
       toast({ title: 'Could not load products', description: error.message, variant: 'destructive' });
