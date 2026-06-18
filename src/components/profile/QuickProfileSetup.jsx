@@ -33,7 +33,7 @@ export function QuickProfileSetup({ onComplete, onClose }) {
   const [uploadingPhoto, setUploadingPhoto] = useState(false);
   const fileInputRef = useRef(null);
 
-  const { updateProfile } = useAuth();
+  const { updateProfile, user } = useAuth();
   const { toast } = useToast();
 
   const handlePhotoUpload = async (event) => {
