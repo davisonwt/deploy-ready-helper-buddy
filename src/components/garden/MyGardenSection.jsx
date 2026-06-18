@@ -108,26 +108,8 @@ function GardenCard({ card, accent, navigate }) {
               📂 Open
             </LivingButton>
           </Link>
-          <button
-            type="button"
-            onClick={(e) => { e.preventDefault(); e.stopPropagation(); navigate(`${card.openPath}?action=bestow`) }}
-            style={{
-              flex: 1,
-              height: 36,
-              borderRadius: 8,
-              border: '1px solid rgba(251,191,36,0.6)',
-              background: 'linear-gradient(90deg, rgba(245,158,11,0.3), rgba(234,179,8,0.25))',
-              color: '#fde68a',
-              fontSize: 11,
-              fontWeight: 800,
-              textTransform: 'uppercase',
-              letterSpacing: '0.05em',
-              cursor: 'pointer',
-            }}
-            aria-label="Bestow to this seed"
-          >
-            🎁 Bestow
-          </button>
+          {/* Bestow button intentionally hidden on My Garden — only shown on public community feeds */}
+
           <div style={{ flex: 1 }}>
             <LivingButton variant="live" onClick={goLive}
               height={36} borderRadius={8} fontSize={11} letterSpacing="0px">
