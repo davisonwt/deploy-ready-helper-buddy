@@ -62,14 +62,14 @@ export const RadioMode: React.FC = () => {
 
       // Load live streams
       const { data: streamsData } = await supabase
-        .from('live_streams')
+        .from('public_live_streams' as any)
         .select('*')
         .eq('status', 'live')
         .order('started_at', { ascending: false })
         .limit(5);
 
       setTracks(tracksData || []);
-      setStreams(streamsData || []);
+      setStreams((streamsData as unknown as Stream[]) || []);
     } catch (error) {
       console.error('Error loading content:', error);
     } finally {
