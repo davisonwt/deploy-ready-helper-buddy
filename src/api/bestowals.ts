@@ -95,3 +95,17 @@ export const fetchOrchardBestowalsWithProfiles = async (orchardId: string) => {
   if (error) throw error;
   return data || [];
 };
+
+/** Plain bestowals for an orchard — no profile join. Mirrors the old api/orchards.ts shape. */
+export const fetchOrchardBestowals = async (orchardId: string) => {
+  const { data, error } = await supabase
+    .from('bestowals')
+    .select(`*`)
+    .eq('orchard_id', orchardId)
+    .eq('payment_status', 'completed')
+    .order('created_at', { ascending: false });
+
+  if (error) throw error;
+  return data || [];
+};
+

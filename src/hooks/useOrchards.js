@@ -9,7 +9,7 @@ import {
   updateOrchard as apiUpdateOrchard,
   deleteOrchard as apiDeleteOrchard,
 } from '@/api/orchards'
-import { fetchOrchardBestowalsWithProfiles as apiFetchBestowals } from '@/api/bestowals'
+import { fetchOrchardBestowals as apiFetchBestowals } from '@/api/bestowals'
 
 /**
  * Thin React wrapper around the orchards data-access layer (src/api/orchards.ts).
