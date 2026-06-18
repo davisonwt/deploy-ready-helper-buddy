@@ -2,14 +2,9 @@ import { supabase } from '@/integrations/supabase/client';
 
 /**
  * Orchards data-access layer.
- * Single source of truth for all orchard/bestowal queries.
  * Pure functions — no React, no local state.
  *
- * Two error conventions are intentionally preserved to match existing callers:
- *  - Functions that THROW on error: fetchOrchard, fetchOrchards, createBestowal,
- *    fetchBestowals, incrementOrchardViews (used by api/orchards.js consumers).
- *  - Functions consumed by useOrchards return raw data / throw; the hook wraps
- *    them in its existing {success,error} envelope.
+ * Bestowal queries live in src/api/bestowals.ts.
  */
 
 // ---------- Types ----------
@@ -21,15 +16,6 @@ export interface OrchardFilters {
   limit?: number;
 }
 
-export interface BestowalInput {
-  orchard_id: string;
-  bestower_id: string;
-  amount: number;
-  currency?: string;
-  pockets_count?: number;
-  pocket_numbers?: number[];
-  message?: string | null;
-}
 
 // ---------- Orchards: read ----------
 
@@ -177,49 +163,9 @@ export const deleteOrchard = async (id: string) => {
   if (error) throw error;
 };
 
-// ---------- Bestowals ----------
+// Bestowal queries moved to src/api/bestowals.ts
 
-export const createBestowal = async (bestowalData: BestowalInput) => {
-  try {
-    const { data, error } = await supabase
-      .from('bestowals')
-      .insert([{
-        orchard_id: bestowalData.orchard_id,
-        bestower_id: bestowalData.bestower_id,
-        amount: bestowalData.amount,
-        currency: bestowalData.currency || 'USD',
-        pockets_count: bestowalData.pockets_count || 0,
-        pocket_numbers: bestowalData.pocket_numbers || [],
-        message: bestowalData.message || null,
-        payment_status: 'pending',
-      }])
-      .select()
-      .single();
 
-    if (error) throw new Error(error.message);
-    return data;
-  } catch (error) {
-    console.error('Error creating bestowal:', error);
-    throw error;
-  }
-};
-
-export const fetchBestowals = async (orchardId: string) => {
-  try {
-    const { data, error } = await supabase
-      .from('bestowals')
-      .select(`*`)
-      .eq('orchard_id', orchardId)
-      .eq('payment_status', 'completed')
-      .order('created_at', { ascending: false });
-
-    if (error) throw new Error(error.message);
-    return data || [];
-  } catch (error) {
-    console.error('Error fetching bestowals:', error);
-    throw error;
-  }
-};
 
 // ---------- RPCs ----------
 
