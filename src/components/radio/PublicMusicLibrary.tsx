@@ -47,6 +47,7 @@ export default function PublicMusicLibrary() {
           )
         `)
         .eq('is_public', true)
+        .eq('radio_eligible', true)
         .order('upload_date', { ascending: false });
 
       if (error) throw error;

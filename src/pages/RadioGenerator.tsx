@@ -46,7 +46,8 @@ export default function RadioGenerator() {
           *,
           dj_music_tracks!inner(*)
         `)
-        .eq('dj_music_tracks.is_original', true);
+        .eq('dj_music_tracks.is_original', true)
+        .eq('dj_music_tracks.radio_eligible', true);
       
       if (error) throw error;
       return data;
