@@ -169,12 +169,7 @@ export default function ProductCard({ product, featured, showActions = false }: 
 
     setDeleting(true);
     try {
-      const { error } = await supabase
-        .from('products')
-        .delete()
-        .eq('id', product.id);
-
-      if (error) throw error;
+      await deleteProduct(product.id);
 
       toast.success('Product deleted successfully');
       window.location.reload();

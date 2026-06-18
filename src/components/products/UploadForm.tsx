@@ -274,25 +274,19 @@ export default function UploadForm() {
       const totalPrice = basePrice * 1.15; // Add 15% (10% + 5%)
 
       // Create product
-      const { data: insertedProduct, error: productError } = await supabase
-        .from('products')
-        .insert({
-          sower_id: sowerId,
-          title: formData.title,
-          description: formData.description,
-          type: formData.type,
-          category: formData.category,
-          wandering_role: wanderingRole,
-          license_type: formData.license_type,
-          price: totalPrice, // Store total price
-          cover_image_url: coverUrl.publicUrl,
-          file_url: fileUrlPublic,
-          tags: [...formData.tags.split(',').map(t => t.trim()).filter(Boolean), releaseType]
-        })
-        .select('id')
-        .single();
-
-      if (productError) throw productError;
+      const insertedProduct = await insertProduct({
+        sower_id: sowerId,
+        title: formData.title,
+        description: formData.description,
+        type: formData.type,
+        category: formData.category,
+        wandering_role: wanderingRole,
+        license_type: formData.license_type,
+        price: totalPrice, // Store total price
+        cover_image_url: coverUrl.publicUrl,
+        file_url: fileUrlPublic,
+        tags: [...formData.tags.split(',').map(t => t.trim()).filter(Boolean), releaseType]
+      });
 
       // Persist marketplace taxonomy (subcategories + tags) into junction tables
       if (insertedProduct?.id && user) {

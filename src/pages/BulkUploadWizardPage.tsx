@@ -579,9 +579,7 @@ function PublishStep({
           image_urls: (r.images ?? []).map((im) => im.url),
           cover_image_url: r.images?.[0]?.url ?? null,
         };
-        const { data: prod, error: pErr } = await supabase
-          .from('products').insert(productPayload as any).select('id').single();
-        if (pErr) throw pErr;
+        const prod = await insertProduct(productPayload);
 
         if (r.images?.length) {
           const imgRows = r.images.map((im, idx) => ({
