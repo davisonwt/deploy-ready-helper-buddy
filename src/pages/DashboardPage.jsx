@@ -9,6 +9,7 @@ import { LetItRainPanel } from '../components/LetItRainPanel'
 import { useSacredNow } from '../hooks/useSacredNow'
 import { BeadPopup } from '../components/watch/BeadPopup'
 import SeedSlider from '../components/garden/SeedSlider'
+import LivingSeedCard from '../components/garden/LivingSeedCard'
 import {
   buildSeedCard, buildOrchardCard, buildMusicCard,
   buildBookCard, buildVideoCard, deleteRow,
@@ -1230,24 +1231,62 @@ export default function SeedFlowDashboard() {
               <span style={styles.liveTag}>{userCards.length ? `${mineCards.length} mine · ${bestowedCards.length}💚` : 'LIVE'}</span>
             </div>
 
-            {/* ── 5 stacked auto-rotating category sliders ── */}
-            <SeedSlider title="Seed" emoji="🌱" accent="#22c55e" cards={seedSliderCards}
-              emptyHint="No seeds yet — plant one with the button below." />
-            <SeedSlider title="Orchards" emoji="🌳" accent="#16a34a" cards={orchardSliderCards}
-              emptyHint="No orchards yet — your own + bestowed will live here." />
-            <SeedSlider title="Music"    emoji="🎵" accent="#0ea5e9" cards={musicSliderCards}
-              emptyHint="No tracks yet — drop a song from your Music Library." />
-            <SeedSlider title="Books"    emoji="📚" accent="#fb923c" cards={bookSliderCards}
-              emptyHint="No books yet — upload one in My S2G Library." />
-            <SeedSlider title="Videos"   emoji="🎬" accent="#f87171" cards={videoSliderCards}
-              emptyHint="No videos yet — share one in Community Videos." />
+            {/* ── Your own seeds — vertical scrollable feed, one per row ── */}
+            {(() => {
+              const ownCards = [
+                ...seedSliderCards,
+                ...myOrchards.map(o => buildOrchardCard(o, ownerHandlers)),
+                ...musicSliderCards,
+                ...bookSliderCards,
+                ...videoSliderCards,
+              ]
+              if (ownCards.length === 0) {
+                return (
+                  <div style={{
+                    padding: 24, textAlign: 'center',
+                    background: '#0a0f1a', border: '1px solid rgba(255,255,255,0.06)',
+                    borderRadius: 14, color: '#64748b', fontSize: 13, fontStyle: 'italic',
+                  }}>
+                    You haven't planted any seeds yet — tap "Plant Seed" below to start.
+                  </div>
+                )
+              }
+              return (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+                  {ownCards.map((c) => (
+                    <LivingSeedCard
+                      key={c.id}
+                      seedId={c.liveKey || c.rawId || c.id}
+                      title={c.title}
+                      subtitle={c.subtitle}
+                      image={c.image}
+                      images={c.images}
+                      openPath={c.openPath}
+                      mediaUrl={c.mediaUrl}
+                      mediaKind={c.mediaKind}
+                      badge={c.badge}
+                      mine={c.mine}
+                      whispererSharePct={c.whispererSharePct}
+                      onEdit={c.onEdit ? () => c.onEdit(c) : undefined}
+                      onDelete={c.onDelete ? () => c.onDelete(c) : undefined}
+                      onRepost={c.onRepost ? () => c.onRepost(c) : undefined}
+                      onPark={c.onPark ? () => c.onPark(c) : undefined}
+                    />
+                  ))}
+                </div>
+              )
+            })()}
 
-            {!userCards.length && (
-              <div style={{
-                fontSize: 12, color: '#64748b', textAlign: 'center',
-                marginBottom: 10, fontStyle: 'italic',
-              }}>
-                You haven't planted any seeds yet — tap "Plant Seed" below to start.
+            {/* Bestowed orchards — still shown as a rotating slider since they're not "yours" */}
+            {bestowedOrchards.length > 0 && (
+              <div style={{ marginTop: 18 }}>
+                <SeedSlider
+                  title="Tending in the Tribe"
+                  emoji="💚"
+                  accent="#4ade80"
+                  cards={bestowedOrchards.map(o => buildOrchardCard(o, {}, { bestowed: true }))}
+                  emptyHint=""
+                />
               </div>
             )}
 
