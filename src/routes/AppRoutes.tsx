@@ -451,6 +451,7 @@ const AppRoutes = () => (
     <Route path="/plant-a-seed" element={
       <ProtectedRoute><Layout><Suspense fallback={<LoadingFallback />}><PlantASeedPage /></Suspense></Layout></ProtectedRoute>
     } />
+    <Route path="/trust" element={<Suspense fallback={<LoadingFallback />}><TrustPage /></Suspense>} />
     <Route path="*" element={<NotFound />} />
   </Routes>
 );
