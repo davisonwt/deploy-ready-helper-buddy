@@ -284,8 +284,10 @@ export class AuthProviderClass extends React.Component {
 
       const { data, error } = await supabase
         .from('profiles')
-        .update({ ...validFields, updated_at: new Date().toISOString() })
-        .eq('user_id', currentUser.id)
+        .upsert(
+          { user_id: currentUser.id, ...validFields, updated_at: new Date().toISOString() },
+          { onConflict: 'user_id' }
+        )
         .select()
         .single()
 
