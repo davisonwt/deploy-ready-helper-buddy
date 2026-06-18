@@ -140,6 +140,34 @@ const handler = async (req: Request): Promise<Response> => {
       return createErrorResponse("Orchard is not available for bestowals", 400, req);
     }
 
+    // C4: server-side amount validation — payload.amount must equal
+    // pocket_price × pocketsCount (±$0.01 tolerance for rounding).
+    const pocketPrice = Number(orchard.pocket_price);
+    if (!Number.isFinite(pocketPrice) || pocketPrice <= 0) {
+      console.error("Orchard has invalid pocket_price", {
+        orchardId: orchard.id,
+        pocket_price: orchard.pocket_price,
+      });
+      return createErrorResponse("Orchard pricing is not configured", 400, req);
+    }
+    const expectedAmount = Number((pocketPrice * payload.pocketsCount).toFixed(2));
+    const submittedAmount = Number(payload.amount.toFixed(2));
+    if (Math.abs(expectedAmount - submittedAmount) > 0.01) {
+      console.warn("Bestowal amount mismatch", {
+        orchardId: orchard.id,
+        pocket_price: pocketPrice,
+        pocketsCount: payload.pocketsCount,
+        expectedAmount,
+        submittedAmount,
+        userId: userData.user.id,
+      });
+      return createErrorResponse(
+        `Amount mismatch: expected ${expectedAmount.toFixed(2)} for ${payload.pocketsCount} pocket(s) at ${pocketPrice.toFixed(2)} each, received ${submittedAmount.toFixed(2)}.`,
+        400,
+        req,
+      );
+    }
+
       const currency = orchard.currency ?? "USDC";
       const orchardType = (orchard.orchard_type as string | null) ?? "standard";
       const productType = (orchard.product_type as string | null) ?? "physical";
