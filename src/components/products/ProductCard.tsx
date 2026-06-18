@@ -9,6 +9,7 @@ import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { Play, Pause, Download, ShoppingCart, Sparkles, CheckCircle2, Edit, Trash2, Loader2 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { supabase } from '@/integrations/supabase/client';
+import { deleteProduct } from '@/api/products';
 import { toast } from 'sonner';
 import { SocialActionButtons } from '@/components/social/SocialActionButtons';
 import { SowerAnalyticsTooltip } from '@/components/social/SowerAnalyticsTooltip';
@@ -169,12 +170,7 @@ export default function ProductCard({ product, featured, showActions = false }: 
 
     setDeleting(true);
     try {
-      const { error } = await supabase
-        .from('products')
-        .delete()
-        .eq('id', product.id);
-
-      if (error) throw error;
+      await deleteProduct(product.id);
 
       toast.success('Product deleted successfully');
       window.location.reload();

@@ -1,5 +1,6 @@
 import { FC, useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
+import { fetchProductTitle } from '@/api/products';
 import { Users, TrendingUp, Heart } from 'lucide-react';
 import { Card } from '@/components/ui/card';
 
@@ -87,12 +88,7 @@ export const SowerAnalyticsTooltip: FC<SowerAnalyticsTooltipProps> = ({
             let title = 'Unknown';
             
             if (source_type === 'product') {
-              const { data } = await supabase
-                .from('products')
-                .select('title')
-                .eq('id', source_id)
-                .maybeSingle();
-              title = data?.title || 'Unknown Product';
+              title = (await fetchProductTitle(source_id)) || 'Unknown Product';
             } else if (source_type === 'orchard') {
               const { data } = await supabase
                 .from('orchards')

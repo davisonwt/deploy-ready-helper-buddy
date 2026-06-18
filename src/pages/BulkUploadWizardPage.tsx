@@ -1,6 +1,7 @@
 import { useState, useCallback, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
+import { insertProduct } from '@/api/products';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -579,9 +580,7 @@ function PublishStep({
           image_urls: (r.images ?? []).map((im) => im.url),
           cover_image_url: r.images?.[0]?.url ?? null,
         };
-        const { data: prod, error: pErr } = await supabase
-          .from('products').insert(productPayload as any).select('id').single();
-        if (pErr) throw pErr;
+        const prod = await insertProduct(productPayload);
 
         if (r.images?.length) {
           const imgRows = r.images.map((im, idx) => ({

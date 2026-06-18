@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
+import { fetchProductForEdit, updateProduct } from '@/api/products';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -32,16 +33,7 @@ export default function EditForm() {
       if (!id || !user) return;
 
       try {
-        const { data, error } = await supabase
-          .from('products')
-          .select(`
-            *,
-            sowers!inner(user_id)
-          `)
-          .eq('id', id)
-          .single();
-
-        if (error) throw error;
+        const data: any = await fetchProductForEdit(id);
 
         // Check ownership
         if (data.sowers.user_id !== user.id) {
@@ -87,21 +79,16 @@ export default function EditForm() {
       const basePrice = parseFloat(String(formData.price)) || 0;
       const totalPrice = basePrice * 1.15; // Add 15% (10% + 5%)
 
-      const { error } = await supabase
-        .from('products')
-        .update({
-          title: formData.title,
-          description: formData.description,
-          type: formData.type,
-          category: formData.category,
-          license_type: formData.license_type,
-          price: totalPrice, // Store total price
-          tags: tagsArray,
-          updated_at: new Date().toISOString()
-        })
-        .eq('id', id);
-
-      if (error) throw error;
+      await updateProduct(id, {
+        title: formData.title,
+        description: formData.description,
+        type: formData.type,
+        category: formData.category,
+        license_type: formData.license_type,
+        price: totalPrice, // Store total price
+        tags: tagsArray,
+        updated_at: new Date().toISOString()
+      });
 
       toast.success('Product updated successfully!');
       navigate('/my-products');
