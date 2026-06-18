@@ -12707,6 +12707,13 @@ export type Database = {
       }
       get_hearts_gender: { Args: { _user_id: string }; Returns: string }
       get_message_streak: { Args: { user_id_param: string }; Returns: number }
+      get_my_live_stream_credentials: {
+        Args: { p_stream_id: string }
+        Returns: {
+          rtmp_url: string
+          stream_key: string
+        }[]
+      }
       get_my_stream_credentials: {
         Args: { _stream_id: string }
         Returns: {
