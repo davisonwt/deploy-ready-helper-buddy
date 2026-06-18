@@ -38,6 +38,7 @@ export default function DJMusicUpload({ trigger }) {
   const [newTag, setNewTag] = useState('')
   const [wanderingRole, setWanderingRole] = useState(null)
   const [taxonomy, setTaxonomy] = useState({ categoryId: null, subcategoryIds: [], tagIds: [] })
+  const [radioEligible, setRadioEligible] = useState(false)
 
   const { fetchTracks, djProfile } = useDJPlaylist()
   const { directUpload, uploading } = useDirectMusicUpload()
@@ -154,6 +155,7 @@ export default function DJMusicUpload({ trigger }) {
         wandering_role: wanderingRole,
         subcategoryIds: taxonomy.subcategoryIds,
         tagIds: taxonomy.tagIds,
+        radioEligible,
       }
       const result = await directUpload(files[0], enrichedTrack, djProfile)
       
@@ -185,6 +187,7 @@ export default function DJMusicUpload({ trigger }) {
           wandering_role: wanderingRole,
           subcategoryIds: taxonomy.subcategoryIds,
           tagIds: taxonomy.tagIds,
+          radioEligible,
         }
 
         const result = await directUpload(file, trackInfo, djProfile)
@@ -220,6 +223,7 @@ export default function DJMusicUpload({ trigger }) {
     })
     setWanderingRole(null)
     setTaxonomy({ categoryId: null, subcategoryIds: [], tagIds: [] })
+    setRadioEligible(false)
     setIsOpen(false)
   }
 
@@ -591,6 +595,26 @@ export default function DJMusicUpload({ trigger }) {
               onChange={setTaxonomy}
             />
           </div>
+
+          {/* Radio opt-in */}
+          <div className="border-t pt-4">
+            <label className="flex items-start gap-3 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={radioEligible}
+                onChange={(e) => setRadioEligible(e.target.checked)}
+                className="mt-1 h-4 w-4 accent-emerald-500"
+              />
+              <span>
+                <span className="block font-medium">📻 Allow on community radio playlists</span>
+                <span className="block text-xs text-muted-foreground">
+                  Radio hosts may include {releaseType === 'album' ? 'these tracks' : 'this track'} in their shows.
+                  You can change this any time from My Radio List.
+                </span>
+              </span>
+            </label>
+          </div>
+
 
           {/* Submit */}
           <div className="flex justify-end gap-2">

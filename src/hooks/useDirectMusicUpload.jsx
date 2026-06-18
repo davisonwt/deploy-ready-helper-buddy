@@ -78,7 +78,9 @@ export const useDirectMusicUpload = () => {
           genre: trackData.genre || null,
           is_explicit: trackData.explicit || false,
           wandering_role: trackData.wandering_role || null,
-          cover_image_url: coverImageUrl
+          cover_image_url: coverImageUrl,
+          radio_eligible: !!trackData.radioEligible,
+          radio_opted_in_at: trackData.radioEligible ? new Date().toISOString() : null
         })
         .select()
         .single()
