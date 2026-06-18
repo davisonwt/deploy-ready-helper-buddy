@@ -85,6 +85,7 @@ import {
   EditForm,
   ProductBasketPage,
   MusicLibraryPage,
+  MyRadioOptInPage,
   MyS2GLibraryPage,
   S2GCommunityLibraryPage,
   S2GCommunityMusicPage,
