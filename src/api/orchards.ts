@@ -2,14 +2,9 @@ import { supabase } from '@/integrations/supabase/client';
 
 /**
  * Orchards data-access layer.
- * Single source of truth for all orchard/bestowal queries.
  * Pure functions — no React, no local state.
  *
- * Two error conventions are intentionally preserved to match existing callers:
- *  - Functions that THROW on error: fetchOrchard, fetchOrchards, createBestowal,
- *    fetchBestowals, incrementOrchardViews (used by api/orchards.js consumers).
- *  - Functions consumed by useOrchards return raw data / throw; the hook wraps
- *    them in its existing {success,error} envelope.
+ * Bestowal queries live in src/api/bestowals.ts.
  */
 
 // ---------- Types ----------
@@ -21,15 +16,6 @@ export interface OrchardFilters {
   limit?: number;
 }
 
-export interface BestowalInput {
-  orchard_id: string;
-  bestower_id: string;
-  amount: number;
-  currency?: string;
-  pockets_count?: number;
-  pocket_numbers?: number[];
-  message?: string | null;
-}
 
 // ---------- Orchards: read ----------
 
