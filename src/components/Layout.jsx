@@ -820,10 +820,6 @@ function Layout({ children }) {
       {/* Gosat Panel */}
       <GosatPanel isOpen={isGosatOpen} onClose={() => setIsGosatOpen(false)} />
 
-      {/* Community Chat Floating Button - Lazy loaded to avoid React init issues */}
-      <Suspense fallback={null}>
-        {/* <CommunityChatButton /> */}
-      </Suspense>
 
       {/* Your Progress Button & Modal */}
       {/* <ProgressButton /> */}
