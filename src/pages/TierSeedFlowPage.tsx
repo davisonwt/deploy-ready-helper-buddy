@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { ArrowLeft, BadgeCheck, Factory } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
+import { fetchProductsByCompanyIds, fetchSoloSowerProducts } from '@/api/products';
 import SeedFlow from '@/components/SeedFlow';
 import { type Tier, TIER_BY_ID } from '@/lib/tiers';
 
@@ -72,11 +73,7 @@ export default function TierSeedFlowPage({ tier }: Props) {
 
       const ids = list.map((c) => c.id);
       const companyProducts = ids.length > 0
-        ? (await supabase
-            .from('products')
-            .select('id, title, cover_image_url, image_urls, price, company_id, sower_id, type, category')
-            .in('company_id', ids)
-            .limit(60)).data as SeedRow[] | null
+        ? (await fetchProductsByCompanyIds(ids, 60)).data as SeedRow[] | null
         : [];
 
       let individualSeeds: SeedRow[] = [];
@@ -94,12 +91,7 @@ export default function TierSeedFlowPage({ tier }: Props) {
           if (key && track.cover_image_url) generatedCoverByTitle.set(key, track.cover_image_url);
         });
 
-        const { data: soloRows } = await supabase
-          .from('products')
-          .select('id, title, cover_image_url, image_urls, price, company_id, sower_id, type, category')
-          .is('company_id', null)
-          .not('sower_id', 'is', null)
-          .limit(500);
+        const { data: soloRows } = await fetchSoloSowerProducts(500);
         individualSeeds = ((soloRows as SeedRow[]) || []).map((seed) => {
           if ((seed.type || '').toLowerCase() !== 'music') return seed;
           const generatedCover = generatedCoverByTitle.get(normalizeSongTitle(seed.title));

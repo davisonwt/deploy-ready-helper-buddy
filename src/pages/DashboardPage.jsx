@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react'
 import { useAuth } from '../hooks/useAuth'
 import { Link, useNavigate } from 'react-router-dom'
 import { supabase } from "@/integrations/supabase/client"
+import { fetchDashboardProductsForSowers } from "@/api/products"
 import SeedFlow from '../components/SeedFlow'
 import LivingButton from '../components/LivingButton'
 import { LetItRainPanel } from '../components/LetItRainPanel'
@@ -474,11 +475,7 @@ export default function SeedFlowDashboard() {
       let productBooks = []
       let productSeeds = []
       if (sowerIds.length) {
-        const { data: prods } = await supabase.from('products')
-          .select('id, title, description, type, category, cover_image_url, image_urls, music_genre, music_mood, artist_name, file_url, created_at')
-          .in('sower_id', sowerIds)
-          .order('created_at', { ascending: false })
-          .limit(60)
+        const { data: prods } = await fetchDashboardProductsForSowers(sowerIds, 60)
         for (const p of (prods || [])) {
           if (p.type === 'music') {
             productMusic.push({

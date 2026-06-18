@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
+import { fetchProductBySlugOrId, fetchRelatedProductsBySower } from '@/api/products';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -30,26 +31,13 @@ export default function BulkProductDetailPage() {
     (async () => {
       setLoading(true); setNotFound(false); setActiveImg(0);
       // Try slug first, then id fallback
-      let q = supabase
-        .from('products')
-        .select('*, sowers:sower_id (id, display_name, slug, logo_url, is_verified, user_id)')
-        .neq('status', 'archived')
-        .limit(1);
-      const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(slug ?? '');
-      const { data, error } = await (isUuid ? q.eq('id', slug!) : q.eq('slug', slug!));
+      const { data, error } = await fetchProductBySlugOrId(slug ?? '');
       if (cancelled) return;
       const row = data?.[0];
       if (error || !row) { setNotFound(true); setLoading(false); return; }
       setProduct(row);
 
-      const { data: rel } = await supabase
-        .from('products')
-        .select('*, sowers:sower_id (id, display_name, slug, logo_url, user_id)')
-        .eq('sower_id', row.sower_id)
-        .neq('id', row.id)
-        .neq('status', 'archived')
-        .order('created_at', { ascending: false })
-        .limit(8);
+      const { data: rel } = await fetchRelatedProductsBySower(row.sower_id, row.id, 8);
       if (!cancelled) setRelated(rel ?? []);
       setLoading(false);
     })();

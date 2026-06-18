@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { useInfiniteQuery, useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
+import { fetchProductsPage } from '@/api/products';
 import { useProductBasket } from '@/contexts/ProductBasketContext';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Loader2, Music, Book, Image, Video, TrendingUp } from 'lucide-react';
@@ -121,48 +122,21 @@ export default function ProductsPage() {
     queryKey: ['products', selectedCategory, selectedSort, marketCategoryId, wanderingRole, taggedProductIds],
     initialPageParam: 0,
     queryFn: async ({ pageParam }: { pageParam: number }) => {
-      let query = supabase
-        .from('products')
-        .select(`
-          *,
-          sowers (
-            user_id,
-            display_name,
-            logo_url,
-            is_verified
-          )
-        `)
-        .range(pageParam, pageParam + ITEMS_PER_PAGE - 1);
+      // Tag-intersection short-circuit (preserve original semantics)
+      if (taggedProductIds && taggedProductIds.length === 0) return [];
 
-      // Apply legacy category filter
-      if (selectedCategory !== 'all' && selectedCategory !== 'trending') {
-        query = query.eq('category', selectedCategory);
-      }
+      const useTrending =
+        selectedCategory === 'trending' || selectedSort === 'Trending';
 
-      // Apply marketplace category filter (new taxonomy — stored in same `category` column as UUID)
-      if (marketCategoryId) {
-        query = query.eq('category', marketCategoryId);
-      }
-
-      // Apply Wandering role identity filter (badge bar)
-      if (wanderingRole) {
-        query = query.eq('wandering_role', wanderingRole);
-      }
-
-      // Apply tag-intersection filter
-      if (taggedProductIds) {
-        if (taggedProductIds.length === 0) return [];
-        query = query.in('id', taggedProductIds);
-      }
-
-      // Apply sorting
-      if (selectedCategory === 'trending' || selectedSort === 'Trending') {
-        query = query.order('bestowal_count', { ascending: false });
-      } else {
-        query = query.order('created_at', { ascending: false });
-      }
-
-      const { data, error } = await query;
+      const { data, error } = await fetchProductsPage({
+        from: pageParam,
+        to: pageParam + ITEMS_PER_PAGE - 1,
+        category: selectedCategory,
+        marketCategoryId: marketCategoryId || undefined,
+        wanderingRole: wanderingRole || undefined,
+        taggedProductIds: taggedProductIds ?? null,
+        sort: useTrending ? 'trending' : 'recent',
+      });
       if (error) throw error;
       return data || [];
     },

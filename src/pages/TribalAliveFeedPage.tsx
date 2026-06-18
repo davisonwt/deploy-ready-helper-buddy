@@ -25,6 +25,7 @@ import {
   ChevronLeft, ChevronRight, ChevronDown,
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
+import { fetchActiveProductsForFeed } from '@/api/products';
 import { useAuth } from '@/hooks/useAuth';
 import { useReferralCode } from '@/hooks/useReferralCode';
 import { useToast } from '@/hooks/use-toast';
@@ -199,10 +200,7 @@ export default function TribalAliveFeedPage() {
           supabase.from('seeds')
             .select('id, title, description, images, video_url, gifter_id, category, created_at')
             .order('created_at', { ascending: false }).limit(40),
-          supabase.from('products')
-            .select('id, title, description, type, cover_image_url, image_urls, file_url, price, sower_id, wandering_role, created_at')
-            .eq('status', 'active')
-            .order('created_at', { ascending: false }).limit(80),
+          fetchActiveProductsForFeed(80),
           supabase.from('dj_music_tracks')
             .select('id, track_title, artist_name, file_url, cover_image_url, preview_url, price, dj_id, wandering_role, music_genre, upload_date, created_at, radio_djs!inner(id, user_id, dj_name, avatar_url)')
             .eq('is_public', true)

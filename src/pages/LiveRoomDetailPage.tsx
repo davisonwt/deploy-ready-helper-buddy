@@ -12,6 +12,7 @@ import { useLiveStage } from '@/hooks/useLiveStage';
 import { useAuth } from '@/hooks/useAuth';
 import LiveStageOverlay from '@/components/live/LiveStageOverlay';
 import { supabase } from '@/integrations/supabase/client';
+import { fetchProductMedia } from '@/api/products';
 
 export default function LiveRoomDetailPage() {
   const { seedId } = useParams<{ seedId: string }>();
@@ -57,8 +58,7 @@ export default function LiveRoomDetailPage() {
         setSeedMedia({ images: Array.isArray(seed.images) ? seed.images.filter(Boolean) : [], video: seed.video_url });
         return;
       }
-      const { data: prod } = await supabase
-        .from('products').select('image_urls, cover_image_url').eq('id', seedId).maybeSingle();
+      const { data: prod } = await fetchProductMedia(seedId);
       if (prod) {
         const imgs = (prod.image_urls && prod.image_urls.length ? prod.image_urls : (prod.cover_image_url ? [prod.cover_image_url] : []))
           .filter(Boolean);

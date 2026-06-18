@@ -2,6 +2,7 @@ import { FC, useEffect, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { supabase } from '@/integrations/supabase/client';
+import { fetchTopProductsByFollowers } from '@/api/products';
 import { Trophy, TrendingUp, Heart } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
@@ -25,22 +26,7 @@ export const LeaderboardWidget: FC = () => {
     const fetchLeaders = async () => {
       try {
         // Top Products by followers
-        const { data: products } = await supabase
-          .from('products')
-          .select(`
-            id,
-            title,
-            follower_count,
-            like_count,
-            profiles:user_id (
-              display_name,
-              first_name,
-              last_name,
-              avatar_url
-            )
-          `)
-          .order('follower_count', { ascending: false })
-          .limit(5);
+        const { data: products } = await fetchTopProductsByFollowers(5);
 
         // Top Orchards by followers
         const { data: orchards } = await supabase

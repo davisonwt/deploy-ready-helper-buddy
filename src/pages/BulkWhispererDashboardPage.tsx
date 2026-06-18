@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
+import { fetchWhispererEnabledProducts } from "@/api/products";
 import { useAuth } from "@/hooks/useAuth";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -98,14 +99,7 @@ export default function BulkWhispererDashboardPage() {
       }
 
       // Sowers to market: sowers with active products having whisperer enabled
-      const { data: sowerProds } = await supabase
-        .from("products")
-        .select(
-          "sower_id, whisperer_commission_percent, sowers:sower_id (id, slug, display_name, logo_url, is_verified)",
-        )
-        .eq("has_whisperer", true)
-        .eq("status", "active")
-        .limit(200);
+      const { data: sowerProds } = await fetchWhispererEnabledProducts(200);
 
       const map = new Map<string, SowerSuggestion>();
       (sowerProds || []).forEach((p: any) => {

@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
+import { fetchProductSowerIdsBatch } from "@/api/products";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -70,11 +71,7 @@ export default function BulkDirectoryPage() {
       const ids = data.map((s) => s.id);
       const counts: Record<string, number> = {};
       if (ids.length) {
-        const { data: prods } = await supabase
-          .from("products")
-          .select("sower_id")
-          .in("sower_id", ids)
-          .neq("status", "archived");
+        const { data: prods } = await fetchProductSowerIdsBatch(ids);
         prods?.forEach((p: any) => {
           counts[p.sower_id] = (counts[p.sower_id] || 0) + 1;
         });
