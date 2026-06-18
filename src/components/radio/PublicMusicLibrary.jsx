@@ -66,6 +66,7 @@ export default function PublicMusicLibrary() {
             avatar_url
           )
         `)
+        .eq('radio_eligible', true)
         .order('upload_date', { ascending: false })
 
       if (error) throw error

@@ -147,15 +147,52 @@ serve(async (req) => {
         logStep("Failed to create direct room", { roomError });
         // Continue with purchase but log the error
       } else {
-        // Send track file to direct chat with secure access
+        // Generate a short-lived signed URL so the buyer (and only the buyer)
+        // can download. After it expires the buyer re-fetches via the
+        // get-purchased-track-url edge function from their purchases page.
+        const extractPath = (fileUrl: string): string | null => {
+          if (!fileUrl) return null;
+          try {
+            const u = new URL(fileUrl);
+            const marker = "/storage/v1/object/";
+            const idx = u.pathname.indexOf(marker);
+            if (idx !== -1) {
+              const after = u.pathname.substring(idx + marker.length);
+              const parts = after.split("/").filter(Boolean);
+              const bucketIdx = ["public", "sign", "authenticated"].includes(parts[0]) ? 1 : 0;
+              if (parts[bucketIdx] === "music-tracks") {
+                return decodeURIComponent(parts.slice(bucketIdx + 1).join("/"));
+              }
+            }
+            return null;
+          } catch {
+            return fileUrl.replace(/^\/+/, "").replace(/^public\//, "");
+          }
+        };
+
+        const path = extractPath(track.file_url);
+        let signedUrl: string | null = null;
+        if (path) {
+          const { data: signed, error: signErr } = await supabaseService.storage
+            .from("music-tracks")
+            .createSignedUrl(path, 60 * 60 * 24 * 7); // 7 days
+          if (signErr) {
+            logStep("Failed to sign track url", { signErr, path });
+          } else {
+            signedUrl = signed?.signedUrl ?? null;
+          }
+        } else {
+          logStep("Could not derive storage path from file_url", { file_url: track.file_url });
+        }
+
         const { error: messageError } = await supabaseService
           .from('chat_messages')
           .insert({
             room_id: directRoom,
             sender_id: user.id, // System message from buyer
-            content: `🎵 Music Purchase: ${track.track_title}\n\n⚠️ This file is for your personal use only and cannot be shared with others.\n\nTo download: Click the attachment below to access your purchased MP3 file.`,
+            content: `🎵 Music Purchase: ${track.track_title}\n\n⚠️ This file is for your personal use only and cannot be shared with others.\n\nThe download link below expires in 7 days. If it stops working, open My Purchases to get a fresh link.`,
             message_type: 'file',
-            file_url: track.file_url,
+            file_url: signedUrl ?? '',
             file_name: `${track.track_title}.mp3`,
             file_size: track.file_size,
             file_type: 'audio',
@@ -164,7 +201,9 @@ serve(async (req) => {
               track_id: trackId,
               is_purchased_content: true,
               access_restricted: true,
-              buyer_only: true
+              buyer_only: true,
+              signed_url_expires_at: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
+              resign_function: 'get-purchased-track-url'
             }
           });
 
