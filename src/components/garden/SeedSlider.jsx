@@ -94,19 +94,6 @@ export default function SeedSlider({
           onPark={active.onPark ? () => active.onPark(active) : undefined}
         />
       </div>
-
-      {/* Dots */}
-      <div style={styles.dots}>
-        {cards.map((_, i) => (
-          <button
-            key={i}
-            type="button"
-            onClick={() => setIdx(i)}
-            style={styles.dot(i === safeIdx, accent)}
-            aria-label={`Go to slide ${i + 1}`}
-          />
-        ))}
-      </div>
     </section>
   )
 }
