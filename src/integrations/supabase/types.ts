@@ -2494,6 +2494,8 @@ export type Database = {
           music_mood: string | null
           preview_url: string | null
           price: number | null
+          radio_eligible: boolean
+          radio_opted_in_at: string | null
           tags: string[] | null
           track_title: string
           track_type: string
@@ -2520,6 +2522,8 @@ export type Database = {
           music_mood?: string | null
           preview_url?: string | null
           price?: number | null
+          radio_eligible?: boolean
+          radio_opted_in_at?: string | null
           tags?: string[] | null
           track_title: string
           track_type?: string
@@ -2546,6 +2550,8 @@ export type Database = {
           music_mood?: string | null
           preview_url?: string | null
           price?: number | null
+          radio_eligible?: boolean
+          radio_opted_in_at?: string | null
           tags?: string[] | null
           track_title?: string
           track_type?: string
@@ -3360,6 +3366,24 @@ export type Database = {
             referencedColumns: ["user_id"]
           },
         ]
+      }
+      gosat_radio_roundup_sent: {
+        Row: {
+          sent_at: string
+          track_count: number
+          user_id: string
+        }
+        Insert: {
+          sent_at?: string
+          track_count?: number
+          user_id: string
+        }
+        Update: {
+          sent_at?: string
+          track_count?: number
+          user_id?: string
+        }
+        Relationships: []
       }
       grove_message_queue: {
         Row: {
