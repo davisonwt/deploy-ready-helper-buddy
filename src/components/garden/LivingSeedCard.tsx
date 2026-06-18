@@ -360,15 +360,17 @@ export default function LivingSeedCard({
                 📂 Open
               </LivingButton>
             </Link>
-            <button
-              type="button"
-              onClick={(e) => { e.preventDefault(); e.stopPropagation(); navigate(`${openPath}?action=bestow`); }}
-              className="flex-1 min-w-[70px] inline-flex items-center justify-center rounded-[10px] border border-amber-400/60 bg-gradient-to-r from-amber-500/30 to-yellow-500/25 text-[11px] font-extrabold uppercase tracking-wider text-amber-100 hover:from-amber-500/45 hover:to-yellow-500/40 transition"
-              style={{ height: 38 }}
-              aria-label="Bestow to this seed"
-            >
-              🎁 Bestow
-            </button>
+            {!mine && (
+              <button
+                type="button"
+                onClick={(e) => { e.preventDefault(); e.stopPropagation(); navigate(`${openPath}?action=bestow`); }}
+                className="flex-1 min-w-[70px] inline-flex items-center justify-center rounded-[10px] border border-amber-400/60 bg-gradient-to-r from-amber-500/30 to-yellow-500/25 text-[11px] font-extrabold uppercase tracking-wider text-amber-100 hover:from-amber-500/45 hover:to-yellow-500/40 transition"
+                style={{ height: 38 }}
+                aria-label="Bestow to this seed"
+              >
+                🎁 Bestow
+              </button>
+            )}
             <div className="flex-1 min-w-[70px]">
               <LivingButton
                 variant="live"
