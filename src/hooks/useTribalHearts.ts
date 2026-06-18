@@ -50,16 +50,13 @@ export function useTribalHearts() {
       if (!alive) return;
       setSparksToday(count ?? 0);
 
-      // Load candidates (heterosexual match, not me, active, not already matched)
+      // Load candidates via SECURITY DEFINER RPC that returns only safe
+      // browsing columns (no raw birthdate, no exact lifestyle/timezone).
+      // Server-side filter: opposite-gender, active, not me, member-gated.
       if (mine?.gender && mine?.seeking) {
         const { data: candidates } = await supabase
-          .from('tribal_hearts_profiles')
-          .select('*')
-          .neq('user_id', user.id)
-          .eq('status', 'active')
-          .eq('gender', mine.seeking)
-          .eq('seeking', mine.gender)
-          .limit(40);
+          .rpc('get_hearts_browse', { p_limit: 40, p_offset: 0 });
+
 
         // Filter out anyone we've already matched/sparked
         const { data: existing } = await supabase
