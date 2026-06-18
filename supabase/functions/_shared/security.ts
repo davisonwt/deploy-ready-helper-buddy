@@ -12,9 +12,13 @@ export function getSecureCorsHeaders(req: Request): Record<string, string> {
     "https://sow2growapp.com",
     "https://www.sow2growapp.com",
     "https://app.sow2grow.com",
-    // Add staging if needed
-    // "https://staging.sow2growapp.com",
+    // Local dev
+    "http://localhost:5173",
+    "http://localhost:3000",
   ];
+  // Lovable preview + published hosts (e.g. id-preview--<uuid>.lovable.app,
+  // <project>.lovable.app, *.lovable.dev). Match scheme + host only.
+  const lovablePattern = /^https:\/\/[a-z0-9-]+(?:--[a-z0-9-]+)?\.lovable\.(?:app|dev)$/i;
 
   // For webhooks (no origin), return minimal headers
   if (!origin) {
@@ -23,8 +27,10 @@ export function getSecureCorsHeaders(req: Request): Record<string, string> {
     };
   }
 
-  // Check if origin is allowed
-  if (origin && allowedOrigins.includes(origin)) {
+  const isAllowed =
+    allowedOrigins.includes(origin) || lovablePattern.test(origin);
+
+  if (isAllowed) {
     return {
       "Access-Control-Allow-Origin": origin,
       "Access-Control-Allow-Methods": "POST, OPTIONS",
@@ -40,6 +46,7 @@ export function getSecureCorsHeaders(req: Request): Record<string, string> {
     "Content-Type": "application/json",
   };
 }
+
 
 /**
  * Validate payment amount
