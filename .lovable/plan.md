@@ -1,89 +1,96 @@
+# Plan: Music preview/delivery flow + premium-room lockdown
 
-# Security Re-scan + `premium-room` Investigation
-
-## 1. Re-scan results — all prior CRITICAL/HIGH still resolved
-
-Just ran both `security--run_security_scan` (204 findings) and `supabase--linter` (199 issues). **Every finding is level=warn — zero errors, zero criticals.** No regressions.
-
-| Item | Status |
-|---|---|
-| C1 `wallet_balances` — owner write policies removed | ✅ in place |
-| C2 `sower_balances` / `sower_payouts` — user UPDATE revoked | ✅ |
-| C3 `product_bestowals` — tightened policies | ✅ |
-| C4 `create-binance-pay-order` — server-side `pocket_price × pocketsCount ±0.01` validation | ✅ live in `supabase/functions/create-binance-pay-order/index.ts` |
-| H1 `bestowals` policies | ✅ |
-| H2 `usdc_transactions` | ✅ |
-| H3 `organization_wallets` | ✅ |
-| H4 `profiles` | ✅ |
-| M1 `study-uploads` bucket private | ✅ confirmed `storage.buckets.public = false` |
-| M3 `tribal_hearts_profiles` browse via `get_hearts_browse` RPC | ✅ |
-| M4 `user_wallets` policy consolidation | ✅ |
-| M5 `seller_credentials` self-verify guard | ✅ |
-| L3 CORS Lovable-preview regex | ✅ |
-
-### New issues vs the original audit
-
-- **NEW — paywall bypass risk on `premium-room` bucket** (see §2 below). Only material new finding.
-- All other warns are the previously-acknowledged `SECURITY DEFINER`-callable-by-anon/authenticated noise (~200 entries) — intentional RPCs (`has_role`, `get_hearts_browse`, `update_wallet_balance_secure`, password-reset helpers, audit helpers). No change recommended.
-- **L1 leaked-password protection** still requires a manual toggle in Supabase Auth dashboard (unchanged).
+You answered three things. Two are straightforward. One (#3) changes the safest order of operations, so I'm asking before doing anything.
 
 ---
 
-## 2. `premium-room` bucket investigation
+## Your answers, restated
 
-### What's in it
+1. **Music flow you want:**
+   - Anyone can play a **40-second preview** of a song (no payment).
+   - To get the full file, a listener must **bestow** the song (or full album).
+   - On successful bestowal, the full file is **delivered as a 1-on-1 ChatApp message** to the buyer, where they can download it.
+   - Separately, the **sower can opt-in** each song/album to "available for radio." Opted-in tracks appear in a pool that radio hosts pick from.
 
-`storage.buckets`: `id=premium-room`, **`public=true`**.
+2. **Premium-room paywall bypass:** full fix (private bucket + signed URLs gated by purchase check, not just a stop-gap).
 
-Sampled `storage.objects` rows (multiple users, Nov 2025 → Mar 2026):
+3. **You've never seen "Create Premium Room" in the app.** But the code exists (`src/pages/CreatePremiumRoomPage.jsx`, `PremiumRoomForm`, tables `premium_rooms` / `premium_item_purchases` / `premium_room_access`, and 100+ files live in the `premium-room` storage bucket from multiple users between Nov 2025 and Mar 2026).
 
-```text
-covers/<user_uuid>/<unix-ms>.jpg|.png        ← cover images
-products/<user_uuid>/<unix-ms>.MOV|.mp3      ← product media (video / audio)
-```
+---
 
-Folder layout (`covers/` + `products/` per user) and content types (sellable MOV/MP3) match the **premium content sale flow** (tables `premium_rooms`, `premium_item_purchases`, `premium_room_access`).
+## Why #3 matters before I change anything
 
-### Who writes / reads it
+Files are in the bucket → **someone is uploading**. Either:
+- (a) It's reachable from a page/route you forgot about or that's hidden behind a role/flag, **or**
+- (b) It was reachable in a past version and the uploads are stale, **or**
+- (c) A different app/admin tool writes to it.
 
-- **Zero references** to the literal string `premium-room` anywhere in `src/` or `supabase/functions/`. So uploads aren't happening through the current repo — likely an older path, Supabase Studio, or external uploader. Worth confirming with you which UI is producing these uploads.
-- Storage RLS policies on `storage.objects` for this bucket:
+If I flip the bucket private + add signed-URL gating before knowing which, I could either:
+- break a live seller flow you didn't know existed, or
+- lock down dead data and waste effort.
 
-```text
-"Allow authenticated access to premium-room"   cmd=ALL    USING bucket_id='premium-room'   ← NO owner / payment check
-"Authenticated upload premium-room"            INSERT     WITH CHECK owner-folder match
-"Authenticated update premium-room"            UPDATE     USING owner-folder match
-"Authenticated delete premium-room"            DELETE     USING owner-folder match
-```
+**I need to investigate first** (read-only) and report back. No DB or storage changes until you see what I find.
 
-INSERT/UPDATE/DELETE are correctly scoped to the uploader's own folder. **SELECT is wide-open to any authenticated user.** And because `public=true`, **anyone — no auth at all — can fetch any file directly** via:
+---
 
-```text
-https://zuwkgasbkpjlxzsjzumu.supabase.co/storage/v1/object/public/premium-room/products/<uid>/<filename>
-```
+## Proposed execution order
 
-### Finding — Paywall bypass (HIGH)
+### Step 0 — Investigate premium-room (read-only, no changes)
+- Search the whole repo (not just `src/`) for routes/links pointing to `/create-premium-room` or `PremiumRoomForm`.
+- Check `App.tsx` / router config to see if the route is mounted, and behind what guard.
+- Query `premium_rooms` and `premium_item_purchases` for row counts + latest `created_at` to see if it's live or dormant.
+- Report back to you: "Here's what's using it / nothing is using it / it's behind X role." **Then** you decide.
 
-If any `products/*.MOV` / `*.mp3` files are sold as premium content, **a non-paying user who obtains or guesses a URL can download the full file without ever triggering the purchase/access check**. Filenames are predictable Unix-ms timestamps (e.g. `1764356355631.MOV`), making URL guessing more feasible than random UUIDs. Nothing on the Supabase side links storage reads to `premium_item_purchases` / `premium_room_access`.
+### Step 1 — Premium-room lockdown (full fix), only after Step 0
+1. Flip `premium-room` bucket to `public=false`.
+2. Drop the wide-open `SELECT` policy on `storage.objects` for this bucket.
+3. New SELECT policy: owner OR matching `premium_item_purchases`/`premium_room_access` row OR admin.
+4. New edge function `get-premium-room-asset`: verifies purchase/access, returns a short-TTL signed URL.
+5. Update `PremiumRoomForm` and any consumer to fetch via the edge function instead of the public URL.
 
-Whether this is a real-money exposure depends on whether `products/` are the same assets gated by `premium_rooms` / `premium_item_purchases`. The bucket name and content strongly suggest yes.
+### Step 2 — Music: 40-second preview + bestowal-gated full delivery
+**Schema (one migration):**
+- `dj_music_tracks`: add `preview_url text` (40s clip), `radio_eligible boolean default false`, `radio_approved_at timestamptz`.
+- `products` (music license rows already exist via `music_purchases`): no new columns needed; we'll use existing `music_purchases.payment_status='completed'` as the gate.
+- New bucket `music-previews` (public, ≤40s clips only) + keep full-quality files in a private bucket `music-full` (migrate existing if needed — TBD in Step 0-style audit of current music storage).
 
-### Proposed fix (NOT applied — awaiting your go-ahead)
+**Frontend:**
+- `RadioMode.tsx` and any music player: play from `preview_url` for non-purchasers; full `file_url` only if `music_purchases` row exists.
+- Upload flow: when a sower uploads a song/album, auto-generate a 40s preview (server-side via edge function using ffmpeg in Deno, OR client-side via Web Audio API — I'll pick whichever you prefer in Step 0).
+- Upload form: add **"Allow this on the radio"** checkbox → sets `radio_eligible=true`.
 
-1. **Confirm** with you that `premium-room/products/*` is paid/gated content.
-2. Flip bucket to private via `supabase--storage_update_bucket(name="premium-room", public=false)`.
-3. Drop `"Allow authenticated access to premium-room"`. Replace SELECT with a policy that allows reads only when:
-   - `auth.uid()::text = (storage.foldername(name))[1]` (owner), OR
-   - caller has a matching row in `premium_item_purchases` / `premium_room_access` for that asset, OR
-   - caller has `admin` role.
-4. Frontend fetches via **signed URLs** (`createSignedUrl`, short TTL ~5–15 min) issued by an edge function that first verifies payment/access.
-5. Optional hardening: future uploads use random UUIDs instead of timestamps so legacy URLs aren't guessable during transition.
-6. Audit the uploader path (not in repo) so flipping private doesn't break a live seller flow.
+**Bestowal → ChatApp delivery:**
+- Extend the existing bestowal/purchase webhook (the same one that writes `music_purchases.payment_status='completed'`) to:
+  1. Create or fetch a 1-on-1 chat room between buyer and sower.
+  2. Generate a signed URL for the full file (long TTL, e.g. 7 days, or regenerable on demand).
+  3. Insert a `chat_messages` row with `message_type='music_delivery'` containing track metadata + download link.
+- Buyer opens ChatApp → sees message → downloads.
 
-### Questions before I implement
+**Radio host picker:**
+- New page or admin section: list `dj_music_tracks WHERE radio_eligible=true AND radio_approved_at IS NOT NULL`.
+- Hosts add to their `dj_playlists` from this pool.
 
-- (a) Are `premium-room/products/*` files actually the assets sold through `premium_rooms` / `premium_item_purchases`? Or is "premium-room" repurposed for something else?
-- (b) Stop-gap (private + tightened SELECT only) or full fix (also build signed-URL edge function + update consuming UI)? Per scope-lock I won't start the broader option without explicit yes.
-- (c) Since the uploader isn't in the current `src/`, do you know which app/page uploads here so the read path can be verified before changing anything?
+### Step 3 — Verify
+- Run `security--run_security_scan` again, confirm premium-room finding is gone and no new criticals.
+- Manually test: non-purchaser plays preview (works), tries full URL (blocked), bestows → receives chat message → downloads (works).
 
-No code or DB changes have been made.
+---
+
+## Scope I am NOT touching unless you say so
+- Existing music already uploaded without previews → migration strategy TBD (regenerate previews? leave as-is?).
+- Album bestowals: I'll mirror song flow but ask before changing `download-album` edge function behavior.
+- Any other unrelated security warns from the scanner.
+
+---
+
+## What I need from you to proceed
+
+**(A) Confirm I should start with Step 0 (read-only investigation of premium-room) and report back before any DB/storage changes.**
+
+**(B) For the 40s preview generation, pick one:**
+- Server-side (ffmpeg in an edge function) — runs once at upload, accurate, slightly more setup.
+- Client-side (Web Audio API in the browser) — simpler, but the user's browser does the work.
+
+**(C) Confirm: full song file is delivered ONLY via the 1-on-1 chat message — not also exposed in any "My Library" download page. Or do you want both?**
+
+Once you answer A/B/C, I execute in order and check in after Step 0 before any destructive changes.
