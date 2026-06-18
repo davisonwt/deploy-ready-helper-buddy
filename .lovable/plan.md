@@ -71,7 +71,7 @@ Whether this is a real-money exposure depends on whether `products/` are the sam
 ### Proposed fix (NOT applied — awaiting your go-ahead)
 
 1. **Confirm** with you that `premium-room/products/*` is paid/gated content.
-2. Flip bucket to private: `UPDATE storage.buckets SET public=false WHERE id='premium-room'`.
+2. Flip bucket to private via `supabase--storage_update_bucket(name="premium-room", public=false)`.
 3. Drop `"Allow authenticated access to premium-room"`. Replace SELECT with a policy that allows reads only when:
    - `auth.uid()::text = (storage.foldername(name))[1]` (owner), OR
    - caller has a matching row in `premium_item_purchases` / `premium_room_access` for that asset, OR
