@@ -9,6 +9,7 @@ import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { Play, Pause, Download, ShoppingCart, Sparkles, CheckCircle2, Edit, Trash2, Loader2 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { supabase } from '@/integrations/supabase/client';
+import { deleteProduct } from '@/api/products';
 import { toast } from 'sonner';
 import { SocialActionButtons } from '@/components/social/SocialActionButtons';
 import { SowerAnalyticsTooltip } from '@/components/social/SowerAnalyticsTooltip';

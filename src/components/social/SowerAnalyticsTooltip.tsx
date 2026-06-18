@@ -1,5 +1,6 @@
 import { FC, useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
+import { fetchProductTitle } from '@/api/products';
 import { Users, TrendingUp, Heart } from 'lucide-react';
 import { Card } from '@/components/ui/card';
 
