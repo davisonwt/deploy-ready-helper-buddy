@@ -1232,49 +1232,59 @@ export default function SeedFlowDashboard() {
             </div>
 
             {/* ── Your own seeds — vertical scrollable feed, one per row ── */}
-            {mineCards.length === 0 ? (
-              <div style={{
-                padding: 24, textAlign: 'center',
-                background: '#0a0f1a', border: '1px solid rgba(255,255,255,0.06)',
-                borderRadius: 14, color: '#64748b', fontSize: 13, fontStyle: 'italic',
-              }}>
-                You haven't planted any seeds yet — tap "Plant Seed" below to start.
-              </div>
-            ) : (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-                {mineCards.map((c) => (
-                  <LivingSeedCard
-                    key={c.id}
-                    seedId={c.liveKey || c.rawId || c.id}
-                    title={c.title}
-                    subtitle={c.subtitle}
-                    image={c.image}
-                    images={c.images}
-                    openPath={c.openPath}
-                    mediaUrl={c.mediaUrl}
-                    mediaKind={c.mediaKind}
-                    badge={c.badge}
-                    mine={c.mine}
-                    whispererSharePct={c.whispererSharePct}
-                    onEdit={c.onEdit ? () => c.onEdit(c) : undefined}
-                    onDelete={c.onDelete ? () => c.onDelete(c) : undefined}
-                    onRepost={c.onRepost ? () => c.onRepost(c) : undefined}
-                    onPark={c.onPark ? () => c.onPark(c) : undefined}
-                  />
-                ))}
-              </div>
-            )}
+            {(() => {
+              const ownCards = [
+                ...seedSliderCards,
+                ...myOrchards.map(o => buildOrchardCard(o, ownerHandlers)),
+                ...musicSliderCards,
+                ...bookSliderCards,
+                ...videoSliderCards,
+              ]
+              if (ownCards.length === 0) {
+                return (
+                  <div style={{
+                    padding: 24, textAlign: 'center',
+                    background: '#0a0f1a', border: '1px solid rgba(255,255,255,0.06)',
+                    borderRadius: 14, color: '#64748b', fontSize: 13, fontStyle: 'italic',
+                  }}>
+                    You haven't planted any seeds yet — tap "Plant Seed" below to start.
+                  </div>
+                )
+              }
+              return (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+                  {ownCards.map((c) => (
+                    <LivingSeedCard
+                      key={c.id}
+                      seedId={c.liveKey || c.rawId || c.id}
+                      title={c.title}
+                      subtitle={c.subtitle}
+                      image={c.image}
+                      images={c.images}
+                      openPath={c.openPath}
+                      mediaUrl={c.mediaUrl}
+                      mediaKind={c.mediaKind}
+                      badge={c.badge}
+                      mine={c.mine}
+                      whispererSharePct={c.whispererSharePct}
+                      onEdit={c.onEdit ? () => c.onEdit(c) : undefined}
+                      onDelete={c.onDelete ? () => c.onDelete(c) : undefined}
+                      onRepost={c.onRepost ? () => c.onRepost(c) : undefined}
+                      onPark={c.onPark ? () => c.onPark(c) : undefined}
+                    />
+                  ))}
+                </div>
+              )
+            })()}
 
             {/* Bestowed orchards — still shown as a rotating slider since they're not "yours" */}
-            {bestowedCards.length > 0 && (
+            {bestowedOrchards.length > 0 && (
               <div style={{ marginTop: 18 }}>
                 <SeedSlider
                   title="Tending in the Tribe"
                   emoji="💚"
                   accent="#4ade80"
-                  cards={[
-                    ...bestowedOrchards.map(o => buildOrchardCard(o, {}, { bestowed: true })),
-                  ]}
+                  cards={bestowedOrchards.map(o => buildOrchardCard(o, {}, { bestowed: true }))}
                   emptyHint=""
                 />
               </div>
