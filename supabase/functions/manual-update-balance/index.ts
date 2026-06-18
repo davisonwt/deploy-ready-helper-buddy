@@ -76,6 +76,23 @@ serve(async (req) => {
       return jsonResponse({ error: "Authentication failed" }, 401, req);
     }
 
+    // Restrict to admin/gosat roles only — regular users must rely on
+    // webhook-driven balance updates (binance-pay-webhook, refresh-binance-wallet-balance).
+    const serviceClientForRole = createClient(supabaseUrl, serviceRoleKey, {
+      auth: { persistSession: false },
+    });
+    const { data: roleRows, error: roleError } = await serviceClientForRole
+      .from("user_roles")
+      .select("role")
+      .eq("user_id", userData.user.id);
+    if (roleError) {
+      return jsonResponse({ error: "Authorization check failed" }, 500, req);
+    }
+    const roles = (roleRows ?? []).map((r: { role: string }) => r.role);
+    if (!roles.includes("admin") && !roles.includes("gosat")) {
+      return jsonResponse({ error: "Forbidden: admin or gosat role required" }, 403, req);
+    }
+
     const body = await req.json();
     const parsed = requestSchema.safeParse(body);
 
