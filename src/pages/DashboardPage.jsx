@@ -9,6 +9,7 @@ import { LetItRainPanel } from '../components/LetItRainPanel'
 import { useSacredNow } from '../hooks/useSacredNow'
 import { BeadPopup } from '../components/watch/BeadPopup'
 import SeedSlider from '../components/garden/SeedSlider'
+import LivingSeedCard from '../components/garden/LivingSeedCard'
 import {
   buildSeedCard, buildOrchardCard, buildMusicCard,
   buildBookCard, buildVideoCard, deleteRow,
