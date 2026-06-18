@@ -619,14 +619,6 @@ Meditate on the significance of this day in the Creator's calendar. What does th
                 <Download className="h-4 w-4 mr-2" />
                 Export PDF
               </Button>
-              <Button onClick={shareToRemnantWall} variant="outline" size="sm">
-                <Share2 className="h-4 w-4 mr-2" />
-                Share to Wall
-              </Button>
-              <Button onClick={shareToS2GChat} variant="outline" size="sm">
-                <MessageSquare className="h-4 w-4 mr-2" />
-                Share to S2G Chatapp
-              </Button>
             </div>
 
             {/* Tabs for all features */}
