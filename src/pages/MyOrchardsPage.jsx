@@ -101,7 +101,7 @@ export default function MyOrchardsPage() {
   // ── Fetch all 5 categories of user's content for the My Garden sections ──
   const fetchAllMyContent = async () => {
     if (!user) return
-    const [seedsRes, orchardsRes, booksRes, vidsRes, djsRes] = await Promise.all([
+    const [seedsRes, orchardsRes, booksRes, vidsRes, djsRes, sowerRes] = await Promise.all([
       supabase.from('seeds').select('id, title, description, category, images, video_url, created_at')
         .eq('gifter_id', user.id).order('created_at', { ascending: false }).limit(50),
       supabase.from('orchards').select('id, title, description, category, images, orchard_type, created_at')
@@ -111,21 +111,46 @@ export default function MyOrchardsPage() {
       supabase.from('community_videos').select('id, title, description, thumbnail_url, video_url, created_at')
         .eq('uploader_id', user.id).order('created_at', { ascending: false }).limit(50),
       supabase.from('radio_djs').select('id').eq('user_id', user.id),
+      supabase.from('sowers').select('id').eq('user_id', user.id).maybeSingle(),
     ])
     setMySeeds(seedsRes.data || [])
     setMyOrchards(orchardsRes.data || [])
     setMyBooks(booksRes.data || [])
     setMyVideos(vidsRes.data || [])
+
+    // Music = DJ tracks ∪ product-music rows (uploaded as products)
     const djIds = (djsRes.data || []).map(d => d.id)
-    if (djIds.length) {
-      const { data } = await supabase.from('dj_music_tracks')
-        .select('id, track_title, genre, file_url, cover_image_url, music_genre, music_mood, created_at')
-        .in('dj_id', djIds).order('created_at', { ascending: false }).limit(50)
-      setMyMusic(data || [])
-    } else {
-      setMyMusic([])
-    }
+    const djTracksP = djIds.length
+      ? supabase.from('dj_music_tracks')
+          .select('id, track_title, genre, file_url, cover_image_url, music_genre, music_mood, created_at')
+          .in('dj_id', djIds).order('created_at', { ascending: false }).limit(100)
+      : Promise.resolve({ data: [] })
+    const sowerId = sowerRes?.data?.id
+    const prodMusicP = sowerId
+      ? supabase.from('products')
+          .select('id, title, music_genre, music_mood, file_url, cover_image_url, image_urls, created_at')
+          .eq('sower_id', sowerId).eq('type', 'music')
+          .order('created_at', { ascending: false }).limit(200)
+      : Promise.resolve({ data: [] })
+    const [djTracks, prodMusic] = await Promise.all([djTracksP, prodMusicP])
+    const djRows = (djTracks.data || []).map(t => ({ ...t, __table: 'dj_music_tracks' }))
+    const prodRows = (prodMusic.data || []).map(p => ({
+      id: p.id,
+      track_title: p.title,
+      music_genre: p.music_genre,
+      music_mood: p.music_mood,
+      file_url: p.file_url,
+      cover_image_url: p.cover_image_url,
+      image_urls: p.image_urls,
+      created_at: p.created_at,
+      __table: 'products',
+    }))
+    const merged = [...djRows, ...prodRows].sort(
+      (a, b) => new Date(b.created_at) - new Date(a.created_at)
+    )
+    setMyMusic(merged)
   }
+
 
   useEffect(() => { fetchAllMyContent() }, [user])
 
