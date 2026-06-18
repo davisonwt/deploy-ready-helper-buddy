@@ -149,7 +149,7 @@ export const createOrchard = async (
 ) => {
   const { data, error } = await supabase
     .from('orchards')
-    .insert([{ ...orchardData, user_id: userId }])
+    .insert([{ ...orchardData, user_id: userId }] as any)
     .select()
     .single();
 
@@ -163,7 +163,7 @@ export const updateOrchard = async (
   userId: string,
   isGosat: boolean
 ) => {
-  let query = supabase.from('orchards').update(updates).eq('id', id);
+  let query = supabase.from('orchards').update(updates as any).eq('id', id);
   if (!isGosat) {
     query = query.eq('user_id', userId);
   }
