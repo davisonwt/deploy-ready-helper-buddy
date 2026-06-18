@@ -17,6 +17,7 @@ import {
 } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
+import { supabase } from '@/integrations/supabase/client';
 
 export function QuickProfileSetup({ onComplete, onClose }) {
   const [step, setStep] = useState(1); // 1: Basic, 2: Photo, 3: Complete
