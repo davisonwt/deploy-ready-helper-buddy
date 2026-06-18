@@ -39,6 +39,12 @@ const TYPE_CONFIG = {
   full_value: { color: '#10b981', bg: 'rgba(34,211,238,0.15)', border: 'rgba(34,211,238,0.35)', emoji: '🌱', label: 'Single Seed' },
 }
 
+const normalizeSongTitle = (title) =>
+  (title || '')
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, ' ')
+    .trim()
+
 function UrgencyBar({ percentage }) {
   const isHot = percentage >= 70
   const isWarm = percentage >= 40
@@ -302,6 +308,11 @@ export default function BrowseOrchardsPage() {
           const s = sowerMap.get(sowerId)
           return s?.display_name || sowerName(profileMap.get(s?.user_id)) || 'Anonymous Sower'
         }
+        const musicCoverByTitle = new Map()
+        ;(musicRes.data || []).forEach(m => {
+          const key = normalizeSongTitle(m.track_title)
+          if (key && m.cover_image_url) musicCoverByTitle.set(key, m.cover_image_url)
+        })
         const seedsFromTable = (seedsRes.data || []).map(s => ({
           id: `seed-${s.id}`, title: s.title, image: (s.images && s.images[0]) || null, emoji: '🌱',
           sower: sowerName(profileMap.get(s.gifter_id)), link: '/orchard-alive', created_at: s.created_at,
@@ -312,7 +323,7 @@ export default function BrowseOrchardsPage() {
         }))
         const productRows = productsRes.data || []
         const musicFromProducts = productRows.filter(p => p.type === 'music').map(p => ({
-          id: `prod-${p.id}`, title: p.title, image: p.cover_image_url || (p.image_urls && p.image_urls[0]) || null, emoji: '🎵',
+          id: `prod-${p.id}`, title: p.title, image: p.cover_image_url || musicCoverByTitle.get(normalizeSongTitle(p.title)) || null, emoji: '🎵',
           sower: p.artist_name || nameFromSower(p.sower_id), link: '/music-library', created_at: p.created_at,
         }))
         const booksFromProducts = productRows.filter(p => p.type === 'ebook' || p.type === 'book').map(p => ({
