@@ -250,7 +250,7 @@ export default function BrowseOrchardsPage() {
   const [selectedRole, setSelectedRole] = useState("all")
   const [selectedType, setSelectedType] = useState("all")
   const [sortBy, setSortBy] = useState("newest")
-  const [activeTab, setActiveTab] = useState('orchards')
+  const [activeTab, setActiveTab] = useState('seeds')
   const [tribeSeeds, setTribeSeeds] = useState([])
   const [music, setMusic] = useState([])
   const [books, setBooks] = useState([])
