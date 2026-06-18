@@ -234,7 +234,7 @@ export function useLiveStreaming() {
   const getAvailableStreams = useCallback(async (filters = {}) => {
     try {
       let query = supabase
-        .from('live_streams')
+        .from('public_live_streams')
         .select('*')
         .eq('status', 'live')
         .order('started_at', { ascending: false });

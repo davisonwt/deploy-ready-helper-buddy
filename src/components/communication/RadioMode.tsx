@@ -62,7 +62,7 @@ export const RadioMode: React.FC = () => {
 
       // Load live streams
       const { data: streamsData } = await supabase
-        .from('live_streams')
+        .from('public_live_streams' as any)
         .select('*')
         .eq('status', 'live')
         .order('started_at', { ascending: false })
