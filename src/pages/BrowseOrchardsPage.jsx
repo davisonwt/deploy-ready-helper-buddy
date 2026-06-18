@@ -240,7 +240,7 @@ export default function BrowseOrchardsPage() {
     ;(async () => {
       setMediaLoading(true)
       try {
-        const [seedsRes, orchardSeedsRes, musicRes, booksRes, videosRes] = await Promise.all([
+        const [seedsRes, orchardSeedsRes, musicRes, booksRes, videosRes, productsRes] = await Promise.all([
           supabase.from('seeds')
             .select('id, title, description, images, gifter_id, created_at')
             .order('created_at', { ascending: false })
@@ -266,6 +266,11 @@ export default function BrowseOrchardsPage() {
             .in('status', ['approved', 'published'])
             .order('created_at', { ascending: false })
             .limit(60),
+          // Also include all sower products (music/books/etc. uploaded as products)
+          supabase.from('products')
+            .select('id, title, description, type, cover_image_url, image_urls, sower_id, artist_name, created_at')
+            .order('created_at', { ascending: false })
+            .limit(200),
         ])
         if (cancelled) return
         const djIds = (musicRes.data || []).map(m => m.dj_id).filter(Boolean)
@@ -273,12 +278,19 @@ export default function BrowseOrchardsPage() {
           ? await supabase.from('radio_djs').select('id, user_id, dj_name, avatar_url').in('id', djIds)
           : { data: [] }
         const djMap = new Map((djs || []).map(d => [d.id, d]))
+        const sowerIds = Array.from(new Set((productsRes.data || []).map(p => p.sower_id).filter(Boolean)
+          .concat((booksRes.data || []).map(b => b.sower_id).filter(Boolean))))
+        const { data: sowersRows } = sowerIds.length
+          ? await supabase.from('sowers').select('id, user_id, display_name').in('id', sowerIds)
+          : { data: [] }
+        const sowerMap = new Map((sowersRows || []).map(s => [s.id, s]))
         const profileIds = Array.from(new Set([
           ...(seedsRes.data || []).map(s => s.gifter_id),
           ...(orchardSeedsRes.data || []).flatMap(o => [o.user_id, o.profile_id]),
           ...(booksRes.data || []).flatMap(b => [b.user_id, b.sower_id]),
           ...(videosRes.data || []).flatMap(v => [v.uploader_id, v.uploader_profile_id]),
           ...(djs || []).map(d => d.user_id),
+          ...(sowersRows || []).map(s => s.user_id),
         ].filter(Boolean)))
         const { data: profiles } = profileIds.length
           ? await supabase.from('profiles').select('id, user_id, first_name, last_name, display_name').or(`id.in.(${profileIds.join(',')}),user_id.in.(${profileIds.join(',')})`)
@@ -286,6 +298,10 @@ export default function BrowseOrchardsPage() {
         const profileMap = new Map()
         ;(profiles || []).forEach(p => { if (p.id) profileMap.set(p.id, p); if (p.user_id) profileMap.set(p.user_id, p) })
         const sowerName = (p) => p?.display_name || `${p?.first_name || ''} ${p?.last_name || ''}`.trim() || 'Anonymous Sower'
+        const nameFromSower = (sowerId) => {
+          const s = sowerMap.get(sowerId)
+          return s?.display_name || sowerName(profileMap.get(s?.user_id)) || 'Anonymous Sower'
+        }
         const seedsFromTable = (seedsRes.data || []).map(s => ({
           id: `seed-${s.id}`, title: s.title, image: (s.images && s.images[0]) || null, emoji: '🌱',
           sower: sowerName(profileMap.get(s.gifter_id)), link: '/orchard-alive', created_at: s.created_at,
@@ -294,24 +310,44 @@ export default function BrowseOrchardsPage() {
           id: `orch-${o.id}`, title: o.title, image: (o.images && o.images[0]) || null, emoji: '🌳',
           sower: sowerName(profileMap.get(o.user_id) || profileMap.get(o.profile_id)), link: `/orchard/${o.id}`, created_at: o.created_at,
         }))
-        const musicItems = (musicRes.data || []).map(m => ({
-          id: m.id, title: m.track_title, image: m.cover_image_url || null, emoji: '🎵',
-          sower: m.artist_name || djMap.get(m.dj_id)?.dj_name || 'Tribe Music', link: '/music-library', created_at: m.upload_date || m.created_at,
+        const productRows = productsRes.data || []
+        const musicFromProducts = productRows.filter(p => p.type === 'music').map(p => ({
+          id: `prod-${p.id}`, title: p.title, image: p.cover_image_url || (p.image_urls && p.image_urls[0]) || null, emoji: '🎵',
+          sower: p.artist_name || nameFromSower(p.sower_id), link: '/music-library', created_at: p.created_at,
         }))
-        const bookItems = (booksRes.data || []).map(b => ({
-          id: b.id, title: b.title, image: b.cover_image_url || (b.image_urls && b.image_urls[0]) || null, emoji: '📚',
-          sower: sowerName(profileMap.get(b.user_id) || profileMap.get(b.sower_id)), link: '/my-s2g-library', created_at: b.created_at,
+        const booksFromProducts = productRows.filter(p => p.type === 'ebook' || p.type === 'book').map(p => ({
+          id: `prod-${p.id}`, title: p.title, image: p.cover_image_url || (p.image_urls && p.image_urls[0]) || null, emoji: '📚',
+          sower: nameFromSower(p.sower_id), link: '/my-s2g-library', created_at: p.created_at,
         }))
+        const seedsFromProducts = productRows.filter(p => !['music','ebook','book'].includes(p.type)).map(p => ({
+          id: `prod-${p.id}`, title: p.title, image: p.cover_image_url || (p.image_urls && p.image_urls[0]) || null, emoji: '🌱',
+          sower: nameFromSower(p.sower_id), link: '/products', created_at: p.created_at,
+        }))
+        const musicItems = [
+          ...(musicRes.data || []).map(m => ({
+            id: m.id, title: m.track_title, image: m.cover_image_url || null, emoji: '🎵',
+            sower: m.artist_name || djMap.get(m.dj_id)?.dj_name || 'Tribe Music', link: '/music-library', created_at: m.upload_date || m.created_at,
+          })),
+          ...musicFromProducts,
+        ]
+        const bookItems = [
+          ...(booksRes.data || []).map(b => ({
+            id: b.id, title: b.title, image: b.cover_image_url || (b.image_urls && b.image_urls[0]) || null, emoji: '📚',
+            sower: sowerName(profileMap.get(b.user_id) || profileMap.get(b.sower_id)), link: '/my-s2g-library', created_at: b.created_at,
+          })),
+          ...booksFromProducts,
+        ]
         const videoItems = (videosRes.data || [])
           .filter(v => !String(v.title || '').toLowerCase().includes('broadcast') && !String(v.description || '').toLowerCase().includes('auto-imported from orchard upload'))
           .map(v => ({
           id: v.id, title: v.title, image: v.thumbnail_url || null, emoji: '🎬',
           sower: sowerName(profileMap.get(v.uploader_id) || profileMap.get(v.uploader_profile_id)), link: '/community-videos', created_at: v.created_at,
         }))
-        setTribeSeeds([...seedsFromTable, ...seedsFromOrchards, ...musicItems, ...bookItems, ...videoItems].sort((a, b) => new Date(b.created_at) - new Date(a.created_at)))
+        setTribeSeeds([...seedsFromTable, ...seedsFromOrchards, ...seedsFromProducts, ...musicItems, ...bookItems, ...videoItems].sort((a, b) => new Date(b.created_at) - new Date(a.created_at)))
         setMusic(musicItems)
         setBooks(bookItems)
         setVideos(videoItems)
+
       } catch (e) {
         console.error('media load error', e)
       } finally {
