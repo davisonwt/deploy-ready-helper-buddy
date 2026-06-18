@@ -94,6 +94,7 @@ export default function TierSeedFlowPage({ tier }: Props) {
         const { data: soloRows } = await fetchSoloSowerProducts(500);
         individualSeeds = ((soloRows as SeedRow[]) || []).map((seed) => {
           if ((seed.type || '').toLowerCase() !== 'music') return seed;
+          if (seed.cover_image_url || (Array.isArray(seed.image_urls) && seed.image_urls[0])) return seed;
           const generatedCover = generatedCoverByTitle.get(normalizeSongTitle(seed.title));
           return generatedCover ? { ...seed, cover_image_url: generatedCover } : seed;
         });
@@ -349,7 +350,9 @@ export default function TierSeedFlowPage({ tier }: Props) {
                             className="aspect-square bg-muted"
                             style={{
                               backgroundImage: (() => {
-                                const img = s.cover_image_url || (s.image_urls && s.image_urls[0]);
+                                const img = (s.type || '').toLowerCase() === 'music'
+                                  ? ((s.image_urls && s.image_urls[0]) || s.cover_image_url)
+                                  : (s.cover_image_url || (s.image_urls && s.image_urls[0]));
                                 return img ? `url(${img})` : undefined;
                               })(),
                               backgroundSize: 'cover',
@@ -447,7 +450,9 @@ export default function TierSeedFlowPage({ tier }: Props) {
                                     className="aspect-square bg-muted"
                                     style={{
                                       backgroundImage: (() => {
-                                        const img = s.cover_image_url || (s.image_urls && s.image_urls[0]);
+                                        const img = (s.type || '').toLowerCase() === 'music'
+                                          ? ((s.image_urls && s.image_urls[0]) || s.cover_image_url)
+                                          : (s.cover_image_url || (s.image_urls && s.image_urls[0]));
                                         return img ? `url(${img})` : undefined;
                                       })(),
                                       backgroundSize: 'cover',

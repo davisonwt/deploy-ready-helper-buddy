@@ -53,13 +53,15 @@ export function buildOrchardCard(o, handlers = {}, opts = {}) {
 }
 
 export function buildMusicCard(m, handlers = {}) {
+  const images = Array.isArray(m.image_urls) ? m.image_urls.filter(Boolean) : []
+  const coverImage = images[0] || m.cover_image_url || m.cover_url || FALLBACK_IMG.music
   return {
     id: `music-${m.id}`,
     rawId: m.id,
     title: m.track_title || 'Untitled Track',
     subtitle: m.music_mood || m.music_genre || m.genre || 'A song you have sown',
-    image: m.cover_image_url || m.cover_url || FALLBACK_IMG.music,
-    images: [m.cover_image_url || m.cover_url].filter(Boolean),
+    image: coverImage,
+    images: images.length ? images : [m.cover_image_url || m.cover_url].filter(Boolean),
     badge: { emoji: '🎵', label: 'music', color: '#38bdf8' },
     openPath: `/music-library`,
     liveKey: `music:${m.id}`,

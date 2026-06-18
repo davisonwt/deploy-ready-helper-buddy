@@ -133,7 +133,7 @@ export default function S2GCommunityMusicPage() {
             duration_seconds: track.duration_seconds || 0,
             file_url: track.file_url,
             preview_url: track.preview_url || track.file_url, // Use preview_url if available
-            cover_image_url: null, // DJ tracks might not have cover images
+            cover_image_url: track.cover_image_url,
             price: trackPrice, // Use actual price set by sower from dj_music_tracks
             is_giveaway: false, // dj_music_tracks doesn't have giveaway fields yet
             giveaway_limit: null,

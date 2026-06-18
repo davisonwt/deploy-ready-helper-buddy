@@ -479,9 +479,11 @@ export default function SeedFlowDashboard() {
         const { data: prods } = await fetchDashboardProductsForSowers(sowerIds, 60)
         for (const p of (prods || [])) {
           if (p.type === 'music') {
+            const productImages = Array.isArray(p.image_urls) ? p.image_urls.filter(Boolean) : []
             productMusic.push({
               id: p.id, track_title: p.title, genre: p.music_genre,
-              file_url: p.file_url, cover_image_url: p.cover_image_url,
+              file_url: p.file_url, cover_image_url: productImages[0] || p.cover_image_url,
+              image_urls: productImages,
               music_genre: p.music_genre, music_mood: p.music_mood,
               created_at: p.created_at,
             })
@@ -606,7 +608,7 @@ export default function SeedFlowDashboard() {
     status: 'Yours',
     activity: m.music_genre || m.genre || 'Music',
     description: m.music_mood || 'A song you have sown',
-    image: m.cover_image_url || 'https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=800&q=80',
+    image: (Array.isArray(m.image_urls) && m.image_urls[0]) || m.cover_image_url || 'https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=800&q=80',
     color: '#0ea5e9', glow: '#38bdf8', emoji: '🎵',
     playPath: `/music-library`, bookPath: `/music-library`,
     mine: true, badge: { label: 'music', emoji: '🎵', color: '#38bdf8' },
