@@ -45,6 +45,46 @@ const normalizeSongTitle = (title) =>
     .replace(/[^a-z0-9]+/g, ' ')
     .trim()
 
+const firstImage = (...sources) => {
+  for (const source of sources) {
+    if (Array.isArray(source)) {
+      const found = source.find(Boolean)
+      if (found) return found
+    } else if (source) {
+      return source
+    }
+  }
+  return null
+}
+
+const safeList = (result, label) => {
+  if (result?.error) {
+    console.warn(`Tribal Gardens ${label} load skipped`, result.error)
+    return []
+  }
+  return result?.data || []
+}
+
+function MediaThumb({ item, kind }) {
+  const [failed, setFailed] = useState(false)
+  return (
+    <div style={{ aspectRatio: '16/9', background: '#020617', position: 'relative', overflow: 'hidden' }}>
+      {item.image && !failed ? (
+        <img
+          src={item.image}
+          alt={item.title || kind}
+          style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+          loading="lazy"
+          onError={() => setFailed(true)}
+        />
+      ) : (
+        <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 42 }}>{item.emoji}</div>
+      )}
+      <div style={{ position: 'absolute', top: 8, left: 8, padding: '3px 8px', borderRadius: 8, background: 'rgba(0,0,0,0.6)', fontSize: 11, color: '#fff', fontWeight: 700 }}>{item.emoji} {kind.toUpperCase()}</div>
+    </div>
+  )
+}
+
 function UrgencyBar({ percentage }) {
   const isHot = percentage >= 70
   const isWarm = percentage >= 40
@@ -175,11 +215,7 @@ function MediaGrid({ kind, items, loading }) {
       {items.map((it, i) => (
         <motion.div key={it.id} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.03 }}
           style={{ background: 'linear-gradient(135deg, #0f172a 0%, #1e293b 100%)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 16, overflow: 'hidden' }}>
-          <div style={{ aspectRatio: '16/9', background: '#020617', position: 'relative', overflow: 'hidden' }}>
-            {it.image ? <img src={it.image} alt={it.title} style={{ width: '100%', height: '100%', objectFit: 'cover' }} loading="lazy" />
-              : <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 42 }}>{it.emoji}</div>}
-            <div style={{ position: 'absolute', top: 8, left: 8, padding: '3px 8px', borderRadius: 8, background: 'rgba(0,0,0,0.6)', fontSize: 11, color: '#fff', fontWeight: 700 }}>{it.emoji} {kind.toUpperCase()}</div>
-          </div>
+          <MediaThumb item={it} kind={kind} />
           <div style={{ padding: 12 }}>
             <div style={{ fontWeight: 700, color: '#f1f5f9', fontSize: 14, marginBottom: 4, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{it.title}</div>
             <div style={{ fontSize: 12, color: '#64748b', marginBottom: 8 }}>by {it.sower || 'Anonymous Sower'}</div>
