@@ -69,7 +69,7 @@ export const RadioMode: React.FC = () => {
         .limit(5);
 
       setTracks(tracksData || []);
-      setStreams(streamsData || []);
+      setStreams((streamsData as unknown as Stream[]) || []);
     } catch (error) {
       console.error('Error loading content:', error);
     } finally {
