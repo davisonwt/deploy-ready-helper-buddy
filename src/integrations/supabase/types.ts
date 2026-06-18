@@ -10125,6 +10125,13 @@ export type Database = {
             referencedRelation: "live_streams"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "stream_analytics_stream_id_fkey"
+            columns: ["stream_id"]
+            isOneToOne: false
+            referencedRelation: "public_live_streams"
+            referencedColumns: ["id"]
+          },
         ]
       }
       stream_chat_messages: {
@@ -10161,6 +10168,13 @@ export type Database = {
             columns: ["stream_id"]
             isOneToOne: false
             referencedRelation: "live_streams"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "stream_chat_messages_stream_id_fkey"
+            columns: ["stream_id"]
+            isOneToOne: false
+            referencedRelation: "public_live_streams"
             referencedColumns: ["id"]
           },
         ]
@@ -10210,6 +10224,13 @@ export type Database = {
             referencedRelation: "live_streams"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "stream_recordings_stream_id_fkey"
+            columns: ["stream_id"]
+            isOneToOne: false
+            referencedRelation: "public_live_streams"
+            referencedColumns: ["id"]
+          },
         ]
       }
       stream_viewers: {
@@ -10246,6 +10267,13 @@ export type Database = {
             columns: ["stream_id"]
             isOneToOne: false
             referencedRelation: "live_streams"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "stream_viewers_stream_id_fkey"
+            columns: ["stream_id"]
+            isOneToOne: false
+            referencedRelation: "public_live_streams"
             referencedColumns: ["id"]
           },
         ]
@@ -12542,6 +12570,60 @@ export type Database = {
             | null
           website?: string | null
           youtube_url?: string | null
+        }
+        Relationships: []
+      }
+      public_live_streams: {
+        Row: {
+          created_at: string | null
+          description: string | null
+          ended_at: string | null
+          hls_url: string | null
+          id: string | null
+          quality: string | null
+          recorded_at: string | null
+          recording_url: string | null
+          started_at: string | null
+          status: string | null
+          tags: string[] | null
+          thumbnail_url: string | null
+          title: string | null
+          user_id: string | null
+          viewer_count: number | null
+        }
+        Insert: {
+          created_at?: string | null
+          description?: string | null
+          ended_at?: string | null
+          hls_url?: string | null
+          id?: string | null
+          quality?: string | null
+          recorded_at?: string | null
+          recording_url?: string | null
+          started_at?: string | null
+          status?: string | null
+          tags?: string[] | null
+          thumbnail_url?: string | null
+          title?: string | null
+          user_id?: string | null
+          viewer_count?: number | null
+        }
+        Update: {
+          created_at?: string | null
+          description?: string | null
+          ended_at?: string | null
+          hls_url?: string | null
+          id?: string | null
+          quality?: string | null
+          recorded_at?: string | null
+          recording_url?: string | null
+          started_at?: string | null
+          status?: string | null
+          tags?: string[] | null
+          thumbnail_url?: string | null
+          title?: string | null
+          user_id?: string | null
+          viewer_count?: number | null
         }
         Relationships: []
       }
