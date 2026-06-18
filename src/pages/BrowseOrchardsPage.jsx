@@ -315,22 +315,28 @@ export default function BrowseOrchardsPage() {
             .limit(200),
         ])
         if (cancelled) return
-        const djIds = (musicRes.data || []).map(m => m.dj_id).filter(Boolean)
+        const seedsRows = safeList(seedsRes, 'seeds')
+        const orchardRows = safeList(orchardSeedsRes, 'orchards')
+        const musicRows = safeList(musicRes, 'music')
+        const bookRows = safeList(booksRes, 'books')
+        const videoRows = safeList(videosRes, 'videos')
+        const productRows = safeList(productsRes, 'products')
+        const djIds = musicRows.map(m => m.dj_id).filter(Boolean)
         const { data: djs } = djIds.length
           ? await supabase.from('radio_djs').select('id, user_id, dj_name, avatar_url').in('id', djIds)
           : { data: [] }
         const djMap = new Map((djs || []).map(d => [d.id, d]))
-        const sowerIds = Array.from(new Set((productsRes.data || []).map(p => p.sower_id).filter(Boolean)
-          .concat((booksRes.data || []).map(b => b.sower_id).filter(Boolean))))
+        const sowerIds = Array.from(new Set(productRows.map(p => p.sower_id).filter(Boolean)
+          .concat(bookRows.map(b => b.sower_id).filter(Boolean))))
         const { data: sowersRows } = sowerIds.length
           ? await supabase.from('sowers').select('id, user_id, display_name').in('id', sowerIds)
           : { data: [] }
         const sowerMap = new Map((sowersRows || []).map(s => [s.id, s]))
         const profileIds = Array.from(new Set([
-          ...(seedsRes.data || []).map(s => s.gifter_id),
-          ...(orchardSeedsRes.data || []).flatMap(o => [o.user_id, o.profile_id]),
-          ...(booksRes.data || []).flatMap(b => [b.user_id, b.sower_id]),
-          ...(videosRes.data || []).flatMap(v => [v.uploader_id, v.uploader_profile_id]),
+          ...seedsRows.map(s => s.gifter_id),
+          ...orchardRows.flatMap(o => [o.user_id, o.profile_id]),
+          ...bookRows.flatMap(b => [b.user_id, b.sower_id]),
+          ...videoRows.flatMap(v => [v.uploader_id, v.uploader_profile_id]),
           ...(djs || []).map(d => d.user_id),
           ...(sowersRows || []).map(s => s.user_id),
         ].filter(Boolean)))
@@ -345,21 +351,20 @@ export default function BrowseOrchardsPage() {
           return s?.display_name || sowerName(profileMap.get(s?.user_id)) || 'Anonymous Sower'
         }
         const musicCoverByTitle = new Map()
-        ;(musicRes.data || []).forEach(m => {
+        ;(musicRows || []).forEach(m => {
           const key = normalizeSongTitle(m.track_title)
           if (key && m.cover_image_url) musicCoverByTitle.set(key, m.cover_image_url)
         })
-        const seedsFromTable = (seedsRes.data || []).map(s => ({
-          id: `seed-${s.id}`, title: s.title, image: (s.images && s.images[0]) || null, emoji: '🌱',
+        const seedsFromTable = seedsRows.map(s => ({
+          id: `seed-${s.id}`, title: s.title, image: firstImage(s.images), emoji: '🌱',
           sower: sowerName(profileMap.get(s.gifter_id)), link: '/orchard-alive', created_at: s.created_at,
         }))
-        const seedsFromOrchards = (orchardSeedsRes.data || []).map(o => ({
-          id: `orch-${o.id}`, title: o.title, image: (o.images && o.images[0]) || null, emoji: '🌳',
+        const seedsFromOrchards = orchardRows.map(o => ({
+          id: `orch-${o.id}`, title: o.title, image: firstImage(o.images), emoji: '🌳',
           sower: sowerName(profileMap.get(o.user_id) || profileMap.get(o.profile_id)), link: `/orchard/${o.id}`, created_at: o.created_at,
         }))
-        const productRows = productsRes.data || []
         const musicFromProducts = productRows.filter(p => p.type === 'music').map(p => ({
-          id: `prod-${p.id}`, title: p.title, image: p.cover_image_url || musicCoverByTitle.get(normalizeSongTitle(p.title)) || null, emoji: '🎵',
+          id: `prod-${p.id}`, title: p.title, image: firstImage(p.image_urls, p.cover_image_url, musicCoverByTitle.get(normalizeSongTitle(p.title))), emoji: '🎵',
           sower: p.artist_name || nameFromSower(p.sower_id), link: '/music-library', created_at: p.created_at,
         }))
         const booksFromProducts = productRows.filter(p => p.type === 'ebook' || p.type === 'book').map(p => ({
