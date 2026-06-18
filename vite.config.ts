@@ -4,6 +4,8 @@ import path from "path";
 import { componentTagger } from "lovable-tagger";
 // @ts-ignore - vite-plugin-eslint types issue with package.json exports
 import eslint from "vite-plugin-eslint";
+import { visualizer } from "rollup-plugin-visualizer";
+
 
 // https://vitejs.dev/config/
 export default defineConfig(({ mode, command }) => ({
@@ -24,7 +26,16 @@ export default defineConfig(({ mode, command }) => ({
       emitError: true,
       emitWarning: true,
     }),
+    // Slice 7a — bundle visualizer (production builds only).
+    // Writes dist/stats.html after `vite build`.
+    command === 'build' && visualizer({
+      filename: 'dist/stats.html',
+      template: 'treemap',
+      gzipSize: true,
+      brotliSize: true,
+    }),
   ].filter(Boolean),
+
   test: {
     globals: true,
     environment: 'jsdom',
@@ -36,6 +47,14 @@ export default defineConfig(({ mode, command }) => ({
     rollupOptions: {},
     minify: 'esbuild', // Use esbuild (built-in, faster than terser)
   },
+  // Slice 7b — strip console.log/info/debug + debugger from production bundles.
+  // console.warn / console.error are KEPT for runtime monitoring (Sentry, etc).
+  // Dev builds are unaffected.
+  esbuild: {
+    pure: mode === 'production' ? ['console.log', 'console.info', 'console.debug'] : [],
+    drop: mode === 'production' ? ['debugger'] : [],
+  },
+
   resolve: {
     dedupe: [
       'react', 
