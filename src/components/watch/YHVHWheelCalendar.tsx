@@ -235,17 +235,23 @@ export const YHVHWheelCalendar = ({ size = 760, ringOffsets = {}, textOverrides 
   const moon = computeMoon(now);
   const moonAngle = (moon.lunarYearDay / 354) * 360;
 
-  // Live "sun-in-sky" angle (top of dial = midnight, sweeps clockwise through the 24h)
-  const hoursNow = now.getHours() + now.getMinutes() / 60 + now.getSeconds() / 3600;
-  const sunAngle = (hoursNow / 24) * 360;
+  // Sun arm = sun's current zodiac gate angle (advances 1°/day across her 30° gate).
+  // This makes the fixed tribe + leader rings line up with the sun arm.
+  // (Time-of-day is still shown by the marker dot on the inner Daylight ring.)
+  const sunGateAngle = (monthIndex * 30) + ((sacred.date.day - 1) / 30) * 30; // 0..360
+  const sunAngle = ((sunGateAngle % 360) + 360) % 360;
 
-  // Helper: rotation that brings a ring's active segment up under the fixed arm
+  // Moon arm = moon's real ecliptic longitude (where she sits among the 12 gates).
+  const moonArmAngle = ((moon.longitude % 360) + 360) % 360;
+
+  // Helper: rotation that brings a ring's active segment up under the sun arm
   const alignRotation = (activeIndex: number, count: number) => {
     const segCenter = ((activeIndex + 0.5) / count) * 360;
     return `rotate(${sunAngle - segCenter} ${cx} ${cy})`;
   };
 
   const armTip = polar(438, sunAngle);
+  const moonArmTip = polar(438, moonArmAngle);
 
   const weekDay = sacred.weekDay;
   const seasonName = (location.lat < 0 ? SEASONS_S : SEASONS_N)[monthIndex];
@@ -487,12 +493,21 @@ export const YHVHWheelCalendar = ({ size = 760, ringOffsets = {}, textOverrides 
         <text x={cx + (ringOffsets.centerHub?.x || 0)} y={cy + 18 + (ringOffsets.centerHub?.y || 0)} textAnchor="middle" fill="#fef3c7" fontSize="11" fontWeight="700">Day {weekDay} of week</text>
         <text x={cx + (ringOffsets.centerHub?.x || 0)} y={cy + 34 + (ringOffsets.centerHub?.y || 0)} textAnchor="middle" fill="#d4a017" fontSize="10" fontWeight="700">Part {dayPart + 1}/18</text>
 
-        {/* Live sun-hand: rotates around the dial to where the sun is now */}
+        {/* Sun arm: points at the sun's current zodiac gate (Aries=Month 1) */}
         <g transform={`rotate(${sunAngle} ${cx} ${cy})`} style={{ transition: 'transform 1s linear' }}>
           <line x1={cx} y1={72} x2={cx} y2={cy} stroke="#e5e7eb" strokeWidth="5" filter="url(#goldGlow)" />
           <path d={`M ${cx} 50 L ${cx - 16} 85 L ${cx + 16} 85 Z`} fill="#facc15" filter="url(#goldGlow)" />
         </g>
         <circle cx={armTip.x} cy={armTip.y} r="18" fill="#facc15" opacity="0.75" stroke="#a16207" strokeWidth="3" />
+
+        {/* Moon arm: points at the moon's current zodiac gate (her own cycle) */}
+        <g transform={`rotate(${moonArmAngle} ${cx} ${cy})`} style={{ transition: 'transform 1s linear' }}>
+          <line x1={cx} y1={72} x2={cx} y2={cy} stroke="#cbd5e1" strokeWidth="3" strokeDasharray="6 4" opacity="0.9" />
+          <path d={`M ${cx} 56 L ${cx - 12} 84 L ${cx + 12} 84 Z`} fill="#e5e7eb" stroke="#475569" strokeWidth="1.2" />
+        </g>
+        <circle cx={moonArmTip.x} cy={moonArmTip.y} r="14" fill="#0b1220" stroke="#e5e7eb" strokeWidth="2" />
+        <text x={moonArmTip.x} y={moonArmTip.y + 1} textAnchor="middle" dominantBaseline="middle" fontSize="18">{moon.glyph}</text>
+
 
       </svg>
       {tip && (
