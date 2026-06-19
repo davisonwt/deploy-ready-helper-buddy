@@ -25,7 +25,7 @@ interface AlbumBuilderContextType {
 const AlbumBuilderContext = createContext<AlbumBuilderContextType | undefined>(undefined);
 
 const ALBUM_SIZE = 10;
-const ALBUM_PRICE = 20; // $20 including tithing and admin
+const ALBUM_PRICE = 20; // $20 including platform fee and admin fee
 
 export function AlbumBuilderProvider({ children }: { children: ReactNode }) {
   const [selectedTracks, setSelectedTracks] = useState<AlbumTrack[]>([]);

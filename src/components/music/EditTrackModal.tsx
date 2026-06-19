@@ -229,7 +229,7 @@ export function EditTrackModal({ track, isOpen, onClose, onSuccess }: EditTrackM
               }}
             />
             <p className="text-xs text-muted-foreground">
-              Single tracks: Minimum 2 USDC (includes 10% tithing + 5% admin fee). Albums can have custom prices.
+              Single tracks: Minimum 2 USDC (includes 10% platform fee + 5% admin fee). Albums can have custom prices.
             </p>
           </div>
 

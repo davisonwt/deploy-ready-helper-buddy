@@ -52,24 +52,24 @@ export default function TithingPage() {
     setLoading(true)
     try {
       addToBasket({
-        orchardId: 'tithing', orchardTitle: 'Tithing Contribution',
+        orchardId: 'platform-fee', orchardTitle: 'Platform Fee Contribution',
         amount: parseFloat(amount), currency: 'USDC', pockets: [],
-        type: 'tithing', frequency,
+        type: 'platform_fee', frequency,
       })
-      setMessage("Tithing added to basket! Please proceed to checkout.")
+      setMessage("Contribution added to basket! Please proceed to checkout.")
       setAmount("")
     } catch {
-      setMessage("There was an error adding tithing to basket.")
+      setMessage("There was an error adding your contribution to basket.")
     } finally { setLoading(false) }
   }
 
   return (
     <MidnightShell
       icon={<HandHeart className="h-6 w-6" />}
-      title="Tithing"
-      subtitle="Honor elohim with your faithful giving · settled in USDC"
+      title="Platform Fee"
+      subtitle="Support Sow2Grow operations · settled in USDC"
     >
-      {/* Profile / scripture banner */}
+      {/* Profile / intro banner */}
       <MidnightCard accent="amber">
         <div className="flex items-center gap-5">
           <div className="w-16 h-16 rounded-full overflow-hidden border-2 border-amber-400/40 shadow-[0_0_24px_rgba(245,158,11,0.25)] shrink-0">
@@ -81,22 +81,22 @@ export default function TithingPage() {
               </div>
             )}
           </div>
-          <p className="text-sm text-slate-300 italic leading-relaxed">
-            "Bring the whole tithe into the storehouse… and see if I will not throw open the floodgates of heaven." — Malachi 3:10
+          <p className="text-sm text-slate-300 leading-relaxed">
+            Your contribution helps keep Sow2Grow running — covering platform operations, the community support fund, and referral payouts to the people who brought you here.
           </p>
         </div>
       </MidnightCard>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Tithing Form */}
+        {/* Contribution Form */}
         <MidnightCard accent="cyan">
           <div className="flex items-center gap-2 mb-5">
             <HandHeart className="h-5 w-5 text-cyan-300" />
-            <h2 className="text-lg font-bold text-white">Set Up Your Tithe</h2>
+            <h2 className="text-lg font-bold text-white">Set Up Your Contribution</h2>
           </div>
           <form onSubmit={handleSubmit} className="space-y-6">
             <div>
-              <Label htmlFor="amount" className="text-slate-300">Tithe Amount (USDC)</Label>
+              <Label htmlFor="amount" className="text-slate-300">Contribution Amount (USDC)</Label>
               <Input
                 id="amount" type="number" value={amount}
                 onChange={(e) => setAmount(e.target.value)} placeholder="Enter amount"
@@ -134,10 +134,10 @@ export default function TithingPage() {
               {loading ? (
                 <span className="inline-flex items-center gap-2">
                   <span className="animate-spin rounded-full h-4 w-4 border-2 border-amber-300 border-t-transparent" />
-                  Processing Tithe…
+                  Processing…
                 </span>
               ) : (
-                <span className="inline-flex items-center gap-2"><Heart className="h-4 w-4" /> Give Tithe</span>
+                <span className="inline-flex items-center gap-2"><Heart className="h-4 w-4" /> Contribute</span>
               )}
             </motion.button>
 
@@ -154,20 +154,20 @@ export default function TithingPage() {
           <MidnightCard accent="violet">
             <div className="flex items-center gap-2 mb-4">
               <Sparkles className="h-5 w-5 text-violet-300" />
-              <h3 className="text-base font-bold text-white">Why We Tithe</h3>
+              <h3 className="text-base font-bold text-white">What Your Contribution Funds</h3>
             </div>
             <ul className="space-y-3 text-sm text-slate-300">
-              <li className="flex gap-2"><Heart className="h-4 w-4 mt-0.5 text-rose-400 shrink-0" /> An act of worship and obedience</li>
-              <li className="flex gap-2"><Gift className="h-4 w-4 mt-0.5 text-amber-300 shrink-0" /> It supports our community projects</li>
-              <li className="flex gap-2"><Star className="h-4 w-4 mt-0.5 text-cyan-300 shrink-0" /> Promised blessing for faithful givers</li>
-              <li className="flex gap-2"><HandHeart className="h-4 w-4 mt-0.5 text-emerald-300 shrink-0" /> Helps build the kingdom on earth</li>
+              <li className="flex gap-2"><Heart className="h-4 w-4 mt-0.5 text-rose-400 shrink-0" /> Platform operations &mdash; hosting, payments, security</li>
+              <li className="flex gap-2"><Gift className="h-4 w-4 mt-0.5 text-amber-300 shrink-0" /> The community support fund for member projects</li>
+              <li className="flex gap-2"><Star className="h-4 w-4 mt-0.5 text-cyan-300 shrink-0" /> Referral payouts to people who invite new members</li>
+              <li className="flex gap-2"><HandHeart className="h-4 w-4 mt-0.5 text-emerald-300 shrink-0" /> Tools and improvements that help the whole tribe grow</li>
             </ul>
           </MidnightCard>
 
           <MidnightCard accent="amber">
             <div className="flex items-center gap-2 mb-4">
               <DollarSign className="h-5 w-5 text-amber-300" />
-              <h3 className="text-base font-bold text-white">Tithing Statistics</h3>
+              <h3 className="text-base font-bold text-white">Your Contributions</h3>
             </div>
             <div className="space-y-3">
               {[['This Month','$0'],['This Year','$0'],['Total Given','$0']].map(([k,v]) => (
@@ -180,9 +180,8 @@ export default function TithingPage() {
           </MidnightCard>
 
           <MidnightCard accent="rose">
-            <blockquote className="text-sm text-slate-300 italic text-center leading-relaxed">
-              "Each of you should give what you have decided in your heart to give… for elohim loves a cheerful giver."
-              <div className="mt-2 text-rose-300 not-italic font-semibold text-xs">— 2 Corinthians 9:7</div>
+            <blockquote className="text-sm text-slate-300 text-center leading-relaxed">
+              Every contribution &mdash; large or small &mdash; helps keep the platform open, safe, and growing for the whole community. Thank you.
             </blockquote>
           </MidnightCard>
         </div>
@@ -194,7 +193,7 @@ export default function TithingPage() {
       {showPaymentModal && pendingTithingData && (
         <PaymentModal
           isOpen={showPaymentModal} onClose={() => setShowPaymentModal(false)}
-          paymentDetails={{ orchardTitle: 'Tithing Contribution', amount: pendingTithingData.amount, currency: 'USDC', pockets: [], type: 'tithing' }}
+          paymentDetails={{ orchardTitle: 'Platform Fee Contribution', amount: pendingTithingData.amount, currency: 'USDC', pockets: [], type: 'platform_fee' }}
           onPaymentComplete={() => setShowPaymentModal(false)}
         />
       )}

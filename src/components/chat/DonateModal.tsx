@@ -26,7 +26,7 @@ export const DonateModal: FC<DonateModalProps> = ({
   const [amount, setAmount] = useState('5');
 
   const handleDonate = () => {
-    // Mock webhook call: Split 90% to hostWallet, 10% to tithing
+    // Mock webhook call: Split 90% to hostWallet, 10% to platform fee
     console.log('Donation processed:', { hostWallet, amount });
     // TODO: Replace with real Binance Pay integration
     onClose();
@@ -38,7 +38,7 @@ export const DonateModal: FC<DonateModalProps> = ({
         <DialogHeader>
           <DialogTitle>Donate to {hostName}</DialogTitle>
           <DialogDescription>
-            Support the host with USDC. 90% goes to the host, 10% to tithing.
+            Support the host with USDC. 90% goes to the host, 10% to the platform fee.
           </DialogDescription>
         </DialogHeader>
         <div className="space-y-4 py-4">

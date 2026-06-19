@@ -1013,7 +1013,7 @@ const fetchOrchardById = async (oid) => {
                                   <span>{breakdown.baseValue.toFixed(2)} USDC</span>
                                 </div>
                                <div className="flex justify-between text-amber-700">
-                                 <span>+ 10% Tithing:</span>
+                                 <span>+ 10% Platform Fee:</span>
                                  <span className="font-medium">{breakdown.tithing.toFixed(2)} USDC</span>
                                </div>
                                <div className="flex justify-between text-blue-700">

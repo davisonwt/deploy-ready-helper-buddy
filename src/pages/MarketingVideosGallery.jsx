@@ -500,7 +500,7 @@ const HOUSE_REEL = [
   { title: 'My Orchard',                  desc: 'Your garden of seeds',                       src: S2G_VID('s2g my orchard (1).mp4') },
   { title: 'Free-Will Giving',            desc: '1% forever through your tribe',             src: S2G_VID('free-will giving.mp4') },
   { title: 'Let It Rain',                 desc: 'Bestow blessings on the tribe',             src: S2G_VID('s2g let it rain bring the rainbow 1280x720.mp4') },
-  { title: 'Tithing',                     desc: 'Wallet & USDC settlement',                  src: S2G_VID('tithing 1280x720.mp4') },
+  { title: 'Platform Fee',                desc: 'Wallet & USDC settlement',                  src: S2G_VID('tithing 1280x720.mp4') },
   { title: 'Harvest Time',                desc: 'When seeds become fruit',                   src: S2G_VID('s2g harvest 1280x720 (1).mp4') },
   { title: 'Light & Love Bestow',         desc: 'The heart of the platform',                 src: S2G_VID('s2g light & love bestow 1280x720.mp4') },
   { title: 'Divine Presence',             desc: 'Sacred time, sacred work',                  src: S2G_VID('s2g divine presence.mp4') },

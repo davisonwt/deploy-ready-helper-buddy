@@ -155,7 +155,7 @@ export default function BestowalCheckout() {
             <span>${totalAmount.toFixed(2)}</span>
           </div>
           <div className="flex justify-between text-muted-foreground">
-            <span>Tithing (10%)</span>
+            <span>Platform Fee (10%)</span>
             <span className="text-purple-400">${(totalAmount * 0.10).toFixed(2)}</span>
           </div>
           <div className="flex justify-between text-muted-foreground">

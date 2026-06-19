@@ -35,10 +35,10 @@ const docs = [
   },
   {
     id: 2,
-    title: 'Understanding Tithing',
-    content: 'Learn about tithing, how it works, and how to contribute to the community.',
+    title: 'Understanding the Platform Fee',
+    content: 'Learn about the 15% platform fee, what it funds, and how contributions support the community.',
     category: 'payments',
-    keywords: ['tithing', 'payment', 'usdc', 'contribute', 'support'],
+    keywords: ['platform fee', 'admin fee', 'payment', 'usdc', 'contribute', 'support'],
   },
   {
     id: 3,
@@ -69,8 +69,8 @@ const faqs = [
     answer: 'Navigate to the "Create Orchard" page, fill in the required details including title, description, and initial seed amount, then click "Plant Seed".',
   },
   {
-    question: 'What is tithing and how does it work?',
-    answer: 'Tithing is a way to support the community. You can contribute USDC or other supported cryptocurrencies to help maintain and grow the platform.',
+    question: 'What is the platform fee and how does it work?',
+    answer: 'A 15% platform fee is added to every transaction (10% platform fee + 5% admin fee). It funds platform operations, the community support fund, and referral payouts. You can also contribute directly from the Platform Fee page.',
   },
   {
     question: 'How do I browse other orchards?',

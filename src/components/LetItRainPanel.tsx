@@ -59,13 +59,13 @@ export function LetItRainPanel({ isOpen, onClose }: LetItRainPanelProps) {
   }
 
   const rainCards = [
-    { href: '/tithing', title: 'Tithing', subtitle: 'Give 10% · Support the work', icon: HandHeart },
+    { href: '/admin-fee', title: 'Platform Fee', subtitle: '15% · Funds operations & community', icon: HandHeart },
     { href: '/free-will-gifting', title: 'Free-Will Gifting', subtitle: 'Give as led · Any amount', icon: Gift },
     { href: '/364yhvh-orchards', title: 'Rain on Orchards', subtitle: 'Support community projects', icon: Cloud },
   ]
 
   const quickActions = [
-    { href: '/tithing', label: 'Tithing', color: 'bg-cyan-500/15 hover:bg-cyan-500/25 border border-cyan-400/30 text-cyan-100', icon: HandHeart },
+    { href: '/admin-fee', label: 'Platform Fee', color: 'bg-cyan-500/15 hover:bg-cyan-500/25 border border-cyan-400/30 text-cyan-100', icon: HandHeart },
     { href: '/free-will-gifting', label: 'Free-Will Gift', color: 'bg-amber-500/15 hover:bg-amber-500/25 border border-amber-400/30 text-amber-100', icon: Gift },
     { href: '#', label: 'Quick Rain 0.50', color: 'bg-cyan-500/15 hover:bg-cyan-500/25 border border-cyan-400/30 text-cyan-100', onClick: quickRain },
     { href: '#', label: 'Body Rain 1.00', color: 'bg-amber-500/15 hover:bg-amber-500/25 border border-amber-400/30 text-amber-100', onClick: rainAmount },

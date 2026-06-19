@@ -109,7 +109,7 @@ export default {
 				'nav-community': 'hsl(var(--nav-community))',
 				'nav-create': 'hsl(var(--nav-create))',
 				'nav-my': 'hsl(var(--nav-my))',
-				'nav-tithing': 'hsl(var(--nav-tithing))',
+				'nav-admin-fee': 'hsl(var(--nav-admin-fee))',
 				'nav-gifting': 'hsl(var(--nav-gifting))',
 				// Heading colors
 				'heading-bg': 'hsl(var(--heading-bg))',

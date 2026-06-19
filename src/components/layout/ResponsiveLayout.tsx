@@ -17,7 +17,7 @@ const navigationItems = [
   { name: 'Dashboard', href: '/dashboard', icon: Home },
   { name: 'Browse Orchards', href: '/browse-orchards', icon: Leaf },
   { name: 'My Orchards', href: '/my-orchards', icon: Leaf },
-  { name: 'Tithing', href: '/tithing', icon: DollarSign },
+  { name: 'Platform Fee', href: '/admin-fee', icon: DollarSign },
   { name: 'Community', href: '/community-videos', icon: Users },
   { name: 'Analytics', href: '/admin/analytics', icon: BarChart },
   { name: 'Profile', href: '/profile', icon: Settings },

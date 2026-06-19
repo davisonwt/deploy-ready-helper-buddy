@@ -35,7 +35,7 @@ export default function PaymentSuccessPage() {
           <div className="bg-muted/50 p-4 rounded-lg text-sm text-left space-y-2">
             <p className="font-semibold">Distribution Overview</p>
             <ul className="space-y-1 text-muted-foreground">
-              <li>✓ 15% → Tithing & Admin (s2gbestow)</li>
+              <li>✓ 15% → Platform Fee (s2gbestow)</li>
               <li>✓ 85% → Sower (orchard owner)</li>
               <li>✓ Additional 10% allocated to product whispers when configured</li>
             </ul>

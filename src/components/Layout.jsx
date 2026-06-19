@@ -176,9 +176,9 @@ function Layout({ children }) {
     {
       name: "Let It Rain",
       icon: Cloud, // Using Cloud icon to match My Garden button style
-      className: 'tithing-tour',
+      className: 'admin-fee-tour',
       items: [
-        { name: "Tithing", href: "/tithing", icon: HandHeart },
+        { name: "Platform Fee", href: "/admin-fee", icon: HandHeart },
         { name: "Free-Will Gifting", href: "/free-will-gifting", icon: Gift }
       ]
     },
@@ -358,27 +358,27 @@ function Layout({ children }) {
                 onClick={() => setIsLetItRainOpen(true)}
                 className={`flex items-center justify-center px-3 py-2 text-xs font-medium transition-all duration-300 border-2 
                   hover:scale-105 active:scale-95 w-[140px] h-[40px] text-center dashboard-nav-button
-                  ${isActive('/tithing') || isActive('/free-will-gifting') ? 'ring-2 ring-offset-1 transform translate-y-[-4px] shadow-lg' : 'hover:translate-y-[-2px]'}
-                  tithing-tour
+                  ${isActive('/admin-fee') || isActive('/free-will-gifting') ? 'ring-2 ring-offset-1 transform translate-y-[-4px] shadow-lg' : 'hover:translate-y-[-2px]'}
+                  admin-fee-tour
                 `}
                 style={{
-                  backgroundColor: (isActive('/tithing') || isActive('/free-will-gifting')) ? currentTheme.accent : currentTheme.secondaryButton,
-                  borderColor: (isActive('/tithing') || isActive('/free-will-gifting')) ? currentTheme.accent : currentTheme.cardBorder,
+                  backgroundColor: (isActive('/admin-fee') || isActive('/free-will-gifting')) ? currentTheme.accent : currentTheme.secondaryButton,
+                  borderColor: (isActive('/admin-fee') || isActive('/free-will-gifting')) ? currentTheme.accent : currentTheme.cardBorder,
                   color: currentTheme.textPrimary,
                   borderRadius: '21px',
-                  boxShadow: (isActive('/tithing') || isActive('/free-will-gifting'))
+                  boxShadow: (isActive('/admin-fee') || isActive('/free-will-gifting'))
                     ? `0 8px 25px ${currentTheme.shadow}, inset 0 2px 4px rgba(0,0,0,0.1)` 
                     : 'inset 0 2px 4px rgba(0,0,0,0.1)',
                   ringColor: currentTheme.accent,
                 }}
                 onMouseEnter={(e) => {
-                  if (!isActive('/tithing') && !isActive('/free-will-gifting')) {
+                  if (!isActive('/admin-fee') && !isActive('/free-will-gifting')) {
                     e.currentTarget.style.backgroundColor = currentTheme.accent;
                     e.currentTarget.style.borderColor = currentTheme.accent;
                   }
                 }}
                 onMouseLeave={(e) => {
-                  if (!isActive('/tithing') && !isActive('/free-will-gifting')) {
+                  if (!isActive('/admin-fee') && !isActive('/free-will-gifting')) {
                     e.currentTarget.style.backgroundColor = currentTheme.secondaryButton;
                     e.currentTarget.style.borderColor = currentTheme.cardBorder;
                   }

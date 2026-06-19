@@ -24,7 +24,7 @@ Sow2Grow uses a sacred terminology: **Sow** (plant a seed/idea), **Bestow** (fun
 - [Grove Feed](/grove-feed): Live grove activity and orchard updates.
 - [Companions](/companions): Orchard Companions hub (Gentoo, Mint, Debian, Tux, Ubuntu, Kali, Fedora, Arch).
 - [Community Offering](/community-offering): Free-will community offerings.
-- [Tithing](/tithing): Tithing flow.
+- [Platform Fee](/admin-fee): Platform fee contribution flow.
 - [Free-Will Gifting](/free-will-gifting): Direct gifting to sowers.
 - [Support Us](/support-us): Support Sow2Grow with Binance Pay (USDC).
 - [Tribal Hearts](/tribal-hearts): Ambassador-only safe heterosexual dating garden (18+).

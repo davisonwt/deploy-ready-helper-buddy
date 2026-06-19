@@ -134,7 +134,7 @@ export function OrganizationWalletSetup() {
             All payments are processed through Binance Pay and distributed automatically according to the Bestowal Map:
             <ul className="list-disc list-inside mt-2 space-y-1">
               <li>All payments first go to <strong>s2gholding</strong> (holding wallet)</li>
-              <li>15% automatically distributed to <strong>s2gbestow</strong> (10% tithing + 5% admin)</li>
+              <li>15% automatically distributed to <strong>s2gbestow</strong> (10% platform fee + 5% admin fee)</li>
               <li>Remaining 85% held in s2gholding pending courier confirmation</li>
               <li>After courier confirms product receipt, gosat's can manually trigger distribution to sowers and whispers</li>
             </ul>
@@ -173,7 +173,7 @@ export function OrganizationWalletSetup() {
                   <div className="flex items-center gap-2">
                     <p className="font-semibold" style={{ color: currentTheme.textPrimary }}>
                       {wallet.wallet_name === 's2gholding' && '💰 Holding Wallet'}
-                      {wallet.wallet_name === 's2gbestow' && '⛪ Tithing & Admin Wallet'}
+                      {wallet.wallet_name === 's2gbestow' && '⛪ Platform & Admin Fee Wallet'}
                     </p>
                     <CheckCircle2 className="h-4 w-4" style={{ color: currentTheme.accent }} />
                   </div>

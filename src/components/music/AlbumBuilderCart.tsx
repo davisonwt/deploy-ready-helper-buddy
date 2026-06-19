@@ -147,8 +147,8 @@ export function AlbumBuilderCart() {
 
           <div className="text-xs text-muted-foreground space-y-1">
             <p>• 85% to artists</p>
-            <p>• 10% tithing</p>
-            <p>• 5% platform fee</p>
+            <p>• 10% platform fee</p>
+            <p>• 5% admin fee</p>
           </div>
 
           {selectedTracks.length === 10 ? (

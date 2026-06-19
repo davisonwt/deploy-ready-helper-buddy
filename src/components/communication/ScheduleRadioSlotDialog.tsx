@@ -343,7 +343,7 @@ export const ScheduleRadioSlotDialog: React.FC<ScheduleRadioSlotDialogProps> = (
                 <p className="text-sm">
                   <strong>Bestowal Feature:</strong> Listeners can bestow on tracks and documents during your show.
                   You'll receive 1-on-1 notifications when listeners bestow on your content, and they'll receive invoices.
-                  Gosat's will receive tithing (10%) and admin (5%) fees automatically.
+                  The platform fee (10%) and admin fee (5%) are routed automatically.
                 </p>
               </div>
             </>
