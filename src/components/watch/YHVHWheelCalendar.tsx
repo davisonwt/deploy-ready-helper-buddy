@@ -99,6 +99,78 @@ function CurvedLabel({ radius, angle, children, fill = '#f8fafc', size = 14, wei
   );
 }
 
+/**
+ * DaylightRing — smooth circular gradient strip showing the 4 phases of the
+ * 24-hour cycle based on the user's real sunrise/sunset times.
+ *   • Morning: ~45 min before sunrise → sunrise + 30 min (pale gold)
+ *   • Day:     sunrise + 30 min       → sunset  - 30 min (sky blue / sun gold)
+ *   • Evening: sunset  - 30 min       → sunset  + 60 min (orange → violet)
+ *   • Night:   evening end            → next morning start (deep indigo)
+ * Top of the ring = midnight (0°). Current local time is marked by a glowing dot.
+ */
+function dayPhaseColor(hourOfDay: number, sun: SunriseData | null): string {
+  // hourOfDay in 0..24
+  let sunriseH = 6, sunsetH = 18;
+  if (sun) {
+    sunriseH = sun.sunrise.getHours() + sun.sunrise.getMinutes() / 60;
+    sunsetH = sun.sunset.getHours() + sun.sunset.getMinutes() / 60;
+  }
+  const morningStart = sunriseH - 0.75;
+  const morningEnd = sunriseH + 0.5;
+  const eveningStart = sunsetH - 0.5;
+  const eveningEnd = sunsetH + 1.0;
+
+  if (hourOfDay >= morningStart && hourOfDay < morningEnd) {
+    // morning twilight → dawn (deep indigo → pale gold)
+    const t = (hourOfDay - morningStart) / (morningEnd - morningStart);
+    return interpColor('#1e1b4b', '#fde68a', t);
+  }
+  if (hourOfDay >= morningEnd && hourOfDay < eveningStart) {
+    // day (pale gold → sky blue → gold)
+    return '#38bdf8';
+  }
+  if (hourOfDay >= eveningStart && hourOfDay < eveningEnd) {
+    // evening (gold → orange → violet)
+    const t = (hourOfDay - eveningStart) / (eveningEnd - eveningStart);
+    return interpColor('#f59e0b', '#7c3aed', t);
+  }
+  // night
+  return '#0b1437';
+}
+
+function interpColor(a: string, b: string, t: number): string {
+  const pa = parseInt(a.slice(1), 16), pb = parseInt(b.slice(1), 16);
+  const ar = (pa >> 16) & 0xff, ag = (pa >> 8) & 0xff, ab = pa & 0xff;
+  const br = (pb >> 16) & 0xff, bg = (pb >> 8) & 0xff, bb = pb & 0xff;
+  const r = Math.round(ar + (br - ar) * t);
+  const g = Math.round(ag + (bg - ag) * t);
+  const bl = Math.round(ab + (bb - ab) * t);
+  return `#${((r << 16) | (g << 8) | bl).toString(16).padStart(6, '0')}`;
+}
+
+function DaylightRing({ inner, outer, now, sun }: { inner: number; outer: number; now: Date; sun: SunriseData | null }) {
+  const segs = 96;
+  const hoursNow = now.getHours() + now.getMinutes() / 60;
+  // Map: top = midnight (0h), clockwise → 6h right, 12h bottom, 18h left
+  const markerAngle = (hoursNow / 24) * 360;
+  const marker = polar((inner + outer) / 2, markerAngle);
+  return (
+    <g>
+      {Array.from({ length: segs }).map((_, i) => {
+        const start = (i / segs) * 360;
+        const end = ((i + 1.02) / segs) * 360;
+        const hourAtSeg = ((i + 0.5) / segs) * 24;
+        const fill = dayPhaseColor(hourAtSeg, sun);
+        return <path key={i} d={arcPath(inner, outer, start, end)} fill={fill} opacity={0.92} />;
+      })}
+      {/* current-time marker */}
+      <circle cx={marker.x} cy={marker.y} r="6" fill="#fef3c7" stroke="#facc15" strokeWidth="2" />
+      <circle cx={marker.x} cy={marker.y} r="11" fill="none" stroke="#facc15" strokeWidth="1" opacity="0.55" />
+    </g>
+  );
+}
+
+
 export const YHVHWheelCalendar = ({ size = 760, ringOffsets = {}, textOverrides = {} }: YHVHWheelCalendarProps) => {
   const sacred = useSacredNow();
   const { location } = useUserLocation();
