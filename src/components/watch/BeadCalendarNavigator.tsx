@@ -107,10 +107,10 @@ export default function BeadCalendarNavigator({ currentMonth, currentDay, curren
                   </div>
                   <MonthFitStrand
                     month={monthNum}
-                    beadCount={beadCount}
                     currentDay={dayProp}
                     year={currentYear}
                   />
+
                 </>
               )}
             </motion.div>
