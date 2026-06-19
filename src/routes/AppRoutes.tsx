@@ -70,6 +70,7 @@ import {
   GosatWalletsPage,
   BinancePayTestPage,
   NowPaymentsTestPage,
+  PaypalTestPage,
   SowerProfile,
   RadioSessions,
   LiveRooms,
@@ -377,6 +378,9 @@ const AppRoutes = () => (
     } />
     <Route path="/dev/nowpay-test" element={
       <ProtectedRoute allowedRoles={['admin', 'gosat']}><Layout><NowPaymentsTestPage /></Layout></ProtectedRoute>
+    } />
+    <Route path="/dev/paypal-test" element={
+      <ProtectedRoute allowedRoles={['admin', 'gosat']}><Layout><PaypalTestPage /></Layout></ProtectedRoute>
     } />
     <Route path="/admin/analytics" element={
       <ProtectedRoute allowedRoles={['admin', 'gosat']}><Layout><AdminAnalyticsPage /></Layout></ProtectedRoute>
