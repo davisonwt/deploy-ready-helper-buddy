@@ -514,7 +514,7 @@ export const YHVHWheelCalendar = ({ size = 760, ringOffsets = {}, textOverrides 
         {/* Outer blue hub circle */}
         <circle cx={cx + (ringOffsets.centerHub?.x || 0)} cy={cy + (ringOffsets.centerHub?.y || 0)} r="104" fill="#020617" stroke="#1d4ed8" strokeWidth="5" />
         {/* Daylight phase ring — rotated so the current daylight marker lines up with the sun arm */}
-        <DaylightRing inner={64} outer={100} now={now} sun={sun} rotation={daylightRotation} />
+        <DaylightRing inner={64} outer={100} now={now} sun={sun} lon={location.lon} rotation={daylightRotation} />
         {/* Gold inner hub circle (holds the today text) */}
         <circle cx={cx + (ringOffsets.centerHub?.x || 0)} cy={cy + (ringOffsets.centerHub?.y || 0)} r="60" fill="#081426" stroke="#d4a017" strokeWidth="2" />
 
