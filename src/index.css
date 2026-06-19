@@ -153,12 +153,13 @@ All colors MUST be HSL.
     --login-foreground: 0 0% 100%;
 
   /* Ed's physical bead calendar colors */
-  --bead-regular: 210 24% 4%;       /* near-black beads */
-  --bead-regular-highlight: 190 35% 22%;
-  --bead-sabbath: 70 92% 52%;       /* neon yellow-green Sabbaths */
-  --bead-sabbath-highlight: 66 100% 70%;
-  --bead-feast: 196 100% 47%;       /* bright cyan-blue feast beads */
-  --bead-feast-highlight: 188 100% 62%;
+  --bead-regular: 25 55% 22%;       /* chocolate brown beads */
+  --bead-regular-highlight: 28 65% 38%;
+  --bead-sabbath: 50 100% 55%;      /* bright yellow Sabbaths */
+  --bead-sabbath-highlight: 52 100% 72%;
+  --bead-feast: 205 90% 60%;        /* light blue feast beads */
+  --bead-feast-highlight: 200 100% 75%;
+
 }
 
 /* Ensure proper text contrast on all surfaces */
