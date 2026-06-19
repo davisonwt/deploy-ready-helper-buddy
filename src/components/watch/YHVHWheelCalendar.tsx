@@ -1,9 +1,43 @@
 'use client';
 
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { useSacredNow } from '@/hooks/useSacredNow';
+import { useUserLocation } from '@/hooks/useUserLocation';
+import { getSunriseSunset, type SunriseData } from '@/utils/sunrise';
 
 type Offset = { x?: number; y?: number };
+
+const SEASONS_N = ['Spring','Spring','Spring','Summer','Summer','Summer','Fall','Fall','Fall','Winter','Winter','Winter'];
+const SEASONS_S = ['Fall','Fall','Fall','Winter','Winter','Winter','Spring','Spring','Spring','Summer','Summer','Summer'];
+
+/**
+ * Compute current 18-part-of-day index based on sunrise/sunset per Enoch 71/72.
+ * Day (sunrise→sunset) and night (sunset→next sunrise) are each split proportionally
+ * into 18 total parts, then current local time maps to the active slot.
+ */
+function compute18PartIndex(now: Date, sun: SunriseData | null): number {
+  if (!sun) {
+    return Math.floor((now.getHours() / 24) * 18);
+  }
+  const sr = sun.sunrise.getTime();
+  const ss = sun.sunset.getTime();
+  const t = now.getTime();
+  const dayMs = ss - sr;
+  const totalDayHours = dayMs / 3600000;
+  // Enoch: equinox = 9 day / 9 night; proportional otherwise
+  const dayParts = Math.max(6, Math.min(12, Math.round((totalDayHours / 24) * 18)));
+  const nightParts = 18 - dayParts;
+  if (t >= sr && t < ss) {
+    const frac = (t - sr) / dayMs;
+    return Math.min(dayParts - 1, Math.floor(frac * dayParts));
+  }
+  // night
+  const nextSr = sr + 24 * 3600000;
+  const nightMs = nextSr - ss;
+  const tt = t < sr ? t + 24 * 3600000 - ss : t - ss;
+  const frac = Math.max(0, Math.min(0.9999, tt / nightMs));
+  return dayParts + Math.floor(frac * nightParts);
+}
 
 interface YHVHWheelCalendarProps {
   size?: number;
