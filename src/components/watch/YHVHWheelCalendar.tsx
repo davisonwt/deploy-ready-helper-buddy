@@ -400,12 +400,10 @@ export const YHVHWheelCalendar = ({ size = 760, ringOffsets = {}, textOverrides 
                   stroke="#020617"
                   strokeWidth="1.2"
                 />
-                {/* Zodiac symbol (outer) */}
-                <CurvedLabel radius={319} angle={mid} fill={active ? '#0b1220' : '#fef3c7'} size={14} weight={900} offset={ringOffsets.tribes}>{z.sym}</CurvedLabel>
-                {/* Tribe name (middle) */}
-                <CurvedLabel radius={309} angle={mid} fill={active ? '#0b1220' : '#fef3c7'} size={10} weight={800} offset={ringOffsets.tribes}>{tribe}</CurvedLabel>
-                {/* Constellation name (inner) */}
-                <CurvedLabel radius={299} angle={mid} fill={active ? '#0b1220' : '#e2e8f0'} size={8} weight={700} offset={ringOffsets.tribes}>{z.name}</CurvedLabel>
+                {/* Tribe + zodiac side-by-side on a single curved line */}
+                <CurvedLabel radius={310} angle={mid} fill={active ? '#0b1220' : '#fef3c7'} size={10} weight={800} offset={ringOffsets.tribes}>
+                  {`${tribe} · ${z.sym} ${z.name}`}
+                </CurvedLabel>
               </g>
             );
           })
