@@ -120,6 +120,9 @@ verify_jwt = false
 [functions.create-nowpayments-invoice]
 verify_jwt = true
 
+[functions.nowpayments-payout]
+verify_jwt = false
+
 [functions.generate-sower-story]
 verify_jwt = true
 [functions.companion-invoke]
