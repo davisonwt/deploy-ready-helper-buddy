@@ -204,6 +204,8 @@ export const YHVHWheelCalendar = ({ size = 760, ringOffsets = {}, textOverrides 
   const weekIndex = Math.max(0, Math.min(51, Math.floor(dayIndex / 7)));
   const monthIndex = Math.max(0, sacred.date.month - 1);
   const dayPart = compute18PartIndex(now, sun);
+  const moon = computeMoon(now);
+  const moonAngle = (moon.lunarYearDay / 354) * 360;
 
   // Live "sun-in-sky" angle (top of dial = midnight, sweeps clockwise through the 24h)
   const hoursNow = now.getHours() + now.getMinutes() / 60 + now.getSeconds() / 3600;
