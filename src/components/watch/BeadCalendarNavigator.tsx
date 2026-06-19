@@ -98,21 +98,13 @@ export default function BeadCalendarNavigator({ currentMonth, currentDay, curren
               {isHelo ? (
                 <HeloYasephView />
               ) : (
-                <>
-                  <div className="text-center mb-4">
-                    <h3 className="text-2xl md:text-3xl font-bold text-amber-400">MONTH {monthNum}</h3>
-                    <p className="text-sm text-amber-200/70 mt-1">
-                      {beadCount} Beads{monthNum === 1 ? ' (includes days 29-31 from Month 12)' : ''}
-                    </p>
-                  </div>
-                  <MonthFitStrand
-                    month={monthNum}
-                    currentDay={dayProp}
-                    year={currentYear}
-                  />
-
-                </>
+                <MonthFitStrand
+                  month={monthNum}
+                  currentDay={dayProp}
+                  year={currentYear}
+                />
               )}
+
             </motion.div>
           </AnimatePresence>
         </div>
