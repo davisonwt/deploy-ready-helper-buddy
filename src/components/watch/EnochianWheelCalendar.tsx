@@ -220,7 +220,7 @@ const SimpleMonthStrand = ({ month, dayOfMonth, year }: { month: number; dayOfMo
       <div className="mt-8 text-amber-200 text-center text-sm space-y-1">
         <p><span style={{ color: BEAD_PALETTE.sabbath.label }}>●</span> Yellow-green = Weekly Sabbath</p>
         <p><span style={{ color: BEAD_PALETTE.feast.label }}>●</span> Cyan-blue = Feast Day</p>
-        <p><span className="text-gray-400">●</span> Black = Regular day</p>
+        <p><span style={{ color: BEAD_PALETTE.regular.label }}>●</span> Black = Regular day</p>
       </div>
       {selectedBead && (
         <BeadPopup
