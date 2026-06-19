@@ -46,6 +46,11 @@ function dayOfYearFor(month: number, day: number): number {
   return total + day;
 }
 
+function weekDayForYhwhDate(month: number, day: number): number {
+  const dayOfYear = dayOfYearFor(month, day);
+  return ((dayOfYear - 1 + 3) % 7) + 1;
+}
+
 function computeOmer(month: number, day: number): number | null {
   const doy = dayOfYearFor(month, day);
   const o = doy - OMER_START_DOY + 1;
@@ -338,7 +343,8 @@ export function BeadPopup({ isOpen, onClose, year, month, day }: BeadPopupProps)
     persist({ ...diary, [kind]: diary[kind].filter(m => m.id !== id) } as DiaryDay);
 
   // Sacred metadata
-  const isShabbat = yhwhDate?.weekDay === 7;
+  const beadWeekDay = weekDayForYhwhDate(month, day);
+  const isShabbat = beadWeekDay === 7;
   const feastName = getFeastDayName(month, day);
   const omer = computeOmer(month, day);
   const history = getSacredHistory(month, day);
@@ -375,7 +381,7 @@ export function BeadPopup({ isOpen, onClose, year, month, day }: BeadPopupProps)
                 {isShabbat && <Badge className="bg-yellow-500 text-black"><Star className="w-3 h-3 mr-1" />Shabbat</Badge>}
                 {feastName && <Badge className="bg-blue-500 text-white"><Calendar className="w-3 h-3 mr-1" />{feastName}</Badge>}
                 {omer && <Badge className="bg-amber-600 text-white"><Sprout className="w-3 h-3 mr-1" />Omer {omer}/50</Badge>}
-                {yhwhDate && <Badge variant="outline" className="text-gray-200 border-gray-400">Day {yhwhDate.weekDay === 7 ? 'Shabbat' : yhwhDate.weekDay} of Week</Badge>}
+                <Badge variant="outline" className="text-gray-200 border-gray-400">Day {beadWeekDay === 7 ? 'Shabbat' : beadWeekDay} of Week</Badge>
               </div>
             </div>
             <button onClick={onClose} className="text-white hover:text-red-400 p-2"><X className="w-5 h-5" /></button>
