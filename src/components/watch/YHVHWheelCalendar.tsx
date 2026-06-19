@@ -175,12 +175,16 @@ function CurvedLabel({ radius, angle, children, fill = '#f8fafc', size = 14, wei
  *   • Night:   evening end            → next morning start (deep indigo)
  * Top of the ring = midnight (0°). Current local time is marked by a glowing dot.
  */
-function dayPhaseColor(hourOfDay: number, sun: SunriseData | null): string {
+function locationHour(date: Date, lon: number): number {
+  return (date.getUTCHours() + date.getUTCMinutes() / 60 + date.getUTCSeconds() / 3600 + lon / 15 + 24) % 24;
+}
+
+function dayPhaseColor(hourOfDay: number, sun: SunriseData | null, lon: number): string {
   // hourOfDay in 0..24
   let sunriseH = 6, sunsetH = 18;
   if (sun) {
-    sunriseH = sun.sunrise.getHours() + sun.sunrise.getMinutes() / 60;
-    sunsetH = sun.sunset.getHours() + sun.sunset.getMinutes() / 60;
+    sunriseH = locationHour(sun.sunrise, lon);
+    sunsetH = locationHour(sun.sunset, lon);
   }
   const morningStart = sunriseH - 0.75;
   const morningEnd = sunriseH + 0.5;
@@ -215,9 +219,9 @@ function interpColor(a: string, b: string, t: number): string {
   return `#${((r << 16) | (g << 8) | bl).toString(16).padStart(6, '0')}`;
 }
 
-function DaylightRing({ inner, outer, now, sun, rotation = 0 }: { inner: number; outer: number; now: Date; sun: SunriseData | null; rotation?: number }) {
+function DaylightRing({ inner, outer, now, sun, lon, rotation = 0 }: { inner: number; outer: number; now: Date; sun: SunriseData | null; lon: number; rotation?: number }) {
   const segs = 96;
-  const hoursNow = now.getHours() + now.getMinutes() / 60;
+  const hoursNow = locationHour(now, lon);
   // Local day map, rotated so the current daylight marker sits under the sun arm.
   const markerAngle = (hoursNow / 24) * 360;
   const marker = polar((inner + outer) / 2, markerAngle);
@@ -227,7 +231,7 @@ function DaylightRing({ inner, outer, now, sun, rotation = 0 }: { inner: number;
         const start = (i / segs) * 360;
         const end = ((i + 1.02) / segs) * 360;
         const hourAtSeg = ((i + 0.5) / segs) * 24;
-        const fill = dayPhaseColor(hourAtSeg, sun);
+        const fill = dayPhaseColor(hourAtSeg, sun, lon);
         return <path key={i} d={arcPath(inner, outer, start, end)} fill={fill} opacity={0.92} />;
       })}
       {/* current-time marker */}
