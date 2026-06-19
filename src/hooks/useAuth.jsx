@@ -365,6 +365,7 @@ export class AuthProviderClass extends React.Component {
 
       const { data: { session } } = await this.withRetry(() => supabase.auth.getSession())
       if (this._isMounted) this.setState({ session, user: session?.user || null, loading: false })
+      if (session?.user) await this.safeFetchProfile(session.user)
     } catch (e) {
       logError('Auth reinitialization failed', { message: e.message, stack: e.stack })
       if (this._isMounted) this.setState({ loading: false })
