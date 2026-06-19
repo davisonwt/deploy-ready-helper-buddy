@@ -277,8 +277,10 @@ export const YHVHWheelCalendar = ({ size = 760, ringOffsets = {}, textOverrides 
     const fixedSeg = (count: number) => Math.floor((((ang % 360) + 360) % 360) / (360 / count));
 
     if (r >= 468 && r <= 484) {
-      const i = rotSeg(354, moon.lunarYearDay);
-      return { title: 'Moon ring — 354-day lunar year (Enoch 73-74)', detail: `Lunar day ${i + 1}/354 · today ${moon.glyph} ${(moon.phase * 100).toFixed(0)}% (age ${moon.age.toFixed(1)}d)` };
+      // Moon ring no longer rotates — segments are fixed at angle = (i/354)*360
+      const i = fixedSeg(354);
+      const z = ZODIAC[moon.zodiacIdx];
+      return { title: 'Moon ring — 354-day lunar year (Enoch 73-74)', detail: `Lunar day ${i + 1}/354 · today ${moon.glyph} ${(moon.phase * 100).toFixed(0)}% · gate ${z.sym} ${z.name}` };
     }
     if (r >= 404 && r <= 455) {
       const i = rotSeg(366, dayIndex);
@@ -292,16 +294,20 @@ export const YHVHWheelCalendar = ({ size = 760, ringOffsets = {}, textOverrides 
       const i = rotSeg(364, dayIndex);
       return { title: 'Sacred Year ring (364 · 13 sabbath-weeks of 28)', detail: `Day ${i + 1} · sabbath-week ${Math.floor(i / 28) + 1}/13` };
     }
-    if (r >= 300 && r <= 320) {
+    if (r >= 295 && r <= 325) {
       const idx = fixedSeg(12);
       const leader = leaders[Math.floor(idx / 3)];
       const tribe = leader.tribes[idx % 3];
-      return { title: '12 Tribes / Sun-portals', detail: `Portal ${idx + 1}: ${tribe} (camp of ${leader.name})` };
+      const z = ZODIAC[idx];
+      const sunHere = monthIndex === idx;
+      const moonHere = moon.zodiacIdx === idx;
+      const here = [sunHere ? '☉ Sun' : null, moonHere ? '☽ Moon' : null].filter(Boolean).join(' · ');
+      return { title: '12 Tribes / Sun-portals (Zodiac gates)', detail: `Gate ${idx + 1}: ${z.sym} ${z.name} · ${tribe} (camp of ${leader.name})${here ? ' · ' + here : ''}` };
     }
-    if (r >= 225 && r <= 298) {
+    if (r >= 225 && r <= 293) {
       const idx = fixedSeg(4);
       const leader = leaders[idx];
-      return { title: 'Priest-Leader quadrant (4 cardinal angels)', detail: `${leader.name} · ${leader.creature} · tribe ${leader.tribe}` };
+      return { title: 'Priest-Leader quadrant (4 cardinal angels)', detail: `${leader.name} · ${leader.creature} · constellation ${leader.constellation} · tribe ${leader.tribe}` };
     }
     if (r >= 188 && r <= 219) {
       const i = rotSeg(52, weekIndex);
