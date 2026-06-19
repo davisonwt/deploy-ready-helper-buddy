@@ -148,13 +148,16 @@ const BEAD_PALETTE = {
 
 // Scriptural feast days (Lev 23) by {month, day}
 const FEAST_DAYS: Record<number, number[]> = {
-  1: [1, 14, 15, 16, 17, 18, 19, 20, 21],   // Season 1 start + Passover + Week of Unleavened Bread
-  2: [14, 15, 16, 17, 18, 19, 20, 21],      // Pesach Sheni (Num 9) — for those on a long journey
-  3: [15],                                   // Shavuot / Pentecost
-  4: [1],                                    // Season 2 start
-  7: [1, 10, 15, 16, 17, 18, 19, 20, 21, 22], // Season 3 start + Trumpets, Atonement, Tabernacles, Last Great Day
-  10: [1],                                   // Season 4 start
+  1: [1, 10, 14, 15, 16, 17, 18, 19, 20, 21],  // Season 1 start + lamb selection + Passover + Week of Unleavened Bread
+  2: [10, 14, 15, 16, 17, 18, 19, 20, 21],     // Lamb selection + Pesach Sheni (Num 9) — long-journey makeup
+  3: [15],                                       // Shavuot / Pentecost
+  4: [1],                                        // Season 2 start
+  5: [3],                                        // Feast of New Wine
+  6: [22],                                       // Feast of New Oil
+  7: [1, 10, 15, 16, 17, 18, 19, 20, 21, 22],  // Season 3 start + Trumpets, Atonement, Tabernacles, Last Great Day
+  10: [1],                                       // Season 4 start
 };
+
 
 
 
