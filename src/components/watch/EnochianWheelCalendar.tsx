@@ -130,7 +130,7 @@ const BEAD_PALETTE = {
     base: 'hsl(var(--bead-regular))',
     highlight: 'hsl(var(--bead-regular-highlight))',
     shadow: 'rgba(0, 0, 0, 0.95)',
-    label: 'hsl(var(--muted))',
+    label: 'hsl(var(--bead-regular-highlight))',
   },
   sabbath: {
     base: 'hsl(var(--bead-sabbath))',
@@ -227,9 +227,10 @@ const SimpleMonthStrand = ({ month, dayOfMonth, year }: { month: number; dayOfMo
       <div style={{ height: '1cm' }} />
       <div className="flex flex-col items-center relative" style={{ gap: '1mm' }}>{pastBeads.map(renderBead)}</div>
       <div className="mt-8 text-amber-200 text-center text-sm space-y-1">
-        <p><span style={{ color: BEAD_PALETTE.sabbath.label }}>●</span> Yellow-green = Weekly Sabbath</p>
-        <p><span style={{ color: BEAD_PALETTE.feast.label }}>●</span> Cyan-blue = Feast Day</p>
-        <p><span style={{ color: BEAD_PALETTE.regular.label }}>●</span> Black = Regular day</p>
+        <p><span style={{ color: BEAD_PALETTE.sabbath.label }}>●</span> Yellow = Weekly Sabbath</p>
+        <p><span style={{ color: BEAD_PALETTE.feast.label }}>●</span> Light Blue = Feast Day</p>
+        <p><span style={{ color: BEAD_PALETTE.regular.label }}>●</span> Brown = Regular day</p>
+
       </div>
       {selectedBead && (
         <BeadPopup
