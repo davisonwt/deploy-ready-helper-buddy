@@ -206,7 +206,7 @@ const SimpleMonthStrand = ({ month, dayOfMonth, year }: { month: number; dayOfMo
               : `0 10px 30px ${bead.tone.shadow}, inset 0 5px 15px hsl(var(--foreground) / 0.18)`,
           }}
         >
-          <span className="text-sm font-bold text-amber-300 relative z-10">{bead.day}</span>
+          <span className="text-sm font-bold relative z-10" style={{ color: '#ffffff', textShadow: '0 1px 2px rgba(0,0,0,0.9), 0 0 3px rgba(0,0,0,0.8)' }}>{bead.day}</span>
         </div>
 
         {bead.isToday && (
