@@ -104,9 +104,9 @@ export default function BeadCalendarNavigator({ currentMonth, currentDay, curren
                       {beadCount} Beads{monthNum === 1 ? ' (includes days 29-31 from Month 12)' : ''}
                     </p>
                   </div>
-                  <div className="max-h-[60vh] overflow-y-auto w-full px-4 scrollbar-thin scrollbar-thumb-amber-700/40">
+                  <FitStrand viewKey={`${view}-${dayProp}`}>
                     {Strand && <Strand dayOfMonth={dayProp} year={currentYear} />}
-                  </div>
+                  </FitStrand>
                 </>
               )}
             </motion.div>
