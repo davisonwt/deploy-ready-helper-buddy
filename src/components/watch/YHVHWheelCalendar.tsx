@@ -297,6 +297,27 @@ export const YHVHWheelCalendar = ({ size = 760, ringOffsets = {}, textOverrides 
         </g>
 
 
+        {/* Moon ring — 354-day lunar year (Enoch 73-74). Moon glyph orbits to today's lunar position in correct phase. */}
+        <g>
+          {Array.from({ length: 354 }).map((_, i) => {
+            const start = (i / 354) * 360;
+            const end = ((i + 0.9) / 354) * 360;
+            const active = i === moon.lunarYearDay;
+            const fill = active ? '#e5e7eb' : i % 29 === 0 ? '#94a3b8' : '#1e293b';
+            return <path key={`moon-${i}`} d={arcPath(468, 484, start, end, ringOffsets.moon)} fill={fill} opacity={active ? 1 : 0.7} />;
+          })}
+          {(() => {
+            const p = polar(476, moonAngle, ringOffsets.moon);
+            return (
+              <g style={{ transition: 'transform 0.8s ease' }}>
+                <circle cx={p.x} cy={p.y} r="14" fill="#0b1220" stroke="#e5e7eb" strokeWidth="1.5" />
+                <text x={p.x} y={p.y + 1} textAnchor="middle" dominantBaseline="middle" fontSize="20">{moon.glyph}</text>
+              </g>
+            );
+          })()}
+        </g>
+
+
         {/* Outer blue hub circle */}
         <circle cx={cx + (ringOffsets.centerHub?.x || 0)} cy={cy + (ringOffsets.centerHub?.y || 0)} r="104" fill="#020617" stroke="#1d4ed8" strokeWidth="5" />
         {/* Daylight phase ring — sits between gold inner (r=60) and blue outer (r=104) */}
