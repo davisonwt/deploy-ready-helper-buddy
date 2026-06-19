@@ -19,6 +19,7 @@ const DEFAULT_LOCATION: UserLocation = {
 
 const KNOWN_LOCATIONS: Record<string, Pick<UserLocation, 'lat' | 'lon'>> = {
   'south africa': { lat: -26.2, lon: 28.0 },
+  za: { lat: -26.2, lon: 28.0 },
   johannesburg: { lat: -26.2, lon: 28.0 },
   pretoria: { lat: -25.7479, lon: 28.2293 },
   'cape town': { lat: -33.9249, lon: 18.4241 },
@@ -71,7 +72,7 @@ export function useUserLocation() {
             return;
           }
 
-          const textLocation = locationFromText(profile?.location || user?.location || user?.user_metadata?.location);
+          const textLocation = locationFromText(profile?.location || profile?.country || user?.location || user?.country || user?.user_metadata?.location || user?.user_metadata?.country);
           if (textLocation) {
             setLocation(textLocation);
             setLoading(false);
