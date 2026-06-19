@@ -194,3 +194,65 @@ function HeloYasephView() {
     </div>
   );
 }
+
+/**
+ * FitStrand
+ *
+ * Measures its child strand's natural size and scales it down with a CSS
+ * transform so the entire month of beads is visible without scrolling on any
+ * screen. Also auto-centers on today's bead (the `.scale-150` "isToday" bead
+ * rendered by the Month*Strand components) when content does still overflow.
+ */
+function FitStrand({ children, viewKey }: { children: React.ReactNode; viewKey: string }) {
+  const outerRef = useRef<HTMLDivElement>(null);
+  const innerRef = useRef<HTMLDivElement>(null);
+  const [scale, setScale] = useState(1);
+
+  useLayoutEffect(() => {
+    const fit = () => {
+      const outer = outerRef.current;
+      const inner = innerRef.current;
+      if (!outer || !inner) return;
+      // Reset before measuring
+      inner.style.transform = 'none';
+      const oh = outer.clientHeight;
+      const ow = outer.clientWidth;
+      const ih = inner.scrollHeight;
+      const iw = inner.scrollWidth;
+      if (!ih || !iw) return;
+      const s = Math.min(1, oh / ih, ow / iw);
+      setScale(s);
+    };
+    fit();
+    const ro = new ResizeObserver(fit);
+    if (outerRef.current) ro.observe(outerRef.current);
+    if (innerRef.current) ro.observe(innerRef.current);
+    window.addEventListener('resize', fit);
+    // Re-fit after fonts/images settle
+    const t = setTimeout(fit, 300);
+    return () => {
+      ro.disconnect();
+      window.removeEventListener('resize', fit);
+      clearTimeout(t);
+    };
+  }, [viewKey]);
+
+  return (
+    <div
+      ref={outerRef}
+      className="w-full flex justify-center items-start overflow-hidden"
+      style={{ height: 'min(70vh, calc(100dvh - 320px))' }}
+    >
+      <div
+        ref={innerRef}
+        style={{
+          transform: `scale(${scale})`,
+          transformOrigin: 'top center',
+          width: '100%',
+        }}
+      >
+        {children}
+      </div>
+    </div>
+  );
+}
