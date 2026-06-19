@@ -51,18 +51,44 @@ const cy = 500;
 const TAU = Math.PI * 2;
 
 const leaders = [
-  { name: "Adnar'el", tribe: 'Yehoseph', creature: 'Lion', color: '#f2b705', tribes: ['Judah','Issachar','Zebulun'] },
-  { name: "Barkiel", tribe: 'Reuben', creature: 'Man', color: '#15803d', tribes: ['Dan','Asher','Naphtali'] },
-  { name: "Bomi'el", tribe: 'Gershon', creature: 'Ox', color: '#991b1b', tribes: ['Ephraim','Manasseh','Benjamin'] },
-  { name: "Gad'el", tribe: 'Asher', creature: 'Eagle', color: '#1d4ed8', tribes: ['Reuben','Simeon','Gad'] },
+  { name: "Adnar'el", tribe: 'Yehoseph', creature: 'Lion', color: '#f2b705', tribes: ['Judah','Issachar','Zebulun'], constellation: 'Orion' },
+  { name: "Barkiel", tribe: 'Reuben', creature: 'Man', color: '#15803d', tribes: ['Dan','Asher','Naphtali'], constellation: 'Hydra' },
+  { name: "Bomi'el", tribe: 'Gershon', creature: 'Ox', color: '#991b1b', tribes: ['Ephraim','Manasseh','Benjamin'], constellation: '?' },
+  { name: "Gad'el", tribe: 'Asher', creature: 'Eagle', color: '#1d4ed8', tribes: ['Reuben','Simeon','Gad'], constellation: 'Pegasus' },
 ];
 
 const partNames = ['Day', 'Man', 'Ox', 'Night', 'Eagle', 'Lion'];
+
+// 12 sun-portals (zodiac), Month 1 (Aviv) = Aries, then sequential
+const ZODIAC = [
+  { name: 'Aries', sym: '♈' },
+  { name: 'Taurus', sym: '♉' },
+  { name: 'Gemini', sym: '♊' },
+  { name: 'Cancer', sym: '♋' },
+  { name: 'Leo', sym: '♌' },
+  { name: 'Virgo', sym: '♍' },
+  { name: 'Libra', sym: '♎' },
+  { name: 'Scorpio', sym: '♏' },
+  { name: 'Sagittarius', sym: '♐' },
+  { name: 'Capricorn', sym: '♑' },
+  { name: 'Aquarius', sym: '♒' },
+  { name: 'Pisces', sym: '♓' },
+];
 
 // Synodic month + reference new moon (2000-01-06 18:14 UTC) per Enoch 73-74
 const SYNODIC = 29.530588853;
 const LUNAR_REF = Date.UTC(2000, 0, 6, 18, 14, 0);
 const MOON_GLYPHS = ['🌑','🌒','🌓','🌔','🌕','🌖','🌗','🌘'];
+
+// Mean lunar ecliptic longitude (degrees, 0=Aries 0°) — good enough to place the
+// moon in its current zodiac gate. Ref: J2000 epoch mean elements.
+function moonEclipticLongitude(now: Date): number {
+  const J2000 = Date.UTC(2000, 0, 1, 12, 0, 0);
+  const d = (now.getTime() - J2000) / 86400000;
+  let L = 218.316 + 13.176396 * d;
+  L = ((L % 360) + 360) % 360;
+  return L;
+}
 
 function computeMoon(now: Date) {
   const daysSince = (now.getTime() - LUNAR_REF) / 86400000;
@@ -70,7 +96,9 @@ function computeMoon(now: Date) {
   const phase = age / SYNODIC; // 0..1
   const lunarYearDay = Math.floor(((daysSince % 354) + 354) % 354); // 0..353
   const phaseIdx = Math.floor(phase * 8 + 0.5) % 8;
-  return { age, phase, lunarYearDay, glyph: MOON_GLYPHS[phaseIdx] };
+  const longitude = moonEclipticLongitude(now); // 0..360 (Aries 0)
+  const zodiacIdx = Math.floor(longitude / 30) % 12;
+  return { age, phase, lunarYearDay, glyph: MOON_GLYPHS[phaseIdx], longitude, zodiacIdx };
 }
 
 function polar(radius: number, degrees: number, offset?: Offset) {
