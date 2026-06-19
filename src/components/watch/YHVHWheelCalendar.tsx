@@ -368,17 +368,32 @@ export const YHVHWheelCalendar = ({ size = 760, ringOffsets = {}, textOverrides 
           <RingSegments count={364} inner={322} outer={344} activeIndex={dayIndex} goldEvery={28} offset={ringOffsets.weeks} />
         </g>
 
-        {/* 12 tribes / portals — sits just outside the 4 priest-leaders, grouped 3-per-quadrant */}
+        {/* 12 tribes / sun-portals (zodiac gates) — Month 1 (Aviv) = Aries.
+            Sun gate = current month; Moon gate = computed from lunar longitude. */}
         {leaders.flatMap((leader, qi) =>
           leader.tribes.map((tribe, ti) => {
             const idx = qi * 3 + ti;
             const start = (idx / 12) * 360;
             const end = ((idx + 1) / 12) * 360;
             const active = monthIndex === idx;
+            const moonHere = moon.zodiacIdx === idx;
+            const z = ZODIAC[idx];
+            const mid = start + (end - start) / 2;
             return (
               <g key={`tribe-${idx}`}>
-                <path d={arcPath(300, 320, start, end, ringOffsets.tribes)} fill={active ? '#facc15' : leader.color} opacity={active ? 1 : 0.55} stroke="#020617" strokeWidth="1.2" />
-                <CurvedLabel radius={310} angle={start + (end - start) / 2} fill={active ? '#0b1220' : '#fef3c7'} size={11} weight={800} offset={ringOffsets.tribes}>{tribe}</CurvedLabel>
+                <path
+                  d={arcPath(295, 325, start, end, ringOffsets.tribes)}
+                  fill={active ? '#facc15' : moonHere ? '#cbd5e1' : leader.color}
+                  opacity={active ? 1 : moonHere ? 0.85 : 0.55}
+                  stroke="#020617"
+                  strokeWidth="1.2"
+                />
+                {/* Zodiac symbol (outer) */}
+                <CurvedLabel radius={319} angle={mid} fill={active ? '#0b1220' : '#fef3c7'} size={14} weight={900} offset={ringOffsets.tribes}>{z.sym}</CurvedLabel>
+                {/* Tribe name (middle) */}
+                <CurvedLabel radius={309} angle={mid} fill={active ? '#0b1220' : '#fef3c7'} size={10} weight={800} offset={ringOffsets.tribes}>{tribe}</CurvedLabel>
+                {/* Constellation name (inner) */}
+                <CurvedLabel radius={299} angle={mid} fill={active ? '#0b1220' : '#e2e8f0'} size={8} weight={700} offset={ringOffsets.tribes}>{z.name}</CurvedLabel>
               </g>
             );
           })
@@ -391,9 +406,10 @@ export const YHVHWheelCalendar = ({ size = 760, ringOffsets = {}, textOverrides 
           const active = Math.floor(monthIndex / 3) === i;
           return (
             <g key={leader.name}>
-              <path d={arcPath(225, 298, start, end, ringOffsets.leaders)} fill={leader.color} opacity={active ? 0.94 : 0.46} stroke="#020617" strokeWidth="3" />
-              <CurvedLabel radius={263} angle={start + 45} fill="#fef3c7" size={15} offset={ringOffsets.leaders}>{textOverrides[`leader-${i}`] || leader.name}</CurvedLabel>
-              <CurvedLabel radius={241} angle={start + 45} fill="#e2e8f0" size={10} weight={600} offset={ringOffsets.leaders}>{leader.tribe}</CurvedLabel>
+              <path d={arcPath(225, 293, start, end, ringOffsets.leaders)} fill={leader.color} opacity={active ? 0.94 : 0.46} stroke="#020617" strokeWidth="3" />
+              <CurvedLabel radius={275} angle={start + 45} fill="#fef3c7" size={15} offset={ringOffsets.leaders}>{textOverrides[`leader-${i}`] || leader.name}</CurvedLabel>
+              <CurvedLabel radius={257} angle={start + 45} fill="#e2e8f0" size={10} weight={600} offset={ringOffsets.leaders}>{leader.tribe}</CurvedLabel>
+              <CurvedLabel radius={239} angle={start + 45} fill="#fcd34d" size={11} weight={800} offset={ringOffsets.leaders}>★ {leader.constellation}</CurvedLabel>
             </g>
           );
         })}
