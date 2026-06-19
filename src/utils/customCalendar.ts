@@ -176,10 +176,9 @@ export async function getCreatorDate(
     }
   }
 
-  // Weekday follows the 364-day Creator year itself: day 1 of each quarter
-  // (including Month 4 Day 1) is Day 1 of the week.
-  const dayIndexInYear = remainingDays;
-  const weekDay = (dayIndexInYear % 7) + 1;  // 1-6 work, 7=Sabbath
+  // Weekday uses the same fixed 364-day pattern as the wheel and bead calendar.
+  // Year day 1 starts on Day 4 of the week, so Month 4 Day 1 is Day 4.
+  const weekDay = ((remainingDays + 3) % 7) + 1;  // 1-6 work, 7=Sabbath
 
   return {
     year,
@@ -218,10 +217,9 @@ export function getCreatorDateSync(gregorianDate: Date = new Date()): CustomDate
     }
   }
 
-  // Weekday follows the 364-day Creator year itself: day 1 of each quarter
-  // (including Month 4 Day 1) is Day 1 of the week.
-  const dayIndexInYear = remainingDays;
-  const weekDay = (dayIndexInYear % 7) + 1;  // 1-6 work, 7=Sabbath
+  // Weekday uses the same fixed 364-day pattern as the wheel and bead calendar.
+  // Year day 1 starts on Day 4 of the week, so Month 4 Day 1 is Day 4.
+  const weekDay = ((remainingDays + 3) % 7) + 1;  // 1-6 work, 7=Sabbath
 
   return {
     year,
