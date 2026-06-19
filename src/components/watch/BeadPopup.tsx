@@ -175,6 +175,10 @@ export function BeadPopup({ isOpen, onClose, year, month, day }: BeadPopupProps)
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const recordedChunksRef = useRef<Blob[]>([]);
 
+  // Sacred day scripture + moon phase from DB
+  const [scripture, setScripture] = useState<{ note: string | null; song: string | null; portal: string | null } | null>(null);
+  const [moon, setMoon] = useState<{ phase: string; illumination_pct: number } | null>(null);
+
   // Reload diary when target day changes
   useEffect(() => {
     if (isOpen) setDiary(loadDiary(year, month, day));
