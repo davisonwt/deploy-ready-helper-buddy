@@ -69,6 +69,7 @@ import {
   PayoutSettingsPage,
   GosatWalletsPage,
   BinancePayTestPage,
+  NowPaymentsTestPage,
   SowerProfile,
   RadioSessions,
   LiveRooms,
@@ -373,6 +374,9 @@ const AppRoutes = () => (
     } />
     <Route path="/binance-pay-test" element={
       <ProtectedRoute><Layout><BinancePayTestPage /></Layout></ProtectedRoute>
+    } />
+    <Route path="/dev/nowpay-test" element={
+      <ProtectedRoute allowedRoles={['admin', 'gosat']}><Layout><NowPaymentsTestPage /></Layout></ProtectedRoute>
     } />
     <Route path="/admin/analytics" element={
       <ProtectedRoute allowedRoles={['admin', 'gosat']}><Layout><AdminAnalyticsPage /></Layout></ProtectedRoute>
