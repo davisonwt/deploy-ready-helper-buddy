@@ -71,8 +71,7 @@ export function LocationVerification() {
         const detectedTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
         await supabase
           .from('profiles')
-          .update({ timezone: detectedTimezone })
-          .eq('user_id', user.id);
+          .upsert({ user_id: user.id, timezone: detectedTimezone, updated_at: new Date().toISOString() }, { onConflict: 'user_id' });
         setTimezone(detectedTimezone);
         setTimezoneVerified(true);
       }
@@ -97,8 +96,7 @@ export function LocationVerification() {
       const detectedTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
       await supabase
         .from('profiles')
-        .update({ timezone: detectedTimezone })
-        .eq('user_id', user.id);
+        .upsert({ user_id: user.id, timezone: detectedTimezone, updated_at: new Date().toISOString() }, { onConflict: 'user_id' });
       setTimezone(detectedTimezone);
       setTimezoneVerified(true);
     }
