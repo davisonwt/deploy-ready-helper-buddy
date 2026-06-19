@@ -148,10 +148,13 @@ const BEAD_PALETTE = {
 
 // Scriptural feast days (Lev 23) by {month, day}
 const FEAST_DAYS: Record<number, number[]> = {
-  1: [14, 15, 16, 17, 18, 19, 20, 21],     // Passover + Unleavened Bread
-  3: [15],                                  // Shavuot / Pentecost
-  7: [1, 10, 15, 16, 17, 18, 19, 20, 21, 22], // Trumpets, Atonement, Tabernacles, Last Great Day
+  1: [1, 14, 15, 16, 17, 18, 19, 20, 21],  // Season 1 start + Passover + Unleavened Bread
+  3: [15],                                   // Shavuot / Pentecost
+  4: [1],                                    // Season 2 start
+  7: [1, 10, 15, 16, 17, 18, 19, 20, 21, 22], // Season 3 start + Trumpets, Atonement, Tabernacles, Last Great Day
+  10: [1],                                   // Season 4 start
 };
+
 
 const getMonthStartGlobalDay = (month: number) =>
   MONTH_DAYS.slice(0, month - 1).reduce((total, days) => total + days, 0) + 1;
