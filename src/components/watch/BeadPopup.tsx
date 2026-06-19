@@ -178,6 +178,9 @@ export function BeadPopup({ isOpen, onClose, year, month, day }: BeadPopupProps)
   // Sacred day scripture + moon phase from DB
   const [scripture, setScripture] = useState<{ note: string | null; song: string | null; portal: string | null } | null>(null);
   const [moon, setMoon] = useState<{ phase: string; illumination_pct: number } | null>(null);
+  const [moonGuide, setMoonGuide] = useState<{ what_to_do: string; what_to_avoid: string | null; best_for: string | null } | null>(null);
+  const [companion, setCompanion] = useState<{ plant: string; companions: string[]; avoid: string[]; benefits: string | null } | null>(null);
+
 
   // Reload diary when target day changes
   useEffect(() => {
