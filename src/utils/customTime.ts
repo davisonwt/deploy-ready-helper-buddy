@@ -37,8 +37,9 @@ export function calculateSunrise(date: Date = new Date(), lat: number = -26.2, l
   if (cosHour > 1 || cosHour < -1) return 360;
   const hour = (360 - Math.acos(cosHour) * 180 / Math.PI) / 15;
   const localHour = hour + rightAscension - (0.06571 * t) - 6.622 - lngHour;
-  const minutes = ((localHour % 24) + 24) % 24 * 60;
-  return Math.round(minutes);
+  const utcMinutes = ((localHour % 24) + 24) % 24 * 60;
+  const browserLocalMinutes = (utcMinutes - date.getTimezoneOffset() + 1440) % 1440;
+  return Math.round(browserLocalMinutes);
 }
 
 /**
