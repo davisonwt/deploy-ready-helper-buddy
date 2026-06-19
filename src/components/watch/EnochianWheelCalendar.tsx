@@ -125,8 +125,16 @@ const calculateSabbathDays = (month: number): number[] => {
 };
 
 const MONTH_DAYS = [30, 30, 31, 30, 30, 31, 30, 30, 31, 30, 30, 31];
-const REGULAR_BEAD_COLOR = '#1f2937';
-const SABBATH_BEAD_COLOR = '#fbbf24';
+const REGULAR_BEAD_COLOR = '#0a0a0a';      // Black like physical beads
+const SABBATH_BEAD_COLOR = '#a3e635';      // Lime/yellow-green like physical beads
+const FEAST_BEAD_COLOR = '#3b82f6';        // Blue like physical beads
+
+// Scriptural feast days (Lev 23) by {month, day}
+const FEAST_DAYS: Record<number, number[]> = {
+  1: [14, 15, 16, 17, 18, 19, 20, 21],     // Passover + Unleavened Bread
+  3: [15],                                  // Shavuot / Pentecost
+  7: [1, 10, 15, 16, 17, 18, 19, 20, 21, 22], // Trumpets, Atonement, Tabernacles, Last Great Day
+};
 
 const getMonthStartGlobalDay = (month: number) =>
   MONTH_DAYS.slice(0, month - 1).reduce((total, days) => total + days, 0) + 1;
@@ -134,16 +142,18 @@ const getMonthStartGlobalDay = (month: number) =>
 const SimpleMonthStrand = ({ month, dayOfMonth, year }: { month: number; dayOfMonth: number; year: number }) => {
   const [selectedBead, setSelectedBead] = useState<{ year: number; month: number; day: number } | null>(null);
   const sabbathDays = calculateSabbathDays(month);
+  const feastDays = FEAST_DAYS[month] ?? [];
   const monthStartGlobalDay = getMonthStartGlobalDay(month);
 
   const beads = Array.from({ length: MONTH_DAYS[month - 1] }, (_, i) => {
     const day = i + 1;
     const isSabbath = sabbathDays.includes(day);
+    const isFeast = feastDays.includes(day);
 
     return {
       day,
       globalDay: monthStartGlobalDay + i,
-      color: isSabbath ? SABBATH_BEAD_COLOR : REGULAR_BEAD_COLOR,
+      color: isSabbath ? SABBATH_BEAD_COLOR : isFeast ? FEAST_BEAD_COLOR : REGULAR_BEAD_COLOR,
       isToday: dayOfMonth > 0 && day === dayOfMonth,
     };
   }).reverse();
