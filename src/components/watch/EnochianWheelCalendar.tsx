@@ -166,7 +166,7 @@ export const Month1Strand = ({ dayOfMonth, year }: { dayOfMonth: number; year: n
     const isSabbath = sabbathDays.includes(day);
 
     const isFeast = day <= 4;                   // First 4 days = blue feast cycle
-    const isTekufah = day === 4;                // Day 4 = special tekufah marker
+    const isTekufah = false;                // Day 4 = special tekufah marker
 
     let color = '#1f2937';                      // Regular day (deep black)
     if (isSabbath) color = '#fbbf24';           // Golden Sabbath - only on actual Shabbat
@@ -805,9 +805,9 @@ export const Month3Strand = ({ dayOfMonth, year }: { dayOfMonth: number; year: n
     const sabbathDaysMonth3 = calculateSabbathDays(3);
     const isSabbath = sabbathDaysMonth3.includes(dayInMonth);
 
-    const isShavuot = dayInMonth === 6;                   // Torah given on 6th Sivan
+    const isShavuot = false;                   // Torah given on 6th Sivan
 
-    const isPreShavuot = dayInMonth === 5;                // Day before — special preparation
+    const isPreShavuot = false;                // Day before — special preparation
 
     const isPostShavuot = dayInMonth === 7;               // Day after — lingering light
 
@@ -1201,11 +1201,11 @@ export const Month4Strand = ({ dayOfMonth, year }: { dayOfMonth: number; year: n
     const sabbathDays = calculateSabbathDays(4);
     const isSabbath = sabbathDays.includes(dayInMonth);
 
-    const is17Tammuz     = dayInMonth === 17;                   // Fast — breach of Jerusalem walls
+    const is17Tammuz     = false;                   // Fast — breach of Jerusalem walls
 
-    const isGoldenCalf   = dayInMonth === 16;                   // Day before the fast — sin committed
+    const isGoldenCalf   = false;                   // Day before the fast — sin committed
 
-    const isThreeWeeks   = dayInMonth >= 17;                    // Mourning period begins
+    const isThreeWeeks   = false;                    // Mourning period begins
 
 
 
@@ -2454,9 +2454,9 @@ export const Month7Strand = ({ dayOfMonth, year }: { dayOfMonth: number; year: n
 
     const isRoshHashana = day <= 2;                     // 1–2 Tishrei
 
-    const isYomKippur   = day === 10;
+    const isYomKippur   = false;
 
-    const isSukkot      = day >= 15 && day <= 21;
+    const isSukkot      = false;
 
     const isSheminiAtzeret = day === 22;
 
@@ -3997,11 +3997,11 @@ export const Month12Strand = ({ dayOfMonth, year }: { dayOfMonth: number; year: 
     const sabbathDaysMonth12 = calculateSabbathDays(12);
     const isSabbath = sabbathDaysMonth12.includes(day);
 
-    const isPurim       = day === 14;                    // 14 Adar – Purim
+    const isPurim       = false;                    // 14 Adar – Purim
 
-    const isShushanPurim= day === 15;                    // 15 Adar – Shushan Purim
+    const isShushanPurim= false;                    // 15 Adar – Shushan Purim
 
-    const isAdarJoy     = day >= 13;                     // Joy increases from 13th onward
+    const isAdarJoy     = false;                     // Joy increases from 13th onward
 
 
 
