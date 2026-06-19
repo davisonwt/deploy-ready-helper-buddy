@@ -222,12 +222,81 @@ export const YHVHWheelCalendar = ({ size = 760, ringOffsets = {}, textOverrides 
   const weekDay = sacred.weekDay;
   const seasonName = (location.lat < 0 ? SEASONS_S : SEASONS_N)[monthIndex];
 
+  // ---- Hover tooltip: magnifying-glass cursor + per-ring + per-segment info ----
+  const [hover, setHover] = useState<{ title: string; detail: string; x: number; y: number } | null>(null);
 
+  const describeAt = (r: number, ang: number): { title: string; detail: string } | null => {
+    // For rotating rings: the active segment is brought to screen-angle `sunAngle`.
+    // So hovered segment index = round(activeIdx + (ang - sunAngle)/360 * count) mod count.
+    const rotSeg = (count: number, active: number) => {
+      const diff = ((ang - sunAngle) / 360) * count;
+      const idx = Math.round(active + diff);
+      return ((idx % count) + count) % count;
+    };
+    const fixedSeg = (count: number) => Math.floor((((ang % 360) + 360) % 360) / (360 / count));
+
+    if (r >= 468 && r <= 484) {
+      const i = rotSeg(354, moon.lunarYearDay);
+      return { title: 'Moon ring — 354-day lunar year (Enoch 73-74)', detail: `Lunar day ${i + 1}/354 · today ${moon.glyph} ${(moon.phase * 100).toFixed(0)}% (age ${moon.age.toFixed(1)}d)` };
+    }
+    if (r >= 404 && r <= 455) {
+      const i = rotSeg(366, dayIndex);
+      return { title: 'Sacred Year ring (364 days, gold every 30)', detail: `Day ${i + 1} of the sacred solar year` };
+    }
+    if (r >= 350 && r <= 398) {
+      const i = rotSeg(90, sacred.date.day - 1);
+      return { title: 'Season ring (90 days · 4 seasons + 4 intercalary)', detail: `Day ${i + 1}/90 of ${seasonName}` };
+    }
+    if (r >= 322 && r <= 344) {
+      const i = rotSeg(364, dayIndex);
+      return { title: 'Sacred Year ring (364 · 13 sabbath-weeks of 28)', detail: `Day ${i + 1} · sabbath-week ${Math.floor(i / 28) + 1}/13` };
+    }
+    if (r >= 300 && r <= 320) {
+      const idx = fixedSeg(12);
+      const leader = leaders[Math.floor(idx / 3)];
+      const tribe = leader.tribes[idx % 3];
+      return { title: '12 Tribes / Sun-portals', detail: `Portal ${idx + 1}: ${tribe} (camp of ${leader.name})` };
+    }
+    if (r >= 225 && r <= 298) {
+      const idx = fixedSeg(4);
+      const leader = leaders[idx];
+      return { title: 'Priest-Leader quadrant (4 cardinal angels)', detail: `${leader.name} · ${leader.creature} · tribe ${leader.tribe}` };
+    }
+    if (r >= 188 && r <= 219) {
+      const i = rotSeg(52, weekIndex);
+      return { title: '52-week ring', detail: `Week ${i + 1}/52 of the year` };
+    }
+    if (r >= 128 && r <= 174) {
+      const i = rotSeg(18, dayPart);
+      return { title: '18 parts of day (Enoch 71/72)', detail: `Part ${i + 1}/18 · ${partNames[Math.floor(i / 3)]}` };
+    }
+    if (r >= 60 && r <= 104) {
+      const hr = ((ang / 360) * 24 + 24) % 24;
+      const h = Math.floor(hr);
+      const m = Math.floor((hr - h) * 60);
+      return { title: 'Daylight phase ring (24-hour sky)', detail: `~${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')} local · morning / day / evening / night` };
+    }
+    return null;
+  };
+
+  const onSvgMove = (e: React.MouseEvent<SVGSVGElement>) => {
+    const rect = e.currentTarget.getBoundingClientRect();
+    const px = ((e.clientX - rect.left) / rect.width) * 1000;
+    const py = ((e.clientY - rect.top) / rect.height) * 1000;
+    const dx = px - cx, dy = py - cy;
+    const r = Math.hypot(dx, dy);
+    let ang = (Math.atan2(dy, dx) * 180) / Math.PI + 90;
+    if (ang < 0) ang += 360;
+    const info = describeAt(r, ang);
+    if (info) setHover({ ...info, x: e.clientX - rect.left, y: e.clientY - rect.top });
+    else setHover(null);
+  };
 
   return (
     <div className="mx-auto" style={{ width: safeSize, maxWidth: '100%' }}>
       <div className="relative" style={{ width: '100%', aspectRatio: '1 / 1' }}>
-      <svg viewBox="0 0 1000 1000" className="h-full w-full drop-shadow-[0_0_34px_hsl(var(--s2g-amber)/0.24)]" role="img" aria-label="YHVH wheel within wheels calendar">
+      <svg viewBox="0 0 1000 1000" className="h-full w-full drop-shadow-[0_0_34px_hsl(var(--s2g-amber)/0.24)] cursor-zoom-in" role="img" aria-label="YHVH wheel within wheels calendar" onMouseMove={onSvgMove} onMouseLeave={() => setHover(null)}>
+
         <defs>
           <radialGradient id="wheelBg" cx="50%" cy="50%" r="58%">
             <stop offset="0%" stopColor="#0f172a" />
