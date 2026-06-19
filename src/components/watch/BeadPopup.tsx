@@ -210,7 +210,27 @@ export function BeadPopup({ isOpen, onClose, year, month, day }: BeadPopupProps)
     })();
   }, [isOpen, user, yhwhDate]);
 
-  // Schedule reminders via Notifications API
+  // Load scripture + moon phase for this sacred day from DB
+  useEffect(() => {
+    if (!isOpen) return;
+    let cancelled = false;
+    (async () => {
+      try {
+        const doy = dayOfYearFor(month, day);
+        const [scripRes, moonRes] = await Promise.all([
+          supabase.from('sacred_day_scriptures').select('note,song,portal').eq('month', month).eq('day', day).maybeSingle(),
+          supabase.from('sacred_moon_phases').select('phase,illumination_pct').eq('day_of_year', doy).maybeSingle(),
+        ]);
+        if (cancelled) return;
+        setScripture(scripRes.data ?? null);
+        setMoon(moonRes.data ?? null);
+      } catch (e) {
+        console.error('sacred day load failed', e);
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [isOpen, month, day]);
+
   useEffect(() => {
     if (!isOpen) return;
     if ('Notification' in window && Notification.permission === 'default') {
