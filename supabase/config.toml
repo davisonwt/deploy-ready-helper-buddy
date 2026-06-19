@@ -129,6 +129,10 @@ verify_jwt = true
 [functions.nowpayments-payout]
 verify_jwt = false
 
+[functions.nowpayments-verify-payout]
+verify_jwt = true
+
+
 [functions.generate-sower-story]
 verify_jwt = true
 [functions.companion-invoke]
