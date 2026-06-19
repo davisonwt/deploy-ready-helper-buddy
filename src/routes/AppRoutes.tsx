@@ -70,6 +70,7 @@ import {
   GosatWalletsPage,
   BinancePayTestPage,
   NowPaymentsTestPage,
+  PaypalTestPage,
   SowerProfile,
   RadioSessions,
   LiveRooms,
