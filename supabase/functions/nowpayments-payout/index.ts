@@ -1,11 +1,22 @@
-// NOWPayments Mass Payouts API wrapper.
-// Invoked internally from _shared/payouts/nowpayments.ts via supabase.functions.invoke.
-// External callers are rejected (requires service role).
+// NOWPayments Mass Payouts — CREATE step only.
 //
-// Returns a PayoutResult-shaped JSON body matching _shared/payouts/types.ts.
-// If NOWPAYMENTS_PAYOUT_JWT is missing, returns 'manual_required' (caller
-// records that on bestowals.payout_status; no funds move).
+// Reality of the NOWPayments payout API (verified against their docs):
+//   1. POST /v1/auth {email,password} -> short-lived JWT (~5 min). No static
+//      "payout JWT" secret exists; the one we previously plumbed as
+//      NOWPAYMENTS_PAYOUT_JWT was a misread of the docs.
+//   2. POST /v1/payout with x-api-key + Bearer <jwt> -> creates the batch in
+//      status 'creating'/'waiting'. Funds do NOT move yet.
+//   3. POST /v1/payout/{batch_id}/verify {verification_code} -> a human types
+//      the 2FA code (email or authenticator) and only THEN funds move.
+//
+// This function does steps 1 and 2 only. It writes payout_status='awaiting_2fa'
+// and stores the batch id in payout_reference. Step 3 is handled by the
+// nowpayments-verify-payout function, driven by an admin from the UI.
+//
+// Service-role gated: only callable from _shared/payouts/nowpayments.ts via
+// supabase.functions.invoke (which forwards the service-role key).
 
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 import { corsHeaders } from "npm:@supabase/supabase-js@2/cors";
 
 const NOWPAYMENTS_API = "https://api.nowpayments.io/v1";
@@ -19,26 +30,54 @@ interface PayoutRequest {
   amount: number;
 }
 
+// In-memory JWT cache. Edge function instances are reused for a short window,
+// so this saves a round-trip when multiple legs dispatch close together.
+let cachedJwt: { token: string; expiresAt: number } | null = null;
+const JWT_TTL_MS = 4 * 60 * 1000; // refresh well before the ~5min expiry
+
+async function getNowPaymentsJwt(email: string, password: string): Promise<string> {
+  const now = Date.now();
+  if (cachedJwt && cachedJwt.expiresAt > now) return cachedJwt.token;
+
+  const res = await fetch(`${NOWPAYMENTS_API}/auth`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ email, password }),
+  });
+  const text = await res.text();
+  if (!res.ok) {
+    throw new Error(`nowpayments_auth_http_${res.status}: ${text}`);
+  }
+  let parsed: { token?: string };
+  try {
+    parsed = JSON.parse(text);
+  } catch {
+    throw new Error("nowpayments_auth_invalid_response");
+  }
+  if (!parsed.token) throw new Error("nowpayments_auth_no_token");
+  cachedJwt = { token: parsed.token, expiresAt: now + JWT_TTL_MS };
+  return parsed.token;
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response("ok", { headers: corsHeaders });
   }
   if (req.method !== "POST") {
-    return new Response("method_not_allowed", { status: 405 });
+    return json({ status: "manual_required", error: "method_not_allowed" }, 405);
   }
 
   const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
-  const apiKey = Deno.env.get("NOWPAYMENTS_API_KEY");
-  const payoutJwt = Deno.env.get("NOWPAYMENTS_PAYOUT_JWT");
   const supabaseUrl = Deno.env.get("SUPABASE_URL");
+  const apiKey = Deno.env.get("NOWPAYMENTS_API_KEY");
+  const email = Deno.env.get("NOWPAYMENTS_EMAIL");
+  const password = Deno.env.get("NOWPAYMENTS_PASSWORD");
 
-  if (!serviceRoleKey || !apiKey || !supabaseUrl) {
+  if (!serviceRoleKey || !supabaseUrl || !apiKey) {
     return json({ status: "manual_required", error: "server_misconfigured" }, 500);
   }
 
-  // Service-role gate: only accept internal calls. supabase.functions.invoke
-  // forwards Authorization: Bearer <key>; we accept the service-role key OR
-  // an apikey header matching it.
+  // Service-role gate.
   const authHeader = req.headers.get("Authorization") ?? "";
   const apikeyHeader = req.headers.get("apikey") ?? "";
   const presentedToken = authHeader.startsWith("Bearer ")
@@ -65,21 +104,28 @@ Deno.serve(async (req) => {
     return json({ status: "manual_required", error: "missing_fields" }, 400);
   }
 
-  if (!payoutJwt) {
+  if (!email || !password) {
+    // Credentials not configured yet — fall through to manual.
     return json({
       status: "manual_required",
-      error: "payout_jwt_missing",
+      error: "nowpayments_credentials_missing",
     });
   }
+
+  const admin = createClient(supabaseUrl, serviceRoleKey, {
+    auth: { persistSession: false },
+  });
 
   const ipnUrl = `${supabaseUrl}/functions/v1/nowpayments-webhook`;
 
   try {
+    const jwt = await getNowPaymentsJwt(email, password);
+
     const res = await fetch(`${NOWPAYMENTS_API}/payout`, {
       method: "POST",
       headers: {
         "x-api-key": apiKey,
-        "Authorization": `Bearer ${payoutJwt}`,
+        "Authorization": `Bearer ${jwt}`,
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
@@ -101,10 +147,12 @@ Deno.serve(async (req) => {
     try {
       parsed = text ? JSON.parse(text) : {};
     } catch {
-      // keep raw text
+      /* keep raw */
     }
 
     if (!res.ok) {
+      // Invalidate cached JWT on auth failures so the next call re-authenticates.
+      if (res.status === 401 || res.status === 403) cachedJwt = null;
       console.error("nowpayments /payout failed", res.status, text);
       return json({
         status: "manual_required",
@@ -113,26 +161,42 @@ Deno.serve(async (req) => {
       });
     }
 
-    // Response shape (single-item batch):
-    // { id: <batch_id>, withdrawals: [ { id, status, currency, address, ... } ] }
+    // Response shape: { id: <batch_id>, withdrawals: [ { id, status, ... } ] }
     const batchId = parsed.id != null ? String(parsed.id) : undefined;
-    const withdrawals = Array.isArray((parsed as { withdrawals?: unknown }).withdrawals)
-      ? (parsed as { withdrawals: Array<Record<string, unknown>> }).withdrawals
-      : [];
-    const w = withdrawals[0] ?? {};
-    const wid = w.id != null ? String(w.id) : undefined;
-    const wstatus = String(w.status ?? "").toLowerCase();
+    if (!batchId) {
+      return json({
+        status: "manual_required",
+        error: "nowpayments_payout_no_batch_id",
+        raw: parsed,
+      });
+    }
 
-    const status: "sent" | "processing" | "failed" =
-      wstatus === "finished" || wstatus === "sent" || wstatus === "ok"
-        ? "sent"
-        : wstatus === "failed" || wstatus === "rejected"
-        ? "failed"
-        : "processing";
+    // Persist the awaiting-2fa state directly on the bestowal so the admin UI
+    // can list it and operators can verify per leg.
+    const { error: updateError } = await admin
+      .from("bestowals")
+      .update({
+        payout_status: "awaiting_2fa",
+        payout_reference: batchId,
+        payout_error: null,
+      })
+      .eq("id", body.bestowalId);
+
+    if (updateError) {
+      console.error("bestowal update failed", updateError);
+      // Payout was created at the provider, but our row didn't update — flag
+      // loudly so an operator investigates rather than silently retrying.
+      return json({
+        status: "awaiting_2fa",
+        reference: batchId,
+        error: `bestowal_update_failed: ${updateError.message}`,
+        raw: parsed,
+      });
+    }
 
     return json({
-      status,
-      reference: wid ?? batchId,
+      status: "awaiting_2fa",
+      reference: batchId,
       raw: parsed,
     });
   } catch (err) {
