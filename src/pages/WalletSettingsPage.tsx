@@ -162,6 +162,17 @@ export default function WalletSettingsPage() {
           </div>
         </div>
 
+        <Alert className="mb-4">
+          <AlertCircle className="h-4 w-4" />
+          <AlertDescription>
+            Looking for NOWPayments or PayPal payout options?{' '}
+            <a href="/settings/payouts" className="text-primary hover:underline font-medium">
+              Manage payout methods →
+            </a>
+          </AlertDescription>
+        </Alert>
+
+
         <Alert className="mb-6">
           <AlertCircle className="h-4 w-4" />
           <AlertDescription>
