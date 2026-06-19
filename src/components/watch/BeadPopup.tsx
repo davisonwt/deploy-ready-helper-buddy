@@ -443,13 +443,43 @@ export function BeadPopup({ isOpen, onClose, year, month, day }: BeadPopupProps)
                 </div>
               )}
 
-              <div className="bg-emerald-900/30 border border-emerald-500/30 rounded-xl p-4">
-                <div className="flex items-center gap-2 mb-2 text-emerald-300 font-semibold"><Sprout className="w-4 h-4" /> Garden Tip</div>
+              <div className="bg-emerald-900/30 border border-emerald-500/30 rounded-xl p-4 space-y-3">
+                <div className="flex items-center gap-2 text-emerald-300 font-semibold"><Sprout className="w-4 h-4" /> Garden Tip</div>
                 <p className="text-emerald-100/90 text-sm leading-relaxed">{gardenTip}</p>
-                <Button size="sm" variant="outline" className="mt-3 border-emerald-400 text-emerald-200" onClick={() => setTab('diary')}>
+
+                {moonGuide && (
+                  <div className="border-t border-emerald-500/20 pt-3 space-y-1.5">
+                    <div className="text-emerald-200 text-xs uppercase tracking-widest">🌙 {moon?.phase} — Moon-Phase Guidance</div>
+                    <p className="text-emerald-50/90 text-sm leading-relaxed"><span className="font-semibold text-emerald-300">Do:</span> {moonGuide.what_to_do}</p>
+                    {moonGuide.what_to_avoid && (
+                      <p className="text-emerald-50/80 text-sm leading-relaxed"><span className="font-semibold text-rose-300">Avoid:</span> {moonGuide.what_to_avoid}</p>
+                    )}
+                    {moonGuide.best_for && (
+                      <p className="text-emerald-50/80 text-xs italic"><span className="font-semibold text-emerald-300">Best for:</span> {moonGuide.best_for}</p>
+                    )}
+                  </div>
+                )}
+
+                {companion && (
+                  <div className="border-t border-emerald-500/20 pt-3 space-y-1.5">
+                    <div className="text-emerald-200 text-xs uppercase tracking-widest">🌿 Companion of the Day — {companion.plant}</div>
+                    {companion.companions.length > 0 && (
+                      <p className="text-emerald-50/90 text-sm"><span className="font-semibold text-emerald-300">Plant with:</span> {companion.companions.join(', ')}</p>
+                    )}
+                    {companion.avoid.length > 0 && (
+                      <p className="text-emerald-50/80 text-sm"><span className="font-semibold text-rose-300">Avoid near:</span> {companion.avoid.join(', ')}</p>
+                    )}
+                    {companion.benefits && (
+                      <p className="text-emerald-50/80 text-xs italic">{companion.benefits}</p>
+                    )}
+                  </div>
+                )}
+
+                <Button size="sm" variant="outline" className="border-emerald-400 text-emerald-200" onClick={() => setTab('diary')}>
                   <Plus className="w-3 h-3 mr-1" /> Plan a garden task
                 </Button>
               </div>
+
               {journalEntry && (
                 <div className="bg-black/40 border border-white/10 rounded-xl p-4">
                   <div className="flex items-center gap-2 mb-2 text-white font-semibold"><FileText className="w-4 h-4" /> Journal entry exists</div>
