@@ -431,13 +431,24 @@ export const YHVHWheelCalendar = ({ size = 760, ringOffsets = {}, textOverrides 
         <circle cx={armTip.x} cy={armTip.y} r="18" fill="#facc15" opacity="0.75" stroke="#a16207" strokeWidth="3" />
 
       </svg>
-      {hover && (
+      {tip && (
         <div
-          className="pointer-events-none absolute z-30 max-w-[260px] rounded-md border border-amber-500/60 bg-slate-950/95 px-3 py-2 text-xs text-amber-50 shadow-[0_4px_20px_rgba(0,0,0,0.7)]"
-          style={{ left: hover.x + 18, top: Math.max(hover.y - 10, 0) }}
+          className={`absolute z-30 max-w-[260px] rounded-md border px-3 py-2 text-xs text-amber-50 shadow-[0_4px_20px_rgba(0,0,0,0.7)] ${pinned ? 'border-amber-400 bg-slate-900 pointer-events-auto' : 'border-amber-500/60 bg-slate-950/95 pointer-events-none'}`}
+          style={{ left: tip.x + 18, top: Math.max(tip.y - 10, 0) }}
         >
-          <div className="mb-0.5 font-extrabold text-amber-300">{hover.title}</div>
-          <div className="leading-snug text-amber-100/90">{hover.detail}</div>
+          <div className="mb-0.5 flex items-start justify-between gap-2">
+            <span className="font-extrabold text-amber-300">{tip.title}</span>
+            {pinned && (
+              <button
+                type="button"
+                onClick={(e) => { e.stopPropagation(); setPinned(null); }}
+                className="ml-1 -mr-1 -mt-1 text-amber-300/70 hover:text-amber-100"
+                aria-label="Unpin"
+              >×</button>
+            )}
+          </div>
+          <div className="leading-snug text-amber-100/90">{tip.detail}</div>
+          {pinned && <div className="mt-1 text-[10px] text-amber-300/60">pinned · click empty space to release</div>}
         </div>
       )}
       </div>
