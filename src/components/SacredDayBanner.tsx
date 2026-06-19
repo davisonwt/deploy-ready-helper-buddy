@@ -19,11 +19,11 @@ export default function SacredDayBanner() {
 
   const title = isSabbath
     ? '🕊️ Sabbath — set apart day'
-    : `✨ Feast day — ${feastName || 'a holy convocation'}`;
+    : `✨ Feast day — ${feastName || 'a set-apart convocation'}`;
 
   const body = isSabbath
     ? 'No buying and no selling today. The marketplace is paused until the next sunrise. Rest, gather, and bless the tribe.'
-    : `${feastName ? feastName + ' is upon us. ' : ''}A holy day of remembrance — gather with your tribe.`;
+    : `${feastName ? feastName + ' is upon us. ' : ''}A set-apart day of remembrance — gather with your tribe.`;
 
   const tone = isSabbath
     ? 'from-amber-500/25 via-amber-400/15 to-yellow-300/10 border-amber-400/40 text-amber-50'
