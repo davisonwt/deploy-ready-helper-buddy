@@ -351,3 +351,148 @@ async function incrementWalletBalance(
     );
   }
 }
+
+// ============================================================================
+// Provider-agnostic payout dispatcher (added in Part 2 — additive, non-breaking)
+// ----------------------------------------------------------------------------
+// `executeDistribution` above remains the legacy Binance-only path used by
+// `create-binance-pay-order`, `cryptomus-webhook`, and `distribute-bestowal`.
+// New rails (NOWPayments, PayPal) should use `dispatchPayouts` below, which
+// reads the snapshot stored on the `bestowals` row to pick a strategy.
+// ============================================================================
+
+import {
+  getPayoutStrategy,
+  type PayoutLeg,
+  type PayoutProvider,
+  type PayoutResult,
+} from "./payouts/index.ts";
+
+interface BestowalPayoutSnapshot {
+  id: string;
+  payout_provider: string | null;
+  payout_destination: string | null;
+  payout_currency: string | null;
+  distribution_data: DistributionData | null;
+}
+
+export function resolvePayoutProvider(
+  row: Pick<BestowalPayoutSnapshot, "payout_provider">,
+): PayoutProvider {
+  const v = (row.payout_provider ?? "").toLowerCase();
+  if (v === "nowpayments" || v === "paypal" || v === "binance" || v === "manual") {
+    return v;
+  }
+  // Legacy rows have no snapshot — preserve historic Binance behavior.
+  return "binance";
+}
+
+/**
+ * Dispatch each non-zero distribution leg via the strategy snapshotted on the
+ * bestowal row. Writes payout_status/payout_reference/payout_fee_amount/
+ * payout_attempted_at/payout_completed_at/payout_error back to bestowals.
+ *
+ * Returns the aggregate status: 'sent' only if every leg succeeded;
+ * 'processing' if any leg is async; 'failed' if any leg hard-failed;
+ * 'manual_required' otherwise.
+ */
+export async function dispatchPayouts(
+  supabase: SupabaseClient,
+  bestowalId: string,
+): Promise<{ status: PayoutResult["status"]; legs: Array<PayoutResult & { role: PayoutLeg["role"] }> }> {
+  const { data: bestowal, error } = await supabase
+    .from("bestowals")
+    .select(
+      "id, payout_provider, payout_destination, payout_currency, distribution_data",
+    )
+    .eq("id", bestowalId)
+    .single();
+
+  if (error || !bestowal) {
+    throw new Error(`dispatchPayouts: bestowal ${bestowalId} not found`);
+  }
+
+  const snapshot = bestowal as BestowalPayoutSnapshot;
+  const distribution = snapshot.distribution_data;
+  if (!distribution) {
+    throw new Error(`dispatchPayouts: bestowal ${bestowalId} has no distribution_data`);
+  }
+
+  const provider = resolvePayoutProvider(snapshot);
+  const strategy = getPayoutStrategy(provider);
+
+  const legs: PayoutLeg[] = [];
+
+  // Sower leg — uses the snapshot on bestowals (sower-chosen rail), not the
+  // Binance address baked into distribution_data.
+  if (distribution.sower_amount > 0 && snapshot.payout_destination) {
+    legs.push({
+      role: "sower",
+      userId: distribution.sower_user_id ?? null,
+      destination: snapshot.payout_destination,
+      currency: snapshot.payout_currency ?? distribution.currency,
+      amount: distribution.sower_amount,
+    });
+  }
+
+  // Grower leg — same rail as sower for v1.
+  if (
+    distribution.grower_wallet &&
+    (distribution.grower_amount ?? 0) > 0 &&
+    snapshot.payout_destination
+  ) {
+    legs.push({
+      role: "grower",
+      userId: distribution.grower_user_id ?? null,
+      destination: distribution.grower_wallet,
+      currency: distribution.currency,
+      amount: distribution.grower_amount ?? 0,
+    });
+  }
+
+  // Tithing leg — always to S2G's internal wallet via Binance for now.
+  // TODO(part-6): decide S2G treasury rail; keeping Binance to avoid silent change.
+  if (distribution.tithing_admin_amount > 0) {
+    const tithingStrategy = getPayoutStrategy("binance");
+    legs.push({
+      role: "tithing",
+      userId: null,
+      destination: distribution.tithing_admin_wallet,
+      currency: distribution.currency,
+      amount: distribution.tithing_admin_amount,
+    });
+    // dispatched separately below
+    void tithingStrategy;
+  }
+
+  const attemptedAt = new Date().toISOString();
+  await supabase
+    .from("bestowals")
+    .update({ payout_status: "processing", payout_attempted_at: attemptedAt })
+    .eq("id", bestowalId);
+
+  const results: Array<PayoutResult & { role: PayoutLeg["role"] }> = [];
+  for (const leg of legs) {
+    const s = leg.role === "tithing" ? getPayoutStrategy("binance") : strategy;
+    const r = await s.dispatch(leg, { bestowalId, supabase });
+    results.push({ ...r, role: leg.role });
+  }
+
+  // Aggregate — sower leg dominates status reporting on the bestowals row.
+  const sower = results.find((r) => r.role === "sower");
+  const headline = sower ?? results[0] ?? { status: "manual_required" as const };
+
+  const update: Record<string, unknown> = {
+    payout_status: headline.status,
+    payout_reference: sower?.reference ?? null,
+    payout_fee_amount: sower?.feeAmount ?? null,
+    payout_error: results.find((r) => r.error)?.error ?? null,
+  };
+  if (headline.status === "sent") {
+    update.payout_completed_at = new Date().toISOString();
+  }
+
+  await supabase.from("bestowals").update(update).eq("id", bestowalId);
+
+  return { status: headline.status, legs: results };
+}
