@@ -176,8 +176,10 @@ export async function getCreatorDate(
     }
   }
 
-  // Weekday: observed anchor — 2026-04-30 is Day 3 of the week.
-  const weekDay = ((totalDays + 2) % 7) + 1;  // 1-6 work, 7=Sabbath
+  // Weekday follows the 364-day Creator year itself: day 1 of each quarter
+  // (including Month 4 Day 1) is Day 1 of the week.
+  const dayIndexInYear = remainingDays;
+  const weekDay = (dayIndexInYear % 7) + 1;  // 1-6 work, 7=Sabbath
 
   return {
     year,
@@ -216,8 +218,10 @@ export function getCreatorDateSync(gregorianDate: Date = new Date()): CustomDate
     }
   }
 
-  // Weekday: observed anchor — 2026-04-30 is Day 3 of the week.
-  const weekDay = ((totalDays + 2) % 7) + 1;  // 1-6 work, 7=Sabbath
+  // Weekday follows the 364-day Creator year itself: day 1 of each quarter
+  // (including Month 4 Day 1) is Day 1 of the week.
+  const dayIndexInYear = remainingDays;
+  const weekDay = (dayIndexInYear % 7) + 1;  // 1-6 work, 7=Sabbath
 
   return {
     year,
