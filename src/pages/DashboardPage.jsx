@@ -18,6 +18,7 @@ import { toast } from 'sonner'
 import DashboardTribeStats from '../components/dashboard/DashboardTribeStats'
 import TribalTiersCard from '../components/dashboard/TribalTiersCard'
 import LiveNowStrip from '@/components/live/LiveNowStrip'
+import SacredDayBanner from '@/components/SacredDayBanner'
 
 const DAYS_PER_MONTH = [30, 30, 31, 30, 30, 31, 30, 30, 31, 30, 30, 31]
 function shiftYhwhDate(year, month, day, offset) {
@@ -1072,6 +1073,10 @@ export default function SeedFlowDashboard() {
 
         {/* ── CENTER ──────────────────────────────────────────── */}
         <div className="s2g-dashboard-center" style={styles.center}>
+
+          <SacredDayBanner />
+
+
 
           <div className="s2g-dashboard-header" style={{ ...styles.header, flexWrap: 'wrap', rowGap: 12 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 12, flex: '1 1 240px', minWidth: 0 }}>
