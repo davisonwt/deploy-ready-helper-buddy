@@ -273,9 +273,13 @@ export const YHVHWheelCalendar = ({ size = 760, ringOffsets = {}, textOverrides 
         <text x={cx + (ringOffsets.centerHub?.x || 0)} y={cy + 18 + (ringOffsets.centerHub?.y || 0)} textAnchor="middle" fill="#fef3c7" fontSize="11" fontWeight="700">Day {weekDay} of week</text>
         <text x={cx + (ringOffsets.centerHub?.x || 0)} y={cy + 34 + (ringOffsets.centerHub?.y || 0)} textAnchor="middle" fill="#d4a017" fontSize="10" fontWeight="700">Part {dayPart + 1}/18</text>
 
-        <line x1={cx} y1="72" x2={cx} y2={cy} stroke="#e5e7eb" strokeWidth="5" filter="url(#goldGlow)" />
-        <path d="M 500 50 L 484 85 L 516 85 Z" fill="#facc15" filter="url(#goldGlow)" />
-        <circle cx={pointer.x} cy={pointer.y} r="18" fill="#facc15" opacity="0.75" stroke="#a16207" strokeWidth="3" />
+        {/* Live sun-hand: rotates around the dial to where the sun is now */}
+        <g transform={`rotate(${sunAngle} ${cx} ${cy})`} style={{ transition: 'transform 1s linear' }}>
+          <line x1={cx} y1={72} x2={cx} y2={cy} stroke="#e5e7eb" strokeWidth="5" filter="url(#goldGlow)" />
+          <path d={`M ${cx} 50 L ${cx - 16} 85 L ${cx + 16} 85 Z`} fill="#facc15" filter="url(#goldGlow)" />
+        </g>
+        <circle cx={armTip.x} cy={armTip.y} r="18" fill="#facc15" opacity="0.75" stroke="#a16207" strokeWidth="3" />
+
         <text x="500" y="935" textAnchor="middle" fill="#fef3c7" fontSize="18" fontWeight="800">
           Year {sacred.date.year} · Month {sacred.date.month} · Day {sacred.date.day} · Day {sacred.dayOfYear}/364
         </text>
