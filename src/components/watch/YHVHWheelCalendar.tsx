@@ -51,13 +51,27 @@ const cy = 500;
 const TAU = Math.PI * 2;
 
 const leaders = [
-  { name: "Adnar'el", tribe: 'Yehoseph', creature: 'Lion', color: '#f2b705' },
-  { name: "Barkiel", tribe: 'Reuben', creature: 'Man', color: '#15803d' },
-  { name: "Bomi'el", tribe: 'Gershon', creature: 'Ox', color: '#991b1b' },
-  { name: "Gad'el", tribe: 'Asher', creature: 'Eagle', color: '#1d4ed8' },
+  { name: "Adnar'el", tribe: 'Yehoseph', creature: 'Lion', color: '#f2b705', tribes: ['Judah','Issachar','Zebulun'] },
+  { name: "Barkiel", tribe: 'Reuben', creature: 'Man', color: '#15803d', tribes: ['Dan','Asher','Naphtali'] },
+  { name: "Bomi'el", tribe: 'Gershon', creature: 'Ox', color: '#991b1b', tribes: ['Ephraim','Manasseh','Benjamin'] },
+  { name: "Gad'el", tribe: 'Asher', creature: 'Eagle', color: '#1d4ed8', tribes: ['Reuben','Simeon','Gad'] },
 ];
 
 const partNames = ['Day', 'Man', 'Ox', 'Night', 'Eagle', 'Lion'];
+
+// Synodic month + reference new moon (2000-01-06 18:14 UTC) per Enoch 73-74
+const SYNODIC = 29.530588853;
+const LUNAR_REF = Date.UTC(2000, 0, 6, 18, 14, 0);
+const MOON_GLYPHS = ['🌑','🌒','🌓','🌔','🌕','🌖','🌗','🌘'];
+
+function computeMoon(now: Date) {
+  const daysSince = (now.getTime() - LUNAR_REF) / 86400000;
+  const age = ((daysSince % SYNODIC) + SYNODIC) % SYNODIC; // 0..29.53
+  const phase = age / SYNODIC; // 0..1
+  const lunarYearDay = Math.floor(((daysSince % 354) + 354) % 354); // 0..353
+  const phaseIdx = Math.floor(phase * 8 + 0.5) % 8;
+  return { age, phase, lunarYearDay, glyph: MOON_GLYPHS[phaseIdx] };
+}
 
 function polar(radius: number, degrees: number, offset?: Offset) {
   const a = ((degrees - 90) * Math.PI) / 180;
