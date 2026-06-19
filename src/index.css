@@ -151,6 +151,14 @@ All colors MUST be HSL.
     --harvest-foreground: 0 0% 100%;
     --login: 188 78% 41%; /* #17A2B8 - Teal */
     --login-foreground: 0 0% 100%;
+
+  /* Ed's physical bead calendar colors */
+  --bead-regular: 210 24% 4%;       /* near-black beads */
+  --bead-regular-highlight: 190 35% 22%;
+  --bead-sabbath: 70 92% 52%;       /* neon yellow-green Sabbaths */
+  --bead-sabbath-highlight: 66 100% 70%;
+  --bead-feast: 196 100% 47%;       /* bright cyan-blue feast beads */
+  --bead-feast-highlight: 188 100% 62%;
 }
 
 /* Ensure proper text contrast on all surfaces */
