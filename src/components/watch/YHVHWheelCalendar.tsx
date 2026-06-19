@@ -109,6 +109,31 @@ function polar(radius: number, degrees: number, offset?: Offset) {
   };
 }
 
+// Arc path used as a baseline for curved text along a ring segment.
+// Auto-flips on the bottom half so the text reads right-side-up.
+function arcLabelPath(radius: number, startDeg: number, endDeg: number, offset?: Offset) {
+  const mid = (startDeg + endDeg) / 2;
+  const flip = mid > 90 && mid < 270;
+  const a1 = flip ? endDeg : startDeg;
+  const a2 = flip ? startDeg : endDeg;
+  const p1 = polar(radius, a1, offset);
+  const p2 = polar(radius, a2, offset);
+  const large = Math.abs(endDeg - startDeg) > 180 ? 1 : 0;
+  const sweep = flip ? 0 : 1;
+  return `M ${p1.x} ${p1.y} A ${radius} ${radius} 0 ${large} ${sweep} ${p2.x} ${p2.y}`;
+}
+
+function ArcLabel({ id, radius, start, end, children, fill = '#fef3c7', size = 12, weight = 700, offset }: { id: string; radius: number; start: number; end: number; children: React.ReactNode; fill?: string; size?: number; weight?: number; offset?: Offset }) {
+  return (
+    <>
+      <path id={id} d={arcLabelPath(radius, start, end, offset)} fill="none" stroke="none" />
+      <text fill={fill} fontSize={size} fontWeight={weight}>
+        <textPath href={`#${id}`} startOffset="50%" textAnchor="middle">{children}</textPath>
+      </text>
+    </>
+  );
+}
+
 function arcPath(inner: number, outer: number, start: number, end: number, offset?: Offset) {
   const large = end - start > 180 ? 1 : 0;
   const p1 = polar(outer, start, offset);
@@ -400,10 +425,10 @@ export const YHVHWheelCalendar = ({ size = 760, ringOffsets = {}, textOverrides 
                   stroke="#020617"
                   strokeWidth="1.2"
                 />
-                {/* Tribe + zodiac side-by-side on a single curved line */}
-                <CurvedLabel radius={310} angle={mid} fill={active ? '#0b1220' : '#fef3c7'} size={10} weight={800} offset={ringOffsets.tribes}>
+                {/* Tribe + zodiac curved along the segment's own arc */}
+                <ArcLabel id={`tribe-arc-${idx}`} radius={310} start={start + 1} end={end - 1} fill={active ? '#0b1220' : '#fef3c7'} size={11} weight={800} offset={ringOffsets.tribes}>
                   {`${tribe} · ${z.sym} ${z.name}`}
-                </CurvedLabel>
+                </ArcLabel>
               </g>
             );
           })
@@ -417,8 +442,8 @@ export const YHVHWheelCalendar = ({ size = 760, ringOffsets = {}, textOverrides 
           return (
             <g key={leader.name}>
               <path d={arcPath(225, 293, start, end, ringOffsets.leaders)} fill={leader.color} opacity={active ? 0.94 : 0.46} stroke="#020617" strokeWidth="3" />
-              <CurvedLabel radius={275} angle={start + 45} fill="#fef3c7" size={15} offset={ringOffsets.leaders}>{`${textOverrides[`leader-${i}`] || leader.name} · ★ ${leader.constellation}`}</CurvedLabel>
-              <CurvedLabel radius={255} angle={start + 45} fill="#e2e8f0" size={10} weight={600} offset={ringOffsets.leaders}>{leader.tribe}</CurvedLabel>
+              <ArcLabel id={`leader-arc-${i}`} radius={278} start={start + 4} end={end - 4} fill="#fef3c7" size={17} weight={800} offset={ringOffsets.leaders}>{`${textOverrides[`leader-${i}`] || leader.name} · ★ ${leader.constellation}`}</ArcLabel>
+              <ArcLabel id={`leader-tribe-arc-${i}`} radius={250} start={start + 10} end={end - 10} fill="#e2e8f0" size={12} weight={600} offset={ringOffsets.leaders}>{leader.tribe}</ArcLabel>
             </g>
           );
         })}
