@@ -442,8 +442,8 @@ export const YHVHWheelCalendar = ({ size = 760, ringOffsets = {}, textOverrides 
           return (
             <g key={leader.name}>
               <path d={arcPath(225, 293, start, end, ringOffsets.leaders)} fill={leader.color} opacity={active ? 0.94 : 0.46} stroke="#020617" strokeWidth="3" />
-              <CurvedLabel radius={275} angle={start + 45} fill="#fef3c7" size={15} offset={ringOffsets.leaders}>{`${textOverrides[`leader-${i}`] || leader.name} · ★ ${leader.constellation}`}</CurvedLabel>
-              <CurvedLabel radius={255} angle={start + 45} fill="#e2e8f0" size={10} weight={600} offset={ringOffsets.leaders}>{leader.tribe}</CurvedLabel>
+              <ArcLabel id={`leader-arc-${i}`} radius={278} start={start + 4} end={end - 4} fill="#fef3c7" size={17} weight={800} offset={ringOffsets.leaders}>{`${textOverrides[`leader-${i}`] || leader.name} · ★ ${leader.constellation}`}</ArcLabel>
+              <ArcLabel id={`leader-tribe-arc-${i}`} radius={250} start={start + 10} end={end - 10} fill="#e2e8f0" size={12} weight={600} offset={ringOffsets.leaders}>{leader.tribe}</ArcLabel>
             </g>
           );
         })}
