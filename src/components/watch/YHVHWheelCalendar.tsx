@@ -1,9 +1,43 @@
 'use client';
 
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { useSacredNow } from '@/hooks/useSacredNow';
+import { useUserLocation } from '@/hooks/useUserLocation';
+import { getSunriseSunset, type SunriseData } from '@/utils/sunrise';
 
 type Offset = { x?: number; y?: number };
+
+const SEASONS_N = ['Spring','Spring','Spring','Summer','Summer','Summer','Fall','Fall','Fall','Winter','Winter','Winter'];
+const SEASONS_S = ['Fall','Fall','Fall','Winter','Winter','Winter','Spring','Spring','Spring','Summer','Summer','Summer'];
+
+/**
+ * Compute current 18-part-of-day index based on sunrise/sunset per Enoch 71/72.
+ * Day (sunrise→sunset) and night (sunset→next sunrise) are each split proportionally
+ * into 18 total parts, then current local time maps to the active slot.
+ */
+function compute18PartIndex(now: Date, sun: SunriseData | null): number {
+  if (!sun) {
+    return Math.floor((now.getHours() / 24) * 18);
+  }
+  const sr = sun.sunrise.getTime();
+  const ss = sun.sunset.getTime();
+  const t = now.getTime();
+  const dayMs = ss - sr;
+  const totalDayHours = dayMs / 3600000;
+  // Enoch: equinox = 9 day / 9 night; proportional otherwise
+  const dayParts = Math.max(6, Math.min(12, Math.round((totalDayHours / 24) * 18)));
+  const nightParts = 18 - dayParts;
+  if (t >= sr && t < ss) {
+    const frac = (t - sr) / dayMs;
+    return Math.min(dayParts - 1, Math.floor(frac * dayParts));
+  }
+  // night
+  const nextSr = sr + 24 * 3600000;
+  const nightMs = nextSr - ss;
+  const tt = t < sr ? t + 24 * 3600000 - ss : t - ss;
+  const frac = Math.max(0, Math.min(0.9999, tt / nightMs));
+  return dayParts + Math.floor(frac * nightParts);
+}
 
 interface YHVHWheelCalendarProps {
   size?: number;
@@ -67,13 +101,27 @@ function CurvedLabel({ radius, angle, children, fill = '#f8fafc', size = 14, wei
 
 export const YHVHWheelCalendar = ({ size = 760, ringOffsets = {}, textOverrides = {} }: YHVHWheelCalendarProps) => {
   const sacred = useSacredNow();
+  const { location } = useUserLocation();
+  const [sun, setSun] = useState<SunriseData | null>(null);
+  const [now, setNow] = useState(() => new Date());
+
+  useEffect(() => {
+    let cancelled = false;
+    getSunriseSunset(new Date(), location.lat, location.lon).then(s => { if (!cancelled) setSun(s); });
+    const id = setInterval(() => setNow(new Date()), 60000);
+    return () => { cancelled = true; clearInterval(id); };
+  }, [location.lat, location.lon]);
+
   const safeSize = Math.max(320, Math.min(size, 900));
   const dayIndex = Math.max(0, Math.min(363, sacred.dayOfYear - 1));
   const weekIndex = Math.max(0, Math.min(51, Math.floor(dayIndex / 7)));
   const monthIndex = Math.max(0, sacred.date.month - 1);
-  const dayPart = Math.floor((new Date().getHours() / 24) * 18);
+  const dayPart = compute18PartIndex(now, sun);
   const pointerAngle = (dayIndex / 364) * 360;
   const pointer = polar(438, pointerAngle);
+
+  const weekDay = (((sacred.dayOfYear - 1) % 7) + 1);
+  const seasonName = (location.lat < 0 ? SEASONS_S : SEASONS_N)[monthIndex];
 
   return (
     <div className="relative mx-auto" style={{ width: safeSize, maxWidth: '100%', aspectRatio: '1 / 1' }}>
@@ -116,10 +164,12 @@ export const YHVHWheelCalendar = ({ size = 760, ringOffsets = {}, textOverrides 
         })}
         {partNames.map((name, i) => <CurvedLabel key={name} radius={106} angle={i * 60 + 30} fill={i % 2 ? '#e2e8f0' : '#facc15'} size={18} offset={ringOffsets.dayParts}>{name}</CurvedLabel>)}
 
-        <circle cx={cx + (ringOffsets.centerHub?.x || 0)} cy={cy + (ringOffsets.centerHub?.y || 0)} r="74" fill="#020617" stroke="#1d4ed8" strokeWidth="5" />
-        <circle cx={cx + (ringOffsets.centerHub?.x || 0)} cy={cy + (ringOffsets.centerHub?.y || 0)} r="48" fill="#081426" stroke="#d4a017" strokeWidth="2" />
-        <text x={cx + (ringOffsets.centerHub?.x || 0)} y={cy - 5 + (ringOffsets.centerHub?.y || 0)} textAnchor="middle" dominantBaseline="middle" fill="#60a5fa" fontSize="18" fontWeight="900">New Year</text>
-        <text x={cx + (ringOffsets.centerHub?.x || 0)} y={cy + 23 + (ringOffsets.centerHub?.y || 0)} textAnchor="middle" fill="#fef3c7" fontSize="12" fontWeight="700">YHVH</text>
+        <circle cx={cx + (ringOffsets.centerHub?.x || 0)} cy={cy + (ringOffsets.centerHub?.y || 0)} r="86" fill="#020617" stroke="#1d4ed8" strokeWidth="5" />
+        <circle cx={cx + (ringOffsets.centerHub?.x || 0)} cy={cy + (ringOffsets.centerHub?.y || 0)} r="58" fill="#081426" stroke="#d4a017" strokeWidth="2" />
+        <text x={cx + (ringOffsets.centerHub?.x || 0)} y={cy - 22 + (ringOffsets.centerHub?.y || 0)} textAnchor="middle" dominantBaseline="middle" fill="#60a5fa" fontSize="15" fontWeight="900">{seasonName}</text>
+        <text x={cx + (ringOffsets.centerHub?.x || 0)} y={cy - 2 + (ringOffsets.centerHub?.y || 0)} textAnchor="middle" dominantBaseline="middle" fill="#fef3c7" fontSize="20" fontWeight="900">{sacred.date.month}/{sacred.date.day}</text>
+        <text x={cx + (ringOffsets.centerHub?.x || 0)} y={cy + 18 + (ringOffsets.centerHub?.y || 0)} textAnchor="middle" fill="#fef3c7" fontSize="11" fontWeight="700">Day {weekDay} of week</text>
+        <text x={cx + (ringOffsets.centerHub?.x || 0)} y={cy + 34 + (ringOffsets.centerHub?.y || 0)} textAnchor="middle" fill="#d4a017" fontSize="10" fontWeight="700">Part {dayPart + 1}/18</text>
 
         <line x1={cx} y1="72" x2={cx} y2={cy} stroke="#e5e7eb" strokeWidth="5" filter="url(#goldGlow)" />
         <path d="M 500 50 L 484 85 L 516 85 Z" fill="#facc15" filter="url(#goldGlow)" />
