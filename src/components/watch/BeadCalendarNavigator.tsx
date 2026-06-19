@@ -32,7 +32,6 @@ export default function BeadCalendarNavigator({ currentMonth, currentDay, curren
   const isHelo = view === -1;
   const monthIndex = isHelo ? -1 : view;
 
-  const Strand = !isHelo ? STRANDS[monthIndex] : null;
   const monthNum = monthIndex + 1;
   const beadCount = !isHelo ? (monthNum === 1 ? 33 : MONTH_DAYS[monthIndex]) : 1;
 
@@ -188,66 +187,52 @@ function HeloYasephView() {
   );
 }
 
-/**
- * FitStrand
- *
- * Measures its child strand's natural size and scales it down with a CSS
- * transform so the entire month of beads is visible without scrolling on any
- * screen. Also auto-centers on today's bead (the `.scale-150` "isToday" bead
- * rendered by the Month*Strand components) when content does still overflow.
- */
-function FitStrand({ children, viewKey }: { children: React.ReactNode; viewKey: string }) {
-  const outerRef = useRef<HTMLDivElement>(null);
-  const innerRef = useRef<HTMLDivElement>(null);
-  const [fit, setFit] = useState({ scale: 1, height: 420 });
-
-  useLayoutEffect(() => {
-    const fit = () => {
-      const outer = outerRef.current;
-      const inner = innerRef.current;
-      if (!outer || !inner) return;
-      // Reset before measuring
-      inner.style.transform = 'none';
-      const rect = outer.getBoundingClientRect();
-      const viewportSpace = Math.max(260, window.innerHeight - rect.top - 112);
-      const oh = Math.min(window.innerHeight * 0.74, viewportSpace);
-      const ow = outer.clientWidth;
-      const ih = inner.scrollHeight;
-      const iw = inner.scrollWidth;
-      if (!ih || !iw) return;
-      const s = Math.min(1, oh / ih, ow / iw);
-      setFit({ scale: s, height: oh });
-    };
-    fit();
-    const ro = new ResizeObserver(fit);
-    if (outerRef.current) ro.observe(outerRef.current);
-    if (innerRef.current) ro.observe(innerRef.current);
-    window.addEventListener('resize', fit);
-    // Re-fit after fonts/images settle
-    const t = setTimeout(fit, 300);
-    return () => {
-      ro.disconnect();
-      window.removeEventListener('resize', fit);
-      clearTimeout(t);
-    };
-  }, [viewKey]);
+function MonthFitStrand({ month, beadCount, currentDay, year }: { month: number; beadCount: number; currentDay: number; year: number }) {
+  const [selectedBead, setSelectedBead] = useState<{ year: number; month: number; day: number } | null>(null);
+  const days = Array.from({ length: beadCount }, (_, i) => beadCount - i);
 
   return (
-    <div
-      ref={outerRef}
-      className="w-full flex justify-center items-start overflow-hidden"
-      style={{ height: fit.height }}
-    >
-      <div
-        ref={innerRef}
-        style={{
-          transform: `scale(${fit.scale})`,
-          transformOrigin: 'top center',
-          width: '100%',
-        }}
-      >
-        {children}
+    <>
+      <div className="w-full rounded-2xl border border-amber-500/20 bg-black/35 p-3 md:p-4">
+        <div className="grid grid-cols-5 sm:grid-cols-6 md:grid-cols-6 gap-2 place-items-center">
+          {days.map(day => {
+            const isCurrent = currentDay === day;
+            const isSabbath = day % 7 === 0;
+            return (
+              <button
+                key={day}
+                type="button"
+                onClick={() => setSelectedBead({ year, month, day })}
+                aria-label={`Month ${month}, bead ${day}`}
+                className={`relative flex aspect-square w-full max-w-11 items-center justify-center rounded-full border-2 border-black text-[11px] font-bold transition-transform hover:scale-110 ${
+                  isCurrent ? 'z-10 scale-110 text-amber-950' : 'text-amber-200'
+                }`}
+                style={{
+                  background: isCurrent
+                    ? 'radial-gradient(circle at 30% 30%, #ffffff, #fbbf24 45%, #dc2626)'
+                    : isSabbath
+                    ? 'radial-gradient(circle at 30% 30%, #ffffff, #fbbf24)'
+                    : 'radial-gradient(circle at 30% 30%, #ffffff, #475569)',
+                  boxShadow: isCurrent
+                    ? '0 0 34px rgba(251, 191, 36, 0.95), inset 0 0 12px rgba(255,255,255,.8)'
+                    : '0 8px 18px rgba(0,0,0,.55), inset 0 3px 8px rgba(255,255,255,.24)',
+                }}
+              >
+                {day}
+              </button>
+            );
+          })}
+        </div>
       </div>
-    </div>
+      {selectedBead && (
+        <BeadPopup
+          isOpen={!!selectedBead}
+          onClose={() => setSelectedBead(null)}
+          year={selectedBead.year}
+          month={selectedBead.month}
+          day={selectedBead.day}
+        />
+      )}
+    </>
   );
 }
