@@ -9,12 +9,24 @@
  *  - Prev / Next chevrons + dot navigator (1..12 + Helo-Yaseph)
  */
 
-import React, { useState } from 'react';
+import React, { useState, useLayoutEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ChevronLeft, ChevronRight, Sparkles } from 'lucide-react';
 import { BeadPopup } from './BeadPopup';
+import {
+  Month1Strand, Month2Strand, Month3Strand, Month4Strand,
+  Month5Strand, Month6Strand, Month7Strand, Month8Strand,
+  Month9Strand, Month10Strand, Month11Strand, Month12Strand,
+} from './EnochianWheelCalendar';
+
+const STRANDS = [
+  Month1Strand, Month2Strand, Month3Strand, Month4Strand,
+  Month5Strand, Month6Strand, Month7Strand, Month8Strand,
+  Month9Strand, Month10Strand, Month11Strand, Month12Strand,
+];
 
 const MONTH_DAYS = [30, 30, 31, 30, 30, 31, 30, 30, 31, 30, 30, 31];
+
 
 const NORTHERN_SEASONS = ['Spring', 'Spring', 'Spring', 'Summer', 'Summer', 'Summer', 'Fall', 'Fall', 'Fall', 'Winter', 'Winter', 'Winter'];
 const SOUTHERN_SEASONS = ['Fall', 'Fall', 'Fall', 'Winter', 'Winter', 'Winter', 'Spring', 'Spring', 'Spring', 'Summer', 'Summer', 'Summer'];
