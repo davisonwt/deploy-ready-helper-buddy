@@ -4,11 +4,12 @@
  * Month-by-month bead strand viewer matching the legacy 364yhvh layout:
  *  - Hemisphere season header (Northern / Southern)
  *  - Month title with bead count
- *  - Vertically-scrolling bead strand for the selected month only
+ *  - Auto-scaled bead strand so the entire month fits on any screen
+ *  - Opens centered on today's bead
  *  - Prev / Next chevrons + dot navigator (1..12 + Helo-Yaseph)
  */
 
-import React, { useMemo, useState } from 'react';
+import React, { useLayoutEffect, useRef, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ChevronLeft, ChevronRight, Sparkles } from 'lucide-react';
 import {
@@ -103,9 +104,9 @@ export default function BeadCalendarNavigator({ currentMonth, currentDay, curren
                       {beadCount} Beads{monthNum === 1 ? ' (includes days 29-31 from Month 12)' : ''}
                     </p>
                   </div>
-                  <div className="max-h-[60vh] overflow-y-auto w-full px-4 scrollbar-thin scrollbar-thumb-amber-700/40">
+                  <FitStrand viewKey={`${view}-${dayProp}`}>
                     {Strand && <Strand dayOfMonth={dayProp} year={currentYear} />}
-                  </div>
+                  </FitStrand>
                 </>
               )}
             </motion.div>
@@ -189,6 +190,68 @@ function HeloYasephView() {
           Eternity — A Place Where No Time Existed
         </p>
         <p className="text-center text-xs text-purple-300/70">Not counted in the sacred calendar</p>
+      </div>
+    </div>
+  );
+}
+
+/**
+ * FitStrand
+ *
+ * Measures its child strand's natural size and scales it down with a CSS
+ * transform so the entire month of beads is visible without scrolling on any
+ * screen. Also auto-centers on today's bead (the `.scale-150` "isToday" bead
+ * rendered by the Month*Strand components) when content does still overflow.
+ */
+function FitStrand({ children, viewKey }: { children: React.ReactNode; viewKey: string }) {
+  const outerRef = useRef<HTMLDivElement>(null);
+  const innerRef = useRef<HTMLDivElement>(null);
+  const [scale, setScale] = useState(1);
+
+  useLayoutEffect(() => {
+    const fit = () => {
+      const outer = outerRef.current;
+      const inner = innerRef.current;
+      if (!outer || !inner) return;
+      // Reset before measuring
+      inner.style.transform = 'none';
+      const oh = outer.clientHeight;
+      const ow = outer.clientWidth;
+      const ih = inner.scrollHeight;
+      const iw = inner.scrollWidth;
+      if (!ih || !iw) return;
+      const s = Math.min(1, oh / ih, ow / iw);
+      setScale(s);
+    };
+    fit();
+    const ro = new ResizeObserver(fit);
+    if (outerRef.current) ro.observe(outerRef.current);
+    if (innerRef.current) ro.observe(innerRef.current);
+    window.addEventListener('resize', fit);
+    // Re-fit after fonts/images settle
+    const t = setTimeout(fit, 300);
+    return () => {
+      ro.disconnect();
+      window.removeEventListener('resize', fit);
+      clearTimeout(t);
+    };
+  }, [viewKey]);
+
+  return (
+    <div
+      ref={outerRef}
+      className="w-full flex justify-center items-start overflow-hidden"
+      style={{ height: 'min(70vh, calc(100dvh - 320px))' }}
+    >
+      <div
+        ref={innerRef}
+        style={{
+          transform: `scale(${scale})`,
+          transformOrigin: 'top center',
+          width: '100%',
+        }}
+      >
+        {children}
       </div>
     </div>
   );
