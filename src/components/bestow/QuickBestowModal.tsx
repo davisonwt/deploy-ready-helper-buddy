@@ -91,7 +91,7 @@ export default function QuickBestowModal({
           </DialogTitle>
           <DialogDescription>
             Bestowals settle in USDC via Binance Pay. Sower receives the
-            majority; 10% tithing + 5% admin support Sow2Grow
+            majority; a 15% platform fee supports Sow2Grow operations
             {hostUserId ? `; ${whispererSharePct}% goes to the live host.` : '.'}
           </DialogDescription>
         </DialogHeader>

@@ -471,7 +471,7 @@ const EnhancedOrchardForm = ({ editing = false }) => {
                   <div className="space-y-1 text-sm">
                     <div className="font-medium">Financial Breakdown:</div>
                     <div>Original Seed Value: {parseFloat(formData.seed_value).toFixed(2)} USDC</div>
-                    <div>Tithing (10%): {(parseFloat(formData.seed_value) * 0.1).toFixed(2)} USDC</div>
+                    <div>Platform Fee (10%): {(parseFloat(formData.seed_value) * 0.1).toFixed(2)} USDC</div>
                     <div>Admin Fee (5%): {(parseFloat(formData.seed_value) * 0.05).toFixed(2)} USDC</div>
                     <div className="font-medium border-t pt-1">
                       Total Required: {(parseFloat(formData.seed_value) * 1.15).toFixed(2)} USDC

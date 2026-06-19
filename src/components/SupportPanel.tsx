@@ -28,7 +28,7 @@ export function SupportPanel({ isOpen, onClose }: SupportPanelProps) {
   const supportCards = [
     { href: '/support-us', title: 'Support Us', subtitle: 'Help grow the community', icon: Heart },
     { href: '/364yhvh-orchards', title: 'Community Orchards', subtitle: 'Support community projects', icon: Users },
-    { href: '/tithing', title: 'Tithing', subtitle: 'Give 10% · Support the work', icon: HandHeart },
+    { href: '/admin-fee', title: 'Platform Fee', subtitle: '15% · Funds operations & community', icon: HandHeart },
     { href: '/free-will-gifting', title: 'Free-Will Gifting', subtitle: 'Give as led · Any amount', icon: Heart },
   ]
 

@@ -315,7 +315,7 @@ export function OrganizationWalletCredentials() {
 
       {renderWalletForm(
         's2gbestow Wallet',
-        'Receives 10% tithing + 5% admin fees (15% total) from distributions.',
+        'Receives 10% platform fee + 5% admin fee (15% total) from distributions.',
         s2gbestow,
         setS2gbestow
       )}

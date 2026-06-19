@@ -96,7 +96,7 @@ export function BinancePayButton({
             <div className="text-xs space-y-1 text-muted-foreground">
               <p>• Standard orchards: funds rest in the s2gholding wallet until a Gosat releases them.</p>
               <p>• Full value orchards without couriers and community products distribute instantly after confirmation.</p>
-              <p>• 15% is routed to s2gbestow (10% tithe, 5% admin stewardship).</p>
+              <p>• 15% platform fee is routed to s2gbestow (covers operations, community support fund, and referral payouts).</p>
               <p>• The remaining share goes to the sower{growerId ? ' and product whispers' : ''}.</p>
             </div>
           </Card>

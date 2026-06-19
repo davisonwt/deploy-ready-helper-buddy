@@ -28,8 +28,8 @@ const steps: Step[] = [
     placement: 'bottom',
   },
   {
-    target: '.tithing-tour',
-    content: '"Let It Rain" - Support the community through tithing and free-will gifting to help the platform grow.',
+    target: '.admin-fee-tour',
+    content: '"Let It Rain" - Support the community through the platform fee and free-will gifting to help the platform grow.',
     placement: 'bottom',
   },
   {

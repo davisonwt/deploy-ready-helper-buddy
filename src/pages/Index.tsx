@@ -208,10 +208,10 @@ function IndexContent() {
                 <div className="w-12 h-12 sm:w-16 sm:h-16 bg-pink-400 rounded-full flex items-center justify-center mx-auto mb-4 sm:mb-6">
                   <Heart className="w-6 h-6 sm:w-8 sm:h-8 text-white" />
                 </div>
-                <h2 className="text-xl sm:text-2xl font-bold text-brown-800 mb-3 sm:mb-4">scriptural giving</h2>
+                <h2 className="text-xl sm:text-2xl font-bold text-brown-800 mb-3 sm:mb-4">community giving</h2>
                 <p className="text-sm sm:text-base text-brown-700 leading-relaxed italic">
                   give with joy, not just duty,<br />
-                  first fruits and love, your tithe of beauty.
+                  first fruits and love, a gift of beauty.
                 </p>
               </CardContent>
             </Card>

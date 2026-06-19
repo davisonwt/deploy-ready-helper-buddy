@@ -412,7 +412,7 @@ export default function SeedSubmissionPage() {
                      required
                    />
                     <p className="text-xs text-muted-foreground mt-1">
-                      Each copy will cost ${formData.value && formData.courierCost ? ((parseFloat(formData.value) + parseFloat(formData.courierCost)) * 1.105).toFixed(2) : '0'} (including courier + 10% tithing + 0.5% admin fee)
+                      Each copy will cost ${formData.value && formData.courierCost ? ((parseFloat(formData.value) + parseFloat(formData.courierCost)) * 1.105).toFixed(2) : '0'} (including courier + 10% platform fee + 0.5% admin fee)
                     </p>
                  </div>
                )}

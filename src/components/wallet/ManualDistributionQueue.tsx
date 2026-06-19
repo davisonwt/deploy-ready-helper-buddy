@@ -226,7 +226,7 @@ export function ManualDistributionQueue() {
             <li>Orchard fully funded (all pockets filled)</li>
             <li>Courier picks up product from sower</li>
             <li>Courier confirms delivery to bestower</li>
-            <li>Gosat clicks "Release Funds" to distribute</li>
+            <li>Admin clicks "Release Funds" to distribute</li>
             <li>Funds split: 85% to sower, remainder to whispers (if applicable)</li>
           </ol>
         </div>

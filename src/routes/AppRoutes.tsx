@@ -233,12 +233,12 @@ const AppRoutes = () => (
     } /><Route path="/wandering-directory" element={
     <ProtectedRoute><WanderingDirectoryPage /></ProtectedRoute>
     } />
-    <Route path="/tithing" element={
+    <Route path="/admin-fee" element={
       <ProtectedRoute><TithingPage /></ProtectedRoute>
     } />
-    <Route path="/tithing-2" element={
-      <ProtectedRoute><TithingPage /></ProtectedRoute>
-    } />
+    {/* Legacy redirects for old /tithing bookmarks */}
+    <Route path="/tithing" element={<Navigate to="/admin-fee" replace />} />
+    <Route path="/tithing-2" element={<Navigate to="/admin-fee" replace />} />
     <Route path="/free-will-gifting" element={
       <ProtectedRoute><FreeWillGiftingPage /></ProtectedRoute>
     } />

@@ -202,7 +202,7 @@ export default function EditForm() {
                       required={formData.license_type === 'bestowal'}
                     />
                     <p className="text-xs text-muted-foreground">
-                      Total charged: ${((formData.price || 0) * 1.15).toFixed(2)} USDC (includes 10% tithing + 5% admin fee)
+                      Total charged: ${((formData.price || 0) * 1.15).toFixed(2)} USDC (includes 10% platform fee + 5% admin fee)
                     </p>
                   </div>
                 )}
