@@ -2311,6 +2311,30 @@ export type Database = {
         }
         Relationships: []
       }
+      companion_planting: {
+        Row: {
+          avoid: string[]
+          benefits: string | null
+          companions: string[]
+          created_at: string
+          plant: string
+        }
+        Insert: {
+          avoid?: string[]
+          benefits?: string | null
+          companions?: string[]
+          created_at?: string
+          plant: string
+        }
+        Update: {
+          avoid?: string[]
+          benefits?: string | null
+          companions?: string[]
+          created_at?: string
+          plant?: string
+        }
+        Relationships: []
+      }
       content_flags: {
         Row: {
           ai_confidence: number | null
@@ -4828,6 +4852,30 @@ export type Database = {
           severity?: string | null
           updated_at?: string
           words?: string[]
+        }
+        Relationships: []
+      }
+      moon_phase_gardening: {
+        Row: {
+          best_for: string | null
+          created_at: string
+          phase: string
+          what_to_avoid: string | null
+          what_to_do: string
+        }
+        Insert: {
+          best_for?: string | null
+          created_at?: string
+          phase: string
+          what_to_avoid?: string | null
+          what_to_do: string
+        }
+        Update: {
+          best_for?: string | null
+          created_at?: string
+          phase?: string
+          what_to_avoid?: string | null
+          what_to_do?: string
         }
         Relationships: []
       }
