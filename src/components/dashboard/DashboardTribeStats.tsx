@@ -17,8 +17,17 @@ export default function DashboardTribeStats() {
   const reload = React.useCallback(async () => {
     if (!user?.id) return;
     // Tribe size = direct members only; use the same source as /my-tribe.
-    const { data: tribeRows } = await supabase.rpc("get_my_tribe_members" as any);
-    setTribeCount((tribeRows || []).filter((member: any) => Number(member.depth || 1) === 1).length);
+    try {
+      const { data: tribeRows, error: tribeError } = await supabase.rpc("get_my_tribe_members" as any);
+      if (tribeError) throw tribeError;
+      setTribeCount((tribeRows || []).filter((member: any) => Number(member.depth || 1) === 1).length);
+    } catch {
+      const [{ count: circleCount }, { count: referralCount }] = await Promise.all([
+        supabase.from("referral_circle").select("id", { count: "exact", head: true }).eq("referrer_id", user.id),
+        supabase.from("referrals").select("id", { count: "exact", head: true }).eq("referrer_id", user.id),
+      ]);
+      setTribeCount((circleCount || 0) + (referralCount || 0));
+    }
 
 
     // Bestowals received: orchards owned by me
