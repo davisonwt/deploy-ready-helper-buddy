@@ -240,6 +240,36 @@ export function LocationVerification() {
                         Please verify your location to ensure accurate calendar times
                       </p>
                     )}
+                    <div className="grid grid-cols-2 gap-2 pt-2">
+                      <input
+                        value={manualLat}
+                        onChange={(event) => setManualLat(event.target.value)}
+                        inputMode="decimal"
+                        placeholder="Latitude"
+                        className="rounded-md border border-amber-500/30 bg-black/40 px-3 py-2 text-sm text-amber-100 outline-none focus:border-amber-400"
+                      />
+                      <input
+                        value={manualLon}
+                        onChange={(event) => setManualLon(event.target.value)}
+                        inputMode="decimal"
+                        placeholder="Longitude"
+                        className="rounded-md border border-amber-500/30 bg-black/40 px-3 py-2 text-sm text-amber-100 outline-none focus:border-amber-400"
+                      />
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={handleManualSave}
+                        className="col-span-2 border-amber-500/40 text-amber-200 hover:bg-amber-500/10"
+                      >
+                        Save manual location
+                      </Button>
+                    </div>
+                    {manualError && (
+                      <p className="text-xs text-red-400 flex items-center gap-1">
+                        <AlertCircle className="w-3 h-3" />
+                        {manualError}
+                      </p>
+                    )}
                   </>
                 )}
               </div>
