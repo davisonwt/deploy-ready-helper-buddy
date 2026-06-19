@@ -125,9 +125,26 @@ const calculateSabbathDays = (month: number): number[] => {
 };
 
 const MONTH_DAYS = [30, 30, 31, 30, 30, 31, 30, 30, 31, 30, 30, 31];
-const REGULAR_BEAD_COLOR = '#0a0a0a';      // Black like physical beads
-const SABBATH_BEAD_COLOR = '#a3e635';      // Lime/yellow-green like physical beads
-const FEAST_BEAD_COLOR = '#3b82f6';        // Blue like physical beads
+const BEAD_PALETTE = {
+  regular: {
+    base: 'hsl(var(--bead-regular))',
+    highlight: 'hsl(var(--bead-regular-highlight))',
+    shadow: 'rgba(0, 0, 0, 0.95)',
+    label: 'hsl(var(--muted))',
+  },
+  sabbath: {
+    base: 'hsl(var(--bead-sabbath))',
+    highlight: 'hsl(var(--bead-sabbath-highlight))',
+    shadow: 'hsl(var(--bead-sabbath) / 0.45)',
+    label: 'hsl(var(--bead-sabbath))',
+  },
+  feast: {
+    base: 'hsl(var(--bead-feast))',
+    highlight: 'hsl(var(--bead-feast-highlight))',
+    shadow: 'hsl(var(--bead-feast) / 0.5)',
+    label: 'hsl(var(--bead-feast))',
+  },
+} as const;
 
 // Scriptural feast days (Lev 23) by {month, day}
 const FEAST_DAYS: Record<number, number[]> = {
@@ -153,7 +170,7 @@ const SimpleMonthStrand = ({ month, dayOfMonth, year }: { month: number; dayOfMo
     return {
       day,
       globalDay: monthStartGlobalDay + i,
-      color: isSabbath ? SABBATH_BEAD_COLOR : isFeast ? FEAST_BEAD_COLOR : REGULAR_BEAD_COLOR,
+      tone: isSabbath ? BEAD_PALETTE.sabbath : isFeast ? BEAD_PALETTE.feast : BEAD_PALETTE.regular,
       isToday: dayOfMonth > 0 && day === dayOfMonth,
     };
   }).reverse();
@@ -174,10 +191,10 @@ const SimpleMonthStrand = ({ month, dayOfMonth, year }: { month: number; dayOfMo
           className="w-8 h-8 md:w-10 md:h-10 aspect-square rounded-full border-2 md:border-3 border-black relative flex items-center justify-center cursor-pointer hover:scale-110 transition-transform"
           onClick={() => setSelectedBead({ year, month, day: bead.day })}
           style={{
-            background: `radial-gradient(circle at 30% 30%, #fff, ${bead.color})`,
+            background: `radial-gradient(circle at 32% 28%, ${bead.tone.highlight} 0%, ${bead.tone.base} 45%, hsl(var(--bead-regular)) 115%)`,
             boxShadow: bead.isToday
-              ? '0 0 70px #ec4899, inset 0 0 32px #fff'
-              : '0 10px 30px rgba(0,0,0,0.9), inset 0 5px 15px rgba(255,255,255,0.22)',
+              ? '0 0 70px hsl(var(--bead-feast) / 0.85), inset 0 0 32px hsl(var(--foreground) / 0.45)'
+              : `0 10px 30px ${bead.tone.shadow}, inset 0 5px 15px hsl(var(--foreground) / 0.18)`,
           }}
         >
           <span className="text-sm font-bold text-amber-300 relative z-10">{bead.day}</span>
@@ -187,7 +204,7 @@ const SimpleMonthStrand = ({ month, dayOfMonth, year }: { month: number; dayOfMo
           <motion.div
             animate={{ rotate: 360 }}
             transition={{ duration: 12, repeat: Infinity, ease: 'linear' }}
-            className="absolute inset-0 rounded-full border-4 border-pink-500 border-dashed pointer-events-none"
+            className="absolute inset-0 rounded-full border-4 border-primary border-dashed pointer-events-none"
           />
         )}
       </motion.div>
@@ -201,8 +218,8 @@ const SimpleMonthStrand = ({ month, dayOfMonth, year }: { month: number; dayOfMo
       <div style={{ height: '1cm' }} />
       <div className="flex flex-col items-center relative" style={{ gap: '1mm' }}>{pastBeads.map(renderBead)}</div>
       <div className="mt-8 text-amber-200 text-center text-sm space-y-1">
-        <p><span className="text-lime-400">●</span> Lime = Weekly Sabbath</p>
-        <p><span className="text-blue-500">●</span> Blue = Feast Day</p>
+        <p><span style={{ color: BEAD_PALETTE.sabbath.label }}>●</span> Yellow-green = Weekly Sabbath</p>
+        <p><span style={{ color: BEAD_PALETTE.feast.label }}>●</span> Cyan-blue = Feast Day</p>
         <p><span className="text-gray-400">●</span> Black = Regular day</p>
       </div>
       {selectedBead && (
