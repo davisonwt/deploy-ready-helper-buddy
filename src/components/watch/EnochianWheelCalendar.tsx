@@ -125,8 +125,16 @@ const calculateSabbathDays = (month: number): number[] => {
 };
 
 const MONTH_DAYS = [30, 30, 31, 30, 30, 31, 30, 30, 31, 30, 30, 31];
-const REGULAR_BEAD_COLOR = '#1f2937';
-const SABBATH_BEAD_COLOR = '#fbbf24';
+const REGULAR_BEAD_COLOR = '#0a0a0a';      // Black like physical beads
+const SABBATH_BEAD_COLOR = '#a3e635';      // Lime/yellow-green like physical beads
+const FEAST_BEAD_COLOR = '#3b82f6';        // Blue like physical beads
+
+// Scriptural feast days (Lev 23) by {month, day}
+const FEAST_DAYS: Record<number, number[]> = {
+  1: [14, 15, 16, 17, 18, 19, 20, 21],     // Passover + Unleavened Bread
+  3: [15],                                  // Shavuot / Pentecost
+  7: [1, 10, 15, 16, 17, 18, 19, 20, 21, 22], // Trumpets, Atonement, Tabernacles, Last Great Day
+};
 
 const getMonthStartGlobalDay = (month: number) =>
   MONTH_DAYS.slice(0, month - 1).reduce((total, days) => total + days, 0) + 1;
@@ -134,16 +142,18 @@ const getMonthStartGlobalDay = (month: number) =>
 const SimpleMonthStrand = ({ month, dayOfMonth, year }: { month: number; dayOfMonth: number; year: number }) => {
   const [selectedBead, setSelectedBead] = useState<{ year: number; month: number; day: number } | null>(null);
   const sabbathDays = calculateSabbathDays(month);
+  const feastDays = FEAST_DAYS[month] ?? [];
   const monthStartGlobalDay = getMonthStartGlobalDay(month);
 
   const beads = Array.from({ length: MONTH_DAYS[month - 1] }, (_, i) => {
     const day = i + 1;
     const isSabbath = sabbathDays.includes(day);
+    const isFeast = feastDays.includes(day);
 
     return {
       day,
       globalDay: monthStartGlobalDay + i,
-      color: isSabbath ? SABBATH_BEAD_COLOR : REGULAR_BEAD_COLOR,
+      color: isSabbath ? SABBATH_BEAD_COLOR : isFeast ? FEAST_BEAD_COLOR : REGULAR_BEAD_COLOR,
       isToday: dayOfMonth > 0 && day === dayOfMonth,
     };
   }).reverse();
@@ -152,29 +162,22 @@ const SimpleMonthStrand = ({ month, dayOfMonth, year }: { month: number; dayOfMo
   const pastBeads = beads.filter(bead => bead.day <= dayOfMonth);
 
   const renderBead = (bead: typeof beads[number]) => {
-    const curveAngle = getSolarCurveAngle(bead.globalDay);
-
     return (
       <motion.div
         key={bead.day}
         data-today={bead.isToday ? 'true' : undefined}
         className="relative flex items-center justify-center"
-        style={{
-          transform: `perspective(600px) rotateX(${curveAngle * 0.7}deg) rotateY(${curveAngle * 0.3}deg) scaleX(${1 + Math.abs(curveAngle) * 0.003})`,
-          transformOrigin: 'center bottom',
-        }}
         animate={bead.isToday ? { scale: [1, 1.55, 1] } : {}}
         transition={bead.isToday ? { duration: 2, repeat: Infinity, ease: 'easeInOut' } : { duration: 0 }}
       >
         <div
-          className="w-8 h-8 md:w-10 md:h-10 rounded-full border-2 md:border-3 border-black relative flex items-center justify-center cursor-pointer hover:scale-110 transition-transform"
+          className="w-8 h-8 md:w-10 md:h-10 aspect-square rounded-full border-2 md:border-3 border-black relative flex items-center justify-center cursor-pointer hover:scale-110 transition-transform"
           onClick={() => setSelectedBead({ year, month, day: bead.day })}
           style={{
             background: `radial-gradient(circle at 30% 30%, #fff, ${bead.color})`,
             boxShadow: bead.isToday
               ? '0 0 70px #ec4899, inset 0 0 32px #fff'
               : '0 10px 30px rgba(0,0,0,0.9), inset 0 5px 15px rgba(255,255,255,0.22)',
-            transform: 'translateZ(30px)',
           }}
         >
           <span className="text-sm font-bold text-amber-300 relative z-10">{bead.day}</span>
@@ -194,12 +197,13 @@ const SimpleMonthStrand = ({ month, dayOfMonth, year }: { month: number; dayOfMo
   return (
     <div className="flex flex-col items-center p-4 md:p-6 bg-gradient-to-b from-stone-900 to-black rounded-3xl shadow-2xl w-full">
       <h2 className="text-lg md:text-xl lg:text-2xl font-black text-amber-400 mb-2 md:mb-4 tracking-widest">MONTH {month}</h2>
-      <div className="flex flex-col" style={{ gap: '1mm' }}>{futureBeads.map(renderBead)}</div>
+      <div className="flex flex-col items-center" style={{ gap: '1mm' }}>{futureBeads.map(renderBead)}</div>
       <div style={{ height: '1cm' }} />
-      <div className="flex flex-col relative" style={{ gap: '1mm' }}>{pastBeads.map(renderBead)}</div>
+      <div className="flex flex-col items-center relative" style={{ gap: '1mm' }}>{pastBeads.map(renderBead)}</div>
       <div className="mt-8 text-amber-200 text-center text-sm space-y-1">
-        <p>Gold = Sabbath</p>
-        <p>Dark = Regular days</p>
+        <p><span className="text-lime-400">●</span> Lime = Weekly Sabbath</p>
+        <p><span className="text-blue-500">●</span> Blue = Feast Day</p>
+        <p><span className="text-gray-400">●</span> Black = Regular day</p>
       </div>
       {selectedBead && (
         <BeadPopup
