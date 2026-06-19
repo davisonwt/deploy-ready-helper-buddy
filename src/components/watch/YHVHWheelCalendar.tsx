@@ -209,7 +209,8 @@ export const YHVHWheelCalendar = ({ size = 760, ringOffsets = {}, textOverrides 
 
 
   return (
-    <div className="relative mx-auto" style={{ width: safeSize, maxWidth: '100%', aspectRatio: '1 / 1' }}>
+    <div className="mx-auto" style={{ width: safeSize, maxWidth: '100%' }}>
+      <div className="relative" style={{ width: '100%', aspectRatio: '1 / 1' }}>
       <svg viewBox="0 0 1000 1000" className="h-full w-full drop-shadow-[0_0_34px_hsl(var(--s2g-amber)/0.24)]" role="img" aria-label="YHVH wheel within wheels calendar">
         <defs>
           <radialGradient id="wheelBg" cx="50%" cy="50%" r="58%">
