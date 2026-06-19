@@ -14,6 +14,33 @@ export type Database = {
   }
   public: {
     Tables: {
+      account_links: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          id: string
+          label: string | null
+          linked_user_id: string
+          owner_user_id: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          label?: string | null
+          linked_user_id: string
+          owner_user_id: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          label?: string | null
+          linked_user_id?: string
+          owner_user_id?: string
+        }
+        Relationships: []
+      }
       achievements: {
         Row: {
           achievement_name: string
@@ -6114,8 +6141,12 @@ export type Database = {
           is_chatapp_verified: boolean | null
           last_login: string | null
           last_name: string | null
+          latitude: number | null
           linkedin_url: string | null
           location: string | null
+          location_updated_at: string | null
+          location_verified: boolean
+          longitude: number | null
           membership_tier: string | null
           phone: string | null
           pinterest_url: string | null
@@ -6163,8 +6194,12 @@ export type Database = {
           is_chatapp_verified?: boolean | null
           last_login?: string | null
           last_name?: string | null
+          latitude?: number | null
           linkedin_url?: string | null
           location?: string | null
+          location_updated_at?: string | null
+          location_verified?: boolean
+          longitude?: number | null
           membership_tier?: string | null
           phone?: string | null
           pinterest_url?: string | null
@@ -6212,8 +6247,12 @@ export type Database = {
           is_chatapp_verified?: boolean | null
           last_login?: string | null
           last_name?: string | null
+          latitude?: number | null
           linkedin_url?: string | null
           location?: string | null
+          location_updated_at?: string | null
+          location_verified?: boolean
+          longitude?: number | null
           membership_tier?: string | null
           phone?: string | null
           pinterest_url?: string | null
@@ -12937,6 +12976,51 @@ export type Database = {
       }
       get_hearts_gender: { Args: { _user_id: string }; Returns: string }
       get_message_streak: { Args: { user_id_param: string }; Returns: number }
+      get_my_account_scope: {
+        Args: never
+        Returns: {
+          is_primary: boolean
+          user_id: string
+        }[]
+      }
+      get_my_dashboard_content: {
+        Args: never
+        Returns: {
+          artist_name: string
+          category: string
+          cover_image_url: string
+          created_at: string
+          description: string
+          file_url: string
+          id: string
+          image_urls: string[]
+          images: string[]
+          music_genre: string
+          music_mood: string
+          source: string
+          title: string
+          video_url: string
+        }[]
+      }
+      get_my_dashboard_profile: {
+        Args: never
+        Returns: {
+          avatar_url: string
+          country: string
+          display_name: string
+          first_name: string
+          last_name: string
+          latitude: number
+          location: string
+          location_verified: boolean
+          longitude: number
+          membership_tier: string
+          preferred_currency: string
+          timezone: string
+          user_id: string
+        }[]
+      }
+      get_my_dashboard_tribe_count: { Args: never; Returns: number }
       get_my_live_stream_credentials: {
         Args: { p_stream_id: string }
         Returns: {

@@ -2,7 +2,6 @@ import React, { useState, useEffect, useRef } from 'react'
 import { useAuth } from '../hooks/useAuth'
 import { Link, useNavigate } from 'react-router-dom'
 import { supabase } from "@/integrations/supabase/client"
-import { fetchDashboardProductsForSowers } from "@/api/products"
 import SeedFlow from '../components/SeedFlow'
 import LivingButton from '../components/LivingButton'
 import { LetItRainPanel } from '../components/LetItRainPanel'
@@ -452,20 +451,82 @@ export default function SeedFlowDashboard() {
       membership_tier: user.membership_tier || 'Sower',
     }
     setProfile(baseProfile)
-    supabase.from('profiles').select('first_name, last_name, display_name, avatar_url, membership_tier').eq('user_id', user.id).maybeSingle()
-      .then(({ data }) => data && setProfile({ ...baseProfile, ...data }))
+    supabase.rpc('get_my_dashboard_profile')
+      .then(({ data }) => {
+        const row = Array.isArray(data) ? data[0] : data
+        if (row) setProfile({ ...baseProfile, ...row })
+      })
+      .catch(() => {
+        supabase.from('profiles').select('first_name, last_name, display_name, avatar_url, membership_tier').eq('user_id', user.id).maybeSingle()
+          .then(({ data }) => data && setProfile({ ...baseProfile, ...data }))
+      })
     supabase.from('sowers').select('*', { count: 'exact', head: true }).eq('is_verified', true)
       .then(({ count }) => setStats(s => ({ ...s, sowers: count || 4 })))
     supabase.from('orchards').select('*', { count: 'exact', head: true }).eq('status', 'active')
       .then(({ count }) => setStats(s => ({ ...s, orchards: count || 0 })))
     supabase.from('seeds').select('*', { count: 'exact', head: true })
       .then(({ count }) => setStats(s => ({ ...s, seeds: count || 56 })))
-    supabase.from('seeds')
-      .select('id, title, description, category, images, video_url, created_at')
-      .eq('gifter_id', user.id)
-      .order('created_at', { ascending: false })
-      .limit(20)
-      .then(({ data }) => setMySeeds(data || []))
+    ;(async () => {
+      const { data: rows, error } = await supabase.rpc('get_my_dashboard_content')
+      if (error) {
+        console.warn('Dashboard content RPC failed:', error)
+        const { data } = await supabase.from('seeds')
+          .select('id, title, description, category, images, video_url, created_at')
+          .eq('gifter_id', user.id)
+          .order('created_at', { ascending: false })
+          .limit(20)
+        setMySeeds(data || [])
+        return
+      }
+
+      const seedRows = []
+      const musicRows = []
+      const bookRows = []
+      for (const row of rows || []) {
+        const source = (row.source || '').toLowerCase()
+        const productType = source.startsWith('product:') ? source.replace('product:', '') : ''
+        const type = productType || (row.category || '').toLowerCase()
+        if (source.startsWith('product:') && type === 'music') {
+          musicRows.push({
+            id: row.id,
+            track_title: row.title,
+            genre: row.music_genre,
+            file_url: row.file_url,
+            cover_image_url: firstImage(row.image_urls, row.cover_image_url),
+            image_urls: row.image_urls || [],
+            music_genre: row.music_genre,
+            music_mood: row.music_mood,
+            created_at: row.created_at,
+          })
+        } else if (source.startsWith('product:') && (type === 'ebook' || type === 'book')) {
+          bookRows.push({
+            id: row.id,
+            title: row.title,
+            description: row.description,
+            cover_image_url: row.cover_image_url,
+            image_urls: row.image_urls,
+            genre: row.category,
+            created_at: row.created_at,
+          })
+        } else {
+          seedRows.push({
+            id: row.id,
+            title: row.title,
+            description: row.description,
+            category: row.category,
+            images: row.images || row.image_urls || (row.cover_image_url ? [row.cover_image_url] : []),
+            video_url: row.video_url,
+            created_at: row.created_at,
+          })
+        }
+      }
+      setMySeeds(seedRows)
+      setMyMusic(musicRows)
+      setMyBooks(curr => {
+        const ids = new Set(bookRows.map(b => b.id))
+        return [...bookRows, ...curr.filter(b => !ids.has(b.id))]
+      })
+    })()
 
     // My orchards
     supabase.from('orchards')
@@ -474,68 +535,6 @@ export default function SeedFlowDashboard() {
       .order('created_at', { ascending: false })
       .limit(20)
       .then(({ data }) => setMyOrchards(data || []))
-
-    // ── Resolve this user's sower row(s) so we can pull their products + dj tracks ──
-    ;(async () => {
-      const { data: sowerRows } = await supabase
-        .from('sowers').select('id').eq('user_id', user.id)
-      const sowerIds = (sowerRows || []).map(s => s.id)
-
-      // Music: dj tracks PLUS products of type 'music'
-      const { data: djs } = await supabase.from('radio_djs').select('id').eq('user_id', user.id)
-      const djIds = (djs || []).map(d => d.id)
-      let djTracks = []
-      if (djIds.length) {
-        const { data } = await supabase.from('dj_music_tracks')
-          .select('id, track_title, genre, file_url, cover_image_url, music_genre, music_mood, created_at')
-          .in('dj_id', djIds)
-          .order('created_at', { ascending: false })
-          .limit(30)
-        djTracks = data || []
-      }
-      let productMusic = []
-      let productBooks = []
-      let productSeeds = []
-      if (sowerIds.length) {
-        const { data: prods } = await fetchDashboardProductsForSowers(sowerIds, 60)
-        for (const p of (prods || [])) {
-          if (p.type === 'music') {
-            const productImages = Array.isArray(p.image_urls) ? p.image_urls.filter(Boolean) : []
-            productMusic.push({
-              id: p.id, track_title: p.title, genre: p.music_genre,
-              file_url: p.file_url, cover_image_url: firstImage(productImages, p.cover_image_url),
-              image_urls: productImages,
-              music_genre: p.music_genre, music_mood: p.music_mood,
-              created_at: p.created_at,
-            })
-          } else if (p.type === 'ebook' || p.type === 'book') {
-            productBooks.push({
-              id: p.id, title: p.title, description: p.description,
-              cover_image_url: p.cover_image_url, image_urls: p.image_urls,
-              genre: p.category, created_at: p.created_at,
-            })
-          } else {
-            productSeeds.push({
-              id: p.id, title: p.title, description: p.description,
-              category: p.category, images: p.image_urls || (p.cover_image_url ? [p.cover_image_url] : []),
-              video_url: null, created_at: p.created_at,
-            })
-          }
-        }
-      }
-      setMyMusic([...djTracks, ...productMusic])
-      setMyBooks(prev => prev) // placeholder; real set below merges
-      // Merge product books with sower_books fetched separately (below)
-      setMyBooks(curr => {
-        const ids = new Set(curr.map(b => b.id))
-        return [...curr, ...productBooks.filter(b => !ids.has(b.id))]
-      })
-      // Merge product-as-seed with seeds
-      setMySeeds(curr => {
-        const ids = new Set(curr.map(s => s.id))
-        return [...curr, ...productSeeds.filter(s => !ids.has(s.id))]
-      })
-    })()
 
     // My books (sower_books table)
     supabase.from('sower_books')

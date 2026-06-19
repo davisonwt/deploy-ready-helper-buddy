@@ -75,6 +75,7 @@ export function useUserLocation() {
           const textLocation = locationFromText(profile?.location || profile?.country || user?.location || user?.country || user?.user_metadata?.location || user?.user_metadata?.country);
           if (textLocation) {
             setLocation(textLocation);
+            await saveLocationToProfile(textLocation);
             setLoading(false);
             return;
           }
