@@ -215,14 +215,14 @@ function interpColor(a: string, b: string, t: number): string {
   return `#${((r << 16) | (g << 8) | bl).toString(16).padStart(6, '0')}`;
 }
 
-function DaylightRing({ inner, outer, now, sun }: { inner: number; outer: number; now: Date; sun: SunriseData | null }) {
+function DaylightRing({ inner, outer, now, sun, rotation = 0 }: { inner: number; outer: number; now: Date; sun: SunriseData | null; rotation?: number }) {
   const segs = 96;
   const hoursNow = now.getHours() + now.getMinutes() / 60;
-  // Map: top = midnight (0h), clockwise → 6h right, 12h bottom, 18h left
+  // Local day map, rotated so the current daylight marker sits under the sun arm.
   const markerAngle = (hoursNow / 24) * 360;
   const marker = polar((inner + outer) / 2, markerAngle);
   return (
-    <g>
+    <g transform={`rotate(${rotation} ${cx} ${cy})`}>
       {Array.from({ length: segs }).map((_, i) => {
         const start = (i / segs) * 360;
         const end = ((i + 1.02) / segs) * 360;
@@ -275,6 +275,9 @@ export const YHVHWheelCalendar = ({ size = 760, ringOffsets = {}, textOverrides 
     return `rotate(${sunAngle - segCenter} ${cx} ${cy})`;
   };
 
+  const daylightMarkerAngle = ((now.getHours() + now.getMinutes() / 60) / 24) * 360;
+  const daylightRotation = sunAngle - daylightMarkerAngle;
+
   const armTip = polar(438, sunAngle);
   const moonArmTip = polar(438, moonArmAngle);
 
@@ -306,6 +309,7 @@ export const YHVHWheelCalendar = ({ size = 760, ringOffsets = {}, textOverrides 
       return ((idx % count) + count) % count;
     };
     const fixedSeg = (count: number) => Math.floor((((ang % 360) + 360) % 360) / (360 / count));
+    const daylightAng = (((ang - daylightRotation) % 360) + 360) % 360;
 
     if (r >= 468 && r <= 484) {
       // Moon ring no longer rotates — segments are fixed at angle = (i/354)*360
@@ -349,7 +353,7 @@ export const YHVHWheelCalendar = ({ size = 760, ringOffsets = {}, textOverrides 
       return { title: '18 parts of day (Enoch 71/72)', detail: `Part ${i + 1}/18 · ${partNames[Math.floor(i / 3)]}` };
     }
     if (r >= 60 && r <= 104) {
-      const hr = ((ang / 360) * 24 + 24) % 24;
+      const hr = ((daylightAng / 360) * 24 + 24) % 24;
       const h = Math.floor(hr);
       const m = Math.floor((hr - h) * 60);
       return { title: 'Daylight phase ring (24-hour sky)', detail: `~${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')} local · morning / day / evening / night` };
@@ -505,8 +509,8 @@ export const YHVHWheelCalendar = ({ size = 760, ringOffsets = {}, textOverrides 
 
         {/* Outer blue hub circle */}
         <circle cx={cx + (ringOffsets.centerHub?.x || 0)} cy={cy + (ringOffsets.centerHub?.y || 0)} r="104" fill="#020617" stroke="#1d4ed8" strokeWidth="5" />
-        {/* Daylight phase ring — sits between gold inner (r=60) and blue outer (r=104) */}
-        <DaylightRing inner={64} outer={100} now={now} sun={sun} />
+        {/* Daylight phase ring — rotated so the current daylight marker lines up with the sun arm */}
+        <DaylightRing inner={64} outer={100} now={now} sun={sun} rotation={daylightRotation} />
         {/* Gold inner hub circle (holds the today text) */}
         <circle cx={cx + (ringOffsets.centerHub?.x || 0)} cy={cy + (ringOffsets.centerHub?.y || 0)} r="60" fill="#081426" stroke="#d4a017" strokeWidth="2" />
 
