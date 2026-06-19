@@ -410,6 +410,15 @@ export const YHVHWheelCalendar = ({ size = 760, ringOffsets = {}, textOverrides 
         <circle cx={armTip.x} cy={armTip.y} r="18" fill="#facc15" opacity="0.75" stroke="#a16207" strokeWidth="3" />
 
       </svg>
+      {hover && (
+        <div
+          className="pointer-events-none absolute z-30 max-w-[260px] rounded-md border border-amber-500/60 bg-slate-950/95 px-3 py-2 text-xs text-amber-50 shadow-[0_4px_20px_rgba(0,0,0,0.7)]"
+          style={{ left: hover.x + 18, top: Math.max(hover.y - 10, 0) }}
+        >
+          <div className="mb-0.5 font-extrabold text-amber-300">{hover.title}</div>
+          <div className="leading-snug text-amber-100/90">{hover.detail}</div>
+        </div>
+      )}
       </div>
       <div className="mt-3 text-center font-extrabold text-[#fef3c7]" style={{ fontSize: 'clamp(14px, 2.2vw, 20px)' }}>
         Year {sacred.date.year} · Month {sacred.date.month} · Day {sacred.date.day} · Day {sacred.dayOfYear}/364
