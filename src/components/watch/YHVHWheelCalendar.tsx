@@ -245,8 +245,24 @@ export const YHVHWheelCalendar = ({ size = 760, ringOffsets = {}, textOverrides 
           <RingSegments count={90} inner={350} outer={398} activeIndex={sacred.date.day - 1} goldEvery={9} offset={ringOffsets.monthDays} />
         </g>
         <g transform={alignRotation(dayIndex, 364)}>
-          <RingSegments count={364} inner={304} outer={344} activeIndex={dayIndex} goldEvery={28} offset={ringOffsets.weeks} />
+          <RingSegments count={364} inner={322} outer={344} activeIndex={dayIndex} goldEvery={28} offset={ringOffsets.weeks} />
         </g>
+
+        {/* 12 tribes / portals — sits just outside the 4 priest-leaders, grouped 3-per-quadrant */}
+        {leaders.flatMap((leader, qi) =>
+          leader.tribes.map((tribe, ti) => {
+            const idx = qi * 3 + ti;
+            const start = (idx / 12) * 360;
+            const end = ((idx + 1) / 12) * 360;
+            const active = monthIndex === idx;
+            return (
+              <g key={`tribe-${idx}`}>
+                <path d={arcPath(300, 320, start, end, ringOffsets.tribes)} fill={active ? '#facc15' : leader.color} opacity={active ? 1 : 0.55} stroke="#020617" strokeWidth="1.2" />
+                <CurvedLabel radius={310} angle={start + (end - start) / 2} fill={active ? '#0b1220' : '#fef3c7'} size={11} weight={800} offset={ringOffsets.tribes}>{tribe}</CurvedLabel>
+              </g>
+            );
+          })
+        )}
 
         {/* Leader quadrants stay fixed (the 4 directions / living creatures) */}
         {leaders.map((leader, i) => {
