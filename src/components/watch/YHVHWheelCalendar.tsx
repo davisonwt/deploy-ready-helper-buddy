@@ -51,13 +51,27 @@ const cy = 500;
 const TAU = Math.PI * 2;
 
 const leaders = [
-  { name: "Adnar'el", tribe: 'Yehoseph', creature: 'Lion', color: '#f2b705' },
-  { name: "Barkiel", tribe: 'Reuben', creature: 'Man', color: '#15803d' },
-  { name: "Bomi'el", tribe: 'Gershon', creature: 'Ox', color: '#991b1b' },
-  { name: "Gad'el", tribe: 'Asher', creature: 'Eagle', color: '#1d4ed8' },
+  { name: "Adnar'el", tribe: 'Yehoseph', creature: 'Lion', color: '#f2b705', tribes: ['Judah','Issachar','Zebulun'] },
+  { name: "Barkiel", tribe: 'Reuben', creature: 'Man', color: '#15803d', tribes: ['Dan','Asher','Naphtali'] },
+  { name: "Bomi'el", tribe: 'Gershon', creature: 'Ox', color: '#991b1b', tribes: ['Ephraim','Manasseh','Benjamin'] },
+  { name: "Gad'el", tribe: 'Asher', creature: 'Eagle', color: '#1d4ed8', tribes: ['Reuben','Simeon','Gad'] },
 ];
 
 const partNames = ['Day', 'Man', 'Ox', 'Night', 'Eagle', 'Lion'];
+
+// Synodic month + reference new moon (2000-01-06 18:14 UTC) per Enoch 73-74
+const SYNODIC = 29.530588853;
+const LUNAR_REF = Date.UTC(2000, 0, 6, 18, 14, 0);
+const MOON_GLYPHS = ['🌑','🌒','🌓','🌔','🌕','🌖','🌗','🌘'];
+
+function computeMoon(now: Date) {
+  const daysSince = (now.getTime() - LUNAR_REF) / 86400000;
+  const age = ((daysSince % SYNODIC) + SYNODIC) % SYNODIC; // 0..29.53
+  const phase = age / SYNODIC; // 0..1
+  const lunarYearDay = Math.floor(((daysSince % 354) + 354) % 354); // 0..353
+  const phaseIdx = Math.floor(phase * 8 + 0.5) % 8;
+  return { age, phase, lunarYearDay, glyph: MOON_GLYPHS[phaseIdx] };
+}
 
 function polar(radius: number, degrees: number, offset?: Offset) {
   const a = ((degrees - 90) * Math.PI) / 180;
@@ -190,6 +204,8 @@ export const YHVHWheelCalendar = ({ size = 760, ringOffsets = {}, textOverrides 
   const weekIndex = Math.max(0, Math.min(51, Math.floor(dayIndex / 7)));
   const monthIndex = Math.max(0, sacred.date.month - 1);
   const dayPart = compute18PartIndex(now, sun);
+  const moon = computeMoon(now);
+  const moonAngle = (moon.lunarYearDay / 354) * 360;
 
   // Live "sun-in-sky" angle (top of dial = midnight, sweeps clockwise through the 24h)
   const hoursNow = now.getHours() + now.getMinutes() / 60 + now.getSeconds() / 3600;
@@ -231,8 +247,24 @@ export const YHVHWheelCalendar = ({ size = 760, ringOffsets = {}, textOverrides 
           <RingSegments count={90} inner={350} outer={398} activeIndex={sacred.date.day - 1} goldEvery={9} offset={ringOffsets.monthDays} />
         </g>
         <g transform={alignRotation(dayIndex, 364)}>
-          <RingSegments count={364} inner={304} outer={344} activeIndex={dayIndex} goldEvery={28} offset={ringOffsets.weeks} />
+          <RingSegments count={364} inner={322} outer={344} activeIndex={dayIndex} goldEvery={28} offset={ringOffsets.weeks} />
         </g>
+
+        {/* 12 tribes / portals — sits just outside the 4 priest-leaders, grouped 3-per-quadrant */}
+        {leaders.flatMap((leader, qi) =>
+          leader.tribes.map((tribe, ti) => {
+            const idx = qi * 3 + ti;
+            const start = (idx / 12) * 360;
+            const end = ((idx + 1) / 12) * 360;
+            const active = monthIndex === idx;
+            return (
+              <g key={`tribe-${idx}`}>
+                <path d={arcPath(300, 320, start, end, ringOffsets.tribes)} fill={active ? '#facc15' : leader.color} opacity={active ? 1 : 0.55} stroke="#020617" strokeWidth="1.2" />
+                <CurvedLabel radius={310} angle={start + (end - start) / 2} fill={active ? '#0b1220' : '#fef3c7'} size={11} weight={800} offset={ringOffsets.tribes}>{tribe}</CurvedLabel>
+              </g>
+            );
+          })
+        )}
 
         {/* Leader quadrants stay fixed (the 4 directions / living creatures) */}
         {leaders.map((leader, i) => {
@@ -262,6 +294,27 @@ export const YHVHWheelCalendar = ({ size = 760, ringOffsets = {}, textOverrides 
             <CurvedLabel key={`num-${i}`} radius={150} angle={(i + 0.47) / 18 * 360} fill={i === dayPart ? '#0b1220' : '#fef3c7'} size={12} weight={800} offset={ringOffsets.dayParts}>{i + 1}</CurvedLabel>
           ))}
           {partNames.map((name, i) => <CurvedLabel key={name} radius={116} angle={i * 60 + 30} fill={i % 2 ? '#e2e8f0' : '#facc15'} size={14} offset={ringOffsets.dayParts}>{name}</CurvedLabel>)}
+        </g>
+
+
+        {/* Moon ring — 354-day lunar year (Enoch 73-74). Moon glyph orbits to today's lunar position in correct phase. */}
+        <g>
+          {Array.from({ length: 354 }).map((_, i) => {
+            const start = (i / 354) * 360;
+            const end = ((i + 0.9) / 354) * 360;
+            const active = i === moon.lunarYearDay;
+            const fill = active ? '#e5e7eb' : i % 29 === 0 ? '#94a3b8' : '#1e293b';
+            return <path key={`moon-${i}`} d={arcPath(468, 484, start, end, ringOffsets.moon)} fill={fill} opacity={active ? 1 : 0.7} />;
+          })}
+          {(() => {
+            const p = polar(476, moonAngle, ringOffsets.moon);
+            return (
+              <g style={{ transition: 'transform 0.8s ease' }}>
+                <circle cx={p.x} cy={p.y} r="14" fill="#0b1220" stroke="#e5e7eb" strokeWidth="1.5" />
+                <text x={p.x} y={p.y + 1} textAnchor="middle" dominantBaseline="middle" fontSize="20">{moon.glyph}</text>
+              </g>
+            );
+          })()}
         </g>
 
 
