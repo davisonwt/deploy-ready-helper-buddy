@@ -9,20 +9,10 @@
  *  - Prev / Next chevrons + dot navigator (1..12 + Helo-Yaseph)
  */
 
-import React, { useLayoutEffect, useRef, useState } from 'react';
+import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ChevronLeft, ChevronRight, Sparkles } from 'lucide-react';
-import {
-  Month1Strand, Month2Strand, Month3Strand, Month4Strand,
-  Month5Strand, Month6Strand, Month7Strand, Month8Strand,
-  Month9Strand, Month10Strand, Month11Strand, Month12Strand,
-} from './EnochianWheelCalendar';
-
-const STRANDS = [
-  Month1Strand, Month2Strand, Month3Strand, Month4Strand,
-  Month5Strand, Month6Strand, Month7Strand, Month8Strand,
-  Month9Strand, Month10Strand, Month11Strand, Month12Strand,
-];
+import { BeadPopup } from './BeadPopup';
 
 const MONTH_DAYS = [30, 30, 31, 30, 30, 31, 30, 30, 31, 30, 30, 31];
 
@@ -75,7 +65,7 @@ export default function BeadCalendarNavigator({ currentMonth, currentDay, curren
       </div>
 
       {/* Strand viewport with side chevrons */}
-      <div className="relative flex items-center min-h-[min(640px,calc(100dvh-150px))]">
+      <div className="relative flex items-center min-h-[min(600px,calc(100dvh-150px))]">
         <button
           onClick={goPrev}
           aria-label="Previous month"
@@ -104,9 +94,12 @@ export default function BeadCalendarNavigator({ currentMonth, currentDay, curren
                       {beadCount} Beads{monthNum === 1 ? ' (includes days 29-31 from Month 12)' : ''}
                     </p>
                   </div>
-                  <FitStrand viewKey={`${view}-${dayProp}`}>
-                    {Strand && <Strand dayOfMonth={dayProp} year={currentYear} />}
-                  </FitStrand>
+                  <MonthFitStrand
+                    month={monthNum}
+                    beadCount={beadCount}
+                    currentDay={dayProp}
+                    year={currentYear}
+                  />
                 </>
               )}
             </motion.div>
