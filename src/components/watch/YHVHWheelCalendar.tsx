@@ -235,17 +235,23 @@ export const YHVHWheelCalendar = ({ size = 760, ringOffsets = {}, textOverrides 
   const moon = computeMoon(now);
   const moonAngle = (moon.lunarYearDay / 354) * 360;
 
-  // Live "sun-in-sky" angle (top of dial = midnight, sweeps clockwise through the 24h)
-  const hoursNow = now.getHours() + now.getMinutes() / 60 + now.getSeconds() / 3600;
-  const sunAngle = (hoursNow / 24) * 360;
+  // Sun arm = sun's current zodiac gate angle (advances 1°/day across her 30° gate).
+  // This makes the fixed tribe + leader rings line up with the sun arm.
+  // (Time-of-day is still shown by the marker dot on the inner Daylight ring.)
+  const sunGateAngle = (monthIndex * 30) + ((sacred.date.day - 1) / 30) * 30; // 0..360
+  const sunAngle = ((sunGateAngle % 360) + 360) % 360;
 
-  // Helper: rotation that brings a ring's active segment up under the fixed arm
+  // Moon arm = moon's real ecliptic longitude (where she sits among the 12 gates).
+  const moonArmAngle = ((moon.longitude % 360) + 360) % 360;
+
+  // Helper: rotation that brings a ring's active segment up under the sun arm
   const alignRotation = (activeIndex: number, count: number) => {
     const segCenter = ((activeIndex + 0.5) / count) * 360;
     return `rotate(${sunAngle - segCenter} ${cx} ${cy})`;
   };
 
   const armTip = polar(438, sunAngle);
+  const moonArmTip = polar(438, moonArmAngle);
 
   const weekDay = sacred.weekDay;
   const seasonName = (location.lat < 0 ? SEASONS_S : SEASONS_N)[monthIndex];
