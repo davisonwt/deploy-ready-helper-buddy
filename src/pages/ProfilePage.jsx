@@ -116,6 +116,33 @@ export default function ProfilePage() {
     country: user?.country || "",
     timezone: user?.timezone || ""
   })
+
+  const profileUser = user || {}
+
+  const ensureProfileRow = async () => {
+    if (!profileUser?.id) return null
+    const fallbackProfile = {
+      user_id: profileUser.id,
+      email: profileUser.email || profileUser.user_metadata?.email || null,
+      first_name: profileUser.first_name || profileUser.user_metadata?.first_name || null,
+      last_name: profileUser.last_name || profileUser.user_metadata?.last_name || null,
+      display_name: profileUser.display_name || profileUser.user_metadata?.display_name || profileUser.user_metadata?.username || profileUser.email?.split('@')[0] || 'Sower',
+      avatar_url: profileUser.avatar_url || profileUser.user_metadata?.avatar_url || profileUser.user_metadata?.picture || null,
+      location: profileUser.location || profileUser.user_metadata?.location || null,
+      phone: profileUser.phone || profileUser.user_metadata?.phone || null,
+      preferred_currency: profileUser.preferred_currency || profileUser.user_metadata?.preferred_currency || 'USD',
+      timezone: profileUser.timezone || profileUser.user_metadata?.timezone || null,
+      country: profileUser.country || profileUser.user_metadata?.country || null,
+      updated_at: new Date().toISOString(),
+    }
+    const { data, error } = await supabase
+      .from('profiles')
+      .upsert(fallbackProfile, { onConflict: 'user_id' })
+      .select('*')
+      .maybeSingle()
+    if (error) throw error
+    return data || fallbackProfile
+  }
   
   // Update form data when user changes
   useEffect(() => {
@@ -143,6 +170,7 @@ export default function ProfilePage() {
         country: user?.country || "",
         timezone: user?.timezone || ""
       })
+      ensureProfileRow().catch((error) => console.warn('Profile row repair failed:', error))
     }
   }, [user])
   

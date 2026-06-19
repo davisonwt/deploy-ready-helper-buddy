@@ -175,12 +175,16 @@ function CurvedLabel({ radius, angle, children, fill = '#f8fafc', size = 14, wei
  *   • Night:   evening end            → next morning start (deep indigo)
  * Top of the ring = midnight (0°). Current local time is marked by a glowing dot.
  */
-function dayPhaseColor(hourOfDay: number, sun: SunriseData | null): string {
+function locationHour(date: Date, lon: number): number {
+  return (date.getUTCHours() + date.getUTCMinutes() / 60 + date.getUTCSeconds() / 3600 + lon / 15 + 24) % 24;
+}
+
+function dayPhaseColor(hourOfDay: number, sun: SunriseData | null, lon: number): string {
   // hourOfDay in 0..24
   let sunriseH = 6, sunsetH = 18;
   if (sun) {
-    sunriseH = sun.sunrise.getHours() + sun.sunrise.getMinutes() / 60;
-    sunsetH = sun.sunset.getHours() + sun.sunset.getMinutes() / 60;
+    sunriseH = locationHour(sun.sunrise, lon);
+    sunsetH = locationHour(sun.sunset, lon);
   }
   const morningStart = sunriseH - 0.75;
   const morningEnd = sunriseH + 0.5;
@@ -215,9 +219,9 @@ function interpColor(a: string, b: string, t: number): string {
   return `#${((r << 16) | (g << 8) | bl).toString(16).padStart(6, '0')}`;
 }
 
-function DaylightRing({ inner, outer, now, sun, rotation = 0 }: { inner: number; outer: number; now: Date; sun: SunriseData | null; rotation?: number }) {
+function DaylightRing({ inner, outer, now, sun, lon, rotation = 0 }: { inner: number; outer: number; now: Date; sun: SunriseData | null; lon: number; rotation?: number }) {
   const segs = 96;
-  const hoursNow = now.getHours() + now.getMinutes() / 60;
+  const hoursNow = locationHour(now, lon);
   // Local day map, rotated so the current daylight marker sits under the sun arm.
   const markerAngle = (hoursNow / 24) * 360;
   const marker = polar((inner + outer) / 2, markerAngle);
@@ -227,7 +231,7 @@ function DaylightRing({ inner, outer, now, sun, rotation = 0 }: { inner: number;
         const start = (i / segs) * 360;
         const end = ((i + 1.02) / segs) * 360;
         const hourAtSeg = ((i + 0.5) / segs) * 24;
-        const fill = dayPhaseColor(hourAtSeg, sun);
+        const fill = dayPhaseColor(hourAtSeg, sun, lon);
         return <path key={i} d={arcPath(inner, outer, start, end)} fill={fill} opacity={0.92} />;
       })}
       {/* current-time marker */}
@@ -275,7 +279,7 @@ export const YHVHWheelCalendar = ({ size = 760, ringOffsets = {}, textOverrides 
     return `rotate(${sunAngle - segCenter} ${cx} ${cy})`;
   };
 
-  const daylightMarkerAngle = ((now.getHours() + now.getMinutes() / 60) / 24) * 360;
+  const daylightMarkerAngle = (locationHour(now, location.lon) / 24) * 360;
   const daylightRotation = sunAngle - daylightMarkerAngle;
 
   const armTip = polar(438, sunAngle);
@@ -510,7 +514,7 @@ export const YHVHWheelCalendar = ({ size = 760, ringOffsets = {}, textOverrides 
         {/* Outer blue hub circle */}
         <circle cx={cx + (ringOffsets.centerHub?.x || 0)} cy={cy + (ringOffsets.centerHub?.y || 0)} r="104" fill="#020617" stroke="#1d4ed8" strokeWidth="5" />
         {/* Daylight phase ring — rotated so the current daylight marker lines up with the sun arm */}
-        <DaylightRing inner={64} outer={100} now={now} sun={sun} rotation={daylightRotation} />
+        <DaylightRing inner={64} outer={100} now={now} sun={sun} lon={location.lon} rotation={daylightRotation} />
         {/* Gold inner hub circle (holds the today text) */}
         <circle cx={cx + (ringOffsets.centerHub?.x || 0)} cy={cy + (ringOffsets.centerHub?.y || 0)} r="60" fill="#081426" stroke="#d4a017" strokeWidth="2" />
 

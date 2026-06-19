@@ -7,13 +7,33 @@ export interface UserLocation {
   lon: number;
   verified: boolean;
   lastUpdated?: Date;
+  source?: 'profile' | 'auth-profile' | 'browser' | 'default' | 'manual';
 }
 
 const DEFAULT_LOCATION: UserLocation = {
   lat: -26.2, // Johannesburg, South Africa
   lon: 28.0,
   verified: false,
+  source: 'default',
 };
+
+const KNOWN_LOCATIONS: Record<string, Pick<UserLocation, 'lat' | 'lon'>> = {
+  'south africa': { lat: -26.2, lon: 28.0 },
+  za: { lat: -26.2, lon: 28.0 },
+  johannesburg: { lat: -26.2, lon: 28.0 },
+  pretoria: { lat: -25.7479, lon: 28.2293 },
+  'cape town': { lat: -33.9249, lon: 18.4241 },
+  durban: { lat: -29.8587, lon: 31.0218 },
+};
+
+function locationFromText(text?: string | null): UserLocation | null {
+  const key = (text || '').trim().toLowerCase();
+  if (!key) return null;
+  const exact = KNOWN_LOCATIONS[key];
+  if (exact) return { ...exact, verified: false, source: 'auth-profile' };
+  const foundKey = Object.keys(KNOWN_LOCATIONS).find((name) => key.includes(name));
+  return foundKey ? { ...KNOWN_LOCATIONS[foundKey], verified: false, source: 'auth-profile' } : null;
+}
 
 /**
  * Hook to manage user location for calendar calculations
@@ -41,12 +61,20 @@ export function useUserLocation() {
             .eq('user_id', user.id)
             .maybeSingle() as any;
 
-          if (profile?.latitude && profile?.longitude) {
+          if (profile?.latitude != null && profile?.longitude != null) {
             setLocation({
               lat: Number(profile.latitude),
               lon: Number(profile.longitude),
               verified: Boolean(profile.location_verified) || false,
+              source: 'profile',
             });
+            setLoading(false);
+            return;
+          }
+
+          const textLocation = locationFromText(profile?.location || profile?.country || user?.location || user?.country || user?.user_metadata?.location || user?.user_metadata?.country);
+          if (textLocation) {
+            setLocation(textLocation);
             setLoading(false);
             return;
           }
@@ -61,6 +89,7 @@ export function useUserLocation() {
                 lon: position.coords.longitude,
                 verified: false,
                 lastUpdated: new Date(),
+                source: 'browser',
               };
               setLocation(newLocation);
               
@@ -98,21 +127,18 @@ export function useUserLocation() {
     if (!user?.id) return;
 
     try {
-      // Check if profiles table has latitude/longitude columns
-      // If not, we'll need to add them via migration
-      // Use type assertion since these columns may not be in generated types
-      const { error } = await (supabase
-        .from('profiles') as any)
-        .update({
+      const { error } = await (supabase.from('profiles') as any)
+        .upsert({
+          user_id: user.id,
           latitude: loc.lat,
           longitude: loc.lon,
           location_verified: loc.verified,
           location_updated_at: new Date().toISOString(),
-        })
-        .eq('user_id', user.id);
+          location: loc.source === 'default' ? 'South Africa' : user.location || user.user_metadata?.location || null,
+          updated_at: new Date().toISOString(),
+        }, { onConflict: 'user_id' });
 
       if (error) {
-        // If columns don't exist, just log and continue
         console.warn('Could not save location to profile:', error);
       }
     } catch (err) {
@@ -126,6 +152,7 @@ export function useUserLocation() {
       lon,
       verified,
       lastUpdated: new Date(),
+      source: 'manual',
     };
     
     setLocation(newLocation);

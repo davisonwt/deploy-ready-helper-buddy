@@ -444,8 +444,16 @@ export default function SeedFlowDashboard() {
 
   useEffect(() => {
     if (!user) return
-    supabase.from('profiles').select('first_name, last_name, avatar_url, membership_tier').eq('user_id', user.id).single()
-      .then(({ data }) => data && setProfile(data))
+    const baseProfile = {
+      first_name: user.first_name || user.user_metadata?.first_name || user.email?.split('@')[0] || 'Friend',
+      last_name: user.last_name || user.user_metadata?.last_name || '',
+      display_name: user.display_name || user.user_metadata?.display_name || user.user_metadata?.username || '',
+      avatar_url: user.avatar_url || user.user_metadata?.avatar_url || user.user_metadata?.picture || null,
+      membership_tier: user.membership_tier || 'Sower',
+    }
+    setProfile(baseProfile)
+    supabase.from('profiles').select('first_name, last_name, display_name, avatar_url, membership_tier').eq('user_id', user.id).maybeSingle()
+      .then(({ data }) => data && setProfile({ ...baseProfile, ...data }))
     supabase.from('sowers').select('*', { count: 'exact', head: true }).eq('is_verified', true)
       .then(({ count }) => setStats(s => ({ ...s, sowers: count || 4 })))
     supabase.from('orchards').select('*', { count: 'exact', head: true }).eq('status', 'active')
@@ -674,7 +682,7 @@ export default function SeedFlowDashboard() {
   const displaySeeds = userCards.length ? userCards : SEEDS
   const safeIdx = activeIdx % Math.max(displaySeeds.length, 1)
   const activeSeed = displaySeeds[safeIdx] || SEEDS[0]
-  const displayName = profile?.first_name || user?.email?.split('@')[0] || 'Friend'
+  const displayName = profile?.display_name || profile?.first_name || user?.display_name || user?.first_name || user?.user_metadata?.first_name || user?.email?.split('@')[0] || 'Friend'
 
   // ── Owner action handlers (shared across all 5 sliders) ──
   const handleEdit = (card) => {

@@ -105,11 +105,37 @@ export class AuthProviderClass extends React.Component {
   fetchUserProfile = async (authUser) => {
     if (!authUser) return null
     try {
-      const { data: profile } = await supabase
+      const meta = authUser.user_metadata || {}
+      let { data: profile } = await supabase
         .from('profiles')
-        .select('id, user_id, display_name, first_name, last_name, avatar_url, bio, location, timezone, preferred_currency, verification_status, has_complete_billing_info, website, tiktok_url, instagram_url, facebook_url, twitter_url, youtube_url, show_social_media, phone, country, is_chatapp_verified, created_at, updated_at')
+        .select('*')
         .eq('user_id', authUser.id)
         .maybeSingle()
+
+      if (!profile) {
+        const fallbackProfile = {
+          user_id: authUser.id,
+          email: authUser.email || meta.email || null,
+          first_name: meta.first_name || null,
+          last_name: meta.last_name || null,
+          display_name: meta.display_name || meta.username || meta.first_name || authUser.email?.split('@')[0] || 'Sower',
+          avatar_url: meta.avatar_url || meta.picture || null,
+          location: meta.location || null,
+          phone: meta.phone || null,
+          preferred_currency: meta.preferred_currency || meta.currency || 'USD',
+          timezone: meta.timezone || null,
+          country: meta.country || null,
+          updated_at: new Date().toISOString(),
+        }
+
+        const { data: created } = await supabase
+          .from('profiles')
+          .upsert(fallbackProfile, { onConflict: 'user_id' })
+          .select('*')
+          .maybeSingle()
+
+        profile = created || fallbackProfile
+      }
 
       return {
         ...authUser,
@@ -339,6 +365,7 @@ export class AuthProviderClass extends React.Component {
 
       const { data: { session } } = await this.withRetry(() => supabase.auth.getSession())
       if (this._isMounted) this.setState({ session, user: session?.user || null, loading: false })
+      if (session?.user) await this.safeFetchProfile(session.user)
     } catch (e) {
       logError('Auth reinitialization failed', { message: e.message, stack: e.stack })
       if (this._isMounted) this.setState({ loading: false })
