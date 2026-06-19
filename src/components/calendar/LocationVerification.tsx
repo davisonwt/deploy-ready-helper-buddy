@@ -8,12 +8,15 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { supabase } from '@/integrations/supabase/client';
 
 export function LocationVerification() {
-  const { location, loading, error, verifyLocation } = useUserLocation();
+  const { location, loading, error, updateLocation, verifyLocation } = useUserLocation();
   const { user } = useAuth();
   const [verifying, setVerifying] = useState(false);
   const [timezone, setTimezone] = useState<string>('');
   const [timezoneVerified, setTimezoneVerified] = useState(false);
   const [showVerificationCard, setShowVerificationCard] = useState(false);
+  const [manualLat, setManualLat] = useState('');
+  const [manualLon, setManualLon] = useState('');
+  const [manualError, setManualError] = useState<string | null>(null);
 
   // Detect and load timezone
   useEffect(() => {
@@ -53,6 +56,11 @@ export function LocationVerification() {
     }
   }, [location.verified, timezoneVerified, loading, showVerificationCard]);
 
+  useEffect(() => {
+    setManualLat(location.lat.toFixed(4));
+    setManualLon(location.lon.toFixed(4));
+  }, [location.lat, location.lon]);
+
   const handleVerify = async () => {
     setVerifying(true);
     try {
@@ -70,6 +78,29 @@ export function LocationVerification() {
       }
     } finally {
       setVerifying(false);
+    }
+  };
+
+  const handleManualSave = async () => {
+    const lat = Number(manualLat);
+    const lon = Number(manualLon);
+
+    if (!Number.isFinite(lat) || !Number.isFinite(lon) || lat < -90 || lat > 90 || lon < -180 || lon > 180) {
+      setManualError('Enter valid latitude and longitude.');
+      return;
+    }
+
+    setManualError(null);
+    await updateLocation(lat, lon, true);
+
+    if (user?.id && !timezoneVerified) {
+      const detectedTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+      await supabase
+        .from('profiles')
+        .update({ timezone: detectedTimezone })
+        .eq('user_id', user.id);
+      setTimezone(detectedTimezone);
+      setTimezoneVerified(true);
     }
   };
 
@@ -207,6 +238,38 @@ export function LocationVerification() {
                       <p className="text-xs text-amber-400 mt-2 flex items-center gap-1">
                         <AlertCircle className="w-3 h-3" />
                         Please verify your location to ensure accurate calendar times
+                      </p>
+                    )}
+                    <div className="grid grid-cols-2 gap-2 pt-2">
+                      <input
+                        value={manualLat}
+                        onChange={(event) => setManualLat(event.target.value)}
+                        inputMode="decimal"
+                        aria-label="Manual latitude"
+                        placeholder="Latitude"
+                        className="rounded-md border border-amber-500/30 bg-black/40 px-3 py-2 text-sm text-amber-100 outline-none focus:border-amber-400"
+                      />
+                      <input
+                        value={manualLon}
+                        onChange={(event) => setManualLon(event.target.value)}
+                        inputMode="decimal"
+                        aria-label="Manual longitude"
+                        placeholder="Longitude"
+                        className="rounded-md border border-amber-500/30 bg-black/40 px-3 py-2 text-sm text-amber-100 outline-none focus:border-amber-400"
+                      />
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={handleManualSave}
+                        className="col-span-2 border-amber-500/40 text-amber-200 hover:bg-amber-500/10"
+                      >
+                        Save manual location
+                      </Button>
+                    </div>
+                    {manualError && (
+                      <p className="text-xs text-red-400 flex items-center gap-1">
+                        <AlertCircle className="w-3 h-3" />
+                        {manualError}
                       </p>
                     )}
                   </>

@@ -124,7 +124,98 @@ const calculateSabbathDays = (month: number): number[] => {
   return sabbathDays;
 };
 
+const MONTH_DAYS = [30, 30, 31, 30, 30, 31, 30, 30, 31, 30, 30, 31];
+const REGULAR_BEAD_COLOR = '#1f2937';
+const SABBATH_BEAD_COLOR = '#fbbf24';
+
+const getMonthStartGlobalDay = (month: number) =>
+  MONTH_DAYS.slice(0, month - 1).reduce((total, days) => total + days, 0) + 1;
+
+const SimpleMonthStrand = ({ month, dayOfMonth, year }: { month: number; dayOfMonth: number; year: number }) => {
+  const [selectedBead, setSelectedBead] = useState<{ year: number; month: number; day: number } | null>(null);
+  const sabbathDays = calculateSabbathDays(month);
+  const monthStartGlobalDay = getMonthStartGlobalDay(month);
+
+  const beads = Array.from({ length: MONTH_DAYS[month - 1] }, (_, i) => {
+    const day = i + 1;
+    const isSabbath = sabbathDays.includes(day);
+
+    return {
+      day,
+      globalDay: monthStartGlobalDay + i,
+      color: isSabbath ? SABBATH_BEAD_COLOR : REGULAR_BEAD_COLOR,
+      isToday: dayOfMonth > 0 && day === dayOfMonth,
+    };
+  }).reverse();
+
+  const futureBeads = beads.filter(bead => bead.day > dayOfMonth);
+  const pastBeads = beads.filter(bead => bead.day <= dayOfMonth);
+
+  const renderBead = (bead: typeof beads[number]) => {
+    const curveAngle = getSolarCurveAngle(bead.globalDay);
+
+    return (
+      <motion.div
+        key={bead.day}
+        data-today={bead.isToday ? 'true' : undefined}
+        className="relative flex items-center justify-center"
+        style={{
+          transform: `perspective(600px) rotateX(${curveAngle * 0.7}deg) rotateY(${curveAngle * 0.3}deg) scaleX(${1 + Math.abs(curveAngle) * 0.003})`,
+          transformOrigin: 'center bottom',
+        }}
+        animate={bead.isToday ? { scale: [1, 1.55, 1] } : {}}
+        transition={bead.isToday ? { duration: 2, repeat: Infinity, ease: 'easeInOut' } : { duration: 0 }}
+      >
+        <div
+          className="w-8 h-8 md:w-10 md:h-10 rounded-full border-2 md:border-3 border-black relative flex items-center justify-center cursor-pointer hover:scale-110 transition-transform"
+          onClick={() => setSelectedBead({ year, month, day: bead.day })}
+          style={{
+            background: `radial-gradient(circle at 30% 30%, #fff, ${bead.color})`,
+            boxShadow: bead.isToday
+              ? '0 0 70px #ec4899, inset 0 0 32px #fff'
+              : '0 10px 30px rgba(0,0,0,0.9), inset 0 5px 15px rgba(255,255,255,0.22)',
+            transform: 'translateZ(30px)',
+          }}
+        >
+          <span className="text-sm font-bold text-amber-300 relative z-10">{bead.day}</span>
+        </div>
+
+        {bead.isToday && (
+          <motion.div
+            animate={{ rotate: 360 }}
+            transition={{ duration: 12, repeat: Infinity, ease: 'linear' }}
+            className="absolute inset-0 rounded-full border-4 border-pink-500 border-dashed pointer-events-none"
+          />
+        )}
+      </motion.div>
+    );
+  };
+
+  return (
+    <div className="flex flex-col items-center p-4 md:p-6 bg-gradient-to-b from-stone-900 to-black rounded-3xl shadow-2xl w-full">
+      <h2 className="text-lg md:text-xl lg:text-2xl font-black text-amber-400 mb-2 md:mb-4 tracking-widest">MONTH {month}</h2>
+      <div className="flex flex-col" style={{ gap: '1mm' }}>{futureBeads.map(renderBead)}</div>
+      <div style={{ height: '1cm' }} />
+      <div className="flex flex-col relative" style={{ gap: '1mm' }}>{pastBeads.map(renderBead)}</div>
+      <div className="mt-8 text-amber-200 text-center text-sm space-y-1">
+        <p>Gold = Sabbath</p>
+        <p>Dark = Regular days</p>
+      </div>
+      {selectedBead && (
+        <BeadPopup
+          isOpen={!!selectedBead}
+          onClose={() => setSelectedBead(null)}
+          year={selectedBead.year}
+          month={selectedBead.month}
+          day={selectedBead.day}
+        />
+      )}
+    </div>
+  );
+};
+
 export const Month1Strand = ({ dayOfMonth, year }: { dayOfMonth: number; year: number }) => {
+  return <SimpleMonthStrand month={1} dayOfMonth={dayOfMonth} year={year} />;
   const [showBloodDrop, setShowBloodDrop] = useState(false);
   const [currentPart, setCurrentPart] = useState(0);
   const [selectedBead, setSelectedBead] = useState<{ year: number; month: number; day: number } | null>(null);
@@ -393,6 +484,7 @@ export const Month1Strand = ({ dayOfMonth, year }: { dayOfMonth: number; year: n
 
 
 export const Month2Strand = ({ dayOfMonth, year }: { dayOfMonth: number; year: number }) => {
+  return <SimpleMonthStrand month={2} dayOfMonth={dayOfMonth} year={year} />;
   const [showBloodDrop, setShowBloodDrop] = useState(false);
   const [currentPart, setCurrentPart] = useState(0);
   const [selectedBead, setSelectedBead] = useState<{ year: number; month: number; day: number } | null>(null);
@@ -764,6 +856,7 @@ export const Month2Strand = ({ dayOfMonth, year }: { dayOfMonth: number; year: n
 
 
 export const Month3Strand = ({ dayOfMonth, year }: { dayOfMonth: number; year: number }) => {
+  return <SimpleMonthStrand month={3} dayOfMonth={dayOfMonth} year={year} />;
   const [showBloodDrop, setShowBloodDrop] = useState(false);
   const [currentPart, setCurrentPart] = useState(0);
   const [selectedBead, setSelectedBead] = useState<{ year: number; month: number; day: number } | null>(null);
@@ -1160,6 +1253,7 @@ export const Month3Strand = ({ dayOfMonth, year }: { dayOfMonth: number; year: n
 
 
 export const Month4Strand = ({ dayOfMonth, year }: { dayOfMonth: number; year: number }) => {
+  return <SimpleMonthStrand month={4} dayOfMonth={dayOfMonth} year={year} />;
   const [selectedBead, setSelectedBead] = useState<{ year: number; month: number; day: number } | null>(null);
   const [showBloodDrop, setShowBloodDrop] = useState(false);
   const [currentPart, setCurrentPart] = useState(0);
@@ -1594,6 +1688,7 @@ export const Month4Strand = ({ dayOfMonth, year }: { dayOfMonth: number; year: n
 
 
 export const Month5Strand = ({ dayOfMonth, year }: { dayOfMonth: number; year: number }) => {
+  return <SimpleMonthStrand month={5} dayOfMonth={dayOfMonth} year={year} />;
   const [selectedBead, setSelectedBead] = useState<{ year: number; month: number; day: number } | null>(null);
   const [showBloodDrop, setShowBloodDrop] = useState(false);
   const [currentPart, setCurrentPart] = useState(0);
@@ -1992,6 +2087,7 @@ export const Month5Strand = ({ dayOfMonth, year }: { dayOfMonth: number; year: n
 
 
 export const Month6Strand = ({ dayOfMonth, year }: { dayOfMonth: number; year: number }) => {
+  return <SimpleMonthStrand month={6} dayOfMonth={dayOfMonth} year={year} />;
   const [selectedBead, setSelectedBead] = useState<{ year: number; month: number; day: number } | null>(null);
   const [showBloodDrop, setShowBloodDrop] = useState(false);
   const [currentPart, setCurrentPart] = useState(0);
@@ -2411,6 +2507,7 @@ export const Month6Strand = ({ dayOfMonth, year }: { dayOfMonth: number; year: n
 
 
 export const Month7Strand = ({ dayOfMonth, year }: { dayOfMonth: number; year: number }) => {
+  return <SimpleMonthStrand month={7} dayOfMonth={dayOfMonth} year={year} />;
   const [selectedBead, setSelectedBead] = useState<{ year: number; month: number; day: number } | null>(null);
   const [showBloodDrop, setShowBloodDrop] = useState(false);
   const [currentPart, setCurrentPart] = useState(0);
@@ -2769,6 +2866,7 @@ export const Month7Strand = ({ dayOfMonth, year }: { dayOfMonth: number; year: n
 
 
 export const Month8Strand = ({ dayOfMonth, year }: { dayOfMonth: number; year: number }) => {
+  return <SimpleMonthStrand month={8} dayOfMonth={dayOfMonth} year={year} />;
   const [selectedBead, setSelectedBead] = useState<{ year: number; month: number; day: number } | null>(null);
   const [showBloodDrop, setShowBloodDrop] = useState(false);
   const [currentPart, setCurrentPart] = useState(0);
@@ -3124,6 +3222,7 @@ export const Month8Strand = ({ dayOfMonth, year }: { dayOfMonth: number; year: n
 
 
 export const Month9Strand = ({ dayOfMonth, year }: { dayOfMonth: number; year: number }) => {
+  return <SimpleMonthStrand month={9} dayOfMonth={dayOfMonth} year={year} />;
   const [selectedBead, setSelectedBead] = useState<{ year: number; month: number; day: number } | null>(null);
   const [showBloodDrop, setShowBloodDrop] = useState(false);
   const [currentPart, setCurrentPart] = useState(0);
@@ -3357,6 +3456,7 @@ export const Month9Strand = ({ dayOfMonth, year }: { dayOfMonth: number; year: n
 
 
 export const Month10Strand = ({ dayOfMonth, year }: { dayOfMonth: number; year: number }) => {
+  return <SimpleMonthStrand month={10} dayOfMonth={dayOfMonth} year={year} />;
   const [selectedBead, setSelectedBead] = useState<{ year: number; month: number; day: number } | null>(null);
   const [showBloodDrop, setShowBloodDrop] = useState(false);
   const [currentPart, setCurrentPart] = useState(0);
@@ -3655,6 +3755,7 @@ export const Month10Strand = ({ dayOfMonth, year }: { dayOfMonth: number; year: 
 
 
 export const Month11Strand = ({ dayOfMonth, year }: { dayOfMonth: number; year: number }) => {
+  return <SimpleMonthStrand month={11} dayOfMonth={dayOfMonth} year={year} />;
   const [selectedBead, setSelectedBead] = useState<{ year: number; month: number; day: number } | null>(null);
   const [showBloodDrop, setShowBloodDrop] = useState(false);
   const [currentPart, setCurrentPart] = useState(0);
@@ -3957,6 +4058,7 @@ export const Month11Strand = ({ dayOfMonth, year }: { dayOfMonth: number; year: 
 
 
 export const Month12Strand = ({ dayOfMonth, year }: { dayOfMonth: number; year: number }) => {
+  return <SimpleMonthStrand month={12} dayOfMonth={dayOfMonth} year={year} />;
   const [selectedBead, setSelectedBead] = useState<{ year: number; month: number; day: number } | null>(null);
   const [showBloodDrop, setShowBloodDrop] = useState(false);
   const [currentPart, setCurrentPart] = useState(0);
