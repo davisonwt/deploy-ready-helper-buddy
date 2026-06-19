@@ -130,7 +130,7 @@ const BEAD_PALETTE = {
     base: 'hsl(var(--bead-regular))',
     highlight: 'hsl(var(--bead-regular-highlight))',
     shadow: 'rgba(0, 0, 0, 0.95)',
-    label: 'hsl(var(--muted))',
+    label: 'hsl(var(--bead-regular-highlight))',
   },
   sabbath: {
     base: 'hsl(var(--bead-sabbath))',
