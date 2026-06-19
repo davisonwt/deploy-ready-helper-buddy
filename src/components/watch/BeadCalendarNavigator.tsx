@@ -4,11 +4,12 @@
  * Month-by-month bead strand viewer matching the legacy 364yhvh layout:
  *  - Hemisphere season header (Northern / Southern)
  *  - Month title with bead count
- *  - Vertically-scrolling bead strand for the selected month only
+ *  - Auto-scaled bead strand so the entire month fits on any screen
+ *  - Opens centered on today's bead
  *  - Prev / Next chevrons + dot navigator (1..12 + Helo-Yaseph)
  */
 
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ChevronLeft, ChevronRight, Sparkles } from 'lucide-react';
 import {
