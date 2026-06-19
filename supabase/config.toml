@@ -111,6 +111,15 @@ verify_jwt = true
 [functions.cryptomus-webhook]
 verify_jwt = false
 
+[functions.nowpayments-webhook]
+verify_jwt = false
+
+[functions.nowpayments-list-currencies]
+verify_jwt = false
+
+[functions.create-nowpayments-invoice]
+verify_jwt = true
+
 [functions.generate-sower-story]
 verify_jwt = true
 [functions.companion-invoke]
