@@ -279,7 +279,7 @@ export const YHVHWheelCalendar = ({ size = 760, ringOffsets = {}, textOverrides 
     return `rotate(${sunAngle - segCenter} ${cx} ${cy})`;
   };
 
-  const daylightMarkerAngle = ((now.getHours() + now.getMinutes() / 60) / 24) * 360;
+  const daylightMarkerAngle = (locationHour(now, location.lon) / 24) * 360;
   const daylightRotation = sunAngle - daylightMarkerAngle;
 
   const armTip = polar(438, sunAngle);
