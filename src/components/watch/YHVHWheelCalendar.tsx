@@ -51,18 +51,44 @@ const cy = 500;
 const TAU = Math.PI * 2;
 
 const leaders = [
-  { name: "Adnar'el", tribe: 'Yehoseph', creature: 'Lion', color: '#f2b705', tribes: ['Judah','Issachar','Zebulun'] },
-  { name: "Barkiel", tribe: 'Reuben', creature: 'Man', color: '#15803d', tribes: ['Dan','Asher','Naphtali'] },
-  { name: "Bomi'el", tribe: 'Gershon', creature: 'Ox', color: '#991b1b', tribes: ['Ephraim','Manasseh','Benjamin'] },
-  { name: "Gad'el", tribe: 'Asher', creature: 'Eagle', color: '#1d4ed8', tribes: ['Reuben','Simeon','Gad'] },
+  { name: "Adnar'el", tribe: 'Yehoseph', creature: 'Lion', color: '#f2b705', tribes: ['Judah','Issachar','Zebulun'], constellation: 'Orion' },
+  { name: "Barkiel", tribe: 'Reuben', creature: 'Man', color: '#15803d', tribes: ['Dan','Asher','Naphtali'], constellation: 'Hydra' },
+  { name: "Bomi'el", tribe: 'Gershon', creature: 'Ox', color: '#991b1b', tribes: ['Ephraim','Manasseh','Benjamin'], constellation: '?' },
+  { name: "Gad'el", tribe: 'Asher', creature: 'Eagle', color: '#1d4ed8', tribes: ['Reuben','Simeon','Gad'], constellation: 'Pegasus' },
 ];
 
 const partNames = ['Day', 'Man', 'Ox', 'Night', 'Eagle', 'Lion'];
+
+// 12 sun-portals (zodiac), Month 1 (Aviv) = Aries, then sequential
+const ZODIAC = [
+  { name: 'Aries', sym: '♈' },
+  { name: 'Taurus', sym: '♉' },
+  { name: 'Gemini', sym: '♊' },
+  { name: 'Cancer', sym: '♋' },
+  { name: 'Leo', sym: '♌' },
+  { name: 'Virgo', sym: '♍' },
+  { name: 'Libra', sym: '♎' },
+  { name: 'Scorpio', sym: '♏' },
+  { name: 'Sagittarius', sym: '♐' },
+  { name: 'Capricorn', sym: '♑' },
+  { name: 'Aquarius', sym: '♒' },
+  { name: 'Pisces', sym: '♓' },
+];
 
 // Synodic month + reference new moon (2000-01-06 18:14 UTC) per Enoch 73-74
 const SYNODIC = 29.530588853;
 const LUNAR_REF = Date.UTC(2000, 0, 6, 18, 14, 0);
 const MOON_GLYPHS = ['🌑','🌒','🌓','🌔','🌕','🌖','🌗','🌘'];
+
+// Mean lunar ecliptic longitude (degrees, 0=Aries 0°) — good enough to place the
+// moon in its current zodiac gate. Ref: J2000 epoch mean elements.
+function moonEclipticLongitude(now: Date): number {
+  const J2000 = Date.UTC(2000, 0, 1, 12, 0, 0);
+  const d = (now.getTime() - J2000) / 86400000;
+  let L = 218.316 + 13.176396 * d;
+  L = ((L % 360) + 360) % 360;
+  return L;
+}
 
 function computeMoon(now: Date) {
   const daysSince = (now.getTime() - LUNAR_REF) / 86400000;
@@ -70,7 +96,9 @@ function computeMoon(now: Date) {
   const phase = age / SYNODIC; // 0..1
   const lunarYearDay = Math.floor(((daysSince % 354) + 354) % 354); // 0..353
   const phaseIdx = Math.floor(phase * 8 + 0.5) % 8;
-  return { age, phase, lunarYearDay, glyph: MOON_GLYPHS[phaseIdx] };
+  const longitude = moonEclipticLongitude(now); // 0..360 (Aries 0)
+  const zodiacIdx = Math.floor(longitude / 30) % 12;
+  return { age, phase, lunarYearDay, glyph: MOON_GLYPHS[phaseIdx], longitude, zodiacIdx };
 }
 
 function polar(radius: number, degrees: number, offset?: Offset) {
@@ -249,8 +277,10 @@ export const YHVHWheelCalendar = ({ size = 760, ringOffsets = {}, textOverrides 
     const fixedSeg = (count: number) => Math.floor((((ang % 360) + 360) % 360) / (360 / count));
 
     if (r >= 468 && r <= 484) {
-      const i = rotSeg(354, moon.lunarYearDay);
-      return { title: 'Moon ring — 354-day lunar year (Enoch 73-74)', detail: `Lunar day ${i + 1}/354 · today ${moon.glyph} ${(moon.phase * 100).toFixed(0)}% (age ${moon.age.toFixed(1)}d)` };
+      // Moon ring no longer rotates — segments are fixed at angle = (i/354)*360
+      const i = fixedSeg(354);
+      const z = ZODIAC[moon.zodiacIdx];
+      return { title: 'Moon ring — 354-day lunar year (Enoch 73-74)', detail: `Lunar day ${i + 1}/354 · today ${moon.glyph} ${(moon.phase * 100).toFixed(0)}% · gate ${z.sym} ${z.name}` };
     }
     if (r >= 404 && r <= 455) {
       const i = rotSeg(366, dayIndex);
@@ -264,16 +294,20 @@ export const YHVHWheelCalendar = ({ size = 760, ringOffsets = {}, textOverrides 
       const i = rotSeg(364, dayIndex);
       return { title: 'Sacred Year ring (364 · 13 sabbath-weeks of 28)', detail: `Day ${i + 1} · sabbath-week ${Math.floor(i / 28) + 1}/13` };
     }
-    if (r >= 300 && r <= 320) {
+    if (r >= 295 && r <= 325) {
       const idx = fixedSeg(12);
       const leader = leaders[Math.floor(idx / 3)];
       const tribe = leader.tribes[idx % 3];
-      return { title: '12 Tribes / Sun-portals', detail: `Portal ${idx + 1}: ${tribe} (camp of ${leader.name})` };
+      const z = ZODIAC[idx];
+      const sunHere = monthIndex === idx;
+      const moonHere = moon.zodiacIdx === idx;
+      const here = [sunHere ? '☉ Sun' : null, moonHere ? '☽ Moon' : null].filter(Boolean).join(' · ');
+      return { title: '12 Tribes / Sun-portals (Zodiac gates)', detail: `Gate ${idx + 1}: ${z.sym} ${z.name} · ${tribe} (camp of ${leader.name})${here ? ' · ' + here : ''}` };
     }
-    if (r >= 225 && r <= 298) {
+    if (r >= 225 && r <= 293) {
       const idx = fixedSeg(4);
       const leader = leaders[idx];
-      return { title: 'Priest-Leader quadrant (4 cardinal angels)', detail: `${leader.name} · ${leader.creature} · tribe ${leader.tribe}` };
+      return { title: 'Priest-Leader quadrant (4 cardinal angels)', detail: `${leader.name} · ${leader.creature} · constellation ${leader.constellation} · tribe ${leader.tribe}` };
     }
     if (r >= 188 && r <= 219) {
       const i = rotSeg(52, weekIndex);
@@ -340,17 +374,32 @@ export const YHVHWheelCalendar = ({ size = 760, ringOffsets = {}, textOverrides 
           <RingSegments count={364} inner={322} outer={344} activeIndex={dayIndex} goldEvery={28} offset={ringOffsets.weeks} />
         </g>
 
-        {/* 12 tribes / portals — sits just outside the 4 priest-leaders, grouped 3-per-quadrant */}
+        {/* 12 tribes / sun-portals (zodiac gates) — Month 1 (Aviv) = Aries.
+            Sun gate = current month; Moon gate = computed from lunar longitude. */}
         {leaders.flatMap((leader, qi) =>
           leader.tribes.map((tribe, ti) => {
             const idx = qi * 3 + ti;
             const start = (idx / 12) * 360;
             const end = ((idx + 1) / 12) * 360;
             const active = monthIndex === idx;
+            const moonHere = moon.zodiacIdx === idx;
+            const z = ZODIAC[idx];
+            const mid = start + (end - start) / 2;
             return (
               <g key={`tribe-${idx}`}>
-                <path d={arcPath(300, 320, start, end, ringOffsets.tribes)} fill={active ? '#facc15' : leader.color} opacity={active ? 1 : 0.55} stroke="#020617" strokeWidth="1.2" />
-                <CurvedLabel radius={310} angle={start + (end - start) / 2} fill={active ? '#0b1220' : '#fef3c7'} size={11} weight={800} offset={ringOffsets.tribes}>{tribe}</CurvedLabel>
+                <path
+                  d={arcPath(295, 325, start, end, ringOffsets.tribes)}
+                  fill={active ? '#facc15' : moonHere ? '#cbd5e1' : leader.color}
+                  opacity={active ? 1 : moonHere ? 0.85 : 0.55}
+                  stroke="#020617"
+                  strokeWidth="1.2"
+                />
+                {/* Zodiac symbol (outer) */}
+                <CurvedLabel radius={319} angle={mid} fill={active ? '#0b1220' : '#fef3c7'} size={14} weight={900} offset={ringOffsets.tribes}>{z.sym}</CurvedLabel>
+                {/* Tribe name (middle) */}
+                <CurvedLabel radius={309} angle={mid} fill={active ? '#0b1220' : '#fef3c7'} size={10} weight={800} offset={ringOffsets.tribes}>{tribe}</CurvedLabel>
+                {/* Constellation name (inner) */}
+                <CurvedLabel radius={299} angle={mid} fill={active ? '#0b1220' : '#e2e8f0'} size={8} weight={700} offset={ringOffsets.tribes}>{z.name}</CurvedLabel>
               </g>
             );
           })
@@ -363,9 +412,10 @@ export const YHVHWheelCalendar = ({ size = 760, ringOffsets = {}, textOverrides 
           const active = Math.floor(monthIndex / 3) === i;
           return (
             <g key={leader.name}>
-              <path d={arcPath(225, 298, start, end, ringOffsets.leaders)} fill={leader.color} opacity={active ? 0.94 : 0.46} stroke="#020617" strokeWidth="3" />
-              <CurvedLabel radius={263} angle={start + 45} fill="#fef3c7" size={15} offset={ringOffsets.leaders}>{textOverrides[`leader-${i}`] || leader.name}</CurvedLabel>
-              <CurvedLabel radius={241} angle={start + 45} fill="#e2e8f0" size={10} weight={600} offset={ringOffsets.leaders}>{leader.tribe}</CurvedLabel>
+              <path d={arcPath(225, 293, start, end, ringOffsets.leaders)} fill={leader.color} opacity={active ? 0.94 : 0.46} stroke="#020617" strokeWidth="3" />
+              <CurvedLabel radius={275} angle={start + 45} fill="#fef3c7" size={15} offset={ringOffsets.leaders}>{textOverrides[`leader-${i}`] || leader.name}</CurvedLabel>
+              <CurvedLabel radius={257} angle={start + 45} fill="#e2e8f0" size={10} weight={600} offset={ringOffsets.leaders}>{leader.tribe}</CurvedLabel>
+              <CurvedLabel radius={239} angle={start + 45} fill="#fcd34d" size={11} weight={800} offset={ringOffsets.leaders}>★ {leader.constellation}</CurvedLabel>
             </g>
           );
         })}
@@ -387,8 +437,10 @@ export const YHVHWheelCalendar = ({ size = 760, ringOffsets = {}, textOverrides 
         </g>
 
 
-        {/* Moon ring — 354-day lunar year (Enoch 73-74). Active lunar-day rotates under sun arm; glyph counter-rotated to stay upright. */}
-        <g transform={alignRotation(moon.lunarYearDay, 354)}>
+        {/* Moon ring — 354-day lunar tick band (Enoch 73-74). Moon glyph is placed
+            at the moon's real zodiac longitude so she lines up with the gate she is
+            currently in on the 12-tribes ring (not with the sun arm). */}
+        <g>
           {Array.from({ length: 354 }).map((_, i) => {
             const start = (i / 354) * 360;
             const end = ((i + 0.9) / 354) * 360;
@@ -397,17 +449,29 @@ export const YHVHWheelCalendar = ({ size = 760, ringOffsets = {}, textOverrides 
             return <path key={`moon-${i}`} d={arcPath(468, 484, start, end, ringOffsets.moon)} fill={fill} opacity={active ? 1 : 0.7} />;
           })}
           {(() => {
-            const segCenter = ((moon.lunarYearDay + 0.5) / 354) * 360;
-            const p = polar(476, segCenter, ringOffsets.moon);
-            const counter = -(sunAngle - segCenter);
+            // Moon glyph at her current zodiac gate angle (0° = Aries / top of dial)
+            const moonGateAngle = moon.longitude;
+            const p = polar(476, moonGateAngle, ringOffsets.moon);
             return (
-              <g transform={`rotate(${counter} ${p.x} ${p.y})`}>
-                <circle cx={p.x} cy={p.y} r="14" fill="#0b1220" stroke="#e5e7eb" strokeWidth="1.5" />
-                <text x={p.x} y={p.y + 1} textAnchor="middle" dominantBaseline="middle" fontSize="20">{moon.glyph}</text>
+              <g>
+                {/* radial pointer from moon ring inward to the gate it occupies */}
+                <line
+                  x1={polar(325, moonGateAngle, ringOffsets.moon).x}
+                  y1={polar(325, moonGateAngle, ringOffsets.moon).y}
+                  x2={p.x}
+                  y2={p.y}
+                  stroke="#e5e7eb"
+                  strokeWidth="1.2"
+                  opacity="0.6"
+                  strokeDasharray="3 3"
+                />
+                <circle cx={p.x} cy={p.y} r="16" fill="#0b1220" stroke="#e5e7eb" strokeWidth="1.8" />
+                <text x={p.x} y={p.y + 1} textAnchor="middle" dominantBaseline="middle" fontSize="22">{moon.glyph}</text>
               </g>
             );
           })()}
         </g>
+
 
 
 
