@@ -245,6 +245,7 @@ export function LocationVerification() {
                         value={manualLat}
                         onChange={(event) => setManualLat(event.target.value)}
                         inputMode="decimal"
+                        aria-label="Manual latitude"
                         placeholder="Latitude"
                         className="rounded-md border border-amber-500/30 bg-black/40 px-3 py-2 text-sm text-amber-100 outline-none focus:border-amber-400"
                       />
@@ -252,6 +253,7 @@ export function LocationVerification() {
                         value={manualLon}
                         onChange={(event) => setManualLon(event.target.value)}
                         inputMode="decimal"
+                        aria-label="Manual longitude"
                         placeholder="Longitude"
                         className="rounded-md border border-amber-500/30 bg-black/40 px-3 py-2 text-sm text-amber-100 outline-none focus:border-amber-400"
                       />
