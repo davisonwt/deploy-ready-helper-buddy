@@ -109,6 +109,31 @@ function polar(radius: number, degrees: number, offset?: Offset) {
   };
 }
 
+// Arc path used as a baseline for curved text along a ring segment.
+// Auto-flips on the bottom half so the text reads right-side-up.
+function arcLabelPath(radius: number, startDeg: number, endDeg: number, offset?: Offset) {
+  const mid = (startDeg + endDeg) / 2;
+  const flip = mid > 90 && mid < 270;
+  const a1 = flip ? endDeg : startDeg;
+  const a2 = flip ? startDeg : endDeg;
+  const p1 = polar(radius, a1, offset);
+  const p2 = polar(radius, a2, offset);
+  const large = Math.abs(endDeg - startDeg) > 180 ? 1 : 0;
+  const sweep = flip ? 0 : 1;
+  return `M ${p1.x} ${p1.y} A ${radius} ${radius} 0 ${large} ${sweep} ${p2.x} ${p2.y}`;
+}
+
+function ArcLabel({ id, radius, start, end, children, fill = '#fef3c7', size = 12, weight = 700, offset }: { id: string; radius: number; start: number; end: number; children: React.ReactNode; fill?: string; size?: number; weight?: number; offset?: Offset }) {
+  return (
+    <>
+      <path id={id} d={arcLabelPath(radius, start, end, offset)} fill="none" stroke="none" />
+      <text fill={fill} fontSize={size} fontWeight={weight}>
+        <textPath href={`#${id}`} startOffset="50%" textAnchor="middle">{children}</textPath>
+      </text>
+    </>
+  );
+}
+
 function arcPath(inner: number, outer: number, start: number, end: number, offset?: Offset) {
   const large = end - start > 180 ? 1 : 0;
   const p1 = polar(outer, start, offset);
