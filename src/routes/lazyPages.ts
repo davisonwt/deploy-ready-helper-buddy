@@ -106,6 +106,7 @@ export const CreatePremiumRoomPage = lazy(() =>
   import('@/pages/CreatePremiumRoomPage').then((m) => ({ default: m.CreatePremiumRoomPage }))
 );
 export const WalletSettingsPage = lazy(() => import('@/pages/WalletSettingsPage'));
+export const PayoutSettingsPage = lazy(() => import('@/pages/PayoutSettingsPage'));
 export const GosatWalletsPage = lazy(() => import('@/pages/GosatWalletsPage'));
 export const BinancePayTestPage = lazy(() => import('@/pages/BinancePayTestPage'));
 export const SowerProfile = lazy(() => import('@/pages/SowerProfile'));

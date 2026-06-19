@@ -66,6 +66,7 @@ import {
   RadioPage,
   CreatePremiumRoomPage,
   WalletSettingsPage,
+  PayoutSettingsPage,
   GosatWalletsPage,
   BinancePayTestPage,
   SowerProfile,
@@ -366,6 +367,9 @@ const AppRoutes = () => (
     } />
     <Route path="/wallet-settings" element={
       <ProtectedRoute><Layout><WalletSettingsPage /></Layout></ProtectedRoute>
+    } />
+    <Route path="/settings/payouts" element={
+      <ProtectedRoute><Layout><PayoutSettingsPage /></Layout></ProtectedRoute>
     } />
     <Route path="/binance-pay-test" element={
       <ProtectedRoute><Layout><BinancePayTestPage /></Layout></ProtectedRoute>
