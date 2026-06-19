@@ -4550,259 +4550,38 @@ const EnochianTimepiece = () => {
         <p className="text-base md:text-lg text-amber-200 mt-1 tracking-widest">Eternal • 364 • Aligned Forever</p>
       </motion.div>
 
-      {/* Main Content Container - Centered Beads */}
-      <div className="relative z-10 flex flex-col items-center justify-center w-full px-4 md:px-8 gap-4 md:gap-8">
-        {/* Month Strand - Centered */}
-        <div 
-          className="flex-shrink-0 flex flex-col items-center w-full max-w-md"
-        >
-          {/* Only show current month beads */}
-          {enochianDate.month === 1 && (
-            <motion.div 
-              initial={{ opacity: 0, scale: 0.1 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ duration: 1.5 }}
-              className="w-full"
-            >
-              <Month1Strand dayOfMonth={enochianDate.dayOfMonth} year={enochianDate.year} />
-            </motion.div>
-          )}
-
-          {enochianDate.month === 2 && (
-            <motion.div 
-              initial={{ opacity: 0, scale: 0.1 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ duration: 1.5 }}
-              className="w-full"
-            >
-              <Month2Strand dayOfMonth={enochianDate.dayOfMonth} year={enochianDate.year} />
-            </motion.div>
-          )}
-
-          {enochianDate.month === 3 && (
-            <motion.div 
-              initial={{ opacity: 0, scale: 0.1 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ duration: 1.5 }}
-              className="w-full"
-            >
-              <Month3Strand dayOfMonth={enochianDate.dayOfMonth} year={enochianDate.year} />
-            </motion.div>
-          )}
-
-          {enochianDate.month === 4 && (
-            <motion.div 
-              initial={{ opacity: 0, scale: 0.1 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ duration: 1.5 }}
-              className="w-full"
-            >
-              <Month4Strand dayOfMonth={enochianDate.dayOfMonth} year={enochianDate.year} />
-            </motion.div>
-          )}
-
-          {enochianDate.month === 5 && (
-            <motion.div 
-              initial={{ opacity: 0, scale: 0.1 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ duration: 1.5 }}
-              className="w-full"
-            >
-              <Month5Strand dayOfMonth={enochianDate.dayOfMonth} year={enochianDate.year} />
-            </motion.div>
-          )}
-
-          {enochianDate.month === 6 && (
-            <motion.div 
-              initial={{ opacity: 0, scale: 0.1 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ duration: 1.5 }}
-              className="w-full"
-            >
-              <Month6Strand dayOfMonth={enochianDate.dayOfMonth} year={enochianDate.year} />
-            </motion.div>
-          )}
-
-          {enochianDate.month === 7 && (
-            <motion.div 
-              initial={{ opacity: 0, scale: 0.1 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ duration: 1.5 }}
-              className="w-full"
-            >
-              <Month7Strand dayOfMonth={enochianDate.dayOfMonth} year={enochianDate.year} />
-            </motion.div>
-          )}
-
-          {enochianDate.month === 8 && (
-            <motion.div 
-              initial={{ opacity: 0, scale: 0.1 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ duration: 1.5 }}
-              className="w-full"
-            >
-              <Month8Strand dayOfMonth={enochianDate.dayOfMonth} year={enochianDate.year} />
-            </motion.div>
-          )}
-
-          {enochianDate.month === 9 && (
-            <motion.div 
-              initial={{ opacity: 0, scale: 0.1 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ duration: 1.5 }}
-              className="w-full"
-            >
-              <Month9Strand dayOfMonth={enochianDate.dayOfMonth} year={enochianDate.year} />
-            </motion.div>
-          )}
-
-          {enochianDate.month === 10 && (
-            <motion.div 
-              initial={{ opacity: 0, scale: 0.1 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ duration: 1.5 }}
-              className="w-full"
-            >
-              <Month10Strand dayOfMonth={enochianDate.dayOfMonth} year={enochianDate.year} />
-            </motion.div>
-          )}
-
-          {enochianDate.month === 11 && (
-            <motion.div 
-              initial={{ opacity: 0, scale: 0.1 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ duration: 1.5 }}
-              className="w-full"
-            >
-              <Month11Strand dayOfMonth={enochianDate.dayOfMonth} year={enochianDate.year} />
-            </motion.div>
-          )}
-
-          {enochianDate.month === 12 && (
-            <motion.div 
-              initial={{ opacity: 0, scale: 0.1 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ duration: 1.5 }}
-              className="w-full"
-            >
-              <Month12Strand dayOfMonth={enochianDate.dayOfMonth} year={enochianDate.year} />
-            </motion.div>
-          )}
+      {/* All 12 Month Strands — month 1 on the RIGHT, month 12 on the LEFT (matches physical beads) */}
+      <div className="relative z-10 w-full px-2 md:px-4">
+        <p className="text-center text-amber-300/80 text-xs md:text-sm mb-3 tracking-wider">
+          Read right → left • Month 1 (right) to Month 12 (left)
+        </p>
+        <div className="w-full overflow-x-auto pb-4">
+          <div className="flex flex-row-reverse items-start justify-start md:justify-center gap-2 md:gap-4 min-w-min mx-auto">
+            {[1,2,3,4,5,6,7,8,9,10,11,12].map((m) => {
+              const StrandComp = [Month1Strand, Month2Strand, Month3Strand, Month4Strand, Month5Strand, Month6Strand, Month7Strand, Month8Strand, Month9Strand, Month10Strand, Month11Strand, Month12Strand][m-1];
+              const isCurrent = enochianDate.month === m;
+              return (
+                <motion.div
+                  key={m}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.6, delay: m * 0.04 }}
+                  className={`flex-shrink-0 w-[140px] md:w-[170px] ${isCurrent ? 'ring-4 ring-amber-400/70 rounded-3xl' : ''}`}
+                >
+                  <StrandComp
+                    dayOfMonth={isCurrent ? enochianDate.dayOfMonth : 0}
+                    year={enochianDate.year}
+                  />
+                </motion.div>
+              );
+            })}
+          </div>
         </div>
+        <p className="text-center text-cyan-300/80 text-xs md:text-sm mt-4 tracking-wider">
+          Feast of Weeks (Shavuot) = 50th day after the wave-sheaf sabbath • Month 3, Day 15 • always Day 1 of the week
+        </p>
       </div>
 
-
-
-      {/* Review Sections - Other Months (Temporary for Review) */}
-      <div className="relative z-10 mt-32 space-y-32 px-4">
-        <div className="border-t-4 border-amber-600/30 pt-16">
-          <h2 className="text-4xl font-bold text-amber-400 mb-8 text-center">Month 10 - Review</h2>
-          <div className="flex flex-col items-center justify-center w-full">
-            <div className="flex-shrink-0 flex flex-col items-center w-full max-w-md">
-              <Month10Strand dayOfMonth={0} year={0} />
-            </div>
-          </div>
-        </div>
-
-        <div className="border-t-4 border-amber-600/30 pt-16">
-          <h2 className="text-4xl font-bold text-amber-400 mb-8 text-center">Month 11 - Review</h2>
-          <div className="flex flex-col items-center justify-center w-full">
-            <div className="flex-shrink-0 flex flex-col items-center w-full max-w-md">
-              <Month11Strand dayOfMonth={0} year={0} />
-            </div>
-          </div>
-        </div>
-
-        <div className="border-t-4 border-amber-600/30 pt-16">
-          <h2 className="text-4xl font-bold text-amber-400 mb-8 text-center">Month 12 - Review</h2>
-          <div className="flex flex-col items-center justify-center w-full">
-            <div className="flex-shrink-0 flex flex-col items-center w-full max-w-md">
-              <Month12Strand dayOfMonth={0} year={0} />
-            </div>
-          </div>
-        </div>
-
-        <div className="border-t-4 border-amber-600/30 pt-16">
-          <h2 className="text-4xl font-bold text-amber-400 mb-8 text-center">Month 1 - Review</h2>
-          <div className="flex flex-col items-center justify-center w-full">
-            <div className="flex-shrink-0 flex flex-col items-center w-full max-w-md">
-              <Month1Strand dayOfMonth={0} year={0} />
-            </div>
-          </div>
-        </div>
-
-        <div className="border-t-4 border-amber-600/30 pt-16">
-          <h2 className="text-4xl font-bold text-amber-400 mb-8 text-center">Month 2 - Review</h2>
-          <div className="flex flex-col items-center justify-center w-full">
-            <div className="flex-shrink-0 flex flex-col items-center w-full max-w-md">
-              <Month2Strand dayOfMonth={0} year={0} />
-            </div>
-          </div>
-        </div>
-
-        <div className="border-t-4 border-amber-600/30 pt-16">
-          <h2 className="text-4xl font-bold text-amber-400 mb-8 text-center">Month 3 - Review</h2>
-          <div className="flex flex-col items-center justify-center w-full">
-            <div className="flex-shrink-0 flex flex-col items-center w-full max-w-md">
-              <Month3Strand dayOfMonth={0} year={0} />
-            </div>
-          </div>
-        </div>
-
-        <div className="border-t-4 border-amber-600/30 pt-16">
-          <h2 className="text-4xl font-bold text-amber-400 mb-8 text-center">Month 4 - Review</h2>
-          <div className="flex flex-col items-center justify-center w-full">
-            <div className="flex-shrink-0 flex flex-col items-center w-full max-w-md">
-              <Month4Strand dayOfMonth={0} year={0} />
-            </div>
-          </div>
-        </div>
-
-        <div className="border-t-4 border-amber-600/30 pt-16">
-          <h2 className="text-4xl font-bold text-amber-400 mb-8 text-center">Month 5 - Review</h2>
-          <div className="flex flex-col items-center justify-center w-full">
-            <div className="flex-shrink-0 flex flex-col items-center w-full max-w-md">
-              <Month5Strand dayOfMonth={0} year={0} />
-            </div>
-          </div>
-        </div>
-
-        <div className="border-t-4 border-amber-600/30 pt-16">
-          <h2 className="text-4xl font-bold text-amber-400 mb-8 text-center">Month 6 - Review</h2>
-          <div className="flex flex-col items-center justify-center w-full">
-            <div className="flex-shrink-0 flex flex-col items-center w-full max-w-md">
-              <Month6Strand dayOfMonth={0} year={0} />
-            </div>
-          </div>
-        </div>
-
-        <div className="border-t-4 border-amber-600/30 pt-16">
-          <h2 className="text-4xl font-bold text-amber-400 mb-8 text-center">Month 7 - Review</h2>
-          <div className="flex flex-col items-center justify-center w-full">
-            <div className="flex-shrink-0 flex flex-col items-center w-full max-w-md">
-              <Month7Strand dayOfMonth={0} year={0} />
-            </div>
-          </div>
-        </div>
-
-        <div className="border-t-4 border-amber-600/30 pt-16">
-          <h2 className="text-4xl font-bold text-amber-400 mb-8 text-center">Month 8 - Review</h2>
-          <div className="flex flex-col items-center justify-center w-full">
-            <div className="flex-shrink-0 flex flex-col items-center w-full max-w-md">
-              <Month8Strand dayOfMonth={0} year={0} />
-            </div>
-          </div>
-        </div>
-
-        <div className="border-t-4 border-amber-600/30 pt-16">
-          <h2 className="text-4xl font-bold text-amber-400 mb-8 text-center">Month 9 - Review</h2>
-          <div className="flex flex-col items-center justify-center w-full">
-            <div className="flex-shrink-0 flex flex-col items-center w-full max-w-md">
-              <Month9Strand dayOfMonth={0} year={0} />
-            </div>
-          </div>
-        </div>
-      </div>
 
       {/* THE TWO DAYS OUTSIDE TIME — HELO-YASEPH & ASFA'EL */}
       <motion.div 
