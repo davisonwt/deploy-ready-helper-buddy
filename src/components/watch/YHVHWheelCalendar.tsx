@@ -223,7 +223,20 @@ export const YHVHWheelCalendar = ({ size = 760, ringOffsets = {}, textOverrides 
   const seasonName = (location.lat < 0 ? SEASONS_S : SEASONS_N)[monthIndex];
 
   // ---- Hover tooltip: magnifying-glass cursor + per-ring + per-segment info ----
-  const [hover, setHover] = useState<{ title: string; detail: string; x: number; y: number } | null>(null);
+  type TipInfo = { title: string; detail: string; x: number; y: number };
+  const [hover, setHover] = useState<TipInfo | null>(null);
+  const [pinned, setPinned] = useState<TipInfo | null>(null);
+  const wrapRef = React.useRef<HTMLDivElement | null>(null);
+
+  // Click outside the wheel wrapper unpins
+  useEffect(() => {
+    if (!pinned) return;
+    const onDoc = (e: MouseEvent) => {
+      if (wrapRef.current && !wrapRef.current.contains(e.target as Node)) setPinned(null);
+    };
+    document.addEventListener('mousedown', onDoc);
+    return () => document.removeEventListener('mousedown', onDoc);
+  }, [pinned]);
 
   const describeAt = (r: number, ang: number): { title: string; detail: string } | null => {
     // For rotating rings: the active segment is brought to screen-angle `sunAngle`.
@@ -279,7 +292,7 @@ export const YHVHWheelCalendar = ({ size = 760, ringOffsets = {}, textOverrides 
     return null;
   };
 
-  const onSvgMove = (e: React.MouseEvent<SVGSVGElement>) => {
+  const infoAtEvent = (e: React.MouseEvent<SVGSVGElement>): TipInfo | null => {
     const rect = e.currentTarget.getBoundingClientRect();
     const px = ((e.clientX - rect.left) / rect.width) * 1000;
     const py = ((e.clientY - rect.top) / rect.height) * 1000;
@@ -288,14 +301,22 @@ export const YHVHWheelCalendar = ({ size = 760, ringOffsets = {}, textOverrides 
     let ang = (Math.atan2(dy, dx) * 180) / Math.PI + 90;
     if (ang < 0) ang += 360;
     const info = describeAt(r, ang);
-    if (info) setHover({ ...info, x: e.clientX - rect.left, y: e.clientY - rect.top });
-    else setHover(null);
+    return info ? { ...info, x: e.clientX - rect.left, y: e.clientY - rect.top } : null;
   };
+
+  const onSvgMove = (e: React.MouseEvent<SVGSVGElement>) => setHover(infoAtEvent(e));
+  const onSvgClick = (e: React.MouseEvent<SVGSVGElement>) => {
+    const info = infoAtEvent(e);
+    setPinned(info); // info or null → click on empty area unpins
+  };
+
+  const tip = pinned ?? hover;
 
   return (
     <div className="mx-auto" style={{ width: safeSize, maxWidth: '100%' }}>
-      <div className="relative" style={{ width: '100%', aspectRatio: '1 / 1' }}>
-      <svg viewBox="0 0 1000 1000" className="h-full w-full drop-shadow-[0_0_34px_hsl(var(--s2g-amber)/0.24)] cursor-zoom-in" role="img" aria-label="YHVH wheel within wheels calendar" onMouseMove={onSvgMove} onMouseLeave={() => setHover(null)}>
+      <div ref={wrapRef} className="relative" style={{ width: '100%', aspectRatio: '1 / 1' }}>
+      <svg viewBox="0 0 1000 1000" className="h-full w-full drop-shadow-[0_0_34px_hsl(var(--s2g-amber)/0.24)] cursor-zoom-in" role="img" aria-label="YHVH wheel within wheels calendar" onMouseMove={onSvgMove} onMouseLeave={() => setHover(null)} onClick={onSvgClick}>
+
 
         <defs>
           <radialGradient id="wheelBg" cx="50%" cy="50%" r="58%">
@@ -410,13 +431,24 @@ export const YHVHWheelCalendar = ({ size = 760, ringOffsets = {}, textOverrides 
         <circle cx={armTip.x} cy={armTip.y} r="18" fill="#facc15" opacity="0.75" stroke="#a16207" strokeWidth="3" />
 
       </svg>
-      {hover && (
+      {tip && (
         <div
-          className="pointer-events-none absolute z-30 max-w-[260px] rounded-md border border-amber-500/60 bg-slate-950/95 px-3 py-2 text-xs text-amber-50 shadow-[0_4px_20px_rgba(0,0,0,0.7)]"
-          style={{ left: hover.x + 18, top: Math.max(hover.y - 10, 0) }}
+          className={`absolute z-30 max-w-[260px] rounded-md border px-3 py-2 text-xs text-amber-50 shadow-[0_4px_20px_rgba(0,0,0,0.7)] ${pinned ? 'border-amber-400 bg-slate-900 pointer-events-auto' : 'border-amber-500/60 bg-slate-950/95 pointer-events-none'}`}
+          style={{ left: tip.x + 18, top: Math.max(tip.y - 10, 0) }}
         >
-          <div className="mb-0.5 font-extrabold text-amber-300">{hover.title}</div>
-          <div className="leading-snug text-amber-100/90">{hover.detail}</div>
+          <div className="mb-0.5 flex items-start justify-between gap-2">
+            <span className="font-extrabold text-amber-300">{tip.title}</span>
+            {pinned && (
+              <button
+                type="button"
+                onClick={(e) => { e.stopPropagation(); setPinned(null); }}
+                className="ml-1 -mr-1 -mt-1 text-amber-300/70 hover:text-amber-100"
+                aria-label="Unpin"
+              >×</button>
+            )}
+          </div>
+          <div className="leading-snug text-amber-100/90">{tip.detail}</div>
+          {pinned && <div className="mt-1 text-[10px] text-amber-300/60">pinned · click empty space to release</div>}
         </div>
       )}
       </div>
