@@ -223,7 +223,20 @@ export const YHVHWheelCalendar = ({ size = 760, ringOffsets = {}, textOverrides 
   const seasonName = (location.lat < 0 ? SEASONS_S : SEASONS_N)[monthIndex];
 
   // ---- Hover tooltip: magnifying-glass cursor + per-ring + per-segment info ----
-  const [hover, setHover] = useState<{ title: string; detail: string; x: number; y: number } | null>(null);
+  type TipInfo = { title: string; detail: string; x: number; y: number };
+  const [hover, setHover] = useState<TipInfo | null>(null);
+  const [pinned, setPinned] = useState<TipInfo | null>(null);
+  const wrapRef = React.useRef<HTMLDivElement | null>(null);
+
+  // Click outside the wheel wrapper unpins
+  useEffect(() => {
+    if (!pinned) return;
+    const onDoc = (e: MouseEvent) => {
+      if (wrapRef.current && !wrapRef.current.contains(e.target as Node)) setPinned(null);
+    };
+    document.addEventListener('mousedown', onDoc);
+    return () => document.removeEventListener('mousedown', onDoc);
+  }, [pinned]);
 
   const describeAt = (r: number, ang: number): { title: string; detail: string } | null => {
     // For rotating rings: the active segment is brought to screen-angle `sunAngle`.
@@ -279,7 +292,7 @@ export const YHVHWheelCalendar = ({ size = 760, ringOffsets = {}, textOverrides 
     return null;
   };
 
-  const onSvgMove = (e: React.MouseEvent<SVGSVGElement>) => {
+  const infoAtEvent = (e: React.MouseEvent<SVGSVGElement>): TipInfo | null => {
     const rect = e.currentTarget.getBoundingClientRect();
     const px = ((e.clientX - rect.left) / rect.width) * 1000;
     const py = ((e.clientY - rect.top) / rect.height) * 1000;
@@ -288,14 +301,22 @@ export const YHVHWheelCalendar = ({ size = 760, ringOffsets = {}, textOverrides 
     let ang = (Math.atan2(dy, dx) * 180) / Math.PI + 90;
     if (ang < 0) ang += 360;
     const info = describeAt(r, ang);
-    if (info) setHover({ ...info, x: e.clientX - rect.left, y: e.clientY - rect.top });
-    else setHover(null);
+    return info ? { ...info, x: e.clientX - rect.left, y: e.clientY - rect.top } : null;
   };
+
+  const onSvgMove = (e: React.MouseEvent<SVGSVGElement>) => setHover(infoAtEvent(e));
+  const onSvgClick = (e: React.MouseEvent<SVGSVGElement>) => {
+    const info = infoAtEvent(e);
+    setPinned(info); // info or null → click on empty area unpins
+  };
+
+  const tip = pinned ?? hover;
 
   return (
     <div className="mx-auto" style={{ width: safeSize, maxWidth: '100%' }}>
-      <div className="relative" style={{ width: '100%', aspectRatio: '1 / 1' }}>
-      <svg viewBox="0 0 1000 1000" className="h-full w-full drop-shadow-[0_0_34px_hsl(var(--s2g-amber)/0.24)] cursor-zoom-in" role="img" aria-label="YHVH wheel within wheels calendar" onMouseMove={onSvgMove} onMouseLeave={() => setHover(null)}>
+      <div ref={wrapRef} className="relative" style={{ width: '100%', aspectRatio: '1 / 1' }}>
+      <svg viewBox="0 0 1000 1000" className="h-full w-full drop-shadow-[0_0_34px_hsl(var(--s2g-amber)/0.24)] cursor-zoom-in" role="img" aria-label="YHVH wheel within wheels calendar" onMouseMove={onSvgMove} onMouseLeave={() => setHover(null)} onClick={onSvgClick}>
+
 
         <defs>
           <radialGradient id="wheelBg" cx="50%" cy="50%" r="58%">
