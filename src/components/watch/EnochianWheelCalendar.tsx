@@ -2866,6 +2866,7 @@ export const Month7Strand = ({ dayOfMonth, year }: { dayOfMonth: number; year: n
 
 
 export const Month8Strand = ({ dayOfMonth, year }: { dayOfMonth: number; year: number }) => {
+  return <SimpleMonthStrand month={8} dayOfMonth={dayOfMonth} year={year} />;
   const [selectedBead, setSelectedBead] = useState<{ year: number; month: number; day: number } | null>(null);
   const [showBloodDrop, setShowBloodDrop] = useState(false);
   const [currentPart, setCurrentPart] = useState(0);
@@ -3221,6 +3222,7 @@ export const Month8Strand = ({ dayOfMonth, year }: { dayOfMonth: number; year: n
 
 
 export const Month9Strand = ({ dayOfMonth, year }: { dayOfMonth: number; year: number }) => {
+  return <SimpleMonthStrand month={9} dayOfMonth={dayOfMonth} year={year} />;
   const [selectedBead, setSelectedBead] = useState<{ year: number; month: number; day: number } | null>(null);
   const [showBloodDrop, setShowBloodDrop] = useState(false);
   const [currentPart, setCurrentPart] = useState(0);
@@ -3454,6 +3456,7 @@ export const Month9Strand = ({ dayOfMonth, year }: { dayOfMonth: number; year: n
 
 
 export const Month10Strand = ({ dayOfMonth, year }: { dayOfMonth: number; year: number }) => {
+  return <SimpleMonthStrand month={10} dayOfMonth={dayOfMonth} year={year} />;
   const [selectedBead, setSelectedBead] = useState<{ year: number; month: number; day: number } | null>(null);
   const [showBloodDrop, setShowBloodDrop] = useState(false);
   const [currentPart, setCurrentPart] = useState(0);
