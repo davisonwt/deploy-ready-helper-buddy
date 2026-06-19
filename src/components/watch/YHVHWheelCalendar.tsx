@@ -223,10 +223,17 @@ export const YHVHWheelCalendar = ({ size = 760, ringOffsets = {}, textOverrides 
         <rect x="8" y="8" width="984" height="984" rx="34" fill="url(#wheelBg)" stroke="#7c5f22" strokeWidth="2" />
         <circle cx={cx} cy={cy} r="456" fill="none" stroke="#020617" strokeWidth="18" />
 
-        <RingSegments count={366} inner={404} outer={455} activeIndex={dayIndex} goldEvery={30} offset={ringOffsets.sun} />
-        <RingSegments count={90} inner={350} outer={398} activeIndex={sacred.date.day - 1} goldEvery={9} offset={ringOffsets.monthDays} />
-        <RingSegments count={364} inner={304} outer={344} activeIndex={dayIndex} goldEvery={28} offset={ringOffsets.weeks} />
+        <g transform={alignRotation(dayIndex, 366)}>
+          <RingSegments count={366} inner={404} outer={455} activeIndex={dayIndex} goldEvery={30} offset={ringOffsets.sun} />
+        </g>
+        <g transform={alignRotation(sacred.date.day - 1, 90)}>
+          <RingSegments count={90} inner={350} outer={398} activeIndex={sacred.date.day - 1} goldEvery={9} offset={ringOffsets.monthDays} />
+        </g>
+        <g transform={alignRotation(dayIndex, 364)}>
+          <RingSegments count={364} inner={304} outer={344} activeIndex={dayIndex} goldEvery={28} offset={ringOffsets.weeks} />
+        </g>
 
+        {/* Leader quadrants stay fixed (the 4 directions / living creatures) */}
         {leaders.map((leader, i) => {
           const start = i * 90;
           const end = start + 90;
@@ -240,14 +247,19 @@ export const YHVHWheelCalendar = ({ size = 760, ringOffsets = {}, textOverrides 
           );
         })}
 
-        <RingSegments count={52} inner={188} outer={219} activeIndex={weekIndex} goldEvery={13} offset={ringOffsets.days} />
-        {Array.from({ length: 52 }).map((_, i) => <CurvedLabel key={i} radius={203} angle={(i / 52) * 360 + 3.4} fill="#f8fafc" size={11} weight={600} offset={ringOffsets.days}>{i + 1}</CurvedLabel>)}
+        <g transform={alignRotation(weekIndex, 52)}>
+          <RingSegments count={52} inner={188} outer={219} activeIndex={weekIndex} goldEvery={13} offset={ringOffsets.days} />
+          {Array.from({ length: 52 }).map((_, i) => <CurvedLabel key={i} radius={203} angle={(i / 52) * 360 + 3.4} fill="#f8fafc" size={11} weight={600} offset={ringOffsets.days}>{i + 1}</CurvedLabel>)}
+        </g>
 
-        {Array.from({ length: 18 }).map((_, i) => {
-          const active = i === dayPart;
-          return <path key={i} d={arcPath(128, 174, (i / 18) * 360, ((i + 0.94) / 18) * 360, ringOffsets.dayParts)} fill={active ? '#facc15' : '#132033'} opacity={active ? 1 : 0.92} stroke="#94a3b8" strokeWidth="0.6" />;
-        })}
-        {partNames.map((name, i) => <CurvedLabel key={name} radius={116} angle={i * 60 + 30} fill={i % 2 ? '#e2e8f0' : '#facc15'} size={16} offset={ringOffsets.dayParts}>{name}</CurvedLabel>)}
+        <g transform={alignRotation(dayPart, 18)}>
+          {Array.from({ length: 18 }).map((_, i) => {
+            const active = i === dayPart;
+            return <path key={i} d={arcPath(128, 174, (i / 18) * 360, ((i + 0.94) / 18) * 360, ringOffsets.dayParts)} fill={active ? '#facc15' : '#132033'} opacity={active ? 1 : 0.92} stroke="#94a3b8" strokeWidth="0.6" />;
+          })}
+          {partNames.map((name, i) => <CurvedLabel key={name} radius={116} angle={i * 60 + 30} fill={i % 2 ? '#e2e8f0' : '#facc15'} size={16} offset={ringOffsets.dayParts}>{name}</CurvedLabel>)}
+        </g>
+
 
         {/* Outer blue hub circle */}
         <circle cx={cx + (ringOffsets.centerHub?.x || 0)} cy={cy + (ringOffsets.centerHub?.y || 0)} r="104" fill="#020617" stroke="#1d4ed8" strokeWidth="5" />
