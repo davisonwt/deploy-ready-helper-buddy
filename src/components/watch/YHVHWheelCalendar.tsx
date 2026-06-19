@@ -257,7 +257,10 @@ export const YHVHWheelCalendar = ({ size = 760, ringOffsets = {}, textOverrides 
             const active = i === dayPart;
             return <path key={i} d={arcPath(128, 174, (i / 18) * 360, ((i + 0.94) / 18) * 360, ringOffsets.dayParts)} fill={active ? '#facc15' : '#132033'} opacity={active ? 1 : 0.92} stroke="#94a3b8" strokeWidth="0.6" />;
           })}
-          {partNames.map((name, i) => <CurvedLabel key={name} radius={116} angle={i * 60 + 30} fill={i % 2 ? '#e2e8f0' : '#facc15'} size={16} offset={ringOffsets.dayParts}>{name}</CurvedLabel>)}
+          {Array.from({ length: 18 }).map((_, i) => (
+            <CurvedLabel key={`num-${i}`} radius={150} angle={(i + 0.47) / 18 * 360} fill={i === dayPart ? '#0b1220' : '#fef3c7'} size={12} weight={800} offset={ringOffsets.dayParts}>{i + 1}</CurvedLabel>
+          ))}
+          {partNames.map((name, i) => <CurvedLabel key={name} radius={116} angle={i * 60 + 30} fill={i % 2 ? '#e2e8f0' : '#facc15'} size={14} offset={ringOffsets.dayParts}>{name}</CurvedLabel>)}
         </g>
 
 
@@ -280,10 +283,10 @@ export const YHVHWheelCalendar = ({ size = 760, ringOffsets = {}, textOverrides 
         </g>
         <circle cx={armTip.x} cy={armTip.y} r="18" fill="#facc15" opacity="0.75" stroke="#a16207" strokeWidth="3" />
 
-        <text x="500" y="935" textAnchor="middle" fill="#fef3c7" fontSize="18" fontWeight="800">
-          Year {sacred.date.year} · Month {sacred.date.month} · Day {sacred.date.day} · Day {sacred.dayOfYear}/364
-        </text>
       </svg>
+      <div className="mt-3 text-center font-extrabold text-[#fef3c7]" style={{ fontSize: 'clamp(14px, 2.2vw, 20px)' }}>
+        Year {sacred.date.year} · Month {sacred.date.month} · Day {sacred.date.day} · Day {sacred.dayOfYear}/364
+      </div>
     </div>
   );
 };
