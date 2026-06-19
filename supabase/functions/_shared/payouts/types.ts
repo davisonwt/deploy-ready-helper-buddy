@@ -17,7 +17,24 @@ export interface PayoutLeg {
   network?: string | null;
 }
 
-export type PayoutStatus = "sent" | "processing" | "failed" | "manual_required";
+/**
+ * Payout lifecycle states.
+ * - sent: funds left our account / provider confirmed terminal success
+ * - processing: provider accepted, awaiting async confirmation (e.g. PayPal webhook)
+ * - awaiting_2fa: provider created the payout but it requires a human to type a
+ *   2FA code before funds move (NOWPayments mass payouts work this way by design).
+ *   Distinct from manual_required — the automated path DID run, it just needs a
+ *   human checkpoint to finalize.
+ * - failed: provider rejected
+ * - manual_required: no automated path is configured for this leg; an operator
+ *   must pay out by hand.
+ */
+export type PayoutStatus =
+  | "sent"
+  | "processing"
+  | "awaiting_2fa"
+  | "failed"
+  | "manual_required";
 
 export interface PayoutResult {
   status: PayoutStatus;
