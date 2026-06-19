@@ -126,21 +126,18 @@ export function useUserLocation() {
     if (!user?.id) return;
 
     try {
-      // Check if profiles table has latitude/longitude columns
-      // If not, we'll need to add them via migration
-      // Use type assertion since these columns may not be in generated types
-      const { error } = await (supabase
-        .from('profiles') as any)
-        .update({
+      const { error } = await (supabase.from('profiles') as any)
+        .upsert({
+          user_id: user.id,
           latitude: loc.lat,
           longitude: loc.lon,
           location_verified: loc.verified,
           location_updated_at: new Date().toISOString(),
-        })
-        .eq('user_id', user.id);
+          location: loc.source === 'default' ? 'South Africa' : user.location || user.user_metadata?.location || null,
+          updated_at: new Date().toISOString(),
+        }, { onConflict: 'user_id' });
 
       if (error) {
-        // If columns don't exist, just log and continue
         console.warn('Could not save location to profile:', error);
       }
     } catch (err) {
