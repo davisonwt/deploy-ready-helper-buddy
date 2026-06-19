@@ -155,14 +155,18 @@ export const YHVHWheelCalendar = ({ size = 760, ringOffsets = {}, textOverrides 
           );
         })}
 
-        <RingSegments count={52} inner={182} outer={219} activeIndex={weekIndex} goldEvery={13} offset={ringOffsets.days} />
-        {Array.from({ length: 52 }).map((_, i) => <CurvedLabel key={i} radius={201} angle={(i / 52) * 360 + 3.4} fill="#f8fafc" size={11} weight={600} offset={ringOffsets.days}>{i + 1}</CurvedLabel>)}
+        <RingSegments count={52} inner={188} outer={219} activeIndex={weekIndex} goldEvery={13} offset={ringOffsets.days} />
+        {Array.from({ length: 52 }).map((_, i) => <CurvedLabel key={i} radius={203} angle={(i / 52) * 360 + 3.4} fill="#f8fafc" size={11} weight={600} offset={ringOffsets.days}>{i + 1}</CurvedLabel>)}
+
+        {/* ---- Daylight phase ring (morning / day / evening / night) ---- */}
+        <DaylightRing inner={178} outer={186} now={now} sun={sun} />
 
         {Array.from({ length: 18 }).map((_, i) => {
           const active = i === dayPart;
-          return <path key={i} d={arcPath(128, 176, (i / 18) * 360, ((i + 0.94) / 18) * 360, ringOffsets.dayParts)} fill={active ? '#facc15' : '#132033'} opacity={active ? 1 : 0.92} stroke="#94a3b8" strokeWidth="0.6" />;
+          return <path key={i} d={arcPath(128, 174, (i / 18) * 360, ((i + 0.94) / 18) * 360, ringOffsets.dayParts)} fill={active ? '#facc15' : '#132033'} opacity={active ? 1 : 0.92} stroke="#94a3b8" strokeWidth="0.6" />;
         })}
         {partNames.map((name, i) => <CurvedLabel key={name} radius={106} angle={i * 60 + 30} fill={i % 2 ? '#e2e8f0' : '#facc15'} size={18} offset={ringOffsets.dayParts}>{name}</CurvedLabel>)}
+
 
         <circle cx={cx + (ringOffsets.centerHub?.x || 0)} cy={cy + (ringOffsets.centerHub?.y || 0)} r="86" fill="#020617" stroke="#1d4ed8" strokeWidth="5" />
         <circle cx={cx + (ringOffsets.centerHub?.x || 0)} cy={cy + (ringOffsets.centerHub?.y || 0)} r="58" fill="#081426" stroke="#d4a017" strokeWidth="2" />
