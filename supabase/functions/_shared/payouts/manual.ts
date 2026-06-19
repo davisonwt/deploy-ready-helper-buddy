@@ -14,19 +14,18 @@ export class ManualPayoutStrategy implements PayoutStrategy {
   async dispatch(leg: PayoutLeg, ctx: PayoutContext): Promise<PayoutResult> {
     try {
       await ctx.supabase.from("sower_payouts").insert({
-        bestowal_id: ctx.bestowalId,
         user_id: leg.userId,
-        destination: leg.destination,
-        currency: leg.currency,
         amount: leg.amount,
-        role: leg.role,
+        currency: leg.currency,
+        wallet_address: leg.destination,
+        wallet_type: "manual",
+        payout_provider: "manual",
         status: "manual_required",
+        failure_reason: `awaiting_manual_settlement:${leg.role}`,
+        metadata: { bestowal_id: ctx.bestowalId, role: leg.role },
       });
     } catch (err) {
-      console.warn(
-        "[payouts.manual] could not insert sower_payouts row (table may not exist yet):",
-        err,
-      );
+      console.warn("[payouts.manual] sower_payouts insert failed:", err);
     }
     return {
       status: "manual_required",
