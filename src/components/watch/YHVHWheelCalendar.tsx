@@ -164,10 +164,12 @@ export const YHVHWheelCalendar = ({ size = 760, ringOffsets = {}, textOverrides 
         })}
         {partNames.map((name, i) => <CurvedLabel key={name} radius={106} angle={i * 60 + 30} fill={i % 2 ? '#e2e8f0' : '#facc15'} size={18} offset={ringOffsets.dayParts}>{name}</CurvedLabel>)}
 
-        <circle cx={cx + (ringOffsets.centerHub?.x || 0)} cy={cy + (ringOffsets.centerHub?.y || 0)} r="74" fill="#020617" stroke="#1d4ed8" strokeWidth="5" />
-        <circle cx={cx + (ringOffsets.centerHub?.x || 0)} cy={cy + (ringOffsets.centerHub?.y || 0)} r="48" fill="#081426" stroke="#d4a017" strokeWidth="2" />
-        <text x={cx + (ringOffsets.centerHub?.x || 0)} y={cy - 5 + (ringOffsets.centerHub?.y || 0)} textAnchor="middle" dominantBaseline="middle" fill="#60a5fa" fontSize="18" fontWeight="900">New Year</text>
-        <text x={cx + (ringOffsets.centerHub?.x || 0)} y={cy + 23 + (ringOffsets.centerHub?.y || 0)} textAnchor="middle" fill="#fef3c7" fontSize="12" fontWeight="700">YHVH</text>
+        <circle cx={cx + (ringOffsets.centerHub?.x || 0)} cy={cy + (ringOffsets.centerHub?.y || 0)} r="86" fill="#020617" stroke="#1d4ed8" strokeWidth="5" />
+        <circle cx={cx + (ringOffsets.centerHub?.x || 0)} cy={cy + (ringOffsets.centerHub?.y || 0)} r="58" fill="#081426" stroke="#d4a017" strokeWidth="2" />
+        <text x={cx + (ringOffsets.centerHub?.x || 0)} y={cy - 22 + (ringOffsets.centerHub?.y || 0)} textAnchor="middle" dominantBaseline="middle" fill="#60a5fa" fontSize="15" fontWeight="900">{seasonName}</text>
+        <text x={cx + (ringOffsets.centerHub?.x || 0)} y={cy - 2 + (ringOffsets.centerHub?.y || 0)} textAnchor="middle" dominantBaseline="middle" fill="#fef3c7" fontSize="20" fontWeight="900">{sacred.date.month}/{sacred.date.day}</text>
+        <text x={cx + (ringOffsets.centerHub?.x || 0)} y={cy + 18 + (ringOffsets.centerHub?.y || 0)} textAnchor="middle" fill="#fef3c7" fontSize="11" fontWeight="700">Day {weekDay} of week</text>
+        <text x={cx + (ringOffsets.centerHub?.x || 0)} y={cy + 34 + (ringOffsets.centerHub?.y || 0)} textAnchor="middle" fill="#d4a017" fontSize="10" fontWeight="700">Part {dayPart + 1}/18</text>
 
         <line x1={cx} y1="72" x2={cx} y2={cy} stroke="#e5e7eb" strokeWidth="5" filter="url(#goldGlow)" />
         <path d="M 500 50 L 484 85 L 516 85 Z" fill="#facc15" filter="url(#goldGlow)" />
