@@ -189,11 +189,22 @@ export const YHVHWheelCalendar = ({ size = 760, ringOffsets = {}, textOverrides 
   const weekIndex = Math.max(0, Math.min(51, Math.floor(dayIndex / 7)));
   const monthIndex = Math.max(0, sacred.date.month - 1);
   const dayPart = compute18PartIndex(now, sun);
-  const pointerAngle = (dayIndex / 364) * 360;
-  const pointer = polar(438, pointerAngle);
+
+  // Live "sun-in-sky" angle (top of dial = midnight, sweeps clockwise through the 24h)
+  const hoursNow = now.getHours() + now.getMinutes() / 60 + now.getSeconds() / 3600;
+  const sunAngle = (hoursNow / 24) * 360;
+
+  // Helper: rotation that brings a ring's active segment up under the fixed arm
+  const alignRotation = (activeIndex: number, count: number) => {
+    const segCenter = ((activeIndex + 0.5) / count) * 360;
+    return `rotate(${sunAngle - segCenter} ${cx} ${cy})`;
+  };
+
+  const armTip = polar(438, sunAngle);
 
   const weekDay = sacred.weekDay;
   const seasonName = (location.lat < 0 ? SEASONS_S : SEASONS_N)[monthIndex];
+
 
 
   return (
