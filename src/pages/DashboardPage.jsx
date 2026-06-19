@@ -483,8 +483,10 @@ export default function SeedFlowDashboard() {
       const musicRows = []
       const bookRows = []
       for (const row of rows || []) {
-        const type = (row.source === 'product' ? row.category : row.source || '').toLowerCase()
-        if (row.source === 'product' && type === 'music') {
+        const source = (row.source || '').toLowerCase()
+        const productType = source.startsWith('product:') ? source.replace('product:', '') : ''
+        const type = productType || (row.category || '').toLowerCase()
+        if (source.startsWith('product:') && type === 'music') {
           musicRows.push({
             id: row.id,
             track_title: row.title,
@@ -496,7 +498,7 @@ export default function SeedFlowDashboard() {
             music_mood: row.music_mood,
             created_at: row.created_at,
           })
-        } else if (row.source === 'product' && (type === 'ebook' || type === 'book')) {
+        } else if (source.startsWith('product:') && (type === 'ebook' || type === 'book')) {
           bookRows.push({
             id: row.id,
             title: row.title,
