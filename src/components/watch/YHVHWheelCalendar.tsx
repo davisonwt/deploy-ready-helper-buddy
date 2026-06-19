@@ -180,9 +180,10 @@ export const YHVHWheelCalendar = ({ size = 760, ringOffsets = {}, textOverrides 
   useEffect(() => {
     let cancelled = false;
     getSunriseSunset(new Date(), location.lat, location.lon).then(s => { if (!cancelled) setSun(s); });
-    const id = setInterval(() => setNow(new Date()), 60000);
+    const id = setInterval(() => setNow(new Date()), 1000);
     return () => { cancelled = true; clearInterval(id); };
   }, [location.lat, location.lon]);
+
 
   const safeSize = Math.max(320, Math.min(size, 900));
   const dayIndex = Math.max(0, Math.min(363, sacred.dayOfYear - 1));
