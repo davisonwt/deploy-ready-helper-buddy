@@ -192,8 +192,9 @@ export const YHVHWheelCalendar = ({ size = 760, ringOffsets = {}, textOverrides 
   const pointerAngle = (dayIndex / 364) * 360;
   const pointer = polar(438, pointerAngle);
 
-  const weekDay = (((sacred.dayOfYear - 1) % 7) + 1);
+  const weekDay = sacred.weekDay;
   const seasonName = (location.lat < 0 ? SEASONS_S : SEASONS_N)[monthIndex];
+
 
   return (
     <div className="relative mx-auto" style={{ width: safeSize, maxWidth: '100%', aspectRatio: '1 / 1' }}>
