@@ -227,12 +227,32 @@ export function BeadPopup({ isOpen, onClose, year, month, day }: BeadPopupProps)
         if (cancelled) return;
         setScripture(scripRes.data ?? null);
         setMoon(moonRes.data ?? null);
+
+        // Rotate through companion-planting list (one plant per day)
+        const { data: allCompanions } = await supabase
+          .from('companion_planting')
+          .select('plant,companions,avoid,benefits')
+          .order('plant');
+        if (!cancelled && allCompanions && allCompanions.length) {
+          setCompanion(allCompanions[(doy - 1) % allCompanions.length] as any);
+        }
+
+        // Moon-phase gardening guidance
+        if (!cancelled && moonRes.data?.phase) {
+          const { data: g } = await supabase
+            .from('moon_phase_gardening')
+            .select('what_to_do,what_to_avoid,best_for')
+            .eq('phase', moonRes.data.phase)
+            .maybeSingle();
+          if (!cancelled) setMoonGuide(g ?? null);
+        }
       } catch (e) {
         console.error('sacred day load failed', e);
       }
     })();
     return () => { cancelled = true; };
   }, [isOpen, month, day]);
+
 
   useEffect(() => {
     if (!isOpen) return;
