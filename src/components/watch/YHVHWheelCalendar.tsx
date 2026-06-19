@@ -180,20 +180,32 @@ export const YHVHWheelCalendar = ({ size = 760, ringOffsets = {}, textOverrides 
   useEffect(() => {
     let cancelled = false;
     getSunriseSunset(new Date(), location.lat, location.lon).then(s => { if (!cancelled) setSun(s); });
-    const id = setInterval(() => setNow(new Date()), 60000);
+    const id = setInterval(() => setNow(new Date()), 1000);
     return () => { cancelled = true; clearInterval(id); };
   }, [location.lat, location.lon]);
+
 
   const safeSize = Math.max(320, Math.min(size, 900));
   const dayIndex = Math.max(0, Math.min(363, sacred.dayOfYear - 1));
   const weekIndex = Math.max(0, Math.min(51, Math.floor(dayIndex / 7)));
   const monthIndex = Math.max(0, sacred.date.month - 1);
   const dayPart = compute18PartIndex(now, sun);
-  const pointerAngle = (dayIndex / 364) * 360;
-  const pointer = polar(438, pointerAngle);
+
+  // Live "sun-in-sky" angle (top of dial = midnight, sweeps clockwise through the 24h)
+  const hoursNow = now.getHours() + now.getMinutes() / 60 + now.getSeconds() / 3600;
+  const sunAngle = (hoursNow / 24) * 360;
+
+  // Helper: rotation that brings a ring's active segment up under the fixed arm
+  const alignRotation = (activeIndex: number, count: number) => {
+    const segCenter = ((activeIndex + 0.5) / count) * 360;
+    return `rotate(${sunAngle - segCenter} ${cx} ${cy})`;
+  };
+
+  const armTip = polar(438, sunAngle);
 
   const weekDay = sacred.weekDay;
   const seasonName = (location.lat < 0 ? SEASONS_S : SEASONS_N)[monthIndex];
+
 
 
   return (
@@ -211,10 +223,17 @@ export const YHVHWheelCalendar = ({ size = 760, ringOffsets = {}, textOverrides 
         <rect x="8" y="8" width="984" height="984" rx="34" fill="url(#wheelBg)" stroke="#7c5f22" strokeWidth="2" />
         <circle cx={cx} cy={cy} r="456" fill="none" stroke="#020617" strokeWidth="18" />
 
-        <RingSegments count={366} inner={404} outer={455} activeIndex={dayIndex} goldEvery={30} offset={ringOffsets.sun} />
-        <RingSegments count={90} inner={350} outer={398} activeIndex={sacred.date.day - 1} goldEvery={9} offset={ringOffsets.monthDays} />
-        <RingSegments count={364} inner={304} outer={344} activeIndex={dayIndex} goldEvery={28} offset={ringOffsets.weeks} />
+        <g transform={alignRotation(dayIndex, 366)}>
+          <RingSegments count={366} inner={404} outer={455} activeIndex={dayIndex} goldEvery={30} offset={ringOffsets.sun} />
+        </g>
+        <g transform={alignRotation(sacred.date.day - 1, 90)}>
+          <RingSegments count={90} inner={350} outer={398} activeIndex={sacred.date.day - 1} goldEvery={9} offset={ringOffsets.monthDays} />
+        </g>
+        <g transform={alignRotation(dayIndex, 364)}>
+          <RingSegments count={364} inner={304} outer={344} activeIndex={dayIndex} goldEvery={28} offset={ringOffsets.weeks} />
+        </g>
 
+        {/* Leader quadrants stay fixed (the 4 directions / living creatures) */}
         {leaders.map((leader, i) => {
           const start = i * 90;
           const end = start + 90;
@@ -228,14 +247,19 @@ export const YHVHWheelCalendar = ({ size = 760, ringOffsets = {}, textOverrides 
           );
         })}
 
-        <RingSegments count={52} inner={188} outer={219} activeIndex={weekIndex} goldEvery={13} offset={ringOffsets.days} />
-        {Array.from({ length: 52 }).map((_, i) => <CurvedLabel key={i} radius={203} angle={(i / 52) * 360 + 3.4} fill="#f8fafc" size={11} weight={600} offset={ringOffsets.days}>{i + 1}</CurvedLabel>)}
+        <g transform={alignRotation(weekIndex, 52)}>
+          <RingSegments count={52} inner={188} outer={219} activeIndex={weekIndex} goldEvery={13} offset={ringOffsets.days} />
+          {Array.from({ length: 52 }).map((_, i) => <CurvedLabel key={i} radius={203} angle={(i / 52) * 360 + 3.4} fill="#f8fafc" size={11} weight={600} offset={ringOffsets.days}>{i + 1}</CurvedLabel>)}
+        </g>
 
-        {Array.from({ length: 18 }).map((_, i) => {
-          const active = i === dayPart;
-          return <path key={i} d={arcPath(128, 174, (i / 18) * 360, ((i + 0.94) / 18) * 360, ringOffsets.dayParts)} fill={active ? '#facc15' : '#132033'} opacity={active ? 1 : 0.92} stroke="#94a3b8" strokeWidth="0.6" />;
-        })}
-        {partNames.map((name, i) => <CurvedLabel key={name} radius={116} angle={i * 60 + 30} fill={i % 2 ? '#e2e8f0' : '#facc15'} size={16} offset={ringOffsets.dayParts}>{name}</CurvedLabel>)}
+        <g transform={alignRotation(dayPart, 18)}>
+          {Array.from({ length: 18 }).map((_, i) => {
+            const active = i === dayPart;
+            return <path key={i} d={arcPath(128, 174, (i / 18) * 360, ((i + 0.94) / 18) * 360, ringOffsets.dayParts)} fill={active ? '#facc15' : '#132033'} opacity={active ? 1 : 0.92} stroke="#94a3b8" strokeWidth="0.6" />;
+          })}
+          {partNames.map((name, i) => <CurvedLabel key={name} radius={116} angle={i * 60 + 30} fill={i % 2 ? '#e2e8f0' : '#facc15'} size={16} offset={ringOffsets.dayParts}>{name}</CurvedLabel>)}
+        </g>
+
 
         {/* Outer blue hub circle */}
         <circle cx={cx + (ringOffsets.centerHub?.x || 0)} cy={cy + (ringOffsets.centerHub?.y || 0)} r="104" fill="#020617" stroke="#1d4ed8" strokeWidth="5" />
@@ -249,9 +273,13 @@ export const YHVHWheelCalendar = ({ size = 760, ringOffsets = {}, textOverrides 
         <text x={cx + (ringOffsets.centerHub?.x || 0)} y={cy + 18 + (ringOffsets.centerHub?.y || 0)} textAnchor="middle" fill="#fef3c7" fontSize="11" fontWeight="700">Day {weekDay} of week</text>
         <text x={cx + (ringOffsets.centerHub?.x || 0)} y={cy + 34 + (ringOffsets.centerHub?.y || 0)} textAnchor="middle" fill="#d4a017" fontSize="10" fontWeight="700">Part {dayPart + 1}/18</text>
 
-        <line x1={cx} y1="72" x2={cx} y2={cy} stroke="#e5e7eb" strokeWidth="5" filter="url(#goldGlow)" />
-        <path d="M 500 50 L 484 85 L 516 85 Z" fill="#facc15" filter="url(#goldGlow)" />
-        <circle cx={pointer.x} cy={pointer.y} r="18" fill="#facc15" opacity="0.75" stroke="#a16207" strokeWidth="3" />
+        {/* Live sun-hand: rotates around the dial to where the sun is now */}
+        <g transform={`rotate(${sunAngle} ${cx} ${cy})`} style={{ transition: 'transform 1s linear' }}>
+          <line x1={cx} y1={72} x2={cx} y2={cy} stroke="#e5e7eb" strokeWidth="5" filter="url(#goldGlow)" />
+          <path d={`M ${cx} 50 L ${cx - 16} 85 L ${cx + 16} 85 Z`} fill="#facc15" filter="url(#goldGlow)" />
+        </g>
+        <circle cx={armTip.x} cy={armTip.y} r="18" fill="#facc15" opacity="0.75" stroke="#a16207" strokeWidth="3" />
+
         <text x="500" y="935" textAnchor="middle" fill="#fef3c7" fontSize="18" fontWeight="800">
           Year {sacred.date.year} · Month {sacred.date.month} · Day {sacred.date.day} · Day {sacred.dayOfYear}/364
         </text>
