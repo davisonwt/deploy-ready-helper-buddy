@@ -45,7 +45,7 @@ export default function BeadCalendarNavigator({ currentMonth, currentDay, curren
   const monthIndex = isHelo ? -1 : view;
 
   const monthNum = monthIndex + 1;
-  const beadCount = !isHelo ? (monthNum === 1 ? 33 : MONTH_DAYS[monthIndex]) : 1;
+  // beadCount derived inside each Strand; kept here for future use
 
   const northSeason = !isHelo ? NORTHERN_SEASONS[monthIndex] : '—';
   const southSeason = !isHelo ? SOUTHERN_SEASONS[monthIndex] : '—';
