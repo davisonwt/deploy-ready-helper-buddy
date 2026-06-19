@@ -8566,6 +8566,60 @@ export type Database = {
           },
         ]
       }
+      sacred_day_scriptures: {
+        Row: {
+          created_at: string
+          day: number
+          month: number
+          note: string | null
+          portal: string | null
+          song: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          day: number
+          month: number
+          note?: string | null
+          portal?: string | null
+          song?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          day?: number
+          month?: number
+          note?: string | null
+          portal?: string | null
+          song?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      sacred_moon_phases: {
+        Row: {
+          created_at: string
+          day_of_year: number
+          illumination_pct: number
+          phase: string
+          sample_gregorian_date: string | null
+        }
+        Insert: {
+          created_at?: string
+          day_of_year: number
+          illumination_pct: number
+          phase: string
+          sample_gregorian_date?: string | null
+        }
+        Update: {
+          created_at?: string
+          day_of_year?: number
+          illumination_pct?: number
+          phase?: string
+          sample_gregorian_date?: string | null
+        }
+        Relationships: []
+      }
       seed_analytics_daily: {
         Row: {
           bestowals_amount: number
