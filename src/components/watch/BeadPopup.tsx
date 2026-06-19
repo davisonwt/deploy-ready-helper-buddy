@@ -383,12 +383,43 @@ export function BeadPopup({ isOpen, onClose, year, month, day }: BeadPopupProps)
         <div className="flex-1 overflow-y-auto p-5 space-y-4">
           {tab === 'sacred' && (
             <div className="space-y-3">
-              {history && (
-                <div className="bg-amber-900/30 border border-amber-500/30 rounded-xl p-4">
-                  <div className="flex items-center gap-2 mb-2 text-amber-300 font-semibold"><Sparkles className="w-4 h-4" /> Sacred History</div>
-                  <p className="text-amber-100/90 text-sm leading-relaxed">{history}</p>
+              {/* Portal + Moon */}
+              {(scripture?.portal || moon) && (
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  {scripture?.portal && (
+                    <div className="bg-indigo-900/30 border border-indigo-400/30 rounded-xl p-4">
+                      <div className="text-indigo-200 text-xs uppercase tracking-widest mb-1">Sun Portal</div>
+                      <div className="text-indigo-100 font-semibold">{scripture.portal}</div>
+                    </div>
+                  )}
+                  {moon && (
+                    <div className="bg-slate-800/40 border border-slate-400/30 rounded-xl p-4">
+                      <div className="text-slate-200 text-xs uppercase tracking-widest mb-1">Moon Phase</div>
+                      <div className="text-slate-100 font-semibold">{moon.phase}</div>
+                      <div className="text-slate-300 text-xs">{moon.illumination_pct}% illuminated</div>
+                    </div>
+                  )}
                 </div>
               )}
+
+              {/* Scripture note from DB (preferred) — fall back to hardcoded summary */}
+              {(scripture?.note || history) && (
+                <div className="bg-amber-900/30 border border-amber-500/30 rounded-xl p-4">
+                  <div className="flex items-center gap-2 mb-2 text-amber-300 font-semibold"><Sparkles className="w-4 h-4" /> Sacred History &amp; Scripture</div>
+                  <p className="text-amber-100/90 text-sm leading-relaxed whitespace-pre-line">
+                    {scripture?.note ?? history}
+                  </p>
+                </div>
+              )}
+
+              {/* Sabbath song / extras */}
+              {scripture?.song && (
+                <div className="bg-purple-900/30 border border-purple-400/30 rounded-xl p-4">
+                  <div className="flex items-center gap-2 mb-2 text-purple-200 font-semibold"><Star className="w-4 h-4" /> Song &amp; Notes</div>
+                  <p className="text-purple-100/90 text-sm leading-relaxed whitespace-pre-line">{scripture.song}</p>
+                </div>
+              )}
+
               <div className="bg-emerald-900/30 border border-emerald-500/30 rounded-xl p-4">
                 <div className="flex items-center gap-2 mb-2 text-emerald-300 font-semibold"><Sprout className="w-4 h-4" /> Garden Tip</div>
                 <p className="text-emerald-100/90 text-sm leading-relaxed">{gardenTip}</p>
@@ -404,6 +435,7 @@ export function BeadPopup({ isOpen, onClose, year, month, day }: BeadPopupProps)
               )}
             </div>
           )}
+
 
           {tab === 'diary' && (
             <div className="space-y-4">
