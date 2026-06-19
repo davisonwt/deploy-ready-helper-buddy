@@ -431,8 +431,10 @@ export const YHVHWheelCalendar = ({ size = 760, ringOffsets = {}, textOverrides 
         </g>
 
 
-        {/* Moon ring — 354-day lunar year (Enoch 73-74). Active lunar-day rotates under sun arm; glyph counter-rotated to stay upright. */}
-        <g transform={alignRotation(moon.lunarYearDay, 354)}>
+        {/* Moon ring — 354-day lunar tick band (Enoch 73-74). Moon glyph is placed
+            at the moon's real zodiac longitude so she lines up with the gate she is
+            currently in on the 12-tribes ring (not with the sun arm). */}
+        <g>
           {Array.from({ length: 354 }).map((_, i) => {
             const start = (i / 354) * 360;
             const end = ((i + 0.9) / 354) * 360;
@@ -441,17 +443,29 @@ export const YHVHWheelCalendar = ({ size = 760, ringOffsets = {}, textOverrides 
             return <path key={`moon-${i}`} d={arcPath(468, 484, start, end, ringOffsets.moon)} fill={fill} opacity={active ? 1 : 0.7} />;
           })}
           {(() => {
-            const segCenter = ((moon.lunarYearDay + 0.5) / 354) * 360;
-            const p = polar(476, segCenter, ringOffsets.moon);
-            const counter = -(sunAngle - segCenter);
+            // Moon glyph at her current zodiac gate angle (0° = Aries / top of dial)
+            const moonGateAngle = moon.longitude;
+            const p = polar(476, moonGateAngle, ringOffsets.moon);
             return (
-              <g transform={`rotate(${counter} ${p.x} ${p.y})`}>
-                <circle cx={p.x} cy={p.y} r="14" fill="#0b1220" stroke="#e5e7eb" strokeWidth="1.5" />
-                <text x={p.x} y={p.y + 1} textAnchor="middle" dominantBaseline="middle" fontSize="20">{moon.glyph}</text>
+              <g>
+                {/* radial pointer from moon ring inward to the gate it occupies */}
+                <line
+                  x1={polar(325, moonGateAngle, ringOffsets.moon).x}
+                  y1={polar(325, moonGateAngle, ringOffsets.moon).y}
+                  x2={p.x}
+                  y2={p.y}
+                  stroke="#e5e7eb"
+                  strokeWidth="1.2"
+                  opacity="0.6"
+                  strokeDasharray="3 3"
+                />
+                <circle cx={p.x} cy={p.y} r="16" fill="#0b1220" stroke="#e5e7eb" strokeWidth="1.8" />
+                <text x={p.x} y={p.y + 1} textAnchor="middle" dominantBaseline="middle" fontSize="22">{moon.glyph}</text>
               </g>
             );
           })()}
         </g>
+
 
 
 
