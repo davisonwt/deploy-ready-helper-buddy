@@ -824,9 +824,11 @@ export type Database = {
       bestowals: {
         Row: {
           amount: number
+          base_amount: number | null
           bestower_id: string
           bestower_profile_id: string | null
           blockchain_network: string | null
+          buyer_total_amount: number | null
           created_at: string
           currency: string
           distributed_at: string | null
@@ -839,8 +841,21 @@ export type Database = {
           payment_method: string | null
           payment_reference: string | null
           payment_status: string
+          payout_attempted_at: string | null
+          payout_completed_at: string | null
+          payout_currency: string | null
+          payout_destination: string | null
+          payout_error: string | null
+          payout_fee_amount: number | null
+          payout_provider: string | null
+          payout_reference: string | null
+          payout_status: string | null
           pocket_numbers: number[] | null
           pockets_count: number
+          processor_fee_amount: number | null
+          processor_fee_currency: string | null
+          provider: string | null
+          provider_order_id: string | null
           release_status: string | null
           released_at: string | null
           tx_signature: string | null
@@ -848,9 +863,11 @@ export type Database = {
         }
         Insert: {
           amount: number
+          base_amount?: number | null
           bestower_id: string
           bestower_profile_id?: string | null
           blockchain_network?: string | null
+          buyer_total_amount?: number | null
           created_at?: string
           currency?: string
           distributed_at?: string | null
@@ -863,8 +880,21 @@ export type Database = {
           payment_method?: string | null
           payment_reference?: string | null
           payment_status?: string
+          payout_attempted_at?: string | null
+          payout_completed_at?: string | null
+          payout_currency?: string | null
+          payout_destination?: string | null
+          payout_error?: string | null
+          payout_fee_amount?: number | null
+          payout_provider?: string | null
+          payout_reference?: string | null
+          payout_status?: string | null
           pocket_numbers?: number[] | null
           pockets_count: number
+          processor_fee_amount?: number | null
+          processor_fee_currency?: string | null
+          provider?: string | null
+          provider_order_id?: string | null
           release_status?: string | null
           released_at?: string | null
           tx_signature?: string | null
@@ -872,9 +902,11 @@ export type Database = {
         }
         Update: {
           amount?: number
+          base_amount?: number | null
           bestower_id?: string
           bestower_profile_id?: string | null
           blockchain_network?: string | null
+          buyer_total_amount?: number | null
           created_at?: string
           currency?: string
           distributed_at?: string | null
@@ -887,8 +919,21 @@ export type Database = {
           payment_method?: string | null
           payment_reference?: string | null
           payment_status?: string
+          payout_attempted_at?: string | null
+          payout_completed_at?: string | null
+          payout_currency?: string | null
+          payout_destination?: string | null
+          payout_error?: string | null
+          payout_fee_amount?: number | null
+          payout_provider?: string | null
+          payout_reference?: string | null
+          payout_status?: string | null
           pocket_numbers?: number[] | null
           pockets_count?: number
+          processor_fee_amount?: number | null
+          processor_fee_currency?: string | null
+          provider?: string | null
+          provider_order_id?: string | null
           release_status?: string | null
           released_at?: string | null
           tx_signature?: string | null
@@ -11586,8 +11631,12 @@ export type Database = {
           is_active: boolean | null
           is_primary: boolean
           merchant_id: string | null
+          network: string | null
+          payout_currency: string | null
           updated_at: string
           user_id: string
+          verification_method: string | null
+          verified_at: string | null
           wallet_address: string
           wallet_type: string
         }
@@ -11599,8 +11648,12 @@ export type Database = {
           is_active?: boolean | null
           is_primary?: boolean
           merchant_id?: string | null
+          network?: string | null
+          payout_currency?: string | null
           updated_at?: string
           user_id: string
+          verification_method?: string | null
+          verified_at?: string | null
           wallet_address: string
           wallet_type?: string
         }
@@ -11612,8 +11665,12 @@ export type Database = {
           is_active?: boolean | null
           is_primary?: boolean
           merchant_id?: string | null
+          network?: string | null
+          payout_currency?: string | null
           updated_at?: string
           user_id?: string
+          verification_method?: string | null
+          verified_at?: string | null
           wallet_address?: string
           wallet_type?: string
         }
