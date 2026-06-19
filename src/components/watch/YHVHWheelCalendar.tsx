@@ -297,8 +297,8 @@ export const YHVHWheelCalendar = ({ size = 760, ringOffsets = {}, textOverrides 
         </g>
 
 
-        {/* Moon ring — 354-day lunar year (Enoch 73-74). Moon glyph orbits to today's lunar position in correct phase. */}
-        <g>
+        {/* Moon ring — 354-day lunar year (Enoch 73-74). Active lunar-day rotates under sun arm; glyph counter-rotated to stay upright. */}
+        <g transform={alignRotation(moon.lunarYearDay, 354)}>
           {Array.from({ length: 354 }).map((_, i) => {
             const start = (i / 354) * 360;
             const end = ((i + 0.9) / 354) * 360;
@@ -307,15 +307,18 @@ export const YHVHWheelCalendar = ({ size = 760, ringOffsets = {}, textOverrides 
             return <path key={`moon-${i}`} d={arcPath(468, 484, start, end, ringOffsets.moon)} fill={fill} opacity={active ? 1 : 0.7} />;
           })}
           {(() => {
-            const p = polar(476, moonAngle, ringOffsets.moon);
+            const segCenter = ((moon.lunarYearDay + 0.5) / 354) * 360;
+            const p = polar(476, segCenter, ringOffsets.moon);
+            const counter = -(sunAngle - segCenter);
             return (
-              <g style={{ transition: 'transform 0.8s ease' }}>
+              <g transform={`rotate(${counter} ${p.x} ${p.y})`}>
                 <circle cx={p.x} cy={p.y} r="14" fill="#0b1220" stroke="#e5e7eb" strokeWidth="1.5" />
                 <text x={p.x} y={p.y + 1} textAnchor="middle" dominantBaseline="middle" fontSize="20">{moon.glyph}</text>
               </g>
             );
           })()}
         </g>
+
 
 
         {/* Outer blue hub circle */}
