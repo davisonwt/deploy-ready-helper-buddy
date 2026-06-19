@@ -75,7 +75,7 @@ export default function BeadCalendarNavigator({ currentMonth, currentDay, curren
       </div>
 
       {/* Strand viewport with side chevrons */}
-      <div className="relative flex items-center min-h-[420px]">
+      <div className="relative flex items-center min-h-[min(640px,calc(100dvh-150px))]">
         <button
           onClick={goPrev}
           aria-label="Previous month"
@@ -84,7 +84,7 @@ export default function BeadCalendarNavigator({ currentMonth, currentDay, curren
           <ChevronLeft className="w-5 h-5" />
         </button>
 
-        <div className="flex-1 flex justify-center px-12 py-6">
+        <div className="flex-1 flex justify-center px-12 py-3 md:py-6">
           <AnimatePresence mode="wait">
             <motion.div
               key={view}
@@ -206,7 +206,7 @@ function HeloYasephView() {
 function FitStrand({ children, viewKey }: { children: React.ReactNode; viewKey: string }) {
   const outerRef = useRef<HTMLDivElement>(null);
   const innerRef = useRef<HTMLDivElement>(null);
-  const [scale, setScale] = useState(1);
+  const [fit, setFit] = useState({ scale: 1, height: 420 });
 
   useLayoutEffect(() => {
     const fit = () => {
@@ -215,13 +215,15 @@ function FitStrand({ children, viewKey }: { children: React.ReactNode; viewKey: 
       if (!outer || !inner) return;
       // Reset before measuring
       inner.style.transform = 'none';
-      const oh = outer.clientHeight;
+      const rect = outer.getBoundingClientRect();
+      const viewportSpace = Math.max(260, window.innerHeight - rect.top - 112);
+      const oh = Math.min(window.innerHeight * 0.74, viewportSpace);
       const ow = outer.clientWidth;
       const ih = inner.scrollHeight;
       const iw = inner.scrollWidth;
       if (!ih || !iw) return;
       const s = Math.min(1, oh / ih, ow / iw);
-      setScale(s);
+      setFit({ scale: s, height: oh });
     };
     fit();
     const ro = new ResizeObserver(fit);
@@ -241,12 +243,12 @@ function FitStrand({ children, viewKey }: { children: React.ReactNode; viewKey: 
     <div
       ref={outerRef}
       className="w-full flex justify-center items-start overflow-hidden"
-      style={{ height: 'min(70vh, calc(100dvh - 320px))' }}
+      style={{ height: fit.height }}
     >
       <div
         ref={innerRef}
         style={{
-          transform: `scale(${scale})`,
+          transform: `scale(${fit.scale})`,
           transformOrigin: 'top center',
           width: '100%',
         }}
