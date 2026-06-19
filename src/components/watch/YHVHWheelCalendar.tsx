@@ -209,7 +209,8 @@ export const YHVHWheelCalendar = ({ size = 760, ringOffsets = {}, textOverrides 
 
 
   return (
-    <div className="relative mx-auto" style={{ width: safeSize, maxWidth: '100%', aspectRatio: '1 / 1' }}>
+    <div className="mx-auto" style={{ width: safeSize, maxWidth: '100%' }}>
+      <div className="relative" style={{ width: '100%', aspectRatio: '1 / 1' }}>
       <svg viewBox="0 0 1000 1000" className="h-full w-full drop-shadow-[0_0_34px_hsl(var(--s2g-amber)/0.24)]" role="img" aria-label="YHVH wheel within wheels calendar">
         <defs>
           <radialGradient id="wheelBg" cx="50%" cy="50%" r="58%">
@@ -284,6 +285,7 @@ export const YHVHWheelCalendar = ({ size = 760, ringOffsets = {}, textOverrides 
         <circle cx={armTip.x} cy={armTip.y} r="18" fill="#facc15" opacity="0.75" stroke="#a16207" strokeWidth="3" />
 
       </svg>
+      </div>
       <div className="mt-3 text-center font-extrabold text-[#fef3c7]" style={{ fontSize: 'clamp(14px, 2.2vw, 20px)' }}>
         Year {sacred.date.year} · Month {sacred.date.month} · Day {sacred.date.day} · Day {sacred.dayOfYear}/364
       </div>
