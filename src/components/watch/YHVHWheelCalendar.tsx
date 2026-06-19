@@ -425,10 +425,10 @@ export const YHVHWheelCalendar = ({ size = 760, ringOffsets = {}, textOverrides 
                   stroke="#020617"
                   strokeWidth="1.2"
                 />
-                {/* Tribe + zodiac side-by-side on a single curved line */}
-                <CurvedLabel radius={310} angle={mid} fill={active ? '#0b1220' : '#fef3c7'} size={10} weight={800} offset={ringOffsets.tribes}>
+                {/* Tribe + zodiac curved along the segment's own arc */}
+                <ArcLabel id={`tribe-arc-${idx}`} radius={310} start={start + 1} end={end - 1} fill={active ? '#0b1220' : '#fef3c7'} size={11} weight={800} offset={ringOffsets.tribes}>
                   {`${tribe} · ${z.sym} ${z.name}`}
-                </CurvedLabel>
+                </ArcLabel>
               </g>
             );
           })
