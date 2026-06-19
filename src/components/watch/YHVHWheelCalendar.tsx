@@ -222,12 +222,81 @@ export const YHVHWheelCalendar = ({ size = 760, ringOffsets = {}, textOverrides 
   const weekDay = sacred.weekDay;
   const seasonName = (location.lat < 0 ? SEASONS_S : SEASONS_N)[monthIndex];
 
+  // ---- Hover tooltip: magnifying-glass cursor + per-ring + per-segment info ----
+  const [hover, setHover] = useState<{ title: string; detail: string; x: number; y: number } | null>(null);
 
+  const describeAt = (r: number, ang: number): { title: string; detail: string } | null => {
+    // For rotating rings: the active segment is brought to screen-angle `sunAngle`.
+    // So hovered segment index = round(activeIdx + (ang - sunAngle)/360 * count) mod count.
+    const rotSeg = (count: number, active: number) => {
+      const diff = ((ang - sunAngle) / 360) * count;
+      const idx = Math.round(active + diff);
+      return ((idx % count) + count) % count;
+    };
+    const fixedSeg = (count: number) => Math.floor((((ang % 360) + 360) % 360) / (360 / count));
+
+    if (r >= 468 && r <= 484) {
+      const i = rotSeg(354, moon.lunarYearDay);
+      return { title: 'Moon ring — 354-day lunar year (Enoch 73-74)', detail: `Lunar day ${i + 1}/354 · today ${moon.glyph} ${(moon.phase * 100).toFixed(0)}% (age ${moon.age.toFixed(1)}d)` };
+    }
+    if (r >= 404 && r <= 455) {
+      const i = rotSeg(366, dayIndex);
+      return { title: 'Sacred Year ring (364 days, gold every 30)', detail: `Day ${i + 1} of the sacred solar year` };
+    }
+    if (r >= 350 && r <= 398) {
+      const i = rotSeg(90, sacred.date.day - 1);
+      return { title: 'Season ring (90 days · 4 seasons + 4 intercalary)', detail: `Day ${i + 1}/90 of ${seasonName}` };
+    }
+    if (r >= 322 && r <= 344) {
+      const i = rotSeg(364, dayIndex);
+      return { title: 'Sacred Year ring (364 · 13 sabbath-weeks of 28)', detail: `Day ${i + 1} · sabbath-week ${Math.floor(i / 28) + 1}/13` };
+    }
+    if (r >= 300 && r <= 320) {
+      const idx = fixedSeg(12);
+      const leader = leaders[Math.floor(idx / 3)];
+      const tribe = leader.tribes[idx % 3];
+      return { title: '12 Tribes / Sun-portals', detail: `Portal ${idx + 1}: ${tribe} (camp of ${leader.name})` };
+    }
+    if (r >= 225 && r <= 298) {
+      const idx = fixedSeg(4);
+      const leader = leaders[idx];
+      return { title: 'Priest-Leader quadrant (4 cardinal angels)', detail: `${leader.name} · ${leader.creature} · tribe ${leader.tribe}` };
+    }
+    if (r >= 188 && r <= 219) {
+      const i = rotSeg(52, weekIndex);
+      return { title: '52-week ring', detail: `Week ${i + 1}/52 of the year` };
+    }
+    if (r >= 128 && r <= 174) {
+      const i = rotSeg(18, dayPart);
+      return { title: '18 parts of day (Enoch 71/72)', detail: `Part ${i + 1}/18 · ${partNames[Math.floor(i / 3)]}` };
+    }
+    if (r >= 60 && r <= 104) {
+      const hr = ((ang / 360) * 24 + 24) % 24;
+      const h = Math.floor(hr);
+      const m = Math.floor((hr - h) * 60);
+      return { title: 'Daylight phase ring (24-hour sky)', detail: `~${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')} local · morning / day / evening / night` };
+    }
+    return null;
+  };
+
+  const onSvgMove = (e: React.MouseEvent<SVGSVGElement>) => {
+    const rect = e.currentTarget.getBoundingClientRect();
+    const px = ((e.clientX - rect.left) / rect.width) * 1000;
+    const py = ((e.clientY - rect.top) / rect.height) * 1000;
+    const dx = px - cx, dy = py - cy;
+    const r = Math.hypot(dx, dy);
+    let ang = (Math.atan2(dy, dx) * 180) / Math.PI + 90;
+    if (ang < 0) ang += 360;
+    const info = describeAt(r, ang);
+    if (info) setHover({ ...info, x: e.clientX - rect.left, y: e.clientY - rect.top });
+    else setHover(null);
+  };
 
   return (
     <div className="mx-auto" style={{ width: safeSize, maxWidth: '100%' }}>
       <div className="relative" style={{ width: '100%', aspectRatio: '1 / 1' }}>
-      <svg viewBox="0 0 1000 1000" className="h-full w-full drop-shadow-[0_0_34px_hsl(var(--s2g-amber)/0.24)]" role="img" aria-label="YHVH wheel within wheels calendar">
+      <svg viewBox="0 0 1000 1000" className="h-full w-full drop-shadow-[0_0_34px_hsl(var(--s2g-amber)/0.24)] cursor-zoom-in" role="img" aria-label="YHVH wheel within wheels calendar" onMouseMove={onSvgMove} onMouseLeave={() => setHover(null)}>
+
         <defs>
           <radialGradient id="wheelBg" cx="50%" cy="50%" r="58%">
             <stop offset="0%" stopColor="#0f172a" />
@@ -297,8 +366,8 @@ export const YHVHWheelCalendar = ({ size = 760, ringOffsets = {}, textOverrides 
         </g>
 
 
-        {/* Moon ring — 354-day lunar year (Enoch 73-74). Moon glyph orbits to today's lunar position in correct phase. */}
-        <g>
+        {/* Moon ring — 354-day lunar year (Enoch 73-74). Active lunar-day rotates under sun arm; glyph counter-rotated to stay upright. */}
+        <g transform={alignRotation(moon.lunarYearDay, 354)}>
           {Array.from({ length: 354 }).map((_, i) => {
             const start = (i / 354) * 360;
             const end = ((i + 0.9) / 354) * 360;
@@ -307,15 +376,18 @@ export const YHVHWheelCalendar = ({ size = 760, ringOffsets = {}, textOverrides 
             return <path key={`moon-${i}`} d={arcPath(468, 484, start, end, ringOffsets.moon)} fill={fill} opacity={active ? 1 : 0.7} />;
           })}
           {(() => {
-            const p = polar(476, moonAngle, ringOffsets.moon);
+            const segCenter = ((moon.lunarYearDay + 0.5) / 354) * 360;
+            const p = polar(476, segCenter, ringOffsets.moon);
+            const counter = -(sunAngle - segCenter);
             return (
-              <g style={{ transition: 'transform 0.8s ease' }}>
+              <g transform={`rotate(${counter} ${p.x} ${p.y})`}>
                 <circle cx={p.x} cy={p.y} r="14" fill="#0b1220" stroke="#e5e7eb" strokeWidth="1.5" />
                 <text x={p.x} y={p.y + 1} textAnchor="middle" dominantBaseline="middle" fontSize="20">{moon.glyph}</text>
               </g>
             );
           })()}
         </g>
+
 
 
         {/* Outer blue hub circle */}
@@ -338,6 +410,15 @@ export const YHVHWheelCalendar = ({ size = 760, ringOffsets = {}, textOverrides 
         <circle cx={armTip.x} cy={armTip.y} r="18" fill="#facc15" opacity="0.75" stroke="#a16207" strokeWidth="3" />
 
       </svg>
+      {hover && (
+        <div
+          className="pointer-events-none absolute z-30 max-w-[260px] rounded-md border border-amber-500/60 bg-slate-950/95 px-3 py-2 text-xs text-amber-50 shadow-[0_4px_20px_rgba(0,0,0,0.7)]"
+          style={{ left: hover.x + 18, top: Math.max(hover.y - 10, 0) }}
+        >
+          <div className="mb-0.5 font-extrabold text-amber-300">{hover.title}</div>
+          <div className="leading-snug text-amber-100/90">{hover.detail}</div>
+        </div>
+      )}
       </div>
       <div className="mt-3 text-center font-extrabold text-[#fef3c7]" style={{ fontSize: 'clamp(14px, 2.2vw, 20px)' }}>
         Year {sacred.date.year} · Month {sacred.date.month} · Day {sacred.date.day} · Day {sacred.dayOfYear}/364
