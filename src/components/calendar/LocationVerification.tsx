@@ -8,12 +8,15 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { supabase } from '@/integrations/supabase/client';
 
 export function LocationVerification() {
-  const { location, loading, error, verifyLocation } = useUserLocation();
+  const { location, loading, error, updateLocation, verifyLocation } = useUserLocation();
   const { user } = useAuth();
   const [verifying, setVerifying] = useState(false);
   const [timezone, setTimezone] = useState<string>('');
   const [timezoneVerified, setTimezoneVerified] = useState(false);
   const [showVerificationCard, setShowVerificationCard] = useState(false);
+  const [manualLat, setManualLat] = useState('');
+  const [manualLon, setManualLon] = useState('');
+  const [manualError, setManualError] = useState<string | null>(null);
 
   // Detect and load timezone
   useEffect(() => {
@@ -53,6 +56,11 @@ export function LocationVerification() {
     }
   }, [location.verified, timezoneVerified, loading, showVerificationCard]);
 
+  useEffect(() => {
+    setManualLat(location.lat.toFixed(4));
+    setManualLon(location.lon.toFixed(4));
+  }, [location.lat, location.lon]);
+
   const handleVerify = async () => {
     setVerifying(true);
     try {
@@ -70,6 +78,29 @@ export function LocationVerification() {
       }
     } finally {
       setVerifying(false);
+    }
+  };
+
+  const handleManualSave = async () => {
+    const lat = Number(manualLat);
+    const lon = Number(manualLon);
+
+    if (!Number.isFinite(lat) || !Number.isFinite(lon) || lat < -90 || lat > 90 || lon < -180 || lon > 180) {
+      setManualError('Enter valid latitude and longitude.');
+      return;
+    }
+
+    setManualError(null);
+    await updateLocation(lat, lon, true);
+
+    if (user?.id && !timezoneVerified) {
+      const detectedTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+      await supabase
+        .from('profiles')
+        .update({ timezone: detectedTimezone })
+        .eq('user_id', user.id);
+      setTimezone(detectedTimezone);
+      setTimezoneVerified(true);
     }
   };
 
