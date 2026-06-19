@@ -108,7 +108,7 @@ export default function Yhvh364Page() {
         <Tabs defaultValue="wheels" className="mt-6">
           <TabsList className="bg-black/40 border border-amber-500/20">
             <TabsTrigger value="wheels" className="gap-2"><Sparkles className="h-4 w-4" /> Wheels in Wheels</TabsTrigger>
-            <TabsTrigger value="beads" className="gap-2"><Sprout className="h-4 w-4" /> Month Beads</TabsTrigger>
+            <TabsTrigger value="beads" className="gap-2"><Sprout className="h-4 w-4" /> Ed's Month Beads</TabsTrigger>
             <TabsTrigger value="journal" className="gap-2"><BookOpen className="h-4 w-4" /> Diary &amp; Journal</TabsTrigger>
             <TabsTrigger value="garden" className="gap-2"><Sprout className="h-4 w-4" /> Garden Tips</TabsTrigger>
           </TabsList>
