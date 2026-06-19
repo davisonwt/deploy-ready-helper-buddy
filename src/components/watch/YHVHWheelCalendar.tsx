@@ -101,13 +101,27 @@ function CurvedLabel({ radius, angle, children, fill = '#f8fafc', size = 14, wei
 
 export const YHVHWheelCalendar = ({ size = 760, ringOffsets = {}, textOverrides = {} }: YHVHWheelCalendarProps) => {
   const sacred = useSacredNow();
+  const { location } = useUserLocation();
+  const [sun, setSun] = useState<SunriseData | null>(null);
+  const [now, setNow] = useState(() => new Date());
+
+  useEffect(() => {
+    let cancelled = false;
+    getSunriseSunset(new Date(), location.lat, location.lon).then(s => { if (!cancelled) setSun(s); });
+    const id = setInterval(() => setNow(new Date()), 60000);
+    return () => { cancelled = true; clearInterval(id); };
+  }, [location.lat, location.lon]);
+
   const safeSize = Math.max(320, Math.min(size, 900));
   const dayIndex = Math.max(0, Math.min(363, sacred.dayOfYear - 1));
   const weekIndex = Math.max(0, Math.min(51, Math.floor(dayIndex / 7)));
   const monthIndex = Math.max(0, sacred.date.month - 1);
-  const dayPart = Math.floor((new Date().getHours() / 24) * 18);
+  const dayPart = compute18PartIndex(now, sun);
   const pointerAngle = (dayIndex / 364) * 360;
   const pointer = polar(438, pointerAngle);
+
+  const weekDay = (((sacred.dayOfYear - 1) % 7) + 1);
+  const seasonName = (location.lat < 0 ? SEASONS_S : SEASONS_N)[monthIndex];
 
   return (
     <div className="relative mx-auto" style={{ width: safeSize, maxWidth: '100%', aspectRatio: '1 / 1' }}>
