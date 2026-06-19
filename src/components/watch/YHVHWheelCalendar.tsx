@@ -192,8 +192,9 @@ export const YHVHWheelCalendar = ({ size = 760, ringOffsets = {}, textOverrides 
   const pointerAngle = (dayIndex / 364) * 360;
   const pointer = polar(438, pointerAngle);
 
-  const weekDay = (((sacred.dayOfYear - 1) % 7) + 1);
+  const weekDay = sacred.weekDay;
   const seasonName = (location.lat < 0 ? SEASONS_S : SEASONS_N)[monthIndex];
+
 
   return (
     <div className="relative mx-auto" style={{ width: safeSize, maxWidth: '100%', aspectRatio: '1 / 1' }}>
@@ -230,18 +231,19 @@ export const YHVHWheelCalendar = ({ size = 760, ringOffsets = {}, textOverrides 
         <RingSegments count={52} inner={188} outer={219} activeIndex={weekIndex} goldEvery={13} offset={ringOffsets.days} />
         {Array.from({ length: 52 }).map((_, i) => <CurvedLabel key={i} radius={203} angle={(i / 52) * 360 + 3.4} fill="#f8fafc" size={11} weight={600} offset={ringOffsets.days}>{i + 1}</CurvedLabel>)}
 
-        {/* ---- Daylight phase ring (morning / day / evening / night) ---- */}
-        <DaylightRing inner={178} outer={186} now={now} sun={sun} />
-
         {Array.from({ length: 18 }).map((_, i) => {
           const active = i === dayPart;
           return <path key={i} d={arcPath(128, 174, (i / 18) * 360, ((i + 0.94) / 18) * 360, ringOffsets.dayParts)} fill={active ? '#facc15' : '#132033'} opacity={active ? 1 : 0.92} stroke="#94a3b8" strokeWidth="0.6" />;
         })}
-        {partNames.map((name, i) => <CurvedLabel key={name} radius={106} angle={i * 60 + 30} fill={i % 2 ? '#e2e8f0' : '#facc15'} size={18} offset={ringOffsets.dayParts}>{name}</CurvedLabel>)}
+        {partNames.map((name, i) => <CurvedLabel key={name} radius={116} angle={i * 60 + 30} fill={i % 2 ? '#e2e8f0' : '#facc15'} size={16} offset={ringOffsets.dayParts}>{name}</CurvedLabel>)}
 
+        {/* Outer blue hub circle */}
+        <circle cx={cx + (ringOffsets.centerHub?.x || 0)} cy={cy + (ringOffsets.centerHub?.y || 0)} r="104" fill="#020617" stroke="#1d4ed8" strokeWidth="5" />
+        {/* Daylight phase ring — sits between gold inner (r=60) and blue outer (r=104) */}
+        <DaylightRing inner={64} outer={100} now={now} sun={sun} />
+        {/* Gold inner hub circle (holds the today text) */}
+        <circle cx={cx + (ringOffsets.centerHub?.x || 0)} cy={cy + (ringOffsets.centerHub?.y || 0)} r="60" fill="#081426" stroke="#d4a017" strokeWidth="2" />
 
-        <circle cx={cx + (ringOffsets.centerHub?.x || 0)} cy={cy + (ringOffsets.centerHub?.y || 0)} r="86" fill="#020617" stroke="#1d4ed8" strokeWidth="5" />
-        <circle cx={cx + (ringOffsets.centerHub?.x || 0)} cy={cy + (ringOffsets.centerHub?.y || 0)} r="58" fill="#081426" stroke="#d4a017" strokeWidth="2" />
         <text x={cx + (ringOffsets.centerHub?.x || 0)} y={cy - 22 + (ringOffsets.centerHub?.y || 0)} textAnchor="middle" dominantBaseline="middle" fill="#60a5fa" fontSize="15" fontWeight="900">{seasonName}</text>
         <text x={cx + (ringOffsets.centerHub?.x || 0)} y={cy - 2 + (ringOffsets.centerHub?.y || 0)} textAnchor="middle" dominantBaseline="middle" fill="#fef3c7" fontSize="20" fontWeight="900">{sacred.date.month}/{sacred.date.day}</text>
         <text x={cx + (ringOffsets.centerHub?.x || 0)} y={cy + 18 + (ringOffsets.centerHub?.y || 0)} textAnchor="middle" fill="#fef3c7" fontSize="11" fontWeight="700">Day {weekDay} of week</text>
