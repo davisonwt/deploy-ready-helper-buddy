@@ -20,10 +20,25 @@ export type TimeOfDay = 'deep-night' | 'dawn' | 'day' | 'golden-hour' | 'dusk' |
  * Improved calculation with better day-of-year and equation of time handling
  */
 export function calculateSunrise(date: Date = new Date(), lat: number = -26.2, lon: number = 28.0): number {
-  // For South Africa (Johannesburg area), use fixed sunrise time of 5:20 AM (320 minutes)
-  // This ensures accurate custom time calculation matching user expectations
-  // At 20:13 SAST, this gives Part 12, minute 14 (893 minutes elapsed = 11*80 + 13)
-  return 320; // 5:20 AM in minutes past midnight
+  const start = new Date(date.getFullYear(), 0, 0);
+  const dayOfYear = Math.floor((date.getTime() - start.getTime()) / 86400000);
+  const lngHour = lon / 15;
+  const t = dayOfYear + ((6 - lngHour) / 24);
+  const meanAnomaly = (0.9856 * t) - 3.289;
+  let trueLong = meanAnomaly + (1.916 * Math.sin(meanAnomaly * Math.PI / 180)) + (0.020 * Math.sin(2 * meanAnomaly * Math.PI / 180)) + 282.634;
+  trueLong = ((trueLong % 360) + 360) % 360;
+  let rightAscension = Math.atan(0.91764 * Math.tan(trueLong * Math.PI / 180)) * 180 / Math.PI;
+  rightAscension = ((rightAscension % 360) + 360) % 360;
+  rightAscension += (Math.floor(trueLong / 90) * 90) - (Math.floor(rightAscension / 90) * 90);
+  rightAscension /= 15;
+  const sinDec = 0.39782 * Math.sin(trueLong * Math.PI / 180);
+  const cosDec = Math.cos(Math.asin(sinDec));
+  const cosHour = (Math.cos(90.833 * Math.PI / 180) - (sinDec * Math.sin(lat * Math.PI / 180))) / (cosDec * Math.cos(lat * Math.PI / 180));
+  if (cosHour > 1 || cosHour < -1) return 360;
+  const hour = (360 - Math.acos(cosHour) * 180 / Math.PI) / 15;
+  const localHour = hour + rightAscension - (0.06571 * t) - 6.622 - lngHour;
+  const minutes = ((localHour % 24) + 24) % 24 * 60;
+  return Math.round(minutes);
 }
 
 /**
