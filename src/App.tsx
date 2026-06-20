@@ -26,6 +26,7 @@ import { logError } from "@/lib/logging";
 import { NavigationMonitor } from "@/components/monitoring/NavigationMonitor";
 import { DeadLinkDetector } from "@/components/monitoring/DeadLinkDetector";
 import { NotificationBanner } from "@/components/NotificationBanner";
+import { PayoutSetupBanner } from "@/components/PayoutSetupBanner";
 import GroundskeeperWidget from "@/components/grove/GroundskeeperWidget";
 import AppRoutes, { LoadingFallback } from "./routes/AppRoutes";
 
@@ -55,6 +56,7 @@ const App = () => (
                 <AudioUnlocker />
                 <SoundUnlockBanner />
                 <NotificationBanner />
+                <PayoutSetupBanner />
                 <SacredDayBanner />
                 <ReferralCaptureMount />
                 <IncomingCallOverlay />

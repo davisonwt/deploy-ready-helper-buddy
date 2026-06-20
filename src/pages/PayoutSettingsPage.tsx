@@ -10,6 +10,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { toast } from 'sonner';
 import AddNowPaymentsWallet from '@/components/payouts/AddNowPaymentsWallet';
 import AddPaypalEmail from '@/components/payouts/AddPaypalEmail';
+import { PAYOUT_PROVIDERS } from '@/lib/payments/providerFees';
 
 /**
  * Sower payout-method settings.
@@ -108,8 +109,15 @@ export default function PayoutSettingsPage() {
       <div>
         <h1 className="text-2xl font-bold">Payout Settings</h1>
         <p className="text-muted-foreground text-sm">
-          Choose where bestowals are paid out. You bear your chosen processor&apos;s payout fee.
+          Choose where bestowals are paid out. <strong>You pay your chosen processor&apos;s fee, not Sow2Grow.</strong>
         </p>
+        <ul className="mt-2 text-xs text-muted-foreground space-y-1">
+          {PAYOUT_PROVIDERS.map((p) => (
+            <li key={p.id}>
+              <span className="font-medium text-foreground">{p.label}:</span> {p.note}
+            </li>
+          ))}
+        </ul>
       </div>
 
       {!user && (

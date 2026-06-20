@@ -8,6 +8,7 @@ export { default as NotFound } from '@/pages/NotFound';
 export { default as LoginPage } from '@/pages/LoginPage';
 export { default as RegisterPage } from '@/pages/RegisterPage';
 export { default as OnboardingSecurityPage } from '@/pages/OnboardingSecurityPage';
+export { default as OnboardingPayoutPage } from '@/pages/OnboardingPayoutPage';
 export { default as ForgotPasswordPage } from '@/pages/ForgotPasswordPage';
 
 // Admin / lazy dashboards

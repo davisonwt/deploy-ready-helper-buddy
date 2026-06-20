@@ -11,6 +11,7 @@ import {
   LoginPage,
   RegisterPage,
   OnboardingSecurityPage,
+  OnboardingPayoutPage,
   ForgotPasswordPage,
   CommissionDashboard,
   GamificationDashboard,
@@ -269,6 +270,11 @@ const AppRoutes = () => (
     <Route path="/onboarding/security" element={
       <ProtectedRoute allowIncompleteSetup>
         <OnboardingSecurityPage />
+      </ProtectedRoute>
+    } />
+    <Route path="/onboarding/payout" element={
+      <ProtectedRoute allowIncompleteSetup>
+        <OnboardingPayoutPage />
       </ProtectedRoute>
     } />
     <Route path="/forgot-password" element={<ForgotPasswordPage />} />
