@@ -10,11 +10,15 @@ import { toast } from 'sonner';
 import { motion, AnimatePresence } from 'framer-motion';
 import { GradientPlaceholder } from '@/components/ui/GradientPlaceholder';
 import { launchConfetti, floatingScore, playSoundEffect } from '@/utils/confetti';
+import ProviderPicker from '@/components/payments/ProviderPicker';
+import { PayoutProviderId, quoteFee } from '@/lib/payments/providerFees';
 
 export default function BestowalCheckout() {
   const { basketItems, removeFromBasket, clearBasket, totalAmount } = useProductBasket();
   const { user } = useAuth();
   const [processing, setProcessing] = useState(false);
+  const [provider, setProvider] = useState<PayoutProviderId>('nowpayments');
+
   
   // Debug: Log basket items
   useEffect(() => {
@@ -41,8 +45,10 @@ export default function BestowalCheckout() {
             productId: item.id,
             amount: amount,
             sowerId: item.sower_id,
+            provider,
           },
         });
+
 
         if (error) {
           console.error('Product bestowal error:', error);
@@ -174,6 +180,25 @@ export default function BestowalCheckout() {
           <div className="flex justify-between text-lg font-bold">
             <span>Total</span>
             <span>${totalAmount.toFixed(2)} USDC</span>
+          </div>
+        </div>
+
+        <div className="space-y-2">
+          <div className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
+            Payment method
+          </div>
+          <ProviderPicker
+            value={provider}
+            onChange={setProvider}
+            amount={totalAmount}
+            mode="buyer"
+            disabled={processing}
+          />
+          <div className="text-xs text-muted-foreground text-right">
+            Estimated processor fee on ${totalAmount.toFixed(2)}:{' '}
+            <span className="font-medium text-foreground">
+              {quoteFee(provider, totalAmount).display}
+            </span>
           </div>
         </div>
 
