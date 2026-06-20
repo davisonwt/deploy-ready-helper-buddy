@@ -1,63 +1,120 @@
+# Payments UX Rollout — 5 Features, Sequenced
 
-# Part 3 — PayPal Integration
+## Table reality check (do this assumption first)
 
-Mirrors the NOWPayments architecture from Part 2 so both providers plug into the same `bestowals` schema and `dispatchPayouts()` strategy chain. Buyers pay in fiat via PayPal; sowers receive payouts to their PayPal email via PayPal Payouts API.
+From the live schema:
 
-## Prerequisites (user action)
+- **`user_wallets`** — payout destination. Has `wallet_type` (provider: `nowpayments` | `paypal`), `wallet_address` (USDC-SOL address or PayPal email), `payout_currency` (e.g. `usdcsol`), `network`, `is_primary`, `verified_at`. **This is where "where do I send your money" lives.**
+- **`sower_balances`** — accrual ledger per user: `available_balance`, `pending_balance`, `total_earned`, `total_withdrawn`, `currency`. **This is the real "on-platform balance from sales".**
+- **`wallet_balances`** — only `wallet_address` + `usdc_balance` + `last_updated`. It's a *cache of an external on-chain balance for a given address*, not an internal ledger. Per `docs/WALLET_BALANCE_SOLUTION.md` it was repurposed as a cache and is currently stuck at 0 for users.
+- **`organization_wallets`** — Sow2Grow's own custody wallets (api_key/api_secret/merchant_id columns), one row per provider.
+- **`bestowals`** already carries `payout_provider`, `payout_destination`, `payout_currency`, `payout_status`, `payout_fee_amount` — so the per-bestowal payout path is fully wired; what's missing is the *user-side setup* and *buyer-side choice*.
 
-User must add these secrets in Project Settings → Secrets before Step 3 onward:
-- `PAYPAL_CLIENT_ID`
-- `PAYPAL_CLIENT_SECRET`
-- `PAYPAL_WEBHOOK_ID` (from the webhook subscription created in PayPal dashboard)
-- `PAYPAL_ENV` = `sandbox` or `live` (defaults to `sandbox`)
-- `PAYPAL_PAYOUTS_ENABLED` = `true` once Payouts API is approved on the account
+**Recommendation:** treat `sower_balances` as the canonical on-platform balance. Leave `wallet_balances` alone (or quietly deprecate later). Top-ups should credit `sower_balances` (new row type / transaction kind), not `wallet_balances`.
 
-I'll surface this checklist after Step 1.
+## Recommended build order
 
-## Steps
+1. **B — Onboarding payout setup** (foundation; everything else assumes a `user_wallets` row exists)
+2. **C — Existing-user nudge** (same UI as B, just surfaced retroactively — cheap once B exists)
+3. **A — Checkout provider selector** (depends on buyer also having a `user_wallets`-style preference? no — buyer just picks per-purchase, but the fee-math helper built here is reused by B's "what this costs you" copy)
+4. **D — User wallet dashboard** (needs B done so wallets exist; needs A's invoice flow for top-ups)
+5. **E — Gosat platform treasury view** (independent, but lowest urgency since we already proved the API works; build last)
 
-### Step 1 — `_shared/paypal/client.ts`
-Tiny REST helper: OAuth2 token cache (in-memory per-isolate, 8min TTL), `paypalFetch(path, init)` that picks `api-m.sandbox.paypal.com` vs `api-m.paypal.com` from `PAYPAL_ENV`, and `verifyPaypalWebhookSig(headers, body)` using `/v1/notifications/verify-webhook-signature`.
+A↔B share a `getProviderFee(provider, amount)` helper — build it in step B, reuse in A.
 
-### Step 2 — `create-paypal-order` (edge function, JWT-verified)
-Mirror of `create-nowpayments-invoice`:
-- Validate JWT, recompute pricing server-side (`base × qty`, `fee = base × 0.01`, `buyer_total = base + fee`).
-- Resolve sower's `paypal_email` from `user_wallets` (fail loud if missing).
-- Insert `bestowals` row with `provider='paypal'`, `payout_provider='paypal'`, `payout_destination=<sower paypal email>`, status `pending`.
-- Call PayPal `/v2/checkout/orders` with `intent=CAPTURE`, `purchase_units[0].custom_id = bestowal_id`, `application_context.return_url/cancel_url` pointing at our app.
-- Return `{ bestowal_id, order_id, approve_url }`.
+---
 
-### Step 3 — `paypal-webhook` (edge function, `verify_jwt=false`)
-- Verify signature via `verifyPaypalWebhookSig` using `PAYPAL_WEBHOOK_ID`. Bad sig → 401.
-- Idempotency via `processed_webhooks` (provider=`paypal`, webhook_id=`event.id`).
-- Event mapping:
-  - `CHECKOUT.ORDER.APPROVED` → `payment_status='processing'`
-  - `PAYMENT.CAPTURE.COMPLETED` → `payment_status='completed'`, store `payment_reference=capture.id`, then call `dispatchPayouts(bestowalId)`.
-  - `PAYMENT.CAPTURE.DENIED` / `VOIDED` / `DECLINED` → `payment_status='failed'` + `payout_error`.
-  - Payouts events: `PAYMENT.PAYOUTSBATCH.SUCCESS` / `PAYMENT.PAYOUTS-ITEM.SUCCEEDED` → `payout_status='sent'`, populate `payout_fee_amount` from `payout_item_fee`. `*.DENIED`/`*.FAILED`/`*.BLOCKED`/`*.RETURNED` → `payout_status='failed'` + `payout_error`.
-- Look up bestowal via `purchase_units[0].custom_id` (orders) or `sender_item_id` (payouts).
+## A. Checkout provider selector
 
-### Step 4 — `paypal-payout` (edge function, service-role only)
-- Service-role gate (header check, same pattern as `nowpayments-payout`).
-- If `PAYPAL_PAYOUTS_ENABLED !== 'true'` → return `manual_required` with reason `payouts_not_enabled` (no funds move; manual.ts row written by dispatcher fallback).
-- POST `/v1/payments/payouts` with single-item batch: `recipient_type=EMAIL`, `receiver=<bestowal.payout_destination>`, `amount={value, currency_code:'USD'}`, `sender_item_id=<bestowal_id>`, `note='Sow2Grow bestowal payout'`.
-- Update bestowal: `payout_status='processing'`, `payout_reference=batch_header.payout_batch_id`. Final `sent` transition comes from webhook.
-- Return `PayoutResult`-shaped JSON.
+**Files**
+- `src/lib/payments/providerFees.ts` *(new)* — single source of truth: `PROVIDERS = [{id:'nowpayments', label, feePct:[0.4,1.0], note:'USDC-SOL'}, {id:'paypal', label, feePct:[5.7,8.0]}]`, plus `quoteFee(provider, amount) → {min, max, displayString}`.
+- `src/components/products/BestowalCheckout.tsx` *(edit)* — add a `<ProviderPicker>` above the "Complete Bestowal" button; show fee preview line ("NOWPayments fee ≈ $0.04–$0.10, you pay $10.10"); pass chosen `provider` into `complete-product-bestowal` invoke body.
+- `src/components/bestow/QuickBestowModal.tsx` *(edit)* — same picker + fee line; currently hard-routes through `useBinancePay`, swap to branching: `nowpayments` → `useNowPayments.createInvoice`, `paypal` → `useCryptoPay`/`usePaypal` `create-paypal-order`.
+- `src/components/payments/ProviderPicker.tsx` *(new, shared)* — radio cards (logo, fee range, "you pay" total), controlled component.
+- `supabase/functions/complete-product-bestowal/index.ts` *(edit)* — accept `provider` in body, persist to `bestowals.provider` + `processor_fee_amount` (already columns).
+- `supabase/functions/create-nowpayments-invoice/index.ts` & `create-paypal-order/index.ts` *(verify, minor edit)* — make sure they accept and echo `processor_fee_amount` so the row written matches what the buyer saw.
 
-### Step 5 — Wire PayPal strategy + frontend
-- Update `_shared/payouts/paypal.ts` (stub from Part 2) to call `paypal-payout` via service role, matching `NowPaymentsPayoutStrategy` shape.
-- Update `_shared/payouts/index.ts` so `dispatchPayouts` picks `paypal` when `bestowal.payout_provider='paypal'`.
-- Add `usePaypal.tsx` hook: `createOrder({ orchardId, qty })` → invokes `create-paypal-order`, returns `approve_url`, redirects buyer. Reuse `useBestowalStatus` from `useNowPayments` (it's provider-agnostic).
-- Add dev test route `/dev/paypal-test` (admin/gosat-only, same gating as `/dev/nowpay-test`) for end-to-end manual verification.
-- Update `supabase/config.toml`: `verify_jwt = true` for `create-paypal-order`; `verify_jwt = false` for `paypal-webhook` and `paypal-payout`.
+**Out of scope for A:** changing distribution logic, changing payout side.
 
-## Out of scope (call out, don't build)
-- PayPal subscriptions / billing plans (this is one-shot capture only).
-- Refund flow (separate part).
-- Currency conversion — bestowals stay USD; display conversion already handled by `src/lib/i18n/currency.ts`.
-- Buyer-side PayPal JS SDK button — using redirect-to-approve_url for parity with NOWPayments hosted checkout. Can add JS SDK in a follow-up if you want inline checkout.
+---
 
-## Verification at each step
-Same pattern as Part 2: deploy → curl with bad auth (expect 401/403) → run from dev test page once secrets are set → watch `bestowals` row transitions and edge function logs.
+## B. Onboarding payout setup
 
-Reply **"go step 1"** to start.
+**Files**
+- `src/pages/PayoutSettingsPage.tsx` *(already exists — edit/rewrite)* — becomes the canonical setup screen with two-step wizard:
+  1. Pick provider (reuse `ProviderPicker` from A, but framed as "how YOU get paid" with the per-tx cost-to-you copy).
+  2. If NOWPayments → force `payout_currency='usdcsol'`, `network='sol'`, ask for Solana USDC wallet address; show a hard-coded explainer "USDC on Solana is the only currently funded payout rail." If PayPal → ask for PayPal email.
+  - Writes/updates `user_wallets` row (`is_primary=true`, `verified_at=null` until a later verification pass).
+- `src/components/onboarding/PayoutSetupStep.tsx` *(new)* — thin wrapper of the wizard for the signup flow.
+- `src/pages/OnboardingSecurityPage.tsx` *(edit)* — add PayoutSetupStep as the step right after security questions (or before, your call); mark complete via a new `profiles.payout_setup_complete boolean default false` column.
+- `supabase/migrations/*` *(new)* — add `profiles.payout_setup_complete`; backfill `false`; trigger on `user_wallets` insert to set it `true`.
+- `src/hooks/useAuth.jsx` *(edit, minimal)* — after signup, route new user to `/onboarding/payout` if `payout_setup_complete=false`.
+- `src/lib/payments/providerFees.ts` — reused from A (or built here first if B ships first; see order note above — build the helper here).
+
+**Copy rule:** the per-transaction cost must say "**You pay this**, not Sow2Grow" verbatim, with the two ranges.
+
+---
+
+## C. Existing-user nudge
+
+**Files**
+- `src/components/PayoutSetupBanner.tsx` *(new)* — mirrors `NotificationBanner.tsx` pattern: fixed bottom-right `Card`, dismiss persisted in `localStorage` (`payout-setup-banner-dismissed`), only renders when `user && profiles.payout_setup_complete === false && !dismissed`. CTA → `/payout-settings`.
+- `src/App.tsx` *(edit)* — mount `<PayoutSetupBanner />` next to `<NotificationBanner />`.
+- `src/hooks/useAuth.jsx` *(edit)* — expose `payoutSetupComplete` from profile.
+- **Email nudge (optional, recommend yes):**
+  - `supabase/functions/_shared/transactional-email-templates/payout-setup-reminder.tsx` *(new)*
+  - One-shot script `supabase/functions/send-payout-setup-reminders/index.ts` *(new, admin-invoked)* — selects profiles where `payout_setup_complete=false AND created_at < now()` and enqueues one email each via `send-transactional-email`. Run once manually from gosat, not on a cron.
+- Migration to add a `profiles.payout_reminder_sent_at` timestamp so a second run doesn't double-email.
+
+**No DB writes from the banner** — just a link.
+
+---
+
+## D. User wallet dashboard
+
+**Decision:** `sower_balances` is the on-platform balance; `wallet_balances` is a confusing legacy cache and should NOT be surfaced to users. `user_wallets` is the payout destination.
+
+**Files**
+- `src/pages/MyWalletPage.tsx` *(new)* at route `/wallet` — sections:
+  1. **On-platform balance** — pulls `sower_balances` (available / pending / total_earned / total_withdrawn).
+  2. **Payout destination** — read-only summary of primary `user_wallets` row + "Change" link to `/payout-settings`.
+  3. **Top up** — amount input + `ProviderPicker` + fee preview → calls a new edge function that creates an invoice tagged `kind='topup'`.
+  4. **Recent activity** — bestowals received (incoming) + topups + payouts in one timeline.
+- `src/routes/lazyPages.ts` + `src/routes/AppRoutes.tsx` *(edit)* — add `/wallet`.
+- Sidebar / dashboard nav *(edit, wherever the user menu lives — probably `src/components/Navbar*.tsx`)* — add "My Wallet" entry.
+- `supabase/functions/create-wallet-topup/index.ts` *(new)* — wraps `create-nowpayments-invoice` / `create-paypal-order`, stamps a `topups` row.
+- Migration: `topups` table (`id, user_id, provider, provider_order_id, amount, fee_amount, currency, status, created_at, completed_at`) with GRANTs + RLS (`auth.uid() = user_id`).
+- Webhook handlers *(edit `nowpayments-webhook`, `paypal-webhook`)* — when payment is for a topup, increment `sower_balances.available_balance` atomically (RPC `credit_sower_balance(user_id, amount)`).
+- New RPC `credit_sower_balance` *(migration)* — security definer, idempotent on `provider_order_id`.
+
+**Existing `WalletSettingsPage.tsx` / `UserWalletSettingsPage.tsx`:** keep as the *destination* editor (or fold into `PayoutSettingsPage` from B). `/wallet` is the new *balance + topup* page. Worth flagging the naming collision now and consolidating: rename existing to `/payout-settings` cleanly.
+
+---
+
+## E. Gosat-only platform treasury view
+
+**Files**
+- `src/pages/GosatTreasuryPage.tsx` *(new)* at route `/admin/treasury`, gated by `useUserRoles` → `gosat` only (mirror `AdminPayoutConfirmationsPage`'s `ProtectedRoute` setup).
+- `src/routes/AppRoutes.tsx` + `lazyPages.ts` *(edit)* — register route.
+- `supabase/functions/treasury-balances/index.ts` *(new)* — gosat-only edge function (verifies caller's role via service-role lookup on `user_roles`); calls:
+  - NOWPayments: `POST /v1/auth` → `GET /v1/balance` (already proven working). Returns `{currency, available, pending}` array.
+  - PayPal: `GET /v1/reporting/balances` with OAuth client_credentials.
+- The page displays both, plus a sum in USD (via existing `src/lib/i18n/currency.ts`).
+
+**Main vs admin/fee split — schema audit result:**
+- No current column tags "fee" vs "main" inside NOWPayments custody. Bestowals carry `processor_fee_amount` (paid by buyer to processor — never hits us) and the platform's revenue share would be implicit in `bestowals.distribution_data`. **There is no separate fee sub-account today.**
+- **Proposal:** rather than fabricating a split that doesn't exist, the page shows:
+  - **Custody total** (raw from provider APIs)
+  - **Reserved for sowers** = `SUM(sower_balances.available_balance + pending_balance)`
+  - **Platform net** = custody total − reserved for sowers
+  - Flag a banner: "Sow2Grow does not currently hold a separate fee wallet. Platform net is computed, not held in a distinct account. To enforce a hard split, create a second NOWPayments sub-account and route the platform's % there at distribution time."
+- No schema change in E; the "create a fee sub-account" is a follow-up the user can green-light separately.
+
+---
+
+## Cross-cutting
+
+- **One shared helper** `src/lib/payments/providerFees.ts` powers A, B, D — single edit point if fee ranges change.
+- **One shared component** `src/components/payments/ProviderPicker.tsx` used by A (buyer side) and B/D (payee side) with a `mode: 'buyer' | 'payee'` prop swapping the copy.
+- **Migrations needed total:** (1) `profiles.payout_setup_complete` + `payout_reminder_sent_at`, (2) `topups` table, (3) `credit_sower_balance` RPC, (4) trigger on `user_wallets` insert. All small, all in step B / D.
+- **No code is written until you approve this plan.**
