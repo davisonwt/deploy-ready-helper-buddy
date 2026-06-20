@@ -89,6 +89,7 @@ import {
   AdminCredentialsPage,
   AdminPayoutConfirmationsPage,
   AdminAttachCoversPage,
+  AdminAiUsagePage,
   EditForm,
   ProductBasketPage,
   MusicLibraryPage,
@@ -465,6 +466,9 @@ const AppRoutes = () => (
     } />
     <Route path="/admin/attach-covers" element={
       <ProtectedRoute allowedRoles={['admin', 'gosat']}><Layout><Suspense fallback={<LoadingFallback />}><AdminAttachCoversPage /></Suspense></Layout></ProtectedRoute>
+    } />
+    <Route path="/admin/ai-usage" element={
+      <ProtectedRoute allowedRoles={['admin', 'gosat']}><Layout><Suspense fallback={<LoadingFallback />}><AdminAiUsagePage /></Suspense></Layout></ProtectedRoute>
     } />
     <Route path="/products/edit/:id" element={
       <ProtectedRoute><Layout><Suspense fallback={<LoadingFallback />}><EditForm /></Suspense></Layout></ProtectedRoute>
