@@ -70,6 +70,7 @@ import {
   PayoutSettingsPage,
   MyWalletPage,
   GosatWalletsPage,
+  GosatTreasuryPage,
   BinancePayTestPage,
   NowPaymentsTestPage,
   PaypalTestPage,
@@ -361,6 +362,11 @@ const AppRoutes = () => (
     <Route path="/gosat/wallets" element={
       <ProtectedRoute allowedRoles={['admin', 'gosat']}>
         <Layout><Suspense fallback={<LoadingFallback />}><GosatWalletsPage /></Suspense></Layout>
+      </ProtectedRoute>
+    } />
+    <Route path="/admin/treasury" element={
+      <ProtectedRoute allowedRoles={['gosat']}>
+        <Layout><Suspense fallback={<LoadingFallback />}><GosatTreasuryPage /></Suspense></Layout>
       </ProtectedRoute>
     } />
     <Route path="/basket" element={
