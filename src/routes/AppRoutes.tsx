@@ -381,6 +381,9 @@ const AppRoutes = () => (
     <Route path="/settings/payouts" element={
       <ProtectedRoute><Layout><PayoutSettingsPage /></Layout></ProtectedRoute>
     } />
+    <Route path="/wallet" element={
+      <ProtectedRoute><Layout><MyWalletPage /></Layout></ProtectedRoute>
+    } />
     <Route path="/binance-pay-test" element={
       <ProtectedRoute><Layout><BinancePayTestPage /></Layout></ProtectedRoute>
     } />
