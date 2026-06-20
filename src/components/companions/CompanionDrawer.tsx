@@ -8,11 +8,14 @@ import { useToast } from "@/hooks/use-toast";
 import type { CompanionEntitlement } from "@/hooks/useCompanions";
 import { COMPANIONS } from "@/lib/companions/registry";
 import { supabase } from "@/integrations/supabase/client";
+import BirchGenerationPanel, { parseReelPlan } from "./BirchGenerationPanel";
 
 interface Msg {
   role: "user" | "assistant";
   content: string;
   image?: string | null;
+  video?: string | null;
+  audio?: string | null;
 }
 
 interface Props {
@@ -109,27 +112,55 @@ export default function CompanionDrawer({ open, onOpenChange, companion, onConsu
               Try: <span className="text-foreground">{meta.examplePrompt}</span>
             </button>
           )}
-          {messages.map((m, i) => (
-            <div
-              key={i}
-              className={
-                m.role === "user"
-                  ? "ml-auto max-w-[85%] rounded-lg bg-primary text-primary-foreground px-3 py-2 text-sm"
-                  : "mr-auto max-w-[90%] rounded-lg bg-muted text-foreground px-3 py-2 text-sm prose prose-sm dark:prose-invert max-w-none"
-              }
-            >
-              {m.role === "assistant" ? (
-                <>
-                  {m.image && (
-                    <img src={m.image} alt="generated" className="rounded mb-2 max-w-full" />
+          {messages.map((m, i) => {
+            const isLastAssistant =
+              m.role === "assistant" && i === messages.length - 1;
+            const reelPlan =
+              isLastAssistant && companion.slug === "birch"
+                ? parseReelPlan(m.content)
+                : null;
+            return (
+              <div key={i} className="space-y-2">
+                <div
+                  className={
+                    m.role === "user"
+                      ? "ml-auto max-w-[85%] rounded-lg bg-primary text-primary-foreground px-3 py-2 text-sm"
+                      : "mr-auto max-w-[90%] rounded-lg bg-muted text-foreground px-3 py-2 text-sm prose prose-sm dark:prose-invert max-w-none"
+                  }
+                >
+                  {m.role === "assistant" ? (
+                    <>
+                      {m.image && <img src={m.image} alt="generated" className="rounded mb-2 max-w-full" />}
+                      {m.video && (
+                        <video src={m.video} controls className="rounded mb-2 max-w-full" />
+                      )}
+                      {m.audio && <audio src={m.audio} controls className="mb-2 w-full" />}
+                      <ReactMarkdown>{m.content}</ReactMarkdown>
+                    </>
+                  ) : (
+                    m.content
                   )}
-                  <ReactMarkdown>{m.content}</ReactMarkdown>
-                </>
-              ) : (
-                m.content
-              )}
-            </div>
-          ))}
+                </div>
+                {reelPlan && (
+                  <BirchGenerationPanel
+                    plan={reelPlan}
+                    onArtifact={(text, att) =>
+                      setMessages((prev) => [
+                        ...prev,
+                        {
+                          role: "assistant",
+                          content: text,
+                          image: att?.image ?? null,
+                          video: att?.video ?? null,
+                          audio: att?.audio ?? null,
+                        },
+                      ])
+                    }
+                  />
+                )}
+              </div>
+            );
+          })}
           {busy && (
             <div className="mr-auto rounded-lg bg-muted px-3 py-2 text-sm flex items-center gap-2">
               <Loader2 className="h-3 w-3 animate-spin" /> {companion.name} is thinking…

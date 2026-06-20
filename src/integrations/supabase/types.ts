@@ -8563,13 +8563,17 @@ export type Database = {
       s2g_companion_runs: {
         Row: {
           action: string | null
+          artifact_url: string | null
           companion_slug: string
+          cost_usd_estimate: number | null
           created_at: string
           error: string | null
           id: string
           input_summary: string | null
+          kind: string | null
           model: string | null
           output_summary: string | null
+          replicate_prediction_id: string | null
           status: string
           tier_at_run: string | null
           tokens_in: number | null
@@ -8578,13 +8582,17 @@ export type Database = {
         }
         Insert: {
           action?: string | null
+          artifact_url?: string | null
           companion_slug: string
+          cost_usd_estimate?: number | null
           created_at?: string
           error?: string | null
           id?: string
           input_summary?: string | null
+          kind?: string | null
           model?: string | null
           output_summary?: string | null
+          replicate_prediction_id?: string | null
           status?: string
           tier_at_run?: string | null
           tokens_in?: number | null
@@ -8593,13 +8601,17 @@ export type Database = {
         }
         Update: {
           action?: string | null
+          artifact_url?: string | null
           companion_slug?: string
+          cost_usd_estimate?: number | null
           created_at?: string
           error?: string | null
           id?: string
           input_summary?: string | null
+          kind?: string | null
           model?: string | null
           output_summary?: string | null
+          replicate_prediction_id?: string | null
           status?: string
           tier_at_run?: string | null
           tokens_in?: number | null
