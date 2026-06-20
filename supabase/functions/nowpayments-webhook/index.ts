@@ -122,6 +122,30 @@ async function handlePaymentEvent(
     return;
   }
 
+  // Basket bestowal path: order_id = "basket:<basket_order_uuid>"
+  if (orderId.startsWith("basket:")) {
+    const basketOrderId = orderId.slice("basket:".length);
+    if (paymentStatus === "waiting" || paymentStatus === "confirming" || paymentStatus === "sending") {
+      await supabase.from("basket_orders").update({ status: "processing" }).eq("id", basketOrderId);
+      return;
+    }
+    if (paymentStatus === "finished" || paymentStatus === "partially_paid") {
+      const { error: rpcErr } = await supabase.rpc("finalize_basket_order", { _basket_order_id: basketOrderId });
+      if (rpcErr) console.error("finalize_basket_order failed", basketOrderId, rpcErr);
+      return;
+    }
+    if (paymentStatus === "failed" || paymentStatus === "refunded") {
+      await supabase.from("basket_orders").update({ status: "failed" }).eq("id", basketOrderId);
+      return;
+    }
+    if (paymentStatus === "expired") {
+      await supabase.from("basket_orders").update({ status: "expired" }).eq("id", basketOrderId);
+      return;
+    }
+    console.warn("basket IPN: unknown status", paymentStatus, basketOrderId);
+    return;
+  }
+
   // order_id was set to the bestowals.id when the invoice was created.
   const { data: bestowal } = await supabase
     .from("bestowals")

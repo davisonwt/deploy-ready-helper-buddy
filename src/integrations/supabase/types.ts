@@ -761,6 +761,96 @@ export type Database = {
           },
         ]
       }
+      basket_order_bestowals: {
+        Row: {
+          basket_order_id: string
+          bestowal_id: string
+          created_at: string
+        }
+        Insert: {
+          basket_order_id: string
+          bestowal_id: string
+          created_at?: string
+        }
+        Update: {
+          basket_order_id?: string
+          bestowal_id?: string
+          created_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "basket_order_bestowals_basket_order_id_fkey"
+            columns: ["basket_order_id"]
+            isOneToOne: false
+            referencedRelation: "basket_orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "basket_order_bestowals_bestowal_id_fkey"
+            columns: ["bestowal_id"]
+            isOneToOne: false
+            referencedRelation: "product_bestowals"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      basket_orders: {
+        Row: {
+          approve_url: string | null
+          buyer_total: number
+          completed_at: string | null
+          created_at: string
+          currency: string
+          id: string
+          items: Json
+          pay_currency: string | null
+          processor_fee: number
+          provider: string
+          provider_invoice_id: string | null
+          provider_order_id: string | null
+          status: string
+          subtotal: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          approve_url?: string | null
+          buyer_total: number
+          completed_at?: string | null
+          created_at?: string
+          currency?: string
+          id?: string
+          items: Json
+          pay_currency?: string | null
+          processor_fee?: number
+          provider: string
+          provider_invoice_id?: string | null
+          provider_order_id?: string | null
+          status?: string
+          subtotal: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          approve_url?: string | null
+          buyer_total?: number
+          completed_at?: string | null
+          created_at?: string
+          currency?: string
+          id?: string
+          items?: Json
+          pay_currency?: string | null
+          processor_fee?: number
+          provider?: string
+          provider_invoice_id?: string | null
+          provider_order_id?: string | null
+          status?: string
+          subtotal?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       baskets: {
         Row: {
           created_at: string | null
@@ -13026,6 +13116,10 @@ export type Database = {
       ensure_linux_family_agents: {
         Args: { _user_id: string }
         Returns: undefined
+      }
+      finalize_basket_order: {
+        Args: { _basket_order_id: string }
+        Returns: Json
       }
       fn_orchard_owner: { Args: { _orchard_id: string }; Returns: string }
       generate_invoice_number: { Args: never; Returns: string }

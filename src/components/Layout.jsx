@@ -62,11 +62,12 @@ function Layout({ children }) {
   const { user, logout } = useAuth()
   const { getTotalItems } = useBasket()
   const [isAdminOrGosat, setIsAdminOrGosat] = useState(false)
+  const [isGosat, setIsGosat] = useState(false)
   const [rolesLoading, setRolesLoading] = useState(false)
   useEffect(() => {
     let active = true
     const load = async () => {
-      if (!user?.id) { if (active) setIsAdminOrGosat(false); return }
+      if (!user?.id) { if (active) { setIsAdminOrGosat(false); setIsGosat(false) } ; return }
       try {
         setRolesLoading(true)
         const { data, error } = await supabase
@@ -75,9 +76,12 @@ function Layout({ children }) {
           .eq('user_id', user.id)
         if (error) throw error
         const roles = (data || []).map(r => r.role)
-        if (active) setIsAdminOrGosat(roles.includes('admin') || roles.includes('gosat'))
+        if (active) {
+          setIsAdminOrGosat(roles.includes('admin') || roles.includes('gosat'))
+          setIsGosat(roles.includes('gosat'))
+        }
       } catch (e) {
-        if (active) setIsAdminOrGosat(false)
+        if (active) { setIsAdminOrGosat(false); setIsGosat(false) }
         console.error('[Layout] roles fetch failed', e)
       } finally {
         if (active) setRolesLoading(false)
@@ -132,6 +136,10 @@ function Layout({ children }) {
     () => isAdminOrGosat && !rolesLoading,
     [isAdminOrGosat, rolesLoading]
   )
+  const shouldShowGosatOnly = useMemo(
+    () => isGosat && !rolesLoading,
+    [isGosat, rolesLoading]
+  )
   
   const basketTotal = useMemo(() => getTotalItems(), [getTotalItems])
   
@@ -178,6 +186,7 @@ function Layout({ children }) {
       icon: Cloud, // Using Cloud icon to match My Garden button style
       className: 'admin-fee-tour',
       items: [
+        { name: "My Wallet", href: "/wallet", icon: Wallet },
         { name: "Platform Fee", href: "/admin-fee", icon: HandHeart },
         { name: "Free-Will Gifting", href: "/free-will-gifting", icon: Gift }
       ]
@@ -196,7 +205,8 @@ function Layout({ children }) {
           { name: "Admin Dashboard & Wallet Settings", href: "/admin/dashboard", icon: Settings },
           { name: "AOD Station Radio Management", href: "/admin/radio", icon: Radio },
           { name: "Organization Wallets", href: "/gosat/wallets", icon: Wallet },
-          { name: "Seeds Management", href: "/admin/seeds", icon: Sprout }
+          { name: "Seeds Management", href: "/admin/seeds", icon: Sprout },
+          ...(shouldShowGosatOnly ? [{ name: "Treasury", href: "/admin/treasury", icon: Wallet }] : [])
         ]
       }] : [])
   ]
