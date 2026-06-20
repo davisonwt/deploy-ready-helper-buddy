@@ -6193,6 +6193,8 @@ export type Database = {
           location_verified: boolean
           longitude: number | null
           membership_tier: string | null
+          payout_reminder_sent_at: string | null
+          payout_setup_complete: boolean
           phone: string | null
           pinterest_url: string | null
           preferred_currency: string | null
@@ -6246,6 +6248,8 @@ export type Database = {
           location_verified?: boolean
           longitude?: number | null
           membership_tier?: string | null
+          payout_reminder_sent_at?: string | null
+          payout_setup_complete?: boolean
           phone?: string | null
           pinterest_url?: string | null
           preferred_currency?: string | null
@@ -6299,6 +6303,8 @@ export type Database = {
           location_verified?: boolean
           longitude?: number | null
           membership_tier?: string | null
+          payout_reminder_sent_at?: string | null
+          payout_setup_complete?: boolean
           phone?: string | null
           pinterest_url?: string | null
           preferred_currency?: string | null
