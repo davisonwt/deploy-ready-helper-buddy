@@ -89,6 +89,7 @@ import {
   AdminCredentialsPage,
   AdminPayoutConfirmationsPage,
   AdminAttachCoversPage,
+  AdminAiUsagePage,
   EditForm,
   ProductBasketPage,
   MusicLibraryPage,
