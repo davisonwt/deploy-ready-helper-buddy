@@ -175,8 +175,8 @@ Deno.serve(async (req) => {
           order_id: orderRef,
           order_description: `Sow2Grow basket (${itemSnapshot.length} item${itemSnapshot.length === 1 ? "" : "s"})`,
           ipn_callback_url: ipnUrl,
-          success_url: `${redirectBase}/payment/success?basket=${order.id}`,
-          cancel_url: `${redirectBase}/payment/cancelled?basket=${order.id}`,
+          success_url: `${redirectBase}/payment-success?basket=${order.id}`,
+          cancel_url: `${redirectBase}/payment-cancelled?basket=${order.id}`,
         }),
       });
       if (!invoiceRes.ok) {
@@ -228,8 +228,8 @@ Deno.serve(async (req) => {
       application_context: {
         brand_name: "Sow2Grow",
         user_action: "PAY_NOW",
-        return_url: `${redirectBase}/payment/success?basket=${order.id}`,
-        cancel_url: `${redirectBase}/payment/cancelled?basket=${order.id}`,
+        return_url: `${redirectBase}/payment-success?basket=${order.id}`,
+        cancel_url: `${redirectBase}/payment-cancelled?basket=${order.id}`,
       },
     };
 
