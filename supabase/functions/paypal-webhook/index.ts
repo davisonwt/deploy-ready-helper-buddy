@@ -121,15 +121,20 @@ async function handleEvent(
 
   // ------- Order approved (buyer accepted; capture pending) --------------------
   if (type === "CHECKOUT.ORDER.APPROVED") {
-    const bestowalId = extractOrderCustomId(resource);
-    if (!bestowalId) {
+    const customId = extractOrderCustomId(resource);
+    if (!customId) {
       console.warn("ORDER.APPROVED missing custom_id", event.id);
+      return;
+    }
+    if (customId.startsWith("topup:")) {
+      await supabase.from("topups").update({ status: "processing" })
+        .eq("id", customId.slice("topup:".length));
       return;
     }
     await supabase
       .from("bestowals")
       .update({ payment_status: "processing" })
-      .eq("id", bestowalId);
+      .eq("id", customId);
     return;
   }
 
