@@ -209,11 +209,11 @@ export const COMPANIONS: CompanionMeta[] = [
     title: "The Room Conductor",
     emoji: "🐝",
     summary:
-      "Conducts the live room — pre-warms the audience, suggests when to switch between Radio, Classroom, Skilldrop, Training.",
+      "Coaches you through your live-room plan — pacing, when to switch between Radio, Classroom, Skilldrop, Training. The room is yours to run.",
     category: "live",
     layer: "live",
-    intro: "Tell me about your next live session — I'll conduct the flow.",
-    examplePrompt: "I'm going live in Radio in 20 minutes — pre-warm the audience.",
+    intro: "Tell me about your next live session — I'll help you plan the flow.",
+    examplePrompt: "I'm going live in Radio in 20 minutes — help me plan how to open and warm the audience.",
   },
   {
     slug: "nectar",
@@ -221,11 +221,11 @@ export const COMPANIONS: CompanionMeta[] = [
     title: "The Engagement Alchemist",
     emoji: "🍯",
     summary:
-      "Reads the room's energy and gently injects polls, flash bestowals and Q&A prompts so dead air never settles.",
+      "A coaching companion you can step aside and consult — describe the room's energy and I'll suggest polls, prompts, or flash-bestowal moments you can try.",
     category: "live",
     layer: "live",
-    intro: "How is the room feeling? I'll pour in a moment to keep it alive.",
-    examplePrompt: "Engagement is dropping — suggest a flash bestowal moment.",
+    intro: "Tell me how the room feels and I'll suggest a moment you could try.",
+    examplePrompt: "Engagement is dropping — suggest a flash bestowal moment I could offer.",
   },
   {
     slug: "petal",
@@ -233,11 +233,11 @@ export const COMPANIONS: CompanionMeta[] = [
     title: "The Audience Matcher",
     emoji: "🌸",
     summary:
-      "Quietly picks who should be invited to which seed's live room, matching tribe members to stories they'll resonate with.",
+      "Helps you think through who in your tribe might love a given seed's live room, based on what you tell me about your people.",
     category: "live",
     layer: "live",
-    intro: "Tell me about your seed and I'll find the tribe members who'd love to be invited.",
-    examplePrompt: "Suggest 10 tribe members to invite to my honey hive tour.",
+    intro: "Tell me about your seed and the tribe members you know — I'll help you think through who to invite.",
+    examplePrompt: "Help me think through who in my tribe to invite to my honey hive tour.",
   },
 
   // ─── Harvest layer ───
@@ -247,11 +247,11 @@ export const COMPANIONS: CompanionMeta[] = [
     title: "The Follow-Up Forger",
     emoji: "🌾",
     summary:
-      "After every harvest, writes warm personal thank-yous and impact reports to every bestower in the tribe.",
+      "Writes warm, personal thank-yous and impact notes for each bestower — you decide how to deliver them.",
     category: "harvest",
     layer: "harvest",
-    intro: "Your harvest is in. I'll send each bestower a thank-you that matters.",
-    examplePrompt: "My Radio session just ended — draft thank-yous for the 8 bestowers.",
+    intro: "Your harvest is in. Tell me about your bestowers and I'll draft thank-yous that matter.",
+    examplePrompt: "My Radio session just ended — help me draft thank-yous for 8 bestowers I'll describe.",
   },
   {
     slug: "sheaf",
@@ -259,11 +259,11 @@ export const COMPANIONS: CompanionMeta[] = [
     title: "The Relationship Gardener",
     emoji: "🌻",
     summary:
-      "Tends bonds between sowers and bestowers — recognises returning supporters and grows them from new soil into deep roots.",
+      "Helps you think through the bonds in your tribe — describe who's been returning and I'll help you notice patterns and suggest touchpoints.",
     category: "harvest",
     layer: "harvest",
-    intro: "Who in your tribe is becoming familiar soil?",
-    examplePrompt: "Show me my returning bestowers and suggest a touchpoint for each.",
+    intro: "Tell me who in your tribe is becoming familiar soil.",
+    examplePrompt: "Here are my returning bestowers — help me think through a touchpoint for each.",
   },
   {
     slug: "thresh",
@@ -271,11 +271,11 @@ export const COMPANIONS: CompanionMeta[] = [
     title: "The Feedback Distiller",
     emoji: "🌿",
     summary:
-      "Winnows each session's data into 3 honest insights and 1 next sacred step for the sower.",
+      "Helps you reflect on a session you describe — together we'll distil 3 honest insights and 1 next sacred step.",
     category: "harvest",
     layer: "harvest",
-    intro: "Bring me a session and I'll separate the wheat from the chaff.",
-    examplePrompt: "Analyse my last 3 sessions and tell me what to change.",
+    intro: "Tell me about your session and I'll help you separate the wheat from the chaff.",
+    examplePrompt: "Here's what happened in my last 3 sessions — help me see what to change.",
   },
 
   // ─── Orchestration ───
