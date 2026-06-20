@@ -129,6 +129,7 @@ export const TribalHeartsPage = lazy(() => import('@/pages/TribalHeartsPage'));
 export const AdminCredentialsPage = lazy(() => import('@/pages/AdminCredentialsPage'));
 export const AdminPayoutConfirmationsPage = lazy(() => import('@/pages/AdminPayoutConfirmationsPage'));
 export const AdminAttachCoversPage = lazy(() => import('@/pages/AdminAttachCoversPage'));
+export const AdminAiUsagePage = lazy(() => import('@/pages/AdminAiUsagePage'));
 export const EditForm = lazy(() => import('@/components/products/EditForm'));
 export const ProductBasketPage = lazy(() => import('@/pages/ProductBasketPage'));
 export const MusicLibraryPage = lazy(() =>
