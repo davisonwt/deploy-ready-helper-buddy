@@ -1,153 +1,133 @@
-# Plan — Task 1 (BestowalCheckout backend rebuild) + Task 2 (Navbar links)
+# Phase 1 — Real tool-calling for Beech, Alder, Thresh (+ Hawthorn lite)
 
-## Background / why `complete-product-bestowal` is disabled
+Read-only, caller-scoped tool access added to `supabase/functions/companion-invoke/index.ts`. No new tables, no schema changes, no RLS changes. UI (drawer) unchanged.
 
-The function file itself states the reason in its top comment (verified):
+## 1. Does the gateway support tool-calling?
 
-> "This endpoint previously recorded 'completed' bestowals with no payment proof, allowing anyone to fake bestowals for any amount. Real bestowals must go through verified webhook flows. Re-enable only after this function is rebuilt to require a webhook-confirmed payment_transaction_id."
+Yes. Lovable AI Gateway is OpenAI-compatible and the Gemini models in use (`google/gemini-3-flash-preview`, `google/gemini-2.5-pro`) accept the standard `tools` / `tool_choice` request fields and emit `tool_calls` on the assistant message. The shape we already POST to `https://ai.gateway.lovable.dev/v1/chat/completions` just gains:
 
-It was a client-trusted "I paid, please mark completed" RPC. We are NOT re-enabling it — we are replacing it with a `create-order-then-webhook-confirms` pattern that mirrors what `create-nowpayments-invoice` / `create-paypal-order` / `nowpayments-webhook` / `paypal-webhook` already do for single-seed bestowals and for top-ups.
+Request additions (only when the companion has tools):
+```
+{
+  ...existing...,
+  tools: [ { type:"function", function:{ name, description, parameters:<json-schema> } }, ... ],
+  tool_choice: "auto"
+}
+```
 
-Three payment cases the webhooks must handle after this work:
-1. `topup:<id>` → already implemented (credit `sower_balances`).
-2. Single bestowal → already implemented (`bestowals.id` is the `order_id` / PayPal `custom_id`).
-3. **NEW: basket bestowal** → one buyer payment → multiple bestowal rows.
+Response shape we must newly handle:
+```
+choices[0].message = {
+  role:"assistant",
+  content: null | "",
+  tool_calls: [ { id, type:"function", function:{ name, arguments:"<json string>" } } ]
+}
+```
+When `tool_calls` is present we execute each, then append:
+- the assistant message (verbatim, including `tool_calls`)
+- one `{ role:"tool", tool_call_id, name, content:"<json result>" }` per call
 
----
+…and POST again. Loop until the model returns plain `content` with no `tool_calls`, capped at 3 rounds (defense against runaway loops; these are narrow report tools).
 
-## TASK 1 — Multi-item basket checkout, payment-first
+## 2. Tables / columns each tool will use (verified against live schema)
 
-### Data model (one new migration)
+**Beech — `get_bestowal_summary({ days?: 7|30|90 })`**
+- `public.bestowals` joined to `public.orchards`.
+- Caller scope: `orchards.user_id = auth.uid()`.
+- Read: `base_amount` (USDC numeric), `amount`, `currency`, `payout_status`, `release_status`, `created_at`.
+- Returns: `{ window_days, total_count, total_base_amount, by_status:{pending,released,paid}, top_orchards:[{orchard_id,title,count,amount}], last_7_days_trend }`.
 
-`basket_orders` — one row per basket payment attempt:
-- `id uuid pk`
-- `user_id uuid` (buyer)
-- `provider text check in ('nowpayments','paypal')`
-- `provider_order_id text` (NOWPayments `order_id` we send = `basket:<uuid>`, or PayPal order id)
-- `provider_invoice_id text null`, `approve_url text null`
-- `pay_currency text null` (e.g. `usdcsol`)
-- `subtotal numeric`, `processor_fee numeric`, `buyer_total numeric`, `currency text default 'USD'`
-- `status text default 'pending'` (`pending|processing|completed|failed|expired`)
-- `items jsonb` — snapshot: `[{ product_id, sower_id, title, unit_price, qty, line_total }]` (price snapshotted server-side at create time so a price change between checkout & webhook can't be exploited)
-- `created_at`, `updated_at`, `completed_at`
+**Alder — two tools:**
+- `get_low_stock_products({ threshold?: number = 5 })` → `public.provider_products` joined to `public.providers` where `providers.user_id = auth.uid()`. Columns: `id, title, price, stock, status`. Returns rows with `stock <= threshold`.
+- `get_open_orders({ limit?: number = 20 })` → `public.provider_orders` joined to `public.providers` where `providers.user_id = auth.uid()` and `status IN ('pending','accepted','in_transit','escrow_held')`. Columns: `id, product_id, quantity, total_amount, status, escrow_status, delivery_city, delivery_country, created_at`.
 
-`basket_order_bestowals` (optional convenience link):
-- `basket_order_id uuid fk`, `bestowal_id uuid fk`, primary key on the pair.
+**Thresh — `get_seed_performance({ days?: 7|30, seed_id?: uuid })`**
+- `public.seed_analytics_daily` where `user_id = auth.uid()` (this table already has a per-user `user_id`, no join needed).
+- Read: `seed_id, metric_date, views, reach, clicks, messages, calls, bestowals_count, bestowals_amount`.
+- Returns aggregated totals + per-seed breakdown, sorted by `bestowals_amount` desc. If `seed_id` given, that seed only.
 
-Bestowal rows are NOT pre-created. They are inserted by the webhook on confirmed payment, then linked back via `basket_order_bestowals`. This is the key security property: no bestowal exists before processor confirmation.
+**Hawthorn — `get_price_benchmarks({ category?: string })` (optional, lightweight)**
+- `public.products` aggregate (this is platform-wide reference data, not the caller's private data): `min/median/max(price)` grouped by `category` (or filtered). No `auth.uid()` needed since `products` already has public-read RLS for active listings; we'll add `status='active'` filter.
+- Honest framing: "median/range across active listings" — not "performance insights about you."
+- If you'd rather keep Hawthorn pure-chat for now, skip this one tool and the rest of the plan still stands.
 
-Grants/RLS:
-- `basket_orders`: `SELECT` to `authenticated` filtered by `user_id = auth.uid()`, no client insert/update (only edge fns via `service_role`). Gosat can read all.
-- `basket_order_bestowals`: select-only to the buyer via join.
+> **No fabricated tables.** I deliberately did **not** add tools for live-session "engagement analytics" beyond `seed_analytics_daily` + `radio_live_sessions.peak_listeners/total_bestow_amount`. If Thresh needs radio-session granularity later, that's a separate phase — `radio_live_sessions` links to `radio_schedule` which would need a join to find the caller's hosted sessions; I'll defer until you confirm the host linkage you want.
 
-RPC: `finalize_basket_order(_basket_order_id uuid)` — security definer. Idempotent. Reads the snapshotted `items`, inserts one `bestowals` row per item with `payment_status='completed'`, `provider`, `provider_payment_id`, fee allocation copied from existing `buildDistributionData` flow, and inserts `basket_order_bestowals` rows. Marks basket_order completed. Returns array of created bestowal ids.
+## 3. Caller-scope pattern (RLS-safe)
 
-### Edge functions
+We will use the **service-role admin client we already create** (`admin`) but **always** add an explicit ownership filter derived from the verified `user.id` (from `userClient.auth.getUser()` against the caller's JWT). Why this over the user-JWT client:
 
-**NEW `create-basket-bestowal-order/index.ts`** (replaces `complete-product-bestowal` semantically):
-- Auth required (JWT, validate via anon client like the other create-* fns).
-- Body: `{ items: [{ productId, qty }], provider: 'nowpayments'|'paypal', payCurrency?, redirectBaseUrl? }`.
-- Server reloads each product from DB, recomputes `unit_price` and `line_total` (never trust client price). Builds `items` snapshot. Computes subtotal, processor fee via shared fee table, buyer_total.
-- Inserts `basket_orders` row (status `pending`).
-- Provider branch:
-  - `nowpayments`: POST `/v1/invoice` with `order_id = basket:<basket_order.id>`, `price_amount = buyer_total`, `pay_currency`. Persist `provider_invoice_id`, `invoice_url`.
-  - `paypal`: POST `/v2/checkout/orders` with `custom_id = basket:<basket_order.id>`, `value = buyer_total`. Persist `provider_order_id`, `approve_url`.
-- Returns `{ basketOrderId, invoiceUrl|approveUrl, breakdown }`.
+- The user-JWT client would also work for `bestowals`/`provider_products`/`provider_orders` (RLS already restricts them), but it would couple correctness to RLS staying perfect on those tables forever. A service-role client + explicit `.eq` / join filter on the verified `user.id` is **belt-and-suspenders** and gives one consistent pattern across all four tools.
+- The `user.id` comes from `auth.getUser()` on the caller's JWT — it cannot be spoofed by the prompt.
+- The model **never** supplies a `user_id` argument. Tool input schemas deliberately omit any user/owner field; if the model tries, we ignore it.
 
-**REWRITE `complete-product-bestowal/index.ts`** → keep file path so nothing 404s, but make it a thin 410 with a clear redirect message pointing to `create-basket-bestowal-order`. Or delete file + remove from `supabase/config.toml` if listed. (Recommendation: delete to avoid dead code; flag here so you can veto.)
+Exact pattern, e.g. Beech:
+```ts
+// pseudo
+const callerId = user.id; // from verified JWT, not from the model
+const { data } = await admin
+  .from("bestowals")
+  .select("base_amount, amount, currency, payout_status, release_status, created_at, orchard_id, orchards!inner(user_id, title)")
+  .eq("orchards.user_id", callerId)
+  .gte("created_at", sinceIso)
+  .limit(500);
+```
+Alder uses the same shape with `providers!inner(user_id)`. Thresh queries `seed_analytics_daily` with `.eq("user_id", callerId)` directly. Hawthorn's price benchmark intentionally has no caller filter — it's public reference data only.
 
-**EDIT `supabase/functions/nowpayments-webhook/index.ts`**
-- In `handlePaymentEvent`, add a third branch BEFORE the existing bestowal-id branch:
-  ```
-  if (orderId.startsWith('basket:')) { handleBasketEvent(...) ; return; }
-  ```
-- `handleBasketEvent` updates `basket_orders.status`, and on success calls `supabase.rpc('finalize_basket_order', { _basket_order_id })`. Idempotent: RPC no-ops if already completed.
-- On failure/expiry update status only.
+Every tool result is capped (≤ 500 rows or pre-aggregated) before being stringified back to the model so we don't blow the context window or leak unbounded data.
 
-**EDIT `supabase/functions/paypal-webhook/index.ts`**
-- Same three-way branch on `customId` (`topup:` / `basket:` / else bestowal). Mirror the NOWPayments behaviour.
-- Both `CAPTURE.COMPLETED` and `CHECKOUT.ORDER.APPROVED` paths must handle the `basket:` prefix consistently with how they currently handle bestowals.
+## 4. companion-invoke/index.ts — file-level change plan
 
-### Frontend
+Inside `supabase/functions/companion-invoke/index.ts`:
 
-**EDIT `src/components/products/BestowalCheckout.tsx`**
-- Remove the per-item loop calling `complete-product-bestowal`.
-- New `handleBestow` calls `supabase.functions.invoke('create-basket-bestowal-order', { body: { items: basketItems.map(i => ({ productId: i.id, qty: i.quantity ?? 1 })), provider, payCurrency: provider === 'nowpayments' ? 'usdcsol' : undefined } })`.
-- Branch on response:
-  - NOWPayments → `window.open(invoiceUrl, '_blank')`, clear basket optimistically only after invoice open (success toast says "Complete payment in the new tab — your bestowals will appear once confirmed").
-  - PayPal → `window.location.href = approveUrl` (full redirect; do NOT clear basket here, basket is local-storage; let `PaymentSuccessPage` / webhook completion clear it via a post-return effect, or clear on `beforeunload`).
-- Keep `ProviderPicker` + fee preview UI exactly as is.
-- Remove the inline XP-award call; that should fire from the webhook-finalize RPC (note in plan, not changed in this file).
-- Confetti / floatingScore move to `PaymentSuccessPage` (or a polled check of `basket_orders.status`). For this task: just remove the premature celebration; flag the success-page polling as a follow-up.
+1. Add a `TOOL_REGISTRY: Record<CompanionSlug, ToolDef[]>` mapping `beech`, `alder`, `thresh` (and optionally `hawthorn`) → an array of `{ name, description, parameters, execute(args, ctx) }`. Other companions stay unmapped → no tools sent → no behavior change for them.
+2. Add `executeTool(name, argsJson, { admin, callerId })` that finds the registered handler, parses & validates args (zod-style guard inline; reject unknown fields, clamp `days`/`limit`/`threshold` to safe ranges), runs the query with the caller-scope pattern above, returns a compact JSON-serializable object or `{ error: "..." }`.
+3. Refactor the single `fetch` to AI Gateway into a **tool loop**:
+   - Build `aiBody` once. If the companion has tools, attach `tools` + `tool_choice:"auto"`.
+   - Loop up to `MAX_TOOL_ROUNDS = 3`:
+     - POST to gateway.
+     - If response has `tool_calls`: append assistant message + one `tool` message per call (executed serially), continue.
+     - Else: break with the final `content`/`images`.
+   - If we exit the loop still pending tools, return the last `content` (or a graceful "I tried to look that up but couldn't finish — try again" message).
+4. Logging in `s2g_companion_runs`: extend `output_summary` to note how many tool rounds + which tools fired (e.g. `"tools: get_bestowal_summary x1"`); count all rounds' usage tokens cumulatively for `tokens_in`/`tokens_out`. Keep `action` as-is; no schema change.
+5. Quota: charge **one** quota unit per user request regardless of tool rounds (we already consumed it up front — leave that as-is). Tool-call rounds are internal.
+6. Error model unchanged: 429 / 402 / generic 500 still surface the same way; if a tool itself errors we feed `{ error: "..." }` back to the model so it can apologize gracefully rather than crashing the whole request.
+7. Image companion (`willow`) path is untouched — no tools attached, `modalities: ["image","text"]` still set, single round.
 
-**Optional (recommended)**: a tiny `src/hooks/useBasketOrder.ts` mirroring `useNowPayments` shape so future call-sites reuse it.
+Loop sketch (in plain terms, not committed code):
 
-### Files touched — TASK 1 summary
+```text
+finalMessages = [system, ...history, user]
+for round in 1..3:
+  resp = POST gateway with finalMessages (+tools if any)
+  msg  = resp.choices[0].message
+  if !msg.tool_calls: return msg.content / msg.images
+  finalMessages.push(msg)                          // assistant w/ tool_calls
+  for call in msg.tool_calls:
+    result = executeTool(call.function.name, call.function.arguments, ctx)
+    finalMessages.push({ role:"tool", tool_call_id:call.id, name:call.function.name, content:JSON.stringify(result) })
+return last msg.content  // safety net
+```
 
-- NEW migration: `basket_orders` table + grants + RLS + `basket_order_bestowals` + `finalize_basket_order` RPC.
-- NEW `supabase/functions/create-basket-bestowal-order/index.ts`.
-- EDIT `supabase/functions/nowpayments-webhook/index.ts` (add `basket:` branch).
-- EDIT `supabase/functions/paypal-webhook/index.ts` (add `basket:` branch in both event types).
-- EDIT `src/components/products/BestowalCheckout.tsx` (replace submit path).
-- DELETE (or 410-stub) `supabase/functions/complete-product-bestowal/index.ts` — **awaiting your call**.
-- NEW `src/hooks/useBasketOrder.ts` (optional).
+## 5. Per-companion verdict (tools vs. pure chat)
 
-### Explicit non-changes (scope-lock)
+| Companion | Verdict | Why |
+|---|---|---|
+| **Beech** | **Tools** (`get_bestowal_summary`) | `bestowals` ↔ `orchards.user_id` is the real receivables source for a sower. |
+| **Alder** | **Tools** (`get_low_stock_products`, `get_open_orders`) | `provider_products.stock` + `provider_orders.status` are exactly the Field & Forge inventory/order rails. |
+| **Thresh** | **Tools** (`get_seed_performance`) | `seed_analytics_daily` is a real per-user, per-seed metrics table with daily granularity. |
+| **Hawthorn** | **Optional 1 tool** (`get_price_benchmarks`) | `products` price aggregates are real; "performance insights about you" is **not** real data we have — keep that framing out. If you'd rather stay pure-chat for Hawthorn this phase, that's honest too. |
+| Linden, Maple, Cypress, Willow, Birch, Elm, Hickory, Acorn, Root, Bud, Hive, Nectar, Petal, Grain, Sheaf, Groundskeeper | **Pure chat** (no tools) | No first-party tables back their personas yet (no posting, no calling, no sending, no live-room state, no follower-graph reads with the right shape). Forcing tools here would re-create the overstated-claims problem we just fixed. |
 
-- `QuickBestowModal.tsx` untouched — it's the single-seed path and already secure.
-- `MyWalletPage` top-up flow untouched.
-- `distribute-bestowal` / payout dispatch untouched — finalize RPC reuses existing distribution code path.
-- No price recompute logic added to client.
+## Scope lock
 
----
+- No new tables, no migrations, no RLS edits, no UI edits, no companion text rewrites, no system-prompt rewrites beyond a one-line note appended to Beech/Alder/Thresh/Hawthorn telling them which tool they have. Drawer continues to render `text` + optional `image` exactly as today.
+- Phase 0 wording stays as-is. If a tool fails or returns empty, the companion still answers honestly ("I checked and found no bestowals in the last 7 days") — that matches the honest-framing pass.
 
-## TASK 2 — Navbar links
+## Decisions I need from you before building
 
-Single file: `src/components/Layout.jsx`.
+1. **Hawthorn**: include `get_price_benchmarks`, or keep Hawthorn pure-chat this phase? (Default if you don't answer: include it — it's small and honest.)
+2. **`MAX_TOOL_ROUNDS = 3`** — OK, or do you want a different cap?
+3. **Bestowal window default for Beech** — default to last 30 days if model doesn't pass `days`? (My pick: yes, 30.)
 
-1. **Add a `isGosat` boolean** alongside the existing `isAdminOrGosat`:
-   - In the role-load `useEffect` (around line 78), also `setIsGosat(roles.includes('gosat'))` from a new `useState`.
-   - Add `shouldShowGosatOnly = useMemo(() => isGosat && !rolesLoading, ...)` next to `shouldShowAdminButton`.
-
-2. **"My Wallet" link** — add to `groupedNavigation` "Let It Rain" group (it's the money-related cluster) OR as a new entry in the existing dropdown that contains wallet items. Concretely, insert into the `"Let It Rain"` items array around line 180:
-   ```
-   { name: "My Wallet", href: "/wallet", icon: Wallet }
-   ```
-   `Wallet` icon is already imported (used by gosat's "Organization Wallets" entry).
-
-3. **"Treasury" link** — gosat-only. Add inside the existing `"gosat's"` group (around line 196-200) but conditional on `shouldShowGosatOnly` instead of the group's outer `shouldShowAdminButton`:
-   - Simplest: split into two spreads:
-     ```
-     ...(shouldShowAdminButton ? [{
-       name: "gosat's", icon: Settings,
-       items: [
-         ...existing items,
-         ...(shouldShowGosatOnly ? [{ name: "Treasury", href: "/admin/treasury", icon: Wallet }] : [])
-       ]
-     }] : [])
-     ```
-   - This keeps Treasury hidden from `admin`-only users and visible only to true `gosat`.
-
-4. No route changes (`/wallet` and `/admin/treasury` already registered in `AppRoutes.tsx`).
-
-### Files touched — TASK 2 summary
-
-- EDIT `src/components/Layout.jsx` only (add `isGosat` state, add 2 nav entries).
-
----
-
-## Build order
-
-1. Migration (`basket_orders` + RPC).
-2. Edge function `create-basket-bestowal-order`.
-3. Webhook edits (NOWPayments + PayPal `basket:` branches).
-4. Frontend `BestowalCheckout.tsx` swap.
-5. Delete/stub `complete-product-bestowal` (after step 4 is verified).
-6. Layout.jsx nav links (independent — can land anytime; suggest last so they ship together).
-
-## Flags requesting your call
-
-- **Delete vs 410-stub** `complete-product-bestowal`? Recommend delete.
-- **Where the success celebration lives** post-redirect — propose follow-up task to make `PaymentSuccessPage` poll `basket_orders.status` and fire confetti there.
-- **XP award** moves into `finalize_basket_order` RPC (one award per basket, 100 XP × items).
-- **Quantity** — `basket_items` row has `quantity`; current BestowalCheckout ignores it. New flow respects it. Confirm that's desired.
+Reply with answers (or "all defaults, go") and I'll switch to build mode for Phase 1 only.
