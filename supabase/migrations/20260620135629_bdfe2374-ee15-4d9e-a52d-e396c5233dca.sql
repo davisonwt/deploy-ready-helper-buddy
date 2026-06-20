@@ -1,0 +1,1 @@
+CREATE POLICY "Admins and gosat can read all runs" ON public.s2g_companion_runs FOR SELECT TO authenticated USING (public.has_role(auth.uid(), 'admin') OR public.has_role(auth.uid(), 'gosat'));
