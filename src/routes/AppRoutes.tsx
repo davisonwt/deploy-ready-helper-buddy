@@ -364,6 +364,11 @@ const AppRoutes = () => (
         <Layout><Suspense fallback={<LoadingFallback />}><GosatWalletsPage /></Suspense></Layout>
       </ProtectedRoute>
     } />
+    <Route path="/admin/treasury" element={
+      <ProtectedRoute allowedRoles={['gosat']}>
+        <Layout><Suspense fallback={<LoadingFallback />}><GosatTreasuryPage /></Suspense></Layout>
+      </ProtectedRoute>
+    } />
     <Route path="/basket" element={
       <ProtectedRoute><Layout><BasketPage /></Layout></ProtectedRoute>
     } />
