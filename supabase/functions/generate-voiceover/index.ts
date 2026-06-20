@@ -22,6 +22,9 @@ const VOICE_CAPS: Record<string, number> = {
   council: 9999,
 };
 
+// Promo safety ceiling (per user/day) when companion promo is active.
+const PROMO_PER_USER_VOICE_CAP = 100;
+
 const ALLOWED_VOICES = new Set([
   "af_bella",
   "af_nicole",
