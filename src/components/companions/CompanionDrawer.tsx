@@ -8,11 +8,14 @@ import { useToast } from "@/hooks/use-toast";
 import type { CompanionEntitlement } from "@/hooks/useCompanions";
 import { COMPANIONS } from "@/lib/companions/registry";
 import { supabase } from "@/integrations/supabase/client";
+import BirchGenerationPanel, { parseReelPlan } from "./BirchGenerationPanel";
 
 interface Msg {
   role: "user" | "assistant";
   content: string;
   image?: string | null;
+  video?: string | null;
+  audio?: string | null;
 }
 
 interface Props {
