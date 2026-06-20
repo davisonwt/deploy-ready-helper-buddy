@@ -210,9 +210,20 @@ async function handleEvent(
     type === "CHECKOUT.PAYMENT-APPROVAL.REVERSED" ||
     type === "CHECKOUT.ORDER.VOIDED"
   ) {
-    const bestowalId = (resource.custom_id as string | undefined) ??
+    const customId = (resource.custom_id as string | undefined) ??
       extractOrderCustomId(resource);
-    if (!bestowalId) return;
+    if (!customId) return;
+    if (customId.startsWith("topup:")) {
+      await supabase.from("topups").update({ status: "failed" })
+        .eq("id", customId.slice("topup:".length));
+      return;
+    }
+    if (customId.startsWith("basket:")) {
+      await supabase.from("basket_orders").update({ status: "failed" })
+        .eq("id", customId.slice("basket:".length));
+      return;
+    }
+    const bestowalId = customId;
     await supabase
       .from("bestowals")
       .update({
