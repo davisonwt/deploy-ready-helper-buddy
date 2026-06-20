@@ -14,8 +14,11 @@ const corsHeaders = {
 
 const MODEL_I2V = "wan-video/wan-2.2-i2v-fast";
 const MODEL_T2V = "wan-video/wan-2.2-t2v-fast";
-const COST_USD_I2V = 0.08;
-const COST_USD_T2V = 0.10;
+// Real Replicate pricing (verified 2026-06-20):
+//   wan-2.2-i2v-fast 480p interpolate = $0.065/video
+//   wan-2.2-t2v-fast 480p             = $0.05/video
+const COST_USD_I2V = 0.065;
+const COST_USD_T2V = 0.05;
 
 const VIDEO_CAPS: Record<string, number> = {
   sower: 1,
@@ -23,6 +26,11 @@ const VIDEO_CAPS: Record<string, number> = {
   ambassador: 8,
   council: 9999,
 };
+
+// Promo safety ceilings (used when companion promo is active to bypass
+// tier caps without removing all guardrails).
+const PROMO_PER_USER_VIDEO_CAP = 50;
+const PROMO_GLOBAL_VIDEO_CAP = 500;
 
 serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
