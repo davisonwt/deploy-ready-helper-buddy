@@ -136,6 +136,10 @@ function Layout({ children }) {
     () => isAdminOrGosat && !rolesLoading,
     [isAdminOrGosat, rolesLoading]
   )
+  const shouldShowGosatOnly = useMemo(
+    () => isGosat && !rolesLoading,
+    [isGosat, rolesLoading]
+  )
   
   const basketTotal = useMemo(() => getTotalItems(), [getTotalItems])
   
