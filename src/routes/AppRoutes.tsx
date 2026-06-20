@@ -70,6 +70,7 @@ import {
   PayoutSettingsPage,
   MyWalletPage,
   GosatWalletsPage,
+  GosatTreasuryPage,
   BinancePayTestPage,
   NowPaymentsTestPage,
   PaypalTestPage,
