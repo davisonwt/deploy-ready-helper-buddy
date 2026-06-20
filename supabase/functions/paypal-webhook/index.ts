@@ -157,6 +157,12 @@ async function handleEvent(
       if (rpcErr) console.error("credit_sower_balance_from_topup failed", topupId, rpcErr);
       return;
     }
+    if (customId.startsWith("basket:")) {
+      const basketOrderId = customId.slice("basket:".length);
+      const { error: rpcErr } = await supabase.rpc("finalize_basket_order", { _basket_order_id: basketOrderId });
+      if (rpcErr) console.error("finalize_basket_order failed", basketOrderId, rpcErr);
+      return;
+    }
     const bestowalId = customId;
     const { data: bestowal } = await supabase
       .from("bestowals")
