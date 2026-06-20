@@ -84,6 +84,7 @@ import {
   SellerCredentialsPage,
   TribalHeartsPage,
   AdminCredentialsPage,
+  AdminPayoutConfirmationsPage,
   AdminAttachCoversPage,
   EditForm,
   ProductBasketPage,
