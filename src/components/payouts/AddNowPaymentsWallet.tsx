@@ -37,39 +37,39 @@ interface PayoutOption {
 
 const PAYOUT_OPTIONS: PayoutOption[] = [
   {
+    value: 'USDC-SOL',
+    label: 'USDC on Solana — recommended (currently funded rail)',
+    network: 'SOL',
+    addressPattern: /^[1-9A-HJ-NP-Za-km-z]{32,44}$/,
+    hint: 'Very low fee. Solana base58 address. This is the only payout currency Sow2Grow currently has funded — other choices may fail at payout until they are funded.',
+  },
+  {
     value: 'USDT-TRC20',
     label: 'USDT on Tron (TRC20)',
     network: 'TRC20',
     addressPattern: /^T[1-9A-HJ-NP-Za-km-z]{33}$/,
-    hint: 'Low fee (~$1). Address starts with T.',
+    hint: 'Low fee (~$1). Address starts with T. Not currently funded — payouts may fail until inventory is added.',
   },
   {
     value: 'USDT-ERC20',
     label: 'USDT on Ethereum (ERC20)',
     network: 'ERC20',
     addressPattern: /^0x[a-fA-F0-9]{40}$/,
-    hint: 'Higher fee (gas). Address starts with 0x.',
+    hint: 'Higher fee (gas). Address starts with 0x. Not currently funded.',
   },
   {
     value: 'USDC-ERC20',
     label: 'USDC on Ethereum (ERC20)',
     network: 'ERC20',
     addressPattern: /^0x[a-fA-F0-9]{40}$/,
-    hint: 'Higher fee (gas). Address starts with 0x.',
-  },
-  {
-    value: 'USDC-SOL',
-    label: 'USDC on Solana',
-    network: 'SOL',
-    addressPattern: /^[1-9A-HJ-NP-Za-km-z]{32,44}$/,
-    hint: 'Very low fee. Solana base58 address.',
+    hint: 'Higher fee (gas). Address starts with 0x. Not currently funded.',
   },
   {
     value: 'BTC',
     label: 'Bitcoin (mainnet)',
     network: null,
     addressPattern: /^(bc1[0-9a-z]{20,80}|[13][a-km-zA-HJ-NP-Z1-9]{25,34})$/,
-    hint: 'Network fee depends on mempool congestion.',
+    hint: 'Network fee depends on mempool congestion. Not currently funded.',
   },
 ];
 

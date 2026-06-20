@@ -51,7 +51,7 @@ export default function OnboardingSecurityPage() {
       ]);
       if (cancelled) return;
       if (profile?.security_setup_complete || securityQuestions?.user_id) {
-        navigate("/dashboard", { replace: true });
+        navigate("/onboarding/payout", { replace: true });
         return;
       }
       setCheckingExisting(false);
@@ -87,7 +87,7 @@ export default function OnboardingSecurityPage() {
       description: "Your account is fully activated. All communication on Sow2Grow stays private.",
     });
     await reinitializeAuth?.();
-    navigate("/dashboard", { replace: true });
+    navigate("/onboarding/payout", { replace: true });
   };
 
   return (
