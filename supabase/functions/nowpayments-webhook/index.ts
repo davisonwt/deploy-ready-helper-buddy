@@ -102,6 +102,26 @@ async function handlePaymentEvent(
     return;
   }
 
+  // Wallet top-up path: order_id = "topup:<topup_uuid>"
+  if (orderId.startsWith("topup:")) {
+    const topupId = orderId.slice("topup:".length);
+    if (paymentStatus === "waiting" || paymentStatus === "confirming" || paymentStatus === "sending") {
+      await supabase.from("topups").update({ status: "processing" }).eq("id", topupId);
+      return;
+    }
+    if (paymentStatus === "finished" || paymentStatus === "partially_paid") {
+      const { error: rpcErr } = await supabase.rpc("credit_sower_balance_from_topup", { _topup_id: topupId });
+      if (rpcErr) console.error("credit_sower_balance_from_topup failed", topupId, rpcErr);
+      return;
+    }
+    if (paymentStatus === "failed" || paymentStatus === "expired" || paymentStatus === "refunded") {
+      await supabase.from("topups").update({ status: "failed" }).eq("id", topupId);
+      return;
+    }
+    console.warn("topup IPN: unknown status", paymentStatus, topupId);
+    return;
+  }
+
   // order_id was set to the bestowals.id when the invoice was created.
   const { data: bestowal } = await supabase
     .from("bestowals")

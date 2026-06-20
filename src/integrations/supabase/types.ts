@@ -10542,6 +10542,51 @@ export type Database = {
         }
         Relationships: []
       }
+      topups: {
+        Row: {
+          amount: number
+          created_at: string
+          credited_at: string | null
+          currency: string
+          fee_amount: number
+          id: string
+          metadata: Json
+          provider: string
+          provider_order_id: string | null
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          credited_at?: string | null
+          currency?: string
+          fee_amount?: number
+          id?: string
+          metadata?: Json
+          provider: string
+          provider_order_id?: string | null
+          status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          credited_at?: string | null
+          currency?: string
+          fee_amount?: number
+          id?: string
+          metadata?: Json
+          provider?: string
+          provider_order_id?: string | null
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       training_courses: {
         Row: {
           circle_id: string | null
@@ -12968,6 +13013,10 @@ export type Database = {
       create_verification_room_for_user: {
         Args: { target_user_id: string }
         Returns: string
+      }
+      credit_sower_balance_from_topup: {
+        Args: { _topup_id: string }
+        Returns: boolean
       }
       current_council_seat_id: { Args: { _user_id: string }; Returns: string }
       decrypt_pii_data: { Args: { encrypted_data: string }; Returns: string }
