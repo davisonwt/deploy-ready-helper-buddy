@@ -54,10 +54,10 @@ export default function CompanionsHubPage() {
               🐧 Orchard Companions
             </h1>
             <p className="text-sm text-slate-400 mt-2 max-w-2xl">
-              Sow2Grow's AI-CaaS layer — Communication, Conversation, Cognition,
-              Comprehension, Channel, Compliance, Credential, Confession & Calling
-              — at the service of your tribe. The more our tribe grows, the wiser
-              these companions become.
+              Sow2Grow's AI-CaaS layer — Conversation, Cognition, Comprehension,
+              Compliance, Credential & Confession — a circle of companions you
+              can think out loud with at the service of your tribe. The more our
+              tribe grows, the wiser these companions become.
             </p>
           </div>
           <div
