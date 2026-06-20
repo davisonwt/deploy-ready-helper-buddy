@@ -135,11 +135,11 @@ export const COMPANIONS: CompanionMeta[] = [
     title: "The Reel Keeper",
     emoji: "🎬",
     summary:
-      "Plans video reels, testimonial clips, and orchard introductions.",
+      "Talks through video reels, testimonial clips, and orchard introductions with you — shot lists and scripts in chat. Filming and editing stay in your hands.",
     category: "video",
     layer: "infrastructure",
-    intro: "Tell me what story this reel should tell. I'll plan the shots.",
-    examplePrompt: "Plan a 30-second reel introducing my orchard to first-time visitors.",
+    intro: "Tell me what story this reel should tell. I'll help you plan the shots and the words.",
+    examplePrompt: "Help me plan a 30-second reel introducing my orchard to first-time visitors.",
   },
   {
     slug: "elm",
@@ -147,11 +147,11 @@ export const COMPANIONS: CompanionMeta[] = [
     title: "The Hearth Messenger",
     emoji: "💬",
     summary:
-      "Drafts outreach, thank-yous, and warm collaboration proposals.",
+      "Helps you draft outreach, thank-yous, and warm collaboration proposals — you'll send them yourself from your own channels.",
     category: "messaging",
     layer: "infrastructure",
-    intro: "Who do you want to reach, and why? I'll draft the message.",
-    examplePrompt: "Write a thank-you to a bestower who sent 25 USDC for my seed.",
+    intro: "Who do you want to reach, and why? I'll help you draft the message for you to send.",
+    examplePrompt: "Help me draft a thank-you to a bestower who sent 25 USDC for my seed.",
   },
   {
     slug: "hickory",
@@ -159,11 +159,11 @@ export const COMPANIONS: CompanionMeta[] = [
     title: "The Bridge Caller",
     emoji: "📞",
     summary:
-      "Opens HearthCall sessions and routes voice or video connections for the tribe.",
+      "Helps you plan and script a call — agendas, talking points, opening lines. You still place the call yourself.",
     category: "calling",
     layer: "infrastructure",
-    intro: "Who do you want to call, and what's the intent of the call?",
-    examplePrompt: "I want a 15-min HearthCall with my tribe leader about pricing — propose an agenda.",
+    intro: "Who do you want to call, and what's the intent? I'll help you shape the agenda.",
+    examplePrompt: "I want a 15-min HearthCall with my tribe leader about pricing — help me plan an agenda.",
   },
   {
     slug: "beech",
@@ -171,11 +171,11 @@ export const COMPANIONS: CompanionMeta[] = [
     title: "The Pocket Keeper",
     emoji: "📒",
     summary:
-      "Tracks bestowals, sends weekly reports, and tends the 1% tribe leader finance.",
+      "A thinking partner for the numbers you bring it — bestowal totals, weekly summaries, the 1% tribe leader finance. Share the figures and I'll help you read them.",
     category: "finance",
     layer: "infrastructure",
-    intro: "Ask me for a weekly summary or any finance question about your orchard.",
-    examplePrompt: "Give me a weekly bestowal report for the past 7 sacred days.",
+    intro: "Paste in your figures or describe the week, and I'll help you make sense of them.",
+    examplePrompt: "Here are my bestowals from the past 7 sacred days — help me summarise them.",
   },
   {
     slug: "alder",
@@ -183,11 +183,11 @@ export const COMPANIONS: CompanionMeta[] = [
     title: "The Storehouse Steward",
     emoji: "🥖",
     summary:
-      "Watches over Field & Forge stock, deliveries, and order tracking.",
+      "A thinking partner for Field & Forge stock, deliveries, and orders — describe what you have on hand and I'll help you reason about it.",
     category: "logistics",
     layer: "infrastructure",
-    intro: "I'll watch your stock and orders. What do you want to know?",
-    examplePrompt: "Which of my Field products are below 5 in stock?",
+    intro: "Tell me about your stock and orders and I'll help you think them through.",
+    examplePrompt: "I've got 12 jars of honey and 3 pending orders — help me decide what to ship first.",
   },
   {
     slug: "hawthorn",
@@ -195,10 +195,10 @@ export const COMPANIONS: CompanionMeta[] = [
     title: "The Harvest Oracle",
     emoji: "🔮",
     summary:
-      "Suggests fair pricing, surfaces performance insights, and whispers the best time to post.",
+      "Suggests fair pricing and talks through performance with you, working from whatever you describe — context in, ideas out.",
     category: "insight",
     layer: "infrastructure",
-    intro: "Bring me a question about pricing, timing or performance.",
+    intro: "Bring me a question about pricing or timing, with whatever context you have.",
     examplePrompt: "Suggest a fair USDC range for a 12-track album seed.",
   },
 
