@@ -125,7 +125,7 @@ export default function CompanionDrawer({ open, onOpenChange, companion, onConsu
                   className={
                     m.role === "user"
                       ? "ml-auto max-w-[85%] rounded-lg bg-primary text-primary-foreground px-3 py-2 text-sm"
-                      : "mr-auto max-w-[90%] rounded-lg bg-muted text-foreground px-3 py-2 text-sm prose prose-sm dark:prose-invert max-w-none"
+                      : "mr-auto max-w-[90%] rounded-lg bg-card text-card-foreground border border-border px-3 py-2 text-sm prose prose-sm dark:prose-invert max-w-none prose-p:text-card-foreground prose-headings:text-card-foreground prose-strong:text-card-foreground prose-li:text-card-foreground"
                   }
                 >
                   {m.role === "assistant" ? (
