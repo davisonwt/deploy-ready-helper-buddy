@@ -278,6 +278,10 @@ export default function AdminAiUsagePage() {
         </div>
       </header>
 
+      <CompanionPromoControl />
+
+
+
       {err && (
         <Card className="border-destructive">
           <CardContent className="p-4 text-destructive">{err}</CardContent>
