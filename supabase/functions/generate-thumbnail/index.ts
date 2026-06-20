@@ -56,14 +56,32 @@ serve(async (req) => {
     const effectiveTier = (tier as string) || "sower";
     const dailyCap = IMAGE_CAPS[effectiveTier] ?? IMAGE_CAPS.sower;
 
+    // Promo bypass (sower only)
+    const { data: promoActive } = await supabase.rpc("is_companion_promo_active");
+    const promoApplies = promoActive === true && effectiveTier === "sower";
+
     // Hourly rate limit (existing pattern).
     const ok = await checkRateLimit(supabase, user.id, "ai_generation", 10, 60);
     if (!ok) return createRateLimitResponse(3600);
 
-    // Daily AI usage cap (images count as 2 units).
-    const { data: usageToday } = await supabase.rpc("get_ai_usage_today", { user_id_param: user.id });
-    if ((usageToday ?? 0) >= dailyCap - 1) {
-      return json({ error: `Daily image limit reached for your tier (${effectiveTier}).` }, 429);
+    if (promoApplies) {
+      // During promo: bypass the normal per-tier cap but enforce the safety ceiling.
+      const since = new Date(Date.now() - 24 * 3600 * 1000).toISOString();
+      const { count: imgUsed } = await supabase
+        .from("s2g_companion_runs")
+        .select("id", { count: "exact", head: true })
+        .eq("user_id", user.id)
+        .eq("kind", "image")
+        .gte("created_at", since);
+      if ((imgUsed ?? 0) >= PROMO_PER_USER_IMAGE_CAP) {
+        return json({ error: `Promo safety ceiling reached (${PROMO_PER_USER_IMAGE_CAP} images/24h).` }, 429);
+      }
+    } else {
+      // Daily AI usage cap (images count as 2 units).
+      const { data: usageToday } = await supabase.rpc("get_ai_usage_today", { user_id_param: user.id });
+      if ((usageToday ?? 0) >= dailyCap - 1) {
+        return json({ error: `Daily image limit reached for your tier (${effectiveTier}).` }, 429);
+      }
     }
 
     const REPLICATE_API_TOKEN = Deno.env.get("REPLICATE_API_TOKEN");
