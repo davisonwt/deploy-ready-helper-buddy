@@ -140,12 +140,19 @@ async function handleEvent(
 
   // ------- Capture completed -> mark paid + dispatch payouts ------------------
   if (type === "PAYMENT.CAPTURE.COMPLETED") {
-    const bestowalId = (resource.custom_id as string | undefined) ??
+    const customId = (resource.custom_id as string | undefined) ??
       extractOrderCustomId(resource);
-    if (!bestowalId) {
+    if (!customId) {
       console.warn("CAPTURE.COMPLETED missing custom_id", event.id);
       return;
     }
+    if (customId.startsWith("topup:")) {
+      const topupId = customId.slice("topup:".length);
+      const { error: rpcErr } = await supabase.rpc("credit_sower_balance_from_topup", { _topup_id: topupId });
+      if (rpcErr) console.error("credit_sower_balance_from_topup failed", topupId, rpcErr);
+      return;
+    }
+    const bestowalId = customId;
     const { data: bestowal } = await supabase
       .from("bestowals")
       .select("id, payment_status")
