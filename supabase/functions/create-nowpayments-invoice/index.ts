@@ -6,6 +6,7 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 import { corsHeaders } from "npm:@supabase/supabase-js@2/cors";
 import { buildDistributionData } from "../_shared/distribution.ts";
+import { resolveSowerPayout } from "../_shared/resolveSowerPayout.ts";
 
 const NOWPAYMENTS_API = "https://api.nowpayments.io/v1";
 
@@ -86,21 +87,12 @@ Deno.serve(async (req) => {
     const processorFee = ceil2(baseAmount * (Number.isFinite(feePct) ? feePct : 0.01));
     const buyerTotal = round2(baseAmount + processorFee);
 
-    // --- Resolve sower's primary payout wallet -------------------------------
-    const { data: wallet } = await service
-      .from("user_wallets")
-      .select("wallet_type, wallet_address, payout_currency, network")
-      .eq("user_id", orchard.user_id)
-      .in("wallet_type", ["nowpayments_crypto", "paypal_email"])
-      .eq("is_active", true)
-      .order("is_primary", { ascending: false })
-      .limit(1)
-      .maybeSingle();
-
+    // --- Resolve sower's preferred payout wallet (shared deterministic resolver) ---
+    const wallet = await resolveSowerPayout(service, orchard.user_id);
     if (!wallet) {
       return json({ error: "no_payout_method", message: "Sower has no NOWPayments or PayPal payout wallet configured." }, 409);
     }
-    const payoutProvider = wallet.wallet_type === "paypal_email" ? "paypal" : "nowpayments";
+    const payoutProvider = wallet.payout_provider;
 
     // --- Build distribution snapshot (uses existing helper) ------------------
     const currency = orchard.currency ?? "USDC";
