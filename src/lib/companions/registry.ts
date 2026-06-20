@@ -73,11 +73,11 @@ export const COMPANIONS: CompanionMeta[] = [
     title: "The Story Sower",
     emoji: "🍁",
     summary:
-      "Drafts SeedFlow posts, captions, content calendars, and gentle marketing copy.",
+      "Helps you compose SeedFlow posts, captions, and gentle marketing copy — you'll still copy the words where they need to go.",
     category: "content",
     layer: "narrative",
-    intro: "Tell me what you'd like to plant in the feed today and I'll shape the words.",
-    examplePrompt: "Draft a SeedFlow post inviting the tribe to bestow on my new music seed.",
+    intro: "Tell me what you'd like to say in the feed today and I'll help you shape the words.",
+    examplePrompt: "Help me draft a SeedFlow post inviting the tribe to bestow on my new music seed.",
   },
   {
     slug: "bud",
