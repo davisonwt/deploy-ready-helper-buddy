@@ -6289,6 +6289,7 @@ export type Database = {
           pinterest_url: string | null
           preferred_currency: string | null
           preferred_language: string | null
+          preferred_payout_method: string | null
           recovery_locked_until: string | null
           security_setup_complete: boolean
           show_birthday: boolean | null
@@ -6344,6 +6345,7 @@ export type Database = {
           pinterest_url?: string | null
           preferred_currency?: string | null
           preferred_language?: string | null
+          preferred_payout_method?: string | null
           recovery_locked_until?: string | null
           security_setup_complete?: boolean
           show_birthday?: boolean | null
@@ -6399,6 +6401,7 @@ export type Database = {
           pinterest_url?: string | null
           preferred_currency?: string | null
           preferred_language?: string | null
+          preferred_payout_method?: string | null
           recovery_locked_until?: string | null
           security_setup_complete?: boolean
           show_birthday?: boolean | null
