@@ -1,175 +1,220 @@
+// generate-thumbnail
+// Replicate FLUX.1 [schnell] (Apache 2.0). Replaces removed DALL-E 3 path.
+// Output is persisted to the `ai-generations` storage bucket because
+// replicate.delivery URLs expire ~1h after generation.
+
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.7.1';
-import { checkRateLimit, createRateLimitResponse } from '../_shared/rateLimiter.ts';
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.7.1";
+import { checkRateLimit, createRateLimitResponse } from "../_shared/rateLimiter.ts";
 
 const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+};
+
+const FLUX_MODEL = "black-forest-labs/flux-schnell";
+const COST_USD = 0.003;
+
+// Per-tier daily image cap
+const IMAGE_CAPS: Record<string, number> = {
+  sower: 5,
+  keeper: 15,
+  ambassador: 40,
+  council: 9999,
 };
 
 serve(async (req) => {
-  if (req.method === 'OPTIONS') {
-    return new Response(null, { headers: corsHeaders });
-  }
+  if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
   try {
-    const { productDescription, style, customPrompt, confirmed } = await req.json();
+    const { productDescription, style, customPrompt, confirmed, aspectRatio } = await req.json();
 
-    // Ask for user confirmation before generating images
     if (!confirmed) {
-      return new Response(JSON.stringify({ 
+      return json({
         requiresConfirmation: true,
-        message: 'Image generation will use additional AI credits. Do you want to proceed?'
-      }), {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        message: `Image generation will use ~$${COST_USD.toFixed(3)} of credits. Do you want to proceed?`,
       });
     }
 
-    // Initialize Supabase client
-    const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
-    const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
-    const supabase = createClient(supabaseUrl, supabaseKey);
+    const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
+    const SERVICE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+    const supabase = createClient(SUPABASE_URL, SERVICE_KEY);
 
-    // Get user from auth header
-    const authHeader = req.headers.get('Authorization');
-    if (!authHeader) {
-      return new Response(JSON.stringify({ error: 'No authorization header' }), {
-        status: 401,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      });
-    }
+    const authHeader = req.headers.get("Authorization");
+    if (!authHeader) return json({ error: "No authorization header" }, 401);
 
-    const token = authHeader.replace('Bearer ', '');
+    const token = authHeader.replace("Bearer ", "");
     const { data: { user }, error: userError } = await supabase.auth.getUser(token);
-    
-    if (userError || !user) {
-      return new Response(JSON.stringify({ error: 'Authentication required' }), {
-        status: 401,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      });
+    if (userError || !user) return json({ error: "Authentication required" }, 401);
+
+    // Tier gate — fail closed if no profile row.
+    const { data: tier } = await supabase.rpc("get_effective_tier", { _user: user.id });
+    const effectiveTier = (tier as string) || "sower";
+    const dailyCap = IMAGE_CAPS[effectiveTier] ?? IMAGE_CAPS.sower;
+
+    // Hourly rate limit (existing pattern).
+    const ok = await checkRateLimit(supabase, user.id, "ai_generation", 10, 60);
+    if (!ok) return createRateLimitResponse(3600);
+
+    // Daily AI usage cap (images count as 2 units).
+    const { data: usageToday } = await supabase.rpc("get_ai_usage_today", { user_id_param: user.id });
+    if ((usageToday ?? 0) >= dailyCap - 1) {
+      return json({ error: `Daily image limit reached for your tier (${effectiveTier}).` }, 429);
     }
 
-    // Check rate limiting - 10 requests per hour
-    const rateLimitAllowed = await checkRateLimit(supabase, user.id, 'ai_generation', 10, 60);
-    if (!rateLimitAllowed) {
-      console.log(`Rate limit exceeded for user ${user.id}`);
-      return createRateLimitResponse(3600);
-    }
+    const REPLICATE_API_TOKEN = Deno.env.get("REPLICATE_API_TOKEN");
+    if (!REPLICATE_API_TOKEN) return json({ error: "Image generation not configured" }, 500);
 
-    // Check daily usage (images count as 2 generations)
-    const { data: usageData } = await supabase.rpc('get_ai_usage_today', { user_id_param: user.id });
-    const dailyLimit = 10;
-    
-    if (usageData >= dailyLimit - 1) {
-      return new Response(JSON.stringify({ 
-        error: 'Daily generation limit reached. Please try again tomorrow.' 
-      }), {
-        status: 429,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      });
-    }
+    const imagePrompt =
+      customPrompt ||
+      `Eye-catching marketing thumbnail for "${productDescription}". Style: ${style ?? "warm, natural, photographic"}. High contrast, clear focal point, no text overlay. Agricultural / tribal / homegrown vibe. Authentic and inviting.`;
 
-    // Construct image prompt
-    const imagePrompt = customPrompt || 
-      `Create a vibrant, eye-catching thumbnail image for "${productDescription}". 
-       Style: ${style}. 
-       Features: High contrast, bright colors, clear focal point, no text overlay needed.
-       Context: Agricultural/farming theme, authentic and appealing for social media.
-       Aspect ratio: 16:9 for video thumbnail.`;
-
-    console.log('Generating thumbnail with OpenAI DALL-E...');
-    
-    const openAIApiKey = Deno.env.get('OPENAI_API_KEY');
-    if (!openAIApiKey) {
-      console.error('OpenAI API key not found in environment variables');
-      return new Response(JSON.stringify({ error: 'OpenAI API key not configured. Please contact support.' }), {
-        status: 500,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      });
-    }
-    
-    const openAIResponse = await fetch('https://api.openai.com/v1/images/generations', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${openAIApiKey}`,
-        'Content-Type': 'application/json',
+    console.log("[generate-thumbnail] calling FLUX schnell");
+    const createRes = await fetch(
+      `https://api.replicate.com/v1/models/${FLUX_MODEL}/predictions`,
+      {
+        method: "POST",
+        headers: {
+          Authorization: `Token ${REPLICATE_API_TOKEN}`,
+          "Content-Type": "application/json",
+          Prefer: "wait",
+        },
+        body: JSON.stringify({
+          input: {
+            prompt: imagePrompt,
+            aspect_ratio: aspectRatio || "16:9",
+            num_outputs: 1,
+            output_format: "webp",
+            output_quality: 90,
+            go_fast: true,
+            megapixels: "1",
+          },
+        }),
       },
-      body: JSON.stringify({
-        model: 'dall-e-3',
-        prompt: imagePrompt,
-        n: 1,
-        size: '1792x1024',
-        quality: 'standard',
-        style: 'natural'
-      }),
-    });
+    );
 
-    if (!openAIResponse.ok) {
-      const error = await openAIResponse.text();
-      console.error('OpenAI API error:', openAIResponse.status, error);
-      return new Response(JSON.stringify({ error: 'Unable to generate content. Please try again later.' }), {
-        status: 500,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      });
+    if (!createRes.ok) {
+      const errText = await createRes.text();
+      console.error("[generate-thumbnail] Replicate error", createRes.status, errText);
+      return json({ error: "Image generation failed", detail: errText.slice(0, 500) }, 502);
     }
 
-    const openAIData = await openAIResponse.json();
-    const imageUrl = openAIData.data[0].url;
+    const pred = await createRes.json();
+    let outputUrl: string | null =
+      Array.isArray(pred.output) ? pred.output[0] : (typeof pred.output === "string" ? pred.output : null);
 
-    // Increment usage count (images count as 2)
-    await supabase.rpc('increment_ai_usage', { user_id_param: user.id });
-    await supabase.rpc('increment_ai_usage', { user_id_param: user.id });
+    // If still processing (wait timed out), poll briefly.
+    if (!outputUrl && pred.id && pred.status !== "failed") {
+      outputUrl = await pollOnce(pred.id, REPLICATE_API_TOKEN, 6, 2500);
+    }
 
-    // Save to database
+    if (!outputUrl) {
+      return json({ error: "Image generation did not complete in time" }, 504);
+    }
+
+    // Persist to Storage so the URL doesn't expire.
+    let publicUrl = outputUrl;
+    try {
+      const imgRes = await fetch(outputUrl);
+      const bytes = new Uint8Array(await imgRes.arrayBuffer());
+      const path = `thumbnails/${user.id}/${crypto.randomUUID()}.webp`;
+      const { error: upErr } = await supabase.storage
+        .from("ai-generations")
+        .upload(path, bytes, { contentType: "image/webp", upsert: false });
+      if (upErr) {
+        console.warn("[generate-thumbnail] storage upload failed, returning raw URL", upErr.message);
+      } else {
+        const { data: pub } = supabase.storage.from("ai-generations").getPublicUrl(path);
+        publicUrl = pub.publicUrl;
+      }
+    } catch (e) {
+      console.warn("[generate-thumbnail] persistence failed", (e as Error).message);
+    }
+
+    // Bump usage (images = 2 units, keeping existing rule).
+    await supabase.rpc("increment_ai_usage", { user_id_param: user.id });
+    await supabase.rpc("increment_ai_usage", { user_id_param: user.id });
+
     const { data: creation, error: dbError } = await supabase
-      .from('ai_creations')
+      .from("ai_creations")
       .insert({
         user_id: user.id,
-        content_type: 'thumbnail',
-        title: `Thumbnail: ${productDescription.substring(0, 40)}...`,
-        image_url: imageUrl,
-        product_description: productDescription,
-        style: style,
-        custom_prompt: customPrompt,
+        content_type: "thumbnail",
+        title: `Thumbnail: ${(productDescription ?? customPrompt ?? "untitled").toString().substring(0, 40)}`,
+        image_url: publicUrl,
+        product_description: productDescription ?? null,
+        style: style ?? null,
+        custom_prompt: customPrompt ?? null,
         metadata: {
           generated_at: new Date().toISOString(),
-          model: 'dall-e-3',
-          size: '1792x1024',
-          quality: 'standard',
-          revised_prompt: openAIData.data[0].revised_prompt
-        }
+          model: FLUX_MODEL,
+          replicate_id: pred.id,
+          original_url: outputUrl,
+          aspect_ratio: aspectRatio || "16:9",
+          tier: effectiveTier,
+          cost_usd_estimate: COST_USD,
+        },
       })
       .select()
       .single();
 
     if (dbError) {
-      console.error('Database error:', dbError.message, dbError.code);
-      return new Response(JSON.stringify({ error: 'Unable to save content. Please try again.' }), {
-        status: 500,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      });
+      console.error("[generate-thumbnail] DB insert failed", dbError);
+      // Still return the image — generation succeeded.
     }
 
-    console.log('Thumbnail generated successfully');
+    // Audit log
+    try {
+      await supabase.from("s2g_companion_runs").insert({
+        user_id: user.id,
+        companion_slug: "willow",
+        action: "image",
+        kind: "image",
+        artifact_url: publicUrl,
+        cost_usd_estimate: COST_USD,
+        replicate_prediction_id: pred.id,
+        status: "ok",
+      });
+    } catch (_) {/* best-effort */}
 
-    return new Response(JSON.stringify({ 
-      imageUrl: imageUrl,
-      creation: creation,
-      usage: usageData + 2,
-      limit: dailyLimit
-    }), {
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    return json({
+      imageUrl: publicUrl,
+      creation,
+      model: FLUX_MODEL,
+      cost_usd_estimate: COST_USD,
+      tier: effectiveTier,
     });
-
   } catch (error) {
-    console.error('Error in generate-thumbnail:', error.message, error.stack);
-    return new Response(JSON.stringify({ 
-      error: 'An error occurred. Please try again later.',
-      requestId: crypto.randomUUID()
-    }), {
-      status: 500,
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-    });
+    console.error("[generate-thumbnail] error", error);
+    return json({ error: "Unexpected error", detail: (error as Error).message }, 500);
   }
 });
+
+function json(body: unknown, status = 200) {
+  return new Response(JSON.stringify(body), {
+    status,
+    headers: { ...corsHeaders, "Content-Type": "application/json" },
+  });
+}
+
+async function pollOnce(
+  id: string,
+  token: string,
+  attempts: number,
+  intervalMs: number,
+): Promise<string | null> {
+  for (let i = 0; i < attempts; i++) {
+    await new Promise((r) => setTimeout(r, intervalMs));
+    const r = await fetch(`https://api.replicate.com/v1/predictions/${id}`, {
+      headers: { Authorization: `Token ${token}` },
+    });
+    if (!r.ok) continue;
+    const p = await r.json();
+    if (p.status === "succeeded") {
+      return Array.isArray(p.output) ? p.output[0] : (typeof p.output === "string" ? p.output : null);
+    }
+    if (p.status === "failed" || p.status === "canceled") return null;
+  }
+  return null;
+}
