@@ -131,6 +131,11 @@ async function handleEvent(
         .eq("id", customId.slice("topup:".length));
       return;
     }
+    if (customId.startsWith("basket:")) {
+      await supabase.from("basket_orders").update({ status: "processing" })
+        .eq("id", customId.slice("basket:".length));
+      return;
+    }
     await supabase
       .from("bestowals")
       .update({ payment_status: "processing" })
