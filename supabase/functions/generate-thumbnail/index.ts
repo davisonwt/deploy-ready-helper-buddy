@@ -24,6 +24,9 @@ const IMAGE_CAPS: Record<string, number> = {
   council: 9999,
 };
 
+// Promo safety ceiling (per user/day) when companion promo is active.
+const PROMO_PER_USER_IMAGE_CAP = 100;
+
 serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
