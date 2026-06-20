@@ -74,6 +74,11 @@ serve(async (req) => {
     const effectiveTier = (tier as string) || "sower";
     const dailyCap = VOICE_CAPS[effectiveTier] ?? VOICE_CAPS.sower;
 
+    // Promo bypass (sower only)
+    const { data: promoActive } = await supabase.rpc("is_companion_promo_active");
+    const promoApplies = promoActive === true && effectiveTier === "sower";
+    const effectiveDailyCap = promoApplies ? PROMO_PER_USER_VOICE_CAP : dailyCap;
+
     // Daily voice cap
     const since = new Date(Date.now() - 24 * 3600 * 1000).toISOString();
     const { count: voiceUsed } = await supabase
@@ -82,9 +87,13 @@ serve(async (req) => {
       .eq("user_id", user.id)
       .eq("kind", "voice")
       .gte("created_at", since);
-    if ((voiceUsed ?? 0) >= dailyCap) {
+    if ((voiceUsed ?? 0) >= effectiveDailyCap) {
       return json(
-        { error: `Daily voiceover limit reached for your tier (${effectiveTier}).` },
+        {
+          error: promoApplies
+            ? `Promo safety ceiling reached (${PROMO_PER_USER_VOICE_CAP} voiceovers/24h).`
+            : `Daily voiceover limit reached for your tier (${effectiveTier}).`,
+        },
         429,
       );
     }
