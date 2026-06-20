@@ -1,120 +1,153 @@
-# Payments UX Rollout — 5 Features, Sequenced
+# Plan — Task 1 (BestowalCheckout backend rebuild) + Task 2 (Navbar links)
 
-## Table reality check (do this assumption first)
+## Background / why `complete-product-bestowal` is disabled
 
-From the live schema:
+The function file itself states the reason in its top comment (verified):
 
-- **`user_wallets`** — payout destination. Has `wallet_type` (provider: `nowpayments` | `paypal`), `wallet_address` (USDC-SOL address or PayPal email), `payout_currency` (e.g. `usdcsol`), `network`, `is_primary`, `verified_at`. **This is where "where do I send your money" lives.**
-- **`sower_balances`** — accrual ledger per user: `available_balance`, `pending_balance`, `total_earned`, `total_withdrawn`, `currency`. **This is the real "on-platform balance from sales".**
-- **`wallet_balances`** — only `wallet_address` + `usdc_balance` + `last_updated`. It's a *cache of an external on-chain balance for a given address*, not an internal ledger. Per `docs/WALLET_BALANCE_SOLUTION.md` it was repurposed as a cache and is currently stuck at 0 for users.
-- **`organization_wallets`** — Sow2Grow's own custody wallets (api_key/api_secret/merchant_id columns), one row per provider.
-- **`bestowals`** already carries `payout_provider`, `payout_destination`, `payout_currency`, `payout_status`, `payout_fee_amount` — so the per-bestowal payout path is fully wired; what's missing is the *user-side setup* and *buyer-side choice*.
+> "This endpoint previously recorded 'completed' bestowals with no payment proof, allowing anyone to fake bestowals for any amount. Real bestowals must go through verified webhook flows. Re-enable only after this function is rebuilt to require a webhook-confirmed payment_transaction_id."
 
-**Recommendation:** treat `sower_balances` as the canonical on-platform balance. Leave `wallet_balances` alone (or quietly deprecate later). Top-ups should credit `sower_balances` (new row type / transaction kind), not `wallet_balances`.
+It was a client-trusted "I paid, please mark completed" RPC. We are NOT re-enabling it — we are replacing it with a `create-order-then-webhook-confirms` pattern that mirrors what `create-nowpayments-invoice` / `create-paypal-order` / `nowpayments-webhook` / `paypal-webhook` already do for single-seed bestowals and for top-ups.
 
-## Recommended build order
-
-1. **B — Onboarding payout setup** (foundation; everything else assumes a `user_wallets` row exists)
-2. **C — Existing-user nudge** (same UI as B, just surfaced retroactively — cheap once B exists)
-3. **A — Checkout provider selector** (depends on buyer also having a `user_wallets`-style preference? no — buyer just picks per-purchase, but the fee-math helper built here is reused by B's "what this costs you" copy)
-4. **D — User wallet dashboard** (needs B done so wallets exist; needs A's invoice flow for top-ups)
-5. **E — Gosat platform treasury view** (independent, but lowest urgency since we already proved the API works; build last)
-
-A↔B share a `getProviderFee(provider, amount)` helper — build it in step B, reuse in A.
+Three payment cases the webhooks must handle after this work:
+1. `topup:<id>` → already implemented (credit `sower_balances`).
+2. Single bestowal → already implemented (`bestowals.id` is the `order_id` / PayPal `custom_id`).
+3. **NEW: basket bestowal** → one buyer payment → multiple bestowal rows.
 
 ---
 
-## A. Checkout provider selector
+## TASK 1 — Multi-item basket checkout, payment-first
 
-**Files**
-- `src/lib/payments/providerFees.ts` *(new)* — single source of truth: `PROVIDERS = [{id:'nowpayments', label, feePct:[0.4,1.0], note:'USDC-SOL'}, {id:'paypal', label, feePct:[5.7,8.0]}]`, plus `quoteFee(provider, amount) → {min, max, displayString}`.
-- `src/components/products/BestowalCheckout.tsx` *(edit)* — add a `<ProviderPicker>` above the "Complete Bestowal" button; show fee preview line ("NOWPayments fee ≈ $0.04–$0.10, you pay $10.10"); pass chosen `provider` into `complete-product-bestowal` invoke body.
-- `src/components/bestow/QuickBestowModal.tsx` *(edit)* — same picker + fee line; currently hard-routes through `useBinancePay`, swap to branching: `nowpayments` → `useNowPayments.createInvoice`, `paypal` → `useCryptoPay`/`usePaypal` `create-paypal-order`.
-- `src/components/payments/ProviderPicker.tsx` *(new, shared)* — radio cards (logo, fee range, "you pay" total), controlled component.
-- `supabase/functions/complete-product-bestowal/index.ts` *(edit)* — accept `provider` in body, persist to `bestowals.provider` + `processor_fee_amount` (already columns).
-- `supabase/functions/create-nowpayments-invoice/index.ts` & `create-paypal-order/index.ts` *(verify, minor edit)* — make sure they accept and echo `processor_fee_amount` so the row written matches what the buyer saw.
+### Data model (one new migration)
 
-**Out of scope for A:** changing distribution logic, changing payout side.
+`basket_orders` — one row per basket payment attempt:
+- `id uuid pk`
+- `user_id uuid` (buyer)
+- `provider text check in ('nowpayments','paypal')`
+- `provider_order_id text` (NOWPayments `order_id` we send = `basket:<uuid>`, or PayPal order id)
+- `provider_invoice_id text null`, `approve_url text null`
+- `pay_currency text null` (e.g. `usdcsol`)
+- `subtotal numeric`, `processor_fee numeric`, `buyer_total numeric`, `currency text default 'USD'`
+- `status text default 'pending'` (`pending|processing|completed|failed|expired`)
+- `items jsonb` — snapshot: `[{ product_id, sower_id, title, unit_price, qty, line_total }]` (price snapshotted server-side at create time so a price change between checkout & webhook can't be exploited)
+- `created_at`, `updated_at`, `completed_at`
 
----
+`basket_order_bestowals` (optional convenience link):
+- `basket_order_id uuid fk`, `bestowal_id uuid fk`, primary key on the pair.
 
-## B. Onboarding payout setup
+Bestowal rows are NOT pre-created. They are inserted by the webhook on confirmed payment, then linked back via `basket_order_bestowals`. This is the key security property: no bestowal exists before processor confirmation.
 
-**Files**
-- `src/pages/PayoutSettingsPage.tsx` *(already exists — edit/rewrite)* — becomes the canonical setup screen with two-step wizard:
-  1. Pick provider (reuse `ProviderPicker` from A, but framed as "how YOU get paid" with the per-tx cost-to-you copy).
-  2. If NOWPayments → force `payout_currency='usdcsol'`, `network='sol'`, ask for Solana USDC wallet address; show a hard-coded explainer "USDC on Solana is the only currently funded payout rail." If PayPal → ask for PayPal email.
-  - Writes/updates `user_wallets` row (`is_primary=true`, `verified_at=null` until a later verification pass).
-- `src/components/onboarding/PayoutSetupStep.tsx` *(new)* — thin wrapper of the wizard for the signup flow.
-- `src/pages/OnboardingSecurityPage.tsx` *(edit)* — add PayoutSetupStep as the step right after security questions (or before, your call); mark complete via a new `profiles.payout_setup_complete boolean default false` column.
-- `supabase/migrations/*` *(new)* — add `profiles.payout_setup_complete`; backfill `false`; trigger on `user_wallets` insert to set it `true`.
-- `src/hooks/useAuth.jsx` *(edit, minimal)* — after signup, route new user to `/onboarding/payout` if `payout_setup_complete=false`.
-- `src/lib/payments/providerFees.ts` — reused from A (or built here first if B ships first; see order note above — build the helper here).
+Grants/RLS:
+- `basket_orders`: `SELECT` to `authenticated` filtered by `user_id = auth.uid()`, no client insert/update (only edge fns via `service_role`). Gosat can read all.
+- `basket_order_bestowals`: select-only to the buyer via join.
 
-**Copy rule:** the per-transaction cost must say "**You pay this**, not Sow2Grow" verbatim, with the two ranges.
+RPC: `finalize_basket_order(_basket_order_id uuid)` — security definer. Idempotent. Reads the snapshotted `items`, inserts one `bestowals` row per item with `payment_status='completed'`, `provider`, `provider_payment_id`, fee allocation copied from existing `buildDistributionData` flow, and inserts `basket_order_bestowals` rows. Marks basket_order completed. Returns array of created bestowal ids.
 
----
+### Edge functions
 
-## C. Existing-user nudge
+**NEW `create-basket-bestowal-order/index.ts`** (replaces `complete-product-bestowal` semantically):
+- Auth required (JWT, validate via anon client like the other create-* fns).
+- Body: `{ items: [{ productId, qty }], provider: 'nowpayments'|'paypal', payCurrency?, redirectBaseUrl? }`.
+- Server reloads each product from DB, recomputes `unit_price` and `line_total` (never trust client price). Builds `items` snapshot. Computes subtotal, processor fee via shared fee table, buyer_total.
+- Inserts `basket_orders` row (status `pending`).
+- Provider branch:
+  - `nowpayments`: POST `/v1/invoice` with `order_id = basket:<basket_order.id>`, `price_amount = buyer_total`, `pay_currency`. Persist `provider_invoice_id`, `invoice_url`.
+  - `paypal`: POST `/v2/checkout/orders` with `custom_id = basket:<basket_order.id>`, `value = buyer_total`. Persist `provider_order_id`, `approve_url`.
+- Returns `{ basketOrderId, invoiceUrl|approveUrl, breakdown }`.
 
-**Files**
-- `src/components/PayoutSetupBanner.tsx` *(new)* — mirrors `NotificationBanner.tsx` pattern: fixed bottom-right `Card`, dismiss persisted in `localStorage` (`payout-setup-banner-dismissed`), only renders when `user && profiles.payout_setup_complete === false && !dismissed`. CTA → `/payout-settings`.
-- `src/App.tsx` *(edit)* — mount `<PayoutSetupBanner />` next to `<NotificationBanner />`.
-- `src/hooks/useAuth.jsx` *(edit)* — expose `payoutSetupComplete` from profile.
-- **Email nudge (optional, recommend yes):**
-  - `supabase/functions/_shared/transactional-email-templates/payout-setup-reminder.tsx` *(new)*
-  - One-shot script `supabase/functions/send-payout-setup-reminders/index.ts` *(new, admin-invoked)* — selects profiles where `payout_setup_complete=false AND created_at < now()` and enqueues one email each via `send-transactional-email`. Run once manually from gosat, not on a cron.
-- Migration to add a `profiles.payout_reminder_sent_at` timestamp so a second run doesn't double-email.
+**REWRITE `complete-product-bestowal/index.ts`** → keep file path so nothing 404s, but make it a thin 410 with a clear redirect message pointing to `create-basket-bestowal-order`. Or delete file + remove from `supabase/config.toml` if listed. (Recommendation: delete to avoid dead code; flag here so you can veto.)
 
-**No DB writes from the banner** — just a link.
+**EDIT `supabase/functions/nowpayments-webhook/index.ts`**
+- In `handlePaymentEvent`, add a third branch BEFORE the existing bestowal-id branch:
+  ```
+  if (orderId.startsWith('basket:')) { handleBasketEvent(...) ; return; }
+  ```
+- `handleBasketEvent` updates `basket_orders.status`, and on success calls `supabase.rpc('finalize_basket_order', { _basket_order_id })`. Idempotent: RPC no-ops if already completed.
+- On failure/expiry update status only.
 
----
+**EDIT `supabase/functions/paypal-webhook/index.ts`**
+- Same three-way branch on `customId` (`topup:` / `basket:` / else bestowal). Mirror the NOWPayments behaviour.
+- Both `CAPTURE.COMPLETED` and `CHECKOUT.ORDER.APPROVED` paths must handle the `basket:` prefix consistently with how they currently handle bestowals.
 
-## D. User wallet dashboard
+### Frontend
 
-**Decision:** `sower_balances` is the on-platform balance; `wallet_balances` is a confusing legacy cache and should NOT be surfaced to users. `user_wallets` is the payout destination.
+**EDIT `src/components/products/BestowalCheckout.tsx`**
+- Remove the per-item loop calling `complete-product-bestowal`.
+- New `handleBestow` calls `supabase.functions.invoke('create-basket-bestowal-order', { body: { items: basketItems.map(i => ({ productId: i.id, qty: i.quantity ?? 1 })), provider, payCurrency: provider === 'nowpayments' ? 'usdcsol' : undefined } })`.
+- Branch on response:
+  - NOWPayments → `window.open(invoiceUrl, '_blank')`, clear basket optimistically only after invoice open (success toast says "Complete payment in the new tab — your bestowals will appear once confirmed").
+  - PayPal → `window.location.href = approveUrl` (full redirect; do NOT clear basket here, basket is local-storage; let `PaymentSuccessPage` / webhook completion clear it via a post-return effect, or clear on `beforeunload`).
+- Keep `ProviderPicker` + fee preview UI exactly as is.
+- Remove the inline XP-award call; that should fire from the webhook-finalize RPC (note in plan, not changed in this file).
+- Confetti / floatingScore move to `PaymentSuccessPage` (or a polled check of `basket_orders.status`). For this task: just remove the premature celebration; flag the success-page polling as a follow-up.
 
-**Files**
-- `src/pages/MyWalletPage.tsx` *(new)* at route `/wallet` — sections:
-  1. **On-platform balance** — pulls `sower_balances` (available / pending / total_earned / total_withdrawn).
-  2. **Payout destination** — read-only summary of primary `user_wallets` row + "Change" link to `/payout-settings`.
-  3. **Top up** — amount input + `ProviderPicker` + fee preview → calls a new edge function that creates an invoice tagged `kind='topup'`.
-  4. **Recent activity** — bestowals received (incoming) + topups + payouts in one timeline.
-- `src/routes/lazyPages.ts` + `src/routes/AppRoutes.tsx` *(edit)* — add `/wallet`.
-- Sidebar / dashboard nav *(edit, wherever the user menu lives — probably `src/components/Navbar*.tsx`)* — add "My Wallet" entry.
-- `supabase/functions/create-wallet-topup/index.ts` *(new)* — wraps `create-nowpayments-invoice` / `create-paypal-order`, stamps a `topups` row.
-- Migration: `topups` table (`id, user_id, provider, provider_order_id, amount, fee_amount, currency, status, created_at, completed_at`) with GRANTs + RLS (`auth.uid() = user_id`).
-- Webhook handlers *(edit `nowpayments-webhook`, `paypal-webhook`)* — when payment is for a topup, increment `sower_balances.available_balance` atomically (RPC `credit_sower_balance(user_id, amount)`).
-- New RPC `credit_sower_balance` *(migration)* — security definer, idempotent on `provider_order_id`.
+**Optional (recommended)**: a tiny `src/hooks/useBasketOrder.ts` mirroring `useNowPayments` shape so future call-sites reuse it.
 
-**Existing `WalletSettingsPage.tsx` / `UserWalletSettingsPage.tsx`:** keep as the *destination* editor (or fold into `PayoutSettingsPage` from B). `/wallet` is the new *balance + topup* page. Worth flagging the naming collision now and consolidating: rename existing to `/payout-settings` cleanly.
+### Files touched — TASK 1 summary
 
----
+- NEW migration: `basket_orders` table + grants + RLS + `basket_order_bestowals` + `finalize_basket_order` RPC.
+- NEW `supabase/functions/create-basket-bestowal-order/index.ts`.
+- EDIT `supabase/functions/nowpayments-webhook/index.ts` (add `basket:` branch).
+- EDIT `supabase/functions/paypal-webhook/index.ts` (add `basket:` branch in both event types).
+- EDIT `src/components/products/BestowalCheckout.tsx` (replace submit path).
+- DELETE (or 410-stub) `supabase/functions/complete-product-bestowal/index.ts` — **awaiting your call**.
+- NEW `src/hooks/useBasketOrder.ts` (optional).
 
-## E. Gosat-only platform treasury view
+### Explicit non-changes (scope-lock)
 
-**Files**
-- `src/pages/GosatTreasuryPage.tsx` *(new)* at route `/admin/treasury`, gated by `useUserRoles` → `gosat` only (mirror `AdminPayoutConfirmationsPage`'s `ProtectedRoute` setup).
-- `src/routes/AppRoutes.tsx` + `lazyPages.ts` *(edit)* — register route.
-- `supabase/functions/treasury-balances/index.ts` *(new)* — gosat-only edge function (verifies caller's role via service-role lookup on `user_roles`); calls:
-  - NOWPayments: `POST /v1/auth` → `GET /v1/balance` (already proven working). Returns `{currency, available, pending}` array.
-  - PayPal: `GET /v1/reporting/balances` with OAuth client_credentials.
-- The page displays both, plus a sum in USD (via existing `src/lib/i18n/currency.ts`).
-
-**Main vs admin/fee split — schema audit result:**
-- No current column tags "fee" vs "main" inside NOWPayments custody. Bestowals carry `processor_fee_amount` (paid by buyer to processor — never hits us) and the platform's revenue share would be implicit in `bestowals.distribution_data`. **There is no separate fee sub-account today.**
-- **Proposal:** rather than fabricating a split that doesn't exist, the page shows:
-  - **Custody total** (raw from provider APIs)
-  - **Reserved for sowers** = `SUM(sower_balances.available_balance + pending_balance)`
-  - **Platform net** = custody total − reserved for sowers
-  - Flag a banner: "Sow2Grow does not currently hold a separate fee wallet. Platform net is computed, not held in a distinct account. To enforce a hard split, create a second NOWPayments sub-account and route the platform's % there at distribution time."
-- No schema change in E; the "create a fee sub-account" is a follow-up the user can green-light separately.
+- `QuickBestowModal.tsx` untouched — it's the single-seed path and already secure.
+- `MyWalletPage` top-up flow untouched.
+- `distribute-bestowal` / payout dispatch untouched — finalize RPC reuses existing distribution code path.
+- No price recompute logic added to client.
 
 ---
 
-## Cross-cutting
+## TASK 2 — Navbar links
 
-- **One shared helper** `src/lib/payments/providerFees.ts` powers A, B, D — single edit point if fee ranges change.
-- **One shared component** `src/components/payments/ProviderPicker.tsx` used by A (buyer side) and B/D (payee side) with a `mode: 'buyer' | 'payee'` prop swapping the copy.
-- **Migrations needed total:** (1) `profiles.payout_setup_complete` + `payout_reminder_sent_at`, (2) `topups` table, (3) `credit_sower_balance` RPC, (4) trigger on `user_wallets` insert. All small, all in step B / D.
-- **No code is written until you approve this plan.**
+Single file: `src/components/Layout.jsx`.
+
+1. **Add a `isGosat` boolean** alongside the existing `isAdminOrGosat`:
+   - In the role-load `useEffect` (around line 78), also `setIsGosat(roles.includes('gosat'))` from a new `useState`.
+   - Add `shouldShowGosatOnly = useMemo(() => isGosat && !rolesLoading, ...)` next to `shouldShowAdminButton`.
+
+2. **"My Wallet" link** — add to `groupedNavigation` "Let It Rain" group (it's the money-related cluster) OR as a new entry in the existing dropdown that contains wallet items. Concretely, insert into the `"Let It Rain"` items array around line 180:
+   ```
+   { name: "My Wallet", href: "/wallet", icon: Wallet }
+   ```
+   `Wallet` icon is already imported (used by gosat's "Organization Wallets" entry).
+
+3. **"Treasury" link** — gosat-only. Add inside the existing `"gosat's"` group (around line 196-200) but conditional on `shouldShowGosatOnly` instead of the group's outer `shouldShowAdminButton`:
+   - Simplest: split into two spreads:
+     ```
+     ...(shouldShowAdminButton ? [{
+       name: "gosat's", icon: Settings,
+       items: [
+         ...existing items,
+         ...(shouldShowGosatOnly ? [{ name: "Treasury", href: "/admin/treasury", icon: Wallet }] : [])
+       ]
+     }] : [])
+     ```
+   - This keeps Treasury hidden from `admin`-only users and visible only to true `gosat`.
+
+4. No route changes (`/wallet` and `/admin/treasury` already registered in `AppRoutes.tsx`).
+
+### Files touched — TASK 2 summary
+
+- EDIT `src/components/Layout.jsx` only (add `isGosat` state, add 2 nav entries).
+
+---
+
+## Build order
+
+1. Migration (`basket_orders` + RPC).
+2. Edge function `create-basket-bestowal-order`.
+3. Webhook edits (NOWPayments + PayPal `basket:` branches).
+4. Frontend `BestowalCheckout.tsx` swap.
+5. Delete/stub `complete-product-bestowal` (after step 4 is verified).
+6. Layout.jsx nav links (independent — can land anytime; suggest last so they ship together).
+
+## Flags requesting your call
+
+- **Delete vs 410-stub** `complete-product-bestowal`? Recommend delete.
+- **Where the success celebration lives** post-redirect — propose follow-up task to make `PaymentSuccessPage` poll `basket_orders.status` and fire confetti there.
+- **XP award** moves into `finalize_basket_order` RPC (one award per basket, 100 XP × items).
+- **Quantity** — `basket_items` row has `quantity`; current BestowalCheckout ignores it. New flow respects it. Confirm that's desired.
