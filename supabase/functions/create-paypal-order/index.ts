@@ -6,6 +6,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 import { corsHeaders } from "npm:@supabase/supabase-js@2/cors";
 import { buildDistributionData } from "../_shared/distribution.ts";
 import { paypalFetch } from "../_shared/paypal/client.ts";
+import { resolveSowerPayout } from "../_shared/resolveSowerPayout.ts";
 
 interface RequestPayload {
   orchardId: string;
@@ -95,22 +96,16 @@ Deno.serve(async (req) => {
     const processorFee = ceil2(baseAmount * (Number.isFinite(feePct) ? feePct : 0.01));
     const buyerTotal = round2(baseAmount + processorFee);
 
-    // --- Resolve sower's PayPal email ----------------------------------------
-    const { data: wallet } = await service
-      .from("user_wallets")
-      .select("wallet_type, wallet_address, payout_currency")
-      .eq("user_id", orchard.user_id)
-      .eq("wallet_type", "paypal_email")
-      .eq("is_active", true)
-      .order("is_primary", { ascending: false })
-      .limit(1)
-      .maybeSingle();
-
-    if (!wallet?.wallet_address) {
+    // --- Resolve sower's preferred payout wallet (shared deterministic resolver) ---
+    // The buyer paid via PayPal, but the sower's payout rail is whichever they
+    // configured (NOWPayments crypto OR PayPal email). We never block a PayPal-in
+    // payment because the sower chose a crypto payout.
+    const wallet = await resolveSowerPayout(service, orchard.user_id);
+    if (!wallet) {
       return json(
         {
           error: "no_payout_method",
-          message: "Sower has no active PayPal email payout wallet configured.",
+          message: "Sower has no active NOWPayments or PayPal payout wallet configured.",
         },
         409,
       );
@@ -153,9 +148,9 @@ Deno.serve(async (req) => {
         processor_fee_amount: processorFee,
         processor_fee_currency: "USD",
         buyer_total_amount: buyerTotal,
-        payout_provider: "paypal",
+        payout_provider: wallet.payout_provider,
         payout_destination: wallet.wallet_address,
-        payout_currency: wallet.payout_currency ?? "USD",
+        payout_currency: wallet.payout_currency ?? (wallet.payout_provider === "paypal" ? "USD" : null),
         payout_status: "pending",
       })
       .select("id")
