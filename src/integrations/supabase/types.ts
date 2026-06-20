@@ -574,6 +574,27 @@ export type Database = {
         }
         Relationships: []
       }
+      app_settings: {
+        Row: {
+          key: string
+          updated_at: string
+          updated_by: string | null
+          value: Json
+        }
+        Insert: {
+          key: string
+          updated_at?: string
+          updated_by?: string | null
+          value: Json
+        }
+        Update: {
+          key?: string
+          updated_at?: string
+          updated_by?: string | null
+          value?: Json
+        }
+        Relationships: []
+      }
       arweave_exports: {
         Row: {
           arweave_tx_id: string | null
@@ -13632,6 +13653,7 @@ export type Database = {
         Args: { _room_id: string; _user_id: string }
         Returns: boolean
       }
+      is_companion_promo_active: { Args: never; Returns: boolean }
       is_council_member: { Args: { _user_id: string }; Returns: boolean }
       is_marketplace_admin: { Args: { _uid: string }; Returns: boolean }
       is_member_of_chat: {
@@ -13806,6 +13828,10 @@ export type Database = {
       send_tribal_hearts_spark: {
         Args: { _message?: string; _recipient_id: string; _voice_url?: string }
         Returns: Json
+      }
+      set_companion_promo_ends_at: {
+        Args: { _ends_at: string }
+        Returns: string
       }
       set_security_questions: {
         Args: {

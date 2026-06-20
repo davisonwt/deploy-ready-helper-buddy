@@ -14,8 +14,11 @@ const corsHeaders = {
 
 const MODEL_I2V = "wan-video/wan-2.2-i2v-fast";
 const MODEL_T2V = "wan-video/wan-2.2-t2v-fast";
-const COST_USD_I2V = 0.08;
-const COST_USD_T2V = 0.10;
+// Real Replicate pricing (verified 2026-06-20):
+//   wan-2.2-i2v-fast 480p interpolate = $0.065/video
+//   wan-2.2-t2v-fast 480p             = $0.05/video
+const COST_USD_I2V = 0.065;
+const COST_USD_T2V = 0.05;
 
 const VIDEO_CAPS: Record<string, number> = {
   sower: 1,
@@ -23,6 +26,11 @@ const VIDEO_CAPS: Record<string, number> = {
   ambassador: 8,
   council: 9999,
 };
+
+// Promo safety ceilings (used when companion promo is active to bypass
+// tier caps without removing all guardrails).
+const PROMO_PER_USER_VIDEO_CAP = 50;
+const PROMO_GLOBAL_VIDEO_CAP = 500;
 
 serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
@@ -61,7 +69,12 @@ serve(async (req) => {
     const effectiveTier = (tier as string) || "sower";
     const dailyCap = VIDEO_CAPS[effectiveTier] ?? VIDEO_CAPS.sower;
 
-    // Count today's video generations for this user (kind='video' in companion_runs)
+    // Promo bypass (sower tier only — keeper/ambassador/council keep their own caps)
+    const { data: promoActive } = await supabase.rpc("is_companion_promo_active");
+    const promoApplies = promoActive === true && effectiveTier === "sower";
+    const effectiveDailyCap = promoApplies ? PROMO_PER_USER_VIDEO_CAP : dailyCap;
+
+    // Count today's video generations for this user
     const since = new Date(Date.now() - 24 * 3600 * 1000).toISOString();
     const { count: videoUsed } = await supabase
       .from("s2g_companion_runs")
@@ -69,11 +82,30 @@ serve(async (req) => {
       .eq("user_id", user.id)
       .eq("kind", "video")
       .gte("created_at", since);
-    if ((videoUsed ?? 0) >= dailyCap) {
+    if ((videoUsed ?? 0) >= effectiveDailyCap) {
       return json(
-        { error: `Daily video limit reached for your tier (${effectiveTier}). Resets in 24h.` },
+        {
+          error: promoApplies
+            ? `Promo safety ceiling reached (${PROMO_PER_USER_VIDEO_CAP} videos/24h). Resets in 24h.`
+            : `Daily video limit reached for your tier (${effectiveTier}). Resets in 24h.`,
+        },
         429,
       );
+    }
+
+    // Global platform-wide ceiling during promo (cheap insurance).
+    if (promoActive === true) {
+      const { count: globalVideoUsed } = await supabase
+        .from("s2g_companion_runs")
+        .select("id", { count: "exact", head: true })
+        .eq("kind", "video")
+        .gte("created_at", since);
+      if ((globalVideoUsed ?? 0) >= PROMO_GLOBAL_VIDEO_CAP) {
+        return json(
+          { error: `Platform-wide promo video ceiling reached (${PROMO_GLOBAL_VIDEO_CAP}/24h). Try again later.` },
+          429,
+        );
+      }
     }
 
     // Birch monthly quota (chat + costly actions share the budget).

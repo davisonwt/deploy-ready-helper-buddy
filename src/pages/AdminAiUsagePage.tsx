@@ -14,6 +14,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Loader2, AlertTriangle } from "lucide-react";
+import { CompanionPromoControl } from "@/components/admin/CompanionPromoControl";
 
 type Run = {
   id: string;
@@ -276,6 +277,10 @@ export default function AdminAiUsagePage() {
           </Button>
         </div>
       </header>
+
+      <CompanionPromoControl />
+
+
 
       {err && (
         <Card className="border-destructive">
