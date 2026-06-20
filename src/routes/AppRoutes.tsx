@@ -84,6 +84,7 @@ import {
   SellerCredentialsPage,
   TribalHeartsPage,
   AdminCredentialsPage,
+  AdminPayoutConfirmationsPage,
   AdminAttachCoversPage,
   EditForm,
   ProductBasketPage,
@@ -442,6 +443,9 @@ const AppRoutes = () => (
     } />
     <Route path="/admin/credentials" element={
       <ProtectedRoute allowedRoles={['admin', 'gosat']}><Layout><Suspense fallback={<LoadingFallback />}><AdminCredentialsPage /></Suspense></Layout></ProtectedRoute>
+    } />
+    <Route path="/admin/payout-confirmations" element={
+      <ProtectedRoute allowedRoles={['admin', 'gosat']}><Layout><Suspense fallback={<LoadingFallback />}><AdminPayoutConfirmationsPage /></Suspense></Layout></ProtectedRoute>
     } />
     <Route path="/admin/attach-covers" element={
       <ProtectedRoute allowedRoles={['admin', 'gosat']}><Layout><Suspense fallback={<LoadingFallback />}><AdminAttachCoversPage /></Suspense></Layout></ProtectedRoute>
