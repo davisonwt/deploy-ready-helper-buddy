@@ -1,9 +1,12 @@
 import { useMemo, useState } from "react";
+import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Loader2, Image as ImageIcon, Film, Mic } from "lucide-react";
+import { Loader2, Image as ImageIcon, Film, Mic, Send, Share2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useGenerationPolling } from "@/hooks/useGenerationPolling";
+import { postArtifactToGrove } from "@/lib/companions/postToGrove";
+import { shareArtifact } from "@/lib/share/nativeShare";
 
 export interface ReelPlan {
   scenes?: Array<{ shot?: string; duration_s?: number; image_prompt?: string }>;
@@ -46,11 +49,23 @@ export default function BirchGenerationPanel({ plan, onArtifact }: Props) {
   const [busyVid, setBusyVid] = useState(false);
   const [busyVoice, setBusyVoice] = useState(false);
   const [videoGenId, setVideoGenId] = useState<string | null>(null);
+  const [lastArtifact, setLastArtifact] = useState<
+    { url: string; type: "image" | "video"; thumbnail?: string } | null
+  >(null);
+  const [busyPost, setBusyPost] = useState(false);
+  const [busyShare, setBusyShare] = useState(false);
+
+  const caption = plan.caption ?? plan.voiceover_script?.slice(0, 180) ?? "";
 
   const videoState = useGenerationPolling(videoGenId);
   useMemo(() => {
     if (videoState.status === "completed" && videoState.videoUrl) {
       onArtifact("Here's your reel:", { video: videoState.videoUrl });
+      setLastArtifact({
+        url: videoState.videoUrl,
+        type: "video",
+        thumbnail: coverUrl ?? undefined,
+      });
       setBusyVid(false);
       setVideoGenId(null);
     } else if (videoState.status === "failed") {
@@ -82,6 +97,7 @@ export default function BirchGenerationPanel({ plan, onArtifact }: Props) {
       const url = (data as any)?.imageUrl;
       if (!url) throw new Error("No image returned");
       setCoverUrl(url);
+      setLastArtifact({ url, type: "image" });
       onArtifact("Cover image ready.", { image: url });
     } catch (e: any) {
       toast({ title: "Cover image failed", description: e?.message ?? "Try again", variant: "destructive" });
@@ -144,6 +160,57 @@ export default function BirchGenerationPanel({ plan, onArtifact }: Props) {
     }
   };
 
+  const postToGrove = async () => {
+    if (!lastArtifact) return;
+    setBusyPost(true);
+    try {
+      await postArtifactToGrove({
+        mediaUrl: lastArtifact.url,
+        mediaType: lastArtifact.type,
+        caption,
+        thumbnailUrl: lastArtifact.thumbnail,
+      });
+      toast({
+        title: "Posted to the grove",
+        description: "Your post is now in the SeedFlow feed.",
+        action: (
+          <Link to="/seedflow" className="text-xs underline">
+            View
+          </Link>
+        ) as any,
+      });
+    } catch (e: any) {
+      toast({ title: "Could not post", description: e?.message ?? "Try again", variant: "destructive" });
+    } finally {
+      setBusyPost(false);
+    }
+  };
+
+  const shareArtifactNow = async () => {
+    if (!lastArtifact) return;
+    setBusyShare(true);
+    try {
+      const result = await shareArtifact({
+        mediaUrl: lastArtifact.url,
+        mediaType: lastArtifact.type,
+        caption,
+      });
+      if (result === "shared") {
+        toast({ title: "Shared", description: "Handed off to your share sheet." });
+      } else if (result === "downloaded") {
+        toast({
+          title: "Saved + caption copied",
+          description: "Paste it into Instagram / WhatsApp / TikTok.",
+        });
+      }
+      // 'cancelled' → silent
+    } catch (e: any) {
+      toast({ title: "Share failed", description: e?.message ?? "Try again", variant: "destructive" });
+    } finally {
+      setBusyShare(false);
+    }
+  };
+
   return (
     <div className="rounded-md border border-primary/30 bg-primary/5 p-3 space-y-2">
       <div className="text-xs font-medium text-foreground">Ready to make it real?</div>
@@ -179,6 +246,28 @@ export default function BirchGenerationPanel({ plan, onArtifact }: Props) {
           <span className="ml-1 text-[10px] text-muted-foreground">~$0.01</span>
         </Button>
       </div>
+      {lastArtifact && (
+        <div className="flex flex-wrap gap-2 pt-1 border-t border-primary/20">
+          <Button
+            size="sm"
+            variant="default"
+            disabled={busyPost}
+            onClick={postToGrove}
+          >
+            {busyPost ? <Loader2 className="h-3 w-3 animate-spin mr-1" /> : <Send className="h-3 w-3 mr-1" />}
+            Post to my Grove feed
+          </Button>
+          <Button
+            size="sm"
+            variant="outline"
+            disabled={busyShare}
+            onClick={shareArtifactNow}
+          >
+            {busyShare ? <Loader2 className="h-3 w-3 animate-spin mr-1" /> : <Share2 className="h-3 w-3 mr-1" />}
+            Share
+          </Button>
+        </div>
+      )}
       {coverUrl && <img src={coverUrl} alt="cover" className="rounded max-w-[160px]" />}
       {busyVid && (
         <div className="text-xs text-muted-foreground flex items-center gap-1">
