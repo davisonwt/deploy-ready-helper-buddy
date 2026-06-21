@@ -97,6 +97,7 @@ export default function BirchGenerationPanel({ plan, onArtifact }: Props) {
       const url = (data as any)?.imageUrl;
       if (!url) throw new Error("No image returned");
       setCoverUrl(url);
+      setLastArtifact({ url, type: "image" });
       onArtifact("Cover image ready.", { image: url });
     } catch (e: any) {
       toast({ title: "Cover image failed", description: e?.message ?? "Try again", variant: "destructive" });
