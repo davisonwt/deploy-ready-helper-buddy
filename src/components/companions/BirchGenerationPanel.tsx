@@ -49,11 +49,23 @@ export default function BirchGenerationPanel({ plan, onArtifact }: Props) {
   const [busyVid, setBusyVid] = useState(false);
   const [busyVoice, setBusyVoice] = useState(false);
   const [videoGenId, setVideoGenId] = useState<string | null>(null);
+  const [lastArtifact, setLastArtifact] = useState<
+    { url: string; type: "image" | "video"; thumbnail?: string } | null
+  >(null);
+  const [busyPost, setBusyPost] = useState(false);
+  const [busyShare, setBusyShare] = useState(false);
+
+  const caption = plan.caption ?? plan.voiceover_script?.slice(0, 180) ?? "";
 
   const videoState = useGenerationPolling(videoGenId);
   useMemo(() => {
     if (videoState.status === "completed" && videoState.videoUrl) {
       onArtifact("Here's your reel:", { video: videoState.videoUrl });
+      setLastArtifact({
+        url: videoState.videoUrl,
+        type: "video",
+        thumbnail: coverUrl ?? undefined,
+      });
       setBusyVid(false);
       setVideoGenId(null);
     } else if (videoState.status === "failed") {
