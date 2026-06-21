@@ -160,6 +160,57 @@ export default function BirchGenerationPanel({ plan, onArtifact }: Props) {
     }
   };
 
+  const postToGrove = async () => {
+    if (!lastArtifact) return;
+    setBusyPost(true);
+    try {
+      await postArtifactToGrove({
+        mediaUrl: lastArtifact.url,
+        mediaType: lastArtifact.type,
+        caption,
+        thumbnailUrl: lastArtifact.thumbnail,
+      });
+      toast({
+        title: "Posted to the grove",
+        description: "Your post is now in the SeedFlow feed.",
+        action: (
+          <Link to="/seedflow" className="text-xs underline">
+            View
+          </Link>
+        ) as any,
+      });
+    } catch (e: any) {
+      toast({ title: "Could not post", description: e?.message ?? "Try again", variant: "destructive" });
+    } finally {
+      setBusyPost(false);
+    }
+  };
+
+  const shareArtifactNow = async () => {
+    if (!lastArtifact) return;
+    setBusyShare(true);
+    try {
+      const result = await shareArtifact({
+        mediaUrl: lastArtifact.url,
+        mediaType: lastArtifact.type,
+        caption,
+      });
+      if (result === "shared") {
+        toast({ title: "Shared", description: "Handed off to your share sheet." });
+      } else if (result === "downloaded") {
+        toast({
+          title: "Saved + caption copied",
+          description: "Paste it into Instagram / WhatsApp / TikTok.",
+        });
+      }
+      // 'cancelled' → silent
+    } catch (e: any) {
+      toast({ title: "Share failed", description: e?.message ?? "Try again", variant: "destructive" });
+    } finally {
+      setBusyShare(false);
+    }
+  };
+
   return (
     <div className="rounded-md border border-primary/30 bg-primary/5 p-3 space-y-2">
       <div className="text-xs font-medium text-foreground">Ready to make it real?</div>
