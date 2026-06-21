@@ -246,6 +246,28 @@ export default function BirchGenerationPanel({ plan, onArtifact }: Props) {
           <span className="ml-1 text-[10px] text-muted-foreground">~$0.01</span>
         </Button>
       </div>
+      {lastArtifact && (
+        <div className="flex flex-wrap gap-2 pt-1 border-t border-primary/20">
+          <Button
+            size="sm"
+            variant="default"
+            disabled={busyPost}
+            onClick={postToGrove}
+          >
+            {busyPost ? <Loader2 className="h-3 w-3 animate-spin mr-1" /> : <Send className="h-3 w-3 mr-1" />}
+            Post to my Grove feed
+          </Button>
+          <Button
+            size="sm"
+            variant="outline"
+            disabled={busyShare}
+            onClick={shareArtifactNow}
+          >
+            {busyShare ? <Loader2 className="h-3 w-3 animate-spin mr-1" /> : <Share2 className="h-3 w-3 mr-1" />}
+            Share
+          </Button>
+        </div>
+      )}
       {coverUrl && <img src={coverUrl} alt="cover" className="rounded max-w-[160px]" />}
       {busyVid && (
         <div className="text-xs text-muted-foreground flex items-center gap-1">
