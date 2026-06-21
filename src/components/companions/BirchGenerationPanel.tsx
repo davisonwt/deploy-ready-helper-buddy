@@ -1,9 +1,12 @@
 import { useMemo, useState } from "react";
+import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Loader2, Image as ImageIcon, Film, Mic } from "lucide-react";
+import { Loader2, Image as ImageIcon, Film, Mic, Send, Share2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useGenerationPolling } from "@/hooks/useGenerationPolling";
+import { postArtifactToGrove } from "@/lib/companions/postToGrove";
+import { shareArtifact } from "@/lib/share/nativeShare";
 
 export interface ReelPlan {
   scenes?: Array<{ shot?: string; duration_s?: number; image_prompt?: string }>;
