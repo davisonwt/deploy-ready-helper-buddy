@@ -1,78 +1,88 @@
-## Goal
-Add two buttons to Birch's generated-artifact UI:
-- **Tier 1 — "Post to my Grove feed"** → real post into the existing tribal feed.
-- **Tier 2 — "Share"** → device-native share sheet via Web Share API, with desktop fallback.
-Tier 3 (autonomous external auto-posting) is explicitly out of scope.
 
-## Where the real feed actually lives
+# ChatApp Go-Live launcher — investigation report
 
-Searched the codebase. The "Grove feed" you see at `/grove` (`useGroveFeed.tsx`) is an aggregator of **chat_rooms / premium_rooms / radio**, not a posts table — companion-generated images/videos do not belong there.
+Source of truth for the launcher: `src/pages/CommunicationsHub.tsx` (`LAUNCH_TYPES` + `createLaunch`). Each tile inserts a row in a different table and then `navigate(actionUrl)` to a destination route.
 
-The actual TikTok-style tribal feed that mixes **everyone's media posts + seeds + products + radio + community videos** is `TribalAliveFeedPage.tsx` ("SeedFlow", route surfaces media via the **`memry_posts`** table — see line 218: `supabase.from('memry_posts').select('id, user_id, content_type, media_url, thumbnail_url, caption, content_category, created_at')`).
+DB row counts (live): live_rooms=1, chat_rooms=82, chat_messages=179, classroom_sessions=1, skilldrop_sessions=1, premium_rooms=1, radio_broadcasts=0, live_room_participants=0, live_call_participants=0.
 
-So `memry_posts` is the correct, real post row for a free-form companion-generated image or video with a caption. Same author (`user_id = auth.uid()`), real row, appears in the real SeedFlow feed alongside everything else — no parallel/fake system.
+Note that the `LAUNCH_TYPES` list maps Training → `premium_rooms`, not a training-specific table.
 
-Assumption to confirm if wrong: **memry_posts is the right target**, not `seeds` (seeds are structured fundraising entities, not casual posts) and not `community_videos` (that's the moderated long-form video pipeline). If you'd rather target `community_videos` for videos specifically, say so and I'll branch the routing by media type.
+---
 
-## File-level changes
+## 1. 1-on-1 Live  →  VERDICT: BROKEN
 
-### 1. `src/lib/companions/postToGrove.ts` (new)
-Thin helper, single export:
-```
-postArtifactToGrove({ mediaUrl, mediaType: 'image'|'video', caption, thumbnailUrl? }) → { postId }
-```
-- Resolves `auth.uid()`.
-- Inserts a row into `memry_posts`:
-  - `user_id` = caller
-  - `content_type` = `'image' | 'video'` (matches existing values used by SeedFlow)
-  - `content_category` = `'companion_birch'` (so we can later filter/attribute companion-origin posts in the AI usage dashboard if useful — no UI impact)
-  - `media_url` = generated asset URL
-  - `thumbnail_url` = cover image when posting a video
-  - `caption` = `plan.caption`
-- Returns the new post id. Throws on failure; caller toasts.
+- **Insert:** `live_rooms` (`name, slug, description, max_participants:2, created_by, is_active:true`).
+- **Destination:** `navigate("/live-rooms?room=<id>")`.
+- **Route conflict:** `src/routes/AppRoutes.tsx` declares `/live-rooms` **twice** — line 331 `<LiveRooms />` and line 443 `<LiveRoomsPage />`. React Router picks the first one.
+  - `LiveRooms` (`src/pages/LiveRooms.tsx`) queries **`chat_rooms`**, not `live_rooms` (line 38). So the freshly inserted `live_rooms` row is invisible.
+  - The Jitsi-capable `LiveRoomsPage` (which actually queries `live_rooms` and embeds `JitsiRoom`) is **unreachable** via this route.
+  - `?room=<id>` query param is ignored by both pages — no auto-join.
+- **RLS:** `live_rooms` SELECT policy is `is_active = true` — i.e. **any authenticated user can list and join any active 1-on-1**, no participant/invitee gate. `live_room_participants` and `live_call_participants` are both empty, so no enforcement exists in data either.
+- **Backend:** Jitsi (when reachable) via `JitsiRoom`. No custom WebRTC. No edge function backing the 1-on-1 flow.
+- **Evidence of dead-end:** invitees inserted only into `user_notifications` with an `action_url` pointing at the broken `/live-rooms?room=...` URL.
 
-No new table, no new edge function, no migration — `memry_posts` already exists with RLS letting an authed user insert their own row.
+## 2. Community Chat  →  VERDICT: PLACEHOLDER-ONLY (dead-end redirect)
 
-### 2. `src/lib/share/nativeShare.ts` (new)
-Single export:
-```
-shareArtifact({ mediaUrl, mediaType, caption, filename }) → 'shared'|'downloaded'|'cancelled'
-```
-Behaviour:
-1. Fetch the asset URL as a `Blob`, wrap in `File`.
-2. If `navigator.canShare?.({ files: [file] })` → call `navigator.share({ files, text: caption })`. Resolve `'shared'`. Swallow `AbortError` as `'cancelled'`.
-3. Else (desktop Chrome/Firefox without file-share support):
-   - Trigger a download of the file (anchor with `download` attr + object URL, revoke after).
-   - Copy `caption` to clipboard via `navigator.clipboard.writeText`.
-   - Return `'downloaded'` so caller can toast: *"Saved to downloads + caption copied — paste it into Instagram/WhatsApp/TikTok."*
-4. If both share and clipboard unavailable → throw, caller toasts a fallback message.
+- **Insert:** `chat_rooms` (`room_type:'group'`, metadata stashes `scheduled_at`, `files`, `price`).
+- **Destination:** `navigate("/chatapp?room=<id>")`.
+- **Route:** `AppRoutes.tsx:272` — `/chatapp` is a `<Navigate to="/communications-hub#chats" replace />`. The `?room=<id>` query is **dropped** during the Navigate. User lands back on the same CommunicationsHub page (`#chats` doesn't render anything special there; the hub has no chat list view).
+- The real `ChatApp` page (`src/pages/ChatApp.tsx`, which reads `?room=` and embeds `JitsiCall`) is **orphaned** — no route mounts it. So the creator never sees the room they just created from this entry point.
+- **Tables actually working:** `chat_rooms` (82 rows), `chat_messages` (179 rows), `chat_participants` exist with sound RLS (`chat_messages` SELECT gated by `chat_participants.is_active=true`). But the launcher does **not** insert any `chat_participants` rows, so even if you reached `ChatApp`, the creator wouldn't satisfy the SELECT policy for messages.
+- **Auth:** chat_rooms SELECT is `created_by OR is_member_of_chat(...)` — sound. But because launcher skips `chat_participants`, the invitees can't read either.
 
-No dependency on any new package; pure browser APIs.
+## 3. Classroom  →  VERDICT: PARTIALLY WORKING (row created + listed in feed, no actual classroom UI)
 
-### 3. `src/components/companions/BirchGenerationPanel.tsx` (edit)
-The user said "exact UI placement: where the Generate buttons currently are". The Generate buttons live in the bottom action bar (lines ~150-188). Plan:
+- **Insert:** `classroom_sessions` (`title, description, scheduled_at, instructor_id, is_free, session_fee, status:'scheduled'`).
+- **Destination:** `navigate("/orchard-alive?classroom=<id>")` → `TribalAliveFeedPage`.
+- `TribalAliveFeedPage` does `useSearchParams` but only reads `tier` (line 123) — `?classroom=<id>` is **ignored**. It does fetch `classroom_sessions` (line 229) and render each as a feed card with `href: "/classroom"` (line 461). `/classroom` route does **not exist** in `AppRoutes.tsx` → clicking through is a 404.
+- No Jitsi/WebRTC wiring. No "join lecture" button bound to a meeting URL. The `classroom_sessions` table has `meeting_url` columns elsewhere, but the launcher doesn't populate them.
+- **RLS:** SELECT policy `Authenticated users can view all classroom sessions: true` — wide open, no circle gating, despite a second per-circle policy. (Policies are OR'd, so the permissive one wins.) **Not correctly scoped**: anyone can see Classroom rows meant to be circle-gated.
+- 1 row currently in table — confirms creation works, viewing does not.
 
-- Track the latest generated artifact in component state: `lastArtifact: { url, type: 'image'|'video', thumbnail?: string } | null` — set inside `generateCover` (image), the `videoState.status === 'completed'` effect (video). (We deliberately skip voiceover for now — audio-only posting/sharing is a separate request.)
-- When `lastArtifact` is non-null, render a **second row** inside the existing `<div className="rounded-md border border-primary/30 bg-primary/5 p-3 space-y-2">` directly under the Generate row:
-  - `[ 📤 Post to my Grove feed ]   [ ↗ Share ]`
-  - Both `size="sm"`, `variant="default"` for Post (primary CTA — this is the real publish action) and `variant="outline"` for Share.
-- Post button → calls `postArtifactToGrove(...)`, on success toast *"Posted to the grove"* with a small link/button to `/seedflow` (the route that renders `TribalAliveFeedPage`).
-- Share button → calls `shareArtifact(...)`, toasts based on returned state.
-- Both buttons show a `Loader2` while in-flight; disable while busy.
-- Caption passed to both = `plan.caption ?? plan.voiceover_script?.slice(0,180) ?? ''`.
+## 4. SkillDrop  →  VERDICT: PARTIALLY WORKING (same shape as Classroom)
 
-No changes to companion-invoke, generate-thumbnail, generate-video, generate-voiceover edge functions. No DB migration. No new routes.
+- **Insert:** `skilldrop_sessions` (`title, description, scheduled_at, presenter_id, pricing_type, session_fee, status:'scheduled'`).
+- **Destination:** `navigate("/orchard-alive?skilldrop=<id>")` — also ignored by `TribalAliveFeedPage`. Feed card href is `/skilldrop` (line 477), and `/skilldrop` is **not a registered route** → 404.
+- No Jitsi/WebRTC wiring; no join flow; `host_application` / `subscriptions` tables exist (`skilldrop_host_applications`, `skilldrop_session_subscriptions`) but launcher doesn't touch them.
+- **RLS:** SELECT is `circle_id IS NULL OR member_of_circle OR presenter_id = auth.uid()`. Launcher inserts `circle_id = NULL`, so **every SkillDrop session created here is publicly visible to all authenticated users**, regardless of presenter intent.
+- 1 row in table.
 
-### 4. (No change) `src/pages/TribalAliveFeedPage.tsx`
-Already reads `memry_posts` and maps it into the feed — newly inserted rows will surface automatically with no edits.
+## 5. Training  →  VERDICT: PARTIALLY WORKING (row + viewer exist, no live-call surface)
 
-## Out of scope (deliberate)
-- Tier 3 autonomous cross-posting to IG/TikTok/FB Graph APIs.
-- Voiceover-only posts (no caller asked).
-- Editing the caption before posting/sharing (could be a v2 — right now it uses `plan.caption` verbatim).
-- Any change to AI usage dashboard, promo logic, or generation cost constants.
+- **Insert:** `premium_rooms` (`creator_id, title, description, room_type:'training', is_public:true, price, pricing_type, documents/artwork/music`).
+- **Destination:** `navigate("/premium-room/<id>")` → `PremiumRoomViewPage` (`src/pages/PremiumRoomViewPage.tsx`) which **does** load the row by `useParams.id` (line 39, 237). So the creator and other users land on a real detail page.
+- However, this is a content/media viewer, not a "training session" with a live call. No JitsiCall/JitsiRoom is mounted from this page based on my read. So it's a misnamed Training tile that really creates a public premium-room listing.
+- Forced `is_public: true` means even sessions a creator wanted private get exposed; the launcher offers no "private" toggle.
+- **RLS:** `Users can view public premium rooms (is_public = true)` OR owner — sound for the chosen public flag.
+- 1 row in table.
 
-## Open questions before I build
-1. Confirm `memry_posts` is the right target (vs. `seeds` or `community_videos`).
-2. Confirm the Post CTA should jump to `/seedflow` on success, not stay in place.
-3. OK to skip a "review/edit caption" step for v1 and post the verbatim `plan.caption`?
+## 6. Radio  →  VERDICT: BROKEN
+
+- **Insert:** `radio_broadcasts` (`title, description, scheduled_at, broadcaster_id, status:'scheduled', thumbnail_url`).
+- **Destination:** `navigate("/grove-station?radio=<id>")` → `GroveStationPage.jsx`. Searched the file: **zero references** to `radio_broadcasts`, `radio=`, `searchParams`, or `broadcaster`. The `?radio=<id>` is silently ignored; the page renders the generic Grove Station landing.
+- **RLS — fatal bug:** `radio_broadcasts` SELECT is gated by `circle_id IN (user's circles)`. Launcher inserts **without `circle_id`** (NULL). NULL is not `IN (...)`, so the SELECT policy returns the row to **no one — not even the broadcaster who created it**. Combined with the destination ignoring the row, the radio entry is end-to-end dead.
+- No edge function for radio session start (e.g. `grove-station-stream` exists but is for streaming, not for "go-live a scheduled broadcast"). 0 rows in `radio_broadcasts` confirms no one has ever successfully used this path.
+
+---
+
+## Cross-cutting issues
+
+- **Duplicate `/live-rooms` route** (AppRoutes.tsx:331 and :443) — first wins, shadows the working Jitsi-backed page.
+- **Orphan page:** `src/pages/ChatApp.tsx` — the only place that reads `?room=` and embeds `JitsiCall` for chat — has no route after the `/chatapp → /communications-hub` redirect was added.
+- **Invitee notifications** (`user_notifications` inserts) point at action URLs that lead to dead-ends (Classroom/SkillDrop 404, Community Chat redirect-loop, Radio nowhere, 1-on-1 wrong table). Invitees who tap notifications will land on broken pages.
+- **No `chat_participants` insert on community chat creation** — even if the destination page existed, the creator wouldn't satisfy the messages SELECT policy.
+- **`/classroom` and `/skilldrop` routes are absent** from `AppRoutes.tsx`.
+- **No console errors are guaranteed** because the failure mode is silent (queries return empty rows / redirect to a working page / 404 page); errors visible only after Click-through to non-existent routes.
+
+## Per-feature summary table
+
+| Feature | DB insert | Destination route | Reachable? | Backend (Jitsi/etc) wired? | Auth gating | Verdict |
+|---|---|---|---|---|---|---|
+| 1-on-1 Live | live_rooms ✅ | /live-rooms?room=… | Wrong page mounted (LiveRooms reads chat_rooms); Jitsi page unreachable | No | SELECT open to all auth users (no invitee gate) | BROKEN |
+| Community Chat | chat_rooms ✅ | /chatapp?room=… | Redirect strips param; ChatApp page is orphaned | Jitsi exists in orphan page only | RLS sound on chat_rooms/messages, but no chat_participants insert | PLACEHOLDER-ONLY |
+| Classroom | classroom_sessions ✅ | /orchard-alive?classroom=… | Feed lists row; per-id viewer 404 (`/classroom`) | No | SELECT wide-open ("Authenticated… true") | PARTIALLY WORKING |
+| SkillDrop | skilldrop_sessions ✅ | /orchard-alive?skilldrop=… | Same as Classroom; `/skilldrop` 404 | No | circle_id NULL ⇒ public to all auth users | PARTIALLY WORKING |
+| Training | premium_rooms ✅ | /premium-room/:id | Yes, viewer renders | No live-call surface | is_public:true forced; RLS sound for that | PARTIALLY WORKING |
+| Radio | radio_broadcasts ✅ | /grove-station?radio=… | Param ignored, no per-id viewer | No | RLS requires circle_id but launcher leaves it NULL → invisible to all incl. creator | BROKEN |
+
+No code changes made. Awaiting your instruction on which (if any) of these to fix first.
