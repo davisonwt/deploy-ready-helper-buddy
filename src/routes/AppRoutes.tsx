@@ -328,9 +328,6 @@ const AppRoutes = () => (
     <Route path="/radio-sessions" element={
       <ProtectedRoute><Layout><RadioSessions /></Layout></ProtectedRoute>
     } />
-    <Route path="/live-rooms" element={
-      <ProtectedRoute><Layout><LiveRooms /></Layout></ProtectedRoute>
-    } />
     <Route path="/radio-generator" element={
       <ProtectedRoute><Layout><RadioGenerator /></Layout></ProtectedRoute>
     } />
