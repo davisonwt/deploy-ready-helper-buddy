@@ -76,7 +76,7 @@ import {
   PaypalTestPage,
   SowerProfile,
   RadioSessions,
-  LiveRooms,
+  
   RadioGenerator,
   LiveRoomsPage,
   CreateLiveRoomPage,
@@ -328,9 +328,6 @@ const AppRoutes = () => (
     <Route path="/radio-sessions" element={
       <ProtectedRoute><Layout><RadioSessions /></Layout></ProtectedRoute>
     } />
-    <Route path="/live-rooms" element={
-      <ProtectedRoute><Layout><LiveRooms /></Layout></ProtectedRoute>
-    } />
     <Route path="/radio-generator" element={
       <ProtectedRoute><Layout><RadioGenerator /></Layout></ProtectedRoute>
     } />
@@ -441,8 +438,9 @@ const AppRoutes = () => (
       <Layout><Suspense fallback={<LoadingFallback />}><AdvancedSearchPage /></Suspense></Layout>
     } />
     <Route path="/live-rooms" element={
-      <Layout><LiveRoomsPage /></Layout>
+      <ProtectedRoute><Layout><LiveRoomsPage /></Layout></ProtectedRoute>
     } />
+
     <Route path="/create-live-room" element={
       <ProtectedRoute><Layout><CreateLiveRoomPage /></Layout></ProtectedRoute>
     } />

@@ -116,7 +116,7 @@ export const NowPaymentsTestPage = lazy(() => import('@/pages/NowPaymentsTestPag
 export const PaypalTestPage = lazy(() => import('@/pages/PaypalTestPage'));
 export const SowerProfile = lazy(() => import('@/pages/SowerProfile'));
 export const RadioSessions = lazy(() => import('@/pages/RadioSessions'));
-export const LiveRooms = lazy(() => import('@/pages/LiveRooms'));
+
 export const RadioGenerator = lazy(() => import('@/pages/RadioGenerator'));
 export const LiveRoomsPage = lazy(() => import('@/pages/LiveRoomsPage'));
 export const CreateLiveRoomPage = lazy(() => import('@/pages/CreateLiveRoomPage'));

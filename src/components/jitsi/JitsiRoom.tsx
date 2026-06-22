@@ -11,6 +11,7 @@ interface JitsiRoomProps {
   domain?: string;
   onLeave?: () => void;
   isModerator?: boolean;
+  audioOnly?: boolean;
 }
 
 export default function JitsiRoom({
@@ -19,7 +20,9 @@ export default function JitsiRoom({
   domain = JITSI_CONFIG.domain,
   onLeave,
   isModerator = false,
+  audioOnly = false,
 }: JitsiRoomProps) {
+
   const jitsiContainer = useRef<HTMLDivElement>(null);
   const jitsiApi = useRef<any>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -67,8 +70,10 @@ export default function JitsiRoom({
           },
           configOverwrite: {
             startWithAudioMuted: false,
-            startWithVideoMuted: false,
+            startWithVideoMuted: audioOnly,
+            startAudioOnly: audioOnly,
             enableWelcomePage: false,
+
             prejoinPageEnabled: false,
             disableDeepLinking: true,
             enableClosePage: false,
