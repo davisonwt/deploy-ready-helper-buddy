@@ -73,9 +73,22 @@ export default function CommunicationsHub() {
 
       if (kind === 'one_on_one') {
         const slug = `${title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')}-${Date.now()}`;
-        const { data, error } = await supabase.from('live_rooms' as any).insert({ name: title.trim(), slug, description, max_participants: 2, created_by: user.id, is_active: true }).select('id').single();
+        const cap = Math.min(8, 1 + invitees.length || 2);
+        const { data, error } = await supabase.from('live_rooms' as any).insert({ name: title.trim(), slug, description, max_participants: cap, created_by: user.id, is_active: true }).select('id').single();
         if (error) throw error;
-        actionUrl = `/live-rooms?room=${(data as any).id}`;
+        const roomId = (data as any).id as string;
+        const participantRows = [
+          { room_id: roomId, user_id: user.id, role: 'host', display_name: user.user_metadata?.display_name || user.email?.split('@')[0] || 'Host' },
+          ...invitees.map(uid => {
+            const p = profiles.find(pp => pp.user_id === uid);
+            const name = p?.display_name || `${p?.first_name || ''} ${p?.last_name || ''}`.trim() || 'Guest';
+            return { room_id: roomId, user_id: uid, role: 'invited', display_name: name };
+          }),
+        ];
+        const { error: pErr } = await supabase.from('live_room_participants' as any).insert(participantRows as any);
+        if (pErr) throw pErr;
+        actionUrl = `/live-rooms?room=${roomId}`;
+
       } else if (kind === 'community_chat') {
         const { data, error } = await supabase.from('chat_rooms' as any).insert({ name: title.trim(), description, room_type: 'group', created_by: user.id, is_active: true, metadata: { scheduled_at: when, files: uploaded, price } }).select('id').single();
         if (error) throw error;
