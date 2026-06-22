@@ -4313,6 +4313,50 @@ export type Database = {
         }
         Relationships: []
       }
+      live_room_messages: {
+        Row: {
+          content: string | null
+          created_at: string
+          id: string
+          media_duration_seconds: number | null
+          media_url: string | null
+          message_type: string
+          mime_type: string | null
+          room_id: string
+          sender_id: string
+        }
+        Insert: {
+          content?: string | null
+          created_at?: string
+          id?: string
+          media_duration_seconds?: number | null
+          media_url?: string | null
+          message_type: string
+          mime_type?: string | null
+          room_id: string
+          sender_id: string
+        }
+        Update: {
+          content?: string | null
+          created_at?: string
+          id?: string
+          media_duration_seconds?: number | null
+          media_url?: string | null
+          message_type?: string
+          mime_type?: string | null
+          room_id?: string
+          sender_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "live_room_messages_room_id_fkey"
+            columns: ["room_id"]
+            isOneToOne: false
+            referencedRelation: "live_rooms"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       live_room_moderators: {
         Row: {
           granted_at: string | null
@@ -13655,6 +13699,10 @@ export type Database = {
       }
       is_companion_promo_active: { Args: never; Returns: boolean }
       is_council_member: { Args: { _user_id: string }; Returns: boolean }
+      is_live_room_participant: {
+        Args: { _room: string; _user: string }
+        Returns: boolean
+      }
       is_marketplace_admin: { Args: { _uid: string }; Returns: boolean }
       is_member_of_chat: {
         Args: { _room_id: string; _user_id?: string }

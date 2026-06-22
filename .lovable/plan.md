@@ -1,88 +1,116 @@
-
-# ChatApp Go-Live launcher — investigation report
-
-Source of truth for the launcher: `src/pages/CommunicationsHub.tsx` (`LAUNCH_TYPES` + `createLaunch`). Each tile inserts a row in a different table and then `navigate(actionUrl)` to a destination route.
-
-DB row counts (live): live_rooms=1, chat_rooms=82, chat_messages=179, classroom_sessions=1, skilldrop_sessions=1, premium_rooms=1, radio_broadcasts=0, live_room_participants=0, live_call_participants=0.
-
-Note that the `LAUNCH_TYPES` list maps Training → `premium_rooms`, not a training-specific table.
+## Goal
+Make 1-on-1 Live a real private DM room: invite-gated, with persisted text + voice notes + video clips + a true 2-person Jitsi call. No partial pieces.
 
 ---
 
-## 1. 1-on-1 Live  →  VERDICT: BROKEN
+## 1. Route collision — `AppRoutes.tsx`
 
-- **Insert:** `live_rooms` (`name, slug, description, max_participants:2, created_by, is_active:true`).
-- **Destination:** `navigate("/live-rooms?room=<id>")`.
-- **Route conflict:** `src/routes/AppRoutes.tsx` declares `/live-rooms` **twice** — line 331 `<LiveRooms />` and line 443 `<LiveRoomsPage />`. React Router picks the first one.
-  - `LiveRooms` (`src/pages/LiveRooms.tsx`) queries **`chat_rooms`**, not `live_rooms` (line 38). So the freshly inserted `live_rooms` row is invisible.
-  - The Jitsi-capable `LiveRoomsPage` (which actually queries `live_rooms` and embeds `JitsiRoom`) is **unreachable** via this route.
-  - `?room=<id>` query param is ignored by both pages — no auto-join.
-- **RLS:** `live_rooms` SELECT policy is `is_active = true` — i.e. **any authenticated user can list and join any active 1-on-1**, no participant/invitee gate. `live_room_participants` and `live_call_participants` are both empty, so no enforcement exists in data either.
-- **Backend:** Jitsi (when reachable) via `JitsiRoom`. No custom WebRTC. No edge function backing the 1-on-1 flow.
-- **Evidence of dead-end:** invitees inserted only into `user_notifications` with an `action_url` pointing at the broken `/live-rooms?room=...` URL.
+- Remove the **first** `/live-rooms` route (lines 331–333) that mounts the orphan `LiveRooms` component (which queries `chat_rooms`, wrong table).
+- Keep the second `/live-rooms` route (line 443) using `LiveRoomsPage`, but wrap it in `ProtectedRoute` (it's a private DM surface now, not a public lobby).
+- **Recommendation for the orphan `src/pages/LiveRooms.tsx` + its lazy export:** delete both. It was a duplicate built against the wrong table and nothing else links to it. Cleaner than repurposing.
 
-## 2. Community Chat  →  VERDICT: PLACEHOLDER-ONLY (dead-end redirect)
+## 2. RLS — `live_rooms` + `live_room_participants` (migration)
 
-- **Insert:** `chat_rooms` (`room_type:'group'`, metadata stashes `scheduled_at`, `files`, `price`).
-- **Destination:** `navigate("/chatapp?room=<id>")`.
-- **Route:** `AppRoutes.tsx:272` — `/chatapp` is a `<Navigate to="/communications-hub#chats" replace />`. The `?room=<id>` query is **dropped** during the Navigate. User lands back on the same CommunicationsHub page (`#chats` doesn't render anything special there; the hub has no chat list view).
-- The real `ChatApp` page (`src/pages/ChatApp.tsx`, which reads `?room=` and embeds `JitsiCall`) is **orphaned** — no route mounts it. So the creator never sees the room they just created from this entry point.
-- **Tables actually working:** `chat_rooms` (82 rows), `chat_messages` (179 rows), `chat_participants` exist with sound RLS (`chat_messages` SELECT gated by `chat_participants.is_active=true`). But the launcher does **not** insert any `chat_participants` rows, so even if you reached `ChatApp`, the creator wouldn't satisfy the SELECT policy for messages.
-- **Auth:** chat_rooms SELECT is `created_by OR is_member_of_chat(...)` — sound. But because launcher skips `chat_participants`, the invitees can't read either.
+Replace the current "Anyone can view active live rooms" + "Authenticated users can join rooms" policies.
 
-## 3. Classroom  →  VERDICT: PARTIALLY WORKING (row created + listed in feed, no actual classroom UI)
+**`live_rooms`:**
+- `SELECT`: only if `auth.uid() = created_by` OR `EXISTS(select 1 from live_room_participants where room_id = live_rooms.id and user_id = auth.uid())`.
+- `INSERT`: `auth.uid() = created_by` (keep).
+- `UPDATE`/`DELETE`: creator only (keep).
 
-- **Insert:** `classroom_sessions` (`title, description, scheduled_at, instructor_id, is_free, session_fee, status:'scheduled'`).
-- **Destination:** `navigate("/orchard-alive?classroom=<id>")` → `TribalAliveFeedPage`.
-- `TribalAliveFeedPage` does `useSearchParams` but only reads `tier` (line 123) — `?classroom=<id>` is **ignored**. It does fetch `classroom_sessions` (line 229) and render each as a feed card with `href: "/classroom"` (line 461). `/classroom` route does **not exist** in `AppRoutes.tsx` → clicking through is a 404.
-- No Jitsi/WebRTC wiring. No "join lecture" button bound to a meeting URL. The `classroom_sessions` table has `meeting_url` columns elsewhere, but the launcher doesn't populate them.
-- **RLS:** SELECT policy `Authenticated users can view all classroom sessions: true` — wide open, no circle gating, despite a second per-circle policy. (Policies are OR'd, so the permissive one wins.) **Not correctly scoped**: anyone can see Classroom rows meant to be circle-gated.
-- 1 row currently in table — confirms creation works, viewing does not.
+**`live_room_participants`:**
+- `SELECT`: only participants of the same room (use security-definer helper `is_live_room_participant(room_id, uid)` to avoid recursion).
+- `INSERT`: creator can add anyone; user can insert their own row only if they were already invited (row exists with `role='invited'`) — we'll handle invite seeding server-side in step 3, so client-side INSERT can be restricted to `auth.uid() = user_id AND is_live_room_participant(room_id, auth.uid())`.
+- `UPDATE` self / `DELETE` self only.
 
-## 4. SkillDrop  →  VERDICT: PARTIALLY WORKING (same shape as Classroom)
+Add security-definer fn `public.is_live_room_participant(_room uuid, _user uuid) returns boolean`.
 
-- **Insert:** `skilldrop_sessions` (`title, description, scheduled_at, presenter_id, pricing_type, session_fee, status:'scheduled'`).
-- **Destination:** `navigate("/orchard-alive?skilldrop=<id>")` — also ignored by `TribalAliveFeedPage`. Feed card href is `/skilldrop` (line 477), and `/skilldrop` is **not a registered route** → 404.
-- No Jitsi/WebRTC wiring; no join flow; `host_application` / `subscriptions` tables exist (`skilldrop_host_applications`, `skilldrop_session_subscriptions`) but launcher doesn't touch them.
-- **RLS:** SELECT is `circle_id IS NULL OR member_of_circle OR presenter_id = auth.uid()`. Launcher inserts `circle_id = NULL`, so **every SkillDrop session created here is publicly visible to all authenticated users**, regardless of presenter intent.
-- 1 row in table.
+## 3. Invite seeding — `CommunicationsHub.tsx` `createLaunch()`
 
-## 5. Training  →  VERDICT: PARTIALLY WORKING (row + viewer exist, no live-call surface)
+After the `live_rooms` insert (line 76), in the same flow:
+- Insert participant rows into `live_room_participants` for **(a)** the creator (`role='host'`) and **(b)** every `invitees[]` user (`role='invited'`).
+- Keep the existing `user_notifications` insert with `action_url = /live-rooms?room=<id>`.
+- Bump `max_participants` to match the actual invite count + 1 (capped, default 2 for true 1-on-1).
 
-- **Insert:** `premium_rooms` (`creator_id, title, description, room_type:'training', is_public:true, price, pricing_type, documents/artwork/music`).
-- **Destination:** `navigate("/premium-room/<id>")` → `PremiumRoomViewPage` (`src/pages/PremiumRoomViewPage.tsx`) which **does** load the row by `useParams.id` (line 39, 237). So the creator and other users land on a real detail page.
-- However, this is a content/media viewer, not a "training session" with a live call. No JitsiCall/JitsiRoom is mounted from this page based on my read. So it's a misnamed Training tile that really creates a public premium-room listing.
-- Forced `is_public: true` means even sessions a creator wanted private get exposed; the launcher offers no "private" toggle.
-- **RLS:** `Users can view public premium rooms (is_public = true)` OR owner — sound for the chosen public flag.
-- 1 row in table.
+## 4. `?room=<id>` auto-join — `LiveRoomsPage.tsx`
 
-## 6. Radio  →  VERDICT: BROKEN
+Rewrite the page from "public lobby grid" to "my private rooms + auto-join":
+- Read `room` (uuid) from `useSearchParams`.
+- Query only rooms the user can see (RLS now scopes this to host + invited rows).
+- If `?room=<id>` is present and matches one of those rows → directly mount the room view (no display-name gate when authed — use profile display_name).
+- Otherwise show the list of the user's own 1-on-1 rooms.
+- Use `room.id` (uuid) — not `slug` — as the Jitsi room name so two different 1-on-1s can never collide. Pass it to `JitsiRoom roomName={`s2g-1v1-${room.id}`}`.
 
-- **Insert:** `radio_broadcasts` (`title, description, scheduled_at, broadcaster_id, status:'scheduled', thumbnail_url`).
-- **Destination:** `navigate("/grove-station?radio=<id>")` → `GroveStationPage.jsx`. Searched the file: **zero references** to `radio_broadcasts`, `radio=`, `searchParams`, or `broadcaster`. The `?radio=<id>` is silently ignored; the page renders the generic Grove Station landing.
-- **RLS — fatal bug:** `radio_broadcasts` SELECT is gated by `circle_id IN (user's circles)`. Launcher inserts **without `circle_id`** (NULL). NULL is not `IN (...)`, so the SELECT policy returns the row to **no one — not even the broadcaster who created it**. Combined with the destination ignoring the row, the radio entry is end-to-end dead.
-- No edge function for radio session start (e.g. `grove-station-stream` exists but is for streaming, not for "go-live a scheduled broadcast"). 0 rows in `radio_broadcasts` confirms no one has ever successfully used this path.
+## 5. Messaging surface — new component `src/components/live/OneOnOneRoom.tsx`
+
+A single split view rendered by `LiveRoomsPage` when a room is active:
+- **Header:** room name, the other participant's name, "Start video call" + "Start audio call" buttons, "Leave" button.
+- **Message thread (main):** uses new table `live_room_messages` (see step 6). Realtime via Supabase channel scoped to `room_id`. Renders text, audio-note bubble (inline `<audio controls>`), video-clip bubble (inline `<video controls>`).
+- **Composer (bottom):** text input + send, mic button (record voice note), camera button (record short video clip ≤30s using `MediaRecorder`), or file-pick fallback. Uploads to `chat-media` bucket then inserts a message row.
+- **Call modal:** clicking call buttons opens `JitsiRoom` overlay (existing component) with `roomName = s2g-1v1-${room.id}` + `?audio` flag for audio-only (start muted-video).
+
+Helper hooks/files:
+- `src/hooks/useLiveRoomMessages.ts` — fetch + realtime subscribe + send.
+- `src/hooks/useMediaRecorder.ts` — small wrapper around `MediaRecorder` for audio + video clip capture with duration cap and Blob return.
+- `src/lib/liveRoom/uploadMedia.ts` — uploads Blob to `chat-media/<room_id>/<uuid>.<ext>`, returns public/signed URL.
+
+## 6. DB — new table `live_room_messages` + storage bucket (migration)
+
+```sql
+create table public.live_room_messages (
+  id uuid primary key default gen_random_uuid(),
+  room_id uuid not null references public.live_rooms(id) on delete cascade,
+  sender_id uuid not null,
+  message_type text not null check (message_type in ('text','voice','video')),
+  content text,                  -- text body, or caption
+  media_url text,                -- for voice/video
+  media_duration_seconds int,
+  mime_type text,
+  created_at timestamptz not null default now()
+);
+-- GRANTs (authenticated + service_role; no anon)
+-- RLS: SELECT/INSERT only if is_live_room_participant(room_id, auth.uid()); sender_id must = auth.uid() on INSERT
+-- Enable realtime: ALTER PUBLICATION supabase_realtime ADD TABLE public.live_room_messages;
+-- Index on (room_id, created_at).
+```
+
+Storage: create private bucket `chat-media` via `supabase--storage_create_bucket`. Add `storage.objects` RLS so only participants of the room (path prefix = `<room_id>/...`) can read/insert.
+
+## 7. Jitsi — true 2-person isolation
+
+- Use `roomName = s2g-1v1-<live_room.id>` everywhere (uuid is unguessable). 
+- Pass `password` derived deterministically from the room id + a server-side secret? Out of scope unless you want it — the uuid alone is already infeasible to guess. **Flag: confirm uuid-only is acceptable, or do you want me to also set a Jitsi room password?**
+- Audio-only call = launch Jitsi with `startWithVideoMuted: true` (already supported by `JitsiRoom` config — verify and pass through prop).
 
 ---
 
-## Cross-cutting issues
+## Files touched
 
-- **Duplicate `/live-rooms` route** (AppRoutes.tsx:331 and :443) — first wins, shadows the working Jitsi-backed page.
-- **Orphan page:** `src/pages/ChatApp.tsx` — the only place that reads `?room=` and embeds `JitsiCall` for chat — has no route after the `/chatapp → /communications-hub` redirect was added.
-- **Invitee notifications** (`user_notifications` inserts) point at action URLs that lead to dead-ends (Classroom/SkillDrop 404, Community Chat redirect-loop, Radio nowhere, 1-on-1 wrong table). Invitees who tap notifications will land on broken pages.
-- **No `chat_participants` insert on community chat creation** — even if the destination page existed, the creator wouldn't satisfy the messages SELECT policy.
-- **`/classroom` and `/skilldrop` routes are absent** from `AppRoutes.tsx`.
-- **No console errors are guaranteed** because the failure mode is silent (queries return empty rows / redirect to a working page / 404 page); errors visible only after Click-through to non-existent routes.
+**Edit**
+- `src/routes/AppRoutes.tsx` — remove dup route, protect kept route.
+- `src/routes/lazyPages.ts` — remove `LiveRooms` export.
+- `src/pages/LiveRoomsPage.tsx` — rewrite for owned-rooms list + `?room=` auto-mount.
+- `src/pages/CommunicationsHub.tsx` — seed `live_room_participants` on create.
+- `src/components/jitsi/JitsiRoom.tsx` — accept `audioOnly?: boolean` prop.
 
-## Per-feature summary table
+**Create**
+- `src/components/live/OneOnOneRoom.tsx`
+- `src/hooks/useLiveRoomMessages.ts`
+- `src/hooks/useMediaRecorder.ts`
+- `src/lib/liveRoom/uploadMedia.ts`
 
-| Feature | DB insert | Destination route | Reachable? | Backend (Jitsi/etc) wired? | Auth gating | Verdict |
-|---|---|---|---|---|---|---|
-| 1-on-1 Live | live_rooms ✅ | /live-rooms?room=… | Wrong page mounted (LiveRooms reads chat_rooms); Jitsi page unreachable | No | SELECT open to all auth users (no invitee gate) | BROKEN |
-| Community Chat | chat_rooms ✅ | /chatapp?room=… | Redirect strips param; ChatApp page is orphaned | Jitsi exists in orphan page only | RLS sound on chat_rooms/messages, but no chat_participants insert | PLACEHOLDER-ONLY |
-| Classroom | classroom_sessions ✅ | /orchard-alive?classroom=… | Feed lists row; per-id viewer 404 (`/classroom`) | No | SELECT wide-open ("Authenticated… true") | PARTIALLY WORKING |
-| SkillDrop | skilldrop_sessions ✅ | /orchard-alive?skilldrop=… | Same as Classroom; `/skilldrop` 404 | No | circle_id NULL ⇒ public to all auth users | PARTIALLY WORKING |
-| Training | premium_rooms ✅ | /premium-room/:id | Yes, viewer renders | No live-call surface | is_public:true forced; RLS sound for that | PARTIALLY WORKING |
-| Radio | radio_broadcasts ✅ | /grove-station?radio=… | Param ignored, no per-id viewer | No | RLS requires circle_id but launcher leaves it NULL → invisible to all incl. creator | BROKEN |
+**Delete**
+- `src/pages/LiveRooms.tsx`
 
-No code changes made. Awaiting your instruction on which (if any) of these to fix first.
+**Migrations**
+- One migration: new `live_room_messages` table + GRANTs + RLS + realtime publication + `is_live_room_participant()` definer fn + rewritten policies on `live_rooms` and `live_room_participants`.
+- `chat-media` bucket via storage tool + `storage.objects` policies migration.
+
+---
+
+## Open questions (please confirm before I build)
+
+1. **Jitsi password:** uuid-only room name (unguessable) vs. also setting a per-room password? I lean uuid-only — simpler, no UX friction.
+2. **Voice/video clip length cap:** propose 60s for voice notes, 30s for video clips. OK?
+3. **Bucket public vs private:** I'll make `chat-media` **private** + serve via signed URLs (5-min expiry on fetch). Confirm — public would be simpler but leaks media if URL escapes.
+4. **Orphan `LiveRooms.tsx`:** delete (my recommendation), or do you want it repurposed for something else first?
