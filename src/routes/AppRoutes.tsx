@@ -438,8 +438,9 @@ const AppRoutes = () => (
       <Layout><Suspense fallback={<LoadingFallback />}><AdvancedSearchPage /></Suspense></Layout>
     } />
     <Route path="/live-rooms" element={
-      <Layout><LiveRoomsPage /></Layout>
+      <ProtectedRoute><Layout><LiveRoomsPage /></Layout></ProtectedRoute>
     } />
+
     <Route path="/create-live-room" element={
       <ProtectedRoute><Layout><CreateLiveRoomPage /></Layout></ProtectedRoute>
     } />
