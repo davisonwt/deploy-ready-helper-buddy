@@ -70,8 +70,10 @@ export default function JitsiRoom({
           },
           configOverwrite: {
             startWithAudioMuted: false,
-            startWithVideoMuted: false,
+            startWithVideoMuted: audioOnly,
+            startAudioOnly: audioOnly,
             enableWelcomePage: false,
+
             prejoinPageEnabled: false,
             disableDeepLinking: true,
             enableClosePage: false,
