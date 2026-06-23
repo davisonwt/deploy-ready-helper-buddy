@@ -12,13 +12,13 @@ import { toast } from 'sonner';
 
 type LaunchKind = 'one_on_one' | 'community_chat' | 'classroom' | 'skilldrop' | 'training' | 'radio';
 
-const LAUNCH_TYPES: Array<{ id: LaunchKind; label: string; icon: React.ReactNode; table: string }> = [
+const LAUNCH_TYPES: Array<{ id: LaunchKind; label: string; icon: React.ReactNode; table: string; deepLink?: string }> = [
   { id: 'one_on_one', label: '1-on-1 Live', icon: <Video className="h-5 w-5" />, table: 'live_rooms' },
   { id: 'community_chat', label: 'Community Chat', icon: <Users className="h-5 w-5" />, table: 'chat_rooms' },
   { id: 'classroom', label: 'Classroom', icon: <BookOpen className="h-5 w-5" />, table: 'classroom_sessions' },
   { id: 'skilldrop', label: 'SkillDrop', icon: <Zap className="h-5 w-5" />, table: 'skilldrop_sessions' },
   { id: 'training', label: 'Training', icon: <Dumbbell className="h-5 w-5" />, table: 'premium_rooms' },
-  { id: 'radio', label: 'Radio', icon: <Radio className="h-5 w-5" />, table: 'radio_broadcasts' },
+  { id: 'radio', label: 'Radio', icon: <Radio className="h-5 w-5" />, table: '', deepLink: '/radio' },
 ];
 
 const defaultDateTime = () => new Date(Date.now() + 30 * 60 * 1000).toISOString().slice(0, 16);
@@ -102,9 +102,9 @@ export default function CommunicationsHub() {
         if (error) throw error;
         actionUrl = `/orchard-alive?skilldrop=${(data as any).id}`;
       } else if (kind === 'radio') {
-        const { data, error } = await supabase.from('radio_broadcasts' as any).insert({ title: title.trim(), description, scheduled_at: when, broadcaster_id: user.id, status: 'scheduled', thumbnail_url: uploaded.find(f => f.type.startsWith('image/'))?.url || null }).select('id').single();
-        if (error) throw error;
-        actionUrl = `/grove-station?radio=${(data as any).id}`;
+        setSaving(false);
+        navigate('/radio');
+        return;
       } else {
         const { data, error } = await supabase.from('premium_rooms' as any).insert({ creator_id: user.id, title: title.trim(), description, room_type: 'training', is_public: true, price, pricing_type: isFree ? 'free' : 'bestowal', documents: uploaded, artwork: uploaded.filter(f => f.type.startsWith('image/')), music: uploaded.filter(f => f.type.startsWith('audio/')) }).select('id').single();
         if (error) throw error;
@@ -144,7 +144,7 @@ export default function CommunicationsHub() {
                 const a = accents[idx % accents.length];
                 const isActive = kind === t.id;
                 return (
-                  <motion.button key={t.id} onClick={() => setKind(t.id)} whileHover={{ y: -2 }} whileTap={{ scale: 0.97 }} className={`flex items-center justify-between rounded-xl border ${a.border} bg-gradient-to-br ${a.bg} backdrop-blur px-4 py-3 text-left font-bold text-white transition-all hover:${a.glow} ${isActive ? `ring-2 ${a.ring} ${a.glow}` : ''}`}>
+                  <motion.button key={t.id} onClick={() => t.deepLink ? navigate(t.deepLink) : setKind(t.id)} whileHover={{ y: -2 }} whileTap={{ scale: 0.97 }} className={`flex items-center justify-between rounded-xl border ${a.border} bg-gradient-to-br ${a.bg} backdrop-blur px-4 py-3 text-left font-bold text-white transition-all hover:${a.glow} ${isActive ? `ring-2 ${a.ring} ${a.glow}` : ''}`}>
                     <span className="flex items-center gap-3"><span className={a.icon}>{t.icon}</span>{t.label}</span>
                     {isActive && <Check className={`h-5 w-5 ${a.icon}`} />}
                   </motion.button>
