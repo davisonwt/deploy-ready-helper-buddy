@@ -15,6 +15,7 @@ export default function CommunityChatsPage() {
     >
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_15%_20%,rgba(56,189,248,0.18),transparent_55%),radial-gradient(circle_at_85%_30%,rgba(168,85,247,0.18),transparent_55%)] pointer-events-none" />
       <div className="relative mx-auto max-w-5xl px-4 py-5">
+        <PageHeroBanner variant="community" />
         <div className="flex items-center justify-between mb-4">
           <Button
             variant="ghost"
