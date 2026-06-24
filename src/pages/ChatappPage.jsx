@@ -61,6 +61,23 @@ const ChatappPage = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const [currentTheme, setCurrentTheme] = useState(getCurrentTheme());
 
+  const { uploadFile, uploading } = useFileUpload();
+  const { toast } = useToast();
+  const {
+    rooms,
+    currentRoom,
+    setCurrentRoom,
+    messages,
+    participants,
+    loading,
+    sendMessage,
+    deleteMessage,
+    createRoom,
+    createDirectRoom,
+    joinRoom,
+    deleteConversation,
+  } = useChat();
+
   // Update theme every 2 hours
   useEffect(() => {
     const themeInterval = setInterval(() => {
@@ -81,23 +98,6 @@ const ChatappPage = () => {
     }
     setSearchParams({}, { replace: true });
   }, [searchParams, rooms, setCurrentRoom, joinRoom, setSearchParams]);
-
-  const { uploadFile, uploading } = useFileUpload();
-  const { toast } = useToast();
-  const {
-    rooms,
-    currentRoom,
-    setCurrentRoom,
-    messages,
-    participants,
-    loading,
-    sendMessage,
-    deleteMessage,
-    createRoom,
-    createDirectRoom,
-    joinRoom,
-    deleteConversation,
-  } = useChat();
 
   // REMOVED: React call flow - using direct Jitsi links instead
   // const {
