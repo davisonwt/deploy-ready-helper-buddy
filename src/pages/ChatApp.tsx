@@ -687,9 +687,9 @@ const ChatApp = () => {
 
           {/* Tabs for One-on-Ones vs Grove Circles */}
           <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as 'one' | 'circle')}>
-            <TabsList className="mb-4">
-              <TabsTrigger value="one">One-on-Ones</TabsTrigger>
-              <TabsTrigger value="circle">Community</TabsTrigger>
+            <TabsList className="mb-4 bg-[#123330]/60 border border-[#4FA876]/15">
+              <TabsTrigger value="one" className="data-[state=active]:bg-[#4FA876] data-[state=active]:text-[#0E1B15] text-[#8AA99A]">One-on-Ones</TabsTrigger>
+              <TabsTrigger value="circle" className="data-[state=active]:bg-[#4FA876] data-[state=active]:text-[#0E1B15] text-[#8AA99A]">Community</TabsTrigger>
             </TabsList>
 
             <TabsContent value="one" className="space-y-4">
