@@ -281,6 +281,13 @@ const AppRoutes = () => (
         </Suspense>
       </ProtectedRoute>
     } />
+    <Route path="/community-chats" element={
+      <ProtectedRoute>
+        <Suspense fallback={<LoadingFallback />}>
+          <CommunityChatsPage />
+        </Suspense>
+      </ProtectedRoute>
+    } />
     <Route path="/classroom" element={
       <ProtectedRoute>
         <Suspense fallback={<LoadingFallback />}>
