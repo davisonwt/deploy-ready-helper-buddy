@@ -675,12 +675,12 @@ const ChatApp = () => {
 
             {/* Search Bar */}
             <div className="relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-[#8AA99A]" />
               <Input
                 placeholder="Search chats..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-10"
+                className="pl-10 bg-[#123330]/60 border-[#4FA876]/20 text-[#F3F7F0] placeholder:text-[#8AA99A] focus-visible:ring-[#4FA876]/40 focus-visible:border-[#4FA876]/50"
               />
             </div>
           </div>
