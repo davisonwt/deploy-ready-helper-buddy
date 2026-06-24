@@ -29,11 +29,22 @@ export default function CreateOneOnOneDialog({ open, onOpenChange, onCreated }: 
     if (!open) return;
     let cancelled = false;
     supabase
-      .from('profiles' as any)
-      .select('id, user_id, display_name, first_name, last_name, avatar_url')
-      .limit(60)
+      .from('public_profiles' as any)
+      .select('user_id, display_name, username, avatar_url')
+      .order('display_name', { ascending: true, nullsFirst: false })
+      .limit(500)
       .then(({ data }) => {
-        if (!cancelled) setProfiles((data || []).filter((p: any) => p.user_id && p.user_id !== user?.id));
+        if (!cancelled) {
+          setProfiles(
+            (data || [])
+              .filter((p: any) => p.user_id && p.user_id !== user?.id)
+              .map((p: any) => ({
+                user_id: p.user_id,
+                display_name: p.display_name || p.username || 'Sower',
+                avatar_url: p.avatar_url,
+              }))
+          );
+        }
       });
     return () => { cancelled = true; };
   }, [open, user?.id]);
