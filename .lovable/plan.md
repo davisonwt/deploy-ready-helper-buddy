@@ -1,68 +1,56 @@
-## Architecture confirmed (flag first)
+# Radio visual identity — plan
 
-Training does **not** use the shared `ChatRoom` component for its main view. `PremiumRoomViewPage.tsx` has two branches:
+## Architecture confirmed
 
-- **`hasAccess === true`** (the real Training experience): renders `DiscordStyleRoomView` — a **separate** messaging implementation with its own `chat_messages` fetch, own realtime subscription, own input box, and only `ChatMessage` shared with other surfaces.
-- **`hasAccess === false`** (paywall preview): renders a small `ChatRoom` panel at the bottom of the locked layout (line 726). Users here can't post, so the streak is irrelevant on this branch.
+- `RadioPage.tsx` mounts four tab components: `MusicLibrary`, `PlaylistManager`, `LiveStreamPlayer`, `ListenerInteractions`. Grepped — **none of these four are imported anywhere else**. `GroveStationPage` and `RadioManagementPage` use different `DJ*`/`Public*` siblings. Safe to restyle directly with **zero risk** to other surfaces.
+- `LiveStreamPlayer` has a real `<audio ref={audioRef} src={streamUrl}>` element with real `play`/`pause`/`loadstart`/`error` listeners. The `playing` boolean is **genuinely tied to media element state**.
+- `listenerCount` is partially real (Supabase RPC `get_current_radio_show` + `radio-live-updates` broadcast channel) but has an optimistic `prev + 1` bump on local play — that bump is already-existing behavior, I won't touch it.
 
-**Implication:** all Training styling + streak work lands in `DiscordStyleRoomView.tsx` and `PremiumRoomViewPage.tsx`. **`ChatRoom` is NOT touched** — zero risk to ChatApp / Classroom / SkillDrop / community-chat. `ChatMessage` is also not touched (no new props needed; Training doesn't need instructor/drop affordances).
+## The honest constraint (waveform)
 
-## Streak — real data, no fabrication
+A true frequency-reactive waveform requires `AudioContext` + `MediaElementAudioSourceNode` + `AnalyserNode` wired to the `<audio>` element. The stream is **cross-origin** (`s9.voscast.com:9525/stream`) and the `<audio>` tag has no `crossOrigin="anonymous"` attribute. Without proper `Access-Control-Allow-Origin` headers from that Shoutcast server, `createMediaElementSource` either throws or returns silent zeros — and Shoutcast endpoints almost never set CORS for arbitrary origins. Adding `crossOrigin="anonymous"` could also break playback entirely if the server rejects the preflight.
 
-`DiscordStyleRoomView` already fetches every `chat_messages` row for `room.id` ordered ascending. The streak derives **for free** from that same array:
+**I will not build fake spectrum analysis.** Instead:
 
-1. Filter `messages.filter(m => m.sender_id === user.id)`.
-2. Map each `created_at` to a `YYYY-MM-DD` key in the user's local timezone.
-3. Walk backwards from today's local date: count consecutive days present in the set; stop at the first gap.
-4. If today has no qualifying message yet, the streak shown is yesterday's run (still "live" — it only breaks when a full day passes with no post). The badge is honest: it shows the current unbroken run, including today once they post.
+- **CSS-animated EQ bar cluster** (8–12 vertical bars with staggered keyframe heights) rendered next to the play button and in the "Stream Information" card.
+- Bars **animate only while `playing === true`** (controlled by a class toggle); when paused/stopped they **freeze flat at ~10% height**. This makes the visual honestly tied to the one real signal we have: media element play state.
+- Bars labeled visually as decorative (subtle, no axis labels, no "Hz" markings) — never implying real audio analysis.
+- `prefers-reduced-motion`: bars hold a static stepped silhouette, no animation.
 
-**Real constraint flagged:** the existing fetch has no `limit` / no date window. For long-lived busy rooms this is already an O(all-messages) load — pre-existing, not introduced here. Streak is computed in-memory off the same array, so it adds zero extra queries. If the room ever crosses thousands of messages we'd want a dedicated `select created_at where sender_id = me` query, but I'm not introducing that now since it'd be premature for current room sizes — flagging so you can tell me if you want it preempted.
+If the user later wires up a same-origin / CORS-enabled stream, swapping to a real `AnalyserNode` is a one-component change.
 
-Tick animation: when streak count increments vs. its previous value, run a short count-up + flame pulse via CSS keyframes. `@media (prefers-reduced-motion: reduce)` collapses it to an instant value swap.
+## Design tokens (added to `tailwind.config.ts` + `src/index.css`)
 
-## Design tokens (Training-only, additive)
+```
+radio.bg     #0A1628   (deep navy night)
+radio.blue   #4A90D9   (warm primary)
+radio.amber  #FFB454   (dial-glow accent)
+radio.ink    #14233B   (raised surface)
+radio.mist   #B8C5D9   (muted text)
+```
 
-Add to `tailwind.config.ts` under `colors.training`:
-- `bg: '#1A0F12'` (dark coral-charcoal)
-- `coral: '#F43F5E'` (primary)
-- `coral-glow: '#FB7185'` (secondary accent for hover/glow)
-- `ash: '#2A1A1F'` (surface)
-- `ember: '#FCA5A5'` (subtle text accent)
+Font: import **Bitter** via `index.html` Google Fonts link; add `font-bitter` family to Tailwind. Headers only — body stays Inter.
 
-Add **Oswald** to `index.html` Google Fonts link, alongside Spectral / Space Grotesk already added for Classroom/SkillDrop. Register `font-oswald` in `tailwind.config.ts`. Body stays Inter (default).
+Animation: `@keyframes radio-eq` (height bounce between 15% and 95%) with 8 stagger-delayed variants. `prefers-reduced-motion` media query halts it.
 
-Add `training-streak-tick` keyframe to `src/index.css` (scale + glow pulse on the badge container, ~600ms), gated by `@media (prefers-reduced-motion: no-preference)`.
+## Scope of files
 
-## Files to change
+1. `index.html` — add Bitter Google Fonts link.
+2. `tailwind.config.ts` — add `radio.*` colors, `font-bitter`, `radio-eq` keyframes/animation.
+3. `src/index.css` — `.radio-surface` scoping class + `prefers-reduced-motion` fallback for `radio-eq`.
+4. `src/components/radio/RadioPage.tsx` — wrap in `radio-surface` background, Bitter title with amber-to-blue gradient, restyle tab list, quick-access buttons, badges, Stream Information card, Chat Guidelines card.
+5. `src/components/radio/LiveStreamPlayer.tsx` — new `<EqBars playing={playing} />` inline component (declared in same file, ~25 lines), restyle Card with navy/blue palette and amber play button glow, replace listener Badge with amber dial chip.
+6. `src/components/radio/MusicLibrary.tsx`, `PlaylistManager.tsx`, `ListenerInteractions.tsx` — restyle cards/headers/buttons to use radio palette + Bitter headers. No logic changes.
 
-1. **`index.html`** — append Oswald to existing Google Fonts `<link>`.
-2. **`tailwind.config.ts`** — add `training` color scale + `oswald` font family.
-3. **`src/index.css`** — add `@keyframes training-streak-tick` + `.training-streak-tick` class with reduced-motion fallback.
-4. **`src/components/premium/DiscordStyleRoomView.tsx`**:
-   - Wrap root in `bg-training-bg text-foreground` shell; sidebars use `bg-training-ash` with coral border accents.
-   - Top bar `h1` ("general-chat") → `font-oswald uppercase tracking-wide text-training-coral`.
-   - Left sidebar `h2` (room title) → `font-oswald uppercase tracking-wide`; Crown icon coral.
-   - Active tab underline → `border-training-coral`; participant count chip and section labels → coral/ember.
-   - Send button → coral with coral-glow hover; input border focus → coral.
-   - **Streak badge** rendered in the top bar (right of `general-chat`, left of call controls): flame icon + `"N-day streak"` in `font-oswald`, coral background `bg-training-coral/15` with coral border, animates `training-streak-tick` when N increases (track previous value in a `useRef`).
-   - Compute streak with a `useMemo` over `messages` + `user.id`; recomputes on each message append (realtime already wired).
-5. **`src/pages/PremiumRoomViewPage.tsx`**:
-   - Restyle ONLY the `hasAccess` branch's "Back to Go-Live" container wrapper to `bg-training-bg` so the page background continues the identity above DiscordStyleRoomView.
-   - The non-access (paywall) branch is left untouched — it uses generic tokens and the shared `ChatRoom`; restyling it risks regressing other premium-room types that aren't "Training".
-   - **Note:** "Training" is currently a label for the whole premium-room concept in this codebase — every premium room flows through this page. If you want the visual identity gated to a specific subtype (e.g. only when `room.room_type === 'training'`), tell me and I'll add the conditional. Default assumption: apply to all premium rooms (matches the "Live Training Chat" copy already in the page).
+## Regression discipline
 
-## Regression guarantees
-
-- `ChatRoom` and `ChatMessage` files are not modified → ChatApp, Classroom, SkillDrop, community chat unaffected.
-- New Tailwind tokens are namespaced (`training-*`) → no token collisions.
-- Oswald is added alongside existing fonts → no replacement of Spectral/Space Grotesk.
-- Streak logic is local to `DiscordStyleRoomView`, no schema/API/edge-function changes.
+- The four restyled components are imported **only** by `RadioPage.tsx` (verified via ripgrep). Other radio surfaces use `DJMusicLibrary`, `DJPlaylistManager`, `PublicMusicLibrary` — untouched.
+- All new tokens are namespaced under `radio.*` — no global token mutation. Classroom / SkillDrop / Training / ChatApp unaffected.
+- New EQ visual is a local component in `LiveStreamPlayer.tsx` — no shared-component prop additions needed this round.
+- `tsgo --noEmit` after the pass.
 
 ## Verification
 
 - `tsgo --noEmit` clean.
-- Visual spot-check: navigate to `/premium-room/:id` for an accessible room → coral identity visible, streak badge shows; navigate to `/chatapp`, `/classroom`, `/skilldrop` → unchanged.
-
-## Open question (answer before I build, or I'll default)
-
-Apply Training identity to **all** premium rooms, or **only** rooms where `room.room_type === 'training'` (and leave other premium-room types on the current neutral styling)? Default if you don't reply: all premium rooms.
+- Visual spot-check `/radio`: navy background, Bitter title, amber play button, EQ bars animate on play / freeze on pause.
+- Spot-check `/grove-station` and `/radio-management` unchanged (they use different components).

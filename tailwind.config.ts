@@ -171,11 +171,20 @@ export default {
 					ash: '#2A1A1F',
 					ember: '#FCA5A5',
 				},
+				// Radio palette (Bitter + warm blue/amber on deep navy night)
+				radio: {
+					bg: '#0A1628',
+					blue: '#4A90D9',
+					amber: '#FFB454',
+					ink: '#14233B',
+					mist: '#B8C5D9',
+				},
 			},
 			fontFamily: {
 				spectral: ['Spectral', 'Georgia', 'serif'],
 				'space-grotesk': ['"Space Grotesk"', 'Inter', 'sans-serif'],
 				oswald: ['Oswald', 'Impact', 'sans-serif'],
+				bitter: ['Bitter', 'Georgia', 'serif'],
 			},
 			borderRadius: {
 				lg: 'var(--radius)',

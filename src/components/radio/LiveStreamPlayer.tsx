@@ -2,25 +2,40 @@ import { useState, useEffect, useRef } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Slider } from '@/components/ui/slider';
-import { Play, Pause, Volume2, VolumeX } from 'lucide-react';
-import { Badge } from '@/components/ui/badge';
+import { Play, Pause, Volume2, VolumeX, Users } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
+
+/**
+ * EqBars — decorative equalizer visual honestly tied to <audio> play state.
+ * Animates only while `playing === true`; freezes flat when paused/stopped.
+ * Not derived from real frequency data (cross-origin stream blocks AnalyserNode).
+ */
+const EqBars = ({ playing, bars = 10 }: { playing: boolean; bars?: number }) => (
+  <div
+    className={`radio-eq ${playing ? 'is-playing' : ''}`}
+    aria-hidden="true"
+    role="presentation"
+  >
+    {Array.from({ length: bars }).map((_, i) => (
+      <span key={i} />
+    ))}
+  </div>
+);
 
 const LiveStreamPlayer = () => {
   const [playing, setPlaying] = useState(false);
   const [volume, setVolume] = useState([0.5]);
   const [muted, setMuted] = useState(false);
-  const [nowPlaying, setNowPlaying] = useState('AOD Station Radio - Live');
+  const [nowPlaying, setNowPlaying] = useState('AOD Station Radio — Live');
   const [listenerCount, setListenerCount] = useState(0);
   const audioRef = useRef<HTMLAudioElement>(null);
   const { toast } = useToast();
 
   // Grove Station stream URL (replace with your actual stream URL)
-  const streamUrl = 'https://s9.voscast.com:9525/stream'; // Example Shoutcast stream
+  const streamUrl = 'https://s9.voscast.com:9525/stream';
 
   useEffect(() => {
-    // Subscribe to live radio updates
     const channel = supabase
       .channel('radio-live-updates')
       .on('broadcast', { event: 'now-playing' }, ({ payload }) => {
@@ -33,7 +48,6 @@ const LiveStreamPlayer = () => {
       })
       .subscribe();
 
-    // Get current show info
     fetchCurrentShow();
 
     return () => {
@@ -65,14 +79,13 @@ const LiveStreamPlayer = () => {
       } else {
         await audio.play();
         setPlaying(true);
-        // Update listener count
         setListenerCount(prev => prev + 1);
       }
     } catch (err) {
-      toast({ 
-        variant: 'destructive', 
+      toast({
+        variant: 'destructive',
         title: 'Stream Error',
-        description: 'Unable to connect to live stream. Please try again later.' 
+        description: 'Unable to connect to live stream. Please try again later.',
       });
       setPlaying(false);
     }
@@ -106,15 +119,15 @@ const LiveStreamPlayer = () => {
     if (audio) {
       audio.volume = volume[0];
       audio.muted = muted;
-      
+
       const handleLoadStart = () => setPlaying(false);
       const handlePlay = () => setPlaying(true);
       const handlePause = () => setPlaying(false);
       const handleError = () => {
-        toast({ 
-          variant: 'destructive', 
+        toast({
+          variant: 'destructive',
           title: 'Stream Error',
-          description: 'Live stream is currently unavailable' 
+          description: 'Live stream is currently unavailable',
         });
         setPlaying(false);
       };
@@ -134,22 +147,43 @@ const LiveStreamPlayer = () => {
   }, [volume, muted, toast]);
 
   return (
-    <Card className="w-full max-w-md mx-auto">
-      <CardHeader>
+    <Card className="radio-card w-full max-w-md mx-auto overflow-hidden">
+      <CardHeader className="border-b border-radio-blue/15">
         <CardTitle className="flex items-center justify-between">
-          <span>AOD Station Radio</span>
-          <Badge variant="secondary">{listenerCount} listeners</Badge>
+          <span className="font-bitter text-xl text-radio-mist">AOD Station Radio</span>
+          <span className="inline-flex items-center gap-1.5 rounded-full border border-radio-amber/40 bg-radio-bg/60 px-2.5 py-1 text-xs text-radio-amber">
+            <Users className="h-3 w-3" />
+            {listenerCount} listening
+          </span>
         </CardTitle>
-        <div className="text-sm text-muted-foreground">
-          <Badge variant="outline" className="w-full justify-center">
+        <div className="mt-2">
+          <div className="rounded-md border border-radio-blue/25 bg-radio-bg/50 px-3 py-2 text-center text-xs uppercase tracking-widest text-radio-mist/80">
             {nowPlaying}
-          </Badge>
+          </div>
         </div>
       </CardHeader>
-      <CardContent className="space-y-4">
+      <CardContent className="space-y-5 pt-6">
         <audio ref={audioRef} src={streamUrl} preload="none" />
-        
-        <Button onClick={togglePlay} className="w-full" size="lg">
+
+        {/* Honest EQ: animates only while real <audio> is playing */}
+        <div className="flex items-center justify-center gap-4 py-2">
+          <EqBars playing={playing} bars={10} />
+          {playing && (
+            <span className="font-bitter text-xs uppercase tracking-[0.2em] text-radio-amber">
+              On Air
+            </span>
+          )}
+        </div>
+
+        <Button
+          onClick={togglePlay}
+          className={`w-full h-12 font-bitter text-base tracking-wide transition-all ${
+            playing
+              ? 'bg-radio-blue text-white hover:bg-radio-blue/90 shadow-[0_0_24px_rgba(74,144,217,0.35)]'
+              : 'bg-radio-amber text-radio-bg hover:bg-radio-amber/90 shadow-[0_0_24px_rgba(255,180,84,0.45)]'
+          }`}
+          size="lg"
+        >
           {playing ? (
             <Pause className="mr-2 h-5 w-5" />
           ) : (
@@ -157,13 +191,13 @@ const LiveStreamPlayer = () => {
           )}
           {playing ? 'Pause Stream' : 'Play Live Stream'}
         </Button>
-        
-        <div className="flex items-center space-x-3">
+
+        <div className="flex items-center gap-3">
           <Button
             variant="ghost"
             size="sm"
             onClick={toggleMute}
-            className="p-2"
+            className="p-2 text-radio-mist hover:text-radio-amber hover:bg-radio-bg/60"
           >
             {muted || volume[0] === 0 ? (
               <VolumeX className="h-4 w-4" />
@@ -171,7 +205,7 @@ const LiveStreamPlayer = () => {
               <Volume2 className="h-4 w-4" />
             )}
           </Button>
-          
+
           <div className="flex-1">
             <Slider
               value={volume}
@@ -183,10 +217,15 @@ const LiveStreamPlayer = () => {
             />
           </div>
         </div>
-        
-        <div className="text-center text-sm text-muted-foreground">
-          {playing && (
-            <p>🔴 Live • Broadcasting from AOD Station</p>
+
+        <div className="text-center text-xs uppercase tracking-widest">
+          {playing ? (
+            <p className="text-radio-amber flex items-center justify-center gap-2">
+              <span className="inline-block h-2 w-2 rounded-full bg-radio-amber animate-pulse" />
+              Live • Broadcasting from AOD Station
+            </p>
+          ) : (
+            <p className="text-radio-mist/50">Standby</p>
           )}
         </div>
       </CardContent>

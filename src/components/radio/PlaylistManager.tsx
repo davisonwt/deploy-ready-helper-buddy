@@ -137,36 +137,46 @@ const PlaylistManager = () => {
 
   return (
     <div className="space-y-6">
-      <Card>
+      <Card className="radio-card">
         <CardHeader>
-          <CardTitle>Playlist Manager</CardTitle>
+          <CardTitle className="font-bitter text-radio-mist">Playlist Manager</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
             <div className="flex space-x-2">
-              <Input 
-                placeholder="New playlist name" 
-                value={newPlaylistName} 
-                onChange={(e) => setNewPlaylistName(e.target.value)} 
+              <Input
+                placeholder="New playlist name"
+                value={newPlaylistName}
+                onChange={(e) => setNewPlaylistName(e.target.value)}
+                className="bg-radio-bg/60 border-radio-blue/30 text-radio-mist placeholder:text-radio-mist/40 focus-visible:ring-radio-amber"
               />
-              <Button onClick={handleCreate} disabled={!newPlaylistName}>
+              <Button
+                onClick={handleCreate}
+                disabled={!newPlaylistName}
+                className="bg-radio-amber text-radio-bg hover:bg-radio-amber/90 font-bitter"
+              >
                 <Plus className="h-4 w-4 mr-1" />
                 Create
               </Button>
             </div>
-            
+
             <div className="space-y-2">
               {playlists?.map((playlist) => (
-                <div key={playlist.id} className="flex justify-between items-center p-3 border rounded-lg">
+                <div
+                  key={playlist.id}
+                  className="flex justify-between items-center p-3 rounded-lg border border-radio-blue/20 bg-radio-bg/40 hover:border-radio-amber/40 transition-colors"
+                >
                   <div>
-                    <Badge variant="outline">{playlist.playlist_name}</Badge>
-                    <p className="text-sm text-muted-foreground mt-1">
+                    <Badge className="bg-radio-ink border border-radio-amber/40 text-radio-amber font-bitter">
+                      {playlist.playlist_name}
+                    </Badge>
+                    <p className="text-sm text-radio-mist/60 mt-1">
                       {playlist.track_count || 0} tracks • {playlist.playlist_type}
                     </p>
                   </div>
                   <div className="flex space-x-2">
-                    <Select onValueChange={(trackId) => handleAddTrack(playlist.id)} value="">
-                      <SelectTrigger className="w-[200px]">
+                    <Select onValueChange={(_trackId) => handleAddTrack(playlist.id)} value="">
+                      <SelectTrigger className="w-[200px] bg-radio-bg/60 border-radio-blue/30 text-radio-mist">
                         <SelectValue placeholder="Add track" />
                       </SelectTrigger>
                       <SelectContent>
@@ -177,12 +187,13 @@ const PlaylistManager = () => {
                         ))}
                       </SelectContent>
                     </Select>
-                    
+
                     <Dialog>
                       <DialogTrigger asChild>
-                        <Button 
-                          variant="ghost" 
-                          size="sm" 
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="text-radio-mist hover:text-radio-amber hover:bg-radio-bg/60"
                           onClick={() => {
                             setEditingId(playlist.id);
                             setEditName(playlist.playlist_name);
@@ -193,12 +204,12 @@ const PlaylistManager = () => {
                       </DialogTrigger>
                       <DialogContent>
                         <DialogHeader>
-                          <DialogTitle>Edit Playlist</DialogTitle>
+                          <DialogTitle className="font-bitter">Edit Playlist</DialogTitle>
                         </DialogHeader>
                         <div className="space-y-4">
-                          <Input 
-                            value={editName} 
-                            onChange={(e) => setEditName(e.target.value)} 
+                          <Input
+                            value={editName}
+                            onChange={(e) => setEditName(e.target.value)}
                             placeholder="Playlist name"
                           />
                           <Button onClick={handleUpdate} className="w-full">
@@ -207,10 +218,10 @@ const PlaylistManager = () => {
                         </div>
                       </DialogContent>
                     </Dialog>
-                    
-                    <Button 
-                      variant="destructive" 
-                      size="sm" 
+
+                    <Button
+                      variant="destructive"
+                      size="sm"
                       onClick={() => handleDelete(playlist.id)}
                     >
                       <Trash2 className="h-4 w-4" />
