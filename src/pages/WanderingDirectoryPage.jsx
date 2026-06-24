@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { supabase } from "@/integrations/supabase/client"
 import { useAuth } from '../hooks/useAuth'
 
@@ -24,6 +24,7 @@ const ROLE_COLORS = {
 
 export default function WanderingDirectoryPage() {
   const { user } = useAuth()
+  const navigate = useNavigate()
   const [activeRole, setActiveRole] = useState('all')
   const [search, setSearch] = useState('')
   const [members, setMembers] = useState([])
@@ -123,13 +124,14 @@ export default function WanderingDirectoryPage() {
   const getDesc = (m) => m.bio || m.description || m.services_offered?.join(', ') || m.specialties?.join(', ') || ''
   const getLocation = (m) => [m.city, m.country].filter(Boolean).join(', ') || 'Location not set'
   const getAvatar = (m) => m.logo_url || m.avatar_url || m.cover_photo || null
+  const goBack = () => (window.history.length > 1 ? navigate(-1) : navigate('/dashboard'))
 
   return (
     <div style={s.root}>
       <style>{`
         @keyframes roleGlow { 0%,100%{opacity:1} 50%{opacity:0.7} }
       `}</style>
-      <Link to="/dashboard" style={s.backBtn}>&#8592; Back to Dashboard</Link>
+      <button type="button" onClick={goBack} style={s.backBtn}>&#8592; Go Back</button>
       <div style={s.header}>
         <div style={s.title}>&#127807; The Wandering Directory</div>
         <div style={s.sub}>Find skilled tribe members ready to serve, create, and connect</div>
