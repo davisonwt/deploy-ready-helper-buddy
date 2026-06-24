@@ -11,6 +11,7 @@ class RoleChecker extends React.Component {
   state = {
     loading: true,
     isAuthenticated: false,
+    hasAccess: false,
     userRoles: [],
     user: null
   }
@@ -24,12 +25,15 @@ class RoleChecker extends React.Component {
       const { data: { session } } = await supabase.auth.getSession()
       
       if (session?.user) {
+        const { allowedRoles = [] } = this.props
         const roles = await this.fetchRoles(session.user.id)
+        const hasAccess = await this.checkAllowedRole(session.user.id, allowedRoles, roles)
         if (this._isMounted) {
           this.setState({
             loading: false,
             isAuthenticated: true,
             user: session.user,
+            hasAccess,
             userRoles: roles
           })
         }
@@ -41,7 +45,7 @@ class RoleChecker extends React.Component {
     } catch (err) {
       console.error('RoleChecker auth error:', err)
       if (this._isMounted) {
-        this.setState({ loading: false, isAuthenticated: false })
+        this.setState({ loading: false, isAuthenticated: false, hasAccess: false })
       }
     }
   }
@@ -65,9 +69,29 @@ class RoleChecker extends React.Component {
     }
   }
 
+  checkAllowedRole = async (userId, allowedRoles, roles) => {
+    if (!Array.isArray(allowedRoles) || allowedRoles.length === 0) return true
+
+    const normalizedAllowedRoles = allowedRoles.map((role) => String(role).toLowerCase())
+    if (normalizedAllowedRoles.some((role) => roles.includes(role))) return true
+
+    try {
+      const checks = await Promise.all(
+        normalizedAllowedRoles.map((role) =>
+          supabase.rpc('has_role', { _user_id: userId, _role: role })
+        )
+      )
+
+      return checks.some(({ data, error }) => !error && data === true)
+    } catch (err) {
+      console.error('Failed to verify allowed role:', err)
+      return false
+    }
+  }
+
   render() {
-    const { loading, isAuthenticated, userRoles } = this.state
-    const { allowedRoles = [], children } = this.props
+    const { loading, isAuthenticated, hasAccess } = this.state
+    const { children } = this.props
 
     if (loading) {
       return <LoadingSpinner full text="Loading permissions..." />
@@ -77,11 +101,7 @@ class RoleChecker extends React.Component {
       return <Navigate to="/login" replace />
     }
 
-    const hasRequiredRole = Array.isArray(allowedRoles) && allowedRoles.length > 0
-      ? allowedRoles.some(r => userRoles.includes(r.toLowerCase()))
-      : true
-
-    if (!hasRequiredRole) {
+    if (!hasAccess) {
       return <Navigate to="/dashboard" replace />
     }
 
