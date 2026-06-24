@@ -8,6 +8,7 @@ import { Plus, ArrowLeft } from 'lucide-react';
 import OneOnOneRoom from '@/components/live/OneOnOneRoom';
 import { PresenceAura, classifyAura } from '@/components/live/PresenceAura';
 import CreateOneOnOneDialog from '@/components/live/CreateOneOnOneDialog';
+import PageHeroBanner from '@/components/chat/PageHeroBanner';
 
 interface LiveRoom {
   id: string;
