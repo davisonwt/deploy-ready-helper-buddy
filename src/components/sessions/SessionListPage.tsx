@@ -52,10 +52,13 @@ const COPY: Record<Kind, { label: string; route: string; tableCreatorCol: string
 export default function SessionListPage({ kind }: Props) {
   const navigate = useNavigate();
   const { user } = useAuth();
+  const queryClient = useQueryClient();
   const cfg = COPY[kind];
   const Icon = cfg.icon;
   const [createOpen, setCreateOpen] = useState(false);
   const [explainerOpen, setExplainerOpen] = useState(false);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+
 
 
   const table = kind === 'classroom' ? 'classroom_sessions' : 'skilldrop_sessions';
