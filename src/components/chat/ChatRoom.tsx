@@ -1019,14 +1019,14 @@ export const ChatRoom: React.FC<ChatRoomProps> = ({ roomId, onBack }) => {
       </ScrollArea>
 
       {/* Input Area */}
-      <div className="border-t bg-card p-4">
+      <div className="border-t border-[#4FA876]/15 bg-[#0E1B15]/95 backdrop-blur p-4">
         {replyingTo && (
-          <div className="mb-2 p-2 bg-muted rounded-lg border-l-2 border-primary text-xs flex items-center justify-between">
+          <div className="mb-2 p-2 bg-[#123330]/50 rounded-lg border-l-2 border-[#F2C14E] text-xs flex items-center justify-between text-[#F3F7F0]">
             <div>
               <span className="font-semibold">Replying to:</span>
-              <span className="ml-2 text-muted-foreground">{replyingTo.content?.substring(0, 50)}...</span>
+              <span className="ml-2 text-[#8AA99A]">{replyingTo.content?.substring(0, 50)}...</span>
             </div>
-            <Button variant="ghost" size="sm" onClick={() => setReplyingTo(null)} className="h-6 px-2">
+            <Button variant="ghost" size="sm" onClick={() => setReplyingTo(null)} className="h-6 px-2 text-[#8AA99A] hover:text-[#F3F7F0] hover:bg-transparent">
               Cancel
             </Button>
           </div>
@@ -1047,11 +1047,13 @@ export const ChatRoom: React.FC<ChatRoomProps> = ({ roomId, onBack }) => {
             placeholder={replyingTo ? "Type your reply..." : "Type a message..."}
             disabled={sending}
             onFocus={handleTyping}
+            className="bg-[#123330]/60 border-[#4FA876]/20 text-[#F3F7F0] placeholder:text-[#8AA99A] focus-visible:ring-[#4FA876]/40 focus-visible:border-[#4FA876]/50"
           />
           <Button
             onClick={handleSendMessage}
             disabled={!message.trim() || sending}
             size="icon"
+            className="bg-[#4FA876] text-[#0E1B15] hover:bg-[#4FA876]/90 disabled:opacity-40"
           >
             {sending ? (
               <Loader2 className="h-4 w-4 animate-spin" />
