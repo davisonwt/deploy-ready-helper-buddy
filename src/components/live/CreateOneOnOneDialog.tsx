@@ -69,7 +69,7 @@ export default function CreateOneOnOneDialog({ open, onOpenChange, onCreated }: 
         { room_id: roomId, user_id: user.id, role: 'host', display_name: user.user_metadata?.display_name || user.email?.split('@')[0] || 'Host' },
         ...invitees.map(uid => {
           const p = profiles.find(pp => pp.user_id === uid);
-          const memberName = p?.display_name || `${p?.first_name || ''} ${p?.last_name || ''}`.trim() || 'Guest';
+          const memberName = p?.display_name || 'Guest';
           return { room_id: roomId, user_id: uid, role: 'invited', display_name: memberName };
         }),
       ];
