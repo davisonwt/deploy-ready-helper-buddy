@@ -150,6 +150,9 @@ export default function LiveRoomsPage() {
               <Plus className="h-4 w-4" /> New room
             </Button>
           </div>
+        </div>
+
+
 
         {isLoading && (
           <div className="flex justify-center items-center h-64">
