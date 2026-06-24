@@ -282,7 +282,7 @@ export default function SessionListPage({ kind }: Props) {
 
       <Dialog open={createOpen} onOpenChange={setCreateOpen}>
         <DialogContent
-          className="max-w-2xl text-white"
+          className="max-w-2xl text-white max-h-[90vh] overflow-y-auto"
           style={{
             backgroundColor: isClassroom ? '#1a1430' : isSkillDrop ? '#241a0d' : '#0f172a',
             border: isClassroom
