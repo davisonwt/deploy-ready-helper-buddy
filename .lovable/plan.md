@@ -1,116 +1,97 @@
-## Goal
-Make 1-on-1 Live a real private DM room: invite-gated, with persisted text + voice notes + video clips + a true 2-person Jitsi call. No partial pieces.
+# ChatApp 6-Section Verification — Read-Only Findings
 
----
+## 1. Routes resolve cleanly
 
-## 1. Route collision — `AppRoutes.tsx`
+Typecheck (`tsgo --noEmit`): **clean, 0 errors**.
 
-- Remove the **first** `/live-rooms` route (lines 331–333) that mounts the orphan `LiveRooms` component (which queries `chat_rooms`, wrong table).
-- Keep the second `/live-rooms` route (line 443) using `LiveRoomsPage`, but wrap it in `ProtectedRoute` (it's a private DM surface now, not a public lobby).
-- **Recommendation for the orphan `src/pages/LiveRooms.tsx` + its lazy export:** delete both. It was a duplicate built against the wrong table and nothing else links to it. Cleaner than repurposing.
+All requested routes are wired with valid lazy imports and existing files:
 
-## 2. RLS — `live_rooms` + `live_room_participants` (migration)
+| Route | Component | File | Status |
+|---|---|---|---|
+| `/communications-hub` | `CommunicationsHub` | `src/pages/CommunicationsHub.tsx` | OK |
+| `/live-rooms` | `LiveRoomsPage` | `src/pages/LiveRoomsPage.tsx` | OK |
+| `/chatapp` | `ChatApp` | `src/pages/ChatApp.tsx` | OK (still routable, still used by ~25 other surfaces — left alone) |
+| `/community-chats` | `CommunityChatsPage` | `src/pages/CommunityChatsPage.tsx` | OK (new, today) |
+| `/classroom` | `ClassroomPage → SessionListPage kind=classroom` | OK |
+| `/classroom/:id` | `SessionPage kind="classroom"` | OK |
+| `/skilldrop` | `SkillDropPage → SessionListPage kind=skilldrop` | OK |
+| `/skilldrop/:id` | `SessionPage kind="skilldrop"` | OK |
+| `/premium-rooms` | `PremiumRoomsLanding` | OK |
+| `/create-premium-room` | `CreatePremiumRoomPage` | OK |
+| `/radio` | `RadioPage` (`src/components/radio/RadioPage.tsx`) | OK |
 
-Replace the current "Anyone can view active live rooms" + "Authenticated users can join rooms" policies.
+No orphaned imports, no broken lazy chunks.
 
-**`live_rooms`:**
-- `SELECT`: only if `auth.uid() = created_by` OR `EXISTS(select 1 from live_room_participants where room_id = live_rooms.id and user_id = auth.uid())`.
-- `INSERT`: `auth.uid() = created_by` (keep).
-- `UPDATE`/`DELETE`: creator only (keep).
+## 2. End-to-end flow per section
 
-**`live_room_participants`:**
-- `SELECT`: only participants of the same room (use security-definer helper `is_live_room_participant(room_id, uid)` to avoid recursion).
-- `INSERT`: creator can add anyone; user can insert their own row only if they were already invited (row exists with `role='invited'`) — we'll handle invite seeding server-side in step 3, so client-side INSERT can be restricted to `auth.uid() = user_id AND is_live_room_participant(room_id, auth.uid())`.
-- `UPDATE` self / `DELETE` self only.
+### a. 1-on-1 Live (`/live-rooms`) — **PASS**
+- Create: "New room" → `CreateOneOnOneDialog` → on success sets `?room=<id>`.
+- List: queries `live_rooms` + `live_room_participants` + `live_room_messages`.
+- Open: `activeRoomId` renders `<OneOnOneRoom>`.
+- Back: `handleLeave` clears search param; header "Back to Go-Live" → `/communications-hub`.
 
-Add security-definer fn `public.is_live_room_participant(_room uuid, _user uuid) returns boolean`.
+### b. Community Chat (`/community-chats`) — **PASS (with one nit)**
+- Hub tile correctly points to `/community-chats` (no longer `/chatapp`).
+- `CommunityChatsPage` renders `PublicRoomsBrowser` with `onJoinRoom={(id)=>navigate('/premium-room/'+id)}` and `onNavigateToOrchard={(id)=>navigate('/orchard/'+id)}`.
+- "Open New Room" → `/create-premium-room`. Go Back → `navigate(-1)`.
+- Nit (not a failure): `PublicRoomsBrowser` lists **public chat rooms** by querying `chat_rooms WHERE is_premium=false`, but `onJoinRoom` routes to `/premium-room/:id`. For purely-public rooms this won't load a premium room record. It only works correctly for premium rooms (which is the more common case in this UI). Worth a follow-up — flagged for next pass per scope-lock.
 
-## 3. Invite seeding — `CommunicationsHub.tsx` `createLaunch()`
+### c. Classroom (`/classroom` / `/classroom/:id`) — **PASS**
+- List (`SessionListPage kind=classroom`): own sessions via `classroom_sessions` filtered by `instructor_id`; invited via `chat_participants` → `chat_room_id`.
+- Create: `CreateSessionForm` → inserts `chat_rooms`, seeds `chat_participants`, inserts `classroom_sessions`, navigates to `/classroom/<id>`.
+- Open: `SessionPage kind="classroom"` loads row, renders `<ChatRoom roomId={session.chat_room_id} />`.
+- Back: header → `/communications-hub`; in-room `onBack` → `navigate(-1)`.
 
-After the `live_rooms` insert (line 76), in the same flow:
-- Insert participant rows into `live_room_participants` for **(a)** the creator (`role='host'`) and **(b)** every `invitees[]` user (`role='invited'`).
-- Keep the existing `user_notifications` insert with `action_url = /live-rooms?room=<id>`.
-- Bump `max_participants` to match the actual invite count + 1 (capped, default 2 for true 1-on-1).
+### d. SkillDrop (`/skilldrop` / `/skilldrop/:id`) — **PASS**
+- Identical to Classroom but with `skilldrop_sessions` / `presenter_id` / `pricing_type`. Routes match. `SessionPage` correctly receives `kind="skilldrop"` and switches table+label+icon.
 
-## 4. `?room=<id>` auto-join — `LiveRoomsPage.tsx`
+### e. Training / Premium Rooms (`/premium-rooms`) — **PASS**
+- List: fetches `premium_rooms`. Back → `navigate(-1)`. Create → `/create-premium-room`. View → `/premium-room/:id`.
+- `PremiumRoomViewPage` has two back paths: `/premium-rooms` and `/communications-hub`, plus inline `<ChatRoom roomId={room.chat_room_id} />`.
 
-Rewrite the page from "public lobby grid" to "my private rooms + auto-join":
-- Read `room` (uuid) from `useSearchParams`.
-- Query only rooms the user can see (RLS now scopes this to host + invited rows).
-- If `?room=<id>` is present and matches one of those rows → directly mount the room view (no display-name gate when authed — use profile display_name).
-- Otherwise show the list of the user's own 1-on-1 rooms.
-- Use `room.id` (uuid) — not `slug` — as the Jitsi room name so two different 1-on-1s can never collide. Pass it to `JitsiRoom roomName={`s2g-1v1-${room.id}`}`.
+### f. Radio (`/radio`) — **PASS**
+- `RadioPage` header has "Back to Go-Live" → `/communications-hub`. Tabs for MusicLibrary / PlaylistManager / LiveStreamPlayer / ListenerInteractions all mount lazily; no broken imports.
 
-## 5. Messaging surface — new component `src/components/live/OneOnOneRoom.tsx`
+## 3. Regressions from today's refactor
 
-A single split view rendered by `LiveRoomsPage` when a room is active:
-- **Header:** room name, the other participant's name, "Start video call" + "Start audio call" buttons, "Leave" button.
-- **Message thread (main):** uses new table `live_room_messages` (see step 6). Realtime via Supabase channel scoped to `room_id`. Renders text, audio-note bubble (inline `<audio controls>`), video-clip bubble (inline `<video controls>`).
-- **Composer (bottom):** text input + send, mic button (record voice note), camera button (record short video clip ≤30s using `MediaRecorder`), or file-pick fallback. Uploads to `chat-media` bucket then inserts a message row.
-- **Call modal:** clicking call buttons opens `JitsiRoom` overlay (existing component) with `roomName = s2g-1v1-${room.id}` + `?audio` flag for audio-only (start muted-video).
+- **CommunicationsHub strip-down:** clean. The only imports in `CommunicationsHub.tsx` are `React`, `useNavigate`, `motion`, lucide icons, `Button`. No dead state, no dead handlers, no leftover create-session logic — that logic moved to `CreateSessionForm` and is the only caller.
+- **ChatApp One-on-Ones removal:** clean. The two remaining strings ("Looking for a private 1-on-1? Head to Live Rooms." and the "Start a 1-on-1" outline button that `navigate('/live-rooms')`) are intentional pointers, not dangling references to a removed tab. No `room_type='direct'` queries remain (confirmed by line-167 comment + grep). No imports referencing the removed flow.
+- **CommunityChatsPage addition:** new file compiles, props on `PublicRoomsBrowser` match its definition (`onJoinRoom`, `onNavigateToOrchard`).
 
-Helper hooks/files:
-- `src/hooks/useLiveRoomMessages.ts` — fetch + realtime subscribe + send.
-- `src/hooks/useMediaRecorder.ts` — small wrapper around `MediaRecorder` for audio + video clip capture with duration cap and Blob return.
-- `src/lib/liveRoom/uploadMedia.ts` — uploads Blob to `chat-media/<room_id>/<uuid>.<ext>`, returns public/signed URL.
+## 4. RLS scoping
 
-## 6. DB — new table `live_room_messages` + storage bucket (migration)
+No DB migrations ran today, so policies are untouched. RLS confirmed **enabled** on every table you listed:
 
-```sql
-create table public.live_room_messages (
-  id uuid primary key default gen_random_uuid(),
-  room_id uuid not null references public.live_rooms(id) on delete cascade,
-  sender_id uuid not null,
-  message_type text not null check (message_type in ('text','voice','video')),
-  content text,                  -- text body, or caption
-  media_url text,                -- for voice/video
-  media_duration_seconds int,
-  mime_type text,
-  created_at timestamptz not null default now()
-);
--- GRANTs (authenticated + service_role; no anon)
--- RLS: SELECT/INSERT only if is_live_room_participant(room_id, auth.uid()); sender_id must = auth.uid() on INSERT
--- Enable realtime: ALTER PUBLICATION supabase_realtime ADD TABLE public.live_room_messages;
--- Index on (room_id, created_at).
+```
+chat_messages, chat_participants, chat_rooms,
+classroom_sessions, skilldrop_sessions,
+live_rooms, live_room_participants, live_room_messages,
+premium_rooms,
+radio_djs, radio_broadcasts, radio_live_sessions, radio_live_messages, radio_schedule
 ```
 
-Storage: create private bucket `chat-media` via `supabase--storage_create_bucket`. Add `storage.objects` RLS so only participants of the room (path prefix = `<room_id>/...`) can read/insert.
+Linter reports 211 pre-existing warnings (mostly `search_path` mutability + SECURITY DEFINER exposure on functions). None are new from today's UI-only refactor.
 
-## 7. Jitsi — true 2-person isolation
+## 5. SessionListPage ↔ SessionPage `kind` wiring — **PASS**
 
-- Use `roomName = s2g-1v1-<live_room.id>` everywhere (uuid is unguessable). 
-- Pass `password` derived deterministically from the room id + a server-side secret? Out of scope unless you want it — the uuid alone is already infeasible to guess. **Flag: confirm uuid-only is acceptable, or do you want me to also set a Jitsi room password?**
-- Audio-only call = launch Jitsi with `startWithVideoMuted: true` (already supported by `JitsiRoom` config — verify and pass through prop).
+- `SessionListPage` card `onClick={() => navigate(`${cfg.route}/${s.id}`)}` with `cfg.route = '/classroom'` or `'/skilldrop'` — produces `/classroom/<id>` and `/skilldrop/<id>` exactly as routed.
+- `AppRoutes`: `<Route path="/classroom/:id" element={<SessionPage kind="classroom" />}/>` and `<Route path="/skilldrop/:id" element={<SessionPage kind="skilldrop" />}/>`.
+- `SessionPage` consumes `kind` to pick `table` (`classroom_sessions` vs `skilldrop_sessions`), `label`, and `Icon`. `useParams` reads `:id`. Renders `<ChatRoom roomId={session.chat_room_id} />`.
 
----
+## Summary
 
-## Files touched
+| Section | Verdict |
+|---|---|
+| 1-on-1 Live | PASS |
+| Community Chat | PASS (one follow-up nit about public-rooms routing to `/premium-room/:id`) |
+| Classroom | PASS |
+| SkillDrop | PASS |
+| Training (Premium Rooms) | PASS |
+| Radio | PASS |
+| Build/typecheck | PASS (clean) |
+| RLS on listed tables | PASS (all enabled, no regressions) |
+| SessionListPage ↔ SessionPage `kind` | PASS |
 
-**Edit**
-- `src/routes/AppRoutes.tsx` — remove dup route, protect kept route.
-- `src/routes/lazyPages.ts` — remove `LiveRooms` export.
-- `src/pages/LiveRoomsPage.tsx` — rewrite for owned-rooms list + `?room=` auto-mount.
-- `src/pages/CommunicationsHub.tsx` — seed `live_room_participants` on create.
-- `src/components/jitsi/JitsiRoom.tsx` — accept `audioOnly?: boolean` prop.
+**Nothing is broken from today's refactor.** The one nit worth deciding on separately: in `CommunityChatsPage`, `PublicRoomsBrowser`'s `onJoinRoom` sends every clicked room (including non-premium `chat_rooms` rows) to `/premium-room/:id`, which only renders correctly for actual premium rooms. If you want, the next pass can split that into `/chatapp?room=<id>` for public rooms and `/premium-room/<id>` for premium rooms.
 
-**Create**
-- `src/components/live/OneOnOneRoom.tsx`
-- `src/hooks/useLiveRoomMessages.ts`
-- `src/hooks/useMediaRecorder.ts`
-- `src/lib/liveRoom/uploadMedia.ts`
-
-**Delete**
-- `src/pages/LiveRooms.tsx`
-
-**Migrations**
-- One migration: new `live_room_messages` table + GRANTs + RLS + realtime publication + `is_live_room_participant()` definer fn + rewritten policies on `live_rooms` and `live_room_participants`.
-- `chat-media` bucket via storage tool + `storage.objects` policies migration.
-
----
-
-## Open questions (please confirm before I build)
-
-1. **Jitsi password:** uuid-only room name (unguessable) vs. also setting a per-room password? I lean uuid-only — simpler, no UX friction.
-2. **Voice/video clip length cap:** propose 60s for voice notes, 30s for video clips. OK?
-3. **Bucket public vs private:** I'll make `chat-media` **private** + serve via signed URLs (5-min expiry on fetch). Confirm — public would be simpler but leaks media if URL escapes.
-4. **Orphan `LiveRooms.tsx`:** delete (my recommendation), or do you want it repurposed for something else first?
+Tell me which (if any) of these you want me to actually change and I'll implement.
