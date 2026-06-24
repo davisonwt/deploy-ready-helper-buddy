@@ -239,13 +239,27 @@ const SessionBuilder = () => {
     }
     setSessions((prev) => [data as Session, ...prev]);
     setActiveId(data.id);
+    setView('editor');
+  };
+
+  const openEditor = (id: string) => {
+    setActiveId(id);
+    setView('editor');
+  };
+
+  const backToList = () => {
+    setView('list');
+    setActiveId(null);
   };
 
   const deleteSession = async (id: string) => {
     if (!confirm('Delete this session and all its slots? This cannot be undone.')) return;
     await supabase.from('radio_prerecorded_sessions').delete().eq('id', id);
     setSessions((prev) => prev.filter((s) => s.id !== id));
-    if (activeId === id) setActiveId(null);
+    if (activeId === id) {
+      setActiveId(null);
+      setView('list');
+    }
   };
 
   const updateSessionField = async (patch: Partial<Session>) => {
