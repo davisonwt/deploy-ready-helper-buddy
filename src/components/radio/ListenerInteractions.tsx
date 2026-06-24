@@ -129,18 +129,18 @@ const ListenerInteractions = () => {
   };
 
   return (
-    <Card className="w-full max-w-md mx-auto">
-      <CardHeader>
-        <CardTitle className="flex items-center">
-          <MessageCircle className="mr-2 h-5 w-5" />
+    <Card className="radio-card w-full max-w-md mx-auto">
+      <CardHeader className="border-b border-radio-blue/15">
+        <CardTitle className="flex items-center font-bitter text-radio-mist">
+          <MessageCircle className="mr-2 h-5 w-5 text-radio-amber" />
           Live Chat & Requests
         </CardTitle>
       </CardHeader>
-      <CardContent className="space-y-4">
+      <CardContent className="space-y-4 pt-5">
         {user ? (
           <div className="space-y-3">
             <Select value={type} onValueChange={(v) => setType(v as 'comment' | 'request')}>
-              <SelectTrigger>
+              <SelectTrigger className="bg-radio-bg/60 border-radio-blue/30 text-radio-mist">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -158,50 +158,55 @@ const ListenerInteractions = () => {
                 </SelectItem>
               </SelectContent>
             </Select>
-            
+
             <div className="flex space-x-2">
               <Input
                 value={message}
                 onChange={(e) => setMessage(e.target.value)}
                 placeholder={
-                  type === 'comment' 
-                    ? 'Say something...' 
+                  type === 'comment'
+                    ? 'Say something...'
                     : 'Request a song...'
                 }
                 onKeyPress={(e) => e.key === 'Enter' && sendMessage()}
                 disabled={loading}
+                className="bg-radio-bg/60 border-radio-blue/30 text-radio-mist placeholder:text-radio-mist/40 focus-visible:ring-radio-amber"
               />
-              <Button 
-                onClick={sendMessage} 
+              <Button
+                onClick={sendMessage}
                 disabled={!message.trim() || loading}
                 size="sm"
+                className="bg-radio-amber text-radio-bg hover:bg-radio-amber/90"
               >
                 <Send className="h-4 w-4" />
               </Button>
             </div>
           </div>
         ) : (
-          <div className="text-center p-4 border rounded-lg">
-            <p className="text-muted-foreground">Login to join the conversation</p>
+          <div className="text-center p-4 rounded-lg border border-radio-blue/25 bg-radio-bg/40">
+            <p className="text-radio-mist/70">Login to join the conversation</p>
           </div>
         )}
-        
-        <div className="space-y-2 max-h-80 overflow-y-auto">
+
+        <div className="space-y-2 max-h-80 overflow-y-auto pr-1">
           {comments.length === 0 ? (
             <div className="text-center py-8">
-              <MessageCircle className="mx-auto h-12 w-12 text-muted-foreground/50" />
-              <p className="text-muted-foreground mt-2">No messages yet</p>
-              <p className="text-sm text-muted-foreground">Be the first to comment!</p>
+              <MessageCircle className="mx-auto h-12 w-12 text-radio-mist/30" />
+              <p className="text-radio-mist/70 mt-2 font-bitter">No messages yet</p>
+              <p className="text-sm text-radio-mist/50">Be the first to comment</p>
             </div>
           ) : (
             comments.map((comment) => (
-              <div 
-                key={comment.id} 
-                className="flex items-start space-x-2 p-3 bg-muted/50 rounded-lg"
+              <div
+                key={comment.id}
+                className="flex items-start space-x-2 p-3 rounded-lg border border-radio-blue/15 bg-radio-bg/40"
               >
-                <Badge 
-                  variant={comment.type === 'request' ? 'secondary' : 'default'}
-                  className="shrink-0 mt-0.5"
+                <Badge
+                  className={`shrink-0 mt-0.5 border ${
+                    comment.type === 'request'
+                      ? 'bg-radio-amber/15 border-radio-amber/40 text-radio-amber'
+                      : 'bg-radio-blue/15 border-radio-blue/40 text-radio-blue'
+                  }`}
                 >
                   {comment.type === 'request' ? (
                     <Music className="h-3 w-3 mr-1" />
@@ -212,14 +217,14 @@ const ListenerInteractions = () => {
                 </Badge>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center justify-between">
-                    <p className="font-medium text-sm truncate">
+                    <p className="font-medium text-sm truncate text-radio-mist">
                       {formatDisplayName(comment)}
                     </p>
-                    <span className="text-xs text-muted-foreground">
+                    <span className="text-xs text-radio-mist/50">
                       {formatTime(comment.created_at)}
                     </span>
                   </div>
-                  <p className="text-sm break-words">{comment.message}</p>
+                  <p className="text-sm break-words text-radio-mist/85">{comment.message}</p>
                 </div>
               </div>
             ))

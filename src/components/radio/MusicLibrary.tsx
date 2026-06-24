@@ -320,15 +320,17 @@ const MusicLibrary = () => {
 
   return (
     <div className="space-y-6">
-      <Card>
+      <Card className="radio-card">
         <CardHeader>
-          <CardTitle>Music Library</CardTitle>
+          <CardTitle className="font-bitter text-radio-mist">Music Library</CardTitle>
         </CardHeader>
         <CardContent>
         ...
         </CardContent>
       </Card>
-      <DataTable columns={columnsWithHandlers} data={tracks || []} />
+      <div className="rounded-lg border border-radio-blue/20 bg-radio-ink/60 p-2">
+        <DataTable columns={columnsWithHandlers} data={tracks || []} />
+      </div>
       <audio ref={audioRef} preload="none" crossOrigin="anonymous" className="hidden" aria-hidden="true" />
     </div>
   );
