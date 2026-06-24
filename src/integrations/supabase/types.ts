@@ -7526,6 +7526,105 @@ export type Database = {
         }
         Relationships: []
       }
+      radio_prerecorded_sessions: {
+        Row: {
+          created_at: string
+          description: string | null
+          host_user_id: string
+          id: string
+          scheduled_at: string | null
+          status: string
+          title: string
+          total_duration_seconds: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          host_user_id: string
+          id?: string
+          scheduled_at?: string | null
+          status?: string
+          title: string
+          total_duration_seconds?: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          host_user_id?: string
+          id?: string
+          scheduled_at?: string | null
+          status?: string
+          title?: string
+          total_duration_seconds?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      radio_prerecorded_slots: {
+        Row: {
+          asset_mime: string | null
+          asset_name: string | null
+          asset_url: string | null
+          created_at: string
+          duration_seconds: number
+          id: string
+          label: string | null
+          music_track_id: string | null
+          notes: string | null
+          position: number
+          session_id: string
+          slot_type: string
+          updated_at: string
+        }
+        Insert: {
+          asset_mime?: string | null
+          asset_name?: string | null
+          asset_url?: string | null
+          created_at?: string
+          duration_seconds?: number
+          id?: string
+          label?: string | null
+          music_track_id?: string | null
+          notes?: string | null
+          position: number
+          session_id: string
+          slot_type: string
+          updated_at?: string
+        }
+        Update: {
+          asset_mime?: string | null
+          asset_name?: string | null
+          asset_url?: string | null
+          created_at?: string
+          duration_seconds?: number
+          id?: string
+          label?: string | null
+          music_track_id?: string | null
+          notes?: string | null
+          position?: number
+          session_id?: string
+          slot_type?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "radio_prerecorded_slots_music_track_id_fkey"
+            columns: ["music_track_id"]
+            isOneToOne: false
+            referencedRelation: "dj_music_tracks"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "radio_prerecorded_slots_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "radio_prerecorded_sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       radio_reactions: {
         Row: {
           created_at: string
