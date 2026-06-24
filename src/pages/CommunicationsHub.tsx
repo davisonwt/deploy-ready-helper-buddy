@@ -157,7 +157,34 @@ export default function CommunicationsHub() {
         navigate('/radio');
         return;
       } else {
-        const { data, error } = await supabase.from('premium_rooms' as any).insert({ creator_id: user.id, title: title.trim(), description, room_type: 'training', is_public: true, price, pricing_type: isFree ? 'free' : 'bestowal', documents: uploaded, artwork: uploaded.filter(f => f.type.startsWith('image/')), music: uploaded.filter(f => f.type.startsWith('audio/')) }).select('id').single();
+        // Training: create a linked private chat room so attendees can message live.
+        const { data: roomData, error: roomErr } = await supabase
+          .from('chat_rooms' as any)
+          .insert({
+            name: `Training: ${title.trim()}`,
+            description,
+            room_type: 'group',
+            created_by: user.id,
+            is_active: true,
+            metadata: { session_kind: 'training', scheduled_at: when, files: uploaded, price },
+          })
+          .select('id')
+          .single();
+        if (roomErr) throw roomErr;
+        const chatRoomId = (roomData as any).id as string;
+
+        const participantRows = Array.from(new Set([user.id, ...invitees])).map(uid => ({
+          room_id: chatRoomId,
+          user_id: uid,
+          is_moderator: uid === user.id,
+          is_active: true,
+        }));
+        const { error: cpErr } = await supabase
+          .from('chat_participants' as any)
+          .upsert(participantRows as any, { onConflict: 'room_id,user_id', ignoreDuplicates: false });
+        if (cpErr) throw cpErr;
+
+        const { data, error } = await supabase.from('premium_rooms' as any).insert({ creator_id: user.id, title: title.trim(), description, room_type: 'training', is_public: true, price, pricing_type: isFree ? 'free' : 'bestowal', documents: uploaded, artwork: uploaded.filter(f => f.type.startsWith('image/')), music: uploaded.filter(f => f.type.startsWith('audio/')), chat_room_id: chatRoomId }).select('id').single();
         if (error) throw error;
         actionUrl = `/premium-room/${(data as any).id}`;
       }
