@@ -666,11 +666,11 @@ export const ChatRoom: React.FC<ChatRoomProps> = ({ roomId, onBack }) => {
   }
 
   return (
-    <div className="flex flex-col h-full min-h-[600px]">
+    <div className="flex flex-col h-full min-h-[600px] bg-[#0E1B15] text-[#F3F7F0]">
       {/* Header */}
-      <div className="border-b bg-card p-4">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
+      <div className="border-b border-[#4FA876]/15 bg-[#0E1B15]/95 backdrop-blur px-6 py-4">
+        <div className="flex items-center justify-between gap-4">
+          <div className="flex items-center gap-4 min-w-0">
             <Button
               variant="ghost"
               size="sm"
@@ -678,43 +678,78 @@ export const ChatRoom: React.FC<ChatRoomProps> = ({ roomId, onBack }) => {
                 console.log('Back button clicked');
                 onBack();
               }}
-              className="text-foreground hover:bg-primary/10"
+              className="text-[#8AA99A] hover:text-[#F3F7F0] hover:bg-[#4FA876]/10 px-2"
             >
               <ArrowLeft className="h-4 w-4 mr-1" />
               <span className="text-sm">Back</span>
             </Button>
-            <Avatar className="h-10 w-10">
-              <AvatarFallback className="bg-primary/10 text-primary">
-                {roomInfo?.name?.charAt(0) || 'C'}
-              </AvatarFallback>
-            </Avatar>
-            <div>
-              <h2 className="font-semibold">{roomInfo?.name}</h2>
-              <div className="flex items-center gap-2">
-                <p className="text-xs text-muted-foreground">
-                  {roomInfo?.room_type === 'direct' ? 'Direct Message' : 'Group Chat'}
-                </p>
-                {participants.length > 0 && (
-                  <div className="flex items-center gap-1">
-                    <span className="text-xs text-muted-foreground">•</span>
-                    <div className="flex -space-x-2">
-                      {participants.slice(0, 3).map((p: any) => (
-                        <Avatar key={p.user_id} className="h-5 w-5 border-2 border-background">
-                          <AvatarImage src={p.profiles?.avatar_url} />
-                          <AvatarFallback className="text-xs">
-                            {(p.profiles?.display_name || p.profiles?.first_name || 'U')?.charAt(0)}
-                          </AvatarFallback>
-                        </Avatar>
-                      ))}
-                    </div>
-                    <span className="text-xs text-muted-foreground">
-                      {participants.length} member{participants.length !== 1 ? 's' : ''}
-                    </span>
-                  </div>
-                )}
+            <div className="min-w-0">
+              <h2
+                className="text-2xl tracking-tight truncate text-[#F3F7F0]"
+                style={{ fontFamily: '"Outfit", "Inter", sans-serif', fontWeight: 600 }}
+              >
+                {roomInfo?.name}
+              </h2>
+              <div className="flex items-center gap-3 mt-1">
+                {participants.length > 0 && (() => {
+                  const visible = participants.slice(0, 6);
+                  const extra = Math.max(0, participants.length - visible.length);
+                  const activeCount = participants.filter((p: any) =>
+                    classifyVoiceState(lastSpokeAtByUser[p.user_id]) === 'active'
+                  ).length;
+                  return (
+                    <>
+                      <div className="flex -space-x-2.5">
+                        {visible.map((p: any) => {
+                          const color = getVoiceColor(p.user_id);
+                          const state = classifyVoiceState(lastSpokeAtByUser[p.user_id]);
+                          const popped = poppedUserId === p.user_id;
+                          const ringOpacity = state === 'active' ? 1 : state === 'recent' ? 0.55 : 0.18;
+                          return (
+                            <div
+                              key={p.user_id}
+                              className="relative rounded-full motion-reduce:transition-none transition-transform duration-300"
+                              style={{
+                                transform: popped ? 'scale(1.18)' : 'scale(1)',
+                                filter: popped ? `drop-shadow(0 0 10px ${color.glow})` : 'none',
+                              }}
+                              title={p.profiles?.display_name || p.profiles?.first_name || 'Member'}
+                            >
+                              <Avatar
+                                className="h-8 w-8 border-2"
+                                style={{ borderColor: color.ring, opacity: 0.4 + 0.6 * ringOpacity }}
+                              >
+                                <AvatarImage src={p.profiles?.avatar_url} />
+                                <AvatarFallback
+                                  className="text-[11px]"
+                                  style={{ background: '#123330', color: color.ring }}
+                                >
+                                  {initialFrom(p.profiles?.display_name || p.profiles?.first_name)}
+                                </AvatarFallback>
+                              </Avatar>
+                            </div>
+                          );
+                        })}
+                        {extra > 0 && (
+                          <div
+                            className="h-8 w-8 rounded-full border-2 border-[#4FA876]/30 bg-[#123330] flex items-center justify-center text-[10px] font-semibold text-[#8AA99A]"
+                          >
+                            +{extra}
+                          </div>
+                        )}
+                      </div>
+                      <span className="text-xs text-[#8AA99A] tabular-nums">
+                        {activeCount > 0
+                          ? `${activeCount} here now`
+                          : `${participants.length} member${participants.length !== 1 ? 's' : ''}`}
+                      </span>
+                    </>
+                  );
+                })()}
               </div>
             </div>
           </div>
+          
           
           {/* Action Buttons */}
           <div className="flex items-center gap-2">
