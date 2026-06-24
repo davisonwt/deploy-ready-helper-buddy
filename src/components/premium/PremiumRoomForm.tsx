@@ -85,7 +85,7 @@ export const PremiumRoomForm = ({ roomId }: PremiumRoomFormProps) => {
         }
       } catch (error) {
         console.error('Failed to load room:', error);
-        toast({ title: 'Error', description: 'Failed to load room data', variant: 'destructive' });
+        toast({ title: 'Error', description: 'Failed to load training room data', variant: 'destructive' });
       } finally {
         setInitialLoading(false);
       }
@@ -190,7 +190,7 @@ export const PremiumRoomForm = ({ roomId }: PremiumRoomFormProps) => {
         
         toast({
           title: "Success!",
-          description: "Premium room updated successfully",
+          description: "Training room updated successfully",
         });
         navigate(`/premium-room/${roomId}`);
       } else {
@@ -198,7 +198,7 @@ export const PremiumRoomForm = ({ roomId }: PremiumRoomFormProps) => {
         const room = await createPremiumRoom(formData);
         toast({
           title: "Success!",
-          description: "Premium room created successfully",
+          description: "Training room created successfully",
         });
         navigate(`/premium-rooms`);
       }
@@ -206,7 +206,7 @@ export const PremiumRoomForm = ({ roomId }: PremiumRoomFormProps) => {
       console.error('Room operation failed:', error);
       toast({
         title: "Error",
-        description: `Failed to ${roomId ? 'update' : 'create'} room. Please try again.`,
+        description: `Failed to ${roomId ? 'update' : 'create'} training room. Please try again.`,
         variant: "destructive"
       });
     } finally {
