@@ -107,14 +107,27 @@ export default function CreateSessionForm({ kind, onCreated }: { kind: Kind; onC
 
       // 3. Session row.
       let actionUrl = '';
+      let createdSessionId: string | null = null;
       if (kind === 'classroom') {
         const { data, error } = await supabase
           .from('classroom_sessions' as any)
-          .insert({ title: title.trim(), description, scheduled_at: when, instructor_id: user.id, is_free: isFree, session_fee: price, status: 'scheduled', chat_room_id: chatRoomId })
+          .insert({
+            title: title.trim(),
+            description,
+            scheduled_at: when,
+            instructor_id: user.id,
+            is_free: isFree,
+            session_fee: price,
+            status: 'scheduled',
+            chat_room_id: chatRoomId,
+            attendance_mode: attendanceMode,
+            require_camera: requireCamera || attendanceMode === 'strict',
+          })
           .select('id')
           .single();
         if (error) throw error;
-        actionUrl = `/classroom/${(data as any).id}`;
+        createdSessionId = (data as any).id as string;
+        actionUrl = `/classroom/${createdSessionId}`;
       } else {
         const { data, error } = await supabase
           .from('skilldrop_sessions' as any)
@@ -125,12 +138,26 @@ export default function CreateSessionForm({ kind, onCreated }: { kind: Kind; onC
         actionUrl = `/skilldrop/${(data as any).id}`;
       }
 
+      // 4. Seed classroom_invites + user_notifications for invited tribe members
       if (invitees.length) {
+        if (kind === 'classroom' && createdSessionId) {
+          await supabase
+            .from('classroom_invites' as any)
+            .upsert(
+              invitees.map((uid) => ({
+                session_id: createdSessionId,
+                inviter_id: user.id,
+                invitee_id: uid,
+                message: description || null,
+              })) as any,
+              { onConflict: 'session_id,invitee_id', ignoreDuplicates: true },
+            );
+        }
         await supabase
           .from('user_notifications' as any)
           .insert(invitees.map(userId => ({
             user_id: userId,
-            type: 'live_invite',
+            type: kind === 'classroom' ? 'classroom_invite' : 'live_invite',
             title: `${kind === 'classroom' ? 'Classroom' : 'SkillDrop'} invite`,
             message: title.trim(),
             action_url: actionUrl,
