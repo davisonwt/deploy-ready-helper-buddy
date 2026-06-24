@@ -204,6 +204,42 @@ export default function CreateSessionForm({ kind, onCreated }: { kind: Kind; onC
         </label>
       </div>
 
+      {kind === 'classroom' && (
+        <div className="mt-5 rounded-xl border border-white/10 bg-white/5 p-3">
+          <div className="mb-2 text-sm font-black uppercase tracking-wide text-cyan-200/80 flex items-center gap-2">
+            <Shield className="h-4 w-4 text-cyan-300" /> Attendance policy
+          </div>
+          <div className="grid gap-2 sm:grid-cols-3">
+            {MODE_OPTIONS.map((opt) => (
+              <button
+                key={opt.value}
+                type="button"
+                onClick={() => { setAttendanceMode(opt.value); if (opt.value === 'strict') setRequireCamera(true); }}
+                className={`rounded-lg border p-2.5 text-left transition ${
+                  attendanceMode === opt.value
+                    ? 'border-cyan-400/70 bg-cyan-500/15 text-white'
+                    : 'border-white/10 bg-white/5 text-slate-200 hover:bg-white/10'
+                }`}
+              >
+                <div className="font-bold uppercase tracking-wider text-xs">{opt.label}</div>
+                <div className="mt-1 text-[11px] opacity-80">{opt.desc}</div>
+              </button>
+            ))}
+          </div>
+          {attendanceMode !== 'strict' && (
+            <label className="mt-3 flex items-center gap-2 cursor-pointer text-sm text-slate-200">
+              <input
+                type="checkbox"
+                checked={requireCamera}
+                onChange={(e) => setRequireCamera(e.target.checked)}
+                className="h-4 w-4 accent-cyan-400"
+              />
+              <Camera className="h-4 w-4 text-cyan-300" /> Require attendees to keep cameras on
+            </label>
+          )}
+        </div>
+      )}
+
       <div className="mt-5 rounded-xl border border-white/10 bg-white/5 p-3">
         <div className="mb-2 text-sm font-black uppercase tracking-wide text-cyan-200/80">Invite tribe members</div>
         <Popover>
