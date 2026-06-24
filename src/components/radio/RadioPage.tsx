@@ -10,6 +10,7 @@ import LiveStreamPlayer from './LiveStreamPlayer';
 import ListenerInteractions from './ListenerInteractions';
 import SessionBuilder from './SessionBuilder';
 import { useAuth } from '@/hooks/useAuth';
+import PageHeroBanner from '@/components/chat/PageHeroBanner';
 
 const RadioPage = () => {
   const { user } = useAuth();
@@ -46,6 +47,7 @@ const RadioPage = () => {
         >
           <ArrowLeft className="h-4 w-4" /> Back to Go-Live
         </Button>
+        <PageHeroBanner variant="radio" />
 
         <div className="text-center space-y-4">
           <div className="flex items-center justify-center space-x-3">
