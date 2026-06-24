@@ -4,10 +4,9 @@ import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Video, Users, Plus, ArrowLeft } from 'lucide-react';
+import { Plus, ArrowLeft } from 'lucide-react';
 import OneOnOneRoom from '@/components/live/OneOnOneRoom';
+import { PresenceAura, classifyAura } from '@/components/live/PresenceAura';
 
 interface LiveRoom {
   id: string;
@@ -17,6 +16,9 @@ interface LiveRoom {
   created_at: string;
   is_active: boolean;
 }
+
+type ParticipantRow = { room_id: string; user_id: string; display_name: string | null };
+type MessageRow = { room_id: string; sender_id: string; created_at: string };
 
 export default function LiveRoomsPage() {
   const navigate = useNavigate();
@@ -41,6 +43,46 @@ export default function LiveRoomsPage() {
     },
   });
 
+  // Fetch the "other participant" + their last message recency for each room.
+  // Honest signal: most recent message from the other party (no presence channel yet).
+  const roomIds = useMemo(() => rooms.map(r => r.id), [rooms]);
+
+  const { data: participantsByRoom = {} } = useQuery({
+    queryKey: ['live-room-others', user?.id, roomIds.join(',')],
+    enabled: !!user?.id && roomIds.length > 0,
+    queryFn: async () => {
+      const { data } = await supabase
+        .from('live_room_participants' as any)
+        .select('room_id, user_id, display_name')
+        .in('room_id', roomIds);
+      const map: Record<string, ParticipantRow | undefined> = {};
+      ((data || []) as ParticipantRow[]).forEach(p => {
+        if (p.user_id !== user?.id && !map[p.room_id]) map[p.room_id] = p;
+      });
+      return map;
+    },
+  });
+
+  const { data: lastSignalByRoom = {} } = useQuery({
+    queryKey: ['live-room-last-other-msg', user?.id, roomIds.join(',')],
+    enabled: !!user?.id && roomIds.length > 0,
+    queryFn: async () => {
+      const { data } = await supabase
+        .from('live_room_messages' as any)
+        .select('room_id, sender_id, created_at')
+        .in('room_id', roomIds)
+        .neq('sender_id', user!.id)
+        .order('created_at', { ascending: false })
+        .limit(500);
+      const map: Record<string, string> = {};
+      ((data || []) as MessageRow[]).forEach(m => {
+        if (!map[m.room_id]) map[m.room_id] = m.created_at;
+      });
+      return map;
+    },
+    refetchInterval: 60_000,
+  });
+
   const activeRoom = useMemo(() => rooms.find(r => r.id === activeRoomId) || null, [rooms, activeRoomId]);
 
   const handleLeave = () => {
@@ -54,60 +96,89 @@ export default function LiveRoomsPage() {
 
   if (activeRoomId && !isLoading && !activeRoom) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center p-6">
-        <Card className="max-w-md w-full">
-          <CardHeader><CardTitle>Room not available</CardTitle></CardHeader>
-          <CardContent className="space-y-4">
-            <p className="text-sm text-muted-foreground">You weren't invited to this room, or it's no longer active.</p>
-            <Button onClick={handleLeave} className="w-full">Back to my rooms</Button>
-          </CardContent>
-        </Card>
+      <div className="min-h-screen bg-[#0B1420] flex items-center justify-center p-6 text-[#EAF4F2]">
+        <div className="max-w-md w-full rounded-2xl border border-[#1FB6A8]/20 bg-[#123330]/40 p-6">
+          <h2 className="text-2xl mb-2" style={{ fontFamily: '"Fraunces", serif', fontWeight: 500 }}>Room not available</h2>
+          <p className="text-sm text-[#7E9498] mb-5">You weren't invited to this room, or it's no longer active.</p>
+          <Button onClick={handleLeave} className="w-full bg-[#1FB6A8] text-[#0B1420] hover:bg-[#1FB6A8]/90">Back to my rooms</Button>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-background">
-      <div className="container mx-auto px-4 py-8">
-        <div className="mb-8 flex items-center justify-between">
+    <div className="min-h-screen bg-[#0B1420] text-[#EAF4F2]">
+      <div className="mx-auto max-w-5xl px-4 py-10">
+        <div className="mb-10 flex items-end justify-between gap-4">
           <div>
-            <Button variant="ghost" size="sm" onClick={() => navigate('/dashboard')} className="mb-2 gap-2"><ArrowLeft className="h-4 w-4" /> Dashboard</Button>
-            <h1 className="text-4xl font-bold mb-2 flex items-center gap-3"><Video className="h-10 w-10 text-primary" /> 1-on-1 Live</h1>
-            <p className="text-muted-foreground text-lg">Private rooms you host or were invited to.</p>
+            <Button variant="ghost" size="sm" onClick={() => navigate('/dashboard')}
+              className="mb-3 gap-2 text-[#7E9498] hover:text-[#EAF4F2] hover:bg-transparent px-0">
+              <ArrowLeft className="h-4 w-4" /> Dashboard
+            </Button>
+            <h1 className="text-5xl tracking-tight mb-2" style={{ fontFamily: '"Fraunces", serif', fontWeight: 500 }}>
+              1-on-1 Live
+            </h1>
+            <p className="text-[#7E9498] text-base">Private rooms you host or were invited to.</p>
           </div>
-          <Button onClick={() => navigate('/communications-hub')} size="lg" className="gap-2"><Plus className="h-5 w-5" /> New room</Button>
+          <Button onClick={() => navigate('/communications-hub')}
+            className="gap-2 bg-[#1FB6A8] text-[#0B1420] hover:bg-[#1FB6A8]/90">
+            <Plus className="h-4 w-4" /> New room
+          </Button>
         </div>
 
-        {isLoading && <div className="flex justify-center items-center h-64"><div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div></div>}
+        {isLoading && (
+          <div className="flex justify-center items-center h-64">
+            <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-[#1FB6A8]"></div>
+          </div>
+        )}
 
         {!isLoading && rooms.length === 0 && (
-          <Card className="p-12 text-center">
-            <Video className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
-            <h3 className="text-xl font-semibold mb-2">No private rooms yet</h3>
-            <p className="text-muted-foreground mb-6">Create a 1-on-1 from the ChatApp Go-Live launcher and invite a tribe member.</p>
-            <Button onClick={() => navigate('/communications-hub')} size="lg">Open launcher</Button>
-          </Card>
+          <div className="rounded-2xl border border-[#1FB6A8]/15 bg-[#123330]/30 p-12 text-center">
+            <p className="text-2xl mb-3" style={{ fontFamily: '"Fraunces", serif', fontWeight: 500 }}>No private rooms yet</p>
+            <p className="text-[#7E9498] mb-6">Create a 1-on-1 from the ChatApp Go-Live launcher and invite a tribe member.</p>
+            <Button onClick={() => navigate('/communications-hub')} className="bg-[#1FB6A8] text-[#0B1420] hover:bg-[#1FB6A8]/90">Open launcher</Button>
+          </div>
         )}
 
         {!isLoading && rooms.length > 0 && (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {rooms.map(room => (
-              <Card key={room.id} className="hover:border-primary/50 transition-colors">
-                <CardHeader>
-                  <div className="flex items-start justify-between mb-2">
-                    <Badge variant={room.created_by === user?.id ? 'default' : 'secondary'} className="gap-1">
-                      <Users className="h-3 w-3" />
-                      {room.created_by === user?.id ? 'Hosting' : 'Invited'}
-                    </Badge>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+            {rooms.map(room => {
+              const other = participantsByRoom[room.id];
+              const otherName = other?.display_name || 'Tribe member';
+              const initial = (otherName[0] || 'T').toUpperCase();
+              const auraState = classifyAura(lastSignalByRoom[room.id]);
+              const hosting = room.created_by === user?.id;
+              return (
+                <button
+                  key={room.id}
+                  onClick={() => setSearchParams({ room: room.id })}
+                  className="text-left rounded-2xl border border-[#1FB6A8]/15 bg-[#123330]/40 hover:bg-[#123330]/60 hover:border-[#1FB6A8]/35 transition-all p-5 flex items-center gap-4 group"
+                >
+                  <PresenceAura state={auraState} size={64}>
+                    <div
+                      className="w-14 h-14 rounded-full flex items-center justify-center text-xl font-semibold border border-[#1FB6A8]/30"
+                      style={{ background: 'linear-gradient(135deg, #123330 0%, #0B1420 100%)', color: '#EAF4F2' }}
+                    >
+                      {initial}
+                    </div>
+                  </PresenceAura>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-baseline justify-between gap-2">
+                      <span className="text-xl truncate" style={{ fontFamily: '"Fraunces", serif', fontWeight: 500 }}>
+                        {otherName}
+                      </span>
+                      <span className="text-[10px] uppercase tracking-wider text-[#7E9498] shrink-0">
+                        {hosting ? 'hosting' : 'invited'}
+                      </span>
+                    </div>
+                    <p className="text-sm text-[#7E9498] truncate mt-0.5">{room.name}</p>
+                    <p className="text-xs text-[#7E9498]/70 mt-2">
+                      {auraState === 'active' ? 'here now' : auraState === 'recent' ? 'recently here' : 'away'}
+                    </p>
                   </div>
-                  <CardTitle className="text-xl">{room.name}</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-muted-foreground mb-4 line-clamp-2">{room.description}</p>
-                  <Button onClick={() => setSearchParams({ room: room.id })} className="w-full">Open room</Button>
-                </CardContent>
-              </Card>
-            ))}
+                </button>
+              );
+            })}
           </div>
         )}
       </div>
