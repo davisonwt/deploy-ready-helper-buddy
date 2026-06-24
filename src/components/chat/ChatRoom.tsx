@@ -47,9 +47,9 @@ export const ChatRoom: React.FC<ChatRoomProps> = ({ roomId, onBack }) => {
   const [roomInfo, setRoomInfo] = useState(null);
   const scrollAreaRef = useRef(null);
   
-  // Voice recording
-  const [recording, setRecording] = useState(false);
-  const mediaRecorderRef = useRef(null);
+  // Voice + video clip recording (uses chat-media bucket via useMediaRecorder)
+  const recorder = useMediaRecorder();
+
   
   // Donations
   const [showDonate, setShowDonate] = useState(false);
