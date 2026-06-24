@@ -10,6 +10,7 @@ import LiveStreamPlayer from './LiveStreamPlayer';
 import ListenerInteractions from './ListenerInteractions';
 import SessionBuilder from './SessionBuilder';
 import { useAuth } from '@/hooks/useAuth';
+import PageHeroBanner from '@/components/chat/PageHeroBanner';
 
 const RadioPage = () => {
   const { user } = useAuth();
