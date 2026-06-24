@@ -180,11 +180,17 @@ const SessionBuilder = () => {
     (async () => {
       const { data } = await supabase
         .from('dj_music_tracks')
-        .select('id,title,artist,duration,file_url')
-        .eq('user_id', user.id)
+        .select('id,track_title,artist_name,duration_seconds,file_url')
         .order('created_at', { ascending: false })
         .limit(200);
-      setTracks((data as MusicTrack[]) || []);
+      const mapped: MusicTrack[] = (data || []).map((t: any) => ({
+        id: t.id,
+        title: t.track_title,
+        artist: t.artist_name,
+        duration: t.duration_seconds,
+        file_url: t.file_url,
+      }));
+      setTracks(mapped);
     })();
   }, [user]);
 
