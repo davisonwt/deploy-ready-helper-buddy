@@ -14,6 +14,23 @@ import { TrainingMode } from '../communication/TrainingMode';
 import { RadioMode } from '../communication/RadioMode';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
+import bannerCircles from '@/assets/chat-mode-circles.jpg';
+import banner1on1 from '@/assets/chat-mode-1on1.jpg';
+import bannerCommunity from '@/assets/chat-mode-community.jpg';
+import bannerClassroom from '@/assets/chat-mode-classroom.jpg';
+import bannerLecture from '@/assets/chat-mode-lecture.jpg';
+import bannerTraining from '@/assets/chat-mode-training.jpg';
+import bannerRadio from '@/assets/chat-mode-radio.jpg';
+
+const modeBanners: Record<CommunicationMode, { src: string; title: string; subtitle: string }> = {
+  circles: { src: bannerCircles, title: 'Circles', subtitle: 'Sacred tribal circles of connection' },
+  chat: { src: banner1on1, title: '1-on-1 Chats', subtitle: 'Intimate, direct conversations' },
+  community: { src: bannerCommunity, title: 'Community', subtitle: 'Gather around the tribal fire' },
+  classroom: { src: bannerClassroom, title: 'Classrooms', subtitle: 'Learn together, grow together' },
+  lecture: { src: bannerLecture, title: 'Lectures', subtitle: 'Wisdom from the stage' },
+  training: { src: bannerTraining, title: 'Training', subtitle: 'Sharpen your skills' },
+  radio: { src: bannerRadio, title: 'Radio', subtitle: 'On-air with the tribe' },
+};
 
 interface ModeConfig {
   id: CommunicationMode;
