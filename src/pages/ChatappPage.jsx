@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -57,15 +58,9 @@ import { UpcomingSessionsWidget } from '@/components/chat/UpcomingSessionsWidget
 
 const ChatappPage = () => {
   const { user } = useAuth();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [currentTheme, setCurrentTheme] = useState(getCurrentTheme());
 
-  // Update theme every 2 hours
-  useEffect(() => {
-    const themeInterval = setInterval(() => {
-      setCurrentTheme(getCurrentTheme());
-    }, 2 * 60 * 60 * 1000); // 2 hours
-    return () => clearInterval(themeInterval);
-  }, []);
   const { uploadFile, uploading } = useFileUpload();
   const { toast } = useToast();
   const {
@@ -82,6 +77,27 @@ const ChatappPage = () => {
     joinRoom,
     deleteConversation,
   } = useChat();
+
+  // Update theme every 2 hours
+  useEffect(() => {
+    const themeInterval = setInterval(() => {
+      setCurrentTheme(getCurrentTheme());
+    }, 2 * 60 * 60 * 1000); // 2 hours
+    return () => clearInterval(themeInterval);
+  }, []);
+
+  // Open a public room passed via ?room=<id> (e.g. from Community Chats)
+  useEffect(() => {
+    const roomId = searchParams.get('room');
+    if (!roomId) return;
+    const target = rooms.find(r => r.id === roomId);
+    if (target) {
+      setCurrentRoom(target);
+    } else {
+      joinRoom(roomId);
+    }
+    setSearchParams({}, { replace: true });
+  }, [searchParams, rooms, setCurrentRoom, joinRoom, setSearchParams]);
 
   // REMOVED: React call flow - using direct Jitsi links instead
   // const {
