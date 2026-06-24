@@ -6,6 +6,7 @@ import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { GraduationCap, Search, Plus, BookOpen } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import PageHeroBanner from '@/components/chat/PageHeroBanner';
 
 const PremiumRoomsPage = () => {
   const { user } = useAuth();
