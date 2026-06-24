@@ -623,50 +623,24 @@ const ChatApp = () => {
             </div>
           </div>
 
-          {/* Tabs for One-on-Ones vs Grove Circles */}
-          <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as 'one' | 'circle')}>
-            <TabsList className="mb-4 bg-[#123330]/60 border border-[#4FA876]/15">
-              <TabsTrigger value="one" className="data-[state=active]:bg-[#4FA876] data-[state=active]:text-[#0E1B15] text-[#8AA99A]">One-on-Ones</TabsTrigger>
-              <TabsTrigger value="circle" className="data-[state=active]:bg-[#4FA876] data-[state=active]:text-[#0E1B15] text-[#8AA99A]">Community</TabsTrigger>
-            </TabsList>
-
-            <TabsContent value="one" className="space-y-4">
-              {/* One-on-Ones: s2g sowers and bestowers */}
-              <SafeUserSelector
-                onStartDirectChat={handleStartDirectChat}
-                onStartCall={handleStartCall}
-              />
-
-              <div className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <h2 className="text-xl text-[#F3F7F0]" style={{ fontFamily: '"Outfit", "Inter", sans-serif', fontWeight: 600 }}>Your One-on-Ones</h2>
-                </div>
-                <ScrollArea className="h-[calc(100vh-300px)] pr-2">
-                  <div className="pb-72 sm:pb-80 md:pb-[calc(env(safe-area-inset-bottom)+18rem)]">
-                    <ChatList searchQuery={searchQuery} roomType="direct" hideFilterControls />
-                    <div aria-hidden className="h-24 sm:h-28 md:h-32" />
-                  </div>
-                </ScrollArea>
-              </div>
-            </TabsContent>
-
-            <TabsContent value="circle" className="space-y-4">
-              <div className="flex items-center justify-between">
-                <h2 className="text-xl text-[#F3F7F0]" style={{ fontFamily: '"Outfit", "Inter", sans-serif', fontWeight: 600 }}>Community</h2>
-                {/* Create New Chat/Circle */}
-                <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
-                  <DialogTrigger asChild>
-                    <Button size="sm">
-                      <Plus className="h-4 w-4 mr-2" />
-                      New Chat
-                    </Button>
-                  </DialogTrigger>
-                  <DialogContent className="max-w-lg max-h-[80vh] overflow-y-auto bg-background z-50">
-                <DialogHeader>
-                  <DialogTitle>Create New Chat</DialogTitle>
-                  <DialogDescription>
-                    Create a new group chat and invite others to join.
-                  </DialogDescription>
+          {/* Community group chats */}
+          <div className="space-y-4">
+            <div className="flex items-center justify-between">
+              <h2 className="text-xl text-[#F3F7F0]" style={{ fontFamily: '"Outfit", "Inter", sans-serif', fontWeight: 600 }}>Community</h2>
+              {/* Create New Chat/Circle */}
+              <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
+                <DialogTrigger asChild>
+                  <Button size="sm">
+                    <Plus className="h-4 w-4 mr-2" />
+                    New Chat
+                  </Button>
+                </DialogTrigger>
+                <DialogContent className="max-w-lg max-h-[80vh] overflow-y-auto bg-background z-50">
+                  <DialogHeader>
+                    <DialogTitle>Create New Chat</DialogTitle>
+                    <DialogDescription>
+                      Create a new group chat and invite others to join.
+                    </DialogDescription>
                   </DialogHeader>
                   <div className="space-y-4 py-4">
                     <div className="space-y-2">
@@ -819,16 +793,15 @@ const ChatApp = () => {
                   </div>
                 </DialogContent>
               </Dialog>
-              </div>
+            </div>
 
-              <ScrollArea className="h-[calc(100vh-300px)] pr-2">
-                <div className="pb-72 sm:pb-80 md:pb-[calc(env(safe-area-inset-bottom)+18rem)]">
-                  <ChatList searchQuery={searchQuery} roomType="group" hideFilterControls />
-                  <div aria-hidden className="h-24 sm:h-28 md:h-32" />
-                </div>
-              </ScrollArea>
-            </TabsContent>
-          </Tabs>
+            <ScrollArea className="h-[calc(100vh-300px)] pr-2">
+              <div className="pb-72 sm:pb-80 md:pb-[calc(env(safe-area-inset-bottom)+18rem)]">
+                <ChatList searchQuery={searchQuery} roomType="group" hideFilterControls />
+                <div aria-hidden className="h-24 sm:h-28 md:h-32" />
+              </div>
+            </ScrollArea>
+          </div>
         </>
       )}
     </div>
