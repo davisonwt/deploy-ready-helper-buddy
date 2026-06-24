@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, Plus, Users } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import PublicRoomsBrowser from '@/components/chat/PublicRoomsBrowser';
+import PageHeroBanner from '@/components/chat/PageHeroBanner';
 
 export default function CommunityChatsPage() {
   const navigate = useNavigate();
