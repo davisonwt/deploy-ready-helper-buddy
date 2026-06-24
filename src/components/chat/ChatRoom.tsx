@@ -76,6 +76,37 @@ export const ChatRoom: React.FC<ChatRoomProps> = ({ roomId, onBack }) => {
   const [participantIds, setParticipantIds] = useState<string[]>([]);
   const [participants, setParticipants] = useState<any[]>([]);
 
+  // --- Voice trail (visual only) ---------------------------------------
+  // Per-user most recent message timestamp drives the active/recent/idle
+  // ring state in the avatar trail. Honest signal: message recency only,
+  // no presence channel exists yet in this code path.
+  const lastSpokeAtByUser = useMemo(() => {
+    const map: Record<string, string> = {};
+    for (let i = messages.length - 1; i >= 0; i--) {
+      const m: any = messages[i];
+      if (m?.sender_id && !map[m.sender_id]) map[m.sender_id] = m.created_at;
+    }
+    return map;
+  }, [messages]);
+
+  // Brief "pop" tag for the latest sender's avatar in the trail (400ms).
+  const [poppedUserId, setPoppedUserId] = useState<string | null>(null);
+  const popTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const lastSeenMsgIdRef = useRef<string | null>(null);
+  useEffect(() => {
+    const last: any = messages[messages.length - 1];
+    if (!last || last.id === lastSeenMsgIdRef.current) return;
+    lastSeenMsgIdRef.current = last.id;
+    if (last.sender_id && last.sender_id !== user?.id) {
+      setPoppedUserId(last.sender_id);
+      if (popTimerRef.current) clearTimeout(popTimerRef.current);
+      popTimerRef.current = setTimeout(() => setPoppedUserId(null), 420);
+    }
+    return () => { if (popTimerRef.current) clearTimeout(popTimerRef.current); };
+  }, [messages, user?.id]);
+  // ---------------------------------------------------------------------
+
+
   useEffect(() => {
     if (roomId && user) {
       console.debug('[ChatRoom] init', { roomId, userId: user.id });
