@@ -967,20 +967,30 @@ export const ChatRoom: React.FC<ChatRoomProps> = ({ roomId, onBack }) => {
                       Cancel
                     </Button>
                   </div>
-                ) : (
+                ) : (() => {
+                  const voice = getVoiceColor(msg.sender_id);
+                  return (
                   <div className={`flex ${isOwn ? 'justify-end' : 'justify-start'} px-4`}>
                     <div className="flex flex-col gap-1">
-                      <ChatMessage
-                        message={msg}
-                        isOwn={isOwn}
-                        onDelete={isOwn ? () => handleDeleteMessage(msg.id) : undefined}
-                      />
+                      <div
+                        className="rounded-r-lg"
+                        style={isOwn
+                          ? undefined
+                          : { borderLeft: `2px solid ${voice.ring}`, paddingLeft: 8, background: voice.tint }
+                        }
+                      >
+                        <ChatMessage
+                          message={msg}
+                          isOwn={isOwn}
+                          onDelete={isOwn ? () => handleDeleteMessage(msg.id) : undefined}
+                        />
+                      </div>
                       <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                         <Button
                           variant="ghost"
                           size="sm"
                           onClick={() => setReplyingTo(msg)}
-                          className="h-6 px-2 text-xs hover:bg-muted"
+                          className="h-6 px-2 text-xs text-[#8AA99A] hover:text-[#F3F7F0] hover:bg-[#4FA876]/10"
                         >
                           Reply
                         </Button>
@@ -992,7 +1002,7 @@ export const ChatRoom: React.FC<ChatRoomProps> = ({ roomId, onBack }) => {
                               setEditingMessageId(msg.id);
                               setEditText(msg.content || '');
                             }}
-                            className="h-6 px-2 text-xs hover:bg-muted"
+                            className="h-6 px-2 text-xs text-[#8AA99A] hover:text-[#F3F7F0] hover:bg-[#4FA876]/10"
                           >
                             Edit
                           </Button>
@@ -1000,7 +1010,8 @@ export const ChatRoom: React.FC<ChatRoomProps> = ({ roomId, onBack }) => {
                       </div>
                     </div>
                   </div>
-                )}
+                  );
+                })()}
               </div>
             );
           })}
