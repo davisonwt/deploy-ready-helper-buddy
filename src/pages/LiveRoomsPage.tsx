@@ -113,6 +113,7 @@ export default function LiveRoomsPage() {
   return (
     <div className="min-h-screen bg-[#0B1420] text-[#EAF4F2]">
       <div className="mx-auto max-w-5xl px-4 py-10">
+        <PageHeroBanner variant="one_on_one" />
         <div className="mb-10 flex items-end justify-between gap-4">
           <div>
             <Button variant="ghost" size="sm" onClick={() => navigate('/communications-hub')}
