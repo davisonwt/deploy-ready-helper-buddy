@@ -13,6 +13,8 @@ import {
   Phone,
   PhoneOff,
   Video,
+  VideoOff,
+  Square,
   DollarSign,
   Loader2,
   Edit2
@@ -25,6 +27,9 @@ import { JitsiCall } from '@/components/JitsiCall';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
+import { useMediaRecorder } from '@/hooks/useMediaRecorder';
+import { uploadChatMedia } from '@/lib/liveRoom/uploadMedia';
+
 
 interface ChatRoomProps {
   roomId: string;
@@ -42,9 +47,9 @@ export const ChatRoom: React.FC<ChatRoomProps> = ({ roomId, onBack }) => {
   const [roomInfo, setRoomInfo] = useState(null);
   const scrollAreaRef = useRef(null);
   
-  // Voice recording
-  const [recording, setRecording] = useState(false);
-  const mediaRecorderRef = useRef(null);
+  // Voice + video clip recording (uses chat-media bucket via useMediaRecorder)
+  const recorder = useMediaRecorder();
+
   
   // Donations
   const [showDonate, setShowDonate] = useState(false);
@@ -576,45 +581,35 @@ export const ChatRoom: React.FC<ChatRoomProps> = ({ roomId, onBack }) => {
       });
     }
   };
-  const startRecording = async () => {
+  const recordAndSend = async (kind: 'audio' | 'video', maxSeconds: number) => {
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      mediaRecorderRef.current = new MediaRecorder(stream);
-      const chunks = [];
-      
-      mediaRecorderRef.current.ondataavailable = (e) => chunks.push(e.data);
-      mediaRecorderRef.current.onstop = async () => {
-        const blob = new Blob(chunks, { type: 'audio/wav' });
-        const file = new File([blob], 'voice-note.wav', { type: 'audio/wav' });
-        await handleFileUpload(file);
-        stream.getTracks().forEach((track) => track.stop());
-      };
-      
-      mediaRecorderRef.current.start();
-      setRecording(true);
-      
-      setTimeout(() => {
-        if (mediaRecorderRef.current?.state === 'recording') {
-          mediaRecorderRef.current.stop();
-          setRecording(false);
-        }
-      }, 60000);
-    } catch (error) {
-      console.error('Recording error:', error);
-      toast({
-        variant: 'destructive',
-        title: 'Recording failed',
-        description: 'Could not access microphone',
+      await ensureMembership();
+      const blob = await recorder.start(kind, maxSeconds);
+      if (!blob) return;
+      const ext = kind === 'audio' ? 'webm' : 'webm';
+      const { signedUrl } = await uploadChatMedia(roomId, blob, ext);
+      const isVoice = kind === 'audio';
+      const { data: inserted, error } = await supabase.rpc('send_chat_message', {
+        p_room_id: roomId,
+        p_content: isVoice ? '[Voice Note]' : '[Video Clip]',
+        p_message_type: isVoice ? 'voice' : 'video',
+        p_file_url: signedUrl,
+        p_file_name: isVoice ? 'voice-note.webm' : 'video-clip.webm',
+        p_file_type: isVoice ? 'audio' : 'video',
+        p_file_size: blob.size,
       });
+      if (error) throw error;
+      if (inserted) setMessages(prev => [...prev, inserted]);
+    } catch (error: any) {
+      console.error('Recording error:', error);
+      toast({ variant: 'destructive', title: 'Recording failed', description: error?.message || 'Could not capture media' });
     }
   };
 
-  const stopRecording = () => {
-    if (mediaRecorderRef.current?.state === 'recording') {
-      mediaRecorderRef.current.stop();
-      setRecording(false);
-    }
-  };
+  const startRecording = () => recordAndSend('audio', 60);
+  const startVideoClip = () => recordAndSend('video', 30);
+  const stopRecording = () => recorder.stop();
+
 
   // REMOVED: React call flow - using direct Jitsi links instead
   const handleCallClick = () => {
@@ -692,11 +687,20 @@ export const ChatRoom: React.FC<ChatRoomProps> = ({ roomId, onBack }) => {
           {/* Action Buttons */}
           <div className="flex items-center gap-2">
             <Button
-              variant={recording ? 'destructive' : 'ghost'}
+              variant={recorder.recording && recorder.kind === 'audio' ? 'destructive' : 'ghost'}
               size="sm"
-              onClick={recording ? stopRecording : startRecording}
+              onClick={recorder.recording && recorder.kind === 'audio' ? stopRecording : startRecording}
+              title={recorder.recording && recorder.kind === 'audio' ? `Stop (${recorder.elapsed}s)` : 'Record voice note'}
             >
               <Mic className="h-4 w-4" />
+            </Button>
+            <Button
+              variant={recorder.recording && recorder.kind === 'video' ? 'destructive' : 'ghost'}
+              size="sm"
+              onClick={recorder.recording && recorder.kind === 'video' ? stopRecording : startVideoClip}
+              title={recorder.recording && recorder.kind === 'video' ? `Stop (${recorder.elapsed}s)` : 'Record video clip'}
+            >
+              {recorder.recording && recorder.kind === 'video' ? <Square className="h-4 w-4" /> : <Video className="h-4 w-4" />}
             </Button>
             
             <Button

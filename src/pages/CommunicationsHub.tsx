@@ -92,7 +92,18 @@ export default function CommunicationsHub() {
       } else if (kind === 'community_chat') {
         const { data, error } = await supabase.from('chat_rooms' as any).insert({ name: title.trim(), description, room_type: 'group', created_by: user.id, is_active: true, metadata: { scheduled_at: when, files: uploaded, price } }).select('id').single();
         if (error) throw error;
-        actionUrl = `/chatapp?room=${(data as any).id}`;
+        const roomId = (data as any).id as string;
+        const chatParticipants = Array.from(new Set([user.id, ...invitees])).map(uid => ({
+          room_id: roomId,
+          user_id: uid,
+          is_moderator: uid === user.id,
+          is_active: true,
+        }));
+        const { error: cpErr } = await supabase
+          .from('chat_participants' as any)
+          .upsert(chatParticipants as any, { onConflict: 'room_id,user_id', ignoreDuplicates: false });
+        if (cpErr) throw cpErr;
+        actionUrl = `/chatapp?room=${roomId}`;
       } else if (kind === 'classroom') {
         const { data, error } = await supabase.from('classroom_sessions' as any).insert({ title: title.trim(), description, scheduled_at: when, instructor_id: user.id, is_free: isFree, session_fee: price, status: 'scheduled' }).select('id').single();
         if (error) throw error;

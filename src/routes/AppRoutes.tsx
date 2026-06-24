@@ -114,6 +114,7 @@ import {
   LearnSharePage,
   WanderingDirectoryPage,
   PlantASeedPage,
+  ChatApp,
 } from './lazyPages';
 
 export const LoadingFallback = () => (
@@ -269,7 +270,13 @@ const AppRoutes = () => (
         </Suspense>
       </ProtectedRoute>
     } />
-    <Route path="/chatapp" element={<Navigate to="/communications-hub#chats" replace />} />
+    <Route path="/chatapp" element={
+      <ProtectedRoute>
+        <Suspense fallback={<div className="flex items-center justify-center min-h-screen"><div className="text-xl">Loading...</div></div>}>
+          <ChatApp />
+        </Suspense>
+      </ProtectedRoute>
+    } />
     <Route path="/onboarding/security" element={
       <ProtectedRoute allowIncompleteSetup>
         <OnboardingSecurityPage />
