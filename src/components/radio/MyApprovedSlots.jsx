@@ -2,6 +2,10 @@ import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { useNavigate } from 'react-router-dom';
@@ -15,7 +19,9 @@ import {
   AlertCircle,
   Play,
   Loader2,
-  Trash2
+  Trash2,
+  Pencil,
+  Plus
 } from 'lucide-react';
 import { format, parseISO, isWithinInterval, addMinutes, subMinutes } from 'date-fns';
 
@@ -25,6 +31,11 @@ export function MyApprovedSlots() {
   const [slots, setSlots] = useState([]);
   const [loading, setLoading] = useState(true);
   const [startingSession, setStartingSession] = useState(null);
+  const [editingSlot, setEditingSlot] = useState(null);
+  const [editStart, setEditStart] = useState('');
+  const [editEnd, setEditEnd] = useState('');
+  const [editNotes, setEditNotes] = useState('');
+  const [savingEdit, setSavingEdit] = useState(false);
 
   useEffect(() => {
     if (user) {
@@ -175,6 +186,50 @@ export function MyApprovedSlots() {
     }
   };
 
+  const openEditDialog = (slot) => {
+    const toLocal = (iso) => {
+      const d = parseISO(iso);
+      const pad = (n) => String(n).padStart(2, '0');
+      return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+    };
+    setEditingSlot(slot);
+    setEditStart(toLocal(slot.start_time));
+    setEditEnd(toLocal(slot.end_time));
+    setEditNotes(slot.show_notes || '');
+  };
+
+  const handleSaveEdit = async () => {
+    if (!editingSlot) return;
+    const start = new Date(editStart);
+    const end = new Date(editEnd);
+    if (!(start < end)) {
+      toast.error('End time must be after start time');
+      return;
+    }
+    setSavingEdit(true);
+    try {
+      const { error } = await supabase
+        .from('radio_schedule')
+        .update({
+          start_time: start.toISOString(),
+          end_time: end.toISOString(),
+          time_slot_date: start.toISOString().slice(0, 10),
+          hour_slot: start.getUTCHours(),
+          show_notes: editNotes || null,
+        })
+        .eq('id', editingSlot.id);
+      if (error) throw error;
+      toast.success('Slot updated');
+      setEditingSlot(null);
+      fetchMyApprovedSlots();
+    } catch (error) {
+      console.error('Error updating slot:', error);
+      toast.error('Failed to update slot: ' + error.message);
+    } finally {
+      setSavingEdit(false);
+    }
+  };
+
   const getSlotStatus = (slot) => {
     const now = new Date();
     const startTime = parseISO(slot.start_time);
@@ -242,16 +297,28 @@ export function MyApprovedSlots() {
   return (
     <Card className="bg-white/80 border-white/40 shadow-xl h-full flex flex-col">
       <CardHeader>
-        <CardTitle className="flex items-center gap-2" style={{ 
-          color: 'hsl(280, 100%, 40%)', 
-          textShadow: '1px 1px 2px rgba(0,0,0,0.2)' 
-        }}>
-          <Calendar className="h-5 w-5 text-purple-600" />
-          My Approved Radio Slots
-        </CardTitle>
-        <p className="text-sm text-muted-foreground" style={{ textShadow: '0 0 2px white, 0 0 2px white' }}>
-          Your upcoming approved broadcasting slots. Click "Go Live" when you're ready to start.
-        </p>
+        <div className="flex items-start justify-between gap-3">
+          <div>
+            <CardTitle className="flex items-center gap-2" style={{ 
+              color: 'hsl(280, 100%, 40%)', 
+              textShadow: '1px 1px 2px rgba(0,0,0,0.2)' 
+            }}>
+              <Calendar className="h-5 w-5 text-purple-600" />
+              My Approved Radio Slots
+            </CardTitle>
+            <p className="text-sm text-muted-foreground" style={{ textShadow: '0 0 2px white, 0 0 2px white' }}>
+              Your upcoming approved broadcasting slots. Click "Go Live" when you're ready to start.
+            </p>
+          </div>
+          <Button
+            size="sm"
+            onClick={() => navigate('/radio-slot-application')}
+            className="bg-purple-600 hover:bg-purple-700 text-white shrink-0"
+          >
+            <Plus className="h-4 w-4 mr-1" />
+            New Slot
+          </Button>
+        </div>
       </CardHeader>
       <CardContent className="space-y-4 flex-1">
         {slots.map((slot) => {
@@ -348,15 +415,25 @@ export function MyApprovedSlots() {
                       </p>
                     )}
                     {slot.status !== 'live' && (
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => handleDeleteSlot(slot)}
-                        className="text-destructive border-destructive/40 hover:bg-destructive/10"
-                      >
-                        <Trash2 className="h-4 w-4 mr-1" />
-                        Delete
-                      </Button>
+                      <div className="flex flex-col gap-1">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => openEditDialog(slot)}
+                        >
+                          <Pencil className="h-4 w-4 mr-1" />
+                          Edit
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleDeleteSlot(slot)}
+                          className="text-destructive border-destructive/40 hover:bg-destructive/10"
+                        >
+                          <Trash2 className="h-4 w-4 mr-1" />
+                          Delete
+                        </Button>
+                      </div>
                     )}
                   </div>
                 </div>
@@ -365,6 +442,53 @@ export function MyApprovedSlots() {
           );
         })}
       </CardContent>
+
+      <Dialog open={!!editingSlot} onOpenChange={(o) => !o && setEditingSlot(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Edit Radio Slot</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="edit-start">Start Time</Label>
+              <Input
+                id="edit-start"
+                type="datetime-local"
+                value={editStart}
+                onChange={(e) => setEditStart(e.target.value)}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="edit-end">End Time</Label>
+              <Input
+                id="edit-end"
+                type="datetime-local"
+                value={editEnd}
+                onChange={(e) => setEditEnd(e.target.value)}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="edit-notes">Show Notes</Label>
+              <Textarea
+                id="edit-notes"
+                rows={3}
+                value={editNotes}
+                onChange={(e) => setEditNotes(e.target.value)}
+                placeholder="Optional notes for this slot"
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="ghost" onClick={() => setEditingSlot(null)} disabled={savingEdit}>
+              Cancel
+            </Button>
+            <Button onClick={handleSaveEdit} disabled={savingEdit}>
+              {savingEdit ? <Loader2 className="h-4 w-4 mr-1 animate-spin" /> : null}
+              Save Changes
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </Card>
   );
 }
