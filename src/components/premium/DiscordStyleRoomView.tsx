@@ -179,6 +179,45 @@ export const DiscordStyleRoomView: React.FC<DiscordStyleRoomViewProps> = ({
     setVideoOn(!videoOn);
   };
 
+  // Earned streak — consecutive local-calendar days the current user has posted ≥1 message in this room.
+  // Derived from already-fetched messages array; zero extra queries.
+  const streak = useMemo(() => {
+    if (!user?.id || messages.length === 0) return 0;
+    const dayKeys = new Set<string>();
+    for (const m of messages) {
+      if (m.sender_id !== user.id || !m.created_at) continue;
+      const d = new Date(m.created_at);
+      dayKeys.add(`${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`);
+    }
+    if (dayKeys.size === 0) return 0;
+    const today = new Date();
+    const keyOf = (d: Date) => `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`;
+    let cursor = new Date(today);
+    // If user hasn't posted today yet, start counting from yesterday (streak is "alive" until a full day gap).
+    if (!dayKeys.has(keyOf(cursor))) {
+      cursor.setDate(cursor.getDate() - 1);
+      if (!dayKeys.has(keyOf(cursor))) return 0;
+    }
+    let count = 0;
+    while (dayKeys.has(keyOf(cursor))) {
+      count += 1;
+      cursor.setDate(cursor.getDate() - 1);
+    }
+    return count;
+  }, [messages, user?.id]);
+
+  const prevStreakRef = useRef(0);
+  const [streakTick, setStreakTick] = useState(false);
+  useEffect(() => {
+    if (streak > prevStreakRef.current && prevStreakRef.current > 0) {
+      setStreakTick(true);
+      const t = setTimeout(() => setStreakTick(false), 650);
+      prevStreakRef.current = streak;
+      return () => clearTimeout(t);
+    }
+    prevStreakRef.current = streak;
+  }, [streak]);
+
   if (!hasAccess) {
     return (
       <div className="flex items-center justify-center h-screen">
