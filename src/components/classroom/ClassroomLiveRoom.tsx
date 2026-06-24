@@ -224,9 +224,30 @@ export default function ClassroomLiveRoom({ session }: Props) {
   };
 
   const handleLeave = async () => {
+    if (cameraGraceRef.current) { window.clearTimeout(cameraGraceRef.current); cameraGraceRef.current = null; }
     await leaveSession();
     if (apiRef.current) { try { apiRef.current.dispose(); } catch {}; apiRef.current = null; }
     navigate('/communications-hub');
+  };
+
+  const handleEndSession = async () => {
+    if (!isHost) return;
+    const ts = new Date().toISOString();
+    const { error } = await supabase
+      .from('classroom_sessions')
+      .update({ ended_at: ts, status: 'ended' } as any)
+      .eq('id', session.id);
+    if (error) {
+      toast({ title: 'Could not end session', description: error.message, variant: 'destructive' });
+      return;
+    }
+    setEndedAt(ts);
+    setSummaryOpen(true);
+  };
+
+  const handleSendInvites = async (ids: string[], message: string) => {
+    if (!userId) return;
+    await sendInvites(userId, ids, message || undefined);
   };
 
   if (!user) {
