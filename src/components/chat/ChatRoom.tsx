@@ -13,6 +13,8 @@ import {
   Phone,
   PhoneOff,
   Video,
+  VideoOff,
+  Square,
   DollarSign,
   Loader2,
   Edit2
@@ -25,6 +27,9 @@ import { JitsiCall } from '@/components/JitsiCall';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
+import { useMediaRecorder } from '@/hooks/useMediaRecorder';
+import { uploadChatMedia } from '@/lib/liveRoom/uploadMedia';
+
 
 interface ChatRoomProps {
   roomId: string;
