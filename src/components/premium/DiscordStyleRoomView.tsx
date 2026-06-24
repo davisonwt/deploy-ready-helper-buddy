@@ -248,15 +248,15 @@ export const DiscordStyleRoomView: React.FC<DiscordStyleRoomViewProps> = ({
         <ScrollArea className="flex-1 p-4">
           <div className="space-y-4">
             <div>
-              <h3 className="text-xs font-semibold text-muted-foreground mb-2 flex items-center gap-2">
+              <h3 className="text-xs font-oswald uppercase tracking-widest text-training-coral/80 mb-2 flex items-center gap-2">
                 <Users className="h-3 w-3" />
-                PARTICIPANTS — {participants.length}
+                Participants — {participants.length}
               </h3>
               <div className="space-y-1">
                 {participants.map((participant: any) => (
-                  <div 
-                    key={participant.user_id} 
-                    className="flex items-center gap-2 p-2 rounded hover:bg-muted/50 cursor-pointer"
+                  <div
+                    key={participant.user_id}
+                    className="flex items-center gap-2 p-2 rounded hover:bg-training-coral/10 cursor-pointer"
                   >
                     <Avatar className="h-8 w-8">
                       <AvatarImage src={participant.profiles?.avatar_url} />
