@@ -714,7 +714,7 @@ const ChatApp = () => {
 
             <TabsContent value="circle" className="space-y-4">
               <div className="flex items-center justify-between">
-                <h2 className="text-xl font-semibold">Community</h2>
+                <h2 className="text-xl text-[#F3F7F0]" style={{ fontFamily: '"Outfit", "Inter", sans-serif', fontWeight: 600 }}>Community</h2>
                 {/* Create New Chat/Circle */}
                 <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
                   <DialogTrigger asChild>
