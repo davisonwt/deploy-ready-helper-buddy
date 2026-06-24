@@ -951,7 +951,7 @@ export const ChatRoom: React.FC<ChatRoomProps> = ({ roomId, onBack, instructorId
             const isOwn = msg.sender_id === user.id;
 
             return (
-              <div key={msg.id} className="group">
+              <div key={msg.id} className={`group ${dropAnimation ? 'skilldrop-message' : ''}`}>
                 {replyingTo?.id === msg.id && (
                   <div className="mb-2 ml-12 p-2 bg-muted/50 rounded-lg border-l-2 border-primary text-xs">
                     <div className="flex items-center justify-between">
