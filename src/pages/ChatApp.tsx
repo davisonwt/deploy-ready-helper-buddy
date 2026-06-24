@@ -24,11 +24,13 @@ import {
   Plus,
   LogIn,
   X,
-  Users
+  Users,
+  ArrowLeft,
+  Video
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ChatList } from '@/components/chat/ChatList';
-import SafeUserSelector from '@/components/chat/SafeUserSelector';
+
 import { ChatRoom } from '@/components/chat/ChatRoom';
 
 import { ChatAppVerificationBanner } from '@/components/chat/ChatAppVerificationBanner';
@@ -64,8 +66,6 @@ const ChatApp = () => {
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [newChatName, setNewChatName] = useState('');
   const [isCreating, setIsCreating] = useState(false);
-  const [isStartingDirect, setIsStartingDirect] = useState(false);
-  const [activeTab, setActiveTab] = useState<'one' | 'circle' | 'relationship'>('one');
   const [isVerified, setIsVerified] = useState<boolean | null>(null);
   const [useRelationshipLayer, setUseRelationshipLayer] = useState(false);
   
@@ -164,90 +164,11 @@ const ChatApp = () => {
   //   endCall
   // } = useCallManager();
 
-  const handleStartDirectChat = async (otherUserId) => {
-    if (!user?.id || !otherUserId) return;
-    if (isStartingDirect) return;
-    setIsStartingDirect(true);
-    try {
-      if (isStartingDirect) return; // inner race-guard
-      // 1) Find existing direct room containing both users
-      const { data: rows, error: findErr } = await supabase
-        .from('chat_participants')
-        .select('room_id, user_id, chat_rooms!inner(id, room_type, is_active)')
-        .eq('chat_rooms.room_type', 'direct')
-        .eq('chat_rooms.is_active', true)
-        .in('user_id', [user.id, otherUserId]);
-      if (findErr) throw findErr;
+  // Direct-chat (room_type='direct') flow removed from ChatApp.
+  // 1-on-1 live conversations now live at /live-rooms.
 
-      interface ParticipantRow {
-        room_id: string;
-        user_id: string;
-      }
-
-      let existingRoomId: string | null = null;
-      if (rows && rows.length) {
-        const counts: Record<string, number> = {};
-        for (const r of rows as ParticipantRow[]) {
-          if (!r || !r.room_id) continue;
-          counts[r.room_id] = (counts[r.room_id] || 0) + 1;
-        }
-        existingRoomId = Object.entries(counts).find(([, c]) => c >= 2)?.[0] || null;
-      }
-
-      let roomId = existingRoomId;
-
-      // 2) If none exists, create a new direct room and upsert participants
-      if (!roomId) {
-        const { data: room, error: roomErr } = await supabase
-          .from('chat_rooms')
-          .insert({ name: 'Direct Chat', room_type: 'direct', created_by: user.id, is_active: true })
-          .select('id')
-          .single();
-        if (roomErr) throw roomErr;
-        roomId = room.id as string;
-
-        const { error: partErr } = await supabase
-          .from('chat_participants')
-          .upsert([
-            { room_id: roomId, user_id: user.id, is_active: true },
-            { room_id: roomId, user_id: otherUserId, is_active: true },
-          ], { onConflict: 'room_id,user_id', ignoreDuplicates: false });
-
-        if (partErr) {
-          // If conflict, verify both participants exist before failing
-          const { data: check, error: checkErr } = await supabase
-            .from('chat_participants')
-            .select('user_id')
-            .eq('room_id', roomId)
-            .in('user_id', [user.id, otherUserId]);
-          if (checkErr || (check?.length || 0) < 2) throw partErr;
-        }
-      } else {
-        // Ensure both participants are active for existing room
-        await supabase
-          .from('chat_participants')
-          .upsert([
-            { room_id: roomId, user_id: user.id, is_active: true },
-            { room_id: roomId, user_id: otherUserId, is_active: true },
-          ], { onConflict: 'room_id,user_id', ignoreDuplicates: false });
-      }
-
-      setSearchParams({ room: roomId! }, { replace: true });
-    } catch (error) {
-      console.error('Error starting direct chat:', error);
-      toast({ title: 'Error', description: 'Could not open direct chat', variant: 'destructive' });
-    } finally {
-      setIsStartingDirect(false);
-    }
-  };
-
-  // Embedded Jitsi call state
+  // Embedded Jitsi call state (retained for group call surface)
   const [showJitsi, setShowJitsi] = useState(false);
-  
-  const handleStartCall = async (otherUserId, callType) => {
-    // Start embedded Jitsi call
-    setShowJitsi(true);
-  };
 
   // Fetch users when search term changes - prioritize sowers and bestowers
   useEffect(() => {
