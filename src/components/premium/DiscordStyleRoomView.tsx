@@ -233,16 +233,17 @@ export const DiscordStyleRoomView: React.FC<DiscordStyleRoomViewProps> = ({
   }
 
   return (
-    <div className="flex h-screen bg-background">
+    <div className="flex h-screen bg-training-bg text-foreground">
       {/* Left Sidebar - Participants */}
-      <div className="w-60 border-r border-border flex flex-col">
-        <div className="p-4 border-b border-border">
+      <div className="w-60 border-r border-training-coral/20 bg-training-ash flex flex-col">
+        <div className="p-4 border-b border-training-coral/20">
           <div className="flex items-center gap-2 mb-2">
-            <h2 className="font-bold text-lg truncate">{room.title}</h2>
-            {isCreator && <Crown className="h-4 w-4 text-primary" />}
+            <h2 className="font-oswald uppercase tracking-wide text-lg truncate text-training-coral-glow">{room.title}</h2>
+            {isCreator && <Crown className="h-4 w-4 text-training-coral" />}
           </div>
-          <Badge variant="secondary" className="text-xs">{room.room_type}</Badge>
+          <Badge variant="secondary" className="text-xs font-oswald uppercase tracking-wider bg-training-coral/15 text-training-ember border border-training-coral/30">{room.room_type}</Badge>
         </div>
+
 
         <ScrollArea className="flex-1 p-4">
           <div className="space-y-4">
