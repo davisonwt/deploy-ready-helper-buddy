@@ -107,13 +107,14 @@ const PremiumRoomsLanding: React.FC = () => {
 
   // Basic SEO tags for this page
   React.useEffect(() => {
-    document.title = 'Premium Rooms & Courses | sow2grow';
+    document.title = 'Training Rooms | sow2grow';
     const metaDesc = document.querySelector('meta[name="description"]');
     if (metaDesc) {
       metaDesc.setAttribute(
         'content',
-        'Create premium rooms and courses: classroom, seminar, training, podcast, marketing demo, or general discussion.'
+        'Browse and create training rooms.'
       );
+
     }
   }, []);
 
