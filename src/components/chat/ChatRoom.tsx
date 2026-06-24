@@ -911,12 +911,12 @@ export const ChatRoom: React.FC<ChatRoomProps> = ({ roomId, onBack }) => {
       <ScrollArea ref={scrollAreaRef} className="flex-1 p-4">
         {/* Typing Indicator */}
         {usersTyping.length > 0 && (
-          <div className="flex items-center gap-2 text-xs text-muted-foreground mb-3 p-2 bg-muted/30 rounded-lg">
+          <div className="flex items-center gap-2 text-xs text-[#8AA99A] mb-3 p-2 bg-[#123330]/40 rounded-lg border border-[#4FA876]/15">
             <div className="flex gap-1">
               {[0, 1, 2].map((i) => (
                 <div
                   key={i}
-                  className="h-1.5 w-1.5 bg-primary rounded-full animate-bounce"
+                  className="h-1.5 w-1.5 bg-[#F2C14E] rounded-full animate-bounce motion-reduce:animate-none"
                   style={{ animationDelay: `${i * 150}ms` }}
                 />
               ))}
