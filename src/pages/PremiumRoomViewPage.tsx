@@ -701,6 +701,20 @@ const PremiumRoomViewPage: React.FC = () => {
             </div>
           </CardContent>
         </Card>
+
+        {/* Live training chat thread */}
+        {room.chat_room_id && (
+          <Card className="lg:col-span-2 overflow-hidden">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Users className="h-5 w-5" /> Live Training Chat
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="p-0" style={{ height: 560 }}>
+              <ChatRoom roomId={room.chat_room_id} onBack={() => { /* stays on page */ }} />
+            </CardContent>
+          </Card>
+        )}
       </div>
 
       {/* Purchase Modals */}
