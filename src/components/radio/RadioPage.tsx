@@ -2,7 +2,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Music, Radio, PlayCircle, MessageCircle, Users, Disc, Sparkles } from 'lucide-react';
+import { Music, Radio, PlayCircle, MessageCircle, Users, Disc, Sparkles, ArrowLeft } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import MusicLibrary from './MusicLibrary';
 import PlaylistManager from './PlaylistManager';
