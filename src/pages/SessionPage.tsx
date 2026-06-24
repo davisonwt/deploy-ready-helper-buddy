@@ -256,7 +256,7 @@ export default function SessionPage({ kind }: SessionPageProps) {
   if (error || !session) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center gap-4 bg-[#1A1308] text-[#F5A623] p-6">
-        <p className="text-center max-w-md font-[\"Space_Grotesk\",sans-serif]">{error || 'Session not found.'}</p>
+        <p className="text-center max-w-md" style={{ fontFamily: '"Space Grotesk", Inter, sans-serif' }}>{error || 'Session not found.'}</p>
         <Button variant="ghost" onClick={() => navigate(-1)} className="gap-2 text-[#F5A623] hover:text-white hover:bg-[#F5A623]/15">
           <ArrowLeft className="h-4 w-4" /> Go back
         </Button>
