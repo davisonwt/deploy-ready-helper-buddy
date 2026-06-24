@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -11,10 +12,13 @@ import ListenerInteractions from './ListenerInteractions';
 import SessionBuilder from './SessionBuilder';
 import { useAuth } from '@/hooks/useAuth';
 import PageHeroBanner from '@/components/chat/PageHeroBanner';
+import ExplainerDialog from '@/components/explainers/ExplainerDialog';
 
 const RadioPage = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
+  const [explainerOpen, setExplainerOpen] = useState(false);
+
 
   if (!user) {
     return (
@@ -59,7 +63,17 @@ const RadioPage = () => {
           <p className="text-lg text-radio-mist/80 max-w-2xl mx-auto font-light">
             Your complete radio station — upload music, curate playlists, broadcast live, and tune in with listeners across the tribe.
           </p>
+          <div className="flex justify-center">
+            <button
+              onClick={() => setExplainerOpen(true)}
+              className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full text-xs font-medium border border-radio-amber/50 bg-radio-amber/10 text-radio-amber hover:bg-radio-amber/20 transition-colors"
+            >
+              <PlayCircle className="h-3.5 w-3.5" />
+              Watch how it works · 32s
+            </button>
+          </div>
           <div className="flex flex-wrap justify-center gap-2">
+
             <Badge className="bg-radio-ink border border-radio-blue/40 text-radio-mist hover:bg-radio-ink/80 gap-1">
               <Music className="h-3 w-3" /> Music Library
             </Badge>
@@ -210,8 +224,10 @@ const RadioPage = () => {
           </TabsContent>
         </Tabs>
       </div>
+      <ExplainerDialog open={explainerOpen} onOpenChange={setExplainerOpen} variant="radio" />
     </div>
   );
 };
 
 export default RadioPage;
+

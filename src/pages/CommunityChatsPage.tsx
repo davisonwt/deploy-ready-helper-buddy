@@ -1,12 +1,17 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, Plus, Users } from 'lucide-react';
+import { ArrowLeft, Plus, Users, PlayCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import PublicRoomsBrowser from '@/components/chat/PublicRoomsBrowser';
 import PageHeroBanner from '@/components/chat/PageHeroBanner';
+import ExplainerDialog from '@/components/explainers/ExplainerDialog';
+
 
 export default function CommunityChatsPage() {
   const navigate = useNavigate();
+  const [explainerOpen, setExplainerOpen] = useState(false);
+
+
 
   return (
     <main
@@ -33,13 +38,21 @@ export default function CommunityChatsPage() {
         </div>
 
         <div className="rounded-2xl border border-cyan-400/25 bg-[#0f172a]/80 backdrop-blur p-5 shadow-[0_0_40px_rgba(34,211,238,0.10)]">
-          <div className="mb-5 flex items-center gap-3">
+          <div className="mb-3 flex items-center gap-3">
             <Users className="h-7 w-7 text-cyan-300" />
             <h1 className="text-2xl font-black text-white">Community Chats</h1>
           </div>
-          <p className="mb-5 text-sm text-slate-300/80">
+          <p className="mb-3 text-sm text-slate-300/80">
             Browse already created rooms — view, request to join, or open a brand new room of your own.
           </p>
+          <button
+            onClick={() => setExplainerOpen(true)}
+            className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full text-xs font-medium transition-colors border border-amber-400/40 bg-amber-400/10 text-amber-300 hover:bg-amber-400/20 mb-5"
+          >
+            <PlayCircle className="h-3.5 w-3.5" />
+            Watch how it works · 35s
+          </button>
+
 
           <PublicRoomsBrowser
             onJoinRoom={(room: { id: string; is_premium?: boolean }) => {
@@ -53,6 +66,8 @@ export default function CommunityChatsPage() {
           />
         </div>
       </div>
+      <ExplainerDialog open={explainerOpen} onOpenChange={setExplainerOpen} variant="community" />
     </main>
   );
 }
+

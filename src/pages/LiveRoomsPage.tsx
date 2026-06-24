@@ -207,7 +207,7 @@ export default function LiveRoomsPage() {
         }}
       />
 
-      <ExplainerDialog open={explainerOpen} onOpenChange={setExplainerOpen} />
+      <ExplainerDialog open={explainerOpen} onOpenChange={setExplainerOpen} variant="one_on_one" />
     </div>
   );
 }

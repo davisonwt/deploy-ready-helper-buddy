@@ -27,12 +27,14 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Badge } from '@/components/ui/badge';
-import { GraduationCap, Search, Plus, BookOpen, Users, Music, FileText, Image, Trash2, ArrowLeft } from 'lucide-react';
+import { GraduationCap, Search, Plus, BookOpen, Users, Music, FileText, Image, Trash2, ArrowLeft, PlayCircle } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { toast } from 'sonner';
 import PageHeroBanner from '@/components/chat/PageHeroBanner';
+import ExplainerDialog from '@/components/explainers/ExplainerDialog';
+
 
 interface MediaItem {
   id: string;
@@ -60,8 +62,10 @@ const PremiumRoomsLanding: React.FC = () => {
   const [searchQuery, setSearchQuery] = React.useState('');
   const [rooms, setRooms] = React.useState<PremiumRoom[]>([]);
   const [loading, setLoading] = React.useState(true);
+  const [explainerOpen, setExplainerOpen] = React.useState(false);
   const { user } = useAuth();
   const navigate = useNavigate();
+
 
   // Fetch premium rooms
   React.useEffect(() => {
@@ -152,6 +156,13 @@ const PremiumRoomsLanding: React.FC = () => {
             <p className="text-sm text-muted-foreground">
               Join an existing training room or create a new one
             </p>
+            <button
+              onClick={() => setExplainerOpen(true)}
+              className="mt-3 inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full text-xs font-medium border border-pink-400/50 bg-pink-400/10 text-pink-300 hover:bg-pink-400/20 transition-colors"
+            >
+              <PlayCircle className="h-3.5 w-3.5" />
+              Watch how it works · 35s
+            </button>
           </div>
           <Button asChild>
             <Link to="/create-premium-room">
@@ -160,6 +171,7 @@ const PremiumRoomsLanding: React.FC = () => {
             </Link>
           </Button>
         </div>
+
 
         {/* Search Bar */}
         <div className="relative">
@@ -287,8 +299,10 @@ const PremiumRoomsLanding: React.FC = () => {
         )}
       </ScrollArea>
       </div>
+      <ExplainerDialog open={explainerOpen} onOpenChange={setExplainerOpen} variant="training" />
     </div>
   );
 };
 
 export default PremiumRoomsLanding;
+
