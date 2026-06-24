@@ -347,6 +347,17 @@ export function MyApprovedSlots() {
                         Available 10 min before show time
                       </p>
                     )}
+                    {slot.status !== 'live' && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleDeleteSlot(slot)}
+                        className="text-destructive border-destructive/40 hover:bg-destructive/10"
+                      >
+                        <Trash2 className="h-4 w-4 mr-1" />
+                        Delete
+                      </Button>
+                    )}
                   </div>
                 </div>
               </CardContent>
