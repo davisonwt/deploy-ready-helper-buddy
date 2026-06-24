@@ -380,11 +380,12 @@ export default function ClassroomLiveRoom({ session }: Props) {
           {/* Side panel */}
           <aside className="rounded-2xl border border-[#8B5CF6]/30 bg-[#14101F]/85 overflow-hidden flex flex-col" style={{ minHeight: 480, height: 'calc(100vh - 320px)' }}>
             <Tabs defaultValue="chat" className="flex flex-col h-full">
-              <TabsList className="w-full grid grid-cols-4 bg-[#1a1430]/80 border-b border-[#8B5CF6]/25 rounded-none h-10 shrink-0">
-                <TabsTrigger value="chat" className="text-xs data-[state=active]:bg-[#8B5CF6]/20 data-[state=active]:text-[#E8D9B5]">Chat</TabsTrigger>
-                <TabsTrigger value="hands" className="text-xs data-[state=active]:bg-[#8B5CF6]/20 data-[state=active]:text-[#E8D9B5]">{isHost ? 'Hands' : 'Floor'}</TabsTrigger>
-                <TabsTrigger value="docs" className="text-xs data-[state=active]:bg-[#8B5CF6]/20 data-[state=active]:text-[#E8D9B5]">Docs</TabsTrigger>
-                <TabsTrigger value="subs" className="text-xs data-[state=active]:bg-[#8B5CF6]/20 data-[state=active]:text-[#E8D9B5]">Tasks</TabsTrigger>
+              <TabsList className="w-full grid grid-cols-5 bg-[#1a1430]/80 border-b border-[#8B5CF6]/25 rounded-none h-10 shrink-0">
+                <TabsTrigger value="chat" className="text-[11px] data-[state=active]:bg-[#8B5CF6]/20 data-[state=active]:text-[#E8D9B5]">Chat</TabsTrigger>
+                <TabsTrigger value="people" className="text-[11px] data-[state=active]:bg-[#8B5CF6]/20 data-[state=active]:text-[#E8D9B5]">People</TabsTrigger>
+                <TabsTrigger value="hands" className="text-[11px] data-[state=active]:bg-[#8B5CF6]/20 data-[state=active]:text-[#E8D9B5]">{isHost ? 'Hands' : 'Floor'}</TabsTrigger>
+                <TabsTrigger value="docs" className="text-[11px] data-[state=active]:bg-[#8B5CF6]/20 data-[state=active]:text-[#E8D9B5]">Docs</TabsTrigger>
+                <TabsTrigger value="subs" className="text-[11px] data-[state=active]:bg-[#8B5CF6]/20 data-[state=active]:text-[#E8D9B5]">Tasks</TabsTrigger>
               </TabsList>
 
               <TabsContent value="chat" className="flex-1 mt-0 overflow-hidden">
@@ -395,6 +396,17 @@ export default function ClassroomLiveRoom({ session }: Props) {
                   hostId={session.instructor_id}
                   onSendText={sendTextMessage}
                   onSendVoice={sendVoiceMessage}
+                />
+              </TabsContent>
+
+              <TabsContent value="people" className="flex-1 mt-0 overflow-y-auto">
+                <RosterPanel
+                  isHost={isHost}
+                  hostUserId={session.instructor_id}
+                  inviterId={userId!}
+                  participants={participants}
+                  invites={invites}
+                  onInvite={handleSendInvites}
                 />
               </TabsContent>
 
@@ -439,6 +451,25 @@ export default function ClassroomLiveRoom({ session }: Props) {
           sessionId={session.id}
           sessionKind="classroom"
           hostName={hostName}
+        />
+      )}
+
+      {!isHost && (
+        <CheckInPrompt open={checkInOpen} deadline={checkInDeadline} onRespond={respondCheckIn} />
+      )}
+
+      {isHost && (
+        <PostSessionSummary
+          open={summaryOpen}
+          onClose={() => setSummaryOpen(false)}
+          sessionTitle={session.title}
+          startedAt={session.started_at ?? null}
+          endedAt={endedAt}
+          hostUserId={session.instructor_id}
+          participants={participants}
+          invites={invites}
+          messages={messages}
+          media={media}
         />
       )}
     </main>
