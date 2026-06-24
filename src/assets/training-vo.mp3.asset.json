@@ -1,11 +1,11 @@
 {
   "version": 1,
-  "asset_id": "13fdc818-5675-453c-855e-1b5eacc1c5ce",
+  "asset_id": "f5f123a8-f32b-4a6e-8e44-8b4375c9982f",
   "project_id": "f76da68e-977d-42e6-85f3-ea2df1aea0df",
-  "url": "/__l5e/assets-v1/13fdc818-5675-453c-855e-1b5eacc1c5ce/training-vo.mp3",
-  "r2_key": "a/v1/f76da68e-977d-42e6-85f3-ea2df1aea0df/13fdc818-5675-453c-855e-1b5eacc1c5ce/training-vo.mp3",
+  "url": "/__l5e/assets-v1/f5f123a8-f32b-4a6e-8e44-8b4375c9982f/training-vo.mp3",
+  "r2_key": "a/v1/f76da68e-977d-42e6-85f3-ea2df1aea0df/f5f123a8-f32b-4a6e-8e44-8b4375c9982f/training-vo.mp3",
   "original_filename": "training-vo.mp3",
-  "size": 477600,
+  "size": 617760,
   "content_type": "audio/mpeg",
-  "created_at": "2026-06-24T12:14:02Z"
+  "created_at": "2026-06-24T12:33:07Z"
 }
