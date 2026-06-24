@@ -48,7 +48,7 @@ const PremiumRoomCard = ({ room, orchard, hasAccess, onJoin, onViewOrchard }) =>
   const handleJoin = async () => {
     setLoading(true);
     try {
-      await onJoin(room.id);
+      await onJoin(room);
       toast({
         title: "Joined Room",
         description: `Welcome to ${room.name}!`,

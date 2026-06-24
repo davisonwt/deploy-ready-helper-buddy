@@ -380,13 +380,13 @@ const PublicRoomsBrowser = ({ onJoinRoom, onNavigateToOrchard }) => {
                             </div>
                           <div className="flex items-center gap-2">
                             {isUserInRoom(room) ? (
-                              <Button 
-                                size="sm"
-                                onClick={() => onJoinRoom(room.id)}
-                                className="bg-green-500/30 hover:bg-green-500/50 text-white font-semibold shadow-md border border-green-500/50 backdrop-blur-sm"
-                              >
-                                Enter Room
-                              </Button>
+                            <Button 
+                              size="sm"
+                              onClick={() => onJoinRoom(room)}
+                              className="bg-green-500/30 hover:bg-green-500/50 text-white font-semibold shadow-md border border-green-500/50 backdrop-blur-sm"
+                            >
+                              Enter Room
+                            </Button>
                             ) : (
                               <Button 
                                 size="sm"
