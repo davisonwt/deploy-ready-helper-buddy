@@ -701,7 +701,7 @@ const ChatApp = () => {
 
               <div className="space-y-4">
                 <div className="flex items-center justify-between">
-                  <h2 className="text-xl font-semibold">Your One-on-Ones</h2>
+                  <h2 className="text-xl text-[#F3F7F0]" style={{ fontFamily: '"Outfit", "Inter", sans-serif', fontWeight: 600 }}>Your One-on-Ones</h2>
                 </div>
                 <ScrollArea className="h-[calc(100vh-300px)] pr-2">
                   <div className="pb-72 sm:pb-80 md:pb-[calc(env(safe-area-inset-bottom)+18rem)]">
