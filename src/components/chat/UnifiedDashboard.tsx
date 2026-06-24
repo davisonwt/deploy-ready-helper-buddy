@@ -14,6 +14,23 @@ import { TrainingMode } from '../communication/TrainingMode';
 import { RadioMode } from '../communication/RadioMode';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
+import bannerCircles from '@/assets/chat-mode-circles.jpg';
+import banner1on1 from '@/assets/chat-mode-1on1.jpg';
+import bannerCommunity from '@/assets/chat-mode-community.jpg';
+import bannerClassroom from '@/assets/chat-mode-classroom.jpg';
+import bannerLecture from '@/assets/chat-mode-lecture.jpg';
+import bannerTraining from '@/assets/chat-mode-training.jpg';
+import bannerRadio from '@/assets/chat-mode-radio.jpg';
+
+const modeBanners: Record<CommunicationMode, { src: string; title: string; subtitle: string }> = {
+  circles: { src: bannerCircles, title: 'Circles', subtitle: 'Sacred tribal circles of connection' },
+  chat: { src: banner1on1, title: '1-on-1 Chats', subtitle: 'Intimate, direct conversations' },
+  community: { src: bannerCommunity, title: 'Community', subtitle: 'Gather around the tribal fire' },
+  classroom: { src: bannerClassroom, title: 'Classrooms', subtitle: 'Learn together, grow together' },
+  lecture: { src: bannerLecture, title: 'Lectures', subtitle: 'Wisdom from the stage' },
+  training: { src: bannerTraining, title: 'Training', subtitle: 'Sharpen your skills' },
+  radio: { src: bannerRadio, title: 'Radio', subtitle: 'On-air with the tribe' },
+};
 
 interface ModeConfig {
   id: CommunicationMode;
@@ -166,6 +183,26 @@ export const UnifiedDashboard: React.FC = () => {
                   exit={{ opacity: 0, y: -20 }}
                   transition={{ duration: 0.3 }}
                 >
+                  {/* Mode banner image */}
+                  <div className="relative mb-6 overflow-hidden rounded-2xl border border-border/40 shadow-lg">
+                    <img
+                      src={modeBanners[activeMode].src}
+                      alt={`${modeBanners[activeMode].title} banner`}
+                      width={1920}
+                      height={512}
+                      loading="lazy"
+                      className="w-full h-32 md:h-44 lg:h-56 object-cover"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-r from-background/80 via-background/30 to-transparent" />
+                    <div className="absolute inset-0 flex flex-col justify-center px-6 md:px-10">
+                      <h2 className="text-2xl md:text-4xl font-bold text-foreground drop-shadow-lg">
+                        {modeBanners[activeMode].title}
+                      </h2>
+                      <p className="text-sm md:text-base text-foreground/80 mt-1 drop-shadow">
+                        {modeBanners[activeMode].subtitle}
+                      </p>
+                    </div>
+                  </div>
                   {renderContent()}
                 </motion.div>
               </AnimatePresence>
