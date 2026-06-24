@@ -150,10 +150,12 @@ const SessionBuilder = () => {
   const { toast } = useToast();
   const [sessions, setSessions] = useState<Session[]>([]);
   const [activeId, setActiveId] = useState<string | null>(null);
+  const [view, setView] = useState<'list' | 'editor'>('list');
   const [slots, setSlots] = useState<Slot[]>([]);
   const [tracks, setTracks] = useState<MusicTrack[]>([]);
   const [loading, setLoading] = useState(true);
   const [savingTitle, setSavingTitle] = useState(false);
+  const [listenSessionId, setListenSessionId] = useState<string | null>(null);
 
   const active = sessions.find((s) => s.id === activeId) || null;
   const usedSeconds = useMemo(
