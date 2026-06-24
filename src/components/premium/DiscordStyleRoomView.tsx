@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
@@ -8,10 +8,10 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Separator } from '@/components/ui/separator';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { 
-  Send, Mic, Video, Phone, PhoneOff, Paperclip, 
+import {
+  Send, Mic, Video, Phone, PhoneOff, Paperclip,
   Users, Music, FileText, Image as ImageIcon,
-  Settings, Crown, Smile, MoreVertical
+  Settings, Crown, Smile, MoreVertical, Flame
 } from 'lucide-react';
 import { toast } from 'sonner';
 import ChatMessage from '@/components/chat/ChatMessage';
