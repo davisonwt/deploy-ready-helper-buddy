@@ -111,9 +111,9 @@ export default function LiveRoomsPage() {
       <div className="mx-auto max-w-5xl px-4 py-10">
         <div className="mb-10 flex items-end justify-between gap-4">
           <div>
-            <Button variant="ghost" size="sm" onClick={() => navigate('/dashboard')}
+            <Button variant="ghost" size="sm" onClick={() => navigate('/communications-hub')}
               className="mb-3 gap-2 text-[#7E9498] hover:text-[#EAF4F2] hover:bg-transparent px-0">
-              <ArrowLeft className="h-4 w-4" /> Dashboard
+              <ArrowLeft className="h-4 w-4" /> Back to Go-Live
             </Button>
             <h1 className="text-5xl tracking-tight mb-2" style={{ fontFamily: '"Fraunces", serif', fontWeight: 500 }}>
               1-on-1 Live

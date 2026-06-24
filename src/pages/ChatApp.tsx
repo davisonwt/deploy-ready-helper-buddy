@@ -24,11 +24,13 @@ import {
   Plus,
   LogIn,
   X,
-  Users
+  Users,
+  ArrowLeft,
+  Video
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ChatList } from '@/components/chat/ChatList';
-import SafeUserSelector from '@/components/chat/SafeUserSelector';
+
 import { ChatRoom } from '@/components/chat/ChatRoom';
 
 import { ChatAppVerificationBanner } from '@/components/chat/ChatAppVerificationBanner';
@@ -64,8 +66,6 @@ const ChatApp = () => {
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [newChatName, setNewChatName] = useState('');
   const [isCreating, setIsCreating] = useState(false);
-  const [isStartingDirect, setIsStartingDirect] = useState(false);
-  const [activeTab, setActiveTab] = useState<'one' | 'circle' | 'relationship'>('one');
   const [isVerified, setIsVerified] = useState<boolean | null>(null);
   const [useRelationshipLayer, setUseRelationshipLayer] = useState(false);
   
@@ -164,90 +164,11 @@ const ChatApp = () => {
   //   endCall
   // } = useCallManager();
 
-  const handleStartDirectChat = async (otherUserId) => {
-    if (!user?.id || !otherUserId) return;
-    if (isStartingDirect) return;
-    setIsStartingDirect(true);
-    try {
-      if (isStartingDirect) return; // inner race-guard
-      // 1) Find existing direct room containing both users
-      const { data: rows, error: findErr } = await supabase
-        .from('chat_participants')
-        .select('room_id, user_id, chat_rooms!inner(id, room_type, is_active)')
-        .eq('chat_rooms.room_type', 'direct')
-        .eq('chat_rooms.is_active', true)
-        .in('user_id', [user.id, otherUserId]);
-      if (findErr) throw findErr;
+  // Direct-chat (room_type='direct') flow removed from ChatApp.
+  // 1-on-1 live conversations now live at /live-rooms.
 
-      interface ParticipantRow {
-        room_id: string;
-        user_id: string;
-      }
-
-      let existingRoomId: string | null = null;
-      if (rows && rows.length) {
-        const counts: Record<string, number> = {};
-        for (const r of rows as ParticipantRow[]) {
-          if (!r || !r.room_id) continue;
-          counts[r.room_id] = (counts[r.room_id] || 0) + 1;
-        }
-        existingRoomId = Object.entries(counts).find(([, c]) => c >= 2)?.[0] || null;
-      }
-
-      let roomId = existingRoomId;
-
-      // 2) If none exists, create a new direct room and upsert participants
-      if (!roomId) {
-        const { data: room, error: roomErr } = await supabase
-          .from('chat_rooms')
-          .insert({ name: 'Direct Chat', room_type: 'direct', created_by: user.id, is_active: true })
-          .select('id')
-          .single();
-        if (roomErr) throw roomErr;
-        roomId = room.id as string;
-
-        const { error: partErr } = await supabase
-          .from('chat_participants')
-          .upsert([
-            { room_id: roomId, user_id: user.id, is_active: true },
-            { room_id: roomId, user_id: otherUserId, is_active: true },
-          ], { onConflict: 'room_id,user_id', ignoreDuplicates: false });
-
-        if (partErr) {
-          // If conflict, verify both participants exist before failing
-          const { data: check, error: checkErr } = await supabase
-            .from('chat_participants')
-            .select('user_id')
-            .eq('room_id', roomId)
-            .in('user_id', [user.id, otherUserId]);
-          if (checkErr || (check?.length || 0) < 2) throw partErr;
-        }
-      } else {
-        // Ensure both participants are active for existing room
-        await supabase
-          .from('chat_participants')
-          .upsert([
-            { room_id: roomId, user_id: user.id, is_active: true },
-            { room_id: roomId, user_id: otherUserId, is_active: true },
-          ], { onConflict: 'room_id,user_id', ignoreDuplicates: false });
-      }
-
-      setSearchParams({ room: roomId! }, { replace: true });
-    } catch (error) {
-      console.error('Error starting direct chat:', error);
-      toast({ title: 'Error', description: 'Could not open direct chat', variant: 'destructive' });
-    } finally {
-      setIsStartingDirect(false);
-    }
-  };
-
-  // Embedded Jitsi call state
+  // Embedded Jitsi call state (retained for group call surface)
   const [showJitsi, setShowJitsi] = useState(false);
-  
-  const handleStartCall = async (otherUserId, callType) => {
-    // Start embedded Jitsi call
-    setShowJitsi(true);
-  };
 
   // Fetch users when search term changes - prioritize sowers and bestowers
   useEffect(() => {
@@ -638,20 +559,37 @@ const ChatApp = () => {
           
           {/* Header */}
           <div className="mb-6 space-y-4">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => navigate('/communications-hub')}
+              className="gap-2 px-0 text-[#8AA99A] hover:text-[#F3F7F0] hover:bg-transparent"
+            >
+              <ArrowLeft className="h-4 w-4" /> Back to Go-Live
+            </Button>
             <div className="flex items-center justify-between">
               <div>
                 <h1
                   className="text-4xl tracking-tight text-[#F3F7F0]"
                   style={{ fontFamily: '"Outfit", "Inter", sans-serif', fontWeight: 600 }}
                 >
-                  Chats
+                  Community Chats
                 </h1>
                 <p className="text-sm text-[#8AA99A] mt-1">
-                  Click on a chat below to send messages, voice notes, make calls & more
+                  Group conversations & circles. Looking for a private 1-on-1? Head to Live Rooms.
                 </p>
               </div>
               <div className="flex gap-2">
-                <Button 
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => navigate('/live-rooms')}
+                  className="gap-2"
+                >
+                  <Video className="h-4 w-4" />
+                  Start a 1-on-1
+                </Button>
+                <Button
                   variant="outline"
                   size="sm"
                   onClick={() => {
@@ -685,50 +623,24 @@ const ChatApp = () => {
             </div>
           </div>
 
-          {/* Tabs for One-on-Ones vs Grove Circles */}
-          <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as 'one' | 'circle')}>
-            <TabsList className="mb-4 bg-[#123330]/60 border border-[#4FA876]/15">
-              <TabsTrigger value="one" className="data-[state=active]:bg-[#4FA876] data-[state=active]:text-[#0E1B15] text-[#8AA99A]">One-on-Ones</TabsTrigger>
-              <TabsTrigger value="circle" className="data-[state=active]:bg-[#4FA876] data-[state=active]:text-[#0E1B15] text-[#8AA99A]">Community</TabsTrigger>
-            </TabsList>
-
-            <TabsContent value="one" className="space-y-4">
-              {/* One-on-Ones: s2g sowers and bestowers */}
-              <SafeUserSelector
-                onStartDirectChat={handleStartDirectChat}
-                onStartCall={handleStartCall}
-              />
-
-              <div className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <h2 className="text-xl text-[#F3F7F0]" style={{ fontFamily: '"Outfit", "Inter", sans-serif', fontWeight: 600 }}>Your One-on-Ones</h2>
-                </div>
-                <ScrollArea className="h-[calc(100vh-300px)] pr-2">
-                  <div className="pb-72 sm:pb-80 md:pb-[calc(env(safe-area-inset-bottom)+18rem)]">
-                    <ChatList searchQuery={searchQuery} roomType="direct" hideFilterControls />
-                    <div aria-hidden className="h-24 sm:h-28 md:h-32" />
-                  </div>
-                </ScrollArea>
-              </div>
-            </TabsContent>
-
-            <TabsContent value="circle" className="space-y-4">
-              <div className="flex items-center justify-between">
-                <h2 className="text-xl text-[#F3F7F0]" style={{ fontFamily: '"Outfit", "Inter", sans-serif', fontWeight: 600 }}>Community</h2>
-                {/* Create New Chat/Circle */}
-                <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
-                  <DialogTrigger asChild>
-                    <Button size="sm">
-                      <Plus className="h-4 w-4 mr-2" />
-                      New Chat
-                    </Button>
-                  </DialogTrigger>
-                  <DialogContent className="max-w-lg max-h-[80vh] overflow-y-auto bg-background z-50">
-                <DialogHeader>
-                  <DialogTitle>Create New Chat</DialogTitle>
-                  <DialogDescription>
-                    Create a new group chat and invite others to join.
-                  </DialogDescription>
+          {/* Community group chats */}
+          <div className="space-y-4">
+            <div className="flex items-center justify-between">
+              <h2 className="text-xl text-[#F3F7F0]" style={{ fontFamily: '"Outfit", "Inter", sans-serif', fontWeight: 600 }}>Community</h2>
+              {/* Create New Chat/Circle */}
+              <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
+                <DialogTrigger asChild>
+                  <Button size="sm">
+                    <Plus className="h-4 w-4 mr-2" />
+                    New Chat
+                  </Button>
+                </DialogTrigger>
+                <DialogContent className="max-w-lg max-h-[80vh] overflow-y-auto bg-background z-50">
+                  <DialogHeader>
+                    <DialogTitle>Create New Chat</DialogTitle>
+                    <DialogDescription>
+                      Create a new group chat and invite others to join.
+                    </DialogDescription>
                   </DialogHeader>
                   <div className="space-y-4 py-4">
                     <div className="space-y-2">
@@ -881,16 +793,15 @@ const ChatApp = () => {
                   </div>
                 </DialogContent>
               </Dialog>
-              </div>
+            </div>
 
-              <ScrollArea className="h-[calc(100vh-300px)] pr-2">
-                <div className="pb-72 sm:pb-80 md:pb-[calc(env(safe-area-inset-bottom)+18rem)]">
-                  <ChatList searchQuery={searchQuery} roomType="group" hideFilterControls />
-                  <div aria-hidden className="h-24 sm:h-28 md:h-32" />
-                </div>
-              </ScrollArea>
-            </TabsContent>
-          </Tabs>
+            <ScrollArea className="h-[calc(100vh-300px)] pr-2">
+              <div className="pb-72 sm:pb-80 md:pb-[calc(env(safe-area-inset-bottom)+18rem)]">
+                <ChatList searchQuery={searchQuery} roomType="group" hideFilterControls />
+                <div aria-hidden className="h-24 sm:h-28 md:h-32" />
+              </div>
+            </ScrollArea>
+          </div>
         </>
       )}
     </div>

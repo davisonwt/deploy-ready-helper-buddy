@@ -63,8 +63,8 @@ export default function SessionPage({ kind }: SessionPageProps) {
   return (
     <main className="min-h-screen text-slate-100" style={{ background: 'linear-gradient(180deg, #0a0f1a 0%, #060a12 100%)' }}>
       <div className="mx-auto max-w-5xl px-4 py-5">
-        <Button variant="ghost" onClick={() => navigate(-1)} className="mb-4 gap-2 text-cyan-300 hover:text-cyan-200 hover:bg-cyan-500/10">
-          <ArrowLeft className="h-4 w-4" /> Back
+        <Button variant="ghost" size="sm" onClick={() => navigate('/communications-hub')} className="mb-4 gap-2 px-0 text-slate-400 hover:text-slate-100 hover:bg-transparent">
+          <ArrowLeft className="h-4 w-4" /> Back to Go-Live
         </Button>
 
         <header className="mb-5 rounded-2xl border border-cyan-400/25 bg-[#0f172a]/80 p-5">

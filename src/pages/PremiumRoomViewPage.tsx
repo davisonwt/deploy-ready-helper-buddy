@@ -435,6 +435,13 @@ const PremiumRoomViewPage: React.FC = () => {
     return (
       <>
         <audio ref={audioRef} controls preload="metadata" playsInline onEnded={() => setPlayingTrack(null)} onError={(e) => { const el = e.currentTarget; console.error('Audio element error:', el.error); toast.error('Audio failed to load'); setPlayingTrack(null); }} crossOrigin="anonymous" className="hidden" />
+        <div className="container mx-auto px-4 pt-4">
+          <Button variant="ghost" size="sm" asChild className="gap-2 px-0 text-muted-foreground hover:text-foreground hover:bg-transparent">
+            <Link to="/communications-hub">
+              <ArrowLeft className="h-4 w-4" /> Back to Go-Live
+            </Link>
+          </Button>
+        </div>
         <DiscordStyleRoomView 
           room={room} 
           hasAccess={hasAccess} 
@@ -455,6 +462,11 @@ const PremiumRoomViewPage: React.FC = () => {
       
       {/* Header */}
       <div className="mb-6">
+        <Button variant="ghost" size="sm" asChild className="mb-2 gap-2 px-0 text-muted-foreground hover:text-foreground hover:bg-transparent">
+          <Link to="/communications-hub">
+            <ArrowLeft className="h-4 w-4" /> Back to Go-Live
+          </Link>
+        </Button>
         <Button variant="ghost" asChild className="mb-4">
           <Link to="/premium-rooms">
             <ArrowLeft className="h-4 w-4 mr-2" />

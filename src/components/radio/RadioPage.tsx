@@ -2,7 +2,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Music, Radio, PlayCircle, MessageCircle, Users, Disc, Sparkles } from 'lucide-react';
+import { Music, Radio, PlayCircle, MessageCircle, Users, Disc, Sparkles, ArrowLeft } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import MusicLibrary from './MusicLibrary';
 import PlaylistManager from './PlaylistManager';
@@ -32,7 +32,11 @@ const RadioPage = () => {
 
   return (
     <div className="container mx-auto px-4 py-8 space-y-8">
+      <Button variant="ghost" size="sm" onClick={() => navigate('/communications-hub')} className="gap-2 px-0 text-muted-foreground hover:text-foreground hover:bg-transparent">
+        <ArrowLeft className="h-4 w-4" /> Back to Go-Live
+      </Button>
       <div className="text-center space-y-4">
+
         <div className="flex items-center justify-center space-x-2">
           <Radio className="h-8 w-8 text-primary" />
           <h1 className="text-4xl font-bold bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">
