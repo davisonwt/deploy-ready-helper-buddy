@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any, no-empty */
 import React from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useNavigate, useParams, Link } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { useCurrency } from '@/hooks/useCurrency';
 import { supabase } from '@/integrations/supabase/client';
@@ -10,7 +10,7 @@ import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { ArrowLeft, Users, Music, FileText, Image as ImageIcon, Download, Play, Pause, ShoppingCart, Crown } from 'lucide-react';
+import { ArrowLeft, Users, Music, FileText, Image as ImageIcon, Download, Play, Pause, ShoppingCart, Crown, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { PremiumItemPurchaseModal } from '@/components/premium/PremiumItemPurchaseModal';
 import { RoomAccessModal } from '@/components/premium/RoomAccessModal';
@@ -39,6 +39,7 @@ interface PremiumRoom {
 
 const PremiumRoomViewPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
+  const navigate = useNavigate();
   const { user } = useAuth();
   const { formatAmount } = useCurrency();
   const [room, setRoom] = React.useState<PremiumRoom | null>(null);
@@ -66,6 +67,25 @@ const PremiumRoomViewPage: React.FC = () => {
       try { sessionStorage.setItem('audioUnlocked', '1'); } catch {}
       setAudioUnlocked(true);
     } catch {}
+  };
+
+  const handleDeleteRoom = async () => {
+    if (!room || !user || user.id !== room.creator_id) return;
+    if (!confirm(`Delete "${room.title}"? This cannot be undone.`)) return;
+
+    const { error } = await supabase
+      .from('premium_rooms')
+      .delete()
+      .eq('id', room.id)
+      .eq('creator_id', user.id);
+
+    if (error) {
+      toast.error('Failed to delete training room');
+      return;
+    }
+
+    toast.success('Training room deleted');
+    navigate('/premium-rooms');
   };
 
   React.useEffect(() => {
@@ -514,9 +534,15 @@ const PremiumRoomViewPage: React.FC = () => {
            </div>
           
           {isCreator && (
-            <Button asChild variant="outline" className="ml-4">
-              <Link to={`/premium-room/${room.id}/edit`}>Edit Room</Link>
-            </Button>
+            <div className="ml-4 flex flex-wrap items-center justify-end gap-2">
+              <Button asChild variant="outline">
+                <Link to={`/premium-room/${room.id}/edit`}>Edit Room</Link>
+              </Button>
+              <Button variant="destructive" onClick={handleDeleteRoom} className="gap-2">
+                <Trash2 className="h-4 w-4" />
+                Delete Room
+              </Button>
+            </div>
           )}
         </div>
       </div>
