@@ -1894,6 +1894,7 @@ export type Database = {
       }
       classroom_sessions: {
         Row: {
+          chat_room_id: string | null
           circle_id: string | null
           created_at: string | null
           description: string | null
@@ -1914,6 +1915,7 @@ export type Database = {
           whiteboard_data: Json | null
         }
         Insert: {
+          chat_room_id?: string | null
           circle_id?: string | null
           created_at?: string | null
           description?: string | null
@@ -1934,6 +1936,7 @@ export type Database = {
           whiteboard_data?: Json | null
         }
         Update: {
+          chat_room_id?: string | null
           circle_id?: string | null
           created_at?: string | null
           description?: string | null
@@ -1954,6 +1957,13 @@ export type Database = {
           whiteboard_data?: Json | null
         }
         Relationships: [
+          {
+            foreignKeyName: "classroom_sessions_chat_room_id_fkey"
+            columns: ["chat_room_id"]
+            isOneToOne: false
+            referencedRelation: "chat_rooms"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "classroom_sessions_circle_id_fkey"
             columns: ["circle_id"]
@@ -9649,6 +9659,7 @@ export type Database = {
       skilldrop_sessions: {
         Row: {
           attendees_count: number | null
+          chat_room_id: string | null
           circle_id: string | null
           created_at: string | null
           description: string | null
@@ -9671,6 +9682,7 @@ export type Database = {
         }
         Insert: {
           attendees_count?: number | null
+          chat_room_id?: string | null
           circle_id?: string | null
           created_at?: string | null
           description?: string | null
@@ -9693,6 +9705,7 @@ export type Database = {
         }
         Update: {
           attendees_count?: number | null
+          chat_room_id?: string | null
           circle_id?: string | null
           created_at?: string | null
           description?: string | null
@@ -9733,6 +9746,13 @@ export type Database = {
             columns: ["presenter_profile_id"]
             isOneToOne: false
             referencedRelation: "profiles_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "skilldrop_sessions_chat_room_id_fkey"
+            columns: ["chat_room_id"]
+            isOneToOne: false
+            referencedRelation: "chat_rooms"
             referencedColumns: ["id"]
           },
         ]

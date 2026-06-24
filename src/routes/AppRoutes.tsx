@@ -115,6 +115,7 @@ import {
   WanderingDirectoryPage,
   PlantASeedPage,
   ChatApp,
+  SessionPage,
 } from './lazyPages';
 
 export const LoadingFallback = () => (
@@ -274,6 +275,20 @@ const AppRoutes = () => (
       <ProtectedRoute>
         <Suspense fallback={<div className="flex items-center justify-center min-h-screen"><div className="text-xl">Loading...</div></div>}>
           <ChatApp />
+        </Suspense>
+      </ProtectedRoute>
+    } />
+    <Route path="/classroom/:id" element={
+      <ProtectedRoute>
+        <Suspense fallback={<LoadingFallback />}>
+          <SessionPage kind="classroom" />
+        </Suspense>
+      </ProtectedRoute>
+    } />
+    <Route path="/skilldrop/:id" element={
+      <ProtectedRoute>
+        <Suspense fallback={<LoadingFallback />}>
+          <SessionPage kind="skilldrop" />
         </Suspense>
       </ProtectedRoute>
     } />
