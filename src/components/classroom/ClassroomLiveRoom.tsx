@@ -140,7 +140,7 @@ export default function ClassroomLiveRoom({ session }: Props) {
           configOverwrite: {
             ...JITSI_CONFIG.getLiveRoomConfig(),
             startWithAudioMuted: !isHost,
-            startWithVideoMuted: true,
+            startWithVideoMuted: isHost ? false : !requireCamera,
             subject: session.title,
           },
           interfaceConfigOverwrite: JITSI_CONFIG.getInterfaceConfig({
@@ -155,6 +155,23 @@ export default function ClassroomLiveRoom({ session }: Props) {
         api.addListener('videoConferenceJoined', () => setJitsiLoading(false));
         api.addListener('audioMuteStatusChanged', ({ muted }: { muted: boolean }) => {
           setAudioMuted(muted);
+        });
+        api.addListener('videoMuteStatusChanged', ({ muted }: { muted: boolean }) => {
+          if (!requireCamera || isHost) return;
+          if (muted) {
+            toast({
+              title: '📷 Camera required',
+              description: 'This session needs cameras on. Turn it back on within 5s or you will be removed.',
+              variant: 'destructive',
+            });
+            if (cameraGraceRef.current) window.clearTimeout(cameraGraceRef.current);
+            cameraGraceRef.current = window.setTimeout(() => {
+              void handleLeave();
+            }, 5000);
+          } else if (cameraGraceRef.current) {
+            window.clearTimeout(cameraGraceRef.current);
+            cameraGraceRef.current = null;
+          }
         });
         api.addListener('readyToClose', () => {
           handleLeave();
