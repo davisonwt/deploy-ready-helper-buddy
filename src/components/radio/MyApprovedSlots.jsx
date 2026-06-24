@@ -186,6 +186,50 @@ export function MyApprovedSlots() {
     }
   };
 
+  const openEditDialog = (slot) => {
+    const toLocal = (iso) => {
+      const d = parseISO(iso);
+      const pad = (n) => String(n).padStart(2, '0');
+      return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+    };
+    setEditingSlot(slot);
+    setEditStart(toLocal(slot.start_time));
+    setEditEnd(toLocal(slot.end_time));
+    setEditNotes(slot.show_notes || '');
+  };
+
+  const handleSaveEdit = async () => {
+    if (!editingSlot) return;
+    const start = new Date(editStart);
+    const end = new Date(editEnd);
+    if (!(start < end)) {
+      toast.error('End time must be after start time');
+      return;
+    }
+    setSavingEdit(true);
+    try {
+      const { error } = await supabase
+        .from('radio_schedule')
+        .update({
+          start_time: start.toISOString(),
+          end_time: end.toISOString(),
+          time_slot_date: start.toISOString().slice(0, 10),
+          hour_slot: start.getUTCHours(),
+          show_notes: editNotes || null,
+        })
+        .eq('id', editingSlot.id);
+      if (error) throw error;
+      toast.success('Slot updated');
+      setEditingSlot(null);
+      fetchMyApprovedSlots();
+    } catch (error) {
+      console.error('Error updating slot:', error);
+      toast.error('Failed to update slot: ' + error.message);
+    } finally {
+      setSavingEdit(false);
+    }
+  };
+
   const getSlotStatus = (slot) => {
     const now = new Date();
     const startTime = parseISO(slot.start_time);
