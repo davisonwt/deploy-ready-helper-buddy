@@ -185,6 +185,16 @@ export default function LiveRoomsPage() {
           </div>
         )}
       </div>
+
+      <CreateOneOnOneDialog
+        open={createOpen}
+        onOpenChange={setCreateOpen}
+        onCreated={(roomId) => {
+          setCreateOpen(false);
+          queryClient.invalidateQueries({ queryKey: ['my-live-rooms', user?.id] });
+          setSearchParams({ room: roomId });
+        }}
+      />
     </div>
   );
 }
