@@ -609,6 +609,7 @@ const ChatApp = () => {
   // }
 
   return (
+    <div className="min-h-screen bg-[#0E1B15] text-[#F3F7F0]">
     <div className="container mx-auto p-4 max-w-7xl h-[calc(100vh-2rem)] pb-28">
       {/* Jitsi Call */}
       {showJitsi && (
