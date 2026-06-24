@@ -303,6 +303,13 @@ const AppRoutes = () => (
         </Suspense>
       </ProtectedRoute>
     } />
+    <Route path="/classroom/:id/dashboard" element={
+      <ProtectedRoute>
+        <Suspense fallback={<LoadingFallback />}>
+          <ClassroomDashboardPage />
+        </Suspense>
+      </ProtectedRoute>
+    } />
     <Route path="/skilldrop" element={
       <ProtectedRoute>
         <Suspense fallback={<LoadingFallback />}>
