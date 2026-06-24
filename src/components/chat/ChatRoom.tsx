@@ -39,9 +39,11 @@ interface ChatRoomProps {
   instructorId?: string;
   /** Optional side rail node (e.g. classroom lesson outline). Renders as a desktop aside + mobile top accordion when provided. */
   rail?: React.ReactNode;
+  /** When true, each message wrapper plays a "drop in + impact ring" animation. SkillDrop-only. Respects prefers-reduced-motion. */
+  dropAnimation?: boolean;
 }
 
-export const ChatRoom: React.FC<ChatRoomProps> = ({ roomId, onBack, instructorId, rail }) => {
+export const ChatRoom: React.FC<ChatRoomProps> = ({ roomId, onBack, instructorId, rail, dropAnimation }) => {
   const { user } = useAuth();
   const { toast } = useToast();
   const { startCall, currentCall, endCall } = useCallManager();
