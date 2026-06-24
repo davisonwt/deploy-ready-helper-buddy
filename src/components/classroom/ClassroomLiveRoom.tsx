@@ -61,6 +61,11 @@ export default function ClassroomLiveRoom({ session }: Props) {
     scoreSubmission,
   } = useClassroomLive({ sessionId: session.id, userId, isHost });
 
+  const attendanceMode: AttendanceMode = (session.attendance_mode as AttendanceMode) ?? 'standard';
+  const requireCamera = !!session.require_camera || attendanceMode === 'strict';
+
+  const { invites, sendInvites } = useClassroomInvites({ sessionId: session.id, isHost });
+
   const me = useMemo(
     () => participants.find((p) => p.user_id === userId) ?? null,
     [participants, userId],
@@ -69,6 +74,14 @@ export default function ClassroomLiveRoom({ session }: Props) {
     () => participants.find((p) => p.user_id === session.instructor_id)?.display_name ?? 'Instructor',
     [participants, session.instructor_id],
   );
+
+  const { checkInOpen, checkInDeadline, respondCheckIn } = useClassroomPresence({
+    sessionId: session.id,
+    userId,
+    isHost,
+    attendanceMode,
+    joined,
+  });
 
   /* -------------------- Jitsi container + api -------------------- */
   const containerRef = useRef<HTMLDivElement>(null);
@@ -79,6 +92,18 @@ export default function ClassroomLiveRoom({ session }: Props) {
   useEffect(() => { audioMutedRef.current = audioMuted; }, [audioMuted]);
   const handRaisedJitsiRef = useRef(false);
   const [bestowOpen, setBestowOpen] = useState(false);
+  const [endedAt, setEndedAt] = useState<string | null>(session.ended_at ?? null);
+  const [summaryOpen, setSummaryOpen] = useState(false);
+  const cameraGraceRef = useRef<number | null>(null);
+
+  /* Mark session started when host first joins */
+  useEffect(() => {
+    if (!isHost || !joined || session.started_at) return;
+    void supabase
+      .from('classroom_sessions')
+      .update({ started_at: new Date().toISOString(), status: 'live' } as any)
+      .eq('id', session.id);
+  }, [isHost, joined, session.started_at, session.id]);
 
   /* On mount: join DB and Jitsi */
   useEffect(() => {
