@@ -242,11 +242,29 @@ export default function SessionListPage({ kind }: Props) {
             {sessions.map(s => {
               const hosting = s.creator_id === user?.id;
               const when = s.scheduled_at ? new Date(s.scheduled_at) : null;
+              const go = () => navigate(`${cfg.route}/${s.id}`);
+              const handleDelete = async (e: React.MouseEvent) => {
+                e.stopPropagation();
+                if (!confirm(`Delete "${s.title}"? This can't be undone.`)) return;
+                setDeletingId(s.id);
+                const { error } = await supabase.from(table as any).delete().eq('id', s.id);
+                setDeletingId(null);
+                if (error) {
+                  toast.error(error.message || 'Could not delete session.');
+                  return;
+                }
+                toast.success('Session deleted.');
+                queryClient.invalidateQueries({ queryKey: [`${kind}-sessions-own`, user?.id] });
+                queryClient.invalidateQueries({ queryKey: [`${kind}-sessions-invited`, user?.id] });
+              };
               return (
-                <button
+                <div
                   key={s.id}
-                  onClick={() => navigate(`${cfg.route}/${s.id}`)}
-                  className="text-left rounded-2xl transition-all p-5 group relative overflow-hidden"
+                  role="button"
+                  tabIndex={0}
+                  onClick={go}
+                  onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); go(); } }}
+                  className="cursor-pointer text-left rounded-2xl transition-all p-5 group relative overflow-hidden"
                   style={{
                     border: `1px solid ${cardBorder}`,
                     backgroundColor: themedTintWeak,
@@ -261,7 +279,7 @@ export default function SessionListPage({ kind }: Props) {
                       style={{ background: 'radial-gradient(circle, rgba(255,107,74,0.35) 0%, rgba(255,107,74,0) 70%)' }}
                     />
                   )}
-                  <div className="flex items-baseline justify-between gap-2 mb-2 relative">
+                  <div className="flex items-baseline justify-between gap-2 mb-2 relative pr-9">
                     <span className="text-xl truncate" style={{ fontFamily: titleFontFamily, fontWeight: titleFontWeight }}>
                       {s.title}
                     </span>
@@ -278,9 +296,23 @@ export default function SessionListPage({ kind }: Props) {
                     <span>{when ? when.toLocaleString() : 'Unscheduled'}</span>
                     <span className="uppercase tracking-wide">{s.status || 'scheduled'}</span>
                   </div>
-                </button>
+                  {hosting && (
+                    <button
+                      type="button"
+                      onClick={handleDelete}
+                      disabled={deletingId === s.id}
+                      aria-label={`Delete ${s.title}`}
+                      title="Delete session"
+                      className="absolute top-3 right-3 p-2 rounded-full transition opacity-70 hover:opacity-100 hover:bg-rose-500/15 disabled:opacity-40"
+                      style={{ color: mutedFg }}
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </button>
+                  )}
+                </div>
               );
             })}
+
           </div>
         )}
       </div>
