@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Calendar, Check, ChevronDown, DollarSign, FileUp, Loader2, Zap } from 'lucide-react';
+import { Calendar, Camera, Check, ChevronDown, DollarSign, FileUp, Loader2, Shield, Zap } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
@@ -10,8 +10,15 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { toast } from 'sonner';
 
 type Kind = 'classroom' | 'skilldrop';
+type AttendanceMode = 'relaxed' | 'standard' | 'strict';
 
 const defaultDateTime = () => new Date(Date.now() + 30 * 60 * 1000).toISOString().slice(0, 16);
+
+const MODE_OPTIONS: { value: AttendanceMode; label: string; desc: string }[] = [
+  { value: 'relaxed', label: 'Relaxed', desc: 'Heartbeat only. Marks "Away" silently — no prompts.' },
+  { value: 'standard', label: 'Standard', desc: 'Heartbeat + random "Tap I\'m here" check-ins.' },
+  { value: 'strict', label: 'Strict', desc: 'Camera required + heartbeat + check-ins. Auto-removed if camera off.' },
+];
 
 /**
  * Shared create-session form for Classroom & SkillDrop.
@@ -27,6 +34,8 @@ export default function CreateSessionForm({ kind, onCreated }: { kind: Kind; onC
   const [scheduledAt, setScheduledAt] = useState(defaultDateTime());
   const [isFree, setIsFree] = useState(true);
   const [amount, setAmount] = useState('5');
+  const [attendanceMode, setAttendanceMode] = useState<AttendanceMode>('standard');
+  const [requireCamera, setRequireCamera] = useState(false);
   const [files, setFiles] = useState<File[]>([]);
   const [profiles, setProfiles] = useState<any[]>([]);
   const [invitees, setInvitees] = useState<string[]>([]);
