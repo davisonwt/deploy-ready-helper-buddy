@@ -115,6 +115,7 @@ import {
   WanderingDirectoryPage,
   PlantASeedPage,
   ChatApp,
+  SessionPage,
 } from './lazyPages';
 
 export const LoadingFallback = () => (
