@@ -1,7 +1,8 @@
 import { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useQuery } from '@tanstack/react-query';
-import { ArrowLeft, BookOpen, Plus, Zap, PlayCircle } from 'lucide-react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { ArrowLeft, BookOpen, Plus, Zap, PlayCircle, Trash2 } from 'lucide-react';
+import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
@@ -9,6 +10,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import CreateSessionForm from '@/components/sessions/CreateSessionForm';
 import PageHeroBanner from '@/components/chat/PageHeroBanner';
 import ExplainerDialog from '@/components/explainers/ExplainerDialog';
+
 
 
 type Kind = 'classroom' | 'skilldrop';
