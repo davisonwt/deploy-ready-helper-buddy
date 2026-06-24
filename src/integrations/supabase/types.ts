@@ -5866,6 +5866,7 @@ export type Database = {
       premium_rooms: {
         Row: {
           artwork: Json | null
+          chat_room_id: string | null
           created_at: string
           creator_id: string
           description: string | null
@@ -5882,6 +5883,7 @@ export type Database = {
         }
         Insert: {
           artwork?: Json | null
+          chat_room_id?: string | null
           created_at?: string
           creator_id: string
           description?: string | null
@@ -5898,6 +5900,7 @@ export type Database = {
         }
         Update: {
           artwork?: Json | null
+          chat_room_id?: string | null
           created_at?: string
           creator_id?: string
           description?: string | null
@@ -5912,7 +5915,15 @@ export type Database = {
           title?: string
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "premium_rooms_chat_room_id_fkey"
+            columns: ["chat_room_id"]
+            isOneToOne: false
+            referencedRelation: "chat_rooms"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       processed_webhooks: {
         Row: {
