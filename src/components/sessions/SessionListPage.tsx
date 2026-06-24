@@ -138,6 +138,7 @@ export default function SessionListPage({ kind }: Props) {
   return (
     <div className="min-h-screen" style={pageBgStyle}>
       <div className="mx-auto max-w-5xl px-4 py-10">
+        <PageHeroBanner variant={kind} />
         <div className="mb-10 flex items-end justify-between gap-4 flex-wrap">
           <div>
             <Button
