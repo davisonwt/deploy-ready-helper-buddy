@@ -177,73 +177,9 @@ export default function SessionPage({ kind }: SessionPageProps) {
         </div>
       );
     }
-    const instructorId = session.instructor_id as string | null;
-    return (
-      <main
-        className="min-h-screen text-[#E8D9B5]"
-        style={{
-          background:
-            'radial-gradient(ellipse at top, rgba(139,92,246,0.18) 0%, rgba(139,92,246,0) 55%), linear-gradient(180deg, #1a1430 0%, #14101F 60%, #100c1a 100%)',
-        }}
-      >
-        <div className="mx-auto max-w-6xl px-4 py-5">
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => navigate('/communications-hub')}
-            className="mb-4 gap-2 px-0 text-[#E8D9B5]/70 hover:text-[#E8D9B5] hover:bg-transparent"
-          >
-            <ArrowLeft className="h-4 w-4" /> Back to Go-Live
-          </Button>
-
-          <header className="mb-5 rounded-2xl border border-[#8B5CF6]/30 bg-[#1a1430]/70 backdrop-blur p-5">
-            <div className="flex items-center gap-3 mb-2">
-              <Icon className="h-7 w-7 text-[#8B5CF6]" />
-              <h1 className="font-spectral text-3xl md:text-4xl text-[#E8D9B5] tracking-tight">
-                {session.title}
-              </h1>
-            </div>
-            {session.description && (
-              <p className="text-[#E8D9B5]/80 font-spectral italic">{session.description}</p>
-            )}
-            <div className="mt-3 flex flex-wrap gap-3 text-sm text-[#E8D9B5]/60">
-              {session.scheduled_at && (
-                <span className="inline-flex items-center gap-1">
-                  <Calendar className="h-4 w-4" /> {new Date(session.scheduled_at).toLocaleString()}
-                </span>
-              )}
-              {session.status && (
-                <span className="rounded-full bg-[#8B5CF6]/20 border border-[#8B5CF6]/50 px-3 py-0.5 font-semibold text-[#E8D9B5] uppercase tracking-wider text-xs">
-                  {session.status}
-                </span>
-              )}
-              <span className="inline-flex items-center gap-1">
-                <Users className="h-4 w-4" /> {label}
-              </span>
-            </div>
-          </header>
-
-          {session.chat_room_id ? (
-            <div
-              className="rounded-2xl border border-[#8B5CF6]/30 bg-[#14101F]/80 overflow-hidden"
-              style={{ height: 'calc(100vh - 320px)', minHeight: 540 }}
-            >
-              <ChatRoom
-                roomId={session.chat_room_id}
-                onBack={() => navigate(-1)}
-                instructorId={instructorId || undefined}
-                rail={<LessonRail roomId={session.chat_room_id} instructorId={instructorId} />}
-              />
-            </div>
-          ) : (
-            <div className="rounded-2xl border border-[#E8D9B5]/30 bg-[#E8D9B5]/5 p-5 text-[#E8D9B5]">
-              This classroom has no chat thread linked yet. Ask the instructor to recreate it from the Communications Hub.
-            </div>
-          )}
-        </div>
-      </main>
-    );
+    return <ClassroomLiveRoom session={session} />;
   }
+
 
   // ---------- SkillDrop branch ----------
   if (loading) {
