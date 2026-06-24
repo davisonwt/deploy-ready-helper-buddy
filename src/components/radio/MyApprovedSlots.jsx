@@ -297,16 +297,28 @@ export function MyApprovedSlots() {
   return (
     <Card className="bg-white/80 border-white/40 shadow-xl h-full flex flex-col">
       <CardHeader>
-        <CardTitle className="flex items-center gap-2" style={{ 
-          color: 'hsl(280, 100%, 40%)', 
-          textShadow: '1px 1px 2px rgba(0,0,0,0.2)' 
-        }}>
-          <Calendar className="h-5 w-5 text-purple-600" />
-          My Approved Radio Slots
-        </CardTitle>
-        <p className="text-sm text-muted-foreground" style={{ textShadow: '0 0 2px white, 0 0 2px white' }}>
-          Your upcoming approved broadcasting slots. Click "Go Live" when you're ready to start.
-        </p>
+        <div className="flex items-start justify-between gap-3">
+          <div>
+            <CardTitle className="flex items-center gap-2" style={{ 
+              color: 'hsl(280, 100%, 40%)', 
+              textShadow: '1px 1px 2px rgba(0,0,0,0.2)' 
+            }}>
+              <Calendar className="h-5 w-5 text-purple-600" />
+              My Approved Radio Slots
+            </CardTitle>
+            <p className="text-sm text-muted-foreground" style={{ textShadow: '0 0 2px white, 0 0 2px white' }}>
+              Your upcoming approved broadcasting slots. Click "Go Live" when you're ready to start.
+            </p>
+          </div>
+          <Button
+            size="sm"
+            onClick={() => navigate('/radio-slot-application')}
+            className="bg-purple-600 hover:bg-purple-700 text-white shrink-0"
+          >
+            <Plus className="h-4 w-4 mr-1" />
+            New Slot
+          </Button>
+        </div>
       </CardHeader>
       <CardContent className="space-y-4 flex-1">
         {slots.map((slot) => {
