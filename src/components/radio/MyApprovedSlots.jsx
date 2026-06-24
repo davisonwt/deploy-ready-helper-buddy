@@ -14,7 +14,8 @@ import {
   CheckCircle, 
   AlertCircle,
   Play,
-  Loader2
+  Loader2,
+  Trash2
 } from 'lucide-react';
 import { format, parseISO, isWithinInterval, addMinutes, subMinutes } from 'date-fns';
 
@@ -155,6 +156,22 @@ export function MyApprovedSlots() {
       toast.error('Failed to start session: ' + error.message);
     } finally {
       setStartingSession(null);
+    }
+  };
+
+  const handleDeleteSlot = async (slot) => {
+    if (!window.confirm(`Delete this slot "${slot.radio_shows?.show_name || 'Radio Show'}"? This cannot be undone.`)) return;
+    try {
+      const { error } = await supabase
+        .from('radio_schedule')
+        .delete()
+        .eq('id', slot.id);
+      if (error) throw error;
+      setSlots((prev) => prev.filter((s) => s.id !== slot.id));
+      toast.success('Slot deleted');
+    } catch (error) {
+      console.error('Error deleting slot:', error);
+      toast.error('Failed to delete slot: ' + error.message);
     }
   };
 
@@ -329,6 +346,17 @@ export function MyApprovedSlots() {
                       <p className="text-xs text-muted-foreground text-center max-w-[120px]">
                         Available 10 min before show time
                       </p>
+                    )}
+                    {slot.status !== 'live' && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleDeleteSlot(slot)}
+                        className="text-destructive border-destructive/40 hover:bg-destructive/10"
+                      >
+                        <Trash2 className="h-4 w-4 mr-1" />
+                        Delete
+                      </Button>
                     )}
                   </div>
                 </div>
