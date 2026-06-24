@@ -640,8 +640,13 @@ const ChatApp = () => {
           <div className="mb-6 space-y-4">
             <div className="flex items-center justify-between">
               <div>
-                <h1 className="text-3xl font-bold text-foreground">Chats</h1>
-                <p className="text-sm text-muted-foreground">
+                <h1
+                  className="text-4xl tracking-tight text-[#F3F7F0]"
+                  style={{ fontFamily: '"Outfit", "Inter", sans-serif', fontWeight: 600 }}
+                >
+                  Chats
+                </h1>
+                <p className="text-sm text-[#8AA99A] mt-1">
                   Click on a chat below to send messages, voice notes, make calls & more
                 </p>
               </div>
