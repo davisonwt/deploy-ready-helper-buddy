@@ -13948,6 +13948,10 @@ export type Database = {
       }
       is_tribal_hearts_member: { Args: { _uid: string }; Returns: boolean }
       is_user_verified: { Args: { user_id_param?: string }; Returns: boolean }
+      join_live_room_as_self: {
+        Args: { p_display_name?: string; p_room_id: string }
+        Returns: undefined
+      }
       kick_user_from_room: {
         Args: {
           kick_reason_param?: string
