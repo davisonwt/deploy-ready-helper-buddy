@@ -17,7 +17,7 @@ const MAP: Record<HeroVariant, { src: string; title: string; subtitle: string }>
   one_on_one: { src: banner1on1, title: '1-on-1 Live', subtitle: 'Private rooms for intimate face-to-face conversations' },
   community: { src: bannerCommunity, title: 'Community Chats', subtitle: 'Open rooms to gather, share, and connect' },
   classroom: { src: bannerClassroom, title: 'Classroom', subtitle: 'Structured learning sessions with instructors' },
-  skilldrop: { src: bannerLecture, title: 'SkillDrop', subtitle: 'Short lectures and skill-sharing drops' },
+  skilldrop: { src: bannerSkilldrop, title: 'SkillDrop', subtitle: 'Teach what you love — cooking, painting, fixing, crafting' },
   training: { src: bannerTraining, title: 'Training', subtitle: 'Premium rooms, courses, and guided programs' },
   radio: { src: bannerRadio, title: 'Radio', subtitle: 'Live broadcasts, playlists, and audio shows' },
 };
