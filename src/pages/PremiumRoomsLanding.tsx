@@ -286,6 +286,7 @@ const PremiumRoomsLanding: React.FC = () => {
           </div>
         )}
       </ScrollArea>
+      </div>
     </div>
   );
 };
