@@ -31,13 +31,19 @@ export default function OneOnOneRoom({ roomId, roomName, onLeave }: { roomId: st
     (async () => {
       // Make sure the current user is registered as a participant so RLS allows
       // reading/sending messages even for rooms whose seed insert was interrupted.
+      const { data: room } = await supabase
+        .from('live_rooms')
+        .select('created_by')
+        .eq('id', roomId)
+        .maybeSingle();
+      const role = room?.created_by === user.id ? 'host' : 'audience';
       await supabase
         .from('live_room_participants' as any)
         .upsert(
           {
             room_id: roomId,
             user_id: user.id,
-            role: 'host',
+            role,
             display_name: user.user_metadata?.display_name || user.email?.split('@')[0] || 'Me',
           },
           { onConflict: 'room_id,user_id', ignoreDuplicates: true } as any,
