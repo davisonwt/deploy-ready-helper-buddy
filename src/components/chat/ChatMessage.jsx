@@ -128,6 +128,16 @@ const ChatMessage = ({ message, isOwn = false, onDelete, isInstructor, instructo
           >
             {isSystemMessage ? (message.system_metadata?.sender_name || 'System') : getSenderName()}
           </span>
+          {instructorMode && !isSystemMessage && isInstructor && (
+            <Badge className="text-[10px] bg-[#8B5CF6] text-white border-0 gap-1 px-2 py-0.5">
+              <GraduationCap className="h-3 w-3" /> Instructor
+            </Badge>
+          )}
+          {instructorMode && !isSystemMessage && !isInstructor && !isOwn && (
+            <Badge variant="outline" className="text-[10px] bg-[#E8D9B5]/10 text-[#E8D9B5] border-[#E8D9B5]/40 gap-1 px-2 py-0.5">
+              <Hand className="h-3 w-3" /> raised
+            </Badge>
+          )}
           <span className="text-xs text-gray-600 bg-white/90 backdrop-blur-md px-2 py-1 rounded-full border border-white/30 shadow-md">
             {formatDistanceToNow(new Date(message.created_at), { addSuffix: true })}
           </span>
