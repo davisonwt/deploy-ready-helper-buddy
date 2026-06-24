@@ -121,8 +121,24 @@ const PremiumRoomsLanding: React.FC = () => {
   }, []);
 
   return (
-    <div className="container mx-auto p-4 max-w-7xl">
-      <PageHeroBanner variant="training" />
+    <div
+      className="min-h-screen relative"
+      style={{
+        background:
+          'linear-gradient(180deg, #1a0a14 0%, #0a0a12 100%), radial-gradient(circle at 20% 15%, rgba(244,114,182,0.35), transparent 55%), radial-gradient(circle at 85% 80%, rgba(244,114,182,0.25), transparent 60%)',
+        backgroundBlendMode: 'screen',
+      }}
+    >
+      <div
+        aria-hidden
+        className="absolute inset-0 pointer-events-none"
+        style={{
+          background:
+            'radial-gradient(circle at 20% 15%, rgba(244,114,182,0.28), transparent 55%), radial-gradient(circle at 85% 80%, rgba(244,114,182,0.22), transparent 60%)',
+        }}
+      />
+      <div className="container mx-auto p-4 max-w-7xl relative">
+        <PageHeroBanner variant="training" />
       {/* Header */}
       <div className="mb-6 space-y-4">
         <Button variant="ghost" onClick={() => navigate(-1)} className="gap-2">
