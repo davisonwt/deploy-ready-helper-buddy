@@ -35,9 +35,13 @@ import { getVoiceColor, classifyVoiceState, initialFrom } from './voiceColor';
 interface ChatRoomProps {
   roomId: string;
   onBack: () => void;
+  /** When set, messages from this user are treated as "instructor" — others render a raised-hand badge. Classroom-only. */
+  instructorId?: string;
+  /** Optional side rail node (e.g. classroom lesson outline). Renders as a desktop aside + mobile top accordion when provided. */
+  rail?: React.ReactNode;
 }
 
-export const ChatRoom: React.FC<ChatRoomProps> = ({ roomId, onBack }) => {
+export const ChatRoom: React.FC<ChatRoomProps> = ({ roomId, onBack, instructorId, rail }) => {
   const { user } = useAuth();
   const { toast } = useToast();
   const { startCall, currentCall, endCall } = useCallManager();
