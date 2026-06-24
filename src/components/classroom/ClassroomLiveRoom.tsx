@@ -298,20 +298,44 @@ export default function ClassroomLiveRoom({ session }: Props) {
                   <Tag className="h-3 w-3" />
                   {session.is_free ? 'Free entry' : `${Number(session.session_fee ?? 0).toFixed(2)} USDT entry`}
                 </span>
+                <span className="inline-flex items-center gap-1 rounded-full bg-[#14101F] border border-[#8B5CF6]/30 px-2 py-0.5 uppercase tracking-wider font-semibold">
+                  <Shield className="h-3 w-3" /> {attendanceMode}
+                  {requireCamera && <Camera className="h-3 w-3 ml-0.5" />}
+                </span>
                 <span className="inline-flex items-center gap-1">
                   <Users className="h-3.5 w-3.5" /> {participants.length} live
                 </span>
               </div>
             </div>
 
-            {!isHost && (
-              <Button
-                onClick={() => setBestowOpen(true)}
-                className="shrink-0 bg-gradient-to-r from-[#8B5CF6] to-[#F0B23F] hover:opacity-90 text-white font-bold gap-2"
-              >
-                <Heart className="h-4 w-4" /> Bestow
-              </Button>
-            )}
+            <div className="flex flex-col gap-2 shrink-0">
+              {!isHost && (
+                <Button
+                  onClick={() => setBestowOpen(true)}
+                  className="bg-gradient-to-r from-[#8B5CF6] to-[#F0B23F] hover:opacity-90 text-white font-bold gap-2"
+                >
+                  <Heart className="h-4 w-4" /> Bestow
+                </Button>
+              )}
+              {isHost && !endedAt && (
+                <Button
+                  onClick={handleEndSession}
+                  variant="outline"
+                  className="border-rose-400/50 text-rose-200 hover:bg-rose-500/10 gap-2"
+                >
+                  <PhoneOff className="h-4 w-4" /> End session
+                </Button>
+              )}
+              {isHost && endedAt && (
+                <Button
+                  onClick={() => setSummaryOpen(true)}
+                  variant="outline"
+                  className="border-[#F0B23F]/50 text-[#F0B23F] hover:bg-[#F0B23F]/10 gap-2"
+                >
+                  <Eye className="h-4 w-4" /> View summary
+                </Button>
+              )}
+            </div>
           </div>
         </header>
 
