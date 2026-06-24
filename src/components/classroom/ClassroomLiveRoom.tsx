@@ -1,10 +1,13 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { ArrowLeft, BookOpen, Calendar, Hand, Heart, Loader2, Tag, Users, X } from 'lucide-react';
+import { ArrowLeft, BookOpen, Calendar, Camera, Eye, Hand, Heart, Loader2, PhoneOff, Shield, Tag, Users } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useAuth } from '@/hooks/useAuth';
 import { useClassroomLive } from '@/hooks/useClassroomLive';
+import { useClassroomPresence, type AttendanceMode } from '@/hooks/useClassroomPresence';
+import { useClassroomInvites } from '@/hooks/useClassroomInvites';
 import { useToast } from '@/hooks/use-toast';
 import { JITSI_CONFIG } from '@/lib/jitsi-config';
 import { HandQueuePanel } from './HandQueuePanel';
@@ -12,6 +15,9 @@ import { DocumentsPanel } from './DocumentsPanel';
 import { SubmissionsPanel } from './SubmissionsPanel';
 import { SessionMessages } from './SessionMessages';
 import { BestowalDialog } from './BestowalDialog';
+import { CheckInPrompt } from './CheckInPrompt';
+import { RosterPanel } from './RosterPanel';
+import { PostSessionSummary } from './PostSessionSummary';
 
 interface ClassroomSession {
   id: string;
@@ -23,6 +29,10 @@ interface ClassroomSession {
   is_free: boolean | null;
   session_fee: number | string | null;
   chat_room_id: string | null;
+  attendance_mode?: AttendanceMode | null;
+  require_camera?: boolean | null;
+  started_at?: string | null;
+  ended_at?: string | null;
 }
 
 interface Props {
