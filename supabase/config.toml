@@ -149,3 +149,6 @@ verify_jwt = true
 
 [functions.bulk-parse-products]
 verify_jwt = true
+
+[functions.pilot-tts]
+verify_jwt = false
