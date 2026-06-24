@@ -2,12 +2,13 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Music, Radio, PlayCircle, MessageCircle, Disc, Sparkles, ArrowLeft } from 'lucide-react';
+import { Music, Radio, PlayCircle, MessageCircle, Disc, Sparkles, ArrowLeft, Layers } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import MusicLibrary from './MusicLibrary';
 import PlaylistManager from './PlaylistManager';
 import LiveStreamPlayer from './LiveStreamPlayer';
 import ListenerInteractions from './ListenerInteractions';
+import SessionBuilder from './SessionBuilder';
 import { useAuth } from '@/hooks/useAuth';
 
 const RadioPage = () => {
