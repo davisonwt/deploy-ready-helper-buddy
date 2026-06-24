@@ -998,6 +998,8 @@ export const ChatRoom: React.FC<ChatRoomProps> = ({ roomId, onBack, instructorId
                           message={msg}
                           isOwn={isOwn}
                           onDelete={isOwn ? () => handleDeleteMessage(msg.id) : undefined}
+                          isInstructor={instructorId ? msg.sender_id === instructorId : undefined}
+                          instructorMode={!!instructorId}
                         />
                       </div>
                       <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
