@@ -56,7 +56,7 @@ export default function LiveRoomsPage() {
         .select('room_id, user_id, display_name')
         .in('room_id', roomIds);
       const map: Record<string, ParticipantRow | undefined> = {};
-      ((data || []) as ParticipantRow[]).forEach(p => {
+      ((data || []) as unknown as ParticipantRow[]).forEach(p => {
         if (p.user_id !== user?.id && !map[p.room_id]) map[p.room_id] = p;
       });
       return map;
