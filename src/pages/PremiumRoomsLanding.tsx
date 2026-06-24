@@ -107,13 +107,14 @@ const PremiumRoomsLanding: React.FC = () => {
 
   // Basic SEO tags for this page
   React.useEffect(() => {
-    document.title = 'Premium Rooms & Courses | sow2grow';
+    document.title = 'Training Rooms | sow2grow';
     const metaDesc = document.querySelector('meta[name="description"]');
     if (metaDesc) {
       metaDesc.setAttribute(
         'content',
-        'Create premium rooms and courses: classroom, seminar, training, podcast, marketing demo, or general discussion.'
+        'Browse and create training rooms.'
       );
+
     }
   }, []);
 
@@ -123,9 +124,9 @@ const PremiumRoomsLanding: React.FC = () => {
       <div className="mb-6 space-y-4">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-3xl font-bold text-foreground">Premium Rooms & Courses</h1>
+            <h1 className="text-3xl font-bold text-foreground">Training Rooms</h1>
             <p className="text-sm text-muted-foreground">
-              Create structured courses and classrooms with premium content
+              Join an existing training room or create a new one
             </p>
           </div>
           <Button asChild>
@@ -140,12 +141,13 @@ const PremiumRoomsLanding: React.FC = () => {
         <div className="relative">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
-            placeholder="Search premium rooms and courses..."
+            placeholder="Search training rooms..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className="pl-10"
-            aria-label="Search premium rooms"
+            aria-label="Search training rooms"
           />
+
         </div>
       </div>
 
@@ -162,12 +164,13 @@ const PremiumRoomsLanding: React.FC = () => {
                 <GraduationCap className="h-10 w-10 text-primary" />
               </div>
               <h3 className="text-xl font-semibold">
-                {searchQuery ? 'No rooms found' : 'Premium Rooms & Courses'}
+                {searchQuery ? 'No rooms found' : 'Training Rooms'}
               </h3>
               <p className="text-muted-foreground max-w-md mx-auto">
                 {searchQuery
                   ? 'Try adjusting your search query'
-                  : 'Create structured courses and classrooms with premium content. Share knowledge through modules, documents, videos, and interactive discussions.'}
+                  : 'No training rooms yet. Create the first one to get started.'}
+
               </p>
               <div className="flex flex-col sm:flex-row gap-3 justify-center pt-4">
                 <Button asChild>
