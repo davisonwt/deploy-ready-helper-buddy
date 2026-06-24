@@ -14,7 +14,14 @@ export interface LiveParticipant {
   hand_raised: boolean;
   hand_raised_at: string | null;
   joined_at: string | null;
-  // joined profile
+  presence_status?: 'present' | 'away' | 'absent';
+  last_ping_at?: string | null;
+  total_active_seconds?: number;
+  total_away_seconds?: number;
+  check_in_required_at?: string | null;
+  check_in_responded_at?: string | null;
+  missed_check_ins?: number;
+  hands_raised_count?: number;
   display_name?: string | null;
   avatar_url?: string | null;
 }
