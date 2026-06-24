@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Calendar, Check, ChevronDown, DollarSign, FileUp, Loader2, Zap } from 'lucide-react';
+import { Calendar, Camera, Check, ChevronDown, DollarSign, FileUp, Loader2, Shield, Zap } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
@@ -10,8 +10,15 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { toast } from 'sonner';
 
 type Kind = 'classroom' | 'skilldrop';
+type AttendanceMode = 'relaxed' | 'standard' | 'strict';
 
 const defaultDateTime = () => new Date(Date.now() + 30 * 60 * 1000).toISOString().slice(0, 16);
+
+const MODE_OPTIONS: { value: AttendanceMode; label: string; desc: string }[] = [
+  { value: 'relaxed', label: 'Relaxed', desc: 'Heartbeat only. Marks "Away" silently — no prompts.' },
+  { value: 'standard', label: 'Standard', desc: 'Heartbeat + random "Tap I\'m here" check-ins.' },
+  { value: 'strict', label: 'Strict', desc: 'Camera required + heartbeat + check-ins. Auto-removed if camera off.' },
+];
 
 /**
  * Shared create-session form for Classroom & SkillDrop.
@@ -27,6 +34,8 @@ export default function CreateSessionForm({ kind, onCreated }: { kind: Kind; onC
   const [scheduledAt, setScheduledAt] = useState(defaultDateTime());
   const [isFree, setIsFree] = useState(true);
   const [amount, setAmount] = useState('5');
+  const [attendanceMode, setAttendanceMode] = useState<AttendanceMode>('standard');
+  const [requireCamera, setRequireCamera] = useState(false);
   const [files, setFiles] = useState<File[]>([]);
   const [profiles, setProfiles] = useState<any[]>([]);
   const [invitees, setInvitees] = useState<string[]>([]);
@@ -98,14 +107,27 @@ export default function CreateSessionForm({ kind, onCreated }: { kind: Kind; onC
 
       // 3. Session row.
       let actionUrl = '';
+      let createdSessionId: string | null = null;
       if (kind === 'classroom') {
         const { data, error } = await supabase
           .from('classroom_sessions' as any)
-          .insert({ title: title.trim(), description, scheduled_at: when, instructor_id: user.id, is_free: isFree, session_fee: price, status: 'scheduled', chat_room_id: chatRoomId })
+          .insert({
+            title: title.trim(),
+            description,
+            scheduled_at: when,
+            instructor_id: user.id,
+            is_free: isFree,
+            session_fee: price,
+            status: 'scheduled',
+            chat_room_id: chatRoomId,
+            attendance_mode: attendanceMode,
+            require_camera: requireCamera || attendanceMode === 'strict',
+          })
           .select('id')
           .single();
         if (error) throw error;
-        actionUrl = `/classroom/${(data as any).id}`;
+        createdSessionId = (data as any).id as string;
+        actionUrl = `/classroom/${createdSessionId}`;
       } else {
         const { data, error } = await supabase
           .from('skilldrop_sessions' as any)
@@ -116,12 +138,26 @@ export default function CreateSessionForm({ kind, onCreated }: { kind: Kind; onC
         actionUrl = `/skilldrop/${(data as any).id}`;
       }
 
+      // 4. Seed classroom_invites + user_notifications for invited tribe members
       if (invitees.length) {
+        if (kind === 'classroom' && createdSessionId) {
+          await supabase
+            .from('classroom_invites' as any)
+            .upsert(
+              invitees.map((uid) => ({
+                session_id: createdSessionId,
+                inviter_id: user.id,
+                invitee_id: uid,
+                message: description || null,
+              })) as any,
+              { onConflict: 'session_id,invitee_id', ignoreDuplicates: true },
+            );
+        }
         await supabase
           .from('user_notifications' as any)
           .insert(invitees.map(userId => ({
             user_id: userId,
-            type: 'live_invite',
+            type: kind === 'classroom' ? 'classroom_invite' : 'live_invite',
             title: `${kind === 'classroom' ? 'Classroom' : 'SkillDrop'} invite`,
             message: title.trim(),
             action_url: actionUrl,
@@ -167,6 +203,42 @@ export default function CreateSessionForm({ kind, onCreated }: { kind: Kind; onC
           <input className="hidden" type="file" multiple onChange={e => setFiles(Array.from(e.target.files || []))} />
         </label>
       </div>
+
+      {kind === 'classroom' && (
+        <div className="mt-5 rounded-xl border border-white/10 bg-white/5 p-3">
+          <div className="mb-2 text-sm font-black uppercase tracking-wide text-cyan-200/80 flex items-center gap-2">
+            <Shield className="h-4 w-4 text-cyan-300" /> Attendance policy
+          </div>
+          <div className="grid gap-2 sm:grid-cols-3">
+            {MODE_OPTIONS.map((opt) => (
+              <button
+                key={opt.value}
+                type="button"
+                onClick={() => { setAttendanceMode(opt.value); if (opt.value === 'strict') setRequireCamera(true); }}
+                className={`rounded-lg border p-2.5 text-left transition ${
+                  attendanceMode === opt.value
+                    ? 'border-cyan-400/70 bg-cyan-500/15 text-white'
+                    : 'border-white/10 bg-white/5 text-slate-200 hover:bg-white/10'
+                }`}
+              >
+                <div className="font-bold uppercase tracking-wider text-xs">{opt.label}</div>
+                <div className="mt-1 text-[11px] opacity-80">{opt.desc}</div>
+              </button>
+            ))}
+          </div>
+          {attendanceMode !== 'strict' && (
+            <label className="mt-3 flex items-center gap-2 cursor-pointer text-sm text-slate-200">
+              <input
+                type="checkbox"
+                checked={requireCamera}
+                onChange={(e) => setRequireCamera(e.target.checked)}
+                className="h-4 w-4 accent-cyan-400"
+              />
+              <Camera className="h-4 w-4 text-cyan-300" /> Require attendees to keep cameras on
+            </label>
+          )}
+        </div>
+      )}
 
       <div className="mt-5 rounded-xl border border-white/10 bg-white/5 p-3">
         <div className="mb-2 text-sm font-black uppercase tracking-wide text-cyan-200/80">Invite tribe members</div>

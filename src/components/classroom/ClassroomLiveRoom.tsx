@@ -1,10 +1,13 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { ArrowLeft, BookOpen, Calendar, Hand, Heart, Loader2, Tag, Users, X } from 'lucide-react';
+import { ArrowLeft, BookOpen, Calendar, Camera, Eye, Hand, Heart, Loader2, PhoneOff, Shield, Tag, Users } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useAuth } from '@/hooks/useAuth';
 import { useClassroomLive } from '@/hooks/useClassroomLive';
+import { useClassroomPresence, type AttendanceMode } from '@/hooks/useClassroomPresence';
+import { useClassroomInvites } from '@/hooks/useClassroomInvites';
 import { useToast } from '@/hooks/use-toast';
 import { JITSI_CONFIG } from '@/lib/jitsi-config';
 import { HandQueuePanel } from './HandQueuePanel';
@@ -12,6 +15,9 @@ import { DocumentsPanel } from './DocumentsPanel';
 import { SubmissionsPanel } from './SubmissionsPanel';
 import { SessionMessages } from './SessionMessages';
 import { BestowalDialog } from './BestowalDialog';
+import { CheckInPrompt } from './CheckInPrompt';
+import { RosterPanel } from './RosterPanel';
+import { PostSessionSummary } from './PostSessionSummary';
 
 interface ClassroomSession {
   id: string;
@@ -23,6 +29,10 @@ interface ClassroomSession {
   is_free: boolean | null;
   session_fee: number | string | null;
   chat_room_id: string | null;
+  attendance_mode?: AttendanceMode | null;
+  require_camera?: boolean | null;
+  started_at?: string | null;
+  ended_at?: string | null;
 }
 
 interface Props {
@@ -51,6 +61,11 @@ export default function ClassroomLiveRoom({ session }: Props) {
     scoreSubmission,
   } = useClassroomLive({ sessionId: session.id, userId, isHost });
 
+  const attendanceMode: AttendanceMode = (session.attendance_mode as AttendanceMode) ?? 'standard';
+  const requireCamera = !!session.require_camera || attendanceMode === 'strict';
+
+  const { invites, sendInvites } = useClassroomInvites({ sessionId: session.id, isHost });
+
   const me = useMemo(
     () => participants.find((p) => p.user_id === userId) ?? null,
     [participants, userId],
@@ -59,6 +74,14 @@ export default function ClassroomLiveRoom({ session }: Props) {
     () => participants.find((p) => p.user_id === session.instructor_id)?.display_name ?? 'Instructor',
     [participants, session.instructor_id],
   );
+
+  const { checkInOpen, checkInDeadline, respondCheckIn } = useClassroomPresence({
+    sessionId: session.id,
+    userId,
+    isHost,
+    attendanceMode,
+    joined,
+  });
 
   /* -------------------- Jitsi container + api -------------------- */
   const containerRef = useRef<HTMLDivElement>(null);
@@ -69,6 +92,18 @@ export default function ClassroomLiveRoom({ session }: Props) {
   useEffect(() => { audioMutedRef.current = audioMuted; }, [audioMuted]);
   const handRaisedJitsiRef = useRef(false);
   const [bestowOpen, setBestowOpen] = useState(false);
+  const [endedAt, setEndedAt] = useState<string | null>(session.ended_at ?? null);
+  const [summaryOpen, setSummaryOpen] = useState(false);
+  const cameraGraceRef = useRef<number | null>(null);
+
+  /* Mark session started when host first joins */
+  useEffect(() => {
+    if (!isHost || !joined || session.started_at) return;
+    void supabase
+      .from('classroom_sessions')
+      .update({ started_at: new Date().toISOString(), status: 'live' } as any)
+      .eq('id', session.id);
+  }, [isHost, joined, session.started_at, session.id]);
 
   /* On mount: join DB and Jitsi */
   useEffect(() => {
@@ -105,7 +140,7 @@ export default function ClassroomLiveRoom({ session }: Props) {
           configOverwrite: {
             ...JITSI_CONFIG.getLiveRoomConfig(),
             startWithAudioMuted: !isHost,
-            startWithVideoMuted: true,
+            startWithVideoMuted: isHost ? false : !requireCamera,
             subject: session.title,
           },
           interfaceConfigOverwrite: JITSI_CONFIG.getInterfaceConfig({
@@ -120,6 +155,23 @@ export default function ClassroomLiveRoom({ session }: Props) {
         api.addListener('videoConferenceJoined', () => setJitsiLoading(false));
         api.addListener('audioMuteStatusChanged', ({ muted }: { muted: boolean }) => {
           setAudioMuted(muted);
+        });
+        api.addListener('videoMuteStatusChanged', ({ muted }: { muted: boolean }) => {
+          if (!requireCamera || isHost) return;
+          if (muted) {
+            toast({
+              title: '📷 Camera required',
+              description: 'This session needs cameras on. Turn it back on within 5s or you will be removed.',
+              variant: 'destructive',
+            });
+            if (cameraGraceRef.current) window.clearTimeout(cameraGraceRef.current);
+            cameraGraceRef.current = window.setTimeout(() => {
+              void handleLeave();
+            }, 5000);
+          } else if (cameraGraceRef.current) {
+            window.clearTimeout(cameraGraceRef.current);
+            cameraGraceRef.current = null;
+          }
         });
         api.addListener('readyToClose', () => {
           handleLeave();
@@ -172,9 +224,30 @@ export default function ClassroomLiveRoom({ session }: Props) {
   };
 
   const handleLeave = async () => {
+    if (cameraGraceRef.current) { window.clearTimeout(cameraGraceRef.current); cameraGraceRef.current = null; }
     await leaveSession();
     if (apiRef.current) { try { apiRef.current.dispose(); } catch {}; apiRef.current = null; }
     navigate('/communications-hub');
+  };
+
+  const handleEndSession = async () => {
+    if (!isHost) return;
+    const ts = new Date().toISOString();
+    const { error } = await supabase
+      .from('classroom_sessions')
+      .update({ ended_at: ts, status: 'ended' } as any)
+      .eq('id', session.id);
+    if (error) {
+      toast({ title: 'Could not end session', description: error.message, variant: 'destructive' });
+      return;
+    }
+    setEndedAt(ts);
+    setSummaryOpen(true);
+  };
+
+  const handleSendInvites = async (ids: string[], message: string) => {
+    if (!userId) return;
+    await sendInvites(userId, ids, message || undefined);
   };
 
   if (!user) {
@@ -225,20 +298,44 @@ export default function ClassroomLiveRoom({ session }: Props) {
                   <Tag className="h-3 w-3" />
                   {session.is_free ? 'Free entry' : `${Number(session.session_fee ?? 0).toFixed(2)} USDT entry`}
                 </span>
+                <span className="inline-flex items-center gap-1 rounded-full bg-[#14101F] border border-[#8B5CF6]/30 px-2 py-0.5 uppercase tracking-wider font-semibold">
+                  <Shield className="h-3 w-3" /> {attendanceMode}
+                  {requireCamera && <Camera className="h-3 w-3 ml-0.5" />}
+                </span>
                 <span className="inline-flex items-center gap-1">
                   <Users className="h-3.5 w-3.5" /> {participants.length} live
                 </span>
               </div>
             </div>
 
-            {!isHost && (
-              <Button
-                onClick={() => setBestowOpen(true)}
-                className="shrink-0 bg-gradient-to-r from-[#8B5CF6] to-[#F0B23F] hover:opacity-90 text-white font-bold gap-2"
-              >
-                <Heart className="h-4 w-4" /> Bestow
-              </Button>
-            )}
+            <div className="flex flex-col gap-2 shrink-0">
+              {!isHost && (
+                <Button
+                  onClick={() => setBestowOpen(true)}
+                  className="bg-gradient-to-r from-[#8B5CF6] to-[#F0B23F] hover:opacity-90 text-white font-bold gap-2"
+                >
+                  <Heart className="h-4 w-4" /> Bestow
+                </Button>
+              )}
+              {isHost && !endedAt && (
+                <Button
+                  onClick={handleEndSession}
+                  variant="outline"
+                  className="border-rose-400/50 text-rose-200 hover:bg-rose-500/10 gap-2"
+                >
+                  <PhoneOff className="h-4 w-4" /> End session
+                </Button>
+              )}
+              {isHost && endedAt && (
+                <Button
+                  onClick={() => setSummaryOpen(true)}
+                  variant="outline"
+                  className="border-[#F0B23F]/50 text-[#F0B23F] hover:bg-[#F0B23F]/10 gap-2"
+                >
+                  <Eye className="h-4 w-4" /> View summary
+                </Button>
+              )}
+            </div>
           </div>
         </header>
 
@@ -283,11 +380,12 @@ export default function ClassroomLiveRoom({ session }: Props) {
           {/* Side panel */}
           <aside className="rounded-2xl border border-[#8B5CF6]/30 bg-[#14101F]/85 overflow-hidden flex flex-col" style={{ minHeight: 480, height: 'calc(100vh - 320px)' }}>
             <Tabs defaultValue="chat" className="flex flex-col h-full">
-              <TabsList className="w-full grid grid-cols-4 bg-[#1a1430]/80 border-b border-[#8B5CF6]/25 rounded-none h-10 shrink-0">
-                <TabsTrigger value="chat" className="text-xs data-[state=active]:bg-[#8B5CF6]/20 data-[state=active]:text-[#E8D9B5]">Chat</TabsTrigger>
-                <TabsTrigger value="hands" className="text-xs data-[state=active]:bg-[#8B5CF6]/20 data-[state=active]:text-[#E8D9B5]">{isHost ? 'Hands' : 'Floor'}</TabsTrigger>
-                <TabsTrigger value="docs" className="text-xs data-[state=active]:bg-[#8B5CF6]/20 data-[state=active]:text-[#E8D9B5]">Docs</TabsTrigger>
-                <TabsTrigger value="subs" className="text-xs data-[state=active]:bg-[#8B5CF6]/20 data-[state=active]:text-[#E8D9B5]">Tasks</TabsTrigger>
+              <TabsList className="w-full grid grid-cols-5 bg-[#1a1430]/80 border-b border-[#8B5CF6]/25 rounded-none h-10 shrink-0">
+                <TabsTrigger value="chat" className="text-[11px] data-[state=active]:bg-[#8B5CF6]/20 data-[state=active]:text-[#E8D9B5]">Chat</TabsTrigger>
+                <TabsTrigger value="people" className="text-[11px] data-[state=active]:bg-[#8B5CF6]/20 data-[state=active]:text-[#E8D9B5]">People</TabsTrigger>
+                <TabsTrigger value="hands" className="text-[11px] data-[state=active]:bg-[#8B5CF6]/20 data-[state=active]:text-[#E8D9B5]">{isHost ? 'Hands' : 'Floor'}</TabsTrigger>
+                <TabsTrigger value="docs" className="text-[11px] data-[state=active]:bg-[#8B5CF6]/20 data-[state=active]:text-[#E8D9B5]">Docs</TabsTrigger>
+                <TabsTrigger value="subs" className="text-[11px] data-[state=active]:bg-[#8B5CF6]/20 data-[state=active]:text-[#E8D9B5]">Tasks</TabsTrigger>
               </TabsList>
 
               <TabsContent value="chat" className="flex-1 mt-0 overflow-hidden">
@@ -298,6 +396,17 @@ export default function ClassroomLiveRoom({ session }: Props) {
                   hostId={session.instructor_id}
                   onSendText={sendTextMessage}
                   onSendVoice={sendVoiceMessage}
+                />
+              </TabsContent>
+
+              <TabsContent value="people" className="flex-1 mt-0 overflow-y-auto">
+                <RosterPanel
+                  isHost={isHost}
+                  hostUserId={session.instructor_id}
+                  inviterId={userId!}
+                  participants={participants}
+                  invites={invites}
+                  onInvite={handleSendInvites}
                 />
               </TabsContent>
 
@@ -342,6 +451,25 @@ export default function ClassroomLiveRoom({ session }: Props) {
           sessionId={session.id}
           sessionKind="classroom"
           hostName={hostName}
+        />
+      )}
+
+      {!isHost && (
+        <CheckInPrompt open={checkInOpen} deadline={checkInDeadline} onRespond={respondCheckIn} />
+      )}
+
+      {isHost && (
+        <PostSessionSummary
+          open={summaryOpen}
+          onClose={() => setSummaryOpen(false)}
+          sessionTitle={session.title}
+          startedAt={session.started_at ?? null}
+          endedAt={endedAt}
+          hostUserId={session.instructor_id}
+          participants={participants}
+          invites={invites}
+          messages={messages}
+          media={media}
         />
       )}
     </main>

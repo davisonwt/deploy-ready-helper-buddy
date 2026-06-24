@@ -1892,13 +1892,54 @@ export type Database = {
         }
         Relationships: []
       }
+      classroom_invites: {
+        Row: {
+          created_at: string
+          id: string
+          invited_at: string
+          invitee_id: string
+          inviter_id: string
+          message: string | null
+          responded_at: string | null
+          session_id: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          invited_at?: string
+          invitee_id: string
+          inviter_id: string
+          message?: string | null
+          responded_at?: string | null
+          session_id: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          invited_at?: string
+          invitee_id?: string
+          inviter_id?: string
+          message?: string | null
+          responded_at?: string | null
+          session_id?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       classroom_sessions: {
         Row: {
+          attendance_mode: string
           chat_room_id: string | null
           circle_id: string | null
           created_at: string | null
           description: string | null
           duration_minutes: number | null
+          ended_at: string | null
           host_approved: boolean | null
           id: string
           instructor_id: string
@@ -1907,19 +1948,23 @@ export type Database = {
           max_participants: number | null
           pricing_type: string
           recording_url: string | null
+          require_camera: boolean
           scheduled_at: string
           session_fee: number | null
+          started_at: string | null
           status: string | null
           title: string
           updated_at: string | null
           whiteboard_data: Json | null
         }
         Insert: {
+          attendance_mode?: string
           chat_room_id?: string | null
           circle_id?: string | null
           created_at?: string | null
           description?: string | null
           duration_minutes?: number | null
+          ended_at?: string | null
           host_approved?: boolean | null
           id?: string
           instructor_id: string
@@ -1928,19 +1973,23 @@ export type Database = {
           max_participants?: number | null
           pricing_type?: string
           recording_url?: string | null
+          require_camera?: boolean
           scheduled_at: string
           session_fee?: number | null
+          started_at?: string | null
           status?: string | null
           title: string
           updated_at?: string | null
           whiteboard_data?: Json | null
         }
         Update: {
+          attendance_mode?: string
           chat_room_id?: string | null
           circle_id?: string | null
           created_at?: string | null
           description?: string | null
           duration_minutes?: number | null
+          ended_at?: string | null
           host_approved?: boolean | null
           id?: string
           instructor_id?: string
@@ -1949,8 +1998,10 @@ export type Database = {
           max_participants?: number | null
           pricing_type?: string
           recording_url?: string | null
+          require_camera?: boolean
           scheduled_at?: string
           session_fee?: number | null
+          started_at?: string | null
           status?: string | null
           title?: string
           updated_at?: string | null
@@ -4622,16 +4673,24 @@ export type Database = {
         Row: {
           audio_enabled: boolean | null
           can_speak: boolean | null
+          check_in_required_at: string | null
+          check_in_responded_at: string | null
           created_at: string
           hand_raised: boolean
           hand_raised_at: string | null
+          hands_raised_count: number
           id: string
           join_request_approved: boolean | null
           joined_at: string | null
+          last_ping_at: string | null
           left_at: string | null
+          missed_check_ins: number
           participant_type: string
+          presence_status: string
           session_id: string
           status: string
+          total_active_seconds: number
+          total_away_seconds: number
           updated_at: string
           user_id: string
           video_enabled: boolean | null
@@ -4639,16 +4698,24 @@ export type Database = {
         Insert: {
           audio_enabled?: boolean | null
           can_speak?: boolean | null
+          check_in_required_at?: string | null
+          check_in_responded_at?: string | null
           created_at?: string
           hand_raised?: boolean
           hand_raised_at?: string | null
+          hands_raised_count?: number
           id?: string
           join_request_approved?: boolean | null
           joined_at?: string | null
+          last_ping_at?: string | null
           left_at?: string | null
+          missed_check_ins?: number
           participant_type?: string
+          presence_status?: string
           session_id: string
           status?: string
+          total_active_seconds?: number
+          total_away_seconds?: number
           updated_at?: string
           user_id: string
           video_enabled?: boolean | null
@@ -4656,16 +4723,24 @@ export type Database = {
         Update: {
           audio_enabled?: boolean | null
           can_speak?: boolean | null
+          check_in_required_at?: string | null
+          check_in_responded_at?: string | null
           created_at?: string
           hand_raised?: boolean
           hand_raised_at?: string | null
+          hands_raised_count?: number
           id?: string
           join_request_approved?: boolean | null
           joined_at?: string | null
+          last_ping_at?: string | null
           left_at?: string | null
+          missed_check_ins?: number
           participant_type?: string
+          presence_status?: string
           session_id?: string
           status?: string
+          total_active_seconds?: number
+          total_away_seconds?: number
           updated_at?: string
           user_id?: string
           video_enabled?: boolean | null
