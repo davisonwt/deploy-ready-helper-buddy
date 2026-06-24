@@ -1,12 +1,13 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
 import { Plus, ArrowLeft } from 'lucide-react';
 import OneOnOneRoom from '@/components/live/OneOnOneRoom';
 import { PresenceAura, classifyAura } from '@/components/live/PresenceAura';
+import CreateOneOnOneDialog from '@/components/live/CreateOneOnOneDialog';
 
 interface LiveRoom {
   id: string;
