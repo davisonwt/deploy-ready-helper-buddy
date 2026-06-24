@@ -278,21 +278,34 @@ export const DiscordStyleRoomView: React.FC<DiscordStyleRoomViewProps> = ({
       {/* Main Content - Chat */}
       <div className="flex-1 flex flex-col">
         {/* Top Bar with Tabs */}
-        <div className="border-b border-border">
+        <div className="border-b border-training-coral/20 bg-training-ash/60">
           <div className="h-14 px-4 flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <h1 className="font-semibold">general-chat</h1>
-              <Separator orientation="vertical" className="h-6" />
-              <p className="text-sm text-muted-foreground truncate max-w-md">
+            <div className="flex items-center gap-4 min-w-0">
+              <h1 className="font-oswald uppercase tracking-widest text-training-coral">general-chat</h1>
+              <Separator orientation="vertical" className="h-6 bg-training-coral/20" />
+              <p className="text-sm text-training-ember/80 truncate max-w-md">
                 {room.description}
               </p>
             </div>
-            
+
             <div className="flex items-center gap-2">
+              {streak > 0 && (
+                <div
+                  className={`flex items-center gap-1.5 px-3 py-1 rounded-full bg-training-coral/15 border border-training-coral/40 ${streakTick ? 'training-streak-tick' : ''}`}
+                  aria-label={`${streak}-day posting streak in this training room`}
+                  title={`${streak}-day streak — consecutive days you've posted here`}
+                >
+                  <Flame className="h-4 w-4 text-training-coral" />
+                  <span className="font-oswald uppercase tracking-wider text-sm text-training-coral-glow">
+                    {streak}-day streak
+                  </span>
+                </div>
+              )}
               <Button
                 variant={callActive ? "destructive" : "ghost"}
                 size="sm"
                 onClick={toggleCall}
+                className={callActive ? '' : 'text-training-ember hover:text-training-coral hover:bg-training-coral/10'}
               >
                 {callActive ? <PhoneOff className="h-4 w-4" /> : <Phone className="h-4 w-4" />}
               </Button>
@@ -301,33 +314,34 @@ export const DiscordStyleRoomView: React.FC<DiscordStyleRoomViewProps> = ({
                 size="sm"
                 onClick={toggleVideo}
                 disabled={!callActive}
+                className={videoOn ? 'bg-training-coral text-white hover:bg-training-coral-glow' : 'text-training-ember hover:text-training-coral hover:bg-training-coral/10'}
               >
                 <Video className="h-4 w-4" />
               </Button>
-              <Button variant="ghost" size="sm">
+              <Button variant="ghost" size="sm" className="text-training-ember hover:text-training-coral hover:bg-training-coral/10">
                 <Settings className="h-4 w-4" />
               </Button>
             </div>
           </div>
 
           {/* Tab Switcher */}
-          <div className="flex border-t border-border">
+          <div className="flex border-t border-training-coral/20">
             <button
               onClick={() => setActiveTab('chat')}
-              className={`flex-1 px-4 py-3 text-sm font-medium transition-colors ${
+              className={`flex-1 px-4 py-3 text-sm font-oswald uppercase tracking-wider transition-colors ${
                 activeTab === 'chat'
-                  ? 'bg-muted text-foreground border-b-2 border-primary'
-                  : 'text-muted-foreground hover:text-foreground hover:bg-muted/50'
+                  ? 'bg-training-coral/10 text-training-coral-glow border-b-2 border-training-coral'
+                  : 'text-training-ember/70 hover:text-training-coral hover:bg-training-coral/5'
               }`}
             >
               Chat
             </button>
             <button
               onClick={() => setActiveTab('media')}
-              className={`flex-1 px-4 py-3 text-sm font-medium transition-colors flex items-center justify-center gap-2 ${
+              className={`flex-1 px-4 py-3 text-sm font-oswald uppercase tracking-wider transition-colors flex items-center justify-center gap-2 ${
                 activeTab === 'media'
-                  ? 'bg-muted text-foreground border-b-2 border-primary'
-                  : 'text-muted-foreground hover:text-foreground hover:bg-muted/50'
+                  ? 'bg-training-coral/10 text-training-coral-glow border-b-2 border-training-coral'
+                  : 'text-training-ember/70 hover:text-training-coral hover:bg-training-coral/5'
               }`}
             >
               <Music className="h-4 w-4" />
@@ -335,6 +349,7 @@ export const DiscordStyleRoomView: React.FC<DiscordStyleRoomViewProps> = ({
             </button>
           </div>
         </div>
+
 
         {/* Content Area */}
         {activeTab === 'chat' ? (
