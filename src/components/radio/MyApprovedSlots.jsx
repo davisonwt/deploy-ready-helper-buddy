@@ -14,7 +14,8 @@ import {
   CheckCircle, 
   AlertCircle,
   Play,
-  Loader2
+  Loader2,
+  Trash2
 } from 'lucide-react';
 import { format, parseISO, isWithinInterval, addMinutes, subMinutes } from 'date-fns';
 
