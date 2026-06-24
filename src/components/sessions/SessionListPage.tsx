@@ -7,6 +7,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import CreateSessionForm from '@/components/sessions/CreateSessionForm';
+import PageHeroBanner from '@/components/chat/PageHeroBanner';
 
 type Kind = 'classroom' | 'skilldrop';
 
