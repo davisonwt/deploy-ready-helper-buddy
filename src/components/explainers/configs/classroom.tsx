@@ -233,7 +233,7 @@ function Outro() {
 
 export const classroomConfig: ExplainerConfig = {
   voUrl: voAsset.url,
-  estDuration: 30,
+  estDuration: 38,
   title: 'Classroom',
   subtitle: 'Live teaching, structured.',
   outroTitle: 'Real teaching.',
@@ -242,8 +242,8 @@ export const classroomConfig: ExplainerConfig = {
   segments: [
     { id: 'intro', weight: 2.5, Scene: Intro },
     { id: 'step1', weight: 3,   Scene: Step1 },
-    { id: 'step2', weight: 7,   Scene: Step2 },
-    { id: 'step3', weight: 7,   Scene: Step3 },
+    { id: 'step2', weight: 6,   Scene: Step2 },
+    { id: 'step3', weight: 12,  Scene: Step3 },
     { id: 'step4', weight: 8,   Scene: Step4 },
     { id: 'outro', weight: 2.5, Scene: Outro },
   ],
