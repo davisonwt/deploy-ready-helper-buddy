@@ -4470,6 +4470,7 @@ export type Database = {
         Row: {
           created_at: string
           duration_seconds: number | null
+          feedback: string | null
           file_name: string
           file_path: string
           file_size: number
@@ -4478,7 +4479,11 @@ export type Database = {
           metadata: Json | null
           mime_type: string
           price_cents: number | null
+          score: number | null
+          scored_at: string | null
+          scored_by: string | null
           session_id: string
+          submission_role: string
           updated_at: string
           uploader_id: string
           watermarked: boolean | null
@@ -4486,6 +4491,7 @@ export type Database = {
         Insert: {
           created_at?: string
           duration_seconds?: number | null
+          feedback?: string | null
           file_name: string
           file_path: string
           file_size: number
@@ -4494,7 +4500,11 @@ export type Database = {
           metadata?: Json | null
           mime_type: string
           price_cents?: number | null
+          score?: number | null
+          scored_at?: string | null
+          scored_by?: string | null
           session_id: string
+          submission_role?: string
           updated_at?: string
           uploader_id: string
           watermarked?: boolean | null
@@ -4502,6 +4512,7 @@ export type Database = {
         Update: {
           created_at?: string
           duration_seconds?: number | null
+          feedback?: string | null
           file_name?: string
           file_path?: string
           file_size?: number
@@ -4510,7 +4521,11 @@ export type Database = {
           metadata?: Json | null
           mime_type?: string
           price_cents?: number | null
+          score?: number | null
+          scored_at?: string | null
+          scored_by?: string | null
           session_id?: string
+          submission_role?: string
           updated_at?: string
           uploader_id?: string
           watermarked?: boolean | null
@@ -4608,6 +4623,8 @@ export type Database = {
           audio_enabled: boolean | null
           can_speak: boolean | null
           created_at: string
+          hand_raised: boolean
+          hand_raised_at: string | null
           id: string
           join_request_approved: boolean | null
           joined_at: string | null
@@ -4623,6 +4640,8 @@ export type Database = {
           audio_enabled?: boolean | null
           can_speak?: boolean | null
           created_at?: string
+          hand_raised?: boolean
+          hand_raised_at?: string | null
           id?: string
           join_request_approved?: boolean | null
           joined_at?: string | null
@@ -4638,6 +4657,8 @@ export type Database = {
           audio_enabled?: boolean | null
           can_speak?: boolean | null
           created_at?: string
+          hand_raised?: boolean
+          hand_raised_at?: string | null
           id?: string
           join_request_approved?: boolean | null
           joined_at?: string | null
