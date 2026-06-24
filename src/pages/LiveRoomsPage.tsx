@@ -169,7 +169,8 @@ export default function LiveRoomsPage() {
         )}
 
         {!isLoading && rooms.length > 0 && (
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+          <div id="existing-1on1-chats" className="grid grid-cols-1 sm:grid-cols-2 gap-5 scroll-mt-6">
+
             {rooms.map(room => {
               const other = participantsByRoom[room.id];
               const otherName = other?.display_name || 'Tribe member';
