@@ -377,7 +377,7 @@ export const DiscordStyleRoomView: React.FC<DiscordStyleRoomViewProps> = ({
             </ScrollArea>
 
             {/* Message Input */}
-            <div className="p-4 border-t border-border">
+            <div className="p-4 border-t border-training-coral/20 bg-training-ash/40">
               <div className="flex gap-2">
                 <Input
                   value={newMessage}
@@ -385,16 +385,19 @@ export const DiscordStyleRoomView: React.FC<DiscordStyleRoomViewProps> = ({
                   onKeyPress={(e) => e.key === 'Enter' && handleSendMessage()}
                   placeholder="Type a message..."
                   disabled={sending}
+                  className="bg-training-bg border-training-coral/30 focus-visible:ring-training-coral placeholder:text-training-ember/40"
                 />
                 <Button
                   variant="ghost"
                   size="icon"
+                  className="text-training-ember hover:text-training-coral hover:bg-training-coral/10"
                 >
                   <Smile className="h-5 w-5" />
                 </Button>
-                <Button 
+                <Button
                   onClick={handleSendMessage}
                   disabled={sending || !newMessage.trim()}
+                  className="bg-training-coral text-white hover:bg-training-coral-glow"
                 >
                   <Send className="h-4 w-4" />
                 </Button>
@@ -403,8 +406,8 @@ export const DiscordStyleRoomView: React.FC<DiscordStyleRoomViewProps> = ({
           </>
         ) : (
           <div className="flex-1">
-            <PremiumRoomMedia 
-              roomId={room.id} 
+            <PremiumRoomMedia
+              roomId={room.id}
               isCreator={isCreator}
               userId={user?.id}
             />
@@ -413,26 +416,26 @@ export const DiscordStyleRoomView: React.FC<DiscordStyleRoomViewProps> = ({
       </div>
 
       {/* Right Sidebar - Participants Info */}
-      <div className="w-80 border-l border-border flex flex-col">
-        <div className="p-4 border-b border-border">
-          <h3 className="font-semibold text-sm mb-3">About</h3>
-          <p className="text-sm text-muted-foreground">{room.description}</p>
+      <div className="w-80 border-l border-training-coral/20 bg-training-ash flex flex-col">
+        <div className="p-4 border-b border-training-coral/20">
+          <h3 className="font-oswald uppercase tracking-widest text-sm mb-3 text-training-coral">About</h3>
+          <p className="text-sm text-training-ember/80">{room.description}</p>
         </div>
-        <Separator />
+        <Separator className="bg-training-coral/20" />
         <div className="p-4">
-          <h3 className="font-semibold text-sm mb-3">Room Details</h3>
+          <h3 className="font-oswald uppercase tracking-widest text-sm mb-3 text-training-coral">Room Details</h3>
           <div className="space-y-2 text-sm">
             <div className="flex justify-between">
-              <span className="text-muted-foreground">Created</span>
-              <span>{new Date(room.created_at).toLocaleDateString()}</span>
+              <span className="text-training-ember/60">Created</span>
+              <span className="text-training-ember">{new Date(room.created_at).toLocaleDateString()}</span>
             </div>
             <div className="flex justify-between">
-              <span className="text-muted-foreground">Max Participants</span>
-              <span>{room.max_participants}</span>
+              <span className="text-training-ember/60">Max Participants</span>
+              <span className="text-training-ember">{room.max_participants}</span>
             </div>
             <div className="flex justify-between">
-              <span className="text-muted-foreground">Type</span>
-              <span>{room.room_type}</span>
+              <span className="text-training-ember/60">Type</span>
+              <span className="text-training-ember">{room.room_type}</span>
             </div>
           </div>
         </div>
