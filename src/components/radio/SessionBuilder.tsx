@@ -176,7 +176,6 @@ const SessionBuilder = () => {
         .eq('host_user_id', user.id)
         .order('created_at', { ascending: false });
       setSessions((data as Session[]) || []);
-      if (data && data.length && !activeId) setActiveId(data[0].id);
       setLoading(false);
     })();
     (async () => {
