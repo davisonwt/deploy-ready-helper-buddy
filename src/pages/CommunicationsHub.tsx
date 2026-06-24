@@ -104,14 +104,54 @@ export default function CommunicationsHub() {
           .upsert(chatParticipants as any, { onConflict: 'room_id,user_id', ignoreDuplicates: false });
         if (cpErr) throw cpErr;
         actionUrl = `/chatapp?room=${roomId}`;
-      } else if (kind === 'classroom') {
-        const { data, error } = await supabase.from('classroom_sessions' as any).insert({ title: title.trim(), description, scheduled_at: when, instructor_id: user.id, is_free: isFree, session_fee: price, status: 'scheduled' }).select('id').single();
-        if (error) throw error;
-        actionUrl = `/orchard-alive?classroom=${(data as any).id}`;
-      } else if (kind === 'skilldrop') {
-        const { data, error } = await supabase.from('skilldrop_sessions' as any).insert({ title: title.trim(), description, scheduled_at: when, presenter_id: user.id, pricing_type: isFree ? 'free' : 'bestowal', session_fee: price, status: 'scheduled' }).select('id').single();
-        if (error) throw error;
-        actionUrl = `/orchard-alive?skilldrop=${(data as any).id}`;
+      } else if (kind === 'classroom' || kind === 'skilldrop') {
+        // 1. Create a linked private chat room so the session has real messaging.
+        const roomName = `${kind === 'classroom' ? 'Classroom' : 'SkillDrop'}: ${title.trim()}`;
+        const { data: roomData, error: roomErr } = await supabase
+          .from('chat_rooms' as any)
+          .insert({
+            name: roomName,
+            description,
+            room_type: 'group',
+            created_by: user.id,
+            is_active: true,
+            metadata: { session_kind: kind, scheduled_at: when, files: uploaded, price },
+          })
+          .select('id')
+          .single();
+        if (roomErr) throw roomErr;
+        const chatRoomId = (roomData as any).id as string;
+
+        // 2. Seed creator + invitees as participants (creator is moderator).
+        const participantRows = Array.from(new Set([user.id, ...invitees])).map(uid => ({
+          room_id: chatRoomId,
+          user_id: uid,
+          is_moderator: uid === user.id,
+          is_active: true,
+        }));
+        const { error: cpErr } = await supabase
+          .from('chat_participants' as any)
+          .upsert(participantRows as any, { onConflict: 'room_id,user_id', ignoreDuplicates: false });
+        if (cpErr) throw cpErr;
+
+        // 3. Insert the session row linked to the chat room.
+        if (kind === 'classroom') {
+          const { data, error } = await supabase
+            .from('classroom_sessions' as any)
+            .insert({ title: title.trim(), description, scheduled_at: when, instructor_id: user.id, is_free: isFree, session_fee: price, status: 'scheduled', chat_room_id: chatRoomId })
+            .select('id')
+            .single();
+          if (error) throw error;
+          actionUrl = `/classroom/${(data as any).id}`;
+        } else {
+          const { data, error } = await supabase
+            .from('skilldrop_sessions' as any)
+            .insert({ title: title.trim(), description, scheduled_at: when, presenter_id: user.id, pricing_type: isFree ? 'free' : 'bestowal', session_fee: price, status: 'scheduled', chat_room_id: chatRoomId })
+            .select('id')
+            .single();
+          if (error) throw error;
+          actionUrl = `/skilldrop/${(data as any).id}`;
+        }
       } else if (kind === 'radio') {
         setSaving(false);
         navigate('/radio');
