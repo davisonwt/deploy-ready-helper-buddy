@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion';
-import { BookOpen, Plus, Hand, ListOrdered } from 'lucide-react';
+import { BookOpen, Plus, FileText, Download, Upload, Check, Star } from 'lucide-react';
 import voAsset from '@/assets/classroom-vo.mp3.asset.json';
 import type { ExplainerConfig } from '../types';
 import { sceneAnim } from '../ExplainerPlayer';
@@ -45,30 +45,41 @@ function Step1() {
 }
 
 function Step2() {
-  const sessions = [
-    { title: 'Sacred Calendar 101', host: 'Ed' },
-    { title: 'Garden Rhythms', host: 'Amber' },
-  ];
   return (
     <motion.div {...sceneAnim} className="w-full max-w-md">
       <div className="rounded-xl border p-4" style={{ background: `${PANEL}CC`, borderColor: `${VIOLET}55`, fontFamily: FONT }}>
         <div className="flex items-center justify-between mb-3">
-          <p className="text-xs uppercase tracking-wider" style={{ color: MUTED }}>Upcoming sessions</p>
+          <p className="text-xs uppercase tracking-wider" style={{ color: MUTED }}>Create a session</p>
           <motion.div animate={{ scale: [1, 1.06, 1] }} transition={{ duration: 1.4, repeat: Infinity }}
             className="flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold"
             style={{ background: CHALK, color: BG }}>
-            <Plus className="w-3 h-3" /> Create
+            <Plus className="w-3 h-3" /> New
           </motion.div>
         </div>
-        <div className="space-y-2">
-          {sessions.map((s, i) => (
-            <motion.div key={s.title}
-              initial={{ opacity: 0, x: -8 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: i * 0.18 }}
-              className="p-3 rounded-lg border" style={{ background: `${VIOLET}10`, borderColor: `${VIOLET}33` }}>
-              <p className="text-sm font-semibold" style={{ color: TEXT }}>{s.title}</p>
-              <p className="text-xs mt-0.5 italic" style={{ color: MUTED }}>instructor · {s.host}</p>
-            </motion.div>
-          ))}
+
+        <div className="p-3 rounded-lg border mb-3" style={{ background: `${VIOLET}10`, borderColor: `${VIOLET}33` }}>
+          <p className="text-sm font-semibold" style={{ color: TEXT }}>Sacred Calendar 101</p>
+          <p className="text-xs mt-0.5 italic" style={{ color: MUTED }}>instructor · Ed</p>
+        </div>
+
+        <p className="text-[10px] uppercase tracking-[0.2em] mb-2" style={{ color: MUTED }}>Attendance</p>
+        <div className="grid grid-cols-2 gap-2">
+          <motion.div
+            initial={{ opacity: 0, x: -6 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.2 }}
+            className="rounded-lg border-2 p-2.5 text-center"
+            style={{ borderColor: VIOLET, background: `${VIOLET}22` }}
+          >
+            <p className="text-xs font-semibold" style={{ color: TEXT }}>Free</p>
+            <p className="text-[10px] italic" style={{ color: MUTED }}>open to all</p>
+          </motion.div>
+          <motion.div
+            initial={{ opacity: 0, x: 6 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.45 }}
+            className="rounded-lg border p-2.5 text-center"
+            style={{ borderColor: `${CHALK}66`, background: `${CHALK}10` }}
+          >
+            <p className="text-xs font-semibold" style={{ color: CHALK }}>Set a fee</p>
+            <p className="text-[10px] italic" style={{ color: MUTED }}>your call</p>
+          </motion.div>
         </div>
       </div>
     </motion.div>
@@ -76,33 +87,39 @@ function Step2() {
 }
 
 function Step3() {
-  const points = [
-    'Why time is sacred',
-    'Sunrise as the day-marker',
-    'Counting the Omer',
-    'The annual rhythm',
+  const docs = [
+    { name: 'Lesson outline.pdf' },
+    { name: 'Worksheet · Omer.pdf' },
+    { name: 'Slides · sunrise.key' },
   ];
   return (
     <motion.div {...sceneAnim} className="w-full max-w-md">
       <div className="rounded-xl border overflow-hidden" style={{ background: `${PANEL}CC`, borderColor: `${VIOLET}55`, fontFamily: FONT }}>
         <div className="px-4 py-3 border-b flex items-center gap-2" style={{ borderColor: `${VIOLET}33` }}>
           <div className="w-2 h-2 rounded-full animate-pulse" style={{ background: VIOLET }} />
-          <span className="text-sm italic" style={{ color: TEXT }}>Ed is teaching</span>
-          <motion.div animate={{ y: [0, -3, 0] }} transition={{ duration: 1.2, repeat: Infinity }}
-            className="ml-auto flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold"
-            style={{ background: `${CHALK}33`, color: CHALK }}>
-            <Hand className="w-3 h-3" /> hand raised
-          </motion.div>
+          <span className="text-sm italic" style={{ color: TEXT }}>Pre-loaded for attendees</span>
+          <span className="ml-auto text-[10px] uppercase tracking-wider font-semibold px-2 py-0.5 rounded-full"
+            style={{ background: `${CHALK}33`, color: CHALK }}>view · download</span>
         </div>
-        <div className="p-4 space-y-2 min-h-[180px]">
-          {points.map((p, i) => (
-            <motion.div key={p}
-              initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.2 + i * 0.6 }}
-              className="flex items-center gap-3"
+        <div className="p-3 space-y-2">
+          {docs.map((d, i) => (
+            <motion.div key={d.name}
+              initial={{ opacity: 0, x: -8 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.15 + i * 0.25 }}
+              className="flex items-center gap-3 p-2.5 rounded-lg border"
+              style={{ background: `${VIOLET}10`, borderColor: `${VIOLET}33` }}
             >
-              <div className="w-6 h-6 rounded-full flex items-center justify-center text-xs font-semibold shrink-0"
-                style={{ background: VIOLET, color: BG, fontFamily: FONT }}>{i + 1}</div>
-              <span className="text-sm" style={{ color: TEXT }}>{p}</span>
+              <div className="w-8 h-8 rounded-md flex items-center justify-center"
+                style={{ background: `${VIOLET}33`, color: VIOLET }}>
+                <FileText className="w-4 h-4" />
+              </div>
+              <span className="text-sm flex-1" style={{ color: TEXT }}>{d.name}</span>
+              <motion.div
+                animate={{ y: [0, -2, 0] }} transition={{ duration: 1.2, repeat: Infinity, delay: i * 0.2 }}
+                className="w-7 h-7 rounded-full flex items-center justify-center"
+                style={{ background: `${CHALK}22`, color: CHALK }}
+              >
+                <Download className="w-3.5 h-3.5" />
+              </motion.div>
             </motion.div>
           ))}
         </div>
@@ -112,26 +129,51 @@ function Step3() {
 }
 
 function Step4() {
-  const points = ['Why time is sacred', 'Sunrise as the day-marker', 'Counting the Omer', 'The annual rhythm', 'Closing reflection'];
+  const subs = [
+    { from: 'Mira', file: 'omer-tasks.pdf', score: 9 },
+    { from: 'Ezra', file: 'reflection.docx', score: 8 },
+    { from: 'Amara', file: 'notes.pdf', score: null },
+  ];
   return (
     <motion.div {...sceneAnim} className="w-full max-w-md">
-      <div className="rounded-xl border p-5" style={{ background: `${PANEL}CC`, borderColor: `${VIOLET}55`, fontFamily: FONT }}>
-        <div className="flex items-center gap-2 mb-4">
-          <ListOrdered className="w-4 h-4" style={{ color: CHALK }} />
-          <p className="text-xs uppercase tracking-wider" style={{ color: MUTED }}>Lesson outline</p>
+      <div className="rounded-xl border overflow-hidden" style={{ background: `${PANEL}CC`, borderColor: `${VIOLET}55`, fontFamily: FONT }}>
+        <div className="px-4 py-3 border-b flex items-center gap-2" style={{ borderColor: `${VIOLET}33` }}>
+          <Upload className="w-4 h-4" style={{ color: VIOLET }} />
+          <span className="text-xs uppercase tracking-wider font-semibold" style={{ color: MUTED }}>Student submissions</span>
+          <span className="ml-auto text-[10px] italic" style={{ color: CHALK }}>teacher reviews</span>
         </div>
-        <ol className="space-y-1.5">
-          {points.map((p, i) => (
-            <motion.li key={p}
-              initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: i * 0.1 }}
-              className="flex items-baseline gap-3 text-sm"
-              style={{ color: TEXT }}
+        <div className="p-3 space-y-2 min-h-[170px]">
+          {subs.map((s, i) => (
+            <motion.div key={s.from}
+              initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15 + i * 0.3 }}
+              className="flex items-center gap-3 p-2.5 rounded-lg border"
+              style={{ background: `${VIOLET}0F`, borderColor: `${VIOLET}33` }}
             >
-              <span className="font-semibold" style={{ color: VIOLET, minWidth: '1.25rem' }}>{i + 1}.</span>
-              <span>{p}</span>
-            </motion.li>
+              <div className="w-7 h-7 rounded-full flex items-center justify-center text-[11px] font-semibold"
+                style={{ background: VIOLET, color: BG }}>{s.from[0]}</div>
+              <div className="flex-1 min-w-0">
+                <p className="text-xs font-semibold truncate" style={{ color: TEXT }}>{s.from} · {s.file}</p>
+              </div>
+              {s.score !== null ? (
+                <motion.div
+                  initial={{ scale: 0.6, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} transition={{ delay: 0.5 + i * 0.3 }}
+                  className="flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-bold"
+                  style={{ background: `${CHALK}33`, color: CHALK }}
+                >
+                  <Star className="w-3 h-3 fill-current" /> {s.score}/10
+                </motion.div>
+              ) : (
+                <motion.div
+                  animate={{ opacity: [0.4, 1, 0.4] }} transition={{ duration: 1.2, repeat: Infinity }}
+                  className="flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] italic"
+                  style={{ background: `${VIOLET}22`, color: VIOLET }}
+                >
+                  <Check className="w-3 h-3" /> scoring…
+                </motion.div>
+              )}
+            </motion.div>
           ))}
-        </ol>
+        </div>
       </div>
     </motion.div>
   );
@@ -148,18 +190,18 @@ function Outro() {
 
 export const classroomConfig: ExplainerConfig = {
   voUrl: voAsset.url,
-  estDuration: 36,
+  estDuration: 30,
   title: 'Classroom',
   subtitle: 'Live teaching, structured.',
   outroTitle: 'Real teaching.',
   outroTagline: 'One quiet room.',
   theme: { bg: BG, panel: PANEL, accent: VIOLET, ember: CHALK, muted: MUTED, text: TEXT, font: FONT, fontWeight: 600 },
   segments: [
-    { id: 'intro', weight: 6,   Scene: Intro },
-    { id: 'step1', weight: 5,   Scene: Step1 },
-    { id: 'step2', weight: 6,   Scene: Step2 },
-    { id: 'step3', weight: 8,   Scene: Step3 },
-    { id: 'step4', weight: 6,   Scene: Step4 },
-    { id: 'outro', weight: 5,   Scene: Outro },
+    { id: 'intro', weight: 2.5, Scene: Intro },
+    { id: 'step1', weight: 3,   Scene: Step1 },
+    { id: 'step2', weight: 7,   Scene: Step2 },
+    { id: 'step3', weight: 7,   Scene: Step3 },
+    { id: 'step4', weight: 8,   Scene: Step4 },
+    { id: 'outro', weight: 2.5, Scene: Outro },
   ],
 };
