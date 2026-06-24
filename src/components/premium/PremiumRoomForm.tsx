@@ -240,8 +240,8 @@ export const PremiumRoomForm = ({ roomId }: PremiumRoomFormProps) => {
     <div className="max-w-4xl mx-auto p-6">
       <Card>
         <CardHeader>
-          <CardTitle>Create Premium Room</CardTitle>
-          <CardDescription>Set up a new classroom or course with premium content</CardDescription>
+          <CardTitle>{roomId ? 'Update Training Room' : 'Create Training Room'}</CardTitle>
+          <CardDescription>Set up a new training room or course with premium content</CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-6">
@@ -251,7 +251,7 @@ export const PremiumRoomForm = ({ roomId }: PremiumRoomFormProps) => {
                 id="title"
                 value={formData.title}
                 onChange={(e) => setFormData({...formData, title: e.target.value})}
-                placeholder="Enter room title"
+                placeholder="Enter training room title"
                 required
               />
             </div>
@@ -262,7 +262,7 @@ export const PremiumRoomForm = ({ roomId }: PremiumRoomFormProps) => {
                 id="description"
                 value={formData.description}
                 onChange={(e) => setFormData({...formData, description: e.target.value})}
-                placeholder="Describe your premium room"
+                placeholder="Describe your training room"
                 rows={3}
               />
             </div>
@@ -332,7 +332,9 @@ export const PremiumRoomForm = ({ roomId }: PremiumRoomFormProps) => {
               className="w-full"
               size="lg"
             >
-              {loading ? 'Creating Room...' : 'Create Premium Room'}
+              {loading
+                ? (roomId ? 'Updating Room...' : 'Creating Room...')
+                : (roomId ? 'Update Training Room' : 'Create Training Room')}
             </Button>
           </form>
         </CardContent>
