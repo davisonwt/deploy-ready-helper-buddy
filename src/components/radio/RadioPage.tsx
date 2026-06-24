@@ -90,8 +90,14 @@ const RadioPage = () => {
           </div>
         </div>
 
-        <Tabs defaultValue="library" className="w-full">
-          <TabsList className="grid w-full grid-cols-4 bg-radio-ink/70 border border-radio-blue/25">
+        <Tabs defaultValue="builder" className="w-full">
+          <TabsList className="grid w-full grid-cols-5 bg-radio-ink/70 border border-radio-blue/25">
+            <TabsTrigger
+              value="builder"
+              className="flex items-center gap-2 font-bitter data-[state=active]:bg-radio-blue/20 data-[state=active]:text-radio-amber"
+            >
+              <Layers className="h-4 w-4" /> <span>2-Hour Builder</span>
+            </TabsTrigger>
             <TabsTrigger
               value="library"
               className="flex items-center gap-2 font-bitter data-[state=active]:bg-radio-blue/20 data-[state=active]:text-radio-amber"
@@ -117,6 +123,10 @@ const RadioPage = () => {
               <MessageCircle className="h-4 w-4" /> <span>Live Chat</span>
             </TabsTrigger>
           </TabsList>
+
+          <TabsContent value="builder" className="mt-8">
+            <SessionBuilder />
+          </TabsContent>
 
           <TabsContent value="library" className="mt-8">
             <MusicLibrary />
