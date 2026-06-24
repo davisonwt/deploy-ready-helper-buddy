@@ -15,6 +15,7 @@ import { toast } from 'sonner';
 import { PremiumItemPurchaseModal } from '@/components/premium/PremiumItemPurchaseModal';
 import { RoomAccessModal } from '@/components/premium/RoomAccessModal';
 import { DiscordStyleRoomView } from '@/components/premium/DiscordStyleRoomView';
+import { ChatRoom } from '@/components/chat/ChatRoom';
 
 interface PremiumRoom {
   id: string;
@@ -29,6 +30,7 @@ interface PremiumRoom {
   documents: any[];
   artwork: any[];
   music: any[];
+  chat_room_id?: string | null;
   profiles?: {
     display_name: string;
     avatar_url: string;
@@ -699,6 +701,20 @@ const PremiumRoomViewPage: React.FC = () => {
             </div>
           </CardContent>
         </Card>
+
+        {/* Live training chat thread */}
+        {room.chat_room_id && (
+          <Card className="lg:col-span-2 overflow-hidden">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Users className="h-5 w-5" /> Live Training Chat
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="p-0" style={{ height: 560 }}>
+              <ChatRoom roomId={room.chat_room_id} onBack={() => { /* stays on page */ }} />
+            </CardContent>
+          </Card>
+        )}
       </div>
 
       {/* Purchase Modals */}
