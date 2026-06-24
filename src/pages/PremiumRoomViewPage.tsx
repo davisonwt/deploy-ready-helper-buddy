@@ -15,6 +15,7 @@ import { toast } from 'sonner';
 import { PremiumItemPurchaseModal } from '@/components/premium/PremiumItemPurchaseModal';
 import { RoomAccessModal } from '@/components/premium/RoomAccessModal';
 import { DiscordStyleRoomView } from '@/components/premium/DiscordStyleRoomView';
+import { ChatRoom } from '@/components/chat/ChatRoom';
 
 interface PremiumRoom {
   id: string;
