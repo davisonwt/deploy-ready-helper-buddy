@@ -150,10 +150,12 @@ const SessionBuilder = () => {
   const { toast } = useToast();
   const [sessions, setSessions] = useState<Session[]>([]);
   const [activeId, setActiveId] = useState<string | null>(null);
+  const [view, setView] = useState<'list' | 'editor'>('list');
   const [slots, setSlots] = useState<Slot[]>([]);
   const [tracks, setTracks] = useState<MusicTrack[]>([]);
   const [loading, setLoading] = useState(true);
   const [savingTitle, setSavingTitle] = useState(false);
+  const [listenSessionId, setListenSessionId] = useState<string | null>(null);
 
   const active = sessions.find((s) => s.id === activeId) || null;
   const usedSeconds = useMemo(
@@ -174,7 +176,6 @@ const SessionBuilder = () => {
         .eq('host_user_id', user.id)
         .order('created_at', { ascending: false });
       setSessions((data as Session[]) || []);
-      if (data && data.length && !activeId) setActiveId(data[0].id);
       setLoading(false);
     })();
     (async () => {
@@ -238,13 +239,27 @@ const SessionBuilder = () => {
     }
     setSessions((prev) => [data as Session, ...prev]);
     setActiveId(data.id);
+    setView('editor');
+  };
+
+  const openEditor = (id: string) => {
+    setActiveId(id);
+    setView('editor');
+  };
+
+  const backToList = () => {
+    setView('list');
+    setActiveId(null);
   };
 
   const deleteSession = async (id: string) => {
     if (!confirm('Delete this session and all its slots? This cannot be undone.')) return;
     await supabase.from('radio_prerecorded_sessions').delete().eq('id', id);
     setSessions((prev) => prev.filter((s) => s.id !== id));
-    if (activeId === id) setActiveId(null);
+    if (activeId === id) {
+      setActiveId(null);
+      setView('list');
+    }
   };
 
   const updateSessionField = async (patch: Partial<Session>) => {
@@ -389,58 +404,113 @@ const SessionBuilder = () => {
 
   if (!user) return null;
 
-  return (
-    <div className="grid grid-cols-1 lg:grid-cols-[280px_1fr] gap-6">
-      {/* Sessions sidebar */}
-      <Card className="radio-card">
-        <CardHeader className="pb-3">
-          <div className="flex items-center justify-between">
-            <CardTitle className="font-bitter text-radio-mist text-base">My Sessions</CardTitle>
-            <Button size="sm" variant="ghost" onClick={createSession} className="h-7 px-2 text-radio-amber hover:bg-radio-amber/10">
-              <Plus className="h-4 w-4" />
-            </Button>
+  if (view === 'list') {
+    return (
+      <div className="space-y-6">
+        <div className="flex items-start justify-between gap-3 flex-wrap">
+          <div>
+            <h2 className="font-bitter text-2xl text-radio-mist">My Radio Sessions</h2>
+            <p className="text-sm text-radio-mist/70">Build pre-recorded 2-hour shows, listen back, or delete old ones.</p>
           </div>
-        </CardHeader>
-        <CardContent className="space-y-2 max-h-[60vh] overflow-y-auto">
-          {loading && <p className="text-sm text-radio-mist/50">Loading…</p>}
-          {!loading && sessions.length === 0 && (
-            <p className="text-sm text-radio-mist/60">
-              No sessions yet. Hit <span className="text-radio-amber">+</span> to start building a 2-hour show.
-            </p>
-          )}
-          {sessions.map((s) => (
-            <button
-              key={s.id}
-              onClick={() => setActiveId(s.id)}
-              className={`w-full text-left rounded-md px-3 py-2 border transition-colors ${
-                activeId === s.id
-                  ? 'bg-radio-blue/20 border-radio-amber/50'
-                  : 'bg-radio-bg/40 border-radio-blue/20 hover:border-radio-amber/30'
-              }`}
-            >
-              <div className="flex items-center justify-between gap-2">
-                <span className="font-bitter text-sm text-radio-mist truncate">{s.title}</span>
-                <Badge
-                  variant="outline"
-                  className={`text-[10px] ${
-                    s.status === 'scheduled'
-                      ? 'border-radio-amber/50 text-radio-amber'
-                      : 'border-radio-blue/40 text-radio-mist/70'
-                  }`}
-                >
-                  {s.status}
-                </Badge>
-              </div>
-              <div className="text-xs text-radio-mist/60 mt-1">
-                {fmt(s.total_duration_seconds)} / 2:00:00
-              </div>
-            </button>
-          ))}
-        </CardContent>
-      </Card>
+          <Button onClick={createSession} className="bg-radio-amber text-radio-bg hover:bg-radio-amber/90">
+            <Plus className="h-4 w-4 mr-2" /> Create Radio Session
+          </Button>
+        </div>
 
-      {/* Active session */}
+        {loading && <p className="text-sm text-radio-mist/50">Loading…</p>}
+
+        {!loading && sessions.length === 0 && (
+          <Card className="radio-card">
+            <CardContent className="py-16 text-center space-y-4">
+              <Disc3 className="h-12 w-12 mx-auto text-radio-amber/70" />
+              <p className="font-bitter text-lg text-radio-mist/80">No radio sessions yet</p>
+              <p className="text-sm text-radio-mist/60 max-w-md mx-auto">
+                Drop your first 2-hour show — mix talk, voice notes, songs, adverts and Q&amp;A slot-by-slot.
+              </p>
+              <Button onClick={createSession} className="bg-radio-amber text-radio-bg hover:bg-radio-amber/90">
+                <Plus className="h-4 w-4 mr-2" /> Create Radio Session
+              </Button>
+            </CardContent>
+          </Card>
+        )}
+
+        {sessions.length > 0 && (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            {sessions.map((s) => (
+              <Card key={s.id} className="radio-card">
+                <CardContent className="p-4 space-y-3">
+                  <div className="flex items-start justify-between gap-2">
+                    <h3 className="font-bitter text-base text-radio-mist truncate">{s.title}</h3>
+                    <Badge
+                      variant="outline"
+                      className={`text-[10px] shrink-0 ${
+                        s.status === 'scheduled'
+                          ? 'border-radio-amber/50 text-radio-amber'
+                          : 'border-radio-blue/40 text-radio-mist/70'
+                      }`}
+                    >
+                      {s.status}
+                    </Badge>
+                  </div>
+                  <div className="text-xs text-radio-mist/60">
+                    {fmt(s.total_duration_seconds)} / 2:00:00
+                  </div>
+                  {s.description && (
+                    <p className="text-xs text-radio-mist/70 line-clamp-2">{s.description}</p>
+                  )}
+                  <div className="flex flex-wrap gap-2 pt-2">
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => setListenSessionId(s.id)}
+                      disabled={s.total_duration_seconds === 0}
+                      className="bg-radio-bg/40 border-radio-blue/30 text-radio-mist hover:border-radio-amber/50 hover:text-radio-amber"
+                    >
+                      <Play className="h-3.5 w-3.5 mr-1" /> Listen
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => openEditor(s.id)}
+                      className="bg-radio-bg/40 border-radio-blue/30 text-radio-mist hover:border-radio-amber/50 hover:text-radio-amber"
+                    >
+                      Edit
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => deleteSession(s.id)}
+                      className="border-destructive/40 text-destructive hover:bg-destructive/10"
+                    >
+                      <Trash2 className="h-3.5 w-3.5 mr-1" /> Delete
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        )}
+
+        <SessionListenDialog
+          sessionId={listenSessionId}
+          onClose={() => setListenSessionId(null)}
+        />
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-4">
+      <Button
+        size="sm"
+        variant="ghost"
+        onClick={backToList}
+        className="text-radio-mist/70 hover:text-radio-amber hover:bg-transparent px-0"
+      >
+        ← Back to sessions
+      </Button>
       <div className="space-y-4">
+
         {!active ? (
           <Card className="radio-card">
             <CardContent className="py-16 text-center">
@@ -898,4 +968,130 @@ const SlotRow = ({
   );
 };
 
+/* ---------------- Listen Dialog ---------------- */
+
+interface ListenSlot {
+  id: string;
+  position: number;
+  slot_type: SlotType;
+  label: string | null;
+  duration_seconds: number;
+  asset_url: string | null;
+  asset_name: string | null;
+  music_track_id: string | null;
+  track_url?: string | null;
+  track_title?: string | null;
+}
+
+const SessionListenDialog = ({
+  sessionId,
+  onClose,
+}: {
+  sessionId: string | null;
+  onClose: () => void;
+}) => {
+  const [items, setItems] = useState<ListenSlot[]>([]);
+  const [sessionTitle, setSessionTitle] = useState('');
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    if (!sessionId) {
+      setItems([]);
+      return;
+    }
+    (async () => {
+      setLoading(true);
+      const { data: sess } = await supabase
+        .from('radio_prerecorded_sessions')
+        .select('title')
+        .eq('id', sessionId)
+        .maybeSingle();
+      setSessionTitle((sess as any)?.title || 'Radio Session');
+
+      const { data: slotRows } = await supabase
+        .from('radio_prerecorded_slots')
+        .select('*')
+        .eq('session_id', sessionId)
+        .order('position', { ascending: true });
+
+      const baseSlots = (slotRows || []) as ListenSlot[];
+      const trackIds = baseSlots
+        .map((s) => s.music_track_id)
+        .filter((x): x is string => !!x);
+
+      let trackMap: Record<string, { file_url: string | null; track_title: string }> = {};
+      if (trackIds.length) {
+        const { data: tracks } = await supabase
+          .from('dj_music_tracks')
+          .select('id,track_title,file_url')
+          .in('id', trackIds);
+        (tracks || []).forEach((t: any) => {
+          trackMap[t.id] = { file_url: t.file_url, track_title: t.track_title };
+        });
+      }
+
+      setItems(
+        baseSlots.map((s) => ({
+          ...s,
+          track_url: s.music_track_id ? trackMap[s.music_track_id]?.file_url ?? null : null,
+          track_title: s.music_track_id ? trackMap[s.music_track_id]?.track_title ?? null : null,
+        }))
+      );
+      setLoading(false);
+    })();
+  }, [sessionId]);
+
+  return (
+    <Dialog open={!!sessionId} onOpenChange={(o) => !o && onClose()}>
+      <DialogContent className="bg-radio-bg border-radio-blue/30 text-radio-mist max-w-2xl">
+        <DialogHeader>
+          <DialogTitle className="font-bitter">Listen · {sessionTitle}</DialogTitle>
+        </DialogHeader>
+        <div className="max-h-[70vh] overflow-y-auto space-y-3">
+          {loading && <p className="text-sm text-radio-mist/60">Loading…</p>}
+          {!loading && items.length === 0 && (
+            <p className="text-sm text-radio-mist/60 text-center py-6">
+              This session has no slots yet.
+            </p>
+          )}
+          {items.map((slot) => {
+            const meta = SLOT_META[slot.slot_type];
+            const Icon = meta.icon;
+            const audioSrc = slot.asset_url || slot.track_url || null;
+            const displayLabel =
+              slot.label || slot.track_title || slot.asset_name || meta.label;
+            return (
+              <div
+                key={slot.id}
+                className="rounded-md border border-radio-blue/30 bg-radio-bg/40 p-3 space-y-2"
+              >
+                <div className="flex items-center gap-2">
+                  <Icon className={`h-4 w-4 ${meta.color}`} />
+                  <span className="text-xs uppercase tracking-wide text-radio-mist/60">
+                    {slot.position + 1}. {meta.label}
+                  </span>
+                  <span className="ml-auto text-xs text-radio-amber tabular-nums">
+                    {fmt(slot.duration_seconds)}
+                  </span>
+                </div>
+                <div className="text-sm text-radio-mist truncate">{displayLabel}</div>
+                {audioSrc ? (
+                  <audio controls src={audioSrc} className="w-full" preload="none" />
+                ) : (
+                  <p className="text-xs text-radio-mist/50 italic">
+                    {slot.slot_type === 'live_talk' || slot.slot_type === 'qa'
+                      ? 'Live segment — no recording to play back.'
+                      : 'No audio attached to this slot.'}
+                  </p>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+};
+
 export default SessionBuilder;
+
