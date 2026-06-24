@@ -889,6 +889,7 @@ const ChatApp = () => {
         </>
       )}
     </div>
+    </div>
   );
 };
 
