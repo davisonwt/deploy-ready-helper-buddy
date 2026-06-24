@@ -168,8 +168,9 @@ export default function OneOnOneRoom({ roomId, roomName, onLeave }: { roomId: st
               <VideoIcon className="h-4 w-4" />
             </Button>
             <Button size="sm" variant="ghost" onClick={onLeave}
-              className="gap-2 text-[#7E9498] hover:text-[#FF8A5B] hover:bg-transparent">
-              <PhoneOff className="h-4 w-4" />
+              className="gap-2 text-[#7E9498] hover:text-[#EAF4F2] hover:bg-[#1FB6A8]/10">
+              <ChevronLeft className="h-5 w-5" />
+              <span className="hidden sm:inline text-sm">Back</span>
             </Button>
           </div>
         </header>
