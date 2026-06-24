@@ -18,7 +18,7 @@ const getFileIcon = (fileType) => {
   return icons[fileType] || FileText;
 };
 
-const ChatMessage = ({ message, isOwn = false, onDelete }) => {
+const ChatMessage = ({ message, isOwn = false, onDelete, isInstructor, instructorMode = false }) => {
   const sender = message.sender_profile;
   const FileIcon = getFileIcon(message.file_type);
   const isSystemMessage = !message.sender_id && message.system_metadata?.is_system;
