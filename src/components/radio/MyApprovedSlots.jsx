@@ -19,7 +19,9 @@ import {
   AlertCircle,
   Play,
   Loader2,
-  Trash2
+  Trash2,
+  Pencil,
+  Plus
 } from 'lucide-react';
 import { format, parseISO, isWithinInterval, addMinutes, subMinutes } from 'date-fns';
 
@@ -29,6 +31,11 @@ export function MyApprovedSlots() {
   const [slots, setSlots] = useState([]);
   const [loading, setLoading] = useState(true);
   const [startingSession, setStartingSession] = useState(null);
+  const [editingSlot, setEditingSlot] = useState(null);
+  const [editStart, setEditStart] = useState('');
+  const [editEnd, setEditEnd] = useState('');
+  const [editNotes, setEditNotes] = useState('');
+  const [savingEdit, setSavingEdit] = useState(false);
 
   useEffect(() => {
     if (user) {
