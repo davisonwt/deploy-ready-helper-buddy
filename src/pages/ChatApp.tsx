@@ -559,20 +559,37 @@ const ChatApp = () => {
           
           {/* Header */}
           <div className="mb-6 space-y-4">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => navigate('/communications-hub')}
+              className="gap-2 px-0 text-[#8AA99A] hover:text-[#F3F7F0] hover:bg-transparent"
+            >
+              <ArrowLeft className="h-4 w-4" /> Back to Go-Live
+            </Button>
             <div className="flex items-center justify-between">
               <div>
                 <h1
                   className="text-4xl tracking-tight text-[#F3F7F0]"
                   style={{ fontFamily: '"Outfit", "Inter", sans-serif', fontWeight: 600 }}
                 >
-                  Chats
+                  Community Chats
                 </h1>
                 <p className="text-sm text-[#8AA99A] mt-1">
-                  Click on a chat below to send messages, voice notes, make calls & more
+                  Group conversations & circles. Looking for a private 1-on-1? Head to Live Rooms.
                 </p>
               </div>
               <div className="flex gap-2">
-                <Button 
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => navigate('/live-rooms')}
+                  className="gap-2"
+                >
+                  <Video className="h-4 w-4" />
+                  Start a 1-on-1
+                </Button>
+                <Button
                   variant="outline"
                   size="sm"
                   onClick={() => {
