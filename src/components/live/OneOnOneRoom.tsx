@@ -26,12 +26,36 @@ export default function OneOnOneRoom({ roomId, roomName, onLeave }: { roomId: st
   const endRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
+    if (!user?.id) return;
     let cancelled = false;
-    supabase.from('live_room_participants' as any).select('user_id, display_name, role').eq('room_id', roomId).then(({ data }) => {
+    (async () => {
+      // Make sure the current user is registered as a participant so RLS allows
+      // reading/sending messages even for rooms whose seed insert was interrupted.
+      const { data: room } = await supabase
+        .from('live_rooms')
+        .select('created_by')
+        .eq('id', roomId)
+        .maybeSingle();
+      const role = room?.created_by === user.id ? 'host' : 'audience';
+      await supabase
+        .from('live_room_participants' as any)
+        .upsert(
+          {
+            room_id: roomId,
+            user_id: user.id,
+            role,
+            display_name: user.user_metadata?.display_name || user.email?.split('@')[0] || 'Me',
+          },
+          { onConflict: 'room_id,user_id', ignoreDuplicates: true } as any,
+        );
+      const { data } = await supabase
+        .from('live_room_participants' as any)
+        .select('user_id, display_name, role')
+        .eq('room_id', roomId);
       if (!cancelled && data) setParticipants(data as any);
-    });
+    })();
     return () => { cancelled = true; };
-  }, [roomId]);
+  }, [roomId, user?.id]);
 
   useEffect(() => { endRef.current?.scrollIntoView({ behavior: 'smooth' }); }, [messages.length]);
 
