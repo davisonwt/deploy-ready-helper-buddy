@@ -9,7 +9,7 @@ const ALLOWED_MIME = new Set([
   'audio/wav',
 ]);
 
-export async function uploadLiveRoomMedia(
+export async function uploadChatMedia(
   roomId: string,
   blob: Blob,
   ext: string,
@@ -33,10 +33,16 @@ export async function uploadLiveRoomMedia(
   return { path, signedUrl: data.signedUrl };
 }
 
-export async function signLiveRoomMedia(path: string): Promise<string> {
+// Backwards-compatible alias for OneOnOneRoom / live_rooms callers.
+export const uploadLiveRoomMedia = uploadChatMedia;
+
+export async function signChatMedia(path: string): Promise<string> {
   const { data, error } = await supabase.storage
     .from(BUCKET)
     .createSignedUrl(path, 60 * 5);
   if (error) throw error;
   return data.signedUrl;
 }
+
+export const signLiveRoomMedia = signChatMedia;
+
