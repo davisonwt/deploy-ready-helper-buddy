@@ -8,7 +8,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
-import { Upload, FileText, Image, Music, X } from 'lucide-react';
+import { ArrowLeft, Upload, FileText, Image, Music, X } from 'lucide-react';
 
 interface FileItem {
   id: string;
@@ -238,6 +238,15 @@ export const PremiumRoomForm = ({ roomId }: PremiumRoomFormProps) => {
 
   return (
     <div className="max-w-4xl mx-auto p-6">
+      <Button
+        type="button"
+        variant="ghost"
+        onClick={() => navigate(-1)}
+        className="mb-4 gap-2 px-0 text-muted-foreground hover:text-foreground hover:bg-transparent"
+      >
+        <ArrowLeft className="h-4 w-4" />
+        Go Back
+      </Button>
       <Card>
         <CardHeader>
           <CardTitle>{roomId ? 'Update Training Room' : 'Create Training Room'}</CardTitle>

@@ -124,6 +124,25 @@ const PremiumRoomsLanding: React.FC = () => {
     }
   }, []);
 
+  const handleDeleteRoom = async (room: PremiumRoom) => {
+    if (!user || user.id !== room.creator_id) return;
+    if (!confirm(`Delete "${room.title}"? This cannot be undone.`)) return;
+
+    const { error } = await supabase
+      .from('premium_rooms')
+      .delete()
+      .eq('id', room.id)
+      .eq('creator_id', user.id);
+
+    if (error) {
+      toast.error('Failed to delete training room');
+      return;
+    }
+
+    setRooms((prev) => prev.filter((r) => r.id !== room.id));
+    toast.success('Training room deleted');
+  };
+
   return (
     <div
       className="min-h-screen relative"
@@ -212,7 +231,7 @@ const PremiumRoomsLanding: React.FC = () => {
                 <Button asChild>
                   <Link to="/create-premium-room">
                     <Plus className="h-4 w-4 mr-2" />
-                    Create Premium Room
+                    Create Training Room
                   </Link>
                 </Button>
               </div>
@@ -225,7 +244,21 @@ const PremiumRoomsLanding: React.FC = () => {
                 <CardHeader>
                   <div className="flex items-start justify-between gap-2">
                     <CardTitle className="text-lg">{room.title}</CardTitle>
-                    <Badge variant="secondary">{room.room_type}</Badge>
+                    <div className="flex flex-wrap items-center justify-end gap-2">
+                      <Badge variant="secondary">{room.room_type}</Badge>
+                      {user?.id === room.creator_id && (
+                        <Button
+                          size="sm"
+                          variant="destructive"
+                          onClick={() => handleDeleteRoom(room)}
+                          aria-label={`Delete ${room.title}`}
+                          className="gap-2"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                          Delete
+                        </Button>
+                      )}
+                    </div>
                   </div>
                 </CardHeader>
                 <CardContent className="space-y-3">
@@ -263,29 +296,6 @@ const PremiumRoomsLanding: React.FC = () => {
                       {room.price > 0 ? `$${room.price}` : 'Free'}
                     </span>
                     <div className="flex items-center gap-2">
-                      {user?.id === room.creator_id && (
-                        <Button
-                          size="sm"
-                          variant="ghost"
-                          className="text-destructive hover:text-destructive"
-                          onClick={async () => {
-                            if (!confirm(`Delete "${room.title}"? This cannot be undone.`)) return;
-                            const { error } = await supabase
-                              .from('premium_rooms')
-                              .delete()
-                              .eq('id', room.id);
-                            if (error) {
-                              toast.error('Failed to delete room');
-                              return;
-                            }
-                            setRooms((prev) => prev.filter((r) => r.id !== room.id));
-                            toast.success('Room deleted');
-                          }}
-                          aria-label="Delete room"
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      )}
                       <Button size="sm" asChild>
                         <Link to={`/premium-room/${room.id}`}>View Room</Link>
                       </Button>
