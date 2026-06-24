@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useMemo } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
@@ -29,6 +29,7 @@ import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
 import { useMediaRecorder } from '@/hooks/useMediaRecorder';
 import { uploadChatMedia } from '@/lib/liveRoom/uploadMedia';
+import { getVoiceColor, classifyVoiceState, initialFrom } from './voiceColor';
 
 
 interface ChatRoomProps {
@@ -74,6 +75,37 @@ export const ChatRoom: React.FC<ChatRoomProps> = ({ roomId, onBack }) => {
   const [loadingUsers, setLoadingUsers] = useState(false);
   const [participantIds, setParticipantIds] = useState<string[]>([]);
   const [participants, setParticipants] = useState<any[]>([]);
+
+  // --- Voice trail (visual only) ---------------------------------------
+  // Per-user most recent message timestamp drives the active/recent/idle
+  // ring state in the avatar trail. Honest signal: message recency only,
+  // no presence channel exists yet in this code path.
+  const lastSpokeAtByUser = useMemo(() => {
+    const map: Record<string, string> = {};
+    for (let i = messages.length - 1; i >= 0; i--) {
+      const m: any = messages[i];
+      if (m?.sender_id && !map[m.sender_id]) map[m.sender_id] = m.created_at;
+    }
+    return map;
+  }, [messages]);
+
+  // Brief "pop" tag for the latest sender's avatar in the trail (400ms).
+  const [poppedUserId, setPoppedUserId] = useState<string | null>(null);
+  const popTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const lastSeenMsgIdRef = useRef<string | null>(null);
+  useEffect(() => {
+    const last: any = messages[messages.length - 1];
+    if (!last || last.id === lastSeenMsgIdRef.current) return;
+    lastSeenMsgIdRef.current = last.id;
+    if (last.sender_id && last.sender_id !== user?.id) {
+      setPoppedUserId(last.sender_id);
+      if (popTimerRef.current) clearTimeout(popTimerRef.current);
+      popTimerRef.current = setTimeout(() => setPoppedUserId(null), 420);
+    }
+    return () => { if (popTimerRef.current) clearTimeout(popTimerRef.current); };
+  }, [messages, user?.id]);
+  // ---------------------------------------------------------------------
+
 
   useEffect(() => {
     if (roomId && user) {
@@ -634,11 +666,11 @@ export const ChatRoom: React.FC<ChatRoomProps> = ({ roomId, onBack }) => {
   }
 
   return (
-    <div className="flex flex-col h-full min-h-[600px]">
+    <div className="flex flex-col h-full min-h-[600px] bg-[#0E1B15] text-[#F3F7F0]">
       {/* Header */}
-      <div className="border-b bg-card p-4">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
+      <div className="border-b border-[#4FA876]/15 bg-[#0E1B15]/95 backdrop-blur px-6 py-4">
+        <div className="flex items-center justify-between gap-4">
+          <div className="flex items-center gap-4 min-w-0">
             <Button
               variant="ghost"
               size="sm"
@@ -646,43 +678,78 @@ export const ChatRoom: React.FC<ChatRoomProps> = ({ roomId, onBack }) => {
                 console.log('Back button clicked');
                 onBack();
               }}
-              className="text-foreground hover:bg-primary/10"
+              className="text-[#8AA99A] hover:text-[#F3F7F0] hover:bg-[#4FA876]/10 px-2"
             >
               <ArrowLeft className="h-4 w-4 mr-1" />
               <span className="text-sm">Back</span>
             </Button>
-            <Avatar className="h-10 w-10">
-              <AvatarFallback className="bg-primary/10 text-primary">
-                {roomInfo?.name?.charAt(0) || 'C'}
-              </AvatarFallback>
-            </Avatar>
-            <div>
-              <h2 className="font-semibold">{roomInfo?.name}</h2>
-              <div className="flex items-center gap-2">
-                <p className="text-xs text-muted-foreground">
-                  {roomInfo?.room_type === 'direct' ? 'Direct Message' : 'Group Chat'}
-                </p>
-                {participants.length > 0 && (
-                  <div className="flex items-center gap-1">
-                    <span className="text-xs text-muted-foreground">•</span>
-                    <div className="flex -space-x-2">
-                      {participants.slice(0, 3).map((p: any) => (
-                        <Avatar key={p.user_id} className="h-5 w-5 border-2 border-background">
-                          <AvatarImage src={p.profiles?.avatar_url} />
-                          <AvatarFallback className="text-xs">
-                            {(p.profiles?.display_name || p.profiles?.first_name || 'U')?.charAt(0)}
-                          </AvatarFallback>
-                        </Avatar>
-                      ))}
-                    </div>
-                    <span className="text-xs text-muted-foreground">
-                      {participants.length} member{participants.length !== 1 ? 's' : ''}
-                    </span>
-                  </div>
-                )}
+            <div className="min-w-0">
+              <h2
+                className="text-2xl tracking-tight truncate text-[#F3F7F0]"
+                style={{ fontFamily: '"Outfit", "Inter", sans-serif', fontWeight: 600 }}
+              >
+                {roomInfo?.name}
+              </h2>
+              <div className="flex items-center gap-3 mt-1">
+                {participants.length > 0 && (() => {
+                  const visible = participants.slice(0, 6);
+                  const extra = Math.max(0, participants.length - visible.length);
+                  const activeCount = participants.filter((p: any) =>
+                    classifyVoiceState(lastSpokeAtByUser[p.user_id]) === 'active'
+                  ).length;
+                  return (
+                    <>
+                      <div className="flex -space-x-2.5">
+                        {visible.map((p: any) => {
+                          const color = getVoiceColor(p.user_id);
+                          const state = classifyVoiceState(lastSpokeAtByUser[p.user_id]);
+                          const popped = poppedUserId === p.user_id;
+                          const ringOpacity = state === 'active' ? 1 : state === 'recent' ? 0.55 : 0.18;
+                          return (
+                            <div
+                              key={p.user_id}
+                              className="relative rounded-full motion-reduce:transition-none transition-transform duration-300"
+                              style={{
+                                transform: popped ? 'scale(1.18)' : 'scale(1)',
+                                filter: popped ? `drop-shadow(0 0 10px ${color.glow})` : 'none',
+                              }}
+                              title={p.profiles?.display_name || p.profiles?.first_name || 'Member'}
+                            >
+                              <Avatar
+                                className="h-8 w-8 border-2"
+                                style={{ borderColor: color.ring, opacity: 0.4 + 0.6 * ringOpacity }}
+                              >
+                                <AvatarImage src={p.profiles?.avatar_url} />
+                                <AvatarFallback
+                                  className="text-[11px]"
+                                  style={{ background: '#123330', color: color.ring }}
+                                >
+                                  {initialFrom(p.profiles?.display_name || p.profiles?.first_name)}
+                                </AvatarFallback>
+                              </Avatar>
+                            </div>
+                          );
+                        })}
+                        {extra > 0 && (
+                          <div
+                            className="h-8 w-8 rounded-full border-2 border-[#4FA876]/30 bg-[#123330] flex items-center justify-center text-[10px] font-semibold text-[#8AA99A]"
+                          >
+                            +{extra}
+                          </div>
+                        )}
+                      </div>
+                      <span className="text-xs text-[#8AA99A] tabular-nums">
+                        {activeCount > 0
+                          ? `${activeCount} here now`
+                          : `${participants.length} member${participants.length !== 1 ? 's' : ''}`}
+                      </span>
+                    </>
+                  );
+                })()}
               </div>
             </div>
           </div>
+          
           
           {/* Action Buttons */}
           <div className="flex items-center gap-2">
@@ -844,12 +911,12 @@ export const ChatRoom: React.FC<ChatRoomProps> = ({ roomId, onBack }) => {
       <ScrollArea ref={scrollAreaRef} className="flex-1 p-4">
         {/* Typing Indicator */}
         {usersTyping.length > 0 && (
-          <div className="flex items-center gap-2 text-xs text-muted-foreground mb-3 p-2 bg-muted/30 rounded-lg">
+          <div className="flex items-center gap-2 text-xs text-[#8AA99A] mb-3 p-2 bg-[#123330]/40 rounded-lg border border-[#4FA876]/15">
             <div className="flex gap-1">
               {[0, 1, 2].map((i) => (
                 <div
                   key={i}
-                  className="h-1.5 w-1.5 bg-primary rounded-full animate-bounce"
+                  className="h-1.5 w-1.5 bg-[#F2C14E] rounded-full animate-bounce motion-reduce:animate-none"
                   style={{ animationDelay: `${i * 150}ms` }}
                 />
               ))}
@@ -900,20 +967,30 @@ export const ChatRoom: React.FC<ChatRoomProps> = ({ roomId, onBack }) => {
                       Cancel
                     </Button>
                   </div>
-                ) : (
+                ) : (() => {
+                  const voice = getVoiceColor(msg.sender_id);
+                  return (
                   <div className={`flex ${isOwn ? 'justify-end' : 'justify-start'} px-4`}>
                     <div className="flex flex-col gap-1">
-                      <ChatMessage
-                        message={msg}
-                        isOwn={isOwn}
-                        onDelete={isOwn ? () => handleDeleteMessage(msg.id) : undefined}
-                      />
+                      <div
+                        className="rounded-r-lg"
+                        style={isOwn
+                          ? undefined
+                          : { borderLeft: `2px solid ${voice.ring}`, paddingLeft: 8, background: voice.tint }
+                        }
+                      >
+                        <ChatMessage
+                          message={msg}
+                          isOwn={isOwn}
+                          onDelete={isOwn ? () => handleDeleteMessage(msg.id) : undefined}
+                        />
+                      </div>
                       <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                         <Button
                           variant="ghost"
                           size="sm"
                           onClick={() => setReplyingTo(msg)}
-                          className="h-6 px-2 text-xs hover:bg-muted"
+                          className="h-6 px-2 text-xs text-[#8AA99A] hover:text-[#F3F7F0] hover:bg-[#4FA876]/10"
                         >
                           Reply
                         </Button>
@@ -925,7 +1002,7 @@ export const ChatRoom: React.FC<ChatRoomProps> = ({ roomId, onBack }) => {
                               setEditingMessageId(msg.id);
                               setEditText(msg.content || '');
                             }}
-                            className="h-6 px-2 text-xs hover:bg-muted"
+                            className="h-6 px-2 text-xs text-[#8AA99A] hover:text-[#F3F7F0] hover:bg-[#4FA876]/10"
                           >
                             Edit
                           </Button>
@@ -933,7 +1010,8 @@ export const ChatRoom: React.FC<ChatRoomProps> = ({ roomId, onBack }) => {
                       </div>
                     </div>
                   </div>
-                )}
+                  );
+                })()}
               </div>
             );
           })}
@@ -941,14 +1019,14 @@ export const ChatRoom: React.FC<ChatRoomProps> = ({ roomId, onBack }) => {
       </ScrollArea>
 
       {/* Input Area */}
-      <div className="border-t bg-card p-4">
+      <div className="border-t border-[#4FA876]/15 bg-[#0E1B15]/95 backdrop-blur p-4">
         {replyingTo && (
-          <div className="mb-2 p-2 bg-muted rounded-lg border-l-2 border-primary text-xs flex items-center justify-between">
+          <div className="mb-2 p-2 bg-[#123330]/50 rounded-lg border-l-2 border-[#F2C14E] text-xs flex items-center justify-between text-[#F3F7F0]">
             <div>
               <span className="font-semibold">Replying to:</span>
-              <span className="ml-2 text-muted-foreground">{replyingTo.content?.substring(0, 50)}...</span>
+              <span className="ml-2 text-[#8AA99A]">{replyingTo.content?.substring(0, 50)}...</span>
             </div>
-            <Button variant="ghost" size="sm" onClick={() => setReplyingTo(null)} className="h-6 px-2">
+            <Button variant="ghost" size="sm" onClick={() => setReplyingTo(null)} className="h-6 px-2 text-[#8AA99A] hover:text-[#F3F7F0] hover:bg-transparent">
               Cancel
             </Button>
           </div>
@@ -969,11 +1047,13 @@ export const ChatRoom: React.FC<ChatRoomProps> = ({ roomId, onBack }) => {
             placeholder={replyingTo ? "Type your reply..." : "Type a message..."}
             disabled={sending}
             onFocus={handleTyping}
+            className="bg-[#123330]/60 border-[#4FA876]/20 text-[#F3F7F0] placeholder:text-[#8AA99A] focus-visible:ring-[#4FA876]/40 focus-visible:border-[#4FA876]/50"
           />
           <Button
             onClick={handleSendMessage}
             disabled={!message.trim() || sending}
             size="icon"
+            className="bg-[#4FA876] text-[#0E1B15] hover:bg-[#4FA876]/90 disabled:opacity-40"
           >
             {sending ? (
               <Loader2 className="h-4 w-4 animate-spin" />
