@@ -40,7 +40,13 @@ export default function CommunityChatsPage() {
           </p>
 
           <PublicRoomsBrowser
-            onJoinRoom={(roomId: string) => navigate(`/premium-room/${roomId}`)}
+            onJoinRoom={(room: { id: string; is_premium?: boolean }) => {
+              if (room.is_premium) {
+                navigate(`/premium-room/${room.id}`);
+              } else {
+                navigate(`/chatapp?room=${room.id}`);
+              }
+            }}
             onNavigateToOrchard={(orchardId: string) => navigate(`/orchard/${orchardId}`)}
           />
         </div>
