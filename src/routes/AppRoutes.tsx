@@ -118,6 +118,7 @@ import {
   CommunityChatsPage,
   SessionPage,
   ClassroomPage,
+  ClassroomDashboardPage,
   SkillDropPage,
 } from './lazyPages';
 
