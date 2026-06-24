@@ -123,7 +123,7 @@ export default function LiveRoomsPage() {
             </h1>
             <p className="text-[#7E9498] text-base">Private rooms you host or were invited to.</p>
           </div>
-          <Button onClick={() => navigate('/communications-hub')}
+          <Button onClick={() => setCreateOpen(true)}
             className="gap-2 bg-[#1FB6A8] text-[#0B1420] hover:bg-[#1FB6A8]/90">
             <Plus className="h-4 w-4" /> New room
           </Button>
