@@ -127,6 +127,44 @@ function Step3() {
               </motion.div>
             </motion.div>
           ))}
+
+          {/* Attendee interaction strip */}
+          <div className="border-t pt-2 mt-2 space-y-1.5" style={{ borderColor: `${VIOLET}22` }}>
+            {attendees.map((a, i) => (
+              <motion.div key={a.name}
+                initial={{ opacity: 0, x: -6 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.55 + i * 0.25 }}
+                className="flex items-center gap-2 px-2 py-1.5 rounded-md"
+                style={{ background: a.unmuted ? `${CHALK}1F` : `${VIOLET}08` }}
+              >
+                <div className="w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-semibold"
+                  style={{ background: VIOLET, color: BG }}>{a.name[0]}</div>
+                <span className="text-xs flex-1" style={{ color: TEXT }}>{a.name}</span>
+                {a.raised && (
+                  <motion.span
+                    animate={{ y: [0, -3, 0] }} transition={{ duration: 1.2, repeat: Infinity }}
+                    className="flex items-center gap-0.5 px-1.5 py-0.5 rounded-full text-[9px] font-bold"
+                    style={{ background: `${CHALK}33`, color: CHALK }}
+                  >
+                    <Hand className="w-2.5 h-2.5" /> raised
+                  </motion.span>
+                )}
+                {a.note && (
+                  <span className="flex items-center gap-1 text-[10px] italic" style={{ color: MUTED }}>
+                    <MessageSquare className="w-2.5 h-2.5" /> {a.note}
+                  </span>
+                )}
+                {a.unmuted ? (
+                  <span className="w-5 h-5 rounded-full flex items-center justify-center" style={{ background: CHALK, color: BG }}>
+                    <Mic className="w-2.5 h-2.5" />
+                  </span>
+                ) : (
+                  <span className="w-5 h-5 rounded-full flex items-center justify-center" style={{ background: `${VIOLET}33`, color: MUTED }}>
+                    <MicOff className="w-2.5 h-2.5" />
+                  </span>
+                )}
+              </motion.div>
+            ))}
+          </div>
         </div>
       </div>
     </motion.div>
