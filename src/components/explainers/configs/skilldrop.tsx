@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion';
-import { Zap, Plus, MessageSquare, Sparkles, FileText, ImageIcon, Download } from 'lucide-react';
+import { Zap, Plus, MessageSquare, Sparkles, FileText, ImageIcon, Download, Hand, Mic, Video, Users } from 'lucide-react';
 import voAsset from '@/assets/skilldrop-vo.mp3.asset.json';
 import type { ExplainerConfig } from '../types';
 import { sceneAnim } from '../ExplainerPlayer';
@@ -131,34 +131,56 @@ function Step3() {
 }
 
 function Step4() {
-  const replies = [
-    { from: 'Mira', text: 'Game changer.' },
-    { from: 'Ezra', text: 'Per litre, not per pot. Got it.' },
-    { from: 'Amara', text: 'Tried it tonight 🔥' },
+  const items = [
+    { from: 'Mira', kind: 'raise', text: 'Has a question' },
+    { from: 'Ezra', kind: 'voice', text: 'voice note · 0:18' },
+    { from: 'Amara', kind: 'upload', text: 'fixed-handle.jpg · video' },
   ];
   return (
     <motion.div {...sceneAnim} className="w-full max-w-md">
       <div className="rounded-xl border p-4" style={{ background: `${PANEL}CC`, borderColor: `${GOLD}55`, fontFamily: FONT }}>
-        <div className="flex items-center gap-2 mb-3">
-          <MessageSquare className="w-4 h-4" style={{ color: GOLD }} />
-          <p className="text-xs uppercase tracking-wider font-semibold" style={{ color: MUTED }}>Back & forth</p>
+        <div className="flex items-center justify-between mb-3">
+          <div className="flex items-center gap-2">
+            <MessageSquare className="w-4 h-4" style={{ color: GOLD }} />
+            <p className="text-xs uppercase tracking-wider font-semibold" style={{ color: MUTED }}>Attendees</p>
+          </div>
+          <motion.div
+            animate={{ scale: [1, 1.06, 1] }} transition={{ duration: 1.6, repeat: Infinity }}
+            className="flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider"
+            style={{ background: `linear-gradient(90deg, ${GOLD}, ${EMBER})`, color: BG }}
+          >
+            <Users className="w-3 h-3" /> Open floor
+          </motion.div>
         </div>
-        <div className="space-y-2">
-          {replies.map((r, i) => (
-            <motion.div key={i}
-              initial={{ opacity: 0, x: i % 2 === 0 ? -10 : 10 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: i * 0.35 }}
-              className={`max-w-[80%] px-3 py-2 rounded-2xl text-sm ${i % 2 === 0 ? '' : 'ml-auto'}`}
-              style={{
-                background: i % 2 === 0 ? `${GOLD}1A` : `linear-gradient(90deg, ${GOLD}, ${EMBER})`,
-                color: i % 2 === 0 ? TEXT : BG,
-                borderTopLeftRadius: i % 2 === 0 ? '0.25rem' : undefined,
-                borderTopRightRadius: i % 2 === 0 ? undefined : '0.25rem',
-              }}
-            >
-              <span className="font-bold mr-1.5">{r.from}:</span>{r.text}
-            </motion.div>
-          ))}
+
+        <div className="space-y-1.5">
+          {items.map((it, i) => {
+            const iconMap = { raise: Hand, voice: Mic, upload: Video } as const;
+            const Icon = iconMap[it.kind as keyof typeof iconMap];
+            return (
+              <motion.div key={it.from}
+                initial={{ opacity: 0, x: -8 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.15 + i * 0.28 }}
+                className="flex items-center gap-2 px-2.5 py-2 rounded-md border"
+                style={{ background: `${GOLD}10`, borderColor: `${GOLD}33` }}
+              >
+                <div className="w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold"
+                  style={{ background: `linear-gradient(90deg, ${GOLD}, ${EMBER})`, color: BG }}>{it.from[0]}</div>
+                <span className="text-xs flex-1" style={{ color: TEXT }}>{it.from}</span>
+                <span className="flex items-center gap-1 text-[10px] italic" style={{ color: MUTED }}>
+                  <Icon className="w-3 h-3" style={{ color: EMBER }} /> {it.text}
+                </span>
+              </motion.div>
+            );
+          })}
         </div>
+
+        <motion.div
+          initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 1.2 }}
+          className="mt-3 text-center text-[10px] uppercase tracking-[0.2em]"
+          style={{ color: MUTED }}
+        >
+          host controls the flow · gives feedback
+        </motion.div>
       </div>
     </motion.div>
   );
@@ -178,7 +200,7 @@ function Outro() {
 
 export const skilldropConfig: ExplainerConfig = {
   voUrl: voAsset.url,
-  estDuration: 25,
+  estDuration: 32,
   title: 'SkillDrop',
   subtitle: 'Fast skill-sharing.',
   outroTitle: 'Short. Sharp.',
@@ -188,8 +210,8 @@ export const skilldropConfig: ExplainerConfig = {
     { id: 'intro', weight: 2,   Scene: Intro },
     { id: 'step1', weight: 3,   Scene: Step1 },
     { id: 'step2', weight: 6,   Scene: Step2 },
-    { id: 'step3', weight: 7,   Scene: Step3 },
-    { id: 'step4', weight: 4.5, Scene: Step4 },
+    { id: 'step3', weight: 6,   Scene: Step3 },
+    { id: 'step4', weight: 10,  Scene: Step4 },
     { id: 'outro', weight: 2.5, Scene: Outro },
   ],
 };
