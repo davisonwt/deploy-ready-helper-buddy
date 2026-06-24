@@ -4,7 +4,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { toast } from 'sonner';
-import { Mic, Video as VideoIcon, Send, Phone, PhoneOff, Square, X } from 'lucide-react';
+import { Mic, Video as VideoIcon, Send, Phone, ChevronLeft, Square, X } from 'lucide-react';
 import { useLiveRoomMessages } from '@/hooks/useLiveRoomMessages';
 import { useMediaRecorder } from '@/hooks/useMediaRecorder';
 import { uploadLiveRoomMedia } from '@/lib/liveRoom/uploadMedia';
