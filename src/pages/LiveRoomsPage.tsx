@@ -138,8 +138,8 @@ export default function LiveRoomsPage() {
         {!isLoading && rooms.length === 0 && (
           <div className="rounded-2xl border border-[#1FB6A8]/15 bg-[#123330]/30 p-12 text-center">
             <p className="text-2xl mb-3" style={{ fontFamily: '"Fraunces", serif', fontWeight: 500 }}>No private rooms yet</p>
-            <p className="text-[#7E9498] mb-6">Create a 1-on-1 from the ChatApp Go-Live launcher and invite a tribe member.</p>
-            <Button onClick={() => navigate('/communications-hub')} className="bg-[#1FB6A8] text-[#0B1420] hover:bg-[#1FB6A8]/90">Open launcher</Button>
+            <p className="text-[#7E9498] mb-6">Start a private 1-on-1 and invite a tribe member.</p>
+            <Button onClick={() => setCreateOpen(true)} className="bg-[#1FB6A8] text-[#0B1420] hover:bg-[#1FB6A8]/90 gap-2"><Plus className="h-4 w-4" /> New room</Button>
           </div>
         )}
 
