@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion';
-import { BookOpen, Plus, FileText, Download, Upload, Check, Star } from 'lucide-react';
+import { BookOpen, Plus, FileText, Download, Upload, Check, Star, Hand, Mic, MicOff, MessageSquare } from 'lucide-react';
 import voAsset from '@/assets/classroom-vo.mp3.asset.json';
 import type { ExplainerConfig } from '../types';
 import { sceneAnim } from '../ExplainerPlayer';
@@ -90,29 +90,34 @@ function Step3() {
   const docs = [
     { name: 'Lesson outline.pdf' },
     { name: 'Worksheet · Omer.pdf' },
-    { name: 'Slides · sunrise.key' },
+  ];
+  const attendees = [
+    { name: 'Mira', raised: true,  unmuted: true,  note: '' },
+    { name: 'Ezra', raised: true,  unmuted: false, note: '' },
+    { name: 'Amara', raised: false, unmuted: false, note: 'voice note · 0:14' },
   ];
   return (
     <motion.div {...sceneAnim} className="w-full max-w-md">
       <div className="rounded-xl border overflow-hidden" style={{ background: `${PANEL}CC`, borderColor: `${VIOLET}55`, fontFamily: FONT }}>
         <div className="px-4 py-3 border-b flex items-center gap-2" style={{ borderColor: `${VIOLET}33` }}>
           <div className="w-2 h-2 rounded-full animate-pulse" style={{ background: VIOLET }} />
-          <span className="text-sm italic" style={{ color: TEXT }}>Pre-loaded for attendees</span>
+          <span className="text-sm italic" style={{ color: TEXT }}>Live · Ed is teaching</span>
           <span className="ml-auto text-[10px] uppercase tracking-wider font-semibold px-2 py-0.5 rounded-full"
             style={{ background: `${CHALK}33`, color: CHALK }}>view · download</span>
         </div>
+
         <div className="p-3 space-y-2">
           {docs.map((d, i) => (
             <motion.div key={d.name}
-              initial={{ opacity: 0, x: -8 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.15 + i * 0.25 }}
-              className="flex items-center gap-3 p-2.5 rounded-lg border"
+              initial={{ opacity: 0, x: -8 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.1 + i * 0.18 }}
+              className="flex items-center gap-3 p-2 rounded-lg border"
               style={{ background: `${VIOLET}10`, borderColor: `${VIOLET}33` }}
             >
-              <div className="w-8 h-8 rounded-md flex items-center justify-center"
+              <div className="w-7 h-7 rounded-md flex items-center justify-center"
                 style={{ background: `${VIOLET}33`, color: VIOLET }}>
-                <FileText className="w-4 h-4" />
+                <FileText className="w-3.5 h-3.5" />
               </div>
-              <span className="text-sm flex-1" style={{ color: TEXT }}>{d.name}</span>
+              <span className="text-xs flex-1" style={{ color: TEXT }}>{d.name}</span>
               <motion.div
                 animate={{ y: [0, -2, 0] }} transition={{ duration: 1.2, repeat: Infinity, delay: i * 0.2 }}
                 className="w-7 h-7 rounded-full flex items-center justify-center"
