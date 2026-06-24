@@ -5,6 +5,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { ChatRoom } from '@/components/chat/ChatRoom';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
+import ClassroomLiveRoom from '@/components/classroom/ClassroomLiveRoom';
 
 type SessionKind = 'classroom' | 'skilldrop';
 
