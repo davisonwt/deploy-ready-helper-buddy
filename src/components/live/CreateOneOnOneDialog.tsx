@@ -139,7 +139,7 @@ export default function CreateOneOnOneDialog({ open, onOpenChange, onCreated }: 
                 <div className="grid gap-1">
                   {profiles.map(p => {
                     const selected = invitees.includes(p.user_id);
-                    const memberName = p.display_name || `${p.first_name || ''} ${p.last_name || ''}`.trim() || 'Sower';
+                    const memberName = p.display_name || 'Sower';
                     return (
                       <button
                         key={p.user_id}
