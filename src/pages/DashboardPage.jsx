@@ -86,7 +86,7 @@ const NAV = [
   { label: 'SeedFlow',         sub: 'Community updates',         emoji: '🏠', path: '/dashboard',            color: '#38bdf8' },
   { label: 'My Garden',        sub: 'Your seeds & orchards',     emoji: '🌱', path: '/my-orchards',           color: '#facc15' },
   { label: 'Tribal Gardens',   sub: 'All tribal seeds & orchards', emoji: '🌳', path: '/browse-orchards',     color: '#0d9488' },
-  { label: 'ChatApp',          sub: 'Tribe messaging',           emoji: '💬', path: '/chatapp',               color: '#0891b2' },
+  { label: 'ChatApp',          sub: 'Tribe messaging',           emoji: '💬', path: '/communications-hub',     color: '#0891b2' },
   { label: '364yhvh',          sub: 'Scripture & spiritual hub', emoji: '📅', path: '/364yhvh-days',          color: '#7c3aed' },
   { label: 'Let It Rain',      sub: 'Bestow blessings',          emoji: '🌧', path: 'action:let-it-rain',     color: '#ec4899' },
   { label: 'Learn & Share',    sub: 'Explainer videos',          emoji: '🎬', path: '/learn-share',           color: '#f97316' },
