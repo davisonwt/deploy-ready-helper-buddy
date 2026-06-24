@@ -157,9 +157,16 @@ export default {
 					violet: '#8B5CF6',
 					chalk: '#E8D9B5',
 				},
+				// SkillDrop palette (Space Grotesk + gold/ember on charcoal-amber)
+				skilldrop: {
+					bg: '#1A1308',
+					gold: '#F5A623',
+					ember: '#FF6B4A',
+				},
 			},
 			fontFamily: {
 				spectral: ['Spectral', 'Georgia', 'serif'],
+				'space-grotesk': ['"Space Grotesk"', 'Inter', 'sans-serif'],
 			},
 			borderRadius: {
 				lg: 'var(--radius)',
