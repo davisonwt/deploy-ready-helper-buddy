@@ -6,7 +6,6 @@ import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { GraduationCap, Search, Plus, BookOpen } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import PageHeroBanner from '@/components/chat/PageHeroBanner';
 
 const PremiumRoomsPage = () => {
   const { user } = useAuth();
@@ -29,7 +28,6 @@ const PremiumRoomsPage = () => {
 
   return (
     <div className="container mx-auto p-4 max-w-7xl">
-      <PageHeroBanner variant="training" />
       {/* Header */}
       <div className="mb-6 space-y-4">
         <div className="flex items-center justify-between">

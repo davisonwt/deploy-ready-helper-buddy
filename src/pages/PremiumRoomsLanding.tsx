@@ -32,6 +32,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { toast } from 'sonner';
+import PageHeroBanner from '@/components/chat/PageHeroBanner';
 
 interface MediaItem {
   id: string;
@@ -121,6 +122,7 @@ const PremiumRoomsLanding: React.FC = () => {
 
   return (
     <div className="container mx-auto p-4 max-w-7xl">
+      <PageHeroBanner variant="training" />
       {/* Header */}
       <div className="mb-6 space-y-4">
         <Button variant="ghost" onClick={() => navigate(-1)} className="gap-2">
