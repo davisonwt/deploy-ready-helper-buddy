@@ -226,10 +226,36 @@ const PremiumRoomsLanding: React.FC = () => {
                     <span className="text-sm font-semibold">
                       {room.price > 0 ? `$${room.price}` : 'Free'}
                     </span>
-                    <Button size="sm" asChild>
-                      <Link to={`/premium-room/${room.id}`}>View Room</Link>
-                    </Button>
+                    <div className="flex items-center gap-2">
+                      {user?.id === room.creator_id && (
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          className="text-destructive hover:text-destructive"
+                          onClick={async () => {
+                            if (!confirm(`Delete "${room.title}"? This cannot be undone.`)) return;
+                            const { error } = await supabase
+                              .from('premium_rooms')
+                              .delete()
+                              .eq('id', room.id);
+                            if (error) {
+                              toast.error('Failed to delete room');
+                              return;
+                            }
+                            setRooms((prev) => prev.filter((r) => r.id !== room.id));
+                            toast.success('Room deleted');
+                          }}
+                          aria-label="Delete room"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      )}
+                      <Button size="sm" asChild>
+                        <Link to={`/premium-room/${room.id}`}>View Room</Link>
+                      </Button>
+                    </div>
                   </div>
+
                 </CardContent>
               </Card>
             ))}
