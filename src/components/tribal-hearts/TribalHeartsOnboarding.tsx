@@ -10,6 +10,7 @@ import heroImg from '@/assets/tribal-hearts-hero.jpg';
 
 interface Props {
   onComplete: () => void;
+  onExit?: () => void;
 }
 
 interface Draft {
@@ -39,7 +40,7 @@ const INTERESTS = [
   'Farming', 'Dancing', 'Quiet evenings', 'Adventure',
 ];
 
-export const TribalHeartsOnboarding: React.FC<Props> = ({ onComplete }) => {
+export const TribalHeartsOnboarding: React.FC<Props> = ({ onComplete, onExit }) => {
   const { user } = useAuth() as any;
   const [step, setStep] = useState(0);
   const [direction, setDirection] = useState<1 | -1>(1);
@@ -147,16 +148,14 @@ export const TribalHeartsOnboarding: React.FC<Props> = ({ onComplete }) => {
       </div>
 
       {/* Back button */}
-      {step > 0 && (
-        <button
-          onClick={back}
-          className="absolute top-16 left-5 z-20 flex items-center gap-1 text-sm transition-opacity hover:opacity-100 opacity-70"
-          style={{ color: 'hsl(38 50% 75%)' }}
-        >
-          <ArrowLeft size={16} />
-          Back
-        </button>
-      )}
+      <button
+        onClick={step > 0 ? back : onExit}
+        className="absolute top-16 left-5 z-20 flex items-center gap-1 text-sm transition-opacity hover:opacity-100 opacity-70"
+        style={{ color: 'hsl(38 50% 75%)' }}
+      >
+        <ArrowLeft size={16} />
+        {step > 0 ? 'Back' : 'Back to Wandering Tribes'}
+      </button>
 
       <main className="relative z-10 min-h-screen flex items-start sm:items-center justify-center px-5 pt-24 pb-32">
         <AnimatePresence mode="wait" custom={direction}>
