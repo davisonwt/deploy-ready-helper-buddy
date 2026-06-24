@@ -151,6 +151,15 @@ export default {
 					800: 'hsl(var(--charcoal-800))',
 					900: 'hsl(var(--charcoal-900))',
 				},
+				// Classroom palette (Spectral + violet/chalk on aubergine-night)
+				classroom: {
+					bg: '#14101F',
+					violet: '#8B5CF6',
+					chalk: '#E8D9B5',
+				},
+			},
+			fontFamily: {
+				spectral: ['Spectral', 'Georgia', 'serif'],
 			},
 			borderRadius: {
 				lg: 'var(--radius)',

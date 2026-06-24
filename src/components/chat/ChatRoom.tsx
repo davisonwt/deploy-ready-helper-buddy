@@ -35,9 +35,13 @@ import { getVoiceColor, classifyVoiceState, initialFrom } from './voiceColor';
 interface ChatRoomProps {
   roomId: string;
   onBack: () => void;
+  /** When set, messages from this user are treated as "instructor" — others render a raised-hand badge. Classroom-only. */
+  instructorId?: string;
+  /** Optional side rail node (e.g. classroom lesson outline). Renders as a desktop aside + mobile top accordion when provided. */
+  rail?: React.ReactNode;
 }
 
-export const ChatRoom: React.FC<ChatRoomProps> = ({ roomId, onBack }) => {
+export const ChatRoom: React.FC<ChatRoomProps> = ({ roomId, onBack, instructorId, rail }) => {
   const { user } = useAuth();
   const { toast } = useToast();
   const { startCall, currentCall, endCall } = useCallManager();
@@ -666,7 +670,18 @@ export const ChatRoom: React.FC<ChatRoomProps> = ({ roomId, onBack }) => {
   }
 
   return (
-    <div className="flex flex-col h-full min-h-[600px] bg-[#0E1B15] text-[#F3F7F0]">
+    <div className="flex h-full min-h-[600px]">
+      {rail && (
+        <aside className="hidden lg:flex flex-col w-[260px] shrink-0 border-r border-[#8B5CF6]/25 bg-[#14101F]/90 overflow-y-auto">
+          {rail}
+        </aside>
+      )}
+      <div className="flex flex-col flex-1 min-w-0 bg-[#0E1B15] text-[#F3F7F0]">
+        {rail && (
+          <div className="lg:hidden border-b border-[#8B5CF6]/25 bg-[#14101F]/90">
+            {rail}
+          </div>
+        )}
       {/* Header */}
       <div className="border-b border-[#4FA876]/15 bg-[#0E1B15]/95 backdrop-blur px-6 py-4">
         <div className="flex items-center justify-between gap-4">
@@ -983,6 +998,8 @@ export const ChatRoom: React.FC<ChatRoomProps> = ({ roomId, onBack }) => {
                           message={msg}
                           isOwn={isOwn}
                           onDelete={isOwn ? () => handleDeleteMessage(msg.id) : undefined}
+                          isInstructor={instructorId ? msg.sender_id === instructorId : undefined}
+                          instructorMode={!!instructorId}
                         />
                       </div>
                       <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
@@ -1122,6 +1139,7 @@ export const ChatRoom: React.FC<ChatRoomProps> = ({ roomId, onBack }) => {
         hostName={roomInfo?.name}
       />
 
+      </div>
     </div>
   );
 };
