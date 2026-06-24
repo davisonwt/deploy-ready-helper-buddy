@@ -4,7 +4,8 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
-import { Plus, ArrowLeft, PlayCircle } from 'lucide-react';
+import { Plus, ArrowLeft, PlayCircle, Trash2 } from 'lucide-react';
+import { toast } from 'sonner';
 import OneOnOneRoom from '@/components/live/OneOnOneRoom';
 import { PresenceAura, classifyAura } from '@/components/live/PresenceAura';
 import CreateOneOnOneDialog from '@/components/live/CreateOneOnOneDialog';
@@ -162,11 +163,28 @@ export default function LiveRoomsPage() {
               const initial = (otherName[0] || 'T').toUpperCase();
               const auraState = classifyAura(lastSignalByRoom[room.id]);
               const hosting = room.created_by === user?.id;
+              const handleDelete = async (e: React.MouseEvent) => {
+                e.stopPropagation();
+                if (!confirm(`Close this 1-on-1 with ${otherName}? You won't see it in this list anymore.`)) return;
+                const { error } = await supabase
+                  .from('live_rooms')
+                  .update({ is_active: false })
+                  .eq('id', room.id);
+                if (error) {
+                  toast.error(error.message || 'Could not close the room.');
+                  return;
+                }
+                toast.success('Room closed.');
+                queryClient.invalidateQueries({ queryKey: ['my-live-rooms', user?.id] });
+              };
               return (
-                <button
+                <div
                   key={room.id}
+                  role="button"
+                  tabIndex={0}
                   onClick={() => setSearchParams({ room: room.id })}
-                  className="text-left rounded-2xl border border-[#1FB6A8]/15 bg-[#123330]/40 hover:bg-[#123330]/60 hover:border-[#1FB6A8]/35 transition-all p-5 flex items-center gap-4 group"
+                  onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setSearchParams({ room: room.id }); } }}
+                  className="relative cursor-pointer text-left rounded-2xl border border-[#1FB6A8]/15 bg-[#123330]/40 hover:bg-[#123330]/60 hover:border-[#1FB6A8]/35 transition-all p-5 flex items-center gap-4 group"
                 >
                   <PresenceAura state={auraState} size={64}>
                     <div
@@ -190,7 +208,18 @@ export default function LiveRoomsPage() {
                       {auraState === 'active' ? 'here now' : auraState === 'recent' ? 'recently here' : 'away'}
                     </p>
                   </div>
-                </button>
+                  {hosting && (
+                    <button
+                      type="button"
+                      onClick={handleDelete}
+                      aria-label="Delete this 1-on-1 room"
+                      title="Delete room"
+                      className="absolute top-3 right-3 p-2 rounded-full text-[#7E9498] hover:text-rose-300 hover:bg-rose-500/10 transition opacity-70 hover:opacity-100"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </button>
+                  )}
+                </div>
               );
             })}
           </div>
