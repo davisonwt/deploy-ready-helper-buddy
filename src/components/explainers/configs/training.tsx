@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion';
-import { Dumbbell, Plus, Flame, CheckCircle2, FileText, Download } from 'lucide-react';
+import { Dumbbell, Plus, Flame, FileText, Download, Hand, Mic, ImageIcon, TrendingDown, ClipboardList } from 'lucide-react';
 import voAsset from '@/assets/training-vo.mp3.asset.json';
 import type { ExplainerConfig } from '../types';
 import { sceneAnim } from '../ExplainerPlayer';
@@ -126,38 +126,38 @@ function Step3() {
 }
 
 function Step4() {
-  const days = Array.from({ length: 7 }, (_, i) => i);
+  const items = [
+    { from: 'Mira',  Icon: Hand,         text: 'raised hand' },
+    { from: 'Ezra',  Icon: Mic,          text: 'voice · 0:22' },
+    { from: 'Amara', Icon: ImageIcon,    text: 'progress.jpg' },
+    { from: 'Tomas', Icon: TrendingDown, text: '−2.4 kg this week' },
+    { from: 'Liat',  Icon: ClipboardList,text: 'my-program.pdf' },
+  ];
   return (
     <motion.div {...sceneAnim} className="w-full max-w-md">
-      <div className="rounded-xl border p-5" style={{ background: `${PANEL}CC`, borderColor: `${CORAL}55`, fontFamily: FONT }}>
-        <div className="flex items-center justify-between mb-4">
-          <p className="text-xs uppercase tracking-[0.25em]" style={{ color: MUTED }}>Your streak</p>
-          <motion.div
-            animate={{ scale: [1, 1.1, 1], rotate: [0, -3, 3, 0] }}
-            transition={{ duration: 1.8, repeat: Infinity }}
-            className="flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold uppercase"
-            style={{ background: HOT, color: BG }}
-          >
-            <Flame className="w-3.5 h-3.5" /> Day 7
-          </motion.div>
+      <div className="rounded-xl border overflow-hidden" style={{ background: `${PANEL}CC`, borderColor: `${CORAL}55`, fontFamily: FONT }}>
+        <div className="px-4 py-3 border-b flex items-center gap-2" style={{ borderColor: `${CORAL}33` }}>
+          <Flame className="w-4 h-4" style={{ color: HOT }} />
+          <span className="text-xs uppercase tracking-[0.2em] font-semibold" style={{ color: MUTED }}>Attendees</span>
+          <span className="ml-auto text-[10px] uppercase tracking-wider font-semibold px-2 py-0.5 rounded-full"
+            style={{ background: `${HOT}22`, color: HOT }}>trainer reviews</span>
         </div>
-        <div className="grid grid-cols-7 gap-1.5 mb-4">
-          {days.map((d) => (
-            <motion.div key={d}
-              initial={{ scale: 0.6, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} transition={{ delay: d * 0.12 }}
-              className="aspect-square rounded-md flex items-center justify-center"
-              style={{ background: `linear-gradient(180deg, ${CORAL} 0%, ${HOT} 100%)`, color: BG }}
+        <div className="p-3 space-y-1.5">
+          {items.map((it, i) => (
+            <motion.div key={it.from}
+              initial={{ opacity: 0, x: -8 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.1 + i * 0.2 }}
+              className="flex items-center gap-2 px-2.5 py-2 rounded-md border"
+              style={{ background: `${CORAL}10`, borderColor: `${CORAL}33` }}
             >
-              <CheckCircle2 className="w-4 h-4" />
+              <div className="w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold uppercase"
+                style={{ background: `linear-gradient(180deg, ${CORAL}, ${HOT})`, color: BG }}>{it.from[0]}</div>
+              <span className="text-xs uppercase tracking-wide flex-1" style={{ color: TEXT }}>{it.from}</span>
+              <span className="flex items-center gap-1 text-[10px] uppercase tracking-wider" style={{ color: MUTED }}>
+                <it.Icon className="w-3 h-3" style={{ color: HOT }} /> {it.text}
+              </span>
             </motion.div>
           ))}
         </div>
-        <motion.div
-          initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 1.4 }}
-          className="text-center text-xs uppercase tracking-wider" style={{ color: MUTED }}
-        >
-          Posted today · the room sees you
-        </motion.div>
       </div>
     </motion.div>
   );
@@ -176,7 +176,7 @@ function Outro() {
 
 export const trainingConfig: ExplainerConfig = {
   voUrl: voAsset.url,
-  estDuration: 24,
+  estDuration: 31,
   title: 'Training',
   subtitle: 'Daily practice rooms.',
   outroTitle: 'Show up. Train.',
@@ -186,8 +186,8 @@ export const trainingConfig: ExplainerConfig = {
     { id: 'intro', weight: 2,   Scene: Intro },
     { id: 'step1', weight: 3,   Scene: Step1 },
     { id: 'step2', weight: 6,   Scene: Step2 },
-    { id: 'step3', weight: 6,   Scene: Step3 },
-    { id: 'step4', weight: 5,   Scene: Step4 },
+    { id: 'step3', weight: 5,   Scene: Step3 },
+    { id: 'step4', weight: 10,  Scene: Step4 },
     { id: 'outro', weight: 2,   Scene: Outro },
   ],
 };
