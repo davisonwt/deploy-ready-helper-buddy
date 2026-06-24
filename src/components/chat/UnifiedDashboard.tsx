@@ -183,6 +183,26 @@ export const UnifiedDashboard: React.FC = () => {
                   exit={{ opacity: 0, y: -20 }}
                   transition={{ duration: 0.3 }}
                 >
+                  {/* Mode banner image */}
+                  <div className="relative mb-6 overflow-hidden rounded-2xl border border-border/40 shadow-lg">
+                    <img
+                      src={modeBanners[activeMode].src}
+                      alt={`${modeBanners[activeMode].title} banner`}
+                      width={1920}
+                      height={512}
+                      loading="lazy"
+                      className="w-full h-32 md:h-44 lg:h-56 object-cover"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-r from-background/80 via-background/30 to-transparent" />
+                    <div className="absolute inset-0 flex flex-col justify-center px-6 md:px-10">
+                      <h2 className="text-2xl md:text-4xl font-bold text-foreground drop-shadow-lg">
+                        {modeBanners[activeMode].title}
+                      </h2>
+                      <p className="text-sm md:text-base text-foreground/80 mt-1 drop-shadow">
+                        {modeBanners[activeMode].subtitle}
+                      </p>
+                    </div>
+                  </div>
                   {renderContent()}
                 </motion.div>
               </AnimatePresence>
