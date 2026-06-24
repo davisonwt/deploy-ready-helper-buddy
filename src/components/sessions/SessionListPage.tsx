@@ -1,13 +1,15 @@
 import { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
-import { ArrowLeft, BookOpen, Plus, Zap } from 'lucide-react';
+import { ArrowLeft, BookOpen, Plus, Zap, PlayCircle } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import CreateSessionForm from '@/components/sessions/CreateSessionForm';
 import PageHeroBanner from '@/components/chat/PageHeroBanner';
+import ExplainerDialog from '@/components/explainers/ExplainerDialog';
+
 
 type Kind = 'classroom' | 'skilldrop';
 
@@ -51,6 +53,8 @@ export default function SessionListPage({ kind }: Props) {
   const cfg = COPY[kind];
   const Icon = cfg.icon;
   const [createOpen, setCreateOpen] = useState(false);
+  const [explainerOpen, setExplainerOpen] = useState(false);
+
 
   const table = kind === 'classroom' ? 'classroom_sessions' : 'skilldrop_sessions';
   const creatorCol = cfg.tableCreatorCol;
@@ -156,12 +160,25 @@ export default function SessionListPage({ kind }: Props) {
             >
               <Icon className="h-9 w-9" style={{ color: cfg.accent }} /> {cfg.label}
             </h1>
-            <p className="text-base" style={{ color: themed ? mutedColor : '#7E9498' }}>
+            <p className="text-base mb-3" style={{ color: themed ? mutedColor : '#7E9498' }}>
               {kind === 'classroom'
                 ? 'Live teaching sessions you host or were invited to.'
                 : 'Short skill-sharing drops you host or were invited to.'}
             </p>
+            <button
+              onClick={() => setExplainerOpen(true)}
+              className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full text-xs font-medium transition-colors"
+              style={{
+                border: `1px solid ${cfg.accent}66`,
+                background: `${cfg.accent}1A`,
+                color: cfg.accent,
+              }}
+            >
+              <PlayCircle className="h-3.5 w-3.5" />
+              Watch how it works · {kind === 'classroom' ? '36s' : '29s'}
+            </button>
           </div>
+
           <Button
             onClick={() => setCreateOpen(true)}
             className="gap-2 hover:opacity-90"
@@ -283,6 +300,9 @@ export default function SessionListPage({ kind }: Props) {
           <CreateSessionForm kind={kind} onCreated={() => setCreateOpen(false)} />
         </DialogContent>
       </Dialog>
+
+      <ExplainerDialog open={explainerOpen} onOpenChange={setExplainerOpen} variant={kind} />
     </div>
   );
 }
+
