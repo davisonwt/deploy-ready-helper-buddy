@@ -176,3 +176,5 @@ export const WanderingDirectoryPage = lazy(() => import('@/pages/WanderingDirect
 export const PlantASeedPage = lazy(() => import('@/pages/PlantASeedPage'));
 export const MyRadioOptInPage = lazy(() => import('@/pages/MyRadioOptInPage'));
 export const SessionPage = lazy(() => import('@/pages/SessionPage'));
+export const ClassroomPage = lazy(() => import('@/pages/ClassroomPage'));
+export const SkillDropPage = lazy(() => import('@/pages/SkillDropPage'));
