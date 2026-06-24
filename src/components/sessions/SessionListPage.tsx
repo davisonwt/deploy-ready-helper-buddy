@@ -39,7 +39,7 @@ const COPY: Record<Kind, { label: string; route: string; tableCreatorCol: string
     route: '/skilldrop',
     tableCreatorCol: 'presenter_id',
     icon: Zap,
-    accent: '#F59E0B',
+    accent: '#F5A623',
     titleFont: 'SkillDrop',
   },
 };
@@ -114,15 +114,28 @@ export default function SessionListPage({ kind }: Props) {
   const isLoading = ownQuery.isLoading || participantRoomsQuery.isLoading;
 
   const isClassroom = kind === 'classroom';
-  const bg = isClassroom ? '#14101F' : '#0B1420';
-  const fg = isClassroom ? '#E8D9B5' : '#EAF4F2';
-  const mutedFg = isClassroom ? '#E8D9B5' : '#7E9498';
-  const titleFontFamily = isClassroom ? '"Spectral", Georgia, serif' : '"Fraunces", serif';
-  const titleFontWeight = isClassroom ? 600 : 500;
-  const cardBorder = isClassroom ? `${cfg.accent}55` : `${cfg.accent}33`;
+  const isSkillDrop = kind === 'skilldrop';
+  const bg = isClassroom ? '#14101F' : isSkillDrop ? '#1A1308' : '#0B1420';
+  const fg = isClassroom ? '#E8D9B5' : isSkillDrop ? '#F5E6C8' : '#EAF4F2';
+  const mutedFg = isClassroom ? '#E8D9B5' : isSkillDrop ? '#F5E6C8' : '#7E9498';
+  const titleFontFamily = isClassroom
+    ? '"Spectral", Georgia, serif'
+    : isSkillDrop
+      ? '"Space Grotesk", Inter, sans-serif'
+      : '"Fraunces", serif';
+  const titleFontWeight = isClassroom ? 600 : isSkillDrop ? 700 : 500;
+  const cardBorder = isClassroom || isSkillDrop ? `${cfg.accent}55` : `${cfg.accent}33`;
+  const themed = isClassroom || isSkillDrop;
+  const themedTintWeak = isClassroom ? 'rgba(139,92,246,0.06)' : isSkillDrop ? 'rgba(245,166,35,0.07)' : 'rgba(255,255,255,0.05)';
+  const themedTintStrong = isClassroom ? 'rgba(139,92,246,0.12)' : isSkillDrop ? 'rgba(245,166,35,0.14)' : 'rgba(255,255,255,0.10)';
+  const buttonFg = isClassroom ? '#14101F' : isSkillDrop ? '#1A1308' : '#0B1420';
+  const mutedColor = isSkillDrop ? 'rgba(245,230,200,0.6)' : isClassroom ? 'rgba(232,217,181,0.6)' : '#7E9498';
+  const pageBgStyle: React.CSSProperties = isSkillDrop
+    ? { background: 'radial-gradient(ellipse at top, rgba(245,166,35,0.10) 0%, rgba(26,19,8,0) 55%), linear-gradient(180deg, #241a0d 0%, #1A1308 70%, #120c04 100%)', color: fg }
+    : { backgroundColor: bg, color: fg };
 
   return (
-    <div className="min-h-screen" style={{ backgroundColor: bg, color: fg }}>
+    <div className="min-h-screen" style={pageBgStyle}>
       <div className="mx-auto max-w-5xl px-4 py-10">
         <div className="mb-10 flex items-end justify-between gap-4 flex-wrap">
           <div>
@@ -131,7 +144,7 @@ export default function SessionListPage({ kind }: Props) {
               size="sm"
               onClick={() => navigate('/communications-hub')}
               className="mb-3 gap-2 hover:bg-transparent px-0"
-              style={{ color: isClassroom ? 'rgba(232,217,181,0.6)' : '#7E9498' }}
+              style={{ color: mutedColor }}
             >
               <ArrowLeft className="h-4 w-4" /> Back to Go-Live
             </Button>
@@ -141,7 +154,7 @@ export default function SessionListPage({ kind }: Props) {
             >
               <Icon className="h-9 w-9" style={{ color: cfg.accent }} /> {cfg.label}
             </h1>
-            <p className="text-base" style={{ color: isClassroom ? 'rgba(232,217,181,0.65)' : '#7E9498' }}>
+            <p className="text-base" style={{ color: themed ? mutedColor : '#7E9498' }}>
               {kind === 'classroom'
                 ? 'Live teaching sessions you host or were invited to.'
                 : 'Short skill-sharing drops you host or were invited to.'}
@@ -150,10 +163,14 @@ export default function SessionListPage({ kind }: Props) {
           <Button
             onClick={() => setCreateOpen(true)}
             className="gap-2 hover:opacity-90"
-            style={{
-              backgroundColor: cfg.accent,
-              color: isClassroom ? '#14101F' : '#0B1420',
-            }}
+            style={
+              isSkillDrop
+                ? {
+                    background: 'linear-gradient(90deg, #F5A623 0%, #FF6B4A 100%)',
+                    color: buttonFg,
+                  }
+                : { backgroundColor: cfg.accent, color: buttonFg }
+            }
           >
             <Plus className="h-4 w-4" /> Create {cfg.label.toLowerCase()} session
           </Button>
@@ -169,17 +186,28 @@ export default function SessionListPage({ kind }: Props) {
           <div
             className="rounded-2xl p-12 text-center"
             style={{
-              border: isClassroom ? `1px solid ${cfg.accent}33` : '1px solid rgba(255,255,255,0.1)',
-              backgroundColor: isClassroom ? 'rgba(139,92,246,0.06)' : 'rgba(255,255,255,0.05)',
+              border: themed ? `1px solid ${cfg.accent}33` : '1px solid rgba(255,255,255,0.1)',
+              backgroundColor: themedTintWeak,
             }}
           >
             <p className="text-2xl mb-3" style={{ fontFamily: titleFontFamily, fontWeight: titleFontWeight }}>
               No {cfg.label.toLowerCase()} sessions yet
             </p>
-            <p className="mb-6" style={{ color: mutedFg, opacity: isClassroom ? 0.7 : 1 }}>
-              {isClassroom ? 'Open your first classroom to gather the tribe.' : 'Create the first one to bring the tribe together.'}
+            <p className="mb-6" style={{ color: mutedFg, opacity: themed ? 0.7 : 1 }}>
+              {isClassroom
+                ? 'Open your first classroom to gather the tribe.'
+                : isSkillDrop
+                  ? 'Drop your first skill — share something the tribe can learn fast.'
+                  : 'Create the first one to bring the tribe together.'}
             </p>
-            <Button onClick={() => setCreateOpen(true)} style={{ backgroundColor: cfg.accent, color: isClassroom ? '#14101F' : '#0B1420' }}>
+            <Button
+              onClick={() => setCreateOpen(true)}
+              style={
+                isSkillDrop
+                  ? { background: 'linear-gradient(90deg, #F5A623 0%, #FF6B4A 100%)', color: buttonFg }
+                  : { backgroundColor: cfg.accent, color: buttonFg }
+              }
+            >
               <Plus className="h-4 w-4 mr-2" /> Create {cfg.label.toLowerCase()} session
             </Button>
           </div>
@@ -194,36 +222,35 @@ export default function SessionListPage({ kind }: Props) {
                 <button
                   key={s.id}
                   onClick={() => navigate(`${cfg.route}/${s.id}`)}
-                  className="text-left rounded-2xl transition-all p-5 group"
+                  className="text-left rounded-2xl transition-all p-5 group relative overflow-hidden"
                   style={{
                     border: `1px solid ${cardBorder}`,
-                    backgroundColor: isClassroom ? 'rgba(139,92,246,0.06)' : 'rgba(255,255,255,0.05)',
+                    backgroundColor: themedTintWeak,
                   }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.backgroundColor = isClassroom
-                      ? 'rgba(139,92,246,0.12)'
-                      : 'rgba(255,255,255,0.10)';
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.backgroundColor = isClassroom
-                      ? 'rgba(139,92,246,0.06)'
-                      : 'rgba(255,255,255,0.05)';
-                  }}
+                  onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = themedTintStrong; }}
+                  onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = themedTintWeak; }}
                 >
-                  <div className="flex items-baseline justify-between gap-2 mb-2">
+                  {isSkillDrop && (
+                    <div
+                      aria-hidden
+                      className="absolute -top-10 -right-10 h-28 w-28 rounded-full pointer-events-none opacity-70 group-hover:opacity-100 transition-opacity"
+                      style={{ background: 'radial-gradient(circle, rgba(255,107,74,0.35) 0%, rgba(255,107,74,0) 70%)' }}
+                    />
+                  )}
+                  <div className="flex items-baseline justify-between gap-2 mb-2 relative">
                     <span className="text-xl truncate" style={{ fontFamily: titleFontFamily, fontWeight: titleFontWeight }}>
                       {s.title}
                     </span>
-                    <span className="text-[10px] uppercase tracking-wider shrink-0" style={{ color: mutedFg, opacity: isClassroom ? 0.6 : 1 }}>
+                    <span className="text-[10px] uppercase tracking-wider shrink-0" style={{ color: mutedFg, opacity: themed ? 0.6 : 1 }}>
                       {hosting ? 'hosting' : 'invited'}
                     </span>
                   </div>
                   {s.description && (
-                    <p className="text-sm line-clamp-2" style={{ color: mutedFg, opacity: isClassroom ? 0.75 : 1 }}>
+                    <p className="text-sm line-clamp-2 relative" style={{ color: mutedFg, opacity: themed ? 0.75 : 1 }}>
                       {s.description}
                     </p>
                   )}
-                  <div className="mt-3 flex items-center justify-between text-xs" style={{ color: mutedFg, opacity: isClassroom ? 0.55 : 0.8 }}>
+                  <div className="mt-3 flex items-center justify-between text-xs relative" style={{ color: mutedFg, opacity: themed ? 0.55 : 0.8 }}>
                     <span>{when ? when.toLocaleString() : 'Unscheduled'}</span>
                     <span className="uppercase tracking-wide">{s.status || 'scheduled'}</span>
                   </div>
@@ -238,8 +265,12 @@ export default function SessionListPage({ kind }: Props) {
         <DialogContent
           className="max-w-2xl text-white"
           style={{
-            backgroundColor: isClassroom ? '#1a1430' : '#0f172a',
-            border: isClassroom ? '1px solid rgba(139,92,246,0.3)' : '1px solid rgba(255,255,255,0.1)',
+            backgroundColor: isClassroom ? '#1a1430' : isSkillDrop ? '#241a0d' : '#0f172a',
+            border: isClassroom
+              ? '1px solid rgba(139,92,246,0.3)'
+              : isSkillDrop
+                ? '1px solid rgba(245,166,35,0.35)'
+                : '1px solid rgba(255,255,255,0.1)',
           }}
         >
           <DialogHeader>

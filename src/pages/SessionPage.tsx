@@ -244,10 +244,10 @@ export default function SessionPage({ kind }: SessionPageProps) {
     );
   }
 
-  // ---------- SkillDrop branch (unchanged styling) ----------
+  // ---------- SkillDrop branch ----------
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-[#060a12] text-slate-300">
+      <div className="min-h-screen flex items-center justify-center bg-[#1A1308] text-[#F5A623]">
         <Loader2 className="h-6 w-6 animate-spin" />
       </div>
     );
@@ -255,46 +255,89 @@ export default function SessionPage({ kind }: SessionPageProps) {
 
   if (error || !session) {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center gap-4 bg-[#060a12] text-slate-300 p-6">
-        <p className="text-center max-w-md">{error || 'Session not found.'}</p>
-        <Button variant="ghost" onClick={() => navigate(-1)} className="gap-2"><ArrowLeft className="h-4 w-4" /> Go back</Button>
+      <div className="min-h-screen flex flex-col items-center justify-center gap-4 bg-[#1A1308] text-[#F5A623] p-6">
+        <p className="text-center max-w-md" style={{ fontFamily: '"Space Grotesk", Inter, sans-serif' }}>{error || 'Session not found.'}</p>
+        <Button variant="ghost" onClick={() => navigate(-1)} className="gap-2 text-[#F5A623] hover:text-white hover:bg-[#F5A623]/15">
+          <ArrowLeft className="h-4 w-4" /> Go back
+        </Button>
       </div>
     );
   }
 
   return (
-    <main className="min-h-screen text-slate-100" style={{ background: 'linear-gradient(180deg, #0a0f1a 0%, #060a12 100%)' }}>
+    <main
+      className="min-h-screen text-[#F5E6C8]"
+      style={{
+        background:
+          'radial-gradient(ellipse at top, rgba(245,166,35,0.15) 0%, rgba(255,107,74,0.05) 35%, rgba(26,19,8,0) 60%), linear-gradient(180deg, #241a0d 0%, #1A1308 60%, #120c04 100%)',
+      }}
+    >
       <div className="mx-auto max-w-5xl px-4 py-5">
-        <Button variant="ghost" size="sm" onClick={() => navigate('/communications-hub')} className="mb-4 gap-2 px-0 text-slate-400 hover:text-slate-100 hover:bg-transparent">
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={() => navigate('/communications-hub')}
+          className="mb-4 gap-2 px-0 text-[#F5E6C8]/60 hover:text-[#F5A623] hover:bg-transparent"
+        >
           <ArrowLeft className="h-4 w-4" /> Back to Go-Live
         </Button>
 
-        <header className="mb-5 rounded-2xl border border-cyan-400/25 bg-[#0f172a]/80 p-5">
-          <div className="flex items-center gap-3 mb-2">
-            <Icon className="h-7 w-7 text-cyan-300" />
-            <h1 className="text-2xl md:text-3xl font-black text-white">{session.title}</h1>
+        <header className="mb-5 rounded-2xl border border-[#F5A623]/35 bg-[#241a0d]/70 backdrop-blur p-5 relative overflow-hidden">
+          <div
+            aria-hidden
+            className="absolute -top-12 -right-12 h-40 w-40 rounded-full pointer-events-none"
+            style={{ background: 'radial-gradient(circle, rgba(255,107,74,0.35) 0%, rgba(255,107,74,0) 70%)' }}
+          />
+          <div className="flex items-center gap-3 mb-2 relative">
+            <Icon className="h-7 w-7 text-[#F5A623]" />
+            <h1
+              className="text-3xl md:text-4xl tracking-tight text-white"
+              style={{ fontFamily: '"Space Grotesk", Inter, sans-serif', fontWeight: 700 }}
+            >
+              {session.title}
+            </h1>
           </div>
-          {session.description && <p className="text-slate-300">{session.description}</p>}
-          <div className="mt-3 flex flex-wrap gap-3 text-sm text-slate-400">
+          {session.description && (
+            <p className="text-[#F5E6C8]/80 relative" style={{ fontFamily: '"Space Grotesk", Inter, sans-serif' }}>
+              {session.description}
+            </p>
+          )}
+          <div className="mt-3 flex flex-wrap gap-3 text-sm text-[#F5E6C8]/60 relative">
             {session.scheduled_at && (
               <span className="inline-flex items-center gap-1">
                 <Calendar className="h-4 w-4" /> {new Date(session.scheduled_at).toLocaleString()}
               </span>
             )}
             {session.status && (
-              <span className="rounded-full bg-cyan-500/15 border border-cyan-400/30 px-3 py-0.5 font-bold text-cyan-200">{session.status}</span>
+              <span
+                className="rounded-full px-3 py-0.5 uppercase tracking-wider text-xs font-bold"
+                style={{
+                  background: 'linear-gradient(90deg, rgba(245,166,35,0.25), rgba(255,107,74,0.25))',
+                  border: '1px solid rgba(245,166,35,0.55)',
+                  color: '#F5A623',
+                }}
+              >
+                {session.status}
+              </span>
             )}
             <span className="inline-flex items-center gap-1"><Users className="h-4 w-4" /> {label}</span>
           </div>
         </header>
 
         {session.chat_room_id ? (
-          <div className="rounded-2xl border border-fuchsia-400/25 bg-[#0f172a]/80 overflow-hidden" style={{ height: 'calc(100vh - 320px)', minHeight: 500 }}>
-            <ChatRoom roomId={session.chat_room_id} onBack={() => navigate(-1)} />
+          <div
+            className="rounded-2xl border border-[#F5A623]/30 bg-[#1A1308]/80 overflow-hidden"
+            style={{ height: 'calc(100vh - 320px)', minHeight: 500 }}
+          >
+            <ChatRoom
+              roomId={session.chat_room_id}
+              onBack={() => navigate(-1)}
+              dropAnimation
+            />
           </div>
         ) : (
-          <div className="rounded-2xl border border-amber-400/25 bg-amber-500/5 p-5 text-amber-200">
-            This session has no chat thread linked yet. Ask the host to recreate it from the Communications Hub.
+          <div className="rounded-2xl border border-[#FF6B4A]/30 bg-[#FF6B4A]/5 p-5 text-[#F5E6C8]">
+            This drop has no chat thread linked yet. Ask the host to recreate it from the Communications Hub.
           </div>
         )}
       </div>

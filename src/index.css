@@ -786,3 +786,47 @@ body {
   }
 }
 
+
+/* ============================================================
+   SkillDrop — "drop" landing motion
+   Opt-in via ChatRoom prop `dropAnimation`; class applied per
+   message wrapper. Respects prefers-reduced-motion.
+   ============================================================ */
+@keyframes skilldrop-drop-in {
+  0%   { opacity: 0; transform: translateY(-16px) scale(0.96); }
+  60%  { opacity: 1; transform: translateY(4px)   scale(1.015); }
+  100% { opacity: 1; transform: translateY(0)     scale(1); }
+}
+@keyframes skilldrop-impact-ring {
+  0%   { opacity: 0.65; transform: scale(0.35); }
+  60%  { opacity: 0.35; transform: scale(1.05); }
+  100% { opacity: 0;    transform: scale(1.4); }
+}
+
+.skilldrop-message {
+  position: relative;
+  animation: skilldrop-drop-in 420ms cubic-bezier(0.34, 1.56, 0.64, 1) both;
+}
+.skilldrop-message::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  margin: auto;
+  width: 60%;
+  height: 100%;
+  border-radius: 9999px;
+  pointer-events: none;
+  background: radial-gradient(circle,
+    rgba(245, 166, 35, 0.55) 0%,
+    rgba(255, 107, 74, 0.30) 45%,
+    rgba(255, 107, 74, 0) 70%);
+  animation: skilldrop-impact-ring 320ms ease-out both;
+}
+@media (prefers-reduced-motion: reduce) {
+  .skilldrop-message {
+    animation: fade-in 200ms ease-out both;
+  }
+  .skilldrop-message::after {
+    display: none;
+  }
+}
