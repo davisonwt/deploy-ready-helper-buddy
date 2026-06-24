@@ -30,6 +30,7 @@ interface PremiumRoom {
   documents: any[];
   artwork: any[];
   music: any[];
+  chat_room_id?: string | null;
   profiles?: {
     display_name: string;
     avatar_url: string;
