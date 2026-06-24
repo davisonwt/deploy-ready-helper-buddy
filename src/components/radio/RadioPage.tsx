@@ -47,6 +47,7 @@ const RadioPage = () => {
         >
           <ArrowLeft className="h-4 w-4" /> Back to Go-Live
         </Button>
+        <PageHeroBanner variant="radio" />
 
         <div className="text-center space-y-4">
           <div className="flex items-center justify-center space-x-3">
