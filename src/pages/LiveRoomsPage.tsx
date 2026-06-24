@@ -4,7 +4,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
-import { Plus, ArrowLeft, PlayCircle, Trash2 } from 'lucide-react';
+import { Plus, ArrowLeft, PlayCircle, Trash2, MessageSquare } from 'lucide-react';
 import { toast } from 'sonner';
 import OneOnOneRoom from '@/components/live/OneOnOneRoom';
 import { PresenceAura, classifyAura } from '@/components/live/PresenceAura';
@@ -135,11 +135,24 @@ export default function LiveRoomsPage() {
               Watch how it works · 34s
             </button>
           </div>
-          <Button onClick={() => setCreateOpen(true)}
-            className="gap-2 bg-[#1FB6A8] text-[#0B1420] hover:bg-[#1FB6A8]/90">
-            <Plus className="h-4 w-4" /> New room
-          </Button>
+          <div className="flex flex-col sm:flex-row gap-2 shrink-0">
+            <Button
+              variant="outline"
+              onClick={() => {
+                document.getElementById('existing-1on1-chats')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+              }}
+              className="gap-2 border-[#1FB6A8]/40 bg-[#123330]/40 text-[#EAF4F2] hover:bg-[#123330]/70 hover:text-[#EAF4F2]"
+            >
+              <MessageSquare className="h-4 w-4" /> Existing chats{rooms.length > 0 ? ` (${rooms.length})` : ''}
+            </Button>
+            <Button onClick={() => setCreateOpen(true)}
+              className="gap-2 bg-[#1FB6A8] text-[#0B1420] hover:bg-[#1FB6A8]/90">
+              <Plus className="h-4 w-4" /> New room
+            </Button>
+          </div>
         </div>
+
+
 
         {isLoading && (
           <div className="flex justify-center items-center h-64">
@@ -156,7 +169,8 @@ export default function LiveRoomsPage() {
         )}
 
         {!isLoading && rooms.length > 0 && (
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+          <div id="existing-1on1-chats" className="grid grid-cols-1 sm:grid-cols-2 gap-5 scroll-mt-6">
+
             {rooms.map(room => {
               const other = participantsByRoom[room.id];
               const otherName = other?.display_name || 'Tribe member';
