@@ -31,13 +31,13 @@ export function InviteAttendeesDialog({ trigger, onSend, excludeUserIds = [] }: 
     if (!open) return;
     void (async () => {
       const { data } = await supabase
-        .from('profiles')
-        .select('user_id, display_name, first_name, last_name, avatar_url')
+        .from('public_profiles' as any)
+        .select('user_id, display_name, username, avatar_url')
         .order('display_name', { ascending: true, nullsFirst: false })
-        .limit(200);
+        .limit(500);
       const rows = (data || []).map((p: any) => ({
         user_id: p.user_id,
-        display_name: p.display_name || `${p.first_name || ''} ${p.last_name || ''}`.trim() || 'Sower',
+        display_name: p.display_name || p.username || 'Sower',
         avatar_url: p.avatar_url ?? null,
       })) as ProfileRow[];
       setProfiles(rows.filter((p) => p.user_id && !excludeUserIds.includes(p.user_id)));
