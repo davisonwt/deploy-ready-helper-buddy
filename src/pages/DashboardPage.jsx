@@ -18,6 +18,7 @@ import DashboardTribeStats from '../components/dashboard/DashboardTribeStats'
 import TribalTiersCard from '../components/dashboard/TribalTiersCard'
 import LiveNowStrip from '@/components/live/LiveNowStrip'
 import SacredDayBanner from '@/components/SacredDayBanner'
+import { GosatPanel } from '../components/GosatPanel'
 
 const DAYS_PER_MONTH = [30, 30, 31, 30, 30, 31, 30, 30, 31, 30, 30, 31]
 function shiftYhwhDate(year, month, day, offset) {
@@ -92,7 +93,7 @@ const NAV = [
   { label: 'Learn & Share',    sub: 'Explainer videos',          emoji: '🎬', path: '/learn-share',           color: '#f97316' },
   { label: 'Wandering Hearts', sub: 'Tribal connections',        emoji: '💚', path: '/tribal-hearts',         color: '#dc2626' },
   { label: 'My Tribe',         sub: 'Your invitation code & tribe', emoji: '🌿', path: '/my-tribe',           color: '#22c55e' },
-  { label: "Gosat's",          sub: 'Elder management',          emoji: '🏛', path: '/admin',                 color: '#7c3aed' },
+  { label: "Gosat's",          sub: 'Elder management',          emoji: '🏛', path: 'action:gosat',           color: '#7c3aed' },
 ]
 
 const GROWTH_TIPS = [
@@ -395,6 +396,7 @@ export default function SeedFlowDashboard() {
   const [activePath, setActivePath] = useState('/dashboard')
   const [mobilePanel, setMobilePanel] = useState(null)
   const [isLetItRainOpen, setIsLetItRainOpen] = useState(false)
+  const [isGosatOpen, setIsGosatOpen] = useState(false)
   const [tribalFeedsOpen, setTribalFeedsOpen] = useState(false)
   const tribalFeedsRef = useRef(null)
   useEffect(() => {
@@ -1037,6 +1039,8 @@ export default function SeedFlowDashboard() {
                 const action = item.path.split(':')[1]
                 if (action === 'let-it-rain') {
                   setIsLetItRainOpen(true)
+                } else if (action === 'gosat') {
+                  setIsGosatOpen(true)
                 }
                 setMobilePanel(null)
               }
@@ -1379,6 +1383,7 @@ export default function SeedFlowDashboard() {
           </Link>
         </div>
         <LetItRainPanel isOpen={isLetItRainOpen} onClose={() => setIsLetItRainOpen(false)} />
+        <GosatPanel isOpen={isGosatOpen} onClose={() => setIsGosatOpen(false)} />
 
       </div>
     </>
