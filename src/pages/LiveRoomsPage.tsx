@@ -75,7 +75,7 @@ export default function LiveRoomsPage() {
         .order('created_at', { ascending: false })
         .limit(500);
       const map: Record<string, string> = {};
-      ((data || []) as MessageRow[]).forEach(m => {
+      ((data || []) as unknown as MessageRow[]).forEach(m => {
         if (!map[m.room_id]) map[m.room_id] = m.created_at;
       });
       return map;
