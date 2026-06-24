@@ -163,10 +163,19 @@ export default {
 					gold: '#F5A623',
 					ember: '#FF6B4A',
 				},
+				// Training palette (Oswald + coral on coral-charcoal)
+				training: {
+					bg: '#1A0F12',
+					coral: '#F43F5E',
+					'coral-glow': '#FB7185',
+					ash: '#2A1A1F',
+					ember: '#FCA5A5',
+				},
 			},
 			fontFamily: {
 				spectral: ['Spectral', 'Georgia', 'serif'],
 				'space-grotesk': ['"Space Grotesk"', 'Inter', 'sans-serif'],
+				oswald: ['Oswald', 'Impact', 'sans-serif'],
 			},
 			borderRadius: {
 				lg: 'var(--radius)',

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
@@ -8,10 +8,10 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Separator } from '@/components/ui/separator';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { 
-  Send, Mic, Video, Phone, PhoneOff, Paperclip, 
+import {
+  Send, Mic, Video, Phone, PhoneOff, Paperclip,
   Users, Music, FileText, Image as ImageIcon,
-  Settings, Crown, Smile, MoreVertical
+  Settings, Crown, Smile, MoreVertical, Flame
 } from 'lucide-react';
 import { toast } from 'sonner';
 import ChatMessage from '@/components/chat/ChatMessage';
@@ -179,6 +179,45 @@ export const DiscordStyleRoomView: React.FC<DiscordStyleRoomViewProps> = ({
     setVideoOn(!videoOn);
   };
 
+  // Earned streak — consecutive local-calendar days the current user has posted ≥1 message in this room.
+  // Derived from already-fetched messages array; zero extra queries.
+  const streak = useMemo(() => {
+    if (!user?.id || messages.length === 0) return 0;
+    const dayKeys = new Set<string>();
+    for (const m of messages) {
+      if (m.sender_id !== user.id || !m.created_at) continue;
+      const d = new Date(m.created_at);
+      dayKeys.add(`${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`);
+    }
+    if (dayKeys.size === 0) return 0;
+    const today = new Date();
+    const keyOf = (d: Date) => `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`;
+    let cursor = new Date(today);
+    // If user hasn't posted today yet, start counting from yesterday (streak is "alive" until a full day gap).
+    if (!dayKeys.has(keyOf(cursor))) {
+      cursor.setDate(cursor.getDate() - 1);
+      if (!dayKeys.has(keyOf(cursor))) return 0;
+    }
+    let count = 0;
+    while (dayKeys.has(keyOf(cursor))) {
+      count += 1;
+      cursor.setDate(cursor.getDate() - 1);
+    }
+    return count;
+  }, [messages, user?.id]);
+
+  const prevStreakRef = useRef(0);
+  const [streakTick, setStreakTick] = useState(false);
+  useEffect(() => {
+    if (streak > prevStreakRef.current && prevStreakRef.current > 0) {
+      setStreakTick(true);
+      const t = setTimeout(() => setStreakTick(false), 650);
+      prevStreakRef.current = streak;
+      return () => clearTimeout(t);
+    }
+    prevStreakRef.current = streak;
+  }, [streak]);
+
   if (!hasAccess) {
     return (
       <div className="flex items-center justify-center h-screen">
@@ -194,29 +233,30 @@ export const DiscordStyleRoomView: React.FC<DiscordStyleRoomViewProps> = ({
   }
 
   return (
-    <div className="flex h-screen bg-background">
+    <div className="flex h-screen bg-training-bg text-foreground">
       {/* Left Sidebar - Participants */}
-      <div className="w-60 border-r border-border flex flex-col">
-        <div className="p-4 border-b border-border">
+      <div className="w-60 border-r border-training-coral/20 bg-training-ash flex flex-col">
+        <div className="p-4 border-b border-training-coral/20">
           <div className="flex items-center gap-2 mb-2">
-            <h2 className="font-bold text-lg truncate">{room.title}</h2>
-            {isCreator && <Crown className="h-4 w-4 text-primary" />}
+            <h2 className="font-oswald uppercase tracking-wide text-lg truncate text-training-coral-glow">{room.title}</h2>
+            {isCreator && <Crown className="h-4 w-4 text-training-coral" />}
           </div>
-          <Badge variant="secondary" className="text-xs">{room.room_type}</Badge>
+          <Badge variant="secondary" className="text-xs font-oswald uppercase tracking-wider bg-training-coral/15 text-training-ember border border-training-coral/30">{room.room_type}</Badge>
         </div>
+
 
         <ScrollArea className="flex-1 p-4">
           <div className="space-y-4">
             <div>
-              <h3 className="text-xs font-semibold text-muted-foreground mb-2 flex items-center gap-2">
+              <h3 className="text-xs font-oswald uppercase tracking-widest text-training-coral/80 mb-2 flex items-center gap-2">
                 <Users className="h-3 w-3" />
-                PARTICIPANTS — {participants.length}
+                Participants — {participants.length}
               </h3>
               <div className="space-y-1">
                 {participants.map((participant: any) => (
-                  <div 
-                    key={participant.user_id} 
-                    className="flex items-center gap-2 p-2 rounded hover:bg-muted/50 cursor-pointer"
+                  <div
+                    key={participant.user_id}
+                    className="flex items-center gap-2 p-2 rounded hover:bg-training-coral/10 cursor-pointer"
                   >
                     <Avatar className="h-8 w-8">
                       <AvatarImage src={participant.profiles?.avatar_url} />
@@ -238,21 +278,34 @@ export const DiscordStyleRoomView: React.FC<DiscordStyleRoomViewProps> = ({
       {/* Main Content - Chat */}
       <div className="flex-1 flex flex-col">
         {/* Top Bar with Tabs */}
-        <div className="border-b border-border">
+        <div className="border-b border-training-coral/20 bg-training-ash/60">
           <div className="h-14 px-4 flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <h1 className="font-semibold">general-chat</h1>
-              <Separator orientation="vertical" className="h-6" />
-              <p className="text-sm text-muted-foreground truncate max-w-md">
+            <div className="flex items-center gap-4 min-w-0">
+              <h1 className="font-oswald uppercase tracking-widest text-training-coral">general-chat</h1>
+              <Separator orientation="vertical" className="h-6 bg-training-coral/20" />
+              <p className="text-sm text-training-ember/80 truncate max-w-md">
                 {room.description}
               </p>
             </div>
-            
+
             <div className="flex items-center gap-2">
+              {streak > 0 && (
+                <div
+                  className={`flex items-center gap-1.5 px-3 py-1 rounded-full bg-training-coral/15 border border-training-coral/40 ${streakTick ? 'training-streak-tick' : ''}`}
+                  aria-label={`${streak}-day posting streak in this training room`}
+                  title={`${streak}-day streak — consecutive days you've posted here`}
+                >
+                  <Flame className="h-4 w-4 text-training-coral" />
+                  <span className="font-oswald uppercase tracking-wider text-sm text-training-coral-glow">
+                    {streak}-day streak
+                  </span>
+                </div>
+              )}
               <Button
                 variant={callActive ? "destructive" : "ghost"}
                 size="sm"
                 onClick={toggleCall}
+                className={callActive ? '' : 'text-training-ember hover:text-training-coral hover:bg-training-coral/10'}
               >
                 {callActive ? <PhoneOff className="h-4 w-4" /> : <Phone className="h-4 w-4" />}
               </Button>
@@ -261,33 +314,34 @@ export const DiscordStyleRoomView: React.FC<DiscordStyleRoomViewProps> = ({
                 size="sm"
                 onClick={toggleVideo}
                 disabled={!callActive}
+                className={videoOn ? 'bg-training-coral text-white hover:bg-training-coral-glow' : 'text-training-ember hover:text-training-coral hover:bg-training-coral/10'}
               >
                 <Video className="h-4 w-4" />
               </Button>
-              <Button variant="ghost" size="sm">
+              <Button variant="ghost" size="sm" className="text-training-ember hover:text-training-coral hover:bg-training-coral/10">
                 <Settings className="h-4 w-4" />
               </Button>
             </div>
           </div>
 
           {/* Tab Switcher */}
-          <div className="flex border-t border-border">
+          <div className="flex border-t border-training-coral/20">
             <button
               onClick={() => setActiveTab('chat')}
-              className={`flex-1 px-4 py-3 text-sm font-medium transition-colors ${
+              className={`flex-1 px-4 py-3 text-sm font-oswald uppercase tracking-wider transition-colors ${
                 activeTab === 'chat'
-                  ? 'bg-muted text-foreground border-b-2 border-primary'
-                  : 'text-muted-foreground hover:text-foreground hover:bg-muted/50'
+                  ? 'bg-training-coral/10 text-training-coral-glow border-b-2 border-training-coral'
+                  : 'text-training-ember/70 hover:text-training-coral hover:bg-training-coral/5'
               }`}
             >
               Chat
             </button>
             <button
               onClick={() => setActiveTab('media')}
-              className={`flex-1 px-4 py-3 text-sm font-medium transition-colors flex items-center justify-center gap-2 ${
+              className={`flex-1 px-4 py-3 text-sm font-oswald uppercase tracking-wider transition-colors flex items-center justify-center gap-2 ${
                 activeTab === 'media'
-                  ? 'bg-muted text-foreground border-b-2 border-primary'
-                  : 'text-muted-foreground hover:text-foreground hover:bg-muted/50'
+                  ? 'bg-training-coral/10 text-training-coral-glow border-b-2 border-training-coral'
+                  : 'text-training-ember/70 hover:text-training-coral hover:bg-training-coral/5'
               }`}
             >
               <Music className="h-4 w-4" />
@@ -295,6 +349,7 @@ export const DiscordStyleRoomView: React.FC<DiscordStyleRoomViewProps> = ({
             </button>
           </div>
         </div>
+
 
         {/* Content Area */}
         {activeTab === 'chat' ? (
@@ -322,7 +377,7 @@ export const DiscordStyleRoomView: React.FC<DiscordStyleRoomViewProps> = ({
             </ScrollArea>
 
             {/* Message Input */}
-            <div className="p-4 border-t border-border">
+            <div className="p-4 border-t border-training-coral/20 bg-training-ash/40">
               <div className="flex gap-2">
                 <Input
                   value={newMessage}
@@ -330,16 +385,19 @@ export const DiscordStyleRoomView: React.FC<DiscordStyleRoomViewProps> = ({
                   onKeyPress={(e) => e.key === 'Enter' && handleSendMessage()}
                   placeholder="Type a message..."
                   disabled={sending}
+                  className="bg-training-bg border-training-coral/30 focus-visible:ring-training-coral placeholder:text-training-ember/40"
                 />
                 <Button
                   variant="ghost"
                   size="icon"
+                  className="text-training-ember hover:text-training-coral hover:bg-training-coral/10"
                 >
                   <Smile className="h-5 w-5" />
                 </Button>
-                <Button 
+                <Button
                   onClick={handleSendMessage}
                   disabled={sending || !newMessage.trim()}
+                  className="bg-training-coral text-white hover:bg-training-coral-glow"
                 >
                   <Send className="h-4 w-4" />
                 </Button>
@@ -348,8 +406,8 @@ export const DiscordStyleRoomView: React.FC<DiscordStyleRoomViewProps> = ({
           </>
         ) : (
           <div className="flex-1">
-            <PremiumRoomMedia 
-              roomId={room.id} 
+            <PremiumRoomMedia
+              roomId={room.id}
               isCreator={isCreator}
               userId={user?.id}
             />
@@ -358,26 +416,26 @@ export const DiscordStyleRoomView: React.FC<DiscordStyleRoomViewProps> = ({
       </div>
 
       {/* Right Sidebar - Participants Info */}
-      <div className="w-80 border-l border-border flex flex-col">
-        <div className="p-4 border-b border-border">
-          <h3 className="font-semibold text-sm mb-3">About</h3>
-          <p className="text-sm text-muted-foreground">{room.description}</p>
+      <div className="w-80 border-l border-training-coral/20 bg-training-ash flex flex-col">
+        <div className="p-4 border-b border-training-coral/20">
+          <h3 className="font-oswald uppercase tracking-widest text-sm mb-3 text-training-coral">About</h3>
+          <p className="text-sm text-training-ember/80">{room.description}</p>
         </div>
-        <Separator />
+        <Separator className="bg-training-coral/20" />
         <div className="p-4">
-          <h3 className="font-semibold text-sm mb-3">Room Details</h3>
+          <h3 className="font-oswald uppercase tracking-widest text-sm mb-3 text-training-coral">Room Details</h3>
           <div className="space-y-2 text-sm">
             <div className="flex justify-between">
-              <span className="text-muted-foreground">Created</span>
-              <span>{new Date(room.created_at).toLocaleDateString()}</span>
+              <span className="text-training-ember/60">Created</span>
+              <span className="text-training-ember">{new Date(room.created_at).toLocaleDateString()}</span>
             </div>
             <div className="flex justify-between">
-              <span className="text-muted-foreground">Max Participants</span>
-              <span>{room.max_participants}</span>
+              <span className="text-training-ember/60">Max Participants</span>
+              <span className="text-training-ember">{room.max_participants}</span>
             </div>
             <div className="flex justify-between">
-              <span className="text-muted-foreground">Type</span>
-              <span>{room.room_type}</span>
+              <span className="text-training-ember/60">Type</span>
+              <span className="text-training-ember">{room.room_type}</span>
             </div>
           </div>
         </div>
