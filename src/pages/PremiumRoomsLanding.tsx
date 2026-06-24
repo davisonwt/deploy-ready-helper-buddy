@@ -164,12 +164,13 @@ const PremiumRoomsLanding: React.FC = () => {
                 <GraduationCap className="h-10 w-10 text-primary" />
               </div>
               <h3 className="text-xl font-semibold">
-                {searchQuery ? 'No rooms found' : 'Premium Rooms & Courses'}
+                {searchQuery ? 'No rooms found' : 'Training Rooms'}
               </h3>
               <p className="text-muted-foreground max-w-md mx-auto">
                 {searchQuery
                   ? 'Try adjusting your search query'
-                  : 'Create structured courses and classrooms with premium content. Share knowledge through modules, documents, videos, and interactive discussions.'}
+                  : 'No training rooms yet. Create the first one to get started.'}
+
               </p>
               <div className="flex flex-col sm:flex-row gap-3 justify-center pt-4">
                 <Button asChild>
