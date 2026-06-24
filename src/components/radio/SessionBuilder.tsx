@@ -968,4 +968,130 @@ const SlotRow = ({
   );
 };
 
+/* ---------------- Listen Dialog ---------------- */
+
+interface ListenSlot {
+  id: string;
+  position: number;
+  slot_type: SlotType;
+  label: string | null;
+  duration_seconds: number;
+  asset_url: string | null;
+  asset_name: string | null;
+  music_track_id: string | null;
+  track_url?: string | null;
+  track_title?: string | null;
+}
+
+const SessionListenDialog = ({
+  sessionId,
+  onClose,
+}: {
+  sessionId: string | null;
+  onClose: () => void;
+}) => {
+  const [items, setItems] = useState<ListenSlot[]>([]);
+  const [sessionTitle, setSessionTitle] = useState('');
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    if (!sessionId) {
+      setItems([]);
+      return;
+    }
+    (async () => {
+      setLoading(true);
+      const { data: sess } = await supabase
+        .from('radio_prerecorded_sessions')
+        .select('title')
+        .eq('id', sessionId)
+        .maybeSingle();
+      setSessionTitle((sess as any)?.title || 'Radio Session');
+
+      const { data: slotRows } = await supabase
+        .from('radio_prerecorded_slots')
+        .select('*')
+        .eq('session_id', sessionId)
+        .order('position', { ascending: true });
+
+      const baseSlots = (slotRows || []) as ListenSlot[];
+      const trackIds = baseSlots
+        .map((s) => s.music_track_id)
+        .filter((x): x is string => !!x);
+
+      let trackMap: Record<string, { file_url: string | null; track_title: string }> = {};
+      if (trackIds.length) {
+        const { data: tracks } = await supabase
+          .from('dj_music_tracks')
+          .select('id,track_title,file_url')
+          .in('id', trackIds);
+        (tracks || []).forEach((t: any) => {
+          trackMap[t.id] = { file_url: t.file_url, track_title: t.track_title };
+        });
+      }
+
+      setItems(
+        baseSlots.map((s) => ({
+          ...s,
+          track_url: s.music_track_id ? trackMap[s.music_track_id]?.file_url ?? null : null,
+          track_title: s.music_track_id ? trackMap[s.music_track_id]?.track_title ?? null : null,
+        }))
+      );
+      setLoading(false);
+    })();
+  }, [sessionId]);
+
+  return (
+    <Dialog open={!!sessionId} onOpenChange={(o) => !o && onClose()}>
+      <DialogContent className="bg-radio-bg border-radio-blue/30 text-radio-mist max-w-2xl">
+        <DialogHeader>
+          <DialogTitle className="font-bitter">Listen · {sessionTitle}</DialogTitle>
+        </DialogHeader>
+        <div className="max-h-[70vh] overflow-y-auto space-y-3">
+          {loading && <p className="text-sm text-radio-mist/60">Loading…</p>}
+          {!loading && items.length === 0 && (
+            <p className="text-sm text-radio-mist/60 text-center py-6">
+              This session has no slots yet.
+            </p>
+          )}
+          {items.map((slot) => {
+            const meta = SLOT_META[slot.slot_type];
+            const Icon = meta.icon;
+            const audioSrc = slot.asset_url || slot.track_url || null;
+            const displayLabel =
+              slot.label || slot.track_title || slot.asset_name || meta.label;
+            return (
+              <div
+                key={slot.id}
+                className="rounded-md border border-radio-blue/30 bg-radio-bg/40 p-3 space-y-2"
+              >
+                <div className="flex items-center gap-2">
+                  <Icon className={`h-4 w-4 ${meta.color}`} />
+                  <span className="text-xs uppercase tracking-wide text-radio-mist/60">
+                    {slot.position + 1}. {meta.label}
+                  </span>
+                  <span className="ml-auto text-xs text-radio-amber tabular-nums">
+                    {fmt(slot.duration_seconds)}
+                  </span>
+                </div>
+                <div className="text-sm text-radio-mist truncate">{displayLabel}</div>
+                {audioSrc ? (
+                  <audio controls src={audioSrc} className="w-full" preload="none" />
+                ) : (
+                  <p className="text-xs text-radio-mist/50 italic">
+                    {slot.slot_type === 'live_talk' || slot.slot_type === 'qa'
+                      ? 'Live segment — no recording to play back.'
+                      : 'No audio attached to this slot.'}
+                  </p>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+};
+
 export default SessionBuilder;
+
