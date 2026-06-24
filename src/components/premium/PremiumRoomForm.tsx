@@ -85,7 +85,7 @@ export const PremiumRoomForm = ({ roomId }: PremiumRoomFormProps) => {
         }
       } catch (error) {
         console.error('Failed to load room:', error);
-        toast({ title: 'Error', description: 'Failed to load room data', variant: 'destructive' });
+        toast({ title: 'Error', description: 'Failed to load training room data', variant: 'destructive' });
       } finally {
         setInitialLoading(false);
       }
@@ -190,7 +190,7 @@ export const PremiumRoomForm = ({ roomId }: PremiumRoomFormProps) => {
         
         toast({
           title: "Success!",
-          description: "Premium room updated successfully",
+          description: "Training room updated successfully",
         });
         navigate(`/premium-room/${roomId}`);
       } else {
@@ -198,7 +198,7 @@ export const PremiumRoomForm = ({ roomId }: PremiumRoomFormProps) => {
         const room = await createPremiumRoom(formData);
         toast({
           title: "Success!",
-          description: "Premium room created successfully",
+          description: "Training room created successfully",
         });
         navigate(`/premium-rooms`);
       }
@@ -206,7 +206,7 @@ export const PremiumRoomForm = ({ roomId }: PremiumRoomFormProps) => {
       console.error('Room operation failed:', error);
       toast({
         title: "Error",
-        description: `Failed to ${roomId ? 'update' : 'create'} room. Please try again.`,
+        description: `Failed to ${roomId ? 'update' : 'create'} training room. Please try again.`,
         variant: "destructive"
       });
     } finally {
@@ -240,8 +240,8 @@ export const PremiumRoomForm = ({ roomId }: PremiumRoomFormProps) => {
     <div className="max-w-4xl mx-auto p-6">
       <Card>
         <CardHeader>
-          <CardTitle>Create Premium Room</CardTitle>
-          <CardDescription>Set up a new classroom or course with premium content</CardDescription>
+          <CardTitle>{roomId ? 'Update Training Room' : 'Create Training Room'}</CardTitle>
+          <CardDescription>Set up a new training room or course with premium content</CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-6">
@@ -251,7 +251,7 @@ export const PremiumRoomForm = ({ roomId }: PremiumRoomFormProps) => {
                 id="title"
                 value={formData.title}
                 onChange={(e) => setFormData({...formData, title: e.target.value})}
-                placeholder="Enter room title"
+                placeholder="Enter training room title"
                 required
               />
             </div>
@@ -262,7 +262,7 @@ export const PremiumRoomForm = ({ roomId }: PremiumRoomFormProps) => {
                 id="description"
                 value={formData.description}
                 onChange={(e) => setFormData({...formData, description: e.target.value})}
-                placeholder="Describe your premium room"
+                placeholder="Describe your training room"
                 rows={3}
               />
             </div>
@@ -332,7 +332,9 @@ export const PremiumRoomForm = ({ roomId }: PremiumRoomFormProps) => {
               className="w-full"
               size="lg"
             >
-              {loading ? 'Creating Room...' : 'Create Premium Room'}
+              {loading
+                ? (roomId ? 'Updating Room...' : 'Creating Room...')
+                : (roomId ? 'Update Training Room' : 'Create Training Room')}
             </Button>
           </form>
         </CardContent>
