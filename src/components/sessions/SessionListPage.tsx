@@ -39,7 +39,7 @@ const COPY: Record<Kind, { label: string; route: string; tableCreatorCol: string
     route: '/skilldrop',
     tableCreatorCol: 'presenter_id',
     icon: Zap,
-    accent: '#F59E0B',
+    accent: '#F5A623',
     titleFont: 'SkillDrop',
   },
 };
