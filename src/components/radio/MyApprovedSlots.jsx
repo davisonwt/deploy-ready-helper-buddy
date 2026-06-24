@@ -159,6 +159,22 @@ export function MyApprovedSlots() {
     }
   };
 
+  const handleDeleteSlot = async (slot) => {
+    if (!window.confirm(`Delete this slot "${slot.radio_shows?.show_name || 'Radio Show'}"? This cannot be undone.`)) return;
+    try {
+      const { error } = await supabase
+        .from('radio_schedule')
+        .delete()
+        .eq('id', slot.id);
+      if (error) throw error;
+      setSlots((prev) => prev.filter((s) => s.id !== slot.id));
+      toast.success('Slot deleted');
+    } catch (error) {
+      console.error('Error deleting slot:', error);
+      toast.error('Failed to delete slot: ' + error.message);
+    }
+  };
+
   const getSlotStatus = (slot) => {
     const now = new Date();
     const startTime = parseISO(slot.start_time);
