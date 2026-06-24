@@ -4,11 +4,12 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
-import { Plus, ArrowLeft } from 'lucide-react';
+import { Plus, ArrowLeft, PlayCircle } from 'lucide-react';
 import OneOnOneRoom from '@/components/live/OneOnOneRoom';
 import { PresenceAura, classifyAura } from '@/components/live/PresenceAura';
 import CreateOneOnOneDialog from '@/components/live/CreateOneOnOneDialog';
 import PageHeroBanner from '@/components/chat/PageHeroBanner';
+import ExplainerDialog from '@/components/explainers/ExplainerDialog';
 
 interface LiveRoom {
   id: string;
@@ -30,6 +31,7 @@ export default function LiveRoomsPage() {
   const roomParam = searchParams.get('room');
   const [activeRoomId, setActiveRoomId] = useState<string | null>(roomParam);
   const [createOpen, setCreateOpen] = useState(false);
+  const [explainerOpen, setExplainerOpen] = useState(false);
 
   useEffect(() => { setActiveRoomId(roomParam); }, [roomParam]);
 
@@ -123,7 +125,14 @@ export default function LiveRoomsPage() {
             <h1 className="text-5xl tracking-tight mb-2" style={{ fontFamily: '"Fraunces", serif', fontWeight: 500 }}>
               1-on-1 Live
             </h1>
-            <p className="text-[#7E9498] text-base">Private rooms you host or were invited to.</p>
+            <p className="text-[#7E9498] text-base mb-3">Private rooms you host or were invited to.</p>
+            <button
+              onClick={() => setExplainerOpen(true)}
+              className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full text-xs font-medium transition-colors border border-[#FF8A5B]/40 bg-[#FF8A5B]/10 text-[#FF8A5B] hover:bg-[#FF8A5B]/20"
+            >
+              <PlayCircle className="h-3.5 w-3.5" />
+              Watch how it works · 34s
+            </button>
           </div>
           <Button onClick={() => setCreateOpen(true)}
             className="gap-2 bg-[#1FB6A8] text-[#0B1420] hover:bg-[#1FB6A8]/90">
@@ -197,6 +206,8 @@ export default function LiveRoomsPage() {
           setSearchParams({ room: roomId });
         }}
       />
+
+      <ExplainerDialog open={explainerOpen} onOpenChange={setExplainerOpen} />
     </div>
   );
 }
