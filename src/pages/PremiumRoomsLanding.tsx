@@ -27,8 +27,8 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Badge } from '@/components/ui/badge';
-import { GraduationCap, Search, Plus, BookOpen, Users, Music, FileText, Image, Trash2 } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { GraduationCap, Search, Plus, BookOpen, Users, Music, FileText, Image, Trash2, ArrowLeft } from 'lucide-react';
+import { Link, useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { toast } from 'sonner';
@@ -60,6 +60,7 @@ const PremiumRoomsLanding: React.FC = () => {
   const [rooms, setRooms] = React.useState<PremiumRoom[]>([]);
   const [loading, setLoading] = React.useState(true);
   const { user } = useAuth();
+  const navigate = useNavigate();
 
   // Fetch premium rooms
   React.useEffect(() => {
@@ -122,6 +123,11 @@ const PremiumRoomsLanding: React.FC = () => {
     <div className="container mx-auto p-4 max-w-7xl">
       {/* Header */}
       <div className="mb-6 space-y-4">
+        <Button variant="ghost" onClick={() => navigate(-1)} className="gap-2">
+          <ArrowLeft className="h-4 w-4" />
+          Go Back
+        </Button>
+
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-3xl font-bold text-foreground">Training Rooms</h1>
