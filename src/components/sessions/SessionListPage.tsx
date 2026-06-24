@@ -114,12 +114,25 @@ export default function SessionListPage({ kind }: Props) {
   const isLoading = ownQuery.isLoading || participantRoomsQuery.isLoading;
 
   const isClassroom = kind === 'classroom';
-  const bg = isClassroom ? '#14101F' : '#0B1420';
-  const fg = isClassroom ? '#E8D9B5' : '#EAF4F2';
-  const mutedFg = isClassroom ? '#E8D9B5' : '#7E9498';
-  const titleFontFamily = isClassroom ? '"Spectral", Georgia, serif' : '"Fraunces", serif';
-  const titleFontWeight = isClassroom ? 600 : 500;
-  const cardBorder = isClassroom ? `${cfg.accent}55` : `${cfg.accent}33`;
+  const isSkillDrop = kind === 'skilldrop';
+  const bg = isClassroom ? '#14101F' : isSkillDrop ? '#1A1308' : '#0B1420';
+  const fg = isClassroom ? '#E8D9B5' : isSkillDrop ? '#F5E6C8' : '#EAF4F2';
+  const mutedFg = isClassroom ? '#E8D9B5' : isSkillDrop ? '#F5E6C8' : '#7E9498';
+  const titleFontFamily = isClassroom
+    ? '"Spectral", Georgia, serif'
+    : isSkillDrop
+      ? '"Space Grotesk", Inter, sans-serif'
+      : '"Fraunces", serif';
+  const titleFontWeight = isClassroom ? 600 : isSkillDrop ? 700 : 500;
+  const cardBorder = isClassroom || isSkillDrop ? `${cfg.accent}55` : `${cfg.accent}33`;
+  const themed = isClassroom || isSkillDrop;
+  const themedTintWeak = isClassroom ? 'rgba(139,92,246,0.06)' : isSkillDrop ? 'rgba(245,166,35,0.07)' : 'rgba(255,255,255,0.05)';
+  const themedTintStrong = isClassroom ? 'rgba(139,92,246,0.12)' : isSkillDrop ? 'rgba(245,166,35,0.14)' : 'rgba(255,255,255,0.10)';
+  const buttonFg = isClassroom ? '#14101F' : isSkillDrop ? '#1A1308' : '#0B1420';
+  const mutedColor = isSkillDrop ? 'rgba(245,230,200,0.6)' : isClassroom ? 'rgba(232,217,181,0.6)' : '#7E9498';
+  const pageBgStyle: React.CSSProperties = isSkillDrop
+    ? { background: 'radial-gradient(ellipse at top, rgba(245,166,35,0.10) 0%, rgba(26,19,8,0) 55%), linear-gradient(180deg, #241a0d 0%, #1A1308 70%, #120c04 100%)', color: fg }
+    : { backgroundColor: bg, color: fg };
 
   return (
     <div className="min-h-screen" style={{ backgroundColor: bg, color: fg }}>
