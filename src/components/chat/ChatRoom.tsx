@@ -1137,6 +1137,8 @@ export const ChatRoom: React.FC<ChatRoomProps> = ({ roomId, onBack, instructorId
         hostName={roomInfo?.name}
       />
 
+      </div>
+    </div>
     </div>
   );
 };
