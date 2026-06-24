@@ -404,58 +404,113 @@ const SessionBuilder = () => {
 
   if (!user) return null;
 
-  return (
-    <div className="grid grid-cols-1 lg:grid-cols-[280px_1fr] gap-6">
-      {/* Sessions sidebar */}
-      <Card className="radio-card">
-        <CardHeader className="pb-3">
-          <div className="flex items-center justify-between">
-            <CardTitle className="font-bitter text-radio-mist text-base">My Sessions</CardTitle>
-            <Button size="sm" variant="ghost" onClick={createSession} className="h-7 px-2 text-radio-amber hover:bg-radio-amber/10">
-              <Plus className="h-4 w-4" />
-            </Button>
+  if (view === 'list') {
+    return (
+      <div className="space-y-6">
+        <div className="flex items-start justify-between gap-3 flex-wrap">
+          <div>
+            <h2 className="font-bitter text-2xl text-radio-mist">My Radio Sessions</h2>
+            <p className="text-sm text-radio-mist/70">Build pre-recorded 2-hour shows, listen back, or delete old ones.</p>
           </div>
-        </CardHeader>
-        <CardContent className="space-y-2 max-h-[60vh] overflow-y-auto">
-          {loading && <p className="text-sm text-radio-mist/50">Loading…</p>}
-          {!loading && sessions.length === 0 && (
-            <p className="text-sm text-radio-mist/60">
-              No sessions yet. Hit <span className="text-radio-amber">+</span> to start building a 2-hour show.
-            </p>
-          )}
-          {sessions.map((s) => (
-            <button
-              key={s.id}
-              onClick={() => setActiveId(s.id)}
-              className={`w-full text-left rounded-md px-3 py-2 border transition-colors ${
-                activeId === s.id
-                  ? 'bg-radio-blue/20 border-radio-amber/50'
-                  : 'bg-radio-bg/40 border-radio-blue/20 hover:border-radio-amber/30'
-              }`}
-            >
-              <div className="flex items-center justify-between gap-2">
-                <span className="font-bitter text-sm text-radio-mist truncate">{s.title}</span>
-                <Badge
-                  variant="outline"
-                  className={`text-[10px] ${
-                    s.status === 'scheduled'
-                      ? 'border-radio-amber/50 text-radio-amber'
-                      : 'border-radio-blue/40 text-radio-mist/70'
-                  }`}
-                >
-                  {s.status}
-                </Badge>
-              </div>
-              <div className="text-xs text-radio-mist/60 mt-1">
-                {fmt(s.total_duration_seconds)} / 2:00:00
-              </div>
-            </button>
-          ))}
-        </CardContent>
-      </Card>
+          <Button onClick={createSession} className="bg-radio-amber text-radio-bg hover:bg-radio-amber/90">
+            <Plus className="h-4 w-4 mr-2" /> Create Radio Session
+          </Button>
+        </div>
 
-      {/* Active session */}
+        {loading && <p className="text-sm text-radio-mist/50">Loading…</p>}
+
+        {!loading && sessions.length === 0 && (
+          <Card className="radio-card">
+            <CardContent className="py-16 text-center space-y-4">
+              <Disc3 className="h-12 w-12 mx-auto text-radio-amber/70" />
+              <p className="font-bitter text-lg text-radio-mist/80">No radio sessions yet</p>
+              <p className="text-sm text-radio-mist/60 max-w-md mx-auto">
+                Drop your first 2-hour show — mix talk, voice notes, songs, adverts and Q&amp;A slot-by-slot.
+              </p>
+              <Button onClick={createSession} className="bg-radio-amber text-radio-bg hover:bg-radio-amber/90">
+                <Plus className="h-4 w-4 mr-2" /> Create Radio Session
+              </Button>
+            </CardContent>
+          </Card>
+        )}
+
+        {sessions.length > 0 && (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            {sessions.map((s) => (
+              <Card key={s.id} className="radio-card">
+                <CardContent className="p-4 space-y-3">
+                  <div className="flex items-start justify-between gap-2">
+                    <h3 className="font-bitter text-base text-radio-mist truncate">{s.title}</h3>
+                    <Badge
+                      variant="outline"
+                      className={`text-[10px] shrink-0 ${
+                        s.status === 'scheduled'
+                          ? 'border-radio-amber/50 text-radio-amber'
+                          : 'border-radio-blue/40 text-radio-mist/70'
+                      }`}
+                    >
+                      {s.status}
+                    </Badge>
+                  </div>
+                  <div className="text-xs text-radio-mist/60">
+                    {fmt(s.total_duration_seconds)} / 2:00:00
+                  </div>
+                  {s.description && (
+                    <p className="text-xs text-radio-mist/70 line-clamp-2">{s.description}</p>
+                  )}
+                  <div className="flex flex-wrap gap-2 pt-2">
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => setListenSessionId(s.id)}
+                      disabled={s.total_duration_seconds === 0}
+                      className="bg-radio-bg/40 border-radio-blue/30 text-radio-mist hover:border-radio-amber/50 hover:text-radio-amber"
+                    >
+                      <Play className="h-3.5 w-3.5 mr-1" /> Listen
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => openEditor(s.id)}
+                      className="bg-radio-bg/40 border-radio-blue/30 text-radio-mist hover:border-radio-amber/50 hover:text-radio-amber"
+                    >
+                      Edit
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => deleteSession(s.id)}
+                      className="border-destructive/40 text-destructive hover:bg-destructive/10"
+                    >
+                      <Trash2 className="h-3.5 w-3.5 mr-1" /> Delete
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        )}
+
+        <SessionListenDialog
+          sessionId={listenSessionId}
+          onClose={() => setListenSessionId(null)}
+        />
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-4">
+      <Button
+        size="sm"
+        variant="ghost"
+        onClick={backToList}
+        className="text-radio-mist/70 hover:text-radio-amber hover:bg-transparent px-0"
+      >
+        ← Back to sessions
+      </Button>
       <div className="space-y-4">
+
         {!active ? (
           <Card className="radio-card">
             <CardContent className="py-16 text-center">
