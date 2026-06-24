@@ -1,12 +1,13 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
 import { Plus, ArrowLeft } from 'lucide-react';
 import OneOnOneRoom from '@/components/live/OneOnOneRoom';
 import { PresenceAura, classifyAura } from '@/components/live/PresenceAura';
+import CreateOneOnOneDialog from '@/components/live/CreateOneOnOneDialog';
 
 interface LiveRoom {
   id: string;
@@ -23,9 +24,11 @@ type MessageRow = { room_id: string; sender_id: string; created_at: string };
 export default function LiveRoomsPage() {
   const navigate = useNavigate();
   const { user } = useAuth();
+  const queryClient = useQueryClient();
   const [searchParams, setSearchParams] = useSearchParams();
   const roomParam = searchParams.get('room');
   const [activeRoomId, setActiveRoomId] = useState<string | null>(roomParam);
+  const [createOpen, setCreateOpen] = useState(false);
 
   useEffect(() => { setActiveRoomId(roomParam); }, [roomParam]);
 
@@ -120,7 +123,7 @@ export default function LiveRoomsPage() {
             </h1>
             <p className="text-[#7E9498] text-base">Private rooms you host or were invited to.</p>
           </div>
-          <Button onClick={() => navigate('/communications-hub')}
+          <Button onClick={() => setCreateOpen(true)}
             className="gap-2 bg-[#1FB6A8] text-[#0B1420] hover:bg-[#1FB6A8]/90">
             <Plus className="h-4 w-4" /> New room
           </Button>
@@ -135,8 +138,8 @@ export default function LiveRoomsPage() {
         {!isLoading && rooms.length === 0 && (
           <div className="rounded-2xl border border-[#1FB6A8]/15 bg-[#123330]/30 p-12 text-center">
             <p className="text-2xl mb-3" style={{ fontFamily: '"Fraunces", serif', fontWeight: 500 }}>No private rooms yet</p>
-            <p className="text-[#7E9498] mb-6">Create a 1-on-1 from the ChatApp Go-Live launcher and invite a tribe member.</p>
-            <Button onClick={() => navigate('/communications-hub')} className="bg-[#1FB6A8] text-[#0B1420] hover:bg-[#1FB6A8]/90">Open launcher</Button>
+            <p className="text-[#7E9498] mb-6">Start a private 1-on-1 and invite a tribe member.</p>
+            <Button onClick={() => setCreateOpen(true)} className="bg-[#1FB6A8] text-[#0B1420] hover:bg-[#1FB6A8]/90 gap-2"><Plus className="h-4 w-4" /> New room</Button>
           </div>
         )}
 
@@ -182,6 +185,16 @@ export default function LiveRoomsPage() {
           </div>
         )}
       </div>
+
+      <CreateOneOnOneDialog
+        open={createOpen}
+        onOpenChange={setCreateOpen}
+        onCreated={(roomId) => {
+          setCreateOpen(false);
+          queryClient.invalidateQueries({ queryKey: ['my-live-rooms', user?.id] });
+          setSearchParams({ room: roomId });
+        }}
+      />
     </div>
   );
 }
