@@ -29,6 +29,7 @@ import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
 import { useMediaRecorder } from '@/hooks/useMediaRecorder';
 import { uploadChatMedia } from '@/lib/liveRoom/uploadMedia';
+import { getVoiceColor, classifyVoiceState, initialFrom } from './voiceColor';
 
 
 interface ChatRoomProps {
