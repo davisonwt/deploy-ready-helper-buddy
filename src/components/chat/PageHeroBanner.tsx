@@ -1,8 +1,8 @@
 import banner1on1 from '@/assets/chat-mode-1on1.jpg';
 import bannerCommunity from '@/assets/chat-mode-community.jpg';
 import bannerClassroom from '@/assets/chat-mode-classroom.jpg';
-import bannerLecture from '@/assets/chat-mode-lecture.jpg';
-import bannerTraining from '@/assets/chat-mode-training.jpg';
+import bannerSkilldrop from '@/assets/chat-mode-skilldrop.jpg';
+import bannerTraining from '@/assets/chat-mode-training-rooms.jpg';
 import bannerRadio from '@/assets/chat-mode-radio.jpg';
 
 export type HeroVariant =
