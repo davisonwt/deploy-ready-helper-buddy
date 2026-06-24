@@ -1,7 +1,7 @@
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Download, Image, FileText, Video, Music, Trash2 } from 'lucide-react';
+import { Download, Image, FileText, Video, Music, Trash2, Hand, GraduationCap } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import FilePreview from './FilePreview';
 import { VerificationButton } from './VerificationButton';
