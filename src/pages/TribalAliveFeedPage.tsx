@@ -474,7 +474,7 @@ export default function TribalAliveFeedPage() {
           sower_handle: handleOf(profileMap[c.presenter_id]),
           wandering_role: 'whisperer',
           created_at: c.created_at,
-          href: `/skilldrop`,
+          href: `/skilldrop/${c.id}`,
         }));
 
         const orchardItems: FeedItem[] = (orchardsRes.data || []).map((o: any) => ({
