@@ -118,6 +118,7 @@ import {
   CommunityChatsPage,
   SessionPage,
   ClassroomPage,
+  ClassroomDashboardPage,
   SkillDropPage,
 } from './lazyPages';
 
@@ -299,6 +300,13 @@ const AppRoutes = () => (
       <ProtectedRoute>
         <Suspense fallback={<LoadingFallback />}>
           <SessionPage kind="classroom" />
+        </Suspense>
+      </ProtectedRoute>
+    } />
+    <Route path="/classroom/:id/dashboard" element={
+      <ProtectedRoute>
+        <Suspense fallback={<LoadingFallback />}>
+          <ClassroomDashboardPage />
         </Suspense>
       </ProtectedRoute>
     } />

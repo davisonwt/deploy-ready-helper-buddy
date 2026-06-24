@@ -178,4 +178,5 @@ export const PlantASeedPage = lazy(() => import('@/pages/PlantASeedPage'));
 export const MyRadioOptInPage = lazy(() => import('@/pages/MyRadioOptInPage'));
 export const SessionPage = lazy(() => import('@/pages/SessionPage'));
 export const ClassroomPage = lazy(() => import('@/pages/ClassroomPage'));
+export const ClassroomDashboardPage = lazy(() => import('@/pages/ClassroomDashboardPage'));
 export const SkillDropPage = lazy(() => import('@/pages/SkillDropPage'));
