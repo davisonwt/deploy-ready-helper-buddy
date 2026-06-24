@@ -70,7 +70,7 @@ export default function CreateOneOnOneDialog({ open, onOpenChange, onCreated }: 
         ...invitees.map(uid => {
           const p = profiles.find(pp => pp.user_id === uid);
           const memberName = p?.display_name || 'Guest';
-          return { room_id: roomId, user_id: uid, role: 'invited', display_name: memberName };
+          return { room_id: roomId, user_id: uid, role: 'audience', display_name: memberName };
         }),
       ];
       const { error: pErr } = await supabase.from('live_room_participants' as any).insert(participantRows as any);
