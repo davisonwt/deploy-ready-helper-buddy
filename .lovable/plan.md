@@ -1,56 +1,82 @@
-# Radio visual identity — plan
+# Pilot: 1-on-1 Live Explainer Video (Remotion + Kokoro voiceover)
 
-## Architecture confirmed
+Build ONE explainer video as a style/pacing/voice pilot before committing to the other 5 pages.
 
-- `RadioPage.tsx` mounts four tab components: `MusicLibrary`, `PlaylistManager`, `LiveStreamPlayer`, `ListenerInteractions`. Grepped — **none of these four are imported anywhere else**. `GroveStationPage` and `RadioManagementPage` use different `DJ*`/`Public*` siblings. Safe to restyle directly with **zero risk** to other surfaces.
-- `LiveStreamPlayer` has a real `<audio ref={audioRef} src={streamUrl}>` element with real `play`/`pause`/`loadstart`/`error` listeners. The `playing` boolean is **genuinely tied to media element state**.
-- `listenerCount` is partially real (Supabase RPC `get_current_radio_show` + `radio-live-updates` broadcast channel) but has an optimistic `prev + 1` bump on local play — that bump is already-existing behavior, I won't touch it.
+## What gets built
 
-## The honest constraint (waveform)
+A ~50-second 1920x1080 MP4 explainer for the 1-on-1 Live page, embedded as a looping (paused-by-default, click-to-play) hero video on `/live-rooms`.
 
-A true frequency-reactive waveform requires `AudioContext` + `MediaElementAudioSourceNode` + `AnalyserNode` wired to the `<audio>` element. The stream is **cross-origin** (`s9.voscast.com:9525/stream`) and the `<audio>` tag has no `crossOrigin="anonymous"` attribute. Without proper `Access-Control-Allow-Origin` headers from that Shoutcast server, `createMediaElementSource` either throws or returns silent zeros — and Shoutcast endpoints almost never set CORS for arbitrary origins. Adding `crossOrigin="anonymous"` could also break playback entirely if the server rejects the preflight.
+## Voiceover pipeline (NOT ElevenLabs)
 
-**I will not build fake spectrum analysis.** Instead:
+1. Write the narration script (4 numbered beats, ~110 words, ~50s at Kokoro default speed).
+2. Call the **existing `generate-voiceover` edge function** from a small one-off Node script in the sandbox using the project's anon key + a logged-in session token. Voice: `af_bella` (warm female, fits Sow2Grow tone — happy to swap to `af_sarah` or `am_michael` if preferred).
+3. The function returns a public URL in the `ai-generations` bucket. Download the MP3 to `remotion/public/audio/1on1-live-vo.mp3`.
+4. Remotion `<Audio src={staticFile('audio/1on1-live-vo.mp3')} />` drives the timeline; visual scene durations are tuned to the actual audio length (measured with ffprobe after generation).
 
-- **CSS-animated EQ bar cluster** (8–12 vertical bars with staggered keyframe heights) rendered next to the play button and in the "Stream Information" card.
-- Bars **animate only while `playing === true`** (controlled by a class toggle); when paused/stopped they **freeze flat at ~10% height**. This makes the visual honestly tied to the one real signal we have: media element play state.
-- Bars labeled visually as decorative (subtle, no axis labels, no "Hz" markings) — never implying real audio analysis.
-- `prefers-reduced-motion`: bars hold a static stepped silhouette, no animation.
+If the edge function rejects the call (tier cap, auth), fallback is to call the same Replicate Kokoro model directly from a sandbox script using the project's Replicate key — same audio, no UX change.
 
-If the user later wires up a same-origin / CORS-enabled stream, swapping to a real `AnalyserNode` is a one-component change.
+## Narration script (draft, ~50s)
 
-## Design tokens (added to `tailwind.config.ts` + `src/index.css`)
+> "Going live one-on-one on Sow2Grow takes four taps.
+> **One** — from the ChatApp launcher, tap *1-on-1 Live*.
+> **Two** — tap *New room*, then pick the tribe member you want to invite.
+> **Three** — your private room opens. Send a message, drop a voice note, or share a quick video clip.
+> **Four** — ready to talk face to face? Tap the call button to start a real voice or video call.
+> That's it. Your tribe, your room, your moment."
 
-```
-radio.bg     #0A1628   (deep navy night)
-radio.blue   #4A90D9   (warm primary)
-radio.amber  #FFB454   (dial-glow accent)
-radio.ink    #14233B   (raised surface)
-radio.mist   #B8C5D9   (muted text)
-```
+## Remotion composition
 
-Font: import **Bitter** via `index.html` Google Fonts link; add `font-bitter` family to Tailwind. Headers only — body stays Inter.
+`remotion/` project, 1920x1080 @ 30fps, ~1500 frames (50s). Five `<TransitionSeries>` segments:
 
-Animation: `@keyframes radio-eq` (height bounce between 15% and 95%) with 8 stagger-delayed variants. `prefers-reduced-motion` media query halts it.
+| # | Beat | Frames | Visual |
+|---|------|--------|--------|
+| 0 | Hook / title | 0-120 | "Going live, 1-on-1" — Fraunces display, teal underline sweep, ember dot pulse |
+| 1 | Step 1 — Open launcher | 120-420 | Big numeral **1**, mock ChatApp launcher card with "1-on-1 Live" button highlighted, tap-ripple animation |
+| 2 | Step 2 — New room + invite | 420-780 | Numeral **2**, "New room" button → tribe member chip slides in with avatar placeholder |
+| 3 | Step 3 — Chat in room | 780-1140 | Numeral **3**, three message bubbles stagger in: text, voice-note waveform, video thumbnail |
+| 4 | Step 4 — Start the call | 1140-1440 | Numeral **4**, ember call button scales up, ripples outward, "Live" badge appears |
+| 5 | Outro | 1440-1500 | "Your tribe. Your room." — Fraunces, teal/ember tokens |
 
-## Scope of files
+**Design tokens (locked to existing 1-on-1 Live page identity):**
+- Background `#0B1420`
+- Teal primary `#1FB6A8`
+- Ember accent `#FF8A5B`
+- Fraunces (display, numbered markers, titles)
+- Inter (body, captions)
+- Subtle teal radial-gradient background drift across the whole video
+- One consistent entrance: spring scale + translateY, damping 18 stiffness 180
+- Scene transitions: `fade` with springTiming(damping 200, 18 frames)
 
-1. `index.html` — add Bitter Google Fonts link.
-2. `tailwind.config.ts` — add `radio.*` colors, `font-bitter`, `radio-eq` keyframes/animation.
-3. `src/index.css` — `.radio-surface` scoping class + `prefers-reduced-motion` fallback for `radio-eq`.
-4. `src/components/radio/RadioPage.tsx` — wrap in `radio-surface` background, Bitter title with amber-to-blue gradient, restyle tab list, quick-access buttons, badges, Stream Information card, Chat Guidelines card.
-5. `src/components/radio/LiveStreamPlayer.tsx` — new `<EqBars playing={playing} />` inline component (declared in same file, ~25 lines), restyle Card with navy/blue palette and amber play button glow, replace listener Badge with amber dial chip.
-6. `src/components/radio/MusicLibrary.tsx`, `PlaylistManager.tsx`, `ListenerInteractions.tsx` — restyle cards/headers/buttons to use radio palette + Bitter headers. No logic changes.
+## Embedding in the app
 
-## Regression discipline
+- Save final MP4 to `src/assets/explainer-1on1-live.mp4`
+- Add a small `<ExplainerVideo />` component (HTML5 `<video controls preload="metadata" poster=...>`) and place it on `src/pages/LiveRoomsPage.tsx` under the hero banner, above the room list. Poster image = a still rendered from frame 60.
+- No autoplay (respects user / mobile data); ember "Watch how it works (50s)" affordance.
 
-- The four restyled components are imported **only** by `RadioPage.tsx` (verified via ripgrep). Other radio surfaces use `DJMusicLibrary`, `DJPlaylistManager`, `PublicMusicLibrary` — untouched.
-- All new tokens are namespaced under `radio.*` — no global token mutation. Classroom / SkillDrop / Training / ChatApp unaffected.
-- New EQ visual is a local component in `LiveStreamPlayer.tsx` — no shared-component prop additions needed this round.
-- `tsgo --noEmit` after the pass.
+## Cost & time estimate
 
-## Verification
+- Voiceover: 1 Kokoro call ≈ **$0.01** + ~5-15s generation time.
+- Remotion render: 1500 frames at 1080p, concurrency 1 (sandbox constraint), realistic ~6-9 minutes wall clock. Fits the 10-min `code--exec` cap with margin. If it threatens to overrun, drop to 720p for the pilot.
+- Total credits impact: trivial (~$0.01 + sandbox compute).
 
-- `tsgo --noEmit` clean.
-- Visual spot-check `/radio`: navy background, Bitter title, amber play button, EQ bars animate on play / freeze on pause.
-- Spot-check `/grove-station` and `/radio-management` unchanged (they use different components).
+## Risks / things I'll flag if they happen
+
+- Kokoro pronunciation of "Sow2Grow" — if it mangles it, I'll respell phonetically ("Sow to Grow") in the script only, UI copy unchanged.
+- Render timeout — mitigation above (720p fallback).
+- Audio/visual drift — after generating VO, measure with ffprobe and adjust scene `durationInFrames` before final render.
+
+## Out of scope for this pilot
+
+- The other 5 pages (Community, Classroom, SkillDrop, Training, Premium Rooms) — wait for your approval on the 1-on-1 pilot first.
+- Captions/subtitles — can add in v2 if you want them.
+- Multi-language VO — single English pilot only.
+
+## Files that will be created/changed (build phase only)
+
+- `remotion/` (new project: package.json, tsconfig, src/Root.tsx, src/MainVideo.tsx, src/scenes/Scene0..5.tsx, src/components/*, public/audio/1on1-live-vo.mp3, scripts/render-remotion.mjs)
+- `src/assets/explainer-1on1-live.mp4` (rendered output)
+- `src/assets/explainer-1on1-live-poster.jpg` (still frame)
+- `src/components/explainers/ExplainerVideo.tsx` (new, ~30 lines)
+- `src/pages/LiveRoomsPage.tsx` (one import + one JSX block)
+
+Nothing else touched. No DB changes, no edge function changes, no routing changes.
