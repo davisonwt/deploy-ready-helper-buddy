@@ -458,7 +458,7 @@ export default function TribalAliveFeedPage() {
           sower_handle: handleOf(profileMap[c.instructor_id]),
           wandering_role: 'whisperer',
           created_at: c.created_at,
-          href: `/classroom`,
+          href: `/classroom/${c.id}`,
         }));
 
         const skillItems: FeedItem[] = (skillRes.data || []).map((c: any) => ({
