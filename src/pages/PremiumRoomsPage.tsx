@@ -32,14 +32,14 @@ const PremiumRoomsPage = () => {
       <div className="mb-6 space-y-4">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-3xl font-bold text-foreground">Premium Rooms & Courses</h1>
+            <h1 className="text-3xl font-bold text-foreground">Training Rooms & Courses</h1>
             <p className="text-sm text-muted-foreground">
-              Create structured courses and classrooms with premium content
+              Create structured training rooms and courses with premium content
             </p>
           </div>
           <Button onClick={() => navigate('/create-premium-room')}>
             <Plus className="h-4 w-4 mr-2" />
-            Create Room
+            Create Training Room
           </Button>
         </div>
 
