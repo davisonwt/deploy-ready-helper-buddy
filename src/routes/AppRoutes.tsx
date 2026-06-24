@@ -278,6 +278,20 @@ const AppRoutes = () => (
         </Suspense>
       </ProtectedRoute>
     } />
+    <Route path="/classroom/:id" element={
+      <ProtectedRoute>
+        <Suspense fallback={<LoadingFallback />}>
+          <SessionPage kind="classroom" />
+        </Suspense>
+      </ProtectedRoute>
+    } />
+    <Route path="/skilldrop/:id" element={
+      <ProtectedRoute>
+        <Suspense fallback={<LoadingFallback />}>
+          <SessionPage kind="skilldrop" />
+        </Suspense>
+      </ProtectedRoute>
+    } />
     <Route path="/onboarding/security" element={
       <ProtectedRoute allowIncompleteSetup>
         <OnboardingSecurityPage />
