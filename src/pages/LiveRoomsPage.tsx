@@ -24,9 +24,11 @@ type MessageRow = { room_id: string; sender_id: string; created_at: string };
 export default function LiveRoomsPage() {
   const navigate = useNavigate();
   const { user } = useAuth();
+  const queryClient = useQueryClient();
   const [searchParams, setSearchParams] = useSearchParams();
   const roomParam = searchParams.get('room');
   const [activeRoomId, setActiveRoomId] = useState<string | null>(roomParam);
+  const [createOpen, setCreateOpen] = useState(false);
 
   useEffect(() => { setActiveRoomId(roomParam); }, [roomParam]);
 
