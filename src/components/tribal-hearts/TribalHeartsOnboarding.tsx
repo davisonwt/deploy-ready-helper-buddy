@@ -154,7 +154,7 @@ export const TribalHeartsOnboarding: React.FC<Props> = ({ onComplete, onExit }) 
         style={{ color: 'hsl(38 50% 75%)' }}
       >
         <ArrowLeft size={16} />
-        {step > 0 ? 'Back' : 'Back to Wandering Tribes'}
+        {step > 0 ? 'Back' : 'Back to Dashboard'}
       </button>
 
       <main className="relative z-10 min-h-screen flex items-start sm:items-center justify-center px-5 pt-24 pb-32">
