@@ -21,6 +21,7 @@ export const AdvancedSearchPage = lazy(() => import('@/pages/AdvancedSearchPage'
 export const MyTribePage = lazy(() => import('@/pages/MyTribePage'));
 
 export const ChatApp = lazy(() => import('@/pages/ChatApp'));
+export const CommunityChatsPage = lazy(() => import('@/pages/CommunityChatsPage'));
 export const GroveFeedPage = lazy(() => import('@/pages/GroveFeedPage'));
 export const CommunicationsHub = lazy(() =>
   import('@/pages/CommunicationsHub').catch((error) => {

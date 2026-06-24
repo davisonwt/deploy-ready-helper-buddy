@@ -8,7 +8,7 @@ type LaunchKind = 'one_on_one' | 'community_chat' | 'classroom' | 'skilldrop' | 
 
 const LAUNCH_TYPES: Array<{ id: LaunchKind; label: string; icon: React.ReactNode; deepLink: string }> = [
   { id: 'one_on_one',     label: '1-on-1 Live',     icon: <Video className="h-5 w-5" />,    deepLink: '/live-rooms' },
-  { id: 'community_chat', label: 'Community Chat',  icon: <Users className="h-5 w-5" />,    deepLink: '/chatapp' },
+  { id: 'community_chat', label: 'Community Chat',  icon: <Users className="h-5 w-5" />,    deepLink: '/community-chats' },
   { id: 'classroom',      label: 'Classroom',       icon: <BookOpen className="h-5 w-5" />, deepLink: '/classroom' },
   { id: 'skilldrop',      label: 'SkillDrop',       icon: <Zap className="h-5 w-5" />,      deepLink: '/skilldrop' },
   { id: 'training',       label: 'Training',        icon: <Dumbbell className="h-5 w-5" />, deepLink: '/premium-rooms' },

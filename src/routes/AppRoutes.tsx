@@ -115,6 +115,7 @@ import {
   WanderingDirectoryPage,
   PlantASeedPage,
   ChatApp,
+  CommunityChatsPage,
   SessionPage,
   ClassroomPage,
   SkillDropPage,
@@ -277,6 +278,13 @@ const AppRoutes = () => (
       <ProtectedRoute>
         <Suspense fallback={<div className="flex items-center justify-center min-h-screen"><div className="text-xl">Loading...</div></div>}>
           <ChatApp />
+        </Suspense>
+      </ProtectedRoute>
+    } />
+    <Route path="/community-chats" element={
+      <ProtectedRoute>
+        <Suspense fallback={<LoadingFallback />}>
+          <CommunityChatsPage />
         </Suspense>
       </ProtectedRoute>
     } />
