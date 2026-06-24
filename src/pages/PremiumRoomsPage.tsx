@@ -63,16 +63,16 @@ const PremiumRoomsPage = () => {
               <GraduationCap className="h-10 w-10 text-primary" />
             </div>
             <h3 className="text-xl font-semibold">
-              Premium Rooms & Courses
+              Training Rooms & Courses
             </h3>
             <p className="text-muted-foreground max-w-md mx-auto">
-              Create structured courses and classrooms with premium content. 
+              Create structured training rooms and courses with premium content. 
               Share knowledge through modules, documents, videos, and interactive discussions.
             </p>
             <div className="flex flex-col sm:flex-row gap-3 justify-center pt-4">
               <Button onClick={() => navigate('/create-premium-room')}>
                 <Plus className="h-4 w-4 mr-2" />
-                Create Premium Room
+                Create Training Room
               </Button>
               <Button variant="outline">
                 <BookOpen className="h-4 w-4 mr-2" />
@@ -80,10 +80,10 @@ const PremiumRoomsPage = () => {
               </Button>
             </div>
             
-            {/* Placeholder for future premium rooms list */}
+            {/* Placeholder for future training rooms list */}
             <div className="mt-8 pt-8 border-t">
               <p className="text-sm text-muted-foreground italic">
-                Premium rooms and courses will appear here once created
+                Training rooms and courses will appear here once created
               </p>
             </div>
           </CardContent>
