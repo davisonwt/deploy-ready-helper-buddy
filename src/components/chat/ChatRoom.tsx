@@ -687,11 +687,20 @@ export const ChatRoom: React.FC<ChatRoomProps> = ({ roomId, onBack }) => {
           {/* Action Buttons */}
           <div className="flex items-center gap-2">
             <Button
-              variant={recording ? 'destructive' : 'ghost'}
+              variant={recorder.recording && recorder.kind === 'audio' ? 'destructive' : 'ghost'}
               size="sm"
-              onClick={recording ? stopRecording : startRecording}
+              onClick={recorder.recording && recorder.kind === 'audio' ? stopRecording : startRecording}
+              title={recorder.recording && recorder.kind === 'audio' ? `Stop (${recorder.elapsed}s)` : 'Record voice note'}
             >
               <Mic className="h-4 w-4" />
+            </Button>
+            <Button
+              variant={recorder.recording && recorder.kind === 'video' ? 'destructive' : 'ghost'}
+              size="sm"
+              onClick={recorder.recording && recorder.kind === 'video' ? stopRecording : startVideoClip}
+              title={recorder.recording && recorder.kind === 'video' ? `Stop (${recorder.elapsed}s)` : 'Record video clip'}
+            >
+              {recorder.recording && recorder.kind === 'video' ? <Square className="h-4 w-4" /> : <Video className="h-4 w-4" />}
             </Button>
             
             <Button
