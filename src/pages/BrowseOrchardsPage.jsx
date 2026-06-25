@@ -260,19 +260,27 @@ export default function BrowseOrchardsPage() {
   const fetchOrchards = async () => {
     try {
       setLoading(true)
-      const { data, error } = await supabase
-        .from('orchards')
-        .select(`*, profiles:profile_id (first_name, last_name, display_name, location)`)
-        .eq('status', 'active')
-        .order('created_at', { ascending: false })
+      // Canonical tribe-wide orchard fetch (same source as AdvancedSearch & feed),
+      // then enrich with profile info for the grower name.
+      const { fetchTribeOrchards } = await import('@/api/sowerContent')
+      const { data, error } = await fetchTribeOrchards({ sortBy: 'recent', limit: 200 })
       if (error) throw error
-      setOrchards(data || [])
+      const rows = data || []
+      const profileIds = Array.from(new Set(rows.map(o => o.profile_id).filter(Boolean)))
+      let profilesById = new Map()
+      if (profileIds.length) {
+        const { data: profs } = await supabase.from('profiles')
+          .select('id, first_name, last_name, display_name, location').in('id', profileIds)
+        ;(profs || []).forEach(p => profilesById.set(p.id, p))
+      }
+      setOrchards(rows.map(o => ({ ...o, profiles: profilesById.get(o.profile_id) || null })))
     } catch (err) {
       toast.error('Failed to load orchards')
     } finally {
       setLoading(false)
     }
   }
+
 
   useEffect(() => { fetchOrchards() }, [])
 
