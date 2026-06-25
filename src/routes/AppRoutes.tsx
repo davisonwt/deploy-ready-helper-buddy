@@ -404,16 +404,6 @@ const AppRoutes = () => (
     <Route path="/support-us" element={
       <ProtectedRoute><Layout><Suspense fallback={<div>Loading...</div>}><SupportUsPage /></Suspense></Layout></ProtectedRoute>
     } />
-    <Route path="/admin/payments" element={
-      <ProtectedRoute allowedRoles={['admin', 'gosat']}>
-        <Suspense fallback={<div>Loading...</div>}><AdminPaymentsPage /></Suspense>
-      </ProtectedRoute>
-    } />
-    <Route path="/gosat/wallets" element={
-      <ProtectedRoute allowedRoles={['admin', 'gosat']}>
-        <Layout><Suspense fallback={<LoadingFallback />}><GosatWalletsPage /></Suspense></Layout>
-      </ProtectedRoute>
-    } />
     <Route path="/admin/treasury" element={
       <ProtectedRoute allowedRoles={['gosat']}>
         <Layout><Suspense fallback={<LoadingFallback />}><GosatTreasuryPage /></Suspense></Layout>
