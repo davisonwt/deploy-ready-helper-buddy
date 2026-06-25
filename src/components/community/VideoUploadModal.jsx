@@ -227,6 +227,22 @@ export default function VideoUploadModal({ isOpen, onClose, defaultCategory = nu
             </p>
           </div>
 
+          {/* Video Category */}
+          <div className="space-y-2">
+            <Label htmlFor="video-category">Category</Label>
+            <Select value={category || ''} onValueChange={(v) => setCategory(v || null)}>
+              <SelectTrigger id="video-category">
+                <SelectValue placeholder="Pick a category (optional)" />
+              </SelectTrigger>
+              <SelectContent>
+                {VIDEO_CATEGORIES.map((c) => (
+                  <SelectItem key={c.value} value={c.value}>{c.label}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+
           {/* Wandering identity */}
           <div className="border-t pt-4">
             <WanderingRolePicker value={wanderingRole} onChange={setWanderingRole} />
