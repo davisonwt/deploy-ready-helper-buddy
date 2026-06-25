@@ -63,7 +63,7 @@ import {
   RadioManagementPage,
   ClubhousePage,
   VideoPage,
-  VideoUploadPage,
+  
   RadioPage,
   CreatePremiumRoomPage,
   WalletSettingsPage,
