@@ -136,10 +136,13 @@ async function handleEvent(
         .eq("id", customId.slice("basket:".length));
       return;
     }
+    const bestowalId = customId.startsWith("gift:")
+      ? customId.slice("gift:".length)
+      : customId;
     await supabase
       .from("bestowals")
       .update({ payment_status: "processing" })
-      .eq("id", customId);
+      .eq("id", bestowalId);
     return;
   }
 
