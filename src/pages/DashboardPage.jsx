@@ -1111,6 +1111,19 @@ export default function SeedFlowDashboard() {
                     🐧 Companions
                   </div>
                 </Link>
+                <Link to="/community-videos" style={{ textDecoration: 'none', flexShrink: 0 }}>
+                  <div style={{
+                    ...styles.seedflowLabel,
+                    background: 'linear-gradient(135deg, rgba(249,115,22,0.25), rgba(251,146,60,0.18), rgba(234,179,8,0.22))',
+                    backdropFilter: 'blur(12px)', WebkitBackdropFilter: 'blur(12px)',
+                    border: '1px solid rgba(253,186,116,0.45)',
+                    color: '#ffedd5', fontWeight: 700,
+                    boxShadow: '0 4px 16px rgba(249,115,22,0.2), inset 0 1px 0 rgba(255,255,255,0.12)',
+                    padding: '4px 8px', fontSize: 11, whiteSpace: 'nowrap',
+                  }}>
+                    🎬 Community
+                  </div>
+                </Link>
 
                 <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginLeft: 'auto', flexShrink: 0 }}>
                   <button
