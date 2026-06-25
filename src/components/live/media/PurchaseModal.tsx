@@ -11,7 +11,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { CreditCard, Wallet, Download, Lock, Clock, MessageSquare } from 'lucide-react';
+import { Wallet, Download, Lock, Clock, MessageSquare } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { useAuth } from '@/hooks/useAuth';
@@ -25,7 +25,7 @@ interface PurchaseModalProps {
 
 export function PurchaseModal({ open, onOpenChange, mediaItem, onPurchaseComplete }: PurchaseModalProps) {
   const { user } = useAuth();
-  const [paymentMethod, setPaymentMethod] = useState<'stripe' | 'crypto'>('stripe');
+  const [paymentMethod, setPaymentMethod] = useState<'crypto'>('crypto');
   const [processing, setProcessing] = useState(false);
 
   const priceUSD = (mediaItem?.price_cents || 0) / 100;
@@ -125,25 +125,12 @@ export function PurchaseModal({ open, onOpenChange, mediaItem, onPurchaseComplet
 
           {/* Payment Method */}
           <Tabs value={paymentMethod} onValueChange={(v: any) => setPaymentMethod(v)}>
-            <TabsList className="grid w-full grid-cols-2">
-              <TabsTrigger value="stripe" className="gap-2">
-                <CreditCard className="h-4 w-4" />
-                Card
-              </TabsTrigger>
+            <TabsList className="grid w-full grid-cols-1">
               <TabsTrigger value="crypto" className="gap-2">
                 <Wallet className="h-4 w-4" />
                 Crypto
               </TabsTrigger>
             </TabsList>
-
-            <TabsContent value="stripe" className="mt-4">
-              <div className="p-4 rounded-lg border bg-muted/50 text-center">
-                <CreditCard className="h-8 w-8 mx-auto mb-2 text-muted-foreground" />
-                <p className="text-sm text-muted-foreground">
-                  Pay securely with credit card via Stripe
-                </p>
-              </div>
-            </TabsContent>
 
             <TabsContent value="crypto" className="mt-4">
               <div className="p-4 rounded-lg border bg-muted/50 text-center">
