@@ -1,19 +1,22 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Coins, Sparkles } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Slider } from '@/components/ui/slider';
-import { useCryptomusPay } from '@/hooks/useCryptomusPay';
+import { useGiftBestowal } from '@/hooks/useGiftBestowal';
 import { toast } from 'sonner';
 import Confetti from 'react-confetti';
-import { supabase } from '@/integrations/supabase/client';
 import { launchConfetti } from '@/utils/confetti';
 
 interface BestowalCoinProps {
+  /** ID of the message/file/audio/image being tipped (passed back via onBestowalComplete). */
   assetId: string;
   assetType: 'message' | 'file' | 'audio' | 'image';
+  /** Recipient of the tip — original sender of the asset. */
   senderId: string;
   senderName?: string;
+  /** Chat room the tip is happening in — required to wire the gift to a context. */
+  roomId: string;
   amount?: number;
   onBestowalComplete?: (amount: number) => void;
   disabled?: boolean;
@@ -23,9 +26,10 @@ const EMOJI_RAIN = ['💰', '✨', '🎉', '💎', '⭐', '🌟', '💫', '🔥'
 
 export function BestowalCoin({
   assetId,
-  assetType,
+  assetType: _assetType,
   senderId,
   senderName,
+  roomId,
   amount: initialAmount,
   onBestowalComplete,
   disabled = false,
@@ -34,7 +38,7 @@ export function BestowalCoin({
   const [sliderValue, setSliderValue] = useState([initialAmount || 0.5]);
   const [showConfetti, setShowConfetti] = useState(false);
   const [emojiRain, setEmojiRain] = useState<Array<{ id: number; x: number; y: number; emoji: string }>>([]);
-  const { initiateCryptomusPayment, processing } = useCryptomusPay();
+  const { send, loading: processing } = useGiftBestowal();
 
   const handleCoinClick = () => {
     if (disabled) return;
@@ -43,18 +47,13 @@ export function BestowalCoin({
 
   const handleSliderChange = (value: number[]) => {
     setSliderValue(value);
-    
-    // Create emoji rain effect
     const newEmojis = Array.from({ length: 3 }, (_, i) => ({
       id: Date.now() + i,
       x: Math.random() * window.innerWidth,
       y: -50,
       emoji: EMOJI_RAIN[Math.floor(Math.random() * EMOJI_RAIN.length)],
     }));
-    
     setEmojiRain(prev => [...prev, ...newEmojis]);
-    
-    // Remove emojis after animation
     setTimeout(() => {
       setEmojiRain(prev => prev.filter(e => !newEmojis.includes(e)));
     }, 2000);
@@ -62,47 +61,33 @@ export function BestowalCoin({
 
   const handleBestowal = async () => {
     const amount = sliderValue[0];
-    
-    try {
-      // Create bestowal record
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) {
-        toast.error('Please log in to bestow');
-        return;
-      }
 
-      // Trigger payment directly
-      const paymentResult = await initiateCryptomusPayment({
-        orchardId: assetId,
-        amount: amount,
-        pocketsCount: 1,
-        currency: 'USDC',
-        network: 'TRC20',
-      });
+    if (!roomId || !senderId) {
+      toast.error('Cannot tip — missing room or recipient.');
+      return;
+    }
 
-      if (paymentResult?.paymentUrl) {
-        // Show confetti
-        launchConfetti();
-        setShowConfetti(true);
-        setTimeout(() => setShowConfetti(false), 3000);
+    const result = await send({
+      recipientId: senderId,
+      amount,
+      contextKind: 'chat_tip',
+      contextId: roomId,
+      provider: 'nowpayments',
+      payCurrency: 'usdttrc20',
+      message: assetId ? `tip:${assetId}` : undefined,
+    });
 
-        // Show thank you message
-        toast.success(`Thank you! ${senderName || 'Sender'} will receive ${amount} USDC`);
-
-        // Close slider
-        setShowSlider(false);
-
-        // Callback
-        onBestowalComplete?.(amount);
-
-        // Open payment page
-        window.open(paymentResult.paymentUrl, '_blank');
-      }
-    } catch (error) {
-      console.error('Bestowal error:', error);
-      toast.error('Failed to process bestowal');
+    if (result.success) {
+      launchConfetti();
+      setShowConfetti(true);
+      setTimeout(() => setShowConfetti(false), 3000);
+      toast.success(`Redirecting to checkout — ${senderName || 'recipient'} will receive ${amount} USDC`);
+      setShowSlider(false);
+      onBestowalComplete?.(amount);
+      // useGiftBestowal already redirects to the provider checkout URL.
     }
   };
+
 
   return (
     <>
