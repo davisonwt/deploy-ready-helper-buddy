@@ -408,16 +408,6 @@ export default function AdminDashboardPage() {
             <GoSatGhostAccessMonitor />
           </TabsContent>
 
-          <TabsContent value="wallet" className="space-y-6">
-            <Card>
-              <CardHeader>
-                <CardTitle>Organization Wallet Setup</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <OrganizationWalletSetup />
-              </CardContent>
-            </Card>
-          </TabsContent>
 
           <TabsContent value="legacy" className="space-y-6">
             {/* Legacy admin content - search, stats, role management, seeds */}
