@@ -42,6 +42,7 @@ export function useContentPurchase() {
             contentId: args.contentId,
             provider: args.provider,
             payCurrency: args.payCurrency,
+            metadata: args.metadata ?? {},
             redirectBaseUrl: window.location.origin,
           },
         },
