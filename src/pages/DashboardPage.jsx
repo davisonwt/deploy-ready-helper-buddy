@@ -19,6 +19,8 @@ import { useMyContent } from '@/api/sowerContent'
 import TribalTiersCard from '../components/dashboard/TribalTiersCard'
 import LiveNowStrip from '@/components/live/LiveNowStrip'
 import SacredDayBanner from '@/components/SacredDayBanner'
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
+import VideoUploadModal from '@/components/community/VideoUploadModal.jsx'
 
 const DAYS_PER_MONTH = [30, 30, 31, 30, 30, 31, 30, 30, 31, 30, 30, 31]
 function shiftYhwhDate(year, month, day, offset) {
