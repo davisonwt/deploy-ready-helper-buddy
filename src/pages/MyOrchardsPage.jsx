@@ -330,8 +330,22 @@ export default function MyOrchardsPage() {
               emptyHint="No tracks yet — drop a song from your Music Library." />
             <MyGardenSection title="Books"    emoji="📚" accent="#fb923c" cards={bookCards}
               emptyHint="No books yet — upload one in My S2G Library." />
-            <MyGardenSection title="Videos"   emoji="🎬" accent="#f87171" cards={videoCards}
-              emptyHint="No videos yet — share one in Community Videos." />
+            <MyGardenSection
+              title="Videos"
+              emoji="🎬"
+              accent="#f87171"
+              cards={videoCards}
+              emptyHint="No videos yet — upload your first one below."
+              headerAction={
+                <Button
+                  size="sm"
+                  onClick={() => setShowVideoUpload(true)}
+                  className="bg-rose-500 hover:bg-rose-400 text-white"
+                >
+                  <Upload className="w-4 h-4 mr-1" /> Upload Video
+                </Button>
+              }
+            />
           </div>
 
           <div className='mb-8 space-y-4'>
