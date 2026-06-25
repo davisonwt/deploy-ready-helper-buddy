@@ -430,9 +430,6 @@ const AppRoutes = () => (
     <Route path="/wallet" element={
       <ProtectedRoute><Layout><MyWalletPage /></Layout></ProtectedRoute>
     } />
-    <Route path="/binance-pay-test" element={
-      <ProtectedRoute><Layout><BinancePayTestPage /></Layout></ProtectedRoute>
-    } />
     <Route path="/dev/nowpay-test" element={
       <ProtectedRoute allowedRoles={['admin', 'gosat']}><Layout><NowPaymentsTestPage /></Layout></ProtectedRoute>
     } />
