@@ -28,6 +28,9 @@ export default function CommunityVideosPage() {
         {/* Header */}
         <div className="bg-gradient-to-br from-primary/10 via-primary/5 to-background/50 border-b backdrop-blur-sm">
         <div className="max-w-6xl mx-auto px-4 py-8">
+          <Button variant="outline" size="sm" onClick={() => navigate('/dashboard')} className="mb-4 flex items-center gap-2">
+            <ArrowLeft className="h-4 w-4" /> Back to Dashboard
+          </Button>
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
             <div className="space-y-2">
               <h1 className="text-3xl font-bold flex items-center gap-3 text-slate-900" style={{textShadow: '2px 2px 0 white, -2px -2px 0 white, 2px -2px 0 white, -2px 2px 0 white'}}>
