@@ -376,6 +376,59 @@ export default function S2GCommunityLibraryPage() {
         </div>
       </div>
 
+      <Dialog open={!!pickerItem} onOpenChange={(o) => !o && setPickerItem(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Bestow to access</DialogTitle>
+            <DialogDescription>
+              {pickerItem ? (
+                <>
+                  {pickerItem.title} — {formatCurrency(pickerItem.price)}
+                  <br />
+                  Choose how you want to pay. You'll be redirected to complete checkout.
+                </>
+              ) : null}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="grid grid-cols-1 gap-3">
+            <Button
+              disabled={isPending}
+              onClick={() =>
+                pickerItem &&
+                purchase({
+                  contentType: 'library_item',
+                  contentId: pickerItem.id,
+                  provider: 'paypal',
+                })
+              }
+            >
+              Pay with PayPal
+            </Button>
+            <Button
+              variant="outline"
+              disabled={isPending}
+              onClick={() =>
+                pickerItem &&
+                purchase({
+                  contentType: 'library_item',
+                  contentId: pickerItem.id,
+                  provider: 'nowpayments',
+                  payCurrency: 'usdttrc20',
+                })
+              }
+            >
+              Pay with crypto (USDT TRC-20 via NOWPayments)
+            </Button>
+          </div>
+          <DialogFooter>
+            <Button variant="ghost" onClick={() => setPickerItem(null)} disabled={isPending}>
+              Cancel
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+
       <style>{`
         @keyframes gradient {
           0% { background-position: 0% 50%; }
