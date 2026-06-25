@@ -28,7 +28,7 @@ export function AlbumBuilderCart() {
 
     setProcessing(true);
     try {
-      // Create album purchase record
+      // Create album purchase record (pending — completion happens server-side after payment verification)
       const { data: purchase, error: purchaseError } = await supabase
         .from('music_purchases')
         .insert({
@@ -41,14 +41,14 @@ export function AlbumBuilderCart() {
           artist_amount: albumPrice * 0.85,
           platform_amount: albumPrice * 0.05,
           admin_amount: albumPrice * 0.10,
-          payment_status: 'completed'
+          payment_status: 'pending'
         })
         .select()
         .single();
 
       if (purchaseError) throw purchaseError;
 
-      // Create individual track purchase records for tracking
+      // Create individual track purchase records for tracking (also pending)
       const trackPurchases = selectedTracks.map(track => ({
         buyer_id: user.id,
         track_id: track.id,
@@ -59,7 +59,7 @@ export function AlbumBuilderCart() {
         artist_amount: (albumPrice / 10) * 0.85,
         platform_amount: (albumPrice / 10) * 0.05,
         admin_amount: (albumPrice / 10) * 0.10,
-        payment_status: 'completed'
+        payment_status: 'pending'
       }));
 
       const { error: tracksError } = await supabase
@@ -68,7 +68,7 @@ export function AlbumBuilderCart() {
 
       if (tracksError) throw tracksError;
 
-      toast.success('Album purchased! You can now download all tracks.');
+      toast.success('Album order created. Complete payment to unlock downloads.');
       clearAlbum();
     } catch (error) {
       console.error('Purchase error:', error);
@@ -77,6 +77,7 @@ export function AlbumBuilderCart() {
       setProcessing(false);
     }
   };
+
 
   if (selectedTracks.length === 0) {
     return (
