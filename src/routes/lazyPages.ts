@@ -167,7 +167,7 @@ export const AdminAnalyticsPage = lazy(() => import('@/pages/AdminAnalyticsPage'
 export const AdminDashboardPage = lazy(() => import('@/pages/AdminDashboardPage'));
 export const AdminRadioPage = lazy(() => import('@/pages/AdminRadioPage'));
 export const AdminSeedsPage = lazy(() => import('@/pages/AdminSeedsPage'));
-export const AdminPaymentsPage = lazy(() => import('@/pages/AdminPaymentsPage'));
+
 export const AuthDebugPage = lazy(() => import('@/pages/AuthDebugPage'));
 export const LiveSeedPage = lazy(() => import('@/pages/LiveSeedPage'));
 export const LearnSharePage = lazy(() => import('@/pages/LearnSharePage'));
