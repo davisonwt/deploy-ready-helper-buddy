@@ -59,6 +59,10 @@ export function useCommunityVideos() {
         query = query.eq('wandering_role', options.activeRole)
       }
 
+      if (options.videoCategory) {
+        query = query.eq('category', options.videoCategory)
+      }
+
       const { data, error } = await query.limit(20)
 
       if (error) throw error
@@ -173,6 +177,7 @@ export function useCommunityVideos() {
           file_size: file.size,
           orchard_id: metadata.orchard_id || null,
           wandering_role: metadata.wandering_role || null,
+          category: metadata.category || null,
           status: 'approved'
         })
         .select()

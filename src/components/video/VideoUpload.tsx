@@ -6,14 +6,17 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Loader2, Upload, Video } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useVideoProcessor } from '@/hooks/useVideoProcessor';
+import { VIDEO_CATEGORIES } from '@/components/community/VideoUploadModal';
 
 export default function VideoUpload() {
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [tags, setTags] = useState('');
+  const [category, setCategory] = useState<string | null>(null);
   const [file, setFile] = useState<File | null>(null);
   const [uploading, setUploading] = useState(false);
   const { toast } = useToast();
@@ -163,6 +166,7 @@ export default function VideoUpload() {
         thumbnail_url: thumbnailUrl,
         tags: tags ? tags.split(',').map(tag => tag.trim()).filter(Boolean) : [],
         file_size: processedFile.size,
+        category: category || null,
         status: 'pending'
       });
 
@@ -177,6 +181,7 @@ export default function VideoUpload() {
       setTitle('');
       setDescription('');
       setTags('');
+      setCategory(null);
       setFile(null);
     } catch (err: any) {
       console.error('Upload error:', err);
@@ -234,6 +239,21 @@ export default function VideoUpload() {
             onChange={(e) => setTags(e.target.value)}
           />
         </div>
+
+        <div className="space-y-2">
+          <label className="text-sm font-medium">Category</label>
+          <Select value={category || ''} onValueChange={(v) => setCategory(v || null)}>
+            <SelectTrigger>
+              <SelectValue placeholder="Pick a category (optional)" />
+            </SelectTrigger>
+            <SelectContent>
+              {VIDEO_CATEGORIES.map((c) => (
+                <SelectItem key={c.value} value={c.value}>{c.label}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+
 
         <div className="space-y-2">
           <label className="text-sm font-medium">Video File *</label>

@@ -4,18 +4,29 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { Label } from '@/components/ui/label'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Upload, Video, X } from 'lucide-react'
 import { useCommunityVideos } from '@/hooks/useCommunityVideos.jsx'
 import WanderingRolePicker from '@/components/marketplace/WanderingRolePicker'
 import CategoryTagPicker from '@/components/marketplace/CategoryTagPicker'
 
-export default function VideoUploadModal({ isOpen, onClose }) {
+export const VIDEO_CATEGORIES = [
+  { value: 'home', label: '🏡 Home' },
+  { value: 'study', label: '📖 Study' },
+  { value: 'training', label: '🏋️ Training' },
+  { value: 'tutorial', label: '🛠️ Tutorial' },
+  { value: 'testimony', label: '🙌 Testimony' },
+  { value: 'other', label: '✨ Other' },
+]
+
+export default function VideoUploadModal({ isOpen, onClose, defaultCategory = null }) {
   const [file, setFile] = useState(null)
   const [title, setTitle] = useState('')
   const [description, setDescription] = useState('')
   const [tags, setTags] = useState('')
   const [dragActive, setDragActive] = useState(false)
   const [wanderingRole, setWanderingRole] = useState(null)
+  const [category, setCategory] = useState(defaultCategory)
   const [taxonomy, setTaxonomy] = useState({ categoryId: null, subcategoryIds: [], tagIds: [] })
   const { uploadVideo, uploading } = useCommunityVideos()
 
@@ -70,6 +81,7 @@ export default function VideoUploadModal({ isOpen, onClose }) {
       description: description.trim() || null,
       tags: tagsArray,
       wandering_role: wanderingRole,
+      category: category || null,
       subcategoryIds: taxonomy.subcategoryIds,
       tagIds: taxonomy.tagIds,
     })
@@ -83,6 +95,7 @@ export default function VideoUploadModal({ isOpen, onClose }) {
       setDescription('')
       setTags('')
       setWanderingRole(null)
+      setCategory(defaultCategory)
       setTaxonomy({ categoryId: null, subcategoryIds: [], tagIds: [] })
       onClose()
     }
@@ -94,6 +107,7 @@ export default function VideoUploadModal({ isOpen, onClose }) {
     setDescription('')
     setTags('')
     setWanderingRole(null)
+    setCategory(defaultCategory)
     setTaxonomy({ categoryId: null, subcategoryIds: [], tagIds: [] })
   }
 
@@ -212,6 +226,22 @@ export default function VideoUploadModal({ isOpen, onClose }) {
               Separate tags with commas
             </p>
           </div>
+
+          {/* Video Category */}
+          <div className="space-y-2">
+            <Label htmlFor="video-category">Category</Label>
+            <Select value={category || ''} onValueChange={(v) => setCategory(v || null)}>
+              <SelectTrigger id="video-category">
+                <SelectValue placeholder="Pick a category (optional)" />
+              </SelectTrigger>
+              <SelectContent>
+                {VIDEO_CATEGORIES.map((c) => (
+                  <SelectItem key={c.value} value={c.value}>{c.label}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
 
           {/* Wandering identity */}
           <div className="border-t pt-4">

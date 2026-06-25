@@ -63,7 +63,7 @@ import {
   RadioManagementPage,
   ClubhousePage,
   VideoPage,
-  VideoUploadPage,
+  
   RadioPage,
   CreatePremiumRoomPage,
   WalletSettingsPage,
@@ -387,9 +387,6 @@ const AppRoutes = () => (
       <ProtectedRoute><ClubhousePage /></ProtectedRoute>
     } />
     <Route path="/video/:id" element={<VideoPage />} />
-    <Route path="/upload" element={
-      <ProtectedRoute requireAuth><VideoUploadPage /></ProtectedRoute>
-    } />
     <Route path="/ai-assistant" element={
       <ProtectedRoute><Layout><CreateOrchardPage /></Layout></ProtectedRoute>
     } />

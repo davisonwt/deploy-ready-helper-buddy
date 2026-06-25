@@ -2424,6 +2424,7 @@ export type Database = {
       }
       community_videos: {
         Row: {
+          category: string | null
           comment_count: number | null
           created_at: string
           description: string | null
@@ -2444,6 +2445,7 @@ export type Database = {
           wandering_role: string | null
         }
         Insert: {
+          category?: string | null
           comment_count?: number | null
           created_at?: string
           description?: string | null
@@ -2464,6 +2466,7 @@ export type Database = {
           wandering_role?: string | null
         }
         Update: {
+          category?: string | null
           comment_count?: number | null
           created_at?: string
           description?: string | null

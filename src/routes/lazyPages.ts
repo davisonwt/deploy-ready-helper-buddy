@@ -102,7 +102,7 @@ export const GroveStationPage = lazy(() => import('@/pages/GroveStationPage'));
 export const RadioManagementPage = lazy(() => import('@/pages/RadioManagementPage'));
 export const ClubhousePage = lazy(() => import('@/pages/ClubhousePage'));
 export const VideoPage = lazy(() => import('@/pages/VideoPage'));
-export const VideoUploadPage = lazy(() => import('@/pages/VideoUploadPage'));
+
 export const RadioPage = lazy(() => import('@/components/radio/RadioPage'));
 export const CreatePremiumRoomPage = lazy(() =>
   import('@/pages/CreatePremiumRoomPage').then((m) => ({ default: m.CreatePremiumRoomPage }))

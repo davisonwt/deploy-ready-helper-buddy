@@ -22,6 +22,7 @@ import {
   buildBookCard, buildVideoCard, deleteRow,
 } from '../components/garden/seedCardBuilders'
 import { useMyContent } from '@/api/sowerContent'
+import VideoUploadModal from '@/components/community/VideoUploadModal.jsx'
 
 const WANDERING_ROLES = [
   { label: 'Wheel 🚗',      value: 'Wheel' },
@@ -51,6 +52,7 @@ export default function MyOrchardsPage() {
   const [selectedRole, setSelectedRole] = useState('all')
   const [seeds, setSeeds] = useState([])
   const [loading, setLoading] = useState(false)
+  const [showVideoUpload, setShowVideoUpload] = useState(false)
 
   // Canonical "my content" — same source as Dashboard, account-scoped (includes
   // linked accounts and the products-as-seeds union). Do NOT add a divergent
@@ -328,8 +330,22 @@ export default function MyOrchardsPage() {
               emptyHint="No tracks yet — drop a song from your Music Library." />
             <MyGardenSection title="Books"    emoji="📚" accent="#fb923c" cards={bookCards}
               emptyHint="No books yet — upload one in My S2G Library." />
-            <MyGardenSection title="Videos"   emoji="🎬" accent="#f87171" cards={videoCards}
-              emptyHint="No videos yet — share one in Community Videos." />
+            <MyGardenSection
+              title="Videos"
+              emoji="🎬"
+              accent="#f87171"
+              cards={videoCards}
+              emptyHint="No videos yet — upload your first one below."
+              headerAction={
+                <Button
+                  size="sm"
+                  onClick={() => setShowVideoUpload(true)}
+                  className="bg-rose-500 hover:bg-rose-400 text-white"
+                >
+                  <Upload className="w-4 h-4 mr-1" /> Upload Video
+                </Button>
+              }
+            />
           </div>
 
           <div className='mb-8 space-y-4'>
@@ -507,6 +523,7 @@ export default function MyOrchardsPage() {
           </div>
         </div>
       </div>
+      <VideoUploadModal isOpen={showVideoUpload} onClose={() => setShowVideoUpload(false)} />
     </div>
   )
 }
