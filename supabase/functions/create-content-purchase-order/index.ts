@@ -68,7 +68,7 @@ Deno.serve(async (req) => {
     const service = createClient(supabaseUrl, serviceRoleKey, { auth: { persistSession: false } });
 
     // --- Resolve content (price, seller) per type ----------------------------
-    const resolved = await resolveContent(service, payload.contentType, payload.contentId);
+    const resolved = await resolveContent(service, payload.contentType, payload.contentId, payload.metadata ?? {});
     if ("error" in resolved) return json(resolved, resolved.status ?? 400);
     const { sellerId, basePrice, label } = resolved;
 
