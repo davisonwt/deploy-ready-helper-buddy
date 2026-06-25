@@ -41,9 +41,10 @@ export default function DashboardTribeStats() {
 
     // Bestowals received: orchards owned by me
     try {
-      const { data: orchards } = await supabase
-        .from("orchards").select("id").eq("user_id", user.id);
-      const oids = (orchards || []).map((o) => o.id);
+      // Canonical account-scoped orchards (covers linked accounts) — same source
+      // as Dashboard / My Garden via src/api/sowerContent.ts.
+      const { data: orchards } = await supabase.rpc("get_my_orchards_scoped");
+      const oids = (orchards || []).map((o: any) => o.id);
       let total = 0, count = 0;
       if (oids.length) {
         const { data: bs } = await supabase
