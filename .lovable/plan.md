@@ -1,75 +1,51 @@
-# Investigation — My Garden books/videos showing 0
+# Videos investigation — read-only findings
 
-Read-only. No changes.
+No code changes proposed. This is the report you asked for.
 
-## 1. JSX bindings in MyOrchardsPage — VERIFIED CORRECT
+## 1) Active UI entry points that write to `community_videos`
 
-The Books / Videos / Music sections in `MyOrchardsPage.jsx` **are** wired to the `useMyContent` hook. No leftover local state, no divergent query.
+Two real, reachable entry points exist today. Both write to `community_videos` (not `video_content`).
 
-`MyOrchardsPage.jsx:58-65` — destructured straight from the hook:
-```jsx
-const {
-  seeds: mySeeds,
-  music: myMusic,
-  books: myBooks,
-  videos: myVideos,
-  orchards: myOrchards,
-  refetch: fetchAllMyContent,
-} = useMyContent(user?.id)
-```
+**A. `/community-videos` — primary entry point**
+- Route: `src/routes/AppRoutes.tsx` → `<Route path="/community-videos" … CommunityVideosPage />`
+- Inbound nav link: `src/components/layout/ResponsiveLayout.tsx` ("Community" item → `/community-videos`)
+- Page: `src/pages/CommunityVideosPage.jsx` shows an **"Upload Video"** button (visible only when signed in) that opens `VideoUploadModal`.
+- Modal: `src/components/community/VideoUploadModal.jsx` → calls `useCommunityVideos().uploadVideo(...)`.
+- Hook: `src/hooks/useCommunityVideos.jsx` line 164 → `.from('community_videos').insert({ uploader_id, uploader_profile_id, … })`.
 
-`MyOrchardsPage.jsx:147-149` — card arrays built from those hook values:
-```jsx
-const musicCards = myMusic.map(m  => buildMusicCard(m, ownerHandlers))
-const bookCards  = myBooks.map(b  => buildBookCard(b, ownerHandlers))
-const videoCards = myVideos.map(v => buildVideoCard(v, ownerHandlers))
-```
+**B. `/upload` — secondary entry point, currently orphaned in nav**
+- Route: `src/routes/AppRoutes.tsx` → `<Route path="/upload" … VideoUploadPage />`
+- Page: `src/pages/VideoUploadPage.tsx` → renders `<VideoUpload />`.
+- Component: `src/components/video/VideoUpload.tsx` line 158 → `supabase.from('community_videos').insert({...})`.
+- No nav/menu/button in the app links to `/upload`. Reachable only by typing the URL.
 
-`MyOrchardsPage.jsx:327-332` — sections render those exact arrays:
-```jsx
-<MyGardenSection title="Music"  cards={musicCards} emptyHint="No tracks yet…" />
-<MyGardenSection title="Books"  cards={bookCards}  emptyHint="No books yet…" />
-<MyGardenSection title="Videos" cards={videoCards} emptyHint="No videos yet…" />
-```
+**Nothing currently writes to `video_content`.** That table is referenced only by `ContentModeration.tsx` (admin) and `useCommunityVideos`'s admin moderation queries — no upload UI populates it.
 
-Dashboard does the exact same thing — only difference is it mirrors `myContent.books` / `myContent.videos` into local state via `useEffect` (`DashboardPage.jsx:401-402`) before mapping. Same hook, same import path (`@/api/sowerContent`), same `user?.id`.
+## 2) Was a Videos upload entry point recently removed?
 
-`MyGardenSection.jsx` shows the count from `cards.length` and renders the empty-hint when 0. So "0 / no books yet" means `bookCards` really is length 0 at render time.
+No. Both routes above are still in `AppRoutes.tsx` and `lazyPages.ts`, and the "Community" nav link in `ResponsiveLayout.tsx` still points at `/community-videos`. Today's dead-code/payments cleanup did not touch `VideoUploadPage`, `VideoUpload.tsx`, `CommunityVideosPage`, `VideoUploadModal`, or `useCommunityVideos`. The reason `community_videos` is empty for the founder's account is not deletion — it's that the founder never used `/community-videos`; they used the seed-attached video field on `SeedSubmissionPage` instead (see #3a).
 
-**Verdict:** the JSX is not the bug. If Dashboard shows the items and My Garden doesn't with the same hook + same `user.id`, the data array can't legitimately differ between the two pages.
+## 3) The three-way distinction
 
-## 2. Hook's data path — books and videos
+**(a) Video clip attached to a seed — what the founder actually used.**
+File: `src/pages/SeedSubmissionPage.jsx`. The seed form has a "Click to upload video (MP4 - Max 50MB)" input that uploads to the `videos` storage bucket under `seeds/`, then stores the URL in `seeds.video_url` (and mirrored into the linked `orchards` row's `video_url`). It does **not** create any `community_videos` row. This is why the Tribe Feed / Homestead seed card shows the player and "Bestow & Get This Seed" — it's a seed, not a standalone video.
 
-`sowerContent.ts:142-203` (`useMyContent`):
+**(b) AI-generated marketing video for a seed — separate, working.**
+Files: `src/components/ai/AIVideoGenerator.jsx`, `VideoMarketingDashboard.jsx`, plus the `video_jobs` table. This pipeline produces marketing assets tied to a seed/orchard. Independent of (a) and (c); does not populate `community_videos` either.
 
-- **Books** = union of `sower_books` rows where `user_id = userId` (L145-147, current user only — **not** linked-account scoped) ∪ books surfaced by the `get_my_dashboard_content` RPC (where bulk-uploaded `products` of type `ebook`/`book` appear, scoped across linked accounts).
-- **Videos** = `community_videos` rows where `uploader_id = userId` only (L148-150). **No RPC union, no linked-account scoping.**
+**(c) Standalone "Videos" library (My Garden / Dashboard "Videos" section).**
+Reads from `community_videos` via `useMyContent` / `fetchTribeOrchards`. The upload entry points that feed this table are the two listed in #1 (`/community-videos` upload modal, and the orphaned `/upload`). It is a **real, intended feature with a working upload path** — not vestigial. The founder's "0 videos" is simply because no `community_videos` row was ever inserted for their account; the file they uploaded went to `seeds.video_url` via the seed form, which is a different surface entirely.
 
-Real DB rows confirmed:
-- `sower_books` newest row: `title="from skin to light"`, `user_id=04754d57-d41d-4ea7-93df-542047a6785b`, `sower_id=a69d6147-…`
-- `community_videos` newest rows: 5 broadcasts owned by `uploader_id=110b5a23-ce07-45c8-a432-086550aa78b5`
+## Plain-English summary
 
-The rows exist. Whether they belong to the currently-signed-in `user.id` is the question — I can't read `auth.uid()` from outside the session.
+- The standalone Videos feature is **not broken or missing** — `/community-videos` works, has a visible "Upload Video" button, writes to `community_videos`, and is linked from the "Community" nav.
+- The founder's "home video" went into a **seed**, not into the standalone Videos library, because they used the seed submission form's video field. That is working as designed for path (a).
+- My Garden / Dashboard's "Videos" section will only ever show items uploaded through `/community-videos` (or `/upload`), never seed-attached `video_url` clips. If the intent is for seed-attached videos to ALSO appear there, that is a new requirement and would need a separate decision — I am **not** proposing that change here.
 
-## 3. Where the real divergence could be hiding
+## What I need from you before any code change
 
-Given the JSX is correct and the hook is shared, the only ways Dashboard can show items that My Garden doesn't are:
-
-a) **One of the queries inside `useMyContent` is throwing on this session**, the whole Promise.all rejects, the `catch` block runs, and `setData` is never called — books/videos stay at the initial `EMPTY` arrays. Dashboard would then *also* show empty… unless Dashboard had previously succeeded and the local-state `useEffect` is still holding the old populated array (Dashboard mirrors into local state; MyOrchards reads live from the hook each render).
-
-b) **The book/video rows belong to a linked account, not the signed-in `user.id`.** The RPC union would surface them on both pages — *only* if the items live in `products` (bulk path). Single-uploaded `sower_books`/`community_videos` rows owned by a linked account are invisible to `useMyContent`'s direct queries on both pages.
-
-c) **Founder saw the books/videos on Dashboard via a different code path** (e.g. an earlier sower-books-specific component) and not via `myContent.books`/`myContent.videos`. Worth double-checking before assuming Dashboard truly reflects the same hook output.
-
-## What I need to confirm the actual cause (no code changes yet)
-
-Either:
-1. Have the founder open My Garden with the browser console open and paste any `[useMyContent]` warning/error lines (the hook logs RPC failures at `sowerContent.ts:155-156` and a catch-all at L205).
-2. Or tell me the signed-in user's `user.id` and which uploads they expect to see, so I can verify the rows actually match that id and that RLS lets that session read them.
-
-Once we know whether it's case (a), (b), or (c), the fix is one of:
-- (a) Make the Promise.all tolerant — partial failures shouldn't blank the whole payload.
-- (b) Scope the direct `sower_books`/`community_videos` queries through linked-account ids the same way the RPC does.
-- (c) Audit Dashboard's render path for a stray legacy fetch that's masking the real bug.
-
-Awaiting your direction before touching code.
+Pick one:
+1. **Leave as-is** — the feature is intact; founder simply needs to use `/community-videos` for standalone uploads.
+2. **Make seed-attached videos also appear in My Garden's Videos section** — requires extending `useMyContent` to union `seeds.video_url` rows into the videos list (no schema change).
+3. **Remove the orphaned `/upload` route** — it's reachable only by URL; safe to delete since `/community-videos` is the canonical path.
+4. Some combination of the above.
