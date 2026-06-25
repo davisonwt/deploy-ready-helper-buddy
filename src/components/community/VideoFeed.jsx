@@ -93,7 +93,7 @@ export default function VideoFeed({ activeRole = null, categoryId = null, tagIds
               variant="outline"
               onClick={() => {
                 setSearchQuery('')
-                fetchVideos({ sortBy, activeRole, categoryId, tagIds })
+                fetchVideos({ sortBy, activeRole, categoryId, tagIds, videoCategory })
               }}
             >
               Clear Search
