@@ -1,74 +1,75 @@
-# Verification Report — Seed Upload Flow vs. Founder's Intent
+# Investigation — My Garden books/videos showing 0
 
-Read-only investigation. No changes made. Findings cited with file:line.
+Read-only. No changes.
 
----
+## 1. JSX bindings in MyOrchardsPage — VERIFIED CORRECT
 
-## 1. Write paths — single vs. bulk seed upload
+The Books / Videos / Music sections in `MyOrchardsPage.jsx` **are** wired to the `useMyContent` hook. No leftover local state, no divergent query.
 
-**Verdict: PARTIAL MISMATCH.**
+`MyOrchardsPage.jsx:58-65` — destructured straight from the hook:
+```jsx
+const {
+  seeds: mySeeds,
+  music: myMusic,
+  books: myBooks,
+  videos: myVideos,
+  orchards: myOrchards,
+  refetch: fetchAllMyContent,
+} = useMyContent(user?.id)
+```
 
-| Path | `seeds` | `products` | `orchards` |
-|---|---|---|---|
-| Single (`SeedSubmissionPage.jsx`) | ✅ insert (L210–229) | ❌ | ✅ insert (L255–274) |
-| Bulk (`BulkUploadWizardPage.tsx` → `PublishStep`) | ❌ | ✅ insert via `insertProduct` (L583 → `src/api/products.ts:84`) | ❌ no orchards row created |
+`MyOrchardsPage.jsx:147-149` — card arrays built from those hook values:
+```jsx
+const musicCards = myMusic.map(m  => buildMusicCard(m, ownerHandlers))
+const bookCards  = myBooks.map(b  => buildBookCard(b, ownerHandlers))
+const videoCards = myVideos.map(v => buildVideoCard(v, ownerHandlers))
+```
 
-What this means for the read layer we just consolidated:
+`MyOrchardsPage.jsx:327-332` — sections render those exact arrays:
+```jsx
+<MyGardenSection title="Music"  cards={musicCards} emptyHint="No tracks yet…" />
+<MyGardenSection title="Books"  cards={bookCards}  emptyHint="No books yet…" />
+<MyGardenSection title="Videos" cards={videoCards} emptyHint="No videos yet…" />
+```
 
-- **`useMyContent` (My Garden + Dashboard "my seeds")** — OK. The `get_my_dashboard_content` RPC UNIONs `seeds` and `products`, so both single-uploaded seeds and bulk-uploaded products show up.
-- **`fetchTribeOrchards` (Browse Orchards + Tribal Feed orchard rail)** — BROKEN for bulk. It reads only from `orchards` (`sowerContent.ts:498–516`, filter `status='active'`). Bulk-uploaded items have no `orchards` row, so they are **invisible** in any orchard browsing/feed surface. Only single-seed uploads ever appear there.
+Dashboard does the exact same thing — only difference is it mirrors `myContent.books` / `myContent.videos` into local state via `useEffect` (`DashboardPage.jsx:401-402`) before mapping. Same hook, same import path (`@/api/sowerContent`), same `user?.id`.
 
-This is the divergence: the bulk path skips the auto-create-orchard step the single path performs.
+`MyGardenSection.jsx` shows the count from `cards.length` and renders the empty-hint when 0. So "0 / no books yet" means `bookCards` really is length 0 at render time.
 
----
+**Verdict:** the JSX is not the bug. If Dashboard shows the items and My Garden doesn't with the same hook + same `user.id`, the data array can't legitimately differ between the two pages.
 
-## 2. Tribal Gardens / Feed — the 5 named sections
+## 2. Hook's data path — books and videos
 
-**Verdict: NO. Those tabs do not exist.**
+`sowerContent.ts:142-203` (`useMyContent`):
 
-`TribalAliveFeedPage.tsx` has exactly **3 tabs** (L44, L993–1009):
+- **Books** = union of `sower_books` rows where `user_id = userId` (L145-147, current user only — **not** linked-account scoped) ∪ books surfaced by the `get_my_dashboard_content` RPC (where bulk-uploaded `products` of type `ebook`/`book` appear, scoped across linked accounts).
+- **Videos** = `community_videos` rows where `uploader_id = userId` only (L148-150). **No RPC union, no linked-account scoping.**
 
-| State | Label shown |
-|---|---|
-| `following` | **Inner Circle** |
-| `foryou` | **Tribe Feed** |
-| `local` | **Around Me** |
+Real DB rows confirmed:
+- `sower_books` newest row: `title="from skin to light"`, `user_id=04754d57-d41d-4ea7-93df-542047a6785b`, `sower_id=a69d6147-…`
+- `community_videos` newest rows: 5 broadcasts owned by `uploader_id=110b5a23-ce07-45c8-a432-086550aa78b5`
 
-The strings "Homestead", "Grove", "Orchard", "Estate", "Harvest Works" do exist — but only as:
-- `TIER_LABELS` map at `TribalAliveFeedPage.tsx:124–130`, used as a URL query-param filter (`?tier=homestead`) shown as a badge in the header, not a tab.
-- `SOWER_TIER_LINKS` href array at `MyOrchardsPage.jsx:38–44`, linking to `/homestead`, `/grove`, etc. (separate pages, not tabs).
+The rows exist. Whether they belong to the currently-signed-in `user.id` is the question — I can't read `auth.uid()` from outside the session.
 
-So the founder's described 5-sub-tab structure on Tribal Feed has never been built.
+## 3. Where the real divergence could be hiding
 
----
+Given the JSX is correct and the hook is shared, the only ways Dashboard can show items that My Garden doesn't are:
 
-## 3. Distinct card components per destination
+a) **One of the queries inside `useMyContent` is throwing on this session**, the whole Promise.all rejects, the `catch` block runs, and `setData` is never called — books/videos stay at the initial `EMPTY` arrays. Dashboard would then *also* show empty… unless Dashboard had previously succeeded and the local-state `useEffect` is still holding the old populated array (Dashboard mirrors into local state; MyOrchards reads live from the hook each render).
 
-**Verdict: YES — three (actually four) distinct card implementations, none shared.**
+b) **The book/video rows belong to a linked account, not the signed-in `user.id`.** The RPC union would surface them on both pages — *only* if the items live in `products` (bulk path). Single-uploaded `sower_books`/`community_videos` rows owned by a linked account are invisible to `useMyContent`'s direct queries on both pages.
 
-| Destination | Card | File |
-|---|---|---|
-| My Garden (`MyOrchardsPage`) | `buildSeedCard()` / `buildOrchardCard()` rendered inside `<MyGardenSection>` | `components/garden/seedCardBuilders.js` + `components/garden/MyGardenSection.jsx` (L145, L323–331) |
-| Dashboard (`DashboardPage`) | `<LivingSeedCard>` (bestowed orchards use `<SeedSlider>`) | `components/garden/LivingSeedCard.tsx` (L1210–1227, L1236) |
-| Tribal Feed (`TribalAliveFeedPage`) | Inline JSX, no named component extracted | `pages/TribalAliveFeedPage.tsx` (~L900+) |
-| Browse Orchards (`BrowseOrchardsPage`) | Local `function OrchardCard()` | `pages/BrowseOrchardsPage.jsx:111`, rendered L658 |
+c) **Founder saw the books/videos on Dashboard via a different code path** (e.g. an earlier sower-books-specific component) and not via `myContent.books`/`myContent.videos`. Worth double-checking before assuming Dashboard truly reflects the same hook output.
 
----
+## What I need to confirm the actual cause (no code changes yet)
 
-## Bottom line vs. founder's described flow
+Either:
+1. Have the founder open My Garden with the browser console open and paste any `[useMyContent]` warning/error lines (the hook logs RPC failures at `sowerContent.ts:155-156` and a catch-all at L205).
+2. Or tell me the signed-in user's `user.id` and which uploads they expect to see, so I can verify the rows actually match that id and that RLS lets that session read them.
 
-| Founder's expectation | Reality |
-|---|---|
-| Single upload populates My Garden / Dashboard / Tribal Feed | ✅ Yes (via `seeds` + `orchards` writes) |
-| Bulk upload populates the same 3 destinations | ⚠️ Partial — appears in My Garden + Dashboard (via `products`), but **does NOT appear in Tribal Feed/Browse Orchards rail** because no `orchards` row is created |
-| Each page uses its own card design | ✅ Yes — 4 distinct card implementations, nothing shared |
-| Tribal Feed has 5 sub-tabs: Homestead / Grove / Orchards / Estate / Harvest Works | ❌ No — feed has 3 tabs (Inner Circle / Tribe Feed / Around Me). The 5 names exist only as URL filter params and as separate page links from My Garden |
+Once we know whether it's case (a), (b), or (c), the fix is one of:
+- (a) Make the Promise.all tolerant — partial failures shouldn't blank the whole payload.
+- (b) Scope the direct `sower_books`/`community_videos` queries through linked-account ids the same way the RPC does.
+- (c) Audit Dashboard's render path for a stray legacy fetch that's masking the real bug.
 
----
-
-## Two real gaps if you want to align to the described flow
-
-1. **Bulk path doesn't create orchards rows.** Either (a) make `PublishStep` also insert into `orchards` like the single path does, or (b) change `fetchTribeOrchards` to UNION `orchards` + `products` so the orchard rail reflects both.
-2. **Tribal Feed has no Homestead/Grove/Orchards/Estate/Harvest Works sub-tabs.** Would need to add a sub-tab strip on `TribalAliveFeedPage` that filters by tier — the `TIER_LABELS` map and tier-based URL filter already exist, so it'd be wiring a tab bar on top of the existing filter.
-
-No code changes made. Awaiting your call on whether to fix gap 1, gap 2, both, or neither.
+Awaiting your direction before touching code.
