@@ -466,94 +466,11 @@ export default function SeedFlowDashboard() {
       .then(({ count }) => setStats(s => ({ ...s, orchards: count || 0 })))
     supabase.from('seeds').select('*', { count: 'exact', head: true })
       .then(({ count }) => setStats(s => ({ ...s, seeds: count || 56 })))
-    ;(async () => {
-      const { data: rows, error } = await supabase.rpc('get_my_dashboard_content')
-      if (error) {
-        console.warn('Dashboard content RPC failed:', error)
-        const { data } = await supabase.from('seeds')
-          .select('id, title, description, category, images, video_url, created_at')
-          .eq('gifter_id', user.id)
-          .order('created_at', { ascending: false })
-          .limit(20)
-        setMySeeds(data || [])
-        return
-      }
+    // Canonical "my content" fetch happens in useMyContent below — do NOT add
+    // direct seeds/products/orchards/books/videos queries for the signed-in
+    // user here. Fix divergences in src/api/sowerContent.ts only.
 
-      const seedRows = []
-      const musicRows = []
-      const bookRows = []
-      for (const row of rows || []) {
-        const source = (row.source || '').toLowerCase()
-        const productType = source.startsWith('product:') ? source.replace('product:', '') : ''
-        const type = productType || (row.category || '').toLowerCase()
-        if (source.startsWith('product:') && type === 'music') {
-          musicRows.push({
-            id: row.id,
-            track_title: row.title,
-            genre: row.music_genre,
-            file_url: row.file_url,
-            cover_image_url: firstImage(row.image_urls, row.cover_image_url),
-            image_urls: row.image_urls || [],
-            music_genre: row.music_genre,
-            music_mood: row.music_mood,
-            created_at: row.created_at,
-          })
-        } else if (source.startsWith('product:') && (type === 'ebook' || type === 'book')) {
-          bookRows.push({
-            id: row.id,
-            title: row.title,
-            description: row.description,
-            cover_image_url: row.cover_image_url,
-            image_urls: row.image_urls,
-            genre: row.category,
-            created_at: row.created_at,
-          })
-        } else {
-          seedRows.push({
-            id: row.id,
-            title: row.title,
-            description: row.description,
-            category: row.category,
-            images: row.images || row.image_urls || (row.cover_image_url ? [row.cover_image_url] : []),
-            video_url: row.video_url,
-            created_at: row.created_at,
-          })
-        }
-      }
-      setMySeeds(seedRows)
-      setMyMusic(musicRows)
-      setMyBooks(curr => {
-        const ids = new Set(bookRows.map(b => b.id))
-        return [...bookRows, ...curr.filter(b => !ids.has(b.id))]
-      })
-    })()
 
-    // My orchards
-    supabase.from('orchards')
-      .select('id, title, description, category, images, orchard_type, created_at')
-      .eq('user_id', user.id)
-      .order('created_at', { ascending: false })
-      .limit(20)
-      .then(({ data }) => setMyOrchards(data || []))
-
-    // My books (sower_books table)
-    supabase.from('sower_books')
-      .select('id, title, description, cover_image_url, image_urls, genre, created_at')
-      .eq('user_id', user.id)
-      .order('created_at', { ascending: false })
-      .limit(20)
-      .then(({ data }) => setMyBooks(curr => {
-        const ids = new Set(curr.map(b => b.id))
-        return [...(data || []), ...curr.filter(b => !ids.has(b.id))]
-      }))
-
-    // My community videos
-    supabase.from('community_videos')
-      .select('id, title, description, thumbnail_url, video_url, created_at')
-      .eq('uploader_id', user.id)
-      .order('created_at', { ascending: false })
-      .limit(20)
-      .then(({ data }) => setMyVideos(data || []))
 
     // Seeds I've bestowed into — orchards the user has supported
     supabase.from('bestowals')
