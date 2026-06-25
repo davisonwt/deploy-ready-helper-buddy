@@ -81,6 +81,7 @@ export default function VideoUploadModal({ isOpen, onClose, defaultCategory = nu
       description: description.trim() || null,
       tags: tagsArray,
       wandering_role: wanderingRole,
+      category: category || null,
       subcategoryIds: taxonomy.subcategoryIds,
       tagIds: taxonomy.tagIds,
     })
@@ -94,6 +95,7 @@ export default function VideoUploadModal({ isOpen, onClose, defaultCategory = nu
       setDescription('')
       setTags('')
       setWanderingRole(null)
+      setCategory(defaultCategory)
       setTaxonomy({ categoryId: null, subcategoryIds: [], tagIds: [] })
       onClose()
     }
@@ -105,6 +107,7 @@ export default function VideoUploadModal({ isOpen, onClose, defaultCategory = nu
     setDescription('')
     setTags('')
     setWanderingRole(null)
+    setCategory(defaultCategory)
     setTaxonomy({ categoryId: null, subcategoryIds: [], tagIds: [] })
   }
 
