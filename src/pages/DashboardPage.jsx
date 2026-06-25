@@ -407,6 +407,8 @@ export default function SeedFlowDashboard() {
   const [activePath, setActivePath] = useState('/dashboard')
   const [mobilePanel, setMobilePanel] = useState(null)
   const [isLetItRainOpen, setIsLetItRainOpen] = useState(false)
+  const [showVideoUpload, setShowVideoUpload] = useState(false)
+  const [plantMenuOpen, setPlantMenuOpen] = useState(false)
   const [tribalFeedsOpen, setTribalFeedsOpen] = useState(false)
   const tribalFeedsRef = useRef(null)
   useEffect(() => {
