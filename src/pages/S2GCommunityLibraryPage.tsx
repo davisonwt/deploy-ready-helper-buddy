@@ -11,6 +11,15 @@ import { formatCurrency } from '@/utils/formatters';
 import { toast } from 'sonner';
 import { GradientPlaceholder } from '@/components/ui/GradientPlaceholder';
 import { launchConfetti } from '@/utils/confetti';
+import { useContentPurchase } from '@/hooks/useContentPurchase';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
 
 export default function S2GCommunityLibraryPage() {
   const { user } = useAuth();
