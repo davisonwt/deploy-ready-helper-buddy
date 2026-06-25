@@ -63,6 +63,28 @@ export default function CommunityVideosPage() {
             onCategoryChange={setCategoryId}
             onTagsChange={setTagIds}
           />
+          <div className="mt-3 flex flex-wrap items-center gap-2">
+            <span className="text-sm font-medium text-white/90">Category:</span>
+            <div className="flex flex-wrap gap-2">
+              <Button
+                size="sm"
+                variant={videoCategory === null ? 'default' : 'outline'}
+                onClick={() => setVideoCategory(null)}
+              >
+                All
+              </Button>
+              {VIDEO_CATEGORIES.map((c) => (
+                <Button
+                  key={c.value}
+                  size="sm"
+                  variant={videoCategory === c.value ? 'default' : 'outline'}
+                  onClick={() => setVideoCategory(c.value)}
+                >
+                  {c.label}
+                </Button>
+              ))}
+            </div>
+          </div>
         </div>
 
       {/* Stats Cards */}
