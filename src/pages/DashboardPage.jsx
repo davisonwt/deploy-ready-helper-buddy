@@ -392,6 +392,15 @@ export default function SeedFlowDashboard() {
   const [myBooks, setMyBooks] = useState([])
   const [myVideos, setMyVideos] = useState([])
   const [bestowedOrchards, setBestowedOrchards] = useState([])
+
+  // Canonical "my content" — same source as My Garden via src/api/sowerContent.ts.
+  const myContent = useMyContent(user?.id)
+  useEffect(() => { setMySeeds(myContent.seeds || []) }, [myContent.seeds])
+  useEffect(() => { setMyOrchards(myContent.orchards || []) }, [myContent.orchards])
+  useEffect(() => { setMyMusic(myContent.music || []) }, [myContent.music])
+  useEffect(() => { setMyBooks(myContent.books || []) }, [myContent.books])
+  useEffect(() => { setMyVideos(myContent.videos || []) }, [myContent.videos])
+
   const [tip] = useState(GROWTH_TIPS[Math.floor(Math.random() * GROWTH_TIPS.length)])
   const [activePath, setActivePath] = useState('/dashboard')
   const [mobilePanel, setMobilePanel] = useState(null)
