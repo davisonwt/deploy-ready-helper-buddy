@@ -1,11 +1,12 @@
 import React, { useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Video, Upload, TrendingUp, Users, Play, Sparkles, Lightbulb } from 'lucide-react'
 import { useAuth } from '@/hooks/useAuth'
 import { QuickAIHelper } from '@/components/ai/QuickAIHelper'
 import VideoFeed from '@/components/community/VideoFeed.jsx'
-import VideoUploadModal from '@/components/community/VideoUploadModal.jsx'
+import VideoUploadModal, { VIDEO_CATEGORIES } from '@/components/community/VideoUploadModal.jsx'
 import WanderingBadgeBar from '@/components/marketplace/WanderingBadgeBar'
 import MarketplaceFilterBar from '@/components/marketplace/MarketplaceFilterBar'
 
@@ -14,6 +15,7 @@ export default function CommunityVideosPage() {
   const [activeRole, setActiveRole] = useState(null)
   const [categoryId, setCategoryId] = useState(null)
   const [tagIds, setTagIds] = useState([])
+  const [videoCategory, setVideoCategory] = useState(null)
   const { user } = useAuth()
 
   return (
