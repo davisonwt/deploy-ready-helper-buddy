@@ -112,6 +112,7 @@ Deno.serve(async (req) => {
         payout_currency:
           wallet.payout_currency ?? (wallet.payout_provider === "paypal" ? "USD" : null),
         payout_status: "pending",
+        metadata: payload.metadata ?? {},
       })
       .select("id")
       .single();
