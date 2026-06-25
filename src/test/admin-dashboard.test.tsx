@@ -38,16 +38,8 @@ vi.mock('@/components/admin/UserManagementDashboard', () => ({
   UserManagementDashboard: () => <div>User Management</div>,
 }))
 
-vi.mock('@/components/AdminPaymentDashboard', () => ({
-  AdminPaymentDashboard: () => <div>Payment Dashboard</div>,
-}))
-
 vi.mock('@/components/admin/ContentModerationDashboard', () => ({
   ContentModerationDashboard: () => <div>Content Moderation</div>,
-}))
-
-vi.mock('@/components/admin/OrganizationWalletSetup', () => ({
-  OrganizationWalletSetup: () => <div>Wallet Setup</div>,
 }))
 
 describe('AdminDashboardPage - Rules of Hooks Compliance', () => {
