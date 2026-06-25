@@ -38,8 +38,6 @@ import { RadioSlotApprovalInterface } from '@/components/radio/RadioSlotApproval
 import { UserManagementDashboard } from '@/components/admin/UserManagementDashboard'
 import { ContentModerationDashboard } from '@/components/admin/ContentModerationDashboard'
 import { EnhancedAnalyticsDashboard } from '@/components/admin/EnhancedAnalyticsDashboard'
-import { OrganizationWalletSetup } from '@/components/admin/OrganizationWalletSetup'
-import { AdminPaymentDashboard } from '@/components/AdminPaymentDashboard'
 import { GoSatGhostAccessMonitor } from '@/components/admin/GoSatGhostAccessMonitor'
 
 export default function AdminDashboardPage() {
