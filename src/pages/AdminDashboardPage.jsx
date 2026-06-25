@@ -356,7 +356,7 @@ export default function AdminDashboardPage() {
         {/* Main Dashboard Tabs */}
         <Tabs defaultValue="analytics" className="space-y-6">
           <div className="flex justify-center mb-8">
-            <TabsList className="bg-transparent p-0 h-auto grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-7 gap-4">
+            <TabsList className="bg-transparent p-0 h-auto grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
               <TabsTrigger 
                 value="analytics" 
                 className="border-2 border-primary/20 rounded-xl px-6 py-4 font-semibold shadow-lg hover:shadow-xl hover:scale-105 hover:border-primary/40 transition-all duration-300 data-[state=active]:bg-gradient-to-br data-[state=active]:from-primary data-[state=active]:to-primary/80 data-[state=active]:text-primary-foreground data-[state=active]:border-primary data-[state=active]:shadow-2xl data-[state=active]:scale-105 bg-background"
