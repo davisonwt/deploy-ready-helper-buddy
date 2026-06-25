@@ -217,7 +217,7 @@ export default function CommunityVideosPage() {
         )}
 
           {/* Video Feed */}
-          <VideoFeed activeRole={activeRole} categoryId={categoryId} tagIds={tagIds} />
+          <VideoFeed activeRole={activeRole} categoryId={categoryId} tagIds={tagIds} videoCategory={videoCategory} />
         </div>
       </div>
 
