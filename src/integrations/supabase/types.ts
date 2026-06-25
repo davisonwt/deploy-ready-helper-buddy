@@ -13398,6 +13398,7 @@ export type Database = {
       }
       get_current_radio_show: { Args: never; Returns: Json }
       get_current_week_id: { Args: never; Returns: string }
+      get_dj_track_file_url: { Args: { _track_id: string }; Returns: string }
       get_effective_tier: { Args: { _user: string }; Returns: string }
       get_gosat_insight_details: {
         Args: { _insight_id: string }
@@ -13533,6 +13534,7 @@ export type Database = {
           wallet_address: string
         }[]
       }
+      get_product_file_url: { Args: { _product_id: string }; Returns: string }
       get_profile_admin_data: {
         Args: { access_reason: string; profile_user_id: string }
         Returns: {
