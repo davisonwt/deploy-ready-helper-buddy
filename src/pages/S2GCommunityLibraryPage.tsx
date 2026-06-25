@@ -92,33 +92,12 @@ export default function S2GCommunityLibraryPage() {
       return;
     }
 
-    // Initiate Binance Pay for bestowal
-    try {
-      const { data, error } = await supabase.functions.invoke('create-binance-pay-order', {
-        body: {
-          libraryItemId: item.id,
-          amount: item.price,
-          sowerId: item.user_id,
-          type: 'library_item'
-        }
-      });
-
-      if (error) {
-        console.error('Binance Pay order creation error:', error);
-        toast.error(error.message || 'Failed to initiate bestowal payment');
-        return;
-      }
-
-      if (data?.paymentUrl) {
-        window.open(data.paymentUrl, '_blank');
-        toast.info('Redirecting to Binance Pay. Complete payment to finalize your bestowal.');
-      } else {
-        toast.error('Failed to get payment URL. Please try again.');
-      }
-    } catch (error: any) {
-      console.error('Payment initiation error:', error);
-      toast.error(`Payment initiation failed: ${error.message}`);
-    }
+    // Paid bestowal temporarily disabled while we migrate to approved
+    // payment providers (NOWPayments / PayPal).
+    toast.info(
+      'Paid bestowal is temporarily disabled while we migrate to our approved payment providers (NOWPayments / PayPal). Please try again soon.'
+    );
+    return;
   };
 
   const filteredItems = libraryItems?.filter(item => {
