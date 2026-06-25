@@ -1,90 +1,74 @@
+# Verification Report — Seed Upload Flow vs. Founder's Intent
 
-# Sower-Content Data-Source Consolidation Plan
+Read-only investigation. No changes made. Findings cited with file:line.
 
-## 1. What we found (the full map)
+---
 
-Two canonical RPCs exist in the DB:
-- `get_my_dashboard_content` — UNIONs `seeds` (by `gifter_id`) + `products` (by `sower_id → sowers.user_id`), already account-scoped via `get_my_account_scope`.
-- `get_my_account_scope` — returns primary + linked user_ids.
+## 1. Write paths — single vs. bulk seed upload
 
-**Only 2 surfaces use them today** (Dashboard + the just-fixed My Garden). Everything else hits tables directly. The same class of bug ("seeds show on Dashboard but not on My Garden") is present in **11 more surfaces**.
+**Verdict: PARTIAL MISMATCH.**
 
-### Surfaces grouped by what they should be doing
+| Path | `seeds` | `products` | `orchards` |
+|---|---|---|---|
+| Single (`SeedSubmissionPage.jsx`) | ✅ insert (L210–229) | ❌ | ✅ insert (L255–274) |
+| Bulk (`BulkUploadWizardPage.tsx` → `PublishStep`) | ❌ | ✅ insert via `insertProduct` (L583 → `src/api/products.ts:84`) | ❌ no orchards row created |
 
-**A — "My own content" (logged-in sower's view of their own stuff)** — should all share ONE hook:
-| # | File | Current source | Divergence |
-|---|------|----------------|------------|
-| 1 | `DashboardPage.jsx:470` | `get_my_dashboard_content` RPC | ✅ canonical |
-| 2 | `DashboardPage.jsx:473` (fallback) | `seeds WHERE gifter_id = user.id` | misses products + linked accounts |
-| 3 | `DashboardPage.jsx:532` (orchards widget) | `orchards WHERE user_id = user.id` | misses linked accounts |
-| 4 | `MyOrchardsPage.jsx:105` (seeds section) | `get_my_dashboard_content` RPC | ✅ canonical (just fixed) |
-| 5 | `MyOrchardsPage.jsx:65` (orchard list) | fetches ALL orchards then client-filters by `user.id` | misses linked accounts + wasteful |
-| 6 | `MyOrchardsPage.jsx:106` (orchards section) | `orchards WHERE user_id = user.id` | misses linked accounts |
-| 7 | `MyOrchardsPage.jsx:113-181` (music section) | `products WHERE sower_id = <primary sower>` | misses linked-account sowers |
-| 8 | `components/dashboard/DashboardTribeStats.tsx:45` | `orchards WHERE user_id = user.id` (count) | wrong for linked accounts |
+What this means for the read layer we just consolidated:
 
-**B — "Another sower's public content"** (viewing someone else's profile) — should share one hook:
-| # | File | Current source |
-|---|------|----------------|
-| 9 | `ProfilePage.jsx:411` | `orchards WHERE user_id = targetId` (count only) |
-| 10 | `api/products.ts:31,165,224` | `products WHERE sower_id = …` / `IN (…)` (already shared) |
-| 11 | `TierSeedFlowPage.tsx:116,142` | `orchards`/`sower_books` by sower id |
+- **`useMyContent` (My Garden + Dashboard "my seeds")** — OK. The `get_my_dashboard_content` RPC UNIONs `seeds` and `products`, so both single-uploaded seeds and bulk-uploaded products show up.
+- **`fetchTribeOrchards` (Browse Orchards + Tribal Feed orchard rail)** — BROKEN for bulk. It reads only from `orchards` (`sowerContent.ts:498–516`, filter `status='active'`). Bulk-uploaded items have no `orchards` row, so they are **invisible** in any orchard browsing/feed surface. Only single-seed uploads ever appear there.
 
-**C — "All tribe content" (public feeds / search)** — should share one hook:
-| # | File | Current source | Gap |
-|---|------|----------------|-----|
-| 12 | `BrowseOrchardsPage.jsx:286` (Tribe Garden) | `seeds` + `orchards` + `products` direct (most complete) | template for others |
-| 13 | `BrowseOrchardsPage.jsx:264` (Orchards tab) | `orchards` only | OK if intentional |
-| 14 | `TribalAliveFeedPage.tsx:200,235` | `seeds` + `orchards` + `fetchActiveProductsForFeed` | OK, products already shared |
-| 15 | `AdvancedSearchPage.tsx:38` | `orchards` only | **misses seeds AND products entirely** |
+This is the divergence: the bulk path skips the auto-create-orchard step the single path performs.
 
-**D — Write-only / Admin** (no change needed): `SeedSubmissionPage`, `FreeWillGiftingPage`, `BulkUploadWizardPage`, `AdminSeedsPage`, `AdminDashboardPage`, `ContentModerationDashboard`.
+---
 
-## 2. Proposed canonical layer
+## 2. Tribal Gardens / Feed — the 5 named sections
 
-Add ONE shared module: `src/api/sowerContent.ts` exposing three hooks. Every page above imports from here — no more inline `from('seeds')` / `from('orchards')` / `from('products')` for display purposes.
+**Verdict: NO. Those tabs do not exist.**
 
-```text
-src/api/sowerContent.ts
-├─ useMyContent()         → { seeds, products, orchards, music, books, isLoading }
-│                           Uses get_my_dashboard_content RPC for seeds+products,
-│                           Uses get_my_account_scope + orchards query for orchards,
-│                           Returns everything pre-shaped for UI.
-│
-├─ useSowerContent(userId)→ { seeds, products, orchards } for a public profile
-│                           Resolves sower_id from userId, fans out.
-│
-└─ useTribeContent(opts)  → { seeds, products, orchards } for public feeds/search
-                            Wraps the BrowseOrchardsPage Tribe Garden pattern.
-```
+`TribalAliveFeedPage.tsx` has exactly **3 tabs** (L44, L993–1009):
 
-**Backend change required (one migration):** extend `get_my_dashboard_content` to also return `orchards` rows (new `source = 'orchard'`), OR add a sibling RPC `get_my_orchards_scoped()`. Recommend the sibling RPC — keeps the existing RPC stable and avoids breaking the just-fixed My Garden.
+| State | Label shown |
+|---|---|
+| `following` | **Inner Circle** |
+| `foryou` | **Tribe Feed** |
+| `local` | **Around Me** |
 
-## 3. Rollout order (each step independently verifiable)
+The strings "Homestead", "Grove", "Orchard", "Estate", "Harvest Works" do exist — but only as:
+- `TIER_LABELS` map at `TribalAliveFeedPage.tsx:124–130`, used as a URL query-param filter (`?tier=homestead`) shown as a badge in the header, not a tab.
+- `SOWER_TIER_LINKS` href array at `MyOrchardsPage.jsx:38–44`, linking to `/homestead`, `/grove`, etc. (separate pages, not tabs).
 
-1. **DB**: add `get_my_orchards_scoped()` RPC (mirrors account-scope pattern).
-2. **Hook layer**: create `src/api/sowerContent.ts` with `useMyContent`. Unit-callable, no UI changes yet.
-3. **Migrate Group A one file at a time**, build-verify after each:
-   - `MyOrchardsPage` (orchard list + orchards section + music section)
-   - `DashboardPage` (fallback path + orchards widget)
-   - `DashboardTribeStats`
-4. **Add `useSowerContent`** and migrate `ProfilePage` + relevant `TierSeedFlowPage` calls.
-5. **Add `useTribeContent`** and migrate `AdvancedSearchPage` (closes the seeds/products invisibility gap), then optionally `BrowseOrchardsPage` Tribe Garden tab and `TribalAliveFeedPage`.
-6. **Lint rule / convention**: document in code comments that display surfaces MUST go through `src/api/sowerContent.ts`. Direct `from('seeds'|'orchards'|'products')` for display is forbidden outside that module + admin pages + write paths.
+So the founder's described 5-sub-tab structure on Tribal Feed has never been built.
 
-## 4. What this plan does NOT touch (per scope-lock)
+---
 
-- No edits to admin pages, write-only submission pages, or bulk-upload wizard.
-- No refactor of `orchardStore.js` / `OrchardState.js` / `communityOrchardsCache.js` (state/cache layer, not display).
-- No change to existing payment / live-room / chat code.
-- The already-shipped MyOrchardsPage fix stays in place; it just gets re-pointed at the new hook later.
+## 3. Distinct card components per destination
 
-## 5. Decision needed from you before I touch code
+**Verdict: YES — three (actually four) distinct card implementations, none shared.**
 
-Pick the scope you want me to execute:
-- **(a) Full plan** — all 3 hooks + DB migration + migrate all 11 divergent surfaces.
-- **(b) Group A only** — just consolidate "my own content" (the bug class that bit you). Skips ProfilePage / search / feed.
-- **(c) Minimal patch** — no new hook, just fix the 4 remaining "my own content" leaks (DashboardPage fallback, DashboardPage orchards widget, MyOrchardsPage orchards/music sections, DashboardTribeStats) in place. No architecture work.
-- **(d) Audit only** — keep this plan as a reference, do nothing yet.
+| Destination | Card | File |
+|---|---|---|
+| My Garden (`MyOrchardsPage`) | `buildSeedCard()` / `buildOrchardCard()` rendered inside `<MyGardenSection>` | `components/garden/seedCardBuilders.js` + `components/garden/MyGardenSection.jsx` (L145, L323–331) |
+| Dashboard (`DashboardPage`) | `<LivingSeedCard>` (bestowed orchards use `<SeedSlider>`) | `components/garden/LivingSeedCard.tsx` (L1210–1227, L1236) |
+| Tribal Feed (`TribalAliveFeedPage`) | Inline JSX, no named component extracted | `pages/TribalAliveFeedPage.tsx` (~L900+) |
+| Browse Orchards (`BrowseOrchardsPage`) | Local `function OrchardCard()` | `pages/BrowseOrchardsPage.jsx:111`, rendered L658 |
 
-Tell me a/b/c/d and I'll execute exactly that, nothing more.
+---
+
+## Bottom line vs. founder's described flow
+
+| Founder's expectation | Reality |
+|---|---|
+| Single upload populates My Garden / Dashboard / Tribal Feed | ✅ Yes (via `seeds` + `orchards` writes) |
+| Bulk upload populates the same 3 destinations | ⚠️ Partial — appears in My Garden + Dashboard (via `products`), but **does NOT appear in Tribal Feed/Browse Orchards rail** because no `orchards` row is created |
+| Each page uses its own card design | ✅ Yes — 4 distinct card implementations, nothing shared |
+| Tribal Feed has 5 sub-tabs: Homestead / Grove / Orchards / Estate / Harvest Works | ❌ No — feed has 3 tabs (Inner Circle / Tribe Feed / Around Me). The 5 names exist only as URL filter params and as separate page links from My Garden |
+
+---
+
+## Two real gaps if you want to align to the described flow
+
+1. **Bulk path doesn't create orchards rows.** Either (a) make `PublishStep` also insert into `orchards` like the single path does, or (b) change `fetchTribeOrchards` to UNION `orchards` + `products` so the orchard rail reflects both.
+2. **Tribal Feed has no Homestead/Grove/Orchards/Estate/Harvest Works sub-tabs.** Would need to add a sub-tab strip on `TribalAliveFeedPage` that filters by tier — the `TIER_LABELS` map and tier-based URL filter already exist, so it'd be wiring a tab bar on top of the existing filter.
+
+No code changes made. Awaiting your call on whether to fix gap 1, gap 2, both, or neither.
