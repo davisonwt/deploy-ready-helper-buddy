@@ -408,11 +408,10 @@ export default function ProfilePage() {
     const fetchStats = async () => {
       setStatsLoading(true)
       try {
-        const { data: orchards } = await supabase
-          .from('orchards')
-          .select('id')
-          .eq('user_id', user.id)
-        const orchardIds = (orchards || []).map(o => o.id)
+        // Canonical sower content (orchards) — same source as public profile views.
+        const { fetchSowerContent } = await import('@/api/sowerContent')
+        const content = await fetchSowerContent(user.id)
+        const orchardIds = content.orchards.map((o) => o.id)
 
         let totalReceived = 0
         let peopleHelped = 0
@@ -440,7 +439,7 @@ export default function ProfilePage() {
             : 'Community Member',
           totalBestowed,
           totalReceived,
-          orchardsCreated: orchards?.length || 0,
+          orchardsCreated: orchardIds.length,
           orchardsSupported,
           peopleHelped,
           communityRank: user.verification_status === 'verified' ? 'Verified Sower' : 'Faithful Sower',
@@ -454,6 +453,7 @@ export default function ProfilePage() {
     }
     fetchStats()
   }, [user?.id])
+
 
   // Show Quick Setup if requested
   if (showQuickSetup) {

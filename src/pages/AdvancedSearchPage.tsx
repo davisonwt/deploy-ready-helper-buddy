@@ -1,6 +1,5 @@
 import { useState } from "react"
 import { useQuery } from "@tanstack/react-query"
-import { supabase } from "@/integrations/supabase/client"
 import { AdvancedSearch } from "@/components/search/AdvancedSearch"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
@@ -10,6 +9,7 @@ import { Skeleton } from "@/components/ui/skeleton"
 import { MapPin, DollarSign, Eye, Users } from "lucide-react"
 import { Link } from "react-router-dom"
 import { GradientPlaceholder } from "@/components/ui/GradientPlaceholder"
+import { fetchTribeOrchards } from "@/api/sowerContent"
 
 interface SearchFilters {
   query: string
@@ -34,60 +34,23 @@ const AdvancedSearchPage = () => {
   const { data: searchResults = [], isLoading, refetch } = useQuery({
     queryKey: ['advanced-search', filters],
     queryFn: async () => {
-      let query = supabase
-        .from('orchards')
-        .select(`*`)
-        .eq('status', 'active')
-
-      // Apply filters
-      if (filters.query) {
-        query = query.or(`title.ilike.%${filters.query}%,description.ilike.%${filters.query}%,category.ilike.%${filters.query}%`)
-      }
-      
-      if (filters.category) {
-        query = query.ilike('category', `%${filters.category}%`)
-      }
-      
-      if (filters.location) {
-        query = query.ilike('location', `%${filters.location}%`)
-      }
-      
-      if (filters.status === 'active') {
-        query = query.lt('filled_pockets', 'total_pockets')
-      } else if (filters.status === 'completed') {
-        query = query.gte('filled_pockets', 'total_pockets')
-      }
-
-      // Price range filter
-      if (filters.priceRange[0] > 0 || filters.priceRange[1] < 10000) {
-        query = query.gte('pocket_price', filters.priceRange[0]).lte('pocket_price', filters.priceRange[1])
-      }
-
-      // Sorting
-      switch (filters.sortBy) {
-        case 'recent':
-          query = query.order('created_at', { ascending: false })
-          break
-        case 'popular':
-          query = query.order('views', { ascending: false })
-          break
-        case 'funded':
-          query = query.order('filled_pockets', { ascending: false })
-          break
-        case 'completion':
-          query = query.order('completion_rate', { ascending: false })
-          break
-        default:
-          query = query.order('created_at', { ascending: false })
-      }
-
-      const { data, error } = await query.limit(20)
-      
+      // Canonical tribe-wide orchard fetch (same source as BrowseOrchards & feed).
+      const { data, error } = await fetchTribeOrchards({
+        query: filters.query || undefined,
+        category: filters.category || undefined,
+        location: filters.location || undefined,
+        priceMin: filters.priceRange[0],
+        priceMax: filters.priceRange[1],
+        status: (filters.status as 'active' | 'completed' | '') || '',
+        sortBy: (filters.sortBy as any) || 'recent',
+        limit: 20,
+      })
       if (error) throw error
       return data || []
     },
     enabled: hasSearched
   })
+
 
   const handleSearch = (newFilters: SearchFilters) => {
     setFilters(newFilters)

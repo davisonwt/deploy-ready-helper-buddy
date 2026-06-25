@@ -232,10 +232,9 @@ export default function TribalAliveFeedPage() {
           supabase.from('skilldrop_sessions')
             .select('id, title, description, presenter_id, recording_url, scheduled_at, status, session_fee, created_at')
             .order('created_at', { ascending: false }).limit(20),
-          supabase.from('orchards')
-            .select('id, title, description, images, video_url, user_id, category, status, created_at')
-            .eq('status', 'active')
-            .order('created_at', { ascending: false }).limit(30),
+          // Canonical tribe-wide orchard fetch (shared with AdvancedSearch & BrowseOrchards)
+          (await import('@/api/sowerContent')).fetchTribeOrchards({ sortBy: 'recent', limit: 30 }),
+
         ]);
 
         if (cancelled) return;
