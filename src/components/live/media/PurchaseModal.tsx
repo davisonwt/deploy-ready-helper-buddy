@@ -1,4 +1,5 @@
-import React from 'react';
+import { useAuth } from '@/hooks/useAuth';
+import { useContentPurchase } from '@/hooks/useContentPurchase';
 import {
   Dialog,
   DialogContent,
@@ -8,8 +9,8 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Lock, AlertCircle } from 'lucide-react';
+import { Lock, Loader2 } from 'lucide-react';
+import { toast } from 'sonner';
 
 interface PurchaseModalProps {
   open: boolean;
@@ -19,7 +20,20 @@ interface PurchaseModalProps {
 }
 
 export function PurchaseModal({ open, onOpenChange, mediaItem }: PurchaseModalProps) {
+  const { user } = useAuth();
+  const { purchase, isPending } = useContentPurchase();
   const priceUSD = (mediaItem?.price_cents || 0) / 100;
+
+  const start = (provider: 'paypal' | 'nowpayments') => {
+    if (!user) { toast.error('Please log in to purchase'); return; }
+    if (!mediaItem?.id) { toast.error('Media item missing identifier'); return; }
+    purchase({
+      contentType: 'live_session_media',
+      contentId: mediaItem.id,
+      provider,
+      payCurrency: provider === 'nowpayments' ? 'usdttrc20' : undefined,
+    });
+  };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -30,21 +44,24 @@ export function PurchaseModal({ open, onOpenChange, mediaItem }: PurchaseModalPr
             Purchase {mediaItem?.file_name}
           </DialogTitle>
           <DialogDescription>
-            Price: ${priceUSD.toFixed(2)}
+            Price: ${priceUSD.toFixed(2)} — you'll be redirected to checkout. Access is granted automatically once payment is confirmed.
           </DialogDescription>
         </DialogHeader>
 
-        <Alert className="my-4">
-          <AlertCircle className="h-4 w-4" />
-          <AlertDescription>
-            <strong>Temporarily unavailable.</strong> In-session media purchases are being
-            migrated to NOWPayments and PayPal. Please check back soon.
-          </AlertDescription>
-        </Alert>
+        <div className="grid gap-2 py-2">
+          <Button onClick={() => start('paypal')} disabled={isPending}>
+            {isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+            Pay with PayPal
+          </Button>
+          <Button variant="outline" onClick={() => start('nowpayments')} disabled={isPending}>
+            {isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+            Pay with crypto (USDT TRC-20)
+          </Button>
+        </div>
 
         <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)}>
-            Close
+          <Button variant="ghost" onClick={() => onOpenChange(false)} disabled={isPending}>
+            Cancel
           </Button>
         </DialogFooter>
       </DialogContent>
