@@ -146,6 +146,12 @@ async function handlePaymentEvent(
     return;
   }
 
+  // Gift bestowal path: order_id = "gift:<bestowals.id>". Same downstream logic
+  // as orchard bestowals — fall through after stripping the prefix.
+  const bestowalId = orderId.startsWith("gift:")
+    ? orderId.slice("gift:".length)
+    : orderId;
+
   // order_id was set to the bestowals.id when the invoice was created.
   const { data: bestowal } = await supabase
     .from("bestowals")
