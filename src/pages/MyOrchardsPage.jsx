@@ -22,6 +22,7 @@ import {
   buildBookCard, buildVideoCard, deleteRow,
 } from '../components/garden/seedCardBuilders'
 import { useMyContent } from '@/api/sowerContent'
+import VideoUploadModal from '@/components/community/VideoUploadModal.jsx'
 
 const WANDERING_ROLES = [
   { label: 'Wheel 🚗',      value: 'Wheel' },
