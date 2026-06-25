@@ -1330,6 +1330,7 @@ export default function SeedFlowDashboard() {
           </Link>
         </div>
         <LetItRainPanel isOpen={isLetItRainOpen} onClose={() => setIsLetItRainOpen(false)} />
+        <VideoUploadModal isOpen={showVideoUpload} onClose={() => setShowVideoUpload(false)} />
       </div>
     </>
   )
