@@ -135,6 +135,11 @@ async function handleEvent(
       await supabase.from("basket_orders").update({ status: "processing" })
         .eq("id", customId.slice("basket:".length));
       return;
+    if (customId.startsWith("content:")) {
+      await supabase.from("content_purchases")
+        .update({ payment_status: "processing" })
+        .eq("id", customId.slice("content:".length));
+      return;
     }
     const bestowalId = customId.startsWith("gift:")
       ? customId.slice("gift:".length)
@@ -164,6 +169,14 @@ async function handleEvent(
       const basketOrderId = customId.slice("basket:".length);
       const { error: rpcErr } = await supabase.rpc("finalize_basket_order", { _basket_order_id: basketOrderId });
       if (rpcErr) console.error("finalize_basket_order failed", basketOrderId, rpcErr);
+      return;
+    if (customId.startsWith("content:")) {
+      const purchaseId = customId.slice("content:".length);
+      const { error: rpcErr } = await supabase.rpc("finalize_content_purchase", { _purchase_id: purchaseId });
+      if (rpcErr) console.error("finalize_content_purchase failed", purchaseId, rpcErr);
+      await supabase.from("content_purchases")
+        .update({ payment_reference: (resource.id as string | undefined) ?? null })
+        .eq("id", purchaseId);
       return;
     }
     const bestowalId = customId.startsWith("gift:")
@@ -226,6 +239,11 @@ async function handleEvent(
     if (customId.startsWith("basket:")) {
       await supabase.from("basket_orders").update({ status: "failed" })
         .eq("id", customId.slice("basket:".length));
+      return;
+    if (customId.startsWith("content:")) {
+      await supabase.from("content_purchases")
+        .update({ payment_status: "failed", payout_error: `paypal_${type.toLowerCase()}` })
+        .eq("id", customId.slice("content:".length));
       return;
     }
     const bestowalId = customId.startsWith("gift:")

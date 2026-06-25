@@ -11,10 +11,21 @@ import { formatCurrency } from '@/utils/formatters';
 import { toast } from 'sonner';
 import { GradientPlaceholder } from '@/components/ui/GradientPlaceholder';
 import { launchConfetti } from '@/utils/confetti';
+import { useContentPurchase } from '@/hooks/useContentPurchase';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
 
 export default function S2GCommunityLibraryPage() {
   const { user } = useAuth();
   const [selectedType, setSelectedType] = useState<string>('all');
+  const [pickerItem, setPickerItem] = useState<any | null>(null);
+  const { purchase, isPending } = useContentPurchase();
 
   const { data: libraryItems, isLoading } = useQuery({
     queryKey: ['s2g-community-library'],
@@ -69,15 +80,15 @@ export default function S2GCommunityLibraryPage() {
       return;
     }
 
-    // Handle giveaway
+    // Free giveaway
     if (item.is_giveaway && item.giveaway_count < (item.giveaway_limit || Infinity)) {
       const result = await supabase.functions.invoke('complete-library-bestowal', {
         body: {
           libraryItemId: item.id,
           amount: 0,
           sowerId: item.user_id,
-          isGiveaway: true
-        }
+          isGiveaway: true,
+        },
       });
       if (result.data?.success) {
         launchConfetti();
@@ -92,12 +103,8 @@ export default function S2GCommunityLibraryPage() {
       return;
     }
 
-    // Paid bestowal temporarily disabled while we migrate to approved
-    // payment providers (NOWPayments / PayPal).
-    toast.info(
-      'Paid bestowal is temporarily disabled while we migrate to our approved payment providers (NOWPayments / PayPal). Please try again soon.'
-    );
-    return;
+    // Paid → open provider picker
+    setPickerItem(item);
   };
 
   const filteredItems = libraryItems?.filter(item => {
@@ -368,6 +375,59 @@ export default function S2GCommunityLibraryPage() {
           )}
         </div>
       </div>
+
+      <Dialog open={!!pickerItem} onOpenChange={(o) => !o && setPickerItem(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Bestow to access</DialogTitle>
+            <DialogDescription>
+              {pickerItem ? (
+                <>
+                  {pickerItem.title} — {formatCurrency(pickerItem.price)}
+                  <br />
+                  Choose how you want to pay. You'll be redirected to complete checkout.
+                </>
+              ) : null}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="grid grid-cols-1 gap-3">
+            <Button
+              disabled={isPending}
+              onClick={() =>
+                pickerItem &&
+                purchase({
+                  contentType: 'library_item',
+                  contentId: pickerItem.id,
+                  provider: 'paypal',
+                })
+              }
+            >
+              Pay with PayPal
+            </Button>
+            <Button
+              variant="outline"
+              disabled={isPending}
+              onClick={() =>
+                pickerItem &&
+                purchase({
+                  contentType: 'library_item',
+                  contentId: pickerItem.id,
+                  provider: 'nowpayments',
+                  payCurrency: 'usdttrc20',
+                })
+              }
+            >
+              Pay with crypto (USDT TRC-20 via NOWPayments)
+            </Button>
+          </div>
+          <DialogFooter>
+            <Button variant="ghost" onClick={() => setPickerItem(null)} disabled={isPending}>
+              Cancel
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
 
       <style>{`
         @keyframes gradient {

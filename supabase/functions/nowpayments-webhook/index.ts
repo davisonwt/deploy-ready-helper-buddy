@@ -146,6 +146,28 @@ async function handlePaymentEvent(
     return;
   }
 
+  // Fixed-price content purchase path: order_id = "content:<content_purchases.id>".
+  if (orderId.startsWith("content:")) {
+    const purchaseId = orderId.slice("content:".length);
+    if (paymentStatus === "waiting" || paymentStatus === "confirming" || paymentStatus === "sending") {
+      await supabase.from("content_purchases").update({ payment_status: "processing" }).eq("id", purchaseId);
+      return;
+    }
+    if (paymentStatus === "finished" || paymentStatus === "partially_paid") {
+      const { error: rpcErr } = await supabase.rpc("finalize_content_purchase", { _purchase_id: purchaseId });
+      if (rpcErr) console.error("finalize_content_purchase failed", purchaseId, rpcErr);
+      return;
+    }
+    if (paymentStatus === "failed" || paymentStatus === "expired" || paymentStatus === "refunded") {
+      await supabase.from("content_purchases")
+        .update({ payment_status: "failed", payout_error: `nowpayments_${paymentStatus}` })
+        .eq("id", purchaseId);
+      return;
+    }
+    console.warn("content IPN: unknown status", paymentStatus, purchaseId);
+    return;
+  }
+
   // Gift bestowal path: order_id = "gift:<bestowals.id>". Same downstream logic
   // as orchard bestowals — fall through after stripping the prefix.
   const bestowalId = orderId.startsWith("gift:")
