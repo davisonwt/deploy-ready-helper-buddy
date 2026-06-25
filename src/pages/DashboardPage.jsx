@@ -1293,7 +1293,6 @@ export default function SeedFlowDashboard() {
           borderTop: '1px solid rgba(255,255,255,0.06)',
           zIndex: 100,
         }}>
-          <Link to="/create-orchard" style={{ flex: 1, textDecoration: 'none' }}>
           <Popover open={plantMenuOpen} onOpenChange={setPlantMenuOpen}>
             <PopoverTrigger asChild>
               <div style={{ flex: 1, cursor: 'pointer' }}>
