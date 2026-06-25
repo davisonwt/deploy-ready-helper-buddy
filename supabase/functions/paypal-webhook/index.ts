@@ -228,7 +228,9 @@ async function handleEvent(
         .eq("id", customId.slice("basket:".length));
       return;
     }
-    const bestowalId = customId;
+    const bestowalId = customId.startsWith("gift:")
+      ? customId.slice("gift:".length)
+      : customId;
     await supabase
       .from("bestowals")
       .update({
