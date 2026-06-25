@@ -1,8 +1,9 @@
 import React, { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { Video, Upload, TrendingUp, Users, Play, Sparkles, Lightbulb } from 'lucide-react'
+import { Video, Upload, TrendingUp, Users, Play, Sparkles, Lightbulb, ArrowLeft } from 'lucide-react'
 import { useAuth } from '@/hooks/useAuth'
 import { QuickAIHelper } from '@/components/ai/QuickAIHelper'
 import VideoFeed from '@/components/community/VideoFeed.jsx'
@@ -11,6 +12,7 @@ import WanderingBadgeBar from '@/components/marketplace/WanderingBadgeBar'
 import MarketplaceFilterBar from '@/components/marketplace/MarketplaceFilterBar'
 
 export default function CommunityVideosPage() {
+  const navigate = useNavigate()
   const [showUploadModal, setShowUploadModal] = useState(false)
   const [activeRole, setActiveRole] = useState(null)
   const [categoryId, setCategoryId] = useState(null)
@@ -26,6 +28,9 @@ export default function CommunityVideosPage() {
         {/* Header */}
         <div className="bg-gradient-to-br from-primary/10 via-primary/5 to-background/50 border-b backdrop-blur-sm">
         <div className="max-w-6xl mx-auto px-4 py-8">
+          <Button variant="outline" size="sm" onClick={() => navigate('/dashboard')} className="mb-4 flex items-center gap-2">
+            <ArrowLeft className="h-4 w-4" /> Back to Dashboard
+          </Button>
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
             <div className="space-y-2">
               <h1 className="text-3xl font-bold flex items-center gap-3 text-slate-900" style={{textShadow: '2px 2px 0 white, -2px -2px 0 white, 2px -2px 0 white, -2px 2px 0 white'}}>
