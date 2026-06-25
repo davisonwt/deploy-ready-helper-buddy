@@ -12,6 +12,7 @@ import WanderingBadgeBar from '@/components/marketplace/WanderingBadgeBar'
 import MarketplaceFilterBar from '@/components/marketplace/MarketplaceFilterBar'
 
 export default function CommunityVideosPage() {
+  const navigate = useNavigate()
   const [showUploadModal, setShowUploadModal] = useState(false)
   const [activeRole, setActiveRole] = useState(null)
   const [categoryId, setCategoryId] = useState(null)
