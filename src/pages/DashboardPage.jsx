@@ -15,6 +15,7 @@ import {
 } from '../components/garden/seedCardBuilders'
 import { toast } from 'sonner'
 import DashboardTribeStats from '../components/dashboard/DashboardTribeStats'
+import { useMyContent } from '@/api/sowerContent'
 import TribalTiersCard from '../components/dashboard/TribalTiersCard'
 import LiveNowStrip from '@/components/live/LiveNowStrip'
 import SacredDayBanner from '@/components/SacredDayBanner'
