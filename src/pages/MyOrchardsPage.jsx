@@ -101,9 +101,8 @@ export default function MyOrchardsPage() {
   // ── Fetch all 5 categories of user's content for the My Garden sections ──
   const fetchAllMyContent = async () => {
     if (!user) return
-    const [seedsRes, orchardsRes, booksRes, vidsRes, djsRes, sowerRes] = await Promise.all([
-      supabase.from('seeds').select('id, title, description, category, images, video_url, created_at')
-        .eq('gifter_id', user.id).order('created_at', { ascending: false }).limit(50),
+    const [rpcRes, orchardsRes, booksRes, vidsRes, djsRes, sowerRes] = await Promise.all([
+      supabase.rpc('get_my_dashboard_content'),
       supabase.from('orchards').select('id, title, description, category, images, orchard_type, created_at')
         .eq('user_id', user.id).order('created_at', { ascending: false }).limit(50),
       supabase.from('sower_books').select('id, title, description, cover_image_url, image_urls, genre, created_at')
@@ -113,9 +112,61 @@ export default function MyOrchardsPage() {
       supabase.from('radio_djs').select('id').eq('user_id', user.id),
       supabase.from('sowers').select('id').eq('user_id', user.id).maybeSingle(),
     ])
-    setMySeeds(seedsRes.data || [])
+
+    // Build mySeeds from the same RPC the dashboard uses (covers `seeds` table
+    // rows AND any `products` rows the user uploaded as seeds via Plant-a-Seed,
+    // including linked accounts). Music/book/ebook products feed their own
+    // sections below, so exclude them here.
+    if (rpcRes.error) console.warn('get_my_dashboard_content failed:', rpcRes.error)
+    const rpcRows = rpcRes.data || []
+    const seedRows = []
+    const rpcBookRows = []
+    const rpcMusicRows = []
+    for (const row of rpcRows) {
+      const source = (row.source || '').toLowerCase()
+      const productType = source.startsWith('product:') ? source.replace('product:', '') : ''
+      const type = productType || (row.category || '').toLowerCase()
+      if (source.startsWith('product:') && type === 'music') {
+        rpcMusicRows.push({
+          id: row.id,
+          track_title: row.title,
+          genre: row.music_genre,
+          file_url: row.file_url,
+          cover_image_url: row.cover_image_url || (row.image_urls && row.image_urls[0]),
+          image_urls: row.image_urls || [],
+          music_genre: row.music_genre,
+          music_mood: row.music_mood,
+          created_at: row.created_at,
+          __table: 'products',
+        })
+      } else if (source.startsWith('product:') && (type === 'ebook' || type === 'book')) {
+        rpcBookRows.push({
+          id: row.id,
+          title: row.title,
+          description: row.description,
+          cover_image_url: row.cover_image_url,
+          image_urls: row.image_urls,
+          genre: row.category,
+          created_at: row.created_at,
+        })
+      } else {
+        seedRows.push({
+          id: row.id,
+          title: row.title,
+          description: row.description,
+          category: row.category,
+          images: row.images || row.image_urls || (row.cover_image_url ? [row.cover_image_url] : []),
+          video_url: row.video_url,
+          created_at: row.created_at,
+        })
+      }
+    }
+    setMySeeds(seedRows)
     setMyOrchards(orchardsRes.data || [])
-    setMyBooks(booksRes.data || [])
+    // Merge RPC-derived books with sower_books rows, dedupe by id
+    const bookBase = booksRes.data || []
+    const bookIds = new Set(bookBase.map(b => b.id))
+    setMyBooks([...bookBase, ...rpcBookRows.filter(b => !bookIds.has(b.id))])
     setMyVideos(vidsRes.data || [])
 
     // Music = DJ tracks ∪ product-music rows (uploaded as products)
