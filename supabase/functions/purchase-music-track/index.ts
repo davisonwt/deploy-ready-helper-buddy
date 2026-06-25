@@ -103,7 +103,11 @@ serve(async (req) => {
 
     logStep("Calculated pricing", { baseAmount, platformFee, sow2growFee, totalAmount });
 
-    // Create purchase record
+    // Create purchase record — ALWAYS pending. A separate, server-side
+    // payment verifier (on-chain signature check / webhook) is the only
+    // path allowed to flip status to 'completed' and trigger delivery.
+    // The client-supplied paymentReference is recorded for later
+    // verification but does NOT confer entitlement on its own.
     const { data: purchase, error: purchaseError } = await supabaseService
       .from('music_purchases')
       .insert({
@@ -113,8 +117,8 @@ serve(async (req) => {
         platform_fee: platformFee,
         sow2grow_fee: sow2growFee,
         total_amount: totalAmount,
-        payment_status: paymentReference ? 'completed' : 'pending',
-        payment_reference: paymentReference
+        payment_status: 'pending',
+        payment_reference: paymentReference ?? null
       })
       .select()
       .single();
@@ -130,96 +134,7 @@ serve(async (req) => {
       );
     }
 
-    logStep("Purchase created", { purchaseId: purchase.id });
-
-    // If payment is completed, deliver the track to direct chat
-    if (paymentReference) {
-      logStep("Payment completed, delivering track");
-      
-      // Create or get direct room with track owner
-      const { data: directRoom, error: roomError } = await supabaseService
-        .rpc('get_or_create_direct_room', {
-          user1_id: user.id,
-          user2_id: track.dj_id
-        });
-
-      if (roomError) {
-        logStep("Failed to create direct room", { roomError });
-        // Continue with purchase but log the error
-      } else {
-        // Generate a short-lived signed URL so the buyer (and only the buyer)
-        // can download. After it expires the buyer re-fetches via the
-        // get-purchased-track-url edge function from their purchases page.
-        const extractPath = (fileUrl: string): string | null => {
-          if (!fileUrl) return null;
-          try {
-            const u = new URL(fileUrl);
-            const marker = "/storage/v1/object/";
-            const idx = u.pathname.indexOf(marker);
-            if (idx !== -1) {
-              const after = u.pathname.substring(idx + marker.length);
-              const parts = after.split("/").filter(Boolean);
-              const bucketIdx = ["public", "sign", "authenticated"].includes(parts[0]) ? 1 : 0;
-              if (parts[bucketIdx] === "music-tracks") {
-                return decodeURIComponent(parts.slice(bucketIdx + 1).join("/"));
-              }
-            }
-            return null;
-          } catch {
-            return fileUrl.replace(/^\/+/, "").replace(/^public\//, "");
-          }
-        };
-
-        const path = extractPath(track.file_url);
-        let signedUrl: string | null = null;
-        if (path) {
-          const { data: signed, error: signErr } = await supabaseService.storage
-            .from("music-tracks")
-            .createSignedUrl(path, 60 * 60 * 24 * 7); // 7 days
-          if (signErr) {
-            logStep("Failed to sign track url", { signErr, path });
-          } else {
-            signedUrl = signed?.signedUrl ?? null;
-          }
-        } else {
-          logStep("Could not derive storage path from file_url", { file_url: track.file_url });
-        }
-
-        const { error: messageError } = await supabaseService
-          .from('chat_messages')
-          .insert({
-            room_id: directRoom,
-            sender_id: user.id, // System message from buyer
-            content: `🎵 Music Purchase: ${track.track_title}\n\n⚠️ This file is for your personal use only and cannot be shared with others.\n\nThe download link below expires in 7 days. If it stops working, open My Purchases to get a fresh link.`,
-            message_type: 'file',
-            file_url: signedUrl ?? '',
-            file_name: `${track.track_title}.mp3`,
-            file_size: track.file_size,
-            file_type: 'audio',
-            system_metadata: {
-              purchase_id: purchase.id,
-              track_id: trackId,
-              is_purchased_content: true,
-              access_restricted: true,
-              buyer_only: true,
-              signed_url_expires_at: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
-              resign_function: 'get-purchased-track-url'
-            }
-          });
-
-        if (messageError) {
-          logStep("Failed to send track to chat", { messageError });
-        } else {
-          // Update purchase as delivered
-          await supabaseService
-            .from('music_purchases')
-            .update({ delivered_at: new Date().toISOString() })
-            .eq('id', purchase.id);
-          
-          logStep("Track delivered to direct chat");
-        }
-      }
-    }
+    logStep("Purchase created (pending verification)", { purchaseId: purchase.id });
 
     return new Response(
       JSON.stringify({
