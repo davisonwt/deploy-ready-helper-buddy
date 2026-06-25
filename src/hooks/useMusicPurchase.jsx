@@ -3,124 +3,60 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from './useAuth';
 import { useToast } from '@/hooks/use-toast';
 
+/**
+ * Music purchase via the unified Shape-1 content_purchases pipeline.
+ * Initiates a NOWPayments or PayPal checkout and redirects the buyer.
+ * The webhook finalizes the music_purchases row + delivers a buyer notification.
+ *
+ * Signatures supported (callers in the codebase vary):
+ *   purchaseTrack(track)
+ *   purchaseTrack(trackId, price?)
+ */
 export function useMusicPurchase() {
   const [loading, setLoading] = useState(false);
   const { user } = useAuth();
   const { toast } = useToast();
 
-  const purchaseTrack = async (track) => {
+  const purchaseTrack = async (trackOrId, _price, opts = {}) => {
     if (!user) {
       toast({
-        title: "Authentication Required",
-        description: "Please log in to purchase music tracks",
-        variant: "destructive",
+        title: 'Authentication Required',
+        description: 'Please log in to purchase music tracks',
+        variant: 'destructive',
       });
       return { success: false };
     }
 
+    const trackId = typeof trackOrId === 'string' ? trackOrId : trackOrId?.id;
+    if (!trackId) {
+      toast({ title: 'Purchase failed', description: 'Track id missing', variant: 'destructive' });
+      return { success: false };
+    }
+
+    const provider = opts.provider === 'paypal' ? 'paypal' : 'nowpayments';
+    const payCurrency = opts.payCurrency || 'usdttrc20';
+
     try {
       setLoading(true);
-
-      // Pricing: Minimum 2.00 USDC (includes 10% tithing + 5% admin fee)
-      // Use track price if set and >= 2.00, otherwise default to 2.00 USDC minimum
-      const baseAmount = track.price && track.price >= 2.00 ? track.price : 2.00;
-      // Note: 2 USDC already includes 10% tithing + 5% admin fee, so total is just baseAmount
-      const totalAmount = baseAmount;
-
-      // Check wallet balance
-      if (!checkSufficientBalance(totalAmount)) {
-        toast({
-          title: "Insufficient Balance",
-          description: `You need ${totalAmount.toFixed(2)} USDC to purchase this track`,
-          variant: "destructive",
-        });
-        return { success: false };
-      }
-
-      toast({
-        title: "Processing Payment",
-        description: `Purchasing "${track.track_title}" for ${totalAmount.toFixed(2)} USDC`,
-      });
-
-      // 1) Resolve owner (artist) wallet
-      const { data: ownerLookup, error: ownerLookupError } = await supabase
-        .from('dj_music_tracks')
-        .select('id, radio_djs!inner(user_id)')
-        .eq('id', track.id)
-        .single();
-
-      if (ownerLookupError || !ownerLookup?.radio_djs?.user_id) {
-        throw new Error('Could not resolve track owner');
-      }
-
-      const ownerUserId = ownerLookup.radio_djs.user_id;
-
-      const { data: ownerWallet, error: ownerWalletError } = await supabase
-        .from('user_wallets')
-        .select('wallet_address')
-        .eq('user_id', ownerUserId)
-        .eq('is_active', true)
-        .maybeSingle();
-
-      if (ownerWalletError || !ownerWallet?.wallet_address) {
-        throw new Error("Artist hasn't set up a wallet yet");
-      }
-
-      // 2) Resolve Sow2Grow platform wallet
-      const { data: platformWallet, error: platformError } = await supabase
-        .rpc('get_payment_wallet_address')
-        .single();
-
-      if (platformError || !platformWallet?.wallet_address) {
-        throw new Error('Platform wallet not available');
-      }
-
-      // 3) Execute wallet-to-wallet transfers
-      const ownerPayment = await transferUSDC({
-        recipientAddress: ownerWallet.wallet_address,
-        amount: baseAmount,
-        memo: `Music purchase: ${track.track_title}`,
-      });
-
-      if (!ownerPayment.success) {
-        throw new Error(ownerPayment.error || 'Failed to send payment to artist');
-      }
-
-      let feePaymentSig = null;
-      if (sow2growFee > 0) {
-        const feePayment = await transferUSDC({
-          recipientAddress: platformWallet.wallet_address,
-          amount: sow2growFee,
-          memo: `Sow2Grow fee for music purchase: ${track.track_title}`,
-        });
-        if (!feePayment.success) {
-          throw new Error(feePayment.error || 'Failed to send platform fee');
-        }
-        feePaymentSig = feePayment.signature;
-      }
-
-      // 4) Complete purchase delivery via Edge Function
-      const { data, error } = await supabase.functions.invoke('purchase-music-track', {
+      const { data, error } = await supabase.functions.invoke('create-content-purchase-order', {
         body: {
-          trackId: track.id,
-          paymentReference: ownerPayment.signature,
-        }
+          contentType: 'music_track',
+          contentId: trackId,
+          provider,
+          payCurrency: provider === 'nowpayments' ? payCurrency : undefined,
+          redirectBaseUrl: typeof window !== 'undefined' ? window.location.origin : undefined,
+        },
       });
-
       if (error) throw error;
-
-      toast({
-        title: 'Purchase Successful!',
-        description: `${track.track_title} has been sent to your direct messages`,
-      });
-
-      return { success: true, data, signatures: [ownerPayment.signature, feePaymentSig].filter(Boolean) };
-
+      const redirectUrl = data?.invoiceUrl || data?.approveUrl;
+      if (!redirectUrl) throw new Error('Provider did not return a checkout URL');
+      window.location.href = redirectUrl;
+      return { success: true, data };
     } catch (error) {
       console.error('Music purchase failed:', error);
       toast({
         title: 'Purchase Failed',
-        description: error.message || 'Failed to complete purchase',
+        description: error.message || 'Failed to start checkout',
         variant: 'destructive',
       });
       return { success: false };
@@ -155,9 +91,23 @@ export function useMusicPurchase() {
     }
   };
 
+  const hasPurchased = async (trackId) => {
+    if (!user || !trackId) return false;
+    const { data } = await supabase
+      .from('music_purchases')
+      .select('id')
+      .eq('buyer_id', user.id)
+      .eq('track_id', trackId)
+      .eq('payment_status', 'completed')
+      .limit(1)
+      .maybeSingle();
+    return !!data;
+  };
+
   return {
     purchaseTrack,
     getPurchaseHistory,
-    loading
+    hasPurchased,
+    loading,
   };
 }
