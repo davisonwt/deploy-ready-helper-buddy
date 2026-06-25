@@ -21,6 +21,7 @@ interface PurchaseArgs {
   contentId: string;
   provider: PurchaseProvider;
   payCurrency?: string; // NOWPayments: e.g. 'usdttrc20'
+  metadata?: Record<string, unknown>;
 }
 
 export function useContentPurchase() {
@@ -41,6 +42,7 @@ export function useContentPurchase() {
             contentId: args.contentId,
             provider: args.provider,
             payCurrency: args.payCurrency,
+            metadata: args.metadata ?? {},
             redirectBaseUrl: window.location.origin,
           },
         },

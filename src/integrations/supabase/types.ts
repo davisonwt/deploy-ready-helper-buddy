@@ -2644,6 +2644,7 @@ export type Database = {
           created_at: string
           currency: string
           id: string
+          metadata: Json
           payment_reference: string | null
           payment_status: string
           payout_attempted_at: string | null
@@ -2671,6 +2672,7 @@ export type Database = {
           created_at?: string
           currency?: string
           id?: string
+          metadata?: Json
           payment_reference?: string | null
           payment_status?: string
           payout_attempted_at?: string | null
@@ -2698,6 +2700,7 @@ export type Database = {
           created_at?: string
           currency?: string
           id?: string
+          metadata?: Json
           payment_reference?: string | null
           payment_status?: string
           payout_attempted_at?: string | null

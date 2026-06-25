@@ -30,6 +30,8 @@ interface RequestPayload {
   provider: Provider;
   payCurrency?: string;
   redirectBaseUrl?: string;
+  // Optional type-specific context (e.g. premium_item needs roomId + itemType)
+  metadata?: Record<string, unknown>;
 }
 
 Deno.serve(async (req) => {
@@ -66,7 +68,7 @@ Deno.serve(async (req) => {
     const service = createClient(supabaseUrl, serviceRoleKey, { auth: { persistSession: false } });
 
     // --- Resolve content (price, seller) per type ----------------------------
-    const resolved = await resolveContent(service, payload.contentType, payload.contentId);
+    const resolved = await resolveContent(service, payload.contentType, payload.contentId, payload.metadata ?? {});
     if ("error" in resolved) return json(resolved, resolved.status ?? 400);
     const { sellerId, basePrice, label } = resolved;
 
@@ -110,6 +112,7 @@ Deno.serve(async (req) => {
         payout_currency:
           wallet.payout_currency ?? (wallet.payout_provider === "paypal" ? "USD" : null),
         payout_status: "pending",
+        metadata: payload.metadata ?? {},
       })
       .select("id")
       .single();
@@ -217,6 +220,7 @@ async function resolveContent(
   supabase: SupabaseClient,
   contentType: ContentType,
   contentId: string,
+  metadata: Record<string, unknown>,
 ): Promise<ResolvedContent> {
   if (contentType === "library_item") {
     const { data, error } = await supabase
@@ -232,7 +236,79 @@ async function resolveContent(
       label: String(data.title ?? "Library item"),
     };
   }
-  // Other content types will be wired as their entry points migrate.
+
+  if (contentType === "premium_item") {
+    const roomId = String(metadata.room_id ?? metadata.roomId ?? "");
+    const itemType = String(metadata.item_type ?? metadata.itemType ?? "");
+    if (!roomId || !itemType) {
+      return { error: "missing_metadata", message: "premium_item requires metadata.room_id and metadata.item_type", status: 400 };
+    }
+    const { data: room, error } = await supabase
+      .from("premium_rooms")
+      .select("id, creator_id, title, documents, artwork, music")
+      .eq("id", roomId)
+      .maybeSingle();
+    if (error || !room) return { error: "content_not_found", status: 404 };
+    const bucket = itemType === "music" ? room.music
+                 : itemType === "artwork" ? room.artwork
+                 : room.documents;
+    const items = Array.isArray(bucket) ? bucket : [];
+    const item = items.find((it: any) => String(it?.id) === contentId);
+    if (!item) return { error: "content_not_found", status: 404 };
+    return {
+      sellerId: room.creator_id,
+      basePrice: Number(item.price ?? 0),
+      label: `${room.title} – ${item.name ?? itemType}`,
+    };
+  }
+
+  if (contentType === "premium_room_access") {
+    const { data, error } = await supabase
+      .from("premium_rooms")
+      .select("id, creator_id, title, price")
+      .eq("id", contentId)
+      .maybeSingle();
+    if (error || !data) return { error: "content_not_found", status: 404 };
+    return {
+      sellerId: data.creator_id,
+      basePrice: Number(data.price ?? 0),
+      label: `Room access: ${data.title ?? "Premium room"}`,
+    };
+  }
+
+  if (contentType === "live_session_media") {
+    const { data, error } = await supabase
+      .from("live_session_media")
+      .select("id, uploader_id, file_name, price_cents")
+      .eq("id", contentId)
+      .maybeSingle();
+    if (error || !data) return { error: "content_not_found", status: 404 };
+    return {
+      sellerId: data.uploader_id,
+      basePrice: Number(data.price_cents ?? 0) / 100,
+      label: `Session media: ${data.file_name ?? "media"}`,
+    };
+  }
+
+  if (contentType === "music_track") {
+    const { data, error } = await supabase
+      .from("dj_music_tracks")
+      .select("id, track_title, price, is_public, radio_djs!inner(user_id)")
+      .eq("id", contentId)
+      .maybeSingle();
+    if (error || !data) return { error: "content_not_found", status: 404 };
+    if (data.is_public === false) return { error: "content_not_available", status: 403 };
+    const sellerId = (data as any).radio_djs?.user_id;
+    if (!sellerId) return { error: "content_not_found", status: 404 };
+    const rawPrice = Number(data.price ?? 0);
+    const basePrice = rawPrice >= 2 ? rawPrice : 2; // platform minimum
+    return {
+      sellerId,
+      basePrice,
+      label: `Music: ${data.track_title ?? "track"}`,
+    };
+  }
+
   return { error: "unsupported_content_type", status: 400 };
 }
 
