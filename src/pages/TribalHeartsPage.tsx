@@ -173,17 +173,10 @@ const TribalHeartsPage: React.FC = () => {
 
       {/* Main content */}
       <main className="relative z-10 px-4 py-8 flex flex-col items-center min-h-[70vh]">
-        {loading ? (
-          <div className="mt-20 flex flex-col items-center gap-4">
-            <TribalHeart size={64} color="warm" pulse />
-            <p style={{ color: 'hsl(38 35% 65%)' }} className="italic text-sm">
-              Listening for kindred hearts…
-            </p>
-          </div>
-        ) : !myProfile || editProfileOpen ? (
+        {editProfileOpen ? (
           <div className="fixed inset-0 z-40 overflow-y-auto overscroll-contain">
             <TribalHeartsOnboarding
-              onExit={() => navigate('/dashboard')}
+              onExit={() => setEditProfileOpen(false)}
               onComplete={() => {
                 setEditProfileOpen(false);
                 window.location.reload();
@@ -191,6 +184,14 @@ const TribalHeartsPage: React.FC = () => {
             />
           </div>
         ) : profiles.length === 0 ? (
+          <EmptyState
+            heroImg={heroImg}
+            title="The fire rests for now."
+            body="Complete (or refine) your Wandering Heart profile so the tribe can find you. The more your heart speaks, the warmer the circle around you grows."
+            cta="Complete my Wandering Heart profile"
+            onCta={() => setEditProfileOpen(true)}
+          />
+
           <EmptyState
             heroImg={heroImg}
             title="The fire rests for now."
