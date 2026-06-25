@@ -383,12 +383,6 @@ export default function AdminDashboardPage() {
                 Ghost Access
               </TabsTrigger>
               <TabsTrigger 
-                value="wallet" 
-                className="border-2 border-purple-200 rounded-xl px-6 py-4 font-semibold shadow-lg hover:shadow-xl hover:scale-105 hover:border-purple-300 transition-all duration-300 data-[state=active]:bg-gradient-to-br data-[state=active]:from-purple-500 data-[state=active]:to-purple-600 data-[state=active]:text-white data-[state=active]:border-purple-500 data-[state=active]:shadow-2xl data-[state=active]:scale-105 bg-background"
-              >
-                Wallet
-              </TabsTrigger>
-              <TabsTrigger 
                 value="legacy" 
                 className="border-2 border-slate-200 rounded-xl px-6 py-4 font-semibold shadow-lg hover:shadow-xl hover:scale-105 hover:border-slate-300 transition-all duration-300 data-[state=active]:bg-gradient-to-br data-[state=active]:from-slate-500 data-[state=active]:to-slate-600 data-[state=active]:text-white data-[state=active]:border-slate-500 data-[state=active]:shadow-2xl data-[state=active]:scale-105 bg-background"
               >
