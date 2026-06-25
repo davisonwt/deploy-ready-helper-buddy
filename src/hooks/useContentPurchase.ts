@@ -21,6 +21,7 @@ interface PurchaseArgs {
   contentId: string;
   provider: PurchaseProvider;
   payCurrency?: string; // NOWPayments: e.g. 'usdttrc20'
+  metadata?: Record<string, unknown>;
 }
 
 export function useContentPurchase() {
