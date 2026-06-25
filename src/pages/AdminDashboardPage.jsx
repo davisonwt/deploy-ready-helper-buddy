@@ -38,8 +38,6 @@ import { RadioSlotApprovalInterface } from '@/components/radio/RadioSlotApproval
 import { UserManagementDashboard } from '@/components/admin/UserManagementDashboard'
 import { ContentModerationDashboard } from '@/components/admin/ContentModerationDashboard'
 import { EnhancedAnalyticsDashboard } from '@/components/admin/EnhancedAnalyticsDashboard'
-import { OrganizationWalletSetup } from '@/components/admin/OrganizationWalletSetup'
-import { AdminPaymentDashboard } from '@/components/AdminPaymentDashboard'
 import { GoSatGhostAccessMonitor } from '@/components/admin/GoSatGhostAccessMonitor'
 
 export default function AdminDashboardPage() {
@@ -358,7 +356,7 @@ export default function AdminDashboardPage() {
         {/* Main Dashboard Tabs */}
         <Tabs defaultValue="analytics" className="space-y-6">
           <div className="flex justify-center mb-8">
-            <TabsList className="bg-transparent p-0 h-auto grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-7 gap-4">
+            <TabsList className="bg-transparent p-0 h-auto grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
               <TabsTrigger 
                 value="analytics" 
                 className="border-2 border-primary/20 rounded-xl px-6 py-4 font-semibold shadow-lg hover:shadow-xl hover:scale-105 hover:border-primary/40 transition-all duration-300 data-[state=active]:bg-gradient-to-br data-[state=active]:from-primary data-[state=active]:to-primary/80 data-[state=active]:text-primary-foreground data-[state=active]:border-primary data-[state=active]:shadow-2xl data-[state=active]:scale-105 bg-background"
@@ -372,12 +370,6 @@ export default function AdminDashboardPage() {
                 Users
               </TabsTrigger>
               <TabsTrigger 
-                value="payments" 
-                className="border-2 border-green-200 rounded-xl px-6 py-4 font-semibold shadow-lg hover:shadow-xl hover:scale-105 hover:border-green-300 transition-all duration-300 data-[state=active]:bg-gradient-to-br data-[state=active]:from-green-500 data-[state=active]:to-green-600 data-[state=active]:text-white data-[state=active]:border-green-500 data-[state=active]:shadow-2xl data-[state=active]:scale-105 bg-background"
-              >
-                Payments
-              </TabsTrigger>
-              <TabsTrigger 
                 value="moderation" 
                 className="border-2 border-orange-200 rounded-xl px-6 py-4 font-semibold shadow-lg hover:shadow-xl hover:scale-105 hover:border-orange-300 transition-all duration-300 data-[state=active]:bg-gradient-to-br data-[state=active]:from-orange-500 data-[state=active]:to-orange-600 data-[state=active]:text-white data-[state=active]:border-orange-500 data-[state=active]:shadow-2xl data-[state=active]:scale-105 bg-background"
               >
@@ -389,12 +381,6 @@ export default function AdminDashboardPage() {
               >
                 <Shield className="w-4 h-4 mr-2" />
                 Ghost Access
-              </TabsTrigger>
-              <TabsTrigger 
-                value="wallet" 
-                className="border-2 border-purple-200 rounded-xl px-6 py-4 font-semibold shadow-lg hover:shadow-xl hover:scale-105 hover:border-purple-300 transition-all duration-300 data-[state=active]:bg-gradient-to-br data-[state=active]:from-purple-500 data-[state=active]:to-purple-600 data-[state=active]:text-white data-[state=active]:border-purple-500 data-[state=active]:shadow-2xl data-[state=active]:scale-105 bg-background"
-              >
-                Wallet
               </TabsTrigger>
               <TabsTrigger 
                 value="legacy" 
@@ -413,11 +399,6 @@ export default function AdminDashboardPage() {
             <UserManagementDashboard />
           </TabsContent>
 
-          <TabsContent value="payments">
-            <div className="rounded-2xl border border-cyan-400/25 bg-[#0f172a]/80 backdrop-blur shadow-[0_0_40px_rgba(34,211,238,0.10)]">
-              <AdminPaymentDashboard />
-            </div>
-          </TabsContent>
 
           <TabsContent value="moderation">
             <ContentModerationDashboard />
@@ -427,16 +408,6 @@ export default function AdminDashboardPage() {
             <GoSatGhostAccessMonitor />
           </TabsContent>
 
-          <TabsContent value="wallet" className="space-y-6">
-            <Card>
-              <CardHeader>
-                <CardTitle>Organization Wallet Setup</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <OrganizationWalletSetup />
-              </CardContent>
-            </Card>
-          </TabsContent>
 
           <TabsContent value="legacy" className="space-y-6">
             {/* Legacy admin content - search, stats, role management, seeds */}

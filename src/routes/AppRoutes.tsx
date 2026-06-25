@@ -69,9 +69,7 @@ import {
   WalletSettingsPage,
   PayoutSettingsPage,
   MyWalletPage,
-  GosatWalletsPage,
   GosatTreasuryPage,
-  BinancePayTestPage,
   NowPaymentsTestPage,
   PaypalTestPage,
   SowerProfile,
@@ -108,7 +106,7 @@ import {
   AdminDashboardPage,
   AdminRadioPage,
   AdminSeedsPage,
-  AdminPaymentsPage,
+  
   AuthDebugPage,
   LiveSeedPage,
   LearnSharePage,
@@ -406,16 +404,6 @@ const AppRoutes = () => (
     <Route path="/support-us" element={
       <ProtectedRoute><Layout><Suspense fallback={<div>Loading...</div>}><SupportUsPage /></Suspense></Layout></ProtectedRoute>
     } />
-    <Route path="/admin/payments" element={
-      <ProtectedRoute allowedRoles={['admin', 'gosat']}>
-        <Suspense fallback={<div>Loading...</div>}><AdminPaymentsPage /></Suspense>
-      </ProtectedRoute>
-    } />
-    <Route path="/gosat/wallets" element={
-      <ProtectedRoute allowedRoles={['admin', 'gosat']}>
-        <Layout><Suspense fallback={<LoadingFallback />}><GosatWalletsPage /></Suspense></Layout>
-      </ProtectedRoute>
-    } />
     <Route path="/admin/treasury" element={
       <ProtectedRoute allowedRoles={['gosat']}>
         <Layout><Suspense fallback={<LoadingFallback />}><GosatTreasuryPage /></Suspense></Layout>
@@ -441,9 +429,6 @@ const AppRoutes = () => (
     } />
     <Route path="/wallet" element={
       <ProtectedRoute><Layout><MyWalletPage /></Layout></ProtectedRoute>
-    } />
-    <Route path="/binance-pay-test" element={
-      <ProtectedRoute><Layout><BinancePayTestPage /></Layout></ProtectedRoute>
     } />
     <Route path="/dev/nowpay-test" element={
       <ProtectedRoute allowedRoles={['admin', 'gosat']}><Layout><NowPaymentsTestPage /></Layout></ProtectedRoute>

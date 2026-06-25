@@ -26,16 +26,16 @@ export function GosatPanel({ isOpen, onClose }: GosatPanelProps) {
   }, [isOpen])
 
   const gosatCards = [
-    { href: '/admin/dashboard', title: 'Admin Dashboard', subtitle: 'Manage settings & wallets', icon: Settings },
+    { href: '/admin/dashboard', title: 'Admin Dashboard', subtitle: 'Manage settings', icon: Settings },
     { href: '/admin/radio', title: 'AOD Station Radio', subtitle: 'Radio management', icon: Radio },
-    { href: '/gosat/wallets', title: 'Organization Wallets', subtitle: 'Manage organization funds', icon: Wallet },
+    { href: '/admin/treasury', title: 'Treasury', subtitle: 'NOWPayments & PayPal custody', icon: Wallet },
     { href: '/admin/seeds', title: 'Seeds Management', subtitle: 'Manage seeds & products', icon: Sprout },
   ]
 
   const quickActions = [
     { href: '/admin/dashboard', label: 'Dashboard', color: 'bg-indigo-600 hover:bg-indigo-500', icon: Settings },
     { href: '/admin/radio', label: 'Radio', color: 'bg-purple-600 hover:bg-purple-500', icon: Radio },
-    { href: '/gosat/wallets', label: 'Wallets', color: 'bg-green-600 hover:bg-green-500', icon: Wallet },
+    { href: '/admin/treasury', label: 'Treasury', color: 'bg-green-600 hover:bg-green-500', icon: Wallet },
     { href: '/admin/seeds', label: 'Seeds', color: 'bg-teal-600 hover:bg-teal-500', icon: Sprout },
   ]
 
