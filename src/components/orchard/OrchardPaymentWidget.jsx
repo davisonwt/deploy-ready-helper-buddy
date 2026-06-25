@@ -6,7 +6,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Heart, Info } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/useAuth';
-import { BinancePayButton } from '@/components/payment/BinancePayButton';
+
 
 const OrchardPaymentWidget = ({ orchardId, orchardTitle, pocketPrice, availablePockets, growerId }) => {
   const [pocketsCount, setPocketsCount] = useState(1);
@@ -88,20 +88,12 @@ const OrchardPaymentWidget = ({ orchardId, orchardTitle, pocketPrice, availableP
           </div>
         </div>
 
-        <BinancePayButton
-          orchardId={orchardId}
-          amount={totalAmount}
-          pocketsCount={pocketsCount}
-          message={message}
-          growerId={growerId}
-          disabled={!user || availablePockets === 0}
-          onSuccess={() => {
-            toast({
-              title: 'Payment Initiated!',
-              description: 'Complete the payment in your Binance app'
-            });
-          }}
-        />
+        <Alert>
+          <Info className="h-4 w-4" />
+          <AlertDescription>
+            Payments are now handled via PayPal — use the standard bestowal flow.
+          </AlertDescription>
+        </Alert>
       </CardContent>
     </Card>
   );

@@ -7,7 +7,7 @@ import { Loader2, DollarSign, Heart, AlertTriangle } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
-import { BinancePayButton } from '@/components/payment/BinancePayButton';
+
 import { z } from 'zod';
 
 // Payment validation schema
@@ -376,15 +376,12 @@ const EnhancedBestowalPayment = () => {
               </div>
             </div>
 
-            {/* Binance Pay Button */}
-            <BinancePayButton
-              orchardId={orchardId}
-              amount={totalAmount}
-              pocketsCount={pocketsCount}
-              message={message}
-              onSuccess={handlePaymentSuccess}
-              disabled={!user || !validatePayment() || availablePockets === 0}
-            />
+            <Alert>
+              <AlertTriangle className="h-4 w-4" />
+              <AlertDescription>
+                Payments are now handled via PayPal — use the standard bestowal flow.
+              </AlertDescription>
+            </Alert>
           </div>
         </CardContent>
       </Card>

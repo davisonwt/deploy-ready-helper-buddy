@@ -1,74 +1,75 @@
-## 1. PayPal webhook URL
 
-Set this in PayPal Developer Dashboard → Webhooks for your live app:
+## Context
 
+The Binance/Cryptomus payment stack was deleted earlier, but two orchard components still import the missing `BinancePayButton` and are breaking the build:
+
+- `src/components/orchard/OrchardPaymentWidget.jsx` (line 9, used at line 91)
+- `src/components/orchard/EnhancedBestowalPayment.jsx` (line 10, used at line 380)
+
+Both are reachable (`OrchardPage.jsx` imports `OrchardPaymentWidget`). The audit can't be trusted while the build is broken, so this needs to clear first. No other Binance/Cryptomus/old-Stripe refs remain in `src/`.
+
+## Step 1 — Minimal build fix (scope-locked)
+
+Same pattern as the `PaymentModal.jsx` fix from the previous turn — surgical, no behavior added:
+
+- In both files, remove the `BinancePayButton` import.
+- Replace the `<BinancePayButton …/>` block with a small inline notice ("Payments are now handled via PayPal — use the standard bestowal flow") plus a Close/secondary button that calls the existing `onClose` / `onSuccess` no-op path.
+- Do NOT wire either component to PayPal here. That belongs in a separate, explicitly-approved task. I will flag these two components plus `PaymentModal.jsx` as PARTIAL in the audit (UI exists, no live payment path).
+
+Verify with `bun run build:dev` before moving on.
+
+## Step 2 — Read-only audit (the actual deliverable)
+
+Once the build is green, produce a single categorized report covering every bucket you listed. No file edits, no DB changes, no secret changes — flag-only.
+
+### Method per bucket
+
+1. **Edge functions (DEAD / PARTIAL / LIVE)** — enumerate `supabase/functions/*/index.ts`, then for each name grep `src/` for `functions.invoke('<name>'`, hardcoded `/functions/v1/<name>` URLs, and any cron/webhook config. Zero refs → DEAD candidate. Referenced only by other (dead) functions → PARTIAL.
+2. **Orphan components/pages** — list every `.tsx`/`.jsx` under `src/components/**` and `src/pages/**`, grep for importers, cross-check `src/App.tsx` + any router files for route registration. Zero importers AND zero routes → DEAD.
+3. **Duplicate-system patterns** — targeted greps for known duplication shapes: parallel hook names (`use*Chat`, `use*Live`, `use*Payment`, `use*Wallet`), parallel util files with overlapping exports, duplicate type definitions for the same domain concept (message, room, profile, bestowal, wallet). Report each cluster with both implementations + which is wired into the live routes.
+4. **Stale docs/scripts** — full `docs/` listing + root-level stray files (`diff.txt`, `actual_diff.txt`, any `deploy*.sh`, `*_FIX*.md`, `CRITICAL_*.md`, multiple `README-*` variants). Classify each as STALE (one-off log, pre-dates current architecture) vs CURRENT (referenced by README/onboarding or describes still-live behavior).
+5. **Superseded migrations** — scan `supabase/migrations/` for pairs where a later migration drops/replaces what an earlier one created (table created then dropped, column added then removed, policy created then replaced). Flag, do not squash.
+6. **Unused npm dependencies** — for every entry in `package.json` `dependencies` + `devDependencies`, grep `src/`, `supabase/functions/`, `vite.config.ts`, `tailwind.config.ts`, `postcss.config.js`, `index.html`. Zero hits → UNUSED candidate (with the caveat that some deps are transitive-runtime-only, which I'll call out).
+7. **Unreferenced DB tables/columns** — pull table list from the schema, grep `src/` and `supabase/functions/` for each table name (string literal in `.from('…')` and in raw SQL). Zero hits → DEAD candidate. Same pass at column granularity only for the DEAD-candidate tables (column-level sweep across 230+ tables is too noisy to be useful in one pass — I'll offer it as a follow-up if you want).
+
+### Output format
+
+One markdown report, posted in chat, structured as:
+
+```text
+## 1. Edge functions
+DEAD: …
+PARTIAL: …
+LIVE: (count only)
+
+## 2. Orphan components/pages
+…
+
+## 3. Duplicate systems
+- Cluster A: <concept>
+  - Impl 1: <path> — wired at <route/importer>
+  - Impl 2: <path> — wired at <route/importer> / orphan
+…
+
+## 4. Stale docs/scripts
+STALE: …
+CURRENT: …
+
+## 5. Superseded migrations
+…
+
+## 6. Unused dependencies
+…
+
+## 7. Unreferenced tables
+DEAD candidates: …
 ```
-https://zuwkgasbkpjlxzsjzumu.supabase.co/functions/v1/paypal-webhook
-```
 
-After PayPal creates the subscription, copy the resulting **Webhook ID** and store it as the `PAYPAL_WEBHOOK_ID` secret (it's required for signature verification in `supabase/functions/_shared/paypal/client.ts`).
+Nothing is deleted, renamed, or migrated. After you review the report, you pick what actually gets removed in follow-up scope-locked tasks.
 
-## 2. PayPal secrets status
+## Out of scope for this plan
 
-Current state of PayPal-related secrets:
-
-| Secret | Status |
-|---|---|
-| `PAYPAL_CLIENT_ID` | ✅ Present |
-| `PAYPAL_CLIENT_SECRET` | ✅ Present |
-| `PAYPAL_ENV` | ❌ **Still missing** (code defaults to `sandbox`) |
-| `PAYPAL_WEBHOOK_ID` | ❌ **Still missing** (webhook verification will fail) |
-| `PAYPAL_PAYOUTS_ENABLED` | ❌ **Still missing** (`paypal-payout` will refuse to dispatch) |
-
-The secrets tool does not expose last-updated timestamps, so I can't tell from here whether `PAYPAL_CLIENT_ID` / `PAYPAL_CLIENT_SECRET` were rotated recently. To verify live credentials are actually in place, the only reliable check is to set `PAYPAL_ENV=live` and call a small live endpoint (e.g. `paypalFetch('/v1/identity/oauth2/userinfo?schema=paypalv1.1', { method: 'GET' })` from a debug edge function) — happy to wire a tiny one-shot diagnostic if you want.
-
-To finish PayPal setup, add (via Project Settings → Secrets):
-- `PAYPAL_ENV` = `live` (or `sandbox`)
-- `PAYPAL_WEBHOOK_ID` = (value from PayPal after creating the webhook subscription above)
-- `PAYPAL_PAYOUTS_ENABLED` = `true`
-
-## 3. Stripe / Cryptomus / Binance / Solana / VAPID audit — finished
-
-| Subsystem | Verdict |
-|---|---|
-| **Stripe** | ❌ DEAD — edge function `create-stripe-payment` never invoked from `src/`; the "Card" tab in `PurchaseModal` is static placeholder text with no `onClick`. Safe to remove. |
-| **Cryptomus** | ⚠️ PARTIALLY WIRED — `BestowalCoin` → `useCryptomusPay` → `create-cryptomus-payment` → `cryptomus-webhook` is fully live in chat/bestow flows. Only `CryptomusPayButton.tsx` is orphaned. **Do NOT remove the rail.** |
-| **Binance Pay** (payment provider) | ⚠️ PARTIALLY WIRED — `BinancePayTestPage` (`/binance-pay-test`) + `binance-pay-webhook` are live. `BinancePayButton`/`useBinancePay` are orphaned. `PremiumItemPurchaseModal`, `RoomAccessModal`, `DonateModal` contain "Binance Pay integration coming soon" TODO stubs. |
-| **Binance Wallet Balance** (different concern) | ✅ LIVE — `/wallet-settings`, `/gosat/wallets`, `OrganizationWalletSetup`, `useBinanceWallet`, `refresh-binance-wallet-balance` all actively used. **Do not touch.** |
-| **Solana** | ❌ DEAD — zero `@solana/*` deps installed; no `SolanaProvider`, `TransactionTracker`, `EnhancedPaymentWidget`, or Phantom/Solflare code exists. The `UsdcPayment` component is a Binance Pay wrapper, not Solana. `process-usdc-transfer` edge function is self-disabled (returns HTTP 410). The only Solana mention is the string `"USDC-SOL"` as a NOWPayments payout currency label. Safe to remove (just `process-usdc-transfer` + the `README-PAYMENT-SYSTEM.md` claims). |
-| **VAPID / Web Push** | ⚠️ LEGITIMATE WEB-PUSH INFRA — **not payment-related**. Client-side subscription, service worker, `NotificationBanner`, and Realtime → toast path are all live globally for every authenticated user. Only the server-side push dispatch in `send-notification/index.ts` is a `console.log` stub (no `web-push` npm package installed; the VAPID public key in `pushNotifications.ts:96` is the demo placeholder). **Do NOT remove.** This needs finishing, not deleting. |
-
-## Proposed Phase 2 — removal plan (awaiting approval)
-
-Only removing things that are unambiguously dead. Per your scope-lock and checkpoint rules, listing exact changes before touching anything:
-
-**A. Stripe (full removal)**
-- Delete `supabase/functions/create-stripe-payment/index.ts` (+ call `supabase--delete_edge_functions(["create-stripe-payment"])`)
-- Edit `src/components/live/media/PurchaseModal.tsx` — remove the `"stripe"` tab and its `TabsContent` block (leaving the rest of the modal intact)
-- Edit `src/utils/inputSanitization.ts` — remove `js.stripe.com` and `checkout.stripe.com` from CSP `script-src` / `frame-src` allowlists
-- Edit `.env.example` — remove `STRIPE_SECRET_KEY`
-- **NOT touching**: `src/integrations/supabase/types.ts` (auto-generated), DB columns `stripe_*` (would need a migration — flagging only, not doing)
-
-**B. Solana (full removal)**
-- Delete `supabase/functions/process-usdc-transfer/index.ts` (+ delete deployed function)
-- Delete `src/README-PAYMENT-SYSTEM.md` (the entire doc is about a Solana payment system that does not exist in the code)
-- **NOT touching**: the string `"USDC-SOL"` in `AddNowPaymentsWallet.tsx` (that's a real NOWPayments payout rail, not Solana code)
-
-**C. Orphaned payment buttons (safe deletions, no UI impact)**
-- Delete `src/components/payment/CryptomusPayButton.tsx` (zero importers)
-- Delete `src/components/payment/BinancePayButton.tsx` (zero importers)
-- Delete `src/hooks/useBinancePay.tsx` (only used by the orphaned `BinancePayButton`)
-
-**D. Flagging — NOT removing without your explicit go-ahead**
-- The "Binance Pay coming soon" TODO stubs in `PremiumItemPurchaseModal.tsx`, `RoomAccessModal.tsx`, `DonateModal.tsx` — these are user-visible placeholder UI. Leave them, or replace with another rail?
-- `BinancePayTestPage` (`/binance-pay-test`) — works, but is a dev test page exposed to any logged-in user. Keep, gate to admins, or delete?
-- The orphaned `NotificationSettings` component (zero importers) — keep for future use, or delete?
-- VAPID server-side push is half-built. Finish (install `web-push`, real dispatch, real VAPID key) or accept the client-only path?
-- DB columns `stripe_connect_account_id`, `stripe_payment_intent_id`, `stripe_transaction_id` — would need a migration to drop. Leave alone unless you say so.
-
-**E. Verification after each removal**
-- After A: ensure project still typechecks/builds.
-- After B: ensure project still typechecks/builds.
-- After C: ensure project still typechecks/builds.
-
-Approve and I'll execute A + B + C only. D items will only happen if you say which ones.
+- Wiring `OrchardPaymentWidget` / `EnhancedBestowalPayment` / `PaymentModal` to PayPal.
+- Any deletions from the audit findings.
+- Column-level DB sweep across live tables.
+- Squashing migration history.
