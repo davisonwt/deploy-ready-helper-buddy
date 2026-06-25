@@ -240,6 +240,11 @@ async function handleEvent(
       await supabase.from("basket_orders").update({ status: "failed" })
         .eq("id", customId.slice("basket:".length));
       return;
+    if (customId.startsWith("content:")) {
+      await supabase.from("content_purchases")
+        .update({ payment_status: "failed", payout_error: `paypal_${type.toLowerCase()}` })
+        .eq("id", customId.slice("content:".length));
+      return;
     }
     const bestowalId = customId.startsWith("gift:")
       ? customId.slice("gift:".length)
