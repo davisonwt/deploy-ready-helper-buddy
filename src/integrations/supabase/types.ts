@@ -2633,6 +2633,90 @@ export type Database = {
         }
         Relationships: []
       }
+      content_purchases: {
+        Row: {
+          base_amount: number
+          buyer_id: string
+          buyer_total_amount: number
+          completed_at: string | null
+          content_id: string
+          content_type: string
+          created_at: string
+          currency: string
+          id: string
+          payment_reference: string | null
+          payment_status: string
+          payout_attempted_at: string | null
+          payout_completed_at: string | null
+          payout_currency: string | null
+          payout_destination: string | null
+          payout_error: string | null
+          payout_fee_amount: number | null
+          payout_provider: string | null
+          payout_reference: string | null
+          payout_status: string | null
+          processor_fee_amount: number
+          provider: string
+          provider_order_id: string | null
+          seller_id: string
+          updated_at: string
+        }
+        Insert: {
+          base_amount: number
+          buyer_id: string
+          buyer_total_amount: number
+          completed_at?: string | null
+          content_id: string
+          content_type: string
+          created_at?: string
+          currency?: string
+          id?: string
+          payment_reference?: string | null
+          payment_status?: string
+          payout_attempted_at?: string | null
+          payout_completed_at?: string | null
+          payout_currency?: string | null
+          payout_destination?: string | null
+          payout_error?: string | null
+          payout_fee_amount?: number | null
+          payout_provider?: string | null
+          payout_reference?: string | null
+          payout_status?: string | null
+          processor_fee_amount?: number
+          provider: string
+          provider_order_id?: string | null
+          seller_id: string
+          updated_at?: string
+        }
+        Update: {
+          base_amount?: number
+          buyer_id?: string
+          buyer_total_amount?: number
+          completed_at?: string | null
+          content_id?: string
+          content_type?: string
+          created_at?: string
+          currency?: string
+          id?: string
+          payment_reference?: string | null
+          payment_status?: string
+          payout_attempted_at?: string | null
+          payout_completed_at?: string | null
+          payout_currency?: string | null
+          payout_destination?: string | null
+          payout_error?: string | null
+          payout_fee_amount?: number | null
+          payout_provider?: string | null
+          payout_reference?: string | null
+          payout_status?: string | null
+          processor_fee_amount?: number
+          provider?: string
+          provider_order_id?: string | null
+          seller_id?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       council_decisions: {
         Row: {
           created_at: string
@@ -13271,6 +13355,10 @@ export type Database = {
       finalize_basket_order: {
         Args: { _basket_order_id: string }
         Returns: Json
+      }
+      finalize_content_purchase: {
+        Args: { _purchase_id: string }
+        Returns: undefined
       }
       fn_orchard_owner: { Args: { _orchard_id: string }; Returns: string }
       generate_invoice_number: { Args: never; Returns: string }
