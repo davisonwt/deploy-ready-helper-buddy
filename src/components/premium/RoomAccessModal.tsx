@@ -35,8 +35,9 @@ export function RoomAccessModal({
     }
 
     if (room.price > 0) {
-      toast.info('Binance Pay integration coming soon!');
-      // TODO: Implement Binance Pay purchase flow
+      toast.info(
+        'Paid room access is temporarily disabled while we migrate to our approved payment providers (NOWPayments / PayPal). Please try again soon.'
+      );
       return;
     }
 
@@ -73,8 +74,8 @@ export function RoomAccessModal({
         <DialogHeader>
           <DialogTitle>{room.price > 0 ? 'Purchase Room Access' : 'Join Room'}</DialogTitle>
           <DialogDescription>
-            {room.price > 0 
-              ? 'Pay with USDC via Binance Pay'
+            {room.price > 0
+              ? 'Paid access temporarily disabled'
               : 'Join this room to access all content'
             }
           </DialogDescription>
@@ -85,7 +86,7 @@ export function RoomAccessModal({
             <Alert>
               <Info className="h-4 w-4" />
               <AlertDescription>
-                All payments are processed through Binance Pay using USDC
+                Paid room access is temporarily disabled while we migrate to our approved payment providers (NOWPayments / PayPal).
               </AlertDescription>
             </Alert>
           )}
@@ -109,9 +110,9 @@ export function RoomAccessModal({
           <Button variant="outline" onClick={() => onOpenChange(false)} disabled={processing}>
             Cancel
           </Button>
-          <Button onClick={handleJoinRoom} disabled={processing}>
+          <Button onClick={handleJoinRoom} disabled={processing || room.price > 0}>
             {processing && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-            {processing ? 'Processing...' : (room.price > 0 ? 'Pay with Binance Pay' : 'Join Room')}
+            {processing ? 'Processing...' : (room.price > 0 ? 'Temporarily Unavailable' : 'Join Room')}
           </Button>
         </DialogFooter>
       </DialogContent>
