@@ -166,6 +166,7 @@ export default function VideoUpload() {
         thumbnail_url: thumbnailUrl,
         tags: tags ? tags.split(',').map(tag => tag.trim()).filter(Boolean) : [],
         file_size: processedFile.size,
+        category: category || null,
         status: 'pending'
       });
 
@@ -180,6 +181,7 @@ export default function VideoUpload() {
       setTitle('');
       setDescription('');
       setTags('');
+      setCategory(null);
       setFile(null);
     } catch (err: any) {
       console.error('Upload error:', err);
