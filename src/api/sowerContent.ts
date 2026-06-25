@@ -348,3 +348,170 @@ export function useTribeContent(limit = 50) {
 
   return { ...data, loading, refetch }
 }
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Non-hook helpers — call from anywhere (loops, useEffect, RPCs)
+// All canonical queries live here so pages never drift.
+// ─────────────────────────────────────────────────────────────────────────────
+
+/** Fetch one sower's full content (mirrors useSowerContent). */
+export async function fetchSowerContent(userId: string): Promise<SowerContent> {
+  if (!userId) return EMPTY
+  const sowerRow = await supabase.from('sowers').select('id').eq('user_id', userId).maybeSingle()
+  const sowerId = sowerRow?.data?.id
+  const [seedsRes, orchardsRes, booksRes, vidsRes, productsRes] = await Promise.all([
+    supabase.from('seeds')
+      .select('id, title, description, category, images, video_url, created_at')
+      .eq('gifter_id', userId).order('created_at', { ascending: false }).limit(80),
+    supabase.from('orchards')
+      .select('id, user_id, title, description, category, images, orchard_type, status, created_at')
+      .eq('user_id', userId).eq('status', 'active').order('created_at', { ascending: false }).limit(80),
+    supabase.from('sower_books')
+      .select('id, title, description, cover_image_url, image_urls, genre, created_at')
+      .eq('user_id', userId).order('created_at', { ascending: false }).limit(50),
+    supabase.from('community_videos')
+      .select('id, title, description, thumbnail_url, video_url, created_at')
+      .eq('uploader_id', userId).order('created_at', { ascending: false }).limit(50),
+    sowerId
+      ? supabase.from('products')
+          .select('id, title, description, type, category, image_urls, cover_image_url, file_url, music_genre, music_mood, created_at')
+          .eq('sower_id', sowerId).order('created_at', { ascending: false }).limit(120)
+      : Promise.resolve({ data: [] as any[] }),
+  ])
+  const products = (productsRes.data || []) as any[]
+  const seeds: SeedRow[] = (seedsRes.data || []) as SeedRow[]
+  const music: MusicRow[] = []
+  const books: BookRow[] = []
+  for (const p of products) {
+    const type = String(p.type || '').toLowerCase()
+    if (type === 'music') {
+      music.push({ id: p.id, track_title: p.title, music_genre: p.music_genre, music_mood: p.music_mood,
+        genre: p.music_genre, file_url: p.file_url, cover_image_url: p.cover_image_url,
+        image_urls: p.image_urls || [], created_at: p.created_at, __table: 'products' })
+    } else if (type === 'ebook' || type === 'book') {
+      books.push({ id: p.id, title: p.title, description: p.description, cover_image_url: p.cover_image_url,
+        image_urls: p.image_urls, genre: p.category, created_at: p.created_at })
+    } else {
+      seeds.push({ id: p.id, title: p.title, description: p.description, category: p.category || p.type,
+        images: p.image_urls || (p.cover_image_url ? [p.cover_image_url] : []),
+        video_url: null, created_at: p.created_at })
+    }
+  }
+  return {
+    seeds, music,
+    books: [...((booksRes.data || []) as BookRow[]), ...books],
+    videos: (vidsRes.data || []) as VideoRow[],
+    orchards: (orchardsRes.data || []) as OrchardRow[],
+  }
+}
+
+/** Bulk variant — batched `.in()` queries, returns Map<userId, SowerContent>. */
+export async function fetchSowerContentBulk(userIds: string[]): Promise<Map<string, SowerContent>> {
+  const out = new Map<string, SowerContent>()
+  const uniq = Array.from(new Set((userIds || []).filter(Boolean)))
+  for (const uid of uniq) out.set(uid, { seeds: [], music: [], books: [], videos: [], orchards: [] })
+  if (!uniq.length) return out
+
+  const sowersRes = await supabase.from('sowers').select('id, user_id').in('user_id', uniq)
+  const sowers = (sowersRes.data || []) as any[]
+  const userBySowerId = new Map<string, string>()
+  sowers.forEach((s) => { userBySowerId.set(s.id, s.user_id) })
+  const sowerIds = Array.from(userBySowerId.keys())
+
+  const [seedsRes, orchardsRes, booksByUserRes, booksBySowerRes, vidsRes, productsRes] = await Promise.all([
+    supabase.from('seeds').select('id, title, description, category, images, video_url, created_at, gifter_id')
+      .in('gifter_id', uniq).order('created_at', { ascending: false }).limit(500),
+    supabase.from('orchards').select('id, user_id, title, description, category, images, orchard_type, status, created_at, pocket_price, seed_value')
+      .in('user_id', uniq).eq('status', 'active').order('created_at', { ascending: false }).limit(500),
+    supabase.from('sower_books').select('id, title, description, cover_image_url, image_urls, genre, created_at, user_id, bestowal_value, category')
+      .in('user_id', uniq).order('created_at', { ascending: false }).limit(500),
+    sowerIds.length
+      ? supabase.from('sower_books').select('id, title, description, cover_image_url, image_urls, genre, created_at, sower_id, bestowal_value, category')
+          .in('sower_id', sowerIds).order('created_at', { ascending: false }).limit(500)
+      : Promise.resolve({ data: [] as any[] }),
+    supabase.from('community_videos').select('id, title, description, thumbnail_url, video_url, created_at, uploader_id')
+      .in('uploader_id', uniq).order('created_at', { ascending: false }).limit(500),
+    sowerIds.length
+      ? supabase.from('products').select('id, title, description, type, category, image_urls, cover_image_url, file_url, music_genre, music_mood, created_at, sower_id')
+          .in('sower_id', sowerIds).order('created_at', { ascending: false }).limit(1000)
+      : Promise.resolve({ data: [] as any[] }),
+  ])
+
+  const pushBook = (bucket: SowerContent, b: any) => {
+    if (bucket.books.some((x) => x.id === b.id)) return
+    bucket.books.push({ id: b.id, title: b.title, description: b.description,
+      cover_image_url: b.cover_image_url, image_urls: b.image_urls, genre: b.genre, created_at: b.created_at })
+  }
+
+  for (const s of (seedsRes.data || []) as any[]) {
+    const bucket = out.get(s.gifter_id); if (!bucket) continue
+    bucket.seeds.push({ id: s.id, title: s.title, description: s.description, category: s.category,
+      images: s.images || [], video_url: s.video_url, created_at: s.created_at })
+  }
+  for (const o of (orchardsRes.data || []) as any[]) {
+    const bucket = out.get(o.user_id); if (!bucket) continue
+    bucket.orchards.push(o as OrchardRow)
+  }
+  for (const b of (booksByUserRes.data || []) as any[]) {
+    const bucket = out.get(b.user_id); if (bucket) pushBook(bucket, b)
+  }
+  for (const b of (booksBySowerRes.data || []) as any[]) {
+    const uid = userBySowerId.get(b.sower_id); const bucket = uid ? out.get(uid) : null
+    if (bucket) pushBook(bucket, b)
+  }
+  for (const v of (vidsRes.data || []) as any[]) {
+    const bucket = out.get(v.uploader_id); if (!bucket) continue
+    bucket.videos.push(v as VideoRow)
+  }
+  for (const p of (productsRes.data || []) as any[]) {
+    const uid = userBySowerId.get(p.sower_id); if (!uid) continue
+    const bucket = out.get(uid); if (!bucket) continue
+    const type = String(p.type || '').toLowerCase()
+    if (type === 'music') {
+      bucket.music.push({ id: p.id, track_title: p.title, music_genre: p.music_genre, music_mood: p.music_mood,
+        genre: p.music_genre, file_url: p.file_url, cover_image_url: p.cover_image_url,
+        image_urls: p.image_urls || [], created_at: p.created_at, __table: 'products' })
+    } else if (type === 'ebook' || type === 'book') {
+      bucket.books.push({ id: p.id, title: p.title, description: p.description, cover_image_url: p.cover_image_url,
+        image_urls: p.image_urls, genre: p.category, created_at: p.created_at })
+    } else {
+      bucket.seeds.push({ id: p.id, title: p.title, description: p.description, category: p.category || p.type,
+        images: p.image_urls || (p.cover_image_url ? [p.cover_image_url] : []),
+        video_url: null, created_at: p.created_at })
+    }
+  }
+  return out
+}
+
+export interface TribeOrchardFilters {
+  query?: string
+  category?: string
+  location?: string
+  priceMin?: number
+  priceMax?: number
+  status?: 'active' | 'completed' | ''
+  sortBy?: 'recent' | 'popular' | 'funded' | 'completion'
+  limit?: number
+}
+
+/** Canonical orchard fetch for tribe-wide views (search / browse). */
+export async function fetchTribeOrchards(opts: TribeOrchardFilters = {}) {
+  let q = supabase.from('orchards').select('*').eq('status', 'active')
+  if (opts.query) {
+    q = q.or(`title.ilike.%${opts.query}%,description.ilike.%${opts.query}%,category.ilike.%${opts.query}%`)
+  }
+  if (opts.category) q = q.ilike('category', `%${opts.category}%`)
+  if (opts.location) q = q.ilike('location', `%${opts.location}%`)
+  if (opts.status === 'active') q = q.lt('filled_pockets', 'total_pockets' as any)
+  else if (opts.status === 'completed') q = q.gte('filled_pockets', 'total_pockets' as any)
+  if (opts.priceMin != null && opts.priceMin > 0) q = q.gte('pocket_price', opts.priceMin)
+  if (opts.priceMax != null && opts.priceMax < 1_000_000) q = q.lte('pocket_price', opts.priceMax)
+  switch (opts.sortBy) {
+    case 'popular':    q = q.order('views', { ascending: false }); break
+    case 'funded':     q = q.order('filled_pockets', { ascending: false }); break
+    case 'completion': q = q.order('completion_rate', { ascending: false }); break
+    default:           q = q.order('created_at', { ascending: false })
+  }
+  return q.limit(opts.limit ?? 20)
+}
+
