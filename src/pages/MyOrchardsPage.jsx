@@ -523,6 +523,7 @@ export default function MyOrchardsPage() {
           </div>
         </div>
       </div>
+      <VideoUploadModal isOpen={showVideoUpload} onClose={() => setShowVideoUpload(false)} />
     </div>
   )
 }
