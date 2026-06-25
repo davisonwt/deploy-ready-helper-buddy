@@ -3,7 +3,7 @@ import { Button } from './ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
 import { X, Info } from 'lucide-react';
 import { Alert, AlertDescription } from './ui/alert';
-import { BinancePayButton } from './payment/BinancePayButton';
+
 
 const PaymentModal = ({ 
   isOpen, 
@@ -55,7 +55,7 @@ const PaymentModal = ({
           <Alert>
             <Info className="h-4 w-4" />
             <AlertDescription>
-              All payments are processed through Binance Pay using USDC
+              Payments are now processed through PayPal. Please use the standard bestowal flow.
             </AlertDescription>
           </Alert>
 
@@ -70,18 +70,10 @@ const PaymentModal = ({
             </div>
           </div>
 
-          <BinancePayButton
-            orchardId={orchardId}
-            amount={amount}
-            pocketsCount={pocketsCount}
-            growerId={growerId}
-            onSuccess={() => {
-              if (onPaymentComplete) {
-                onPaymentComplete();
-              }
-              onClose();
-            }}
-          />
+          <Button onClick={onClose} className="w-full" variant="secondary">
+            Close
+          </Button>
+
         </CardContent>
       </Card>
     </div>
