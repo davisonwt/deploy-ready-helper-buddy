@@ -7,7 +7,7 @@ import { useRef, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import LivingButton from '../LivingButton'
 
-export default function MyGardenSection({ title, emoji, accent = '#22c55e', cards, emptyHint }) {
+export default function MyGardenSection({ title, emoji, accent = '#22c55e', cards, emptyHint, headerAction = null }) {
   const navigate = useNavigate()
   return (
     <section style={styles.wrap(accent)}>
@@ -17,10 +17,14 @@ export default function MyGardenSection({ title, emoji, accent = '#22c55e', card
           <h3 style={styles.title}>{title}</h3>
           <span style={styles.count}>{cards.length}</span>
         </div>
+        {headerAction}
       </header>
 
       {cards.length === 0 ? (
-        <div style={styles.empty}>{emptyHint || 'Nothing here yet.'}</div>
+        <div style={styles.empty}>
+          <div>{emptyHint || 'Nothing here yet.'}</div>
+          {headerAction && <div style={{ marginTop: 12, display: 'flex', justifyContent: 'center' }}>{headerAction}</div>}
+        </div>
       ) : (
         <div style={styles.grid}>
           {cards.map((c) => (
