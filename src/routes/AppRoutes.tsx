@@ -106,7 +106,7 @@ import {
   AdminDashboardPage,
   AdminRadioPage,
   AdminSeedsPage,
-  AdminPaymentsPage,
+  
   AuthDebugPage,
   LiveSeedPage,
   LearnSharePage,
