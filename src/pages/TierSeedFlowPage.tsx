@@ -110,57 +110,36 @@ export default function TierSeedFlowPage({ tier }: Props) {
           if (s.user_id) sowerIdByUserId.set(s.user_id, s.id);
         });
 
-        // Pull this sower's tribe of orchards (bee-hives, honey, etc.) and merge as seeds
+        // Canonical sower content (orchards + books) via shared bulk helper — same source as
+        // public sower profile + dashboard, so this page never drifts.
         const sowerUserIds = Array.from(sowerIdByUserId.keys());
         if (sowerUserIds.length > 0) {
-          const { data: orchardRows } = await supabase
-            .from('orchards')
-            .select('id, title, images, pocket_price, seed_value, user_id, category')
-            .in('user_id', sowerUserIds)
-            .eq('status', 'active')
-            .limit(500);
-          (orchardRows || []).forEach((o: any) => {
-            const sid = sowerIdByUserId.get(o.user_id);
+          const { fetchSowerContentBulk } = await import('@/api/sowerContent');
+          const bulk = await fetchSowerContentBulk(sowerUserIds);
+          bulk.forEach((content, userId) => {
+            const sid = sowerIdByUserId.get(userId);
             if (!sid) return;
-            const imgs = Array.isArray(o.images) ? o.images : [];
-            individualSeeds.push({
-              id: o.id,
-              title: o.title,
-              cover_image_url: imgs[0] || null,
-              image_urls: imgs,
-              price: o.pocket_price ?? o.seed_value ?? null,
-              company_id: null,
-              sower_id: sid,
-              type: 'orchard',
-              category: o.category || null,
-            });
-          });
-
-          // Pull each sower's books and merge as seeds
-          const sowerIdsForBooks = Array.from(sowerById.keys());
-          if (sowerIdsForBooks.length > 0) {
-            const { data: bookRows } = await supabase
-              .from('sower_books')
-              .select('id, title, cover_image_url, image_urls, bestowal_value, sower_id, category')
-              .in('sower_id', sowerIdsForBooks)
-              .eq('status', 'active')
-              .limit(500);
-            (bookRows || []).forEach((b: any) => {
-              if (!b.sower_id) return;
+            for (const o of content.orchards) {
+              const imgs = Array.isArray(o.images) ? o.images : [];
+              individualSeeds.push({
+                id: o.id, title: o.title || '',
+                cover_image_url: imgs[0] || null, image_urls: imgs,
+                price: (o as any).pocket_price ?? (o as any).seed_value ?? null,
+                company_id: null, sower_id: sid,
+                type: 'orchard', category: o.category || null,
+              });
+            }
+            for (const b of content.books) {
               const imgs = Array.isArray(b.image_urls) ? b.image_urls : [];
               individualSeeds.push({
-                id: b.id,
-                title: b.title,
-                cover_image_url: b.cover_image_url || imgs[0] || null,
-                image_urls: imgs,
-                price: b.bestowal_value ?? null,
-                company_id: null,
-                sower_id: b.sower_id,
-                type: 'book',
-                category: b.category || null,
+                id: b.id, title: b.title || '',
+                cover_image_url: b.cover_image_url || imgs[0] || null, image_urls: imgs,
+                price: (b as any).bestowal_value ?? null,
+                company_id: null, sower_id: sid,
+                type: 'book', category: b.genre || null,
               });
-            });
-          }
+            }
+          });
         }
 
         // Build sower groups for every sower that has at least one seed (product or orchard)
@@ -177,6 +156,7 @@ export default function TierSeedFlowPage({ tier }: Props) {
           };
         });
       }
+
 
       if (alive) {
         setSeeds([...(companyProducts || []), ...individualSeeds]);
