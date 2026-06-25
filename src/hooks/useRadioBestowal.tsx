@@ -1,40 +1,37 @@
-import { useState } from 'react';
-import { useToast } from '@/hooks/use-toast';
+import { useGiftBestowal, type GiftProvider } from '@/hooks/useGiftBestowal';
 
 interface RadioBestowlData {
   trackId?: string;
   documentId?: string;
   amount: number;
-  listenerId: string;
+  listenerId: string; // accepted for API back-compat; ignored (server reads auth.uid())
   sowerId: string;
   scheduleId: string;
+  provider?: GiftProvider;
+  payCurrency?: string;
 }
 
 /**
- * DISABLED — previous implementation inserted bestowals with
- * payment_status='completed' and payment_invoices with status='paid'
- * directly from the client, without ever charging the listener. That
- * was an active free-money path and has been short-circuited.
- *
- * TODO: rebuild on the approved NOWPayments / PayPal create-order +
- * webhook-verified completion flow.
+ * Free-will radio bestowal — thin facade over useGiftBestowal so the
+ * existing radio UI keeps the same call signature. Now wired to the real
+ * NOWPayments / PayPal create-order + webhook flow.
  */
 export const useRadioBestowal = () => {
-  const { toast } = useToast();
-  const [loading, setLoading] = useState(false);
+  const { send, loading } = useGiftBestowal();
 
-  const processRadioBestowal = async (_data: RadioBestowlData) => {
-    toast({
-      title: 'Bestowals temporarily disabled',
-      description:
-        'Radio bestowals are paused while we migrate to our approved payment providers (NOWPayments / PayPal). Please try again soon.',
-      variant: 'destructive',
+  const processRadioBestowal = async (data: RadioBestowlData) => {
+    const result = await send({
+      recipientId: data.sowerId,
+      amount: data.amount,
+      contextKind: 'radio_session',
+      contextId: data.scheduleId,
+      provider: data.provider ?? 'nowpayments',
+      payCurrency: data.payCurrency ?? 'usdttrc20',
     });
-    return { success: false, error: new Error('Bestowals temporarily disabled') };
+    return result.success
+      ? { success: true as const, bestowalId: result.bestowalId }
+      : { success: false as const, error: new Error(result.error ?? 'Bestowal failed') };
   };
 
-  return {
-    processRadioBestowal,
-    loading,
-  };
+  return { processRadioBestowal, loading };
 };

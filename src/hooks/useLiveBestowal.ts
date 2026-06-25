@@ -1,41 +1,41 @@
-import { useState } from 'react';
-import { useToast } from '@/hooks/use-toast';
+import { useGiftBestowal, type GiftProvider } from '@/hooks/useGiftBestowal';
 
 /**
  * Generalized free-will bestowal for live sessions
- * (classroom / skilldrop / training / radio).
+ * (classroom / skilldrop / training).
  *
- * DISABLED — previous implementation inserted bestowals with
- * payment_status='completed' and payment_invoices with status='paid'
- * directly from the client, without ever charging the bestower. That
- * was an active free-money path and has been short-circuited.
- *
- * TODO: rebuild on the approved NOWPayments / PayPal create-order +
- * webhook-verified completion flow (same pattern as the orchard and
- * basket rails).
+ * Thin facade over useGiftBestowal — keeps the existing call sites unchanged.
+ * Now wired to the real NOWPayments / PayPal create-order + webhook flow
+ * (no more direct client-side bestowals.payment_status='completed' inserts).
  */
 export interface LiveBestowalInput {
   sowerId: string;
-  bestowerId: string;
+  bestowerId: string; // accepted for API back-compat; ignored (server reads auth.uid())
   amount: number;
-  sessionKind: string;
+  sessionKind: 'classroom' | 'skilldrop' | 'training' | string;
   sessionId: string;
   mediaId?: string | null;
   note?: string;
+  provider?: GiftProvider;
+  payCurrency?: string;
 }
 
 export function useLiveBestowal() {
-  const { toast } = useToast();
-  const [loading, setLoading] = useState(false);
+  const { send, loading } = useGiftBestowal();
 
-  const sendBestowal = async (_data: LiveBestowalInput) => {
-    toast({
-      title: 'Bestowals temporarily disabled',
-      description:
-        'Live-session bestowals are paused while we migrate to our approved payment providers (NOWPayments / PayPal). Please try again soon.',
-      variant: 'destructive',
+  const sendBestowal = async (data: LiveBestowalInput) => {
+    const result = await send({
+      recipientId: data.sowerId,
+      amount: data.amount,
+      contextKind: 'live_session',
+      contextId: data.sessionId,
+      provider: data.provider ?? 'nowpayments',
+      payCurrency: data.payCurrency ?? 'usdttrc20',
+      message: data.note,
     });
-    return { success: false, error: new Error('Bestowals temporarily disabled') };
+    return result.success
+      ? { success: true as const, bestowalId: result.bestowalId }
+      : { success: false as const, error: new Error(result.error ?? 'Bestowal failed') };
   };
 
   return { sendBestowal, loading };

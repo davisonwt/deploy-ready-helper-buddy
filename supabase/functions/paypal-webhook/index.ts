@@ -136,10 +136,13 @@ async function handleEvent(
         .eq("id", customId.slice("basket:".length));
       return;
     }
+    const bestowalId = customId.startsWith("gift:")
+      ? customId.slice("gift:".length)
+      : customId;
     await supabase
       .from("bestowals")
       .update({ payment_status: "processing" })
-      .eq("id", customId);
+      .eq("id", bestowalId);
     return;
   }
 
@@ -163,7 +166,9 @@ async function handleEvent(
       if (rpcErr) console.error("finalize_basket_order failed", basketOrderId, rpcErr);
       return;
     }
-    const bestowalId = customId;
+    const bestowalId = customId.startsWith("gift:")
+      ? customId.slice("gift:".length)
+      : customId;
     const { data: bestowal } = await supabase
       .from("bestowals")
       .select("id, payment_status")
@@ -223,7 +228,9 @@ async function handleEvent(
         .eq("id", customId.slice("basket:".length));
       return;
     }
-    const bestowalId = customId;
+    const bestowalId = customId.startsWith("gift:")
+      ? customId.slice("gift:".length)
+      : customId;
     await supabase
       .from("bestowals")
       .update({

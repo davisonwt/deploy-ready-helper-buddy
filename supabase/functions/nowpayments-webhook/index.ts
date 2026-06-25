@@ -146,14 +146,20 @@ async function handlePaymentEvent(
     return;
   }
 
+  // Gift bestowal path: order_id = "gift:<bestowals.id>". Same downstream logic
+  // as orchard bestowals — fall through after stripping the prefix.
+  const bestowalId = orderId.startsWith("gift:")
+    ? orderId.slice("gift:".length)
+    : orderId;
+
   // order_id was set to the bestowals.id when the invoice was created.
   const { data: bestowal } = await supabase
     .from("bestowals")
     .select("id, payment_status")
-    .eq("id", orderId)
+    .eq("id", bestowalId)
     .maybeSingle();
   if (!bestowal) {
-    console.warn("payment IPN: bestowal not found", orderId);
+    console.warn("payment IPN: bestowal not found", bestowalId);
     return;
   }
 
@@ -161,7 +167,7 @@ async function handlePaymentEvent(
     await supabase
       .from("bestowals")
       .update({ payment_status: "processing" })
-      .eq("id", orderId);
+      .eq("id", bestowalId);
     return;
   }
 
@@ -172,19 +178,19 @@ async function handlePaymentEvent(
     await supabase
       .from("bestowals")
       .update({ payment_status: "completed" })
-      .eq("id", orderId);
+      .eq("id", bestowalId);
     // Trigger provider-agnostic payout dispatch.
     try {
-      await dispatchPayouts(supabase, orderId);
+      await dispatchPayouts(supabase, bestowalId);
     } catch (err) {
-      console.error("dispatchPayouts failed", orderId, err);
+      console.error("dispatchPayouts failed", bestowalId, err);
       await supabase
         .from("bestowals")
         .update({
           payout_status: "manual_required",
           payout_error: err instanceof Error ? err.message : String(err),
         })
-        .eq("id", orderId);
+        .eq("id", bestowalId);
     }
     return;
   }
@@ -197,11 +203,11 @@ async function handlePaymentEvent(
         payout_status: "failed",
         payout_error: `nowpayments_${paymentStatus}`,
       })
-      .eq("id", orderId);
+      .eq("id", bestowalId);
     return;
   }
 
-  console.warn("payment IPN: unknown status", paymentStatus, orderId);
+  console.warn("payment IPN: unknown status", paymentStatus, bestowalId);
 }
 
 async function handlePayoutEvent(

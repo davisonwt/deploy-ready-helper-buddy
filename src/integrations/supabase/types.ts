@@ -940,6 +940,8 @@ export type Database = {
           bestower_profile_id: string | null
           blockchain_network: string | null
           buyer_total_amount: number | null
+          context_id: string | null
+          context_kind: string | null
           created_at: string
           currency: string
           distributed_at: string | null
@@ -948,7 +950,7 @@ export type Database = {
           hold_reason: string | null
           id: string
           message: string | null
-          orchard_id: string
+          orchard_id: string | null
           payment_method: string | null
           payment_reference: string | null
           payment_status: string
@@ -979,6 +981,8 @@ export type Database = {
           bestower_profile_id?: string | null
           blockchain_network?: string | null
           buyer_total_amount?: number | null
+          context_id?: string | null
+          context_kind?: string | null
           created_at?: string
           currency?: string
           distributed_at?: string | null
@@ -987,7 +991,7 @@ export type Database = {
           hold_reason?: string | null
           id?: string
           message?: string | null
-          orchard_id: string
+          orchard_id?: string | null
           payment_method?: string | null
           payment_reference?: string | null
           payment_status?: string
@@ -1018,6 +1022,8 @@ export type Database = {
           bestower_profile_id?: string | null
           blockchain_network?: string | null
           buyer_total_amount?: number | null
+          context_id?: string | null
+          context_kind?: string | null
           created_at?: string
           currency?: string
           distributed_at?: string | null
@@ -1026,7 +1032,7 @@ export type Database = {
           hold_reason?: string | null
           id?: string
           message?: string | null
-          orchard_id?: string
+          orchard_id?: string | null
           payment_method?: string | null
           payment_reference?: string | null
           payment_status?: string

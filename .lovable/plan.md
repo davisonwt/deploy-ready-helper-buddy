@@ -1,184 +1,153 @@
-# Payment Entry-Point Audit
+## Goal
 
-Hard rule: only **NOWPayments** and **PayPal** are allowed. Everything else (Binance Pay, Cryptomus, Solana/USDC on-chain, Stripe) must be retired or migrated.
-
-Status legend: **LIVE** = wired end-to-end and reachable. **PARTIAL** = code exists but flow is broken, gated, or short-circuited. **DEAD** = unreachable / no UI path / orphan.
-
-No Stripe references remain in code. No Solana SPL transfer code remains except the wallet-balance display utilities.
+Replace the 7 disabled payment flows with **two** generic create-order + webhook-completion pipelines on NOWPayments and PayPal, mirroring what already works for orchard bestowals and basket orders.
 
 ---
 
-## 1. Basket / cart checkout (products)
+## What already exists (reuse, don't recreate)
 
-| Entry point | Component → function | Processors | Status |
+- `bestowals` table — has the full provider snapshot columns (`provider`, `base_amount`, `processor_fee_amount`, `buyer_total_amount`, `payout_provider`, `payout_destination`, `payout_status`, `payout_reference`, `distribution_data`, `provider_order_id`). Already the proven shape.
+- `basket_orders` — finalized via `finalize_basket_order` RPC from the webhook (proves the "discriminator-by-prefix" routing pattern).
+- Edge functions:
+  - `create-nowpayments-invoice` / `create-paypal-order` — order creation pattern with sower-payout resolution + distribution snapshot.
+  - `nowpayments-webhook` / `paypal-webhook` — already route by `order_id` prefix (`topup:`, `basket:`, bare uuid for orchard bestowals) and call `dispatchPayouts()`.
+  - `_shared/distribution.ts` / `_shared/resolveSowerPayout.ts` — provider-agnostic payout splitter and wallet resolver. Both shapes will call these unchanged.
+- `useNowPayments`, `usePaypal` hooks — already do the redirect handshake.
+
+The 7 disabled flows all converge on the same two questions: (a) what does the buyer/bestower pay and to whom, (b) what happens on `payment_status=finished`. Everything else is shared.
+
+---
+
+## Shape 1 — Fixed-price content purchase
+
+5 call sites, 5 different "what gets delivered":
+
+| # | Entry point file | Content type | Delivery on success |
 |---|---|---|---|
-| Product basket checkout | `BestowalCheckout.tsx` → `create-basket-bestowal-order` | NOWPayments **+** PayPal (provider chosen client-side, server routes) | **LIVE** (compliant) |
-| Webhooks that finalize | `nowpayments-webhook`, `paypal-webhook` | NOWPayments, PayPal | **LIVE** (compliant) |
+| 1 | `src/pages/S2GCommunityLibraryPage.tsx` | `library_item` | insert `s2g_library_item_access(user_id, library_item_id)` |
+| 2 | `src/components/live/media/PurchaseModal.tsx` (mounted in `MediaDock.tsx`) | `live_session_media` | insert `live_session_media_purchases(user_id, media_id)` |
+| 3 | `src/pages/S2GCommunityMusicPage.tsx` (via `useMusicPurchase.jsx`) | `music_track` | insert `music_purchases(user_id, track_id)` + send chat-delivered receipt |
+| 4 | `src/components/premium/PremiumItemPurchaseModal.tsx` | `premium_item` | insert `premium_item_purchases(user_id, item_id)` |
+| 5 | `src/components/premium/RoomAccessModal.tsx` (used by `PremiumRoomViewPage.tsx`) | `premium_room` | insert `premium_room_access(user_id, room_id, expires_at)` |
+
+### 1. DB schema — extend, don't replace
+
+Do **not** invent a unified `content_purchases` table. The 5 access tables already exist, are already referenced by RLS policies (e.g. `premium_room_access`, `live_session_media_purchases`, `s2g_library_item_access`) and have type-specific shapes (rentals have `expires_at`, music has track-specific fields, etc.). A unifying table would force a parallel write on every grant.
+
+Instead add **one new ledger table** that all Shape-1 flows write at order creation, and that the webhook reads to know which access row to grant:
+
+- `content_purchases` (new) — the payment-side row, one per buyer attempt. Columns:
+  - `id`, `buyer_id`, `seller_id`
+  - `content_type` enum: `library_item | live_session_media | music_track | premium_item | premium_room`
+  - `content_id uuid` (polymorphic; not FK-enforced — validated in the create-order function)
+  - Provider snapshot: same columns as `bestowals` (`provider`, `provider_order_id`, `base_amount`, `processor_fee_amount`, `buyer_total_amount`, `currency`, `payout_provider`, `payout_destination`, `payout_currency`, `payout_status`, `payout_reference`, `payout_error`, `distribution_data jsonb`)
+  - Lifecycle: `payment_status` (`pending|processing|completed|failed|refunded|expired`), `created_at`, `paid_at`, `delivered_at`
+  - Metadata: `quantity int default 1`, `pricing_snapshot jsonb` (room rental days, media duration, etc.)
+- RLS: buyer sees own rows, seller sees rows where `seller_id = auth.uid()`, service_role full. Inserts service_role only (always inserted by edge function). GRANTs per the public-schema rule.
+- The existing `s2g_library_item_access` / `live_session_media_purchases` / `music_purchases` / `premium_item_purchases` / `premium_room_access` rows become **derived** rows written by the webhook after `content_purchases` flips to `completed`. They keep being the source of truth for "does the user have access" — so RLS on the actual content keeps working unchanged.
+
+### 2. Edge functions — one generic create + one generic completion router
+
+Two new functions (mirroring the orchard pair):
+
+- `create-content-purchase-order` — single function, branch on `content_type`:
+  - For each `content_type`, a small in-file resolver looks up the content row, returns `{ seller_id, base_amount, currency, title, pricing_snapshot }`. Resolvers are 5 small switch arms, ~15 lines each. Anything not found → 404.
+  - From there it's identical to `create-nowpayments-invoice`: compute processor fee, resolve seller payout wallet via `resolveSowerPayout`, call `buildDistributionData` (the 15% S2G split already applies to seller revenue), insert `content_purchases` row, create NOWPayments invoice OR PayPal order with `order_id = "content:<content_purchases.id>"`, return checkout URL.
+  - Provider choice is a `provider: 'nowpayments' | 'paypal'` field on the request body — same edge function returns either invoice URL or PayPal approval URL. Keeps the call-site code one branch.
+- `complete-content-purchase` — invoked by the webhook router (see below). One function, branches on `content_type` to write the type-specific access row inside a single transaction with the `content_purchases` row flip. Branches:
+  1. `library_item` → insert `s2g_library_item_access`
+  2. `live_session_media` → insert `live_session_media_purchases`
+  3. `music_track` → insert `music_purchases` + enqueue a chat-delivered receipt (existing chat insert pattern)
+  4. `premium_item` → insert `premium_item_purchases`
+  5. `premium_room` → insert `premium_room_access` with `expires_at = now() + pricing_snapshot.rental_days * interval '1 day'`
+  
+  Yes, delivery differences force per-type completion logic — but it lives in **one** branched function, not 5 functions. That's the "type-specific completion within a shared pipeline" you asked about.
+
+Webhook changes (small):
+- `nowpayments-webhook` and `paypal-webhook` get a new `order_id` prefix branch: `content:<uuid>` → call `complete-content-purchase` (or inline it — leaning inline for consistency with how `finalize_basket_order` is called as an RPC; the RPC route is even cleaner, see Technical notes).
+
+### 3. Frontend wiring — minimal per call site
+
+All 5 call sites converge on **one new hook**: `useContentPurchase({ contentType, contentId, provider })`. Inside, it calls `create-content-purchase-order`, gets back a checkout URL, and redirects (same pattern as `useNowPayments`).
+
+Per call-site changes:
+
+- `S2GCommunityLibraryPage.tsx` — replace the existing disabled toast in the "Get for $X" handler with `useContentPurchase({ contentType: 'library_item', contentId: item.id })`.
+- `PurchaseModal.tsx` (live media) — same replacement; remove the disabled banner.
+- `S2GCommunityMusicPage.tsx` + `useMusicPurchase.jsx` — `useMusicPurchase` becomes a thin wrapper around `useContentPurchase` with `contentType: 'music_track'`.
+- `PremiumItemPurchaseModal.tsx` — strip the "temporarily disabled" body, render a NOWPayments/PayPal picker, call the hook.
+- `RoomAccessModal.tsx` — same; rental-days selection lives in `pricing_snapshot` passed by the call site.
+
+No call site touches the access tables anymore — that's webhook-only.
 
 ---
 
-## 2. Single-seed / orchard bestowals
+## Shape 2 — Free-will gift
 
-| Entry point | Caller | Processors | Status |
-|---|---|---|---|
-| QuickBestowModal (orchard quick-bestow) | `useNowPayments` + `usePaypal` | NOWPayments, PayPal | **LIVE** (compliant) |
-| `EnhancedBestowalPayment.jsx` (orchard) | `process-usdc-transfer` edge fn | Solana / on-chain USDC | **PARTIAL/BROKEN** — non-compliant |
-| `OrchardPaymentWidget.jsx` | (stale, BinancePayButton removed earlier today; needs re-verify) | was Binance | **DEAD-ish** — non-compliant |
-| `CreateOrchardPage.jsx` / `EditOrchardPage.jsx` / `MyOrchardsPage.jsx` / `EnhancedOrchardForm.jsx` / `QuickOrchardCreator.jsx` | references to wallet/binance terminology | mixed | needs deeper read |
+2 call sites:
 
----
-
-## 3. Community library + music (S2G Library)
-
-| Entry point | Caller | Processors | Status |
-|---|---|---|---|
-| `S2GCommunityLibraryPage.tsx` | `create-binance-pay-order` **and** `complete-library-bestowal` | Binance Pay; library-bestowal is now 503 short-circuit | **PARTIAL/BROKEN** — non-compliant |
-| `S2GCommunityMusicPage.tsx` | same pair | Binance Pay + 503 | **PARTIAL/BROKEN** — non-compliant |
-| `MusicLibrary` track buy (`useMusicPurchase` → `purchase-music-track`) | direct insert flow with pending status; no processor verifier | none real | **PARTIAL** (no rail) |
-| `AlbumBuilderCart.tsx` | direct inserts `pending` | none real | **PARTIAL** (no rail) |
-| `useCryptoPay` used in `SowerProfile.tsx` (buy song) and `RadioSessions.tsx` (buy session) | on-chain USDC/Solana | Solana | **PARTIAL/BROKEN** — non-compliant |
-
----
-
-## 4. Premium rooms & premium room media
-
-| Entry point | Caller | Processors | Status |
-|---|---|---|---|
-| `RoomAccessModal.tsx` (join paid room) | placeholder "Binance Pay coming soon" toast | none | **DEAD/non-compliant placeholder** |
-| `PremiumItemPurchaseModal.tsx` | placeholder Binance Pay UI | none | **DEAD/non-compliant placeholder** |
-| `PremiumRoomMedia.tsx` & `live/media/PurchaseModal.tsx` | `purchase-media` edge fn | edge fn is now 503 short-circuit (fixed earlier today) | **DISABLED** |
-
----
-
-## 5. Radio bestowals & live session bestowals
-
-| Entry point | Caller | Processors | Status |
-|---|---|---|---|
-| `useRadioBestowal` | (needs read — likely NOWPayments/PayPal) | TBD | likely compliant |
-| `useLiveBestowal` | (needs read) | TBD | likely compliant |
-| `BestowalCoin.tsx` (chat) | `useCryptomusPay` → `create-cryptomus-payment` | Cryptomus | **LIVE** — non-compliant |
-| `DonateModal.tsx` (chat) | refs Binance/Cryptomus | TBD | likely non-compliant |
-
----
-
-## 6. Wallet top-ups
-
-| Entry point | Caller | Processors | Status |
-|---|---|---|---|
-| `MyWalletPage.tsx` → `create-wallet-topup` | NOWPayments + PayPal | **LIVE** (compliant) |
-| `useBinanceWallet` → `create-binance-wallet-topup` / `link-binance-wallet` / `refresh-binance-wallet-balance` / `sync-wallet-balance` | Binance Pay merchant + Binance wallet API | **LIVE** — non-compliant |
-| `FiatOnRamp.jsx` (used by `VideoGifting.jsx` in `MarketingVideosGallery`) | Binance Pay checkout | Binance Pay | **LIVE** — non-compliant |
-| `AdminPaymentDashboard.jsx`, `OrganizationWalletSetup.tsx`, `OrganizationWalletCredentials.tsx` | Binance wallet admin | Binance | **LIVE** — non-compliant |
-
----
-
-## 7. Gifting / tipping / misc
-
-| Entry point | Caller | Processors | Status |
-|---|---|---|---|
-| `VideoGifting.jsx` | imports `FiatOnRamp` (Binance), placeholder gift handler | Binance (UI only) | **PARTIAL** — non-compliant |
-| `clubhouse/RoomCreationForm.jsx` | references payment | TBD | needs read |
-| `FreeWillGiftingPage.jsx`, `TithingPage.jsx`, `SupportUsPage.jsx` | references | TBD | needs read |
-| `LetItRainPanel.tsx`, `MyGardenPanel.tsx` | references | TBD | needs read |
-
----
-
-## 8. Test / admin / debug pages
-
-| Page | Processor | Status |
+| # | Entry point | Recipient resolution |
 |---|---|---|
-| `PaypalTestPage.tsx` | PayPal | LIVE (compliant, dev-only) |
-| `NowPaymentsTestPage.tsx` | NOWPayments | LIVE (compliant, dev-only) |
-| `BinancePayTestPage.tsx` | Binance Pay | LIVE — non-compliant |
-| `AdminPayoutConfirmationsPage.tsx` → `nowpayments-verify-payout` | NOWPayments payouts | LIVE (compliant) |
-| `PayoutSettingsPage.tsx` + `AddPaypalEmail.tsx` + `AddNowPaymentsWallet.tsx` | PayPal + NOWPayments payout methods | LIVE (compliant) |
+| 6 | `useLiveBestowal` / `useRadioBestowal` (used by `BestowalDialog.tsx`, radio bestow buttons) | `sowerId` from session host |
+| 7 | `BestowalCoin.tsx` (chat tipping) | recipient is the other chat participant |
+
+### 1. DB schema — reuse `bestowals`
+
+`bestowals` already has every column we need. Add only:
+
+- `bestowals.context_kind text` — nullable: `'orchard' | 'live_session' | 'radio_session' | 'chat_tip'`. `orchard` is the existing default behavior (kept as `NULL` for back-compat, or backfilled).
+- `bestowals.context_id uuid` — nullable; session id / chat room id / orchard id depending on `context_kind`.
+- Existing `orchard_id` stays NOT NULL for now? Check — likely needs to be made nullable for `live_session`/`chat_tip` rows. **Confirm before migration** (this is a constraint change on an existing table).
+
+That's it. `distribution_data`, `payout_provider`, `payout_destination`, `dispatchPayouts` all keep working because gifts use the same recipient-wallet → S2G-fee split.
+
+### 2. Edge functions — one new pair, but skinny
+
+- `create-gift-bestowal-order` — accepts `{ recipientId, amount, contextKind, contextId, provider, message? }`. Resolves recipient's payout wallet (`resolveSowerPayout`), builds a distribution snapshot with no orchard (sower leg = recipient, no grower split), inserts `bestowals` row with `orchard_id=null`, `context_kind`, `context_id`. Creates NOWPayments invoice or PayPal order with `order_id = "gift:<bestowals.id>"`.
+- Webhook routing — `nowpayments-webhook` / `paypal-webhook` get one more prefix branch: `gift:<uuid>` → resolve to `bestowals` row, flip `payment_status='completed'`, call `dispatchPayouts` (already provider-aware). No new completion function needed because there's nothing to deliver — gifts grant no access.
+
+Special case for chat tips: after `dispatchPayouts` succeeds, insert a system message in the chat room (`chat_messages` insert, same pattern used elsewhere) so the recipient sees "X bestowed $Y". This is a 10-line addition in the webhook's gift branch.
+
+### 3. Frontend wiring
+
+- `useLiveBestowal` — currently returns the "disabled" toast. Replace its body with a call to `create-gift-bestowal-order` with `contextKind='live_session'`. `BestowalDialog.tsx` stays unchanged.
+- `useRadioBestowal` — same change with `contextKind='radio_session'`.
+- `BestowalCoin.tsx` — replace its current disabled handler with the same hook (`contextKind='chat_tip'`, `contextId=room_id`, `recipientId=other_participant_id`).
+
+Both hooks can share **one** underlying primitive `useGiftBestowal({ recipientId, contextKind, contextId })`. The two named hooks stay as thin facades to avoid touching every call site.
 
 ---
 
-## 9. Edge functions inventory by rail
+## Sequencing
 
-**Allowed (NOWPayments / PayPal):**
-- `create-nowpayments-invoice`, `nowpayments-webhook`, `nowpayments-payout`, `nowpayments-verify-payout`, `nowpayments-list-currencies`
-- `create-paypal-order`, `paypal-webhook`, `paypal-payout`, `_shared/paypal/client.ts`, `_shared/payouts/paypal.ts`, `_shared/payouts/nowpayments.ts`
-- `create-basket-bestowal-order` (routes to both), `create-wallet-topup` (routes to both)
-- `distribute-bestowal` (rail-agnostic)
-- `complete-library-bestowal` (503 short-circuit, safe)
-- `purchase-media` (503 short-circuit, safe)
-- `purchase-music-track` (insert-pending only, no rail attached)
+Build order, and which to verify end-to-end before wiring siblings:
 
-**To retire (Binance Pay):**
-- `create-binance-pay-order`
-- `create-binance-wallet-topup`
-- `link-binance-wallet`
-- `refresh-binance-wallet-balance`
-- `sync-wallet-balance`
-- `binance-pay-webhook`
-- `manual-update-balance` (Binance wallet helper)
-- `_shared/binance.ts`, `_shared/walletConfig.ts` (Binance bits), `_shared/payouts/binance.ts`
-
-**To retire (Cryptomus):**
-- `create-cryptomus-payment`
-- `cryptomus-webhook`
-- `_shared/cryptomus.ts`
-
-**To retire (Solana / on-chain USDC):**
-- `process-usdc-transfer` (referenced from `EnhancedBestowalPayment.jsx`; confirm deploy state)
-- `treasury-balances` if Solana-only (needs read)
-
-**No Stripe edge functions remain.**
+1. **Shape 2 first.** It needs zero new tables (just two new nullable columns on `bestowals`) and the webhook router already does almost everything. The smallest possible diff that proves the "discriminator prefix + dispatchPayouts" pattern still works for non-orchard recipients.
+2. **Within Shape 2: wire `BestowalCoin.tsx` (chat tip) first.** Reasons:
+   - It's the most constrained recipient resolution (the other chat participant — no host/session lookup needed).
+   - It exercises the post-completion side-effect (system chat message) which is the only novel piece.
+   - It's the easiest to manually verify: open a 1-on-1, send a $1 tip, sandbox-pay, watch the chat row appear and the recipient's `bestowals` row flip to `completed`.
+   - Once green, `useLiveBestowal` and `useRadioBestowal` are literally swapping `contextKind`.
+3. **Then Shape 1.** New table + new generic create + branched completion. Larger surface but proven webhook plumbing.
+4. **Within Shape 1: wire `S2GCommunityLibraryPage.tsx` (library_item) first.** Reasons:
+   - Simplest delivery (single insert into `s2g_library_item_access`, no expiry, no chat side-effect).
+   - The library access row is already a working grant gate — easy to verify "did the buyer get access" via the existing `MyS2GLibraryPage`.
+   - Forces the `content_purchases` table and webhook routing to be right before adding the 4 branched delivery cases.
+   - Once green, the other 4 are each ~one resolver + one completion branch.
 
 ---
 
-## 10. Hooks / lib to retire
+## Technical notes (non-user-facing)
 
-- `src/hooks/useBinanceWallet.ts`
-- `src/hooks/useCryptomusPay.tsx`
-- `src/hooks/useCryptoPay.tsx` (Solana on-chain)
-- `src/lib/cronos.ts` (chain integration)
-- `src/components/FiatOnRamp.jsx`
-- `src/components/wallet/BinanceWalletManager.tsx` (already removed earlier? verify)
-- `src/components/admin/OrganizationWalletSetup.tsx` / `OrganizationWalletCredentials.tsx` (Binance halves)
-- `src/components/AdminPaymentDashboard.jsx` (Binance halves)
-- `src/pages/BinancePayTestPage.tsx`
-- `src/pages/GosatWalletsPage.tsx`, `src/pages/GosatTreasuryPage.tsx` (if Binance/Cryptomus-only)
+- **RPC vs inline completion**: prefer an RPC `finalize_content_purchase(_purchase_id uuid)` called from the webhook, mirroring `finalize_basket_order`. Keeps the webhook function lean and the access-grant logic atomic with the `payment_status` flip (single transaction). Same approach for the gift webhook branch: `finalize_gift_bestowal(_bestowal_id uuid)`.
+- **Idempotency**: `processed_webhooks` already keys on `provider + payment_id + payment_status`. No change. The `finalize_*` RPCs must be idempotent (use `on conflict do nothing` on access-row inserts).
+- **Refunds**: out of scope for this rebuild — neither shape currently emits refunds. If a `refunded`/`failed` IPN arrives after access was granted, the webhook flips `payment_status` but does **not** auto-revoke access. Note this as a follow-up so we don't silently rebuild the bug.
+- **Provider fee**: keep the existing pattern of `processor_fee` added on top of `base_amount` so the seller/recipient always nets the full listed price. No change in fee math vs orchards/baskets.
+- **Migration safety on `bestowals`**: making `orchard_id` nullable affects existing RLS policies — audit `bestowals` policies before the migration and update any that assume `orchard_id IS NOT NULL`.
+- **Hook test pages already exist**: `NowPaymentsTestPage.tsx` and `PaypalTestPage.tsx` can be reused (or extended) to smoke-test both new endpoints without going through the real UI.
 
----
+## Out of scope (flag, don't fix)
 
-## 11. Non-compliant UI entry points (user-reachable today)
-
-These are the surfaces a real user can hit RIGHT NOW that still call a banned rail:
-
-1. `BestowalCoin.tsx` (chat tip) → Cryptomus
-2. `EnhancedBestowalPayment.jsx` (orchard bestowal) → Solana/USDC on-chain
-3. `SowerProfile.tsx` (buy song) → Solana via `useCryptoPay`
-4. `RadioSessions.tsx` (buy session) → Solana via `useCryptoPay`
-5. `S2GCommunityLibraryPage.tsx` → Binance Pay
-6. `S2GCommunityMusicPage.tsx` → Binance Pay
-7. `RoomAccessModal.tsx` paid room join → Binance Pay placeholder
-8. `PremiumItemPurchaseModal.tsx` → Binance Pay placeholder
-9. `MyWalletPage.tsx` top-up (Binance path alongside compliant rails) → Binance Pay option
-10. `VideoGifting.jsx` / `FiatOnRamp.jsx` → Binance Pay
-11. `BinancePayTestPage.tsx` → Binance Pay
-12. `AdminPaymentDashboard.jsx` + `OrganizationWallet*` admin → Binance wallet admin
-13. `DonateModal.tsx` chat → Binance/Cryptomus (needs deeper read)
-
----
-
-## Items still needing a deeper read before any cleanup pass
-
-- `useRadioBestowal.tsx`, `useLiveBestowal.ts`, `DonateModal.tsx`, `LetItRainPanel.tsx`, `MyGardenPanel.tsx`, `clubhouse/RoomCreationForm.jsx`, `FreeWillGiftingPage.jsx`, `TithingPage.jsx`, `SupportUsPage.jsx`, `treasury-balances`, `MyOrchardsPage.jsx`, `EditOrchardPage.jsx`, `CreateOrchardPage.jsx`, `EnhancedOrchardForm.jsx`, `OrchardPaymentWidget.jsx`, `QuickOrchardCreator.jsx`, `GosatTreasuryPage.tsx`, `GosatWalletsPage.tsx`.
-
-Those references may be cosmetic (currency display, terminology) rather than active calls — confirm before adding to the kill list.
-
----
-
-## Proposed next phase (NOT executed yet — read-only audit only)
-
-When you greenlight, the cleanup order would be:
-
-1. Re-route every numbered entry in §11 to the existing NOWPayments/PayPal pickers (same UX as `BestowalCheckout` / `MyWalletPage`).
-2. Delete the orphaned hooks, components, pages, and edge functions in §9 / §10.
-3. Drop the `_shared/binance.ts`, `_shared/cryptomus.ts`, Solana-only modules.
-4. Re-run typecheck, security scan, publish.
-
-Awaiting your go-ahead on this map before I touch anything.
+- Refund/revocation flow.
+- Buyer-side currency picker UX (use the existing `nowpayments-list-currencies` function).
+- Replacing the legacy `purchase-music-track` and `purchase-media` functions — leave them in place until the new pipeline is verified, then delete in a follow-up.
