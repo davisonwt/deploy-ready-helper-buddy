@@ -46,8 +46,7 @@ export default function TrustPage() {
             <p>
               Sow2Grow runs on Lovable's hosting platform, with database, authentication, file
               storage and serverless functions provided by Supabase. Payment settlement is
-              handled through external processors (e.g. Binance Pay, Cryptomus) configured by
-              the app owner.
+              handled through NOWPayments (crypto) and PayPal, configured by the app owner.
             </p>
             <p>
               These platform features are provided by third parties under their own terms — the
