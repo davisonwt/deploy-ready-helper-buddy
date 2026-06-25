@@ -77,9 +77,9 @@ export function AdminButton() {
                 </Link>
               </DropdownMenuItem>
               <DropdownMenuItem asChild className="cursor-pointer">
-                <Link to="/gosat/wallets" className="flex items-center w-full px-2 py-1.5">
+                <Link to="/admin/treasury" className="flex items-center w-full px-2 py-1.5">
                   <Wallet className="w-4 h-4 mr-2" />
-                  Organization Wallets
+                  Treasury
                 </Link>
               </DropdownMenuItem>
               <DropdownMenuItem asChild className="cursor-pointer">
