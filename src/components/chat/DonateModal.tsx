@@ -9,6 +9,7 @@ import {
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { toast } from 'sonner';
 
 interface DonateModalProps {
   isOpen: boolean;
@@ -26,9 +27,7 @@ export const DonateModal: FC<DonateModalProps> = ({
   const [amount, setAmount] = useState('5');
 
   const handleDonate = () => {
-    // Mock webhook call: Split 90% to hostWallet, 10% to platform fee
-    console.log('Donation processed:', { hostWallet, amount });
-    // TODO: Replace with real Binance Pay integration
+    toast.info('In-chat tipping is temporarily disabled while we migrate to NOWPayments / PayPal.');
     onClose();
   };
 
@@ -38,7 +37,7 @@ export const DonateModal: FC<DonateModalProps> = ({
         <DialogHeader>
           <DialogTitle>Donate to {hostName}</DialogTitle>
           <DialogDescription>
-            Support the host with USDC. 90% goes to the host, 10% to the platform fee.
+            In-chat tipping is temporarily unavailable while we migrate to NOWPayments / PayPal.
           </DialogDescription>
         </DialogHeader>
         <div className="space-y-4 py-4">
@@ -51,6 +50,7 @@ export const DonateModal: FC<DonateModalProps> = ({
               onChange={(e) => setAmount(e.target.value)}
               min="1"
               step="0.01"
+              disabled
             />
           </div>
           {hostWallet && (
@@ -61,11 +61,14 @@ export const DonateModal: FC<DonateModalProps> = ({
         </div>
         <div className="flex gap-2 justify-end">
           <Button variant="outline" onClick={onClose}>
-            Cancel
+            Close
           </Button>
-          <Button onClick={handleDonate}>Confirm Donation</Button>
+          <Button onClick={handleDonate} disabled>
+            Temporarily Unavailable
+          </Button>
         </div>
       </DialogContent>
     </Dialog>
   );
 };
+

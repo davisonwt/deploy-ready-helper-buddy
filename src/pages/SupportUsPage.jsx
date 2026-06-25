@@ -1,24 +1,33 @@
 import React from 'react';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
-import { WalletHelpModal } from '@/components/wallet/WalletHelpModal';
+import { Button } from '@/components/ui/button';
+import { Link } from 'react-router-dom';
 
 export default function SupportUsPage() {
   return (
     <main className="container mx-auto py-8">
       <Card>
-        <CardHeader className="flex flex-row items-center justify-between">
+        <CardHeader>
           <h1 className="text-2xl font-semibold leading-none tracking-tight">
-            Support Us with Binance Pay (USDC)
+            Support Sow2Grow
           </h1>
-          <WalletHelpModal />
         </CardHeader>
-        <CardContent className="space-y-2">
+        <CardContent className="space-y-4">
           <p className="text-muted-foreground">
-            To support our work, please use Binance Pay in your Binance app to send USDC to our organization wallet.
+            All giving on Sow2Grow now flows through our compliant rails: NOWPayments (crypto)
+            and PayPal (cards / PayPal balance). Choose a path below.
           </p>
-          <p className="text-sm text-muted-foreground">
-            You can find wallet setup instructions and FAQs via the Payment Help button.
-          </p>
+          <div className="flex flex-wrap gap-3">
+            <Button asChild>
+              <Link to="/free-will-gifting">Free-Will Gift</Link>
+            </Button>
+            <Button asChild variant="secondary">
+              <Link to="/tithing">Platform Contribution</Link>
+            </Button>
+            <Button asChild variant="outline">
+              <Link to="/wallet">Top Up Wallet</Link>
+            </Button>
+          </div>
         </CardContent>
       </Card>
     </main>
