@@ -192,13 +192,6 @@ const TribalHeartsPage: React.FC = () => {
             onCta={() => setEditProfileOpen(true)}
           />
 
-          <EmptyState
-            heroImg={heroImg}
-            title="The fire rests for now."
-            body="Complete (or refine) your Wandering Heart profile so the tribe can find you. The more your heart speaks, the warmer the circle around you grows."
-            cta="Complete my Wandering Heart profile"
-            onCta={() => setEditProfileOpen(true)}
-          />
         ) : (
           <AnimatePresence mode="wait">
             {current && (
