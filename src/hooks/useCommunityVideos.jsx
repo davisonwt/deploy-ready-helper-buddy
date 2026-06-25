@@ -115,7 +115,61 @@ export function useCommunityVideos() {
         return signed?.signedUrl ? { ...video, video_url: signed.signedUrl } : video
       }))
 
-      setVideos(refreshedVideos)
+      // Also include seed-attached videos so all of a sower's videos appear in one place.
+      // Skip when filters that don't apply to seeds are active.
+      let seedVideos = []
+      if (!options.activeRole && !options.categoryId && !options.tagIds?.length) {
+        try {
+          let seedQuery = supabase
+            .from('seeds')
+            .select(`id, gifter_id, title, description, category, video_url, created_at,
+              profiles:gifter_id ( display_name, first_name, last_name, avatar_url )`)
+            .not('video_url', 'is', null)
+            .order('created_at', { ascending: false })
+            .limit(20)
+          if (options.search) {
+            seedQuery = seedQuery.or(`title.ilike.%${options.search}%,description.ilike.%${options.search}%`)
+          }
+          if (options.videoCategory) {
+            seedQuery = seedQuery.eq('category', options.videoCategory)
+          }
+          const { data: seedRows } = await seedQuery
+          seedVideos = await Promise.all((seedRows || []).filter(s => s.video_url).map(async (s) => {
+            let url = s.video_url
+            const marker = '/object/sign/videos/'
+            const objectPath = url.includes(marker)
+              ? decodeURIComponent(url.split(marker)[1].split('?')[0])
+              : url.startsWith('http') ? null : url
+            if (objectPath) {
+              const { data: signed } = await supabase.storage.from('videos').createSignedUrl(objectPath, 3600)
+              if (signed?.signedUrl) url = signed.signedUrl
+            }
+            return {
+              id: `seed-${s.id}`,
+              seed_id: s.id,
+              source: 'seed',
+              title: s.title,
+              description: s.description,
+              category: s.category,
+              video_url: url,
+              uploader_id: s.gifter_id,
+              uploader_profile_id: s.gifter_id,
+              profiles: s.profiles,
+              status: 'approved',
+              view_count: 0,
+              like_count: 0,
+              created_at: s.created_at,
+            }
+          }))
+        } catch (e) {
+          console.warn('Seed video fetch failed (non-fatal):', e?.message)
+        }
+      }
+
+      const merged = [...refreshedVideos, ...seedVideos].sort(
+        (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+      )
+      setVideos(merged)
     } catch (error) {
       console.error('Error fetching videos:', error)
       toast({
