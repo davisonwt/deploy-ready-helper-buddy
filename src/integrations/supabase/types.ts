@@ -13476,6 +13476,20 @@ export type Database = {
           stream_key: string
         }[]
       }
+      get_my_orchards_scoped: {
+        Args: never
+        Returns: {
+          category: string
+          created_at: string
+          description: string
+          id: string
+          images: string[]
+          orchard_type: string
+          status: string
+          title: string
+          user_id: string
+        }[]
+      }
       get_my_stream_credentials: {
         Args: { _stream_id: string }
         Returns: {
