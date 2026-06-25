@@ -92,13 +92,32 @@ const TribalHeartsPage: React.FC = () => {
     }
   }, []);
 
+  const pageBg =
+    'radial-gradient(ellipse at top, hsl(20 30% 12%) 0%, hsl(20 35% 7%) 60%, hsl(0 0% 4%) 100%)';
+
+  // While we don't yet know if the user has a profile, render a neutral
+  // background only — avoids the "Tribal Hearts shell flashes for a second
+  // then jumps to onboarding" glitch.
+  if (loading) {
+    return <div className="min-h-screen" style={{ background: pageBg }} />;
+  }
+
+  // No profile yet → go straight to onboarding (no shell behind it).
+  if (!myProfile) {
+    return (
+      <div className="min-h-screen" style={{ background: pageBg }}>
+        <TribalHeartsOnboarding
+          onExit={() => navigate('/dashboard')}
+          onComplete={() => window.location.reload()}
+        />
+      </div>
+    );
+  }
+
   return (
     <div
       className="min-h-screen relative overflow-hidden"
-      style={{
-        background:
-          'radial-gradient(ellipse at top, hsl(20 30% 12%) 0%, hsl(20 35% 7%) 60%, hsl(0 0% 4%) 100%)',
-      }}
+      style={{ background: pageBg }}
     >
       {/* Top bar */}
       <header className="relative z-10 flex items-center justify-between px-5 py-4">
@@ -154,17 +173,10 @@ const TribalHeartsPage: React.FC = () => {
 
       {/* Main content */}
       <main className="relative z-10 px-4 py-8 flex flex-col items-center min-h-[70vh]">
-        {loading ? (
-          <div className="mt-20 flex flex-col items-center gap-4">
-            <TribalHeart size={64} color="warm" pulse />
-            <p style={{ color: 'hsl(38 35% 65%)' }} className="italic text-sm">
-              Listening for kindred hearts…
-            </p>
-          </div>
-        ) : !myProfile || editProfileOpen ? (
+        {editProfileOpen ? (
           <div className="fixed inset-0 z-40 overflow-y-auto overscroll-contain">
             <TribalHeartsOnboarding
-              onExit={() => navigate('/dashboard')}
+              onExit={() => setEditProfileOpen(false)}
               onComplete={() => {
                 setEditProfileOpen(false);
                 window.location.reload();
@@ -179,6 +191,7 @@ const TribalHeartsPage: React.FC = () => {
             cta="Complete my Wandering Heart profile"
             onCta={() => setEditProfileOpen(true)}
           />
+
         ) : (
           <AnimatePresence mode="wait">
             {current && (
