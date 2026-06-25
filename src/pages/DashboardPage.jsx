@@ -1294,10 +1294,31 @@ export default function SeedFlowDashboard() {
           zIndex: 100,
         }}>
           <Link to="/create-orchard" style={{ flex: 1, textDecoration: 'none' }}>
-            <LivingButton variant="enter" height={50} borderRadius={14} fontSize={12} letterSpacing="1px">
-              🌱 Plant Seed
-            </LivingButton>
-          </Link>
+          <Popover open={plantMenuOpen} onOpenChange={setPlantMenuOpen}>
+            <PopoverTrigger asChild>
+              <div style={{ flex: 1, cursor: 'pointer' }}>
+                <LivingButton variant="enter" height={50} borderRadius={14} fontSize={12} letterSpacing="1px">
+                  🌱 Plant Seed
+                </LivingButton>
+              </div>
+            </PopoverTrigger>
+            <PopoverContent side="top" align="start" className="w-56 p-2 bg-slate-900 border-slate-700">
+              <button
+                type="button"
+                onClick={() => { setPlantMenuOpen(false); navigate('/create-orchard') }}
+                className="w-full text-left px-3 py-2 rounded-md text-sm text-white hover:bg-white/10 flex items-center gap-2"
+              >
+                🌱 <span>Plant a Seed</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => { setPlantMenuOpen(false); setShowVideoUpload(true) }}
+                className="w-full text-left px-3 py-2 rounded-md text-sm text-white hover:bg-white/10 flex items-center gap-2"
+              >
+                🎬 <span>Upload a Video</span>
+              </button>
+            </PopoverContent>
+          </Popover>
           <Link to="/communications-hub" style={{ flex: 1, textDecoration: 'none' }}>
             <LivingButton variant="live" height={50} borderRadius={14} fontSize={12} letterSpacing="1px">
               🔴 Go Live
