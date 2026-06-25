@@ -52,6 +52,7 @@ export default function MyOrchardsPage() {
   const [selectedRole, setSelectedRole] = useState('all')
   const [seeds, setSeeds] = useState([])
   const [loading, setLoading] = useState(false)
+  const [showVideoUpload, setShowVideoUpload] = useState(false)
 
   // Canonical "my content" — same source as Dashboard, account-scoped (includes
   // linked accounts and the products-as-seeds union). Do NOT add a divergent
