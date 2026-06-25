@@ -370,12 +370,6 @@ export default function AdminDashboardPage() {
                 Users
               </TabsTrigger>
               <TabsTrigger 
-                value="payments" 
-                className="border-2 border-green-200 rounded-xl px-6 py-4 font-semibold shadow-lg hover:shadow-xl hover:scale-105 hover:border-green-300 transition-all duration-300 data-[state=active]:bg-gradient-to-br data-[state=active]:from-green-500 data-[state=active]:to-green-600 data-[state=active]:text-white data-[state=active]:border-green-500 data-[state=active]:shadow-2xl data-[state=active]:scale-105 bg-background"
-              >
-                Payments
-              </TabsTrigger>
-              <TabsTrigger 
                 value="moderation" 
                 className="border-2 border-orange-200 rounded-xl px-6 py-4 font-semibold shadow-lg hover:shadow-xl hover:scale-105 hover:border-orange-300 transition-all duration-300 data-[state=active]:bg-gradient-to-br data-[state=active]:from-orange-500 data-[state=active]:to-orange-600 data-[state=active]:text-white data-[state=active]:border-orange-500 data-[state=active]:shadow-2xl data-[state=active]:scale-105 bg-background"
               >
