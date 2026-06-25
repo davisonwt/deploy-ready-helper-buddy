@@ -80,15 +80,15 @@ export default function S2GCommunityLibraryPage() {
       return;
     }
 
-    // Handle giveaway
+    // Free giveaway
     if (item.is_giveaway && item.giveaway_count < (item.giveaway_limit || Infinity)) {
       const result = await supabase.functions.invoke('complete-library-bestowal', {
         body: {
           libraryItemId: item.id,
           amount: 0,
           sowerId: item.user_id,
-          isGiveaway: true
-        }
+          isGiveaway: true,
+        },
       });
       if (result.data?.success) {
         launchConfetti();
@@ -103,12 +103,8 @@ export default function S2GCommunityLibraryPage() {
       return;
     }
 
-    // Paid bestowal temporarily disabled while we migrate to approved
-    // payment providers (NOWPayments / PayPal).
-    toast.info(
-      'Paid bestowal is temporarily disabled while we migrate to our approved payment providers (NOWPayments / PayPal). Please try again soon.'
-    );
-    return;
+    // Paid → open provider picker
+    setPickerItem(item);
   };
 
   const filteredItems = libraryItems?.filter(item => {
