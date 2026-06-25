@@ -92,13 +92,32 @@ const TribalHeartsPage: React.FC = () => {
     }
   }, []);
 
+  const pageBg =
+    'radial-gradient(ellipse at top, hsl(20 30% 12%) 0%, hsl(20 35% 7%) 60%, hsl(0 0% 4%) 100%)';
+
+  // While we don't yet know if the user has a profile, render a neutral
+  // background only — avoids the "Tribal Hearts shell flashes for a second
+  // then jumps to onboarding" glitch.
+  if (loading) {
+    return <div className="min-h-screen" style={{ background: pageBg }} />;
+  }
+
+  // No profile yet → go straight to onboarding (no shell behind it).
+  if (!myProfile) {
+    return (
+      <div className="min-h-screen" style={{ background: pageBg }}>
+        <TribalHeartsOnboarding
+          onExit={() => navigate('/dashboard')}
+          onComplete={() => window.location.reload()}
+        />
+      </div>
+    );
+  }
+
   return (
     <div
       className="min-h-screen relative overflow-hidden"
-      style={{
-        background:
-          'radial-gradient(ellipse at top, hsl(20 30% 12%) 0%, hsl(20 35% 7%) 60%, hsl(0 0% 4%) 100%)',
-      }}
+      style={{ background: pageBg }}
     >
       {/* Top bar */}
       <header className="relative z-10 flex items-center justify-between px-5 py-4">
