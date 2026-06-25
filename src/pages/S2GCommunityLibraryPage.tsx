@@ -24,6 +24,8 @@ import {
 export default function S2GCommunityLibraryPage() {
   const { user } = useAuth();
   const [selectedType, setSelectedType] = useState<string>('all');
+  const [pickerItem, setPickerItem] = useState<any | null>(null);
+  const { purchase, isPending } = useContentPurchase();
 
   const { data: libraryItems, isLoading } = useQuery({
     queryKey: ['s2g-community-library'],
