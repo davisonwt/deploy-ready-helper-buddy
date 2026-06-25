@@ -6,24 +6,24 @@ import { Search, Filter, TrendingUp, Clock, Heart, Eye } from 'lucide-react'
 import { useCommunityVideos } from '@/hooks/useCommunityVideos.jsx'
 import VideoCard from './VideoCard.jsx'
 
-export default function VideoFeed({ activeRole = null, categoryId = null, tagIds = [] }) {
+export default function VideoFeed({ activeRole = null, categoryId = null, tagIds = [], videoCategory = null }) {
   const [searchQuery, setSearchQuery] = useState('')
   const [sortBy, setSortBy] = useState('newest')
   const { videos, loading, fetchVideos } = useCommunityVideos()
 
   const handleSearch = async (e) => {
     e.preventDefault()
-    await fetchVideos({ search: searchQuery, sortBy, activeRole, categoryId, tagIds })
+    await fetchVideos({ search: searchQuery, sortBy, activeRole, categoryId, tagIds, videoCategory })
   }
 
   const handleSortChange = async (value) => {
     setSortBy(value)
-    await fetchVideos({ search: searchQuery, sortBy: value, activeRole, categoryId, tagIds })
+    await fetchVideos({ search: searchQuery, sortBy: value, activeRole, categoryId, tagIds, videoCategory })
   }
 
   React.useEffect(() => {
-    fetchVideos({ search: searchQuery, sortBy, activeRole, categoryId, tagIds })
-  }, [activeRole, categoryId, tagIds])
+    fetchVideos({ search: searchQuery, sortBy, activeRole, categoryId, tagIds, videoCategory })
+  }, [activeRole, categoryId, tagIds, videoCategory])
 
   const getSortIcon = (value) => {
     switch (value) {
