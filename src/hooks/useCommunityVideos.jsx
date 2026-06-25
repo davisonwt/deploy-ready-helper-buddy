@@ -59,6 +59,10 @@ export function useCommunityVideos() {
         query = query.eq('wandering_role', options.activeRole)
       }
 
+      if (options.videoCategory) {
+        query = query.eq('category', options.videoCategory)
+      }
+
       const { data, error } = await query.limit(20)
 
       if (error) throw error
