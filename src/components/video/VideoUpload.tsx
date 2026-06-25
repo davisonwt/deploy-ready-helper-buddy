@@ -6,14 +6,17 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Loader2, Upload, Video } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useVideoProcessor } from '@/hooks/useVideoProcessor';
+import { VIDEO_CATEGORIES } from '@/components/community/VideoUploadModal';
 
 export default function VideoUpload() {
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [tags, setTags] = useState('');
+  const [category, setCategory] = useState<string | null>(null);
   const [file, setFile] = useState<File | null>(null);
   const [uploading, setUploading] = useState(false);
   const { toast } = useToast();
