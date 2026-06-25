@@ -30,6 +30,8 @@ interface RequestPayload {
   provider: Provider;
   payCurrency?: string;
   redirectBaseUrl?: string;
+  // Optional type-specific context (e.g. premium_item needs roomId + itemType)
+  metadata?: Record<string, unknown>;
 }
 
 Deno.serve(async (req) => {
