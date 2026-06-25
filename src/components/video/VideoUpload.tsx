@@ -241,6 +241,21 @@ export default function VideoUpload() {
         </div>
 
         <div className="space-y-2">
+          <label className="text-sm font-medium">Category</label>
+          <Select value={category || ''} onValueChange={(v) => setCategory(v || null)}>
+            <SelectTrigger>
+              <SelectValue placeholder="Pick a category (optional)" />
+            </SelectTrigger>
+            <SelectContent>
+              {VIDEO_CATEGORIES.map((c) => (
+                <SelectItem key={c.value} value={c.value}>{c.label}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+
+
+        <div className="space-y-2">
           <label className="text-sm font-medium">Video File *</label>
           <Input
             type="file"
