@@ -34,8 +34,9 @@ export function PremiumItemPurchaseModal({
       return;
     }
 
-    toast.info('Binance Pay integration coming soon!');
-    // TODO: Implement Binance Pay purchase flow
+    toast.info(
+      'Premium item purchases are temporarily disabled while we migrate to our approved payment providers (NOWPayments / PayPal). Please try again soon.'
+    );
   };
 
   return (
@@ -44,7 +45,7 @@ export function PremiumItemPurchaseModal({
         <DialogHeader>
           <DialogTitle>Purchase {itemType}</DialogTitle>
           <DialogDescription>
-            Pay with USDC via Binance Pay
+            Purchases temporarily disabled
           </DialogDescription>
         </DialogHeader>
 
@@ -52,7 +53,7 @@ export function PremiumItemPurchaseModal({
           <Alert>
             <Info className="h-4 w-4" />
             <AlertDescription>
-              All payments are processed through Binance Pay using USDC
+              Premium item purchases are temporarily disabled while we migrate to our approved payment providers (NOWPayments / PayPal).
             </AlertDescription>
           </Alert>
 
@@ -77,7 +78,7 @@ export function PremiumItemPurchaseModal({
           </Button>
           <Button onClick={handlePurchase} disabled={processing}>
             {processing && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-            {processing ? 'Processing...' : 'Pay with Binance Pay'}
+            {processing ? 'Processing...' : 'Temporarily Unavailable'}
           </Button>
         </DialogFooter>
       </DialogContent>
