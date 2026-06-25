@@ -177,6 +177,7 @@ export function useCommunityVideos() {
           file_size: file.size,
           orchard_id: metadata.orchard_id || null,
           wandering_role: metadata.wandering_role || null,
+          category: metadata.category || null,
           status: 'approved'
         })
         .select()
