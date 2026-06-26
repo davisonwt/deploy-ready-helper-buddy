@@ -44,8 +44,8 @@ import groupChatVideo from '../assets/banners/banner-16-group-chat.mp4'
 
 // Learn & Share batch (13 new explainers, 5-image slideshow + alloy VO)
 import findAHeartVideo from '../assets/explainers/learn-share/find-a-heart.mp4'
-import becomeAStoryTellerVideo from '../assets/explainers/learn-share/become-a-story-teller.mp4'
-import watchAStoryVideo from '../assets/explainers/learn-share/watch-a-story.mp4'
+import becomeAWhispererExplainerVideo from '../assets/explainers/learn-share/become-a-whisperer.mp4'
+import findAWhispererVideo from '../assets/explainers/learn-share/find-a-whisperer.mp4'
 import whatIsSow2GrowVideo from '../assets/explainers/learn-share/what-is-sow2grow.mp4'
 import theReferralSystemVideo from '../assets/explainers/learn-share/the-referral-system.mp4'
 import browseCommunityOrchardsVideo from '../assets/explainers/learn-share/browse-community-orchards.mp4'
@@ -101,8 +101,8 @@ const VIDEOS = [
   { id: 14, role: 'Forge',     title: 'Commission a Forge',         desc: 'How to order custom made items',                   color: '#64748b', emoji: '⚒️', url: commissionAForgeVideo },
   { id: 15, role: 'Heart',     title: 'Become a Wandering Heart',   desc: 'How to offer care & community support',            color: '#10b981', emoji: '💚', url: becomeAWanderingHeartVideo },
   { id: 16, role: 'Heart',     title: 'Find a Heart',               desc: 'How to find care & support in your tribe',         color: '#10b981', emoji: '💚', url: findAHeartVideo },
-  { id: 17, role: 'Story',     title: 'Become a Story Teller',      desc: 'How to share your content & media',                color: '#6366f1', emoji: '🎥', url: becomeAStoryTellerVideo },
-  { id: 18, role: 'Story',     title: 'Watch a Story',              desc: 'How to find & support tribe storytellers',         color: '#6366f1', emoji: '🎥', url: watchAStoryVideo },
+  { id: 17, role: 'Whisperer', title: 'Become a Whisperer (Marketer)', desc: 'List as an online marketer / creator and earn % on seeds you take viral', color: '#a855f7', emoji: '🌬️', url: becomeAWhispererExplainerVideo },
+  { id: 18, role: 'Whisperer', title: 'Find a Whisperer',             desc: 'Browse the Whisperers feed and partner up via ChatApp',           color: '#a855f7', emoji: '🌬️', url: findAWhispererVideo },
   { id: 19, role: 'Platform',  title: 'What is Sow2Grow',           desc: 'The full platform explained',                      color: '#0ea5e9', emoji: '🏛️', url: whatIsSow2GrowVideo },
   { id: 20, role: 'Platform',  title: 'How Bestowing Works',        desc: 'Understanding pockets & bestowals',                color: '#0ea5e9', emoji: '🏛️', url: bestowingVideo },
   { id: 21, role: 'Platform',  title: 'Sow a Single Seed',          desc: 'Step by step seed creation guide',                 color: '#0ea5e9', emoji: '🏛️', url: singleSeedVideo },
