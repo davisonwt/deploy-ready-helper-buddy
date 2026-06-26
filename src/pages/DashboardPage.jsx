@@ -94,6 +94,7 @@ const NAV = [
   { label: '364yhvh',          sub: 'Scripture & spiritual hub', emoji: '📅', path: '/364yhvh-days',          color: '#7c3aed' },
   { label: 'Let It Rain',      sub: 'Bestow blessings',          emoji: '🌧', path: 'action:let-it-rain',     color: '#ec4899' },
   { label: 'Learn & Share',    sub: 'Explainer videos',          emoji: '🎥', path: '/learn-share',           color: '#f97316' },
+  { label: 'Whisperers',       sub: 'List yourself or find one', emoji: '🌬️', path: '/whisperers',            color: '#a855f7' },
   { label: 'Wandering Hearts', sub: 'Tribal connections',        emoji: '💚', path: '/tribal-hearts',         color: '#dc2626' },
   { label: 'My Tribe',         sub: 'Your invitation code & tribe', emoji: '🌿', path: '/my-tribe',           color: '#22c55e' },
   { label: "Gosat's",          sub: 'Elder management',          emoji: '🏛', path: '/admin/dashboard',       color: '#7c3aed' },
