@@ -16,7 +16,9 @@ import singleSeedVideo from '../assets/banners/banner-03-single-seed.mp4'
 import becomeAWanderingWheelVideo from '../assets/banners/banner-04-wandering-wheel.mp4'
 import bookAWanderingWheelVideo from '../assets/banners/banner-04-wandering-wheel-book.mp4'
 
-import becomeAWanderingHandVideo from '../assets/banners/banner-05-wandering-hand.mp4'
+import connectWithAHandVideo from '../assets/banners/banner-05-wandering-hand.mp4'
+import becomeAWanderingHandVideo from '../assets/banners/banner-05b-wandering-hand-become.mp4'
+import bestowingVideo from '../assets/banners/banner-17-bestowing.mp4'
 
 import becomeAWhispererVideo from '../assets/banners/banner-06-wandering-whisperer.mp4'
 import bookAWhispererVideo from '../assets/banners/banner-06-wandering-whisperer-book.mp4'
