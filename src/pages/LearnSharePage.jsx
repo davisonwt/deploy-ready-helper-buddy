@@ -44,8 +44,8 @@ import groupChatVideo from '../assets/banners/banner-16-group-chat.mp4'
 
 // Learn & Share batch (13 new explainers, 5-image slideshow + alloy VO)
 import findAHeartVideo from '../assets/explainers/learn-share/find-a-heart.mp4'
-import becomeAStoryTellerVideo from '../assets/explainers/learn-share/become-a-story-teller.mp4'
-import watchAStoryVideo from '../assets/explainers/learn-share/watch-a-story.mp4'
+import becomeAWhispererExplainerVideo from '../assets/explainers/learn-share/become-a-whisperer.mp4'
+import findAWhispererVideo from '../assets/explainers/learn-share/find-a-whisperer.mp4'
 import whatIsSow2GrowVideo from '../assets/explainers/learn-share/what-is-sow2grow.mp4'
 import theReferralSystemVideo from '../assets/explainers/learn-share/the-referral-system.mp4'
 import browseCommunityOrchardsVideo from '../assets/explainers/learn-share/browse-community-orchards.mp4'
