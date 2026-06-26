@@ -1080,7 +1080,7 @@ export default function SeedFlowDashboard() {
                       {TRIBAL_FEED_TIERS.map((t) => (
                         <Link
                           key={t.tier}
-                          to={`/orchard-alive?tier=${t.tier}`}
+                          to={t.to || `/orchard-alive?tier=${t.tier}`}
                           onClick={() => setTribalFeedsOpen(false)}
                           role="menuitem"
                           style={{
