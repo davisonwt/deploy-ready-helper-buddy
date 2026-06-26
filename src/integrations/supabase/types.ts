@@ -13015,14 +13015,21 @@ export type Database = {
       }
       whisperers: {
         Row: {
+          avatar_url: string | null
           bio: string | null
           created_at: string | null
           display_name: string
+          headline: string | null
           id: string
           is_active: boolean | null
+          is_listed: boolean
           is_verified: boolean | null
+          languages: string[] | null
+          location: string | null
+          portfolio_media: Json
           portfolio_url: string | null
           profile_id: string | null
+          rates: string | null
           social_links: Json | null
           specialties: string[] | null
           total_earnings: number | null
@@ -13031,16 +13038,24 @@ export type Database = {
           user_id: string
           wallet_address: string | null
           wallet_type: string | null
+          years_experience: number | null
         }
         Insert: {
+          avatar_url?: string | null
           bio?: string | null
           created_at?: string | null
           display_name: string
+          headline?: string | null
           id?: string
           is_active?: boolean | null
+          is_listed?: boolean
           is_verified?: boolean | null
+          languages?: string[] | null
+          location?: string | null
+          portfolio_media?: Json
           portfolio_url?: string | null
           profile_id?: string | null
+          rates?: string | null
           social_links?: Json | null
           specialties?: string[] | null
           total_earnings?: number | null
@@ -13049,16 +13064,24 @@ export type Database = {
           user_id: string
           wallet_address?: string | null
           wallet_type?: string | null
+          years_experience?: number | null
         }
         Update: {
+          avatar_url?: string | null
           bio?: string | null
           created_at?: string | null
           display_name?: string
+          headline?: string | null
           id?: string
           is_active?: boolean | null
+          is_listed?: boolean
           is_verified?: boolean | null
+          languages?: string[] | null
+          location?: string | null
+          portfolio_media?: Json
           portfolio_url?: string | null
           profile_id?: string | null
+          rates?: string | null
           social_links?: Json | null
           specialties?: string[] | null
           total_earnings?: number | null
@@ -13067,6 +13090,7 @@ export type Database = {
           user_id?: string
           wallet_address?: string | null
           wallet_type?: string | null
+          years_experience?: number | null
         }
         Relationships: [
           {
