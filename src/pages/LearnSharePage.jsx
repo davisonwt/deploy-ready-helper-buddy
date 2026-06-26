@@ -72,7 +72,7 @@ const VIDEOS = [
   { id: 1,  role: 'Wheel',     title: 'Become a Wandering Wheel',   desc: 'How to register as a driver & transport provider', color: '#06b6d4', emoji: '🚗', url: becomeAWanderingWheelVideo },
   { id: 2,  role: 'Wheel',     title: 'Book a Wandering Wheel',     desc: 'How to find and book a driver near you',           color: '#06b6d4', emoji: '🚗', url: bookAWanderingWheelVideo },
   { id: 3,  role: 'Hand',      title: 'Become a Wandering Hand',    desc: 'How to register your skilled service',             color: '#22c55e', emoji: '🤲', url: becomeAWanderingHandVideo },
-  { id: 4,  role: 'Hand',      title: 'Connect with a Hand',        desc: 'How to find and hire skilled tribe members',       color: '#22c55e', emoji: '🤲', url: becomeAWanderingHandVideo },
+  { id: 4,  role: 'Hand',      title: 'Connect with a Hand',        desc: 'How to find and hire skilled tribe members',       color: '#22c55e', emoji: '🤲', url: connectWithAHandVideo },
   { id: 5,  role: 'Whisperer', title: 'Become a Whisperer',         desc: 'How to earn by referring seeds & orchards',        color: '#a855f7', emoji: '🌬️', url: becomeAWhispererVideo },
   { id: 6,  role: 'Whisperer', title: 'Connect with a Whisperer',   desc: 'How to book / connect with a wandering whisperer', color: '#a855f7', emoji: '🌬️', url: bookAWhispererVideo },
   { id: 7,  role: 'Pillow',    title: 'Become a Wandering Pillow',  desc: 'How to list your accommodation',                   color: '#ec4899', emoji: '🛏️', url: becomeAWanderingPillowVideo },
