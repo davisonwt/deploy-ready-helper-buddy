@@ -118,6 +118,8 @@ import {
   ClassroomPage,
   ClassroomDashboardPage,
   SkillDropPage,
+  BecomeWhispererPage,
+  WhisperersFeedPage,
 } from './lazyPages';
 
 export const LoadingFallback = () => (
@@ -244,6 +246,12 @@ const AppRoutes = () => (
       <ProtectedRoute><LearnSharePage /></ProtectedRoute>
     } /><Route path="/wandering-directory" element={
     <ProtectedRoute><WanderingDirectoryPage /></ProtectedRoute>
+    } />
+    <Route path="/whisperers" element={
+      <ProtectedRoute><Suspense fallback={<LoadingFallback />}><WhisperersFeedPage /></Suspense></ProtectedRoute>
+    } />
+    <Route path="/become-a-whisperer" element={
+      <ProtectedRoute><Suspense fallback={<LoadingFallback />}><BecomeWhispererPage /></Suspense></ProtectedRoute>
     } />
     <Route path="/admin-fee" element={
       <ProtectedRoute><TithingPage /></ProtectedRoute>

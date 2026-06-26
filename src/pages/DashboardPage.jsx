@@ -428,6 +428,7 @@ export default function SeedFlowDashboard() {
     { tier: 'orchard', label: 'Orchard', emoji: '🍎' },
     { tier: 'estate', label: 'Estate', emoji: '🏛️' },
     { tier: 'harvest_works', label: 'Harvest Works', emoji: '🏭' },
+    { tier: 'whisperers', label: 'Whisperers', emoji: '🌬️', to: '/whisperers' },
   ]
   const intervalRef = useRef(null)
 
