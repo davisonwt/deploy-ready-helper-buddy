@@ -42,6 +42,22 @@ import radioVideo from '../assets/banners/banner-14-radio.mp4'
 import oneOnOneVideo from '../assets/banners/banner-15-one-on-one.mp4'
 import groupChatVideo from '../assets/banners/banner-16-group-chat.mp4'
 
+// Learn & Share batch (13 new explainers, 5-image slideshow + alloy VO)
+import findAHeartVideo from '../assets/explainers/learn-share/find-a-heart.mp4'
+import becomeAStoryTellerVideo from '../assets/explainers/learn-share/become-a-story-teller.mp4'
+import watchAStoryVideo from '../assets/explainers/learn-share/watch-a-story.mp4'
+import whatIsSow2GrowVideo from '../assets/explainers/learn-share/what-is-sow2grow.mp4'
+import theReferralSystemVideo from '../assets/explainers/learn-share/the-referral-system.mp4'
+import browseCommunityOrchardsVideo from '../assets/explainers/learn-share/browse-community-orchards.mp4'
+import theGroveStationVideo from '../assets/explainers/learn-share/the-grove-station.mp4'
+import myGardenGuideVideo from '../assets/explainers/learn-share/my-garden-guide.mp4'
+import goLiveOnASeedVideo from '../assets/explainers/learn-share/go-live-on-a-seed.mp4'
+import theWanderingDirectoryVideo from '../assets/explainers/learn-share/the-wandering-directory.mp4'
+import calendar364yhvhVideo from '../assets/explainers/learn-share/calendar-364yhvh.mp4'
+import letItRainVideo from '../assets/explainers/learn-share/let-it-rain.mp4'
+import theMusicLibraryVideo from '../assets/explainers/learn-share/the-music-library.mp4'
+import s2gWalletSetupVideo from '../assets/explainers/learn-share/s2g-wallet-setup.mp4'
+
 // ── Colored Living Button — share animation in any color ────────────────────
 
 const REFERRAL_CODES = {
@@ -84,30 +100,30 @@ const VIDEOS = [
   { id: 13, role: 'Forge',     title: 'Become a Wandering Forge',   desc: 'How to list your craft & manufacturing skills',    color: '#64748b', emoji: '⚒️', url: becomeAWanderingForgeVideo },
   { id: 14, role: 'Forge',     title: 'Commission a Forge',         desc: 'How to order custom made items',                   color: '#64748b', emoji: '⚒️', url: commissionAForgeVideo },
   { id: 15, role: 'Heart',     title: 'Become a Wandering Heart',   desc: 'How to offer care & community support',            color: '#10b981', emoji: '💚', url: becomeAWanderingHeartVideo },
-  { id: 16, role: 'Heart',     title: 'Find a Heart',               desc: 'How to find care & support in your tribe',         color: '#10b981', emoji: '💚', url: null },
-  { id: 17, role: 'Story',     title: 'Become a Story Teller',      desc: 'How to share your content & media',                color: '#6366f1', emoji: '🎥', url: null },
-  { id: 18, role: 'Story',     title: 'Watch a Story',              desc: 'How to find & support tribe storytellers',         color: '#6366f1', emoji: '🎥', url: null },
-  { id: 19, role: 'Platform',  title: 'What is Sow2Grow',           desc: 'The full platform explained',                      color: '#0ea5e9', emoji: '🏛️', url: null },
+  { id: 16, role: 'Heart',     title: 'Find a Heart',               desc: 'How to find care & support in your tribe',         color: '#10b981', emoji: '💚', url: findAHeartVideo },
+  { id: 17, role: 'Story',     title: 'Become a Story Teller',      desc: 'How to share your content & media',                color: '#6366f1', emoji: '🎥', url: becomeAStoryTellerVideo },
+  { id: 18, role: 'Story',     title: 'Watch a Story',              desc: 'How to find & support tribe storytellers',         color: '#6366f1', emoji: '🎥', url: watchAStoryVideo },
+  { id: 19, role: 'Platform',  title: 'What is Sow2Grow',           desc: 'The full platform explained',                      color: '#0ea5e9', emoji: '🏛️', url: whatIsSow2GrowVideo },
   { id: 20, role: 'Platform',  title: 'How Bestowing Works',        desc: 'Understanding pockets & bestowals',                color: '#0ea5e9', emoji: '🏛️', url: bestowingVideo },
   { id: 21, role: 'Platform',  title: 'Sow a Single Seed',          desc: 'Step by step seed creation guide',                 color: '#0ea5e9', emoji: '🏛️', url: singleSeedVideo },
   { id: 22, role: 'Platform',  title: 'Community Orchard Explained',desc: 'How tribe needs become community orchards',        color: '#0ea5e9', emoji: '🏛️', url: communityOrchardVideo },
   { id: 23, role: 'Platform',  title: 'Production Orchard Explained',desc:'How to fund a product into existence',             color: '#0ea5e9', emoji: '🏛️', url: productionOrchardVideo },
-  { id: 24, role: 'Platform',  title: 'The Referral System',        desc: 'How to earn 1% forever through your tribe',        color: '#0ea5e9', emoji: '🏛️', url: null },
+  { id: 24, role: 'Platform',  title: 'The Referral System',        desc: 'How to earn 1% forever through your tribe',        color: '#0ea5e9', emoji: '🏛️', url: theReferralSystemVideo },
   { id: 35, role: 'Platform',  title: 'Host a Live Classroom',      desc: 'How to host a live classroom session',             color: '#0ea5e9', emoji: '🏛️', url: classroomVideo },
   { id: 36, role: 'Platform',  title: 'Open a Skilldrop Room',      desc: 'How to open a skilldrop room',                     color: '#0ea5e9', emoji: '🏛️', url: skilldropVideo },
   { id: 37, role: 'Platform',  title: 'Host a Training Session',    desc: 'How to host a live training session',              color: '#0ea5e9', emoji: '🏛️', url: trainingVideo },
   { id: 38, role: 'Platform',  title: 'Host Your Own Radio Show',   desc: 'How to start your own radio show',                 color: '#0ea5e9', emoji: '🏛️', url: radioVideo },
   { id: 39, role: 'Platform',  title: 'Start a 1-on-1 Chat',        desc: 'How to start a private 1-on-1 chat',               color: '#0ea5e9', emoji: '🏛️', url: oneOnOneVideo },
   { id: 40, role: 'Platform',  title: 'Start an S2G Group Chat',    desc: 'How to start an S2G group call',                   color: '#0ea5e9', emoji: '🏛️', url: groupChatVideo },
-  { id: 25, role: 'Orchard',   title: 'Browse Community Orchards',  desc: 'How to find and bestow into orchards',             color: '#16a34a', emoji: '🌳', url: null },
-  { id: 26, role: 'Orchard',   title: 'The Grove Station',          desc: 'How to use the 24hr community radio',              color: '#16a34a', emoji: '🌳', url: null },
-  { id: 27, role: 'Orchard',   title: 'My Garden Guide',            desc: 'How to manage your seeds & orchards',              color: '#16a34a', emoji: '🌳', url: null },
-  { id: 28, role: 'Orchard',   title: 'Go Live on a Seed',          desc: 'How to host a live session for a seed',            color: '#16a34a', emoji: '🌳', url: null },
-  { id: 29, role: 'Orchard',   title: 'The Wandering Directory',    desc: 'How to find tribe members by role',                color: '#16a34a', emoji: '🌳', url: null },
-  { id: 30, role: 'Orchard',   title: '364yhvh Calendar',           desc: 'How the sacred calendar works in S2G',             color: '#16a34a', emoji: '🌳', url: null },
-  { id: 31, role: 'Orchard',   title: 'Let It Rain',                desc: 'How to bestow blessings to the tribe',             color: '#16a34a', emoji: '🌳', url: null },
-  { id: 32, role: 'Orchard',   title: 'The Music Library',          desc: 'How to upload and share your music',               color: '#16a34a', emoji: '🌳', url: null },
-  { id: 33, role: 'Orchard',   title: 'S2G Wallet Setup',           desc: 'How to set up USDC payments',                      color: '#16a34a', emoji: '🌳', url: null },
+  { id: 25, role: 'Orchard',   title: 'Browse Community Orchards',  desc: 'How to find and bestow into orchards',             color: '#16a34a', emoji: '🌳', url: browseCommunityOrchardsVideo },
+  { id: 26, role: 'Orchard',   title: 'The Grove Station',          desc: 'How to use the 24hr community radio',              color: '#16a34a', emoji: '🌳', url: theGroveStationVideo },
+  { id: 27, role: 'Orchard',   title: 'My Garden Guide',            desc: 'How to manage your seeds & orchards',              color: '#16a34a', emoji: '🌳', url: myGardenGuideVideo },
+  { id: 28, role: 'Orchard',   title: 'Go Live on a Seed',          desc: 'How to host a live session for a seed',            color: '#16a34a', emoji: '🌳', url: goLiveOnASeedVideo },
+  { id: 29, role: 'Orchard',   title: 'The Wandering Directory',    desc: 'How to find tribe members by role',                color: '#16a34a', emoji: '🌳', url: theWanderingDirectoryVideo },
+  { id: 30, role: 'Orchard',   title: '364yhvh Calendar',           desc: 'How the sacred calendar works in S2G',             color: '#16a34a', emoji: '🌳', url: calendar364yhvhVideo },
+  { id: 31, role: 'Orchard',   title: 'Let It Rain',                desc: 'How to bestow blessings to the tribe',             color: '#16a34a', emoji: '🌳', url: letItRainVideo },
+  { id: 32, role: 'Orchard',   title: 'The Music Library',          desc: 'How to upload and share your music',               color: '#16a34a', emoji: '🌳', url: theMusicLibraryVideo },
+  { id: 33, role: 'Orchard',   title: 'S2G Wallet Setup',           desc: 'How to set up USDC payments',                      color: '#16a34a', emoji: '🌳', url: s2gWalletSetupVideo },
   { id: 34, role: 'Orchard',   title: 'Become a Sower & Grower',    desc: 'The complete S2G onboarding guide',                color: '#16a34a', emoji: '🌳', url: becomeASowerVideo },
 ]
 
