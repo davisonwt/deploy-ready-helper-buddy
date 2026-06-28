@@ -68,9 +68,10 @@ export const MonthPage: React.FC<Props> = ({ month, year, imageUrl }) => {
           <View key={`blank-${i}`} style={styles.cell} />
         ))}
         {month.days.map((d) => {
-          const cellStyles = [styles.cell];
-          if (d.info.isHighSabbath) cellStyles.push(styles.highSabbathCell);
-          else if (d.info.isSabbath) cellStyles.push(styles.sabbathCell);
+          const bg = d.info.isHighSabbath
+            ? styles.highSabbathCell
+            : d.info.isSabbath ? styles.sabbathCell : undefined;
+          const cellStyles = bg ? [styles.cell, bg] : styles.cell;
 
           return (
             <View key={d.dayOfMonth} style={cellStyles}>
