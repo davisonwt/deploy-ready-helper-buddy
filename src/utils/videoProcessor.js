@@ -1,5 +1,4 @@
 // Enhanced video processing utility with compression and thumbnail generation
-import { loadImage } from '@/utils/backgroundRemoval';
 
 // Supported video formats and their optimal settings
 const VIDEO_FORMATS = {
