@@ -42,9 +42,10 @@ export const YearPlannerPage: React.FC<Props> = ({ year }) => (
           <View key={m.month} style={styles.column}>
             <Text style={styles.columnHeader}>{m.label}</Text>
             {m.days.map((d) => {
-              const rowStyle = [styles.dayRow];
-              if (d.info.isHighSabbath) rowStyle.push(styles.highSabbath);
-              else if (d.info.isSabbath) rowStyle.push(styles.sabbath);
+              const bg = d.info.isHighSabbath
+                ? styles.highSabbath
+                : d.info.isSabbath ? styles.sabbath : undefined;
+              const rowStyle = bg ? [styles.dayRow, bg] : styles.dayRow;
               return (
                 <View key={d.dayOfMonth} style={rowStyle}>
                   <Text style={styles.dayNum}>{d.dayOfMonth}{d.info.isIntercalary ? '*' : ''}</Text>
