@@ -1,51 +1,57 @@
-# Videos investigation — read-only findings
+## Investigation report — read only, no changes made
 
-No code changes proposed. This is the report you asked for.
+### 1. `ethers` — **UNUSED (dead weight)**
 
-## 1) Active UI entry points that write to `community_videos`
+**Imports found (2):**
+- `src/hooks/useWallet.tsx` — exports `useWallet()` hook (Cronos USDC wallet)
+- `src/lib/cronos.ts` — exports `USDC_ADDRESS`, `USDC_ABI`
 
-Two real, reachable entry points exist today. Both write to `community_videos` (not `video_content`).
+**Consumers in `src/`:** none.
+- `useWallet` is not imported anywhere outside its own file.
+- `@/lib/cronos` is imported only by `useWallet.tsx` itself.
 
-**A. `/community-videos` — primary entry point**
-- Route: `src/routes/AppRoutes.tsx` → `<Route path="/community-videos" … CommunityVideosPage />`
-- Inbound nav link: `src/components/layout/ResponsiveLayout.tsx` ("Community" item → `/community-videos`)
-- Page: `src/pages/CommunityVideosPage.jsx` shows an **"Upload Video"** button (visible only when signed in) that opens `VideoUploadModal`.
-- Modal: `src/components/community/VideoUploadModal.jsx` → calls `useCommunityVideos().uploadVideo(...)`.
-- Hook: `src/hooks/useCommunityVideos.jsx` line 164 → `.from('community_videos').insert({ uploader_id, uploader_profile_id, … })`.
+**Conclusion:** Leftover from the Binance/Cronos/crypto-wallet removal earlier today. Safe to delete both files and drop the `ethers` package.
 
-**B. `/upload` — secondary entry point, currently orphaned in nav**
-- Route: `src/routes/AppRoutes.tsx` → `<Route path="/upload" … VideoUploadPage />`
-- Page: `src/pages/VideoUploadPage.tsx` → renders `<VideoUpload />`.
-- Component: `src/components/video/VideoUpload.tsx` line 158 → `supabase.from('community_videos').insert({...})`.
-- No nav/menu/button in the app links to `/upload`. Reachable only by typing the URL.
+---
 
-**Nothing currently writes to `video_content`.** That table is referenced only by `ContentModeration.tsx` (admin) and `useCommunityVideos`'s admin moderation queries — no upload UI populates it.
+### 2. `@huggingface/transformers` — **EFFECTIVELY UNUSED**
 
-## 2) Was a Videos upload entry point recently removed?
+**Import found (1):**
+- `src/utils/backgroundRemoval.ts` — uses `pipeline('image-segmentation', 'Xenova/segformer-...')` for in-browser background removal. Exports: `removeBackground`, `loadImage`, `loadImageFromUrl`.
 
-No. Both routes above are still in `AppRoutes.tsx` and `lazyPages.ts`, and the "Community" nav link in `ResponsiveLayout.tsx` still points at `/community-videos`. Today's dead-code/payments cleanup did not touch `VideoUploadPage`, `VideoUpload.tsx`, `CommunityVideosPage`, `VideoUploadModal`, or `useCommunityVideos`. The reason `community_videos` is empty for the founder's account is not deletion — it's that the founder never used `/community-videos`; they used the seed-attached video field on `SeedSubmissionPage` instead (see #3a).
+**Consumers in `src/`:**
+- `src/components/LogoProcessor.tsx` — calls `removeBackground` and `loadImageFromUrl`. **`LogoProcessor` itself has zero consumers** (no page/route imports it).
+- `src/utils/videoProcessor.js` — has `import { loadImage } from '@/utils/backgroundRemoval'` but **never calls `loadImage`** (import-only, unused symbol). `videoProcessor` itself is heavily used, but it does not trigger the transformers pipeline.
 
-## 3) The three-way distinction
+**Conclusion:** Only the orphaned `LogoProcessor` actually executes the transformers code. Safe to delete `LogoProcessor.tsx` + `backgroundRemoval.ts` (and remove the unused `loadImage` import from `videoProcessor.js`), then drop the `@huggingface/transformers` package.
 
-**(a) Video clip attached to a seed — what the founder actually used.**
-File: `src/pages/SeedSubmissionPage.jsx`. The seed form has a "Click to upload video (MP4 - Max 50MB)" input that uploads to the `videos` storage bucket under `seeds/`, then stores the URL in `seeds.video_url` (and mirrored into the linked `orchards` row's `video_url`). It does **not** create any `community_videos` row. This is why the Tribe Feed / Homestead seed card shows the player and "Bestow & Get This Seed" — it's a seed, not a standalone video.
+---
 
-**(b) AI-generated marketing video for a seed — separate, working.**
-Files: `src/components/ai/AIVideoGenerator.jsx`, `VideoMarketingDashboard.jsx`, plus the `video_jobs` table. This pipeline produces marketing assets tied to a seed/orchard. Independent of (a) and (c); does not populate `community_videos` either.
+### 3. `socket.io-client` — **UNUSED (dead weight)**
 
-**(c) Standalone "Videos" library (My Garden / Dashboard "Videos" section).**
-Reads from `community_videos` via `useMyContent` / `fetchTribeOrchards`. The upload entry points that feed this table are the two listed in #1 (`/community-videos` upload modal, and the orphaned `/upload`). It is a **real, intended feature with a working upload path** — not vestigial. The founder's "0 videos" is simply because no `community_videos` row was ever inserted for their account; the file they uploaded went to `seeds.video_url` via the seed form, which is a different surface entirely.
+**Import found (1):**
+- `src/utils/liveStreamingService.js` — `import io from 'socket.io-client'`, a custom WebRTC + Socket.IO live-streaming service class.
 
-## Plain-English summary
+**Consumer chain:**
+- `liveStreamingService` → used only by `src/hooks/useLiveStreaming.jsx`
+- `useLiveStreaming` → used only by 3 components in `src/components/streaming/`:
+  - `LiveStreamViewer.jsx`
+  - `LiveStreamBroadcaster.jsx`
+  - `LiveStreamDirectory.jsx`
+- **None of these 3 components are imported anywhere** (no route, no page, no parent).
 
-- The standalone Videos feature is **not broken or missing** — `/community-videos` works, has a visible "Upload Video" button, writes to `community_videos`, and is linked from the "Community" nav.
-- The founder's "home video" went into a **seed**, not into the standalone Videos library, because they used the seed submission form's video field. That is working as designed for path (a).
-- My Garden / Dashboard's "Videos" section will only ever show items uploaded through `/community-videos` (or `/upload`), never seed-attached `video_url` clips. If the intent is for seed-attached videos to ALSO appear there, that is a new requirement and would need a separate decision — I am **not** proposing that change here.
+Note: the `LiveStream*` components actually rendered by the app live in `src/components/radio/` (`LiveStreamInterface`, `LiveStreamListener`, used by `GroveStationPage`). Those are unrelated and do NOT use socket.io — radio/live features go through Supabase realtime.
 
-## What I need from you before any code change
+**Conclusion:** Entire `components/streaming/` + `useLiveStreaming` + `liveStreamingService` chain is dead. Safe to delete all of it and drop `socket.io-client`.
 
-Pick one:
-1. **Leave as-is** — the feature is intact; founder simply needs to use `/community-videos` for standalone uploads.
-2. **Make seed-attached videos also appear in My Garden's Videos section** — requires extending `useMyContent` to union `seeds.video_url` rows into the videos list (no schema change).
-3. **Remove the orphaned `/upload` route** — it's reachable only by URL; safe to delete since `/community-videos` is the canonical path.
-4. Some combination of the above.
+---
+
+### Summary
+
+| Package | Status | Files implicated |
+|---|---|---|
+| `ethers` | Dead | `useWallet.tsx`, `lib/cronos.ts` |
+| `@huggingface/transformers` | Dead | `backgroundRemoval.ts`, `LogoProcessor.tsx`, unused import in `videoProcessor.js` |
+| `socket.io-client` | Dead | `liveStreamingService.js`, `useLiveStreaming.jsx`, `components/streaming/LiveStream{Viewer,Broadcaster,Directory}.jsx` |
+
+All three can be removed cleanly. **Awaiting your go-ahead before deleting any files or uninstalling packages** (per scope-lock + checkpoint rules).
