@@ -100,6 +100,7 @@ import {
   GoSatGhostAccessThumbnailPage,
   TrueTequfahClock,
   Sow2GrowCalendarPage,
+  PrintCalendarPage,
   EnochianCalendarDesignPage,
   EternalForestPage,
   AdminAnalyticsPage,
@@ -141,6 +142,9 @@ const AppRoutes = () => (
     <Route path="/gosat-ghost-access-thumbnail" element={<GoSatGhostAccessThumbnailPage />} />
     <Route path="/tequfah-clock" element={<TrueTequfahClock />} />
     <Route path="/sow2grow-calendar" element={<Sow2GrowCalendarPage />} />
+    <Route path="/calendar/print" element={
+      <Suspense fallback={<LoadingFallback />}><PrintCalendarPage /></Suspense>
+    } />
     <Route path="/enochian-calendar-design" element={
       <Layout><Suspense fallback={<LoadingFallback />}><EnochianCalendarDesignPage /></Suspense></Layout>
     } />

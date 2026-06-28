@@ -9240,6 +9240,45 @@ export type Database = {
         }
         Relationships: []
       }
+      seasonal_calendar_art: {
+        Row: {
+          created_at: string
+          id: string
+          image_url: string
+          model: string
+          prompt: string
+          region_key: string
+          scriptural_month: number
+          season_label: string
+          storage_path: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          image_url: string
+          model: string
+          prompt: string
+          region_key: string
+          scriptural_month: number
+          season_label: string
+          storage_path: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          image_url?: string
+          model?: string
+          prompt?: string
+          region_key?: string
+          scriptural_month?: number
+          season_label?: string
+          storage_path?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       seed_analytics_daily: {
         Row: {
           bestowals_amount: number
