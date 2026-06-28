@@ -161,6 +161,7 @@ export const AmbassadorThumbnailPage = lazy(() => import('@/pages/AmbassadorThum
 export const GoSatGhostAccessThumbnailPage = lazy(() => import('@/pages/GoSatGhostAccessThumbnailPage'));
 export const TrueTequfahClock = lazy(() => import('@/components/TrueTequfahClock'));
 export const Sow2GrowCalendarPage = lazy(() => import('@/pages/Sow2GrowCalendarPage'));
+export const PrintCalendarPage = lazy(() => import('@/pages/PrintCalendarPage'));
 export const EnochianCalendarDesignPage = lazy(() => import('@/pages/EnochianCalendarDesignPage'));
 export const EternalForestPage = lazy(() => import('@/pages/EternalForestPage'));
 export const AdminAnalyticsPage = lazy(() => import('@/pages/AdminAnalyticsPage'));
