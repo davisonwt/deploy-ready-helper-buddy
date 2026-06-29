@@ -1,0 +1,1 @@
+DELETE FROM public.seasonal_calendar_art;
