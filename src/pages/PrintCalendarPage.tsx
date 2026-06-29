@@ -31,9 +31,11 @@ const PrintCalendarPage: React.FC = () => {
   // staring at a spinner after they click Download.
   useEffect(() => {
     if (locLoading) return;
-    void loadCalendarBundle(year, location.lat, location.lon).catch(() => {
-      /* prewarm only — errors surface on the real Download click */
-    });
+    let cancelled = false;
+    loadCalendarBundle(year, location.lat, location.lon)
+      .then((b) => { if (!cancelled) setPreviewBundle(b); })
+      .catch(() => { /* prewarm only — errors surface on the real Download click */ });
+    return () => { cancelled = true; };
   }, [year, location.lat, location.lon, locLoading]);
 
   const handleDownload = async () => {
