@@ -84,11 +84,15 @@ serve(async (req) => {
     const REPLICATE_API_TOKEN = Deno.env.get("REPLICATE_API_TOKEN");
     if (!REPLICATE_API_TOKEN) return json({ error: "Image generation not configured" }, 500);
 
-    // 2. Build prompt
+    // 2. Build prompt — stunning, gallery-grade seasonal nature art
     const prompt =
-      `Photorealistic ${season_label} landscape, ${region_description}, ` +
-      `scriptural month ${scriptural_month}, soft natural light, ` +
-      `no text, no people, calendar wall-art composition, painterly, serene.`;
+      `Breathtaking, award-winning fine-art nature photograph of a ${season_label} landscape in ${region_description}. ` +
+      `Sweeping vista, dramatic golden-hour light, rich atmospheric depth, volumetric haze, ` +
+      `cinematic composition with strong foreground, mid-ground and distant mountains or horizon, ` +
+      `vivid seasonal flora and authentic local ecosystem appropriate to scriptural month ${scriptural_month}, ` +
+      `hyper-detailed, ultra-sharp, 8k, National Geographic quality, painterly yet photoreal, ` +
+      `serene and majestic, no people, no text, no watermarks, no logos, ` +
+      `vertical wall-calendar composition with clear sky area at lower portion for date grid.`;
 
     // 3. Call FLUX (matching generate-thumbnail/index.ts pattern)
     const createRes = await fetch(
