@@ -120,6 +120,7 @@ export const MonthPage: React.FC<Props> = ({ month, year, imageUrl }) => {
               ? styles.highSabbathCell
               : d.info.isSabbath ? styles.sabbathCell : undefined;
             const cellStyles = bg ? [styles.cell, bg] : styles.cell;
+            const omer = getOmerCount(month.month, d.dayOfMonth);
 
             return (
               <View key={d.dayOfMonth} style={cellStyles}>
@@ -131,6 +132,9 @@ export const MonthPage: React.FC<Props> = ({ month, year, imageUrl }) => {
                 </View>
                 {d.info.feastName ? (
                   <Text style={styles.cellFeast}>{d.info.feastName}</Text>
+                ) : null}
+                {omer ? (
+                  <Text style={styles.cellOmer}>{omer.label}</Text>
                 ) : null}
                 {d.info.isIntercalary ? (
                   <Text style={styles.intercalary}>Intercalary</Text>
