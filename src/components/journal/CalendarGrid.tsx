@@ -379,6 +379,14 @@ export default function CalendarGrid({ entries: propEntries, onDateSelect }: Cal
             const isShabbatDay = isShabbat(day.yhwhDate);
             const isTequvahDay = isTequvah(day.yhwhDate);
 
+            // Scriptural feast + Omer info for this day
+            const monthDaysArr = [30, 30, 31, 30, 30, 31, 30, 30, 31, 30, 30, 31];
+            let dayOfYearForDay = 0;
+            for (let i = 0; i < currentYhwhMonth - 1; i++) dayOfYearForDay += monthDaysArr[i];
+            dayOfYearForDay += day.yhwhDate.day;
+            const sacredInfo = getDayInfo(dayOfYearForDay);
+            const omer = getOmerCount(currentYhwhMonth, day.yhwhDate.day);
+
             return (
               <motion.button
                 key={idx}
@@ -390,51 +398,52 @@ export default function CalendarGrid({ entries: propEntries, onDateSelect }: Cal
                   }
                 }}
                 className={`
-                  aspect-square p-2 rounded-lg border-2 transition-all
+                  aspect-square p-2 rounded-lg border-2 transition-all text-left
                   ${isToday ? 'border-primary bg-primary/10' : 'border-border'}
                   ${day.hasEntry ? 'bg-success/10 hover:bg-success/20' : 'hover:bg-muted/50'}
                   ${day.birthdays && day.birthdays.length > 0 ? 'bg-pink-500/10 ring-1 ring-pink-500/30' : ''}
                   ${isShabbatDay ? 'bg-yellow-500/20' : ''}
+                  ${sacredInfo.isHighSabbath ? 'bg-amber-500/30 ring-2 ring-amber-600' : ''}
                   ${isTequvahDay ? 'ring-2 ring-amber-500/50' : ''}
                 `}
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
+                whileHover={{ scale: 1.03 }}
+                whileTap={{ scale: 0.97 }}
+                title={sacredInfo.feastName || ''}
               >
-                <div className="flex flex-col items-center justify-center h-full">
-                  {/* YHWH day number - PRIMARY */}
-                  <div className={`
-                    text-lg font-bold mb-1
-                    ${isToday ? 'text-primary' : 'text-foreground'}
-                  `}>
-                    {day.yhwhDate.day}
-                  </div>
-
-                  {/* Gregorian date - SECONDARY */}
-                  <div className="text-xs text-muted-foreground text-center leading-tight">
-                    <div className="font-semibold">
-                      {day.gregorianDate.getFullYear()}/{String(day.gregorianDate.getMonth() + 1).padStart(2, '0')}/{String(day.gregorianDate.getDate()).padStart(2, '0')}
+                <div className="flex flex-col h-full">
+                  <div className="flex items-baseline justify-between">
+                    <div className={`text-lg font-bold ${isToday ? 'text-primary' : 'text-foreground'}`}>
+                      {day.yhwhDate.day}
+                    </div>
+                    <div className="text-[9px] text-muted-foreground font-semibold">
+                      {day.gregorianDate.toLocaleDateString(undefined, { day: 'numeric', month: 'short' })}
                     </div>
                   </div>
 
+                  {sacredInfo.feastName && (
+                    <div className="text-[8px] leading-tight font-bold text-orange-700 dark:text-orange-300 mt-1 line-clamp-2">
+                      {sacredInfo.feastName}
+                    </div>
+                  )}
+                  {omer && (
+                    <div className="text-[8px] leading-tight text-emerald-700 dark:text-emerald-400 mt-0.5 italic">
+                      {omer.label}
+                    </div>
+                  )}
+
                   {/* Indicators */}
-                  <div className="flex gap-1 mt-1 flex-wrap justify-center">
-                    {day.hasEntry && (
-                      <BookOpen className="h-3 w-3 text-success" />
-                    )}
+                  <div className="flex gap-1 mt-auto flex-wrap">
+                    {day.hasEntry && <BookOpen className="h-3 w-3 text-success" />}
                     {day.birthdays && day.birthdays.length > 0 && (
                       <Badge className="bg-pink-500/20 text-pink-700 text-[8px] px-1 py-0" title={day.birthdays.map(b => b.person_name).join(', ')}>
                         🎂 {day.birthdays.length}
                       </Badge>
                     )}
                     {isShabbatDay && (
-                      <Badge className="bg-yellow-500/20 text-yellow-700 text-[8px] px-1 py-0">
-                        S
-                      </Badge>
+                      <Badge className="bg-yellow-500/20 text-yellow-700 text-[8px] px-1 py-0">S</Badge>
                     )}
-                    {isTequvahDay && (
-                      <Badge className="bg-amber-500/20 text-amber-700 text-[8px] px-1 py-0">
-                        T
-                      </Badge>
+                    {sacredInfo.isHighSabbath && (
+                      <Badge className="bg-amber-600/30 text-amber-900 text-[8px] px-1 py-0">High</Badge>
                     )}
                   </div>
                 </div>
@@ -442,6 +451,8 @@ export default function CalendarGrid({ entries: propEntries, onDateSelect }: Cal
             );
           })}
         </div>
+
+
 
         {/* Legend */}
         <div className="mt-6 flex flex-wrap gap-4 text-sm">
