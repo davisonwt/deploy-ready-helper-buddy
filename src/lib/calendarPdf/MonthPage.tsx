@@ -2,6 +2,7 @@ import React from 'react';
 import { Page, Text, View, Image, StyleSheet } from '@react-pdf/renderer';
 import type { MonthBuild } from '@/utils/calendarYearBuild';
 import { WEEKDAY_LABELS, formatGregorian } from '@/utils/calendarYearBuild';
+import { getOmerCount } from '@/utils/sacredCalendar';
 
 const styles = StyleSheet.create({
   page: { padding: 0, fontFamily: 'Helvetica', backgroundColor: '#FBF8F1' },
@@ -58,6 +59,7 @@ const styles = StyleSheet.create({
     fontSize: 6.5, color: '#8C3A00', marginTop: 3,
     fontWeight: 'bold',
   },
+  cellOmer: { fontSize: 6, color: '#4B6A2E', marginTop: 2, fontStyle: 'italic' },
   sabbathCell: { backgroundColor: '#FFF4E0' },
   highSabbathCell: { backgroundColor: '#F6D9B0' },
   intercalary: { fontSize: 6, color: '#8a7a55', fontStyle: 'italic' },
@@ -118,6 +120,7 @@ export const MonthPage: React.FC<Props> = ({ month, year, imageUrl }) => {
               ? styles.highSabbathCell
               : d.info.isSabbath ? styles.sabbathCell : undefined;
             const cellStyles = bg ? [styles.cell, bg] : styles.cell;
+            const omer = getOmerCount(month.month, d.dayOfMonth);
 
             return (
               <View key={d.dayOfMonth} style={cellStyles}>
@@ -129,6 +132,9 @@ export const MonthPage: React.FC<Props> = ({ month, year, imageUrl }) => {
                 </View>
                 {d.info.feastName ? (
                   <Text style={styles.cellFeast}>{d.info.feastName}</Text>
+                ) : null}
+                {omer ? (
+                  <Text style={styles.cellOmer}>{omer.label}</Text>
                 ) : null}
                 {d.info.isIntercalary ? (
                   <Text style={styles.intercalary}>Intercalary</Text>

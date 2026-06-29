@@ -8,8 +8,9 @@ import { useToast } from '@/hooks/use-toast';
 import { useUserLocation } from '@/hooks/useUserLocation';
 import { getCreatorDateSync } from '@/utils/customCalendar';
 import { getRegion, describeRegion } from '@/utils/calendarSeason';
-import { loadCalendarBundle, calendarFilename } from '@/lib/calendarPdf/buildCalendar';
+import { loadCalendarBundle, calendarFilename, type CalendarBundle } from '@/lib/calendarPdf/buildCalendar';
 import type { CalendarOutput } from '@/lib/calendarPdf/WallCalendarDocument';
+import { MONTH_LABELS } from '@/utils/calendarYearBuild';
 
 type Phase = 'idle' | 'generating-art' | 'rendering-pdf' | 'done' | 'error';
 
@@ -22,6 +23,7 @@ const PrintCalendarPage: React.FC = () => {
   const [output, setOutput] = useState<CalendarOutput>('both');
   const [phase, setPhase] = useState<Phase>('idle');
   const [progress, setProgress] = useState<string>('');
+  const [previewBundle, setPreviewBundle] = useState<CalendarBundle | null>(null);
 
   const region = useMemo(() => getRegion(location.lat), [location.lat]);
 
@@ -29,9 +31,11 @@ const PrintCalendarPage: React.FC = () => {
   // staring at a spinner after they click Download.
   useEffect(() => {
     if (locLoading) return;
-    void loadCalendarBundle(year, location.lat, location.lon).catch(() => {
-      /* prewarm only — errors surface on the real Download click */
-    });
+    let cancelled = false;
+    loadCalendarBundle(year, location.lat, location.lon)
+      .then((b) => { if (!cancelled) setPreviewBundle(b); })
+      .catch(() => { /* prewarm only — errors surface on the real Download click */ });
+    return () => { cancelled = true; };
   }, [year, location.lat, location.lon, locLoading]);
 
   const handleDownload = async () => {
@@ -144,6 +148,30 @@ const PrintCalendarPage: React.FC = () => {
             First-time generation for a brand-new region takes a minute while 12 seasonal images are produced.
             After that, the same images are reused for everyone in your region — no wait, no per-user regeneration.
           </p>
+
+          {/* Seasonal art preview — same imagery printed at the top of each month page */}
+          <div>
+            <div className="text-sm font-medium mb-2">Seasonal artwork preview</div>
+            <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
+              {Array.from({ length: 12 }, (_, i) => i + 1).map((m) => {
+                const url = previewBundle?.monthImages[m];
+                return (
+                  <div key={m} className="relative rounded-md overflow-hidden border bg-muted/30 aspect-[3/4]">
+                    {url ? (
+                      <img src={url} alt={`${MONTH_LABELS[m - 1]} seasonal art`} className="absolute inset-0 w-full h-full object-cover" loading="lazy" />
+                    ) : (
+                      <div className="absolute inset-0 flex items-center justify-center text-[10px] text-muted-foreground text-center px-1">
+                        Generating…
+                      </div>
+                    )}
+                    <div className="absolute bottom-0 inset-x-0 bg-gradient-to-t from-black/70 to-transparent text-white text-[10px] font-semibold px-1.5 py-1">
+                      {MONTH_LABELS[m - 1]}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
         </CardContent>
       </Card>
     </div>
