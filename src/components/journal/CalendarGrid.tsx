@@ -398,7 +398,7 @@ export default function CalendarGrid({ entries: propEntries, onDateSelect }: Cal
                   }
                 }}
                 className={`
-                  aspect-square p-2 rounded-lg border-2 transition-all text-left
+                  min-h-[92px] p-2 rounded-lg border-2 transition-all text-left
                   ${isToday ? 'border-primary bg-primary/10' : 'border-border'}
                   ${day.hasEntry ? 'bg-success/10 hover:bg-success/20' : 'hover:bg-muted/50'}
                   ${day.birthdays && day.birthdays.length > 0 ? 'bg-pink-500/10 ring-1 ring-pink-500/30' : ''}
