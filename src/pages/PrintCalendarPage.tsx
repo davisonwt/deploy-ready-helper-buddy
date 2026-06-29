@@ -23,6 +23,7 @@ const PrintCalendarPage: React.FC = () => {
   const [output, setOutput] = useState<CalendarOutput>('both');
   const [phase, setPhase] = useState<Phase>('idle');
   const [progress, setProgress] = useState<string>('');
+  const [previewBundle, setPreviewBundle] = useState<CalendarBundle | null>(null);
 
   const region = useMemo(() => getRegion(location.lat), [location.lat]);
 
