@@ -8,8 +8,9 @@ import { useToast } from '@/hooks/use-toast';
 import { useUserLocation } from '@/hooks/useUserLocation';
 import { getCreatorDateSync } from '@/utils/customCalendar';
 import { getRegion, describeRegion } from '@/utils/calendarSeason';
-import { loadCalendarBundle, calendarFilename } from '@/lib/calendarPdf/buildCalendar';
+import { loadCalendarBundle, calendarFilename, type CalendarBundle } from '@/lib/calendarPdf/buildCalendar';
 import type { CalendarOutput } from '@/lib/calendarPdf/WallCalendarDocument';
+import { MONTH_LABELS } from '@/utils/calendarYearBuild';
 
 type Phase = 'idle' | 'generating-art' | 'rendering-pdf' | 'done' | 'error';
 
