@@ -272,8 +272,39 @@ export default function CalendarGrid({ entries: propEntries, onDateSelect }: Cal
     return yhwhDate.day === 1 || yhwhDate.day === 15 || yhwhDate.day === 30;
   };
 
+  // Seasonal hero image for the displayed scriptural month + region
+  const { imageUrl: seasonalImage, loading: seasonalLoading } = useSeasonalArt(
+    currentYhwhMonth,
+    location?.lat ?? 0,
+    location?.lon ?? 0,
+  );
+
   return (
-    <Card>
+    <Card className="overflow-hidden">
+      {/* Seasonal hero — same artwork that appears on the printable wall calendar */}
+      <div className="relative w-full h-48 sm:h-64 bg-gradient-to-br from-amber-50 to-emerald-50 dark:from-stone-900 dark:to-stone-800">
+        {seasonalImage ? (
+          <img
+            src={seasonalImage}
+            alt={`Seasonal artwork for ${YHWH_MONTHS[currentYhwhMonth - 1]}`}
+            className="absolute inset-0 w-full h-full object-cover"
+            loading="lazy"
+          />
+        ) : (
+          <div className="absolute inset-0 flex items-center justify-center text-muted-foreground text-sm gap-2">
+            <Sparkles className="h-4 w-4 animate-pulse" />
+            {seasonalLoading ? 'Preparing seasonal artwork for your region…' : 'Seasonal artwork unavailable'}
+          </div>
+        )}
+        <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/10 to-transparent" />
+        <div className="absolute bottom-3 left-4 right-4 text-white">
+          <div className="text-xs uppercase tracking-widest opacity-80">Scriptural Year {currentYhwhYear}</div>
+          <div className="text-2xl sm:text-3xl font-bold drop-shadow">
+            {YHWH_MONTHS[currentYhwhMonth - 1]}
+          </div>
+        </div>
+      </div>
+
       <CardContent className="pt-6">
         {/* Header */}
         <div className="flex items-center justify-between mb-6">
