@@ -57,6 +57,7 @@ function getGregorianDateForYhwh(yhwhYear: number, yhwhMonth: number, yhwhDay: n
 
 export default function CalendarGrid({ entries: propEntries, onDateSelect }: CalendarGridProps) {
   const { user } = useAuth();
+  const { location } = useUserLocation();
   const [entries, setEntries] = useState<JournalEntry[]>(propEntries || []);
   const [selectedDay, setSelectedDay] = useState<{ date: Date; yhwhDate: ReturnType<typeof calculateCreatorDate> } | null>(null);
   const [isOptionsMenuOpen, setIsOptionsMenuOpen] = useState(false);
