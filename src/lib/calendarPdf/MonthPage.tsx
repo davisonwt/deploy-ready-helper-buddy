@@ -59,6 +59,7 @@ const styles = StyleSheet.create({
     fontSize: 6.5, color: '#8C3A00', marginTop: 3,
     fontWeight: 'bold',
   },
+  cellOmer: { fontSize: 6, color: '#4B6A2E', marginTop: 2, fontStyle: 'italic' },
   sabbathCell: { backgroundColor: '#FFF4E0' },
   highSabbathCell: { backgroundColor: '#F6D9B0' },
   intercalary: { fontSize: 6, color: '#8a7a55', fontStyle: 'italic' },
