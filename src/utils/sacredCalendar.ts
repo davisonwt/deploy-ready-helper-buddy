@@ -43,32 +43,47 @@ const MONTHS = [
 const FEAST_DAYS: Record<number, Record<number, { name: string; isHighSabbath: boolean }>> = {
   1: {
     1: { name: 'New Year', isHighSabbath: false },
-    15: { name: 'Unleavened Bread (1st day)', isHighSabbath: false }, // Can prepare food
-    21: { name: 'Unleavened Bread (last day)', isHighSabbath: false },
+    14: { name: 'Pesach (Passover)', isHighSabbath: true },
+    15: { name: 'Unleavened Bread (Day 1)', isHighSabbath: true },
+    16: { name: 'Unleavened Bread (Day 2)', isHighSabbath: false },
+    17: { name: 'Unleavened Bread (Day 3)', isHighSabbath: false },
+    18: { name: 'Unleavened Bread (Day 4)', isHighSabbath: false },
+    19: { name: 'Unleavened Bread (Day 5)', isHighSabbath: false },
+    20: { name: 'Unleavened Bread (Day 6)', isHighSabbath: false },
+    21: { name: 'Unleavened Bread (Day 7)', isHighSabbath: true },
+    26: { name: "First Fruits (Wave Sheaf) · Omer Day 1 → Shavu\u2019ot", isHighSabbath: false },
   },
   2: {
     1: { name: 'New Month Feast', isHighSabbath: false },
+    14: { name: 'Pesach Sheni (Second Passover)', isHighSabbath: false },
+    15: { name: 'Second Unleavened Bread (Day 1)', isHighSabbath: false },
+    16: { name: 'Second Unleavened Bread (Day 2)', isHighSabbath: false },
+    17: { name: 'Second Unleavened Bread (Day 3)', isHighSabbath: false },
+    18: { name: 'Second Unleavened Bread (Day 4)', isHighSabbath: false },
+    19: { name: 'Second Unleavened Bread (Day 5)', isHighSabbath: false },
+    20: { name: 'Second Unleavened Bread (Day 6)', isHighSabbath: false },
+    21: { name: 'Second Unleavened Bread (Day 7)', isHighSabbath: false },
   },
   3: {
     1: { name: 'New Month Feast', isHighSabbath: false },
-    15: { name: 'Shavuot (1st Feast of Weeks)', isHighSabbath: false }, // Can prepare food
+    15: { name: "Shavu\u2019ot (Feast of Weeks) · Omer Day 1 → New Wine", isHighSabbath: true },
   },
   4: {
     1: { name: 'New Month Feast', isHighSabbath: false },
   },
   5: {
     1: { name: 'New Month Feast', isHighSabbath: false },
-    3: { name: 'Feast of New Wine', isHighSabbath: false },
+    3: { name: 'Feast of New Wine · Omer Day 1 → New Oil', isHighSabbath: true },
   },
   6: {
     1: { name: 'New Month Feast', isHighSabbath: false },
-    22: { name: 'Feast of New Oil', isHighSabbath: false },
+    22: { name: 'Feast of New Oil', isHighSabbath: true },
   },
   7: {
-    1: { name: 'Yom Teruah', isHighSabbath: false },
-    10: { name: 'Yom Kippur', isHighSabbath: true }, // Most high Sabbath
-    15: { name: 'Sukkot (1st day)', isHighSabbath: false }, // Can prepare food
-    22: { name: 'Shemini Atzeret (Simchat Torah)', isHighSabbath: false }, // Can prepare food
+    1: { name: 'Yom Teruah (Day of Trumpets)', isHighSabbath: true },
+    10: { name: 'Yom Kippur (Day of Atonement)', isHighSabbath: true },
+    15: { name: 'Sukkot (Day 1)', isHighSabbath: true },
+    22: { name: 'Shemini Atzeret (Simchat Torah)', isHighSabbath: true },
   },
   8: {
     1: { name: 'New Month Feast', isHighSabbath: false },
@@ -86,6 +101,46 @@ const FEAST_DAYS: Record<number, Record<number, { name: string; isHighSabbath: b
     1: { name: 'New Month Feast', isHighSabbath: false },
   },
 };
+
+/**
+ * Omer Counts — three sequential 50-day counts:
+ *  • Count A: starts M1 D26 (First Fruits) → M3 D15 (Shavu'ot)
+ *  • Count B: starts M3 D15 (Shavu'ot)     → M5 D3  (Feast of New Wine)
+ *  • Count C: starts M5 D3  (New Wine)     → M6 D22 (Feast of New Oil)
+ *
+ * Each count covers 50 inclusive days. Returns the active count for a given
+ * scriptural (month, dayOfMonth) or null if none applies.
+ */
+const MONTH_DAY_COUNT = [30, 30, 31, 30, 30, 31, 30, 30, 31, 30, 30, 31];
+
+function absoluteDayOfYear(month: number, day: number): number {
+  let total = 0;
+  for (let i = 0; i < month - 1; i++) total += MONTH_DAY_COUNT[i];
+  return total + day;
+}
+
+export interface OmerCountInfo {
+  count: 'A' | 'B' | 'C';
+  label: string;        // e.g. "Omer 12/50 → Shavu'ot"
+  dayNumber: number;    // 1..50
+  goal: string;         // target feast name
+}
+
+export function getOmerCount(month: number, dayOfMonth: number): OmerCountInfo | null {
+  const today = absoluteDayOfYear(month, dayOfMonth);
+  const ranges: { count: 'A' | 'B' | 'C'; start: number; goal: string }[] = [
+    { count: 'A', start: absoluteDayOfYear(1, 26), goal: "Shavu\u2019ot" },
+    { count: 'B', start: absoluteDayOfYear(3, 15), goal: 'Feast of New Wine' },
+    { count: 'C', start: absoluteDayOfYear(5, 3),  goal: 'Feast of New Oil' },
+  ];
+  for (const r of ranges) {
+    const diff = today - r.start + 1;
+    if (diff >= 1 && diff <= 50) {
+      return { count: r.count, dayNumber: diff, goal: r.goal, label: `Omer ${diff}/50 → ${r.goal}` };
+    }
+  }
+  return null;
+}
 
 // Intercalary days (31st days of months 3, 6, 10, 12)
 const INTERCALARY_DAYS = [
