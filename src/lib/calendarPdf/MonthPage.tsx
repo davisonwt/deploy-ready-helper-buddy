@@ -2,6 +2,7 @@ import React from 'react';
 import { Page, Text, View, Image, StyleSheet } from '@react-pdf/renderer';
 import type { MonthBuild } from '@/utils/calendarYearBuild';
 import { WEEKDAY_LABELS, formatGregorian } from '@/utils/calendarYearBuild';
+import { getOmerCount } from '@/utils/sacredCalendar';
 
 const styles = StyleSheet.create({
   page: { padding: 0, fontFamily: 'Helvetica', backgroundColor: '#FBF8F1' },
