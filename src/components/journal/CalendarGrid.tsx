@@ -1,6 +1,6 @@
 import React, { useMemo, useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
-import { ChevronLeft, ChevronRight, BookOpen } from 'lucide-react';
+import { ChevronLeft, ChevronRight, BookOpen, Sparkles } from 'lucide-react';
 import { Button } from '../ui/button';
 import { Card, CardContent } from '../ui/card';
 import { Badge } from '../ui/badge';
@@ -10,6 +10,9 @@ import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { BirthdayManager } from './BirthdayManager';
 import { DateOptionsMenu } from './DateOptionsMenu';
+import { useUserLocation } from '@/hooks/useUserLocation';
+import { useSeasonalArt } from '@/hooks/useSeasonalArt';
+import { getDayInfo, getOmerCount } from '@/utils/sacredCalendar';
 
 interface CalendarGridProps {
   entries?: JournalEntry[]; // Optional - will load from Supabase if not provided
