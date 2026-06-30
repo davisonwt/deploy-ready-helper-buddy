@@ -1,6 +1,5 @@
-import { supabase } from '@/integrations/supabase/client';
 import { buildScripturalYear, type YearBuild } from '@/utils/calendarYearBuild';
-import { getRegion, scripturalMonthToSeason, describeRegion, type RegionInfo } from '@/utils/calendarSeason';
+import { getRegion, type RegionInfo } from '@/utils/calendarSeason';
 import { buildSeasonalFallbackArt } from '@/hooks/useSeasonalArt';
 
 export interface CalendarBundle {
@@ -9,27 +8,9 @@ export interface CalendarBundle {
   monthImages: Record<number, string>;
 }
 
-async function fetchArt(region: RegionInfo, month: number, lat: number): Promise<string> {
-  const season = scripturalMonthToSeason(month, region);
-  const { data, error } = await supabase.functions.invoke('get-or-generate-calendar-art', {
-    body: {
-      region_key: region.key,
-      scriptural_month: month,
-      season_label: season,
-      region_description: describeRegion(region),
-    },
-  });
-  if (error) throw new Error(error.message ?? 'Failed to fetch calendar art');
-  const response = data as { imageUrl?: string; fallback?: boolean };
-  if (response?.fallback) return buildSeasonalFallbackArt(month, lat);
-  const url = response?.imageUrl;
-  if (!url) throw new Error('Calendar art response missing imageUrl');
-  return url;
-}
-
 /**
- * Fetch (and on first request, generate) the full set of 12 month images for
- * the user's region. Subsequent users in the same region reuse the cached images.
+ * Use the curated uploaded month images immediately so the preview, PDF,
+ * journal, and diary stay visually in sync.
  */
 export async function loadCalendarBundle(year: number, lat: number, lon: number): Promise<CalendarBundle> {
   const region = getRegion(lat);
@@ -37,11 +18,12 @@ export async function loadCalendarBundle(year: number, lat: number, lon: number)
 
   const monthImages: Record<number, string> = {};
   for (const m of yearBuild.months) {
-    monthImages[m.month] = buildSeasonalFallbackArt(m.month, lat);
+    monthImages[m.month] = buildSeasonalFallbackArt(m.month);
   }
 
   return { year: yearBuild, region, monthImages };
 }
+
 
 export function calendarFilename(year: number, regionKey: string): string {
   return `Scriptural-Calendar-Year-${year}-${regionKey.replace(':', '-')}.pdf`;

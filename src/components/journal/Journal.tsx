@@ -1,9 +1,9 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { motion } from 'framer-motion';
-import { 
-  BookOpen, 
-  Calendar as CalendarIcon, 
-  Search, 
+import {
+  BookOpen,
+  Calendar as CalendarIcon,
+  Search,
   Filter,
   Plus,
   Edit,
@@ -30,9 +30,11 @@ import { getCreatorDateSync, getDaysInMonth } from '@/utils/customCalendar';
 import { getDayInfo } from '@/utils/sacredCalendar';
 import { getCreatorTime } from '@/utils/customTime';
 import { useUserLocation } from '@/hooks/useUserLocation';
+import { useSeasonalArt } from '@/hooks/useSeasonalArt';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import CalendarGrid from './CalendarGrid';
+
 
 function getDayOfYear(month: number, day: number) {
   let total = 0;
@@ -92,6 +94,13 @@ export default function Journal() {
   const [tags, setTags] = useState<string>('');
   const [loading, setLoading] = useState(true);
   const [migrated, setMigrated] = useState(false);
+  const currentMonthForArt = useMemo(() => getCreatorDateSync(selectedDate).month, [selectedDate]);
+  const { imageUrl: journalSeasonalImage } = useSeasonalArt(
+    currentMonthForArt,
+    location?.lat ?? 0,
+    location?.lon ?? 0,
+  );
+
 
   // Load entries from Supabase with real-time sync
   useEffect(() => {
@@ -406,27 +415,39 @@ export default function Journal() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-3xl font-bold text-foreground flex items-center gap-3">
-            <BookOpen className="h-8 w-8 text-primary" />
-            My Journal
-          </h2>
-          <p className="text-muted-foreground mt-2">
-            Reflect on your journey through the YHWH calendar
-          </p>
-        </div>
-        <div className="flex gap-2">
-          <Button onClick={handleExport} variant="outline" size="sm">
-            <Download className="h-4 w-4 mr-2" />
-            Export
-          </Button>
-          <Button onClick={() => handleNewEntry()} size="sm">
-            <Plus className="h-4 w-4 mr-2" />
-            New Entry
-          </Button>
+      <div className="relative overflow-hidden rounded-xl border bg-card">
+        {journalSeasonalImage ? (
+          <img
+            src={journalSeasonalImage}
+            alt={`Seasonal artwork for Month ${currentMonthForArt}`}
+            className="absolute inset-0 h-full w-full object-cover"
+            loading="lazy"
+          />
+        ) : null}
+        <div className="absolute inset-0 bg-gradient-to-r from-black/70 via-black/45 to-black/20" />
+        <div className="relative flex items-center justify-between gap-4 p-6 text-white">
+          <div>
+            <h2 className="flex items-center gap-3 text-3xl font-bold">
+              <BookOpen className="h-8 w-8" />
+              My Journal
+            </h2>
+            <p className="mt-2 text-white/85">
+              Reflect on your journey through the YHWH calendar
+            </p>
+          </div>
+          <div className="flex gap-2">
+            <Button onClick={handleExport} variant="outline" size="sm" className="border-white/40 bg-black/20 text-white hover:bg-black/35">
+              <Download className="h-4 w-4 mr-2" />
+              Export
+            </Button>
+            <Button onClick={() => handleNewEntry()} size="sm" className="bg-white/90 text-black hover:bg-white">
+              <Plus className="h-4 w-4 mr-2" />
+              New Entry
+            </Button>
+          </div>
         </div>
       </div>
+
 
       <Tabs defaultValue="entries" className="space-y-4">
         <TabsList>
