@@ -4,7 +4,6 @@ import { ChevronLeft, ChevronRight, BookOpen, Sparkles } from 'lucide-react';
 import { Button } from '../ui/button';
 import { Card, CardContent } from '../ui/card';
 import { Badge } from '../ui/badge';
-import { calculateCreatorDate } from '@/utils/dashboardCalendar';
 import { JournalEntry } from './Journal';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
@@ -12,7 +11,9 @@ import { BirthdayManager } from './BirthdayManager';
 import { DateOptionsMenu } from './DateOptionsMenu';
 import { useUserLocation } from '@/hooks/useUserLocation';
 import { useSeasonalArt } from '@/hooks/useSeasonalArt';
-import { getDayInfo, getOmerCount } from '@/utils/sacredCalendar';
+import { getOmerCount, type DayInfo } from '@/utils/sacredCalendar';
+import { useSacredNow } from '@/hooks/useSacredNow';
+import { buildScripturalYear } from '@/utils/calendarYearBuild';
 
 interface CalendarGridProps {
   entries?: JournalEntry[]; // Optional - will load from Supabase if not provided
@@ -28,46 +29,37 @@ const YHWH_MONTHS = [
 
 const DAYS_PER_MONTH = [30, 30, 31, 30, 30, 31, 30, 30, 31, 30, 30, 31];
 
-// Epoch: March 20, 2025 = Year 6028, Month 1, Day 1
-const EPOCH_DATE = new Date(2025, 2, 20); // March 20, 2025 (month is 0-indexed)
-
-// Calculate Gregorian date for a given YHWH date
-function getGregorianDateForYhwh(yhwhYear: number, yhwhMonth: number, yhwhDay: number): Date {
-  // Calculate days from epoch
-  const monthDays = [30, 30, 31, 30, 30, 31, 30, 30, 31, 30, 30, 31];
-  
-  // Days from epoch year start (each year has 364 days)
-  let daysFromEpoch = (yhwhYear - 6028) * 364;
-  
-  // Add days from months before current month
-  for (let i = 0; i < yhwhMonth - 1; i++) {
-    daysFromEpoch += monthDays[i];
-  }
-  
-  // Add days in current month (subtract 1 because Day 1 is the first day, so 0 days added)
-  daysFromEpoch += yhwhDay - 1;
-  
-  // Calculate Gregorian date
-  // Use UTC to avoid timezone issues, then convert to local
-  const gregorianDate = new Date(EPOCH_DATE);
-  gregorianDate.setDate(gregorianDate.getDate() + daysFromEpoch);
-  
-  return gregorianDate;
+interface GridYhwhDate {
+  year: number;
+  month: number;
+  day: number;
+  weekDay: number;
+  dayOfYear: number;
 }
 
 export default function CalendarGrid({ entries: propEntries, onDateSelect }: CalendarGridProps) {
   const { user } = useAuth();
   const { location } = useUserLocation();
+  const sacred = useSacredNow();
   const [entries, setEntries] = useState<JournalEntry[]>(propEntries || []);
-  const [selectedDay, setSelectedDay] = useState<{ date: Date; yhwhDate: ReturnType<typeof calculateCreatorDate> } | null>(null);
+  const [selectedDay, setSelectedDay] = useState<{ date: Date; yhwhDate: GridYhwhDate } | null>(null);
   const [isOptionsMenuOpen, setIsOptionsMenuOpen] = useState(false);
   const [birthdays, setBirthdays] = useState<Array<{ yhwh_month: number; yhwh_day: number; person_name: string }>>([]);
   const [showBirthdayManager, setShowBirthdayManager] = useState(false);
   
-  // Get current YHWH date to determine which month to show
-  const currentYhwhDate = useMemo(() => calculateCreatorDate(new Date()), []);
-  const [currentYhwhMonth, setCurrentYhwhMonth] = React.useState(currentYhwhDate.month);
-  const [currentYhwhYear, setCurrentYhwhYear] = React.useState(currentYhwhDate.year);
+  // Get current YHWH date from the shared sunrise-aware source of truth.
+  const [currentYhwhMonth, setCurrentYhwhMonth] = React.useState(sacred.date.month);
+  const [currentYhwhYear, setCurrentYhwhYear] = React.useState(sacred.date.year);
+
+  useEffect(() => {
+    if (!sacred.loading) {
+      setCurrentYhwhMonth(sacred.date.month);
+      setCurrentYhwhYear(sacred.date.year);
+    }
+  }, [sacred.loading, sacred.date.month, sacred.date.year]);
+
+  const yearBuild = useMemo(() => buildScripturalYear(currentYhwhYear), [currentYhwhYear]);
+  const monthBuild = yearBuild.months[currentYhwhMonth - 1];
 
   // Load entries from Supabase if not provided via props
   useEffect(() => {
@@ -166,35 +158,23 @@ export default function CalendarGrid({ entries: propEntries, onDateSelect }: Cal
   const calendarDays = useMemo(() => {
     const days: Array<{
       gregorianDate: Date;
-      yhwhDate: ReturnType<typeof calculateCreatorDate>;
+      yhwhDate: GridYhwhDate;
+      info: DayInfo;
       hasEntry: boolean;
       entry?: JournalEntry;
       birthdays: Array<{ yhwh_month: number; yhwh_day: number; person_name: string }>;
     }> = [];
 
-    const daysInMonth = DAYS_PER_MONTH[currentYhwhMonth - 1];
-    
-    // Generate all days in the YHWH month
-    const monthDays = [30, 30, 31, 30, 30, 31, 30, 30, 31, 30, 30, 31];
-    for (let day = 1; day <= daysInMonth; day++) {
-      const gregorianDate = getGregorianDateForYhwh(currentYhwhYear, currentYhwhMonth, day);
-      // Use noon to avoid sunrise time issues when calculating YHWH date
-      const gregorianAtNoon = new Date(gregorianDate);
-      gregorianAtNoon.setHours(12, 0, 0, 0);
-      const yhwhDate = calculateCreatorDate(gregorianAtNoon);
-      
-      // Calculate day of year for fixed weekday pattern
-      let dayOfYear = 0;
-      for (let i = 0; i < currentYhwhMonth - 1; i++) {
-        dayOfYear += monthDays[i];
-      }
-      dayOfYear += day;
-      
-      // Override weekday with fixed pattern calculation (same for all years)
-      const STARTING_WEEKDAY_YEAR_6028 = 4; // Year 6028 Month 1 Day 1 = Day 4
-      const fixedWeekday = ((dayOfYear - 1 + STARTING_WEEKDAY_YEAR_6028 - 1) % 7) + 1;
-      const yhwhDateWithFixedWeekday = { ...yhwhDate, weekDay: fixedWeekday };
-      
+    for (const scripturalDay of monthBuild.days) {
+      const day = scripturalDay.dayOfMonth;
+      const yhwhDate: GridYhwhDate = {
+        year: currentYhwhYear,
+        month: currentYhwhMonth,
+        day,
+        weekDay: scripturalDay.weekDay,
+        dayOfYear: scripturalDay.info.creatorDay,
+      };
+
       // Find entry for this date (match by YHWH date for accurate syncing)
       const entry = entries.find(e => 
         e.yhwhDate.year === currentYhwhYear &&
@@ -208,8 +188,9 @@ export default function CalendarGrid({ entries: propEntries, onDateSelect }: Cal
       )
 
       days.push({
-        gregorianDate, // Keep original for display
-        yhwhDate: yhwhDateWithFixedWeekday, // Use fixed weekday pattern
+        gregorianDate: scripturalDay.gregorian,
+        yhwhDate,
+        info: scripturalDay.info,
         hasEntry: !!entry,
         entry,
         birthdays: dayBirthdays,
@@ -217,22 +198,13 @@ export default function CalendarGrid({ entries: propEntries, onDateSelect }: Cal
     }
 
     return days;
-  }, [currentYhwhMonth, currentYhwhYear, entries, birthdays]);
+  }, [currentYhwhMonth, currentYhwhYear, entries, birthdays, monthBuild]);
 
   // Get first day of month for grid positioning using YHWH calendar
   // Calculate weekday using fixed pattern based on day of year
   // Each year has 364 days (52 weeks), so the weekday pattern repeats exactly every year
   // Year 6028 Month 1 Day 1 starts on Day 4
-  const monthDays = [30, 30, 31, 30, 30, 31, 30, 30, 31, 30, 30, 31];
-  let dayOfYearForFirstDay = 0;
-  for (let i = 0; i < currentYhwhMonth - 1; i++) {
-    dayOfYearForFirstDay += monthDays[i];
-  }
-  dayOfYearForFirstDay += 1; // Day 1 of the month
-  
-  // Fixed weekday calculation: same pattern every year
-  const STARTING_WEEKDAY_YEAR_6028 = 4; // Year 6028 Month 1 Day 1 = Day 4
-  const firstDayWeekday = ((dayOfYearForFirstDay - 1 + STARTING_WEEKDAY_YEAR_6028 - 1) % 7) + 1;
+  const firstDayWeekday = monthBuild.days[0]?.weekDay ?? 1;
   // Convert YHWH weekday (1-7, where 7 is Shabbat) to grid position (0-6)
   // YHWH Day 1 = grid position 0, Day 2 = 1, ..., Shabbat (7) = 6
   const firstDayOfMonth = (firstDayWeekday - 1) % 7;
@@ -257,18 +229,17 @@ export default function CalendarGrid({ entries: propEntries, onDateSelect }: Cal
   };
 
   const goToToday = () => {
-    const today = calculateCreatorDate(new Date());
-    setCurrentYhwhMonth(today.month);
-    setCurrentYhwhYear(today.year);
+    setCurrentYhwhMonth(sacred.date.month);
+    setCurrentYhwhYear(sacred.date.year);
   };
 
   // Check if day is Shabbat (weekday 7)
-  const isShabbat = (yhwhDate: ReturnType<typeof calculateCreatorDate>) => {
+  const isShabbat = (yhwhDate: GridYhwhDate) => {
     return yhwhDate.weekDay === 7;
   };
 
   // Check if day is Tequvah (alignment day - simplified check)
-  const isTequvah = (yhwhDate: ReturnType<typeof calculateCreatorDate>) => {
+  const isTequvah = (yhwhDate: GridYhwhDate) => {
     return yhwhDate.day === 1 || yhwhDate.day === 15 || yhwhDate.day === 30;
   };
 
@@ -375,16 +346,14 @@ export default function CalendarGrid({ entries: propEntries, onDateSelect }: Cal
 
           {/* Calendar days */}
           {calendarDays.map((day, idx) => {
-            const isToday = day.gregorianDate.toDateString() === new Date().toDateString();
+            const isToday = day.yhwhDate.year === sacred.date.year &&
+              day.yhwhDate.month === sacred.date.month &&
+              day.yhwhDate.day === sacred.date.day;
             const isShabbatDay = isShabbat(day.yhwhDate);
             const isTequvahDay = isTequvah(day.yhwhDate);
 
             // Scriptural feast + Omer info for this day
-            const monthDaysArr = [30, 30, 31, 30, 30, 31, 30, 30, 31, 30, 30, 31];
-            let dayOfYearForDay = 0;
-            for (let i = 0; i < currentYhwhMonth - 1; i++) dayOfYearForDay += monthDaysArr[i];
-            dayOfYearForDay += day.yhwhDate.day;
-            const sacredInfo = getDayInfo(dayOfYearForDay);
+            const sacredInfo = day.info;
             const omer = getOmerCount(currentYhwhMonth, day.yhwhDate.day);
 
             return (
