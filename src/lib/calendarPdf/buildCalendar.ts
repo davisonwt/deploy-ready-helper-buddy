@@ -1,6 +1,7 @@
 import { supabase } from '@/integrations/supabase/client';
 import { buildScripturalYear, type YearBuild } from '@/utils/calendarYearBuild';
 import { getRegion, scripturalMonthToSeason, describeRegion, type RegionInfo } from '@/utils/calendarSeason';
+import { buildSeasonalFallbackArt } from '@/hooks/useSeasonalArt';
 
 export interface CalendarBundle {
   year: YearBuild;
@@ -8,7 +9,7 @@ export interface CalendarBundle {
   monthImages: Record<number, string>;
 }
 
-async function fetchArt(region: RegionInfo, month: number): Promise<string> {
+async function fetchArt(region: RegionInfo, month: number, lat: number): Promise<string> {
   const season = scripturalMonthToSeason(month, region);
   const { data, error } = await supabase.functions.invoke('get-or-generate-calendar-art', {
     body: {
@@ -19,7 +20,9 @@ async function fetchArt(region: RegionInfo, month: number): Promise<string> {
     },
   });
   if (error) throw new Error(error.message ?? 'Failed to fetch calendar art');
-  const url = (data as { imageUrl?: string })?.imageUrl;
+  const response = data as { imageUrl?: string; fallback?: boolean };
+  if (response?.fallback) return buildSeasonalFallbackArt(month, lat);
+  const url = response?.imageUrl;
   if (!url) throw new Error('Calendar art response missing imageUrl');
   return url;
 }
@@ -32,20 +35,10 @@ export async function loadCalendarBundle(year: number, lat: number, lon: number)
   const region = getRegion(lat);
   const yearBuild = buildScripturalYear(year);
 
-  const entries = await Promise.all(
-    yearBuild.months.map(async (m) => {
-      try {
-        const url = await fetchArt(region, m.month);
-        return [m.month, url] as const;
-      } catch (e) {
-        console.warn(`Month ${m.month} art failed`, e);
-        return [m.month, ''] as const;
-      }
-    }),
-  );
-
   const monthImages: Record<number, string> = {};
-  for (const [m, url] of entries) monthImages[m] = url;
+  for (const m of yearBuild.months) {
+    monthImages[m.month] = buildSeasonalFallbackArt(m.month, lat);
+  }
 
   return { year: yearBuild, region, monthImages };
 }

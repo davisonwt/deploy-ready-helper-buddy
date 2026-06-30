@@ -26,12 +26,19 @@ import { Badge } from '../ui/badge';
 import { Textarea } from '../ui/textarea';
 import { Input } from '../ui/input';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../ui/tabs';
-import { calculateCreatorDate } from '@/utils/dashboardCalendar';
+import { getCreatorDateSync, getDaysInMonth } from '@/utils/customCalendar';
+import { getDayInfo } from '@/utils/sacredCalendar';
 import { getCreatorTime } from '@/utils/customTime';
 import { useUserLocation } from '@/hooks/useUserLocation';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import CalendarGrid from './CalendarGrid';
+
+function getDayOfYear(month: number, day: number) {
+  let total = 0;
+  for (let m = 1; m < month; m++) total += getDaysInMonth(m);
+  return total + day;
+}
 
 export interface JournalEntry {
   id: string;
@@ -235,7 +242,7 @@ export default function Journal() {
             yhwh_month: entry.yhwhDate.month,
             yhwh_day: entry.yhwhDate.day,
             yhwh_weekday: entry.yhwhDate.weekDay,
-            yhwh_day_of_year: calculateCreatorDate(new Date(entry.createdAt)).dayOfYear,
+            yhwh_day_of_year: getDayOfYear(entry.yhwhDate.month, entry.yhwhDate.day),
             gregorian_date: new Date(entry.createdAt).toISOString().split('T')[0],
             content: entry.content,
             mood: entry.mood,
@@ -259,7 +266,7 @@ export default function Journal() {
 
   // Get current YHWH date
   const currentYhwhDate = useMemo(() => {
-    return calculateCreatorDate(selectedDate);
+    return getCreatorDateSync(selectedDate);
   }, [selectedDate]);
 
   const currentTime = useMemo(() => {
@@ -281,8 +288,10 @@ export default function Journal() {
   const handleSave = async () => {
     if (!user) return;
 
-    const yhwhDate = calculateCreatorDate(selectedDate);
+    const yhwhDate = getCreatorDateSync(selectedDate);
     const time = getCreatorTime(selectedDate, location?.lat, location?.lon);
+    const dayOfYear = getDayOfYear(yhwhDate.month, yhwhDate.day);
+    const dayInfo = getDayInfo(dayOfYear);
     const gregorianDateStr = selectedDate.toISOString().split('T')[0];
 
     try {
@@ -292,7 +301,7 @@ export default function Journal() {
         yhwh_month: yhwhDate.month,
         yhwh_day: yhwhDate.day,
         yhwh_weekday: yhwhDate.weekDay,
-        yhwh_day_of_year: yhwhDate.dayOfYear,
+        yhwh_day_of_year: dayOfYear,
         gregorian_date: gregorianDateStr,
         content,
         mood,
@@ -301,8 +310,8 @@ export default function Journal() {
         part_of_yowm: time.part,
         watch: Math.floor(time.part / 4.5) + 1,
         is_shabbat: yhwhDate.weekDay === 7,
-        is_tequvah: false, // Can be calculated or set manually
-        feast: null,
+        is_tequvah: dayInfo.isTequfah,
+        feast: dayInfo.feastName ?? null,
       };
 
       if (selectedEntry) {
@@ -374,13 +383,13 @@ export default function Journal() {
   };
 
   // Start new entry
-  const handleNewEntry = () => {
+  const handleNewEntry = (date: Date = new Date()) => {
     setSelectedEntry(null);
     setIsEditing(true);
     setContent('');
     setMood('neutral');
     setTags('');
-    setSelectedDate(new Date());
+    setSelectedDate(date);
   };
 
   // Export entries
@@ -412,7 +421,7 @@ export default function Journal() {
             <Download className="h-4 w-4 mr-2" />
             Export
           </Button>
-          <Button onClick={handleNewEntry} size="sm">
+          <Button onClick={() => handleNewEntry()} size="sm">
             <Plus className="h-4 w-4 mr-2" />
             New Entry
           </Button>
@@ -669,7 +678,7 @@ export default function Journal() {
               if (existingEntry) {
                 handleEdit(existingEntry);
               } else {
-                handleNewEntry();
+                handleNewEntry(date);
               }
             }}
           />

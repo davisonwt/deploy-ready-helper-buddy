@@ -83,6 +83,12 @@ const FEAST_DAYS: Record<number, Record<number, { name: string; isHighSabbath: b
     1: { name: 'Yom Teruah (Day of Trumpets)', isHighSabbath: true },
     10: { name: 'Yom Kippur (Day of Atonement)', isHighSabbath: true },
     15: { name: 'Sukkot (Day 1)', isHighSabbath: true },
+    16: { name: 'Sukkot (Day 2)', isHighSabbath: false },
+    17: { name: 'Sukkot (Day 3)', isHighSabbath: false },
+    18: { name: 'Sukkot (Day 4)', isHighSabbath: false },
+    19: { name: 'Sukkot (Day 5)', isHighSabbath: false },
+    20: { name: 'Sukkot (Day 6)', isHighSabbath: false },
+    21: { name: 'Sukkot (Day 7)', isHighSabbath: false },
     22: { name: 'Shemini Atzeret (Simchat Torah)', isHighSabbath: true },
   },
   8: {

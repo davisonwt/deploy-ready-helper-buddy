@@ -6,13 +6,20 @@ import { MediaForm } from './forms/MediaForm'
 import { PrayerForm } from './forms/PrayerForm'
 import { LifeForm } from './forms/LifeForm'
 import { SpiritualForm } from './forms/SpiritualForm'
-import { calculateCreatorDate } from '@/utils/dashboardCalendar'
+
+interface YhwhDateForMenu {
+  year: number
+  month: number
+  day: number
+  weekDay: number
+  dayOfYear: number
+}
 
 interface DateOptionsMenuProps {
   isOpen: boolean
   onClose: () => void
   selectedDate: Date
-  yhwhDate: ReturnType<typeof calculateCreatorDate>
+  yhwhDate: YhwhDateForMenu
   onSelectOption?: (tab: 'notes' | 'media' | 'prayer' | 'life' | 'spiritual') => void
 }
 
