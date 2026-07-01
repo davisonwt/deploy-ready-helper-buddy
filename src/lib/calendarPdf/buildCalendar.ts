@@ -18,7 +18,7 @@ export async function loadCalendarBundle(year: number, lat: number, lon: number)
 
   const monthImages: Record<number, string> = {};
   for (const m of yearBuild.months) {
-    monthImages[m.month] = buildSeasonalFallbackArt(m.month);
+    monthImages[m.month] = buildSeasonalFallbackArt(m.month, region);
   }
 
   return { year: yearBuild, region, monthImages };
