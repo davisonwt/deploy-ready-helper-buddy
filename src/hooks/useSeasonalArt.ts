@@ -7,46 +7,74 @@ import calendarUpload67 from '@/assets/calendar-uploaded/calendar-upload-67.png.
 import calendarUpload68 from '@/assets/calendar-uploaded/calendar-upload-68.png.asset.json';
 import calendarUpload69 from '@/assets/calendar-uploaded/calendar-upload-69.png.asset.json';
 import calendarUpload70 from '@/assets/calendar-uploaded/calendar-upload-70.png.asset.json';
+import calendarUpload72 from '@/assets/calendar-uploaded/calendar-upload-72.png.asset.json';
+import calendarUpload73 from '@/assets/calendar-uploaded/calendar-upload-73.png.asset.json';
+import calendarUpload74 from '@/assets/calendar-uploaded/calendar-upload-74.png.asset.json';
+import calendarUpload75 from '@/assets/calendar-uploaded/calendar-upload-75.png.asset.json';
+import { getRegion, scripturalMonthToSeason, type RegionInfo, type SeasonLabel } from '@/utils/calendarSeason';
 
-const MONTH_IMAGE_SEQUENCE = [
-  calendarUpload70.url,
-  calendarUpload71Fallback(calendarUpload64.url),
-  calendarUpload71Fallback(calendarUpload69.url),
-  calendarUpload63.url,
+const SOUTHERN_MONTH_IMAGE_SEQUENCE = [
   calendarUpload64.url,
   calendarUpload65.url,
-  calendarUpload70.url,
-  calendarUpload69.url,
-  calendarUpload67.url,
+  calendarUpload63.url,
   calendarUpload66.url,
   calendarUpload68.url,
   calendarUpload67.url,
+  calendarUpload69.url,
+  calendarUpload70.url,
+  calendarUpload74.url,
+  calendarUpload72.url,
+  calendarUpload73.url,
+  calendarUpload75.url,
 ] as const;
 
-function calendarUpload71Fallback(url: string) {
-  return url;
-}
-
 export const BUNDLED_SEASONAL_ART: Record<number, string> = Object.fromEntries(
-  MONTH_IMAGE_SEQUENCE.map((url, index) => [index + 1, url]),
+  SOUTHERN_MONTH_IMAGE_SEQUENCE.map((url, index) => [index + 1, url]),
 ) as Record<number, string>;
 
-export function buildSeasonalFallbackArt(scripturalMonth: number): string {
-  return BUNDLED_SEASONAL_ART[scripturalMonth] ?? calendarUpload63.url;
+const SOUTHERN_SEASON_IMAGES: Record<SeasonLabel, readonly string[]> = {
+  autumn: [calendarUpload64.url, calendarUpload65.url, calendarUpload63.url],
+  winter: [calendarUpload66.url, calendarUpload68.url, calendarUpload67.url],
+  spring: [calendarUpload69.url, calendarUpload70.url, calendarUpload74.url],
+  summer: [calendarUpload72.url, calendarUpload73.url, calendarUpload75.url],
+  wet: [calendarUpload69.url, calendarUpload70.url, calendarUpload72.url],
+  dry: [calendarUpload63.url, calendarUpload68.url, calendarUpload75.url],
+  'polar-day': [calendarUpload72.url, calendarUpload73.url, calendarUpload74.url],
+  'polar-night': [calendarUpload66.url, calendarUpload67.url, calendarUpload68.url],
+};
+
+function getSeasonPhaseIndex(month: number) {
+  return (month - 1) % 3;
 }
 
-export function useSeasonalArt(scripturalMonth: number, _lat: number, _lon: number) {
+export function buildSeasonalFallbackArt(scripturalMonth: number, region?: RegionInfo): string {
+  if (!scripturalMonth || scripturalMonth < 1 || scripturalMonth > 12) {
+    return calendarUpload64.url;
+  }
+
+  if (!region) {
+    return BUNDLED_SEASONAL_ART[scripturalMonth] ?? calendarUpload64.url;
+  }
+
+  const season = scripturalMonthToSeason(scripturalMonth, region);
+  const seasonalSet = SOUTHERN_SEASON_IMAGES[season] ?? SOUTHERN_SEASON_IMAGES.autumn;
+  return seasonalSet[getSeasonPhaseIndex(scripturalMonth)] ?? seasonalSet[0] ?? calendarUpload64.url;
+}
+
+export function useSeasonalArt(scripturalMonth: number, lat: number, _lon: number) {
   const [imageUrl, setImageUrl] = useState<string>('');
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!scripturalMonth || scripturalMonth < 1 || scripturalMonth > 12) return;
-    setImageUrl(buildSeasonalFallbackArt(scripturalMonth));
+    const region = getRegion(lat);
+    setImageUrl(buildSeasonalFallbackArt(scripturalMonth, region));
     setLoading(false);
     setError(null);
-  }, [scripturalMonth]);
+  }, [scripturalMonth, lat]);
 
   return { imageUrl, loading, error };
 }
+
 
