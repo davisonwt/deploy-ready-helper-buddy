@@ -2839,6 +2839,36 @@ export type Database = {
           },
         ]
       }
+      curated_calendar_photos: {
+        Row: {
+          created_at: string
+          id: string
+          label: string | null
+          public_url: string
+          season: string
+          slot: number
+          storage_path: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          label?: string | null
+          public_url: string
+          season: string
+          slot: number
+          storage_path: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          label?: string | null
+          public_url?: string
+          season?: string
+          slot?: number
+          storage_path?: string
+        }
+        Relationships: []
+      }
       dj_music_tracks: {
         Row: {
           artist_name: string | null

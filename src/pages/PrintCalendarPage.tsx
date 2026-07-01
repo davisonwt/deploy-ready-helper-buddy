@@ -1,18 +1,45 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { ArrowLeft, Download, MapPin, Loader2 } from 'lucide-react';
+import { ArrowLeft, Download, MapPin, Loader2, Check } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
 import { useUserLocation } from '@/hooks/useUserLocation';
 import { getCreatorDateSync } from '@/utils/customCalendar';
-import { getRegion, describeRegion } from '@/utils/calendarSeason';
+import { getRegion, describeRegion, scripturalMonthToSeason, type SeasonLabel } from '@/utils/calendarSeason';
 import { loadCalendarBundle, calendarFilename, type CalendarBundle } from '@/lib/calendarPdf/buildCalendar';
 import type { CalendarOutput } from '@/lib/calendarPdf/WallCalendarDocument';
 import { MONTH_LABELS } from '@/utils/calendarYearBuild';
+import { supabase } from '@/integrations/supabase/client';
+import { cn } from '@/lib/utils';
 
 type Phase = 'idle' | 'generating-art' | 'rendering-pdf' | 'done' | 'error';
+
+type PickerSeason = 'autumn' | 'summer' | 'spring' | 'winter';
+const PICKER_SEASONS: PickerSeason[] = ['autumn', 'summer', 'spring', 'winter'];
+
+interface CuratedPhoto {
+  id: string;
+  season: PickerSeason;
+  slot: number;
+  public_url: string;
+  label: string | null;
+}
+
+/** Map any season label (incl. wet/dry/polar) to one of the 4 picker buckets. */
+function pickerSeasonFor(label: SeasonLabel): PickerSeason {
+  switch (label) {
+    case 'spring': return 'spring';
+    case 'summer':
+    case 'wet':
+    case 'polar-day': return 'summer';
+    case 'autumn': return 'autumn';
+    case 'winter':
+    case 'dry':
+    case 'polar-night': return 'winter';
+  }
+}
 
 const PrintCalendarPage: React.FC = () => {
   const { toast } = useToast();
@@ -24,29 +51,57 @@ const PrintCalendarPage: React.FC = () => {
   const [phase, setPhase] = useState<Phase>('idle');
   const [progress, setProgress] = useState<string>('');
   const [previewBundle, setPreviewBundle] = useState<CalendarBundle | null>(null);
+  const [photos, setPhotos] = useState<CuratedPhoto[]>([]);
+  const [selectedSlot, setSelectedSlot] = useState<Record<PickerSeason, number>>({
+    autumn: 1, summer: 1, spring: 1, winter: 1,
+  });
 
   const region = useMemo(() => getRegion(location.lat), [location.lat]);
 
-  // Preload bundle in background so first-time users in a new region aren't
-  // staring at a spinner after they click Download.
+  // Load curated photos
+  useEffect(() => {
+    supabase
+      .from('curated_calendar_photos')
+      .select('id,season,slot,public_url,label')
+      .order('season')
+      .order('slot')
+      .then(({ data, error }) => {
+        if (error) { console.error(error); return; }
+        setPhotos((data ?? []) as CuratedPhoto[]);
+      });
+  }, []);
+
+  // Build a per-month curated override map from the season picks
+  const curatedImages = useMemo<Record<number, string>>(() => {
+    const bySeasonSlot = new Map<string, string>();
+    for (const p of photos) bySeasonSlot.set(`${p.season}:${p.slot}`, p.public_url);
+    const map: Record<number, string> = {};
+    for (let m = 1; m <= 12; m++) {
+      const season = pickerSeasonFor(scripturalMonthToSeason(m, region));
+      const url = bySeasonSlot.get(`${season}:${selectedSlot[season]}`);
+      if (url) map[m] = url;
+    }
+    return map;
+  }, [photos, selectedSlot, region]);
+
+  // Preload bundle in background
   useEffect(() => {
     if (locLoading) return;
     let cancelled = false;
-    loadCalendarBundle(year, location.lat, location.lon)
+    loadCalendarBundle(year, location.lat, location.lon, curatedImages)
       .then((b) => { if (!cancelled) setPreviewBundle(b); })
-      .catch(() => { /* prewarm only — errors surface on the real Download click */ });
+      .catch(() => {});
     return () => { cancelled = true; };
-  }, [year, location.lat, location.lon, locLoading]);
+  }, [year, location.lat, location.lon, locLoading, curatedImages]);
 
   const handleDownload = async () => {
     try {
       setPhase('generating-art');
       setProgress('Preparing seasonal artwork for your region…');
-      const bundle = await loadCalendarBundle(year, location.lat, location.lon);
+      const bundle = await loadCalendarBundle(year, location.lat, location.lon, curatedImages);
 
       setPhase('rendering-pdf');
       setProgress('Building your PDF…');
-      // Lazy-load @react-pdf/renderer so it doesn't bloat the dashboard bundle.
       const [{ pdf }, { WallCalendarDocument }] = await Promise.all([
         import('@react-pdf/renderer'),
         import('@/lib/calendarPdf/WallCalendarDocument'),
@@ -79,6 +134,12 @@ const PrintCalendarPage: React.FC = () => {
   const busy = phase === 'generating-art' || phase === 'rendering-pdf';
   const years = [currentScripturalYear, currentScripturalYear + 1];
 
+  const photosBySeason = useMemo(() => {
+    const g: Record<PickerSeason, CuratedPhoto[]> = { autumn: [], summer: [], spring: [], winter: [] };
+    for (const p of photos) g[p.season].push(p);
+    return g;
+  }, [photos]);
+
   return (
     <div className="container mx-auto max-w-3xl py-6 px-4 space-y-6">
       <div className="flex items-center justify-between">
@@ -92,7 +153,6 @@ const PrintCalendarPage: React.FC = () => {
           <CardTitle>Print My Scriptural Calendar</CardTitle>
         </CardHeader>
         <CardContent className="space-y-5">
-
           <div className="rounded-md border p-3 flex items-start gap-3 bg-muted/30">
             <MapPin className="w-4 h-4 mt-0.5 text-muted-foreground" />
             <div className="text-sm flex-1">
@@ -135,6 +195,58 @@ const PrintCalendarPage: React.FC = () => {
             </div>
           </div>
 
+          {/* Season Photo Picker */}
+          <div className="space-y-4">
+            <div>
+              <div className="text-sm font-medium">Choose one photo per season</div>
+              <div className="text-xs text-muted-foreground">
+                Your pick becomes the artwork for every month in that season, based on your hemisphere.
+              </div>
+            </div>
+            {PICKER_SEASONS.map((season) => (
+              <div key={season}>
+                <div className="text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-2">
+                  {season}
+                </div>
+                <div className="grid grid-cols-3 gap-2">
+                  {photosBySeason[season].map((p) => {
+                    const active = selectedSlot[season] === p.slot;
+                    return (
+                      <button
+                        key={p.id}
+                        type="button"
+                        onClick={() => setSelectedSlot((s) => ({ ...s, [season]: p.slot }))}
+                        className={cn(
+                          'relative rounded-md overflow-hidden border aspect-[4/3] bg-muted/30 transition',
+                          active ? 'ring-2 ring-primary ring-offset-2 ring-offset-background' : 'hover:opacity-90',
+                        )}
+                      >
+                        <img
+                          src={p.public_url}
+                          alt={p.label ?? `${season} ${p.slot}`}
+                          className="absolute inset-0 w-full h-full object-cover"
+                          loading="lazy"
+                          onError={(e) => { (e.target as HTMLImageElement).style.opacity = '0.2'; }}
+                        />
+                        {active && (
+                          <div className="absolute top-1 right-1 rounded-full bg-primary text-primary-foreground p-1">
+                            <Check className="w-3 h-3" />
+                          </div>
+                        )}
+                        <div className="absolute bottom-0 inset-x-0 bg-gradient-to-t from-black/70 to-transparent text-white text-[10px] font-semibold px-1.5 py-1">
+                          {p.label ?? `${season} ${p.slot}`}
+                        </div>
+                      </button>
+                    );
+                  })}
+                  {photosBySeason[season].length === 0 && (
+                    <div className="col-span-3 text-xs text-muted-foreground italic">Photos loading…</div>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+
           <Button onClick={handleDownload} disabled={busy || locLoading} className="w-full">
             {busy ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Download className="w-4 h-4 mr-2" />}
             {busy ? progress : 'Download PDF'}
@@ -144,14 +256,9 @@ const PrintCalendarPage: React.FC = () => {
             <p className="text-sm text-destructive">{progress}</p>
           )}
 
-          <p className="text-xs text-muted-foreground">
-            First-time generation for a brand-new region takes a minute while 12 seasonal images are produced.
-            After that, the same images are reused for everyone in your region — no wait, no per-user regeneration.
-          </p>
-
-          {/* Seasonal art preview — same imagery printed at the top of each month page */}
+          {/* Per-month preview reflecting current picks */}
           <div>
-            <div className="text-sm font-medium mb-2">Seasonal artwork preview</div>
+            <div className="text-sm font-medium mb-2">Month-by-month preview</div>
             <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
               {Array.from({ length: 12 }, (_, i) => i + 1).map((m) => {
                 const url = previewBundle?.monthImages[m];
@@ -161,7 +268,7 @@ const PrintCalendarPage: React.FC = () => {
                       <img src={url} alt={`${MONTH_LABELS[m - 1]} seasonal art`} className="absolute inset-0 w-full h-full object-cover" loading="lazy" />
                     ) : (
                       <div className="absolute inset-0 flex items-center justify-center text-[10px] text-muted-foreground text-center px-1">
-                        Generating…
+                        Loading…
                       </div>
                     )}
                     <div className="absolute bottom-0 inset-x-0 bg-gradient-to-t from-black/70 to-transparent text-white text-[10px] font-semibold px-1.5 py-1">
