@@ -12,13 +12,18 @@ export interface CalendarBundle {
  * Use the curated uploaded month images immediately so the preview, PDF,
  * journal, and diary stay visually in sync.
  */
-export async function loadCalendarBundle(year: number, lat: number, lon: number): Promise<CalendarBundle> {
+export async function loadCalendarBundle(
+  year: number,
+  lat: number,
+  lon: number,
+  curatedImages?: Record<number, string>,
+): Promise<CalendarBundle> {
   const region = getRegion(lat);
   const yearBuild = buildScripturalYear(year);
 
   const monthImages: Record<number, string> = {};
   for (const m of yearBuild.months) {
-    monthImages[m.month] = buildSeasonalFallbackArt(m.month, region);
+    monthImages[m.month] = curatedImages?.[m.month] ?? buildSeasonalFallbackArt(m.month, region);
   }
 
   return { year: yearBuild, region, monthImages };
