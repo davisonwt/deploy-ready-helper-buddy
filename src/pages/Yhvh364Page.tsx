@@ -21,6 +21,8 @@ import { LocationVerification } from '@/components/calendar/LocationVerification
 import Journal from '@/components/journal/Journal';
 import GardenSetup from '@/components/garden/GardenSetup';
 import { useSacredNow } from '@/hooks/useSacredNow';
+import { useSeasonalArt } from '@/hooks/useSeasonalArt';
+import { useUserLocation } from '@/hooks/useUserLocation';
 
 const GARDEN_TIPS: Record<number, string[]> = {
   // Indexed by month — at least one tip per month in the Creator's year.
