@@ -2845,6 +2845,7 @@ export type Database = {
           id: string
           label: string | null
           public_url: string
+          scriptural_month: number | null
           season: string
           slot: number
           storage_path: string
@@ -2854,6 +2855,7 @@ export type Database = {
           id?: string
           label?: string | null
           public_url: string
+          scriptural_month?: number | null
           season: string
           slot: number
           storage_path: string
@@ -2863,6 +2865,7 @@ export type Database = {
           id?: string
           label?: string | null
           public_url?: string
+          scriptural_month?: number | null
           season?: string
           slot?: number
           storage_path?: string

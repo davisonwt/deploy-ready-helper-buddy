@@ -61,6 +61,15 @@ export function buildSeasonalFallbackArt(scripturalMonth: number, region?: Regio
   return seasonalSet[getSeasonPhaseIndex(scripturalMonth)] ?? seasonalSet[0] ?? calendarUpload64.url;
 }
 
+export function buildSeasonalChoiceUrls(scripturalMonth: number, region: RegionInfo): readonly string[] {
+  if (!scripturalMonth || scripturalMonth < 1 || scripturalMonth > 12) {
+    return SOUTHERN_SEASON_IMAGES.autumn;
+  }
+
+  const season = scripturalMonthToSeason(scripturalMonth, region);
+  return SOUTHERN_SEASON_IMAGES[season] ?? SOUTHERN_SEASON_IMAGES.autumn;
+}
+
 export function useSeasonalArt(scripturalMonth: number, lat: number, _lon: number) {
   const [imageUrl, setImageUrl] = useState<string>('');
   const [loading, setLoading] = useState<boolean>(true);
