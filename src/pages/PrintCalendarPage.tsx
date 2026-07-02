@@ -18,7 +18,6 @@ import { buildSeasonalChoiceUrls } from '@/hooks/useSeasonalArt';
 type Phase = 'idle' | 'generating-art' | 'rendering-pdf' | 'done' | 'error';
 
 type PickerSeason = 'autumn' | 'summer' | 'spring' | 'winter';
-const PICKER_SEASONS: PickerSeason[] = ['autumn', 'summer', 'spring', 'winter'];
 
 interface CuratedPhoto {
   id: string;
@@ -240,7 +239,6 @@ const PrintCalendarPage: React.FC = () => {
               </div>
             </div>
             {Array.from({ length: 12 }, (_, i) => i + 1).map((month) => {
-              const season = pickerSeasonFor(scripturalMonthToSeason(month, region));
               const localSeason = scripturalMonthToSeason(month, region);
               const choices = monthChoicesByMonth[month] ?? [];
               return (
