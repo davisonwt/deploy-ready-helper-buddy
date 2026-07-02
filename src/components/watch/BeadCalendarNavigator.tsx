@@ -18,6 +18,8 @@ import {
   Month5Strand, Month6Strand, Month7Strand, Month8Strand,
   Month9Strand, Month10Strand, Month11Strand, Month12Strand,
 } from './EnochianWheelCalendar';
+import { useSeasonalArt } from '@/hooks/useSeasonalArt';
+import { useUserLocation } from '@/hooks/useUserLocation';
 
 const STRANDS = [
   Month1Strand, Month2Strand, Month3Strand, Month4Strand,
