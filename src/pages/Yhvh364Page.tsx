@@ -119,7 +119,18 @@ export default function Yhvh364Page() {
 
           {/* Wheels-in-wheels live calendar */}
           <TabsContent value="wheels" className="mt-4">
-            <Card className="border-amber-500/20 bg-black/40">
+            <Card className="border-amber-500/20 bg-black/40 overflow-hidden">
+              {monthImage && (
+                <div className="relative w-full h-40 md:h-56 overflow-hidden">
+                  <img
+                    src={monthImage}
+                    alt={`Seasonal artwork for Month ${sacred.date.month}`}
+                    className="w-full h-full object-cover"
+                    loading="lazy"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-black/60" />
+                </div>
+              )}
               <CardContent className="flex justify-center p-6">
                 <YHVHWheelCalendarLive size={Math.min(700, typeof window !== 'undefined' ? window.innerWidth * 0.7 : 700)} />
               </CardContent>
