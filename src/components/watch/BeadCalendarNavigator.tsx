@@ -58,8 +58,24 @@ export default function BeadCalendarNavigator({ currentMonth, currentDay, curren
   // Only pass real day if viewing the actual current month
   const dayProp = !isHelo && monthNum === currentMonth ? currentDay : 0;
 
+  // Seasonal image matching the currently viewed month for the user's hemisphere
+  const { location } = useUserLocation();
+  const { imageUrl: seasonalImage } = useSeasonalArt(isHelo ? 12 : monthNum, location.lat, location.lon);
+
   return (
     <div className="relative w-full bg-gradient-to-b from-[#0a0a15] via-[#0f1226] to-[#0a0a15] rounded-2xl overflow-hidden border border-amber-500/20">
+      {/* Seasonal hero image for this month */}
+      {seasonalImage && (
+        <div className="relative w-full h-40 md:h-56 overflow-hidden">
+          <img
+            src={seasonalImage}
+            alt={isHelo ? 'Helo-Yaseph seasonal artwork' : `Seasonal artwork for Month ${monthNum}`}
+            className="w-full h-full object-cover"
+            loading="lazy"
+          />
+          <div className="absolute inset-0 bg-gradient-to-b from-black/10 via-transparent to-[#0a0a15]" />
+        </div>
+      )}
       {/* Season header */}
       <div className="flex items-center justify-between px-4 md:px-6 py-3 border-b border-amber-500/10 bg-black/40">
         <div className="flex items-center gap-2 text-emerald-300">
