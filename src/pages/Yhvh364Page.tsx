@@ -58,6 +58,8 @@ function GardenTipCard({ month, dayOfYear }: { month: number; dayOfYear: number 
 
 export default function Yhvh364Page() {
   const sacred = useSacredNow();
+  const { location } = useUserLocation();
+  const { imageUrl: monthImage } = useSeasonalArt(sacred.date.month, location.lat, location.lon);
 
   const headerLine = useMemo(() => {
     const omer = sacred.omer ? ` · Omer ${sacred.omer}/${sacred.omerTotal}` : '';
