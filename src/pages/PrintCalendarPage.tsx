@@ -13,6 +13,7 @@ import type { CalendarOutput } from '@/lib/calendarPdf/WallCalendarDocument';
 import { MONTH_LABELS } from '@/utils/calendarYearBuild';
 import { supabase } from '@/integrations/supabase/client';
 import { cn } from '@/lib/utils';
+import { buildSeasonalChoiceUrls } from '@/hooks/useSeasonalArt';
 
 type Phase = 'idle' | 'generating-art' | 'rendering-pdf' | 'done' | 'error';
 
@@ -26,6 +27,18 @@ interface CuratedPhoto {
   public_url: string;
   label: string | null;
 }
+
+interface MonthPhotoChoice {
+  id: string;
+  season: PickerSeason;
+  slot: number;
+  url: string;
+  label: string;
+}
+
+const DEFAULT_MONTH_SLOTS = Object.fromEntries(
+  Array.from({ length: 12 }, (_, i) => [i + 1, 1]),
+) as Record<number, number>;
 
 /** Map any season label (incl. wet/dry/polar) to one of the 4 picker buckets. */
 function pickerSeasonFor(label: SeasonLabel): PickerSeason {
@@ -52,9 +65,7 @@ const PrintCalendarPage: React.FC = () => {
   const [progress, setProgress] = useState<string>('');
   const [previewBundle, setPreviewBundle] = useState<CalendarBundle | null>(null);
   const [photos, setPhotos] = useState<CuratedPhoto[]>([]);
-  const [selectedSlot, setSelectedSlot] = useState<Record<PickerSeason, number>>({
-    autumn: 1, summer: 1, spring: 1, winter: 1,
-  });
+  const [selectedMonthSlots, setSelectedMonthSlots] = useState<Record<number, number>>(DEFAULT_MONTH_SLOTS);
 
   const region = useMemo(() => getRegion(location.lat), [location.lat]);
 
@@ -71,18 +82,49 @@ const PrintCalendarPage: React.FC = () => {
       });
   }, []);
 
-  // Build a per-month curated override map from the season picks
-  const curatedImages = useMemo<Record<number, string>>(() => {
-    const bySeasonSlot = new Map<string, string>();
-    for (const p of photos) bySeasonSlot.set(`${p.season}:${p.slot}`, p.public_url);
-    const map: Record<number, string> = {};
+  const photosBySeason = useMemo(() => {
+    const g: Record<PickerSeason, CuratedPhoto[]> = { autumn: [], summer: [], spring: [], winter: [] };
+    for (const p of photos) g[p.season].push(p);
+    return g;
+  }, [photos]);
+
+  const monthChoicesByMonth = useMemo<Record<number, MonthPhotoChoice[]>>(() => {
+    const choices: Record<number, MonthPhotoChoice[]> = {};
+
     for (let m = 1; m <= 12; m++) {
       const season = pickerSeasonFor(scripturalMonthToSeason(m, region));
-      const url = bySeasonSlot.get(`${season}:${selectedSlot[season]}`);
-      if (url) map[m] = url;
+      const curated = photosBySeason[season];
+
+      choices[m] = curated.length > 0
+        ? curated.map((p) => ({
+            id: `${m}-${p.id}`,
+            season,
+            slot: p.slot,
+            url: p.public_url,
+            label: p.label ?? `${MONTH_LABELS[m - 1]} ${season} ${p.slot}`,
+          }))
+        : buildSeasonalChoiceUrls(m, region).map((url, index) => ({
+            id: `${m}-fallback-${index + 1}`,
+            season,
+            slot: index + 1,
+            url,
+            label: `${MONTH_LABELS[m - 1]} ${season} ${index + 1}`,
+          }));
+    }
+
+    return choices;
+  }, [photosBySeason, region]);
+
+  // Build a per-month curated override map from the month-specific picks.
+  const curatedImages = useMemo<Record<number, string>>(() => {
+    const map: Record<number, string> = {};
+    for (let m = 1; m <= 12; m++) {
+      const slot = selectedMonthSlots[m] ?? 1;
+      const choice = monthChoicesByMonth[m]?.find((p) => p.slot === slot) ?? monthChoicesByMonth[m]?.[0];
+      if (choice?.url) map[m] = choice.url;
     }
     return map;
-  }, [photos, selectedSlot, region]);
+  }, [monthChoicesByMonth, selectedMonthSlots]);
 
   // Preload bundle in background
   useEffect(() => {
@@ -133,12 +175,6 @@ const PrintCalendarPage: React.FC = () => {
 
   const busy = phase === 'generating-art' || phase === 'rendering-pdf';
   const years = [currentScripturalYear, currentScripturalYear + 1];
-
-  const photosBySeason = useMemo(() => {
-    const g: Record<PickerSeason, CuratedPhoto[]> = { autumn: [], summer: [], spring: [], winter: [] };
-    for (const p of photos) g[p.season].push(p);
-    return g;
-  }, [photos]);
 
   return (
     <div className="container mx-auto max-w-3xl py-6 px-4 space-y-6">
@@ -195,56 +231,64 @@ const PrintCalendarPage: React.FC = () => {
             </div>
           </div>
 
-          {/* Season Photo Picker */}
+          {/* Month Photo Picker */}
           <div className="space-y-4">
             <div>
-              <div className="text-sm font-medium">Choose one photo per season</div>
+              <div className="text-sm font-medium">Choose one photo for each month</div>
               <div className="text-xs text-muted-foreground">
-                Your pick becomes the artwork for every month in that season, based on your hemisphere.
+                Each scriptural month has three real seasonal photos. The season is calculated from your location.
               </div>
             </div>
-            {PICKER_SEASONS.map((season) => (
-              <div key={season}>
-                <div className="text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-2">
-                  {season}
-                </div>
-                <div className="grid grid-cols-3 gap-2">
-                  {photosBySeason[season].map((p) => {
-                    const active = selectedSlot[season] === p.slot;
-                    return (
-                      <button
-                        key={p.id}
-                        type="button"
-                        onClick={() => setSelectedSlot((s) => ({ ...s, [season]: p.slot }))}
-                        className={cn(
-                          'relative rounded-md overflow-hidden border aspect-[4/3] bg-muted/30 transition',
-                          active ? 'ring-2 ring-primary ring-offset-2 ring-offset-background' : 'hover:opacity-90',
-                        )}
-                      >
-                        <img
-                          src={p.public_url}
-                          alt={p.label ?? `${season} ${p.slot}`}
-                          className="absolute inset-0 w-full h-full object-cover"
-                          loading="lazy"
-                          onError={(e) => { (e.target as HTMLImageElement).style.opacity = '0.2'; }}
-                        />
-                        {active && (
-                          <div className="absolute top-1 right-1 rounded-full bg-primary text-primary-foreground p-1">
-                            <Check className="w-3 h-3" />
+            {Array.from({ length: 12 }, (_, i) => i + 1).map((month) => {
+              const season = pickerSeasonFor(scripturalMonthToSeason(month, region));
+              const localSeason = scripturalMonthToSeason(month, region);
+              const choices = monthChoicesByMonth[month] ?? [];
+              return (
+                <div key={month}>
+                  <div className="flex items-center justify-between gap-2 mb-2">
+                    <div className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                      {MONTH_LABELS[month - 1]}
+                    </div>
+                    <div className="text-[10px] font-medium text-muted-foreground capitalize">
+                      {localSeason.replace('-', ' ')} artwork
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-3 gap-2">
+                    {choices.map((p) => {
+                      const active = (selectedMonthSlots[month] ?? 1) === p.slot;
+                      const fallbackUrl = buildSeasonalChoiceUrls(month, region)[p.slot - 1] ?? buildSeasonalChoiceUrls(month, region)[0];
+                      return (
+                        <button
+                          key={p.id}
+                          type="button"
+                          onClick={() => setSelectedMonthSlots((s) => ({ ...s, [month]: p.slot }))}
+                          className={cn(
+                            'relative rounded-md overflow-hidden border aspect-[4/3] bg-muted/30 transition',
+                            active ? 'ring-2 ring-primary ring-offset-2 ring-offset-background' : 'hover:opacity-90',
+                          )}
+                        >
+                          <img
+                            src={p.url}
+                            alt={`${MONTH_LABELS[month - 1]} ${p.label}`}
+                            className="absolute inset-0 w-full h-full object-cover"
+                            loading="lazy"
+                            onError={(e) => { (e.target as HTMLImageElement).src = fallbackUrl; }}
+                          />
+                          {active && (
+                            <div className="absolute top-1 right-1 rounded-full bg-primary text-primary-foreground p-1">
+                              <Check className="w-3 h-3" />
+                            </div>
+                          )}
+                          <div className="absolute bottom-0 inset-x-0 bg-gradient-to-t from-black/70 to-transparent text-white text-[10px] font-semibold px-1.5 py-1">
+                            Option {p.slot}
                           </div>
-                        )}
-                        <div className="absolute bottom-0 inset-x-0 bg-gradient-to-t from-black/70 to-transparent text-white text-[10px] font-semibold px-1.5 py-1">
-                          {p.label ?? `${season} ${p.slot}`}
-                        </div>
-                      </button>
-                    );
-                  })}
-                  {photosBySeason[season].length === 0 && (
-                    <div className="col-span-3 text-xs text-muted-foreground italic">Photos loading…</div>
-                  )}
+                        </button>
+                      );
+                    })}
+                  </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
 
           <Button onClick={handleDownload} disabled={busy || locLoading} className="w-full">
