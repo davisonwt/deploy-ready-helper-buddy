@@ -105,8 +105,7 @@ const PrintCalendarPage: React.FC = () => {
 
     for (let m = 1; m <= 12; m++) {
       const season = pickerSeasonFor(scripturalMonthToSeason(m, region));
-      const localMonthPhotos = (photosByMonth[m] ?? []).filter((p) => p.season === season);
-      const curated = localMonthPhotos.length ? localMonthPhotos : photosBySeason[season];
+      const curated = photosByMonth[m]?.length ? photosByMonth[m] : photosBySeason[season];
 
       choices[m] = curated.length > 0
         ? curated.map((p) => ({
