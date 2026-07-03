@@ -21,6 +21,7 @@ type PickerSeason = 'autumn' | 'summer' | 'spring' | 'winter';
 
 interface CuratedPhoto {
   id: string;
+  scriptural_month: number | null;
   season: PickerSeason;
   slot: number;
   public_url: string;
@@ -72,8 +73,8 @@ const PrintCalendarPage: React.FC = () => {
   useEffect(() => {
     supabase
       .from('curated_calendar_photos')
-      .select('id,season,slot,public_url,label')
-      .order('season')
+      .select('id,scriptural_month,season,slot,public_url,label')
+      .order('scriptural_month', { nullsFirst: false })
       .order('slot')
       .then(({ data, error }) => {
         if (error) { console.error(error); return; }
@@ -83,7 +84,19 @@ const PrintCalendarPage: React.FC = () => {
 
   const photosBySeason = useMemo(() => {
     const g: Record<PickerSeason, CuratedPhoto[]> = { autumn: [], summer: [], spring: [], winter: [] };
-    for (const p of photos) g[p.season].push(p);
+    for (const p of photos) {
+      if (p.scriptural_month === null) g[p.season].push(p);
+    }
+    return g;
+  }, [photos]);
+
+  const photosByMonth = useMemo(() => {
+    const g: Record<number, CuratedPhoto[]> = {};
+    for (const p of photos) {
+      if (p.scriptural_month) {
+        g[p.scriptural_month] = [...(g[p.scriptural_month] ?? []), p];
+      }
+    }
     return g;
   }, [photos]);
 
@@ -92,7 +105,7 @@ const PrintCalendarPage: React.FC = () => {
 
     for (let m = 1; m <= 12; m++) {
       const season = pickerSeasonFor(scripturalMonthToSeason(m, region));
-      const curated = photosBySeason[season];
+      const curated = photosByMonth[m]?.length ? photosByMonth[m] : photosBySeason[season];
 
       choices[m] = curated.length > 0
         ? curated.map((p) => ({
@@ -112,7 +125,7 @@ const PrintCalendarPage: React.FC = () => {
     }
 
     return choices;
-  }, [photosBySeason, region]);
+  }, [photosByMonth, photosBySeason, region]);
 
   // Build a per-month curated override map from the month-specific picks.
   const curatedImages = useMemo<Record<number, string>>(() => {
