@@ -40,6 +40,17 @@ const SOUTHERN_MONTH_BASE_IMAGES: Record<number, string> = {
   12: month12Summer.url,
 };
 
+const LOCAL_SEASON_IMAGES: Record<SeasonLabel, readonly string[]> = {
+  autumn: [month01Autumn.url, month02Autumn.url, month03Autumn.url],
+  winter: [month04Winter.url, month05Winter.url, month06Winter.url],
+  spring: [month07Spring.url, month08Spring.url, month09Spring.url],
+  summer: [month10Summer.url, month11Summer.url, month12Summer.url],
+  wet: [month07Spring.url, month08Spring.url, month10Summer.url],
+  dry: [month01Autumn.url, month04Winter.url, month12Summer.url],
+  'polar-day': [month10Summer.url, month11Summer.url, month12Summer.url],
+  'polar-night': [month04Winter.url, month05Winter.url, month06Winter.url],
+};
+
 const SOUTHERN_SEASON_IMAGES: Record<SeasonLabel, readonly string[]> = {
   autumn: [calendarUpload64.url, calendarUpload65.url, calendarUpload63.url],
   winter: [calendarUpload66.url, calendarUpload68.url, calendarUpload67.url],
@@ -73,8 +84,9 @@ export function buildSeasonalFallbackArt(scripturalMonth: number, region?: Regio
   }
 
   const season = region ? scripturalMonthToSeason(scripturalMonth, region) : scripturalMonthToSeason(scripturalMonth, getRegion(-34));
+  const localSeasonSet = LOCAL_SEASON_IMAGES[season] ?? LOCAL_SEASON_IMAGES.autumn;
   const seasonalSet = SOUTHERN_SEASON_IMAGES[season] ?? SOUTHERN_SEASON_IMAGES.autumn;
-  return SOUTHERN_MONTH_BASE_IMAGES[scripturalMonth] ?? rotateSeasonImages(seasonalSet, scripturalMonth)[0] ?? seasonalSet[0] ?? calendarUpload64.url;
+  return rotateSeasonImages(localSeasonSet, scripturalMonth)[0] ?? rotateSeasonImages(seasonalSet, scripturalMonth)[0] ?? seasonalSet[0] ?? calendarUpload64.url;
 }
 
 export function buildSeasonalChoiceUrls(scripturalMonth: number, region: RegionInfo): readonly string[] {
@@ -83,8 +95,9 @@ export function buildSeasonalChoiceUrls(scripturalMonth: number, region: RegionI
   }
 
   const season = scripturalMonthToSeason(scripturalMonth, region);
+  const localChoices = rotateSeasonImages(LOCAL_SEASON_IMAGES[season] ?? LOCAL_SEASON_IMAGES.autumn, scripturalMonth);
   const seasonalChoices = rotateSeasonImages(SOUTHERN_SEASON_IMAGES[season] ?? SOUTHERN_SEASON_IMAGES.autumn, scripturalMonth);
-  return [SOUTHERN_MONTH_BASE_IMAGES[scripturalMonth], ...seasonalChoices].filter(Boolean).slice(0, 3);
+  return [localChoices[0], ...seasonalChoices].filter(Boolean).slice(0, 3);
 }
 
 export function useSeasonalArt(scripturalMonth: number, lat: number, _lon: number) {
