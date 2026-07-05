@@ -40,6 +40,12 @@ const DEFAULT_MONTH_SLOTS = Object.fromEntries(
   Array.from({ length: 12 }, (_, i) => [i + 1, 1]),
 ) as Record<number, number>;
 
+const WRONG_SCREENSHOT_ASSET_PATTERN = /calendar-month-(1[5-9]|[2-4]\d|5[0-3])\.png(?:$|[?#])/;
+
+function isWrongCalendarScreenshot(url: string) {
+  return WRONG_SCREENSHOT_ASSET_PATTERN.test(url);
+}
+
 /** Map any season label (incl. wet/dry/polar) to one of the 4 picker buckets. */
 function pickerSeasonFor(label: SeasonLabel): PickerSeason {
   switch (label) {
@@ -85,6 +91,7 @@ const PrintCalendarPage: React.FC = () => {
   const photosBySeason = useMemo(() => {
     const g: Record<PickerSeason, CuratedPhoto[]> = { autumn: [], summer: [], spring: [], winter: [] };
     for (const p of photos) {
+      if (isWrongCalendarScreenshot(p.public_url)) continue;
       if (p.scriptural_month === null) g[p.season].push(p);
     }
     return g;
@@ -93,6 +100,7 @@ const PrintCalendarPage: React.FC = () => {
   const photosByMonth = useMemo(() => {
     const g: Record<number, CuratedPhoto[]> = {};
     for (const p of photos) {
+      if (isWrongCalendarScreenshot(p.public_url)) continue;
       if (p.scriptural_month) {
         g[p.scriptural_month] = [...(g[p.scriptural_month] ?? []), p];
       }
