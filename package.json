@@ -13,6 +13,7 @@
   "dependencies": {
     "@axe-core/react": "^4.10.2",
     "@jitsi/react-sdk": "^1.4.4",
+    "@lovable.dev/mcp-js": "^0.20.0",
     "@radix-ui/react-accordion": "^1.2.0",
     "@radix-ui/react-alert-dialog": "^1.1.1",
     "@radix-ui/react-aspect-ratio": "^1.1.0",
@@ -96,7 +97,7 @@
     "vaul": "^0.9.3",
     "vite-plugin-eslint": "^1.8.1",
     "vitest": "^4",
-    "zod": "^4.1.9",
+    "zod": "^4.4.3",
     "zustand": "^5.0.8"
   },
   "devDependencies": {
