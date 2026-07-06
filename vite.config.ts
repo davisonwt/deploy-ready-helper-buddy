@@ -5,6 +5,7 @@ import { componentTagger } from "lovable-tagger";
 // @ts-ignore - vite-plugin-eslint types issue with package.json exports
 import eslint from "vite-plugin-eslint";
 import { visualizer } from "rollup-plugin-visualizer";
+import { mcpPlugin } from "@lovable.dev/mcp-js/stacks/supabase/vite";
 
 
 // https://vitejs.dev/config/
@@ -19,6 +20,7 @@ export default defineConfig(({ mode, command }) => ({
   },
   plugins: [
     react(),
+    mcpPlugin(),
     command === 'serve' && mode === 'development' && componentTagger(),
     command === 'serve' && eslint({
       failOnError: true, // Fail dev server on ESLint errors
