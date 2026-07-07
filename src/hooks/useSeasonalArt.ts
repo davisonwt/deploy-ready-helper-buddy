@@ -23,21 +23,33 @@ import calendarUpload72 from '@/assets/calendar-uploaded/calendar-upload-72.png.
 import calendarUpload73 from '@/assets/calendar-uploaded/calendar-upload-73.png.asset.json';
 import calendarUpload74 from '@/assets/calendar-uploaded/calendar-upload-74.png.asset.json';
 import calendarUpload75 from '@/assets/calendar-uploaded/calendar-upload-75.png.asset.json';
+import calendarMonth63 from '@/assets/calendar-monthly/calendar-month-63.png.asset.json';
+import calendarMonth64 from '@/assets/calendar-monthly/calendar-month-64.png.asset.json';
+import calendarMonth65 from '@/assets/calendar-monthly/calendar-month-65.png.asset.json';
+import calendarMonth66 from '@/assets/calendar-monthly/calendar-month-66.png.asset.json';
+import calendarMonth67 from '@/assets/calendar-monthly/calendar-month-67.png.asset.json';
+import calendarMonth68 from '@/assets/calendar-monthly/calendar-month-68.png.asset.json';
+import calendarMonth70 from '@/assets/calendar-monthly/calendar-month-70.png.asset.json';
+import calendarMonth71 from '@/assets/calendar-monthly/calendar-month-71.png.asset.json';
+import calendarMonth72 from '@/assets/calendar-monthly/calendar-month-72.png.asset.json';
+import calendarMonth73 from '@/assets/calendar-monthly/calendar-month-73.png.asset.json';
+import calendarMonth74 from '@/assets/calendar-monthly/calendar-month-74.png.asset.json';
+import calendarMonth75 from '@/assets/calendar-monthly/calendar-month-75.png.asset.json';
 import { getRegion, scripturalMonthToSeason, type RegionInfo, type SeasonLabel } from '@/utils/calendarSeason';
 
-const SOUTHERN_MONTH_BASE_IMAGES: Record<number, string> = {
-  1: month01Autumn.url,
-  2: month02Autumn.url,
-  3: month03Autumn.url,
-  4: month04Winter.url,
-  5: month05Winter.url,
-  6: month06Winter.url,
-  7: month07Spring.url,
-  8: month08Spring.url,
-  9: month09Spring.url,
-  10: month10Summer.url,
-  11: month11Summer.url,
-  12: month12Summer.url,
+export const MONTH_CHOICE_IMAGES: Record<number, readonly string[]> = {
+  1: [month01Autumn.url, calendarUpload64.url, calendarMonth65.url],
+  2: [month02Autumn.url, calendarUpload65.url, calendarMonth63.url],
+  3: [month03Autumn.url, calendarUpload63.url, calendarMonth64.url],
+  4: [month04Winter.url, calendarUpload66.url, calendarMonth68.url],
+  5: [month05Winter.url, calendarUpload68.url, calendarMonth67.url],
+  6: [month06Winter.url, calendarUpload67.url, calendarMonth66.url],
+  7: [month07Spring.url, calendarUpload69.url, calendarMonth70.url],
+  8: [month08Spring.url, calendarUpload70.url, calendarMonth72.url],
+  9: [month09Spring.url, calendarUpload72.url, calendarMonth71.url],
+  10: [month10Summer.url, calendarUpload73.url, calendarMonth74.url],
+  11: [month11Summer.url, calendarUpload74.url, calendarMonth75.url],
+  12: [month12Summer.url, calendarUpload75.url, calendarMonth73.url],
 };
 
 const LOCAL_SEASON_IMAGES: Record<SeasonLabel, readonly string[]> = {
@@ -74,7 +86,7 @@ function rotateSeasonImages(images: readonly string[], month: number): readonly 
 export const BUNDLED_SEASONAL_ART: Record<number, string> = Object.fromEntries(
   Array.from({ length: 12 }, (_, index) => {
     const month = index + 1;
-    return [month, SOUTHERN_MONTH_BASE_IMAGES[month]];
+    return [month, MONTH_CHOICE_IMAGES[month][0]];
   }),
 ) as Record<number, string>;
 
@@ -82,6 +94,9 @@ export function buildSeasonalFallbackArt(scripturalMonth: number, region?: Regio
   if (!scripturalMonth || scripturalMonth < 1 || scripturalMonth > 12) {
     return calendarUpload64.url;
   }
+
+  const monthChoices = MONTH_CHOICE_IMAGES[scripturalMonth];
+  if (monthChoices?.[0]) return monthChoices[0];
 
   const season = region ? scripturalMonthToSeason(scripturalMonth, region) : scripturalMonthToSeason(scripturalMonth, getRegion(-34));
   const localSeasonSet = LOCAL_SEASON_IMAGES[season] ?? LOCAL_SEASON_IMAGES.autumn;
@@ -93,6 +108,9 @@ export function buildSeasonalChoiceUrls(scripturalMonth: number, region: RegionI
   if (!scripturalMonth || scripturalMonth < 1 || scripturalMonth > 12) {
     return SOUTHERN_SEASON_IMAGES.autumn;
   }
+
+  const monthChoices = MONTH_CHOICE_IMAGES[scripturalMonth];
+  if (monthChoices?.length === 3) return monthChoices;
 
   const season = scripturalMonthToSeason(scripturalMonth, region);
   const localChoices = rotateSeasonImages(LOCAL_SEASON_IMAGES[season] ?? LOCAL_SEASON_IMAGES.autumn, scripturalMonth);
