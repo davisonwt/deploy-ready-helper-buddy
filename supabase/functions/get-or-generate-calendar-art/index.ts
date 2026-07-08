@@ -244,12 +244,19 @@ serve(async (req) => {
       generatedImage = await generateCalendarImage(prompt);
     } catch (e) {
       console.warn("[calendar-art] paid image generation unavailable; returning fallback art", (e as Error).message);
+      // Remove placeholder so a later request can retry generation
+      await supabase.from("seasonal_calendar_art")
+        .delete()
+        .eq("region_key", region_key)
+        .eq("scriptural_month", scriptural_month)
+        .eq("model", "placeholder");
       return json({
         imageUrl: fallbackSvgDataUrl(scriptural_month, season_label, region_description),
         cached: false,
         fallback: true,
       });
     }
+
     const extension = generatedImage.contentType === "image/webp" ? "webp" : "png";
     const storagePath = `calendar-art/${region_key.replace(":", "_")}/${scriptural_month}.${extension}`;
     const { error: upErr } = await supabase.storage
