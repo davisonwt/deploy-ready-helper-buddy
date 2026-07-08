@@ -239,8 +239,12 @@ export default function TribalAliveFeedPage() {
 
         if (cancelled) return;
 
-        // Collect every user_id we need to resolve to a profile
-        const sowerIds = Array.from(new Set([
+        // Collect every id we need to resolve. NOTE: products.sower_id / sower_books.sower_id
+        // reference public.sowers.id (NOT auth.users.id). Resolve those through the `sowers`
+        // table first, then read names/avatars from `public_profiles` (public-readable under RLS).
+        // The private `profiles` table blocks cross-user reads, so any lookup there for another
+        // sower returns nothing → "Anonymous" for every card that isn't the viewer's own.
+        const rawIds = Array.from(new Set([
           ...(seedsRes.data || []).map((s: any) => s.gifter_id),
           ...(productsRes.data || []).map((p: any) => p.sower_id),
           ...(videosRes.data || []).map((v: any) => v.uploader_id),
@@ -251,21 +255,56 @@ export default function TribalAliveFeedPage() {
           ...(skillRes.data || []).map((c: any) => c.presenter_id),
           ...(orchardsRes.data || []).map((o: any) => o.user_id),
           ...((djTracksRes.data || []).map((t: any) => t.radio_djs?.user_id)),
-        ].filter(Boolean)));
+        ].filter(Boolean))) as string[];
 
         const profileMap: Record<string, any> = {};
-        if (sowerIds.length) {
-          const [byUserId, byProfileId] = await Promise.all([
+        if (rawIds.length) {
+          const { data: sowerRows } = await supabase
+            .from('sowers')
+            .select('id, user_id, display_name, logo_url')
+            .in('id', rawIds);
+          const sowerById: Record<string, any> = {};
+          (sowerRows || []).forEach((s: any) => { sowerById[s.id] = s; });
+
+          const userIds = Array.from(new Set([
+            ...rawIds,
+            ...(sowerRows || []).map((s: any) => s.user_id).filter(Boolean),
+          ])) as string[];
+
+          const [pubRes, selfRes] = await Promise.all([
+            supabase.from('public_profiles')
+              .select('user_id, display_name, username, avatar_url')
+              .in('user_id', userIds),
+            // Best-effort: only returns the caller's own row under RLS, but gives richer fields.
             supabase.from('profiles')
               .select('id, user_id, first_name, last_name, display_name, username, email, avatar_url')
-              .in('user_id', sowerIds as string[]),
-            supabase.from('profiles')
-              .select('id, user_id, first_name, last_name, display_name, username, email, avatar_url')
-              .in('id', sowerIds as string[]),
+              .in('user_id', userIds),
           ]);
-          [...(byUserId.data || []), ...(byProfileId.data || [])].forEach((p: any) => {
-            if (p.user_id) profileMap[p.user_id] = p;
-            if (p.id) profileMap[p.id] = p;
+          const pubByUserId: Record<string, any> = {};
+          (pubRes.data || []).forEach((p: any) => { pubByUserId[p.user_id] = p; });
+          const privByUserId: Record<string, any> = {};
+          (selfRes.data || []).forEach((p: any) => { if (p.user_id) privByUserId[p.user_id] = p; });
+
+          const buildProfile = (uid: string | null, sower: any) => {
+            const pub = uid ? pubByUserId[uid] : null;
+            const priv = uid ? privByUserId[uid] : null;
+            return {
+              id: uid,
+              user_id: uid,
+              display_name: pub?.display_name || sower?.display_name || priv?.display_name || null,
+              username: pub?.username || priv?.username || null,
+              first_name: priv?.first_name || null,
+              last_name: priv?.last_name || null,
+              email: priv?.email || null,
+              avatar_url: pub?.avatar_url || sower?.logo_url || priv?.avatar_url || null,
+            };
+          };
+
+          rawIds.forEach((rid) => {
+            const sower = sowerById[rid] || null;
+            const uid = sower?.user_id || rid;
+            profileMap[rid] = buildProfile(uid, sower);
+            if (uid && uid !== rid) profileMap[uid] = buildProfile(uid, sower);
           });
         }
 
