@@ -92,14 +92,50 @@ serve(async (req) => {
     }
 
 
+    // Verify each bestower against real completed bestowals on this sower's orchards.
+    // Drop any client-supplied entry that doesn't match a real record, and clamp amount.
+    const verifiedBestowers: typeof bestowers = [];
+    if (bestowers.length > 0) {
+      const bestowerIds = Array.from(new Set(bestowers.map((b) => String(b.user_id)).filter(Boolean)));
+      const { data: orchardRows } = await admin
+        .from("orchards").select("id").eq("user_id", sowerId);
+      const orchardIds = (orchardRows ?? []).map((o: any) => o.id);
+      if (orchardIds.length && bestowerIds.length) {
+        const { data: realBestowals } = await admin
+          .from("bestowals")
+          .select("bestower_id, amount, status")
+          .in("orchard_id", orchardIds)
+          .in("bestower_id", bestowerIds)
+          .eq("status", "completed");
+        const totalsByUser = new Map<string, number>();
+        for (const b of realBestowals ?? []) {
+          totalsByUser.set(b.bestower_id, (totalsByUser.get(b.bestower_id) ?? 0) + Number(b.amount ?? 0));
+        }
+        for (const b of bestowers) {
+          const realTotal = totalsByUser.get(String(b.user_id));
+          if (realTotal === undefined) continue; // never bestowed to this sower — skip
+          const claimed = Number(b.amount ?? 0);
+          const safeAmount = Math.min(Math.max(0, claimed), realTotal);
+          verifiedBestowers.push({
+            ...b,
+            amount: safeAmount,
+            chat_snippet: typeof b.chat_snippet === "string" ? b.chat_snippet.slice(0, 500) : undefined,
+          });
+        }
+      }
+    }
+    // Clamp transcript passed to the AI prompt
+    const safeTranscript = transcript.slice(0, 6000);
+
     // Log lifecycle event
     await admin.from("grove_session_events").insert({
       session_kind: sessionKind,
       session_id: sessionId,
       sower_id: sowerId,
       event_type: "session_ended",
-      payload: { seed_title: seedTitle, bestower_count: bestowers.length },
+      payload: { seed_title: seedTitle, bestower_count: verifiedBestowers.length },
     });
+
 
     // Update relationship scores
     for (const b of bestowers) {
