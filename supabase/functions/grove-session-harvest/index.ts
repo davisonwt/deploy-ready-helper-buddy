@@ -137,8 +137,8 @@ serve(async (req) => {
     });
 
 
-    // Update relationship scores
-    for (const b of bestowers) {
+    // Update relationship scores — only for verified bestowers
+    for (const b of verifiedBestowers) {
       const { data: existing } = await admin
         .from("grove_relationship_scores")
         .select("sessions_attended,total_bestowed,consecutive_support")
@@ -163,12 +163,16 @@ serve(async (req) => {
       .from("profiles").select("display_name").eq("user_id", sowerId).maybeSingle();
     const sowerName = (sowerProfile as any)?.display_name ?? "the sower";
 
+    // Only allow dispatches to verified bestower user_ids (or the sower themselves)
+    const allowedRecipients = new Set<string>([sowerId, ...verifiedBestowers.map((b) => String(b.user_id))]);
+
     // --- GRAIN: thank-yous ---
     const grainOut = await callAI(PROMPTS.grain, {
-      sower: sowerName, seed_title: seedTitle, transcript_excerpt: transcript.slice(0, 4000), bestowers,
+      sower: sowerName, seed_title: seedTitle, transcript_excerpt: safeTranscript.slice(0, 4000), bestowers: verifiedBestowers,
     }, LOVABLE_API_KEY).catch((e) => ({ error: String(e) }));
 
     const dispatch = async (recipient_id: string, agent: string, msg: string, meta: Record<string, unknown> = {}) => {
+      if (!allowedRecipients.has(recipient_id)) return;
       await fetch(`${SUPABASE_URL}/functions/v1/grove-dispatch`, {
         method: "POST",
         headers: { "Content-Type": "application/json", apikey: SERVICE_KEY, Authorization: `Bearer ${SERVICE_KEY}` },
@@ -189,12 +193,12 @@ serve(async (req) => {
 
     // --- SHEAF: relationship nurture (queued) ---
     const sheafOut = await callAI(PROMPTS.sheaf, {
-      sower: sowerName, seed_title: seedTitle, bestowers,
+      sower: sowerName, seed_title: seedTitle, bestowers: verifiedBestowers,
     }, LOVABLE_API_KEY).catch(() => ({ nurtures: [] }));
 
     if (Array.isArray((sheafOut as any)?.nurtures)) {
       const rows = (sheafOut as any).nurtures
-        .filter((n: any) => n?.recipient_id && n?.message)
+        .filter((n: any) => n?.recipient_id && n?.message && allowedRecipients.has(String(n.recipient_id)))
         .map((n: any) => ({
           recipient_id: n.recipient_id,
           agent_slug: "sheaf",
@@ -207,10 +211,12 @@ serve(async (req) => {
 
     // --- THRESH: coaching for sower ---
     const threshOut = await callAI(PROMPTS.thresh, {
-      seed_title: seedTitle, transcript_excerpt: transcript.slice(0, 6000),
-      bestower_count: bestowers.length,
-      total_bestowed: bestowers.reduce((s, b) => s + Number(b.amount ?? 0), 0),
+      seed_title: seedTitle, transcript_excerpt: safeTranscript,
+      bestower_count: verifiedBestowers.length,
+      total_bestowed: verifiedBestowers.reduce((s, b) => s + Number(b.amount ?? 0), 0),
     }, LOVABLE_API_KEY).catch(() => null);
+
+
 
     if (threshOut) {
       const pretty = [
