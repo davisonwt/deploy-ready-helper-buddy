@@ -170,6 +170,22 @@ serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
 
   try {
+    // Require an authenticated caller so this paid endpoint is not open to the world
+    const authHeader = req.headers.get("authorization") ?? "";
+    if (!authHeader.toLowerCase().startsWith("bearer ")) {
+      return json({ error: "unauthorized" }, 401);
+    }
+    const token = authHeader.slice(7).trim();
+    const userClient = createClient(
+      Deno.env.get("SUPABASE_URL")!,
+      Deno.env.get("SUPABASE_ANON_KEY")!,
+      { global: { headers: { Authorization: `Bearer ${token}` } } },
+    );
+    const { data: userData, error: userErr } = await userClient.auth.getUser();
+    if (userErr || !userData?.user) {
+      return json({ error: "unauthorized" }, 401);
+    }
+
     const parsed = validate(await req.json().catch(() => null));
     if (!parsed) return json({ error: "Invalid request body" }, 400);
     const { region_key, scriptural_month, season_label, region_description } = parsed;
@@ -191,7 +207,28 @@ serve(async (req) => {
       return json({ imageUrl: cached.image_url, cached: true });
     }
 
+    // 1b. Race guard — insert a placeholder row so concurrent callers see cache and skip generation.
+    // If insert fails on conflict, another request is already generating; return fallback SVG this time.
+    const placeholderUrl = fallbackSvgDataUrl(scriptural_month, season_label, region_description);
+    const { error: placeholderErr } = await supabase
+      .from("seasonal_calendar_art")
+      .insert({
+        region_key,
+        scriptural_month,
+        season_label,
+        image_url: placeholderUrl,
+        storage_path: null,
+        prompt: null,
+        model: "placeholder",
+      } as any);
+    if (placeholderErr) {
+      // Someone else is (or already) generating this key — return fallback while their result caches.
+      console.log("[calendar-art] concurrent generation detected, returning fallback", placeholderErr.message);
+      return json({ imageUrl: placeholderUrl, cached: false, fallback: true });
+    }
+
     // 2. Build prompt — stunning, gallery-grade seasonal nature art
+
     const prompt =
       `Breathtaking, award-winning fine-art nature photograph of a ${season_label} landscape in ${region_description}. ` +
       `Sweeping vista, dramatic golden-hour light, rich atmospheric depth, volumetric haze, ` +
@@ -207,12 +244,19 @@ serve(async (req) => {
       generatedImage = await generateCalendarImage(prompt);
     } catch (e) {
       console.warn("[calendar-art] paid image generation unavailable; returning fallback art", (e as Error).message);
+      // Remove placeholder so a later request can retry generation
+      await supabase.from("seasonal_calendar_art")
+        .delete()
+        .eq("region_key", region_key)
+        .eq("scriptural_month", scriptural_month)
+        .eq("model", "placeholder");
       return json({
         imageUrl: fallbackSvgDataUrl(scriptural_month, season_label, region_description),
         cached: false,
         fallback: true,
       });
     }
+
     const extension = generatedImage.contentType === "image/webp" ? "webp" : "png";
     const storagePath = `calendar-art/${region_key.replace(":", "_")}/${scriptural_month}.${extension}`;
     const { error: upErr } = await supabase.storage
@@ -225,7 +269,7 @@ serve(async (req) => {
     const { data: pub } = supabase.storage.from("ai-generations").getPublicUrl(storagePath);
     const publicUrl = pub.publicUrl;
 
-    // 5. Insert cache row (ON CONFLICT DO NOTHING via upsert + ignoreDuplicates)
+    // 5. Overwrite the placeholder row with the real generated image.
     const { error: insErr } = await supabase
       .from("seasonal_calendar_art")
       .upsert({
@@ -236,8 +280,9 @@ serve(async (req) => {
         storage_path: storagePath,
         prompt,
         model: generatedImage.model,
-      }, { onConflict: "region_key,scriptural_month", ignoreDuplicates: true });
+      }, { onConflict: "region_key,scriptural_month" });
     if (insErr) console.warn("[calendar-art] cache insert failed", insErr.message);
+
 
     return json({ imageUrl: publicUrl, cached: false });
   } catch (error) {

@@ -1,4 +1,5 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2"
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -15,15 +16,37 @@ serve(async (req) => {
   const upgradeHeader = headers.get("upgrade") || ""
 
   if (upgradeHeader.toLowerCase() !== "websocket") {
-    return new Response("Expected WebSocket connection", { 
+    return new Response("Expected WebSocket connection", {
       status: 400,
-      headers: corsHeaders 
+      headers: corsHeaders
     })
   }
 
+  // Require a valid Supabase JWT — supplied via ?token=... query string,
+  // since browsers cannot set Authorization headers on WebSocket upgrades.
+  try {
+    const url = new URL(req.url)
+    const token = url.searchParams.get("token") ?? ""
+    if (!token) {
+      return new Response("Unauthorized", { status: 401, headers: corsHeaders })
+    }
+    const userClient = createClient(
+      Deno.env.get("SUPABASE_URL") ?? "",
+      Deno.env.get("SUPABASE_ANON_KEY") ?? "",
+      { global: { headers: { Authorization: `Bearer ${token}` } } }
+    )
+    const { data: userData, error: userErr } = await userClient.auth.getUser()
+    if (userErr || !userData?.user) {
+      return new Response("Unauthorized", { status: 401, headers: corsHeaders })
+    }
+  } catch (_) {
+    return new Response("Unauthorized", { status: 401, headers: corsHeaders })
+  }
+
   const { socket, response } = Deno.upgradeWebSocket(req)
-  
+
   console.log("Grove Station WebSocket connection established")
+
   
   // OpenAI Realtime API connection
   let openAISocket: WebSocket | null = null

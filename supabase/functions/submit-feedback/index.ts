@@ -13,23 +13,38 @@ serve(async (req) => {
   }
 
   try {
-    // Get authorization header
-    const authHeader = req.headers.get('Authorization');
-    if (!authHeader) {
+    // Verify JWT and derive user_id from the verified claims — never trust body-supplied user_id
+    const authHeader = req.headers.get('Authorization') ?? '';
+    if (!authHeader.toLowerCase().startsWith('bearer ')) {
       return new Response(
         JSON.stringify({ error: 'Authorization header required' }),
         { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
-
-    const { feedback, user_id } = await req.json();
-
-    if (!feedback || !user_id) {
+    const token = authHeader.slice(7).trim();
+    const userClient = createClient(
+      Deno.env.get('SUPABASE_URL') ?? '',
+      Deno.env.get('SUPABASE_ANON_KEY') ?? '',
+      { global: { headers: { Authorization: `Bearer ${token}` } } }
+    );
+    const { data: userData, error: userErr } = await userClient.auth.getUser();
+    if (userErr || !userData?.user) {
       return new Response(
-        JSON.stringify({ error: 'Missing feedback or user_id' }),
+        JSON.stringify({ error: 'unauthorized' }),
+        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+    const user_id = userData.user.id;
+
+    const { feedback } = await req.json();
+
+    if (!feedback || typeof feedback !== 'string' || feedback.length > 10_000) {
+      return new Response(
+        JSON.stringify({ error: 'Missing or invalid feedback' }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
+
 
     // Create Supabase client with service role
     const supabaseAdmin = createClient(

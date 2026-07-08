@@ -1,10 +1,17 @@
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+
+const SUPABASE_URL = Deno.env.get('SUPABASE_URL') ?? '';
+const SUPABASE_ANON_KEY = Deno.env.get('SUPABASE_ANON_KEY') ?? '';
+const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
+
+const DAILY_LIMIT = 10;
 
 serve(async (req) => {
   // Handle CORS preflight requests
@@ -13,7 +20,36 @@ serve(async (req) => {
   }
 
   try {
+    // AuthN: require a valid Supabase JWT
+    const authHeader = req.headers.get('authorization') ?? '';
+    if (!authHeader.toLowerCase().startsWith('bearer ')) {
+      return new Response(JSON.stringify({ error: 'unauthorized' }), {
+        status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+    const token = authHeader.slice(7).trim();
+    const userClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+      global: { headers: { Authorization: `Bearer ${token}` } },
+    });
+    const { data: userData, error: userErr } = await userClient.auth.getUser();
+    if (userErr || !userData?.user) {
+      return new Response(JSON.stringify({ error: 'unauthorized' }), {
+        status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+    const userId = userData.user.id;
+
+    // Per-user daily rate limit
+    const admin = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
+    const { data: usageCount } = await admin.rpc('get_ai_usage_today', { user_id_param: userId });
+    if ((usageCount ?? 0) >= DAILY_LIMIT) {
+      return new Response(JSON.stringify({ error: 'Daily AI usage limit reached. Please try again tomorrow.' }), {
+        status: 429, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
     const { memberName, offering, personalStory, myGoal, communityBenefit, tone } = await req.json();
+
     
     console.log('Generating community offering for:', memberName);
 
@@ -115,10 +151,18 @@ Return the response as a valid JSON object with these exact keys.
       };
     }
 
+    // Record AI usage for rate limiting
+    try {
+      await admin.from('ai_usage').insert({ user_id: userId, feature: 'generate-community-offering' } as any);
+    } catch (e) {
+      console.warn('Failed to record ai_usage', e);
+    }
+
     return new Response(
       JSON.stringify({ offering_pack }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
+
 
   } catch (error) {
     console.error('Error in generate-community-offering function:', error);

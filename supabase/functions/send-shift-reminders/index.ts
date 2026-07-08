@@ -23,8 +23,42 @@ const handler = async (req: Request): Promise<Response> => {
 
   try {
     console.log('Shift reminder function called');
-    
+
+    // Require caller auth: either service role (cron/internal) or an admin/gosat/radio_admin user
+    const authHeader = req.headers.get('authorization') ?? '';
+    if (!authHeader.toLowerCase().startsWith('bearer ')) {
+      return new Response(JSON.stringify({ error: 'unauthorized' }), {
+        status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+    const token = authHeader.slice(7).trim();
+    const serviceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '';
+    const isServiceRole = token === serviceKey;
+    if (!isServiceRole) {
+      const anonKey = Deno.env.get('SUPABASE_ANON_KEY') ?? '';
+      const userClient = createClient(Deno.env.get('SUPABASE_URL') ?? '', anonKey, {
+        global: { headers: { Authorization: `Bearer ${token}` } },
+      });
+      const { data: userData, error: userErr } = await userClient.auth.getUser();
+      if (userErr || !userData?.user) {
+        return new Response(JSON.stringify({ error: 'unauthorized' }), {
+          status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
+      const { data: roles } = await supabase
+        .from('user_roles')
+        .select('role')
+        .eq('user_id', userData.user.id);
+      const allowed = roles?.some((r: any) => ['admin', 'gosat', 'radio_admin'].includes(r.role));
+      if (!allowed) {
+        return new Response(JSON.stringify({ error: 'forbidden' }), {
+          status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
+    }
+
     const { scheduleId, reminderType }: ShiftReminderRequest = await req.json();
+
 
     let upcomingShifts;
 

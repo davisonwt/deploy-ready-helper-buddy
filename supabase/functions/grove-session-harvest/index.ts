@@ -92,17 +92,53 @@ serve(async (req) => {
     }
 
 
+    // Verify each bestower against real completed bestowals on this sower's orchards.
+    // Drop any client-supplied entry that doesn't match a real record, and clamp amount.
+    const verifiedBestowers: typeof bestowers = [];
+    if (bestowers.length > 0) {
+      const bestowerIds = Array.from(new Set(bestowers.map((b) => String(b.user_id)).filter(Boolean)));
+      const { data: orchardRows } = await admin
+        .from("orchards").select("id").eq("user_id", sowerId);
+      const orchardIds = (orchardRows ?? []).map((o: any) => o.id);
+      if (orchardIds.length && bestowerIds.length) {
+        const { data: realBestowals } = await admin
+          .from("bestowals")
+          .select("bestower_id, amount, status")
+          .in("orchard_id", orchardIds)
+          .in("bestower_id", bestowerIds)
+          .eq("status", "completed");
+        const totalsByUser = new Map<string, number>();
+        for (const b of realBestowals ?? []) {
+          totalsByUser.set(b.bestower_id, (totalsByUser.get(b.bestower_id) ?? 0) + Number(b.amount ?? 0));
+        }
+        for (const b of bestowers) {
+          const realTotal = totalsByUser.get(String(b.user_id));
+          if (realTotal === undefined) continue; // never bestowed to this sower — skip
+          const claimed = Number(b.amount ?? 0);
+          const safeAmount = Math.min(Math.max(0, claimed), realTotal);
+          verifiedBestowers.push({
+            ...b,
+            amount: safeAmount,
+            chat_snippet: typeof b.chat_snippet === "string" ? b.chat_snippet.slice(0, 500) : undefined,
+          });
+        }
+      }
+    }
+    // Clamp transcript passed to the AI prompt
+    const safeTranscript = transcript.slice(0, 6000);
+
     // Log lifecycle event
     await admin.from("grove_session_events").insert({
       session_kind: sessionKind,
       session_id: sessionId,
       sower_id: sowerId,
       event_type: "session_ended",
-      payload: { seed_title: seedTitle, bestower_count: bestowers.length },
+      payload: { seed_title: seedTitle, bestower_count: verifiedBestowers.length },
     });
 
-    // Update relationship scores
-    for (const b of bestowers) {
+
+    // Update relationship scores — only for verified bestowers
+    for (const b of verifiedBestowers) {
       const { data: existing } = await admin
         .from("grove_relationship_scores")
         .select("sessions_attended,total_bestowed,consecutive_support")
@@ -127,12 +163,16 @@ serve(async (req) => {
       .from("profiles").select("display_name").eq("user_id", sowerId).maybeSingle();
     const sowerName = (sowerProfile as any)?.display_name ?? "the sower";
 
+    // Only allow dispatches to verified bestower user_ids (or the sower themselves)
+    const allowedRecipients = new Set<string>([sowerId, ...verifiedBestowers.map((b) => String(b.user_id))]);
+
     // --- GRAIN: thank-yous ---
     const grainOut = await callAI(PROMPTS.grain, {
-      sower: sowerName, seed_title: seedTitle, transcript_excerpt: transcript.slice(0, 4000), bestowers,
+      sower: sowerName, seed_title: seedTitle, transcript_excerpt: safeTranscript.slice(0, 4000), bestowers: verifiedBestowers,
     }, LOVABLE_API_KEY).catch((e) => ({ error: String(e) }));
 
     const dispatch = async (recipient_id: string, agent: string, msg: string, meta: Record<string, unknown> = {}) => {
+      if (!allowedRecipients.has(recipient_id)) return;
       await fetch(`${SUPABASE_URL}/functions/v1/grove-dispatch`, {
         method: "POST",
         headers: { "Content-Type": "application/json", apikey: SERVICE_KEY, Authorization: `Bearer ${SERVICE_KEY}` },
@@ -153,12 +193,12 @@ serve(async (req) => {
 
     // --- SHEAF: relationship nurture (queued) ---
     const sheafOut = await callAI(PROMPTS.sheaf, {
-      sower: sowerName, seed_title: seedTitle, bestowers,
+      sower: sowerName, seed_title: seedTitle, bestowers: verifiedBestowers,
     }, LOVABLE_API_KEY).catch(() => ({ nurtures: [] }));
 
     if (Array.isArray((sheafOut as any)?.nurtures)) {
       const rows = (sheafOut as any).nurtures
-        .filter((n: any) => n?.recipient_id && n?.message)
+        .filter((n: any) => n?.recipient_id && n?.message && allowedRecipients.has(String(n.recipient_id)))
         .map((n: any) => ({
           recipient_id: n.recipient_id,
           agent_slug: "sheaf",
@@ -171,10 +211,12 @@ serve(async (req) => {
 
     // --- THRESH: coaching for sower ---
     const threshOut = await callAI(PROMPTS.thresh, {
-      seed_title: seedTitle, transcript_excerpt: transcript.slice(0, 6000),
-      bestower_count: bestowers.length,
-      total_bestowed: bestowers.reduce((s, b) => s + Number(b.amount ?? 0), 0),
+      seed_title: seedTitle, transcript_excerpt: safeTranscript,
+      bestower_count: verifiedBestowers.length,
+      total_bestowed: verifiedBestowers.reduce((s, b) => s + Number(b.amount ?? 0), 0),
     }, LOVABLE_API_KEY).catch(() => null);
+
+
 
     if (threshOut) {
       const pretty = [
