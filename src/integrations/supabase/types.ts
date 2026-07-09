@@ -5803,45 +5803,33 @@ export type Database = {
       }
       payment_config: {
         Row: {
-          bank_account_name: string
           bank_account_name_encrypted: string | null
-          bank_account_number: string
           bank_account_number_encrypted: string | null
           bank_name: string
           bank_name_encrypted: string | null
-          bank_swift_code: string | null
           bank_swift_code_encrypted: string | null
-          business_email: string | null
           business_email_encrypted: string | null
           created_at: string
           id: string
           updated_at: string
         }
         Insert: {
-          bank_account_name: string
           bank_account_name_encrypted?: string | null
-          bank_account_number: string
           bank_account_number_encrypted?: string | null
           bank_name: string
           bank_name_encrypted?: string | null
-          bank_swift_code?: string | null
           bank_swift_code_encrypted?: string | null
-          business_email?: string | null
           business_email_encrypted?: string | null
           created_at?: string
           id?: string
           updated_at?: string
         }
         Update: {
-          bank_account_name?: string
           bank_account_name_encrypted?: string | null
-          bank_account_number?: string
           bank_account_number_encrypted?: string | null
           bank_name?: string
           bank_name_encrypted?: string | null
-          bank_swift_code?: string | null
           bank_swift_code_encrypted?: string | null
-          business_email?: string | null
           business_email_encrypted?: string | null
           created_at?: string
           id?: string
