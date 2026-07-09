@@ -23,18 +23,19 @@ import calendarUpload72 from '@/assets/calendar-uploaded/calendar-upload-72.png.
 import calendarUpload73 from '@/assets/calendar-uploaded/calendar-upload-73.png.asset.json';
 import calendarUpload74 from '@/assets/calendar-uploaded/calendar-upload-74.png.asset.json';
 import calendarUpload75 from '@/assets/calendar-uploaded/calendar-upload-75.png.asset.json';
-import calendarMonth63 from '@/assets/calendar-monthly/calendar-month-63.png.asset.json';
-import calendarMonth64 from '@/assets/calendar-monthly/calendar-month-64.png.asset.json';
-import calendarMonth65 from '@/assets/calendar-monthly/calendar-month-65.png.asset.json';
-import calendarMonth66 from '@/assets/calendar-monthly/calendar-month-66.png.asset.json';
-import calendarMonth67 from '@/assets/calendar-monthly/calendar-month-67.png.asset.json';
-import calendarMonth68 from '@/assets/calendar-monthly/calendar-month-68.png.asset.json';
-import calendarMonth70 from '@/assets/calendar-monthly/calendar-month-70.png.asset.json';
-import calendarMonth71 from '@/assets/calendar-monthly/calendar-month-71.png.asset.json';
-import calendarMonth72 from '@/assets/calendar-monthly/calendar-month-72.png.asset.json';
-import calendarMonth73 from '@/assets/calendar-monthly/calendar-month-73.png.asset.json';
-import calendarMonth74 from '@/assets/calendar-monthly/calendar-month-74.png.asset.json';
-import calendarMonth75 from '@/assets/calendar-monthly/calendar-month-75.png.asset.json';
+// Third-slot images — chosen for distinct file sizes (verified unique from the calendar-upload set)
+import calendarMonth15 from '@/assets/calendar-monthly/calendar-month-15.png.asset.json';
+import calendarMonth16 from '@/assets/calendar-monthly/calendar-month-16.png.asset.json';
+import calendarMonth17 from '@/assets/calendar-monthly/calendar-month-17.png.asset.json';
+import calendarMonth18 from '@/assets/calendar-monthly/calendar-month-18.png.asset.json';
+import calendarMonth19 from '@/assets/calendar-monthly/calendar-month-19.png.asset.json';
+import calendarMonth23 from '@/assets/calendar-monthly/calendar-month-23.png.asset.json';
+import calendarMonth26 from '@/assets/calendar-monthly/calendar-month-26.png.asset.json';
+import calendarMonth34 from '@/assets/calendar-monthly/calendar-month-34.png.asset.json';
+import calendarMonth36 from '@/assets/calendar-monthly/calendar-month-36.png.asset.json';
+import calendarMonth42 from '@/assets/calendar-monthly/calendar-month-42.png.asset.json';
+import calendarMonth45 from '@/assets/calendar-monthly/calendar-month-45.png.asset.json';
+import calendarMonth33 from '@/assets/calendar-monthly/calendar-month-33.png.asset.json';
 import { getRegion, scripturalMonthToSeason, type RegionInfo, type SeasonLabel } from '@/utils/calendarSeason';
 
 export const MONTH_CHOICE_IMAGES: Record<number, readonly string[]> = {
