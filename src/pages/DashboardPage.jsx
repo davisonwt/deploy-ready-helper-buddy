@@ -1017,20 +1017,6 @@ export default function SeedFlowDashboard() {
 
           <SacredDayBanner />
 
-          <div style={{ marginTop: 8, marginBottom: 4 }}>
-            <Link
-              to="/calendar/print"
-              style={{
-                display: 'inline-flex', alignItems: 'center', gap: 8,
-                padding: '8px 14px', borderRadius: 999,
-                background: 'linear-gradient(135deg, #92400e, #f59e0b)',
-                color: '#fff', textDecoration: 'none', fontSize: 13, fontWeight: 600,
-                boxShadow: '0 4px 14px rgba(245,158,11,0.35)',
-              }}
-            >
-              🖨️ Print My Calendar
-            </Link>
-          </div>
 
 
 
@@ -1280,6 +1266,19 @@ export default function SeedFlowDashboard() {
               Month {sacredDate.month} · Day {sacredDate.day}<br />
               Day {sacredDate.weekDay} · {sacredDate.dayType}
             </div>
+            <Link
+              to="/calendar/print"
+              style={{
+                display: 'inline-flex', alignItems: 'center', gap: 8,
+                marginTop: 12,
+                padding: '8px 14px', borderRadius: 999,
+                background: 'linear-gradient(135deg, #92400e, #f59e0b)',
+                color: '#fff', textDecoration: 'none', fontSize: 13, fontWeight: 600,
+                boxShadow: '0 4px 14px rgba(245,158,11,0.35)',
+              }}
+            >
+              🖨️ Print My Calendar
+            </Link>
           </div>
           <OmerBadge omer={sacredDate.omer} omerTotal={sacredDate.omerTotal} nextFeast={sacredDate.nextFeast} />
           <div style={styles.panelSection}>
