@@ -23,33 +23,34 @@ import calendarUpload72 from '@/assets/calendar-uploaded/calendar-upload-72.png.
 import calendarUpload73 from '@/assets/calendar-uploaded/calendar-upload-73.png.asset.json';
 import calendarUpload74 from '@/assets/calendar-uploaded/calendar-upload-74.png.asset.json';
 import calendarUpload75 from '@/assets/calendar-uploaded/calendar-upload-75.png.asset.json';
-import calendarMonth63 from '@/assets/calendar-monthly/calendar-month-63.png.asset.json';
-import calendarMonth64 from '@/assets/calendar-monthly/calendar-month-64.png.asset.json';
-import calendarMonth65 from '@/assets/calendar-monthly/calendar-month-65.png.asset.json';
-import calendarMonth66 from '@/assets/calendar-monthly/calendar-month-66.png.asset.json';
-import calendarMonth67 from '@/assets/calendar-monthly/calendar-month-67.png.asset.json';
-import calendarMonth68 from '@/assets/calendar-monthly/calendar-month-68.png.asset.json';
-import calendarMonth70 from '@/assets/calendar-monthly/calendar-month-70.png.asset.json';
-import calendarMonth71 from '@/assets/calendar-monthly/calendar-month-71.png.asset.json';
-import calendarMonth72 from '@/assets/calendar-monthly/calendar-month-72.png.asset.json';
-import calendarMonth73 from '@/assets/calendar-monthly/calendar-month-73.png.asset.json';
-import calendarMonth74 from '@/assets/calendar-monthly/calendar-month-74.png.asset.json';
-import calendarMonth75 from '@/assets/calendar-monthly/calendar-month-75.png.asset.json';
+// Third-slot images — chosen for distinct file sizes (verified unique from the calendar-upload set)
+import calendarMonth15 from '@/assets/calendar-monthly/calendar-month-15.png.asset.json';
+import calendarMonth16 from '@/assets/calendar-monthly/calendar-month-16.png.asset.json';
+import calendarMonth17 from '@/assets/calendar-monthly/calendar-month-17.png.asset.json';
+import calendarMonth18 from '@/assets/calendar-monthly/calendar-month-18.png.asset.json';
+import calendarMonth19 from '@/assets/calendar-monthly/calendar-month-19.png.asset.json';
+import calendarMonth23 from '@/assets/calendar-monthly/calendar-month-23.png.asset.json';
+import calendarMonth26 from '@/assets/calendar-monthly/calendar-month-26.png.asset.json';
+import calendarMonth34 from '@/assets/calendar-monthly/calendar-month-34.png.asset.json';
+import calendarMonth36 from '@/assets/calendar-monthly/calendar-month-36.png.asset.json';
+import calendarMonth42 from '@/assets/calendar-monthly/calendar-month-42.png.asset.json';
+import calendarMonth45 from '@/assets/calendar-monthly/calendar-month-45.png.asset.json';
+import calendarMonth33 from '@/assets/calendar-monthly/calendar-month-33.png.asset.json';
 import { getRegion, scripturalMonthToSeason, type RegionInfo, type SeasonLabel } from '@/utils/calendarSeason';
 
 export const MONTH_CHOICE_IMAGES: Record<number, readonly string[]> = {
-  1: [month01Autumn.url, calendarUpload64.url, calendarMonth65.url],
-  2: [month02Autumn.url, calendarUpload65.url, calendarMonth63.url],
-  3: [month03Autumn.url, calendarUpload63.url, calendarMonth64.url],
-  4: [month04Winter.url, calendarUpload66.url, calendarMonth68.url],
-  5: [month05Winter.url, calendarUpload68.url, calendarMonth67.url],
-  6: [month06Winter.url, calendarUpload67.url, calendarMonth66.url],
-  7: [month07Spring.url, calendarUpload69.url, calendarMonth70.url],
-  8: [month08Spring.url, calendarUpload70.url, calendarMonth72.url],
-  9: [month09Spring.url, calendarUpload72.url, calendarMonth71.url],
-  10: [month10Summer.url, calendarUpload73.url, calendarMonth74.url],
-  11: [month11Summer.url, calendarUpload74.url, calendarMonth75.url],
-  12: [month12Summer.url, calendarUpload75.url, calendarMonth73.url],
+  1: [month01Autumn.url, calendarUpload64.url, calendarMonth15.url],
+  2: [month02Autumn.url, calendarUpload65.url, calendarMonth16.url],
+  3: [month03Autumn.url, calendarUpload63.url, calendarMonth17.url],
+  4: [month04Winter.url, calendarUpload66.url, calendarMonth18.url],
+  5: [month05Winter.url, calendarUpload68.url, calendarMonth19.url],
+  6: [month06Winter.url, calendarUpload67.url, calendarMonth23.url],
+  7: [month07Spring.url, calendarUpload69.url, calendarMonth26.url],
+  8: [month08Spring.url, calendarUpload70.url, calendarMonth34.url],
+  9: [month09Spring.url, calendarUpload72.url, calendarMonth36.url],
+  10: [month10Summer.url, calendarUpload73.url, calendarMonth42.url],
+  11: [month11Summer.url, calendarUpload74.url, calendarMonth45.url],
+  12: [month12Summer.url, calendarUpload75.url, calendarMonth33.url],
 };
 
 const LOCAL_SEASON_IMAGES: Record<SeasonLabel, readonly string[]> = {
