@@ -39,18 +39,18 @@ import calendarMonth33 from '@/assets/calendar-monthly/calendar-month-33.png.ass
 import { getRegion, scripturalMonthToSeason, type RegionInfo, type SeasonLabel } from '@/utils/calendarSeason';
 
 export const MONTH_CHOICE_IMAGES: Record<number, readonly string[]> = {
-  1: [month01Autumn.url, calendarUpload64.url, calendarMonth65.url],
-  2: [month02Autumn.url, calendarUpload65.url, calendarMonth63.url],
-  3: [month03Autumn.url, calendarUpload63.url, calendarMonth64.url],
-  4: [month04Winter.url, calendarUpload66.url, calendarMonth68.url],
-  5: [month05Winter.url, calendarUpload68.url, calendarMonth67.url],
-  6: [month06Winter.url, calendarUpload67.url, calendarMonth66.url],
-  7: [month07Spring.url, calendarUpload69.url, calendarMonth70.url],
-  8: [month08Spring.url, calendarUpload70.url, calendarMonth72.url],
-  9: [month09Spring.url, calendarUpload72.url, calendarMonth71.url],
-  10: [month10Summer.url, calendarUpload73.url, calendarMonth74.url],
-  11: [month11Summer.url, calendarUpload74.url, calendarMonth75.url],
-  12: [month12Summer.url, calendarUpload75.url, calendarMonth73.url],
+  1: [month01Autumn.url, calendarUpload64.url, calendarMonth15.url],
+  2: [month02Autumn.url, calendarUpload65.url, calendarMonth16.url],
+  3: [month03Autumn.url, calendarUpload63.url, calendarMonth17.url],
+  4: [month04Winter.url, calendarUpload66.url, calendarMonth18.url],
+  5: [month05Winter.url, calendarUpload68.url, calendarMonth19.url],
+  6: [month06Winter.url, calendarUpload67.url, calendarMonth23.url],
+  7: [month07Spring.url, calendarUpload69.url, calendarMonth26.url],
+  8: [month08Spring.url, calendarUpload70.url, calendarMonth34.url],
+  9: [month09Spring.url, calendarUpload72.url, calendarMonth36.url],
+  10: [month10Summer.url, calendarUpload73.url, calendarMonth42.url],
+  11: [month11Summer.url, calendarUpload74.url, calendarMonth45.url],
+  12: [month12Summer.url, calendarUpload75.url, calendarMonth33.url],
 };
 
 const LOCAL_SEASON_IMAGES: Record<SeasonLabel, readonly string[]> = {
