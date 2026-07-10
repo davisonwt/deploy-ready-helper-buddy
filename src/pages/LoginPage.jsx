@@ -25,6 +25,10 @@ export default function LoginPage() {
   
   const [searchParams] = useSearchParams();
   const isFirstTimeLogin = searchParams.get('firstTime') === 'true';
+  const rawNext = searchParams.get('next') || '';
+  // Only accept same-origin relative paths (must start with a single '/').
+  const nextTarget = rawNext.startsWith('/') && !rawNext.startsWith('//') ? rawNext : '/dashboard';
+
   
   const { login, loginAnonymously, resetPassword } = useAuth()
   const { logSecurityEvent } = useSecurityLogging()
@@ -84,9 +88,10 @@ export default function LoginPage() {
         })
         // Small delay to ensure auth state is updated
         setTimeout(() => {
-          console.log('🔥 NAVIGATING TO DASHBOARD')
-          navigate("/dashboard", { replace: true })
+          console.log('🔥 NAVIGATING TO', nextTarget)
+          navigate(nextTarget, { replace: true })
         }, 50)
+
       } else {
         console.log('❌ LOGIN FAILED:', result.error)
         setError(result.error || "Login failed")
@@ -107,7 +112,8 @@ export default function LoginPage() {
       const result = await loginAnonymously()
       
       if (result.success) {
-        navigate("/dashboard")
+        navigate(nextTarget)
+
       } else {
         setError(result.error || "Guest access failed")
       }
