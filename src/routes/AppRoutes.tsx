@@ -132,10 +132,16 @@ export const LoadingFallback = () => (
   </Card>
 );
 
+const OAuthConsent = lazy(() => import('@/pages/OAuthConsent'));
+
 const AppRoutes = () => (
   <Routes>
     <Route path="/" element={<Index />} />
     <Route path="/login" element={<LoginPage />} />
+    <Route path="/.lovable/oauth/consent" element={
+      <Suspense fallback={<LoadingFallback />}><OAuthConsent /></Suspense>
+    } />
+
     <Route path="/register" element={<RegisterPage />} />
     <Route path="/start-your-journey" element={<RegisterPage />} />
     <Route path="/ambassador-thumbnail" element={<AmbassadorThumbnailPage />} />
