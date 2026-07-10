@@ -3,7 +3,7 @@
 // supabase function: mcp
 // Bundled from src/lib/mcp/index.ts by @lovable.dev/mcp-js.
 // src/lib/mcp/index.ts
-import { defineMcp } from "npm:@lovable.dev/mcp-js@0.20.0";
+import { auth, defineMcp } from "npm:@lovable.dev/mcp-js@0.20.0";
 
 // src/lib/mcp/tools/echo.ts
 import { defineTool } from "npm:@lovable.dev/mcp-js@0.20.0";
@@ -89,11 +89,16 @@ ${rows.map(
 });
 
 // src/lib/mcp/index.ts
+var projectRef = "zuwkgasbkpjlxzsjzumu";
 var mcp_default = defineMcp({
   name: "sow2grow-mcp",
   title: "Sow2Grow MCP",
   version: "0.1.0",
-  instructions: "Sow2Grow public tools. Use `echo` to verify connectivity, and `list_public_orchards` to discover live orchards on the Sow2Grow tribal marketplace.",
+  instructions: "Sow2Grow tools. Use `echo` to verify connectivity, and `list_public_orchards` to discover live orchards on the Sow2Grow tribal marketplace. Callers must sign in as a Sow2Grow user via OAuth.",
+  auth: auth.oauth.issuer({
+    issuer: `https://${projectRef}.supabase.co/auth/v1`,
+    acceptedAudiences: "authenticated"
+  }),
   tools: [echo_default, list_public_orchards_default]
 });
 
