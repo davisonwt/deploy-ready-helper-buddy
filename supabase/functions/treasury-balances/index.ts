@@ -192,10 +192,51 @@ Deno.serve(async (req) => {
     const reservedTotal = reservedAvailable + reservedPending;
     const platformNetUsd = custodyTotalUsd - reservedTotal;
 
+    // ---- Organization wallets (main + tithing) with live Solana balances ----
+    const orgWallets: OrgWalletBalance[] = [];
+    const { data: orgRows } = await service
+      .from("organization_wallets")
+      .select("wallet_name, blockchain, wallet_address, is_active")
+      .eq("is_active", true);
+    for (const row of orgRows ?? []) {
+      const address = row.wallet_address as string | null;
+      const blockchain = (row.blockchain as string | null) ?? "unknown";
+      const name = row.wallet_name as string;
+      const entry: OrgWalletBalance = {
+        wallet_name: name,
+        label: WALLET_LABELS[name] ?? name,
+        blockchain,
+        address: address ?? "",
+        sol: 0,
+        usdc: 0,
+        ok: false,
+      };
+      if (!address) {
+        entry.error = "no_address";
+        orgWallets.push(entry);
+        continue;
+      }
+      if (blockchain !== "solana") {
+        entry.error = `unsupported_chain_${blockchain}`;
+        orgWallets.push(entry);
+        continue;
+      }
+      try {
+        const bal = await loadSolanaWalletBalance(address);
+        entry.sol = bal.sol;
+        entry.usdc = bal.usdc;
+        entry.ok = true;
+      } catch (err) {
+        entry.error = err instanceof Error ? err.message : String(err);
+      }
+      orgWallets.push(entry);
+    }
+
     return json({
       generatedAt: new Date().toISOString(),
       nowpayments,
       paypal,
+      orgWallets,
       reserved: {
         available: reservedAvailable,
         pending: reservedPending,
