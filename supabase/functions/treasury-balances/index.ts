@@ -9,6 +9,8 @@ import { corsHeaders } from "npm:@supabase/supabase-js@2/cors";
 import { getPaypalAccessToken, paypalBaseUrl } from "../_shared/paypal/client.ts";
 
 const NOWPAYMENTS_API = "https://api.nowpayments.io/v1";
+const SOLANA_RPC = Deno.env.get("SOLANA_RPC_URL") ?? "https://api.mainnet-beta.solana.com";
+const USDC_SPL_MINT = "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v";
 
 interface NPBalanceEntry {
   amount?: number;
@@ -17,6 +19,50 @@ interface NPBalanceEntry {
 interface NPBalanceResponse {
   currencies?: Record<string, NPBalanceEntry>;
 }
+
+interface OrgWalletBalance {
+  wallet_name: string;
+  label: string;
+  blockchain: string;
+  address: string;
+  sol: number;
+  usdc: number;
+  ok: boolean;
+  error?: string;
+}
+
+async function solanaRpc<T>(method: string, params: unknown[]): Promise<T> {
+  const res = await fetch(SOLANA_RPC, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ jsonrpc: "2.0", id: 1, method, params }),
+  });
+  const text = await res.text();
+  if (!res.ok) throw new Error(`solana_http_${res.status}: ${text}`);
+  const parsed = JSON.parse(text);
+  if (parsed.error) throw new Error(`solana_rpc_error: ${JSON.stringify(parsed.error)}`);
+  return parsed.result as T;
+}
+
+async function loadSolanaWalletBalance(address: string): Promise<{ sol: number; usdc: number }> {
+  const lamports = await solanaRpc<{ value: number }>("getBalance", [address]);
+  const sol = Number(lamports?.value ?? 0) / 1e9;
+
+  const tokens = await solanaRpc<{ value: Array<{ account: { data: { parsed: { info: { tokenAmount: { uiAmount: number | null } } } } } }> }>(
+    "getTokenAccountsByOwner",
+    [address, { mint: USDC_SPL_MINT }, { encoding: "jsonParsed" }],
+  );
+  let usdc = 0;
+  for (const t of tokens?.value ?? []) {
+    usdc += Number(t?.account?.data?.parsed?.info?.tokenAmount?.uiAmount ?? 0);
+  }
+  return { sol, usdc };
+}
+
+const WALLET_LABELS: Record<string, string> = {
+  s2gholding: "Main (s2gholding)",
+  s2gbestow: "Tithing (s2gbestow)",
+};
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
