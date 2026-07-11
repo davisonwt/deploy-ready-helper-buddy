@@ -40,6 +40,7 @@ import { UserManagementDashboard } from '@/components/admin/UserManagementDashbo
 import { ContentModerationDashboard } from '@/components/admin/ContentModerationDashboard'
 import { EnhancedAnalyticsDashboard } from '@/components/admin/EnhancedAnalyticsDashboard'
 import { GoSatGhostAccessMonitor } from '@/components/admin/GoSatGhostAccessMonitor'
+import GosatTreasuryPage from '@/pages/GosatTreasuryPage'
 
 export default function AdminDashboardPage() {
   const { user } = useAuth()
