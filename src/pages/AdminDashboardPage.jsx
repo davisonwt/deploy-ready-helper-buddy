@@ -417,6 +417,11 @@ export default function AdminDashboardPage() {
             <GoSatGhostAccessMonitor />
           </TabsContent>
 
+          <TabsContent value="treasury" className="space-y-6">
+            <GosatTreasuryPage />
+          </TabsContent>
+
+
 
           <TabsContent value="legacy" className="space-y-6">
             {/* Legacy admin content - search, stats, role management, seeds */}
