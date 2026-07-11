@@ -9,11 +9,22 @@ import { toast } from 'sonner';
 
 interface NPCurrency { currency: string; available: number; pending: number; }
 interface PPBalance { currency: string; available: number; total: number; }
+interface OrgWallet {
+  wallet_name: string;
+  label: string;
+  blockchain: string;
+  address: string;
+  sol: number;
+  usdc: number;
+  ok: boolean;
+  error?: string;
+}
 
 interface TreasuryResponse {
   generatedAt: string;
   nowpayments: { ok: boolean; error?: string; currencies?: NPCurrency[] };
   paypal: { ok: boolean; error?: string; balances?: PPBalance[] };
+  orgWallets?: OrgWallet[];
   reserved: { available: number; pending: number; currency: string };
   summary: {
     custodyTotalUsd: number;
@@ -92,6 +103,44 @@ export default function GosatTreasuryPage() {
           </Alert>
         </>
       )}
+
+      {/* Organization wallets: Main (s2gholding) + Tithing (s2gbestow) */}
+      {data?.orgWallets && data.orgWallets.length > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Organization wallets</CardTitle>
+            <CardDescription>Main & Tithing on-chain balances (live from Solana RPC).</CardDescription>
+          </CardHeader>
+          <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {data.orgWallets.map((w) => (
+              <div key={w.wallet_name} className="rounded-md border p-4 space-y-2">
+                <div className="flex items-center justify-between">
+                  <div className="font-semibold">{w.label}</div>
+                  <Badge variant={w.ok ? 'secondary' : 'destructive'}>
+                    {w.ok ? w.blockchain.toUpperCase() : 'ERROR'}
+                  </Badge>
+                </div>
+                <div className="text-xs text-muted-foreground font-mono break-all">{w.address || '—'}</div>
+                {w.ok ? (
+                  <div className="grid grid-cols-2 gap-2 pt-1">
+                    <div>
+                      <div className="text-xs text-muted-foreground">USDC</div>
+                      <div className="text-lg font-semibold">{w.usdc.toFixed(2)}</div>
+                    </div>
+                    <div>
+                      <div className="text-xs text-muted-foreground">SOL</div>
+                      <div className="text-lg font-semibold">{w.sol.toFixed(4)}</div>
+                    </div>
+                  </div>
+                ) : (
+                  <p className="text-xs text-destructive break-all">{w.error}</p>
+                )}
+              </div>
+            ))}
+          </CardContent>
+        </Card>
+      )}
+
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {/* NOWPayments */}
