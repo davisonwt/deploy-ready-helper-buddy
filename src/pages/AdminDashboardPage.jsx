@@ -26,7 +26,8 @@ import {
   ArrowLeft,
   Check,
   X,
-  Radio
+  Radio,
+  Wallet
 } from 'lucide-react'
 import { toast } from 'sonner'
 import { useRoles } from '../hooks/useRoles'
