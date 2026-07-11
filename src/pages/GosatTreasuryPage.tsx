@@ -9,11 +9,22 @@ import { toast } from 'sonner';
 
 interface NPCurrency { currency: string; available: number; pending: number; }
 interface PPBalance { currency: string; available: number; total: number; }
+interface OrgWallet {
+  wallet_name: string;
+  label: string;
+  blockchain: string;
+  address: string;
+  sol: number;
+  usdc: number;
+  ok: boolean;
+  error?: string;
+}
 
 interface TreasuryResponse {
   generatedAt: string;
   nowpayments: { ok: boolean; error?: string; currencies?: NPCurrency[] };
   paypal: { ok: boolean; error?: string; balances?: PPBalance[] };
+  orgWallets?: OrgWallet[];
   reserved: { available: number; pending: number; currency: string };
   summary: {
     custodyTotalUsd: number;
