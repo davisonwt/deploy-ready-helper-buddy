@@ -84,7 +84,7 @@ export default function PrescriptionSubmitPage() {
       if (error) throw error;
       toast.success('Prescription submitted');
       const roomId = (data as any)?.chat_room_id;
-      if (roomId) navigate(`/chat/room/${roomId}`);
+      if (roomId) navigate(`/chatapp?room=${roomId}`);
       else navigate('/dashboard');
     } catch (e: any) {
       toast.error(e?.message ?? 'Submission failed');
