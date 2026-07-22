@@ -517,12 +517,32 @@ function S2GHouseReel() {
 
   const toggle = (i) => setActiveId(prev => (prev === i ? null : i))
 
+  const handleDownload = async (v, e) => {
+    e.stopPropagation()
+    try {
+      const response = await fetch(v.src)
+      const blob = await response.blob()
+      const url = window.URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = `${v.title.replace(/[^a-z0-9]/gi, '_').toLowerCase()}_s2g.mp4`
+      document.body.appendChild(a)
+      a.click()
+      document.body.removeChild(a)
+      window.URL.revokeObjectURL(url)
+      toast.success(`Downloading ${v.title}`)
+    } catch (error) {
+      console.error('Download failed:', error)
+      toast.error('Download failed. Try opening the video and saving it manually.')
+    }
+  }
+
   return (
     <div className='container mx-auto px-4 pt-8'>
       <div className='flex items-center justify-between mb-4'>
         <div>
           <h2 className='text-2xl md:text-3xl font-bold text-white drop-shadow'>S2G House Reel</h2>
-          <p className='text-white/80 text-sm mt-1'>Official brand films from Sow2Grow</p>
+          <p className='text-white/80 text-sm mt-1'>Official brand films from Sow2Grow — download and share on TikTok, Facebook, X, YouTube</p>
         </div>
         <Badge className='bg-white/20 backdrop-blur-md border border-white/30 text-white'>
           {HOUSE_REEL.length} films
@@ -537,6 +557,11 @@ function S2GHouseReel() {
             onClick={() => toggle(i)}
           >
             <div className='aspect-video relative bg-black'>
+              {v.isNew && (
+                <Badge className='absolute top-2 left-2 z-10 bg-emerald-500 text-white border-none'>
+                  New
+                </Badge>
+              )}
               {activeId === i ? (
                 <video
                   src={v.src}
@@ -563,8 +588,21 @@ function S2GHouseReel() {
               )}
             </div>
             <div className='p-3'>
-              <div className='font-semibold text-white text-sm leading-tight'>{v.title}</div>
-              <div className='text-xs text-white/70 mt-0.5'>{v.desc}</div>
+              <div className='flex items-start justify-between gap-2'>
+                <div>
+                  <div className='font-semibold text-white text-sm leading-tight'>{v.title}</div>
+                  <div className='text-xs text-white/70 mt-0.5'>{v.desc}</div>
+                </div>
+                <Button
+                  variant='ghost'
+                  size='icon'
+                  className='shrink-0 text-white hover:text-white hover:bg-white/20 -mr-2 -mt-2'
+                  onClick={(e) => handleDownload(v, e)}
+                  title={`Download ${v.title}`}
+                >
+                  <Download className='w-4 h-4' />
+                </Button>
+              </div>
             </div>
           </div>
         ))}
