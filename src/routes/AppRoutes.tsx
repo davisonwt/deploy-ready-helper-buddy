@@ -510,6 +510,12 @@ const AppRoutes = () => (
     <Route path="/seller/credentials" element={
       <ProtectedRoute><Layout><Suspense fallback={<LoadingFallback />}><SellerCredentialsPage /></Suspense></Layout></ProtectedRoute>
     } />
+    <Route path="/prescription/submit/:sowerId" element={
+      <ProtectedRoute><Layout><Suspense fallback={<LoadingFallback />}><PrescriptionSubmitPage /></Suspense></Layout></ProtectedRoute>
+    } />
+    <Route path="/my-garden/prescriptions" element={
+      <ProtectedRoute><Layout><Suspense fallback={<LoadingFallback />}><PrescriptionsInboxPage /></Suspense></Layout></ProtectedRoute>
+    } />
     <Route path="/admin/credentials" element={
       <ProtectedRoute allowedRoles={['admin', 'gosat']}><Layout><Suspense fallback={<LoadingFallback />}><AdminCredentialsPage /></Suspense></Layout></ProtectedRoute>
     } />
