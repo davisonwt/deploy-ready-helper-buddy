@@ -496,6 +496,8 @@ const S2G_VID = (file) =>
   `https://zuwkgasbkpjlxzsjzumu.supabase.co/storage/v1/object/public/orchard-videos/${encodeURI(file)}`
 
 const HOUSE_REEL = [
+  { title: 'What is Sow2Grow?',           desc: '75s cinematic intro to the tribe economy',  src: whatIsSow2GrowAsset.url, isNew: true },
+  { title: 'The Tribe Economy',           desc: 'How value flows inside S2G in 60s',         src: tribeEconomyAsset.url, isNew: true },
   { title: 'Become a Sower & Grower',     desc: 'The complete S2G onboarding film',          src: S2G_VID('s2g  become a sower and grower (1).mp4') },
   { title: 'How Bestowing Works',         desc: 'Pockets, bestowals, and the harvest',       src: S2G_VID('bestowers main mp4.mp4') },
   { title: 'Community Orchards',          desc: 'Tribe needs become orchards',               src: S2G_VID('orchards main mp4.mp4') },
