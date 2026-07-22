@@ -272,6 +272,52 @@ export default function SellerBusinessSettingsPage() {
               />
             </div>
 
+            {/* Business tier picker */}
+            <div className="grid gap-2">
+              <Label>Business type</Label>
+              <p className="text-xs text-muted-foreground -mt-1">
+                Choose the option that best describes your business size. Hover for a short explanation.
+              </p>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                <button
+                  type="button"
+                  onClick={() => setForm({ ...form, tier: '' })}
+                  className={`text-left rounded-lg border-2 p-3 transition-all ${
+                    form.tier === ''
+                      ? 'border-primary bg-primary/5 shadow-sm'
+                      : 'border-border hover:border-primary/40'
+                  }`}
+                >
+                  <div className="font-semibold text-sm">👤 Personal sower</div>
+                  <div className="text-xs text-muted-foreground mt-0.5">Just me — not a business</div>
+                </button>
+                {TIERS.map((t) => (
+                  <button
+                    key={t.id}
+                    type="button"
+                    onClick={() => setForm({ ...form, tier: t.id })}
+                    title={t.explainer}
+                    className={`text-left rounded-lg border-2 p-3 transition-all ${
+                      form.tier === t.id
+                        ? 'border-primary bg-primary/5 shadow-sm'
+                        : 'border-border hover:border-primary/40'
+                    }`}
+                  >
+                    <div className="font-semibold text-sm">
+                      <span className="mr-1">{t.emoji}</span>{t.label}
+                    </div>
+                    <div className="text-xs text-muted-foreground mt-0.5">{t.tagline}</div>
+                  </button>
+                ))}
+              </div>
+              {form.tier && (
+                <p className="text-xs bg-muted/50 border rounded p-2">
+                  {TIERS.find((t) => t.id === form.tier)?.explainer}
+                </p>
+              )}
+            </div>
+
+
             <div className="flex items-center justify-between rounded-lg border p-4">
               <div className="space-y-0.5">
                 <div className="flex items-center gap-2">
