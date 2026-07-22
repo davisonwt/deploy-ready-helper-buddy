@@ -8,7 +8,7 @@ import { Badge } from '@/components/ui/badge'
 import { Progress } from '@/components/ui/progress'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Link, useNavigate } from 'react-router-dom'
-import { Sprout, Plus, Eye, Users, TrendingUp, Calendar, DollarSign, Edit, Share2, MapPin, Trash2, Sparkles, Loader2, Radio, ArrowLeft, Upload } from 'lucide-react'
+import { Sprout, Plus, Eye, Users, TrendingUp, Calendar, DollarSign, Edit, Share2, MapPin, Trash2, Sparkles, Loader2, Radio, ArrowLeft, Upload, Store } from 'lucide-react'
 import { toast } from "sonner"
 import { supabase } from '@/integrations/supabase/client'
 import { formatCurrency } from '../utils/formatters'
