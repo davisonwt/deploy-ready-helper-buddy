@@ -83,6 +83,7 @@ import {
   MyProductsPage,
   UploadForm,
   SellerCredentialsPage,
+  SellerBusinessSettingsPage,
   TribalHeartsPage,
   AdminCredentialsPage,
   AdminPayoutConfirmationsPage,
