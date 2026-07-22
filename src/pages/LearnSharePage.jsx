@@ -58,6 +58,12 @@ import letItRainVideo from '../assets/explainers/learn-share/let-it-rain.mp4'
 import theMusicLibraryVideo from '../assets/explainers/learn-share/the-music-library.mp4'
 import s2gWalletSetupVideo from '../assets/explainers/learn-share/s2g-wallet-setup.mp4'
 
+// Marketing hero videos (Remotion-rendered, CDN-hosted)
+import whatIsSow2GrowMarketingAsset from '../assets/marketing/s2g-what-is-sow2grow.mp4.asset.json'
+import tribeEconomyMarketingAsset from '../assets/marketing/s2g-tribe-economy.mp4.asset.json'
+const whatIsSow2GrowMarketingVideo = whatIsSow2GrowMarketingAsset.url
+const tribeEconomyMarketingVideo = tribeEconomyMarketingAsset.url
+
 // ── Colored Living Button — share animation in any color ────────────────────
 
 const REFERRAL_CODES = {
