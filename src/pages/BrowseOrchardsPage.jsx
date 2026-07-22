@@ -640,6 +640,40 @@ export default function BrowseOrchardsPage() {
           ))}
         </div>
 
+        {/* Sowers dropdown — filter by a specific sower */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 20, flexWrap: 'wrap' }}>
+          <span style={{ fontSize: 11, fontWeight: 700, color: '#64748b', letterSpacing: '0.1em' }}>👥 SOWERS</span>
+          <select
+            value={selectedSower}
+            onChange={(e) => setSelectedSower(e.target.value)}
+            style={{
+              padding: '9px 14px',
+              borderRadius: 12,
+              background: selectedSower === 'all' ? 'rgba(15,23,42,0.6)' : 'linear-gradient(135deg, rgba(34,211,238,0.25), rgba(8,145,178,0.10))',
+              border: `1px solid ${selectedSower === 'all' ? 'rgba(255,255,255,0.10)' : 'rgba(34,211,238,0.65)'}`,
+              color: '#e0f7ff',
+              fontWeight: 700,
+              fontSize: 13,
+              cursor: 'pointer',
+              minWidth: 220,
+              backdropFilter: 'blur(8px)',
+            }}
+          >
+            <option value="all" style={{ background: '#0f172a' }}>All Sowers ({allSowers.length})</option>
+            {allSowers.map(name => (
+              <option key={name} value={name} style={{ background: '#0f172a' }}>{name}</option>
+            ))}
+          </select>
+          {selectedSower !== 'all' && (
+            <button
+              onClick={() => setSelectedSower('all')}
+              style={{ padding: '8px 12px', borderRadius: 10, background: 'rgba(239,68,68,0.15)', border: '1px solid rgba(239,68,68,0.35)', color: '#fca5a5', fontSize: 12, fontWeight: 700, cursor: 'pointer' }}
+            >
+              ✕ Clear
+            </button>
+          )}
+        </div>
+
         {activeTab === 'orchards' && (<>
         <div style={{ display: 'flex', gap: 12, marginBottom: 24, flexWrap: 'wrap' }}>
           {[
