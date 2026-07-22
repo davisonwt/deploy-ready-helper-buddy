@@ -30,7 +30,9 @@ await renderMedia({
   codec: "h264",
   outputLocation: "/mnt/documents/s2g-tribe-economy.mp4",
   puppeteerInstance: browser,
-  muted: true,
+  muted: false,
+  enforceAudioTrack: true,
+  audioCodec: "aac",
   concurrency: 1,
 });
 
