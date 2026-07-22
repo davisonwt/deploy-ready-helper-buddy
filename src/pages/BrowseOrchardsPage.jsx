@@ -540,6 +540,7 @@ export default function BrowseOrchardsPage() {
     let results = processed
     if (selectedRole !== 'all') results = results.filter(o => o.category === selectedRole)
     if (selectedType !== 'all') results = results.filter(o => o.orchard_type === selectedType)
+    if (selectedSower !== 'all') results = results.filter(o => (o.grower_name || '') === selectedSower)
     results.sort((a, b) => {
       if (sortBy === 'newest') return new Date(b.created_at) - new Date(a.created_at)
       if (sortBy === 'hottest') return b.completion_percentage - a.completion_percentage
@@ -547,7 +548,20 @@ export default function BrowseOrchardsPage() {
       return 0
     })
     return results
-  }, [processed, selectedRole, selectedType, sortBy])
+  }, [processed, selectedRole, selectedType, sortBy, selectedSower])
+
+  const filterBySower = (arr) => selectedSower === 'all' ? arr : arr.filter(it => (it.sower || 'Anonymous Sower') === selectedSower)
+  const filteredTribeSeeds = useMemo(() => filterBySower(tribeSeeds), [tribeSeeds, selectedSower])
+  const filteredMusic = useMemo(() => filterBySower(music), [music, selectedSower])
+  const filteredBooks = useMemo(() => filterBySower(books), [books, selectedSower])
+  const filteredVideos = useMemo(() => filterBySower(videos), [videos, selectedSower])
+
+  const allSowers = useMemo(() => {
+    const set = new Set()
+    processed.forEach(o => o.grower_name && set.add(o.grower_name))
+    ;[...tribeSeeds, ...music, ...books, ...videos].forEach(it => it.sower && set.add(it.sower))
+    return [...set].sort((a, b) => a.localeCompare(b))
+  }, [processed, tribeSeeds, music, books, videos])
 
   return (
     <div style={{ minHeight: '100vh', background: 'linear-gradient(135deg, #020617 0%, #0f172a 50%, #020617 100%)', color: '#f1f5f9', paddingBottom: 90 }}>
