@@ -83,6 +83,7 @@ import {
   MyProductsPage,
   UploadForm,
   SellerCredentialsPage,
+  SellerBusinessSettingsPage,
   TribalHeartsPage,
   AdminCredentialsPage,
   AdminPayoutConfirmationsPage,
@@ -511,6 +512,9 @@ const AppRoutes = () => (
     } />
     <Route path="/seller/credentials" element={
       <ProtectedRoute><Layout><Suspense fallback={<LoadingFallback />}><SellerCredentialsPage /></Suspense></Layout></ProtectedRoute>
+    } />
+    <Route path="/seller/business-settings" element={
+      <ProtectedRoute><Layout><Suspense fallback={<LoadingFallback />}><SellerBusinessSettingsPage /></Suspense></Layout></ProtectedRoute>
     } />
     <Route path="/prescription/submit/:sowerId" element={
       <ProtectedRoute><Layout><Suspense fallback={<LoadingFallback />}><PrescriptionSubmitPage /></Suspense></Layout></ProtectedRoute>

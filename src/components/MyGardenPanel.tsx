@@ -97,6 +97,7 @@ export function MyGardenPanel({ isOpen, onClose }: MyGardenPanelProps) {
     { href: '/create-orchard', label: 'New Orchard', color: 'bg-green-600 hover:bg-green-500' },
     { href: '/music-library', label: 'Drop Music', color: 'bg-pink-600 hover:bg-pink-500' }, // Music uploads happen on music-library page
     { href: '/products/upload', label: 'New Resource', color: 'bg-yellow-600 hover:bg-yellow-500' }, // Product upload route
+    { href: '/seller/business-settings', label: 'Business Settings', color: 'bg-blue-600 hover:bg-blue-500' },
     { href: '#', label: 'Rain Now', color: 'bg-red-600 hover:bg-red-500', onClick: quickRain } // Quick Rain action
   ]
 

@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { Link } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { useMyCredentials, type CredentialType } from '@/hooks/useMarketplaceTaxonomy';
@@ -71,11 +72,16 @@ export default function SellerCredentialsPage() {
 
   return (
     <div className="container max-w-4xl mx-auto px-4 py-12">
-      <div className="mb-8">
-        <h1 className="text-4xl font-bold mb-2">Seller Credentials</h1>
-        <p className="text-muted-foreground">
-          Upload proof to unlock Trust tags (Verified Identity, Licensed, Insured, Background Checked) on your listings.
-        </p>
+      <div className="mb-8 flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
+        <div>
+          <h1 className="text-4xl font-bold mb-2">Seller Credentials</h1>
+          <p className="text-muted-foreground">
+            Upload proof to unlock Trust tags (Verified Identity, Licensed, Insured, Background Checked) on your listings.
+          </p>
+        </div>
+        <Button asChild variant="outline">
+          <Link to="/seller/business-settings">Business Settings</Link>
+        </Button>
       </div>
 
       <div className="grid gap-4">
