@@ -126,6 +126,7 @@ export const ProductsPage = lazy(() => import('@/pages/ProductsPage'));
 export const MyProductsPage = lazy(() => import('@/pages/MyProductsPage'));
 export const UploadForm = lazy(() => import('@/components/products/UploadForm'));
 export const SellerCredentialsPage = lazy(() => import('@/pages/SellerCredentialsPage'));
+export const SellerBusinessSettingsPage = lazy(() => import('@/pages/SellerBusinessSettingsPage'));
 export const TribalHeartsPage = lazy(() => import('@/pages/TribalHeartsPage'));
 export const AdminCredentialsPage = lazy(() => import('@/pages/AdminCredentialsPage'));
 export const AdminPayoutConfirmationsPage = lazy(() => import('@/pages/AdminPayoutConfirmationsPage'));
