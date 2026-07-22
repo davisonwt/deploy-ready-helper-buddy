@@ -65,13 +65,61 @@ const safeList = (result, label) => {
   return result?.data || []
 }
 
+const PRIVATE_COVER_BUCKETS = new Set(['premium-room', 'music-tracks', 'dj-music'])
+
+const extractCoverObject = (url) => {
+  if (!url) return null
+  try {
+    const parsed = new URL(url)
+    const match = parsed.pathname.match(/\/storage\/v1\/object\/(?:public|authenticated|sign)\/([^/]+)\/(.+)$/)
+    if (!match) return null
+    const bucket = decodeURIComponent(match[1])
+    const key = decodeURIComponent(match[2].split('?')[0])
+    if (!PRIVATE_COVER_BUCKETS.has(bucket)) return null
+    if (!key.startsWith('covers/') && !key.includes('/covers/') && !key.startsWith('thumbnails/') && !key.includes('/thumbnails/')) return null
+    return { bucket, key }
+  } catch {
+    return null
+  }
+}
+
 function MediaThumb({ item, kind }) {
   const [failed, setFailed] = useState(false)
+  const [src, setSrc] = useState(item.image || null)
+
+  useEffect(() => {
+    let alive = true
+    setFailed(false)
+
+    const coverObject = extractCoverObject(item.image)
+    if (!coverObject) {
+      setSrc(item.image || null)
+      return () => { alive = false }
+    }
+
+    setSrc(null)
+
+    supabase.storage
+      .from(coverObject.bucket)
+      .createSignedUrl(coverObject.key, 60 * 60 * 6)
+      .then(({ data, error }) => {
+        if (!alive) return
+        if (error || !data?.signedUrl) {
+          console.warn('Seed cover signing failed', error)
+          return
+        }
+        setFailed(false)
+        setSrc(data.signedUrl)
+      })
+
+    return () => { alive = false }
+  }, [item.image])
+
   return (
     <div style={{ aspectRatio: '16/9', background: '#020617', position: 'relative', overflow: 'hidden' }}>
-      {item.image && !failed ? (
+      {src && !failed ? (
         <img
-          src={item.image}
+          src={src}
           alt={item.title || kind}
           style={{ width: '100%', height: '100%', objectFit: 'cover' }}
           loading="lazy"
