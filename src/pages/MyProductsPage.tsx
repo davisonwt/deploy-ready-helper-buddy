@@ -142,11 +142,17 @@ export default function MyProductsPage() {
               <p className='text-white/90 text-xl mb-4 backdrop-blur-sm bg-white/10 rounded-lg p-4 border border-white/20'>
                 Manage your uploaded products, music, and digital content. Share your creativity with the community.
               </p>
-              <div className="flex flex-wrap gap-2">
+              <div className="flex flex-wrap gap-2 justify-center">
                 <Link to="/products/upload">
                   <Button size="lg" className='backdrop-blur-md bg-white/20 border-white/30 text-white hover:bg-white/30'>
                     <Upload className="w-5 h-5 mr-2" />
                     Upload New Product
+                  </Button>
+                </Link>
+                <Link to="/seller/business-settings">
+                  <Button size="lg" variant="outline" className='backdrop-blur-md bg-white/10 border-white/30 text-white hover:bg-white/20'>
+                    <Store className="w-5 h-5 mr-2" />
+                    Business Settings
                   </Button>
                 </Link>
                 <Link to="/my-garden/prescriptions">
