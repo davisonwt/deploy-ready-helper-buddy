@@ -70,7 +70,7 @@ export default function PrescriptionsInboxPage() {
       setLoading(false);
       return;
     }
-    setRows((data as PrescriptionRow[]) ?? []);
+    setRows(((data as unknown) as PrescriptionRow[]) ?? []);
     setLoading(false);
   };
 
