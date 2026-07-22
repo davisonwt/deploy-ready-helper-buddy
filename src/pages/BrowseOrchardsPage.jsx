@@ -352,6 +352,7 @@ export default function BrowseOrchardsPage() {
   const [books, setBooks] = useState([])
   const [videos, setVideos] = useState([])
   const [mediaLoading, setMediaLoading] = useState(false)
+  const [selectedSower, setSelectedSower] = useState('all')
 
   const fetchOrchards = async () => {
     try {
