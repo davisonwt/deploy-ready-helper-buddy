@@ -5,7 +5,7 @@ import { fetchProductsBySower } from '@/api/products';
 import { useAuth } from '@/hooks/useAuth';
 import ProductCard from '@/components/products/ProductCard';
 import CategoryFilter from '@/components/products/CategoryFilter';
-import { Loader2, Package, Upload, Plus } from 'lucide-react';
+import { Loader2, Package, Upload, Plus, Store } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
