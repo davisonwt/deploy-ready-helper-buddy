@@ -3,7 +3,7 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { Video, Play, Heart, Filter, Eye, MessageCircle, ThumbsUp, ExternalLink, Share2, Pause, DollarSign, ChevronLeft, ChevronRight, Loader2 } from 'lucide-react'
+import { Video, Play, Heart, Filter, Eye, MessageCircle, ThumbsUp, ExternalLink, Share2, Pause, DollarSign, ChevronLeft, ChevronRight, Loader2, Download } from 'lucide-react'
 import { useAuth } from '@/hooks/useAuth'
 import { useCommunityVideos } from '@/hooks/useCommunityVideos'
 import { useNavigate } from 'react-router-dom'
@@ -15,6 +15,8 @@ import VideoSocialShare from '@/components/community/VideoSocialShare'
 import { Carousel, CarouselContent, CarouselItem, CarouselPrevious, CarouselNext } from '@/components/ui/carousel'
 import Autoplay from 'embla-carousel-autoplay'
 import { motion } from 'framer-motion'
+import whatIsSow2GrowAsset from '@/assets/marketing/s2g-what-is-sow2grow.mp4.asset.json'
+import tribeEconomyAsset from '@/assets/marketing/s2g-tribe-economy.mp4.asset.json'
 
 
 export default function MarketingVideosGallery() {
