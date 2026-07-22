@@ -17,6 +17,11 @@ const CRED_TYPES: { type: CredentialType; label: string; desc: string }[] = [
   { type: 'license', label: 'Licensed / Bonded', desc: 'Trade license or professional certification.' },
   { type: 'insurance', label: 'Insured', desc: 'Liability or professional insurance certificate.' },
   { type: 'background_check', label: 'Background Checked', desc: 'Recent background check report.' },
+  { type: 'pharmacist_license' as CredentialType, label: 'Pharmacist License', desc: 'Registered pharmacist license (required to accept prescriptions).' },
+  { type: 'vet_license' as CredentialType, label: 'Veterinarian License', desc: 'Registered veterinarian license.' },
+  { type: 'herbalist_cert' as CredentialType, label: 'Herbalist Certification', desc: 'Recognised herbalist certification.' },
+  { type: 'optometrist_license' as CredentialType, label: 'Optometrist License', desc: 'Registered optometrist license.' },
+  { type: 'clinic_license' as CredentialType, label: 'Clinic License', desc: 'Registered clinic/facility license.' },
 ];
 
 const STATUS_BADGE: Record<string, { label: string; cls: string; Icon: any }> = {

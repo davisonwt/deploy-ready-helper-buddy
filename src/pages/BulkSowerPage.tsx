@@ -23,6 +23,7 @@ type Sower = {
   bio: string | null;
   tagline: string | null;
   is_verified: boolean | null;
+  seller_template?: string | null;
 };
 
 const PAGE_SIZE = 24;
@@ -47,7 +48,7 @@ export default function BulkSowerPage() {
       setLoading(true);
       const { data, error } = await supabase
         .from('sowers')
-        .select('id, slug, display_name, logo_url, banner_url, bio, tagline, is_verified')
+        .select('id, slug, display_name, logo_url, banner_url, bio, tagline, is_verified, seller_template')
         .eq('slug', slug!)
         .maybeSingle();
       if (cancelled) return;
@@ -149,6 +150,11 @@ export default function BulkSowerPage() {
               {sower.bio && <p className="text-sm mt-2 max-w-2xl">{sower.bio}</p>}
             </div>
             <div className="flex flex-wrap gap-2">
+              {(sower as any).seller_template === 'regulated_business' && (
+                <Button asChild variant="default" className="bg-green-600 hover:bg-green-700">
+                  <Link to={`/prescription/submit/${sower.id}`}>📋 Submit prescription</Link>
+                </Button>
+              )}
               <Button asChild>
                 <Link to={`/bulk/sower/${sower.slug}/feed`}><PlayCircle className="h-4 w-4 mr-1" /> View seed feed</Link>
               </Button>
