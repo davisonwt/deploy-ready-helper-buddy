@@ -46,7 +46,7 @@ import groupChatVideo from '../assets/banners/banner-16-group-chat.mp4'
 import findAHeartVideo from '../assets/explainers/learn-share/find-a-wandering-heart.mp4'
 import becomeAWhispererExplainerVideo from '../assets/explainers/learn-share/become-a-whisperer.mp4'
 import findAWhispererVideo from '../assets/explainers/learn-share/find-a-whisperer.mp4'
-import whatIsSow2GrowVideo from '../assets/explainers/learn-share/what-is-sow2grow.mp4'
+// what-is-sow2grow local explainer replaced by cinematic marketing edit (see marketing imports below)
 import theReferralSystemVideo from '../assets/explainers/learn-share/the-referral-system.mp4'
 import browseCommunityOrchardsVideo from '../assets/explainers/learn-share/browse-community-orchards.mp4'
 import theGroveStationVideo from '../assets/explainers/learn-share/the-grove-station.mp4'
