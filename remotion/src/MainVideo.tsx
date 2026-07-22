@@ -1,4 +1,4 @@
-import { AbsoluteFill } from "remotion";
+import { AbsoluteFill, Audio, staticFile, Sequence } from "remotion";
 import { TransitionSeries, linearTiming } from "@remotion/transitions";
 import { fade } from "@remotion/transitions/fade";
 import { PersistentBackground } from "./components/PersistentBackground";
@@ -11,7 +11,11 @@ import { Scene5CTA } from "./scenes/Scene5CTA";
 export function MainVideo() {
   return (
     <AbsoluteFill>
+      <Sequence from={15}>
+        <Audio src={staticFile("audio/vo-what-is.mp3")} volume={1} />
+      </Sequence>
       <PersistentBackground />
+
       <TransitionSeries>
         <TransitionSeries.Sequence durationInFrames={300}>
           <Scene1Hook />
