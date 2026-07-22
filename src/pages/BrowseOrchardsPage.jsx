@@ -806,13 +806,13 @@ export default function BrowseOrchardsPage() {
             </>
           )
         ) : activeTab === 'seeds' ? (
-          <MediaGrid kind="seeds" items={tribeSeeds} loading={mediaLoading} />
+          <MediaGrid kind="seeds" items={filteredTribeSeeds} loading={mediaLoading} groupByCategory />
         ) : activeTab === 'music' ? (
-          <MediaGrid kind="music" items={music} loading={mediaLoading} />
+          <MediaGrid kind="music" items={filteredMusic} loading={mediaLoading} />
         ) : activeTab === 'books' ? (
-          <MediaGrid kind="books" items={books} loading={mediaLoading} />
+          <MediaGrid kind="books" items={filteredBooks} loading={mediaLoading} />
         ) : (
-          <MediaGrid kind="videos" items={videos} loading={mediaLoading} />
+          <MediaGrid kind="videos" items={filteredVideos} loading={mediaLoading} />
         )}
       </div>
 
