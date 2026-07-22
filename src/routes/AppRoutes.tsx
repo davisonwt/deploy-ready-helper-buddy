@@ -121,6 +121,8 @@ import {
   SkillDropPage,
   BecomeWhispererPage,
   WhisperersFeedPage,
+  PrescriptionSubmitPage,
+  PrescriptionsInboxPage,
 } from './lazyPages';
 
 export const LoadingFallback = () => (
