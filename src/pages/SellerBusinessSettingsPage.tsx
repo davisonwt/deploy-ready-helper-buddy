@@ -42,6 +42,7 @@ interface SowerProfile {
   is_verified: boolean | null;
   logo_url: string | null;
   banner_url: string | null;
+  tier: string | null;
 }
 
 interface MyCredential {
