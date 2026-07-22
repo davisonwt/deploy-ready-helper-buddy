@@ -23,6 +23,7 @@ import {
   ArrowLeft,
   Home,
 } from 'lucide-react';
+import { TIERS } from '@/lib/tiers';
 
 const REGULATED_CREDENTIALS = [
   { type: 'pharmacist_license', label: 'Pharmacist License', business: 'Pharmacy' },
@@ -42,6 +43,7 @@ interface SowerProfile {
   is_verified: boolean | null;
   logo_url: string | null;
   banner_url: string | null;
+  tier: string | null;
 }
 
 interface MyCredential {
@@ -73,6 +75,7 @@ export default function SellerBusinessSettingsPage() {
     slug: '',
     bio: '',
     tagline: '',
+    tier: '' as '' | 'homestead' | 'grove' | 'orchard' | 'estate' | 'harvest_works',
   });
   const [regulated, setRegulated] = useState(false);
   const [publicUrl, setPublicUrl] = useState<string | null>(null);
@@ -101,11 +104,20 @@ export default function SellerBusinessSettingsPage() {
           slug: sowerData.slug || '',
           bio: sowerData.bio || '',
           tagline: sowerData.tagline || '',
+          tier: (sowerData.tier as any) || '',
         });
         setRegulated(sowerData.seller_template === 'regulated_business');
         if (sowerData.slug) {
           setPublicUrl(`${window.location.origin}/bulk/sower/${sowerData.slug}`);
         }
+      } else {
+        // First-time visit — pre-fill tier from registration selection if any
+        try {
+          const pending = localStorage.getItem('pending_business_tier');
+          if (pending && ['homestead','grove','orchard','estate','harvest_works'].includes(pending)) {
+            setForm((f) => ({ ...f, tier: pending as any }));
+          }
+        } catch { /* ignore */ }
       }
       setCreds((credsData || []) as MyCredential[]);
     } catch (e: any) {
@@ -128,6 +140,7 @@ export default function SellerBusinessSettingsPage() {
         slug: form.slug.trim() || null,
         bio: form.bio.trim() || null,
         tagline: form.tagline.trim() || null,
+        tier: form.tier || null,
         seller_template: regulated ? 'regulated_business' : null,
       };
 
@@ -155,6 +168,7 @@ export default function SellerBusinessSettingsPage() {
       if (result.data?.slug) {
         setPublicUrl(`${window.location.origin}/bulk/sower/${result.data.slug}`);
       }
+      try { localStorage.removeItem('pending_business_tier'); } catch { /* ignore */ }
       toast.success(sower ? 'Business profile updated' : 'Business registered successfully');
     } catch (e: any) {
       toast.error(e.message || 'Save failed');
@@ -257,6 +271,52 @@ export default function SellerBusinessSettingsPage() {
                 placeholder="Tell clients what you offer, your hours, delivery areas, etc."
               />
             </div>
+
+            {/* Business tier picker */}
+            <div className="grid gap-2">
+              <Label>Business type</Label>
+              <p className="text-xs text-muted-foreground -mt-1">
+                Choose the option that best describes your business size. Hover for a short explanation.
+              </p>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                <button
+                  type="button"
+                  onClick={() => setForm({ ...form, tier: '' })}
+                  className={`text-left rounded-lg border-2 p-3 transition-all ${
+                    form.tier === ''
+                      ? 'border-primary bg-primary/5 shadow-sm'
+                      : 'border-border hover:border-primary/40'
+                  }`}
+                >
+                  <div className="font-semibold text-sm">👤 Personal sower</div>
+                  <div className="text-xs text-muted-foreground mt-0.5">Just me — not a business</div>
+                </button>
+                {TIERS.map((t) => (
+                  <button
+                    key={t.id}
+                    type="button"
+                    onClick={() => setForm({ ...form, tier: t.id })}
+                    title={t.explainer}
+                    className={`text-left rounded-lg border-2 p-3 transition-all ${
+                      form.tier === t.id
+                        ? 'border-primary bg-primary/5 shadow-sm'
+                        : 'border-border hover:border-primary/40'
+                    }`}
+                  >
+                    <div className="font-semibold text-sm">
+                      <span className="mr-1">{t.emoji}</span>{t.label}
+                    </div>
+                    <div className="text-xs text-muted-foreground mt-0.5">{t.tagline}</div>
+                  </button>
+                ))}
+              </div>
+              {form.tier && (
+                <p className="text-xs bg-muted/50 border rounded p-2">
+                  {TIERS.find((t) => t.id === form.tier)?.explainer}
+                </p>
+              )}
+            </div>
+
 
             <div className="flex items-center justify-between rounded-lg border p-4">
               <div className="space-y-0.5">

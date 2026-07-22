@@ -1,0 +1,1 @@
+ALTER TABLE public.sowers ADD COLUMN IF NOT EXISTS tier text CHECK (tier IN ('homestead','grove','orchard','estate','harvest_works'));
