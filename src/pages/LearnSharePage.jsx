@@ -46,7 +46,7 @@ import groupChatVideo from '../assets/banners/banner-16-group-chat.mp4'
 import findAHeartVideo from '../assets/explainers/learn-share/find-a-wandering-heart.mp4'
 import becomeAWhispererExplainerVideo from '../assets/explainers/learn-share/become-a-whisperer.mp4'
 import findAWhispererVideo from '../assets/explainers/learn-share/find-a-whisperer.mp4'
-import whatIsSow2GrowVideo from '../assets/explainers/learn-share/what-is-sow2grow.mp4'
+// what-is-sow2grow local explainer replaced by cinematic marketing edit (see marketing imports below)
 import theReferralSystemVideo from '../assets/explainers/learn-share/the-referral-system.mp4'
 import browseCommunityOrchardsVideo from '../assets/explainers/learn-share/browse-community-orchards.mp4'
 import theGroveStationVideo from '../assets/explainers/learn-share/the-grove-station.mp4'
@@ -57,6 +57,12 @@ import calendar364yhvhVideo from '../assets/explainers/learn-share/calendar-364y
 import letItRainVideo from '../assets/explainers/learn-share/let-it-rain.mp4'
 import theMusicLibraryVideo from '../assets/explainers/learn-share/the-music-library.mp4'
 import s2gWalletSetupVideo from '../assets/explainers/learn-share/s2g-wallet-setup.mp4'
+
+// Marketing hero videos (Remotion-rendered, CDN-hosted)
+import whatIsSow2GrowMarketingAsset from '../assets/marketing/s2g-what-is-sow2grow.mp4.asset.json'
+import tribeEconomyMarketingAsset from '../assets/marketing/s2g-tribe-economy.mp4.asset.json'
+const whatIsSow2GrowMarketingVideo = whatIsSow2GrowMarketingAsset.url
+const tribeEconomyMarketingVideo = tribeEconomyMarketingAsset.url
 
 // ── Colored Living Button — share animation in any color ────────────────────
 
@@ -103,7 +109,8 @@ const VIDEOS = [
   { id: 16, role: 'Heart',     title: 'Find a Wandering Heart',     desc: 'Singles connect securely via ChatApp text, voice, or video — no email or phone shared', color: '#10b981', emoji: '💚', url: findAHeartVideo },
   { id: 17, role: 'Whisperer', title: 'Become a Whisperer (Marketer)', desc: 'List as an online marketer / creator and earn % on seeds you take viral', color: '#a855f7', emoji: '🌬️', url: becomeAWhispererExplainerVideo },
   { id: 18, role: 'Whisperer', title: 'Find a Whisperer',             desc: 'Browse the Whisperers feed and partner up via ChatApp',           color: '#a855f7', emoji: '🌬️', url: findAWhispererVideo },
-  { id: 19, role: 'Platform',  title: 'What is Sow2Grow',           desc: 'The full platform explained',                      color: '#0ea5e9', emoji: '🏛️', url: whatIsSow2GrowVideo },
+  { id: 19, role: 'Platform',  title: 'What is Sow2Grow',           desc: 'The full platform explained (cinematic marketing edit)', color: '#0ea5e9', emoji: '🏛️', url: whatIsSow2GrowMarketingVideo },
+  { id: 41, role: 'Field',     title: 'The Tribe Economy in 60 Seconds', desc: 'How sowers, bestowers & whisperers create income together — zero middlemen', color: '#eab308', emoji: '🌾', url: tribeEconomyMarketingVideo },
   { id: 20, role: 'Platform',  title: 'How Bestowing Works',        desc: 'Understanding pockets & bestowals',                color: '#0ea5e9', emoji: '🏛️', url: bestowingVideo },
   { id: 21, role: 'Platform',  title: 'Sow a Single Seed',          desc: 'Step by step seed creation guide',                 color: '#0ea5e9', emoji: '🏛️', url: singleSeedVideo },
   { id: 22, role: 'Platform',  title: 'Community Orchard Explained',desc: 'How tribe needs become community orchards',        color: '#0ea5e9', emoji: '🏛️', url: communityOrchardVideo },
