@@ -100,6 +100,15 @@ export default function RegisterPage() {
       })
 
       if (result.success) {
+        // Stash the chosen business tier so Seller Business Settings can pre-fill it
+        try {
+          if (formData.businessTier) {
+            localStorage.setItem('pending_business_tier', formData.businessTier)
+          } else {
+            localStorage.removeItem('pending_business_tier')
+          }
+        } catch { /* ignore storage errors */ }
+
         toast({
           title: "Welcome to sow2grow! 🌱",
           description: "Let's secure your account — no email or phone needed.",
