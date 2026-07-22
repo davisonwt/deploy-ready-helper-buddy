@@ -23,6 +23,7 @@ type Sower = {
   bio: string | null;
   tagline: string | null;
   is_verified: boolean | null;
+  seller_template?: string | null;
 };
 
 const PAGE_SIZE = 24;
