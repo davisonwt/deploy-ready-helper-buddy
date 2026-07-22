@@ -168,6 +168,7 @@ export default function SellerBusinessSettingsPage() {
       if (result.data?.slug) {
         setPublicUrl(`${window.location.origin}/bulk/sower/${result.data.slug}`);
       }
+      try { localStorage.removeItem('pending_business_tier'); } catch { /* ignore */ }
       toast.success(sower ? 'Business profile updated' : 'Business registered successfully');
     } catch (e: any) {
       toast.error(e.message || 'Save failed');
