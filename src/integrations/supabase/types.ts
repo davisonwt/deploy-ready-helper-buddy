@@ -6138,6 +6138,68 @@ export type Database = {
           },
         ]
       }
+      prescription_requests: {
+        Row: {
+          chat_room_id: string | null
+          client_notes: string | null
+          contact_phone: string | null
+          created_at: string
+          delivery_address: string | null
+          fulfillment_mode: string | null
+          id: string
+          pharmacist_notes: string | null
+          prescription_file_name: string | null
+          prescription_file_path: string | null
+          quoted_amount_usdc: number | null
+          sower_id: string
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          chat_room_id?: string | null
+          client_notes?: string | null
+          contact_phone?: string | null
+          created_at?: string
+          delivery_address?: string | null
+          fulfillment_mode?: string | null
+          id?: string
+          pharmacist_notes?: string | null
+          prescription_file_name?: string | null
+          prescription_file_path?: string | null
+          quoted_amount_usdc?: number | null
+          sower_id: string
+          status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          chat_room_id?: string | null
+          client_notes?: string | null
+          contact_phone?: string | null
+          created_at?: string
+          delivery_address?: string | null
+          fulfillment_mode?: string | null
+          id?: string
+          pharmacist_notes?: string | null
+          prescription_file_name?: string | null
+          prescription_file_path?: string | null
+          quoted_amount_usdc?: number | null
+          sower_id?: string
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "prescription_requests_sower_id_fkey"
+            columns: ["sower_id"]
+            isOneToOne: false
+            referencedRelation: "sowers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       processed_webhooks: {
         Row: {
           id: string
@@ -10420,6 +10482,7 @@ export type Database = {
           id: string
           is_verified: boolean | null
           logo_url: string | null
+          seller_template: string | null
           slug: string | null
           tagline: string | null
           updated_at: string | null
@@ -10434,6 +10497,7 @@ export type Database = {
           id?: string
           is_verified?: boolean | null
           logo_url?: string | null
+          seller_template?: string | null
           slug?: string | null
           tagline?: string | null
           updated_at?: string | null
@@ -10448,6 +10512,7 @@ export type Database = {
           id?: string
           is_verified?: boolean | null
           logo_url?: string | null
+          seller_template?: string | null
           slug?: string | null
           tagline?: string | null
           updated_at?: string | null
