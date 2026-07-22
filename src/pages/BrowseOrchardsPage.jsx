@@ -90,10 +90,14 @@ function MediaThumb({ item, kind }) {
   useEffect(() => {
     let alive = true
     setFailed(false)
-    setSrc(item.image || null)
 
     const coverObject = extractCoverObject(item.image)
-    if (!coverObject) return () => { alive = false }
+    if (!coverObject) {
+      setSrc(item.image || null)
+      return () => { alive = false }
+    }
+
+    setSrc(null)
 
     supabase.storage
       .from(coverObject.bucket)
@@ -104,6 +108,7 @@ function MediaThumb({ item, kind }) {
           console.warn('Seed cover signing failed', error)
           return
         }
+        setFailed(false)
         setSrc(data.signedUrl)
       })
 
