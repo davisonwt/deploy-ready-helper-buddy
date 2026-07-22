@@ -540,7 +540,15 @@ export default function BrowseOrchardsPage() {
     let results = processed
     if (selectedRole !== 'all') results = results.filter(o => o.category === selectedRole)
     if (selectedType !== 'all') results = results.filter(o => o.orchard_type === selectedType)
-    if (selectedSower !== 'all') results = results.filter(o => canonicalSowerRef.current(o.grower_name || '') === selectedSower)
+    if (selectedSower !== 'all') {
+      const canon = (name) => {
+        const n = String(name || '').trim(); const lower = n.toLowerCase()
+        if (lower === 'davison - sow2grow guide' || lower === 'davison' || /^lyric?ist["':;\s-]*davison$/.test(lower) || (lower.includes('davison') && lower.includes('lyri'))) return 'davison taljaard'
+        return n
+      }
+      results = results.filter(o => canon(o.grower_name) === selectedSower)
+    }
+
     results.sort((a, b) => {
       if (sortBy === 'newest') return new Date(b.created_at) - new Date(a.created_at)
       if (sortBy === 'hottest') return b.completion_percentage - a.completion_percentage
