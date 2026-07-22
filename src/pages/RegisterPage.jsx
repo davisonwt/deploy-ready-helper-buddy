@@ -14,6 +14,8 @@ import { supabase } from "@/integrations/supabase/client"
 import { useToast } from "@/hooks/use-toast"
 import { QuickRegistration } from "../components/auth/QuickRegistration"
 
+import { TIERS } from "@/lib/tiers"
+
 export default function RegisterPage() {
   const [formData, setFormData] = useState({
     email: "",
@@ -25,7 +27,8 @@ export default function RegisterPage() {
     phone: "",
     currency: "USD",
     timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
-    country: ""
+    country: "",
+    businessTier: "", // '' = personal sower, else one of TIERS ids
   })
   const [showPassword, setShowPassword] = useState(false)
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
