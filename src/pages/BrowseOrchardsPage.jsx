@@ -255,28 +255,76 @@ function OrchardCard({ orchard, index }) {
   )
 }
 
-function MediaGrid({ kind, items, loading }) {
+const CATEGORY_LABELS = {
+  '🌱': 'Seeds',
+  '🌳': 'Orchards',
+  '🎵': 'Music',
+  '📚': 'Books',
+  '🎬': 'Videos',
+}
+const CATEGORY_ORDER = ['🌱', '🌳', '🎵', '📚', '🎬']
+
+function MediaCard({ it, kind, i }) {
+  return (
+    <motion.div key={it.id} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.03 }}
+      style={{ background: 'linear-gradient(135deg, #0f172a 0%, #1e293b 100%)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 16, overflow: 'hidden' }}>
+      <MediaThumb item={it} kind={kind} />
+      <div style={{ padding: 12 }}>
+        <div style={{ fontWeight: 700, color: '#f1f5f9', fontSize: 14, marginBottom: 4, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{it.title}</div>
+        <div style={{ fontSize: 12, color: '#64748b', marginBottom: 8 }}>by {it.sower || 'Anonymous Sower'}</div>
+        {it.link && (
+          <Link to={it.link} style={{ textDecoration: 'none' }}>
+            <LivingButton variant="enter" height={40} borderRadius={10} fontSize={12} letterSpacing="1px">
+              Open
+            </LivingButton>
+          </Link>
+        )}
+      </div>
+    </motion.div>
+  )
+}
+
+function MediaGrid({ kind, items, loading, groupByCategory = false }) {
   if (loading) return <div style={{ display: 'flex', justifyContent: 'center', padding: '60px 0' }}><Loader2 style={{ width: 40, height: 40, color: '#10b981' }} /></div>
   if (!items.length) return <div style={{ textAlign: 'center', padding: '60px 0', color: '#64748b' }}>No {kind} from the tribe yet.</div>
+
+  if (groupByCategory) {
+    const groups = new Map()
+    items.forEach(it => {
+      const k = it.emoji || '🌱'
+      if (!groups.has(k)) groups.set(k, [])
+      groups.get(k).push(it)
+    })
+    const orderedKeys = [
+      ...CATEGORY_ORDER.filter(k => groups.has(k)),
+      ...[...groups.keys()].filter(k => !CATEGORY_ORDER.includes(k)),
+    ]
+    return (
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 32 }}>
+        {orderedKeys.map(key => {
+          const rows = groups.get(key) || []
+          return (
+            <section key={key}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12 }}>
+                <span style={{ fontSize: 22 }}>{key}</span>
+                <h2 style={{ fontSize: 18, fontWeight: 800, color: '#e0f2fe', margin: 0 }}>
+                  {CATEGORY_LABELS[key] || 'Other'}
+                </h2>
+                <span style={{ fontSize: 12, color: '#64748b', fontWeight: 600 }}>({rows.length})</span>
+              </div>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))', gap: 16 }}>
+                {rows.map((it, i) => <MediaCard key={it.id} it={it} kind={kind} i={i} />)}
+              </div>
+            </section>
+          )
+        })}
+      </div>
+    )
+  }
+
   return (
     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))', gap: 16 }}>
-      {items.map((it, i) => (
-        <motion.div key={it.id} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.03 }}
-          style={{ background: 'linear-gradient(135deg, #0f172a 0%, #1e293b 100%)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 16, overflow: 'hidden' }}>
-          <MediaThumb item={it} kind={kind} />
-          <div style={{ padding: 12 }}>
-            <div style={{ fontWeight: 700, color: '#f1f5f9', fontSize: 14, marginBottom: 4, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{it.title}</div>
-            <div style={{ fontSize: 12, color: '#64748b', marginBottom: 8 }}>by {it.sower || 'Anonymous Sower'}</div>
-            {it.link && (
-              <Link to={it.link} style={{ textDecoration: 'none' }}>
-                <LivingButton variant="enter" height={40} borderRadius={10} fontSize={12} letterSpacing="1px">
-                  Open
-                </LivingButton>
-              </Link>
-            )}
-          </div>
-        </motion.div>
-      ))}
+      {items.map((it, i) => <MediaCard key={it.id} it={it} kind={kind} i={i} />)}
     </div>
   )
 }
