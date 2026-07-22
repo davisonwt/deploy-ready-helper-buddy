@@ -540,7 +540,15 @@ export default function BrowseOrchardsPage() {
     let results = processed
     if (selectedRole !== 'all') results = results.filter(o => o.category === selectedRole)
     if (selectedType !== 'all') results = results.filter(o => o.orchard_type === selectedType)
-    if (selectedSower !== 'all') results = results.filter(o => (o.grower_name || '') === selectedSower)
+    if (selectedSower !== 'all') {
+      const canon = (name) => {
+        const n = String(name || '').trim(); const lower = n.toLowerCase()
+        if (lower === 'davison - sow2grow guide' || lower === 'davison' || /^lyric?ist["':;\s-]*davison$/.test(lower) || (lower.includes('davison') && lower.includes('lyri'))) return 'davison taljaard'
+        return n
+      }
+      results = results.filter(o => canon(o.grower_name) === selectedSower)
+    }
+
     results.sort((a, b) => {
       if (sortBy === 'newest') return new Date(b.created_at) - new Date(a.created_at)
       if (sortBy === 'hottest') return b.completion_percentage - a.completion_percentage
@@ -550,7 +558,28 @@ export default function BrowseOrchardsPage() {
     return results
   }, [processed, selectedRole, selectedType, sortBy, selectedSower])
 
-  const filterBySower = (arr) => selectedSower === 'all' ? arr : arr.filter(it => (it.sower || 'Anonymous Sower') === selectedSower)
+  // Merge duplicate/alias sower names into their canonical account name
+  const canonicalSower = (name) => {
+    if (!name) return name
+    const n = String(name).trim()
+    const lower = n.toLowerCase()
+    // Any "lyrist/lyricist … davison" variant + "davison - sow2grow guide" → davison taljaard
+    if (
+      lower === 'davison - sow2grow guide' ||
+      lower === 'davison' ||
+      /^lyric?ist["':;\s-]*davison$/.test(lower) ||
+      (lower.includes('davison') && lower.includes('lyri'))
+    ) {
+      return 'davison taljaard'
+    }
+    return n
+  }
+
+  const sowerMatches = (itemName) => {
+    if (selectedSower === 'all') return true
+    return canonicalSower(itemName || 'Anonymous Sower') === selectedSower
+  }
+  const filterBySower = (arr) => selectedSower === 'all' ? arr : arr.filter(it => sowerMatches(it.sower))
   const filteredTribeSeeds = useMemo(() => filterBySower(tribeSeeds), [tribeSeeds, selectedSower])
   const filteredMusic = useMemo(() => filterBySower(music), [music, selectedSower])
   const filteredBooks = useMemo(() => filterBySower(books), [books, selectedSower])
@@ -566,10 +595,12 @@ export default function BrowseOrchardsPage() {
       if (lower === 'anonymous sower' || lower === 'anonymous' || lower === 'tribe music') return false
       return true
     }
-    processed.forEach(o => isReal(o.grower_name) && set.add(o.grower_name))
-    ;[...tribeSeeds, ...music, ...books, ...videos].forEach(it => isReal(it.sower) && set.add(it.sower))
+    const add = (name) => { if (isReal(name)) set.add(canonicalSower(name)) }
+    processed.forEach(o => add(o.grower_name))
+    ;[...tribeSeeds, ...music, ...books, ...videos].forEach(it => add(it.sower))
     return [...set].sort((a, b) => a.localeCompare(b))
   }, [processed, tribeSeeds, music, books, videos])
+
 
   return (
     <div style={{ minHeight: '100vh', background: 'linear-gradient(135deg, #020617 0%, #0f172a 50%, #020617 100%)', color: '#f1f5f9', paddingBottom: 90 }}>
