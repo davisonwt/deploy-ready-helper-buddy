@@ -13579,6 +13579,7 @@ export type Database = {
           user_id: string
         }[]
       }
+      get_my_sower_wallet: { Args: never; Returns: string }
       get_my_stream_credentials: {
         Args: { _stream_id: string }
         Returns: {
