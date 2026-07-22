@@ -20,6 +20,8 @@ import {
   CheckCircle2,
   Clock,
   XCircle,
+  ArrowLeft,
+  Home,
 } from 'lucide-react';
 
 const REGULATED_CREDENTIALS = [
@@ -181,7 +183,15 @@ export default function SellerBusinessSettingsPage() {
   }
 
   return (
-    <div className="container max-w-4xl mx-auto px-4 py-12">
+    <div className="container max-w-4xl mx-auto px-4 py-8">
+      <div className="flex items-center gap-2 mb-6">
+        <Button variant="outline" size="sm" onClick={() => navigate(-1)}>
+          <ArrowLeft className="w-4 h-4 mr-1" /> Back
+        </Button>
+        <Button variant="outline" size="sm" onClick={() => navigate('/dashboard')}>
+          <Home className="w-4 h-4 mr-1" /> Home
+        </Button>
+      </div>
       <div className="mb-8">
         <h1 className="text-4xl font-bold mb-2 flex items-center gap-3">
           <Store className="w-8 h-8 text-primary" /> Seller Business Settings
