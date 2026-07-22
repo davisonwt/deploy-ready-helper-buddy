@@ -20,6 +20,8 @@ import {
   CheckCircle2,
   Clock,
   XCircle,
+  ArrowLeft,
+  Home,
 } from 'lucide-react';
 
 const REGULATED_CREDENTIALS = [
