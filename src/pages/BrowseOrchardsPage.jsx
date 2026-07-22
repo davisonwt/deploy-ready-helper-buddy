@@ -255,28 +255,76 @@ function OrchardCard({ orchard, index }) {
   )
 }
 
-function MediaGrid({ kind, items, loading }) {
+const CATEGORY_LABELS = {
+  '🌱': 'Seeds',
+  '🌳': 'Orchards',
+  '🎵': 'Music',
+  '📚': 'Books',
+  '🎬': 'Videos',
+}
+const CATEGORY_ORDER = ['🌱', '🌳', '🎵', '📚', '🎬']
+
+function MediaCard({ it, kind, i }) {
+  return (
+    <motion.div key={it.id} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.03 }}
+      style={{ background: 'linear-gradient(135deg, #0f172a 0%, #1e293b 100%)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 16, overflow: 'hidden' }}>
+      <MediaThumb item={it} kind={kind} />
+      <div style={{ padding: 12 }}>
+        <div style={{ fontWeight: 700, color: '#f1f5f9', fontSize: 14, marginBottom: 4, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{it.title}</div>
+        <div style={{ fontSize: 12, color: '#64748b', marginBottom: 8 }}>by {it.sower || 'Anonymous Sower'}</div>
+        {it.link && (
+          <Link to={it.link} style={{ textDecoration: 'none' }}>
+            <LivingButton variant="enter" height={40} borderRadius={10} fontSize={12} letterSpacing="1px">
+              Open
+            </LivingButton>
+          </Link>
+        )}
+      </div>
+    </motion.div>
+  )
+}
+
+function MediaGrid({ kind, items, loading, groupByCategory = false }) {
   if (loading) return <div style={{ display: 'flex', justifyContent: 'center', padding: '60px 0' }}><Loader2 style={{ width: 40, height: 40, color: '#10b981' }} /></div>
   if (!items.length) return <div style={{ textAlign: 'center', padding: '60px 0', color: '#64748b' }}>No {kind} from the tribe yet.</div>
+
+  if (groupByCategory) {
+    const groups = new Map()
+    items.forEach(it => {
+      const k = it.emoji || '🌱'
+      if (!groups.has(k)) groups.set(k, [])
+      groups.get(k).push(it)
+    })
+    const orderedKeys = [
+      ...CATEGORY_ORDER.filter(k => groups.has(k)),
+      ...[...groups.keys()].filter(k => !CATEGORY_ORDER.includes(k)),
+    ]
+    return (
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 32 }}>
+        {orderedKeys.map(key => {
+          const rows = groups.get(key) || []
+          return (
+            <section key={key}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12 }}>
+                <span style={{ fontSize: 22 }}>{key}</span>
+                <h2 style={{ fontSize: 18, fontWeight: 800, color: '#e0f2fe', margin: 0 }}>
+                  {CATEGORY_LABELS[key] || 'Other'}
+                </h2>
+                <span style={{ fontSize: 12, color: '#64748b', fontWeight: 600 }}>({rows.length})</span>
+              </div>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))', gap: 16 }}>
+                {rows.map((it, i) => <MediaCard key={it.id} it={it} kind={kind} i={i} />)}
+              </div>
+            </section>
+          )
+        })}
+      </div>
+    )
+  }
+
   return (
     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))', gap: 16 }}>
-      {items.map((it, i) => (
-        <motion.div key={it.id} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.03 }}
-          style={{ background: 'linear-gradient(135deg, #0f172a 0%, #1e293b 100%)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 16, overflow: 'hidden' }}>
-          <MediaThumb item={it} kind={kind} />
-          <div style={{ padding: 12 }}>
-            <div style={{ fontWeight: 700, color: '#f1f5f9', fontSize: 14, marginBottom: 4, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{it.title}</div>
-            <div style={{ fontSize: 12, color: '#64748b', marginBottom: 8 }}>by {it.sower || 'Anonymous Sower'}</div>
-            {it.link && (
-              <Link to={it.link} style={{ textDecoration: 'none' }}>
-                <LivingButton variant="enter" height={40} borderRadius={10} fontSize={12} letterSpacing="1px">
-                  Open
-                </LivingButton>
-              </Link>
-            )}
-          </div>
-        </motion.div>
-      ))}
+      {items.map((it, i) => <MediaCard key={it.id} it={it} kind={kind} i={i} />)}
     </div>
   )
 }
@@ -304,6 +352,7 @@ export default function BrowseOrchardsPage() {
   const [books, setBooks] = useState([])
   const [videos, setVideos] = useState([])
   const [mediaLoading, setMediaLoading] = useState(false)
+  const [selectedSower, setSelectedSower] = useState('all')
 
   const fetchOrchards = async () => {
     try {
@@ -491,6 +540,7 @@ export default function BrowseOrchardsPage() {
     let results = processed
     if (selectedRole !== 'all') results = results.filter(o => o.category === selectedRole)
     if (selectedType !== 'all') results = results.filter(o => o.orchard_type === selectedType)
+    if (selectedSower !== 'all') results = results.filter(o => (o.grower_name || '') === selectedSower)
     results.sort((a, b) => {
       if (sortBy === 'newest') return new Date(b.created_at) - new Date(a.created_at)
       if (sortBy === 'hottest') return b.completion_percentage - a.completion_percentage
@@ -498,7 +548,20 @@ export default function BrowseOrchardsPage() {
       return 0
     })
     return results
-  }, [processed, selectedRole, selectedType, sortBy])
+  }, [processed, selectedRole, selectedType, sortBy, selectedSower])
+
+  const filterBySower = (arr) => selectedSower === 'all' ? arr : arr.filter(it => (it.sower || 'Anonymous Sower') === selectedSower)
+  const filteredTribeSeeds = useMemo(() => filterBySower(tribeSeeds), [tribeSeeds, selectedSower])
+  const filteredMusic = useMemo(() => filterBySower(music), [music, selectedSower])
+  const filteredBooks = useMemo(() => filterBySower(books), [books, selectedSower])
+  const filteredVideos = useMemo(() => filterBySower(videos), [videos, selectedSower])
+
+  const allSowers = useMemo(() => {
+    const set = new Set()
+    processed.forEach(o => o.grower_name && set.add(o.grower_name))
+    ;[...tribeSeeds, ...music, ...books, ...videos].forEach(it => it.sower && set.add(it.sower))
+    return [...set].sort((a, b) => a.localeCompare(b))
+  }, [processed, tribeSeeds, music, books, videos])
 
   return (
     <div style={{ minHeight: '100vh', background: 'linear-gradient(135deg, #020617 0%, #0f172a 50%, #020617 100%)', color: '#f1f5f9', paddingBottom: 90 }}>
@@ -575,6 +638,40 @@ export default function BrowseOrchardsPage() {
               {t.emoji} {t.label}
             </button>
           ))}
+        </div>
+
+        {/* Sowers dropdown — filter by a specific sower */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 20, flexWrap: 'wrap' }}>
+          <span style={{ fontSize: 11, fontWeight: 700, color: '#64748b', letterSpacing: '0.1em' }}>👥 SOWERS</span>
+          <select
+            value={selectedSower}
+            onChange={(e) => setSelectedSower(e.target.value)}
+            style={{
+              padding: '9px 14px',
+              borderRadius: 12,
+              background: selectedSower === 'all' ? 'rgba(15,23,42,0.6)' : 'linear-gradient(135deg, rgba(34,211,238,0.25), rgba(8,145,178,0.10))',
+              border: `1px solid ${selectedSower === 'all' ? 'rgba(255,255,255,0.10)' : 'rgba(34,211,238,0.65)'}`,
+              color: '#e0f7ff',
+              fontWeight: 700,
+              fontSize: 13,
+              cursor: 'pointer',
+              minWidth: 220,
+              backdropFilter: 'blur(8px)',
+            }}
+          >
+            <option value="all" style={{ background: '#0f172a' }}>All Sowers ({allSowers.length})</option>
+            {allSowers.map(name => (
+              <option key={name} value={name} style={{ background: '#0f172a' }}>{name}</option>
+            ))}
+          </select>
+          {selectedSower !== 'all' && (
+            <button
+              onClick={() => setSelectedSower('all')}
+              style={{ padding: '8px 12px', borderRadius: 10, background: 'rgba(239,68,68,0.15)', border: '1px solid rgba(239,68,68,0.35)', color: '#fca5a5', fontSize: 12, fontWeight: 700, cursor: 'pointer' }}
+            >
+              ✕ Clear
+            </button>
+          )}
         </div>
 
         {activeTab === 'orchards' && (<>
@@ -709,13 +806,13 @@ export default function BrowseOrchardsPage() {
             </>
           )
         ) : activeTab === 'seeds' ? (
-          <MediaGrid kind="seeds" items={tribeSeeds} loading={mediaLoading} />
+          <MediaGrid kind="seeds" items={filteredTribeSeeds} loading={mediaLoading} groupByCategory />
         ) : activeTab === 'music' ? (
-          <MediaGrid kind="music" items={music} loading={mediaLoading} />
+          <MediaGrid kind="music" items={filteredMusic} loading={mediaLoading} />
         ) : activeTab === 'books' ? (
-          <MediaGrid kind="books" items={books} loading={mediaLoading} />
+          <MediaGrid kind="books" items={filteredBooks} loading={mediaLoading} />
         ) : (
-          <MediaGrid kind="videos" items={videos} loading={mediaLoading} />
+          <MediaGrid kind="videos" items={filteredVideos} loading={mediaLoading} />
         )}
       </div>
 
