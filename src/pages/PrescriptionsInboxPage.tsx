@@ -184,7 +184,7 @@ export default function PrescriptionsInboxPage() {
                       <FileText className="w-4 h-4 mr-1" /> View prescription
                     </Button>
                     {row.chat_room_id && (
-                      <Button size="sm" variant="outline" onClick={() => navigate(`/chat/room/${row.chat_room_id}`)}>
+                      <Button size="sm" variant="outline" onClick={() => navigate(`/chatapp?room=${row.chat_room_id}`)}>
                         <MessageSquare className="w-4 h-4 mr-1" /> Open chat
                       </Button>
                     )}
