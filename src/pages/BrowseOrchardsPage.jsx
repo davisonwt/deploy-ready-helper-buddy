@@ -558,8 +558,16 @@ export default function BrowseOrchardsPage() {
 
   const allSowers = useMemo(() => {
     const set = new Set()
-    processed.forEach(o => o.grower_name && set.add(o.grower_name))
-    ;[...tribeSeeds, ...music, ...books, ...videos].forEach(it => it.sower && set.add(it.sower))
+    const isReal = (name) => {
+      if (!name) return false
+      const n = String(name).trim()
+      if (!n) return false
+      const lower = n.toLowerCase()
+      if (lower === 'anonymous sower' || lower === 'anonymous' || lower === 'tribe music') return false
+      return true
+    }
+    processed.forEach(o => isReal(o.grower_name) && set.add(o.grower_name))
+    ;[...tribeSeeds, ...music, ...books, ...videos].forEach(it => isReal(it.sower) && set.add(it.sower))
     return [...set].sort((a, b) => a.localeCompare(b))
   }, [processed, tribeSeeds, music, books, videos])
 
