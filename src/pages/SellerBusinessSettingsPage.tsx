@@ -23,6 +23,7 @@ import {
   ArrowLeft,
   Home,
 } from 'lucide-react';
+import { TIERS } from '@/lib/tiers';
 
 const REGULATED_CREDENTIALS = [
   { type: 'pharmacist_license', label: 'Pharmacist License', business: 'Pharmacy' },
@@ -74,6 +75,7 @@ export default function SellerBusinessSettingsPage() {
     slug: '',
     bio: '',
     tagline: '',
+    tier: '' as '' | 'homestead' | 'grove' | 'orchard' | 'estate' | 'harvest_works',
   });
   const [regulated, setRegulated] = useState(false);
   const [publicUrl, setPublicUrl] = useState<string | null>(null);
@@ -102,11 +104,20 @@ export default function SellerBusinessSettingsPage() {
           slug: sowerData.slug || '',
           bio: sowerData.bio || '',
           tagline: sowerData.tagline || '',
+          tier: (sowerData.tier as any) || '',
         });
         setRegulated(sowerData.seller_template === 'regulated_business');
         if (sowerData.slug) {
           setPublicUrl(`${window.location.origin}/bulk/sower/${sowerData.slug}`);
         }
+      } else {
+        // First-time visit — pre-fill tier from registration selection if any
+        try {
+          const pending = localStorage.getItem('pending_business_tier');
+          if (pending && ['homestead','grove','orchard','estate','harvest_works'].includes(pending)) {
+            setForm((f) => ({ ...f, tier: pending as any }));
+          }
+        } catch { /* ignore */ }
       }
       setCreds((credsData || []) as MyCredential[]);
     } catch (e: any) {
@@ -129,6 +140,7 @@ export default function SellerBusinessSettingsPage() {
         slug: form.slug.trim() || null,
         bio: form.bio.trim() || null,
         tagline: form.tagline.trim() || null,
+        tier: form.tier || null,
         seller_template: regulated ? 'regulated_business' : null,
       };
 
