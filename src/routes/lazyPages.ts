@@ -102,6 +102,8 @@ export const GroveStationPage = lazy(() => import('@/pages/GroveStationPage'));
 export const RadioManagementPage = lazy(() => import('@/pages/RadioManagementPage'));
 export const ClubhousePage = lazy(() => import('@/pages/ClubhousePage'));
 export const VideoPage = lazy(() => import('@/pages/VideoPage'));
+export const PrescriptionSubmitPage = lazy(() => import('@/pages/PrescriptionSubmitPage'));
+export const PrescriptionsInboxPage = lazy(() => import('@/pages/PrescriptionsInboxPage'));
 
 export const RadioPage = lazy(() => import('@/components/radio/RadioPage'));
 export const CreatePremiumRoomPage = lazy(() =>
