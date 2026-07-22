@@ -1,136 +1,66 @@
-## Printable Scriptural Wall Calendar + Year Planner — Plan
+# S2G Marketing Video Plan
 
-### 1. Scriptural calendar data (source of truth)
+## Goal
+Build awareness of Sow2Grow across TikTok, Facebook, X, and YouTube, explaining what the platform is, what users can do, and how anyone can generate income.
 
-The system is fully code-driven — there's **no DB table** of months/feasts. All data already lives in:
+## Recommendation: 12–14 core videos, then 20+ platform-specific cuts
 
-- `src/utils/customCalendar.ts` — date math, epoch (Tequvah / Vernal Equinox 20 Mar 2025 = Year 6028 M1 D1), 12-month structure `[30,30,31,30,30,31,30,30,31,30,30,31]` = 364 days, `isLongYear()` for days-out-of-time, sunrise-aware `getCreatorDate()`, `getCreatorDateSync()`, `formatCustomDate()`, `getDayOfWeek()`.
-- `src/utils/sacredCalendar.ts` — `FEAST_DAYS` map (New Year, Unleavened Bread, Shavuot, Yom Teruah, Yom Kippur, Sukkot, New Month Feasts, etc.), `INTERCALARY_DAYS`, Sabbath rule (every 7th day), `getDayInfo()`, `getAllDays()`.
-- `src/utils/dashboardCalendar.ts` + `src/hooks/useSacredNow.ts` — what the Dashboard banners read.
-- `supabase/functions/remnants-wheel-calendar/index.ts` — server mirror of the same logic.
+You already have 40+ internal explainers on Learn & Share. This plan is for **new, externally-facing marketing videos** designed for conversion and shareability.
 
-**Gap to close (no new schema):** add a pure helper `src/utils/calendarYearBuild.ts` exporting `buildScripturalYear(year)` that returns, for every scriptural day in a year, the inverse-mapped Gregorian date + `getDayInfo()` output. The Gregorian inverse is just `CREATOR_EPOCH + (cumulative days from year 6028 M1 D1)` — already trivial from existing primitives. Month names: today only "Month 1..12" exists. Add a small `MONTH_LABELS` constant in the same helper (initially just `"Month 1" … "Month 12"`; user can rename later) so PDF/UI share one source.
+### Phase 1: Awareness & Positioning (5 videos)
 
-The `sacred_day_scriptures` table exists and can optionally enrich each day with a verse — read-only join, no schema change required for v1.
+| # | Title | Length | Style | Purpose |
+|---|-------|--------|-------|---------|
+| 1 | **What is Sow2Grow?** | 60–90s | Polished motion graphics | Hero video. Defines S2G as a global tribal CaaS marketplace where seeds become orchards. |
+| 2 | **The Tribe Economy in 60 Seconds** | 60s | Polished | Explains the circular value flow: sowers create, bestowers support, whisperers amplify. |
+| 3 | **What Can You Actually Do on S2G?** | 90s | Fast montage | Showcases orchards, live rooms, wandering directory, calendar, wallet, community videos. |
+| 4 | **Sower, Bestower, Whisperer** | 60s | Clean split-screen | The three primary ways to participate and belong. |
+| 5 | **Your Seed Becomes an Orchard** | 45s | Visual metaphor | Walks the idea from a single seed to a funded/growing community orchard. |
 
-### 2. Location → season mapping
+### Phase 2: Feature Deep-Dives (4 videos)
 
-User location is **already captured**:
+| # | Title | Length | Focus |
+|---|-------|--------|-------|
+| 6 | **The Wandering Directory** | 45s | Wheel, Hand, Pillow, Field, Forge, Hearth, Heart, Story, Whisperer |
+| 7 | **Live Rooms: Learn, Share, Gather** | 60s | 1-on-1, Community, Classroom, SkillDrop, Training, Radio |
+| 8 | **The Sacred Calendar & 364YHVH** | 45s | Unique spiritual/seasonal identity |
+| 9 | **Wallet, Bestowals & USDC** | 60s | How money moves safely in the tribe |
 
-- `profiles.latitude`, `profiles.longitude`, `profiles.location_verified` (migration `20251201000000_add_location_columns.sql`).
-- `src/hooks/useUserLocation.ts` resolves it (profile → text country → browser geolocation → default Johannesburg).
+### Phase 3: Income & Opportunity (5 videos)
 
-So no prompt is needed for existing users; only a one-time "Confirm your location" step if `location_verified=false`.
+| # | Title | Length | Income Path |
+|---|-------|--------|-------------|
+| 10 | **Sell Your First Seed** | 60s | Create a product/seed and earn from bestowals |
+| 11 | **Become a Whisperer** | 60s | Earn commission marketing other sowers’ seeds |
+| 12 | **Earn 1% Forever** | 45s | Referral system |
+| 13 | **Host Paid Live Sessions** | 45s | Classroom, SkillDrop, Training, Radio entry fees |
+| 14 | **Offer Real-World Services** | 45s | Wandering Wheel, Hand, Pillow, Field, Forge listings |
 
-**Region key (cache key, coarse on purpose):**
-```
-region_key = `${hemisphere}:${climate_band}`
-hemisphere = lat >= 0 ? 'N' : 'S'
-climate_band:
-  |lat| < 23.5  → 'tropical'
-  23.5–35       → 'subtropical'
-  35–55         → 'temperate'
-  55–66.5       → 'boreal'
-  >= 66.5       → 'polar'
-```
-Five bands × 2 hemispheres = max 10 climates × 12 scriptural months = **120 cached images worst-case** for the whole platform.
+### Platform Distribution
 
-**Scriptural month → real local season:** Scriptural M1 begins at Vernal Equinox (≈ 20 Mar). For the N hemisphere that's start of spring, for the S hemisphere that's start of autumn. A static lookup table `scripturalMonthToSeason(month, hemisphere)` returns `'spring' | 'summer' | 'autumn' | 'winter'` (M1–M3 spring N / autumn S, M4–M6 summer N / winter S, etc.). Tropical/polar bands override the four-season label with `'wet' | 'dry'` and `'polar-day' | 'polar-night'` respectively to drive better art.
+From the 14 core videos, produce derivative cuts:
 
-Lives in `src/utils/calendarSeason.ts` — pure functions, no DB.
+- **YouTube**: 14 full-length explainers (landscape, SEO titles/descriptions)
+- **TikTok / Reels / Shorts**: 14 vertical cuts, 15–30s each, with hooks in first 3s
+- **Facebook**: 8–10 community-focused 30–60s cuts
+- **X / Twitter**: 10–12 short 30–45s cuts with bold captions
 
-### 3. Image generation + caching
+**Total video assets: ~34–40**
 
-New table `public.seasonal_calendar_art`:
+## Production Approach
 
-| column | type | notes |
-| --- | --- | --- |
-| `id` | uuid PK | |
-| `region_key` | text | e.g. `S:subtropical` |
-| `scriptural_month` | int (1–12) | |
-| `season_label` | text | denormalized for prompt traceability |
-| `image_url` | text | public URL in storage |
-| `storage_path` | text | |
-| `prompt` | text | |
-| `model` | text | `black-forest-labs/flux-1.1-pro` (matches existing) |
-| `created_at` / `updated_at` | timestamptz | |
+- **5 polished hero videos** (What is S2G, Tribe Economy, Sower/Bestower/Whisperer, Wandering Directory, Income overview) — use motion graphics / AI narration.
+- **9 quick founder/screen-capture videos** for feature and income explainers — authentic, faster to produce.
+- All videos use consistent S2G branding: dark garden aesthetic, teal/ember/gold palette, Fraunces/Outfit typography.
 
-`UNIQUE(region_key, scriptural_month)` — that's the cache key. Public SELECT (images are non-sensitive). INSERT/UPDATE restricted to `service_role` (edge function only). Required GRANTs included.
+## Suggested Rollout Order
 
-Storage: reuse existing **`ai-generations`** bucket (already public per the earlier Option 1 decision) under path `calendar-art/<region_key>/<month>.webp`.
+1. Launch **Video 1 (What is S2G?)** + **Video 2 (Tribe Economy)** as the foundation.
+2. Release **Videos 3–5** over the following 2 weeks.
+3. Drop **Feature Deep-Dives 6–9** one per week.
+4. Release **Income videos 10–14** as a "Earn on S2G" mini-series.
+5. Repurpose every core video into platform-specific cuts using the first 5–10 seconds as the hook.
 
-**Edge function `get-or-generate-calendar-art`** (new, under `supabase/functions/get-or-generate-calendar-art/`):
-- Input: `{ region_key, scriptural_month }` (validated with Zod).
-- 1. `SELECT` cache row; if hit, return `image_url`.
-- 2. Else build prompt: `"Photorealistic <season_label> landscape, <hemisphere> hemisphere <climate_band>, scriptural month <n>, soft natural light, no text, no people, calendar wall-art composition, vertical 3:4."`
-- 3. Reuse the **exact same Replicate pipeline** used by `supabase/functions/generate-thumbnail/index.ts` (FLUX model, `REPLICATE_API_TOKEN`, `pollOnce`, upload to storage). Extract the shared 40 lines into `supabase/functions/_shared/fluxImage.ts` so we don't fork the pipeline.
-- 4. Insert row, return URL.
+## Next Step
 
-Idempotency: rely on the UNIQUE constraint + `ON CONFLICT DO NOTHING` so two concurrent users in the same region don't double-generate.
-
-Pre-warming: on first request, function generates only the requested month synchronously and fires-and-forgets the other 11 for that region in the background, so subsequent month requests by the same user are instant. No per-user storage, no regeneration per user — exactly the cache-by-region requirement.
-
-### 4. PDF generation approach
-
-**Decision: client-side, `@react-pdf/renderer`.**
-
-Reasons:
-- Already-rendered Supabase image URLs work directly in `<Image src=…>` without re-uploading binary to an edge function.
-- Avoids large PDF buffers transiting an edge function; keeps function quota free.
-- React component model lets us reuse `getDayInfo()` / `FEAST_DAYS` directly — no logic duplication.
-- The other PDF-shaped exports in this codebase (`download-album`) are zip flows, not PDF, so there's no existing server PDF stack to extend.
-
-New deps: `@react-pdf/renderer` (single dep, ~250kb, lazy-loaded only on the calendar page so it doesn't hit the main bundle).
-
-Files:
-- `src/lib/calendarPdf/MonthPage.tsx` — one A4-portrait page per scriptural month: hero image (top 55%), month label + year, weekday header (Day 1…Sabbath), day grid honoring 30/30/31 layout with feast names + sabbath shading + `*` for intercalary, footer line "Gregorian: <start>–<end>".
-- `src/lib/calendarPdf/YearPlannerPage.tsx` — single landscape A3 (or A4 fold-out) page, 12 mini-columns, each a vertical strip of days color-coded for feasts/sabbaths. Optional 2nd page: feast-day list with Gregorian dates.
-- `src/lib/calendarPdf/WallCalendarDocument.tsx` — composes 12 `MonthPage` + `YearPlannerPage` into one `Document`.
-- `src/lib/calendarPdf/buildCalendar.ts` — orchestrator: takes `year` + `region_key`, calls `buildScripturalYear(year)`, fetches all 12 cached images via the edge function in parallel, renders to blob with `pdf().toBlob()`, triggers download.
-
-QA gate: after generation, before delivering, render the doc to a Blob, convert first + last + a feast page to images and inspect — exactly the visual-inspection loop in our skill/pdf guidance, but client-side via the on-screen preview from `@react-pdf/renderer`'s `<PDFViewer>` shown in the UI before download.
-
-### 5. UI entry point
-
-**New page** `src/pages/PrintCalendarPage.tsx` at route `/calendar/print` (registered in `src/routes/AppRoutes.tsx` + `src/routes/lazyPages.ts` to lazy-load `@react-pdf/renderer`).
-
-Entry points:
-- Dashboard tile "Print My Calendar" next to the existing Sacred Day banner (one card in `src/pages/DashboardPage.jsx`).
-- Link from `src/pages/Sow2GrowCalendarPage.tsx` header.
-
-Flow (deliberately 3 clicks):
-1. Page loads → reads `useUserLocation()`. If `verified=false` or coords missing, show a single inline card: "We'll use **<resolved place>** for seasonal artwork — Confirm / Change". `Change` opens the existing location editor pattern from `useUserLocation.updateLocation`.
-2. User picks year (default = current scriptural year) and output (`Wall calendar` / `Year planner` / `Both`). Show live `<PDFViewer>` of month 1 as a preview while the other 11 cache-prime in the background.
-3. **Download PDF** button — calls `buildCalendar()`, saves `Scriptural-Calendar-Year-<n>-<region_key>.pdf`.
-
-No payment, no per-user storage, no email — just a browser download.
-
-### Technical summary (one-glance)
-
-```text
-data:       src/utils/customCalendar.ts  (exists)
-            src/utils/sacredCalendar.ts  (exists)
-            src/utils/calendarYearBuild.ts  (new, pure)
-            src/utils/calendarSeason.ts  (new, pure)
-
-location:   profiles.latitude/longitude  (exists)
-            src/hooks/useUserLocation.ts (exists)
-
-cache:      public.seasonal_calendar_art  (new table, UNIQUE region_key+month)
-            ai-generations bucket / calendar-art/<region>/<month>.webp  (existing bucket)
-
-generate:   supabase/functions/_shared/fluxImage.ts  (extracted from generate-thumbnail)
-            supabase/functions/get-or-generate-calendar-art/index.ts  (new)
-
-pdf:        @react-pdf/renderer  (new dep, lazy)
-            src/lib/calendarPdf/{MonthPage,YearPlannerPage,WallCalendarDocument,buildCalendar}.tsx
-
-ui:         src/pages/PrintCalendarPage.tsx  (new, lazy)
-            route /calendar/print  + dashboard tile
-```
-
-### Open questions before build
-
-1. **Month names** — keep `"Month 1…12"` for v1, or do you have proper scriptural names you want baked in now?
-2. **Year selector** — only current scriptural year, or also next year (useful for planners printed in advance)?
-3. **Paper size** — A4 wall calendar OK, or do you want US Letter as the default?
+Approve this scope and I can produce the first video scripts, shot lists, and platform-specific hooks, or begin building a reusable S2G marketing video template in the app.
