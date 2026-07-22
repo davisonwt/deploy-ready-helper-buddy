@@ -10485,6 +10485,7 @@ export type Database = {
           seller_template: string | null
           slug: string | null
           tagline: string | null
+          tier: string | null
           updated_at: string | null
           user_id: string | null
           wallet_address: string | null
@@ -10500,6 +10501,7 @@ export type Database = {
           seller_template?: string | null
           slug?: string | null
           tagline?: string | null
+          tier?: string | null
           updated_at?: string | null
           user_id?: string | null
           wallet_address?: string | null
@@ -10515,6 +10517,7 @@ export type Database = {
           seller_template?: string | null
           slug?: string | null
           tagline?: string | null
+          tier?: string | null
           updated_at?: string | null
           user_id?: string | null
           wallet_address?: string | null
