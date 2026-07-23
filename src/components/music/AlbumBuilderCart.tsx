@@ -8,6 +8,8 @@ import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { useCurrency } from '@/hooks/useCurrency';
+import ProviderPicker from '@/components/payments/ProviderPicker';
+import { PayoutProviderId, quoteFee } from '@/lib/payments/providerFees';
 
 interface AlbumBuilderCartProps {
   scopeName?: string;
@@ -18,6 +20,8 @@ export function AlbumBuilderCart({ scopeName }: AlbumBuilderCartProps = {}) {
   const { user } = useAuth();
   const { formatAmount } = useCurrency();
   const [processing, setProcessing] = useState(false);
+  const [provider, setProvider] = useState<PayoutProviderId>('nowpayments');
+  const feeQuote = quoteFee(provider, albumPrice);
 
   const handleCheckout = async () => {
     if (!user) {
@@ -32,51 +36,40 @@ export function AlbumBuilderCart({ scopeName }: AlbumBuilderCartProps = {}) {
 
     setProcessing(true);
     try {
-      // Create album purchase record (pending — completion happens server-side after payment verification)
-      const { data: purchase, error: purchaseError } = await supabase
-        .from('music_purchases')
-        .insert({
-          buyer_id: user.id,
-          track_id: selectedTracks[0].id, // Use first track as reference
-          amount: albumPrice * 0.85, // Artist amount (85%)
-          total_amount: albumPrice,
-          platform_fee: albumPrice * 0.05,
-          sow2grow_fee: albumPrice * 0.10,
-          artist_amount: albumPrice * 0.85,
-          platform_amount: albumPrice * 0.05,
-          admin_amount: albumPrice * 0.10,
-          payment_status: 'pending'
-        })
-        .select()
-        .single();
+      const productItems = selectedTracks
+        .map((track) => track.product_id || (track.source_type === 'product' ? track.id : null))
+        .filter(Boolean)
+        .map((productId) => ({ productId, qty: 1 }));
 
-      if (purchaseError) throw purchaseError;
+      if (productItems.length !== selectedTracks.length) {
+        toast.error('Album checkout is available for sower music seeds. Please bestow uploaded DJ tracks one song at a time.');
+        return;
+      }
 
-      // Create individual track purchase records for tracking (also pending)
-      const trackPurchases = selectedTracks.map(track => ({
-        buyer_id: user.id,
-        track_id: track.id,
-        amount: albumPrice / 10,
-        total_amount: albumPrice / 10,
-        platform_fee: (albumPrice / 10) * 0.05,
-        sow2grow_fee: (albumPrice / 10) * 0.10,
-        artist_amount: (albumPrice / 10) * 0.85,
-        platform_amount: (albumPrice / 10) * 0.05,
-        admin_amount: (albumPrice / 10) * 0.10,
-        payment_status: 'pending'
-      }));
+      const { data, error } = await supabase.functions.invoke('create-basket-bestowal-order', {
+        body: {
+          items: productItems,
+          provider,
+          payCurrency: provider === 'nowpayments' ? 'usdcsol' : undefined,
+          redirectBaseUrl: typeof window !== 'undefined' ? window.location.origin : undefined,
+        },
+      });
 
-      const { error: tracksError } = await supabase
-        .from('music_purchases')
-        .insert(trackPurchases);
+      if (error) throw new Error(error.message || 'Failed to create album order');
+      if (!data || data.error) throw new Error(data?.error || 'album_order_failed');
 
-      if (tracksError) throw tracksError;
+      if (provider === 'paypal') {
+        if (!data.approveUrl) throw new Error('No PayPal checkout URL returned');
+        window.location.href = data.approveUrl;
+        return;
+      }
 
-      toast.success('Album order created. Complete payment to unlock downloads.');
-      clearAlbum();
+      if (!data.invoiceUrl) throw new Error('No crypto invoice URL returned');
+      window.open(data.invoiceUrl, '_blank');
+      toast.success('Album invoice opened. Complete payment to confirm the album bestowal.');
     } catch (error) {
       console.error('Purchase error:', error);
-      toast.error('Purchase failed. Please try again.');
+      toast.error(error instanceof Error ? error.message : 'Purchase failed. Please try again.');
     } finally {
       setProcessing(false);
     }
@@ -155,6 +148,16 @@ export function AlbumBuilderCart({ scopeName }: AlbumBuilderCartProps = {}) {
             <p>• 10% platform fee</p>
             <p>• 5% admin fee</p>
           </div>
+
+          {selectedTracks.length === 10 && (
+            <div className="space-y-2">
+              <div className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Payment method</div>
+              <ProviderPicker value={provider} onChange={setProvider} amount={albumPrice} mode="buyer" disabled={processing} />
+              <div className="text-xs text-muted-foreground text-right">
+                Estimated processor fee: <span className="font-medium text-foreground">{feeQuote.display}</span>
+              </div>
+            </div>
+          )}
 
           {selectedTracks.length === 10 ? (
             <Button
