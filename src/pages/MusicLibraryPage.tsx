@@ -133,7 +133,7 @@ export default function MusicLibraryPage() {
         .from('products')
         .select('id, title, type, cover_image_url, image_urls, file_url, price, sower_id, artist_name, music_genre, music_mood, duration, created_at')
         .eq('type', 'music')
-        .neq('status', 'archived')
+        .or('status.is.null,status.neq.archived')
         .order('created_at', { ascending: false })
         .limit(500);
 
