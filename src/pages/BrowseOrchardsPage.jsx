@@ -483,7 +483,7 @@ export default function BrowseOrchardsPage() {
         const musicItems = [
           ...musicRows.map(m => ({
             id: m.id, title: m.track_title, image: m.cover_image_url || null, emoji: '🎵',
-            sower: m.artist_name || djMap.get(m.dj_id)?.dj_name || 'Tribe Music', link: '/music-library', created_at: m.upload_date || m.created_at,
+            sower: m.artist_name || djMap.get(m.dj_id)?.dj_name || 'Tribe Music', link: `/music-track/${m.id}`, created_at: m.upload_date || m.created_at,
           })),
           ...musicFromProducts,
         ]
