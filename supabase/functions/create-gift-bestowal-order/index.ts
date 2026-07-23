@@ -9,6 +9,7 @@ import { createClient, type SupabaseClient } from "https://esm.sh/@supabase/supa
 import { corsHeaders } from "npm:@supabase/supabase-js@2/cors";
 import { resolveSowerPayout } from "../_shared/resolveSowerPayout.ts";
 import { paypalFetch } from "../_shared/paypal/client.ts";
+import { computeBuyerFee } from "../_shared/paypal/fees.ts";
 
 const NOWPAYMENTS_API = "https://api.nowpayments.io/v1";
 
