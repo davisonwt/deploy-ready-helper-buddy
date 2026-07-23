@@ -4,7 +4,7 @@ import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Heart, Share2, Download, DollarSign, Play, Pause, Edit, ShoppingCart, Gift } from 'lucide-react';
+import { Share2, Download, DollarSign, Play, Pause, Edit, Gift } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { useMusicPurchase } from '@/hooks/useMusicPurchase';
 import { useGiftBestowal } from '@/hooks/useGiftBestowal';
@@ -55,6 +55,7 @@ interface MusicTrack {
   dj_id: string;
   wallet_address: string | null;
   product_id?: string | null;
+  sower_id?: string | null;
   sower_user_id?: string | null;
   source_type?: string;
   // Profile data from join
@@ -104,12 +105,13 @@ export function MusicLibraryTable({
   const processing = hookProcessing || localProcessing;
 
   useEffect(() => {
-    if (!highlightedTrackId || tracks.length === 0) return;
+    const targetId = highlightedTrackId || highlightedProductId;
+    if (!targetId || tracks.length === 0) return;
     const timer = window.setTimeout(() => {
-      document.getElementById(`music-track-${highlightedTrackId}`)?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      document.getElementById(`music-track-${targetId}`)?.scrollIntoView({ behavior: 'smooth', block: 'center' });
     }, 200);
     return () => window.clearTimeout(timer);
-  }, [highlightedTrackId, tracks.length]);
+  }, [highlightedTrackId, highlightedProductId, tracks.length]);
 
   useEffect(() => {
     let alive = true;
@@ -248,7 +250,7 @@ export function MusicLibraryTable({
       title: track.track_title,
       price,
       cover_image_url: (track as any).cover_image_url || undefined,
-      sower_id: track.sower_user_id || track.dj_id,
+      sower_id: track.sower_id || track.sower_user_id || track.dj_id,
       bestowal_count: 0,
       sowers: { display_name: track.artist_name || track.profiles?.username || 'Sower' },
     });
@@ -276,10 +278,6 @@ export function MusicLibraryTable({
       provider: 'paypal',
       message: `Freewill gift for ${track.track_title}`,
     });
-  };
-
-  const handleFollow = (djId: string) => {
-    toast.info('Follow feature coming soon!');
   };
 
   const handleShare = async (track: MusicTrack, e?: React.MouseEvent) => {
@@ -366,12 +364,12 @@ export function MusicLibraryTable({
           const isPurchased = showEditButton || ownedTrackIds.has(track.id);
           const isPlaying = playingTrack === track.id;
           const isSelected = selectedTracks.includes(track.id);
-          const isHighlighted = highlightedTrackId === track.id;
+          const isHighlighted = highlightedTrackId === track.id || highlightedProductId === track.product_id || highlightedProductId === track.id;
 
           return (
             <Card 
               key={track.id} 
-              id={`music-track-${track.id}`}
+              id={`music-track-${track.product_id || track.id}`}
               className={`p-4 backdrop-blur-md bg-white/10 border-white/20 hover:bg-white/20 transition-all ${allowSelection ? 'cursor-pointer' : ''} ${isSelected ? 'ring-2 ring-white/50' : ''} ${isHighlighted ? 'ring-4 ring-yellow-300 bg-yellow-300/20 shadow-2xl shadow-yellow-300/30' : ''}`}
               onClick={() => allowSelection && onTrackSelect?.(track)}
             >
@@ -484,18 +482,6 @@ export function MusicLibraryTable({
                     size="sm"
                     variant="ghost"
                     onClick={(e) => {
-                      e.stopPropagation();
-                      handleFollow(track.dj_id);
-                    }}
-                    className="h-8 w-8 p-0 text-white hover:bg-white/20"
-                  >
-                    <Heart className="h-4 w-4" />
-                  </Button>
-
-                  <Button
-                    size="sm"
-                    variant="ghost"
-                    onClick={(e) => {
                       e.preventDefault();
                       e.stopPropagation();
                       handleShare(track, e);
@@ -522,15 +508,6 @@ export function MusicLibraryTable({
                     <>
                       <Button
                         size="sm"
-                        onClick={(e) => handleBasketBestowal(track, e)}
-                        disabled={processing}
-                        className="h-8 w-8 p-0 text-white bg-emerald-500/80 hover:bg-emerald-500"
-                        title="Bestow via basket"
-                      >
-                        <ShoppingCart className="h-3 w-3" />
-                      </Button>
-                      <Button
-                        size="sm"
                         onClick={(e) => {
                           e.preventDefault();
                           e.stopPropagation();
@@ -540,7 +517,7 @@ export function MusicLibraryTable({
                         className="h-8 gap-1 bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white"
                       >
                         <DollarSign className="h-3 w-3" />
-                        Direct
+                        Bestow
                       </Button>
                       <Button
                         size="sm"
