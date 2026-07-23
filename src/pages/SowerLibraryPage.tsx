@@ -309,12 +309,18 @@ export default function SowerLibraryPage() {
                       id={`sower-item-${r.id}`}
                       className={`rounded-xl border p-3 space-y-3 bg-card/40 backdrop-blur-sm transition ${isHighlighted ? 'border-primary ring-2 ring-primary/60' : 'border-border/40'}`}
                     >
-                      <div className="aspect-square w-full overflow-hidden rounded-lg bg-muted">
-                        {r.cover_image_url ? (
-                          <img src={r.cover_image_url} alt={r.title} className="w-full h-full object-cover" />
-                        ) : (
-                          <GradientPlaceholder type={'product' as any} title={r.title} className="w-full h-full" />
-                        )}
+                      <div className="relative aspect-square w-full overflow-hidden rounded-lg bg-muted">
+                        {(() => {
+                          const gallery = Array.from(new Set([
+                            ...(r.cover_image_url ? [r.cover_image_url] : []),
+                            ...(r.images || []),
+                          ].filter(Boolean)));
+                          return gallery.length > 0 ? (
+                            <CoverGallery images={gallery} title={r.title} />
+                          ) : (
+                            <GradientPlaceholder type={'product' as any} title={r.title} className="w-full h-full" />
+                          );
+                        })()}
                       </div>
                       <div className="space-y-1">
                         <h3 className="font-semibold text-foreground line-clamp-2">{r.title}</h3>
