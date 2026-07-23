@@ -128,11 +128,11 @@ Deno.serve(async (req) => {
       });
     }
 
-    // --- Processor fee on top (paid by buyer) --------------------------------
-    const feeEnvKey = payload.provider === "nowpayments" ? "NOWPAYMENTS_FEE_PCT" : "PAYPAL_FEE_PCT";
-    const feePct = Number(Deno.env.get(feeEnvKey) ?? "0.01");
-    const processorFee = ceil2(subtotal * (Number.isFinite(feePct) ? feePct : 0.01));
-    const buyerTotal = round2(subtotal + processorFee);
+    // --- Processor fee on top (paid by BUYER — Sow2Grow golden rule) ---------
+    const quote = computeBuyerFee(payload.provider, subtotal);
+    const feePct = quote.feePct;
+    const processorFee = quote.fee;
+    const buyerTotal = quote.total;
 
     // --- Insert basket_orders row (snapshot before calling processor) --------
     const { data: order, error: insertError } = await service
