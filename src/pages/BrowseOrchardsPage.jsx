@@ -475,6 +475,14 @@ export default function BrowseOrchardsPage() {
           if (!matches.length) return null
           return matches.find((m) => djMap.get(m.dj_id)?.user_id === sowerUserId) || matches[0]
         }
+        const findMatchingMusicProduct = (track) => {
+          const key = normalizeSongTitle(track.track_title)
+          if (!key) return null
+          const trackUserId = djMap.get(track.dj_id)?.user_id
+          const matches = productRows.filter((p) => p.type === 'music' && normalizeSongTitle(p.title) === key)
+          if (!matches.length) return null
+          return matches.find((p) => sowerMap.get(p.sower_id)?.user_id === trackUserId) || matches[0]
+        }
         const seedsFromTable = seedsRows.map(s => ({
           id: `seed-${s.id}`, title: s.title, image: firstImage(s.images), emoji: '🌱',
           sower: sowerName(profileMap.get(s.gifter_id)), link: '/orchard-alive', created_at: s.created_at,
@@ -503,7 +511,7 @@ export default function BrowseOrchardsPage() {
         const musicItems = [
           ...musicRows.map(m => ({
             id: m.id, title: m.track_title, image: m.cover_image_url || null, emoji: '🎵',
-            sower: m.artist_name || djMap.get(m.dj_id)?.dj_name || 'Tribe Music', link: musicLibraryLink(m.id, m.dj_id), created_at: m.upload_date || m.created_at,
+            sower: m.artist_name || djMap.get(m.dj_id)?.dj_name || 'Tribe Music', link: musicLibraryLink(m.id, m.dj_id, findMatchingMusicProduct(m)?.id), created_at: m.upload_date || m.created_at,
           })),
           ...musicFromProducts,
         ]
