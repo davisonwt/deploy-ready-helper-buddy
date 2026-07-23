@@ -56,6 +56,7 @@ interface MusicTrack {
   wallet_address: string | null;
   product_id?: string | null;
   sower_user_id?: string | null;
+  source_type?: string;
   // Profile data from join
   profiles?: {
     username: string | null;
@@ -207,6 +208,10 @@ export function MusicLibraryTable({
 
     try {
       setLocalProcessing(true);
+      if (track.source_type === 'product' || track.product_id) {
+        handleBasketBestowal(track, e);
+        return;
+      }
       const price = track.price && track.price >= 2.00 ? track.price : 2.00;
       await purchaseTrack(track.id, price);
       
