@@ -513,13 +513,22 @@ export default function BrowseOrchardsPage() {
             created_at: p.created_at,
           }
         })
+        const sowerLibLink = (mode, p) => {
+          const s = sowerMap.get(p.sower_id)
+          const sowerUserId = s?.user_id
+          const sowerDisplayName = s?.display_name || sowerName(profileMap.get(s?.user_id)) || 'Sower'
+          const qs = new URLSearchParams({ productId: p.id })
+          if (sowerUserId) qs.set('sowerUserId', sowerUserId)
+          if (sowerDisplayName) qs.set('sowerName', sowerDisplayName)
+          return `/sower-library/${mode}?${qs.toString()}`
+        }
         const booksFromProducts = productRows.filter(p => p.type === 'ebook' || p.type === 'book').map(p => ({
           id: `prod-${p.id}`, title: p.title, image: firstImage(p.image_urls, p.cover_image_url), emoji: '📚',
-          sower: nameFromSower(p.sower_id), link: '/my-s2g-library', created_at: p.created_at,
+          sower: nameFromSower(p.sower_id), link: sowerLibLink('books', p), created_at: p.created_at,
         }))
         const seedsFromProducts = productRows.filter(p => !['music','ebook','book'].includes(p.type)).map(p => ({
           id: `prod-${p.id}`, title: p.title, image: firstImage(p.image_urls, p.cover_image_url), emoji: '🌱',
-          sower: nameFromSower(p.sower_id), link: '/products', created_at: p.created_at,
+          sower: nameFromSower(p.sower_id), link: sowerLibLink('products', p), created_at: p.created_at,
         }))
         const musicItems = [
           ...musicRows.map(m => ({
