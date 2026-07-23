@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { motion } from 'framer-motion';
@@ -10,20 +10,30 @@ import { AlbumBuilderCart } from '@/components/music/AlbumBuilderCart';
 import { LiveSessionPlaylistCart } from '@/components/music/LiveSessionPlaylistCart';
 import { useAlbumBuilder } from '@/contexts/AlbumBuilderContext';
 import { useLiveSessionPlaylist } from '@/contexts/LiveSessionPlaylistContext';
-import { Music, Users, Radio, Disc, Podcast, Loader2 } from 'lucide-react';
+import { ArrowLeft, Home, Music, Users, Radio, Disc, Podcast, Loader2 } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { PlaylistBrowser } from '@/components/music/PlaylistBrowser';
 import WanderingBadgeBar, { type WanderingRole } from '@/components/marketplace/WanderingBadgeBar';
 import MarketplaceFilterBar from '@/components/marketplace/MarketplaceFilterBar';
+import { Button } from '@/components/ui/button';
+
+const displayProfileName = (profile: any) =>
+  profile?.display_name ||
+  `${profile?.first_name || ''} ${profile?.last_name || ''}`.trim() ||
+  profile?.username ||
+  null;
 
 export default function MusicLibraryPage() {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const albumBuilder = useAlbumBuilder();
   const livePlaylist = useLiveSessionPlaylist();
   const [searchParams] = useSearchParams();
   const selectedTrackId = searchParams.get('trackId');
   const selectedDjId = searchParams.get('djId');
   const selectedProductId = searchParams.get('productId');
+  const selectedSowerUserId = searchParams.get('sowerUserId');
+  const selectedSowerNameParam = searchParams.get('sowerName');
   const requestedTab = searchParams.get('tab');
   const [activeTab, setActiveTab] = useState(requestedTab === 'community' ? 'community' : 'my-music');
   const [activeRole, setActiveRole] = useState<WanderingRole | null>(null);
@@ -61,7 +71,7 @@ export default function MusicLibraryPage() {
       // Get user's profile first
       const { data: profile } = await supabase
         .from('profiles')
-        .select('username, avatar_url')
+        .select('username, avatar_url, display_name, first_name, last_name')
         .eq('id', user.id)
         .single();
       
@@ -105,11 +115,11 @@ export default function MusicLibraryPage() {
 
   // Fetch all public community music - ALL tracks from ALL users
   const { data: communityMusic = [], isLoading: loadingCommunity } = useQuery({
-    queryKey: ['community-music', activeRole, categoryId, tagIds, selectedDjId],
+    queryKey: ['community-music', activeRole, categoryId, tagIds, selectedDjId, selectedSowerUserId],
     queryFn: async () => {
       console.log('🎵 Fetching community music...');
       
-      // Get ALL tracks regardless of user
+      // Get ALL DJ tracks and music products; Tribal Gardens music seeds can come from either source.
       const { data: tracks, error } = await supabase
         .from('dj_music_tracks')
         .select('*')
@@ -120,6 +130,19 @@ export default function MusicLibraryPage() {
         console.error('❌ Error fetching community tracks:', error);
         throw error;
       }
+
+      const { data: productMusicRows, error: productMusicError } = await supabase
+        .from('products')
+        .select('id, title, description, type, cover_image_url, image_urls, file_url, price, sower_id, artist_name, music_genre, music_mood, duration, wandering_role, created_at')
+        .eq('type', 'music')
+        .neq('status', 'archived')
+        .order('created_at', { ascending: false })
+        .limit(300);
+
+      if (productMusicError) {
+        console.warn('⚠️ Product music fetch error, continuing with DJ tracks only:', productMusicError);
+      }
+      const productMusic = productMusicRows || [];
       
       console.log('✅ Raw tracks fetched:', tracks?.length || 0);
       console.log('📊 Sample track:', tracks?.[0]);
@@ -127,7 +150,27 @@ export default function MusicLibraryPage() {
       // Get unique DJ IDs from tracks
       const djIds = [...new Set((tracks || []).map(t => t.dj_id).filter(Boolean))];
       console.log('🎤 Unique DJ IDs found:', djIds.length);
-      
+
+      let djProfilesList: Array<{ id: string; user_id: string | null }> = [];
+      if (djIds.length > 0) {
+        const { data: djProfiles, error: djError } = await supabase
+          .from('radio_djs')
+          .select('id, user_id')
+          .in('id', djIds);
+        if (djError) {
+          console.warn('⚠️ DJ profiles fetch error, continuing without profiles:', djError);
+        }
+        djProfilesList = djProfiles || [];
+      }
+
+      const djToUserMap = new Map(djProfilesList.map((dj) => [dj.id, dj.user_id]));
+
+      const sowerIds = [...new Set(productMusic.map((product: any) => product.sower_id).filter(Boolean))];
+      const { data: sowerRows } = sowerIds.length
+        ? await supabase.from('sowers').select('id, user_id, display_name, logo_url').in('id', sowerIds)
+        : { data: [] };
+      const sowerMap = new Map((sowerRows || []).map((sower: any) => [sower.id, sower]));
+
       // Fetch DJ profiles to get user IDs
       let filteredTracks = tracks || [];
 
@@ -137,6 +180,20 @@ export default function MusicLibraryPage() {
 
       if (selectedDjId) {
         filteredTracks = filteredTracks.filter((track) => track.dj_id === selectedDjId);
+      }
+
+      if (selectedSowerUserId) {
+        filteredTracks = filteredTracks.filter((track) => djToUserMap.get(track.dj_id) === selectedSowerUserId);
+      }
+
+      let filteredProducts = productMusic;
+
+      if (activeRole) {
+        filteredProducts = filteredProducts.filter((product: any) => product.wandering_role === activeRole);
+      }
+
+      if (selectedSowerUserId) {
+        filteredProducts = filteredProducts.filter((product: any) => sowerMap.get(product.sower_id)?.user_id === selectedSowerUserId);
       }
 
       if (categoryId) {
@@ -156,6 +213,7 @@ export default function MusicLibraryPage() {
         if (listingError) throw listingError;
         const listingIds = new Set((listingRows || []).map((row: any) => row.listing_id));
         filteredTracks = filteredTracks.filter((track) => listingIds.has(track.id));
+        filteredProducts = filteredProducts.filter((product: any) => listingIds.has(product.id));
       }
 
       if (tagIds.length) {
@@ -171,29 +229,21 @@ export default function MusicLibraryPage() {
           counts.get(row.listing_id)?.add(row.tag_id);
         });
         filteredTracks = filteredTracks.filter((track) => counts.get(track.id)?.size === tagIds.length);
+        filteredProducts = filteredProducts.filter((product: any) => counts.get(product.id)?.size === tagIds.length);
       }
 
-      let userIds: string[] = [];
-      if (djIds.length > 0) {
-        const { data: djProfiles, error: djError } = await supabase
-          .from('radio_djs')
-          .select('id, user_id')
-          .in('id', djIds);
-        
-        if (djError) {
-          console.warn('⚠️ DJ profiles fetch error, continuing without profiles:', djError);
-        } else {
-          userIds = (djProfiles || []).map(dj => dj.user_id).filter(Boolean);
-          console.log('👥 Unique user IDs found:', userIds.length);
-        }
-      }
+      const userIds = [
+        ...djProfilesList.map(dj => dj.user_id).filter(Boolean),
+        ...(sowerRows || []).map((sower: any) => sower.user_id).filter(Boolean),
+      ] as string[];
+      console.log('👥 Unique user IDs found:', userIds.length);
       
       // Fetch profiles for all users (guard empty to avoid IN error)
       let profileList: Array<{ id: string; username: string | null; avatar_url: string | null }> = [];
       if (userIds.length > 0) {
         const { data: profs, error: profErr } = await supabase
           .from('profiles')
-          .select('id, username, avatar_url')
+          .select('id, username, avatar_url, display_name, first_name, last_name')
           .in('id', userIds);
         if (profErr) {
           console.warn('⚠️ Profiles fetch error, continuing without profiles:', profErr);
@@ -207,18 +257,6 @@ export default function MusicLibraryPage() {
       
       const profileMap = new Map(profileList.map(p => [p.id, p]));
       
-      // Create a DJ to user mapping
-      let djToUserMap = new Map<string, string>();
-      if (djIds.length > 0) {
-        const { data: djProfiles } = await supabase
-          .from('radio_djs')
-          .select('id, user_id')
-          .in('id', djIds);
-        if (djProfiles) {
-          djToUserMap = new Map(djProfiles.map(dj => [dj.id, dj.user_id]));
-        }
-      }
-      
       // Transform the data to include profile info
       const transformedTracks = filteredTracks.map(track => {
         const userId = djToUserMap.get(track.dj_id);
@@ -229,10 +267,36 @@ export default function MusicLibraryPage() {
           profiles: profile || { username: null, avatar_url: null }
         };
       });
+
+      const transformedProducts = filteredProducts.map((product: any) => {
+        const sower = sowerMap.get(product.sower_id);
+        const profile = sower?.user_id ? profileMap.get(sower.user_id) : null;
+        return {
+          id: product.id,
+          track_title: product.title,
+          artist_name: product.artist_name || sower?.display_name || displayProfileName(profile),
+          duration_seconds: product.duration || null,
+          file_url: product.file_url,
+          preview_url: null,
+          price: product.price,
+          genre: product.music_genre || product.music_mood || null,
+          created_at: product.created_at,
+          dj_id: `product-${product.sower_id}`,
+          wallet_address: null,
+          product_id: product.id,
+          sower_user_id: sower?.user_id || null,
+          cover_image_url: product.cover_image_url || product.image_urls?.[0] || null,
+          profiles: profile || { username: null, avatar_url: sower?.logo_url || null, display_name: sower?.display_name || null },
+          source_type: 'product',
+        };
+      });
+
+      const combinedMusic = [...transformedProducts, ...transformedTracks]
+        .sort((a: any, b: any) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
       
-      console.log('🎼 Final transformed tracks:', transformedTracks.length);
+      console.log('🎼 Final transformed music rows:', combinedMusic.length);
       
-      return transformedTracks;
+      return combinedMusic;
     }
   });
 
@@ -243,8 +307,14 @@ export default function MusicLibraryPage() {
 
   const selectedSowerName = useMemo(() => {
     const selected = communityMusic.find((track: any) => track.id === selectedTrackId) || communityMusic[0];
-    return selected?.artist_name || selected?.profiles?.username || null;
-  }, [communityMusic, selectedTrackId]);
+    return selectedSowerNameParam || selected?.artist_name || displayProfileName(selected?.profiles) || null;
+  }, [communityMusic, selectedTrackId, selectedSowerNameParam]);
+
+  const heroTitle = useMemo(() => {
+    if (selectedSowerUserId && selectedSowerName) return `${selectedSowerName}'s S2G Music Library`;
+    if (activeTab === 'community') return 'S2G Community Music Library';
+    return 'My S2G Music Library';
+  }, [activeTab, selectedSowerName, selectedSowerUserId]);
 
   return (
     <div className='min-h-screen relative overflow-hidden'>
@@ -284,6 +354,17 @@ export default function MusicLibraryPage() {
 
       {/* Content */}
       <div className='relative z-10 container mx-auto py-6 space-y-6'>
+        <div className='flex items-center gap-3'>
+          <Button variant='outline' onClick={() => navigate(-1)} className='gap-2 bg-white/10 border-white/30 text-white hover:bg-white/20'>
+            <ArrowLeft className='h-4 w-4' />
+            Return
+          </Button>
+          <Button variant='outline' onClick={() => navigate('/dashboard')} className='gap-2 bg-white/10 border-white/30 text-white hover:bg-white/20'>
+            <Home className='h-4 w-4' />
+            Home
+          </Button>
+        </div>
+
         {/* Hero Header */}
         <div className='relative overflow-hidden border-b border-white/20 backdrop-blur-md bg-white/10 rounded-2xl mb-8'>
           <div className='relative container mx-auto px-4 py-12'>
@@ -297,7 +378,7 @@ export default function MusicLibraryPage() {
                   <Music className='w-16 h-16 text-white' />
                 </div>
                 <h1 className='text-6xl font-bold text-white drop-shadow-2xl'>
-                  My S2G Music Library
+                  {heroTitle}
                 </h1>
               </div>
               <p className='text-white/90 text-xl backdrop-blur-sm bg-white/10 rounded-lg p-4 border border-white/20'>
@@ -372,10 +453,10 @@ export default function MusicLibraryPage() {
                   <CardHeader>
                     <CardTitle className='flex items-center gap-2 text-white'>
                       <Users className='h-5 w-5' />
-                      {selectedDjId && selectedSowerName ? `${selectedSowerName}'s S2G Music Library` : 'S2G Community Music Library'}
+                      {selectedSowerName && (selectedDjId || selectedSowerUserId) ? `${selectedSowerName}'s S2G Music Library` : 'S2G Community Music Library'}
                     </CardTitle>
                     <p className='text-sm text-white/80'>
-                      {selectedDjId ? 'The song opened from Tribal Gardens is highlighted below.' : 'Select 10 tracks to build your custom album for $20'}
+                      {selectedDjId || selectedSowerUserId ? 'The song opened from Tribal Gardens is highlighted below.' : 'Select 10 tracks to build your custom album for $20'}
                     </p>
                   </CardHeader>
                   <CardContent>
@@ -387,7 +468,7 @@ export default function MusicLibraryPage() {
                       <MusicLibraryTable 
                         tracks={communityMusic} 
                         showBestowalButton={true}
-                        allowSelection={true}
+                        allowSelection={!selectedSowerUserId && !selectedDjId}
                         onTrackSelect={handleAlbumTrackSelect}
                         selectedTracks={albumBuilder.selectedTracks.map(t => t.id)}
                         highlightedTrackId={selectedTrackId || undefined}

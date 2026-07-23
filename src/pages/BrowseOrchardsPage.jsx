@@ -65,10 +65,13 @@ const safeList = (result, label) => {
   return result?.data || []
 }
 
-const musicLibraryLink = (trackId, djId, productId) => {
-  const params = new URLSearchParams({ tab: 'community', trackId })
+const musicLibraryLink = ({ trackId, djId, productId, sowerUserId, sowerName }) => {
+  const params = new URLSearchParams({ tab: 'community' })
+  if (trackId || productId) params.set('trackId', trackId || productId)
   if (djId) params.set('djId', djId)
   if (productId) params.set('productId', productId)
+  if (sowerUserId) params.set('sowerUserId', sowerUserId)
+  if (sowerName) params.set('sowerName', sowerName)
   return `/music-library?${params.toString()}`
 }
 
@@ -471,17 +474,19 @@ export default function BrowseOrchardsPage() {
           const key = normalizeSongTitle(product.title)
           if (!key) return null
           const sowerUserId = sowerMap.get(product.sower_id)?.user_id
+          if (!sowerUserId) return null
           const matches = musicRows.filter((m) => normalizeSongTitle(m.track_title) === key)
           if (!matches.length) return null
-          return matches.find((m) => djMap.get(m.dj_id)?.user_id === sowerUserId) || matches[0]
+          return matches.find((m) => djMap.get(m.dj_id)?.user_id === sowerUserId) || null
         }
         const findMatchingMusicProduct = (track) => {
           const key = normalizeSongTitle(track.track_title)
           if (!key) return null
           const trackUserId = djMap.get(track.dj_id)?.user_id
+          if (!trackUserId) return null
           const matches = productRows.filter((p) => p.type === 'music' && normalizeSongTitle(p.title) === key)
           if (!matches.length) return null
-          return matches.find((p) => sowerMap.get(p.sower_id)?.user_id === trackUserId) || matches[0]
+          return matches.find((p) => sowerMap.get(p.sower_id)?.user_id === trackUserId) || null
         }
         const seedsFromTable = seedsRows.map(s => ({
           id: `seed-${s.id}`, title: s.title, image: firstImage(s.images), emoji: '🌱',
@@ -493,10 +498,18 @@ export default function BrowseOrchardsPage() {
         }))
         const musicFromProducts = productRows.filter(p => p.type === 'music').map(p => {
           const matchedTrack = findMatchingMusicTrack(p)
+          const productSowerUserId = sowerMap.get(p.sower_id)?.user_id
+          const productSowerName = p.artist_name || nameFromSower(p.sower_id)
           return {
             id: `prod-${p.id}`, title: p.title, image: firstImage(p.image_urls, p.cover_image_url, matchedTrack?.cover_image_url, musicCoverByTitle.get(normalizeSongTitle(p.title))), emoji: '🎵',
-            sower: p.artist_name || nameFromSower(p.sower_id),
-            link: matchedTrack ? musicLibraryLink(matchedTrack.id, matchedTrack.dj_id, p.id) : '/music-library?tab=community',
+            sower: productSowerName,
+            link: musicLibraryLink({
+              trackId: matchedTrack?.id,
+              djId: matchedTrack?.dj_id,
+              productId: p.id,
+              sowerUserId: productSowerUserId,
+              sowerName: productSowerName,
+            }),
             created_at: p.created_at,
           }
         })
@@ -511,7 +524,15 @@ export default function BrowseOrchardsPage() {
         const musicItems = [
           ...musicRows.map(m => ({
             id: m.id, title: m.track_title, image: m.cover_image_url || null, emoji: '🎵',
-            sower: m.artist_name || djMap.get(m.dj_id)?.dj_name || 'Tribe Music', link: musicLibraryLink(m.id, m.dj_id, findMatchingMusicProduct(m)?.id), created_at: m.upload_date || m.created_at,
+            sower: djMap.get(m.dj_id)?.dj_name || m.artist_name || 'Tribe Music',
+            link: musicLibraryLink({
+              trackId: m.id,
+              djId: m.dj_id,
+              productId: findMatchingMusicProduct(m)?.id,
+              sowerUserId: djMap.get(m.dj_id)?.user_id,
+              sowerName: djMap.get(m.dj_id)?.dj_name || m.artist_name || 'Tribe Music',
+            }),
+            created_at: m.upload_date || m.created_at,
           })),
           ...musicFromProducts,
         ]
