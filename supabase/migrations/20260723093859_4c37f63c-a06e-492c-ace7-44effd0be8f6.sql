@@ -1,0 +1,2 @@
+ALTER TABLE public.seller_credentials DROP CONSTRAINT IF EXISTS seller_credentials_credential_type_check;
+ALTER TABLE public.seller_credentials ADD CONSTRAINT seller_credentials_credential_type_check CHECK (credential_type IN ('identity','license','insurance','background_check','pharmacist_license','vet_license','herbalist_cert','optometrist_license','clinic_license'));
