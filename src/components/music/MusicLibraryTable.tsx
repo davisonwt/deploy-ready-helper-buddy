@@ -98,7 +98,7 @@ export function MusicLibraryTable({
   
   // Safely extract functions with fallbacks
   const purchaseTrack = musicPurchase?.purchaseTrack || (async () => {});
-  const hookProcessing = musicPurchase?.processing || false;
+  const hookProcessing = (musicPurchase as any)?.loading || (musicPurchase as any)?.processing || false;
   const [localProcessing, setLocalProcessing] = useState(false);
   const processing = hookProcessing || localProcessing;
 
