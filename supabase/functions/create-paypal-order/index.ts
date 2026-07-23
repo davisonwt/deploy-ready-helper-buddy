@@ -182,9 +182,25 @@ Deno.serve(async (req) => {
           },
         },
       ],
+      // Explicitly allow both PayPal balance and unbranded card (debit/credit)
+      // so bestowers without a PayPal account can still pay.
+      payment_source: {
+        paypal: {
+          experience_context: {
+            brand_name: "Sow2Grow",
+            user_action: "PAY_NOW",
+            shipping_preference: "NO_SHIPPING",
+            landing_page: "LOGIN",
+            payment_method_preference: "IMMEDIATE_PAYMENT_REQUIRED",
+            return_url: `${redirectBase}/bestowals/${bestowal.id}?status=success`,
+            cancel_url: `${redirectBase}/bestowals/${bestowal.id}?status=cancelled`,
+          },
+        },
+      },
       application_context: {
         brand_name: "Sow2Grow",
         user_action: "PAY_NOW",
+        shipping_preference: "NO_SHIPPING",
         return_url: `${redirectBase}/bestowals/${bestowal.id}?status=success`,
         cancel_url: `${redirectBase}/bestowals/${bestowal.id}?status=cancelled`,
       },
