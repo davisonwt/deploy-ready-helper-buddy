@@ -7,6 +7,42 @@ import {
   ArrowLeft, ChevronDown, ChevronLeft, ChevronRight, Home, Loader2, Package, BookOpen, Users, ShoppingBasket,
 } from 'lucide-react';
 
+import { supabase } from '@/integrations/supabase/client';
+
+const PRIVATE_COVER_BUCKETS = new Set(['premium-room', 'music-tracks', 'dj-music']);
+
+const extractCoverObject = (url: string | null | undefined) => {
+  if (!url) return null;
+  try {
+    const parsed = new URL(url);
+    const match = parsed.pathname.match(/\/storage\/v1\/object\/(?:public|authenticated|sign)\/([^/]+)\/(.+)$/);
+    if (!match) return null;
+    const bucket = decodeURIComponent(match[1]);
+    const key = decodeURIComponent(match[2].split('?')[0]);
+    if (!PRIVATE_COVER_BUCKETS.has(bucket)) return null;
+    return { bucket, key };
+  } catch {
+    return null;
+  }
+};
+
+function SignedImg({ src, alt }: { src: string; alt: string }) {
+  const [resolved, setResolved] = useState<string | null>(() =>
+    extractCoverObject(src) ? null : src
+  );
+  useEffect(() => {
+    let alive = true;
+    const obj = extractCoverObject(src);
+    if (!obj) { setResolved(src); return () => { alive = false; }; }
+    setResolved(null);
+    supabase.storage.from(obj.bucket).createSignedUrl(obj.key, 60 * 60 * 6)
+      .then(({ data }) => { if (alive && data?.signedUrl) setResolved(data.signedUrl); });
+    return () => { alive = false; };
+  }, [src]);
+  if (!resolved) return <div className="w-full h-full bg-muted animate-pulse" />;
+  return <img src={resolved} alt={alt} className="w-full h-full object-cover" />;
+}
+
 function CoverGallery({ images, title }: { images: string[]; title: string }) {
   const [idx, setIdx] = useState(0);
   if (images.length === 0) return null;
@@ -15,7 +51,7 @@ function CoverGallery({ images, title }: { images: string[]; title: string }) {
   const next = (e: React.MouseEvent) => { e.stopPropagation(); setIdx((i) => i + 1); };
   return (
     <div className="relative w-full h-full group">
-      <img src={images[safeIdx]} alt={title} className="w-full h-full object-cover" />
+      <SignedImg src={images[safeIdx]} alt={title} />
       {images.length > 1 && (
         <>
           <button
