@@ -95,6 +95,7 @@ import {
   MusicTrackDetailPage,
   MyRadioOptInPage,
   MyS2GLibraryPage,
+  SowerLibraryPage,
   S2GCommunityLibraryPage,
   S2GCommunityMusicPage,
   LibraryUploadForm,
