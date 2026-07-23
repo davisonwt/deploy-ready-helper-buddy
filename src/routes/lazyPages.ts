@@ -157,6 +157,7 @@ export const MusicLibraryPage = lazy(() =>
   })
 );
 export const MyS2GLibraryPage = lazy(() => import('@/pages/MyS2GLibraryPage'));
+export const SowerLibraryPage = lazy(() => import('@/pages/SowerLibraryPage'));
 export const MusicTrackDetailPage = lazy(() => import('@/pages/MusicTrackDetailPage'));
 export const S2GCommunityLibraryPage = lazy(() => import('@/pages/S2GCommunityLibraryPage'));
 export const S2GCommunityMusicPage = lazy(() => import('@/pages/S2GCommunityMusicPage'));
