@@ -4,7 +4,7 @@ import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Heart, Share2, Download, DollarSign, Play, Pause, Edit, ShoppingCart, Gift } from 'lucide-react';
+import { Share2, Download, DollarSign, Play, Pause, Edit, Gift } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { useMusicPurchase } from '@/hooks/useMusicPurchase';
 import { useGiftBestowal } from '@/hooks/useGiftBestowal';
@@ -278,10 +278,6 @@ export function MusicLibraryTable({
     });
   };
 
-  const handleFollow = (djId: string) => {
-    toast.info('Follow feature coming soon!');
-  };
-
   const handleShare = async (track: MusicTrack, e?: React.MouseEvent) => {
     if (e) {
       e.preventDefault();
@@ -484,18 +480,6 @@ export function MusicLibraryTable({
                     size="sm"
                     variant="ghost"
                     onClick={(e) => {
-                      e.stopPropagation();
-                      handleFollow(track.dj_id);
-                    }}
-                    className="h-8 w-8 p-0 text-white hover:bg-white/20"
-                  >
-                    <Heart className="h-4 w-4" />
-                  </Button>
-
-                  <Button
-                    size="sm"
-                    variant="ghost"
-                    onClick={(e) => {
                       e.preventDefault();
                       e.stopPropagation();
                       handleShare(track, e);
@@ -522,15 +506,6 @@ export function MusicLibraryTable({
                     <>
                       <Button
                         size="sm"
-                        onClick={(e) => handleBasketBestowal(track, e)}
-                        disabled={processing}
-                        className="h-8 w-8 p-0 text-white bg-emerald-500/80 hover:bg-emerald-500"
-                        title="Bestow via basket"
-                      >
-                        <ShoppingCart className="h-3 w-3" />
-                      </Button>
-                      <Button
-                        size="sm"
                         onClick={(e) => {
                           e.preventDefault();
                           e.stopPropagation();
@@ -540,7 +515,7 @@ export function MusicLibraryTable({
                         className="h-8 gap-1 bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white"
                       >
                         <DollarSign className="h-3 w-3" />
-                        Direct
+                        Bestow
                       </Button>
                       <Button
                         size="sm"

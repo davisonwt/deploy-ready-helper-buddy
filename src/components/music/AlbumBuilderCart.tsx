@@ -9,7 +9,11 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { useCurrency } from '@/hooks/useCurrency';
 
-export function AlbumBuilderCart() {
+interface AlbumBuilderCartProps {
+  scopeName?: string;
+}
+
+export function AlbumBuilderCart({ scopeName }: AlbumBuilderCartProps = {}) {
   const { selectedTracks, removeTrack, clearAlbum, albumPrice } = useAlbumBuilder();
   const { user } = useAuth();
   const { formatAmount } = useCurrency();
@@ -91,7 +95,7 @@ export function AlbumBuilderCart() {
         <CardContent>
           <div className="text-center py-8 text-muted-foreground">
             <Music className="h-12 w-12 mx-auto mb-4 opacity-50" />
-            <p>Select 10 tracks from the community music to build your album</p>
+             <p>Select 10 tracks{scopeName ? ` from ${scopeName}` : ''} to build your album</p>
             <p className="text-sm mt-2">{formatAmount(albumPrice)} total</p>
           </div>
         </CardContent>
@@ -105,7 +109,7 @@ export function AlbumBuilderCart() {
         <CardTitle className="flex items-center justify-between">
           <span className="flex items-center gap-2">
             <Music className="h-5 w-5" />
-            Your Album
+             Your Album
           </span>
           <Badge variant="secondary">
             {selectedTracks.length}/10 tracks
@@ -147,7 +151,7 @@ export function AlbumBuilderCart() {
           </div>
 
           <div className="text-xs text-muted-foreground space-y-1">
-            <p>• 85% to artists</p>
+            <p>• 85% to sowers</p>
             <p>• 10% platform fee</p>
             <p>• 5% admin fee</p>
           </div>
