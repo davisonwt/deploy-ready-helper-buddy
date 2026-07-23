@@ -5,6 +5,7 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 import { corsHeaders } from "npm:@supabase/supabase-js@2/cors";
 import { paypalFetch } from "../_shared/paypal/client.ts";
+import { computeBuyerFee } from "../_shared/paypal/fees.ts";
 
 const NOWPAYMENTS_API = "https://api.nowpayments.io/v1";
 
@@ -49,11 +50,11 @@ Deno.serve(async (req) => {
     const service = createClient(supabaseUrl, serviceRoleKey, { auth: { persistSession: false } });
 
     // Fee estimate so the row stores what was shown to the user.
-    const feePct = payload.provider === "nowpayments"
-      ? Number(Deno.env.get("NOWPAYMENTS_FEE_PCT") ?? "0.01")
-      : Number(Deno.env.get("PAYPAL_FEE_PCT") ?? "0.06");
-    const fee = ceil2(base * (Number.isFinite(feePct) ? feePct : 0.01));
-    const buyerTotal = round2(base + fee);
+    // Buyer pays the processor fee — Sow2Grow golden rule.
+    const quote = computeBuyerFee(payload.provider, base);
+    const feePct = quote.feePct;
+    const fee = quote.fee;
+    const buyerTotal = quote.total;
 
     // 1. Create topups row
     const { data: topup, error: topupErr } = await service
@@ -122,9 +123,23 @@ Deno.serve(async (req) => {
         description: "Sow2Grow wallet top-up",
         amount: { currency_code: "USD", value: buyerTotal.toFixed(2) },
       }],
+      payment_source: {
+        paypal: {
+          experience_context: {
+            brand_name: "Sow2Grow",
+            user_action: "PAY_NOW",
+            shipping_preference: "NO_SHIPPING",
+            landing_page: "LOGIN",
+            payment_method_preference: "IMMEDIATE_PAYMENT_REQUIRED",
+            return_url: `${redirectBase}/wallet?topup=success`,
+            cancel_url: `${redirectBase}/wallet?topup=cancelled`,
+          },
+        },
+      },
       application_context: {
         brand_name: "Sow2Grow",
         user_action: "PAY_NOW",
+        shipping_preference: "NO_SHIPPING",
         return_url: `${redirectBase}/wallet?topup=success`,
         cancel_url: `${redirectBase}/wallet?topup=cancelled`,
       },

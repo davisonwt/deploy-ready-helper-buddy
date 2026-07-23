@@ -6,6 +6,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 import { corsHeaders } from "npm:@supabase/supabase-js@2/cors";
 import { buildDistributionData } from "../_shared/distribution.ts";
 import { paypalFetch } from "../_shared/paypal/client.ts";
+import { computeBuyerFee } from "../_shared/paypal/fees.ts";
 import { resolveSowerPayout } from "../_shared/resolveSowerPayout.ts";
 
 interface RequestPayload {
@@ -91,10 +92,13 @@ Deno.serve(async (req) => {
     }
     const baseAmount = round2(pocketPrice * payload.pocketsCount);
 
-    // --- Processor fee on top (paid by buyer) --------------------------------
-    const feePct = Number(Deno.env.get("PAYPAL_FEE_PCT") ?? "0.01");
-    const processorFee = ceil2(baseAmount * (Number.isFinite(feePct) ? feePct : 0.01));
-    const buyerTotal = round2(baseAmount + processorFee);
+    // --- Processor fee on top (paid by BUYER — Sow2Grow golden rule) ---------
+    // PayPal 3.49% + $0.49 (cards or PayPal balance) is added on top of the
+    // base amount so the sower always receives 100% of base minus S2G's share.
+    const quote = computeBuyerFee("paypal", baseAmount);
+    const processorFee = quote.fee;
+    const feePct = quote.feePct;
+    const buyerTotal = quote.total;
 
     // --- Resolve sower's preferred payout wallet (shared deterministic resolver) ---
     // The buyer paid via PayPal, but the sower's payout rail is whichever they
@@ -178,9 +182,25 @@ Deno.serve(async (req) => {
           },
         },
       ],
+      // Explicitly allow both PayPal balance and unbranded card (debit/credit)
+      // so bestowers without a PayPal account can still pay.
+      payment_source: {
+        paypal: {
+          experience_context: {
+            brand_name: "Sow2Grow",
+            user_action: "PAY_NOW",
+            shipping_preference: "NO_SHIPPING",
+            landing_page: "LOGIN",
+            payment_method_preference: "IMMEDIATE_PAYMENT_REQUIRED",
+            return_url: `${redirectBase}/bestowals/${bestowal.id}?status=success`,
+            cancel_url: `${redirectBase}/bestowals/${bestowal.id}?status=cancelled`,
+          },
+        },
+      },
       application_context: {
         brand_name: "Sow2Grow",
         user_action: "PAY_NOW",
+        shipping_preference: "NO_SHIPPING",
         return_url: `${redirectBase}/bestowals/${bestowal.id}?status=success`,
         cancel_url: `${redirectBase}/bestowals/${bestowal.id}?status=cancelled`,
       },

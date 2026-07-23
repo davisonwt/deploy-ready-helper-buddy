@@ -12,6 +12,7 @@ import { createClient, type SupabaseClient } from "https://esm.sh/@supabase/supa
 import { corsHeaders } from "npm:@supabase/supabase-js@2/cors";
 import { resolveSowerPayout } from "../_shared/resolveSowerPayout.ts";
 import { paypalFetch } from "../_shared/paypal/client.ts";
+import { computeBuyerFee } from "../_shared/paypal/fees.ts";
 
 const NOWPAYMENTS_API = "https://api.nowpayments.io/v1";
 
@@ -77,12 +78,12 @@ Deno.serve(async (req) => {
       return json({ error: "content_not_purchasable" }, 400);
     }
 
-    // --- Pricing -------------------------------------------------------------
+    // --- Pricing (buyer pays processor fee — Sow2Grow golden rule) ----------
     const baseAmount = round2(basePrice);
-    const feeEnv = payload.provider === "paypal" ? "PAYPAL_FEE_PCT" : "NOWPAYMENTS_FEE_PCT";
-    const feePct = Number(Deno.env.get(feeEnv) ?? "0.01");
-    const processorFee = ceil2(baseAmount * (Number.isFinite(feePct) ? feePct : 0.01));
-    const buyerTotal = round2(baseAmount + processorFee);
+    const quote = computeBuyerFee(payload.provider, baseAmount);
+    const feePct = quote.feePct;
+    const processorFee = quote.fee;
+    const buyerTotal = quote.total;
 
     // --- Resolve seller payout wallet ----------------------------------------
     const wallet = await resolveSowerPayout(service, sellerId);
@@ -179,9 +180,23 @@ Deno.serve(async (req) => {
           description,
           amount: { currency_code: "USD", value: buyerTotal.toFixed(2) },
         }],
+        payment_source: {
+          paypal: {
+            experience_context: {
+              brand_name: "Sow2Grow",
+              user_action: "PAY_NOW",
+              shipping_preference: "NO_SHIPPING",
+              landing_page: "LOGIN",
+              payment_method_preference: "IMMEDIATE_PAYMENT_REQUIRED",
+              return_url: `${redirectBase}/payment-success?purchase=${purchase.id}`,
+              cancel_url: `${redirectBase}/payment-cancelled?purchase=${purchase.id}`,
+            },
+          },
+        },
         application_context: {
           brand_name: "Sow2Grow",
           user_action: "PAY_NOW",
+          shipping_preference: "NO_SHIPPING",
           return_url: `${redirectBase}/payment-success?purchase=${purchase.id}`,
           cancel_url: `${redirectBase}/payment-cancelled?purchase=${purchase.id}`,
         },

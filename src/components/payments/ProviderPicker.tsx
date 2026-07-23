@@ -34,9 +34,12 @@ export default function ProviderPicker({
       {PAYOUT_PROVIDERS.map((p) => {
         const fee = quoteFee(p.id, amount, currencySymbol);
         const selected = value === p.id;
+        const pctLabel = p.feePct[0] === p.feePct[1]
+          ? `${p.feePct[0]}%${p.feeFixed ? ` + ${currencySymbol}${p.feeFixed.toFixed(2)}` : ''}`
+          : `${p.feePct[0]}–${p.feePct[1]}%`;
         const feeLine =
           mode === 'buyer'
-            ? `Estimated processor fee: ${fee.display} (≈ ${p.feePct[0]}–${p.feePct[1]}%) — comes out of the total.`
+            ? `Processor fee: ${fee.display} (${pctLabel}) — added to your total. The sower receives the full amount.`
             : `${p.note}`;
         return (
           <button

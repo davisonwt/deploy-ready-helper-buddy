@@ -18,28 +18,37 @@ export interface PayoutProviderInfo {
   label: string;
   /** Percent fee range [min, max], inclusive. */
   feePct: [number, number];
+  /** Flat fee added on top (buyer mode). */
+  feeFixed: number;
   /** Short note shown under the label. */
   note: string;
   /** Long-form explainer for the onboarding/settings page. */
   explainer: string;
 }
 
+/**
+ * GOLDEN RULE: the bestower (buyer) always carries the processor fee.
+ * Sowers receive the full base amount (minus S2G's 15% share). These figures
+ * are what the buyer sees in the picker before confirming.
+ */
 export const PAYOUT_PROVIDERS: PayoutProviderInfo[] = [
   {
     id: 'nowpayments',
-    label: 'NOWPayments (crypto, USDC on Solana)',
+    label: 'Crypto (USDC on Solana)',
     feePct: [0.4, 1.0],
-    note: '≈ 0.4% – 1% per payout. You pay this, not Sow2Grow.',
+    feeFixed: 0,
+    note: '≈ 0.4% – 1% added to your total. The sower receives the full amount.',
     explainer:
-      'NOWPayments is the cheapest option. USDC on Solana is the only payout rail currently funded by Sow2Grow, so we recommend choosing it. Other networks may fail at payout time until they are funded.',
+      'Cheapest option. USDC on Solana settles in seconds. The fee is added to your payment so the sower is never short-changed.',
   },
   {
     id: 'paypal',
-    label: 'PayPal',
-    feePct: [5.7, 8.0],
-    note: '≈ 5.7% – 8% per payout. You pay this, not Sow2Grow.',
+    label: 'PayPal — debit / credit card or PayPal balance',
+    feePct: [3.49, 3.49],
+    feeFixed: 0.49,
+    note: 'PayPal fee (3.49% + $0.49) is added to your total. The sower receives the full amount.',
     explainer:
-      'PayPal is simpler if you already have an account, but the fee is much higher. Sow2Grow does not absorb it — it comes out of what you receive.',
+      'Pay with any Visa, Mastercard, Amex, or Discover card — no PayPal account required — or with your PayPal balance. PayPal charges 3.49% + $0.49 per transaction, and Sow2Grow adds it to your total so the sower always receives 100% of the base amount they set.',
   },
 ];
 
@@ -59,8 +68,8 @@ export function quoteFee(
   if (!info || !Number.isFinite(amount) || amount <= 0) {
     return { minFee: 0, maxFee: 0, display: `${currencySymbol}0.00` };
   }
-  const minFee = (amount * info.feePct[0]) / 100;
-  const maxFee = (amount * info.feePct[1]) / 100;
+  const minFee = (amount * info.feePct[0]) / 100 + info.feeFixed;
+  const maxFee = (amount * info.feePct[1]) / 100 + info.feeFixed;
   const fmt = (n: number) => `${currencySymbol}${n.toFixed(2)}`;
   return {
     minFee,

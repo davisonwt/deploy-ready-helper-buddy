@@ -11,6 +11,7 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 import { corsHeaders } from "npm:@supabase/supabase-js@2/cors";
 import { paypalFetch } from "../_shared/paypal/client.ts";
+import { computeBuyerFee } from "../_shared/paypal/fees.ts";
 
 const NOWPAYMENTS_API = "https://api.nowpayments.io/v1";
 
@@ -127,11 +128,11 @@ Deno.serve(async (req) => {
       });
     }
 
-    // --- Processor fee on top (paid by buyer) --------------------------------
-    const feeEnvKey = payload.provider === "nowpayments" ? "NOWPAYMENTS_FEE_PCT" : "PAYPAL_FEE_PCT";
-    const feePct = Number(Deno.env.get(feeEnvKey) ?? "0.01");
-    const processorFee = ceil2(subtotal * (Number.isFinite(feePct) ? feePct : 0.01));
-    const buyerTotal = round2(subtotal + processorFee);
+    // --- Processor fee on top (paid by BUYER — Sow2Grow golden rule) ---------
+    const quote = computeBuyerFee(payload.provider, subtotal);
+    const feePct = quote.feePct;
+    const processorFee = quote.fee;
+    const buyerTotal = quote.total;
 
     // --- Insert basket_orders row (snapshot before calling processor) --------
     const { data: order, error: insertError } = await service
@@ -225,6 +226,18 @@ Deno.serve(async (req) => {
           amount: { currency_code: "USD", value: buyerTotal.toFixed(2) },
         },
       ],
+      payment_source: {
+        paypal: {
+          experience_context: {
+            brand_name: "Sow2Grow",
+            user_action: "PAY_NOW",
+            landing_page: "LOGIN",
+            payment_method_preference: "IMMEDIATE_PAYMENT_REQUIRED",
+            return_url: `${redirectBase}/payment-success?basket=${order.id}`,
+            cancel_url: `${redirectBase}/payment-cancelled?basket=${order.id}`,
+          },
+        },
+      },
       application_context: {
         brand_name: "Sow2Grow",
         user_action: "PAY_NOW",
