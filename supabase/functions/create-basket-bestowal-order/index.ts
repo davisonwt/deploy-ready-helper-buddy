@@ -226,6 +226,18 @@ Deno.serve(async (req) => {
           amount: { currency_code: "USD", value: buyerTotal.toFixed(2) },
         },
       ],
+      payment_source: {
+        paypal: {
+          experience_context: {
+            brand_name: "Sow2Grow",
+            user_action: "PAY_NOW",
+            landing_page: "LOGIN",
+            payment_method_preference: "IMMEDIATE_PAYMENT_REQUIRED",
+            return_url: `${redirectBase}/payment-success?basket=${order.id}`,
+            cancel_url: `${redirectBase}/payment-cancelled?basket=${order.id}`,
+          },
+        },
+      },
       application_context: {
         brand_name: "Sow2Grow",
         user_action: "PAY_NOW",
