@@ -60,7 +60,8 @@ const displayProfileName = (profile: any) =>
   profile?.username ||
   null;
 
-const cleanName = (name: string | null | undefined) => name?.trim() || 'Sower';
+const cleanName = (name: string | null | undefined) =>
+  (name?.replace(/^\s*(lyricist|lyrist)\s*:\s*/i, '').trim()) || 'Sower';
 
 export default function MusicLibraryPage() {
   const { user } = useAuth();
