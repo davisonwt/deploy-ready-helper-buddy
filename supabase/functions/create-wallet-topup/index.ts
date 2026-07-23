@@ -123,9 +123,23 @@ Deno.serve(async (req) => {
         description: "Sow2Grow wallet top-up",
         amount: { currency_code: "USD", value: buyerTotal.toFixed(2) },
       }],
+      payment_source: {
+        paypal: {
+          experience_context: {
+            brand_name: "Sow2Grow",
+            user_action: "PAY_NOW",
+            shipping_preference: "NO_SHIPPING",
+            landing_page: "LOGIN",
+            payment_method_preference: "IMMEDIATE_PAYMENT_REQUIRED",
+            return_url: `${redirectBase}/wallet?topup=success`,
+            cancel_url: `${redirectBase}/wallet?topup=cancelled`,
+          },
+        },
+      },
       application_context: {
         brand_name: "Sow2Grow",
         user_action: "PAY_NOW",
+        shipping_preference: "NO_SHIPPING",
         return_url: `${redirectBase}/wallet?topup=success`,
         cancel_url: `${redirectBase}/wallet?topup=cancelled`,
       },
