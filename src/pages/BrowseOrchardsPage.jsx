@@ -65,6 +65,13 @@ const safeList = (result, label) => {
   return result?.data || []
 }
 
+const musicLibraryLink = (trackId, djId, productId) => {
+  const params = new URLSearchParams({ tab: 'community', trackId })
+  if (djId) params.set('djId', djId)
+  if (productId) params.set('productId', productId)
+  return `/music-library?${params.toString()}`
+}
+
 const PRIVATE_COVER_BUCKETS = new Set(['premium-room', 'music-tracks', 'dj-music'])
 
 const extractCoverObject = (url) => {
@@ -402,7 +409,7 @@ export default function BrowseOrchardsPage() {
             .select('id, track_title, artist_name, music_genre, genre, cover_image_url, file_url, dj_id, upload_date, created_at')
             .eq('is_public', true)
             .order('upload_date', { ascending: false })
-            .limit(60),
+            .limit(200),
           supabase.from('sower_books')
             .select('id, title, cover_image_url, image_urls, user_id, sower_id, created_at')
             .eq('is_available', true)
@@ -460,6 +467,14 @@ export default function BrowseOrchardsPage() {
           const key = normalizeSongTitle(m.track_title)
           if (key && m.cover_image_url) musicCoverByTitle.set(key, m.cover_image_url)
         })
+        const findMatchingMusicTrack = (product) => {
+          const key = normalizeSongTitle(product.title)
+          if (!key) return null
+          const sowerUserId = sowerMap.get(product.sower_id)?.user_id
+          const matches = musicRows.filter((m) => normalizeSongTitle(m.track_title) === key)
+          if (!matches.length) return null
+          return matches.find((m) => djMap.get(m.dj_id)?.user_id === sowerUserId) || matches[0]
+        }
         const seedsFromTable = seedsRows.map(s => ({
           id: `seed-${s.id}`, title: s.title, image: firstImage(s.images), emoji: '🌱',
           sower: sowerName(profileMap.get(s.gifter_id)), link: '/orchard-alive', created_at: s.created_at,
@@ -468,10 +483,15 @@ export default function BrowseOrchardsPage() {
           id: `orch-${o.id}`, title: o.title, image: firstImage(o.images), emoji: '🌳',
           sower: sowerName(profileMap.get(o.user_id) || profileMap.get(o.profile_id)), link: `/orchard/${o.id}`, created_at: o.created_at,
         }))
-        const musicFromProducts = productRows.filter(p => p.type === 'music').map(p => ({
-          id: `prod-${p.id}`, title: p.title, image: firstImage(p.image_urls, p.cover_image_url, musicCoverByTitle.get(normalizeSongTitle(p.title))), emoji: '🎵',
-          sower: p.artist_name || nameFromSower(p.sower_id), link: '/music-library', created_at: p.created_at,
-        }))
+        const musicFromProducts = productRows.filter(p => p.type === 'music').map(p => {
+          const matchedTrack = findMatchingMusicTrack(p)
+          return {
+            id: `prod-${p.id}`, title: p.title, image: firstImage(p.image_urls, p.cover_image_url, matchedTrack?.cover_image_url, musicCoverByTitle.get(normalizeSongTitle(p.title))), emoji: '🎵',
+            sower: p.artist_name || nameFromSower(p.sower_id),
+            link: matchedTrack ? musicLibraryLink(matchedTrack.id, matchedTrack.dj_id, p.id) : '/music-library?tab=community',
+            created_at: p.created_at,
+          }
+        })
         const booksFromProducts = productRows.filter(p => p.type === 'ebook' || p.type === 'book').map(p => ({
           id: `prod-${p.id}`, title: p.title, image: firstImage(p.image_urls, p.cover_image_url), emoji: '📚',
           sower: nameFromSower(p.sower_id), link: '/my-s2g-library', created_at: p.created_at,
@@ -483,7 +503,7 @@ export default function BrowseOrchardsPage() {
         const musicItems = [
           ...musicRows.map(m => ({
             id: m.id, title: m.track_title, image: m.cover_image_url || null, emoji: '🎵',
-            sower: m.artist_name || djMap.get(m.dj_id)?.dj_name || 'Tribe Music', link: `/music-track/${m.id}`, created_at: m.upload_date || m.created_at,
+            sower: m.artist_name || djMap.get(m.dj_id)?.dj_name || 'Tribe Music', link: musicLibraryLink(m.id, m.dj_id), created_at: m.upload_date || m.created_at,
           })),
           ...musicFromProducts,
         ]
