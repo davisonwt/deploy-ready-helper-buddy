@@ -4,8 +4,49 @@ import { useQuery } from '@tanstack/react-query';
 import { motion } from 'framer-motion';
 import { toast } from 'sonner';
 import {
-  ArrowLeft, ChevronDown, Home, Loader2, Package, BookOpen, Users, ShoppingBasket,
+  ArrowLeft, ChevronDown, ChevronLeft, ChevronRight, Home, Loader2, Package, BookOpen, Users, ShoppingBasket,
 } from 'lucide-react';
+
+function CoverGallery({ images, title }: { images: string[]; title: string }) {
+  const [idx, setIdx] = useState(0);
+  if (images.length === 0) return null;
+  const safeIdx = ((idx % images.length) + images.length) % images.length;
+  const prev = (e: React.MouseEvent) => { e.stopPropagation(); setIdx((i) => i - 1); };
+  const next = (e: React.MouseEvent) => { e.stopPropagation(); setIdx((i) => i + 1); };
+  return (
+    <div className="relative w-full h-full group">
+      <img src={images[safeIdx]} alt={title} className="w-full h-full object-cover" />
+      {images.length > 1 && (
+        <>
+          <button
+            type="button"
+            aria-label="Previous image"
+            onClick={prev}
+            className="absolute left-1 top-1/2 -translate-y-1/2 h-8 w-8 rounded-full bg-background/70 hover:bg-background text-foreground flex items-center justify-center shadow border border-border/50 opacity-90"
+          >
+            <ChevronLeft className="h-4 w-4" />
+          </button>
+          <button
+            type="button"
+            aria-label="Next image"
+            onClick={next}
+            className="absolute right-1 top-1/2 -translate-y-1/2 h-8 w-8 rounded-full bg-background/70 hover:bg-background text-foreground flex items-center justify-center shadow border border-border/50 opacity-90"
+          >
+            <ChevronRight className="h-4 w-4" />
+          </button>
+          <div className="absolute bottom-1 left-1/2 -translate-x-1/2 flex gap-1">
+            {images.map((_, i) => (
+              <span
+                key={i}
+                className={`h-1.5 w-1.5 rounded-full ${i === safeIdx ? 'bg-primary' : 'bg-background/60'}`}
+              />
+            ))}
+          </div>
+        </>
+      )}
+    </div>
+  );
+}
 
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -268,12 +309,18 @@ export default function SowerLibraryPage() {
                       id={`sower-item-${r.id}`}
                       className={`rounded-xl border p-3 space-y-3 bg-card/40 backdrop-blur-sm transition ${isHighlighted ? 'border-primary ring-2 ring-primary/60' : 'border-border/40'}`}
                     >
-                      <div className="aspect-square w-full overflow-hidden rounded-lg bg-muted">
-                        {r.cover_image_url ? (
-                          <img src={r.cover_image_url} alt={r.title} className="w-full h-full object-cover" />
-                        ) : (
-                          <GradientPlaceholder type={'product' as any} title={r.title} className="w-full h-full" />
-                        )}
+                      <div className="relative aspect-square w-full overflow-hidden rounded-lg bg-muted">
+                        {(() => {
+                          const gallery = Array.from(new Set([
+                            ...(r.cover_image_url ? [r.cover_image_url] : []),
+                            ...(r.images || []),
+                          ].filter(Boolean)));
+                          return gallery.length > 0 ? (
+                            <CoverGallery images={gallery} title={r.title} />
+                          ) : (
+                            <GradientPlaceholder type={'product' as any} title={r.title} className="w-full h-full" />
+                          );
+                        })()}
                       </div>
                       <div className="space-y-1">
                         <h3 className="font-semibold text-foreground line-clamp-2">{r.title}</h3>
