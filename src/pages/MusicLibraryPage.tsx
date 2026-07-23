@@ -1,4 +1,5 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { motion } from 'framer-motion';
@@ -19,10 +20,21 @@ export default function MusicLibraryPage() {
   const { user } = useAuth();
   const albumBuilder = useAlbumBuilder();
   const livePlaylist = useLiveSessionPlaylist();
-  const [activeTab, setActiveTab] = useState('my-music');
+  const [searchParams] = useSearchParams();
+  const selectedTrackId = searchParams.get('trackId');
+  const selectedDjId = searchParams.get('djId');
+  const selectedProductId = searchParams.get('productId');
+  const requestedTab = searchParams.get('tab');
+  const [activeTab, setActiveTab] = useState(requestedTab === 'community' ? 'community' : 'my-music');
   const [activeRole, setActiveRole] = useState<WanderingRole | null>(null);
   const [categoryId, setCategoryId] = useState<string | null>(null);
   const [tagIds, setTagIds] = useState<string[]>([]);
+
+  useEffect(() => {
+    if (requestedTab === 'community' || requestedTab === 'my-music') {
+      setActiveTab(requestedTab);
+    }
+  }, [requestedTab]);
 
   const handleAlbumTrackSelect = (track: any) => {
     if (albumBuilder.isTrackSelected(track.id)) {
@@ -84,6 +96,7 @@ export default function MusicLibraryPage() {
       
       return (tracks || []).map(track => ({
         ...track,
+        sower_user_id: user.id,
         profiles: profile || { username: null, avatar_url: null }
       }));
     },
@@ -92,7 +105,7 @@ export default function MusicLibraryPage() {
 
   // Fetch all public community music - ALL tracks from ALL users
   const { data: communityMusic = [], isLoading: loadingCommunity } = useQuery({
-    queryKey: ['community-music', activeRole, categoryId, tagIds],
+    queryKey: ['community-music', activeRole, categoryId, tagIds, selectedDjId],
     queryFn: async () => {
       console.log('🎵 Fetching community music...');
       
@@ -120,6 +133,10 @@ export default function MusicLibraryPage() {
 
       if (activeRole) {
         filteredTracks = filteredTracks.filter((track) => track.wandering_role === activeRole);
+      }
+
+      if (selectedDjId) {
+        filteredTracks = filteredTracks.filter((track) => track.dj_id === selectedDjId);
       }
 
       if (categoryId) {
@@ -208,6 +225,7 @@ export default function MusicLibraryPage() {
         const profile = userId ? profileMap.get(userId) : null;
         return {
           ...track,
+          sower_user_id: userId || null,
           profiles: profile || { username: null, avatar_url: null }
         };
       });
@@ -222,6 +240,11 @@ export default function MusicLibraryPage() {
     if (!activeRole) return myMusic;
     return myMusic.filter((track: any) => track.wandering_role === activeRole);
   }, [activeRole, myMusic]);
+
+  const selectedSowerName = useMemo(() => {
+    const selected = communityMusic.find((track: any) => track.id === selectedTrackId) || communityMusic[0];
+    return selected?.artist_name || selected?.profiles?.username || null;
+  }, [communityMusic, selectedTrackId]);
 
   return (
     <div className='min-h-screen relative overflow-hidden'>
@@ -278,7 +301,7 @@ export default function MusicLibraryPage() {
                 </h1>
               </div>
               <p className='text-white/90 text-xl backdrop-blur-sm bg-white/10 rounded-lg p-4 border border-white/20'>
-                Browse and bestow on music tracks. Preview 30 seconds or download after bestowal. Build albums and create playlists.
+                Browse and bestow on music tracks. Preview 40 seconds or download after bestowal. Build albums and create playlists.
               </p>
             </motion.div>
           </div>
@@ -334,6 +357,8 @@ export default function MusicLibraryPage() {
                     tracks={filteredMyMusic} 
                     showBestowalButton={false}
                     showEditButton={true}
+                    highlightedTrackId={selectedTrackId || undefined}
+                    highlightedProductId={selectedProductId || undefined}
                   />
                 )}
               </CardContent>
@@ -347,10 +372,10 @@ export default function MusicLibraryPage() {
                   <CardHeader>
                     <CardTitle className='flex items-center gap-2 text-white'>
                       <Users className='h-5 w-5' />
-                      S2G Community Music Library
+                      {selectedDjId && selectedSowerName ? `${selectedSowerName}'s S2G Music Library` : 'S2G Community Music Library'}
                     </CardTitle>
                     <p className='text-sm text-white/80'>
-                      Select 10 tracks to build your custom album for $20
+                      {selectedDjId ? 'The song opened from Tribal Gardens is highlighted below.' : 'Select 10 tracks to build your custom album for $20'}
                     </p>
                   </CardHeader>
                   <CardContent>
@@ -365,6 +390,8 @@ export default function MusicLibraryPage() {
                         allowSelection={true}
                         onTrackSelect={handleAlbumTrackSelect}
                         selectedTracks={albumBuilder.selectedTracks.map(t => t.id)}
+                        highlightedTrackId={selectedTrackId || undefined}
+                        highlightedProductId={selectedProductId || undefined}
                       />
                     )}
                   </CardContent>
