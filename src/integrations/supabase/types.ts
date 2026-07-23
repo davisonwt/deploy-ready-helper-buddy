@@ -5466,6 +5466,38 @@ export type Database = {
           },
         ]
       }
+      orchard_payouts: {
+        Row: {
+          created_at: string
+          orchard_id: string
+          recipient_pubkey: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          orchard_id: string
+          recipient_pubkey?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          orchard_id?: string
+          recipient_pubkey?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "orchard_payouts_orchard_id_fkey"
+            columns: ["orchard_id"]
+            isOneToOne: true
+            referencedRelation: "orchards"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       orchards: {
         Row: {
           allow_commission_marketing: boolean | null
@@ -5495,7 +5527,6 @@ export type Database = {
           pocket_price: number
           product_type: string | null
           profile_id: string
-          recipient_pubkey: string | null
           seed_value: number
           status: Database["public"]["Enums"]["orchard_status"]
           supporters: number
@@ -5539,7 +5570,6 @@ export type Database = {
           pocket_price?: number
           product_type?: string | null
           profile_id: string
-          recipient_pubkey?: string | null
           seed_value: number
           status?: Database["public"]["Enums"]["orchard_status"]
           supporters?: number
@@ -5583,7 +5613,6 @@ export type Database = {
           pocket_price?: number
           product_type?: string | null
           profile_id?: string
-          recipient_pubkey?: string | null
           seed_value?: number
           status?: Database["public"]["Enums"]["orchard_status"]
           supporters?: number
