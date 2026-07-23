@@ -92,10 +92,11 @@ Deno.serve(async (req) => {
 
     // --- Pricing -------------------------------------------------------------
     const baseAmount = round2(payload.amount);
-    const feeEnv = payload.provider === "paypal" ? "PAYPAL_FEE_PCT" : "NOWPAYMENTS_FEE_PCT";
-    const feePct = Number(Deno.env.get(feeEnv) ?? "0.01");
-    const processorFee = ceil2(baseAmount * (Number.isFinite(feePct) ? feePct : 0.01));
-    const buyerTotal = round2(baseAmount + processorFee);
+    // Buyer pays the processor fee — Sow2Grow golden rule.
+    const quote = computeBuyerFee(payload.provider, baseAmount);
+    const feePct = quote.feePct;
+    const processorFee = quote.fee;
+    const buyerTotal = quote.total;
     const currency = "USDC";
 
     // --- Resolve recipient payout wallet -------------------------------------
