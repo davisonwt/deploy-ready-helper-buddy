@@ -6,6 +6,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 import { corsHeaders } from "npm:@supabase/supabase-js@2/cors";
 import { buildDistributionData } from "../_shared/distribution.ts";
 import { paypalFetch } from "../_shared/paypal/client.ts";
+import { computeBuyerFee } from "../_shared/paypal/fees.ts";
 import { resolveSowerPayout } from "../_shared/resolveSowerPayout.ts";
 
 interface RequestPayload {
