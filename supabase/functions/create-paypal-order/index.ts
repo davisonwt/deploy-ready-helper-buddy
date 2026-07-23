@@ -92,10 +92,13 @@ Deno.serve(async (req) => {
     }
     const baseAmount = round2(pocketPrice * payload.pocketsCount);
 
-    // --- Processor fee on top (paid by buyer) --------------------------------
-    const feePct = Number(Deno.env.get("PAYPAL_FEE_PCT") ?? "0.01");
-    const processorFee = ceil2(baseAmount * (Number.isFinite(feePct) ? feePct : 0.01));
-    const buyerTotal = round2(baseAmount + processorFee);
+    // --- Processor fee on top (paid by BUYER — Sow2Grow golden rule) ---------
+    // PayPal 3.49% + $0.49 (cards or PayPal balance) is added on top of the
+    // base amount so the sower always receives 100% of base minus S2G's share.
+    const quote = computeBuyerFee("paypal", baseAmount);
+    const processorFee = quote.fee;
+    const feePct = quote.feePct;
+    const buyerTotal = quote.total;
 
     // --- Resolve sower's preferred payout wallet (shared deterministic resolver) ---
     // The buyer paid via PayPal, but the sower's payout rail is whichever they
