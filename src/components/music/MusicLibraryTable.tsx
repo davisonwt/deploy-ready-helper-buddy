@@ -425,7 +425,8 @@ export function MusicLibraryTable({
                       {track.track_title}
                     </p>
                     <p className="text-sm text-white/70 truncate">
-                      lyrist: {track.artist_name || track.profiles?.username || 'Unknown Artist'}
+                      {(track.artist_name || track.profiles?.username || 'Unknown Artist')
+                        .replace(/^\s*(lyricist|lyrist)\s*:\s*/i, '')}
                     </p>
                   </div>
                 </div>
