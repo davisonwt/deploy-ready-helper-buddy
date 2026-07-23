@@ -293,22 +293,22 @@ export default function MusicLibraryPage() {
 
       <div className="relative z-10 container mx-auto px-4 py-6 space-y-6">
         <div className="flex flex-wrap items-center gap-3">
-          <Button variant="outline" onClick={() => navigate(-1)} className="gap-2 bg-card/20 border-border/40 text-primary-foreground hover:bg-card/30">
+          <Button variant="outline" onClick={() => navigate(-1)} className="gap-2 bg-card/20 border-border/40 text-foreground hover:bg-card/30">
             <ArrowLeft className="h-4 w-4" />
             Return
           </Button>
-          <Button variant="outline" onClick={() => navigate('/dashboard')} className="gap-2 bg-card/20 border-border/40 text-primary-foreground hover:bg-card/30">
+          <Button variant="outline" onClick={() => navigate('/dashboard')} className="gap-2 bg-card/20 border-border/40 text-foreground hover:bg-card/30">
             <Home className="h-4 w-4" />
             Home
           </Button>
-          <Button variant="outline" onClick={goToAllSowersMusic} className="gap-2 bg-card/20 border-border/40 text-primary-foreground hover:bg-card/30">
+          <Button variant="outline" onClick={goToAllSowersMusic} className="gap-2 bg-card/20 border-border/40 text-foreground hover:bg-card/30">
             <Users className="h-4 w-4" />
             All Sowers Music
           </Button>
 
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="outline" className="gap-2 bg-card/20 border-border/40 text-primary-foreground hover:bg-card/30">
+              <Button variant="outline" className="gap-2 bg-card/20 border-border/40 text-foreground hover:bg-card/30">
                 <Music className="h-4 w-4" />
                 Sowers
                 <ChevronDown className="h-4 w-4" />
@@ -336,7 +336,7 @@ export default function MusicLibraryPage() {
           </DropdownMenu>
 
           {user && (
-            <Button variant="outline" onClick={() => { setActiveMode('my-music'); navigate('/music-library'); }} className="gap-2 bg-card/20 border-border/40 text-primary-foreground hover:bg-card/30">
+            <Button variant="outline" onClick={() => { setActiveMode('my-music'); navigate('/music-library'); }} className="gap-2 bg-card/20 border-border/40 text-foreground hover:bg-card/30">
               <Disc3 className="h-4 w-4" />
               My Music Uploads
             </Button>
@@ -348,13 +348,13 @@ export default function MusicLibraryPage() {
             <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} className="text-center max-w-5xl mx-auto">
               <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-6">
                 <div className="p-4 rounded-2xl bg-card/20 backdrop-blur-md border border-border/40">
-                  <Music className="w-14 h-14 text-primary-foreground" />
+                  <Music className="w-14 h-14 text-foreground" />
                 </div>
-                <h1 className="text-4xl md:text-6xl font-bold text-primary-foreground">
+                <h1 className="text-4xl md:text-6xl font-bold text-foreground">
                   {heroTitle}
                 </h1>
               </div>
-              <p className="text-primary-foreground/90 text-lg md:text-xl backdrop-blur-sm bg-card/15 rounded-lg p-4 border border-border/30">
+              <p className="text-foreground/90 text-lg md:text-xl backdrop-blur-sm bg-card/15 rounded-lg p-4 border border-border/30">
                 Preview songs, bestow on a single song, or choose exactly 10 songs for a custom album.
               </p>
             </motion.div>
@@ -365,11 +365,11 @@ export default function MusicLibraryPage() {
           <div className="lg:col-span-2">
             <Card className="backdrop-blur-md bg-card/20 border-border/30 shadow-2xl">
               <CardHeader>
-                <CardTitle className="flex items-center gap-2 text-primary-foreground">
+                <CardTitle className="flex items-center gap-2 text-foreground">
                   <Music className="h-5 w-5" />
                   {activeMode === 'my-music' ? 'My music uploads' : listTitle}
                 </CardTitle>
-                <p className="text-sm text-primary-foreground/80">
+                <p className="text-sm text-foreground/80">
                   {selectedSowerUserId
                     ? 'This page only shows this sower’s music. The opened song is highlighted when available.'
                     : activeMode === 'community'
@@ -382,7 +382,7 @@ export default function MusicLibraryPage() {
               <CardContent>
                 {loading ? (
                   <div className="flex items-center justify-center py-12">
-                    <Loader2 className="w-8 h-8 animate-spin text-primary-foreground" />
+                    <Loader2 className="w-8 h-8 animate-spin text-foreground" />
                   </div>
                 ) : (
                   <MusicLibraryTable
