@@ -95,6 +95,7 @@ import {
   MusicTrackDetailPage,
   MyRadioOptInPage,
   MyS2GLibraryPage,
+  SowerLibraryPage,
   S2GCommunityLibraryPage,
   S2GCommunityMusicPage,
   LibraryUploadForm,
@@ -543,6 +544,9 @@ const AppRoutes = () => (
     } />
     <Route path="/products/basket" element={
       <ProtectedRoute><Layout><Suspense fallback={<LoadingFallback />}><ProductBasketPage /></Suspense></Layout></ProtectedRoute>
+    } />
+    <Route path="/sower-library/:mode" element={
+      <Layout><Suspense fallback={<LoadingFallback />}><SowerLibraryPage /></Suspense></Layout>
     } />
     <Route path="/my-s2g-library" element={
       <ProtectedRoute><Layout><Suspense fallback={<LoadingFallback />}><MyS2GLibraryPage /></Suspense></Layout></ProtectedRoute>
