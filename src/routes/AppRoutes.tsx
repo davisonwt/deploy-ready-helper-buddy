@@ -92,6 +92,7 @@ import {
   EditForm,
   ProductBasketPage,
   MusicLibraryPage,
+  MusicTrackDetailPage,
   MyRadioOptInPage,
   MyS2GLibraryPage,
   S2GCommunityLibraryPage,
@@ -382,6 +383,9 @@ const AppRoutes = () => (
     } />
     <Route path="/music-library" element={
       <Layout><Suspense fallback={<LoadingFallback />}><MusicLibraryPage /></Suspense></Layout>
+    } />
+    <Route path="/music-track/:id" element={
+      <Layout><Suspense fallback={<LoadingFallback />}><MusicTrackDetailPage /></Suspense></Layout>
     } />
     <Route path="/my-radio-opt-in" element={
       <ProtectedRoute><Layout><Suspense fallback={<LoadingFallback />}><MyRadioOptInPage /></Suspense></Layout></ProtectedRoute>
