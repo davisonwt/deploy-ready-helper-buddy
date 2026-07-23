@@ -93,7 +93,6 @@ import {
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { GradientPlaceholder } from '@/components/ui/GradientPlaceholder';
 import { useProductBasket } from '@/contexts/ProductBasketContext';
-import { supabase } from '@/integrations/supabase/client';
 
 type Mode = 'products' | 'books';
 
