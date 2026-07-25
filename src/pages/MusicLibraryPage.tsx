@@ -54,6 +54,12 @@ type SowerOption = {
   trackCount: number;
 };
 
+type CoverCandidate = {
+  url: string;
+  ownerUserId: string | null;
+  createdAt: string | null;
+};
+
 const displayProfileName = (profile: any) =>
   profile?.display_name ||
   `${profile?.first_name || ''} ${profile?.last_name || ''}`.trim() ||
@@ -62,6 +68,23 @@ const displayProfileName = (profile: any) =>
 
 const cleanName = (name: string | null | undefined) =>
   (name?.replace(/^\s*(lyricist|lyrist)\s*:\s*/i, '').trim()) || 'Sower';
+
+const normalizeMusicTitle = (title: string | null | undefined) =>
+  (title || '').toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim();
+
+const chooseLatestMusicCover = (candidates: CoverCandidate[], ownerUserId?: string | null) =>
+  candidates
+    .filter((candidate) => candidate.url && (!ownerUserId || candidate.ownerUserId === ownerUserId))
+    .sort((a, b) => new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime())[0]?.url || null;
+
+const chooseProductMusicCover = (product: any, matchingTrackCover: string | null) => {
+  if (matchingTrackCover) return matchingTrackCover;
+  if (product.cover_image_url?.startsWith('/__l5e/')) return product.cover_image_url;
+  const latestProductImage = Array.isArray(product.image_urls)
+    ? product.image_urls.find((url: string | null) => Boolean(url))
+    : null;
+  return latestProductImage || product.cover_image_url || null;
+};
 
 export default function MusicLibraryPage() {
   const { user } = useAuth();
@@ -181,9 +204,26 @@ export default function MusicLibraryPage() {
         };
       });
 
+      const trackCoverByTitle = new Map<string, CoverCandidate[]>();
+      (tracks || []).forEach((track: any) => {
+        const key = normalizeMusicTitle(track.track_title);
+        if (key && track.cover_image_url) {
+          const ownerUserId = (djToUserMap.get(track.dj_id) as string | undefined) || null;
+          const existing = trackCoverByTitle.get(key) || [];
+          trackCoverByTitle.set(key, [
+            ...existing,
+            { url: track.cover_image_url, ownerUserId, createdAt: track.updated_at || track.created_at || track.upload_date || null },
+          ]);
+        }
+      });
+
       const transformedProducts = productMusic.map((product: any) => {
         const sower = sowerMap.get(product.sower_id);
         const profile = sower?.user_id ? profileMap.get(sower.user_id) : null;
+        const matchingTrackCover = chooseLatestMusicCover(
+          trackCoverByTitle.get(normalizeMusicTitle(product.title)) || [],
+          sower?.user_id || null,
+        );
         return {
           id: product.id,
           track_title: product.title,
@@ -199,7 +239,7 @@ export default function MusicLibraryPage() {
           product_id: product.id,
           sower_id: product.sower_id,
           sower_user_id: sower?.user_id || null,
-          cover_image_url: product.cover_image_url || product.image_urls?.[0] || null,
+          cover_image_url: chooseProductMusicCover(product, matchingTrackCover),
           profiles: profile || { username: null, avatar_url: sower?.logo_url || null, display_name: sower?.display_name || null },
           source_type: 'product',
         };
