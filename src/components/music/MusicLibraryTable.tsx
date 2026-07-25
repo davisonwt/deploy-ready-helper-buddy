@@ -45,9 +45,15 @@ async function resolveAudioUrl(rawUrl: string | null): Promise<string | null> {
 
 function SignedCover({ src, alt }: { src: string; alt: string }) {
   const [resolved, setResolved] = useState<string | null>(null);
+  const [failed, setFailed] = useState(false);
   useEffect(() => {
     let alive = true;
+    setFailed(false);
     if (!src) { setResolved(null); return; }
+    if (src.startsWith('/__l5e/') || src.startsWith('/assets/') || src.startsWith('data:') || src.startsWith('blob:')) {
+      setResolved(src);
+      return () => { alive = false; };
+    }
     if (!src.startsWith('http')) {
       supabase.storage.from('music-tracks').createSignedUrl(src, 60 * 60 * 6)
         .then(({ data }) => { if (alive) setResolved(data?.signedUrl || null); });
@@ -62,13 +68,22 @@ function SignedCover({ src, alt }: { src: string; alt: string }) {
       .then(({ data }) => { if (alive) setResolved(data?.signedUrl || null); });
     return () => { alive = false; };
   }, [src]);
-  if (!resolved) return null;
+  if (!resolved || failed) {
+    return (
+      <GradientPlaceholder
+        type="music"
+        title={alt}
+        className="w-full h-full"
+        size="sm"
+      />
+    );
+  }
   return (
     <img
       src={resolved}
       alt={alt}
       className="w-full h-full object-cover"
-      onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
+      onError={() => setFailed(true)}
     />
   );
 }
@@ -89,6 +104,7 @@ interface MusicTrack {
   sower_id?: string | null;
   sower_user_id?: string | null;
   source_type?: string;
+  cover_image_url?: string | null;
   // Profile data from join
   profiles?: {
     username: string | null;
