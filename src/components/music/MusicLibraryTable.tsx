@@ -19,6 +19,7 @@ import { supabase } from '@/integrations/supabase/client';
 
 const PREVIEW_SECONDS = 40;
 const PRIVATE_BUCKETS = ['music-tracks', 'dj-music', 'premium-room'];
+const PRIVATE_COVER_BUCKETS = new Set(['music-tracks', 'dj-music', 'premium-room']);
 
 function extractBucketAndPath(url: string): { bucket: string; path: string } | null {
   try {
@@ -40,6 +41,36 @@ async function resolveAudioUrl(rawUrl: string | null): Promise<string | null> {
   if (!parts || !PRIVATE_BUCKETS.includes(parts.bucket)) return rawUrl;
   const { data } = await supabase.storage.from(parts.bucket).createSignedUrl(parts.path, 60 * 60);
   return data?.signedUrl || rawUrl;
+}
+
+function SignedCover({ src, alt }: { src: string; alt: string }) {
+  const [resolved, setResolved] = useState<string | null>(null);
+  useEffect(() => {
+    let alive = true;
+    if (!src) { setResolved(null); return; }
+    if (!src.startsWith('http')) {
+      supabase.storage.from('music-tracks').createSignedUrl(src, 60 * 60 * 6)
+        .then(({ data }) => { if (alive) setResolved(data?.signedUrl || null); });
+      return () => { alive = false; };
+    }
+    const parts = extractBucketAndPath(src);
+    if (!parts || !PRIVATE_COVER_BUCKETS.has(parts.bucket)) {
+      setResolved(src);
+      return () => { alive = false; };
+    }
+    supabase.storage.from(parts.bucket).createSignedUrl(parts.path, 60 * 60 * 6)
+      .then(({ data }) => { if (alive) setResolved(data?.signedUrl || null); });
+    return () => { alive = false; };
+  }, [src]);
+  if (!resolved) return null;
+  return (
+    <img
+      src={resolved}
+      alt={alt}
+      className="w-full h-full object-cover"
+      onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
+    />
+  );
 }
 
 interface MusicTrack {
@@ -398,22 +429,15 @@ export function MusicLibraryTable({
                 {/* Track Info */}
                 <div className={`${allowSelection ? 'col-span-3' : 'col-span-4'} flex items-center gap-3`}>
                   {/* Cover Image / Album Art */}
-                  <div className="relative h-12 w-12 flex-shrink-0 rounded overflow-hidden">
+                  <div className="relative h-12 w-12 flex-shrink-0 rounded overflow-hidden bg-white/10">
                     {(track as any).cover_image_url ? (
-                      <img
+                      <SignedCover
                         src={(track as any).cover_image_url}
                         alt={track.track_title}
-                        className="w-full h-full object-cover"
-                        onError={(e) => {
-                          // Replace with placeholder on error
-                          const target = e.target as HTMLImageElement;
-                          target.style.display = 'none';
-                        }}
                       />
-                    ) : null}
-                    {!(track as any).cover_image_url && (
-                      <GradientPlaceholder 
-                        type="music" 
+                    ) : (
+                      <GradientPlaceholder
+                        type="music"
                         title={track.track_title}
                         className="w-full h-full"
                         size="sm"
