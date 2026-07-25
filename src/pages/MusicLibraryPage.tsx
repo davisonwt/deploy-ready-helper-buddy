@@ -133,8 +133,33 @@ export default function MusicLibraryPage() {
 
       if (error) throw error;
 
+      const { data: sowerRows } = await supabase
+        .from('sowers')
+        .select('id')
+        .eq('user_id', user.id);
+
+      const sowerIds = (sowerRows || []).map((sower: any) => sower.id).filter(Boolean);
+      const { data: productMusicRows } = sowerIds.length
+        ? await supabase
+            .from('products')
+            .select('title, cover_image_url, image_urls, created_at')
+            .eq('type', 'music')
+            .in('sower_id', sowerIds)
+            .or('status.is.null,status.neq.archived')
+        : { data: [] };
+
+      const productCoverByTitle = new Map<string, string>();
+      (productMusicRows || [])
+        .sort((a: any, b: any) => new Date(b.created_at || 0).getTime() - new Date(a.created_at || 0).getTime())
+        .forEach((product: any) => {
+          const key = normalizeMusicTitle(product.title);
+          const cover = chooseProductMusicCover(product, null);
+          if (key && cover && !productCoverByTitle.has(key)) productCoverByTitle.set(key, cover);
+        });
+
       return (tracks || []).map((track: any) => ({
         ...track,
+        cover_image_url: track.cover_image_url || productCoverByTitle.get(normalizeMusicTitle(track.track_title)) || null,
         sower_user_id: user.id,
         profiles: profile || { username: null, avatar_url: null },
       }));
@@ -194,11 +219,26 @@ export default function MusicLibraryPage() {
 
       const profileMap = new Map((profileRows || []).map((profile: any) => [profile.id, profile]));
 
+      const productCoverByTitle = new Map<string, CoverCandidate[]>();
+      productMusic.forEach((product: any) => {
+        const key = normalizeMusicTitle(product.title);
+        const sower = sowerMap.get(product.sower_id);
+        const cover = chooseProductMusicCover(product, null);
+        if (key && cover) {
+          const existing = productCoverByTitle.get(key) || [];
+          productCoverByTitle.set(key, [
+            ...existing,
+            { url: cover, ownerUserId: sower?.user_id || null, createdAt: product.created_at || null },
+          ]);
+        }
+      });
+
       const transformedTracks = (tracks || []).map((track: any) => {
         const userId = djToUserMap.get(track.dj_id) as string | undefined;
         const profile = userId ? profileMap.get(userId) : null;
         return {
           ...track,
+          cover_image_url: track.cover_image_url || chooseLatestMusicCover(productCoverByTitle.get(normalizeMusicTitle(track.track_title)) || [], userId || null),
           sower_user_id: userId || null,
           profiles: profile || { username: null, avatar_url: null },
         };
