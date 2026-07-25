@@ -429,22 +429,15 @@ export function MusicLibraryTable({
                 {/* Track Info */}
                 <div className={`${allowSelection ? 'col-span-3' : 'col-span-4'} flex items-center gap-3`}>
                   {/* Cover Image / Album Art */}
-                  <div className="relative h-12 w-12 flex-shrink-0 rounded overflow-hidden">
+                  <div className="relative h-12 w-12 flex-shrink-0 rounded overflow-hidden bg-white/10">
                     {(track as any).cover_image_url ? (
-                      <img
+                      <SignedCover
                         src={(track as any).cover_image_url}
                         alt={track.track_title}
-                        className="w-full h-full object-cover"
-                        onError={(e) => {
-                          // Replace with placeholder on error
-                          const target = e.target as HTMLImageElement;
-                          target.style.display = 'none';
-                        }}
                       />
-                    ) : null}
-                    {!(track as any).cover_image_url && (
-                      <GradientPlaceholder 
-                        type="music" 
+                    ) : (
+                      <GradientPlaceholder
+                        type="music"
                         title={track.track_title}
                         className="w-full h-full"
                         size="sm"
