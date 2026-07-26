@@ -33,7 +33,7 @@ type MusicRow = {
   genre: string | null;
   created_at: string;
   dj_id: string;
-  wallet_address: string | null;
+  wallet_address?: string | null;
   product_id?: string | null;
   sower_id?: string | null;
   sower_user_id?: string | null;
