@@ -5,13 +5,14 @@ import { Button } from '@/components/ui/button';
 import PublicRoomsBrowser from '@/components/chat/PublicRoomsBrowser';
 import PageHeroBanner from '@/components/chat/PageHeroBanner';
 import ExplainerDialog from '@/components/explainers/ExplainerDialog';
-
+import CreateRoomModal from '@/components/chat/CreateRoomModal';
+import { useChat } from '@/hooks/useChat';
 
 export default function CommunityChatsPage() {
   const navigate = useNavigate();
   const [explainerOpen, setExplainerOpen] = useState(false);
-
-
+  const [createOpen, setCreateOpen] = useState(false);
+  const { createRoom } = useChat();
 
   return (
     <main
@@ -30,7 +31,7 @@ export default function CommunityChatsPage() {
             <ArrowLeft className="h-4 w-4" /> Go Back
           </Button>
           <Button
-            onClick={() => navigate('/create-premium-room')}
+            onClick={() => setCreateOpen(true)}
             className="gap-2 bg-emerald-500/80 hover:bg-emerald-500 text-white font-semibold"
           >
             <Plus className="h-4 w-4" /> Open New Room
@@ -67,6 +68,15 @@ export default function CommunityChatsPage() {
         </div>
       </div>
       <ExplainerDialog open={explainerOpen} onOpenChange={setExplainerOpen} variant="community" />
+      <CreateRoomModal
+        isOpen={createOpen}
+        onClose={() => setCreateOpen(false)}
+        onCreateRoom={async (formData: any, moderators: any[]) => {
+          const room = await createRoom(formData, moderators);
+          if (room) navigate(`/chatapp?room=${room.id}`);
+          return room;
+        }}
+      />
     </main>
   );
 }
