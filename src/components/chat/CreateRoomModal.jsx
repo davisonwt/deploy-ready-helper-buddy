@@ -167,7 +167,7 @@ const CreateRoomModal = ({ isOpen, onClose, onCreateRoom }) => {
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="sm:max-w-md max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Create New Chat Room</DialogTitle>
         </DialogHeader>
