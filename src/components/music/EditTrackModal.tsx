@@ -23,7 +23,7 @@ export function EditTrackModal({ track, isOpen, onClose, onSuccess }: EditTrackM
     track_title: track?.track_title || '',
     artist_name: track?.artist_name || '',
     genre: track?.genre || '',
-    wallet_address: track?.wallet_address || '',
+    wallet_address: track?.payout_wallet_address || '',
     bestow: track?.price || 2.0,
   });
   const [artistImage, setArtistImage] = useState<string>(track?.profiles?.avatar_url || '');
