@@ -279,14 +279,14 @@ async function resolveUserWallet(
     return wallet.wallet_address;
   }
 
-  const { data: sower } = await supabase
-    .from("sowers")
+  const { data: sowerWallet } = await supabase
+    .from("sower_payout_wallets")
     .select("wallet_address")
     .eq("user_id", userId)
     .maybeSingle();
 
-  if (sower?.wallet_address) {
-    return sower.wallet_address;
+  if (sowerWallet?.wallet_address) {
+    return sowerWallet.wallet_address;
   }
 
   return null;
