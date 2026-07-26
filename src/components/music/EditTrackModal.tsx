@@ -23,7 +23,7 @@ export function EditTrackModal({ track, isOpen, onClose, onSuccess }: EditTrackM
     track_title: track?.track_title || '',
     artist_name: track?.artist_name || '',
     genre: track?.genre || '',
-    wallet_address: track?.wallet_address || '',
+    wallet_address: track?.payout_wallet_address || '',
     bestow: track?.price || 2.0,
   });
   const [artistImage, setArtistImage] = useState<string>(track?.profiles?.avatar_url || '');
@@ -88,12 +88,19 @@ export function EditTrackModal({ track, isOpen, onClose, onSuccess }: EditTrackM
           track_title: formData.track_title,
           artist_name: formData.artist_name,
           genre: formData.genre,
-          wallet_address: formData.wallet_address,
           price: formData.bestow,
         })
         .eq('id', track.id);
 
       if (trackError) throw trackError;
+
+      // Upsert payout wallet in owner-only sidecar table
+      if (formData.wallet_address) {
+        const { error: walletError } = await supabase
+          .from('dj_track_payout_wallets')
+          .upsert({ track_id: track.id, wallet_address: formData.wallet_address });
+        if (walletError) throw walletError;
+      }
 
       // If artist image was uploaded and we have DJ info, update the profile
       if (artistImage && track.radio_djs?.user_id) {

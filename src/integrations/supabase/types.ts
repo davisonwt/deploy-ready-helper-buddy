@@ -2898,7 +2898,6 @@ export type Database = {
           track_type: string
           updated_at: string
           upload_date: string
-          wallet_address: string | null
           wandering_role: string | null
         }
         Insert: {
@@ -2926,7 +2925,6 @@ export type Database = {
           track_type?: string
           updated_at?: string
           upload_date?: string
-          wallet_address?: string | null
           wandering_role?: string | null
         }
         Update: {
@@ -2954,7 +2952,6 @@ export type Database = {
           track_type?: string
           updated_at?: string
           upload_date?: string
-          wallet_address?: string | null
           wandering_role?: string | null
         }
         Relationships: [
@@ -3061,6 +3058,35 @@ export type Database = {
             columns: ["dj_id"]
             isOneToOne: false
             referencedRelation: "radio_djs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      dj_track_payout_wallets: {
+        Row: {
+          created_at: string
+          track_id: string
+          updated_at: string
+          wallet_address: string
+        }
+        Insert: {
+          created_at?: string
+          track_id: string
+          updated_at?: string
+          wallet_address: string
+        }
+        Update: {
+          created_at?: string
+          track_id?: string
+          updated_at?: string
+          wallet_address?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "dj_track_payout_wallets_track_id_fkey"
+            columns: ["track_id"]
+            isOneToOne: true
+            referencedRelation: "dj_music_tracks"
             referencedColumns: ["id"]
           },
         ]
@@ -10382,6 +10408,27 @@ export type Database = {
           },
         ]
       }
+      sower_payout_wallets: {
+        Row: {
+          created_at: string
+          updated_at: string
+          user_id: string
+          wallet_address: string
+        }
+        Insert: {
+          created_at?: string
+          updated_at?: string
+          user_id: string
+          wallet_address: string
+        }
+        Update: {
+          created_at?: string
+          updated_at?: string
+          user_id?: string
+          wallet_address?: string
+        }
+        Relationships: []
+      }
       sower_payouts: {
         Row: {
           amount: number
@@ -10517,7 +10564,6 @@ export type Database = {
           tier: string | null
           updated_at: string | null
           user_id: string | null
-          wallet_address: string | null
         }
         Insert: {
           banner_url?: string | null
@@ -10533,7 +10579,6 @@ export type Database = {
           tier?: string | null
           updated_at?: string | null
           user_id?: string | null
-          wallet_address?: string | null
         }
         Update: {
           banner_url?: string | null
@@ -10549,7 +10594,6 @@ export type Database = {
           tier?: string | null
           updated_at?: string | null
           user_id?: string | null
-          wallet_address?: string | null
         }
         Relationships: []
       }
@@ -13086,6 +13130,30 @@ export type Database = {
           },
         ]
       }
+      whisperer_payout_wallets: {
+        Row: {
+          created_at: string
+          updated_at: string
+          user_id: string
+          wallet_address: string
+          wallet_type: string | null
+        }
+        Insert: {
+          created_at?: string
+          updated_at?: string
+          user_id: string
+          wallet_address: string
+          wallet_type?: string | null
+        }
+        Update: {
+          created_at?: string
+          updated_at?: string
+          user_id?: string
+          wallet_address?: string
+          wallet_type?: string | null
+        }
+        Relationships: []
+      }
       whisperer_referral_links: {
         Row: {
           assignment_id: string
@@ -13193,8 +13261,6 @@ export type Database = {
           total_products_promoted: number | null
           updated_at: string | null
           user_id: string
-          wallet_address: string | null
-          wallet_type: string | null
           years_experience: number | null
         }
         Insert: {
@@ -13219,8 +13285,6 @@ export type Database = {
           total_products_promoted?: number | null
           updated_at?: string | null
           user_id: string
-          wallet_address?: string | null
-          wallet_type?: string | null
           years_experience?: number | null
         }
         Update: {
@@ -13245,8 +13309,6 @@ export type Database = {
           total_products_promoted?: number | null
           updated_at?: string | null
           user_id?: string
-          wallet_address?: string | null
-          wallet_type?: string | null
           years_experience?: number | null
         }
         Relationships: [
@@ -13411,6 +13473,22 @@ export type Database = {
           viewer_count?: number | null
         }
         Relationships: []
+      }
+      song_vote_counts: {
+        Row: {
+          song_id: string | null
+          vote_count: number | null
+          week_id: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "song_votes_song_id_fkey"
+            columns: ["song_id"]
+            isOneToOne: false
+            referencedRelation: "dj_music_tracks"
+            referencedColumns: ["id"]
+          },
+        ]
       }
     }
     Functions: {
