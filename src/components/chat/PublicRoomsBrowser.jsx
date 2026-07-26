@@ -203,18 +203,21 @@ const PublicRoomsBrowser = ({ onJoinRoom, onNavigateToOrchard }) => {
   };
 
   const filteredPublicRooms = publicRooms.filter(room => {
-    const matchesSearch = room.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         room.description?.toLowerCase().includes(searchTerm.toLowerCase());
+    const q = searchTerm.toLowerCase();
+    const matchesSearch = (room.name || '').toLowerCase().includes(q) ||
+                         (room.description || '').toLowerCase().includes(q);
     const matchesCategory = categoryFilter === 'all' || room.category === categoryFilter;
     return matchesSearch && matchesCategory;
   });
 
   const filteredPremiumRooms = premiumRooms.filter(room => {
-    const matchesSearch = room.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         room.description?.toLowerCase().includes(searchTerm.toLowerCase());
+    const q = searchTerm.toLowerCase();
+    const matchesSearch = (room.name || '').toLowerCase().includes(q) ||
+                         (room.description || '').toLowerCase().includes(q);
     const matchesCategory = categoryFilter === 'all' || room.premium_category === categoryFilter;
     return matchesSearch && matchesCategory;
   });
+
 
   if (loading) {
     return (
