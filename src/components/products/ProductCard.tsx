@@ -30,6 +30,7 @@ export default function ProductCard({ product, featured, showActions = false }: 
   const [downloading, setDownloading] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [audioUrl, setAudioUrl] = useState<string | null>(null);
+  const [ownerWallet, setOwnerWallet] = useState<string | undefined>(undefined);
   const audioRef = useRef<HTMLAudioElement>(null);
   const { addToBasket } = useProductBasket();
   const { user } = useAuth();
@@ -60,6 +61,17 @@ export default function ProductCard({ product, featured, showActions = false }: 
       loadAudioUrl();
     }
   }, [product.file_url, product.type, isAlbum]);
+
+  useEffect(() => {
+    const ownerId = product.sowers?.user_id;
+    if (!ownerId) return;
+    let cancelled = false;
+    (async () => {
+      const { data, error } = await supabase.rpc('get_sower_wallet_public', { _user_id: ownerId });
+      if (!cancelled && !error && data) setOwnerWallet(data as string);
+    })();
+    return () => { cancelled = true; };
+  }, [product.sowers?.user_id]);
 
   const formatCount = (count: number) => {
     if (count >= 1000000) return `${(count / 1000000).toFixed(1)}M`;
@@ -364,7 +376,7 @@ export default function ProductCard({ product, featured, showActions = false }: 
                 itemId={product.id}
                 ownerId={product.sowers?.user_id}
                 ownerName={product.sowers?.display_name || `${product.sowers?.first_name || ''} ${product.sowers?.last_name || ''}`.trim()}
-                ownerWallet={undefined}
+                ownerWallet={ownerWallet}
                 title={product.title}
                 likeCount={product.like_count || 0}
                 isOwner={isOwner}

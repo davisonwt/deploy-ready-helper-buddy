@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -27,6 +27,19 @@ export function EditTrackModal({ track, isOpen, onClose, onSuccess }: EditTrackM
     bestow: track?.price || 2.0,
   });
   const [artistImage, setArtistImage] = useState<string>(track?.profiles?.avatar_url || '');
+
+  // Load existing payout wallet from owner-only sidecar via RPC
+  useEffect(() => {
+    if (!isOpen || !track?.id) return;
+    let cancelled = false;
+    (async () => {
+      const { data, error } = await supabase.rpc('get_my_dj_track_wallet', { _track_id: track.id });
+      if (!cancelled && !error && data) {
+        setFormData((prev) => (prev.wallet_address ? prev : { ...prev, wallet_address: data as string }));
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [isOpen, track?.id]);
 
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];

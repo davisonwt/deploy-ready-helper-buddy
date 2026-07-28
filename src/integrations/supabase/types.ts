@@ -13960,6 +13960,7 @@ export type Database = {
         Args: { song_id_param: string; week_id_param?: string }
         Returns: number
       }
+      get_sower_wallet_public: { Args: { _user_id: string }; Returns: string }
       get_trending_streams: {
         Args: { limit_count?: number }
         Returns: {
