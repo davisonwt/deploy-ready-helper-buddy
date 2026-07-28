@@ -62,6 +62,17 @@ export default function ProductCard({ product, featured, showActions = false }: 
     }
   }, [product.file_url, product.type, isAlbum]);
 
+  useEffect(() => {
+    const ownerId = product.sowers?.user_id;
+    if (!ownerId) return;
+    let cancelled = false;
+    (async () => {
+      const { data, error } = await supabase.rpc('get_sower_wallet_public', { _user_id: ownerId });
+      if (!cancelled && !error && data) setOwnerWallet(data as string);
+    })();
+    return () => { cancelled = true; };
+  }, [product.sowers?.user_id]);
+
   const formatCount = (count: number) => {
     if (count >= 1000000) return `${(count / 1000000).toFixed(1)}M`;
     if (count >= 1000) return `${(count / 1000).toFixed(1)}K`;
