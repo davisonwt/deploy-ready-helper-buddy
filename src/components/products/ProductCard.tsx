@@ -30,6 +30,7 @@ export default function ProductCard({ product, featured, showActions = false }: 
   const [downloading, setDownloading] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [audioUrl, setAudioUrl] = useState<string | null>(null);
+  const [ownerWallet, setOwnerWallet] = useState<string | undefined>(undefined);
   const audioRef = useRef<HTMLAudioElement>(null);
   const { addToBasket } = useProductBasket();
   const { user } = useAuth();
