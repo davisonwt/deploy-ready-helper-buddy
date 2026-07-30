@@ -4748,6 +4748,7 @@ export type Database = {
           media_id: string
           payment_method: string
           payment_reference: string | null
+          payment_status: string
           price_paid_cents: number
           seller_id: string
         }
@@ -4760,6 +4761,7 @@ export type Database = {
           media_id: string
           payment_method: string
           payment_reference?: string | null
+          payment_status?: string
           price_paid_cents: number
           seller_id: string
         }
@@ -4772,6 +4774,7 @@ export type Database = {
           media_id?: string
           payment_method?: string
           payment_reference?: string | null
+          payment_status?: string
           price_paid_cents?: number
           seller_id?: string
         }
