@@ -2,6 +2,29 @@
 // Extracted verbatim from src/App.tsx — no behavioural changes.
 import React, { lazy } from 'react';
 
+// Retries a dynamic import once, then force-reloads the page.
+// Guards against stale chunk hashes after a new deploy.
+function lazyWithRetry<T extends { default: React.ComponentType<any> }>(
+  factory: () => Promise<T>,
+  key: string
+) {
+  return lazy(async () => {
+    try {
+      return await factory();
+    } catch (error) {
+      const storageKey = `chunk-retry:${key}`;
+      const alreadyRetried = sessionStorage.getItem(storageKey);
+      if (!alreadyRetried) {
+        sessionStorage.setItem(storageKey, '1');
+        window.location.reload();
+        return await new Promise<T>(() => {});
+      }
+      sessionStorage.removeItem(storageKey);
+      throw error;
+    }
+  });
+}
+
 // Eager imports (kept eager exactly as in App.tsx)
 export { default as Index } from '@/pages/Index';
 export { default as NotFound } from '@/pages/NotFound';
@@ -180,9 +203,9 @@ export const LearnSharePage = lazy(() => import('@/pages/LearnSharePage'));
 export const WanderingDirectoryPage = lazy(() => import('@/pages/WanderingDirectoryPage'));
 export const PlantASeedPage = lazy(() => import('@/pages/PlantASeedPage'));
 export const MyRadioOptInPage = lazy(() => import('@/pages/MyRadioOptInPage'));
-export const SessionPage = lazy(() => import('@/pages/SessionPage'));
-export const ClassroomPage = lazy(() => import('@/pages/ClassroomPage'));
-export const ClassroomDashboardPage = lazy(() => import('@/pages/ClassroomDashboardPage'));
-export const SkillDropPage = lazy(() => import('@/pages/SkillDropPage'));
+export const SessionPage = lazyWithRetry(() => import('@/pages/SessionPage'), 'SessionPage');
+export const ClassroomPage = lazyWithRetry(() => import('@/pages/ClassroomPage'), 'ClassroomPage');
+export const ClassroomDashboardPage = lazyWithRetry(() => import('@/pages/ClassroomDashboardPage'), 'ClassroomDashboardPage');
+export const SkillDropPage = lazyWithRetry(() => import('@/pages/SkillDropPage'), 'SkillDropPage');
 export const BecomeWhispererPage = lazy(() => import('@/pages/BecomeWhispererPage'));
 export const WhisperersFeedPage = lazy(() => import('@/pages/WhisperersFeedPage'));
