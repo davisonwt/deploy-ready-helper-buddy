@@ -2,6 +2,29 @@
 // Extracted verbatim from src/App.tsx — no behavioural changes.
 import React, { lazy } from 'react';
 
+// Retries a dynamic import once, then force-reloads the page.
+// Guards against stale chunk hashes after a new deploy.
+function lazyWithRetry<T extends { default: React.ComponentType<any> }>(
+  factory: () => Promise<T>,
+  key: string
+) {
+  return lazy(async () => {
+    try {
+      return await factory();
+    } catch (error) {
+      const storageKey = `chunk-retry:${key}`;
+      const alreadyRetried = sessionStorage.getItem(storageKey);
+      if (!alreadyRetried) {
+        sessionStorage.setItem(storageKey, '1');
+        window.location.reload();
+        return await new Promise<T>(() => {});
+      }
+      sessionStorage.removeItem(storageKey);
+      throw error;
+    }
+  });
+}
+
 // Eager imports (kept eager exactly as in App.tsx)
 export { default as Index } from '@/pages/Index';
 export { default as NotFound } from '@/pages/NotFound';
