@@ -75,6 +75,14 @@ const ZODIAC = [
   { name: 'Pisces', sym: '♓' },
 ];
 
+// Sun-portal per month/gate (Enoch): the sun climbs to portal 6 at the summer
+// turn, then returns back down to portal 1 at the winter turn.
+// Aries=4, Taurus=5, Gemini=6, Cancer=6, Leo=5, Virgo=4, Libra=3, Scorpio=2,
+// Sagittarius=1, Capricorn=1, Aquarius=2, Pisces=3
+const SUN_PORTALS = [4, 5, 6, 6, 5, 4, 3, 2, 1, 1, 2, 3];
+
+
+
 // Synodic month + reference new moon (2000-01-06 18:14 UTC) per Enoch 73-74
 const SYNODIC = 29.530588853;
 const LUNAR_REF = Date.UTC(2000, 0, 6, 18, 14, 0);
@@ -434,9 +442,14 @@ export const YHVHWheelCalendar = ({ size = 760, ringOffsets = {}, textOverrides 
                   strokeWidth="1.2"
                 />
                 {/* Tribe + zodiac curved along the segment's own arc */}
-                <ArcLabel id={`tribe-arc-${idx}`} radius={310} start={start + 1} end={end - 1} fill={active ? '#0b1220' : '#fef3c7'} size={11} weight={800} offset={ringOffsets.tribes}>
+                <ArcLabel id={`tribe-arc-${idx}`} radius={312} start={start + 1} end={end - 1} fill={active ? '#0b1220' : '#fef3c7'} size={11} weight={800} offset={ringOffsets.tribes}>
                   {`${tribe} · ${z.sym} ${z.name}`}
                 </ArcLabel>
+                {/* Sun-portal number (portals climb 1→6 and return as the sun turns) */}
+                <ArcLabel id={`tribe-portal-${idx}`} radius={299} start={start + 1} end={end - 1} fill={active ? '#0b1220' : '#fcd34d'} size={9} weight={700} offset={ringOffsets.tribes}>
+                  {`Portal ${SUN_PORTALS[idx]}`}
+                </ArcLabel>
+
               </g>
             );
           })
