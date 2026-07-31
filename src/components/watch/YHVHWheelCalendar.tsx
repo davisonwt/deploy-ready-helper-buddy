@@ -434,9 +434,14 @@ export const YHVHWheelCalendar = ({ size = 760, ringOffsets = {}, textOverrides 
                   strokeWidth="1.2"
                 />
                 {/* Tribe + zodiac curved along the segment's own arc */}
-                <ArcLabel id={`tribe-arc-${idx}`} radius={310} start={start + 1} end={end - 1} fill={active ? '#0b1220' : '#fef3c7'} size={11} weight={800} offset={ringOffsets.tribes}>
+                <ArcLabel id={`tribe-arc-${idx}`} radius={312} start={start + 1} end={end - 1} fill={active ? '#0b1220' : '#fef3c7'} size={11} weight={800} offset={ringOffsets.tribes}>
                   {`${tribe} · ${z.sym} ${z.name}`}
                 </ArcLabel>
+                {/* Sun-portal number (portals climb 1→6 and return as the sun turns) */}
+                <ArcLabel id={`tribe-portal-${idx}`} radius={299} start={start + 1} end={end - 1} fill={active ? '#0b1220' : '#fcd34d'} size={9} weight={700} offset={ringOffsets.tribes}>
+                  {`Portal ${SUN_PORTALS[idx]}`}
+                </ArcLabel>
+
               </g>
             );
           })
