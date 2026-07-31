@@ -75,6 +75,14 @@ const ZODIAC = [
   { name: 'Pisces', sym: '♓' },
 ];
 
+// Sun-portal per month/gate (Enoch): the sun climbs to portal 6 at the summer
+// turn, then returns back down to portal 1 at the winter turn.
+// Aries=4, Taurus=5, Gemini=6, Cancer=6, Leo=5, Virgo=4, Libra=3, Scorpio=2,
+// Sagittarius=1, Capricorn=1, Aquarius=2, Pisces=3
+const SUN_PORTALS = [4, 5, 6, 6, 5, 4, 3, 2, 1, 1, 2, 3];
+
+
+
 // Synodic month + reference new moon (2000-01-06 18:14 UTC) per Enoch 73-74
 const SYNODIC = 29.530588853;
 const LUNAR_REF = Date.UTC(2000, 0, 6, 18, 14, 0);
