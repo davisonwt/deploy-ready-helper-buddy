@@ -57,6 +57,14 @@ export default function PrescriptionSubmitPage() {
       toast.error('Please attach your prescription image');
       return;
     }
+    if (!ALLOWED_TYPES.includes(file.type)) {
+      toast.error('Please attach a JPEG, PNG, WebP, HEIC or PDF file');
+      return;
+    }
+    if (file.size > MAX_UPLOAD_BYTES) {
+      toast.error('File must be 15MB or smaller');
+      return;
+    }
     if (fulfillmentMode !== 'pickup' && !deliveryAddress.trim()) {
       toast.error('Delivery address required for delivery options');
       return;
