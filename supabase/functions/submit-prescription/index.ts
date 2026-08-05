@@ -268,6 +268,13 @@ Deno.serve(async (req) => {
   } catch (e) {
     const msg = e instanceof Error ? e.message : String(e);
     console.error('submit-prescription error:', msg);
+    // F-9: remove the uploaded object if the request never got persisted.
+    if (orphanPath && adminForCleanup) {
+      try {
+        await adminForCleanup.storage.from('prescriptions').remove([orphanPath]);
+      } catch (_) { /* best effort */ }
+    }
+
     return new Response(JSON.stringify({ error: msg }), {
       status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
