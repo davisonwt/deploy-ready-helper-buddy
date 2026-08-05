@@ -254,7 +254,7 @@ const MusicLibrary = () => {
 
       const fileExt = file.name.split('.').pop();
       const fileName = `${user.id}-${Date.now()}.${fileExt}`;
-      const filePath = `music/${fileName}`;
+      const filePath = `${user.id}/music/${fileName}`;
 
       const { error: uploadError } = await supabase.storage
         .from('music-tracks')

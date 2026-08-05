@@ -575,7 +575,7 @@ export const ChatRoom: React.FC<ChatRoomProps> = ({ roomId, onBack, instructorId
     try {
       const fileExt = file.name.split('.').pop();
       const fileName = `${user.id}-${Date.now()}.${fileExt}`;
-      const filePath = `chat-files/${fileName}`;
+      const filePath = `${user.id}/${fileName}`;
       
       const { error: uploadError } = await supabase.storage
         .from('chat-files')
