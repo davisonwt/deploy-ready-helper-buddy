@@ -14242,6 +14242,7 @@ export type Database = {
         Args: { target_user_id: string }
         Returns: boolean
       }
+      prescription_object_owner: { Args: { _path: string }; Returns: string }
       process_referral: {
         Args: { p_referral_code: string; p_referred_user_id: string }
         Returns: Json
