@@ -63,11 +63,26 @@ export default function PrescriptionSubmitPage() {
     }
     setSubmitting(true);
     try {
-      const safeName = file.name.replace(/[^\w.\-]+/g, '_');
-      const objectPath = `${sower.id}/${Date.now()}-${safeName}`;
+      // The server owns the storage key: ask for a short-lived signed upload URL.
+      const { data: prep, error: prepErr } = await supabase.functions.invoke(
+        'prescription-upload-url',
+        {
+          body: {
+            sower_id: sower.id,
+            mime_type: file.type,
+            file_name: file.name,
+            size: file.size,
+          },
+        },
+      );
+      if (prepErr) throw prepErr;
+      const objectPath = (prep as any)?.path as string | undefined;
+      const uploadToken = (prep as any)?.token as string | undefined;
+      if (!objectPath || !uploadToken) throw new Error('Could not prepare upload');
+
       const { error: upErr } = await supabase.storage
         .from('prescriptions')
-        .upload(objectPath, file, { upsert: false, contentType: file.type });
+        .uploadToSignedUrl(objectPath, uploadToken, file, { contentType: file.type });
       if (upErr) throw upErr;
 
       const { data, error } = await supabase.functions.invoke('submit-prescription', {
