@@ -19,6 +19,15 @@ interface Sower {
   user_id: string;
 }
 
+const MAX_UPLOAD_BYTES = 15 * 1024 * 1024; // 15MB — mirrored server-side
+const ALLOWED_TYPES = [
+  'image/jpeg',
+  'image/png',
+  'image/webp',
+  'image/heic',
+  'application/pdf',
+];
+
 export default function PrescriptionSubmitPage() {
   const { sowerId } = useParams<{ sowerId: string }>();
   const { user } = useAuth();
@@ -57,17 +66,40 @@ export default function PrescriptionSubmitPage() {
       toast.error('Please attach your prescription image');
       return;
     }
+    if (!ALLOWED_TYPES.includes(file.type)) {
+      toast.error('Please attach a JPEG, PNG, WebP, HEIC or PDF file');
+      return;
+    }
+    if (file.size > MAX_UPLOAD_BYTES) {
+      toast.error('File must be 15MB or smaller');
+      return;
+    }
     if (fulfillmentMode !== 'pickup' && !deliveryAddress.trim()) {
       toast.error('Delivery address required for delivery options');
       return;
     }
     setSubmitting(true);
     try {
-      const safeName = file.name.replace(/[^\w.\-]+/g, '_');
-      const objectPath = `${sower.id}/${Date.now()}-${safeName}`;
+      // The server owns the storage key: ask for a short-lived signed upload URL.
+      const { data: prep, error: prepErr } = await supabase.functions.invoke(
+        'prescription-upload-url',
+        {
+          body: {
+            sower_id: sower.id,
+            mime_type: file.type,
+            file_name: file.name,
+            size: file.size,
+          },
+        },
+      );
+      if (prepErr) throw prepErr;
+      const objectPath = (prep as any)?.path as string | undefined;
+      const uploadToken = (prep as any)?.token as string | undefined;
+      if (!objectPath || !uploadToken) throw new Error('Could not prepare upload');
+
       const { error: upErr } = await supabase.storage
         .from('prescriptions')
-        .upload(objectPath, file, { upsert: false, contentType: file.type });
+        .uploadToSignedUrl(objectPath, uploadToken, file, { contentType: file.type });
       if (upErr) throw upErr;
 
       const { data, error } = await supabase.functions.invoke('submit-prescription', {
@@ -130,7 +162,7 @@ export default function PrescriptionSubmitPage() {
             <div className="mt-1 flex items-center gap-2">
               <Input
                 type="file"
-                accept="image/*,application/pdf"
+                accept="image/jpeg,image/png,image/webp,image/heic,application/pdf"
                 onChange={(e) => setFile(e.target.files?.[0] ?? null)}
               />
             </div>

@@ -7,6 +7,30 @@
 import { corsHeaders } from 'npm:@supabase/supabase-js@2/cors';
 import { createClient } from 'npm:@supabase/supabase-js@2';
 
+const MAX_UPLOAD_BYTES = 15 * 1024 * 1024; // 15MB
+
+// F-4: server-side content sniffing. Extensions and declared MIME types are
+// attacker-controlled; magic bytes are the only thing worth trusting here.
+function sniffType(b: Uint8Array): string | null {
+  const at = (i: number) => b[i];
+  if (b.length >= 4 && at(0) === 0x25 && at(1) === 0x50 && at(2) === 0x44 && at(3) === 0x46) {
+    return 'application/pdf'; // %PDF
+  }
+  if (b.length >= 3 && at(0) === 0xff && at(1) === 0xd8 && at(2) === 0xff) return 'image/jpeg';
+  if (b.length >= 8 && at(0) === 0x89 && at(1) === 0x50 && at(2) === 0x4e && at(3) === 0x47 &&
+      at(4) === 0x0d && at(5) === 0x0a && at(6) === 0x1a && at(7) === 0x0a) {
+    return 'image/png';
+  }
+  const ascii = (start: number, len: number) =>
+    String.fromCharCode(...Array.from(b.slice(start, start + len)));
+  if (b.length >= 12 && ascii(0, 4) === 'RIFF' && ascii(8, 4) === 'WEBP') return 'image/webp';
+  if (b.length >= 12 && ascii(4, 4) === 'ftyp') {
+    const brand = ascii(8, 4);
+    if (['heic', 'heix', 'hevc', 'heim', 'heis', 'mif1', 'msf1'].includes(brand)) return 'image/heic';
+  }
+  return null;
+}
+
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders });
   if (req.method !== 'POST') {
@@ -14,6 +38,11 @@ Deno.serve(async (req) => {
       status: 405, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
   }
+
+  // F-9: if anything fails after the file has been accepted, the object must
+  // not be left behind unreferenced in the bucket.
+  let orphanPath: string | null = null;
+  let adminForCleanup: ReturnType<typeof createClient> | null = null;
 
   try {
     const authHeader = req.headers.get('Authorization');
@@ -66,11 +95,13 @@ Deno.serve(async (req) => {
     }
 
     const admin = createClient(supabaseUrl, serviceKey);
+    adminForCleanup = admin;
 
-    // F-1: never trust a client-supplied storage path. Confirm the object
-    // exists in the prescriptions bucket AND was uploaded by this caller,
-    // otherwise an attacker could attach another patient's file to their own
-    // request and then read it back via prescription-signed-url.
+    // F-1 / F-3 / F-4: never trust a client-supplied storage path or file type.
+    // The path must match an unconsumed upload token this caller was issued
+    // (server-chosen key), and the stored bytes must actually be one of the
+    // allowed document types — an HTML `accept` attribute proves nothing.
+    let uploadToken: { id: string; mime_type: string | null; sower_id: string } | null = null;
     if (prescription_file_path) {
       if (typeof prescription_file_path !== 'string' ||
           prescription_file_path.length > 1024 ||
@@ -79,12 +110,51 @@ Deno.serve(async (req) => {
           status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         });
       }
-      const { data: objOwner, error: ownerErr } = await admin
-        .rpc('prescription_object_owner', { _path: prescription_file_path });
-      if (ownerErr) throw ownerErr;
-      if (!objOwner || objOwner !== user.id) {
+
+      const { data: tok, error: tokErr } = await admin
+        .from('prescription_upload_tokens')
+        .select('id, user_id, sower_id, mime_type, consumed, expires_at')
+        .eq('object_path', prescription_file_path)
+        .maybeSingle();
+      if (tokErr) throw tokErr;
+      if (!tok || tok.user_id !== user.id || tok.consumed ||
+          new Date(tok.expires_at).getTime() < Date.now()) {
         return new Response(JSON.stringify({ error: 'You do not own this uploaded file' }), {
           status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
+      if (tok.sower_id !== sower_id) {
+        return new Response(JSON.stringify({ error: 'Upload was not prepared for this seller' }), {
+          status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
+      orphanPath = prescription_file_path;
+      uploadToken = { id: tok.id, mime_type: tok.mime_type, sower_id: tok.sower_id };
+
+      const { data: blob, error: dlErr } = await admin.storage
+        .from('prescriptions')
+        .download(prescription_file_path);
+      if (dlErr || !blob) {
+        return new Response(JSON.stringify({ error: 'Uploaded file not found' }), {
+          status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
+      if (blob.size === 0 || blob.size > MAX_UPLOAD_BYTES) {
+        await admin.storage.from('prescriptions').remove([prescription_file_path]);
+        orphanPath = null;
+        return new Response(JSON.stringify({ error: 'File must be between 1 byte and 15MB.' }), {
+          status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
+      const head = new Uint8Array(await blob.slice(0, 32).arrayBuffer());
+      const sniffed = sniffType(head);
+      if (!sniffed || (uploadToken.mime_type && sniffed !== uploadToken.mime_type)) {
+        await admin.storage.from('prescriptions').remove([prescription_file_path]);
+        orphanPath = null;
+        return new Response(JSON.stringify({
+          error: 'File contents are not a valid JPEG, PNG, WebP, HEIC or PDF.',
+        }), {
+          status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         });
       }
     }
@@ -153,6 +223,18 @@ Deno.serve(async (req) => {
       .single();
     if (presErr) throw presErr;
 
+    // The file is now referenced by a row: burn the token and stop tracking it
+    // as an orphan candidate.
+    if (uploadToken) {
+      await admin
+        .from('prescription_upload_tokens')
+        .update({ consumed: true })
+        .eq('id', uploadToken.id);
+    }
+    orphanPath = null;
+
+
+
     // Post intro message in the chat
     const intro = [
       '📋 **New prescription consult**',
@@ -186,6 +268,13 @@ Deno.serve(async (req) => {
   } catch (e) {
     const msg = e instanceof Error ? e.message : String(e);
     console.error('submit-prescription error:', msg);
+    // F-9: remove the uploaded object if the request never got persisted.
+    if (orphanPath && adminForCleanup) {
+      try {
+        await adminForCleanup.storage.from('prescriptions').remove([orphanPath]);
+      } catch (_) { /* best effort */ }
+    }
+
     return new Response(JSON.stringify({ error: msg }), {
       status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });

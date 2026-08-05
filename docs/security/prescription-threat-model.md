@@ -126,13 +126,13 @@ demonstrable access control — not merely "it's private-ish".
 |---|---|---|
 | F-1 | **High — FIXED (2026-08-05)** | Unvalidated `prescription_file_path`. The client uploads to storage first, then passes the object path to `submit-prescription`, which stores it with no check that the caller owns it. An attacker who learns or guesses another patient's object path can submit a throwaway request carrying that path, then call `prescription-signed-url` on their *own* request id — the ownership check passes, and they receive a signed URL to someone else's prescription. This is a classic IDOR that bypasses an otherwise correct authorization check. **Fix:** `submit-prescription` now resolves the object's uploader via the service-role-only `public.prescription_object_owner()` helper and rejects (403) any path not owned by the caller; the path is also length- and traversal-checked. |
 | F-2 | **High** | No audit log. No record of prescription views, downloads, status changes, or credential decisions. |
-| F-3 | **Medium** | Upload path is `{sower_id}/...`, keyed to the *recipient*, not the uploader. This conflicts with the recently tightened folder-ownership storage policy (which expects an `auth.uid()` prefix) and makes per-patient retention or deletion impractical. Also permits writing into another sower's folder namespace. |
-| F-4 | **Medium** | No server-side file validation: MIME type, magic bytes, extension, and size are only constrained by an HTML `accept` attribute, which is trivially bypassed. No malware scanning. |
+| F-3 | **Medium — FIXED (2026-08-05)** | Upload path was `{sower_id}/...`, keyed to the *recipient*, not the uploader. **Fix:** the browser can no longer write to the bucket at all (the `authenticated` INSERT policy is dropped). `prescription-upload-url` issues a short-lived signed upload URL under a server-chosen key `{patient_uid}/{sower_id}/{uuid}.{ext}`, restoring uid-prefixed folder ownership and making per-patient retention/deletion tractable. Read policies were re-pointed at the new layout. |
+| F-4 | **Medium — FIXED (2026-08-05)** | No server-side file validation. **Fix:** the upload-URL function validates declared MIME (JPEG/PNG/WebP/HEIC/PDF only) and size (≤15MB) and picks the extension itself; `submit-prescription` then downloads the stored object and sniffs magic bytes, rejecting and deleting anything whose contents do not match an allowed type or that exceeds the size cap. Malware scanning is still not performed (no scanner in this stack) — documented residual risk. |
 | F-5 | **Medium** | Symptom text duplicated into `chat_messages`, widening the blast radius of health data beyond prescription RLS. |
 | F-6 | **Medium** | Health data, addresses, and phone numbers stored in plaintext at rest. |
 | F-7 | **Medium** | No rate limiting on either prescription endpoint; no lockout on repeated failures. |
 | F-8 | **Low** | Raw exception messages returned to the client. |
-| F-9 | **Low** | Orphaned uploads: if `submit-prescription` fails after the upload succeeds, the file remains in the bucket forever, unreferenced and never subject to retention. |
+| F-9 | **Low — FIXED (2026-08-05)** | Orphaned uploads. **Fix:** every issued upload is tracked in `prescription_upload_tokens` (service-role only) with an expiry. `submit-prescription` deletes the object on any failure path and marks the token consumed on success; `prescription-upload-url` sweeps the caller's expired, unconsumed uploads out of the bucket before issuing a new one. |
 | F-10 | **Low** | No optimistic locking on status transitions. |
 
 ## 6. Recommended remediation order
@@ -140,8 +140,8 @@ demonstrable access control — not merely "it's private-ish".
 1. **F-1** — make the edge function own the whole upload, or verify the object's
    owner before accepting the path. This is the only finding with a direct,
    practical path to reading another patient's health record.
-2. **F-3 / F-4 / F-9** — fold upload into the authorized backend call: validate
-   magic bytes and size, reject executables, write under a server-chosen key.
+2. ~~**F-3 / F-4 / F-9**~~ — done (2026-08-05): server-owned upload key via
+   `prescription-upload-url`, magic-byte + size validation, orphan sweep.
 3. **F-2** — append-only audit table, INSERT revoked from `authenticated` and
    `anon`, written only by `SECURITY DEFINER` functions, covering view,
    download, status change, and credential decisions.
