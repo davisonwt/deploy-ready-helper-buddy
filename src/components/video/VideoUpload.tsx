@@ -116,30 +116,30 @@ export default function VideoUpload() {
       let thumbnailUrl = '';
       if (thumbnails.length === 0) {
         const { blob: thumbnailBlob } = await generateThumbnail(processedFile);
-        const thumbnailFileName = `${user.id}-${Date.now()}-thumb.jpg`;
+        const thumbnailPath = `${user.id}/thumbnails/${user.id}-${Date.now()}-thumb.jpg`;
         const { data: thumbData, error: thumbError } = await supabase.storage
           .from('chat-files')
-          .upload(`thumbnails/${thumbnailFileName}`, thumbnailBlob);
+          .upload(thumbnailPath, thumbnailBlob);
 
         if (thumbError) throw thumbError;
         
         const { data: { publicUrl: thumbPublicUrl } } = supabase.storage
           .from('chat-files')
-          .getPublicUrl(`thumbnails/${thumbnailFileName}`);
+          .getPublicUrl(thumbnailPath);
         
         thumbnailUrl = thumbPublicUrl;
       } else {
         // Upload first thumbnail
-        const thumbnailFileName = `${user.id}-${Date.now()}-thumb.jpg`;
+        const thumbnailPath = `${user.id}/thumbnails/${user.id}-${Date.now()}-thumb.jpg`;
         const { data: thumbData, error: thumbError } = await supabase.storage
           .from('chat-files')
-          .upload(`thumbnails/${thumbnailFileName}`, thumbnails[0]);
+          .upload(thumbnailPath, thumbnails[0]);
 
         if (thumbError) throw thumbError;
         
         const { data: { publicUrl: thumbPublicUrl } } = supabase.storage
           .from('chat-files')
-          .getPublicUrl(`thumbnails/${thumbnailFileName}`);
+          .getPublicUrl(thumbnailPath);
         
         thumbnailUrl = thumbPublicUrl;
       }
@@ -147,15 +147,16 @@ export default function VideoUpload() {
       // Upload video
       const fileExt = processedFile.name.split('.').pop();
       const fileName = `${user.id}-${Date.now()}.${fileExt}`;
+      const videoPath = `${user.id}/videos/${fileName}`;
       const { data: uploadData, error: uploadError } = await supabase.storage
         .from('chat-files')
-        .upload(`videos/${fileName}`, processedFile);
+        .upload(videoPath, processedFile);
 
       if (uploadError) throw uploadError;
 
       const { data: { publicUrl: videoUrl } } = supabase.storage
         .from('chat-files')
-        .getPublicUrl(`videos/${fileName}`);
+        .getPublicUrl(videoPath);
 
       // Insert to database
       const { error: dbError } = await supabase.from('community_videos').insert({
