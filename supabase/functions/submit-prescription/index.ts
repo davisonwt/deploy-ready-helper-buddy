@@ -15,6 +15,11 @@ Deno.serve(async (req) => {
     });
   }
 
+  // F-9: if anything fails after the file has been accepted, the object must
+  // not be left behind unreferenced in the bucket.
+  let orphanPath: string | null = null;
+  let adminForCleanup: ReturnType<typeof createClient> | null = null;
+
   try {
     const authHeader = req.headers.get('Authorization');
     if (!authHeader) {
