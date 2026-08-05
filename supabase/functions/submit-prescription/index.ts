@@ -71,11 +71,13 @@ Deno.serve(async (req) => {
     }
 
     const admin = createClient(supabaseUrl, serviceKey);
+    adminForCleanup = admin;
 
-    // F-1: never trust a client-supplied storage path. Confirm the object
-    // exists in the prescriptions bucket AND was uploaded by this caller,
-    // otherwise an attacker could attach another patient's file to their own
-    // request and then read it back via prescription-signed-url.
+    // F-1 / F-3 / F-4: never trust a client-supplied storage path or file type.
+    // The path must match an unconsumed upload token this caller was issued
+    // (server-chosen key), and the stored bytes must actually be one of the
+    // allowed document types — an HTML `accept` attribute proves nothing.
+    let uploadToken: { id: string; mime_type: string | null; sower_id: string } | null = null;
     if (prescription_file_path) {
       if (typeof prescription_file_path !== 'string' ||
           prescription_file_path.length > 1024 ||
@@ -84,12 +86,51 @@ Deno.serve(async (req) => {
           status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         });
       }
-      const { data: objOwner, error: ownerErr } = await admin
-        .rpc('prescription_object_owner', { _path: prescription_file_path });
-      if (ownerErr) throw ownerErr;
-      if (!objOwner || objOwner !== user.id) {
+
+      const { data: tok, error: tokErr } = await admin
+        .from('prescription_upload_tokens')
+        .select('id, user_id, sower_id, mime_type, consumed, expires_at')
+        .eq('object_path', prescription_file_path)
+        .maybeSingle();
+      if (tokErr) throw tokErr;
+      if (!tok || tok.user_id !== user.id || tok.consumed ||
+          new Date(tok.expires_at).getTime() < Date.now()) {
         return new Response(JSON.stringify({ error: 'You do not own this uploaded file' }), {
           status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
+      if (tok.sower_id !== sower_id) {
+        return new Response(JSON.stringify({ error: 'Upload was not prepared for this seller' }), {
+          status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
+      orphanPath = prescription_file_path;
+      uploadToken = { id: tok.id, mime_type: tok.mime_type, sower_id: tok.sower_id };
+
+      const { data: blob, error: dlErr } = await admin.storage
+        .from('prescriptions')
+        .download(prescription_file_path);
+      if (dlErr || !blob) {
+        return new Response(JSON.stringify({ error: 'Uploaded file not found' }), {
+          status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
+      if (blob.size === 0 || blob.size > MAX_UPLOAD_BYTES) {
+        await admin.storage.from('prescriptions').remove([prescription_file_path]);
+        orphanPath = null;
+        return new Response(JSON.stringify({ error: 'File must be between 1 byte and 15MB.' }), {
+          status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
+      const head = new Uint8Array(await blob.slice(0, 32).arrayBuffer());
+      const sniffed = sniffType(head);
+      if (!sniffed || (uploadToken.mime_type && sniffed !== uploadToken.mime_type)) {
+        await admin.storage.from('prescriptions').remove([prescription_file_path]);
+        orphanPath = null;
+        return new Response(JSON.stringify({
+          error: 'File contents are not a valid JPEG, PNG, WebP, HEIC or PDF.',
+        }), {
+          status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         });
       }
     }
