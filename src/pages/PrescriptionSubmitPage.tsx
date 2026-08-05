@@ -19,6 +19,15 @@ interface Sower {
   user_id: string;
 }
 
+const MAX_UPLOAD_BYTES = 15 * 1024 * 1024; // 15MB — mirrored server-side
+const ALLOWED_TYPES = [
+  'image/jpeg',
+  'image/png',
+  'image/webp',
+  'image/heic',
+  'application/pdf',
+];
+
 export default function PrescriptionSubmitPage() {
   const { sowerId } = useParams<{ sowerId: string }>();
   const { user } = useAuth();
