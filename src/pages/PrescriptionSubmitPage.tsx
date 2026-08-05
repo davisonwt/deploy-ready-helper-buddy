@@ -162,7 +162,7 @@ export default function PrescriptionSubmitPage() {
             <div className="mt-1 flex items-center gap-2">
               <Input
                 type="file"
-                accept="image/*,application/pdf"
+                accept="image/jpeg,image/png,image/webp,image/heic,application/pdf"
                 onChange={(e) => setFile(e.target.files?.[0] ?? null)}
               />
             </div>
