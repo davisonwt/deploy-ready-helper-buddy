@@ -223,6 +223,18 @@ Deno.serve(async (req) => {
       .single();
     if (presErr) throw presErr;
 
+    // The file is now referenced by a row: burn the token and stop tracking it
+    // as an orphan candidate.
+    if (uploadToken) {
+      await admin
+        .from('prescription_upload_tokens')
+        .update({ consumed: true })
+        .eq('id', uploadToken.id);
+    }
+    orphanPath = null;
+
+
+
     // Post intro message in the chat
     const intro = [
       '📋 **New prescription consult**',
