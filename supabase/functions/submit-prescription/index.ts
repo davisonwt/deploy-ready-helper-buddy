@@ -7,6 +7,30 @@
 import { corsHeaders } from 'npm:@supabase/supabase-js@2/cors';
 import { createClient } from 'npm:@supabase/supabase-js@2';
 
+const MAX_UPLOAD_BYTES = 15 * 1024 * 1024; // 15MB
+
+// F-4: server-side content sniffing. Extensions and declared MIME types are
+// attacker-controlled; magic bytes are the only thing worth trusting here.
+function sniffType(b: Uint8Array): string | null {
+  const at = (i: number) => b[i];
+  if (b.length >= 4 && at(0) === 0x25 && at(1) === 0x50 && at(2) === 0x44 && at(3) === 0x46) {
+    return 'application/pdf'; // %PDF
+  }
+  if (b.length >= 3 && at(0) === 0xff && at(1) === 0xd8 && at(2) === 0xff) return 'image/jpeg';
+  if (b.length >= 8 && at(0) === 0x89 && at(1) === 0x50 && at(2) === 0x4e && at(3) === 0x47 &&
+      at(4) === 0x0d && at(5) === 0x0a && at(6) === 0x1a && at(7) === 0x0a) {
+    return 'image/png';
+  }
+  const ascii = (start: number, len: number) =>
+    String.fromCharCode(...Array.from(b.slice(start, start + len)));
+  if (b.length >= 12 && ascii(0, 4) === 'RIFF' && ascii(8, 4) === 'WEBP') return 'image/webp';
+  if (b.length >= 12 && ascii(4, 4) === 'ftyp') {
+    const brand = ascii(8, 4);
+    if (['heic', 'heix', 'hevc', 'heim', 'heis', 'mif1', 'msf1'].includes(brand)) return 'image/heic';
+  }
+  return null;
+}
+
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders });
   if (req.method !== 'POST') {
