@@ -67,6 +67,28 @@ Deno.serve(async (req) => {
 
     const admin = createClient(supabaseUrl, serviceKey);
 
+    // F-1: never trust a client-supplied storage path. Confirm the object
+    // exists in the prescriptions bucket AND was uploaded by this caller,
+    // otherwise an attacker could attach another patient's file to their own
+    // request and then read it back via prescription-signed-url.
+    if (prescription_file_path) {
+      if (typeof prescription_file_path !== 'string' ||
+          prescription_file_path.length > 1024 ||
+          prescription_file_path.includes('..')) {
+        return new Response(JSON.stringify({ error: 'invalid prescription_file_path' }), {
+          status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
+      const { data: objOwner, error: ownerErr } = await admin
+        .rpc('prescription_object_owner', { _path: prescription_file_path });
+      if (ownerErr) throw ownerErr;
+      if (!objOwner || objOwner !== user.id) {
+        return new Response(JSON.stringify({ error: 'You do not own this uploaded file' }), {
+          status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
+    }
+
     // Verify sower exists and is a regulated_business
     const { data: sower, error: sowerErr } = await admin
       .from('sowers')
