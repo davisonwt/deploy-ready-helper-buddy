@@ -6258,6 +6258,48 @@ export type Database = {
           },
         ]
       }
+      prescription_upload_tokens: {
+        Row: {
+          consumed: boolean
+          created_at: string
+          declared_size: number | null
+          expires_at: string
+          file_name: string | null
+          id: string
+          mime_type: string | null
+          object_path: string
+          sower_id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          consumed?: boolean
+          created_at?: string
+          declared_size?: number | null
+          expires_at?: string
+          file_name?: string | null
+          id?: string
+          mime_type?: string | null
+          object_path: string
+          sower_id: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          consumed?: boolean
+          created_at?: string
+          declared_size?: number | null
+          expires_at?: string
+          file_name?: string | null
+          id?: string
+          mime_type?: string | null
+          object_path?: string
+          sower_id?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       processed_webhooks: {
         Row: {
           id: string
