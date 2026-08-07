@@ -1,0 +1,134 @@
+{
+  "h1-thirty-percent": {
+    "audio": "audio/hooks/h1-thirty-percent.mp3",
+    "beats": [
+      {
+        "from": 0,
+        "durationInFrames": 116
+      },
+      {
+        "from": 124,
+        "durationInFrames": 66
+      },
+      {
+        "from": 198,
+        "durationInFrames": 109
+      },
+      {
+        "from": 315,
+        "durationInFrames": 74
+      }
+    ],
+    "durationInFrames": 429
+  },
+  "h2-anonymous": {
+    "audio": "audio/hooks/h2-anonymous.mp3",
+    "beats": [
+      {
+        "from": 0,
+        "durationInFrames": 96
+      },
+      {
+        "from": 105,
+        "durationInFrames": 66
+      },
+      {
+        "from": 180,
+        "durationInFrames": 115
+      },
+      {
+        "from": 304,
+        "durationInFrames": 106
+      }
+    ],
+    "durationInFrames": 450
+  },
+  "h3-bestow": {
+    "audio": "audio/hooks/h3-bestow.mp3",
+    "beats": [
+      {
+        "from": 0,
+        "durationInFrames": 35
+      },
+      {
+        "from": 43,
+        "durationInFrames": 181
+      },
+      {
+        "from": 233,
+        "durationInFrames": 78
+      },
+      {
+        "from": 319,
+        "durationInFrames": 113
+      }
+    ],
+    "durationInFrames": 473
+  },
+  "h4-five-dollars": {
+    "audio": "audio/hooks/h4-five-dollars.mp3",
+    "beats": [
+      {
+        "from": 0,
+        "durationInFrames": 75
+      },
+      {
+        "from": 84,
+        "durationInFrames": 136
+      },
+      {
+        "from": 229,
+        "durationInFrames": 98
+      },
+      {
+        "from": 336,
+        "durationInFrames": 95
+      }
+    ],
+    "durationInFrames": 471
+  },
+  "h5-nine-hands": {
+    "audio": "audio/hooks/h5-nine-hands.mp3",
+    "beats": [
+      {
+        "from": 0,
+        "durationInFrames": 194
+      },
+      {
+        "from": 202,
+        "durationInFrames": 63
+      },
+      {
+        "from": 273,
+        "durationInFrames": 68
+      },
+      {
+        "from": 350,
+        "durationInFrames": 108
+      }
+    ],
+    "durationInFrames": 499
+  },
+  "h6-money-path": {
+    "audio": "audio/hooks/h6-money-path.mp3",
+    "beats": [
+      {
+        "from": 0,
+        "durationInFrames": 100
+      },
+      {
+        "from": 109,
+        "durationInFrames": 43
+      },
+      {
+        "from": 160,
+        "durationInFrames": 48
+      },
+      {
+        "from": 216,
+        "durationInFrames": 92
+      }
+    ],
+    "durationInFrames": 349
+  }
+}
