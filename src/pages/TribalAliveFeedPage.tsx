@@ -1517,10 +1517,17 @@ function FeedCard({
           <div className="mt-3 flex items-center gap-3 rounded-2xl bg-black/40 p-2 pr-4 backdrop-blur">
             <button
               onClick={togglePlay}
-              className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-amber-500 text-white shadow-lg hover:scale-105"
+              disabled={loadingMedia}
+              className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-amber-500 text-white shadow-lg transition hover:scale-105 disabled:opacity-60"
               aria-label={playing ? 'Pause preview' : 'Play 45s preview'}
             >
-              {playing ? <Pause className="h-5 w-5" /> : <Play className="h-5 w-5 translate-x-0.5" />}
+              {loadingMedia ? (
+                <span className="h-4 w-4 animate-spin rounded-full border-2 border-white/40 border-t-white" />
+              ) : playing ? (
+                <Pause className="h-5 w-5" />
+              ) : (
+                <Play className="h-5 w-5 translate-x-0.5" />
+              )}
             </button>
             <div className="flex-1">
               <div className="h-1.5 w-full overflow-hidden rounded-full bg-white/20">
