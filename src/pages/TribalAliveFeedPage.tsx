@@ -1292,21 +1292,61 @@ function FeedCard({
     }
   }, [isActive]);
 
-  const togglePlay = useCallback(() => {
-    const media = audioRef.current || videoRef.current;
+  // Reset resolved media when the card's item changes
+  useEffect(() => {
+    setPlayAudioUrl(null);
+    setPlayVideoUrl(null);
+    setPlaying(false);
+    setTime(0);
+  }, [item.key]);
+
+  const togglePlay = useCallback(async () => {
+    const media = videoRef.current || audioRef.current;
     if (!media) return;
+
     if (playing) {
       media.pause();
       setPlaying(false);
-    } else {
-      media.currentTime = 0;
-      media.play().then(() => setPlaying(true)).catch(() => setPlaying(false));
+      return;
     }
-  }, [playing]);
+
+    // Lazily resolve a playable (signed) URL for private storage buckets.
+    const isVideo = media === videoRef.current;
+    const raw = isVideo ? item.video_url : item.audio_url;
+    let src = isVideo ? playVideoUrl : playAudioUrl;
+
+    if (!src) {
+      setLoadingMedia(true);
+      try {
+        src = await resolvePlayableUrl(raw);
+      } catch {
+        src = null;
+      }
+      setLoadingMedia(false);
+      if (!src) {
+        toast.error('This media could not be loaded');
+        return;
+      }
+      if (isVideo) setPlayVideoUrl(src); else setPlayAudioUrl(src);
+      if (media.getAttribute('src') !== src) {
+        media.setAttribute('src', src);
+        media.load();
+      }
+    }
+
+    try {
+      media.currentTime = 0;
+      await media.play();
+      setPlaying(true);
+    } catch {
+      setPlaying(false);
+      toast.error('Playback failed — try again');
+    }
+  }, [playing, item.key, item.audio_url, item.video_url, playAudioUrl, playVideoUrl]);
 
   // 45s cap
   useEffect(() => {
-    const media = audioRef.current || videoRef.current;
+    const media = videoRef.current || audioRef.current;
     if (!media) return;
     const onTime = () => {
       setTime(media.currentTime);
@@ -1318,13 +1358,16 @@ function FeedCard({
       }
     };
     const onEnd = () => { setPlaying(false); setTime(0); };
+    const onError = () => { setPlaying(false); };
     media.addEventListener('timeupdate', onTime);
     media.addEventListener('ended', onEnd);
+    media.addEventListener('error', onError);
     return () => {
       media.removeEventListener('timeupdate', onTime);
       media.removeEventListener('ended', onEnd);
+      media.removeEventListener('error', onError);
     };
-  }, []);
+  }, [item.key]);
 
   const badge = WANDERING_BADGES.find((b) => b.key === item.wandering_role);
   // All sower creations (seeds, products, music, books, videos, stories, orchards) are bestowable.
