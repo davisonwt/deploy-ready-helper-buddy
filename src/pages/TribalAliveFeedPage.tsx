@@ -29,6 +29,7 @@ import { fetchActiveProductsForFeed } from '@/api/products';
 import { useAuth } from '@/hooks/useAuth';
 import { useReferralCode } from '@/hooks/useReferralCode';
 import { useToast } from '@/hooks/use-toast';
+import { toast } from 'sonner';
 import { useProductBasket } from '@/contexts/ProductBasketContext';
 import { useTribalLiveOrchard } from '@/hooks/useTribalLiveOrchard';
 import { JITSI_DOMAIN } from '@/lib/jitsi-config';
@@ -1203,6 +1204,48 @@ export default function TribalAliveFeedPage() {
   );
 }
 
+/* ───────── private-bucket media resolution ───────── */
+
+const PRIVATE_MEDIA_BUCKETS = new Set([
+  'music-tracks', 'dj-music', 'premium-room', 'videos', 'recipe-media',
+  'chat-files', 'chat_files', 'chat-media', 'journal-media', 'study-uploads',
+  'live-session-music', 'live-session-docs', 'stream-recordings',
+  'radio-show-files', 'radio-session-assets', 'ai-voiceovers', 'sow2grow-1b',
+]);
+
+function extractBucketAndPath(url: string): { bucket: string; path: string } | null {
+  try {
+    const u = new URL(url, window.location.origin);
+    const m = u.pathname.match(/\/storage\/v1\/object\/(?:public|authenticated|sign)\/([^/]+)\/(.+)$/);
+    if (!m) return null;
+    return { bucket: m[1], path: decodeURIComponent(m[2].split('?')[0]) };
+  } catch {
+    return null;
+  }
+}
+
+/** Turns a stored media URL/path into a URL the browser can actually play. */
+async function resolvePlayableUrl(rawUrl: string | null | undefined): Promise<string | null> {
+  if (!rawUrl) return null;
+  if (rawUrl.startsWith('blob:') || rawUrl.startsWith('data:')) return rawUrl;
+
+  // Bare storage path (no host) — assume music-tracks, the most common case.
+  if (!/^https?:\/\//i.test(rawUrl)) {
+    const { data } = await supabase.storage
+      .from('music-tracks')
+      .createSignedUrl(rawUrl.replace(/^\/+/, ''), 60 * 60);
+    return data?.signedUrl || rawUrl;
+  }
+
+  const parts = extractBucketAndPath(rawUrl);
+  if (!parts || !PRIVATE_MEDIA_BUCKETS.has(parts.bucket)) return rawUrl;
+
+  const { data } = await supabase.storage
+    .from(parts.bucket)
+    .createSignedUrl(parts.path, 60 * 60);
+  return data?.signedUrl || rawUrl;
+}
+
 /* ───────── card with 45s preview + action rail ───────── */
 
 function FeedCard({
@@ -1224,8 +1267,11 @@ function FeedCard({
   const audioRef = useRef<HTMLAudioElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
   const [playing, setPlaying] = useState(false);
+  const [loadingMedia, setLoadingMedia] = useState(false);
   const [time, setTime] = useState(0);
   const [imgIdx, setImgIdx] = useState(0);
+  const [playAudioUrl, setPlayAudioUrl] = useState<string | null>(null);
+  const [playVideoUrl, setPlayVideoUrl] = useState<string | null>(null);
   const PREVIEW = 45; // seconds
 
   const gallery = (item.images && item.images.length > 0)
@@ -1247,21 +1293,61 @@ function FeedCard({
     }
   }, [isActive]);
 
-  const togglePlay = useCallback(() => {
-    const media = audioRef.current || videoRef.current;
+  // Reset resolved media when the card's item changes
+  useEffect(() => {
+    setPlayAudioUrl(null);
+    setPlayVideoUrl(null);
+    setPlaying(false);
+    setTime(0);
+  }, [item.key]);
+
+  const togglePlay = useCallback(async () => {
+    const media = videoRef.current || audioRef.current;
     if (!media) return;
+
     if (playing) {
       media.pause();
       setPlaying(false);
-    } else {
-      media.currentTime = 0;
-      media.play().then(() => setPlaying(true)).catch(() => setPlaying(false));
+      return;
     }
-  }, [playing]);
+
+    // Lazily resolve a playable (signed) URL for private storage buckets.
+    const isVideo = media === videoRef.current;
+    const raw = isVideo ? item.video_url : item.audio_url;
+    let src = isVideo ? playVideoUrl : playAudioUrl;
+
+    if (!src) {
+      setLoadingMedia(true);
+      try {
+        src = await resolvePlayableUrl(raw);
+      } catch {
+        src = null;
+      }
+      setLoadingMedia(false);
+      if (!src) {
+        toast.error('This media could not be loaded');
+        return;
+      }
+      if (isVideo) setPlayVideoUrl(src); else setPlayAudioUrl(src);
+      if (media.getAttribute('src') !== src) {
+        media.setAttribute('src', src);
+        media.load();
+      }
+    }
+
+    try {
+      media.currentTime = 0;
+      await media.play();
+      setPlaying(true);
+    } catch {
+      setPlaying(false);
+      toast.error('Playback failed — try again');
+    }
+  }, [playing, item.key, item.audio_url, item.video_url, playAudioUrl, playVideoUrl]);
 
   // 45s cap
   useEffect(() => {
-    const media = audioRef.current || videoRef.current;
+    const media = videoRef.current || audioRef.current;
     if (!media) return;
     const onTime = () => {
       setTime(media.currentTime);
@@ -1273,13 +1359,16 @@ function FeedCard({
       }
     };
     const onEnd = () => { setPlaying(false); setTime(0); };
+    const onError = () => { setPlaying(false); };
     media.addEventListener('timeupdate', onTime);
     media.addEventListener('ended', onEnd);
+    media.addEventListener('error', onError);
     return () => {
       media.removeEventListener('timeupdate', onTime);
       media.removeEventListener('ended', onEnd);
+      media.removeEventListener('error', onError);
     };
-  }, []);
+  }, [item.key]);
 
   const badge = WANDERING_BADGES.find((b) => b.key === item.wandering_role);
   // All sower creations (seeds, products, music, books, videos, stories, orchards) are bestowable.
@@ -1303,11 +1392,12 @@ function FeedCard({
       {item.video_url ? (
         <video
           ref={videoRef}
-          src={item.video_url}
+          src={playVideoUrl || undefined}
+          poster={currentImg || undefined}
           className="absolute inset-0 h-full w-full object-cover"
           playsInline
           muted={false}
-          preload="metadata"
+          preload="none"
         />
       ) : currentImg ? (
         <img
@@ -1322,7 +1412,7 @@ function FeedCard({
         </div>
       )}
       {item.audio_url && (
-        <audio ref={audioRef} src={item.audio_url} preload="metadata" />
+        <audio ref={audioRef} src={playAudioUrl || undefined} preload="none" />
       )}
 
       {/* Image carousel arrows + dots — only when there are multiple images */}
@@ -1427,10 +1517,17 @@ function FeedCard({
           <div className="mt-3 flex items-center gap-3 rounded-2xl bg-black/40 p-2 pr-4 backdrop-blur">
             <button
               onClick={togglePlay}
-              className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-amber-500 text-white shadow-lg hover:scale-105"
+              disabled={loadingMedia}
+              className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-amber-500 text-white shadow-lg transition hover:scale-105 disabled:opacity-60"
               aria-label={playing ? 'Pause preview' : 'Play 45s preview'}
             >
-              {playing ? <Pause className="h-5 w-5" /> : <Play className="h-5 w-5 translate-x-0.5" />}
+              {loadingMedia ? (
+                <span className="h-4 w-4 animate-spin rounded-full border-2 border-white/40 border-t-white" />
+              ) : playing ? (
+                <Pause className="h-5 w-5" />
+              ) : (
+                <Play className="h-5 w-5 translate-x-0.5" />
+              )}
             </button>
             <div className="flex-1">
               <div className="h-1.5 w-full overflow-hidden rounded-full bg-white/20">
