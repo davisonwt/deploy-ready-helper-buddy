@@ -1392,11 +1392,12 @@ function FeedCard({
       {item.video_url ? (
         <video
           ref={videoRef}
-          src={item.video_url}
+          src={playVideoUrl || undefined}
+          poster={currentImg || undefined}
           className="absolute inset-0 h-full w-full object-cover"
           playsInline
           muted={false}
-          preload="metadata"
+          preload="none"
         />
       ) : currentImg ? (
         <img
@@ -1411,7 +1412,7 @@ function FeedCard({
         </div>
       )}
       {item.audio_url && (
-        <audio ref={audioRef} src={item.audio_url} preload="metadata" />
+        <audio ref={audioRef} src={playAudioUrl || undefined} preload="none" />
       )}
 
       {/* Image carousel arrows + dots — only when there are multiple images */}
