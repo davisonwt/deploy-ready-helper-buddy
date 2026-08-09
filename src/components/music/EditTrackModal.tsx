@@ -52,13 +52,19 @@ export function EditTrackModal({ track, isOpen, onClose, onSuccess }: EditTrackM
 
     try {
       setUploading(true);
+
+      const { data: authData } = await supabase.auth.getUser();
+      const userId = authData?.user?.id;
+      if (!userId) throw new Error('You must be signed in to upload an image');
+
       const fileExt = file.name.split('.').pop();
       const fileName = `${track.id}-artist-${Date.now()}.${fileExt}`;
-      const filePath = `artist-images/${fileName}`;
+      const filePath = `${userId}/artist-images/${fileName}`;
 
       const { error: uploadError } = await supabase.storage
         .from('music-tracks')
         .upload(filePath, file, { upsert: true });
+
 
       if (uploadError) throw uploadError;
 
