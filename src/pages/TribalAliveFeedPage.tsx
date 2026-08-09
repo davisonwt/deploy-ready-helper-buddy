@@ -1266,8 +1266,11 @@ function FeedCard({
   const audioRef = useRef<HTMLAudioElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
   const [playing, setPlaying] = useState(false);
+  const [loadingMedia, setLoadingMedia] = useState(false);
   const [time, setTime] = useState(0);
   const [imgIdx, setImgIdx] = useState(0);
+  const [playAudioUrl, setPlayAudioUrl] = useState<string | null>(null);
+  const [playVideoUrl, setPlayVideoUrl] = useState<string | null>(null);
   const PREVIEW = 45; // seconds
 
   const gallery = (item.images && item.images.length > 0)
