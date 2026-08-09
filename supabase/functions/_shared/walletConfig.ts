@@ -40,32 +40,38 @@ export async function loadWalletConfig(
         walletName: 'user'
       }
     } else {
-      // Load organization wallet credentials
+      // Organization wallet credentials live ONLY in secret storage, never in the database.
+      const apiKey = Deno.env.get('BINANCE_PAY_API_KEY')
+      const apiSecret = Deno.env.get('BINANCE_PAY_API_SECRET')
+      const merchantId = Deno.env.get('BINANCE_PAY_MERCHANT_ID') || undefined
+
+      if (!apiKey || !apiSecret) {
+        console.log(`Missing Binance Pay credentials for ${walletName}`)
+        return null
+      }
+
+      // Ensure the organization wallet is configured and active
       const { data, error } = await supabase
         .from('organization_wallets')
-        .select('api_key, api_secret, merchant_id')
+        .select('id, merchant_id')
         .eq('wallet_name', walletName)
         .eq('is_active', true)
         .single()
 
       if (error || !data) {
-        console.log(`No wallet config found for ${walletName}`)
-        return null
-      }
-
-      if (!data.api_key || !data.api_secret) {
-        console.log(`Incomplete API credentials for ${walletName}`)
+        console.log(`No active wallet found for ${walletName}`)
         return null
       }
 
       return {
-        apiKey: data.api_key,
-        apiSecret: data.api_secret,
-        merchantId: data.merchant_id || undefined,
+        apiKey,
+        apiSecret,
+        merchantId: data.merchant_id || merchantId,
         baseUrl: 'https://bpay.binanceapi.com',
         walletName
       }
     }
+
   } catch (error) {
     console.error(`Error loading wallet config for ${walletName}:`, error)
     return null
