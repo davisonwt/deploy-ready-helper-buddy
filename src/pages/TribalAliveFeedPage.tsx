@@ -1203,6 +1203,48 @@ export default function TribalAliveFeedPage() {
   );
 }
 
+/* ───────── private-bucket media resolution ───────── */
+
+const PRIVATE_MEDIA_BUCKETS = new Set([
+  'music-tracks', 'dj-music', 'premium-room', 'videos', 'recipe-media',
+  'chat-files', 'chat_files', 'chat-media', 'journal-media', 'study-uploads',
+  'live-session-music', 'live-session-docs', 'stream-recordings',
+  'radio-show-files', 'radio-session-assets', 'ai-voiceovers', 'sow2grow-1b',
+]);
+
+function extractBucketAndPath(url: string): { bucket: string; path: string } | null {
+  try {
+    const u = new URL(url, window.location.origin);
+    const m = u.pathname.match(/\/storage\/v1\/object\/(?:public|authenticated|sign)\/([^/]+)\/(.+)$/);
+    if (!m) return null;
+    return { bucket: m[1], path: decodeURIComponent(m[2].split('?')[0]) };
+  } catch {
+    return null;
+  }
+}
+
+/** Turns a stored media URL/path into a URL the browser can actually play. */
+async function resolvePlayableUrl(rawUrl: string | null | undefined): Promise<string | null> {
+  if (!rawUrl) return null;
+  if (rawUrl.startsWith('blob:') || rawUrl.startsWith('data:')) return rawUrl;
+
+  // Bare storage path (no host) — assume music-tracks, the most common case.
+  if (!/^https?:\/\//i.test(rawUrl)) {
+    const { data } = await supabase.storage
+      .from('music-tracks')
+      .createSignedUrl(rawUrl.replace(/^\/+/, ''), 60 * 60);
+    return data?.signedUrl || rawUrl;
+  }
+
+  const parts = extractBucketAndPath(rawUrl);
+  if (!parts || !PRIVATE_MEDIA_BUCKETS.has(parts.bucket)) return rawUrl;
+
+  const { data } = await supabase.storage
+    .from(parts.bucket)
+    .createSignedUrl(parts.path, 60 * 60);
+  return data?.signedUrl || rawUrl;
+}
+
 /* ───────── card with 45s preview + action rail ───────── */
 
 function FeedCard({
