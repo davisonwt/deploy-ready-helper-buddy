@@ -5721,8 +5721,6 @@ export type Database = {
       }
       organization_wallets: {
         Row: {
-          api_key: string | null
-          api_secret: string | null
           blockchain: string | null
           created_at: string
           id: string
@@ -5736,8 +5734,6 @@ export type Database = {
           wallet_type: string | null
         }
         Insert: {
-          api_key?: string | null
-          api_secret?: string | null
           blockchain?: string | null
           created_at?: string
           id?: string
@@ -5751,8 +5747,6 @@ export type Database = {
           wallet_type?: string | null
         }
         Update: {
-          api_key?: string | null
-          api_secret?: string | null
           blockchain?: string | null
           created_at?: string
           id?: string
@@ -14209,6 +14203,7 @@ export type Database = {
         Args: { _room_id: string; _user_id: string }
         Returns: boolean
       }
+      is_service_role: { Args: never; Returns: boolean }
       is_tribal_hearts_member: { Args: { _uid: string }; Returns: boolean }
       is_user_verified: { Args: { user_id_param?: string }; Returns: boolean }
       join_live_room_as_self: {
