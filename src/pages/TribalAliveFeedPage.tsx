@@ -29,6 +29,7 @@ import { fetchActiveProductsForFeed } from '@/api/products';
 import { useAuth } from '@/hooks/useAuth';
 import { useReferralCode } from '@/hooks/useReferralCode';
 import { useToast } from '@/hooks/use-toast';
+import { toast } from 'sonner';
 import { useProductBasket } from '@/contexts/ProductBasketContext';
 import { useTribalLiveOrchard } from '@/hooks/useTribalLiveOrchard';
 import { JITSI_DOMAIN } from '@/lib/jitsi-config';
