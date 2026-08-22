@@ -15,55 +15,57 @@ const Card: React.FC = () => {
   const spread = interpolate(frame, [0, 190], [12, 24], {
     extrapolateRight: "clamp",
   });
+  const glow =
+    "0 2px 2px rgba(0,0,0,1), 0 0 10px rgba(0,0,0,1), 0 0 26px rgba(0,0,0,0.95)";
   return (
-    <AbsoluteFill
-      style={{ justifyContent: "center", alignItems: "center", opacity }}
-    >
-      {/* heavy scrim so the type always reads against any shot */}
+    <AbsoluteFill style={{ opacity }}>
+      {/* full-frame darkening so the type always reads */}
+      <AbsoluteFill style={{ backgroundColor: "rgba(0,0,0,0.62)" }} />
       <AbsoluteFill
         style={{
           background:
-            "radial-gradient(ellipse at 50% 50%, rgba(0,0,0,0.94) 0%, rgba(0,0,0,0.86) 26%, rgba(0,0,0,0.55) 48%, rgba(0,0,0,0) 72%)",
+            "radial-gradient(ellipse 55% 32% at 50% 50%, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0.5) 55%, rgba(0,0,0,0) 100%)",
         }}
       />
-      <div
-        style={{
-          fontFamily,
-          fontWeight: 700,
-          fontSize: 128,
-          letterSpacing: spread,
-          color: "#FFF6E2",
-          WebkitTextStroke: "2px rgba(0,0,0,0.85)",
-          textShadow:
-            "0 0 4px rgba(0,0,0,1), 0 4px 14px rgba(0,0,0,1), 0 8px 60px rgba(0,0,0,1)",
-        }}
+      <AbsoluteFill
+        style={{ justifyContent: "center", alignItems: "center" }}
       >
-        SAMSON
-      </div>
-      <div
-        style={{
-          marginTop: 22,
-          height: 3,
-          width: 420,
-          background:
-            "linear-gradient(90deg, rgba(201,168,106,0) 0%, #E3C177 50%, rgba(201,168,106,0) 100%)",
-        }}
-      />
-      <div
-        style={{
-          marginTop: 24,
-          fontFamily,
-          fontWeight: 700,
-          fontSize: 42,
-          letterSpacing: 10,
-          color: "#F0D79B",
-          WebkitTextStroke: "1px rgba(0,0,0,0.8)",
-          textShadow:
-            "0 0 4px rgba(0,0,0,1), 0 3px 12px rgba(0,0,0,1), 0 6px 40px rgba(0,0,0,1)",
-        }}
-      >
-        JUST ONE MORE TIME
-      </div>
+        <div
+          style={{
+            fontFamily,
+            fontWeight: 700,
+            fontSize: 132,
+            lineHeight: 1,
+            letterSpacing: spread,
+            color: "#FFF7E6",
+            textShadow: glow,
+          }}
+        >
+          SAMSON
+        </div>
+        <div
+          style={{
+            marginTop: 26,
+            height: 3,
+            width: 460,
+            background:
+              "linear-gradient(90deg, rgba(227,193,119,0) 0%, #E3C177 50%, rgba(227,193,119,0) 100%)",
+          }}
+        />
+        <div
+          style={{
+            marginTop: 26,
+            fontFamily,
+            fontWeight: 700,
+            fontSize: 44,
+            letterSpacing: 12,
+            color: "#F5DFA8",
+            textShadow: glow,
+          }}
+        >
+          JUST ONE MORE TIME
+        </div>
+      </AbsoluteFill>
     </AbsoluteFill>
   );
 };
