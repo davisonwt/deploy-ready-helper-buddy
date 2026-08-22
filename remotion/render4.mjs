@@ -32,8 +32,6 @@ for (let start = 0; start < total; start += SIZE) {
     muted: true,
     crf: 18,
     chromiumOptions: { gl: "swangle" },
-    chromeMode: "chrome-for-testing",
-    browserExecutable: "/opt/ms-playwright/chromium-1194/chrome-linux/chrome",
     
     onProgress: ({ renderedFrames }) => {
       if (renderedFrames % 200 === 0) console.log("  f", renderedFrames);
