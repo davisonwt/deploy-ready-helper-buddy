@@ -130,8 +130,8 @@ export const SHOTS: Shot[] = [
   "i": 18,
   "start": 121.6,
   "end": 127.3,
-  "kind": "img",
-  "src": "samson/frames/shot18.png"
+  "kind": "vid",
+  "src": "samson/clips/shot18.mp4"
  },
  {
   "i": 19,
