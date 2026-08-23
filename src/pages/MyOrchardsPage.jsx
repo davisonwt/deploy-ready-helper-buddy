@@ -23,6 +23,11 @@ import {
 } from '../components/garden/seedCardBuilders'
 import { useMyContent } from '@/api/sowerContent'
 import VideoUploadModal from '@/components/community/VideoUploadModal.jsx'
+import BrandManagerDialog from '@/components/garden/BrandManagerDialog'
+import BrandIcon from '@/components/garden/BrandIcon'
+import { useMyBrands, useMyBrandAssignments, assignBrandToItem } from '@/api/sowerBrands'
+import { Input } from '@/components/ui/input'
+import { Search } from 'lucide-react'
 
 const WANDERING_ROLES = [
   { label: 'Wheel 🚗',      value: 'Wheel' },
