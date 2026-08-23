@@ -279,6 +279,8 @@ export default function PayoutSettingsPage() {
           <AddPaypalEmail onSaved={load} />
         </TabsContent>
       </Tabs>
+
+      {user && <CryptoPayoutSettings />}
     </div>
   );
 }
