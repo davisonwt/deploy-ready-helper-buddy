@@ -2983,12 +2983,15 @@ export type Database = {
       crypto_payout_transfers: {
         Row: {
           amount: number
+          amount_usd: number | null
           cluster: string
           created_at: string
           created_by: string | null
           destination_address: string
           destination_tag: number | null
           error_message: string | null
+          fx_rate: number | null
+          fx_sources: Json | null
           id: string
           network: string
           recipient_user_id: string | null
@@ -2999,12 +3002,15 @@ export type Database = {
         }
         Insert: {
           amount: number
+          amount_usd?: number | null
           cluster: string
           created_at?: string
           created_by?: string | null
           destination_address: string
           destination_tag?: number | null
           error_message?: string | null
+          fx_rate?: number | null
+          fx_sources?: Json | null
           id?: string
           network: string
           recipient_user_id?: string | null
@@ -3015,12 +3021,15 @@ export type Database = {
         }
         Update: {
           amount?: number
+          amount_usd?: number | null
           cluster?: string
           created_at?: string
           created_by?: string | null
           destination_address?: string
           destination_tag?: number | null
           error_message?: string | null
+          fx_rate?: number | null
+          fx_sources?: Json | null
           id?: string
           network?: string
           recipient_user_id?: string | null
