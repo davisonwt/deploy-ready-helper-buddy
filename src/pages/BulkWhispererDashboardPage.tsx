@@ -6,12 +6,14 @@ import { useAuth } from "@/hooks/useAuth";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, Megaphone, Sprout, TrendingUp, DollarSign, BadgeCheck, HandHeart } from "lucide-react";
+import { Loader2, Megaphone, Sprout, TrendingUp, DollarSign, BadgeCheck, HandHeart, Link as LinkIcon } from "lucide-react";
 import { toast } from "sonner";
 import {
   WHISPER_SHARE_PERCENT,
   WHISPER_FALLBACK_NOTE,
+  WHISPER_STATUS_ACTIVE,
 } from "@/lib/whisperer/policy";
+import { buildWhispererShareLink } from "@/lib/whisperer/attribution";
 
 /**
  * PRESCRIBED WHISPERER PATH (see src/lib/whisperer/policy.ts):
@@ -207,6 +209,23 @@ export default function BulkWhispererDashboardPage() {
     toast.success("Request sent — the sower must approve before you earn anything.");
   };
 
+  /**
+   * Step 4: once approved, this is the whisperer's OWN link. Every sale that
+   * comes through it is credited to them and paid out immediately when the
+   * buyer's payment clears — the sower does not approve payouts again.
+   */
+  const copyShareLink = async (a: Assignment) => {
+    if (!whispererId) return;
+    const slug = a.products?.slug ?? a.products?.id ?? a.product_id;
+    const link = buildWhispererShareLink(`/bulk/products/${slug}`, whispererId);
+    try {
+      await navigator.clipboard.writeText(link);
+      toast.success("Your share link is copied — every sale through it pays you.");
+    } catch {
+      toast.info(link);
+    }
+  };
+
   if (!user) {
     return (
       <div className="container mx-auto py-16 text-center">
@@ -267,6 +286,8 @@ export default function BulkWhispererDashboardPage() {
           <div className="text-muted-foreground">1. Register as a whisperer.</div>
           <div className="text-muted-foreground">2. Request permission on a sower's seed (status: pending — pays nothing).</div>
           <div className="text-muted-foreground">3. The sower approves — only then do you earn the {WHISPER_SHARE_PERCENT}% whisper share.</div>
+          <div className="text-muted-foreground">4. Copy YOUR share link on each approved seed and market it. Every sale that comes through your link is credited to you and paid the moment the buyer's payment clears — no further approval from the sower.</div>
+          <div className="text-muted-foreground">A seed can have several approved whisperers: the share always goes to the one whose link made the sale.</div>
           <div className="text-muted-foreground">{WHISPER_FALLBACK_NOTE}</div>
         </div>
       </Card>
@@ -376,6 +397,16 @@ export default function BulkWhispererDashboardPage() {
                     <div className="mt-2 text-xs text-muted-foreground">
                       Earned ${Number(a.total_earned || 0).toFixed(2)} · {a.status}
                     </div>
+                    {a.status === WHISPER_STATUS_ACTIVE && whispererId && (
+                      <Button
+                        size="sm"
+                        variant="secondary"
+                        className="w-full mt-3"
+                        onClick={() => copyShareLink(a)}
+                      >
+                        <LinkIcon className="h-4 w-4 mr-1" /> Copy my share link
+                      </Button>
+                    )}
                   </div>
                 </Card>
               );

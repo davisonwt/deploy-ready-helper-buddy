@@ -12,6 +12,7 @@ import { GradientPlaceholder } from '@/components/ui/GradientPlaceholder';
 import ProviderPicker from '@/components/payments/ProviderPicker';
 import { PayoutProviderId, quoteFee } from '@/lib/payments/providerFees';
 import { WHISPER_SHARE_RATE, WHISPER_SHARE_PERCENT, WHISPER_FALLBACK_NOTE, WHISPER_STATUS_ACTIVE } from '@/lib/whisperer/policy';
+import { getWhispererFor } from '@/lib/whisperer/attribution';
 
 export default function BestowalCheckout() {
   const { basketItems, removeFromBasket, totalAmount } = useProductBasket();
@@ -19,9 +20,11 @@ export default function BestowalCheckout() {
   const [processing, setProcessing] = useState(false);
   const [provider, setProvider] = useState<PayoutProviderId>('nowpayments');
 
-  // Which basket items actually have a whisperer attached? When none is
-  // involved the whisper share falls back to the sower (creator).
-  const [whisperedIds, setWhisperedIds] = useState<Set<string>>(new Set());
+  // WHO gets the whisper share on each line?
+  // A seed can have MANY approved whisperers — the share goes to the ONE whose
+  // share link brought this buyer here (see src/lib/whisperer/attribution.ts).
+  // No credited whisperer => the share falls back to the sower (creator).
+  const [credited, setCredited] = useState<Record<string, { whispererId: string; name: string }>>({});
 
   useEffect(() => {
     console.log('🛒 BestowalCheckout: Basket items', basketItems);
@@ -30,34 +33,45 @@ export default function BestowalCheckout() {
   useEffect(() => {
     const ids = basketItems.map((it: any) => it.id).filter(Boolean);
     if (ids.length === 0) {
-      setWhisperedIds(new Set());
+      setCredited({});
       return;
     }
     let cancelled = false;
     (async () => {
       const { data, error } = await supabase
         .from('product_whisperer_assignments')
-        .select('product_id, book_id, orchard_id, status')
-        .eq('status', WHISPER_STATUS_ACTIVE) // only sower-approved links are paid
+        .select('product_id, book_id, orchard_id, status, whisperer_id, whisperers:whisperer_id (id, display_name)')
+        .eq('status', WHISPER_STATUS_ACTIVE) // only sower-approved links can be paid
         .or(
           `product_id.in.(${ids.join(',')}),book_id.in.(${ids.join(',')}),orchard_id.in.(${ids.join(',')})`,
         );
       if (cancelled) return;
       if (error) {
         console.warn('Whisperer lookup failed, assuming none:', error.message);
-        setWhisperedIds(new Set());
+        setCredited({});
         return;
       }
-      const found = new Set<string>();
-      for (const row of data ?? []) {
-        for (const v of [row.product_id, row.book_id, row.orchard_id]) {
-          if (v) found.add(v);
+      const next: Record<string, { whispererId: string; name: string }> = {};
+      for (const itemId of ids) {
+        const attributed = getWhispererFor(itemId);
+        if (!attributed) continue; // nobody brought this sale -> sower keeps it
+        const match = (data ?? []).find(
+          (row: any) =>
+            row.whisperer_id === attributed &&
+            [row.product_id, row.book_id, row.orchard_id].includes(itemId),
+        );
+        if (match) {
+          next[itemId] = {
+            whispererId: attributed,
+            name: (match as any).whisperers?.display_name || 'Whisperer',
+          };
         }
       }
-      setWhisperedIds(found);
+      setCredited(next);
     })();
     return () => { cancelled = true; };
   }, [basketItems]);
+
 
 
   const handleBestow = async () => {
@@ -72,6 +86,8 @@ export default function BestowalCheckout() {
       const items = basketItems.map((it: any) => ({
         productId: it.id,
         qty: Math.max(1, Number(it.quantity ?? 1)),
+        // Whisperer credited with THIS sale (server re-validates the link).
+        whispererId: getWhispererFor(it.id),
       }));
 
       const { data, error } = await supabase.functions.invoke('create-basket-bestowal-order', {
@@ -125,13 +141,16 @@ export default function BestowalCheckout() {
 
   const feeQuote = quoteFee(provider, totalAmount);
 
-  // Split the subtotal into the part that has a whisperer attached and the part
-  // that does not. Without a whisperer the 15% whisper share goes to the sower.
+  // Only lines credited to an ACTIVE whisperer carry a whisper share; the rest
+  // of the 15% stays with the sower.
   const whisperedSubtotal = basketItems.reduce(
     (sum: number, it: any) =>
-      sum + (whisperedIds.has(it.id) ? Number(it.price || 0) * Math.max(1, Number(it.quantity ?? 1)) : 0),
+      sum + (credited[it.id] ? Number(it.price || 0) * Math.max(1, Number(it.quantity ?? 1)) : 0),
     0,
   );
+  const creditedNames = Array.from(
+    new Set(basketItems.map((it: any) => credited[it.id]?.name).filter(Boolean)),
+  ) as string[];
   const platformFee = totalAmount * 0.1;
   const adminFee = totalAmount * 0.05;
   const whisperFee = whisperedSubtotal * WHISPER_SHARE_RATE;
@@ -199,7 +218,9 @@ export default function BestowalCheckout() {
           </div>
           {whisperFee > 0 ? (
             <div className="flex justify-between text-muted-foreground">
-              <span>To Product Whisperers ({WHISPER_SHARE_PERCENT}%)</span>
+              <span>
+                To {creditedNames.length === 1 ? creditedNames[0] : 'the whisperers who brought this sale'} ({WHISPER_SHARE_PERCENT}%)
+              </span>
               <span className="text-accent">${whisperFee.toFixed(2)}</span>
             </div>
           ) : (

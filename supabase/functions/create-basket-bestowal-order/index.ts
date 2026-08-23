@@ -18,6 +18,12 @@ const NOWPAYMENTS_API = "https://api.nowpayments.io/v1";
 interface RequestItem {
   productId: string;
   qty?: number;
+  /**
+   * Whisperer credited with this sale (whisperers.id), captured from the
+   * whisperer's share link. CLIENT CLAIM ONLY — it is validated below against
+   * an ACTIVE (sower-approved) assignment before it can earn anything.
+   */
+  whispererId?: string | null;
 }
 
 interface RequestPayload {
@@ -105,6 +111,8 @@ Deno.serve(async (req) => {
       unit_price: number;
       qty: number;
       line_total: number;
+      whisperer_id: string | null;
+      whisperer_user_id: string | null;
     }> = [];
 
     let subtotal = 0;
@@ -118,6 +126,27 @@ Deno.serve(async (req) => {
       const qty = Math.max(1, Math.floor(Number(item.qty ?? 1)));
       const lineTotal = round2(unitPrice * qty);
       subtotal = round2(subtotal + lineTotal);
+
+      // --- Whisperer attribution (validated server-side) --------------------
+      // The buyer may arrive through a whisperer's share link. That whisperer
+      // is only credited when the sower ALREADY approved them on this seed
+      // (assignment status 'active'). Anything else pays nobody and the whisper
+      // share falls back to the sower.
+      let whispererId: string | null = null;
+      let whispererUserId: string | null = null;
+      if (item.whispererId) {
+        const { data: resolved, error: resolveErr } = await service.rpc(
+          "resolve_active_whisperer",
+          { _product_id: p.id, _whisperer_id: item.whispererId },
+        );
+        if (resolveErr) {
+          console.warn("whisperer resolve failed", resolveErr.message);
+        } else if (Array.isArray(resolved) && resolved.length > 0) {
+          whispererId = resolved[0].whisperer_id ?? null;
+          whispererUserId = resolved[0].whisperer_user_id ?? null;
+        }
+      }
+
       itemSnapshot.push({
         product_id: p.id,
         sower_id: (p as any).sower_id ?? null,
@@ -125,6 +154,8 @@ Deno.serve(async (req) => {
         unit_price: unitPrice,
         qty,
         line_total: lineTotal,
+        whisperer_id: whispererId,
+        whisperer_user_id: whispererUserId,
       });
     }
 

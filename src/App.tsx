@@ -11,6 +11,7 @@ import AudioUnlocker from "./components/audio/AudioUnlocker";
 import SoundUnlockBanner from "./components/audio/SoundUnlockBanner";
 import SacredDayBanner from "./components/SacredDayBanner";
 import { useReferralCapture } from "./hooks/useReferralCapture";
+import { useWhispererCapture } from "./hooks/useWhispererCapture";
 import { AuthProvider } from "./hooks/useAuth";
 import { BasketProvider } from "./hooks/useBasket";
 import { ProductBasketProvider } from "./contexts/ProductBasketContext";
@@ -34,6 +35,7 @@ import AppRoutes, { LoadingFallback } from "./routes/AppRoutes";
 
 function ReferralCaptureMount() {
   useReferralCapture();
+  useWhispererCapture();
   return null;
 }
 
