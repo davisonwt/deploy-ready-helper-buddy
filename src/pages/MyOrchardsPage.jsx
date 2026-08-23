@@ -384,33 +384,104 @@ export default function MyOrchardsPage() {
             </Card>
           </div>
 
+          {/* ── Search my garden ── */}
+          <div className='mb-6 rounded-2xl border border-cyan-400/15 bg-[#0f172a]/70 p-4 backdrop-blur'>
+            <div className='flex flex-col gap-3 md:flex-row md:items-center'>
+              <div className='relative flex-1'>
+                <Search className='pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400' />
+                <Input
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  placeholder='Search my seeds by name, description or genre…'
+                  className='border-cyan-400/20 bg-[#0a0f1a]/80 pl-9 text-white placeholder:text-slate-500'
+                />
+              </div>
+              <div className='min-w-[190px]'>
+                <Select value={categoryFilter} onValueChange={setCategoryFilter}>
+                  <SelectTrigger className='backdrop-blur bg-[#0a0f1a]/80 border border-cyan-400/20 text-white'>
+                    <SelectValue placeholder='All categories' />
+                  </SelectTrigger>
+                  <SelectContent className='z-50 bg-popover'>
+                    <SelectItem value='all'>All categories</SelectItem>
+                    <SelectItem value='seeds'>🌱 Seeds</SelectItem>
+                    <SelectItem value='orchards'>🌳 Orchards</SelectItem>
+                    <SelectItem value='music'>🎵 Music</SelectItem>
+                    <SelectItem value='books'>📚 Books</SelectItem>
+                    <SelectItem value='videos'>🎬 Videos</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className='min-w-[190px]'>
+                <Select value={brandFilter} onValueChange={setBrandFilter}>
+                  <SelectTrigger className='backdrop-blur bg-[#0a0f1a]/80 border border-cyan-400/20 text-white'>
+                    <SelectValue placeholder='All brands' />
+                  </SelectTrigger>
+                  <SelectContent className='z-50 bg-popover'>
+                    <SelectItem value='all'>All brands</SelectItem>
+                    {brands.map((b) => (
+                      <SelectItem key={b.id} value={b.id}>🏷 {b.name}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <Button variant='outline' onClick={() => setShowBrands(true)}>
+                🏷 My brands
+              </Button>
+            </div>
+            {searchActive && (
+              <p className='mt-2 text-xs text-slate-300'>
+                {resultCount} match{resultCount === 1 ? '' : 'es'} in your garden
+                <button type='button' onClick={() => { setSearch(''); setCategoryFilter('all'); setBrandFilter('all') }}
+                  className='ml-3 underline'>clear</button>
+              </p>
+            )}
+          </div>
+
           {/* ── 5 vertical category sections — your full living garden ── */}
           <div className='mb-8'>
-            <MyGardenSection title="Seeds"    emoji="🌱" accent="#22c55e" cards={seedCards}
-              emptyHint="No seeds yet — sow your first one above." />
-            <MyGardenSection title="Orchards" emoji="🌳" accent="#16a34a" cards={orchardCards}
-              emptyHint="No orchards yet — your created orchards live here." />
-            <MyGardenSection title="Music"    emoji="🎵" accent="#0ea5e9" cards={musicCards}
-              emptyHint="No tracks yet — drop a song from your Music Library." />
-            <MyGardenSection title="Books"    emoji="📚" accent="#fb923c" cards={bookCards}
-              emptyHint="No books yet — upload one in My S2G Library." />
-            <MyGardenSection
-              title="Videos"
-              emoji="🎬"
-              accent="#f87171"
-              cards={videoCards}
-              emptyHint="No videos yet — upload your first one below."
-              headerAction={
-                <Button
-                  size="sm"
-                  onClick={() => setShowVideoUpload(true)}
-                  className="bg-rose-500 hover:bg-rose-400 text-white"
-                >
-                  <Upload className="w-4 h-4 mr-1" /> Upload Video
-                </Button>
-              }
-            />
+            {inCategory('seeds') && (
+              <MyGardenSection title="Seeds"    emoji="🌱" accent="#22c55e" cards={seedCards}
+                brands={brands} brandByItem={brandByItem} onAssignBrand={handleAssignBrand}
+                emptyHint={searchActive ? 'No seeds match your search.' : 'No seeds yet — sow your first one above.'} />
+            )}
+            {inCategory('orchards') && (
+              <MyGardenSection title="Orchards" emoji="🌳" accent="#16a34a" cards={orchardCards}
+                brands={brands} brandByItem={brandByItem} onAssignBrand={handleAssignBrand}
+                emptyHint={searchActive ? 'No orchards match your search.' : 'No orchards yet — your created orchards live here.'} />
+            )}
+            {inCategory('music') && (
+              <MyGardenSection title="Music"    emoji="🎵" accent="#0ea5e9" cards={musicCards}
+                brands={brands} brandByItem={brandByItem} onAssignBrand={handleAssignBrand}
+                emptyHint={searchActive ? 'No tracks match your search.' : 'No tracks yet — drop a song from your Music Library.'} />
+            )}
+            {inCategory('books') && (
+              <MyGardenSection title="Books"    emoji="📚" accent="#fb923c" cards={bookCards}
+                brands={brands} brandByItem={brandByItem} onAssignBrand={handleAssignBrand}
+                emptyHint={searchActive ? 'No books match your search.' : 'No books yet — upload one in My S2G Library.'} />
+            )}
+            {inCategory('videos') && (
+              <MyGardenSection
+                title="Videos"
+                emoji="🎬"
+                accent="#f87171"
+                cards={videoCards}
+                brands={brands}
+                brandByItem={brandByItem}
+                onAssignBrand={handleAssignBrand}
+                emptyHint={searchActive ? 'No videos match your search.' : 'No videos yet — upload your first one below.'}
+                headerAction={
+                  <Button
+                    size="sm"
+                    onClick={() => setShowVideoUpload(true)}
+                    className="bg-rose-500 hover:bg-rose-400 text-white"
+                  >
+                    <Upload className="w-4 h-4 mr-1" /> Upload Video
+                  </Button>
+                }
+              />
+            )}
           </div>
+
 
           <div className='mb-8 space-y-4'>
             <div className='flex justify-center'>
