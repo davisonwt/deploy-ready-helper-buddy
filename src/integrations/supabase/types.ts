@@ -2983,12 +2983,15 @@ export type Database = {
       crypto_payout_transfers: {
         Row: {
           amount: number
+          amount_usd: number | null
           cluster: string
           created_at: string
           created_by: string | null
           destination_address: string
           destination_tag: number | null
           error_message: string | null
+          fx_rate: number | null
+          fx_sources: Json | null
           id: string
           network: string
           recipient_user_id: string | null
@@ -2999,12 +3002,15 @@ export type Database = {
         }
         Insert: {
           amount: number
+          amount_usd?: number | null
           cluster: string
           created_at?: string
           created_by?: string | null
           destination_address: string
           destination_tag?: number | null
           error_message?: string | null
+          fx_rate?: number | null
+          fx_sources?: Json | null
           id?: string
           network: string
           recipient_user_id?: string | null
@@ -3015,12 +3021,15 @@ export type Database = {
         }
         Update: {
           amount?: number
+          amount_usd?: number | null
           cluster?: string
           created_at?: string
           created_by?: string | null
           destination_address?: string
           destination_tag?: number | null
           error_message?: string | null
+          fx_rate?: number | null
+          fx_sources?: Json | null
           id?: string
           network?: string
           recipient_user_id?: string | null
@@ -14118,6 +14127,60 @@ export type Database = {
           },
         ]
       }
+      xrp_quotes: {
+        Row: {
+          consumed_at: string | null
+          created_at: string
+          destination_address: string | null
+          destination_tag: number | null
+          expires_at: string
+          id: string
+          locked_at: string
+          purpose: string
+          rate_sources: Json
+          reference: string | null
+          status: string
+          usd_amount: number
+          user_id: string
+          xrp_amount: number
+          xrp_usd_rate: number
+        }
+        Insert: {
+          consumed_at?: string | null
+          created_at?: string
+          destination_address?: string | null
+          destination_tag?: number | null
+          expires_at: string
+          id?: string
+          locked_at?: string
+          purpose?: string
+          rate_sources?: Json
+          reference?: string | null
+          status?: string
+          usd_amount: number
+          user_id?: string
+          xrp_amount: number
+          xrp_usd_rate: number
+        }
+        Update: {
+          consumed_at?: string | null
+          created_at?: string
+          destination_address?: string | null
+          destination_tag?: number | null
+          expires_at?: string
+          id?: string
+          locked_at?: string
+          purpose?: string
+          rate_sources?: Json
+          reference?: string | null
+          status?: string
+          usd_amount?: number
+          user_id?: string
+          xrp_amount?: number
+          xrp_usd_rate?: number
+        }
+        Relationships: []
+      }
     }
     Views: {
       admin_pending_credentials_v: {
@@ -14423,6 +14486,7 @@ export type Database = {
           ref_link_id: string
         }[]
       }
+      expire_stale_xrp_quotes: { Args: never; Returns: undefined }
       finalize_basket_order: {
         Args: { _basket_order_id: string }
         Returns: Json

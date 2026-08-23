@@ -18,6 +18,8 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { AlertTriangle, Loader2, ShieldAlert, Wallet } from 'lucide-react';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
+import XrpRateNotice from '@/components/payouts/XrpRateNotice';
+
 import { useAuth } from '@/hooks/useAuth';
 import {
   EXCHANGE_TAG_WARNING,
@@ -186,7 +188,10 @@ export default function CryptoPayoutSettings() {
               </RadioGroup>
             </div>
 
+            {isXrp && <XrpRateNotice context="payout" />}
+
             {isXrp && (
+
               <div className="space-y-2">
                 <Label>What kind of XRP wallet is this?</Label>
                 <RadioGroup

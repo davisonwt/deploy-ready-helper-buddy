@@ -119,7 +119,7 @@ Deno.serve(async (req) => {
       .in("user_id", userIds.length > 0 ? userIds : ["00000000-0000-0000-0000-000000000000"]);
     const profileByUser = new Map((profiles ?? []).map((p: any) => [p.user_id, p]));
 
-    const xrpUsdRate = Number(Deno.env.get("XRP_USD_RATE") ?? "");
+    
 
     const outcomes: Outcome[] = [];
 
@@ -157,17 +157,16 @@ Deno.serve(async (req) => {
           reference: `whisperer_earnings:${wid}`,
         };
       } else if (network === "xrp") {
-        if (!Number.isFinite(xrpUsdRate) || xrpUsdRate <= 0) {
-          // We will not guess a conversion rate for real money.
-          outcomes.push({ ...base, reason: "xrp_usd_rate_not_configured", network });
-          continue;
-        }
+        // XRP is a rail, not a unit of account: we hand the sender the USD the
+        // whisperer earned and it converts at the live rate at send time, so
+        // they always receive the full dollar value regardless of price moves.
         fn = "send-xrp-payout";
         payload = {
           recipient_user_id: userId,
-          amount: round2(amountUsd / xrpUsdRate),
+          amount_usd: amountUsd,
           reference: `whisperer_earnings:${wid}`,
         };
+
       } else {
         outcomes.push({ ...base, reason: `unsupported_payout_network:${network}`, network });
         continue;

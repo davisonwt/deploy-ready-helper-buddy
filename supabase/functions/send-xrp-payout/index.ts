@@ -12,14 +12,22 @@
 // entirely for personal / self-custody wallets.
 //
 // Caller must be an admin/gosat user, or the service role.
+//
+// AMOUNTS: USD is the unit of account. Prefer sending { amount_usd } — the
+// function converts at the live median XRP/USD rate at the moment of sending,
+// so the recipient receives exactly what they earned in dollars. { amount }
+// (raw XRP) is still accepted for manual/operational transfers.
+//
 // Body: { recipient_user_id?: string, destination_address?: string,
 //         destination_tag?: number|null, wallet_type?: 'personal'|'custodial',
-//         amount: number (XRP), reference?: string }
+//         amount_usd?: number, amount?: number (XRP), reference?: string }
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
-import { Client, Wallet, xrpToDrops } from "https://esm.sh/xrpl@4.0.0";
+import { Client, Wallet, xrpToDrops } from "npm:xrpl@4.0.0";
 import { validateDestinationTag, validateXrpAddress } from "../_shared/cryptoAddress.ts";
 import { getXrpNetwork, getXrpRpcUrl } from "../_shared/cryptoNetworks.ts";
+import { assertRateFresh, getXrpUsdRate, usdToXrp, xrpToUsd } from "../_shared/xrpRate.ts";
+
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -68,8 +76,28 @@ Deno.serve(async (req) => {
     const body = await req.json().catch(() => null);
     if (!body) return json({ error: "invalid JSON body" }, 400);
 
-    const amount = Number(body.amount);
-    if (!Number.isFinite(amount) || amount <= 0) return json({ error: "amount must be > 0" }, 400);
+    // USD-denominated payouts convert at the live rate at the moment of sending,
+    // so a mover in XRP never changes what the member was promised in dollars.
+    const amountUsdIn = Number(body.amount_usd);
+    let amount = Number(body.amount);
+    let fxRate: number | null = null;
+    let fxSources: unknown = null;
+    let amountUsd: number | null = null;
+
+    if (Number.isFinite(amountUsdIn) && amountUsdIn > 0) {
+      const rate = await getXrpUsdRate();
+      assertRateFresh(rate.observedAt);
+      fxRate = rate.rate;
+      fxSources = rate.sources;
+      amountUsd = Math.round(amountUsdIn * 100) / 100;
+      amount = usdToXrp(amountUsd, rate.rate);
+    }
+
+    if (!Number.isFinite(amount) || amount <= 0) {
+      return json({ error: "amount_usd or amount must be > 0" }, 400);
+    }
+    if (amountUsd === null && fxRate !== null) amountUsd = xrpToUsd(amount, fxRate);
+
 
     let destination: string | null = typeof body.destination_address === "string"
       ? body.destination_address.trim()
@@ -123,6 +151,10 @@ Deno.serve(async (req) => {
         destination_address: destination,
         destination_tag: tag,
         amount,
+        amount_usd: amountUsd,
+        fx_rate: fxRate,
+        fx_sources: fxSources,
+
         status: "pending",
         reference: body.reference ?? null,
         created_by: callerId,
@@ -160,7 +192,16 @@ Deno.serve(async (req) => {
       .update({ status: "sent", tx_hash: result.result.hash, updated_at: new Date().toISOString() })
       .eq("id", transferId);
 
-    return json({ success: true, network, hash: result.result.hash, transfer_id: transferId });
+    return json({
+      success: true,
+      network,
+      hash: result.result.hash,
+      transfer_id: transferId,
+      amount_xrp: amount,
+      amount_usd: amountUsd,
+      fx_rate: fxRate,
+    });
+
   } catch (e) {
     const message = e instanceof Error ? e.message : "unknown error";
     console.error("send-xrp-payout error", message);
