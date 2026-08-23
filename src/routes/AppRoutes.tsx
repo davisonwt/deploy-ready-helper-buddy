@@ -69,6 +69,7 @@ import {
   WalletSettingsPage,
   PayoutSettingsPage,
   BooksPage,
+  BooksCatalogItemPage,
   MyWalletPage,
   GosatTreasuryPage,
   NowPaymentsTestPage,
