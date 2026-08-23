@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
 import { toast } from 'sonner';
-import { Info, Loader2, Package, Plus, Store } from 'lucide-react';
+import { Info, Loader2, Package, Plus, RefreshCw, Store } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -24,6 +24,16 @@ export default function CatalogTab({ businessId, booksEnabled, items, income, on
   const [name, setName] = useState('');
   const [price, setPrice] = useState('');
   const [saving, setSaving] = useState(false);
+  const [syncing, setSyncing] = useState(false);
+
+  const syncMarketplace = async () => {
+    setSyncing(true);
+    const { data, error } = await supabase.rpc('books_backfill_products' as any, { _business_id: businessId } as any);
+    setSyncing(false);
+    if (error) return toast.error(error.message);
+    toast.success(`${Number(data) || 0} marketplace listing(s) synced into your catalog`);
+    onChanged();
+  };
 
   const totals = useMemo(() => {
     const sales = income.filter((i) => i.income_type === 'sale');
@@ -111,10 +121,16 @@ export default function CatalogTab({ businessId, booksEnabled, items, income, on
               <Input id="item-price" inputMode="decimal" value={price} onChange={(e) => setPrice(e.target.value)} />
             </div>
           </div>
-          <Button onClick={addItem} disabled={saving}>
-            {saving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Plus className="mr-2 h-4 w-4" />}
-            Add item
-          </Button>
+          <div className="flex flex-wrap gap-2">
+            <Button onClick={addItem} disabled={saving}>
+              {saving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Plus className="mr-2 h-4 w-4" />}
+              Add item
+            </Button>
+            <Button variant="outline" onClick={syncMarketplace} disabled={syncing || !booksEnabled}>
+              {syncing ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <RefreshCw className="mr-2 h-4 w-4" />}
+              Sync my marketplace listings
+            </Button>
+          </div>
 
           <div className="space-y-2 pt-2">
             {items.length === 0 && <p className="text-sm text-muted-foreground">No items yet.</p>}
