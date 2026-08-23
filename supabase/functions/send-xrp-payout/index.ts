@@ -151,6 +151,10 @@ Deno.serve(async (req) => {
         destination_address: destination,
         destination_tag: tag,
         amount,
+        amount_usd: amountUsd,
+        fx_rate: fxRate,
+        fx_sources: fxSources,
+
         status: "pending",
         reference: body.reference ?? null,
         created_by: callerId,
