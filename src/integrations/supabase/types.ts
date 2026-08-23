@@ -14308,6 +14308,10 @@ export type Database = {
             }
             Returns: boolean
           }
+      books_backfill_products: {
+        Args: { _business_id: string }
+        Returns: number
+      }
       books_company_for_user: { Args: { _user_id: string }; Returns: string }
       browse_public_rooms: {
         Args: never
