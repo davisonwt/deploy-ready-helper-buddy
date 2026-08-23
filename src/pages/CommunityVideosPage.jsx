@@ -37,7 +37,7 @@ export default function CommunityVideosPage() {
                 <Video className="h-8 w-8 text-primary" style={{filter: 'drop-shadow(1px 1px 0 white) drop-shadow(-1px -1px 0 white) drop-shadow(1px -1px 0 white) drop-shadow(-1px 1px 0 white)'}} />
                 Community Videos
               </h1>
-              <p className="text-lg text-slate-800 font-medium" style={{textShadow: '1px 1px 0 white, -1px -1px 0 white, 1px -1px 0 white, -1px 1px 0 white'}}>
+              <p className="text-lg font-medium text-slate-100">
                 Share your marketing insights and discover what's working for other sowers
               </p>
             </div>

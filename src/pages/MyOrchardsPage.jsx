@@ -28,6 +28,7 @@ import BrandIcon from '@/components/garden/BrandIcon'
 import { useMyBrands, useMyBrandAssignments, assignBrandToItem } from '@/api/sowerBrands'
 import { Input } from '@/components/ui/input'
 import { Search } from 'lucide-react'
+import { useSignedImage } from '@/lib/storage/signedImage'
 
 const WANDERING_ROLES = [
   { label: 'Wheel 🚗',      value: 'Wheel' },
