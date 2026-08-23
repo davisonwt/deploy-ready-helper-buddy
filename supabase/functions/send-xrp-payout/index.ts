@@ -192,7 +192,16 @@ Deno.serve(async (req) => {
       .update({ status: "sent", tx_hash: result.result.hash, updated_at: new Date().toISOString() })
       .eq("id", transferId);
 
-    return json({ success: true, network, hash: result.result.hash, transfer_id: transferId });
+    return json({
+      success: true,
+      network,
+      hash: result.result.hash,
+      transfer_id: transferId,
+      amount_xrp: amount,
+      amount_usd: amountUsd,
+      fx_rate: fxRate,
+    });
+
   } catch (e) {
     const message = e instanceof Error ? e.message : "unknown error";
     console.error("send-xrp-payout error", message);
