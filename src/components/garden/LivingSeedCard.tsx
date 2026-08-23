@@ -17,6 +17,9 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Share2, ChevronLeft, ChevronRight } from 'lucide-react';
+import { useSignedImages } from '@/lib/storage/signedImage';
+import ShareSeedDialog from '@/components/share/ShareSeedDialog';
+
 import LivingButton from '@/components/LivingButton';
 import { useTribalLiveOrchard, type BloomStage } from '@/hooks/useTribalLiveOrchard';
 import { useReferralCode } from '@/hooks/useReferralCode';
