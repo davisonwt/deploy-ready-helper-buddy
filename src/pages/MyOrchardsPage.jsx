@@ -659,6 +659,23 @@ export default function MyOrchardsPage() {
         </div>
       </div>
       <VideoUploadModal isOpen={showVideoUpload} onClose={() => setShowVideoUpload(false)} />
+      <BrandManagerDialog
+        open={showBrands}
+        onOpenChange={setShowBrands}
+        userId={user?.id}
+        brands={brands}
+        onChanged={refetchBrands}
+      />
     </div>
   )
 }
+
+function HeroBrandLogo({ brand }) {
+  const signed = useSignedImage(brand?.logo_url || undefined)
+  const src = signed || brand?.logo_url
+  if (src) {
+    return <img src={src} alt={`${brand.name} logo`} className='h-12 w-12 rounded-xl object-cover' />
+  }
+  return <Sprout className='w-12 h-12 text-cyan-300' />
+}
+
