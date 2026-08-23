@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { fetchProductsBySower } from '@/api/products';
+import { SOWER_PUBLIC_COLS } from '@/api/products';
 import { useAuth } from '@/hooks/useAuth';
 import ProductCard from '@/components/products/ProductCard';
 import CategoryFilter from '@/components/products/CategoryFilter';
@@ -66,18 +66,18 @@ export default function MyProductsPage() {
 
       const { data, error } = await supabase
         .from('products')
-        .select(`*, sowers ( ${SOWER_PUBLIC_COLS} )`)
+        .select(`*, sowers (${SOWER_PUBLIC_COLS})` as any)
         .or(filters.join(','))
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      return data || [];
+      return (data as any[]) || [];
     },
     enabled: !!user?.id
   });
 
 
-  const filteredProducts = products?.filter(product => {
+  const filteredProducts = (products as any[])?.filter((product: any) => {
     const matchesCategory = selectedCategory === 'all' || product.category === selectedCategory;
     const matchesType = selectedType === 'all' || product.type === selectedType;
     const matchesFormat = selectedFormat === 'all' || (selectedFormat === 'single' && !isAlbum(product)) || (selectedFormat === 'album' && isAlbum(product));
