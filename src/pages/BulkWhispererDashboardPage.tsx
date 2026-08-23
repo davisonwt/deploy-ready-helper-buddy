@@ -209,6 +209,23 @@ export default function BulkWhispererDashboardPage() {
     toast.success("Request sent — the sower must approve before you earn anything.");
   };
 
+  /**
+   * Step 4: once approved, this is the whisperer's OWN link. Every sale that
+   * comes through it is credited to them and paid out immediately when the
+   * buyer's payment clears — the sower does not approve payouts again.
+   */
+  const copyShareLink = async (a: Assignment) => {
+    if (!whispererId) return;
+    const slug = a.products?.slug ?? a.products?.id ?? a.product_id;
+    const link = buildWhispererShareLink(`/bulk/products/${slug}`, whispererId);
+    try {
+      await navigator.clipboard.writeText(link);
+      toast.success("Your share link is copied — every sale through it pays you.");
+    } catch {
+      toast.info(link);
+    }
+  };
+
   if (!user) {
     return (
       <div className="container mx-auto py-16 text-center">
