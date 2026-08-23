@@ -42,8 +42,11 @@ export default function MyGardenSection({ title, emoji, accent = '#22c55e', card
 function GardenCard({ card, accent, navigate }) {
   const [menuOpen, setMenuOpen] = useState(false)
   const [previewing, setPreviewing] = useState(false)
+  const [shareOpen, setShareOpen] = useState(false)
+  const signedImage = useSignedImage(card.image)
   const audioRef = useRef(null)
   const videoRef = useRef(null)
+
 
   const goLive = () => navigate(`/grove-station?seed=${encodeURIComponent(card.liveKey || card.id)}`)
   const handlePlay = () => {
