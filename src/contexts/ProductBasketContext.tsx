@@ -24,7 +24,7 @@ interface ProductBasketContextType {
 const ProductBasketContext = createContext<ProductBasketContextType | undefined>(undefined);
 
 export function ProductBasketProvider({ children }: { children: ReactNode }) {
-  const [basketItems, setBasketItems] = useState<Product[]>([]);
+  const [basketItems, setBasketItems] = useState<Product[]>(() => { const saved = localStorage.getItem("productBasket"); if (saved) { try { return JSON.parse(saved); } catch (e) { console.error("Error parsing basket:", e); } } return []; });
   const isInitialMount = useRef(true);
 
   // Load basket from localStorage on mount
