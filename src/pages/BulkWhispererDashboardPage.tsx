@@ -6,7 +6,28 @@ import { useAuth } from "@/hooks/useAuth";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, Megaphone, Sprout, TrendingUp, DollarSign, BadgeCheck } from "lucide-react";
+import { Loader2, Megaphone, Sprout, TrendingUp, DollarSign, BadgeCheck, HandHeart } from "lucide-react";
+import { toast } from "sonner";
+import {
+  WHISPER_SHARE_PERCENT,
+  WHISPER_FALLBACK_NOTE,
+} from "@/lib/whisperer/policy";
+
+/**
+ * PRESCRIBED WHISPERER PATH (see src/lib/whisperer/policy.ts):
+ * register -> REQUEST a seed (status 'pending') -> SOWER APPROVES (status
+ * 'active') -> only then is the whisper share paid. A pending request earns
+ * nothing; the share stays with the sower until permission is granted.
+ */
+
+type OpenSeed = {
+  id: string;
+  title: string;
+  cover_image_url: string | null;
+  whisperer_commission_percent: number | null;
+  sower_user_id: string | null;
+  sower_name: string;
+};
 
 type Assignment = {
   id: string;
@@ -51,6 +72,8 @@ export default function BulkWhispererDashboardPage() {
   const [assignments, setAssignments] = useState<Assignment[]>([]);
   const [suggestions, setSuggestions] = useState<SowerSuggestion[]>([]);
   const [totals, setTotals] = useState({ pending: 0, paid: 0, bestowals: 0 });
+  const [openSeeds, setOpenSeeds] = useState<OpenSeed[]>([]);
+  const [requesting, setRequesting] = useState<string | null>(null);
 
   useEffect(() => {
     document.title = "Whisperer Dashboard — Sow2Grow";
@@ -125,12 +148,64 @@ export default function BulkWhispererDashboardPage() {
         .slice(0, 8);
       if (!cancelled) setSuggestions(sugg);
 
+      // Seeds that are open to whisperers and that I can request permission for
+      const { data: openRows } = await supabase
+        .from("products")
+        .select(
+          "id, title, cover_image_url, whisperer_commission_percent, sowers:sower_id (display_name, user_id)",
+        )
+        .eq("has_whisperer", true)
+        .eq("status", "active")
+        .limit(60);
+      if (!cancelled) {
+        setOpenSeeds(
+          ((openRows as any[]) || []).map((p) => ({
+            id: p.id,
+            title: p.title,
+            cover_image_url: p.cover_image_url,
+            whisperer_commission_percent: p.whisperer_commission_percent,
+            sower_user_id: p.sowers?.user_id ?? null,
+            sower_name: p.sowers?.display_name ?? "Sower",
+          })),
+        );
+      }
+
       setLoading(false);
     })();
     return () => {
       cancelled = true;
     };
   }, [user]);
+
+  /** Step 2 of the path: ask the sower for permission. Always 'pending'. */
+  const requestSeed = async (seed: OpenSeed) => {
+    if (!whispererId) {
+      toast.error("Register as a whisperer first.");
+      return;
+    }
+    if (!seed.sower_user_id) {
+      toast.error("This sower has no linked account yet.");
+      return;
+    }
+    setRequesting(seed.id);
+    const { error } = await supabase.from("product_whisperer_assignments").insert({
+      product_id: seed.id,
+      whisperer_id: whispererId,
+      sower_id: seed.sower_user_id,
+      commission_percent: seed.whisperer_commission_percent ?? WHISPER_SHARE_PERCENT,
+      status: "pending",
+    });
+    setRequesting(null);
+    if (error) {
+      toast.error(
+        error.message.includes("duplicate")
+          ? "You already have an open request for this seed."
+          : error.message,
+      );
+      return;
+    }
+    toast.success("Request sent — the sower must approve before you earn anything.");
+  };
 
   if (!user) {
     return (
@@ -185,6 +260,56 @@ export default function BulkWhispererDashboardPage() {
           <div className="text-2xl font-bold mt-1">{totals.bestowals}</div>
         </Card>
       </div>
+
+      <Card className="p-4 mb-8 border-dashed">
+        <div className="text-sm space-y-1">
+          <div className="font-semibold">How a whisperer gets paid</div>
+          <div className="text-muted-foreground">1. Register as a whisperer.</div>
+          <div className="text-muted-foreground">2. Request permission on a sower's seed (status: pending — pays nothing).</div>
+          <div className="text-muted-foreground">3. The sower approves — only then do you earn the {WHISPER_SHARE_PERCENT}% whisper share.</div>
+          <div className="text-muted-foreground">{WHISPER_FALLBACK_NOTE}</div>
+        </div>
+      </Card>
+
+      <section className="mb-10">
+        <div className="flex items-center justify-between mb-3">
+          <h2 className="text-xl font-semibold">Seeds open to whisperers</h2>
+          <Badge variant="secondary">{openSeeds.length}</Badge>
+        </div>
+        {openSeeds.length === 0 ? (
+          <Card className="p-6 text-center text-muted-foreground text-sm">
+            No seeds are open to whisperers right now.
+          </Card>
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+            {openSeeds.map((s) => (
+              <Card key={s.id} className="p-3 flex items-center gap-3">
+                <div className="h-12 w-12 rounded bg-muted overflow-hidden shrink-0">
+                  {s.cover_image_url ? (
+                    <img src={s.cover_image_url} alt={s.title} className="h-full w-full object-cover" loading="lazy" />
+                  ) : (
+                    <div className="h-full w-full flex items-center justify-center"><Sprout className="h-5 w-5 text-muted-foreground" /></div>
+                  )}
+                </div>
+                <div className="min-w-0 flex-1">
+                  <div className="font-medium text-sm truncate">{s.title}</div>
+                  <div className="text-xs text-muted-foreground truncate">
+                    {s.sower_name} · {s.whisperer_commission_percent ?? WHISPER_SHARE_PERCENT}%
+                  </div>
+                </div>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  disabled={!whispererId || requesting === s.id}
+                  onClick={() => requestSeed(s)}
+                >
+                  <HandHeart className="h-4 w-4 mr-1" /> Request
+                </Button>
+              </Card>
+            ))}
+          </div>
+        )}
+      </section>
 
       <section className="mb-10">
         <div className="flex items-center justify-between mb-3">

@@ -209,3 +209,4 @@ export const ClassroomDashboardPage = lazyWithRetry(() => import('@/pages/Classr
 export const SkillDropPage = lazyWithRetry(() => import('@/pages/SkillDropPage'), 'SkillDropPage');
 export const BecomeWhispererPage = lazy(() => import('@/pages/BecomeWhispererPage'));
 export const WhisperersFeedPage = lazy(() => import('@/pages/WhisperersFeedPage'));
+export const WhispererRequestsPage = lazy(() => import('@/pages/WhispererRequestsPage'));

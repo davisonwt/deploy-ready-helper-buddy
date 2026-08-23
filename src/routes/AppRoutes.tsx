@@ -124,6 +124,7 @@ import {
   SkillDropPage,
   BecomeWhispererPage,
   WhisperersFeedPage,
+  WhispererRequestsPage,
   PrescriptionSubmitPage,
   PrescriptionsInboxPage,
 } from './lazyPages';
@@ -264,6 +265,9 @@ const AppRoutes = () => (
     } />
     <Route path="/whisperers" element={
       <ProtectedRoute><Suspense fallback={<LoadingFallback />}><WhisperersFeedPage /></Suspense></ProtectedRoute>
+    } />
+    <Route path="/whisperer-requests" element={
+      <ProtectedRoute><Suspense fallback={<LoadingFallback />}><WhispererRequestsPage /></Suspense></ProtectedRoute>
     } />
     <Route path="/become-a-whisperer" element={
       <ProtectedRoute><Suspense fallback={<LoadingFallback />}><BecomeWhispererPage /></Suspense></ProtectedRoute>

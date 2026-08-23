@@ -330,6 +330,11 @@ export default function MyOrchardsPage() {
                     <Store size={18} /> Business Settings
                   </LivingButton>
                 </Link>
+                <Link to="/whisperer-requests" style={{ textDecoration: 'none', minWidth: 200 }}>
+                  <LivingButton variant="share" height={50} borderRadius={12} fontSize={14} letterSpacing="1px">
+                    🌬️ Whisperer Requests
+                  </LivingButton>
+                </Link>
               </div>
               <div className='mt-5 flex flex-wrap items-center justify-center gap-2'>
                 <span className='text-xs font-semibold uppercase tracking-wider text-slate-300'>SeedFlows by scale</span>
