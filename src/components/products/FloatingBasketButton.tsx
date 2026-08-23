@@ -1,4 +1,4 @@
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import { useProductBasket } from '@/contexts/ProductBasketContext';
 import { Button } from '@/components/ui/button';
 import { ShoppingCart } from 'lucide-react';
@@ -7,10 +7,9 @@ import { motion, AnimatePresence } from 'framer-motion';
 
 export default function FloatingBasketButton() {
   const { itemCount } = useProductBasket();
-  
-  console.log('FloatingBasketButton itemCount:', itemCount);
+  const location = useLocation();
 
-  if (itemCount === 0) return null;
+  if (itemCount === 0 || location.pathname === '/products/basket') return null;
 
   return (
     <AnimatePresence>

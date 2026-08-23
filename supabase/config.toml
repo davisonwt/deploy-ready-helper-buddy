@@ -45,6 +45,9 @@ verify_jwt = false
 [functions.create-stripe-payment]
 verify_jwt = true
 
+[functions.create-basket-bestowal-order]
+verify_jwt = false
+
 [functions.create-eft-payment]
 verify_jwt = true
 
