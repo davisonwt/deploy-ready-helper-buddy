@@ -29,6 +29,8 @@ import { useMyBrands, useMyBrandAssignments, assignBrandToItem } from '@/api/sow
 import { Input } from '@/components/ui/input'
 import { Search } from 'lucide-react'
 import { useSignedImage } from '@/lib/storage/signedImage'
+import { BookOpenCheck } from 'lucide-react'
+import { useBooksBusiness } from '@/hooks/useBooksBusiness'
 
 const WANDERING_ROLES = [
   { label: 'Wheel 🚗',      value: 'Wheel' },
@@ -330,6 +332,13 @@ export default function MyOrchardsPage() {
                     <Store size={18} /> Business Settings
                   </LivingButton>
                 </Link>
+                {isBusinessUser && (
+                  <Link to="/books" style={{ textDecoration: 'none', minWidth: 200 }}>
+                    <LivingButton variant="share" height={50} borderRadius={12} fontSize={14} letterSpacing="1px">
+                      <BookOpenCheck size={18} /> Books
+                    </LivingButton>
+                  </Link>
+                )}
                 <Link to="/whisperer-requests" style={{ textDecoration: 'none', minWidth: 200 }}>
                   <LivingButton variant="share" height={50} borderRadius={12} fontSize={14} letterSpacing="1px">
                     🌬️ Whisperer Requests
