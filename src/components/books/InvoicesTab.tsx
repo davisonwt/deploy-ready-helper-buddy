@@ -78,13 +78,37 @@ export default function InvoicesTab({ businessId, invoices, onChanged }: Props) 
           <CardTitle className="text-base">Create &amp; send an invoice</CardTitle>
         </CardHeader>
         <CardContent className="space-y-3">
+          <div className="space-y-1.5">
+            <Label>Catalog item (optional)</Label>
+            <Select
+              value={itemId}
+              onValueChange={(v) => {
+                setItemId(v);
+                const it = items.find((i) => i.id === v);
+                if (it) {
+                  if (!amount) setAmount(String(it.unit_price));
+                  if (!notes) setNotes(it.name);
+                }
+              }}
+            >
+              <SelectTrigger><SelectValue placeholder="No item — free-form invoice" /></SelectTrigger>
+              <SelectContent className="max-h-72">
+                <SelectItem value="__none">No item</SelectItem>
+                {items.map((it) => (
+                  <SelectItem key={it.id} value={it.id}>
+                    {it.name} · {fmt(it.unit_price)}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
           <div className="grid gap-3 sm:grid-cols-3">
             <div className="space-y-1.5">
               <Label htmlFor="inv-client">Client</Label>
               <Input id="inv-client" value={client} onChange={(e) => setClient(e.target.value)} placeholder="Client or company" />
             </div>
             <div className="space-y-1.5">
-              <Label htmlFor="inv-amount">Amount (ZAR)</Label>
+              <Label htmlFor="inv-amount">Amount ({currency})</Label>
               <Input id="inv-amount" inputMode="decimal" value={amount} onChange={(e) => setAmount(e.target.value)} placeholder="0.00" />
             </div>
             <div className="space-y-1.5">
@@ -92,6 +116,7 @@ export default function InvoicesTab({ businessId, invoices, onChanged }: Props) 
               <Input id="inv-due" type="date" value={dueDate} onChange={(e) => setDueDate(e.target.value)} />
             </div>
           </div>
+
           <div className="space-y-1.5">
             <Label htmlFor="inv-notes">Notes</Label>
             <Textarea id="inv-notes" rows={2} value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="What is this invoice for?" />
