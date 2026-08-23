@@ -6371,6 +6371,8 @@ export type Database = {
           sower_amount: number
           sower_id: string | null
           status: string | null
+          whisperer_amount: number
+          whisperer_id: string | null
         }
         Insert: {
           amount: number
@@ -6389,6 +6391,8 @@ export type Database = {
           sower_amount: number
           sower_id?: string | null
           status?: string | null
+          whisperer_amount?: number
+          whisperer_id?: string | null
         }
         Update: {
           amount?: number
@@ -6407,6 +6411,8 @@ export type Database = {
           sower_amount?: number
           sower_id?: string | null
           status?: string | null
+          whisperer_amount?: number
+          whisperer_id?: string | null
         }
         Relationships: [
           {
@@ -14370,6 +14376,15 @@ export type Database = {
       reorder_hand_raise_queue: {
         Args: { call_session_id_param: string }
         Returns: undefined
+      }
+      resolve_active_whisperer: {
+        Args: { _product_id: string; _whisperer_id: string }
+        Returns: {
+          assignment_id: string
+          commission_percent: number
+          whisperer_id: string
+          whisperer_user_id: string
+        }[]
       }
       respond_tribal_hearts_spark: {
         Args: { _accept: boolean; _match_id: string }
