@@ -1,73 +1,81 @@
+# Whisperer Attribution & Three-Way Payout — Investigation Report
 
-# Pharmacy pilot → reusable "Regulated Business" template
+Everything below is confirmed against the live schema and current code, not assumed.
 
-Goal: onboard your friend's pharmacy end-to-end as a stress test, and generalize the pieces so any regulated seller (clinic, herbalist, vet, optician…) can reuse the exact same flow. Reuse what already exists — bulk product upload, ChatApp, product images, courier tables — and only add the missing regulated-seller pieces.
+## 1. How a whisperer's approved link to a product is stored
 
-## What we're building
+Table: `product_whisperer_assignments`
+- `id`, `whisperer_id` -> `whisperers.id`, `sower_id`
+- one of `product_id` / `orchard_id` / `book_id` (the seed being marketed)
+- `commission_percent` (per-assignment, sower-set)
+- `status` — only `'active'` pays (DB trigger `enforce_whisperer_assignment_flow` blocks self-approval)
+- rolling counters `total_bestowals`, `total_earned`
 
-1. **Onboard the pharmacy as a Sower** with a new "Regulated Business" seller template.
-2. **Bulk upload his shelf inventory** through the existing `bulk-parse-products` flow (CSV / XLSX / PDF / DOCX already supported).
-3. **Prescription intake**: clients upload their doctor's prescription image → private bucket → only the pharmacist can view (signed URLs).
-4. **Symptom consult**: one-tap "Ask the Pharmacist" opens a 1-on-1 ChatApp room using the existing flow; pharmacist quotes a cost inside the chat.
-5. **Fulfillment**: on every order the pharmacist picks per-order between **In-store pickup**, **Pharmacy delivers**, **Community driver**, or **Courier quote** — all four routed to tables we already have (`courier_deliveries`, `driver_quote_requests`).
-6. **Pharmacist workspace**: a "Prescriptions" tab in his Sower dashboard to see incoming scripts, respond, quote, and mark ready/dispatched/collected.
+Supporting tables that already exist:
+- `whisperers` — the whisperer identity row (`user_id`, `display_name`, verification flags)
+- `whisperer_invitations` — sower-initiated invite with `proposed_commission_percent`
+- `whisperer_earnings` — per-sale credit ledger (`whisperer_id`, `assignment_id`, `bestowal_id`, `amount`, `commission_percent`, `status`, `processed_at`)
+- `resolve_active_whisperer(_product_id, _whisperer_id)` — server-side re-validation used at checkout
 
-Everything else (payments, USDC settlement, chat, notifications, verified badges, wallet, ratings) is already built — we just wire the pharmacy flow into it.
+Live counts today: `whisperers` 0, assignments 0, earnings 0 — nothing in production yet, so schema changes are low risk.
 
-## Scope of changes
+## 2. Live-session sale attribution — what exists vs what is missing
 
-### New (small, focused)
+**Exists (link-based, last-touch):**
+- `src/lib/whisperer/attribution.ts` stores `?w=<whispererId>` in localStorage per seed, 30-day TTL
+- `useWhispererCapture` captures it on navigation
+- `BestowalCheckout` sends `whispererId` per basket line
+- `create-basket-bestowal-order` calls `resolve_active_whisperer` and stamps `whisperer_id` / `whisperer_user_id` onto the order item
+- `finalize_basket_order` writes `product_bestowals.whisperer_id` + `whisperer_amount` and inserts `whisperer_earnings` on payment confirmation
 
-- **`prescription_requests` table** — one row per prescription. Fields: client `user_id`, `sower_id`, `chat_room_id`, `status` (`submitted → reviewed → quoted → paid → ready → fulfilled → cancelled`), `fulfillment_mode` (`pickup | self_deliver | community_driver | courier_quote`), `quoted_amount_usdc`, `pharmacist_notes`, `client_notes` (symptoms), timestamps. Owner-only RLS + pharmacist-of-sower RLS.
-- **Private `prescriptions` storage bucket** — pharmacist-only signed URLs; object key `sower_id/request_id/filename`.
-- **Seller template flag on `sowers`** — add `regulated_business` alongside existing wandering roles. Enabling it requires an approved `seller_credentials` row (already exists) with a matching `credential_type` (e.g. `pharmacist_license`). Reuses the admin review queue at `/admin/credentials`.
-- **`RegulatedBusinessPanel.tsx`** on the public sower page: "Upload Prescription", "Ask the Pharmacist", "Browse Shelf" (existing product grid).
-- **`PrescriptionsInboxPage.tsx`** for the pharmacist at `/my-garden/prescriptions`: list, open, view image, reply in linked chat, set quote + fulfillment mode, advance status.
-- **`submit-prescription` edge function** — validates auth, stores upload, creates chat room via existing helper, inserts `prescription_requests` row, notifies pharmacist.
+**Exists but completely unused (empty, no code references):**
+- `whisperer_referral_links` (`ref_code`, `assignment_id`, `product_id/orchard_id/book_id`, `is_active`, counters)
+- `whisperer_clicks` (`ref_link_id`, `visitor_id`, `ip_hash`, `referrer_url`)
+- `whisperer_conversions` (`ref_link_id`, `click_id`, `bestowal_id`, `commission_amount`, `attribution_type`)
 
-### Extended (reuse existing)
+**Missing: live-session attribution.** `live_streams` / `live_rooms` / `live_session_participants` have no link to any sale. No `session_id` is passed through checkout, no order or bestowal column stores it. A sale made during a whisperer's live show is only credited if the buyer happened to click that whisperer's `?w=` link — which is exactly the wrong assumption for a TikTok-style live where people buy from an on-screen tile.
 
-- **Bulk uploader** (`bulk-parse-products` + `BulkUploadWizardPage`): add optional `regulated: true` column so scheduled/OTC items can be flagged (display-only badge; not a controlled-substance workflow).
-- **ChatApp 1-on-1 rooms**: consult uses existing `CreateOneOnOneDialog` / room. The prescription image is auto-dropped into the chat as a file attachment for context.
-- **Fulfillment**: order rows route to `courier_deliveries` (self/community driver) or `driver_quote_requests` (courier quote).
-- **Payments**: pharmacist "quote" message → client pays via existing `content_purchases` (Shape 1) → status flips to `paid`.
+### Recommended mechanism for #2
 
-### Explicitly out of scope (flag, don't build)
+Use the dormant `whisperer_referral_links` table as the single source of truth instead of a raw `?w=` id, and add a session dimension.
 
-- No controlled-substance verification or e-prescribing standards. Regulatory compliance stays with the pharmacist; the app just facilitates.
-- No insurance / medical-aid claim submission.
-- No auto-dispensing logic beyond the `products.stock_qty` already tracked.
+```text
+whisperer goes live
+   -> ensure_whisperer_ref_link(assignment_id, session_id)  -> ref_code (short, unique)
+   -> every buy tile / share link in that live = /product/:id?w=<ref_code>
+   -> click logged in whisperer_clicks (ref_link_id, visitor_id, session_id)
+   -> code stored client-side per seed (existing attribution.ts, upgraded to codes)
+   -> checkout sends ref_code per line
+   -> resolve_active_whisperer_by_code() re-validates: link active AND assignment active
+   -> finalize_basket_order writes whisperer_conversions row incl. session_id
+```
 
-## Technical notes
+Schema deltas needed:
+- `whisperer_referral_links.live_session_id uuid null` + `session_kind text null` (one code per whisperer per seed per live, plus one evergreen code with null session)
+- `whisperer_clicks.live_session_id`, `whisperer_conversions.live_session_id`
+- `basket_orders.items[].ref_code` (jsonb, no migration) and `product_bestowals.ref_link_id uuid null`
 
-- Prescription bucket **private**; pharmacist dashboard fetches signed URLs (5-min expiry) via edge function — same pattern already used for `music-tracks` and `premium-room` covers.
-- `prescription_requests` RLS:
-  - client: `SELECT/INSERT` where `user_id = auth.uid()`
-  - pharmacist: `SELECT/UPDATE` where `sower_id` maps to `auth.uid()` via `sowers.user_id`
-  - no anon access.
-- Regulated template gated by a DB trigger on `sowers`: cannot enable `regulated_business` until a matching approved `seller_credentials` row exists — same pattern as trust tags.
-- New table gets full `GRANT` block (authenticated + service_role).
-- Reusable for future regulated sellers by swapping `credential_type`: `vet_license`, `herbalist_cert`, `optometrist_license`, etc.
+Second, in-session path (no link click): when a viewer is a `live_session_participant` of an active session hosted by a whisperer and buys within that session (or within a short window after), attribute to that session's ref link. Precedence: **explicit ref_code click > in-session participation > stored last-touch > none (falls back to sower)**. Attribution reason is recorded in `whisperer_conversions.attribution_type`, so every cent is auditable.
 
-## Pilot flow to validate
+Why codes rather than raw whisperer ids: the code is revocable, scoped to one seed and one live, and cannot be guessed and pasted onto another seed to farm commission.
 
-1. Pharmacist registers → applies for `pharmacist_license` credential → you approve at `/admin/credentials`.
-2. He bulk-uploads his shelf via the existing wizard.
-3. Test client submits a prescription image → private upload → pharmacist notified.
-4. Pharmacist opens auto-created chat, quotes a price, picks "Community driver" fulfillment.
-5. Client pays → driver quote flow kicks in → order marked fulfilled.
-6. Same flow works for the next regulated business type with zero code changes.
+## 3. Whisperer payout readiness
 
-## Deliverables checklist
+- Payout infrastructure lives on `profiles`: `payout_network`, `payout_address`, `payout_tag`, `payout_wallet_type`, `preferred_payout_method`, `payout_setup_complete`.
+- `send-solana-usdc-payout` and `send-xrp-payout` both resolve a destination from `profiles` by `recipient_user_id`, and log to `crypto_payout_transfers`.
+- `whisperers.user_id` is a real auth user, so **the same infrastructure works unchanged** — no schema reason it can't be reused. There is a separate `whisperer_payout_wallets` table (`user_id`, `wallet_address`, `wallet_type`), currently empty and unused; recommendation is to ignore/retire it and standardise on `profiles`, so one person selling and whispering has one payout config.
+- Gap: nothing today reads `whisperer_earnings` and actually sends money. Earnings are written with `status='payable'` and stop there.
 
-- [ ] Migration: `prescription_requests` table + RLS + grants + `sowers` gating trigger
-- [ ] Storage: private `prescriptions` bucket + object policies
-- [ ] Edge function: `submit-prescription` (+ signed-URL read helper)
-- [ ] UI: `RegulatedBusinessPanel` on public sower page (client side)
-- [ ] UI: `PrescriptionsInboxPage` under My Garden (pharmacist side)
-- [ ] Seller credentials: add `pharmacist_license` (stub siblings) to accepted credential types
-- [ ] Bulk uploader `regulated` flag (display badge only)
-- [ ] Fulfillment picker on prescription row → existing courier tables
-- [ ] Notifications: new-prescription + quote-ready via existing `user_notifications`
+## 4. Intended end state — assessment
 
-Nothing outside these files/tables gets touched.
+Current split in `finalize_basket_order` is hardcoded: 15% S2G, and when a whisperer is credited a flat 15% to whisperer / 70% to sower — it **ignores `assignment.commission_percent`**, so a sower's 2%–30% choice is not honoured. That must be fixed as part of this work: sower share = line total − 15% S2G − (line total × assignment commission%).
+
+Your pending-balance recommendation is correct and matches the architecture: `whisperer_earnings.status` already models this (`payable` -> `paid`), and `sower_balances` shows the same pattern is already accepted here. Never block a sale on a missing payout config.
+
+## Technical summary of the proposed build (not yet implemented)
+
+1. Migration: session columns on the three dormant whisperer tables, `ref_link_id` on `product_bestowals`, RLS + GRANTs for each.
+2. `ensure_whisperer_ref_link(assignment_id, live_session_id)` and `resolve_whisperer_by_ref_code(product_id, ref_code, buyer_id, live_session_id)` security-definer functions.
+3. Rewrite the split in `finalize_basket_order` to honour `commission_percent`, and record `whisperer_conversions`.
+4. Client: upgrade `attribution.ts` to store codes, log clicks, pass `refCode` at checkout; whisperer live UI generates and displays its own buy links.
+5. Payout: a `payout-whisperer-earnings` function that batches `payable` earnings per whisperer and calls the existing Solana/XRP senders, marking `paid`; unpaid stays pending when no payout config.
