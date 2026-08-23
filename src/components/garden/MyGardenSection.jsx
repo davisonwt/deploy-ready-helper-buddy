@@ -125,7 +125,10 @@ function GardenCard({ card, accent, navigate, brands = [], brand = null, onAssig
 
       <div style={styles.body}>
         <div style={styles.cardTitle}>{card.title}</div>
-        <div style={styles.cardSub}>{card.subtitle}</div>
+        <div style={{ display: 'flex', alignItems: 'flex-start', gap: 6 }}>
+          {brand && <BrandIcon brand={brand} size={16} />}
+          <div style={styles.cardSub}>{card.subtitle}</div>
+        </div>
 
         {previewing && card.mediaKind === 'audio' && card.mediaUrl && (
           <audio ref={audioRef} src={card.mediaUrl} controls style={{ width: '100%', marginTop: 6 }}
