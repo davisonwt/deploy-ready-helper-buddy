@@ -105,6 +105,23 @@ export default function CatalogTab({ businessId, booksEnabled, items, income, on
     onChanged();
   };
 
+  // Auto-populate the catalog from seeds already sown, once per business.
+  useEffect(() => {
+    if (!businessId || !booksEnabled) return;
+    let cancelled = false;
+    (async () => {
+      const { data, error } = await supabase.rpc('books_backfill_products' as any, {
+        _business_id: businessId,
+      } as any);
+      if (cancelled || error) return;
+      if (Number(data) > 0) onChanged();
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [businessId, booksEnabled]);
+
+
 
   const totals = useMemo(() => {
     const sales = income.filter((i) => i.income_type === 'sale');
