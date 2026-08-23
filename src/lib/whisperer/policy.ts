@@ -23,11 +23,18 @@
  *    A whisperer can never self-approve. A pending, declined, withdrawn or
  *    revoked link earns nothing.
  *
- * 4. FALLBACK RULE: when no ACTIVE whisperer is linked to a seed, the whisper
- *    share is NOT charged to anyone and NOT held anywhere — it simply stays
- *    with the sower (creator payout). Currently there are seeds with a whisper
- *    % set and no whisperer linked; those all pay 100% of the whisper share
- *    back to the sower.
+ * 4. PAYMENT IS IMMEDIATE. Approval happened once, at step (c). From then on
+ *    the whisperer's earning is credited the moment the buyer's payment
+ *    completes (`finalize_basket_order`) — the sower NEVER approves a payout.
+ *
+ * 5. ONE SALE, ONE WHISPERER. A seed may have many ACTIVE whisperers. The
+ *    whisper share is paid to the single whisperer whose share link brought
+ *    the buyer (see src/lib/whisperer/attribution.ts). It is never split and
+ *    never given to a whisperer who did not make the sale.
+ *
+ * 6. FALLBACK RULE: when no ACTIVE whisperer is credited with the sale, the
+ *    whisper share is NOT charged to anyone and NOT held anywhere — it simply
+ *    stays with the sower (creator payout).
  */
 
 /** Percentage of a bestowal that goes to an ACTIVE whisperer. */
