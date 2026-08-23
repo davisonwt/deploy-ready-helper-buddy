@@ -79,12 +79,15 @@ export default function LivingSeedCard({
   const audioRef = useRef<HTMLAudioElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
 
-  // image carousel
-  const imgList = (images && images.length ? images : (image ? [image] : [])).filter(Boolean) as string[];
+  // image carousel (private-bucket URLs are re-signed so they actually render)
+  const rawImgList = (images && images.length ? images : (image ? [image] : [])).filter(Boolean) as string[];
+  const imgList = useSignedImages(rawImgList);
   const visibleImgList = imgList.filter((src) => !failedImages[src]);
   const [imgIdx, setImgIdx] = useState(0);
   const safeImgIdx = visibleImgList.length ? imgIdx % visibleImgList.length : 0;
   const currentImage = visibleImgList[safeImgIdx] || null;
+  const [shareOpen, setShareOpen] = useState(false);
+
 
   // live overlay state
   const [overlayImgIdx, setOverlayImgIdx] = useState(0);
