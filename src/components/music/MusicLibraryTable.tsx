@@ -233,9 +233,11 @@ export function MusicLibraryTable({
       setPlayingTrack(null);
     });
 
-    audio.play().catch(() => {
+    audio.play().catch((err) => {
+      console.error('Preview playback failed:', err, audioUrl);
       toast.error('Failed to play preview');
     });
+
 
     setAudioElement(audio);
     setPlayingTrack(track.id);
