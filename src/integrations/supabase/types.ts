@@ -3329,6 +3329,101 @@ export type Database = {
         }
         Relationships: []
       }
+      employee_contracts: {
+        Row: {
+          business_id: string
+          employee_id: string
+          file_path: string
+          id: string
+          parse_status: string
+          parsed_terms: Json
+          uploaded_at: string
+        }
+        Insert: {
+          business_id: string
+          employee_id: string
+          file_path: string
+          id?: string
+          parse_status?: string
+          parsed_terms?: Json
+          uploaded_at?: string
+        }
+        Update: {
+          business_id?: string
+          employee_id?: string
+          file_path?: string
+          id?: string
+          parse_status?: string
+          parsed_terms?: Json
+          uploaded_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "employee_contracts_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "employee_contracts_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      employees: {
+        Row: {
+          active: boolean
+          business_id: string
+          created_at: string
+          hourly_rate: number | null
+          hours_per_month: number | null
+          id: string
+          monthly_salary: number | null
+          name: string
+          pay_type: string
+          role: string | null
+          updated_at: string
+        }
+        Insert: {
+          active?: boolean
+          business_id: string
+          created_at?: string
+          hourly_rate?: number | null
+          hours_per_month?: number | null
+          id?: string
+          monthly_salary?: number | null
+          name: string
+          pay_type?: string
+          role?: string | null
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean
+          business_id?: string
+          created_at?: string
+          hourly_rate?: number | null
+          hours_per_month?: number | null
+          id?: string
+          monthly_salary?: number | null
+          name?: string
+          pay_type?: string
+          role?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "employees_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       error_logs: {
         Row: {
           component_stack: string | null
@@ -3370,6 +3465,56 @@ export type Database = {
           user_id?: string | null
         }
         Relationships: []
+      }
+      expenses: {
+        Row: {
+          amount: number
+          business_id: string
+          category: string
+          created_at: string
+          currency: string
+          description: string
+          id: string
+          merchant: string | null
+          receipt_image_path: string | null
+          source: string
+          spent_on: string | null
+        }
+        Insert: {
+          amount?: number
+          business_id: string
+          category?: string
+          created_at?: string
+          currency?: string
+          description: string
+          id?: string
+          merchant?: string | null
+          receipt_image_path?: string | null
+          source?: string
+          spent_on?: string | null
+        }
+        Update: {
+          amount?: number
+          business_id?: string
+          category?: string
+          created_at?: string
+          currency?: string
+          description?: string
+          id?: string
+          merchant?: string | null
+          receipt_image_path?: string | null
+          source?: string
+          spent_on?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "expenses_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       follower_notifications: {
         Row: {
@@ -4026,6 +4171,56 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      invoices: {
+        Row: {
+          amount: number
+          business_id: string
+          client_name: string
+          created_at: string
+          currency: string
+          due_date: string | null
+          id: string
+          notes: string | null
+          paid_at: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          amount?: number
+          business_id: string
+          client_name: string
+          created_at?: string
+          currency?: string
+          due_date?: string | null
+          id?: string
+          notes?: string | null
+          paid_at?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          amount?: number
+          business_id?: string
+          client_name?: string
+          created_at?: string
+          currency?: string
+          due_date?: string | null
+          id?: string
+          notes?: string | null
+          paid_at?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "invoices_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       item_brand_assignments: {
         Row: {
@@ -6179,6 +6374,133 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      payroll_lines: {
+        Row: {
+          business_id: string
+          created_at: string
+          deductions: number
+          employee_id: string | null
+          employee_name: string
+          gross: number
+          id: string
+          line_items: Json
+          net: number
+          paye: number
+          payroll_run_id: string
+          sdl: number
+          uif_employee: number
+          uif_employer: number
+        }
+        Insert: {
+          business_id: string
+          created_at?: string
+          deductions?: number
+          employee_id?: string | null
+          employee_name?: string
+          gross?: number
+          id?: string
+          line_items?: Json
+          net?: number
+          paye?: number
+          payroll_run_id: string
+          sdl?: number
+          uif_employee?: number
+          uif_employer?: number
+        }
+        Update: {
+          business_id?: string
+          created_at?: string
+          deductions?: number
+          employee_id?: string | null
+          employee_name?: string
+          gross?: number
+          id?: string
+          line_items?: Json
+          net?: number
+          paye?: number
+          payroll_run_id?: string
+          sdl?: number
+          uif_employee?: number
+          uif_employer?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "payroll_lines_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "payroll_lines_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "payroll_lines_payroll_run_id_fkey"
+            columns: ["payroll_run_id"]
+            isOneToOne: false
+            referencedRelation: "payroll_runs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      payroll_runs: {
+        Row: {
+          business_id: string
+          created_at: string
+          employer_fica: number
+          expense_id: string | null
+          id: string
+          pay_date: string
+          period_end: string
+          period_start: string
+          total_cost: number
+          totals: Json
+        }
+        Insert: {
+          business_id: string
+          created_at?: string
+          employer_fica?: number
+          expense_id?: string | null
+          id?: string
+          pay_date: string
+          period_end: string
+          period_start: string
+          total_cost?: number
+          totals?: Json
+        }
+        Update: {
+          business_id?: string
+          created_at?: string
+          employer_fica?: number
+          expense_id?: string | null
+          id?: string
+          pay_date?: string
+          period_end?: string
+          period_start?: string
+          total_cost?: number
+          totals?: Json
+        }
+        Relationships: [
+          {
+            foreignKeyName: "payroll_runs_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "payroll_runs_expense_id_fkey"
+            columns: ["expense_id"]
+            isOneToOne: false
+            referencedRelation: "expenses"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       premium_item_purchases: {
         Row: {
@@ -11459,6 +11781,38 @@ export type Database = {
         }
         Relationships: []
       }
+      tax_settings: {
+        Row: {
+          business_id: string
+          paye_pct: number
+          sdl_applies: boolean
+          uif_ceiling: number
+          updated_at: string
+        }
+        Insert: {
+          business_id: string
+          paye_pct?: number
+          sdl_applies?: boolean
+          uif_ceiling?: number
+          updated_at?: string
+        }
+        Update: {
+          business_id?: string
+          paye_pct?: number
+          sdl_applies?: boolean
+          uif_ceiling?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tax_settings_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: true
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       topups: {
         Row: {
           amount: number
@@ -14465,6 +14819,7 @@ export type Database = {
         Args: { target_user_id: string }
         Returns: boolean
       }
+      owns_company: { Args: { _company_id: string }; Returns: boolean }
       prescription_object_owner: { Args: { _path: string }; Returns: string }
       process_referral: {
         Args: { p_referral_code: string; p_referred_user_id: string }
