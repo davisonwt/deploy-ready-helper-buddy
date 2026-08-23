@@ -58,6 +58,25 @@ export default function MyOrchardsPage() {
   const [seeds, setSeeds] = useState([])
   const [loading, setLoading] = useState(false)
   const [showVideoUpload, setShowVideoUpload] = useState(false)
+  const [showBrands, setShowBrands] = useState(false)
+  const [search, setSearch] = useState('')
+  const [categoryFilter, setCategoryFilter] = useState('all')
+  const [brandFilter, setBrandFilter] = useState('all')
+
+  const { brands, refetch: refetchBrands } = useMyBrands(user?.id)
+  const { brandByItem, refetch: refetchBrandAssignments } = useMyBrandAssignments(user?.id)
+  const defaultBrand = brands.find((b) => b.is_default) || brands[0] || null
+
+  const handleAssignBrand = async (card, brandId) => {
+    if (!user?.id) return
+    try {
+      await assignBrandToItem(user.id, card.id, brandId)
+      await refetchBrandAssignments()
+      toast.success(brandId ? 'Brand applied to this seed' : 'Brand removed from this seed')
+    } catch (e) {
+      toast.error(`Could not update brand: ${e.message}`)
+    }
+  }
 
   // Canonical "my content" — same source as Dashboard, account-scoped (includes
   // linked accounts and the products-as-seeds union). Do NOT add a divergent
