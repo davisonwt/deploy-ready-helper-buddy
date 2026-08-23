@@ -65,8 +65,10 @@ const App = () => (
                       <AccessibilityChecker />
                       <ResponsiveLayout>
                         <AppRoutes />
+                        <FloatingBasketButton />
                         <GroundskeeperWidget />
                       </ResponsiveLayout>
+
                     </Suspense>
                 </ErrorBoundary>
               </ThemeProvider>
