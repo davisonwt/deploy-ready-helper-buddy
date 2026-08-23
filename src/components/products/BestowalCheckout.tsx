@@ -218,7 +218,9 @@ export default function BestowalCheckout() {
           </div>
           {whisperFee > 0 ? (
             <div className="flex justify-between text-muted-foreground">
-              <span>To Product Whisperers ({WHISPER_SHARE_PERCENT}%)</span>
+              <span>
+                To {creditedNames.length === 1 ? creditedNames[0] : 'the whisperers who brought this sale'} ({WHISPER_SHARE_PERCENT}%)
+              </span>
               <span className="text-accent">${whisperFee.toFixed(2)}</span>
             </div>
           ) : (
