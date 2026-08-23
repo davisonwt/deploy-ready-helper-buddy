@@ -11,6 +11,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { GradientPlaceholder } from '@/components/ui/GradientPlaceholder';
 import ProviderPicker from '@/components/payments/ProviderPicker';
 import { PayoutProviderId, quoteFee } from '@/lib/payments/providerFees';
+import { WHISPER_SHARE_RATE, WHISPER_SHARE_PERCENT, WHISPER_FALLBACK_NOTE, WHISPER_STATUS_ACTIVE } from '@/lib/whisperer/policy';
 
 export default function BestowalCheckout() {
   const { basketItems, removeFromBasket, totalAmount } = useProductBasket();
@@ -37,7 +38,7 @@ export default function BestowalCheckout() {
       const { data, error } = await supabase
         .from('product_whisperer_assignments')
         .select('product_id, book_id, orchard_id, status')
-        .eq('status', 'active')
+        .eq('status', WHISPER_STATUS_ACTIVE) // only sower-approved links are paid
         .or(
           `product_id.in.(${ids.join(',')}),book_id.in.(${ids.join(',')}),orchard_id.in.(${ids.join(',')})`,
         );
@@ -133,7 +134,7 @@ export default function BestowalCheckout() {
   );
   const platformFee = totalAmount * 0.1;
   const adminFee = totalAmount * 0.05;
-  const whisperFee = whisperedSubtotal * 0.15;
+  const whisperFee = whisperedSubtotal * WHISPER_SHARE_RATE;
   const creatorShare = totalAmount - platformFee - adminFee - whisperFee;
 
 
@@ -198,12 +199,12 @@ export default function BestowalCheckout() {
           </div>
           {whisperFee > 0 ? (
             <div className="flex justify-between text-muted-foreground">
-              <span>To Product Whisperers (15%)</span>
+              <span>To Product Whisperers ({WHISPER_SHARE_PERCENT}%)</span>
               <span className="text-accent">${whisperFee.toFixed(2)}</span>
             </div>
           ) : (
             <div className="flex justify-between text-xs text-muted-foreground/70">
-              <span>No whisperer involved — whisper share goes to the sower</span>
+              <span>{WHISPER_FALLBACK_NOTE}</span>
               <span>$0.00</span>
             </div>
           )}
