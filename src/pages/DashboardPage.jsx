@@ -89,6 +89,7 @@ const SEEDS = [
 const NAV = [
   { label: 'SeedFlow',         sub: 'Community updates',         emoji: '🏠', path: '/dashboard',            color: '#38bdf8' },
   { label: 'My Garden',        sub: 'Your seeds & orchards',     emoji: '🌱', path: '/my-orchards',           color: '#facc15' },
+  { label: 'Books',            sub: 'Business bookkeeping',       emoji: '📒', path: '/books',                  color: '#2563eb' },
   { label: 'Tribal Gardens',   sub: 'All tribal seeds & orchards', emoji: '🌳', path: '/browse-orchards',     color: '#0d9488' },
   { label: 'Community Videos', sub: 'Upload & watch',            emoji: '🎬', path: '/community-videos',      color: '#f97316' },
   { label: 'ChatApp',          sub: 'Tribe messaging',           emoji: '💬', path: '/communications-hub',     color: '#0891b2' },

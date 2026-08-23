@@ -66,6 +66,7 @@ export function MyGardenPanel({ isOpen, onClose }: MyGardenPanelProps) {
   // Garden cards - EXACTLY matching "My Content" dropdown items
   const gardenCards = [
     { href: '/my-orchards', title: 'My S2G Orchards', subtitle: '3 growing · +12 fruits today' },
+    { href: '/books', title: 'Books — Business Bookkeeping', subtitle: 'Invoices · expenses · payroll' },
     { 
       href: '/364yhvh-orchards', 
       title: 'S2G Community Orchards', 
