@@ -178,6 +178,16 @@ export default function PayoutSettingsPage() {
 
   return (
     <div className="container max-w-3xl py-6 space-y-6">
+      <div className="flex flex-wrap gap-3 mb-2">
+        <Button variant="outline" size="sm" onClick={() => navigate('/dashboard')}>
+          <LayoutDashboard className="w-4 h-4 mr-2" />
+          Dashboard
+        </Button>
+        <Button variant="outline" size="sm" onClick={() => navigate(-1)}>
+          <ArrowLeft className="w-4 h-4 mr-2" />
+          Back
+        </Button>
+      </div>
       <div>
         <h1 className="text-2xl font-bold">Payout Settings</h1>
         <p className="text-muted-foreground text-sm">
