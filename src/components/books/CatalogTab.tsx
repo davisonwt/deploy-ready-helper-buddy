@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import { Info, Loader2, Package, Plus, RefreshCw, Store } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
@@ -21,9 +22,12 @@ interface Props {
   onChanged: () => void;
 }
 
+const S2G_PCT = 15;
+
 type ProductMeta = { category: string | null; whisperer_pct: number | null };
 
 export default function CatalogTab({ businessId, booksEnabled, items, income, onChanged }: Props) {
+  const navigate = useNavigate();
   const { fmt, currency } = useBooksCurrency();
   const [name, setName] = useState('');
   const [price, setPrice] = useState('');
@@ -104,6 +108,23 @@ export default function CatalogTab({ businessId, booksEnabled, items, income, on
     toast.success(`${Number(data) || 0} marketplace listing(s) synced into your catalog`);
     onChanged();
   };
+
+  // Auto-populate the catalog from seeds already sown, once per business.
+  useEffect(() => {
+    if (!businessId || !booksEnabled) return;
+    let cancelled = false;
+    (async () => {
+      const { data, error } = await supabase.rpc('books_backfill_products' as any, {
+        _business_id: businessId,
+      } as any);
+      if (cancelled || error) return;
+      if (Number(data) > 0) onChanged();
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [businessId, booksEnabled]);
+
 
 
   const totals = useMemo(() => {
@@ -204,44 +225,68 @@ export default function CatalogTab({ businessId, booksEnabled, items, income, on
           </div>
 
           <div className="space-y-2 pt-2">
-            {items.length === 0 && <p className="text-sm text-muted-foreground">No items yet.</p>}
+            {items.length === 0 && (
+              <p className="text-sm text-muted-foreground">
+                No items yet. Seeds you have already sown appear here automatically once the Books add-on is on.
+              </p>
+            )}
+
+            {items.length > 0 && (
+              <div className="hidden grid-cols-[minmax(0,1fr)_4rem_4rem_5rem_7rem] gap-2 px-3 pb-1 text-[10px] uppercase tracking-wide text-muted-foreground sm:grid">
+                <span>Item name</span>
+                <span className="text-right">S2G %</span>
+                <span className="text-right">Whisp %</span>
+                <span className="text-right">Total sold</span>
+                <span className="text-right">Sower total</span>
+              </div>
+            )}
+
             {items.map((it) => {
               const m = it.product_id ? meta[it.product_id] : undefined;
               const rows = it.product_id ? salesByProduct.get(it.product_id) ?? [] : [];
-              const revenue = rows.reduce((s, r) => s + r.amount, 0);
+              const gross = rows.reduce((s, r) => s + r.amount, 0);
+              const fees = rows.reduce((s, r) => s + r.platform_fee, 0);
+              const whisper = rows.reduce((s, r) => s + r.whisperer_amount, 0);
+              const sowerTotal = gross - fees - whisper;
               return (
                 <button
                   key={it.id}
                   type="button"
-                  onClick={() => setOpenItemId(it.id)}
-                  className="flex w-full flex-wrap items-center justify-between gap-2 rounded-lg border border-border/50 bg-background/40 px-3 py-2 text-left transition-colors hover:border-primary/40 hover:bg-background/70"
+                  onClick={() => navigate(`/books/catalog/${it.id}`)}
+                  className="grid w-full grid-cols-2 items-center gap-2 rounded-lg border border-border/50 bg-background/40 px-3 py-2 text-left transition-colors hover:border-primary/40 hover:bg-background/70 sm:grid-cols-[minmax(0,1fr)_4rem_4rem_5rem_7rem]"
                 >
-                  <div className="min-w-0">
+                  <div className="col-span-2 min-w-0 sm:col-span-1">
                     <p className="truncate text-sm font-medium">{it.name}</p>
-                    <p className="text-xs text-muted-foreground">
+                    <p className="flex flex-wrap items-center gap-1 text-xs text-muted-foreground">
                       {m?.category || it.kind}{it.sku ? ` · ${it.sku}` : ''}{it.active ? '' : ' · inactive'}
-                      {` · bestowed ${rows.length}×`}
+                      {' · '}{fmt(it.unit_price)}
+                      {it.source === 'marketplace' && (
+                        <Badge variant="outline" className="text-[10px] uppercase">
+                          <Store className="mr-1 h-3 w-3" /> marketplace
+                        </Badge>
+                      )}
                     </p>
                   </div>
-                  <div className="flex flex-wrap items-center gap-2">
-                    {m?.whisperer_pct ? (
-                      <Badge variant="outline" className="border-primary/40 text-[10px] text-primary">
-                        Whisperer offer: {m.whisperer_pct}%
-                      </Badge>
-                    ) : null}
-                    {it.source === 'marketplace' && (
-                      <Badge variant="outline" className="text-[10px] uppercase">
-                        <Store className="mr-1 h-3 w-3" /> marketplace
-                      </Badge>
-                    )}
-                    <div className="text-right">
-                      <p className="text-sm">{fmt(it.unit_price)}</p>
-                      <p className="text-xs text-emerald-400">{fmt(revenue)} earned</p>
-                    </div>
+                  <div className="text-right text-sm text-orange-400">
+                    <span className="mr-1 text-[10px] uppercase text-muted-foreground sm:hidden">S2G</span>
+                    {S2G_PCT}%
+                  </div>
+                  <div className="text-right text-sm text-primary">
+                    <span className="mr-1 text-[10px] uppercase text-muted-foreground sm:hidden">Whisp</span>
+                    {m?.whisperer_pct ? `${m.whisperer_pct}%` : '—'}
+                  </div>
+                  <div className="text-right text-sm">
+                    <span className="mr-1 text-[10px] uppercase text-muted-foreground sm:hidden">Sold</span>
+                    {rows.length}
+                  </div>
+                  <div className="text-right text-sm text-emerald-400">
+                    <span className="mr-1 text-[10px] uppercase text-muted-foreground sm:hidden">Sower</span>
+                    {fmt(sowerTotal)}
                   </div>
                 </button>
               );
             })}
+
 
           </div>
         </CardContent>
