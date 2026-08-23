@@ -2839,6 +2839,57 @@ export type Database = {
           },
         ]
       }
+      crypto_payout_transfers: {
+        Row: {
+          amount: number
+          cluster: string
+          created_at: string
+          created_by: string | null
+          destination_address: string
+          destination_tag: number | null
+          error_message: string | null
+          id: string
+          network: string
+          recipient_user_id: string | null
+          reference: string | null
+          status: string
+          tx_hash: string | null
+          updated_at: string
+        }
+        Insert: {
+          amount: number
+          cluster: string
+          created_at?: string
+          created_by?: string | null
+          destination_address: string
+          destination_tag?: number | null
+          error_message?: string | null
+          id?: string
+          network: string
+          recipient_user_id?: string | null
+          reference?: string | null
+          status?: string
+          tx_hash?: string | null
+          updated_at?: string
+        }
+        Update: {
+          amount?: number
+          cluster?: string
+          created_at?: string
+          created_by?: string | null
+          destination_address?: string
+          destination_tag?: number | null
+          error_message?: string | null
+          id?: string
+          network?: string
+          recipient_user_id?: string | null
+          reference?: string | null
+          status?: string
+          tx_hash?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       curated_calendar_photos: {
         Row: {
           created_at: string
@@ -6084,6 +6135,51 @@ export type Database = {
           },
         ]
       }
+      payout_change_audit: {
+        Row: {
+          changed_at: string
+          changed_by: string | null
+          id: string
+          new_address: string | null
+          new_network: string | null
+          new_tag: number | null
+          new_wallet_type: string | null
+          old_address: string | null
+          old_network: string | null
+          old_tag: number | null
+          old_wallet_type: string | null
+          user_id: string
+        }
+        Insert: {
+          changed_at?: string
+          changed_by?: string | null
+          id?: string
+          new_address?: string | null
+          new_network?: string | null
+          new_tag?: number | null
+          new_wallet_type?: string | null
+          old_address?: string | null
+          old_network?: string | null
+          old_tag?: number | null
+          old_wallet_type?: string | null
+          user_id: string
+        }
+        Update: {
+          changed_at?: string
+          changed_by?: string | null
+          id?: string
+          new_address?: string | null
+          new_network?: string | null
+          new_tag?: number | null
+          new_wallet_type?: string | null
+          old_address?: string | null
+          old_network?: string | null
+          old_tag?: number | null
+          old_wallet_type?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       premium_item_purchases: {
         Row: {
           amount: number
@@ -6779,8 +6875,13 @@ export type Database = {
           location_verified: boolean
           longitude: number | null
           membership_tier: string | null
+          payout_address: string | null
+          payout_details_updated_at: string | null
+          payout_network: string | null
           payout_reminder_sent_at: string | null
           payout_setup_complete: boolean
+          payout_tag: number | null
+          payout_wallet_type: string | null
           phone: string | null
           pinterest_url: string | null
           preferred_currency: string | null
@@ -6835,8 +6936,13 @@ export type Database = {
           location_verified?: boolean
           longitude?: number | null
           membership_tier?: string | null
+          payout_address?: string | null
+          payout_details_updated_at?: string | null
+          payout_network?: string | null
           payout_reminder_sent_at?: string | null
           payout_setup_complete?: boolean
+          payout_tag?: number | null
+          payout_wallet_type?: string | null
           phone?: string | null
           pinterest_url?: string | null
           preferred_currency?: string | null
@@ -6891,8 +6997,13 @@ export type Database = {
           location_verified?: boolean
           longitude?: number | null
           membership_tier?: string | null
+          payout_address?: string | null
+          payout_details_updated_at?: string | null
+          payout_network?: string | null
           payout_reminder_sent_at?: string | null
           payout_setup_complete?: boolean
+          payout_tag?: number | null
+          payout_wallet_type?: string | null
           phone?: string | null
           pinterest_url?: string | null
           preferred_currency?: string | null

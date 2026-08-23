@@ -12,6 +12,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { toast } from 'sonner';
 import AddNowPaymentsWallet from '@/components/payouts/AddNowPaymentsWallet';
 import AddPaypalEmail from '@/components/payouts/AddPaypalEmail';
+import CryptoPayoutSettings from '@/components/payouts/CryptoPayoutSettings';
 import { PAYOUT_PROVIDERS } from '@/lib/payments/providerFees';
 
 /**
@@ -279,6 +280,8 @@ export default function PayoutSettingsPage() {
           <AddPaypalEmail onSaved={load} />
         </TabsContent>
       </Tabs>
+
+      {user && <CryptoPayoutSettings />}
     </div>
   );
 }
