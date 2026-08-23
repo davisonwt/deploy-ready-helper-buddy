@@ -54,6 +54,7 @@ const SOWER_TIER_LINKS = [
 
 export default function MyOrchardsPage() {
   const { user } = useAuth()
+  const { isBusinessUser } = useBooksBusiness()
   const navigate = useNavigate()
   const [userSeeds, setUserSeeds] = useState([])
   const [statusFilter, setStatusFilter] = useState('all')
