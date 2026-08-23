@@ -17,6 +17,9 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Share2, ChevronLeft, ChevronRight } from 'lucide-react';
+import { useSignedImages } from '@/lib/storage/signedImage';
+import ShareSeedDialog from '@/components/share/ShareSeedDialog';
+
 import LivingButton from '@/components/LivingButton';
 import { useTribalLiveOrchard, type BloomStage } from '@/hooks/useTribalLiveOrchard';
 import { useReferralCode } from '@/hooks/useReferralCode';
@@ -79,12 +82,15 @@ export default function LivingSeedCard({
   const audioRef = useRef<HTMLAudioElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
 
-  // image carousel
-  const imgList = (images && images.length ? images : (image ? [image] : [])).filter(Boolean) as string[];
+  // image carousel (private-bucket URLs are re-signed so they actually render)
+  const rawImgList = (images && images.length ? images : (image ? [image] : [])).filter(Boolean) as string[];
+  const imgList = useSignedImages(rawImgList);
   const visibleImgList = imgList.filter((src) => !failedImages[src]);
   const [imgIdx, setImgIdx] = useState(0);
   const safeImgIdx = visibleImgList.length ? imgIdx % visibleImgList.length : 0;
   const currentImage = visibleImgList[safeImgIdx] || null;
+  const [shareOpen, setShareOpen] = useState(false);
+
 
   // live overlay state
   const [overlayImgIdx, setOverlayImgIdx] = useState(0);
@@ -142,18 +148,11 @@ export default function LivingSeedCard({
 
   // (chat + realtime moved into LiveStageOverlay)
 
-  const handleShare = async () => {
-    const url = new URL(openPath, 'https://sow2growapp.com');
-    if (referralCode) url.searchParams.set('ref', referralCode);
-    const text = `🌿 "${title}" is alive in the Sow2Grow orchard. Step in:\n${url.toString()}`;
-    try {
-      if (navigator.share) await navigator.share({ title, text, url: url.toString() });
-      else {
-        await navigator.clipboard.writeText(text);
-        toast({ title: 'Invitation copied', description: 'Your referral code is burned in.' });
-      }
-    } catch {/* dismissed */}
+  const handleShare = () => {
+    void referralCode; void toast;
+    setShareOpen(true);
   };
+
 
   const cardHeight = size === 'full' ? 360 : 280;
 
@@ -411,7 +410,19 @@ export default function LivingSeedCard({
           />
         )}
       </AnimatePresence>
+
+      <ShareSeedDialog
+        open={shareOpen}
+        onOpenChange={setShareOpen}
+        seedId={seedId}
+        title={title}
+        subtitle={subtitle}
+        image={currentImage}
+        openPath={openPath}
+        feedKind={mediaKind === 'video' ? 'video' : mediaKind === 'audio' ? 'music' : 'photo'}
+      />
     </>
+
   );
 }
 

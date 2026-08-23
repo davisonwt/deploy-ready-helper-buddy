@@ -6,6 +6,9 @@
 import { useRef, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import LivingButton from '../LivingButton'
+import { useSignedImage } from '@/lib/storage/signedImage'
+import ShareSeedDialog from '@/components/share/ShareSeedDialog'
+
 
 export default function MyGardenSection({ title, emoji, accent = '#22c55e', cards, emptyHint, headerAction = null }) {
   const navigate = useNavigate()
@@ -39,8 +42,11 @@ export default function MyGardenSection({ title, emoji, accent = '#22c55e', card
 function GardenCard({ card, accent, navigate }) {
   const [menuOpen, setMenuOpen] = useState(false)
   const [previewing, setPreviewing] = useState(false)
+  const [shareOpen, setShareOpen] = useState(false)
+  const signedImage = useSignedImage(card.image)
   const audioRef = useRef(null)
   const videoRef = useRef(null)
+
 
   const goLive = () => navigate(`/grove-station?seed=${encodeURIComponent(card.liveKey || card.id)}`)
   const handlePlay = () => {
@@ -64,7 +70,7 @@ function GardenCard({ card, accent, navigate }) {
   return (
     <article style={styles.card(accent)}>
       <div style={styles.thumb}>
-        <img src={card.image} alt="" style={styles.thumbImg} />
+        <img src={signedImage || card.image} alt="" style={styles.thumbImg} />
         {card.badge && (
           <span style={styles.badge(card.badge.color)}>
             <span>{card.badge.emoji}</span>
@@ -120,7 +126,25 @@ function GardenCard({ card, accent, navigate }) {
               🔴 Live
             </LivingButton>
           </div>
+          <div style={{ flex: 1 }}>
+            <LivingButton variant="enter" onClick={() => setShareOpen(true)}
+              height={36} borderRadius={8} fontSize={11} letterSpacing="0px">
+              🔗 Share
+            </LivingButton>
+          </div>
         </div>
+
+        <ShareSeedDialog
+          open={shareOpen}
+          onOpenChange={setShareOpen}
+          seedId={String(card.id)}
+          title={card.title}
+          subtitle={card.subtitle}
+          image={signedImage || card.image}
+          openPath={card.openPath}
+          feedKind={card.mediaKind === 'video' ? 'video' : card.mediaKind === 'audio' ? 'music' : 'photo'}
+        />
+
 
       </div>
     </article>
