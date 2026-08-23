@@ -14,7 +14,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { formatZAR, BOOKS_CURRENCY } from '@/lib/books/format';
+import { useBooksCurrency } from '@/lib/books/currency';
 import { EXPENSE_CATEGORIES, autoCategorize, normalizeCategory, type ExpenseCategory } from '@/lib/books/categorize';
 import type { ExpenseRow } from '@/hooks/useBooksData';
 
@@ -25,6 +25,7 @@ interface Props {
 }
 
 export default function ExpensesTab({ businessId, expenses, onChanged }: Props) {
+  const { fmt, currency, symbol } = useBooksCurrency();
   const [description, setDescription] = useState('');
   const [amount, setAmount] = useState('');
   const [merchant, setMerchant] = useState('');
@@ -60,7 +61,7 @@ export default function ExpensesTab({ businessId, expenses, onChanged }: Props) 
       business_id: businessId,
       description: description.trim(),
       amount: value,
-      currency: BOOKS_CURRENCY,
+      currency: currency,
       category,
       merchant: merchant.trim() || null,
       spent_on: spentOn || null,
@@ -195,14 +196,14 @@ export default function ExpensesTab({ businessId, expenses, onChanged }: Props) 
               <div className="min-w-0">
                 <p className="truncate font-medium">{e.description}</p>
                 <p className="text-xs text-muted-foreground">
-                  {new Date(e.spent_on ?? e.created_at).toLocaleDateString('en-ZA')}
+                  {new Date(e.spent_on ?? e.created_at).toLocaleDateString()}
                   {e.merchant ? ` · ${e.merchant}` : ''}
                   {e.source === 'receipt_scan' ? ' · scanned' : ''}
                 </p>
               </div>
               <div className="flex items-center gap-2">
                 <Badge variant="outline" className="uppercase">{e.category}</Badge>
-                <span className="text-sm text-orange-400">{formatZAR(e.amount)}</span>
+                <span className="text-sm text-orange-400">{fmt(e.amount)}</span>
               </div>
             </div>
           ))}

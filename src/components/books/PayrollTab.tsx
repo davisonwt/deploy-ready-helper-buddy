@@ -17,21 +17,22 @@ import {
 } from '@/components/ui/alert-dialog';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import ComplianceBanner from './ComplianceBanner';
-import { formatZAR, BOOKS_CURRENCY } from '@/lib/books/format';
+import { useBooksCurrency } from '@/lib/books/currency';
+import { presetFor } from '@/lib/books/presets';
 import {
   computePayrollPreview,
   type PayrollEmployeeInput,
   type PayrollPreview,
-  type TaxSettings,
 } from '@/lib/books/payroll';
-import type { ContractRow, EmployeeRow, PayrollRunRow } from '@/hooks/useBooksData';
+import type { ContractRow, EmployeeRow, PayrollRunRow, StatutoryDeductionRow } from '@/hooks/useBooksData';
 
 interface Props {
   businessId: string;
+  country: string | null;
   employees: EmployeeRow[];
   contractByEmployee: Map<string, ContractRow>;
   runs: PayrollRunRow[];
-  taxSettings: TaxSettings;
+  deductions: StatutoryDeductionRow[];
   onChanged: () => void;
 }
 
@@ -45,8 +46,11 @@ const lastOfMonth = () => {
 };
 
 export default function PayrollTab({
-  businessId, employees, contractByEmployee, runs, taxSettings, onChanged,
+  businessId, country, employees, contractByEmployee, runs, deductions, onChanged,
 }: Props) {
+  const { fmt, currency } = useBooksCurrency();
+  const lineCodes = presetFor(country)?.lineCodes;
+
   const [name, setName] = useState('');
   const [role, setRole] = useState('');
   const [payType, setPayType] = useState<'salary' | 'hourly'>('salary');
@@ -54,9 +58,6 @@ export default function PayrollTab({
   const [rate, setRate] = useState('');
   const [hours, setHours] = useState('');
   const [addingEmployee, setAddingEmployee] = useState(false);
-
-  const [settings, setSettings] = useState<TaxSettings>(taxSettings);
-  const [savingSettings, setSavingSettings] = useState(false);
 
   const [periodStart, setPeriodStart] = useState(firstOfMonth());
   const [periodEnd, setPeriodEnd] = useState(lastOfMonth());
@@ -122,26 +123,6 @@ export default function PayrollTab({
     onChanged();
   };
 
-  const saveSettings = async () => {
-    setSavingSettings(true);
-    const { error } = await supabase
-      .from('tax_settings' as any)
-      .upsert(
-        {
-          business_id: businessId,
-          paye_pct: Number(settings.paye_pct),
-          uif_ceiling: Number(settings.uif_ceiling),
-          sdl_applies: settings.sdl_applies,
-        } as any,
-        { onConflict: 'business_id' }
-      );
-    setSavingSettings(false);
-    if (error) return toast.error(error.message);
-    toast.success('Tax settings saved');
-    setPreview(null);
-    onChanged();
-  };
-
   const pickContract = (employeeId: string) => {
     pendingEmployee.current = employeeId;
     fileRef.current?.click();
@@ -179,7 +160,12 @@ export default function PayrollTab({
 
   const runPreview = () => {
     if (payrollInputs.length === 0) return toast.error('No active employees to pay');
-    setPreview(computePayrollPreview(payrollInputs, settings));
+    if (deductions.length === 0) {
+      toast.message('No statutory deductions configured', {
+        description: 'Add them under Settings — payroll will show gross = net until you do.',
+      });
+    }
+    setPreview(computePayrollPreview(payrollInputs, deductions, lineCodes ?? {}));
   };
 
   const commit = async () => {
@@ -196,6 +182,7 @@ export default function PayrollTab({
           totals: preview.totals as any,
           employer_fica: preview.employer_contributions,
           total_cost: preview.total_cost,
+          currency,
         } as any)
         .select('id')
         .single();
@@ -209,12 +196,11 @@ export default function PayrollTab({
           employee_id: l.employee_id,
           employee_name: l.employee_name,
           gross: l.gross,
-          paye: l.paye,
-          uif_employee: l.uif_employee,
-          uif_employer: l.uif_employer,
-          sdl: l.sdl,
+          employee_statutory: l.employee_statutory,
+          employer_statutory: l.employer_statutory,
           deductions: l.deductions,
           net: l.net,
+          currency,
           line_items: l.line_items as any,
         })) as any
       );
@@ -226,7 +212,7 @@ export default function PayrollTab({
           business_id: businessId,
           description: `Payroll ${periodStart} to ${periodEnd}`,
           amount: preview.total_cost,
-          currency: BOOKS_CURRENCY,
+          currency,
           category: 'Payroll',
           spent_on: payDate,
           source: 'payroll_run',
@@ -290,13 +276,13 @@ export default function PayrollTab({
             </div>
             {payType === 'salary' ? (
               <div className="space-y-1.5">
-                <Label htmlFor="emp-salary">Monthly salary (ZAR)</Label>
+                <Label htmlFor="emp-salary">Monthly salary ({currency})</Label>
                 <Input id="emp-salary" inputMode="decimal" value={salary} onChange={(e) => setSalary(e.target.value)} />
               </div>
             ) : (
               <>
                 <div className="space-y-1.5">
-                  <Label htmlFor="emp-rate">Hourly rate (ZAR)</Label>
+                  <Label htmlFor="emp-rate">Hourly rate ({currency})</Label>
                   <Input id="emp-rate" inputMode="decimal" value={rate} onChange={(e) => setRate(e.target.value)} />
                 </div>
                 <div className="space-y-1.5">
@@ -330,8 +316,8 @@ export default function PayrollTab({
                     </p>
                     <p className="text-xs text-muted-foreground">
                       {e.pay_type === 'salary'
-                        ? `Manual rate: ${formatZAR(e.monthly_salary ?? 0)} / month`
-                        : `Manual rate: ${formatZAR(e.hourly_rate ?? 0)} × ${e.hours_per_month ?? 0} h`}
+                        ? `Manual rate: ${fmt(e.monthly_salary ?? 0)} / month`
+                        : `Manual rate: ${fmt(e.hourly_rate ?? 0)} × ${e.hours_per_month ?? 0} h`}
                     </p>
                   </div>
                   <div className="flex items-center gap-2">
@@ -352,10 +338,13 @@ export default function PayrollTab({
                   {terms?.basic_salary ? (
                     <span className="inline-flex flex-wrap items-center gap-2 text-emerald-300">
                       <FileText className="h-3.5 w-3.5" />
-                      Contract on file — {terms.job_title || 'role per contract'}, basic {formatZAR(terms.basic_salary)}
+                      Contract on file — {terms.job_title || 'role per contract'}, basic {fmt(terms.basic_salary)}
                       {terms.start_date ? `, from ${terms.start_date}` : ''}
                       {(terms.allowances?.length ?? 0) > 0
-                        ? ` · allowances: ${terms.allowances!.map((a) => `${a.label} ${formatZAR(a.amount)}${a.sars_code ? ` (${a.sars_code})` : ''}`).join(', ')}`
+                        ? ` · allowances: ${terms.allowances!.map((a) => {
+                            const code = a.tax_code ?? a.sars_code;
+                            return `${a.label} ${fmt(a.amount)}${code ? ` (${code})` : ''}`;
+                          }).join(', ')}`
                         : ''}
                     </span>
                   ) : (
@@ -369,29 +358,27 @@ export default function PayrollTab({
       </Card>
 
       <Card className="border-border/60 bg-card/50 backdrop-blur">
-        <CardHeader className="pb-2"><CardTitle className="text-base">Tax settings</CardTitle></CardHeader>
-        <CardContent className="space-y-3">
-          <div className="grid gap-3 sm:grid-cols-3">
-            <div className="space-y-1.5">
-              <Label htmlFor="paye">PAYE %</Label>
-              <Input id="paye" inputMode="decimal" value={settings.paye_pct}
-                onChange={(e) => setSettings({ ...settings, paye_pct: Number(e.target.value) })} />
-            </div>
-            <div className="space-y-1.5">
-              <Label htmlFor="uif">UIF ceiling (ZAR / month)</Label>
-              <Input id="uif" inputMode="decimal" value={settings.uif_ceiling}
-                onChange={(e) => setSettings({ ...settings, uif_ceiling: Number(e.target.value) })} />
-            </div>
-            <div className="flex items-center gap-3 pt-6">
-              <Switch id="sdl" checked={settings.sdl_applies}
-                onCheckedChange={(v) => setSettings({ ...settings, sdl_applies: v })} />
-              <Label htmlFor="sdl">SDL applies (1%, employer)</Label>
-            </div>
-          </div>
-          <Button variant="outline" onClick={saveSettings} disabled={savingSettings}>
-            {savingSettings ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-            Save tax settings
-          </Button>
+        <CardHeader className="pb-2"><CardTitle className="text-base">Statutory deductions in use</CardTitle></CardHeader>
+        <CardContent className="space-y-2 text-sm">
+          {deductions.length === 0 ? (
+            <p className="text-muted-foreground">
+              None configured yet. Add the deductions your country requires under the <strong>Settings</strong> tab.
+            </p>
+          ) : (
+            deductions.map((d) => (
+              <div key={d.id} className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-border/50 bg-background/40 px-3 py-2">
+                <span className="font-medium">
+                  {d.label}
+                  {d.tax_code ? <Badge variant="outline" className="ml-2">{d.tax_code}</Badge> : null}
+                  {!d.applies && <Badge variant="outline" className="ml-2 uppercase">off</Badge>}
+                </span>
+                <span className="text-xs text-muted-foreground">
+                  employee {d.employee_pct}% · employer {d.employer_pct}%
+                  {d.wage_cap != null ? ` · capped at ${fmt(d.wage_cap)}` : ''}
+                </span>
+              </div>
+            ))
+          )}
         </CardContent>
       </Card>
 
@@ -425,7 +412,7 @@ export default function PayrollTab({
                     <TableRow>
                       <TableHead>Employee</TableHead>
                       <TableHead>Line item</TableHead>
-                      <TableHead>SARS code</TableHead>
+                      <TableHead>Tax code</TableHead>
                       <TableHead className="text-right">Amount</TableHead>
                     </TableRow>
                   </TableHeader>
@@ -440,9 +427,9 @@ export default function PayrollTab({
                             </span>
                           </TableCell>
                           <TableCell colSpan={2} className="text-xs text-muted-foreground">
-                            Gross {formatZAR(l.gross)} · deductions {formatZAR(l.deductions)}
+                            Gross {fmt(l.gross)} · deductions {fmt(l.deductions)}
                           </TableCell>
-                          <TableCell className="text-right font-semibold text-emerald-300">Net {formatZAR(l.net)}</TableCell>
+                          <TableCell className="text-right font-semibold text-emerald-300">Net {fmt(l.net)}</TableCell>
                         </TableRow>
                         {l.line_items.map((li, idx) => (
                           <TableRow key={`${l.employee_id}-${idx}`}>
@@ -453,9 +440,11 @@ export default function PayrollTab({
                                 <span className="ml-2 text-[10px] uppercase text-muted-foreground">employer</span>
                               )}
                             </TableCell>
-                            <TableCell><Badge variant="outline">{li.sars_code}</Badge></TableCell>
+                            <TableCell>
+                              {li.tax_code ? <Badge variant="outline">{li.tax_code}</Badge> : <span className="text-xs text-muted-foreground">—</span>}
+                            </TableCell>
                             <TableCell className={`text-right ${li.kind === 'deduction' ? 'text-orange-400' : ''}`}>
-                              {li.kind === 'deduction' ? '−' : ''}{formatZAR(li.amount)}
+                              {li.kind === 'deduction' ? '−' : ''}{fmt(li.amount)}
                             </TableCell>
                           </TableRow>
                         ))}
@@ -466,12 +455,17 @@ export default function PayrollTab({
               </div>
 
               <div className="grid gap-2 rounded-lg border border-border/60 bg-background/40 p-3 text-sm sm:grid-cols-3">
-                <p>Total gross: <strong>{formatZAR(preview.totals.gross)}</strong></p>
-                <p>Total net pay: <strong>{formatZAR(preview.totals.net)}</strong></p>
-                <p>PAYE (4102): <strong>{formatZAR(preview.totals.paye)}</strong></p>
-                <p>UIF employee (4141): <strong>{formatZAR(preview.totals.uif_employee)}</strong></p>
-                <p>UIF employer + SDL: <strong>{formatZAR(preview.employer_contributions)}</strong></p>
-                <p>Total cost to company: <strong>{formatZAR(preview.total_cost)}</strong></p>
+                <p>Total gross: <strong>{fmt(preview.totals.gross)}</strong></p>
+                <p>Total net pay: <strong>{fmt(preview.totals.net)}</strong></p>
+                <p>Employee deductions: <strong>{fmt(preview.totals.employee_statutory)}</strong></p>
+                {preview.byDeduction.map((b) => (
+                  <p key={b.label}>
+                    {b.label}{b.tax_code ? ` (${b.tax_code})` : ''}:{' '}
+                    <strong>{fmt(b.employee_amount + b.employer_amount)}</strong>
+                  </p>
+                ))}
+                <p>Employer contributions: <strong>{fmt(preview.employer_contributions)}</strong></p>
+                <p>Total cost to company: <strong>{fmt(preview.total_cost)}</strong></p>
               </div>
 
               <Button onClick={() => setConfirmOpen(true)}>
@@ -490,11 +484,11 @@ export default function PayrollTab({
             <div key={r.id} className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-border/50 bg-background/40 px-3 py-2">
               <div>
                 <p className="text-sm font-medium">{r.period_start} → {r.period_end}</p>
-                <p className="text-xs text-muted-foreground">Paid {new Date(r.pay_date).toLocaleDateString('en-ZA')}</p>
+                <p className="text-xs text-muted-foreground">Paid {new Date(r.pay_date).toLocaleDateString()}</p>
               </div>
               <div className="text-right text-sm">
-                <p>Cost to company <strong>{formatZAR(r.total_cost)}</strong></p>
-                <p className="text-xs text-muted-foreground">Employer contributions {formatZAR(r.employer_fica)}</p>
+                <p>Cost to company <strong>{fmt(r.total_cost)}</strong></p>
+                <p className="text-xs text-muted-foreground">Employer contributions {fmt(r.employer_fica)}</p>
               </div>
             </div>
           ))}
@@ -507,9 +501,10 @@ export default function PayrollTab({
             <AlertDialogTitle>Approve and run this payroll?</AlertDialogTitle>
             <AlertDialogDescription>
               This commits {preview?.lines.length ?? 0} payslip{(preview?.lines.length ?? 0) === 1 ? '' : 's'} for{' '}
-              {periodStart} → {periodEnd}, total cost to company {formatZAR(preview?.total_cost ?? 0)}. It is logged to
-              payroll history and posted as a Payroll expense. These are simplified estimates — verify with SARS or a
-              registered practitioner before paying or filing.
+              {periodStart} → {periodEnd}, total cost to company {fmt(preview?.total_cost ?? 0)}. It is logged to
+              payroll history and posted as a Payroll expense. These are estimates based on the statutory deductions
+              you configured — verify them with your own country&apos;s tax authority or a registered professional
+              before paying or filing.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

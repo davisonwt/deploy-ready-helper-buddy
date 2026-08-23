@@ -8,17 +8,23 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useBooksBusiness } from '@/hooks/useBooksBusiness';
 import { useBooksData } from '@/hooks/useBooksData';
+import { BooksCurrencyProvider } from '@/lib/books/currency';
 import BooksDashboardTab from '@/components/books/BooksDashboardTab';
 import InvoicesTab from '@/components/books/InvoicesTab';
 import ExpensesTab from '@/components/books/ExpensesTab';
 import PayrollTab from '@/components/books/PayrollTab';
 import ReportsTab from '@/components/books/ReportsTab';
+import CatalogTab from '@/components/books/CatalogTab';
+import BooksSettingsTab from '@/components/books/BooksSettingsTab';
 
 export default function BooksPage() {
   const navigate = useNavigate();
-  const { loading: bizLoading, business, businessId, isBusinessUser, suggestedName, creating, createWorkspace } =
-    useBooksBusiness();
+  const {
+    loading: bizLoading, business, businessId, isBusinessUser, suggestedName, creating, saving,
+    createWorkspace, updateBusiness, applyCountryPreset,
+  } = useBooksBusiness();
   const books = useBooksData(businessId);
+
   const [newName, setNewName] = useState('');
 
   const header = (
@@ -110,41 +116,73 @@ export default function BooksPage() {
   }
 
   return (
-    <div className="mx-auto max-w-6xl px-4 py-10">
-      {header}
+    <BooksCurrencyProvider currency={business?.currency}>
+      <div className="mx-auto max-w-6xl px-4 py-10">
+        {header}
 
-      <Tabs defaultValue="dashboard" className="space-y-6">
-        <TabsList className="flex w-full flex-wrap justify-start">
-          <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
-          <TabsTrigger value="invoices">Invoices</TabsTrigger>
-          <TabsTrigger value="expenses">Expenses</TabsTrigger>
-          <TabsTrigger value="payroll">Payroll</TabsTrigger>
-          <TabsTrigger value="reports">Reports</TabsTrigger>
-        </TabsList>
+        <Tabs defaultValue="dashboard" className="space-y-6">
+          <TabsList className="flex w-full flex-wrap justify-start">
+            <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
+            <TabsTrigger value="invoices">Invoices</TabsTrigger>
+            <TabsTrigger value="expenses">Expenses</TabsTrigger>
+            <TabsTrigger value="catalog">Catalog</TabsTrigger>
+            <TabsTrigger value="payroll">Payroll</TabsTrigger>
+            <TabsTrigger value="reports">Reports</TabsTrigger>
+            <TabsTrigger value="settings">Settings</TabsTrigger>
+          </TabsList>
 
-        <TabsContent value="dashboard">
-          <BooksDashboardTab invoices={books.invoices} expenses={books.expenses} />
-        </TabsContent>
-        <TabsContent value="invoices">
-          <InvoicesTab businessId={businessId} invoices={books.invoices} onChanged={books.reload} />
-        </TabsContent>
-        <TabsContent value="expenses">
-          <ExpensesTab businessId={businessId} expenses={books.expenses} onChanged={books.reload} />
-        </TabsContent>
-        <TabsContent value="payroll">
-          <PayrollTab
-            businessId={businessId}
-            employees={books.employees}
-            contractByEmployee={books.contractByEmployee}
-            runs={books.runs}
-            taxSettings={books.taxSettings}
-            onChanged={books.reload}
-          />
-        </TabsContent>
-        <TabsContent value="reports">
-          <ReportsTab invoices={books.invoices} expenses={books.expenses} />
-        </TabsContent>
-      </Tabs>
-    </div>
+          <TabsContent value="dashboard">
+            <BooksDashboardTab invoices={books.invoices} expenses={books.expenses} />
+          </TabsContent>
+          <TabsContent value="invoices">
+            <InvoicesTab
+              businessId={businessId}
+              invoices={books.invoices}
+              items={books.items}
+              onChanged={books.reload}
+            />
+          </TabsContent>
+          <TabsContent value="expenses">
+            <ExpensesTab businessId={businessId} expenses={books.expenses} onChanged={books.reload} />
+          </TabsContent>
+          <TabsContent value="catalog">
+            <CatalogTab
+              businessId={businessId}
+              booksEnabled={Boolean(business?.books_enabled)}
+              items={books.items}
+              income={books.income}
+              onChanged={books.reload}
+            />
+          </TabsContent>
+          <TabsContent value="payroll">
+            <PayrollTab
+              businessId={businessId}
+              country={business?.country ?? null}
+              employees={books.employees}
+              contractByEmployee={books.contractByEmployee}
+              runs={books.runs}
+              deductions={books.deductions}
+              onChanged={books.reload}
+            />
+          </TabsContent>
+          <TabsContent value="reports">
+            <ReportsTab invoices={books.invoices} expenses={books.expenses} />
+          </TabsContent>
+          <TabsContent value="settings">
+            {business && (
+              <BooksSettingsTab
+                business={business}
+                deductions={books.deductions}
+                saving={saving}
+                onUpdateBusiness={updateBusiness}
+                onApplyPreset={applyCountryPreset}
+                onChanged={books.reload}
+              />
+            )}
+          </TabsContent>
+        </Tabs>
+      </div>
+    </BooksCurrencyProvider>
   );
 }
+

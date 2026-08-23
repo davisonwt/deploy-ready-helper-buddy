@@ -2,7 +2,7 @@ import { AlertTriangle } from 'lucide-react';
 
 /**
  * PERSISTENT COMPLIANCE DISCLAIMER — required on the Payroll tab.
- * Do not remove, hide, collapse or soften this wording.
+ * Jurisdiction-agnostic. Do not remove, hide, collapse or soften this wording.
  */
 export default function ComplianceBanner() {
   return (
@@ -13,13 +13,11 @@ export default function ComplianceBanner() {
       <div className="flex gap-3">
         <AlertTriangle className="mt-0.5 h-5 w-5 shrink-0 text-amber-300" aria-hidden="true" />
         <p>
-          <strong className="font-semibold text-amber-200">
-            Simplified illustrative estimate — not tax or legal advice.
-          </strong>{' '}
-          These payroll figures are a simplified illustration only. PAYE brackets, the UIF
-          remuneration ceiling, SDL liability and all SARS source codes must be verified against
-          current SARS guidance or with a registered tax practitioner or payroll provider before
-          you use them for any real filing, payslip or payment.
+          <strong className="font-semibold text-amber-200">Estimates only — not tax or legal advice.</strong>{' '}
+          These are estimates based on the statutory deductions you&apos;ve configured — not tax or legal
+          advice. Verify current rates, wage caps, and reporting codes with your own country&apos;s tax
+          authority or a registered tax/payroll professional before relying on this for real filings or
+          payments.
         </p>
       </div>
     </div>

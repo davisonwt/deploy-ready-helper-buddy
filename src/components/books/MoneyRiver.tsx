@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { formatZAR } from '@/lib/books/format';
+import { useBooksCurrency } from '@/lib/books/currency';
 
 interface Source {
   label: string;
@@ -22,6 +22,7 @@ const OUT_COLOR = 'hsl(20 90% 62%)';
  * through the business, out to expense categories.
  */
 export default function MoneyRiver({ inflows, outflows, net }: Props) {
+  const { fmt, currency, symbol } = useBooksCurrency();
   const W = 900;
   const H = 360;
   const CX = W / 2;
@@ -81,7 +82,7 @@ export default function MoneyRiver({ inflows, outflows, net }: Props) {
                 <animateMotion dur={`${2.6 + i * 0.35}s`} repeatCount="indefinite" path={d} />
               </circle>
               <text x="140" y={y - 10} textAnchor="end" className="fill-foreground" fontSize="13">{s.label}</text>
-              <text x="140" y={y + 8} textAnchor="end" fill={IN_COLOR} fontSize="12">{formatZAR(s.amount)}</text>
+              <text x="140" y={y + 8} textAnchor="end" fill={IN_COLOR} fontSize="12">{fmt(s.amount)}</text>
             </g>
           );
         })}
@@ -96,7 +97,7 @@ export default function MoneyRiver({ inflows, outflows, net }: Props) {
                 <animateMotion dur={`${2.4 + i * 0.3}s`} repeatCount="indefinite" path={d} />
               </circle>
               <text x={W - 140} y={y - 10} className="fill-foreground" fontSize="13">{s.label}</text>
-              <text x={W - 140} y={y + 8} fill={OUT_COLOR} fontSize="12">{formatZAR(s.amount)}</text>
+              <text x={W - 140} y={y + 8} fill={OUT_COLOR} fontSize="12">{fmt(s.amount)}</text>
             </g>
           );
         })}
@@ -108,7 +109,7 @@ export default function MoneyRiver({ inflows, outflows, net }: Props) {
         </circle>
         <text x={CX} y={CY - 6} textAnchor="middle" className="fill-muted-foreground" fontSize="11">NET</text>
         <text x={CX} y={CY + 14} textAnchor="middle" fill={net >= 0 ? IN_COLOR : OUT_COLOR} fontSize="15" fontWeight="600">
-          {formatZAR(net)}
+          {fmt(net)}
         </text>
       </svg>
     </div>

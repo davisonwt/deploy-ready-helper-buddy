@@ -13,7 +13,8 @@ import {
   YAxis,
 } from 'recharts';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { formatZAR, monthLabel } from '@/lib/books/format';
+import { monthLabel } from '@/lib/books/format';
+import { useBooksCurrency } from '@/lib/books/currency';
 import type { ExpenseRow, InvoiceRow } from '@/hooks/useBooksData';
 
 interface Props {
@@ -32,6 +33,7 @@ const PIE_COLORS = [
 ];
 
 export default function ReportsTab({ invoices, expenses }: Props) {
+  const { fmt, currency, symbol } = useBooksCurrency();
   const months = useMemo(() => {
     const now = new Date();
     const buckets: { key: string; label: string; income: number; expenses: number }[] = [];
@@ -77,9 +79,9 @@ export default function ReportsTab({ invoices, expenses }: Props) {
               <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" opacity={0.4} />
               <XAxis dataKey="label" tick={{ fontSize: 12, fill: 'hsl(var(--muted-foreground))' }} />
               <YAxis tick={{ fontSize: 12, fill: 'hsl(var(--muted-foreground))' }} width={70}
-                tickFormatter={(v) => `R${Math.round(Number(v) / 1000)}k`} />
+                tickFormatter={(v) => `${symbol}${Math.round(Number(v) / 1000)}k`} />
               <Tooltip
-                formatter={(v: any) => formatZAR(Number(v))}
+                formatter={(v: any) => fmt(Number(v))}
                 contentStyle={{ background: 'hsl(var(--card))', border: '1px solid hsl(var(--border))', borderRadius: 8 }}
               />
               <Legend wrapperStyle={{ fontSize: 12 }} />
@@ -106,7 +108,7 @@ export default function ReportsTab({ invoices, expenses }: Props) {
                   ))}
                 </Pie>
                 <Tooltip
-                  formatter={(v: any) => formatZAR(Number(v))}
+                  formatter={(v: any) => fmt(Number(v))}
                   contentStyle={{ background: 'hsl(var(--card))', border: '1px solid hsl(var(--border))', borderRadius: 8 }}
                 />
                 <Legend wrapperStyle={{ fontSize: 12 }} />
