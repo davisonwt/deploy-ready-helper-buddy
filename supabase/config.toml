@@ -164,3 +164,7 @@ verify_jwt = false
 
 [functions.send-xrp-payout]
 verify_jwt = false
+
+[functions.payout-whisperer-earnings]
+verify_jwt = false
+
