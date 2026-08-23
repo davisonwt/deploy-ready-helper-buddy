@@ -281,6 +281,13 @@ export default function CatalogTab({ businessId, booksEnabled, items, income, on
           ))}
         </CardContent>
       </Card>
+
+      <CatalogItemDetailDialog
+        item={openItem ? { ...openItem, category: openMeta?.category ?? null, whisperer_pct: openMeta?.whisperer_pct ?? null } : null}
+        sales={openItem?.product_id ? salesByProduct.get(openItem.product_id) ?? [] : []}
+        onOpenChange={(o) => !o && setOpenItemId(null)}
+      />
     </div>
+
   );
 }
