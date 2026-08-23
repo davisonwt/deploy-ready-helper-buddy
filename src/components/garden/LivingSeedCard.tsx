@@ -148,18 +148,11 @@ export default function LivingSeedCard({
 
   // (chat + realtime moved into LiveStageOverlay)
 
-  const handleShare = async () => {
-    const url = new URL(openPath, 'https://sow2growapp.com');
-    if (referralCode) url.searchParams.set('ref', referralCode);
-    const text = `🌿 "${title}" is alive in the Sow2Grow orchard. Step in:\n${url.toString()}`;
-    try {
-      if (navigator.share) await navigator.share({ title, text, url: url.toString() });
-      else {
-        await navigator.clipboard.writeText(text);
-        toast({ title: 'Invitation copied', description: 'Your referral code is burned in.' });
-      }
-    } catch {/* dismissed */}
+  const handleShare = () => {
+    void referralCode; void toast;
+    setShareOpen(true);
   };
+
 
   const cardHeight = size === 'full' ? 360 : 280;
 
