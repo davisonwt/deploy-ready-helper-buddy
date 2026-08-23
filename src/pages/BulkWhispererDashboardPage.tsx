@@ -13,7 +13,7 @@ import {
   WHISPER_FALLBACK_NOTE,
   WHISPER_STATUS_ACTIVE,
 } from "@/lib/whisperer/policy";
-import { buildWhispererShareLink } from "@/lib/whisperer/attribution";
+import WhispererLiveLinkDialog from "@/components/whisperer/WhispererLiveLinkDialog";
 
 /**
  * PRESCRIBED WHISPERER PATH (see src/lib/whisperer/policy.ts):
@@ -210,21 +210,12 @@ export default function BulkWhispererDashboardPage() {
   };
 
   /**
-   * Step 4: once approved, this is the whisperer's OWN link. Every sale that
-   * comes through it is credited to them and paid out immediately when the
-   * buyer's payment clears — the sower does not approve payouts again.
+   * Step 4: once approved, the whisperer mints their OWN ref code per seed
+   * (and per live session) from WhispererLiveLinkDialog. Every sale that comes
+   * through it is credited to them and paid out immediately when the buyer's
+   * payment clears — the sower does not approve payouts again.
    */
-  const copyShareLink = async (a: Assignment) => {
-    if (!whispererId) return;
-    const slug = a.products?.slug ?? a.products?.id ?? a.product_id;
-    const link = buildWhispererShareLink(`/bulk/products/${slug}`, whispererId);
-    try {
-      await navigator.clipboard.writeText(link);
-      toast.success("Your share link is copied — every sale through it pays you.");
-    } catch {
-      toast.info(link);
-    }
-  };
+
 
   if (!user) {
     return (
@@ -398,15 +389,13 @@ export default function BulkWhispererDashboardPage() {
                       Earned ${Number(a.total_earned || 0).toFixed(2)} · {a.status}
                     </div>
                     {a.status === WHISPER_STATUS_ACTIVE && whispererId && (
-                      <Button
-                        size="sm"
-                        variant="secondary"
-                        className="w-full mt-3"
-                        onClick={() => copyShareLink(a)}
-                      >
-                        <LinkIcon className="h-4 w-4 mr-1" /> Copy my share link
-                      </Button>
+                      <WhispererLiveLinkDialog
+                        assignmentId={a.id}
+                        seedPath={`/bulk/products/${p?.slug ?? p?.id ?? a.product_id}`}
+                        seedTitle={p?.title ?? undefined}
+                      />
                     )}
+
                   </div>
                 </Card>
               );

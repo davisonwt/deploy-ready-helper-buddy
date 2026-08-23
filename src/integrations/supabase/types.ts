@@ -6962,6 +6962,7 @@ export type Database = {
           payment_method: string | null
           payment_reference: string | null
           product_id: string | null
+          ref_link_id: string | null
           release_status: string | null
           released_at: string | null
           s2g_fee: number
@@ -6982,6 +6983,7 @@ export type Database = {
           payment_method?: string | null
           payment_reference?: string | null
           product_id?: string | null
+          ref_link_id?: string | null
           release_status?: string | null
           released_at?: string | null
           s2g_fee: number
@@ -7002,6 +7004,7 @@ export type Database = {
           payment_method?: string | null
           payment_reference?: string | null
           product_id?: string | null
+          ref_link_id?: string | null
           release_status?: string | null
           released_at?: string | null
           s2g_fee?: number
@@ -13608,6 +13611,7 @@ export type Database = {
           created_at: string
           id: string
           ip_hash: string | null
+          live_session_id: string | null
           orchard_id: string | null
           product_id: string | null
           ref_link_id: string
@@ -13622,6 +13626,7 @@ export type Database = {
           created_at?: string
           id?: string
           ip_hash?: string | null
+          live_session_id?: string | null
           orchard_id?: string | null
           product_id?: string | null
           ref_link_id: string
@@ -13636,6 +13641,7 @@ export type Database = {
           created_at?: string
           id?: string
           ip_hash?: string | null
+          live_session_id?: string | null
           orchard_id?: string | null
           product_id?: string | null
           ref_link_id?: string
@@ -13695,6 +13701,7 @@ export type Database = {
           commission_percent: number
           created_at: string
           id: string
+          live_session_id: string | null
           orchard_id: string | null
           product_id: string | null
           ref_link_id: string
@@ -13711,6 +13718,7 @@ export type Database = {
           commission_percent?: number
           created_at?: string
           id?: string
+          live_session_id?: string | null
           orchard_id?: string | null
           product_id?: string | null
           ref_link_id: string
@@ -13727,6 +13735,7 @@ export type Database = {
           commission_percent?: number
           created_at?: string
           id?: string
+          live_session_id?: string | null
           orchard_id?: string | null
           product_id?: string | null
           ref_link_id?: string
@@ -13936,9 +13945,11 @@ export type Database = {
           created_at: string
           id: string
           is_active: boolean
+          live_session_id: string | null
           orchard_id: string | null
           product_id: string | null
           ref_code: string
+          session_kind: string | null
           total_clicks: number
           total_conversions: number
           total_earned: number
@@ -13951,9 +13962,11 @@ export type Database = {
           created_at?: string
           id?: string
           is_active?: boolean
+          live_session_id?: string | null
           orchard_id?: string | null
           product_id?: string | null
           ref_code: string
+          session_kind?: string | null
           total_clicks?: number
           total_conversions?: number
           total_earned?: number
@@ -13966,9 +13979,11 @@ export type Database = {
           created_at?: string
           id?: string
           is_active?: boolean
+          live_session_id?: string | null
           orchard_id?: string | null
           product_id?: string | null
           ref_code?: string
+          session_kind?: string | null
           total_clicks?: number
           total_conversions?: number
           total_earned?: number
@@ -14396,6 +14411,17 @@ export type Database = {
       ensure_linux_family_agents: {
         Args: { _user_id: string }
         Returns: undefined
+      }
+      ensure_whisperer_ref_link: {
+        Args: {
+          _assignment_id: string
+          _live_session_id?: string
+          _session_kind?: string
+        }
+        Returns: {
+          ref_code: string
+          ref_link_id: string
+        }[]
       }
       finalize_basket_order: {
         Args: { _basket_order_id: string }
@@ -15006,6 +15032,16 @@ export type Database = {
         }
         Returns: undefined
       }
+      log_whisperer_click: {
+        Args: {
+          _live_session_id?: string
+          _product_id?: string
+          _ref_code: string
+          _referrer_url?: string
+          _visitor_id?: string
+        }
+        Returns: string
+      }
       mark_webhook_processed: {
         Args: {
           payload_hash_param: string
@@ -15050,6 +15086,24 @@ export type Database = {
         Returns: {
           assignment_id: string
           commission_percent: number
+          whisperer_id: string
+          whisperer_user_id: string
+        }[]
+      }
+      resolve_whisperer_by_ref_code: {
+        Args: {
+          _buyer_id?: string
+          _live_session_id?: string
+          _product_id: string
+          _ref_code?: string
+          _source?: string
+        }
+        Returns: {
+          assignment_id: string
+          attribution_type: string
+          commission_percent: number
+          live_session_id: string
+          ref_link_id: string
           whisperer_id: string
           whisperer_user_id: string
         }[]

@@ -19,12 +19,17 @@ interface RequestItem {
   productId: string;
   qty?: number;
   /**
-   * Whisperer credited with this sale (whisperers.id), captured from the
-   * whisperer's share link. CLIENT CLAIM ONLY — it is validated below against
+   * Whisperer referral code captured from the whisperer's share link.
+   * CLIENT CLAIM ONLY — re-validated below (and again at finalisation) against
    * an ACTIVE (sower-approved) assignment before it can earn anything.
    */
-  whispererId?: string | null;
+  refCode?: string | null;
+  /** Live session the buyer came through, when the link was minted for a live. */
+  liveSessionId?: string | null;
+  /** 'ref_click' (scoped to this seed) or 'last_touch' (global fallback). */
+  attributionSource?: string | null;
 }
+
 
 interface RequestPayload {
   items: RequestItem[];
@@ -111,8 +116,13 @@ Deno.serve(async (req) => {
       unit_price: number;
       qty: number;
       line_total: number;
+      ref_code: string | null;
+      live_session_id: string | null;
+      attribution_source: string;
       whisperer_id: string | null;
       whisperer_user_id: string | null;
+      attribution_type: string | null;
+      commission_percent: number | null;
     }> = [];
 
     let subtotal = 0;
@@ -128,22 +138,41 @@ Deno.serve(async (req) => {
       subtotal = round2(subtotal + lineTotal);
 
       // --- Whisperer attribution (validated server-side) --------------------
-      // The buyer may arrive through a whisperer's share link. That whisperer
-      // is only credited when the sower ALREADY approved them on this seed
-      // (assignment status 'active'). Anything else pays nobody and the whisper
-      // share falls back to the sower.
+      // The buyer may arrive through a whisperer's ref code, or be inside that
+      // whisperer's live session. Either way the whisperer is only credited
+      // when the sower ALREADY approved them on this seed (assignment status
+      // 'active'). Anything else pays nobody and the share stays with the sower.
+      // The claim is stored on the order and re-validated at finalisation.
+      const refCode = typeof item.refCode === "string" && item.refCode.trim()
+        ? item.refCode.trim().toUpperCase().slice(0, 32)
+        : null;
+      const liveSessionId = typeof item.liveSessionId === "string" && item.liveSessionId.trim()
+        ? item.liveSessionId.trim()
+        : null;
+      const attributionSource = item.attributionSource === "last_touch" ? "last_touch" : "ref_click";
+
       let whispererId: string | null = null;
       let whispererUserId: string | null = null;
-      if (item.whispererId) {
+      let attributionType: string | null = null;
+      let commissionPercent: number | null = null;
+      if (refCode || liveSessionId) {
         const { data: resolved, error: resolveErr } = await service.rpc(
-          "resolve_active_whisperer",
-          { _product_id: p.id, _whisperer_id: item.whispererId },
+          "resolve_whisperer_by_ref_code",
+          {
+            _product_id: p.id,
+            _ref_code: refCode,
+            _buyer_id: userId,
+            _live_session_id: liveSessionId,
+            _source: attributionSource,
+          },
         );
         if (resolveErr) {
           console.warn("whisperer resolve failed", resolveErr.message);
         } else if (Array.isArray(resolved) && resolved.length > 0) {
           whispererId = resolved[0].whisperer_id ?? null;
           whispererUserId = resolved[0].whisperer_user_id ?? null;
+          attributionType = resolved[0].attribution_type ?? null;
+          commissionPercent = resolved[0].commission_percent ?? null;
         }
       }
 
@@ -154,10 +183,16 @@ Deno.serve(async (req) => {
         unit_price: unitPrice,
         qty,
         line_total: lineTotal,
+        ref_code: refCode,
+        live_session_id: liveSessionId,
+        attribution_source: attributionSource,
         whisperer_id: whispererId,
         whisperer_user_id: whispererUserId,
+        attribution_type: attributionType,
+        commission_percent: commissionPercent,
       });
     }
+
 
     // --- Processor fee on top (paid by BUYER — Sow2Grow golden rule) ---------
     const quote = computeBuyerFee(payload.provider, subtotal);
