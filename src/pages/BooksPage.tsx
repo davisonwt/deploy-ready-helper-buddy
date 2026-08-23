@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { ArrowLeft, BookOpenCheck, LayoutDashboard, Loader2 } from 'lucide-react';
-import { Helmet } from 'react-helmet-async';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -112,13 +111,6 @@ export default function BooksPage() {
 
   return (
     <div className="mx-auto max-w-6xl px-4 py-10">
-      <Helmet>
-        <title>Books — private business finance | Sow2Grow</title>
-        <meta
-          name="description"
-          content="Invoices, expenses and South African payroll for your Sow2Grow business — private, ZAR-based books with PAYE, UIF and SDL estimates."
-        />
-      </Helmet>
       {header}
 
       <Tabs defaultValue="dashboard" className="space-y-6">

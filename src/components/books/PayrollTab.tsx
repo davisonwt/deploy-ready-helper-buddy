@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState } from 'react';
+import { Fragment, useMemo, useRef, useState } from 'react';
 import { toast } from 'sonner';
 import { FileText, Loader2, Pause, Play, Plus, Trash2, Upload, Calculator, ShieldCheck } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
@@ -419,8 +419,8 @@ export default function PayrollTab({
                   </TableHeader>
                   <TableBody>
                     {preview.lines.map((l) => (
-                      <>
-                        <TableRow key={`${l.employee_id}-head`} className="bg-background/40">
+                      <Fragment key={l.employee_id}>
+                        <TableRow className="bg-background/40">
                           <TableCell className="font-medium">
                             {l.employee_name}
                             <span className={`ml-2 text-[10px] uppercase ${l.source === 'contract' ? 'text-emerald-400' : 'text-amber-400'}`}>
@@ -447,7 +447,7 @@ export default function PayrollTab({
                             </TableCell>
                           </TableRow>
                         ))}
-                      </>
+                      </Fragment>
                     ))}
                   </TableBody>
                 </Table>
