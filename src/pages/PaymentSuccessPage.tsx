@@ -128,7 +128,8 @@ export default function PaymentSuccessPage() {
             <ul className="space-y-1 text-muted-foreground">
               <li>✓ 15% → Platform Fee (s2gbestow)</li>
               <li>✓ 70% → Sower (orchard owner)</li>
-              <li>✓ 15% → Product Whispers / Growers</li>
+              <li>✓ 15% → Product Whisperer (falls back to the sower when none was involved)</li>
+
             </ul>
           </div>
 
