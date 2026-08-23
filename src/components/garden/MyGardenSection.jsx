@@ -49,7 +49,7 @@ export default function MyGardenSection({ title, emoji, accent = '#22c55e', card
 }
 
 
-function GardenCard({ card, accent, navigate }) {
+function GardenCard({ card, accent, navigate, brands = [], brand = null, onAssignBrand = null }) {
   const [menuOpen, setMenuOpen] = useState(false)
   const [previewing, setPreviewing] = useState(false)
   const [shareOpen, setShareOpen] = useState(false)
