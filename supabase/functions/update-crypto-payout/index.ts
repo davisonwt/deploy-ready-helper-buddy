@@ -1,0 +1,138 @@
+// Saves a member's crypto payout destination (USDC on Solana, or XRP).
+//
+// Why server-side: the payload is validated here (client validation is only a
+// typo-catcher), the change is written with the caller's identity so the
+// profiles audit trigger records old -> new values, and the account owner is
+// notified — payout-redirect is a common account-takeover pattern.
+//
+// GET  -> returns the caller's current payout details + network mode banner info
+// POST -> { payout_network, payout_address, payout_address_confirm,
+//           payout_tag (int|null), payout_wallet_type }
+
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
+import { validatePayoutDetails } from "../_shared/cryptoAddress.ts";
+import { networkModeSummary } from "../_shared/cryptoNetworks.ts";
+
+const corsHeaders = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+  "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
+};
+
+const SUPABASE_URL = Deno.env.get("SUPABASE_URL") ?? "";
+const SUPABASE_ANON_KEY = Deno.env.get("SUPABASE_ANON_KEY") ?? "";
+const SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
+
+function json(body: unknown, status = 200) {
+  return new Response(JSON.stringify(body), {
+    status,
+    headers: { ...corsHeaders, "Content-Type": "application/json" },
+  });
+}
+
+Deno.serve(async (req) => {
+  if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
+
+  try {
+    const authHeader = req.headers.get("authorization") ?? "";
+    if (!authHeader.toLowerCase().startsWith("bearer ")) return json({ error: "unauthorized" }, 401);
+    const token = authHeader.slice(7).trim();
+
+    const userClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+      global: { headers: { Authorization: `Bearer ${token}` } },
+    });
+    const { data: userData, error: userErr } = await userClient.auth.getUser();
+    if (userErr || !userData?.user) return json({ error: "unauthorized" }, 401);
+    const user = userData.user;
+
+    const mode = networkModeSummary();
+
+    if (req.method === "GET") {
+      const { data, error } = await userClient
+        .from("profiles")
+        .select("payout_network, payout_address, payout_tag, payout_wallet_type, payout_details_updated_at")
+        .eq("user_id", user.id)
+        .maybeSingle();
+      if (error) throw error;
+      return json({ payout: data ?? null, network_mode: mode });
+    }
+
+    if (req.method !== "POST") return json({ error: "method not allowed" }, 405);
+
+    const body = await req.json().catch(() => null);
+    if (!body) return json({ error: "invalid JSON body" }, 400);
+
+    const address = typeof body.payout_address === "string" ? body.payout_address.trim() : "";
+    const confirm = typeof body.payout_address_confirm === "string"
+      ? body.payout_address_confirm.trim()
+      : null;
+    if (confirm !== null && confirm !== address) {
+      return json({ error: "The two addresses you entered do not match." }, 400);
+    }
+
+    const rawTag = body.payout_tag;
+    const tag = rawTag === null || rawTag === undefined || rawTag === ""
+      ? null
+      : Number(rawTag);
+
+    const payload = {
+      payout_network: body.payout_network,
+      payout_address: address,
+      payout_tag: tag,
+      payout_wallet_type: body.payout_wallet_type,
+    };
+
+    const err = validatePayoutDetails(payload);
+    if (err) return json({ error: err }, 400);
+
+    // Write with the caller's JWT so the audit trigger records auth.uid().
+    const { data: updated, error: updErr } = await userClient
+      .from("profiles")
+      .update({ ...payload, payout_details_updated_at: new Date().toISOString() })
+      .eq("user_id", user.id)
+      .select("payout_network, payout_address, payout_tag, payout_wallet_type, payout_details_updated_at")
+      .maybeSingle();
+    if (updErr) return json({ error: updErr.message }, 400);
+
+    // Notify the owner out-of-band. Never blocks the save.
+    const admin = createClient(SUPABASE_URL, SERVICE_ROLE_KEY);
+    const masked = address.length > 12 ? `${address.slice(0, 6)}…${address.slice(-6)}` : address;
+    const label = payload.payout_network === "xrp" ? "XRP (Ripple)" : "USDC (Solana)";
+    const message =
+      `Your Sow2Grow payout destination was changed to ${label} — ${masked}` +
+      (tag !== null ? ` (destination tag ${tag})` : "") +
+      `. If you did not make this change, contact support immediately and secure your account.`;
+
+    try {
+      await admin.from("user_notifications").insert({
+        user_id: user.id,
+        type: "orchard_update",
+        title: "Payout destination changed",
+        message,
+        action_url: "/settings/payouts",
+        is_read: false,
+      });
+    } catch (e) {
+      console.warn("payout change notification insert failed", e);
+    }
+
+    if (user.email) {
+      try {
+        await admin.functions.invoke("send-resend-email", {
+          body: {
+            to: user.email,
+            subject: "Your Sow2Grow payout destination was changed",
+            html: `<p>${message}</p><p>Changed at ${new Date().toISOString()}.</p>`,
+          },
+        });
+      } catch (e) {
+        console.warn("payout change email failed", e);
+      }
+    }
+
+    return json({ success: true, payout: updated, network_mode: mode });
+  } catch (e) {
+    console.error("update-crypto-payout error", e);
+    return json({ error: "Failed to update payout details" }, 500);
+  }
+});
