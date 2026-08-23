@@ -123,8 +123,9 @@ export default function BestowalCheckout() {
     0,
   );
   const creditedNames = Array.from(
-    new Set(basketItems.map((it: any) => credited[it.id]?.name).filter(Boolean)),
+    new Set(basketItems.map((it: any) => credited[it.id]?.refCode).filter(Boolean)),
   ) as string[];
+
   const platformFee = totalAmount * 0.1;
   const adminFee = totalAmount * 0.05;
   const whisperFee = whisperedSubtotal * WHISPER_SHARE_RATE;
