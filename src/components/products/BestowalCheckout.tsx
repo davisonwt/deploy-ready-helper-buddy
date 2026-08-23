@@ -18,9 +18,46 @@ export default function BestowalCheckout() {
   const [processing, setProcessing] = useState(false);
   const [provider, setProvider] = useState<PayoutProviderId>('nowpayments');
 
+  // Which basket items actually have a whisperer attached? When none is
+  // involved the whisper share falls back to the sower (creator).
+  const [whisperedIds, setWhisperedIds] = useState<Set<string>>(new Set());
+
   useEffect(() => {
     console.log('🛒 BestowalCheckout: Basket items', basketItems);
   }, [basketItems]);
+
+  useEffect(() => {
+    const ids = basketItems.map((it: any) => it.id).filter(Boolean);
+    if (ids.length === 0) {
+      setWhisperedIds(new Set());
+      return;
+    }
+    let cancelled = false;
+    (async () => {
+      const { data, error } = await supabase
+        .from('product_whisperer_assignments')
+        .select('product_id, book_id, orchard_id, status')
+        .eq('status', 'active')
+        .or(
+          `product_id.in.(${ids.join(',')}),book_id.in.(${ids.join(',')}),orchard_id.in.(${ids.join(',')})`,
+        );
+      if (cancelled) return;
+      if (error) {
+        console.warn('Whisperer lookup failed, assuming none:', error.message);
+        setWhisperedIds(new Set());
+        return;
+      }
+      const found = new Set<string>();
+      for (const row of data ?? []) {
+        for (const v of [row.product_id, row.book_id, row.orchard_id]) {
+          if (v) found.add(v);
+        }
+      }
+      setWhisperedIds(found);
+    })();
+    return () => { cancelled = true; };
+  }, [basketItems]);
+
 
   const handleBestow = async () => {
     if (!user) {
