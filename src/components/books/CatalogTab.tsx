@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
 import { Info, Loader2, Package, Plus, RefreshCw, Store } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
@@ -8,8 +8,10 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { useBooksCurrency } from '@/lib/books/currency';
-import { dateLabel } from '@/lib/books/format';
+import { dateLabel, toNumber } from '@/lib/books/format';
 import type { BooksIncomeRow, BooksItemRow } from '@/hooks/useBooksData';
+import CatalogItemDetailDialog from './CatalogItemDetailDialog';
+import type { CatalogSaleRow } from './catalogTypes';
 
 interface Props {
   businessId: string;
@@ -19,12 +21,80 @@ interface Props {
   onChanged: () => void;
 }
 
+type ProductMeta = { category: string | null; whisperer_pct: number | null };
+
 export default function CatalogTab({ businessId, booksEnabled, items, income, onChanged }: Props) {
   const { fmt, currency } = useBooksCurrency();
   const [name, setName] = useState('');
   const [price, setPrice] = useState('');
   const [saving, setSaving] = useState(false);
   const [syncing, setSyncing] = useState(false);
+  const [meta, setMeta] = useState<Record<string, ProductMeta>>({});
+  const [sales, setSales] = useState<CatalogSaleRow[]>([]);
+  const [openItemId, setOpenItemId] = useState<string | null>(null);
+
+  const productIds = useMemo(
+    () => items.map((i) => i.product_id).filter(Boolean) as string[],
+    [items]
+  );
+
+  useEffect(() => {
+    let cancelled = false;
+    if (productIds.length === 0) {
+      setMeta({});
+      setSales([]);
+      return;
+    }
+    (async () => {
+      const [prod, best] = await Promise.all([
+        supabase.from('products').select('id, category, whisperer_commission_percent').in('id', productIds),
+        supabase
+          .from('product_bestowals')
+          .select('id, product_id, amount, s2g_fee, whisperer_id, whisperer_amount, created_at')
+          .in('product_id', productIds)
+          .eq('status', 'completed')
+          .order('created_at', { ascending: false }),
+      ]);
+      if (cancelled) return;
+      const m: Record<string, ProductMeta> = {};
+      ((prod.data as any[]) ?? []).forEach((p) => {
+        m[p.id] = {
+          category: p.category ?? null,
+          whisperer_pct: p.whisperer_commission_percent == null ? null : toNumber(p.whisperer_commission_percent),
+        };
+      });
+      setMeta(m);
+      setSales(
+        ((best.data as any[]) ?? []).map((b) => ({
+          id: b.id,
+          product_id: b.product_id,
+          amount: toNumber(b.amount),
+          platform_fee: toNumber(b.s2g_fee),
+          whisperer_amount: b.whisperer_id ? toNumber(b.whisperer_amount) : 0,
+          whisperer_id: b.whisperer_id ?? null,
+          income_type: 'sale' as const,
+          created_at: b.created_at,
+        }))
+      );
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [productIds.join(',')]);
+
+  const salesByProduct = useMemo(() => {
+    const map = new Map<string, CatalogSaleRow[]>();
+    sales.forEach((s) => {
+      if (!s.product_id) return;
+      const arr = map.get(s.product_id) ?? [];
+      arr.push(s);
+      map.set(s.product_id, arr);
+    });
+    return map;
+  }, [sales]);
+
+  const openItem = items.find((i) => i.id === openItemId) ?? null;
+  const openMeta = openItem?.product_id ? meta[openItem.product_id] : undefined;
 
   const syncMarketplace = async () => {
     setSyncing(true);
@@ -34,6 +104,7 @@ export default function CatalogTab({ businessId, booksEnabled, items, income, on
     toast.success(`${Number(data) || 0} marketplace listing(s) synced into your catalog`);
     onChanged();
   };
+
 
   const totals = useMemo(() => {
     const sales = income.filter((i) => i.income_type === 'sale');
