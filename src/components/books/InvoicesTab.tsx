@@ -9,11 +9,15 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
 import { useBooksCurrency } from '@/lib/books/currency';
-import type { InvoiceRow } from '@/hooks/useBooksData';
+import {
+  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
+} from '@/components/ui/select';
+import type { BooksItemRow, InvoiceRow } from '@/hooks/useBooksData';
 
 interface Props {
   businessId: string;
   invoices: InvoiceRow[];
+  items: BooksItemRow[];
   onChanged: () => void;
 }
 
@@ -23,13 +27,15 @@ const statusStyles: Record<InvoiceRow['status'], string> = {
   paid: 'bg-emerald-500/15 text-emerald-300 border-emerald-400/30',
 };
 
-export default function InvoicesTab({ businessId, invoices, onChanged }: Props) {
+export default function InvoicesTab({ businessId, invoices, items, onChanged }: Props) {
   const { fmt, currency, symbol } = useBooksCurrency();
   const [client, setClient] = useState('');
   const [amount, setAmount] = useState('');
   const [dueDate, setDueDate] = useState('');
   const [notes, setNotes] = useState('');
+  const [itemId, setItemId] = useState('__none');
   const [saving, setSaving] = useState(false);
+
 
   const create = async (status: 'draft' | 'sent') => {
     const value = Number(amount);
