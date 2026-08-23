@@ -155,3 +155,12 @@ verify_jwt = true
 
 [functions.pilot-tts]
 verify_jwt = false
+
+[functions.update-crypto-payout]
+verify_jwt = false
+
+[functions.send-solana-usdc-payout]
+verify_jwt = false
+
+[functions.send-xrp-payout]
+verify_jwt = false
