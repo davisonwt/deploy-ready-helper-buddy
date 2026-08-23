@@ -186,7 +186,10 @@ export default function CryptoPayoutSettings() {
               </RadioGroup>
             </div>
 
+            {isXrp && <XrpRateNotice context="payout" />}
+
             {isXrp && (
+
               <div className="space-y-2">
                 <Label>What kind of XRP wallet is this?</Label>
                 <RadioGroup
