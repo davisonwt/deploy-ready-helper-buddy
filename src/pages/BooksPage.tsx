@@ -8,17 +8,23 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useBooksBusiness } from '@/hooks/useBooksBusiness';
 import { useBooksData } from '@/hooks/useBooksData';
+import { BooksCurrencyProvider } from '@/lib/books/currency';
 import BooksDashboardTab from '@/components/books/BooksDashboardTab';
 import InvoicesTab from '@/components/books/InvoicesTab';
 import ExpensesTab from '@/components/books/ExpensesTab';
 import PayrollTab from '@/components/books/PayrollTab';
 import ReportsTab from '@/components/books/ReportsTab';
+import CatalogTab from '@/components/books/CatalogTab';
+import BooksSettingsTab from '@/components/books/BooksSettingsTab';
 
 export default function BooksPage() {
   const navigate = useNavigate();
-  const { loading: bizLoading, business, businessId, isBusinessUser, suggestedName, creating, createWorkspace } =
-    useBooksBusiness();
+  const {
+    loading: bizLoading, business, businessId, isBusinessUser, suggestedName, creating, saving,
+    createWorkspace, updateBusiness, applyCountryPreset,
+  } = useBooksBusiness();
   const books = useBooksData(businessId);
+
   const [newName, setNewName] = useState('');
 
   const header = (
