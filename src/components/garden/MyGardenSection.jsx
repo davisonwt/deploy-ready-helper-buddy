@@ -8,9 +8,10 @@ import { Link, useNavigate } from 'react-router-dom'
 import LivingButton from '../LivingButton'
 import { useSignedImage } from '@/lib/storage/signedImage'
 import ShareSeedDialog from '@/components/share/ShareSeedDialog'
+import BrandIcon from './BrandIcon'
 
 
-export default function MyGardenSection({ title, emoji, accent = '#22c55e', cards, emptyHint, headerAction = null }) {
+export default function MyGardenSection({ title, emoji, accent = '#22c55e', cards, emptyHint, headerAction = null, brands = [], brandByItem = {}, onAssignBrand = null }) {
   const navigate = useNavigate()
   return (
     <section style={styles.wrap(accent)}>
@@ -31,7 +32,15 @@ export default function MyGardenSection({ title, emoji, accent = '#22c55e', card
       ) : (
         <div style={styles.grid}>
           {cards.map((c) => (
-            <GardenCard key={c.id} card={c} accent={accent} navigate={navigate} />
+            <GardenCard
+              key={c.id}
+              card={c}
+              accent={accent}
+              navigate={navigate}
+              brands={brands}
+              brand={brands.find((b) => b.id === brandByItem[c.id]) || null}
+              onAssignBrand={onAssignBrand}
+            />
           ))}
         </div>
       )}
@@ -39,7 +48,8 @@ export default function MyGardenSection({ title, emoji, accent = '#22c55e', card
   )
 }
 
-function GardenCard({ card, accent, navigate }) {
+
+function GardenCard({ card, accent, navigate, brands = [], brand = null, onAssignBrand = null }) {
   const [menuOpen, setMenuOpen] = useState(false)
   const [previewing, setPreviewing] = useState(false)
   const [shareOpen, setShareOpen] = useState(false)
@@ -85,7 +95,23 @@ function GardenCard({ card, accent, navigate }) {
                 <MenuItem label="✏️ Edit"   onClick={() => { setMenuOpen(false); card.onEdit?.(card) }} />
                 <MenuItem label="♻️ Repost" onClick={() => { setMenuOpen(false); card.onRepost?.(card) }} />
                 <MenuItem label="⏸ Park"   onClick={() => { setMenuOpen(false); card.onPark?.(card) }} />
+                {onAssignBrand && (
+                  <>
+                    <div style={{ padding: '6px 12px 2px', fontSize: 10, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'rgba(226,232,240,0.5)' }}>Brand</div>
+                    {brands.length === 0 && (
+                      <div style={{ padding: '2px 12px 8px', fontSize: 11, color: 'rgba(226,232,240,0.5)' }}>Add a brand in My Garden</div>
+                    )}
+                    {brands.map((b) => (
+                      <MenuItem
+                        key={b.id}
+                        label={`${brand?.id === b.id ? '✓ ' : '🏷 '}${b.name}`}
+                        onClick={() => { setMenuOpen(false); onAssignBrand(card, brand?.id === b.id ? null : b.id) }}
+                      />
+                    ))}
+                  </>
+                )}
                 <MenuItem label="🗑 Delete" onClick={() => { setMenuOpen(false); card.onDelete?.(card) }} danger />
+
               </div>
             )}
           </div>
@@ -99,7 +125,10 @@ function GardenCard({ card, accent, navigate }) {
 
       <div style={styles.body}>
         <div style={styles.cardTitle}>{card.title}</div>
-        <div style={styles.cardSub}>{card.subtitle}</div>
+        <div style={{ display: 'flex', alignItems: 'flex-start', gap: 6 }}>
+          {brand && <BrandIcon brand={brand} size={16} />}
+          <div style={styles.cardSub}>{card.subtitle}</div>
+        </div>
 
         {previewing && card.mediaKind === 'audio' && card.mediaUrl && (
           <audio ref={audioRef} src={card.mediaUrl} controls style={{ width: '100%', marginTop: 6 }}
