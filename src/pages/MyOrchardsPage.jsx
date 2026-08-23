@@ -168,11 +168,32 @@ export default function MyOrchardsPage() {
   }
 
   // Build per-category card lists for the 5 vertical sections
-  const seedCards    = mySeeds.map(s    => buildSeedCard(s, ownerHandlers))
-  const orchardCards = myOrchards.map(o => buildOrchardCard(o, ownerHandlers))
-  const musicCards   = myMusic.map(m    => buildMusicCard(m, ownerHandlers))
-  const bookCards    = myBooks.map(b    => buildBookCard(b, ownerHandlers))
-  const videoCards   = myVideos.map(v   => buildVideoCard(v, ownerHandlers))
+  const allSeedCards    = mySeeds.map(s    => buildSeedCard(s, ownerHandlers))
+  const allOrchardCards = myOrchards.map(o => buildOrchardCard(o, ownerHandlers))
+  const allMusicCards   = myMusic.map(m    => buildMusicCard(m, ownerHandlers))
+  const allBookCards    = myBooks.map(b    => buildBookCard(b, ownerHandlers))
+  const allVideoCards   = myVideos.map(v   => buildVideoCard(v, ownerHandlers))
+
+  // ── Garden search: look a seed up by name/description, category and brand ──
+  const q = search.trim().toLowerCase()
+  const matches = (c) => {
+    if (brandFilter !== 'all' && brandByItem[c.id] !== brandFilter) return false
+    if (!q) return true
+    const hay = [c.title, c.subtitle, c.seedRow?.category, c.seedRow?.genre, c.seedRow?.artist_name]
+      .filter(Boolean).join(' ').toLowerCase()
+    return hay.includes(q)
+  }
+  const inCategory = (key) => categoryFilter === 'all' || categoryFilter === key
+  const filterFor = (key, list) => (inCategory(key) ? list.filter(matches) : [])
+
+  const seedCards    = filterFor('seeds', allSeedCards)
+  const orchardCards = filterFor('orchards', allOrchardCards)
+  const musicCards   = filterFor('music', allMusicCards)
+  const bookCards    = filterFor('books', allBookCards)
+  const videoCards   = filterFor('videos', allVideoCards)
+  const searchActive = q.length > 0 || categoryFilter !== 'all' || brandFilter !== 'all'
+  const resultCount  = seedCards.length + orchardCards.length + musicCards.length + bookCards.length + videoCards.length
+
 
   const getCompletionPercentage = (seed) => {
     const total = (seed.intended_pockets && seed.intended_pockets > 1) ? seed.intended_pockets : seed.total_pockets || 1
