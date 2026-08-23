@@ -23,7 +23,7 @@
 //         amount_usd?: number, amount?: number (XRP), reference?: string }
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
-import { Client, Wallet, xrpToDrops } from "https://esm.sh/xrpl@4.0.0";
+import { Client, Wallet, xrpToDrops } from "npm:xrpl@4.0.0";
 import { validateDestinationTag, validateXrpAddress } from "../_shared/cryptoAddress.ts";
 import { getXrpNetwork, getXrpRpcUrl } from "../_shared/cryptoNetworks.ts";
 import { assertRateFresh, getXrpUsdRate, usdToXrp, xrpToUsd } from "../_shared/xrpRate.ts";
