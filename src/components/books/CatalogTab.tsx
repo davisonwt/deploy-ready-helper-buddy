@@ -205,24 +205,44 @@ export default function CatalogTab({ businessId, booksEnabled, items, income, on
 
           <div className="space-y-2 pt-2">
             {items.length === 0 && <p className="text-sm text-muted-foreground">No items yet.</p>}
-            {items.map((it) => (
-              <div key={it.id} className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-border/50 bg-background/40 px-3 py-2">
-                <div className="min-w-0">
-                  <p className="truncate text-sm font-medium">{it.name}</p>
-                  <p className="text-xs text-muted-foreground">
-                    {it.kind}{it.sku ? ` · ${it.sku}` : ''}{it.active ? '' : ' · inactive'}
-                  </p>
-                </div>
-                <div className="flex items-center gap-2">
-                  {it.source === 'marketplace' && (
-                    <Badge variant="outline" className="text-[10px] uppercase">
-                      <Store className="mr-1 h-3 w-3" /> marketplace
-                    </Badge>
-                  )}
-                  <span className="text-sm">{fmt(it.unit_price)}</span>
-                </div>
-              </div>
-            ))}
+            {items.map((it) => {
+              const m = it.product_id ? meta[it.product_id] : undefined;
+              const rows = it.product_id ? salesByProduct.get(it.product_id) ?? [] : [];
+              const revenue = rows.reduce((s, r) => s + r.amount, 0);
+              return (
+                <button
+                  key={it.id}
+                  type="button"
+                  onClick={() => setOpenItemId(it.id)}
+                  className="flex w-full flex-wrap items-center justify-between gap-2 rounded-lg border border-border/50 bg-background/40 px-3 py-2 text-left transition-colors hover:border-primary/40 hover:bg-background/70"
+                >
+                  <div className="min-w-0">
+                    <p className="truncate text-sm font-medium">{it.name}</p>
+                    <p className="text-xs text-muted-foreground">
+                      {m?.category || it.kind}{it.sku ? ` · ${it.sku}` : ''}{it.active ? '' : ' · inactive'}
+                      {` · bestowed ${rows.length}×`}
+                    </p>
+                  </div>
+                  <div className="flex flex-wrap items-center gap-2">
+                    {m?.whisperer_pct ? (
+                      <Badge variant="outline" className="border-primary/40 text-[10px] text-primary">
+                        Whisperer offer: {m.whisperer_pct}%
+                      </Badge>
+                    ) : null}
+                    {it.source === 'marketplace' && (
+                      <Badge variant="outline" className="text-[10px] uppercase">
+                        <Store className="mr-1 h-3 w-3" /> marketplace
+                      </Badge>
+                    )}
+                    <div className="text-right">
+                      <p className="text-sm">{fmt(it.unit_price)}</p>
+                      <p className="text-xs text-emerald-400">{fmt(revenue)} earned</p>
+                    </div>
+                  </div>
+                </button>
+              );
+            })}
+
           </div>
         </CardContent>
       </Card>
