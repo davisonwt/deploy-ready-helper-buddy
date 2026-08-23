@@ -70,7 +70,7 @@ function GardenCard({ card, accent, navigate }) {
   return (
     <article style={styles.card(accent)}>
       <div style={styles.thumb}>
-        <img src={card.image} alt="" style={styles.thumbImg} />
+        <img src={signedImage || card.image} alt="" style={styles.thumbImg} />
         {card.badge && (
           <span style={styles.badge(card.badge.color)}>
             <span>{card.badge.emoji}</span>
