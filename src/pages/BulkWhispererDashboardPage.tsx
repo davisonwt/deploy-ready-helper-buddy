@@ -6,12 +6,14 @@ import { useAuth } from "@/hooks/useAuth";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, Megaphone, Sprout, TrendingUp, DollarSign, BadgeCheck, HandHeart } from "lucide-react";
+import { Loader2, Megaphone, Sprout, TrendingUp, DollarSign, BadgeCheck, HandHeart, Link as LinkIcon } from "lucide-react";
 import { toast } from "sonner";
 import {
   WHISPER_SHARE_PERCENT,
   WHISPER_FALLBACK_NOTE,
+  WHISPER_STATUS_ACTIVE,
 } from "@/lib/whisperer/policy";
+import { buildWhispererShareLink } from "@/lib/whisperer/attribution";
 
 /**
  * PRESCRIBED WHISPERER PATH (see src/lib/whisperer/policy.ts):
