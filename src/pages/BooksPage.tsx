@@ -121,14 +121,24 @@ export default function BooksPage() {
         {header}
 
         <Tabs defaultValue="dashboard" className="space-y-6">
-          <TabsList className="flex w-full flex-wrap justify-start">
-            <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
-            <TabsTrigger value="invoices">Invoices</TabsTrigger>
-            <TabsTrigger value="expenses">Expenses</TabsTrigger>
-            <TabsTrigger value="catalog">Catalog</TabsTrigger>
-            <TabsTrigger value="payroll">Payroll</TabsTrigger>
-            <TabsTrigger value="reports">Reports</TabsTrigger>
-            <TabsTrigger value="settings">Settings</TabsTrigger>
+          <TabsList className="flex h-auto w-full flex-wrap justify-start gap-1 border border-border/60 bg-card/70 p-1 backdrop-blur">
+            {[
+              ['dashboard', 'Dashboard'],
+              ['invoices', 'Invoices'],
+              ['expenses', 'Expenses'],
+              ['catalog', 'Catalog'],
+              ['payroll', 'Payroll'],
+              ['reports', 'Reports'],
+              ['settings', 'Settings'],
+            ].map(([v, label]) => (
+              <TabsTrigger
+                key={v}
+                value={v}
+                className="rounded-md px-3 py-1.5 text-sm font-medium text-foreground/80 hover:text-foreground data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow"
+              >
+                {label}
+              </TabsTrigger>
+            ))}
           </TabsList>
 
           <TabsContent value="dashboard">
