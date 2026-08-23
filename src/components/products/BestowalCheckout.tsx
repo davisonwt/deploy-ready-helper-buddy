@@ -86,6 +86,8 @@ export default function BestowalCheckout() {
       const items = basketItems.map((it: any) => ({
         productId: it.id,
         qty: Math.max(1, Number(it.quantity ?? 1)),
+        // Whisperer credited with THIS sale (server re-validates the link).
+        whispererId: getWhispererFor(it.id),
       }));
 
       const { data, error } = await supabase.functions.invoke('create-basket-bestowal-order', {
