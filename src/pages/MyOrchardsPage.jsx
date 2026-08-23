@@ -283,11 +283,25 @@ export default function MyOrchardsPage() {
               className='text-center max-w-4xl mx-auto'
             >
               <div className='flex items-center justify-center gap-4 mb-6'>
-                <div className='p-4 rounded-2xl bg-cyan-400/10 backdrop-blur-md border border-cyan-400/30'>
-                  <Sprout className='w-12 h-12 text-cyan-300' />
-                </div>
+                <button
+                  type='button'
+                  onClick={() => setShowBrands(true)}
+                  title={defaultBrand ? `${defaultBrand.name} — edit my brands` : 'Add your own logo & brand'}
+                  className='group relative p-4 rounded-2xl bg-cyan-400/10 backdrop-blur-md border border-cyan-400/30 hover:border-cyan-300/70'
+                >
+                  <HeroBrandLogo brand={defaultBrand} />
+                  <span className='absolute -bottom-2 -right-2 rounded-full bg-cyan-400 px-1.5 py-0.5 text-[10px] font-extrabold text-slate-900'>
+                    ✎
+                  </span>
+                </button>
                 <h1 className='text-4xl sm:text-5xl font-bold text-white drop-shadow-[0_2px_8px_rgba(34,211,238,0.25)]'>My Garden</h1>
               </div>
+              {defaultBrand && (
+                <div className='mb-3 flex justify-center'>
+                  <BrandIcon brand={defaultBrand} size={20} />
+                </div>
+              )}
+
               <p className='text-slate-200/90 text-base sm:text-lg mb-4 max-w-2xl mx-auto'>
                 Manage and tend to your growing seeds. Watch each one blossom into something meaningful.
               </p>
