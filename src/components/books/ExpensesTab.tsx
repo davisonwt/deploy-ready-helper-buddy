@@ -25,6 +25,7 @@ interface Props {
 }
 
 export default function ExpensesTab({ businessId, expenses, onChanged }: Props) {
+  const { fmt, currency, symbol } = useBooksCurrency();
   const [description, setDescription] = useState('');
   const [amount, setAmount] = useState('');
   const [merchant, setMerchant] = useState('');

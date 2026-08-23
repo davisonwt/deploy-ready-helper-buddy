@@ -22,6 +22,7 @@ const OUT_COLOR = 'hsl(20 90% 62%)';
  * through the business, out to expense categories.
  */
 export default function MoneyRiver({ inflows, outflows, net }: Props) {
+  const { fmt, currency, symbol } = useBooksCurrency();
   const W = 900;
   const H = 360;
   const CX = W / 2;

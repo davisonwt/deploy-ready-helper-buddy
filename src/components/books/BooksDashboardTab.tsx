@@ -46,6 +46,7 @@ function StatCard({
 }
 
 export default function BooksDashboardTab({ invoices, expenses }: Props) {
+  const { fmt, currency, symbol } = useBooksCurrency();
   const stats = useMemo(() => {
     const income = invoices.filter((i) => i.status === 'paid').reduce((s, i) => s + i.amount, 0);
     const outstanding = invoices.filter((i) => i.status !== 'paid').reduce((s, i) => s + i.amount, 0);

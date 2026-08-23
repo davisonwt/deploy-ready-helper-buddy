@@ -24,6 +24,7 @@ const statusStyles: Record<InvoiceRow['status'], string> = {
 };
 
 export default function InvoicesTab({ businessId, invoices, onChanged }: Props) {
+  const { fmt, currency, symbol } = useBooksCurrency();
   const [client, setClient] = useState('');
   const [amount, setAmount] = useState('');
   const [dueDate, setDueDate] = useState('');
