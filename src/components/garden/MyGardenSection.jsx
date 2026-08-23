@@ -8,9 +8,10 @@ import { Link, useNavigate } from 'react-router-dom'
 import LivingButton from '../LivingButton'
 import { useSignedImage } from '@/lib/storage/signedImage'
 import ShareSeedDialog from '@/components/share/ShareSeedDialog'
+import BrandIcon from './BrandIcon'
 
 
-export default function MyGardenSection({ title, emoji, accent = '#22c55e', cards, emptyHint, headerAction = null }) {
+export default function MyGardenSection({ title, emoji, accent = '#22c55e', cards, emptyHint, headerAction = null, brands = [], brandByItem = {}, onAssignBrand = null }) {
   const navigate = useNavigate()
   return (
     <section style={styles.wrap(accent)}>
@@ -31,13 +32,22 @@ export default function MyGardenSection({ title, emoji, accent = '#22c55e', card
       ) : (
         <div style={styles.grid}>
           {cards.map((c) => (
-            <GardenCard key={c.id} card={c} accent={accent} navigate={navigate} />
+            <GardenCard
+              key={c.id}
+              card={c}
+              accent={accent}
+              navigate={navigate}
+              brands={brands}
+              brand={brands.find((b) => b.id === brandByItem[c.id]) || null}
+              onAssignBrand={onAssignBrand}
+            />
           ))}
         </div>
       )}
     </section>
   )
 }
+
 
 function GardenCard({ card, accent, navigate }) {
   const [menuOpen, setMenuOpen] = useState(false)
