@@ -13,6 +13,7 @@ import ProviderPicker from '@/components/payments/ProviderPicker';
 import { PayoutProviderId, quoteFee } from '@/lib/payments/providerFees';
 import { WHISPER_SHARE_RATE, WHISPER_SHARE_PERCENT, WHISPER_FALLBACK_NOTE, WHISPER_STATUS_ACTIVE } from '@/lib/whisperer/policy';
 import { getWhispererFor } from '@/lib/whisperer/attribution';
+import { invokePaymentFunction } from '@/lib/payments/invokeFunction';
 
 export default function BestowalCheckout() {
   const { basketItems, removeFromBasket, totalAmount } = useProductBasket();
