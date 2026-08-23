@@ -124,6 +124,19 @@ export default function BestowalCheckout() {
 
   const feeQuote = quoteFee(provider, totalAmount);
 
+  // Split the subtotal into the part that has a whisperer attached and the part
+  // that does not. Without a whisperer the 15% whisper share goes to the sower.
+  const whisperedSubtotal = basketItems.reduce(
+    (sum: number, it: any) =>
+      sum + (whisperedIds.has(it.id) ? Number(it.price || 0) * Math.max(1, Number(it.quantity ?? 1)) : 0),
+    0,
+  );
+  const platformFee = totalAmount * 0.1;
+  const adminFee = totalAmount * 0.05;
+  const whisperFee = whisperedSubtotal * 0.15;
+  const creatorShare = totalAmount - platformFee - adminFee - whisperFee;
+
+
   return (
     <Card>
       <CardHeader>
