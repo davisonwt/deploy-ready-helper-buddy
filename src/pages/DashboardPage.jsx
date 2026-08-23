@@ -21,6 +21,7 @@ import LiveNowStrip from '@/components/live/LiveNowStrip'
 import SacredDayBanner from '@/components/SacredDayBanner'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import VideoUploadModal from '@/components/community/VideoUploadModal.jsx'
+import { useProductBasket } from '@/contexts/ProductBasketContext'
 
 const DAYS_PER_MONTH = [30, 30, 31, 30, 30, 31, 30, 30, 31, 30, 30, 31]
 function shiftYhwhDate(year, month, day, offset) {
@@ -447,6 +448,7 @@ export default function SeedFlowDashboard() {
 
   // Live sunrise-based sacred date — ticks every minute, rolls at user's local sunrise.
   const sacred = useSacredNow()
+  const { itemCount: basketItemCount } = useProductBasket()
   const sacredDate = {
     year: sacred.date.year,
     month: sacred.date.month,
