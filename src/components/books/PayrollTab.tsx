@@ -207,9 +207,12 @@ export default function PayrollTab({
           business_id: businessId,
           payroll_run_id: runId,
           employee_id: l.employee_id,
+          employee_name: l.employee_name,
           gross: l.gross,
           paye: l.paye,
           uif_employee: l.uif_employee,
+          uif_employer: l.uif_employer,
+          sdl: l.sdl,
           deductions: l.deductions,
           net: l.net,
           line_items: l.line_items as any,
@@ -217,16 +220,25 @@ export default function PayrollTab({
       );
       if (lineErr) throw lineErr;
 
-      const { error: expErr } = await supabase.from('expenses' as any).insert({
-        business_id: businessId,
-        description: `Payroll ${periodStart} to ${periodEnd}`,
-        amount: preview.total_cost,
-        currency: BOOKS_CURRENCY,
-        category: 'Payroll',
-        spent_on: payDate,
-        source: 'payroll_run',
-      } as any);
+      const { data: expense, error: expErr } = await supabase
+        .from('expenses' as any)
+        .insert({
+          business_id: businessId,
+          description: `Payroll ${periodStart} to ${periodEnd}`,
+          amount: preview.total_cost,
+          currency: BOOKS_CURRENCY,
+          category: 'Payroll',
+          spent_on: payDate,
+          source: 'payroll_run',
+        } as any)
+        .select('id')
+        .single();
       if (expErr) throw expErr;
+
+      await supabase
+        .from('payroll_runs' as any)
+        .update({ expense_id: (expense as any).id } as any)
+        .eq('id', runId);
 
       toast.success('Payroll approved, logged and posted to expenses');
       setPreview(null);
