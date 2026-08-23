@@ -34,6 +34,7 @@ import AppRoutes, { LoadingFallback } from "./routes/AppRoutes";
 
 function ReferralCaptureMount() {
   useReferralCapture();
+  useWhispererCapture();
   return null;
 }
 
