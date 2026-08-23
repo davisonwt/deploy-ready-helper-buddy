@@ -49,22 +49,33 @@ export default function MyProductsPage() {
     queryKey: ['my-products', user?.id],
     queryFn: async () => {
       if (!user?.id) return [];
-      
-      // First get user's sower profile
-      const { data: sowerData } = await supabase
-        .from('sowers')
-        .select('id')
-        .eq('user_id', user.id)
-        .single();
 
-      if (!sowerData) return [];
+      // A user's listings can hang off their sower profile and/or their company
+      const [{ data: sowerRows }, { data: companyRows }] = await Promise.all([
+        supabase.from('sowers').select('id').eq('user_id', user.id),
+        supabase.from('companies').select('id').eq('owner_user_id', user.id),
+      ]);
 
-      // Then get products for that sower
-      const data = await fetchProductsBySower(sowerData.id);
-      return data;
+      const sowerIds = (sowerRows ?? []).map((r: any) => r.id);
+      const companyIds = (companyRows ?? []).map((r: any) => r.id);
+      if (sowerIds.length === 0 && companyIds.length === 0) return [];
+
+      const filters: string[] = [];
+      if (sowerIds.length) filters.push(`sower_id.in.(${sowerIds.join(',')})`);
+      if (companyIds.length) filters.push(`company_id.in.(${companyIds.join(',')})`);
+
+      const { data, error } = await supabase
+        .from('products')
+        .select(`*, sowers ( ${SOWER_PUBLIC_COLS} )`)
+        .or(filters.join(','))
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+      return data || [];
     },
     enabled: !!user?.id
   });
+
 
   const filteredProducts = products?.filter(product => {
     const matchesCategory = selectedCategory === 'all' || product.category === selectedCategory;
