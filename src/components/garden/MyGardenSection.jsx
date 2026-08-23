@@ -6,6 +6,9 @@
 import { useRef, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import LivingButton from '../LivingButton'
+import { useSignedImage } from '@/lib/storage/signedImage'
+import ShareSeedDialog from '@/components/share/ShareSeedDialog'
+
 
 export default function MyGardenSection({ title, emoji, accent = '#22c55e', cards, emptyHint, headerAction = null }) {
   const navigate = useNavigate()
