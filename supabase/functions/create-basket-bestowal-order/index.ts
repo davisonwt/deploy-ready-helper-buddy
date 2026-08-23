@@ -19,12 +19,17 @@ interface RequestItem {
   productId: string;
   qty?: number;
   /**
-   * Whisperer credited with this sale (whisperers.id), captured from the
-   * whisperer's share link. CLIENT CLAIM ONLY — it is validated below against
+   * Whisperer referral code captured from the whisperer's share link.
+   * CLIENT CLAIM ONLY — re-validated below (and again at finalisation) against
    * an ACTIVE (sower-approved) assignment before it can earn anything.
    */
-  whispererId?: string | null;
+  refCode?: string | null;
+  /** Live session the buyer came through, when the link was minted for a live. */
+  liveSessionId?: string | null;
+  /** 'ref_click' (scoped to this seed) or 'last_touch' (global fallback). */
+  attributionSource?: string | null;
 }
+
 
 interface RequestPayload {
   items: RequestItem[];
