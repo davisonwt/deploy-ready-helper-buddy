@@ -186,20 +186,28 @@ export default function BestowalCheckout() {
           </div>
           <div className="flex justify-between text-muted-foreground">
             <span>Platform Fee (10%)</span>
-            <span className="text-purple-400">${(totalAmount * 0.1).toFixed(2)}</span>
+            <span className="text-purple-400">${platformFee.toFixed(2)}</span>
           </div>
           <div className="flex justify-between text-muted-foreground">
             <span>Admin Fee (5%)</span>
-            <span>${(totalAmount * 0.05).toFixed(2)}</span>
+            <span>${adminFee.toFixed(2)}</span>
           </div>
           <div className="flex justify-between text-muted-foreground">
-            <span>To Creators (70%)</span>
-            <span className="text-primary">${(totalAmount * 0.7).toFixed(2)}</span>
+            <span>To Creators ({totalAmount > 0 ? Math.round((creatorShare / totalAmount) * 100) : 0}%)</span>
+            <span className="text-primary">${creatorShare.toFixed(2)}</span>
           </div>
-          <div className="flex justify-between text-muted-foreground">
-            <span>To Product Whispers (15%)</span>
-            <span className="text-accent">${(totalAmount * 0.15).toFixed(2)}</span>
-          </div>
+          {whisperFee > 0 ? (
+            <div className="flex justify-between text-muted-foreground">
+              <span>To Product Whisperers (15%)</span>
+              <span className="text-accent">${whisperFee.toFixed(2)}</span>
+            </div>
+          ) : (
+            <div className="flex justify-between text-xs text-muted-foreground/70">
+              <span>No whisperer involved — whisper share goes to the sower</span>
+              <span>$0.00</span>
+            </div>
+          )}
+
           <Separator />
           <div className="flex justify-between text-lg font-bold">
             <span>Total</span>
