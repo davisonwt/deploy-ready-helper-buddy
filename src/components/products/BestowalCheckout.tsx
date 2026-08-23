@@ -24,54 +24,23 @@ export default function BestowalCheckout() {
 
   // WHO gets the whisper share on each line?
   // A seed can have MANY approved whisperers — the share goes to the ONE whose
-  // share link brought this buyer here (see src/lib/whisperer/attribution.ts).
-  // No credited whisperer => the share falls back to the sower (creator).
-  const [credited, setCredited] = useState<Record<string, { whispererId: string; name: string }>>({});
+  // ref code brought this buyer here (see src/lib/whisperer/attribution.ts).
+  // This is an ESTIMATE for display only: the server re-validates the code
+  // against an ACTIVE assignment before a cent moves, and falls the share back
+  // to the sower when nobody is credited.
+  const [credited, setCredited] = useState<Record<string, { refCode: string }>>({});
 
   useEffect(() => {
     console.log('🛒 BestowalCheckout: Basket items', basketItems);
   }, [basketItems]);
 
   useEffect(() => {
-    const ids = basketItems.map((it: any) => it.id).filter(Boolean);
-    if (ids.length === 0) {
-      setCredited({});
-      return;
+    const next: Record<string, { refCode: string }> = {};
+    for (const it of basketItems as any[]) {
+      const credit = getWhispererCredit(it.id);
+      if (credit?.refCode) next[it.id] = { refCode: credit.refCode };
     }
-    let cancelled = false;
-    (async () => {
-      const { data, error } = await supabase
-        .from('product_whisperer_assignments')
-        .select('product_id, book_id, orchard_id, status, whisperer_id, whisperers:whisperer_id (id, display_name)')
-        .eq('status', WHISPER_STATUS_ACTIVE) // only sower-approved links can be paid
-        .or(
-          `product_id.in.(${ids.join(',')}),book_id.in.(${ids.join(',')}),orchard_id.in.(${ids.join(',')})`,
-        );
-      if (cancelled) return;
-      if (error) {
-        console.warn('Whisperer lookup failed, assuming none:', error.message);
-        setCredited({});
-        return;
-      }
-      const next: Record<string, { whispererId: string; name: string }> = {};
-      for (const itemId of ids) {
-        const attributed = getWhispererFor(itemId);
-        if (!attributed) continue; // nobody brought this sale -> sower keeps it
-        const match = (data ?? []).find(
-          (row: any) =>
-            row.whisperer_id === attributed &&
-            [row.product_id, row.book_id, row.orchard_id].includes(itemId),
-        );
-        if (match) {
-          next[itemId] = {
-            whispererId: attributed,
-            name: (match as any).whisperers?.display_name || 'Whisperer',
-          };
-        }
-      }
-      setCredited(next);
-    })();
-    return () => { cancelled = true; };
+    setCredited(next);
   }, [basketItems]);
 
 
@@ -85,12 +54,18 @@ export default function BestowalCheckout() {
 
     setProcessing(true);
     try {
-      const items = basketItems.map((it: any) => ({
-        productId: it.id,
-        qty: Math.max(1, Number(it.quantity ?? 1)),
-        // Whisperer credited with THIS sale (server re-validates the link).
-        whispererId: getWhispererFor(it.id),
-      }));
+      const items = basketItems.map((it: any) => {
+        const credit = getWhispererCredit(it.id);
+        return {
+          productId: it.id,
+          qty: Math.max(1, Number(it.quantity ?? 1)),
+          // Whisperer credited with THIS sale (server re-validates the code).
+          refCode: credit?.refCode ?? null,
+          liveSessionId: credit?.liveSessionId ?? null,
+          attributionSource: credit?.source ?? null,
+        };
+      });
+
 
       const data = await invokePaymentFunction<any>('create-basket-bestowal-order', {
         items,
