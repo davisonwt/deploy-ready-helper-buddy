@@ -48,6 +48,7 @@ const PAYPAL_TYPE = 'paypal_email';
 type PreferredRail = typeof NOWPAY_TYPE | typeof PAYPAL_TYPE | null;
 
 export default function PayoutSettingsPage() {
+  const navigate = useNavigate();
   const { user } = useAuth();
   const [loading, setLoading] = useState(true);
   const [wallets, setWallets] = useState<WalletRow[]>([]);
