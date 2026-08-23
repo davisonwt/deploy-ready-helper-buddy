@@ -15032,6 +15032,16 @@ export type Database = {
         }
         Returns: undefined
       }
+      log_whisperer_click: {
+        Args: {
+          _live_session_id?: string
+          _product_id?: string
+          _ref_code: string
+          _referrer_url?: string
+          _visitor_id?: string
+        }
+        Returns: string
+      }
       mark_webhook_processed: {
         Args: {
           payload_hash_param: string
