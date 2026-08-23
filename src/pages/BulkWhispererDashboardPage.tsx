@@ -376,6 +376,16 @@ export default function BulkWhispererDashboardPage() {
                     <div className="mt-2 text-xs text-muted-foreground">
                       Earned ${Number(a.total_earned || 0).toFixed(2)} · {a.status}
                     </div>
+                    {a.status === WHISPER_STATUS_ACTIVE && whispererId && (
+                      <Button
+                        size="sm"
+                        variant="secondary"
+                        className="w-full mt-3"
+                        onClick={() => copyShareLink(a)}
+                      >
+                        <LinkIcon className="h-4 w-4 mr-1" /> Copy my share link
+                      </Button>
+                    )}
                   </div>
                 </Card>
               );
