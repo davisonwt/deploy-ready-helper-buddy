@@ -19,9 +19,11 @@ export default function BestowalCheckout() {
   const [processing, setProcessing] = useState(false);
   const [provider, setProvider] = useState<PayoutProviderId>('nowpayments');
 
-  // Which basket items actually have a whisperer attached? When none is
-  // involved the whisper share falls back to the sower (creator).
-  const [whisperedIds, setWhisperedIds] = useState<Set<string>>(new Set());
+  // WHO gets the whisper share on each line?
+  // A seed can have MANY approved whisperers — the share goes to the ONE whose
+  // share link brought this buyer here (see src/lib/whisperer/attribution.ts).
+  // No credited whisperer => the share falls back to the sower (creator).
+  const [credited, setCredited] = useState<Record<string, { whispererId: string; name: string }>>({});
 
   useEffect(() => {
     console.log('🛒 BestowalCheckout: Basket items', basketItems);
@@ -30,34 +32,45 @@ export default function BestowalCheckout() {
   useEffect(() => {
     const ids = basketItems.map((it: any) => it.id).filter(Boolean);
     if (ids.length === 0) {
-      setWhisperedIds(new Set());
+      setCredited({});
       return;
     }
     let cancelled = false;
     (async () => {
       const { data, error } = await supabase
         .from('product_whisperer_assignments')
-        .select('product_id, book_id, orchard_id, status')
-        .eq('status', WHISPER_STATUS_ACTIVE) // only sower-approved links are paid
+        .select('product_id, book_id, orchard_id, status, whisperer_id, whisperers:whisperer_id (id, display_name)')
+        .eq('status', WHISPER_STATUS_ACTIVE) // only sower-approved links can be paid
         .or(
           `product_id.in.(${ids.join(',')}),book_id.in.(${ids.join(',')}),orchard_id.in.(${ids.join(',')})`,
         );
       if (cancelled) return;
       if (error) {
         console.warn('Whisperer lookup failed, assuming none:', error.message);
-        setWhisperedIds(new Set());
+        setCredited({});
         return;
       }
-      const found = new Set<string>();
-      for (const row of data ?? []) {
-        for (const v of [row.product_id, row.book_id, row.orchard_id]) {
-          if (v) found.add(v);
+      const next: Record<string, { whispererId: string; name: string }> = {};
+      for (const itemId of ids) {
+        const attributed = getWhispererFor(itemId);
+        if (!attributed) continue; // nobody brought this sale -> sower keeps it
+        const match = (data ?? []).find(
+          (row: any) =>
+            row.whisperer_id === attributed &&
+            [row.product_id, row.book_id, row.orchard_id].includes(itemId),
+        );
+        if (match) {
+          next[itemId] = {
+            whispererId: attributed,
+            name: (match as any).whisperers?.display_name || 'Whisperer',
+          };
         }
       }
-      setWhisperedIds(found);
+      setCredited(next);
     })();
     return () => { cancelled = true; };
   }, [basketItems]);
+
 
 
   const handleBestow = async () => {
