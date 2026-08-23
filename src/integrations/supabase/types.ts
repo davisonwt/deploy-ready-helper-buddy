@@ -3976,6 +3976,41 @@ export type Database = {
         }
         Relationships: []
       }
+      item_brand_assignments: {
+        Row: {
+          brand_id: string
+          created_at: string
+          id: string
+          item_id: string
+          item_type: string
+          user_id: string
+        }
+        Insert: {
+          brand_id: string
+          created_at?: string
+          id?: string
+          item_id: string
+          item_type: string
+          user_id: string
+        }
+        Update: {
+          brand_id?: string
+          created_at?: string
+          id?: string
+          item_id?: string
+          item_type?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "item_brand_assignments_brand_id_fkey"
+            columns: ["brand_id"]
+            isOneToOne: false
+            referencedRelation: "sower_brands"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       journal_entries: {
         Row: {
           ai_prompt: string | null
@@ -10446,6 +10481,39 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      sower_brands: {
+        Row: {
+          created_at: string
+          id: string
+          is_default: boolean
+          logo_url: string | null
+          name: string
+          tagline: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_default?: boolean
+          logo_url?: string | null
+          name: string
+          tagline?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_default?: boolean
+          logo_url?: string | null
+          name?: string
+          tagline?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
       }
       sower_payout_wallets: {
         Row: {
