@@ -1376,6 +1376,7 @@ export type Database = {
       books_items: {
         Row: {
           active: boolean
+          book_id: string | null
           business_id: string
           created_at: string
           currency: string
@@ -1391,6 +1392,7 @@ export type Database = {
         }
         Insert: {
           active?: boolean
+          book_id?: string | null
           business_id: string
           created_at?: string
           currency?: string
@@ -1406,6 +1408,7 @@ export type Database = {
         }
         Update: {
           active?: boolean
+          book_id?: string | null
           business_id?: string
           created_at?: string
           currency?: string
@@ -1420,6 +1423,13 @@ export type Database = {
           updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "books_items_book_id_fkey"
+            columns: ["book_id"]
+            isOneToOne: false
+            referencedRelation: "sower_books"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "books_items_business_id_fkey"
             columns: ["business_id"]
