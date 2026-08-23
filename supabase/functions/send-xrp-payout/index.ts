@@ -12,14 +12,22 @@
 // entirely for personal / self-custody wallets.
 //
 // Caller must be an admin/gosat user, or the service role.
+//
+// AMOUNTS: USD is the unit of account. Prefer sending { amount_usd } — the
+// function converts at the live median XRP/USD rate at the moment of sending,
+// so the recipient receives exactly what they earned in dollars. { amount }
+// (raw XRP) is still accepted for manual/operational transfers.
+//
 // Body: { recipient_user_id?: string, destination_address?: string,
 //         destination_tag?: number|null, wallet_type?: 'personal'|'custodial',
-//         amount: number (XRP), reference?: string }
+//         amount_usd?: number, amount?: number (XRP), reference?: string }
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 import { Client, Wallet, xrpToDrops } from "https://esm.sh/xrpl@4.0.0";
 import { validateDestinationTag, validateXrpAddress } from "../_shared/cryptoAddress.ts";
 import { getXrpNetwork, getXrpRpcUrl } from "../_shared/cryptoNetworks.ts";
+import { assertRateFresh, getXrpUsdRate, usdToXrp, xrpToUsd } from "../_shared/xrpRate.ts";
+
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
