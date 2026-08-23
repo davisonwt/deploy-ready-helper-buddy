@@ -21,6 +21,7 @@ import LiveNowStrip from '@/components/live/LiveNowStrip'
 import SacredDayBanner from '@/components/SacredDayBanner'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import VideoUploadModal from '@/components/community/VideoUploadModal.jsx'
+import { useProductBasket } from '@/contexts/ProductBasketContext'
 
 const DAYS_PER_MONTH = [30, 30, 31, 30, 30, 31, 30, 30, 31, 30, 30, 31]
 function shiftYhwhDate(year, month, day, offset) {
@@ -447,6 +448,7 @@ export default function SeedFlowDashboard() {
 
   // Live sunrise-based sacred date — ticks every minute, rolls at user's local sunrise.
   const sacred = useSacredNow()
+  const { itemCount: basketItemCount } = useProductBasket()
   const sacredDate = {
     year: sacred.date.year,
     month: sacred.date.month,
@@ -1114,6 +1116,21 @@ export default function SeedFlowDashboard() {
                     padding: '4px 8px', fontSize: 11, whiteSpace: 'nowrap',
                   }}>
                     🐧 Companions
+                  </div>
+                </Link>
+
+                <Link to="/products/basket" style={{ textDecoration: 'none', flexShrink: 0 }}>
+                  <div style={{
+                    ...styles.seedflowLabel,
+                    position: 'relative',
+                    background: 'linear-gradient(135deg, rgba(245,158,11,0.25), rgba(251,191,36,0.18))',
+                    backdropFilter: 'blur(12px)', WebkitBackdropFilter: 'blur(12px)',
+                    border: '1px solid rgba(251,191,36,0.45)',
+                    color: '#fde68a', fontWeight: 700,
+                    boxShadow: '0 4px 16px rgba(245,158,11,0.2), inset 0 1px 0 rgba(255,255,255,0.12)',
+                    padding: '4px 8px', fontSize: 11, whiteSpace: 'nowrap',
+                  }}>
+                    🛒 Basket{basketItemCount > 0 ? ` (${basketItemCount})` : ''}
                   </div>
                 </Link>
 
