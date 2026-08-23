@@ -286,6 +286,8 @@ export default function BulkWhispererDashboardPage() {
           <div className="text-muted-foreground">1. Register as a whisperer.</div>
           <div className="text-muted-foreground">2. Request permission on a sower's seed (status: pending — pays nothing).</div>
           <div className="text-muted-foreground">3. The sower approves — only then do you earn the {WHISPER_SHARE_PERCENT}% whisper share.</div>
+          <div className="text-muted-foreground">4. Copy YOUR share link on each approved seed and market it. Every sale that comes through your link is credited to you and paid the moment the buyer's payment clears — no further approval from the sower.</div>
+          <div className="text-muted-foreground">A seed can have several approved whisperers: the share always goes to the one whose link made the sale.</div>
           <div className="text-muted-foreground">{WHISPER_FALLBACK_NOTE}</div>
         </div>
       </Card>
