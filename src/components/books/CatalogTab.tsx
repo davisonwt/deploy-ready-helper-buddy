@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import { Info, Loader2, Package, Plus, RefreshCw, Store } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
@@ -21,9 +22,12 @@ interface Props {
   onChanged: () => void;
 }
 
+const S2G_PCT = 15;
+
 type ProductMeta = { category: string | null; whisperer_pct: number | null };
 
 export default function CatalogTab({ businessId, booksEnabled, items, income, onChanged }: Props) {
+  const navigate = useNavigate();
   const { fmt, currency } = useBooksCurrency();
   const [name, setName] = useState('');
   const [price, setPrice] = useState('');
