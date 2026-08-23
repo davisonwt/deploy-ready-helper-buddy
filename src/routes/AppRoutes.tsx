@@ -68,6 +68,7 @@ import {
   CreatePremiumRoomPage,
   WalletSettingsPage,
   PayoutSettingsPage,
+  BooksPage,
   MyWalletPage,
   GosatTreasuryPage,
   NowPaymentsTestPage,
