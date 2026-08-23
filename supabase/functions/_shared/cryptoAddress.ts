@@ -1,0 +1,76 @@
+// Server-side mirror of src/lib/payments/cryptoAddress.ts.
+// Format-only validation for the two supported payout rails:
+//   • USDC on Solana  (base58 address, no destination tag concept)
+//   • XRP on the XRP Ledger (base58 "r..." address, optional destination tag)
+
+export type PayoutNetwork = "solana_usdc" | "xrp";
+export type PayoutWalletType = "personal" | "custodial";
+
+const BASE58 = /^[1-9A-HJ-NP-Za-km-z]+$/;
+export const XRP_MAX_TAG = 4294967295;
+
+export function validateSolanaAddress(raw: string): string | null {
+  const v = (raw ?? "").trim();
+  if (!v) return "Solana address is required.";
+  if (v.length < 32 || v.length > 44) return "Solana address must be 32-44 characters.";
+  if (!BASE58.test(v)) return "Solana address is not valid base58.";
+  return null;
+}
+
+export function validateXrpAddress(raw: string): string | null {
+  const v = (raw ?? "").trim();
+  if (!v) return "XRP address is required.";
+  if (!v.startsWith("r")) return 'XRP address must start with "r".';
+  if (v.length < 25 || v.length > 35) return "XRP address must be 25-35 characters.";
+  if (!BASE58.test(v)) return "XRP address is not valid base58.";
+  return null;
+}
+
+export function validateDestinationTag(tag: unknown): string | null {
+  if (typeof tag !== "number" || !Number.isInteger(tag)) {
+    return "Destination tag must be an integer.";
+  }
+  if (tag < 0 || tag > XRP_MAX_TAG) return `Destination tag must be 0-${XRP_MAX_TAG}.`;
+  return null;
+}
+
+export interface PayoutDetails {
+  payout_network: PayoutNetwork;
+  payout_address: string;
+  payout_tag: number | null;
+  payout_wallet_type: PayoutWalletType;
+}
+
+/** Full-shape validation. Returns an error string, or null when the payload is sound. */
+export function validatePayoutDetails(input: Partial<PayoutDetails>): string | null {
+  const { payout_network, payout_address, payout_tag, payout_wallet_type } = input;
+
+  if (payout_network !== "solana_usdc" && payout_network !== "xrp") {
+    return "payout_network must be 'solana_usdc' or 'xrp'.";
+  }
+  if (payout_wallet_type !== "personal" && payout_wallet_type !== "custodial") {
+    return "payout_wallet_type must be 'personal' or 'custodial'.";
+  }
+
+  const addrErr = payout_network === "xrp"
+    ? validateXrpAddress(payout_address ?? "")
+    : validateSolanaAddress(payout_address ?? "");
+  if (addrErr) return addrErr;
+
+  if (payout_network === "solana_usdc") {
+    // Solana has no destination-tag concept at all.
+    if (payout_tag !== null && payout_tag !== undefined) {
+      return "Solana payouts must not carry a destination tag.";
+    }
+    return null;
+  }
+
+  // XRP
+  if (payout_wallet_type === "custodial") {
+    return validateDestinationTag(payout_tag);
+  }
+  if (payout_tag !== null && payout_tag !== undefined) {
+    return "Personal (self-custody) XRP wallets must not carry a destination tag.";
+  }
+  return null;
+}
