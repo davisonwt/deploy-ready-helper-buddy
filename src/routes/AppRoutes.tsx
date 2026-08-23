@@ -68,6 +68,7 @@ import {
   CreatePremiumRoomPage,
   WalletSettingsPage,
   PayoutSettingsPage,
+  BooksPage,
   MyWalletPage,
   GosatTreasuryPage,
   NowPaymentsTestPage,
@@ -453,6 +454,9 @@ const AppRoutes = () => (
     } />
     <Route path="/settings/payouts" element={
       <ProtectedRoute><Layout><PayoutSettingsPage /></Layout></ProtectedRoute>
+    } />
+    <Route path="/books" element={
+      <ProtectedRoute><Layout><BooksPage /></Layout></ProtectedRoute>
     } />
     <Route path="/wallet" element={
       <ProtectedRoute><Layout><MyWalletPage /></Layout></ProtectedRoute>

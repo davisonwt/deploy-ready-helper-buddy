@@ -134,6 +134,7 @@ export const CreatePremiumRoomPage = lazy(() =>
 );
 export const WalletSettingsPage = lazy(() => import('@/pages/WalletSettingsPage'));
 export const PayoutSettingsPage = lazy(() => import('@/pages/PayoutSettingsPage'));
+export const BooksPage = lazy(() => import('@/pages/BooksPage'));
 export const MyWalletPage = lazy(() => import('@/pages/MyWalletPage'));
 export const GosatTreasuryPage = lazy(() => import('@/pages/GosatTreasuryPage'));
 export const NowPaymentsTestPage = lazy(() => import('@/pages/NowPaymentsTestPage'));
