@@ -4338,6 +4338,7 @@ export type Database = {
           currency: string
           due_date: string | null
           id: string
+          item_id: string | null
           notes: string | null
           paid_at: string | null
           status: string
@@ -4351,6 +4352,7 @@ export type Database = {
           currency?: string
           due_date?: string | null
           id?: string
+          item_id?: string | null
           notes?: string | null
           paid_at?: string | null
           status?: string
@@ -4364,6 +4366,7 @@ export type Database = {
           currency?: string
           due_date?: string | null
           id?: string
+          item_id?: string | null
           notes?: string | null
           paid_at?: string | null
           status?: string
@@ -4375,6 +4378,13 @@ export type Database = {
             columns: ["business_id"]
             isOneToOne: false
             referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "invoices_item_id_fkey"
+            columns: ["item_id"]
+            isOneToOne: false
+            referencedRelation: "books_items"
             referencedColumns: ["id"]
           },
         ]
