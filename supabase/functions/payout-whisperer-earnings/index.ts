@@ -119,7 +119,7 @@ Deno.serve(async (req) => {
       .in("user_id", userIds.length > 0 ? userIds : ["00000000-0000-0000-0000-000000000000"]);
     const profileByUser = new Map((profiles ?? []).map((p: any) => [p.user_id, p]));
 
-    const xrpUsdRate = Number(Deno.env.get("XRP_USD_RATE") ?? "");
+    
 
     const outcomes: Outcome[] = [];
 
