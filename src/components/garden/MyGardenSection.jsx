@@ -95,7 +95,23 @@ function GardenCard({ card, accent, navigate, brands = [], brand = null, onAssig
                 <MenuItem label="✏️ Edit"   onClick={() => { setMenuOpen(false); card.onEdit?.(card) }} />
                 <MenuItem label="♻️ Repost" onClick={() => { setMenuOpen(false); card.onRepost?.(card) }} />
                 <MenuItem label="⏸ Park"   onClick={() => { setMenuOpen(false); card.onPark?.(card) }} />
+                {onAssignBrand && (
+                  <>
+                    <div style={{ padding: '6px 12px 2px', fontSize: 10, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'rgba(226,232,240,0.5)' }}>Brand</div>
+                    {brands.length === 0 && (
+                      <div style={{ padding: '2px 12px 8px', fontSize: 11, color: 'rgba(226,232,240,0.5)' }}>Add a brand in My Garden</div>
+                    )}
+                    {brands.map((b) => (
+                      <MenuItem
+                        key={b.id}
+                        label={`${brand?.id === b.id ? '✓ ' : '🏷 '}${b.name}`}
+                        onClick={() => { setMenuOpen(false); onAssignBrand(card, brand?.id === b.id ? null : b.id) }}
+                      />
+                    ))}
+                  </>
+                )}
                 <MenuItem label="🗑 Delete" onClick={() => { setMenuOpen(false); card.onDelete?.(card) }} danger />
+
               </div>
             )}
           </div>
