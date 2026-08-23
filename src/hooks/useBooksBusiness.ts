@@ -1,13 +1,20 @@
 import { useCallback, useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
+import { presetFor } from '@/lib/books/presets';
 
 export interface BooksBusiness {
   id: string;
   name: string;
   logo_url: string | null;
   is_verified: boolean | null;
+  country: string | null;
+  currency: string;
+  books_enabled: boolean;
+  books_activated_at: string | null;
 }
+
+const SELECT = 'id, name, logo_url, is_verified, country, currency, books_enabled, books_activated_at';
 
 /**
  * Resolves the Books workspace owner: a `companies` row owned by auth.uid().
@@ -22,6 +29,7 @@ export function useBooksBusiness() {
   const [business, setBusiness] = useState<BooksBusiness | null>(null);
   const [sellerName, setSellerName] = useState<string | null>(null);
   const [creating, setCreating] = useState(false);
+  const [saving, setSaving] = useState(false);
 
   const load = useCallback(async () => {
     if (!user) {
@@ -35,7 +43,7 @@ export function useBooksBusiness() {
       const [companyRes, sowerRes] = await Promise.all([
         supabase
           .from('companies')
-          .select('id, name, logo_url, is_verified')
+          .select(SELECT)
           .eq('owner_user_id', user.id)
           .order('created_at', { ascending: true })
           .limit(1)
@@ -72,7 +80,7 @@ export function useBooksBusiness() {
         const { data, error } = await supabase
           .from('companies')
           .insert({ owner_user_id: user.id, name, slug: `${slug}-${user.id.slice(0, 6)}` } as any)
-          .select('id, name, logo_url, is_verified')
+          .select(SELECT)
           .single();
         if (error) throw error;
         setBusiness(data as any);
@@ -84,6 +92,63 @@ export function useBooksBusiness() {
     [user]
   );
 
+  /** Country / currency / add-on updates on the business itself. */
+  const updateBusiness = useCallback(
+    async (patch: Partial<Pick<BooksBusiness, 'country' | 'currency' | 'books_enabled'>>) => {
+      if (!business) throw new Error('No business');
+      setSaving(true);
+      try {
+        const payload: Record<string, unknown> = { ...patch };
+        if (patch.books_enabled) payload.books_activated_at = new Date().toISOString();
+        const { data, error } = await supabase
+          .from('companies')
+          .update(payload as any)
+          .eq('id', business.id)
+          .select(SELECT)
+          .single();
+        if (error) throw error;
+        setBusiness(data as any);
+        return data as any as BooksBusiness;
+      } finally {
+        setSaving(false);
+      }
+    },
+    [business]
+  );
+
+  /**
+   * Applies the ONE built-in country preset (South Africa). Any other country
+   * leaves the statutory deduction list untouched/empty for the business.
+   */
+  const applyCountryPreset = useCallback(
+    async (country: string) => {
+      if (!business) throw new Error('No business');
+      const preset = presetFor(country);
+      if (!preset) return false;
+      const existing = await supabase
+        .from('statutory_deductions' as any)
+        .select('id')
+        .eq('business_id', business.id)
+        .limit(1);
+      if ((existing.data as any[])?.length) return false;
+      const { error } = await supabase.from('statutory_deductions' as any).insert(
+        preset.deductions.map((d) => ({
+          business_id: business.id,
+          label: d.label,
+          employee_pct: d.employee_pct,
+          employer_pct: d.employer_pct,
+          wage_cap: d.wage_cap,
+          applies: d.applies,
+          tax_code: d.tax_code ?? null,
+          sort_order: d.sort_order ?? 0,
+        })) as any
+      );
+      if (error) throw error;
+      return true;
+    },
+    [business]
+  );
+
   return {
     loading,
     business,
@@ -92,7 +157,10 @@ export function useBooksBusiness() {
     isBusinessUser: Boolean(business || sellerName),
     suggestedName: sellerName,
     creating,
+    saving,
     createWorkspace,
+    updateBusiness,
+    applyCountryPreset,
     reload: load,
   };
 }

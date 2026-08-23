@@ -1,16 +1,51 @@
-/** Books uses ZAR (South African Rand) for every monetary figure. */
-export const BOOKS_CURRENCY = 'ZAR';
+/**
+ * Books money formatting — currency comes from the business, never hardcoded.
+ * Every Books figure renders in the currency the business selected on its
+ * profile (companies.currency).
+ */
 
-const zar = new Intl.NumberFormat('en-ZA', {
-  style: 'currency',
-  currency: 'ZAR',
-  minimumFractionDigits: 2,
-  maximumFractionDigits: 2,
-});
+export const DEFAULT_BOOKS_CURRENCY = 'USD';
 
-export function formatZAR(value: number | string | null | undefined): string {
+const cache = new Map<string, Intl.NumberFormat>();
+
+function formatter(currency: string): Intl.NumberFormat {
+  const code = (currency || DEFAULT_BOOKS_CURRENCY).toUpperCase();
+  let f = cache.get(code);
+  if (!f) {
+    try {
+      f = new Intl.NumberFormat(undefined, {
+        style: 'currency',
+        currency: code,
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2,
+      });
+    } catch {
+      f = new Intl.NumberFormat(undefined, {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2,
+      });
+    }
+    cache.set(code, f);
+  }
+  return f;
+}
+
+export function formatMoney(
+  value: number | string | null | undefined,
+  currency: string = DEFAULT_BOOKS_CURRENCY
+): string {
   const n = typeof value === 'string' ? Number(value) : value ?? 0;
-  return zar.format(Number.isFinite(n as number) ? (n as number) : 0);
+  return formatter(currency).format(Number.isFinite(n as number) ? (n as number) : 0);
+}
+
+/** Short currency symbol/prefix for compact axis ticks. */
+export function currencySymbol(currency: string = DEFAULT_BOOKS_CURRENCY): string {
+  try {
+    const parts = formatter(currency).formatToParts(1);
+    return parts.find((p) => p.type === 'currency')?.value ?? currency;
+  } catch {
+    return currency;
+  }
 }
 
 export function toNumber(value: unknown): number {
@@ -19,5 +54,13 @@ export function toNumber(value: unknown): number {
 }
 
 export function monthLabel(d: Date): string {
-  return d.toLocaleDateString('en-ZA', { month: 'short', year: '2-digit' });
+  return d.toLocaleDateString(undefined, { month: 'short', year: '2-digit' });
+}
+
+export function dateLabel(iso: string): string {
+  return new Date(iso).toLocaleDateString(undefined, {
+    day: '2-digit',
+    month: 'short',
+    year: 'numeric',
+  });
 }

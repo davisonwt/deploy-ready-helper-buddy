@@ -1307,6 +1307,135 @@ export type Database = {
           },
         ]
       }
+      books_income: {
+        Row: {
+          amount: number
+          business_id: string
+          buyer_reference: string | null
+          created_at: string
+          currency: string
+          description: string
+          id: string
+          income_type: string
+          item_id: string | null
+          occurred_at: string
+          payment_method: string | null
+          platform_fee: number
+          source_id: string
+          source_table: string
+        }
+        Insert: {
+          amount?: number
+          business_id: string
+          buyer_reference?: string | null
+          created_at?: string
+          currency?: string
+          description: string
+          id?: string
+          income_type?: string
+          item_id?: string | null
+          occurred_at?: string
+          payment_method?: string | null
+          platform_fee?: number
+          source_id: string
+          source_table: string
+        }
+        Update: {
+          amount?: number
+          business_id?: string
+          buyer_reference?: string | null
+          created_at?: string
+          currency?: string
+          description?: string
+          id?: string
+          income_type?: string
+          item_id?: string | null
+          occurred_at?: string
+          payment_method?: string | null
+          platform_fee?: number
+          source_id?: string
+          source_table?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "books_income_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "books_income_item_id_fkey"
+            columns: ["item_id"]
+            isOneToOne: false
+            referencedRelation: "books_items"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      books_items: {
+        Row: {
+          active: boolean
+          business_id: string
+          created_at: string
+          currency: string
+          description: string | null
+          id: string
+          kind: string
+          name: string
+          product_id: string | null
+          sku: string | null
+          source: string
+          unit_price: number
+          updated_at: string
+        }
+        Insert: {
+          active?: boolean
+          business_id: string
+          created_at?: string
+          currency?: string
+          description?: string | null
+          id?: string
+          kind?: string
+          name: string
+          product_id?: string | null
+          sku?: string | null
+          source?: string
+          unit_price?: number
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean
+          business_id?: string
+          created_at?: string
+          currency?: string
+          description?: string | null
+          id?: string
+          kind?: string
+          name?: string
+          product_id?: string | null
+          sku?: string | null
+          source?: string
+          unit_price?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "books_items_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "books_items_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       bulk_upload_jobs: {
         Row: {
           created_at: string
@@ -2515,7 +2644,11 @@ export type Database = {
           about: string | null
           ads_enabled: boolean
           banner_url: string | null
+          books_activated_at: string | null
+          books_enabled: boolean
+          country: string | null
           created_at: string
+          currency: string
           id: string
           is_factory: boolean
           is_verified: boolean
@@ -2532,7 +2665,11 @@ export type Database = {
           about?: string | null
           ads_enabled?: boolean
           banner_url?: string | null
+          books_activated_at?: string | null
+          books_enabled?: boolean
+          country?: string | null
           created_at?: string
+          currency?: string
           id?: string
           is_factory?: boolean
           is_verified?: boolean
@@ -2549,7 +2686,11 @@ export type Database = {
           about?: string | null
           ads_enabled?: boolean
           banner_url?: string | null
+          books_activated_at?: string | null
+          books_enabled?: boolean
+          country?: string | null
           created_at?: string
+          currency?: string
           id?: string
           is_factory?: boolean
           is_verified?: boolean
@@ -3475,9 +3616,12 @@ export type Database = {
           currency: string
           description: string
           id: string
+          linked_income_id: string | null
           merchant: string | null
           receipt_image_path: string | null
           source: string
+          source_id: string | null
+          source_table: string | null
           spent_on: string | null
         }
         Insert: {
@@ -3488,9 +3632,12 @@ export type Database = {
           currency?: string
           description: string
           id?: string
+          linked_income_id?: string | null
           merchant?: string | null
           receipt_image_path?: string | null
           source?: string
+          source_id?: string | null
+          source_table?: string | null
           spent_on?: string | null
         }
         Update: {
@@ -3501,9 +3648,12 @@ export type Database = {
           currency?: string
           description?: string
           id?: string
+          linked_income_id?: string | null
           merchant?: string | null
           receipt_image_path?: string | null
           source?: string
+          source_id?: string | null
+          source_table?: string | null
           spent_on?: string | null
         }
         Relationships: [
@@ -3512,6 +3662,13 @@ export type Database = {
             columns: ["business_id"]
             isOneToOne: false
             referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "expenses_linked_income_id_fkey"
+            columns: ["linked_income_id"]
+            isOneToOne: false
+            referencedRelation: "books_income"
             referencedColumns: ["id"]
           },
         ]
@@ -6379,50 +6536,59 @@ export type Database = {
         Row: {
           business_id: string
           created_at: string
+          currency: string | null
           deductions: number
           employee_id: string | null
           employee_name: string
+          employee_statutory: number
+          employer_statutory: number
           gross: number
           id: string
           line_items: Json
           net: number
-          paye: number
+          paye: number | null
           payroll_run_id: string
-          sdl: number
-          uif_employee: number
-          uif_employer: number
+          sdl: number | null
+          uif_employee: number | null
+          uif_employer: number | null
         }
         Insert: {
           business_id: string
           created_at?: string
+          currency?: string | null
           deductions?: number
           employee_id?: string | null
           employee_name?: string
+          employee_statutory?: number
+          employer_statutory?: number
           gross?: number
           id?: string
           line_items?: Json
           net?: number
-          paye?: number
+          paye?: number | null
           payroll_run_id: string
-          sdl?: number
-          uif_employee?: number
-          uif_employer?: number
+          sdl?: number | null
+          uif_employee?: number | null
+          uif_employer?: number | null
         }
         Update: {
           business_id?: string
           created_at?: string
+          currency?: string | null
           deductions?: number
           employee_id?: string | null
           employee_name?: string
+          employee_statutory?: number
+          employer_statutory?: number
           gross?: number
           id?: string
           line_items?: Json
           net?: number
-          paye?: number
+          paye?: number | null
           payroll_run_id?: string
-          sdl?: number
-          uif_employee?: number
-          uif_employer?: number
+          sdl?: number | null
+          uif_employee?: number | null
+          uif_employer?: number | null
         }
         Relationships: [
           {
@@ -6452,6 +6618,7 @@ export type Database = {
         Row: {
           business_id: string
           created_at: string
+          currency: string | null
           employer_fica: number
           expense_id: string | null
           id: string
@@ -6464,6 +6631,7 @@ export type Database = {
         Insert: {
           business_id: string
           created_at?: string
+          currency?: string | null
           employer_fica?: number
           expense_id?: string | null
           id?: string
@@ -6476,6 +6644,7 @@ export type Database = {
         Update: {
           business_id?: string
           created_at?: string
+          currency?: string | null
           employer_fica?: number
           expense_id?: string | null
           id?: string
@@ -11143,6 +11312,56 @@ export type Database = {
         }
         Relationships: []
       }
+      statutory_deductions: {
+        Row: {
+          applies: boolean
+          business_id: string
+          created_at: string
+          employee_pct: number
+          employer_pct: number
+          id: string
+          label: string
+          sort_order: number
+          tax_code: string | null
+          updated_at: string
+          wage_cap: number | null
+        }
+        Insert: {
+          applies?: boolean
+          business_id: string
+          created_at?: string
+          employee_pct?: number
+          employer_pct?: number
+          id?: string
+          label: string
+          sort_order?: number
+          tax_code?: string | null
+          updated_at?: string
+          wage_cap?: number | null
+        }
+        Update: {
+          applies?: boolean
+          business_id?: string
+          created_at?: string
+          employee_pct?: number
+          employer_pct?: number
+          id?: string
+          label?: string
+          sort_order?: number
+          tax_code?: string | null
+          updated_at?: string
+          wage_cap?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "statutory_deductions_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       stay_availability: {
         Row: {
           custom_price: number | null
@@ -11780,38 +11999,6 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
-      }
-      tax_settings: {
-        Row: {
-          business_id: string
-          paye_pct: number
-          sdl_applies: boolean
-          uif_ceiling: number
-          updated_at: string
-        }
-        Insert: {
-          business_id: string
-          paye_pct?: number
-          sdl_applies?: boolean
-          uif_ceiling?: number
-          updated_at?: string
-        }
-        Update: {
-          business_id?: string
-          paye_pct?: number
-          sdl_applies?: boolean
-          uif_ceiling?: number
-          updated_at?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "tax_settings_business_id_fkey"
-            columns: ["business_id"]
-            isOneToOne: true
-            referencedRelation: "companies"
-            referencedColumns: ["id"]
-          },
-        ]
       }
       topups: {
         Row: {
@@ -14111,6 +14298,7 @@ export type Database = {
             }
             Returns: boolean
           }
+      books_company_for_user: { Args: { _user_id: string }; Returns: string }
       browse_public_rooms: {
         Args: never
         Returns: {

@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { DEFAULT_TAX_SETTINGS, type ParsedTerms, type TaxSettings } from '@/lib/books/payroll';
+import type { ParsedTerms, StatutoryDeductionInput } from '@/lib/books/payroll';
 import { toNumber } from '@/lib/books/format';
 
 export interface InvoiceRow {
@@ -27,6 +27,9 @@ export interface ExpenseRow {
   merchant: string | null;
   spent_on: string | null;
   source: string;
+  source_table: string | null;
+  source_id: string | null;
+  linked_income_id: string | null;
   created_at: string;
 }
 
@@ -62,7 +65,44 @@ export interface PayrollRunRow {
   totals: Record<string, number>;
   employer_fica: number;
   total_cost: number;
+  currency: string | null;
   created_at: string;
+}
+
+export interface BooksItemRow {
+  id: string;
+  business_id: string;
+  product_id: string | null;
+  name: string;
+  description: string | null;
+  kind: string;
+  sku: string | null;
+  unit_price: number;
+  currency: string;
+  source: string;
+  active: boolean;
+  created_at: string;
+}
+
+export interface BooksIncomeRow {
+  id: string;
+  business_id: string;
+  income_type: 'sale' | 'gift';
+  item_id: string | null;
+  description: string;
+  amount: number;
+  platform_fee: number;
+  currency: string;
+  payment_method: string | null;
+  buyer_reference: string | null;
+  source_table: string;
+  source_id: string;
+  occurred_at: string;
+}
+
+export interface StatutoryDeductionRow extends StatutoryDeductionInput {
+  id: string;
+  business_id: string;
 }
 
 const num = (row: any, key: string) => toNumber(row?.[key]);
@@ -74,7 +114,9 @@ export function useBooksData(businessId: string | null) {
   const [employees, setEmployees] = useState<EmployeeRow[]>([]);
   const [contracts, setContracts] = useState<ContractRow[]>([]);
   const [runs, setRuns] = useState<PayrollRunRow[]>([]);
-  const [taxSettings, setTaxSettings] = useState<TaxSettings>(DEFAULT_TAX_SETTINGS);
+  const [deductions, setDeductions] = useState<StatutoryDeductionRow[]>([]);
+  const [items, setItems] = useState<BooksItemRow[]>([]);
+  const [income, setIncome] = useState<BooksIncomeRow[]>([]);
 
   const reload = useCallback(async () => {
     if (!businessId) {
@@ -83,13 +125,15 @@ export function useBooksData(businessId: string | null) {
     }
     setLoading(true);
     try {
-      const [inv, exp, emp, con, run, tax] = await Promise.all([
+      const [inv, exp, emp, con, run, ded, itm, inc] = await Promise.all([
         supabase.from('invoices' as any).select('*').eq('business_id', businessId).order('created_at', { ascending: false }),
         supabase.from('expenses' as any).select('*').eq('business_id', businessId).order('created_at', { ascending: false }),
         supabase.from('employees' as any).select('*').eq('business_id', businessId).order('created_at', { ascending: true }),
         supabase.from('employee_contracts' as any).select('*').eq('business_id', businessId).order('uploaded_at', { ascending: false }),
         supabase.from('payroll_runs' as any).select('*').eq('business_id', businessId).order('pay_date', { ascending: false }),
-        supabase.from('tax_settings' as any).select('*').eq('business_id', businessId).maybeSingle(),
+        supabase.from('statutory_deductions' as any).select('*').eq('business_id', businessId).order('sort_order', { ascending: true }),
+        supabase.from('books_items' as any).select('*').eq('business_id', businessId).order('created_at', { ascending: false }),
+        supabase.from('books_income' as any).select('*').eq('business_id', businessId).order('occurred_at', { ascending: false }),
       ]);
 
       setInvoices(((inv.data as any[]) ?? []).map((r) => ({ ...r, amount: num(r, 'amount') })) as InvoiceRow[]);
@@ -106,17 +150,18 @@ export function useBooksData(businessId: string | null) {
         employer_fica: num(r, 'employer_fica'),
         total_cost: num(r, 'total_cost'),
       })) as PayrollRunRow[]);
-
-      const t = tax.data as any;
-      setTaxSettings(
-        t
-          ? {
-              paye_pct: toNumber(t.paye_pct),
-              uif_ceiling: toNumber(t.uif_ceiling),
-              sdl_applies: Boolean(t.sdl_applies),
-            }
-          : DEFAULT_TAX_SETTINGS
-      );
+      setDeductions(((ded.data as any[]) ?? []).map((r) => ({
+        ...r,
+        employee_pct: num(r, 'employee_pct'),
+        employer_pct: num(r, 'employer_pct'),
+        wage_cap: r.wage_cap == null ? null : num(r, 'wage_cap'),
+      })) as StatutoryDeductionRow[]);
+      setItems(((itm.data as any[]) ?? []).map((r) => ({ ...r, unit_price: num(r, 'unit_price') })) as BooksItemRow[]);
+      setIncome(((inc.data as any[]) ?? []).map((r) => ({
+        ...r,
+        amount: num(r, 'amount'),
+        platform_fee: num(r, 'platform_fee'),
+      })) as BooksIncomeRow[]);
     } finally {
       setLoading(false);
     }
@@ -142,8 +187,9 @@ export function useBooksData(businessId: string | null) {
     contracts,
     contractByEmployee,
     runs,
-    taxSettings,
-    setTaxSettings,
+    deductions,
+    items,
+    income,
     reload,
   };
 }
