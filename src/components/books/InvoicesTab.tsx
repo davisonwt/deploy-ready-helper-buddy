@@ -50,6 +50,7 @@ export default function InvoicesTab({ businessId, invoices, items, onChanged }: 
       status,
       due_date: dueDate || null,
       notes: notes.trim() || null,
+      item_id: itemId === '__none' ? null : itemId,
     } as any);
     setSaving(false);
     if (error) return toast.error(error.message);
@@ -58,6 +59,7 @@ export default function InvoicesTab({ businessId, invoices, items, onChanged }: 
     setAmount('');
     setDueDate('');
     setNotes('');
+    setItemId('__none');
     onChanged();
   };
 
