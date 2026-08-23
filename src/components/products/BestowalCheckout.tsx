@@ -13,6 +13,7 @@ import ProviderPicker from '@/components/payments/ProviderPicker';
 import { PayoutProviderId, quoteFee } from '@/lib/payments/providerFees';
 import { WHISPER_SHARE_RATE, WHISPER_SHARE_PERCENT, WHISPER_FALLBACK_NOTE, WHISPER_STATUS_ACTIVE } from '@/lib/whisperer/policy';
 import { getWhispererFor } from '@/lib/whisperer/attribution';
+import { invokePaymentFunction } from '@/lib/payments/invokeFunction';
 
 export default function BestowalCheckout() {
   const { basketItems, removeFromBasket, totalAmount } = useProductBasket();
@@ -90,16 +91,13 @@ export default function BestowalCheckout() {
         whispererId: getWhispererFor(it.id),
       }));
 
-      const { data, error } = await supabase.functions.invoke('create-basket-bestowal-order', {
-        body: {
-          items,
-          provider,
-          payCurrency: provider === 'nowpayments' ? 'usdcsol' : undefined,
-        },
+      const data = await invokePaymentFunction<any>('create-basket-bestowal-order', {
+        items,
+        provider,
+        payCurrency: provider === 'nowpayments' ? 'usdcsol' : undefined,
       });
 
-      if (error) throw new Error(error.message || 'Failed to create order');
-      if (!data || data.error) throw new Error(data?.error || 'unknown_error');
+      if (!data) throw new Error('The payment service returned an empty response.');
 
       if (provider === 'nowpayments') {
         if (data.invoiceUrl) {
