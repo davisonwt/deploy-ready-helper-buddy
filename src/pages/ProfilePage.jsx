@@ -524,7 +524,26 @@ export default function ProfilePage() {
               </TabsList>
 
               <TabsContent value="profile" className="mt-6 space-y-8">
+          {/* Wallet & Payments */}
+          <Card className="bg-card/95 backdrop-blur-md border-border/30 shadow-xl">
+            <CardHeader>
+              <CardTitle className="text-foreground text-xl">💳 Wallet &amp; Payments</CardTitle>
+            </CardHeader>
+            <CardContent className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+              <Button variant="default" onClick={() => navigate('/wallet')}>
+                Top up my wallet
+              </Button>
+              <Button variant="outline" onClick={() => navigate('/wallet-settings')}>
+                Wallet info &amp; addresses
+              </Button>
+              <Button variant="outline" onClick={() => navigate('/settings/payouts')}>
+                Payout preferences
+              </Button>
+            </CardContent>
+          </Card>
+
           {/* Enhanced Header */}
+
           <div className="text-center">
             <div className="bg-card text-card-foreground backdrop-blur-md rounded-3xl p-8 mx-auto max-w-4xl border shadow-2xl">
               <div className="flex justify-center mb-6 relative">

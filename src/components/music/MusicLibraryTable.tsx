@@ -35,13 +35,16 @@ function extractBucketAndPath(url: string): { bucket: string; path: string } | n
 async function resolveAudioUrl(rawUrl: string | null): Promise<string | null> {
   if (!rawUrl) return null;
   if (!rawUrl.startsWith('http')) {
-    return supabase.storage.from('music-tracks').getPublicUrl(rawUrl).data.publicUrl;
+    // Stored as a bucket-relative path; music buckets are private -> sign it.
+    const { data } = await supabase.storage.from('music-tracks').createSignedUrl(rawUrl, 60 * 60);
+    return data?.signedUrl || supabase.storage.from('music-tracks').getPublicUrl(rawUrl).data.publicUrl;
   }
   const parts = extractBucketAndPath(rawUrl);
   if (!parts || !PRIVATE_BUCKETS.includes(parts.bucket)) return rawUrl;
   const { data } = await supabase.storage.from(parts.bucket).createSignedUrl(parts.path, 60 * 60);
   return data?.signedUrl || rawUrl;
 }
+
 
 function SignedCover({ src, alt }: { src: string; alt: string }) {
   const [resolved, setResolved] = useState<string | null>(null);
@@ -230,9 +233,11 @@ export function MusicLibraryTable({
       setPlayingTrack(null);
     });
 
-    audio.play().catch(() => {
+    audio.play().catch((err) => {
+      console.error('Preview playback failed:', err, audioUrl);
       toast.error('Failed to play preview');
     });
+
 
     setAudioElement(audio);
     setPlayingTrack(track.id);

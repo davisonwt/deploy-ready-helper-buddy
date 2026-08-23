@@ -96,6 +96,26 @@ export default function BasketPage() {
   }
 
   if (basketItems.length === 0) {
+    const productItems = (() => {
+      try { return JSON.parse(localStorage.getItem('productBasket') || '[]') } catch { return [] }
+    })()
+
+    if (productItems.length > 0) {
+      return (
+        <div className="min-h-screen bg-background flex items-center justify-center p-4">
+          <Card className="p-8 text-center max-w-md w-full animate-fade-in">
+            <ShoppingCart className="h-16 w-16 mx-auto mb-4 text-primary" />
+            <h2 className="text-2xl font-bold mb-3 text-foreground">Your Seeds Basket</h2>
+            <p className="mb-6 text-muted-foreground">
+              You have {productItems.length} seed{productItems.length > 1 ? 's' : ''} waiting in your seed basket.
+            </p>
+            <Button onClick={() => navigate('/products/basket')} className="w-full mb-3">Go to Seed Basket</Button>
+            <Button variant="outline" onClick={() => navigate('/browse-orchards')} className="w-full">Browse Orchards</Button>
+          </Card>
+        </div>
+      )
+    }
+
     return (
       <div className="min-h-screen bg-background flex items-center justify-center p-4">
         <Card className="p-8 text-center max-w-md w-full animate-fade-in">
@@ -107,6 +127,7 @@ export default function BasketPage() {
       </div>
     )
   }
+
 
   return (
     <div className="min-h-screen bg-background p-4 sm:p-6">

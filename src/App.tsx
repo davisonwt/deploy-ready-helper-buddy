@@ -14,6 +14,8 @@ import { useReferralCapture } from "./hooks/useReferralCapture";
 import { AuthProvider } from "./hooks/useAuth";
 import { BasketProvider } from "./hooks/useBasket";
 import { ProductBasketProvider } from "./contexts/ProductBasketContext";
+import FloatingBasketButton from "./components/products/FloatingBasketButton";
+
 import { AlbumBuilderProvider } from "./contexts/AlbumBuilderContext";
 import { LiveSessionPlaylistProvider } from "./contexts/LiveSessionPlaylistContext";
 import { AppContextProvider } from "./contexts/AppContext";
@@ -65,8 +67,10 @@ const App = () => (
                       <AccessibilityChecker />
                       <ResponsiveLayout>
                         <AppRoutes />
+                        <FloatingBasketButton />
                         <GroundskeeperWidget />
                       </ResponsiveLayout>
+
                     </Suspense>
                 </ErrorBoundary>
               </ThemeProvider>
