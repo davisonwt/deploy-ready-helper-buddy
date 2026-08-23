@@ -3,7 +3,7 @@ import { ArrowDownRight, ArrowUpRight, Clock, Wallet } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import MoneyRiver from './MoneyRiver';
-import { formatZAR } from '@/lib/books/format';
+import { useBooksCurrency } from '@/lib/books/currency';
 import type { ExpenseRow, InvoiceRow } from '@/hooks/useBooksData';
 
 interface Props {
@@ -92,10 +92,10 @@ export default function BooksDashboardTab({ invoices, expenses }: Props) {
   return (
     <div className="space-y-6">
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-        <StatCard label="Balance" value={formatZAR(stats.net)} icon={Wallet} tone={stats.net >= 0 ? 'primary' : 'negative'} />
-        <StatCard label="Income (paid)" value={formatZAR(stats.income)} icon={ArrowUpRight} tone="positive" />
-        <StatCard label="Expenses" value={formatZAR(stats.spend)} icon={ArrowDownRight} tone="negative" />
-        <StatCard label="Outstanding" value={formatZAR(stats.outstanding)} icon={Clock} tone="muted" />
+        <StatCard label="Balance" value={fmt(stats.net)} icon={Wallet} tone={stats.net >= 0 ? 'primary' : 'negative'} />
+        <StatCard label="Income (paid)" value={fmt(stats.income)} icon={ArrowUpRight} tone="positive" />
+        <StatCard label="Expenses" value={fmt(stats.spend)} icon={ArrowDownRight} tone="negative" />
+        <StatCard label="Outstanding" value={fmt(stats.outstanding)} icon={Clock} tone="muted" />
       </div>
 
       <Card className="border-border/60 bg-card/50 backdrop-blur">
@@ -120,13 +120,13 @@ export default function BooksDashboardTab({ invoices, expenses }: Props) {
               <div className="min-w-0">
                 <p className="truncate text-sm">{a.title}</p>
                 <p className="text-xs text-muted-foreground">
-                  {new Date(a.when).toLocaleDateString('en-ZA', { day: '2-digit', month: 'short', year: 'numeric' })}
+                  {new Date(a.when).toLocaleDateString(undefined, { day: '2-digit', month: 'short', year: 'numeric' })}
                 </p>
               </div>
               <div className="flex shrink-0 items-center gap-2">
                 <Badge variant="outline" className="text-[10px] uppercase">{a.tag}</Badge>
                 <span className={a.positive ? 'text-sm text-emerald-400' : 'text-sm text-orange-400'}>
-                  {a.positive ? '+' : '−'}{formatZAR(a.amount)}
+                  {a.positive ? '+' : '−'}{fmt(a.amount)}
                 </span>
               </div>
             </div>

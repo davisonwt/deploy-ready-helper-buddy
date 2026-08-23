@@ -8,7 +8,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
-import { formatZAR, BOOKS_CURRENCY } from '@/lib/books/format';
+import { useBooksCurrency } from '@/lib/books/currency';
 import type { InvoiceRow } from '@/hooks/useBooksData';
 
 interface Props {
@@ -39,7 +39,7 @@ export default function InvoicesTab({ businessId, invoices, onChanged }: Props) 
       business_id: businessId,
       client_name: client.trim(),
       amount: value,
-      currency: BOOKS_CURRENCY,
+      currency: currency,
       status,
       due_date: dueDate || null,
       notes: notes.trim() || null,
@@ -118,8 +118,8 @@ export default function InvoicesTab({ businessId, invoices, onChanged }: Props) 
               <div className="min-w-0">
                 <p className="truncate font-medium">{inv.client_name}</p>
                 <p className="text-xs text-muted-foreground">
-                  {formatZAR(inv.amount)}
-                  {inv.due_date ? ` · due ${new Date(inv.due_date).toLocaleDateString('en-ZA')}` : ''}
+                  {fmt(inv.amount)}
+                  {inv.due_date ? ` · due ${new Date(inv.due_date).toLocaleDateString()}` : ''}
                 </p>
               </div>
               <div className="flex items-center gap-2">

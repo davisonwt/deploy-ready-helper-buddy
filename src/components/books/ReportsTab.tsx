@@ -13,7 +13,8 @@ import {
   YAxis,
 } from 'recharts';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { formatZAR, monthLabel } from '@/lib/books/format';
+import { monthLabel } from '@/lib/books/format';
+import { useBooksCurrency } from '@/lib/books/currency';
 import type { ExpenseRow, InvoiceRow } from '@/hooks/useBooksData';
 
 interface Props {
@@ -79,7 +80,7 @@ export default function ReportsTab({ invoices, expenses }: Props) {
               <YAxis tick={{ fontSize: 12, fill: 'hsl(var(--muted-foreground))' }} width={70}
                 tickFormatter={(v) => `R${Math.round(Number(v) / 1000)}k`} />
               <Tooltip
-                formatter={(v: any) => formatZAR(Number(v))}
+                formatter={(v: any) => fmt(Number(v))}
                 contentStyle={{ background: 'hsl(var(--card))', border: '1px solid hsl(var(--border))', borderRadius: 8 }}
               />
               <Legend wrapperStyle={{ fontSize: 12 }} />
@@ -106,7 +107,7 @@ export default function ReportsTab({ invoices, expenses }: Props) {
                   ))}
                 </Pie>
                 <Tooltip
-                  formatter={(v: any) => formatZAR(Number(v))}
+                  formatter={(v: any) => fmt(Number(v))}
                   contentStyle={{ background: 'hsl(var(--card))', border: '1px solid hsl(var(--border))', borderRadius: 8 }}
                 />
                 <Legend wrapperStyle={{ fontSize: 12 }} />
