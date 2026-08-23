@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
@@ -6,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from '@/components/ui/label';
-import { Loader2, Star, Trash2, AlertCircle, CheckCircle2 } from 'lucide-react';
+import { Loader2, Star, Trash2, AlertCircle, CheckCircle2, LayoutDashboard, ArrowLeft } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { toast } from 'sonner';
@@ -47,6 +48,7 @@ const PAYPAL_TYPE = 'paypal_email';
 type PreferredRail = typeof NOWPAY_TYPE | typeof PAYPAL_TYPE | null;
 
 export default function PayoutSettingsPage() {
+  const navigate = useNavigate();
   const { user } = useAuth();
   const [loading, setLoading] = useState(true);
   const [wallets, setWallets] = useState<WalletRow[]>([]);
@@ -178,6 +180,16 @@ export default function PayoutSettingsPage() {
 
   return (
     <div className="container max-w-3xl py-6 space-y-6">
+      <div className="flex flex-wrap gap-3 mb-2">
+        <Button variant="outline" size="sm" onClick={() => navigate('/dashboard')}>
+          <LayoutDashboard className="w-4 h-4 mr-2" />
+          Dashboard
+        </Button>
+        <Button variant="outline" size="sm" onClick={() => navigate(-1)}>
+          <ArrowLeft className="w-4 h-4 mr-2" />
+          Back
+        </Button>
+      </div>
       <div>
         <h1 className="text-2xl font-bold">Payout Settings</h1>
         <p className="text-muted-foreground text-sm">
