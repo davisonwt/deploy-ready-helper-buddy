@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
 import { Info, Loader2, Package, Plus, RefreshCw, Store } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
@@ -8,8 +8,10 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { useBooksCurrency } from '@/lib/books/currency';
-import { dateLabel } from '@/lib/books/format';
+import { dateLabel, toNumber } from '@/lib/books/format';
 import type { BooksIncomeRow, BooksItemRow } from '@/hooks/useBooksData';
+import CatalogItemDetailDialog from './CatalogItemDetailDialog';
+import type { CatalogSaleRow } from './catalogTypes';
 
 interface Props {
   businessId: string;
@@ -19,12 +21,80 @@ interface Props {
   onChanged: () => void;
 }
 
+type ProductMeta = { category: string | null; whisperer_pct: number | null };
+
 export default function CatalogTab({ businessId, booksEnabled, items, income, onChanged }: Props) {
   const { fmt, currency } = useBooksCurrency();
   const [name, setName] = useState('');
   const [price, setPrice] = useState('');
   const [saving, setSaving] = useState(false);
   const [syncing, setSyncing] = useState(false);
+  const [meta, setMeta] = useState<Record<string, ProductMeta>>({});
+  const [sales, setSales] = useState<CatalogSaleRow[]>([]);
+  const [openItemId, setOpenItemId] = useState<string | null>(null);
+
+  const productIds = useMemo(
+    () => items.map((i) => i.product_id).filter(Boolean) as string[],
+    [items]
+  );
+
+  useEffect(() => {
+    let cancelled = false;
+    if (productIds.length === 0) {
+      setMeta({});
+      setSales([]);
+      return;
+    }
+    (async () => {
+      const [prod, best] = await Promise.all([
+        supabase.from('products').select('id, category, whisperer_commission_percent').in('id', productIds),
+        supabase
+          .from('product_bestowals')
+          .select('id, product_id, amount, s2g_fee, whisperer_id, whisperer_amount, created_at')
+          .in('product_id', productIds)
+          .eq('status', 'completed')
+          .order('created_at', { ascending: false }),
+      ]);
+      if (cancelled) return;
+      const m: Record<string, ProductMeta> = {};
+      ((prod.data as any[]) ?? []).forEach((p) => {
+        m[p.id] = {
+          category: p.category ?? null,
+          whisperer_pct: p.whisperer_commission_percent == null ? null : toNumber(p.whisperer_commission_percent),
+        };
+      });
+      setMeta(m);
+      setSales(
+        ((best.data as any[]) ?? []).map((b) => ({
+          id: b.id,
+          product_id: b.product_id,
+          amount: toNumber(b.amount),
+          platform_fee: toNumber(b.s2g_fee),
+          whisperer_amount: b.whisperer_id ? toNumber(b.whisperer_amount) : 0,
+          whisperer_id: b.whisperer_id ?? null,
+          income_type: 'sale' as const,
+          created_at: b.created_at,
+        }))
+      );
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [productIds.join(',')]);
+
+  const salesByProduct = useMemo(() => {
+    const map = new Map<string, CatalogSaleRow[]>();
+    sales.forEach((s) => {
+      if (!s.product_id) return;
+      const arr = map.get(s.product_id) ?? [];
+      arr.push(s);
+      map.set(s.product_id, arr);
+    });
+    return map;
+  }, [sales]);
+
+  const openItem = items.find((i) => i.id === openItemId) ?? null;
+  const openMeta = openItem?.product_id ? meta[openItem.product_id] : undefined;
 
   const syncMarketplace = async () => {
     setSyncing(true);
@@ -34,6 +104,7 @@ export default function CatalogTab({ businessId, booksEnabled, items, income, on
     toast.success(`${Number(data) || 0} marketplace listing(s) synced into your catalog`);
     onChanged();
   };
+
 
   const totals = useMemo(() => {
     const sales = income.filter((i) => i.income_type === 'sale');
@@ -134,24 +205,44 @@ export default function CatalogTab({ businessId, booksEnabled, items, income, on
 
           <div className="space-y-2 pt-2">
             {items.length === 0 && <p className="text-sm text-muted-foreground">No items yet.</p>}
-            {items.map((it) => (
-              <div key={it.id} className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-border/50 bg-background/40 px-3 py-2">
-                <div className="min-w-0">
-                  <p className="truncate text-sm font-medium">{it.name}</p>
-                  <p className="text-xs text-muted-foreground">
-                    {it.kind}{it.sku ? ` · ${it.sku}` : ''}{it.active ? '' : ' · inactive'}
-                  </p>
-                </div>
-                <div className="flex items-center gap-2">
-                  {it.source === 'marketplace' && (
-                    <Badge variant="outline" className="text-[10px] uppercase">
-                      <Store className="mr-1 h-3 w-3" /> marketplace
-                    </Badge>
-                  )}
-                  <span className="text-sm">{fmt(it.unit_price)}</span>
-                </div>
-              </div>
-            ))}
+            {items.map((it) => {
+              const m = it.product_id ? meta[it.product_id] : undefined;
+              const rows = it.product_id ? salesByProduct.get(it.product_id) ?? [] : [];
+              const revenue = rows.reduce((s, r) => s + r.amount, 0);
+              return (
+                <button
+                  key={it.id}
+                  type="button"
+                  onClick={() => setOpenItemId(it.id)}
+                  className="flex w-full flex-wrap items-center justify-between gap-2 rounded-lg border border-border/50 bg-background/40 px-3 py-2 text-left transition-colors hover:border-primary/40 hover:bg-background/70"
+                >
+                  <div className="min-w-0">
+                    <p className="truncate text-sm font-medium">{it.name}</p>
+                    <p className="text-xs text-muted-foreground">
+                      {m?.category || it.kind}{it.sku ? ` · ${it.sku}` : ''}{it.active ? '' : ' · inactive'}
+                      {` · bestowed ${rows.length}×`}
+                    </p>
+                  </div>
+                  <div className="flex flex-wrap items-center gap-2">
+                    {m?.whisperer_pct ? (
+                      <Badge variant="outline" className="border-primary/40 text-[10px] text-primary">
+                        Whisperer offer: {m.whisperer_pct}%
+                      </Badge>
+                    ) : null}
+                    {it.source === 'marketplace' && (
+                      <Badge variant="outline" className="text-[10px] uppercase">
+                        <Store className="mr-1 h-3 w-3" /> marketplace
+                      </Badge>
+                    )}
+                    <div className="text-right">
+                      <p className="text-sm">{fmt(it.unit_price)}</p>
+                      <p className="text-xs text-emerald-400">{fmt(revenue)} earned</p>
+                    </div>
+                  </div>
+                </button>
+              );
+            })}
+
           </div>
         </CardContent>
       </Card>
@@ -190,6 +281,13 @@ export default function CatalogTab({ businessId, booksEnabled, items, income, on
           ))}
         </CardContent>
       </Card>
+
+      <CatalogItemDetailDialog
+        item={openItem ? { ...openItem, category: openMeta?.category ?? null, whisperer_pct: openMeta?.whisperer_pct ?? null } : null}
+        sales={openItem?.product_id ? salesByProduct.get(openItem.product_id) ?? [] : []}
+        onOpenChange={(o) => !o && setOpenItemId(null)}
+      />
     </div>
+
   );
 }
