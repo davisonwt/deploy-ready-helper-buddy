@@ -76,8 +76,28 @@ Deno.serve(async (req) => {
     const body = await req.json().catch(() => null);
     if (!body) return json({ error: "invalid JSON body" }, 400);
 
-    const amount = Number(body.amount);
-    if (!Number.isFinite(amount) || amount <= 0) return json({ error: "amount must be > 0" }, 400);
+    // USD-denominated payouts convert at the live rate at the moment of sending,
+    // so a mover in XRP never changes what the member was promised in dollars.
+    const amountUsdIn = Number(body.amount_usd);
+    let amount = Number(body.amount);
+    let fxRate: number | null = null;
+    let fxSources: unknown = null;
+    let amountUsd: number | null = null;
+
+    if (Number.isFinite(amountUsdIn) && amountUsdIn > 0) {
+      const rate = await getXrpUsdRate();
+      assertRateFresh(rate.observedAt);
+      fxRate = rate.rate;
+      fxSources = rate.sources;
+      amountUsd = Math.round(amountUsdIn * 100) / 100;
+      amount = usdToXrp(amountUsd, rate.rate);
+    }
+
+    if (!Number.isFinite(amount) || amount <= 0) {
+      return json({ error: "amount_usd or amount must be > 0" }, 400);
+    }
+    if (amountUsd === null && fxRate !== null) amountUsd = xrpToUsd(amount, fxRate);
+
 
     let destination: string | null = typeof body.destination_address === "string"
       ? body.destination_address.trim()
