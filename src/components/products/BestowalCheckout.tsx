@@ -18,9 +18,46 @@ export default function BestowalCheckout() {
   const [processing, setProcessing] = useState(false);
   const [provider, setProvider] = useState<PayoutProviderId>('nowpayments');
 
+  // Which basket items actually have a whisperer attached? When none is
+  // involved the whisper share falls back to the sower (creator).
+  const [whisperedIds, setWhisperedIds] = useState<Set<string>>(new Set());
+
   useEffect(() => {
     console.log('🛒 BestowalCheckout: Basket items', basketItems);
   }, [basketItems]);
+
+  useEffect(() => {
+    const ids = basketItems.map((it: any) => it.id).filter(Boolean);
+    if (ids.length === 0) {
+      setWhisperedIds(new Set());
+      return;
+    }
+    let cancelled = false;
+    (async () => {
+      const { data, error } = await supabase
+        .from('product_whisperer_assignments')
+        .select('product_id, book_id, orchard_id, status')
+        .eq('status', 'active')
+        .or(
+          `product_id.in.(${ids.join(',')}),book_id.in.(${ids.join(',')}),orchard_id.in.(${ids.join(',')})`,
+        );
+      if (cancelled) return;
+      if (error) {
+        console.warn('Whisperer lookup failed, assuming none:', error.message);
+        setWhisperedIds(new Set());
+        return;
+      }
+      const found = new Set<string>();
+      for (const row of data ?? []) {
+        for (const v of [row.product_id, row.book_id, row.orchard_id]) {
+          if (v) found.add(v);
+        }
+      }
+      setWhisperedIds(found);
+    })();
+    return () => { cancelled = true; };
+  }, [basketItems]);
+
 
   const handleBestow = async () => {
     if (!user) {
@@ -87,6 +124,19 @@ export default function BestowalCheckout() {
 
   const feeQuote = quoteFee(provider, totalAmount);
 
+  // Split the subtotal into the part that has a whisperer attached and the part
+  // that does not. Without a whisperer the 15% whisper share goes to the sower.
+  const whisperedSubtotal = basketItems.reduce(
+    (sum: number, it: any) =>
+      sum + (whisperedIds.has(it.id) ? Number(it.price || 0) * Math.max(1, Number(it.quantity ?? 1)) : 0),
+    0,
+  );
+  const platformFee = totalAmount * 0.1;
+  const adminFee = totalAmount * 0.05;
+  const whisperFee = whisperedSubtotal * 0.15;
+  const creatorShare = totalAmount - platformFee - adminFee - whisperFee;
+
+
   return (
     <Card>
       <CardHeader>
@@ -136,20 +186,28 @@ export default function BestowalCheckout() {
           </div>
           <div className="flex justify-between text-muted-foreground">
             <span>Platform Fee (10%)</span>
-            <span className="text-purple-400">${(totalAmount * 0.1).toFixed(2)}</span>
+            <span className="text-purple-400">${platformFee.toFixed(2)}</span>
           </div>
           <div className="flex justify-between text-muted-foreground">
             <span>Admin Fee (5%)</span>
-            <span>${(totalAmount * 0.05).toFixed(2)}</span>
+            <span>${adminFee.toFixed(2)}</span>
           </div>
           <div className="flex justify-between text-muted-foreground">
-            <span>To Creators (70%)</span>
-            <span className="text-primary">${(totalAmount * 0.7).toFixed(2)}</span>
+            <span>To Creators ({totalAmount > 0 ? Math.round((creatorShare / totalAmount) * 100) : 0}%)</span>
+            <span className="text-primary">${creatorShare.toFixed(2)}</span>
           </div>
-          <div className="flex justify-between text-muted-foreground">
-            <span>To Product Whispers (15%)</span>
-            <span className="text-accent">${(totalAmount * 0.15).toFixed(2)}</span>
-          </div>
+          {whisperFee > 0 ? (
+            <div className="flex justify-between text-muted-foreground">
+              <span>To Product Whisperers (15%)</span>
+              <span className="text-accent">${whisperFee.toFixed(2)}</span>
+            </div>
+          ) : (
+            <div className="flex justify-between text-xs text-muted-foreground/70">
+              <span>No whisperer involved — whisper share goes to the sower</span>
+              <span>$0.00</span>
+            </div>
+          )}
+
           <Separator />
           <div className="flex justify-between text-lg font-bold">
             <span>Total</span>
