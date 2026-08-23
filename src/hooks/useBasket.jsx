@@ -11,15 +11,18 @@ export const useBasket = () => {
 }
 
 export const BasketProvider = ({ children }) => {
-  const [basketItems, setBasketItems] = useState([])
-  
-  // Load basket from localStorage on mount
-  useEffect(() => {
+  const [basketItems, setBasketItems] = useState(() => {
     const savedBasket = localStorage.getItem('sowBasket')
     if (savedBasket) {
-      setBasketItems(JSON.parse(savedBasket))
+      try {
+        return JSON.parse(savedBasket)
+      } catch (e) {
+        console.error('Error parsing sowBasket:', e)
+        return []
+      }
     }
-  }, [])
+    return []
+  })
   
   // Save basket to localStorage whenever it changes
   useEffect(() => {
