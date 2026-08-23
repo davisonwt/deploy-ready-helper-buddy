@@ -410,7 +410,19 @@ export default function LivingSeedCard({
           />
         )}
       </AnimatePresence>
+
+      <ShareSeedDialog
+        open={shareOpen}
+        onOpenChange={setShareOpen}
+        seedId={seedId}
+        title={title}
+        subtitle={subtitle}
+        image={currentImage}
+        openPath={openPath}
+        feedKind={mediaKind === 'video' ? 'video' : mediaKind === 'audio' ? 'music' : 'photo'}
+      />
     </>
+
   );
 }
 
