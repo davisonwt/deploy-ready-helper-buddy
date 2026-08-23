@@ -9,7 +9,7 @@ import { Button } from '../components/ui/button'
 import { Input } from '../components/ui/input'
 import { Label } from '../components/ui/label'
 import { Textarea } from '../components/ui/textarea'
-import { Trash2, ShoppingCart, CreditCard } from 'lucide-react'
+import { Trash2, ShoppingCart, CreditCard, LayoutDashboard, ArrowLeft } from "lucide-react"
 import PaymentModal from '../components/PaymentModal'
 
 export default function BasketPage() {
@@ -132,6 +132,16 @@ export default function BasketPage() {
   return (
     <div className="min-h-screen bg-background p-4 sm:p-6">
       <div className="container mx-auto max-w-5xl animate-fade-in">
+        <div className="flex gap-3 mb-6">
+          <Button variant="outline" size="sm" onClick={() => navigate("/dashboard")}>
+            <LayoutDashboard className="w-4 h-4 mr-2" />
+            Dashboard
+          </Button>
+          <Button variant="outline" size="sm" onClick={() => navigate("/browse-orchards")}>
+            <ArrowLeft className="w-4 h-4 mr-2" />
+            Browse Orchards
+          </Button>
+        </div>
         <div className="mb-8">
           <h1 className="text-3xl sm:text-4xl font-bold mb-2 bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">Your Bestowal Basket 🛒</h1>
           <p className="text-muted-foreground">Review your selection and provide invoice details</p>

@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useEffect, useRef, ReactNode } from 'react';
+import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 
 interface Product {
   id: string;
@@ -24,46 +24,31 @@ interface ProductBasketContextType {
 const ProductBasketContext = createContext<ProductBasketContextType | undefined>(undefined);
 
 export function ProductBasketProvider({ children }: { children: ReactNode }) {
-  const [basketItems, setBasketItems] = useState<Product[]>([]);
-  const isInitialMount = useRef(true);
-
-  // Load basket from localStorage on mount
-  useEffect(() => {
+  const [basketItems, setBasketItems] = useState<Product[]>(() => {
     const saved = localStorage.getItem('productBasket');
-    console.log('🛒 ProductBasket: Loading from localStorage', saved);
     if (saved) {
       try {
-        const parsed = JSON.parse(saved);
-        console.log('🛒 ProductBasket: Loaded from localStorage', parsed);
-        setBasketItems(parsed);
+        return JSON.parse(saved);
       } catch (error) {
         console.error('Error loading basket:', error);
+        return [];
       }
-    } else {
-      console.log('🛒 ProductBasket: No saved basket found');
     }
-    isInitialMount.current = false;
-  }, []);
+    return [];
+  });
 
-  // Save basket to localStorage whenever it changes (skip initial mount)
+  // Save basket to localStorage whenever it changes
   useEffect(() => {
-    if (!isInitialMount.current) {
-      console.log('🛒 ProductBasket: Saving to localStorage', basketItems);
-      localStorage.setItem('productBasket', JSON.stringify(basketItems));
-    }
+    localStorage.setItem('productBasket', JSON.stringify(basketItems));
   }, [basketItems]);
 
   const addToBasket = (product: Product) => {
-    console.log('🛒 ProductBasket: Adding product to basket', product);
     setBasketItems((prev) => {
       const exists = prev.find((item) => item.id === product.id);
       if (exists) {
-        console.log('🛒 ProductBasket: Product already in basket, skipping');
         return prev; // Don't add duplicates
       }
-      const updated = [...prev, product];
-      console.log('🛒 ProductBasket: Updated basket items', updated);
-      return updated;
+      return [...prev, product];
     });
   };
 
