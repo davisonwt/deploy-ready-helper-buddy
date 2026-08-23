@@ -1117,6 +1117,21 @@ export default function SeedFlowDashboard() {
                   </div>
                 </Link>
 
+                <Link to="/products/basket" style={{ textDecoration: 'none', flexShrink: 0 }}>
+                  <div style={{
+                    ...styles.seedflowLabel,
+                    position: 'relative',
+                    background: 'linear-gradient(135deg, rgba(245,158,11,0.25), rgba(251,191,36,0.18))',
+                    backdropFilter: 'blur(12px)', WebkitBackdropFilter: 'blur(12px)',
+                    border: '1px solid rgba(251,191,36,0.45)',
+                    color: '#fde68a', fontWeight: 700,
+                    boxShadow: '0 4px 16px rgba(245,158,11,0.2), inset 0 1px 0 rgba(255,255,255,0.12)',
+                    padding: '4px 8px', fontSize: 11, whiteSpace: 'nowrap',
+                  }}>
+                    🛒 Basket{basketItemCount > 0 ? ` (${basketItemCount})` : ''}
+                  </div>
+                </Link>
+
                 <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginLeft: 'auto', flexShrink: 0 }}>
                   <button
                     type="button"
