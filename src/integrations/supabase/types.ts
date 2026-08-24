@@ -15048,6 +15048,7 @@ export type Database = {
       is_service_role: { Args: never; Returns: boolean }
       is_tribal_hearts_member: { Args: { _uid: string }; Returns: boolean }
       is_user_verified: { Args: { user_id_param?: string }; Returns: boolean }
+      join_free_premium_room: { Args: { p_room_id: string }; Returns: string }
       join_live_room_as_self: {
         Args: { p_display_name?: string; p_room_id: string }
         Returns: undefined
@@ -15260,6 +15261,15 @@ export type Database = {
           q3: string
         }
         Returns: undefined
+      }
+      sower_owns_listing: {
+        Args: {
+          _book_id: string
+          _orchard_id: string
+          _product_id: string
+          _user: string
+        }
+        Returns: boolean
       }
       store_payment_idempotency: {
         Args: {

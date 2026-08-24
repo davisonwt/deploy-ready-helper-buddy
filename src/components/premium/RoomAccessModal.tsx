@@ -33,16 +33,11 @@ export function RoomAccessModal({
     if (!user) { toast.error('Please log in to join'); navigate('/login'); return; }
     setProcessing(true);
     try {
-      const { error } = await supabase
-        .from('premium_room_access')
-        .insert({
-          user_id: user.id,
-          room_id: room.id,
-          access_granted_at: new Date().toISOString(),
-          payment_amount: 0,
-          payment_status: 'free',
-        });
+      const { error } = await supabase.rpc('join_free_premium_room', {
+        p_room_id: room.id,
+      });
       if (error) throw error;
+
       toast.success('Welcome to the room!');
       onAccessGranted?.();
       onOpenChange(false);
