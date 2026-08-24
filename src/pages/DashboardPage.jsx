@@ -958,6 +958,21 @@ export default function SeedFlowDashboard() {
                 <div style={styles.logoSub}>364yhvh community farm</div>
               </div>
             </div>
+            <a
+              href="https://364yhvh.org"
+              target="_blank"
+              rel="noopener noreferrer"
+              style={{
+                display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
+                marginBottom: 10, padding: '7px 10px', borderRadius: 8,
+                background: 'rgba(180,140,40,0.14)', border: '1px solid rgba(212,175,55,0.35)',
+                color: '#e6c86a', fontSize: 12, fontWeight: 600, textDecoration: 'none',
+              }}
+              title="Open 364yhvh.org scripture study site in a new tab"
+            >
+              📖 Scripture Study · 364yhvh.org
+            </a>
+
             <div style={styles.keeperBadge}>
               <div style={styles.keeperDot}>{displayName?.charAt(0)?.toUpperCase() || 'S'}</div>
               <span style={{ fontSize: 13, color: '#9ca3af' }}>{profile?.membership_tier || 'Sower'}</span>
