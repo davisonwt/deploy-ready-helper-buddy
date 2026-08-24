@@ -5,6 +5,64 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
+const PROJECT_URL = Deno.env.get('SUPABASE_URL') ?? '';
+const STORAGE_HOST = (() => {
+  try { return new URL(PROJECT_URL).host.toLowerCase(); } catch { return ''; }
+})();
+
+const FETCH_TIMEOUT_MS = 15_000;
+const MAX_MANIFEST_BYTES = 1_000_000; // 1 MB
+const MAX_TRACK_BYTES = 50_000_000; // 50 MB per track
+const MAX_TOTAL_BYTES = 400_000_000; // 400 MB per album
+
+/**
+ * Only allow fetching from this project's own Supabase Storage domain.
+ * Blocks SSRF to internal services / metadata endpoints / arbitrary hosts.
+ */
+function isAllowedUrl(raw: unknown): boolean {
+  if (typeof raw !== 'string' || raw.length === 0) return false;
+  let u: URL;
+  try { u = new URL(raw); } catch { return false; }
+  if (u.protocol !== 'https:') return false;
+  if (!STORAGE_HOST || u.host.toLowerCase() !== STORAGE_HOST) return false;
+  return u.pathname.startsWith('/storage/v1/');
+}
+
+async function safeFetch(url: string, maxBytes: number): Promise<Uint8Array | null> {
+  if (!isAllowedUrl(url)) return null;
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), FETCH_TIMEOUT_MS);
+  try {
+    const res = await fetch(url, { signal: controller.signal, redirect: 'error' });
+    if (!res.ok || !res.body) return null;
+    const declared = Number(res.headers.get('content-length') ?? '0');
+    if (declared > maxBytes) return null;
+
+    const chunks: Uint8Array[] = [];
+    let total = 0;
+    const reader = res.body.getReader();
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      total += value.byteLength;
+      if (total > maxBytes) {
+        try { await reader.cancel(); } catch { /* ignore */ }
+        return null;
+      }
+      chunks.push(value);
+    }
+    const out = new Uint8Array(total);
+    let offset = 0;
+    for (const c of chunks) { out.set(c, offset); offset += c.byteLength; }
+    return out;
+  } catch (_e) {
+    return null;
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
+
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
