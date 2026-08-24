@@ -1,5 +1,5 @@
 // Lightweight Service Worker - Network-first strategy
-const CACHE_VERSION = '2025-11-14-v1'
+const CACHE_VERSION = '2026-08-24-v2'
 const CACHE_NAME = `sow2grow-v${CACHE_VERSION}`
 
 // Only cache critical static assets
@@ -49,8 +49,9 @@ self.addEventListener('fetch', (event) => {
   event.respondWith(
     fetch(request)
       .then((response) => {
-        // Only cache successful responses for static assets
-        if (response.status === 200 && request.url.match(/\.(js|css|png|jpg|svg|woff2?)$/)) {
+        // Hashed app bundles must always come from the current deployment.
+        // Cache only non-code static assets so an old release cannot survive a publish.
+        if (response.status === 200 && request.url.match(/\.(png|jpg|svg|woff2?)$/)) {
           const responseClone = response.clone()
           caches.open(CACHE_NAME).then((cache) => {
             cache.put(request, responseClone)
