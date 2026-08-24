@@ -5,6 +5,64 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
+const PROJECT_URL = Deno.env.get('SUPABASE_URL') ?? '';
+const STORAGE_HOST = (() => {
+  try { return new URL(PROJECT_URL).host.toLowerCase(); } catch { return ''; }
+})();
+
+const FETCH_TIMEOUT_MS = 15_000;
+const MAX_MANIFEST_BYTES = 1_000_000; // 1 MB
+const MAX_TRACK_BYTES = 50_000_000; // 50 MB per track
+const MAX_TOTAL_BYTES = 400_000_000; // 400 MB per album
+
+/**
+ * Only allow fetching from this project's own Supabase Storage domain.
+ * Blocks SSRF to internal services / metadata endpoints / arbitrary hosts.
+ */
+function isAllowedUrl(raw: unknown): boolean {
+  if (typeof raw !== 'string' || raw.length === 0) return false;
+  let u: URL;
+  try { u = new URL(raw); } catch { return false; }
+  if (u.protocol !== 'https:') return false;
+  if (!STORAGE_HOST || u.host.toLowerCase() !== STORAGE_HOST) return false;
+  return u.pathname.startsWith('/storage/v1/');
+}
+
+async function safeFetch(url: string, maxBytes: number): Promise<Uint8Array | null> {
+  if (!isAllowedUrl(url)) return null;
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), FETCH_TIMEOUT_MS);
+  try {
+    const res = await fetch(url, { signal: controller.signal, redirect: 'error' });
+    if (!res.ok || !res.body) return null;
+    const declared = Number(res.headers.get('content-length') ?? '0');
+    if (declared > maxBytes) return null;
+
+    const chunks: Uint8Array[] = [];
+    let total = 0;
+    const reader = res.body.getReader();
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      total += value.byteLength;
+      if (total > maxBytes) {
+        try { await reader.cancel(); } catch { /* ignore */ }
+        return null;
+      }
+      chunks.push(value);
+    }
+    const out = new Uint8Array(total);
+    let offset = 0;
+    for (const c of chunks) { out.set(c, offset); offset += c.byteLength; }
+    return out;
+  } catch (_e) {
+    return null;
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
+
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
@@ -80,22 +138,30 @@ Deno.serve(async (req) => {
       }
     }
 
-    // Fetch manifest from storage
-    const manifestResponse = await fetch(product.file_url);
-    if (!manifestResponse.ok) {
+    // Fetch manifest from storage (host-restricted, size/time capped)
+    const manifestBytes = await safeFetch(product.file_url, MAX_MANIFEST_BYTES);
+    if (!manifestBytes) {
       return new Response(
         JSON.stringify({ error: 'Failed to fetch album manifest' }),
-        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
-    const manifest = await manifestResponse.json();
-
-    // Validate manifest structure
-    if (!manifest.tracks || !Array.isArray(manifest.tracks)) {
+    let manifest: any;
+    try {
+      manifest = JSON.parse(new TextDecoder().decode(manifestBytes));
+    } catch {
       return new Response(
         JSON.stringify({ error: 'Invalid album manifest' }),
-        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    // Validate manifest structure
+    if (!manifest.tracks || !Array.isArray(manifest.tracks) || manifest.tracks.length > 100) {
+      return new Response(
+        JSON.stringify({ error: 'Invalid album manifest' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
@@ -106,23 +172,22 @@ Deno.serve(async (req) => {
     const zip = new JSZip();
 
     // Download and add each track to ZIP
+    let totalBytes = 0;
     for (const track of manifest.tracks) {
-      try {
-        console.log(`Fetching track: ${track.name}`);
-        const trackResponse = await fetch(track.url);
-        
-        if (!trackResponse.ok) {
-          console.error(`Failed to fetch track ${track.name}: ${trackResponse.statusText}`);
-          continue;
-        }
+      const safeName = String(track?.name ?? '').replace(/[^\w.\- ]/g, '_').slice(0, 120);
+      if (!safeName) continue;
+      if (totalBytes >= MAX_TOTAL_BYTES) break;
 
-        const trackBlob = await trackResponse.blob();
-        zip.file(track.name, trackBlob);
-      } catch (error) {
-        console.error(`Error processing track ${track.name}:`, error);
-        // Continue with other tracks
+      const remaining = Math.min(MAX_TRACK_BYTES, MAX_TOTAL_BYTES - totalBytes);
+      const bytes = await safeFetch(track?.url, remaining);
+      if (!bytes) {
+        console.error(`Skipped track (blocked, too large, or unreachable): ${safeName}`);
+        continue;
       }
+      totalBytes += bytes.byteLength;
+      zip.file(safeName, bytes);
     }
+
 
     // Generate ZIP
     console.log('Generating ZIP file...');

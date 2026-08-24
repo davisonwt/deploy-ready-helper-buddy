@@ -3,6 +3,8 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SUPABASE_ANON_KEY = Deno.env.get("SUPABASE_ANON_KEY")!;
+const SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
+
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -32,7 +34,7 @@ const handler = async (req: Request): Promise<Response> => {
   }
 
   try {
-    // Require a valid Supabase JWT
+    // Require a valid Supabase JWT (or the platform service role for internal calls)
     const authHeader = req.headers.get("authorization") ?? "";
     if (!authHeader.toLowerCase().startsWith("bearer ")) {
       return new Response(JSON.stringify({ error: "unauthorized" }), {
@@ -40,14 +42,20 @@ const handler = async (req: Request): Promise<Response> => {
       });
     }
     const token = authHeader.slice(7).trim();
-    const userClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
-      global: { headers: { Authorization: `Bearer ${token}` } },
-    });
-    const { data: userData, error: userErr } = await userClient.auth.getUser();
-    if (userErr || !userData?.user) {
-      return new Response(JSON.stringify({ error: "unauthorized" }), {
-        status: 401, headers: { "Content-Type": "application/json", ...corsHeaders },
+    const isServiceRole = SERVICE_ROLE_KEY.length > 0 && token === SERVICE_ROLE_KEY;
+
+    let callerEmail: string | null = null;
+    if (!isServiceRole) {
+      const userClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+        global: { headers: { Authorization: `Bearer ${token}` } },
       });
+      const { data: userData, error: userErr } = await userClient.auth.getUser();
+      if (userErr || !userData?.user) {
+        return new Response(JSON.stringify({ error: "unauthorized" }), {
+          status: 401, headers: { "Content-Type": "application/json", ...corsHeaders },
+        });
+      }
+      callerEmail = (userData.user.email ?? "").toLowerCase();
     }
 
     const { to, subject, html } = (await req.json()) as BrevoEmailRequest;
@@ -68,6 +76,20 @@ const handler = async (req: Request): Promise<Response> => {
         status: 400, headers: { "Content-Type": "application/json", ...corsHeaders },
       });
     }
+
+    // Non-service callers may only email their own verified address.
+    if (!isServiceRole) {
+      const allowed =
+        !!callerEmail &&
+        recipients.length === 1 &&
+        recipients[0].toLowerCase() === callerEmail;
+      if (!allowed) {
+        return new Response(JSON.stringify({ error: "recipient not permitted" }), {
+          status: 403, headers: { "Content-Type": "application/json", ...corsHeaders },
+        });
+      }
+    }
+
 
     const brevoApiKey = Deno.env.get('BREVO_API_KEY');
     if (!brevoApiKey) throw new Error('BREVO_API_KEY secret not configured');

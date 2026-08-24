@@ -5,6 +5,8 @@ import { Resend } from "npm:resend@2.0.0";
 const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SUPABASE_ANON_KEY = Deno.env.get("SUPABASE_ANON_KEY")!;
+const SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
+
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -35,7 +37,7 @@ const handler = async (req: Request): Promise<Response> => {
   }
 
   try {
-    // Require a valid Supabase JWT
+    // Require a valid Supabase JWT (or the platform service role for internal calls)
     const authHeader = req.headers.get("authorization") ?? "";
     if (!authHeader.toLowerCase().startsWith("bearer ")) {
       return new Response(JSON.stringify({ error: "unauthorized" }), {
@@ -43,14 +45,20 @@ const handler = async (req: Request): Promise<Response> => {
       });
     }
     const token = authHeader.slice(7).trim();
-    const userClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
-      global: { headers: { Authorization: `Bearer ${token}` } },
-    });
-    const { data: userData, error: userErr } = await userClient.auth.getUser();
-    if (userErr || !userData?.user) {
-      return new Response(JSON.stringify({ error: "unauthorized" }), {
-        status: 401, headers: { "Content-Type": "application/json", ...corsHeaders },
+    const isServiceRole = SERVICE_ROLE_KEY.length > 0 && token === SERVICE_ROLE_KEY;
+
+    let callerEmail: string | null = null;
+    if (!isServiceRole) {
+      const userClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+        global: { headers: { Authorization: `Bearer ${token}` } },
       });
+      const { data: userData, error: userErr } = await userClient.auth.getUser();
+      if (userErr || !userData?.user) {
+        return new Response(JSON.stringify({ error: "unauthorized" }), {
+          status: 401, headers: { "Content-Type": "application/json", ...corsHeaders },
+        });
+      }
+      callerEmail = (userData.user.email ?? "").toLowerCase();
     }
 
     const body = (await req.json()) as EmailRequest;
@@ -72,6 +80,21 @@ const handler = async (req: Request): Promise<Response> => {
         status: 400, headers: { "Content-Type": "application/json", ...corsHeaders },
       });
     }
+
+    // Non-service callers may only email their own verified address.
+    // Free-form recipients are reserved for internal, server-initiated sends.
+    if (!isServiceRole) {
+      const allowed =
+        !!callerEmail &&
+        recipients.length === 1 &&
+        recipients[0].toLowerCase() === callerEmail;
+      if (!allowed) {
+        return new Response(JSON.stringify({ error: "recipient not permitted" }), {
+          status: 403, headers: { "Content-Type": "application/json", ...corsHeaders },
+        });
+      }
+    }
+
 
     const emailResponse = await resend.emails.send({
       from: ALLOWED_FROM,
