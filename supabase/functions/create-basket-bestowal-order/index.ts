@@ -304,12 +304,6 @@ Deno.serve(async (req) => {
           },
         },
       },
-      application_context: {
-        brand_name: "Sow2Grow",
-        user_action: "PAY_NOW",
-        return_url: `${redirectBase}/payment-success?basket=${order.id}`,
-        cancel_url: `${redirectBase}/payment-cancelled?basket=${order.id}`,
-      },
     };
 
     const { ok, status, data, raw } = await paypalFetch<PaypalOrderResponse>(

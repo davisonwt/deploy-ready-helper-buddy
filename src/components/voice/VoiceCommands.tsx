@@ -169,25 +169,6 @@ export function VoiceCommands({ isEnabled, onToggle, isOpen, onOpenChange }: Voi
     }
   }, []) // Remove dependencies to avoid recreating recognition
 
-  // Request microphone permission when component mounts
-  useEffect(() => {
-    const requestPermission = async () => {
-      try {
-        console.log('VoiceCommands: Requesting microphone permission')
-        await navigator.mediaDevices.getUserMedia({ audio: true })
-        setHasPermission(true)
-        console.log('VoiceCommands: Microphone permission granted')
-      } catch (error) {
-        console.error('VoiceCommands: Microphone permission denied:', error)
-        setHasPermission(false)
-      }
-    }
-
-    if (isSupported) {
-      requestPermission()
-    }
-  }, [isSupported])
-
   // Handle enabling/disabling voice commands
   useEffect(() => {
     console.log('VoiceCommands: isEnabled changed:', isEnabled, 'hasPermission:', hasPermission)
@@ -301,22 +282,25 @@ export function VoiceCommands({ isEnabled, onToggle, isOpen, onOpenChange }: Voi
     }
   }
 
-  const toggleListening = () => {
+  const toggleListening = async () => {
     if (!isSupported) {
       setShowManualInput(!showManualInput)
       return
     }
-    
+
     if (!hasPermission) {
-      toast({
-        title: "Permission Required",
-        description: "Please allow microphone access to use voice commands",
-        variant: "destructive"
-      })
-      setShowManualInput(true)
-      return
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
+        stream.getTracks().forEach((track) => track.stop())
+        setHasPermission(true)
+      } catch (error) {
+        console.error('VoiceCommands: Microphone permission denied:', error)
+        setHasPermission(false)
+        setShowManualInput(true)
+        return
+      }
     }
-    
+
     onToggle()
   }
 
