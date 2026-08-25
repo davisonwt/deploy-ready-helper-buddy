@@ -17,10 +17,6 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState("")
   const [mounted, setMounted] = useState(false)
-  const [showForgotPassword, setShowForgotPassword] = useState(false)
-  const [resetEmail, setResetEmail] = useState("")
-  const [resetLoading, setResetLoading] = useState(false)
-  const [resetMessage, setResetMessage] = useState("")
   const [securityViolations, setSecurityViolations] = useState(0)
   
   const [searchParams] = useSearchParams();
@@ -30,7 +26,7 @@ export default function LoginPage() {
   const nextTarget = rawNext.startsWith('/') && !rawNext.startsWith('//') ? rawNext : '/dashboard';
 
   
-  const { login, loginAnonymously, resetPassword } = useAuth()
+  const { login, loginAnonymously } = useAuth()
   const { logSecurityEvent } = useSecurityLogging()
   const { toast } = useToast()
   const navigate = useNavigate()
