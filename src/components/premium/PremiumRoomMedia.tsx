@@ -469,6 +469,58 @@ export const PremiumRoomMedia: React.FC<PremiumRoomMediaProps> = ({
           }}
         />
       )}
+
+      <Dialog open={!!pickerItem} onOpenChange={(o) => !o && setPickerItem(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Bestow to unlock</DialogTitle>
+            <DialogDescription>
+              {pickerItem ? (
+                <>
+                  {pickerItem.file_name} — {formatAmount((pickerItem.price_cents ?? 0) / 100)}
+                  <br />
+                  Choose how you want to pay. You'll be redirected to complete checkout.
+                </>
+              ) : null}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="grid grid-cols-1 gap-3">
+            <Button
+              disabled={purchasePending}
+              onClick={() =>
+                pickerItem &&
+                purchase({
+                  contentType: 'live_session_media',
+                  contentId: pickerItem.id,
+                  provider: 'paypal',
+                })
+              }
+            >
+              Pay with PayPal
+            </Button>
+            <Button
+              variant="outline"
+              disabled={purchasePending}
+              onClick={() =>
+                pickerItem &&
+                purchase({
+                  contentType: 'live_session_media',
+                  contentId: pickerItem.id,
+                  provider: 'nowpayments',
+                  payCurrency: 'usdttrc20',
+                })
+              }
+            >
+              Pay with crypto (USDT TRC-20 via NOWPayments)
+            </Button>
+          </div>
+          <DialogFooter>
+            <Button variant="ghost" onClick={() => setPickerItem(null)} disabled={purchasePending}>
+              Cancel
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
