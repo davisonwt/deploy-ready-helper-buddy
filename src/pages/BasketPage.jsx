@@ -296,16 +296,15 @@ export default function BasketPage() {
         </div>
       </div>
 
-      {/* Payment Modal */}
+      {/* Payment Modal — bestower chooses crypto (USDC) or PayPal */}
       {showPaymentModal && selectedBasketItem && (
-        <PaymentModal
-          isOpen={showPaymentModal}
+        <QuickBestowModal
+          open={showPaymentModal}
           onClose={() => setShowPaymentModal(false)}
-          amount={selectedBasketItem.amount}
-          currency={selectedBasketItem.currency}
           orchardId={selectedBasketItem.orchardId}
-          pockets={selectedBasketItem.pockets}
-          onPaymentComplete={handlePaymentComplete}
+          seedTitle={basketItems[0]?.orchardTitle || 'Orchard'}
+          sowerUserId={basketItems[0]?.sowerUserId || basketItems[0]?.growerId || ''}
+          defaultAmount={selectedBasketItem.amount}
         />
       )}
     </div>
