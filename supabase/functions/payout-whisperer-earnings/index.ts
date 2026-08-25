@@ -22,6 +22,7 @@
 // Body: { whisperer_id?: string, dry_run?: boolean, max_whisperers?: number }
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
+import { assertRateFresh, getXrpUsdRate, usdToXrp, type XrpRateQuote } from "../_shared/xrpRate.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -52,6 +53,9 @@ interface Outcome {
   reason?: string;
   network?: string;
   tx?: string | null;
+  /** USD per 1 XRP actually used for this payout (XRP rail only). */
+  fx_rate?: number | null;
+  fx_observed_at?: string | null;
 }
 
 Deno.serve(async (req) => {
@@ -96,11 +100,13 @@ Deno.serve(async (req) => {
     }
 
     const byWhisperer = new Map<string, { ids: string[]; amount: number }>();
+    const amountById = new Map<string, number>();
     for (const e of earnings as any[]) {
       const cur = byWhisperer.get(e.whisperer_id) ?? { ids: [], amount: 0 };
       cur.ids.push(e.id);
       cur.amount = round2(cur.amount + Number(e.amount || 0));
       byWhisperer.set(e.whisperer_id, cur);
+      amountById.set(e.id, Number(e.amount || 0));
     }
 
     const whispererIds = Array.from(byWhisperer.keys()).slice(0, maxWhisperers);
@@ -119,9 +125,37 @@ Deno.serve(async (req) => {
       .in("user_id", userIds.length > 0 ? userIds : ["00000000-0000-0000-0000-000000000000"]);
     const profileByUser = new Map((profiles ?? []).map((p: any) => [p.user_id, p]));
 
-    
+    // --- One XRP/USD rate for the whole run ----------------------------------
+    // Fetched ONCE (not once per whisperer) and only when someone in this batch
+    // is actually on the XRP rail. If no trustworthy price can be established,
+    // xrpRate stays null: every XRP payout in this run is skipped, its earnings
+    // stay 'payable', and the next run tries again. We never guess a rate.
+    const needsXrp = whispererIds.some((wid) => {
+      const uid = userIdByWhisperer.get(wid);
+      return uid ? profileByUser.get(uid)?.payout_network === "xrp" : false;
+    });
+    let xrpRate: XrpRateQuote | null = null;
+    let xrpRateError: string | null = null;
+    if (needsXrp && !dryRun) {
+      try {
+        xrpRate = await getXrpUsdRate();
+        assertRateFresh(xrpRate.observedAt);
+        console.log(
+          `payout-whisperer-earnings: XRP/USD run rate ${xrpRate.rate} observed ${xrpRate.observedAt} from ${
+            xrpRate.sources.map((s) => `${s.name}=${s.price}`).join(", ")
+          }`,
+        );
+      } catch (e) {
+        xrpRate = null;
+        xrpRateError = e instanceof Error ? e.message : String(e);
+        console.error(
+          `payout-whisperer-earnings: SKIPPING ALL XRP PAYOUTS this run — no trustworthy XRP/USD price. Reason: ${xrpRateError}. Earnings remain payable and will be retried on the next run.`,
+        );
+      }
+    }
 
     const outcomes: Outcome[] = [];
+
 
     for (const wid of whispererIds) {
       const bucket = byWhisperer.get(wid)!;
@@ -158,13 +192,28 @@ Deno.serve(async (req) => {
         };
       } else if (network === "xrp") {
         // XRP is a rail, not a unit of account: we hand the sender the USD the
-        // whisperer earned and it converts at the live rate at send time, so
-        // they always receive the full dollar value regardless of price moves.
+        // whisperer earned plus the run-level rate, so every XRP payout in this
+        // run converts at one price we actually observed and recorded.
+        if (!dryRun && !xrpRate) {
+          outcomes.push({
+            ...base,
+            reason: `xrp_rate_unavailable:${xrpRateError ?? "no_rate"}`,
+            network,
+          });
+          continue; // earnings stay 'payable' — retried next run
+        }
         fn = "send-xrp-payout";
         payload = {
           recipient_user_id: userId,
           amount_usd: amountUsd,
           reference: `whisperer_earnings:${wid}`,
+          ...(xrpRate
+            ? {
+              fx_rate: xrpRate.rate,
+              fx_observed_at: xrpRate.observedAt,
+              fx_sources: xrpRate.sources,
+            }
+            : {}),
         };
 
       } else {
@@ -199,9 +248,25 @@ Deno.serve(async (req) => {
         continue; // earnings stay 'payable' — retried on the next run
       }
 
+      const usedRate = network === "xrp"
+        ? Number((result as any)?.fx_rate ?? xrpRate?.rate ?? 0) || null
+        : null;
+      const usedObservedAt = network === "xrp"
+        ? ((result as any)?.fx_observed_at ?? xrpRate?.observedAt ?? null)
+        : null;
+      const usedSources = network === "xrp"
+        ? ((result as any)?.fx_sources ?? xrpRate?.sources ?? null)
+        : null;
+
       const { error: markErr } = await admin
         .from("whisperer_earnings")
-        .update({ status: "paid", processed_at: new Date().toISOString() })
+        .update({
+          status: "paid",
+          processed_at: new Date().toISOString(),
+          payout_fx_rate: usedRate,
+          payout_fx_observed_at: usedObservedAt,
+          payout_fx_sources: usedSources,
+        })
         .in("id", bucket.ids);
       if (markErr) {
         // Money moved but the ledger did not update — loud, needs a human.
@@ -210,11 +275,28 @@ Deno.serve(async (req) => {
         continue;
       }
 
+      // Per-earning XRP amount, so "$X became Y XRP" is answerable row by row.
+      if (usedRate) {
+        for (const id of bucket.ids) {
+          const usd = amountById.get(id) ?? 0;
+          if (usd <= 0) continue;
+          const { error: xrpErr } = await admin
+            .from("whisperer_earnings")
+            .update({ payout_amount_xrp: usdToXrp(usd, usedRate) })
+            .eq("id", id);
+          if (xrpErr) {
+            console.error("could not record payout_amount_xrp", id, xrpErr.message);
+          }
+        }
+      }
+
       outcomes.push({
         ...base,
         status: "paid",
         network,
         tx: (result as any)?.signature ?? (result as any)?.tx_hash ?? null,
+        fx_rate: usedRate,
+        fx_observed_at: usedObservedAt,
       });
     }
 
