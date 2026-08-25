@@ -319,12 +319,12 @@ export default function LoginPage() {
                 </div>
               )}
               
-              {/* Forgot Password */}
+              {/* Forgot Password — security questions, no email */}
               <div className="text-center">
                 <button
                   type="button"
                   className="text-sm text-blue-600 hover:text-blue-500 transition-colors duration-200"
-                  onClick={() => setShowForgotPassword(true)}
+                  onClick={() => navigate('/forgot-password')}
                 >
                   Forgot Password?
                 </button>
