@@ -1,14 +1,31 @@
 -- Sow2Grow money-job cron schedules
--- HOW TO RUN:
---   1. Replace the three occurrences of PASTE_YOUR_CRON_SECRET_HERE below with the
---      same CRON_SECRET value you saved as an edge function secret.
---   2. Paste the whole file into the Supabase SQL Editor and run it.
---   3. Do NOT commit the filled-in version back into the repo.
+--
+-- STATUS: the four cron jobs below are ALREADY SCHEDULED in this project.
+-- The only thing you must do by hand is store your CRON_SECRET in the
+-- encrypted vault, once:
+--
+--   select vault.create_secret('YOUR_CRON_SECRET_VALUE', 'CRON_SECRET');
+--
+-- (If it already exists, rotate it with:
+--    select vault.update_secret(
+--      (select id from vault.secrets where name = 'CRON_SECRET'),
+--      'NEW_VALUE');
+--  )
+--
+-- The secret value MUST be identical to the CRON_SECRET edge function secret.
+-- It is never written into a cron schedule or a URL — public.invoke_money_job()
+-- reads it from the vault and sends it as `Authorization: Bearer <secret>`.
+--
+-- Schedules (already live):
+--   release-escrow-hourly              0 * * * *    -> release-escrow
+--   payout-sower-earnings-daily        10 2 * * *   -> payout-sower-earnings
+--   payout-whisperer-earnings-daily    40 2 * * *   -> payout-whisperer-earnings
+--   expire-stale-xrp-quotes            */5 * * * *  -> public.expire_stale_xrp_quotes()
 
+-- Re-create the schedules (safe to re-run):
 create extension if not exists pg_cron;
 create extension if not exists pg_net;
 
--- Clean re-run safety: drop existing schedules with these names
 do $$
 declare j text;
 begin
@@ -24,60 +41,26 @@ begin
   end loop;
 end $$;
 
--- 1) Release escrow that has passed its auto-release window — every hour
-select cron.schedule(
-  'release-escrow-hourly',
-  '0 * * * *',
-  $$
-  select net.http_post(
-    url := 'https://zuwkgasbkpjlxzsjzumu.supabase.co/functions/v1/release-escrow',
-    headers := jsonb_build_object(
-      'Content-Type', 'application/json',
-      'Authorization', 'Bearer PASTE_YOUR_CRON_SECRET_HERE'
-    ),
-    body := jsonb_build_object('trigger', 'cron', 'at', now())
-  );
-  $$
-);
+select cron.schedule('release-escrow-hourly', '0 * * * *',
+  $$ select public.invoke_money_job('release-escrow'); $$);
 
--- 2) Pay sowers their released bestowals — daily 02:10 UTC
-select cron.schedule(
-  'payout-sower-earnings-daily',
-  '10 2 * * *',
-  $$
-  select net.http_post(
-    url := 'https://zuwkgasbkpjlxzsjzumu.supabase.co/functions/v1/payout-sower-earnings',
-    headers := jsonb_build_object(
-      'Content-Type', 'application/json',
-      'Authorization', 'Bearer PASTE_YOUR_CRON_SECRET_HERE'
-    ),
-    body := jsonb_build_object('trigger', 'cron', 'at', now())
-  );
-  $$
-);
+select cron.schedule('payout-sower-earnings-daily', '10 2 * * *',
+  $$ select public.invoke_money_job('payout-sower-earnings'); $$);
 
--- 3) Pay whisperer commissions — daily 02:40 UTC (after sower run)
-select cron.schedule(
-  'payout-whisperer-earnings-daily',
-  '40 2 * * *',
-  $$
-  select net.http_post(
-    url := 'https://zuwkgasbkpjlxzsjzumu.supabase.co/functions/v1/payout-whisperer-earnings',
-    headers := jsonb_build_object(
-      'Content-Type', 'application/json',
-      'Authorization', 'Bearer PASTE_YOUR_CRON_SECRET_HERE'
-    ),
-    body := jsonb_build_object('trigger', 'cron', 'at', now())
-  );
-  $$
-);
+select cron.schedule('payout-whisperer-earnings-daily', '40 2 * * *',
+  $$ select public.invoke_money_job('payout-whisperer-earnings'); $$);
 
--- 4) Expire stale 10-minute XRP checkout quotes — every 5 minutes (pure SQL, no secret)
-select cron.schedule(
-  'expire-stale-xrp-quotes',
-  '*/5 * * * *',
-  $$ select public.expire_stale_xrp_quotes(); $$
-);
+select cron.schedule('expire-stale-xrp-quotes', '*/5 * * * *',
+  $$ select public.expire_stale_xrp_quotes(); $$);
 
--- Verify
+-- Verify schedules
 select jobid, jobname, schedule, active from cron.job order by jobname;
+
+-- Verify the last runs (after the vault secret is set)
+select jobid, status, return_message, start_time
+from cron.job_run_details
+order by start_time desc
+limit 20;
+
+-- Manual smoke test of one job (uses the vault secret, no plaintext here)
+-- select public.invoke_money_job('release-escrow');
