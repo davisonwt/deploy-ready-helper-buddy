@@ -100,11 +100,13 @@ Deno.serve(async (req) => {
     }
 
     const byWhisperer = new Map<string, { ids: string[]; amount: number }>();
+    const amountById = new Map<string, number>();
     for (const e of earnings as any[]) {
       const cur = byWhisperer.get(e.whisperer_id) ?? { ids: [], amount: 0 };
       cur.ids.push(e.id);
       cur.amount = round2(cur.amount + Number(e.amount || 0));
       byWhisperer.set(e.whisperer_id, cur);
+      amountById.set(e.id, Number(e.amount || 0));
     }
 
     const whispererIds = Array.from(byWhisperer.keys()).slice(0, maxWhisperers);
