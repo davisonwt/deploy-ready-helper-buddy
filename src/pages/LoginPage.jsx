@@ -124,30 +124,6 @@ export default function LoginPage() {
     }
   }
 
-  const handleForgotPassword = async (e) => {
-    e.preventDefault()
-    setResetLoading(true)
-    setResetMessage("")
-    
-    try {
-      const result = await resetPassword(resetEmail)
-      
-      if (result.success) {
-        setResetMessage("Password reset email sent! Check your inbox.")
-        setTimeout(() => {
-          setShowForgotPassword(false)
-          setResetEmail("")
-          setResetMessage("")
-        }, 3000)
-      } else {
-        setResetMessage(result.error || "Failed to send reset email")
-      }
-    } catch (err) {
-      setResetMessage("An unexpected error occurred")
-    } finally {
-      setResetLoading(false)
-    }
-  }
   
   return (
     <div className="min-h-screen bg-gradient-to-br from-green-50 via-blue-50 to-amber-50 flex items-center justify-center p-4 relative overflow-hidden">
