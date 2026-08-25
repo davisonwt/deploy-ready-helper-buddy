@@ -103,12 +103,14 @@ Deno.serve(async (req) => {
     }
 
     const bySower = new Map<string, { ids: string[]; amount: number }>();
+    const amountById = new Map<string, number>();
     for (const r of rows as any[]) {
       if (!r.sower_id) continue;
       const cur = bySower.get(r.sower_id) ?? { ids: [], amount: 0 };
       cur.ids.push(r.id);
       cur.amount = round2(cur.amount + Number(r.sower_amount || 0));
       bySower.set(r.sower_id, cur);
+      amountById.set(r.id, Number(r.sower_amount || 0));
     }
 
     const sowerIds = Array.from(bySower.keys()).slice(0, maxSowers);
@@ -117,6 +119,32 @@ Deno.serve(async (req) => {
       .select("user_id, payout_network, payout_address, payout_tag")
       .in("user_id", sowerIds.length > 0 ? sowerIds : ["00000000-0000-0000-0000-000000000000"]);
     const profileByUser = new Map((profiles ?? []).map((p: any) => [p.user_id, p]));
+
+    // --- One XRP/USD rate for the whole run ----------------------------------
+    // Fetched ONCE per run and only when a sower in this batch is on the XRP
+    // rail. If no trustworthy price can be established we skip every XRP payout
+    // this run (balances stay pending, retried next run) rather than guess.
+    const needsXrp = sowerIds.some((sid) => profileByUser.get(sid)?.payout_network === "xrp");
+    let xrpRate: XrpRateQuote | null = null;
+    let xrpRateError: string | null = null;
+    if (needsXrp && !dryRun) {
+      try {
+        xrpRate = await getXrpUsdRate();
+        assertRateFresh(xrpRate.observedAt);
+        console.log(
+          `payout-sower-earnings: XRP/USD run rate ${xrpRate.rate} observed ${xrpRate.observedAt} from ${
+            xrpRate.sources.map((s) => `${s.name}=${s.price}`).join(", ")
+          }`,
+        );
+      } catch (e) {
+        xrpRate = null;
+        xrpRateError = e instanceof Error ? e.message : String(e);
+        console.error(
+          `payout-sower-earnings: SKIPPING ALL XRP PAYOUTS this run — no trustworthy XRP/USD price. Reason: ${xrpRateError}. Balances remain pending and will be retried on the next run.`,
+        );
+      }
+    }
+
 
     const outcomes: Outcome[] = [];
 
