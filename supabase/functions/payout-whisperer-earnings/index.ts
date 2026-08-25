@@ -32,13 +32,15 @@ import {
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-cron-secret",
   "Access-Control-Allow-Methods": "POST, OPTIONS",
 };
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL") ?? "";
 const SUPABASE_ANON_KEY = Deno.env.get("SUPABASE_ANON_KEY") ?? "";
 const SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
+const CRON_SECRET = Deno.env.get("CRON_SECRET") ?? "";
+
 
 function json(body: unknown, status = 200) {
   return new Response(JSON.stringify(body), {
@@ -72,21 +74,27 @@ Deno.serve(async (req) => {
   const admin = createClient(SUPABASE_URL, SERVICE_ROLE_KEY);
 
   try {
+    const cronHeader = req.headers.get("x-cron-secret") ?? "";
     const authHeader = req.headers.get("authorization") ?? "";
-    if (!authHeader.toLowerCase().startsWith("bearer ")) return json({ error: "unauthorized" }, 401);
-    const token = authHeader.slice(7).trim();
+    const token = authHeader.toLowerCase().startsWith("bearer ") ? authHeader.slice(7).trim() : "";
 
-    if (token !== SERVICE_ROLE_KEY) {
+    let authorized = false;
+    // Cron auth: prefer Authorization: Bearer <CRON_SECRET>; legacy x-cron-secret still accepted.
+    if (CRON_SECRET && token && token === CRON_SECRET) authorized = true;
+    if (!authorized && CRON_SECRET && cronHeader && cronHeader === CRON_SECRET) authorized = true;
+    if (!authorized && token && token === SERVICE_ROLE_KEY) authorized = true;
+    if (!authorized && token) {
       const userClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
         global: { headers: { Authorization: `Bearer ${token}` } },
       });
       const { data: u } = await userClient.auth.getUser();
-      if (!u?.user) return json({ error: "unauthorized" }, 401);
-      const { data: roles } = await admin.from("user_roles").select("role").eq("user_id", u.user.id);
-      if (!roles?.some((r: any) => ["admin", "gosat"].includes(r.role))) {
-        return json({ error: "forbidden" }, 403);
+      if (u?.user) {
+        const { data: roles } = await admin.from("user_roles").select("role").eq("user_id", u.user.id);
+        authorized = !!roles?.some((r: any) => ["admin", "gosat"].includes(r.role));
       }
     }
+    if (!authorized) return json({ error: "unauthorized" }, 401);
+
 
     const body = await req.json().catch(() => ({}));
     const onlyWhisperer: string | null = typeof body?.whisperer_id === "string" ? body.whisperer_id : null;

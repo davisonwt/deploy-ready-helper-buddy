@@ -1,6 +1,6 @@
 -- Sow2Grow money-job cron schedules
 -- HOW TO RUN:
---   1. Replace the two occurrences of PASTE_YOUR_CRON_SECRET_HERE below with the
+--   1. Replace the three occurrences of PASTE_YOUR_CRON_SECRET_HERE below with the
 --      same CRON_SECRET value you saved as an edge function secret.
 --   2. Paste the whole file into the Supabase SQL Editor and run it.
 --   3. Do NOT commit the filled-in version back into the repo.
@@ -33,7 +33,7 @@ select cron.schedule(
     url := 'https://zuwkgasbkpjlxzsjzumu.supabase.co/functions/v1/release-escrow',
     headers := jsonb_build_object(
       'Content-Type', 'application/json',
-      'x-cron-secret', 'PASTE_YOUR_CRON_SECRET_HERE'
+      'Authorization', 'Bearer PASTE_YOUR_CRON_SECRET_HERE'
     ),
     body := jsonb_build_object('trigger', 'cron', 'at', now())
   );
@@ -49,7 +49,7 @@ select cron.schedule(
     url := 'https://zuwkgasbkpjlxzsjzumu.supabase.co/functions/v1/payout-sower-earnings',
     headers := jsonb_build_object(
       'Content-Type', 'application/json',
-      'x-cron-secret', 'PASTE_YOUR_CRON_SECRET_HERE'
+      'Authorization', 'Bearer PASTE_YOUR_CRON_SECRET_HERE'
     ),
     body := jsonb_build_object('trigger', 'cron', 'at', now())
   );
@@ -65,7 +65,7 @@ select cron.schedule(
     url := 'https://zuwkgasbkpjlxzsjzumu.supabase.co/functions/v1/payout-whisperer-earnings',
     headers := jsonb_build_object(
       'Content-Type', 'application/json',
-      'x-cron-secret', 'PASTE_YOUR_CRON_SECRET_HERE'
+      'Authorization', 'Bearer PASTE_YOUR_CRON_SECRET_HERE'
     ),
     body := jsonb_build_object('trigger', 'cron', 'at', now())
   );
