@@ -181,12 +181,28 @@ Deno.serve(async (req) => {
         };
       } else if (network === "xrp") {
         // XRP is a rail, not a unit of account — the USD value converts at the
-        // live rate at send time so the sower receives the full dollar amount.
+        // run-level rate observed above, so every XRP payout in this run uses
+        // one price we actually saw and then record against the bestowal.
+        if (!dryRun && !xrpRate) {
+          outcomes.push({
+            ...base,
+            reason: `xrp_rate_unavailable:${xrpRateError ?? "no_rate"}`,
+            network,
+          });
+          continue; // stays pending — retried next run
+        }
         fn = "send-xrp-payout";
         payload = {
           recipient_user_id: sid,
           amount_usd: amountUsd,
           reference: `sower_earnings:${sid}`,
+          ...(xrpRate
+            ? {
+              fx_rate: xrpRate.rate,
+              fx_observed_at: xrpRate.observedAt,
+              fx_sources: xrpRate.sources,
+            }
+            : {}),
         };
       } else {
         outcomes.push({ ...base, reason: `unsupported_payout_network:${network}`, network });
