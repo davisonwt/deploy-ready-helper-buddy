@@ -7032,6 +7032,10 @@ export type Database = {
           paid_at: string | null
           payment_method: string | null
           payment_reference: string | null
+          payout_amount_xrp: number | null
+          payout_fx_observed_at: string | null
+          payout_fx_rate: number | null
+          payout_fx_sources: Json | null
           payout_reference: string | null
           payout_status: string
           product_id: string | null
@@ -7061,6 +7065,10 @@ export type Database = {
           paid_at?: string | null
           payment_method?: string | null
           payment_reference?: string | null
+          payout_amount_xrp?: number | null
+          payout_fx_observed_at?: string | null
+          payout_fx_rate?: number | null
+          payout_fx_sources?: Json | null
           payout_reference?: string | null
           payout_status?: string
           product_id?: string | null
@@ -7090,6 +7098,10 @@ export type Database = {
           paid_at?: string | null
           payment_method?: string | null
           payment_reference?: string | null
+          payout_amount_xrp?: number | null
+          payout_fx_observed_at?: string | null
+          payout_fx_rate?: number | null
+          payout_fx_sources?: Json | null
           payout_reference?: string | null
           payout_status?: string
           product_id?: string | null
@@ -13887,6 +13899,10 @@ export type Database = {
           commission_percent: number
           created_at: string | null
           id: string
+          payout_amount_xrp: number | null
+          payout_fx_observed_at: string | null
+          payout_fx_rate: number | null
+          payout_fx_sources: Json | null
           processed_at: string | null
           status: string | null
           whisperer_id: string
@@ -13898,6 +13914,10 @@ export type Database = {
           commission_percent: number
           created_at?: string | null
           id?: string
+          payout_amount_xrp?: number | null
+          payout_fx_observed_at?: string | null
+          payout_fx_rate?: number | null
+          payout_fx_sources?: Json | null
           processed_at?: string | null
           status?: string | null
           whisperer_id: string
@@ -13909,6 +13929,10 @@ export type Database = {
           commission_percent?: number
           created_at?: string | null
           id?: string
+          payout_amount_xrp?: number | null
+          payout_fx_observed_at?: string | null
+          payout_fx_rate?: number | null
+          payout_fx_sources?: Json | null
           processed_at?: string | null
           status?: string | null
           whisperer_id?: string
