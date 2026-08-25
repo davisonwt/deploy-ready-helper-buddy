@@ -243,9 +243,25 @@ Deno.serve(async (req) => {
         continue; // earnings stay 'payable' — retried on the next run
       }
 
+      const usedRate = network === "xrp"
+        ? Number((result as any)?.fx_rate ?? xrpRate?.rate ?? 0) || null
+        : null;
+      const usedObservedAt = network === "xrp"
+        ? ((result as any)?.fx_observed_at ?? xrpRate?.observedAt ?? null)
+        : null;
+      const usedSources = network === "xrp"
+        ? ((result as any)?.fx_sources ?? xrpRate?.sources ?? null)
+        : null;
+
       const { error: markErr } = await admin
         .from("whisperer_earnings")
-        .update({ status: "paid", processed_at: new Date().toISOString() })
+        .update({
+          status: "paid",
+          processed_at: new Date().toISOString(),
+          payout_fx_rate: usedRate,
+          payout_fx_observed_at: usedObservedAt,
+          payout_fx_sources: usedSources,
+        })
         .in("id", bucket.ids);
       if (markErr) {
         // Money moved but the ledger did not update — loud, needs a human.
@@ -254,11 +270,28 @@ Deno.serve(async (req) => {
         continue;
       }
 
+      // Per-earning XRP amount, so "$X became Y XRP" is answerable row by row.
+      if (usedRate) {
+        for (const id of bucket.ids) {
+          const usd = amountById.get(id) ?? 0;
+          if (usd <= 0) continue;
+          const { error: xrpErr } = await admin
+            .from("whisperer_earnings")
+            .update({ payout_amount_xrp: usdToXrp(usd, usedRate) })
+            .eq("id", id);
+          if (xrpErr) {
+            console.error("could not record payout_amount_xrp", id, xrpErr.message);
+          }
+        }
+      }
+
       outcomes.push({
         ...base,
         status: "paid",
         network,
         tx: (result as any)?.signature ?? (result as any)?.tx_hash ?? null,
+        fx_rate: usedRate,
+        fx_observed_at: usedObservedAt,
       });
     }
 
