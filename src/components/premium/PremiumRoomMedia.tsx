@@ -17,6 +17,15 @@ import { useMediaUpload } from '@/components/live/media/useMediaUpload';
 import { MediaUploadZone } from '@/components/live/media/MediaUploadZone';
 import { SetPriceModal } from '@/components/live/media/SetPriceModal';
 import { useCurrency } from '@/hooks/useCurrency';
+import { useContentPurchase } from '@/hooks/useContentPurchase';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
 
 interface PremiumRoomMediaProps {
   roomId: string;
@@ -38,6 +47,8 @@ export const PremiumRoomMedia: React.FC<PremiumRoomMediaProps> = ({
   const [selectedMedia, setSelectedMedia] = useState<any>(null);
   const [showPriceModal, setShowPriceModal] = useState(false);
   const { uploadMedia, uploading, progress } = useMediaUpload();
+  const [pickerItem, setPickerItem] = useState<any | null>(null);
+  const { purchase, isPending: purchasePending } = useContentPurchase();
 
   // Fetch media and purchases
   useEffect(() => {
@@ -105,29 +116,7 @@ export const PremiumRoomMedia: React.FC<PremiumRoomMediaProps> = ({
       toast.error('Please log in to purchase');
       return;
     }
-
-    try {
-      // Call purchase edge function
-      const { data, error } = await supabase.functions.invoke('purchase-media', {
-        body: {
-          mediaId: item.id,
-          paymentMethod: 'bestowal'
-        }
-      });
-
-      if (error) throw error;
-
-      const result = data as { success: boolean; chatRoomId: string; message: string };
-      toast.success('Purchase successful! Opening chat with s2g gosat...');
-      
-      // Navigate to the 1-1 chat room with gosat
-      navigate(`/chatapp?room=${result.chatRoomId}`);
-      
-      fetchPurchases();
-    } catch (error: any) {
-      console.error('Purchase error:', error);
-      toast.error(error.message || 'Purchase failed');
-    }
+    setPickerItem(item);
   };
 
   const handleDelete = async (item: any) => {
@@ -480,6 +469,58 @@ export const PremiumRoomMedia: React.FC<PremiumRoomMediaProps> = ({
           }}
         />
       )}
+
+      <Dialog open={!!pickerItem} onOpenChange={(o) => !o && setPickerItem(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Bestow to unlock</DialogTitle>
+            <DialogDescription>
+              {pickerItem ? (
+                <>
+                  {pickerItem.file_name} — {formatAmount((pickerItem.price_cents ?? 0) / 100)}
+                  <br />
+                  Choose how you want to pay. You'll be redirected to complete checkout.
+                </>
+              ) : null}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="grid grid-cols-1 gap-3">
+            <Button
+              disabled={purchasePending}
+              onClick={() =>
+                pickerItem &&
+                purchase({
+                  contentType: 'live_session_media',
+                  contentId: pickerItem.id,
+                  provider: 'paypal',
+                })
+              }
+            >
+              Pay with PayPal
+            </Button>
+            <Button
+              variant="outline"
+              disabled={purchasePending}
+              onClick={() =>
+                pickerItem &&
+                purchase({
+                  contentType: 'live_session_media',
+                  contentId: pickerItem.id,
+                  provider: 'nowpayments',
+                  payCurrency: 'usdttrc20',
+                })
+              }
+            >
+              Pay with crypto (USDT TRC-20 via NOWPayments)
+            </Button>
+          </div>
+          <DialogFooter>
+            <Button variant="ghost" onClick={() => setPickerItem(null)} disabled={purchasePending}>
+              Cancel
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

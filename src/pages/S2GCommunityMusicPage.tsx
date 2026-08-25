@@ -11,12 +11,23 @@ import { formatCurrency } from '@/utils/formatters';
 import { toast } from 'sonner';
 import { GradientPlaceholder } from '@/components/ui/GradientPlaceholder';
 import { launchConfetti } from '@/utils/confetti';
+import { useContentPurchase } from '@/hooks/useContentPurchase';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
 
 export default function S2GCommunityMusicPage() {
   const { user } = useAuth();
   const [playingId, setPlayingId] = useState<string | null>(null);
   const [audioRefs, setAudioRefs] = useState<Map<string, HTMLAudioElement>>(new Map());
   const [playbackPositions, setPlaybackPositions] = useState<Map<string, number>>(new Map());
+  const [pickerItem, setPickerItem] = useState<any | null>(null);
+  const { purchase, isPending: purchasePending } = useContentPurchase();
   const PREVIEW_DURATION = 30; // 30 seconds preview
 
   // Fetch music from BOTH s2g_library_items AND dj_music_tracks
@@ -253,20 +264,17 @@ export default function S2GCommunityMusicPage() {
       return;
     }
 
-    if (item.is_giveaway && item.giveaway_count < (item.giveaway_limit || Infinity)) {
-      // Handle giveaway
+    if (item.source === 'library' && item.is_giveaway && item.giveaway_count < (item.giveaway_limit || Infinity)) {
+      // Free giveaway — server re-verifies eligibility
       const result = await supabase.functions.invoke('complete-library-bestowal', {
-        body: {
-          libraryItemId: item.id,
-          amount: 0,
-          sowerId: item.user_id,
-          isGiveaway: true
-        }
+        body: { libraryItemId: item.id },
       });
       if (result.data?.success) {
         launchConfetti();
         toast.success('Giveaway access granted!');
         window.location.reload();
+      } else {
+        toast.error((result.data as any)?.message || 'Could not claim this giveaway.');
       }
       return;
     }
@@ -276,12 +284,8 @@ export default function S2GCommunityMusicPage() {
       return;
     }
 
-    // Paid bestowal temporarily disabled while we migrate to approved
-    // payment providers (NOWPayments / PayPal).
-    toast.info(
-      'Paid bestowal is temporarily disabled while we migrate to our approved payment providers (NOWPayments / PayPal). Please try again soon.'
-    );
-    return;
+    // Paid → open provider picker
+    setPickerItem(item);
   };
 
   const handleDownload = (item: any) => {
@@ -574,6 +578,60 @@ export default function S2GCommunityMusicPage() {
           )}
         </div>
       </div>
+
+      <Dialog open={!!pickerItem} onOpenChange={(o) => !o && setPickerItem(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Bestow to unlock</DialogTitle>
+            <DialogDescription>
+              {pickerItem ? (
+                <>
+                  {pickerItem.title} — {formatCurrency(pickerItem.price)}
+                  <br />
+                  Choose how you want to pay. You'll be redirected to complete checkout.
+                </>
+              ) : null}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="grid grid-cols-1 gap-3">
+            <Button
+              disabled={purchasePending}
+              onClick={() =>
+                pickerItem &&
+                purchase({
+                  contentType: pickerItem.source === 'library' ? 'library_item' : 'music_track',
+                  contentId: pickerItem.id,
+                  provider: 'paypal',
+                })
+              }
+            >
+              Pay with PayPal
+            </Button>
+            <Button
+              variant="outline"
+              disabled={purchasePending}
+              onClick={() =>
+                pickerItem &&
+                purchase({
+                  contentType: pickerItem.source === 'library' ? 'library_item' : 'music_track',
+                  contentId: pickerItem.id,
+                  provider: 'nowpayments',
+                  payCurrency: 'usdttrc20',
+                })
+              }
+            >
+              Pay with crypto (USDT TRC-20 via NOWPayments)
+            </Button>
+          </div>
+          <DialogFooter>
+            <Button variant="ghost" onClick={() => setPickerItem(null)} disabled={purchasePending}>
+              Cancel
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+
 
       <style>{`
         @keyframes gradient {
