@@ -404,53 +404,15 @@ export default function LoginPage() {
       </div>
 
       {/* Forgot Password Modal */}
-      {showForgotPassword && (
+      {false && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
           <div className="bg-white rounded-2xl p-6 w-full max-w-md shadow-2xl">
             <h3 className="text-xl font-bold text-blue-700 mb-4 text-center">Reset Password</h3>
-            
-            <form onSubmit={handleForgotPassword} className="space-y-4">
-              {resetMessage && (
-                <div className={`p-3 rounded-lg text-sm text-center ${
-                  resetMessage.includes('sent') 
-                    ? 'bg-green-100 text-green-700' 
-                    : 'bg-red-100 text-red-700'
-                }`}>
-                  {resetMessage}
-                </div>
-              )}
-              
-              <div className="space-y-2">
-                <label htmlFor="resetEmail" className="text-sm font-medium text-gray-700">
-                  Email Address
-                </label>
-                <input
-                  id="resetEmail"
-                  type="email"
-                  value={resetEmail}
-                  onChange={(e) => setResetEmail(e.target.value)}
-                  className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-400 focus:border-blue-400 transition-all duration-300"
-                  placeholder="Enter your email"
-                  required
-                />
-              </div>
-              
+            <form className="space-y-4">
               <div className="flex gap-3">
-                <Button
-                  type="submit"
-                  className="flex-1 bg-blue-500 hover:bg-blue-600 text-white"
-                  disabled={resetLoading}
-                >
-                  {resetLoading ? "Sending..." : "Send Reset Email"}
-                </Button>
                 <Button
                   type="button"
                   variant="outline"
-                  onClick={() => {
-                    setShowForgotPassword(false)
-                    setResetEmail("")
-                    setResetMessage("")
-                  }}
                 >
                   Cancel
                 </Button>
