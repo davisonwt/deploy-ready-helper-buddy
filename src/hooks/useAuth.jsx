@@ -270,18 +270,13 @@ export class AuthProviderClass extends React.Component {
     }
   }
 
-  resetPassword = async (email) => {
-    try {
-      const redirectTo = `${window.location.origin}/login?reset=true`
-      const { error } = await this.withRetry(() => supabase.auth.resetPasswordForEmail(email, { redirectTo }))
-      if (error) {
-        return { success: true, message: "If an account exists with that email, you will receive a reset link." }
-      }
-      return { success: true, message: "Password reset email sent!" }
-    } catch {
-      return { success: true, message: "If an account exists with that email, you will receive a reset link." }
-    }
-  }
+  // Sow2Grow does not use email for password resets.
+  // Recovery runs through the signup security questionnaire at /forgot-password.
+  resetPassword = async () => ({
+    success: true,
+    redirectTo: '/forgot-password',
+    message: 'Password recovery uses your security questions. Continue on the recovery page.',
+  })
 
   updateProfile = async (profileData) => {
     try {
