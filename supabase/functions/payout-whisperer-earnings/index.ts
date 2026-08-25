@@ -187,13 +187,28 @@ Deno.serve(async (req) => {
         };
       } else if (network === "xrp") {
         // XRP is a rail, not a unit of account: we hand the sender the USD the
-        // whisperer earned and it converts at the live rate at send time, so
-        // they always receive the full dollar value regardless of price moves.
+        // whisperer earned plus the run-level rate, so every XRP payout in this
+        // run converts at one price we actually observed and recorded.
+        if (!dryRun && !xrpRate) {
+          outcomes.push({
+            ...base,
+            reason: `xrp_rate_unavailable:${xrpRateError ?? "no_rate"}`,
+            network,
+          });
+          continue; // earnings stay 'payable' — retried next run
+        }
         fn = "send-xrp-payout";
         payload = {
           recipient_user_id: userId,
           amount_usd: amountUsd,
           reference: `whisperer_earnings:${wid}`,
+          ...(xrpRate
+            ? {
+              fx_rate: xrpRate.rate,
+              fx_observed_at: xrpRate.observedAt,
+              fx_sources: xrpRate.sources,
+            }
+            : {}),
         };
 
       } else {
