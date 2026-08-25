@@ -22,8 +22,15 @@ import { corsHeaders } from "npm:@supabase/supabase-js@2/cors";
 const NOWPAYMENTS_API = "https://api.nowpayments.io/v1";
 
 interface PayoutRequest {
-  bestowalId: string;
-  role: "sower" | "tithing" | "grower";
+  /** Set for single-bestowal legs; this function then updates public.bestowals itself. */
+  bestowalId?: string;
+  /**
+   * Set instead of bestowalId for aggregated earnings runs (sower / whisperer
+   * payout runners). In that mode NOTHING is written here — the caller owns its
+   * own ledger and records the returned batch id itself.
+   */
+  externalId?: string;
+  role: "sower" | "tithing" | "grower" | "whisperer";
   address: string;
   currency: string;
   network?: string | null;
@@ -95,7 +102,7 @@ Deno.serve(async (req) => {
   }
 
   if (
-    !body?.bestowalId ||
+    !(body?.bestowalId || body?.externalId) ||
     !body.address ||
     !body.currency ||
     typeof body.amount !== "number" ||
@@ -136,7 +143,7 @@ Deno.serve(async (req) => {
             currency: body.currency.toLowerCase(),
             amount: body.amount,
             ...(body.network ? { network: body.network } : {}),
-            unique_external_id: `${body.bestowalId}-${body.role}`,
+            unique_external_id: body.bestowalId ? `${body.bestowalId}-${body.role}` : String(body.externalId),
           },
         ],
       }),
@@ -169,6 +176,12 @@ Deno.serve(async (req) => {
         error: "nowpayments_payout_no_batch_id",
         raw: parsed,
       });
+    }
+
+    // Aggregated-earnings mode: caller owns its ledger, so we just hand back
+    // the batch id and let it record awaiting_2fa on its own rows.
+    if (!body.bestowalId) {
+      return json({ status: "awaiting_2fa", reference: batchId, raw: parsed });
     }
 
     // Persist the awaiting-2fa state directly on the bestowal so the admin UI

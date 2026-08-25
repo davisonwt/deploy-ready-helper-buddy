@@ -19,6 +19,12 @@
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 import { assertRateFresh, getXrpUsdRate, usdToXrp, type XrpRateQuote } from "../_shared/xrpRate.ts";
+import {
+  createNowPaymentsPayout,
+  payoutProvider,
+  toNowPaymentsTarget,
+  type PayoutNetwork,
+} from "../_shared/payouts/nowpaymentsRail.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -46,7 +52,8 @@ interface Outcome {
   sower_id: string;
   amount_usd: number;
   bestowal_count: number;
-  status: "paid" | "skipped" | "failed";
+  status: "paid" | "awaiting_2fa" | "skipped" | "failed";
+  provider?: "nowpayments" | "hotkey";
   reason?: string;
   network?: string;
   tx?: string | null;
@@ -146,6 +153,7 @@ Deno.serve(async (req) => {
     }
 
 
+    const provider = payoutProvider();
     const outcomes: Outcome[] = [];
 
     for (const sid of sowerIds) {
@@ -167,6 +175,111 @@ Deno.serve(async (req) => {
       const network = profile?.payout_network ?? null;
       if (!profile?.payout_address || !network) {
         outcomes.push({ ...base, reason: "no_payout_method_configured" });
+        continue;
+      }
+
+      // --- Default rail: NOWPayments Mass Payouts ---------------------------
+      // The platform's holding wallets live at NOWPayments and S2G holds no hot
+      // keys, so crypto leaves through NOWPayments unless PAYOUT_PROVIDER=hotkey.
+      // Creating a batch does NOT move funds: it returns a batch id awaiting a
+      // human 2FA verification, so rows are marked 'awaiting_2fa', never 'paid'.
+      if (provider === "nowpayments") {
+        if (network !== "solana_usdc" && network !== "xrp") {
+          outcomes.push({ ...base, reason: `unsupported_payout_network:${network}`, network, provider });
+          continue;
+        }
+        if (network === "xrp" && !dryRun && !xrpRate) {
+          outcomes.push({
+            ...base,
+            reason: `xrp_rate_unavailable:${xrpRateError ?? "no_rate"}`,
+            network,
+            provider,
+          });
+          continue; // stays pending — retried next run
+        }
+        if (dryRun) {
+          outcomes.push({ ...base, status: "skipped", reason: "dry_run", network, provider });
+          continue;
+        }
+
+        const target = toNowPaymentsTarget(network as PayoutNetwork, amountUsd, xrpRate?.rate ?? null);
+        if (!target) {
+          outcomes.push({ ...base, reason: "payout_amount_unresolvable", network, provider });
+          continue;
+        }
+
+        const np = await createNowPaymentsPayout({
+          supabaseUrl: SUPABASE_URL,
+          serviceRoleKey: SERVICE_ROLE_KEY,
+          externalId: `sower_earnings:${sid}:${Date.now()}`,
+          role: "sower",
+          address: profile.payout_address,
+          target,
+        });
+
+        if (np.status !== "awaiting_2fa" || !np.reference) {
+          console.error("nowpayments sower payout not created", sid, np.error, np.raw);
+          outcomes.push({
+            ...base,
+            status: "failed",
+            network,
+            provider,
+            reason: np.error ?? "nowpayments_payout_not_created",
+          });
+          continue; // stays pending — retried on the next run
+        }
+
+        const npRate = network === "xrp" ? (xrpRate?.rate ?? null) : null;
+        const { error: npMarkErr } = await admin
+          .from("product_bestowals")
+          .update({
+            payout_status: "awaiting_2fa",
+            payout_reference: np.reference,
+            payout_provider: "nowpayments",
+            payout_fx_rate: npRate,
+            payout_fx_observed_at: network === "xrp" ? (xrpRate?.observedAt ?? null) : null,
+            payout_fx_sources: network === "xrp" ? (xrpRate?.sources ?? null) : null,
+          })
+          .in("id", bucket.ids);
+        if (npMarkErr) {
+          console.error(
+            "CRITICAL: NOWPayments batch created but ledger not marked awaiting_2fa",
+            sid,
+            np.reference,
+            npMarkErr.message,
+          );
+          outcomes.push({
+            ...base,
+            status: "failed",
+            network,
+            provider,
+            reason: `batch_created_but_ledger_update_failed:${npMarkErr.message}`,
+            tx: np.reference,
+          });
+          continue;
+        }
+
+        if (npRate) {
+          for (const id of bucket.ids) {
+            const usd = amountById.get(id) ?? 0;
+            if (usd <= 0) continue;
+            const { error: xrpErr } = await admin
+              .from("product_bestowals")
+              .update({ payout_amount_xrp: usdToXrp(usd, npRate) })
+              .eq("id", id);
+            if (xrpErr) console.error("could not record payout_amount_xrp", id, xrpErr.message);
+          }
+        }
+
+        outcomes.push({
+          ...base,
+          status: "awaiting_2fa",
+          network,
+          provider,
+          tx: np.reference,
+          fx_rate: npRate,
+          fx_observed_at: network === "xrp" ? (xrpRate?.observedAt ?? null) : null,
+        });
         continue;
       }
 
@@ -254,6 +367,7 @@ Deno.serve(async (req) => {
           payout_status: "paid",
           paid_at: new Date().toISOString(),
           payout_reference: tx,
+          payout_provider: "hotkey",
           payout_fx_rate: usedRate,
           payout_fx_observed_at: usedObservedAt,
           payout_fx_sources: usedSources,
@@ -296,7 +410,9 @@ Deno.serve(async (req) => {
 
     return json({
       success: true,
+      provider,
       processed: outcomes.filter((o) => o.status === "paid").length,
+      awaiting_2fa: outcomes.filter((o) => o.status === "awaiting_2fa").length,
       skipped: outcomes.filter((o) => o.status === "skipped").length,
       failed: outcomes.filter((o) => o.status === "failed").length,
       outcomes,
