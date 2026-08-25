@@ -17,7 +17,13 @@ import { corsHeaders } from "npm:@supabase/supabase-js@2/cors";
 const NOWPAYMENTS_API = "https://api.nowpayments.io/v1";
 
 interface VerifyRequest {
-  bestowalId: string;
+  /** Single-leg bestowal payout. */
+  bestowalId?: string;
+  /**
+   * Batch id created by the aggregated earnings runners
+   * (payout-sower-earnings / payout-whisperer-earnings).
+   */
+  batchId?: string;
   code: string;
 }
 
@@ -88,8 +94,76 @@ Deno.serve(async (req) => {
   } catch {
     return json({ error: "invalid_json" }, 400);
   }
-  if (!body?.bestowalId || !body?.code) {
+  if (!body?.code || !(body?.bestowalId || body?.batchId)) {
     return json({ error: "missing_fields" }, 400);
+  }
+
+  // --- Aggregated earnings batches ------------------------------------------
+  // No bestowal row to read: the batch id itself is the handle, and the earnings
+  // ledgers carry it in payout_reference.
+  if (!body.bestowalId && body.batchId) {
+    const batchId = body.batchId;
+    const { count: bestowalCount } = await admin
+      .from("product_bestowals")
+      .select("id", { count: "exact", head: true })
+      .eq("payout_reference", batchId);
+    const { count: earningCount } = await admin
+      .from("whisperer_earnings")
+      .select("id", { count: "exact", head: true })
+      .eq("payout_reference", batchId);
+    if (!bestowalCount && !earningCount) {
+      return json({ error: "batch_not_found_in_ledgers" }, 404);
+    }
+
+    try {
+      const jwt = await getNowPaymentsJwt(email, password);
+      const res = await fetch(
+        `${NOWPAYMENTS_API}/payout/${encodeURIComponent(batchId)}/verify`,
+        {
+          method: "POST",
+          headers: {
+            "x-api-key": apiKey,
+            "Authorization": `Bearer ${jwt}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ verification_code: body.code }),
+        },
+      );
+      const text = await res.text();
+      let parsed: Record<string, unknown> = {};
+      try {
+        parsed = text ? JSON.parse(text) : {};
+      } catch { /* keep raw */ }
+
+      if (!res.ok) {
+        // Leave the ledgers untouched so the operator can retry with a fresh code.
+        return json({ error: `nowpayments_verify_http_${res.status}`, detail: parsed }, 400);
+      }
+
+      // Verified: funds are on their way. The payout IPN flips these rows to
+      // paid/failed, so we only move them out of the awaiting_2fa gate here.
+      await admin
+        .from("product_bestowals")
+        .update({ payout_status: "processing" })
+        .eq("payout_reference", batchId)
+        .eq("payout_status", "awaiting_2fa");
+      await admin
+        .from("whisperer_earnings")
+        .update({ status: "processing" })
+        .eq("payout_reference", batchId)
+        .eq("status", "awaiting_2fa");
+
+      return json({
+        ok: true,
+        batchId,
+        bestowalRows: bestowalCount ?? 0,
+        whispererEarningRows: earningCount ?? 0,
+        payoutStatus: "processing",
+        raw: parsed,
+      });
+    } catch (err) {
+      return json({ error: err instanceof Error ? err.message : String(err) }, 500);
+    }
   }
 
   // 3. Look up the payout_reference (the NOWPayments batch id) for this bestowal.

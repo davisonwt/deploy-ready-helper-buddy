@@ -260,6 +260,27 @@ async function handlePayoutEvent(
     .from("bestowals")
     .update(update)
     .eq("payout_reference", ref);
+
+  // The aggregated earnings runners (payout-sower-earnings /
+  // payout-whisperer-earnings) also stamp payout_reference with the NOWPayments
+  // batch id, so the same IPN settles their ledgers.
+  const terminal = String(update.payout_status);
+  await supabase
+    .from("product_bestowals")
+    .update({
+      payout_status: terminal === "sent" ? "paid" : terminal,
+      ...(terminal === "sent" ? { paid_at: new Date().toISOString() } : {}),
+    })
+    .eq("payout_reference", ref);
+
+  const earningStatus = terminal === "sent" ? "paid" : terminal === "failed" ? "failed" : "processing";
+  await supabase
+    .from("whisperer_earnings")
+    .update({
+      status: earningStatus,
+      ...(earningStatus === "paid" ? { processed_at: new Date().toISOString() } : {}),
+    })
+    .eq("payout_reference", ref);
 }
 
 // ---------------------------------------------------------------------------
