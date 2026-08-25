@@ -1,81 +1,72 @@
-# Whisperer Attribution & Three-Way Payout — Investigation Report
+# Escrow + Payout Split for Bestowals
 
-Everything below is confirmed against the live schema and current code, not assumed.
+Goal: S2G safely **receives and holds** every bestowal, then **releases** it to the right people — sower, whisperer (when one made the sale), and S2G's 15% — with physical goods held until delivery is confirmed.
 
-## 1. How a whisperer's approved link to a product is stored
+## The money rule (one place, every sale)
 
-Table: `product_whisperer_assignments`
-- `id`, `whisperer_id` -> `whisperers.id`, `sower_id`
-- one of `product_id` / `orchard_id` / `book_id` (the seed being marketed)
-- `commission_percent` (per-assignment, sower-set)
-- `status` — only `'active'` pays (DB trigger `enforce_whisperer_assignment_flow` blocks self-approval)
-- rolling counters `total_bestowals`, `total_earned`
-
-Supporting tables that already exist:
-- `whisperers` — the whisperer identity row (`user_id`, `display_name`, verification flags)
-- `whisperer_invitations` — sower-initiated invite with `proposed_commission_percent`
-- `whisperer_earnings` — per-sale credit ledger (`whisperer_id`, `assignment_id`, `bestowal_id`, `amount`, `commission_percent`, `status`, `processed_at`)
-- `resolve_active_whisperer(_product_id, _whisperer_id)` — server-side re-validation used at checkout
-
-Live counts today: `whisperers` 0, assignments 0, earnings 0 — nothing in production yet, so schema changes are low risk.
-
-## 2. Live-session sale attribution — what exists vs what is missing
-
-**Exists (link-based, last-touch):**
-- `src/lib/whisperer/attribution.ts` stores `?w=<whispererId>` in localStorage per seed, 30-day TTL
-- `useWhispererCapture` captures it on navigation
-- `BestowalCheckout` sends `whispererId` per basket line
-- `create-basket-bestowal-order` calls `resolve_active_whisperer` and stamps `whisperer_id` / `whisperer_user_id` onto the order item
-- `finalize_basket_order` writes `product_bestowals.whisperer_id` + `whisperer_amount` and inserts `whisperer_earnings` on payment confirmation
-
-**Exists but completely unused (empty, no code references):**
-- `whisperer_referral_links` (`ref_code`, `assignment_id`, `product_id/orchard_id/book_id`, `is_active`, counters)
-- `whisperer_clicks` (`ref_link_id`, `visitor_id`, `ip_hash`, `referrer_url`)
-- `whisperer_conversions` (`ref_link_id`, `click_id`, `bestowal_id`, `commission_amount`, `attribution_type`)
-
-**Missing: live-session attribution.** `live_streams` / `live_rooms` / `live_session_participants` have no link to any sale. No `session_id` is passed through checkout, no order or bestowal column stores it. A sale made during a whisperer's live show is only credited if the buyer happened to click that whisperer's `?w=` link — which is exactly the wrong assumption for a TikTok-style live where people buy from an on-screen tile.
-
-### Recommended mechanism for #2
-
-Use the dormant `whisperer_referral_links` table as the single source of truth instead of a raw `?w=` id, and add a session dimension.
+For each line item on a bestowal:
 
 ```text
-whisperer goes live
-   -> ensure_whisperer_ref_link(assignment_id, session_id)  -> ref_code (short, unique)
-   -> every buy tile / share link in that live = /product/:id?w=<ref_code>
-   -> click logged in whisperer_clicks (ref_link_id, visitor_id, session_id)
-   -> code stored client-side per seed (existing attribution.ts, upgraded to codes)
-   -> checkout sends ref_code per line
-   -> resolve_active_whisperer_by_code() re-validates: link active AND assignment active
-   -> finalize_basket_order writes whisperer_conversions row incl. session_id
+line total
+  ├─ 15%            → S2G platform (always)
+  ├─ whisperer %    → whisperer, ONLY on an active sower-approved link that made the sale
+  └─ remainder      → sower  (absorbs the whisper share when no whisperer earned it)
 ```
 
-Schema deltas needed:
-- `whisperer_referral_links.live_session_id uuid null` + `session_kind text null` (one code per whisperer per seed per live, plus one evergreen code with null session)
-- `whisperer_clicks.live_session_id`, `whisperer_conversions.live_session_id`
-- `basket_orders.items[].ref_code` (jsonb, no migration) and `product_bestowals.ref_link_id uuid null`
+This split already exists in `finalize_basket_order`. Nothing about the maths changes — what changes is **when the money leaves escrow**.
 
-Second, in-session path (no link click): when a viewer is a `live_session_participant` of an active session hosted by a whisperer and buys within that session (or within a short window after), attribute to that session's ref link. Precedence: **explicit ref_code click > in-session participation > stored last-touch > none (falls back to sower)**. Attribution reason is recorded in `whisperer_conversions.attribution_type`, so every cent is auditable.
+## Hold rules
 
-Why codes rather than raw whisperer ids: the code is revocable, scoped to one seed and one live, and cannot be guessed and pasted onto another seed to farm commission.
+| Seed type | Hold | Released when |
+|---|---|---|
+| Digital (delivered in ChatApp) | none | payment confirmed → released immediately |
+| Physical (needs transport) | held in escrow | buyer confirms delivery, **or** courier marks delivered + 3-day auto-release window passes |
+| Disputed | held indefinitely | GoSat decision |
 
-## 3. Whisperer payout readiness
+Sower and whisperer are always released together — one event, both paid, so nobody waits on the other.
 
-- Payout infrastructure lives on `profiles`: `payout_network`, `payout_address`, `payout_tag`, `payout_wallet_type`, `preferred_payout_method`, `payout_setup_complete`.
-- `send-solana-usdc-payout` and `send-xrp-payout` both resolve a destination from `profiles` by `recipient_user_id`, and log to `crypto_payout_transfers`.
-- `whisperers.user_id` is a real auth user, so **the same infrastructure works unchanged** — no schema reason it can't be reused. There is a separate `whisperer_payout_wallets` table (`user_id`, `wallet_address`, `wallet_type`), currently empty and unused; recommendation is to ignore/retire it and standardise on `profiles`, so one person selling and whispering has one payout config.
-- Gap: nothing today reads `whisperer_earnings` and actually sends money. Earnings are written with `status='payable'` and stop there.
+## What gets built
 
-## 4. Intended end state — assessment
+### 1. Seed knows if it ships
+`products.delivery_type` exists but every row is `digital`. Add `physical` as a real option and surface a **Digital / Physical delivery** choice on the seed upload + edit forms. Physical seeds also capture whether the sower ships themselves or uses a tribe courier.
 
-Current split in `finalize_basket_order` is hardcoded: 15% S2G, and when a whisperer is credited a flat 15% to whisperer / 70% to sower — it **ignores `assignment.commission_percent`**, so a sower's 2%–30% choice is not honoured. That must be fixed as part of this work: sower share = line total − 15% S2G − (line total × assignment commission%).
+### 2. Escrow ledger
+`product_bestowals` already carries `release_status`, `hold_reason`, `released_at`, `delivery_confirmed_at` — currently unused. Wire them up:
 
-Your pending-balance recommendation is correct and matches the architecture: `whisperer_earnings.status` already models this (`payable` -> `paid`), and `sower_balances` shows the same pattern is already accepted here. Never block a sale on a missing payout config.
+- `finalize_basket_order` sets `release_status = 'released'` for digital lines and `'held'` for physical lines (with `hold_reason`).
+- Whisperer earnings rows follow the same gate: `payable` for released lines, `held` for escrowed ones.
+- Every state change writes a row to an escrow audit ledger so there is a permanent trail of who released what and why.
 
-## Technical summary of the proposed build (not yet implemented)
+### 3. Delivery confirmation
+- Buyer gets a **Confirm delivery** action on their order (and inside the chat thread for that seed).
+- Courier/sower can mark shipped + delivered; that starts the 3-day auto-release clock.
+- Buyer can instead **Raise an issue**, which flips the line to `disputed` and freezes release.
 
-1. Migration: session columns on the three dormant whisperer tables, `ref_link_id` on `product_bestowals`, RLS + GRANTs for each.
-2. `ensure_whisperer_ref_link(assignment_id, live_session_id)` and `resolve_whisperer_by_ref_code(product_id, ref_code, buyer_id, live_session_id)` security-definer functions.
-3. Rewrite the split in `finalize_basket_order` to honour `commission_percent`, and record `whisperer_conversions`.
-4. Client: upgrade `attribution.ts` to store codes, log clicks, pass `refCode` at checkout; whisperer live UI generates and displays its own buy links.
-5. Payout: a `payout-whisperer-earnings` function that batches `payable` earnings per whisperer and calls the existing Solana/XRP senders, marking `paid`; unpaid stays pending when no payout config.
+### 4. Release engine
+A `release-escrow` backend job that:
+- releases every `held` line whose delivery is confirmed or whose auto-release window has expired,
+- flips the matching whisperer earnings to `payable`,
+- never touches `disputed` lines.
+Runs on a schedule and can be triggered by the buyer's confirm action for instant payout.
+
+### 5. Actually paying people out
+`payout-whisperer-earnings` already sends whisperer money over USDC-Solana / XRP. Add the mirror for sowers: a `payout-sower-earnings` job that sums released `sower_amount`, pays to the sower's configured payout wallet, and records into `sower_payouts`. Sowers with no wallet configured simply accumulate a pending balance — a sale never fails because of it.
+
+S2G's 15% accrues to the treasury ledger already visible on the GoSat Treasury page.
+
+### 6. What everyone sees
+- **Buyer:** order shows `Paid → Held in escrow → Delivered → Released`.
+- **Sower (My Garden / Books):** "Held in escrow" vs "Available" balance, per seed.
+- **Whisperer feed:** same two-state balance.
+- **GoSat:** escrow queue with disputed and long-held lines, plus manual release/refund.
+
+## Technical notes
+
+- DB migration: `delivery_type` check constraint + `physical` support, escrow audit table with GRANTs and RLS, indexes on `release_status`.
+- `finalize_basket_order` rewritten to set hold state per line; existing completed rows backfilled as `released` so nothing historical is frozen.
+- New edge functions: `release-escrow` (scheduled + on-demand), `payout-sower-earnings`.
+- New RPCs: `confirm_delivery(bestowal_id)` (buyer only), `raise_delivery_issue(...)`, `gosat_release_escrow(...)` (admin only) — all SECURITY DEFINER with ownership checks so no one can release their own money.
+- Payout rails need `SOLANA_SENDER_PRIVATE_KEY`, `SOLANA_RPC_URL`, `XRP_SENDER_SEED`, and `CRON_SECRET` for the scheduler before real funds move. Everything above works and records correctly without them; only the final on-chain send is blocked.
+
+## Out of scope for this pass
+Membership billing, Stripe finish-out, and legal pages — tracked separately.
