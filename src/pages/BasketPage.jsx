@@ -10,7 +10,7 @@ import { Input } from '../components/ui/input'
 import { Label } from '../components/ui/label'
 import { Textarea } from '../components/ui/textarea'
 import { Trash2, ShoppingCart, CreditCard, LayoutDashboard, ArrowLeft } from "lucide-react"
-import PaymentModal from '../components/PaymentModal'
+import QuickBestowModal from '@/components/bestow/QuickBestowModal'
 
 export default function BasketPage() {
   console.log('🛒 BasketPage rendered')
