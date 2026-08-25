@@ -119,9 +119,37 @@ Deno.serve(async (req) => {
       .in("user_id", userIds.length > 0 ? userIds : ["00000000-0000-0000-0000-000000000000"]);
     const profileByUser = new Map((profiles ?? []).map((p: any) => [p.user_id, p]));
 
-    
+    // --- One XRP/USD rate for the whole run ----------------------------------
+    // Fetched ONCE (not once per whisperer) and only when someone in this batch
+    // is actually on the XRP rail. If no trustworthy price can be established,
+    // xrpRate stays null: every XRP payout in this run is skipped, its earnings
+    // stay 'payable', and the next run tries again. We never guess a rate.
+    const needsXrp = whispererIds.some((wid) => {
+      const uid = userIdByWhisperer.get(wid);
+      return uid ? profileByUser.get(uid)?.payout_network === "xrp" : false;
+    });
+    let xrpRate: XrpRateQuote | null = null;
+    let xrpRateError: string | null = null;
+    if (needsXrp && !dryRun) {
+      try {
+        xrpRate = await getXrpUsdRate();
+        assertRateFresh(xrpRate.observedAt);
+        console.log(
+          `payout-whisperer-earnings: XRP/USD run rate ${xrpRate.rate} observed ${xrpRate.observedAt} from ${
+            xrpRate.sources.map((s) => `${s.name}=${s.price}`).join(", ")
+          }`,
+        );
+      } catch (e) {
+        xrpRate = null;
+        xrpRateError = e instanceof Error ? e.message : String(e);
+        console.error(
+          `payout-whisperer-earnings: SKIPPING ALL XRP PAYOUTS this run — no trustworthy XRP/USD price. Reason: ${xrpRateError}. Earnings remain payable and will be retried on the next run.`,
+        );
+      }
+    }
 
     const outcomes: Outcome[] = [];
+
 
     for (const wid of whispererIds) {
       const bucket = byWhisperer.get(wid)!;
