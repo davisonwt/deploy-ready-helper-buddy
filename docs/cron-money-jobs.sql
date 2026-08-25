@@ -33,7 +33,7 @@ select cron.schedule(
     url := 'https://zuwkgasbkpjlxzsjzumu.supabase.co/functions/v1/release-escrow',
     headers := jsonb_build_object(
       'Content-Type', 'application/json',
-      'x-cron-secret', 'PASTE_YOUR_CRON_SECRET_HERE'
+      'Authorization', 'Bearer PASTE_YOUR_CRON_SECRET_HERE'
     ),
     body := jsonb_build_object('trigger', 'cron', 'at', now())
   );
@@ -49,7 +49,7 @@ select cron.schedule(
     url := 'https://zuwkgasbkpjlxzsjzumu.supabase.co/functions/v1/payout-sower-earnings',
     headers := jsonb_build_object(
       'Content-Type', 'application/json',
-      'x-cron-secret', 'PASTE_YOUR_CRON_SECRET_HERE'
+      'Authorization', 'Bearer PASTE_YOUR_CRON_SECRET_HERE'
     ),
     body := jsonb_build_object('trigger', 'cron', 'at', now())
   );
@@ -65,7 +65,7 @@ select cron.schedule(
     url := 'https://zuwkgasbkpjlxzsjzumu.supabase.co/functions/v1/payout-whisperer-earnings',
     headers := jsonb_build_object(
       'Content-Type', 'application/json',
-      'x-cron-secret', 'PASTE_YOUR_CRON_SECRET_HERE'
+      'Authorization', 'Bearer PASTE_YOUR_CRON_SECRET_HERE'
     ),
     body := jsonb_build_object('trigger', 'cron', 'at', now())
   );
