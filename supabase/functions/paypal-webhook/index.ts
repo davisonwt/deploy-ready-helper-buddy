@@ -135,6 +135,7 @@ async function handleEvent(
       await supabase.from("basket_orders").update({ status: "processing" })
         .eq("id", customId.slice("basket:".length));
       return;
+    }
     if (customId.startsWith("content:")) {
       await supabase.from("content_purchases")
         .update({ payment_status: "processing" })
