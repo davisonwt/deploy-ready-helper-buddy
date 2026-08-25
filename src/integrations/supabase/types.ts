@@ -7036,6 +7036,7 @@ export type Database = {
           payout_fx_observed_at: string | null
           payout_fx_rate: number | null
           payout_fx_sources: Json | null
+          payout_provider: string | null
           payout_reference: string | null
           payout_status: string
           product_id: string | null
@@ -7069,6 +7070,7 @@ export type Database = {
           payout_fx_observed_at?: string | null
           payout_fx_rate?: number | null
           payout_fx_sources?: Json | null
+          payout_provider?: string | null
           payout_reference?: string | null
           payout_status?: string
           product_id?: string | null
@@ -7102,6 +7104,7 @@ export type Database = {
           payout_fx_observed_at?: string | null
           payout_fx_rate?: number | null
           payout_fx_sources?: Json | null
+          payout_provider?: string | null
           payout_reference?: string | null
           payout_status?: string
           product_id?: string | null
@@ -13903,6 +13906,8 @@ export type Database = {
           payout_fx_observed_at: string | null
           payout_fx_rate: number | null
           payout_fx_sources: Json | null
+          payout_provider: string | null
+          payout_reference: string | null
           processed_at: string | null
           status: string | null
           whisperer_id: string
@@ -13918,6 +13923,8 @@ export type Database = {
           payout_fx_observed_at?: string | null
           payout_fx_rate?: number | null
           payout_fx_sources?: Json | null
+          payout_provider?: string | null
+          payout_reference?: string | null
           processed_at?: string | null
           status?: string | null
           whisperer_id: string
@@ -13933,6 +13940,8 @@ export type Database = {
           payout_fx_observed_at?: string | null
           payout_fx_rate?: number | null
           payout_fx_sources?: Json | null
+          payout_provider?: string | null
+          payout_reference?: string | null
           processed_at?: string | null
           status?: string | null
           whisperer_id?: string
