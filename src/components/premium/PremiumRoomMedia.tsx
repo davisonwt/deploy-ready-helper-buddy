@@ -17,6 +17,15 @@ import { useMediaUpload } from '@/components/live/media/useMediaUpload';
 import { MediaUploadZone } from '@/components/live/media/MediaUploadZone';
 import { SetPriceModal } from '@/components/live/media/SetPriceModal';
 import { useCurrency } from '@/hooks/useCurrency';
+import { useContentPurchase } from '@/hooks/useContentPurchase';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
 
 interface PremiumRoomMediaProps {
   roomId: string;
