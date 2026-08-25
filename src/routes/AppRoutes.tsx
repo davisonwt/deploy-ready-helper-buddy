@@ -68,6 +68,8 @@ import {
   CreatePremiumRoomPage,
   WalletSettingsPage,
   PayoutSettingsPage,
+  MyOrdersPage,
+  EscrowQueuePage,
   BooksPage,
   BooksCatalogItemPage,
   MyWalletPage,
