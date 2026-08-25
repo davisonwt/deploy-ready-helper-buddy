@@ -403,24 +403,6 @@ export default function LoginPage() {
         </div>
       </div>
 
-      {/* Forgot Password Modal */}
-      {false && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-2xl p-6 w-full max-w-md shadow-2xl">
-            <h3 className="text-xl font-bold text-blue-700 mb-4 text-center">Reset Password</h3>
-            <form className="space-y-4">
-              <div className="flex gap-3">
-                <Button
-                  type="button"
-                  variant="outline"
-                >
-                  Cancel
-                </Button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
     </div>
   )
 }
