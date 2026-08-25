@@ -108,6 +108,7 @@ Deno.serve(async (req) => {
       }
       fxRate = rate.rate;
       fxSources = rate.sources;
+      fxObservedAt = rate.observedAt;
       amountUsd = Math.round(amountUsdIn * 100) / 100;
       amount = usdToXrp(amountUsd, rate.rate);
     }
