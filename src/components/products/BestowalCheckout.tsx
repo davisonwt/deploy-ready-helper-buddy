@@ -74,8 +74,6 @@ export default function BestowalCheckout() {
         redirectBaseUrl: window.location.origin,
       });
 
-      if (!data) throw new Error('The payment service returned an empty response.');
-
       if (provider === 'nowpayments') {
         if (data.invoiceUrl) {
           window.open(data.invoiceUrl, '_blank');
