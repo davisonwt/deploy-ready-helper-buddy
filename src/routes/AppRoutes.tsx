@@ -458,6 +458,12 @@ const AppRoutes = () => (
     <Route path="/settings/payouts" element={
       <ProtectedRoute><Layout><PayoutSettingsPage /></Layout></ProtectedRoute>
     } />
+    <Route path="/my-orders" element={
+      <ProtectedRoute><Layout><MyOrdersPage /></Layout></ProtectedRoute>
+    } />
+    <Route path="/gosat/escrow" element={
+      <ProtectedRoute><Layout><EscrowQueuePage /></Layout></ProtectedRoute>
+    } />
     <Route path="/books" element={
       <ProtectedRoute><Layout><BooksPage /></Layout></ProtectedRoute>
     } />
