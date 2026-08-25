@@ -38,6 +38,9 @@ export default function UploadForm() {
   const [albumFiles, setAlbumFiles] = useState<File[]>([]);
   const [zipFile, setZipFile] = useState<File | null>(null);
   const [extractingZip, setExtractingZip] = useState(false);
+  const [deliveryType, setDeliveryType] = useState<'digital' | 'physical'>('digital');
+  const [shippingMethod, setShippingMethod] = useState<string>('self');
+
 
   const handleZipUpload = async (file: File) => {
     if (!file.name.endsWith('.zip')) {
