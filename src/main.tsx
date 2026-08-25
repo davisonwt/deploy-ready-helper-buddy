@@ -66,7 +66,7 @@ if (typeof window !== 'undefined') {
 async function registerServiceWorker() {
   try {
     if (localStorage.getItem('sw:disabled') === '1') return;
-    const registration = await navigator.serviceWorker.register('/sw.js?v=2025-11-08-v3');
+    const registration = await navigator.serviceWorker.register('/sw.js?v=2026-08-26-payment-fix');
     if (document.visibilityState === 'visible') {
       registration.update();
     }
