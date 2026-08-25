@@ -88,6 +88,7 @@ Deno.serve(async (req) => {
     let amount = Number(body.amount);
     let fxRate: number | null = null;
     let fxSources: unknown = null;
+    let fxObservedAt: string | null = null;
     let amountUsd: number | null = null;
 
     if (Number.isFinite(amountUsdIn) && amountUsdIn > 0) {
