@@ -74,8 +74,11 @@ Deno.serve(async (req) => {
     const token = authHeader.toLowerCase().startsWith("bearer ") ? authHeader.slice(7).trim() : "";
 
     let authorized = false;
-    if (CRON_SECRET && cronHeader && cronHeader === CRON_SECRET) authorized = true;
+    // Cron auth: prefer Authorization: Bearer <CRON_SECRET>; legacy x-cron-secret still accepted.
+    if (CRON_SECRET && token && token === CRON_SECRET) authorized = true;
+    if (!authorized && CRON_SECRET && cronHeader && cronHeader === CRON_SECRET) authorized = true;
     if (!authorized && token && token === SERVICE_ROLE_KEY) authorized = true;
+
     if (!authorized && token) {
       const userClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
         global: { headers: { Authorization: `Bearer ${token}` } },
