@@ -18,6 +18,7 @@
 // Body: { sower_id?: string, dry_run?: boolean, max_sowers?: number }
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
+import { assertRateFresh, getXrpUsdRate, usdToXrp, type XrpRateQuote } from "../_shared/xrpRate.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
