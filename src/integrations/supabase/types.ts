@@ -15132,6 +15132,7 @@ export type Database = {
         }
         Returns: string
       }
+      invoke_money_job: { Args: { _fn: string }; Returns: number }
       is_active_ambassador: { Args: { _user_id: string }; Returns: boolean }
       is_active_participant: {
         Args: { _room_id: string; _user_id: string }
