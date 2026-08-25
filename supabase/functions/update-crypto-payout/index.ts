@@ -116,19 +116,7 @@ Deno.serve(async (req) => {
       console.warn("payout change notification insert failed", e);
     }
 
-    if (user.email) {
-      try {
-        await admin.functions.invoke("send-resend-email", {
-          body: {
-            to: user.email,
-            subject: "Your Sow2Grow payout destination was changed",
-            html: `<p>${message}</p><p>Changed at ${new Date().toISOString()}.</p>`,
-          },
-        });
-      } catch (e) {
-        console.warn("payout change email failed", e);
-      }
-    }
+    // No email notifications: Sow2Grow notifies in-app / via the in-house chat only.
 
     return json({ success: true, payout: updated, network_mode: mode });
   } catch (e) {
