@@ -238,9 +238,26 @@ Deno.serve(async (req) => {
 
       const tx = (result as any)?.signature ?? (result as any)?.tx_hash ?? null;
 
+      const usedRate = network === "xrp"
+        ? Number((result as any)?.fx_rate ?? xrpRate?.rate ?? 0) || null
+        : null;
+      const usedObservedAt = network === "xrp"
+        ? ((result as any)?.fx_observed_at ?? xrpRate?.observedAt ?? null)
+        : null;
+      const usedSources = network === "xrp"
+        ? ((result as any)?.fx_sources ?? xrpRate?.sources ?? null)
+        : null;
+
       const { error: markErr } = await admin
         .from("product_bestowals")
-        .update({ payout_status: "paid", paid_at: new Date().toISOString(), payout_reference: tx })
+        .update({
+          payout_status: "paid",
+          paid_at: new Date().toISOString(),
+          payout_reference: tx,
+          payout_fx_rate: usedRate,
+          payout_fx_observed_at: usedObservedAt,
+          payout_fx_sources: usedSources,
+        })
         .in("id", bucket.ids);
       if (markErr) {
         console.error("CRITICAL: paid but could not mark bestowals paid", sid, markErr.message);
@@ -253,7 +270,28 @@ Deno.serve(async (req) => {
         continue;
       }
 
-      outcomes.push({ ...base, status: "paid", network, tx });
+      // Per-bestowal XRP amount, so "$X became Y XRP" is answerable row by row.
+      if (usedRate) {
+        for (const id of bucket.ids) {
+          const usd = amountById.get(id) ?? 0;
+          if (usd <= 0) continue;
+          const { error: xrpErr } = await admin
+            .from("product_bestowals")
+            .update({ payout_amount_xrp: usdToXrp(usd, usedRate) })
+            .eq("id", id);
+          if (xrpErr) console.error("could not record payout_amount_xrp", id, xrpErr.message);
+        }
+      }
+
+      outcomes.push({
+        ...base,
+        status: "paid",
+        network,
+        tx,
+        fx_rate: usedRate,
+        fx_observed_at: usedObservedAt,
+      });
+
     }
 
     return json({
