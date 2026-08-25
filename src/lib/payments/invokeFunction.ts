@@ -1,7 +1,11 @@
 import { supabase } from '@/integrations/supabase/client';
 
-const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL as string;
-const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY as string;
+const SUPABASE_URL =
+  import.meta.env.VITE_SUPABASE_URL || 'https://zuwkgasbkpjlxzsjzumu.supabase.co';
+const SUPABASE_ANON_KEY =
+  import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY ||
+  import.meta.env.VITE_SUPABASE_ANON_KEY ||
+  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inp1d2tnYXNia3BqbHh6c2p6dW11Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTI4NDk4MjEsImV4cCI6MjA2ODQyNTgyMX0.ffH_7MzNCgyjXf8BFzGDCiVE7Qjptqb9qKBkq3gVbiU';
 
 /**
  * Call a payment edge function reliably.
@@ -65,6 +69,9 @@ export async function invokePaymentFunction<T = any>(
   if (!response.ok) {
     const serverMessage = parsed?.error || parsed?.message || raw?.slice(0, 200);
     throw new Error(serverMessage || `Payment service returned ${response.status}.`);
+  }
+  if (!raw || parsed === null) {
+    throw new Error('The payment service returned an invalid response. Please try again.');
   }
   if (parsed?.error) {
     throw new Error(parsed.error);
