@@ -1,0 +1,12 @@
+REVOKE ALL ON FUNCTION public.escrow_release_bestowal(uuid, uuid, text, text) FROM PUBLIC, anon, authenticated;
+REVOKE ALL ON FUNCTION public.release_due_escrow(integer) FROM PUBLIC, anon, authenticated;
+REVOKE ALL ON FUNCTION public.confirm_delivery(uuid) FROM PUBLIC, anon;
+REVOKE ALL ON FUNCTION public.raise_delivery_issue(uuid, text) FROM PUBLIC, anon;
+REVOKE ALL ON FUNCTION public.mark_delivery_progress(uuid, text) FROM PUBLIC, anon;
+REVOKE ALL ON FUNCTION public.gosat_resolve_escrow(uuid, text, text) FROM PUBLIC, anon;
+GRANT EXECUTE ON FUNCTION public.confirm_delivery(uuid) TO authenticated;
+GRANT EXECUTE ON FUNCTION public.raise_delivery_issue(uuid, text) TO authenticated;
+GRANT EXECUTE ON FUNCTION public.mark_delivery_progress(uuid, text) TO authenticated;
+GRANT EXECUTE ON FUNCTION public.gosat_resolve_escrow(uuid, text, text) TO authenticated;
+GRANT EXECUTE ON FUNCTION public.escrow_release_bestowal(uuid, uuid, text, text) TO service_role;
+GRANT EXECUTE ON FUNCTION public.release_due_escrow(integer) TO service_role;

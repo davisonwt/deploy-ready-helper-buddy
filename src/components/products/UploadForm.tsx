@@ -38,6 +38,9 @@ export default function UploadForm() {
   const [albumFiles, setAlbumFiles] = useState<File[]>([]);
   const [zipFile, setZipFile] = useState<File | null>(null);
   const [extractingZip, setExtractingZip] = useState(false);
+  const [deliveryType, setDeliveryType] = useState<'digital' | 'physical'>('digital');
+  const [shippingMethod, setShippingMethod] = useState<string>('self');
+
 
   const handleZipUpload = async (file: File) => {
     if (!file.name.endsWith('.zip')) {
@@ -286,8 +289,11 @@ export default function UploadForm() {
         price: totalPrice, // Store total price
         cover_image_url: coverUrl.publicUrl,
         file_url: fileUrlPublic,
+        delivery_type: deliveryType,
+        shipping_method: deliveryType === 'physical' ? shippingMethod : null,
         tags: [...formData.tags.split(',').map(t => t.trim()).filter(Boolean), releaseType]
       });
+
 
       // Persist marketplace taxonomy (subcategories + tags) into junction tables
       if (insertedProduct?.id && user) {
@@ -484,7 +490,45 @@ export default function UploadForm() {
                     </p>
                   </div>
                 )}
+
+                <div>
+                  <Label htmlFor="delivery">Delivery *</Label>
+                  <Select
+                    value={deliveryType}
+                    onValueChange={(value) => setDeliveryType(value as 'digital' | 'physical')}
+                  >
+                    <SelectTrigger id="delivery">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="digital">Digital — delivered in ChatApp</SelectItem>
+                      <SelectItem value="physical">Physical — needs transport</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    {deliveryType === 'physical'
+                      ? 'Bestowals are held safely by S2G until the bestower confirms delivery.'
+                      : 'Bestowals are released to you as soon as payment confirms.'}
+                  </p>
+                </div>
+
+                {deliveryType === 'physical' && (
+                  <div>
+                    <Label htmlFor="shipping">How is it delivered?</Label>
+                    <Select value={shippingMethod} onValueChange={setShippingMethod}>
+                      <SelectTrigger id="shipping">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="self">I deliver it myself</SelectItem>
+                        <SelectItem value="courier">Tribe courier</SelectItem>
+                        <SelectItem value="collect">Bestower collects</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                )}
               </div>
+
 
               {/* Right Column */}
               <div className="space-y-4">
