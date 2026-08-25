@@ -7029,8 +7029,11 @@ export type Database = {
           grower_amount: number
           hold_reason: string | null
           id: string
+          paid_at: string | null
           payment_method: string | null
           payment_reference: string | null
+          payout_reference: string | null
+          payout_status: string
           product_id: string | null
           ref_link_id: string | null
           release_status: string | null
@@ -7055,8 +7058,11 @@ export type Database = {
           grower_amount: number
           hold_reason?: string | null
           id?: string
+          paid_at?: string | null
           payment_method?: string | null
           payment_reference?: string | null
+          payout_reference?: string | null
+          payout_status?: string
           product_id?: string | null
           ref_link_id?: string | null
           release_status?: string | null
@@ -7081,8 +7087,11 @@ export type Database = {
           grower_amount?: number
           hold_reason?: string | null
           id?: string
+          paid_at?: string | null
           payment_method?: string | null
           payment_reference?: string | null
+          payout_reference?: string | null
+          payout_status?: string
           product_id?: string | null
           ref_link_id?: string | null
           release_status?: string | null
