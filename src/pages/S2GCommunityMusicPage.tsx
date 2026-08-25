@@ -253,20 +253,17 @@ export default function S2GCommunityMusicPage() {
       return;
     }
 
-    if (item.is_giveaway && item.giveaway_count < (item.giveaway_limit || Infinity)) {
-      // Handle giveaway
+    if (item.source === 'library' && item.is_giveaway && item.giveaway_count < (item.giveaway_limit || Infinity)) {
+      // Free giveaway — server re-verifies eligibility
       const result = await supabase.functions.invoke('complete-library-bestowal', {
-        body: {
-          libraryItemId: item.id,
-          amount: 0,
-          sowerId: item.user_id,
-          isGiveaway: true
-        }
+        body: { libraryItemId: item.id },
       });
       if (result.data?.success) {
         launchConfetti();
         toast.success('Giveaway access granted!');
         window.location.reload();
+      } else {
+        toast.error((result.data as any)?.message || 'Could not claim this giveaway.');
       }
       return;
     }
@@ -276,12 +273,8 @@ export default function S2GCommunityMusicPage() {
       return;
     }
 
-    // Paid bestowal temporarily disabled while we migrate to approved
-    // payment providers (NOWPayments / PayPal).
-    toast.info(
-      'Paid bestowal is temporarily disabled while we migrate to our approved payment providers (NOWPayments / PayPal). Please try again soon.'
-    );
-    return;
+    // Paid → open provider picker
+    setPickerItem(item);
   };
 
   const handleDownload = (item: any) => {
