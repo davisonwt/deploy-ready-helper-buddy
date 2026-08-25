@@ -221,6 +221,8 @@ Deno.serve(async (req) => {
       amount_xrp: amount,
       amount_usd: amountUsd,
       fx_rate: fxRate,
+      fx_observed_at: fxObservedAt,
+      fx_sources: fxSources,
     });
 
   } catch (e) {
