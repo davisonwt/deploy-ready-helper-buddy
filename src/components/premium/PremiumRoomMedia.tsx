@@ -47,6 +47,8 @@ export const PremiumRoomMedia: React.FC<PremiumRoomMediaProps> = ({
   const [selectedMedia, setSelectedMedia] = useState<any>(null);
   const [showPriceModal, setShowPriceModal] = useState(false);
   const { uploadMedia, uploading, progress } = useMediaUpload();
+  const [pickerItem, setPickerItem] = useState<any | null>(null);
+  const { purchase, isPending: purchasePending } = useContentPurchase();
 
   // Fetch media and purchases
   useEffect(() => {
