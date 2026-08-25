@@ -105,29 +105,7 @@ export const PremiumRoomMedia: React.FC<PremiumRoomMediaProps> = ({
       toast.error('Please log in to purchase');
       return;
     }
-
-    try {
-      // Call purchase edge function
-      const { data, error } = await supabase.functions.invoke('purchase-media', {
-        body: {
-          mediaId: item.id,
-          paymentMethod: 'bestowal'
-        }
-      });
-
-      if (error) throw error;
-
-      const result = data as { success: boolean; chatRoomId: string; message: string };
-      toast.success('Purchase successful! Opening chat with s2g gosat...');
-      
-      // Navigate to the 1-1 chat room with gosat
-      navigate(`/chatapp?room=${result.chatRoomId}`);
-      
-      fetchPurchases();
-    } catch (error: any) {
-      console.error('Purchase error:', error);
-      toast.error(error.message || 'Purchase failed');
-    }
+    setPickerItem(item);
   };
 
   const handleDelete = async (item: any) => {
