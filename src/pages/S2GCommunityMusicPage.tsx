@@ -11,12 +11,23 @@ import { formatCurrency } from '@/utils/formatters';
 import { toast } from 'sonner';
 import { GradientPlaceholder } from '@/components/ui/GradientPlaceholder';
 import { launchConfetti } from '@/utils/confetti';
+import { useContentPurchase } from '@/hooks/useContentPurchase';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
 
 export default function S2GCommunityMusicPage() {
   const { user } = useAuth();
   const [playingId, setPlayingId] = useState<string | null>(null);
   const [audioRefs, setAudioRefs] = useState<Map<string, HTMLAudioElement>>(new Map());
   const [playbackPositions, setPlaybackPositions] = useState<Map<string, number>>(new Map());
+  const [pickerItem, setPickerItem] = useState<any | null>(null);
+  const { purchase, isPending: purchasePending } = useContentPurchase();
   const PREVIEW_DURATION = 30; // 30 seconds preview
 
   // Fetch music from BOTH s2g_library_items AND dj_music_tracks
