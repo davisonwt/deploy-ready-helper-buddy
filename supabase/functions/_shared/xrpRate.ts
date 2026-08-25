@@ -34,6 +34,25 @@ export const QUOTE_TTL_MS = 10 * 60_000;
 /** Reject the median if two venues disagree by more than this — feeds are broken. */
 const MAX_SPREAD_RATIO = 0.05; // 5%
 
+/**
+ * Sanity envelope for USD per 1 XRP. Not a prediction — just a tripwire against
+ * a feed returning a unit-confused or corrupted number (drops instead of XRP,
+ * a cents value, a sentinel). XRP has never traded outside this range and if it
+ * ever does, a human should widen this deliberately rather than have an
+ * automated payout run act on it.
+ */
+export const XRP_USD_MIN_PLAUSIBLE = 0.01;
+export const XRP_USD_MAX_PLAUSIBLE = 100;
+
+/** True when a rate is a finite number inside the sanity envelope. */
+export function isPlausibleXrpRate(rate: unknown): boolean {
+  const n = Number(rate);
+  return (
+    Number.isFinite(n) && n >= XRP_USD_MIN_PLAUSIBLE && n <= XRP_USD_MAX_PLAUSIBLE
+  );
+}
+
+
 interface Venue {
   name: string;
   url: string;
