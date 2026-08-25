@@ -289,8 +289,11 @@ export default function UploadForm() {
         price: totalPrice, // Store total price
         cover_image_url: coverUrl.publicUrl,
         file_url: fileUrlPublic,
+        delivery_type: deliveryType,
+        shipping_method: deliveryType === 'physical' ? shippingMethod : null,
         tags: [...formData.tags.split(',').map(t => t.trim()).filter(Boolean), releaseType]
       });
+
 
       // Persist marketplace taxonomy (subcategories + tags) into junction tables
       if (insertedProduct?.id && user) {
