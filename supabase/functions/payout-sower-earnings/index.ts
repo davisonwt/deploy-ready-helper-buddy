@@ -50,6 +50,9 @@ interface Outcome {
   reason?: string;
   network?: string;
   tx?: string | null;
+  /** USD per 1 XRP actually used for this payout (XRP rail only). */
+  fx_rate?: number | null;
+  fx_observed_at?: string | null;
 }
 
 Deno.serve(async (req) => {
