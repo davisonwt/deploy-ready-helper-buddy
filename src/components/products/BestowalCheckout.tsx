@@ -71,6 +71,7 @@ export default function BestowalCheckout() {
         items,
         provider,
         payCurrency: provider === 'nowpayments' ? 'usdcsol' : undefined,
+        redirectBaseUrl: window.location.origin,
       });
 
       if (!data) throw new Error('The payment service returned an empty response.');
