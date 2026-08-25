@@ -3626,6 +3626,53 @@ export type Database = {
         }
         Relationships: []
       }
+      escrow_events: {
+        Row: {
+          actor_id: string | null
+          actor_role: string | null
+          amount: number | null
+          bestowal_id: string
+          created_at: string
+          event: string
+          from_status: string | null
+          id: string
+          notes: string | null
+          to_status: string | null
+        }
+        Insert: {
+          actor_id?: string | null
+          actor_role?: string | null
+          amount?: number | null
+          bestowal_id: string
+          created_at?: string
+          event: string
+          from_status?: string | null
+          id?: string
+          notes?: string | null
+          to_status?: string | null
+        }
+        Update: {
+          actor_id?: string | null
+          actor_role?: string | null
+          amount?: number | null
+          bestowal_id?: string
+          created_at?: string
+          event?: string
+          from_status?: string | null
+          id?: string
+          notes?: string | null
+          to_status?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "escrow_events_bestowal_id_fkey"
+            columns: ["bestowal_id"]
+            isOneToOne: false
+            referencedRelation: "product_bestowals"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       expenses: {
         Row: {
           amount: number
@@ -6972,9 +7019,13 @@ export type Database = {
       product_bestowals: {
         Row: {
           amount: number
+          auto_release_at: string | null
           bestower_id: string | null
           created_at: string | null
+          delivered_at: string | null
           delivery_confirmed_at: string | null
+          delivery_type: string
+          dispute_reason: string | null
           grower_amount: number
           hold_reason: string | null
           id: string
@@ -6985,6 +7036,7 @@ export type Database = {
           release_status: string | null
           released_at: string | null
           s2g_fee: number
+          shipped_at: string | null
           sower_amount: number
           sower_id: string | null
           status: string | null
@@ -6993,9 +7045,13 @@ export type Database = {
         }
         Insert: {
           amount: number
+          auto_release_at?: string | null
           bestower_id?: string | null
           created_at?: string | null
+          delivered_at?: string | null
           delivery_confirmed_at?: string | null
+          delivery_type?: string
+          dispute_reason?: string | null
           grower_amount: number
           hold_reason?: string | null
           id?: string
@@ -7006,6 +7062,7 @@ export type Database = {
           release_status?: string | null
           released_at?: string | null
           s2g_fee: number
+          shipped_at?: string | null
           sower_amount: number
           sower_id?: string | null
           status?: string | null
@@ -7014,9 +7071,13 @@ export type Database = {
         }
         Update: {
           amount?: number
+          auto_release_at?: string | null
           bestower_id?: string | null
           created_at?: string | null
+          delivered_at?: string | null
           delivery_confirmed_at?: string | null
+          delivery_type?: string
+          dispute_reason?: string | null
           grower_amount?: number
           hold_reason?: string | null
           id?: string
@@ -7027,6 +7088,7 @@ export type Database = {
           release_status?: string | null
           released_at?: string | null
           s2g_fee?: number
+          shipped_at?: string | null
           sower_amount?: number
           sower_id?: string | null
           status?: string | null
@@ -7226,6 +7288,7 @@ export type Database = {
           music_mood: string | null
           play_count: number | null
           price: number | null
+          shipping_method: string | null
           sku: string | null
           slug: string | null
           sower_id: string | null
@@ -7265,6 +7328,7 @@ export type Database = {
           music_mood?: string | null
           play_count?: number | null
           price?: number | null
+          shipping_method?: string | null
           sku?: string | null
           slug?: string | null
           sower_id?: string | null
@@ -7304,6 +7368,7 @@ export type Database = {
           music_mood?: string | null
           play_count?: number | null
           price?: number | null
+          shipping_method?: string | null
           sku?: string | null
           slug?: string | null
           sower_id?: string | null
@@ -14468,6 +14533,7 @@ export type Database = {
       cleanup_expired_idempotency_keys: { Args: never; Returns: undefined }
       cleanup_inactive_voice_clones: { Args: never; Returns: number }
       cleanup_old_rate_limits: { Args: never; Returns: undefined }
+      confirm_delivery: { Args: { _bestowal_id: string }; Returns: Json }
       create_verification_room_for_user: {
         Args: { target_user_id: string }
         Returns: string
@@ -14495,6 +14561,15 @@ export type Database = {
           ref_code: string
           ref_link_id: string
         }[]
+      }
+      escrow_release_bestowal: {
+        Args: {
+          _actor_id: string
+          _actor_role: string
+          _bestowal_id: string
+          _notes?: string
+        }
+        Returns: boolean
       }
       expire_stale_xrp_quotes: { Args: never; Returns: undefined }
       finalize_basket_order: {
@@ -14959,6 +15034,10 @@ export type Database = {
           vote_count: number
         }[]
       }
+      gosat_resolve_escrow: {
+        Args: { _action: string; _bestowal_id: string; _notes?: string }
+        Returns: Json
+      }
       grant_bootstrap_admin: {
         Args: { target_email: string }
         Returns: undefined
@@ -15117,6 +15196,10 @@ export type Database = {
         }
         Returns: string
       }
+      mark_delivery_progress: {
+        Args: { _bestowal_id: string; _stage: string }
+        Returns: Json
+      }
       mark_webhook_processed: {
         Args: {
           payload_hash_param: string
@@ -15138,6 +15221,10 @@ export type Database = {
         Args: { p_referral_code: string; p_referred_user_id: string }
         Returns: Json
       }
+      raise_delivery_issue: {
+        Args: { _bestowal_id: string; _reason: string }
+        Returns: Json
+      }
       recompute_tribal_score: { Args: { _user_id: string }; Returns: number }
       reject_join_request: { Args: { request_id: string }; Returns: boolean }
       reject_radio_schedule_slot: {
@@ -15148,6 +15235,7 @@ export type Database = {
         Args: { rejection_reason: string; schedule_id_param: string }
         Returns: boolean
       }
+      release_due_escrow: { Args: { _limit?: number }; Returns: Json }
       remove_sensitive_profile_data: {
         Args: { target_user_id: string }
         Returns: boolean
