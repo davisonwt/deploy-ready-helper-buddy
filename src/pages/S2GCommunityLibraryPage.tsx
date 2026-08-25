@@ -83,17 +83,14 @@ export default function S2GCommunityLibraryPage() {
     // Free giveaway
     if (item.is_giveaway && item.giveaway_count < (item.giveaway_limit || Infinity)) {
       const result = await supabase.functions.invoke('complete-library-bestowal', {
-        body: {
-          libraryItemId: item.id,
-          amount: 0,
-          sowerId: item.user_id,
-          isGiveaway: true,
-        },
+        body: { libraryItemId: item.id },
       });
       if (result.data?.success) {
         launchConfetti();
         toast.success('Giveaway access granted!');
         window.location.reload();
+      } else {
+        toast.error((result.data as any)?.message || 'Could not claim this giveaway.');
       }
       return;
     }
