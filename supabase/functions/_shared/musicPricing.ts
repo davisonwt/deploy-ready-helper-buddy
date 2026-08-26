@@ -8,6 +8,22 @@ export const MUSIC_SINGLE_MIN_USD = 2;
 export const S2G_FEE_PERCENT = 15;
 export const S2G_FEE_RATE = S2G_FEE_PERCENT / 100;
 
+const MUSIC_FILE_PATTERN = /\.(mp3|m4a|wav|flac|aac|ogg|webm|opus|caf|wma|aiff)(\?|$)/i;
+
+export function isMusicProduct(item: {
+  type?: unknown;
+  category?: unknown;
+  music_genre?: unknown;
+  file_url?: unknown;
+}): boolean {
+  const classification = String(item.type || item.category || '').trim().toLowerCase();
+  return classification === 'music'
+    || classification === 'audio'
+    || classification === 'radio_recorded'
+    || Boolean(String(item.music_genre || '').trim())
+    || MUSIC_FILE_PATTERN.test(String(item.file_url || ''));
+}
+
 const round2 = (n: number) => Math.round((n + Number.EPSILON) * 100) / 100;
 
 export function musicSingleBase(price?: number | null): number {

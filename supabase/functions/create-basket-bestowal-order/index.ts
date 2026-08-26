@@ -12,7 +12,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 import { corsHeaders } from "npm:@supabase/supabase-js@2/cors";
 import { paypalFetch } from "../_shared/paypal/client.ts";
 import { computeBuyerFee } from "../_shared/paypal/fees.ts";
-import { musicSingleBreakdown } from "../_shared/musicPricing.ts";
+import { isMusicProduct, musicSingleBreakdown } from "../_shared/musicPricing.ts";
 
 const NOWPAYMENTS_API = "https://api.nowpayments.io/v1";
 
@@ -136,9 +136,7 @@ Deno.serve(async (req) => {
         return json({ error: "product_price_invalid", productId: item.productId }, 400);
       }
       const qty = Math.max(1, Math.floor(Number(item.qty ?? 1)));
-      const productType = String((p as any).type || (p as any).category || "").toLowerCase();
-      const isMusic = productType === "music" || Boolean((p as any).music_genre)
-        || /\.(mp3|m4a|wav|flac|aac|ogg)(\?|$)/i.test(String((p as any).file_url || ""));
+      const isMusic = isMusicProduct(p as any);
       const musicPricing = isMusic ? musicSingleBreakdown(storedPrice) : null;
       const unitPrice = musicPricing?.base ?? storedPrice;
       const lineTotal = round2((musicPricing?.total ?? storedPrice) * qty);
