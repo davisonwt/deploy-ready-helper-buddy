@@ -6,6 +6,7 @@ import { CheckCircle, ArrowRight, Loader2 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useProductBasket } from '@/contexts/ProductBasketContext';
 import { launchConfetti, floatingScore, playSoundEffect } from '@/utils/confetti';
+import { invokePaymentFunction } from '@/lib/payments/invokeFunction';
 
 type BasketStatus = 'pending' | 'processing' | 'completed' | 'failed' | 'expired';
 
@@ -19,6 +20,18 @@ export default function PaymentSuccessPage() {
   const [basketStatus, setBasketStatus] = useState<BasketStatus | null>(null);
   const [basketTotal, setBasketTotal] = useState<number | null>(null);
   const celebratedRef = useRef(false);
+  const captureRequestedRef = useRef(false);
+
+  // PayPal requires an explicit capture after the buyer approves the order.
+  // The webhook also captures server-side; this authenticated call recovers
+  // orders when PayPal delivers that webhook late or not at all.
+  useEffect(() => {
+    if (!basketOrderId || captureRequestedRef.current) return;
+    captureRequestedRef.current = true;
+    invokePaymentFunction('capture-paypal-basket-order', { basketOrderId }).catch((error) => {
+      console.warn('PayPal basket capture recovery failed', error);
+    });
+  }, [basketOrderId]);
 
   // Poll basket_orders.status until completed/failed/expired
   useEffect(() => {
