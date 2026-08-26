@@ -46,19 +46,19 @@ export function ProductBasketProvider({ children }: { children: ReactNode }) {
     localStorage.setItem('productBasket', JSON.stringify(basketItems));
   }, [basketItems]);
 
-  // Older saved baskets pre-date product-type metadata. Restore it from both
-  // product seeds and the dedicated music library so singles always receive
-  // the correct $2 + 15% pricing at checkout.
+  // Re-resolve every saved basket line instead of only lines with no `type`.
+  // Older music lines were persisted as "unspecified"/"product", which is a
+  // truthy value and therefore previously skipped the $2 + 15% music rule.
   useEffect(() => {
-    const missingTypeIds = basketItems.filter((item) => !item.type).map((item) => item.id);
-    if (missingTypeIds.length === 0) return;
+    const basketIds = basketItems.map((item) => item.id).filter(Boolean);
+    if (basketIds.length === 0) return;
 
     let active = true;
     const restoreProductTypes = async () => {
       const { data: products, error: productError } = await supabase
         .from('products')
         .select('id, type, category, file_url, music_genre')
-        .in('id', missingTypeIds);
+        .in('id', basketIds);
 
       if (!active || productError) return;
       const types = new Map<string, string>();
@@ -70,7 +70,7 @@ export function ProductBasketProvider({ children }: { children: ReactNode }) {
         else if (productType) types.set(row.id, productType);
       }
 
-      const unresolvedIds = missingTypeIds.filter((id) => !types.has(id));
+      const unresolvedIds = basketIds.filter((id) => !types.has(id));
       if (unresolvedIds.length > 0) {
         const { data: tracks } = await supabase
           .from('dj_music_tracks')
@@ -80,9 +80,12 @@ export function ProductBasketProvider({ children }: { children: ReactNode }) {
       }
 
       if (!active || types.size === 0) return;
-      setBasketItems((current) => current.map((item) => (
-        item.type || !types.get(item.id) ? item : { ...item, type: types.get(item.id) }
-      )));
+      setBasketItems((current) => current.map((item) => {
+        const resolvedType = types.get(item.id);
+        return !resolvedType || item.type === resolvedType
+          ? item
+          : { ...item, type: resolvedType };
+      }));
     };
 
     restoreProductTypes();

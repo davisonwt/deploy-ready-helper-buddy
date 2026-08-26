@@ -116,6 +116,8 @@ export default function BestowalCheckout() {
   const isMusicItem = (item: any) => {
     const classification = String(item.type || item.category || '').toLowerCase();
     return classification === 'music'
+      || classification === 'audio'
+      || String(item.music_genre || '').trim().length > 0
       || /\.(mp3|m4a|wav|flac|aac|ogg)(\?|$)/i.test(String(item.file_url || ''));
   };
   const baseSubtotal = basketItems.reduce(
