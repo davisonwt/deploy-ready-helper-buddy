@@ -56,12 +56,15 @@ export function ProductBasketProvider({ children }: { children: ReactNode }) {
 
     let active = true;
     const restoreProductTypes = async () => {
-      const { data: products, error: productError } = await supabase
-        .from('products')
-        .select('id, type, category, file_url, cover_image_url, music_genre')
-        .in('id', basketIds);
+      const uuidIds = basketIds.filter((id) => /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(id));
+      const { data: products } = uuidIds.length > 0
+        ? await supabase
+            .from('products')
+            .select('id, type, category, file_url, cover_image_url, music_genre')
+            .in('id', uuidIds)
+        : { data: [] };
 
-      if (!active || productError) return;
+      if (!active) return;
       const types = new Map<string, string>();
       const musicFiles = new Set<string>();
       const musicCovers = new Set<string>();
@@ -79,19 +82,26 @@ export function ProductBasketProvider({ children }: { children: ReactNode }) {
 
       const savedFiles = basketItems.map((item) => item.file_url).filter(Boolean) as string[];
       const savedCovers = basketItems.map((item) => item.cover_image_url).filter(Boolean) as string[];
-      if (savedFiles.length > 0 || savedCovers.length > 0) {
-        let identityQuery = supabase
+      if (savedFiles.length > 0) {
+        const { data: fileProducts } = await supabase
           .from('products')
-          .select('file_url, cover_image_url, type, category, music_genre');
-        if (savedFiles.length > 0 && savedCovers.length > 0) {
-          identityQuery = identityQuery.or(`file_url.in.(${savedFiles.map((url) => `"${url}"`).join(',')}),cover_image_url.in.(${savedCovers.map((url) => `"${url}"`).join(',')})`);
-        } else if (savedFiles.length > 0) {
-          identityQuery = identityQuery.in('file_url', savedFiles);
-        } else {
-          identityQuery = identityQuery.in('cover_image_url', savedCovers);
+          .select('file_url, cover_image_url, type, category, music_genre')
+          .in('file_url', savedFiles);
+        for (const row of fileProducts || []) {
+          const productType = String(row.type || row.category || '').toLowerCase();
+          const isMusic = productType === 'music' || Boolean(row.music_genre)
+            || /\.(mp3|m4a|wav|flac|aac|ogg)(\?|$)/i.test(String(row.file_url || ''));
+          if (!isMusic) continue;
+          if (row.file_url) musicFiles.add(row.file_url);
+          if (row.cover_image_url) musicCovers.add(row.cover_image_url);
         }
-        const { data: identityProducts } = await identityQuery;
-        for (const row of identityProducts || []) {
+      }
+      if (savedCovers.length > 0) {
+        const { data: coverProducts } = await supabase
+          .from('products')
+          .select('file_url, cover_image_url, type, category, music_genre')
+          .in('cover_image_url', savedCovers);
+        for (const row of coverProducts || []) {
           const productType = String(row.type || row.category || '').toLowerCase();
           const isMusic = productType === 'music' || Boolean(row.music_genre)
             || /\.(mp3|m4a|wav|flac|aac|ogg)(\?|$)/i.test(String(row.file_url || ''));
