@@ -95,11 +95,12 @@ serve(async (req) => {
       );
     }
 
-    // Calculate pricing
-    const baseAmount = 1.25;
-    const platformFee = baseAmount * 0.10; // 10%
-    const sow2growFee = baseAmount * 0.005; // 0.5%
-    const totalAmount = baseAmount + platformFee + sow2growFee;
+    // Pricing rule: a single is $2 to the sower (floor), Sow2Grow's 15% is
+    // added ON TOP and carried by the bestower. A whisperer share, when one is
+    // linked, comes out of the sower's base — never on top.
+    const { base: baseAmount, s2gFee: platformFee, total: totalAmount } =
+      musicSingleBreakdown(track.price);
+    const sow2growFee = 0;
 
     logStep("Calculated pricing", { baseAmount, platformFee, sow2growFee, totalAmount });
 
