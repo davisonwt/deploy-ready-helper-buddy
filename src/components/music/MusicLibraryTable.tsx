@@ -10,7 +10,7 @@ import { useMusicPurchase } from '@/hooks/useMusicPurchase';
 import { useGiftBestowal } from '@/hooks/useGiftBestowal';
 import { useProductBasket } from '@/contexts/ProductBasketContext';
 import { toast } from 'sonner';
-import { musicSingleBase, musicSingleTotal } from '@/lib/pricing/music';
+import { musicSingleBase } from '@/lib/pricing/music';
 import { EditTrackModal } from './EditTrackModal';
 import { useQueryClient } from '@tanstack/react-query';
 import { useCurrency } from '@/hooks/useCurrency';
