@@ -249,6 +249,7 @@ export default function SowerLibraryPage() {
       id: r.id,
       title: r.title,
       price: Number(r.price || 0),
+      type: meta.routeSegment === 'music' ? 'music' : meta.routeSegment,
       cover_image_url: r.cover_image_url || undefined,
       sower_id: r.sower_id,
       bestowal_count: 0,

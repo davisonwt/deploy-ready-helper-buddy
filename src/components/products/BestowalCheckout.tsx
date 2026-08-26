@@ -113,8 +113,13 @@ export default function BestowalCheckout() {
     );
   }
 
+  const isMusicItem = (item: any) => {
+    const classification = String(item.type || item.category || '').toLowerCase();
+    return classification === 'music'
+      || /\.(mp3|m4a|wav|flac|aac|ogg)(\?|$)/i.test(String(item.file_url || ''));
+  };
   const musicSubtotal = basketItems.reduce(
-    (sum: number, item: any) => (String(item.type || '').toLowerCase() === 'music'
+    (sum: number, item: any) => (isMusicItem(item)
       ? sum + Number(item.price || 0) * Math.max(1, Number(item.quantity ?? 1))
       : sum),
     0,

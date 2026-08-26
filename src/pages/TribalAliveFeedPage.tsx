@@ -861,6 +861,7 @@ export default function TribalAliveFeedPage() {
       id: item.id,
       title: item.title,
       price: Number(item.price ?? 2),
+      type: item.kind === 'music' ? 'music' : item.kind,
       cover_image_url: item.image || undefined,
       sower_id: item.sower_id || undefined,
       bestowal_count: 0,
