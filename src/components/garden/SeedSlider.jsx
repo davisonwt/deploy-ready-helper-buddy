@@ -3,8 +3,7 @@
 // Each card carries Play (inline preview), Open (full page), Go Live (every card),
 // and a ⋯ owner menu (Edit · Delete · Repost · Park) when the seed is the user's own.
 
-import { useEffect, useRef, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useEffect, useState } from 'react'
 import LivingSeedCard from './LivingSeedCard'
 
 /**
@@ -26,7 +25,6 @@ export default function SeedSlider({
   emptyHint,
   intervalMs = 6000,
 }) {
-  const navigate = useNavigate()
   const [idx, setIdx] = useState(0)
   const [paused, setPaused] = useState(false)
 
