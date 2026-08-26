@@ -6,6 +6,7 @@ interface Product {
   title: string;
   price: number;
   cover_image_url?: string;
+  file_url?: string;
   sower_id: string;
   bestowal_count: number;
   type?: string;
