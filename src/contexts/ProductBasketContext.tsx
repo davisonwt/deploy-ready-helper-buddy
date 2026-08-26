@@ -1,5 +1,6 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { supabase } from '@/integrations/supabase/client';
+import { isMusicProduct } from '@/lib/pricing/music';
 
 interface Product {
   id: string;
@@ -70,8 +71,7 @@ export function ProductBasketProvider({ children }: { children: ReactNode }) {
       const musicCovers = new Set<string>();
       for (const row of products || []) {
         const productType = String(row.type || row.category || '').toLowerCase();
-        const isMusic = productType === 'music' || Boolean(row.music_genre)
-          || /\.(mp3|m4a|wav|flac|aac|ogg)(\?|$)/i.test(String(row.file_url || ''));
+        const isMusic = isMusicProduct(row);
         if (isMusic) {
           types.set(row.id, 'music');
           if (row.file_url) musicFiles.add(row.file_url);
@@ -89,8 +89,7 @@ export function ProductBasketProvider({ children }: { children: ReactNode }) {
           .in('file_url', savedFiles);
         for (const row of fileProducts || []) {
           const productType = String(row.type || row.category || '').toLowerCase();
-          const isMusic = productType === 'music' || Boolean(row.music_genre)
-            || /\.(mp3|m4a|wav|flac|aac|ogg)(\?|$)/i.test(String(row.file_url || ''));
+          const isMusic = isMusicProduct(row);
           if (!isMusic) continue;
           if (row.file_url) musicFiles.add(row.file_url);
           if (row.cover_image_url) musicCovers.add(row.cover_image_url);
@@ -103,8 +102,7 @@ export function ProductBasketProvider({ children }: { children: ReactNode }) {
           .in('cover_image_url', savedCovers);
         for (const row of coverProducts || []) {
           const productType = String(row.type || row.category || '').toLowerCase();
-          const isMusic = productType === 'music' || Boolean(row.music_genre)
-            || /\.(mp3|m4a|wav|flac|aac|ogg)(\?|$)/i.test(String(row.file_url || ''));
+          const isMusic = isMusicProduct(row);
           if (!isMusic) continue;
           if (row.file_url) musicFiles.add(row.file_url);
           if (row.cover_image_url) musicCovers.add(row.cover_image_url);

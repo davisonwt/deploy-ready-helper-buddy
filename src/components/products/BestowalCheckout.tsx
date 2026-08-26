@@ -15,7 +15,7 @@ import { WHISPER_SHARE_RATE, WHISPER_SHARE_PERCENT, WHISPER_FALLBACK_NOTE, WHISP
 import { getWhispererCredit } from '@/lib/whisperer/attribution';
 
 import { invokePaymentFunction } from '@/lib/payments/invokeFunction';
-import { musicSingleBreakdown } from '@/lib/pricing/music';
+import { isMusicProduct, musicSingleBreakdown } from '@/lib/pricing/music';
 
 export default function BestowalCheckout() {
   const { basketItems, removeFromBasket, totalAmount } = useProductBasket();
@@ -113,13 +113,7 @@ export default function BestowalCheckout() {
     );
   }
 
-  const isMusicItem = (item: any) => {
-    const classification = String(item.type || item.category || '').toLowerCase();
-    return classification === 'music'
-      || classification === 'audio'
-      || String(item.music_genre || '').trim().length > 0
-      || /\.(mp3|m4a|wav|flac|aac|ogg)(\?|$)/i.test(String(item.file_url || ''));
-  };
+  const isMusicItem = (item: any) => isMusicProduct(item);
   const baseSubtotal = basketItems.reduce(
     (sum: number, item: any) => sum + (isMusicItem(item)
       ? musicSingleBreakdown().base
