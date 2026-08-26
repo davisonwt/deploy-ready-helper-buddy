@@ -13,6 +13,7 @@ import { GradientPlaceholder } from '@/components/ui/GradientPlaceholder';
 import { launchConfetti } from '@/utils/confetti';
 import { useContentPurchase } from '@/hooks/useContentPurchase';
 import {
+import { musicSingleTotal } from '@/lib/pricing/music';
   Dialog,
   DialogContent,
   DialogDescription,
@@ -77,7 +78,8 @@ export default function S2GCommunityMusicPage() {
               
               // Single tracks: enforce minimum 2 USDC, albums use actual price
               const itemPrice = item.price || 0;
-              return isAlbum ? itemPrice : (itemPrice >= 2.00 ? itemPrice : 2.00);
+              // Singles: bestower pays the sower's price + Sow2Grow's 15% on top.
+              return isAlbum ? itemPrice : musicSingleTotal(itemPrice);
             })(),
             is_giveaway: false,
             giveaway_limit: null,
@@ -132,9 +134,9 @@ export default function S2GCommunityMusicPage() {
           ) || false;
           
           // Single tracks: enforce minimum 2 USDC, albums use actual price
-          const trackPrice = isAlbum 
-            ? (track.price || 0) 
-            : (track.price && track.price >= 2.00 ? track.price : 2.00);
+          const trackPrice = isAlbum
+            ? (track.price || 0)
+            : musicSingleTotal(track.price);
           
           allTracks.push({
             id: track.id,
