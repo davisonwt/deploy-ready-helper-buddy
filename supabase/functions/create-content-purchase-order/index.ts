@@ -72,15 +72,21 @@ Deno.serve(async (req) => {
     const resolved = await resolveContent(service, payload.contentType, payload.contentId, payload.metadata ?? {});
     if ("error" in resolved) return json(resolved, resolved.status ?? 400);
     const { sellerId, basePrice, label } = resolved;
+    const platformFeeOnTop = "platformFee" in resolved ? Number(resolved.platformFee ?? 0) : 0;
 
     if (buyerId === sellerId) return json({ error: "cannot_purchase_own_content" }, 400);
     if (!Number.isFinite(basePrice) || basePrice <= 0) {
       return json({ error: "content_not_purchasable" }, 400);
     }
 
-    // --- Pricing (buyer pays processor fee — Sow2Grow golden rule) ----------
+    // --- Pricing -------------------------------------------------------------
+    // Golden rule: the bestower carries Sow2Grow's fee and the processor fee.
+    // For music singles the 15% S2G fee is added ON TOP of the sower's price;
+    // the whisperer share (if any) is later taken OUT OF the sower's base.
     const baseAmount = round2(basePrice);
-    const quote = computeBuyerFee(payload.provider, baseAmount);
+    const platformFee = round2(platformFeeOnTop);
+    const chargeableAmount = round2(baseAmount + platformFee);
+    const quote = computeBuyerFee(payload.provider, chargeableAmount);
     const feePct = quote.feePct;
     const processorFee = quote.fee;
     const buyerTotal = quote.total;
@@ -103,6 +109,7 @@ Deno.serve(async (req) => {
         content_type: payload.contentType,
         content_id: payload.contentId,
         base_amount: baseAmount,
+        platform_fee_amount: platformFee,
         processor_fee_amount: processorFee,
         buyer_total_amount: buyerTotal,
         currency: "USD",
