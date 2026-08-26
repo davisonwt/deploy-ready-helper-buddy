@@ -13,6 +13,7 @@ import { corsHeaders } from "npm:@supabase/supabase-js@2/cors";
 import { resolveSowerPayout } from "../_shared/resolveSowerPayout.ts";
 import { paypalFetch } from "../_shared/paypal/client.ts";
 import { computeBuyerFee } from "../_shared/paypal/fees.ts";
+import { musicSingleBreakdown } from "../_shared/musicPricing.ts";
 
 const NOWPAYMENTS_API = "https://api.nowpayments.io/v1";
 
@@ -169,7 +170,7 @@ Deno.serve(async (req) => {
         invoiceId: invoice.id,
         invoiceUrl: invoice.invoice_url,
         expiresAt: invoice.expiration_date ?? null,
-        breakdown: { baseAmount, processorFee, processorFeePct: feePct, buyerTotal, currency: "USD" },
+        breakdown: { baseAmount, platformFee, processorFee, processorFeePct: feePct, buyerTotal, currency: "USD" },
       });
     }
 
@@ -224,7 +225,7 @@ Deno.serve(async (req) => {
       provider: "paypal",
       orderId: data.id,
       approveUrl: approveLink?.href ?? null,
-      breakdown: { baseAmount, processorFee, processorFeePct: feePct, buyerTotal, currency: "USD" },
+      breakdown: { baseAmount, platformFee, processorFee, processorFeePct: feePct, buyerTotal, currency: "USD" },
     });
   } catch (err) {
     console.error("create-content-purchase-order error", err);
@@ -235,7 +236,7 @@ Deno.serve(async (req) => {
 // ----------------------------------------------------------------------------
 
 type ResolvedContent =
-  | { sellerId: string; basePrice: number; label: string }
+  | { sellerId: string; basePrice: number; label: string; platformFee?: number }
   | { error: string; message?: string; status?: number };
 
 async function resolveContent(
@@ -322,11 +323,12 @@ async function resolveContent(
     if (data.is_public === false) return { error: "content_not_available", status: 403 };
     const sellerId = (data as any).radio_djs?.user_id;
     if (!sellerId) return { error: "content_not_found", status: 404 };
-    const rawPrice = Number(data.price ?? 0);
-    const basePrice = rawPrice >= 2 ? rawPrice : 2; // platform minimum
+    // Single = $2 to the sower (floor), Sow2Grow's 15% added on top.
+    const { base, s2gFee } = musicSingleBreakdown(data.price);
     return {
       sellerId,
-      basePrice,
+      basePrice: base,
+      platformFee: s2gFee,
       label: `Music: ${data.track_title ?? "track"}`,
     };
   }
