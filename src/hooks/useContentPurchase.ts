@@ -4,8 +4,8 @@
 // invoice URL or PayPal approve URL).
 
 import { useState, useCallback } from 'react';
-import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { invokePaymentFunction } from '@/lib/payments/invokeFunction';
 
 export type ContentType =
   | 'library_item'
@@ -34,23 +34,17 @@ export function useContentPurchase() {
         toast.error('Please pick a crypto to pay with.');
         return null;
       }
-      const { data, error } = await supabase.functions.invoke(
+      const data = await invokePaymentFunction(
         'create-content-purchase-order',
         {
-          body: {
-            contentType: args.contentType,
-            contentId: args.contentId,
-            provider: args.provider,
-            payCurrency: args.payCurrency,
-            metadata: args.metadata ?? {},
-            redirectBaseUrl: window.location.origin,
-          },
+          contentType: args.contentType,
+          contentId: args.contentId,
+          provider: args.provider,
+          payCurrency: args.payCurrency,
+          metadata: args.metadata ?? {},
+          redirectBaseUrl: window.location.origin,
         },
       );
-      if (error) {
-        toast.error(error.message ?? 'Could not start checkout.');
-        return null;
-      }
       const redirectUrl =
         (data as any)?.invoiceUrl ?? (data as any)?.approveUrl ?? null;
       if (!redirectUrl) {

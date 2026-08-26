@@ -5,11 +5,11 @@ import { useAlbumBuilder } from '@/contexts/AlbumBuilderContext';
 import { Music, X, ShoppingCart, Download } from 'lucide-react';
 import { useState } from 'react';
 import { useAuth } from '@/hooks/useAuth';
-import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { useCurrency } from '@/hooks/useCurrency';
 import ProviderPicker from '@/components/payments/ProviderPicker';
 import { PayoutProviderId, quoteFee } from '@/lib/payments/providerFees';
+import { invokePaymentFunction } from '@/lib/payments/invokeFunction';
 
 interface AlbumBuilderCartProps {
   scopeName?: string;
@@ -46,16 +46,13 @@ export function AlbumBuilderCart({ scopeName }: AlbumBuilderCartProps = {}) {
         return;
       }
 
-      const { data, error } = await supabase.functions.invoke('create-basket-bestowal-order', {
-        body: {
-          items: productItems,
-          provider,
-          payCurrency: provider === 'nowpayments' ? 'usdcsol' : undefined,
-          redirectBaseUrl: typeof window !== 'undefined' ? window.location.origin : undefined,
-        },
+      const data = await invokePaymentFunction('create-basket-bestowal-order', {
+        items: productItems,
+        provider,
+        payCurrency: provider === 'nowpayments' ? 'usdcsol' : undefined,
+        redirectBaseUrl: typeof window !== 'undefined' ? window.location.origin : undefined,
       });
 
-      if (error) throw new Error(error.message || 'Failed to create album order');
       if (!data || data.error) throw new Error(data?.error || 'album_order_failed');
 
       if (provider === 'paypal') {
