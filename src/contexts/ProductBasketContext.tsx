@@ -110,7 +110,7 @@ export function ProductBasketProvider({ children }: { children: ReactNode }) {
         for (const track of tracks || []) types.set(track.id, 'music');
       }
 
-      if (!active || types.size === 0) return;
+      if (!active || (types.size === 0 && musicFiles.size === 0 && musicCovers.size === 0)) return;
       setBasketItems((current) => current.map((item) => {
         const resolvedType = types.get(item.id)
           || (item.file_url && musicFiles.has(item.file_url) ? 'music' : undefined)
