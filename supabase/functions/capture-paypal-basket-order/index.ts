@@ -35,11 +35,17 @@ Deno.serve(async (req) => {
     .from("basket_orders")
     .select("id, user_id, provider, provider_invoice_id, status")
     .eq("id", parsed.basketOrderId)
-    .eq("user_id", authData.user.id)
     .maybeSingle();
 
   if (orderError) return json({ error: "basket_lookup_failed" }, 500);
   if (!order) return json({ error: "basket_not_found" }, 404);
+  if (order.user_id !== authData.user.id) {
+    const [{ data: isAdmin }, { data: isGosat }] = await Promise.all([
+      service.rpc("has_role", { _user_id: authData.user.id, _role: "admin" }),
+      service.rpc("has_role", { _user_id: authData.user.id, _role: "gosat" }),
+    ]);
+    if (!isAdmin && !isGosat) return json({ error: "forbidden" }, 403);
+  }
   if (order.provider !== "paypal") return json({ error: "not_paypal_order" }, 400);
   if (order.status === "completed") return json({ status: "completed" });
   if (!order.provider_invoice_id) return json({ error: "paypal_order_id_missing" }, 409);
