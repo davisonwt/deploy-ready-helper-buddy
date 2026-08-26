@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from './useAuth';
 import { useToast } from '@/hooks/use-toast';
+import { invokePaymentFunction } from '@/lib/payments/invokeFunction';
 
 /**
  * Music purchase via the unified Shape-1 content_purchases pipeline.
@@ -38,16 +39,13 @@ export function useMusicPurchase() {
 
     try {
       setLoading(true);
-      const { data, error } = await supabase.functions.invoke('create-content-purchase-order', {
-        body: {
-          contentType: 'music_track',
-          contentId: trackId,
-          provider,
-          payCurrency: provider === 'nowpayments' ? payCurrency : undefined,
-          redirectBaseUrl: typeof window !== 'undefined' ? window.location.origin : undefined,
-        },
+      const data = await invokePaymentFunction('create-content-purchase-order', {
+        contentType: 'music_track',
+        contentId: trackId,
+        provider,
+        payCurrency: provider === 'nowpayments' ? payCurrency : undefined,
+        redirectBaseUrl: typeof window !== 'undefined' ? window.location.origin : undefined,
       });
-      if (error) throw error;
       const redirectUrl = data?.invoiceUrl || data?.approveUrl;
       if (!redirectUrl) throw new Error('Provider did not return a checkout URL');
       window.location.href = redirectUrl;

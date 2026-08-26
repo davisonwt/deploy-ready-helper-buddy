@@ -201,13 +201,6 @@ Deno.serve(async (req) => {
             },
           },
         },
-        application_context: {
-          brand_name: "Sow2Grow",
-          user_action: "PAY_NOW",
-          shipping_preference: "NO_SHIPPING",
-          return_url: `${redirectBase}/payment-success?purchase=${purchase.id}`,
-          cancel_url: `${redirectBase}/payment-cancelled?purchase=${purchase.id}`,
-        },
       },
     });
 
