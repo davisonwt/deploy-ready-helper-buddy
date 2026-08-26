@@ -9,6 +9,7 @@ interface Product {
   sower_id: string;
   bestowal_count: number;
   type?: string;
+  category?: string;
   sowers?: {
     display_name: string;
   };
@@ -44,21 +45,40 @@ export function ProductBasketProvider({ children }: { children: ReactNode }) {
     localStorage.setItem('productBasket', JSON.stringify(basketItems));
   }, [basketItems]);
 
-  // Older saved baskets pre-date product-type metadata. Restore it so music
-  // singles always receive the correct $2 + 15% pricing at checkout.
+  // Older saved baskets pre-date product-type metadata. Restore it from both
+  // product seeds and the dedicated music library so singles always receive
+  // the correct $2 + 15% pricing at checkout.
   useEffect(() => {
     const missingTypeIds = basketItems.filter((item) => !item.type).map((item) => item.id);
     if (missingTypeIds.length === 0) return;
 
     let active = true;
     const restoreProductTypes = async () => {
-      const { data, error } = await supabase
+      const { data: products, error: productError } = await supabase
         .from('products')
-        .select('id, type')
+        .select('id, type, category, file_url, music_genre')
         .in('id', missingTypeIds);
 
-      if (!active || error || !data?.length) return;
-      const types = new Map(data.map((row) => [row.id, row.type]));
+      if (!active || productError) return;
+      const types = new Map<string, string>();
+      for (const row of products || []) {
+        const productType = String(row.type || row.category || '').toLowerCase();
+        const isMusic = productType === 'music' || Boolean(row.music_genre)
+          || /\.(mp3|m4a|wav|flac|aac|ogg)(\?|$)/i.test(String(row.file_url || ''));
+        if (isMusic) types.set(row.id, 'music');
+        else if (productType) types.set(row.id, productType);
+      }
+
+      const unresolvedIds = missingTypeIds.filter((id) => !types.has(id));
+      if (unresolvedIds.length > 0) {
+        const { data: tracks } = await supabase
+          .from('dj_music_tracks')
+          .select('id')
+          .in('id', unresolvedIds);
+        for (const track of tracks || []) types.set(track.id, 'music');
+      }
+
+      if (!active || types.size === 0) return;
       setBasketItems((current) => current.map((item) => (
         item.type || !types.get(item.id) ? item : { ...item, type: types.get(item.id) }
       )));

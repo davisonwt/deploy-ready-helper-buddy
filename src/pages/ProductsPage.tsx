@@ -219,6 +219,8 @@ export default function ProductsPage() {
         id: product.id,
         title: product.title,
         price: amount,
+        type: product.type || product.category,
+        category: product.category,
         cover_image_url: product.cover_image_url,
         sower_id: product.sower_id,
         bestowal_count: product.bestowal_count || 0,
