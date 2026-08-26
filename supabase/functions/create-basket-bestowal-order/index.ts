@@ -124,6 +124,7 @@ Deno.serve(async (req) => {
       whisperer_user_id: string | null;
       attribution_type: string | null;
       commission_percent: number | null;
+      is_music: boolean;
     }> = [];
 
     let subtotal = 0;
