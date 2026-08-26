@@ -15,7 +15,7 @@ import { WHISPER_SHARE_RATE, WHISPER_SHARE_PERCENT, WHISPER_FALLBACK_NOTE, WHISP
 import { getWhispererCredit } from '@/lib/whisperer/attribution';
 
 import { invokePaymentFunction } from '@/lib/payments/invokeFunction';
-import { S2G_FEE_RATE } from '@/lib/pricing/music';
+import { musicSingleBreakdown } from '@/lib/pricing/music';
 
 export default function BestowalCheckout() {
   const { basketItems, removeFromBasket, totalAmount } = useProductBasket();
@@ -118,21 +118,28 @@ export default function BestowalCheckout() {
     return classification === 'music'
       || /\.(mp3|m4a|wav|flac|aac|ogg)(\?|$)/i.test(String(item.file_url || ''));
   };
-  const musicSubtotal = basketItems.reduce(
-    (sum: number, item: any) => (isMusicItem(item)
-      ? sum + Number(item.price || 0) * Math.max(1, Number(item.quantity ?? 1))
-      : sum),
+  const baseSubtotal = basketItems.reduce(
+    (sum: number, item: any) => sum + (isMusicItem(item)
+      ? musicSingleBreakdown().base
+      : Number(item.price || 0)) * Math.max(1, Number(item.quantity ?? 1)),
     0,
   );
-  const s2gMusicFee = musicSubtotal * S2G_FEE_RATE;
-  const checkoutTotal = totalAmount + s2gMusicFee;
+  const s2gMusicFee = basketItems.reduce(
+    (sum: number, item: any) => sum + (isMusicItem(item)
+      ? musicSingleBreakdown().s2gFee * Math.max(1, Number(item.quantity ?? 1))
+      : 0),
+    0,
+  );
+  const checkoutTotal = baseSubtotal + s2gMusicFee;
   const feeQuote = quoteFee(provider, checkoutTotal);
 
   // Only lines credited to an ACTIVE whisperer carry a whisper share; the rest
   // of the 15% stays with the sower.
   const whisperedSubtotal = basketItems.reduce(
     (sum: number, it: any) =>
-      sum + (credited[it.id] ? Number(it.price || 0) * Math.max(1, Number(it.quantity ?? 1)) : 0),
+      sum + (credited[it.id]
+        ? (isMusicItem(it) ? musicSingleBreakdown().base : Number(it.price || 0)) * Math.max(1, Number(it.quantity ?? 1))
+        : 0),
     0,
   );
   const creditedNames = Array.from(
@@ -140,7 +147,7 @@ export default function BestowalCheckout() {
   ) as string[];
 
   const whisperFee = whisperedSubtotal * WHISPER_SHARE_RATE;
-  const creatorShare = totalAmount - whisperFee;
+  const creatorShare = baseSubtotal - whisperFee;
 
 
   return (
@@ -174,7 +181,9 @@ export default function BestowalCheckout() {
                 )}
               </div>
               <div className="text-right">
-                <p className="font-semibold">${item.price}</p>
+                <p className="font-semibold">
+                  ${(isMusicItem(item) ? musicSingleBreakdown().base : Number(item.price || 0)).toFixed(2)}
+                </p>
               </div>
               <Button size="icon" variant="ghost" onClick={() => removeFromBasket(item.id)} className="flex-shrink-0">
                 <Trash2 className="w-4 h-4" />
@@ -188,7 +197,7 @@ export default function BestowalCheckout() {
         <div className="space-y-2 text-sm">
           <div className="flex justify-between text-muted-foreground">
             <span>Subtotal</span>
-            <span>${totalAmount.toFixed(2)}</span>
+            <span>${baseSubtotal.toFixed(2)}</span>
           </div>
           {s2gMusicFee > 0 && (
             <div className="flex justify-between text-muted-foreground">
@@ -216,7 +225,7 @@ export default function BestowalCheckout() {
 
           <Separator />
           <div className="flex justify-between text-lg font-bold">
-            <span>Total</span>
+            <span>Total before processor fee</span>
             <span>${checkoutTotal.toFixed(2)} USD</span>
           </div>
         </div>

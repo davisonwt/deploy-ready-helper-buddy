@@ -11,8 +11,8 @@ export const S2G_FEE_RATE = S2G_FEE_PERCENT / 100;
 const round2 = (n: number) => Math.round((n + Number.EPSILON) * 100) / 100;
 
 export function musicSingleBase(price?: number | null): number {
-  const p = Number(price ?? 0);
-  return round2(Number.isFinite(p) && p > MUSIC_SINGLE_MIN_USD ? p : MUSIC_SINGLE_MIN_USD);
+  void price;
+  return MUSIC_SINGLE_MIN_USD;
 }
 
 export function s2gFeeOn(base: number): number {
