@@ -2810,6 +2810,7 @@ export type Database = {
           payout_provider: string | null
           payout_reference: string | null
           payout_status: string | null
+          platform_fee_amount: number
           processor_fee_amount: number
           provider: string
           provider_order_id: string | null
@@ -2838,6 +2839,7 @@ export type Database = {
           payout_provider?: string | null
           payout_reference?: string | null
           payout_status?: string | null
+          platform_fee_amount?: number
           processor_fee_amount?: number
           provider: string
           provider_order_id?: string | null
@@ -2866,6 +2868,7 @@ export type Database = {
           payout_provider?: string | null
           payout_reference?: string | null
           payout_status?: string | null
+          platform_fee_amount?: number
           processor_fee_amount?: number
           provider?: string
           provider_order_id?: string | null

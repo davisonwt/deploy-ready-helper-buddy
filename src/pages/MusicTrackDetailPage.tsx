@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { ArrowLeft, Home, Loader2, Play, Pause, Heart, Download } from 'lucide-react';
 import { toast } from 'sonner';
+import { musicSingleBreakdown } from '@/lib/pricing/music';
 
 const PREVIEW_SECONDS = 40;
 const PRIVATE_BUCKETS = ['music-tracks', 'dj-music', 'premium-room'];
@@ -115,7 +116,7 @@ export default function MusicTrackDetailPage() {
     );
   }
 
-  const price = Number(track.price) >= 2 ? Number(track.price) : 2;
+  const { base, s2gFee, total } = musicSingleBreakdown(track.price);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-950 to-slate-900 text-white p-4 md:p-8">
@@ -192,8 +193,14 @@ export default function MusicTrackDetailPage() {
                 ) : (
                   <Button onClick={handleBuy} disabled={purchasing} className="bg-rose-500 hover:bg-rose-600">
                     {purchasing ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Heart className="w-4 h-4 mr-2" />}
-                    Bestow ${price.toFixed(2)} USDC
+                    Bestow ${total.toFixed(2)} USDC
                   </Button>
+                )}
+                {!owned && (
+                  <div className="w-full text-xs text-slate-400">
+                    ${base.toFixed(2)} to the sower + ${s2gFee.toFixed(2)} Sow2Grow 15% (carried by you).
+                    A whisperer share, when linked, comes out of the sower's ${base.toFixed(2)}.
+                  </div>
                 )}
               </div>
             </div>

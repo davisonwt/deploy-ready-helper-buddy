@@ -255,7 +255,7 @@ export function EditTrackModal({ track, isOpen, onClose, onSuccess }: EditTrackM
               }}
             />
             <p className="text-xs text-muted-foreground">
-              Single tracks: Minimum 2 USDC (includes 10% platform fee + 5% admin fee). Albums can have custom prices.
+              Singles: minimum 2 USDC to you. Sow2Grow's 15% is added on top and carried by the bestower (they pay 2.30). A whisperer share comes out of your 2 USDC. Albums can have custom prices.
             </p>
           </div>
 
