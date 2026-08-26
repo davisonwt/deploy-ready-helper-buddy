@@ -12,8 +12,8 @@ import { toast } from 'sonner';
 import { GradientPlaceholder } from '@/components/ui/GradientPlaceholder';
 import { launchConfetti } from '@/utils/confetti';
 import { useContentPurchase } from '@/hooks/useContentPurchase';
-import {
 import { musicSingleTotal } from '@/lib/pricing/music';
+import {
   Dialog,
   DialogContent,
   DialogDescription,
