@@ -19,6 +19,7 @@ import { corsHeaders } from "npm:@supabase/supabase-js@2/cors";
 import { dispatchPayouts } from "../_shared/distribution.ts";
 import {
   extractPaypalWebhookHeaders,
+  paypalFetch,
   verifyPaypalWebhookSig,
 } from "../_shared/paypal/client.ts";
 
@@ -132,8 +133,27 @@ async function handleEvent(
       return;
     }
     if (customId.startsWith("basket:")) {
+      const basketOrderId = customId.slice("basket:".length);
       await supabase.from("basket_orders").update({ status: "processing" })
-        .eq("id", customId.slice("basket:".length));
+        .eq("id", basketOrderId);
+
+      // PayPal approval does not capture an order automatically. Capture it
+      // here so completion never depends on the buyer keeping the return page open.
+      const paypalOrderId = typeof resource.id === "string" ? resource.id : undefined;
+      if (!paypalOrderId) throw new Error("approved_paypal_order_id_missing");
+      const capture = await paypalFetch<{ status?: string }>(
+        `/v2/checkout/orders/${encodeURIComponent(paypalOrderId)}/capture`,
+        { method: "POST", body: {} },
+      );
+      if (!capture.ok && capture.status !== 422) {
+        throw new Error(`paypal_capture_failed:${capture.status}`);
+      }
+      if (capture.ok && String(capture.data?.status ?? "").toUpperCase() === "COMPLETED") {
+        const { error: finalizeError } = await supabase.rpc("finalize_basket_order", {
+          _basket_order_id: basketOrderId,
+        });
+        if (finalizeError) throw new Error(`finalize_basket_order_failed:${finalizeError.message}`);
+      }
       return;
     }
     if (customId.startsWith("content:")) {
