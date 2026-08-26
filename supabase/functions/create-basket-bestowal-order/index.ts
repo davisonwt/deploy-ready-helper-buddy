@@ -12,6 +12,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 import { corsHeaders } from "npm:@supabase/supabase-js@2/cors";
 import { paypalFetch } from "../_shared/paypal/client.ts";
 import { computeBuyerFee } from "../_shared/paypal/fees.ts";
+import { musicSingleBreakdown } from "../_shared/musicPricing.ts";
 
 const NOWPAYMENTS_API = "https://api.nowpayments.io/v1";
 
@@ -101,7 +102,7 @@ Deno.serve(async (req) => {
 
     const { data: products, error: productsErr } = await service
       .from("products")
-      .select("id, title, price, sower_id, status")
+      .select("id, title, price, sower_id, status, type, category, file_url, music_genre")
       .in("id", productIds);
     if (productsErr || !products) {
       console.error("products lookup failed", productsErr);
@@ -129,12 +130,17 @@ Deno.serve(async (req) => {
     for (const item of payload.items) {
       const p = byId.get(item.productId);
       if (!p) return json({ error: "product_not_found", productId: item.productId }, 404);
-      const unitPrice = Number(p.price);
-      if (!Number.isFinite(unitPrice) || unitPrice <= 0) {
+      const storedPrice = Number(p.price);
+      if (!Number.isFinite(storedPrice) || storedPrice <= 0) {
         return json({ error: "product_price_invalid", productId: item.productId }, 400);
       }
       const qty = Math.max(1, Math.floor(Number(item.qty ?? 1)));
-      const lineTotal = round2(unitPrice * qty);
+      const productType = String((p as any).type || (p as any).category || "").toLowerCase();
+      const isMusic = productType === "music" || Boolean((p as any).music_genre)
+        || /\.(mp3|m4a|wav|flac|aac|ogg)(\?|$)/i.test(String((p as any).file_url || ""));
+      const musicPricing = isMusic ? musicSingleBreakdown(storedPrice) : null;
+      const unitPrice = musicPricing?.base ?? storedPrice;
+      const lineTotal = round2((musicPricing?.total ?? storedPrice) * qty);
       subtotal = round2(subtotal + lineTotal);
 
       // --- Whisperer attribution (validated server-side) --------------------
@@ -190,6 +196,7 @@ Deno.serve(async (req) => {
         whisperer_user_id: whispererUserId,
         attribution_type: attributionType,
         commission_percent: commissionPercent,
+        is_music: isMusic,
       });
     }
 
