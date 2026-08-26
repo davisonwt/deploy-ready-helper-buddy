@@ -16,7 +16,7 @@
  * checkout — see supabase/functions/_shared/paypal/fees.ts.
  */
 
-/** Minimum (and default) sower price for a single. */
+/** Fixed sower price for every single. */
 export const MUSIC_SINGLE_MIN_USD = 2;
 
 /** Sow2Grow platform + admin percentage, added on top of the sower price. */
@@ -25,10 +25,10 @@ export const S2G_FEE_RATE = S2G_FEE_PERCENT / 100;
 
 const round2 = (n: number) => Math.round((n + Number.EPSILON) * 100) / 100;
 
-/** The sower price of a single — never below the $2 floor. */
+/** The sower price of every single is exactly $2. */
 export function musicSingleBase(price?: number | null): number {
-  const p = Number(price ?? 0);
-  return round2(Number.isFinite(p) && p > MUSIC_SINGLE_MIN_USD ? p : MUSIC_SINGLE_MIN_USD);
+  void price;
+  return MUSIC_SINGLE_MIN_USD;
 }
 
 /** Sow2Grow's 15% on a sower price. */
