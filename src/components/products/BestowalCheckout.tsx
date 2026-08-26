@@ -15,6 +15,7 @@ import { WHISPER_SHARE_RATE, WHISPER_SHARE_PERCENT, WHISPER_FALLBACK_NOTE, WHISP
 import { getWhispererCredit } from '@/lib/whisperer/attribution';
 
 import { invokePaymentFunction } from '@/lib/payments/invokeFunction';
+import { S2G_FEE_RATE } from '@/lib/pricing/music';
 
 export default function BestowalCheckout() {
   const { basketItems, removeFromBasket, totalAmount } = useProductBasket();
@@ -112,7 +113,15 @@ export default function BestowalCheckout() {
     );
   }
 
-  const feeQuote = quoteFee(provider, totalAmount);
+  const musicSubtotal = basketItems.reduce(
+    (sum: number, item: any) => (String(item.type || '').toLowerCase() === 'music'
+      ? sum + Number(item.price || 0) * Math.max(1, Number(item.quantity ?? 1))
+      : sum),
+    0,
+  );
+  const s2gMusicFee = musicSubtotal * S2G_FEE_RATE;
+  const checkoutTotal = totalAmount + s2gMusicFee;
+  const feeQuote = quoteFee(provider, checkoutTotal);
 
   // Only lines credited to an ACTIVE whisperer carry a whisper share; the rest
   // of the 15% stays with the sower.
@@ -125,10 +134,8 @@ export default function BestowalCheckout() {
     new Set(basketItems.map((it: any) => credited[it.id]?.refCode).filter(Boolean)),
   ) as string[];
 
-  const platformFee = totalAmount * 0.1;
-  const adminFee = totalAmount * 0.05;
   const whisperFee = whisperedSubtotal * WHISPER_SHARE_RATE;
-  const creatorShare = totalAmount - platformFee - adminFee - whisperFee;
+  const creatorShare = totalAmount - whisperFee;
 
 
   return (
@@ -178,16 +185,14 @@ export default function BestowalCheckout() {
             <span>Subtotal</span>
             <span>${totalAmount.toFixed(2)}</span>
           </div>
+          {s2gMusicFee > 0 && (
+            <div className="flex justify-between text-muted-foreground">
+              <span>Sow2Grow Fee (15% added on top)</span>
+              <span className="text-accent">${s2gMusicFee.toFixed(2)}</span>
+            </div>
+          )}
           <div className="flex justify-between text-muted-foreground">
-            <span>Platform Fee (10%)</span>
-            <span className="text-purple-400">${platformFee.toFixed(2)}</span>
-          </div>
-          <div className="flex justify-between text-muted-foreground">
-            <span>Admin Fee (5%)</span>
-            <span>${adminFee.toFixed(2)}</span>
-          </div>
-          <div className="flex justify-between text-muted-foreground">
-            <span>To Creators ({totalAmount > 0 ? Math.round((creatorShare / totalAmount) * 100) : 0}%)</span>
+            <span>To Sowers</span>
             <span className="text-primary">${creatorShare.toFixed(2)}</span>
           </div>
           {whisperFee > 0 ? (
@@ -207,15 +212,15 @@ export default function BestowalCheckout() {
           <Separator />
           <div className="flex justify-between text-lg font-bold">
             <span>Total</span>
-            <span>${totalAmount.toFixed(2)} USD</span>
+            <span>${checkoutTotal.toFixed(2)} USD</span>
           </div>
         </div>
 
         <div className="space-y-2">
           <div className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Payment method</div>
-          <ProviderPicker value={provider} onChange={setProvider} amount={totalAmount} mode="buyer" disabled={processing} />
+          <ProviderPicker value={provider} onChange={setProvider} amount={checkoutTotal} mode="buyer" disabled={processing} />
           <div className="text-xs text-muted-foreground text-right">
-            Estimated processor fee on ${totalAmount.toFixed(2)}:{' '}
+            Estimated processor fee on ${checkoutTotal.toFixed(2)}:{' '}
             <span className="font-medium text-foreground">{feeQuote.display}</span>
           </div>
         </div>

@@ -10,7 +10,7 @@ import { useMusicPurchase } from '@/hooks/useMusicPurchase';
 import { useGiftBestowal } from '@/hooks/useGiftBestowal';
 import { useProductBasket } from '@/contexts/ProductBasketContext';
 import { toast } from 'sonner';
-import { musicSingleBase, musicSingleTotal } from '@/lib/pricing/music';
+import { musicSingleBase } from '@/lib/pricing/music';
 import { EditTrackModal } from './EditTrackModal';
 import { useQueryClient } from '@tanstack/react-query';
 import { useCurrency } from '@/hooks/useCurrency';
@@ -296,12 +296,14 @@ export function MusicLibraryTable({
       toast.info('Use Direct Bestow for this music seed. Basket checkout needs the product seed record.');
       return;
     }
-    // Bestower carries Sow2Grow's 15% on top of the sower's price.
-    const price = musicSingleTotal(track.price);
+    // Store the sower's base in the basket. Checkout adds Sow2Grow's 15% on
+    // top, keeping the base and platform fee visible as separate amounts.
+    const price = musicSingleBase(track.price);
     addToBasket({
       id: productId,
       title: track.track_title,
       price,
+      type: 'music',
       cover_image_url: (track as any).cover_image_url || undefined,
       sower_id: track.sower_id || track.sower_user_id || track.dj_id,
       bestowal_count: 0,

@@ -1,4 +1,5 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import { supabase } from '@/integrations/supabase/client';
 
 interface Product {
   id: string;
@@ -7,6 +8,7 @@ interface Product {
   cover_image_url?: string;
   sower_id: string;
   bestowal_count: number;
+  type?: string;
   sowers?: {
     display_name: string;
   };
@@ -40,6 +42,30 @@ export function ProductBasketProvider({ children }: { children: ReactNode }) {
   // Save basket to localStorage whenever it changes
   useEffect(() => {
     localStorage.setItem('productBasket', JSON.stringify(basketItems));
+  }, [basketItems]);
+
+  // Older saved baskets pre-date product-type metadata. Restore it so music
+  // singles always receive the correct $2 + 15% pricing at checkout.
+  useEffect(() => {
+    const missingTypeIds = basketItems.filter((item) => !item.type).map((item) => item.id);
+    if (missingTypeIds.length === 0) return;
+
+    let active = true;
+    const restoreProductTypes = async () => {
+      const { data, error } = await supabase
+        .from('products')
+        .select('id, type')
+        .in('id', missingTypeIds);
+
+      if (!active || error || !data?.length) return;
+      const types = new Map(data.map((row) => [row.id, row.type]));
+      setBasketItems((current) => current.map((item) => (
+        item.type || !types.get(item.id) ? item : { ...item, type: types.get(item.id) }
+      )));
+    };
+
+    restoreProductTypes();
+    return () => { active = false; };
   }, [basketItems]);
 
   const addToBasket = (product: Product) => {
