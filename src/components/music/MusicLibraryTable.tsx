@@ -10,6 +10,7 @@ import { useMusicPurchase } from '@/hooks/useMusicPurchase';
 import { useGiftBestowal } from '@/hooks/useGiftBestowal';
 import { useProductBasket } from '@/contexts/ProductBasketContext';
 import { toast } from 'sonner';
+import { musicSingleBase, musicSingleTotal, musicSingleBreakdown } from '@/lib/pricing/music';
 import { EditTrackModal } from './EditTrackModal';
 import { useQueryClient } from '@tanstack/react-query';
 import { useCurrency } from '@/hooks/useCurrency';
@@ -266,8 +267,7 @@ export function MusicLibraryTable({
         handleBasketBestowal(track, e);
         return;
       }
-      const price = track.price && track.price >= 2.00 ? track.price : 2.00;
-      await purchaseTrack(track.id, price);
+      await purchaseTrack(track.id, musicSingleBase(track.price));
       
       // Award XP for music bestowal (100 XP) - use type assertion for RPC
       if (user) {
@@ -296,7 +296,8 @@ export function MusicLibraryTable({
       toast.info('Use Direct Bestow for this music seed. Basket checkout needs the product seed record.');
       return;
     }
-    const price = track.price && track.price >= 2 ? Number(track.price) : 2;
+    // Bestower carries Sow2Grow's 15% on top of the sower's price.
+    const price = musicSingleTotal(track.price);
     addToBasket({
       id: productId,
       title: track.track_title,
