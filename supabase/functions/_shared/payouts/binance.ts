@@ -12,7 +12,6 @@ import type {
 const REMARK_BY_ROLE: Record<PayoutLeg["role"], string> = {
   sower: "Bestowal distribution - sower",
   tithing: "Bestowal distribution - tithing & admin",
-  grower: "Bestowal distribution - product whispers",
 };
 
 export class BinancePayoutStrategy implements PayoutStrategy {

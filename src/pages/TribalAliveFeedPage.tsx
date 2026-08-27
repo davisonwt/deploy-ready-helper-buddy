@@ -32,6 +32,8 @@ import { useToast } from '@/hooks/use-toast';
 import { toast } from 'sonner';
 import { useProductBasket } from '@/contexts/ProductBasketContext';
 import { useTribalLiveOrchard } from '@/hooks/useTribalLiveOrchard';
+import { useGiftBestowal, type GiftContextKind } from '@/hooks/useGiftBestowal';
+import { useMusicPurchase } from '@/hooks/useMusicPurchase';
 import { JITSI_DOMAIN } from '@/lib/jitsi-config';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
@@ -135,6 +137,8 @@ export default function TribalAliveFeedPage() {
   const { code: referralCode } = useReferralCode();
   const { addToBasket } = useProductBasket();
   const { goLive, endLive, liveSeeds } = useTribalLiveOrchard();
+  const { send: sendGift } = useGiftBestowal();
+  const { purchaseTrack } = useMusicPurchase();
 
   const [tab, setTab] = useState<FeedTab>('foryou');
   const [wanderingRole, setWanderingRole] = useState<WanderingRole | null>(null);
@@ -210,7 +214,10 @@ export default function TribalAliveFeedPage() {
             .select('id, status, started_at, ended_at, created_at, schedule_id')
             .order('created_at', { ascending: false }).limit(20),
           supabase.from('radio_automated_sessions')
-            .select('id, schedule_id, playback_status, current_track_index, created_at')
+            // Left join (no !inner) — a session with no resolvable schedule/DJ
+            // still shows in the feed; handleBestow declines gracefully for it
+            // instead of sending a gift with no recipient.
+            .select('id, schedule_id, playback_status, current_track_index, created_at, radio_schedule(dj_id, radio_djs(user_id, dj_name))')
             .order('created_at', { ascending: false }).limit(20),
           supabase.from('community_videos')
             .select('id, title, description, video_url, thumbnail_url, uploader_id, created_at, status')
@@ -398,17 +405,24 @@ export default function TribalAliveFeedPage() {
           href: `/grove-station?session=${r.id}`,
         }));
 
-        const radioRecItems: FeedItem[] = (radioRecRes.data || []).map((r: any) => ({
-          key: `radio-rec-${r.id}`, kind: 'radio_recorded', id: r.id,
-          title: '📻 Pre-recorded radio session',
-          description: 'Tap to listen to this scheduled broadcast',
-          image: null,
-          sower_id: null,
-          sower_name: 'Tribal Radio',
-          wandering_role: 'whisperer',
-          created_at: r.created_at,
-          href: `/grove-station?automated=${r.id}`,
-        }));
+        const radioRecItems: FeedItem[] = (radioRecRes.data || []).map((r: any) => {
+          const host = r.radio_schedule?.radio_djs;
+          return {
+            key: `radio-rec-${r.id}`, kind: 'radio_recorded', id: r.id,
+            title: '📻 Pre-recorded radio session',
+            description: 'Tap to listen to this scheduled broadcast',
+            image: null,
+            // Resolved via radio_automated_sessions -> radio_schedule.dj_id ->
+            // radio_djs.user_id. Null when the session has no schedule/DJ
+            // link — handleBestow declines the gift for those rather than
+            // sending it with no recipient.
+            sower_id: host?.user_id || null,
+            sower_name: host?.dj_name || 'Tribal Radio',
+            wandering_role: 'whisperer',
+            created_at: r.created_at,
+            href: `/grove-station?automated=${r.id}`,
+          };
+        });
 
         const videoItems: FeedItem[] = (videosRes.data || []).map((v: any) => ({
           key: `video-${v.id}`, kind: 'video', id: v.id,
@@ -839,16 +853,34 @@ export default function TribalAliveFeedPage() {
       return;
     }
 
-    addToBasket({
-      id: `freewill-${item.kind}-${item.id}-${amount}-${Date.now()}`,
-      title: `Freewill gift to ${item.sower_name} · ${item.title}`,
-      price: amount,
-      cover_image_url: item.image || undefined,
-      sower_id: item.sower_id || undefined,
-      bestowal_count: 0,
-      sowers: { display_name: item.sower_name },
-    } as any);
-    toast({ title: 'Gift added', description: `$${amount < 1 ? amount.toFixed(2) : amount} freewill gift is in your basket.` });
+    // A freewill gift is never tied to a products.id — it's a direct gift to
+    // whoever made this, via the same checkout create-gift-bestowal-order uses
+    // for chat tips and live-session gifts (see BestowalCoin.tsx). Items with
+    // no real sower (system content like Tribal Radio's own posts) have
+    // nobody to route the gift to.
+    if (!item.sower_id) {
+      toast({
+        title: 'Gift unavailable',
+        description: "This isn't linked to a sower yet — try bestowing on a seed or track instead.",
+        variant: 'destructive',
+      });
+      return;
+    }
+    const contextKind: GiftContextKind =
+      item.kind === 'radio_recorded' || item.kind === 'radio_live' ? 'radio_session' : 'live_session';
+    const result = await sendGift({
+      recipientId: item.sower_id,
+      amount,
+      contextKind,
+      contextId: item.id,
+      provider: 'nowpayments',
+      payCurrency: 'usdttrc20',
+      message: `Freewill gift · ${item.title}`,
+    });
+    if (result.success) {
+      setActionPanel(null);
+    }
+    // useGiftBestowal already toasts on failure and redirects to checkout on success.
   };
 
   const handleBestow = (item: FeedItem) => {
@@ -857,11 +889,46 @@ export default function TribalAliveFeedPage() {
       navigate(item.href);
       return;
     }
+
+    if (item.kind === 'music') {
+      // DJ tracks aren't marketplace products (no products.id exists for
+      // them) — buy them via the content-purchase pipeline, which resolves
+      // dj_music_tracks directly. This is already the working path used
+      // elsewhere in the app for the same content.
+      purchaseTrack(item.id);
+      return;
+    }
+
+    if (item.kind === 'radio_recorded') {
+      // A recorded broadcast session isn't a single priced track — bestowing
+      // on it is a tip to the host DJ, not a purchase, so it goes through the
+      // gift path. sower_id is resolved in radioRecItems via
+      // radio_automated_sessions -> radio_schedule.dj_id -> radio_djs.user_id;
+      // a session with no schedule/DJ link has nobody to send the gift to.
+      if (!item.sower_id) {
+        toast({
+          title: 'Not available yet',
+          description: "This session has no host on record to bestow on.",
+        });
+        return;
+      }
+      sendGift({
+        recipientId: item.sower_id,
+        amount: Number(item.price ?? 2),
+        contextKind: 'radio_session',
+        contextId: item.id,
+        provider: 'nowpayments',
+        payCurrency: 'usdttrc20',
+        message: `Bestowal · ${item.title}`,
+      });
+      return;
+    }
+
     addToBasket({
       id: item.id,
       title: item.title,
       price: Number(item.price ?? 2),
-      type: item.kind === 'music' || item.kind === 'radio_recorded' ? 'music' : item.kind,
+      type: item.kind,
       file_url: item.audio_url || undefined,
       cover_image_url: item.image || undefined,
       sower_id: item.sower_id || undefined,

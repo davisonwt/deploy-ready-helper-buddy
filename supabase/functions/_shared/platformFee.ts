@@ -28,6 +28,21 @@ export function buyerTotal(base: number): number {
   return round2(base + s2gFeeOn(base));
 }
 
+/**
+ * Whisperer share always comes out of the sower/recipient's base, never on top.
+ * `commissionPercent` is the whisperer's own configured rate (from
+ * `product_whisperer_assignments.commission_percent`) — an unrelated number
+ * to the S2G admin fee rate, so it is required rather than defaulted.
+ */
+export function whisperShareFromBase(base: number, commissionPercent: number): number {
+  return round2(base * (Number(commissionPercent || 0) / 100));
+}
+
+/** What the sower/recipient nets after an (optional) whisperer share comes out of their base. */
+export function sowerNet(base: number, whisperShare: number = 0): number {
+  return round2(base - whisperShare);
+}
+
 export function priceBreakdown(price: unknown) {
   const base = requirePrice(price);
   const s2gFee = s2gFeeOn(base);

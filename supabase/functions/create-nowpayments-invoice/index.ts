@@ -7,6 +7,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 import { corsHeaders } from "npm:@supabase/supabase-js@2/cors";
 import { buildDistributionData } from "../_shared/distribution.ts";
 import { resolveSowerPayout } from "../_shared/resolveSowerPayout.ts";
+import { priceBreakdown } from "../_shared/platformFee.ts";
 
 const NOWPAYMENTS_API = "https://api.nowpayments.io/v1";
 
@@ -15,6 +16,11 @@ interface RequestPayload {
   pocketsCount: number;
   payCurrency: string; // e.g. 'usdttrc20', 'btc', 'eth'
   message?: string;
+  /**
+   * Accepted but ignored — the "grower" cut this fed was deleted along with
+   * the deduction fee model (see spec-unified-fee-model.md). Existing
+   * clients still send it; safe to remove from callers separately.
+   */
   growerId?: string | null;
   redirectBaseUrl?: string;
 }
@@ -82,10 +88,13 @@ Deno.serve(async (req) => {
     }
     const baseAmount = round2(pocketPrice * payload.pocketsCount);
 
-    // --- Processor fee on top (paid by buyer) --------------------------------
+    // --- S2G's 15% fee is added on top of the base, paid by the bestower -----
+    const pricing = priceBreakdown(baseAmount);
+
+    // --- Processor fee on top of the S2G-inclusive total (paid by buyer) -----
     const feePct = Number(Deno.env.get("NOWPAYMENTS_FEE_PCT") ?? "0.01");
-    const processorFee = ceil2(baseAmount * (Number.isFinite(feePct) ? feePct : 0.01));
-    const buyerTotal = round2(baseAmount + processorFee);
+    const processorFee = ceil2(pricing.total * (Number.isFinite(feePct) ? feePct : 0.01));
+    const buyerTotal = round2(pricing.total + processorFee);
 
     // --- Resolve sower's preferred payout wallet (shared deterministic resolver) ---
     const wallet = await resolveSowerPayout(service, orchard.user_id);
@@ -103,9 +112,8 @@ Deno.serve(async (req) => {
       orchardId: orchard.id,
       orchardTitle: orchard.title,
       orchardUserId: orchard.user_id,
-      totalAmount: baseAmount, // 15% S2G fee is on base, NOT on processor fee
+      baseAmount, // the sower's set price — S2G's 15% is added on top, not deducted
       currency,
-      growerUserId: payload.growerId ?? null,
       distributionMode: productType === "digital" ? "automatic" : "manual",
       holdReason: null,
       orchardType,
@@ -191,6 +199,7 @@ Deno.serve(async (req) => {
       expiresAt: invoice.expiration_date ?? null,
       breakdown: {
         baseAmount,
+        s2gFee: pricing.s2gFee,
         processorFee,
         processorFeePct: feePct,
         buyerTotal,

@@ -8,11 +8,17 @@ import { buildDistributionData } from "../_shared/distribution.ts";
 import { paypalFetch } from "../_shared/paypal/client.ts";
 import { computeBuyerFee } from "../_shared/paypal/fees.ts";
 import { resolveSowerPayout } from "../_shared/resolveSowerPayout.ts";
+import { priceBreakdown } from "../_shared/platformFee.ts";
 
 interface RequestPayload {
   orchardId: string;
   pocketsCount: number;
   message?: string;
+  /**
+   * Accepted but ignored — the "grower" cut this fed was deleted along with
+   * the deduction fee model (see spec-unified-fee-model.md). Existing
+   * clients still send it; safe to remove from callers separately.
+   */
   growerId?: string | null;
   redirectBaseUrl?: string;
 }
@@ -92,10 +98,13 @@ Deno.serve(async (req) => {
     }
     const baseAmount = round2(pocketPrice * payload.pocketsCount);
 
-    // --- Processor fee on top (paid by BUYER — Sow2Grow golden rule) ---------
+    // --- S2G's 15% fee is added on top of the base, paid by the bestower -----
+    const pricing = priceBreakdown(baseAmount);
+
+    // --- Processor fee on top of the S2G-inclusive total (paid by BUYER) -----
     // PayPal 3.49% + $0.49 (cards or PayPal balance) is added on top of the
-    // base amount so the sower always receives 100% of base minus S2G's share.
-    const quote = computeBuyerFee("paypal", baseAmount);
+    // S2G-inclusive total so the sower always receives 100% of their base.
+    const quote = computeBuyerFee("paypal", pricing.total);
     const processorFee = quote.fee;
     const feePct = quote.feePct;
     const buyerTotal = quote.total;
@@ -124,9 +133,8 @@ Deno.serve(async (req) => {
       orchardId: orchard.id,
       orchardTitle: orchard.title,
       orchardUserId: orchard.user_id,
-      totalAmount: baseAmount, // 15% S2G fee is on base, NOT on processor fee
+      baseAmount, // the sower's set price — S2G's 15% is added on top, not deducted
       currency,
-      growerUserId: payload.growerId ?? null,
       distributionMode: productType === "digital" ? "automatic" : "manual",
       holdReason: null,
       orchardType,
@@ -238,6 +246,7 @@ Deno.serve(async (req) => {
       approveUrl: approveLink?.href ?? null,
       breakdown: {
         baseAmount,
+        s2gFee: pricing.s2gFee,
         processorFee,
         processorFeePct: feePct,
         buyerTotal,

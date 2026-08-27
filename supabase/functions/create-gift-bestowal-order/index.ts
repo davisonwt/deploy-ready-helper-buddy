@@ -10,6 +10,7 @@ import { corsHeaders } from "npm:@supabase/supabase-js@2/cors";
 import { resolveSowerPayout } from "../_shared/resolveSowerPayout.ts";
 import { paypalFetch } from "../_shared/paypal/client.ts";
 import { computeBuyerFee } from "../_shared/paypal/fees.ts";
+import { priceBreakdown, s2gFeeOn, S2G_FEE_RATE } from "../_shared/platformFee.ts";
 
 const NOWPAYMENTS_API = "https://api.nowpayments.io/v1";
 
@@ -18,7 +19,7 @@ type Provider = "nowpayments" | "paypal";
 
 interface RequestPayload {
   recipientId: string;
-  amount: number;                 // base amount the recipient should net (before processor fee)
+  amount: number;                 // the value the giver set — recipient nets 100% of this; S2G's 15% and the processor fee are added on top of what the giver pays
   contextKind: GiftContext;
   contextId: string;              // session id, schedule id, or chat room id
   provider: Provider;
@@ -92,8 +93,10 @@ Deno.serve(async (req) => {
 
     // --- Pricing -------------------------------------------------------------
     const baseAmount = round2(payload.amount);
-    // Buyer pays the processor fee — Sow2Grow golden rule.
-    const quote = computeBuyerFee(payload.provider, baseAmount);
+    // S2G's 15% fee is added on top of the base, paid by the giver.
+    const pricing = priceBreakdown(baseAmount);
+    // Processor fee is on top of the S2G-inclusive total — Sow2Grow golden rule.
+    const quote = computeBuyerFee(payload.provider, pricing.total);
     const feePct = quote.feePct;
     const processorFee = quote.fee;
     const buyerTotal = quote.total;
@@ -108,10 +111,12 @@ Deno.serve(async (req) => {
       }, 409);
     }
 
-    // --- Build slim distribution snapshot (no orchard, no grower) -----------
+    // --- Build slim distribution snapshot (no orchard, no whisperer) --------
+    // No whisperer applies to a gift/tip: it isn't attached to a seed, and
+    // there is no product/orchard/book link to resolve one from.
     const distribution = await buildGiftDistribution(service, {
       recipientUserId: payload.recipientId,
-      totalAmount: baseAmount,
+      baseAmount,
       currency,
     });
 
@@ -198,7 +203,7 @@ Deno.serve(async (req) => {
         invoiceId: invoice.id,
         invoiceUrl: invoice.invoice_url,
         expiresAt: invoice.expiration_date ?? null,
-        breakdown: { baseAmount, processorFee, processorFeePct: feePct, buyerTotal, currency: "USD" },
+        breakdown: { baseAmount, s2gFee: pricing.s2gFee, processorFee, processorFeePct: feePct, buyerTotal, currency: "USD" },
       });
     }
 
@@ -254,7 +259,7 @@ Deno.serve(async (req) => {
       provider: "paypal",
       orderId: data.id,
       approveUrl: approveLink?.href ?? null,
-      breakdown: { baseAmount, processorFee, processorFeePct: feePct, buyerTotal, currency: "USD" },
+      breakdown: { baseAmount, s2gFee: pricing.s2gFee, processorFee, processorFeePct: feePct, buyerTotal, currency: "USD" },
     });
   } catch (err) {
     console.error("create-gift-bestowal-order error", err);
@@ -263,20 +268,18 @@ Deno.serve(async (req) => {
 });
 
 // ---------------------------------------------------------------------------
-// Slim distribution snapshot for gifts (no orchard, no grower).
+// Slim distribution snapshot for gifts (no orchard, no whisperer).
 // Same shape as buildDistributionData so dispatchPayouts works unchanged.
 // ---------------------------------------------------------------------------
 
 interface GiftDistInput {
   recipientUserId: string;
-  totalAmount: number;
+  /** The value the giver set / recipient is owed — NOT grossed up. */
+  baseAmount: number;
   currency: string;
 }
 
 async function buildGiftDistribution(supabase: SupabaseClient, ctx: GiftDistInput) {
-  const tithingPercent = clamp(Number(Deno.env.get("BESTOWAL_TITHING_PERCENT") ?? "0.15"));
-  const sowerPercent = clamp(1 - tithingPercent);
-
   const { data: wallets } = await supabase
     .from("organization_wallets")
     .select("wallet_name, wallet_address")
@@ -288,22 +291,20 @@ async function buildGiftDistribution(supabase: SupabaseClient, ctx: GiftDistInpu
   if (!byName.s2gholding) throw new Error("Holding wallet (s2gholding) is not configured");
   if (!byName.s2gbestow) throw new Error("Tithing wallet (s2gbestow) is not configured");
 
-  const total = round2(ctx.totalAmount);
-  const tithing = round2(total * tithingPercent);
-  const sower = round2(total - tithing);
+  // The recipient's amount is the full base — S2G's 15% was already
+  // collected on top of the giver's charge at checkout, not deducted here.
+  const base = round2(ctx.baseAmount);
+  const tithing = s2gFeeOn(base);
 
   return {
-    total_amount: total,
+    total_amount: base,
     currency: ctx.currency,
     holding_wallet: byName.s2gholding,
     tithing_admin_wallet: byName.s2gbestow,
     tithing_admin_amount: tithing,
     sower_wallet: null,                  // resolved via bestowals.payout_destination
-    sower_amount: sower,
+    sower_amount: base,
     sower_user_id: ctx.recipientUserId,
-    grower_wallet: null,
-    grower_amount: null,
-    grower_user_id: null,
     mode: "automatic",
     hold_reason: null,
     orchard_type: null,
@@ -311,7 +312,8 @@ async function buildGiftDistribution(supabase: SupabaseClient, ctx: GiftDistInpu
     proof_sent_at: null,
     manual_release_at: null,
     manual_release_user_id: null,
-    percentages: { holding: 1, tithing_admin: tithingPercent, sower: sowerPercent },
+    percentages: { holding: 1, tithing_admin: S2G_FEE_RATE, sower: 1 },
+    fee_model: "gross_up",
     generated_at: new Date().toISOString(),
   };
 }
@@ -333,11 +335,4 @@ function json(body: unknown, status = 200): Response {
 }
 function round2(n: number): number {
   return Math.round((n + Number.EPSILON) * 100) / 100;
-}
-function ceil2(n: number): number {
-  return Math.ceil((n - Number.EPSILON) * 100) / 100;
-}
-function clamp(n: number): number {
-  if (!Number.isFinite(n)) return 0;
-  return Math.min(1, Math.max(0, n));
 }

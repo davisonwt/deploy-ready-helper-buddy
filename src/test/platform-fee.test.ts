@@ -6,6 +6,7 @@ import {
   s2gFeeOn,
   buyerTotal,
   whisperShareFromBase,
+  sowerNet,
   priceBreakdown,
 } from '@/lib/pricing/platformFee';
 
@@ -46,20 +47,37 @@ describe('platformFee', () => {
   it('computes the whisperer share out of the base, never on top of the total', () => {
     const base = 2;
     const whisperShare = whisperShareFromBase(base, S2G_FEE_PERCENT);
-    const sowerNet = round2(base - whisperShare);
+    const net = sowerNet(base, whisperShare);
     const total = buyerTotal(base);
 
     expect(whisperShare).toBe(0.3);
-    expect(sowerNet).toBe(1.7);
+    expect(net).toBe(1.7);
     expect(total).toBe(2.3);
     // S2G's cut plus the whisperer's cut plus the sower's net always equals
     // exactly what the buyer paid.
-    expect(round2(s2gFeeOn(base) + whisperShare + sowerNet)).toBe(total);
+    expect(round2(s2gFeeOn(base) + whisperShare + net)).toBe(total);
   });
 
   it('falls back entirely to the sower when nobody is credited', () => {
     const base = 2;
-    const sowerNet = base; // no whisperer share taken out
-    expect(round2(s2gFeeOn(base) + sowerNet)).toBe(buyerTotal(base));
+    const net = sowerNet(base); // no whisperer share taken out
+    expect(net).toBe(base);
+    expect(round2(s2gFeeOn(base) + net)).toBe(buyerTotal(base));
+  });
+
+  it('a $10 gift or orchard bestowal with no whisperer nets the recipient the full base', () => {
+    const base = 10;
+    expect(sowerNet(base)).toBe(10);
+    expect(s2gFeeOn(base)).toBe(1.5);
+    expect(buyerTotal(base)).toBe(11.5);
+  });
+
+  it('a $10 seed with a 20% whisperer splits sower/whisperer/S2G correctly', () => {
+    const base = 10;
+    const whisperShare = whisperShareFromBase(base, 20);
+    expect(whisperShare).toBe(2);
+    expect(sowerNet(base, whisperShare)).toBe(8);
+    expect(s2gFeeOn(base)).toBe(1.5);
+    expect(buyerTotal(base)).toBe(11.5);
   });
 });

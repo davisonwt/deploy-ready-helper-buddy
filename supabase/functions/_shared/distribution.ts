@@ -1,5 +1,6 @@
 import { BinancePayClient } from "./binance.ts";
 import { SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
+import { S2G_FEE_RATE, s2gFeeOn } from "./platformFee.ts";
 
 export interface DistributionData {
   total_amount: number;
@@ -9,10 +10,7 @@ export interface DistributionData {
   tithing_admin_amount: number;
   sower_wallet: string;
   sower_amount: number;
-  grower_wallet?: string | null;
-  grower_amount?: number | null;
   sower_user_id?: string;
-  grower_user_id?: string | null;
   mode: "automatic" | "manual";
   hold_reason?: string | null;
   orchard_type?: string | null;
@@ -24,8 +22,19 @@ export interface DistributionData {
     holding: number;
     tithing_admin: number;
     sower: number;
-    grower?: number;
   };
+  /**
+   * Which fee convention produced sower_amount/tithing_admin_amount on this
+   * row. New rows are always 'gross_up' (base(x)=sower's value, S2G's 15% is
+   * added on top of the buyer's charge). Rows without this field, or marked
+   * 'deduction', predate the unified fee model and were computed by taking a
+   * tithing % out of the sower's amount instead — see spec-unified-fee-model.md.
+   * Nothing currently reads this at payout time (dispatchPayouts/
+   * executeDistribution replay whatever is already stored here rather than
+   * recomputing), but it's kept for audit/reporting and so a future payout
+   * change can't silently misinterpret a legacy row.
+   */
+  fee_model?: "gross_up" | "deduction";
   generated_at: string;
 }
 
@@ -33,9 +42,9 @@ export interface DistributionContext {
   orchardId: string;
   orchardTitle: string;
   orchardUserId: string;
-  totalAmount: number;
+  /** The value the sower set (their price) — NOT grossed up. */
+  baseAmount: number;
   currency: string;
-  growerUserId?: string | null;
   distributionMode?: "automatic" | "manual";
   holdReason?: string | null;
   orchardType?: string | null;
@@ -43,26 +52,11 @@ export interface DistributionContext {
   productType?: string | null;
 }
 
-const DEFAULT_TITHING_PERCENT = Number(
-  Deno.env.get("BESTOWAL_TITHING_PERCENT") ?? "0.15",
-);
-
-const DEFAULT_GROWER_PERCENT = Number(
-  Deno.env.get("BESTOWAL_GROWER_PERCENT") ?? "0.10",
-);
-
 export async function buildDistributionData(
   supabase: SupabaseClient,
   context: DistributionContext,
 ): Promise<DistributionData> {
   const distributionMode = context.distributionMode ?? "automatic";
-  const tithingPercent = clampPercentage(DEFAULT_TITHING_PERCENT);
-  const growerPercent = context.growerUserId
-    ? clampPercentage(DEFAULT_GROWER_PERCENT)
-    : 0;
-  const sowerPercent = clampPercentage(
-    1 - tithingPercent - growerPercent,
-  );
 
   const wallets = await fetchOrganizationWallets(supabase, [
     "s2gholding",
@@ -89,21 +83,14 @@ export async function buildDistributionData(
     );
   }
 
-  const growerWallet = context.growerUserId
-    ? await resolveUserWallet(supabase, context.growerUserId)
-    : null;
-
-  const totalAmount = roundAmount(context.totalAmount);
-  const tithingAmount = roundAmount(totalAmount * tithingPercent);
-  const growerAmount = growerPercent > 0
-    ? roundAmount(totalAmount * growerPercent)
-    : 0;
-  const sowerAmount = roundAmount(
-    totalAmount - tithingAmount - growerAmount,
-  );
+  // The sower's amount is the full base they set — S2G's 15% was already
+  // collected on top of the buyer's charge at checkout, not deducted here.
+  const baseAmount = roundAmount(context.baseAmount);
+  const tithingAmount = s2gFeeOn(baseAmount);
+  const sowerAmount = baseAmount;
 
   return {
-    total_amount: totalAmount,
+    total_amount: baseAmount,
     currency: context.currency,
     holding_wallet: wallets.s2gholding,
     tithing_admin_wallet: wallets.s2gbestow,
@@ -111,9 +98,6 @@ export async function buildDistributionData(
     sower_wallet: sowerWallet,
     sower_amount: sowerAmount,
     sower_user_id: context.orchardUserId,
-    grower_wallet: growerWallet,
-    grower_amount: growerAmount || null,
-    grower_user_id: context.growerUserId ?? null,
     mode: distributionMode,
     hold_reason: context.holdReason ?? null,
     orchard_type: context.orchardType ?? null,
@@ -123,10 +107,10 @@ export async function buildDistributionData(
     manual_release_user_id: null,
     percentages: {
       holding: 1,
-      tithing_admin: tithingPercent,
-      sower: sowerPercent,
-      grower: growerPercent || undefined,
+      tithing_admin: S2G_FEE_RATE,
+      sower: 1,
     },
+    fee_model: "gross_up",
     generated_at: new Date().toISOString(),
   };
 }
@@ -190,33 +174,6 @@ export async function executeDistribution(
         distribution.sower_user_id,
         distribution.sower_wallet,
         distribution.sower_amount,
-      );
-    }
-  }
-
-  if (distribution.grower_wallet && (distribution.grower_amount ?? 0) > 0) {
-    const response = await executeTransfer(binanceClient, {
-      bestowalId,
-      suffix: "grower",
-      wallet: distribution.grower_wallet,
-      amount: distribution.grower_amount ?? 0,
-      currency: distribution.currency,
-      remark: "Bestowal distribution - product whispers",
-    });
-
-    transfers.push({
-      payee: distribution.grower_wallet,
-      amount: distribution.grower_amount ?? 0,
-      currency: distribution.currency,
-      response,
-    });
-
-    if (distribution.grower_user_id) {
-      await incrementWalletBalance(
-        supabase,
-        distribution.grower_user_id,
-        distribution.grower_wallet,
-        distribution.grower_amount ?? 0,
       );
     }
   }
@@ -310,11 +267,6 @@ async function executeTransfer(
     currency: params.currency,
     remark: params.remark,
   });
-}
-
-function clampPercentage(value: number): number {
-  if (Number.isNaN(value)) return 0;
-  return Math.min(Math.max(value, 0), 1);
 }
 
 function roundAmount(value: number): number {
@@ -432,21 +384,6 @@ export async function dispatchPayouts(
       destination: snapshot.payout_destination,
       currency: snapshot.payout_currency ?? distribution.currency,
       amount: distribution.sower_amount,
-    });
-  }
-
-  // Grower leg — same rail as sower for v1.
-  if (
-    distribution.grower_wallet &&
-    (distribution.grower_amount ?? 0) > 0 &&
-    snapshot.payout_destination
-  ) {
-    legs.push({
-      role: "grower",
-      userId: distribution.grower_user_id ?? null,
-      destination: distribution.grower_wallet,
-      currency: distribution.currency,
-      amount: distribution.grower_amount ?? 0,
     });
   }
 

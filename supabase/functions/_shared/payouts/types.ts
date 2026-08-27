@@ -1,11 +1,11 @@
 // Shared types for the payout strategy pattern.
-// Each strategy dispatches ONE leg (sower / tithing / grower) for ONE bestowal.
+// Each strategy dispatches ONE leg (sower / tithing) for ONE bestowal.
 
 import type { SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 
 export type PayoutProvider = "nowpayments" | "paypal" | "binance" | "manual";
 
-export type PayoutLegRole = "sower" | "tithing" | "grower";
+export type PayoutLegRole = "sower" | "tithing";
 
 export interface PayoutLeg {
   role: PayoutLegRole;
