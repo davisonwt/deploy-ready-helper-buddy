@@ -13,7 +13,6 @@ import {
   OnboardingSecurityPage,
   OnboardingPayoutPage,
   ForgotPasswordPage,
-  CommissionDashboard,
   GamificationDashboard,
   AdvancedSearchPage,
   MyTribePage,
@@ -504,9 +503,11 @@ const AppRoutes = () => (
     } />
     <Route path="/payment-cancelled" element={<PaymentCancelledPage />} />
     <Route path="/payment-success" element={<PaymentSuccessPage />} />
-    <Route path="/commissions" element={
-      <ProtectedRoute><Layout><Suspense fallback={<LoadingFallback />}><CommissionDashboard /></Suspense></Layout></ProtectedRoute>
-    } />
+    {/* /commissions removed: fronted a "10% Commission Rate" badge for a
+        program that doesn't exist -- the real mechanic (1% of S2G's fee to
+        whoever invited a sower) has never paid anyone and isn't wired to a
+        payout. Data and the underlying trigger are untouched; only this
+        page is down. See spec-unified-fee-model.md follow-up discussion. */}
     <Route path="/my-tribe" element={
       <ProtectedRoute><Suspense fallback={<LoadingFallback />}><MyTribePage /></Suspense></ProtectedRoute>
     } />

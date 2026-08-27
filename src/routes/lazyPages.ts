@@ -38,7 +38,6 @@ export { default as ForgotPasswordPage } from '@/pages/ForgotPasswordPage';
 export const EnhancedAnalyticsDashboard = lazy(() => import('@/components/admin/EnhancedAnalyticsDashboard'));
 export const UserManagementDashboard = lazy(() => import('@/components/admin/UserManagementDashboard'));
 export const ContentModerationDashboard = lazy(() => import('@/components/admin/ContentModerationDashboard'));
-export const CommissionDashboard = lazy(() => import('@/components/marketing/CommissionDashboard'));
 export const GamificationDashboard = lazy(() => import('@/components/gamification/GamificationDashboard'));
 export const AdvancedSearchPage = lazy(() => import('@/pages/AdvancedSearchPage'));
 export const MyTribePage = lazy(() => import('@/pages/MyTribePage'));

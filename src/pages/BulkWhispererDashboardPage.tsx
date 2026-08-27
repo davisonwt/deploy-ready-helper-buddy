@@ -239,7 +239,7 @@ export default function BulkWhispererDashboardPage() {
         <Card className="p-4 mb-6 border-dashed">
           <p className="text-sm text-muted-foreground">
             You're not registered as a whisperer yet.{" "}
-            <Link to="/commissions" className="text-primary underline">
+            <Link to="/become-a-whisperer" className="text-primary underline">
               Set up your whisperer profile
             </Link>{" "}
             to start earning.
