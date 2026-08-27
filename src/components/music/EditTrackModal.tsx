@@ -86,16 +86,8 @@ export function EditTrackModal({ track, isOpen, onClose, onSuccess }: EditTrackM
     try {
       setSaving(true);
 
-      // Check if it's an album (from track.tags)
-      const isAlbum = track.tags?.some((tag: string) => 
-        tag.toLowerCase().includes('album') || 
-        tag.toLowerCase().includes('lp') || 
-        tag.toLowerCase().includes('ep')
-      ) || false;
-
-      // Validate: Single tracks must have minimum 2 USDC
-      if (!isAlbum && formData.bestow < 2.00) {
-        toast.error('Single music tracks require minimum 2 USDC');
+      if (!(formData.bestow > 0)) {
+        toast.error('Enter a price greater than 0');
         setSaving(false);
         return;
       }
@@ -229,33 +221,20 @@ export function EditTrackModal({ track, isOpen, onClose, onSuccess }: EditTrackM
           <div className="space-y-2">
             <Label htmlFor="price">
               Price (USDC) *
-              <span className="text-yellow-500 ml-2">(Minimum: 2 USDC for single tracks)</span>
             </Label>
             <Input
               id="price"
               type="number"
               step="0.01"
-              min="2.00"
+              min="0"
               value={formData.bestow}
               onChange={(e) => {
                 const newBestow = parseFloat(e.target.value) || 0;
-                // Check if it's a single track (not album)
-                const isAlbum = track?.tags?.some((tag: string) => 
-                  tag.toLowerCase().includes('album') || 
-                  tag.toLowerCase().includes('lp') || 
-                  tag.toLowerCase().includes('ep')
-                ) || false;
-                
-                if (!isAlbum && newBestow > 0 && newBestow < 2.00) {
-                  toast.error('Single music tracks require minimum 2 USDC');
-                  setFormData({ ...formData, bestow: 2.00 });
-                } else {
-                  setFormData({ ...formData, bestow: newBestow });
-                }
+                setFormData({ ...formData, bestow: newBestow });
               }}
             />
             <p className="text-xs text-muted-foreground">
-              Singles: minimum 2 USDC to you. Sow2Grow's 15% is added on top and carried by the bestower (they pay 2.30). A whisperer share comes out of your 2 USDC. Albums can have custom prices.
+              You set the price. Sow2Grow's 15% is added on top and carried by the bestower — e.g. a $2 price is charged as $2.30. A whisperer share, when one made the sale, comes out of your price.
             </p>
           </div>
 

@@ -13,7 +13,7 @@ import { corsHeaders } from "npm:@supabase/supabase-js@2/cors";
 import { resolveSowerPayout } from "../_shared/resolveSowerPayout.ts";
 import { paypalFetch } from "../_shared/paypal/client.ts";
 import { computeBuyerFee } from "../_shared/paypal/fees.ts";
-import { musicSingleBreakdown } from "../_shared/musicPricing.ts";
+import { priceBreakdown } from "../_shared/platformFee.ts";
 
 const NOWPAYMENTS_API = "https://api.nowpayments.io/v1";
 
@@ -73,7 +73,6 @@ Deno.serve(async (req) => {
     const resolved = await resolveContent(service, payload.contentType, payload.contentId, payload.metadata ?? {});
     if ("error" in resolved) return json(resolved, resolved.status ?? 400);
     const { sellerId, basePrice, label } = resolved;
-    const platformFeeOnTop = "platformFee" in resolved ? Number(resolved.platformFee ?? 0) : 0;
 
     if (buyerId === sellerId) return json({ error: "cannot_purchase_own_content" }, 400);
     if (!Number.isFinite(basePrice) || basePrice <= 0) {
@@ -81,12 +80,13 @@ Deno.serve(async (req) => {
     }
 
     // --- Pricing -------------------------------------------------------------
-    // Golden rule: the bestower carries Sow2Grow's fee and the processor fee.
-    // For music singles the 15% S2G fee is added ON TOP of the sower's price;
-    // the whisperer share (if any) is later taken OUT OF the sower's base.
-    const baseAmount = round2(basePrice);
-    const platformFee = round2(platformFeeOnTop);
-    const chargeableAmount = round2(baseAmount + platformFee);
+    // Golden rule: every purchase, of every content type, is charged as the
+    // seller's price + Sow2Grow's 15% fee, added ON TOP and carried by the
+    // buyer. The whisperer share (if any) is later taken OUT OF the base.
+    const pricing = priceBreakdown(basePrice);
+    const baseAmount = pricing.base;
+    const platformFee = pricing.s2gFee;
+    const chargeableAmount = pricing.total;
     const quote = computeBuyerFee(payload.provider, chargeableAmount);
     const feePct = quote.feePct;
     const processorFee = quote.fee;
@@ -229,7 +229,7 @@ Deno.serve(async (req) => {
 // ----------------------------------------------------------------------------
 
 type ResolvedContent =
-  | { sellerId: string; basePrice: number; label: string; platformFee?: number }
+  | { sellerId: string; basePrice: number; label: string }
   | { error: string; message?: string; status?: number };
 
 async function resolveContent(
@@ -316,12 +316,9 @@ async function resolveContent(
     if (data.is_public === false) return { error: "content_not_available", status: 403 };
     const sellerId = (data as any).radio_djs?.user_id;
     if (!sellerId) return { error: "content_not_found", status: 404 };
-    // Single = $2 to the sower (floor), Sow2Grow's 15% added on top.
-    const { base, s2gFee } = musicSingleBreakdown(data.price);
     return {
       sellerId,
-      basePrice: base,
-      platformFee: s2gFee,
+      basePrice: Number(data.price ?? 0),
       label: `Music: ${data.track_title ?? "track"}`,
     };
   }

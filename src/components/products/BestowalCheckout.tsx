@@ -15,7 +15,7 @@ import { WHISPER_SHARE_RATE, WHISPER_SHARE_PERCENT, WHISPER_FALLBACK_NOTE, WHISP
 import { getWhispererCredit } from '@/lib/whisperer/attribution';
 
 import { invokePaymentFunction } from '@/lib/payments/invokeFunction';
-import { isMusicProduct, musicSingleBreakdown } from '@/lib/pricing/music';
+import { s2gFeeOn, round2 } from '@/lib/pricing/platformFee';
 
 export default function BestowalCheckout() {
   const { basketItems, removeFromBasket, totalAmount } = useProductBasket();
@@ -113,29 +113,24 @@ export default function BestowalCheckout() {
     );
   }
 
-  const isMusicItem = (item: any) => isMusicProduct(item);
+  // Platform fee applies to every line, regardless of product type — the
+  // sower sets the price (item.price), Sow2Grow's 15% is added on top.
   const baseSubtotal = basketItems.reduce(
-    (sum: number, item: any) => sum + (isMusicItem(item)
-      ? musicSingleBreakdown().base
-      : Number(item.price || 0)) * Math.max(1, Number(item.quantity ?? 1)),
+    (sum: number, item: any) => sum + Number(item.price || 0) * Math.max(1, Number(item.quantity ?? 1)),
     0,
   );
-  const s2gMusicFee = basketItems.reduce(
-    (sum: number, item: any) => sum + (isMusicItem(item)
-      ? musicSingleBreakdown().s2gFee * Math.max(1, Number(item.quantity ?? 1))
-      : 0),
+  const s2gFee = basketItems.reduce(
+    (sum: number, item: any) => sum + s2gFeeOn(Number(item.price || 0)) * Math.max(1, Number(item.quantity ?? 1)),
     0,
   );
-  const checkoutTotal = baseSubtotal + s2gMusicFee;
+  const checkoutTotal = round2(baseSubtotal + s2gFee);
   const feeQuote = quoteFee(provider, checkoutTotal);
 
   // Only lines credited to an ACTIVE whisperer carry a whisper share; the rest
   // of the 15% stays with the sower.
   const whisperedSubtotal = basketItems.reduce(
     (sum: number, it: any) =>
-      sum + (credited[it.id]
-        ? (isMusicItem(it) ? musicSingleBreakdown().base : Number(it.price || 0)) * Math.max(1, Number(it.quantity ?? 1))
-        : 0),
+      sum + (credited[it.id] ? Number(it.price || 0) * Math.max(1, Number(it.quantity ?? 1)) : 0),
     0,
   );
   const creditedNames = Array.from(
@@ -178,7 +173,7 @@ export default function BestowalCheckout() {
               </div>
               <div className="text-right">
                 <p className="font-semibold">
-                  ${(isMusicItem(item) ? musicSingleBreakdown().base : Number(item.price || 0)).toFixed(2)}
+                  ${Number(item.price || 0).toFixed(2)}
                 </p>
               </div>
               <Button size="icon" variant="ghost" onClick={() => removeFromBasket(item.id)} className="flex-shrink-0">
@@ -195,12 +190,10 @@ export default function BestowalCheckout() {
             <span>Subtotal</span>
             <span>${baseSubtotal.toFixed(2)}</span>
           </div>
-          {s2gMusicFee > 0 && (
-            <div className="flex justify-between text-muted-foreground">
-              <span>Sow2Grow Fee (15% added on top)</span>
-              <span className="text-accent">${s2gMusicFee.toFixed(2)}</span>
-            </div>
-          )}
+          <div className="flex justify-between text-muted-foreground">
+            <span>Sow2Grow Fee (15% added on top)</span>
+            <span className="text-accent">${s2gFee.toFixed(2)}</span>
+          </div>
           <div className="flex justify-between text-muted-foreground">
             <span>To Sowers</span>
             <span className="text-primary">${creatorShare.toFixed(2)}</span>

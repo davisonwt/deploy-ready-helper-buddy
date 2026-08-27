@@ -1,4 +1,4 @@
-﻿import { useState, useEffect } from 'react';
+﻿import { useState } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
@@ -29,22 +29,6 @@ export default function LibraryUploadForm() {
     preview_duration_seconds: 30
   });
 
-  // Check if current type is music and if it's a single track (not album)
-  const isSingleMusic = formData.type === 'music' && 
-    (!formData.tags.toLowerCase().includes('album') && 
-     !formData.tags.toLowerCase().includes('lp') &&
-     !formData.tags.toLowerCase().includes('ep'));
-
-  // Update bestow when type changes to music (single tracks default to 2 USDC, but sowers can set higher)
-  useEffect(() => {
-    if (isSingleMusic && formData.bestow === 0 && !formData.is_giveaway) {
-      setFormData(prev => ({ ...prev, bestow: 2.00 }));
-    }
-    // Ensure minimum 2 USDC for single music tracks if bestow is set but below minimum
-    if (isSingleMusic && formData.bestow > 0 && formData.bestow < 2.00 && !formData.is_giveaway) {
-      setFormData(prev => ({ ...prev, bestow: 2.00 }));
-    }
-  }, [formData.type, formData.tags, formData.is_giveaway]);
   const [coverImage, setCoverImage] = useState<File | null>(null);
   const [mainFile, setMainFile] = useState<File | null>(null);
   const [previewFile, setPreviewFile] = useState<File | null>(null);
@@ -65,16 +49,6 @@ export default function LibraryUploadForm() {
     if (!formData.is_giveaway && (!formData.bestow || formData.bestow <= 0)) {
       toast.error('Please set a bestowal value OR enable giveaway option');
       return;
-    }
-
-    // Validate: Single music tracks must have minimum 2 USDC
-    if (!formData.is_giveaway && formData.type === 'music' && formData.bestow > 0) {
-      const tagsArray = formData.tags.split(',').map(t => t.trim().toLowerCase()).filter(Boolean);
-      const isAlbum = tagsArray.some(tag => tag.includes('album') || tag.includes('lp') || tag.includes('ep'));
-      if (!isAlbum && formData.bestow < 2.00) {
-        toast.error('Single music tracks require a minimum bestowal value of 2 USDC');
-        return;
-      }
     }
 
     // Validate: If giveaway, must have limit
@@ -163,19 +137,7 @@ export default function LibraryUploadForm() {
           description: formData.description,
           type: formData.type,
           category: formData.category,
-          price: (() => {
-            if (formData.is_giveaway) return 0;
-            // Single music tracks: ensure minimum 2 USDC, but allow sowers to set higher
-            if (formData.type === 'music') {
-              const tagsArray = formData.tags.split(',').map(t => t.trim().toLowerCase()).filter(Boolean);
-              const isAlbum = tagsArray.some(tag => tag.includes('album') || tag.includes('lp') || tag.includes('ep'));
-              if (!isAlbum) {
-                // Default to 2 USDC if not set, otherwise use sower's bestow (must be >= 2)
-                return formData.bestow >= 2.00 ? formData.bestow : 2.00;
-              }
-            }
-            return formData.bestow;
-          })(),
+          price: formData.is_giveaway ? 0 : formData.bestow,
           file_url: fileUrl.publicUrl,
           preview_url: previewUrl,
           cover_image_url: coverUrl,
@@ -305,34 +267,23 @@ export default function LibraryUploadForm() {
                   <div>
                     <Label htmlFor='bestow' className='text-white'>
                       Bestowal Value (USDC) *
-                      {isSingleMusic && (
-                        <span className='text-yellow-400 ml-2'>(Minimum: 2 USDC for single tracks)</span>
-                      )}
                     </Label>
                     <Input
                       id='bestow'
                       type='number'
                       step='0.01'
-                      min={isSingleMusic ? '2.00' : '0.01'}
+                      min='0.01'
                       required={!formData.is_giveaway}
                       value={formData.bestow}
                       onChange={(e) => {
                         const newBestow = parseFloat(e.target.value) || 0;
-                        // Enforce minimum 2 USDC for single music tracks
-                        if (isSingleMusic && newBestow > 0 && newBestow < 2.00) {
-                          toast.error('Single music tracks require minimum 2 USDC');
-                          setFormData({ ...formData, bestow: 2.00 });
-                        } else {
-                          setFormData({ ...formData, bestow: newBestow });
-                        }
+                        setFormData({ ...formData, bestow: newBestow });
                       }}
                       className='bg-white/20 border-white/30 text-white'
-                      placeholder={isSingleMusic ? '2.00 (minimum)' : '0.00'}
+                      placeholder='0.00'
                     />
                     <p className='text-white/70 text-xs mt-1'>
-                      {isSingleMusic 
-                        ? 'Single music tracks require minimum 2 USDC. You can set a higher bestowal value if desired. Albums can have custom prices.'
-                        : 'Amount growers must bestow to access this item. Minimum $0.01 USDC required.'}
+                      Amount growers must bestow to access this item. Sow2Grow's 15% is added on top and carried by the bestower.
                     </p>
                   </div>
                 )}

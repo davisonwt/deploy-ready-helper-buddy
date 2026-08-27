@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { ArrowLeft, Home, Loader2, Play, Pause, Heart, Download } from 'lucide-react';
 import { toast } from 'sonner';
-import { musicSingleBreakdown } from '@/lib/pricing/music';
+import { priceBreakdown } from '@/lib/pricing/platformFee';
 
 const PREVIEW_SECONDS = 40;
 const PRIVATE_BUCKETS = ['music-tracks', 'dj-music', 'premium-room'];
@@ -116,7 +116,7 @@ export default function MusicTrackDetailPage() {
     );
   }
 
-  const { base, s2gFee, total } = musicSingleBreakdown(track.price);
+  const { base, s2gFee, total } = priceBreakdown(track.price);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-950 to-slate-900 text-white p-4 md:p-8">

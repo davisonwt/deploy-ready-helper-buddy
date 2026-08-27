@@ -12,7 +12,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 import { corsHeaders } from "npm:@supabase/supabase-js@2/cors";
 import { paypalFetch } from "../_shared/paypal/client.ts";
 import { computeBuyerFee } from "../_shared/paypal/fees.ts";
-import { isMusicProduct, musicSingleBreakdown } from "../_shared/musicPricing.ts";
+import { priceBreakdown } from "../_shared/platformFee.ts";
 
 const NOWPAYMENTS_API = "https://api.nowpayments.io/v1";
 
@@ -102,7 +102,7 @@ Deno.serve(async (req) => {
 
     const { data: products, error: productsErr } = await service
       .from("products")
-      .select("id, title, price, sower_id, status, type, category, file_url, music_genre")
+      .select("id, title, price, sower_id, status")
       .in("id", productIds);
     if (productsErr || !products) {
       console.error("products lookup failed", productsErr);
@@ -124,7 +124,13 @@ Deno.serve(async (req) => {
       whisperer_user_id: string | null;
       attribution_type: string | null;
       commission_percent: number | null;
-      is_music: boolean;
+      /**
+       * Every line this function writes is grossed up (base + 15%) — lets
+       * finalize_basket_order distinguish this snapshot shape from a legacy
+       * one written before the platform-wide fee shipped, where only music
+       * lines were grossed up. See the finalize_basket_order migration.
+       */
+      fee_inclusive: true;
     }> = [];
 
     let subtotal = 0;
@@ -136,10 +142,11 @@ Deno.serve(async (req) => {
         return json({ error: "product_price_invalid", productId: item.productId }, 400);
       }
       const qty = Math.max(1, Math.floor(Number(item.qty ?? 1)));
-      const isMusic = isMusicProduct(p as any);
-      const musicPricing = isMusic ? musicSingleBreakdown(storedPrice) : null;
-      const unitPrice = musicPricing?.base ?? storedPrice;
-      const lineTotal = round2((musicPricing?.total ?? storedPrice) * qty);
+      // Platform fee applies to every product, of every type — the sower sets
+      // the price (storedPrice), Sow2Grow's 15% is added on top.
+      const pricing = priceBreakdown(storedPrice);
+      const unitPrice = pricing.base;
+      const lineTotal = round2(pricing.total * qty);
       subtotal = round2(subtotal + lineTotal);
 
       // --- Whisperer attribution (validated server-side) --------------------
@@ -195,7 +202,7 @@ Deno.serve(async (req) => {
         whisperer_user_id: whispererUserId,
         attribution_type: attributionType,
         commission_percent: commissionPercent,
-        is_music: isMusic,
+        fee_inclusive: true,
       });
     }
 

@@ -1,6 +1,6 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
-import { musicSingleBreakdown } from "../_shared/musicPricing.ts";
+import { priceBreakdown } from "../_shared/platformFee.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -96,11 +96,11 @@ serve(async (req) => {
       );
     }
 
-    // Pricing rule: a single is $2 to the sower (floor), Sow2Grow's 15% is
-    // added ON TOP and carried by the bestower. A whisperer share, when one is
-    // linked, comes out of the sower's base — never on top.
+    // Pricing rule: the sower sets the price. Sow2Grow's 15% is added ON TOP
+    // and carried by the bestower. A whisperer share, when one is linked,
+    // comes out of the sower's base — never on top.
     const { base: baseAmount, s2gFee: platformFee, total: totalAmount } =
-      musicSingleBreakdown(track.price);
+      priceBreakdown(track.price);
     const sow2growFee = 0;
 
     logStep("Calculated pricing", { baseAmount, platformFee, sow2growFee, totalAmount });
