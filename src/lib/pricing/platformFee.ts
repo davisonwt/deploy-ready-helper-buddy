@@ -64,3 +64,16 @@ export function priceBreakdown(price: unknown) {
   const s2gFee = s2gFeeOn(base);
   return { base, s2gFee, total: round2(base + s2gFee) };
 }
+
+/**
+ * Inverse of priceBreakdown: given a total that already has S2G's 15% baked
+ * in (e.g. an orchard's pocket_price, fee-inclusive by design rather than
+ * grossed up at checkout), back the fee back out rather than adding another
+ * 15% on top of it.
+ */
+export function backOutFee(grossTotal: unknown) {
+  const total = round2(requirePrice(grossTotal));
+  const base = round2(total / (1 + S2G_FEE_RATE));
+  const s2gFee = round2(total - base);
+  return { base, s2gFee, total };
+}

@@ -8,6 +8,7 @@ import {
   whisperShareFromBase,
   sowerNet,
   priceBreakdown,
+  backOutFee,
 } from '@/lib/pricing/platformFee';
 
 describe('platformFee', () => {
@@ -65,7 +66,7 @@ describe('platformFee', () => {
     expect(round2(s2gFeeOn(base) + net)).toBe(buyerTotal(base));
   });
 
-  it('a $10 gift or orchard bestowal with no whisperer nets the recipient the full base', () => {
+  it('a $10 gift with no whisperer nets the recipient the full base', () => {
     const base = 10;
     expect(sowerNet(base)).toBe(10);
     expect(s2gFeeOn(base)).toBe(1.5);
@@ -79,5 +80,17 @@ describe('platformFee', () => {
     expect(sowerNet(base, whisperShare)).toBe(8);
     expect(s2gFeeOn(base)).toBe(1.5);
     expect(buyerTotal(base)).toBe(11.5);
+  });
+
+  it('backs S2G\'s 15% out of an already fee-inclusive total (orchard pocket_price)', () => {
+    expect(backOutFee(11.5)).toEqual({ base: 10, s2gFee: 1.5, total: 11.5 });
+  });
+
+  it('backOutFee then priceBreakdown-style forward math agree on the same total', () => {
+    const grossTotal = 150; // e.g. a $150 orchard pocket
+    const { base, s2gFee } = backOutFee(grossTotal);
+    expect(round2(base + s2gFee)).toBe(grossTotal);
+    expect(base).toBeCloseTo(130.43, 2);
+    expect(s2gFee).toBeCloseTo(19.57, 2);
   });
 });

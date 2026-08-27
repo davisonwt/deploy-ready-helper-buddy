@@ -5,6 +5,7 @@ import { useCurrency } from "../hooks/useCurrency"
 import { useOrchards } from "../hooks/useOrchards"
 import { useFileUpload } from "../hooks/useFileUpload.jsx"
 import { supabase } from "../integrations/supabase/client"
+import { s2gFeeOn, buyerTotal } from "@/lib/pricing/platformFee"
 import { Button } from "../components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "../components/ui/card"
 import { Badge } from "../components/ui/badge"
@@ -13,7 +14,6 @@ import { Input } from "../components/ui/input"
 import { Textarea } from "../components/ui/textarea"
 import { QuickAIHelper } from "../components/ai/QuickAIHelper"
 import { OrchardMarketingAssistant } from "../components/ai/OrchardMarketingAssistant"
-import { QuickOrchardCreator } from "../components/orchards/QuickOrchardCreator"
 import EnhancedImageUpload from "../components/upload/EnhancedImageUpload"
 import { 
   Plus, 
@@ -515,9 +515,9 @@ const fetchOrchardById = async (oid) => {
       // For full value orchards, use the specified number of pockets
       return parseInt(formData.number_of_pockets) || 1
     } else {
-      // For standard orchards, calculate based on total (seed value * 1.105) / pocket price
+      // For standard orchards, calculate based on total (seed value + Sow2Grow's 15% fee) / pocket price
       const seedValue = parseFloat(formData.seed_value) || 0
-      const total = seedValue * 1.105  // 10% tithing + 0.5% admin fee
+      const total = buyerTotal(seedValue)
       const pocketPrice = parseFloat(formData.pocket_price) || 150
       if (total && pocketPrice) {
         return Math.floor(total / pocketPrice)
@@ -526,43 +526,27 @@ const fetchOrchardById = async (oid) => {
     }
   }
 
-  const calculateFinalSeedValue = () => {
-    const originalSeedValue = parseFloat(formData.seed_value) || 0
-    if (originalSeedValue === 0) return 0
-    
-    if (formData.orchard_type === 'full_value') {
-      // For full value orchards: (seed value * 1.105) * number of pockets
-      const pocketCost = originalSeedValue * 1.105 // 10% tithing + 0.5% admin fee
-      const numberOfPockets = parseInt(formData.number_of_pockets) || 1
-      return pocketCost * numberOfPockets
-    } else {
-      // For standard orchards: seed value * 1.105
-      return originalSeedValue * 1.105 // 10% tithing + 0.5% admin fee
-    }
-  }
-
   const getSeedValueBreakdown = () => {
     const originalSeedValue = parseFloat(formData.seed_value) || 0
     const courierCost = parseFloat(formData.courier_cost) || 0
     if (originalSeedValue === 0) return null
-    
+
     const baseValue = originalSeedValue + courierCost  // Add courier cost to base
-    const tithingAmount = baseValue * 0.10  // 10% tithing on total (seed + courier)
-    const adminFee = baseValue * 0.005       // 0.5% admin fee on total
-    const totalWithFees = baseValue * 1.105  // Total = (seed + courier) * 1.105
-    
+    const s2gFee = s2gFeeOn(baseValue)                 // Sow2Grow's 15% fee
+    const totalWithFees = buyerTotal(baseValue)        // (seed + courier) + Sow2Grow's 15% fee
+
     let finalCost = totalWithFees
     if (formData.orchard_type === 'full_value') {
       const numberOfPockets = parseInt(formData.number_of_pockets) || 1
       finalCost = totalWithFees * numberOfPockets
     }
-    
+
     return {
       original: originalSeedValue,
       courierCost: courierCost,
       baseValue: baseValue,
-      tithing: tithingAmount,
-      paymentProcessing: adminFee,
+      tithing: s2gFee,        // full 15% Sow2Grow fee
+      paymentProcessing: 0,   // no separate admin fee — folded into the single 15% above
       totalWithFees: totalWithFees,
       final: finalCost,
       pocketCost: formData.orchard_type === 'full_value' ? totalWithFees : null
@@ -1013,16 +997,12 @@ const fetchOrchardById = async (oid) => {
                                   <span>{breakdown.baseValue.toFixed(2)} USDC</span>
                                 </div>
                                <div className="flex justify-between text-amber-700">
-                                 <span>+ 10% Platform Fee:</span>
+                                 <span>+ 15% Sow2Grow Fee:</span>
                                  <span className="font-medium">{breakdown.tithing.toFixed(2)} USDC</span>
-                               </div>
-                               <div className="flex justify-between text-blue-700">
-                                 <span>+ 0.5% Admin Fee:</span>
-                                 <span className="font-medium">{breakdown.paymentProcessing.toFixed(2)} USDC</span>
                                </div>
                              <div className="border-t border-gray-200 pt-2 mt-2">
                                  <div className="flex justify-between font-semibold text-green-700">
-                                   <span>Total (= Seed × 1.105):</span>
+                                   <span>Total (= Seed × 1.15):</span>
                                    <span>{breakdown.totalWithFees.toFixed(2)} USDC</span>
                                 </div>
                                 {formData.orchard_type === 'full_value' && (

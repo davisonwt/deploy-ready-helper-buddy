@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { useAuth } from '../hooks/useAuth'
 import { useFileUpload } from '../hooks/useFileUpload.jsx'
 import { supabase } from '@/integrations/supabase/client'
+import { s2gFeeOn, buyerTotal } from '@/lib/pricing/platformFee'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -234,14 +235,13 @@ export default function SeedSubmissionPage() {
       const totalPockets = calculatePockets(seedValue, formData.orchardType, formData.numberOfPockets)
       
       if (totalPockets > 0) {
-        // Calculate values including courier cost, tithing and admin fee
+        // Calculate values including courier cost and Sow2Grow's fee
         const baseValue = seedValue + courierCost  // Add courier cost to base
-        const tithingAmount = baseValue * 0.10  // 10% tithing on total (seed + courier)
-        const adminFee = baseValue * 0.005       // 0.5% admin fee on total
-        const totalWithFees = baseValue * 1.105  // Total = (seed + courier) * 1.105
-        
+        const s2gFee = s2gFeeOn(baseValue)          // Sow2Grow's 15% fee
+        const totalWithFees = buyerTotal(baseValue) // (seed + courier) + Sow2Grow's 15% fee
+
         let finalSeedValue, pocketPrice
-        
+
         if (formData.orchardType === 'full_value') {
           // For full value: each pocket costs the full seed value + fees
           finalSeedValue = totalWithFees * totalPockets // Total needed for all pockets
@@ -262,8 +262,8 @@ export default function SeedSubmissionPage() {
             seed_value: finalSeedValue,
             original_seed_value: seedValue,
             courier_cost: courierCost * (formData.orchardType === 'full_value' ? totalPockets : 1),
-            tithing_amount: tithingAmount * (formData.orchardType === 'full_value' ? totalPockets : 1),
-            payment_processing_fee: adminFee * (formData.orchardType === 'full_value' ? totalPockets : 1),
+            tithing_amount: s2gFee * (formData.orchardType === 'full_value' ? totalPockets : 1),
+            payment_processing_fee: 0,
             pocket_price: pocketPrice,
             total_pockets: totalPockets,
             images: uploadedImages,
@@ -412,7 +412,7 @@ export default function SeedSubmissionPage() {
                      required
                    />
                     <p className="text-xs text-muted-foreground mt-1">
-                      Each copy will cost ${formData.value && formData.courierCost ? ((parseFloat(formData.value) + parseFloat(formData.courierCost)) * 1.105).toFixed(2) : '0'} (including courier + 10% platform fee + 0.5% admin fee)
+                      Each copy will cost ${formData.value && formData.courierCost ? buyerTotal(parseFloat(formData.value) + parseFloat(formData.courierCost)).toFixed(2) : '0'} (including courier + Sow2Grow's 15% fee)
                     </p>
                  </div>
                )}

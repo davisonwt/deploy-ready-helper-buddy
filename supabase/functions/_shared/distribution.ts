@@ -1,6 +1,6 @@
 import { BinancePayClient } from "./binance.ts";
 import { SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
-import { S2G_FEE_RATE, s2gFeeOn } from "./platformFee.ts";
+import { S2G_FEE_RATE, backOutFee } from "./platformFee.ts";
 
 export interface DistributionData {
   total_amount: number;
@@ -25,16 +25,20 @@ export interface DistributionData {
   };
   /**
    * Which fee convention produced sower_amount/tithing_admin_amount on this
-   * row. New rows are always 'gross_up' (base(x)=sower's value, S2G's 15% is
-   * added on top of the buyer's charge). Rows without this field, or marked
-   * 'deduction', predate the unified fee model and were computed by taking a
-   * tithing % out of the sower's amount instead — see spec-unified-fee-model.md.
+   * row:
+   *   'fee_inclusive' — orchards: pocket_price already has S2G's 15% baked
+   *     in at orchard-creation time, backed out here (base = gross / 1.15).
+   *   'gross_up' — gifts/tips (buildGiftDistribution): base(x)=the value the
+   *     giver set, S2G's 15% is added on top of the buyer's charge.
+   *   'deduction' — legacy, or the field is absent entirely: predates the
+   *     unified fee model, computed by taking a tithing % out of the
+   *     sower's amount instead — see spec-unified-fee-model.md.
    * Nothing currently reads this at payout time (dispatchPayouts/
    * executeDistribution replay whatever is already stored here rather than
    * recomputing), but it's kept for audit/reporting and so a future payout
    * change can't silently misinterpret a legacy row.
    */
-  fee_model?: "gross_up" | "deduction";
+  fee_model?: "gross_up" | "deduction" | "fee_inclusive";
   generated_at: string;
 }
 
@@ -42,7 +46,13 @@ export interface DistributionContext {
   orchardId: string;
   orchardTitle: string;
   orchardUserId: string;
-  /** The value the sower set (their price) — NOT grossed up. */
+  /**
+   * pocket_price × pocketsCount. Fee-inclusive by design — orchard
+   * pocket_price already has S2G's 15% baked in at orchard-creation time
+   * (see CreateOrchardPage.jsx / SeedSubmissionPage.jsx), so nothing is
+   * added on top of this at checkout. buildDistributionData backs the fee
+   * back out rather than adding another 15%.
+   */
   baseAmount: number;
   currency: string;
   distributionMode?: "automatic" | "manual";
@@ -83,14 +93,14 @@ export async function buildDistributionData(
     );
   }
 
-  // The sower's amount is the full base they set — S2G's 15% was already
-  // collected on top of the buyer's charge at checkout, not deducted here.
-  const baseAmount = roundAmount(context.baseAmount);
-  const tithingAmount = s2gFeeOn(baseAmount);
-  const sowerAmount = baseAmount;
+  // pocket_price is fee-inclusive — S2G's 15% is baked in at orchard-creation
+  // time, not added on top at checkout. Back it out of what was actually
+  // collected rather than adding another 15% on top of it.
+  const grossAmount = roundAmount(context.baseAmount);
+  const { base: sowerAmount, s2gFee: tithingAmount } = backOutFee(grossAmount);
 
   return {
-    total_amount: baseAmount,
+    total_amount: grossAmount,
     currency: context.currency,
     holding_wallet: wallets.s2gholding,
     tithing_admin_wallet: wallets.s2gbestow,
@@ -107,10 +117,13 @@ export async function buildDistributionData(
     manual_release_user_id: null,
     percentages: {
       holding: 1,
-      tithing_admin: S2G_FEE_RATE,
-      sower: 1,
+      // Share of the gross (fee-inclusive) total, not of the sower's base —
+      // S2G_FEE_RATE (0.15) is the rate applied to base, so the tithing
+      // share of the gross itself is smaller: tithingAmount / grossAmount.
+      tithing_admin: grossAmount > 0 ? roundAmount(tithingAmount / grossAmount) : S2G_FEE_RATE,
+      sower: grossAmount > 0 ? roundAmount(sowerAmount / grossAmount) : 1,
     },
-    fee_model: "gross_up",
+    fee_model: "fee_inclusive",
     generated_at: new Date().toISOString(),
   };
 }
