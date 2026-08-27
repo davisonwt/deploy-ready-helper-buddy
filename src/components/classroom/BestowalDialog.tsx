@@ -83,7 +83,7 @@ export function BestowalDialog({ open, onOpenChange, sowerId, bestowerId, sessio
           </div>
 
           <p className="text-[11px] text-[#E8D9B5]/50">
-            10% tithing + 5% admin fee are applied automatically. An invoice is sent to your ChatApp inbox.
+            An invoice is sent to your ChatApp inbox.
           </p>
 
           <Button

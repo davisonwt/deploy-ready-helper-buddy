@@ -25,6 +25,7 @@ import { usePaypal } from '@/hooks/usePaypal';
 import { postBestowalChatNotes } from '@/lib/bestowalChat';
 import ProviderPicker from '@/components/payments/ProviderPicker';
 import { PayoutProviderId, quoteFee } from '@/lib/payments/providerFees';
+import { priceBreakdown } from '@/lib/pricing/platformFee';
 
 export interface QuickBestowModalProps {
   open: boolean;
@@ -120,7 +121,12 @@ export default function QuickBestowModal({
     }
   };
 
-  const feePreview = quoteFee(provider, amount);
+  // The server grosses base up by S2G's 15% before charging (see
+  // create-nowpayments-invoice / create-paypal-order) — the processor fee
+  // estimate and the amount shown here must be computed on that S2G-inclusive
+  // total, not the raw base, or both numbers understate what's charged.
+  const pricing = priceBreakdown(amount);
+  const feePreview = quoteFee(provider, pricing.total);
 
   return (
     <Dialog open={open} onOpenChange={(v) => { if (!v) onClose(); }}>
@@ -167,7 +173,7 @@ export default function QuickBestowModal({
               <ProviderPicker
                 value={provider}
                 onChange={setProvider}
-                amount={amount}
+                amount={pricing.total}
                 mode="buyer"
                 disabled={processing}
               />
@@ -195,7 +201,7 @@ export default function QuickBestowModal({
             <Button variant="ghost" onClick={onClose} disabled={processing}>Cancel</Button>
             <Button onClick={handleBestow} disabled={processing || amount <= 0} className="gap-2">
               {processing && <Loader2 className="h-4 w-4 animate-spin" />}
-              Bestow ${amount.toFixed(2)}
+              Bestow ${pricing.total.toFixed(2)}
             </Button>
           </div>
         </div>
