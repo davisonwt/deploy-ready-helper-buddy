@@ -10,17 +10,23 @@ import { useCurrency } from '@/hooks/useCurrency';
 import ProviderPicker from '@/components/payments/ProviderPicker';
 import { PayoutProviderId, quoteFee } from '@/lib/payments/providerFees';
 import { invokePaymentFunction } from '@/lib/payments/invokeFunction';
+import { buyerTotal, round2 } from '@/lib/pricing/platformFee';
 
 interface AlbumBuilderCartProps {
   scopeName?: string;
 }
 
 export function AlbumBuilderCart({ scopeName }: AlbumBuilderCartProps = {}) {
-  const { selectedTracks, removeTrack, clearAlbum, albumPrice } = useAlbumBuilder();
+  const { selectedTracks, removeTrack, clearAlbum } = useAlbumBuilder();
   const { user } = useAuth();
   const { formatAmount } = useCurrency();
   const [processing, setProcessing] = useState(false);
   const [provider, setProvider] = useState<PayoutProviderId>('nowpayments');
+  // Matches what create-basket-bestowal-order actually charges: each
+  // selected track's own price + S2G's 15%, summed — never a flat figure.
+  const albumPrice = round2(
+    selectedTracks.reduce((sum, t) => sum + buyerTotal(Number(t.price) || 0), 0)
+  );
   const feeQuote = quoteFee(provider, albumPrice);
 
   const handleCheckout = async () => {

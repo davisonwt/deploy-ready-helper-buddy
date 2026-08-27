@@ -25,13 +25,16 @@ interface AlbumBuilderContextType {
   clearAlbum: () => void;
   isTrackSelected: (trackId: string) => boolean;
   canAddMore: boolean;
-  albumPrice: number;
 }
 
 const AlbumBuilderContext = createContext<AlbumBuilderContextType | undefined>(undefined);
 
 const ALBUM_SIZE = 10;
-const ALBUM_PRICE = 20; // $20 including platform fee and admin fee
+// No flat album price here — the real charge is the sum of the selected
+// tracks' own prices plus S2G's 15%, computed from live track data by
+// whoever displays a total (see AlbumBuilderCart). A constant here was
+// display-only and never matched what create-basket-bestowal-order actually
+// charges, since that edge function prices each song from its own row.
 
 export function AlbumBuilderProvider({ children }: { children: ReactNode }) {
   const [selectedTracks, setSelectedTracks] = useState<AlbumTrack[]>([]);
@@ -84,8 +87,7 @@ export function AlbumBuilderProvider({ children }: { children: ReactNode }) {
         removeTrack,
         clearAlbum,
         isTrackSelected,
-        canAddMore,
-        albumPrice: ALBUM_PRICE
+        canAddMore
       }}
     >
       {children}
