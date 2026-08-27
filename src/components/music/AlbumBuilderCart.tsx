@@ -1,16 +1,18 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Separator } from '@/components/ui/separator';
 import { useAlbumBuilder } from '@/contexts/AlbumBuilderContext';
 import { Music, X, ShoppingCart, Download } from 'lucide-react';
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { toast } from 'sonner';
 import { useCurrency } from '@/hooks/useCurrency';
 import ProviderPicker from '@/components/payments/ProviderPicker';
 import { PayoutProviderId, quoteFee } from '@/lib/payments/providerFees';
 import { invokePaymentFunction } from '@/lib/payments/invokeFunction';
-import { buyerTotal, round2 } from '@/lib/pricing/platformFee';
+import { s2gFeeOn, round2 } from '@/lib/pricing/platformFee';
+import { WHISPER_FALLBACK_NOTE } from '@/lib/whisperer/policy';
 
 interface AlbumBuilderCartProps {
   scopeName?: string;
@@ -22,11 +24,33 @@ export function AlbumBuilderCart({ scopeName }: AlbumBuilderCartProps = {}) {
   const { formatAmount } = useCurrency();
   const [processing, setProcessing] = useState(false);
   const [provider, setProvider] = useState<PayoutProviderId>('nowpayments');
-  // Matches what create-basket-bestowal-order actually charges: each
-  // selected track's own price + S2G's 15%, summed — never a flat figure.
-  const albumPrice = round2(
-    selectedTracks.reduce((sum, t) => sum + buyerTotal(Number(t.price) || 0), 0)
-  );
+
+  // Same breakdown shape as BestowalCheckout, computed from the selected
+  // tracks' own prices — never a flat figure. An album build has no ref-code
+  // attribution flowing into it today (unlike the basket flow), so a
+  // whisperer share never applies here; the fallback note reflects that
+  // honestly rather than fabricating a credit.
+  const subtotal = round2(selectedTracks.reduce((sum, t) => sum + (Number(t.price) || 0), 0));
+  const s2gFee = round2(selectedTracks.reduce((sum, t) => sum + s2gFeeOn(Number(t.price) || 0), 0));
+  const albumPrice = round2(subtotal + s2gFee);
+  const toSowers = subtotal;
+
+  // Since an album spans multiple sowers, break "To Sowers" down per sower
+  // as well as the total — grouped by sower_id (falls back to track id if a
+  // track has no sower_id, e.g. a DJ track that slipped through).
+  const perSower = useMemo(() => {
+    const map = new Map<string, { name: string; amount: number }>();
+    for (const t of selectedTracks) {
+      const key = t.sower_id || t.sower_user_id || t.id;
+      const name = t.artist_name || t.profiles?.username || 'Unknown Artist';
+      const price = Number(t.price) || 0;
+      const existing = map.get(key);
+      if (existing) existing.amount = round2(existing.amount + price);
+      else map.set(key, { name, amount: round2(price) });
+    }
+    return Array.from(map.values()).sort((a, b) => b.amount - a.amount);
+  }, [selectedTracks]);
+
   const feeQuote = quoteFee(provider, albumPrice);
 
   const handleCheckout = async () => {
@@ -92,7 +116,7 @@ export function AlbumBuilderCart({ scopeName }: AlbumBuilderCartProps = {}) {
           <div className="text-center py-8 text-muted-foreground">
             <Music className="h-12 w-12 mx-auto mb-4 opacity-50" />
              <p>Select 10 tracks{scopeName ? ` from ${scopeName}` : ''} to build your album</p>
-            <p className="text-sm mt-2">{formatAmount(albumPrice)} total</p>
+            <p className="text-sm mt-2">Priced from each song's own bestowal value</p>
           </div>
         </CardContent>
       </Card>
@@ -141,15 +165,39 @@ export function AlbumBuilderCart({ scopeName }: AlbumBuilderCartProps = {}) {
         </div>
 
         <div className="pt-4 border-t space-y-4">
-          <div className="flex justify-between items-center">
-            <span className="font-semibold">Total</span>
-            <span className="text-lg font-bold">{formatAmount(albumPrice)}</span>
-          </div>
+          <div className="space-y-2 text-sm">
+            <div className="flex justify-between text-muted-foreground">
+              <span>Subtotal</span>
+              <span>{formatAmount(subtotal)}</span>
+            </div>
+            <div className="flex justify-between text-muted-foreground">
+              <span>Sow2Grow Fee (15% added on top)</span>
+              <span className="text-accent">{formatAmount(s2gFee)}</span>
+            </div>
+            <div className="flex justify-between text-muted-foreground">
+              <span>To Sowers</span>
+              <span className="text-primary">{formatAmount(toSowers)}</span>
+            </div>
+            {perSower.length > 1 && (
+              <div className="pl-3 space-y-0.5">
+                {perSower.map((s) => (
+                  <div key={s.name} className="flex justify-between text-xs text-muted-foreground/80">
+                    <span className="truncate">{s.name}</span>
+                    <span>{formatAmount(s.amount)}</span>
+                  </div>
+                ))}
+              </div>
+            )}
+            <div className="flex justify-between text-xs text-muted-foreground/70">
+              <span>{WHISPER_FALLBACK_NOTE}</span>
+              <span>$0.00</span>
+            </div>
 
-          <div className="text-xs text-muted-foreground space-y-1">
-            <p>• 85% to sowers</p>
-            <p>• 10% platform fee</p>
-            <p>• 5% admin fee</p>
+            <Separator />
+            <div className="flex justify-between text-lg font-bold">
+              <span>Total before processor fee</span>
+              <span>{formatAmount(albumPrice)}</span>
+            </div>
           </div>
 
           {selectedTracks.length === 10 && (
@@ -157,7 +205,8 @@ export function AlbumBuilderCart({ scopeName }: AlbumBuilderCartProps = {}) {
               <div className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Payment method</div>
               <ProviderPicker value={provider} onChange={setProvider} amount={albumPrice} mode="buyer" disabled={processing} />
               <div className="text-xs text-muted-foreground text-right">
-                Estimated processor fee: <span className="font-medium text-foreground">{feeQuote.display}</span>
+                Estimated processor fee on {formatAmount(albumPrice)}:{' '}
+                <span className="font-medium text-foreground">{feeQuote.display}</span>
               </div>
             </div>
           )}
