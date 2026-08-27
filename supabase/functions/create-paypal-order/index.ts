@@ -8,7 +8,6 @@ import { buildDistributionData } from "../_shared/distribution.ts";
 import { paypalFetch } from "../_shared/paypal/client.ts";
 import { computeBuyerFee } from "../_shared/paypal/fees.ts";
 import { resolveSowerPayout } from "../_shared/resolveSowerPayout.ts";
-import { priceBreakdown } from "../_shared/platformFee.ts";
 
 interface RequestPayload {
   orchardId: string;
@@ -98,13 +97,20 @@ Deno.serve(async (req) => {
     }
     const baseAmount = round2(pocketPrice * payload.pocketsCount);
 
-    // --- S2G's 15% fee is added on top of the base, paid by the bestower -----
-    const pricing = priceBreakdown(baseAmount);
-
-    // --- Processor fee on top of the S2G-inclusive total (paid by BUYER) -----
+    // --- REVERTED 2026-08-27: no S2G gross-up here -----------------------------
+    // orchards.pocket_price can already be fee-inclusive at orchard-creation
+    // time (CreateOrchardPage.jsx: full_value orchards set
+    // pocket_price = (seed_value + courier_cost) * 1.105). Applying
+    // priceBreakdown's 15% here on top double-charged every full_value
+    // orchard bestowal (~27% total markup instead of the intended ~15%).
+    // Reverted to charging pocket_price * pocketsCount directly pending a
+    // decision on how buildDistributionData should treat orchards — see
+    // spec-unified-fee-model.md follow-up. Do not re-add this gross-up
+    // without also resolving that.
+    //
     // PayPal 3.49% + $0.49 (cards or PayPal balance) is added on top of the
-    // S2G-inclusive total so the sower always receives 100% of their base.
-    const quote = computeBuyerFee("paypal", pricing.total);
+    // base amount so the sower always receives 100% of base minus S2G's share.
+    const quote = computeBuyerFee("paypal", baseAmount);
     const processorFee = quote.fee;
     const feePct = quote.feePct;
     const buyerTotal = quote.total;
@@ -246,7 +252,6 @@ Deno.serve(async (req) => {
       approveUrl: approveLink?.href ?? null,
       breakdown: {
         baseAmount,
-        s2gFee: pricing.s2gFee,
         processorFee,
         processorFeePct: feePct,
         buyerTotal,

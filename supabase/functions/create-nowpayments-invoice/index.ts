@@ -7,7 +7,6 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 import { corsHeaders } from "npm:@supabase/supabase-js@2/cors";
 import { buildDistributionData } from "../_shared/distribution.ts";
 import { resolveSowerPayout } from "../_shared/resolveSowerPayout.ts";
-import { priceBreakdown } from "../_shared/platformFee.ts";
 
 const NOWPAYMENTS_API = "https://api.nowpayments.io/v1";
 
@@ -88,13 +87,19 @@ Deno.serve(async (req) => {
     }
     const baseAmount = round2(pocketPrice * payload.pocketsCount);
 
-    // --- S2G's 15% fee is added on top of the base, paid by the bestower -----
-    const pricing = priceBreakdown(baseAmount);
-
-    // --- Processor fee on top of the S2G-inclusive total (paid by buyer) -----
+    // --- REVERTED 2026-08-27: no S2G gross-up here -----------------------------
+    // orchards.pocket_price can already be fee-inclusive at orchard-creation
+    // time (CreateOrchardPage.jsx: full_value orchards set
+    // pocket_price = (seed_value + courier_cost) * 1.105). Applying
+    // priceBreakdown's 15% here on top double-charged every full_value
+    // orchard bestowal (~27% total markup instead of the intended ~15%).
+    // Reverted to charging pocket_price * pocketsCount directly pending a
+    // decision on how buildDistributionData should treat orchards — see
+    // spec-unified-fee-model.md follow-up. Do not re-add this gross-up
+    // without also resolving that.
     const feePct = Number(Deno.env.get("NOWPAYMENTS_FEE_PCT") ?? "0.01");
-    const processorFee = ceil2(pricing.total * (Number.isFinite(feePct) ? feePct : 0.01));
-    const buyerTotal = round2(pricing.total + processorFee);
+    const processorFee = ceil2(baseAmount * (Number.isFinite(feePct) ? feePct : 0.01));
+    const buyerTotal = round2(baseAmount + processorFee);
 
     // --- Resolve sower's preferred payout wallet (shared deterministic resolver) ---
     const wallet = await resolveSowerPayout(service, orchard.user_id);
@@ -199,7 +204,6 @@ Deno.serve(async (req) => {
       expiresAt: invoice.expiration_date ?? null,
       breakdown: {
         baseAmount,
-        s2gFee: pricing.s2gFee,
         processorFee,
         processorFeePct: feePct,
         buyerTotal,
