@@ -15,6 +15,33 @@ import JSZip from 'jszip';
 import CategoryTagPicker from '@/components/marketplace/CategoryTagPicker';
 import { WANDERING_BADGES, type WanderingRole } from '@/components/marketplace/WanderingBadgeBar';
 
+const AUDIO_EXTENSIONS = ['wav', 'mp3', 'flac', 'aac', 'm4a', 'ogg'];
+const AUDIO_ACCEPT = AUDIO_EXTENSIONS.map((ext) => `.${ext}`).join(',');
+const AUDIO_ALLOWED_LABEL = 'WAV, MP3, FLAC, AAC, M4A, or OGG';
+
+const IMAGE_EXTENSIONS = ['jpg', 'jpeg', 'png', 'gif', 'webp'];
+const IMAGE_ACCEPT = 'image/*';
+const IMAGE_ALLOWED_LABEL = 'JPG, PNG, GIF, or WEBP';
+
+function fileExtension(file: File): string {
+  return file.name.includes('.') ? file.name.split('.').pop()!.toLowerCase() : '';
+}
+
+// Extension is authoritative; MIME type (when the browser supplies one) must
+// at least be plausible for the kind. Some browsers report '' for less common
+// audio formats (flac, m4a), so an empty type is not treated as a rejection.
+function isAllowedAudioFile(file: File): boolean {
+  if (!AUDIO_EXTENSIONS.includes(fileExtension(file))) return false;
+  if (file.type && !file.type.startsWith('audio/') && file.type !== 'application/octet-stream') return false;
+  return true;
+}
+
+function isAllowedImageFile(file: File): boolean {
+  if (!IMAGE_EXTENSIONS.includes(fileExtension(file))) return false;
+  if (file.type && !file.type.startsWith('image/')) return false;
+  return true;
+}
+
 export default function UploadForm() {
   const { user } = useAuth();
   const navigate = useNavigate();
@@ -60,8 +87,8 @@ export default function UploadForm() {
       for (const [filename, zipEntry] of Object.entries(contents.files)) {
         if (zipEntry.dir) continue;
         
-        const isAudio = /\.(mp3|wav|m4a|flac|aac|ogg|wma)$/i.test(filename);
-        if (!isAudio) continue;
+        const entryExt = filename.includes('.') ? filename.split('.').pop()!.toLowerCase() : '';
+        if (!AUDIO_EXTENSIONS.includes(entryExt)) continue;
 
         const blob = await zipEntry.async('blob');
         const audioFile = new File([blob], filename.split('/').pop() || filename, {
@@ -126,6 +153,26 @@ export default function UploadForm() {
     if (coverImage.size > 10 * 1024 * 1024) {
       toast.error('Cover image must be under 10MB');
       return;
+    }
+
+    // Format validation — authoritative check, independent of the file
+    // picker's `accept` attribute (a hint the browser/user can bypass).
+    if (!isAllowedImageFile(coverImage)) {
+      toast.error(`Cover image must be a ${IMAGE_ALLOWED_LABEL} file.`);
+      return;
+    }
+
+    if (formData.type === 'music') {
+      if (releaseType === 'album') {
+        const badTrack = albumFiles.find((f) => !isAllowedAudioFile(f));
+        if (badTrack) {
+          toast.error(`"${badTrack.name}" isn't a supported audio format. Allowed: ${AUDIO_ALLOWED_LABEL}.`);
+          return;
+        }
+      } else if (mainFile && !isAllowedAudioFile(mainFile)) {
+        toast.error(`"${mainFile.name}" isn't a supported audio format. Allowed: ${AUDIO_ALLOWED_LABEL}.`);
+        return;
+      }
     }
 
     setUploading(true);
@@ -545,6 +592,7 @@ export default function UploadForm() {
                       <input
                         id="cover"
                         type="file"
+                        accept={IMAGE_ACCEPT}
                         className="hidden"
                         onChange={(e) => {
                           const files = e.target.files;
@@ -637,6 +685,7 @@ export default function UploadForm() {
                       <input
                         id="file"
                         type="file"
+                        accept={formData.type === 'music' ? AUDIO_ACCEPT : undefined}
                         className="hidden"
                         multiple={releaseType === 'album'}
                         disabled={extractingZip || (releaseType === 'album' && zipFile !== null)}
