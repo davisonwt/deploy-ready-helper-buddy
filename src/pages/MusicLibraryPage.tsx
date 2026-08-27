@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
-import { ArrowLeft, ChevronDown, Disc3, Home, Loader2, Music, Users } from 'lucide-react';
+import { ArrowLeft, ChevronDown, Disc3, Home, Loader2, Music, Upload, Users } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { toast } from 'sonner';
 
@@ -420,6 +420,12 @@ export default function MusicLibraryPage() {
             <Button variant="outline" onClick={() => { setActiveMode('my-music'); navigate('/music-library'); }} className="gap-2 bg-card/20 border-border/40 text-foreground hover:bg-card/30">
               <Disc3 className="h-4 w-4" />
               My Music Uploads
+            </Button>
+          )}
+          {user && (
+            <Button onClick={() => navigate('/products/upload')} className="gap-2">
+              <Upload className="h-4 w-4" />
+              Upload new
             </Button>
           )}
         </div>

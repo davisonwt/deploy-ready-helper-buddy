@@ -622,10 +622,16 @@ export default function SeedFlowDashboard() {
 
   // ── Owner action handlers (shared across all 5 sliders) ──
   const handleEdit = (card) => {
-    const rid = card.rawId
+    const rid = card.rawId ?? card.id?.replace(/^[a-z]+-/, '')
     if (card.id.startsWith('orchard-')) navigate(`/create-orchard?edit=${rid}`)
     else if (card.id.startsWith('seed-')) navigate(`/seed/${rid}?edit=1`)
-    else if (card.id.startsWith('music-')) navigate(`/music-library?edit=${rid}`)
+    else if (card.id.startsWith('music-')) {
+      // Music cards can be a sower-published product (single/album) or a
+      // DJ track — only products have an edit page; music-library is the
+      // right destination for dj_music_tracks rows.
+      if (card.seedRow?.__table === 'products') navigate(`/products/edit/${rid}`)
+      else navigate(`/music-library?edit=${rid}`)
+    }
     else if (card.id.startsWith('book-')) navigate(`/my-s2g-library?edit=${rid}`)
     else if (card.id.startsWith('video-')) navigate(`/community-videos?edit=${rid}`)
   }

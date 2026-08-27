@@ -8,7 +8,7 @@ import { Badge } from '@/components/ui/badge'
 import { Progress } from '@/components/ui/progress'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Link, useNavigate } from 'react-router-dom'
-import { Sprout, Plus, Eye, Users, TrendingUp, Calendar, DollarSign, Edit, Share2, MapPin, Trash2, Sparkles, Loader2, Radio, ArrowLeft, Upload, Store } from 'lucide-react'
+import { Sprout, Plus, Eye, Users, TrendingUp, Calendar, DollarSign, Edit, Share2, MapPin, Trash2, Sparkles, Loader2, Radio, ArrowLeft, Upload, Store, Music } from 'lucide-react'
 import { toast } from "sonner"
 import { supabase } from '@/integrations/supabase/client'
 import { formatCurrency } from '../utils/formatters'
@@ -137,10 +137,16 @@ export default function MyOrchardsPage() {
 
   // ── Owner action handlers shared across all 5 sections ──
   const handleEditCard = (card) => {
-    const rid = card.rawId
+    const rid = card.rawId ?? card.id?.replace(/^[a-z]+-/, '')
     if (card.id.startsWith('orchard-')) navigate(`/edit-orchard/${rid}`)
     else if (card.id.startsWith('seed-'))   navigate(`/seed/${rid}?edit=1`)
-    else if (card.id.startsWith('music-'))  navigate(`/music-library?edit=${rid}`)
+    else if (card.id.startsWith('music-')) {
+      // Music cards can be a sower-published product (single/album) or a
+      // DJ track — only products have an edit page; music-library is the
+      // right destination for dj_music_tracks rows.
+      if (card.seedRow?.__table === 'products') navigate(`/products/edit/${rid}`)
+      else navigate(`/music-library?edit=${rid}`)
+    }
     else if (card.id.startsWith('book-'))   navigate(`/my-s2g-library?edit=${rid}`)
     else if (card.id.startsWith('video-'))  navigate(`/community-videos?edit=${rid}`)
   }
@@ -316,6 +322,11 @@ export default function MyOrchardsPage() {
                 <Link to="/create-orchard" style={{ textDecoration: 'none', minWidth: 200 }}>
                   <LivingButton variant="enter" height={50} borderRadius={12} fontSize={14} letterSpacing="1px">
                     <Plus size={18} /> Sow New Seed
+                  </LivingButton>
+                </Link>
+                <Link to="/products/upload" style={{ textDecoration: 'none', minWidth: 200 }}>
+                  <LivingButton variant="enter" height={50} borderRadius={12} fontSize={14} letterSpacing="1px">
+                    <Music size={18} /> Sow a Song
                   </LivingButton>
                 </Link>
                 <Link to="/dashboard/sower/upload" style={{ textDecoration: 'none', minWidth: 200 }}>
