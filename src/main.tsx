@@ -48,6 +48,19 @@ logInfo('Application starting', {
 });
 
 if (!import.meta.env.DEV && 'serviceWorker' in navigator) {
+  // A new SW taking control (skipWaiting + clients.claim in sw.js) only
+  // changes which SW intercepts THIS tab's future requests — it does not
+  // touch the JS already running in memory, which still references the
+  // previous deploy's content-hashed chunk filenames. Reload once so an
+  // already-open tab lands on the new build instead of later 404ing on a
+  // lazy import() for a chunk that no longer exists on the server.
+  let refreshingForNewServiceWorker = false;
+  navigator.serviceWorker.addEventListener('controllerchange', () => {
+    if (refreshingForNewServiceWorker) return;
+    refreshingForNewServiceWorker = true;
+    window.location.reload();
+  });
+
   window.addEventListener('load', () => {
     if ('requestIdleCallback' in window) {
       requestIdleCallback(() => registerServiceWorker(), { timeout: 2000 });
