@@ -39,6 +39,7 @@ import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { type WanderingRole, WANDERING_BADGES } from '@/components/marketplace/WanderingBadgeBar';
 import { launchConfetti, playSoundEffect } from '@/utils/confetti';
+import { PREVIEW_SECONDS } from '@/lib/media/previewLength';
 import { LiveNowStrip } from '@/components/live/LiveNowStrip';
 import LiveStage from '@/components/live/LiveStage';
 import LiveStageOverlay from '@/components/live/LiveStageOverlay';
@@ -1341,7 +1342,7 @@ function FeedCard({
   const [imgIdx, setImgIdx] = useState(0);
   const [playAudioUrl, setPlayAudioUrl] = useState<string | null>(null);
   const [playVideoUrl, setPlayVideoUrl] = useState<string | null>(null);
-  const PREVIEW = 45; // seconds
+  const PREVIEW = PREVIEW_SECONDS;
 
   const gallery = (item.images && item.images.length > 0)
     ? item.images

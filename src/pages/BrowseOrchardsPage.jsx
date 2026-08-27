@@ -65,15 +65,10 @@ const safeList = (result, label) => {
   return result?.data || []
 }
 
-const musicLibraryLink = ({ trackId, djId, productId, sowerUserId, sowerName }) => {
-  const params = new URLSearchParams({ tab: 'community' })
-  if (trackId || productId) params.set('trackId', trackId || productId)
-  if (djId) params.set('djId', djId)
-  if (productId) params.set('productId', productId)
-  if (sowerUserId) params.set('sowerUserId', sowerUserId)
-  if (sowerName) params.set('sowerName', sowerName)
-  return `/music-library?${params.toString()}`
-}
+// Opens the song's own seed page (cover, sample, bestow, details) rather
+// than the library list. Prefers the dj_music_tracks id when a title-matched
+// pair exists, since MusicTrackDetailPage looks there first.
+const musicSeedLink = ({ trackId, productId }) => `/music-track/${trackId || productId}`
 
 const PRIVATE_COVER_BUCKETS = new Set(['premium-room', 'music-tracks', 'dj-music'])
 
@@ -498,18 +493,11 @@ export default function BrowseOrchardsPage() {
         }))
         const musicFromProducts = productRows.filter(p => p.type === 'music').map(p => {
           const matchedTrack = findMatchingMusicTrack(p)
-          const productSowerUserId = sowerMap.get(p.sower_id)?.user_id
           const productSowerName = p.artist_name || nameFromSower(p.sower_id)
           return {
             id: `prod-${p.id}`, title: p.title, image: firstImage(p.image_urls, p.cover_image_url, matchedTrack?.cover_image_url, musicCoverByTitle.get(normalizeSongTitle(p.title))), emoji: '🎵',
             sower: productSowerName,
-            link: musicLibraryLink({
-              trackId: matchedTrack?.id,
-              djId: matchedTrack?.dj_id,
-              productId: p.id,
-              sowerUserId: productSowerUserId,
-              sowerName: productSowerName,
-            }),
+            link: musicSeedLink({ trackId: matchedTrack?.id, productId: p.id }),
             created_at: p.created_at,
           }
         })
@@ -534,13 +522,7 @@ export default function BrowseOrchardsPage() {
           ...musicRows.map(m => ({
             id: m.id, title: m.track_title, image: m.cover_image_url || null, emoji: '🎵',
             sower: djMap.get(m.dj_id)?.dj_name || m.artist_name || 'Tribe Music',
-            link: musicLibraryLink({
-              trackId: m.id,
-              djId: m.dj_id,
-              productId: findMatchingMusicProduct(m)?.id,
-              sowerUserId: djMap.get(m.dj_id)?.user_id,
-              sowerName: djMap.get(m.dj_id)?.dj_name || m.artist_name || 'Tribe Music',
-            }),
+            link: musicSeedLink({ trackId: m.id, productId: findMatchingMusicProduct(m)?.id }),
             created_at: m.upload_date || m.created_at,
           })),
           ...musicFromProducts,
@@ -913,7 +895,16 @@ export default function BrowseOrchardsPage() {
         ) : activeTab === 'seeds' ? (
           <MediaGrid kind="seeds" items={filteredTribeSeeds} loading={mediaLoading} groupByCategory />
         ) : activeTab === 'music' ? (
-          <MediaGrid kind="music" items={filteredMusic} loading={mediaLoading} />
+          <>
+            <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 16 }}>
+              <Link to="/music-library" style={{ textDecoration: 'none' }}>
+                <LivingButton variant="enter" height={44} borderRadius={12} fontSize={12} letterSpacing="1px">
+                  🎵 Music Library
+                </LivingButton>
+              </Link>
+            </div>
+            <MediaGrid kind="music" items={filteredMusic} loading={mediaLoading} />
+          </>
         ) : activeTab === 'books' ? (
           <MediaGrid kind="books" items={filteredBooks} loading={mediaLoading} />
         ) : (
