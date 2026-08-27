@@ -61,12 +61,19 @@ Deno.serve(async (req) => {
     ? `payout:${String(parsed.withdrawal_id ?? parsed.batch_withdrawal_id)}:${String(parsed.status ?? "")}`
     : `payment:${String(parsed.payment_id ?? parsed.invoice_id ?? "")}:${String(parsed.payment_status ?? "")}`;
 
-  const { data: existing } = await supabase
+  // A failed check here is not "not a duplicate": if we can't read
+  // processed_webhooks, we must not fall through and reprocess, since
+  // NOWPayments retries deliveries and that would double-run payouts.
+  const { data: existing, error: dedupeError } = await supabase
     .from("processed_webhooks")
     .select("id")
     .eq("provider", "nowpayments")
     .eq("webhook_id", dedupeKey)
     .maybeSingle();
+  if (dedupeError) {
+    console.error("nowpayments-webhook: idempotency check failed", dedupeError);
+    return json({ error: "idempotency_check_failed" }, 500);
+  }
   if (existing) {
     return json({ ok: true, deduped: true });
   }

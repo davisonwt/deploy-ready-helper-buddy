@@ -86,13 +86,19 @@ Deno.serve(async (req) => {
     auth: { persistSession: false },
   });
 
-  // Idempotency
-  const { data: existing } = await supabase
+  // Idempotency — a failed check here is not "not a duplicate": if we can't
+  // read processed_webhooks, we must not fall through and reprocess, since
+  // PayPal retries deliveries routinely and that would double-run payouts.
+  const { data: existing, error: dedupeError } = await supabase
     .from("processed_webhooks")
     .select("id")
     .eq("provider", "paypal")
     .eq("webhook_id", event.id)
     .maybeSingle();
+  if (dedupeError) {
+    console.error("paypal-webhook: idempotency check failed", dedupeError);
+    return json({ error: "idempotency_check_failed" }, 500);
+  }
   if (existing) {
     return json({ ok: true, deduped: true });
   }
@@ -204,11 +210,18 @@ async function handleEvent(
     const bestowalId = customId.startsWith("gift:")
       ? customId.slice("gift:".length)
       : customId;
-    const { data: bestowal } = await supabase
+    // A failed lookup is not "bestowal not found" — throwing here (instead of
+    // returning) routes it through the outer catch, which returns a non-2xx
+    // so PayPal retries instead of the event being silently dropped with no
+    // record and no retry.
+    const { data: bestowal, error: bestowalLookupError } = await supabase
       .from("bestowals")
       .select("id, payment_status")
       .eq("id", bestowalId)
       .maybeSingle();
+    if (bestowalLookupError) {
+      throw new Error(`bestowal_lookup_failed:${bestowalLookupError.message}`);
+    }
     if (!bestowal) {
       console.warn("CAPTURE.COMPLETED: bestowal not found", bestowalId);
       return;
