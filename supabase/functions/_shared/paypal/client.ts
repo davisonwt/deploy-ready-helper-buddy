@@ -13,8 +13,18 @@ interface CachedToken {
 let cachedToken: CachedToken | null = null;
 
 function getEnv(): "sandbox" | "live" {
-  const v = (Deno.env.get("PAYPAL_ENV") ?? "sandbox").toLowerCase();
-  return v === "live" ? "live" : "sandbox";
+  const raw = Deno.env.get("PAYPAL_ENV");
+  const v = (raw ?? "").trim().toLowerCase();
+  if (v === "live") return "live";
+  if (v === "sandbox") return "sandbox";
+  // Unset or misspelled (e.g. "Production", a stray space, empty string) was
+  // silently treated as sandbox — which verifies nothing against real, live
+  // webhook traffic and looks identical to a genuine signature failure.
+  console.warn(
+    `[paypal] PAYPAL_ENV is ${raw === undefined ? "unset" : JSON.stringify(raw)} — ` +
+      `falling back to sandbox. Set it to exactly "live" or "sandbox" to silence this warning.`,
+  );
+  return "sandbox";
 }
 
 export function paypalBaseUrl(): string {
@@ -129,7 +139,7 @@ export async function verifyPaypalWebhookSig(
 ): Promise<boolean> {
   const webhookId = Deno.env.get("PAYPAL_WEBHOOK_ID");
   if (!webhookId) {
-    console.error("[paypal] PAYPAL_WEBHOOK_ID not set");
+    console.error("[paypal] verify_webhook_signature: PAYPAL_WEBHOOK_ID not set");
     return false;
   }
   if (
@@ -139,6 +149,13 @@ export async function verifyPaypalWebhookSig(
     !headers.authAlgo ||
     !headers.transmissionSig
   ) {
+    console.warn("[paypal] verify_webhook_signature: missing signature header(s)", {
+      transmissionId: !!headers.transmissionId,
+      transmissionTime: !!headers.transmissionTime,
+      certUrl: !!headers.certUrl,
+      authAlgo: !!headers.authAlgo,
+      transmissionSig: !!headers.transmissionSig,
+    });
     return false;
   }
 
@@ -146,7 +163,8 @@ export async function verifyPaypalWebhookSig(
   let webhookEvent: unknown;
   try {
     webhookEvent = JSON.parse(rawBody);
-  } catch {
+  } catch (e) {
+    console.warn("[paypal] verify_webhook_signature: request body is not valid JSON", e);
     return false;
   }
 
@@ -161,14 +179,30 @@ export async function verifyPaypalWebhookSig(
   };
 
   try {
-    const { ok, data } = await paypalFetch<{ verification_status?: string }>(
+    const { ok, status, data, raw } = await paypalFetch<{ verification_status?: string }>(
       "/v1/notifications/verify-webhook-signature",
       { method: "POST", body: payload },
     );
-    if (!ok) return false;
-    return data?.verification_status === "SUCCESS";
+    // Distinguish every outcome so a dead OAuth client, a wrong webhook ID,
+    // a live/sandbox mismatch, and a genuine signature failure stop looking
+    // identical from the logs alone.
+    if (!ok) {
+      console.error(
+        `[paypal] verify_webhook_signature: PayPal API call failed (env=${getEnv()}) status=${status}`,
+        raw,
+      );
+      return false;
+    }
+    const verificationStatus = data?.verification_status;
+    if (verificationStatus !== "SUCCESS") {
+      console.warn(
+        `[paypal] verify_webhook_signature: verification_status=${verificationStatus ?? "<missing>"} (env=${getEnv()}) transmissionId=${headers.transmissionId}`,
+      );
+      return false;
+    }
+    return true;
   } catch (e) {
-    console.error("[paypal] verify_webhook_signature error", e);
+    console.error(`[paypal] verify_webhook_signature: request threw (env=${getEnv()})`, e);
     return false;
   }
 }
