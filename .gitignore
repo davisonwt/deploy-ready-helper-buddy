@@ -28,3 +28,7 @@ dist-ssr
 .env.*
 !.env.example
 !.env.jitsi.example
+
+# Supabase CLI local state (project ref, versions, pooler URL) — regenerated
+# on every `supabase` CLI command, not source
+supabase/.temp/
