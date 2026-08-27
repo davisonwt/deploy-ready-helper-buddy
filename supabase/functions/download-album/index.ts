@@ -10,10 +10,18 @@ const STORAGE_HOST = (() => {
   try { return new URL(PROJECT_URL).host.toLowerCase(); } catch { return ''; }
 })();
 
+// Service-role client, used only to sign premium-room storage paths server-side.
+// premium-room is a private bucket — the manifest/track URLs stored on the product
+// row are getPublicUrl()-style links that no longer resolve now the bucket is
+// private, so every fetch below has to go through a freshly-minted signed URL
+// instead of being fetched directly.
+const serviceClient = createClient(PROJECT_URL, Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '');
+
 const FETCH_TIMEOUT_MS = 15_000;
 const MAX_MANIFEST_BYTES = 1_000_000; // 1 MB
 const MAX_TRACK_BYTES = 50_000_000; // 50 MB per track
 const MAX_TOTAL_BYTES = 400_000_000; // 400 MB per album
+const SIGN_TTL_SECONDS = 300; // just needs to outlive this request
 
 /**
  * Only allow fetching from this project's own Supabase Storage domain.
@@ -26,6 +34,41 @@ function isAllowedUrl(raw: unknown): boolean {
   if (u.protocol !== 'https:') return false;
   if (!STORAGE_HOST || u.host.toLowerCase() !== STORAGE_HOST) return false;
   return u.pathname.startsWith('/storage/v1/');
+}
+
+/**
+ * Extracts the object path inside the premium-room bucket from a stored
+ * getPublicUrl()-style (or signed/authenticated) URL. Returns null for
+ * anything not pointing at premium-room, so callers fail closed.
+ */
+function extractPremiumRoomPath(raw: unknown): string | null {
+  if (!isAllowedUrl(raw)) return null;
+  const u = new URL(raw as string);
+  const marker = '/storage/v1/object/';
+  const idx = u.pathname.indexOf(marker);
+  if (idx === -1) return null;
+  const parts = u.pathname.slice(idx + marker.length).split('/').filter(Boolean);
+  const bucketIdx = ['public', 'sign', 'authenticated'].includes(parts[0]) ? 1 : 0;
+  if (parts[bucketIdx] !== 'premium-room') return null;
+  return decodeURIComponent(parts.slice(bucketIdx + 1).join('/'));
+}
+
+/**
+ * Signs a stored premium-room URL server-side, then fetches it through the
+ * existing SSRF-guarded safeFetch. Replaces a direct fetch of the (no longer
+ * public) stored URL.
+ */
+async function signedFetch(rawUrl: unknown, maxBytes: number): Promise<Uint8Array | null> {
+  const path = extractPremiumRoomPath(rawUrl);
+  if (!path) return null;
+  const { data: signed, error } = await serviceClient.storage
+    .from('premium-room')
+    .createSignedUrl(path, SIGN_TTL_SECONDS);
+  if (error || !signed?.signedUrl) {
+    console.error('Failed to sign premium-room path', { path, error: error?.message });
+    return null;
+  }
+  return safeFetch(signed.signedUrl, maxBytes);
 }
 
 async function safeFetch(url: string, maxBytes: number): Promise<Uint8Array | null> {
@@ -121,14 +164,28 @@ Deno.serve(async (req) => {
     const isFree = product.license_type === 'free';
 
     if (!isFree && !isOwner) {
-      // Check if user purchased it
-      const { data: purchase } = await supabaseClient
-        .from('music_purchases')
+      // product_bestowals is the actual purchase record for `products` rows
+      // (music_purchases is a different table — it only ever tracks
+      // dj_music_tracks purchases via track_id/buyer_id, and has no
+      // product_id/user_id columns at all).
+      const { data: purchase, error: purchaseError } = await supabaseClient
+        .from('product_bestowals')
         .select('id')
         .eq('product_id', productId)
-        .eq('user_id', user.id)
-        .eq('payment_status', 'completed')
-        .single();
+        .eq('bestower_id', user.id)
+        .eq('status', 'completed')
+        .maybeSingle();
+
+      // A failed lookup is not the same as "not purchased" — surface it as
+      // an error instead of silently denying access (or, if the query were
+      // ever inverted, silently granting it).
+      if (purchaseError) {
+        console.error('Purchase check failed', { productId, userId: user.id, error: purchaseError.message });
+        return new Response(
+          JSON.stringify({ error: 'Could not verify purchase' }),
+          { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
 
       if (!purchase) {
         return new Response(
@@ -138,8 +195,8 @@ Deno.serve(async (req) => {
       }
     }
 
-    // Fetch manifest from storage (host-restricted, size/time capped)
-    const manifestBytes = await safeFetch(product.file_url, MAX_MANIFEST_BYTES);
+    // Fetch manifest from storage via a freshly-signed URL (host-restricted, size/time capped)
+    const manifestBytes = await signedFetch(product.file_url, MAX_MANIFEST_BYTES);
     if (!manifestBytes) {
       return new Response(
         JSON.stringify({ error: 'Failed to fetch album manifest' }),
@@ -179,7 +236,7 @@ Deno.serve(async (req) => {
       if (totalBytes >= MAX_TOTAL_BYTES) break;
 
       const remaining = Math.min(MAX_TRACK_BYTES, MAX_TOTAL_BYTES - totalBytes);
-      const bytes = await safeFetch(track?.url, remaining);
+      const bytes = await signedFetch(track?.url, remaining);
       if (!bytes) {
         console.error(`Skipped track (blocked, too large, or unreachable): ${safeName}`);
         continue;
