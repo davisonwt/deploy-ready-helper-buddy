@@ -9,7 +9,7 @@
  */
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { ArrowLeft, Sparkles, MapPin, Briefcase, ExternalLink, MessageCircle, Loader2, Play, Image as ImageIcon } from 'lucide-react';
+import { ArrowLeft, Sparkles, DollarSign, MapPin, Briefcase, ExternalLink, MessageCircle, Loader2, Play, Image as ImageIcon } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 
@@ -97,6 +97,15 @@ export default function WhisperersFeedPage() {
               <Sparkles className="w-4 h-4" />
               {myId ? 'Edit my Whisperer profile' : 'Become a Whisperer'}
             </Link>
+            {myId && (
+              <Link
+                to="/bulk/whisperer"
+                className="px-4 py-2 rounded-xl bg-white/10 hover:bg-white/15 border border-white/15 text-sm inline-flex items-center gap-2"
+              >
+                <DollarSign className="w-4 h-4" />
+                My Earnings
+              </Link>
+            )}
             <Link
               to="/learn-share?role=Whisperer"
               className="px-4 py-2 rounded-xl bg-white/10 hover:bg-white/15 border border-white/15 text-sm"
