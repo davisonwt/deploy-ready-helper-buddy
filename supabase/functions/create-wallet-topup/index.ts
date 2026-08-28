@@ -133,8 +133,8 @@ Deno.serve(async (req) => {
             shipping_preference: "NO_SHIPPING",
             landing_page: "LOGIN",
             payment_method_preference: "IMMEDIATE_PAYMENT_REQUIRED",
-            return_url: `${redirectBase}/wallet?topup=success`,
-            cancel_url: `${redirectBase}/wallet?topup=cancelled`,
+            return_url: `${redirectBase}/payment-success?topup=${topup.id}`,
+            cancel_url: `${redirectBase}/payment-cancelled?topup=${topup.id}`,
           },
         },
       },
@@ -142,8 +142,8 @@ Deno.serve(async (req) => {
         brand_name: "Sow2Grow",
         user_action: "PAY_NOW",
         shipping_preference: "NO_SHIPPING",
-        return_url: `${redirectBase}/wallet?topup=success`,
-        cancel_url: `${redirectBase}/wallet?topup=cancelled`,
+        return_url: `${redirectBase}/payment-success?topup=${topup.id}`,
+        cancel_url: `${redirectBase}/payment-cancelled?topup=${topup.id}`,
       },
     };
     const { ok, status, data, raw } = await paypalFetch<{ id?: string; links?: Array<{ href: string; rel: string }> }>(

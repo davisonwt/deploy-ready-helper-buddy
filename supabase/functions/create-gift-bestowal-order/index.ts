@@ -226,8 +226,8 @@ Deno.serve(async (req) => {
             shipping_preference: "NO_SHIPPING",
             landing_page: "LOGIN",
             payment_method_preference: "IMMEDIATE_PAYMENT_REQUIRED",
-            return_url: `${redirectBase}/bestowals/${bestowal.id}?status=success`,
-            cancel_url: `${redirectBase}/bestowals/${bestowal.id}?status=cancelled`,
+            return_url: `${redirectBase}/payment-success?bestowal=${bestowal.id}`,
+            cancel_url: `${redirectBase}/payment-cancelled?bestowal=${bestowal.id}`,
           },
         },
       },
@@ -235,8 +235,8 @@ Deno.serve(async (req) => {
         brand_name: "Sow2Grow",
         user_action: "PAY_NOW",
         shipping_preference: "NO_SHIPPING",
-        return_url: `${redirectBase}/bestowals/${bestowal.id}?status=success`,
-        cancel_url: `${redirectBase}/bestowals/${bestowal.id}?status=cancelled`,
+        return_url: `${redirectBase}/payment-success?bestowal=${bestowal.id}`,
+        cancel_url: `${redirectBase}/payment-cancelled?bestowal=${bestowal.id}`,
       },
     };
 
