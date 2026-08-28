@@ -16,27 +16,35 @@ import {
 import { useMusicPurchase } from '@/hooks/useMusicPurchase'
 import { useAuth } from '@/hooks/useAuth'
 import { toast } from 'sonner'
+import { ConfirmBestowModal } from '@/components/payments/ConfirmBestowModal'
 
-export function MusicPurchaseInterface({ 
-  tracks = [], 
-  currentTrack = null, 
-  showPurchaseDialog = false, 
-  setShowPurchaseDialog 
+export function MusicPurchaseInterface({
+  tracks = [],
+  currentTrack = null,
+  showPurchaseDialog = false,
+  setShowPurchaseDialog
 }) {
   const { user } = useAuth()
   const { purchaseTrack, loading: purchasing } = useMusicPurchase()
   const [selectedTrack, setSelectedTrack] = useState(null)
+  const [confirmTrack, setConfirmTrack] = useState(null)
 
-  const handlePurchaseTrack = async (track) => {
+  const handlePurchaseTrack = (track) => {
     if (!user) {
       toast.error('Please log in to purchase music tracks')
       return
     }
+    setConfirmTrack(track)
+  }
 
-    const result = await purchaseTrack(track)
+  const confirmPurchaseWithProvider = async (provider) => {
+    if (!confirmTrack) return
+    const track = confirmTrack
+    const result = await purchaseTrack(track, track?.price, { provider })
     if (result.success) {
-      setShowPurchaseDialog(false)
+      setShowPurchaseDialog?.(false)
       setSelectedTrack(null)
+      setConfirmTrack(null)
       toast.success(`🎵 "${track.track_title}" purchased! Check your direct messages.`)
     }
   }
@@ -49,6 +57,17 @@ export function MusicPurchaseInterface({
 
   return (
     <>
+      {confirmTrack && (
+        <ConfirmBestowModal
+          isOpen
+          onClose={() => setConfirmTrack(null)}
+          title={confirmTrack.track_title || 'this track'}
+          amount={Number(confirmTrack.price) || 1.38}
+          confirming={purchasing}
+          onConfirm={confirmPurchaseWithProvider}
+        />
+      )}
+
       {/* Current Track Purchase */}
       {currentTrack && (
         <Card className="border-primary/20 bg-gradient-to-r from-primary/5 to-primary/10">

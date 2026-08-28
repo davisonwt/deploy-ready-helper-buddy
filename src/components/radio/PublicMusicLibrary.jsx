@@ -19,10 +19,12 @@ import {
 import { supabase } from '@/integrations/supabase/client'
 import { useMusicPurchase } from '@/hooks/useMusicPurchase'
 import { useAuth } from '@/hooks/useAuth'
+import { ConfirmBestowModal } from '@/components/payments/ConfirmBestowModal'
 
 export default function PublicMusicLibrary() {
   const { user } = useAuth()
   const { purchaseTrack, loading: purchasing } = useMusicPurchase()
+  const [confirmTrack, setConfirmTrack] = useState(null)
   const [tracks, setTracks] = useState([])
   const [loading, setLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState('')
@@ -302,8 +304,14 @@ export default function PublicMusicLibrary() {
     }
   }
 
-  const handlePurchase = async (track) => {
-    await purchaseTrack(track)
+  const handlePurchase = (track) => {
+    setConfirmTrack(track)
+  }
+
+  const confirmPurchaseWithProvider = async (provider) => {
+    if (!confirmTrack) return
+    await purchaseTrack(confirmTrack, confirmTrack?.price, { provider })
+    setConfirmTrack(null)
   }
 
   const getTrackTypeLabel = (type) => {
@@ -339,6 +347,17 @@ export default function PublicMusicLibrary() {
 
   return (
     <div className="space-y-6">
+      {confirmTrack && (
+        <ConfirmBestowModal
+          isOpen
+          onClose={() => setConfirmTrack(null)}
+          title={confirmTrack.track_title || confirmTrack.title || 'this track'}
+          amount={Number(confirmTrack.price) || 0}
+          confirming={purchasing}
+          onConfirm={confirmPurchaseWithProvider}
+        />
+      )}
+
       {/* Header */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>

@@ -5,6 +5,8 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { useLiveBestowal } from '@/hooks/useLiveBestowal';
+import ProviderPicker from '@/components/payments/ProviderPicker';
+import type { PayoutProviderId } from '@/lib/payments/providerFees';
 
 interface Props {
   open: boolean;
@@ -22,11 +24,12 @@ export function BestowalDialog({ open, onOpenChange, sowerId, bestowerId, sessio
   const { sendBestowal, loading } = useLiveBestowal();
   const [amount, setAmount] = useState('5');
   const [note, setNote] = useState('');
+  const [provider, setProvider] = useState<PayoutProviderId>('nowpayments');
 
   const submit = async () => {
     const n = Number(amount);
     if (!Number.isFinite(n) || n <= 0) return;
-    const res = await sendBestowal({ sowerId, bestowerId, amount: n, sessionKind, sessionId, note });
+    const res = await sendBestowal({ sowerId, bestowerId, amount: n, sessionKind, sessionId, note, provider });
     if (res.success) {
       onOpenChange(false);
       setNote('');
@@ -80,6 +83,13 @@ export function BestowalDialog({ open, onOpenChange, sowerId, bestowerId, sessio
               placeholder="A blessing or thank-you"
               className="mt-1 bg-[#14101F] border-[#8B5CF6]/40 text-[#E8D9B5]"
             />
+          </div>
+
+          <div>
+            <label className="text-xs uppercase tracking-wider text-[#E8D9B5]/60">Payment method</label>
+            <div className="mt-1">
+              <ProviderPicker value={provider} onChange={setProvider} amount={Number(amount) || 0} mode="buyer" disabled={loading} />
+            </div>
           </div>
 
           <p className="text-[11px] text-[#E8D9B5]/50">

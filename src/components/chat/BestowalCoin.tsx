@@ -7,6 +7,7 @@ import { useGiftBestowal } from '@/hooks/useGiftBestowal';
 import { toast } from 'sonner';
 import Confetti from 'react-confetti';
 import { launchConfetti } from '@/utils/confetti';
+import type { PayoutProviderId } from '@/lib/payments/providerFees';
 
 interface BestowalCoinProps {
   /** ID of the message/file/audio/image being tipped (passed back via onBestowalComplete). */
@@ -36,6 +37,7 @@ export function BestowalCoin({
 }: BestowalCoinProps) {
   const [showSlider, setShowSlider] = useState(false);
   const [sliderValue, setSliderValue] = useState([initialAmount || 0.5]);
+  const [provider, setProvider] = useState<PayoutProviderId>('nowpayments');
   const [showConfetti, setShowConfetti] = useState(false);
   const [emojiRain, setEmojiRain] = useState<Array<{ id: number; x: number; y: number; emoji: string }>>([]);
   const { send, loading: processing } = useGiftBestowal();
@@ -72,7 +74,7 @@ export function BestowalCoin({
       amount,
       contextKind: 'chat_tip',
       contextId: roomId,
-      provider: 'nowpayments',
+      provider,
       payCurrency: 'usdttrc20',
       message: assetId ? `tip:${assetId}` : undefined,
     });
@@ -186,6 +188,27 @@ export function BestowalCoin({
                   <span>0.50</span>
                   <span>5.00</span>
                 </div>
+              </div>
+
+              <div className="flex gap-2 mb-4">
+                <Button
+                  type="button"
+                  size="sm"
+                  variant={provider === 'nowpayments' ? 'default' : 'outline'}
+                  onClick={() => setProvider('nowpayments')}
+                  className="flex-1"
+                >
+                  Crypto
+                </Button>
+                <Button
+                  type="button"
+                  size="sm"
+                  variant={provider === 'paypal' ? 'default' : 'outline'}
+                  onClick={() => setProvider('paypal')}
+                  className="flex-1"
+                >
+                  PayPal
+                </Button>
               </div>
 
               <div className="flex gap-2">

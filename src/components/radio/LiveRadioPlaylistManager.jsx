@@ -16,10 +16,12 @@ import { supabase } from '@/integrations/supabase/client'
 import { useAuth } from '@/hooks/useAuth'
 import { useMusicPurchase } from '@/hooks/useMusicPurchase'
 import { toast } from 'sonner'
+import { ConfirmBestowModal } from '@/components/payments/ConfirmBestowModal'
 
 export function LiveRadioPlaylistManager({ sessionId, isHost = false }) {
   const { user } = useAuth()
   const { purchaseTrack, loading: purchasing } = useMusicPurchase()
+  const [confirmTrack, setConfirmTrack] = useState(null)
   const [automatedSession, setAutomatedSession] = useState(null)
   const [currentTrack, setCurrentTrack] = useState(null)
   const [playlistTracks, setPlaylistTracks] = useState([])
@@ -111,10 +113,17 @@ export function LiveRadioPlaylistManager({ sessionId, isHost = false }) {
     }
   }
 
-  const handlePurchaseTrack = async (track) => {
-    const result = await purchaseTrack(track)
+  const handlePurchaseTrack = (track) => {
+    setConfirmTrack(track)
+  }
+
+  const confirmPurchaseWithProvider = async (provider) => {
+    if (!confirmTrack) return
+    const track = confirmTrack
+    const result = await purchaseTrack(track, track?.price, { provider })
     if (result.success) {
       toast.success(`🎵 "${track.track_title}" purchased! Check your direct messages.`)
+      setConfirmTrack(null)
     }
   }
 
@@ -169,6 +178,17 @@ export function LiveRadioPlaylistManager({ sessionId, isHost = false }) {
 
   return (
     <div className="space-y-4">
+      {confirmTrack && (
+        <ConfirmBestowModal
+          isOpen
+          onClose={() => setConfirmTrack(null)}
+          title={confirmTrack.track_title || 'this track'}
+          amount={Number(confirmTrack.price) || 0}
+          confirming={purchasing}
+          onConfirm={confirmPurchaseWithProvider}
+        />
+      )}
+
       {/* Current Track */}
       <Card>
         <CardHeader>

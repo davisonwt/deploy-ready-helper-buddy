@@ -7,7 +7,8 @@ interface RadioBestowlData {
   listenerId: string; // accepted for API back-compat; ignored (server reads auth.uid())
   sowerId: string;
   scheduleId: string;
-  provider?: GiftProvider;
+  /** Required — no default. The bestower must have chosen this. */
+  provider: GiftProvider;
   payCurrency?: string;
 }
 
@@ -25,7 +26,7 @@ export const useRadioBestowal = () => {
       amount: data.amount,
       contextKind: 'radio_session',
       contextId: data.scheduleId,
-      provider: data.provider ?? 'nowpayments',
+      provider: data.provider,
       payCurrency: data.payCurrency ?? 'usdttrc20',
     });
     return result.success

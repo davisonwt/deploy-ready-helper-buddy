@@ -11,6 +11,7 @@ import { useGiftBestowal } from '@/hooks/useGiftBestowal';
 import { useProductBasket } from '@/contexts/ProductBasketContext';
 import { toast } from 'sonner';
 import { EditTrackModal } from './EditTrackModal';
+import { ConfirmBestowModal } from '@/components/payments/ConfirmBestowModal';
 import { useQueryClient } from '@tanstack/react-query';
 import { useCurrency } from '@/hooks/useCurrency';
 import { launchConfetti } from '@/utils/confetti';
@@ -147,6 +148,7 @@ export function MusicLibraryTable({
   const [audioElement, setAudioElement] = useState<HTMLAudioElement | null>(null);
   const [editingTrack, setEditingTrack] = useState<MusicTrack | null>(null);
   const [ownedTrackIds, setOwnedTrackIds] = useState<Set<string>>(new Set());
+  const [confirmAction, setConfirmAction] = useState<{ track: MusicTrack; kind: 'bestow' | 'gift' } | null>(null);
   
   // Safely extract functions with fallbacks
   const purchaseTrack = musicPurchase?.purchaseTrack || (async () => {});
@@ -248,7 +250,7 @@ export function MusicLibraryTable({
       e.preventDefault();
       e.stopPropagation();
     }
-    
+
     if (!user) {
       toast.error('Please sign in to make a bestowal');
       return;
@@ -260,31 +262,12 @@ export function MusicLibraryTable({
       return;
     }
 
-    try {
-      setLocalProcessing(true);
-      if (track.source_type === 'product' || track.product_id) {
-        handleBasketBestowal(track, e);
-        return;
-      }
-      await purchaseTrack(track.id, Number(track.price) || 0);
-      
-      // Award XP for music bestowal (100 XP) - use type assertion for RPC
-      if (user) {
-        try {
-          await (supabase.rpc as any)('add_xp_to_current_user', { amount: 100 });
-        } catch (err) {
-          console.warn('XP award not available:', err);
-        }
-      }
-      
-      launchConfetti();
-      toast.success('Bestowal completed! You can now download the track.');
-    } catch (error: any) {
-      console.error('Bestowal error:', error);
-      toast.error(error?.message || 'Bestowal failed. Please try again.');
-    } finally {
-      setLocalProcessing(false);
+    if (track.source_type === 'product' || track.product_id) {
+      handleBasketBestowal(track, e);
+      return;
     }
+
+    setConfirmAction({ track, kind: 'bestow' });
   };
 
   const handleBasketBestowal = (track: MusicTrack, e?: React.MouseEvent) => {
@@ -324,14 +307,42 @@ export function MusicLibraryTable({
       toast.error('Sower recipient missing for this track');
       return;
     }
-    await giftBestowal.send({
-      recipientId: track.sower_user_id,
-      amount: 2,
-      contextKind: 'chat_tip',
-      contextId: track.id,
-      provider: 'paypal',
-      message: `Freewill gift for ${track.track_title}`,
-    });
+    setConfirmAction({ track, kind: 'gift' });
+  };
+
+  const confirmActionWithProvider = async (provider: 'nowpayments' | 'paypal') => {
+    if (!confirmAction) return;
+    const { track, kind } = confirmAction;
+    setLocalProcessing(true);
+    try {
+      if (kind === 'bestow') {
+        await purchaseTrack(track.id, Number(track.price) || 0, { provider });
+        if (user) {
+          try {
+            await (supabase.rpc as any)('add_xp_to_current_user', { amount: 100 });
+          } catch (err) {
+            console.warn('XP award not available:', err);
+          }
+        }
+        launchConfetti();
+        toast.success('Bestowal completed! You can now download the track.');
+      } else {
+        await giftBestowal.send({
+          recipientId: track.sower_user_id!,
+          amount: 2,
+          contextKind: 'chat_tip',
+          contextId: track.id,
+          provider,
+          message: `Freewill gift for ${track.track_title}`,
+        });
+      }
+      setConfirmAction(null);
+    } catch (error: any) {
+      console.error('Bestowal error:', error);
+      toast.error(error?.message || 'Bestowal failed. Please try again.');
+    } finally {
+      setLocalProcessing(false);
+    }
   };
 
   const handleShare = async (track: MusicTrack, e?: React.MouseEvent) => {
@@ -400,6 +411,18 @@ export function MusicLibraryTable({
             queryClient.invalidateQueries({ queryKey: ['my-music'] });
             queryClient.invalidateQueries({ queryKey: ['community-music'] });
           }}
+        />
+      )}
+
+      {confirmAction && (
+        <ConfirmBestowModal
+          isOpen
+          onClose={() => setConfirmAction(null)}
+          title={confirmAction.track.track_title}
+          amount={confirmAction.kind === 'bestow' ? Number(confirmAction.track.price) || 0 : 2}
+          confirming={localProcessing}
+          actionLabel={confirmAction.kind === 'gift' ? 'Gift' : 'Bestow'}
+          onConfirm={confirmActionWithProvider}
         />
       )}
 

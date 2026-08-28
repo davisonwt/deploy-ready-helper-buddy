@@ -10,8 +10,13 @@ import { invokePaymentFunction } from '@/lib/payments/invokeFunction';
  * The webhook finalizes the music_purchases row + delivers a buyer notification.
  *
  * Signatures supported (callers in the codebase vary):
- *   purchaseTrack(track)
- *   purchaseTrack(trackId, price?)
+ *   purchaseTrack(track, price, { provider })
+ *   purchaseTrack(trackId, price, { provider })
+ *
+ * `opts.provider` is REQUIRED — 'nowpayments' or 'paypal', whichever the
+ * bestower actually picked. There is no default; a missing/invalid
+ * provider is a caller bug, not something to silently paper over by
+ * picking one for them.
  */
 export function useMusicPurchase() {
   const [loading, setLoading] = useState(false);
@@ -34,7 +39,11 @@ export function useMusicPurchase() {
       return { success: false };
     }
 
-    const provider = opts.provider === 'paypal' ? 'paypal' : 'nowpayments';
+    if (opts.provider !== 'paypal' && opts.provider !== 'nowpayments') {
+      toast({ title: 'Purchase failed', description: 'Choose a payment method first', variant: 'destructive' });
+      return { success: false };
+    }
+    const provider = opts.provider;
     const payCurrency = opts.payCurrency || 'usdttrc20';
 
     try {

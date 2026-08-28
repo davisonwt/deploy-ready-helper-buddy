@@ -40,6 +40,8 @@ import { cn } from '@/lib/utils';
 import { type WanderingRole, WANDERING_BADGES } from '@/components/marketplace/WanderingBadgeBar';
 import { launchConfetti, playSoundEffect } from '@/utils/confetti';
 import { PREVIEW_SECONDS } from '@/lib/media/previewLength';
+import { ConfirmBestowModal } from '@/components/payments/ConfirmBestowModal';
+import type { PayoutProviderId } from '@/lib/payments/providerFees';
 import { LiveNowStrip } from '@/components/live/LiveNowStrip';
 import LiveStage from '@/components/live/LiveStage';
 import LiveStageOverlay from '@/components/live/LiveStageOverlay';
@@ -163,6 +165,8 @@ export default function TribalAliveFeedPage() {
   } | null>(null);
   const [followingIds, setFollowingIds] = useState<Set<string>>(new Set());
   const [actionPanel, setActionPanel] = useState<ActionPanelState>(null);
+  const [confirmBestow, setConfirmBestow] = useState<{ item: FeedItem; kind: 'music' | 'radio_recorded' } | null>(null);
+  const [bestowing, setBestowing] = useState(false);
 
   const containerRef = useRef<HTMLDivElement>(null);
   const cardRefs = useRef<Array<HTMLDivElement | null>>([]);
@@ -838,7 +842,7 @@ export default function TribalAliveFeedPage() {
     await refreshActionMessages(roomId, actionPanel.item, 'voice');
   };
 
-  const handleFreewillGift = async (amount: number | 'heart') => {
+  const handleFreewillGift = async (amount: number | 'heart', provider: PayoutProviderId) => {
     if (!actionPanel || !user) return;
     const item = actionPanel.item;
     if (amount === 'heart') {
@@ -874,7 +878,7 @@ export default function TribalAliveFeedPage() {
       amount,
       contextKind,
       contextId: item.id,
-      provider: 'nowpayments',
+      provider,
       payCurrency: 'usdttrc20',
       message: `Freewill gift · ${item.title}`,
     });
@@ -895,8 +899,9 @@ export default function TribalAliveFeedPage() {
       // DJ tracks aren't marketplace products (no products.id exists for
       // them) — buy them via the content-purchase pipeline, which resolves
       // dj_music_tracks directly. This is already the working path used
-      // elsewhere in the app for the same content.
-      purchaseTrack(item.id);
+      // elsewhere in the app for the same content. Pause for a provider
+      // choice first rather than firing straight to NOWPayments.
+      setConfirmBestow({ item, kind: 'music' });
       return;
     }
 
@@ -913,15 +918,7 @@ export default function TribalAliveFeedPage() {
         });
         return;
       }
-      sendGift({
-        recipientId: item.sower_id,
-        amount: Number(item.price ?? 2),
-        contextKind: 'radio_session',
-        contextId: item.id,
-        provider: 'nowpayments',
-        payCurrency: 'usdttrc20',
-        message: `Bestowal · ${item.title}`,
-      });
+      setConfirmBestow({ item, kind: 'radio_recorded' });
       return;
     }
 
@@ -939,6 +936,31 @@ export default function TribalAliveFeedPage() {
     launchConfetti();
     playSoundEffect('bestow', 0.8);
     navigate('/products/basket');
+  };
+
+  // Fires once the sower has actually picked a provider in the confirm modal.
+  const confirmBestowWithProvider = async (provider: PayoutProviderId) => {
+    if (!confirmBestow) return;
+    const { item, kind } = confirmBestow;
+    setBestowing(true);
+    try {
+      if (kind === 'music') {
+        await purchaseTrack(item.id, item.price, { provider });
+      } else {
+        await sendGift({
+          recipientId: item.sower_id!,
+          amount: Number(item.price ?? 2),
+          contextKind: 'radio_session',
+          contextId: item.id,
+          provider,
+          payCurrency: 'usdttrc20',
+          message: `Bestowal · ${item.title}`,
+        });
+      }
+      setConfirmBestow(null);
+    } finally {
+      setBestowing(false);
+    }
   };
 
   // Open seed-specific ChatApp message panel with the sower
@@ -1224,6 +1246,20 @@ export default function TribalAliveFeedPage() {
             onGift={handleFreewillGift}
           />
         )}
+      </AnimatePresence>
+
+      {confirmBestow && (
+        <ConfirmBestowModal
+          isOpen
+          onClose={() => setConfirmBestow(null)}
+          title={confirmBestow.item.title}
+          amount={Number(confirmBestow.item.price ?? 2)}
+          confirming={bestowing}
+          onConfirm={confirmBestowWithProvider}
+        />
+      )}
+
+      <AnimatePresence>
         {activeRoom && activeRoom.liveSeed && (
           <LiveStageOverlay
             seedId={activeRoom.liveSeed.seedId}
@@ -1643,10 +1679,11 @@ function SeedActionPanel({
   onClose: () => void;
   onSendText: (text: string) => Promise<void>;
   onSendVoice: (audioBlob: Blob, duration: number) => Promise<void>;
-  onGift: (amount: number | 'heart') => Promise<void>;
+  onGift: (amount: number | 'heart', provider: PayoutProviderId) => Promise<void>;
 }) {
   const [text, setText] = useState('');
   const [sending, setSending] = useState(false);
+  const [giftProvider, setGiftProvider] = useState<PayoutProviderId>('nowpayments');
   const [recording, setRecording] = useState(false);
   const [seconds, setSeconds] = useState(0);
   const recorderRef = useRef<MediaRecorder | null>(null);
@@ -1730,7 +1767,7 @@ function SeedActionPanel({
     if (sending) return;
     setSending(true);
     try {
-      await onGift(amount);
+      await onGift(amount, giftProvider);
     } finally {
       setSending(false);
     }
@@ -1765,6 +1802,26 @@ function SeedActionPanel({
 
         {panel.mode === 'gift' ? (
           <div className="space-y-4 p-4">
+            <div className="flex gap-2">
+              <Button
+                type="button"
+                size="sm"
+                variant={giftProvider === 'nowpayments' ? 'default' : 'outline'}
+                onClick={() => setGiftProvider('nowpayments')}
+                className="flex-1"
+              >
+                Crypto
+              </Button>
+              <Button
+                type="button"
+                size="sm"
+                variant={giftProvider === 'paypal' ? 'default' : 'outline'}
+                onClick={() => setGiftProvider('paypal')}
+                className="flex-1"
+              >
+                PayPal
+              </Button>
+            </div>
             <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
               {[
                 { label: '10c', value: 0.1 },

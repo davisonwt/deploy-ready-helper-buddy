@@ -16,7 +16,8 @@ export interface LiveBestowalInput {
   sessionId: string;
   mediaId?: string | null;
   note?: string;
-  provider?: GiftProvider;
+  /** Required — no default. The bestower must have chosen this. */
+  provider: GiftProvider;
   payCurrency?: string;
 }
 
@@ -29,7 +30,7 @@ export function useLiveBestowal() {
       amount: data.amount,
       contextKind: 'live_session',
       contextId: data.sessionId,
-      provider: data.provider ?? 'nowpayments',
+      provider: data.provider,
       payCurrency: data.payCurrency ?? 'usdttrc20',
       message: data.note,
     });

@@ -10,6 +10,8 @@ import { ArrowLeft, Home, Loader2, Play, Pause, Heart, Download } from 'lucide-r
 import { toast } from 'sonner';
 import { priceBreakdown } from '@/lib/pricing/platformFee';
 import { PREVIEW_SECONDS } from '@/lib/media/previewLength';
+import ProviderPicker from '@/components/payments/ProviderPicker';
+import type { PayoutProviderId } from '@/lib/payments/providerFees';
 
 const PRIVATE_BUCKETS = ['music-tracks', 'dj-music', 'premium-room'];
 
@@ -65,6 +67,7 @@ export default function MusicTrackDetailPage() {
   const [playing, setPlaying] = useState(false);
   const [elapsed, setElapsed] = useState(0);
   const [buyingProduct, setBuyingProduct] = useState(false);
+  const [provider, setProvider] = useState<PayoutProviderId>('nowpayments');
   const audioRef = useRef<HTMLAudioElement | null>(null);
 
   useEffect(() => {
@@ -187,7 +190,7 @@ export default function MusicTrackDetailPage() {
     if (!track) return;
 
     if (track.source === 'dj_track') {
-      purchaseTrack(track.id);
+      purchaseTrack(track.id, track.price, { provider });
       return;
     }
 
@@ -203,8 +206,8 @@ export default function MusicTrackDetailPage() {
     try {
       const data = await invokePaymentFunction<any>('create-basket-bestowal-order', {
         items: [{ productId: track.id, qty: 1 }],
-        provider: 'nowpayments',
-        payCurrency: 'usdcsol',
+        provider,
+        payCurrency: provider === 'nowpayments' ? 'usdcsol' : undefined,
         redirectBaseUrl: typeof window !== 'undefined' ? window.location.origin : undefined,
       });
       const redirectUrl = data?.invoiceUrl || data?.approveUrl;
@@ -307,7 +310,7 @@ export default function MusicTrackDetailPage() {
                 </div>
               )}
 
-              <div className="flex flex-wrap gap-3 pt-2">
+              <div className="flex flex-col gap-3 pt-2">
                 {owned ? (
                   track.source === 'dj_track' && audioUrl ? (
                     <a href={audioUrl} download>
@@ -321,16 +324,20 @@ export default function MusicTrackDetailPage() {
                     </div>
                   )
                 ) : (
-                  <Button onClick={handleBuy} disabled={isBuying} className="bg-rose-500 hover:bg-rose-600">
-                    {isBuying ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Heart className="w-4 h-4 mr-2" />}
-                    Bestow ${total.toFixed(2)} USDC
-                  </Button>
-                )}
-                {!owned && (
-                  <div className="w-full text-xs text-slate-400">
-                    ${base.toFixed(2)} to the sower + ${s2gFee.toFixed(2)} Sow2Grow 15% (carried by you).
-                    A whisperer share, when linked, comes out of the sower's ${base.toFixed(2)}.
-                  </div>
+                  <>
+                    <div className="text-xs font-bold uppercase tracking-wider text-slate-400">
+                      Payment method
+                    </div>
+                    <ProviderPicker value={provider} onChange={setProvider} amount={total} mode="buyer" disabled={isBuying} />
+                    <Button onClick={handleBuy} disabled={isBuying} className="bg-rose-500 hover:bg-rose-600">
+                      {isBuying ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Heart className="w-4 h-4 mr-2" />}
+                      Bestow ${total.toFixed(2)} USDC
+                    </Button>
+                    <div className="text-xs text-slate-400">
+                      ${base.toFixed(2)} to the sower + ${s2gFee.toFixed(2)} Sow2Grow 15% (carried by you).
+                      A whisperer share, when linked, comes out of the sower's ${base.toFixed(2)}.
+                    </div>
+                  </>
                 )}
               </div>
             </div>
