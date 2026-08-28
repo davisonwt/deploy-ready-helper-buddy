@@ -10,7 +10,7 @@ import { toast } from 'sonner';
 import { motion, AnimatePresence } from 'framer-motion';
 import { GradientPlaceholder } from '@/components/ui/GradientPlaceholder';
 import ProviderPicker from '@/components/payments/ProviderPicker';
-import { PayoutProviderId, quoteFee } from '@/lib/payments/providerFees';
+import { MIN_CRYPTO_BESTOWAL_USD, quoteFee, type PayoutProviderId } from '@/lib/payments/providerFees';
 import { WHISPER_SHARE_RATE, WHISPER_SHARE_PERCENT, WHISPER_FALLBACK_NOTE, WHISPER_STATUS_ACTIVE } from '@/lib/whisperer/policy';
 import { getWhispererCredit } from '@/lib/whisperer/attribution';
 
@@ -70,12 +70,12 @@ export default function BestowalCheckout() {
 
       const data = await invokePaymentFunction<any>('create-basket-bestowal-order', {
         items,
-        provider,
-        payCurrency: provider === 'nowpayments' ? 'usdcsol' : undefined,
+        provider: effectiveProvider,
+        payCurrency: effectiveProvider === 'nowpayments' ? 'usdcsol' : undefined,
         redirectBaseUrl: window.location.origin,
       });
 
-      if (provider === 'nowpayments') {
+      if (effectiveProvider === 'nowpayments') {
         if (data.invoiceUrl) {
           window.open(data.invoiceUrl, '_blank');
         }
@@ -124,7 +124,9 @@ export default function BestowalCheckout() {
     0,
   );
   const checkoutTotal = round2(baseSubtotal + s2gFee);
-  const feeQuote = quoteFee(provider, checkoutTotal);
+  const belowCryptoMin = checkoutTotal < MIN_CRYPTO_BESTOWAL_USD;
+  const effectiveProvider: PayoutProviderId = belowCryptoMin ? 'paypal' : provider;
+  const feeQuote = quoteFee(effectiveProvider, checkoutTotal);
 
   // Only lines credited to an ACTIVE whisperer carry a whisper share; the rest
   // of the 15% stays with the sower.
@@ -221,7 +223,19 @@ export default function BestowalCheckout() {
 
         <div className="space-y-2">
           <div className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Payment method</div>
-          <ProviderPicker value={provider} onChange={setProvider} amount={checkoutTotal} mode="buyer" disabled={processing} />
+          {belowCryptoMin && (
+            <p className="text-xs text-muted-foreground">
+              Crypto has a ${MIN_CRYPTO_BESTOWAL_USD} minimum — pay with PayPal for smaller amounts.
+            </p>
+          )}
+          <ProviderPicker
+            value={effectiveProvider}
+            onChange={setProvider}
+            amount={checkoutTotal}
+            mode="buyer"
+            disabled={processing}
+            providers={belowCryptoMin ? ['paypal'] : undefined}
+          />
           <div className="text-xs text-muted-foreground text-right">
             Estimated processor fee on ${checkoutTotal.toFixed(2)}:{' '}
             <span className="font-medium text-foreground">{feeQuote.display}</span>
@@ -243,7 +257,7 @@ export default function BestowalCheckout() {
         </Button>
 
         <p className="text-xs text-center text-muted-foreground">
-          No bestowals are recorded until your payment is confirmed by {provider === 'nowpayments' ? 'NOWPayments' : 'PayPal'}.
+          No bestowals are recorded until your payment is confirmed by {effectiveProvider === 'nowpayments' ? 'NOWPayments' : 'PayPal'}.
         </p>
       </CardContent>
     </Card>

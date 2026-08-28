@@ -9,7 +9,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { toast } from 'sonner';
 import { useCurrency } from '@/hooks/useCurrency';
 import ProviderPicker from '@/components/payments/ProviderPicker';
-import { PayoutProviderId, quoteFee } from '@/lib/payments/providerFees';
+import { MIN_CRYPTO_BESTOWAL_USD, quoteFee, type PayoutProviderId } from '@/lib/payments/providerFees';
 import { invokePaymentFunction } from '@/lib/payments/invokeFunction';
 import { s2gFeeOn, round2 } from '@/lib/pricing/platformFee';
 import { WHISPER_FALLBACK_NOTE } from '@/lib/whisperer/policy';
@@ -51,7 +51,9 @@ export function AlbumBuilderCart({ scopeName }: AlbumBuilderCartProps = {}) {
     return Array.from(map.values()).sort((a, b) => b.amount - a.amount);
   }, [selectedTracks]);
 
-  const feeQuote = quoteFee(provider, albumPrice);
+  const belowCryptoMin = albumPrice < MIN_CRYPTO_BESTOWAL_USD;
+  const effectiveProvider: PayoutProviderId = belowCryptoMin ? 'paypal' : provider;
+  const feeQuote = quoteFee(effectiveProvider, albumPrice);
 
   const handleCheckout = async () => {
     if (!user) {
@@ -78,14 +80,14 @@ export function AlbumBuilderCart({ scopeName }: AlbumBuilderCartProps = {}) {
 
       const data = await invokePaymentFunction('create-basket-bestowal-order', {
         items: productItems,
-        provider,
-        payCurrency: provider === 'nowpayments' ? 'usdcsol' : undefined,
+        provider: effectiveProvider,
+        payCurrency: effectiveProvider === 'nowpayments' ? 'usdcsol' : undefined,
         redirectBaseUrl: typeof window !== 'undefined' ? window.location.origin : undefined,
       });
 
       if (!data || data.error) throw new Error(data?.error || 'album_order_failed');
 
-      if (provider === 'paypal') {
+      if (effectiveProvider === 'paypal') {
         if (!data.approveUrl) throw new Error('No PayPal checkout URL returned');
         window.location.href = data.approveUrl;
         return;
@@ -203,7 +205,19 @@ export function AlbumBuilderCart({ scopeName }: AlbumBuilderCartProps = {}) {
           {selectedTracks.length === 10 && (
             <div className="space-y-2">
               <div className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Payment method</div>
-              <ProviderPicker value={provider} onChange={setProvider} amount={albumPrice} mode="buyer" disabled={processing} />
+              {belowCryptoMin && (
+                <p className="text-xs text-muted-foreground">
+                  Crypto has a ${MIN_CRYPTO_BESTOWAL_USD} minimum — pay with PayPal for smaller amounts.
+                </p>
+              )}
+              <ProviderPicker
+                value={effectiveProvider}
+                onChange={setProvider}
+                amount={albumPrice}
+                mode="buyer"
+                disabled={processing}
+                providers={belowCryptoMin ? ['paypal'] : undefined}
+              />
               <div className="text-xs text-muted-foreground text-right">
                 Estimated processor fee on {formatAmount(albumPrice)}:{' '}
                 <span className="font-medium text-foreground">{feeQuote.display}</span>

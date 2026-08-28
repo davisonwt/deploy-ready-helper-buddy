@@ -24,7 +24,7 @@ import { useNowPayments } from '@/hooks/useNowPayments';
 import { usePaypal } from '@/hooks/usePaypal';
 import { postBestowalChatNotes } from '@/lib/bestowalChat';
 import ProviderPicker from '@/components/payments/ProviderPicker';
-import { PayoutProviderId, quoteFee } from '@/lib/payments/providerFees';
+import { MIN_CRYPTO_BESTOWAL_USD, quoteFee, type PayoutProviderId } from '@/lib/payments/providerFees';
 import { priceBreakdown } from '@/lib/pricing/platformFee';
 
 export interface QuickBestowModalProps {
@@ -69,7 +69,7 @@ export default function QuickBestowModal({
     try {
       let bestowalId: string;
 
-      if (provider === 'nowpayments') {
+      if (effectiveProvider === 'nowpayments') {
         const invoice = await createInvoice({
           orchardId,
           pocketsCount: 1,
@@ -126,7 +126,9 @@ export default function QuickBestowModal({
   // estimate and the amount shown here must be computed on that S2G-inclusive
   // total, not the raw base, or both numbers understate what's charged.
   const pricing = priceBreakdown(amount);
-  const feePreview = quoteFee(provider, pricing.total);
+  const belowCryptoMin = pricing.total < MIN_CRYPTO_BESTOWAL_USD;
+  const effectiveProvider: PayoutProviderId = belowCryptoMin ? 'paypal' : provider;
+  const feePreview = quoteFee(effectiveProvider, pricing.total);
 
   return (
     <Dialog open={open} onOpenChange={(v) => { if (!v) onClose(); }}>
@@ -169,13 +171,19 @@ export default function QuickBestowModal({
             <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
               Payment method
             </label>
+            {belowCryptoMin && (
+              <p className="text-xs text-muted-foreground mt-1">
+                Crypto has a ${MIN_CRYPTO_BESTOWAL_USD} minimum — pay with PayPal for smaller amounts.
+              </p>
+            )}
             <div className="mt-1">
               <ProviderPicker
-                value={provider}
+                value={effectiveProvider}
                 onChange={setProvider}
                 amount={pricing.total}
                 mode="buyer"
                 disabled={processing}
+                providers={belowCryptoMin ? ['paypal'] : undefined}
               />
             </div>
           </div>
