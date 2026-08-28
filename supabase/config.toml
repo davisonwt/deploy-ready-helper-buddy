@@ -168,9 +168,6 @@ verify_jwt = false
 [functions.xrp-quote]
 verify_jwt = false
 
-[functions.-Remnants-Wheel-Calendar]
-verify_jwt = false
-
 [functions.admin-create-user]
 verify_jwt = false
 
