@@ -8,7 +8,7 @@ import { Badge } from '@/components/ui/badge'
 import { Progress } from '@/components/ui/progress'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Link, useNavigate } from 'react-router-dom'
-import { Sprout, Plus, Eye, Users, TrendingUp, Calendar, DollarSign, Edit, Share2, MapPin, Trash2, Sparkles, Loader2, Radio, ArrowLeft, Upload, Store, Music } from 'lucide-react'
+import { Sprout, Plus, Eye, Users, TrendingUp, Calendar, DollarSign, Edit, Share2, MapPin, Trash2, Sparkles, Loader2, Radio, ArrowLeft, Upload, Store, Music, Disc } from 'lucide-react'
 import { toast } from "sonner"
 import { supabase } from '@/integrations/supabase/client'
 import { formatCurrency } from '../utils/formatters'
@@ -327,6 +327,11 @@ export default function MyOrchardsPage() {
                 <Link to="/products/upload" style={{ textDecoration: 'none', minWidth: 200 }}>
                   <LivingButton variant="enter" height={50} borderRadius={12} fontSize={14} letterSpacing="1px">
                     <Music size={18} /> Sow a Song
+                  </LivingButton>
+                </Link>
+                <Link to="/products/upload?releaseType=album" style={{ textDecoration: 'none', minWidth: 200 }}>
+                  <LivingButton variant="enter" height={50} borderRadius={12} fontSize={14} letterSpacing="1px">
+                    <Disc size={18} /> Sow an Album
                   </LivingButton>
                 </Link>
                 <Link to="/dashboard/sower/upload" style={{ textDecoration: 'none', minWidth: 200 }}>

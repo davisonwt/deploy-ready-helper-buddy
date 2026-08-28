@@ -8,9 +8,9 @@ import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Upload, Loader2, CheckCircle2, Disc, Music, X } from 'lucide-react';
+import { Upload, Loader2, CheckCircle2, Disc, Music, X, ArrowLeft } from 'lucide-react';
 import { toast } from 'sonner';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import JSZip from 'jszip';
 import CategoryTagPicker from '@/components/marketplace/CategoryTagPicker';
 import { WANDERING_BADGES, type WanderingRole } from '@/components/marketplace/WanderingBadgeBar';
@@ -45,6 +45,7 @@ function isAllowedImageFile(file: File): boolean {
 export default function UploadForm() {
   const { user } = useAuth();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const [uploading, setUploading] = useState(false);
   const [formData, setFormData] = useState({
     title: '',
@@ -57,7 +58,9 @@ export default function UploadForm() {
   });
   const [coverImage, setCoverImage] = useState<File | null>(null);
   const [mainFile, setMainFile] = useState<File | null>(null);
-  const [releaseType, setReleaseType] = useState<'single' | 'album'>('single');
+  const [releaseType, setReleaseType] = useState<'single' | 'album'>(
+    searchParams.get('releaseType') === 'album' ? 'album' : 'single'
+  );
   const [taxonomy, setTaxonomy] = useState<{ categoryId: string | null; subcategoryIds: string[]; tagIds: string[] }>({
     categoryId: null, subcategoryIds: [], tagIds: [],
   });
@@ -391,6 +394,10 @@ export default function UploadForm() {
 
   return (
     <div className="container max-w-3xl mx-auto px-4 py-8">
+      <Button variant="ghost" onClick={() => navigate(-1)} className="mb-4">
+        <ArrowLeft className="w-4 h-4 mr-2" />
+        Back
+      </Button>
       <Card>
         <CardHeader>
           <CardTitle className="text-3xl">Upload Your Creation</CardTitle>
@@ -496,6 +503,7 @@ export default function UploadForm() {
                     categoryId={taxonomy.categoryId}
                     subcategoryIds={taxonomy.subcategoryIds}
                     tagIds={taxonomy.tagIds}
+                    relevantGroups={formData.type === 'music' ? ['trust', 'logistics'] : undefined}
                     onChange={(next) => {
                       setTaxonomy(next);
                       // Mirror selection into legacy free-text column for backward-compat queries
