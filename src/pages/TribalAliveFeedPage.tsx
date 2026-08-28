@@ -41,7 +41,7 @@ import { type WanderingRole, WANDERING_BADGES } from '@/components/marketplace/W
 import { launchConfetti, playSoundEffect } from '@/utils/confetti';
 import { PREVIEW_SECONDS } from '@/lib/media/previewLength';
 import { ConfirmBestowModal } from '@/components/payments/ConfirmBestowModal';
-import { CRYPTO_ROUNDING_NOTICE, MIN_CRYPTO_BESTOWAL_USD, type PayoutProviderId } from '@/lib/payments/providerFees';
+import { CRYPTO_ROUNDING_NOTICE, DEFAULT_CRYPTO_PAY_CURRENCY, MIN_CRYPTO_BESTOWAL_USD, type PayoutProviderId } from '@/lib/payments/providerFees';
 import { LiveNowStrip } from '@/components/live/LiveNowStrip';
 import LiveStage from '@/components/live/LiveStage';
 import LiveStageOverlay from '@/components/live/LiveStageOverlay';
@@ -879,7 +879,7 @@ export default function TribalAliveFeedPage() {
       contextKind,
       contextId: item.id,
       provider,
-      payCurrency: 'usdttrc20',
+      payCurrency: DEFAULT_CRYPTO_PAY_CURRENCY,
       message: `Freewill gift · ${item.title}`,
     });
     if (result.success) {
@@ -953,7 +953,7 @@ export default function TribalAliveFeedPage() {
           contextKind: 'radio_session',
           contextId: item.id,
           provider,
-          payCurrency: 'usdttrc20',
+          payCurrency: DEFAULT_CRYPTO_PAY_CURRENCY,
           message: `Bestowal · ${item.title}`,
         });
       }

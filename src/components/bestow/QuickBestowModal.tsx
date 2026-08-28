@@ -24,7 +24,7 @@ import { useNowPayments } from '@/hooks/useNowPayments';
 import { usePaypal } from '@/hooks/usePaypal';
 import { postBestowalChatNotes } from '@/lib/bestowalChat';
 import ProviderPicker from '@/components/payments/ProviderPicker';
-import { CRYPTO_ROUNDING_NOTICE, MIN_CRYPTO_BESTOWAL_USD, quoteFee, type PayoutProviderId } from '@/lib/payments/providerFees';
+import { CRYPTO_ROUNDING_NOTICE, DEFAULT_CRYPTO_PAY_CURRENCY, MIN_CRYPTO_BESTOWAL_USD, quoteFee, type PayoutProviderId } from '@/lib/payments/providerFees';
 import { priceBreakdown } from '@/lib/pricing/platformFee';
 
 export interface QuickBestowModalProps {
@@ -73,7 +73,7 @@ export default function QuickBestowModal({
         const invoice = await createInvoice({
           orchardId,
           pocketsCount: 1,
-          payCurrency: 'usdcsol',
+          payCurrency: DEFAULT_CRYPTO_PAY_CURRENCY,
           message: note || undefined,
           growerId: hostUserId || undefined,
         });

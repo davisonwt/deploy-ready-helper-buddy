@@ -41,6 +41,13 @@ export const MIN_CRYPTO_BESTOWAL_USD = 10;
 export const CRYPTO_ROUNDING_NOTICE =
   "If your wallet or exchange limits decimals, round the amount UP. Overpaying by a cent completes the payment; underpaying by any fraction stalls it.";
 
+/**
+ * Single crypto pay currency for every NOWPayments invoice — USDC on Solana.
+ * Was inconsistently hardcoded per call site (some 'usdcsol', some the
+ * legacy 'usdttrc20'); this is the one value every site should pass.
+ */
+export const DEFAULT_CRYPTO_PAY_CURRENCY = 'usdcsol';
+
 export interface PayoutProviderInfo {
   id: PayoutProviderId;
   label: string;

@@ -20,7 +20,7 @@ interface PurchaseArgs {
   contentType: ContentType;
   contentId: string;
   provider: PurchaseProvider;
-  payCurrency?: string; // NOWPayments: e.g. 'usdttrc20'
+  payCurrency?: string; // NOWPayments: DEFAULT_CRYPTO_PAY_CURRENCY unless a caller has a real reason to override
   metadata?: Record<string, unknown>;
 }
 

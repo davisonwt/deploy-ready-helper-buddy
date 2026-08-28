@@ -3,6 +3,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from './useAuth';
 import { useToast } from '@/hooks/use-toast';
 import { invokePaymentFunction } from '@/lib/payments/invokeFunction';
+import { DEFAULT_CRYPTO_PAY_CURRENCY } from '@/lib/payments/providerFees';
 
 /**
  * Music purchase via the unified Shape-1 content_purchases pipeline.
@@ -44,7 +45,7 @@ export function useMusicPurchase() {
       return { success: false };
     }
     const provider = opts.provider;
-    const payCurrency = opts.payCurrency || 'usdttrc20';
+    const payCurrency = opts.payCurrency || DEFAULT_CRYPTO_PAY_CURRENCY;
 
     try {
       setLoading(true);

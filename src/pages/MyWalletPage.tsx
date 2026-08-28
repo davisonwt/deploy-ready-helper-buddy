@@ -11,7 +11,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { toast } from 'sonner';
 import ProviderPicker from '@/components/payments/ProviderPicker';
-import { CRYPTO_ROUNDING_NOTICE, quoteFee, type PayoutProviderId } from '@/lib/payments/providerFees';
+import { CRYPTO_ROUNDING_NOTICE, DEFAULT_CRYPTO_PAY_CURRENCY, quoteFee, type PayoutProviderId } from '@/lib/payments/providerFees';
 
 interface SowerBalance {
   available_balance: number;
@@ -122,7 +122,7 @@ export default function MyWalletPage() {
         body: {
           provider,
           amount: amountNum,
-          payCurrency: 'usdcsol',
+          payCurrency: DEFAULT_CRYPTO_PAY_CURRENCY,
           redirectBaseUrl: window.location.origin,
         },
       });

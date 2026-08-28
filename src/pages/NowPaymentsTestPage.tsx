@@ -5,6 +5,7 @@
 
 import { useState } from 'react';
 import { useNowPayments, useBestowalStatus } from '@/hooks/useNowPayments';
+import { DEFAULT_CRYPTO_PAY_CURRENCY } from '@/lib/payments/providerFees';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -14,7 +15,7 @@ export default function NowPaymentsTestPage() {
   const { createInvoice } = useNowPayments();
   const [orchardId, setOrchardId] = useState('');
   const [pockets, setPockets] = useState(1);
-  const [payCurrency, setPayCurrency] = useState('usdttrc20');
+  const [payCurrency, setPayCurrency] = useState(DEFAULT_CRYPTO_PAY_CURRENCY);
   const [bestowalId, setBestowalId] = useState<string | null>(null);
   const [invoiceUrl, setInvoiceUrl] = useState<string | null>(null);
   const [breakdown, setBreakdown] = useState<Record<string, number> | null>(null);

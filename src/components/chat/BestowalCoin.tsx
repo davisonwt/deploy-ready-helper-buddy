@@ -7,7 +7,7 @@ import { useGiftBestowal } from '@/hooks/useGiftBestowal';
 import { toast } from 'sonner';
 import Confetti from 'react-confetti';
 import { launchConfetti } from '@/utils/confetti';
-import { CRYPTO_ROUNDING_NOTICE, MIN_CRYPTO_BESTOWAL_USD, type PayoutProviderId } from '@/lib/payments/providerFees';
+import { CRYPTO_ROUNDING_NOTICE, DEFAULT_CRYPTO_PAY_CURRENCY, MIN_CRYPTO_BESTOWAL_USD, type PayoutProviderId } from '@/lib/payments/providerFees';
 
 interface BestowalCoinProps {
   /** ID of the message/file/audio/image being tipped (passed back via onBestowalComplete). */
@@ -78,7 +78,7 @@ export function BestowalCoin({
       contextKind: 'chat_tip',
       contextId: roomId,
       provider: effectiveProvider,
-      payCurrency: 'usdttrc20',
+      payCurrency: DEFAULT_CRYPTO_PAY_CURRENCY,
       message: assetId ? `tip:${assetId}` : undefined,
     });
 

@@ -18,7 +18,7 @@ import { MediaUploadZone } from '@/components/live/media/MediaUploadZone';
 import { SetPriceModal } from '@/components/live/media/SetPriceModal';
 import { useCurrency } from '@/hooks/useCurrency';
 import { useContentPurchase } from '@/hooks/useContentPurchase';
-import { CRYPTO_ROUNDING_NOTICE, MIN_CRYPTO_BESTOWAL_USD, type PayoutProviderId } from '@/lib/payments/providerFees';
+import { CRYPTO_ROUNDING_NOTICE, DEFAULT_CRYPTO_PAY_CURRENCY, MIN_CRYPTO_BESTOWAL_USD, type PayoutProviderId } from '@/lib/payments/providerFees';
 import ProviderPicker from '@/components/payments/ProviderPicker';
 import { buyerTotal } from '@/lib/pricing/platformFee';
 import {
@@ -517,7 +517,7 @@ export const PremiumRoomMedia: React.FC<PremiumRoomMediaProps> = ({
                   contentType: 'live_session_media',
                   contentId: pickerItem.id,
                   provider: effectiveProvider,
-                  payCurrency: effectiveProvider === 'nowpayments' ? 'usdttrc20' : undefined,
+                  payCurrency: effectiveProvider === 'nowpayments' ? DEFAULT_CRYPTO_PAY_CURRENCY : undefined,
                 })
               }
             >

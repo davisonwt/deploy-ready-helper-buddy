@@ -1,4 +1,5 @@
 import { useGiftBestowal, type GiftProvider } from '@/hooks/useGiftBestowal';
+import { DEFAULT_CRYPTO_PAY_CURRENCY } from '@/lib/payments/providerFees';
 
 interface RadioBestowlData {
   trackId?: string;
@@ -27,7 +28,7 @@ export const useRadioBestowal = () => {
       contextKind: 'radio_session',
       contextId: data.scheduleId,
       provider: data.provider,
-      payCurrency: data.payCurrency ?? 'usdttrc20',
+      payCurrency: data.payCurrency ?? DEFAULT_CRYPTO_PAY_CURRENCY,
     });
     return result.success
       ? { success: true as const, bestowalId: result.bestowalId }

@@ -1,4 +1,5 @@
 import { useGiftBestowal, type GiftProvider } from '@/hooks/useGiftBestowal';
+import { DEFAULT_CRYPTO_PAY_CURRENCY } from '@/lib/payments/providerFees';
 
 /**
  * Generalized free-will bestowal for live sessions
@@ -31,7 +32,7 @@ export function useLiveBestowal() {
       contextKind: 'live_session',
       contextId: data.sessionId,
       provider: data.provider,
-      payCurrency: data.payCurrency ?? 'usdttrc20',
+      payCurrency: data.payCurrency ?? DEFAULT_CRYPTO_PAY_CURRENCY,
       message: data.note,
     });
     return result.success
