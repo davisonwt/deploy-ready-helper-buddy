@@ -3,8 +3,10 @@
 -- each track their own slice with their own column names and their own
 -- (sometimes missing) status filters:
 --
---   product_bestowals  — basket-flow product sales (has sower_id, s2g_fee,
---                         sower_amount, whisperer_id/whisperer_amount directly)
+--   product_bestowals  — basket-flow product sales (sower_id column holds
+--                         sowers.id, not the sower's auth id — resolved via a
+--                         join below; s2g_fee, sower_amount, whisperer_id/
+--                         whisperer_amount are on the row directly)
 --   content_purchases  — library/premium/session-media/music-track sales
 --                         (seller_id, platform_fee_amount, base_amount;
 --                         no whisperer support today)
@@ -32,7 +34,14 @@ SELECT * FROM (
   SELECT
     'product'::text AS source,
     pb.id AS source_id,
-    pb.sower_id,
+    -- pb.sower_id stores sowers.id (its own PK), not the sower's auth.users
+    -- id — products.sower_id references sowers(id), and finalize_basket_order
+    -- copies it unchanged from products at order time. product_bestowals' own
+    -- RLS policy ("Users can view their bestowals") already resolves this via
+    -- EXISTS (sowers.id = product_bestowals.sower_id AND sowers.user_id =
+    -- auth.uid()) — this view now matches that same resolution instead of
+    -- comparing pb.sower_id to auth.uid() directly, which would never match.
+    s.user_id AS sower_id,
     pb.whisperer_id,
     pb.bestower_id AS buyer_id,
     pb.amount AS gross,
@@ -43,6 +52,7 @@ SELECT * FROM (
     pb.status,
     pb.created_at AS paid_at
   FROM public.product_bestowals pb
+  JOIN public.sowers s ON s.id = pb.sower_id
   WHERE pb.status = 'completed'
 
   UNION ALL
