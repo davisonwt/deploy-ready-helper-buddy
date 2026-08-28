@@ -47,11 +47,19 @@ const SELECT = `
   products:product_id ( title, cover_image_url, delivery_type )
 `;
 
-/** Everything this user bought. */
+/**
+ * Everything this user bought. Escrow mechanics (release_status,
+ * shipped_at/delivered_at, delivery actions) are product_bestowals-specific
+ * and have no equivalent in sower_earnings_v — that unified view has no
+ * product_id either, so this stays a direct query rather than a switch.
+ * status='completed' matters: without it, stale 'pending' rows (never
+ * actually paid) show up as real purchases/sales.
+ */
 export async function fetchMyPurchases(userId: string): Promise<EscrowBestowal[]> {
   const { data, error } = await (supabase.from('product_bestowals') as any)
     .select(SELECT)
     .eq('bestower_id', userId)
+    .eq('status', 'completed')
     .order('created_at', { ascending: false });
   if (error) throw error;
   return (data ?? []) as EscrowBestowal[];
@@ -62,6 +70,7 @@ export async function fetchMySales(userId: string): Promise<EscrowBestowal[]> {
   const { data, error } = await (supabase.from('product_bestowals') as any)
     .select(SELECT)
     .eq('sower_id', userId)
+    .eq('status', 'completed')
     .order('created_at', { ascending: false });
   if (error) throw error;
   return (data ?? []) as EscrowBestowal[];

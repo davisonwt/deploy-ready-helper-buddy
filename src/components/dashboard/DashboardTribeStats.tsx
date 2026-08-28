@@ -39,30 +39,22 @@ export default function DashboardTribeStats() {
     }
 
 
-    // Bestowals received: orchards owned by me
+    // Bestowals received: sower_earnings_v unions product/content/orchard-gift
+    // sales into one already-completed-only shape, so this is a single query
+    // instead of two separately-filtered ones (the old product_bestowals half
+    // had no status filter at all — stale 'pending' rows were counting as
+    // real money). RLS on the view already scopes to rows the caller may see;
+    // .eq('sower_id', ...) narrows that further to "I'm the sower" specifically,
+    // since the same RLS also admits rows where I'm the credited whisperer.
     try {
-      // Canonical account-scoped orchards (covers linked accounts) — same source
-      // as Dashboard / My Garden via src/api/sowerContent.ts.
-      const { data: orchards } = await supabase.rpc("get_my_orchards_scoped");
-      const oids = (orchards || []).map((o: any) => o.id);
-      let total = 0, count = 0;
-      if (oids.length) {
-        const { data: bs } = await supabase
-          .from("bestowals")
-          .select("amount")
-          .in("orchard_id", oids)
-          .eq("payment_status", "completed");
-        count = bs?.length || 0;
-        total = (bs || []).reduce((s, b) => s + Number(b.amount || 0), 0);
-      }
-      // Plus product bestowals where I'm the sower
-      const { data: pbs } = await supabase
-        .from("product_bestowals")
+      const { data: rows } = await supabase
+        .from("sower_earnings_v")
         .select("sower_amount")
         .eq("sower_id", user.id);
-      count += pbs?.length || 0;
-      total += (pbs || []).reduce((s, b) => s + Number(b.sower_amount || 0), 0);
-      setBestowals({ count, total });
+      setBestowals({
+        count: rows?.length || 0,
+        total: (rows || []).reduce((s, r) => s + Number(r.sower_amount || 0), 0),
+      });
     } catch {}
 
     // Unread messages
@@ -93,6 +85,8 @@ export default function DashboardTribeStats() {
       .on("postgres_changes", { event: "*", schema: "public", table: "referral_circle" }, reload)
       .on("postgres_changes", { event: "*", schema: "public", table: "referrals" }, reload)
       .on("postgres_changes", { event: "*", schema: "public", table: "bestowals" }, reload)
+      .on("postgres_changes", { event: "*", schema: "public", table: "product_bestowals" }, reload)
+      .on("postgres_changes", { event: "*", schema: "public", table: "content_purchases" }, reload)
       .on("postgres_changes", { event: "*", schema: "public", table: "chat_messages" }, reload)
       .subscribe();
     return () => { supabase.removeChannel(ch); };
@@ -129,7 +123,7 @@ export default function DashboardTribeStats() {
       display: "flex", gap: 10, flexWrap: "wrap", marginBottom: 14,
     }}>
       {tile("/my-tribe", <Users size={20} />, "My Tribe", tribeCount, "members in your tribe", "#22c55e")}
-      {tile("/wallet-settings", <Coins size={20} />, "Bestowals", `${bestowals.total.toFixed(2)}`, `${bestowals.count} bestowals received (USDC)`, "#f59e0b")}
+      {tile("/wallet-settings", <Coins size={20} />, "Bestowals", `${bestowals.total.toFixed(2)}`, `${bestowals.count} bestowals received (USD)`, "#f59e0b")}
       {tile("/chatapp?filter=unread", <MessageCircle size={20} />, "Unread", unread, unread ? "tap to read" : "all caught up", "#22d3ee")}
     </div>
   );

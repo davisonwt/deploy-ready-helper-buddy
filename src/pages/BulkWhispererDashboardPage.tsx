@@ -106,6 +106,10 @@ export default function BulkWhispererDashboardPage() {
           .order("created_at", { ascending: false });
         if (!cancelled) setAssignments((rows as any) || []);
 
+        // whisperer_earnings tracks PAYOUT status (has S2G actually sent the
+        // commission yet?) — a different lifecycle stage than "the sale
+        // completed," and one sower_earnings_v doesn't carry a column for.
+        // Kept as the source for pending/paid.
         const { data: earnings } = await supabase
           .from("whisperer_earnings")
           .select("amount, status")
@@ -116,10 +120,16 @@ export default function BulkWhispererDashboardPage() {
         const paid = (earnings || [])
           .filter((e: any) => e.status === "paid")
           .reduce((s: number, e: any) => s + Number(e.amount || 0), 0);
-        const bestowals = (rows || []).reduce(
-          (s: number, r: any) => s + Number(r.total_bestowals || 0),
-          0,
-        );
+
+        // Real count of completed sales credited to me, from ground truth
+        // instead of product_whisperer_assignments.total_bestowals (a
+        // maintained running counter, prone to drifting from what actually
+        // completed).
+        const { data: earningsRows } = await supabase
+          .from("sower_earnings_v")
+          .select("source_id")
+          .eq("whisperer_id", wid);
+        const bestowals = earningsRows?.length || 0;
         if (!cancelled) setTotals({ pending, paid, bestowals });
       }
 
