@@ -1,14 +1,26 @@
 // PayPal webhook handler.
 // Verifies signature via PayPal's verify-webhook-signature API (requires
-// PAYPAL_WEBHOOK_ID secret). Updates the matching bestowals row and, on
-// terminal capture success, triggers dispatchPayouts().
+// PAYPAL_WEBHOOK_ID secret). Updates the matching order row and, on
+// terminal capture success, finalizes it (via _shared/paypal/capture.ts)
+// for whichever of the five order kinds it is.
 //
 // Idempotency: processed_webhooks(provider='paypal', webhook_id=<event.id>).
 //
 // Event coverage:
-//   - CHECKOUT.ORDER.APPROVED                    -> payment_status='processing'
-//   - PAYMENT.CAPTURE.COMPLETED                  -> payment_status='completed' + dispatchPayouts
-//   - PAYMENT.CAPTURE.DENIED / VOIDED / DECLINED -> payment_status='failed'
+//   - CHECKOUT.ORDER.APPROVED                    -> mark 'processing', then
+//                                                    capture + finalize (all
+//                                                    five kinds — PayPal
+//                                                    never auto-captures on
+//                                                    approval, so this is
+//                                                    the only place any kind
+//                                                    other than 'basket' has
+//                                                    ever had a capture call
+//                                                    made on its behalf)
+//   - PAYMENT.CAPTURE.COMPLETED                  -> finalize (idempotent —
+//                                                    may be a no-op if
+//                                                    ORDER.APPROVED already
+//                                                    finalized this order)
+//   - PAYMENT.CAPTURE.DENIED / VOIDED / DECLINED -> mark 'failed'
 //   - PAYMENT.PAYOUTSBATCH.SUCCESS
 //     PAYMENT.PAYOUTS-ITEM.SUCCEEDED             -> payout_status='sent'
 //   - PAYMENT.PAYOUTS-ITEM.{DENIED|FAILED|BLOCKED|RETURNED|UNCLAIMED}
@@ -16,10 +28,9 @@
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 import { corsHeaders } from "npm:@supabase/supabase-js@2/cors";
-import { dispatchPayouts } from "../_shared/distribution.ts";
+import { captureAndFinalize, finalizeCompletedOrder, type PaypalOrderKind } from "../_shared/paypal/capture.ts";
 import {
   extractPaypalWebhookHeaders,
-  paypalFetch,
   verifyPaypalWebhookSig,
 } from "../_shared/paypal/client.ts";
 
@@ -119,6 +130,84 @@ Deno.serve(async (req) => {
   }
 });
 
+interface ParsedOrder {
+  kind: PaypalOrderKind;
+  recordId: string;
+}
+
+// The one place a custom_id string is decoded into a kind + record id.
+// Matches the prefixes each create-*-order function writes into custom_id;
+// an orchard bestowal has no prefix at all (custom_id IS the bestowal id) —
+// gift bestowals are the only bestowals-table order with a prefix, since
+// they need to be told apart from orchard ones for readability even though
+// both finalize identically (see _shared/paypal/capture.ts).
+function parseCustomId(customId: string): ParsedOrder {
+  if (customId.startsWith("topup:")) {
+    return { kind: "topup", recordId: customId.slice("topup:".length) };
+  }
+  if (customId.startsWith("basket:")) {
+    return { kind: "basket", recordId: customId.slice("basket:".length) };
+  }
+  if (customId.startsWith("content:")) {
+    return { kind: "content", recordId: customId.slice("content:".length) };
+  }
+  if (customId.startsWith("gift:")) {
+    return { kind: "gift", recordId: customId.slice("gift:".length) };
+  }
+  return { kind: "orchard", recordId: customId };
+}
+
+async function markProcessing(
+  supabase: ReturnType<typeof createClient>,
+  order: ParsedOrder,
+): Promise<void> {
+  switch (order.kind) {
+    case "topup":
+      await supabase.from("topups").update({ status: "processing" }).eq("id", order.recordId);
+      return;
+    case "basket":
+      await supabase.from("basket_orders").update({ status: "processing" }).eq("id", order.recordId);
+      return;
+    case "content":
+      await supabase.from("content_purchases")
+        .update({ payment_status: "processing" })
+        .eq("id", order.recordId);
+      return;
+    case "gift":
+    case "orchard":
+      await supabase.from("bestowals")
+        .update({ payment_status: "processing" })
+        .eq("id", order.recordId);
+      return;
+  }
+}
+
+async function markFailed(
+  supabase: ReturnType<typeof createClient>,
+  order: ParsedOrder,
+  reason: string,
+): Promise<void> {
+  switch (order.kind) {
+    case "topup":
+      await supabase.from("topups").update({ status: "failed" }).eq("id", order.recordId);
+      return;
+    case "basket":
+      await supabase.from("basket_orders").update({ status: "failed" }).eq("id", order.recordId);
+      return;
+    case "content":
+      await supabase.from("content_purchases")
+        .update({ payment_status: "failed", payout_error: reason })
+        .eq("id", order.recordId);
+      return;
+    case "gift":
+    case "orchard":
+      await supabase.from("bestowals")
+        .update({ payment_status: "failed", payout_status: "failed", payout_error: reason })
+        .eq("id", order.recordId);
+      return;
+  }
+}
+
 async function handleEvent(
   supabase: ReturnType<typeof createClient>,
   event: PaypalEvent,
@@ -133,52 +222,19 @@ async function handleEvent(
       console.warn("ORDER.APPROVED missing custom_id", event.id);
       return;
     }
-    if (customId.startsWith("topup:")) {
-      await supabase.from("topups").update({ status: "processing" })
-        .eq("id", customId.slice("topup:".length));
-      return;
-    }
-    if (customId.startsWith("basket:")) {
-      const basketOrderId = customId.slice("basket:".length);
-      await supabase.from("basket_orders").update({ status: "processing" })
-        .eq("id", basketOrderId);
+    const order = parseCustomId(customId);
+    await markProcessing(supabase, order);
 
-      // PayPal approval does not capture an order automatically. Capture it
-      // here so completion never depends on the buyer keeping the return page open.
-      const paypalOrderId = typeof resource.id === "string" ? resource.id : undefined;
-      if (!paypalOrderId) throw new Error("approved_paypal_order_id_missing");
-      const capture = await paypalFetch<{ status?: string }>(
-        `/v2/checkout/orders/${encodeURIComponent(paypalOrderId)}/capture`,
-        { method: "POST", body: {} },
-      );
-      if (!capture.ok && capture.status !== 422) {
-        throw new Error(`paypal_capture_failed:${capture.status}`);
-      }
-      if (capture.ok && String(capture.data?.status ?? "").toUpperCase() === "COMPLETED") {
-        const { error: finalizeError } = await supabase.rpc("finalize_basket_order", {
-          _basket_order_id: basketOrderId,
-        });
-        if (finalizeError) throw new Error(`finalize_basket_order_failed:${finalizeError.message}`);
-      }
-      return;
-    }
-    if (customId.startsWith("content:")) {
-      await supabase.from("content_purchases")
-        .update({ payment_status: "processing" })
-        .eq("id", customId.slice("content:".length));
-      return;
-    }
-    const bestowalId = customId.startsWith("gift:")
-      ? customId.slice("gift:".length)
-      : customId;
-    await supabase
-      .from("bestowals")
-      .update({ payment_status: "processing" })
-      .eq("id", bestowalId);
+    // PayPal never auto-captures on approval — capture here so completion
+    // never depends on the buyer keeping the return page open, for every
+    // kind, not just baskets.
+    const paypalOrderId = typeof resource.id === "string" ? resource.id : undefined;
+    if (!paypalOrderId) throw new Error("approved_paypal_order_id_missing");
+    await captureAndFinalize(supabase, order.kind, order.recordId, paypalOrderId);
     return;
   }
 
-  // ------- Capture completed -> mark paid + dispatch payouts ------------------
+  // ------- Capture completed -> finalize (idempotent) -------------------------
   if (type === "PAYMENT.CAPTURE.COMPLETED") {
     const customId = (resource.custom_id as string | undefined) ??
       extractOrderCustomId(resource);
@@ -186,72 +242,9 @@ async function handleEvent(
       console.warn("CAPTURE.COMPLETED missing custom_id", event.id);
       return;
     }
-    if (customId.startsWith("topup:")) {
-      const topupId = customId.slice("topup:".length);
-      const { error: rpcErr } = await supabase.rpc("credit_sower_balance_from_topup", { _topup_id: topupId });
-      if (rpcErr) console.error("credit_sower_balance_from_topup failed", topupId, rpcErr);
-      return;
-    }
-    if (customId.startsWith("basket:")) {
-      const basketOrderId = customId.slice("basket:".length);
-      const { error: rpcErr } = await supabase.rpc("finalize_basket_order", { _basket_order_id: basketOrderId });
-      if (rpcErr) console.error("finalize_basket_order failed", basketOrderId, rpcErr);
-      return;
-    }
-    if (customId.startsWith("content:")) {
-      const purchaseId = customId.slice("content:".length);
-      const { error: rpcErr } = await supabase.rpc("finalize_content_purchase", { _purchase_id: purchaseId });
-      if (rpcErr) console.error("finalize_content_purchase failed", purchaseId, rpcErr);
-      await supabase.from("content_purchases")
-        .update({ payment_reference: (resource.id as string | undefined) ?? null })
-        .eq("id", purchaseId);
-      return;
-    }
-    const bestowalId = customId.startsWith("gift:")
-      ? customId.slice("gift:".length)
-      : customId;
-    // A failed lookup is not "bestowal not found" — throwing here (instead of
-    // returning) routes it through the outer catch, which returns a non-2xx
-    // so PayPal retries instead of the event being silently dropped with no
-    // record and no retry.
-    const { data: bestowal, error: bestowalLookupError } = await supabase
-      .from("bestowals")
-      .select("id, payment_status")
-      .eq("id", bestowalId)
-      .maybeSingle();
-    if (bestowalLookupError) {
-      throw new Error(`bestowal_lookup_failed:${bestowalLookupError.message}`);
-    }
-    if (!bestowal) {
-      console.warn("CAPTURE.COMPLETED: bestowal not found", bestowalId);
-      return;
-    }
-    if (
-      bestowal.payment_status === "completed" ||
-      bestowal.payment_status === "distributed"
-    ) {
-      return;
-    }
-    await supabase
-      .from("bestowals")
-      .update({
-        payment_status: "completed",
-        payment_reference: (resource.id as string | undefined) ?? null,
-      })
-      .eq("id", bestowalId);
-
-    try {
-      await dispatchPayouts(supabase, bestowalId);
-    } catch (err) {
-      console.error("dispatchPayouts failed", bestowalId, err);
-      await supabase
-        .from("bestowals")
-        .update({
-          payout_status: "manual_required",
-          payout_error: err instanceof Error ? err.message : String(err),
-        })
-        .eq("id", bestowalId);
-    }
+    const order = parseCustomId(customId);
+    const paymentReference = (resource.id as string | undefined) ?? null;
+    await finalizeCompletedOrder(supabase, order.kind, order.recordId, paymentReference);
     return;
   }
 
@@ -266,33 +259,8 @@ async function handleEvent(
     const customId = (resource.custom_id as string | undefined) ??
       extractOrderCustomId(resource);
     if (!customId) return;
-    if (customId.startsWith("topup:")) {
-      await supabase.from("topups").update({ status: "failed" })
-        .eq("id", customId.slice("topup:".length));
-      return;
-    }
-    if (customId.startsWith("basket:")) {
-      await supabase.from("basket_orders").update({ status: "failed" })
-        .eq("id", customId.slice("basket:".length));
-      return;
-    }
-    if (customId.startsWith("content:")) {
-      await supabase.from("content_purchases")
-        .update({ payment_status: "failed", payout_error: `paypal_${type.toLowerCase()}` })
-        .eq("id", customId.slice("content:".length));
-      return;
-    }
-    const bestowalId = customId.startsWith("gift:")
-      ? customId.slice("gift:".length)
-      : customId;
-    await supabase
-      .from("bestowals")
-      .update({
-        payment_status: "failed",
-        payout_status: "failed",
-        payout_error: `paypal_${type.toLowerCase()}`,
-      })
-      .eq("id", bestowalId);
+    const order = parseCustomId(customId);
+    await markFailed(supabase, order, `paypal_${type.toLowerCase()}`);
     return;
   }
 
