@@ -262,7 +262,7 @@ async function resolveBestowalOrder(supabase: SupabaseLike, bestowalId: string):
   };
 }
 
-async function resolveContentTitle(supabase: SupabaseLike, contentType: string, contentId: string): Promise<string> {
+export async function resolveContentTitle(supabase: SupabaseLike, contentType: string, contentId: string): Promise<string> {
   const lookups: Record<string, { table: string; col: string }> = {
     library_item: { table: "s2g_library_items", col: "title" },
     premium_room_access: { table: "premium_rooms", col: "title" },

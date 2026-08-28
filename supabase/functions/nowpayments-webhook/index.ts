@@ -9,6 +9,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 import { corsHeaders } from "npm:@supabase/supabase-js@2/cors";
 import { dispatchPayouts } from "../_shared/distribution.ts";
 import { deliverFinalizeMessages } from "../_shared/postFinalize/messaging.ts";
+import { syncBooksEntries } from "../_shared/postFinalize/books.ts";
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -120,7 +121,10 @@ async function handlePaymentEvent(
     if (paymentStatus === "finished" || paymentStatus === "partially_paid") {
       const { error: rpcErr } = await supabase.rpc("credit_sower_balance_from_topup", { _topup_id: topupId });
       if (rpcErr) console.error("credit_sower_balance_from_topup failed", topupId, rpcErr);
-      else await deliverFinalizeMessages(supabase, "topup", topupId);
+      else {
+        await deliverFinalizeMessages(supabase, "topup", topupId);
+        await syncBooksEntries(supabase, "topup", topupId);
+      }
       return;
     }
     if (paymentStatus === "failed" || paymentStatus === "expired" || paymentStatus === "refunded") {
@@ -141,7 +145,10 @@ async function handlePaymentEvent(
     if (paymentStatus === "finished" || paymentStatus === "partially_paid") {
       const { error: rpcErr } = await supabase.rpc("finalize_basket_order", { _basket_order_id: basketOrderId });
       if (rpcErr) console.error("finalize_basket_order failed", basketOrderId, rpcErr);
-      else await deliverFinalizeMessages(supabase, "basket", basketOrderId);
+      else {
+        await deliverFinalizeMessages(supabase, "basket", basketOrderId);
+        await syncBooksEntries(supabase, "basket", basketOrderId);
+      }
       return;
     }
     if (paymentStatus === "failed" || paymentStatus === "refunded") {
@@ -166,7 +173,10 @@ async function handlePaymentEvent(
     if (paymentStatus === "finished" || paymentStatus === "partially_paid") {
       const { error: rpcErr } = await supabase.rpc("finalize_content_purchase", { _purchase_id: purchaseId });
       if (rpcErr) console.error("finalize_content_purchase failed", purchaseId, rpcErr);
-      else await deliverFinalizeMessages(supabase, "content", purchaseId);
+      else {
+        await deliverFinalizeMessages(supabase, "content", purchaseId);
+        await syncBooksEntries(supabase, "content", purchaseId);
+      }
       return;
     }
     if (paymentStatus === "failed" || paymentStatus === "expired" || paymentStatus === "refunded") {
@@ -224,7 +234,9 @@ async function handlePaymentEvent(
         })
         .eq("id", bestowalId);
     }
-    await deliverFinalizeMessages(supabase, isGift ? "gift" : "orchard", bestowalId);
+    const bestowalKind = isGift ? "gift" : "orchard";
+    await deliverFinalizeMessages(supabase, bestowalKind, bestowalId);
+    await syncBooksEntries(supabase, bestowalKind, bestowalId);
     return;
   }
 

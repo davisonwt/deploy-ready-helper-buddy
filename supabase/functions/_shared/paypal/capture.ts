@@ -19,6 +19,7 @@
 
 import { dispatchPayouts } from "../distribution.ts";
 import { deliverFinalizeMessages } from "../postFinalize/messaging.ts";
+import { syncBooksEntries } from "../postFinalize/books.ts";
 import { paypalFetch } from "./client.ts";
 
 export type PaypalOrderKind = "basket" | "content" | "gift" | "orchard" | "topup";
@@ -131,9 +132,10 @@ async function finalize(
     }
   }
 
-  // Best-effort — deliverFinalizeMessages never throws, so a messaging
+  // Best-effort — neither call throws, so a messaging or bookkeeping
   // failure can never roll back or mask a successful payment finalize.
   await deliverFinalizeMessages(supabase, kind, recordId);
+  await syncBooksEntries(supabase, kind, recordId);
 }
 
 /**

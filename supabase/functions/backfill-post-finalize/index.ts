@@ -1,14 +1,15 @@
-// backfill-post-finalize — admin-only. Runs the post-finalize messaging step
-// (_shared/postFinalize/messaging.ts) for completed orders that predate it,
-// that otherwise never got their thank-you/receipt messages, or whose
-// receipt needs correcting after a fix to messaging.ts's own math.
+// backfill-post-finalize — admin-only. Runs the post-finalize messaging
+// (_shared/postFinalize/messaging.ts) and bookkeeping (postFinalize/books.ts)
+// steps for completed orders that predate either, that otherwise never got
+// them, or whose numbers need correcting after a fix to either module's math.
 //
 // Safe to run repeatedly, unconditionally, for every completed order:
 // deliverFinalizeMessages posts each thank-you at most once ever, but always
-// upserts the receipt to whatever messaging.ts currently computes — so a
-// re-run after a receipt-format fix corrects every historical order's
-// receipt rather than skipping ones that already have a (possibly stale)
-// one. No pre-check here; that correctness lives in messaging.ts itself.
+// upserts the receipt to whatever messaging.ts currently computes; books.ts
+// upserts by (source_table, source_id) the same way. A re-run after a
+// format fix corrects every historical order rather than skipping ones that
+// already have (possibly stale) entries. No pre-check here; that
+// correctness lives in messaging.ts/books.ts themselves.
 //
 // Auth: internal (service-role bearer, matching grove-dispatch's existing
 // pattern) or a real admin's session (has_role 'admin'). verify_jwt is
@@ -22,6 +23,7 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 import { corsHeaders } from "npm:@supabase/supabase-js@2/cors";
 import { deliverFinalizeMessages, type FinalizeMessagingKind } from "../_shared/postFinalize/messaging.ts";
+import { syncBooksEntries } from "../_shared/postFinalize/books.ts";
 
 // deno-lint-ignore no-explicit-any
 type SupabaseLike = any;
@@ -80,6 +82,7 @@ Deno.serve(async (req) => {
 
     for (const t of targets) {
       await deliverFinalizeMessages(service, t.kind, t.recordId);
+      await syncBooksEntries(service, t.kind, t.recordId);
     }
 
     return json({ processed: targets.length, results: targets });
