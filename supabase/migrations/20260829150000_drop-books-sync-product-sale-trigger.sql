@@ -1,0 +1,17 @@
+-- Applied live ahead of this file (2026-08-26 incident repair) -- recorded
+-- here so the migration history matches reality. trg_books_sync_product_sale
+-- duplicated what _shared/postFinalize/books.ts now does for every
+-- product_bestowals sale, with a materially different accounting model
+-- (gross income + separate fee/whisperer expense lines, vs. books.ts's
+-- net-income model) and three independent bugs stacked on a code path that
+-- had never actually run successfully until today (see the three
+-- migrations immediately before this one). Rather than keep patching a
+-- second, redundant writer, books.ts is now the single source of truth for
+-- auto-derived Books entries.
+--
+-- Only the trigger is dropped here, not its function
+-- (books_sync_product_sale()) -- that's what was actually run live; the
+-- function is left in place, orphaned/unused, not touched further.
+-- trg_books_sync_gift (bestowals, orchard rows) was left alone too — not
+-- part of this decision.
+DROP TRIGGER IF EXISTS trg_books_sync_product_sale ON public.product_bestowals;

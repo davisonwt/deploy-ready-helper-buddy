@@ -21,6 +21,17 @@
 // Idempotent per (source_table, source_id): upserts by that pair, so a
 // re-run (finalize firing twice, a backfill) corrects rather than
 // duplicates.
+//
+// This module is the *only* writer of auto-derived books_income/expenses
+// rows. Two DB triggers (trg_books_sync_product_sale, trg_books_sync_gift)
+// independently did the same job for product_bestowals/bestowals — found
+// during the 2026-08-26 incident repair, both broken (a books_income/
+// expenses unique-constraint gap the trigger's own ON CONFLICT assumed,
+// plus an expenses.category CHECK violation). trg_books_sync_product_sale
+// has been dropped outright rather than patched (see the
+// 20260829150000 migration) now that this module covers everything it
+// did. trg_books_sync_gift was left alone — untouched, out of scope for
+// that decision.
 
 import { resolveContentTitle } from "./messaging.ts";
 
@@ -96,22 +107,6 @@ async function syncBasketOrder(supabase: SupabaseLike, basketOrderId: string): P
         source_id: r.id,
         occurred_at: paidAt,
       });
-      // A pre-existing DB trigger (trg_books_sync_product_sale) also fires
-      // on this same product_bestowals insert -- independently discovered
-      // during the 2026-08-26 incident repair. It books the platform fee
-      // (and, when one applies, the whisperer commission) as separate
-      // expense rows against a *gross* income figure; upsertIncome above
-      // just overwrote that income row to the sower's net take-home
-      // instead (already fee- and whisperer-net, matching this session's
-      // established convention). Left in place, the trigger's fee/
-      // whisperer expense rows would double-count against the now-net
-      // income. Remove them -- they're redundant, not wrong on their own,
-      // just incompatible with the net-income model this module uses.
-      await supabase
-        .from("expenses")
-        .delete()
-        .in("source_table", ["product_bestowals_fee", "product_bestowals_whisperer"])
-        .eq("source_id", r.id);
     }
 
     await upsertExpense(supabase, basketOrder.user_id, {
