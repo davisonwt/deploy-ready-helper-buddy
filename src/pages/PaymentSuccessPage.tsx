@@ -8,34 +8,60 @@ import { useProductBasket } from '@/contexts/ProductBasketContext';
 import { launchConfetti, floatingScore, playSoundEffect } from '@/utils/confetti';
 import { invokePaymentFunction } from '@/lib/payments/invokeFunction';
 
-type BasketStatus = 'pending' | 'processing' | 'completed' | 'failed' | 'expired';
+type OrderKind = 'basket' | 'content' | 'gift' | 'topup';
+type OrderStatus = 'pending' | 'processing' | 'completed' | 'failed' | 'expired';
+
+interface ActiveOrder {
+  kind: OrderKind;
+  id: string;
+  table: string;
+  statusColumn: string;
+  amountColumn: string;
+}
+
+// The ?bestowal= param covers both gift AND orchard bestowals — both are
+// rows in `bestowals` and finalize identically (see
+// supabase/functions/_shared/paypal/capture.ts), so nothing here needs to
+// tell them apart. 'gift' is just the kind label sent to capture-paypal-order;
+// its table config is identical for either.
+function resolveActiveOrder(searchParams: URLSearchParams): ActiveOrder | null {
+  const basket = searchParams.get('basket');
+  if (basket) return { kind: 'basket', id: basket, table: 'basket_orders', statusColumn: 'status', amountColumn: 'buyer_total' };
+  const purchase = searchParams.get('purchase');
+  if (purchase) return { kind: 'content', id: purchase, table: 'content_purchases', statusColumn: 'payment_status', amountColumn: 'buyer_total_amount' };
+  const bestowal = searchParams.get('bestowal');
+  if (bestowal) return { kind: 'gift', id: bestowal, table: 'bestowals', statusColumn: 'payment_status', amountColumn: 'buyer_total_amount' };
+  const topup = searchParams.get('topup');
+  if (topup) return { kind: 'topup', id: topup, table: 'topups', statusColumn: 'status', amountColumn: 'amount' };
+  return null;
+}
 
 export default function PaymentSuccessPage() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const bestowalId = useMemo(() => searchParams.get('orderId'), [searchParams]);
-  const basketOrderId = useMemo(() => searchParams.get('basket'), [searchParams]);
   const { clearBasket } = useProductBasket();
+  const active = useMemo(() => resolveActiveOrder(searchParams), [searchParams]);
 
-  const [basketStatus, setBasketStatus] = useState<BasketStatus | null>(null);
-  const [basketTotal, setBasketTotal] = useState<number | null>(null);
+  const [status, setStatus] = useState<OrderStatus | null>(null);
+  const [amount, setAmount] = useState<number | null>(null);
   const celebratedRef = useRef(false);
   const captureRequestedRef = useRef(false);
 
   // PayPal requires an explicit capture after the buyer approves the order.
-  // The webhook also captures server-side; this authenticated call recovers
-  // orders when PayPal delivers that webhook late or not at all.
+  // paypal-webhook also captures server-side, for every kind — this
+  // authenticated call recovers orders when PayPal delivers that webhook
+  // late or not at all.
   useEffect(() => {
-    if (!basketOrderId || captureRequestedRef.current) return;
+    if (!active || captureRequestedRef.current) return;
     captureRequestedRef.current = true;
-    invokePaymentFunction('capture-paypal-basket-order', { basketOrderId }).catch((error) => {
-      console.warn('PayPal basket capture recovery failed', error);
+    invokePaymentFunction('capture-paypal-order', { kind: active.kind, recordId: active.id }).catch((error) => {
+      console.warn('PayPal capture recovery failed', error);
     });
-  }, [basketOrderId]);
+  }, [active]);
 
-  // Poll basket_orders.status until completed/failed/expired
+  // Poll the order's status column until completed/failed/expired.
   useEffect(() => {
-    if (!basketOrderId) return;
+    if (!active) return;
     let cancelled = false;
     let attempts = 0;
     const maxAttempts = 60; // ~3 minutes at 3s
@@ -44,27 +70,32 @@ export default function PaymentSuccessPage() {
       if (cancelled) return;
       attempts += 1;
       const { data, error } = await supabase
-        .from('basket_orders')
-        .select('status, buyer_total')
-        .eq('id', basketOrderId)
+        .from(active.table)
+        .select(`${active.statusColumn}, ${active.amountColumn}`)
+        .eq('id', active.id)
         .maybeSingle();
 
       if (!cancelled && data) {
-        setBasketStatus(data.status as BasketStatus);
-        if (data.buyer_total != null) setBasketTotal(Number(data.buyer_total));
-        if (data.status === 'completed' && !celebratedRef.current) {
+        const row = data as Record<string, unknown>;
+        const rowStatus = row[active.statusColumn] as OrderStatus;
+        setStatus(rowStatus);
+        const rowAmount = row[active.amountColumn];
+        if (rowAmount != null) setAmount(Number(rowAmount));
+        if (rowStatus === 'completed' && !celebratedRef.current) {
           celebratedRef.current = true;
-          try { clearBasket(); } catch { /* ignore */ }
+          if (active.kind === 'basket') {
+            try { clearBasket(); } catch { /* ignore */ }
+          }
           try { playSoundEffect('bestow', 0.7); } catch { /* ignore */ }
-          try { floatingScore(Number(data.buyer_total ?? 0)); } catch { /* ignore */ }
+          try { floatingScore(Number(rowAmount ?? 0)); } catch { /* ignore */ }
           try { launchConfetti(); } catch { /* ignore */ }
           return; // stop polling
         }
-        if (data.status === 'failed' || data.status === 'expired') {
+        if (rowStatus === 'failed' || rowStatus === 'expired') {
           return; // stop polling
         }
       }
-      if (!cancelled && error) console.warn('basket status poll error', error);
+      if (!cancelled && error) console.warn('order status poll error', error);
       if (!cancelled && attempts < maxAttempts) {
         setTimeout(tick, 3000);
       }
@@ -72,10 +103,9 @@ export default function PaymentSuccessPage() {
     tick();
 
     return () => { cancelled = true; };
-  }, [basketOrderId, clearBasket]);
+  }, [active, clearBasket]);
 
-  const isBasket = !!basketOrderId;
-  const showProcessing = isBasket && basketStatus !== 'completed' && basketStatus !== 'failed' && basketStatus !== 'expired';
+  const showProcessing = !!active && status !== 'completed' && status !== 'failed' && status !== 'expired';
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-background to-muted/20 p-4">
@@ -89,51 +119,40 @@ export default function PaymentSuccessPage() {
             )}
           </div>
           <CardTitle className="text-2xl">
-            {isBasket
-              ? basketStatus === 'completed'
+            {active
+              ? status === 'completed'
                 ? 'Bestowal Complete!'
-                : basketStatus === 'failed' || basketStatus === 'expired'
+                : status === 'failed' || status === 'expired'
                 ? 'Payment Not Completed'
                 : 'Confirming Your Payment...'
               : 'Payment Initiated!'}
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-6 text-center">
-          {isBasket ? (
+          {active ? (
             <>
               <p className="text-muted-foreground">
-                {basketStatus === 'completed'
-                  ? `Thank you! Your bestowals${basketTotal ? ` totalling $${basketTotal.toFixed(2)}` : ''} have been recorded and creators will be paid out automatically.`
-                  : basketStatus === 'failed' || basketStatus === 'expired'
-                  ? 'We did not receive a confirmed payment from your provider. No bestowals were recorded. You can try again from your basket.'
+                {status === 'completed'
+                  ? `Thank you! Your bestowal${amount ? ` totalling $${amount.toFixed(2)}` : ''} has been recorded and creators will be paid out automatically.`
+                  : status === 'failed' || status === 'expired'
+                  ? 'We did not receive a confirmed payment from your provider. No bestowals were recorded. You can try again.'
                   : 'We are waiting for the payment processor to confirm your transaction. This page will update automatically — no need to refresh.'}
               </p>
 
               <div className="bg-muted/50 p-4 rounded-lg text-sm text-left space-y-1">
                 <p className="font-semibold">Reference</p>
                 <p className="text-muted-foreground break-words">
-                  Basket order: <span className="font-mono text-xs">{basketOrderId}</span>
+                  Order: <span className="font-mono text-xs">{active.id}</span>
                 </p>
-                {basketStatus && (
-                  <p className="text-muted-foreground">Status: <span className="font-mono text-xs">{basketStatus}</span></p>
+                {status && (
+                  <p className="text-muted-foreground">Status: <span className="font-mono text-xs">{status}</span></p>
                 )}
               </div>
             </>
           ) : (
-            <>
-              <p className="text-muted-foreground">
-                Thank you for supporting this orchard. The processor is confirming your transaction and we&apos;ll distribute your bestowal automatically according to the bestowal map.
-              </p>
-
-              {bestowalId && (
-                <div className="bg-muted/50 p-4 rounded-lg text-sm text-left space-y-1">
-                  <p className="font-semibold">Reference</p>
-                  <p className="text-muted-foreground break-words">
-                    Bestowal ID: <span className="font-mono text-xs">{bestowalId}</span>
-                  </p>
-                </div>
-              )}
-            </>
+            <p className="text-muted-foreground">
+              Thank you for supporting this seed. The processor is confirming your transaction and we&apos;ll distribute your bestowal automatically according to the bestowal map.
+            </p>
           )}
 
           <div className="bg-muted/50 p-4 rounded-lg text-sm text-left space-y-2">
@@ -142,7 +161,6 @@ export default function PaymentSuccessPage() {
               <li>✓ 15% → Platform Fee (s2gbestow)</li>
               <li>✓ 70% → Sower (orchard owner)</li>
               <li>✓ 15% → Product Whisperer (falls back to the sower when none was involved)</li>
-
             </ul>
           </div>
 
