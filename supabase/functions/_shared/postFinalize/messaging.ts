@@ -9,10 +9,14 @@
 // finalize step that already moved real money, so every entry point catches
 // and logs instead of throwing.
 //
-// Idempotent per (kind, recordId, sowerKey): checks for an existing
-// 'bestowal_receipt' row carrying the same system_metadata markers before
-// inserting anything, so a finalize step that runs twice (webhook + client
-// recovery racing, or a retried NOWPayments IPN) never double-posts.
+// Idempotent per (kind, recordId, sowerKey), but not uniformly: the two
+// thank-you messages are posted at most once ever (skipped if a receipt for
+// this key already exists), while the receipt itself is an upsert — updated
+// in place if one exists, inserted if not. That's deliberate: a finalize
+// step running twice (webhook + client recovery racing, a retried
+// NOWPayments IPN) must never double-post a thank-you, but a backfill
+// re-run after a receipt-format fix should always leave the correct numbers
+// behind rather than silently skip an order that already has a stale one.
 
 // deno-lint-ignore no-explicit-any
 type SupabaseLike = any;
@@ -34,7 +38,10 @@ interface SowerLeg {
   s2gFee: number;
   whispererAmount: number | null;
   whispererName: string | null;
+  /** Seed price + S2G's fee, added on top — before any processor fee. */
   gross: number;
+  /** The processor's own cut, charged to the buyer on top of `gross`. */
+  processorFee: number;
 }
 
 interface ResolvedOrder {
@@ -83,7 +90,7 @@ async function resolveOrder(
 async function resolveBasketOrder(supabase: SupabaseLike, basketOrderId: string): Promise<ResolvedOrder | null> {
   const { data: basketOrder } = await supabase
     .from("basket_orders")
-    .select("id, user_id, provider, provider_order_id, completed_at, created_at")
+    .select("id, user_id, provider, provider_order_id, completed_at, created_at, subtotal, processor_fee")
     .eq("id", basketOrderId)
     .maybeSingle();
   if (!basketOrder) return null;
@@ -137,6 +144,7 @@ async function resolveBasketOrder(supabase: SupabaseLike, basketOrderId: string)
         whispererAmount: null,
         whispererName: null,
         gross: 0,
+        processorFee: 0,
       };
       legsByOwner.set(sowerUserId, leg);
     }
@@ -148,6 +156,18 @@ async function resolveBasketOrder(supabase: SupabaseLike, basketOrderId: string)
       leg.whispererAmount = (leg.whispererAmount ?? 0) + Number(r.whisperer_amount || 0);
       leg.whispererName = whispererNames.get(r.whisperer_id) ?? leg.whispererName;
     }
+  }
+
+  // The processor fee is charged once on the whole order's subtotal, not
+  // per line — basket_orders has no per-product breakdown of it. Prorate it
+  // across sowers by each one's share of the order's subtotal, so a
+  // multi-sower basket's receipts sum back to what was actually charged.
+  const orderSubtotal = Number(basketOrder.subtotal || 0);
+  const orderProcessorFee = Number(basketOrder.processor_fee || 0);
+  for (const leg of legsByOwner.values()) {
+    leg.processorFee = orderSubtotal > 0
+      ? round2(orderProcessorFee * (leg.gross / orderSubtotal))
+      : 0;
   }
 
   await fillSowerNamesAndNotes(supabase, legsByOwner);
@@ -164,7 +184,7 @@ async function resolveBasketOrder(supabase: SupabaseLike, basketOrderId: string)
 async function resolveContentOrder(supabase: SupabaseLike, purchaseId: string): Promise<ResolvedOrder | null> {
   const { data: cp } = await supabase
     .from("content_purchases")
-    .select("id, buyer_id, seller_id, content_type, content_id, base_amount, platform_fee_amount, buyer_total_amount, provider, provider_order_id, completed_at, created_at")
+    .select("id, buyer_id, seller_id, content_type, content_id, base_amount, platform_fee_amount, processor_fee_amount, buyer_total_amount, provider, provider_order_id, completed_at, created_at")
     .eq("id", purchaseId)
     .eq("payment_status", "completed")
     .maybeSingle();
@@ -182,7 +202,8 @@ async function resolveContentOrder(supabase: SupabaseLike, purchaseId: string): 
     s2gFee: Number(cp.platform_fee_amount || 0),
     whispererAmount: null,
     whispererName: null,
-    gross: Number(cp.buyer_total_amount || 0),
+    gross: Number(cp.base_amount || 0) + Number(cp.platform_fee_amount || 0),
+    processorFee: Number(cp.processor_fee_amount || 0),
   });
   await fillSowerNamesAndNotes(supabase, legsByOwner);
 
@@ -211,8 +232,10 @@ async function resolveBestowalOrder(supabase: SupabaseLike, bestowalId: string):
   if (!sowerUserId) return null;
 
   const sowerAmount = Number((b.distribution_data as any)?.sower_amount ?? b.base_amount ?? 0);
-  const gross = Number(b.buyer_total_amount || 0);
-  const s2gFee = Math.max(0, gross - Number(b.processor_fee_amount || 0) - Number(b.base_amount || 0));
+  const buyerTotal = Number(b.buyer_total_amount || 0);
+  const processorFee = Number(b.processor_fee_amount || 0);
+  const gross = round2(buyerTotal - processorFee); // seed + S2G fee, before the processor's own cut
+  const s2gFee = Math.max(0, gross - Number(b.base_amount || 0));
 
   const legsByOwner = new Map<string, SowerLeg>();
   legsByOwner.set(sowerUserId, {
@@ -226,6 +249,7 @@ async function resolveBestowalOrder(supabase: SupabaseLike, bestowalId: string):
     whispererAmount: null,
     whispererName: null,
     gross,
+    processorFee,
   });
   await fillSowerNamesAndNotes(supabase, legsByOwner);
 
@@ -291,38 +315,39 @@ async function deliverLeg(
     return;
   }
 
-  if (await alreadyDelivered(supabase, roomId, kind, recordId, leg.sowerUserId)) return;
-
+  const existingReceiptId = await findReceiptId(supabase, roomId, kind, recordId, leg.sowerUserId);
   const seedTitles = leg.seedLines.map((l) => l.title).join(", ");
 
-  // 1) Thank-you from the sower.
-  const sowerContent = leg.thankYouMessage
-    ? `${leg.thankYouMessage}\n\n— ${leg.sowerName}`
-    : `🙏 Thank you for supporting "${seedTitles}"! Your bestowal helps this seed grow.\n\n— ${leg.sowerName}`;
-  await supabase.from("chat_messages").insert({
-    room_id: roomId,
-    sender_id: leg.sowerUserId,
-    content: sowerContent,
-    message_type: "text",
-    system_metadata: { is_system: false, type: "sower_thanks", source: kind, source_id: recordId, sower_key: leg.sowerUserId },
-  });
+  if (!existingReceiptId) {
+    // 1) Thank-you from the sower.
+    const sowerContent = leg.thankYouMessage
+      ? `${leg.thankYouMessage}\n\n— ${leg.sowerName}`
+      : `🙏 Thank you for supporting "${seedTitles}"! Your bestowal helps this seed grow.\n\n— ${leg.sowerName}`;
+    await supabase.from("chat_messages").insert({
+      room_id: roomId,
+      sender_id: leg.sowerUserId,
+      content: sowerContent,
+      message_type: "text",
+      system_metadata: { is_system: false, type: "sower_thanks", source: kind, source_id: recordId, sower_key: leg.sowerUserId },
+    });
 
-  // 2) Thank-you from Sow2Grow.
-  await supabase.from("chat_messages").insert({
-    room_id: roomId,
-    sender_id: null,
-    content: `🌱 Thank you for bestowing through Sow2Grow! Your receipt is right below.`,
-    message_type: "text",
-    system_metadata: {
-      is_system: true, sender_name: "Sow2Grow", type: "platform_thanks",
-      source: kind, source_id: recordId, sower_key: leg.sowerUserId,
-    },
-  });
+    // 2) Thank-you from Sow2Grow.
+    await supabase.from("chat_messages").insert({
+      room_id: roomId,
+      sender_id: null,
+      content: `🌱 Thank you for bestowing through Sow2Grow! Your receipt is right below.`,
+      message_type: "text",
+      system_metadata: {
+        is_system: true, sender_name: "Sow2Grow", type: "platform_thanks",
+        source: kind, source_id: recordId, sower_key: leg.sowerUserId,
+      },
+    });
+  }
 
-  // 3) Receipt.
-  await supabase.from("chat_messages").insert({
-    room_id: roomId,
-    sender_id: null,
+  // 3) Receipt — inserted once, then kept up to date on every re-run (a
+  // backfill after a receipt-format fix should correct what's already
+  // there, not skip it).
+  const receiptRow = {
     content: `Receipt for "${seedTitles}"`,
     message_type: "bestowal_receipt",
     system_metadata: {
@@ -342,9 +367,16 @@ async function deliverLeg(
       s2g_fee: round2(leg.s2gFee),
       whisperer_amount: leg.whispererAmount != null ? round2(leg.whispererAmount) : null,
       whisperer_name: leg.whispererName,
-      buyer_total: round2(leg.gross),
+      subtotal: round2(leg.gross),
+      processor_fee: round2(leg.processorFee),
+      buyer_total: round2(leg.gross + leg.processorFee),
     },
-  });
+  };
+  if (existingReceiptId) {
+    await supabase.from("chat_messages").update(receiptRow).eq("id", existingReceiptId);
+  } else {
+    await supabase.from("chat_messages").insert({ room_id: roomId, sender_id: null, ...receiptRow });
+  }
 }
 
 async function deliverTopupMessages(supabase: SupabaseLike, topupId: string): Promise<void> {
@@ -357,19 +389,22 @@ async function deliverTopupMessages(supabase: SupabaseLike, topupId: string): Pr
 
   const roomId = await ensureS2gSystemRoom(supabase, topup.user_id);
   if (!roomId) return;
-  if (await alreadyDelivered(supabase, roomId, "topup", topupId, "platform")) return;
 
-  await supabase.from("chat_messages").insert({
-    room_id: roomId,
-    sender_id: null,
-    content: `🌱 Thank you for topping up your Sow2Grow wallet! Your receipt is right below.`,
-    message_type: "text",
-    system_metadata: { is_system: true, sender_name: "Sow2Grow", type: "platform_thanks", source: "topup", source_id: topupId, sower_key: "platform" },
-  });
+  const existingReceiptId = await findReceiptId(supabase, roomId, "topup", topupId, "platform");
 
-  await supabase.from("chat_messages").insert({
-    room_id: roomId,
-    sender_id: null,
+  if (!existingReceiptId) {
+    await supabase.from("chat_messages").insert({
+      room_id: roomId,
+      sender_id: null,
+      content: `🌱 Thank you for topping up your Sow2Grow wallet! Your receipt is right below.`,
+      message_type: "text",
+      system_metadata: { is_system: true, sender_name: "Sow2Grow", type: "platform_thanks", source: "topup", source_id: topupId, sower_key: "platform" },
+    });
+  }
+
+  const topupAmount = round2(Number(topup.amount || 0));
+  const processorFee = round2(Number(topup.fee_amount || 0));
+  const receiptRow = {
     content: `Receipt for wallet top-up`,
     message_type: "bestowal_receipt",
     system_metadata: {
@@ -389,11 +424,17 @@ async function deliverTopupMessages(supabase: SupabaseLike, topupId: string): Pr
       s2g_fee: null,
       whisperer_amount: null,
       whisperer_name: null,
-      buyer_total: round2(Number(topup.amount || 0) + Number(topup.fee_amount || 0)),
-      topup_amount: round2(Number(topup.amount || 0)),
-      topup_fee: round2(Number(topup.fee_amount || 0)),
+      subtotal: topupAmount,
+      processor_fee: processorFee,
+      buyer_total: round2(topupAmount + processorFee),
+      topup_amount: topupAmount,
     },
-  });
+  };
+  if (existingReceiptId) {
+    await supabase.from("chat_messages").update(receiptRow).eq("id", existingReceiptId);
+  } else {
+    await supabase.from("chat_messages").insert({ room_id: roomId, sender_id: null, ...receiptRow });
+  }
 }
 
 async function ensureS2gSystemRoom(supabase: SupabaseLike, buyerId: string): Promise<string | null> {
@@ -427,13 +468,13 @@ async function ensureS2gSystemRoom(supabase: SupabaseLike, buyerId: string): Pro
   return room.id;
 }
 
-async function alreadyDelivered(
+async function findReceiptId(
   supabase: SupabaseLike,
   roomId: string,
   kind: string,
   recordId: string,
   sowerKey: string,
-): Promise<boolean> {
+): Promise<string | null> {
   const { data } = await supabase
     .from("chat_messages")
     .select("id")
@@ -441,7 +482,7 @@ async function alreadyDelivered(
     .eq("message_type", "bestowal_receipt")
     .contains("system_metadata", { source: kind, source_id: recordId, sower_key: sowerKey })
     .maybeSingle();
-  return !!data;
+  return data?.id ?? null;
 }
 
 function round2(n: number): number {

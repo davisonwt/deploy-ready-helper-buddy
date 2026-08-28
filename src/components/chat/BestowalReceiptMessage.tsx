@@ -19,9 +19,10 @@ interface BestowalReceiptMetadata {
   s2g_fee?: number | null;
   whisperer_amount?: number | null;
   whisperer_name?: string | null;
+  subtotal?: number;
+  processor_fee?: number;
   buyer_total?: number;
   topup_amount?: number;
-  topup_fee?: number;
 }
 
 const usd = (n: number | null | undefined) =>
@@ -31,11 +32,12 @@ export function BestowalReceiptMessage({ metadata }: { metadata: BestowalReceipt
   const {
     order_ref, date, provider, seed_lines, sower_name,
     sower_amount, s2g_fee, whisperer_amount, whisperer_name,
-    buyer_total, topup_amount, topup_fee,
+    processor_fee, buyer_total, topup_amount,
   } = metadata || {};
 
   const isTopup = !seed_lines || seed_lines.length === 0;
   const dateLabel = date ? format(new Date(date), 'PP') : '';
+  const providerLabel = provider ? provider.charAt(0).toUpperCase() + provider.slice(1) : 'processor';
 
   return (
     <Card className="p-4 bg-gradient-to-br from-amber-500/10 to-emerald-500/10 border-amber-500/20 max-w-md">
@@ -54,19 +56,26 @@ export function BestowalReceiptMessage({ metadata }: { metadata: BestowalReceipt
 
       <Separator className="my-2" />
 
+      {/* Buyer total first, with the processor's own cut broken out — this
+          is what actually left the buyer's account, not the pre-processor-fee
+          subtotal. */}
+      <div className="flex justify-between text-sm font-bold">
+        <span>Total paid</span>
+        <span>{usd(buyer_total)}</span>
+      </div>
+      {!!processor_fee && (
+        <div className="flex justify-between text-xs text-muted-foreground">
+          <span>{providerLabel} processor fee</span>
+          <span>{usd(processor_fee)}</span>
+        </div>
+      )}
+
+      <Separator className="my-2" />
+
       {isTopup ? (
-        <div>
-          <p className="text-xs font-bold uppercase tracking-wide text-muted-foreground mb-1">Wallet top-up</p>
-          <div className="flex justify-between text-sm">
-            <span>Amount credited</span>
-            <span className="font-medium">{usd(topup_amount)}</span>
-          </div>
-          {!!topup_fee && (
-            <div className="flex justify-between text-xs text-muted-foreground">
-              <span>Processor fee</span>
-              <span>{usd(topup_fee)}</span>
-            </div>
-          )}
+        <div className="flex justify-between text-sm">
+          <span>Amount credited to your wallet</span>
+          <span className="font-medium">{usd(topup_amount)}</span>
         </div>
       ) : (
         <>
@@ -105,13 +114,6 @@ export function BestowalReceiptMessage({ metadata }: { metadata: BestowalReceipt
           </div>
         </>
       )}
-
-      <Separator className="my-2" />
-
-      <div className="flex justify-between text-sm font-bold">
-        <span>Total paid</span>
-        <span>{usd(buyer_total)}</span>
-      </div>
     </Card>
   );
 }

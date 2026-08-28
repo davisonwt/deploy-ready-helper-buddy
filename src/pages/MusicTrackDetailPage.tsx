@@ -43,9 +43,9 @@ async function resolveMediaUrl(url: string | null): Promise<string | null> {
  * etc.) rather than throwing, so the caller can just fall back to "no
  * preview available" the same way a missing dj_track URL already does.
  */
-async function fetchSeedFileUrl(productId: string): Promise<string | null> {
+async function fetchSeedFileUrl(productId: string, purpose: 'play' | 'download'): Promise<string | null> {
   try {
-    const { url } = await invokePaymentFunction<{ url: string }>('get-seed-file', { productId });
+    const { url } = await invokePaymentFunction<{ url: string }>('get-seed-file', { productId, purpose });
     return url || null;
   } catch (err) {
     console.warn('get-seed-file failed:', err);
@@ -186,7 +186,7 @@ export default function MusicTrackDetailPage() {
       const a = normalized.source === 'dj_track'
         ? await resolveMediaUrl(normalized.playable_url)
         : isOwned
-        ? await fetchSeedFileUrl(normalized.id)
+        ? await fetchSeedFileUrl(normalized.id, 'play')
         : null;
       if (!alive) return;
       setAudioUrl(a);
@@ -223,7 +223,7 @@ export default function MusicTrackDetailPage() {
     if (!track) return;
     setDownloading(true);
     try {
-      const url = await fetchSeedFileUrl(track.id);
+      const url = await fetchSeedFileUrl(track.id, 'download');
       if (!url) {
         toast.error('Could not get a download link. Please try again.');
         return;

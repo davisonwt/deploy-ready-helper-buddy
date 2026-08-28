@@ -1,13 +1,14 @@
 // backfill-post-finalize — admin-only. Runs the post-finalize messaging step
 // (_shared/postFinalize/messaging.ts) for completed orders that predate it,
-// or that otherwise never got their thank-you/receipt messages.
+// that otherwise never got their thank-you/receipt messages, or whose
+// receipt needs correcting after a fix to messaging.ts's own math.
 //
-// Safe to run repeatedly: deliverFinalizeMessages is already idempotent per
-// (kind, recordId, sower) — it checks for an existing 'bestowal_receipt'
-// message before inserting anything. This function's own "already has a
-// receipt" pre-check is only a scale optimization (skip an order entirely
-// once every leg it needs is confirmed present); correctness always rests
-// on messaging.ts's own finer-grained per-sower check underneath.
+// Safe to run repeatedly, unconditionally, for every completed order:
+// deliverFinalizeMessages posts each thank-you at most once ever, but always
+// upserts the receipt to whatever messaging.ts currently computes — so a
+// re-run after a receipt-format fix corrects every historical order's
+// receipt rather than skipping ones that already have a (possibly stale)
+// one. No pre-check here; that correctness lives in messaging.ts itself.
 //
 // Auth: internal (service-role bearer, matching grove-dispatch's existing
 // pattern) or a real admin's session (has_role 'admin'). verify_jwt is
@@ -77,21 +78,11 @@ Deno.serve(async (req) => {
       ? [{ kind: payload.kind!, recordId: payload.orderId }]
       : await collectCompletedOrders(service, payload.kind);
 
-    const results: Array<{ kind: string; recordId: string; skipped: boolean }> = [];
     for (const t of targets) {
-      const skipped = await alreadyHasReceipt(service, t.kind, t.recordId);
-      if (!skipped) {
-        await deliverFinalizeMessages(service, t.kind, t.recordId);
-      }
-      results.push({ kind: t.kind, recordId: t.recordId, skipped });
+      await deliverFinalizeMessages(service, t.kind, t.recordId);
     }
 
-    return json({
-      processed: results.length,
-      skipped: results.filter((r) => r.skipped).length,
-      ran: results.filter((r) => !r.skipped).length,
-      results,
-    });
+    return json({ processed: targets.length, results: targets });
   } catch (err) {
     console.error("backfill-post-finalize error", err);
     return json({ error: err instanceof Error ? err.message : String(err) }, 500);
@@ -128,27 +119,6 @@ async function collectCompletedOrders(
   }
 
   return out;
-}
-
-/**
- * Coarse pre-check: does ANY 'bestowal_receipt' message exist for this
- * (kind, recordId) at all? A basket with multiple sowers that's only
- * partially delivered still gets re-run — deliverFinalizeMessages's own
- * per-sower check is what actually decides what (if anything) to insert.
- */
-async function alreadyHasReceipt(
-  service: SupabaseLike,
-  kind: string,
-  recordId: string,
-): Promise<boolean> {
-  const { data } = await service
-    .from("chat_messages")
-    .select("id")
-    .eq("message_type", "bestowal_receipt")
-    .contains("system_metadata", { source: kind, source_id: recordId })
-    .limit(1)
-    .maybeSingle();
-  return !!data;
 }
 
 function json(body: unknown, status = 200): Response {

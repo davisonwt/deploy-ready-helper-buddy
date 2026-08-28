@@ -21,7 +21,11 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 import { corsHeaders } from "npm:@supabase/supabase-js@2/cors";
 
-const SIGNED_URL_TTL_SECONDS = 60;
+// Play gets a longer window so a signed URL set once as an <audio src> on
+// page load doesn't expire mid-listen. Download stays short-lived — it's
+// re-fetched at click time anyway (see MusicTrackDetailPage's handleDownload).
+const PLAY_TTL_SECONDS = 60 * 60;
+const DOWNLOAD_TTL_SECONDS = 60;
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -45,10 +49,11 @@ Deno.serve(async (req) => {
     if (userError || !userData?.user) return json({ error: "unauthorized" }, 401);
     const callerId = userData.user.id;
 
-    let payload: { productId?: string };
+    let payload: { productId?: string; purpose?: "play" | "download" };
     try { payload = await req.json(); } catch { return json({ error: "invalid_json" }, 400); }
     const productId = payload?.productId;
     if (!productId) return json({ error: "missing_product_id" }, 400);
+    const ttl = payload?.purpose === "play" ? PLAY_TTL_SECONDS : DOWNLOAD_TTL_SECONDS;
 
     const service = createClient(supabaseUrl, serviceRoleKey, { auth: { persistSession: false } });
 
@@ -80,13 +85,13 @@ Deno.serve(async (req) => {
 
     const { data: signed, error: signError } = await service.storage
       .from(parsed.bucket)
-      .createSignedUrl(parsed.path, SIGNED_URL_TTL_SECONDS);
+      .createSignedUrl(parsed.path, ttl);
     if (signError || !signed?.signedUrl) {
       console.error("get-seed-file: sign failed", productId, signError);
       return json({ error: "sign_failed" }, 500);
     }
 
-    return json({ url: signed.signedUrl, expiresIn: SIGNED_URL_TTL_SECONDS });
+    return json({ url: signed.signedUrl, expiresIn: ttl });
   } catch (err) {
     console.error("get-seed-file error", err);
     return json({ error: err instanceof Error ? err.message : String(err) }, 500);
