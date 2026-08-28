@@ -168,4 +168,259 @@ verify_jwt = false
 [functions.xrp-quote]
 verify_jwt = false
 
+[functions.-Remnants-Wheel-Calendar]
+verify_jwt = false
+
+[functions.admin-create-user]
+verify_jwt = false
+
+[functions.admin-delete-user]
+verify_jwt = false
+
+[functions.agent-arch-caller]
+verify_jwt = false
+
+[functions.agent-bestowal-matcher]
+verify_jwt = false
+
+[functions.agent-debian-collab-cron]
+verify_jwt = false
+
+[functions.agent-debian-event-scheduler]
+verify_jwt = false
+
+[functions.agent-debian-messenger]
+verify_jwt = false
+
+[functions.agent-fedora-video]
+verify_jwt = false
+
+[functions.agent-gentoo-mentorship-matcher]
+verify_jwt = false
+
+[functions.agent-kali-images]
+verify_jwt = false
+
+[functions.agent-loaf-logistics]
+verify_jwt = false
+
+[functions.agent-mint-bookkeeper]
+verify_jwt = false
+
+[functions.agent-sage-pricing]
+verify_jwt = false
+
+[functions.agent-tux-content]
+verify_jwt = false
+
+[functions.agent-ubuntu-brand]
+verify_jwt = false
+
+[functions.calendar-now]
+verify_jwt = false
+
+[functions.capture-paypal-order]
+verify_jwt = false
+
+[functions.chatterbox-tts]
+verify_jwt = false
+
+[functions.check-rate-limit]
+verify_jwt = false
+
+[functions.complete-library-bestowal]
+verify_jwt = false
+
+[functions.create-agent-install-payment]
+verify_jwt = false
+
+[functions.create-content-purchase-order]
+verify_jwt = false
+
+[functions.create-gift-bestowal-order]
+verify_jwt = false
+
+[functions.create-nowpayments-order]
+verify_jwt = false
+
+[functions.create-nowpayments-payout]
+verify_jwt = false
+
+[functions.create-wallet-topup]
+verify_jwt = false
+
+[functions.elder-council-rotation]
+verify_jwt = false
+
+[functions.generate-radio-script]
+verify_jwt = false
+
+[functions.generate-seed-story]
+verify_jwt = false
+
+[functions.generate-study-cover]
+verify_jwt = false
+
+[functions.generate-weekly-playlist]
+verify_jwt = false
+
+[functions.get-nowpayments-balance]
+verify_jwt = false
+
+[functions.get-or-generate-calendar-art]
+verify_jwt = false
+
+[functions.get-premium-room-asset]
+verify_jwt = false
+
+[functions.get-purchased-track-url]
+verify_jwt = false
+
+[functions.get-wallet-credentials]
+verify_jwt = false
+
+[functions.gig-admin]
+verify_jwt = false
+
+[functions.gig-availability]
+verify_jwt = false
+
+[functions.gig-bookings]
+verify_jwt = false
+
+[functions.gig-tracking]
+verify_jwt = false
+
+[functions.gosat-radio-roundup]
+verify_jwt = false
+
+[functions.grove-dispatch]
+verify_jwt = false
+
+[functions.grove-flush-queue]
+verify_jwt = false
+
+[functions.grove-session-harvest]
+verify_jwt = false
+
+[functions.grove-station-stream]
+verify_jwt = false
+
+[functions.ingest-analytics]
+verify_jwt = false
+
+[functions.linux-family-cron]
+verify_jwt = false
+
+[functions.linux-family-orchestrator]
+verify_jwt = false
+
+[functions.linux-family-terminal]
+verify_jwt = false
+
+[functions.mcp]
+verify_jwt = false
+
+[functions.moderate-content]
+verify_jwt = false
+
+[functions.notify-driver-registration]
+verify_jwt = false
+
+[functions.notify-quote-request]
+verify_jwt = false
+
+[functions.notify-uncategorized-music]
+verify_jwt = false
+
+[functions.nowpayments-payout-webhook]
+verify_jwt = false
+
+[functions.orchard-shepherd]
+verify_jwt = false
+
+[functions.parse-contract]
+verify_jwt = false
+
+[functions.password-reset-approve]
+verify_jwt = false
+
+[functions.password-reset-request]
+verify_jwt = false
+
+[functions.password-reset-with-security]
+verify_jwt = false
+
+[functions.payout-sower-earnings]
+verify_jwt = false
+
+[functions.poll-video-jobs]
+verify_jwt = false
+
+[functions.prescription-signed-url]
+verify_jwt = false
+
+[functions.prescription-upload-url]
+verify_jwt = false
+
+[functions.release-bestowal-escrow]
+verify_jwt = false
+
+[functions.release-escrow]
+verify_jwt = false
+
+[functions.remnants-wheel-calendar]
+verify_jwt = false
+
+[functions.reset-password-via-questions]
+verify_jwt = false
+
+[functions.save-wallet-credentials]
+verify_jwt = false
+
+[functions.scan-receipt]
+verify_jwt = false
+
+[functions.send-bulk-system-message]
+verify_jwt = false
+
+[functions.send-notification]
+verify_jwt = false
+
+[functions.send-password-reset]
+verify_jwt = false
+
+[functions.send-shift-reminders]
+verify_jwt = false
+
+[functions.submit-feedback]
+verify_jwt = false
+
+[functions.submit-prescription]
+verify_jwt = false
+
+[functions.sync-nowpayments-balance]
+verify_jwt = false
+
+[functions.track-referral-click]
+verify_jwt = false
+
+[functions.treasury-balances]
+verify_jwt = false
+
+[functions.tribal-hearts-icebreaker]
+verify_jwt = false
+
+[functions.tribal-hearts-matcher]
+verify_jwt = false
+
+[functions.tribal-hearts-moderate]
+verify_jwt = false
+
+[functions.tribal-hearts-onboard]
+verify_jwt = false
+
+[functions.trigger-video-agent]
+verify_jwt = false
+
 
