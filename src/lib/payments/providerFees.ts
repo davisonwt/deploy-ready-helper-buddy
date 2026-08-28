@@ -14,11 +14,20 @@
 export type PayoutProviderId = 'nowpayments' | 'paypal';
 
 /**
- * Below this, crypto is not offered as a bestowal option: a NOWPayments
- * invoice recomputes the exact crypto amount against the live exchange rate,
- * and most buyer exchanges (e.g. VALR) can only send 2-decimal amounts —
- * underpaying by any fraction leaves the invoice stuck Partially_paid forever.
- * PayPal has no equivalent rounding failure mode at small amounts.
+ * Below this, crypto is not offered as a bestowal option.
+ *
+ * This is a FEE-ECONOMICS floor, not a decimals fix. NOWPayments' own flat
+ * network fee (~0.27 USDC) plus the buyer's exchange's flat withdrawal fee
+ * (~0.50 USDC — e.g. VALR) together are 25%+ of a $2 bestowal and ~2.5% of a
+ * $20 one; below this line the flat fees dominate the payment. PayPal has no
+ * equivalent flat-fee floor at small amounts.
+ *
+ * It does NOT solve the amount-precision problem — a fixed-rate invoice
+ * (see is_fixed_rate in the invoice-creation functions) still quotes an
+ * 8-decimal crypto amount at ANY price, including above this floor, and a
+ * wallet/exchange that can only send 2 decimals can still underpay and stall
+ * the invoice. That's handled separately by CRYPTO_ROUNDING_NOTICE below,
+ * shown at the point of redirect to NOWPayments' hosted invoice.
  */
 export const MIN_CRYPTO_BESTOWAL_USD = 10;
 
