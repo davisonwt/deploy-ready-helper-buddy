@@ -6,6 +6,7 @@
 import { useState, useCallback } from 'react';
 import { toast } from 'sonner';
 import { invokePaymentFunction } from '@/lib/payments/invokeFunction';
+import { CRYPTO_ROUNDING_NOTICE } from '@/lib/payments/providerFees';
 
 export type ContentType =
   | 'library_item'
@@ -50,6 +51,9 @@ export function useContentPurchase() {
       if (!redirectUrl) {
         toast.error('Provider did not return a checkout URL.');
         return null;
+      }
+      if (args.provider === 'nowpayments') {
+        toast(CRYPTO_ROUNDING_NOTICE);
       }
       window.location.href = redirectUrl;
       return data as { purchaseId: string };

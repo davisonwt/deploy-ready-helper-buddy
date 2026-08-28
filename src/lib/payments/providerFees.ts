@@ -31,6 +31,16 @@ export type PayoutProviderId = 'nowpayments' | 'paypal';
  */
 export const MIN_CRYPTO_BESTOWAL_USD = 10;
 
+/**
+ * Shown at every redirect to a NOWPayments-hosted invoiceUrl. NOWPayments'
+ * own page renders the exact crypto amount to send (full precision, e.g. 8
+ * decimals) — a wallet or exchange that can only send fewer decimals must
+ * round UP, never down or to-nearest: underpaying by any fraction leaves the
+ * invoice stuck Partially_paid; overpaying by a cent still completes it.
+ */
+export const CRYPTO_ROUNDING_NOTICE =
+  "If your wallet or exchange limits decimals, round the amount UP. Overpaying by a cent completes the payment; underpaying by any fraction stalls it.";
+
 export interface PayoutProviderInfo {
   id: PayoutProviderId;
   label: string;

@@ -11,7 +11,7 @@ import { toast } from 'sonner';
 import { priceBreakdown } from '@/lib/pricing/platformFee';
 import { PREVIEW_SECONDS } from '@/lib/media/previewLength';
 import ProviderPicker from '@/components/payments/ProviderPicker';
-import { MIN_CRYPTO_BESTOWAL_USD, type PayoutProviderId } from '@/lib/payments/providerFees';
+import { CRYPTO_ROUNDING_NOTICE, MIN_CRYPTO_BESTOWAL_USD, type PayoutProviderId } from '@/lib/payments/providerFees';
 
 const PRIVATE_BUCKETS = ['music-tracks', 'dj-music', 'premium-room'];
 
@@ -214,6 +214,9 @@ export default function MusicTrackDetailPage() {
       });
       const redirectUrl = data?.invoiceUrl || data?.approveUrl;
       if (!redirectUrl) throw new Error('Provider did not return a checkout URL');
+      if (effectiveProvider === 'nowpayments') {
+        toast.message('Before you send', { description: CRYPTO_ROUNDING_NOTICE });
+      }
       window.location.href = redirectUrl;
     } catch (error) {
       console.error('Product bestowal failed:', error);

@@ -3,6 +3,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from './useAuth';
 import { useToast } from '@/hooks/use-toast';
 import { invokePaymentFunction } from '@/lib/payments/invokeFunction';
+import { CRYPTO_ROUNDING_NOTICE } from '@/lib/payments/providerFees';
 
 /**
  * Music purchase via the unified Shape-1 content_purchases pipeline.
@@ -57,6 +58,9 @@ export function useMusicPurchase() {
       });
       const redirectUrl = data?.invoiceUrl || data?.approveUrl;
       if (!redirectUrl) throw new Error('Provider did not return a checkout URL');
+      if (provider === 'nowpayments') {
+        toast({ title: 'Before you send', description: CRYPTO_ROUNDING_NOTICE });
+      }
       window.location.href = redirectUrl;
       return { success: true, data };
     } catch (error) {

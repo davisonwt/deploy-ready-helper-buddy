@@ -24,7 +24,7 @@ import { useNowPayments } from '@/hooks/useNowPayments';
 import { usePaypal } from '@/hooks/usePaypal';
 import { postBestowalChatNotes } from '@/lib/bestowalChat';
 import ProviderPicker from '@/components/payments/ProviderPicker';
-import { MIN_CRYPTO_BESTOWAL_USD, quoteFee, type PayoutProviderId } from '@/lib/payments/providerFees';
+import { CRYPTO_ROUNDING_NOTICE, MIN_CRYPTO_BESTOWAL_USD, quoteFee, type PayoutProviderId } from '@/lib/payments/providerFees';
 import { priceBreakdown } from '@/lib/pricing/platformFee';
 
 export interface QuickBestowModalProps {
@@ -80,6 +80,7 @@ export default function QuickBestowModal({
         bestowalId = invoice.bestowalId;
         if (invoice.invoiceUrl) {
           window.open(invoice.invoiceUrl, '_blank');
+          toast.message('Invoice opened.', { description: CRYPTO_ROUNDING_NOTICE });
         }
       } else {
         const order = await createOrder({

@@ -11,7 +11,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { toast } from 'sonner';
 import ProviderPicker from '@/components/payments/ProviderPicker';
-import { PayoutProviderId, quoteFee } from '@/lib/payments/providerFees';
+import { CRYPTO_ROUNDING_NOTICE, quoteFee, type PayoutProviderId } from '@/lib/payments/providerFees';
 
 interface SowerBalance {
   available_balance: number;
@@ -129,6 +129,9 @@ export default function MyWalletPage() {
       if (error) throw error;
       const url = (data as any)?.invoiceUrl ?? (data as any)?.approveUrl;
       if (!url) throw new Error('No payment URL returned.');
+      if (provider === 'nowpayments') {
+        toast.message('Before you send', { description: CRYPTO_ROUNDING_NOTICE });
+      }
       window.location.href = url;
     } catch (err: any) {
       console.error('topup failed', err);

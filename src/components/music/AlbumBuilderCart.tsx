@@ -9,7 +9,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { toast } from 'sonner';
 import { useCurrency } from '@/hooks/useCurrency';
 import ProviderPicker from '@/components/payments/ProviderPicker';
-import { MIN_CRYPTO_BESTOWAL_USD, quoteFee, type PayoutProviderId } from '@/lib/payments/providerFees';
+import { CRYPTO_ROUNDING_NOTICE, MIN_CRYPTO_BESTOWAL_USD, quoteFee, type PayoutProviderId } from '@/lib/payments/providerFees';
 import { invokePaymentFunction } from '@/lib/payments/invokeFunction';
 import { s2gFeeOn, round2 } from '@/lib/pricing/platformFee';
 import { WHISPER_FALLBACK_NOTE } from '@/lib/whisperer/policy';
@@ -95,7 +95,7 @@ export function AlbumBuilderCart({ scopeName }: AlbumBuilderCartProps = {}) {
 
       if (!data.invoiceUrl) throw new Error('No crypto invoice URL returned');
       window.open(data.invoiceUrl, '_blank');
-      toast.success('Album invoice opened. Complete payment to confirm the album bestowal.');
+      toast.success('Album invoice opened.', { description: CRYPTO_ROUNDING_NOTICE });
     } catch (error) {
       console.error('Purchase error:', error);
       toast.error(error instanceof Error ? error.message : 'Purchase failed. Please try again.');

@@ -10,7 +10,7 @@ import { toast } from 'sonner';
 import { motion, AnimatePresence } from 'framer-motion';
 import { GradientPlaceholder } from '@/components/ui/GradientPlaceholder';
 import ProviderPicker from '@/components/payments/ProviderPicker';
-import { MIN_CRYPTO_BESTOWAL_USD, quoteFee, type PayoutProviderId } from '@/lib/payments/providerFees';
+import { CRYPTO_ROUNDING_NOTICE, MIN_CRYPTO_BESTOWAL_USD, quoteFee, type PayoutProviderId } from '@/lib/payments/providerFees';
 import { WHISPER_SHARE_RATE, WHISPER_SHARE_PERCENT, WHISPER_FALLBACK_NOTE, WHISPER_STATUS_ACTIVE } from '@/lib/whisperer/policy';
 import { getWhispererCredit } from '@/lib/whisperer/attribution';
 
@@ -80,7 +80,7 @@ export default function BestowalCheckout() {
           window.open(data.invoiceUrl, '_blank');
         }
         toast.success('Invoice opened in a new tab', {
-          description: 'Complete the crypto payment. Your bestowals will appear once the payment is confirmed.',
+          description: CRYPTO_ROUNDING_NOTICE,
         });
         // Do NOT clear basket — items stay until webhook-confirmed completion
         // (visible on the success page) so the buyer can retry if they close
