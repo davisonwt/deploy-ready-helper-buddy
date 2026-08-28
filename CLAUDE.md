@@ -14,6 +14,11 @@ Changes reach real users. There is no staging buffer implied by default — trea
 Every routed page must have a visible Back/Return control (a real back action, or a Home/parent-page link — not just relying on the browser's back button). Apply this whenever touching a page for any other reason, and treat a missing one as worth fixing on sight, not just when asked.
 Exempt: `/` (Index) and `/dashboard` (DashboardPage) — they're the app's home destinations. Don't re-flag them in a future audit.
 
+## Product principles
+- Forms should feel like planting, not paperwork. Show visible progress toward a satisfying completion, ideally using the sower's own content.
+- Errors are always plain, specific and actionable. Never gamify a mistake — tell the person exactly what's wrong and how to fix it.
+- Keep it simple. If a field isn't needed for this category of seed, don't show it.
+
 ## Stay in scope
 - Don't refactor unrelated code, restyle unrelated screens, change branding, alter database structure, add dependencies, or change business rules that weren't asked for.
 - Before editing a shared component, check everywhere else it's used.
