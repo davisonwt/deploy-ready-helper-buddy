@@ -46,10 +46,20 @@ Deno.serve(async (req) => {
 
   const authHeader = req.headers.get("Authorization");
   if (!authHeader?.startsWith("Bearer ")) return json({ error: "unauthorized" }, 401);
+  const token = authHeader.slice(7);
 
-  const authClient = createClient(supabaseUrl, anonKey, { auth: { persistSession: false } });
-  const { data: authData, error: authError } = await authClient.auth.getUser(authHeader.slice(7));
-  if (authError || !authData.user) return json({ error: "unauthorized" }, 401);
+  // Internal callers (admin recovery scripts) authenticate with the
+  // service-role key directly, same pattern as backfill-post-finalize /
+  // check-paypal-order / grove-dispatch — skips the ownership check below
+  // entirely, same as the existing admin/gosat bypass already does.
+  const isServiceRole = token === serviceRoleKey;
+  let callerId: string | null = null;
+  if (!isServiceRole) {
+    const authClient = createClient(supabaseUrl, anonKey, { auth: { persistSession: false } });
+    const { data: authData, error: authError } = await authClient.auth.getUser(token);
+    if (authError || !authData.user) return json({ error: "unauthorized" }, 401);
+    callerId = authData.user.id;
+  }
 
   let parsed: z.infer<typeof BodySchema>;
   try {
@@ -78,10 +88,10 @@ Deno.serve(async (req) => {
   const row = order as Record<string, unknown>;
 
   const ownerId = row[config.ownerColumn] as string | undefined;
-  if (ownerId !== authData.user.id) {
+  if (!isServiceRole && ownerId !== callerId) {
     const [{ data: isAdmin }, { data: isGosat }] = await Promise.all([
-      service.rpc("has_role", { _user_id: authData.user.id, _role: "admin" }),
-      service.rpc("has_role", { _user_id: authData.user.id, _role: "gosat" }),
+      service.rpc("has_role", { _user_id: callerId, _role: "admin" }),
+      service.rpc("has_role", { _user_id: callerId, _role: "gosat" }),
     ]);
     if (!isAdmin && !isGosat) return json({ error: "forbidden" }, 403);
   }
