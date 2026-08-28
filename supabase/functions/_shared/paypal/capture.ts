@@ -55,14 +55,17 @@ export async function captureAndFinalize(
     { method: "POST", body: {} },
   );
 
-  if (!capture.ok && capture.status !== 422) {
-    throw new Error(`paypal_capture_failed:${capture.status}`);
-  }
-
   let completed = capture.ok && String(capture.data?.status ?? "").toUpperCase() === "COMPLETED";
   let paymentReference: string | null = capture.ok ? (capture.data?.id ?? null) : null;
 
   if (!completed) {
+    // A non-ok /capture response doesn't necessarily mean the payment
+    // failed — PayPal returns a re-capture attempt on an order that's
+    // already COMPLETED as a range of error codes depending on account/API
+    // version, not just the documented 422 (a live incident on
+    // 2026-08-26/28 hit 404 for exactly this). Always check the
+    // authoritative GET before concluding anything; never throw purely off
+    // the capture call's own status code.
     const lookup = await paypalFetch<{ status?: string; id?: string }>(
       `/v2/checkout/orders/${encodeURIComponent(paypalOrderId)}`,
       { method: "GET" },
@@ -71,6 +74,9 @@ export async function captureAndFinalize(
     if (completed) paymentReference = lookup.data?.id ?? paypalOrderId;
   }
 
+  if (!completed && !capture.ok) {
+    throw new Error(`paypal_capture_failed:${capture.status}`);
+  }
   if (!completed) return { completed: false };
 
   await finalize(supabase, kind, recordId, paymentReference);
