@@ -592,6 +592,7 @@ export default function DJMusicUpload({ trigger }) {
               categoryId={taxonomy.categoryId}
               subcategoryIds={taxonomy.subcategoryIds}
               tagIds={taxonomy.tagIds}
+              relevantGroups={['trust', 'logistics']}
               onChange={setTaxonomy}
             />
           </div>

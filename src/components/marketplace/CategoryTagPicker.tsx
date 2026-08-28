@@ -25,9 +25,16 @@ interface Props {
   subcategoryIds: string[];
   tagIds: string[];
   onChange: (next: { categoryId: string | null; subcategoryIds: string[]; tagIds: string[] }) => void;
+  /**
+   * Restricts which tag groups render, e.g. ['trust', 'logistics'] for music
+   * — Condition/Quality/Service/Travel tags describe physical goods and
+   * services, not a song. Omit to show every group (existing behavior,
+   * unchanged for callers that don't pass this).
+   */
+  relevantGroups?: TagGroup[];
 }
 
-export default function CategoryTagPicker({ categoryId, subcategoryIds, tagIds, onChange }: Props) {
+export default function CategoryTagPicker({ categoryId, subcategoryIds, tagIds, onChange, relevantGroups }: Props) {
   const { user } = useAuth();
   const { data: categories = [] } = useMarketplaceCategories();
   const { data: subcategories = [] } = useMarketplaceSubcategories(categoryId || undefined);
@@ -106,6 +113,7 @@ export default function CategoryTagPicker({ categoryId, subcategoryIds, tagIds, 
       <div className="space-y-4">
         <Label className="text-base font-semibold">Tags</Label>
         {(Object.keys(groupedTags) as TagGroup[]).map((group) => {
+          if (relevantGroups && !relevantGroups.includes(group)) return null;
           const list = groupedTags[group];
           if (!list.length) return null;
           return (
