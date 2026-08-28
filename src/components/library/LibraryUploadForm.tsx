@@ -7,7 +7,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Upload, Loader2, Book, FileText, GraduationCap, Image, Music } from 'lucide-react';
+import { Upload, Loader2, Book, FileText, GraduationCap, Image, Music, ArrowLeft } from 'lucide-react';
 import { toast } from 'sonner';
 import { useNavigate } from 'react-router-dom';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -186,6 +186,10 @@ export default function LibraryUploadForm() {
       </div>
 
       <div className='relative z-10 container max-w-3xl mx-auto px-4 py-8'>
+        <Button variant="ghost" onClick={() => navigate(-1)} className="mb-4 text-white hover:bg-white/10">
+          <ArrowLeft className="w-4 h-4 mr-2" />
+          Back
+        </Button>
         <Card className='backdrop-blur-md bg-white/20 border-white/30'>
           <CardHeader>
             <CardTitle className='text-3xl text-white flex items-center gap-3'>

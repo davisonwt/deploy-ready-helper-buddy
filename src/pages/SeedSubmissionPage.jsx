@@ -15,7 +15,8 @@ import {
   Video,
   X,
   CheckCircle,
-  AlertCircle
+  AlertCircle,
+  ArrowLeft
 } from 'lucide-react'
 import CourierCostCalculator from '../components/CourierCostCalculator'
 import { toast } from 'sonner'
@@ -297,6 +298,10 @@ export default function SeedSubmissionPage() {
       {/* Content */}
       <div className="relative z-10">
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <Button variant="ghost" onClick={() => navigate(-1)} className="mb-4 text-white hover:bg-white/10">
+          <ArrowLeft className="h-4 w-4 mr-2" />
+          Back
+        </Button>
         {/* Header with cloud background */}
         <div className="max-w-2xl mx-auto text-center mb-8 px-8 py-6 bg-white/90 rounded-3xl shadow-lg">
           <div className="flex items-center justify-center mb-4">

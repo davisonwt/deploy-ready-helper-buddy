@@ -2,7 +2,8 @@ import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
-import { Library, Loader2, FileText, GraduationCap, Image, Music, Book, Eye, Download, Heart } from 'lucide-react';
+import { Library, Loader2, FileText, GraduationCap, Image, Music, Book, Eye, Download, Heart, ArrowLeft } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -22,6 +23,7 @@ import {
 } from '@/components/ui/dialog';
 
 export default function S2GCommunityLibraryPage() {
+  const navigate = useNavigate();
   const { user } = useAuth();
   const [selectedType, setSelectedType] = useState<string>('all');
   const [pickerItem, setPickerItem] = useState<any | null>(null);
@@ -183,6 +185,10 @@ export default function S2GCommunityLibraryPage() {
         {/* Hero Header */}
         <div className='relative overflow-hidden border-b border-white/20 backdrop-blur-md bg-white/10'>
           <div className='relative container mx-auto px-4 py-16'>
+            <Button variant="ghost" onClick={() => navigate(-1)} className="mb-4 text-white hover:bg-white/10">
+              <ArrowLeft className="w-4 h-4 mr-2" />
+              Back
+            </Button>
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}

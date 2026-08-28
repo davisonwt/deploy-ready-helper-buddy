@@ -2,9 +2,9 @@ import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
-import { Book, Upload, Loader2, FileText, GraduationCap, Image, Music, Plus } from 'lucide-react';
+import { Book, Upload, Loader2, FileText, GraduationCap, Image, Music, Plus, ArrowLeft } from 'lucide-react';
 import { motion } from 'framer-motion';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -12,6 +12,7 @@ import { formatCurrency } from '@/utils/formatters';
 import { GradientPlaceholder } from '@/components/ui/GradientPlaceholder';
 
 export default function MyS2GLibraryPage() {
+  const navigate = useNavigate();
   const { user } = useAuth();
   const [selectedType, setSelectedType] = useState<string>('all');
 
@@ -107,6 +108,10 @@ export default function MyS2GLibraryPage() {
       {/* Hero Header */}
       <div className="relative overflow-hidden border-b border-white/20 backdrop-blur-md bg-white/10">
         <div className="relative container mx-auto px-4 py-16">
+          <Button variant="ghost" onClick={() => navigate(-1)} className="mb-4 text-white hover:bg-white/10">
+            <ArrowLeft className="w-4 h-4 mr-2" />
+            Back
+          </Button>
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}

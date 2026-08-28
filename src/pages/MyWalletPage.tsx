@@ -1,12 +1,12 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Loader2, Wallet, ArrowUpRight, ArrowDownLeft, PiggyBank, Settings2 } from 'lucide-react';
+import { Loader2, Wallet, ArrowUpRight, ArrowDownLeft, PiggyBank, Settings2, ArrowLeft } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { toast } from 'sonner';
@@ -71,6 +71,7 @@ function fmt(n: number | null | undefined, ccy = 'USD') {
 }
 
 export default function MyWalletPage() {
+  const navigate = useNavigate();
   const { user } = useAuth();
   const [loading, setLoading] = useState(true);
   const [balance, setBalance] = useState<SowerBalance | null>(null);
@@ -157,6 +158,10 @@ export default function MyWalletPage() {
   const ccy = balance?.currency ?? 'USD';
   return (
     <div className="container max-w-4xl mx-auto py-8 space-y-6">
+      <Button variant="ghost" onClick={() => navigate(-1)} className="-ml-2">
+        <ArrowLeft className="h-4 w-4 mr-2" />
+        Back
+      </Button>
       <header className="flex items-center gap-3">
         <Wallet className="h-7 w-7 text-primary" />
         <div>

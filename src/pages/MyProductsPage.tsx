@@ -5,9 +5,9 @@ import { SOWER_PUBLIC_COLS } from '@/api/products';
 import { useAuth } from '@/hooks/useAuth';
 import ProductCard from '@/components/products/ProductCard';
 import CategoryFilter from '@/components/products/CategoryFilter';
-import { Loader2, Package, Upload, Plus, Store } from 'lucide-react';
+import { Loader2, Package, Upload, Plus, Store, ArrowLeft } from 'lucide-react';
 import { motion } from 'framer-motion';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import {
@@ -20,6 +20,7 @@ import {
 import { isAlbum } from '@/lib/products/isAlbum';
 
 export default function MyProductsPage() {
+  const navigate = useNavigate();
   const { user } = useAuth();
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [selectedType, setSelectedType] = useState<string>('all');
@@ -117,6 +118,10 @@ export default function MyProductsPage() {
         {/* Hero Header */}
         <div className='relative overflow-hidden border-b border-white/20 backdrop-blur-md bg-white/10'>
           <div className='relative container mx-auto px-4 py-16'>
+            <Button variant="ghost" onClick={() => navigate(-1)} className="mb-4 text-white hover:bg-white/10">
+              <ArrowLeft className="w-4 h-4 mr-2" />
+              Back
+            </Button>
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}

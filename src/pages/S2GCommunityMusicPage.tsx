@@ -2,7 +2,8 @@
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
-import { Music, Loader2, Play, Pause, Heart, Download, Users, Clock, TrendingUp, Eye } from 'lucide-react';
+import { Music, Loader2, Play, Pause, Heart, Download, Users, Clock, TrendingUp, Eye, ArrowLeft } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -23,6 +24,7 @@ import {
 } from '@/components/ui/dialog';
 
 export default function S2GCommunityMusicPage() {
+  const navigate = useNavigate();
   const { user } = useAuth();
   const [playingId, setPlayingId] = useState<string | null>(null);
   const [audioRefs, setAudioRefs] = useState<Map<string, HTMLAudioElement>>(new Map());
@@ -372,6 +374,10 @@ export default function S2GCommunityMusicPage() {
         {/* Hero Header */}
         <div className='relative overflow-hidden border-b border-white/20 backdrop-blur-md bg-white/10'>
           <div className='relative container mx-auto px-4 py-16'>
+            <Button variant="ghost" onClick={() => navigate(-1)} className="mb-4 text-white hover:bg-white/10">
+              <ArrowLeft className="w-4 h-4 mr-2" />
+              Back
+            </Button>
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}

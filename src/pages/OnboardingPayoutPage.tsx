@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Wallet } from 'lucide-react';
+import { Wallet, ArrowLeft } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { PAYOUT_PROVIDERS } from '@/lib/payments/providerFees';
@@ -53,6 +53,10 @@ export default function OnboardingPayoutPage() {
   return (
     <div className="min-h-screen bg-background py-6">
       <div className="container max-w-3xl space-y-6">
+        <Button variant="ghost" onClick={goDashboard} className="-ml-2">
+          <ArrowLeft className="h-4 w-4 mr-2" />
+          Back to Dashboard
+        </Button>
         <Card>
           <CardHeader className="text-center">
             <div className="mx-auto w-14 h-14 rounded-full bg-primary/10 flex items-center justify-center mb-3">
