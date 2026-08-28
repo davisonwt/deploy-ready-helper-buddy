@@ -52,12 +52,14 @@ export default function CatalogTab({ businessId, booksEnabled, items, income, on
     (async () => {
       const [prod, best] = await Promise.all([
         supabase.from('products').select('id, category, whisperer_commission_percent').in('id', productIds),
+        // sower_earnings_v is already completed-only per source branch, so no
+        // separate status filter is needed here.
         supabase
-          .from('product_bestowals')
-          .select('id, product_id, amount, s2g_fee, whisperer_id, whisperer_amount, created_at')
-          .in('product_id', productIds)
-          .eq('status', 'completed')
-          .order('created_at', { ascending: false }),
+          .from('sower_earnings_v')
+          .select('source_id, item_id, gross, s2g_fee, whisperer_id, whisperer_amount, paid_at')
+          .eq('source', 'product')
+          .in('item_id', productIds)
+          .order('paid_at', { ascending: false }),
       ]);
       if (cancelled) return;
       const m: Record<string, ProductMeta> = {};
@@ -70,14 +72,14 @@ export default function CatalogTab({ businessId, booksEnabled, items, income, on
       setMeta(m);
       setSales(
         ((best.data as any[]) ?? []).map((b) => ({
-          id: b.id,
-          product_id: b.product_id,
-          amount: toNumber(b.amount),
+          id: b.source_id,
+          product_id: b.item_id,
+          amount: toNumber(b.gross),
           platform_fee: toNumber(b.s2g_fee),
           whisperer_amount: b.whisperer_id ? toNumber(b.whisperer_amount) : 0,
           whisperer_id: b.whisperer_id ?? null,
           income_type: 'sale' as const,
-          created_at: b.created_at,
+          created_at: b.paid_at,
         }))
       );
     })();
