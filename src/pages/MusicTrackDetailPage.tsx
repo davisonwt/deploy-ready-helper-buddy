@@ -214,9 +214,6 @@ export default function MusicTrackDetailPage() {
       });
       const redirectUrl = data?.invoiceUrl || data?.approveUrl;
       if (!redirectUrl) throw new Error('Provider did not return a checkout URL');
-      if (effectiveProvider === 'nowpayments') {
-        toast.message('Before you send', { description: CRYPTO_ROUNDING_NOTICE });
-      }
       window.location.href = redirectUrl;
     } catch (error) {
       console.error('Product bestowal failed:', error);
@@ -348,6 +345,9 @@ export default function MusicTrackDetailPage() {
                       disabled={isBuying}
                       providers={belowCryptoMin ? ['paypal'] : undefined}
                     />
+                    {effectiveProvider === 'nowpayments' && (
+                      <p className="text-xs text-slate-400">{CRYPTO_ROUNDING_NOTICE}</p>
+                    )}
                     <Button onClick={handleBuy} disabled={isBuying} className="bg-rose-500 hover:bg-rose-600">
                       {isBuying ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Heart className="w-4 h-4 mr-2" />}
                       Bestow ${total.toFixed(2)} USDC

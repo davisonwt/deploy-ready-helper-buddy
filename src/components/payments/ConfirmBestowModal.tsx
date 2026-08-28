@@ -3,7 +3,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Button } from '@/components/ui/button';
 import { Loader2, Heart } from 'lucide-react';
 import ProviderPicker from '@/components/payments/ProviderPicker';
-import { MIN_CRYPTO_BESTOWAL_USD, type PayoutProviderId } from '@/lib/payments/providerFees';
+import { CRYPTO_ROUNDING_NOTICE, MIN_CRYPTO_BESTOWAL_USD, type PayoutProviderId } from '@/lib/payments/providerFees';
 
 interface ConfirmBestowModalProps {
   isOpen: boolean;
@@ -61,6 +61,9 @@ export function ConfirmBestowModal({
             disabled={confirming}
             providers={belowCryptoMin ? ['paypal'] : undefined}
           />
+          {effectiveProvider === 'nowpayments' && (
+            <p className="text-xs text-muted-foreground">{CRYPTO_ROUNDING_NOTICE}</p>
+          )}
 
           <Button
             className="w-full"

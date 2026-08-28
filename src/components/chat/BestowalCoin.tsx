@@ -7,7 +7,7 @@ import { useGiftBestowal } from '@/hooks/useGiftBestowal';
 import { toast } from 'sonner';
 import Confetti from 'react-confetti';
 import { launchConfetti } from '@/utils/confetti';
-import { MIN_CRYPTO_BESTOWAL_USD, type PayoutProviderId } from '@/lib/payments/providerFees';
+import { CRYPTO_ROUNDING_NOTICE, MIN_CRYPTO_BESTOWAL_USD, type PayoutProviderId } from '@/lib/payments/providerFees';
 
 interface BestowalCoinProps {
   /** ID of the message/file/audio/image being tipped (passed back via onBestowalComplete). */
@@ -218,6 +218,9 @@ export function BestowalCoin({
                 <p className="text-xs text-muted-foreground mb-3">
                   Crypto has a ${MIN_CRYPTO_BESTOWAL_USD} minimum — pay with PayPal for smaller amounts.
                 </p>
+              )}
+              {effectiveProvider === 'nowpayments' && (
+                <p className="text-xs text-muted-foreground mb-3">{CRYPTO_ROUNDING_NOTICE}</p>
               )}
 
               <div className="flex gap-2">

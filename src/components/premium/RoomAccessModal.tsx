@@ -4,6 +4,7 @@ import { useCurrency } from '@/hooks/useCurrency';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useContentPurchase } from '@/hooks/useContentPurchase';
+import { CRYPTO_ROUNDING_NOTICE } from '@/lib/payments/providerFees';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
@@ -94,6 +95,7 @@ export function RoomAccessModal({
                 {isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                 Pay with crypto (USDT TRC-20)
               </Button>
+              <p className="text-xs text-muted-foreground">{CRYPTO_ROUNDING_NOTICE}</p>
             </div>
           ) : (
             <Button onClick={handleFreeJoin} disabled={processing} className="w-full">

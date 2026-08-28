@@ -129,9 +129,6 @@ export default function MyWalletPage() {
       if (error) throw error;
       const url = (data as any)?.invoiceUrl ?? (data as any)?.approveUrl;
       if (!url) throw new Error('No payment URL returned.');
-      if (provider === 'nowpayments') {
-        toast.message('Before you send', { description: CRYPTO_ROUNDING_NOTICE });
-      }
       window.location.href = url;
     } catch (err: any) {
       console.error('topup failed', err);
@@ -242,6 +239,9 @@ export default function MyWalletPage() {
             />
           </div>
           <ProviderPicker value={provider} onChange={setProvider} amount={amountNum || 0} mode="buyer" disabled={submitting} />
+          {provider === 'nowpayments' && (
+            <p className="text-xs text-muted-foreground">{CRYPTO_ROUNDING_NOTICE}</p>
+          )}
           {feeQuote && (
             <div className="text-xs text-muted-foreground">
               Processor fee ≈ <strong>{feeQuote.display}</strong> · You'll be credited <strong>${amountNum.toFixed(2)}</strong>.

@@ -1,6 +1,7 @@
 import { useAuth } from '@/hooks/useAuth';
 import { useCurrency } from '@/hooks/useCurrency';
 import { useContentPurchase } from '@/hooks/useContentPurchase';
+import { CRYPTO_ROUNDING_NOTICE } from '@/lib/payments/providerFees';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
@@ -73,6 +74,7 @@ export function PremiumItemPurchaseModal({
               {isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               Pay with crypto (USDT TRC-20)
             </Button>
+            <p className="text-xs text-muted-foreground">{CRYPTO_ROUNDING_NOTICE}</p>
           </div>
         </div>
 

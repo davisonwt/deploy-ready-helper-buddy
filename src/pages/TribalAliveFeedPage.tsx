@@ -41,7 +41,7 @@ import { type WanderingRole, WANDERING_BADGES } from '@/components/marketplace/W
 import { launchConfetti, playSoundEffect } from '@/utils/confetti';
 import { PREVIEW_SECONDS } from '@/lib/media/previewLength';
 import { ConfirmBestowModal } from '@/components/payments/ConfirmBestowModal';
-import { MIN_CRYPTO_BESTOWAL_USD, type PayoutProviderId } from '@/lib/payments/providerFees';
+import { CRYPTO_ROUNDING_NOTICE, MIN_CRYPTO_BESTOWAL_USD, type PayoutProviderId } from '@/lib/payments/providerFees';
 import { LiveNowStrip } from '@/components/live/LiveNowStrip';
 import LiveStage from '@/components/live/LiveStage';
 import LiveStageOverlay from '@/components/live/LiveStageOverlay';
@@ -1828,6 +1828,9 @@ function SeedActionPanel({
               <p className="text-xs text-muted-foreground">
                 Crypto has a ${MIN_CRYPTO_BESTOWAL_USD} minimum — pay with PayPal for smaller amounts.
               </p>
+            )}
+            {giftProvider === 'nowpayments' && (
+              <p className="text-xs text-muted-foreground">{CRYPTO_ROUNDING_NOTICE}</p>
             )}
             <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
               {[

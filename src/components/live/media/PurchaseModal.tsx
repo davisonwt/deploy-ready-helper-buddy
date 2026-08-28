@@ -1,5 +1,6 @@
 import { useAuth } from '@/hooks/useAuth';
 import { useContentPurchase } from '@/hooks/useContentPurchase';
+import { CRYPTO_ROUNDING_NOTICE } from '@/lib/payments/providerFees';
 import {
   Dialog,
   DialogContent,
@@ -57,6 +58,7 @@ export function PurchaseModal({ open, onOpenChange, mediaItem }: PurchaseModalPr
             {isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
             Pay with crypto (USDT TRC-20)
           </Button>
+          <p className="text-xs text-muted-foreground">{CRYPTO_ROUNDING_NOTICE}</p>
         </div>
 
         <DialogFooter>

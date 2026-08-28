@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
-import { CRYPTO_ROUNDING_NOTICE } from '@/lib/payments/providerFees';
 
 export type GiftContextKind = 'live_session' | 'radio_session' | 'chat_tip';
 export type GiftProvider = 'nowpayments' | 'paypal';
@@ -79,9 +78,6 @@ export function useGiftBestowal() {
         return { success: false, error: 'no_redirect_url' };
       }
 
-      if (input.provider === 'nowpayments') {
-        toast({ title: 'Before you send', description: CRYPTO_ROUNDING_NOTICE });
-      }
       window.location.href = redirect;
 
       return {

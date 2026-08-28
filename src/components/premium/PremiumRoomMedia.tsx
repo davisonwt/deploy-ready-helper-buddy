@@ -18,6 +18,7 @@ import { MediaUploadZone } from '@/components/live/media/MediaUploadZone';
 import { SetPriceModal } from '@/components/live/media/SetPriceModal';
 import { useCurrency } from '@/hooks/useCurrency';
 import { useContentPurchase } from '@/hooks/useContentPurchase';
+import { CRYPTO_ROUNDING_NOTICE } from '@/lib/payments/providerFees';
 import {
   Dialog,
   DialogContent,
@@ -513,6 +514,7 @@ export const PremiumRoomMedia: React.FC<PremiumRoomMediaProps> = ({
             >
               Pay with crypto (USDT TRC-20 via NOWPayments)
             </Button>
+            <p className="text-xs text-muted-foreground">{CRYPTO_ROUNDING_NOTICE}</p>
           </div>
           <DialogFooter>
             <Button variant="ghost" onClick={() => setPickerItem(null)} disabled={purchasePending}>

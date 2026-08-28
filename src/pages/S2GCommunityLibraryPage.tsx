@@ -13,6 +13,7 @@ import { toast } from 'sonner';
 import { GradientPlaceholder } from '@/components/ui/GradientPlaceholder';
 import { launchConfetti } from '@/utils/confetti';
 import { useContentPurchase } from '@/hooks/useContentPurchase';
+import { CRYPTO_ROUNDING_NOTICE } from '@/lib/payments/providerFees';
 import {
   Dialog,
   DialogContent,
@@ -422,6 +423,7 @@ export default function S2GCommunityLibraryPage() {
             >
               Pay with crypto (USDT TRC-20 via NOWPayments)
             </Button>
+            <p className="text-xs text-muted-foreground">{CRYPTO_ROUNDING_NOTICE}</p>
           </div>
           <DialogFooter>
             <Button variant="ghost" onClick={() => setPickerItem(null)} disabled={isPending}>

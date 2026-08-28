@@ -6,7 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { useLiveBestowal } from '@/hooks/useLiveBestowal';
 import ProviderPicker from '@/components/payments/ProviderPicker';
-import { MIN_CRYPTO_BESTOWAL_USD, type PayoutProviderId } from '@/lib/payments/providerFees';
+import { CRYPTO_ROUNDING_NOTICE, MIN_CRYPTO_BESTOWAL_USD, type PayoutProviderId } from '@/lib/payments/providerFees';
 
 interface Props {
   open: boolean;
@@ -104,6 +104,9 @@ export function BestowalDialog({ open, onOpenChange, sowerId, bestowerId, sessio
                 disabled={loading}
                 providers={belowCryptoMin ? ['paypal'] : undefined}
               />
+              {effectiveProvider === 'nowpayments' && (
+                <p className="text-xs text-[#E8D9B5]/50 mt-1">{CRYPTO_ROUNDING_NOTICE}</p>
+              )}
             </div>
           </div>
 
