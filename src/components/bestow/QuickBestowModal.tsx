@@ -22,7 +22,6 @@ import { toast } from 'sonner';
 import { useAuth } from '@/hooks/useAuth';
 import { useNowPayments } from '@/hooks/useNowPayments';
 import { usePaypal } from '@/hooks/usePaypal';
-import { postBestowalChatNotes } from '@/lib/bestowalChat';
 import ProviderPicker from '@/components/payments/ProviderPicker';
 import { CRYPTO_ROUNDING_NOTICE, DEFAULT_CRYPTO_PAY_CURRENCY, MIN_CRYPTO_BESTOWAL_USD, quoteFee, type PayoutProviderId } from '@/lib/payments/providerFees';
 import { priceBreakdown } from '@/lib/pricing/platformFee';
@@ -40,7 +39,7 @@ export interface QuickBestowModalProps {
 
 export default function QuickBestowModal({
   open, onClose,
-  orchardId, seedTitle, sowerUserId,
+  orchardId, seedTitle,
   hostUserId, whispererSharePct = 10,
   defaultAmount = 5,
 }: QuickBestowModalProps) {
@@ -67,8 +66,6 @@ export default function QuickBestowModal({
 
     setProcessing(true);
     try {
-      let bestowalId: string;
-
       if (effectiveProvider === 'nowpayments') {
         const invoice = await createInvoice({
           orchardId,
@@ -77,7 +74,6 @@ export default function QuickBestowModal({
           message: note || undefined,
           growerId: hostUserId || undefined,
         });
-        bestowalId = invoice.bestowalId;
         if (invoice.invoiceUrl) {
           window.open(invoice.invoiceUrl, '_blank');
           toast.message('Invoice opened.', { description: CRYPTO_ROUNDING_NOTICE });
@@ -89,30 +85,15 @@ export default function QuickBestowModal({
           message: note || undefined,
           growerId: hostUserId || undefined,
         });
-        bestowalId = order.bestowalId;
         if (order.approveUrl) {
-          // PayPal flow is a full-page redirect; chat notes posted before nav.
-          try {
-            await postBestowalChatNotes({
-              bestowalId, bestowerUserId: user.id, sowerUserId,
-              seedTitle, amount, note: note || undefined,
-            });
-          } catch (err) {
-            console.warn('Chat thread bootstrap failed (will retry on webhook):', err);
-          }
+          // Post-bestowal chat notes (thank-yous + receipt) are posted
+          // server-side once the order actually finalizes — see
+          // supabase/functions/_shared/postFinalize/messaging.ts.
           redirectToApprove(order.approveUrl);
           return;
         }
       }
 
-      try {
-        await postBestowalChatNotes({
-          bestowalId, bestowerUserId: user.id, sowerUserId,
-          seedTitle, amount, note: note || undefined,
-        });
-      } catch (err) {
-        console.warn('Chat thread bootstrap failed (will retry on webhook):', err);
-      }
       onClose();
     } catch (err: any) {
       console.error('Bestowal initiation failed:', err);

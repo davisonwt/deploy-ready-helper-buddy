@@ -8,6 +8,7 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 import { corsHeaders } from "npm:@supabase/supabase-js@2/cors";
 import { dispatchPayouts } from "../_shared/distribution.ts";
+import { deliverFinalizeMessages } from "../_shared/postFinalize/messaging.ts";
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -119,6 +120,7 @@ async function handlePaymentEvent(
     if (paymentStatus === "finished" || paymentStatus === "partially_paid") {
       const { error: rpcErr } = await supabase.rpc("credit_sower_balance_from_topup", { _topup_id: topupId });
       if (rpcErr) console.error("credit_sower_balance_from_topup failed", topupId, rpcErr);
+      else await deliverFinalizeMessages(supabase, "topup", topupId);
       return;
     }
     if (paymentStatus === "failed" || paymentStatus === "expired" || paymentStatus === "refunded") {
@@ -139,6 +141,7 @@ async function handlePaymentEvent(
     if (paymentStatus === "finished" || paymentStatus === "partially_paid") {
       const { error: rpcErr } = await supabase.rpc("finalize_basket_order", { _basket_order_id: basketOrderId });
       if (rpcErr) console.error("finalize_basket_order failed", basketOrderId, rpcErr);
+      else await deliverFinalizeMessages(supabase, "basket", basketOrderId);
       return;
     }
     if (paymentStatus === "failed" || paymentStatus === "refunded") {
@@ -163,6 +166,7 @@ async function handlePaymentEvent(
     if (paymentStatus === "finished" || paymentStatus === "partially_paid") {
       const { error: rpcErr } = await supabase.rpc("finalize_content_purchase", { _purchase_id: purchaseId });
       if (rpcErr) console.error("finalize_content_purchase failed", purchaseId, rpcErr);
+      else await deliverFinalizeMessages(supabase, "content", purchaseId);
       return;
     }
     if (paymentStatus === "failed" || paymentStatus === "expired" || paymentStatus === "refunded") {
@@ -177,9 +181,8 @@ async function handlePaymentEvent(
 
   // Gift bestowal path: order_id = "gift:<bestowals.id>". Same downstream logic
   // as orchard bestowals — fall through after stripping the prefix.
-  const bestowalId = orderId.startsWith("gift:")
-    ? orderId.slice("gift:".length)
-    : orderId;
+  const isGift = orderId.startsWith("gift:");
+  const bestowalId = isGift ? orderId.slice("gift:".length) : orderId;
 
   // order_id was set to the bestowals.id when the invoice was created.
   const { data: bestowal } = await supabase
@@ -221,6 +224,7 @@ async function handlePaymentEvent(
         })
         .eq("id", bestowalId);
     }
+    await deliverFinalizeMessages(supabase, isGift ? "gift" : "orchard", bestowalId);
     return;
   }
 

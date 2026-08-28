@@ -18,6 +18,7 @@
 // racing either one.
 
 import { dispatchPayouts } from "../distribution.ts";
+import { deliverFinalizeMessages } from "../postFinalize/messaging.ts";
 import { paypalFetch } from "./client.ts";
 
 export type PaypalOrderKind = "basket" | "content" | "gift" | "orchard" | "topup";
@@ -104,7 +105,7 @@ async function finalize(
       // reference from the order row, so none is passed here.
       const { error } = await supabase.rpc("finalize_basket_order", { _basket_order_id: recordId });
       if (error) throw new Error(`finalize_basket_order_failed:${error.message}`);
-      return;
+      break;
     }
     case "content": {
       // finalize_content_purchase is idempotent — locks the row,
@@ -114,21 +115,25 @@ async function finalize(
       await supabase.from("content_purchases")
         .update({ payment_reference: paymentReference })
         .eq("id", recordId);
-      return;
+      break;
     }
     case "topup": {
       // credit_sower_balance_from_topup is idempotent — locks the row,
       // short-circuits if credited_at is already set.
       const { error } = await supabase.rpc("credit_sower_balance_from_topup", { _topup_id: recordId });
       if (error) throw new Error(`credit_sower_balance_from_topup_failed:${error.message}`);
-      return;
+      break;
     }
     case "gift":
     case "orchard": {
       await finalizeBestowal(supabase, recordId, paymentReference);
-      return;
+      break;
     }
   }
+
+  // Best-effort — deliverFinalizeMessages never throws, so a messaging
+  // failure can never roll back or mask a successful payment finalize.
+  await deliverFinalizeMessages(supabase, kind, recordId);
 }
 
 /**

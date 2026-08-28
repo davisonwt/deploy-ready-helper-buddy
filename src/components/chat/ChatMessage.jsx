@@ -7,6 +7,7 @@ import FilePreview from './FilePreview';
 import { VerificationButton } from './VerificationButton';
 import { CredentialVerificationForm } from './CredentialVerificationForm';
 import { PurchaseDeliveryMessage } from './PurchaseDeliveryMessage';
+import { BestowalReceiptMessage } from './BestowalReceiptMessage';
 
 const getFileIcon = (fileType) => {
   const icons = {
@@ -26,6 +27,17 @@ const ChatMessage = ({ message, isOwn = false, onDelete, isInstructor, instructo
   const isCredentialVerification = message.system_metadata?.type === 'credential_verification';
   const isVerified = message.system_metadata?.verified;
   
+  // Post-bestowal receipt system message
+  if (message.message_type === 'bestowal_receipt' && message.system_metadata) {
+    return (
+      <div className={`flex gap-3 mb-4 ${isOwn ? 'flex-row-reverse' : ''}`}>
+        <div className="flex-1 max-w-[80%]">
+          <BestowalReceiptMessage metadata={message.system_metadata} />
+        </div>
+      </div>
+    );
+  }
+
   // Purchase delivery or free download system message
   if (message.message_type === 'purchase_delivery' && message.system_metadata) {
     return (
