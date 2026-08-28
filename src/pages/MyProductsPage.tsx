@@ -17,27 +17,7 @@ import {
   CarouselNext,
   CarouselPrevious,
 } from '@/components/ui/carousel';
-
-// Helper function to check if a product is an album
-function isAlbum(product: any): boolean {
-  // Check metadata field
-  if (product.metadata?.is_album === true) return true;
-  
-  // Check tags array
-  if (product.tags && Array.isArray(product.tags)) {
-    const tagStr = product.tags.join(' ').toLowerCase();
-    if (tagStr.includes('album') || tagStr.includes('lp') || tagStr.includes('ep')) {
-      return true;
-    }
-  }
-  
-  // Check if file_url points to a manifest.json (album manifest)
-  if (product.file_url && product.file_url.includes('manifest.json')) {
-    return true;
-  }
-  
-  return false;
-}
+import { isAlbum } from '@/lib/products/isAlbum';
 
 export default function MyProductsPage() {
   const { user } = useAuth();

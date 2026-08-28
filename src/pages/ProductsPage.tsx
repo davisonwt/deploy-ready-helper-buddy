@@ -14,21 +14,6 @@ import WanderingBadgeBar, { type WanderingRole } from '@/components/marketplace/
 
 const ITEMS_PER_PAGE = 20;
 
-// Helper function to check if a product is an album
-function isAlbum(product: any): boolean {
-  if (product.metadata?.is_album === true) return true;
-  if (product.tags && Array.isArray(product.tags)) {
-    const tagStr = product.tags.join(' ').toLowerCase();
-    if (tagStr.includes('album') || tagStr.includes('lp') || tagStr.includes('ep')) {
-      return true;
-    }
-  }
-  if (product.file_url && product.file_url.includes('manifest.json')) {
-    return true;
-  }
-  return false;
-}
-
 // Get category icon
 function getCategoryIcon(category: string) {
   switch (category?.toLowerCase()) {

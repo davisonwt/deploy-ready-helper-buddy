@@ -21,6 +21,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { useAlbumBuilder } from '@/contexts/AlbumBuilderContext';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
+import { isAlbum } from '@/lib/products/isAlbum';
 
 type MusicRow = {
   id: string;
@@ -180,7 +181,7 @@ export default function MusicLibraryPage() {
 
       const { data: productMusicRows, error: productMusicError } = await supabase
         .from('products')
-        .select('id, title, type, cover_image_url, image_urls, file_url, price, sower_id, artist_name, music_genre, music_mood, duration, created_at')
+        .select('id, title, type, cover_image_url, image_urls, file_url, price, sower_id, artist_name, music_genre, music_mood, duration, created_at, tags')
         .eq('type', 'music')
         .or('status.is.null,status.neq.archived')
         .order('created_at', { ascending: false })
@@ -257,7 +258,10 @@ export default function MusicLibraryPage() {
         }
       });
 
-      const transformedProducts = productMusic.map((product: any) => {
+      // Build-your-own albums are made of singles only — an album product
+      // (tags/manifest.json/metadata, see isAlbum) has no business showing
+      // up in this list or being selectable into a custom album.
+      const transformedProducts = productMusic.filter((product: any) => !isAlbum(product)).map((product: any) => {
         const sower = sowerMap.get(product.sower_id);
         const profile = sower?.user_id ? profileMap.get(sower.user_id) : null;
         const matchingTrackCover = chooseLatestMusicCover(

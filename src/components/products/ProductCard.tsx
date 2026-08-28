@@ -17,6 +17,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/comp
 import { GradientPlaceholder } from '@/components/ui/GradientPlaceholder';
 import { formatCurrency } from '@/lib/utils';
 import { launchConfetti, floatingScore, playSoundEffect } from '@/utils/confetti';
+import { isAlbum as isAlbumProduct } from '@/lib/products/isAlbum';
 
 interface ProductCardProps {
   product: any;
@@ -37,7 +38,7 @@ export default function ProductCard({ product, featured, showActions = false }: 
   const navigate = useNavigate();
   
   const isOwner = user?.id === product.sowers?.user_id;
-  const isAlbum = product.tags?.includes('album');
+  const isAlbum = isAlbumProduct(product);
 
   useEffect(() => {
     const loadAudioUrl = async () => {
