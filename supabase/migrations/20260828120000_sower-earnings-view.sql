@@ -88,7 +88,14 @@ SELECT * FROM (
 ) rows
 WHERE
   rows.sower_id = auth.uid()
-  OR rows.whisperer_id = auth.uid()
+  -- rows.whisperer_id stores whisperers.id (its own PK), not the
+  -- whisperer's auth.users id — resolve_whisperer_by_ref_code returns it
+  -- that way and finalize_basket_order inserts it unchanged. Comparing it
+  -- to auth.uid() directly would never match a real whisperer's session.
+  OR EXISTS (
+    SELECT 1 FROM public.whisperers w
+    WHERE w.id = rows.whisperer_id AND w.user_id = auth.uid()
+  )
   OR public.has_role(auth.uid(), 'admin'::app_role)
   OR public.has_role(auth.uid(), 'gosat'::app_role);
 
