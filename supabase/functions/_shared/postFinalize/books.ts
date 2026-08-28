@@ -96,6 +96,22 @@ async function syncBasketOrder(supabase: SupabaseLike, basketOrderId: string): P
         source_id: r.id,
         occurred_at: paidAt,
       });
+      // A pre-existing DB trigger (trg_books_sync_product_sale) also fires
+      // on this same product_bestowals insert -- independently discovered
+      // during the 2026-08-26 incident repair. It books the platform fee
+      // (and, when one applies, the whisperer commission) as separate
+      // expense rows against a *gross* income figure; upsertIncome above
+      // just overwrote that income row to the sower's net take-home
+      // instead (already fee- and whisperer-net, matching this session's
+      // established convention). Left in place, the trigger's fee/
+      // whisperer expense rows would double-count against the now-net
+      // income. Remove them -- they're redundant, not wrong on their own,
+      // just incompatible with the net-income model this module uses.
+      await supabase
+        .from("expenses")
+        .delete()
+        .in("source_table", ["product_bestowals_fee", "product_bestowals_whisperer"])
+        .eq("source_id", r.id);
     }
 
     await upsertExpense(supabase, basketOrder.user_id, {
