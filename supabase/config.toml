@@ -42,6 +42,12 @@ verify_jwt = false
 [functions.capture-paypal-payment]
 verify_jwt = false
 
+[functions.check-paypal-order]
+verify_jwt = false
+
+[functions.reconcile-paypal-orders]
+verify_jwt = false
+
 [functions.create-stripe-payment]
 verify_jwt = true
 
