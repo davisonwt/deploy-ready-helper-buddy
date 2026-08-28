@@ -29,14 +29,28 @@ async function resolveMediaUrl(url: string | null): Promise<string | null> {
   const parts = extractBucketAndPath(url);
   if (!parts) return url;
   if (!PRIVATE_BUCKETS.includes(parts.bucket)) return url;
-  // NOTE: for premium-room paths (products-sourced tracks), this only
-  // succeeds for the track's own uploader today — the RLS policy on that
-  // bucket has no grant for a general visitor or even a genuine buyer of
-  // this specific product (see spec-seed-protection.md, Phase 2/3, not yet
-  // built). It fails closed: createSignedUrl returns no url and the player
-  // simply doesn't render, rather than falling back to a raw/public link.
+  // dj_track files (music-tracks/dj-music) only — product-sourced
+  // (premium-room) files never go through this path; see fetchSeedFileUrl.
   const { data } = await supabase.storage.from(parts.bucket).createSignedUrl(parts.path, 60 * 60);
   return data?.signedUrl || null;
+}
+
+/**
+ * Purchase-gated access for a product-sourced (premium-room) track — the
+ * client never gets a signed URL for these except through get-seed-file,
+ * which re-checks entitlement (uploader or a completed product_bestowals
+ * row) on every call. Returns null on any failure (not entitled, no file,
+ * etc.) rather than throwing, so the caller can just fall back to "no
+ * preview available" the same way a missing dj_track URL already does.
+ */
+async function fetchSeedFileUrl(productId: string): Promise<string | null> {
+  try {
+    const { url } = await invokePaymentFunction<{ url: string }>('get-seed-file', { productId });
+    return url || null;
+  } catch (err) {
+    console.warn('get-seed-file failed:', err);
+    return null;
+  }
 }
 
 type TrackSource = 'dj_track' | 'product';
@@ -67,6 +81,7 @@ export default function MusicTrackDetailPage() {
   const [playing, setPlaying] = useState(false);
   const [elapsed, setElapsed] = useState(0);
   const [buyingProduct, setBuyingProduct] = useState(false);
+  const [downloading, setDownloading] = useState(false);
   const [provider, setProvider] = useState<PayoutProviderId>('nowpayments');
   const audioRef = useRef<HTMLAudioElement | null>(null);
 
@@ -138,17 +153,14 @@ export default function MusicTrackDetailPage() {
       }
 
       setTrack(normalized);
-      const [c, a] = await Promise.all([
-        resolveMediaUrl(normalized.cover_image_url),
-        resolveMediaUrl(normalized.playable_url),
-      ]);
+      const c = await resolveMediaUrl(normalized.cover_image_url);
       if (!alive) return;
       setCoverUrl(c);
-      setAudioUrl(a);
 
+      let isOwned = false;
       if (user) {
         if (normalized.source === 'dj_track') {
-          setOwned(await hasPurchased(normalized.id));
+          isOwned = await hasPurchased(normalized.id);
         } else {
           // product_bestowals is the real purchase record for `products` rows
           // (music_purchases only ever tracks dj_music_tracks purchases).
@@ -159,9 +171,26 @@ export default function MusicTrackDetailPage() {
             .eq('product_id', normalized.id)
             .eq('status', 'completed')
             .maybeSingle();
-          setOwned(!!bestowalRow);
+          isOwned = !!bestowalRow;
         }
       }
+      if (!alive) return;
+      setOwned(isOwned);
+
+      // dj_track previews/full files resolve the same way regardless of
+      // ownership (the 45s cap is enforced client-side either way). A
+      // product-sourced track has no separate preview object yet (see
+      // spec-seed-protection.md) — only an owner (buyer or uploader) gets a
+      // URL at all, via the purchase-gated get-seed-file function; a
+      // non-owner gets nothing rather than a signed URL to the full file.
+      const a = normalized.source === 'dj_track'
+        ? await resolveMediaUrl(normalized.playable_url)
+        : isOwned
+        ? await fetchSeedFileUrl(normalized.id)
+        : null;
+      if (!alive) return;
+      setAudioUrl(a);
+
       setLoading(false);
     })();
     return () => { alive = false; };
@@ -184,6 +213,30 @@ export default function MusicTrackDetailPage() {
     if (!el) return;
     if (playing) { el.pause(); setPlaying(false); }
     else { el.play(); setPlaying(true); }
+  };
+
+  // A product-sourced download mints a fresh 60s URL at click time rather
+  // than reusing the one fetched on page load, which may well have expired
+  // by the time the buyer actually clicks (get-seed-file re-checks
+  // entitlement on every call, per spec-seed-protection.md).
+  const handleDownload = async () => {
+    if (!track) return;
+    setDownloading(true);
+    try {
+      const url = await fetchSeedFileUrl(track.id);
+      if (!url) {
+        toast.error('Could not get a download link. Please try again.');
+        return;
+      }
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = track.title || 'seed';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+    } finally {
+      setDownloading(false);
+    }
   };
 
   const handleBuy = async () => {
@@ -322,6 +375,16 @@ export default function MusicTrackDetailPage() {
                         <Download className="w-4 h-4 mr-2" /> Download
                       </Button>
                     </a>
+                  ) : track.source === 'product' && audioUrl ? (
+                    <>
+                      <div className="text-sm text-emerald-400 font-medium">
+                        ✓ Bestowed — thank you for supporting this sower
+                      </div>
+                      <Button onClick={handleDownload} disabled={downloading} className="bg-emerald-500 hover:bg-emerald-600 w-fit">
+                        {downloading ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Download className="w-4 h-4 mr-2" />}
+                        Download
+                      </Button>
+                    </>
                   ) : (
                     <div className="text-sm text-emerald-400 font-medium">
                       ✓ Bestowed — thank you for supporting this sower

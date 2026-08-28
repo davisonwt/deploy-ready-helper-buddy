@@ -273,6 +273,9 @@ verify_jwt = false
 [functions.get-purchased-track-url]
 verify_jwt = false
 
+[functions.get-seed-file]
+verify_jwt = false
+
 [functions.get-wallet-credentials]
 verify_jwt = false
 
