@@ -7,6 +7,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useProductBasket } from '@/contexts/ProductBasketContext';
 import { launchConfetti, floatingScore, playSoundEffect } from '@/utils/confetti';
 import { invokePaymentFunction } from '@/lib/payments/invokeFunction';
+import { backOutFee } from '@/lib/pricing/platformFee';
 
 type OrderKind = 'basket' | 'content' | 'gift' | 'topup';
 type OrderStatus = 'pending' | 'processing' | 'completed' | 'failed' | 'expired';
@@ -155,14 +156,33 @@ export default function PaymentSuccessPage() {
             </p>
           )}
 
-          <div className="bg-muted/50 p-4 rounded-lg text-sm text-left space-y-2">
-            <p className="font-semibold">Distribution Overview</p>
-            <ul className="space-y-1 text-muted-foreground">
-              <li>✓ 15% → Platform Fee (s2gbestow)</li>
-              <li>✓ 70% → Sower (orchard owner)</li>
-              <li>✓ 15% → Product Whisperer (falls back to the sower when none was involved)</li>
-            </ul>
-          </div>
+          {active?.kind === 'topup' ? (
+            amount != null && (
+              <div className="bg-muted/50 p-4 rounded-lg text-sm text-left space-y-1">
+                <p className="font-semibold">Distribution Overview</p>
+                <p className="text-muted-foreground">
+                  ✓ ${amount.toFixed(2)} → credited to your Sow2Grow wallet balance (no platform fee on top-ups)
+                </p>
+              </div>
+            )
+          ) : (
+            amount != null && (() => {
+              // `amount` here is always the buyer-paid gross (already
+              // includes S2G's 15%, added on top per priceBreakdown's golden
+              // rule) — back it out with the same pricing helper used at
+              // checkout rather than a stale fixed 70/15/15 split.
+              const { base, s2gFee } = backOutFee(amount);
+              return (
+                <div className="bg-muted/50 p-4 rounded-lg text-sm text-left space-y-2">
+                  <p className="font-semibold">Distribution Overview</p>
+                  <ul className="space-y-1 text-muted-foreground">
+                    <li>✓ ${s2gFee.toFixed(2)} → Platform Fee (Sow2Grow, 15%)</li>
+                    <li>✓ up to ${base.toFixed(2)} → Sower (a Product Whisperer's share, if one applied, comes out of this — never on top)</li>
+                  </ul>
+                </div>
+              );
+            })()
+          )}
 
           <div className="flex flex-col gap-3">
             <Button onClick={() => navigate('/dashboard')} className="w-full">
