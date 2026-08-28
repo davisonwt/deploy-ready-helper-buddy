@@ -10,6 +10,10 @@ Changes reach real users. There is no staging buffer implied by default — trea
 - Testing: Vitest + React Testing Library (`src/test/`), Cypress for e2e (`cypress/e2e/`), k6 for load testing
 - This is a Lovable-managed project — Lovable's AI agent can push commits directly to this repo. Pull before starting work to avoid clobbering Lovable-side changes, and expect commit history to include Lovable's own auto-commits.
 
+## Golden rule: every page needs a way back
+Every routed page must have a visible Back/Return control (a real back action, or a Home/parent-page link — not just relying on the browser's back button). Apply this whenever touching a page for any other reason, and treat a missing one as worth fixing on sight, not just when asked.
+Exempt: `/` (Index) and `/dashboard` (DashboardPage) — they're the app's home destinations. Don't re-flag them in a future audit.
+
 ## Stay in scope
 - Don't refactor unrelated code, restyle unrelated screens, change branding, alter database structure, add dependencies, or change business rules that weren't asked for.
 - Before editing a shared component, check everywhere else it's used.
