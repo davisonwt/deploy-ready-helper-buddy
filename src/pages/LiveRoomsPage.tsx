@@ -74,11 +74,14 @@ export default function LiveRoomsPage() {
     queryKey: ['live-room-last-other-msg', user?.id, roomIds.join(',')],
     enabled: !!user?.id && roomIds.length > 0,
     queryFn: async () => {
+      // .neq('sender_id', ...) excludes a NULL sender_id entirely (SQL
+      // `<>` against NULL is unknown, not true) instead of counting it as
+      // "not me" — see DashboardTribeStats.tsx for the same fix.
       const { data } = await supabase
         .from('live_room_messages' as any)
         .select('room_id, sender_id, created_at')
         .in('room_id', roomIds)
-        .neq('sender_id', user!.id)
+        .or(`sender_id.is.null,sender_id.neq.${user!.id}`)
         .order('created_at', { ascending: false })
         .limit(500);
       const map: Record<string, string> = {};

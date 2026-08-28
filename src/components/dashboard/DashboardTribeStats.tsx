@@ -5,13 +5,14 @@ import { useAuth } from "@/hooks/useAuth";
 import { Users, Coins, MessageCircle } from "lucide-react";
 
 /**
- * Three-tile dashboard widget: Tribe size · Bestowals received · Unread messages.
+ * Three-tile dashboard widget: Tribe size · Bestowals (received + given) · Unread messages.
  * Each tile is a Link. Real-time refreshes via Supabase Realtime.
  */
 export default function DashboardTribeStats() {
   const { user } = useAuth();
   const [tribeCount, setTribeCount] = useState(0);
   const [bestowals, setBestowals] = useState({ count: 0, total: 0 });
+  const [purchases, setPurchases] = useState({ count: 0, total: 0 });
   const [unread, setUnread] = useState(0);
 
   const reload = React.useCallback(async () => {
@@ -57,6 +58,22 @@ export default function DashboardTribeStats() {
       });
     } catch {}
 
+    // Bestowals given: buyer_purchases_v mirrors sower_earnings_v from the
+    // other side — everything this user has completed-and-paid-for across
+    // basket_orders (via product_bestowals), content_purchases, bestowals,
+    // and topups. buyer_total is the real charge (subtotal + processor fee),
+    // not just the seed price, matching what actually left the buyer's account.
+    try {
+      const { data: rows } = await supabase
+        .from("buyer_purchases_v")
+        .select("buyer_total")
+        .eq("buyer_id", user.id);
+      setPurchases({
+        count: rows?.length || 0,
+        total: (rows || []).reduce((s, r) => s + Number(r.buyer_total || 0), 0),
+      });
+    } catch {}
+
     // Unread messages
     try {
       const { data: parts } = await supabase
@@ -65,11 +82,15 @@ export default function DashboardTribeStats() {
         .eq("user_id", user.id);
       let totalUnread = 0;
       for (const p of parts || []) {
+        // .neq('sender_id', user.id) would translate to plain SQL `<>`,
+        // which is NULL (excluded) for a NULL sender_id — silently dropping
+        // every system message (Sow2Grow thank-yous, receipts). Use an OR
+        // so it reads as "sender_id IS DISTINCT FROM me" instead.
         const { count: c } = await supabase
           .from("chat_messages")
           .select("id", { count: "exact", head: true })
           .eq("room_id", p.room_id)
-          .neq("sender_id", user.id)
+          .or(`sender_id.is.null,sender_id.neq.${user.id}`)
           .gt("created_at", p.last_read_at || "1970-01-01");
         totalUnread += c || 0;
       }
@@ -87,10 +108,14 @@ export default function DashboardTribeStats() {
       .on("postgres_changes", { event: "*", schema: "public", table: "bestowals" }, reload)
       .on("postgres_changes", { event: "*", schema: "public", table: "product_bestowals" }, reload)
       .on("postgres_changes", { event: "*", schema: "public", table: "content_purchases" }, reload)
+      .on("postgres_changes", { event: "*", schema: "public", table: "basket_orders" }, reload)
+      .on("postgres_changes", { event: "*", schema: "public", table: "topups" }, reload)
       .on("postgres_changes", { event: "*", schema: "public", table: "chat_messages" }, reload)
       .subscribe();
     return () => { supabase.removeChannel(ch); };
   }, [user?.id, reload]);
+
+  const subLine = { fontSize: 11, color: "#64748b", marginTop: 2 };
 
   const tile = (to, icon, label, value, sub, color) => (
     <Link to={to} style={{
@@ -113,7 +138,7 @@ export default function DashboardTribeStats() {
       <div style={{ minWidth: 0 }}>
         <div style={{ fontSize: 11, color: "#94a3b8", letterSpacing: ".08em", textTransform: "uppercase" }}>{label}</div>
         <div style={{ fontSize: 20, fontWeight: 800, color: "#f1f5f9", lineHeight: 1.1 }}>{value}</div>
-        {sub && <div style={{ fontSize: 11, color: "#64748b", marginTop: 2 }}>{sub}</div>}
+        {sub}
       </div>
     </Link>
   );
@@ -122,9 +147,14 @@ export default function DashboardTribeStats() {
     <div style={{
       display: "flex", gap: 10, flexWrap: "wrap", marginBottom: 14,
     }}>
-      {tile("/my-tribe", <Users size={20} />, "My Tribe", tribeCount, "members in your tribe", "#22c55e")}
-      {tile("/wallet-settings", <Coins size={20} />, "Bestowals", `${bestowals.total.toFixed(2)}`, `${bestowals.count} bestowals received (USD)`, "#f59e0b")}
-      {tile("/chatapp?filter=unread", <MessageCircle size={20} />, "Unread", unread, unread ? "tap to read" : "all caught up", "#22d3ee")}
+      {tile("/my-tribe", <Users size={20} />, "My Tribe", tribeCount, <div style={subLine}>members in your tribe</div>, "#22c55e")}
+      {tile("/wallet-settings", <Coins size={20} />, "Bestowals", `${bestowals.total.toFixed(2)}`, (
+        <>
+          <div style={subLine}>{bestowals.count} received (USD)</div>
+          <div style={subLine}>${purchases.total.toFixed(2)} given · {purchases.count} purchases</div>
+        </>
+      ), "#f59e0b")}
+      {tile("/chatapp?filter=unread", <MessageCircle size={20} />, "Unread", unread, <div style={subLine}>{unread ? "tap to read" : "all caught up"}</div>, "#22d3ee")}
     </div>
   );
 }
