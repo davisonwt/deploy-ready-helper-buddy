@@ -153,6 +153,8 @@ Deno.serve(async (req) => {
           ipn_callback_url: ipnUrl,
           success_url: `${redirectBase}/payment-success?purchase=${purchase.id}`,
           cancel_url: `${redirectBase}/payment-cancelled?purchase=${purchase.id}`,
+          is_fixed_rate: true,
+          is_fee_paid_by_user: true,
         }),
       });
       if (!invoiceRes.ok) {

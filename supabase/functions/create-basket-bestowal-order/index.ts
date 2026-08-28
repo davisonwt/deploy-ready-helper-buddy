@@ -257,6 +257,8 @@ Deno.serve(async (req) => {
           ipn_callback_url: ipnUrl,
           success_url: `${redirectBase}/payment-success?basket=${order.id}`,
           cancel_url: `${redirectBase}/payment-cancelled?basket=${order.id}`,
+          is_fixed_rate: true,
+          is_fee_paid_by_user: true,
         }),
       });
       if (!invoiceRes.ok) {

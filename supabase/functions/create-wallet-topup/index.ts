@@ -95,6 +95,8 @@ Deno.serve(async (req) => {
           ipn_callback_url: ipnUrl,
           success_url: `${redirectBase}/wallet?topup=success`,
           cancel_url: `${redirectBase}/wallet?topup=cancelled`,
+          is_fixed_rate: true,
+          is_fee_paid_by_user: true,
         }),
       });
       if (!res.ok) {

@@ -177,6 +177,8 @@ Deno.serve(async (req) => {
           ipn_callback_url: ipnUrl,
           success_url: `${redirectBase}/bestowals/${bestowal.id}?status=success`,
           cancel_url: `${redirectBase}/bestowals/${bestowal.id}?status=cancelled`,
+          is_fixed_rate: true,
+          is_fee_paid_by_user: true,
         }),
       });
 
