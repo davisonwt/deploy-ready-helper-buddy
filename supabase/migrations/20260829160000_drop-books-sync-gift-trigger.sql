@@ -1,0 +1,18 @@
+-- Applied live ahead of this file -- recorded here so the migration
+-- history matches reality. trg_books_sync_gift (bestowals, orchard rows
+-- only -- it returns early when orchard_id IS NULL, so it never actually
+-- covered pure gifts) was the second of the two pre-existing triggers
+-- duplicating what _shared/postFinalize/books.ts now does for every
+-- completed order (see the 2026-08-26 incident writeup in
+-- SESSION-STATE.md, and 20260829150000 for the first one,
+-- trg_books_sync_product_sale). Left alone at the time since it had no
+-- expense-side insert to double-count and _shared/postFinalize/books.ts's
+-- own upsert already overwrote whatever it wrote -- functionally harmless,
+-- but still a second, redundant writer for the same source. Dropped now
+-- for the same reason as the first: books.ts is the single Books writer.
+--
+-- Only the trigger is dropped here, not its function (books_sync_gift())
+-- -- that's what was actually run live; the function is left in place,
+-- orphaned/unused, matching the same choice made for
+-- books_sync_product_sale().
+DROP TRIGGER IF EXISTS trg_books_sync_gift ON public.bestowals;
