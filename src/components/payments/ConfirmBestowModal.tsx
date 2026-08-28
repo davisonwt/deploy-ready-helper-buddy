@@ -3,7 +3,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Button } from '@/components/ui/button';
 import { Loader2, Heart } from 'lucide-react';
 import ProviderPicker from '@/components/payments/ProviderPicker';
-import type { PayoutProviderId } from '@/lib/payments/providerFees';
+import { MIN_CRYPTO_BESTOWAL_USD, type PayoutProviderId } from '@/lib/payments/providerFees';
 
 interface ConfirmBestowModalProps {
   isOpen: boolean;
@@ -34,6 +34,8 @@ export function ConfirmBestowModal({
   actionLabel = 'Bestow',
 }: ConfirmBestowModalProps) {
   const [provider, setProvider] = useState<PayoutProviderId>('nowpayments');
+  const belowCryptoMin = amount < MIN_CRYPTO_BESTOWAL_USD;
+  const effectiveProvider: PayoutProviderId = belowCryptoMin ? 'paypal' : provider;
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && !confirming && onClose()}>
@@ -46,12 +48,24 @@ export function ConfirmBestowModal({
           <div className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
             Payment method
           </div>
-          <ProviderPicker value={provider} onChange={setProvider} amount={amount} mode="buyer" disabled={confirming} />
+          {belowCryptoMin && (
+            <p className="text-xs text-muted-foreground">
+              Crypto has a ${MIN_CRYPTO_BESTOWAL_USD} minimum — pay with PayPal for smaller amounts.
+            </p>
+          )}
+          <ProviderPicker
+            value={effectiveProvider}
+            onChange={setProvider}
+            amount={amount}
+            mode="buyer"
+            disabled={confirming}
+            providers={belowCryptoMin ? ['paypal'] : undefined}
+          />
 
           <Button
             className="w-full"
             disabled={confirming}
-            onClick={() => onConfirm(provider)}
+            onClick={() => onConfirm(effectiveProvider)}
           >
             {confirming ? (
               <Loader2 className="w-4 h-4 mr-2 animate-spin" />

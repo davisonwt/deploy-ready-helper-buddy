@@ -7,7 +7,7 @@ import { useGiftBestowal } from '@/hooks/useGiftBestowal';
 import { toast } from 'sonner';
 import Confetti from 'react-confetti';
 import { launchConfetti } from '@/utils/confetti';
-import type { PayoutProviderId } from '@/lib/payments/providerFees';
+import { MIN_CRYPTO_BESTOWAL_USD, type PayoutProviderId } from '@/lib/payments/providerFees';
 
 interface BestowalCoinProps {
   /** ID of the message/file/audio/image being tipped (passed back via onBestowalComplete). */
@@ -61,6 +61,9 @@ export function BestowalCoin({
     }, 2000);
   };
 
+  const belowCryptoMin = sliderValue[0] < MIN_CRYPTO_BESTOWAL_USD;
+  const effectiveProvider: PayoutProviderId = belowCryptoMin ? 'paypal' : provider;
+
   const handleBestowal = async () => {
     const amount = sliderValue[0];
 
@@ -74,7 +77,7 @@ export function BestowalCoin({
       amount,
       contextKind: 'chat_tip',
       contextId: roomId,
-      provider,
+      provider: effectiveProvider,
       payCurrency: 'usdttrc20',
       message: assetId ? `tip:${assetId}` : undefined,
     });
@@ -190,12 +193,13 @@ export function BestowalCoin({
                 </div>
               </div>
 
-              <div className="flex gap-2 mb-4">
+              <div className="flex gap-2 mb-1">
                 <Button
                   type="button"
                   size="sm"
-                  variant={provider === 'nowpayments' ? 'default' : 'outline'}
+                  variant={effectiveProvider === 'nowpayments' ? 'default' : 'outline'}
                   onClick={() => setProvider('nowpayments')}
+                  disabled={belowCryptoMin}
                   className="flex-1"
                 >
                   Crypto
@@ -203,13 +207,18 @@ export function BestowalCoin({
                 <Button
                   type="button"
                   size="sm"
-                  variant={provider === 'paypal' ? 'default' : 'outline'}
+                  variant={effectiveProvider === 'paypal' ? 'default' : 'outline'}
                   onClick={() => setProvider('paypal')}
                   className="flex-1"
                 >
                   PayPal
                 </Button>
               </div>
+              {belowCryptoMin && (
+                <p className="text-xs text-muted-foreground mb-3">
+                  Crypto has a ${MIN_CRYPTO_BESTOWAL_USD} minimum — pay with PayPal for smaller amounts.
+                </p>
+              )}
 
               <div className="flex gap-2">
                 <Button

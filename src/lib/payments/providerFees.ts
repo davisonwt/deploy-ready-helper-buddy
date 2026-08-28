@@ -13,6 +13,15 @@
 
 export type PayoutProviderId = 'nowpayments' | 'paypal';
 
+/**
+ * Below this, crypto is not offered as a bestowal option: a NOWPayments
+ * invoice recomputes the exact crypto amount against the live exchange rate,
+ * and most buyer exchanges (e.g. VALR) can only send 2-decimal amounts —
+ * underpaying by any fraction leaves the invoice stuck Partially_paid forever.
+ * PayPal has no equivalent rounding failure mode at small amounts.
+ */
+export const MIN_CRYPTO_BESTOWAL_USD = 10;
+
 export interface PayoutProviderInfo {
   id: PayoutProviderId;
   label: string;

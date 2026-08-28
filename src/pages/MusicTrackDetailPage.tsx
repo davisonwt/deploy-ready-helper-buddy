@@ -11,7 +11,7 @@ import { toast } from 'sonner';
 import { priceBreakdown } from '@/lib/pricing/platformFee';
 import { PREVIEW_SECONDS } from '@/lib/media/previewLength';
 import ProviderPicker from '@/components/payments/ProviderPicker';
-import type { PayoutProviderId } from '@/lib/payments/providerFees';
+import { MIN_CRYPTO_BESTOWAL_USD, type PayoutProviderId } from '@/lib/payments/providerFees';
 
 const PRIVATE_BUCKETS = ['music-tracks', 'dj-music', 'premium-room'];
 
@@ -188,9 +188,11 @@ export default function MusicTrackDetailPage() {
 
   const handleBuy = async () => {
     if (!track) return;
+    const belowCryptoMin = priceBreakdown(track.price).total < MIN_CRYPTO_BESTOWAL_USD;
+    const effectiveProvider: PayoutProviderId = belowCryptoMin ? 'paypal' : provider;
 
     if (track.source === 'dj_track') {
-      purchaseTrack(track.id, track.price, { provider });
+      purchaseTrack(track.id, track.price, { provider: effectiveProvider });
       return;
     }
 
@@ -206,8 +208,8 @@ export default function MusicTrackDetailPage() {
     try {
       const data = await invokePaymentFunction<any>('create-basket-bestowal-order', {
         items: [{ productId: track.id, qty: 1 }],
-        provider,
-        payCurrency: provider === 'nowpayments' ? 'usdcsol' : undefined,
+        provider: effectiveProvider,
+        payCurrency: effectiveProvider === 'nowpayments' ? 'usdcsol' : undefined,
         redirectBaseUrl: typeof window !== 'undefined' ? window.location.origin : undefined,
       });
       const redirectUrl = data?.invoiceUrl || data?.approveUrl;
@@ -240,6 +242,8 @@ export default function MusicTrackDetailPage() {
 
   const { base, s2gFee, total } = priceBreakdown(track.price);
   const isBuying = track.source === 'dj_track' ? purchasingTrack : buyingProduct;
+  const belowCryptoMin = total < MIN_CRYPTO_BESTOWAL_USD;
+  const effectiveProvider: PayoutProviderId = belowCryptoMin ? 'paypal' : provider;
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-950 to-slate-900 text-white p-4 md:p-8">
@@ -328,7 +332,19 @@ export default function MusicTrackDetailPage() {
                     <div className="text-xs font-bold uppercase tracking-wider text-slate-400">
                       Payment method
                     </div>
-                    <ProviderPicker value={provider} onChange={setProvider} amount={total} mode="buyer" disabled={isBuying} />
+                    {belowCryptoMin && (
+                      <p className="text-xs text-slate-400">
+                        Crypto has a ${MIN_CRYPTO_BESTOWAL_USD} minimum — pay with PayPal for smaller amounts.
+                      </p>
+                    )}
+                    <ProviderPicker
+                      value={effectiveProvider}
+                      onChange={setProvider}
+                      amount={total}
+                      mode="buyer"
+                      disabled={isBuying}
+                      providers={belowCryptoMin ? ['paypal'] : undefined}
+                    />
                     <Button onClick={handleBuy} disabled={isBuying} className="bg-rose-500 hover:bg-rose-600">
                       {isBuying ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Heart className="w-4 h-4 mr-2" />}
                       Bestow ${total.toFixed(2)} USDC

@@ -41,7 +41,7 @@ import { type WanderingRole, WANDERING_BADGES } from '@/components/marketplace/W
 import { launchConfetti, playSoundEffect } from '@/utils/confetti';
 import { PREVIEW_SECONDS } from '@/lib/media/previewLength';
 import { ConfirmBestowModal } from '@/components/payments/ConfirmBestowModal';
-import type { PayoutProviderId } from '@/lib/payments/providerFees';
+import { MIN_CRYPTO_BESTOWAL_USD, type PayoutProviderId } from '@/lib/payments/providerFees';
 import { LiveNowStrip } from '@/components/live/LiveNowStrip';
 import LiveStage from '@/components/live/LiveStage';
 import LiveStageOverlay from '@/components/live/LiveStageOverlay';
@@ -1767,7 +1767,9 @@ function SeedActionPanel({
     if (sending) return;
     setSending(true);
     try {
-      await onGift(amount, giftProvider);
+      const effectiveProvider: PayoutProviderId =
+        typeof amount === 'number' && amount < MIN_CRYPTO_BESTOWAL_USD ? 'paypal' : giftProvider;
+      await onGift(amount, effectiveProvider);
     } finally {
       setSending(false);
     }
@@ -1822,6 +1824,11 @@ function SeedActionPanel({
                 PayPal
               </Button>
             </div>
+            {giftProvider === 'nowpayments' && (
+              <p className="text-xs text-muted-foreground">
+                Crypto has a ${MIN_CRYPTO_BESTOWAL_USD} minimum — pay with PayPal for smaller amounts.
+              </p>
+            )}
             <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
               {[
                 { label: '10c', value: 0.1 },
@@ -1829,11 +1836,19 @@ function SeedActionPanel({
                 { label: '$1', value: 1 },
                 { label: '$5', value: 5 },
                 { label: '$10', value: 10 },
-              ].map((gift) => (
-                <Button key={gift.label} disabled={sending} onClick={() => sendGift(gift.value)} className="h-12 rounded-full">
-                  {gift.label}
-                </Button>
-              ))}
+              ].map((gift) => {
+                const disabledByCryptoMin = giftProvider === 'nowpayments' && gift.value < MIN_CRYPTO_BESTOWAL_USD;
+                return (
+                  <Button
+                    key={gift.label}
+                    disabled={sending || disabledByCryptoMin}
+                    onClick={() => sendGift(gift.value)}
+                    className="h-12 rounded-full"
+                  >
+                    {gift.label}
+                  </Button>
+                );
+              })}
               <Button disabled={sending} variant="outline" onClick={() => sendGift('heart')} className="h-12 rounded-full gap-2">
                 <Heart className="h-4 w-4" /> Heart
               </Button>

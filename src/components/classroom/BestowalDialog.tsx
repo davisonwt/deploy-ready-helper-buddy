@@ -6,7 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { useLiveBestowal } from '@/hooks/useLiveBestowal';
 import ProviderPicker from '@/components/payments/ProviderPicker';
-import type { PayoutProviderId } from '@/lib/payments/providerFees';
+import { MIN_CRYPTO_BESTOWAL_USD, type PayoutProviderId } from '@/lib/payments/providerFees';
 
 interface Props {
   open: boolean;
@@ -25,11 +25,14 @@ export function BestowalDialog({ open, onOpenChange, sowerId, bestowerId, sessio
   const [amount, setAmount] = useState('5');
   const [note, setNote] = useState('');
   const [provider, setProvider] = useState<PayoutProviderId>('nowpayments');
+  const numericAmount = Number(amount) || 0;
+  const belowCryptoMin = numericAmount < MIN_CRYPTO_BESTOWAL_USD;
+  const effectiveProvider: PayoutProviderId = belowCryptoMin ? 'paypal' : provider;
 
   const submit = async () => {
     const n = Number(amount);
     if (!Number.isFinite(n) || n <= 0) return;
-    const res = await sendBestowal({ sowerId, bestowerId, amount: n, sessionKind, sessionId, note, provider });
+    const res = await sendBestowal({ sowerId, bestowerId, amount: n, sessionKind, sessionId, note, provider: effectiveProvider });
     if (res.success) {
       onOpenChange(false);
       setNote('');
@@ -87,8 +90,20 @@ export function BestowalDialog({ open, onOpenChange, sowerId, bestowerId, sessio
 
           <div>
             <label className="text-xs uppercase tracking-wider text-[#E8D9B5]/60">Payment method</label>
+            {belowCryptoMin && (
+              <p className="text-xs text-[#E8D9B5]/50 mt-1">
+                Crypto has a ${MIN_CRYPTO_BESTOWAL_USD} minimum — pay with PayPal for smaller amounts.
+              </p>
+            )}
             <div className="mt-1">
-              <ProviderPicker value={provider} onChange={setProvider} amount={Number(amount) || 0} mode="buyer" disabled={loading} />
+              <ProviderPicker
+                value={effectiveProvider}
+                onChange={setProvider}
+                amount={numericAmount}
+                mode="buyer"
+                disabled={loading}
+                providers={belowCryptoMin ? ['paypal'] : undefined}
+              />
             </div>
           </div>
 

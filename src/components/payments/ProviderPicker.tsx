@@ -1,4 +1,4 @@
-import { PAYOUT_PROVIDERS, PayoutProviderId, quoteFee } from '@/lib/payments/providerFees';
+import { PAYOUT_PROVIDERS, quoteFee, type PayoutProviderId } from '@/lib/payments/providerFees';
 import { cn } from '@/lib/utils';
 
 interface ProviderPickerProps {
@@ -14,6 +14,8 @@ interface ProviderPickerProps {
    */
   mode?: 'buyer' | 'payee';
   disabled?: boolean;
+  /** Restrict which choices are shown (e.g. crypto hidden below its $ minimum). Defaults to all providers. */
+  providers?: PayoutProviderId[];
 }
 
 /**
@@ -28,10 +30,12 @@ export default function ProviderPicker({
   currencySymbol = '$',
   mode = 'buyer',
   disabled,
+  providers,
 }: ProviderPickerProps) {
+  const options = providers ? PAYOUT_PROVIDERS.filter((p) => providers.includes(p.id)) : PAYOUT_PROVIDERS;
   return (
     <div role="radiogroup" className="space-y-2">
-      {PAYOUT_PROVIDERS.map((p) => {
+      {options.map((p) => {
         const fee = quoteFee(p.id, amount, currencySymbol);
         const selected = value === p.id;
         const pctLabel = p.feePct[0] === p.feePct[1]
