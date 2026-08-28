@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { fetchProductForEdit, updateProduct } from '@/api/products';
+import { isAlbum } from '@/lib/products/isAlbum';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -18,6 +19,7 @@ export default function EditForm() {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   const [updating, setUpdating] = useState(false);
+  const [wasAlbum, setWasAlbum] = useState(false);
   const [formData, setFormData] = useState({
     title: '',
     description: '',
@@ -42,12 +44,18 @@ export default function EditForm() {
           return;
         }
 
+        setWasAlbum(isAlbum(data));
         setFormData({
           title: data.title || '',
           description: data.description || '',
           type: data.type || 'music',
           category: data.category || '',
           license_type: data.license_type || 'free',
+          // The field shows and saves the total charged to the bestower,
+          // unchanged — matching what products.price already means
+          // everywhere else it's read (checkout, product cards, the music
+          // detail page). No conversion happens on load or on save; that
+          // mismatch is what silently compounded this by 15% on every save.
           price: data.price || 0,
           tags: Array.isArray(data.tags) ? data.tags.join(', ') : ''
         });
@@ -70,14 +78,18 @@ export default function EditForm() {
     setUpdating(true);
 
     try {
-      const tagsArray = formData.tags
+      let tagsArray = formData.tags
         .split(',')
         .map(tag => tag.trim())
         .filter(tag => tag.length > 0);
 
-      // Calculate total price with fees (10% tithing + 5% admin)
-      const basePrice = parseFloat(String(formData.price)) || 0;
-      const totalPrice = basePrice * 1.15; // Add 15% (10% + 5%)
+      // The lowercase 'album' tag is load-bearing — it's what isAlbum()
+      // checks everywhere (music library exclusion, download-as-zip,
+      // manifest playback). The tags field is a flat free-text overwrite,
+      // so preserve it automatically if this product was an album at load.
+      if (wasAlbum && !tagsArray.some(t => t.toLowerCase() === 'album')) {
+        tagsArray = [...tagsArray, 'album'];
+      }
 
       await updateProduct(id, {
         title: formData.title,
@@ -85,7 +97,7 @@ export default function EditForm() {
         type: formData.type,
         category: formData.category,
         license_type: formData.license_type,
-        price: totalPrice, // Store total price
+        price: parseFloat(String(formData.price)) || 0, // saved as-is — see load comment above
         tags: tagsArray,
         updated_at: new Date().toISOString()
       });
@@ -189,27 +201,31 @@ export default function EditForm() {
                   </Select>
                 </div>
 
-                {formData.license_type === 'bestowal' && (
-                  <div className="space-y-2">
-                    <Label htmlFor="price">Base Price (USDC) *</Label>
-                    <Input
-                      id="price"
-                      type="number"
-                      step="0.01"
-                      min="0"
-                      value={formData.price}
-                      onChange={(e) => setFormData({ ...formData, price: parseFloat(e.target.value) || 0 })}
-                      required={formData.license_type === 'bestowal'}
-                    />
-                    <p className="text-xs text-muted-foreground">
-                      Total charged: ${((formData.price || 0) * 1.15).toFixed(2)} USDC (includes 10% platform fee + 5% admin fee)
-                    </p>
-                  </div>
-                )}
+                <div className="space-y-2">
+                  <Label htmlFor="price">Total Charged to Bestower (USDC)</Label>
+                  <Input
+                    id="price"
+                    type="number"
+                    step="0.01"
+                    min="0"
+                    value={formData.price}
+                    onChange={(e) => setFormData({ ...formData, price: parseFloat(e.target.value) || 0 })}
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    {formData.license_type === 'bestowal'
+                      ? `You receive ~$${((formData.price || 0) / 1.15).toFixed(2)} after Sow2Grow's 15% fee.`
+                      : "Only applies while License Type is Bestowal (Paid)."}
+                  </p>
+                </div>
               </div>
 
               <div className="space-y-2">
                 <Label htmlFor="tags">Tags (comma-separated)</Label>
+                {wasAlbum && (
+                  <p className="text-xs text-muted-foreground">
+                    This is an album — the "album" tag is kept automatically even if you don't type it.
+                  </p>
+                )}
                 <Input
                   id="tags"
                   value={formData.tags}
