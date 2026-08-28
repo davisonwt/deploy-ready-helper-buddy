@@ -13,7 +13,9 @@ import { toast } from 'sonner';
 import { GradientPlaceholder } from '@/components/ui/GradientPlaceholder';
 import { launchConfetti } from '@/utils/confetti';
 import { useContentPurchase } from '@/hooks/useContentPurchase';
-import { CRYPTO_ROUNDING_NOTICE } from '@/lib/payments/providerFees';
+import { CRYPTO_ROUNDING_NOTICE, MIN_CRYPTO_BESTOWAL_USD, type PayoutProviderId } from '@/lib/payments/providerFees';
+import ProviderPicker from '@/components/payments/ProviderPicker';
+import { priceBreakdown } from '@/lib/pricing/platformFee';
 import {
   Dialog,
   DialogContent,
@@ -28,7 +30,11 @@ export default function S2GCommunityLibraryPage() {
   const { user } = useAuth();
   const [selectedType, setSelectedType] = useState<string>('all');
   const [pickerItem, setPickerItem] = useState<any | null>(null);
+  const [provider, setProvider] = useState<PayoutProviderId>('nowpayments');
   const { purchase, isPending } = useContentPurchase();
+  const pickerTotal = pickerItem ? priceBreakdown(pickerItem.price).total : 0;
+  const belowCryptoMin = pickerTotal < MIN_CRYPTO_BESTOWAL_USD;
+  const effectiveProvider: PayoutProviderId = belowCryptoMin ? 'paypal' : provider;
 
   const { data: libraryItems, isLoading } = useQuery({
     queryKey: ['s2g-community-library'],
@@ -387,7 +393,7 @@ export default function S2GCommunityLibraryPage() {
             <DialogDescription>
               {pickerItem ? (
                 <>
-                  {pickerItem.title} — {formatCurrency(pickerItem.price)}
+                  {pickerItem.title} — {formatCurrency(pickerTotal)}
                   <br />
                   Choose how you want to pay. You'll be redirected to complete checkout.
                 </>
@@ -395,6 +401,23 @@ export default function S2GCommunityLibraryPage() {
             </DialogDescription>
           </DialogHeader>
           <div className="grid grid-cols-1 gap-3">
+            <div className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Payment method</div>
+            {belowCryptoMin && (
+              <p className="text-xs text-muted-foreground">
+                Crypto has a ${MIN_CRYPTO_BESTOWAL_USD} minimum — pay with PayPal for smaller amounts.
+              </p>
+            )}
+            <ProviderPicker
+              value={effectiveProvider}
+              onChange={setProvider}
+              amount={pickerTotal}
+              mode="buyer"
+              disabled={isPending}
+              providers={belowCryptoMin ? ['paypal'] : undefined}
+            />
+            {effectiveProvider === 'nowpayments' && (
+              <p className="text-xs text-muted-foreground">{CRYPTO_ROUNDING_NOTICE}</p>
+            )}
             <Button
               disabled={isPending}
               onClick={() =>
@@ -402,28 +425,13 @@ export default function S2GCommunityLibraryPage() {
                 purchase({
                   contentType: 'library_item',
                   contentId: pickerItem.id,
-                  provider: 'paypal',
+                  provider: effectiveProvider,
+                  payCurrency: effectiveProvider === 'nowpayments' ? 'usdttrc20' : undefined,
                 })
               }
             >
-              Pay with PayPal
+              {isPending ? 'Processing...' : `Pay ${formatCurrency(pickerTotal)}`}
             </Button>
-            <Button
-              variant="outline"
-              disabled={isPending}
-              onClick={() =>
-                pickerItem &&
-                purchase({
-                  contentType: 'library_item',
-                  contentId: pickerItem.id,
-                  provider: 'nowpayments',
-                  payCurrency: 'usdttrc20',
-                })
-              }
-            >
-              Pay with crypto (USDT TRC-20 via NOWPayments)
-            </Button>
-            <p className="text-xs text-muted-foreground">{CRYPTO_ROUNDING_NOTICE}</p>
           </div>
           <DialogFooter>
             <Button variant="ghost" onClick={() => setPickerItem(null)} disabled={isPending}>

@@ -4,7 +4,9 @@ import { useCurrency } from '@/hooks/useCurrency';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useContentPurchase } from '@/hooks/useContentPurchase';
-import { CRYPTO_ROUNDING_NOTICE } from '@/lib/payments/providerFees';
+import { CRYPTO_ROUNDING_NOTICE, MIN_CRYPTO_BESTOWAL_USD, type PayoutProviderId } from '@/lib/payments/providerFees';
+import ProviderPicker from '@/components/payments/ProviderPicker';
+import { buyerTotal } from '@/lib/pricing/platformFee';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
@@ -28,7 +30,11 @@ export function RoomAccessModal({
   const navigate = useNavigate();
   const { purchase, isPending } = useContentPurchase();
   const [processing, setProcessing] = useState(false);
+  const [provider, setProvider] = useState<PayoutProviderId>('nowpayments');
   const isPaid = Number(room?.price ?? 0) > 0;
+  const roomTotal = buyerTotal(Number(room?.price ?? 0));
+  const belowCryptoMin = roomTotal < MIN_CRYPTO_BESTOWAL_USD;
+  const effectiveProvider: PayoutProviderId = belowCryptoMin ? 'paypal' : provider;
 
   const handleFreeJoin = async () => {
     if (!user) { toast.error('Please log in to join'); navigate('/login'); return; }
@@ -50,13 +56,13 @@ export function RoomAccessModal({
     }
   };
 
-  const handlePaid = (provider: 'paypal' | 'nowpayments') => {
+  const handlePaid = () => {
     if (!user) { toast.error('Please log in to purchase'); navigate('/login'); return; }
     purchase({
       contentType: 'premium_room_access',
       contentId: room.id,
-      provider,
-      payCurrency: provider === 'nowpayments' ? 'usdttrc20' : undefined,
+      provider: effectiveProvider,
+      payCurrency: effectiveProvider === 'nowpayments' ? 'usdttrc20' : undefined,
     });
   };
 
@@ -81,21 +87,33 @@ export function RoomAccessModal({
           {isPaid && (
             <div className="border-t pt-4 flex justify-between items-center">
               <span className="font-semibold">Total:</span>
-              <span className="text-2xl font-bold">{formatAmount(Number(room.price))}</span>
+              <span className="text-2xl font-bold">{formatAmount(roomTotal)}</span>
             </div>
           )}
 
           {isPaid ? (
             <div className="grid gap-2">
-              <Button onClick={() => handlePaid('paypal')} disabled={isPending}>
+              <div className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Payment method</div>
+              {belowCryptoMin && (
+                <p className="text-xs text-muted-foreground">
+                  Crypto has a ${MIN_CRYPTO_BESTOWAL_USD} minimum — pay with PayPal for smaller amounts.
+                </p>
+              )}
+              <ProviderPicker
+                value={effectiveProvider}
+                onChange={setProvider}
+                amount={roomTotal}
+                mode="buyer"
+                disabled={isPending}
+                providers={belowCryptoMin ? ['paypal'] : undefined}
+              />
+              {effectiveProvider === 'nowpayments' && (
+                <p className="text-xs text-muted-foreground">{CRYPTO_ROUNDING_NOTICE}</p>
+              )}
+              <Button onClick={handlePaid} disabled={isPending}>
                 {isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                Pay with PayPal
+                {isPending ? 'Processing...' : `Pay ${formatAmount(roomTotal)}`}
               </Button>
-              <Button variant="outline" onClick={() => handlePaid('nowpayments')} disabled={isPending}>
-                {isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                Pay with crypto (USDT TRC-20)
-              </Button>
-              <p className="text-xs text-muted-foreground">{CRYPTO_ROUNDING_NOTICE}</p>
             </div>
           ) : (
             <Button onClick={handleFreeJoin} disabled={processing} className="w-full">

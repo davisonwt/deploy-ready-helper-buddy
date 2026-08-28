@@ -1,6 +1,9 @@
+import { useState } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { useContentPurchase } from '@/hooks/useContentPurchase';
-import { CRYPTO_ROUNDING_NOTICE } from '@/lib/payments/providerFees';
+import { CRYPTO_ROUNDING_NOTICE, MIN_CRYPTO_BESTOWAL_USD, type PayoutProviderId } from '@/lib/payments/providerFees';
+import ProviderPicker from '@/components/payments/ProviderPicker';
+import { buyerTotal } from '@/lib/pricing/platformFee';
 import {
   Dialog,
   DialogContent,
@@ -23,16 +26,20 @@ interface PurchaseModalProps {
 export function PurchaseModal({ open, onOpenChange, mediaItem }: PurchaseModalProps) {
   const { user } = useAuth();
   const { purchase, isPending } = useContentPurchase();
+  const [provider, setProvider] = useState<PayoutProviderId>('nowpayments');
   const priceUSD = (mediaItem?.price_cents || 0) / 100;
+  const total = buyerTotal(priceUSD);
+  const belowCryptoMin = total < MIN_CRYPTO_BESTOWAL_USD;
+  const effectiveProvider: PayoutProviderId = belowCryptoMin ? 'paypal' : provider;
 
-  const start = (provider: 'paypal' | 'nowpayments') => {
+  const start = () => {
     if (!user) { toast.error('Please log in to purchase'); return; }
     if (!mediaItem?.id) { toast.error('Media item missing identifier'); return; }
     purchase({
       contentType: 'live_session_media',
       contentId: mediaItem.id,
-      provider,
-      payCurrency: provider === 'nowpayments' ? 'usdttrc20' : undefined,
+      provider: effectiveProvider,
+      payCurrency: effectiveProvider === 'nowpayments' ? 'usdttrc20' : undefined,
     });
   };
 
@@ -45,20 +52,32 @@ export function PurchaseModal({ open, onOpenChange, mediaItem }: PurchaseModalPr
             Purchase {mediaItem?.file_name}
           </DialogTitle>
           <DialogDescription>
-            Price: ${priceUSD.toFixed(2)} — you'll be redirected to checkout. Access is granted automatically once payment is confirmed.
+            Price: ${total.toFixed(2)} — you'll be redirected to checkout. Access is granted automatically once payment is confirmed.
           </DialogDescription>
         </DialogHeader>
 
         <div className="grid gap-2 py-2">
-          <Button onClick={() => start('paypal')} disabled={isPending}>
+          <div className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Payment method</div>
+          {belowCryptoMin && (
+            <p className="text-xs text-muted-foreground">
+              Crypto has a ${MIN_CRYPTO_BESTOWAL_USD} minimum — pay with PayPal for smaller amounts.
+            </p>
+          )}
+          <ProviderPicker
+            value={effectiveProvider}
+            onChange={setProvider}
+            amount={total}
+            mode="buyer"
+            disabled={isPending}
+            providers={belowCryptoMin ? ['paypal'] : undefined}
+          />
+          {effectiveProvider === 'nowpayments' && (
+            <p className="text-xs text-muted-foreground">{CRYPTO_ROUNDING_NOTICE}</p>
+          )}
+          <Button onClick={start} disabled={isPending}>
             {isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-            Pay with PayPal
+            {isPending ? 'Processing...' : `Pay $${total.toFixed(2)}`}
           </Button>
-          <Button variant="outline" onClick={() => start('nowpayments')} disabled={isPending}>
-            {isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-            Pay with crypto (USDT TRC-20)
-          </Button>
-          <p className="text-xs text-muted-foreground">{CRYPTO_ROUNDING_NOTICE}</p>
         </div>
 
         <DialogFooter>

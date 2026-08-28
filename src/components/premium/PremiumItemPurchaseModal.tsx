@@ -1,7 +1,10 @@
+import { useState } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { useCurrency } from '@/hooks/useCurrency';
 import { useContentPurchase } from '@/hooks/useContentPurchase';
-import { CRYPTO_ROUNDING_NOTICE } from '@/lib/payments/providerFees';
+import { CRYPTO_ROUNDING_NOTICE, MIN_CRYPTO_BESTOWAL_USD, type PayoutProviderId } from '@/lib/payments/providerFees';
+import ProviderPicker from '@/components/payments/ProviderPicker';
+import { buyerTotal } from '@/lib/pricing/platformFee';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
@@ -27,15 +30,19 @@ export function PremiumItemPurchaseModal({
   const { user } = useAuth();
   const { formatAmount } = useCurrency();
   const { purchase, isPending } = useContentPurchase();
+  const [provider, setProvider] = useState<PayoutProviderId>('nowpayments');
+  const itemTotal = buyerTotal(Number(item?.price ?? 0));
+  const belowCryptoMin = itemTotal < MIN_CRYPTO_BESTOWAL_USD;
+  const effectiveProvider: PayoutProviderId = belowCryptoMin ? 'paypal' : provider;
 
-  const start = (provider: 'paypal' | 'nowpayments') => {
+  const start = () => {
     if (!user) { toast.error('Please log in to purchase'); return; }
     if (!item?.id) { toast.error('Item missing identifier'); return; }
     purchase({
       contentType: 'premium_item',
       contentId: String(item.id),
-      provider,
-      payCurrency: provider === 'nowpayments' ? 'usdttrc20' : undefined,
+      provider: effectiveProvider,
+      payCurrency: effectiveProvider === 'nowpayments' ? 'usdttrc20' : undefined,
       metadata: { room_id: roomId, item_type: itemType },
     });
   };
@@ -62,19 +69,31 @@ export function PremiumItemPurchaseModal({
 
           <div className="border-t pt-4 flex justify-between items-center">
             <span className="font-semibold">Total:</span>
-            <span className="text-2xl font-bold">{formatAmount(Number(item?.price ?? 0))}</span>
+            <span className="text-2xl font-bold">{formatAmount(itemTotal)}</span>
           </div>
 
           <div className="grid gap-2">
-            <Button onClick={() => start('paypal')} disabled={isPending}>
+            <div className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Payment method</div>
+            {belowCryptoMin && (
+              <p className="text-xs text-muted-foreground">
+                Crypto has a ${MIN_CRYPTO_BESTOWAL_USD} minimum — pay with PayPal for smaller amounts.
+              </p>
+            )}
+            <ProviderPicker
+              value={effectiveProvider}
+              onChange={setProvider}
+              amount={itemTotal}
+              mode="buyer"
+              disabled={isPending}
+              providers={belowCryptoMin ? ['paypal'] : undefined}
+            />
+            {effectiveProvider === 'nowpayments' && (
+              <p className="text-xs text-muted-foreground">{CRYPTO_ROUNDING_NOTICE}</p>
+            )}
+            <Button onClick={start} disabled={isPending}>
               {isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              Pay with PayPal
+              {isPending ? 'Processing...' : `Pay ${formatAmount(itemTotal)}`}
             </Button>
-            <Button variant="outline" onClick={() => start('nowpayments')} disabled={isPending}>
-              {isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              Pay with crypto (USDT TRC-20)
-            </Button>
-            <p className="text-xs text-muted-foreground">{CRYPTO_ROUNDING_NOTICE}</p>
           </div>
         </div>
 
