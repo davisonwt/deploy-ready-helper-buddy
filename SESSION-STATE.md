@@ -686,6 +686,41 @@ task's step 1 needed touching beyond `MyBusinessesSection.tsx` itself.
   and needed no change) updated the same way.
 - `npx tsc --noEmit` and `npx eslint` both clean.
 
+## Fixed — 2026-08-29, still later (spec-books.md build order step 4: Books field on /sow/music, lock-after-first-sale)
+
+No migration — pure application-layer work on the schema already in
+place. The other §4 item ("every products writer sets company_id") was
+already done in the earlier books steps-1-2 task (`insertProduct()`'s
+three call sites), so not repeated here.
+
+- **`SowMusicPage.tsx`**: "More options" gained a "Books" field — a
+  `Select` of the sower's own businesses, defaulting to `is_default`,
+  **rendered only when `businesses.length > 1`** (matches the same
+  "silent with one set" rule used everywhere else in this feature). Fetches
+  once on mount via `owner_user_id = user.id` directly (doesn't need to
+  wait for the sower-row resolution the rest of Plant does, since
+  `companies` keys off the auth user, not the sower row). On Plant,
+  `company_id` is set from the field's own selection; if the field never
+  rendered (one business) or somehow never resolved, falls back to the
+  existing `getDefaultCompanyId(sowerId)` call from the earlier task —
+  never blocks Plant either way, per spec.
+- **`MusicTrackDetailPage.tsx`** gained a **"Seed settings"** card, owner-only
+  — and "owner" here specifically means *the uploader*, a check this page
+  never had before (its existing `owned` state means "this viewer
+  bestowed," a buyer concept, unrelated). Resolves the uploader via
+  `products.sowers.user_id === auth user`. **Locked once the seed has any
+  `product_bestowals` row at all** (the spec's own literal definition of
+  "first sale" — not narrowed to `completed` status, matching the
+  parenthetical in §4 exactly): shows the current business name, read-only,
+  with the one-line reason ("its business can't be changed after a sale,
+  for clean books"). Not locked: a `Select` of the uploader's businesses,
+  saving straight to `products.company_id` on change. Same "silent when
+  there's only one business" gate as the Sow form — the whole card is
+  hidden unless the uploader actually has more than one to choose between.
+  Only applies to product-sourced tracks (`dj_music_tracks` has no
+  `company_id`/business concept at all).
+- `npx tsc --noEmit` and `npx eslint` both clean.
+
 ## Open — priority order
 
 1. ~~Live proof that `paypal-webhook` actually works now~~ — **resolved, see Keystone problem**: order `0a6a0b1a` finalized via a clean webhook call at 08:36 UTC 2026-08-29. The `processed_webhooks`-insert bug (separate from the webhook itself) is also fixed; watch for its first real row as confirmation the fix landed, not as proof the webhook works — that's already established.

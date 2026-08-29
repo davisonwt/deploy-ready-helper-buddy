@@ -8,6 +8,8 @@ import { fetchSeedFileUrl } from '@/lib/media/getSeedFileUrl';
 import { usePreviewPlayer } from '@/hooks/usePreviewPlayer';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
+import { Label } from '@/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { ArrowLeft, Home, Loader2, Play, Pause, Heart, Download } from 'lucide-react';
 import { toast } from 'sonner';
 import { priceBreakdown } from '@/lib/pricing/platformFee';
@@ -67,6 +69,14 @@ export default function MusicTrackDetailPage() {
   const [buyingProduct, setBuyingProduct] = useState(false);
   const [downloading, setDownloading] = useState(false);
   const [provider, setProvider] = useState<PayoutProviderId>('nowpayments');
+
+  // Seed settings (spec-books.md §4) — owner-only (the uploader, not a
+  // buyer; `owned` above means "this viewer bestowed", a different thing).
+  const [isUploader, setIsUploader] = useState(false);
+  const [seedBusinesses, setSeedBusinesses] = useState<{ id: string; name: string }[]>([]);
+  const [seedCompanyId, setSeedCompanyId] = useState<string | null>(null);
+  const [seedLocked, setSeedLocked] = useState(false);
+  const [savingSeedBusiness, setSavingSeedBusiness] = useState(false);
 
   useEffect(() => {
     let alive = true;
@@ -177,6 +187,53 @@ export default function MusicTrackDetailPage() {
     })();
     return () => { alive = false; };
   }, [id, user]);
+
+  // Seed settings: only for the seed's own uploader, locked once it has
+  // sold at all (spec-books.md §4 — "moving revenue between sets after the
+  // fact is what an auditor doesn't want to see").
+  useEffect(() => {
+    let alive = true;
+    if (!track || track.source !== 'product' || !user) { setIsUploader(false); return; }
+    (async () => {
+      const { data: productRow } = await supabase
+        .from('products')
+        .select('company_id, sowers:sower_id ( user_id )')
+        .eq('id', track.id)
+        .maybeSingle();
+      if (!alive) return;
+      const uploaderUserId = (productRow as any)?.sowers?.user_id;
+      const uploader = uploaderUserId === user.id;
+      setIsUploader(uploader);
+      if (!uploader) return;
+
+      setSeedCompanyId((productRow as any)?.company_id ?? null);
+
+      const [bestowalRes, businessesRes] = await Promise.all([
+        supabase.from('product_bestowals').select('id', { count: 'exact', head: true }).eq('product_id', track.id),
+        supabase.from('companies').select('id, name').eq('owner_user_id', user.id).order('created_at', { ascending: true }),
+      ]);
+      if (!alive) return;
+      setSeedLocked((bestowalRes.count ?? 0) > 0);
+      setSeedBusinesses((businessesRes.data as any) ?? []);
+    })();
+    return () => { alive = false; };
+  }, [track, user]);
+
+  const handleChangeSeedBusiness = async (newCompanyId: string) => {
+    if (!track) return;
+    setSavingSeedBusiness(true);
+    try {
+      const { error } = await supabase.from('products').update({ company_id: newCompanyId }).eq('id', track.id);
+      if (error) throw error;
+      setSeedCompanyId(newCompanyId);
+      toast.success('Business updated');
+    } catch (err) {
+      console.error('Failed to change seed business:', err);
+      toast.error(err instanceof Error ? err.message : 'Could not update. Please try again.');
+    } finally {
+      setSavingSeedBusiness(false);
+    }
+  };
 
   // Owners/buyers get the full file same as before; get-seed-file re-checks
   // entitlement server-side on every call, so it's safe to always pass
@@ -403,6 +460,40 @@ export default function MusicTrackDetailPage() {
             </div>
           </CardContent>
         </Card>
+
+        {isUploader && seedBusinesses.length > 1 && (
+          <Card className="bg-white/5 border-white/10 backdrop-blur mt-4">
+            <CardContent className="p-4 md:p-6 space-y-2">
+              <div className="text-xs font-bold uppercase tracking-wider text-slate-400">Seed settings</div>
+              <Label className="text-sm text-slate-300">Business</Label>
+              {seedLocked ? (
+                <>
+                  <p className="text-sm text-white">
+                    {seedBusinesses.find((b) => b.id === seedCompanyId)?.name ?? '—'}
+                  </p>
+                  <p className="text-xs text-slate-400">
+                    Locked — this seed has already sold; its business can't be changed after a sale, for clean books.
+                  </p>
+                </>
+              ) : (
+                <Select
+                  value={seedCompanyId ?? undefined}
+                  onValueChange={handleChangeSeedBusiness}
+                  disabled={savingSeedBusiness}
+                >
+                  <SelectTrigger className="max-w-xs bg-white/5 border-white/10 text-white">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {seedBusinesses.map((b) => (
+                      <SelectItem key={b.id} value={b.id}>{b.name}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              )}
+            </CardContent>
+          </Card>
+        )}
       </div>
     </div>
   );

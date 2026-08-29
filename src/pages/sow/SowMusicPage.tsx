@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
@@ -22,6 +22,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { ArrowLeft, Music, Disc, ChevronDown, Eye } from 'lucide-react';
 import sowMusicBanner from '@/assets/chat-mode-radio.jpg';
@@ -88,6 +89,28 @@ export default function SowMusicPage() {
   const [explicit, setExplicit] = useState(false);
   const [releaseDate, setReleaseDate] = useState('');
   const [whispererPercent, setWhispererPercent] = useState<number | null>(null);
+
+  // Books field (spec-books.md §4) — only shown once there's a real choice
+  // to make; with one business it's silent and the default set is used.
+  const [businesses, setBusinesses] = useState<{ id: string; name: string; is_default: boolean }[]>([]);
+  const [selectedCompanyId, setSelectedCompanyId] = useState<string | null>(null);
+
+  useEffect(() => {
+    let alive = true;
+    if (!user) return;
+    (async () => {
+      const { data } = await supabase
+        .from('companies')
+        .select('id, name, is_default')
+        .eq('owner_user_id', user.id)
+        .order('created_at', { ascending: true });
+      if (!alive) return;
+      const list = (data as any) ?? [];
+      setBusinesses(list);
+      setSelectedCompanyId((list.find((b: any) => b.is_default) ?? list[0])?.id ?? null);
+    })();
+    return () => { alive = false; };
+  }, [user]);
 
   // Stable per-visit folder for album tracks — recomputed only if the user
   // never touches album mode, so it never collides across sessions.
@@ -165,7 +188,7 @@ export default function SowMusicPage() {
         sowerId = newSower.id;
       }
 
-      const companyId = await getDefaultCompanyId(sowerId);
+      const companyId = selectedCompanyId ?? (await getDefaultCompanyId(sowerId));
 
       const totalPrice = isFree ? 0 : priceBreakdown(price!).total;
       const metadata: Record<string, unknown> = {};
@@ -392,6 +415,23 @@ export default function SowMusicPage() {
                   className="mt-1.5 max-w-xs"
                 />
               </div>
+
+              {businesses.length > 1 && (
+                <div>
+                  <Label htmlFor="sow-books">Books</Label>
+                  <p className="text-xs text-muted-foreground mb-1.5">
+                    Which of your businesses this seed's sales go into. Can be changed later, until its first sale.
+                  </p>
+                  <Select value={selectedCompanyId ?? undefined} onValueChange={setSelectedCompanyId}>
+                    <SelectTrigger id="sow-books" className="max-w-xs"><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      {businesses.map((b) => (
+                        <SelectItem key={b.id} value={b.id}>{b.name}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
 
               <div>
                 <Label htmlFor="sow-whisperer">Whisperer commission %</Label>
