@@ -302,11 +302,30 @@ export default function RegisterWanderingPage() {
           </Button>
         </div>
         <div
-          className="relative w-full h-32 overflow-hidden rounded-2xl border flex items-end p-4"
+          className="relative w-full h-32 overflow-hidden rounded-2xl border"
           style={bannerStyle}
         >
           <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
-          <p className="relative text-white font-semibold drop-shadow">{preset.promise}</p>
+          {role === 'hand' && preset.bannerImage ? (
+            <>
+              <p className="absolute inset-x-0 top-0 p-4 text-white font-semibold drop-shadow">{preset.promise}</p>
+              <div className="absolute inset-x-0 bottom-0 h-[45%] bg-[#081310]/95 flex items-center justify-center px-3 gap-1.5 flex-wrap">
+                {preset.chips.map((chip) => (
+                  <span
+                    key={chip}
+                    className="text-[10px] font-medium px-2 py-0.5 rounded-full"
+                    style={{ backgroundColor: `${accent}22`, color: accent, border: `1px solid ${accent}55` }}
+                  >
+                    {chip}
+                  </span>
+                ))}
+              </div>
+            </>
+          ) : (
+            <div className="absolute inset-0 flex items-end p-4">
+              <p className="relative text-white font-semibold drop-shadow">{preset.promise}</p>
+            </div>
+          )}
         </div>
 
         <div className="flex flex-col items-center gap-2">
@@ -387,12 +406,41 @@ export default function RegisterWanderingPage() {
         style={{ ...bannerStyle, boxShadow: `0 0 40px ${accent}40` }}
       >
         <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/20 to-black/10" />
-        <div className="absolute inset-0 flex flex-col justify-end p-4 md:p-6">
-          <h1 className="text-white text-xl md:text-3xl font-black tracking-tight drop-shadow-lg">
-            Become a {meta.label}
-          </h1>
-          <p className="text-white/85 text-sm md:text-base mt-1 max-w-2xl drop-shadow">{preset.promise}</p>
-        </div>
+        {/* Hand's banner artwork bakes in "Plumbers, Electricians,
+            Mechanics, Dentists, Doctors, & More" — Dentists/Doctors aren't
+            in presets.ts's own chips (spec-wandering-doors.md §4, no
+            licensed professionals yet), so that row is covered here
+            rather than left showing categories we haven't cleared. Title/
+            promise text moves to the top for this case so it doesn't
+            collide with the chip band pinned to the bottom. */}
+        {role === 'hand' && preset.bannerImage ? (
+          <>
+            <div className="absolute inset-x-0 top-0 p-4 md:p-6">
+              <h1 className="text-white text-xl md:text-3xl font-black tracking-tight drop-shadow-lg">
+                Become a {meta.label}
+              </h1>
+              <p className="text-white/85 text-sm md:text-base mt-1 max-w-2xl drop-shadow">{preset.promise}</p>
+            </div>
+            <div className="absolute inset-x-0 bottom-0 h-[45%] bg-[#081310]/95 flex items-center justify-center px-3 gap-1.5 flex-wrap">
+              {preset.chips.map((chip) => (
+                <span
+                  key={chip}
+                  className="text-[10px] md:text-xs font-medium px-2 py-0.5 rounded-full"
+                  style={{ backgroundColor: `${accent}22`, color: accent, border: `1px solid ${accent}55` }}
+                >
+                  {chip}
+                </span>
+              ))}
+            </div>
+          </>
+        ) : (
+          <div className="absolute inset-0 flex flex-col justify-end p-4 md:p-6">
+            <h1 className="text-white text-xl md:text-3xl font-black tracking-tight drop-shadow-lg">
+              Become a {meta.label}
+            </h1>
+            <p className="text-white/85 text-sm md:text-base mt-1 max-w-2xl drop-shadow">{preset.promise}</p>
+          </div>
+        )}
       </div>
 
       <div className="grid md:grid-cols-[1fr_320px] gap-8">

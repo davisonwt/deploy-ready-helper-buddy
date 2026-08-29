@@ -169,14 +169,21 @@ export default function StorePage() {
           </div>
         )}
 
-        {/* Banner — the kind's preset (spec-storefronts.md §4a), until the
-            shop uploads its own or a real banner photo lands in
-            src/assets/wandering/. No photo exists for any kind yet
-            (checked live), so every shop gets the accent-gradient
-            fallback for now, not just forge/heart. */}
+        {/* Banner — the kind's preset (spec-storefronts.md §4a). Real
+            artwork exists for pillow/hand/wheel/field/hearth now
+            (src/assets/wandering/); forge and shop still fall back to
+            the accent gradient. Each banner is a full poster with its
+            own baked-in tagline/chip-row/CTA/footer — this strip only
+            shows a short cropped slice of it, so most of that is already
+            cropped out; hand's baked-in row ("Plumbers, Electricians,
+            Mechanics, Dentists, Doctors, & More") still peeks through at
+            some viewport sizes though, and bakes in Dentists/Doctors,
+            which presets.ts's own chips deliberately exclude
+            (spec-wandering-doors.md §4) — covered below rather than left
+            showing licensed-professional categories we haven't cleared. */}
         {preset && (
           <div
-            className="relative w-full h-28 md:h-36 overflow-hidden rounded-2xl mb-4 border flex items-end p-4"
+            className="relative w-full h-28 md:h-36 overflow-hidden rounded-2xl mb-4 border"
             style={
               bannerUrl
                 ? { backgroundImage: `url(${bannerUrl})`, backgroundSize: 'cover', backgroundPosition: 'center', borderColor: `${accent}66` }
@@ -184,7 +191,28 @@ export default function StorePage() {
             }
           >
             <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
-            <p className="relative text-white text-sm md:text-base font-semibold drop-shadow">{preset.promise}</p>
+            {preset.kind === 'hand' && bannerUrl ? (
+              <>
+                <p className="absolute inset-x-0 top-0 p-4 text-white text-sm md:text-base font-semibold drop-shadow">
+                  {preset.promise}
+                </p>
+                <div className="absolute inset-x-0 bottom-0 h-[45%] bg-[#081310]/95 flex items-center justify-center px-3 gap-1.5 flex-wrap">
+                  {preset.chips.map((chip) => (
+                    <span
+                      key={chip}
+                      className="text-[10px] font-medium px-2 py-0.5 rounded-full"
+                      style={{ backgroundColor: `${accent}22`, color: accent, border: `1px solid ${accent}55` }}
+                    >
+                      {chip}
+                    </span>
+                  ))}
+                </div>
+              </>
+            ) : (
+              <div className="absolute inset-0 flex items-end p-4">
+                <p className="relative text-white text-sm md:text-base font-semibold drop-shadow">{preset.promise}</p>
+              </div>
+            )}
           </div>
         )}
 

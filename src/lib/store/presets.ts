@@ -1,3 +1,9 @@
+import pillowBanner from '@/assets/wandering/pillow-banner.png';
+import handBanner from '@/assets/wandering/hand-banner.png';
+import wheelBanner from '@/assets/wandering/wheel-banner.png';
+import fieldBanner from '@/assets/wandering/field-banner.png';
+import hearthBanner from '@/assets/wandering/hearth-banner.png';
+
 // Heart is matchmaking (/tribal-hearts), not a service seed or a shop —
 // spec-service-seeds.md §4, revised. It never gets a preset here.
 //
@@ -17,12 +23,17 @@ export interface WanderingPreset {
   chips: string[];
   buttonText: string;
   /**
-   * The real banner photo — none of the six have landed in
-   * src/assets/wandering/<kind>-banner.jpg yet (checked live: the
-   * directory doesn't exist anywhere in the repo). Every kind falls back
-   * to a gradient built from `accent` until the real assets are supplied;
-   * swapping this to a real import later is a one-line change per kind,
-   * nothing else about the preset shape moves.
+   * The real banner artwork — src/assets/wandering/<kind>-banner.png, for
+   * the five kinds it's landed for (pillow/hand/wheel/field/hearth).
+   * forge and shop still fall back to the accent gradient. Every banner
+   * is a full marketing poster (title, tagline, a row of trade/category
+   * chips, a CTA button, a Sow2Grow footer, all baked into the image) —
+   * StorePage.tsx/RegisterWanderingPage.tsx only ever show a short
+   * cropped strip of it today, so most of that baked-in content is
+   * already cropped out in practice; only hand's chip row needed an
+   * explicit cover (see the `kind === 'hand'` overlay in both of those
+   * files) since it bakes in "Dentists, Doctors", which presets.ts's own
+   * chips deliberately don't carry (spec-wandering-doors.md §4).
    */
   bannerImage: string | null;
 }
@@ -40,7 +51,7 @@ const PRESETS: Record<WanderingKind, WanderingPreset> = {
     description: 'Stay with the tribe — private homes, hotels, farms and retreats, wherever the road takes you.',
     chips: ['Private homes', 'Hotels', 'Farms & retreats', 'Holiday getaways'],
     buttonText: 'Explore stays',
-    bannerImage: null,
+    bannerImage: pillowBanner,
   },
   hand: {
     kind: 'hand',
@@ -52,7 +63,7 @@ const PRESETS: Record<WanderingKind, WanderingPreset> = {
     // until the licensed-professional question is answered by the lawyer.
     chips: ['Plumbers', 'Electricians', 'Mechanics', 'Builders', 'Carpenters'],
     buttonText: 'Book a service',
-    bannerImage: null,
+    bannerImage: handBanner,
   },
   wheel: {
     kind: 'wheel',
@@ -62,7 +73,7 @@ const PRESETS: Record<WanderingKind, WanderingPreset> = {
     description: 'Rides, deliveries and vehicles from the tribe — whatever needs moving, wherever it needs to go.',
     chips: ['Passenger rides', 'Deliveries', 'Plough land', 'Move materials', 'Any vehicle'],
     buttonText: 'Book a ride or job',
-    bannerImage: null,
+    bannerImage: wheelBanner,
   },
   field: {
     kind: 'field',
@@ -72,7 +83,7 @@ const PRESETS: Record<WanderingKind, WanderingPreset> = {
     description: 'Fresh produce and seasonal goods, straight from the farmers who grow them.',
     chips: ['Fresh produce', 'Seasonal goods', 'Direct from farmers'],
     buttonText: 'Shop the field',
-    bannerImage: null,
+    bannerImage: fieldBanner,
   },
   hearth: {
     kind: 'hearth',
@@ -82,7 +93,7 @@ const PRESETS: Record<WanderingKind, WanderingPreset> = {
     description: 'Handmade crafts and homemade goods, made by hand, shared with heart.',
     chips: ['Handmade crafts', 'Homemade foods', 'Artisan products'],
     buttonText: 'Visit the hearth',
-    bannerImage: null,
+    bannerImage: hearthBanner,
   },
   forge: {
     kind: 'forge',

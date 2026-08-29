@@ -1554,6 +1554,70 @@ top, unlike every other `create-*-order` function — is closed.
   "Uploading asset" log).
 - `npx tsc --noEmit` and `npx eslint` both clean.
 
+## Fixed — 2026-08-29, still later (real Wandering banner artwork landed)
+
+The seven banners finally exist (checked live: `src/assets/wandering/`
+genuinely didn't exist before now, confirmed multiple times earlier this
+session). Copied from Downloads: `hand-banner.png`, `wheel-banner.png`,
+`field-banner.png`, `hearth-banner.png`, `whisperer-banner.png`,
+`pillow-banner.png`, `heart-banner.png` (the `hearth` one had a newer
+`(1)` duplicate — same byte size, took the newer file per the task's own
+instruction). All seven are the same template, 1168×784 (pillow's is
+1280×853, same ~1.5:1 ratio) — a full marketing poster per kind: circular
+icon, title, tagline, a description line, a row of category chips (icon
++ label each), a CTA button, and a Sow2Grow footer bar, all baked into
+the image itself.
+
+- **`presets.ts`**: `bannerImage` wired for the five kinds that have a
+  preset object — `pillow`, `hand`, `wheel`, `field`, `hearth`. `forge`
+  and `shop` still fall back to the accent gradient (no artwork supplied
+  for those two). **`heart-banner.png` and `whisperer-banner.png` are
+  copied into the assets folder but not wired anywhere** — `heart` and
+  `whisperer` genuinely have no entry in `PRESETS` at all (both
+  deliberately excluded earlier this session: Heart is matchmaking, not
+  a shop; Whisperer is a service hired by shops, not a place to shop —
+  spec-wandering-doors.md §1). Flagging rather than inventing preset
+  entries that would contradict that decision — if those two get a
+  door/banner treatment later, it'll need its own design decision, not a
+  silent addition here.
+- **Compared all seven visually before touching code**: only Hand's
+  baked-in chip row actually needed covering. Wheel's row (Passenger
+  Rides/Deliveries/Plow Land/Move Materials/Any Vehicle) and Pillow's
+  (Private Homes/Hotels/Farms & Retreats/Holiday Getaways) already match
+  `presets.ts`'s own chips exactly — confirmed by reading both banners,
+  not assumed from the task's own framing. Hand's bakes in "Plumbers,
+  Electricians, Mechanics, **Dentists, Doctors**, & More" — Dentists/
+  Doctors aren't in `presets.ts`'s hand chips (never have been, per
+  spec-wandering-doors.md §4 — no licensed professionals until the
+  lawyer answers that question), so that row needed an explicit cover.
+- **`StorePage.tsx` and `RegisterWanderingPage.tsx`** (both places
+  `preset.bannerImage` actually renders today; no `/wandering/:kind`
+  door page exists yet to also touch): for `kind === 'hand'` /
+  `role === 'hand'` with a real banner image, the bottom 45-55% of the
+  banner is now covered with a solid dark band showing `presets.ts`'s
+  own chips as pills, and the title/promise text moves to the top of the
+  banner instead of the bottom so the two don't collide (both had
+  originally been bottom-anchored). Every other kind's banner rendering
+  is untouched.
+- **Positioning is a reasoned estimate, not live-browser-verified** —
+  no browser tooling is available this session (per the standing
+  claude-in-chrome note). Worked out via the actual `cover`+`center`
+  crop math at each banner's real container size (StorePage's `h-28
+  md:h-36`, RegisterWanderingPage's taller `h-32 md:h-44 lg:h-56`) against
+  the source image's real 1168×784 dimensions — confirmed the row is
+  fully visible on mobile-width containers and partially visible on
+  RegisterWanderingPage's desktop `lg` size, which is why the fix
+  covers a full bottom band rather than a tightly-fitted box: safer to
+  over-cover (also hiding the baked-in CTA button and footer bar, which
+  duplicate real page UI anyway) than under-cover and leave a sliver of
+  "Dentists, Doctors" showing at some viewport width. Worth a quick
+  visual check once published rather than assumed correct.
+- Verified with a real production build (`npm run build`), not just
+  `tsc --noEmit` — a broken asset import path is exactly the kind of
+  thing type-checking alone won't catch, since `vite/client`'s image
+  import types accept any path.
+- `npx tsc --noEmit`, `npx eslint`, and `npm run build` all clean.
+
 ## Open — priority order
 
 1. ~~Live proof that `paypal-webhook` actually works now~~ — **resolved, see Keystone problem**: order `0a6a0b1a` finalized via a clean webhook call at 08:36 UTC 2026-08-29. The `processed_webhooks`-insert bug (separate from the webhook itself) is also fixed; watch for its first real row as confirmation the fix landed, not as proof the webhook works — that's already established.
