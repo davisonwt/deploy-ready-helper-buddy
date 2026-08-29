@@ -96,7 +96,7 @@ export function MyGardenPanel({ isOpen, onClose }: MyGardenPanelProps) {
   // Quick action routes - matching actual upload/create routes
   const quickActions = [
     { href: '/create-orchard', label: 'New Orchard', color: 'bg-green-600 hover:bg-green-500' },
-    { href: '/products/upload', label: 'Drop Music', color: 'bg-pink-600 hover:bg-pink-500' },
+    { href: '/sow', label: 'Drop Music', color: 'bg-pink-600 hover:bg-pink-500' },
     { href: '/products/upload', label: 'Sell Art or Files', color: 'bg-yellow-600 hover:bg-yellow-500' },
     { href: '/seller/business-settings', label: 'Business Settings', color: 'bg-blue-600 hover:bg-blue-500' },
     { href: '#', label: 'Rain Now', color: 'bg-red-600 hover:bg-red-500', onClick: quickRain } // Quick Rain action

@@ -427,7 +427,7 @@ export default function MusicLibraryPage() {
             </Button>
           )}
           {user && (
-            <Button onClick={() => navigate('/products/upload')} className="gap-2">
+            <Button onClick={() => navigate('/sow/music')} className="gap-2">
               <Upload className="h-4 w-4" />
               Upload new
             </Button>

@@ -8,16 +8,11 @@ import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Upload, Loader2, CheckCircle2, Disc, Music, X, ArrowLeft } from 'lucide-react';
+import { Upload, Loader2, CheckCircle2, ArrowLeft } from 'lucide-react';
 import { toast } from 'sonner';
-import { useNavigate, useSearchParams } from 'react-router-dom';
-import JSZip from 'jszip';
+import { useNavigate } from 'react-router-dom';
 import CategoryTagPicker from '@/components/marketplace/CategoryTagPicker';
 import { WANDERING_BADGES, type WanderingRole } from '@/components/marketplace/WanderingBadgeBar';
-
-const AUDIO_EXTENSIONS = ['wav', 'mp3', 'flac', 'aac', 'm4a', 'ogg'];
-const AUDIO_ACCEPT = AUDIO_EXTENSIONS.map((ext) => `.${ext}`).join(',');
-const AUDIO_ALLOWED_LABEL = 'WAV, MP3, FLAC, AAC, M4A, or OGG';
 
 const IMAGE_EXTENSIONS = ['jpg', 'jpeg', 'png', 'gif', 'webp'];
 const IMAGE_ACCEPT = 'image/*';
@@ -25,15 +20,6 @@ const IMAGE_ALLOWED_LABEL = 'JPG, PNG, GIF, or WEBP';
 
 function fileExtension(file: File): string {
   return file.name.includes('.') ? file.name.split('.').pop()!.toLowerCase() : '';
-}
-
-// Extension is authoritative; MIME type (when the browser supplies one) must
-// at least be plausible for the kind. Some browsers report '' for less common
-// audio formats (flac, m4a), so an empty type is not treated as a rejection.
-function isAllowedAudioFile(file: File): boolean {
-  if (!AUDIO_EXTENSIONS.includes(fileExtension(file))) return false;
-  if (file.type && !file.type.startsWith('audio/') && file.type !== 'application/octet-stream') return false;
-  return true;
 }
 
 function isAllowedImageFile(file: File): boolean {
@@ -45,12 +31,11 @@ function isAllowedImageFile(file: File): boolean {
 export default function UploadForm() {
   const { user } = useAuth();
   const navigate = useNavigate();
-  const [searchParams] = useSearchParams();
   const [uploading, setUploading] = useState(false);
   const [formData, setFormData] = useState({
     title: '',
     description: '',
-    type: 'music',
+    type: 'art',
     category: '',
     license_type: 'free',
     price: 0,
@@ -58,69 +43,12 @@ export default function UploadForm() {
   });
   const [coverImage, setCoverImage] = useState<File | null>(null);
   const [mainFile, setMainFile] = useState<File | null>(null);
-  const [releaseType, setReleaseType] = useState<'single' | 'album'>(
-    searchParams.get('releaseType') === 'album' ? 'album' : 'single'
-  );
   const [taxonomy, setTaxonomy] = useState<{ categoryId: string | null; subcategoryIds: string[]; tagIds: string[] }>({
     categoryId: null, subcategoryIds: [], tagIds: [],
   });
   const [wanderingRole, setWanderingRole] = useState<WanderingRole | null>(null);
-  const [albumFiles, setAlbumFiles] = useState<File[]>([]);
-  const [zipFile, setZipFile] = useState<File | null>(null);
-  const [extractingZip, setExtractingZip] = useState(false);
   const [deliveryType, setDeliveryType] = useState<'digital' | 'physical'>('digital');
   const [shippingMethod, setShippingMethod] = useState<string>('self');
-
-
-  const handleZipUpload = async (file: File) => {
-    if (!file.name.endsWith('.zip')) {
-      toast.error('Please select a ZIP file');
-      return;
-    }
-
-    setExtractingZip(true);
-    setZipFile(file);
-
-    try {
-      const zip = new JSZip();
-      const contents = await zip.loadAsync(file);
-      const audioFiles: File[] = [];
-
-      // Extract only audio files
-      for (const [filename, zipEntry] of Object.entries(contents.files)) {
-        if (zipEntry.dir) continue;
-        
-        const entryExt = filename.includes('.') ? filename.split('.').pop()!.toLowerCase() : '';
-        if (!AUDIO_EXTENSIONS.includes(entryExt)) continue;
-
-        const blob = await zipEntry.async('blob');
-        const audioFile = new File([blob], filename.split('/').pop() || filename, {
-          type: blob.type || 'audio/mpeg'
-        });
-        
-        audioFiles.push(audioFile);
-      }
-
-      if (audioFiles.length === 0) {
-        toast.error('No audio files found in ZIP');
-        setZipFile(null);
-        return;
-      }
-
-      if (audioFiles.length < 8) {
-        toast.warning(`Only ${audioFiles.length} tracks found. Albums typically have 8+ songs.`);
-      }
-
-      setAlbumFiles(audioFiles);
-      toast.success(`Extracted ${audioFiles.length} audio files from ZIP`);
-    } catch (error) {
-      console.error('ZIP extraction error:', error);
-      toast.error('Failed to extract ZIP file');
-      setZipFile(null);
-    } finally {
-      setExtractingZip(false);
-    }
-  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -129,26 +57,15 @@ export default function UploadForm() {
       return;
     }
 
-    if (!coverImage || (releaseType === 'single' ? !mainFile : albumFiles.length === 0)) {
-      toast.error(releaseType === 'single' ? 'Please select both cover image and main file' : 'Please select a cover and at least one audio file for the album');
-      return;
-    }
-
-    if (releaseType === 'album' && albumFiles.length < 8) {
-      toast.error('Albums must have at least 8 tracks. Use single track upload for shorter releases.');
+    if (!coverImage || !mainFile) {
+      toast.error('Please select both cover image and main file');
       return;
     }
 
     // Check file size limits (Supabase object limit ~50MB per file)
     const perFileLimit = 50 * 1024 * 1024; // 50MB
 
-    if (releaseType === 'album') {
-      const tooLarge = albumFiles.find((f) => f.size > perFileLimit);
-      if (tooLarge) {
-        toast.error(`Track "${tooLarge.name}" is ${(tooLarge.size / 1024 / 1024).toFixed(2)}MB and exceeds the 50MB per-file limit.`);
-        return;
-      }
-    } else if (mainFile && mainFile.size > perFileLimit) {
+    if (mainFile.size > perFileLimit) {
       toast.error(`File size (${(mainFile.size / 1024 / 1024).toFixed(2)}MB) exceeds the 50MB limit.`);
       return;
     }
@@ -163,19 +80,6 @@ export default function UploadForm() {
     if (!isAllowedImageFile(coverImage)) {
       toast.error(`Cover image must be a ${IMAGE_ALLOWED_LABEL} file.`);
       return;
-    }
-
-    if (formData.type === 'music') {
-      if (releaseType === 'album') {
-        const badTrack = albumFiles.find((f) => !isAllowedAudioFile(f));
-        if (badTrack) {
-          toast.error(`"${badTrack.name}" isn't a supported audio format. Allowed: ${AUDIO_ALLOWED_LABEL}.`);
-          return;
-        }
-      } else if (mainFile && !isAllowedAudioFile(mainFile)) {
-        toast.error(`"${mainFile.name}" isn't a supported audio format. Allowed: ${AUDIO_ALLOWED_LABEL}.`);
-        return;
-      }
     }
 
     setUploading(true);
@@ -214,7 +118,7 @@ export default function UploadForm() {
       if (!coverImage || coverImage.size === 0) {
         throw new Error('Cover image is empty or invalid');
       }
-      
+
       console.log('📤 Uploading cover image:', { name: coverImage.name, size: coverImage.size, type: coverImage.type });
       const coverExt = coverImage.name.split('.').pop();
       const coverPath = `covers/${user.id}/${Date.now()}.${coverExt}`;
@@ -234,94 +138,28 @@ export default function UploadForm() {
         .from('premium-room')
         .getPublicUrl(coverPath);
 
-      // Prepare main upload (single file or album manifest)
-      let fileUrlPublic = '';
-
-      if (releaseType === 'album') {
-        // Upload each track separately to avoid per-object 50MB limit
-        const timestamp = Date.now();
-        const baseDir = `products/${user.id}/${timestamp}`;
-        const trackResults: { name: string; size: number; path: string; url: string }[] = [];
-        const sanitizeFileName = (name: string) =>
-          name
-            .normalize('NFKD')
-            .replace(/[\u0300-\u036f]/g, '') // strip diacritics
-            .replace(/\s+/g, '_')
-            .replace(/[^A-Za-z0-9._-]/g, '_')
-            .slice(0, 200);
-
-        for (const f of albumFiles) {
-          // Validate file before upload
-          if (!f || f.size === 0) {
-            console.error('Invalid file in album:', f?.name);
-            throw new Error(`File "${f?.name}" is empty or invalid`);
-          }
-          
-          console.log('📤 Uploading track:', { name: f.name, size: f.size, type: f.type });
-          const ext = f.name.includes('.') ? f.name.split('.').pop() : undefined;
-          const baseName = f.name.replace(/\.[^.]+$/, '');
-          const safeName = `${sanitizeFileName(baseName)}${ext ? '.' + sanitizeFileName(ext) : ''}`;
-          const trackPath = `${baseDir}/${safeName}`;
-          const { error: trackErr } = await supabase.storage
-            .from('premium-room')
-            .upload(trackPath, f, {
-              cacheControl: '3600',
-              upsert: false
-            });
-          if (trackErr) {
-            console.error('Track upload error:', trackErr);
-            throw trackErr;
-          }
-          const { data: trackUrl } = supabase.storage
-            .from('premium-room')
-            .getPublicUrl(trackPath);
-          trackResults.push({ name: f.name, size: f.size, path: trackPath, url: trackUrl.publicUrl });
-        }
-
-        // Create and upload manifest
-        const manifestBlob = new Blob([
-          JSON.stringify({
-            type: 'album',
-            createdAt: new Date().toISOString(),
-            cover: coverUrl.publicUrl,
-            tracks: trackResults
-          }, null, 2)
-        ], { type: 'application/json' });
-        const manifestPath = `${baseDir}/manifest.json`;
-        const { error: manifestErr } = await supabase.storage
-          .from('premium-room')
-          .upload(manifestPath, manifestBlob, { contentType: 'application/json' });
-        if (manifestErr) throw manifestErr;
-        const { data: manifestUrl } = supabase.storage
-          .from('premium-room')
-          .getPublicUrl(manifestPath);
-        fileUrlPublic = manifestUrl.publicUrl;
-      } else {
-        // Single file upload - validate file before upload
-        if (!mainFile || mainFile.size === 0) {
-          throw new Error('Main file is empty or invalid');
-        }
-        
-        console.log('📤 Uploading main file:', { name: mainFile.name, size: mainFile.size, type: mainFile.type });
-        const uploadBlob = mainFile as File;
-        const uploadExt = (mainFile as File).name.split('.').pop() || 'bin';
-        const filePath = `products/${user.id}/${Date.now()}.${uploadExt}`;
-        const { error: fileUploadError } = await supabase.storage
-          .from('premium-room')
-          .upload(filePath, uploadBlob, {
-            cacheControl: '3600',
-            upsert: false
-          });
-        if (fileUploadError) {
-          console.error('File upload error:', fileUploadError);
-          throw fileUploadError;
-        }
-        const { data: fileUrl } = supabase.storage
-          .from('premium-room')
-          .getPublicUrl(filePath);
-        fileUrlPublic = fileUrl.publicUrl;
+      // Upload main file - validate file before upload
+      if (!mainFile || mainFile.size === 0) {
+        throw new Error('Main file is empty or invalid');
       }
 
+      console.log('📤 Uploading main file:', { name: mainFile.name, size: mainFile.size, type: mainFile.type });
+      const uploadExt = mainFile.name.split('.').pop() || 'bin';
+      const filePath = `products/${user.id}/${Date.now()}.${uploadExt}`;
+      const { error: fileUploadError } = await supabase.storage
+        .from('premium-room')
+        .upload(filePath, mainFile, {
+          cacheControl: '3600',
+          upsert: false
+        });
+      if (fileUploadError) {
+        console.error('File upload error:', fileUploadError);
+        throw fileUploadError;
+      }
+      const { data: fileUrl } = supabase.storage
+        .from('premium-room')
+        .getPublicUrl(filePath);
+      const fileUrlPublic = fileUrl.publicUrl;
 
       // Calculate total price with fees (10% tithing + 5% admin)
       const basePrice = parseFloat(String(formData.price)) || 0;
@@ -341,7 +179,7 @@ export default function UploadForm() {
         file_url: fileUrlPublic,
         delivery_type: deliveryType,
         shipping_method: deliveryType === 'physical' ? shippingMethod : null,
-        tags: [...formData.tags.split(',').map(t => t.trim()).filter(Boolean), releaseType]
+        tags: formData.tags.split(',').map(t => t.trim()).filter(Boolean)
       });
 
 
@@ -406,7 +244,7 @@ export default function UploadForm() {
       <Card>
         <CardHeader>
           <CardTitle className="text-3xl">Upload Your Creation</CardTitle>
-          <CardDescription>Share your music, art, or files with the S2G community</CardDescription>
+          <CardDescription>Share your art or files with the S2G community</CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-6">
@@ -426,47 +264,22 @@ export default function UploadForm() {
                 <div>
                   <Label htmlFor="type">Type *</Label>
                   <Select value={formData.type} onValueChange={(value) => {
-                    console.log('Product type changed to:', value);
                     setFormData({ ...formData, type: value });
-                    // Clear files when switching away from music to ensure proper file filtering
-                    if (value !== 'music') {
-                      setMainFile(null);
-                      setAlbumFiles([]);
-                      setZipFile(null);
-                    }
                   }}>
                     <SelectTrigger>
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="music">Music</SelectItem>
                       <SelectItem value="art">Art</SelectItem>
                       <SelectItem value="file">File</SelectItem>
                     </SelectContent>
                   </Select>
-                </div>
-
-                <div>
-                  <Label htmlFor="releaseType">Release Type *</Label>
-                  <Select value={releaseType} onValueChange={(value) => {
-                    setReleaseType(value as 'single' | 'album');
-                    setMainFile(null);
-                    setAlbumFiles([]);
-                    setZipFile(null);
-                  }}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Single or Album" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="single">Single Track</SelectItem>
-                      <SelectItem value="album">Album (8+ Tracks)</SelectItem>
-                    </SelectContent>
-                  </Select>
-                  {releaseType === 'album' && (
-                    <p className="text-xs text-muted-foreground mt-1">
-                      Albums must have 8+ songs. Upload as ZIP or select multiple files.
-                    </p>
-                  )}
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Sowing music?{' '}
+                    <button type="button" onClick={() => navigate('/sow')} className="underline underline-offset-2 hover:text-foreground">
+                      It's moved — sow a seed →
+                    </button>
+                  </p>
                 </div>
 
                 <div>
@@ -508,7 +321,6 @@ export default function UploadForm() {
                     categoryId={taxonomy.categoryId}
                     subcategoryIds={taxonomy.subcategoryIds}
                     tagIds={taxonomy.tagIds}
-                    relevantGroups={formData.type === 'music' ? ['trust', 'logistics'] : undefined}
                     onChange={(next) => {
                       setTaxonomy(next);
                       // Mirror selection into legacy free-text column for backward-compat queries
@@ -613,13 +425,13 @@ export default function UploadForm() {
                             console.error('No cover image selected');
                             return;
                           }
-                          
+
                           const file = files[0];
                           if (!file) {
                             console.error('No file in files array');
                             return;
                           }
-                          
+
                           if (file.size === 0) {
                             console.error('Empty cover image detected:', file.name);
                             toast.error(`Cover image "${file.name}" is empty. Please select a valid image file.`);
@@ -627,7 +439,7 @@ export default function UploadForm() {
                             e.target.value = '';
                             return;
                           }
-                          
+
                           console.log('Cover image selected:', { name: file.name, size: file.size, type: file.type });
                           // Store file immediately
                           setCoverImage(file);
@@ -638,185 +450,46 @@ export default function UploadForm() {
                 </div>
 
                 <div>
-                  <Label htmlFor="file">{releaseType === 'album' ? 'Album Tracks *' : 'Main File *'}</Label>
+                  <Label htmlFor="file">Main File *</Label>
                   <div className="mt-2 space-y-2">
-                    {releaseType === 'album' && (
-                      <>
-                        <label className="flex items-center justify-center w-full h-24 border-2 border-dashed border-border rounded-lg cursor-pointer hover:border-primary transition-colors">
-                          <div className="text-center">
-                            <Disc className="w-6 h-6 mx-auto mb-2 text-muted-foreground" />
-                            <p className="text-sm text-muted-foreground font-medium">
-                              {zipFile ? zipFile.name : 'Upload ZIP Archive'}
-                            </p>
-                            <p className="text-xs text-muted-foreground">
-                              Recommended for 50MB+ albums
-                            </p>
-                          </div>
-                          <input
-                            id="zip-file"
-                            type="file"
-                            className="hidden"
-                            disabled={extractingZip || albumFiles.length > 0}
-                            onChange={(e) => {
-                              const file = e.target.files?.[0];
-                              if (file) handleZipUpload(file);
-                            }}
-                          />
-                        </label>
-                        <div className="relative">
-                          <div className="absolute inset-0 flex items-center">
-                            <span className="w-full border-t" />
-                          </div>
-                          <div className="relative flex justify-center text-xs uppercase">
-                            <span className="bg-card px-2 text-muted-foreground">or</span>
-                          </div>
-                        </div>
-                      </>
-                    )}
                     <label className="flex items-center justify-center w-full h-24 border-2 border-dashed border-border rounded-lg cursor-pointer hover:border-primary transition-colors">
                       <div className="text-center">
-                        {extractingZip ? (
-                          <>
-                            <Loader2 className="w-6 h-6 mx-auto mb-2 text-primary animate-spin" />
-                            <p className="text-sm text-muted-foreground">Extracting ZIP...</p>
-                          </>
-                        ) : (
-                          <>
-                            <Music className="w-6 h-6 mx-auto mb-2 text-muted-foreground" />
-                            {releaseType === 'album' ? (
-                              <p className="text-sm text-muted-foreground">
-                                {albumFiles.length > 0 ? `${albumFiles.length} files selected` : 'Select Multiple Audio Files'}
-                              </p>
-                            ) : (
-                              <p className="text-sm text-muted-foreground">
-                                {mainFile ? mainFile.name : 'Click to upload file'}
-                              </p>
-                            )}
-                          </>
-                        )}
+                        <Upload className="w-6 h-6 mx-auto mb-2 text-muted-foreground" />
+                        <p className="text-sm text-muted-foreground">
+                          {mainFile ? mainFile.name : 'Click to upload file'}
+                        </p>
                       </div>
                       <input
                         id="file"
                         type="file"
-                        accept={formData.type === 'music' ? AUDIO_ACCEPT : undefined}
                         className="hidden"
-                        multiple={releaseType === 'album'}
-                        disabled={extractingZip || (releaseType === 'album' && zipFile !== null)}
                         onChange={(e) => {
                           const files = e.target.files;
                           if (!files || files.length === 0) {
                             console.error('No files selected');
                             return;
                           }
-                          
-                          // Immediately capture files before any async operations
-                          const fileList = Array.from(files);
-                          
-                          if (releaseType === 'album') {
-                            // Validate and store files immediately
-                            const validFiles = fileList.filter(file => {
-                              if (!file) {
-                                console.error('Null file in array');
-                                return false;
-                              }
-                              if (file.size === 0) {
-                                console.error('Empty file detected:', file.name);
-                                toast.error(`File "${file.name}" is empty. Please select a valid file.`);
-                                return false;
-                              }
-                              console.log('Valid file:', { name: file.name, size: file.size, type: file.type });
-                              return true;
-                            });
-                            
-                            if (validFiles.length > 0) {
-                              // Store files immediately - don't wait for any async operations
-                              setAlbumFiles([...validFiles]); // Create new array to ensure React detects change
-                              setMainFile(null);
-                              setZipFile(null);
-                            }
-                          } else {
-                            const file = fileList[0];
-                            if (!file) {
-                              console.error('No file selected');
-                              return;
-                            }
-                            
-                            if (file.size === 0) {
-                              console.error('Empty file detected:', file.name);
-                              toast.error(`File "${file.name}" is empty. Please select a valid file.`);
-                              // Reset input
-                              e.target.value = '';
-                              return;
-                            }
-                            
-                            console.log('File selected:', { name: file.name, size: file.size, type: file.type });
-                            // Store file immediately
-                            setMainFile(file);
-                            setAlbumFiles([]);
+
+                          const file = files[0];
+                          if (!file) {
+                            console.error('No file selected');
+                            return;
                           }
+
+                          if (file.size === 0) {
+                            console.error('Empty file detected:', file.name);
+                            toast.error(`File "${file.name}" is empty. Please select a valid file.`);
+                            // Reset input
+                            e.target.value = '';
+                            return;
+                          }
+
+                          console.log('File selected:', { name: file.name, size: file.size, type: file.type });
+                          // Store file immediately
+                          setMainFile(file);
                         }}
                       />
                     </label>
-                    {releaseType === 'album' && albumFiles.length > 0 && (
-                      <>
-                        <div className="mt-3 p-3 bg-muted/50 rounded-lg border border-border">
-                          <div className="flex items-center justify-between mb-2">
-                            <span className="text-sm font-medium flex items-center gap-2">
-                              {zipFile && <Disc className="w-4 h-4" />}
-                              {albumFiles.length} Tracks
-                            </span>
-                            <span className="text-sm font-bold">
-                              {(albumFiles.reduce((sum, f) => sum + f.size, 0) / 1024 / 1024).toFixed(2)} MB total
-                            </span>
-                          </div>
-                          {albumFiles.length < 8 && (
-                            <p className="text-xs text-warning mb-2">⚠️ Albums require 8+ tracks</p>
-                          )}
-                          <div className="w-full h-2 bg-background rounded-full overflow-hidden">
-                            <div 
-                              className={`h-full transition-all ${
-                                albumFiles.length < 8 ? 'bg-warning' : 'bg-primary'
-                              }`}
-                              style={{ 
-                                width: `${Math.min((albumFiles.length / 8) * 100, 100)}%` 
-                              }}
-                            />
-                          </div>
-                        </div>
-                        <ul className="mt-2 max-h-32 overflow-y-auto text-sm space-y-1">
-                          {albumFiles.map((f, i) => (
-                            <li key={i} className="flex items-center justify-between gap-2 p-2 bg-background rounded hover:bg-muted/50 transition-colors">
-                              <span className="truncate text-muted-foreground flex-1">{f.name}</span>
-                              <span className="text-xs text-muted-foreground whitespace-nowrap">{(f.size / 1024 / 1024).toFixed(2)} MB</span>
-                              <button
-                                type="button"
-                                onClick={() => {
-                                  setAlbumFiles(albumFiles.filter((_, index) => index !== i));
-                                  if (albumFiles.length === 1) setZipFile(null);
-                                }}
-                                className="text-muted-foreground hover:text-destructive transition-colors p-1 hover:bg-destructive/10 rounded"
-                              >
-                                <X size={16} />
-                              </button>
-                            </li>
-                          ))}
-                        </ul>
-                        {zipFile && (
-                          <Button
-                            type="button"
-                            variant="outline"
-                            size="sm"
-                            className="w-full mt-2"
-                            onClick={() => {
-                              setZipFile(null);
-                              setAlbumFiles([]);
-                            }}
-                          >
-                            Clear All & Start Over
-                          </Button>
-                        )}
-                      </>
-                    )}
                   </div>
                 </div>
 
@@ -824,7 +497,7 @@ export default function UploadForm() {
                   <Label htmlFor="tags">Tags (comma-separated)</Label>
                   <Input
                     id="tags"
-                    placeholder="music, relaxing, ambient"
+                    placeholder="art, handmade, limited"
                     value={formData.tags}
                     onChange={(e) => setFormData({ ...formData, tags: e.target.value })}
                   />
