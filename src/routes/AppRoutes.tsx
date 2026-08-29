@@ -67,6 +67,7 @@ import {
   CreatePremiumRoomPage,
   WalletSettingsPage,
   PayoutSettingsPage,
+  PaypalConnectedPage,
   MyOrdersPage,
   MySeedsPage,
   EscrowQueuePage,
@@ -463,6 +464,9 @@ const AppRoutes = () => (
     } />
     <Route path="/settings/payouts" element={
       <ProtectedRoute><Layout><PayoutSettingsPage /></Layout></ProtectedRoute>
+    } />
+    <Route path="/settings/payouts/paypal-connected" element={
+      <ProtectedRoute><PaypalConnectedPage /></ProtectedRoute>
     } />
     <Route path="/my-orders" element={
       <ProtectedRoute><Layout><MyOrdersPage /></Layout></ProtectedRoute>

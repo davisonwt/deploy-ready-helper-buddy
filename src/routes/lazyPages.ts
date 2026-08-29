@@ -133,6 +133,7 @@ export const CreatePremiumRoomPage = lazy(() =>
 );
 export const WalletSettingsPage = lazy(() => import('@/pages/WalletSettingsPage'));
 export const PayoutSettingsPage = lazy(() => import('@/pages/PayoutSettingsPage'));
+export const PaypalConnectedPage = lazy(() => import('@/pages/PaypalConnectedPage'));
 export const MyOrdersPage = lazy(() => import('@/pages/MyOrdersPage'));
 export const MySeedsPage = lazy(() => import('@/pages/MySeedsPage'));
 export const EscrowQueuePage = lazy(() => import('@/pages/EscrowQueuePage'));

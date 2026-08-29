@@ -12,9 +12,8 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { toast } from 'sonner';
 import AddNowPaymentsWallet from '@/components/payouts/AddNowPaymentsWallet';
-import AddPaypalEmail from '@/components/payouts/AddPaypalEmail';
+import ConnectPaypalButton from '@/components/payouts/ConnectPaypalButton';
 import CryptoPayoutSettings from '@/components/payouts/CryptoPayoutSettings';
-import VerifyPaypalEmailControl from '@/components/payouts/VerifyPaypalEmailControl';
 import { PAYOUT_PROVIDERS } from '@/lib/payments/providerFees';
 
 /**
@@ -220,9 +219,9 @@ export default function PayoutSettingsPage() {
         <Alert className="border-amber-300 bg-amber-50 dark:bg-amber-950/30">
           <AlertCircle className="h-4 w-4 text-amber-600" />
           <AlertDescription>
-            <strong>Add your PayPal email to get paid.</strong> Sow2Grow now pays sowers and
-            whisperers weekly (Fridays) via PayPal Payouts, to a verified PayPal email only —
-            balances under $20 carry over to the next week.
+            <strong>Connect with PayPal to get paid.</strong> Sow2Grow now pays sowers and
+            whisperers weekly (Fridays) via PayPal Payouts — PayPal itself supplies your verified
+            email, nothing to type. Balances under $20 carry over to the next week.
           </AlertDescription>
         </Alert>
       )}
@@ -258,7 +257,7 @@ export default function PayoutSettingsPage() {
               <div className="flex items-center gap-2">
                 <RadioGroupItem value={PAYPAL_TYPE} id="pref-paypal" disabled={!hasPaypal} />
                 <Label htmlFor="pref-paypal" className={!hasPaypal ? 'text-muted-foreground' : ''}>
-                  PayPal {!hasPaypal && <span className="text-xs">— add a PayPal email first</span>}
+                  PayPal {!hasPaypal && <span className="text-xs">— connect PayPal first</span>}
                 </Label>
               </div>
               <div className="flex items-center gap-2">
@@ -297,16 +296,15 @@ export default function PayoutSettingsPage() {
 
         <TabsContent value="paypal" className="space-y-4 mt-4">
           <WalletList
-            title="Your PayPal emails"
+            title="Your PayPal account"
             loading={loading}
             rows={paypalWallets}
             activeDefaultId={activeDefaultWalletId}
             onSetPrimary={setPrimary}
             onRemove={removeWallet}
-            onVerified={load}
-            emptyText="No PayPal payout emails yet."
+            emptyText="No PayPal account connected yet."
           />
-          <AddPaypalEmail onSaved={load} />
+          <ConnectPaypalButton />
         </TabsContent>
       </Tabs>
 
@@ -322,7 +320,6 @@ function WalletList({
   activeDefaultId,
   onSetPrimary,
   onRemove,
-  onVerified,
   emptyText,
 }: {
   title: string;
@@ -331,8 +328,6 @@ function WalletList({
   activeDefaultId: string | null;
   onSetPrimary: (r: WalletRow) => void;
   onRemove: (r: WalletRow) => void;
-  /** Passed only for PayPal rows — shows a "Verify" control on an unverified row. */
-  onVerified?: () => void;
   emptyText: string;
 }) {
   return (
@@ -381,9 +376,6 @@ function WalletList({
                     )}
                   </div>
                 </div>
-                {onVerified && !r.verified_at && (
-                  <VerifyPaypalEmailControl email={r.wallet_address} onVerified={onVerified} />
-                )}
                 {!r.is_primary && (
                   <Button size="sm" variant="outline" onClick={() => onSetPrimary(r)}>
                     Make primary

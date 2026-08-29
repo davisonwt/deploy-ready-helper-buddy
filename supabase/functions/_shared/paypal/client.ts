@@ -33,6 +33,16 @@ export function paypalBaseUrl(): string {
     : "https://api-m.sandbox.paypal.com";
 }
 
+/**
+ * The consumer-facing "Log in with PayPal" domain — different from the API
+ * host above (api-m.*). Same live/sandbox switch via PAYPAL_ENV.
+ */
+export function paypalConnectBaseUrl(): string {
+  return getEnv() === "live"
+    ? "https://www.paypal.com"
+    : "https://www.sandbox.paypal.com";
+}
+
 function getCreds(): { id: string; secret: string } {
   const id = Deno.env.get("PAYPAL_CLIENT_ID");
   const secret = Deno.env.get("PAYPAL_CLIENT_SECRET");
