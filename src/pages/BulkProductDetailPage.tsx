@@ -126,7 +126,7 @@ export default function BulkProductDetailPage() {
         '@type': 'Offer',
         priceCurrency: 'USD',
         price: Number(product.price ?? 0).toFixed(2),
-        availability: (product.stock_qty ?? 1) > 0 ? 'https://schema.org/InStock' : 'https://schema.org/OutOfStock',
+        availability: (product.stock ?? 1) > 0 ? 'https://schema.org/InStock' : 'https://schema.org/OutOfStock',
         url: window.location.href,
       },
     };
@@ -242,7 +242,7 @@ export default function BulkProductDetailPage() {
             <div>
               <div className="flex flex-wrap gap-2 mb-2">
                 {product.category && <Badge variant="secondary"><Tag className="h-3 w-3 mr-1" /> {product.category}</Badge>}
-                {(product.stock_qty ?? 0) === 0 && product.stock_qty !== null && (
+                {(product.stock ?? 0) === 0 && product.stock !== null && (
                   <Badge variant="outline" className="border-destructive text-destructive">Out of stock</Badge>
                 )}
               </div>
@@ -291,7 +291,7 @@ export default function BulkProductDetailPage() {
             )}
 
             <div className="grid grid-cols-2 gap-2 pt-2">
-              <Button size="lg" onClick={handleAdd} disabled={(product.stock_qty ?? 1) === 0}>
+              <Button size="lg" onClick={handleAdd} disabled={(product.stock ?? 1) === 0}>
                 <ShoppingCart className="h-4 w-4 mr-1" /> Add to basket
               </Button>
               <Button size="lg" variant="outline" onClick={share}>
@@ -306,9 +306,9 @@ export default function BulkProductDetailPage() {
               </Button>
             )}
 
-            {(product.stock_qty != null) && (
+            {(product.stock != null) && (
               <p className="text-xs text-muted-foreground flex items-center gap-1">
-                <Package className="h-3 w-3" /> {product.stock_qty} in stock
+                <Package className="h-3 w-3" /> {product.stock} in stock
               </p>
             )}
           </div>

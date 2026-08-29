@@ -73,6 +73,7 @@ import {
   SowMusicPage,
   SowArtPage,
   SowBookPage,
+  SowProductPage,
   RegisterWanderingPage,
   StorePage,
   PrivacyPage,
@@ -174,6 +175,9 @@ const AppRoutes = () => (
     } />
     <Route path="/sow/book" element={
       <ProtectedRoute><Suspense fallback={<LoadingFallback />}><SowBookPage /></Suspense></ProtectedRoute>
+    } />
+    <Route path="/sow/product" element={
+      <ProtectedRoute><Suspense fallback={<LoadingFallback />}><SowProductPage /></Suspense></ProtectedRoute>
     } />
     <Route path="/register-wandering" element={
       <ProtectedRoute><Suspense fallback={<LoadingFallback />}><RegisterWanderingPage /></Suspense></ProtectedRoute>

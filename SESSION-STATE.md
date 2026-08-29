@@ -146,16 +146,17 @@ time, the same way music just was, rather than all at once.
 |---|---|---|
 | Music — single | **Live** — `/sow/music` | Retired — Type option removed |
 | Music — album | **Live** — `/sow/music`, "Album" mode | Retired — Type option removed |
-| Artwork / image | Not built | **Live** — Type: Art |
-| Document / e-book | Not built | **Live** — Type: File (documents have no dedicated type; they go through "File") |
-| Physical product | Not built | Partial — the Digital/Physical delivery toggle exists for Art/File, but there's no dedicated physical-product type or flow (variants, stock, shipping price) |
+| Artwork / image | **Live** — `/sow/art` | Retired — Type option removed |
+| Document / e-book | **Live** — `/sow/book` | Retired — Type option removed |
+| Physical product | **Live** — `/sow/product` | Untouched — old form's Physical/Digital delivery toggle still there, not retired this task |
 | Service | Not built | **Not covered** — the old form has never had a Service type |
 | Orchard | Not built | N/A — orchards are a separate flow (`/create-orchard`, `orchards` table), never part of `UploadForm.tsx` |
 
-Next in `spec-sowing-forms.md`'s own order: Document, then Artwork, then
-Physical product/Service (deferred last on purpose — they carry the
-delivery/booking complexity), then Orchard. Only once every kind has a
-live `/sow` form does `UploadForm.tsx` itself get retired outright.
+Next in `spec-sowing-forms.md`'s own order: Service (deferred last on
+purpose — it carries booking complexity, and `/sow/hand`, `/sow/wheel`,
+`/sow/pillow` are still role-gated placeholders behind
+`spec-service-seeds.md`), then Orchard. Only once every kind has a live
+`/sow` form does `UploadForm.tsx` itself get retired outright.
 
 ## Fixed — 2026-08-29 (WAV preview failure on /sow/music, and the 150MB upload work that led to it)
 
@@ -945,6 +946,67 @@ instruction's own "if present."
   your Tribal Hearts profile so singles in the tribe can find and connect
   with you", matching "Find a Wandering Heart"'s existing matchmaking
   framing right next to it.
+- `npx tsc --noEmit` and `npx eslint` both clean.
+
+## Fixed — 2026-08-29, still later (spec-sowing-forms.md: /sow/product, the fourth live sowing form)
+
+Built `/sow/product` on the `/sow/art` single-track pattern, no
+`SeedDropZone` at all — a physical seed has nothing digital to gate, so
+there's no `file_url` and no `preview_url`, per the task.
+
+- **First check, `products.stock` vs `products.stock_qty`**: both existed
+  live, both 100% empty (0/58 populated), zero conflicts anywhere — the
+  "migrate" step was a no-op. Kept `stock` (it's what the storefronts spec
+  and the new `(company_id, sku)` index are built around), dropped
+  `stock_qty` (`20260829240000_sow-product-schema.sql`). Fixed every
+  reader first, before dropping the column: 5 spots in
+  `BulkProductDetailPage.tsx` (JSON-LD availability, the "Out of stock"
+  badge, "Add to basket"'s disabled condition, the "N in stock" text) and
+  1 writer in `BulkUploadWizardPage.tsx` (line 576 insert mapping). The
+  wizard's own internal CSV-column-mapping key is still called
+  `stock_qty` in a few places — that's the wizard's own vocabulary for a
+  spreadsheet header, unrelated to the DB column, left alone.
+- **`type`**: the one legacy physical-goods row ("coffee mugs x6") has
+  `type = 'product'` — confirmed live, used unchanged. `kind = 'product'`
+  added to the CHECK vocabulary (now `music | ebook | art | hand | wheel
+  | pillow | product`) in the same migration.
+- **Required pieces, fixed order**: photo (`CoverDropZone`, 10MB, already
+  built-in — no change needed there), title, price, category, stock,
+  description. Stock is the one piece with a "blank is a valid final
+  value but doesn't count as done" rule: `stock: number | null` state,
+  the puzzle only counts it complete once the sower has typed an explicit
+  number — including 0 ("out of stock") — never on blank ("not tracked").
+- **Photo**: goes straight to `cover_image_url` and as the first entry in
+  `image_urls` (matching how `BulkProductDetailPage.tsx`'s gallery only
+  falls back to `cover_image_url` when `image_urls` is empty — same
+  pattern art already established).
+- **More options (never block Plant)**: sku (unique per business — the
+  existing `(company_id, sku)` partial index catches a duplicate; the
+  catch block checks for Postgres's `23505` and shows "That SKU is
+  already used by another item in this business — pick a different one."
+  instead of the raw error), up to 5 more photos (a small inline
+  uploader, not a new shared component — reuses the same crop-to-square-
+  JPEG-then-upload logic `CoverDropZone` uses internally, uploaded to
+  `premium-room` under `covers/{user.id}/extra-*.jpg` so they get the
+  same public-read carve-out the main cover already relies on — confirmed
+  live in the storage policies before building this), weight/size (free
+  text), fulfilment note (prefilled `"Collect from {business's
+  collect_address}"` once the selected business is known, editable —
+  never overwrites a note the sower already typed), whisperer %, tags.
+  Books field — identical pattern to every other `/sow/*` form, hidden
+  with one business.
+- **Detail page**: `BulkProductDetailPage.tsx` already handled physical
+  goods before this task (stock badge, basket) — verified, not changed,
+  beyond the stock/stock_qty fix above: stock badge and "Out of stock"
+  read `product.stock`, "Add to basket" disables at 0, and the
+  full-res-download button's `['art', 'ebook'].includes(product.type)`
+  guard already excludes `'product'` by construction.
+- **`/sow` chooser**: added a "Physical product" card to the "Produce &
+  goods" group (alongside the still-`live: false` Field/Forge
+  placeholders) rather than "Creations" — "Produce & goods" is literally
+  "goods", and Field/Forge are specific not-yet-built subtypes of
+  physical goods, so Physical product reads as the general one that's
+  ready now. Routes to `/sow/product`, `live: true`.
 - `npx tsc --noEmit` and `npx eslint` both clean.
 
 ## Open — priority order

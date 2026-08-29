@@ -573,7 +573,7 @@ function PublishStep({
           price: n.price ?? 0,
           category: n.category ?? null,
           sku: n.sku ?? null,
-          stock_qty: n.stock_qty ?? null,
+          stock: n.stock_qty ?? null,
           whisperer_commission_percent: n.commission_pct ?? null,
           commission_fixed: n.commission_fixed ?? null,
           bulk_upload_id: jobId,
