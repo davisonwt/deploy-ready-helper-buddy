@@ -157,7 +157,7 @@ Physical product/Service (deferred last on purpose — they carry the
 delivery/booking complexity), then Orchard. Only once every kind has a
 live `/sow` form does `UploadForm.tsx` itself get retired outright.
 
-## Fixed — 2026-09-01 (WAV preview failure on /sow/music, and the 150MB upload work that led to it)
+## Fixed — 2026-08-29 (WAV preview failure on /sow/music, and the 150MB upload work that led to it)
 
 A sower's 42.5MB WAV single failed with `preview_upload_failed` (the track
 itself uploaded fine). Investigated read-only first, then fixed:
@@ -169,7 +169,7 @@ itself uploaded fine). Investigated read-only first, then fixed:
   plain 44.1k/16-bit content), so any higher-resolution WAV's preview was
   rejected after the main file had already uploaded successfully.
 - `seed-previews` bucket `file_size_limit`: 5MB → 20MB (migration
-  `20260901100000`, applied and confirmed live).
+  `20260829181000`, applied and confirmed live).
 - `_shared/audioTrim.ts`'s `trimWav()`: 24-bit/32-bit sources are now
   truncated to 16-bit before upload — a pure byte-selection operation (keep
   each sample's top two bytes, closest to the MSB; no decode), consistent
@@ -401,7 +401,7 @@ Did build order steps 1–2 of `spec-books.md` only, per instruction —
 steps 3+ (switcher UI, /sow Books field, per-set payouts, admin view) not
 started.
 
-**Step 1 — migration (`20260901120000_books-multi-set-schema.sql`), verified counts:**
+**Step 1 — migration (`20260829183000_books-multi-set-schema.sql`), verified counts:**
 - `companies` gained `registration_no`/`vat_no`/`address` (nullable) and
   `is_default boolean not null default false`, plus a partial unique index
   (`companies_one_default_per_owner`, one `is_default = true` per
@@ -445,7 +445,7 @@ started.
 
 **Step 2 — resolution logic (§5):**
 - `books_backfill_products(_business_id)` (new migration
-  `20260901130000`): the products half now pulls only `WHERE p.company_id
+  `20260829184000`): the products half now pulls only `WHERE p.company_id
   = _business_id`, dropping the old `OR p.sower_id IN (scoped sowers)`
   fallback that pulled every product across the caller's whole account
   scope into whichever business asked. Top-level ownership check
