@@ -26,6 +26,7 @@ import VideoUploadModal from '@/components/community/VideoUploadModal.jsx'
 import BrandManagerDialog from '@/components/garden/BrandManagerDialog'
 import BrandIcon from '@/components/garden/BrandIcon'
 import { useMyBrands, useMyBrandAssignments, assignBrandToItem } from '@/api/sowerBrands'
+import { countActiveProductsForSower } from '@/api/products'
 import { Input } from '@/components/ui/input'
 import { Search } from 'lucide-react'
 import { useSignedImage } from '@/lib/storage/signedImage'
@@ -126,6 +127,43 @@ export default function MyOrchardsPage() {
     if (user) fetchSeeds()
   }, [user])
 
+  // My Garden header stats — "seeds" here means everything a sower can grow:
+  // products (any kind, any status) plus orchards, not just the crowdfunding
+  // `orchards` rows userSeeds tracks below. Raised comes from sower_earnings_v,
+  // the same completed-only, already-net-of-fee source the dashboard uses.
+  const [gardenStats, setGardenStats] = useState({ totalSeeds: 0, activeSeeds: 0, totalRaised: 0 })
+
+  useEffect(() => {
+    if (!user) return
+    let cancelled = false
+    ;(async () => {
+      try {
+        const { data: sowerRow } = await supabase.from('sowers').select('id').eq('user_id', user.id).maybeSingle()
+        const sowerId = sowerRow?.id
+
+        const [productsTotalRes, productsActiveRes, orchardsTotalRes, orchardsActiveRes, earningsRes] = await Promise.all([
+          sowerId
+            ? supabase.from('products').select('id', { count: 'exact', head: true }).eq('sower_id', sowerId)
+            : Promise.resolve({ count: 0 }),
+          sowerId ? countActiveProductsForSower(sowerId) : Promise.resolve({ count: 0 }),
+          supabase.from('orchards').select('id', { count: 'exact', head: true }).eq('user_id', user.id),
+          supabase.from('orchards').select('id', { count: 'exact', head: true }).eq('user_id', user.id).eq('status', 'active'),
+          supabase.from('sower_earnings_v').select('sower_amount').eq('sower_id', user.id),
+        ])
+
+        if (cancelled) return
+        setGardenStats({
+          totalSeeds: (productsTotalRes.count || 0) + (orchardsTotalRes.count || 0),
+          activeSeeds: (productsActiveRes.count || 0) + (orchardsActiveRes.count || 0),
+          totalRaised: (earningsRes.data || []).reduce((sum, r) => sum + Number(r.sower_amount || 0), 0),
+        })
+      } catch (e) {
+        console.error('Error fetching garden stats:', e)
+      }
+    })()
+    return () => { cancelled = true }
+  }, [user])
+
   useEffect(() => {
     const processed = processOrchardsUrls(seeds)
     let filtered = processed.filter(s => s.user_id === user?.id)
@@ -210,9 +248,6 @@ export default function MyOrchardsPage() {
     if (!total) return 0
     return Math.round((seed.filled_pockets / total) * 100)
   }
-
-  const getTotalRaised = () =>
-    userSeeds.reduce((sum, s) => sum + ((s.filled_pockets || 0) * (s.pocket_bestow || 0)), 0)
 
   const handleGoBack = () => {
     navigate('/dashboard', { replace: true })
@@ -315,9 +350,6 @@ export default function MyOrchardsPage() {
               <p className='text-slate-200/90 text-base sm:text-lg mb-4 max-w-2xl mx-auto'>
                 Manage and tend to your growing seeds. Watch each one blossom into something meaningful.
               </p>
-              <p className='text-slate-400 text-sm mb-6'>
-                Payment Method: USDC (USD Coin) · Total Raised: {formatCurrency(getTotalRaised())}
-              </p>
               <div className='flex flex-wrap items-center justify-center gap-4'>
                 <Link to="/sow" style={{ textDecoration: 'none', minWidth: 200 }}>
                   <LivingButton variant="enter" height={50} borderRadius={12} fontSize={14} letterSpacing="1px">
@@ -369,7 +401,7 @@ export default function MyOrchardsPage() {
                 <div className='flex items-center justify-between'>
                   <div>
                     <p className='text-sm font-medium text-slate-300'>Total Seeds</p>
-                    <p className='text-2xl font-bold text-white'>{userSeeds.length}</p>
+                    <p className='text-2xl font-bold text-white'>{gardenStats.totalSeeds}</p>
                   </div>
                   <Sprout className='h-8 w-8 text-white' />
                 </div>
@@ -380,7 +412,8 @@ export default function MyOrchardsPage() {
                 <div className='flex items-center justify-between'>
                   <div>
                     <p className='text-sm font-medium text-slate-300'>Total Raised</p>
-                    <p className='text-2xl font-bold text-white'>{formatCurrency(getTotalRaised())}</p>
+                    <p className='text-2xl font-bold text-white'>${gardenStats.totalRaised.toFixed(2)}</p>
+                    <p className='text-xs text-slate-400 mt-0.5'>USD</p>
                   </div>
                   <DollarSign className='h-8 w-8 text-white' />
                 </div>
@@ -391,7 +424,7 @@ export default function MyOrchardsPage() {
                 <div className='flex items-center justify-between'>
                   <div>
                     <p className='text-sm font-medium text-slate-300'>Active Seeds</p>
-                    <p className='text-2xl font-bold text-white'>{userSeeds.filter(s => s.status === 'active').length}</p>
+                    <p className='text-2xl font-bold text-white'>{gardenStats.activeSeeds}</p>
                   </div>
                   <TrendingUp className='h-8 w-8 text-white' />
                 </div>
