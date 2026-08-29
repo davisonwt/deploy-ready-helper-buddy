@@ -8,6 +8,8 @@ import { VerificationButton } from './VerificationButton';
 import { CredentialVerificationForm } from './CredentialVerificationForm';
 import { PurchaseDeliveryMessage } from './PurchaseDeliveryMessage';
 import { BestowalReceiptMessage } from './BestowalReceiptMessage';
+import { BookingRequestMessage } from './BookingRequestMessage';
+import { BookingResponseMessage } from './BookingResponseMessage';
 
 const getFileIcon = (fileType) => {
   const icons = {
@@ -33,6 +35,30 @@ const ChatMessage = ({ message, isOwn = false, onDelete, isInstructor, instructo
       <div className={`flex gap-3 mb-4 ${isOwn ? 'flex-row-reverse' : ''}`}>
         <div className="flex-1 max-w-[80%]">
           <BestowalReceiptMessage metadata={message.system_metadata} />
+        </div>
+      </div>
+    );
+  }
+
+  // Booking request — spec-service-seeds.md §7. Accept/Decline live
+  // inside the card itself, gated on the viewer not being the sender
+  // (the grower who requested it).
+  if (message.message_type === 'booking_request' && message.system_metadata) {
+    return (
+      <div className={`flex gap-3 mb-4 ${isOwn ? 'flex-row-reverse' : ''}`}>
+        <div className="flex-1 max-w-[80%]">
+          <BookingRequestMessage metadata={message.system_metadata} roomId={message.room_id} isOwnMessage={isOwn} />
+        </div>
+      </div>
+    );
+  }
+
+  // The sower's Accept/Decline response, back to the grower.
+  if (message.message_type === 'booking_response' && message.system_metadata) {
+    return (
+      <div className={`flex gap-3 mb-4 ${isOwn ? 'flex-row-reverse' : ''}`}>
+        <div className="flex-1 max-w-[80%]">
+          <BookingResponseMessage metadata={message.system_metadata} />
         </div>
       </div>
     );

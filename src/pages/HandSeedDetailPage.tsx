@@ -1,15 +1,28 @@
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { fetchProductBySlugOrId } from '@/api/products';
+import { useAuth } from '@/hooks/useAuth';
+import { supabase } from '@/integrations/supabase/client';
+import { priceBreakdown } from '@/lib/pricing/platformFee';
+import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
 import { ArrowLeft, MapPin, Calendar, Loader2 } from 'lucide-react';
 
 const RATE_UNIT_LABEL: Record<string, string> = {
   per_hour: 'per hour',
   per_job: 'per job',
   callout_quote: 'call-out fee + quote',
+};
+
+const QUANTITY_LABEL: Record<string, string> = {
+  per_hour: 'Hours',
+  per_job: 'Jobs',
 };
 
 const DAY_LABEL: Record<string, string> = {
@@ -22,15 +35,22 @@ const DAY_LABEL: Record<string, string> = {
  * basket, no download, a rate+unit instead of a price, a service area
  * instead of stock), different enough that bolting it onto the generic
  * product page would mean threading service-only branches through code
- * that's already carrying art/ebook/physical-goods logic. "Request
- * booking" is wired disabled for now — spec-service-seeds.md §7/step 4.
+ * that's already carrying art/ebook/physical-goods logic.
  */
 export default function HandSeedDetailPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [loading, setLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
   const [product, setProduct] = useState<any | null>(null);
+
+  const [bookingOpen, setBookingOpen] = useState(false);
+  const [bookingDate, setBookingDate] = useState('');
+  const [bookingTime, setBookingTime] = useState('');
+  const [quantity, setQuantity] = useState<number | null>(1);
+  const [note, setNote] = useState('');
+  const [submittingBooking, setSubmittingBooking] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -65,8 +85,10 @@ export default function HandSeedDetailPage() {
   }
 
   const details = (product.service_details as Record<string, any>) ?? {};
-  const rateUnitLabel = RATE_UNIT_LABEL[details.rate_unit] ?? details.rate_unit;
+  const rateUnit: string = details.rate_unit;
+  const rateUnitLabel = RATE_UNIT_LABEL[rateUnit] ?? rateUnit;
   const rateText = `$${Number(product.price ?? 0).toFixed(2)} ${rateUnitLabel}`;
+  const isCallout = rateUnit === 'callout_quote';
 
   const areaText = details.area_mode === 'you_come_to_me'
     ? `You come to ${details.base_town || 'them'}`
@@ -74,6 +96,88 @@ export default function HandSeedDetailPage() {
 
   const availabilityDays: string[] = Array.isArray(details.availability_days) ? details.availability_days : [];
   const sowerName = product.sowers?.display_name ?? 'A Wandering Hand';
+  const sowerUserId: string | undefined = product.sowers?.user_id;
+
+  const qty = isCallout ? 1 : Math.max(1, quantity ?? 1);
+  const amount = Number(product.price ?? 0) * qty;
+  const split = amount > 0 ? priceBreakdown(amount) : null;
+  const canSubmitBooking = !!bookingDate && !!bookingTime && (isCallout || (quantity != null && quantity > 0));
+
+  const handleRequestBooking = async () => {
+    if (!user) { toast.error('Please log in to request a booking.'); return; }
+    if (!sowerUserId) { toast.error('Could not find this seed\'s owner. Please try again.'); return; }
+    if (user.id === sowerUserId) { toast.error('You can\'t book your own seed.'); return; }
+    if (!canSubmitBooking || !split) return;
+
+    setSubmittingBooking(true);
+    try {
+      const startsAt = new Date(`${bookingDate}T${bookingTime}`);
+      if (Number.isNaN(startsAt.getTime())) throw new Error('Pick a valid date and time.');
+      const endsAt = rateUnit === 'per_hour' ? new Date(startsAt.getTime() + qty * 60 * 60 * 1000) : null;
+
+      const { data: booking, error: bookingErr } = await supabase
+        .from('bookings')
+        .insert({
+          product_id: product.id,
+          grower_user_id: user.id,
+          sower_user_id: sowerUserId,
+          company_id: product.company_id,
+          status: 'requested',
+          starts_at: startsAt.toISOString(),
+          ends_at: endsAt ? endsAt.toISOString() : null,
+          quantity: qty,
+          rate_unit: rateUnit,
+          amount: split.base,
+          s2g_fee: split.s2gFee,
+          total: split.total,
+          note: note.trim() || null,
+        } as any)
+        .select()
+        .single();
+      if (bookingErr) throw bookingErr;
+
+      const { data: roomId, error: roomErr } = await supabase.rpc('get_or_create_direct_room', {
+        user1_id: sowerUserId,
+        user2_id: user.id,
+      } as any);
+      if (roomErr || !roomId) throw roomErr ?? new Error('Could not open a chat with the sower.');
+
+      const { error: msgErr } = await supabase.from('chat_messages').insert({
+        room_id: roomId,
+        sender_id: user.id,
+        content: `📅 Booking request for "${product.title}"`,
+        message_type: 'booking_request',
+        system_metadata: {
+          is_system: false,
+          type: 'booking_request',
+          booking_id: (booking as any).id,
+          product_id: product.id,
+          product_title: product.title,
+          quantity: qty,
+          rate_unit: rateUnit,
+          starts_at: startsAt.toISOString(),
+          ends_at: endsAt ? endsAt.toISOString() : null,
+          note: note.trim() || null,
+          amount: split.base,
+          s2g_fee: split.s2gFee,
+          total: split.total,
+        },
+      } as any);
+      if (msgErr) throw msgErr;
+
+      toast.success('Booking request sent!');
+      setBookingOpen(false);
+      setBookingDate('');
+      setBookingTime('');
+      setQuantity(1);
+      setNote('');
+    } catch (err) {
+      console.error('Request booking failed:', err);
+      toast.error(err instanceof Error ? err.message : 'Could not send this booking request. Please try again.');
+    } finally {
+      setSubmittingBooking(false);
+    }
+  };
 
   return (
     <div className="container max-w-2xl mx-auto px-4 py-6 md:py-8">
@@ -126,9 +230,92 @@ export default function HandSeedDetailPage() {
             <p className="text-sm text-muted-foreground">Tools &amp; equipment supplied</p>
           )}
 
-          <Button size="lg" className="w-full" disabled title="Bookings coming soon">
-            Request booking — Bookings coming soon
-          </Button>
+          <Sheet open={bookingOpen} onOpenChange={setBookingOpen}>
+            <SheetTrigger asChild>
+              <Button size="lg" className="w-full">
+                Request booking
+              </Button>
+            </SheetTrigger>
+            <SheetContent side="bottom" className="max-h-[90vh] overflow-y-auto">
+              <SheetHeader className="text-left">
+                <SheetTitle>Request a booking</SheetTitle>
+              </SheetHeader>
+              <div className="space-y-4 mt-4 pb-4">
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="space-y-1.5">
+                    <Label htmlFor="booking-date">Date</Label>
+                    <Input
+                      id="booking-date"
+                      type="date"
+                      min={new Date().toISOString().slice(0, 10)}
+                      value={bookingDate}
+                      onChange={(e) => setBookingDate(e.target.value)}
+                    />
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label htmlFor="booking-time">Time</Label>
+                    <Input
+                      id="booking-time"
+                      type="time"
+                      value={bookingTime}
+                      onChange={(e) => setBookingTime(e.target.value)}
+                    />
+                  </div>
+                </div>
+
+                {!isCallout && (
+                  <div className="space-y-1.5">
+                    <Label htmlFor="booking-quantity">{QUANTITY_LABEL[rateUnit] ?? 'Quantity'}</Label>
+                    <Input
+                      id="booking-quantity"
+                      type="number"
+                      min="1"
+                      step="1"
+                      value={quantity ?? ''}
+                      onChange={(e) => setQuantity(e.target.value === '' ? null : Math.max(1, Number(e.target.value)))}
+                      className="max-w-[140px]"
+                    />
+                  </div>
+                )}
+
+                <div className="space-y-1.5">
+                  <Label htmlFor="booking-note">Note (optional)</Label>
+                  <Textarea
+                    id="booking-note"
+                    rows={3}
+                    value={note}
+                    onChange={(e) => setNote(e.target.value)}
+                    placeholder="Anything the sower should know"
+                  />
+                </div>
+
+                <div className="rounded-lg border p-3 text-sm">
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Rate × quantity</span>
+                    <span>${split ? split.base.toFixed(2) : '0.00'}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Sow2Grow fee (15%)</span>
+                    <span>${split ? split.s2gFee.toFixed(2) : '0.00'}</span>
+                  </div>
+                  <div className="flex justify-between font-semibold mt-1 pt-1 border-t">
+                    <span>Total</span>
+                    <span>${split ? split.total.toFixed(2) : '0.00'}</span>
+                  </div>
+                </div>
+
+                <Button
+                  size="lg"
+                  className="w-full"
+                  disabled={!canSubmitBooking || submittingBooking}
+                  onClick={handleRequestBooking}
+                >
+                  {submittingBooking ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : null}
+                  Send request
+                </Button>
+              </div>
+            </SheetContent>
+          </Sheet>
         </CardContent>
       </Card>
     </div>

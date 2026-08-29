@@ -1210,6 +1210,75 @@ the same way a Hand/Wheel/Pillow role belongs to a *person*, not a seed.
   staying role-based since those belong to a person, not a business).
 - `npx tsc --noEmit` and `npx eslint` both clean.
 
+## Fixed — 2026-08-29, still later (spec-service-seeds.md §7: booking steps 1-2, no payment)
+
+Built the request → accept/decline round trip and its 24h auto-expiry.
+Step 3 (Pay button → PayPal) and step 4 (finalize messages + booking
+confirmation card) are explicitly not this task — the accept response's
+Pay button is wired disabled ("Payment next").
+
+- **Schema**: new `bookings` table (`product_id, grower_user_id,
+  sower_user_id, company_id, status, starts_at, ends_at, quantity,
+  rate_unit, amount, s2g_fee, total, note`, `expires_at` defaulting to
+  `created_at + 24h`) — `20260829280000_bookings.sql`. RLS: grower/sower
+  read their own rows, grower inserts, sower updates (status). A partial
+  index on `(expires_at) where status = 'requested'` backs the cron
+  query. Same migration adds `expire_bookings()` (marks overdue
+  `requested` rows `expired`, posts one notification message per booking
+  into the existing grower↔sower direct room — both see it, since
+  `get_or_create_direct_room` already adds both as participants) and
+  schedules it via `invoke_money_job('expire-bookings')` every 15
+  minutes, the exact same thin-wrapper-RPC pattern `expire-stale-orders`
+  already established.
+- **New edge function `expire-bookings`** — byte-for-byte the same
+  auth/shape as `expire-stale-orders` (CRON_SECRET / service-role /
+  admin session), just calling `expire_bookings()` instead. Deployed
+  live via the Supabase CLI (`supabase functions deploy expire-bookings
+  --no-verify-jwt`), `config.toml` updated to match (`verify_jwt =
+  false`, same as its sibling).
+- **No new edge function for create/accept/decline** — considered one
+  (mirroring `verify-chatapp`'s "action button calls a function"
+  pattern), but `chat_messages`' own RLS already allows a participant to
+  insert a message as themselves in a room they belong to, and
+  `bookings`' RLS already scopes insert-as-grower / update-as-sower
+  correctly — so both the request and the response are plain,
+  RLS-guarded client-side writes, consistent with how every `/sow/*`
+  form this session has worked. The accept/decline UPDATE carries
+  `.eq('status', 'requested')` as a guard, so a click that loses a race
+  against the 15-min expiry cron fails cleanly (a toast, not a wrong
+  state) instead of resurrecting an already-expired booking.
+- **`HandSeedDetailPage.tsx`**: "Request booking" now opens a bottom
+  Sheet — date, time, quantity (hidden entirely for `callout_quote`,
+  since a call-out is a flat fee, not rate × quantity; labelled Hours or
+  Jobs otherwise, per `rate_unit`), an optional note, and a live total
+  via `priceBreakdown()` (rate × quantity, then 15% on top — the exact
+  same split every other seed's price uses). Submitting inserts the
+  `bookings` row, opens/reuses the direct room
+  (`get_or_create_direct_room`), and posts a `booking_request` message.
+  Guards against booking your own seed and against a missing sower id.
+- **Chat**: two new message types, rendered as full custom cards exactly
+  like `bestowal_receipt`/`purchase_delivery` do (keyed off
+  `message.message_type`, not the inline-addition pattern
+  `verification`/`credential_verification` use) —
+  `src/components/chat/BookingRequestMessage.tsx` (details + total,
+  Accept/Decline buttons shown only to the non-sender — i.e. the sower —
+  and only while a **live** re-fetch of the booking's own status still
+  reads `requested`, so a stale card from before an expiry or another
+  device's response doesn't offer buttons that would just fail) and
+  `BookingResponseMessage.tsx` (the sower's decision, Accept's Pay button
+  disabled with "Payment next"). Wired into `ChatMessage.jsx` alongside
+  the existing two custom types.
+- **Dashboard Unread tile — verified, no change needed.** Read
+  `DashboardTribeStats.tsx`'s unread count first: it's already fully
+  generic (`chat_messages` in any room the viewer participates in,
+  `sender_id IS DISTINCT FROM me`, `created_at > last_read_at` — no
+  `message_type` filter at all), and `get_or_create_direct_room` already
+  adds both grower and sower as participants. Booking messages are
+  ordinary `chat_messages` rows in that same room, so they were already
+  going to be counted correctly the moment they existed — confirmed by
+  reading the query, not assumed.
+- `npx tsc --noEmit` and `npx eslint` both clean.
+
 ## Open — priority order
 
 1. ~~Live proof that `paypal-webhook` actually works now~~ — **resolved, see Keystone problem**: order `0a6a0b1a` finalized via a clean webhook call at 08:36 UTC 2026-08-29. The `processed_webhooks`-insert bug (separate from the webhook itself) is also fixed; watch for its first real row as confirmation the fix landed, not as proof the webhook works — that's already established.

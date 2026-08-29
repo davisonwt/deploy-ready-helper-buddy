@@ -51,6 +51,9 @@ verify_jwt = false
 [functions.expire-stale-orders]
 verify_jwt = false
 
+[functions.expire-bookings]
+verify_jwt = false
+
 [functions.create-stripe-payment]
 verify_jwt = true
 
