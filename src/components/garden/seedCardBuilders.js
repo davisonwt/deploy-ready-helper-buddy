@@ -22,17 +22,39 @@ const firstImage = (...sources) => {
   return null
 }
 
+const RATE_UNIT_LABEL = {
+  per_hour: 'per hour',
+  per_job: 'per job',
+  callout_quote: 'call-out fee + quote',
+}
+
+// Kind-specific badge/subtitle/open-path overrides for products.kind rows
+// riding through the generic "seed" card (see SeedRow.kind in
+// sowerContent.ts) — only Hand exists live today; Wheel/Pillow slot in
+// here the same way once those forms ship.
+const KIND_CARD_META = {
+  hand: {
+    badge: { emoji: '🤲', label: 'hand', color: '#16a34a' },
+    openPath: (id) => `/seed/hand/${id}`,
+    subtitle: (s) => {
+      const unit = RATE_UNIT_LABEL[s.service_details?.rate_unit] ?? s.service_details?.rate_unit
+      return s.price != null ? `$${Number(s.price).toFixed(2)} ${unit || ''}`.trim() : (s.description || s.category)
+    },
+  },
+}
+
 export function buildSeedCard(s, handlers = {}) {
   const images = Array.isArray(s.images) ? s.images.filter(Boolean) : []
+  const kindMeta = s.kind ? KIND_CARD_META[s.kind] : null
   return {
     id: `seed-${s.id}`,
     rawId: s.id,
     title: s.title || 'Untitled Seed',
-    subtitle: s.description || s.category || 'A seed you planted',
+    subtitle: kindMeta ? kindMeta.subtitle(s) : (s.description || s.category || 'A seed you planted'),
     image: images[0] || FALLBACK_IMG.seed,
     images,
-    badge: { emoji: '🌱', label: 'mine', color: '#22c55e' },
-    openPath: `/seed/${s.id}`,
+    badge: kindMeta ? kindMeta.badge : { emoji: '🌱', label: 'mine', color: '#22c55e' },
+    openPath: kindMeta ? kindMeta.openPath(s.id) : `/seed/${s.id}`,
     liveKey: s.id,
     mediaKind: 'seed',
     mine: true,

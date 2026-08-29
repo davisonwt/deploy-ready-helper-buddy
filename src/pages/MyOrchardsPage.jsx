@@ -215,8 +215,19 @@ export default function MyOrchardsPage() {
     onPark: handleParkCard, onDelete: handleDeleteCard,
   }
 
-  // Build per-category card lists for the 5 vertical sections
-  const allSeedCards    = mySeeds.map(s    => buildSeedCard(s, ownerHandlers))
+  // Build per-category card lists for the vertical sections. "Seeds" from
+  // useMyContent pools every products.kind together plus the legacy
+  // `seeds` table (kind null) — split those apart here so Hand (and
+  // Wheel/Pillow once their forms ship) get their own section per
+  // spec-service-seeds.md §8, instead of hiding inside a generic bucket.
+  const allSeedCardsRaw = mySeeds.map(s => buildSeedCard(s, ownerHandlers))
+  const kindOf = (c) => c.seedRow?.kind || null
+  const allSeedCards    = allSeedCardsRaw.filter(c => !kindOf(c))
+  const allArtCards     = allSeedCardsRaw.filter(c => kindOf(c) === 'art')
+  const allGoodsCards   = allSeedCardsRaw.filter(c => ['product', 'field', 'hearth', 'forge'].includes(kindOf(c)))
+  const allHandCards    = allSeedCardsRaw.filter(c => kindOf(c) === 'hand')
+  const allWheelCards   = allSeedCardsRaw.filter(c => kindOf(c) === 'wheel')
+  const allPillowCards  = allSeedCardsRaw.filter(c => kindOf(c) === 'pillow')
   const allOrchardCards = myOrchards.map(o => buildOrchardCard(o, ownerHandlers))
   const allMusicCards   = myMusic.map(m    => buildMusicCard(m, ownerHandlers))
   const allBookCards    = myBooks.map(b    => buildBookCard(b, ownerHandlers))
@@ -235,12 +246,19 @@ export default function MyOrchardsPage() {
   const filterFor = (key, list) => (inCategory(key) ? list.filter(matches) : [])
 
   const seedCards    = filterFor('seeds', allSeedCards)
+  const artCards     = filterFor('art', allArtCards)
+  const goodsCards   = filterFor('goods', allGoodsCards)
+  const handCards    = filterFor('hand', allHandCards)
+  const wheelCards   = filterFor('wheel', allWheelCards)
+  const pillowCards  = filterFor('pillow', allPillowCards)
   const orchardCards = filterFor('orchards', allOrchardCards)
   const musicCards   = filterFor('music', allMusicCards)
   const bookCards    = filterFor('books', allBookCards)
   const videoCards   = filterFor('videos', allVideoCards)
   const searchActive = q.length > 0 || categoryFilter !== 'all' || brandFilter !== 'all'
-  const resultCount  = seedCards.length + orchardCards.length + musicCards.length + bookCards.length + videoCards.length
+  const resultCount  = seedCards.length + artCards.length + goodsCards.length + handCards.length
+    + wheelCards.length + pillowCards.length + orchardCards.length + musicCards.length
+    + bookCards.length + videoCards.length
 
 
   const getCompletionPercentage = (seed) => {
@@ -452,9 +470,14 @@ export default function MyOrchardsPage() {
                   <SelectContent className='z-50 bg-popover'>
                     <SelectItem value='all'>All categories</SelectItem>
                     <SelectItem value='seeds'>🌱 Seeds</SelectItem>
-                    <SelectItem value='orchards'>🌳 Orchards</SelectItem>
                     <SelectItem value='music'>🎵 Music</SelectItem>
+                    <SelectItem value='art'>🎨 Art</SelectItem>
                     <SelectItem value='books'>📚 Books</SelectItem>
+                    <SelectItem value='goods'>📦 Goods</SelectItem>
+                    <SelectItem value='hand'>🤲 Hand</SelectItem>
+                    <SelectItem value='wheel'>🚗 Wheel</SelectItem>
+                    <SelectItem value='pillow'>🛏️ Pillow</SelectItem>
+                    <SelectItem value='orchards'>🌳 Orchards</SelectItem>
                     <SelectItem value='videos'>🎬 Videos</SelectItem>
                   </SelectContent>
                 </Select>
@@ -501,6 +524,31 @@ export default function MyOrchardsPage() {
               <MyGardenSection title="Music"    emoji="🎵" accent="#0ea5e9" cards={musicCards}
                 brands={brands} brandByItem={brandByItem} onAssignBrand={handleAssignBrand}
                 emptyHint={searchActive ? 'No tracks match your search.' : 'No tracks yet — drop a song from your Music Library.'} />
+            )}
+            {inCategory('art') && (
+              <MyGardenSection title="Art"      emoji="🎨" accent="#a855f7" cards={artCards}
+                brands={brands} brandByItem={brandByItem} onAssignBrand={handleAssignBrand}
+                emptyHint={searchActive ? 'No art matches your search.' : 'No art yet — sow one from /sow/art.'} />
+            )}
+            {inCategory('goods') && (
+              <MyGardenSection title="Goods"    emoji="📦" accent="#f59e0b" cards={goodsCards}
+                brands={brands} brandByItem={brandByItem} onAssignBrand={handleAssignBrand}
+                emptyHint={searchActive ? 'No goods match your search.' : 'No goods yet — Field, Hearth, Forge or a general product from /sow.'} />
+            )}
+            {inCategory('hand') && (
+              <MyGardenSection title="Hand"     emoji="🤲" accent="#16a34a" cards={handCards}
+                brands={brands} brandByItem={brandByItem} onAssignBrand={handleAssignBrand}
+                emptyHint={searchActive ? 'No Hand seeds match your search.' : 'No Hand seeds yet — sow one from /sow/hand.'} />
+            )}
+            {inCategory('wheel') && (
+              <MyGardenSection title="Wheel"    emoji="🚗" accent="#0891b2" cards={wheelCards}
+                brands={brands} brandByItem={brandByItem} onAssignBrand={handleAssignBrand}
+                emptyHint="Wheel seeds aren't open yet." />
+            )}
+            {inCategory('pillow') && (
+              <MyGardenSection title="Pillow"   emoji="🛏️" accent="#db2777" cards={pillowCards}
+                brands={brands} brandByItem={brandByItem} onAssignBrand={handleAssignBrand}
+                emptyHint="Pillow seeds aren't open yet." />
             )}
             {inCategory('books') && (
               <MyGardenSection title="Books"    emoji="📚" accent="#fb923c" cards={bookCards}

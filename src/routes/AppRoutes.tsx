@@ -74,6 +74,8 @@ import {
   SowArtPage,
   SowBookPage,
   SowProductPage,
+  SowHandPage,
+  HandSeedDetailPage,
   RegisterWanderingPage,
   StorePage,
   PrivacyPage,
@@ -178,6 +180,12 @@ const AppRoutes = () => (
     } />
     <Route path="/sow/product" element={
       <ProtectedRoute><Suspense fallback={<LoadingFallback />}><SowProductPage /></Suspense></ProtectedRoute>
+    } />
+    <Route path="/sow/hand" element={
+      <ProtectedRoute><Suspense fallback={<LoadingFallback />}><SowHandPage /></Suspense></ProtectedRoute>
+    } />
+    <Route path="/seed/hand/:id" element={
+      <Suspense fallback={<LoadingFallback />}><HandSeedDetailPage /></Suspense>
     } />
     <Route path="/register-wandering" element={
       <ProtectedRoute><Suspense fallback={<LoadingFallback />}><RegisterWanderingPage /></Suspense></ProtectedRoute>

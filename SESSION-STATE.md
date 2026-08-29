@@ -149,14 +149,14 @@ time, the same way music just was, rather than all at once.
 | Artwork / image | **Live** — `/sow/art` | Retired — Type option removed |
 | Document / e-book | **Live** — `/sow/book` | Retired — Type option removed |
 | Physical goods (Field/Hearth/Forge/General) | **Live** — `/sow/product?kind=X` | Untouched — old form's Physical/Digital delivery toggle still there, not retired this task |
-| Service | Not built | **Not covered** — the old form has never had a Service type |
+| Service — Hand | **Live** — `/sow/hand`, role-gated | **Not covered** — the old form has never had a Service type |
+| Service — Wheel / Pillow | Not built — role-gated placeholders | **Not covered** |
 | Orchard | Not built | N/A — orchards are a separate flow (`/create-orchard`, `orchards` table), never part of `UploadForm.tsx` |
 
-Next in `spec-sowing-forms.md`'s own order: Service (deferred last on
-purpose — it carries booking complexity, and `/sow/hand`, `/sow/wheel`,
-`/sow/pillow` are still role-gated placeholders behind
-`spec-service-seeds.md`), then Orchard. Only once every kind has a live
-`/sow` form does `UploadForm.tsx` itself get retired outright.
+Next in `spec-sowing-forms.md`'s own order: Wheel, then Pillow (booking
+already works per spec-service-seeds.md §9 once Hand's booking purchase
+kind ships), then Orchard. Only once every kind has a live `/sow` form
+does `UploadForm.tsx` itself get retired outright.
 
 ## Fixed — 2026-08-29 (WAV preview failure on /sow/music, and the 150MB upload work that led to it)
 
@@ -1057,6 +1057,88 @@ more."
   prior task), and the download button's `['art', 'ebook'].includes(
   product.type)` guard already excludes every physical-goods kind, since
   `type` is `'product'` for all of them.
+- `npx tsc --noEmit` and `npx eslint` both clean.
+
+## Fixed — 2026-08-29, still later (spec-service-seeds.md §5: /sow/hand, the first service seed)
+
+Built `/sow/hand` on the `/sow/product` pattern — same layout, SeedPuzzle
++ SeedPreviewCard, More options never blocking Plant, Books field with
+>1 business, company_id on insert, confetti → detail page.
+
+- **Role gate**: the chooser only links here once `wandering_roles` has
+  an active `hand` row for the viewer, but a bookmark or typed URL can
+  reach the page directly — added a page-level guard querying
+  `wandering_roles` on mount, redirecting to `/register-wandering?
+  role=hand` (replace, not push) if missing/inactive. `base_town` from
+  that row feeds the service-area copy and gets copied into
+  `service_details.base_town` at insert (never re-typed).
+- **Schema**: `products.type` CHECK gained `'service'` (`kind='hand'`
+  already allowed from the earlier service-seeds migration).
+  `get_my_dashboard_content()` — the RPC My Garden's `useMyContent` reads
+  — never selected `kind`/`price`/`service_details` at all; needed a
+  drop+recreate (return-type change, not a bare `CREATE OR REPLACE`) to
+  add those three, so My Garden could tell a Hand seed apart from every
+  other product and show its rate. Both changes:
+  `20260829260000_sow-hand-schema.sql`.
+- **Required pieces, fixed order**: photo (`CoverDropZone`), title,
+  category (`OnePicker` — plumbing/electrical/mechanic/building/
+  carpentry/welding/gardening/cleaning/IT-repairs/tutoring/other, "other"
+  reveals a free-text field whose value becomes the stored category),
+  rate (amount + a unit `Select` — per hour / per job / call-out fee +
+  quote), service area (`RadioGroup` — "I come to you within N km of
+  {base_town}", N defaulting to 30 and editable, or "You come to me"),
+  description. Service area counts as satisfied from the start (it
+  always has a complete default state), unlike `/sow/product`'s stock
+  field which deliberately requires an explicit touch.
+- **No `PriceWithSplit`** — Hand's own spec text never mentions a Free
+  option (unlike the old, now-removed Heart spec text), so rate is a
+  bespoke amount+unit pair rather than reusing the shared Price
+  component's Free toggle; still calls `priceBreakdown()` for the live
+  split line, per spec-sowing-forms.md's "never a second copy of the
+  maths" rule.
+- **No `file_url`, no `preview_url`** — a Hand seed has nothing digital
+  to gate. `price` = the rate amount; `service_details` carries
+  `rate_unit`, `area_mode`, `radius_km`, `base_town`.
+- **More options**: availability days (`ToggleGroup`, Mon–Sun →
+  `service_details.availability_days`), years of experience
+  (`service_details.years_experience`), tools & equipment supplied
+  toggle (`service_details.tools_supplied`), up to 5 more photos (same
+  inline crop-and-upload-to-`premium-room`-`covers/` pattern as
+  `/sow/product`), whisperer %, tags.
+- **Detail page — built new, not reused**: `/seed/hand/:id`
+  (`HandSeedDetailPage.tsx`), not `BulkProductDetailPage.tsx`. Reasoning:
+  a Hand seed is booked, not bought — no basket, no download, a
+  rate+unit instead of a price, a service area instead of stock —
+  different enough that bolting it onto the generic product page would
+  mean threading service-only branches through code that already carries
+  art/ebook/physical-goods logic for a shared page with no service
+  concept at all today. Shows photo, title, category badge, rate
+  ("$X per hour" etc.), service area, availability (if set), a static
+  "🤲 Wandering Hand" badge, and a **disabled** "Request booking —
+  Bookings coming soon" button — spec-service-seeds.md §7/step 4 wires
+  it up once the booking purchase kind exists. No Add to basket, no
+  download button, by construction (this page never had either).
+- **`/sow` chooser**: Hand card was already wired (`live: true,
+  service: 'hand', route: '/sow/hand'`) from the earlier service-seeds
+  build — confirmed, not changed.
+- **My Garden kind filter row** (spec §8): `useMyContent`'s `seeds`
+  bucket previously pooled every non-music/non-book product kind
+  together (art, general goods, field/hearth/forge, and now hand) plus
+  the legacy `seeds` table — split apart in `MyOrchardsPage.jsx` (the
+  page titled "My Garden") using the `kind` now available on each row:
+  new Art / Goods / Hand / Wheel / Pillow sections alongside the
+  existing Seeds / Music / Books / Orchards / Videos ones, each
+  filterable from the category dropdown. Wheel/Pillow sections render
+  (always empty for now, "aren't open yet") rather than being hidden,
+  matching how every other always-visible section on this page already
+  behaves rather than special-casing not-yet-live kinds. `buildSeedCard`
+  (`seedCardBuilders.js`) shows a Hand card's rate ("$X per hour") as its
+  subtitle instead of the generic description/category text, and links
+  it to `/seed/hand/:id` instead of the legacy `/seed/:id` route — the
+  only card slot available for a price/rate at all in this shared card
+  component. Scoped to exactly what's needed for Hand today; Wheel/
+  Pillow slot into the same `KIND_CARD_META`/section pattern the moment
+  those forms exist, no further plumbing required.
 - `npx tsc --noEmit` and `npx eslint` both clean.
 
 ## Open — priority order

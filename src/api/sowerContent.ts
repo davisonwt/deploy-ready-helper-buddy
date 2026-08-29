@@ -19,6 +19,12 @@ export type SeedRow = {
   images: string[]
   video_url: string | null
   created_at: string | null
+  /** products.kind — null for the legacy `seeds` table. Lets My Garden tell a
+   *  Hand/Wheel/Pillow/Field/Hearth/Forge/Art/General-goods seed apart from
+   *  a plain seeds-table row, without a second query. */
+  kind?: string | null
+  price?: number | null
+  service_details?: Record<string, unknown> | null
 }
 
 export type MusicRow = {
@@ -126,6 +132,9 @@ function splitDashboardRows(rows: any[]): { seeds: SeedRow[]; music: MusicRow[];
         images: row.images || row.image_urls || (row.cover_image_url ? [row.cover_image_url] : []),
         video_url: row.video_url,
         created_at: row.created_at,
+        kind: row.kind ?? null,
+        price: row.price ?? null,
+        service_details: row.service_details ?? null,
       })
     }
   }
