@@ -98,6 +98,49 @@ Shop owner view of the same page: a "Manage" bar — Bulk upload, Add one
 seed, Edit shop, Orders (n new), Books. Nothing else changes; what they
 see is what buyers see.
 
+## 4a. Shop presets by Wandering kind
+
+Every Wandering kind has a **preset theme** so a service provider gets a
+finished-looking shop the moment they unlock a role, with zero design work.
+Musicians and product shops can override; trades mostly won't.
+
+`store_theme jsonb` (already on `companies`) holds `{ preset, accent,
+banner_url, logo_url, tagline_style, chips[] }`. A new `src/lib/store/presets.ts`
+defines one preset per kind:
+
+| kind | accent | tagline (default) | chips |
+|---|---|---|---|
+| pillow | gold on deep green | Rest. Recharge. Belong Anywhere. | Private homes · Hotels · Farms & retreats · Holiday getaways |
+| hand | teal | Skilled Hands. Trusted Service. | Plumbers · Electricians · Mechanics · Builders · & more |
+| wheel | orange | Move What Matters. | Passenger rides · Deliveries · Plough land · Move materials · Any vehicle |
+| field | green | From Our Fields to Our Tribe. | Fresh produce · Seasonal goods · Direct from farmers |
+| hearth | red | Made with Love. Shared with You. | Handmade crafts · Homemade foods · Artisan products |
+| forge | slate | (to write) | Custom made · Commissions · Repairs |
+| heart | emerald | (to write) | Care · Companionship · Support |
+
+Whisperer has no shop preset — it's a service hired by shops, not a place
+to shop (see spec-wandering-doors.md).
+
+Rules:
+- On role unlock (spec-service-seeds §4) the business gets
+  `store_theme.preset = <kind>` if it has no theme yet, and `is_store`
+  stays off until they turn it on in Profile. A business with several
+  roles keeps the first preset; they can change it in Edit shop.
+- The storefront header (§4) renders from the preset: banner image (from a
+  small set of stock banners per kind shipped in `/assets/wandering/`),
+  accent colour on buttons and chips, tagline defaulting to the preset's
+  unless `store_tagline` is set, chips from `store_categories` if set else
+  the preset's.
+- Overrides: Edit shop lets them pick a different preset, upload their own
+  banner/logo, and change accent. Nothing else about the page changes.
+- The sower's own photo, name and town always come from their profile /
+  role row, never from the preset.
+- Hands preset chips are trades only. No Dentists / Doctors until the
+  licensed-professional question is answered by the lawyer.
+
+Build: with step 2 (bulk upload) or earlier if the Hand form (service-seeds
+step 3) lands first — a Hand's shop should look right on day one.
+
 ## 5. Basket and checkout
 
 One basket per shop (mixed-shop baskets are out of scope for v1). Checkout
