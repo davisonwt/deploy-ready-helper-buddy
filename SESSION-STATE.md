@@ -636,6 +636,56 @@ started.
   explicit Save per card, and a "View your shop" link once live.
 - `npx tsc --noEmit` and `npx eslint` both clean.
 
+## Fixed — 2026-08-29, still later (spec-books.md build order step 3: My businesses, switcher, Books never creates rows)
+
+No migration this time — pure application-layer work on top of the
+schema step 1 already applied. No app-level code from the storefronts
+task's step 1 needed touching beyond `MyBusinessesSection.tsx` itself.
+
+- **Profile → My businesses** (`MyBusinessesSection.tsx`, extending the
+  card the storefronts task built) now shows, per business: name,
+  currency, a "Default" badge, and — for every non-default one — a "Make
+  default" button. Editable fields: name, currency, registration no., VAT
+  no., address (spec-books.md §2's identity fields), plus the existing
+  Storefront toggle/tagline/categories/collect-address from the
+  storefronts task, all in one card, one Save. **"Add a business"** is a
+  new inline form (name, currency — prefilled from the current default
+  business's currency, editable — optional registration no./VAT no./
+  address); submitting inserts a `companies` row with `is_default: false`
+  and **`books_enabled` copied from the default business** — per the
+  spec, that insert *is* the new business's set of books, nothing further
+  to activate. "Make default" is a two-step client-side update (clear the
+  old default, then set the new one) since the partial unique index only
+  allows one `is_default = true` per owner at a time — checked
+  `companies`' RLS first (owner can already insert/update/select/delete
+  their own rows, confirmed live, no policy changes needed). Copy
+  audited: "business" / "set of books" throughout, "company"/"workspace"
+  only in code comments, never in anything a member reads.
+- **`useBooksBusiness.ts`** rewritten to the shape the spec asks for:
+  `{ businesses, current, setCurrent, loading, saving, updateBusiness,
+  applyCountryPreset, reload }`. `current` defaults to the owner's
+  `is_default` row and is remembered per user in `localStorage`
+  (`books:currentBusiness:<userId>`), falling back to `is_default` (then
+  the oldest row) if nothing stored matches what's actually there anymore
+  (e.g. a business got deleted). **`createWorkspace` is gone —
+  the hook never creates rows now; the profile does**, per the spec.
+  `updateBusiness`/`applyCountryPreset` (used by the Settings tab, unrelated
+  to creation) kept, just re-scoped from the old singular `business` to
+  `current`.
+- **`BooksPage.tsx`**: header gained a business switcher (a `Select`
+  listing `businesses`, calling `setCurrent`) — **rendered only when
+  `businesses.length > 1`**, per instruction — plus an always-shown
+  "Manage businesses" link to `/profile`. Every tab now reads `current.id`
+  instead of the old `businessId`. The old inline "create your Books
+  workspace" form (name field + `createWorkspace()` call) is gone —
+  structurally unreachable now anyway, since every sower has always had a
+  default business since the earlier books migration's trigger; the
+  zero-businesses fallback state just points to `/profile` instead.
+  `BooksCatalogItemPage.tsx` (the only other real consumer besides
+  `MyOrchardsPage.jsx`, which discards the hook's return value entirely
+  and needed no change) updated the same way.
+- `npx tsc --noEmit` and `npx eslint` both clean.
+
 ## Open — priority order
 
 1. ~~Live proof that `paypal-webhook` actually works now~~ — **resolved, see Keystone problem**: order `0a6a0b1a` finalized via a clean webhook call at 08:36 UTC 2026-08-29. The `processed_webhooks`-insert bug (separate from the webhook itself) is also fixed; watch for its first real row as confirmation the fix landed, not as proof the webhook works — that's already established.

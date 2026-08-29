@@ -113,7 +113,8 @@ function Breakdown({ item, sales }: { item: ItemState; sales: CatalogSaleRow[] }
 export default function BooksCatalogItemPage() {
   const { itemId } = useParams<{ itemId: string }>();
   const navigate = useNavigate();
-  const { business, businessId, loading: bizLoading } = useBooksBusiness();
+  const { current, loading: bizLoading } = useBooksBusiness();
+  const businessId = current?.id ?? null;
   const [item, setItem] = useState<ItemState | null>(null);
   const [sales, setSales] = useState<CatalogSaleRow[]>([]);
   const [loading, setLoading] = useState(true);
@@ -190,7 +191,7 @@ export default function BooksCatalogItemPage() {
   }, [itemId, businessId]);
 
   return (
-    <BooksCurrencyProvider currency={business?.currency}>
+    <BooksCurrencyProvider currency={current?.currency}>
       <div className="mx-auto max-w-5xl px-4 py-10">
         <div className="mb-6 space-y-4">
           <div className="flex flex-wrap gap-2">
