@@ -35,6 +35,7 @@ import { ChatRoom } from '@/components/chat/ChatRoom';
 
 import { ChatAppVerificationBanner } from '@/components/chat/ChatAppVerificationBanner';
 import { RelationshipLayerChatApp } from '@/components/chat/RelationshipLayerChatApp';
+import { UnreadInbox } from '@/components/chat/UnreadInbox';
 import {
   Dialog,
   DialogContent,
@@ -81,6 +82,7 @@ const ChatApp = () => {
 
   // Get current room from URL
   const currentRoomId = searchParams.get('room');
+  const filter = searchParams.get('filter');
   
   // Check verification status
   useEffect(() => {
@@ -544,6 +546,11 @@ const ChatApp = () => {
 
       {currentRoomId ? (
         <ChatRoom roomId={currentRoomId} onBack={handleBackToList} />
+      ) : filter === 'unread' ? (
+        <UnreadInbox
+          onOpenRoom={(roomId) => setSearchParams({ room: roomId }, { replace: true })}
+          onBack={() => navigate('/dashboard')}
+        />
       ) : useRelationshipLayer ? (
         // Relationship Layer Mode
         <RelationshipLayerChatApp 
