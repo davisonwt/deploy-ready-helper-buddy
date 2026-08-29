@@ -69,12 +69,6 @@ export default function SeedPuzzle({ coverUrl, pieces = 6, completedPieces, cele
         })}
       </div>
 
-      {!coverUrl && (
-        <div className="absolute inset-0 flex items-center justify-center pointer-events-none px-3">
-          <span className="text-xs text-center text-muted-foreground">Your cover goes here</span>
-        </div>
-      )}
-
       {celebrate && coverUrl && (
         <div
           aria-hidden

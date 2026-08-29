@@ -1409,6 +1409,107 @@ row inserted at finalize — so payout, `sower_earnings_v` and
   from each deploy's own "Uploading asset" log).
 - `npx tsc --noEmit` and `npx eslint` both clean.
 
+## Fixed — 2026-08-29, still later (RegisterWanderingPage.tsx rebuilt to the /sow/art standard; SeedPuzzle caption-overlap fix)
+
+`RegisterWanderingPage.tsx` was still the bare, single-column version from
+the original service-seeds build (name/town/two checkboxes). Rebuilt to
+match the sowing forms' own standard, reusing shared pieces rather than
+forking new ones.
+
+- **Schema**: `wandering_roles` gains `photo_url`, `tagline`,
+  `gallery_urls text[]`, `testimonials jsonb` —
+  `20260829300000_wandering-roles-profile-fields.sql`.
+- **New `src/components/wandering/WanderingMemberCard.tsx`** — extracted
+  from `WanderingDirectoryPage.jsx`'s own inline card (same dark-card/
+  colour-top-bar/circular-avatar visual style, unchanged), with a gallery
+  strip added. `linkTo` optional — omitted for a live, non-clickable
+  preview, set for the Directory's real cards. This is now the **one**
+  place that card's markup lives; both pages render the exact same
+  component rather than a lookalike, per the task's own wording.
+- **`WanderingDirectoryPage.jsx`**: its inline `<Link>` card block
+  replaced with `<WanderingMemberCard>`, passing `tagline={m.tagline}`
+  and `galleryUrls={m.gallery_urls}` — `select('*')` was already in use
+  for the `wandering_roles` fetch, so both came through with no query
+  change. Other role types (whisperer/heart/field/forge/story/hearth,
+  still on their own legacy tables) just pass `undefined` for both and
+  render exactly as before.
+- **`PlantButton.tsx`** generalized with optional `progressWord`/
+  `label`/`loadingLabel`/`icon` props, all defaulting to the exact
+  original copy ("planted"/"Plant seed"/"Planting…"/Sprout) — fully
+  backward-compatible with its four existing callers
+  (Music/Art/Book/Product/Hand forms, confirmed via `tsc`). Reused here
+  with `progressWord="ready"`, `label="Unlock {role}"` instead of
+  forking a near-identical component.
+- **`RegisterWanderingPage.tsx`**, fully rebuilt:
+  - Hero banner from the role's own `presets.ts` entry — real
+    `bannerImage` if one exists, else the same CSS gradient fallback
+    `StorePage.tsx` already uses (none of hand/wheel/pillow have a real
+    banner photo yet, confirmed earlier this session — same gap, still
+    open). Accent colour threaded through every button/checkbox-card/
+    link on the page via inline `style`, same pattern `StorePage.tsx`
+    uses for its category chips.
+  - Two-column layout, sticky preview / bottom Sheet on mobile — same
+    structure every `/sow/*` form uses, just previewing a
+    `WanderingMemberCard` instead of `SeedPreviewCard` (a seed's
+    ProductCard-plus-jigsaw preview makes no sense for a person; the
+    Directory's own member card is the actually-correct live preview
+    here, which is exactly what the task asked for).
+  - Six required pieces, "N of 6 ready": photo (`CoverDropZone`,
+    role-worded prompt — "A photo of you/your vehicle/your place"),
+    display name (prefilled from profile), base town (prefilled from
+    `profiles.location`, **except** when blank or matching a small
+    country-name denylist — South Africa plus its immediate SADC
+    neighbours — which is left blank instead, forcing a real town rather
+    than silently shipping a card that says "South Africa"), a one-line
+    tagline (role-worded prompt — "What do you do?/drive?/host?"), a
+    3-8 photo gallery (role-worded prompt, ready at 3 — uploaded
+    unmodified, not square-cropped like a cover, since a portfolio shot
+    of a vehicle or room shouldn't be forced square), and 1-3
+    testimonials (name + town + quote, ready once one is fully filled —
+    "From a customer — they'll be able to add their own after a
+    booking," per the task's own copy).
+  - Declaration + terms as two accent-highlighted consent cards (border
+    + tinted background when checked, not just a bare checkbox) —
+    required to submit, but deliberately **not** folded into the "N of 6"
+    counter (that's the 6 profile fields only); `handleSubmit` checks
+    both before proceeding and toasts if either is missing, rather than
+    pre-disabling Unlock on checkbox state — keeps `PlantButton` reusable
+    unmodified for its `ready = completed >= required` gate.
+  - On success: confetti, a `submitted` view (not an immediate redirect,
+    unlike the previous bare version) showing a badge reveal, the same
+    live `WanderingMemberCard` as the final saved state, the door link
+    (`/wandering/{role}` — will 404 until doors ship; shown anyway, per
+    the task's own explicit instruction), a **Share** button reusing
+    `ShareSeedDialog` (the app's one established multi-channel share
+    component — referral code, tribe invite, feed post, copy link — all
+    already built, not reinvented) sharing the door link, and "Sow your
+    first {role} seed" → `/sow/{role}`. Has its own Back-to-Dashboard
+    control, satisfying the golden rule on this state too, not just the
+    form state.
+  - Same page still serves all three roles via `?role=`, with every
+    role-specific prompt (photo/tagline/gallery copy) driven by small
+    per-role lookup maps.
+- **`HandSeedDetailPage.tsx`** gains an "About this Wandering Hand"
+  section — photo, tagline, gallery strip, testimonials — fetched from
+  `wandering_roles` by the seed's `sowers.user_id` + `role = 'hand'`,
+  rendered only when the sower actually filled in at least one of those
+  fields (a role unlocked before this rebuild, or via direct SQL, shows
+  nothing extra rather than an empty card). Wheel/Pillow detail pages
+  don't exist yet — noted, not built, since only Hand has a detail page
+  at all so far.
+- **`SeedPuzzle.tsx` caption-overlap fix**: the empty-state "Your cover
+  goes here" caption was absolutely centred over the exact same area
+  `ProductCard`'s own `GradientPlaceholder` (a large centred animated
+  icon) already fills for a null `cover_image_url` — both dead centre,
+  directly overlapping. Removed the caption outright rather than
+  repositioning it: the dashed-piece grid plus `GradientPlaceholder`'s
+  icon are already sufficient "nothing here yet" cues, and
+  `SeedPreviewCard`'s own surrounding captions ("How it will look" above,
+  "N of 6 planted" below) already explain the puzzle concept without
+  needing a third, overlapping label. Affects every `/sow/*` form that
+  renders `SeedPreviewCard` before a cover is set, not just `/sow/art`.
+- `npx tsc --noEmit` and `npx eslint` both clean.
+
 ## Open — priority order
 
 1. ~~Live proof that `paypal-webhook` actually works now~~ — **resolved, see Keystone problem**: order `0a6a0b1a` finalized via a clean webhook call at 08:36 UTC 2026-08-29. The `processed_webhooks`-insert bug (separate from the webhook itself) is also fixed; watch for its first real row as confirmation the fix landed, not as proof the webhook works — that's already established.

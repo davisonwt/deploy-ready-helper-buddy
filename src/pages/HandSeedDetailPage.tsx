@@ -52,6 +52,9 @@ export default function HandSeedDetailPage() {
   const [note, setNote] = useState('');
   const [submittingBooking, setSubmittingBooking] = useState(false);
 
+  const [wanderingProfile, setWanderingProfile] = useState<any | null>(null);
+  const [loadingWanderingProfile, setLoadingWanderingProfile] = useState(true);
+
   useEffect(() => {
     let cancelled = false;
     (async () => {
@@ -66,6 +69,27 @@ export default function HandSeedDetailPage() {
     })();
     return () => { cancelled = true; };
   }, [id]);
+
+  // "About this Wandering Hand" — fetched from the sower's own role
+  // profile (RegisterWanderingPage.tsx), not the product row.
+  useEffect(() => {
+    let alive = true;
+    const sid = product?.sowers?.user_id;
+    if (!sid) { setLoadingWanderingProfile(false); return; }
+    setLoadingWanderingProfile(true);
+    (async () => {
+      const { data } = await supabase
+        .from('wandering_roles')
+        .select('photo_url, tagline, gallery_urls, testimonials')
+        .eq('user_id', sid)
+        .eq('role', 'hand')
+        .maybeSingle();
+      if (!alive) return;
+      setWanderingProfile(data);
+      setLoadingWanderingProfile(false);
+    })();
+    return () => { alive = false; };
+  }, [product?.sowers?.user_id]);
 
   if (loading) {
     return (
@@ -318,6 +342,52 @@ export default function HandSeedDetailPage() {
           </Sheet>
         </CardContent>
       </Card>
+
+      {!loadingWanderingProfile && wanderingProfile && (
+        wanderingProfile.photo_url || wanderingProfile.tagline ||
+        wanderingProfile.gallery_urls?.length || wanderingProfile.testimonials?.length
+      ) && (
+        <Card className="mt-4">
+          <CardContent className="p-5 md:p-6 space-y-4">
+            <h2 className="text-lg font-bold">About this Wandering Hand</h2>
+
+            <div className="flex items-start gap-3">
+              {wanderingProfile.photo_url && (
+                <img
+                  src={wanderingProfile.photo_url}
+                  alt={sowerName}
+                  className="w-16 h-16 rounded-full object-cover border shrink-0"
+                />
+              )}
+              <div>
+                <p className="font-semibold">{sowerName}</p>
+                {wanderingProfile.tagline && (
+                  <p className="text-sm text-muted-foreground">{wanderingProfile.tagline}</p>
+                )}
+              </div>
+            </div>
+
+            {!!wanderingProfile.gallery_urls?.length && (
+              <div className="flex gap-2 overflow-x-auto">
+                {wanderingProfile.gallery_urls.map((url: string, i: number) => (
+                  <img key={i} src={url} alt="" className="w-24 h-24 rounded-lg object-cover border shrink-0" />
+                ))}
+              </div>
+            )}
+
+            {!!wanderingProfile.testimonials?.length && (
+              <div className="space-y-3">
+                {wanderingProfile.testimonials.map((t: any, i: number) => (
+                  <div key={i} className="rounded-lg border p-3">
+                    <p className="text-sm italic">"{t.quote}"</p>
+                    <p className="text-xs text-muted-foreground mt-1">— {t.name}, {t.town}</p>
+                  </div>
+                ))}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      )}
     </div>
   );
 }

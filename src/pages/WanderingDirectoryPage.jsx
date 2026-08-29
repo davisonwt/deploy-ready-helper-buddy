@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { supabase } from "@/integrations/supabase/client"
 import { useAuth } from '../hooks/useAuth'
+import WanderingMemberCard from '@/components/wandering/WanderingMemberCard'
 
 const ROLES = [
   { key: 'all', label: 'All', emoji: '🌿' },
@@ -199,27 +200,19 @@ export default function WanderingDirectoryPage() {
       ) : (
         <div style={s.grid}>
           {filtered.map((m, i) => (
-            <Link key={i} to={m._role === 'heart' ? '/tribal-hearts' : `/wandering/${m._role}/${m.id}`} style={s.card(m._color)}>
-              <div style={s.cardTop(m._color)} />
-              <div style={s.cardBody}>
-                <div style={s.cardHeader}>
-                  <div style={s.avatar(m._color)}>
-                    {getAvatar(m) ? <img src={getAvatar(m)} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '50%' }} /> : m._roleEmoji}
-                  </div>
-                  <div>
-                    <div style={s.cardName}>{getName(m)}</div>
-                    <div style={s.cardRole(m._color)}>{m._roleEmoji} {m._roleLabel}</div>
-                  </div>
-                </div>
-                <div style={s.cardDesc}>{getDesc(m) ? getDesc(m).slice(0, 100) + (getDesc(m).length > 100 ? '...' : '') : 'Tribe member'}</div>
-                <div style={s.cardFooter}>
-                  <div style={s.cardLocation}>&#128205; {getLocation(m)}</div>
-                  <button style={s.bookBtn(m._color)} onClick={e => e.preventDefault()}>
-                    {m._role === 'heart' ? 'Connect' : m._role === 'whisperer' ? 'Invite' : 'Book'}
-                  </button>
-                </div>
-              </div>
-            </Link>
+            <WanderingMemberCard
+              key={i}
+              name={getName(m)}
+              roleLabel={m._roleLabel}
+              roleEmoji={m._roleEmoji}
+              color={m._color}
+              location={getLocation(m)}
+              tagline={m.tagline || getDesc(m)}
+              photoUrl={getAvatar(m)}
+              galleryUrls={m.gallery_urls}
+              linkTo={m._role === 'heart' ? '/tribal-hearts' : `/wandering/${m._role}/${m.id}`}
+              bookLabel={m._role === 'heart' ? 'Connect' : m._role === 'whisperer' ? 'Invite' : 'Book'}
+            />
           ))}
         </div>
       )}
