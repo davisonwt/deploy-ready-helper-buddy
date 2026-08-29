@@ -2,6 +2,7 @@ import { useCallback, useRef, useState } from 'react';
 import { AlertCircle, GripVertical, Loader2, Music, UploadCloud, X } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { supabase } from '@/integrations/supabase/client';
+import { formatSizeMessage, mapStorageUploadError } from '@/lib/uploadErrors';
 
 export interface AlbumTrack {
   localId: string;
@@ -25,6 +26,8 @@ interface Props {
 }
 
 const AUDIO_EXTENSIONS = ['wav', 'mp3', 'flac', 'aac', 'm4a', 'ogg'];
+const MAX_TRACK_SIZE_BYTES = 150 * 1024 * 1024;
+const MIME_REJECTION_MESSAGE = "That file type isn't supported — use WAV, MP3, FLAC, M4A or OGG.";
 
 function extOf(file: File): string {
   return file.name.includes('.') ? file.name.split('.').pop()!.toLowerCase() : '';
@@ -77,7 +80,8 @@ export default function AlbumTrackList({ bucket, pathPrefix, allowedLabel, onCha
       upsert: false,
     });
     if (error) {
-      emit((prev) => prev.map((t) => (t.localId === track.localId ? { ...t, status: 'error', errorMessage: error.message } : t)));
+      const message = mapStorageUploadError(error, track.file, MAX_TRACK_SIZE_BYTES, MIME_REJECTION_MESSAGE);
+      emit((prev) => prev.map((t) => (t.localId === track.localId ? { ...t, status: 'error', errorMessage: message } : t)));
       return;
     }
     const { data: pub } = supabase.storage.from(bucket).getPublicUrl(path);
@@ -90,16 +94,20 @@ export default function AlbumTrackList({ bucket, pathPrefix, allowedLabel, onCha
     const sorted = [...audioFiles].sort((a, b) =>
       a.name.localeCompare(b.name, undefined, { numeric: true, sensitivity: 'base' })
     );
-    const newTracks: AlbumTrack[] = sorted.map((file) => ({
-      localId: `${Date.now()}-${Math.random().toString(36).slice(2)}`,
-      file,
-      name: file.name,
-      size: file.size,
-      status: 'uploading',
-      price: null,
-    }));
+    const newTracks: AlbumTrack[] = sorted.map((file) => {
+      const oversized = file.size > MAX_TRACK_SIZE_BYTES;
+      return {
+        localId: `${Date.now()}-${Math.random().toString(36).slice(2)}`,
+        file,
+        name: file.name,
+        size: file.size,
+        status: oversized ? 'error' : 'uploading',
+        price: null,
+        ...(oversized ? { errorMessage: formatSizeMessage(file, MAX_TRACK_SIZE_BYTES) } : {}),
+      };
+    });
     emit((prev) => [...prev, ...newTracks]);
-    newTracks.forEach((t) => uploadTrack(t));
+    newTracks.filter((t) => t.status === 'uploading').forEach((t) => uploadTrack(t));
   }, [emit, uploadTrack]);
 
   const onDrop = (e: React.DragEvent) => {

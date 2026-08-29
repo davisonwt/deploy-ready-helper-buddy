@@ -2,6 +2,7 @@ import { useCallback, useRef, useState } from 'react';
 import { Loader2, Music, UploadCloud, CheckCircle2, AlertCircle, X } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { invokePaymentFunction } from '@/lib/payments/invokeFunction';
+import { formatSizeMessage, mapStorageUploadError } from '@/lib/uploadErrors';
 
 export type SeedKind = 'audio' | 'image' | 'document';
 
@@ -35,6 +36,18 @@ interface Props {
 const AUDIO_EXTENSIONS = ['wav', 'mp3', 'flac', 'aac', 'm4a', 'ogg'];
 const IMAGE_EXTENSIONS = ['jpg', 'jpeg', 'png', 'gif', 'webp'];
 const DOCUMENT_EXTENSIONS = ['pdf', 'epub'];
+
+// Only kinds with an explicit ceiling get checked — 'document' has none yet.
+const MAX_SIZE_BYTES: Partial<Record<SeedKind, number>> = {
+  audio: 150 * 1024 * 1024,
+  image: 10 * 1024 * 1024,
+};
+
+const MIME_REJECTION_MESSAGE: Record<SeedKind, string> = {
+  audio: "That file type isn't supported — use WAV, MP3, FLAC, M4A or OGG.",
+  image: "That file type isn't supported — use JPG, PNG, GIF or WEBP.",
+  document: "That file type isn't supported — use PDF or EPUB.",
+};
 
 function extOf(file: File): string {
   return file.name.includes('.') ? file.name.split('.').pop()!.toLowerCase() : '';
@@ -110,6 +123,15 @@ export default function SeedDropZone({
       return;
     }
 
+    const maxSize = MAX_SIZE_BYTES[kind];
+    if (maxSize && file.size > maxSize) {
+      emit({
+        file, fileUrl: '', storagePath: '', previewStatus: 'error',
+        previewMessage: formatSizeMessage(file, maxSize),
+      });
+      return;
+    }
+
     let base: Partial<SeedFileResult> = {};
     emit({ file, fileUrl: '', storagePath: '', previewStatus: 'reading', ...base });
 
@@ -129,7 +151,8 @@ export default function SeedDropZone({
       upsert: false,
     });
     if (uploadErr) {
-      emit({ file, fileUrl: '', storagePath: '', previewStatus: 'error', previewMessage: uploadErr.message, ...base });
+      const message = mapStorageUploadError(uploadErr, file, maxSize ?? file.size, MIME_REJECTION_MESSAGE[kind]);
+      emit({ file, fileUrl: '', storagePath: '', previewStatus: 'error', previewMessage: message, ...base });
       return;
     }
     const { data: pub } = supabase.storage.from(bucket).getPublicUrl(path);
