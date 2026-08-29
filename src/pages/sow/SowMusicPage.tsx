@@ -80,6 +80,7 @@ export default function SowMusicPage() {
   const [genre, setGenre] = useState<string | null>(null);
   const [description, setDescription] = useState('');
   const [submitting, setSubmitting] = useState(false);
+  const [celebrate, setCelebrate] = useState(false);
 
   // More options — none of these can block Plant seed.
   const [moreOpen, setMoreOpen] = useState(false);
@@ -208,8 +209,13 @@ export default function SowMusicPage() {
 
       try { await (supabase.rpc as any)('add_xp_to_current_user', { amount: 100 }); } catch { /* best-effort */ }
 
+      // The 6th puzzle piece was already in (Plant is disabled until then) —
+      // play its shimmer alongside the confetti, then give it a beat to be
+      // seen before the page changes out from under it.
+      setCelebrate(true);
       launchConfetti();
       toast.success('Seed planted! 🌱');
+      await new Promise((resolve) => setTimeout(resolve, 650));
       navigate(`/music-track/${inserted.id}`);
     } catch (e: any) {
       console.error('Plant seed error', e);
@@ -240,6 +246,8 @@ export default function SowMusicPage() {
       isFree={isFree}
       type="music"
       isAlbum={mode === 'album'}
+      completedPieces={completed}
+      celebrate={celebrate}
     />
   );
 
