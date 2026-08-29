@@ -140,6 +140,7 @@ export const BooksPage = lazy(() => import('@/pages/BooksPage'));
 export const BooksCatalogItemPage = lazy(() => import('@/pages/BooksCatalogItemPage'));
 export const MyWalletPage = lazy(() => import('@/pages/MyWalletPage'));
 export const GosatTreasuryPage = lazy(() => import('@/pages/GosatTreasuryPage'));
+export const AdminPayoutsPage = lazy(() => import('@/pages/AdminPayoutsPage'));
 export const NowPaymentsTestPage = lazy(() => import('@/pages/NowPaymentsTestPage'));
 export const PaypalTestPage = lazy(() => import('@/pages/PaypalTestPage'));
 export const SowerProfile = lazy(() => import('@/pages/SowerProfile'));

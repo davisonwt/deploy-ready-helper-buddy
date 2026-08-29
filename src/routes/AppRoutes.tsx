@@ -74,6 +74,7 @@ import {
   BooksCatalogItemPage,
   MyWalletPage,
   GosatTreasuryPage,
+  AdminPayoutsPage,
   NowPaymentsTestPage,
   PaypalTestPage,
   SowerProfile,
@@ -438,6 +439,11 @@ const AppRoutes = () => (
     <Route path="/admin/treasury" element={
       <ProtectedRoute allowedRoles={['gosat']}>
         <Layout><Suspense fallback={<LoadingFallback />}><GosatTreasuryPage /></Suspense></Layout>
+      </ProtectedRoute>
+    } />
+    <Route path="/admin/payouts" element={
+      <ProtectedRoute allowedRoles={['gosat', 'admin']}>
+        <Layout><Suspense fallback={<LoadingFallback />}><AdminPayoutsPage /></Suspense></Layout>
       </ProtectedRoute>
     } />
     <Route path="/basket" element={

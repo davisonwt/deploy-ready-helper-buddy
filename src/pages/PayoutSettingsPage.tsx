@@ -100,6 +100,10 @@ export default function PayoutSettingsPage() {
 
   const hasCrypto = cryptoWallets.some((w) => w.is_active !== false);
   const hasPaypal = paypalWallets.some((w) => w.is_active !== false);
+  // Payouts now run weekly via PayPal Payouts only (see payout-earnings) —
+  // a wallet has to be both active AND verified to actually get paid;
+  // "Unverified" isn't enough, even though it still shows in the list below.
+  const hasVerifiedPaypal = paypalWallets.some((w) => w.is_active !== false && !!w.verified_at);
 
   /** Mirrors resolveSowerPayout.ts. Returns the wallet that would actually receive the next payout. */
   const activeDefaultWalletId = useMemo(() => {
@@ -208,6 +212,17 @@ export default function PayoutSettingsPage() {
         <Alert>
           <AlertCircle className="h-4 w-4" />
           <AlertDescription>Please sign in to manage payout methods.</AlertDescription>
+        </Alert>
+      )}
+
+      {user && !loading && !hasVerifiedPaypal && (
+        <Alert className="border-amber-300 bg-amber-50 dark:bg-amber-950/30">
+          <AlertCircle className="h-4 w-4 text-amber-600" />
+          <AlertDescription>
+            <strong>Add your PayPal email to get paid.</strong> Sow2Grow now pays sowers and
+            whisperers weekly (Fridays) via PayPal Payouts, to a verified PayPal email only —
+            balances under $20 carry over to the next week.
+          </AlertDescription>
         </Alert>
       )}
 
