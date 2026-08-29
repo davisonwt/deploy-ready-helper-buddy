@@ -31,11 +31,6 @@ const SERVICES: Card[] = [
   { key: 'pillow', label: 'Pillow', emoji: '🛏️', color: '#db2777', live: true, service: 'pillow', route: '/sow/pillow' },
 ];
 
-// Heart is matchmaking (/tribal-hearts), not a service seed —
-// spec-service-seeds.md §4, revised. No role-unlock check, no
-// products.kind, no /sow/heart form: always the same one destination.
-const HEART_CARD: Card = { key: 'heart', label: 'Find your Heart', emoji: '💚', color: '#dc2626', live: true, route: '/tribal-hearts' };
-
 // "What kind of goods?" — spec-sowing-forms.md, Hearth revised: home-made
 // goods (crafts, baked goods, preserves), never Creations. Each card is
 // live and lands on the same /sow/product form, preselected by ?kind=.
@@ -58,8 +53,8 @@ const ORCHARDS: Card[] = [
  * Produce & goods, Orchards. A service card checks whether the viewer
  * already holds that Wandering role (wandering_roles) before routing —
  * straight to the seed form if so, to the role-unlock screen first if
- * not. Heart is its own single tile, always routing straight to
- * /tribal-hearts — it's matchmaking, not a role to unlock or a seed form.
+ * not. No Heart tile here — Wandering Hearts is the dating feature, with
+ * its own Dashboard tile; it was never a seed to sow.
  */
 export default function SowChooserPage() {
   const navigate = useNavigate();
@@ -124,7 +119,6 @@ export default function SowChooserPage() {
         {SERVICES.map((card) => (
           <ServiceTile key={card.key} card={card} disabled={!checked} onClick={() => chooseService(card)} />
         ))}
-        <ServiceTile card={HEART_CARD} disabled={false} onClick={() => navigate(HEART_CARD.route)} />
       </ChooserGroup>
 
       <ChooserGroup title="Produce & goods">
