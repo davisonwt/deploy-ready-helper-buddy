@@ -68,6 +68,7 @@ import {
   WalletSettingsPage,
   PayoutSettingsPage,
   PaypalConnectedPage,
+  SowIndexPage,
   PrivacyPage,
   TermsPage,
   MyOrdersPage,
@@ -152,6 +153,9 @@ const AppRoutes = () => (
   <Routes>
     <Route path="/" element={<Index />} />
     <Route path="/login" element={<LoginPage />} />
+    <Route path="/sow" element={
+      <ProtectedRoute><Suspense fallback={<LoadingFallback />}><SowIndexPage /></Suspense></ProtectedRoute>
+    } />
     <Route path="/privacy" element={<Suspense fallback={<LoadingFallback />}><PrivacyPage /></Suspense>} />
     <Route path="/terms" element={<Suspense fallback={<LoadingFallback />}><TermsPage /></Suspense>} />
     <Route path="/.lovable/oauth/consent" element={
