@@ -25,7 +25,7 @@ import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { ArrowLeft, ChevronDown, Eye, Loader2 } from 'lucide-react';
-import sowBookBanner from '@/assets/seeds-strip.jpg';
+import sowBookBanner from '@/assets/sow/book-banner.png';
 
 const CATEGORIES: OnePickerOption[] = [
   'Fiction', 'Non-fiction', 'Self-help', 'Business', 'Spiritual',
@@ -44,12 +44,12 @@ function SowBanner() {
       className="relative w-full h-32 md:h-44 lg:h-56 overflow-hidden rounded-2xl mb-6 border"
       style={{ borderColor: 'rgba(234,179,8,0.45)', boxShadow: '0 0 40px rgba(234,179,8,0.25)' }}
     >
-      <img src={sowBookBanner} alt="" className="absolute inset-0 w-full h-full object-cover" loading="eager" />
+      <img src={sowBookBanner} alt="" className="absolute inset-0 w-full h-full object-cover object-right" loading="eager" />
       <div
         className="absolute inset-0"
-        style={{ background: 'linear-gradient(to top, rgba(0,0,0,0.85), rgba(234,179,8,0.25) 60%, rgba(0,0,0,0.1))' }}
+        style={{ background: 'linear-gradient(to bottom, rgba(0,0,0,0.85), rgba(234,179,8,0.25) 60%, rgba(0,0,0,0.1))' }}
       />
-      <div className="absolute inset-0 flex flex-col justify-end p-4 md:p-6">
+      <div className="absolute inset-x-0 top-0 flex flex-col p-4 md:p-6">
         <h1 className="text-white text-xl md:text-3xl font-black tracking-tight drop-shadow-lg">Sow your book</h1>
         <p className="text-white/85 text-sm md:text-base mt-1 max-w-2xl drop-shadow">
           Share a document or e-book with the tribe — planted in under two minutes.

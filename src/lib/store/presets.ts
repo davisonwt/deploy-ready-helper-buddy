@@ -3,6 +3,7 @@ import handBanner from '@/assets/wandering/hand-banner.png';
 import wheelBanner from '@/assets/wandering/wheel-banner.png';
 import fieldBanner from '@/assets/wandering/field-banner.png';
 import hearthBanner from '@/assets/wandering/hearth-banner.png';
+import forgeBanner from '@/assets/sow/forge-banner.png';
 
 // Heart is matchmaking (/tribal-hearts), not a service seed or a shop —
 // spec-service-seeds.md §4, revised. It never gets a preset here.
@@ -23,9 +24,11 @@ export interface WanderingPreset {
   chips: string[];
   buttonText: string;
   /**
-   * The real banner artwork — src/assets/wandering/<kind>-banner.png, for
-   * the five kinds it's landed for (pillow/hand/wheel/field/hearth).
-   * forge and shop still fall back to the accent gradient. Every banner
+   * The real banner artwork — src/assets/wandering/<kind>-banner.png for
+   * pillow/hand/wheel/field/hearth, src/assets/sow/forge-banner.png for
+   * forge (landed later, in the /sow-chooser banner pass, hence the
+   * different folder). Only `shop` still falls back to the accent
+   * gradient — no artwork exists for it. Every banner
    * is a full marketing poster (title, tagline, a row of trade/category
    * chips, a CTA button, a Sow2Grow footer, all baked into the image) —
    * StorePage.tsx/RegisterWanderingPage.tsx only ever show a short
@@ -103,7 +106,7 @@ const PRESETS: Record<WanderingKind, WanderingPreset> = {
     description: "Custom-made goods, commissions and repairs from the tribe's own makers.",
     chips: ['Custom made', 'Commissions', 'Repairs'],
     buttonText: 'Commission a piece',
-    bannerImage: null,
+    bannerImage: forgeBanner,
   },
   // Deliberately no "Wandering" prefix — Shop is the neutral/general
   // business kind, not a specific trade or craft identity like the other

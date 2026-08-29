@@ -25,7 +25,7 @@ import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { ArrowLeft, ChevronDown, Eye, Loader2 } from 'lucide-react';
-import sowArtBanner from '@/assets/seeds-strip.jpg';
+import sowArtBanner from '@/assets/sow/art-banner.png';
 
 const CATEGORIES: OnePickerOption[] = [
   'Painting', 'Photography', 'Digital art', 'Illustration', 'Drawing',
@@ -42,23 +42,18 @@ const LICENCE_LABELS: Record<Licence, string> = {
   print_rights: 'Print rights',
 };
 
-// Willow would normally weave this banner per spec, but companion-invoke
-// needs a real signed-in session and spends the user's own image-quota —
-// not something to trigger from a build script. Reusing the same neutral
-// "sowing" asset the /sow chooser itself uses, same reasoning as
-// SowMusicPage's banner.
 function SowBanner() {
   return (
     <div
       className="relative w-full h-32 md:h-44 lg:h-56 overflow-hidden rounded-2xl mb-6 border"
       style={{ borderColor: 'rgba(217,70,239,0.45)', boxShadow: '0 0 40px rgba(217,70,239,0.25)' }}
     >
-      <img src={sowArtBanner} alt="" className="absolute inset-0 w-full h-full object-cover" loading="eager" />
+      <img src={sowArtBanner} alt="" className="absolute inset-0 w-full h-full object-cover object-right" loading="eager" />
       <div
         className="absolute inset-0"
-        style={{ background: 'linear-gradient(to top, rgba(0,0,0,0.85), rgba(217,70,239,0.25) 60%, rgba(0,0,0,0.1))' }}
+        style={{ background: 'linear-gradient(to bottom, rgba(0,0,0,0.85), rgba(217,70,239,0.25) 60%, rgba(0,0,0,0.1))' }}
       />
-      <div className="absolute inset-0 flex flex-col justify-end p-4 md:p-6">
+      <div className="absolute inset-x-0 top-0 flex flex-col p-4 md:p-6">
         <h1 className="text-white text-xl md:text-3xl font-black tracking-tight drop-shadow-lg">Sow your art</h1>
         <p className="text-white/85 text-sm md:text-base mt-1 max-w-2xl drop-shadow">
           Share a piece with the tribe — planted in under two minutes.

@@ -1659,6 +1659,61 @@ real banner from, so nothing changes there.
   block (since neither needs one).
 - `npx tsc --noEmit` and `npx eslint` both clean.
 
+## Fixed — 2026-08-29, still later (real photo cards on the /sow chooser; dedicated banners for music/art/book)
+
+Eight more banners landed from Downloads, into a new `src/assets/sow/`
+(distinct from `src/assets/wandering/`, which holds the Directory/
+role-unlock artwork) — same 1264×843 "text left, photo right" template
+as every banner so far. Copied: `music-banner.png`, `art-banner.png`,
+`book-banner.png`, `forge-banner.png`, `field-sow-banner.png`,
+`hearth-sow-banner.png`, `community-orchard-banner.png`,
+`production-orchard-banner.png`.
+
+- **`presets.ts`**: `forge` finally gets a real `bannerImage` (from
+  `src/assets/sow/forge-banner.png` — landed later than the other five,
+  hence the different folder; noted directly in the interface doc
+  comment). Only `shop` still has none.
+- **`hearth-sow-banner.png` is copied but not wired anywhere** — the
+  task's own card-by-card mapping for the `/sow` chooser never names it
+  (Music/Art/Books → their three; Product → `field-sow-banner`;
+  Hand/Wheel/Pillow → the existing Wandering presets; Community/
+  Production → the two orchard banners), and it doesn't fit
+  `presets.ts`'s `hearth` preset either (that one already got
+  `hearth-banner.png`, from `src/assets/wandering/`, two tasks ago).
+  Flagging rather than guessing where a second Hearth-flavoured banner
+  was meant to go.
+- **`SowChooserPage.tsx`**: every one of the 9 cards (Music/Art/Books,
+  Product, Hand/Wheel/Pillow, Community/Production) now carries a real
+  `bannerUrl`, rendered `object-cover object-right` (crops to the photo
+  half, keeping each banner's own baked-in title/tagline/CTA out of the
+  small card) under a dark bottom gradient, with the card's own label
+  sitting on top of that gradient instead of centred over an icon. Icon/
+  emoji fallback rendering stays in both tile components for any future
+  card without artwork, and the Lock+"Coming soon" treatment is
+  unchanged for a non-live card — neither currently exercised, since
+  every card here is live with real art today, but both stay correct
+  for whenever that's not true. Hand/Wheel/Pillow reuse the exact same
+  `getPreset('hand'|'wheel'|'pillow').bannerImage` every other surface
+  already shows — one asset, no new copy.
+- **`SowMusicPage.tsx`, `SowArtPage.tsx`, `SowBookPage.tsx`**: each gets
+  its own dedicated banner instead of a shared fallback (Music
+  previously used `chat-mode-radio.jpg`, Art and Book both used
+  `seeds-strip.jpg` — none of the three shared one asset in practice,
+  despite that being the premise of this task's own opening line; fixed
+  either way, matches what was asked). Title/subtitle move from bottom-
+  anchored to top-left, `object-position: right` crops to the photo
+  half, same pattern `SowProductPage.tsx`/`SowHandPage.tsx` already
+  established for this exact reason.
+- **`SowProductPage.tsx`**: the shop/unresolved-kind fallback banner is
+  now `field-sow-banner.png` (a generic "goods" photo) instead of
+  `seeds-strip.jpg`. Field/Hearth/Forge all now show their own real
+  preset banner (Forge's landed in this same task, via step 1 above) —
+  only Shop and an unresolved kind ever reach this fallback now, both
+  cases with no preset object to draw from at all.
+- Verified with a real `npm run build`, not just `tsc --noEmit` — same
+  reasoning as every other asset-import change this session.
+- `npx tsc --noEmit`, `npx eslint`, and `npm run build` all clean.
+
 ## Open — priority order
 
 1. ~~Live proof that `paypal-webhook` actually works now~~ — **resolved, see Keystone problem**: order `0a6a0b1a` finalized via a clean webhook call at 08:36 UTC 2026-08-29. The `processed_webhooks`-insert bug (separate from the webhook itself) is also fixed; watch for its first real row as confirmation the fix landed, not as proof the webhook works — that's already established.

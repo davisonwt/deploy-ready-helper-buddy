@@ -22,7 +22,7 @@ import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { ArrowLeft, ChevronDown, Eye, ImagePlus, X, Loader2, Wheat, Flame, Hammer, Package, Check } from 'lucide-react';
-import sowProductBanner from '@/assets/seeds-strip.jpg';
+import sowProductBanner from '@/assets/sow/field-sow-banner.png';
 import { saveBusinessKind, productKindForBusinessKind, BUSINESS_KIND_OPTIONS, type BusinessKind } from '@/lib/store/businessKind';
 import { getPreset } from '@/lib/store/presets';
 
@@ -62,11 +62,10 @@ const BANNER_COPY: Record<Kind, { title: string; sub: string }> = {
 
 const FALLBACK_ACCENT = '#ea580c';
 
-// Field/Hearth get their business kind's real preset banner (real
-// artwork landed this session). Forge's preset exists but has no
-// artwork yet, and Shop/an unresolved kind have no preset banner at
-// all — all three fall through to the same seeds-strip.jpg /sow/art and
-// /sow/book already use.
+// Field/Hearth/Forge get their business kind's real preset banner (real
+// artwork landed for all three now). Shop and an unresolved kind (no
+// preset object exists for either) fall back to field-sow-banner.png —
+// a generic "goods" photo, not seeds-strip.jpg.
 function SowBanner({ kind }: { kind: Kind | null }) {
   const copy = kind ? BANNER_COPY[kind] : BANNER_COPY.product;
   const preset = kind && kind !== 'product' ? getPreset(kind) : null;
@@ -77,7 +76,7 @@ function SowBanner({ kind }: { kind: Kind | null }) {
       className="relative w-full h-32 md:h-44 lg:h-56 overflow-hidden rounded-2xl mb-6 border"
       style={{ borderColor: `${accent}73`, boxShadow: `0 0 40px ${accent}40` }}
     >
-      <img src={bannerUrl} alt="" className="absolute inset-0 w-full h-full object-cover" loading="eager" />
+      <img src={bannerUrl} alt="" className="absolute inset-0 w-full h-full object-cover object-right" loading="eager" />
       <div
         className="absolute inset-0"
         style={{ background: `linear-gradient(to bottom, rgba(0,0,0,0.85), ${accent}40 60%, rgba(0,0,0,0.1))` }}
