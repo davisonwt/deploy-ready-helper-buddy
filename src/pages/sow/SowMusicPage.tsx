@@ -43,27 +43,13 @@ type Mode = 'single' | 'album';
 // user's own image-generation quota — not something to trigger from a
 // build script. Using the existing warm, music-themed asset instead, in
 // the same style as PageHeroBanner (src/components/chat/PageHeroBanner.tsx).
-function SowBanner({ mode }: { mode: Mode }) {
+function SowBanner() {
   return (
     <div
       className="relative w-full h-32 md:h-44 lg:h-56 overflow-hidden rounded-2xl mb-6 border"
       style={{ borderColor: 'rgba(56,189,248,0.45)', boxShadow: '0 0 40px rgba(56,189,248,0.25)' }}
     >
       <img src={sowMusicBanner} alt="" className="absolute inset-0 w-full h-full object-cover object-right" loading="eager" />
-      <div
-        className="absolute inset-0"
-        style={{ background: 'linear-gradient(to bottom, rgba(0,0,0,0.85), rgba(56,189,248,0.25) 60%, rgba(0,0,0,0.1))' }}
-      />
-      <div className="absolute inset-x-0 top-0 flex flex-col p-4 md:p-6">
-        <h1 className="text-white text-xl md:text-3xl font-black tracking-tight drop-shadow-lg">
-          {mode === 'album' ? 'Sow an album' : 'Sow a song'}
-        </h1>
-        <p className="text-white/85 text-sm md:text-base mt-1 max-w-2xl drop-shadow">
-          {mode === 'album'
-            ? 'Share a full release with the tribe, track by track.'
-            : 'Share your track with the tribe — planted in under two minutes.'}
-        </p>
-      </div>
     </div>
   );
 }
@@ -296,7 +282,9 @@ export default function SowMusicPage() {
         Back
       </Button>
 
-      <SowBanner mode={mode} />
+      <h1 className="text-2xl font-bold mb-4">{mode === 'album' ? 'Sow an album' : 'Sow a song'}</h1>
+
+      <SowBanner />
 
       <div className="grid md:grid-cols-[1fr_320px] gap-8">
         <div className="space-y-5">

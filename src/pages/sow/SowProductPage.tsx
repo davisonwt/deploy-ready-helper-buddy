@@ -53,11 +53,11 @@ const CATEGORY_OPTIONS_BY_KIND: Record<Exclude<Kind, 'product'>, OnePickerOption
 const MAX_EXTRA_PHOTOS = 5;
 const MAX_PHOTO_SIZE_BYTES = 10 * 1024 * 1024;
 
-const BANNER_COPY: Record<Kind, { title: string; sub: string }> = {
-  field: { title: 'Sow from the field', sub: 'Farm produce, planted in under two minutes.' },
-  hearth: { title: 'Sow from the hearth', sub: 'Home-made goods, planted in under two minutes.' },
-  forge: { title: 'Sow from the forge', sub: 'Custom-made goods, planted in under two minutes.' },
-  product: { title: 'Sow physical goods', sub: 'Share something physical with the tribe — planted in under two minutes.' },
+const BANNER_TITLE: Record<Kind, string> = {
+  field: 'Sow from the field',
+  hearth: 'Sow from the hearth',
+  forge: 'Sow from the forge',
+  product: 'Sow physical goods',
 };
 
 const FALLBACK_ACCENT = '#ea580c';
@@ -67,7 +67,6 @@ const FALLBACK_ACCENT = '#ea580c';
 // preset object exists for either) fall back to field-sow-banner.png —
 // a generic "goods" photo, not seeds-strip.jpg.
 function SowBanner({ kind }: { kind: Kind | null }) {
-  const copy = kind ? BANNER_COPY[kind] : BANNER_COPY.product;
   const preset = kind && kind !== 'product' ? getPreset(kind) : null;
   const bannerUrl = preset?.bannerImage ?? sowProductBanner;
   const accent = preset?.bannerImage ? preset.accent : FALLBACK_ACCENT;
@@ -77,14 +76,6 @@ function SowBanner({ kind }: { kind: Kind | null }) {
       style={{ borderColor: `${accent}73`, boxShadow: `0 0 40px ${accent}40` }}
     >
       <img src={bannerUrl} alt="" className="absolute inset-0 w-full h-full object-cover object-right" loading="eager" />
-      <div
-        className="absolute inset-0"
-        style={{ background: `linear-gradient(to bottom, rgba(0,0,0,0.85), ${accent}40 60%, rgba(0,0,0,0.1))` }}
-      />
-      <div className="absolute inset-x-0 top-0 flex flex-col p-4 md:p-6">
-        <h1 className="text-white text-xl md:text-3xl font-black tracking-tight drop-shadow-lg">{copy.title}</h1>
-        <p className="text-white/85 text-sm md:text-base mt-1 max-w-2xl drop-shadow">{copy.sub}</p>
-      </div>
     </div>
   );
 }
@@ -374,6 +365,8 @@ export default function SowProductPage() {
         <ArrowLeft className="w-4 h-4 mr-2" />
         Back
       </Button>
+
+      <h1 className="text-2xl font-bold mb-4">{kind ? BANNER_TITLE[kind] : BANNER_TITLE.product}</h1>
 
       <SowBanner kind={kind} />
 

@@ -61,43 +61,22 @@ const DEFAULT_RADIUS_KM = 30;
 const MAX_EXTRA_PHOTOS = 5;
 const MAX_PHOTO_SIZE_BYTES = 10 * 1024 * 1024;
 
-// Real Hand artwork landed this session — its baked-in chip row bakes in
-// "Dentists, Doctors" (no licensed professionals until the lawyer
-// answers that question), so it's covered with presets.ts's own chips,
-// same treatment as RegisterWanderingPage.tsx/StorePage.tsx.
+// Hand's poster bakes in "Dentists, Doctors" (no licensed professionals
+// until the lawyer answers that question, spec-wandering-doors.md §4)
+// below the image's ~44% mark by estimate — cropped to a fixed top
+// slice via aspect-ratio (not a max-height, which crops a different
+// fraction depending on container width) so that text stays out of
+// frame regardless of screen size. Not live-verified this session.
 function SowBanner() {
   const preset = getPreset('hand');
   const bannerUrl = preset?.bannerImage ?? sowProductBanner;
   const accent = preset?.accent ?? '#16a34a';
   return (
     <div
-      className="relative w-full h-32 md:h-44 lg:h-56 overflow-hidden rounded-2xl mb-6 border"
+      className="relative w-full overflow-hidden rounded-2xl mb-6 border aspect-[3.9/1]"
       style={{ borderColor: `${accent}73`, boxShadow: `0 0 40px ${accent}40` }}
     >
-      <img src={bannerUrl} alt="" className="absolute inset-0 w-full h-full object-cover" loading="eager" />
-      <div
-        className="absolute inset-0"
-        style={{ background: `linear-gradient(to bottom, rgba(0,0,0,0.85), ${accent}40 60%, rgba(0,0,0,0.1))` }}
-      />
-      <div className="absolute inset-x-0 top-0 flex flex-col p-4 md:p-6">
-        <h1 className="text-white text-xl md:text-3xl font-black tracking-tight drop-shadow-lg">🤲 Sow a Hand seed</h1>
-        <p className="text-white/85 text-sm md:text-base mt-1 max-w-2xl drop-shadow">
-          Offer your skills to the tribe — planted in under two minutes.
-        </p>
-      </div>
-      {preset?.bannerImage && (
-        <div className="absolute inset-x-0 bottom-0 h-[45%] bg-[#081310]/95 flex items-center justify-center px-3 gap-1.5 flex-wrap">
-          {preset.chips.map((chip) => (
-            <span
-              key={chip}
-              className="text-[10px] md:text-xs font-medium px-2 py-0.5 rounded-full"
-              style={{ backgroundColor: `${accent}22`, color: accent, border: `1px solid ${accent}55` }}
-            >
-              {chip}
-            </span>
-          ))}
-        </div>
-      )}
+      <img src={bannerUrl} alt="" className="absolute inset-0 w-full h-full object-cover object-top" loading="eager" />
     </div>
   );
 }
@@ -362,6 +341,8 @@ export default function SowHandPage() {
         <ArrowLeft className="w-4 h-4 mr-2" />
         Back
       </Button>
+
+      <h1 className="text-2xl font-bold mb-4">🤲 Sow a Hand seed</h1>
 
       <SowBanner />
 

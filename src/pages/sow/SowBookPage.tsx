@@ -45,16 +45,6 @@ function SowBanner() {
       style={{ borderColor: 'rgba(234,179,8,0.45)', boxShadow: '0 0 40px rgba(234,179,8,0.25)' }}
     >
       <img src={sowBookBanner} alt="" className="absolute inset-0 w-full h-full object-cover object-right" loading="eager" />
-      <div
-        className="absolute inset-0"
-        style={{ background: 'linear-gradient(to bottom, rgba(0,0,0,0.85), rgba(234,179,8,0.25) 60%, rgba(0,0,0,0.1))' }}
-      />
-      <div className="absolute inset-x-0 top-0 flex flex-col p-4 md:p-6">
-        <h1 className="text-white text-xl md:text-3xl font-black tracking-tight drop-shadow-lg">Sow your book</h1>
-        <p className="text-white/85 text-sm md:text-base mt-1 max-w-2xl drop-shadow">
-          Share a document or e-book with the tribe — planted in under two minutes.
-        </p>
-      </div>
     </div>
   );
 }
@@ -276,6 +266,8 @@ export default function SowBookPage() {
         <ArrowLeft className="w-4 h-4 mr-2" />
         Back
       </Button>
+
+      <h1 className="text-2xl font-bold mb-4">Sow your book</h1>
 
       <SowBanner />
 

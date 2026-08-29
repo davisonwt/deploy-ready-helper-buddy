@@ -1714,6 +1714,73 @@ as every banner so far. Copied: `music-banner.png`, `art-banner.png`,
   reasoning as every other asset-import change this session.
 - `npx tsc --noEmit`, `npx eslint`, and `npm run build` all clean.
 
+## Fixed — 2026-08-29, still later (posters are the header now — dropped the overlaid title/promise everywhere; Hand's chip band replaced with a fixed-aspect crop)
+
+The role-unlock and store banners were overprinting our own title on top
+of the poster's own baked-in title — a visible double-title collision.
+Fixed by not overlaying text on real posters at all, in two different
+ways depending on which banner family:
+
+- **`RegisterWanderingPage.tsx`** (both the main hero and the smaller
+  success-view banner) **and `StorePage.tsx`**: when the preset has a
+  `bannerImage`, it now renders at natural aspect ratio (`w-full h-auto
+  max-h-56 md:max-h-80`, i.e. capped at 320px on desktop as asked) with
+  `object-position: top` — no gradient, no title, no promise text. The
+  poster's own baked-in title/tagline is the header. The accent glow
+  border is unchanged. Only the no-`bannerImage` fallback (`shop`, or
+  any future kind with no artwork) keeps the old gradient+title+promise
+  treatment.
+- **`/sow/music`, `/sow/art`, `/sow/book`, `/sow/product`, `/sow/hand`**:
+  poster kept as-is (still `object-cover object-right`, cropping to the
+  photo half only — unchanged technique, these never showed the baked-
+  in title to begin with), overlay `<h1>`/`<p>` removed entirely. Each
+  page's own heading ("Sow a song", "Sow your art", "Sow physical
+  goods", "🤲 Sow a Hand seed", etc.) now renders as normal page text
+  (`<h1 className="text-2xl font-bold mb-4">`) above the banner, not
+  overlaid on it. The subtitle line is dropped, not relocated — matches
+  what was asked ("remove our overlaid heading and subtitle").
+- **Hand's chip-cover band is removed from all three surfaces
+  (`RegisterWanderingPage.tsx`, `StorePage.tsx`, `SowHandPage.tsx`)**
+  and replaced with `object-position: top` cropping, per the task. The
+  task also asked to *verify* the "dentists, doctors" description line
+  (not just the icon row) is actually hidden by that crop, and to keep
+  the band on Hand only if not.
+
+  **That verification found a real problem with a plain max-height
+  cap**: the fraction of the image a max-height crop actually shows
+  depends on the *container's* width (`visible % = maxHeight /
+  (containerWidth / imageAspectRatio)`), and this app's real containers
+  for these banners range from ~480px (`RegisterWanderingPage`'s
+  success view, `max-w-lg`) to ~990px (the main hero and `StorePage`,
+  both `max-w-5xl`). At those widths, a 320px cap shows anywhere from
+  ~49% down to ~99% of the image's height — comfortably past the ~44%
+  mark where Hand's description paragraph (which itself contains
+  "dentists, doctors", separately from the icon row around ~58-70%) is
+  estimated to sit. A fixed max-height would not have reliably hidden
+  it, especially in the narrower success-view container where it
+  barely crops at all.
+
+  **Fix: Hand specifically uses a fixed aspect-ratio crop
+  (`aspect-[3.9/1]`) instead of a max-height**, on all three surfaces.
+  Unlike max-height, the visible fraction of an aspect-ratio crop is
+  constant regardless of container width — it always shows roughly the
+  top ~38% of the image (icon, title, most of the tagline), which by
+  the same estimate sits safely above the description paragraph and
+  icon row. Every other kind (pillow/wheel/field/hearth/forge) keeps
+  the plain max-height treatment, since none of them have this baked-in
+  text problem.
+
+  **This is still an estimate, not a live-browser measurement** — the
+  44%/58-70% marks come from eyeballing the source PNG, not a pixel
+  measurement, and no browser tooling is available this session to
+  confirm the actual rendered crop. If "dentists, doctors" is still
+  visible anywhere after publishing, the fix is narrowing
+  `aspect-[3.9/1]` further (e.g. `aspect-[4.5/1]`), not reintroducing
+  the chip band.
+- `npx tsc --noEmit`, `npx eslint` (one pre-existing, unrelated warning
+  in `SowProductPage.tsx` — an `eslint-disable` comment for a hook this
+  change didn't touch), and a real `npm run build` all clean.
+
 ## Open — priority order
 
 1. ~~Live proof that `paypal-webhook` actually works now~~ — **resolved, see Keystone problem**: order `0a6a0b1a` finalized via a clean webhook call at 08:36 UTC 2026-08-29. The `processed_webhooks`-insert bug (separate from the webhook itself) is also fixed; watch for its first real row as confirmation the fix landed, not as proof the webhook works — that's already established.

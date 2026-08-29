@@ -172,48 +172,32 @@ export default function StorePage() {
         {/* Banner — the kind's preset (spec-storefronts.md §4a). Real
             artwork exists for pillow/hand/wheel/field/hearth now
             (src/assets/wandering/); forge and shop still fall back to
-            the accent gradient. Each banner is a full poster with its
-            own baked-in tagline/chip-row/CTA/footer — this strip only
-            shows a short cropped slice of it, so most of that is already
-            cropped out; hand's baked-in row ("Plumbers, Electricians,
-            Mechanics, Dentists, Doctors, & More") still peeks through at
-            some viewport sizes though, and bakes in Dentists/Doctors,
-            which presets.ts's own chips deliberately exclude
-            (spec-wandering-doors.md §4) — covered below rather than left
-            showing licensed-professional categories we haven't cleared. */}
+            the accent gradient. The poster's own baked-in title/tagline
+            is the header now — no text overlay of ours competes with it.
+            Hand's poster bakes in "Dentists, Doctors" (not cleared yet,
+            spec-wandering-doors.md §4) below the image's ~44% mark by
+            estimate — cropped to a fixed top slice via aspect-ratio
+            (not max-height, which crops a different fraction depending
+            on container width) so that text stays out of frame
+            regardless of screen size. Not live-verified this session. */}
         {preset && (
-          <div
-            className="relative w-full h-28 md:h-36 overflow-hidden rounded-2xl mb-4 border"
-            style={
-              bannerUrl
-                ? { backgroundImage: `url(${bannerUrl})`, backgroundSize: 'cover', backgroundPosition: 'center', borderColor: `${accent}66` }
-                : { background: `linear-gradient(135deg, ${accent}, ${accent}55)`, borderColor: `${accent}66` }
-            }
-          >
-            <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
-            {preset.kind === 'hand' && bannerUrl ? (
-              <>
-                <p className="absolute inset-x-0 top-0 p-4 text-white text-sm md:text-base font-semibold drop-shadow">
-                  {preset.promise}
-                </p>
-                <div className="absolute inset-x-0 bottom-0 h-[45%] bg-[#081310]/95 flex items-center justify-center px-3 gap-1.5 flex-wrap">
-                  {preset.chips.map((chip) => (
-                    <span
-                      key={chip}
-                      className="text-[10px] font-medium px-2 py-0.5 rounded-full"
-                      style={{ backgroundColor: `${accent}22`, color: accent, border: `1px solid ${accent}55` }}
-                    >
-                      {chip}
-                    </span>
-                  ))}
-                </div>
-              </>
+          bannerUrl ? (
+            preset.kind === 'hand' ? (
+              <div className="relative w-full overflow-hidden rounded-2xl mb-4 border aspect-[3.9/1]" style={{ borderColor: `${accent}66` }}>
+                <img src={bannerUrl} alt="" className="absolute inset-0 w-full h-full object-cover object-top" loading="eager" />
+              </div>
             ) : (
+              <div className="relative w-full overflow-hidden rounded-2xl mb-4 border" style={{ borderColor: `${accent}66` }}>
+                <img src={bannerUrl} alt="" className="w-full h-auto max-h-56 md:max-h-80 object-cover object-top" loading="eager" />
+              </div>
+            )
+          ) : (
+            <div className="relative w-full h-28 md:h-36 overflow-hidden rounded-2xl mb-4 border" style={{ background: `linear-gradient(135deg, ${accent}, ${accent}55)`, borderColor: `${accent}66` }}>
               <div className="absolute inset-0 flex items-end p-4">
                 <p className="relative text-white text-sm md:text-base font-semibold drop-shadow">{preset.promise}</p>
               </div>
-            )}
-          </div>
+            </div>
+          )
         )}
 
         {/* Header */}
