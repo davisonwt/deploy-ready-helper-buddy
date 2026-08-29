@@ -54,7 +54,7 @@ const CRON_SECRET = Deno.env.get("CRON_SECRET") ?? "";
 const STALE_HOURS = 48;
 const MISS_THRESHOLD = 3;
 
-type ReconcileKind = "basket" | "content" | "gift" | "orchard" | "topup";
+type ReconcileKind = "basket" | "content" | "gift" | "orchard" | "topup" | "booking";
 
 interface Target {
   kind: ReconcileKind;
@@ -118,7 +118,7 @@ Deno.serve(async (req) => {
       if (httpStatus === 404) {
         const missCount = await recordMiss(service, t.kind, t.table, t.recordId, httpStatus);
         if (missCount >= MISS_THRESHOLD && ageHours >= STALE_HOURS) {
-          await service.from(t.table).update({ [t.statusColumn]: "failed" }).eq("id", t.recordId);
+          await markOrderFailed(service, t);
           await resolveMiss(service, t.table, t.recordId, "paypal_order_not_found");
           results.push({ kind: t.kind, recordId: t.recordId, paypalStatus, action: "marked_failed_not_found", missCount });
         } else {
@@ -133,7 +133,7 @@ Deno.serve(async (req) => {
       if (ageHours >= STALE_HOURS && ok) {
         // PayPal itself confirms this is not (and isn't going to become)
         // completed -- a positive answer, not just staleness. Safe to close.
-        await service.from(t.table).update({ [t.statusColumn]: "failed" }).eq("id", t.recordId);
+        await markOrderFailed(service, t);
         results.push({ kind: t.kind, recordId: t.recordId, paypalStatus, action: "marked_failed" });
       } else {
         results.push({ kind: t.kind, recordId: t.recordId, paypalStatus, action: "left_pending" });
@@ -197,7 +197,36 @@ async function collectTargets(service: ReturnType<typeof createClient>): Promise
     out.push({ kind: "topup", table: "topups", recordId: r.id, paypalOrderId: r.provider_order_id, createdAt: r.created_at, statusColumn: "status" });
   }
 
+  // Bookings has no 'processing' status (see paypal-webhook's markProcessing
+  // comment) — a payment-pending booking sits at 'accepted' the whole time,
+  // so that's the one status value to sweep here, not pending/processing.
+  const { data: bookings } = await service
+    .from("bookings")
+    .select("id, provider_order_id, created_at")
+    .eq("provider", "paypal")
+    .eq("status", "accepted")
+    .not("provider_order_id", "is", null);
+  for (const r of (bookings ?? []) as any[]) {
+    out.push({ kind: "booking", table: "bookings", recordId: r.id, paypalOrderId: r.provider_order_id, createdAt: r.created_at, statusColumn: "status" });
+  }
+
   return out;
+}
+
+/**
+ * Closes a genuinely-failed order — except bookings.status has no 'failed'
+ * value in its CHECK constraint (requested|accepted|declined|expired|paid|
+ * cancelled), unlike every other table this sweeps. A booking's payment
+ * genuinely not going anywhere is left at 'accepted' instead — the grower
+ * can just retry Pay — matching the same choice paypal-webhook's markFailed
+ * already made for the exact same reason.
+ */
+async function markOrderFailed(service: ReturnType<typeof createClient>, t: Target): Promise<void> {
+  if (t.kind === "booking") {
+    console.warn("reconcile: booking payment not completed, left as 'accepted' for retry", t.recordId);
+    return;
+  }
+  await service.from(t.table).update({ [t.statusColumn]: "failed" }).eq("id", t.recordId);
 }
 
 /** Increments (or starts) the consecutive-404 streak for this row; returns the new count. */

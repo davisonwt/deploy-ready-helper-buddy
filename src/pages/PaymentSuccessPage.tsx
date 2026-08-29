@@ -9,8 +9,8 @@ import { launchConfetti, floatingScore, playSoundEffect } from '@/utils/confetti
 import { invokePaymentFunction } from '@/lib/payments/invokeFunction';
 import { backOutFee, round2 } from '@/lib/pricing/platformFee';
 
-type OrderKind = 'basket' | 'content' | 'gift' | 'topup';
-type OrderStatus = 'pending' | 'processing' | 'completed' | 'failed' | 'expired';
+type OrderKind = 'basket' | 'content' | 'gift' | 'topup' | 'booking';
+type OrderStatus = 'pending' | 'processing' | 'completed' | 'failed' | 'expired' | 'accepted' | 'paid';
 
 interface ActiveOrder {
   kind: OrderKind;
@@ -23,7 +23,10 @@ interface ActiveOrder {
   // Distribution Overview can back S2G's 15% out of the subtotal alone
   // rather than out of the full buyer_total, and show the processor's cut
   // as its own line, matching BestowalReceiptMessage.tsx exactly.
-  processorFeeColumn: string;
+  // null for booking — bookings has no processor_fee column (see
+  // create-booking-paypal-order's own header for why); its total is
+  // charged as-is, no processor cut layered on top yet.
+  processorFeeColumn: string | null;
 }
 
 // The ?bestowal= param covers both gift AND orchard bestowals — both are
@@ -40,6 +43,8 @@ function resolveActiveOrder(searchParams: URLSearchParams): ActiveOrder | null {
   if (bestowal) return { kind: 'gift', id: bestowal, table: 'bestowals', statusColumn: 'payment_status', amountColumn: 'buyer_total_amount', processorFeeColumn: 'processor_fee_amount' };
   const topup = searchParams.get('topup');
   if (topup) return { kind: 'topup', id: topup, table: 'topups', statusColumn: 'status', amountColumn: 'amount', processorFeeColumn: 'fee_amount' };
+  const booking = searchParams.get('booking');
+  if (booking) return { kind: 'booking', id: booking, table: 'bookings', statusColumn: 'status', amountColumn: 'total', processorFeeColumn: null };
   return null;
 }
 
@@ -77,9 +82,12 @@ export default function PaymentSuccessPage() {
     const tick = async () => {
       if (cancelled) return;
       attempts += 1;
+      const cols = [active.statusColumn, active.amountColumn, active.processorFeeColumn]
+        .filter((c): c is string => !!c)
+        .join(', ');
       const { data, error } = await supabase
         .from(active.table)
-        .select(`${active.statusColumn}, ${active.amountColumn}, ${active.processorFeeColumn}`)
+        .select(cols)
         .eq('id', active.id)
         .maybeSingle();
 
@@ -89,9 +97,14 @@ export default function PaymentSuccessPage() {
         setStatus(rowStatus);
         const rowAmount = row[active.amountColumn];
         if (rowAmount != null) setAmount(Number(rowAmount));
-        const rowProcessorFee = row[active.processorFeeColumn];
+        const rowProcessorFee = active.processorFeeColumn ? row[active.processorFeeColumn] : null;
         setProcessorFee(rowProcessorFee != null ? Number(rowProcessorFee) : 0);
-        if (rowStatus === 'completed' && !celebratedRef.current) {
+        // Every other kind's terminal success value is 'completed' —
+        // bookings.status uses 'paid' instead (it also carries the
+        // pre-payment request/accept/decline lifecycle, which none of the
+        // other tables' status columns do).
+        const isDone = rowStatus === 'completed' || (active.kind === 'booking' && rowStatus === 'paid');
+        if (isDone && !celebratedRef.current) {
           celebratedRef.current = true;
           if (active.kind === 'basket') {
             try { clearBasket(); } catch { /* ignore */ }
@@ -115,7 +128,8 @@ export default function PaymentSuccessPage() {
     return () => { cancelled = true; };
   }, [active, clearBasket]);
 
-  const showProcessing = !!active && status !== 'completed' && status !== 'failed' && status !== 'expired';
+  const isOrderDone = !!active && (status === 'completed' || (active.kind === 'booking' && status === 'paid'));
+  const showProcessing = !!active && !isOrderDone && status !== 'failed' && status !== 'expired';
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-background to-muted/20 p-4">
@@ -130,8 +144,8 @@ export default function PaymentSuccessPage() {
           </div>
           <CardTitle className="text-2xl">
             {active
-              ? status === 'completed'
-                ? 'Bestowal Complete!'
+              ? isOrderDone
+                ? active.kind === 'booking' ? 'Booking Paid!' : 'Bestowal Complete!'
                 : status === 'failed' || status === 'expired'
                 ? 'Payment Not Completed'
                 : 'Confirming Your Payment...'
@@ -142,8 +156,10 @@ export default function PaymentSuccessPage() {
           {active ? (
             <>
               <p className="text-muted-foreground">
-                {status === 'completed'
-                  ? `Thank you! Your bestowal${amount ? ` totalling $${amount.toFixed(2)}` : ''} has been recorded and creators will be paid out automatically.`
+                {isOrderDone
+                  ? active.kind === 'booking'
+                    ? `Paid! Your booking${amount ? ` totalling $${amount.toFixed(2)}` : ''} is confirmed — check the chat for the details.`
+                    : `Thank you! Your bestowal${amount ? ` totalling $${amount.toFixed(2)}` : ''} has been recorded and creators will be paid out automatically.`
                   : status === 'failed' || status === 'expired'
                   ? 'We did not receive a confirmed payment from your provider. No bestowals were recorded. You can try again.'
                   : 'We are waiting for the payment processor to confirm your transaction. This page will update automatically — no need to refresh.'}
@@ -208,6 +224,11 @@ export default function PaymentSuccessPage() {
               <Button onClick={() => navigate('/dashboard')} className="w-full">
                 <ArrowRight className="mr-2 h-4 w-4" />
                 Go to Dashboard
+              </Button>
+            ) : active?.kind === 'booking' ? (
+              <Button onClick={() => navigate('/chatapp')} className="w-full">
+                <ArrowRight className="mr-2 h-4 w-4" />
+                See the confirmation in chat
               </Button>
             ) : (
               <Button onClick={() => navigate('/my-seeds')} className="w-full">

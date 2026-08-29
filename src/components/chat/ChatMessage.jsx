@@ -10,6 +10,7 @@ import { PurchaseDeliveryMessage } from './PurchaseDeliveryMessage';
 import { BestowalReceiptMessage } from './BestowalReceiptMessage';
 import { BookingRequestMessage } from './BookingRequestMessage';
 import { BookingResponseMessage } from './BookingResponseMessage';
+import { BookingConfirmedMessage } from './BookingConfirmedMessage';
 
 const getFileIcon = (fileType) => {
   const icons = {
@@ -59,6 +60,18 @@ const ChatMessage = ({ message, isOwn = false, onDelete, isInstructor, instructo
       <div className={`flex gap-3 mb-4 ${isOwn ? 'flex-row-reverse' : ''}`}>
         <div className="flex-1 max-w-[80%]">
           <BookingResponseMessage metadata={message.system_metadata} />
+        </div>
+      </div>
+    );
+  }
+
+  // Booking paid — confirmation card, no download (a service has nothing
+  // to download).
+  if (message.message_type === 'booking_confirmed' && message.system_metadata) {
+    return (
+      <div className={`flex gap-3 mb-4 ${isOwn ? 'flex-row-reverse' : ''}`}>
+        <div className="flex-1 max-w-[80%]">
+          <BookingConfirmedMessage metadata={message.system_metadata} />
         </div>
       </div>
     );

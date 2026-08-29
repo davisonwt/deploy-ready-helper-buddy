@@ -60,6 +60,9 @@ verify_jwt = true
 [functions.create-basket-bestowal-order]
 verify_jwt = false
 
+[functions.create-booking-paypal-order]
+verify_jwt = false
+
 [functions.create-eft-payment]
 verify_jwt = true
 

@@ -1279,6 +1279,136 @@ Pay button is wired disabled ("Payment next").
   reading the query, not assumed.
 - `npx tsc --noEmit` and `npx eslint` both clean.
 
+## Fixed — 2026-08-29, still later (spec-service-seeds.md §7 step 3: booking payment, wired per the prior report's recommendation)
+
+Smallest change set, exactly as recommended: `bookings` stays lightweight
+(3 new columns only), the real financial record is ONE `product_bestowals`
+row inserted at finalize — so payout, `sower_earnings_v` and
+`release-escrow` need zero changes to also cover a paid booking.
+
+- **Schema**: `bookings` gains `provider`, `provider_order_id`,
+  `payment_reference` (all nullable text) —
+  `20260829290000_bookings-paypal-columns.sql`.
+- **New `create-booking-paypal-order`**: input `bookingId`; checks caller
+  === `grower_user_id` and `status === 'accepted'`; re-reads
+  amount/s2g_fee/total from the `bookings` row itself (never trusts a
+  client-submitted amount); creates the PayPal order
+  (`custom_id: "booking:<id>"`, `return_url` →
+  `/payment-success?booking=<id>`); writes `provider`/`provider_order_id`
+  back. Deployed, `verify_jwt = false` in `config.toml` (matches every
+  sibling create-*-order function — auth is checked manually inside, same
+  pattern as `create-basket-bestowal-order`).
+  - **Known, disclosed gap**: every other `create-*-order` function runs
+    its buyer total through `computeBuyerFee` so the buyer (not the
+    sower) absorbs PayPal's processor cut — this one doesn't. The order
+    amount is exactly `bookings.total`, no processor fee layered on top,
+    since `bookings` has no `processor_fee` column and adding one wasn't
+    part of this change set's explicit column list. Flagged, not silently
+    decided — worth a follow-up if parity with the other payment paths
+    matters here.
+- **`paypal-webhook`**: `parseCustomId` gains the `booking:` prefix.
+  `markProcessing`/`markFailed` both get a `case "booking"` that's a
+  deliberate no-op (with a comment explaining why) — `bookings.status`'s
+  CHECK constraint has no `'processing'` or `'failed'` value (it's
+  `requested|accepted|declined|expired|paid|cancelled`, carrying the
+  pre-payment accept/decline lifecycle that no other table's status
+  column does). A payment-pending booking just sits at `'accepted'`
+  through the whole window; a failed/denied capture leaves it there too,
+  so the grower can simply retry Pay.
+- **`_shared/paypal/capture.ts`**: `PaypalOrderKind` gains `'booking'`;
+  `finalize()` gets `case "booking"` → new `finalizeBooking()`. Locks via
+  a plain select + `status === 'paid'` short-circuit (same non-SQL-lock
+  idempotency pattern `finalizeBestowal` already uses for gift/orchard,
+  not a real `FOR UPDATE` — accepted here for the same reason: webhook
+  dedup already prevents most double-delivery, and this only runs once
+  ever per booking in practice). Resolves a whisperer exactly like
+  `finalize_basket_order` does (`resolve_whisperer_by_ref_code`, share
+  taken out of the sower's base) — **currently always resolves to "no
+  whisperer"** since `/sow/hand`'s booking Sheet never captures a
+  ref_code or live_session_id today; implemented for parity anyway, so
+  the moment that capture exists this path already handles it correctly
+  with no further change. Inserts ONE `product_bestowals` row:
+  `amount = booking.total` (**not** `booking.amount` — see the
+  column-name trap noted in both files' comments: `bookings.amount` is
+  the sower's pre-fee base, `product_bestowals.amount` is the buyer-paid
+  gross, same name opposite meaning), `delivery_type: null` so it
+  releases immediately (a service has nothing to physically hold in
+  escrow). Then sets `bookings.status = 'paid'`,
+  `payment_reference = <PayPal capture id>`. Whisperer bookkeeping
+  (`whisperer_earnings`, `whisperer_conversions`, the referral-link/
+  assignment running totals) mirrors `finalize_basket_order`'s inserts,
+  read-then-write instead of SQL's `+= 1` since the JS client has no
+  increment operator. **Not mirrored**: `finalize_basket_order`'s
+  `escrow_events` audit-log insert — skipped deliberately, out of the
+  requested scope, and not very meaningful for a row that's always
+  `released` immediately anyway.
+- **`capture-paypal-order`**: `BodySchema`/`KIND_CONFIG` gain `'booking'`
+  (`table: 'bookings', ownerColumn: 'grower_user_id', doneValues:
+  ['paid']`) — its generic column-selection branch already worked
+  unchanged, since `bookings` now has real `provider`/`provider_order_id`
+  columns like every other table it handles.
+- **`PaymentSuccessPage.tsx`**: reads `?booking=`; `isOrderDone` now
+  treats `status === 'paid'` as booking's terminal-success value (every
+  other kind uses `'completed'` — bookings' status column doubles as the
+  pre-payment lifecycle tracker, so it never gets a `'completed'` value
+  at all). `processorFeeColumn` is nullable (booking has none); the
+  Distribution Overview block needed no new branch — with
+  `processorFee` reading `0`, `backOutFee(booking.total)` already
+  recovers the right platform-fee/sower-share split, since
+  `bookings.total` is fee-inclusive by construction. Booking-specific
+  copy ("Booking Paid!", a "See the confirmation in chat" button →
+  `/chatapp` instead of `/my-seeds`).
+- **`reconcile-paypal-orders`**: `collectTargets()` sweeps `bookings`
+  where `provider='paypal', status='accepted'` (not
+  pending/processing — see the no-`'processing'`-value note above).
+  Found and fixed a real bug before it could fire: the existing
+  mark-failed code paths wrote `status: 'failed'` directly, which would
+  have violated `bookings.status`'s CHECK constraint the first time a
+  booking's PayPal order genuinely went stale — added a `markOrderFailed`
+  helper that no-ops (with a warning log) for booking specifically,
+  leaving it at `'accepted'` for retry, same choice `paypal-webhook`'s
+  `markFailed` already made.
+- **`_shared/postFinalize/messaging.ts`**: `FinalizeMessagingKind` gains
+  `'booking'`; `deliverFinalizeMessages` routes it to new
+  `postBookingConfirmation()` (same special-case pattern `topup` already
+  uses) — reopens the SAME grower↔sower direct room the request/accept
+  messages used (`get_or_create_direct_room` is idempotent), posts the
+  sower thank-you (their own `bestowal_thank_you_message` if set) + the
+  platform thank-you + a `booking_confirmed` card (product title,
+  date/time, quantity, total). No download receipt — nothing to
+  download for a service. Idempotent: checks for an existing
+  `booking_confirmed` message carrying this `booking_id` first.
+- **New `BookingConfirmedMessage.tsx`** + wired into `ChatMessage.jsx`
+  alongside the other three booking message types, same full-card
+  pattern as `BestowalReceiptMessage`/`PurchaseDeliveryMessage`.
+- **`_shared/postFinalize/books.ts`**: `BooksSyncKind` gains `'booking'`;
+  new `syncBooking()` — since `bookings` has no direct FK to the
+  `product_bestowals` row `finalizeBooking` created, looks it up by
+  `(product_id, bestower_id, payment_reference)` — the same
+  `payment_reference` value both rows carry — then syncs from THAT row,
+  `source_table='product_bestowals'` (never `'bookings'`), matching
+  exactly what `syncBasketOrder` would have written had this gone
+  through the basket path. Can't double-count against a real basket
+  purchase (or against itself on a re-run) since both are the same
+  upsert-by-`(source_table, source_id)` key.
+- **`BookingResponseMessage.tsx`**: Accept's Pay button is now real —
+  live-fetches the booking's current `status`/`grower_user_id` on mount
+  (the message's own frozen `system_metadata` only has `decision`/
+  `total`/`product_title`), shows the button enabled only for the
+  grower while `status === 'accepted'`, disabled with "Payment next" for
+  the sower's own view of the same message, and a "✓ Paid" state once
+  `status === 'paid'`. Uses `invokePaymentFunction` (the same
+  retry-once, real-status-surfacing wrapper every other payment call
+  site uses), not a raw `supabase.functions.invoke`.
+- **Deployed live** via the Supabase CLI (Docker wasn't running — CLI
+  falls back to a plain asset upload, same as every other function
+  deployed this session): `create-booking-paypal-order` (new),
+  `paypal-webhook`, `capture-paypal-order`, `reconcile-paypal-orders`
+  (redeployed — all three bundle the changed `_shared/paypal/capture.ts`
+  / `_shared/postFinalize/{messaging,books}.ts` at deploy time, confirmed
+  from each deploy's own "Uploading asset" log).
+- `npx tsc --noEmit` and `npx eslint` both clean.
+
 ## Open — priority order
 
 1. ~~Live proof that `paypal-webhook` actually works now~~ — **resolved, see Keystone problem**: order `0a6a0b1a` finalized via a clean webhook call at 08:36 UTC 2026-08-29. The `processed_webhooks`-insert bug (separate from the webhook itself) is also fixed; watch for its first real row as confirmation the fix landed, not as proof the webhook works — that's already established.

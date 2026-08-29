@@ -49,7 +49,7 @@ import { resolveContentTitle } from "./messaging.ts";
 // deno-lint-ignore no-explicit-any
 type SupabaseLike = any;
 
-export type BooksSyncKind = "basket" | "content" | "gift" | "orchard" | "topup";
+export type BooksSyncKind = "basket" | "content" | "gift" | "orchard" | "topup" | "booking";
 
 interface Company {
   id: string;
@@ -65,6 +65,7 @@ export async function syncBooksEntries(
     if (kind === "basket") return await syncBasketOrder(supabase, recordId);
     if (kind === "content") return await syncContentPurchase(supabase, recordId);
     if (kind === "topup") return await syncTopup(supabase, recordId);
+    if (kind === "booking") return await syncBooking(supabase, recordId);
     return await syncBestowal(supabase, recordId); // gift | orchard
   } catch (err) {
     console.error("syncBooksEntries failed", kind, recordId, err);
@@ -247,6 +248,66 @@ async function syncTopup(supabase: SupabaseLike, topupId: string): Promise<void>
     spent_on: t.credited_at ?? t.created_at,
     source_table: "topups",
     source_id: t.id,
+  });
+}
+
+/**
+ * A paid booking, spec-service-seeds.md §7 step 3-4. finalizeBooking
+ * (_shared/paypal/capture.ts) already created ONE `product_bestowals` row
+ * for this booking — this looks that row up (by product_id + bestower_id
+ * + the shared payment_reference, since bookings carries no direct FK to
+ * it) and syncs from THAT row, keyed `source_table='product_bestowals'`
+ * exactly like syncBasketOrder would have written had this gone through
+ * the basket path — so it can never double-count against a real basket
+ * purchase, and reuses the exact same upsert-by-source-key idempotency.
+ */
+async function syncBooking(supabase: SupabaseLike, bookingId: string): Promise<void> {
+  const { data: booking } = await supabase
+    .from("bookings")
+    .select("id, product_id, grower_user_id, sower_user_id, status, total, payment_reference, updated_at, created_at")
+    .eq("id", bookingId)
+    .maybeSingle();
+  if (!booking || booking.status !== "paid" || !booking.payment_reference) return;
+
+  const { data: bestowal } = await supabase
+    .from("product_bestowals")
+    .select("id, sower_amount, s2g_fee")
+    .eq("product_id", booking.product_id)
+    .eq("bestower_id", booking.grower_user_id)
+    .eq("payment_reference", booking.payment_reference)
+    .maybeSingle();
+  if (!bestowal) return; // finalizeBooking hasn't created it yet (or lookup failed) — nothing to sync
+
+  const { data: product } = await supabase
+    .from("products")
+    .select("title, company_id")
+    .eq("id", booking.product_id)
+    .maybeSingle();
+  const title = product?.title ?? "Booking";
+  const paidAt = booking.updated_at ?? booking.created_at;
+
+  const sellerCompany = await findCompanyIfBooksEnabled(supabase, product?.company_id ?? null);
+  await upsertIncome(supabase, sellerCompany?.id ?? null, {
+    income_type: "sale",
+    description: title,
+    amount: round2(Number(bestowal.sower_amount || 0)),
+    platform_fee: round2(Number(bestowal.s2g_fee || 0)),
+    payment_method: "paypal",
+    buyer_reference: await resolveBuyerName(supabase, booking.grower_user_id),
+    source_table: "product_bestowals",
+    source_id: bestowal.id,
+    occurred_at: paidAt,
+  });
+
+  const buyerCompany = await findDefaultBooksCompany(supabase, booking.grower_user_id);
+  await upsertExpense(supabase, buyerCompany?.id ?? null, {
+    description: title,
+    amount: round2(Number(booking.total || 0)),
+    category: "Other",
+    merchant: await resolveSowerName(supabase, booking.sower_user_id),
+    spent_on: paidAt,
+    source_table: "product_bestowals",
+    source_id: bestowal.id,
   });
 }
 

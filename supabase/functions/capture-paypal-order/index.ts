@@ -12,7 +12,7 @@ import { corsHeaders } from "npm:@supabase/supabase-js@2/cors";
 import { captureAndFinalize, type PaypalOrderKind } from "../_shared/paypal/capture.ts";
 
 const BodySchema = z.object({
-  kind: z.enum(["basket", "content", "gift", "orchard", "topup"]),
+  kind: z.enum(["basket", "content", "gift", "orchard", "topup", "booking"]),
   recordId: z.string().uuid(),
 });
 
@@ -33,6 +33,7 @@ const KIND_CONFIG: Record<PaypalOrderKind, KindConfig> = {
   gift: { table: "bestowals", ownerColumn: "bestower_id", statusColumn: "payment_status", doneValues: ["completed", "distributed"] },
   orchard: { table: "bestowals", ownerColumn: "bestower_id", statusColumn: "payment_status", doneValues: ["completed", "distributed"] },
   topup: { table: "topups", ownerColumn: "user_id", statusColumn: "status", doneValues: ["completed"] },
+  booking: { table: "bookings", ownerColumn: "grower_user_id", statusColumn: "status", doneValues: ["paid"] },
 };
 
 Deno.serve(async (req) => {

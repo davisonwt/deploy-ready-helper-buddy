@@ -181,6 +181,9 @@ function parseCustomId(customId: string): ParsedOrder {
   if (customId.startsWith("gift:")) {
     return { kind: "gift", recordId: customId.slice("gift:".length) };
   }
+  if (customId.startsWith("booking:")) {
+    return { kind: "booking", recordId: customId.slice("booking:".length) };
+  }
   return { kind: "orchard", recordId: customId };
 }
 
@@ -205,6 +208,13 @@ async function markProcessing(
       await supabase.from("bestowals")
         .update({ payment_status: "processing" })
         .eq("id", order.recordId);
+      return;
+    case "booking":
+      // bookings.status has no 'processing' value in its CHECK constraint
+      // (requested|accepted|declined|expired|paid|cancelled) — deliberately
+      // not added for this change set. A booking stays 'accepted' through
+      // the payment-pending window; finalizeBooking moves it straight to
+      // 'paid' on capture.
       return;
   }
 }
@@ -231,6 +241,12 @@ async function markFailed(
       await supabase.from("bestowals")
         .update({ payment_status: "failed", payout_status: "failed", payout_error: reason })
         .eq("id", order.recordId);
+      return;
+    case "booking":
+      // No 'failed' value on bookings.status either — a declined/reversed
+      // capture leaves the booking at 'accepted', so the grower can simply
+      // retry payment. Nothing to write here for this change set.
+      console.warn("paypal-webhook: booking payment failed, left as 'accepted' for retry", order.recordId, reason);
       return;
   }
 }

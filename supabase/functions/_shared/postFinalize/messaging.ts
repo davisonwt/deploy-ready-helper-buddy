@@ -21,7 +21,7 @@
 // deno-lint-ignore no-explicit-any
 type SupabaseLike = any;
 
-export type FinalizeMessagingKind = "basket" | "content" | "gift" | "orchard" | "topup";
+export type FinalizeMessagingKind = "basket" | "content" | "gift" | "orchard" | "topup" | "booking";
 
 interface SeedLine {
   title: string;
@@ -69,6 +69,10 @@ export async function deliverFinalizeMessages(
   try {
     if (kind === "topup") {
       await deliverTopupMessages(supabase, recordId);
+      return;
+    }
+    if (kind === "booking") {
+      await postBookingConfirmation(supabase, recordId);
       return;
     }
     const order = await resolveOrder(supabase, kind, recordId);
@@ -454,6 +458,94 @@ async function deliverTopupMessages(supabase: SupabaseLike, topupId: string): Pr
   } else {
     await supabase.from("chat_messages").insert({ room_id: roomId, sender_id: null, ...receiptRow });
   }
+}
+
+/**
+ * A paid booking's confirmation, spec-service-seeds.md §7 step 4 — into
+ * the SAME grower<->sower room the request/accept messages already used
+ * (get_or_create_direct_room is idempotent, so this reopens it rather
+ * than creating a second one). Unlike a basket/content/gift purchase,
+ * there's no download receipt here — nothing to download for a service —
+ * so this posts the sower thank-you + platform thank-you (once ever,
+ * same idempotency key style as deliverLeg) plus a `booking_confirmed`
+ * card instead of a `bestowal_receipt` one.
+ */
+async function postBookingConfirmation(supabase: SupabaseLike, bookingId: string): Promise<void> {
+  const { data: booking } = await supabase
+    .from("bookings")
+    .select("id, product_id, grower_user_id, sower_user_id, quantity, rate_unit, starts_at, total, updated_at")
+    .eq("id", bookingId)
+    .maybeSingle();
+  if (!booking) return;
+
+  const { data: product } = await supabase
+    .from("products")
+    .select("title")
+    .eq("id", booking.product_id)
+    .maybeSingle();
+  const productTitle = product?.title ?? "Hand booking";
+
+  const { data: sowerProfile } = await supabase
+    .from("profiles")
+    .select("display_name, first_name, bestowal_thank_you_message")
+    .eq("user_id", booking.sower_user_id)
+    .maybeSingle();
+  const sowerName = sowerProfile?.display_name || sowerProfile?.first_name || "the sower";
+
+  const { data: roomId, error: roomErr } = await supabase.rpc("get_or_create_direct_room", {
+    user1_id: booking.sower_user_id,
+    user2_id: booking.grower_user_id,
+  });
+  if (roomErr || !roomId) {
+    console.error("postBookingConfirmation: could not open direct room", bookingId, roomErr);
+    return;
+  }
+
+  const { data: existing } = await supabase
+    .from("chat_messages")
+    .select("id")
+    .eq("room_id", roomId)
+    .eq("message_type", "booking_confirmed")
+    .contains("system_metadata", { booking_id: bookingId })
+    .maybeSingle();
+  if (existing?.id) return; // already posted — idempotent, never re-run
+
+  const sowerContent = sowerProfile?.bestowal_thank_you_message
+    ? `${sowerProfile.bestowal_thank_you_message}\n\n— ${sowerName}`
+    : `🙏 Thank you for booking "${productTitle}"! Looking forward to it.\n\n— ${sowerName}`;
+  await supabase.from("chat_messages").insert({
+    room_id: roomId,
+    sender_id: booking.sower_user_id,
+    content: sowerContent,
+    message_type: "text",
+    system_metadata: { is_system: false, type: "sower_thanks", source: "booking", source_id: bookingId, sower_key: booking.sower_user_id },
+  });
+
+  await supabase.from("chat_messages").insert({
+    room_id: roomId,
+    sender_id: null,
+    content: `🌱 Your booking is confirmed! Details are right below.`,
+    message_type: "text",
+    system_metadata: { is_system: true, sender_name: "Sow2Grow", type: "platform_thanks", source: "booking", source_id: bookingId },
+  });
+
+  await supabase.from("chat_messages").insert({
+    room_id: roomId,
+    sender_id: null,
+    content: `Booking confirmed for "${productTitle}"`,
+    message_type: "booking_confirmed",
+    system_metadata: {
+      is_system: true,
+      sender_name: "Sow2Grow",
+      type: "booking_confirmed",
+      booking_id: bookingId,
+      product_title: productTitle,
+      quantity: booking.quantity,
+      rate_unit: booking.rate_unit,
+      starts_at: booking.starts_at,
+      total: round2(Number(booking.total || 0)),
+    },
+  });
 }
 
 export type PayoutNotification =
