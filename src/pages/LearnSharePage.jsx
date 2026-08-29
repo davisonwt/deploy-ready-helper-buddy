@@ -1,16 +1,12 @@
 import { useState } from 'react'
-import { useAuth } from '../hooks/useAuth'
 import { Link } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { toast } from 'sonner'
 import RoleButton, { ROLE_CONFIG } from '../components/RoleButton'
 import { VIDEOS } from '@/data/learnShareVideos'
+import { useReferralCode } from '@/hooks/useReferralCode'
 
 // ── Colored Living Button — share animation in any color ────────────────────
-
-const REFERRAL_CODES = {
-  '04754d57-d41d-4ea7-93df-542047a6785b': 'S2G-XDAVU6VP'
-}
 
 const ROLES = [
   { value: 'all', label: 'All', emoji: '🌿' },
@@ -28,11 +24,17 @@ const ROLES = [
 ]
 
 export default function LearnSharePage() {
-  const { user } = useAuth()
   const [selectedRole, setSelectedRole] = useState('all')
   const [playingId, setPlayingId] = useState(null)
 
-  const referralCode = REFERRAL_CODES[user?.id] || 'S2G-XXXXXX'
+  // Real per-user code from affiliates, never a placeholder — null until it
+  // resolves, so Share/Copy stay disabled and the box shows a skeleton
+  // rather than ever emitting a fake code. Reuses the existing
+  // useReferralCode hook (src/hooks/useReferralCode.ts) rather than a
+  // second mechanism.
+  const { code: referralCode, loading: referralCodeLoading } = useReferralCode()
+  const referralCodeError = !referralCodeLoading && !referralCode
+
   const filtered = selectedRole === 'all' ? VIDEOS : VIDEOS.filter(v => v.role === selectedRole)
 
   // Always share the public Sow2Grow domain so link previews show S2G branding
@@ -45,6 +47,7 @@ export default function LearnSharePage() {
   const shareUrlFor = (video) => `${PUBLIC_ORIGIN}/learn-share/${video.id}?ref=${referralCode}`
 
   const handleShare = async (video) => {
+    if (!referralCode) return
     const shareUrl = shareUrlFor(video)
     const text = `🌱 ${video.title} — ${video.desc}\n\nWatch & join Sow2Grow: ${shareUrl}`
     try {
@@ -61,6 +64,7 @@ export default function LearnSharePage() {
   }
 
   const handleCopyScript = async (video) => {
+    if (!referralCode) return
     const script = `Hey! 👋 Check out this video about S2G — ${video.title}.\n${video.desc}\n\nWatch it here 🌱 ${shareUrlFor(video)}`
     await navigator.clipboard.writeText(script)
     toast.success('Script copied!')
@@ -88,7 +92,21 @@ export default function LearnSharePage() {
             <p style={{ fontSize: 14, color: '#64748b', margin: '4px 0 0' }}>Share videos with your referral code to grow your tribe</p>
           </div>
           <div style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 12, padding: '10px 16px', fontSize: 13, color: '#94a3b8' }}>
-            Your referral code: <span style={{ color: '#10b981', fontWeight: 800, fontSize: 15 }}>{referralCode}</span>
+            Your referral code:{' '}
+            {referralCode ? (
+              <span style={{ color: '#10b981', fontWeight: 800, fontSize: 15 }}>{referralCode}</span>
+            ) : referralCodeError ? (
+              <span style={{ color: '#f87171', fontWeight: 600 }}>Couldn't load</span>
+            ) : (
+              <span
+                aria-label="Loading your referral code"
+                style={{
+                  display: 'inline-block', width: 92, height: 15, borderRadius: 4,
+                  background: 'rgba(148,163,184,0.25)', verticalAlign: 'middle',
+                  animation: 'pulse 1.5s ease-in-out infinite',
+                }}
+              />
+            )}
           </div>
         </div>
 
@@ -226,18 +244,20 @@ export default function LearnSharePage() {
                   {/* Buttons */}
                   <div style={{ display: 'flex', gap: 8 }}>
                     <motion.button
-                      whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }}
+                      whileHover={referralCode ? { scale: 1.03 } : undefined} whileTap={referralCode ? { scale: 0.97 } : undefined}
                       onClick={() => handleShare(video)}
-                      style={{ flex: 1, padding: '10px 0', background: video.color, border: 'none', borderRadius: 10, color: '#fff', fontWeight: 700, fontSize: 13, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}
+                      disabled={!referralCode}
+                      style={{ flex: 1, padding: '10px 0', background: video.color, border: 'none', borderRadius: 10, color: '#fff', fontWeight: 700, fontSize: 13, cursor: referralCode ? 'pointer' : 'not-allowed', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, opacity: referralCode ? 1 : 0.5 }}
                     >
                       ↗ Share
                     </motion.button>
 
                     {/* Copy Script */}
                     <motion.button
-                      whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }}
+                      whileHover={referralCode ? { scale: 1.03 } : undefined} whileTap={referralCode ? { scale: 0.97 } : undefined}
                       onClick={() => handleCopyScript(video)}
-                      style={{ padding: '10px 12px', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 10, color: '#94a3b8', fontSize: 13, cursor: 'pointer' }}
+                      disabled={!referralCode}
+                      style={{ padding: '10px 12px', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 10, color: '#94a3b8', fontSize: 13, cursor: referralCode ? 'pointer' : 'not-allowed', opacity: referralCode ? 1 : 0.5 }}
                       title="Copy share script"
                     >
                       📋
