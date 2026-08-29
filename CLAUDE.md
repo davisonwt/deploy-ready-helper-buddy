@@ -14,6 +14,9 @@ Changes reach real users. There is no staging buffer implied by default — trea
 Every routed page must have a visible Back/Return control (a real back action, or a Home/parent-page link — not just relying on the browser's back button). Apply this whenever touching a page for any other reason, and treat a missing one as worth fixing on sight, not just when asked.
 Exempt: `/` (Index) and `/dashboard` (DashboardPage) — they're the app's home destinations. Don't re-flag them in a future audit.
 
+## Golden rule: every commit is pushed immediately
+Every commit is pushed immediately; never leave commits local. State "pushed" in the summary only after `git push` succeeds.
+
 ## Product principles
 - Forms should feel like planting, not paperwork. Show visible progress toward a satisfying completion, ideally using the sower's own content.
 - Errors are always plain, specific and actionable. Never gamify a mistake — tell the person exactly what's wrong and how to fix it.
