@@ -124,6 +124,7 @@ import {
   AuthDebugPage,
   LiveSeedPage,
   LearnSharePage,
+  LearnShareVideoPage,
   WanderingDirectoryPage,
   PlantASeedPage,
   ChatApp,
@@ -278,7 +279,11 @@ const AppRoutes = () => (
     } />
     <Route path="/learn-share" element={
       <ProtectedRoute><LearnSharePage /></ProtectedRoute>
-    } /><Route path="/wandering-directory" element={
+    } />
+    <Route path="/learn-share/:videoId" element={
+      <Suspense fallback={<LoadingFallback />}><LearnShareVideoPage /></Suspense>
+    } />
+    <Route path="/wandering-directory" element={
     <ProtectedRoute><WanderingDirectoryPage /></ProtectedRoute>
     } />
     <Route path="/whisperers" element={

@@ -7,6 +7,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { PAYOUT_PROVIDERS } from '@/lib/payments/providerFees';
 import PayoutSettingsPage from '@/pages/PayoutSettingsPage';
+import { readPendingReturn, clearPendingReturn } from '@/lib/returnTo';
 
 /**
  * Onboarding step shown right after security questions.
@@ -48,7 +49,14 @@ export default function OnboardingPayoutPage() {
 
   if (loading || checking) return null;
 
-  const goDashboard = () => navigate('/dashboard', { replace: true });
+  // If this signup started from a shared video link (or anywhere else that
+  // asked to return somewhere specific), land there instead of /dashboard —
+  // this is the last stop in the mandatory onboarding chain.
+  const goDashboard = () => {
+    const pending = readPendingReturn();
+    clearPendingReturn();
+    navigate(pending || '/dashboard', { replace: true });
+  };
 
   return (
     <div className="min-h-screen bg-background py-6">

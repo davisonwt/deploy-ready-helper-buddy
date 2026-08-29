@@ -210,6 +210,7 @@ export const AdminSeedsPage = lazy(() => import('@/pages/AdminSeedsPage'));
 export const AuthDebugPage = lazy(() => import('@/pages/AuthDebugPage'));
 export const LiveSeedPage = lazy(() => import('@/pages/LiveSeedPage'));
 export const LearnSharePage = lazy(() => import('@/pages/LearnSharePage'));
+export const LearnShareVideoPage = lazy(() => import('@/pages/LearnShareVideoPage'));
 export const WanderingDirectoryPage = lazy(() => import('@/pages/WanderingDirectoryPage'));
 export const PlantASeedPage = lazy(() => import('@/pages/PlantASeedPage'));
 export const MyRadioOptInPage = lazy(() => import('@/pages/MyRadioOptInPage'));

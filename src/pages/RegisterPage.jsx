@@ -1,6 +1,7 @@
-import { useState } from "react"
-import { Link, useNavigate } from "react-router-dom"
+import { useEffect, useState } from "react"
+import { Link, useNavigate, useSearchParams } from "react-router-dom"
 import { useAuth } from "../hooks/useAuth"
+import { storePendingReturn } from "@/lib/returnTo"
 import { Button } from "../components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "../components/ui/card"
 import { Badge } from "../components/ui/badge"
@@ -39,6 +40,13 @@ export default function RegisterPage() {
   const { register } = useAuth()
   const navigate = useNavigate()
   const { toast } = useToast()
+  const [searchParams] = useSearchParams()
+  // Persisted on mount (not just read at submit time) so it survives the
+  // mandatory onboarding chain that follows a successful signup, the same
+  // way ?ref= already survives it via s2g_pending_ref.
+  useEffect(() => {
+    storePendingReturn(searchParams.get('next'))
+  }, [searchParams])
 
   // Show Quick Registration if user prefers it
   if (showQuickRegistration) {
