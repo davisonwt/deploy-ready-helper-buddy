@@ -1044,11 +1044,14 @@ more."
 - **Forge-only field**: "Made to order — lead time (days)" in More
   options, `metadata.lead_time_days` when set, never blocks Plant like
   every other More-options field.
-- **`/sow` chooser**: "Produce & goods" row is now Field · Hearth · Forge,
-  all `live: true`, each routing to `/sow/product?kind=<field|hearth|
-  forge>`. The general "Physical product" entry point moved to
-  `/sow/classic` (`SowIndexPage.tsx`'s existing tile, `route` set from
-  `null` to `/sow/product` — no `?kind=`, so it lands on General).
+- **`/sow` chooser**: "Produce & goods" row is Field · Hearth · Forge ·
+  Physical product, all `live: true`, each routing to
+  `/sow/product?kind=<field|hearth|forge|product>` (revised again the
+  same day — Physical product had briefly been chooser-only-via-
+  `/sow/classic`; put back as the row's fourth, explicit tile per this
+  task's own instruction). `/sow/classic`'s own "Physical product" tile
+  still also routes to `/sow/product` (no `?kind=`, defaults to General)
+  as a second path to the same form.
 - **Detail page**: `BulkProductDetailPage.tsx` needed no changes — stock
   badge/"Out of stock"/basket-disable all read `product.stock` (fixed the
   prior task), and the download button's `['art', 'ebook'].includes(

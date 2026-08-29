@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, Music, Palette, FileText, Wheat, Flame, Hammer, TreeDeciduous, Users, Lock } from 'lucide-react';
+import { ArrowLeft, Music, Palette, FileText, Wheat, Flame, Hammer, Package, TreeDeciduous, Users, Lock } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
@@ -43,6 +43,7 @@ const PRODUCE: Card[] = [
   { key: 'field', label: 'Field', icon: Wheat, live: true, route: '/sow/product?kind=field' },
   { key: 'hearth', label: 'Hearth', icon: Flame, live: true, route: '/sow/product?kind=hearth' },
   { key: 'forge', label: 'Forge', icon: Hammer, live: true, route: '/sow/product?kind=forge' },
+  { key: 'product', label: 'Physical product', icon: Package, live: true, route: '/sow/product?kind=product' },
 ];
 
 const ORCHARDS: Card[] = [
