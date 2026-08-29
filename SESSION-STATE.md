@@ -1510,6 +1510,50 @@ forking new ones.
   renders `SeedPreviewCard` before a cover is set, not just `/sow/art`.
 - `npx tsc --noEmit` and `npx eslint` both clean.
 
+## Fixed — 2026-08-29, still later (closed the booking-payment processor-fee gap)
+
+The disclosed gap from the booking-payment wiring — `create-booking-
+paypal-order` didn't run the buyer total through `computeBuyerFee`, so
+the buyer paid `bookings.total` exactly with no PayPal processor cut on
+top, unlike every other `create-*-order` function — is closed.
+
+- **Schema**: `bookings.processor_fee numeric` (nullable) —
+  `20260829310000_bookings-processor-fee.sql`.
+- **`create-booking-paypal-order`**: now calls `computeBuyerFee('paypal',
+  booking.total)` exactly like `create-basket-bestowal-order` does
+  (`booking.total` is the "subtotal" it expects — already S2G-fee-
+  inclusive). The PayPal order's `amount.value` is the resulting
+  `quote.total` (subtotal + processor fee), not `booking.total` alone.
+  Writes `processor_fee` back alongside `provider`/`provider_order_id`.
+  **`finalizeBooking`/`syncBooking` genuinely untouched** — they still
+  read `bookings.amount`/`s2g_fee`/`total` exactly as before, so the
+  processor fee never touches the sower's payout or the S2G split, only
+  what the buyer is charged on top.
+- **`BookingRequestMessage.tsx`**: its live-status fetch now also reads
+  `processor_fee` (`null` until the grower has actually started payment,
+  since it's computed at `create-booking-paypal-order` time, after this
+  message was already posted at request time) — once known, a "Payment
+  processor fee" line appears and the displayed Total becomes
+  `metadata.total + processorFee`, matching what PayPal actually
+  charges. `BookingResponseMessage.tsx`'s Pay button text is deliberately
+  left showing the pre-fee amount — the exact charge isn't computable
+  client-side before the order exists, same as every other checkout
+  button in this app that doesn't itemize the processor fee until the
+  order is created.
+- **`PaymentSuccessPage.tsx`**: `processorFeeColumn` is `'processor_fee'`
+  for booking now. Every other kind's `amountColumn` already reads a
+  column that includes the processor fee (e.g.
+  `basket_orders.buyer_total`) — `bookings.total` deliberately doesn't,
+  so `tick()` now adds `processor_fee` back into the displayed `amount`
+  specifically for booking, matching what "amount" already means
+  everywhere else on this page. The existing generic Distribution
+  Overview math (`backOutFee(amount - processorFee)`) needed no further
+  change once `amount` carried the right value.
+- Redeployed `create-booking-paypal-order` (confirmed the new
+  `_shared/paypal/fees.ts` import is bundled in the deploy's own
+  "Uploading asset" log).
+- `npx tsc --noEmit` and `npx eslint` both clean.
+
 ## Open — priority order
 
 1. ~~Live proof that `paypal-webhook` actually works now~~ — **resolved, see Keystone problem**: order `0a6a0b1a` finalized via a clean webhook call at 08:36 UTC 2026-08-29. The `processed_webhooks`-insert bug (separate from the webhook itself) is also fixed; watch for its first real row as confirmation the fix landed, not as proof the webhook works — that's already established.

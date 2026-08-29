@@ -52,6 +52,10 @@ export function BookingRequestMessage({
   const [status, setStatus] = useState<string | null>(null);
   const [loadingStatus, setLoadingStatus] = useState(true);
   const [responding, setResponding] = useState<'accepted' | 'declined' | null>(null);
+  // Only known once the grower has started payment (create-booking-
+  // paypal-order writes it) — this message's own metadata predates that,
+  // since a request is posted before any Accept/Pay has happened.
+  const [processorFee, setProcessorFee] = useState<number | null>(null);
 
   // The live status, not what's frozen in this message's own metadata —
   // another device, or the 15-min expiry cron, may have already resolved
@@ -61,11 +65,12 @@ export function BookingRequestMessage({
     (async () => {
       const { data } = await supabase
         .from('bookings')
-        .select('status')
+        .select('status, processor_fee')
         .eq('id', metadata.booking_id)
         .maybeSingle();
       if (!alive) return;
       setStatus((data as any)?.status ?? null);
+      setProcessorFee((data as any)?.processor_fee != null ? Number((data as any).processor_fee) : null);
       setLoadingStatus(false);
     })();
     return () => { alive = false; };
@@ -138,7 +143,7 @@ export function BookingRequestMessage({
 
       <div className="flex justify-between text-sm font-bold">
         <span>Total</span>
-        <span>{usd(metadata.total)}</span>
+        <span>{usd(metadata.total + (processorFee ?? 0))}</span>
       </div>
       <div className="flex justify-between text-xs text-muted-foreground">
         <span>Rate × quantity</span>
@@ -148,6 +153,12 @@ export function BookingRequestMessage({
         <span>Sow2Grow fee (15%)</span>
         <span>{usd(metadata.s2g_fee)}</span>
       </div>
+      {processorFee != null && (
+        <div className="flex justify-between text-xs text-muted-foreground">
+          <span>Payment processor fee</span>
+          <span>{usd(processorFee)}</span>
+        </div>
+      )}
 
       {!loadingStatus && status === 'requested' && !isOwnMessage && (
         <div className="flex gap-2 mt-3">

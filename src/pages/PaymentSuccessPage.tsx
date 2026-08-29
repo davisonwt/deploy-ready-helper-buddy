@@ -23,9 +23,6 @@ interface ActiveOrder {
   // Distribution Overview can back S2G's 15% out of the subtotal alone
   // rather than out of the full buyer_total, and show the processor's cut
   // as its own line, matching BestowalReceiptMessage.tsx exactly.
-  // null for booking — bookings has no processor_fee column (see
-  // create-booking-paypal-order's own header for why); its total is
-  // charged as-is, no processor cut layered on top yet.
   processorFeeColumn: string | null;
 }
 
@@ -44,7 +41,7 @@ function resolveActiveOrder(searchParams: URLSearchParams): ActiveOrder | null {
   const topup = searchParams.get('topup');
   if (topup) return { kind: 'topup', id: topup, table: 'topups', statusColumn: 'status', amountColumn: 'amount', processorFeeColumn: 'fee_amount' };
   const booking = searchParams.get('booking');
-  if (booking) return { kind: 'booking', id: booking, table: 'bookings', statusColumn: 'status', amountColumn: 'total', processorFeeColumn: null };
+  if (booking) return { kind: 'booking', id: booking, table: 'bookings', statusColumn: 'status', amountColumn: 'total', processorFeeColumn: 'processor_fee' };
   return null;
 }
 
@@ -95,10 +92,20 @@ export default function PaymentSuccessPage() {
         const row = data as Record<string, unknown>;
         const rowStatus = row[active.statusColumn] as OrderStatus;
         setStatus(rowStatus);
-        const rowAmount = row[active.amountColumn];
-        if (rowAmount != null) setAmount(Number(rowAmount));
         const rowProcessorFee = active.processorFeeColumn ? row[active.processorFeeColumn] : null;
-        setProcessorFee(rowProcessorFee != null ? Number(rowProcessorFee) : 0);
+        const processorFeeNum = rowProcessorFee != null ? Number(rowProcessorFee) : 0;
+        setProcessorFee(processorFeeNum);
+        const rawAmount = row[active.amountColumn];
+        // Every other kind's amountColumn already includes the processor
+        // fee (e.g. basket_orders.buyer_total = subtotal + processor_fee).
+        // bookings.total deliberately doesn't — finalizeBooking/syncBooking
+        // need it as the pre-processor-fee, S2G-inclusive figure — so add
+        // the fee back in here to match what every other kind's "amount"
+        // already means on this page (the buyer's actual full charge).
+        const rowAmount = active.kind === 'booking' && rawAmount != null
+          ? Number(rawAmount) + processorFeeNum
+          : rawAmount;
+        if (rowAmount != null) setAmount(Number(rowAmount));
         // Every other kind's terminal success value is 'completed' —
         // bookings.status uses 'paid' instead (it also carries the
         // pre-payment request/accept/decline lifecycle, which none of the

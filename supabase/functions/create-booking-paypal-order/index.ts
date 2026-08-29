@@ -2,23 +2,20 @@
 // §7 step 3. Mirrors create-basket-bestowal-order's PayPal branch, scaled
 // down to a single line item.
 //
-// KNOWN GAP, disclosed rather than silently decided: every other
-// create-*-order function runs its buyer total through computeBuyerFee
-// (_shared/paypal/fees.ts) so the buyer, not the sower, absorbs PayPal's
-// processor cut — "must run its buyer total through this helper" per that
-// module's own header. This function does NOT do that; the PayPal order
-// amount is exactly `bookings.total` (sower's rate + Sow2Grow's 15%, no
-// processor fee layered on top), per the task's explicit instruction to
-// re-derive the order amount from amount/s2g_fee/total on the bookings row.
-// bookings has no processor_fee column (out of scope for this change set —
-// see the 20260829290000 migration, which added only provider/
-// provider_order_id/payment_reference). Until that's added, a booking
-// payment is the one PayPal path in this codebase where the processor fee
-// isn't separately itemized to the buyer.
+// Gap closed: the buyer total now runs through computeBuyerFee exactly
+// like create-basket-bestowal-order's does, so the buyer (not the sower)
+// absorbs PayPal's processor cut, same as every other create-*-order
+// function. bookings.processor_fee (20260829310000 migration) stores it.
+// bookings.amount/s2g_fee/total are untouched by this — those stay the
+// pre-processor-fee, S2G-inclusive figures finalizeBooking/syncBooking
+// already use for the sower/S2G split; the processor fee is charged on
+// top, exactly like basket_orders.processor_fee is on top of its own
+// fee-inclusive subtotal.
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 import { corsHeaders } from "npm:@supabase/supabase-js@2/cors";
 import { paypalFetch } from "../_shared/paypal/client.ts";
+import { computeBuyerFee } from "../_shared/paypal/fees.ts";
 
 interface RequestPayload {
   bookingId: string;
@@ -83,6 +80,13 @@ Deno.serve(async (req) => {
       return json({ error: "invalid_booking_amount" }, 400);
     }
 
+    // Golden rule: the buyer pays the processor fee, not the sower.
+    // `total` (S2G-fee-inclusive already) is the "subtotal" computeBuyerFee
+    // expects — mirrors create-basket-bestowal-order's own call exactly.
+    const quote = computeBuyerFee("paypal", total);
+    const processorFee = quote.fee;
+    const buyerCharge = quote.total;
+
     const paypalClientId = Deno.env.get("PAYPAL_CLIENT_ID");
     const paypalSecret = Deno.env.get("PAYPAL_CLIENT_SECRET");
     if (!paypalClientId || !paypalSecret) {
@@ -99,7 +103,7 @@ Deno.serve(async (req) => {
           reference_id: booking.id,
           custom_id: `booking:${booking.id}`,
           description: `Sow2Grow booking — ${productTitle}`.slice(0, 127),
-          amount: { currency_code: "USD", value: total.toFixed(2) },
+          amount: { currency_code: "USD", value: buyerCharge.toFixed(2) },
         },
       ],
       payment_source: {
@@ -129,7 +133,7 @@ Deno.serve(async (req) => {
 
     const { error: updateErr } = await service
       .from("bookings")
-      .update({ provider: "paypal", provider_order_id: data.id })
+      .update({ provider: "paypal", provider_order_id: data.id, processor_fee: processorFee })
       .eq("id", booking.id);
     if (updateErr) {
       console.error("booking provider_order_id write failed", updateErr);
@@ -141,6 +145,7 @@ Deno.serve(async (req) => {
       provider: "paypal",
       orderId: data.id,
       approveUrl: approveLink?.href ?? null,
+      breakdown: { subtotal: total, processorFee, buyerCharge, currency: "USD" },
     });
   } catch (err) {
     console.error("create-booking-paypal-order error", err);
