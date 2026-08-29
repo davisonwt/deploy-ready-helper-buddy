@@ -23,6 +23,7 @@ import { Switch } from '@/components/ui/switch';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { ArrowLeft, Music, Disc, ChevronDown, Eye } from 'lucide-react';
+import sowMusicBanner from '@/assets/chat-mode-radio.jpg';
 
 const GENRES: OnePickerOption[] = [
   'Pop', 'Rock', 'Hip-Hop', 'R&B', 'Electronic', 'Dance', 'Indie', 'Folk',
@@ -35,16 +36,27 @@ const ALBUM_MIN_TRACKS = 8;
 
 type Mode = 'single' | 'album';
 
+// Willow (the image companion) would normally weave this banner per spec,
+// but companion-invoke needs a real signed-in user session and spends that
+// user's own image-generation quota — not something to trigger from a
+// build script. Using the existing warm, music-themed asset instead, in
+// the same style as PageHeroBanner (src/components/chat/PageHeroBanner.tsx).
 function SowBanner({ mode }: { mode: Mode }) {
-  const Icon = mode === 'album' ? Disc : Music;
   return (
-    <div className="relative w-full rounded-2xl overflow-hidden mb-6 border flex items-stretch min-h-[7rem] md:min-h-[9rem]">
-      <div className="w-28 md:w-40 shrink-0 bg-gradient-to-br from-primary/70 to-primary/30 flex items-center justify-center">
-        <Icon className="w-10 h-10 md:w-14 md:h-14 text-primary-foreground/90" />
-      </div>
-      <div className="flex-1 flex flex-col justify-center p-4 md:p-6 bg-muted/40">
-        <h1 className="text-xl md:text-3xl font-black tracking-tight">{mode === 'album' ? 'Sow an album' : 'Sow a song'}</h1>
-        <p className="text-sm md:text-base text-muted-foreground mt-1">
+    <div
+      className="relative w-full h-32 md:h-44 lg:h-56 overflow-hidden rounded-2xl mb-6 border"
+      style={{ borderColor: 'rgba(56,189,248,0.45)', boxShadow: '0 0 40px rgba(56,189,248,0.25)' }}
+    >
+      <img src={sowMusicBanner} alt="" className="absolute inset-0 w-full h-full object-cover" loading="eager" />
+      <div
+        className="absolute inset-0"
+        style={{ background: 'linear-gradient(to top, rgba(0,0,0,0.85), rgba(56,189,248,0.25) 60%, rgba(0,0,0,0.1))' }}
+      />
+      <div className="absolute inset-0 flex flex-col justify-end p-4 md:p-6">
+        <h1 className="text-white text-xl md:text-3xl font-black tracking-tight drop-shadow-lg">
+          {mode === 'album' ? 'Sow an album' : 'Sow a song'}
+        </h1>
+        <p className="text-white/85 text-sm md:text-base mt-1 max-w-2xl drop-shadow">
           {mode === 'album'
             ? 'Share a full release with the tribe, track by track.'
             : 'Share your track with the tribe — planted in under two minutes.'}

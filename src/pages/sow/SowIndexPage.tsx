@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, Music, Palette, FileText, Package, Wrench, TreeDeciduous, Lock, Upload } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import sowIndexBanner from '@/assets/seeds-strip.jpg';
 
 const LAST_KIND_KEY = 'sow:lastKind';
 
@@ -47,9 +48,23 @@ export default function SowIndexPage() {
         Dashboard
       </Button>
 
-      <div className="text-center mb-8">
-        <h1 className="text-3xl font-bold tracking-tight">What are you sowing?</h1>
-        <p className="text-muted-foreground mt-1">Pick a kind — we'll only ask what it needs.</p>
+      {/* Willow would normally weave this per spec, but that needs a real
+          signed-in session and spends the user's own image quota — not
+          something to trigger from a build script. Existing asset instead,
+          same style as PageHeroBanner (src/components/chat/PageHeroBanner.tsx). */}
+      <div
+        className="relative w-full h-28 md:h-40 overflow-hidden rounded-2xl mb-6 border"
+        style={{ borderColor: 'rgba(132,204,22,0.45)', boxShadow: '0 0 40px rgba(132,204,22,0.2)' }}
+      >
+        <img src={sowIndexBanner} alt="" className="absolute inset-0 w-full h-full object-cover" loading="eager" />
+        <div
+          className="absolute inset-0"
+          style={{ background: 'linear-gradient(to top, rgba(0,0,0,0.85), rgba(132,204,22,0.2) 60%, rgba(0,0,0,0.1))' }}
+        />
+        <div className="absolute inset-0 flex flex-col justify-end items-center text-center p-4 md:p-6">
+          <h1 className="text-white text-2xl md:text-3xl font-black tracking-tight drop-shadow-lg">What are you sowing?</h1>
+          <p className="text-white/85 text-sm md:text-base mt-1 drop-shadow">Pick a kind — we'll only ask what it needs.</p>
+        </div>
       </div>
 
       <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
