@@ -26,6 +26,14 @@ export type FinalizeMessagingKind = "basket" | "content" | "gift" | "orchard" | 
 interface SeedLine {
   title: string;
   amount: number;
+  /** Set only for a real purchasable digital item (product-sourced or
+   * content-sourced) — never for a gift/orchard bestowal line, which has no
+   * file to play/download. Lets the receipt UI render a "Play / Download"
+   * link without a second round-trip to figure out what was bought. */
+  itemId?: string | null;
+  itemSource?: "product" | "content" | null;
+  /** Only meaningful when itemSource is "content" — content_purchases.content_type. */
+  contentType?: string | null;
 }
 
 interface SowerLeg {
@@ -105,7 +113,7 @@ async function resolveBasketOrder(supabase: SupabaseLike, basketOrderId: string)
   const { data: rows } = await supabase
     .from("product_bestowals")
     .select(`
-      id, sower_id, whisperer_id, amount, s2g_fee, sower_amount, whisperer_amount, status,
+      id, sower_id, whisperer_id, amount, s2g_fee, sower_amount, whisperer_amount, status, product_id,
       products:product_id ( title ),
       sowers:sower_id ( user_id, display_name )
     `)
@@ -148,7 +156,12 @@ async function resolveBasketOrder(supabase: SupabaseLike, basketOrderId: string)
       };
       legsByOwner.set(sowerUserId, leg);
     }
-    leg.seedLines.push({ title: r.products?.title ?? "Seed", amount: Number(r.amount || 0) });
+    leg.seedLines.push({
+      title: r.products?.title ?? "Seed",
+      amount: Number(r.amount || 0),
+      itemId: r.product_id ?? null,
+      itemSource: "product",
+    });
     leg.sowerAmount += Number(r.sower_amount || 0);
     leg.s2gFee += Number(r.s2g_fee || 0);
     leg.gross += Number(r.amount || 0);
@@ -197,7 +210,13 @@ async function resolveContentOrder(supabase: SupabaseLike, purchaseId: string): 
     sowerName: "",
     thankYouMessage: null,
     buyerId: cp.buyer_id,
-    seedLines: [{ title, amount: Number(cp.base_amount || 0) + Number(cp.platform_fee_amount || 0) }],
+    seedLines: [{
+      title,
+      amount: Number(cp.base_amount || 0) + Number(cp.platform_fee_amount || 0),
+      itemId: cp.content_id ?? null,
+      itemSource: "content",
+      contentType: cp.content_type ?? null,
+    }],
     sowerAmount: Number(cp.base_amount || 0),
     s2gFee: Number(cp.platform_fee_amount || 0),
     whispererAmount: null,

@@ -1,11 +1,16 @@
+import { Link } from 'react-router-dom';
 import { Card } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
-import { ReceiptText } from 'lucide-react';
+import { ReceiptText, PlayCircle } from 'lucide-react';
 import { format } from 'date-fns';
+import { resolveItemLink } from '@/lib/media/resolveItemLink';
 
 interface SeedLine {
   title: string;
   amount: number;
+  itemId?: string | null;
+  itemSource?: 'product' | 'content' | null;
+  contentType?: string | null;
 }
 
 interface BestowalReceiptMetadata {
@@ -83,12 +88,26 @@ export function BestowalReceiptMessage({ metadata }: { metadata: BestowalReceipt
             <p className="text-xs font-bold uppercase tracking-wide text-muted-foreground mb-1">
               Seed{(seed_lines?.length ?? 0) > 1 ? 's' : ''} — from {sower_name}
             </p>
-            {seed_lines?.map((line, i) => (
-              <div key={i} className="flex justify-between text-sm">
-                <span className="truncate pr-2">{line.title}</span>
-                <span className="font-medium whitespace-nowrap">{usd(line.amount)}</span>
-              </div>
-            ))}
+            {seed_lines?.map((line, i) => {
+              const itemLink = resolveItemLink(line);
+              return (
+                <div key={i} className="flex items-center justify-between gap-2 text-sm">
+                  <span className="truncate pr-2">{line.title}</span>
+                  <span className="flex items-center gap-2 whitespace-nowrap">
+                    <span className="font-medium">{usd(line.amount)}</span>
+                    {itemLink && (
+                      <Link
+                        to={itemLink}
+                        className="inline-flex items-center gap-1 text-xs font-medium text-amber-700 dark:text-amber-400 hover:underline"
+                      >
+                        <PlayCircle className="h-3.5 w-3.5" />
+                        Play / Download
+                      </Link>
+                    )}
+                  </span>
+                </div>
+              );
+            })}
             <div className="flex justify-between text-xs text-muted-foreground mt-1">
               <span>Sower receives</span>
               <span>{usd(sower_amount)}</span>
