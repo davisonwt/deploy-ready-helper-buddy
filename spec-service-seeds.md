@@ -41,15 +41,17 @@ Stored with a timestamp on the role row. No other gating.
 Groups (in this order), each a row of large cards using the Learn & Share
 category colours/icons:
 
-1. **Creations** — Music (single / album), Art, Books. Digital seeds, each
-   with a gated file + preview (spec-sowing-forms.md's pattern). All live.
-2. **Services & time** — Hand · Wheel · Pillow → this spec. (Heart is not
-   a service seed — see section 4.)
-3. **Produce & goods** — Field · Hearth · Forge, all physical goods
-   sharing **one form**, `/sow/product`, with a "What kind of goods?"
-   picker: Field = farm produce, Hearth = home-made (crafts, cakes, jams,
-   candles — **not creations**), Forge = custom-made, General = shop
-   stock. `kind = field | hearth | forge | product`. All live.
+1. **Creations** — Music (single / album), Art, Books. Digital seeds with a
+   gated file and a preview.
+2. **Services & time** — Hand · Wheel · Pillow → this spec. Heart → `/tribal-hearts` (matchmaking, not a seed).
+3. **Produce & goods** — Field · Hearth · Forge. All three are physical
+   goods and share ONE form (`/sow/product`), with a "What kind of goods?"
+   picker: Field (farm produce), Hearth (home-made — crafts, cakes, jams,
+   chutneys, candles; the home business), Forge (custom-made /
+   commissions), or General (a shop's stock, e.g. the pharmacy).
+   `products.kind` = `field | hearth | forge | product`. Corrected
+   2026-08-29: Hearth is NOT "creations" — the Learn & Share video
+   description that says so is wrong and should be fixed.
 4. **Orchards** — Community · Production → existing orchard flows.
 
 Clicking a service card:
@@ -76,9 +78,12 @@ Heart tab never fetches. So:
 - Directory reads Wheel/Hand/Pillow from `wandering_roles`. Old three tables
   are left in place, unread, and get a "deprecated" comment; drop in a later
   cleanup once nothing references them.
-- **Heart is not a service seed** — Wandering Heart is matchmaking on
-  `tribal_hearts_profiles` with its own onboarding (`/tribal-hearts`). No
-  rate, no booking, no Books, no seed form, no `kind = 'heart'`.
+- **Heart is not a service seed.** Corrected 2026-08-29 after the Heart
+  banner: Wandering Heart is matchmaking (profiles, matches, verified,
+  events) on `tribal_hearts_profiles` with its own onboarding
+  (`/tribal-hearts`). No rate, no booking, no Books, no seed form, no
+  `products.kind = 'heart'`. Fix the Directory's missing Heart fetch as part
+  of this work, and have those cards link into `/tribal-hearts`.
 - `/register-wandering` becomes the role-unlock screen below (route it), with
   `?role=` preselecting.
 
@@ -134,7 +139,7 @@ role, editable) and `kind` (`hand | wheel | pillow`).
 
 - `ALTER TABLE products ALTER COLUMN file_url DROP NOT NULL` (the only NOT NULL
   column that makes no sense for a service).
-- New column `kind text` — `music | ebook | hand | wheel | pillow`
+- New column `kind text` — `music | ebook | art | hand | wheel | pillow`
   (CHECK constraint). Backfill existing rows from `type`. **Do not reuse
   `wandering_role`** — that column is the uploader's personal badge and is
   read by TribalAliveFeed, DJMusicUpload and video upload; it means something
@@ -183,7 +188,7 @@ immediate payout — same test as the other purchase kinds.
 ## 8. My Garden
 
 One list of all the member's seeds regardless of kind, newest first, with a kind
-filter row (All · Music · Hand · Wheel · Pillow · Orchards) using the
+filter row (All · Music · Art · Hand · Wheel · Pillow · Orchards) using the
 Learn & Share colours. Each card shows kind badge, title, price/rate, and for
 services a small "N bookings" count. "Sow a seed" button on this page goes to
 the `/sow` chooser.
@@ -208,4 +213,5 @@ album). Steps 1–3 can be done while album fixes are in review.
 
 Calendar sync, maps/geo search beyond town + radius text, insurance,
 ID/licence verification, escrow, reviews/ratings, multi-day pricing tiers,
-deposits, cancellation refunds (handle manually via admin for now).
+deposits, cancellation refunds (handle manually via admin for now), Field and
+Forge seed forms (next spec).
