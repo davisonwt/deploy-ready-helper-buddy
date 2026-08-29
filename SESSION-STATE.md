@@ -83,6 +83,60 @@ Working notes on where the Sow2Grow codebase stands. Not a spec, not permanent d
 - **A cron job briefly existed at jobid 15, between `reconcile-paypal-orders` (14) and `payout-earnings-weekly` (16), and was unscheduled by hand** (user-reported) before it ever fired — confirmed independently from this end: the jobid gap is real, and `cron.job_run_details` has zero rows for jobid 15, so whatever it was never actually ran. Its name/command aren't recoverable now (removed from `cron.job`, and `job_run_details` doesn't retain a removed job's definition) — noted here as a fact, not a mystery to chase.
 - **A Lovable sync stall around 07:46** was reported by the user this morning — outside what I have visibility into (Lovable's own git-sync pipeline, not the Supabase project), so this is recorded as user-reported and not independently verified from this end.
 
+## Fixed — 2026-08-29 (sowing forms: music album, new entry points, old-form retirement)
+
+Continuing `spec-sowing-forms.md`'s build (Step 0/music-single itself — `/sow`,
+`/sow/music`, the shared components, `generate-preview` — landed in a prior
+session and was never logged here; noted for the record). Four commits today:
+
+- Album mode added to `/sow/music`: "Single or album?" is the first
+  question; album mode adds a multi-file track drop zone (order by
+  filename, drag to reorder, optional per-track price) and writes the same
+  row shape the old album upload form wrote (one `products` row, `file_url`
+  → a `manifest.json` of individually-uploaded tracks). `isAlbum()` picks
+  this up from the manifest.json `file_url` alone; `metadata.is_album` is
+  also set. The old form's 8-tracks-minimum was carried forward since
+  nothing asked to relax it.
+- New entry points into `/sow`: a "Sow a seed" button on the dashboard next
+  to Feeds; My Garden's old four buttons (Sow New Seed, Sow a Song, Sow an
+  Album, Bulk Upload) collapsed into one "Sow a seed"; `/sow` itself gained
+  a "Bulk upload" link (kept visually separate from the six kind tiles)
+  opening the existing bulk uploader at `/dashboard/sower/upload`.
+- Music retired from the old upload form (`UploadForm.tsx`, `/products/upload`):
+  removed the Release Type (single/album) selector, ZIP upload/extraction
+  (JSZip), the album track list and its validation, and audio-format
+  checking — none of it is reachable anymore since Music is no longer a
+  Type option. A note under Type points sowers looking for music at `/sow`.
+  The route itself stays live for Art/File. Fixed two links this would
+  otherwise have left dangling: `MusicLibraryPage`'s "Upload new" and
+  `MyGardenPanel`'s "Drop Music" quick action both pointed at
+  `/products/upload` and now go to the new flow instead.
+  `DJMusicUpload.jsx` (DJ radio track uploads — a separate feature and
+  table, `dj_music_tracks`) was left untouched; it only shares the word
+  "album" with the form retired here, not any code.
+
+tsc/lint clean on every commit; each pushed immediately.
+
+## Sowing forms — per-kind status (spec-sowing-forms.md)
+
+Tracked here so the rest of `UploadForm.tsx` gets retired one kind at a
+time, the same way music just was, rather than all at once.
+
+| Kind | New form | Old form (`/products/upload`) |
+|---|---|---|
+| Music — single | **Live** — `/sow/music` | Retired — Type option removed |
+| Music — album | **Live** — `/sow/music`, "Album" mode | Retired — Type option removed |
+| Artwork / image | Not built | **Live** — Type: Art |
+| Document / e-book | Not built | **Live** — Type: File (documents have no dedicated type; they go through "File") |
+| Physical product | Not built | Partial — the Digital/Physical delivery toggle exists for Art/File, but there's no dedicated physical-product type or flow (variants, stock, shipping price) |
+| Service | Not built | **Not covered** — the old form has never had a Service type |
+| Orchard | Not built | N/A — orchards are a separate flow (`/create-orchard`, `orchards` table), never part of `UploadForm.tsx` |
+
+Next in `spec-sowing-forms.md`'s own order: Document, then Artwork, then
+Physical product/Service (deferred last on purpose — they carry the
+delivery/booking complexity), then Orchard. Only once every kind has a
+live `/sow` form does `UploadForm.tsx` itself get retired outright.
+
 ## Open — priority order
 
 1. ~~Live proof that `paypal-webhook` actually works now~~ — **resolved, see Keystone problem**: order `0a6a0b1a` finalized via a clean webhook call at 08:36 UTC 2026-08-29. The `processed_webhooks`-insert bug (separate from the webhook itself) is also fixed; watch for its first real row as confirmation the fix landed, not as proof the webhook works — that's already established.
