@@ -43,7 +43,13 @@ export default function ProductCard({ product, featured, showActions = false }: 
   useEffect(() => {
     const loadAudioUrl = async () => {
       if (!isAlbum) {
-        setAudioUrl(product.file_url);
+        // product.file_url points into the private premium-room bucket —
+        // a bare <audio src> to it carries no auth and will never load,
+        // for anyone, owner included (get-seed-file is the only path that
+        // works, and it's a per-request signed URL, not something to wire
+        // into every card in a grid). preview_url is the actual public,
+        // directly-playable object — null until generate-preview succeeds.
+        setAudioUrl(product.preview_url || null);
         return;
       }
 
@@ -61,7 +67,7 @@ export default function ProductCard({ product, featured, showActions = false }: 
     if (product.type === 'music') {
       loadAudioUrl();
     }
-  }, [product.file_url, product.type, isAlbum]);
+  }, [product.file_url, product.preview_url, product.type, isAlbum]);
 
   useEffect(() => {
     const ownerId = product.sowers?.user_id;
@@ -226,7 +232,7 @@ export default function ProductCard({ product, featured, showActions = false }: 
             {/* Overlay */}
             <div className="absolute inset-0 bg-gradient-to-t from-background/90 via-background/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300">
               <div className="absolute inset-0 flex items-center justify-center">
-                {product.type === 'music' && (
+                {product.type === 'music' && audioUrl && (
                   <Button
                     size="lg"
                     onClick={handlePlayPause}

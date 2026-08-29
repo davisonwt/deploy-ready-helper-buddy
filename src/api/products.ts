@@ -231,7 +231,7 @@ export const fetchDashboardProductsForSowers = (sowerIds: string[], limit = 60) 
 export const fetchActiveProductsForFeed = (limit = 80) =>
   supabase
     .from('products')
-    .select('id, title, description, type, cover_image_url, image_urls, file_url, price, sower_id, wandering_role, created_at')
+    .select('id, title, description, type, cover_image_url, image_urls, file_url, preview_url, price, sower_id, wandering_role, created_at')
     .eq('status', 'active')
     .order('created_at', { ascending: false })
     .limit(limit);

@@ -62,6 +62,8 @@ interface FeedItem {
   image?: string | null;
   images?: string[] | null;
   audio_url?: string | null;
+  /** Public 45s clip, used as the play fallback when audio_url can't be signed for this viewer (not the owner/a buyer). */
+  preview_url?: string | null;
   video_url?: string | null;
   price?: number | null;
   sower_id: string | null;
@@ -364,7 +366,12 @@ export default function TribalAliveFeedPage() {
               if (Array.isArray(p.image_urls)) p.image_urls.forEach((u: string) => { if (u && !arr.includes(u)) arr.push(u); });
               return arr.length ? arr : null;
             })(),
+            // audio_url is signed on play (resolvePlayableUrl) -- succeeds
+            // for the owner/a buyer (premium-room's RLS), fails for anyone
+            // else, in which case togglePlay falls back to preview_url (a
+            // real public 45s clip) instead of a dead unsigned URL.
             audio_url: isAudio ? p.file_url : null,
+            preview_url: isAudio ? (p.preview_url || null) : null,
             video_url: isVideo ? p.file_url : null,
             price: Number(p.price ?? 2),
             sower_id: p.sower_id,
@@ -1330,9 +1337,15 @@ function extractBucketAndPath(url: string): { bucket: string; path: string } | n
   }
 }
 
-/** Turns a stored media URL/path into a URL the browser can actually play. */
-async function resolvePlayableUrl(rawUrl: string | null | undefined): Promise<string | null> {
-  if (!rawUrl) return null;
+/**
+ * Turns a stored media URL/path into a URL the browser can actually play.
+ * fallbackUrl is only ever a preview_url (a genuinely public object) — used
+ * when signing the real file fails, which for premium-room specifically
+ * means "not the owner and hasn't bestowed" (RLS denies the signed URL),
+ * not a transient error. Never falls back to the raw, still-private URL.
+ */
+async function resolvePlayableUrl(rawUrl: string | null | undefined, fallbackUrl?: string | null): Promise<string | null> {
+  if (!rawUrl) return fallbackUrl || null;
   if (rawUrl.startsWith('blob:') || rawUrl.startsWith('data:')) return rawUrl;
 
   // Bare storage path (no host) — assume music-tracks, the most common case.
@@ -1340,7 +1353,7 @@ async function resolvePlayableUrl(rawUrl: string | null | undefined): Promise<st
     const { data } = await supabase.storage
       .from('music-tracks')
       .createSignedUrl(rawUrl.replace(/^\/+/, ''), 60 * 60);
-    return data?.signedUrl || rawUrl;
+    return data?.signedUrl || fallbackUrl || null;
   }
 
   const parts = extractBucketAndPath(rawUrl);
@@ -1349,7 +1362,7 @@ async function resolvePlayableUrl(rawUrl: string | null | undefined): Promise<st
   const { data } = await supabase.storage
     .from(parts.bucket)
     .createSignedUrl(parts.path, 60 * 60);
-  return data?.signedUrl || rawUrl;
+  return data?.signedUrl || fallbackUrl || null;
 }
 
 /* ───────── card with 45s preview + action rail ───────── */
@@ -1418,14 +1431,17 @@ function FeedCard({
     }
 
     // Lazily resolve a playable (signed) URL for private storage buckets.
+    // Audio gets a preview_url fallback for when signing is denied (not the
+    // owner/a buyer) — video has no preview concept, so none is passed.
     const isVideo = media === videoRef.current;
     const raw = isVideo ? item.video_url : item.audio_url;
+    const fallback = isVideo ? null : item.preview_url;
     let src = isVideo ? playVideoUrl : playAudioUrl;
 
     if (!src) {
       setLoadingMedia(true);
       try {
-        src = await resolvePlayableUrl(raw);
+        src = await resolvePlayableUrl(raw, fallback);
       } catch {
         src = null;
       }
@@ -1449,7 +1465,7 @@ function FeedCard({
       setPlaying(false);
       toast.error('Playback failed — try again');
     }
-  }, [playing, item.key, item.audio_url, item.video_url, playAudioUrl, playVideoUrl]);
+  }, [playing, item.key, item.audio_url, item.video_url, item.preview_url, playAudioUrl, playVideoUrl]);
 
   // 45s cap
   useEffect(() => {

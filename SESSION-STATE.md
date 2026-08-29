@@ -207,21 +207,34 @@ itself uploaded fine). Investigated read-only first, then fixed:
   reject a CRON_SECRET bearer at the platform level before the function's
   own auth logic ever ran) — the function already validates real user
   sessions manually, same as `reconcile-paypal-orders`/`release-escrow`.
-- **Found, not fixed here** (out of scope for this pass, flagged plainly):
-  `MusicTrackDetailPage.tsx` (the player) never actually reads
-  `products.preview_url` at all — a non-owner always gets `audioUrl: null`
-  regardless of whether a preview exists, per a comment in that file dating
-  to before `generate-preview`/`preview_url` existed ("a product-sourced
-  track has no separate preview object yet"). That comment is now false,
-  but the player was never updated to match. Practically: `preview_url`
-  being null is already handled gracefully (verified — same "not available
-  yet" fallback either way), so nothing here is broken by this fix, but the
-  entire preview feature currently delivers zero benefit to a browsing
-  buyer even when it works. `get-seed-file` was also checked and never
-  references `preview_url` at all (full-file-only), so it has nothing to
-  break here either. Wiring the player to actually serve `preview_url` to
-  non-owners is a real follow-up, deliberately not bundled into this fix
-  since it touches purchase-flow display logic beyond what was asked.
+- **Fixed same day, follow-up task**: the gap noted just above (player never
+  served `preview_url`) is closed. `MusicTrackDetailPage.tsx` now plays
+  `preview_url` directly for a non-owner/non-buyer on a product-sourced
+  track (public bucket, no signing needed) instead of `null`; owners/buyers
+  are unchanged (still `get-seed-file`). The existing "45-second preview"
+  label and "not available yet" fallback needed no changes — both already
+  keyed off `audioUrl` being null/non-null, which now reflects reality.
+  Same gap found and fixed in two more places: `ProductCard.tsx`'s inline
+  play button was setting `audioUrl = product.file_url` directly — a raw
+  URL into the private `premium-room` bucket that a bare `<audio src>` can
+  never load (no auth header), so this had actually never worked for
+  *anyone*, owner included; now uses `preview_url`, with the play button
+  itself hidden when there's none. `TribalAliveFeedPage.tsx`'s community
+  feed already attempted `createSignedUrl` on the real file (correctly
+  succeeding for an owner/buyer per premium-room's RLS, denied for anyone
+  else) but fell back to the same broken raw URL on denial — `preview_url`
+  is now the fallback instead. Albums are untouched in all three (no
+  per-track preview exists for them — a separate, bigger gap, not part of
+  this fix). Two related-but-different issues found and *not* touched,
+  flagged here instead: `LivingSeedCard.tsx` (My Garden / dashboard "your
+  own seeds") has the identical raw-`file_url` bug, but only ever renders
+  the viewing user's own content — there's no non-owner case there, so it's
+  a different bug (broken even for the owner), not "the same gap"; and
+  `/products` (`ProductsPage.tsx`, the main marketplace grid — a bespoke
+  card, not `ProductCard`) has a "Play 30s" button with **no `onClick`
+  handler at all** — never functional, would need real playback UI built
+  from scratch rather than a URL swap, which is a materially bigger task
+  than this one.
 
 ## Open — priority order
 

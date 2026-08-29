@@ -62,6 +62,8 @@ interface NormalizedTrack {
   artist_name: string | null;
   cover_image_url: string | null;
   playable_url: string | null;
+  /** Product-sourced only — a public 45s clip in seed-previews, playable directly, no signing. */
+  preview_url: string | null;
   price: number | null;
   duration_seconds: number | null;
   genre: string | null;
@@ -109,6 +111,7 @@ export default function MusicTrackDetailPage() {
           artist_name: djData.artist_name,
           cover_image_url: djData.cover_image_url,
           playable_url: djData.preview_url || djData.file_url,
+          preview_url: null, // dj tracks fold preview into playable_url already, above
           price: djData.price,
           duration_seconds: djData.duration_seconds,
           genre: djData.music_genre || djData.genre,
@@ -116,7 +119,7 @@ export default function MusicTrackDetailPage() {
       } else {
         const { data: productData } = await supabase
           .from('products')
-          .select('id, title, artist_name, cover_image_url, image_urls, file_url, price, duration, music_genre, music_mood, sower_id')
+          .select('id, title, artist_name, cover_image_url, image_urls, file_url, preview_url, price, duration, music_genre, music_mood, sower_id')
           .eq('id', id)
           .eq('type', 'music')
           .maybeSingle();
@@ -138,6 +141,7 @@ export default function MusicTrackDetailPage() {
             artist_name: productData.artist_name || sowerName,
             cover_image_url: productData.cover_image_url || productData.image_urls?.[0] || null,
             playable_url: productData.file_url,
+            preview_url: productData.preview_url ?? null,
             price: productData.price,
             duration_seconds: productData.duration,
             genre: productData.music_genre || productData.music_mood,
@@ -179,15 +183,17 @@ export default function MusicTrackDetailPage() {
 
       // dj_track previews/full files resolve the same way regardless of
       // ownership (the 45s cap is enforced client-side either way). A
-      // product-sourced track has no separate preview object yet (see
-      // spec-seed-protection.md) — only an owner (buyer or uploader) gets a
-      // URL at all, via the purchase-gated get-seed-file function; a
-      // non-owner gets nothing rather than a signed URL to the full file.
+      // product-sourced track: an owner (buyer or uploader) gets the real
+      // file via the purchase-gated get-seed-file function; anyone else
+      // gets preview_url directly — seed-previews is a public bucket, so
+      // it's already a usable URL, no signing needed. null when no preview
+      // has been generated yet (e.g. still mid-retry — see
+      // retry-seed-previews) — same "not available yet" state as before.
       const a = normalized.source === 'dj_track'
         ? await resolveMediaUrl(normalized.playable_url)
         : isOwned
         ? await fetchSeedFileUrl(normalized.id, 'play')
-        : null;
+        : normalized.preview_url;
       if (!alive) return;
       setAudioUrl(a);
 
