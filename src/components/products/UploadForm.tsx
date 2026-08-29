@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { insertProduct } from '@/api/products';
+import { getDefaultCompanyId } from '@/lib/products/getDefaultCompanyId';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -114,6 +115,8 @@ export default function UploadForm() {
         sowerId = newSower.id;
       }
 
+      const companyId = await getDefaultCompanyId(sowerId);
+
       // Upload cover image - ensure file is valid before upload
       if (!coverImage || coverImage.size === 0) {
         throw new Error('Cover image is empty or invalid');
@@ -168,6 +171,7 @@ export default function UploadForm() {
       // Create product
       const insertedProduct = await insertProduct({
         sower_id: sowerId,
+        company_id: companyId,
         title: formData.title,
         description: formData.description,
         type: formData.type,

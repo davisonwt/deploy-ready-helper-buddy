@@ -2,6 +2,7 @@ import { useState, useCallback, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { insertProduct } from '@/api/products';
+import { getDefaultCompanyId } from '@/lib/products/getDefaultCompanyId';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -559,12 +560,14 @@ function PublishStep({
 
     let published = 0;
     try {
+      const companyId = await getDefaultCompanyId(sowerId);
       const status = asDraft ? 'draft' : (scheduleAt ? 'draft' : 'active');
       for (let i = 0; i < validRows.length; i++) {
         const r = validRows[i];
         const n = r.normalized;
         const productPayload: Record<string, unknown> = {
           sower_id: sowerId,
+          company_id: companyId,
           title: n.name!,
           description: n.description ?? null,
           price: n.price ?? 0,

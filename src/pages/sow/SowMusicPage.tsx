@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { insertProduct } from '@/api/products';
+import { getDefaultCompanyId } from '@/lib/products/getDefaultCompanyId';
 import { priceBreakdown } from '@/lib/pricing/platformFee';
 import { launchConfetti } from '@/utils/confetti';
 import { toast } from 'sonner';
@@ -164,6 +165,8 @@ export default function SowMusicPage() {
         sowerId = newSower.id;
       }
 
+      const companyId = await getDefaultCompanyId(sowerId);
+
       const totalPrice = isFree ? 0 : priceBreakdown(price!).total;
       const metadata: Record<string, unknown> = {};
       if (explicit) metadata.explicit = true;
@@ -201,6 +204,7 @@ export default function SowMusicPage() {
 
       const inserted = await insertProduct({
         sower_id: sowerId,
+        company_id: companyId,
         title: title.trim(),
         description: description.trim(),
         type: 'music',

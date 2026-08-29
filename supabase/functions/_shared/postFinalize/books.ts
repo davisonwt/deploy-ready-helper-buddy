@@ -4,9 +4,20 @@
 // from the client). Mirrors sower_earnings_v into books_income and
 // buyer_purchases_v into expenses automatically — no manual entry — for
 // every user who has an active Books workspace (a `companies` row with
-// books_enabled = true, created via BooksPage's "Open my books" flow).
-// A user with no workspace yet gets nothing logged; there's nowhere to
-// attach it to, and this never creates a workspace on someone's behalf.
+// books_enabled = true, created via BooksPage's "Open my books" flow, or
+// via the spec-books.md backfill that gives every sower a default one).
+// A business with Books not turned on gets nothing logged; there's nowhere
+// to attach it to, and this never turns Books on for anyone.
+//
+// spec-books.md §5 — a set of books is a `companies` row, and every seed
+// (product, orchard) belongs to exactly one. Income from a seed sale
+// resolves business_id from THAT seed's own company_id — never from "the
+// user's Books workspace" — since a member with two businesses may have
+// sown the seed into either one. Anything with no specific seed behind it
+// (a buyer's own expense record; a P2P gift with no orchard; whisperer and
+// referral income, neither of which is logged into Books anywhere yet, but
+// carries the same rule for whenever that's built) is personal, not
+// per-business, and goes to the recipient's/buyer's *default* set instead.
 //
 // Runs at the same per-row granularity as the two views rather than
 // reading them: both views embed `WHERE ... = auth.uid()` directly in
@@ -79,7 +90,7 @@ async function syncBasketOrder(supabase: SupabaseLike, basketOrderId: string): P
     .from("product_bestowals")
     .select(`
       id, bestower_id, sower_id, product_id, amount, s2g_fee, sower_amount, status,
-      products:product_id ( title ),
+      products:product_id ( title, company_id ),
       sowers:sower_id ( user_id )
     `)
     .in("id", bestowalIds)
@@ -88,6 +99,7 @@ async function syncBasketOrder(supabase: SupabaseLike, basketOrderId: string): P
   const orderSubtotal = Number(basketOrder.subtotal || 0);
   const orderProcessorFee = Number(basketOrder.processor_fee || 0);
   const paidAt = basketOrder.completed_at ?? basketOrder.created_at;
+  const buyerCompany = await findDefaultBooksCompany(supabase, basketOrder.user_id);
 
   for (const r of (rows ?? []) as any[]) {
     const sowerUserId = r.sowers?.user_id;
@@ -95,21 +107,23 @@ async function syncBasketOrder(supabase: SupabaseLike, basketOrderId: string): P
     const lineAmount = Number(r.amount || 0);
     const processorFee = orderSubtotal > 0 ? round2(orderProcessorFee * (lineAmount / orderSubtotal)) : 0;
 
-    if (sowerUserId) {
-      await upsertIncome(supabase, sowerUserId, {
-        income_type: "sale",
-        description: title,
-        amount: round2(Number(r.sower_amount || 0)),
-        platform_fee: round2(Number(r.s2g_fee || 0)),
-        payment_method: basketOrder.provider,
-        buyer_reference: await resolveBuyerName(supabase, basketOrder.user_id),
-        source_table: "product_bestowals",
-        source_id: r.id,
-        occurred_at: paidAt,
-      });
-    }
+    // Income belongs to the product's own set of books, not "the sower's"
+    // — a member with two businesses may have sown this into either one.
+    const sellerCompany = await findCompanyIfBooksEnabled(supabase, r.products?.company_id ?? null);
+    await upsertIncome(supabase, sellerCompany?.id ?? null, {
+      income_type: "sale",
+      description: title,
+      amount: round2(Number(r.sower_amount || 0)),
+      platform_fee: round2(Number(r.s2g_fee || 0)),
+      payment_method: basketOrder.provider,
+      buyer_reference: await resolveBuyerName(supabase, basketOrder.user_id),
+      source_table: "product_bestowals",
+      source_id: r.id,
+      occurred_at: paidAt,
+    });
 
-    await upsertExpense(supabase, basketOrder.user_id, {
+    // The buyer's own spending record is personal — their default set.
+    await upsertExpense(supabase, buyerCompany?.id ?? null, {
       description: title,
       amount: round2(lineAmount + processorFee),
       category: "Other",
@@ -133,7 +147,12 @@ async function syncContentPurchase(supabase: SupabaseLike, purchaseId: string): 
   const title = await resolveContentTitle(supabase, cp.content_type, cp.content_id);
   const paidAt = cp.completed_at ?? cp.created_at;
 
-  await upsertIncome(supabase, cp.seller_id, {
+  // content_purchases spans premium rooms / library items / live-session
+  // media, none of which are `products` or `orchards` rows — no company_id
+  // exists anywhere on these, so this income isn't attributable to a
+  // specific business. Seller's default set, same as a P2P gift.
+  const sellerCompany = await findDefaultBooksCompany(supabase, cp.seller_id);
+  await upsertIncome(supabase, sellerCompany?.id ?? null, {
     income_type: "sale",
     description: title,
     amount: round2(Number(cp.base_amount || 0)),
@@ -145,7 +164,8 @@ async function syncContentPurchase(supabase: SupabaseLike, purchaseId: string): 
     occurred_at: paidAt,
   });
 
-  await upsertExpense(supabase, cp.buyer_id, {
+  const buyerCompany = await findDefaultBooksCompany(supabase, cp.buyer_id);
+  await upsertExpense(supabase, buyerCompany?.id ?? null, {
     description: title,
     amount: round2(Number(cp.buyer_total_amount || 0)),
     category: "Other",
@@ -162,7 +182,7 @@ async function syncBestowal(supabase: SupabaseLike, bestowalId: string): Promise
     .select(`
       id, bestower_id, orchard_id, buyer_total_amount, base_amount, processor_fee_amount,
       distribution_data, provider, updated_at, created_at, payment_status,
-      orchards:orchard_id ( title, user_id )
+      orchards:orchard_id ( title, user_id, company_id )
     `)
     .eq("id", bestowalId)
     .maybeSingle();
@@ -179,7 +199,12 @@ async function syncBestowal(supabase: SupabaseLike, bestowalId: string): Promise
   const incomeType = b.orchard_id ? "sale" : "gift";
 
   if (sowerUserId) {
-    await upsertIncome(supabase, sowerUserId, {
+    // An orchard sale belongs to that orchard's own set of books; a bare
+    // P2P gift (no orchard) has no seed behind it — recipient's default set.
+    const sellerCompany = b.orchard_id
+      ? await findCompanyIfBooksEnabled(supabase, b.orchards?.company_id ?? null)
+      : await findDefaultBooksCompany(supabase, sowerUserId);
+    await upsertIncome(supabase, sellerCompany?.id ?? null, {
       income_type: incomeType,
       description: title,
       amount: round2(sowerAmount),
@@ -192,7 +217,8 @@ async function syncBestowal(supabase: SupabaseLike, bestowalId: string): Promise
     });
   }
 
-  await upsertExpense(supabase, b.bestower_id, {
+  const buyerCompany = await findDefaultBooksCompany(supabase, b.bestower_id);
+  await upsertExpense(supabase, buyerCompany?.id ?? null, {
     description: title,
     amount: round2(buyerTotal),
     category: "Other",
@@ -211,8 +237,9 @@ async function syncTopup(supabase: SupabaseLike, topupId: string): Promise<void>
     .maybeSingle();
   if (!t || t.status !== "completed") return;
 
-  // No sower/seed involved — self-funding. Expense only.
-  await upsertExpense(supabase, t.user_id, {
+  // No sower/seed involved — self-funding. Expense only, buyer's default set.
+  const buyerCompany = await findDefaultBooksCompany(supabase, t.user_id);
+  await upsertExpense(supabase, buyerCompany?.id ?? null, {
     description: "Wallet top-up",
     amount: round2(Number(t.amount || 0) + Number(t.fee_amount || 0)),
     category: "Other",
@@ -227,13 +254,37 @@ async function syncTopup(supabase: SupabaseLike, topupId: string): Promise<void>
 // Shared helpers
 // ---------------------------------------------------------------------------
 
-async function findBooksCompany(supabase: SupabaseLike, ownerUserId: string): Promise<Company | null> {
+/**
+ * A user's default set of books — for anything with no specific seed to
+ * attribute it to: a buyer's own expense record, a P2P gift with no
+ * orchard, content_purchases income (no products/orchards row exists for
+ * those content types), and — whenever either is actually logged into
+ * Books, neither is yet — whisperer and referral income. All personal,
+ * not per-business, per spec-books.md §5.
+ */
+async function findDefaultBooksCompany(supabase: SupabaseLike, ownerUserId: string): Promise<Company | null> {
   const { data } = await supabase
     .from("companies")
     .select("id")
     .eq("owner_user_id", ownerUserId)
+    .eq("is_default", true)
     .eq("books_enabled", true)
-    .limit(1)
+    .maybeSingle();
+  return data ?? null;
+}
+
+/**
+ * The specific business a product/orchard sale belongs to — its own
+ * company_id, never "the sower's Books workspace": a member with two
+ * businesses may have sown this particular seed into either one.
+ */
+async function findCompanyIfBooksEnabled(supabase: SupabaseLike, companyId: string | null): Promise<Company | null> {
+  if (!companyId) return null;
+  const { data } = await supabase
+    .from("companies")
+    .select("id")
+    .eq("id", companyId)
+    .eq("books_enabled", true)
     .maybeSingle();
   return data ?? null;
 }
@@ -260,12 +311,11 @@ interface IncomeParams {
   occurred_at: string;
 }
 
-async function upsertIncome(supabase: SupabaseLike, sowerUserId: string, params: IncomeParams): Promise<void> {
-  const company = await findBooksCompany(supabase, sowerUserId);
-  if (!company) return; // no Books workspace to attach this to yet
+async function upsertIncome(supabase: SupabaseLike, businessId: string | null, params: IncomeParams): Promise<void> {
+  if (!businessId) return; // no set of books to attach this to (none exists, or Books isn't enabled on it)
 
   const row = {
-    business_id: company.id,
+    business_id: businessId,
     income_type: params.income_type,
     description: params.description,
     amount: params.amount,
@@ -302,12 +352,11 @@ interface ExpenseParams {
   source_id: string;
 }
 
-async function upsertExpense(supabase: SupabaseLike, buyerUserId: string, params: ExpenseParams): Promise<void> {
-  const company = await findBooksCompany(supabase, buyerUserId);
-  if (!company) return; // no Books workspace to attach this to yet
+async function upsertExpense(supabase: SupabaseLike, businessId: string | null, params: ExpenseParams): Promise<void> {
+  if (!businessId) return; // no set of books to attach this to (none exists, or Books isn't enabled on it)
 
   const row = {
-    business_id: company.id,
+    business_id: businessId,
     description: params.description,
     amount: params.amount,
     currency: "USD",

@@ -392,6 +392,111 @@ Closed the three remaining gaps from the previous entry:
   seconds longer before the client-side cap kicks in.
 - `npx tsc --noEmit` and `npx eslint` both clean.
 
+## Fixed — 2026-08-29, still later (spec-books.md build order steps 1–2: multiple sets of books, schema + resolution)
+
+`spec-books.md` and `spec-service-seeds.md` added to the repo root (copied
+from Downloads — `spec-books(2).md` and `spec-service-seeds(1).md`, the
+latter carrying the "Decided 2026-08-29 after report" sections 4 and 6).
+Did build order steps 1–2 of `spec-books.md` only, per instruction —
+steps 3+ (switcher UI, /sow Books field, per-set payouts, admin view) not
+started.
+
+**Step 1 — migration (`20260901120000_books-multi-set-schema.sql`), verified counts:**
+- `companies` gained `registration_no`/`vat_no`/`address` (nullable) and
+  `is_default boolean not null default false`, plus a partial unique index
+  (`companies_one_default_per_owner`, one `is_default = true` per
+  `owner_user_id`).
+- Backfill: every sower without a `companies` row got one (name = sower
+  display name, `is_default = true`, `books_enabled = false` — today's
+  column default, so nobody's Books state changed). **Live count: 4 of 6
+  sowers had no company yet (Ed, Amber Wheeles, "The R.I.S.E. Coach" =
+  Rodney, and "ClayRoses" — a brand-new sower who signed up and planted a
+  product mid-migration, see below) — all 4 got one.** The oldest company
+  per owner was then marked default in the same pass (covers the
+  pre-existing 1-row case — davison, Louw — and would have covered any
+  >1-row case too; live count of owners with more than one company: 0,
+  both before and after).
+- **A live sow happened mid-migration** ("ClayRoses" planted "The
+  Journey" at 12:44:33 UTC, between the companies backfill and the
+  products backfill) — its `company_id` came up null on the first
+  products-backfill pass; re-ran the (idempotent) companies-backfill and
+  products-backfill once each and it resolved cleanly. In response, added
+  two safety nets beyond what the spec's migration section itself asked
+  for, given this was directly observed, not hypothetical: a `BEFORE
+  INSERT` trigger on `products` and one on `orchards` that fill
+  `company_id` from the inserting owner's default set whenever a writer
+  leaves it null (harmless once every writer sets it explicitly — see
+  below — but closes the window before that was true), and an `AFTER
+  INSERT` trigger on `sowers` that gives a **brand-new** sower a default
+  company immediately, so their very first product isn't the one that
+  discovers the new NOT NULL constraint the hard way.
+- `products.company_id` (pre-existing, unused, and — discovered live — already
+  carrying an `ON DELETE SET NULL` FK to `companies.id` from whenever the
+  column was first added) backfilled to each product's owner's default
+  set, then locked `NOT NULL`. **Verified: 58/58 products have a
+  `company_id`, 6 distinct companies, column `NOT NULL` confirmed.**
+- `orchards.company_id` added (new column, plain FK, no `ON DELETE`
+  clause), backfilled, locked `NOT NULL`. **Live count: 0 orchards exist
+  at all**, so this was schema-only — trivially satisfied, nothing to
+  backfill.
+- **Final verification, all confirmed live:** every sower has exactly one
+  default company (0 without); 6 companies total, 6 marked default (1:1);
+  both FK constraints present.
+
+**Step 2 — resolution logic (§5):**
+- `books_backfill_products(_business_id)` (new migration
+  `20260901130000`): the products half now pulls only `WHERE p.company_id
+  = _business_id`, dropping the old `OR p.sower_id IN (scoped sowers)`
+  fallback that pulled every product across the caller's whole account
+  scope into whichever business asked. Top-level ownership check
+  unchanged. `sower_books` (no `company_id` column — out of scope for
+  this spec, §2 never adds one) keeps its existing
+  `get_my_account_scope()`-based filter, untouched. No orchard-equivalent
+  backfill function exists to mirror this in — checked (`pg_proc` for
+  anything else `%backfill%`), only `books_backfill_products` itself.
+- `books.ts` (`supabase/functions/_shared/postFinalize/books.ts`) no
+  longer resolves `business_id` from "the sower's/buyer's Books
+  workspace" (the old `findBooksCompany`, an arbitrary/unordered
+  `books_enabled` lookup by user). Two new resolvers: `findCompanyIfBooksEnabled(companyId)`
+  for seed-sourced sale income — reads the *specific* product's or
+  orchard's own `company_id`, since a member with two businesses may have
+  sown a given seed into either one; `findDefaultBooksCompany(ownerUserId)`
+  (now `is_default = true AND books_enabled = true`, replacing the old
+  unordered lookup) for everything with no seed behind it: a buyer's own
+  expense record (always), a bare P2P gift with no orchard, and
+  `content_purchases`-sourced income (premium rooms / library items /
+  live-session media — none of those backing tables have a `company_id`
+  column, so there's nothing seed-specific to resolve there). **Whisperer
+  and referral income aren't logged into Books anywhere yet — grepped
+  `supabase/functions` and `pg_proc` to confirm, nothing writes either
+  into `books_income` today — so "→ recipient's default set" is recorded
+  as the rule for whenever that's built, not new functionality added now.**
+- **Re-ran `books_backfill_products` for davison, Ed, Amber, Rodney
+  (`the-r-i-s-e-coach`) — Catalog and totals confirmed unchanged for all
+  four:** davison: 34 `books_items` before and after (33 products
+  upserted in place + 1 book, untouched), `books_income` 1 row/$2,
+  `expenses` 5 rows/$14.40 — identical before and after. Ed/Amber/Rodney:
+  0/0/0 before and after (`books_enabled = false` for all three — Books
+  was never turned on, backfill correctly no-ops exactly as it did when
+  they had no `companies` row at all). Independently confirmed davison's
+  one existing `books_income` row's `business_id` already matches what
+  the new product-`company_id` resolution computes for that same sale —
+  the new logic agrees with what was already recorded, nothing to correct.
+- **Every `products` writer sets `company_id`.** Grepped for
+  `.from('products').insert` across `src/` and `supabase/functions/` —
+  exactly one real writer exists: `insertProduct()` in `src/api/products.ts`,
+  called from three sites (`UploadForm.tsx`, `sow/SowMusicPage.tsx`,
+  `BulkUploadWizardPage.tsx` — the DJMusicUpload/video-upload writers
+  spec-books.md §4 also names insert into different tables entirely,
+  `dj_music_tracks`/`community_videos`, not `products`, so they're not
+  `products` writers and were left alone). New
+  `src/lib/products/getDefaultCompanyId.ts` (`sowers.id` ->
+  `sowers.user_id` -> `companies.owner_user_id where is_default`,
+  matching every writer's existing sower-resolution step) — all three now
+  set `company_id` on the insert payload; the bulk-upload wizard resolves
+  it once before its per-row loop rather than once per row.
+- `npx tsc --noEmit` and `npx eslint` both clean.
+
 ## Open — priority order
 
 1. ~~Live proof that `paypal-webhook` actually works now~~ — **resolved, see Keystone problem**: order `0a6a0b1a` finalized via a clean webhook call at 08:36 UTC 2026-08-29. The `processed_webhooks`-insert bug (separate from the webhook itself) is also fixed; watch for its first real row as confirmation the fix landed, not as proof the webhook works — that's already established.
