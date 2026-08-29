@@ -721,6 +721,73 @@ three call sites), so not repeated here.
   `company_id`/business concept at all).
 - `npx tsc --noEmit` and `npx eslint` both clean.
 
+## Fixed — 2026-08-29, still later (spec-sowing-forms.md: /sow/art, the second live sowing form)
+
+Built `/sow/art` following `SowMusicPage.tsx`'s single-track pattern
+exactly (same shared pieces, same layout, same non-blocking More-options
+philosophy, same Books field from the earlier task). Two small schema
+prerequisites found live and fixed first (`20260829210000_sow-art-schema.sql`):
+`products.kind`'s CHECK vocabulary (added by the service-seeds migration)
+didn't include `'art'` yet; `seed-previews`' `allowed_mime_types` was
+audio-only and would have rejected the watermarked-JPEG upload — both
+confirmed and fixed live before writing any page code.
+
+- **The image *is* the cover, and the two are deliberately different
+  files.** `SeedDropZone kind="image"` (10MB check, already existed)
+  uploads the real, full-resolution original straight to `premium-room`
+  (private) → `file_url`, gated behind `get-seed-file` exactly like
+  music's full track. Separately, **client-side, canvas-only, no edge
+  function** (new `src/lib/media/generateWatermarkedPreview.ts`): resizes
+  to a max 1200px width (never upscales), tiles a diagonal, 30%-opacity
+  "Sow2Grow preview" watermark across it, exports as JPEG, uploads to the
+  public `seed-previews` bucket. That watermarked copy is what actually
+  goes into **both** `cover_image_url`/`image_urls` (so every feed card,
+  `SeedPreviewCard`, and this listing's own gallery show it — never the
+  gated original) **and** `preview_url` (keeping the same
+  public-preview/gated-full-file column shape music already established,
+  for whatever reuses it later). Generation runs automatically right
+  after upload finishes (mirrors audio's "generating…" UX) and is
+  non-blocking on failure, same reasoning as audio's `preview_failed`: the
+  real file already uploaded fine.
+- **Required pieces, fixed order**: image, title, price, category,
+  description, licence. Licence (personal / commercial / print rights,
+  default personal — a new `RadioGroup`, stored in `metadata.usage_license`;
+  `products.license_type` stays exactly what it already meant elsewhere,
+  free-vs-bestowal payment model, a different concept, checked live before
+  reusing it) is a real puzzle piece but satisfied from the start, since it
+  always has a default. More options (never block Plant): medium,
+  dimensions (both free text, `metadata`), whisperer %, tags
+  (comma-separated — spec-sowing-forms.md's general "tags removed" rule is
+  explicitly overridden for this build, per this task's own literal
+  instruction), explicit. `type: 'art'` — confirmed live this is what
+  the old `UploadForm.tsx` already used (`<SelectItem value="art">`), kept
+  identical. `category`/One Picker fills the same "where does this belong"
+  role genre plays for music, with its own art-specific option list.
+  Books field (spec-books.md §4) — identical pattern to music's, hidden
+  with one business. On Plant: confetti, then
+  `navigate('/bulk/products/${id}')`.
+- **Detail page**: confirmed live (via `git log`, predates this session by
+  months) that `/bulk/products/:slug` → `BulkProductDetailPage.tsx` is the
+  genuinely old, generic, type-agnostic product page — the "old artwork
+  detail route." Its existing gallery needed no changes (it already just
+  renders `cover_image_url`/`image_urls`, which for an art seed is now
+  correctly the safe watermarked preview). Added the one new piece it was
+  missing: a **"Download full resolution"** button, shown only when
+  `product.type === 'art'` and the viewer is the uploader or holds a
+  completed `product_bestowals` row — same `fetchSeedFileUrl`/
+  `get-seed-file` call music's Download button uses (confirmed the
+  function has no type-specific assumptions — purely `products.id` +
+  entitlement). Scoped strictly to `type === 'art'`; every other product
+  type on this shared page is completely unchanged.
+- **`/sow` chooser**: Art card flipped to `live: true`, routed to
+  `/sow/art`. `/sow/classic` (the old flat tile picker) is untouched and
+  still where Books/Physical/Field/Forge's "coming soon" cards land.
+- Known gap, disclosed rather than silently accepted: unlike audio, there
+  is no `retry-seed-previews`-equivalent for a failed watermark
+  generation — if it fails, `preview_url`/`cover_image_url` stay null for
+  that seed until the sower re-uploads. Not built now; not asked for.
+- `npx tsc --noEmit` and `npx eslint` both clean.
+
 ## Open — priority order
 
 1. ~~Live proof that `paypal-webhook` actually works now~~ — **resolved, see Keystone problem**: order `0a6a0b1a` finalized via a clean webhook call at 08:36 UTC 2026-08-29. The `processed_webhooks`-insert bug (separate from the webhook itself) is also fixed; watch for its first real row as confirmation the fix landed, not as proof the webhook works — that's already established.

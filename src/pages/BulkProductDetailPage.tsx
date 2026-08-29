@@ -2,6 +2,8 @@ import { useEffect, useState } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { fetchProductBySlugOrId, fetchRelatedProductsBySower } from '@/api/products';
+import { fetchSeedFileUrl } from '@/lib/media/getSeedFileUrl';
+import { useAuth } from '@/hooks/useAuth';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -11,7 +13,7 @@ import { useProductBasket } from '@/contexts/ProductBasketContext';
 import ProductCard from '@/components/products/ProductCard';
 import {
   ArrowLeft, Share2, ShoppingCart, Megaphone, Loader2, ImageIcon,
-  Package, Tag, ChevronRight,
+  Package, Tag, ChevronRight, Download,
 } from 'lucide-react';
 
 export default function BulkProductDetailPage() {
@@ -19,12 +21,15 @@ export default function BulkProductDetailPage() {
   const navigate = useNavigate();
   const { toast } = useToast();
   const { addToBasket } = useProductBasket();
+  const { user } = useAuth();
 
   const [loading, setLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
   const [product, setProduct] = useState<any | null>(null);
   const [related, setRelated] = useState<any[]>([]);
   const [activeImg, setActiveImg] = useState(0);
+  const [fullResEntitled, setFullResEntitled] = useState(false);
+  const [downloadingFullRes, setDownloadingFullRes] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -43,6 +48,53 @@ export default function BulkProductDetailPage() {
     })();
     return () => { cancelled = true; };
   }, [slug]);
+
+  // Art seeds only: the gallery/cover above is always the public
+  // watermarked preview (cover_image_url is set to it at plant time) —
+  // never the full-resolution original, which stays behind get-seed-file
+  // the same way music's full track does. Only the uploader or a
+  // completed buyer sees the download affordance.
+  useEffect(() => {
+    let alive = true;
+    if (!product || product.type !== 'art') { setFullResEntitled(false); return; }
+    if (!user) { setFullResEntitled(false); return; }
+    (async () => {
+      if (product.sowers?.user_id === user.id) {
+        if (alive) setFullResEntitled(true);
+        return;
+      }
+      const { data } = await supabase
+        .from('product_bestowals')
+        .select('id')
+        .eq('bestower_id', user.id)
+        .eq('product_id', product.id)
+        .eq('status', 'completed')
+        .maybeSingle();
+      if (!alive) return;
+      setFullResEntitled(!!data);
+    })();
+    return () => { alive = false; };
+  }, [product, user]);
+
+  const handleDownloadFullRes = async () => {
+    if (!product) return;
+    setDownloadingFullRes(true);
+    try {
+      const url = await fetchSeedFileUrl(product.id, 'download');
+      if (!url) {
+        toast({ title: 'Could not get a download link', variant: 'destructive' });
+        return;
+      }
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = product.title || 'seed';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+    } finally {
+      setDownloadingFullRes(false);
+    }
+  };
 
   // SEO: title + meta + JSON-LD
   useEffect(() => {
@@ -225,6 +277,13 @@ export default function BulkProductDetailPage() {
                 <Share2 className="h-4 w-4 mr-1" /> Share
               </Button>
             </div>
+
+            {product.type === 'art' && fullResEntitled && (
+              <Button size="lg" variant="secondary" onClick={handleDownloadFullRes} disabled={downloadingFullRes} className="w-full">
+                {downloadingFullRes ? <Loader2 className="h-4 w-4 mr-1 animate-spin" /> : <Download className="h-4 w-4 mr-1" />}
+                Download full resolution
+              </Button>
+            )}
 
             {(product.stock_qty != null) && (
               <p className="text-xs text-muted-foreground flex items-center gap-1">

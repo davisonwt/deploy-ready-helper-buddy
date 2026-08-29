@@ -21,7 +21,7 @@ interface Card {
 
 const CREATIONS: Card[] = [
   { key: 'music', label: 'Music', icon: Music, live: true, route: '/sow/music' },
-  { key: 'art', label: 'Art', icon: Palette, live: false, route: '/sow/classic' },
+  { key: 'art', label: 'Art', icon: Palette, live: true, route: '/sow/art' },
   { key: 'books', label: 'Books', icon: FileText, live: false, route: '/sow/classic' },
 ];
 
