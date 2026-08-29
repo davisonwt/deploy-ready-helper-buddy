@@ -68,6 +68,7 @@ import {
   WalletSettingsPage,
   PayoutSettingsPage,
   MyOrdersPage,
+  MySeedsPage,
   EscrowQueuePage,
   BooksPage,
   BooksCatalogItemPage,
@@ -459,6 +460,9 @@ const AppRoutes = () => (
     } />
     <Route path="/my-orders" element={
       <ProtectedRoute><Layout><MyOrdersPage /></Layout></ProtectedRoute>
+    } />
+    <Route path="/my-seeds" element={
+      <ProtectedRoute><Layout><MySeedsPage /></Layout></ProtectedRoute>
     } />
     <Route path="/gosat/escrow" element={
       <ProtectedRoute><Layout><EscrowQueuePage /></Layout></ProtectedRoute>

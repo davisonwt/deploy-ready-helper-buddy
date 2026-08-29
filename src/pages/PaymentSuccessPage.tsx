@@ -204,10 +204,17 @@ export default function PaymentSuccessPage() {
           )}
 
           <div className="flex flex-col gap-3">
-            <Button onClick={() => navigate('/dashboard')} className="w-full">
-              <ArrowRight className="mr-2 h-4 w-4" />
-              Go to Dashboard
-            </Button>
+            {active?.kind === 'topup' ? (
+              <Button onClick={() => navigate('/dashboard')} className="w-full">
+                <ArrowRight className="mr-2 h-4 w-4" />
+                Go to Dashboard
+              </Button>
+            ) : (
+              <Button onClick={() => navigate('/my-seeds')} className="w-full">
+                <ArrowRight className="mr-2 h-4 w-4" />
+                See what you bestowed to
+              </Button>
+            )}
             <Button onClick={() => navigate('/wandering-directory')} variant="outline" className="w-full">
               Browse More
             </Button>

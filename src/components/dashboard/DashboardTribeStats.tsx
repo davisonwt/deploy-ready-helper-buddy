@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { Users, Coins, MessageCircle } from "lucide-react";
@@ -10,6 +10,7 @@ import { Users, Coins, MessageCircle } from "lucide-react";
  */
 export default function DashboardTribeStats() {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const [tribeCount, setTribeCount] = useState(0);
   const [bestowals, setBestowals] = useState({ count: 0, total: 0 });
   const [purchases, setPurchases] = useState({ count: 0, total: 0 });
@@ -151,7 +152,15 @@ export default function DashboardTribeStats() {
       {tile("/wallet-settings", <Coins size={20} />, "Bestowals", `${bestowals.total.toFixed(2)}`, (
         <>
           <div style={subLine}>{bestowals.count} received (USD)</div>
-          <div style={subLine}>${purchases.total.toFixed(2)} given · {purchases.count} purchases</div>
+          <div
+            style={{ ...subLine, textDecoration: "underline", cursor: "pointer" }}
+            role="link"
+            tabIndex={0}
+            onClick={(e) => { e.preventDefault(); e.stopPropagation(); navigate("/my-seeds"); }}
+            onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); e.stopPropagation(); navigate("/my-seeds"); } }}
+          >
+            ${purchases.total.toFixed(2)} given · {purchases.count} purchases — see what you bestowed to
+          </div>
         </>
       ), "#f59e0b")}
       {tile("/chatapp?filter=unread", <MessageCircle size={20} />, "Unread", unread, <div style={subLine}>{unread ? "tap to read" : "all caught up"}</div>, "#22d3ee")}
