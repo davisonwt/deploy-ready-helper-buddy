@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, Music, Palette, FileText, Wheat, Flame, Hammer, Package, TreeDeciduous, Users, Lock } from 'lucide-react';
+import { ArrowLeft, Music, Palette, FileText, Package, TreeDeciduous, Users, Lock } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
@@ -31,14 +31,11 @@ const SERVICES: Card[] = [
   { key: 'pillow', label: 'Pillow', emoji: '🛏️', color: '#db2777', live: true, service: 'pillow', route: '/sow/pillow' },
 ];
 
-// "What kind of goods?" — spec-sowing-forms.md, Hearth revised: home-made
-// goods (crafts, baked goods, preserves), never Creations. Each card is
-// live and lands on the same /sow/product form, preselected by ?kind=.
+// Field/Hearth/Forge are business types now (companies.kind), not a
+// per-seed choice — one card, one form. /sow/product itself resolves the
+// seed's kind from the sower's selected business.
 const PRODUCE: Card[] = [
-  { key: 'field', label: 'Field', icon: Wheat, live: true, route: '/sow/product?kind=field' },
-  { key: 'hearth', label: 'Hearth', icon: Flame, live: true, route: '/sow/product?kind=hearth' },
-  { key: 'forge', label: 'Forge', icon: Hammer, live: true, route: '/sow/product?kind=forge' },
-  { key: 'product', label: 'Physical product', icon: Package, live: true, route: '/sow/product?kind=product' },
+  { key: 'product', label: 'Product', icon: Package, live: true, route: '/sow/product' },
 ];
 
 const ORCHARDS: Card[] = [

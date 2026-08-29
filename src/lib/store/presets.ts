@@ -1,6 +1,11 @@
 // Heart is matchmaking (/tribal-hearts), not a service seed or a shop —
 // spec-service-seeds.md §4, revised. It never gets a preset here.
-export type WanderingKind = 'pillow' | 'hand' | 'wheel' | 'field' | 'hearth' | 'forge';
+//
+// 'shop' isn't a Wandering trade — it's the neutral/general business kind
+// (companies.kind), for a business that isn't specifically Field, Hearth
+// or Forge. It shares this same preset vocabulary since store_theme.preset
+// draws from all four business kinds identically.
+export type WanderingKind = 'pillow' | 'hand' | 'wheel' | 'field' | 'hearth' | 'forge' | 'shop';
 
 export interface WanderingPreset {
   kind: WanderingKind;
@@ -89,6 +94,19 @@ const PRESETS: Record<WanderingKind, WanderingPreset> = {
     buttonText: 'Commission a piece',
     bannerImage: null,
   },
+  // Deliberately no "Wandering" prefix — Shop is the neutral/general
+  // business kind, not a specific trade or craft identity like the other
+  // three.
+  shop: {
+    kind: 'shop',
+    title: 'Shop',
+    accent: '#71717a',
+    promise: 'Everything under one roof.',
+    description: 'General stock from a business in the tribe — browse what they have on the shelves.',
+    chips: [],
+    buttonText: 'Shop now',
+    bannerImage: null,
+  },
 };
 
 /**
@@ -106,4 +124,4 @@ export function isWanderingKind(kind: string): kind is WanderingKind {
   return Object.prototype.hasOwnProperty.call(PRESETS, kind);
 }
 
-export const WANDERING_KINDS: WanderingKind[] = ['pillow', 'hand', 'wheel', 'field', 'hearth', 'forge'];
+export const WANDERING_KINDS: WanderingKind[] = ['pillow', 'hand', 'wheel', 'field', 'hearth', 'forge', 'shop'];

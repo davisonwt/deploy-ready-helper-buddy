@@ -43,15 +43,24 @@ category colours/icons:
 
 1. **Creations** — Music (single / album), Art, Books. Digital seeds with a
    gated file and a preview.
-2. **Services & time** — Hand · Wheel · Pillow → this spec. Heart → `/tribal-hearts` (matchmaking, not a seed).
-3. **Produce & goods** — Field · Hearth · Forge. All three are physical
-   goods and share ONE form (`/sow/product`), with a "What kind of goods?"
-   picker: Field (farm produce), Hearth (home-made — crafts, cakes, jams,
-   chutneys, candles; the home business), Forge (custom-made /
-   commissions), or General (a shop's stock, e.g. the pharmacy).
-   `products.kind` = `field | hearth | forge | product`. Corrected
-   2026-08-29: Hearth is NOT "creations" — the Learn & Share video
-   description that says so is wrong and should be fixed.
+2. **Services & time** — Hand · Wheel · Pillow → this spec. No Heart tile
+   here at all (corrected 2026-08-29, again) — Wandering Hearts is the
+   dating feature with its own Dashboard tile, not something reached from
+   the sowing chooser.
+3. **Produce & goods** — one card, "Product" → `/sow/product`. Corrected
+   again 2026-08-29: Field / Hearth / Forge are **business types, not seed
+   kinds** — `companies.kind` (`field | hearth | forge | shop`, set on
+   Profile → My businesses, or asked once inline on `/sow/product` for a
+   business that has none yet). A farmer is a Field business; everything
+   they sow inherits it. `/sow/product`'s own "What kind of goods?" tiles
+   are gone — the form reads the selected business's `kind` and derives
+   `products.kind` from it (`field | hearth | forge`; a Shop business
+   yields `product`). Category list follows the resolved kind: Field
+   (vegetables, fruit, eggs, dairy, meat, honey, plants), Hearth (baked
+   goods, preserves, crafts, candles, soap, clothing — the home business,
+   **not "creations"**), Forge (metalwork, woodwork, leather, repairs,
+   custom), Shop (free text, e.g. the pharmacy). `?kind=` still works as
+   a per-seed override.
 4. **Orchards** — Community · Production → existing orchard flows.
 
 Clicking a service card:

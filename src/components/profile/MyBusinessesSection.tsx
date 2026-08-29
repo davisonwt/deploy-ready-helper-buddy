@@ -10,7 +10,9 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
 import { Badge } from '@/components/ui/badge';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Loader2, Store, ExternalLink, Star, Plus } from 'lucide-react';
+import { saveBusinessKind, BUSINESS_KIND_OPTIONS, type BusinessKind } from '@/lib/store/businessKind';
 
 interface Business {
   id: string;
@@ -26,10 +28,34 @@ interface Business {
   store_categories: string[] | null;
   collect_address: string | null;
   books_enabled: boolean;
+  kind: BusinessKind | null;
 }
 
 const SELECT =
-  'id, name, slug, currency, is_default, registration_no, vat_no, address, is_store, store_tagline, store_categories, collect_address, books_enabled';
+  'id, name, slug, currency, is_default, registration_no, vat_no, address, is_store, store_tagline, store_categories, collect_address, books_enabled, kind';
+
+function BusinessKindPicker({ value, onChange, idPrefix }: { value: BusinessKind | null; onChange: (v: BusinessKind) => void; idPrefix: string }) {
+  return (
+    <div className="space-y-1.5">
+      <Label>What kind of business?</Label>
+      <RadioGroup value={value ?? undefined} onValueChange={(v) => onChange(v as BusinessKind)} className="grid sm:grid-cols-2 gap-2">
+        {BUSINESS_KIND_OPTIONS.map((opt) => (
+          <label
+            key={opt.value}
+            htmlFor={`${idPrefix}-kind-${opt.value}`}
+            className={`flex items-start gap-2.5 rounded-lg border p-2.5 cursor-pointer text-sm ${value === opt.value ? 'border-primary bg-primary/5' : 'border-border hover:border-primary/60'}`}
+          >
+            <RadioGroupItem value={opt.value} id={`${idPrefix}-kind-${opt.value}`} className="mt-0.5" />
+            <span>
+              <span className="font-medium block">{opt.label}</span>
+              <span className="text-xs text-muted-foreground">{opt.description}</span>
+            </span>
+          </label>
+        ))}
+      </RadioGroup>
+    </div>
+  );
+}
 
 const slugify = (name: string, userId: string) =>
   (name
@@ -150,6 +176,7 @@ function AddBusinessForm({
   const [registrationNo, setRegistrationNo] = useState('');
   const [vatNo, setVatNo] = useState('');
   const [address, setAddress] = useState('');
+  const [kind, setKind] = useState<BusinessKind | null>(null);
   const [saving, setSaving] = useState(false);
 
   const create = async () => {
@@ -173,13 +200,16 @@ function AddBusinessForm({
           is_default: false,
           books_enabled: defaultBooksEnabled,
         } as any)
-        .select(
-          'id, name, slug, currency, is_default, registration_no, vat_no, address, is_store, store_tagline, store_categories, collect_address, books_enabled'
-        )
+        .select(SELECT)
         .single();
       if (error) throw error;
+      let created = data as any;
+      if (kind) {
+        await saveBusinessKind(created.id, kind);
+        created = { ...created, kind };
+      }
       toast.success(`${name.trim()} added — its set of books is ready`);
-      onAdded(data as any);
+      onAdded(created);
     } catch (err) {
       console.error('Failed to add business:', err);
       toast.error(err instanceof Error ? err.message : 'Could not add this business. Please try again.');
@@ -215,6 +245,7 @@ function AddBusinessForm({
         <Label htmlFor="new-biz-address">Address (optional)</Label>
         <Textarea id="new-biz-address" value={address} onChange={(e) => setAddress(e.target.value)} rows={2} />
       </div>
+      <BusinessKindPicker value={kind} onChange={setKind} idPrefix="new-biz" />
       <div className="flex gap-2">
         <Button onClick={create} disabled={saving || !name.trim()} size="sm">
           {saving ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : null}
@@ -246,6 +277,7 @@ function BusinessCard({
   const [tagline, setTagline] = useState(business.store_tagline ?? '');
   const [categories, setCategories] = useState((business.store_categories ?? []).join(', '));
   const [collectAddress, setCollectAddress] = useState(business.collect_address ?? '');
+  const [kind, setKind] = useState<BusinessKind | null>(business.kind);
   const [saving, setSaving] = useState(false);
 
   const save = async () => {
@@ -266,7 +298,10 @@ function BusinessCard({
       };
       const { error } = await supabase.from('companies').update(patch).eq('id', business.id);
       if (error) throw error;
-      onChange({ ...business, ...patch, store_categories: patch.store_categories ?? [] });
+      if (kind && kind !== business.kind) {
+        await saveBusinessKind(business.id, kind);
+      }
+      onChange({ ...business, ...patch, store_categories: patch.store_categories ?? [], kind: kind ?? business.kind });
       toast.success('Saved');
     } catch (err) {
       console.error('Failed to save business:', err);
@@ -321,6 +356,10 @@ function BusinessCard({
       <div className="space-y-1.5">
         <Label htmlFor={`address-${business.id}`}>Address</Label>
         <Textarea id={`address-${business.id}`} value={address} onChange={(e) => setAddress(e.target.value)} placeholder="Optional" rows={2} />
+      </div>
+
+      <div className="pt-2 border-t border-border/40">
+        <BusinessKindPicker value={kind} onChange={setKind} idPrefix={`biz-${business.id}`} />
       </div>
 
       <div className="flex items-center justify-between gap-3 pt-2 border-t border-border/40">

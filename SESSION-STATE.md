@@ -148,7 +148,7 @@ time, the same way music just was, rather than all at once.
 | Music — album | **Live** — `/sow/music`, "Album" mode | Retired — Type option removed |
 | Artwork / image | **Live** — `/sow/art` | Retired — Type option removed |
 | Document / e-book | **Live** — `/sow/book` | Retired — Type option removed |
-| Physical goods (Field/Hearth/Forge/General) | **Live** — `/sow/product?kind=X` | Untouched — old form's Physical/Digital delivery toggle still there, not retired this task |
+| Physical goods (Field/Hearth/Forge/Shop) | **Live** — `/sow/product`, kind from the business (`companies.kind`) | Untouched — old form's Physical/Digital delivery toggle still there, not retired this task |
 | Service — Hand | **Live** — `/sow/hand`, role-gated | **Not covered** — the old form has never had a Service type |
 | Service — Wheel / Pillow | Not built — role-gated placeholders | **Not covered** |
 | Orchard | Not built | N/A — orchards are a separate flow (`/create-orchard`, `orchards` table), never part of `UploadForm.tsx` |
@@ -1139,6 +1139,75 @@ Built `/sow/hand` on the `/sow/product` pattern — same layout, SeedPuzzle
   component. Scoped to exactly what's needed for Hand today; Wheel/
   Pillow slot into the same `KIND_CARD_META`/section pattern the moment
   those forms exist, no further plumbing required.
+- `npx tsc --noEmit` and `npx eslint` both clean.
+
+## Fixed — 2026-08-29, still later (Heart tile removed from /sow; Field/Hearth/Forge moved from seed kind to business kind)
+
+Two separate, quick-succession corrections.
+
+**"Find your Heart" removed from the `/sow` chooser** — Wandering Hearts
+is the dating feature with its own Dashboard tile; it was never a seed to
+sow, and having a tile here (even one that just redirected to
+`/tribal-hearts`) implied otherwise. `SowChooserPage.tsx`'s "Services &
+time" row is Hand · Wheel · Pillow only now; the `HEART_CARD` constant
+and its render are gone.
+
+**Field / Hearth / Forge are business types, not seed kinds** —
+corrected the same day's earlier work (`/sow/product`'s "What kind of
+goods?" tile picker, and spec-service-seeds.md §3 describing it that
+way). A farmer is a Field business; everything they sow inherits it,
+the same way a Hand/Wheel/Pillow role belongs to a *person*, not a seed.
+
+- **Schema**: `companies.kind text` (nullable, CHECK
+  `field|hearth|forge|shop`) — `20260829270000_companies-kind.sql`.
+- **New `src/lib/store/businessKind.ts`**: `BUSINESS_KIND_OPTIONS`
+  (label + one-line description per kind, shared by both UIs below),
+  `productKindForBusinessKind()` (`shop` → `'product'`, everything else
+  passes through), and `saveBusinessKind(companyId, kind)` — the one
+  place that writes `companies.kind`, also defaulting
+  `store_theme.preset` to match *if the business has no preset yet*
+  (same "only if unset" rule `RegisterWanderingPage.tsx` already used
+  for role unlock — this is that same behaviour, generalized into a
+  shared helper both paths below now call).
+- **Profile → My businesses** (`MyBusinessesSection.tsx`): a "What kind
+  of business?" picker (Field — smallholdings & farms supplying the
+  community; Hearth — home-owned business; Forge — factory/workshop;
+  Shop — general stock) on both Add a business and each existing card,
+  optional at creation (not forced), editable any time via `save()`.
+- **`presets.ts`**: new `shop` preset — deliberately titled just "Shop",
+  not "Wandering Shop" (unlike the other three), since Shop is the
+  neutral/general business kind, not a specific trade identity like
+  Field/Hearth/Forge. Neutral grey accent, "Everything under one roof."
+  `WanderingKind`/`WANDERING_KINDS` both gained `'shop'`.
+- **`/sow/product`**: the tile picker is gone. Kind now resolves as
+  `?kind=` override → the selected business's own `companies.kind` →
+  (if neither) a one-time inline picker shown above the rest of the
+  form, using the same `BUSINESS_KIND_OPTIONS`. Choosing there doesn't
+  touch the business until **Plant**, when `saveBusinessKind()` commits
+  it — never re-asked after that for the same business. Switching the
+  Books-field business (More options) re-evaluates kind and resets the
+  not-yet-saved choice and the category, since a category from one
+  kind's list wouldn't make sense under another's. Category rendering,
+  the Forge-only lead-time field, and the banner copy all now key off
+  the *resolved* kind instead of a user-toggled tile state.
+- **`/sow` chooser**: "Produce & goods" collapsed to one card, "Product"
+  → `/sow/product` (no `?kind=`) — the form itself now figures out the
+  kind from the business, so the chooser doesn't need to ask.
+- **`StorePage.tsx`**: a breadcrumb above the shop name — "Wandering
+  Field › {shop}" (or Hearth/Forge/Shop) — reading `companies.kind`
+  directly via `getPreset(store.kind)`, kept deliberately separate from
+  the existing `preset` variable (`store_theme.preset`, which drives the
+  banner/accent/chips and could in principle diverge from `kind` later
+  via Edit shop, even though no such override UI exists yet). Only
+  renders when a preset exists for the kind — a business with no kind
+  set shows no breadcrumb.
+- **Specs updated to match**: spec-service-seeds.md §3 (Produce & goods
+  is one card now; kind lives on `companies.kind`; also dropped the
+  stray "Heart → /tribal-hearts" mention from the Services & time line,
+  since there's no Heart tile at all anymore) and spec-storefronts.md
+  §4a (new `shop` preset row; a paragraph recording that kind lives on
+  the business, with `hand`/`wheel`/`pillow` explicitly called out as
+  staying role-based since those belong to a person, not a business).
 - `npx tsc --noEmit` and `npx eslint` both clean.
 
 ## Open — priority order

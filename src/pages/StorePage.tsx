@@ -29,6 +29,7 @@ interface Store {
   logo_url: string | null;
   banner_url: string | null;
   owner_user_id: string;
+  kind: string | null;
 }
 
 /**
@@ -136,6 +137,10 @@ export default function StorePage() {
   }
 
   const isOwner = !!user && store.owner_user_id === user.id;
+  // The business's own kind (companies.kind) — the breadcrumb below —
+  // vs. the store's theme preset (banner/accent/chips), which starts out
+  // matching kind but is a separate, ownerable choice (Edit shop).
+  const kindPreset = getPreset(store.kind);
   // spec-storefronts.md §4a: store_categories overrides the preset's
   // chips if set; the preset's own tagline is the fallback for
   // store_tagline, same rule, same order.
@@ -193,6 +198,11 @@ export default function StorePage() {
             )}
           </div>
           <div className="min-w-0">
+            {kindPreset && (
+              <p className="text-xs font-medium text-muted-foreground truncate">
+                {kindPreset.title} <span aria-hidden>›</span> {store.name}
+              </p>
+            )}
             <h1 className="text-2xl font-bold truncate">{store.name}</h1>
             {tagline && <p className="text-sm text-muted-foreground truncate">{tagline}</p>}
           </div>

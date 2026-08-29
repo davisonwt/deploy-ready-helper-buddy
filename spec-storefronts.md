@@ -116,16 +116,30 @@ defines one preset per kind:
 | field | green | From Our Fields to Our Tribe. | Fresh produce · Seasonal goods · Direct from farmers |
 | hearth | red | Made with Love. Shared with You. | Handmade crafts · Homemade foods · Artisan products |
 | forge | slate | (to write) | Custom made · Commissions · Repairs |
+| shop | neutral grey | Everything under one roof. | (none — general stock) |
 
 Whisperer and Heart have no shop preset — Whisperer is a service hired by
 shops, not a place to shop; Heart is matchmaking, not a shop (see
 spec-wandering-doors.md).
 
+**Corrected 2026-08-29: kind lives on the business, not the seed.**
+`field` / `hearth` / `forge` / `shop` are `companies.kind` — set on
+Profile → My businesses (a "What kind of business?" picker, editable any
+time), or asked once inline on `/sow/product` for a business that hasn't
+picked one yet. Every seed a business sows inherits its kind; there is no
+longer a per-seed kind picker on `/sow/product`. `hand` / `wheel` /
+`pillow` stay exactly as below — those come from a *role* unlock, not a
+business setting, since a person (not a business) becomes a Wandering
+Hand/Wheel/Pillow.
+
 Rules:
 - On role unlock (spec-service-seeds §4) the business gets
   `store_theme.preset = <kind>` if it has no theme yet, and `is_store`
   stays off until they turn it on in Profile. A business with several
-  roles keeps the first preset; they can change it in Edit shop.
+  roles keeps the first preset; they can change it in Edit shop. Setting
+  `companies.kind` (Field/Hearth/Forge/Shop, above) applies the exact
+  same "only if no preset yet" rule — same helper function, same
+  behaviour, whichever path sets `kind` first.
 - The storefront header (§4) renders from the preset: banner image (from a
   small set of stock banners per kind shipped in `/assets/wandering/`),
   accent colour on buttons and chips, tagline defaulting to the preset's

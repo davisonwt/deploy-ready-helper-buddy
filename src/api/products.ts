@@ -321,7 +321,7 @@ export const fetchProductsPage = (opts: ProductsPageQueryOpts) => {
 export const fetchStoreBySlug = (slug: string) =>
   supabase
     .from('companies')
-    .select('id, name, slug, store_tagline, store_theme, store_categories, logo_url, banner_url, collect_address, offers_collect, offers_delivery, owner_user_id, is_store')
+    .select('id, name, slug, store_tagline, store_theme, store_categories, logo_url, banner_url, collect_address, offers_collect, offers_delivery, owner_user_id, is_store, kind')
     .eq('slug', slug)
     .eq('is_store', true)
     .maybeSingle();

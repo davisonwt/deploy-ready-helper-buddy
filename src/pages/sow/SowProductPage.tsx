@@ -23,16 +23,18 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { ArrowLeft, ChevronDown, Eye, ImagePlus, X, Loader2, Wheat, Flame, Hammer, Package, Check } from 'lucide-react';
 import sowProductBanner from '@/assets/seeds-strip.jpg';
+import { saveBusinessKind, productKindForBusinessKind, BUSINESS_KIND_OPTIONS, type BusinessKind } from '@/lib/store/businessKind';
 
+// Field/Hearth/Forge are BUSINESS types (companies.kind), not a per-seed
+// choice — a farmer is a Field business, everything they sow inherits it.
+// `Kind` here is the resulting products.kind value; 'product' covers both
+// a Shop business and the ?kind= override's own literal 'product' value.
 type Kind = 'field' | 'hearth' | 'forge' | 'product';
 const KINDS: Kind[] = ['field', 'hearth', 'forge', 'product'];
 
-const KIND_TILES: { key: Kind; label: string; sub: string; icon: React.ComponentType<{ className?: string }> }[] = [
-  { key: 'field', label: 'Field', sub: 'Farm produce', icon: Wheat },
-  { key: 'hearth', label: 'Hearth', sub: 'Home-made', icon: Flame },
-  { key: 'forge', label: 'Forge', sub: 'Custom-made / commissions', icon: Hammer },
-  { key: 'product', label: 'General', sub: 'Shop stock', icon: Package },
-];
+const BUSINESS_KIND_ICONS: Record<BusinessKind, React.ComponentType<{ className?: string }>> = {
+  field: Wheat, hearth: Flame, forge: Hammer, shop: Package,
+};
 
 function toOptions(labels: string[]): OnePickerOption[] {
   return labels.map((l) => ({ value: l.toLowerCase().replace(/[^a-z0-9]+/g, '-'), label: l }));
@@ -59,8 +61,8 @@ const BANNER_COPY: Record<Kind, { title: string; sub: string }> = {
 
 // Same reused banner asset as /sow/art and /sow/book — no dedicated
 // product-category artwork exists yet.
-function SowBanner({ kind }: { kind: Kind }) {
-  const copy = BANNER_COPY[kind];
+function SowBanner({ kind }: { kind: Kind | null }) {
+  const copy = kind ? BANNER_COPY[kind] : BANNER_COPY.product;
   return (
     <div
       className="relative w-full h-32 md:h-44 lg:h-56 overflow-hidden rounded-2xl mb-6 border"
@@ -109,11 +111,17 @@ export default function SowProductPage() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
 
-  const initialKind = (() => {
+  // ?kind= still works as an override — mostly for testing/deep-links now
+  // that the tile picker is gone; the real source is the business's own
+  // companies.kind.
+  const urlKind = (() => {
     const q = searchParams.get('kind');
-    return (KINDS as string[]).includes(q ?? '') ? (q as Kind) : 'product';
+    return (KINDS as string[]).includes(q ?? '') ? (q as Kind) : null;
   })();
-  const [kind, setKind] = useState<Kind>(initialKind);
+
+  // The one-time choice for a business that has no kind yet — asked
+  // inline, saved to the business on Plant (never re-asked afterward).
+  const [chosenBusinessKind, setChosenBusinessKind] = useState<BusinessKind | null>(null);
 
   const [cover, setCover] = useState<CoverResult | null>(null);
   const [extraPhotos, setExtraPhotos] = useState<CoverResult[]>([]);
@@ -137,17 +145,12 @@ export default function SowProductPage() {
   const [tags, setTags] = useState('');
   const [leadTimeDays, setLeadTimeDays] = useState<number | null>(null);
 
-  // The category list depends on kind — reset the choice when kind changes
-  // so a stale value from a different kind's list can't linger.
-  const changeKind = (next: Kind) => {
-    setKind(next);
-    setCategory(null);
-  };
-
   // Books field (spec-books.md §4) — only shown once there's a real choice
   // to make; with one business it's silent and the default set is used.
-  // Also carries collect_address, to prefill the fulfilment note below.
-  const [businesses, setBusinesses] = useState<{ id: string; name: string; is_default: boolean; collect_address: string | null }[]>([]);
+  // Also carries collect_address (fulfilment note prefill) and kind (the
+  // seed's own kind now comes from here, not a per-seed tile picker).
+  const [businesses, setBusinesses] = useState<{ id: string; name: string; is_default: boolean; collect_address: string | null; kind: BusinessKind | null }[]>([]);
+  const [businessesLoaded, setBusinessesLoaded] = useState(false);
   const [selectedCompanyId, setSelectedCompanyId] = useState<string | null>(null);
 
   useEffect(() => {
@@ -156,16 +159,37 @@ export default function SowProductPage() {
     (async () => {
       const { data } = await supabase
         .from('companies')
-        .select('id, name, is_default, collect_address')
+        .select('id, name, is_default, collect_address, kind')
         .eq('owner_user_id', user.id)
         .order('created_at', { ascending: true });
       if (!alive) return;
       const list = (data as any) ?? [];
       setBusinesses(list);
       setSelectedCompanyId((list.find((b: any) => b.is_default) ?? list[0])?.id ?? null);
+      setBusinessesLoaded(true);
     })();
     return () => { alive = false; };
   }, [user]);
+
+  const selectedBusiness = businesses.find((b) => b.id === selectedCompanyId) ?? null;
+  const businessKind: BusinessKind | null = selectedBusiness?.kind ?? null;
+
+  // Precedence: ?kind= override > the business's own saved kind > the
+  // one-time inline choice below (not yet saved to the business).
+  const kind: Kind | null = urlKind
+    ?? (businessKind ? productKindForBusinessKind(businessKind) : null)
+    ?? (chosenBusinessKind ? productKindForBusinessKind(chosenBusinessKind) : null);
+
+  const needsBusinessKindPicker = businessesLoaded && !urlKind && !businessKind && !!selectedCompanyId;
+
+  // Switching business (Books field) re-evaluates everything above —
+  // drop any not-yet-saved choice and the category, which belonged to
+  // the previous business's kind.
+  useEffect(() => {
+    setChosenBusinessKind(null);
+    setCategory(null);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedCompanyId]);
 
   // "Collect from {business collect_address}" — prefilled once the
   // selected business is known, but never overwrites a note the sower
@@ -209,7 +233,8 @@ export default function SowProductPage() {
   const coverReady = !!cover;
   const titleReady = title.trim().length > 0;
   const priceReady = isFree || (price != null && price > 0);
-  const categoryReady = !!category;
+  // Needs a resolved kind first — the category list depends on it.
+  const categoryReady = kind !== null && !!category;
   // Blank means "not tracked" — a legitimate final value for the column,
   // but the puzzle piece needs an explicit choice, including 0.
   const stockReady = stock !== null;
@@ -219,6 +244,7 @@ export default function SowProductPage() {
     .filter(Boolean).length;
 
   const missingReason = useMemo(() => {
+    if (kind === null) return 'Choose what kind of business this is, above.';
     if (!coverReady) return 'Add a photo to continue.';
     if (!titleReady) return 'Give it a title.';
     if (!priceReady) return 'Set a price, or mark it free.';
@@ -226,11 +252,11 @@ export default function SowProductPage() {
     if (!stockReady) return 'Set how many you have — 0 for out of stock, or leave it for "not tracked" after planting.';
     if (!descriptionReady) return 'Add a short description.';
     return undefined;
-  }, [coverReady, titleReady, priceReady, categoryReady, stockReady, descriptionReady]);
+  }, [kind, coverReady, titleReady, priceReady, categoryReady, stockReady, descriptionReady]);
 
   const handlePlant = async () => {
     if (!user) { toast.error('Please log in to sow.'); return; }
-    if (completed < 6 || !cover) return;
+    if (completed < 6 || !cover || !kind) return;
 
     setSubmitting(true);
     try {
@@ -251,6 +277,13 @@ export default function SowProductPage() {
 
       const companyId = selectedCompanyId ?? (await getDefaultCompanyId(sowerId));
 
+      // First time this business has planted anything from here — the
+      // inline picker's choice becomes the business's own kind, once,
+      // never re-asked (spec-sowing-forms.md, revised).
+      if (chosenBusinessKind && companyId) {
+        await saveBusinessKind(companyId, chosenBusinessKind);
+      }
+
       const totalPrice = isFree ? 0 : priceBreakdown(price!).total;
       const metadata: Record<string, unknown> = {};
       if (weightSize.trim()) metadata.weight_size = weightSize.trim();
@@ -262,8 +295,8 @@ export default function SowProductPage() {
       // No file_url, no preview_url — a physical seed has nothing digital
       // to gate behind get-seed-file. The photo is fully public, like
       // every other product's cover. `type` stays 'product' for every
-      // kind (matches the one legacy physical-goods row); `kind` carries
-      // the Field/Hearth/Forge/General distinction.
+      // kind (matches the one legacy physical-goods row); `kind` is
+      // inherited from the business's own companies.kind, resolved above.
       const inserted = await insertProduct({
         sower_id: sowerId,
         company_id: companyId,
@@ -338,29 +371,34 @@ export default function SowProductPage() {
 
       <div className="grid md:grid-cols-[1fr_320px] gap-8">
         <div className="space-y-5">
-          <div>
-            <Label className="mb-1.5 block">What kind of goods?</Label>
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-              {KIND_TILES.map((t) => {
-                const Icon = t.icon;
-                const selected = kind === t.key;
-                return (
-                  <button
-                    key={t.key}
-                    type="button"
-                    onClick={() => changeKind(t.key)}
-                    className={`relative flex flex-col items-center justify-center gap-1 rounded-xl border-2 p-3 text-center transition-all
-                      ${selected ? 'border-primary bg-primary/5' : 'border-border hover:border-primary/60 hover:bg-muted/50'}`}
-                  >
-                    {selected && <Check className="absolute top-1.5 right-1.5 w-3.5 h-3.5 text-primary" />}
-                    <Icon className="w-5 h-5 text-primary" />
-                    <span className="text-sm font-medium">{t.label}</span>
-                    <span className="text-[11px] text-muted-foreground leading-tight">{t.sub}</span>
-                  </button>
-                );
-              })}
+          {needsBusinessKindPicker && (
+            <div>
+              <Label className="mb-1.5 block">What kind of business is this?</Label>
+              <p className="text-xs text-muted-foreground mb-2">
+                Asked once — everything {selectedBusiness?.name ?? 'this business'} sows will be this kind from now on.
+              </p>
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                {BUSINESS_KIND_OPTIONS.map((opt) => {
+                  const Icon = BUSINESS_KIND_ICONS[opt.value];
+                  const selected = chosenBusinessKind === opt.value;
+                  return (
+                    <button
+                      key={opt.value}
+                      type="button"
+                      onClick={() => setChosenBusinessKind(opt.value)}
+                      className={`relative flex flex-col items-center justify-center gap-1 rounded-xl border-2 p-3 text-center transition-all
+                        ${selected ? 'border-primary bg-primary/5' : 'border-border hover:border-primary/60 hover:bg-muted/50'}`}
+                    >
+                      {selected && <Check className="absolute top-1.5 right-1.5 w-3.5 h-3.5 text-primary" />}
+                      <Icon className="w-5 h-5 text-primary" />
+                      <span className="text-sm font-medium">{opt.label}</span>
+                      <span className="text-[11px] text-muted-foreground leading-tight">{opt.description}</span>
+                    </button>
+                  );
+                })}
+              </div>
             </div>
-          </div>
+          )}
 
           <div className="flex items-start gap-4">
             <CoverDropZone bucket="premium-room" pathPrefix={`covers/${user.id}`} onChange={setCover} required />
@@ -384,7 +422,7 @@ export default function SowProductPage() {
             label="Price"
           />
 
-          {kind === 'product' ? (
+          {kind && (kind === 'product' ? (
             <div>
               <Label htmlFor="sow-category">Category</Label>
               <Input
@@ -403,7 +441,7 @@ export default function SowProductPage() {
               value={category}
               onChange={setCategory}
             />
-          )}
+          ))}
 
           <div>
             <Label htmlFor="sow-stock">Stock</Label>
