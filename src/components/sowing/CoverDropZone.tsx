@@ -1,11 +1,15 @@
 import { useCallback, useRef, useState } from 'react';
 import { Loader2, ImagePlus, X } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
+import { formatSizeMessage, mapStorageUploadError } from '@/lib/uploadErrors';
 
 export interface CoverResult {
   fileUrl: string;
   storagePath: string;
 }
+
+const MAX_COVER_SIZE_BYTES = 10 * 1024 * 1024;
+const MIME_REJECTION_MESSAGE = "That file type isn't supported — use JPG, PNG, GIF or WEBP.";
 
 interface Props {
   bucket: string;
@@ -56,6 +60,13 @@ export default function CoverDropZone({ bucket, pathPrefix, onChange, required }
     setBusy(true);
     try {
       const cropped = await cropToSquare(file);
+
+      if (cropped.size > MAX_COVER_SIZE_BYTES) {
+        setError(formatSizeMessage(cropped, MAX_COVER_SIZE_BYTES));
+        onChange(null);
+        return;
+      }
+
       const localUrl = URL.createObjectURL(cropped);
       setPreviewUrl(localUrl);
 
@@ -65,7 +76,11 @@ export default function CoverDropZone({ bucket, pathPrefix, onChange, required }
         contentType: 'image/jpeg',
         upsert: false,
       });
-      if (uploadErr) { setError(uploadErr.message); onChange(null); return; }
+      if (uploadErr) {
+        setError(mapStorageUploadError(uploadErr, cropped, MAX_COVER_SIZE_BYTES, MIME_REJECTION_MESSAGE));
+        onChange(null);
+        return;
+      }
       const { data: pub } = supabase.storage.from(bucket).getPublicUrl(path);
       onChange({ fileUrl: pub.publicUrl, storagePath: path });
     } catch (e: any) {

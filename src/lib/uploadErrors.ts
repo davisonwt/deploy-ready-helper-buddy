@@ -7,8 +7,8 @@ export function formatMB(bytes: number): string {
   return (bytes / (1024 * 1024)).toFixed(1);
 }
 
-/** e.g. "File is 187.3 MB — the limit is 150 MB" */
-export function formatSizeMessage(file: File, limitBytes: number): string {
+/** e.g. "File is 187.3 MB — the limit is 150 MB". Takes anything with a .size (File or Blob — CoverDropZone checks its cropped output blob, not the original File). */
+export function formatSizeMessage(file: { size: number }, limitBytes: number): string {
   return `File is ${formatMB(file.size)} MB — the limit is ${formatMB(limitBytes)} MB`;
 }
 
@@ -24,7 +24,7 @@ interface StorageErrorLike {
  */
 export function mapStorageUploadError(
   err: StorageErrorLike | null | undefined,
-  file: File,
+  file: { size: number },
   limitBytes: number,
   mimeRejectionMessage: string,
 ): string {
