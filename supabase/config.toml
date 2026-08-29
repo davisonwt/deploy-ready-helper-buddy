@@ -87,6 +87,9 @@ verify_jwt = true
 [functions.generate-thumbnail]
 verify_jwt = true
 
+[functions.generate-preview]
+verify_jwt = true
+
 [functions.generate-video]
 verify_jwt = true
 
