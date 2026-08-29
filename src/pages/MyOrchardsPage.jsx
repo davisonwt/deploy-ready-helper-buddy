@@ -8,7 +8,7 @@ import { Badge } from '@/components/ui/badge'
 import { Progress } from '@/components/ui/progress'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Link, useNavigate } from 'react-router-dom'
-import { Sprout, Plus, Eye, Users, TrendingUp, Calendar, DollarSign, Edit, Share2, MapPin, Trash2, Sparkles, Loader2, Radio, ArrowLeft, Upload, Store, Music, Disc } from 'lucide-react'
+import { Sprout, Plus, Eye, Users, TrendingUp, Calendar, DollarSign, Edit, Share2, MapPin, Trash2, Sparkles, Loader2, Radio, ArrowLeft, Upload, Store } from 'lucide-react'
 import { toast } from "sonner"
 import { supabase } from '@/integrations/supabase/client'
 import { formatCurrency } from '../utils/formatters'
@@ -319,24 +319,9 @@ export default function MyOrchardsPage() {
                 Payment Method: USDC (USD Coin) · Total Raised: {formatCurrency(getTotalRaised())}
               </p>
               <div className='flex flex-wrap items-center justify-center gap-4'>
-                <Link to="/create-orchard" style={{ textDecoration: 'none', minWidth: 200 }}>
+                <Link to="/sow" style={{ textDecoration: 'none', minWidth: 200 }}>
                   <LivingButton variant="enter" height={50} borderRadius={12} fontSize={14} letterSpacing="1px">
-                    <Plus size={18} /> Sow New Seed
-                  </LivingButton>
-                </Link>
-                <Link to="/products/upload" style={{ textDecoration: 'none', minWidth: 200 }}>
-                  <LivingButton variant="enter" height={50} borderRadius={12} fontSize={14} letterSpacing="1px">
-                    <Music size={18} /> Sow a Song
-                  </LivingButton>
-                </Link>
-                <Link to="/products/upload?releaseType=album" style={{ textDecoration: 'none', minWidth: 200 }}>
-                  <LivingButton variant="enter" height={50} borderRadius={12} fontSize={14} letterSpacing="1px">
-                    <Disc size={18} /> Sow an Album
-                  </LivingButton>
-                </Link>
-                <Link to="/dashboard/sower/upload" style={{ textDecoration: 'none', minWidth: 200 }}>
-                  <LivingButton variant="enter" height={50} borderRadius={12} fontSize={14} letterSpacing="1px">
-                    <Upload size={18} /> Bulk Upload
+                    <Sprout size={18} /> Sow a seed
                   </LivingButton>
                 </Link>
                 <Link to="/community-offering" style={{ textDecoration: 'none', minWidth: 200 }}>

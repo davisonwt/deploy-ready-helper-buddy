@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, Music, Palette, FileText, Package, Wrench, TreeDeciduous, Lock } from 'lucide-react';
+import { ArrowLeft, Music, Palette, FileText, Package, Wrench, TreeDeciduous, Lock, Upload } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 const LAST_KIND_KEY = 'sow:lastKind';
@@ -85,6 +85,15 @@ export default function SowIndexPage() {
           );
         })}
       </div>
+
+      <button
+        type="button"
+        onClick={() => navigate('/dashboard/sower/upload')}
+        className="mt-4 w-full flex items-center justify-center gap-2 rounded-xl border border-border p-3 text-sm text-muted-foreground hover:border-primary/60 hover:text-foreground transition-colors"
+      >
+        <Upload className="w-4 h-4" />
+        Got a lot to add at once? Bulk upload
+      </button>
     </div>
   );
 }

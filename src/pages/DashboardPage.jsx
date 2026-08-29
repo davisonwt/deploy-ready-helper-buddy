@@ -1127,6 +1127,21 @@ export default function SeedFlowDashboard() {
                     </div>
                   )}
                 </div>
+                <Link to="/sow" style={{ textDecoration: 'none', flexShrink: 0 }}>
+                  <div style={{
+                    ...styles.seedflowLabel,
+                    background: 'linear-gradient(135deg, rgba(234,179,8,0.25), rgba(132,204,22,0.18), rgba(34,197,94,0.22))',
+                    backdropFilter: 'blur(12px)', WebkitBackdropFilter: 'blur(12px)',
+                    border: '1px solid rgba(253,224,71,0.45)',
+                    color: '#fef9c3', fontWeight: 700,
+                    boxShadow: '0 4px 16px rgba(234,179,8,0.2), inset 0 1px 0 rgba(255,255,255,0.12)',
+                    cursor: 'pointer',
+                    display: 'inline-flex', alignItems: 'center', gap: 4,
+                    padding: '4px 8px', fontSize: 11, whiteSpace: 'nowrap',
+                  }}>
+                    🌱 Sow a seed
+                  </div>
+                </Link>
                 <Link to="/companions" style={{ textDecoration: 'none', flexShrink: 0 }}>
                   <div style={{
                     ...styles.seedflowLabel,
