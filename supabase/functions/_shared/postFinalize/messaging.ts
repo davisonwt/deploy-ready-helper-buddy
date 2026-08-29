@@ -456,6 +456,58 @@ async function deliverTopupMessages(supabase: SupabaseLike, topupId: string): Pr
   }
 }
 
+export type PayoutNotification =
+  | { kind: "paid"; amount: number; email: string }
+  | { kind: "below_minimum"; amount: number }
+  | { kind: "not_connected"; amount: number };
+
+/**
+ * One chat message per payout-earnings outcome, into the recipient's own
+ * "🌻 Sow2Grow" system room (same one topup receipts use) — this is the
+ * payout notification path now; email/OTP was retired in favor of PayPal's
+ * own Log-in-with-PayPal identity flow, so there's no email address of ours
+ * to notify through. Best-effort, same as every other messaging call here:
+ * a notification failure must never fail (or roll back) an actual payout.
+ */
+export async function deliverPayoutNotification(
+  supabase: SupabaseLike,
+  recipientUserId: string,
+  notification: PayoutNotification,
+): Promise<void> {
+  try {
+    const roomId = await ensureS2gSystemRoom(supabase, recipientUserId);
+    if (!roomId) return;
+
+    const amount = round2(notification.amount);
+    const content = notification.kind === "paid"
+      ? `💸 $${amount.toFixed(2)} sent to your PayPal ending …${maskEmailDomain(notification.email)}`
+      : notification.kind === "below_minimum"
+      ? `🌱 Balance $${amount.toFixed(2)} — below the $20 payout minimum, so it carries over to next week.`
+      : `🔗 Connect your PayPal to get paid — you have $${amount.toFixed(2)} waiting. Add it under Payout Settings.`;
+
+    await supabase.from("chat_messages").insert({
+      room_id: roomId,
+      sender_id: null,
+      content,
+      message_type: "text",
+      system_metadata: {
+        is_system: true,
+        sender_name: "Sow2Grow",
+        type: "payout_notification",
+        outcome: notification.kind,
+        amount,
+      },
+    });
+  } catch (err) {
+    console.error("deliverPayoutNotification failed", recipientUserId, notification.kind, err);
+  }
+}
+
+function maskEmailDomain(email: string): string {
+  const at = email.indexOf("@");
+  return at > 0 ? email.slice(at) : email;
+}
+
 async function ensureS2gSystemRoom(supabase: SupabaseLike, buyerId: string): Promise<string | null> {
   const { data: existing } = await supabase
     .from("chat_rooms")

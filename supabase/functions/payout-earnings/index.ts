@@ -27,7 +27,14 @@
 //
 // dry_run:true computes and returns the exact same eligible/skipped
 // breakdown (for the admin "next run preview") without touching anything —
-// no payouts rows, no covered-row status changes, no PayPal call.
+// no payouts rows, no covered-row status changes, no PayPal call, no
+// notifications.
+//
+// NOTIFICATIONS: on a real (non-dry) run, every owed recipient gets exactly
+// one chat message via deliverPayoutNotification (messaging.ts) — "paid"
+// once the batch is actually created, "below_minimum"/"not_connected" for
+// everyone skipped. Payout notifications go to chat now, not email — see
+// the retired paypal-email-verify for why.
 //
 // Auth: CRON_SECRET (Authorization: Bearer, or legacy x-cron-secret),
 // service-role bearer, or an admin/gosat user session.
@@ -35,6 +42,7 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 import { paypalFetch } from "../_shared/paypal/client.ts";
 import { markCoveredRowsPending, markCoveredRowsProcessing, type CoveredRow } from "../_shared/payoutLedger.ts";
+import { deliverPayoutNotification } from "../_shared/postFinalize/messaging.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -148,6 +156,17 @@ Deno.serve(async (req) => {
       return json({ dry_run: true, totalFloatUsd, recipients: outcomes });
     }
 
+    // Every owed recipient gets exactly one chat notification this run,
+    // regardless of what happens below — "paid" fires separately, once the
+    // batch actually goes out, for the eligible subset only.
+    for (const o of outcomes) {
+      if (o.eligible) continue;
+      await deliverPayoutNotification(admin, o.recipient_user_id, {
+        kind: o.reason === "below_minimum" ? "below_minimum" : "not_connected",
+        amount: o.amount_usd,
+      });
+    }
+
     const eligibleOwed = owed.filter((r) => {
       const amount = round2(Number(r.amount_usd || 0));
       return amount >= MIN_PAYOUT_USD && emailByUser.has(r.recipient_user_id);
@@ -229,6 +248,14 @@ Deno.serve(async (req) => {
 
       const batchId = data?.batch_header?.payout_batch_id ?? null;
       await admin.from("payouts").update({ paypal_batch_id: batchId }).eq("run_id", runId);
+
+      for (const row of inserted) {
+        await deliverPayoutNotification(admin, row.recipient_user_id, {
+          kind: "paid",
+          amount: Number(row.amount),
+          email: emailByUser.get(row.recipient_user_id)!,
+        });
+      }
 
       return json({
         success: true,
