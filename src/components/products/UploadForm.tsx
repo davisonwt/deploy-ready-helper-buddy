@@ -394,10 +394,15 @@ export default function UploadForm() {
 
   return (
     <div className="container max-w-3xl mx-auto px-4 py-8">
-      <Button variant="ghost" onClick={() => navigate(-1)} className="mb-4">
-        <ArrowLeft className="w-4 h-4 mr-2" />
-        Back
-      </Button>
+      <div className="flex items-center justify-between mb-4 gap-2 flex-wrap">
+        <Button variant="ghost" onClick={() => navigate(-1)} className="-ml-2">
+          <ArrowLeft className="w-4 h-4 mr-2" />
+          Back
+        </Button>
+        <Button variant="outline" size="sm" onClick={() => navigate('/sow')}>
+          🌱 Try the new sowing form
+        </Button>
+      </div>
       <Card>
         <CardHeader>
           <CardTitle className="text-3xl">Upload Your Creation</CardTitle>
