@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, Music, Palette, FileText, Package, Wheat, Hammer, TreeDeciduous, Users, Lock } from 'lucide-react';
+import { ArrowLeft, Music, Palette, FileText, Wheat, Flame, Hammer, TreeDeciduous, Users, Lock } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
@@ -36,10 +36,13 @@ const SERVICES: Card[] = [
 // products.kind, no /sow/heart form: always the same one destination.
 const HEART_CARD: Card = { key: 'heart', label: 'Find your Heart', emoji: '💚', color: '#dc2626', live: true, route: '/tribal-hearts' };
 
+// "What kind of goods?" — spec-sowing-forms.md, Hearth revised: home-made
+// goods (crafts, baked goods, preserves), never Creations. Each card is
+// live and lands on the same /sow/product form, preselected by ?kind=.
 const PRODUCE: Card[] = [
-  { key: 'product', label: 'Physical product', icon: Package, live: true, route: '/sow/product' },
-  { key: 'field', label: 'Field', icon: Wheat, live: false, route: '/sow/classic' },
-  { key: 'forge', label: 'Forge', icon: Hammer, live: false, route: '/sow/classic' },
+  { key: 'field', label: 'Field', icon: Wheat, live: true, route: '/sow/product?kind=field' },
+  { key: 'hearth', label: 'Hearth', icon: Flame, live: true, route: '/sow/product?kind=hearth' },
+  { key: 'forge', label: 'Forge', icon: Hammer, live: true, route: '/sow/product?kind=forge' },
 ];
 
 const ORCHARDS: Card[] = [

@@ -17,7 +17,7 @@ const TILES: Tile[] = [
   { key: 'music', label: 'Music', icon: Music, route: '/sow/music' },
   { key: 'artwork', label: 'Artwork / image', icon: Palette, route: null },
   { key: 'document', label: 'Document / e-book', icon: FileText, route: null },
-  { key: 'physical', label: 'Physical product', icon: Package, route: null },
+  { key: 'physical', label: 'Physical product', icon: Package, route: '/sow/product' },
   { key: 'service', label: 'Service', icon: Wrench, route: null },
   { key: 'orchard', label: 'Orchard', icon: TreeDeciduous, route: null },
 ];

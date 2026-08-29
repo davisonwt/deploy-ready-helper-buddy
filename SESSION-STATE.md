@@ -148,7 +148,7 @@ time, the same way music just was, rather than all at once.
 | Music — album | **Live** — `/sow/music`, "Album" mode | Retired — Type option removed |
 | Artwork / image | **Live** — `/sow/art` | Retired — Type option removed |
 | Document / e-book | **Live** — `/sow/book` | Retired — Type option removed |
-| Physical product | **Live** — `/sow/product` | Untouched — old form's Physical/Digital delivery toggle still there, not retired this task |
+| Physical goods (Field/Hearth/Forge/General) | **Live** — `/sow/product?kind=X` | Untouched — old form's Physical/Digital delivery toggle still there, not retired this task |
 | Service | Not built | **Not covered** — the old form has never had a Service type |
 | Orchard | Not built | N/A — orchards are a separate flow (`/create-orchard`, `orchards` table), never part of `UploadForm.tsx` |
 
@@ -1007,6 +1007,53 @@ there's no `file_url` and no `preview_url`, per the task.
   "goods", and Field/Forge are specific not-yet-built subtypes of
   physical goods, so Physical product reads as the general one that's
   ready now. Routes to `/sow/product`, `live: true`.
+- `npx tsc --noEmit` and `npx eslint` both clean.
+
+## Fixed — 2026-08-29, still later (spec-sowing-forms.md: /sow/product revised — Field/Hearth/Forge/General, Hearth corrected)
+
+**Hearth is home-made goods (crafts, cakes, jams, chutneys), not
+"Creations"** — the previous session's chooser wiring never touched
+Hearth, but Learn & Share's "Become a Hearth Creator" copy did say "How to
+list music, art, books & creations", which is the wrong framing; fixed to
+"How to list your home-made goods — crafts, baked goods, preserves &
+more."
+
+- **First check, re-verified live**: only `products.stock` exists —
+  `stock_qty` was already dropped in the prior `/sow/product` task
+  (`20260829240000_sow-product-schema.sql`). Nothing to migrate this
+  time; confirmed rather than assumed.
+- **`products.kind` CHECK** gains `field`, `hearth`, `forge` alongside the
+  existing `product` (`20260829250000_sow-product-goods-kinds.sql`) — now
+  `music | ebook | art | hand | wheel | pillow | product | field | hearth
+  | forge`. `type` stays `'product'` for all four — only `kind` carries
+  the Field/Hearth/Forge/General distinction, since `type` still matches
+  the one legacy physical-goods row and everything downstream
+  (`BulkProductDetailPage.tsx`'s download-button exclusion, the JSON-LD
+  block) keys off `type`, unaffected by this change.
+- **`/sow/product`** gained a "What kind of goods?" tile row above the
+  required pieces — Field / Hearth / Forge / General, preselected from
+  `?kind=` in the URL (falls back to General/`product` if missing or
+  unrecognised). Category becomes kind-dependent: Field/Hearth/Forge each
+  get their own fixed `OnePicker` list (vegetables/fruit/eggs/dairy/
+  meat/honey/plants; baked goods/preserves/crafts/candles/soap/clothing;
+  metalwork/woodwork/leather/repairs/custom), General stays free text.
+  Switching kind resets the category choice, since a value from one
+  kind's list wouldn't make sense under another's. Banner heading/subtext
+  also vary by kind ("Sow from the field/hearth/forge" vs "Sow physical
+  goods").
+- **Forge-only field**: "Made to order — lead time (days)" in More
+  options, `metadata.lead_time_days` when set, never blocks Plant like
+  every other More-options field.
+- **`/sow` chooser**: "Produce & goods" row is now Field · Hearth · Forge,
+  all `live: true`, each routing to `/sow/product?kind=<field|hearth|
+  forge>`. The general "Physical product" entry point moved to
+  `/sow/classic` (`SowIndexPage.tsx`'s existing tile, `route` set from
+  `null` to `/sow/product` — no `?kind=`, so it lands on General).
+- **Detail page**: `BulkProductDetailPage.tsx` needed no changes — stock
+  badge/"Out of stock"/basket-disable all read `product.stock` (fixed the
+  prior task), and the download button's `['art', 'ebook'].includes(
+  product.type)` guard already excludes every physical-goods kind, since
+  `type` is `'product'` for all of them.
 - `npx tsc --noEmit` and `npx eslint` both clean.
 
 ## Open — priority order

@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { insertProduct } from '@/api/products';
@@ -21,20 +21,46 @@ import { Label } from '@/components/ui/label';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
-import { ArrowLeft, ChevronDown, Eye, ImagePlus, X, Loader2 } from 'lucide-react';
+import { ArrowLeft, ChevronDown, Eye, ImagePlus, X, Loader2, Wheat, Flame, Hammer, Package, Check } from 'lucide-react';
 import sowProductBanner from '@/assets/seeds-strip.jpg';
 
-const CATEGORIES: OnePickerOption[] = [
-  'Home & Kitchen', 'Clothing & Accessories', 'Health & Beauty', 'Food & Beverages',
-  'Toys & Games', 'Sports & Outdoors', 'Electronics', 'Books & Media', 'Arts & Crafts', 'Other',
-].map((c) => ({ value: c.toLowerCase().replace(/[^a-z0-9]+/g, '-'), label: c }));
+type Kind = 'field' | 'hearth' | 'forge' | 'product';
+const KINDS: Kind[] = ['field', 'hearth', 'forge', 'product'];
+
+const KIND_TILES: { key: Kind; label: string; sub: string; icon: React.ComponentType<{ className?: string }> }[] = [
+  { key: 'field', label: 'Field', sub: 'Farm produce', icon: Wheat },
+  { key: 'hearth', label: 'Hearth', sub: 'Home-made', icon: Flame },
+  { key: 'forge', label: 'Forge', sub: 'Custom-made / commissions', icon: Hammer },
+  { key: 'product', label: 'General', sub: 'Shop stock', icon: Package },
+];
+
+function toOptions(labels: string[]): OnePickerOption[] {
+  return labels.map((l) => ({ value: l.toLowerCase().replace(/[^a-z0-9]+/g, '-'), label: l }));
+}
+
+// Hearth = home-made goods (crafts, cakes, jams, chutneys) — never
+// "Creations" (that's Music/Art/Books). General has no fixed list; it's
+// free text, since shop stock spans everything.
+const CATEGORY_OPTIONS_BY_KIND: Record<Exclude<Kind, 'product'>, OnePickerOption[]> = {
+  field: toOptions(['Vegetables', 'Fruit', 'Eggs', 'Dairy', 'Meat', 'Honey', 'Plants']),
+  hearth: toOptions(['Baked goods', 'Preserves', 'Crafts', 'Candles', 'Soap', 'Clothing']),
+  forge: toOptions(['Metalwork', 'Woodwork', 'Leather', 'Repairs', 'Custom']),
+};
 
 const MAX_EXTRA_PHOTOS = 5;
 const MAX_PHOTO_SIZE_BYTES = 10 * 1024 * 1024;
 
+const BANNER_COPY: Record<Kind, { title: string; sub: string }> = {
+  field: { title: 'Sow from the field', sub: 'Farm produce, planted in under two minutes.' },
+  hearth: { title: 'Sow from the hearth', sub: 'Home-made goods, planted in under two minutes.' },
+  forge: { title: 'Sow from the forge', sub: 'Custom-made goods, planted in under two minutes.' },
+  product: { title: 'Sow physical goods', sub: 'Share something physical with the tribe — planted in under two minutes.' },
+};
+
 // Same reused banner asset as /sow/art and /sow/book — no dedicated
 // product-category artwork exists yet.
-function SowBanner() {
+function SowBanner({ kind }: { kind: Kind }) {
+  const copy = BANNER_COPY[kind];
   return (
     <div
       className="relative w-full h-32 md:h-44 lg:h-56 overflow-hidden rounded-2xl mb-6 border"
@@ -46,10 +72,8 @@ function SowBanner() {
         style={{ background: 'linear-gradient(to top, rgba(0,0,0,0.85), rgba(234,88,12,0.25) 60%, rgba(0,0,0,0.1))' }}
       />
       <div className="absolute inset-0 flex flex-col justify-end p-4 md:p-6">
-        <h1 className="text-white text-xl md:text-3xl font-black tracking-tight drop-shadow-lg">Sow a product</h1>
-        <p className="text-white/85 text-sm md:text-base mt-1 max-w-2xl drop-shadow">
-          Share something physical with the tribe — planted in under two minutes.
-        </p>
+        <h1 className="text-white text-xl md:text-3xl font-black tracking-tight drop-shadow-lg">{copy.title}</h1>
+        <p className="text-white/85 text-sm md:text-base mt-1 max-w-2xl drop-shadow">{copy.sub}</p>
       </div>
     </div>
   );
@@ -83,6 +107,13 @@ function cropToSquare(file: File): Promise<Blob> {
 export default function SowProductPage() {
   const { user } = useAuth();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+
+  const initialKind = (() => {
+    const q = searchParams.get('kind');
+    return (KINDS as string[]).includes(q ?? '') ? (q as Kind) : 'product';
+  })();
+  const [kind, setKind] = useState<Kind>(initialKind);
 
   const [cover, setCover] = useState<CoverResult | null>(null);
   const [extraPhotos, setExtraPhotos] = useState<CoverResult[]>([]);
@@ -104,6 +135,14 @@ export default function SowProductPage() {
   const [fulfilmentTouched, setFulfilmentTouched] = useState(false);
   const [whispererPercent, setWhispererPercent] = useState<number | null>(null);
   const [tags, setTags] = useState('');
+  const [leadTimeDays, setLeadTimeDays] = useState<number | null>(null);
+
+  // The category list depends on kind — reset the choice when kind changes
+  // so a stale value from a different kind's list can't linger.
+  const changeKind = (next: Kind) => {
+    setKind(next);
+    setCategory(null);
+  };
 
   // Books field (spec-books.md §4) — only shown once there's a real choice
   // to make; with one business it's silent and the default set is used.
@@ -218,17 +257,20 @@ export default function SowProductPage() {
       if (fulfilmentNote.trim()) metadata.fulfilment_note = fulfilmentNote.trim();
       const tagList = tags.split(',').map((t) => t.trim()).filter(Boolean);
       if (tagList.length) metadata.tags = tagList;
+      if (kind === 'forge' && leadTimeDays != null) metadata.lead_time_days = leadTimeDays;
 
       // No file_url, no preview_url — a physical seed has nothing digital
       // to gate behind get-seed-file. The photo is fully public, like
-      // every other product's cover.
+      // every other product's cover. `type` stays 'product' for every
+      // kind (matches the one legacy physical-goods row); `kind` carries
+      // the Field/Hearth/Forge/General distinction.
       const inserted = await insertProduct({
         sower_id: sowerId,
         company_id: companyId,
         title: title.trim(),
         description: description.trim(),
         type: 'product',
-        kind: 'product',
+        kind,
         category,
         license_type: isFree ? 'free' : 'bestowal',
         price: totalPrice,
@@ -292,10 +334,34 @@ export default function SowProductPage() {
         Back
       </Button>
 
-      <SowBanner />
+      <SowBanner kind={kind} />
 
       <div className="grid md:grid-cols-[1fr_320px] gap-8">
         <div className="space-y-5">
+          <div>
+            <Label className="mb-1.5 block">What kind of goods?</Label>
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+              {KIND_TILES.map((t) => {
+                const Icon = t.icon;
+                const selected = kind === t.key;
+                return (
+                  <button
+                    key={t.key}
+                    type="button"
+                    onClick={() => changeKind(t.key)}
+                    className={`relative flex flex-col items-center justify-center gap-1 rounded-xl border-2 p-3 text-center transition-all
+                      ${selected ? 'border-primary bg-primary/5' : 'border-border hover:border-primary/60 hover:bg-muted/50'}`}
+                  >
+                    {selected && <Check className="absolute top-1.5 right-1.5 w-3.5 h-3.5 text-primary" />}
+                    <Icon className="w-5 h-5 text-primary" />
+                    <span className="text-sm font-medium">{t.label}</span>
+                    <span className="text-[11px] text-muted-foreground leading-tight">{t.sub}</span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
           <div className="flex items-start gap-4">
             <CoverDropZone bucket="premium-room" pathPrefix={`covers/${user.id}`} onChange={setCover} required />
             <div className="flex-1">
@@ -318,13 +384,26 @@ export default function SowProductPage() {
             label="Price"
           />
 
-          <OnePicker
-            label="Category"
-            storageKey="sow:lastProductCategory"
-            options={CATEGORIES}
-            value={category}
-            onChange={setCategory}
-          />
+          {kind === 'product' ? (
+            <div>
+              <Label htmlFor="sow-category">Category</Label>
+              <Input
+                id="sow-category"
+                value={category ?? ''}
+                onChange={(e) => setCategory(e.target.value || null)}
+                placeholder="e.g. Home & Kitchen"
+                className="mt-1.5"
+              />
+            </div>
+          ) : (
+            <OnePicker
+              label="Category"
+              storageKey={`sow:lastProductCategory:${kind}`}
+              options={CATEGORY_OPTIONS_BY_KIND[kind]}
+              value={category}
+              onChange={setCategory}
+            />
+          )}
 
           <div>
             <Label htmlFor="sow-stock">Stock</Label>
@@ -408,6 +487,22 @@ export default function SowProductPage() {
                 </div>
                 <p className="mt-1 text-xs text-muted-foreground">Up to {MAX_EXTRA_PHOTOS} more, alongside the main photo.</p>
               </div>
+
+              {kind === 'forge' && (
+                <div>
+                  <Label htmlFor="sow-lead-time">Made to order — lead time (days)</Label>
+                  <Input
+                    id="sow-lead-time"
+                    type="number"
+                    min="0"
+                    step="1"
+                    value={leadTimeDays ?? ''}
+                    onChange={(e) => setLeadTimeDays(e.target.value === '' ? null : Math.max(0, Number(e.target.value)))}
+                    placeholder="Optional"
+                    className="max-w-xs"
+                  />
+                </div>
+              )}
 
               <div>
                 <Label htmlFor="sow-weight-size">Weight / size</Label>

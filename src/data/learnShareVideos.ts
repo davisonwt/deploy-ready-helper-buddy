@@ -82,7 +82,7 @@ export const VIDEOS: LearnVideo[] = [
   { id: 8,  role: 'Pillow',    title: 'Reserve a Stay',             desc: 'How to book a Wandering Pillow',                   color: '#ec4899', emoji: '🛏️', url: reserveAStayVideo },
   { id: 9,  role: 'Field',     title: 'Become a Wandering Field',   desc: 'How to list your farm produce',                    color: '#eab308', emoji: '🌾', url: becomeAWanderingFieldVideo },
   { id: 10, role: 'Field',     title: 'Order from the Field',       desc: 'How to buy from farmers in your tribe',            color: '#eab308', emoji: '🌾', url: orderFromTheFieldVideo },
-  { id: 11, role: 'Hearth',    title: 'Become a Hearth Creator',    desc: 'How to list music, art, books & creations',        color: '#f97316', emoji: '🔥', url: becomeAHearthCreatorVideo },
+  { id: 11, role: 'Hearth',    title: 'Become a Hearth Creator',    desc: 'How to list your home-made goods — crafts, baked goods, preserves & more', color: '#f97316', emoji: '🔥', url: becomeAHearthCreatorVideo },
   { id: 12, role: 'Hearth',    title: 'Bestow a Hearth Seed',       desc: 'How to support a creator through bestowal',        color: '#f97316', emoji: '🔥', url: bestowAHearthSeedVideo },
   { id: 13, role: 'Forge',     title: 'Become a Wandering Forge',   desc: 'How to list your craft & manufacturing skills',    color: '#64748b', emoji: '⚒️', url: becomeAWanderingForgeVideo },
   { id: 14, role: 'Forge',     title: 'Commission a Forge',         desc: 'How to order custom made items',                   color: '#64748b', emoji: '⚒️', url: commissionAForgeVideo },
