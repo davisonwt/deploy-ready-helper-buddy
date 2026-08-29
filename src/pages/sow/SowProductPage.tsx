@@ -24,6 +24,7 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/component
 import { ArrowLeft, ChevronDown, Eye, ImagePlus, X, Loader2, Wheat, Flame, Hammer, Package, Check } from 'lucide-react';
 import sowProductBanner from '@/assets/seeds-strip.jpg';
 import { saveBusinessKind, productKindForBusinessKind, BUSINESS_KIND_OPTIONS, type BusinessKind } from '@/lib/store/businessKind';
+import { getPreset } from '@/lib/store/presets';
 
 // Field/Hearth/Forge are BUSINESS types (companies.kind), not a per-seed
 // choice — a farmer is a Field business, everything they sow inherits it.
@@ -59,21 +60,29 @@ const BANNER_COPY: Record<Kind, { title: string; sub: string }> = {
   product: { title: 'Sow physical goods', sub: 'Share something physical with the tribe — planted in under two minutes.' },
 };
 
-// Same reused banner asset as /sow/art and /sow/book — no dedicated
-// product-category artwork exists yet.
+const FALLBACK_ACCENT = '#ea580c';
+
+// Field/Hearth get their business kind's real preset banner (real
+// artwork landed this session). Forge's preset exists but has no
+// artwork yet, and Shop/an unresolved kind have no preset banner at
+// all — all three fall through to the same seeds-strip.jpg /sow/art and
+// /sow/book already use.
 function SowBanner({ kind }: { kind: Kind | null }) {
   const copy = kind ? BANNER_COPY[kind] : BANNER_COPY.product;
+  const preset = kind && kind !== 'product' ? getPreset(kind) : null;
+  const bannerUrl = preset?.bannerImage ?? sowProductBanner;
+  const accent = preset?.bannerImage ? preset.accent : FALLBACK_ACCENT;
   return (
     <div
       className="relative w-full h-32 md:h-44 lg:h-56 overflow-hidden rounded-2xl mb-6 border"
-      style={{ borderColor: 'rgba(234,88,12,0.45)', boxShadow: '0 0 40px rgba(234,88,12,0.25)' }}
+      style={{ borderColor: `${accent}73`, boxShadow: `0 0 40px ${accent}40` }}
     >
-      <img src={sowProductBanner} alt="" className="absolute inset-0 w-full h-full object-cover" loading="eager" />
+      <img src={bannerUrl} alt="" className="absolute inset-0 w-full h-full object-cover" loading="eager" />
       <div
         className="absolute inset-0"
-        style={{ background: 'linear-gradient(to top, rgba(0,0,0,0.85), rgba(234,88,12,0.25) 60%, rgba(0,0,0,0.1))' }}
+        style={{ background: `linear-gradient(to bottom, rgba(0,0,0,0.85), ${accent}40 60%, rgba(0,0,0,0.1))` }}
       />
-      <div className="absolute inset-0 flex flex-col justify-end p-4 md:p-6">
+      <div className="absolute inset-x-0 top-0 flex flex-col p-4 md:p-6">
         <h1 className="text-white text-xl md:text-3xl font-black tracking-tight drop-shadow-lg">{copy.title}</h1>
         <p className="text-white/85 text-sm md:text-base mt-1 max-w-2xl drop-shadow">{copy.sub}</p>
       </div>

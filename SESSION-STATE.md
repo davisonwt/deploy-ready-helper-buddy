@@ -1618,6 +1618,47 @@ the image itself.
   import types accept any path.
 - `npx tsc --noEmit`, `npx eslint`, and `npm run build` all clean.
 
+## Fixed — 2026-08-29, still later (real banners on /sow/product and /sow/hand)
+
+`/sow/music`, `/sow/art`, `/sow/book` keep the shared `seeds-strip.jpg` —
+none of them have a `presets.ts`/business-kind relationship to draw a
+real banner from, so nothing changes there.
+
+- **`SowProductPage.tsx`**: `SowBanner` now shows the resolved business
+  kind's real preset banner for **field**/**hearth** (both have artwork).
+  **Forge** falls through to the same `seeds-strip.jpg` fallback — its
+  preset object exists but has no `bannerImage` yet — and so does
+  **shop** (`kind='product'`) and an **unresolved** kind (business has
+  none set, inline picker not yet answered), exactly as asked. Accent
+  colour (border glow, gradient tint) switches to the resolved preset's
+  own accent only when real art is actually showing; the fallback cases
+  keep the original hardcoded orange, unchanged.
+- **`SowHandPage.tsx`**: `SowBanner` now always shows the real `hand`
+  preset banner (Hand always has one). Same chip-cover-band treatment as
+  `RegisterWanderingPage.tsx`/`StorePage.tsx` from the previous task —
+  Hand's artwork still bakes in "Dentists, Doctors", which
+  `presets.ts`'s own chips have never included.
+- **Title/subtitle moved from bottom-anchored to top-left** in both —
+  needed regardless of chip-overlay, since a real banner's own baked-in
+  content (chip row, CTA button, footer bar) all sit in the lower
+  portion of the image; keeping the S2G title text at the bottom would
+  compete with that. Checked Field's and Hearth's own baked-in chip rows
+  before deciding whether they also needed a cover: both already match
+  `presets.ts` almost exactly (each has one extra generic marketing chip
+  — "Support Local", "Home Businesses" — with no legal/mismatch concern
+  like Hand's), so **no overlay for those two**, only the banner swap +
+  top-left text move.
+- **Wheel and Pillow**: `/sow/wheel` and `/sow/pillow` don't exist yet
+  (still role-gated placeholders in `SowChooserPage.tsx` with no actual
+  page behind them) — nothing to wire yet. Both already have real
+  artwork sitting ready in `presets.ts` (`wheel`/`pillow` `bannerImage`,
+  wired last task) and neither's baked-in chip row needs a cover
+  (confirmed last task — both already match `presets.ts` exactly), so
+  once either form is built, its `SowBanner` should follow the exact
+  same pattern `SowHandPage.tsx`'s now does, minus the chip-overlay
+  block (since neither needs one).
+- `npx tsc --noEmit` and `npx eslint` both clean.
+
 ## Open — priority order
 
 1. ~~Live proof that `paypal-webhook` actually works now~~ — **resolved, see Keystone problem**: order `0a6a0b1a` finalized via a clean webhook call at 08:36 UTC 2026-08-29. The `processed_webhooks`-insert bug (separate from the webhook itself) is also fixed; watch for its first real row as confirmation the fix landed, not as proof the webhook works — that's already established.

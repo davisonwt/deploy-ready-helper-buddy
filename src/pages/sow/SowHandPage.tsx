@@ -25,6 +25,7 @@ import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { ArrowLeft, ChevronDown, Eye, ImagePlus, X, Loader2 } from 'lucide-react';
 import sowProductBanner from '@/assets/seeds-strip.jpg';
+import { getPreset } from '@/lib/store/presets';
 
 const CATEGORY_OPTIONS: OnePickerOption[] = [
   { value: 'plumbing', label: 'Plumbing' },
@@ -60,23 +61,43 @@ const DEFAULT_RADIUS_KM = 30;
 const MAX_EXTRA_PHOTOS = 5;
 const MAX_PHOTO_SIZE_BYTES = 10 * 1024 * 1024;
 
+// Real Hand artwork landed this session — its baked-in chip row bakes in
+// "Dentists, Doctors" (no licensed professionals until the lawyer
+// answers that question), so it's covered with presets.ts's own chips,
+// same treatment as RegisterWanderingPage.tsx/StorePage.tsx.
 function SowBanner() {
+  const preset = getPreset('hand');
+  const bannerUrl = preset?.bannerImage ?? sowProductBanner;
+  const accent = preset?.accent ?? '#16a34a';
   return (
     <div
       className="relative w-full h-32 md:h-44 lg:h-56 overflow-hidden rounded-2xl mb-6 border"
-      style={{ borderColor: 'rgba(22,163,74,0.45)', boxShadow: '0 0 40px rgba(22,163,74,0.25)' }}
+      style={{ borderColor: `${accent}73`, boxShadow: `0 0 40px ${accent}40` }}
     >
-      <img src={sowProductBanner} alt="" className="absolute inset-0 w-full h-full object-cover" loading="eager" />
+      <img src={bannerUrl} alt="" className="absolute inset-0 w-full h-full object-cover" loading="eager" />
       <div
         className="absolute inset-0"
-        style={{ background: 'linear-gradient(to top, rgba(0,0,0,0.85), rgba(22,163,74,0.25) 60%, rgba(0,0,0,0.1))' }}
+        style={{ background: `linear-gradient(to bottom, rgba(0,0,0,0.85), ${accent}40 60%, rgba(0,0,0,0.1))` }}
       />
-      <div className="absolute inset-0 flex flex-col justify-end p-4 md:p-6">
+      <div className="absolute inset-x-0 top-0 flex flex-col p-4 md:p-6">
         <h1 className="text-white text-xl md:text-3xl font-black tracking-tight drop-shadow-lg">🤲 Sow a Hand seed</h1>
         <p className="text-white/85 text-sm md:text-base mt-1 max-w-2xl drop-shadow">
           Offer your skills to the tribe — planted in under two minutes.
         </p>
       </div>
+      {preset?.bannerImage && (
+        <div className="absolute inset-x-0 bottom-0 h-[45%] bg-[#081310]/95 flex items-center justify-center px-3 gap-1.5 flex-wrap">
+          {preset.chips.map((chip) => (
+            <span
+              key={chip}
+              className="text-[10px] md:text-xs font-medium px-2 py-0.5 rounded-full"
+              style={{ backgroundColor: `${accent}22`, color: accent, border: `1px solid ${accent}55` }}
+            >
+              {chip}
+            </span>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
