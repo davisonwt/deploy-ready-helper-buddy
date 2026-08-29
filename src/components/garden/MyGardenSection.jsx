@@ -9,6 +9,7 @@ import LivingButton from '../LivingButton'
 import { useSignedImage } from '@/lib/storage/signedImage'
 import ShareSeedDialog from '@/components/share/ShareSeedDialog'
 import BrandIcon from './BrandIcon'
+import { usePreviewPlayer } from '@/hooks/usePreviewPlayer'
 
 
 export default function MyGardenSection({ title, emoji, accent = '#22c55e', cards, emptyHint, headerAction = null, brands = [], brandByItem = {}, onAssignBrand = null }) {
@@ -54,22 +55,32 @@ function GardenCard({ card, accent, navigate, brands = [], brand = null, onAssig
   const [previewing, setPreviewing] = useState(false)
   const [shareOpen, setShareOpen] = useState(false)
   const signedImage = useSignedImage(card.image)
-  const audioRef = useRef(null)
   const videoRef = useRef(null)
 
+  // Owner-only card (My Garden only ever shows your own content), so a
+  // click tries the real file via get-seed-file first — a raw
+  // file_url can't load into a bare <audio src>, no auth header — and
+  // falls back to the row's own preview_url only if that fails.
+  const player = usePreviewPlayer({
+    id: String(card.id),
+    previewUrl: card.mediaKind === 'audio' ? (card.previewUrl ?? null) : null,
+    productId: card.mediaKind === 'audio' ? (card.productId ?? undefined) : undefined,
+  })
+  const isPlayingNow = card.mediaKind === 'audio' ? player.isPlaying : previewing
 
   const goLive = () => navigate(`/grove-station?seed=${encodeURIComponent(card.liveKey || card.id)}`)
   const handlePlay = () => {
+    if (card.mediaKind === 'audio') {
+      if (player.hasSource) player.toggle()
+      else navigate(card.openPath)
+      return
+    }
     if (previewing) {
-      audioRef.current?.pause()
       videoRef.current?.pause()
       setPreviewing(false)
       return
     }
-    if (card.mediaKind === 'audio' && card.mediaUrl) {
-      setPreviewing(true)
-      setTimeout(() => audioRef.current?.play().catch(() => {}), 0)
-    } else if (card.mediaKind === 'video' && card.mediaUrl) {
+    if (card.mediaKind === 'video' && card.mediaUrl) {
       setPreviewing(true)
       setTimeout(() => videoRef.current?.play().catch(() => {}), 0)
     } else {
@@ -130,16 +141,20 @@ function GardenCard({ card, accent, navigate, brands = [], brand = null, onAssig
           <div style={styles.cardSub}>{card.subtitle}</div>
         </div>
 
-        {previewing && card.mediaKind === 'audio' && card.mediaUrl && (
-          <audio ref={audioRef} src={card.mediaUrl} controls style={{ width: '100%', marginTop: 6 }}
-            onEnded={() => setPreviewing(false)} />
+        {card.mediaKind === 'audio' && player.isPlaying && (
+          <div style={{ marginTop: 6 }}>
+            <div style={styles.previewTrack}>
+              <div style={{ ...styles.previewFill, width: `${Math.min(100, Math.max(0, player.progress * 100))}%` }} />
+            </div>
+            <p style={styles.previewLabel}>{player.isFullTrack ? 'Full track' : '45s preview'}</p>
+          </div>
         )}
 
         <div style={styles.btnRow}>
           <div style={{ flex: 1 }}>
-            <LivingButton variant="play" isPlaying={previewing} onClick={handlePlay}
+            <LivingButton variant="play" isPlaying={isPlayingNow} onClick={handlePlay}
               height={36} borderRadius={8} fontSize={11} letterSpacing="0px">
-              {previewing ? '⏸' : '▶'} Play
+              {card.mediaKind === 'audio' && player.isLoading ? '… Loading' : isPlayingNow ? '⏸ Pause' : '▶ Play'}
             </LivingButton>
           </div>
           <Link to={card.openPath} style={{ flex: 1, textDecoration: 'none' }}>
@@ -256,6 +271,15 @@ const styles = {
   cardSub: {
     fontSize: 11, color: 'rgba(226,232,240,0.65)', lineHeight: 1.35,
     display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden',
+  },
+  previewTrack: {
+    height: 4, borderRadius: 999, background: 'rgba(255,255,255,0.15)', overflow: 'hidden',
+  },
+  previewFill: {
+    height: '100%', background: '#34d399', transition: 'width 150ms',
+  },
+  previewLabel: {
+    marginTop: 4, fontSize: 10, fontWeight: 600, color: 'rgba(255,255,255,0.8)',
   },
   btnRow: { display: 'flex', gap: 5, marginTop: 'auto' },
 }

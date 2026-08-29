@@ -24,8 +24,8 @@ import {
   subscribeToPreviewPlayback,
   getCurrentlyPlayingId,
 } from '@/lib/media/previewPlaybackStore';
+import { PREVIEW_SECONDS } from '@/lib/media/previewLength';
 
-const PREVIEW_SECONDS = 40;
 const PRIVATE_BUCKETS = ['music-tracks', 'dj-music', 'premium-room'];
 const PRIVATE_COVER_BUCKETS = new Set(['music-tracks', 'dj-music', 'premium-room']);
 

@@ -361,8 +361,36 @@ Closed the three remaining gaps from the previous entry:
   `GardenCard` (rendered by `/my-orchards`, "My Garden") has the identical
   raw-`file_url`-into-`<audio src>` bug as `LivingSeedCard` had — but it's
   a separate, unrelated component, and the task named `LivingSeedCard.tsx`
-  specifically. Not touched.
+  specifically. Not touched. **Fixed later the same day — see the next
+  entry below.**
 - `npx tsc --noEmit` and `npx eslint` both clean across every file touched.
+
+## Fixed — 2026-08-29, later still (MyGardenSection's own copy of the same bug; preview-length constant drift)
+
+- **`MyGardenSection.jsx`'s `GardenCard`** (rendered by `/my-orchards`, "My
+  Garden" — flagged but explicitly not touched in the previous entry since
+  the task had named `LivingSeedCard.tsx` specifically) had the identical
+  bug: a raw `card.mediaUrl` (private-bucket `file_url`) straight into a
+  bare `<audio src>`, no auth header, never actually playable even for the
+  owner. Fixed the same way as `LivingSeedCard`: `usePreviewPlayer` with
+  `productId` (so a click tries `get-seed-file` first — the owner's real
+  file) and `previewUrl` as the fallback. No new threading needed —
+  `card.previewUrl`/`card.productId` were already populated by
+  `buildMusicCard()` from the earlier `LivingSeedCard` fix, `MyGardenSection`
+  just wasn't reading them yet. The raw `<audio ref controls>` element and
+  local `audioRef` are gone for the audio case; video is unchanged (own
+  separate, working mechanism, not this bug). Local `styles.previewTrack`/
+  `previewFill`/`previewLabel` added to this file's existing plain-object
+  style system to show a progress bar + "45s preview"/"Full track" label
+  while playing, matching the visual language used everywhere else this
+  session.
+- **`MusicLibraryTable.tsx`'s local `PREVIEW_SECONDS = 40`** (its
+  `dj_music_tracks` fallback-to-full-file cap) replaced with the shared
+  `PREVIEW_SECONDS = 45` from `src/lib/media/previewLength.ts` — the same
+  constant every other preview surface already uses. Behavior change is
+  real but tiny: a non-owned dj-track-with-no-real-preview now plays 5
+  seconds longer before the client-side cap kicks in.
+- `npx tsc --noEmit` and `npx eslint` both clean.
 
 ## Open — priority order
 
