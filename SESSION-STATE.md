@@ -117,6 +117,26 @@ session and was never logged here; noted for the record). Four commits today:
 
 tsc/lint clean on every commit; each pushed immediately.
 
+Two follow-up commits, same day:
+
+- `ba1477b1` — My Garden's Total Seeds / Total Raised / Active Seeds tiles
+  were reading `userSeeds`, which is actually the orchards-only crowdfunding
+  query — a sower with 34 products and 0 orchards always showed 0/0.00/0.
+  Now Total/Active Seeds count the sower's `products` (any status /
+  non-archived) plus their `orchards` (any status / active) directly; Total
+  Raised sums `sower_amount` from `sower_earnings_v`, same source
+  `DashboardTribeStats` already trusts. Removed the "Payment Method: USDC
+  (USD Coin)" line; the Total Raised tile is now labeled "USD" instead of
+  routing through `formatCurrency`'s "USDC" suffix.
+- `cf941ea9` — Real banner images for `/sow` and `/sow/music`, in
+  `PageHeroBanner`'s style (image + bottom gradient + title/subtitle).
+  Willow (the image companion, `companion-invoke`) needs a real signed-in
+  user session and spends that user's own per-account image-generation
+  quota — not callable from a build script, so existing bundled assets were
+  used instead: `chat-mode-radio.jpg` (already used for the Radio chat
+  mode) for `/sow/music`, `seeds-strip.jpg` for `/sow`. No new storage
+  bucket needed since both are repo-bundled, not Willow output.
+
 ## Sowing forms — per-kind status (spec-sowing-forms.md)
 
 Tracked here so the rest of `UploadForm.tsx` gets retired one kind at a
