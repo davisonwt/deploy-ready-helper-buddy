@@ -21,10 +21,16 @@
 //                                                    ORDER.APPROVED already
 //                                                    finalized this order)
 //   - PAYMENT.CAPTURE.DENIED / VOIDED / DECLINED -> mark 'failed'
-//   - PAYMENT.PAYOUTSBATCH.SUCCESS
-//     PAYMENT.PAYOUTS-ITEM.SUCCEEDED             -> payout_status='sent'
+//   - PAYMENT.PAYOUTS-ITEM.SUCCEEDED             -> the payouts row (found
+//     by sender_item_id = payouts.id, set at dispatch by payout-earnings)
+//     and every row it covers are marked paid.
 //   - PAYMENT.PAYOUTS-ITEM.{DENIED|FAILED|BLOCKED|RETURNED|UNCLAIMED}
-//                                                -> payout_status='failed'
+//                                                -> payouts row 'failed',
+//     covered rows revert to owed (picked up by the next weekly run).
+//   - PAYMENT.PAYOUTSBATCH.{SUCCESS|DENIED}      -> logged only. A batch
+//     now covers many recipients (payout-earnings), so a batch-level ping
+//     says nothing about any one recipient — item-level events are the only
+//     authoritative per-recipient signal.
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 import { corsHeaders } from "npm:@supabase/supabase-js@2/cors";
@@ -33,6 +39,7 @@ import {
   extractPaypalWebhookHeaders,
   verifyPaypalWebhookSig,
 } from "../_shared/paypal/client.ts";
+import { markCoveredRowsPaid, markCoveredRowsPending, type CoveredRow } from "../_shared/payoutLedger.ts";
 
 type PaypalEvent = {
   id?: string;
@@ -42,6 +49,7 @@ type PaypalEvent = {
     custom_id?: string;
     sender_item_id?: string;
     payout_batch_id?: string;
+    payout_item_id?: string;
     transaction_status?: string;
     payout_item?: {
       sender_item_id?: string;
@@ -264,40 +272,14 @@ async function handleEvent(
     return;
   }
 
-  // ------- Payouts batch / item events ---------------------------------------
-  if (type === "PAYMENT.PAYOUTSBATCH.SUCCESS") {
-    const batchId = resource.payout_batch_id as string | undefined ??
-      (resource as Record<string, unknown>).batch_header
-        ? ((resource as { batch_header?: { payout_batch_id?: string } })
-          .batch_header?.payout_batch_id)
-        : undefined;
-    if (!batchId) return;
-    await supabase
-      .from("bestowals")
-      .update({
-        payout_status: "sent",
-        payout_completed_at: new Date().toISOString(),
-      })
-      .eq("payout_reference", batchId);
+  // ------- Payouts batch events: logged only, see file header ----------------
+  if (type === "PAYMENT.PAYOUTSBATCH.SUCCESS" || type === "PAYMENT.PAYOUTSBATCH.DENIED") {
+    console.log("paypal-webhook payouts batch event", type, event.id);
     return;
   }
 
-  if (type === "PAYMENT.PAYOUTSBATCH.DENIED") {
-    const batchId = (resource as { batch_header?: { payout_batch_id?: string } })
-      .batch_header?.payout_batch_id ??
-      (resource.payout_batch_id as string | undefined);
-    if (!batchId) return;
-    await supabase
-      .from("bestowals")
-      .update({
-        payout_status: "failed",
-        payout_error: "paypal_payoutsbatch_denied",
-      })
-      .eq("payout_reference", batchId);
-    return;
-  }
-
-  // Item-level events identify the bestowal via sender_item_id we set at dispatch.
+  // Item-level events identify the payouts row via sender_item_id, which
+  // payout-earnings sets to that row's own id at dispatch.
   if (type.startsWith("PAYMENT.PAYOUTS-ITEM.")) {
     const senderItemId = (resource.sender_item_id as string | undefined) ??
       resource.payout_item?.sender_item_id;
@@ -307,15 +289,28 @@ async function handleEvent(
     }
     const status = type.substring("PAYMENT.PAYOUTS-ITEM.".length).toLowerCase();
 
-    const update: Record<string, unknown> = {};
+    const { data: payout, error: payoutErr } = await supabase
+      .from("payouts")
+      .select("id, covered_rows, status")
+      .eq("id", senderItemId)
+      .maybeSingle();
+    if (payoutErr || !payout) {
+      console.warn("payouts-item event: no matching payouts row", senderItemId, event.id);
+      return;
+    }
+    if (payout.status === "paid" || payout.status === "failed") {
+      return; // already terminal — a retried delivery of the same event
+    }
+
+    const coveredRows = (payout.covered_rows ?? []) as CoveredRow[];
+    const itemId = (resource.payout_item_id as string | undefined) ?? null;
+
     if (status === "succeeded") {
-      update.payout_status = "sent";
-      update.payout_completed_at = new Date().toISOString();
-      const feeStr = resource.payout_item_fee?.value;
-      const fee = feeStr != null ? Number(feeStr) : null;
-      if (fee != null && Number.isFinite(fee)) {
-        update.payout_fee_amount = fee;
-      }
+      await supabase
+        .from("payouts")
+        .update({ status: "paid", paypal_item_id: itemId, completed_at: new Date().toISOString() })
+        .eq("id", senderItemId);
+      await markCoveredRowsPaid(supabase, coveredRows);
     } else if (
       status === "denied" ||
       status === "failed" ||
@@ -324,16 +319,21 @@ async function handleEvent(
       status === "refunded" ||
       status === "reversed"
     ) {
-      update.payout_status = "failed";
-      update.payout_error = `paypal_payout_${status}`;
+      const reason = `paypal_payout_${status}`;
+      await supabase
+        .from("payouts")
+        .update({ status: "failed", paypal_item_id: itemId, error: reason })
+        .eq("id", senderItemId);
+      await markCoveredRowsPending(supabase, coveredRows, reason);
     } else if (status === "unclaimed" || status === "held" || status === "onhold") {
-      update.payout_status = "processing";
+      // Still in flight — leave the payouts row and covered rows as-is
+      // ('processing'), just record the item id once we have it.
+      if (itemId) {
+        await supabase.from("payouts").update({ paypal_item_id: itemId }).eq("id", senderItemId);
+      }
     } else {
       console.warn("payouts-item unknown status", status, event.id);
-      return;
     }
-
-    await supabase.from("bestowals").update(update).eq("id", senderItemId);
     return;
   }
 

@@ -1,13 +1,12 @@
 // NOWPayments IPN webhook.
 // Verifies x-nowpayments-sig (HMAC-SHA512 of canonical sorted JSON) and
-// updates the matching bestowals row. On terminal success, triggers
-// dispatchPayouts() (provider-agnostic dispatcher added in Part 2 step 2).
+// updates the matching bestowals row. Payout is no longer dispatched here —
+// see payout-earnings (the weekly, PayPal-only run) and owed_payout_balances().
 //
 // Idempotency: processed_webhooks(provider='nowpayments', webhook_id=<payment_id:status>).
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 import { corsHeaders } from "npm:@supabase/supabase-js@2/cors";
-import { dispatchPayouts } from "../_shared/distribution.ts";
 import { deliverFinalizeMessages } from "../_shared/postFinalize/messaging.ts";
 import { syncBooksEntries } from "../_shared/postFinalize/books.ts";
 
@@ -221,19 +220,9 @@ async function handlePaymentEvent(
       .from("bestowals")
       .update({ payment_status: "completed" })
       .eq("id", bestowalId);
-    // Trigger provider-agnostic payout dispatch.
-    try {
-      await dispatchPayouts(supabase, bestowalId);
-    } catch (err) {
-      console.error("dispatchPayouts failed", bestowalId, err);
-      await supabase
-        .from("bestowals")
-        .update({
-          payout_status: "manual_required",
-          payout_error: err instanceof Error ? err.message : String(err),
-        })
-        .eq("id", bestowalId);
-    }
+    // payout_status stays 'pending' -- the weekly payout-earnings run picks
+    // it up from there, same as every other source table. Immediate
+    // per-bestowal dispatch (dispatchPayouts()) is retired.
     const bestowalKind = isGift ? "gift" : "orchard";
     await deliverFinalizeMessages(supabase, bestowalKind, bestowalId);
     await syncBooksEntries(supabase, bestowalKind, bestowalId);
@@ -284,9 +273,11 @@ async function handlePayoutEvent(
     .update(update)
     .eq("payout_reference", ref);
 
-  // The aggregated earnings runners (payout-sower-earnings /
-  // payout-whisperer-earnings) also stamp payout_reference with the NOWPayments
-  // batch id, so the same IPN settles their ledgers.
+  // Dead as of the unified PayPal-only payout system (payout-earnings) --
+  // nothing sets payout_reference via a NOWPayments crypto payout batch
+  // anymore, so this never matches a row. Left in place rather than
+  // removed; harmless since it's unreachable, and the NOWPayments payout
+  // rail returns with the native crypto spec later.
   const terminal = String(update.payout_status);
   await supabase
     .from("product_bestowals")

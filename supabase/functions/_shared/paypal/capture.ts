@@ -17,7 +17,6 @@
 // arriving independently, and/or the buyer's return-page recovery call
 // racing either one.
 
-import { dispatchPayouts } from "../distribution.ts";
 import { deliverFinalizeMessages } from "../postFinalize/messaging.ts";
 import { syncBooksEntries } from "../postFinalize/books.ts";
 import { paypalFetch } from "./client.ts";
@@ -145,12 +144,17 @@ async function finalize(
 }
 
 /**
- * Gift and orchard bestowals share this: both are rows in `bestowals`, both
- * mark paid + dispatch payouts the same way. There is no DB-side RPC for
- * this (unlike basket/content/topup) — this mirrors the idempotency check
- * (payment_status already completed/distributed short-circuits) that
- * previously lived inline in paypal-webhook's PAYMENT.CAPTURE.COMPLETED
- * handler, now shared by both entry points.
+ * Gift and orchard bestowals share this: both are rows in `bestowals`. There
+ * is no DB-side RPC for this (unlike basket/content/topup) — this mirrors
+ * the idempotency check (payment_status already completed/distributed
+ * short-circuits) that previously lived inline in paypal-webhook's
+ * PAYMENT.CAPTURE.COMPLETED handler, now shared by both entry points.
+ *
+ * Payout is no longer dispatched here — payout_status stays at its
+ * 'pending' default, and the weekly payout-earnings run (see
+ * owed_payout_balances()) picks it up from there, same as every other
+ * source table. Immediate per-bestowal dispatch (dispatchPayouts(),
+ * distribution.ts) is retired; that function is left in place, unused.
  */
 async function finalizeBestowal(
   supabase: SupabaseLike,
@@ -177,17 +181,4 @@ async function finalizeBestowal(
     .from("bestowals")
     .update({ payment_status: "completed", payment_reference: paymentReference })
     .eq("id", bestowalId);
-
-  try {
-    await dispatchPayouts(supabase, bestowalId);
-  } catch (err) {
-    console.error("dispatchPayouts failed", bestowalId, err);
-    await supabase
-      .from("bestowals")
-      .update({
-        payout_status: "manual_required",
-        payout_error: err instanceof Error ? err.message : String(err),
-      })
-      .eq("id", bestowalId);
-  }
 }

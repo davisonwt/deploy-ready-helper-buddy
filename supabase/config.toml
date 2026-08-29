@@ -174,9 +174,6 @@ verify_jwt = false
 [functions.send-xrp-payout]
 verify_jwt = false
 
-[functions.payout-whisperer-earnings]
-verify_jwt = false
-
 [functions.xrp-quote]
 verify_jwt = false
 
@@ -363,7 +360,7 @@ verify_jwt = false
 [functions.password-reset-with-security]
 verify_jwt = false
 
-[functions.payout-sower-earnings]
+[functions.payout-earnings]
 verify_jwt = false
 
 [functions.poll-video-jobs]
