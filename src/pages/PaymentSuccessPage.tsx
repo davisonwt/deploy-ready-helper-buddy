@@ -7,7 +7,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useProductBasket } from '@/contexts/ProductBasketContext';
 import { launchConfetti, floatingScore, playSoundEffect } from '@/utils/confetti';
 import { invokePaymentFunction } from '@/lib/payments/invokeFunction';
-import { backOutFee } from '@/lib/pricing/platformFee';
+import { backOutFee, round2 } from '@/lib/pricing/platformFee';
 
 type OrderKind = 'basket' | 'content' | 'gift' | 'topup';
 type OrderStatus = 'pending' | 'processing' | 'completed' | 'failed' | 'expired';
@@ -18,6 +18,12 @@ interface ActiveOrder {
   table: string;
   statusColumn: string;
   amountColumn: string;
+  // Processor fee (PayPal/crypto's own cut) is stored separately from the
+  // fee-inclusive subtotal on every one of these tables — needed so the
+  // Distribution Overview can back S2G's 15% out of the subtotal alone
+  // rather than out of the full buyer_total, and show the processor's cut
+  // as its own line, matching BestowalReceiptMessage.tsx exactly.
+  processorFeeColumn: string;
 }
 
 // The ?bestowal= param covers both gift AND orchard bestowals — both are
@@ -27,13 +33,13 @@ interface ActiveOrder {
 // its table config is identical for either.
 function resolveActiveOrder(searchParams: URLSearchParams): ActiveOrder | null {
   const basket = searchParams.get('basket');
-  if (basket) return { kind: 'basket', id: basket, table: 'basket_orders', statusColumn: 'status', amountColumn: 'buyer_total' };
+  if (basket) return { kind: 'basket', id: basket, table: 'basket_orders', statusColumn: 'status', amountColumn: 'buyer_total', processorFeeColumn: 'processor_fee' };
   const purchase = searchParams.get('purchase');
-  if (purchase) return { kind: 'content', id: purchase, table: 'content_purchases', statusColumn: 'payment_status', amountColumn: 'buyer_total_amount' };
+  if (purchase) return { kind: 'content', id: purchase, table: 'content_purchases', statusColumn: 'payment_status', amountColumn: 'buyer_total_amount', processorFeeColumn: 'processor_fee_amount' };
   const bestowal = searchParams.get('bestowal');
-  if (bestowal) return { kind: 'gift', id: bestowal, table: 'bestowals', statusColumn: 'payment_status', amountColumn: 'buyer_total_amount' };
+  if (bestowal) return { kind: 'gift', id: bestowal, table: 'bestowals', statusColumn: 'payment_status', amountColumn: 'buyer_total_amount', processorFeeColumn: 'processor_fee_amount' };
   const topup = searchParams.get('topup');
-  if (topup) return { kind: 'topup', id: topup, table: 'topups', statusColumn: 'status', amountColumn: 'amount' };
+  if (topup) return { kind: 'topup', id: topup, table: 'topups', statusColumn: 'status', amountColumn: 'amount', processorFeeColumn: 'fee_amount' };
   return null;
 }
 
@@ -45,6 +51,7 @@ export default function PaymentSuccessPage() {
 
   const [status, setStatus] = useState<OrderStatus | null>(null);
   const [amount, setAmount] = useState<number | null>(null);
+  const [processorFee, setProcessorFee] = useState<number | null>(null);
   const celebratedRef = useRef(false);
   const captureRequestedRef = useRef(false);
 
@@ -72,7 +79,7 @@ export default function PaymentSuccessPage() {
       attempts += 1;
       const { data, error } = await supabase
         .from(active.table)
-        .select(`${active.statusColumn}, ${active.amountColumn}`)
+        .select(`${active.statusColumn}, ${active.amountColumn}, ${active.processorFeeColumn}`)
         .eq('id', active.id)
         .maybeSingle();
 
@@ -82,6 +89,8 @@ export default function PaymentSuccessPage() {
         setStatus(rowStatus);
         const rowAmount = row[active.amountColumn];
         if (rowAmount != null) setAmount(Number(rowAmount));
+        const rowProcessorFee = row[active.processorFeeColumn];
+        setProcessorFee(rowProcessorFee != null ? Number(rowProcessorFee) : 0);
         if (rowStatus === 'completed' && !celebratedRef.current) {
           celebratedRef.current = true;
           if (active.kind === 'basket') {
@@ -160,22 +169,32 @@ export default function PaymentSuccessPage() {
             amount != null && (
               <div className="bg-muted/50 p-4 rounded-lg text-sm text-left space-y-1">
                 <p className="font-semibold">Distribution Overview</p>
-                <p className="text-muted-foreground">
-                  ✓ ${amount.toFixed(2)} → credited to your Sow2Grow wallet balance (no platform fee on top-ups)
-                </p>
+                <ul className="space-y-1 text-muted-foreground">
+                  <li>✓ ${amount.toFixed(2)} → credited to your Sow2Grow wallet balance (no platform fee on top-ups)</li>
+                  {!!processorFee && (
+                    <li>✓ ${processorFee.toFixed(2)} → Payment Processor Fee</li>
+                  )}
+                </ul>
               </div>
             )
           ) : (
-            amount != null && (() => {
-              // `amount` here is always the buyer-paid gross (already
-              // includes S2G's 15%, added on top per priceBreakdown's golden
-              // rule) — back it out with the same pricing helper used at
-              // checkout rather than a stale fixed 70/15/15 split.
-              const { base, s2gFee } = backOutFee(amount);
+            amount != null && processorFee != null && (() => {
+              // `amount` is the buyer-paid gross including the processor's
+              // own cut (PayPal/crypto) — that processor fee is charged on
+              // top of the fee-inclusive subtotal, not folded into S2G's
+              // 15%. Back the fee out of the subtotal alone (subtotal =
+              // amount - processorFee), matching the receipt
+              // (BestowalReceiptMessage.tsx) exactly rather than backing
+              // 15% out of the processor-inclusive total.
+              const subtotal = round2(amount - processorFee);
+              const { base, s2gFee } = backOutFee(subtotal);
               return (
                 <div className="bg-muted/50 p-4 rounded-lg text-sm text-left space-y-2">
                   <p className="font-semibold">Distribution Overview</p>
                   <ul className="space-y-1 text-muted-foreground">
+                    {!!processorFee && (
+                      <li>✓ ${processorFee.toFixed(2)} → Payment Processor Fee</li>
+                    )}
                     <li>✓ ${s2gFee.toFixed(2)} → Platform Fee (Sow2Grow, 15%)</li>
                     <li>✓ up to ${base.toFixed(2)} → Sower (a Product Whisperer's share, if one applied, comes out of this — never on top)</li>
                   </ul>
