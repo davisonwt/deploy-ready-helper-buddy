@@ -137,11 +137,18 @@ Deno.serve(async (req) => {
   try {
     await handleEvent(supabase, event);
 
-    await supabase.from("processed_webhooks").insert({
+    // The event is already processed at this point — a failed insert here
+    // must not throw (that would surface as a 500, and PayPal would retry
+    // an event that already ran, risking a double-process). Log it and
+    // move on; the insert's only job is idempotency for a *future* retry.
+    const { error: insertErr } = await supabase.from("processed_webhooks").insert({
       provider: "paypal",
       webhook_id: event.id,
       payload_hash: event.event_type,
     });
+    if (insertErr) {
+      console.error("paypal-webhook: processed_webhooks insert failed", event.id, insertErr);
+    }
 
     return json({ ok: true });
   } catch (err) {

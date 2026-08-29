@@ -86,11 +86,18 @@ Deno.serve(async (req) => {
       await handlePaymentEvent(supabase, parsed);
     }
 
-    await supabase.from("processed_webhooks").insert({
+    // The event is already processed at this point — a failed insert here
+    // must not throw (that would surface as a 500, and NOWPayments would
+    // retry an event that already ran, risking a double-process). Log it
+    // and move on; the insert's only job is idempotency for a *future* retry.
+    const { error: insertErr } = await supabase.from("processed_webhooks").insert({
       provider: "nowpayments",
       webhook_id: dedupeKey,
       payload_hash: expected,
     });
+    if (insertErr) {
+      console.error("nowpayments-webhook: processed_webhooks insert failed", dedupeKey, insertErr);
+    }
 
     return json({ ok: true });
   } catch (err) {
