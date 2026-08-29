@@ -317,3 +317,42 @@ export const fetchProductsPage = (opts: ProductsPageQueryOpts) => {
   return query;
 };
 
+/** A store by its slug — spec-storefronts.md §4. Public, no auth. */
+export const fetchStoreBySlug = (slug: string) =>
+  supabase
+    .from('companies')
+    .select('id, name, slug, store_tagline, store_theme, store_categories, logo_url, banner_url, collect_address, offers_collect, offers_delivery, owner_user_id, is_store')
+    .eq('slug', slug)
+    .eq('is_store', true)
+    .maybeSingle();
+
+export interface StoreProductsQueryOpts {
+  companyId: string;
+  from: number;
+  to: number;
+  search?: string;
+  category?: string;
+}
+
+/** Paginated grid of a store's own active products, spec-storefronts.md §4. */
+export const fetchStoreProducts = (opts: StoreProductsQueryOpts) => {
+  const { companyId, from, to, search, category } = opts;
+  let query = supabase
+    .from('products')
+    .select(`
+      *,
+      sowers (
+        ${SOWER_PUBLIC_COLS}, first_name, last_name
+      )
+    `)
+    .eq('company_id', companyId)
+    .eq('status', 'active')
+    .order('created_at', { ascending: false })
+    .range(from, to);
+
+  if (search) query = query.ilike('title', `%${search}%`);
+  if (category && category !== 'all') query = query.eq('category', category);
+
+  return query;
+};
+

@@ -45,6 +45,7 @@ import {
   ArrowLeft
 } from "lucide-react"
 import { QuickProfileSetup } from "../components/profile/QuickProfileSetup"
+import MyBusinessesSection from "../components/profile/MyBusinessesSection"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "../components/ui/tabs"
 import Journal from "../components/journal/Journal"
 
@@ -541,6 +542,8 @@ export default function ProfilePage() {
               </Button>
             </CardContent>
           </Card>
+
+          <MyBusinessesSection />
 
           {/* Enhanced Header */}
 

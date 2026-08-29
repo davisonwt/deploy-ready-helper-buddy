@@ -24,9 +24,11 @@ interface ProductCardProps {
   product: any;
   featured?: boolean;
   showActions?: boolean; // Control whether to show edit/delete actions
+  /** Hide the sower avatar/name row — every card on a store's own page (spec-storefronts.md §4) belongs to the same shop, so it's implied rather than repeated. */
+  hideSowerInfo?: boolean;
 }
 
-export default function ProductCard({ product, featured, showActions = false }: ProductCardProps) {
+export default function ProductCard({ product, featured, showActions = false, hideSowerInfo = false }: ProductCardProps) {
   const [imageError, setImageError] = useState(false);
   const [isPlaying, setIsPlaying] = useState(false);
   const [downloading, setDownloading] = useState(false);
@@ -263,20 +265,22 @@ export default function ProductCard({ product, featured, showActions = false }: 
           {/* Content */}
           <div className="p-4 space-y-3">
             {/* Sower Info */}
-            <div className="flex items-center gap-2">
-              <Avatar className="w-6 h-6">
-                <AvatarImage src={product.sowers?.logo_url} />
-                <AvatarFallback className="bg-white/20 text-white">{product.sowers?.display_name?.[0]}</AvatarFallback>
-              </Avatar>
-              <div className="flex items-center gap-1 flex-1 min-w-0">
-                <span className="text-sm text-white/70 truncate">
-                  {product.sowers?.display_name}
-                </span>
-                {product.sowers?.is_verified && (
-                  <CheckCircle2 className="w-4 h-4 text-white flex-shrink-0" />
-                )}
+            {!hideSowerInfo && (
+              <div className="flex items-center gap-2">
+                <Avatar className="w-6 h-6">
+                  <AvatarImage src={product.sowers?.logo_url} />
+                  <AvatarFallback className="bg-white/20 text-white">{product.sowers?.display_name?.[0]}</AvatarFallback>
+                </Avatar>
+                <div className="flex items-center gap-1 flex-1 min-w-0">
+                  <span className="text-sm text-white/70 truncate">
+                    {product.sowers?.display_name}
+                  </span>
+                  {product.sowers?.is_verified && (
+                    <CheckCircle2 className="w-4 h-4 text-white flex-shrink-0" />
+                  )}
+                </div>
               </div>
-            </div>
+            )}
 
             {/* Title & Description */}
             <div>

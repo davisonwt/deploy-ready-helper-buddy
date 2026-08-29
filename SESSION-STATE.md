@@ -575,6 +575,67 @@ catch-all route, exactly as the spec expects at this stage.
   never a seed; Field/Forge are deferred "coming soon").
 - `npx tsc --noEmit` and `npx eslint` both clean.
 
+## Fixed — 2026-08-29, still later (spec-storefronts.md build order step 1: schema + public /store/:slug page)
+
+Did build order step 1 of `spec-storefronts.md` only, per instruction —
+`bulk_upload_jobs`/`basket_orders` changes (steps 2 and 4) explicitly
+skipped; the shop card in Tribal Gardens/Directory, Follow, basket/
+checkout, and the four-screen bulk upload flow are all later steps, not
+started.
+
+**Migration (`20260829200000_storefronts-schema.sql`), confirmed applied live:**
+- `companies` gained `is_store` (default false), `store_tagline`,
+  `store_theme` (jsonb), `store_categories` (text[]), `collect_address`,
+  `offers_collect` (default true), `offers_delivery` (default false),
+  `location_lat`/`location_lng`. `slug`/`logo_url`/`banner_url` already
+  existed, reused as the spec's own note said.
+- `products`: **`sku` and `category` already existed live** — checked
+  before writing the migration, confirmed nullable/unconstrained/all-null,
+  so nothing to add there; the migration only adds `stock` (nullable
+  integer). `status`'s existing `CHECK (status = ANY ('active','paused'))`
+  extended to include `draft`/`archived` in the same constraint rather
+  than replaced — live data was 58/58 `active` before and after, no rows
+  touched.
+- New partial unique index `(company_id, sku) WHERE sku IS NOT NULL`.
+- `is_store` turned on for davison's default company (`dd069637-...`,
+  slug `davison-9cb1b1`) as the test shop — confirmed live: 33 active
+  products, matching exactly what `/store/davison-9cb1b1` now queries.
+
+**App code:**
+- **`/store/:slug`** (`StorePage.tsx`, new) — public route, no auth (same
+  pattern as `/learn-share/:videoId`). `?ref=` referral capture needed no
+  extra code: `useReferralCapture()` in `App.tsx` already runs app-wide
+  for every route. Shows the shop header (logo, name, tagline), a scoped
+  search box (debounced, `ilike` on title) and category chips (from
+  `store_categories`), and a paginated grid (24/page, "Load more") of the
+  company's `status = 'active'` products via the existing `ProductCard`.
+  New `fetchStoreBySlug`/`fetchStoreProducts` in `api/products.ts` (a
+  pre-existing `fetchProductsByCompany` helper existed but was built for
+  a different page with a narrower field projection and no
+  active-only/search/category filtering — not reused, a fresh
+  narrowly-scoped helper written instead, matching this file's own
+  established one-helper-per-page convention). The owner (`companies.owner_user_id
+  === auth user`) sees a Manage bar with **only** Edit shop (→ `/profile`)
+  and Books (→ `/books`) — the fuller Manage bar (Bulk upload, Add one
+  seed, Orders) is a later step.
+- **`ProductCard.tsx`** gained an optional `hideSowerInfo` prop (default
+  `false`, every existing caller unaffected) — every card on a shop's own
+  page belongs to the same shop, so its avatar/name row is redundant per
+  spec §4 ("ProductCard with the shop badge hidden, it's implied");
+  `StorePage` is the only caller that sets it.
+- **Profile → My businesses** (`MyBusinessesSection.tsx`, new component,
+  dropped into `ProfilePage.jsx`'s existing "profile" tab right after the
+  Wallet & Payments card — that 1855-line file wasn't otherwise touched)
+  — this section didn't exist at all before now (spec-books.md's own
+  step 3, which was meant to build the full switcher/create-workspace
+  version of it, was never done — out of scope for both that task and
+  this one). Built the minimal version this spec actually needs: one card
+  per `companies` row the member owns (in practice exactly one, per the
+  books migration's default-set backfill) with a Storefront switch and,
+  once on, tagline / comma-separated categories / collect-address fields,
+  explicit Save per card, and a "View your shop" link once live.
+- `npx tsc --noEmit` and `npx eslint` both clean.
+
 ## Open — priority order
 
 1. ~~Live proof that `paypal-webhook` actually works now~~ — **resolved, see Keystone problem**: order `0a6a0b1a` finalized via a clean webhook call at 08:36 UTC 2026-08-29. The `processed_webhooks`-insert bug (separate from the webhook itself) is also fixed; watch for its first real row as confirmation the fix landed, not as proof the webhook works — that's already established.
