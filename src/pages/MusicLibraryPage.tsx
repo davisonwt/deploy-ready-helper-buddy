@@ -181,7 +181,7 @@ export default function MusicLibraryPage() {
 
       const { data: productMusicRows, error: productMusicError } = await supabase
         .from('products')
-        .select('id, title, type, cover_image_url, image_urls, file_url, price, sower_id, artist_name, music_genre, music_mood, duration, created_at, tags')
+        .select('id, title, type, cover_image_url, image_urls, file_url, preview_url, price, sower_id, artist_name, music_genre, music_mood, duration, created_at, tags')
         .eq('type', 'music')
         .or('status.is.null,status.neq.archived')
         .order('created_at', { ascending: false })
@@ -274,7 +274,7 @@ export default function MusicLibraryPage() {
           artist_name: product.artist_name || sower?.display_name || displayProfileName(profile),
           duration_seconds: product.duration || null,
           file_url: product.file_url,
-          preview_url: null,
+          preview_url: product.preview_url ?? null,
           price: product.price,
           genre: product.music_genre || product.music_mood || null,
           created_at: product.created_at || new Date().toISOString(),

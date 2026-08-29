@@ -11,6 +11,7 @@ import { processOrchardsUrls } from "../utils/urlUtils"
 import { GradientPlaceholder } from "@/components/ui/GradientPlaceholder"
 import { motion, AnimatePresence } from "framer-motion"
 import LivingButton from "../components/LivingButton"
+import PreviewPlayer from "@/components/media/PreviewPlayer"
 
 const WANDERING_ROLES = [
   { label: 'All Roles', value: 'all', emoji: '🌿' },
@@ -134,6 +135,9 @@ function MediaThumb({ item, kind }) {
         <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 42 }}>{item.emoji}</div>
       )}
       <div style={{ position: 'absolute', top: 8, left: 8, padding: '3px 8px', borderRadius: 8, background: 'rgba(0,0,0,0.6)', fontSize: 11, color: '#fff', fontWeight: 700 }}>{item.emoji} {kind.toUpperCase()}</div>
+      {kind === 'music' && item.preview_url && (
+        <PreviewPlayer id={item.id} previewUrl={item.preview_url} productId={item.productId} />
+      )}
     </div>
   )
 }
@@ -420,7 +424,7 @@ export default function BrowseOrchardsPage() {
             .limit(60),
           // Also include all sower products (music/books/etc. uploaded as products)
           supabase.from('products')
-            .select('id, title, description, type, cover_image_url, image_urls, sower_id, artist_name, created_at')
+            .select('id, title, description, type, cover_image_url, image_urls, sower_id, artist_name, preview_url, created_at')
             .order('created_at', { ascending: false })
             .limit(200),
         ])
@@ -499,6 +503,8 @@ export default function BrowseOrchardsPage() {
             sower: productSowerName,
             link: musicSeedLink({ trackId: matchedTrack?.id, productId: p.id }),
             created_at: p.created_at,
+            preview_url: p.preview_url ?? null,
+            productId: p.id,
           }
         })
         const sowerLibLink = (mode, p) => {

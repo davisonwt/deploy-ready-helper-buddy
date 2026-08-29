@@ -1,9 +1,11 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate, useParams, Link } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { useMusicPurchase } from '@/hooks/useMusicPurchase';
 import { invokePaymentFunction } from '@/lib/payments/invokeFunction';
+import { fetchSeedFileUrl } from '@/lib/media/getSeedFileUrl';
+import { usePreviewPlayer } from '@/hooks/usePreviewPlayer';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { ArrowLeft, Home, Loader2, Play, Pause, Heart, Download } from 'lucide-react';
@@ -35,24 +37,6 @@ async function resolveMediaUrl(url: string | null): Promise<string | null> {
   return data?.signedUrl || null;
 }
 
-/**
- * Purchase-gated access for a product-sourced (premium-room) track — the
- * client never gets a signed URL for these except through get-seed-file,
- * which re-checks entitlement (uploader or a completed product_bestowals
- * row) on every call. Returns null on any failure (not entitled, no file,
- * etc.) rather than throwing, so the caller can just fall back to "no
- * preview available" the same way a missing dj_track URL already does.
- */
-async function fetchSeedFileUrl(productId: string, purpose: 'play' | 'download'): Promise<string | null> {
-  try {
-    const { url } = await invokePaymentFunction<{ url: string }>('get-seed-file', { productId, purpose });
-    return url || null;
-  } catch (err) {
-    console.warn('get-seed-file failed:', err);
-    return null;
-  }
-}
-
 type TrackSource = 'dj_track' | 'product';
 
 interface NormalizedTrack {
@@ -78,14 +62,11 @@ export default function MusicTrackDetailPage() {
   const [track, setTrack] = useState<NormalizedTrack | null>(null);
   const [loading, setLoading] = useState(true);
   const [coverUrl, setCoverUrl] = useState<string | null>(null);
-  const [audioUrl, setAudioUrl] = useState<string | null>(null);
+  const [djAudioUrl, setDjAudioUrl] = useState<string | null>(null);
   const [owned, setOwned] = useState(false);
-  const [playing, setPlaying] = useState(false);
-  const [elapsed, setElapsed] = useState(0);
   const [buyingProduct, setBuyingProduct] = useState(false);
   const [downloading, setDownloading] = useState(false);
   const [provider, setProvider] = useState<PayoutProviderId>('nowpayments');
-  const audioRef = useRef<HTMLAudioElement | null>(null);
 
   useEffect(() => {
     let alive = true;
@@ -182,44 +163,36 @@ export default function MusicTrackDetailPage() {
       setOwned(isOwned);
 
       // dj_track previews/full files resolve the same way regardless of
-      // ownership (the 45s cap is enforced client-side either way). A
-      // product-sourced track: an owner (buyer or uploader) gets the real
-      // file via the purchase-gated get-seed-file function; anyone else
-      // gets preview_url directly — seed-previews is a public bucket, so
-      // it's already a usable URL, no signing needed. null when no preview
-      // has been generated yet (e.g. still mid-retry — see
-      // retry-seed-previews) — same "not available yet" state as before.
-      const a = normalized.source === 'dj_track'
-        ? await resolveMediaUrl(normalized.playable_url)
-        : isOwned
-        ? await fetchSeedFileUrl(normalized.id, 'play')
-        : normalized.preview_url;
+      // ownership — playingUrl is either dj's own preview_url or, lacking
+      // that, the full file_url, capped client-side below either way. A
+      // product-sourced track leans entirely on usePreviewPlayer instead:
+      // preview_url (public, no signing) plays directly; get-seed-file is
+      // tried lazily on click, not here, so a feed of tracks doesn't fire
+      // an entitlement check per card on load.
+      const dj = normalized.source === 'dj_track' ? await resolveMediaUrl(normalized.playable_url) : null;
       if (!alive) return;
-      setAudioUrl(a);
+      setDjAudioUrl(dj);
 
       setLoading(false);
     })();
     return () => { alive = false; };
   }, [id, user]);
 
-  const onTime = () => {
-    const el = audioRef.current;
-    if (!el) return;
-    setElapsed(el.currentTime);
-    if (!owned && el.currentTime >= PREVIEW_SECONDS) {
-      el.pause();
-      el.currentTime = 0;
-      setPlaying(false);
-      toast('Preview ended — bestow to unlock the full track.');
-    }
-  };
-
-  const toggle = () => {
-    const el = audioRef.current;
-    if (!el) return;
-    if (playing) { el.pause(); setPlaying(false); }
-    else { el.play(); setPlaying(true); }
-  };
+  // Owners/buyers get the full file same as before; get-seed-file re-checks
+  // entitlement server-side on every call, so it's safe to always pass
+  // productId here and let it fail gracefully (falls back to previewUrl)
+  // for a non-owner rather than gating client-side on `owned`.
+  const player = usePreviewPlayer({
+    id: track?.id ?? 'pending',
+    previewUrl: track?.source === 'dj_track' ? djAudioUrl : (track?.preview_url ?? null),
+    productId: track && track.source === 'product' ? track.id : undefined,
+    capSeconds: track?.source === 'dj_track' && !owned ? PREVIEW_SECONDS : undefined,
+  });
+  const showPlayer = track
+    ? track.source === 'dj_track'
+      ? !!djAudioUrl
+      : !!track.preview_url || owned
+    : false;
 
   // A product-sourced download mints a fresh 60s URL at click time rather
   // than reusing the one fetched on page load, which may well have expired
@@ -338,30 +311,29 @@ export default function MusicTrackDetailPage() {
                 )}
               </div>
 
-              {audioUrl ? (
+              {showPlayer ? (
                 <div className="rounded-lg bg-black/30 p-4">
-                  <audio
-                    ref={audioRef}
-                    src={audioUrl}
-                    onTimeUpdate={onTime}
-                    onEnded={() => setPlaying(false)}
-                    preload="metadata"
-                  />
                   <div className="flex items-center gap-3">
-                    <Button onClick={toggle} size="icon" className="rounded-full bg-emerald-500 hover:bg-emerald-600">
-                      {playing ? <Pause className="w-5 h-5" /> : <Play className="w-5 h-5" />}
+                    <Button onClick={player.toggle} size="icon" className="rounded-full bg-emerald-500 hover:bg-emerald-600">
+                      {player.isLoading ? (
+                        <Loader2 className="w-5 h-5 animate-spin" />
+                      ) : player.isPlaying ? (
+                        <Pause className="w-5 h-5" />
+                      ) : (
+                        <Play className="w-5 h-5" />
+                      )}
                     </Button>
                     <div className="flex-1">
                       <div className="text-sm">
                         {owned ? 'Full track' : `${PREVIEW_SECONDS}-second preview`}
                       </div>
                       <div className="text-xs text-slate-400">
-                        {Math.floor(elapsed)}s {!owned && `/ ${PREVIEW_SECONDS}s`}
+                        {Math.floor(player.elapsedSeconds)}s {!owned && `/ ${PREVIEW_SECONDS}s`}
                       </div>
                       <div className="h-1 mt-2 bg-white/10 rounded-full overflow-hidden">
                         <div
                           className="h-full bg-emerald-400 transition-all"
-                          style={{ width: `${Math.min(100, (elapsed / (owned ? (track.duration_seconds || PREVIEW_SECONDS) : PREVIEW_SECONDS)) * 100)}%` }}
+                          style={{ width: `${Math.min(100, player.progress * 100)}%` }}
                         />
                       </div>
                     </div>
@@ -375,13 +347,13 @@ export default function MusicTrackDetailPage() {
 
               <div className="flex flex-col gap-3 pt-2">
                 {owned ? (
-                  track.source === 'dj_track' && audioUrl ? (
-                    <a href={audioUrl} download>
+                  track.source === 'dj_track' && djAudioUrl ? (
+                    <a href={djAudioUrl} download>
                       <Button className="bg-emerald-500 hover:bg-emerald-600">
                         <Download className="w-4 h-4 mr-2" /> Download
                       </Button>
                     </a>
-                  ) : track.source === 'product' && audioUrl ? (
+                  ) : track.source === 'product' ? (
                     <>
                       <div className="text-sm text-emerald-400 font-medium">
                         ✓ Bestowed — thank you for supporting this sower

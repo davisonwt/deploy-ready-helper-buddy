@@ -236,6 +236,81 @@ itself uploaded fine). Investigated read-only first, then fixed:
   from scratch rather than a URL swap, which is a materially bigger task
   than this one.
 
+## Fixed — 2026-08-29 (previews playable everywhere a card renders, not just the detail page)
+
+`preview_url` was being served correctly by this point (previous entry), but
+almost nothing actually offered a way to *hear* it — a sower could plant a
+seed, the preview would trim and upload fine, and the only place anyone
+could ever press play was the detail page opened via a direct link. Built
+one shared playback stack and wired it into every remaining surface that
+renders a music card or row:
+
+- **New shared infrastructure**: `src/lib/media/previewPlaybackStore.ts` (a
+  module-level singleton — one real `Audio` object, `startPreviewPlayback`/
+  `stopPreviewPlayback`/`subscribeToPreviewPlayback` — so "only one preview
+  plays at a time" holds across completely unrelated component trees
+  without a Context provider); `src/hooks/usePreviewPlayer.ts` (the shared
+  state machine: lazy — only fetches anything on click, never on mount —
+  tries `get-seed-file` first when a `productId` is given and the viewer is
+  signed in, falling back to `previewUrl` on 403/failure; optional
+  `capSeconds` for a source that might resolve to a full file with no real
+  preview object behind it); `src/components/media/PreviewPlayer.tsx` (the
+  visual overlay — play/pause, progress bar, "45s preview"/"Full track"
+  label — renders nothing when `previewUrl` is null, regardless of
+  ownership, matching "no preview = no button"); `src/lib/media/getSeedFileUrl.ts`
+  (the `get-seed-file` caller, extracted out of `MusicTrackDetailPage.tsx`
+  so the hook can share it instead of re-implementing).
+- **`ProductCard.tsx`**: a `PreviewPlayer` now sits on every music card's
+  cover (visible without hovering, for touch), fed `product.preview_url` +
+  `product.id`. Albums are unchanged (still the old manifest-fetch
+  mechanism — no per-track preview or `get-seed-file` concept for them).
+- **`BrowseOrchardsPage.jsx`** ("Tribal Gardens" — Orchards/Seeds/Music/
+  Books/Videos tabs): `products` query gained `preview_url`; product-sourced
+  music items now carry `preview_url`/`productId` through to `MediaThumb`,
+  which renders the same `PreviewPlayer` on its cover. **Scoped to
+  product-sourced tracks only** — the `dj_music_tracks` half of this same
+  feed (`musicRows`) intentionally gets no play button: its own
+  `preview_url` (a different table, different bucket, may need signing) has
+  no cheap way to become a synchronously-playable URL for up to 200 cards
+  on load without either eager per-card signed-URL calls or a bigger
+  refactor; deferred, not done silently — cards without a preview_url
+  already correctly show no button, so this just means dj-sourced cards
+  stay silent here for now.
+- **`MusicLibraryPage.tsx`**: fixed a real bug — the products branch
+  hardcoded `preview_url: null` for every row regardless of the real
+  column value, and the query didn't even select it. Both fixed.
+- **`MusicLibraryTable.tsx`**: its own bespoke `handlePreview`/
+  `playingTrack`/`audioElement` state (table-local, 40s cap, no
+  cross-component coordination) is gone. New `TrackPreviewButton` per row:
+  product-sourced rows (`source_type==='product'` + `product_id`) go
+  through the shared hook exactly like `ProductCard`; `dj_music_tracks` rows
+  keep their previous resolve-then-cap-at-40s behavior (unchanged logic,
+  since that table has no `get-seed-file`/entitlement concept here) but now
+  route through the shared `previewPlaybackStore` so starting one stops
+  whatever else was playing anywhere on the page, including a `ProductCard`.
+- **`MusicTrackDetailPage.tsx`** refactored onto the same hook (removed its
+  own local `audioUrl`/`playing`/`elapsed`/`audioRef`/`onTime`/`toggle` and
+  the eager mount-time `get-seed-file` call for owners). `productId` is now
+  always passed for a product-sourced track regardless of client-known
+  ownership — `get-seed-file` is the entitlement authority, not a client
+  flag — so an owner still sees the player and gets the full file on click
+  even if `preview_url` happens to be null; a non-owner's "not available
+  yet" fallback is still keyed strictly on `preview_url` being null, per
+  spec. `dj_track` rows keep the existing signed-URL resolve, now passed
+  into the hook with `capSeconds` for non-owners (preserves the pre-existing
+  "don't let a non-owner stream the full file past 45s when no real dj
+  preview object exists" protection, which the shared hook doesn't bake in
+  by default).
+- **Explicitly not touched, with reasons**: `SowerProfile.tsx` — confirmed
+  (grepped) it renders no `products`/`ProductCard` content at all, entirely
+  `dj_music_tracks`/`radio_djs`, a different card, not "the same gap" from
+  this task's instruction. `/my-seeds` (`MySeedsPage.tsx`) — no cover image,
+  no card reuse; a compact purchase-history row whose "Play" button already
+  links to the (now-fixed) detail page. Video previews — grepped the schema,
+  no table has a trailer/preview-video column anywhere, so the "only if it
+  already exists" condition was never met; zero changes needed.
+- `npx tsc --noEmit` and `npx eslint` both clean across every file touched.
+
 ## Open — priority order
 
 1. ~~Live proof that `paypal-webhook` actually works now~~ — **resolved, see Keystone problem**: order `0a6a0b1a` finalized via a clean webhook call at 08:36 UTC 2026-08-29. The `processed_webhooks`-insert bug (separate from the webhook itself) is also fixed; watch for its first real row as confirmation the fix landed, not as proof the webhook works — that's already established.

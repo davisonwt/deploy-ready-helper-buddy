@@ -4,7 +4,7 @@ import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Share2, Download, DollarSign, Play, Pause, Edit, Gift } from 'lucide-react';
+import { Share2, Download, DollarSign, Play, Pause, Loader2, Edit, Gift } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { useMusicPurchase } from '@/hooks/useMusicPurchase';
 import { useGiftBestowal } from '@/hooks/useGiftBestowal';
@@ -17,6 +17,13 @@ import { useCurrency } from '@/hooks/useCurrency';
 import { launchConfetti } from '@/utils/confetti';
 import { GradientPlaceholder } from '@/components/ui/GradientPlaceholder';
 import { supabase } from '@/integrations/supabase/client';
+import { usePreviewPlayer } from '@/hooks/usePreviewPlayer';
+import {
+  startPreviewPlayback,
+  stopPreviewPlayback,
+  subscribeToPreviewPlayback,
+  getCurrentlyPlayingId,
+} from '@/lib/media/previewPlaybackStore';
 
 const PREVIEW_SECONDS = 40;
 const PRIVATE_BUCKETS = ['music-tracks', 'dj-music', 'premium-room'];
@@ -92,6 +99,95 @@ function SignedCover({ src, alt }: { src: string; alt: string }) {
   );
 }
 
+/**
+ * Play/pause icon button for one row. Product-sourced tracks (a real
+ * products.preview_url + product_id) go through the shared usePreviewPlayer
+ * hook, same as every other seed card — owner/buyer upgrades to the full
+ * file via get-seed-file on click. dj_music_tracks rows keep their
+ * pre-existing signed-URL-then-cap-at-40s behavior (that table has no
+ * get-seed-file/entitlement concept here), but now route through the same
+ * previewPlaybackStore singleton so starting one stops whatever else on the
+ * page — including a ProductCard preview — was playing.
+ */
+function TrackPreviewButton({ track, formatAmount }: { track: MusicTrack; formatAmount: (n: number) => string }) {
+  const isProductTrack = track.source_type === 'product' && !!track.product_id;
+  const player = usePreviewPlayer({
+    id: track.id,
+    previewUrl: isProductTrack ? (track.preview_url ?? null) : null,
+    productId: isProductTrack ? track.product_id! : undefined,
+  });
+
+  const [djPlaying, setDjPlaying] = useState(() => getCurrentlyPlayingId() === track.id);
+  const [djLoading, setDjLoading] = useState(false);
+
+  useEffect(() => {
+    if (isProductTrack) return;
+    return subscribeToPreviewPlayback((id) => setDjPlaying(id === track.id));
+  }, [isProductTrack, track.id]);
+
+  useEffect(() => () => { if (!isProductTrack) stopPreviewPlayback(track.id); }, [isProductTrack, track.id]);
+
+  const toggleDjPreview = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (djPlaying) {
+      stopPreviewPlayback(track.id);
+      return;
+    }
+    setDjLoading(true);
+    const url = await resolveAudioUrl(track.preview_url || track.file_url);
+    setDjLoading(false);
+    if (!url) {
+      toast.error('No preview available for this track');
+      return;
+    }
+    startPreviewPlayback(track.id, url, {
+      onProgress: (_fraction, currentTime) => {
+        if (currentTime >= PREVIEW_SECONDS) {
+          stopPreviewPlayback(track.id);
+          toast.info(`Preview ended. Bestow ${formatAmount(2)} to unlock the full track.`);
+        }
+      },
+      onError: () => toast.error('Failed to play preview'),
+    });
+  };
+
+  if (isProductTrack) {
+    return (
+      <Button
+        size="sm"
+        variant="ghost"
+        onClick={player.toggle}
+        className="h-8 w-8 p-0 text-white hover:bg-white/20"
+      >
+        {player.isLoading ? (
+          <Loader2 className="h-4 w-4 animate-spin" />
+        ) : player.isPlaying ? (
+          <Pause className="h-4 w-4" />
+        ) : (
+          <Play className="h-4 w-4" />
+        )}
+      </Button>
+    );
+  }
+
+  return (
+    <Button
+      size="sm"
+      variant="ghost"
+      onClick={toggleDjPreview}
+      className="h-8 w-8 p-0 text-white hover:bg-white/20"
+    >
+      {djLoading ? (
+        <Loader2 className="h-4 w-4 animate-spin" />
+      ) : djPlaying ? (
+        <Pause className="h-4 w-4" />
+      ) : (
+        <Play className="h-4 w-4" />
+      )}
+    </Button>
+  );
+}
+
 interface MusicTrack {
   id: string;
   track_title: string;
@@ -144,8 +240,6 @@ export function MusicLibraryTable({
   const giftBestowal = useGiftBestowal();
   const musicPurchase = useMusicPurchase();
   const queryClient = useQueryClient();
-  const [playingTrack, setPlayingTrack] = useState<string | null>(null);
-  const [audioElement, setAudioElement] = useState<HTMLAudioElement | null>(null);
   const [editingTrack, setEditingTrack] = useState<MusicTrack | null>(null);
   const [ownedTrackIds, setOwnedTrackIds] = useState<Set<string>>(new Set());
   const [confirmAction, setConfirmAction] = useState<{ track: MusicTrack; kind: 'bestow' | 'gift' } | null>(null);
@@ -196,53 +290,6 @@ export function MusicLibraryTable({
     const mins = Math.floor(seconds / 60);
     const secs = seconds % 60;
     return `${mins}:${secs.toString().padStart(2, '0')}`;
-  };
-
-  const handlePreview = async (track: MusicTrack) => {
-    if (playingTrack === track.id) {
-      audioElement?.pause();
-      setPlayingTrack(null);
-      return;
-    }
-
-    // Stop previous audio
-    if (audioElement) {
-      audioElement.pause();
-      audioElement.currentTime = 0;
-    }
-
-    const audioUrl = await resolveAudioUrl(track.preview_url || track.file_url);
-    if (!audioUrl) {
-      toast.error('No preview available for this track');
-      return;
-    }
-
-    // Create new audio element for 40-second preview
-    const audio = new Audio(audioUrl);
-    audio.volume = 0.7;
-    
-    // Limit to 40 seconds for preview
-    audio.addEventListener('timeupdate', () => {
-      if (audio.currentTime >= PREVIEW_SECONDS) {
-        audio.pause();
-        audio.currentTime = 0;
-        setPlayingTrack(null);
-        toast.info(`Preview ended. Bestow ${formatAmount(2)} to unlock the full track.`);
-      }
-    });
-
-    audio.addEventListener('ended', () => {
-      setPlayingTrack(null);
-    });
-
-    audio.play().catch((err) => {
-      console.error('Preview playback failed:', err, audioUrl);
-      toast.error('Failed to play preview');
-    });
-
-
-    setAudioElement(audio);
-    setPlayingTrack(track.id);
   };
 
   const handleBestowal = async (track: MusicTrack, e?: React.MouseEvent) => {
@@ -439,7 +486,6 @@ export function MusicLibraryTable({
       <div className="space-y-2 max-h-[600px] overflow-y-auto">
         {tracks.map((track) => {
           const isPurchased = showEditButton || ownedTrackIds.has(track.id);
-          const isPlaying = playingTrack === track.id;
           const isSelected = selectedTracks.includes(track.id);
           const isHighlighted = highlightedTrackId === track.id || highlightedProductId === track.product_id || highlightedProductId === track.id;
 
@@ -537,17 +583,7 @@ export function MusicLibraryTable({
                     </Button>
                   )}
 
-                  <Button
-                    size="sm"
-                    variant="ghost"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handlePreview(track);
-                    }}
-                    className="h-8 w-8 p-0 text-white hover:bg-white/20"
-                  >
-                    {isPlaying ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}
-                  </Button>
+                  <TrackPreviewButton track={track} formatAmount={formatAmount} />
 
                   <Button
                     size="sm"

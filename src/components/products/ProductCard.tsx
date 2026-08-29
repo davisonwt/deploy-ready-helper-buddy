@@ -18,6 +18,7 @@ import { GradientPlaceholder } from '@/components/ui/GradientPlaceholder';
 import { formatCurrency } from '@/lib/utils';
 import { launchConfetti, floatingScore, playSoundEffect } from '@/utils/confetti';
 import { isAlbum as isAlbumProduct } from '@/lib/products/isAlbum';
+import PreviewPlayer from '@/components/media/PreviewPlayer';
 
 interface ProductCardProps {
   product: any;
@@ -40,19 +41,13 @@ export default function ProductCard({ product, featured, showActions = false }: 
   const isOwner = user?.id === product.sowers?.user_id;
   const isAlbum = isAlbumProduct(product);
 
+  // Albums only — a single track's play button is the shared PreviewPlayer
+  // now (previewUrl/get-seed-file), rendered directly in the JSX below.
+  // Albums have no per-track preview and aren't a get-seed-file target
+  // (that function signs one file_url, not a manifest), so they keep this
+  // older mechanism: fetch the manifest, play its first track's own URL.
   useEffect(() => {
-    const loadAudioUrl = async () => {
-      if (!isAlbum) {
-        // product.file_url points into the private premium-room bucket —
-        // a bare <audio src> to it carries no auth and will never load,
-        // for anyone, owner included (get-seed-file is the only path that
-        // works, and it's a per-request signed URL, not something to wire
-        // into every card in a grid). preview_url is the actual public,
-        // directly-playable object — null until generate-preview succeeds.
-        setAudioUrl(product.preview_url || null);
-        return;
-      }
-
+    const loadAlbumAudioUrl = async () => {
       try {
         const response = await fetch(product.file_url);
         const manifest = await response.json();
@@ -64,10 +59,10 @@ export default function ProductCard({ product, featured, showActions = false }: 
       }
     };
 
-    if (product.type === 'music') {
-      loadAudioUrl();
+    if (product.type === 'music' && isAlbum) {
+      loadAlbumAudioUrl();
     }
-  }, [product.file_url, product.preview_url, product.type, isAlbum]);
+  }, [product.file_url, product.type, isAlbum]);
 
   useEffect(() => {
     const ownerId = product.sowers?.user_id;
@@ -229,10 +224,10 @@ export default function ProductCard({ product, featured, showActions = false }: 
               />
             )}
             
-            {/* Overlay */}
+            {/* Overlay — albums keep their own hover play button (manifest's first track, no preview/get-seed-file concept); a single track uses the shared PreviewPlayer instead, rendered outside this hover layer so it's visible on touch devices too. */}
             <div className="absolute inset-0 bg-gradient-to-t from-background/90 via-background/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300">
               <div className="absolute inset-0 flex items-center justify-center">
-                {product.type === 'music' && audioUrl && (
+                {product.type === 'music' && isAlbum && audioUrl && (
                   <Button
                     size="lg"
                     onClick={handlePlayPause}
@@ -247,6 +242,9 @@ export default function ProductCard({ product, featured, showActions = false }: 
                 )}
               </div>
             </div>
+            {product.type === 'music' && !isAlbum && (
+              <PreviewPlayer id={product.id} previewUrl={product.preview_url ?? null} productId={product.id} />
+            )}
 
             {/* Badges */}
             <div className="absolute top-3 left-3 flex gap-2">
@@ -392,7 +390,7 @@ export default function ProductCard({ product, featured, showActions = false }: 
             </div>
           </div>
 
-          {/* Hidden audio element for music */}
+          {/* Hidden audio element for the album center play button above (audioUrl is only ever set for albums now) */}
           {product.type === 'music' && audioUrl && (
             <audio
               ref={audioRef}
