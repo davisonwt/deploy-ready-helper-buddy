@@ -15,8 +15,17 @@ export interface SeedFileResult {
   height?: number;
   pageCount?: number;
   previewUrl?: string | null;
-  /** Only meaningful when generatePreview is true (audio). */
-  previewStatus: 'idle' | 'reading' | 'uploading' | 'generating' | 'ready' | 'unsupported' | 'error';
+  /**
+   * Only meaningful when generatePreview is true (audio).
+   * 'unsupported' — the format itself can't be trimmed (not WAV/MP3): blocks
+   *   Plant per spec-seed-protection.md ("if preview generation fails, the
+   *   upload fails" — written for this case specifically).
+   * 'preview_failed' — the main file uploaded fine and IS a supported
+   *   format; only the preview step failed for an infrastructure reason
+   *   (e.g. preview_upload_failed). Does not block Plant — retry-seed-previews
+   *   fills preview_url in later.
+   */
+  previewStatus: 'idle' | 'reading' | 'uploading' | 'generating' | 'ready' | 'unsupported' | 'preview_failed' | 'error';
   previewMessage?: string;
 }
 
@@ -167,10 +176,26 @@ export default function SeedDropZone({
       const { previewUrl } = await invokePaymentFunction<{ previewUrl: string }>('generate-preview', { bucket, path });
       emit({ file, fileUrl: pub.publicUrl, storagePath: path, previewUrl, previewStatus: 'ready', ...base });
     } catch (err: any) {
-      const message = err?.message === 'unsupported_preview_format' || /wav or mp3/i.test(err?.message ?? '')
-        ? "We can only generate a preview from WAV or MP3 right now — please upload one of those formats."
-        : (err?.message ?? 'Could not generate a preview. Please try again.');
-      emit({ file, fileUrl: pub.publicUrl, storagePath: path, previewStatus: 'unsupported', previewMessage: message, ...base });
+      if (err?.message === 'unsupported_preview_format') {
+        // Format-unsupported policy block (spec-seed-protection.md) —
+        // the sower needs a different file, so this still blocks Plant.
+        emit({
+          file, fileUrl: pub.publicUrl, storagePath: path, previewStatus: 'unsupported',
+          previewMessage: "We can only generate a preview from WAV or MP3 right now — please upload one of those formats.",
+          ...base,
+        });
+        return;
+      }
+      // Any other failure (preview_upload_failed, a network blip, etc.) —
+      // the main file is already safely uploaded and IS a supported
+      // format; this is an infrastructure hiccup, not a reason to block
+      // planting. retry-seed-previews fills preview_url in automatically.
+      console.error('generate-preview failed (non-blocking):', err);
+      emit({
+        file, fileUrl: pub.publicUrl, storagePath: path, previewStatus: 'preview_failed',
+        previewMessage: "Track uploaded. Preview couldn't be generated — we'll retry it automatically.",
+        ...base,
+      });
     }
   }, [bucket, pathPrefix, generatePreview, kind, extensions, allowedLabel, emit]);
 
@@ -188,7 +213,8 @@ export default function SeedDropZone({
 
   const busy = result && ['reading', 'uploading', 'generating'].includes(result.previewStatus);
   const isError = result?.previewStatus === 'error' || result?.previewStatus === 'unsupported';
-  const isReady = result?.previewStatus === 'ready';
+  const isPreviewFailed = result?.previewStatus === 'preview_failed';
+  const isReady = result?.previewStatus === 'ready' || isPreviewFailed;
 
   return (
     <div>
@@ -213,6 +239,11 @@ export default function SeedDropZone({
             <button type="button" onClick={(e) => { e.preventDefault(); clear(); }} className="mt-1 text-xs text-muted-foreground hover:text-destructive inline-flex items-center gap-1">
               <X className="w-3 h-3" /> Choose a different file
             </button>
+            {isPreviewFailed && result?.previewMessage && (
+              <p className="mt-2 text-xs text-muted-foreground flex items-start gap-1.5 text-left">
+                <AlertCircle className="w-3.5 h-3.5 shrink-0 mt-0.5" /> {result.previewMessage}
+              </p>
+            )}
           </>
         ) : (
           <>

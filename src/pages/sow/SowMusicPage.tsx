@@ -100,9 +100,14 @@ export default function SowMusicPage() {
   };
 
   const albumTracksReady = tracks.length >= ALBUM_MIN_TRACKS && tracks.every((t) => t.status === 'ready');
+  // 'preview_failed' still counts as ready: the track itself uploaded fine
+  // and is a supported format — only the preview step failed for an
+  // infrastructure reason, which shouldn't block planting a good seed.
+  // 'unsupported' does NOT — that's the real "can't generate a preview at
+  // all" policy block (spec-seed-protection.md).
   const fileReady = mode === 'album'
     ? albumTracksReady
-    : !!seedFile && seedFile.previewStatus === 'ready' && !!seedFile.fileUrl;
+    : !!seedFile && !!seedFile.fileUrl && (seedFile.previewStatus === 'ready' || seedFile.previewStatus === 'preview_failed');
   const coverReady = !!cover;
   const titleReady = title.trim().length > 0;
   const priceReady = isFree || (price != null && price > 0);
@@ -121,6 +126,12 @@ export default function SowMusicPage() {
         const remaining = ALBUM_MIN_TRACKS - tracks.length;
         return `Add at least ${remaining} more track${remaining === 1 ? '' : 's'} — albums need ${ALBUM_MIN_TRACKS}+.`;
       }
+      // A track already uploaded (fileUrl set) is never "add your track" —
+      // the only way fileReady is still false with a fileUrl present is the
+      // format-unsupported policy block ('unsupported'), so show its own
+      // specific reason instead of the generic, misleading prompt.
+      if (seedFile?.fileUrl) return seedFile.previewMessage || 'This file needs a different format for its preview.';
+      if (seedFile && ['reading', 'uploading', 'generating'].includes(seedFile.previewStatus)) return 'Your track is uploading…';
       return 'Add your track to continue.';
     }
     if (!coverReady) return 'Add a cover to continue.';
@@ -129,7 +140,7 @@ export default function SowMusicPage() {
     if (!genreReady) return 'Pick a genre.';
     if (!descriptionReady) return 'Add a short description.';
     return undefined;
-  }, [fileReady, mode, tracks, coverReady, titleReady, priceReady, genreReady, descriptionReady]);
+  }, [fileReady, mode, tracks, seedFile, coverReady, titleReady, priceReady, genreReady, descriptionReady]);
 
   const handlePlant = async () => {
     if (!user) { toast.error('Please log in to sow.'); return; }

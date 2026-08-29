@@ -57,8 +57,20 @@ Generate a real 45-second clip at upload time and store it as a separate object.
 - Store previews in a dedicated bucket (`seed-previews`), public read, audio MIME types only,
   small file size limit.
 - Store the preview path on the seed row alongside the full file path.
-- If preview generation fails, the upload fails. A seed without a preview must not publish —
-  otherwise the player falls back to the full track and we are back where we started.
+- If preview generation fails **because the format itself can't be trimmed** (not WAV/MP3 —
+  `unsupported_preview_format`), the upload is blocked. A seed without a preview must not
+  publish — otherwise the player falls back to the full track and we are back where we
+  started. This is a real, permanent block: the sower must pick a different file.
+- **Distinct from the above** — 2026-09-01, found live on `/sow/music`: a preview can also fail
+  for an infrastructure reason (`preview_upload_failed` — e.g. the trimmed clip landed over the
+  `seed-previews` bucket's size cap) *after* the main file already uploaded successfully in a
+  supported format. This is not the case the "upload fails" rule above was written for — the
+  format is fine, there's nothing for the sower to fix by picking a different file. This kind
+  does **not** block Plant: the seed publishes with `preview_url` null (no free 45-second clip
+  until it's filled in — that's fine, it's still purchase-gated the same as ever), and
+  `retry-seed-previews` (every 15 min) retries preview generation automatically. See
+  `previewStatus: 'unsupported'` (blocks) vs `'preview_failed'` (doesn't) in
+  `SeedDropZone.tsx`/`SowMusicPage.tsx`.
 
 Both upload paths need this: `UploadForm.tsx` → `products`, and `DJMusicUpload.jsx` →
 `dj_music_tracks`.

@@ -133,12 +133,60 @@ function trimMp3(b: Uint8Array, seconds: number): TrimResult | null {
   };
 }
 
+function readU16LE(b: Uint8Array, o: number): number {
+  return b[o] | (b[o + 1] << 8);
+}
+
 function readU32LE(b: Uint8Array, o: number): number {
   return b[o] | (b[o + 1] << 8) | (b[o + 2] << 16) | (b[o + 3] << 24);
 }
 
+function writeU16LE(view: DataView, o: number, v: number): void {
+  view.setUint16(o, v, true);
+}
+
 function writeU32LE(view: DataView, o: number, v: number): void {
   view.setUint32(o, v, true);
+}
+
+/** Builds a standalone 24-byte "fmt " chunk (8-byte header + 16-byte PCM body) at 16-bit. */
+function build16BitFmtChunk(numChannels: number, sampleRate: number): Uint8Array {
+  const blockAlign = numChannels * 2;
+  const byteRate = sampleRate * blockAlign;
+  const chunk = new Uint8Array(24);
+  const view = new DataView(chunk.buffer);
+  chunk.set([0x66, 0x6d, 0x74, 0x20], 0); // "fmt "
+  writeU32LE(view, 4, 16); // body size
+  writeU16LE(view, 8, 1); // audioFormat = PCM
+  writeU16LE(view, 10, numChannels);
+  writeU32LE(view, 12, sampleRate);
+  writeU32LE(view, 16, byteRate);
+  writeU16LE(view, 20, blockAlign);
+  writeU16LE(view, 22, 16); // bitsPerSample
+  return chunk;
+}
+
+/**
+ * Drops PCM to 16-bit by keeping each sample's top two bytes (the ones
+ * closest to the MSB) and discarding the rest — pure byte selection, no
+ * decode. Little-endian PCM means those are literally the last two bytes
+ * of each per-channel sample, taken as-is as the new 16-bit LE sample.
+ */
+function downsampleTo16Bit(pcm: Uint8Array, numChannels: number, sourceBytesPerSample: number, blockAlign: number): Uint8Array {
+  const frameCount = Math.floor(pcm.length / blockAlign);
+  const outBlockAlign = numChannels * 2;
+  const out = new Uint8Array(frameCount * outBlockAlign);
+  for (let f = 0; f < frameCount; f++) {
+    const frameIn = f * blockAlign;
+    const frameOut = f * outBlockAlign;
+    for (let c = 0; c < numChannels; c++) {
+      const sIn = frameIn + c * sourceBytesPerSample;
+      const sOut = frameOut + c * 2;
+      out[sOut] = pcm[sIn + sourceBytesPerSample - 2];
+      out[sOut + 1] = pcm[sIn + sourceBytesPerSample - 1];
+    }
+  }
+  return out;
 }
 
 function trimWav(b: Uint8Array, seconds: number): TrimResult | null {
@@ -148,6 +196,9 @@ function trimWav(b: Uint8Array, seconds: number): TrimResult | null {
   let dataSize = -1;
   let byteRate = 0;
   let blockAlign = 1;
+  let numChannels = 0;
+  let sampleRate = 0;
+  let bitsPerSample = 0;
 
   while (offset + 8 <= b.length) {
     const id = String.fromCharCode(b[offset], b[offset + 1], b[offset + 2], b[offset + 3]);
@@ -155,8 +206,11 @@ function trimWav(b: Uint8Array, seconds: number): TrimResult | null {
     const bodyStart = offset + 8;
     if (id === 'fmt ') {
       fmtChunk = b.subarray(offset, bodyStart + size);
+      numChannels = readU16LE(b, bodyStart + 2);
+      sampleRate = readU32LE(b, bodyStart + 4);
       byteRate = readU32LE(b, bodyStart + 8);
-      blockAlign = b[bodyStart + 12] | (b[bodyStart + 13] << 8);
+      blockAlign = readU16LE(b, bodyStart + 12);
+      bitsPerSample = readU16LE(b, bodyStart + 14);
     } else if (id === 'data') {
       dataStart = bodyStart;
       dataSize = size;
@@ -171,18 +225,29 @@ function trimWav(b: Uint8Array, seconds: number): TrimResult | null {
   const trimmedLen = maxBytes - (maxBytes % blockAlign); // whole sample frames only
   if (trimmedLen <= 0) return null;
 
-  const pcm = b.subarray(dataStart, dataStart + trimmedLen);
-  const out = new Uint8Array(12 + fmtChunk.length + 8 + trimmedLen);
+  const sourcePcm = b.subarray(dataStart, dataStart + trimmedLen);
+
+  // 24-bit/32-bit previews are needlessly large for a 45-second clip — PCM
+  // has no compression, so a stereo 48k/24-bit clip alone is ~13MB. Drop to
+  // 16-bit (~9MB at the same rate/channels). 8-bit and 16-bit sources pass
+  // through unchanged.
+  const downsample = (bitsPerSample === 24 || bitsPerSample === 32) && numChannels > 0;
+  const outFmt = downsample ? build16BitFmtChunk(numChannels, sampleRate) : fmtChunk;
+  const pcm = downsample
+    ? downsampleTo16Bit(sourcePcm, numChannels, bitsPerSample / 8, blockAlign)
+    : sourcePcm;
+
+  const out = new Uint8Array(12 + outFmt.length + 8 + pcm.length);
   const view = new DataView(out.buffer);
 
   out.set([0x52, 0x49, 0x46, 0x46], 0); // "RIFF"
   writeU32LE(view, 4, out.length - 8);
   out.set([0x57, 0x41, 0x56, 0x45], 8); // "WAVE"
-  out.set(fmtChunk, 12);
+  out.set(outFmt, 12);
 
-  const dataHeaderOffset = 12 + fmtChunk.length;
+  const dataHeaderOffset = 12 + outFmt.length;
   out.set([0x64, 0x61, 0x74, 0x61], dataHeaderOffset); // "data"
-  writeU32LE(view, dataHeaderOffset + 4, trimmedLen);
+  writeU32LE(view, dataHeaderOffset + 4, pcm.length);
   out.set(pcm, dataHeaderOffset + 8);
 
   return { bytes: out, mimeType: 'audio/wav', extension: 'wav' };

@@ -10,8 +10,12 @@
 // publish without a preview — "If preview generation fails, the upload
 // fails" (spec-seed-protection.md).
 //
-// Auth: real user session only — a sower generates the preview for their
-// own just-uploaded file, never on someone else's behalf.
+// Auth: a real user session (a sower generating the preview for their own
+// just-uploaded file), OR the CRON_SECRET batch path used by
+// retry-seed-previews to retry an existing product whose preview failed
+// the first time — that caller has no user session, so it resolves and
+// passes the product's own owner as `userId` in the body instead. Either
+// way the ownership check below (path must contain /${userId}/) still runs.
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 import { corsHeaders } from "npm:@supabase/supabase-js@2/cors";
@@ -20,6 +24,7 @@ import { trimAudio } from "../_shared/audioTrim.ts";
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL") ?? "";
 const SUPABASE_ANON_KEY = Deno.env.get("SUPABASE_ANON_KEY") ?? "";
 const SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
+const CRON_SECRET = Deno.env.get("CRON_SECRET") ?? "";
 
 // Mirrors src/lib/media/previewLength.ts's PREVIEW_SECONDS — a different
 // runtime (this is Deno, that's Vite/React), so the constant can't be
@@ -44,16 +49,24 @@ Deno.serve(async (req) => {
     const token = authHeader.toLowerCase().startsWith("bearer ") ? authHeader.slice(7).trim() : "";
     if (!token) return json({ error: "unauthorized" }, 401);
 
-    const userClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
-      global: { headers: { Authorization: `Bearer ${token}` } },
-    });
-    const { data: userData, error: userErr } = await userClient.auth.getUser();
-    if (userErr || !userData?.user) return json({ error: "unauthorized" }, 401);
-    const userId = userData.user.id;
-
     const body = await req.json().catch(() => ({}));
     const bucket = typeof body?.bucket === "string" ? body.bucket : "";
     const path = typeof body?.path === "string" ? body.path : "";
+
+    let userId: string;
+    if (CRON_SECRET && token === CRON_SECRET) {
+      const bodyUserId = typeof body?.userId === "string" ? body.userId : "";
+      if (!bodyUserId) return json({ error: "missing_user_id" }, 400);
+      userId = bodyUserId;
+    } else {
+      const userClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+        global: { headers: { Authorization: `Bearer ${token}` } },
+      });
+      const { data: userData, error: userErr } = await userClient.auth.getUser();
+      if (userErr || !userData?.user) return json({ error: "unauthorized" }, 401);
+      userId = userData.user.id;
+    }
+
     if (!bucket || !path) return json({ error: "missing_bucket_or_path" }, 400);
     if (!SOURCE_BUCKETS.has(bucket)) return json({ error: "unsupported_source_bucket" }, 400);
     // The uploaded file must live under the caller's own folder — same
@@ -82,6 +95,7 @@ Deno.serve(async (req) => {
       .from("seed-previews")
       .upload(previewPath, trimmed.bytes, { contentType: trimmed.mimeType, upsert: false });
     if (uploadErr) {
+      console.error("generate-preview: preview upload failed", { bucket, path, previewPath, message: uploadErr.message });
       return json({ error: "preview_upload_failed", detail: uploadErr.message }, 500);
     }
 

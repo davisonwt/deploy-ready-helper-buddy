@@ -157,6 +157,72 @@ Physical product/Service (deferred last on purpose — they carry the
 delivery/booking complexity), then Orchard. Only once every kind has a
 live `/sow` form does `UploadForm.tsx` itself get retired outright.
 
+## Fixed — 2026-09-01 (WAV preview failure on /sow/music, and the 150MB upload work that led to it)
+
+A sower's 42.5MB WAV single failed with `preview_upload_failed` (the track
+itself uploaded fine). Investigated read-only first, then fixed:
+
+- **Root cause**: `generate-preview` trims the 45-second preview as raw,
+  uncompressed PCM at the source file's own sample rate/bit depth/channels
+  — a 48k/24-bit stereo clip alone is ~13MB. The `seed-previews` bucket's
+  `file_size_limit` was 5MB (set when the bucket was created, sized for
+  plain 44.1k/16-bit content), so any higher-resolution WAV's preview was
+  rejected after the main file had already uploaded successfully.
+- `seed-previews` bucket `file_size_limit`: 5MB → 20MB (migration
+  `20260901100000`, applied and confirmed live).
+- `_shared/audioTrim.ts`'s `trimWav()`: 24-bit/32-bit sources are now
+  truncated to 16-bit before upload — a pure byte-selection operation (keep
+  each sample's top two bytes, closest to the MSB; no decode), consistent
+  with the rest of this file's "no ffmpeg available" constraint. Brings a
+  48k/24-bit preview down to ~9MB. 8-bit/16-bit sources are unchanged.
+  `generate-preview` now also logs the raw Storage error to console on the
+  `preview_upload_failed` path (it never did before — the only way to see
+  the real message was the client's own response body).
+- **Failure kinds separated**, since they'd been conflated into identical
+  blocking behavior: `previewStatus: 'unsupported'` (format genuinely can't
+  be trimmed — not WAV/MP3) still blocks Plant, per
+  spec-seed-protection.md's "if preview generation fails, the upload
+  fails" — that rule was written for this case. A new
+  `previewStatus: 'preview_failed'` (main file uploaded fine, in a
+  supported format; only the preview step failed for an infrastructure
+  reason) does **not** block — `SowMusicPage.tsx`'s `fileReady` now accepts
+  either `'ready'` or `'preview_failed'`. The dropzone shows "Track
+  uploaded. Preview couldn't be generated — we'll retry it automatically."
+  `missingReason` no longer says "Add your track to continue" once
+  `seedFile.fileUrl` is set — it shows the specific reason instead (this
+  was actively misleading before: a sower whose file had genuinely
+  uploaded was told to "add" it).
+- New `retry-seed-previews` (every 15 min, cron jobid 17, same
+  `invoke_money_job`/`CRON_SECRET` pattern as `reconcile-paypal-orders`):
+  finds music products with `preview_url IS NULL` and a real file in
+  `premium-room` (excludes albums — manifest.json has no single file to
+  preview), up to 10 per run, and calls `generate-preview` for each,
+  writing `preview_url` back onto the product itself (`generate-preview`
+  itself never touches the `products` table — that's this function's job).
+  `generate-preview` gained a second auth path for this: CRON_SECRET bearer
+  + an explicit `userId` in the body (no real user session to derive it
+  from), resolved by the retry function from `products.sower_id ->
+  sowers.user_id` before calling. Required flipping `generate-preview`'s
+  `verify_jwt` to `false` in `config.toml` (it was `true`, which would
+  reject a CRON_SECRET bearer at the platform level before the function's
+  own auth logic ever ran) — the function already validates real user
+  sessions manually, same as `reconcile-paypal-orders`/`release-escrow`.
+- **Found, not fixed here** (out of scope for this pass, flagged plainly):
+  `MusicTrackDetailPage.tsx` (the player) never actually reads
+  `products.preview_url` at all — a non-owner always gets `audioUrl: null`
+  regardless of whether a preview exists, per a comment in that file dating
+  to before `generate-preview`/`preview_url` existed ("a product-sourced
+  track has no separate preview object yet"). That comment is now false,
+  but the player was never updated to match. Practically: `preview_url`
+  being null is already handled gracefully (verified — same "not available
+  yet" fallback either way), so nothing here is broken by this fix, but the
+  entire preview feature currently delivers zero benefit to a browsing
+  buyer even when it works. `get-seed-file` was also checked and never
+  references `preview_url` at all (full-file-only), so it has nothing to
+  break here either. Wiring the player to actually serve `preview_url` to
+  non-owners is a real follow-up, deliberately not bundled into this fix
+  since it touches purchase-flow display logic beyond what was asked.
+
 ## Open — priority order
 
 1. ~~Live proof that `paypal-webhook` actually works now~~ — **resolved, see Keystone problem**: order `0a6a0b1a` finalized via a clean webhook call at 08:36 UTC 2026-08-29. The `processed_webhooks`-insert bug (separate from the webhook itself) is also fixed; watch for its first real row as confirmation the fix landed, not as proof the webhook works — that's already established.
