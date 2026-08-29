@@ -21,6 +21,17 @@
 // since we've now positively confirmed with PayPal rather than just
 // assumed staleness.
 //
+// A GET 404 (PayPal's own "this resource doesn't exist" answer) is a
+// different case from a generic lookup failure — found live 2026-08-28/29,
+// basket_orders 70f28cf8-... got a genuine 404 on every single 15-minute
+// check and was never closed, since a 404 isn't `ok` and so never satisfied
+// the "positively confirmed" rule above. Each consecutive 404 is now
+// recorded in paypal_reconcile_misses; once a row has 3 in a row *and* is
+// past the same 48h threshold, it's closed as 'failed' with
+// resolved_reason = 'paypal_order_not_found'. Any non-404 result (ok or
+// not) breaks the streak and clears the row — a transient miss on its own
+// carries no meaning; three straight positive "doesn't exist" answers do.
+//
 // Auth: CRON_SECRET (Authorization: Bearer, or legacy x-cron-secret),
 // service-role bearer, or an admin/gosat user session — same pattern as
 // release-escrow / payout-sower-earnings.
@@ -41,6 +52,7 @@ const SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
 const CRON_SECRET = Deno.env.get("CRON_SECRET") ?? "";
 
 const STALE_HOURS = 48;
+const MISS_THRESHOLD = 3;
 
 type ReconcileKind = "basket" | "content" | "gift" | "orchard" | "topup";
 
@@ -81,9 +93,9 @@ Deno.serve(async (req) => {
     const service = createClient(SUPABASE_URL, SERVICE_ROLE_KEY, { auth: { persistSession: false } });
     const targets = await collectTargets(service);
 
-    const results: Array<{ kind: string; recordId: string; paypalStatus: string; action: string }> = [];
+    const results: Array<{ kind: string; recordId: string; paypalStatus: string; action: string; missCount?: number }> = [];
     for (const t of targets) {
-      const { ok, data } = await paypalFetch<{ status?: string }>(
+      const { ok, status: httpStatus, data } = await paypalFetch<{ status?: string }>(
         `/v2/checkout/orders/${encodeURIComponent(t.paypalOrderId)}`,
         { method: "GET" },
       );
@@ -92,6 +104,7 @@ Deno.serve(async (req) => {
       if (paypalStatus === "COMPLETED") {
         try {
           await captureAndFinalize(service, t.kind, t.recordId, t.paypalOrderId);
+          await clearMiss(service, t.table, t.recordId);
           results.push({ kind: t.kind, recordId: t.recordId, paypalStatus, action: "finalized" });
         } catch (err) {
           console.error("reconcile: finalize failed", t.kind, t.recordId, err);
@@ -101,6 +114,22 @@ Deno.serve(async (req) => {
       }
 
       const ageHours = (Date.now() - new Date(t.createdAt).getTime()) / 3_600_000;
+
+      if (httpStatus === 404) {
+        const missCount = await recordMiss(service, t.kind, t.table, t.recordId, httpStatus);
+        if (missCount >= MISS_THRESHOLD && ageHours >= STALE_HOURS) {
+          await service.from(t.table).update({ [t.statusColumn]: "failed" }).eq("id", t.recordId);
+          await resolveMiss(service, t.table, t.recordId, "paypal_order_not_found");
+          results.push({ kind: t.kind, recordId: t.recordId, paypalStatus, action: "marked_failed_not_found", missCount });
+        } else {
+          results.push({ kind: t.kind, recordId: t.recordId, paypalStatus, action: "left_pending", missCount });
+        }
+        continue;
+      }
+
+      // Not a 404 — any prior consecutive-404 streak is broken.
+      await clearMiss(service, t.table, t.recordId);
+
       if (ageHours >= STALE_HOURS && ok) {
         // PayPal itself confirms this is not (and isn't going to become)
         // completed -- a positive answer, not just staleness. Safe to close.
@@ -169,6 +198,55 @@ async function collectTargets(service: ReturnType<typeof createClient>): Promise
   }
 
   return out;
+}
+
+/** Increments (or starts) the consecutive-404 streak for this row; returns the new count. */
+async function recordMiss(
+  service: ReturnType<typeof createClient>,
+  kind: string,
+  table: string,
+  recordId: string,
+  statusCode: number,
+): Promise<number> {
+  const { data: existing } = await service
+    .from("paypal_reconcile_misses")
+    .select("id, miss_count")
+    .eq("table_name", table)
+    .eq("record_id", recordId)
+    .maybeSingle();
+
+  if (existing) {
+    const newCount = (existing as any).miss_count + 1;
+    await service
+      .from("paypal_reconcile_misses")
+      .update({ miss_count: newCount, last_status_code: statusCode, last_checked_at: new Date().toISOString() })
+      .eq("id", (existing as any).id);
+    return newCount;
+  }
+
+  await service.from("paypal_reconcile_misses").insert({
+    kind, table_name: table, record_id: recordId, miss_count: 1, last_status_code: statusCode,
+  });
+  return 1;
+}
+
+/** Breaks a consecutive-404 streak — a transient/mixed result on its own carries no meaning. */
+async function clearMiss(service: ReturnType<typeof createClient>, table: string, recordId: string): Promise<void> {
+  await service.from("paypal_reconcile_misses").delete().eq("table_name", table).eq("record_id", recordId);
+}
+
+/** Stamps the miss row once the 3-strikes rule actually closes an order out. */
+async function resolveMiss(
+  service: ReturnType<typeof createClient>,
+  table: string,
+  recordId: string,
+  reason: string,
+): Promise<void> {
+  await service
+    .from("paypal_reconcile_misses")
+    .update({ resolved_at: new Date().toISOString(), resolved_reason: reason })
+    .eq("table_name", table)
+    .eq("record_id", recordId);
 }
 
 function json(body: unknown, status = 200): Response {
