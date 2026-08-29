@@ -22,6 +22,13 @@ Its page lives at `/whisperers` (exists) and is linked from the sower side
 (Dashboard, `/sow` chooser footer: "Find a Whisperer for your seed"), not
 from the shopper's hall.
 
+**Heart is a door but not a market** — banner plus one button "Find your
+Heart" → `/tribal-hearts`; no grid, no chips, no Become-one card. It still
+gets a hall card and its own banner artwork like every other kind, but the
+page beneath it is just the single button — Heart is matchmaking
+(spec-service-seeds.md §4), not something with seeds, shops or role
+holders to grid up.
+
 ## 2. A door page
 
 Top to bottom:
@@ -39,15 +46,15 @@ Top to bottom:
    `companies.location_lat/lng` already exist; fall back to `base_town`
    text match when there are no coordinates.
 5. **The grid** — for kinds with service seeds live (Hand, Wheel, Pillow,
-   Heart as they ship): seed cards (ProductCard with the shop badge) from
+   as they ship): seed cards (ProductCard with the shop badge) from
    `products where kind = <kind> and status = 'active'`. Until a kind's
    seed form exists, the grid shows the **role holders** from
-   `wandering_roles` (or `tribal_hearts_profiles` for Heart) as member
-   cards with Chat — same data the Directory shows today.
+   `wandering_roles` as member cards with Chat — same data the Directory
+   shows today. Heart has no grid at all — see section 1.
 6. **Become one** — a quiet card at the bottom: "Offer your skills as a
-   Wandering Hand" → `/register-wandering?role=hand` (Heart →
-   `/tribal-hearts`). Logged-out viewers see "Join the tribe" with
-   referral capture, same as `/learn-share` and `/store`.
+   Wandering Hand" → `/register-wandering?role=hand`. Logged-out viewers
+   see "Join the tribe" with referral capture, same as `/learn-share` and
+   `/store`. Heart has no Become-one card — see section 1.
 
 Public route, no auth. `?ref=` captured app-wide already.
 
@@ -88,7 +95,29 @@ licensed-professional question.
 Do step 1–2 after service-seeds step 3 (the Hand form), so the first door
 opens onto real Hand seeds, not just names.
 
-## 6. Out of scope
+## 6. Entrances
+
+Every path into a door, so none of them stay orphaned once the hall ships:
+
+- **Dashboard tile** → `/wandering`.
+- **Wandering tab** in Tribal Gardens.
+- **Search** returns a door first when the query matches one of its chips
+  (e.g. "plumber" surfaces the Hand door above individual seed results).
+- **Learn & Share** category chips link to the matching door.
+- **Storefront breadcrumb** — a shop under a Wandering kind shows
+  "Wandering Hands › {shop}" so a buyer can step back out to the door.
+- Doors are public, with `?ref=` capture and a **Share** button, same as
+  every other public route in the app.
+- **Per-door SEO** — title and `og:image` set from the kind's preset/
+  banner, so a shared door link previews correctly.
+- **Role-unlock success** shows the door link ("Your door is
+  `/wandering/hand` — here's what it looks like") right after a member
+  unlocks a Wandering role.
+- **Day-after chat message** — "Share your door" — sent once, the day
+  after a role unlock, nudging the new role holder to share their door
+  link.
+
+## 7. Out of scope
 
 Map view, reviews/ratings, door-level promotions, per-town sub-doors,
 Whisperer door (deliberately none).

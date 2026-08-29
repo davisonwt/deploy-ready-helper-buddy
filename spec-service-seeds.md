@@ -41,10 +41,15 @@ Stored with a timestamp on the role row. No other gating.
 Groups (in this order), each a row of large cards using the Learn & Share
 category colours/icons:
 
-1. **Creations** — Music (single / album), Art, Books → existing Hearth forms.
-   Only Music is live now; Art/Books show "coming soon" and link to the old form.
-2. **Services & time** — Hand · Wheel · Pillow · Heart → this spec.
-3. **Produce & goods** — Field · Forge → "coming soon", link to old form.
+1. **Creations** — Music (single / album), Art, Books. Digital seeds, each
+   with a gated file + preview (spec-sowing-forms.md's pattern). All live.
+2. **Services & time** — Hand · Wheel · Pillow → this spec. (Heart is not
+   a service seed — see section 4.)
+3. **Produce & goods** — Field · Hearth · Forge, all physical goods
+   sharing **one form**, `/sow/product`, with a "What kind of goods?"
+   picker: Field = farm produce, Hearth = home-made (crafts, cakes, jams,
+   candles — **not creations**), Forge = custom-made, General = shop
+   stock. `kind = field | hearth | forge | product`. All live.
 4. **Orchards** — Community · Production → existing orchard flows.
 
 Clicking a service card:
@@ -71,10 +76,9 @@ Heart tab never fetches. So:
 - Directory reads Wheel/Hand/Pillow from `wandering_roles`. Old three tables
   are left in place, unread, and get a "deprecated" comment; drop in a later
   cleanup once nothing references them.
-- **Heart stays on `tribal_hearts_profiles`** and its existing onboarding
-  (`/tribal-hearts`). Fix the Directory's missing Heart fetch as part of this
-  work. The Heart *seed* form (section 5) requires an active Heart profile the
-  same way the others require a `wandering_roles` row.
+- **Heart is not a service seed** — Wandering Heart is matchmaking on
+  `tribal_hearts_profiles` with its own onboarding (`/tribal-hearts`). No
+  rate, no booking, no Books, no seed form, no `kind = 'heart'`.
 - `/register-wandering` becomes the role-unlock screen below (route it), with
   `?role=` preselecting.
 
@@ -120,14 +124,8 @@ pool, braai, pet-friendly, self-catering, meals available), house rules, check-i
 / check-out times, up to 6 photos, blocked dates (simple date list, no calendar
 sync)
 
-### Heart
-Required: photo · title · care type · rate (or "free") · remote/in-person · description
-- care type: counselling/listening, elderly care, childcare, companionship,
-  prayer/spiritual, other
-Optional: availability, second photo
-
-Common to all four: every seed has `location` (town/area, inherited from the
-role, editable) and `kind` (`hand | wheel | pillow | heart`).
+Common to all three: every seed has `location` (town/area, inherited from the
+role, editable) and `kind` (`hand | wheel | pillow`).
 
 ## 6. Data model
 
@@ -136,7 +134,7 @@ role, editable) and `kind` (`hand | wheel | pillow | heart`).
 
 - `ALTER TABLE products ALTER COLUMN file_url DROP NOT NULL` (the only NOT NULL
   column that makes no sense for a service).
-- New column `kind text` — `music | ebook | hand | wheel | pillow | heart`
+- New column `kind text` — `music | ebook | hand | wheel | pillow`
   (CHECK constraint). Backfill existing rows from `type`. **Do not reuse
   `wandering_role`** — that column is the uploader's personal badge and is
   read by TribalAliveFeed, DJMusicUpload and video upload; it means something
@@ -179,15 +177,13 @@ Flow:
    — pre-payment, same as production orchards per the lawyer. Release-escrow is
    not used. Revisit if disputes appear.
 
-No bookings for `Heart` seeds marked free — "Connect" opens a chat instead.
-
 Acceptance: a booking gives 2 `processed_webhooks` rows, Books entries, and no
 immediate payout — same test as the other purchase kinds.
 
 ## 8. My Garden
 
 One list of all the member's seeds regardless of kind, newest first, with a kind
-filter row (All · Music · Hand · Wheel · Pillow · Heart · Orchards) using the
+filter row (All · Music · Hand · Wheel · Pillow · Orchards) using the
 Learn & Share colours. Each card shows kind badge, title, price/rate, and for
 services a small "N bookings" count. "Sow a seed" button on this page goes to
 the `/sow` chooser.
@@ -202,7 +198,7 @@ bestowals received.
 2. Role unlock (reusing existing directory tables).
 3. Hand seed form + My Garden unified list + kind filter.
 4. Booking purchase kind, tested with a $1 Hand booking end to end.
-5. Wheel, then Pillow, then Heart forms (booking already works).
+5. Wheel, then Pillow forms (booking already works).
 6. Grower-side: seed detail page with "Request booking" for each kind.
 
 Do not start step 1 until the music album form has passed acceptance (Amber's
@@ -212,5 +208,4 @@ album). Steps 1–3 can be done while album fixes are in review.
 
 Calendar sync, maps/geo search beyond town + radius text, insurance,
 ID/licence verification, escrow, reviews/ratings, multi-day pricing tiers,
-deposits, cancellation refunds (handle manually via admin for now), Field and
-Forge seed forms (next spec).
+deposits, cancellation refunds (handle manually via admin for now).

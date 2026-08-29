@@ -116,10 +116,10 @@ defines one preset per kind:
 | field | green | From Our Fields to Our Tribe. | Fresh produce · Seasonal goods · Direct from farmers |
 | hearth | red | Made with Love. Shared with You. | Handmade crafts · Homemade foods · Artisan products |
 | forge | slate | (to write) | Custom made · Commissions · Repairs |
-| heart | emerald | (to write) | Care · Companionship · Support |
 
-Whisperer has no shop preset — it's a service hired by shops, not a place
-to shop (see spec-wandering-doors.md).
+Whisperer and Heart have no shop preset — Whisperer is a service hired by
+shops, not a place to shop; Heart is matchmaking, not a shop (see
+spec-wandering-doors.md).
 
 Rules:
 - On role unlock (spec-service-seeds §4) the business gets
