@@ -788,6 +788,55 @@ confirmed and fixed live before writing any page code.
   that seed until the sower re-uploads. Not built now; not asked for.
 - `npx tsc --noEmit` and `npx eslint` both clean.
 
+## Fixed — 2026-08-29, still later (spec-storefronts.md §4a: shop presets by Wandering kind)
+
+`spec-wandering-doors.md` (new) and an updated `spec-storefronts.md` (now
+with §4a) copied in from Downloads first — confirmed the update was
+additive (same 1–9 numbering, 4a inserted) before overwriting the
+committed copy. **No door pages built** — explicitly out of scope for
+this task (spec-wandering-doors.md's own build order says door pages come
+after this; not started).
+
+- **Banner assets don't exist.** Checked live before writing any code:
+  `src/assets/wandering/` doesn't exist at all — not one of the seven
+  `<kind>-banner.jpg` files the task described, not in `dist/`, not
+  untracked, not in Downloads either. Built `src/lib/store/presets.ts`
+  with every kind's `bannerImage` set to `null` and a gradient fallback
+  (built from the kind's own accent colour) everywhere a banner renders —
+  the same fallback the task specified for forge/heart specifically,
+  applied to all seven since none of the five "existing" ones actually
+  do. Swapping in the real photos later is a one-line change per kind;
+  nothing else about the preset shape moves.
+- **`src/lib/store/presets.ts`** (new): one entry per kind (pillow, hand,
+  wheel, field, hearth, forge, heart) — accent colour, title, promise
+  line, description, chips, button text, `bannerImage`. Copy and chips
+  for pillow/hand/wheel/field/hearth straight from spec-storefronts.md
+  §4a's table; forge/heart were marked `(to write)` there, so drafted in
+  the same short style — disclosed as drafted, not literal spec text.
+  **Hand's chips are trades only** — Plumbers, Electricians, Mechanics,
+  Builders, Carpenters — no Dentists/Doctors, per spec-wandering-doors.md
+  §4's explicit note (used its slightly longer list, since presets.ts is
+  described as shared between the shop preset and the door page, which
+  needs the fuller version). Whisperer has no entry — deliberately, it's
+  a hired service, not a shop (§1 of the doors spec). `getPreset(kind)`
+  returns `null` for whisperer or anything unrecognised.
+- **`StorePage.tsx`**: when `store_theme.preset` is set, renders that
+  preset's banner (photo once one exists, gradient fallback today) with
+  its promise line, its accent colour on the active category-chip
+  button, and its chips/tagline as the fallback — `store_categories`/
+  `store_tagline` still win when the shop has set its own, exactly the
+  precedence spec-storefronts.md §4a states. A business with no
+  `store_theme.preset` (or an unrecognised one) renders exactly as
+  before today — no regression for davison's test shop, which has no
+  theme set.
+- **`RegisterWanderingPage.tsx`**: on successful role unlock, best-effort
+  (never blocks the unlock itself) sets `store_theme.preset = <role>` on
+  the user's **default** business, but only if it has no preset yet — a
+  business that already picked one, or unlocked a second role later,
+  keeps its first. Heart still never reaches this page (unchanged, its
+  own `/tribal-hearts` onboarding).
+- `npx tsc --noEmit` and `npx eslint` both clean.
+
 ## Open — priority order
 
 1. ~~Live proof that `paypal-webhook` actually works now~~ — **resolved, see Keystone problem**: order `0a6a0b1a` finalized via a clean webhook call at 08:36 UTC 2026-08-29. The `processed_webhooks`-insert bug (separate from the webhook itself) is also fixed; watch for its first real row as confirmation the fix landed, not as proof the webhook works — that's already established.

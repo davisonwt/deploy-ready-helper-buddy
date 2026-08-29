@@ -104,6 +104,30 @@ export default function RegisterWanderingPage() {
         { onConflict: 'user_id,role' }
       );
       if (error) throw error;
+
+      // spec-storefronts.md §4a: the default business gets the matching
+      // shop preset the moment the role unlocks, so a Hand/Wheel/Pillow
+      // shop looks finished from day one — but only if it has no theme
+      // yet; a business that already picked one (or unlocked a different
+      // role first) keeps it. Best-effort, never blocks the role unlock.
+      try {
+        const { data: defaultBiz } = await supabase
+          .from('companies')
+          .select('id, store_theme')
+          .eq('owner_user_id', user.id)
+          .eq('is_default', true)
+          .maybeSingle();
+        const theme = (defaultBiz as any)?.store_theme as { preset?: string } | null;
+        if (defaultBiz && !theme?.preset) {
+          await supabase
+            .from('companies')
+            .update({ store_theme: { ...(theme || {}), preset: role } })
+            .eq('id', (defaultBiz as any).id);
+        }
+      } catch (themeErr) {
+        console.warn('Could not set the shop preset:', themeErr);
+      }
+
       toast.success(`${meta.label} unlocked!`);
       navigate(`/sow/${role}`);
     } catch (err) {

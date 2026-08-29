@@ -6,14 +6,25 @@ import { Input } from '@/components/ui/input';
 import { useAuth } from '@/hooks/useAuth';
 import { fetchStoreBySlug, fetchStoreProducts } from '@/api/products';
 import ProductCard from '@/components/products/ProductCard';
+import { getPreset } from '@/lib/store/presets';
 
 const PAGE_SIZE = 24;
+
+interface StoreTheme {
+  preset?: string;
+  accent?: string;
+  banner_url?: string;
+  logo_url?: string;
+  tagline_style?: string;
+  chips?: string[];
+}
 
 interface Store {
   id: string;
   name: string;
   slug: string;
   store_tagline: string | null;
+  store_theme: StoreTheme | null;
   store_categories: string[] | null;
   logo_url: string | null;
   banner_url: string | null;
@@ -125,7 +136,14 @@ export default function StorePage() {
   }
 
   const isOwner = !!user && store.owner_user_id === user.id;
-  const categories = store.store_categories ?? [];
+  // spec-storefronts.md §4a: store_categories overrides the preset's
+  // chips if set; the preset's own tagline is the fallback for
+  // store_tagline, same rule, same order.
+  const preset = getPreset(store.store_theme?.preset);
+  const categories = store.store_categories?.length ? store.store_categories : (preset?.chips ?? []);
+  const tagline = store.store_tagline || preset?.promise || null;
+  const accent = store.store_theme?.accent || preset?.accent || undefined;
+  const bannerUrl = store.store_theme?.banner_url || preset?.bannerImage || null;
 
   return (
     <div className="min-h-screen">
@@ -146,6 +164,25 @@ export default function StorePage() {
           </div>
         )}
 
+        {/* Banner — the kind's preset (spec-storefronts.md §4a), until the
+            shop uploads its own or a real banner photo lands in
+            src/assets/wandering/. No photo exists for any kind yet
+            (checked live), so every shop gets the accent-gradient
+            fallback for now, not just forge/heart. */}
+        {preset && (
+          <div
+            className="relative w-full h-28 md:h-36 overflow-hidden rounded-2xl mb-4 border flex items-end p-4"
+            style={
+              bannerUrl
+                ? { backgroundImage: `url(${bannerUrl})`, backgroundSize: 'cover', backgroundPosition: 'center', borderColor: `${accent}66` }
+                : { background: `linear-gradient(135deg, ${accent}, ${accent}55)`, borderColor: `${accent}66` }
+            }
+          >
+            <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
+            <p className="relative text-white text-sm md:text-base font-semibold drop-shadow">{preset.promise}</p>
+          </div>
+        )}
+
         {/* Header */}
         <div className="flex items-center gap-4 mb-6">
           <div className="w-16 h-16 rounded-2xl overflow-hidden bg-muted flex-shrink-0 flex items-center justify-center border">
@@ -157,7 +194,7 @@ export default function StorePage() {
           </div>
           <div className="min-w-0">
             <h1 className="text-2xl font-bold truncate">{store.name}</h1>
-            {store.store_tagline && <p className="text-sm text-muted-foreground truncate">{store.store_tagline}</p>}
+            {tagline && <p className="text-sm text-muted-foreground truncate">{tagline}</p>}
           </div>
         </div>
 
@@ -177,7 +214,8 @@ export default function StorePage() {
               <button
                 type="button"
                 onClick={() => setActiveCategory('all')}
-                className={`px-3 py-1 rounded-full text-xs font-medium border transition-colors ${activeCategory === 'all' ? 'bg-primary text-primary-foreground border-primary' : 'border-border hover:border-primary/60'}`}
+                className={`px-3 py-1 rounded-full text-xs font-medium border transition-colors ${activeCategory === 'all' ? (accent ? 'text-white border-transparent' : 'bg-primary text-primary-foreground border-primary') : 'border-border hover:border-primary/60'}`}
+                style={activeCategory === 'all' && accent ? { backgroundColor: accent } : undefined}
               >
                 All
               </button>
@@ -186,7 +224,8 @@ export default function StorePage() {
                   key={c}
                   type="button"
                   onClick={() => setActiveCategory(c)}
-                  className={`px-3 py-1 rounded-full text-xs font-medium border transition-colors ${activeCategory === c ? 'bg-primary text-primary-foreground border-primary' : 'border-border hover:border-primary/60'}`}
+                  className={`px-3 py-1 rounded-full text-xs font-medium border transition-colors ${activeCategory === c ? (accent ? 'text-white border-transparent' : 'bg-primary text-primary-foreground border-primary') : 'border-border hover:border-primary/60'}`}
+                  style={activeCategory === c && accent ? { backgroundColor: accent } : undefined}
                 >
                   {c}
                 </button>
