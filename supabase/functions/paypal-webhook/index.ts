@@ -84,8 +84,20 @@ Deno.serve(async (req) => {
 
   const verified = await verifyPaypalWebhookSig(sigHeaders, rawBody);
   if (!verified) {
+    // Body is UNVERIFIED here — never acted on, only logged, so a stale
+    // retry (signed for some other webhook config) can be told apart from
+    // a genuine live failure without waiting on a second data point.
+    let unverifiedEvent: { id?: unknown; event_type?: unknown; create_time?: unknown } = {};
+    try {
+      unverifiedEvent = JSON.parse(rawBody);
+    } catch {
+      // Not JSON either — nothing more to report.
+    }
     console.warn("paypal-webhook signature mismatch", {
       transmissionId: sigHeaders.transmissionId,
+      unverifiedEventId: unverifiedEvent?.id,
+      unverifiedEventType: unverifiedEvent?.event_type,
+      unverifiedCreateTime: unverifiedEvent?.create_time,
     });
     return json({ error: "invalid_signature" }, 401);
   }
