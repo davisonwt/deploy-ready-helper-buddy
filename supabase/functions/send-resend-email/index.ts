@@ -103,6 +103,21 @@ const handler = async (req: Request): Promise<Response> => {
       html,
     });
 
+    // resend.emails.send() resolves even when Resend itself rejected the
+    // send (bad domain, invalid recipient, etc.) — the failure lands in
+    // emailResponse.error, not a thrown exception. Checking it is the whole
+    // fix: previously this always reported success regardless.
+    if (emailResponse.error) {
+      console.error("Resend send error:", emailResponse.error);
+      return new Response(JSON.stringify({
+        success: false,
+        error: emailResponse.error.message || "Failed to send email",
+      }), {
+        status: 502,
+        headers: { "Content-Type": "application/json", ...corsHeaders },
+      });
+    }
+
     return new Response(JSON.stringify({
       success: true,
       message: "Email sent successfully",
