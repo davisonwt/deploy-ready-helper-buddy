@@ -138,6 +138,7 @@ export const SowIndexPage = lazy(() => import('@/pages/sow/SowIndexPage'));
 export const SowChooserPage = lazy(() => import('@/pages/sow/SowChooserPage'));
 export const SowMusicPage = lazy(() => import('@/pages/sow/SowMusicPage'));
 export const SowArtPage = lazy(() => import('@/pages/sow/SowArtPage'));
+export const SowBookPage = lazy(() => import('@/pages/sow/SowBookPage'));
 export const RegisterWanderingPage = lazy(() => import('@/pages/RegisterWanderingPage'));
 export const StorePage = lazy(() => import('@/pages/StorePage'));
 export const PrivacyPage = lazy(() => import('@/pages/PrivacyPage'));

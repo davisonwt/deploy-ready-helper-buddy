@@ -837,6 +837,78 @@ after this; not started).
   own `/tribal-hearts` onboarding).
 - `npx tsc --noEmit` and `npx eslint` both clean.
 
+## Fixed — 2026-08-29, still later (spec-sowing-forms.md: /sow/book, the third live sowing form)
+
+Built `/sow/book` on the same `/sow/art` / `/sow/music` single-track
+pattern. Three schema/dependency checks done live before writing page
+code, two came back already-satisfied:
+
+- `products.kind`'s CHECK already allowed `'ebook'` (added by the
+  service-seeds migration) — the task's own "add if missing" was
+  correctly hedged; confirmed live, no migration needed.
+- `seed-previews` already allowed `image/jpeg` (added building `/sow/art`)
+  — also already satisfied.
+- `premium-room` did **not** allow EPUB's MIME type
+  (`application/epub+zip`) — genuinely missing, fixed live
+  (`20260829220000_sow-book-schema.sql`) before any EPUB upload could
+  have worked.
+- `pdfjs-dist` was not a dependency — added (`^6.3.289`). Verified the
+  Vite `?url` worker-import pattern actually resolves by running a real
+  production build (not just `tsc`), since a pdf.js worker
+  misconfiguration is exactly the kind of thing type-checking can't
+  catch — it built clean, and `SowBookPage` is its own lazy-loaded chunk
+  (~495KB, pdfjs-dist included), so the ~2MB `react-pdf.browser` chunk
+  pdfjs-dist depends on only loads for a visitor who actually opens
+  `/sow/book`, never anywhere else.
+- **`type: 'ebook'`, not `'document'`** — spec-sowing-forms.md's own
+  table says `type document`, but live data, `sowerContent.ts`,
+  `CatalogTab.tsx` and others already branch on `type === 'ebook'`
+  throughout the app; `'ebook'` is also the value the `kind` CHECK (and
+  `LibraryUploadForm.tsx`, a *different* table's old ebook form —
+  `s2g_library_items`, confirmed not what this build writes to) already
+  settled on. Used `'ebook'` for both `type` and `kind` to match the
+  ecosystem that already exists, not the spec table's shorthand label.
+- `SeedDropZone.tsx` gained the missing 50MB ceiling for `kind='document'`
+  (audio and image already had one; document didn't).
+- **Required pieces, fixed order**: file (PDF or EPUB, `SeedDropZone
+  kind="document"`), cover (`CoverDropZone`, required, same as music),
+  title, price, category, description.
+- **Preview**: PDF renders its first up-to-3 pages to 1200px JPEGs,
+  **no watermark** (unlike art's watermarked preview — the task was
+  explicit these are meant to actually be read, not just previewed),
+  client-side via `pdfjs-dist` (new `src/lib/media/generatePdfPreview.ts`),
+  uploaded to `seed-previews` as `page-1.jpg`…`page-3.jpg`, stored as
+  `metadata.preview_pages` with `preview_url` = page 1. The real page
+  count from pdf.js (not a heuristic) auto-fills the "page count"
+  More-options field. EPUB gets no page preview — `preview_pages` stays
+  unset and `preview_url` stays null; the cover (already shown) is what
+  stands in for a preview, per the task's own "for EPUB, use the cover."
+  Generation is eager (right after upload, same timing as art's
+  watermark) and non-blocking on failure — same reasoning as every other
+  preview step in this whole build: the real file already uploaded fine.
+  `file_url` (the real upload, `premium-room`, private) stays gated
+  behind `get-seed-file` regardless of format.
+- More options (never block Plant): author, page count (auto from the
+  PDF, still editable — an EPUB has no auto-source, sower fills it in by
+  hand), language, ISBN, whisperer %, tags, explicit. Books field
+  (spec-books.md §4) — identical pattern to music/art's, hidden with one
+  business.
+- **Detail page**: no dedicated single-ebook `products` detail route
+  exists (`/sower-library/:mode` and `/my-s2g-library` are both list
+  pages, not per-item detail; `BooksCatalogItemPage` is the
+  bookkeeping-catalog feature, unrelated) — confirmed, then reused
+  `BulkProductDetailPage.tsx` exactly like art. Its full-res/entitlement
+  logic (added for art) is now `['art', 'ebook'].includes(product.type)`
+  instead of art-only; a new swipeable strip (the same horizontal-scroll-
+  snap pattern the page's own "Related" row already uses) shows
+  `metadata.preview_pages` to non-buyers only — an entitled viewer (owner
+  or completed buyer) sees the Download button instead, not both. Every
+  other product type on this shared page is unaffected.
+- **`/sow` chooser**: Books card flipped to `live: true`, routed to
+  `/sow/book`. `/sow/classic` still handles Physical/Field/Forge's
+  "coming soon" cards.
+- `npx tsc --noEmit` and `npx eslint` both clean.
+
 ## Open — priority order
 
 1. ~~Live proof that `paypal-webhook` actually works now~~ — **resolved, see Keystone problem**: order `0a6a0b1a` finalized via a clean webhook call at 08:36 UTC 2026-08-29. The `processed_webhooks`-insert bug (separate from the webhook itself) is also fixed; watch for its first real row as confirmation the fix landed, not as proof the webhook works — that's already established.

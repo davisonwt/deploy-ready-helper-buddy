@@ -72,6 +72,7 @@
     "lucide-react": "^0.462.0",
     "next-themes": "^0.3.0",
     "os-browserify": "^0.3.0",
+    "pdfjs-dist": "^6.3.289",
     "process": "^0.11.10",
     "react": "^18.3.1",
     "react-confetti": "^6.4.0",
@@ -120,5 +121,9 @@
     "typescript": "^5.5.3",
     "typescript-eslint": "^8.0.1",
     "vite": "^5.4.1"
+  },
+  "allowScripts": {
+    "esbuild": true,
+    "@swc/core": true
   }
 }

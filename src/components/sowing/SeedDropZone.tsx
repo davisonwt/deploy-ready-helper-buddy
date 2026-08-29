@@ -46,10 +46,10 @@ const AUDIO_EXTENSIONS = ['wav', 'mp3', 'flac', 'aac', 'm4a', 'ogg'];
 const IMAGE_EXTENSIONS = ['jpg', 'jpeg', 'png', 'gif', 'webp'];
 const DOCUMENT_EXTENSIONS = ['pdf', 'epub'];
 
-// Only kinds with an explicit ceiling get checked — 'document' has none yet.
 const MAX_SIZE_BYTES: Partial<Record<SeedKind, number>> = {
   audio: 150 * 1024 * 1024,
   image: 10 * 1024 * 1024,
+  document: 50 * 1024 * 1024,
 };
 
 const MIME_REJECTION_MESSAGE: Record<SeedKind, string> = {

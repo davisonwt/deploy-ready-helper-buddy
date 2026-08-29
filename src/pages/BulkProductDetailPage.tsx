@@ -49,14 +49,14 @@ export default function BulkProductDetailPage() {
     return () => { cancelled = true; };
   }, [slug]);
 
-  // Art seeds only: the gallery/cover above is always the public
-  // watermarked preview (cover_image_url is set to it at plant time) —
-  // never the full-resolution original, which stays behind get-seed-file
-  // the same way music's full track does. Only the uploader or a
-  // completed buyer sees the download affordance.
+  // Art and ebook seeds only: the gallery/cover above is always something
+  // safe to show anyone (art's watermarked preview; an ebook's cover,
+  // which is never the gated file) — the real file stays behind
+  // get-seed-file the same way music's full track does. Only the
+  // uploader or a completed buyer sees the download affordance.
   useEffect(() => {
     let alive = true;
-    if (!product || product.type !== 'art') { setFullResEntitled(false); return; }
+    if (!product || !['art', 'ebook'].includes(product.type)) { setFullResEntitled(false); return; }
     if (!user) { setFullResEntitled(false); return; }
     (async () => {
       if (product.sowers?.user_id === user.id) {
@@ -214,6 +214,27 @@ export default function BulkProductDetailPage() {
                 ))}
               </div>
             )}
+
+            {/* Ebook, non-buyers only: the rendered PDF preview pages
+                (spec-sowing-forms.md) — a swipeable strip, since the main
+                cover above is the only thing shown otherwise. Nothing to
+                show for an EPUB (no page renders) or once the viewer is
+                entitled to the real file below. */}
+            {product.type === 'ebook' && !fullResEntitled && product.metadata?.preview_pages?.length > 0 && (
+              <div className="space-y-1.5">
+                <p className="text-xs font-medium text-muted-foreground">Preview pages</p>
+                <div className="flex gap-2 overflow-x-auto pb-1 snap-x">
+                  {product.metadata.preview_pages.map((url: string, i: number) => (
+                    <img
+                      key={i}
+                      src={url}
+                      alt={`Page ${i + 1}`}
+                      className="h-40 w-auto rounded-md border shrink-0 snap-start object-cover"
+                    />
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
 
           {/* Info */}
@@ -278,10 +299,10 @@ export default function BulkProductDetailPage() {
               </Button>
             </div>
 
-            {product.type === 'art' && fullResEntitled && (
+            {['art', 'ebook'].includes(product.type) && fullResEntitled && (
               <Button size="lg" variant="secondary" onClick={handleDownloadFullRes} disabled={downloadingFullRes} className="w-full">
                 {downloadingFullRes ? <Loader2 className="h-4 w-4 mr-1 animate-spin" /> : <Download className="h-4 w-4 mr-1" />}
-                Download full resolution
+                {product.type === 'art' ? 'Download full resolution' : 'Download'}
               </Button>
             )}
 
