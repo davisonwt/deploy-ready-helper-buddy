@@ -86,7 +86,7 @@ export const VIDEOS: LearnVideo[] = [
   { id: 12, role: 'Hearth',    title: 'Bestow a Hearth Seed',       desc: 'How to support a creator through bestowal',        color: '#f97316', emoji: '🔥', url: bestowAHearthSeedVideo },
   { id: 13, role: 'Forge',     title: 'Become a Wandering Forge',   desc: 'How to list your craft & manufacturing skills',    color: '#64748b', emoji: '⚒️', url: becomeAWanderingForgeVideo },
   { id: 14, role: 'Forge',     title: 'Commission a Forge',         desc: 'How to order custom made items',                   color: '#64748b', emoji: '⚒️', url: commissionAForgeVideo },
-  { id: 15, role: 'Heart',     title: 'Become a Wandering Heart',   desc: 'How to offer care & community support',            color: '#10b981', emoji: '💚', url: becomeAWanderingHeartVideo },
+  { id: 15, role: 'Heart',     title: 'Become a Wandering Heart',   desc: 'Set up your Tribal Hearts profile so singles in the tribe can find and connect with you', color: '#10b981', emoji: '💚', url: becomeAWanderingHeartVideo },
   { id: 16, role: 'Heart',     title: 'Find a Wandering Heart',     desc: 'Singles connect securely via ChatApp text, voice, or video — no email or phone shared', color: '#10b981', emoji: '💚', url: findAHeartVideo },
   { id: 17, role: 'Whisperer', title: 'Become a Whisperer (Marketer)', desc: 'List as an online marketer / creator and earn % on seeds you take viral', color: '#a855f7', emoji: '🌬️', url: becomeAWhispererExplainerVideo },
   { id: 18, role: 'Whisperer', title: 'Find a Whisperer',             desc: 'Browse the Whisperers feed and partner up via ChatApp',           color: '#a855f7', emoji: '🌬️', url: findAWhispererVideo },

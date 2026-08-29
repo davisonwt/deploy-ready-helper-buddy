@@ -1,4 +1,6 @@
-export type WanderingKind = 'pillow' | 'hand' | 'wheel' | 'field' | 'hearth' | 'forge' | 'heart';
+// Heart is matchmaking (/tribal-hearts), not a service seed or a shop —
+// spec-service-seeds.md §4, revised. It never gets a preset here.
+export type WanderingKind = 'pillow' | 'hand' | 'wheel' | 'field' | 'hearth' | 'forge';
 
 export interface WanderingPreset {
   kind: WanderingKind;
@@ -10,12 +12,12 @@ export interface WanderingPreset {
   chips: string[];
   buttonText: string;
   /**
-   * The real banner photo — none of the seven have landed in
+   * The real banner photo — none of the six have landed in
    * src/assets/wandering/<kind>-banner.jpg yet (checked live: the
-   * directory doesn't exist anywhere in the repo, not just forge/heart).
-   * Every kind falls back to a gradient built from `accent` until the
-   * real assets are supplied; swapping this to a real import later is a
-   * one-line change per kind, nothing else about the preset shape moves.
+   * directory doesn't exist anywhere in the repo). Every kind falls back
+   * to a gradient built from `accent` until the real assets are supplied;
+   * swapping this to a real import later is a one-line change per kind,
+   * nothing else about the preset shape moves.
    */
   bannerImage: string | null;
 }
@@ -87,19 +89,14 @@ const PRESETS: Record<WanderingKind, WanderingPreset> = {
     buttonText: 'Commission a piece',
     bannerImage: null,
   },
-  heart: {
-    kind: 'heart',
-    title: 'Wandering Heart',
-    accent: '#059669',
-    promise: 'Never Wander Alone.',
-    description: 'Companionship, care and support from the tribe — someone to walk beside you.',
-    chips: ['Care', 'Companionship', 'Support'],
-    buttonText: 'Find your tribe',
-    bannerImage: null,
-  },
 };
 
-/** Whisperer deliberately has no preset — it's a service hired by shops, not a place to shop (spec-wandering-doors.md §1). */
+/**
+ * Whisperer deliberately has no preset — it's a service hired by shops,
+ * not a place to shop (spec-wandering-doors.md §1). Heart deliberately
+ * has no preset either — it's matchmaking (/tribal-hearts), not a shop
+ * or a service seed (spec-service-seeds.md §4, revised).
+ */
 export function getPreset(kind: string | null | undefined): WanderingPreset | null {
   if (!kind) return null;
   return Object.prototype.hasOwnProperty.call(PRESETS, kind) ? PRESETS[kind as WanderingKind] : null;
@@ -109,4 +106,4 @@ export function isWanderingKind(kind: string): kind is WanderingKind {
   return Object.prototype.hasOwnProperty.call(PRESETS, kind);
 }
 
-export const WANDERING_KINDS: WanderingKind[] = ['pillow', 'hand', 'wheel', 'field', 'hearth', 'forge', 'heart'];
+export const WANDERING_KINDS: WanderingKind[] = ['pillow', 'hand', 'wheel', 'field', 'hearth', 'forge'];

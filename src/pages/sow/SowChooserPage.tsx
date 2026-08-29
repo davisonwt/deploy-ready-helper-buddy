@@ -6,7 +6,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import sowIndexBanner from '@/assets/seeds-strip.jpg';
 
-type ServiceKind = 'hand' | 'wheel' | 'pillow' | 'heart';
+type ServiceKind = 'hand' | 'wheel' | 'pillow';
 
 interface Card {
   key: string;
@@ -29,8 +29,12 @@ const SERVICES: Card[] = [
   { key: 'hand', label: 'Hand', emoji: '🤲', color: '#16a34a', live: true, service: 'hand', route: '/sow/hand' },
   { key: 'wheel', label: 'Wheel', emoji: '🚗', color: '#0891b2', live: true, service: 'wheel', route: '/sow/wheel' },
   { key: 'pillow', label: 'Pillow', emoji: '🛏️', color: '#db2777', live: true, service: 'pillow', route: '/sow/pillow' },
-  { key: 'heart', label: 'Heart', emoji: '💚', color: '#dc2626', live: true, service: 'heart', route: '/sow/heart' },
 ];
+
+// Heart is matchmaking (/tribal-hearts), not a service seed —
+// spec-service-seeds.md §4, revised. No role-unlock check, no
+// products.kind, no /sow/heart form: always the same one destination.
+const HEART_CARD: Card = { key: 'heart', label: 'Find your Heart', emoji: '💚', color: '#dc2626', live: true, route: '/tribal-hearts' };
 
 const PRODUCE: Card[] = [
   { key: 'field', label: 'Field', icon: Wheat, live: false, route: '/sow/classic' },
@@ -47,9 +51,10 @@ const ORCHARDS: Card[] = [
  * flat tile picker (still live at /sow/classic, linked from every
  * "coming soon" card here) with four groups: Creations, Services & time,
  * Produce & goods, Orchards. A service card checks whether the viewer
- * already holds that Wandering role (wandering_roles, or
- * tribal_hearts_profiles for Heart) before routing — straight to the seed
- * form if so, to the role-unlock screen first if not.
+ * already holds that Wandering role (wandering_roles) before routing —
+ * straight to the seed form if so, to the role-unlock screen first if
+ * not. Heart is its own single tile, always routing straight to
+ * /tribal-hearts — it's matchmaking, not a role to unlock or a seed form.
  */
 export default function SowChooserPage() {
   const navigate = useNavigate();
@@ -61,14 +66,9 @@ export default function SowChooserPage() {
     let alive = true;
     if (!user) { setChecked(true); return; }
     (async () => {
-      const [rolesRes, heartRes] = await Promise.all([
-        supabase.from('wandering_roles').select('role').eq('user_id', user.id),
-        supabase.from('tribal_hearts_profiles').select('user_id').eq('user_id', user.id).maybeSingle(),
-      ]);
+      const { data } = await supabase.from('wandering_roles').select('role').eq('user_id', user.id);
       if (!alive) return;
-      const set = new Set<ServiceKind>((rolesRes.data ?? []).map((r: any) => r.role as ServiceKind));
-      if (heartRes.data) set.add('heart');
-      setUnlockedRoles(set);
+      setUnlockedRoles(new Set<ServiceKind>((data ?? []).map((r: any) => r.role as ServiceKind)));
       setChecked(true);
     })();
     return () => { alive = false; };
@@ -80,10 +80,7 @@ export default function SowChooserPage() {
       navigate(card.route);
       return;
     }
-    // Heart keeps its own existing onboarding (/tribal-hearts) — it was
-    // never a wandering_roles row and the unlock screen below doesn't
-    // handle it.
-    navigate(card.service === 'heart' ? '/tribal-hearts' : `/register-wandering?role=${card.service}`);
+    navigate(`/register-wandering?role=${card.service}`);
   };
 
   const chooseOther = (card: Card) => {
@@ -122,6 +119,7 @@ export default function SowChooserPage() {
         {SERVICES.map((card) => (
           <ServiceTile key={card.key} card={card} disabled={!checked} onClick={() => chooseService(card)} />
         ))}
+        <ServiceTile card={HEART_CARD} disabled={false} onClick={() => navigate(HEART_CARD.route)} />
       </ChooserGroup>
 
       <ChooserGroup title="Produce & goods">

@@ -909,6 +909,44 @@ code, two came back already-satisfied:
   "coming soon" cards.
 - `npx tsc --noEmit` and `npx eslint` both clean.
 
+## Fixed — 2026-08-29, still later (Heart is matchmaking, not a service seed)
+
+**No "updated" `spec-service-seeds.md` was actually available** — checked
+Downloads, same two files as when it was first copied in
+(`spec-service-seeds.md`/`spec-service-seeds(1).md`, both unchanged since
+then), no newer variant. The committed spec still describes a Heart seed
+form in §4/§5. Proceeded anyway since the instruction itself was fully
+self-contained and unambiguous — not guessing at anything, just
+implementing exactly what was asked; the spec file itself was **not**
+edited to match (should be, once a real updated copy exists to bring in).
+`heart-banner.jpg` was also not present in Downloads — skipped per the
+instruction's own "if present."
+
+- **`products.kind` CHECK**: confirmed live first — 0 rows used
+  `kind = 'heart'` — then dropped it from the vocabulary
+  (`20260829230000_remove-heart-service-seed.sql`; now `music | ebook |
+  art | hand | wheel | pillow`).
+- **`SowChooserPage.tsx`**: Heart removed from `SERVICES`/`ServiceKind`
+  entirely (no more role-unlock check, no `/sow/heart`). New standalone
+  `HEART_CARD`, labelled **"Find your Heart"**, always routes straight to
+  `/tribal-hearts` — rendered in the same "Services & time" row so it's
+  still where a member would look for it, but as a plain, always-live
+  link rather than a role-gated tile. The page's own `wandering_roles`
+  lookup effect and `chooseService()` both lost the now-dead
+  `tribal_hearts_profiles` branch that existed only for Heart.
+- **`presets.ts`**: `'heart'` removed from `WanderingKind`, `PRESETS`,
+  and `WANDERING_KINDS` — Heart never gets a shop preset (it's not a
+  shop), joining Whisperer as the two Wandering concepts with none.
+- **`WanderingDirectoryPage.jsx`**: Heart cards already linked to
+  `/tribal-hearts` — true since the very first build of this page, not
+  something that needed changing; confirmed unchanged.
+- **Learn & Share**: "Become a Wandering Heart"'s description ("How to
+  offer care & community support" — a service framing) fixed to "Set up
+  your Tribal Hearts profile so singles in the tribe can find and connect
+  with you", matching "Find a Wandering Heart"'s existing matchmaking
+  framing right next to it.
+- `npx tsc --noEmit` and `npx eslint` both clean.
+
 ## Open — priority order
 
 1. ~~Live proof that `paypal-webhook` actually works now~~ — **resolved, see Keystone problem**: order `0a6a0b1a` finalized via a clean webhook call at 08:36 UTC 2026-08-29. The `processed_webhooks`-insert bug (separate from the webhook itself) is also fixed; watch for its first real row as confirmation the fix landed, not as proof the webhook works — that's already established.
