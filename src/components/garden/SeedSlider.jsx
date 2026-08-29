@@ -80,6 +80,8 @@ export default function SeedSlider({
           openPath={active.openPath}
           mediaUrl={active.mediaUrl}
           mediaKind={active.mediaKind}
+          previewUrl={active.previewUrl}
+          productId={active.productId}
           badge={active.badge}
           mine={active.mine}
           whispererSharePct={active.whispererSharePct}

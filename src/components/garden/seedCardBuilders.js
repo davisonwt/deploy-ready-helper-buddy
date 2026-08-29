@@ -79,6 +79,11 @@ export function buildMusicCard(m, handlers = {}) {
     liveKey: `music:${m.id}`,
     mediaKind: 'audio',
     mediaUrl: m.file_url,
+    // Owner playback goes through get-seed-file (productId) rather than the
+    // raw file_url above, which a bare <audio src> can't load from a
+    // private bucket; preview_url is the fallback if that fails.
+    previewUrl: m.preview_url ?? null,
+    productId: m.__table === 'products' ? m.id : null,
     mine: true,
     seedRow: m,
     whispererSharePct: Number(m.whisperer_share_pct ?? 10),

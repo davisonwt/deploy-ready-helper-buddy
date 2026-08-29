@@ -32,6 +32,8 @@ export type MusicRow = {
   image_urls: string[]
   created_at: string | null
   __table?: 'products' | 'dj_music_tracks'
+  /** The row's own 45s clip — dj_music_tracks and products each have their own column. Only populated by useMyContent today (the sole feed for LivingSeedCard's owner-only play button). */
+  preview_url?: string | null
 }
 
 export type BookRow = {
@@ -99,6 +101,7 @@ function splitDashboardRows(rows: any[]): { seeds: SeedRow[]; music: MusicRow[];
         music_mood: row.music_mood,
         genre: row.music_genre,
         file_url: row.file_url,
+        preview_url: row.preview_url ?? null,
         cover_image_url: firstImage(row.image_urls, row.cover_image_url),
         image_urls: row.image_urls || [],
         created_at: row.created_at,
@@ -168,24 +171,24 @@ export function useMyContent(userId: string | null | undefined) {
       const [djTracks, prodMusic] = await Promise.all([
         djIds.length
           ? supabase.from('dj_music_tracks')
-              .select('id, track_title, genre, file_url, cover_image_url, music_genre, music_mood, created_at')
+              .select('id, track_title, genre, file_url, preview_url, cover_image_url, music_genre, music_mood, created_at')
               .in('dj_id', djIds).order('created_at', { ascending: false }).limit(100)
           : Promise.resolve({ data: [] as any[] }),
         sowerId
           ? supabase.from('products')
-              .select('id, title, music_genre, music_mood, file_url, cover_image_url, image_urls, created_at')
+              .select('id, title, music_genre, music_mood, file_url, preview_url, cover_image_url, image_urls, created_at')
               .eq('sower_id', sowerId).eq('type', 'music')
               .order('created_at', { ascending: false }).limit(200)
           : Promise.resolve({ data: [] as any[] }),
       ])
       const djRows: MusicRow[] = (djTracks.data || []).map((t: any) => ({
         id: t.id, track_title: t.track_title, music_genre: t.music_genre, music_mood: t.music_mood,
-        genre: t.genre, file_url: t.file_url, cover_image_url: t.cover_image_url,
+        genre: t.genre, file_url: t.file_url, preview_url: t.preview_url ?? null, cover_image_url: t.cover_image_url,
         image_urls: [], created_at: t.created_at, __table: 'dj_music_tracks' as const,
       }))
       const prodRows: MusicRow[] = (prodMusic.data || []).map((p: any) => ({
         id: p.id, track_title: p.title, music_genre: p.music_genre, music_mood: p.music_mood,
-        genre: p.music_genre, file_url: p.file_url, cover_image_url: p.cover_image_url,
+        genre: p.music_genre, file_url: p.file_url, preview_url: p.preview_url ?? null, cover_image_url: p.cover_image_url,
         image_urls: p.image_urls || [], created_at: p.created_at, __table: 'products' as const,
       }))
       const musicIds = new Set<string>()

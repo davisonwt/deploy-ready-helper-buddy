@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { fetchSeedFileUrl } from '@/lib/media/getSeedFileUrl';
+import { resolvePlayableUrl } from '@/lib/media/resolvePlayableUrl';
 import {
   startPreviewPlayback,
   stopPreviewPlayback,
@@ -11,7 +12,7 @@ import {
 export interface UsePreviewPlayerOptions {
   /** Unique key for cross-component "only one plays at a time" coordination — e.g. the product/track id. */
   id: string;
-  /** The public 45s clip. Playing this is always safe — seed-previews is a public bucket. */
+  /** The 45s clip's stored URL — usually a public seed-previews link, played as-is, but may also be a private-bucket URL (e.g. a dj_music_tracks preview), which is signed lazily on click via resolvePlayableUrl. */
   previewUrl: string | null;
   /** When present and the viewer is signed in, a click tries get-seed-file first (owner/buyer gets the full track); falls back to previewUrl on 403/failure. Omit for content with no full-track entitlement concept here (e.g. dj_music_tracks, already resolved elsewhere). */
   productId?: string | null;
@@ -79,13 +80,18 @@ export function usePreviewPlayer({ id, previewUrl, productId, capSeconds }: UseP
     const seq = ++requestSeq.current;
     (async () => {
       setIsLoading(true);
-      let url = previewUrl;
+      let url: string | null = null;
       let full = false;
 
       if (user && productId) {
         const seedUrl = await fetchSeedFileUrl(productId, 'play');
         if (seq !== requestSeq.current) return; // a newer click (or toggle-off) superseded this one
         if (seedUrl) { url = seedUrl; full = true; }
+      }
+
+      if (!url && previewUrl) {
+        url = await resolvePlayableUrl(previewUrl);
+        if (seq !== requestSeq.current) return;
       }
 
       if (seq !== requestSeq.current) return;

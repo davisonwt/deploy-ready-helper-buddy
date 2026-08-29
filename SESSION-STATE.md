@@ -311,6 +311,59 @@ renders a music card or row:
   already exists" condition was never met; zero changes needed.
 - `npx tsc --noEmit` and `npx eslint` both clean across every file touched.
 
+## Fixed — 2026-08-29, later same day (finished the preview playback work)
+
+Closed the three remaining gaps from the previous entry:
+
+- **`BrowseOrchardsPage.jsx`'s `dj_music_tracks` half of the Music/Seeds tabs
+  now gets a Play button too** — previously deferred (only product-sourced
+  cards had one). Solved the "up to 200 cards, can't eagerly sign 200
+  URLs" problem by moving the signing itself into the shared hook instead
+  of the page: new `src/lib/media/resolvePlayableUrl.ts` — given a raw URL,
+  returns it as-is unless it parses into a known private bucket
+  (`music-tracks`/`dj-music`/`premium-room`), in which case it signs it,
+  lazily, only on an actual click. `usePreviewPlayer`'s `toggle()` now
+  routes its `previewUrl` fallback through this before playing, for every
+  caller, not just this one — a product-sourced `preview_url` (already
+  public) round-trips through it for free (bucket doesn't match, returned
+  as-is). `dj_music_tracks` select gained `preview_url`; `musicRows.map()`
+  now carries it through with no `productId` (no get-seed-file/entitlement
+  concept for that table). No fallback to `file_url` when a dj track has no
+  preview_url — per spec, no preview means no button, full stop.
+- **`ProductsPage.tsx`**: the "Play 30s" button (`no onClick handler at
+  all`, confirmed dead in the previous entry) is now a real `PreviewPlayer`,
+  gated on `!isAlbum(product)` same as `ProductCard`. `preview_url` was
+  already in the page's `select('*')`.
+- **`LivingSeedCard.tsx`**: owner-only, so instead of playing `preview_url`
+  outright (a downgrade — the owner should hear their own full track), it
+  now uses `usePreviewPlayer` with `productId` set so a click tries
+  `get-seed-file` first, falling back to the row's own `preview_url` only
+  if that fails — exactly the hook's existing precedence, unchanged. The
+  raw `<audio src={mediaUrl}>` (bug: private-bucket URL, no auth header,
+  never worked even for the owner) and its local `previewing`/`audioRef`
+  state are gone for the audio case; video is untouched (different bug
+  class, own working mechanism, not part of this fix). Threaded
+  `previewUrl`/`productId` all the way from `sowerContent.ts`'s
+  `useMyContent()` (added `preview_url` to both the `dj_music_tracks` and
+  `products` selects, and to the shared `MusicRow` type) through
+  `buildMusicCard()` → `SeedSlider.jsx` / `DashboardPage.jsx`'s direct
+  render site. `useMyContent()`'s RPC-sourced music rows
+  (`get_my_dashboard_content`) read `preview_url` defensively (`?? null`)
+  since that RPC's own row shape isn't confirmed to carry it — those rows
+  still work via `get-seed-file` (their `productId` is set), just without
+  the `preview_url` fallback if that call fails. `useSowerContent`/
+  `useTribeContent`/`fetchSowerContent`/`fetchSowerContentBulk` were left
+  untouched — they don't feed `LivingSeedCard`.
+- **Video, everywhere touched today**: still correctly zero rows — no
+  table has a trailer/preview-video column (re-confirmed live). No video
+  Play buttons added.
+- **Found, not touched — flagged, not silent**: `MyGardenSection.jsx`'s
+  `GardenCard` (rendered by `/my-orchards`, "My Garden") has the identical
+  raw-`file_url`-into-`<audio src>` bug as `LivingSeedCard` had — but it's
+  a separate, unrelated component, and the task named `LivingSeedCard.tsx`
+  specifically. Not touched.
+- `npx tsc --noEmit` and `npx eslint` both clean across every file touched.
+
 ## Open — priority order
 
 1. ~~Live proof that `paypal-webhook` actually works now~~ — **resolved, see Keystone problem**: order `0a6a0b1a` finalized via a clean webhook call at 08:36 UTC 2026-08-29. The `processed_webhooks`-insert bug (separate from the webhook itself) is also fixed; watch for its first real row as confirmation the fix landed, not as proof the webhook works — that's already established.

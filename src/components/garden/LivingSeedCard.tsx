@@ -25,6 +25,7 @@ import { useTribalLiveOrchard, type BloomStage } from '@/hooks/useTribalLiveOrch
 import { useReferralCode } from '@/hooks/useReferralCode';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/useAuth';
+import { usePreviewPlayer } from '@/hooks/usePreviewPlayer';
 import LiveStageOverlay from '@/components/live/LiveStageOverlay';
 
 export interface LivingSeedCardProps {
@@ -36,6 +37,10 @@ export interface LivingSeedCardProps {
   openPath: string;
   mediaUrl?: string | null;
   mediaKind?: 'audio' | 'video' | 'book' | 'orchard' | 'seed';
+  /** Audio only — the row's own 45s clip, used if get-seed-file fails or productId is absent. */
+  previewUrl?: string | null;
+  /** Audio only — a products.id, tried first via get-seed-file so the owner hears the real file, not just the preview. */
+  productId?: string | null;
   badge?: { emoji: string; label: string; color: string };
   mine?: boolean;
   onEdit?: () => void;
@@ -62,7 +67,7 @@ const BLOOM_META: Record<BloomStage, { emoji: string; label: string }> = {
 
 export default function LivingSeedCard({
   seedId, title, subtitle, image, images, openPath,
-  mediaUrl, mediaKind = 'seed',
+  mediaUrl, mediaKind = 'seed', previewUrl, productId,
   badge, mine, onEdit, onDelete, onRepost, onPark,
   size = 'compact', className = '',
   whispererSharePct = 10,
@@ -79,8 +84,19 @@ export default function LivingSeedCard({
   const [menuOpen, setMenuOpen] = useState(false);
   const [activeRoom, setActiveRoom] = useState<string | null>(null);
   const [failedImages, setFailedImages] = useState<Record<string, true>>({});
-  const audioRef = useRef<HTMLAudioElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
+
+  // Owner-only playback: this card only ever renders content the viewer
+  // owns, so a click tries the real file via get-seed-file first (not a
+  // raw file_url — a private-bucket URL a bare <audio src> can't load
+  // without an auth header) and falls back to the row's own preview_url
+  // only if that fails.
+  const player = usePreviewPlayer({
+    id: seedId,
+    previewUrl: mediaKind === 'audio' ? (previewUrl ?? null) : null,
+    productId: mediaKind === 'audio' ? (productId ?? undefined) : undefined,
+  });
+  const isPlayingNow = mediaKind === 'audio' ? player.isPlaying : previewing;
 
   // image carousel (private-bucket URLs are re-signed so they actually render)
   const rawImgList = (images && images.length ? images : (image ? [image] : [])).filter(Boolean) as string[];
@@ -105,25 +121,29 @@ export default function LivingSeedCard({
   const myBlooms = blooms[seedId] || { seed: 0, leaf: 0, tree: 0 };
   const recentForMe = recentBloom?.seed_id === seedId ? recentBloom.stage : null;
 
-  // Stop preview if media changes
+  // Stop the video preview if media changes — audio's own start/stop
+  // already lives in the shared store, keyed by seedId, and stops itself
+  // when seedId changes (see usePreviewPlayer's own unmount/id-change effect).
   useEffect(() => {
     setPreviewing(false);
-    audioRef.current?.pause();
     videoRef.current?.pause();
   }, [mediaUrl, seedId]);
 
   const handlePlay = () => {
+    if (mediaKind === 'audio') {
+      if (player.hasSource) player.toggle();
+      else navigate(openPath);
+      return;
+    }
     if (previewing) {
-      audioRef.current?.pause();
       videoRef.current?.pause();
       setPreviewing(false);
       return;
     }
-    if ((mediaKind === 'audio' || mediaKind === 'video') && mediaUrl) {
+    if (mediaKind === 'video' && mediaUrl) {
       setPreviewing(true);
       setTimeout(() => {
-        if (mediaKind === 'audio') audioRef.current?.play().catch(() => {});
-        else videoRef.current?.play().catch(() => {});
+        videoRef.current?.play().catch(() => {});
       }, 0);
     } else {
       navigate(openPath);
@@ -250,15 +270,17 @@ export default function LivingSeedCard({
             onEnded={() => setPreviewing(false)}
           />
         )}
-        {previewing && mediaKind === 'audio' && mediaUrl && (
-          <div className="absolute left-3 right-3 top-3 z-10 rounded-lg bg-[#060a12]/85 p-2 backdrop-blur">
-            <audio
-              ref={audioRef}
-              src={mediaUrl}
-              controls
-              className="w-full"
-              onEnded={() => setPreviewing(false)}
-            />
+        {mediaKind === 'audio' && player.isPlaying && (
+          <div className="absolute left-3 right-3 top-3 z-10 rounded-lg bg-[#060a12]/85 p-2.5 backdrop-blur">
+            <div className="h-1 rounded-full bg-white/15 overflow-hidden">
+              <div
+                className="h-full bg-emerald-400 transition-[width] duration-150"
+                style={{ width: `${Math.min(100, Math.max(0, player.progress * 100))}%` }}
+              />
+            </div>
+            <p className="mt-1 text-[10px] font-medium text-white/80">
+              {player.isFullTrack ? 'Full track' : '45s preview'}
+            </p>
           </div>
         )}
 
@@ -347,14 +369,14 @@ export default function LivingSeedCard({
             <div className="flex-1 min-w-[70px]">
               <LivingButton
                 variant="play"
-                isPlaying={previewing}
+                isPlaying={isPlayingNow}
                 onClick={handlePlay}
                 height={38}
                 borderRadius={10}
                 fontSize={11}
                 letterSpacing="0px"
               >
-                {previewing ? '⏸ Pause' : '▶ Play'}
+                {mediaKind === 'audio' && player.isLoading ? '… Loading' : isPlayingNow ? '⏸ Pause' : '▶ Play'}
               </LivingButton>
             </div>
             <Link to={openPath} className="flex-1 min-w-[70px]" style={{ textDecoration: 'none' }}>

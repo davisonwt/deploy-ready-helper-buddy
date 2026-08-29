@@ -408,7 +408,7 @@ export default function BrowseOrchardsPage() {
             .order('created_at', { ascending: false })
             .limit(60),
           supabase.from('dj_music_tracks')
-            .select('id, track_title, artist_name, music_genre, genre, cover_image_url, file_url, dj_id, upload_date, created_at')
+            .select('id, track_title, artist_name, music_genre, genre, cover_image_url, file_url, preview_url, dj_id, upload_date, created_at')
             .eq('is_public', true)
             .order('upload_date', { ascending: false })
             .limit(200),
@@ -530,6 +530,10 @@ export default function BrowseOrchardsPage() {
             sower: djMap.get(m.dj_id)?.dj_name || m.artist_name || 'Tribe Music',
             link: musicSeedLink({ trackId: m.id, productId: findMatchingMusicProduct(m)?.id }),
             created_at: m.upload_date || m.created_at,
+            // No product_id/get-seed-file concept for dj_music_tracks — just
+            // its own preview_url, which usePreviewPlayer signs lazily on
+            // click if it turns out to live in a private bucket.
+            preview_url: m.preview_url || null,
           })),
           ...musicFromProducts,
         ]

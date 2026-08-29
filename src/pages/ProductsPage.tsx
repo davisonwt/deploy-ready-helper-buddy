@@ -11,6 +11,8 @@ import { formatCurrency } from '@/lib/utils';
 import { launchConfetti, floatingScore, playSoundEffect } from '@/utils/confetti';
 import MarketplaceFilterBar from '@/components/marketplace/MarketplaceFilterBar';
 import WanderingBadgeBar, { type WanderingRole } from '@/components/marketplace/WanderingBadgeBar';
+import PreviewPlayer from '@/components/media/PreviewPlayer';
+import { isAlbum } from '@/lib/products/isAlbum';
 
 const ITEMS_PER_PAGE = 20;
 
@@ -458,10 +460,8 @@ export default function ProductsPage() {
                   </div>
                 )}
                 <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent opacity-0 group-hover:opacity-100 transition"></div>
-                {product.type === 'music' && (
-                  <button className="absolute top-4 right-4 bg-teal-500 p-4 rounded-full opacity-0 group-hover:opacity-100 transition hover:scale-125">
-                    Play 30s
-                  </button>
+                {product.type === 'music' && !isAlbum(product) && (
+                  <PreviewPlayer id={product.id} previewUrl={product.preview_url ?? null} productId={product.id} />
                 )}
               </div>
               <div className="p-6">

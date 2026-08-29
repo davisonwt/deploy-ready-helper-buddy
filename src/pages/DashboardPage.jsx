@@ -1281,6 +1281,8 @@ export default function SeedFlowDashboard() {
                       openPath={c.openPath}
                       mediaUrl={c.mediaUrl}
                       mediaKind={c.mediaKind}
+                      previewUrl={c.previewUrl}
+                      productId={c.productId}
                       badge={c.badge}
                       mine={c.mine}
                       whispererSharePct={c.whispererSharePct}
