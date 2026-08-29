@@ -366,6 +366,9 @@ verify_jwt = false
 [functions.paypal-email-verify]
 verify_jwt = true
 
+[functions.check-email-transport]
+verify_jwt = false
+
 [functions.poll-video-jobs]
 verify_jwt = false
 
