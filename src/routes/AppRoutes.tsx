@@ -69,7 +69,9 @@ import {
   PayoutSettingsPage,
   PaypalConnectedPage,
   SowIndexPage,
+  SowChooserPage,
   SowMusicPage,
+  RegisterWanderingPage,
   PrivacyPage,
   TermsPage,
   MyOrdersPage,
@@ -156,10 +158,16 @@ const AppRoutes = () => (
     <Route path="/" element={<Index />} />
     <Route path="/login" element={<LoginPage />} />
     <Route path="/sow" element={
+      <ProtectedRoute><Suspense fallback={<LoadingFallback />}><SowChooserPage /></Suspense></ProtectedRoute>
+    } />
+    <Route path="/sow/classic" element={
       <ProtectedRoute><Suspense fallback={<LoadingFallback />}><SowIndexPage /></Suspense></ProtectedRoute>
     } />
     <Route path="/sow/music" element={
       <ProtectedRoute><Suspense fallback={<LoadingFallback />}><SowMusicPage /></Suspense></ProtectedRoute>
+    } />
+    <Route path="/register-wandering" element={
+      <ProtectedRoute><Suspense fallback={<LoadingFallback />}><RegisterWanderingPage /></Suspense></ProtectedRoute>
     } />
     <Route path="/privacy" element={<Suspense fallback={<LoadingFallback />}><PrivacyPage /></Suspense>} />
     <Route path="/terms" element={<Suspense fallback={<LoadingFallback />}><TermsPage /></Suspense>} />

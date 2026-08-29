@@ -497,6 +497,84 @@ started.
   it once before its per-row loop rather than once per row.
 - `npx tsc --noEmit` and `npx eslint` both clean.
 
+## Fixed — 2026-08-29, still later (spec-service-seeds.md build order steps 1–2: /sow chooser, role unlock, Directory fix)
+
+Did build order steps 1–2 of `spec-service-seeds.md` only, per instruction
+— steps 3+ (the four seed forms themselves, booking as a purchase kind,
+grower-side "Request booking") not started; `/sow/hand`, `/sow/wheel`,
+`/sow/pillow`, `/sow/heart` all correctly 404 for now via the existing
+catch-all route, exactly as the spec expects at this stage.
+
+**Step 1 — migration (`20260829190000_wandering-roles-and-service-seeds.sql`), confirmed applied live:**
+- New `wandering_roles` table (`user_id`, `role` — CHECK'd to
+  `wheel|hand|pillow`, `display_name`, `base_town`, `lat`/`lng`, `status`
+  default `'active'`, `declared_self_operated_at`, `accepted_terms_at`,
+  timestamps, `UNIQUE(user_id, role)`). RLS: owner can read/insert/update
+  their own rows; a separate public policy lets anyone read `status =
+  'active'` rows — verified all 4 policies live.
+- `community_drivers`/`service_providers`/`stay_listings` marked
+  deprecated via `COMMENT ON TABLE` (plain ASCII text — the first attempt
+  used `§`/em-dash and came back mojibake in a client display, redone
+  clean rather than left ambiguous); nothing dropped, nothing else reads
+  them going forward except the Directory, which is fixed below.
+- `products.file_url` — `DROP NOT NULL` (service seeds have no file).
+- `products.kind` (new, `CHECK (kind is null or kind in
+  ('music','ebook','hand','wheel','pillow','heart'))`) backfilled from
+  `type`. **Live counts before backfill: 56 `music`, 1 `ebook`, 1
+  `product`.** Only `music`/`ebook` map cleanly into the new vocabulary —
+  the one legacy `product`-typed row was left `kind = NULL` rather than
+  forced into a mismatched value; confirmed live afterward: 56
+  `kind='music'`, 1 `kind='ebook'`, 1 `kind=NULL`.
+- `products.service_details jsonb` (new, nullable) — for the kind-specific
+  fields section 5 defines (not built yet, this task is schema-only for it).
+- `wandering_role` column (the uploader's personal badge, read by
+  TribalAliveFeed/DJMusicUpload/video upload) was **not** reused or
+  touched, per the spec's explicit warning that it means something
+  different from the new `kind` column.
+
+**Step 2 — application code:**
+- **`/sow` is now the chooser** (`SowChooserPage.tsx`, new) — four
+  groups per §3: Creations (Music → live `/sow/music`; Art/Books → `/sow/classic`,
+  "coming soon"), Services & time (Hand/Wheel/Pillow/Heart), Produce &
+  goods (Field/Forge → `/sow/classic`), Orchards (Community/Production →
+  existing `/create-orchard`, both — the form itself distinguishes the
+  type). The old flat tile picker (`SowIndexPage.tsx`) is unchanged and
+  now lives at **`/sow/classic`** — every "coming soon" card links there,
+  matching what the spec calls "the old form."
+- **Service card routing**: on mount, fetches the viewer's own
+  `wandering_roles` rows plus a `tribal_hearts_profiles` existence check.
+  A card for a role already held routes straight to `/sow/<kind>`
+  (currently 404 — no seed form built yet, expected at this stage). A
+  role not yet held routes to `/register-wandering?role=<kind>` — **except
+  Heart**, which routes straight to its own existing `/tribal-hearts`
+  onboarding instead, since Heart was never a `wandering_roles` concept
+  and the new unlock screen doesn't handle it (spec §4 is explicit that
+  Heart keeps its current flow untouched).
+- **`/register-wandering`** (`RegisterWanderingPage.tsx`, new — this route
+  never existed before; SESSION-STATE previously flagged it as "a dead
+  link," see Open list) is the role-unlock screen for `hand`/`wheel`/`pillow`
+  only. Prefills display name and base town from the profile (`profiles.display_name`/
+  `location`/`latitude`/`longitude`, when set). Both the self-operation
+  declaration (the lawyer's exact wording, §2) and the terms checkbox are
+  required before the button enables. Submits an `upsert` on
+  `(user_id, role)` — reactivating a previously-`inactive` role works the
+  same as a first-time unlock — then navigates to `/sow/<role>`.
+- **`WanderingDirectoryPage.jsx`**: Wheel/Hand/Pillow now query
+  `wandering_roles` (`role = <x> AND status = 'active'`) instead of
+  `community_drivers`/`service_providers`/`stay_listings`. **The Heart
+  tab's fetch — entirely missing before, a real bug independently
+  confirmed both by reading the code and previously flagged in this log —
+  is added**, reading `tribal_hearts_profiles` (`status = 'active'`); its
+  card already correctly linked to `/tribal-hearts` regardless of row
+  shape, so that part needed no change. `getName`/`getLocation`/`getAvatar`
+  extended to read the new row shapes (`display_name`/`base_town` for
+  wandering_roles; `display_first_name`/`location_region`+`location_country`/
+  `photos[0]` for tribal_hearts_profiles) without removing any existing
+  fallback. Whisperer/Field/Forge/Story/Hearth tabs are unchanged — not
+  part of this spec's role system (Whisperer is role-only and explicitly
+  never a seed; Field/Forge are deferred "coming soon").
+- `npx tsc --noEmit` and `npx eslint` both clean.
+
 ## Open — priority order
 
 1. ~~Live proof that `paypal-webhook` actually works now~~ — **resolved, see Keystone problem**: order `0a6a0b1a` finalized via a clean webhook call at 08:36 UTC 2026-08-29. The `processed_webhooks`-insert bug (separate from the webhook itself) is also fixed; watch for its first real row as confirmation the fix landed, not as proof the webhook works — that's already established.

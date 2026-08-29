@@ -5,10 +5,10 @@ import { useAuth } from '../hooks/useAuth'
 
 const ROLES = [
   { key: 'all', label: 'All', emoji: '🌿' },
-  { key: 'wheel', label: 'Wandering Wheel', emoji: '🚗', table: 'community_drivers' },
-  { key: 'hand', label: 'Wandering Hand', emoji: '🤲', table: 'service_providers' },
+  { key: 'wheel', label: 'Wandering Wheel', emoji: '🚗', table: 'wandering_roles' },
+  { key: 'hand', label: 'Wandering Hand', emoji: '🤲', table: 'wandering_roles' },
   { key: 'whisperer', label: 'Whisperer', emoji: '🌬️', table: 'whisperers' },
-  { key: 'pillow', label: 'Wandering Pillow', emoji: '🛏️', table: 'stay_listings' },
+  { key: 'pillow', label: 'Wandering Pillow', emoji: '🛏️', table: 'wandering_roles' },
   { key: 'field', label: 'Wandering Field', emoji: '🌾', table: 'providers' },
   { key: 'heart', label: 'Wandering Heart', emoji: '💚', table: 'tribal_hearts_profiles' },
   { key: 'forge', label: 'Wandering Forge', emoji: '⚒️', table: 'providers' },
@@ -46,12 +46,29 @@ export default function WanderingDirectoryPage() {
           _roleEmoji: roleEmoji, _color: ROLE_COLORS[roleKey],
         }))
       }
-      if (activeRole === 'all' || activeRole === 'wheel') await fetchRole('community_drivers', 'wheel', 'Wandering Wheel', '🚗')
-      if (activeRole === 'all' || activeRole === 'hand') await fetchRole('service_providers', 'hand', 'Wandering Hand', '🤲')
+      // Wheel/Hand/Pillow now read from wandering_roles (spec-service-seeds.md
+      // §4) — the old community_drivers/service_providers/stay_listings
+      // tables have no registration UI or writer anywhere, deprecated.
+      const fetchWanderingRole = async (roleKey, roleLabel, roleEmoji) => {
+        let query = supabase.from('wandering_roles').select('*').eq('role', roleKey).eq('status', 'active').limit(20)
+        if (locationFilter) query = query.ilike('base_town', `%${locationFilter}%`)
+        const { data } = await query
+        if (data) data.forEach(item => results.push({
+          ...item, _role: roleKey, _roleLabel: roleLabel,
+          _roleEmoji: roleEmoji, _color: ROLE_COLORS[roleKey],
+        }))
+      }
+      if (activeRole === 'all' || activeRole === 'wheel') await fetchWanderingRole('wheel', 'Wandering Wheel', '🚗')
+      if (activeRole === 'all' || activeRole === 'hand') await fetchWanderingRole('hand', 'Wandering Hand', '🤲')
       if (activeRole === 'all' || activeRole === 'whisperer') await fetchRole('whisperers', 'whisperer', 'Whisperer', '🌬️')
-      if (activeRole === 'all' || activeRole === 'pillow') {
-        const { data } = await supabase.from('stay_listings').select('*').eq('status', 'approved').limit(20)
-        if (data) data.forEach(item => results.push({ ...item, _role: 'pillow', _roleLabel: 'Wandering Pillow', _roleEmoji: '🛏️', _color: ROLE_COLORS.pillow }))
+      if (activeRole === 'all' || activeRole === 'pillow') await fetchWanderingRole('pillow', 'Wandering Pillow', '🛏️')
+      if (activeRole === 'all' || activeRole === 'heart') {
+        // Directory's Heart tab never fetched anything — fixed here.
+        // Stays on tribal_hearts_profiles, its own onboarding (/tribal-hearts).
+        let query = supabase.from('tribal_hearts_profiles').select('*').eq('status', 'active').limit(20)
+        if (locationFilter) query = query.ilike('location_region', `%${locationFilter}%`)
+        const { data } = await query
+        if (data) data.forEach(item => results.push({ ...item, _role: 'heart', _roleLabel: 'Wandering Heart', _roleEmoji: '💚', _color: ROLE_COLORS.heart }))
       }
       if (activeRole === 'all' || activeRole === 'field') {
         const { data } = await supabase.from('providers').select('*').eq('status', 'approved').eq('subtype', 'farmer').limit(20)
@@ -120,10 +137,10 @@ export default function WanderingDirectoryPage() {
     registerBtn: { padding: '8px 16px', background: '#16a34a', border: 'none', borderRadius: 20, color: '#fff', fontSize: 13, fontWeight: 700, cursor: 'pointer' },
   }
 
-  const getName = (m) => m.full_name || m.display_name || m.business_name || m.dj_name || 'Tribe Member'
+  const getName = (m) => m.full_name || m.display_name || m.display_first_name || m.business_name || m.dj_name || 'Tribe Member'
   const getDesc = (m) => m.bio || m.description || m.services_offered?.join(', ') || m.specialties?.join(', ') || ''
-  const getLocation = (m) => [m.city, m.country].filter(Boolean).join(', ') || 'Location not set'
-  const getAvatar = (m) => m.logo_url || m.avatar_url || m.cover_photo || null
+  const getLocation = (m) => [m.city, m.country].filter(Boolean).join(', ') || m.base_town || [m.location_region, m.location_country].filter(Boolean).join(', ') || 'Location not set'
+  const getAvatar = (m) => m.logo_url || m.avatar_url || m.cover_photo || m.photos?.[0] || null
   const goBack = () => (window.history.length > 1 ? navigate(-1) : navigate('/dashboard'))
 
   return (

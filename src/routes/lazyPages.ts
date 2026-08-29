@@ -135,7 +135,9 @@ export const WalletSettingsPage = lazy(() => import('@/pages/WalletSettingsPage'
 export const PayoutSettingsPage = lazy(() => import('@/pages/PayoutSettingsPage'));
 export const PaypalConnectedPage = lazy(() => import('@/pages/PaypalConnectedPage'));
 export const SowIndexPage = lazy(() => import('@/pages/sow/SowIndexPage'));
+export const SowChooserPage = lazy(() => import('@/pages/sow/SowChooserPage'));
 export const SowMusicPage = lazy(() => import('@/pages/sow/SowMusicPage'));
+export const RegisterWanderingPage = lazy(() => import('@/pages/RegisterWanderingPage'));
 export const PrivacyPage = lazy(() => import('@/pages/PrivacyPage'));
 export const TermsPage = lazy(() => import('@/pages/TermsPage'));
 export const MyOrdersPage = lazy(() => import('@/pages/MyOrdersPage'));
