@@ -363,6 +363,9 @@ verify_jwt = false
 [functions.payout-earnings]
 verify_jwt = false
 
+[functions.paypal-email-verify]
+verify_jwt = true
+
 [functions.poll-video-jobs]
 verify_jwt = false
 

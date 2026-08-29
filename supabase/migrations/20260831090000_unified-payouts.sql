@@ -166,11 +166,25 @@ ALTER TABLE public.content_purchases ADD CONSTRAINT content_purchases_payout_sta
 
 -- ---------------------------------------------------------------------------
 -- Retire the two daily crypto-rail cron jobs; replace with one weekly run.
--- Both job names are confirmed live right now (jobid 10 and 11) — if this
--- migration is re-run after they're already gone, cron.unschedule() by name
--- raises rather than no-oping, so this block is NOT safe to replay blindly.
-SELECT cron.unschedule('payout-sower-earnings-daily');
-SELECT cron.unschedule('payout-whisperer-earnings-daily');
+-- cron.unschedule(name) raises rather than no-oping when the job doesn't
+-- exist — payout-sower-earnings-daily was already removed by hand in Studio
+-- (2026-08-31 08:55), so a bare SELECT here would abort this whole
+-- migration. Wrapped in DO blocks that swallow exactly that failure.
+DO $$
+BEGIN
+  PERFORM cron.unschedule('payout-sower-earnings-daily');
+EXCEPTION WHEN OTHERS THEN
+  RAISE NOTICE 'payout-sower-earnings-daily: already gone, nothing to unschedule';
+END;
+$$;
+
+DO $$
+BEGIN
+  PERFORM cron.unschedule('payout-whisperer-earnings-daily');
+EXCEPTION WHEN OTHERS THEN
+  RAISE NOTICE 'payout-whisperer-earnings-daily: already gone, nothing to unschedule';
+END;
+$$;
 
 SELECT cron.schedule(
   'payout-earnings-weekly',

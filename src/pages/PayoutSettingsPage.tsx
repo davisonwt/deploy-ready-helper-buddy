@@ -14,6 +14,7 @@ import { toast } from 'sonner';
 import AddNowPaymentsWallet from '@/components/payouts/AddNowPaymentsWallet';
 import AddPaypalEmail from '@/components/payouts/AddPaypalEmail';
 import CryptoPayoutSettings from '@/components/payouts/CryptoPayoutSettings';
+import VerifyPaypalEmailControl from '@/components/payouts/VerifyPaypalEmailControl';
 import { PAYOUT_PROVIDERS } from '@/lib/payments/providerFees';
 
 /**
@@ -302,6 +303,7 @@ export default function PayoutSettingsPage() {
             activeDefaultId={activeDefaultWalletId}
             onSetPrimary={setPrimary}
             onRemove={removeWallet}
+            onVerified={load}
             emptyText="No PayPal payout emails yet."
           />
           <AddPaypalEmail onSaved={load} />
@@ -320,6 +322,7 @@ function WalletList({
   activeDefaultId,
   onSetPrimary,
   onRemove,
+  onVerified,
   emptyText,
 }: {
   title: string;
@@ -328,6 +331,8 @@ function WalletList({
   activeDefaultId: string | null;
   onSetPrimary: (r: WalletRow) => void;
   onRemove: (r: WalletRow) => void;
+  /** Passed only for PayPal rows — shows a "Verify" control on an unverified row. */
+  onVerified?: () => void;
   emptyText: string;
 }) {
   return (
@@ -376,6 +381,9 @@ function WalletList({
                     )}
                   </div>
                 </div>
+                {onVerified && !r.verified_at && (
+                  <VerifyPaypalEmailControl email={r.wallet_address} onVerified={onVerified} />
+                )}
                 {!r.is_primary && (
                   <Button size="sm" variant="outline" onClick={() => onSetPrimary(r)}>
                     Make primary
