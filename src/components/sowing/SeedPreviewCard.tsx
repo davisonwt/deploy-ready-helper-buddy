@@ -9,6 +9,7 @@ interface Props {
   price: number | null;
   isFree: boolean;
   type: string;
+  isAlbum?: boolean;
   sowerName?: string;
   sowerAvatarUrl?: string;
 }
@@ -19,7 +20,7 @@ interface Props {
  * built from the form's current values. Non-interactive: there's no real
  * row behind it yet.
  */
-export default function SeedPreviewCard({ title, description, coverUrl, price, isFree, type, sowerName, sowerAvatarUrl }: Props) {
+export default function SeedPreviewCard({ title, description, coverUrl, price, isFree, type, isAlbum, sowerName, sowerAvatarUrl }: Props) {
   const { user } = useAuth();
   const total = !isFree && price && price > 0 ? priceBreakdown(price).total : 0;
 
@@ -31,6 +32,7 @@ export default function SeedPreviewCard({ title, description, coverUrl, price, i
     cover_image_url: coverUrl,
     price: total,
     license_type: isFree ? 'free' : 'bestowal',
+    metadata: isAlbum ? { is_album: true } : undefined,
     play_count: 0,
     bestowal_count: 0,
     like_count: 0,

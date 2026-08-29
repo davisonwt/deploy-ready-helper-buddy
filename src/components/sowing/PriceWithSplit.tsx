@@ -9,6 +9,8 @@ interface Props {
   isFree: boolean;
   onChangePrice: (base: number | null) => void;
   onChangeFree: (free: boolean) => void;
+  /** Defaults to "Price" — e.g. "Album price" when the whole form is priced as one unit. */
+  label?: string;
 }
 
 /**
@@ -17,13 +19,13 @@ interface Props {
  * with live split". Always priceBreakdown(); never a second copy of the
  * maths.
  */
-export default function PriceWithSplit({ price, isFree, onChangePrice, onChangeFree }: Props) {
+export default function PriceWithSplit({ price, isFree, onChangePrice, onChangeFree, label = 'Price' }: Props) {
   const split = !isFree && price != null && price > 0 ? priceBreakdown(price) : null;
 
   return (
     <div className="space-y-2">
       <div className="flex items-center justify-between">
-        <Label htmlFor="sow-price">Price</Label>
+        <Label htmlFor="sow-price">{label}</Label>
         <div className="flex items-center gap-2">
           <Label htmlFor="sow-free" className="text-sm text-muted-foreground font-normal cursor-pointer">Free</Label>
           <Switch id="sow-free" checked={isFree} onCheckedChange={onChangeFree} />

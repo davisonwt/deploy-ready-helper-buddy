@@ -8,6 +8,7 @@ import { launchConfetti } from '@/utils/confetti';
 import { toast } from 'sonner';
 
 import SeedDropZone, { type SeedFileResult } from '@/components/sowing/SeedDropZone';
+import AlbumTrackList, { type AlbumTrack } from '@/components/sowing/AlbumTrackList';
 import CoverDropZone, { type CoverResult } from '@/components/sowing/CoverDropZone';
 import PriceWithSplit from '@/components/sowing/PriceWithSplit';
 import OnePicker, { type OnePickerOption } from '@/components/sowing/OnePicker';
@@ -21,7 +22,7 @@ import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
-import { ArrowLeft, Music, ChevronDown, Eye } from 'lucide-react';
+import { ArrowLeft, Music, Disc, ChevronDown, Eye } from 'lucide-react';
 
 const GENRES: OnePickerOption[] = [
   'Pop', 'Rock', 'Hip-Hop', 'R&B', 'Electronic', 'Dance', 'Indie', 'Folk',
@@ -30,17 +31,23 @@ const GENRES: OnePickerOption[] = [
 ].map((g) => ({ value: g.toLowerCase(), label: g }));
 
 const AUDIO_ACCEPT = '.wav,.mp3,.flac,.aac,.m4a,.ogg';
+const ALBUM_MIN_TRACKS = 8;
 
-function SowBanner() {
+type Mode = 'single' | 'album';
+
+function SowBanner({ mode }: { mode: Mode }) {
+  const Icon = mode === 'album' ? Disc : Music;
   return (
     <div className="relative w-full rounded-2xl overflow-hidden mb-6 border flex items-stretch min-h-[7rem] md:min-h-[9rem]">
       <div className="w-28 md:w-40 shrink-0 bg-gradient-to-br from-primary/70 to-primary/30 flex items-center justify-center">
-        <Music className="w-10 h-10 md:w-14 md:h-14 text-primary-foreground/90" />
+        <Icon className="w-10 h-10 md:w-14 md:h-14 text-primary-foreground/90" />
       </div>
       <div className="flex-1 flex flex-col justify-center p-4 md:p-6 bg-muted/40">
-        <h1 className="text-xl md:text-3xl font-black tracking-tight">Sow a song</h1>
+        <h1 className="text-xl md:text-3xl font-black tracking-tight">{mode === 'album' ? 'Sow an album' : 'Sow a song'}</h1>
         <p className="text-sm md:text-base text-muted-foreground mt-1">
-          Share your track with the tribe — planted in under two minutes.
+          {mode === 'album'
+            ? 'Share a full release with the tribe, track by track.'
+            : 'Share your track with the tribe — planted in under two minutes.'}
         </p>
       </div>
     </div>
@@ -51,7 +58,9 @@ export default function SowMusicPage() {
   const { user } = useAuth();
   const navigate = useNavigate();
 
+  const [mode, setMode] = useState<Mode>('single');
   const [seedFile, setSeedFile] = useState<SeedFileResult | null>(null);
+  const [tracks, setTracks] = useState<AlbumTrack[]>([]);
   const [cover, setCover] = useState<CoverResult | null>(null);
   const [title, setTitle] = useState('');
   const [price, setPrice] = useState<number | null>(null);
@@ -66,7 +75,21 @@ export default function SowMusicPage() {
   const [releaseDate, setReleaseDate] = useState('');
   const [whispererPercent, setWhispererPercent] = useState<number | null>(null);
 
-  const fileReady = !!seedFile && seedFile.previewStatus === 'ready' && !!seedFile.fileUrl;
+  // Stable per-visit folder for album tracks — recomputed only if the user
+  // never touches album mode, so it never collides across sessions.
+  const albumSessionId = useMemo(() => Date.now(), []);
+
+  const switchMode = (next: Mode) => {
+    if (next === mode) return;
+    setMode(next);
+    setSeedFile(null);
+    setTracks([]);
+  };
+
+  const albumTracksReady = tracks.length >= ALBUM_MIN_TRACKS && tracks.every((t) => t.status === 'ready');
+  const fileReady = mode === 'album'
+    ? albumTracksReady
+    : !!seedFile && seedFile.previewStatus === 'ready' && !!seedFile.fileUrl;
   const coverReady = !!cover;
   const titleReady = title.trim().length > 0;
   const priceReady = isFree || (price != null && price > 0);
@@ -77,18 +100,29 @@ export default function SowMusicPage() {
     .filter(Boolean).length;
 
   const missingReason = useMemo(() => {
-    if (!fileReady) return 'Add your track to continue.';
+    if (!fileReady) {
+      if (mode === 'album') {
+        if (tracks.length === 0) return 'Add your tracks to continue.';
+        if (tracks.some((t) => t.status === 'error')) return 'Fix or remove the tracks that failed to upload.';
+        if (tracks.some((t) => t.status === 'uploading')) return 'Tracks are still uploading…';
+        const remaining = ALBUM_MIN_TRACKS - tracks.length;
+        return `Add at least ${remaining} more track${remaining === 1 ? '' : 's'} — albums need ${ALBUM_MIN_TRACKS}+.`;
+      }
+      return 'Add your track to continue.';
+    }
     if (!coverReady) return 'Add a cover to continue.';
     if (!titleReady) return 'Give it a title.';
     if (!priceReady) return 'Set a price, or mark it free.';
     if (!genreReady) return 'Pick a genre.';
     if (!descriptionReady) return 'Add a short description.';
     return undefined;
-  }, [fileReady, coverReady, titleReady, priceReady, genreReady, descriptionReady]);
+  }, [fileReady, mode, tracks, coverReady, titleReady, priceReady, genreReady, descriptionReady]);
 
   const handlePlant = async () => {
     if (!user) { toast.error('Please log in to sow.'); return; }
-    if (completed < 6 || !seedFile || !cover) return;
+    if (completed < 6 || !cover) return;
+    if (mode === 'single' && !seedFile) return;
+    if (mode === 'album' && !albumTracksReady) return;
 
     setSubmitting(true);
     try {
@@ -111,6 +145,36 @@ export default function SowMusicPage() {
       if (explicit) metadata.explicit = true;
       if (releaseDate) metadata.release_date = releaseDate;
 
+      let fileUrl: string;
+      let duration: number | null = null;
+      let previewUrl: string | null = null;
+
+      if (mode === 'album') {
+        // Same shape the old album upload form wrote: one products row,
+        // file_url pointing at a manifest.json of individually-uploaded
+        // tracks. isAlbum() recognises this from the manifest.json file_url
+        // alone; metadata.is_album is set too, for good measure.
+        metadata.is_album = true;
+        const manifest = {
+          type: 'album',
+          createdAt: new Date().toISOString(),
+          cover: cover.fileUrl,
+          tracks: tracks.map((t) => ({ name: t.name, size: t.size, path: t.path, url: t.url, price: t.price ?? undefined })),
+        };
+        const manifestBlob = new Blob([JSON.stringify(manifest, null, 2)], { type: 'application/json' });
+        const manifestPath = `products/${user.id}/${albumSessionId}/manifest.json`;
+        const { error: manifestErr } = await supabase.storage
+          .from('premium-room')
+          .upload(manifestPath, manifestBlob, { contentType: 'application/json' });
+        if (manifestErr) throw manifestErr;
+        const { data: manifestUrl } = supabase.storage.from('premium-room').getPublicUrl(manifestPath);
+        fileUrl = manifestUrl.publicUrl;
+      } else {
+        fileUrl = seedFile!.fileUrl;
+        duration = seedFile!.duration ? Math.round(seedFile!.duration) : null;
+        previewUrl = seedFile!.previewUrl ?? null;
+      }
+
       const inserted = await insertProduct({
         sower_id: sowerId,
         title: title.trim(),
@@ -121,9 +185,9 @@ export default function SowMusicPage() {
         license_type: isFree ? 'free' : 'bestowal',
         price: totalPrice,
         cover_image_url: cover.fileUrl,
-        file_url: seedFile.fileUrl,
-        preview_url: seedFile.previewUrl ?? null,
-        duration: seedFile.duration ? Math.round(seedFile.duration) : null,
+        file_url: fileUrl,
+        preview_url: previewUrl,
+        duration,
         delivery_type: 'digital',
         has_whisperer: whispererPercent != null && whispererPercent > 0,
         whisperer_commission_percent: whispererPercent,
@@ -153,6 +217,7 @@ export default function SowMusicPage() {
   }
 
   const pathPrefix = `products/${user.id}`;
+  const albumPathPrefix = `products/${user.id}/${albumSessionId}`;
 
   const previewCard = (
     <SeedPreviewCard
@@ -162,6 +227,7 @@ export default function SowMusicPage() {
       price={price}
       isFree={isFree}
       type="music"
+      isAlbum={mode === 'album'}
     />
   );
 
@@ -172,10 +238,32 @@ export default function SowMusicPage() {
         Back
       </Button>
 
-      <SowBanner />
+      <SowBanner mode={mode} />
 
       <div className="grid md:grid-cols-[1fr_320px] gap-8">
         <div className="space-y-5">
+          <div>
+            <Label className="mb-1.5 block">Single or album?</Label>
+            <div className="grid grid-cols-2 gap-2">
+              <button
+                type="button"
+                onClick={() => switchMode('single')}
+                className={`flex items-center justify-center gap-2 rounded-xl border-2 py-3 text-sm font-medium transition-colors
+                  ${mode === 'single' ? 'border-primary bg-primary/5' : 'border-border hover:border-primary/60'}`}
+              >
+                <Music className="w-4 h-4" /> Single track
+              </button>
+              <button
+                type="button"
+                onClick={() => switchMode('album')}
+                className={`flex items-center justify-center gap-2 rounded-xl border-2 py-3 text-sm font-medium transition-colors
+                  ${mode === 'album' ? 'border-primary bg-primary/5' : 'border-border hover:border-primary/60'}`}
+              >
+                <Disc className="w-4 h-4" /> Album
+              </button>
+            </div>
+          </div>
+
           <div className="flex items-start gap-4">
             <CoverDropZone bucket="premium-room" pathPrefix={`covers/${user.id}`} onChange={setCover} required />
             <div className="flex-1">
@@ -190,20 +278,38 @@ export default function SowMusicPage() {
             </div>
           </div>
 
-          <div>
-            <Label className="mb-1.5 block">Track</Label>
-            <SeedDropZone
-              kind="audio"
-              bucket="premium-room"
-              pathPrefix={pathPrefix}
-              generatePreview
-              accept={AUDIO_ACCEPT}
-              allowedLabel="WAV or MP3 for an automatic 45-second preview. Other formats can still be uploaded through the classic form."
-              onChange={setSeedFile}
-            />
-          </div>
+          {mode === 'album' ? (
+            <div>
+              <Label className="mb-1.5 block">Tracks</Label>
+              <AlbumTrackList
+                bucket="premium-room"
+                pathPrefix={albumPathPrefix}
+                allowedLabel={`WAV, MP3, FLAC, AAC, M4A, or OGG — at least ${ALBUM_MIN_TRACKS} tracks`}
+                onChange={setTracks}
+              />
+            </div>
+          ) : (
+            <div>
+              <Label className="mb-1.5 block">Track</Label>
+              <SeedDropZone
+                kind="audio"
+                bucket="premium-room"
+                pathPrefix={pathPrefix}
+                generatePreview
+                accept={AUDIO_ACCEPT}
+                allowedLabel="WAV or MP3 for an automatic 45-second preview. Other formats can still be uploaded through the classic form."
+                onChange={setSeedFile}
+              />
+            </div>
+          )}
 
-          <PriceWithSplit price={price} isFree={isFree} onChangePrice={setPrice} onChangeFree={setIsFree} />
+          <PriceWithSplit
+            price={price}
+            isFree={isFree}
+            onChangePrice={setPrice}
+            onChangeFree={setIsFree}
+            label={mode === 'album' ? 'Album price' : 'Price'}
+          />
 
           <OnePicker
             label="Genre"
