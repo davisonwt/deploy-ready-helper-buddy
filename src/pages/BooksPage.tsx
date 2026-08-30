@@ -123,7 +123,7 @@ export default function BooksPage() {
           </TabsList>
 
           <TabsContent value="dashboard">
-            <BooksDashboardTab invoices={books.invoices} expenses={books.expenses} />
+            <BooksDashboardTab invoices={books.invoices} expenses={books.expenses} income={books.income} />
           </TabsContent>
           <TabsContent value="invoices">
             <InvoicesTab

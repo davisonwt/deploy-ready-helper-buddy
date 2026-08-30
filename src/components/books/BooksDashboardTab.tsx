@@ -4,11 +4,12 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import MoneyRiver from './MoneyRiver';
 import { useBooksCurrency } from '@/lib/books/currency';
-import type { ExpenseRow, InvoiceRow } from '@/hooks/useBooksData';
+import type { BooksIncomeRow, ExpenseRow, InvoiceRow } from '@/hooks/useBooksData';
 
 interface Props {
   invoices: InvoiceRow[];
   expenses: ExpenseRow[];
+  income: BooksIncomeRow[];
 }
 
 function StatCard({
@@ -45,14 +46,14 @@ function StatCard({
   );
 }
 
-export default function BooksDashboardTab({ invoices, expenses }: Props) {
+export default function BooksDashboardTab({ invoices, expenses, income }: Props) {
   const { fmt, currency, symbol } = useBooksCurrency();
   const stats = useMemo(() => {
-    const income = invoices.filter((i) => i.status === 'paid').reduce((s, i) => s + i.amount, 0);
+    const totalIncome = income.reduce((s, i) => s + i.amount, 0);
     const outstanding = invoices.filter((i) => i.status !== 'paid').reduce((s, i) => s + i.amount, 0);
     const spend = expenses.reduce((s, e) => s + e.amount, 0);
-    return { income, outstanding, spend, net: income - spend };
-  }, [invoices, expenses]);
+    return { income: totalIncome, outstanding, spend, net: totalIncome - spend };
+  }, [income, invoices, expenses]);
 
   const inflows = useMemo(() => {
     const map = new Map<string, number>();
