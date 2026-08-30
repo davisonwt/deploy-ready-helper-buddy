@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" fill="none" role="img" aria-label="pillow">
+  <defs>
+    <filter id="glow-pillow" x="-60%" y="-60%" width="220%" height="220%" color-interpolation-filters="sRGB">
+      <feGaussianBlur stdDeviation="1.1" result="b1"></feGaussianBlur>
+      <feGaussianBlur stdDeviation="0.4" result="b2"></feGaussianBlur>
+      <feMerge>
+        <feMergeNode in="b1"></feMergeNode>
+        <feMergeNode in="b1"></feMergeNode>
+        <feMergeNode in="b2"></feMergeNode>
+        <feMergeNode in="SourceGraphic"></feMergeNode>
+      </feMerge>
+    </filter>
+  </defs>
+  <g filter="url(#glow-pillow)" stroke="#2DE8D8" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round" fill="none">
+    <path d="M12 30c0-6 4-9 9-9h22c5 0 9 3 9 9v6c0 8-6 12-20 12S12 44 12 36Z"></path>
+    <path d="M20 24c1.5 3 1.5 15 0 18" stroke-width="0.8"></path>
+    <path d="M44 24c-1.5 3-1.5 15 0 18" stroke-width="0.8"></path>
+    <path d="M17 22c4-2 8-2.5 15-2.5s11 .5 15 2.5" stroke-width="0.8"></path>
+
+    <path d="M22 40c4 2.5 16 2.5 20 0"></path>
+  </g>
+</svg>

@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" fill="none" role="img" aria-label="wheels">
+  <defs>
+    <filter id="glow-wheels" x="-60%" y="-60%" width="220%" height="220%" color-interpolation-filters="sRGB">
+      <feGaussianBlur stdDeviation="1.1" result="b1"></feGaussianBlur>
+      <feGaussianBlur stdDeviation="0.4" result="b2"></feGaussianBlur>
+      <feMerge>
+        <feMergeNode in="b1"></feMergeNode>
+        <feMergeNode in="b1"></feMergeNode>
+        <feMergeNode in="b2"></feMergeNode>
+        <feMergeNode in="SourceGraphic"></feMergeNode>
+      </feMerge>
+    </filter>
+  </defs>
+  <g filter="url(#glow-wheels)" stroke="#2DE8D8" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round" fill="none">
+    <circle cx="32" cy="32" r="17"></circle>
+    <circle cx="32" cy="32" r="6"></circle>
+    <path d="M32 15v11M32 38v11M15 32h11M38 32h11"></path>
+    <path d="M20.5 20.5l7.5 7.5M43.5 43.5l-7.5-7.5M43.5 20.5l-7.5 7.5M20.5 43.5l7.5-7.5"></path>
+    <path d="M32 12a20 20 0 0 1 0 40" stroke-width="0.8"></path>
+    <path d="M9 26a23 23 0 0 0 0 12" stroke-width="0.8"></path>
+
+  </g>
+  <g stroke="#2DE8D8" stroke-width="0.8" stroke-linecap="round" stroke-linejoin="round" fill="none" opacity="0.9">
+
+  </g>
+</svg>

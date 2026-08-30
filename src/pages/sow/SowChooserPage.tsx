@@ -1,56 +1,53 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, Music, Palette, FileText, Package, TreeDeciduous, Users, Lock } from 'lucide-react';
+import { ArrowLeft, Lock } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
-import { getPreset } from '@/lib/store/presets';
 import sowIndexBanner from '@/assets/seeds-strip.jpg';
-import musicBanner from '@/assets/sow/music-banner.png';
-import artBanner from '@/assets/sow/art-banner.png';
-import bookBanner from '@/assets/sow/book-banner.png';
-import fieldSowBanner from '@/assets/sow/field-sow-banner.png';
-import communityOrchardBanner from '@/assets/sow/community-orchard-banner.png';
-import productionOrchardBanner from '@/assets/sow/production-orchard-banner.png';
+import musicIcon from '@/assets/sow/icons/music.svg';
+import artIcon from '@/assets/sow/icons/art.svg';
+import booksIcon from '@/assets/sow/icons/books.svg';
+import handIcon from '@/assets/sow/icons/hand.svg';
+import wheelsIcon from '@/assets/sow/icons/wheels.svg';
+import pillowIcon from '@/assets/sow/icons/pillow.svg';
+import goodsIcon from '@/assets/sow/icons/goods.svg';
+import communityIcon from '@/assets/sow/icons/community.svg';
+import productionIcon from '@/assets/sow/icons/production.svg';
 
 type ServiceKind = 'hand' | 'wheel' | 'pillow';
 
 interface Card {
   key: string;
   label: string;
-  icon?: React.ComponentType<{ className?: string }>;
-  emoji?: string;
-  color?: string;
+  icon: string;
   live: boolean;
   service?: ServiceKind;
   route: string;
-  bannerUrl?: string | null;
 }
 
 const CREATIONS: Card[] = [
-  { key: 'music', label: 'Music', icon: Music, live: true, route: '/sow/music', bannerUrl: musicBanner },
-  { key: 'art', label: 'Art', icon: Palette, live: true, route: '/sow/art', bannerUrl: artBanner },
-  { key: 'books', label: 'Books', icon: FileText, live: true, route: '/sow/book', bannerUrl: bookBanner },
+  { key: 'music', label: 'Music', icon: musicIcon, live: true, route: '/sow/music' },
+  { key: 'art', label: 'Art', icon: artIcon, live: true, route: '/sow/art' },
+  { key: 'books', label: 'Books', icon: booksIcon, live: true, route: '/sow/book' },
 ];
 
-// Hand/Wheel/Pillow reuse the exact same artwork RegisterWanderingPage.tsx
-// and StorePage.tsx already show — one asset, every surface.
 const SERVICES: Card[] = [
-  { key: 'hand', label: 'Hand', emoji: '🤲', color: '#16a34a', live: true, service: 'hand', route: '/sow/hand', bannerUrl: getPreset('hand')?.bannerImage },
-  { key: 'wheel', label: 'Wheel', emoji: '🚗', color: '#0891b2', live: true, service: 'wheel', route: '/sow/wheel', bannerUrl: getPreset('wheel')?.bannerImage },
-  { key: 'pillow', label: 'Pillow', emoji: '🛏️', color: '#db2777', live: true, service: 'pillow', route: '/sow/pillow', bannerUrl: getPreset('pillow')?.bannerImage },
+  { key: 'hand', label: 'Hand', icon: handIcon, live: true, service: 'hand', route: '/sow/hand' },
+  { key: 'wheel', label: 'Wheel', icon: wheelsIcon, live: true, service: 'wheel', route: '/sow/wheel' },
+  { key: 'pillow', label: 'Pillow', icon: pillowIcon, live: true, service: 'pillow', route: '/sow/pillow' },
 ];
 
 // Field/Hearth/Forge are business types now (companies.kind), not a
 // per-seed choice — one card, one form. /sow/product itself resolves the
 // seed's kind from the sower's selected business.
 const PRODUCE: Card[] = [
-  { key: 'product', label: 'Product', icon: Package, live: true, route: '/sow/product', bannerUrl: fieldSowBanner },
+  { key: 'product', label: 'Product', icon: goodsIcon, live: true, route: '/sow/product' },
 ];
 
 const ORCHARDS: Card[] = [
-  { key: 'community', label: 'Community', icon: Users, live: true, route: '/create-orchard', bannerUrl: communityOrchardBanner },
-  { key: 'production', label: 'Production', icon: TreeDeciduous, live: true, route: '/create-orchard', bannerUrl: productionOrchardBanner },
+  { key: 'community', label: 'Community', icon: communityIcon, live: true, route: '/create-orchard' },
+  { key: 'production', label: 'Production', icon: productionIcon, live: true, route: '/create-orchard' },
 ];
 
 /**
@@ -152,41 +149,20 @@ function ChooserGroup({ title, children }: { title: string; children: React.Reac
   );
 }
 
-/** Every banner is a "text left, photo right" poster — object-right crops
- *  to the photo half, keeping the baked-in title/tagline/CTA out of the
- *  card. Dark bottom gradient keeps the card's own label legible over it. */
-function CardBackground({ url }: { url?: string | null }) {
-  if (!url) return null;
-  return (
-    <>
-      <img src={url} alt="" className="absolute inset-0 w-full h-full object-cover object-right" />
-      <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/25 to-transparent" />
-    </>
-  );
-}
-
 function ContentTile({ card, onClick }: { card: Card; onClick: () => void }) {
-  const Icon = card.icon!;
   return (
     <button
       type="button"
       onClick={onClick}
-      className={`relative flex flex-col items-center justify-end gap-1 rounded-2xl border-2 p-4 aspect-square overflow-hidden transition-all
+      className={`relative flex flex-col items-center justify-center gap-2 rounded-2xl border-2 p-4 aspect-square transition-all
         ${card.live
           ? 'border-border hover:border-primary/60 hover:bg-muted/50'
           : 'border-border/50 opacity-60 hover:opacity-90'}`}
     >
-      <CardBackground url={card.bannerUrl} />
-      {!card.live && <Lock className="absolute top-2 right-2 w-3.5 h-3.5 text-white/90 z-10 drop-shadow" />}
-      {!card.bannerUrl && <Icon className="w-8 h-8 text-primary relative z-10 mb-2" />}
-      <span className={`text-sm font-medium text-center relative z-10 ${card.bannerUrl ? 'text-white drop-shadow' : ''}`}>
-        {card.label}
-      </span>
-      {!card.live && (
-        <span className={`text-[11px] relative z-10 ${card.bannerUrl ? 'text-white/80 drop-shadow' : 'text-muted-foreground'}`}>
-          Coming soon
-        </span>
-      )}
+      {!card.live && <Lock className="absolute top-2 right-2 w-3.5 h-3.5 text-muted-foreground" />}
+      <img src={card.icon} alt="" className="w-14 h-14" />
+      <span className="text-sm font-medium text-center">{card.label}</span>
+      {!card.live && <span className="text-[11px] text-muted-foreground">Coming soon</span>}
     </button>
   );
 }
@@ -197,17 +173,10 @@ function ServiceTile({ card, disabled, onClick }: { card: Card; disabled: boolea
       type="button"
       disabled={disabled}
       onClick={onClick}
-      className="relative flex flex-col items-center justify-end gap-1 rounded-2xl border-2 p-4 aspect-square overflow-hidden transition-all border-border hover:border-primary/60 hover:bg-muted/50 disabled:opacity-50"
+      className="relative flex flex-col items-center justify-center gap-2 rounded-2xl border-2 p-4 aspect-square transition-all border-border hover:border-primary/60 hover:bg-muted/50 disabled:opacity-50"
     >
-      <CardBackground url={card.bannerUrl} />
-      {!card.bannerUrl && (
-        <span className="text-3xl leading-none relative z-10 mb-2" aria-hidden style={{ filter: `drop-shadow(0 0 6px ${card.color}55)` }}>
-          {card.emoji}
-        </span>
-      )}
-      <span className={`text-sm font-medium text-center relative z-10 ${card.bannerUrl ? 'text-white drop-shadow' : ''}`}>
-        {card.label}
-      </span>
+      <img src={card.icon} alt="" className="w-14 h-14" />
+      <span className="text-sm font-medium text-center">{card.label}</span>
     </button>
   );
 }
