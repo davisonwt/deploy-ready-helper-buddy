@@ -155,6 +155,12 @@ on the transaction signature. A signature must never be able to credit an
 order twice. Fail closed — the existing fail-open bug (`f77d3cf0`) is
 already fixed; do not reintroduce it.
 
+Before wiring this up: confirm `processed_webhooks_provider_check`
+actually permits whatever `provider` value the Solana path writes (e.g.
+`'solana'`). That exact constraint has already silently broken two
+payment integrations (see section 6) — check it explicitly rather than
+assuming a third provider value will be allowed.
+
 **Reuse, do not fork, the finalize path.** `finalize_basket_order`,
 `finalize_content_purchase`, and `credit_sower_balance_from_topup` are
 already idempotent and row-locked. Solana confirmation calls them exactly
@@ -230,19 +236,31 @@ in the same place, as `3b4287c4` did.
 
 Do not do this in one pass. Each step should be separately verifiable.
 
-1. **Prove PayPal works end-to-end first.** `PAYPAL_WEBHOOK_ID`'s
-   `paste_` prefix bug is fixed and deployed, but `processed_webhooks` is
-   still 0 rows — it has never been proven against a real event. Until
-   PayPal is confirmed working, there is no known-good rail to fall back
-   on while crypto is rebuilt. **This is the gate on everything below.**
-2. Build Solana inbound detection alongside NOWPayments, not instead of
+**The PayPal gate is cleared.** PayPal was proven live end-to-end on
+2026-08-29: order `0a6a0b1a` finalized via a clean, signature-verified
+`paypal-webhook` call at 08:36:57 UTC, ~3.4s after the order completed —
+tight enough that this is confidently the webhook itself doing the
+finalize, not the `capture-paypal-order` safety net.
+
+`processed_webhooks` sitting at 0 rows was never proof this was broken —
+it was a false signal from a second, unrelated bug:
+`processed_webhooks_provider_check` only permitted
+`provider IN ('binance_pay','stripe','other')`, a leftover from an
+earlier payment system, so every insert from `paypal-webhook`
+(`provider:'paypal'`) or `nowpayments-webhook` (`provider:'nowpayments'`)
+silently violated the constraint on every attempt, regardless of whether
+the webhook itself worked. Fixed in migration `20260831150000`. **Lesson:
+an empty audit table is not proof the thing it audits failed — check the
+insert's own error before trusting its silence.**
+
+1. Build Solana inbound detection alongside NOWPayments, not instead of
    it. Both live at once, crypto checkout still goes to NOWPayments.
-3. Test the Solana path end-to-end on devnet, then with one small real
+2. Test the Solana path end-to-end on devnet, then with one small real
    payment on mainnet.
-4. Switch the crypto checkout path over. Keep NOWPayments code in place
+3. Switch the crypto checkout path over. Keep NOWPayments code in place
    but unreachable.
-5. Rebuild the Solana payout rail inside `payout-earnings`.
-6. Only once both directions are proven: remove NOWPayments code, its
+4. Rebuild the Solana payout rail inside `payout-earnings`.
+5. Only once both directions are proven: remove NOWPayments code, its
    secrets, and its webhook function.
 
 ---
