@@ -9,7 +9,7 @@ import { toast } from "@/hooks/use-toast";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import {
-  ArrowLeft, Copy, Check, Users, TrendingUp, Sparkles, Linkedin, Mail, Facebook,
+  ArrowLeft, Copy, Check, Users, Sparkles, Linkedin, Mail, Facebook,
 } from "lucide-react";
 
 /**
@@ -21,7 +21,7 @@ export default function MyTribePage() {
   const { user } = useAuth();
   const { code, loading: codeLoading } = useReferralCode();
   const [copied, setCopied] = useState<"code" | "link" | null>(null);
-  const [stats, setStats] = useState({ total: 0, completed: 0, earnings: 0 });
+  const [stats, setStats] = useState({ total: 0, completed: 0 });
   const [tribe, setTribe] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -39,14 +39,7 @@ export default function MyTribePage() {
     let cancelled = false;
     (async () => {
       try {
-        const [{ data: affRows }, { data: tribeRows, error: tribeError }] = await Promise.all([
-          supabase
-          .from("affiliates")
-          .select("id, earnings, total_referrals, created_at")
-          .eq("user_id", user.id)
-          .order("created_at", { ascending: true }),
-          supabase.rpc("get_my_tribe_members" as any),
-        ]);
+        const { data: tribeRows, error: tribeError } = await supabase.rpc("get_my_tribe_members" as any);
 
         if (tribeError) throw tribeError;
 
@@ -65,11 +58,9 @@ export default function MyTribePage() {
 
         if (cancelled) return;
         setTribe(enriched);
-        const totalEarnings = (affRows || []).reduce((sum, a: any) => sum + Number(a.earnings || 0), 0);
         setStats({
           total: enriched.length,
           completed: enriched.filter((r: any) => ["completed", "active", "joined"].includes(r.status)).length,
-          earnings: totalEarnings,
         });
       } catch (err) {
         console.warn("[MyTribePage] load failed:", err);
@@ -211,11 +202,9 @@ export default function MyTribePage() {
         </div>
 
         {/* Stats */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 max-w-sm gap-4">
           {[
             { label: 'Tribe size', value: stats.total, sub: `${stats.completed} active`, icon: Users, color: 'cyan' },
-            { label: 'Total earned', value: `$${stats.earnings.toFixed(2)}`, sub: 'From tribe activity', icon: TrendingUp, color: 'amber' },
-            { label: 'Conversion', value: `${stats.total > 0 ? ((stats.completed / stats.total) * 100).toFixed(0) : 0}%`, sub: 'Of your invites bloom', icon: Sparkles, color: 'violet' },
           ].map((s) => {
             const Icon = s.icon
             const ring =
