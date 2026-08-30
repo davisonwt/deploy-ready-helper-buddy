@@ -237,10 +237,10 @@ in the same place, as `3b4287c4` did.
 Do not do this in one pass. Each step should be separately verifiable.
 
 **The PayPal gate is cleared.** PayPal was proven live end-to-end on
-2026-08-29: order `0a6a0b1a` finalized via a clean, signature-verified
-`paypal-webhook` call at 08:36:57 UTC, ~3.4s after the order completed —
-tight enough that this is confidently the webhook itself doing the
-finalize, not the `capture-paypal-order` safety net.
+2026-08-29: `basket_orders` `0a6a0b1a` finalized via a clean,
+signature-verified `paypal-webhook` call at 08:36:57 UTC, ~3.4s after the
+order completed — tight enough that this is confidently the webhook
+itself doing the finalize, not the `capture-paypal-order` safety net.
 
 `processed_webhooks` sitting at 0 rows was never proof this was broken —
 it was a false signal from a second, unrelated bug:
