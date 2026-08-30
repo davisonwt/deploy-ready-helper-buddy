@@ -256,3 +256,144 @@ Do not do this in one pass. Each step should be separately verifiable.
 - Does XRP stay in the plan at all? It is a separate ledger — a Solana
   Squad cannot hold it, and it would need its own custody arrangement.
   Nothing in the current stack requires it.
+
+---
+
+## 8. Payout rules — when money actually leaves
+
+### The split happens immediately, always
+
+On payment confirmation, every share is calculated and recorded at once:
+the sower's share, the whisperer's share (if a whisperer is attributed),
+and S2G's 15%. This is independent of when any of it is *paid out*.
+
+S2G's 15% goes to the S2G wallet immediately, every time, no threshold.
+
+### Payout threshold depends on the rail, not the amount
+
+| Recipient's payout rail | Threshold |
+|---|---|
+| **USDC on Solana** | **None — pay immediately, any amount** |
+| **PayPal** | **$20 accumulated balance** |
+
+The reason is honest and should be stated to users in exactly these terms:
+PayPal Payouts costs real money per item, so small payouts have to be
+batched to be worth sending. A Solana transfer costs a fraction of a cent,
+so there is no reason to hold anyone's money.
+
+This applies identically to **sowers and whisperers**. The two are
+evaluated independently on the same transaction: a $100 sale with a 10%
+whisperer pays the sower ~$75 and the whisperer $10, and each of those is
+paid or held according to *that person's own* rail and balance — not the
+size of the sale.
+
+### Why this matters beyond fees
+
+Every recipient on the Solana rail is money S2G no longer holds. That
+directly reduces the custody exposure described in section 9. Moving
+people to instant crypto payout is not only a marketing benefit — it
+shrinks a real liability.
+
+### Use it as the reason to switch
+
+Instant payout is a genuine benefit and should be surfaced where it lands
+hardest: on the payout settings page, when a recipient has a PayPal
+balance sitting below the $20 threshold. Something like "You have $12
+waiting. Connect a Solana wallet and get paid immediately instead."
+
+### Do not strand the PayPal holdouts
+
+Some people will never touch crypto, and their small balance sitting
+indefinitely is both unfair to them and a growing liability for S2G.
+Provide a release valve — **decide which:**
+- pay out below threshold anyway after a fixed period (e.g. 90 days),
+  absorbing or deducting the fee; or
+- let the recipient request an early payout, with the fee deducted and
+  shown to them before they confirm.
+
+"We are holding your money because you didn't adopt our preferred rail" is
+a bad position however sound the economics.
+
+---
+
+## 9. Held balances: S2G is holding other people's money
+
+**Name this plainly, because it changes what the platform is.** Once S2G
+holds a sower's or whisperer's earnings pending a threshold, that is
+custody, not payment processing.
+
+Three consequences that must be designed for, not discovered later:
+
+**Regulatory.** Holding client funds pending payout carries real
+regulatory weight in many jurisdictions and can require registration or
+segregated accounts. **Not reviewed by counsel. Get a real opinion before
+volume grows, not after.**
+
+**Accounting.** Held balances are a **liability**, not revenue. S2G's own
+books must show them as money owed and keep them distinct from the 15%
+that is genuinely S2G's. Conflating the two overstates what the platform
+actually has.
+
+**Separability.** If S2G ever hit trouble, held balances must be clearly
+distinguishable from operating funds so they cannot be treated as company
+assets. This argues for keeping held payouts structurally separate from
+the 15% sweep to the Squad — in the wallet layout *and* in the ledger, not
+just conceptually.
+
+### The gosat tracking page
+
+The gosat/admin area needs a view answering, at any moment:
+
+- **Who is owed what.** Per recipient: accrued balance, their payout rail,
+  whether they're above or below their threshold, and how long the oldest
+  unpaid amount has been sitting.
+- **Which transactions make up each balance.** Every held amount traces
+  back to specific source rows. `owed_payout_balances()` already resolves
+  amounts and stays the single source of truth — this view reads it, it
+  does not compute its own parallel figures.
+- **Total held, as one number.** This is S2G's outstanding liability. It
+  belongs on the page prominently, not buried, because it is the number
+  that matters for both accounting and risk.
+- **Held vs. S2G's own.** The wallet balance is not S2G's money. Show the
+  split explicitly: total balance, minus held liabilities, equals what is
+  actually S2G's.
+- **Aging.** Anything held unusually long is a flag — either a stuck
+  payout or a recipient who has never configured a method and needs
+  telling.
+
+Read-only. Payouts continue to run through `payout-earnings`; this page
+observes, it does not become a second way to move money.
+
+---
+
+## 10. Orchard bestowals
+
+All bestowals to community orchards and production orchards are held in
+S2G's wallet (Phantom) or account (PayPal) rather than paid out per
+transaction.
+
+**This is the highest-trust-risk holding on the platform** and needs
+explicit rules before it scales. Orchard funds are raised *for* a stated
+purpose; S2G holding them without defined release conditions is exactly
+where trust breaks down — and it is a larger custody position than the
+$20 batching in section 9.
+
+**Open, must be decided:**
+- What condition releases orchard funds? A funding goal being met, a
+  deadline, an S2G decision, an orchard-owner request?
+- Who authorises release — the orchard creator, S2G, or both?
+- What happens if an orchard never reaches its goal? Refund to bestowers,
+  release anyway, or hold indefinitely?
+- Are bestowers told, at the point of giving, what the release condition
+  is and what happens if it isn't met? **They should be.**
+
+**Reuse, don't reinvent.** The platform already has an escrow mechanism —
+`release-escrow`, `escrow_events`, and `release_status` on physical-goods
+orders. Orchard holdings are the same shape of problem: money held against
+a future condition, with an audit trail of who released it and when.
+Extend that system rather than building a second holding mechanism with
+its own separate rules.
+
+Orchard holdings must appear in the section 9 gosat view alongside
+individual held balances, and must be counted in the total liability
+figure. They are not S2G's money either.
