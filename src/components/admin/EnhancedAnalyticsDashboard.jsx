@@ -56,10 +56,17 @@ export function EnhancedAnalyticsDashboard() {
         .select('id, created_at, status, seed_value, category')
         .gte('created_at', startDate.toISOString());
 
-      // Fetch bestowals data
+      // Fetch bestowals data (orchard/gift bestowals)
       const { data: bestowalsData, error: bestowalsError } = await supabase
         .from('bestowals')
         .select('id, amount, created_at, payment_status')
+        .gte('created_at', startDate.toISOString());
+
+      // Fetch product bestowals data (product/service/booking sales) --
+      // real revenue lives here too, not just in `bestowals`.
+      const { data: productBestowalsData, error: productBestowalsError } = await supabase
+        .from('product_bestowals')
+        .select('id, amount, created_at, status')
         .gte('created_at', startDate.toISOString());
 
       // Process time series data for charts
@@ -104,10 +111,17 @@ export function EnhancedAnalyticsDashboard() {
 
       // Calculate totals and growth
       const totalUsers = usersData?.length || 0;
-      const totalOrchards = orchardsData?.length || 0;
-      const totalRevenue = bestowalsData?.filter(b => b.payment_status === 'completed')
-        .reduce((sum, b) => sum + parseFloat(b.amount || 0), 0) || 0;
-      const totalBestowals = bestowalsData?.length || 0;
+      // "Active Orchards" means orchards whose status is active, not every
+      // orchard created in the window.
+      const totalOrchards = orchardsData?.filter(o => o.status === 'active').length || 0;
+      // Revenue lives in two tables: `bestowals` (orchard/gift bestowals)
+      // and `product_bestowals` (product/service/booking sales) -- sum both.
+      const totalRevenue =
+        (bestowalsData?.filter(b => b.payment_status === 'completed')
+          .reduce((sum, b) => sum + parseFloat(b.amount || 0), 0) || 0) +
+        (productBestowalsData?.filter(p => p.status === 'completed')
+          .reduce((sum, p) => sum + parseFloat(p.amount || 0), 0) || 0);
+      const totalBestowals = (bestowalsData?.length || 0) + (productBestowalsData?.length || 0);
 
       // Calculate growth rates (simplified)
       const midPoint = Math.floor(timeSeriesData.length / 2);
@@ -286,9 +300,9 @@ export function EnhancedAnalyticsDashboard() {
 
       {/* Key Metrics */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        <MetricCard title="Total Users" value={analytics.overview.totalUsers.toLocaleString()} trend={analytics.overview.userGrowth} Icon={Users} accent="cyan" />
+        <MetricCard title="New users" value={analytics.overview.totalUsers.toLocaleString()} trend={analytics.overview.userGrowth} Icon={Users} accent="cyan" />
         <MetricCard title="Total Revenue" value={`$${analytics.overview.totalRevenue.toLocaleString()}`} trend={analytics.overview.revenueGrowth} Icon={DollarSign} accent="emerald" />
-        <MetricCard title="Active Orchards" value={analytics.overview.totalOrchards} sub="Total created" Icon={Sprout} accent="amber" />
+        <MetricCard title="Active Orchards" value={analytics.overview.totalOrchards} sub="Currently active" Icon={Sprout} accent="amber" />
         <MetricCard title="Conversion Rate" value={`${analytics.conversionRate.toFixed(1)}%`} sub="Orchard to bestowal" Icon={Target} accent="violet" />
       </div>
 
