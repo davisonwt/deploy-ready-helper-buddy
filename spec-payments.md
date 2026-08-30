@@ -70,9 +70,12 @@ regress it.
 ### Who absorbs the processor fee
 The **grower (payer)** absorbs it. If a cheaper rail is available and they
 choose the expensive one, that cost is theirs — the sower shouldn't be
-penalised for someone else's rail preference. Already true for most kinds;
-`bookings` is the documented exception (see SESSION-STATE ~line 1303) —
-**decide explicitly whether bookings should now match.**
+penalised for someone else's rail preference. `bookings` was briefly the
+documented exception (see SESSION-STATE ~line 1303) — closed in a later
+fix (SESSION-STATE ~line 1513, "closed the booking-payment processor-fee
+gap"): `create-booking-paypal-order` now runs through `computeBuyerFee`
+exactly like every other `create-*-order` function. Every kind is
+consistent as of that fix; no open decision remains here.
 
 ---
 
@@ -246,8 +249,6 @@ Do not do this in one pass. Each step should be separately verifiable.
 
 ## 7. Open questions
 
-- Bookings currently have the sower absorb the processor fee, unlike every
-  other kind. Should that change to match?
 - Late Solana payment after expiry: credit-and-reopen, or refund?
 - Hot wallet caps: what per-transaction and daily numbers?
 - Sweep threshold and cadence for hot wallet → Squad?
