@@ -154,13 +154,13 @@ function ContentTile({ card, onClick }: { card: Card; onClick: () => void }) {
     <button
       type="button"
       onClick={onClick}
-      className={`relative flex flex-col items-center justify-center gap-2 rounded-2xl border-2 p-4 aspect-square transition-all
+      className={`relative flex flex-col items-center justify-center gap-3 rounded-2xl border-2 py-8 px-4 min-h-[160px] transition-all
         ${card.live
           ? 'border-border hover:border-primary/60 hover:bg-muted/50'
           : 'border-border/50 opacity-60 hover:opacity-90'}`}
     >
       {!card.live && <Lock className="absolute top-2 right-2 w-3.5 h-3.5 text-muted-foreground" />}
-      <img src={card.icon} alt="" className="w-14 h-14" />
+      <img src={card.icon} alt="" className="w-20 h-20" />
       <span className="text-sm font-medium text-center">{card.label}</span>
       {!card.live && <span className="text-[11px] text-muted-foreground">Coming soon</span>}
     </button>
@@ -173,9 +173,9 @@ function ServiceTile({ card, disabled, onClick }: { card: Card; disabled: boolea
       type="button"
       disabled={disabled}
       onClick={onClick}
-      className="relative flex flex-col items-center justify-center gap-2 rounded-2xl border-2 p-4 aspect-square transition-all border-border hover:border-primary/60 hover:bg-muted/50 disabled:opacity-50"
+      className="relative flex flex-col items-center justify-center gap-3 rounded-2xl border-2 py-8 px-4 min-h-[160px] transition-all border-border hover:border-primary/60 hover:bg-muted/50 disabled:opacity-50"
     >
-      <img src={card.icon} alt="" className="w-14 h-14" />
+      <img src={card.icon} alt="" className="w-20 h-20" />
       <span className="text-sm font-medium text-center">{card.label}</span>
     </button>
   );
