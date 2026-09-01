@@ -239,7 +239,7 @@ export const VideoMarketingDashboard = () => {
           
           <CardContent>
             <Tabs defaultValue="preview" className="space-y-4">
-              <TabsList className="grid w-full grid-cols-4">
+              <TabsList className="flex w-full overflow-x-auto justify-start">
                 <TabsTrigger value="preview">Preview</TabsTrigger>
                 <TabsTrigger value="social">Social Media</TabsTrigger>
                 <TabsTrigger value="sow2grow">Sow2Grow</TabsTrigger>

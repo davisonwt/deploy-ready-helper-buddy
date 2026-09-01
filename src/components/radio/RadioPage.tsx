@@ -107,7 +107,7 @@ const RadioPage = () => {
         </div>
 
         <Tabs defaultValue="builder" className="w-full">
-          <TabsList className="grid w-full grid-cols-5 bg-radio-ink/70 border border-radio-blue/25">
+          <TabsList className="flex w-full overflow-x-auto justify-start bg-radio-ink/70 border border-radio-blue/25">
             <TabsTrigger
               value="builder"
               className="flex items-center gap-2 font-bitter data-[state=active]:bg-radio-blue/20 data-[state=active]:text-radio-amber"

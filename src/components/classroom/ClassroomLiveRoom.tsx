@@ -380,7 +380,7 @@ export default function ClassroomLiveRoom({ session }: Props) {
           {/* Side panel */}
           <aside className="rounded-2xl border border-[#8B5CF6]/30 bg-[#14101F]/85 overflow-hidden flex flex-col" style={{ minHeight: 480, height: 'calc(100vh - 320px)' }}>
             <Tabs defaultValue="chat" className="flex flex-col h-full">
-              <TabsList className="w-full grid grid-cols-5 bg-[#1a1430]/80 border-b border-[#8B5CF6]/25 rounded-none h-10 shrink-0">
+              <TabsList className="w-full flex overflow-x-auto justify-start bg-[#1a1430]/80 border-b border-[#8B5CF6]/25 rounded-none h-10 shrink-0">
                 <TabsTrigger value="chat" className="text-[11px] data-[state=active]:bg-[#8B5CF6]/20 data-[state=active]:text-[#E8D9B5]">Chat</TabsTrigger>
                 <TabsTrigger value="people" className="text-[11px] data-[state=active]:bg-[#8B5CF6]/20 data-[state=active]:text-[#E8D9B5]">People</TabsTrigger>
                 <TabsTrigger value="hands" className="text-[11px] data-[state=active]:bg-[#8B5CF6]/20 data-[state=active]:text-[#E8D9B5]">{isHost ? 'Hands' : 'Floor'}</TabsTrigger>

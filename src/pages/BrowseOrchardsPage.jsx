@@ -926,6 +926,7 @@ export default function BrowseOrchardsPage() {
       <div style={{
         position: 'fixed', bottom: 0, left: 0, right: 0,
         display: 'flex', gap: 8, padding: '10px 12px',
+        paddingBottom: 'max(10px, env(safe-area-inset-bottom))',
         background: 'rgba(8,13,23,0.95)', backdropFilter: 'blur(10px)',
         borderTop: '1px solid rgba(34,211,238,0.15)',
         zIndex: 100,

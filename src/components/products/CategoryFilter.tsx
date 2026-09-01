@@ -48,7 +48,7 @@ export default function CategoryFilter({
       {/* Type Filter */}
       <div className="flex justify-center">
         <Tabs value={selectedType} onValueChange={onTypeChange} className="w-full max-w-2xl">
-          <TabsList className="grid w-full grid-cols-4 bg-muted/50 backdrop-blur-md bg-white/20 border-white/30">
+          <TabsList className="flex w-full overflow-x-auto justify-start bg-muted/50 backdrop-blur-md bg-white/20 border-white/30">
             {types.map(({ value, label, icon: Icon }) => (
               <TabsTrigger
                 key={value}

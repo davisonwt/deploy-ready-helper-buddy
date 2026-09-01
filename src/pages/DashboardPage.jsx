@@ -899,6 +899,9 @@ export default function SeedFlowDashboard() {
         .seed-card-anim { animation: breathe 4s ease-in-out infinite; }
         .nav-link:hover { opacity: 0.85; }
         .s2g-mobile-panel-tab, .s2g-mobile-backdrop { display: none; }
+        .s2g-header-pill-scroll { scrollbar-width: thin; }
+        .s2g-header-pill-scroll::-webkit-scrollbar { height: 4px; }
+        .s2g-header-pill-scroll::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.15); border-radius: 4px; }
         @media (max-width: 768px) {
           .s2g-dashboard-root { top: 0 !important; height: calc(100vh - 70px) !important; height: calc(100dvh - 70px) !important; }
           .s2g-dashboard-center { width: 100vw !important; flex: 1 1 100% !important; }
@@ -1069,8 +1072,15 @@ export default function SeedFlowDashboard() {
                </div>
              </div>
 
-              {/* single-row actions: Feeds · Companions · Log out · Settings — kept inline on mobile */}
+              {/* Row actions: the pill cluster (Feeds/Sow/Companions/Basket) scrolls
+                  horizontally on narrow screens instead of overflowing the page —
+                  Log out + Settings are outside that scroller so they're always
+                  visible and never get clipped by the ancestor's overflow:hidden. */}
               <div style={{ display: 'flex', flexWrap: 'nowrap', alignItems: 'center', gap: 6, width: '100%', marginTop: 4 }}>
+                <div
+                  className="s2g-header-pill-scroll"
+                  style={{ display: 'flex', flexWrap: 'nowrap', alignItems: 'center', gap: 6, overflowX: 'auto', flex: '1 1 auto', minWidth: 0, WebkitOverflowScrolling: 'touch' }}
+                >
                  <div ref={tribalFeedsRef} style={{ position: 'relative', flexShrink: 0 }}>
                    <button
                      type="button"
@@ -1170,8 +1180,9 @@ export default function SeedFlowDashboard() {
                     🛒 Basket{basketItemCount > 0 ? ` (${basketItemCount})` : ''}
                   </div>
                 </Link>
+                </div>
 
-                <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginLeft: 'auto', flexShrink: 0 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginLeft: 0, flexShrink: 0 }}>
                   <button
                     type="button"
                     onClick={async () => {
@@ -1364,6 +1375,7 @@ export default function SeedFlowDashboard() {
         <div style={{
           position: 'fixed', bottom: 0, left: 0, right: 0,
           display: 'flex', gap: 8, padding: '10px 12px',
+          paddingBottom: 'max(10px, env(safe-area-inset-bottom))',
           background: '#080d17',
           borderTop: '1px solid rgba(255,255,255,0.06)',
           zIndex: 100,

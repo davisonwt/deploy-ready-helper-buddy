@@ -458,7 +458,7 @@ export default function SowMusicPage() {
       </div>
 
       {/* Mobile: sticky bottom sheet + inline Plant */}
-      <div className="md:hidden fixed bottom-0 left-0 right-0 z-20 bg-background border-t p-3 space-y-2">
+      <div className="md:hidden fixed bottom-0 left-0 right-0 z-20 bg-background border-t px-3 pt-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] space-y-2">
         <Sheet>
           <SheetTrigger asChild>
             <button type="button" className="w-full flex items-center gap-2 text-xs text-muted-foreground">

@@ -439,7 +439,7 @@ export function UniversalLiveSessionInterface({
         {/* Right Sidebar - Interactive Feed with Darker Theme */}
         <div className="space-y-4">
           <Tabs defaultValue="messages" className="w-full">
-            <TabsList className="grid w-full grid-cols-4 bg-slate-800 border-slate-700">
+            <TabsList className="flex w-full overflow-x-auto justify-start bg-slate-800 border-slate-700">
               <TabsTrigger value="messages" className="data-[state=active]:bg-slate-700 data-[state=active]:text-white text-slate-300">
                 <MessageSquare className="h-4 w-4 mr-1" />
                 Messages

@@ -322,7 +322,7 @@ export function GoSatGhostAccessMonitor() {
 
       {/* Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="grid w-full grid-cols-5">
+        <TabsList className="flex w-full overflow-x-auto justify-start">
           <TabsTrigger value="chats">
             <MessageSquare className="w-4 h-4 mr-2" />
             1-on-1 Chats ({chats.length})

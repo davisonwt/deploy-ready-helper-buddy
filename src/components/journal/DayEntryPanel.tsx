@@ -623,7 +623,7 @@ Meditate on the significance of this day in the Creator's calendar. What does th
 
             {/* Tabs for all features */}
             <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as typeof activeTab)} className="w-full">
-              <TabsList className="grid grid-cols-5 w-full bg-white/10">
+              <TabsList className="flex overflow-x-auto justify-start w-full bg-white/10">
                 <TabsTrigger value="notes">Notes</TabsTrigger>
                 <TabsTrigger value="media">Media</TabsTrigger>
                 <TabsTrigger value="prayer">Prayer</TabsTrigger>

@@ -275,7 +275,7 @@ export default function StatsPage() {
               setActiveTab(v);
               setSearchParams({ tab: v });
             }}>
-              <TabsList className="grid w-full grid-cols-5 bg-amber-900/30 border border-amber-500/20 mb-4">
+              <TabsList className="flex w-full overflow-x-auto justify-start bg-amber-900/30 border border-amber-500/20 mb-4">
                 <TabsTrigger value="overview" className="data-[state=active]:bg-amber-500 data-[state=active]:text-white">
                   Overview
                 </TabsTrigger>

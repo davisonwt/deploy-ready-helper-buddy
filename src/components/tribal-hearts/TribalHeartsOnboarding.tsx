@@ -183,7 +183,7 @@ export const TribalHeartsOnboarding: React.FC<Props> = ({ onComplete, onExit }) 
       </main>
 
       {/* Continue button */}
-      <div className="fixed bottom-0 inset-x-0 z-20 px-5 pb-6 pt-10"
+      <div className="fixed bottom-0 inset-x-0 z-20 px-5 pb-[max(1.5rem,env(safe-area-inset-bottom))] pt-10"
         style={{
           background: 'linear-gradient(to top, hsl(20 35% 6%) 30%, transparent)',
         }}

@@ -103,7 +103,7 @@ export function MediaDock({ sessionId, isHost = false }: MediaDockProps) {
           )}
         </div>
 
-        <TabsList className="w-full grid grid-cols-5 gap-2 p-2 bg-muted/50">
+        <TabsList className="w-full flex overflow-x-auto justify-start gap-2 p-2 bg-muted/50">
           {tabConfig.map(({ value, label, icon: Icon, color }) => (
             <TabsTrigger
               key={value}

@@ -403,7 +403,7 @@ export default function GroveStationPage() {
                   />
                 ) : (
                   <Tabs defaultValue="profile" className="w-full">
-                    <TabsList className="grid w-full grid-cols-4">
+                    <TabsList className="flex w-full overflow-x-auto justify-start">
                       <TabsTrigger value="profile">
                         <Mic className="h-4 w-4 mr-2" />
                         Profile

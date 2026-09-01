@@ -53,7 +53,7 @@ export const CompleteLiveStreamingInterface = ({
         </CardHeader>
         <CardContent>
           <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-            <TabsList className="grid w-full grid-cols-4">
+            <TabsList className="flex w-full overflow-x-auto justify-start">
               <TabsTrigger value="directory" className="flex items-center gap-2">
                 <Radio className="w-4 h-4" />
                 Browse Streams

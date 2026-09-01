@@ -265,7 +265,7 @@ export default function ShareSeedDialog({
         </DialogHeader>
 
         <Tabs defaultValue="tribe">
-          <TabsList className="grid w-full grid-cols-4">
+          <TabsList className="flex w-full overflow-x-auto justify-start">
             <TabsTrigger value="tribe"><Users className="mr-1 h-4 w-4" />Tribe</TabsTrigger>
             <TabsTrigger value="room"><MessagesSquare className="mr-1 h-4 w-4" />Circle</TabsTrigger>
             <TabsTrigger value="feed"><Globe2 className="mr-1 h-4 w-4" />Feed</TabsTrigger>
