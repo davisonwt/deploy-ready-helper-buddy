@@ -112,7 +112,7 @@ export default function CryptoPayoutSettings() {
       setSaved(data.payout);
       setConfirmAddress('');
       setAcknowledged(false);
-      toast.success('Payout destination saved. We emailed you a confirmation of the change.');
+      toast.success('Payout destination saved. Check your Sow2Grow notifications for a confirmation of the change.');
     } catch (e: any) {
       console.error(e);
       toast.error(e?.message ?? 'Could not save payout destination');
@@ -187,6 +187,17 @@ export default function CryptoPayoutSettings() {
                 ))}
               </RadioGroup>
             </div>
+
+            {!isXrp && (
+              <Alert>
+                <Wallet className="h-4 w-4" />
+                <AlertDescription className="text-xs">
+                  PayPal payouts are batched to a $20 minimum because PayPal charges a fee per
+                  transfer. USDC on Solana costs a fraction of a cent to send, so once this rail
+                  is live, Solana recipients are paid immediately — any amount, no threshold.
+                </AlertDescription>
+              </Alert>
+            )}
 
             {isXrp && <XrpRateNotice context="payout" />}
 

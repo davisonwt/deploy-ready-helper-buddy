@@ -55,6 +55,7 @@ export default function PayoutSettingsPage() {
   const [preferred, setPreferred] = useState<PreferredRail>(null);
   const [savingPreferred, setSavingPreferred] = useState(false);
   const [activeTab, setActiveTab] = useState<'crypto' | 'paypal'>('crypto');
+  const [solanaAddress, setSolanaAddress] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     if (!user) return;
@@ -71,14 +72,16 @@ export default function PayoutSettingsPage() {
           .order('created_at', { ascending: false }),
         supabase
           .from('profiles')
-          .select('preferred_payout_method' as any)
-          .eq('id', user.id)
+          .select('preferred_payout_method, payout_network, payout_address' as any)
+          .eq('user_id', user.id)
           .maybeSingle(),
       ]);
       if (walletsRes.error) throw walletsRes.error;
       setWallets((walletsRes.data ?? []) as any as WalletRow[]);
       const pref = (profileRes.data as any)?.preferred_payout_method ?? null;
       setPreferred(pref === NOWPAY_TYPE || pref === PAYPAL_TYPE ? pref : null);
+      const p = profileRes.data as any;
+      setSolanaAddress(p?.payout_network === 'solana_usdc' && p?.payout_address ? p.payout_address : null);
     } catch (e: any) {
       console.error('PayoutSettings load error', e);
       toast.error(e?.message ?? 'Failed to load payout wallets');
@@ -224,6 +227,51 @@ export default function PayoutSettingsPage() {
             email, nothing to type. Balances under $20 carry over to the next week.
           </AlertDescription>
         </Alert>
+      )}
+
+      {user && !loading && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-base">Your payout rail</CardTitle>
+            <CardDescription>
+              PayPal payouts are batched to a $20 minimum because PayPal charges a fee per
+              transfer. USDC on Solana costs a fraction of a cent to send, so once that rail is
+              live, Solana recipients are paid immediately — any amount, no threshold.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="flex flex-col sm:flex-row gap-3">
+            <div className="flex-1 rounded-md border p-3">
+              <div className="flex items-center gap-2 font-medium">
+                PayPal
+                {hasVerifiedPaypal && (
+                  <Badge className="text-[10px] bg-primary/15 text-primary border border-primary/30">
+                    Active now
+                  </Badge>
+                )}
+              </div>
+              <p className="text-xs text-muted-foreground mt-1">
+                {hasVerifiedPaypal
+                  ? 'Connected and verified — this is what pays you today.'
+                  : 'Not connected yet.'}
+              </p>
+            </div>
+            <div className="flex-1 rounded-md border p-3">
+              <div className="flex items-center gap-2 font-medium">
+                Solana USDC
+                {solanaAddress && (
+                  <Badge variant="secondary" className="text-[10px]">
+                    Saved
+                  </Badge>
+                )}
+              </div>
+              <p className="text-xs text-muted-foreground mt-1">
+                {solanaAddress
+                  ? 'Address saved — ready for when instant Solana payouts launch.'
+                  : 'Not set yet.'}
+              </p>
+            </div>
+          </CardContent>
+        </Card>
       )}
 
       {user && (
