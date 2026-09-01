@@ -404,15 +404,36 @@ The gosat/admin area needs a view answering, at any moment:
   back to specific source rows. `owed_payout_balances()` already resolves
   amounts and stays the single source of truth — this view reads it, it
   does not compute its own parallel figures.
-- **Total held, as one number.** This is S2G's outstanding liability. It
-  belongs on the page prominently, not buried, because it is the number
-  that matters for both accounting and risk.
+- **Two kinds of held money, shown separately, never merged into one
+  undifferentiated pile.** They're different in kind, not just source:
+  - **Individual payout balances** — sower/whisperer earnings not yet
+    paid out, per section 8's thresholds. Resolved from
+    `owed_payout_balances()`, short-lived by design (paid on the next
+    eligible run).
+  - **Orchard holdings** (section 10) — the Launch Orchard and Uplift
+    Orchard wallet balances. Resolved from those two wallets' own
+    balances, not `owed_payout_balances()` (orchard funds aren't
+    per-recipient accrual, they're a fixed target held until fully
+    funded, per orchard, indefinitely — no threshold, no aging-toward-a-
+    payout-run the way an individual balance has one).
+  Show each as its own line/section, not summed into a single
+  undifferentiated figure — a gosat reading the page needs to be able to
+  tell "held for people" apart from "held for orchards" at a glance.
+- **Total held, as one number.** This is S2G's full outstanding
+  liability: individual payout balances **plus** both orchard wallets'
+  balances, added together. It belongs on the page prominently, not
+  buried, because it is the number that matters for both accounting and
+  risk — and it is incomplete, understating real exposure, if it omits
+  either orchard wallet.
 - **Held vs. S2G's own.** The wallet balance is not S2G's money. Show the
-  split explicitly: total balance, minus held liabilities, equals what is
-  actually S2G's.
+  split explicitly: total balance, minus held liabilities (individual +
+  orchard), equals what is actually S2G's.
 - **Aging.** Anything held unusually long is a flag — either a stuck
   payout or a recipient who has never configured a method and needs
-  telling.
+  telling. Applies to individual balances; an orchard sitting unfunded a
+  long time is expected behavior (section 10: "there is no deadline"),
+  not itself a flag — though it's still worth surfacing on the page for
+  visibility, just not as an anomaly.
 
 Read-only. Payouts continue to run through `payout-earnings`; this page
 observes, it does not become a second way to move money.
