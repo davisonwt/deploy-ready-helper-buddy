@@ -1851,6 +1851,13 @@ contact-detail blocking, voice/video notes. Calling deliberately not touched.
 both members having paid the $5/$10 one-time fee (decision 2 above), wiring
 that into `WanderingHeartsChat.tsx`.
 
+**Fee accounting rule for the call-unlock fee (decided 2026-09-01, see
+spec-payments.md §9):** platform-only income (no sower) — e.g. the Wandering
+Hearts call-unlock fee ($5 or $10, both members) — is 100% S2G revenue.
+Record the full amount as `s2g_fee` with `sower_amount` 0, treat it as
+Squad-bound in the hot-wallet→Squad sweep, and include it in the gosat P&L.
+It is NOT subject to the 15%-on-top model.
+
 ## Open — priority order
 
 1. ~~Live proof that `paypal-webhook` actually works now~~ — **resolved, see Keystone problem**: order `0a6a0b1a` finalized via a clean webhook call at 08:36 UTC 2026-08-29. The `processed_webhooks`-insert bug (separate from the webhook itself) is also fixed; watch for its first real row as confirmation the fix landed, not as proof the webhook works — that's already established.

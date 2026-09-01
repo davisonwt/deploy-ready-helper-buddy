@@ -438,6 +438,14 @@ The gosat/admin area needs a view answering, at any moment:
 Read-only. Payouts continue to run through `payout-earnings`; this page
 observes, it does not become a second way to move money.
 
+### Platform-only income (no sower)
+
+Decided 2026-09-01. Platform-only income (no sower) — e.g. the Wandering
+Hearts call-unlock fee ($5 or $10, both members) — is 100% S2G revenue.
+Record the full amount as `s2g_fee` with `sower_amount` 0, treat it as
+Squad-bound in the hot-wallet→Squad sweep, and include it in the gosat P&L
+(this section). It is NOT subject to the 15%-on-top model.
+
 ---
 
 ## 10. Orchards — Launch and Uplift
