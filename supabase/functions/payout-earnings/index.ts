@@ -11,19 +11,41 @@
 // (amount, status='payable'), grouped by the recipient's real auth user id.
 //
 // RULES:
-//   - PayPal Payouts only. No crypto rail here anymore (Solana comes back
-//     with the native crypto spec later — explicitly deferred, not this).
-//   - $20 minimum per recipient. Below it, stays owed, retried next run.
-//   - Requires an ACTIVE, VERIFIED PayPal email in user_wallets
-//     (wallet_type='paypal_email', verified_at IS NOT NULL). No email, or
-//     an unverified one, skips with a reason — never blocks the sale.
-//   - PAYPAL_PAYOUTS_ENABLED must be 'true', same flag paypal-payout used.
-//   - One PayPal Payouts batch call per run, covering every eligible
-//     recipient (sowers and whisperers together) as separate items.
-//   - One `payouts` row per recipient, sender_item_id = that row's id, so
-//     the webhook can find it directly. paypal_item_id is filled in once
+//   - Two rails, chosen per recipient from their own profiles.payout_network
+//     (spec-payments.md section 4: "recipient rail comes from their own
+//     stored payout config", never a second place to configure it):
+//       * payout_network = 'solana_usdc' → Solana USDC, sent directly from
+//         the hot wallet (see _shared/solanaPayout.ts). NO minimum — a
+//         Solana transfer costs a fraction of a cent, so nothing is held
+//         back. Hard per-transaction/daily caps still apply (below) as the
+//         circuit breaker for a bug or a compromised key.
+//       * everyone else → PayPal Payouts, unchanged: $20 minimum per
+//         recipient (PayPal charges a real per-item fee), requires an
+//         ACTIVE, VERIFIED PayPal email in user_wallets
+//         (wallet_type='paypal_email', verified_at IS NOT NULL). No email,
+//         or an unverified one, skips with a reason — never blocks the sale.
+//   - A recipient with no payout method configured at all keeps accruing;
+//     nothing here ever blocks or fails a sale over the recipient's own
+//     incomplete setup.
+//   - PAYPAL_PAYOUTS_ENABLED must be 'true' for the PayPal leg, same flag
+//     paypal-payout used. The Solana leg has no equivalent flag — it's
+//     gated by SOLANA_HOT_WALLET_SECRET_KEY / SOLANA_HOT_WALLET_ADDRESS
+//     existing at all (see _shared/solanaPayout.ts), and defaults to
+//     devnet unless SOLANA_CLUSTER=mainnet-beta is set.
+//   - One PayPal Payouts batch call per run, covering every eligible PayPal
+//     recipient (sowers and whisperers together) as separate items. One
+//     `payouts` row per recipient, sender_item_id = that row's id, so the
+//     webhook can find it directly. paypal_item_id is filled in once
 //     PayPal's PAYMENT.PAYOUTS-ITEM.* webhook arrives — batch creation
 //     alone doesn't return real per-item ids, only the batch id.
+//   - Solana sends are synchronous and per-recipient (not batched): send
+//     FIRST, wait for FINALIZED commitment, THEN mark the payouts row and
+//     its covered source rows paid. If the send succeeds but that DB
+//     update fails, this logs loudly as a needs-a-human case and leaves
+//     the row at 'processing' rather than risking a double-send on retry
+//     (same idempotency shape as the PayPal leg: owed_payout_balances()
+//     only ever returns rows still payout_status='pending', so a row
+//     marked 'processing' can't be picked up again by a later run).
 //
 // dry_run:true computes and returns the exact same eligible/skipped
 // breakdown (for the admin "next run preview") without touching anything —
@@ -40,9 +62,23 @@
 // service-role bearer, or an admin/gosat user session.
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
+import { Connection } from "https://esm.sh/@solana/web3.js@1.95.3";
 import { paypalFetch } from "../_shared/paypal/client.ts";
-import { markCoveredRowsPending, markCoveredRowsProcessing, type CoveredRow } from "../_shared/payoutLedger.ts";
+import {
+  markCoveredRowsPaid,
+  markCoveredRowsPending,
+  markCoveredRowsProcessing,
+  type CoveredRow,
+} from "../_shared/payoutLedger.ts";
 import { deliverPayoutNotification } from "../_shared/postFinalize/messaging.ts";
+import { validateSolanaAddress } from "../_shared/cryptoAddress.ts";
+import { getSolanaCluster, getSolanaRpcUrl } from "../_shared/cryptoNetworks.ts";
+import {
+  getHotWalletUsdcBalance,
+  loadHotWalletKeypair,
+  sendUsdcPayout,
+  verifyHotWallet,
+} from "../_shared/solanaPayout.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -55,7 +91,20 @@ const SUPABASE_ANON_KEY = Deno.env.get("SUPABASE_ANON_KEY") ?? "";
 const SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
 const CRON_SECRET = Deno.env.get("CRON_SECRET") ?? "";
 
-const MIN_PAYOUT_USD = 20;
+const MIN_PAYOUT_USD = 20; // PayPal only — Solana has no minimum.
+
+// Hard circuit-breaker caps for the Solana leg, per spec-payments.md
+// section 2. Anything over either cap does NOT send; it's flagged for
+// manual Squad approval instead (see solanaOutcomes below). Real balances
+// today are $2-$4 per person, ~$12 total owed — these defaults sit roughly
+// 10x above current real per-person amounts and give meaningful headroom
+// for organic growth while still catching a bug or a compromised key long
+// before it could drain anything close to the hot wallet's actual float.
+// Overridable via env without a redeploy, in case the operator wants to
+// tune them as volume grows; the hardcoded fallback is the real limit if
+// the env var is unset or unparseable.
+const SOLANA_MAX_PER_TX_USD = Number(Deno.env.get("SOLANA_MAX_PER_TX_USD")) || 50;
+const SOLANA_MAX_DAILY_USD = Number(Deno.env.get("SOLANA_MAX_DAILY_USD")) || 200;
 
 function round2(n: number): number {
   return Math.round((n + Number.EPSILON) * 100) / 100;
@@ -79,6 +128,7 @@ interface RecipientOutcome {
   recipient_type: "sower" | "whisperer";
   recipient_user_id: string;
   amount_usd: number;
+  rail: "paypal" | "solana_usdc";
   eligible: boolean;
   reason?: string;
 }
@@ -120,8 +170,26 @@ Deno.serve(async (req) => {
 
     const totalFloatUsd = round2(owed.reduce((s, r) => s + Number(r.amount_usd || 0), 0));
 
-    // --- Resolve verified PayPal emails, one query for every recipient ----
-    const userIds = [...new Set(owed.map((r) => r.recipient_user_id))];
+    // --- Split by rail, from each recipient's own stored payout config ----
+    // spec-payments.md section 4: reuse the existing profiles fields rather
+    // than a second place a person can configure where their money goes.
+    const allUserIds = [...new Set(owed.map((r) => r.recipient_user_id))];
+    const { data: profileRows } = allUserIds.length > 0
+      ? await admin
+        .from("profiles")
+        .select("user_id, payout_network, payout_address")
+        .in("user_id", allUserIds)
+      : { data: [] as any[] };
+    const railByUser = new Map<string, { network: string | null; address: string | null }>();
+    for (const p of (profileRows ?? []) as any[]) {
+      railByUser.set(p.user_id, { network: p.payout_network ?? null, address: p.payout_address ?? null });
+    }
+
+    const solanaOwed = owed.filter((r) => railByUser.get(r.recipient_user_id)?.network === "solana_usdc");
+    const paypalOwed = owed.filter((r) => railByUser.get(r.recipient_user_id)?.network !== "solana_usdc");
+
+    // --- Resolve verified PayPal emails, one query per PayPal recipient ---
+    const userIds = [...new Set(paypalOwed.map((r) => r.recipient_user_id))];
     const { data: wallets } = userIds.length > 0
       ? await admin
         .from("user_wallets")
@@ -143,23 +211,80 @@ Deno.serve(async (req) => {
       }
     }
 
-    // --- Eligibility: $20 minimum, verified PayPal email required ---------
-    const outcomes: RecipientOutcome[] = owed.map((r) => {
+    // --- PayPal eligibility: $20 minimum, verified PayPal email required --
+    const paypalOutcomes: RecipientOutcome[] = paypalOwed.map((r) => {
       const amount = round2(Number(r.amount_usd || 0));
-      const base = { recipient_type: r.recipient_type, recipient_user_id: r.recipient_user_id, amount_usd: amount };
+      const base = {
+        recipient_type: r.recipient_type,
+        recipient_user_id: r.recipient_user_id,
+        amount_usd: amount,
+        rail: "paypal" as const,
+      };
       if (amount < MIN_PAYOUT_USD) return { ...base, eligible: false, reason: "below_minimum" };
       if (!emailByUser.has(r.recipient_user_id)) return { ...base, eligible: false, reason: "no_verified_paypal_email" };
       return { ...base, eligible: true };
     });
 
+    // --- Solana eligibility: no minimum, but hard per-tx/daily caps -------
+    // Daily headroom is computed against everything already marked paid on
+    // this rail today (across any earlier run today, not just this one),
+    // then reserved provisionally as each recipient in this run is approved
+    // so two recipients in the same run can't together blow the daily cap.
+    const solanaOutcomes: RecipientOutcome[] = [];
+    if (solanaOwed.length > 0) {
+      const todayStartIso = new Date(new Date().setUTCHours(0, 0, 0, 0)).toISOString();
+      const { data: sentTodayRows } = await admin
+        .from("payouts")
+        .select("amount")
+        .eq("rail", "solana_usdc")
+        .eq("status", "paid")
+        .gte("created_at", todayStartIso);
+      let dailySpent = round2((sentTodayRows ?? []).reduce((s: number, r: any) => s + Number(r.amount || 0), 0));
+
+      for (const r of solanaOwed) {
+        const amount = round2(Number(r.amount_usd || 0));
+        const base = {
+          recipient_type: r.recipient_type,
+          recipient_user_id: r.recipient_user_id,
+          amount_usd: amount,
+          rail: "solana_usdc" as const,
+        };
+        const rail = railByUser.get(r.recipient_user_id);
+        if (!rail?.address) {
+          solanaOutcomes.push({ ...base, eligible: false, reason: "no_solana_address" });
+          continue;
+        }
+        const addrErr = validateSolanaAddress(rail.address);
+        if (addrErr) {
+          solanaOutcomes.push({ ...base, eligible: false, reason: "invalid_solana_address" });
+          continue;
+        }
+        if (amount > SOLANA_MAX_PER_TX_USD) {
+          solanaOutcomes.push({ ...base, eligible: false, reason: "exceeds_per_tx_cap_needs_squad_approval" });
+          continue;
+        }
+        if (dailySpent + amount > SOLANA_MAX_DAILY_USD) {
+          solanaOutcomes.push({ ...base, eligible: false, reason: "exceeds_daily_cap_needs_squad_approval" });
+          continue;
+        }
+        dailySpent = round2(dailySpent + amount);
+        solanaOutcomes.push({ ...base, eligible: true });
+      }
+    }
+
+    const outcomes: RecipientOutcome[] = [...paypalOutcomes, ...solanaOutcomes];
+
     if (dryRun) {
       return json({ dry_run: true, totalFloatUsd, recipients: outcomes });
     }
 
-    // Every owed recipient gets exactly one chat notification this run,
-    // regardless of what happens below — "paid" fires separately, once the
-    // batch actually goes out, for the eligible subset only.
-    for (const o of outcomes) {
+    // Every non-eligible PayPal recipient gets exactly one chat notification
+    // this run — "paid" fires separately, once the batch actually goes out,
+    // for the eligible subset only. Solana notification copy isn't wired up
+    // here — messaging.ts's PayoutNotification union is PayPal-shaped
+    // ("paid" requires an email); out of scope for this pass, flagged as a
+    // follow-up rather than bent to fit.
+    for (const o of paypalOutcomes) {
       if (o.eligible) continue;
       await deliverPayoutNotification(admin, o.recipient_user_id, {
         kind: o.reason === "below_minimum" ? "below_minimum" : "not_connected",
@@ -167,13 +292,161 @@ Deno.serve(async (req) => {
       });
     }
 
-    const eligibleOwed = owed.filter((r) => {
+    const eligiblePaypal = paypalOwed.filter((r) => {
       const amount = round2(Number(r.amount_usd || 0));
       return amount >= MIN_PAYOUT_USD && emailByUser.has(r.recipient_user_id);
     });
+    const eligibleSolana = solanaOwed.filter(
+      (r) => solanaOutcomes.find((o) => o.recipient_user_id === r.recipient_user_id)?.eligible,
+    );
 
-    if (eligibleOwed.length === 0) {
-      return json({ success: true, totalFloatUsd, paid: 0, skipped: outcomes.length, outcomes });
+    // --- Solana leg: send FIRST, then mark paid ----------------------------
+    // Runs before PayPal and is fully independent of it — a Solana problem
+    // (bad config, insufficient balance, a failed send) never blocks or
+    // delays the PayPal batch below, and vice versa.
+    let solanaPaidCount = 0;
+    if (eligibleSolana.length > 0) {
+      // Setup is isolated from the send loop below on purpose: if setup
+      // fails, nothing has been attempted yet, so it's safe to mark every
+      // Solana outcome not-configured. Once sends start, a later failure
+      // must never retroactively mislabel an earlier recipient who was
+      // already successfully paid — see the per-recipient try/catch below.
+      let setup: { sender: ReturnType<typeof loadHotWalletKeypair>; hotWalletAddress: string; cluster: ReturnType<typeof getSolanaCluster>; connection: Connection } | null = null;
+      try {
+        const sender = loadHotWalletKeypair();
+        const { address: hotWalletAddress } = verifyHotWallet(sender);
+        const cluster = getSolanaCluster();
+        const connection = new Connection(getSolanaRpcUrl(), "confirmed");
+        setup = { sender, hotWalletAddress, cluster, connection };
+        console.log(
+          `payout-earnings: Solana leg starting — cluster=${cluster} hotWallet=${hotWalletAddress} ` +
+            `recipients=${eligibleSolana.length}`,
+        );
+      } catch (setupErr) {
+        // Hot wallet secret/address missing or inconsistent — refuse the
+        // whole Solana leg for this run rather than guessing. PayPal below
+        // is entirely unaffected.
+        const reason = setupErr instanceof Error ? setupErr.message : String(setupErr);
+        console.error("payout-earnings: Solana leg not attempted —", reason);
+        for (const o of solanaOutcomes) {
+          if (o.eligible) {
+            o.eligible = false;
+            o.reason = "solana_not_configured";
+          }
+        }
+      }
+
+      if (setup) {
+        const { sender, hotWalletAddress, cluster, connection } = setup;
+        try {
+          // Preflight: never half-complete a run because the wallet ran dry
+          // partway through — check the total needed against the actual
+          // balance before sending anything.
+          const totalNeeded = round2(eligibleSolana.reduce((s, r) => s + round2(Number(r.amount_usd || 0)), 0));
+          const balance = await getHotWalletUsdcBalance(connection, sender, cluster);
+          if (balance < totalNeeded) {
+            console.error(
+              `payout-earnings: SOLANA BALANCE INSUFFICIENT — hot wallet (${hotWalletAddress}, ${cluster}) has ` +
+                `${balance} USDC, this run needs ${totalNeeded} USDC across ${eligibleSolana.length} recipient(s). ` +
+                `Skipping the entire Solana leg rather than half-completing it. Top up the hot wallet and re-run.`,
+            );
+            for (const o of solanaOutcomes) {
+              if (o.eligible) {
+                o.eligible = false;
+                o.reason = "insufficient_hot_wallet_balance";
+              }
+            }
+          } else {
+            for (const r of eligibleSolana) {
+              const rail = railByUser.get(r.recipient_user_id)!;
+              const amount = round2(Number(r.amount_usd || 0));
+
+              const { data: prow, error: insErr } = await admin
+                .from("payouts")
+                .insert({
+                  run_id: crypto.randomUUID(),
+                  recipient_type: r.recipient_type,
+                  recipient_user_id: r.recipient_user_id,
+                  amount,
+                  currency: "USD",
+                  rail: "solana_usdc",
+                  status: "processing",
+                  covered_rows: r.covered_rows,
+                })
+                .select("id")
+                .single();
+              if (insErr || !prow) {
+                console.error("payout-earnings: solana payouts insert failed", r.recipient_user_id, insErr?.message);
+                continue;
+              }
+              // Lock the covered rows immediately so an overlapping run
+              // can't double-pick them, same pattern as the PayPal leg.
+              await markCoveredRowsProcessing(admin, r.covered_rows as CoveredRow[]);
+
+              try {
+                const { signature } = await sendUsdcPayout(connection, sender, rail.address!, amount);
+                // The transfer is now irreversible and finalized on-chain.
+                // Everything from here is bookkeeping — if it fails, the
+                // fix is a human reconciling the row, never an automatic
+                // retry (that could double-send).
+                try {
+                  const { error: updErr } = await admin
+                    .from("payouts")
+                    .update({
+                      status: "paid",
+                      solana_tx_signature: signature,
+                      completed_at: new Date().toISOString(),
+                    })
+                    .eq("id", prow.id);
+                  if (updErr) throw updErr;
+                  await markCoveredRowsPaid(admin, r.covered_rows as CoveredRow[]);
+                  solanaPaidCount++;
+                } catch (dbErr) {
+                  console.error(
+                    `payout-earnings: NEEDS A HUMAN — Solana send SUCCEEDED (signature=${signature}, ` +
+                      `payouts.id=${prow.id}, recipient=${r.recipient_user_id}, amount=${amount} USDC, ` +
+                      `cluster=${cluster}) but the DB update failed: ` +
+                      `${dbErr instanceof Error ? dbErr.message : String(dbErr)}. The payouts row is left at ` +
+                      `'processing' on purpose — do not retry this recipient automatically, reconcile by hand.`,
+                  );
+                }
+              } catch (sendErr) {
+                const reason = sendErr instanceof Error ? sendErr.message : String(sendErr);
+                console.error("payout-earnings: solana send failed", r.recipient_user_id, reason);
+                await admin.from("payouts").update({ status: "failed", error: reason }).eq("id", prow.id);
+                await markCoveredRowsPending(admin, r.covered_rows as CoveredRow[], reason);
+              }
+            }
+          }
+        } catch (runErr) {
+          // Something outside any per-recipient try/catch broke mid-leg
+          // (e.g. the balance-check RPC call itself failed). This only
+          // affects this response's summary — every payouts row and
+          // covered-row update already made above is untouched and stays
+          // authoritative (solanaPaidCount only counts real confirmed
+          // sends), so at worst this mislabels an already-paid recipient
+          // as "aborted" in the outcomes list for this one response; the
+          // payouts table is the source of truth, not this summary.
+          const reason = runErr instanceof Error ? runErr.message : String(runErr);
+          console.error("payout-earnings: Solana leg aborted mid-run —", reason);
+          for (const o of solanaOutcomes) {
+            if (o.eligible) {
+              o.eligible = false;
+              o.reason = "solana_leg_aborted";
+            }
+          }
+        }
+      }
+    }
+
+    if (eligiblePaypal.length === 0) {
+      return json({
+        success: true,
+        totalFloatUsd,
+        paid: solanaPaidCount,
+        skipped: outcomes.filter((o) => !o.eligible).length,
+        outcomes,
+      });
     }
 
     const payoutsEnabled = (Deno.env.get("PAYPAL_PAYOUTS_ENABLED") ?? "").toLowerCase() === "true";
@@ -181,16 +454,16 @@ Deno.serve(async (req) => {
       return json({
         success: true,
         totalFloatUsd,
-        paid: 0,
-        skipped: outcomes.length,
-        reason: "payouts_not_enabled",
+        paid: solanaPaidCount,
+        skipped: outcomes.filter((o) => !o.eligible).length,
+        reason: "paypal_payouts_not_enabled",
         outcomes,
       });
     }
 
-    // --- Dispatch: one payouts row per recipient, one PayPal batch total --
+    // --- PayPal dispatch: one payouts row per recipient, one batch total --
     const runId = crypto.randomUUID();
-    const inserts = eligibleOwed.map((r) => ({
+    const inserts = eligiblePaypal.map((r) => ({
       run_id: runId,
       recipient_type: r.recipient_type,
       recipient_user_id: r.recipient_user_id,
@@ -262,8 +535,8 @@ Deno.serve(async (req) => {
         runId,
         batchId,
         totalFloatUsd,
-        paid: inserted.length,
-        skipped: outcomes.length - eligibleOwed.length,
+        paid: inserted.length + solanaPaidCount,
+        skipped: outcomes.filter((o) => !o.eligible).length,
         outcomes,
       });
     } catch (err) {
