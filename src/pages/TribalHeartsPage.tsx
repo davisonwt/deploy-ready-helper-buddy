@@ -1,14 +1,19 @@
 import React, { useState, useEffect } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
-import { ArrowLeft, ShieldCheck, Volume2, VolumeX } from 'lucide-react';
+import { ArrowLeft, MessageCircle, ShieldCheck, Volume2, VolumeX } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { ProfileCard } from '@/components/tribal-hearts/ProfileCard';
 import { SparkModal } from '@/components/tribal-hearts/SparkModal';
 import { BondingAnimation } from '@/components/tribal-hearts/BondingAnimation';
 import { TribalHeartsOnboarding } from '@/components/tribal-hearts/TribalHeartsOnboarding';
+import { MatchScreen } from '@/components/tribal-hearts/MatchScreen';
+import { MatchesList } from '@/components/tribal-hearts/MatchesList';
+import { WanderingHeartsChat } from '@/components/tribal-hearts/WanderingHeartsChat';
 import { useTribalHearts } from '@/hooks/useTribalHearts';
+import { useAuth } from '@/hooks/useAuth';
 import { TribalAudio } from '@/hooks/useTribalHeartsAudio';
 import { toast } from '@/hooks/use-toast';
+import { supabase } from '@/integrations/supabase/client';
 
 // public/wandering-hearts/ (not src/assets/, so referenced by public path).
 const heroImg = '/wandering-hearts/hero-banner.jpg';
@@ -16,6 +21,7 @@ const logoImg = '/wandering-hearts/logo.png';
 
 const TribalHeartsPage: React.FC = () => {
   const navigate = useNavigate();
+  const { user } = useAuth() as any;
   const {
     profiles,
     myProfile,
@@ -33,6 +39,33 @@ const TribalHeartsPage: React.FC = () => {
   });
   const [soundOn, setSoundOn] = useState(true);
   const [editProfileOpen, setEditProfileOpen] = useState(false);
+
+  // Wandering Hearts messaging (Phase 1): browse the deck, browse matches,
+  // or be inside a single match's conversation. pendingMatchPartner carries
+  // who we just matched with across the BondingAnimation, so the room can be
+  // created (or found) once the animation finishes and MatchScreen shown.
+  const [view, setView] = useState<'browse' | 'matches' | 'chat'>('browse');
+  const [pendingMatchPartner, setPendingMatchPartner] = useState<{ id: string; name: string } | null>(null);
+  const [matchScreen, setMatchScreen] = useState<{ partnerName: string; roomId: string } | null>(null);
+  const [activeRoom, setActiveRoom] = useState<{ roomId: string; partnerName: string } | null>(null);
+
+  const openChatWithPartner = async (partnerId: string, partnerName: string) => {
+    if (!user?.id) return;
+    const { data, error } = await supabase.rpc('get_or_create_wandering_hearts_room' as any, {
+      user1_id: user.id,
+      user2_id: partnerId,
+    });
+    if (error || !data) {
+      toast({
+        title: 'Could not open chat',
+        description: error?.message || 'Please try again.',
+        variant: 'destructive' as any,
+      });
+      return;
+    }
+    setActiveRoom({ roomId: data as string, partnerName });
+    setView('chat');
+  };
 
   // Unlock audio on first interaction
   useEffect(() => {
@@ -65,6 +98,7 @@ const TribalHeartsPage: React.FC = () => {
       return;
     }
     if (res.mutual) {
+      setPendingMatchPartner({ id: current.user_id, name: current.display_first_name || 'your new bond' });
       setBonding({
         open: true,
         name: current.display_first_name || 'your new bond',
@@ -83,7 +117,7 @@ const TribalHeartsPage: React.FC = () => {
     document.title = 'Tribal Hearts — Find your tribe. Protect your heart.';
     const existing = document.querySelector('meta[name="description"]');
     const desc =
-      'Tribal Hearts: a warm, respectful, safe dating space for the Sow2Grow tribe. Heart Circles, mutual Sparks, in-app voice & video — no phone numbers, no emails.';
+      'Tribal Hearts: a warm, respectful, safe dating space for the Sow2Grow tribe. Heart Circles, mutual Sparks, private chat with voice & video notes — no phone numbers, no emails.';
     if (existing) existing.setAttribute('content', desc);
     else {
       const m = document.createElement('meta');
@@ -126,6 +160,36 @@ const TribalHeartsPage: React.FC = () => {
     );
   }
 
+  // Standalone match/chat screens -- own header + back control, so they
+  // render outside the browse shell rather than as an overlay on top of it.
+  if (matchScreen) {
+    return (
+      <MatchScreen
+        partnerName={matchScreen.partnerName}
+        onStartChat={() => {
+          setActiveRoom({ roomId: matchScreen.roomId, partnerName: matchScreen.partnerName });
+          setMatchScreen(null);
+          setView('chat');
+        }}
+        onBack={() => setMatchScreen(null)}
+      />
+    );
+  }
+
+  if (view === 'matches') {
+    return <MatchesList onOpenChat={openChatWithPartner} onBack={() => setView('browse')} />;
+  }
+
+  if (view === 'chat' && activeRoom) {
+    return (
+      <WanderingHeartsChat
+        roomId={activeRoom.roomId}
+        partnerName={activeRoom.partnerName}
+        onBack={() => setView('matches')}
+      />
+    );
+  }
+
   return (
     <div
       className="min-h-screen relative overflow-hidden"
@@ -152,14 +216,24 @@ const TribalHeartsPage: React.FC = () => {
           </h1>
         </div>
 
-        <button
-          onClick={toggleSound}
-          aria-label={soundOn ? 'Mute sounds' : 'Enable sounds'}
-          className="p-2 rounded-full"
-          style={{ color: 'hsl(38 40% 70%)' }}
-        >
-          {soundOn ? <Volume2 size={18} /> : <VolumeX size={18} />}
-        </button>
+        <div className="flex items-center gap-1">
+          <button
+            onClick={() => setView('matches')}
+            aria-label="Your Matches"
+            className="p-2 rounded-full"
+            style={{ color: 'hsl(38 40% 70%)' }}
+          >
+            <MessageCircle size={18} />
+          </button>
+          <button
+            onClick={toggleSound}
+            aria-label={soundOn ? 'Mute sounds' : 'Enable sounds'}
+            className="p-2 rounded-full"
+            style={{ color: 'hsl(38 40% 70%)' }}
+          >
+            {soundOn ? <Volume2 size={18} /> : <VolumeX size={18} />}
+          </button>
+        </div>
       </header>
 
       {/* Sparks remaining indicator */}
@@ -248,7 +322,27 @@ const TribalHeartsPage: React.FC = () => {
         open={bonding.open}
         otherName={bonding.name}
         highCompatibility={bonding.high}
-        onComplete={() => setTimeout(() => setBonding({ open: false }), 600)}
+        onComplete={() =>
+          setTimeout(async () => {
+            setBonding({ open: false });
+            const partner = pendingMatchPartner;
+            setPendingMatchPartner(null);
+            if (!partner || !user?.id) return;
+            const { data, error } = await supabase.rpc('get_or_create_wandering_hearts_room' as any, {
+              user1_id: user.id,
+              user2_id: partner.id,
+            });
+            if (error || !data) {
+              toast({
+                title: 'Could not open your conversation',
+                description: error?.message || 'You can still find this match under Matches.',
+                variant: 'destructive' as any,
+              });
+              return;
+            }
+            setMatchScreen({ partnerName: partner.name, roomId: data as string });
+          }, 600)
+        }
       />
     </div>
   );

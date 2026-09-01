@@ -1,6 +1,6 @@
-import React, { useState, useRef } from 'react';
+import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Mic, Square, X, Sparkles } from 'lucide-react';
+import { X, Sparkles } from 'lucide-react';
 import { TribalHeart } from './BondingAnimation';
 import { TribalAudio } from '@/hooks/useTribalHeartsAudio';
 
@@ -27,53 +27,16 @@ export const SparkModal: React.FC<SparkModalProps> = ({
   onSend,
 }) => {
   const [message, setMessage] = useState('');
-  const [recording, setRecording] = useState(false);
-  const [voiceBlob, setVoiceBlob] = useState<Blob | null>(null);
   const [sending, setSending] = useState(false);
-  const recRef = useRef<MediaRecorder | null>(null);
-  const chunksRef = useRef<Blob[]>([]);
-  const promptIdx = useRef(Math.floor(Math.random() * PROMPTS.length));
-
-  const startRecord = async () => {
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      const rec = new MediaRecorder(stream);
-      chunksRef.current = [];
-      rec.ondataavailable = (e) => chunksRef.current.push(e.data);
-      rec.onstop = () => {
-        setVoiceBlob(new Blob(chunksRef.current, { type: 'audio/webm' }));
-        stream.getTracks().forEach((t) => t.stop());
-      };
-      rec.start();
-      recRef.current = rec;
-      setRecording(true);
-      // Auto-stop at 15s
-      setTimeout(() => {
-        if (recRef.current?.state === 'recording') {
-          recRef.current.stop();
-          setRecording(false);
-        }
-      }, 15000);
-    } catch (e) {
-      console.warn('mic denied', e);
-    }
-  };
-
-  const stopRecord = () => {
-    recRef.current?.stop();
-    setRecording(false);
-  };
+  const promptIdx = React.useRef(Math.floor(Math.random() * PROMPTS.length));
 
   const handleSend = async () => {
     setSending(true);
     TribalAudio.playSparkSent();
     if (navigator.vibrate) navigator.vibrate([20, 40, 30]);
     try {
-      // For now we don't upload voice (would need storage bucket).
-      // Keeping the UX so it can be wired later.
-      await onSend(message.trim(), undefined);
+      await onSend(message.trim());
       setMessage('');
-      setVoiceBlob(null);
       onClose();
     } finally {
       setSending(false);
@@ -160,39 +123,9 @@ export const SparkModal: React.FC<SparkModalProps> = ({
               {message.length}/240
             </div>
 
-            {/* Voice option */}
-            <div className="mt-4 flex items-center justify-center gap-3">
-              {!recording ? (
-                <button
-                  onClick={startRecord}
-                  className="flex items-center gap-2 px-4 py-2 rounded-full text-sm transition-all hover:scale-105"
-                  style={{
-                    background: 'hsl(75 25% 18%)',
-                    color: 'hsl(75 50% 75%)',
-                    border: '1px solid hsl(75 30% 28%)',
-                  }}
-                >
-                  <Mic size={16} />
-                  {voiceBlob ? 'Re-record voice (15s)' : 'Or send a voice spark (15s)'}
-                </button>
-              ) : (
-                <button
-                  onClick={stopRecord}
-                  className="flex items-center gap-2 px-4 py-2 rounded-full text-sm animate-pulse"
-                  style={{
-                    background: 'hsl(15 70% 35%)',
-                    color: 'hsl(38 95% 88%)',
-                  }}
-                >
-                  <Square size={16} fill="currentColor" />
-                  Recording… tap to stop
-                </button>
-              )}
-            </div>
-
             <button
               onClick={handleSend}
-              disabled={sending || (!message.trim() && !voiceBlob)}
+              disabled={sending || !message.trim()}
               className="mt-6 w-full py-4 rounded-2xl font-semibold text-base flex items-center justify-center gap-2 transition-all disabled:opacity-50 hover:scale-[1.02]"
               style={{
                 background:
