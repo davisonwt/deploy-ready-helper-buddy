@@ -1785,6 +1785,20 @@ ways depending on which banner family:
 
 - Solana payout rail verified on devnet with real sends, raw amount 2000000 confirmed.
 
+## Wandering Hearts
+
+**Decided 2026-09-01, not yet built:**
+
+1. WH chat hard-blocks sharing of contact details — emails, phone numbers
+   in any format including spelled-out digits, @handles, social/messaging
+   usernames, links — enforced server-side; sender sees a clear notice.
+2. Voice/video calls between a match unlock only after BOTH members pay a
+   one-time "what is meeting here worth to you" fee of their choice, $5 or
+   $10, per match, via S2G rails; after that, unlimited calls with that
+   person.
+3. Members are told plainly they never need to share a phone number and
+   can stay inside the app.
+
 ## Open — priority order
 
 1. ~~Live proof that `paypal-webhook` actually works now~~ — **resolved, see Keystone problem**: order `0a6a0b1a` finalized via a clean webhook call at 08:36 UTC 2026-08-29. The `processed_webhooks`-insert bug (separate from the webhook itself) is also fixed; watch for its first real row as confirmation the fix landed, not as proof the webhook works — that's already established.
