@@ -1781,6 +1781,10 @@ ways depending on which banner family:
   in `SowProductPage.tsx` — an `eslint-disable` comment for a hook this
   change didn't touch), and a real `npm run build` all clean.
 
+## Fixed — 2026-09-01 (Solana payout rail)
+
+- Solana payout rail verified on devnet with real sends, raw amount 2000000 confirmed.
+
 ## Open — priority order
 
 1. ~~Live proof that `paypal-webhook` actually works now~~ — **resolved, see Keystone problem**: order `0a6a0b1a` finalized via a clean webhook call at 08:36 UTC 2026-08-29. The `processed_webhooks`-insert bug (separate from the webhook itself) is also fixed; watch for its first real row as confirmation the fix landed, not as proof the webhook works — that's already established.

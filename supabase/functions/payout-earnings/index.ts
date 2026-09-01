@@ -400,6 +400,7 @@ Deno.serve(async (req) => {
                   amount,
                   currency: "USD",
                   rail: "solana_usdc",
+                  solana_cluster: cluster,
                   status: "processing",
                   covered_rows: r.covered_rows,
                 })
