@@ -111,6 +111,24 @@ address through a second channel (read back the last 6 characters on a
 call) — address-swap interception is a real attack, and changing a member
 after creation requires a governance vote.
 
+**Live Squad (created 2026-09-01, on Squads — app.squads.so):**
+
+| | |
+|---|---|
+| Vault address | `BjBY4uCCEQfE66rYddTBUn9Twg7jKevH1Rze8UfZFWLs` |
+| Threshold | 2 of 3 |
+| Member — davison | `EbSUvuE8sstLCcGsMZqXb7rB6rvgpVR4dTqEZEi32ekx` |
+| Member — Ed | `BnKrWANiiYgK6c8R2bMvN216zDZRhH6V1nsFT7rUasf4` |
+| Member — Amber | `4DWsVidKs1scqD6iKxKfvX18wi5MTxG8bJtsSCTkvKJW` |
+
+These three addresses are each member's own personal Phantom wallet, used
+here only as a signing key for the Squad. They are distinct from — and
+must never share a schema field with — those same people's personal payout
+destinations as sowers.
+
+This is the treasury half only. **The hot wallet described above does not
+exist yet** — the operational float wallet still needs to be created.
+
 ---
 
 ## 3. Inbound: direct Solana payment detection
