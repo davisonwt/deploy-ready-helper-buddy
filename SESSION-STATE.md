@@ -1787,7 +1787,7 @@ ways depending on which banner family:
 
 ## Wandering Hearts
 
-**Decided 2026-09-01, not yet built:**
+**Decided 2026-09-01:**
 
 1. WH chat hard-blocks sharing of contact details — emails, phone numbers
    in any format including spelled-out digits, @handles, social/messaging
@@ -1798,6 +1798,58 @@ ways depending on which banner family:
    person.
 3. Members are told plainly they never need to share a phone number and
    can stay inside the app.
+
+**Phase 1 built and live, 2026-09-01 (commit `af4515b3`):** match → conversation,
+contact-detail blocking, voice/video notes. Calling deliberately not touched.
+
+- `chat_room_type` gained a `'wandering_hearts'` value. New RPCs
+  `get_or_create_wandering_hearts_room(user1_id, user2_id)` (only for
+  `status='mutual'` pairs) and `send_wandering_hearts_message(...)` — the
+  latter is the *only* sanctioned send path; it runs the shared contact-detail
+  detector (`wh_detect_contact_info`) before insert and returns
+  `{ok:false, code:'contact_info_blocked'}` without inserting if it matches,
+  logging the attempt (user_id, room_id, matched_rule, timestamp — not the
+  text) to `wh_blocked_message_log` for gosat review. A `BEFORE INSERT`
+  trigger on `chat_messages` (`wh_block_contact_info_trigger`, WH rooms only —
+  confirmed by reading its body, scoped on `room_type = 'wandering_hearts'`)
+  is a hard backstop that raises if anyone bypasses the RPC via direct insert.
+- Detector logic is duplicated deliberately in SQL and
+  `src/lib/wanderingHearts/contactDetection.ts` (client-side instant feedback
+  before the round trip) — catches email, URL, @handle, social-platform names
+  (instagram/tiktok/snapchat/facebook/whatsapp/telegram/signal/discord/etc.),
+  contact phrases ("call me on", "dm me", ...), and phone numbers in digit,
+  spelled-out (5+ consecutive number-words, so a lone "one" in prose never
+  matches), and mixed digit/word form. 45 hand-written test cases
+  (`scripts/wh-contact-detection-tests.sql`) pass 45/45 in both SQL and JS.
+- New UI: `MatchScreen.tsx` (shown once right after `BondingAnimation`, exact
+  required privacy copy), `MatchesList.tsx` (reachable via a header icon on
+  `TribalHeartsPage`), `WanderingHeartsChat.tsx` — a dedicated 1:1 chat
+  component (deliberately not the general `ChatRoom.tsx`, which has calling
+  wired in) with text plus in-browser voice (60s max) and video (30s max)
+  notes via `MediaRecorder`, uploaded to the existing `tribal-hearts-media`
+  bucket (`src/lib/wanderingHearts/media.ts`) and rendered inline with native
+  `<audio>`/`<video>` controls. Persistent header line: "All communication
+  stays inside Wandering Hearts."
+- `SparkModal.tsx`'s old 15s voice-recording UI never uploaded anything
+  (dead code) — removed rather than duplicating upload logic for a one-shot
+  spark opener.
+- `TribalHeartsPage.tsx`'s SEO description no longer claims "in-app voice &
+  video" (that meant real-time calling, which still doesn't exist) — reworded
+  to "private chat with voice & video notes," which is what actually ships.
+- Verified end-to-end as a non-admin seed account (Priya, `4ef245bf-...`, not
+  davison) via `SET LOCAL request.jwt.claim.sub` against the live DB: mutual
+  match with Thabo (`4101e0f6-...`), room creation, a clean message sent, a
+  contact-info message blocked (logged, not inserted), and the trigger
+  backstop confirmed on a direct-insert bypass attempt. Test room/message/log
+  row cleaned up afterward; the underlying mutual match was left in place
+  (harmless seed-data side effect).
+- No `supabase/functions/**` file touched this phase — nothing needs
+  `supabase functions deploy`. Lovable publish is still a separate manual
+  step for the frontend changes.
+
+**Phase 2, next, not started:** JaaS JWT call rooms, call unlock gated on
+both members having paid the $5/$10 one-time fee (decision 2 above), wiring
+that into `WanderingHeartsChat.tsx`.
 
 ## Open — priority order
 
