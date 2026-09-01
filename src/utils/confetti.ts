@@ -184,82 +184,7 @@ export function launchSparkles(x?: number, y?: number) {
   draw();
 }
 
-// 3. Floating garden particles (leaves, petals, tiny fruits) — runs forever
-export function startGardenParticles() {
-  const canvas = document.createElement('canvas');
-  canvas.style.position = 'fixed';
-  canvas.style.inset = '0';
-  canvas.style.pointerEvents = 'none';
-  canvas.style.zIndex = '1'; // behind everything
-  canvas.style.opacity = '0.4';
-  document.body.appendChild(canvas);
-
-  const ctx = canvas.getContext('2d');
-  if (!ctx) return;
-
-  canvas.width = window.innerWidth;
-  canvas.height = window.innerHeight;
-
-  const particles: Array<{
-    x: number;
-    y: number;
-    size: number;
-    speed: number;
-    sway: number;
-    swayPhase: number;
-    type: string;
-  }> = [];
-
-  const symbols = ['Leaf', 'Petal', 'Tiny Fruit', 'Tiny Fruit', 'Petal', 'Sparkles', 'Sparkles'];
-
-  const intervalId = setInterval(() => {
-    if (particles.length < 40) {
-      particles.push({
-        x: Math.random() * canvas.width,
-        y: -50,
-        size: Math.random() * 20 + 15,
-        speed: Math.random() * 1.5 + 0.8,
-        sway: Math.random() * 4 + 2,
-        swayPhase: Math.random() * Math.PI * 2,
-        type: symbols[Math.floor(Math.random() * symbols.length)]
-      });
-    }
-  }, 800);
-
-  function draw() {
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-    particles.forEach((p, i) => {
-      p.y += p.speed;
-      p.x += Math.sin(p.y * 0.02 + p.swayPhase) * p.sway;
-
-      if (p.y > canvas.height + 50) {
-        particles.splice(i, 1);
-      } else {
-        ctx.font = `${p.size}px serif`;
-        ctx.fillStyle = p.type === 'Tiny Fruit' ? '#f43f5e' : p.type === 'Leaf' ? '#34d399' : '#f472b6';
-        const text = p.type === 'Sparkles' ? '✨' : p.type === 'Tiny Fruit' ? '🍒' : '🍃';
-        ctx.fillText(text, p.x, p.y);
-      }
-    });
-    requestAnimationFrame(draw);
-  }
-  draw();
-
-  const handleResize = () => {
-    canvas.width = window.innerWidth;
-    canvas.height = window.innerHeight;
-  };
-  window.addEventListener('resize', handleResize);
-
-  // Cleanup function (optional, for when component unmounts)
-  return () => {
-    clearInterval(intervalId);
-    window.removeEventListener('resize', handleResize);
-    canvas.remove();
-  };
-}
-
-// 4. Floating score numbers (+1, +5, +10 etc.)
+// 3. Floating score numbers (+1, +5, +10 etc.)
 export function floatingScore(amount: number = 1, x?: number, y?: number) {
   const score = document.createElement('div');
   score.textContent = `+${amount} USDC`;
@@ -290,6 +215,5 @@ export function floatingScore(amount: number = 1, x?: number, y?: number) {
 if (typeof window !== 'undefined') {
   (window as any).launchConfetti = launchConfetti;
   (window as any).launchSparkles = launchSparkles;
-  (window as any).startGardenParticles = startGardenParticles;
   (window as any).floatingScore = floatingScore;
 }

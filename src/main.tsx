@@ -11,7 +11,6 @@ import { queryClient } from "./lib/queryPersistence";
 import { CryptoComProvider } from '@/providers/CryptoComProvider';
 import { clearRoleCache } from '@/hooks/useUserRoles';
 import "./index.css";
-import { startGardenParticles } from '@/utils/confetti';
 import '@/utils/confetti';
 
 declare global {
@@ -67,12 +66,6 @@ if (!import.meta.env.DEV && 'serviceWorker' in navigator) {
     } else {
       setTimeout(registerServiceWorker, 2000);
     }
-  });
-}
-
-if (typeof window !== 'undefined') {
-  window.addEventListener('load', () => {
-    startGardenParticles();
   });
 }
 
