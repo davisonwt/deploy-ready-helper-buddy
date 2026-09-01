@@ -1,6 +1,6 @@
 import React, { useState, useRef, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ArrowRight, ArrowLeft, Camera, Check, MapPin, Heart, Upload, X, Loader2 } from 'lucide-react';
+import { ArrowRight, ArrowLeft, Check, MapPin, Heart, Upload, X, Loader2 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { TribalHeart } from './BondingAnimation';
@@ -23,10 +23,9 @@ interface Draft {
   bio: string;
   interests: string[];
   photos: string[]; // storage paths
-  selfieVerified: boolean;
 }
 
-const STEPS = 6;
+const STEPS = 5;
 
 const INTENTS = [
   { key: 'courtship', label: 'Courtship — looking for love', emoji: '💞' },
@@ -57,7 +56,6 @@ export const TribalHeartsOnboarding: React.FC<Props> = ({ onComplete, onExit }) 
     bio: '',
     interests: [],
     photos: [],
-    selfieVerified: false,
   });
 
   const update = useCallback(<K extends keyof Draft>(k: K, v: Draft[K]) => {
@@ -81,7 +79,6 @@ export const TribalHeartsOnboarding: React.FC<Props> = ({ onComplete, onExit }) 
       case 2: return !!draft.birthYear && (new Date().getFullYear() - draft.birthYear) >= 18 && !!draft.country.trim();
       case 3: return draft.gender !== null && draft.seeking !== null && draft.gender !== draft.seeking;
       case 4: return draft.photos.length >= 1;
-      case 5: return draft.selfieVerified;
       default: return false;
     }
   };
@@ -105,7 +102,6 @@ export const TribalHeartsOnboarding: React.FC<Props> = ({ onComplete, onExit }) 
         photos: draft.photos,
         location_country: draft.country.trim() || null,
         location_region: draft.region.trim() || null,
-        photo_verified: draft.selfieVerified,
         age_verified: true,
         status: 'active',
       } as any);
@@ -173,7 +169,6 @@ export const TribalHeartsOnboarding: React.FC<Props> = ({ onComplete, onExit }) 
             {step === 2 && <StepAgeLocation draft={draft} update={update} />}
             {step === 3 && <StepGender draft={draft} update={update} />}
             {step === 4 && <StepPhotos userId={user?.id} draft={draft} update={update} />}
-            {step === 5 && <StepVerification draft={draft} update={update} />}
           </motion.div>
         </AnimatePresence>
       </main>
@@ -591,114 +586,6 @@ const StepPhotos: React.FC<{ userId?: string; draft: Draft; update: any }> = ({ 
           })}
         </div>
       </div>
-    </div>
-  );
-};
-
-/* ------------------------ Step 5: Verification ------------------------ */
-
-const StepVerification: React.FC<{ draft: Draft; update: any }> = ({ draft, update }) => {
-  const [streamActive, setStreamActive] = useState(false);
-  const [smiling, setSmiling] = useState(false);
-  const videoRef = useRef<HTMLVideoElement>(null);
-  const streamRef = useRef<MediaStream | null>(null);
-
-  const startCamera = async () => {
-    try {
-      const s = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user' } });
-      streamRef.current = s;
-      if (videoRef.current) videoRef.current.srcObject = s;
-      setStreamActive(true);
-    } catch (e) {
-      toast({
-        title: 'Camera blocked',
-        description: 'Please allow camera access to verify.',
-        variant: 'destructive' as any,
-      });
-    }
-  };
-
-  const confirm = () => {
-    setSmiling(true);
-    setTimeout(() => {
-      // Stop camera
-      streamRef.current?.getTracks().forEach((t) => t.stop());
-      setStreamActive(false);
-      update('selfieVerified', true);
-      TribalAudio.chime(0, 1320, 1.2, 0.18);
-    }, 700);
-  };
-
-  return (
-    <div className="text-center">
-      <StepHeading
-        title="A quick smile to verify"
-        subtitle="Keeps the tribe safe from fakes. Your selfie is private."
-        center
-      />
-
-      <div
-        className="relative mx-auto mt-8 rounded-full overflow-hidden flex items-center justify-center"
-        style={{
-          width: 220,
-          height: 220,
-          background: 'hsl(20 25% 10%)',
-          border: '3px solid hsl(25 35% 25%)',
-        }}
-      >
-        {streamActive ? (
-          <video ref={videoRef} autoPlay playsInline muted className="w-full h-full object-cover" style={{ transform: 'scaleX(-1)' }} />
-        ) : draft.selfieVerified ? (
-          <motion.div
-            initial={{ scale: 0 }}
-            animate={{ scale: 1 }}
-            transition={{ type: 'spring', damping: 14, stiffness: 220 }}
-            className="flex items-center justify-center w-20 h-20 rounded-full"
-            style={{
-              background: 'linear-gradient(135deg, hsl(75 60% 45%), hsl(85 55% 50%))',
-              color: 'white',
-            }}
-          >
-            <Check size={40} strokeWidth={3} />
-          </motion.div>
-        ) : (
-          <Camera size={48} style={{ color: 'hsl(38 40% 60%)' }} />
-        )}
-
-        {smiling && (
-          <motion.div
-            className="absolute inset-0 rounded-full pointer-events-none"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: [0, 1, 0] }}
-            transition={{ duration: 0.7 }}
-            style={{
-              background: 'radial-gradient(circle, hsl(38 100% 70% / 0.6), transparent 70%)',
-            }}
-          />
-        )}
-      </div>
-
-      <p className="mt-4 text-sm italic" style={{ color: 'hsl(38 35% 65%)' }}>
-        {draft.selfieVerified
-          ? 'Beautiful. Welcome 🌿'
-          : streamActive
-            ? 'Smile gently when ready ☺️'
-            : 'A 2-second moment.'}
-      </p>
-
-      {!draft.selfieVerified && (
-        <button
-          onClick={streamActive ? confirm : startCamera}
-          className="mt-6 px-6 py-2.5 rounded-full text-sm font-medium transition-all hover:scale-105"
-          style={{
-            background: 'hsl(75 30% 22%)',
-            color: 'hsl(75 65% 80%)',
-            border: '1px solid hsl(75 35% 35%)',
-          }}
-        >
-          {streamActive ? 'Capture smile' : 'Open camera'}
-        </button>
-      )}
     </div>
   );
 };

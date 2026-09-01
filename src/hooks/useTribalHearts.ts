@@ -17,6 +17,7 @@ export function useTribalHearts() {
   const { user } = useAuth() as any;
   const [profiles, setProfiles] = useState<HeartsProfile[]>([]);
   const [myProfile, setMyProfile] = useState<HeartsProfile | null>(null);
+  const [isMember, setIsMember] = useState<boolean | null>(null);
   const [loading, setLoading] = useState(true);
   const [sparksToday, setSparksToday] = useState(0);
   const [savedIds, setSavedIds] = useState<Set<string>>(new Set());
@@ -38,6 +39,15 @@ export function useTribalHearts() {
         .maybeSingle();
       if (!alive) return;
       setMyProfile(mine as any);
+
+      // Same check the get_hearts_browse RPC enforces server-side, so the
+      // UI can tell a "not a member" empty state apart from a genuinely
+      // empty candidate pool instead of showing one generic message for both.
+      const { data: memberCheck } = await supabase.rpc('is_tribal_hearts_member', {
+        _uid: user.id,
+      });
+      if (!alive) return;
+      setIsMember(!!memberCheck);
 
       // Count today's sparks
       const todayStart = new Date();
@@ -131,6 +141,7 @@ export function useTribalHearts() {
   return {
     profiles,
     myProfile,
+    isMember,
     loading,
     sparksToday,
     sparksRemaining: Math.max(0, 8 - sparksToday),

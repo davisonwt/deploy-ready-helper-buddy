@@ -19,6 +19,7 @@ const TribalHeartsPage: React.FC = () => {
   const {
     profiles,
     myProfile,
+    isMember,
     loading,
     sparksRemaining,
     sendSpark,
@@ -102,6 +103,17 @@ const TribalHeartsPage: React.FC = () => {
     return <div className="min-h-screen" style={{ background: pageBg }} />;
   }
 
+  // Not a member (not an approved Ambassador) → say so before they fill
+  // in anything, instead of letting them complete onboarding and then
+  // silently never see a candidate. Same check get_hearts_browse enforces.
+  if (!myProfile && isMember === false) {
+    return (
+      <div className="min-h-screen" style={{ background: pageBg }}>
+        <MembershipRequired heroImg={heroImg} onBack={() => navigate('/dashboard')} />
+      </div>
+    );
+  }
+
   // No profile yet → go straight to onboarding (no shell behind it).
   if (!myProfile) {
     return (
@@ -183,6 +195,14 @@ const TribalHeartsPage: React.FC = () => {
               }}
             />
           </div>
+        ) : profiles.length === 0 && isMember === false ? (
+          <EmptyState
+            heroImg={heroImg}
+            title="You won't see candidates yet."
+            body="Wandering Hearts browsing is currently limited to approved Ambassadors of the tribe. Your account doesn't have that status, so no one will show up here regardless of your profile."
+            cta="Back to Dashboard"
+            onCta={() => navigate('/dashboard')}
+          />
         ) : profiles.length === 0 ? (
           <EmptyState
             heroImg={heroImg}
@@ -233,6 +253,43 @@ const TribalHeartsPage: React.FC = () => {
     </div>
   );
 };
+
+const MembershipRequired: React.FC<{ heroImg: string; onBack: () => void }> = ({
+  heroImg,
+  onBack,
+}) => (
+  <div className="min-h-screen flex flex-col items-center justify-center px-5 text-center">
+    <button
+      onClick={onBack}
+      className="absolute top-6 left-5 flex items-center gap-1 text-sm opacity-70 hover:opacity-100"
+      style={{ color: 'hsl(38 50% 75%)' }}
+    >
+      <ArrowLeft size={16} />
+      Back to Dashboard
+    </button>
+    <motion.div
+      className="max-w-md mx-auto"
+      initial={{ opacity: 0, y: 16 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.6 }}
+    >
+      <img
+        src={heroImg}
+        alt="Tribal Hearts circle"
+        className="w-full max-w-xs mx-auto rounded-3xl mb-6"
+        style={{ boxShadow: '0 20px 60px hsl(15 80% 25% / 0.5)' }}
+      />
+      <h2 className="text-3xl font-serif italic mb-3" style={{ color: 'hsl(38 95% 85%)' }}>
+        Wandering Hearts is limited right now.
+      </h2>
+      <p style={{ color: 'hsl(38 35% 70%)' }} className="text-sm">
+        Browsing and matching is currently open only to approved Ambassadors
+        of the tribe. Your account doesn't have that status yet, so there's
+        nothing to set up here for you at the moment.
+      </p>
+    </motion.div>
+  </div>
+);
 
 const EmptyState: React.FC<{
   heroImg: string;
